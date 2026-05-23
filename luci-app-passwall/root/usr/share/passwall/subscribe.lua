@@ -809,7 +809,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 				if result.type == 'Xray' then
 					-- obfs-local插件转换成xray支持的格式
 					if result.plugin ~= "obfs-local" then
-						result.error_msg = "Xray 不支持 " .. result.plugin .. " 插件。"
+						result.error_msg = "Xray 不支持 SS " .. result.plugin .. " 插件。"
 					else
 						local obfs = result.plugin_opts:match("obfs=([^;]+)") or ""
 						local obfs_host = result.plugin_opts:match("obfs%-host=([^;]+)") or ""
@@ -828,6 +828,12 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 						end
 						result.plugin = nil
 						result.plugin_opts = nil
+					end
+				elseif result.type == 'sing-box' then
+					if result.plugin ~= "obfs-local" and result.plugin ~= "v2ray-plugin" then
+						result.error_msg = "Sing-Box 不支持 SS " .. result.plugin .. " 插件。"
+					else
+						result.plugin_enabled = "1"
 					end
 				else
 					result.plugin_enabled = "1"
@@ -942,7 +948,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 					local insecure = params.allowinsecure or params.allowInsecure or params.insecure
 					result.tls_allowInsecure = (insecure == "1" or insecure == "0") and insecure or (sub_allowinsecure and "1" or "0")
 					result.uot = params.udp
-				elseif (params.type ~= "tcp" and params.type ~= "raw") and (params.headerType and params.headerType ~= "none") then
+				else
 					result.error_msg = "请更换 Xray 或 Sing-Box 来支持 SS 更多的传输方式。"
 				end
 			end

@@ -318,15 +318,40 @@ local function encode_ss(node)
 	if node["udp-over-tcp"] then table.insert(p, "uot=1") end
 
 	if node.plugin then
-		local plugin = node.plugin
-		if node["plugin-opts"] then
+		local plugin = (node.plugin == "obfs") and "obfs-local" or node.plugin
+		if plugin == "shadow-tls" then
+			local shadow_tls = base64(json.stringify(node["plugin-opts"] or {}))
+			table.insert(p, "shadow-tls=" .. urlencode(shadow_tls))
+		else
 			local opts = {}
-			for k, v in pairs(node["plugin-opts"]) do
-				table.insert(opts, k .. "=" .. v)
+			for k, v in pairs(node["plugin-opts"] or {}) do
+				if plugin == "obfs-local" then
+					if k == "mode" then k = "obfs" end
+					if k == "host" then k = "obfs-host" end
+				elseif plugin == "v2ray-plugin" then
+					if k == "mode" and v == "websocket" then
+						v = nil
+					elseif type(v) == "boolean" then
+						if v == true then
+							table.insert(opts, k)
+						end
+						v = nil
+					end
+				elseif plugin == "gost-plugin" then
+					if k == "mode" and v == "websocket" then v = "ws" end
+					if k == "host" then k = "serverName" end
+					if k == "headers" then v = nil end
+				end
+				if v ~= nil then
+					if type(v) == "boolean" then
+						v = v and "1" or "0"
+					end
+					table.insert(opts, k .. "=" .. v)
+				end
 			end
-			plugin = plugin .. ";" .. table.concat(opts, ";")
+			if #opts > 0 then plugin = plugin .. ";" .. table.concat(opts, ";") end
+			table.insert(p, "plugin=" .. urlencode(plugin))
 		end
-		table.insert(p, "plugin=" .. urlencode(plugin))
 	end
 
 	if #p > 0 then
