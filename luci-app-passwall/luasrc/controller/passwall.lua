@@ -59,6 +59,7 @@ function index()
 	entry({"admin", "services", appname, "server_user"}, cbi(appname .. "/server/user")).leaf = true
 
 	--[[ API ]]
+	entry({"admin", "services", appname, "server_user_update"}, call("server_user_update")).leaf = true
 	entry({"admin", "services", appname, "server_user_status"}, call("server_user_status")).leaf = true
 	entry({"admin", "services", appname, "server_user_log"}, call("server_user_log")).leaf = true
 	entry({"admin", "services", appname, "server_get_log"}, call("server_get_log")).leaf = true
@@ -728,6 +729,23 @@ function rollback_rules()
 		luci.sys.call("lua /usr/share/passwall/rule_update.lua log '" .. rules .. "' rollback > /dev/null")
 	end
 	http_write_json_ok()
+end
+
+function server_user_update()
+	local id = http.formvalue("id") -- Node id
+	local data = http.formvalue("data") -- json new Data
+	if id and data then
+		local data_t = jsonParse(data) or {}
+		if next(data_t) then
+			for k, v in pairs(data_t) do
+				uci:set(appname .. "_server", id, k, v)
+			end
+			api.uci_save(uci, appname .. "_server")
+			http_write_json_ok()
+			return
+		end
+	end
+	http_write_json_error()
 end
 
 function server_user_status()

@@ -1322,7 +1322,7 @@ function act_ping()
 
 		if not e.ping then
 			local icmp_cmd = string.format("ping -c 1 -W 1 %s 2>/dev/null | grep -o 'time=[0-9.]*' | cut -d= -f2", domain)
-			e.ping = tonumber(luci.sys.exec(icmp_cmd))
+			e.ping = normalize_ping_ms(tonumber(luci.sys.exec(icmp_cmd)))
 		end
 		if not e.ping then
 			e.ping = 0
@@ -1332,7 +1332,7 @@ function act_ping()
 		local result = ""
 		local success = false
 		local icmp_cmd = string.format("ping -c 1 -W 1 %s 2>/dev/null | grep -o 'time=[0-9.]*' | cut -d= -f2", domain)
-		e.ping = tonumber(luci.sys.exec(icmp_cmd))
+		e.ping = normalize_ping_ms(tonumber(luci.sys.exec(icmp_cmd)))
 		-- WebSocket 探测 (适用于域名，或带 SNI 的 IP)
 		if not is_ip or probe_host ~= domain then
 			local resolve_arg = ""
@@ -1403,7 +1403,7 @@ function act_ping()
 		end
 		if not e.ping then
 			local icmp_cmd = string.format("ping -c 1 -W 1 %s 2>/dev/null | grep -o 'time=[0-9.]*' | cut -d= -f2", domain)
-			e.ping = tonumber(luci.sys.exec(icmp_cmd))
+			e.ping = normalize_ping_ms(tonumber(luci.sys.exec(icmp_cmd)))
 		end
 
 		if not e.ping then
@@ -1451,10 +1451,6 @@ function act_ping()
 			ping = tonumber(e.ping) or 0,
 			time = os.time()
 		})
-	end
-
-	if e.ping then
-		e.ping = math.floor(e.ping + 0.5)
 	end
 
 	luci.http.prepare_content("application/json")

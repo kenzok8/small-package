@@ -1,7 +1,5 @@
 local m, s = ...
 
-local api = require "luci.passwall.api"
-
 if not api.is_finded("microsocks") then
 	return
 end
@@ -17,6 +15,13 @@ end
 -- [[ microsocks ]]
 
 s.fields["type"]:value(type_name, "Socks")
+if not s.fields["type"].default then
+	s.fields["type"].default = type_name
+end
+
+if s.val["type"] and s.val["type"] ~= type_name then
+	return
+end
 
 o = s:option(Value, _n("port"), translate("Listen Port"))
 o.datatype = "port"

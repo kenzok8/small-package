@@ -14,6 +14,7 @@ formvalue_key = "cbid." .. appname .. "." .. arg[1] .. "."
 
 local header = Template(appname .. "/node_config/header")
 header.api = api
+header.config = m.config
 header.section = arg[1]
 m:append(header)
 
@@ -117,6 +118,7 @@ end
 
 local footer = Template(appname .. "/node_config/footer")
 footer.api = api
+footer.config = m.config
 footer.section = arg[1]
 
 m:append(footer)

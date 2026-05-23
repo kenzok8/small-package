@@ -4,7 +4,7 @@ local api = self.api
 <script type="text/javascript">
 	//<![CDATA[
 	let node_id = "<%=self.section%>";
-	let node_config_url = '<%=api.url("node_config")%>/' + node_id;
+	let node_config_url = '<%=api.url("server_user")%>/' + node_id;
 
 	function waitForElement(selector, callback) {
 		const el = document.querySelector(selector);
@@ -39,7 +39,7 @@ local api = self.api
 	}
 	
 	function update_node(data) {
-		XHR.get('<%=api.url("update_node")%>', {
+		XHR.get('<%=api.url("server_user_update")%>', {
 			id: node_id,
 			data: JSON.stringify(data)
 		},
@@ -50,30 +50,6 @@ local api = self.api
 			else {
 				alert("<%:Error%>");
 			}
-		});
-	}
-
-	function fetchCertSha256(el) {
-		if (el.getAttribute("data-loading") === "1") return;
-		el.setAttribute("data-loading", "1");
-		el.style.pointerEvents = "none";
-		el.style.color = "red";
-		XHR.get('<%=api.url("fetch_certsha256")%>', { id: node_id }, function(x, res) {
-			el.setAttribute("data-loading", "0");
-			el.style.pointerEvents = "";
-			el.style.color = "";
-			if (!x || x.status !== 200) {
-				alert("<%:Error%>");
-				return;
-			}
-			if (!res || res.code !== 1 || !res.data) {
-				alert(res && res.msg ? res.msg : "<%:Fetch Failed%> !");
-				return;
-			}
-			const inputs = document.querySelectorAll('input[id$=".xray_tls_pinSHA256"]');
-			inputs.forEach(function(input) {
-				input.value = res.data;
-			});
 		});
 	}
 	//]]>

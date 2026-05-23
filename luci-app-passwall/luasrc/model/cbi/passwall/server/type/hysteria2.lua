@@ -1,7 +1,5 @@
 local m, s = ...
 
-local api = require "luci.passwall.api"
-
 if not api.finded_com("hysteria") then
 	return
 end
@@ -10,21 +8,24 @@ local fs = api.fs
 
 local type_name = "Hysteria2"
 
+-- [[ Hysteria2 ]]
+
+s.fields["type"]:value(type_name, "Hysteria2")
+
+if s.val["type"] and s.val["type"] ~= type_name then
+	return
+end
+
 local option_prefix = "hysteria2_"
 
 local function _n(name)
 	return option_prefix .. name
 end
 
--- [[ Hysteria2 ]]
-
-s.fields["type"]:value(type_name, "Hysteria2")
-
 o = s:option(Flag, _n("custom"), translate("Use Custom Config"))
 
 o = s:option(Value, _n("port"), translate("Listen Port"))
 o.datatype = "port"
-o.rmempty = false
 o:depends({ [_n("custom")] = false })
 
 o = s:option(Flag, _n("realms"), translate("Realms"))

@@ -1,12 +1,18 @@
 local m, s = ...
 
-local api = require "luci.passwall.api"
-
 if not api.is_finded("ssserver") then
 	return
 end
 
 local type_name = "SS-Rust"
+
+-- [[ Shadowsocks Rust ]]
+
+s.fields["type"]:value(type_name, translate("Shadowsocks Rust"))
+
+if s.val["type"] and s.val["type"] ~= type_name then
+	return
+end
 
 local option_prefix = "ssrust_"
 
@@ -19,10 +25,6 @@ local ssrust_encrypt_method_list = {
 	"aes-128-gcm", "aes-256-gcm", "chacha20-ietf-poly1305",
 	"2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305"
 }
-
--- [[ Shadowsocks Rust ]]
-
-s.fields["type"]:value(type_name, translate("Shadowsocks Rust"))
 
 o = s:option(Flag, _n("custom"), translate("Use Custom Config"))
 

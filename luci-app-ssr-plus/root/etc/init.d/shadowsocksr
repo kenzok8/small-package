@@ -2271,16 +2271,41 @@ start() {
 		echolog "禁止连接的域名加载完毕。"
 		if [ "$(uci_get_by_type global adblock 0)" == "1" ]; then
 			echolog "未启动主节点，广告过滤正在加载。"
-			cp -f /etc/ssrplus/ad.conf $TMP_DNSMASQ_PATH/
+			cp -f /etc/ssrplus/ad.conf "$TMP_DNSMASQ_PATH/"
 			if [ -f "$TMP_DNSMASQ_PATH/ad.conf" ]; then
 				# Optimize: Batch filter using grep instead of looping sed
 				for list_file in /etc/ssrplus/black.list /etc/ssrplus/white.list /etc/ssrplus/deny.list; do
 					if [ -s "$list_file" ]; then
 						# Clean list file (remove comments and empty lines)
-						grep -vE '^\s*#|^\s*$' "$list_file" > "${list_file}.clean"
+						grep -vE '^\s*#|^\s*$' "$list_file" | sed 's/\r//g' > "${list_file}.clean"
 						if [ -s "${list_file}.clean" ]; then
-							grep -v -F -f "${list_file}.clean" "$TMP_DNSMASQ_PATH/ad.conf" > "$TMP_DNSMASQ_PATH/ad.conf.tmp"
-							mv "$TMP_DNSMASQ_PATH/ad.conf.tmp" "$TMP_DNSMASQ_PATH/ad.conf"
+							tmp_file="$TMP_DNSMASQ_PATH/ad.conf.tmp"
+							awk -v list="${list_file}.clean" '
+							BEGIN {
+								while ((getline line < list) > 0) {
+									gsub(/\r/, "", line)
+									if (line != "") {
+										domain[line] = 1
+										# 支持泛域名
+										domain["*." line] = 1
+									}
+								}
+								close(list)
+							}
+							{
+								keep = 1
+								# 匹配 server=/domain/
+								if (match($0, /^server=\/([^\/]+)\//, m)) {
+									if (m[1] in domain) keep = 0
+								}
+								# 匹配 ipset=/domain/
+								if (match($0, /^ipset=\/([^\/]+)\//, m)) {
+									if (m[1] in domain) keep = 0
+								}
+								if (keep) print
+							}
+							' "$TMP_DNSMASQ_PATH/ad.conf" > "$tmp_file"
+							mv "$tmp_file" "$TMP_DNSMASQ_PATH/ad.conf"
 						fi
 						rm -f "${list_file}.clean"
 					fi

@@ -1,0 +1,27 @@
+<%
+local api = self.api
+-%>
+<script type="text/javascript">
+	//<![CDATA[
+	document.addEventListener("DOMContentLoaded", function () {
+		waitForElement('select[name*="<%=self.config%>"][name*="type"]', function(el) {
+			let o_val = el.value;
+			el.addEventListener("change", () => {
+				el.blur();
+				if (o_val != el.value) {
+					let save = true;
+					if (save) {
+						//document.getElementsByClassName('cbi-button-save')[0].click();
+						update_node({
+							enable: getOption("enable").value,
+							remarks: getOption("remarks").value,
+							type: getOption("type").value,
+							protocol: ''
+						});
+					}
+				}
+			});
+		});
+	});
+	//]]>
+</script>
