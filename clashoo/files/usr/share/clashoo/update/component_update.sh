@@ -252,6 +252,11 @@ run_pkg_update() {
   clashoo_was_running && was_running=1
   backup_config || finish 1 "备份配置失败"
 
+  # apk 默认会对 world 做一致性求解，若系统上别的包（如 daed 缺 kmod-sched-bpf）
+  # 处于 broken 状态，会让 apk add 整个失败，连本次升级都装不上。这里通过
+  # --force-broken-world 让 apk 忽略不相关的 world 失败，只完成本次升级。
+  APK_FLAGS="--allow-untrusted --force-broken-world"
+
   if [ "$which" = "clashoo" ]; then
     core_ver="$(package_version_from_url "$CORE_URL")"
     log "目标版本：Clashoo 核心 ${core_ver}"
@@ -261,7 +266,7 @@ run_pkg_update() {
     if [ "$PM" = "opkg" ]; then
       opkg install "$TMP_DIR/core.${EXT}"; rc=$?
     else
-      apk add --allow-untrusted "$TMP_DIR/core.${EXT}"; rc=$?
+      apk add $APK_FLAGS "$TMP_DIR/core.${EXT}"; rc=$?
     fi
   else
     luci_ver="$(package_version_from_url "$LUCI_URL")"
@@ -275,7 +280,7 @@ run_pkg_update() {
     if [ "$PM" = "opkg" ]; then
       opkg install "$TMP_DIR/luci.${EXT}" ${I18N_URL:+"$TMP_DIR/i18n.${EXT}"}; rc=$?
     else
-      apk add --allow-untrusted "$TMP_DIR/luci.${EXT}" ${I18N_URL:+"$TMP_DIR/i18n.${EXT}"}; rc=$?
+      apk add $APK_FLAGS "$TMP_DIR/luci.${EXT}" ${I18N_URL:+"$TMP_DIR/i18n.${EXT}"}; rc=$?
     fi
   fi
 

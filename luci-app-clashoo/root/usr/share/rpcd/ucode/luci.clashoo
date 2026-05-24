@@ -793,6 +793,24 @@ return out;
 
 const B2_FEED_BASE = 'https://kenzo111.s3.us-west-004.backblazeb2.com/openwrt-feed';
 
+// download_core UCI 可能存的是 OpenWrt arch（x86_64 / aarch64_*）或 uname -m，
+// 但 mihomo release 文件名用的是 amd64 / arm64 / armv7 …。前端下拉一致用
+// mihomo 命名，但老配置 / 默认值可能仍是 x86_64 —— 在这里统一归一化。
+function normalize_mihomo_arch(a) {
+if (!a) return 'amd64';
+if (a == 'x86_64')                                 return 'amd64';
+if (match(a, /^aarch64/))                          return 'arm64';
+if (match(a, /^armv7|^arm_cortex-a[7-9]|^arm_cortex-a1[0-9]/)) return 'armv7';
+if (match(a, /^armv6|^arm_cortex-a[56]/))          return 'armv6';
+if (match(a, /^arm/) && a != 'arm64' && a != 'armv7' && a != 'armv6' && a != 'armv5') return 'armv5';
+if (match(a, /^i[3-6]86/))                         return '386';
+if (match(a, /^mips64el/))                         return 'mips64le';
+if (match(a, /^mips64/))                           return 'mips64';
+if (match(a, /^mipsel/))                           return 'mipsle';
+if (match(a, /^mips/) && a != 'mips64' && a != 'mipsle' && a != 'mips64le') return 'mips';
+return a;
+}
+
 // Prerelease-Alpha 资源清单里抽版本 —— mihomo alpha / smart 是滚动版，
 // 比的是「最新发布的 hash 跟已装的是否不同」，不是比大小（同 OpenClash）
 function alpha_asset_ver(html, arch, kind) {
@@ -812,7 +830,7 @@ return '';
 // DISTRIB_RELEASE 可能是自定义串，不能当 SDK 版本；按包管理器试多个候选。
 function component_latest_versions() {
 let latest = {};
-let core_arch = uci_get('clashoo', 'config', 'download_core') || 'amd64';
+let core_arch = normalize_mihomo_arch(uci_get('clashoo', 'config', 'download_core') || 'amd64');
 let pkg_arch = trim(shell_read("opkg print-architecture 2>/dev/null | awk '/^arch /{print $2}' | tail -1") || '');
 if (!pkg_arch) pkg_arch = trim(shell_read('apk --print-arch 2>/dev/null') || '');
 let is_apk = !!trim(shell_read('command -v apk 2>/dev/null') || '');
@@ -2069,7 +2087,9 @@ current,
 components: comps,
 arch: {
 system: trim(shell_read('uname -m 2>/dev/null') || ''),
-download_core: uci_get('clashoo', 'config', 'download_core') || ''
+// 老配置可能存 x86_64 / aarch64_*，归一化为 mihomo arch 名后再吐给前端，
+// 这样下拉选项能正确 selected，alpha_asset_ver 也能匹配到资源行。
+download_core: normalize_mihomo_arch(uci_get('clashoo', 'config', 'download_core') || '')
 },
 last_log: component_last_log(),
 log: component_log_tail(40)

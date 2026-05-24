@@ -5,12 +5,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dae
-PKG_VERSION:=1.0.0
+PKG_VERSION:=2026.05.06
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).zip
-PKG_SOURCE_URL:=https://github.com/daeuniverse/dae/releases/download/v$(PKG_VERSION)/dae-full-src.zip?
-PKG_HASH:=d933b93fc30cb4e9941cbb1be23557bd6caa2a33af212883505fec435d06fc13
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/daeuniverse/dae.git
+PKG_SOURCE_VERSION:=c7e02968f8baa425798b05dd4ab4142e3c20f568
+PKG_MIRROR_HASH:=ca879d4ab77c523776526ae66b7be770cd13ffde8a6e74f9ef7b6a1ac4e1003e
 
 PKG_LICENSE:=AGPL-3.0-only
 PKG_LICENSE_FILE:=LICENSE
@@ -20,18 +21,22 @@ PKG_BUILD_DEPENDS:=golang/host bpf-headers
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
 
+ifeq ($(ARCH),arm)
+PATCH_DIR:=patches_arm
+else ifeq ($(ARCH),mips)
+PATCH_DIR:=patches_mips
+endif
+
 GO_PKG:=github.com/daeuniverse/dae
 GO_PKG_EXCLUDES:=control/kern/tests
 GO_PKG_LDFLAGS_X:= \
-	$(GO_PKG)/cmd.Version=$(PKG_VERSION) \
+	$(GO_PKG)/cmd.Version=$(PKG_VERSION)-$(PKG_SOURCE_VERSION) \
 	$(GO_PKG)/common/consts.MaxMatchSetLen_=1024
 GO_PKG_TAGS:=trace
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/bpf.mk
 include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
-
-UNZIP_CMD:=unzip -q -d $(PKG_BUILD_DIR) $(DL_DIR)/$(PKG_SOURCE)
 
 define Package/dae/Default
   SECTION:=net
@@ -40,27 +45,38 @@ define Package/dae/Default
   URL:=https://github.com/daeuniverse/dae
 endef
 
+define Package/dae/config
+  choice
+    prompt "BPF dependency type"
+    default DAE_USE_VMLINUX_BTF
+    help
+      Select the BPF dependency type.
+      - BPF CO-RE (vmlinux-btf): Recommended. Does not require kernel headers.
+      - Kernel DEBUG_INFO_BTF (bpf-depends): Requires kernel to be compiled with BTF debug info.
+
+    config DAE_USE_VMLINUX_BTF
+      bool "BPF CO-RE (vmlinux-btf)"
+
+    config DAE_USE_BPF_DEPENDS
+      bool "Kernel DEBUG_INFO_BTF (bpf-depends)"
+  endchoice
+endef
+
 define Package/dae
   $(call Package/dae/Default)
   TITLE:=A lightweight and high-performance transparent proxy solution
   # You need enable KERNEL_DEBUG_INFO_BTF and KERNEL_BPF_EVENTS
-  DEPENDS:=$(GO_ARCH_DEPENDS) $(BPF_DEPENDS)  \
-    +ca-bundle +kmod-sched-core +kmod-sched-bpf +kmod-xdp-sockets-diag \
-    +kmod-veth
-endef
 
-define Package/dae-geoip
-  $(call Package/dae/Default)
-  TITLE:=geoip for dae
-  DEPENDS:=+dae +v2ray-geoip
-  PKGARCH:=all
-endef
+  DEPENDS:=$(GO_ARCH_DEPENDS) \
+    +ca-bundle +kmod-sched-core +kmod-sched-bpf \
+    +kmod-veth +v2ray-geoip +v2ray-geosite
 
-define Package/dae-geosite
-  $(call Package/dae/Default)
-  TITLE:=geosite for dae
-  DEPENDS:=+dae +v2ray-geosite
-  PKGARCH:=all
+  ifeq ($(CONFIG_DAE_USE_VMLINUX_BTF),y)
+    DEPENDS+=+vmlinux-btf
+  endif
+  ifeq ($(CONFIG_DAE_USE_BPF_DEPENDS),y)
+    DEPENDS+=$(BPF_DEPENDS) +kmod-xdp-sockets-diag
+  endif
 endef
 
 define Package/dae/description
@@ -104,7 +120,9 @@ define Build/Compile
 endef
 
 define Package/dae/install
-	$(call GoPackage/Package/Install/Bin,$(1))
+	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
+	$(INSTALL_DIR) $(1)/usr/bin/
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dae $(1)/usr/bin/dae
 
 	$(INSTALL_DIR) $(1)/etc/dae/
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/example.dae $(1)/etc/dae/
@@ -116,17 +134,5 @@ define Package/dae/install
 	$(INSTALL_BIN) $(CURDIR)/files/dae.init $(1)/etc/init.d/dae
 endef
 
-define Package/dae-geoip/install
-	$(INSTALL_DIR) $(1)/usr/share/dae
-	$(LN) ../v2ray/geoip.dat $(1)/usr/share/dae/geoip.dat
-endef
-
-define Package/dae-geosite/install
-	$(INSTALL_DIR) $(1)/usr/share/dae
-	$(LN) ../v2ray/geosite.dat $(1)/usr/share/dae/geosite.dat
-endef
-
 $(eval $(call GoBinPackage,dae))
 $(eval $(call BuildPackage,dae))
-$(eval $(call BuildPackage,dae-geoip))
-$(eval $(call BuildPackage,dae-geosite))
