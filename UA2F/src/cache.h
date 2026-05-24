@@ -23,6 +23,7 @@ extern struct cache *not_http_dst_cache;
 extern pthread_rwlock_t cacheLock;
 
 void init_not_http_cache(int interval);
+void destroy_not_http_cache(void);
 
 // add addr_port to cache, assume it's not a http dst
 void cache_add(struct addr_port addr_port);

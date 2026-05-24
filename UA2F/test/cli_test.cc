@@ -65,3 +65,19 @@ TEST_F(CLIDeathTest, RequireRootWhenRoot) {
         EXPECT_EXIT(require_root(), ::testing::ExitedWithCode(EXIT_FAILURE), ".*");
     }
 }
+
+TEST(CLIOptionsTest, ModeAndListenPortAreAvailableWithoutUci) {
+    cli_mode_set = false;
+    cli_mode = UA2F_MODE_NFQUEUE;
+    cli_listen_port_set = false;
+    cli_listen_port = UA2F_DEFAULT_PROXY_PORT;
+
+    char *argv[] = {(char *)"ua2f", (char *)"--mode", (char *)"TPROXY", (char *)"--listen-port", (char *)"12345"};
+    int argc = 5;
+
+    EXPECT_NO_THROW(try_print_info(argc, argv));
+    EXPECT_TRUE(cli_mode_set);
+    EXPECT_EQ(cli_mode, UA2F_MODE_TPROXY);
+    EXPECT_TRUE(cli_listen_port_set);
+    EXPECT_EQ(cli_listen_port, 12345);
+}

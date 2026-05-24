@@ -1,4 +1,6 @@
 #!/bin/sh /etc/rc.common
+# shellcheck shell=ash
+# shellcheck disable=SC2034
 # Copyright (C) 2020 Zxilly <zhouxinyu1001@gmail.com>
 # Copyright (C) 2021 Tianling Shen <cnsztl@immortalwrt.org>
 
@@ -10,6 +12,12 @@ NAME="ua2f"
 PROG="/usr/bin/$NAME"
 IPT_M="iptables -t mangle"
 IPT6_M="ip6tables -t mangle"
+IPT_N="iptables -t nat"
+IPT6_N="ip6tables -t nat"
+
+PROXY_MARK="0xc9"
+TPROXY_MARK="0x1c9"
+TPROXY_TABLE="0x1c9"
 
 FW_DIR="/var/etc"
 FW_CONF="$FW_DIR/ua2f.include"
@@ -17,30 +25,95 @@ FW_CONF="$FW_DIR/ua2f.include"
 HAS_IPT6="$(command -v ip6tables)"
 HAS_NFT="$(command -v nft)"
 
+delete_rule() {
+	local table_cmd="$1"
+	shift
+
+	while $table_cmd -D "$@" 2>"/dev/null"; do
+		:
+	done
+}
+
+flush_chain() {
+	local table_cmd="$1"
+	local chain="$2"
+
+	$table_cmd -F "$chain" 2>"/dev/null"
+	$table_cmd -X "$chain" 2>"/dev/null"
+}
+
+delete_nft_table() {
+	nft delete table inet ua2f 2>"/dev/null"
+}
+
+normalize_worker_count() {
+	local value="$1"
+	local default="$2"
+	local min="$3"
+	local max="$4"
+
+	case "$value" in
+		""|*[!0-9]*)
+			echo "$default"
+			return
+			;;
+	esac
+
+	if [ "$value" -lt "$min" ] || [ "$value" -gt "$max" ]; then
+		echo "$default"
+		return
+	fi
+
+	echo "$value"
+}
+
 if type extra_command >"/dev/null" 2>&1; then
 	extra_command "setup_firewall"
 else
 	EXTRA_COMMANDS="setup_firewall"
 fi
 
-setup_firewall() {
-	config_load "$NAME"
-
-	local handle_fw
-	config_get_bool handle_fw "firewall" "handle_fw" "0"
-
-	if [ "$handle_fw" -ne "1" ]; then
-		echo "Auto setup firewall disabled. You should set up it manually."
+setup_tproxy_route() {
+	if ! command -v ip >"/dev/null" 2>&1; then
+		echo "TPROXY mode requires ip-full/iproute2 policy routing support."
 		return 1
 	fi
 
-	local handle_tls handle_intranet handle_mmtls disable_connmark
-	config_get_bool handle_tls "firewall" "handle_tls" "0"
-	config_get_bool handle_intranet "firewall" "handle_intranet" "0"
-	config_get_bool handle_mmtls "firewall" "handle_mmtls" "0"
-	config_get_bool disable_connmark "main" "disable_connmark" "0"
+	while ip rule del fwmark "$TPROXY_MARK" table "$TPROXY_TABLE" 2>"/dev/null"; do
+		:
+	done
+	ip route flush table "$TPROXY_TABLE" 2>"/dev/null"
+	ip rule add fwmark "$TPROXY_MARK" table "$TPROXY_TABLE" || return 1
+	ip route replace local 0.0.0.0/0 dev lo table "$TPROXY_TABLE" || return 1
+
+	while ip -6 rule del fwmark "$TPROXY_MARK" table "$TPROXY_TABLE" 2>"/dev/null"; do
+		:
+	done
+	ip -6 route flush table "$TPROXY_TABLE" 2>"/dev/null"
+	ip -6 rule add fwmark "$TPROXY_MARK" table "$TPROXY_TABLE" 2>"/dev/null"
+	ip -6 route replace local ::/0 dev lo table "$TPROXY_TABLE" 2>"/dev/null"
+}
+
+cleanup_tproxy_route() {
+	command -v ip >"/dev/null" 2>&1 || return 0
+
+	while ip rule del fwmark "$TPROXY_MARK" table "$TPROXY_TABLE" 2>"/dev/null"; do
+		:
+	done
+	ip route flush table "$TPROXY_TABLE" 2>"/dev/null"
+	while ip -6 rule del fwmark "$TPROXY_MARK" table "$TPROXY_TABLE" 2>"/dev/null"; do
+		:
+	done
+	ip -6 route flush table "$TPROXY_TABLE" 2>"/dev/null"
+}
+
+setup_firewall_redirect() {
+	local handle_tls="$1"
+	local handle_intranet="$2"
+	local listen_port="$3"
 
 	if [ -n "$HAS_NFT" ]; then
+		delete_nft_table
 		nft -f- <<-EOF
 			table inet ua2f {
 				set localaddr_v4 {
@@ -63,7 +136,281 @@ setup_firewall() {
 					auto-merge;
 					elements = {
 						::/128, ::1/128, ::ffff:0:0/96, 100::/64, 64:ff9b::/96,
-						2001::/32, 2001:10::/28, 2001:20::/28, 2001:db8::/28, 2002::/16,
+							2001::/32, 2001:10::/28, 2001:20::/28, 2001:db8::/32, 2002::/16,
+						fc00::/7, fe80::/10, ff00::/8
+					};
+				}
+
+				chain prerouting {
+					type nat hook prerouting priority dstnat - 20; policy accept;
+
+					meta l4proto != tcp counter return;
+					ct direction reply counter return;
+						$([ "$handle_intranet" -eq "1" ] || echo 'ip daddr @localaddr_v4 counter return;')
+						$([ "$handle_intranet" -eq "1" ] || echo 'ip6 daddr @localaddr_v6 counter return;')
+					tcp dport 22 counter return comment "!ua2f: bypass SSH";
+					$([ "$handle_tls" -eq "1" ] || echo 'tcp dport 443 counter return comment "!ua2f: bypass HTTPS";')
+					meta mark $PROXY_MARK counter return comment "!ua2f: bypass ua2f outbound";
+					tcp dport != $listen_port counter redirect to :$listen_port;
+				}
+
+				chain output {
+					type nat hook output priority dstnat - 20; policy accept;
+
+					meta l4proto != tcp counter return;
+						$([ "$handle_intranet" -eq "1" ] || echo 'ip daddr @localaddr_v4 counter return;')
+						$([ "$handle_intranet" -eq "1" ] || echo 'ip6 daddr @localaddr_v6 counter return;')
+					tcp dport 22 counter return comment "!ua2f: bypass SSH";
+					$([ "$handle_tls" -eq "1" ] || echo 'tcp dport 443 counter return comment "!ua2f: bypass HTTPS";')
+					meta mark $PROXY_MARK counter return comment "!ua2f: bypass ua2f outbound";
+					tcp dport != $listen_port counter redirect to :$listen_port;
+				}
+			}
+		EOF
+		else
+			delete_rule "$IPT_N" PREROUTING -p tcp -j ua2f
+			delete_rule "$IPT_N" OUTPUT -p tcp -j ua2f
+			flush_chain "$IPT_N" ua2f
+
+			if $IPT_N -N ua2f; then
+				if [ "$handle_intranet" -ne "1" ]; then
+				$IPT_N -A ua2f -d 10.0.0.0/8 -j RETURN
+				$IPT_N -A ua2f -d 172.16.0.0/12 -j RETURN
+				$IPT_N -A ua2f -d 192.168.0.0/16 -j RETURN
+				$IPT_N -A ua2f -d 0.0.0.0/8 -j RETURN
+				$IPT_N -A ua2f -d 127.0.0.0/8 -j RETURN
+				$IPT_N -A ua2f -d 169.254.0.0/16 -j RETURN
+				$IPT_N -A ua2f -d 224.0.0.0/4 -j RETURN
+				$IPT_N -A ua2f -d 240.0.0.0/4 -j RETURN
+			fi
+
+			[ "$handle_tls" -eq "1" ] || $IPT_N -A ua2f -p tcp --dport 443 -j RETURN
+			$IPT_N -A ua2f -p tcp --dport 22 -j RETURN
+			$IPT_N -A ua2f -m mark --mark "$PROXY_MARK" -j RETURN
+			$IPT_N -A ua2f -p tcp ! --dport "$listen_port" -j REDIRECT --to-ports "$listen_port"
+		fi
+		$IPT_N -A PREROUTING -p tcp -j ua2f
+		$IPT_N -A OUTPUT -p tcp -j ua2f
+
+			if [ -n "$HAS_IPT6" ]; then
+				delete_rule "$IPT6_N" PREROUTING -p tcp -j ua2f
+				delete_rule "$IPT6_N" OUTPUT -p tcp -j ua2f
+				flush_chain "$IPT6_N" ua2f
+
+			if $IPT6_N -N ua2f; then
+					if [ "$handle_intranet" -ne "1" ]; then
+					$IPT6_N -A ua2f -d ::/128 -j RETURN
+					$IPT6_N -A ua2f -d ::1/128 -j RETURN
+					$IPT6_N -A ua2f -d ::ffff:0:0/96 -j RETURN
+					$IPT6_N -A ua2f -d 100::/64 -j RETURN
+					$IPT6_N -A ua2f -d 64:ff9b::/96 -j RETURN
+					$IPT6_N -A ua2f -d 2001::/32 -j RETURN
+					$IPT6_N -A ua2f -d 2001:10::/28 -j RETURN
+					$IPT6_N -A ua2f -d 2001:20::/28 -j RETURN
+						$IPT6_N -A ua2f -d 2001:db8::/32 -j RETURN
+					$IPT6_N -A ua2f -d 2002::/16 -j RETURN
+					$IPT6_N -A ua2f -d fc00::/7 -j RETURN
+					$IPT6_N -A ua2f -d fe80::/10 -j RETURN
+					$IPT6_N -A ua2f -d ff00::/8 -j RETURN
+				fi
+
+				[ "$handle_tls" -eq "1" ] || $IPT6_N -A ua2f -p tcp --dport 443 -j RETURN
+				$IPT6_N -A ua2f -p tcp --dport 22 -j RETURN
+				$IPT6_N -A ua2f -m mark --mark "$PROXY_MARK" -j RETURN
+				$IPT6_N -A ua2f -p tcp ! --dport "$listen_port" -j REDIRECT --to-ports "$listen_port"
+			fi
+			$IPT6_N -A PREROUTING -p tcp -j ua2f
+			$IPT6_N -A OUTPUT -p tcp -j ua2f
+		fi
+	fi
+}
+
+setup_firewall_tproxy() {
+	local handle_tls="$1"
+	local handle_intranet="$2"
+	local listen_port="$3"
+
+	setup_tproxy_route || return 1
+
+	if [ -n "$HAS_NFT" ]; then
+		delete_nft_table
+		nft -f- <<-EOF
+			table inet ua2f {
+				set localaddr_v4 {
+					type ipv4_addr;
+					flags interval;
+					auto-merge;
+					elements = {
+						0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8,
+						169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24,
+						192.0.2.0/24, 192.31.196.0/24, 192.52.193.0/24,
+						192.88.99.0/24, 192.168.0.0/16, 192.175.48.0/24,
+						198.18.0.0/15, 198.51.100.0/24, 203.0.113.0/24,
+						224.0.0.0/4, 240.0.0.0/4
+					};
+				}
+
+				set localaddr_v6 {
+					type ipv6_addr;
+					flags interval;
+					auto-merge;
+					elements = {
+						::/128, ::1/128, ::ffff:0:0/96, 100::/64, 64:ff9b::/96,
+							2001::/32, 2001:10::/28, 2001:20::/28, 2001:db8::/32, 2002::/16,
+						fc00::/7, fe80::/10, ff00::/8
+					};
+				}
+
+				chain prerouting {
+					type filter hook prerouting priority mangle; policy accept;
+
+					meta l4proto != tcp counter return;
+					ct direction reply counter return;
+						$([ "$handle_intranet" -eq "1" ] || echo 'ip daddr @localaddr_v4 counter return;')
+						$([ "$handle_intranet" -eq "1" ] || echo 'ip6 daddr @localaddr_v6 counter return;')
+						tcp dport 22 counter return comment "!ua2f: bypass SSH";
+						tcp dport $listen_port counter return comment "!ua2f: bypass proxy listener";
+						$([ "$handle_tls" -eq "1" ] || echo 'tcp dport 443 counter return comment "!ua2f: bypass HTTPS";')
+						meta mark $PROXY_MARK counter return comment "!ua2f: bypass ua2f outbound";
+						meta nfproto ipv4 meta mark set $TPROXY_MARK tproxy ip to 127.0.0.1:$listen_port counter accept;
+						meta nfproto ipv6 meta mark set $TPROXY_MARK tproxy ip6 to [::1]:$listen_port counter accept;
+					}
+				}
+			EOF
+		else
+			delete_rule "$IPT_M" PREROUTING -p tcp -j ua2f
+			delete_rule "$IPT_M" OUTPUT -p tcp -j ua2f_output
+			flush_chain "$IPT_M" ua2f
+			flush_chain "$IPT_M" ua2f_output
+
+			if $IPT_M -N ua2f; then
+				if [ "$handle_intranet" -ne "1" ]; then
+				$IPT_M -A ua2f -d 10.0.0.0/8 -j RETURN
+				$IPT_M -A ua2f -d 172.16.0.0/12 -j RETURN
+				$IPT_M -A ua2f -d 192.168.0.0/16 -j RETURN
+				$IPT_M -A ua2f -d 0.0.0.0/8 -j RETURN
+				$IPT_M -A ua2f -d 127.0.0.0/8 -j RETURN
+				$IPT_M -A ua2f -d 169.254.0.0/16 -j RETURN
+				$IPT_M -A ua2f -d 224.0.0.0/4 -j RETURN
+				$IPT_M -A ua2f -d 240.0.0.0/4 -j RETURN
+			fi
+
+				[ "$handle_tls" -eq "1" ] || $IPT_M -A ua2f -p tcp --dport 443 -j RETURN
+				$IPT_M -A ua2f -p tcp --dport 22 -j RETURN
+				$IPT_M -A ua2f -p tcp --dport "$listen_port" -j RETURN
+				$IPT_M -A ua2f -m mark --mark "$PROXY_MARK" -j RETURN
+				$IPT_M -A ua2f -p tcp -j TPROXY --on-ip 127.0.0.1 --on-port "$listen_port" --tproxy-mark "$TPROXY_MARK"
+			fi
+
+			$IPT_M -A PREROUTING -p tcp -j ua2f
+
+			if [ -n "$HAS_IPT6" ]; then
+				delete_rule "$IPT6_M" PREROUTING -p tcp -j ua2f
+				delete_rule "$IPT6_M" OUTPUT -p tcp -j ua2f_output
+				flush_chain "$IPT6_M" ua2f
+				flush_chain "$IPT6_M" ua2f_output
+
+				if $IPT6_M -N ua2f; then
+					if [ "$handle_intranet" -ne "1" ]; then
+					$IPT6_M -A ua2f -d ::/128 -j RETURN
+					$IPT6_M -A ua2f -d ::1/128 -j RETURN
+					$IPT6_M -A ua2f -d ::ffff:0:0/96 -j RETURN
+					$IPT6_M -A ua2f -d 100::/64 -j RETURN
+					$IPT6_M -A ua2f -d 64:ff9b::/96 -j RETURN
+					$IPT6_M -A ua2f -d 2001::/32 -j RETURN
+					$IPT6_M -A ua2f -d 2001:10::/28 -j RETURN
+					$IPT6_M -A ua2f -d 2001:20::/28 -j RETURN
+						$IPT6_M -A ua2f -d 2001:db8::/32 -j RETURN
+					$IPT6_M -A ua2f -d 2002::/16 -j RETURN
+					$IPT6_M -A ua2f -d fc00::/7 -j RETURN
+					$IPT6_M -A ua2f -d fe80::/10 -j RETURN
+					$IPT6_M -A ua2f -d ff00::/8 -j RETURN
+				fi
+
+					[ "$handle_tls" -eq "1" ] || $IPT6_M -A ua2f -p tcp --dport 443 -j RETURN
+					$IPT6_M -A ua2f -p tcp --dport 22 -j RETURN
+					$IPT6_M -A ua2f -p tcp --dport "$listen_port" -j RETURN
+					$IPT6_M -A ua2f -m mark --mark "$PROXY_MARK" -j RETURN
+					$IPT6_M -A ua2f -p tcp -j TPROXY --on-ip ::1 --on-port "$listen_port" --tproxy-mark "$TPROXY_MARK"
+				fi
+
+				$IPT6_M -A PREROUTING -p tcp -j ua2f
+			fi
+		fi
+	}
+
+setup_firewall() {
+	config_load "$NAME"
+
+	local handle_fw
+	config_get_bool handle_fw "firewall" "handle_fw" "0"
+
+	if [ "$handle_fw" -ne "1" ]; then
+		echo "Auto setup firewall disabled. You should set up it manually."
+		return 1
+	fi
+
+	local handle_tls handle_intranet handle_mmtls disable_connmark mode listen_port nfqueue_workers
+	config_get_bool handle_tls "firewall" "handle_tls" "0"
+	config_get_bool handle_intranet "firewall" "handle_intranet" "0"
+	config_get_bool handle_mmtls "firewall" "handle_mmtls" "0"
+	config_get_bool disable_connmark "main" "disable_connmark" "0"
+	config_get mode "main" "mode" "NFQUEUE"
+	config_get listen_port "main" "listen_port" "10010"
+	config_get nfqueue_workers "main" "nfqueue_workers" "1"
+	nfqueue_workers="$(normalize_worker_count "$nfqueue_workers" 1 1 16)"
+	mode="$(echo "$mode" | tr '[:lower:]' '[:upper:]')"
+
+	case "$mode" in
+		NFQUEUE|"")
+			mode="NFQUEUE"
+			;;
+		REDIRECT)
+			setup_firewall_redirect "$handle_tls" "$handle_intranet" "$listen_port"
+			return $?
+			;;
+		TPROXY)
+			setup_firewall_tproxy "$handle_tls" "$handle_intranet" "$listen_port"
+			return $?
+			;;
+		*)
+			echo "Unsupported UA2F mode: $mode"
+			return 1
+			;;
+	esac
+
+	local nfqueue_end nfqueue_expr
+	nfqueue_end=$((10010 + nfqueue_workers - 1))
+	nfqueue_expr="queue num 10010 bypass"
+	if [ "$nfqueue_workers" -gt 1 ]; then
+		nfqueue_expr="queue num 10010-$nfqueue_end bypass"
+	fi
+
+	if [ -n "$HAS_NFT" ]; then
+		delete_nft_table
+		nft -f- <<-EOF
+			table inet ua2f {
+				set localaddr_v4 {
+					type ipv4_addr;
+					flags interval;
+					auto-merge;
+					elements = {
+						0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8,
+						169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24,
+						192.0.2.0/24, 192.31.196.0/24, 192.52.193.0/24,
+						192.88.99.0/24, 192.168.0.0/16, 192.175.48.0/24,
+						198.18.0.0/15, 198.51.100.0/24, 203.0.113.0/24,
+						224.0.0.0/4, 240.0.0.0/4
+					};
+				}
+
+				set localaddr_v6 {
+					type ipv6_addr;
+					flags interval;
+					auto-merge;
+					elements = {
+						::/128, ::1/128, ::ffff:0:0/96, 100::/64, 64:ff9b::/96,
+							2001::/32, 2001:10::/28, 2001:20::/28, 2001:db8::/32, 2002::/16,
 						fc00::/7, fe80::/10, ff00::/8
 					};
 				}
@@ -71,20 +418,21 @@ setup_firewall() {
 				chain postrouting {
 					type filter hook postrouting priority mangle -5; policy accept;
 
-					$([ "$handle_intranet" -ne "1" ] || echo 'ip daddr @localaddr_v4 counter return;')
-					$([ "$handle_intranet" -ne "1" ] || echo 'ip6 daddr @localaddr_v6 counter return;')
+						$([ "$handle_intranet" -eq "1" ] || echo 'ip daddr @localaddr_v4 counter return;')
+						$([ "$handle_intranet" -eq "1" ] || echo 'ip6 daddr @localaddr_v6 counter return;')
 
 					tcp dport 22 counter return comment "!ua2f: bypass SSH";
 					$([ "$handle_tls" -eq "1" ] || echo 'tcp dport 443 counter return comment "!ua2f: bypass HTTPS";')
 					$([ "$disable_connmark" -eq "1" ] || echo 'tcp dport 80 counter ct mark set 44;')
 					$([ "$disable_connmark" -eq "1" ] || echo 'ct mark 43 counter return comment "!ua2f: bypass non-http stream";')
-					meta l4proto tcp ct direction original counter queue num 10010 bypass;
+					meta l4proto tcp ct direction original counter $nfqueue_expr;
 				}
 			}
 		EOF
-	else
-		# Flush existing rules
-		$IPT_M -D POSTROUTING -p tcp -m conntrack --ctdir ORIGINAL -j ua2f 2>"/dev/null"
+		else
+			# Flush existing rules
+			delete_rule "$IPT_M" POSTROUTING -p tcp -m conntrack --ctdir ORIGINAL -j ua2f
+			flush_chain "$IPT_M" ua2f
 
 		if $IPT_M -N ua2f; then
 			if [ "$handle_intranet" -ne "1" ]; then
@@ -102,13 +450,18 @@ setup_firewall() {
 			[ "$disable_connmark" -eq "1" ] || $IPT_M -A ua2f -p tcp --dport 80 -j CONNMARK --set-mark 44
       [ "$disable_connmark" -eq "1" ] || $IPT_M -A ua2f -m connmark --mark 43 -j RETURN # 不处理标记为非 http 的流
 			[ "$handle_mmtls" -eq "1" ] || $IPT_M -A ua2f -p tcp --dport 80 -m string --string "/mmtls/" --algo bm -j RETURN # 不处理微信的mmtls
-			$IPT_M -A ua2f -j NFQUEUE --queue-num 10010 --queue-bypass
+			if [ "$nfqueue_workers" -gt 1 ]; then
+				$IPT_M -A ua2f -j NFQUEUE --queue-balance "10010:$nfqueue_end" --queue-bypass
+			else
+				$IPT_M -A ua2f -j NFQUEUE --queue-num 10010 --queue-bypass
+			fi
 		fi
 		$IPT_M -A POSTROUTING -p tcp -m conntrack --ctdir ORIGINAL -j ua2f
 
-		if [ -n "$HAS_IPT6" ]; then
-			# Flush existing rules
-			$IPT6_M -D POSTROUTING -p tcp -m conntrack --ctdir ORIGINAL -j ua2f 2>"/dev/null"
+			if [ -n "$HAS_IPT6" ]; then
+				# Flush existing rules
+				delete_rule "$IPT6_M" POSTROUTING -p tcp -m conntrack --ctdir ORIGINAL -j ua2f
+				flush_chain "$IPT6_M" ua2f
 
 			if $IPT6_M -N ua2f; then
 				if [ "$handle_intranet" -ne "1" ]; then
@@ -120,7 +473,7 @@ setup_firewall() {
 					$IPT6_M -A ua2f -d 2001::/32 -j RETURN
 					$IPT6_M -A ua2f -d 2001:10::/28 -j RETURN
 					$IPT6_M -A ua2f -d 2001:20::/28 -j RETURN
-					$IPT6_M -A ua2f -d 2001:db8::/28 -j RETURN
+					$IPT6_M -A ua2f -d 2001:db8::/32 -j RETURN
 					$IPT6_M -A ua2f -d 2002::/16 -j RETURN
 					$IPT6_M -A ua2f -d fc00::/7 -j RETURN
 					$IPT6_M -A ua2f -d fe80::/10 -j RETURN
@@ -131,7 +484,11 @@ setup_firewall() {
 				[ "$disable_connmark" -eq "1" ] || $IPT6_M -A ua2f -p tcp --dport 80 -j CONNMARK --set-mark 44
         [ "$disable_connmark" -eq "1" ] || $IPT6_M -A ua2f -m connmark --mark 43 -j RETURN # 不处理标记为非 http 的流
 				[ "$handle_mmtls" -eq "1" ] || $IPT6_M -A ua2f -p tcp --dport 80 -m string --string "/mmtls/" --algo bm -j RETURN # 不处理微信的mmtls
-				$IPT6_M -A ua2f -j NFQUEUE --queue-num 10010 --queue-bypass
+				if [ "$nfqueue_workers" -gt 1 ]; then
+					$IPT6_M -A ua2f -j NFQUEUE --queue-balance "10010:$nfqueue_end" --queue-bypass
+				else
+					$IPT6_M -A ua2f -j NFQUEUE --queue-num 10010 --queue-bypass
+				fi
 			fi
 			$IPT6_M -A POSTROUTING -p tcp -m conntrack --ctdir ORIGINAL -j ua2f
 		fi
@@ -158,7 +515,7 @@ start_service() {
 		setup_firewall
 		[ -n "$HAS_NFT" ] || {
 			mkdir -p "$FW_DIR"
-			echo -e "/etc/init.d/$NAME setup_firewall" > "$FW_CONF"
+			printf '/etc/init.d/%s setup_firewall\n' "$NAME" > "$FW_CONF"
 		}
 	fi
 
@@ -170,18 +527,29 @@ start_service() {
 }
 
 stop_service() {
+	cleanup_tproxy_route
+
 	if [ -n "$HAS_NFT" ]; then
-		nft flush table inet ua2f
-		nft delete table inet ua2f
+		delete_nft_table
 	else
-		$IPT_M -D POSTROUTING -p tcp -m conntrack --ctdir ORIGINAL -j ua2f 2>"/dev/null"
-		$IPT_M -F ua2f 2>"/dev/null"
-		$IPT_M -X ua2f 2>"/dev/null"
+		delete_rule "$IPT_M" POSTROUTING -p tcp -m conntrack --ctdir ORIGINAL -j ua2f
+		delete_rule "$IPT_M" PREROUTING -p tcp -j ua2f
+		delete_rule "$IPT_M" OUTPUT -p tcp -j ua2f_output
+		delete_rule "$IPT_N" PREROUTING -p tcp -j ua2f
+		delete_rule "$IPT_N" OUTPUT -p tcp -j ua2f
+		flush_chain "$IPT_M" ua2f
+		flush_chain "$IPT_M" ua2f_output
+		flush_chain "$IPT_N" ua2f
 
 		if [ -n "$HAS_IPT6" ]; then
-			$IPT6_M -D POSTROUTING -p tcp -m conntrack --ctdir ORIGINAL -j ua2f 2>"/dev/null"
-			$IPT6_M -F ua2f 2>"/dev/null"
-			$IPT6_M -X ua2f 2>"/dev/null"
+			delete_rule "$IPT6_M" POSTROUTING -p tcp -m conntrack --ctdir ORIGINAL -j ua2f
+			delete_rule "$IPT6_M" PREROUTING -p tcp -j ua2f
+			delete_rule "$IPT6_M" OUTPUT -p tcp -j ua2f_output
+			delete_rule "$IPT6_N" PREROUTING -p tcp -j ua2f
+			delete_rule "$IPT6_N" OUTPUT -p tcp -j ua2f
+			flush_chain "$IPT6_M" ua2f
+			flush_chain "$IPT6_M" ua2f_output
+			flush_chain "$IPT6_N" ua2f
 		fi
 
 		echo > "$FW_CONF"

@@ -106,6 +106,23 @@ TEST_F(HttpSessionTest, DeleteByKey) {
     session_wrunlock();
 }
 
+TEST_F(HttpSessionTest, DeleteRetainedSessionDefersFreeUntilRelease) {
+    session_wrlock();
+    struct session_key key = session_key_from_connid(8);
+    struct http_session *s = session_create(&key);
+    ASSERT_NE(s, nullptr);
+    ASSERT_TRUE(session_retain_locked(s));
+    EXPECT_EQ(session_count(), 1);
+
+    session_delete(s);
+    EXPECT_EQ(session_count(), 0);
+    EXPECT_TRUE(s->deleting);
+    EXPECT_EQ(s->key.conn_id, 8u);
+    session_wrunlock();
+
+    session_release(s);
+}
+
 TEST_F(HttpSessionTest, SessionLimit) {
     // Re-init with limit of 2
     init_http_sessions(2);

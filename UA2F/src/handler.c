@@ -1,28 +1,31 @@
-#include "assert.h"
 #include "handler.h"
+#include "assert.h"
 #include "cache.h"
 #include "custom.h"
+#include "http_parser_ua.h"
+#include "http_session.h"
 #include "statistics.h"
 #include "util.h"
-#include "http_session.h"
-#include "http_parser_ua.h"
 
 #ifdef UA2F_ENABLE_UCI
 #include "config.h"
 #endif
 
 #include <arpa/inet.h>
-#include <linux/ip.h>
-#include <netinet/ip6.h>
-#include <netinet/tcp.h>
 #include <libnetfilter_queue/libnetfilter_queue_ipv4.h>
 #include <libnetfilter_queue/libnetfilter_queue_ipv6.h>
 #include <libnetfilter_queue/libnetfilter_queue_tcp.h>
 #include <libnetfilter_queue/pktbuff.h>
 #include <linux/if_ether.h>
+#include <linux/ip.h>
+#include <limits.h>
+#include <netinet/in.h>
+#include <netinet/ip6.h>
+#include <netinet/tcp.h>
+#include <stdlib.h>
 
-#define MAX_USER_AGENT_LENGTH (0xffff + (MNL_SOCKET_BUFFER_SIZE / 2))
 static char *replacement_user_agent_string = NULL;
+static bool replacement_user_agent_cleanup_registered = false;
 
 static const struct mark_op MARK_NONE = {false, 0};
 static const struct mark_op MARK_NOT_HTTP = {true, CONNMARK_NOT_HTTP};
@@ -34,18 +37,34 @@ bool use_conntrack = true;
 bool use_conntrack = false;
 #endif
 
+static void destroy_handler(void) {
+    free(replacement_user_agent_string);
+    replacement_user_agent_string = NULL;
+}
+
 void init_handler() {
     init_not_http_cache(60);
 
-    replacement_user_agent_string = malloc(MAX_USER_AGENT_LENGTH);
+    destroy_handler();
+    replacement_user_agent_string = malloc(UA2F_MAX_USER_AGENT_LENGTH);
     assert(replacement_user_agent_string != NULL && "Failed to allocate user agent string");
+    if (!replacement_user_agent_cleanup_registered) {
+        atexit(destroy_handler);
+        replacement_user_agent_cleanup_registered = true;
+    }
     bool ua_set = false;
 
 #ifdef UA2F_ENABLE_UCI
     if (config.use_custom_ua) {
-        memset(replacement_user_agent_string, ' ', MAX_USER_AGENT_LENGTH);
-        strncpy(replacement_user_agent_string, config.custom_ua, strlen(config.custom_ua));
-        syslog(LOG_INFO, "Using config user agent string: %s", replacement_user_agent_string);
+        memset(replacement_user_agent_string, ' ', UA2F_MAX_USER_AGENT_LENGTH);
+        size_t custom_ua_len = strlen(config.custom_ua);
+        if (custom_ua_len > UA2F_MAX_USER_AGENT_LENGTH) {
+            syslog(LOG_WARNING, "Config user agent string is too long, truncating to %zu bytes",
+                   (size_t)UA2F_MAX_USER_AGENT_LENGTH);
+            custom_ua_len = UA2F_MAX_USER_AGENT_LENGTH;
+        }
+        memcpy(replacement_user_agent_string, config.custom_ua, custom_ua_len);
+        syslog(LOG_INFO, "Using config user agent string: %.*s", (int)custom_ua_len, replacement_user_agent_string);
         ua_set = true;
     }
 
@@ -55,21 +74,56 @@ void init_handler() {
     }
 #endif
 
-#ifdef UA2F_CUSTOM_UA
+#ifdef UA2F_USE_CUSTOM_UA
     if (!ua_set) {
-        memset(replacement_user_agent_string, ' ', MAX_USER_AGENT_LENGTH);
-        strncpy(replacement_user_agent_string, UA2F_CUSTOM_UA, strlen(UA2F_CUSTOM_UA));
-        syslog(LOG_INFO, "Using embed user agent string: %s", replacement_user_agent_string);
+        memset(replacement_user_agent_string, ' ', UA2F_MAX_USER_AGENT_LENGTH);
+        size_t custom_ua_len = strlen(UA2F_CUSTOM_UA);
+        if (custom_ua_len > UA2F_MAX_USER_AGENT_LENGTH) {
+            syslog(LOG_WARNING, "Embed user agent string is too long, truncating to %zu bytes",
+                   (size_t)UA2F_MAX_USER_AGENT_LENGTH);
+            custom_ua_len = UA2F_MAX_USER_AGENT_LENGTH;
+        }
+        memcpy(replacement_user_agent_string, UA2F_CUSTOM_UA, custom_ua_len);
+        syslog(LOG_INFO, "Using embed user agent string: %.*s", (int)custom_ua_len, replacement_user_agent_string);
         ua_set = true;
     }
 #endif
 
     if (!ua_set) {
-        memset(replacement_user_agent_string, 'F', MAX_USER_AGENT_LENGTH);
+        memset(replacement_user_agent_string, 'F', UA2F_MAX_USER_AGENT_LENGTH);
         syslog(LOG_INFO, "Custom user agent string not set, using default F-string.");
     }
 
     syslog(LOG_INFO, "Handler initialized.");
+}
+
+const char *get_replacement_user_agent_string() { return replacement_user_agent_string; }
+
+size_t get_replacement_user_agent_string_length() { return UA2F_MAX_USER_AGENT_LENGTH; }
+
+static const char *replacement_chunk(size_t replacement_offset, size_t ua_len, char **owned) {
+    *owned = NULL;
+
+    if (replacement_offset <= UA2F_MAX_USER_AGENT_LENGTH && ua_len <= UA2F_MAX_USER_AGENT_LENGTH - replacement_offset) {
+        return replacement_user_agent_string + replacement_offset;
+    }
+
+    char *buf = malloc(ua_len);
+    if (buf == NULL) {
+        return NULL;
+    }
+    memset(buf, ' ', ua_len);
+
+    if (replacement_offset < UA2F_MAX_USER_AGENT_LENGTH) {
+        size_t available = UA2F_MAX_USER_AGENT_LENGTH - replacement_offset;
+        if (available > ua_len) {
+            available = ua_len;
+        }
+        memcpy(buf, replacement_user_agent_string + replacement_offset, available);
+    }
+
+    *owned = buf;
+    return buf;
 }
 
 void add_to_cache(const struct nf_packet *pkt) {
@@ -125,6 +179,73 @@ bool ipv6_set_transport_header(struct pkt_buff *pkt_buff) {
     return true;
 }
 
+static size_t tcp_header_length(const struct tcphdr *tcp_hdr) {
+    return (size_t)tcp_hdr->th_off * 4U;
+}
+
+static bool packet_has_tcp_payload_fast(const struct nf_packet *pkt, int type, bool *has_payload) {
+    *has_payload = false;
+
+    if (type == IPV4) {
+        if (pkt->payload_len < sizeof(struct iphdr)) {
+            return false;
+        }
+
+        const struct iphdr *ip_hdr = (const struct iphdr *)pkt->payload;
+        if (ip_hdr->version != 4 || ip_hdr->protocol != IPPROTO_TCP) {
+            return false;
+        }
+
+        const size_t ip_header_len = (size_t)ip_hdr->ihl * 4U;
+        const size_t ip_total_len = (size_t)ntohs(ip_hdr->tot_len);
+        const uint16_t fragment = ntohs(ip_hdr->frag_off);
+        if (ip_header_len < sizeof(struct iphdr) || ip_total_len < ip_header_len ||
+            ip_total_len > pkt->payload_len || (fragment & 0x3fffU) != 0) {
+            return false;
+        }
+        if (ip_total_len < ip_header_len + sizeof(struct tcphdr)) {
+            return false;
+        }
+
+        const struct tcphdr *tcp_hdr = (const struct tcphdr *)((const uint8_t *)pkt->payload + ip_header_len);
+        const size_t tcp_header_len = tcp_header_length(tcp_hdr);
+        if (tcp_header_len < sizeof(struct tcphdr) || ip_total_len < ip_header_len + tcp_header_len) {
+            return false;
+        }
+
+        *has_payload = ip_total_len > ip_header_len + tcp_header_len;
+        return true;
+    }
+
+    if (type == IPV6) {
+        if (pkt->payload_len < sizeof(struct ip6_hdr)) {
+            return false;
+        }
+
+        const struct ip6_hdr *ip_hdr = (const struct ip6_hdr *)pkt->payload;
+        if ((ip_hdr->ip6_vfc >> 4) != 6 || ip_hdr->ip6_nxt != IPPROTO_TCP) {
+            return false;
+        }
+
+        const size_t ip_total_len = sizeof(struct ip6_hdr) + (size_t)ntohs(ip_hdr->ip6_plen);
+        if (ip_total_len < sizeof(struct ip6_hdr) || ip_total_len > pkt->payload_len ||
+            ip_total_len < sizeof(struct ip6_hdr) + sizeof(struct tcphdr)) {
+            return false;
+        }
+
+        const struct tcphdr *tcp_hdr = (const struct tcphdr *)((const uint8_t *)pkt->payload + sizeof(struct ip6_hdr));
+        const size_t tcp_header_len = tcp_header_length(tcp_hdr);
+        if (tcp_header_len < sizeof(struct tcphdr) || ip_total_len < sizeof(struct ip6_hdr) + tcp_header_len) {
+            return false;
+        }
+
+        *has_payload = ip_total_len > sizeof(struct ip6_hdr) + tcp_header_len;
+        return true;
+    }
+
+    return false;
+}
+
 int get_pkt_ip_version(const struct nf_packet *pkt) {
     if (pkt->has_conntrack) {
         return pkt->orig.ip_version;
@@ -141,6 +262,14 @@ int get_pkt_ip_version(const struct nf_packet *pkt) {
     }
 }
 
+static void count_ip_packet(int type) {
+    if (type == IPV4) {
+        count_ipv4_packet();
+    } else if (type == IPV6) {
+        count_ipv6_packet();
+    }
+}
+
 void handle_packet(const struct packet_io *io, void *io_ctx, const struct nf_packet *pkt) {
     assert(io != NULL && "Packet I/O cannot be NULL");
     assert(io->send_verdict != NULL && "send_verdict callback cannot be NULL");
@@ -149,22 +278,41 @@ void handle_packet(const struct packet_io *io, void *io_ctx, const struct nf_pac
     assert(pkt->payload_len > 0 && "Packet payload length must be positive");
     struct pkt_buff *pkt_buff = NULL;
     bool ct_ok = use_conntrack && pkt->has_conntrack;
+    bool verdict_sent = false;
+
+#define SEND_VERDICT(verdict_, mark_, pkt_buff_)                                                                          \
+    do {                                                                                                                  \
+        io->send_verdict(io_ctx, pkt, (verdict_), (mark_), (pkt_buff_));                                                  \
+        verdict_sent = true;                                                                                              \
+    } while (0)
 
     // Level 1: cache check
     if (ct_ok && should_ignore(pkt)) {
-        io->send_verdict(io_ctx, pkt, NF_ACCEPT, MARK_NOT_HTTP, NULL);
+        SEND_VERDICT(NF_ACCEPT, MARK_NOT_HTTP, NULL);
         goto end;
     }
 
     const int type = get_pkt_ip_version(pkt);
     if (type == IP_UNK) {
         syslog(LOG_WARNING, "Received unknown ip packet type %x. You may set wrong firewall rules.", pkt->hw_protocol);
-        io->send_verdict(io_ctx, pkt, NF_ACCEPT, MARK_NONE, NULL);
+        SEND_VERDICT(NF_ACCEPT, MARK_NONE, NULL);
         goto end;
     }
 
+    bool has_tcp_payload = false;
+    bool counted_ip_packet = false;
+    if (packet_has_tcp_payload_fast(pkt, type, &has_tcp_payload)) {
+        count_ip_packet(type);
+        counted_ip_packet = true;
+        if (!has_tcp_payload) {
+            SEND_VERDICT(NF_ACCEPT, MARK_NONE, NULL);
+            goto end;
+        }
+    }
+
     pkt_buff = pktb_alloc(type == IPV4 ? AF_INET : AF_INET6, pkt->payload, pkt->payload_len, 0);
-    if (pkt_buff == NULL) {        syslog(LOG_ERR, "Failed to allocate packet buffer");
+    if (pkt_buff == NULL) {
+        syslog(LOG_ERR, "Failed to allocate packet buffer");
         goto end;
     }
 
@@ -173,13 +321,17 @@ void handle_packet(const struct packet_io *io, void *io_ctx, const struct nf_pac
             syslog(LOG_ERR, "Failed to set ipv4 transport header");
             goto end;
         }
-        count_ipv4_packet();
+        if (!counted_ip_packet) {
+            count_ipv4_packet();
+        }
     } else if (type == IPV6) {
         if (!ipv6_set_transport_header(pkt_buff)) {
             syslog(LOG_ERR, "Failed to set ipv6 transport header");
             goto end;
         }
-        count_ipv6_packet();
+        if (!counted_ip_packet) {
+            count_ipv6_packet();
+        }
     } else {
         syslog(LOG_ERR, "Unknown ip version");
         goto end;
@@ -214,20 +366,20 @@ void handle_packet(const struct packet_io *io, void *io_ctx, const struct nf_pac
     if (tcp_hdr == NULL) {
         // This packet is not tcp, pass it
         syslog(LOG_WARNING, "No tcp header found");
-        io->send_verdict(io_ctx, pkt, NF_ACCEPT, MARK_NONE, NULL);
+        SEND_VERDICT(NF_ACCEPT, MARK_NONE, NULL);
         goto end;
     }
 
     const __auto_type tcp_payload = nfq_tcp_get_payload(tcp_hdr, pkt_buff);
     if (tcp_payload == NULL) {
         // Empty ACK or no payload — just accept, don't mark
-        io->send_verdict(io_ctx, pkt, NF_ACCEPT, MARK_NONE, NULL);
+        SEND_VERDICT(NF_ACCEPT, MARK_NONE, NULL);
         goto end;
     }
 
     const __auto_type tcp_payload_len = nfq_tcp_get_payload_len(tcp_hdr, pkt_buff);
     if (tcp_payload_len == 0) {
-        io->send_verdict(io_ctx, pkt, NF_ACCEPT, MARK_NONE, NULL);
+        SEND_VERDICT(NF_ACCEPT, MARK_NONE, NULL);
         goto end;
     }
 
@@ -262,11 +414,18 @@ void handle_packet(const struct packet_io *io, void *io_ctx, const struct nf_pac
 
     bool new_session = false;
     struct http_session *session = NULL;
+    bool session_retained = false;
 
     // Check if this looks like HTTP before creating session
     // (avoids session allocation for non-HTTP traffic)
     session_wrlock();
     session = session_find(&skey);
+    if (session != NULL) {
+        session_retained = session_retain_locked(session);
+        if (!session_retained) {
+            session = NULL;
+        }
+    }
 
     if (session == NULL) {
         // No existing session — check if this looks like HTTP via fast path
@@ -275,9 +434,9 @@ void handle_packet(const struct packet_io *io, void *io_ctx, const struct nf_pac
             // Not HTTP
             if (ct_ok) {
                 add_to_cache(pkt);
-                io->send_verdict(io_ctx, pkt, NF_ACCEPT, MARK_NOT_HTTP, NULL);
+                SEND_VERDICT(NF_ACCEPT, MARK_NOT_HTTP, NULL);
             } else {
-                io->send_verdict(io_ctx, pkt, NF_ACCEPT, MARK_NONE, NULL);
+                SEND_VERDICT(NF_ACCEPT, MARK_NONE, NULL);
             }
             goto end;
         }
@@ -287,14 +446,24 @@ void handle_packet(const struct packet_io *io, void *io_ctx, const struct nf_pac
         if (session == NULL) {
             session_wrunlock();
             syslog(LOG_WARNING, "Session limit reached, dropping packet");
-            io->send_verdict(io_ctx, pkt, NF_DROP, MARK_NONE, NULL);
+            SEND_VERDICT(NF_DROP, MARK_NONE, NULL);
             goto end;
         }
         http_parser_init_session(session);
+        session_retained = session_retain_locked(session);
         new_session = true;
     }
 
-    // Level 3: feed to llhttp (session is valid, we hold the lock)
+    if (session == NULL || !session_retained) {
+        session_wrunlock();
+        syslog(LOG_ERR, "HTTP session unexpectedly missing");
+        SEND_VERDICT(NF_DROP, MARK_NONE, NULL);
+        goto end;
+    }
+    session_wrunlock();
+
+    // Level 3: feed to llhttp (session is valid, protected by its own state lock)
+    session_state_lock(session);
     session_reset_per_packet(session, tcp_payload);
     const int parse_ret = http_parser_feed(session, (const char *)tcp_payload, tcp_payload_len);
 
@@ -304,54 +473,79 @@ void handle_packet(const struct packet_io *io, void *io_ctx, const struct nf_pac
     if (ua_count > 0) {
         memcpy(ua_entries_copy, session->ua_entries, ua_count * sizeof(struct ua_mangle_entry));
     }
+    session_state_unlock(session);
 
     if (parse_ret != 0) {
+        session_wrlock();
         session_delete(session);
         session_wrunlock();
+        session_release(session);
+        session_retained = false;
 
         if (ct_ok) {
             add_to_cache(pkt);
-            io->send_verdict(io_ctx, pkt, NF_ACCEPT, MARK_NOT_HTTP, NULL);
+            SEND_VERDICT(NF_ACCEPT, MARK_NOT_HTTP, NULL);
         } else {
-            io->send_verdict(io_ctx, pkt, NF_ACCEPT, MARK_NONE, NULL);
+            SEND_VERDICT(NF_ACCEPT, MARK_NONE, NULL);
         }
         goto end;
     }
 
-    session_wrunlock();
+    session_release(session);
+    session_retained = false;
 
     // Mangle UA entries (using copied data, session lock released)
     for (int i = 0; i < ua_count; i++) {
-        const unsigned int ua_offset = ua_entries_copy[i].offset;
-        const unsigned int ua_len = ua_entries_copy[i].len;
+        const size_t ua_offset = ua_entries_copy[i].offset;
+        const size_t ua_len = ua_entries_copy[i].len;
+        const size_t replacement_offset = ua_entries_copy[i].replacement_offset;
+        if (ua_offset > UINT_MAX || ua_len > UINT_MAX) {
+            syslog(LOG_WARNING, "Skipping too-large user agent mangle entry");
+            continue;
+        }
+        char *owned_replacement = NULL;
+        const char *replacement = replacement_chunk(replacement_offset, ua_len, &owned_replacement);
+        if (replacement == NULL) {
+            syslog(LOG_ERR, "Failed to allocate replacement chunk");
+            goto end;
+        }
 
         if (type == IPV4) {
-            if (!nfq_tcp_mangle_ipv4(pkt_buff, ua_offset, ua_len, replacement_user_agent_string, ua_len)) {
+            if (!nfq_tcp_mangle_ipv4(pkt_buff, (unsigned int)ua_offset, (unsigned int)ua_len, replacement,
+                                     (unsigned int)ua_len)) {
+                free(owned_replacement);
                 syslog(LOG_ERR, "Failed to mangle ipv4 packet");
                 goto end;
             }
         } else {
-            if (!nfq_tcp_mangle_ipv6(pkt_buff, ua_offset, ua_len, replacement_user_agent_string, ua_len)) {
+            if (!nfq_tcp_mangle_ipv6(pkt_buff, (unsigned int)ua_offset, (unsigned int)ua_len, replacement,
+                                     (unsigned int)ua_len)) {
+                free(owned_replacement);
                 syslog(LOG_ERR, "Failed to mangle ipv6 packet");
                 goto end;
             }
         }
+        free(owned_replacement);
     }
 
     if (ua_count > 0) {
         count_user_agent_packet();
     }
 
-    io->send_verdict(io_ctx, pkt, NF_ACCEPT,
-                     (ct_ok && new_session) ? MARK_HTTP : MARK_NONE, pkt_buff);
+    SEND_VERDICT(NF_ACCEPT, (ct_ok && new_session) ? MARK_HTTP : MARK_NONE, pkt_buff);
 
 end:
+    if (!verdict_sent) {
+        SEND_VERDICT(NF_ACCEPT, MARK_NONE, NULL);
+    }
     free(pkt->payload);
     if (pkt_buff != NULL) {
         pktb_free(pkt_buff);
     }
+    if (session_retained) {
+        session_release(session);
+    }
 
     try_print_statistics();
+#undef SEND_VERDICT
 }
-
-#undef MAX_USER_AGENT_LENGTH

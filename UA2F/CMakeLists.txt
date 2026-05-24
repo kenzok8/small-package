@@ -140,6 +140,7 @@ add_executable(ua2f
         src/cache.c
         src/handler.c
         src/handler_io.c
+        src/proxy.c
         src/cli.c
         src/config.c
         src/http_session.c
@@ -256,6 +257,10 @@ if (UA2F_BUILD_TESTS)
     )
     target_include_directories(ua2f_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
     target_include_directories(ua2f_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/third/llhttp)
+    if (UA2F_ENABLE_UCI)
+        target_sources(ua2f_test PRIVATE src/config.c)
+        target_link_libraries(ua2f_test uci)
+    endif ()
 
     # Add coverage target
     if (UA2F_ENABLE_COVERAGE)
@@ -317,6 +322,10 @@ if (UA2F_BUILD_TESTS)
     target_compile_definitions(ua2f_handler_test PRIVATE
             PCAP_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/data"
     )
+    if (UA2F_ENABLE_UCI)
+        target_sources(ua2f_handler_test PRIVATE src/config.c)
+        target_link_libraries(ua2f_handler_test uci)
+    endif ()
 
     # Conditionally link libpcap for pcap-based tests
     find_library(PCAP_LIB pcap)

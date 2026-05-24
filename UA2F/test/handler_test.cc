@@ -411,3 +411,42 @@ TEST_F(HandlerTest, ConntrackExistingSessionNoMark) {
 
     use_conntrack = false;
 }
+
+TEST_F(HandlerTest, CrossPacketUserAgentUsesReplacementOffset) {
+    char *replacement = const_cast<char *>(get_replacement_user_agent_string());
+    ASSERT_NE(replacement, nullptr);
+    for (size_t i = 0; i < 64; i++) {
+        replacement[i] = static_cast<char>('A' + (i % 26));
+    }
+
+    const char *pkt1_data = "GET / HTTP/1.1\r\nUser-Agent: Mozilla/5.";
+    auto pkt1 = make_http_packet(pkt1_data, 1);
+    handle_packet(&mock_packet_io, &mock_ctx, &pkt1);
+
+    ASSERT_EQ(mock_ctx.verdicts.size(), 1u);
+    auto payload1 = extract_tcp_payload(mock_ctx.verdicts[0].mangled_data, IPV4);
+    std::string payload1_str(payload1.begin(), payload1.end());
+    EXPECT_NE(payload1_str.find("ABCDEFGHIJ"), std::string::npos);
+    EXPECT_EQ(payload1_str.find("Mozilla/5."), std::string::npos);
+
+    const char *pkt2_data = "0 (Windows)\r\n\r\n";
+    auto pkt2 = make_http_packet(pkt2_data, 2);
+    handle_packet(&mock_packet_io, &mock_ctx, &pkt2);
+
+    ASSERT_EQ(mock_ctx.verdicts.size(), 2u);
+    auto payload2 = extract_tcp_payload(mock_ctx.verdicts[1].mangled_data, IPV4);
+    std::string payload2_str(payload2.begin(), payload2.end());
+    EXPECT_NE(payload2_str.find("KLMNOPQRSTU"), std::string::npos);
+    EXPECT_EQ(payload2_str.find("0 (Windows)"), std::string::npos);
+}
+
+TEST_F(HandlerTest, MalformedIpv4StillSendsVerdict) {
+    std::vector<uint8_t> raw = {0x45};
+    auto pkt = make_nf_packet(raw, 99, IPV4);
+
+    handle_packet(&mock_packet_io, &mock_ctx, &pkt);
+
+    ASSERT_EQ(mock_ctx.verdicts.size(), 1u);
+    EXPECT_EQ(mock_ctx.verdicts[0].verdict, NF_ACCEPT);
+    EXPECT_TRUE(mock_ctx.verdicts[0].mangled_data.empty());
+}

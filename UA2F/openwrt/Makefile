@@ -24,11 +24,14 @@ define Package/ua2f
     +libnetfilter-queue \
     +libpthread \
     +libuci \
+    +ip-full \
     +USE_GLIBC:libasan \
     +(PACKAGE_nftables-json||PACKAGE_nftables-nojson):kmod-nft-queue \
+    +(PACKAGE_nftables-json||PACKAGE_nftables-nojson):kmod-nft-tproxy \
     +PACKAGE_firewall:iptables-mod-conntrack-extra \
     +PACKAGE_firewall:iptables-mod-filter \
-    +PACKAGE_firewall:iptables-mod-nfqueue
+    +PACKAGE_firewall:iptables-mod-nfqueue \
+    +PACKAGE_firewall:iptables-mod-tproxy
 endef
 
 define Package/ua2f/config

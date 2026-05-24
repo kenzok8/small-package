@@ -1,9 +1,10 @@
-#include <gtest/gtest.h>
 #include <cstring>
+#include <limits>
+#include <gtest/gtest.h>
 
 extern "C" {
-#include <http_session.h>
 #include <http_parser_ua.h>
+#include <http_session.h>
 }
 
 class HttpParserUATest : public ::testing::Test {
@@ -105,6 +106,7 @@ TEST_F(HttpParserUATest, CrossPacketUAValue) {
     EXPECT_EQ(ret1, 0);
     // First packet should have found the partial UA
     EXPECT_EQ(session->ua_entry_count, 1);
+    EXPECT_EQ(session->ua_entries[0].replacement_offset, 0u);
 
     // Second packet has the rest of the UA value
     const char *pkt2 = "0 (Windows)\r\n\r\n";
@@ -117,6 +119,25 @@ TEST_F(HttpParserUATest, CrossPacketUAValue) {
     // The second packet's entry offset should point to "0 (Windows)"
     const char *ua_start2 = pkt2 + session->ua_entries[0].offset;
     EXPECT_EQ(strncmp(ua_start2, "0 (Windows)", 11), 0);
+    EXPECT_EQ(session->ua_entries[0].replacement_offset, 10u);
+}
+
+TEST_F(HttpParserUATest, UaValueSeenLengthSaturatesOnOverflow) {
+    const char *pkt1 = "GET / HTTP/1.1\r\nUser-Agent: A";
+    session_reset_per_packet(session, pkt1);
+    int ret1 = http_parser_feed(session, pkt1, strlen(pkt1));
+    EXPECT_EQ(ret1, 0);
+    ASSERT_EQ(session->ua_entry_count, 1);
+
+    session->ua_value_seen_len = std::numeric_limits<size_t>::max() - 1;
+
+    const char *pkt2 = "BC";
+    session_reset_per_packet(session, pkt2);
+    int ret2 = http_parser_feed(session, pkt2, strlen(pkt2));
+    EXPECT_EQ(ret2, 0);
+    ASSERT_EQ(session->ua_entry_count, 1);
+    EXPECT_EQ(session->ua_entries[0].replacement_offset, std::numeric_limits<size_t>::max() - 1);
+    EXPECT_EQ(session->ua_value_seen_len, std::numeric_limits<size_t>::max());
 }
 
 // 7. Keep-alive: multiple requests fed sequentially (separate feed calls)
@@ -138,9 +159,8 @@ TEST_F(HttpParserUATest, KeepAliveMultipleRequests) {
 
 // 8. Pipelined requests in a single packet — both UAs should be recorded
 TEST_F(HttpParserUATest, PipelinedRequestsSinglePacket) {
-    const char *req =
-        "GET /first HTTP/1.1\r\nHost: example.com\r\nUser-Agent: AgentOne\r\n\r\n"
-        "GET /second HTTP/1.1\r\nHost: example.com\r\nUser-Agent: AgentTwo\r\n\r\n";
+    const char *req = "GET /first HTTP/1.1\r\nHost: example.com\r\nUser-Agent: AgentOne\r\n\r\n"
+                      "GET /second HTTP/1.1\r\nHost: example.com\r\nUser-Agent: AgentTwo\r\n\r\n";
     int ret = feed(req);
     EXPECT_EQ(ret, 0);
     EXPECT_EQ(session->ua_entry_count, 2);
@@ -157,11 +177,10 @@ TEST_F(HttpParserUATest, PipelinedRequestsSinglePacket) {
 // 9. Long field name (> FIELD_BUF_SIZE) should be ignored; UA after it still found
 TEST_F(HttpParserUATest, LongFieldNameIgnored) {
     // Field name longer than 32 chars (FIELD_BUF_SIZE)
-    const char *req =
-        "GET / HTTP/1.1\r\n"
-        "X-Very-Long-Custom-Header-Name-That-Exceeds-Limit: somevalue\r\n"
-        "User-Agent: BrowserAgent\r\n"
-        "\r\n";
+    const char *req = "GET / HTTP/1.1\r\n"
+                      "X-Very-Long-Custom-Header-Name-That-Exceeds-Limit: somevalue\r\n"
+                      "User-Agent: BrowserAgent\r\n"
+                      "\r\n";
     int ret = feed(req);
     EXPECT_EQ(ret, 0);
     ASSERT_EQ(session->ua_entry_count, 1);
@@ -172,13 +191,12 @@ TEST_F(HttpParserUATest, LongFieldNameIgnored) {
 
 // 10. Multiple non-UA headers before User-Agent — verify field_buf resets correctly
 TEST_F(HttpParserUATest, MultipleNonUAHeadersThenUA) {
-    const char *req =
-        "GET / HTTP/1.1\r\n"
-        "Host: example.com\r\n"
-        "Accept: text/html\r\n"
-        "Connection: keep-alive\r\n"
-        "User-Agent: TargetAgent\r\n"
-        "\r\n";
+    const char *req = "GET / HTTP/1.1\r\n"
+                      "Host: example.com\r\n"
+                      "Accept: text/html\r\n"
+                      "Connection: keep-alive\r\n"
+                      "User-Agent: TargetAgent\r\n"
+                      "\r\n";
     int ret = feed(req);
     EXPECT_EQ(ret, 0);
     ASSERT_EQ(session->ua_entry_count, 1);
