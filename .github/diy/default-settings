@@ -66,5 +66,26 @@ rm -f /tmp/luci-indexcache
 chmod 0755 /etc/init.d/*
 
 sed -i.bak '/^option overlay_root \/overlay/s/^/#/' /etc/opkg.conf
-sed -i.bak '/_smpackage/s#https://[^ ]*/packages/x86_64/smpackage#https://op.dllkids.xyz/packages/x86_64#g' /etc/opkg/distfeeds.conf
+
+# 自家 dllkids feed：旧地址 op.dllkids.xyz/packages/x86_64 已 403 下线，
+# 新 layout 是 https://down.dllkids.xyz/openwrt-feed/<SDK>/<arch>/。
+# 按包管理器选 SDK（apk=25.12 / opkg=24.10），按 print-arch 动态拿 arch，
+# 避免硬编码 x86_64 把 nanopi / arm 设备坑死。
+if command -v apk >/dev/null 2>&1; then
+    _dl_arch="$(apk --print-arch 2>/dev/null)"
+    _dl_file="/etc/apk/repositories.d/distfeeds.list"
+    _dl_line="https://down.dllkids.xyz/openwrt-feed/25.12/${_dl_arch}/packages.adb"
+elif command -v opkg >/dev/null 2>&1; then
+    _dl_arch="$(opkg print-architecture 2>/dev/null | awk '$1=="arch" && $2!="all" && $2!="noarch" { if ($3+0>best) { best=$3+0; arch=$2 } } END { print arch }')"
+    _dl_file="/etc/opkg/distfeeds.conf"
+    _dl_line="src/gz dllkids_smpackage https://down.dllkids.xyz/openwrt-feed/24.10/${_dl_arch}"
+else
+    _dl_arch=""
+fi
+if [ -n "$_dl_arch" ] && [ -f "$_dl_file" ]; then
+    # 先清掉所有 dllkids 旧行（op.dllkids 死链 / 重复 down.dllkids），再追加一条新的
+    sed -i.bak '/dllkids\.xyz/d' "$_dl_file"
+    echo "$_dl_line" >> "$_dl_file"
+fi
+
 exit 0
