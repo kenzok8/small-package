@@ -1,0 +1,51 @@
+<%+header%>
+<h2>AP设备详情</h2>
+<div id="ap-detail"></div>
+<div id="firmware-status-log"></div>
+<script>
+function showApDetail(mac) {
+  fetch("/cgi-bin/luci/admin/network/wifi-ap/api/status?mac=" + encodeURIComponent(mac))
+    .then(r => r.json())
+    .then(res => {
+      let d = res.data || {};
+      document.getElementById("ap-detail").innerHTML = `
+        <ul>
+          <li>MAC: ${d.mac}</li>
+          <li>IP: ${d.ip}</li>
+          <li>厂商: ${d.vendor}</li>
+          <li>型号: ${d.model}</li>
+          <li>固件: ${d.firmware}</li>
+          <li>状态: ${d.status}</li>
+          <li>CPU: ${d.cpu}%</li>
+          <li>内存: ${d.mem}%</li>
+          <li>2.4G接入: ${d.clients_24g}</li>
+          <li>5G接入: ${d.clients_5g}</li>
+          <li>信号: ${d.signal}</li>
+          <li>Uptime: ${d.uptime}</li>
+        </ul>
+      `;
+    });
+}
+
+function showFirmwareStatus() {
+  fetch("/cgi-bin/luci/admin/network/wifi-ap/api/firmware_status")
+    .then(r => r.json())
+    .then(res => {
+      let log = (res.log || []).map(x => `<div>${x}</div>`).join("");
+      document.getElementById("firmware-status-log").innerHTML = log;
+    });
+}
+showFirmwareStatus();
+
+// WebSocket实时状态推送（需后端支持ws接口）
+// 可选：自动刷新详情
+if ("WebSocket" in window) {
+    try {
+        let ws = new WebSocket("ws://" + location.host + "/ws/wifi-ap/status");
+        ws.onmessage = function(evt) {
+            // 可扩展：自动刷新详情
+        };
+    } catch (e) {}
+}
+</script>
+<%+footer%>

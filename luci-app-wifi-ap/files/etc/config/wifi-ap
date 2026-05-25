@@ -1,0 +1,42 @@
+# WiFi AP 配置模板（建议根据实际环境调整）
+# 全局参数
+config global 'global'
+	option enabled '1'
+	option ap_name 'MyWiFiAP'
+	option ap_ip '0.0.0.0'         # 启动时由脚本自动获取并写入
+	option subnet '0.0.0.0/0'      # 启动时由脚本自动获取并写入
+	option gateway '0.0.0.0'       # 启动时由脚本自动获取并写入
+	option network_mode 'dhcp'
+	option udp_port '9090'
+	option udp_broadcast '255.255.255.255'
+	option udp_timeout '2'
+	option udp_retry '2'
+	option log_level 'info'
+	option log_rotate_days '7'
+	option trend_db '/etc/wifi-ap/trend.json'
+	option token 'your_token'
+	option secret 'your_secret'
+    
+# 角色与权限管理（可选，配合AC端权限校验）
+config role_manage 'admin'
+	option role 'admin'
+	option desc '系统管理员'
+	list users 'root'
+config role_manage 'operator'
+	option role 'operator'
+	option desc '运维操作员'
+	list users 'admin'
+	list users 'ops'
+config role_manage 'auditor'
+	option role 'auditor'
+	option desc '审计员'
+	list users 'audit'
+# 设备静态信息（可批量添加，实际可由AP自动生成/注册）
+config device 'AA:BB:CC:DD:EE:FF'
+	option mac 'AA:BB:CC:DD:EE:FF'
+	option ip '192.168.1.2'
+	option vendor 'Huawei'
+	option model 'AP123'
+	option firmware 'v1.0.2'
+	option enable '1'
+# 可扩展更多设备、模板、角色等

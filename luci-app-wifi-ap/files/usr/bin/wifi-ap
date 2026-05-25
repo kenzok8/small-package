@@ -1,0 +1,232 @@
+#!/bin/sh
+
+# =========================
+# 参数区（建议支持UCI热加载）
+# =========================
+
+# AC_LIST: 支持多AC冗余注册，自动获取网关作为注册地址
+GATEWAY=$(ip route | awk '/default/ {print $3}' | head -n1)
+AC_LIST="$GATEWAY"
+
+
+# UDP_PORT: UDP自动发现端口，AC与AP需一致
+UDP_PORT=9090
+
+# MDNS_SERVICE: mDNS服务类型，便于跨网段自动发现
+MDNS_SERVICE="_wifi-ap._tcp"
+
+# TOKEN: AC与AP通信安全认证Token，需与AC端一致
+# 推荐写法：直接写死或通过UCI/配置文件读取，建议生产环境存储于 /etc/wifi-ap/token
+TOKEN="your_token"
+TOKEN_FILE="/etc/wifi-ap/token"
+[ -f "$TOKEN_FILE" ] && TOKEN=$(cat "$TOKEN_FILE")
+
+# SECRET: HMAC签名密钥，建议安全存储，防止伪造
+# 推荐实际存储路径为 /etc/wifi-ap/secret，若该文件存在则覆盖上面SECRET变量
+SECRET="your_secret"
+SECRET_FILE="/etc/wifi-ap/secret"
+[ -f "$SECRET_FILE" ] && SECRET=$(cat "$SECRET_FILE")
+
+# IP_WHITELIST: UDP发现/命令允许的源IP白名单，自动获取网关网段+127.0.0.1
+GATEWAY=$(ip route | awk '/default/ {print $3}' | head -n1)
+if [ -n "$GATEWAY" ]; then
+  # 提取网段前缀（如192.168.1.1 -> 192.168.1.）
+  GW_PREFIX=$(echo "$GATEWAY" | awk -F. '{print $1"."$2"."$3"."}')
+  # 生成C类网段所有IP（不含0/255），可根据实际需求优化
+  IP_WHITELIST="127.0.0.1"
+  for i in $(seq 1 254); do
+    IP_WHITELIST="$IP_WHITELIST ${GW_PREFIX}${i}"
+  done
+else
+  IP_WHITELIST="127.0.0.1"
+fi
+
+# AP_INFO_JSON: 本机静态信息JSON文件路径
+AP_INFO_JSON="/tmp/wifi-ac/ap_info.json"
+
+# DISCOVERED_JSON: UDP自动发现结果文件
+DISCOVERED_JSON="/tmp/wifi-ac/discovered_devices.json"
+
+# MDNS_JSON: mDNS发现结果文件
+MDNS_JSON="/tmp/wifi-ac/mdns_devices.json"
+
+# HTTP_JSON: HTTP主动注册发现结果文件
+HTTP_JSON="/tmp/wifi-ac/http_devices.json"
+
+# AP_STATUS_JSON: 本机动态状态信息JSON文件路径
+AP_STATUS_JSON="/tmp/wifi-ac/ap_status.json"
+
+mkdir -p /tmp/wifi-ac
+
+# HMAC-SHA256签名（优先openssl，降级md5sum）
+sign() {
+  local data="$1"
+  if command -v openssl >/dev/null 2>&1; then
+    printf "%s" "$data" | openssl dgst -sha256 -hmac "$SECRET" | awk '{print $2}'
+  else
+    echo -n "$data$SECRET" | md5sum | awk '{print $1}'
+  fi
+}
+
+# 生成本机静态信息
+gen_ap_info() {
+  MAC=$(cat /sys/class/net/br-lan/address 2>/dev/null)
+  IP=$(ip -4 addr show br-lan | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -n1)
+  VENDOR=$(uci get system.@system[0].vendor 2>/dev/null || echo "OpenWrt")
+  MODEL=$(uci get system.@system[0].model 2>/dev/null || echo "Generic")
+  FIRMWARE=$(cat /etc/openwrt_version 2>/dev/null)
+  cat <<EOF > $AP_INFO_JSON
+{
+  "mac": "$MAC",
+  "ip": "$IP",
+  "vendor": "$VENDOR",
+  "model": "$MODEL",
+  "firmware": "$FIRMWARE"
+}
+EOF
+}
+
+# 采集动态状态（CPU、内存、客户端数、信号、uptime等）
+gen_ap_status() {
+  CPU=$(top -bn1 | grep 'CPU:' | awk '{print int($2)}')
+  MEM=$(free | awk '/Mem:/ {printf("%.0f", $3/$2*100)}')
+  CLIENTS_24G=$(iwinfo | grep -A10 'ESSID' | grep '2.4GHz' | wc -l)
+  CLIENTS_5G=$(iwinfo | grep -A10 'ESSID' | grep '5GHz' | wc -l)
+  UPTIME=$(awk '{print int($1)}' /proc/uptime)
+  SIGNAL=$(iwinfo | grep 'Signal' | awk '{print $2}' | head -n1)
+  STATUS="online"
+  cat <<EOF > $AP_STATUS_JSON
+{
+  "status": "$STATUS",
+  "cpu": $CPU,
+  "mem": $MEM,
+  "clients_24g": $CLIENTS_24G,
+  "clients_5g": $CLIENTS_5G,
+  "uptime": $UPTIME,
+  "signal": $SIGNAL
+}
+EOF
+}
+
+# 合并静态与动态信息为完整AP信息
+gen_full_ap_info() {
+  jq -s '.[0] + .[1]' "$AP_INFO_JSON" "$AP_STATUS_JSON" > /tmp/wifi-ac/ap_full_info.json
+}
+
+# 日志采集函数
+log_event() {
+  local msg="$1"
+  local code="${2:-0}"
+  local user="${3:-wifi-ap}"
+  echo "{\"timestamp\":$(date +%s),\"type\":\"event\",\"user\":\"$user\",\"msg\":\"$msg\",\"code\":$code}" >> /var/log/wifi-ap.log
+}
+
+# UDP发现响应守护进程（标准化返回结构，安全校验）
+udp_discover_daemon() {
+  while true; do
+    nc -ul -p $UDP_PORT -c '
+      read line
+      MAC=$(echo $line | cut -d, -f1)
+      CMD=$(echo $line | cut -d, -f2)
+      PARAM=$(echo $line | cut -d, -f3)
+      TOKEN_RCVD=$(echo $line | cut -d, -f4)
+      SIG_RCVD=$(echo $line | cut -d, -f5)
+      SRCIP=$NCAT_REMOTE_ADDR
+      WL=0
+      for IP in '"$IP_WHITELIST"'; do
+        [ "$SRCIP" = "$IP" ] && WL=1 && break
+      done
+      [ "$WL" != "1" ] && echo "{\"code\":403,\"msg\":\"ip not allowed\",\"data\":null}" && exit 0
+      [ "$TOKEN_RCVD" != "'"$TOKEN"'" ] && echo "{\"code\":403,\"msg\":\"invalid token\",\"data\":null}" && exit 0
+      SIG_EXPECT=$(sh -c "printf \"%s\" \"$MAC$CMD$PARAM$TOKEN\" | openssl dgst -sha256 -hmac \"'"$SECRET"'\" 2>/dev/null | awk \"{print \\$2}\"")
+      [ -z "$SIG_EXPECT" ] && SIG_EXPECT=$(echo -n "$MAC$CMD$PARAM$TOKEN$SECRET" | md5sum | awk "{print \$1}")
+      [ -n "$SIG_RCVD" ] && [ "$SIG_RCVD" != "$SIG_EXPECT" ] && echo "{\"code\":403,\"msg\":\"invalid signature\",\"data\":null}" && exit 0
+      if [ "$CMD" = "discover" ]; then
+        jq -c . /tmp/wifi-ac/ap_full_info.json | sed "s/^/{\"code\":0,\"msg\":\"ok\",\"data\":/;s/$/}/"
+        jq -s ".[0] as \$new | .[1] as \$arr | if \$arr then ([\$new] + \$arr | unique_by(.mac)) else [\$new] end" /tmp/wifi-ac/ap_full_info.json '"$DISCOVERED_JSON"' 2>/dev/null > /tmp/discovered_tmp.json
+        mv /tmp/discovered_tmp.json '"$DISCOVERED_JSON"'
+      else
+        echo "{\"code\":0,\"msg\":\"ok\",\"data\":\"ACK:$MAC,$CMD,code=0,msg=ok\"}"
+      fi
+    '
+    sleep 1
+  done
+}
+
+# mDNS发现采集（标准化结构，需avahi-utils、jq）
+mdns_discover() {
+  avahi-browse -rt $MDNS_SERVICE | grep address | awk '{print $4}' | jq -R -s -c 'split("\n")[:-1] | map(select(length>0) | {ip: .})' > $MDNS_JSON
+}
+
+# mDNS响应（需安装avahi-daemon，自动注册AP信息，提升跨网段发现）
+mdns_announce() {
+  # 使用avahi-publish-service注册AP信息，需root权限
+  MAC=$(jq -r .mac $AP_INFO_JSON)
+  HOSTNAME="ap-${MAC//:/-}"
+  avahi-publish-service "$HOSTNAME" "$MDNS_SERVICE" 8080 "mac=$MAC" "vendor=$(jq -r .vendor $AP_INFO_JSON)" "model=$(jq -r .model $AP_INFO_JSON)" >/dev/null 2>&1 &
+  MDNS_PID=$!
+}
+
+# HTTP主动注册（多AC，标准化结构，安全校验，适配NAT/跨网段）
+http_register() {
+  for AC in $AC_LIST; do
+    MAC=$(jq -r .mac $AP_INFO_JSON)
+    PAYLOAD=$(jq -c . /tmp/wifi-ac/ap_full_info.json)
+    SIG=$(sign "$MAC""register""$PAYLOAD""$TOKEN")
+    # 优先http，失败再尝试https
+    curl -s -X POST -H "Content-Type: application/json" \
+      -d "$PAYLOAD" \
+      "http://$AC:8080/api/ap_register?token=$TOKEN&signature=$SIG" \
+      || curl -sk -X POST -H "Content-Type: application/json" \
+      -d "$PAYLOAD" \
+      "https://$AC:8080/api/ap_register?token=$TOKEN&signature=$SIG"
+    jq -s ".[0] as \$new | .[1] as \$arr | if \$arr then ([\$new] + \$arr | unique_by(.mac)) else [\$new] end" /tmp/wifi-ac/ap_full_info.json "$HTTP_JSON" 2>/dev/null > /tmp/http_tmp.json
+    mv /tmp/http_tmp.json "$HTTP_JSON"
+    echo "{\"ac\":\"$AC\",\"result\":\"register sent\"}" >> /tmp/wifi-ac/http_register.log
+}
+
+# 心跳/状态上报（定时主动POST到AC，结构标准化）
+send_heartbeat() {
+  for AC in $AC_LIST; do
+    PAYLOAD=$(jq -c . /tmp/wifi-ac/ap_full_info.json)
+    SIG=$(sign "$(jq -r .mac $AP_INFO_JSON)""heartbeat""$PAYLOAD""$TOKEN")
+    curl -s -X POST -H "Content-Type: application/json" \
+      -d "$PAYLOAD" \
+      "http://$AC:8080/api/ap_heartbeat?token=$TOKEN&signature=$SIG" >/dev/null 2>&1 \
+      || curl -sk -X POST -H "Content-Type: application/json" \
+      -d "$PAYLOAD" \
+      "https://$AC:8080/api/ap_heartbeat?token=$TOKEN&signature=$SIG" >/dev/null 2>&1
+  done
+}
+
+# 建议：关键事件ubus推送（如上线/离线/升级/异常），便于WebSocket实时推送
+push_event() {
+  local event="$1"
+  local data="$2"
+  command -v ubus >/dev/null 2>&1 && ubus send "wifi-ap.$event" "$data"
+}
+
+# 主循环
+main_loop() {
+  gen_ap_info
+  gen_ap_status
+  gen_full_ap_info
+  mdns_announce   # mDNS响应进程
+  udp_discover_daemon &
+  UDP_PID=$!
+  while true; do
+    gen_ap_info
+    gen_ap_status
+    gen_full_ap_info
+    mdns_discover
+    http_register
+    send_heartbeat   # 定时心跳上报
+    # 推送上线事件（如首次上线/状态变化）
+    push_event "status_update" "$(jq -c . $AP_INFO_JSON | sed 's/^/{\"mac\":/;s/,$/,\"status\":\"online\",\"time\":'$(date +%s)'}')"
+    sleep 60
+  done
+  kill $UDP_PID
+  [ -n "$MDNS_PID" ] && kill $MDNS_PID
+}
+
+main_loop

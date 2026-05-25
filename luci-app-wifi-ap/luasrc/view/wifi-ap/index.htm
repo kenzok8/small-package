@@ -1,0 +1,110 @@
+<%+header%>
+<style>
+#ap-table { width:100%; border-collapse:collapse; margin-top:16px; }
+#ap-table th, #ap-table td { border:1px solid #e5e5e5; padding:7px 6px; text-align:center; }
+#ap-table th { background:#f5f7fa; color:#333; }
+#ap-batch-progress { color:#409eff; margin:10px 0; }
+#ap-cmd-bar { margin:12px 0; }
+</style>
+<h2><%:WiFi AP%></h2>
+<div id="ap-cmd-bar">
+  <button id="ap-refresh-btn">刷新</button>
+  <button id="ap-batch-reboot">批量重启</button>
+  <button id="ap-batch-upgrade">批量升级</button>
+  <button id="ap-batch-sync">批量同步</button>
+  <button id="ap-firmware-manage">固件升级管理</button>
+  <button id="ap-template-manage">模板应用</button>
+</div>
+<div id="ap-discover-bar" style="margin-bottom:10px;">
+  <button id="discover-udp">UDP自动发现</button>
+  <button id="discover-mdns">mDNS发现</button>
+  <button id="discover-http">HTTP注册发现</button>
+  <span id="discover-progress" style="margin-left:10px;color:#409eff;"></span>
+</div>
+<div id="firmware-upload-bar" style="margin:10px 0;">
+  <input type="file" id="firmware-file">
+  <button id="firmware-upload-btn">分块上传固件</button>
+  <button id="firmware-rollback-btn">回滚</button>
+  <button id="firmware-commit-btn">提交升级</button>
+  <progress id="firmware-progress" value="0" max="100" style="width:200px;"></progress>
+  <span id="firmware-status"></span>
+</div>
+<div style="margin:10px 0;">
+  <button onclick="window.open(L.env.cgiBase + '/admin/network/wifi-ap/api/log?export=csv&token=your_token')">导出日志CSV</button>
+  <span style="color:#888;font-size:12px;">（需Token权限）</span>
+</div>
+<table id="ap-table">
+  <thead>
+    <tr>
+      <th><input type="checkbox" id="ap-select-all"></th>
+      <th>MAC</th>
+      <th>IP</th>
+      <th>厂商</th>
+      <th>型号</th>
+      <th>固件</th>
+      <th>状态</th>
+      <th>CPU</th>
+      <th>内存</th>
+      <th>2.4G接入</th>
+      <th>5G接入</th>
+      <th>信号</th>
+      <th>Uptime</th>
+      <th>操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- JS渲染 -->
+  </tbody>
+</table>
+<div id="ap-batch-progress"></div>
+<script src="<%=resource%>/wifi-ap.js"></script>
+<script>
+document.getElementById("firmware-upload-btn").onclick = function() {
+    let file = document.getElementById("firmware-file").files[0];
+    if (!file) return alert("请选择固件文件");
+    let chunkSize = 1024 * 1024, offset = 0;
+    let progress = document.getElementById("firmware-progress");
+    let status = document.getElementById("firmware-status");
+    function uploadNext() {
+        if (offset >= file.size) {
+            status.textContent = "上传完成";
+            return;
+        }
+        uploadFirmwareChunk(file, offset, chunkSize, function(res) {
+            if (res.code === 0) {
+                offset += chunkSize;
+                progress.value = Math.min(100, Math.round(offset / file.size * 100));
+                uploadNext();
+            } else {
+                status.textContent = "上传失败: " + res.msg;
+            }
+        });
+    }
+    uploadNext();
+};
+document.getElementById("firmware-rollback-btn").onclick = function() {
+    rollbackFirmware(function(res) {
+        document.getElementById("firmware-status").textContent = res.msg;
+    });
+};
+document.getElementById("firmware-commit-btn").onclick = function() {
+    commitFirmware(function(res) {
+        document.getElementById("firmware-status").textContent = res.msg;
+    });
+};
+
+// WebSocket实时状态推送（需后端支持ws接口，建议uhttpd/ws或lua-websockets）
+// 可选：自动刷新设备状态
+if ("WebSocket" in window) {
+    try {
+        let ws = new WebSocket("ws://" + location.host + "/ws/wifi-ap/status");
+        ws.onmessage = function(evt) {
+            // 解析推送数据，刷新表格
+            // 可扩展：window.fetchApList();
+        };
+    } catch (e) {}
+}
+
+// 建议生产环境通过HTTPS访问本页面，避免中间人攻击
+</script>
+<%+footer%>

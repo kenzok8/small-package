@@ -1,0 +1,25 @@
+#!/bin/sh /etc/rc.common
+USE_PROCD=1
+
+START=98
+STOP=10
+
+start_service() {
+    procd_open_instance
+    procd_set_param command /usr/bin/wifi-ap
+    procd_set_param respawn 30 5 100
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+    procd_set_param pidfile /var/run/wifi-ap.pid
+    procd_close_instance
+}
+
+
+# 通过DHCP获取br-lan接口的IP、子网、网关，并写入UCI配置
+IP=$(ip -4 addr show br-lan | awk '/inet /{print $2}' | cut -d/ -f1)
+SUBNET=$(ip -4 addr show br-lan | awk '/inet /{print $2}')
+GW=$(ip route | awk '/default/ {print $3}')
+uci set wifi-ap.global.ap_ip="$IP"
+uci set wifi-ap.global.subnet="$SUBNET"
+uci set wifi-ap.global.gateway="$GW"
+uci commit wifi-ap
