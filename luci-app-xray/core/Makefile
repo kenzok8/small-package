@@ -80,6 +80,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/ssl/certs
 ifdef CONFIG_PACKAGE_XRAY_INCLUDE_CLOUDFLARE_ORIGIN_ROOT_CA
 	$(INSTALL_DATA) ./root/etc/ssl/certs/origin_ca_ecc_root.pem $(1)/etc/ssl/certs/origin_ca_ecc_root.pem
+	$(INSTALL_DATA) ./root/etc/ssl/certs/origin_ca_rsa_root.pem $(1)/etc/ssl/certs/origin_ca_rsa_root.pem
 endif
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./root/etc/init.d/xray_core $(1)/etc/init.d/xray_core
