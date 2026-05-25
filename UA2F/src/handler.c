@@ -414,15 +414,13 @@ void handle_packet(const struct packet_io *io, void *io_ctx, const struct nf_pac
 
     bool new_session = false;
     struct http_session *session = NULL;
-    bool session_retained = false;
 
     // Check if this looks like HTTP before creating session
     // (avoids session allocation for non-HTTP traffic)
     session_wrlock();
     session = session_find(&skey);
     if (session != NULL) {
-        session_retained = session_retain_locked(session);
-        if (!session_retained) {
+        if (!session_retain_locked(session)) {
             session = NULL;
         }
     }
@@ -450,11 +448,15 @@ void handle_packet(const struct packet_io *io, void *io_ctx, const struct nf_pac
             goto end;
         }
         http_parser_init_session(session);
-        session_retained = session_retain_locked(session);
-        new_session = true;
+        if (!session_retain_locked(session)) {
+            session_delete(session);
+            session = NULL;
+        } else {
+            new_session = true;
+        }
     }
 
-    if (session == NULL || !session_retained) {
+    if (session == NULL) {
         session_wrunlock();
         syslog(LOG_ERR, "HTTP session unexpectedly missing");
         SEND_VERDICT(NF_DROP, MARK_NONE, NULL);
@@ -480,7 +482,7 @@ void handle_packet(const struct packet_io *io, void *io_ctx, const struct nf_pac
         session_delete(session);
         session_wrunlock();
         session_release(session);
-        session_retained = false;
+        session = NULL;
 
         if (ct_ok) {
             add_to_cache(pkt);
@@ -492,7 +494,7 @@ void handle_packet(const struct packet_io *io, void *io_ctx, const struct nf_pac
     }
 
     session_release(session);
-    session_retained = false;
+    session = NULL;
 
     // Mangle UA entries (using copied data, session lock released)
     for (int i = 0; i < ua_count; i++) {
@@ -541,9 +543,6 @@ end:
     free(pkt->payload);
     if (pkt_buff != NULL) {
         pktb_free(pkt_buff);
-    }
-    if (session_retained) {
-        session_release(session);
     }
 
     try_print_statistics();

@@ -258,6 +258,7 @@ local function encode_trojan(node)
 	if o.tls.sni then table.insert(p, "sni=" .. urlencode(o.tls.sni)) end
 	if o.tls.fp then table.insert(p, "fp=" .. urlencode(o.tls.fp)) end
 	if o.tls.alpn then table.insert(p, "alpn=" .. urlencode(o.tls.alpn)) end
+	if o.tls.ech then table.insert(p, "ech=" .. urlencode(o.tls.ech)) end
 	if o.tls.pcs then table.insert(p, "pcs=" .. urlencode(o.tls.pcs)) end
 	table.insert(p, "allowInsecure=" .. (o.tls.insecure and "1" or "0"))
 
@@ -294,6 +295,7 @@ local function encode_vmess(node)
 		sni = o.tls.sni,
 		alpn = o.tls.alpn,
 		fp = o.tls.fp,
+		ech = o.tls.ech,
 		pcs = o.tls.pcs,
 		insecure = o.tls.insecure and "1" or "0",
 		tfo = node.tfo and "1" or "0"
@@ -425,7 +427,6 @@ local function encode_tuic(node)
 	if node["disable-sni"] then table.insert(p, "disable_sni=1") end
 	if node["skip-cert-verify"] then table.insert(p, "allowInsecure=1") end
 	if node["udp-relay-mode"] then table.insert(p, "udp_relay_mode=" .. node["udp-relay-mode"]) end
-	
 
 	if #p > 0 then
 		link = link .. "?" .. table.concat(p, "&")
@@ -436,14 +437,19 @@ end
 
 -- AnyTLS
 local function encode_anytls(node)
+	local o = build_common(node)
+
 	local link = "anytls://" .. (node.password or "") .. "@" .. host_format(node.server) .. ":" .. node.port
 	local p = {}
 
-	if node.sni then table.insert(p, "sni=" .. urlencode(node.sni)) end
-	if node["skip-cert-verify"] then table.insert(p, "allowInsecure=1") end
-
-	if node.alpn then
-		table.insert(p, "alpn=" .. urlencode(build_alpn(node.alpn)))
+	if o.tls.sni then table.insert(p, "sni=" .. urlencode(o.tls.sni)) end
+	if o.tls.alpn then table.insert(p, "alpn=" .. urlencode(o.tls.alpn)) end
+	if o.tls.fp then table.insert(p, "fp=" .. urlencode(o.tls.fp)) end
+	if o.tls.ech then table.insert(p, "ech=" .. urlencode(o.tls.ech)) end
+	if o.tls.pcs then
+		table.insert(p, "allowInsecure=1")
+	else
+		table.insert(p, "allowInsecure=" .. (o.tls.insecure and "1" or "0"))
 	end
 
 	if #p > 0 then

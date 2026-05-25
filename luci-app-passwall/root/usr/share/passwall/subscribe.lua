@@ -1547,6 +1547,10 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 					result.reality_publicKey = params.pbk or nil
 					result.reality_shortId = params.sid or nil
 				end
+				if params.ech and params.ech ~= "" then
+					result.ech = "1"
+					result.ech_config = params.ech
+				end
 			end
 			result.port = port
 			local insecure = params.allowinsecure or params.insecure
