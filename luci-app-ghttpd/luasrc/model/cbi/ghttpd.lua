@@ -1,7 +1,7 @@
 local m, s
 
 m = Map("ghttpd", translate("Ghttpd"), translate("Ghttpd"))
-m:section(SimpleSection).template  = "ghttpd/ghttpd_status"
+m:section(SimpleSection).template  = "ghttpd/status"
 
 s=m:section(TypedSection, "ghttpd", translate("Global settings"))
 s.addremove=false
