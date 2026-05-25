@@ -22,6 +22,7 @@ define Package/ua2f
   DEPENDS:= \
     +libnetfilter-conntrack \
     +libnetfilter-queue \
+    +(mips||mipsel):libatomic \
     +libpthread \
     +libuci \
     +ip-full \

@@ -22,6 +22,41 @@ OPTION(UA2F_ENABLE_BACKTRACE "Enable libbacktrace support" ON)
 set(UA2F_MAX_HTTP_SESSIONS 0 CACHE STRING "Default max HTTP sessions (0 = unlimited)")
 add_compile_definitions(UA2F_DEFAULT_MAX_HTTP_SESSIONS=${UA2F_MAX_HTTP_SESSIONS})
 
+include(CheckCSourceCompiles)
+
+set(UA2F_64BIT_ATOMIC_TEST_SOURCE
+        "#include <stdatomic.h>
+int main(void) {
+    atomic_llong value = ATOMIC_VAR_INIT(0);
+    long long expected = 1;
+    atomic_fetch_add_explicit(&value, 1, memory_order_relaxed);
+    atomic_compare_exchange_strong_explicit(&value, &expected, 2, memory_order_relaxed, memory_order_relaxed);
+    return (int)atomic_load_explicit(&value, memory_order_relaxed);
+}")
+
+check_c_source_compiles("${UA2F_64BIT_ATOMIC_TEST_SOURCE}" UA2F_64BIT_ATOMICS_WITHOUT_LIBATOMIC)
+if (NOT UA2F_64BIT_ATOMICS_WITHOUT_LIBATOMIC)
+    set(UA2F_PREVIOUS_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES}")
+    set(CMAKE_REQUIRED_LIBRARIES atomic)
+    check_c_source_compiles("${UA2F_64BIT_ATOMIC_TEST_SOURCE}" UA2F_64BIT_ATOMICS_WITH_LIBATOMIC)
+    set(CMAKE_REQUIRED_LIBRARIES "${UA2F_PREVIOUS_REQUIRED_LIBRARIES}")
+
+    if (UA2F_64BIT_ATOMICS_WITH_LIBATOMIC)
+        set(UA2F_ATOMIC_LIBRARIES atomic)
+        message(STATUS "64-bit atomics require libatomic.")
+    else ()
+        message(FATAL_ERROR "64-bit C atomics are unavailable with or without libatomic")
+    endif ()
+else ()
+    message(STATUS "64-bit atomics do not require libatomic.")
+endif ()
+
+function(ua2f_link_atomic_if_needed target)
+    if (UA2F_ATOMIC_LIBRARIES)
+        target_link_libraries(${target} ${UA2F_ATOMIC_LIBRARIES})
+    endif ()
+endfunction()
+
 find_package(Git)
 if (GIT_FOUND)
     execute_process(
@@ -154,6 +189,7 @@ add_executable(ua2f
 target_include_directories(ua2f PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/third/llhttp)
 
 target_link_libraries(ua2f mnl netfilter_queue pthread nfnetlink)
+ua2f_link_atomic_if_needed(ua2f)
 
 find_library(NFCONNTRACK netfilter_conntrack)
 if(NFCONNTRACK)
@@ -255,6 +291,7 @@ if (UA2F_BUILD_TESTS)
             GTest::gtest_main
             pthread
     )
+    ua2f_link_atomic_if_needed(ua2f_test)
     target_include_directories(ua2f_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
     target_include_directories(ua2f_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/third/llhttp)
     if (UA2F_ENABLE_UCI)
@@ -314,6 +351,7 @@ if (UA2F_BUILD_TESTS)
             netfilter_queue
             nfnetlink
     )
+    ua2f_link_atomic_if_needed(ua2f_handler_test)
     target_compile_options(ua2f_handler_test PRIVATE
             $<$<COMPILE_LANGUAGE:C>:-iquote${CMAKE_CURRENT_SOURCE_DIR}/src>
             $<$<COMPILE_LANGUAGE:CXX>:-iquote${CMAKE_CURRENT_SOURCE_DIR}/src>

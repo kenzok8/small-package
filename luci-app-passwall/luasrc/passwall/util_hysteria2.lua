@@ -20,8 +20,8 @@ function gen_config_server(node)
 			key = node.tls_keyFile,
 		},
 		obfs = (node.hysteria2_obfs_type and node.hysteria2_obfs_password) and {
-			type = "salamander",
-			salamander = {
+			type = node.hysteria2_obfs_type,
+			[node.hysteria2_obfs_type] = {
 				password = node.hysteria2_obfs_password
 			}
 		} or nil,
@@ -104,8 +104,8 @@ function gen_config(var)
 			end)() or nil
 		},
 		obfs = (node.hysteria2_obfs_type and node.hysteria2_obfs_password) and {
-			type = "salamander",
-			salamander = {
+			type = node.hysteria2_obfs_type,
+			[node.hysteria2_obfs_type] = {
 				password = node.hysteria2_obfs_password
 			}
 		} or nil,
