@@ -83,6 +83,7 @@ git clone --depth 1 https://github.com/jefferymvp/luci-app-koolproxyR
 git clone --depth 1 https://github.com/wolandmaster/luci-app-rtorrent
 git clone --depth 1 https://github.com/NateLol/luci-app-oled
 git clone --depth 1 https://github.com/hubbylei/luci-app-clash
+git clone --depth 1 https://github.com/YingHaoIT/luci-app-wifi-ap
 git clone --depth 1 https://github.com/destan19/OpenAppFilter && mvdir OpenAppFilter
 git clone --depth 1 https://github.com/lvqier/luci-app-dnsmasq-ipset
 git clone --depth 1 https://github.com/walkingsky/luci-wifidog luci-app-wifidog
