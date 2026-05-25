@@ -1,0 +1,7 @@
+#!/bin/sh
+
+
+/etc/init.d/baidudrive enable
+/etc/init.d/baidudrive start
+
+exit 0
