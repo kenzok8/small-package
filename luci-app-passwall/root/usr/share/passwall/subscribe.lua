@@ -683,6 +683,11 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			result.tls = "0"
 		end
 
+		if info.ech and info.ech ~= "" then
+			result.ech = "1"
+			result.ech_config = info.ech
+		end
+
 		result.tcp_fast_open = info.tfo
 
 		info.fm = (info.fm and info.fm ~= "") and UrlDecode(info.fm) or nil

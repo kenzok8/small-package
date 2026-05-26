@@ -870,6 +870,7 @@ function restore_backup()
 		fp:write(decoded)
 		fp:close()
 		if chunk_index + 1 == total_chunks then
+			uci:revert(appname)
 			luci.sys.call("echo '' > /tmp/log/passwall.log")
 			api.log(" * PassWall 配置文件上传成功…")
 			local temp_dir = '/tmp/passwall_bak'

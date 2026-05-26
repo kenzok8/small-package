@@ -66,10 +66,10 @@ local function build_common(node)
 
 	local ech_opts = node["ech-opts"]
 	if ech_opts and ech_opts.enable == true then
-		if ech_opts.config then
-			o.tls.ech = ech_opts.config
-		elseif ech_opts["query-server-name"] then
+		if ech_opts["query-server-name"] then
 			o.tls.ech = ech_opts["query-server-name"] .. "+https://223.5.5.5/dns-query"
+		elseif ech_opts.config then
+			o.tls.ech = ech_opts.config
 		end
 	end
 
