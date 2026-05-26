@@ -146,7 +146,7 @@ msgid "AliYun Public DNS (223.5.5.5)"
 msgstr ""
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:568
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:656
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:680
 msgid "Alias"
 msgstr "别名"
 
@@ -225,8 +225,8 @@ msgstr "Apple 域名更新 URL"
 msgid "Apple domains optimization"
 msgstr "Apple 域名解析优化"
 
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:716
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:722
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:740
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:746
 msgid "Apply"
 msgstr "应用"
 
@@ -242,7 +242,7 @@ msgstr ""
 msgid "Are you sure you want to restore the client to default settings?"
 msgstr "是否真的要恢复客户端默认配置？"
 
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:733
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:757
 msgid "Auto Switch"
 msgstr "自动切换"
 
@@ -1706,8 +1706,8 @@ msgstr "噪声"
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1120
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1132
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1142
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:653
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:658
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:677
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:682
 msgid "None"
 msgstr ""
 
@@ -1844,7 +1844,7 @@ msgstr "执行重置"
 msgid "Permit Without Stream"
 msgstr "允许无数据流"
 
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:701
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:725
 msgid "Ping Latency"
 msgstr "Ping 延迟"
 
@@ -1991,7 +1991,7 @@ msgstr "就绪。"
 msgid "Really reset all changes?"
 msgstr "真的重置所有更改吗？"
 
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:720
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:744
 #: applications/luci-app-ssr-plus/luasrc/view/shadowsocksr/clash_main_panel.htm:272
 #: applications/luci-app-ssr-plus/luasrc/view/shadowsocksr/clash_panel_button.htm:17
 msgid "Reapply"
@@ -2294,7 +2294,7 @@ msgstr ""
 msgid "Showing %d-%d of %d nodes"
 msgstr "当前显示第 %d-%d 个节点，共 %d 个"
 
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:661
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:685
 msgid "Socket Connected"
 msgstr "连接测试"
 
@@ -2599,7 +2599,7 @@ msgid "Try Count"
 msgstr "重试次数"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/advanced.lua:282
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:650
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:674
 msgid "Type"
 msgstr "类型"
 

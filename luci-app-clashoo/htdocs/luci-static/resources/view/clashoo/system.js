@@ -54,7 +54,15 @@ var CSS = [
   '.cl-log-tabs{display:flex;gap:8px;margin-bottom:8px}',
   '.cl-log-tab{padding:4px 12px;border:1px solid rgba(128,128,128,.2);border-radius:20px;font-size:12px;cursor:pointer;opacity:.6}',
   '.cl-log-tab.active{opacity:1;font-weight:600;background:rgba(128,128,128,.1)}',
-  '.cl-dl-hint{margin-top:6px;font-size:12px;min-height:18px;line-height:1.4}',
+  '.cl-log-line{display:block;padding:1px 4px;border-radius:3px}',
+	  '.cl-log-line.cl-log-info{color:#7fc7a8}',
+	  '.cl-log-line.cl-log-warn{color:#e8b95a}',
+	  '.cl-log-line.cl-log-error{color:#ea7878;background:rgba(234,120,120,.06)}',
+	  '.cl-log-line.cl-log-debug{color:#7a8290;opacity:.7}',
+	  '.cl-log-line.cl-log-hidden{display:none}',
+	  '.cl-log-ts{color:#6b7480;margin-right:8px}',
+	  '.cl-log-msg{color:inherit}',
+	  '.cl-dl-hint{margin-top:6px;font-size:12px;min-height:18px;line-height:1.4}',
   '.cl-component-card{padding:16px 18px;border:1px solid var(--cl-surface-border,rgba(128,128,128,.14));border-radius:var(--border-radius,var(--cl-radius,12px));background:var(--cl-card-bg,#fff);box-shadow:var(--card-shadow,var(--cl-card-shadow));margin:0 14px 14px}',
   '.cl-component-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}',
   '.cl-component-head h4{display:flex;align-items:center;gap:8px;margin:0 0 4px !important;padding:0 !important;font-size:0.95rem;font-weight:600;color:var(--title-color,var(--cl-title-color,inherit));background:transparent !important}',
@@ -858,9 +866,70 @@ return view.extend({
       { id: 'core',   label: '核心日志', read: clashoo.readCoreLog.bind(clashoo),           clear: clashoo.clearCoreLog.bind(clashoo) },
       { id: 'update', label: '更新日志', read: clashoo.readUpdateMergedLog.bind(clashoo),   clear: clashoo.clearUpdateMergedLog.bind(clashoo) }
     ];
+    var MAX_LINES = 5000;
+
+    var state = { autoScroll: true, paused: false, filter: '' };
+
+    function esc(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    /* Expose helpers for _pollLogs */
+    self._buildLogLine = buildLine;
+    self._applyLogFilter = applyFilter;
+
+    /* highlight: detect level keyword in line, return CSS class */
+    function detectLevel(ln) {
+      var m = ln.match(/\b(DEBUG|INFO|WARN(?:ING)?|ERROR|FATAL|PANIC)\b/i);
+      if (!m) return '';
+      var l = m[1].toUpperCase();
+      if (l === 'DEBUG') return 'cl-log-debug';
+      if (l === 'INFO')  return 'cl-log-info';
+      if (l.startsWith('WARN')) return 'cl-log-warn';
+      return 'cl-log-error';
+    }
+
+    var MONTHS = { Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12' };
+    /* render a single line as colored HTML */
+    function buildLine(ln) {
+      var cls = detectLevel(ln);
+      var ts = '', msg = ln;
+      /* plugin / update: YYYY-MM-DD HH:MM:SS → MM-DD HH:MM:SS */
+      var pm = ln.match(/^\d{4}-(\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+-\s+(.*)$/);
+      if (pm) { ts = pm[1] + ' ' + pm[2]; msg = pm[3]; }
+      /* core syslog: Mon DD HH:MM:SS YYYY → MM-DD HH:MM:SS */
+      var cm = ln.match(/^(\w{3})\s+(\d{1,2})\s+(\d{2}:\d{2}:\d{2})\s+\d{4}\s+\S+\.(\S+)\s+\S+\[\d+\]:\s+(.*)$/);
+      if (cm) { ts = (MONTHS[cm[1]] || cm[1]) + '-' + cm[2].padStart(2,'0') + ' ' + cm[3]; msg = cm[5] || ln; }
+      if (ts) {
+        return '<div class="cl-log-line ' + cls + '"><span class="cl-log-ts">' + esc(ts) + '</span><span class="cl-log-msg">' + esc(msg) + '</span></div>';
+      }
+      return '<div class="cl-log-line ' + cls + '">' + esc(ln) + '</div>';
+    }
+
+    function renderLines(text) {
+      var lines = text.split('\n').filter(function(l) { return l; });
+      var html = '';
+      for (var i = 0; i < lines.length; i++) {
+        html += buildLine(lines[i]);
+      }
+      return html;
+    }
+
+    function applyFilter() {
+      var f = state.filter;
+      var els = document.querySelectorAll('#cl-log-area .cl-log-line');
+      for (var i = 0; i < els.length; i++) {
+        if (!f || els[i].textContent.toLowerCase().indexOf(f) !== -1)
+          els[i].classList.remove('cl-log-hidden');
+        else
+          els[i].classList.add('cl-log-hidden');
+      }
+    }
 
     var logTabEls = {};
-    var logArea = E('div', { 'class': 'cl-log-area', id: 'cl-log-area' }, runLog || '（空）');
+    var logArea = E('div', { 'class': 'cl-log-area', id: 'cl-log-area' });
+    logArea.innerHTML = runLog ? renderLines(runLog) : '<em>（空）</em>';
+
     var clearBtn = null;
 
     function activateLogTab(id) {
@@ -871,7 +940,9 @@ return view.extend({
       self._logTab = logType.id;
       syncClearButton();
       return logType.read().then(function (content) {
-        logArea.textContent = (content && content.trim()) ? content : '（空）';
+        logArea.innerHTML = (content && content.trim()) ? renderLines(content) : '<em>（空）</em>';
+        applyFilter();
+        if (state.autoScroll) logArea.scrollTop = logArea.scrollHeight;
       });
     }
     this._activateLogTab = activateLogTab;
@@ -880,9 +951,7 @@ return view.extend({
       logTypes.map(function (lt) {
         var el = E('span', {
           'class': 'cl-log-tab' + (self._logTab === lt.id ? ' active' : ''),
-          click: function () {
-            activateLogTab(lt.id);
-          }
+          click: function () { activateLogTab(lt.id); }
         }, lt.label);
         logTabEls[lt.id] = el;
         return el;
@@ -896,42 +965,75 @@ return view.extend({
     function syncClearButton() {
       if (!clearBtn) return;
       var ct = currentType();
-      var canClear = !!ct.clear;
-      clearBtn.disabled = !canClear;
-      clearBtn.className = 'btn ' + (canClear ? 'cbi-button-negative' : 'cbi-button');
-      clearBtn.title = canClear ? '清空当前日志' : '';
-      clearBtn.textContent = '清空日志';
+      clearBtn.disabled = !ct.clear;
     }
 
-    clearBtn = E('button', {
-      'class': 'btn cbi-button-negative',
-      click: function () {
-        var ct = currentType();
-        if (!ct.clear) return;
-        ct.clear().then(function () { logArea.textContent = ''; });
-      }
-    }, '清空日志');
+    /* ---- toolbar ---- */
+    var cbAuto = E('input', { type: 'checkbox', checked: 'checked' });
+    cbAuto.addEventListener('change', function () { state.autoScroll = cbAuto.checked; });
+
+    var cbPause = E('input', { type: 'checkbox' });
+    cbPause.addEventListener('change', function () { state.paused = cbPause.checked; });
+
+    var selFilter = E('select', { 'class': 'btn cbi-button', style: 'font-size:11px;padding:2px 8px' }, [
+      E('option', { value: '' }, '全部'),
+      E('option', { value: 'info' }, 'INFO'),
+      E('option', { value: 'warn' }, 'WARN'),
+      E('option', { value: 'error' }, 'ERROR'),
+      E('option', { value: 'fatal' }, 'FATAL')
+    ]);
+    selFilter.addEventListener('change', function () {
+      state.filter = selFilter.value;
+      applyFilter();
+    });
+
+    var btnClearView = E('button', { 'class': 'btn cbi-button', style: 'font-size:11px;padding:2px 8px' }, '清空显示');
+    btnClearView.addEventListener('click', function () { logArea.innerHTML = ''; });
+
+    var btnDownload = E('button', { 'class': 'btn cbi-button', style: 'font-size:11px;padding:2px 8px' }, '下载');
+    btnDownload.addEventListener('click', function () {
+      var blob = new Blob([logArea.textContent || ''], { type: 'text/plain' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'clashoo-' + new Date().toISOString().replace(/[:.]/g, '-') + '.log';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    clearBtn = E('button', { 'class': 'btn cbi-button', style: 'font-size:11px;padding:2px 8px' }, '清空文件');
+    clearBtn.addEventListener('click', function () {
+      var ct = currentType();
+      if (!ct.clear) return;
+      if (!confirm('确定要清空当前日志文件吗？此操作不可恢复。')) return;
+      ct.clear().then(function () { logArea.innerHTML = ''; });
+    });
     syncClearButton();
+
+    var toolbar = E('div', { style: 'display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px' }, [
+      E('label', { style: 'font-size:11px;display:inline-flex;align-items:center;gap:3px;cursor:pointer' }, [cbAuto, '自动滚动']),
+      E('label', { style: 'font-size:11px;display:inline-flex;align-items:center;gap:3px;cursor:pointer' }, [cbPause, '暂停']),
+      selFilter,
+      btnClearView,
+      btnDownload,
+      clearBtn
+    ]);
 
     return E('div', { 'class': 'cl-section cl-card cl-log-card' }, [
       E('h4', {}, '日志'),
       logTabBar,
-      logArea,
-      E('div', { 'class': 'cl-actions', style: 'margin-top:8px' }, [
-        E('button', {
-          'class': 'btn cbi-button',
-          click: function () {
-            logArea.scrollTop = logArea.scrollHeight;
-          }
-        }, '滚动到底部'),
-        clearBtn
-      ])
+      toolbar,
+      logArea
     ]);
   },
 
   _pollLogs: function () {
     if (this._tab !== 'logs') return Promise.resolve();
     var self = this;
+    var el = document.getElementById('cl-log-area');
+    if (!el) return Promise.resolve();
+    var cbPause = el.parentNode.querySelector('input[type="checkbox"]:nth-of-type(2)');
+    if (cbPause && cbPause.checked) return Promise.resolve();
     var logFns = {
       plugin: clashoo.readLog.bind(clashoo),
       core:   clashoo.readCoreLog.bind(clashoo),
@@ -939,8 +1041,16 @@ return view.extend({
     };
     var readFn = logFns[this._logTab] || logFns.plugin;
     return readFn().then(function (content) {
-      var el = document.getElementById('cl-log-area');
-      if (el) el.textContent = (content && content.trim()) ? content : '（空）';
+      if (!content || !content.trim()) { el.innerHTML = '<em>（空）</em>'; return; }
+      var html = '';
+      var lines = content.split('\n').filter(function(l) { return l; });
+      for (var i = 0; i < lines.length; i++) {
+        html += self._buildLogLine(lines[i]);
+      }
+      el.innerHTML = html;
+      self._applyLogFilter();
+      var cbAuto = el.parentNode.querySelector('input[type="checkbox"]:first-of-type');
+      if (!cbAuto || cbAuto.checked) el.scrollTop = el.scrollHeight;
     });
   },
 

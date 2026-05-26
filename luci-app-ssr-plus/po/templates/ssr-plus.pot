@@ -142,7 +142,7 @@ msgid "AliYun Public DNS (223.5.5.5)"
 msgstr ""
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:568
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:656
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:680
 msgid "Alias"
 msgstr ""
 
@@ -221,8 +221,8 @@ msgstr ""
 msgid "Apple domains optimization"
 msgstr ""
 
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:716
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:722
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:740
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:746
 msgid "Apply"
 msgstr ""
 
@@ -238,7 +238,7 @@ msgstr ""
 msgid "Are you sure you want to restore the client to default settings?"
 msgstr ""
 
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:733
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:757
 msgid "Auto Switch"
 msgstr ""
 
@@ -1691,8 +1691,8 @@ msgstr ""
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1120
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1132
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1142
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:653
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:658
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:677
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:682
 msgid "None"
 msgstr ""
 
@@ -1829,7 +1829,7 @@ msgstr ""
 msgid "Permit Without Stream"
 msgstr ""
 
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:701
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:725
 msgid "Ping Latency"
 msgstr ""
 
@@ -1976,7 +1976,7 @@ msgstr ""
 msgid "Really reset all changes?"
 msgstr ""
 
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:720
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:744
 #: applications/luci-app-ssr-plus/luasrc/view/shadowsocksr/clash_main_panel.htm:272
 #: applications/luci-app-ssr-plus/luasrc/view/shadowsocksr/clash_panel_button.htm:17
 msgid "Reapply"
@@ -2278,7 +2278,7 @@ msgstr ""
 msgid "Showing %d-%d of %d nodes"
 msgstr ""
 
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:661
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:685
 msgid "Socket Connected"
 msgstr ""
 
@@ -2575,7 +2575,7 @@ msgid "Try Count"
 msgstr ""
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/advanced.lua:282
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:650
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:674
 msgid "Type"
 msgstr ""
 

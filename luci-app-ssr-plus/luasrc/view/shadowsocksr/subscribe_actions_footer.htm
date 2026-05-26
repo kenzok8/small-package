@@ -282,7 +282,7 @@ end
 
 <div class="cbi-section-create cbi-tblsection-create ssr-subscribe-toolbar" id="ssr-subscribe-toolbar">
 	<input class="btn cbi-button cbi-button-add" type="button" value="<%:Add%>" id="ssr-add-btn" title="<%:Add%>" />
-	<!-- <input class="btn cbi-button cbi-button-save" type="button" value="<%:Save%>" title="<%:Save%>" onclick="saveAllSubscribeItems(this)" /> -->
+	<input class="btn cbi-button cbi-button-save" type="button" value="<%:Save%>" title="<%:Save%>" onclick="saveAllSubscribeItems(this)" />
 	<!-- <input class="btn cbi-button cbi-button-save ssr-subscribe-save-settings" type="submit" value="<%:Save%>" title="<%:Save%>" name="cbi.apply" /> -->
 	<div class="ssr-subscribe-toolbar-slot ssr-subscribe-toolbar-slot-delete"></div>
 	<div class="ssr-subscribe-toolbar-slot ssr-subscribe-toolbar-slot-update"></div>
@@ -410,6 +410,29 @@ end
 		color: #fff !important;
 	}
 
+	/* 电脑端按钮间距 */
+	#cbi-shadowsocksr-server_subscribe_item .ssr-subscribe-actions {
+		display: flex;
+		flex-direction: row;
+		gap: 2px;          /* 按钮之间增加 8px 间距 */
+		align-items: center;
+		white-space: nowrap;
+	}
+
+	/* 移除电脑端默认外边距，统一由 gap 控制间距 */
+	#cbi-shadowsocksr-server_subscribe_item .ssr-subscribe-actions .btn {
+		margin: 0 !important;
+	}
+
+	/* 清除手机端伪元素问题（出现断层显示）*/
+	@media screen and (max-width: 1152px) {
+		td[data-title]::after {
+			content: none !important;
+			display: none !important;
+			background: none !important;
+		}
+	}
+
 	@media (max-width: 900px) {
 		#ssr-subscribe-toolbar {
 			flex-wrap: wrap;
@@ -420,6 +443,48 @@ end
 		#ssr-subscribe-toolbar .ssr-subscribe-toolbar-slot-delete,
 		#ssr-subscribe-toolbar .ssr-subscribe-toolbar-slot-update {
 			margin-left: 0;
+		}
+
+		/* 订阅列表 table 卡片化 */
+		#cbi-shadowsocksr-server_subscribe_item .cbi-section-table,
+		#cbi-shadowsocksr-server_subscribe_item .cbi-section-table tbody,
+		#cbi-shadowsocksr-server_subscribe_item .cbi-section-table tr,
+		#cbi-shadowsocksr-server_subscribe_item .cbi-section-table td {
+			display: block !important;
+			width: 100% !important;
+			box-sizing: border-box;
+		}
+
+		/* 隐藏表头 */
+		#cbi-shadowsocksr-server_subscribe_item .cbi-section-table-titles {
+			display: none !important;
+		}
+
+		/* 操作列，将 td 容器调整为 100% */
+		#cbi-shadowsocksr-server_subscribe_item .cbi-section-table td.cbi-section-actions {
+			width: 100% !important;
+			max-width: 100% !important;
+			display: block !important;
+			box-sizing: border-box !important;
+		}
+
+		/* 按钮区域 */
+		#cbi-shadowsocksr-server_subscribe_item .ssr-subscribe-actions {
+			display: flex !important;
+			gap: 8px;
+			width: 100%;
+		}
+
+		/* 保存、删除、更新 三个按钮均分 */
+		#cbi-shadowsocksr-server_subscribe_item .ssr-subscribe-actions .btn {
+			flex: 1;
+			margin: 0 !important;
+			white-space: nowrap;
+		}
+
+		/* 修复手机端卡片化布局中 placeholder 行的显示问题 */
+		#cbi-shadowsocksr-server_subscribe_item .placeholder td {
+			display: table-cell !important;
 		}
 	}
 </style>

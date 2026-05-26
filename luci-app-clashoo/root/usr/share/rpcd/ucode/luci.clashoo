@@ -846,7 +846,7 @@ for (let line in split(html, '\n')) {
 		m = match(line, /(^|[\/" >])(clashoo_[^"<>\/ ]+_[^"<>\/ ]+\.ipk)/) || match(line, /(^|[\/" >])(clashoo-[^"<>\/ ]+\.apk)/);
 		if (m) {
 			let f = m[2];
-			let v = match(f, /^clashoo_(.+)_[^_]+\.ipk$/) || match(f, /^clashoo-(.+-r[0-9]+)-.+\.apk$/);
+			let v = match(f, /^clashoo_([^_]+)_.+\.ipk$/) || match(f, /^clashoo-(.+-r[0-9]+)-.+\.apk$/);
 			if (v) out.clashoo = v[1];
 		}
 	}
@@ -914,10 +914,10 @@ for (let sdk in sdks) {
 		if (!kv) continue;
 		let f = kv[2], mv;
 		if (kv[1] == 'core') {
-			mv = match(f, /^clashoo_(.+)_[^.]+\.ipk$/) || match(f, /^clashoo-(.+-r[0-9]+)-.+\.apk$/);
+			mv = match(f, /^clashoo_([^_]+)_.+\.ipk$/) || match(f, /^clashoo-(.+-r[0-9]+)-.+\.apk$/);
 			if (mv) { latest.clashoo = mv[1]; hit = true; }
 		} else {
-			mv = match(f, /^luci-app-clashoo_(.+)_[^.]+\.ipk$/) || match(f, /^luci-app-clashoo-(.+-r[0-9]+)-.+\.apk$/);
+			mv = match(f, /^luci-app-clashoo_([^_]+)_.+\.ipk$/) || match(f, /^luci-app-clashoo-(.+-r[0-9]+)-.+\.apk$/);
 			if (mv) latest.luci = mv[1];
 		}
 	}

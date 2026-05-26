@@ -635,16 +635,40 @@ s.server_last_index = server_last_index
 s.server_base_url = luci.dispatcher.build_url("admin", "services", "shadowsocksr", "servers")
 
 function s.create(self, ...)
-    local sid = TypedSection.create(self, ...)
-    if sid then
-		local newsid = "cfg" .. sid:sub(-6)
-		-- 删除匿名
+	local used_sid = {}
+	local next_sid = 1
+
+	self.map.uci:foreach(self.config, self.sectiontype, function(s)
+		local num = s[".name"]:match("^cfg(%x%x)")
+		if num then
+			local n = tonumber(num, 16)
+			if n then
+				used_sid[n] = true
+			end
+		end
+	end)
+
+	local function get_next_sid()
+		while used_sid[next_sid] do
+			next_sid = next_sid + 1
+		end
+		used_sid[next_sid] = true
+		return next_sid
+	end
+
+	local sid = TypedSection.create(self, ...)	
+	if sid then
+		local suffix = sid:sub(-4)
 		self.map.uci:delete(self.config, sid)
-		-- 重命名 section
-		self.map.uci:section(self.config, self.sectiontype, newsid)
-		luci.http.redirect(self.extedit % newsid)
-        return
-    end
+		local id = get_next_sid()
+		local newsid = string.format("cfg%02x%s", id, suffix)
+		local success = self.map.uci:section(self.config, self.sectiontype, newsid)
+		if success then
+			--self.map.uci:save(self.config)
+			luci.http.redirect(self.extedit % newsid)
+			return
+		end
+	end
 end
 
 o = s:option(DummyValue, "type", translate("Type"))
