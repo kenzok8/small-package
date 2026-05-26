@@ -129,8 +129,13 @@ head_url_try() {
 }
 
 map_mihomo_arch() {
+	# 上游 amd64 默认 v3 微架构（要 AVX2）跑不起来；default 给 compatible 兜底
 	case "$1" in
-		amd64|x86_64) echo "linux-amd64" ;;
+		amd64-compatible) echo "linux-amd64-compatible" ;;
+		amd64-v1)         echo "linux-amd64-v1" ;;
+		amd64-v2)         echo "linux-amd64-v2" ;;
+		amd64-v3)         echo "linux-amd64-v3" ;;
+		amd64|x86_64)     echo "linux-amd64-compatible" ;;
 		arm64|aarch64_cortex-a53|aarch64_generic) echo "linux-arm64" ;;
 		armv7|arm_cortex-a7_neon-vfpv4) echo "linux-armv7" ;;
 		armv6|arm_arm1176jzf-s_vfp) echo "linux-armv6" ;;
@@ -141,13 +146,13 @@ map_mihomo_arch() {
 		mips64le|mips64el_mips64r2) echo "linux-mips64le" ;;
 		mips64|mips64_mips64r2) echo "linux-mips64" ;;
 		riscv64) echo "linux-riscv64" ;;
-		*) echo "linux-amd64" ;;
+		*) echo "linux-amd64-compatible" ;;
 	esac
 }
 
 map_singbox_arch() {
 	case "$1" in
-		amd64)   echo "amd64" ;;
+		amd64|amd64-compatible|amd64-v1|amd64-v2|amd64-v3) echo "amd64" ;;
 		arm64)   echo "arm64" ;;
 		armv7)   echo "armv7" ;;
 		armv6)   echo "armv6" ;;
@@ -163,7 +168,7 @@ map_singbox_arch() {
 
 map_openwrt_arch() {
 	case "$1" in
-		amd64|x86_64) echo "x86_64" ;;
+		amd64|amd64-compatible|amd64-v1|amd64-v2|amd64-v3|x86_64) echo "x86_64" ;;
 		arm64)        echo "aarch64_generic" ;;
 		armv7)        echo "arm_cortex-a7_neon-vfpv4" ;;
 		armv6)        echo "arm_arm1176jzf-s_vfp" ;;

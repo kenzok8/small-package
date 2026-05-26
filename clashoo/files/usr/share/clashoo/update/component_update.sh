@@ -4,8 +4,9 @@ LOG_FILE="/tmp/clashoo_component_update.log"
 RUN_FILE="/var/run/clashoo_component_update"
 STATE_FILE="/tmp/clashoo_component_update_state"
 TMP_DIR="/tmp/clashoo-component-update"
-B2_FEED_BASE_URL="https://kenzo111.s3.us-west-004.backblazeb2.com/openwrt-feed"
+B2_FEED_BASE_URL="https://kenzo111.s3.us-west-004.backblazeb2.com/openwrt-feed/clashoo"
 GITHUB_API_URL="https://api.github.com/repos/kenzok8/openwrt-clashoo/releases/latest"
+GITHUB_PROXY_PREFIX="${GITHUB_PROXY_PREFIX:-https://ghfast.top/}"
 
 log() {
   mkdir -p "$(dirname "$LOG_FILE")" "$(dirname "$STATE_FILE")" >/dev/null 2>&1
@@ -44,6 +45,42 @@ download_file() {
     return $?
   fi
   wget -qO "$out" "$url"
+}
+
+download_url() {
+  url="$1"
+  case "$url" in
+    https://github.com/*)
+      printf '%s%s\n' "$GITHUB_PROXY_PREFIX" "$url"
+      ;;
+    *)
+      printf '%s\n' "$url"
+      ;;
+  esac
+}
+
+root_free_kb() {
+  df -k / 2>/dev/null | awk 'NR==2 {print $4}'
+}
+
+kb_to_mib() {
+  awk "BEGIN {printf \"%.0f\", (${1:-0}) / 1024}"
+}
+
+ensure_root_space() {
+  need_kb="$1"
+  free_kb="$(root_free_kb)"
+  [ -n "$free_kb" ] || return 0
+  [ "$free_kb" -ge "$need_kb" ] && return 0
+  finish 1 "根分区空间不足：可用 $(kb_to_mib "$free_kb") MiB，至少需要 $(kb_to_mib "$need_kb") MiB"
+}
+
+log_install_error() {
+  file="$1"
+  [ -s "$file" ] || return 0
+  tail -8 "$file" 2>/dev/null | while IFS= read -r line; do
+    [ -n "$line" ] && log "$line"
+  done
 }
 
 detect_manager() {
@@ -116,7 +153,7 @@ find_manifest_value() {
 load_manifest_urls() {
   sdk="$1"
   arch="$2"
-  manifest_url="${B2_FEED_BASE_URL}/${sdk}/${arch}/manifest.txt"
+  manifest_url="${B2_FEED_BASE_URL}/${sdk}/${arch}/manifest-clashoo.txt"
   manifest_text="$(fetch_text "$manifest_url" || true)"
   [ -n "$manifest_text" ] || return 1
 
@@ -145,8 +182,8 @@ load_github_urls() {
 
   if [ "$ext" = "apk" ]; then
     CORE_URL="$(printf '%s\n' "$urls" | grep -E '/clashoo-[^-]+.*-r[0-9]+-'"$arch"'\.apk$' | head -n 1)"
-    LUCI_URL="$(printf '%s\n' "$urls" | grep -E '/luci-app-clashoo-[^-]+.*-r[0-9]+-all\.apk$' | head -n 1)"
-    I18N_URL="$(printf '%s\n' "$urls" | grep -E '/luci-i18n-clashoo-zh-cn-[^-]+.*-r[0-9]+-all\.apk$' | head -n 1)"
+    LUCI_URL="$(printf '%s\n' "$urls" | grep -E '/luci-app-clashoo-[^-]+.*-r[0-9]+-('"$arch"'|all)\.apk$' | head -n 1)"
+    I18N_URL="$(printf '%s\n' "$urls" | grep -E '/luci-i18n-clashoo-zh-cn-[^-]+.*-r[0-9]+-('"$arch"'|all)\.apk$' | head -n 1)"
   else
     CORE_URL="$(printf '%s\n' "$urls" | grep -E '/clashoo_.*_'"$arch"'\.ipk$' | head -n 1)"
     LUCI_URL="$(printf '%s\n' "$urls" | grep -E '/luci-app-clashoo_.*_all\.ipk$' | head -n 1)"
@@ -165,9 +202,9 @@ package_version_from_url() {
     clashoo_*.ipk) printf '%s\n' "$file" | sed -n 's/^clashoo_\(.*\)_.*\.ipk$/\1/p' ;;
     luci-app-clashoo_*.ipk) printf '%s\n' "$file" | sed -n 's/^luci-app-clashoo_\(.*\)_all\.ipk$/\1/p' ;;
     luci-i18n-clashoo-zh-cn_*.ipk) printf '%s\n' "$file" | sed -n 's/^luci-i18n-clashoo-zh-cn_\(.*\)_all\.ipk$/\1/p' ;;
-    clashoo-*.apk) printf '%s\n' "$file" | sed -n 's/^clashoo-\(.*\)-[^-]*\.apk$/\1/p' ;;
-    luci-app-clashoo-*.apk) printf '%s\n' "$file" | sed -n 's/^luci-app-clashoo-\(.*\)-all\.apk$/\1/p' ;;
-    luci-i18n-clashoo-zh-cn-*.apk) printf '%s\n' "$file" | sed -n 's/^luci-i18n-clashoo-zh-cn-\(.*\)-all\.apk$/\1/p' ;;
+    clashoo-*.apk) printf '%s\n' "$file" | sed -n 's/^clashoo-\(.*-r[0-9][0-9]*\)-.*\.apk$/\1/p' ;;
+    luci-app-clashoo-*.apk) printf '%s\n' "$file" | sed -n 's/^luci-app-clashoo-\(.*-r[0-9][0-9]*\)-.*\.apk$/\1/p' ;;
+    luci-i18n-clashoo-zh-cn-*.apk) printf '%s\n' "$file" | sed -n 's/^luci-i18n-clashoo-zh-cn-\(.*-r[0-9][0-9]*\)-.*\.apk$/\1/p' ;;
     *) printf '%s\n' "$file" ;;
   esac
 }
@@ -261,30 +298,32 @@ run_pkg_update() {
     core_ver="$(package_version_from_url "$CORE_URL")"
     log "目标版本：Clashoo 核心 ${core_ver}"
     log "正在下载 Clashoo 核心"
-    download_file "$CORE_URL" "$TMP_DIR/core.${EXT}" || finish 1 "下载 clashoo 失败"
+    download_file "$(download_url "$CORE_URL")" "$TMP_DIR/core.${EXT}" || finish 1 "下载 clashoo 失败"
+    ensure_root_space 98304
     log "正在安装 Clashoo 核心"
     if [ "$PM" = "opkg" ]; then
-      opkg install "$TMP_DIR/core.${EXT}"; rc=$?
+      opkg install "$TMP_DIR/core.${EXT}" >"$TMP_DIR/install.log" 2>&1; rc=$?
     else
-      apk add $APK_FLAGS "$TMP_DIR/core.${EXT}"; rc=$?
+      apk add $APK_FLAGS "$TMP_DIR/core.${EXT}" >"$TMP_DIR/install.log" 2>&1; rc=$?
     fi
   else
     luci_ver="$(package_version_from_url "$LUCI_URL")"
     log "目标版本：客户端 ${luci_ver}"
     log "正在下载客户端（LuCI + 语言包）"
-    download_file "$LUCI_URL" "$TMP_DIR/luci.${EXT}" || finish 1 "下载 luci-app-clashoo 失败"
+    download_file "$(download_url "$LUCI_URL")" "$TMP_DIR/luci.${EXT}" || finish 1 "下载 luci-app-clashoo 失败"
     if [ -n "$I18N_URL" ]; then
-      download_file "$I18N_URL" "$TMP_DIR/i18n.${EXT}" || finish 1 "下载语言包失败"
+      download_file "$(download_url "$I18N_URL")" "$TMP_DIR/i18n.${EXT}" || finish 1 "下载语言包失败"
     fi
     log "正在安装客户端"
     if [ "$PM" = "opkg" ]; then
-      opkg install "$TMP_DIR/luci.${EXT}" ${I18N_URL:+"$TMP_DIR/i18n.${EXT}"}; rc=$?
+      opkg install "$TMP_DIR/luci.${EXT}" ${I18N_URL:+"$TMP_DIR/i18n.${EXT}"} >"$TMP_DIR/install.log" 2>&1; rc=$?
     else
-      apk add $APK_FLAGS "$TMP_DIR/luci.${EXT}" ${I18N_URL:+"$TMP_DIR/i18n.${EXT}"}; rc=$?
+      apk add $APK_FLAGS "$TMP_DIR/luci.${EXT}" ${I18N_URL:+"$TMP_DIR/i18n.${EXT}"} >"$TMP_DIR/install.log" 2>&1; rc=$?
     fi
   fi
 
   if [ "$rc" -ne 0 ]; then
+    log_install_error "$TMP_DIR/install.log"
     log "安装失败，正在恢复配置备份"
     restore_config_backup
     finish "$rc" "组件更新失败"

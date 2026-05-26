@@ -324,7 +324,7 @@ return view.extend({
 
   _detectMihomoArch: function (raw) {
     if (!raw) return '';
-    if (raw === 'x86_64')             return 'amd64';
+    if (raw === 'x86_64')             return 'amd64-compatible';
     if (/^aarch64/.test(raw))         return 'arm64';
     if (/^armv7|^arm_cortex-a[7-9]|^arm_cortex-a1[0-9]/.test(raw)) return 'armv7';
     if (/^armv6|^arm_cortex-a[56]/.test(raw))  return 'armv6';
@@ -518,12 +518,15 @@ return view.extend({
   _compVariantOf: function (comp) {
     if (!comp.variant) return '';
     if (this._compVariant[comp.id]) return this._compVariant[comp.id];
-    return /^v?[0-9]/.test(comp.installed_version || '') ? 'stable' : 'alpha';
+    var inst = String(comp.installed_version || '').toLowerCase();
+    return /(?:alpha|beta|rc|pre)/.test(inst) ? 'alpha' : 'stable';
   },
 
   _compInstalledVersion: function (comp, variant) {
     if (comp && comp.installed_versions && comp.installed_versions[variant])
       return comp.installed_versions[variant];
+    if (comp && comp.variant)
+      return '';
     return (comp && comp.installed_version) || '';
   },
 
@@ -556,8 +559,8 @@ return view.extend({
     arch = arch || {};
     var sys = arch.system || '未知';
     var detected = this._detectMihomoArch(this._compCpuArch || sys) || '';
-    var cur = arch.download_core || detected || 'amd64';
-    var archList = ['amd64', 'arm64', 'armv7', 'armv6', 'armv5', '386', 'mips', 'mipsle', 'mips64', 'mips64le'];
+    var cur = arch.download_core || detected || 'amd64-compatible';
+    var archList = ['amd64-compatible', 'amd64-v1', 'amd64-v2', 'amd64-v3', 'arm64', 'armv7', 'armv6', 'armv5', '386', 'mips', 'mipsle', 'mips64', 'mips64le'];
     var sel = E('select', { 'class': 'cl-component-arch-sel' },
       archList.map(function (a) {
         return E('option', { value: a, selected: a === cur ? '' : null }, a);
@@ -589,7 +592,7 @@ return view.extend({
     var self = this;
     var statusText = this._componentStatusText(comp, globalRunning);
     var inst = comp.installed_version || '';
-    var instStable = /^v?[0-9]/.test(inst);
+    var instStable = !/(?:alpha|beta|rc|pre)/i.test(inst);
 
     /* mihomo / sing-box：行内稳定 / Alpha 切换 */
     var variant = '';
@@ -609,7 +612,7 @@ return view.extend({
         return b;
       };
       variantBox = E('div', { 'class': 'cl-comp-var-box' }, [mkV('stable', '稳定版'), mkV('alpha', 'Alpha')]);
-      inst = this._compInstalledVersion(comp, variant) || inst;
+      inst = this._compInstalledVersion(comp, variant) || '未安装';
     }
     var latest = latestMap[this._compLatestKey(comp, variant || this._compVariantOf(comp))];
     if (!statusText && latest)

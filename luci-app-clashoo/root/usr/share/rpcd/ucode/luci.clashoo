@@ -767,11 +767,16 @@ if (match(ver, /^[0-9a-fA-F]{7,}$/)) return 'alpha-' + ver;
 return ver;
 }
 
+function is_prerelease_label(ver) {
+return !!match(ver || '', /(alpha|beta|rc|pre|smart)/i);
+}
+
 function component_installed_versions(id) {
 let out = {};
 if (id == 'mihomo') {
 	let stable = read_first_line('/usr/share/clashoo/clash_meta_version');
 	if (!stable && access('/usr/bin/clash-meta', 'x')) stable = core_short_version('/usr/bin/clash-meta');
+	if (is_prerelease_label(stable)) stable = '';
 	let alpha = read_first_line('/usr/share/clashoo/mihomo_version');
 	if (match(alpha, /^smart-/)) alpha = '';
 	if (!alpha && access('/usr/bin/mihomo', 'x')) alpha = core_short_version('/usr/bin/mihomo');
@@ -782,6 +787,7 @@ if (id == 'mihomo') {
 if (id == 'singbox') {
 	let stable = read_first_line('/usr/share/clashoo/singbox_stable_version');
 	if (!stable && access('/usr/bin/sing-box-stable', 'x')) stable = core_short_version('/usr/bin/sing-box-stable');
+	if (is_prerelease_label(stable)) stable = '';
 	let alpha = read_first_line('/usr/share/clashoo/singbox_alpha_version');
 	if (!alpha && access('/usr/bin/sing-box-alpha', 'x')) alpha = core_short_version('/usr/bin/sing-box-alpha');
 	out.stable = stable || '';
@@ -791,14 +797,16 @@ if (id == 'singbox') {
 return out;
 }
 
-const B2_FEED_BASE = 'https://kenzo111.s3.us-west-004.backblazeb2.com/openwrt-feed';
+const B2_FEED_BASE = 'https://kenzo111.s3.us-west-004.backblazeb2.com/openwrt-feed/clashoo';
+// bucket 多项目共用，按项目区分文件名免互相 sync 覆盖
+const B2_MANIFEST_NAME = 'manifest-clashoo.txt';
+const GH_CLASHOO_REPO = 'kenzok8/openwrt-clashoo';
 
-// download_core UCI 可能存的是 OpenWrt arch（x86_64 / aarch64_*）或 uname -m，
-// 但 mihomo release 文件名用的是 amd64 / arm64 / armv7 …。前端下拉一致用
-// mihomo 命名，但老配置 / 默认值可能仍是 x86_64 —— 在这里统一归一化。
+// 上游 amd64 默认是 AMD64-v3（要 AVX2），LXC/KVM 跑不起来；老值统一兜底 compatible
 function normalize_mihomo_arch(a) {
-if (!a) return 'amd64';
-if (a == 'x86_64')                                 return 'amd64';
+if (!a) return 'amd64-compatible';
+if (a == 'amd64-compatible' || a == 'amd64-v1' || a == 'amd64-v2' || a == 'amd64-v3') return a;
+if (a == 'amd64' || a == 'x86_64')                 return 'amd64-compatible';
 if (match(a, /^aarch64/))                          return 'arm64';
 if (match(a, /^armv7|^arm_cortex-a[7-9]|^arm_cortex-a1[0-9]/)) return 'armv7';
 if (match(a, /^armv6|^arm_cortex-a[56]/))          return 'armv6';
@@ -811,12 +819,15 @@ if (match(a, /^mips/) && a != 'mips64' && a != 'mipsle' && a != 'mips64le') retu
 return a;
 }
 
-// Prerelease-Alpha 资源清单里抽版本 —— mihomo alpha / smart 是滚动版，
-// 比的是「最新发布的 hash 跟已装的是否不同」，不是比大小（同 OpenClash）
+// alpha / smart 滚动版按 hash 比对；needle 用 -alpha- 边界，免 amd64 撞 amd64-compatible
 function alpha_asset_ver(html, arch, kind) {
 if (!html) return '';
+let needle = (kind == 'smart')
+	? 'mihomo-linux-' + arch + '-alpha-smart-'
+	: 'mihomo-linux-' + arch + '-alpha-';
 for (let line in split(html, '\n')) {
-	if (index(line, 'mihomo-linux-' + arch + '-') < 0) continue;
+	if (index(line, needle) < 0) continue;
+	if (kind != 'smart' && index(line, '-alpha-smart-') >= 0) continue;
 	let m = (kind == 'smart')
 		? match(line, /-(alpha-smart-[0-9A-Za-z]{6,})\.gz/)
 		: match(line, /-(alpha-[0-9a-f]{7,})\.gz/);
@@ -825,12 +836,39 @@ for (let line in split(html, '\n')) {
 return '';
 }
 
+// 从 release expanded_assets HTML 抽 clashoo / luci 版本号
+function gh_assets_versions(html) {
+let out = {};
+if (!html) return out;
+for (let line in split(html, '\n')) {
+	let m;
+	if (!out.clashoo) {
+		m = match(line, /(^|[\/" >])(clashoo_[^"<>\/ ]+_[^"<>\/ ]+\.ipk)/) || match(line, /(^|[\/" >])(clashoo-[^"<>\/ ]+\.apk)/);
+		if (m) {
+			let f = m[2];
+			let v = match(f, /^clashoo_(.+)_[^_]+\.ipk$/) || match(f, /^clashoo-(.+-r[0-9]+)-.+\.apk$/);
+			if (v) out.clashoo = v[1];
+		}
+	}
+	if (!out.luci) {
+		m = match(line, /(^|[\/" >])(luci-app-clashoo_[^"<>\/ ]+_all\.ipk)/) || match(line, /(^|[\/" >])(luci-app-clashoo-[^"<>\/ ]+\.apk)/);
+		if (m) {
+			let f = m[2];
+			let v = match(f, /^luci-app-clashoo_(.+)_all\.ipk$/) || match(f, /^luci-app-clashoo-(.+-r[0-9]+)-.+\.apk$/);
+			if (v) out.luci = v[1];
+		}
+	}
+	if (out.clashoo && out.luci) break;
+}
+return out;
+}
+
 // 并行抓取全部上游版本 —— 6+ 个 curl 串行会超 ubus 30s 上限，故全部
 // 后台并发，wait 后统一解析（总耗时 ≈ 最慢的单个请求）。
 // DISTRIB_RELEASE 可能是自定义串，不能当 SDK 版本；按包管理器试多个候选。
 function component_latest_versions() {
 let latest = {};
-let core_arch = normalize_mihomo_arch(uci_get('clashoo', 'config', 'download_core') || 'amd64');
+let core_arch = normalize_mihomo_arch(uci_get('clashoo', 'config', 'download_core') || '');
 let pkg_arch = trim(shell_read("opkg print-architecture 2>/dev/null | awk '/^arch /{print $2}' | tail -1") || '');
 if (!pkg_arch) pkg_arch = trim(shell_read('apk --print-arch 2>/dev/null') || '');
 let is_apk = !!trim(shell_read('command -v apk 2>/dev/null') || '');
@@ -848,7 +886,9 @@ cmd += 'curl -fsSL -m 20 ' + shell_quote(GH + 'vernesong/mihomo/releases/expande
 cmd += 'curl -fsSL -m 12 ' + shell_quote(GH + 'SagerNet/sing-box/releases.atom') + ' >' + shell_quote(dir + '/sa') + ' 2>/dev/null &\n';
 if (pkg_arch)
 	for (let sdk in sdks)
-		cmd += 'curl -fsSL -m 8 ' + shell_quote(B2_FEED_BASE + '/' + sdk + '/' + pkg_arch + '/manifest.txt') + ' >' + shell_quote(dir + '/b_' + sdk) + ' 2>/dev/null &\n';
+		cmd += 'curl -fsSL -m 8 ' + shell_quote(B2_FEED_BASE + '/' + sdk + '/' + pkg_arch + '/' + B2_MANIFEST_NAME) + ' >' + shell_quote(dir + '/b_' + sdk) + ' 2>/dev/null &\n';
+// GitHub API 兜底，避免 expanded_assets 在部分网络下超时
+cmd += 'curl -fsSL -m 12 ' + shell_quote('https://api.github.com/repos/' + GH_CLASHOO_REPO + '/releases/latest') + ' >' + shell_quote(dir + '/gc') + ' 2>/dev/null &\n';
 cmd += 'wait\n';
 let pp = popen(cmd);
 if (pp) { pp.read('all'); pp.close(); }
@@ -863,7 +903,7 @@ m = match(readfile(dir + '/sa') || '', /\/releases\/tag\/([^"?#]+)/); if (m) lat
 let v;
 v = alpha_asset_ver(readfile(dir + '/ma') || '', core_arch, 'alpha'); if (v) latest.mihomo_alpha = v;
 v = alpha_asset_ver(readfile(dir + '/sm') || '', core_arch, 'smart'); if (v) latest.smart = v;
-// clashoo / luci —— B2 manifest，按 SDK 候选顺序取第一个命中
+// clashoo / luci —— B2 manifest，按 SDK 候选取第一个命中
 if (pkg_arch)
 for (let sdk in sdks) {
 	let txt = readfile(dir + '/b_' + sdk);
@@ -874,14 +914,20 @@ for (let sdk in sdks) {
 		if (!kv) continue;
 		let f = kv[2], mv;
 		if (kv[1] == 'core') {
-			mv = match(f, /^clashoo_(.+)_[^.]+\.ipk$/) || match(f, /^clashoo-(.+)\.apk$/);
+			mv = match(f, /^clashoo_(.+)_[^.]+\.ipk$/) || match(f, /^clashoo-(.+-r[0-9]+)-.+\.apk$/);
 			if (mv) { latest.clashoo = mv[1]; hit = true; }
 		} else {
-			mv = match(f, /^luci-app-clashoo_(.+)_[^.]+\.ipk$/) || match(f, /^luci-app-clashoo-(.+)\.apk$/);
+			mv = match(f, /^luci-app-clashoo_(.+)_[^.]+\.ipk$/) || match(f, /^luci-app-clashoo-(.+-r[0-9]+)-.+\.apk$/);
 			if (mv) latest.luci = mv[1];
 		}
 	}
 	if (hit) break;
+}
+// B2 缺啥用 GitHub 兜底
+if (!latest.clashoo || !latest.luci) {
+	let gh = gh_assets_versions(readfile(dir + '/gc') || '');
+	if (!latest.clashoo && gh.clashoo) latest.clashoo = gh.clashoo;
+	if (!latest.luci && gh.luci) latest.luci = gh.luci;
 }
 
 let rp = popen('rm -rf ' + shell_quote(dir)); if (rp) rp.close();
@@ -2085,12 +2131,11 @@ return {
 running,
 current,
 components: comps,
-arch: {
-system: trim(shell_read('uname -m 2>/dev/null') || ''),
-// 老配置可能存 x86_64 / aarch64_*，归一化为 mihomo arch 名后再吐给前端，
-// 这样下拉选项能正确 selected，alpha_asset_ver 也能匹配到资源行。
-download_core: normalize_mihomo_arch(uci_get('clashoo', 'config', 'download_core') || '')
-},
+	arch: {
+	system: trim(shell_read('uname -m 2>/dev/null') || ''),
+	// 老 arch 值归一化后再给前端
+	download_core: normalize_mihomo_arch(uci_get('clashoo', 'config', 'download_core') || '')
+	},
 last_log: component_last_log(),
 log: component_log_tail(40)
 };
