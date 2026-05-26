@@ -307,13 +307,13 @@ if (length(profiles) > 0) break;
 return profiles;
 }
 
-function strip_log_dates(text) {
-return replace(text || '', /\d{4}-\d{2}-\d{2} /g, '');
+function format_log_dates(text) {
+return replace(text || '', /\d{4}-(\d{2}-\d{2}) /g, '$1 ');
 }
 
 function format_update_log(text) {
 let out = [];
-for (let line in split(strip_log_dates(text || ''), '\n')) {
+for (let line in split(format_log_dates(text || ''), '\n')) {
 line = trim(line || '');
 if (!line) continue;
 if (index(line, '启动任务已触发') >= 0 ||
@@ -327,29 +327,34 @@ return join('\n', out);
 
 function reformat_core_line(line) {
 if (match(line, /^(===|---)/)) return line;
-// Extract local time from syslog outer prefix "23:16:18 2026"
+// Extract local time+date "May 26 23:16:18 2026" → "05-26 23:16:18"
 let local_t = '';
-let syslog_tm = match(line, /(\d{2}:\d{2}:\d{2}) \d{4}/);
-if (syslog_tm) local_t = syslog_tm[1];
+let syslog_tm = match(line, /^\w{3} (\d{1,2}) (\d{2}:\d{2}:\d{2}) \d{4}/);
+if (syslog_tm) {
+    let months = { Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12' };
+    let mon_match = match(line, /^\w{3}/);
+    let mon = mon_match ? months[mon_match[0]] || mon_match[0] : '??';
+    local_t = mon + '-' + syslog_tm[1].padStart(2,'0') + ' ' + syslog_tm[2];
+}
 // Strip syslog prefix "...process[pid]: "
 let msg = replace(line, /^.*?\[\d+\]:\s*/, '');
 if (msg === line) msg = line;
-// mihomo: time="...THH:MM:SS..." level=LEVEL msg="TEXT"
-let mm = match(msg, /^time="[^"]*T(\d{2}:\d{2}:\d{2})[^"]*"\s+level=(\w+)\s+msg="(.*)"\s*$/);
+// mihomo: time="YYYY-MM-DDTHH:MM:SS..." level=LEVEL msg="TEXT"
+let mm = match(msg, /^time="\d{4}-(\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})[^"]*"\s+level=(\w+)\s+msg="(.*)"\s*$/);
 if (mm) {
-    let t = local_t;
-    if (!t) { let h = +substr(mm[1], 0, 2); t = sprintf('%02d', (h + 8) % 24) + substr(mm[1], 2); }
-    if (mm[2] === 'info') return t + ' ' + mm[3];
-    return t + ' [' + mm[2] + '] ' + mm[3];
+    let t = local_t ? local_t : mm[1] + ' ';
+    let h = +substr(mm[2], 0, 2); t += sprintf('%02d', (h + 8) % 24) + substr(mm[2], 2);
+    if (mm[3] === 'info') return t + ' ' + mm[4];
+    return t + ' [' + mm[3] + '] ' + mm[4];
 }
 // sing-box ISO "T" format: "YYYY-MM-DDTHH:MM:SS... LEVEL message"
-let sm = match(msg, /^\d{4}-\d{2}-\d{2}T(\d{2}:\d{2}:\d{2})[^ ]* +(\w+) +(.*)/);
+let sm = match(msg, /^\d{4}-(\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})[^ ]* +(\w+) +(.*)/);
 if (sm) {
-    let t = local_t;
-    if (!t) { let h = +substr(sm[1], 0, 2); t = sprintf('%02d', (h + 8) % 24) + substr(sm[1], 2); }
-    let lvl = lc(sm[2]);
-    if (lvl === 'info') return t + ' ' + sm[3];
-    return t + ' [' + lvl + '] ' + sm[3];
+    let t = local_t ? local_t : sm[1] + ' ';
+    let h = +substr(sm[2], 0, 2); t += sprintf('%02d', (h + 8) % 24) + substr(sm[2], 2);
+    let lvl = lc(sm[3]);
+    if (lvl === 'info') return t + ' ' + sm[4];
+    return t + ' [' + lvl + '] ' + sm[4];
 }
 // sing-box space format: "[+0000] YYYY-MM-DD HH:MM:SS LEVEL message"
 let ss = match(msg, /^[+-]\d{4} \d{4}-\d{2}-\d{2} (\d{2}:\d{2}:\d{2}) +(\w+) +(.*)/);

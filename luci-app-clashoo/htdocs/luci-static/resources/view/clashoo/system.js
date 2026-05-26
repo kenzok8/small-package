@@ -762,7 +762,7 @@ return view.extend({
       enhanceDashPasswordField(node);
       container.appendChild(node);
       container.appendChild(E('div', { 'class': 'cl-save-bar' }, [
-        E('button', { 'class': 'btn cbi-button', click: function () {
+        E('button', { 'class': 'cbi-button', click: function () {
           m.save().then(function () { return clashoo.commitConfig(); })
             .then(function () { return clearClashooDirty(); })
             .then(function () { location.reload(); })
@@ -845,7 +845,7 @@ return view.extend({
       decorateSystemForm(node);
       container.appendChild(node);
       container.appendChild(E('div', { 'class': 'cl-save-bar' }, [
-        E('button', { 'class': 'btn cbi-button', click: function () {
+        E('button', { 'class': 'cbi-button', click: function () {
           m.save().then(function () { return clashoo.commitConfig(); })
             .then(function () { return clearClashooDirty(); })
             .then(function () { location.reload(); })
@@ -894,12 +894,16 @@ return view.extend({
     function buildLine(ln) {
       var cls = detectLevel(ln);
       var ts = '', msg = ln;
-      /* plugin / update: YYYY-MM-DD HH:MM:SS → MM-DD HH:MM:SS */
-      var pm = ln.match(/^\d{4}-(\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+-\s+(.*)$/);
-      if (pm) { ts = pm[1] + ' ' + pm[2]; msg = pm[3]; }
       /* core syslog: Mon DD HH:MM:SS YYYY → MM-DD HH:MM:SS */
       var cm = ln.match(/^(\w{3})\s+(\d{1,2})\s+(\d{2}:\d{2}:\d{2})\s+\d{4}\s+\S+\.(\S+)\s+\S+\[\d+\]:\s+(.*)$/);
       if (cm) { ts = (MONTHS[cm[1]] || cm[1]) + '-' + cm[2].padStart(2,'0') + ' ' + cm[3]; msg = cm[5] || ln; }
+      /* plugin / update: MM-DD HH:MM:SS [warn] message */
+      else if (/^\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\s/.test(ln)) {
+        ts = ln.substring(0,14);
+        msg = ln.substring(15);
+        /* update: MM-DD HH:MM:SS - message → strip dash */
+        if (msg.indexOf(' - ') === 0) msg = msg.substring(3);
+      }
       if (ts) {
         return '<div class="cl-log-line ' + cls + '"><span class="cl-log-ts">' + esc(ts) + '</span><span class="cl-log-msg">' + esc(msg) + '</span></div>';
       }
@@ -975,7 +979,7 @@ return view.extend({
     var cbPause = E('input', { type: 'checkbox' });
     cbPause.addEventListener('change', function () { state.paused = cbPause.checked; });
 
-    var selFilter = E('select', { 'class': 'btn cbi-button', style: 'font-size:11px;padding:2px 8px' }, [
+    var selFilter = E('select', { 'class': 'cbi-button', style: 'font-size:11px;padding:2px 8px' }, [
       E('option', { value: '' }, '全部'),
       E('option', { value: 'info' }, 'INFO'),
       E('option', { value: 'warn' }, 'WARN'),
@@ -987,10 +991,10 @@ return view.extend({
       applyFilter();
     });
 
-    var btnClearView = E('button', { 'class': 'btn cbi-button', style: 'font-size:11px;padding:2px 8px' }, '清空显示');
+    var btnClearView = E('button', { 'class': 'cbi-button', style: 'font-size:11px;padding:2px 8px' }, '清空显示');
     btnClearView.addEventListener('click', function () { logArea.innerHTML = ''; });
 
-    var btnDownload = E('button', { 'class': 'btn cbi-button', style: 'font-size:11px;padding:2px 8px' }, '下载');
+    var btnDownload = E('button', { 'class': 'cbi-button', style: 'font-size:11px;padding:2px 8px' }, '下载');
     btnDownload.addEventListener('click', function () {
       var blob = new Blob([logArea.textContent || ''], { type: 'text/plain' });
       var url = URL.createObjectURL(blob);
@@ -1001,7 +1005,7 @@ return view.extend({
       URL.revokeObjectURL(url);
     });
 
-    clearBtn = E('button', { 'class': 'btn cbi-button', style: 'font-size:11px;padding:2px 8px' }, '清空文件');
+    clearBtn = E('button', { 'class': 'cbi-button', style: 'font-size:11px;padding:2px 8px' }, '清空文件');
     clearBtn.addEventListener('click', function () {
       var ct = currentType();
       if (!ct.clear) return;

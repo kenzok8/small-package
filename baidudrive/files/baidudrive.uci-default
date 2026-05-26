@@ -1,0 +1,13 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@baidudrive[-1]
+	add ucitrack baidudrive
+	set ucitrack.@baidudrive[-1].init=baidudrive
+	commit ucitrack
+EOF
+
+/etc/init.d/baidudrive enable
+/etc/init.d/baidudrive start
+
+exit 0
