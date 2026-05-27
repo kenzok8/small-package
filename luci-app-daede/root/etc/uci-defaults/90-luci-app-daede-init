@@ -1,0 +1,103 @@
+#!/bin/sh
+# Patch the daed package's /etc/init.d/daed to clean up /run/netns/daens on
+# stop_service(). Without this, restarting daed fails with:
+#   fatal: failed to create netns: open /run/netns/daens: file exists
+#
+# This script lives under /etc/uci-defaults/ which OpenWrt runs once on
+# every package install/upgrade and then removes - so each time luci-app-daede
+# is (re-)installed we re-patch the daed init.d even if it was overwritten
+# by a daed package upgrade in between.
+#
+# The patch is idempotent: a marker comment guards against double-injection.
+
+set -e
+
+# luci-app-daede owns its own LuCI menu and view path. Remove stale files from
+# the official luci-app-daed package and earlier daede builds that reused
+# /view/daed.
+rm -f /usr/share/luci/menu.d/luci-app-daed.json
+rm -f /usr/share/rpcd/acl.d/luci-app-daed.json
+rm -rf /usr/share/luci-app-daed
+rm -rf /www/luci-static/resources/view/daed
+rm -f /usr/lib/lua/luci/i18n/daed.zh-cn.lmo
+rm -f /tmp/luci-indexcache.* 2>/dev/null || true
+rm -rf /tmp/luci-modulecache/* 2>/dev/null || true
+
+if [ -f /etc/config/daed_luci ]; then
+	old_backend="$(uci -q get daed_luci.config.active_backend || true)"
+	if ! uci -q get daede.config >/dev/null 2>&1; then
+		touch /etc/config/daede
+		uci -q set daede.config=daede
+		case "$old_backend" in
+			dae|daed) uci -q set daede.config.active_backend="$old_backend" ;;
+		esac
+		uci -q commit daede
+	elif ! uci -q get daede.config.active_backend >/dev/null 2>&1; then
+		case "$old_backend" in
+			dae|daed)
+				uci -q set daede.config.active_backend="$old_backend"
+				uci -q commit daede
+				;;
+		esac
+	fi
+	rm -f /etc/config/daed_luci
+fi
+
+if ! uci -q get daede.config >/dev/null 2>&1; then
+	touch /etc/config/daede
+	uci -q set daede.config=daede
+	if [ -f /etc/init.d/daed ]; then
+		uci -q set daede.config.active_backend='daed'
+	else
+		uci -q set daede.config.active_backend='dae'
+	fi
+	uci -q commit daede
+fi
+
+# Remove --disable-timestamp from dae init so log lines carry timestamps
+DAE_INIT="/etc/init.d/dae"
+if [ -f "$DAE_INIT" ]; then
+	sed -i 's/--disable-timestamp//' "$DAE_INIT"
+	sed -i '/procd_append_param command *$/d' "$DAE_INIT"
+fi
+
+# dae expects geoip.dat / geosite.dat under /usr/share/dae/;
+# v2ray-geoip installs them to /usr/share/v2ray/. Create symlinks.
+if [ -f /usr/share/v2ray/geoip.dat ] && [ ! -f /usr/share/dae/geoip.dat ]; then
+	mkdir -p /usr/share/dae
+	ln -sf /usr/share/v2ray/geoip.dat /usr/share/dae/geoip.dat
+fi
+if [ -f /usr/share/v2ray/geosite.dat ] && [ ! -f /usr/share/dae/geosite.dat ]; then
+	mkdir -p /usr/share/dae
+	ln -sf /usr/share/v2ray/geosite.dat /usr/share/dae/geosite.dat
+fi
+if [ -f /usr/share/v2ray/geoip.dat ] && [ ! -f /usr/share/daed/geoip.dat ]; then
+	mkdir -p /usr/share/daed
+	ln -sf /usr/share/v2ray/geoip.dat /usr/share/daed/geoip.dat
+fi
+if [ -f /usr/share/v2ray/geosite.dat ] && [ ! -f /usr/share/daed/geosite.dat ]; then
+	mkdir -p /usr/share/daed
+	ln -sf /usr/share/v2ray/geosite.dat /usr/share/daed/geosite.dat
+fi
+
+INIT="/etc/init.d/daed"
+MARKER="# luci-app-daede: netns-cleanup"
+
+[ -f "$INIT" ] || exit 0
+grep -q "$MARKER" "$INIT" && exit 0
+
+# Inject `ip netns del daens 2>/dev/null || true` right after `rm -f "$LOG"`
+# inside stop_service(). awk is more reliable than sed for multiline contexts.
+awk -v marker="$MARKER" '
+	BEGIN { in_stop = 0; injected = 0 }
+	/^stop_service\(\)/    { in_stop = 1 }
+	in_stop && /^}/        { in_stop = 0 }
+	{ print }
+	in_stop && !injected && /rm -f "\$LOG"/ {
+		print "\tip netns del daens 2>/dev/null || true  " marker
+		injected = 1
+	}
+' "$INIT" > "${INIT}.new" && mv "${INIT}.new" "$INIT"
+chmod +x "$INIT"
+
+exit 0

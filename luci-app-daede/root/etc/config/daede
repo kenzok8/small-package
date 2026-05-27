@@ -1,0 +1,2 @@
+config daede 'config'
+	option active_backend 'daed'

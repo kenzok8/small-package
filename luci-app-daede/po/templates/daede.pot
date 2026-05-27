@@ -1,0 +1,362 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "Service Status"
+msgstr ""
+
+msgid "Collecting data…"
+msgstr ""
+
+msgid "RUNNING"
+msgstr ""
+
+msgid "STOPPED"
+msgstr ""
+
+msgid "Backend"
+msgstr ""
+
+msgid "Listen"
+msgstr ""
+
+msgid "Toggle service"
+msgstr ""
+
+msgid "Open WebUI"
+msgstr ""
+
+msgid "Restart"
+msgstr ""
+
+msgid "Hot Reload"
+msgstr ""
+
+msgid "Active backend"
+msgstr ""
+
+msgid "Active"
+msgstr ""
+
+msgid "Not installed"
+msgstr ""
+
+msgid "Switch to %s"
+msgstr ""
+
+msgid "%s is not installed"
+msgstr ""
+
+msgid "%s is not installed. Install it first, then switch backend."
+msgstr ""
+
+msgid "Switching backend stops the current service first. Click start when you want the new backend to run."
+msgstr ""
+
+msgid "Stopping current backend…"
+msgstr ""
+
+msgid "Switching to %s…"
+msgstr ""
+
+msgid "Switched to %s. Click start when you want it to run."
+msgstr ""
+
+msgid "Backend switched to %s. Click start to run it."
+msgstr ""
+
+msgid "Switch failed."
+msgstr ""
+
+msgid "Failed to switch backend: %s"
+msgstr ""
+
+msgid "Action \"%s\" error: %s"
+msgstr ""
+
+msgid "Action \"%s\" failed: %s"
+msgstr ""
+
+msgid "Action \"%s\" succeeded."
+msgstr ""
+
+msgid "Toggle failed: %s"
+msgstr ""
+
+msgid "%s is already running. Stop %s before starting %s because both backends share the same eBPF/cgroup attachment."
+msgstr ""
+
+msgid "daede Settings"
+msgstr ""
+
+msgid "A modern dashboard for dae. Subscriptions, nodes, routing and DNS are managed in the daed WebUI."
+msgstr ""
+
+msgid "Listen Address"
+msgstr ""
+
+msgid "Host:port that the daed WebUI and GraphQL API listen on."
+msgstr ""
+
+msgid "Max Log Size (MB)"
+msgstr ""
+
+msgid "Rotate the log file once it grows past this many megabytes."
+msgstr ""
+
+msgid "Max Log Backups"
+msgstr ""
+
+msgid "Number of rotated log files to keep."
+msgstr ""
+
+msgid "Log Advanced Settings"
+msgstr ""
+
+msgid "dae Settings"
+msgstr ""
+
+msgid "eBPF-based Linux high-performance transparent proxy solution."
+msgstr ""
+
+msgid "Configuration File"
+msgstr ""
+
+msgid "dae Configuration"
+msgstr ""
+
+msgid "Text-only mode."
+msgstr ""
+
+msgid "dae has no built-in WebUI. Edit the config DSL below by hand (subscriptions, nodes, routing, DNS). \"Initialize from example\" loads the bundled template — replace the placeholder subscription URL with your own before saving. For point-and-click management, switch backend to daed."
+msgstr ""
+
+msgid "dae config file is empty. Click \"Initialize from example\" to start, or paste your config here."
+msgstr ""
+
+msgid "Save and Hot Reload"
+msgstr ""
+
+msgid "Initialize from example"
+msgstr ""
+
+msgid "+ Insert Block…"
+msgstr ""
+
+msgid "Insert config block at cursor"
+msgstr ""
+
+msgid "lines"
+msgstr ""
+
+msgid "⚠ %d placeholder"
+msgstr ""
+
+msgid "⚠ 还差订阅链接才能跑：检测到 %d 行占位 URL"
+msgstr ""
+
+msgid " / "
+msgstr ""
+
+msgid "这些 "
+msgstr ""
+
+msgid " 都是 dae 官方模板留的假地址，不是真订阅。把其中任意一行的 URL 换成你机场的订阅链接（删掉多余行），保存即可跑通。"
+msgstr ""
+
+msgid "Placeholder lines (click line number to jump):"
+msgstr ""
+
+msgid "Jump to line"
+msgstr ""
+
+msgid "Validating…"
+msgstr ""
+
+msgid "Validate failed: %s"
+msgstr ""
+
+msgid "Saving…"
+msgstr ""
+
+msgid "Reload failed: %s"
+msgstr ""
+
+msgid "Validated · saved · hot-reloaded"
+msgstr ""
+
+msgid "Save failed: %s"
+msgstr ""
+
+msgid "Loading example…"
+msgstr ""
+
+msgid "Example loaded"
+msgstr ""
+
+msgid "Init failed: %s"
+msgstr ""
+
+msgid "Selected backend is not installed. Install dae or daed from the package feed first."
+msgstr ""
+
+msgid "Loading…"
+msgstr ""
+
+msgid "Log file does not exist yet."
+msgstr ""
+
+msgid "Error reading log: %s"
+msgstr ""
+
+msgid "Log file cleared."
+msgstr ""
+
+msgid "Failed to clear log: %s"
+msgstr ""
+
+msgid "Truncate %s log on the router? This cannot be undone."
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "Updates"
+msgstr ""
+
+msgid "Log"
+msgstr ""
+
+msgid "Data Updates"
+msgstr ""
+
+msgid "Package Updates"
+msgstr ""
+
+msgid "System Health"
+msgstr ""
+
+msgid "Update"
+msgstr ""
+
+msgid "Upgrade"
+msgstr ""
+
+msgid "Clean"
+msgstr ""
+
+msgid "missing — click Update to fetch"
+msgstr ""
+
+msgid "%s download started — will refresh in 1–3 min."
+msgstr ""
+
+msgid "%s update already running."
+msgstr ""
+
+msgid "%s update failed: %s"
+msgstr ""
+
+msgid "%s update error: %s"
+msgstr ""
+
+msgid "%s binary"
+msgstr ""
+
+msgid "active"
+msgstr ""
+
+msgid "installed"
+msgstr ""
+
+msgid "latest"
+msgstr ""
+
+msgid "up to date"
+msgstr ""
+
+msgid "not installed via package manager"
+msgstr ""
+
+msgid "Unavailable"
+msgstr ""
+
+msgid "Run \"apk upgrade %s\" now? This may restart the active backend."
+msgstr ""
+
+msgid "%s upgrade started — see log below."
+msgstr ""
+
+msgid "%s upgrade already running."
+msgstr ""
+
+msgid "%s upgrade failed: %s"
+msgstr ""
+
+msgid "%s upgrade error: %s"
+msgstr ""
+
+msgid "Probing…"
+msgstr ""
+
+msgid "%s process"
+msgstr ""
+
+msgid "Kernel BTF"
+msgstr ""
+
+msgid "WebUI/API"
+msgstr ""
+
+msgid "Hot reload"
+msgstr ""
+
+msgid "netns daens"
+msgstr ""
+
+msgid "pgrep reports the backend is running"
+msgstr ""
+
+msgid "backend process is not running"
+msgstr ""
+
+msgid "service is running, expected on port %s"
+msgstr ""
+
+msgid "service is stopped"
+msgstr ""
+
+msgid "not available — eBPF needs CONFIG_DEBUG_INFO_BTF or vmlinux-btf"
+msgstr ""
+
+msgid "/etc/init.d/dae hot_reload is available"
+msgstr ""
+
+msgid "netns daens removed."
+msgstr ""
+
+msgid "exists, may block daed start"
+msgstr ""
+
+msgid "clean"
+msgstr ""
+
+msgid "%s Realtime Log"
+msgstr ""
+
+msgid "Auto-scroll"
+msgstr ""
+
+msgid "Pause"
+msgstr ""
+
+msgid "Filter (substring)"
+msgstr ""
+
+msgid "Clear View"
+msgstr ""
+
+msgid "Clear File"
+msgstr ""
+
+msgid "Download"
+msgstr ""
