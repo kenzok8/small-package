@@ -183,6 +183,7 @@ git clone --depth 1 https://github.com/Wulnut/luci-app-suselogin
 git clone https://github.com/Ausaci/luci-app-nat6-helper -b main-dev
 git clone --depth 1 https://github.com/animegasan/luci-app-droidmodem
 git clone --depth 1 https://github.com/kenzok78/luci-app-guest-wifi
+git clone --depth 1 https://github.com/kenzok8/luci-app-daede daede-luci && mv -n daede-luci/luci-app-daede ./; rm -rf daede-luci
 git clone --depth 1 https://github.com/EkkoG/openwrt-natmap
 git clone --depth 1 https://github.com/EkkoG/luci-app-natmap
 git clone --depth 1 https://github.com/EasyTier/luci-app-easytier luci-app-easytier1 && mvdir luci-app-easytier1
