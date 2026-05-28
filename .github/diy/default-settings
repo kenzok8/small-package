@@ -46,15 +46,28 @@ echo '[ -n "$(command -v ip6tables)" ] && ip6tables -t nat -A PREROUTING -p tcp 
 sed -i '/option disabled/d' /etc/config/wireless
 sed -i '/set wireless.radio${devidx}.disabled/d' /lib/wifi/mac80211.sh
 
-sed -i '/DISTRIB_REVISION/d' /etc/openwrt_release
-echo "DISTRIB_REVISION='v$(date +'%Y.%m.%d')'" >> /etc/openwrt_release
-sed -i '/DISTRIB_RELEASE/d' /etc/openwrt_release
-echo "DISTRIB_RELEASE='v$(date +'%Y.%m.%d')'" >> /etc/openwrt_release
-sed -i '/DISTRIB_DESCRIPTION/d' /etc/openwrt_release
-echo "DISTRIB_DESCRIPTION='Openwrt '" >> /etc/openwrt_release
+# kenzo 构建标记
+# 关键：保留 DISTRIB_REVISION / DISTRIB_RELEASE 原值不动，apk/opkg 需要它们拼 feed URL
+# 在 DISTRIB_DESCRIPTION 末尾追加 kenzo 字串 + 新增独立字段 kenzo_build 供脚本读取
+kenzo_date="$(date +'%Y.%m.%d')"
+sed -i "s/^\(DISTRIB_DESCRIPTION='[^']*\)'/\1 by kenzo $kenzo_date'/" /etc/openwrt_release
+sed -i '/^kenzo_build=/d' /etc/openwrt_release
+echo "kenzo_build='v$kenzo_date'" >> /etc/openwrt_release
 
-sed -i -e 's/ImmortalWrt/Openwrt/' -e 's/LuCI [^ ]*/kenzo/g' -e '/luciversion/d' /usr/lib/lua/luci/version.lua
-echo "luciversion ='$(date +'%m.%d')'" >> /usr/lib/lua/luci/version.lua
+# 同步把 kenzo_build 写进 banner，方便 ssh 登录时看见
+if [ -f /etc/banner ]; then
+    if grep -q "by kenzo" /etc/banner; then
+        sed -i "/by kenzo/c\\       build v$kenzo_date by kenzo" /etc/banner
+    else
+        sed -i "s|%D %V, %C|build v$kenzo_date by kenzo|" /etc/banner
+    fi
+fi
+
+# LuCI 版本字串改 kenzo 标记（纯界面字串，不影响包管理）
+if [ -f /usr/lib/lua/luci/version.lua ]; then
+    sed -i -e 's/ImmortalWrt/Openwrt/' -e 's/LuCI [^ ]*/kenzo/g' -e '/luciversion/d' /usr/lib/lua/luci/version.lua
+    echo "luciversion ='$kenzo_date'" >> /usr/lib/lua/luci/version.lua
+fi
 
 sed -i '/log-facility/d' /etc/dnsmasq.conf
 echo "log-facility=/dev/null" >> /etc/dnsmasq.conf
