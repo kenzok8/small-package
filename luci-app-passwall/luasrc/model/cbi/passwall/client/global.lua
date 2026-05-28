@@ -95,7 +95,7 @@ end
 
 m:append(Template(appname .. "/global/status"))
 
-global_cfgid = m:get("@global[0]")[".name"]
+global_cfgid = (m:get("@global[0]") or {})[".name"] or ""
 
 s = m:section(TypedSection, "global")
 s.anonymous = true

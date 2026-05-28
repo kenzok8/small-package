@@ -24,7 +24,6 @@ function index()
 	local uci = api.uci			-- in function index()
 	local fs = api.fs
 	entry({"admin", "services", appname}).dependent = true
-	entry({"admin", "services", appname, "reset_config"}, call("reset_config")).leaf = true
 	entry({"admin", "services", appname, "show"}, call("show_menu")).leaf = true
 	entry({"admin", "services", appname, "hide"}, call("hide_menu")).leaf = true
 	local e
@@ -113,6 +112,7 @@ function index()
 	--[[Backup]]
 	entry({"admin", "services", appname, "create_backup"}, call("create_backup")).leaf = true
 	entry({"admin", "services", appname, "restore_backup"}, call("restore_backup")).leaf = true
+	entry({"admin", "services", appname, "reset_config"}, call("reset_config")).leaf = true
 
 	--[[geoview]]
 	entry({"admin", "services", appname, "geo_view"}, call("geo_view")).leaf = true
@@ -136,9 +136,15 @@ local function http_write_json_error(data)
 end
 
 function reset_config()
+	uci:revert(appname)
+	luci.sys.call("echo '' > /tmp/log/passwall.log")
 	luci.sys.call('/etc/init.d/passwall stop')
-	luci.sys.call('[ -f "/usr/share/passwall/0_default_config" ] && cp -f /usr/share/passwall/0_default_config /etc/config/passwall')
-	http.redirect(api.url())
+	if luci.sys.call('[ -s "/usr/share/passwall/0_default_config" ]') == 0 then
+		luci.sys.call('cp -f /usr/share/passwall/0_default_config /etc/config/passwall')
+		api.log(" * 恢复默认配置成功。")
+	else
+		api.log(" * 找不到默认配置文件，重置失败！")
+	end
 end
 
 function show_menu()
