@@ -1232,6 +1232,18 @@ function refreshConnInfo() {
 			}
 		}
 	};
+	xhr.onerror = function() {
+      		isRefreshing = false;
+      		btn.disabled = false;
+      		btn.classList.remove('loading');
+      		btnText.textContent = originalText;
+  	};
+  	xhr.onabort = function() {
+      		isRefreshing = false;
+      		btn.disabled = false;
+      		btn.classList.remove('loading');
+      		btnText.textContent = originalText;
+  	};
 	xhr.send();
 }
 
@@ -1496,7 +1508,7 @@ function loadContributors() {
 
 // 自动刷新
 XHR.poll(5, '<%=url("admin", "vpn", "easytier", "api_conninfo")%>', null, function(x, data) {
-	if (!isRefreshing) {
+	if (!isRefreshing && data) {
 		updateConnInfo(data);
 	}
 });

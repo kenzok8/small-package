@@ -1075,6 +1075,7 @@ function updateTunInterface(coreRunning, noTun, devName) {
 
 var firstLoad = true;
 XHR.poll(3, '<%=url("admin", "vpn", "easytier", "api_status")%>', null, function(x, data) {
+	if (!data) return;
 	updateStatus(data);
 	
 	updateTunInterface(data.crunning, data.no_tun, data.dev_name);

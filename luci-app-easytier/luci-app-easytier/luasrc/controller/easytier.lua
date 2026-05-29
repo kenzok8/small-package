@@ -147,7 +147,7 @@ function act_status()
 	end
 	
 	e.no_tun = uci:get_first("easytier", "easytier", "no_tun") == "1"
-	e.dev_name = uci:get_first("easytier", "easytier", "dev_name") or "tun0"
+	e.dev_name = uci:get_first("easytier", "easytier", "tunname") or "tun0"
 
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
