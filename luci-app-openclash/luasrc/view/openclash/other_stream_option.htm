@@ -25,7 +25,7 @@ function act_manual_unlock_test_<%=stream_id_name%>(btn, type)
 			{
 				manual_<%=stream_id_name%>_type_legend.style.display = 'none';
 				manual_<%=stream_id_name%>_type_output.innerHTML = '<textarea id="manual_<%=stream_id_name%>_type_output" class="cbi-input-textarea" style="width: 100%;display:inline" data-update="change" rows="10" cols="50" readonly="readonly" >'+x.responseText+'</textarea>';
-				log_area(document.getElementById("manual_<%=stream_id_name%>_type_output"), 'manual_stream_unlock_test', 'true', manual_<%=stream_id_name%>_type_output.offsetWidth, '250px');
+				log_editor(document.getElementById("manual_<%=stream_id_name%>_type_output"), 'manual_stream_unlock_test', 'true', manual_<%=stream_id_name%>_type_output.offsetWidth, '250px');
 			}
 			else
 			{

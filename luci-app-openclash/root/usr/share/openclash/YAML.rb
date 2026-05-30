@@ -21,36 +21,25 @@ module YAML
 		puts Time.new.strftime("%Y-%m-%d %H:%M:%S") + " [Tip] " + "#{info}"
 	end
 
-	# Keep `short-id` as string before YAML parsing so leading zeros are preserved.
-	# This is required for REALITY short-id values like `00000000`.
 	def self.load_file(filename, *args, **kwargs)
 		yaml_content = File.read(filename)
 		processed_content = fix_short_id_quotes(yaml_content)
 
-		if kwargs.empty?
-			load(processed_content, *args)
-		else
-			load(processed_content, *args, **kwargs)
-		end
+		load(processed_content, *args, **kwargs)
 	end
 
 	def self.dump(obj, io = nil, **options)
 		begin
-		if io.nil?
 			yaml_content = original_dump(obj, **options)
-			fix_short_id_quotes(yaml_content)
-		elsif io.respond_to?(:write)
-			require 'stringio'
-			temp_io = StringIO.new
-			original_dump(obj, temp_io, **options)
-			yaml_content = temp_io.string
-			processed_content = fix_short_id_quotes(yaml_content)
-			io.write(processed_content)
-			io
-		else
-			yaml_content = original_dump(obj, io, **options)
-			fix_short_id_quotes(yaml_content)
-		end
+			processed = fix_short_id_quotes(yaml_content)
+			if io.nil?
+				processed
+			elsif io.respond_to?(:write)
+				io.write(processed)
+				io
+			else
+				processed
+			end
 		rescue => e
 			LOG_ERROR("Write file failed:【%s】" % [e.message])
 			nil
@@ -59,58 +48,84 @@ module YAML
 
 	private
 
-	SHORT_ID_REGEX = /^(\s*)short-id:\s*(.*)$/
-	LIST_ITEM_REGEX = /^(\s*)-\s*(.*)$/
-	KEY_REGEX = /^(\s*)([a-zA-Z0-9_-]+):\s*(.*)$/
-	QUOTED_VALUE_REGEX = /^(["'].*["']|null)$/
-
-	# Inline map support, e.g. reality-opts: { ..., short-id: 00000000 }
-	INLINE_SHORT_ID_REGEX = /(short-id:\s*)(?!["'\[]|null)([^\s,"'{}\[\]\n\r]+)(?=\s*(?:[,}\]\n\r]|$))/m.freeze
+	# fix_short_id_quotes:
+	# Purpose: ensure YAML `short-id` values are emitted with the intended
+	# representation when dumping or re-writing YAML files.
+	# Behavior:
+	# - Non-null, non-empty scalar `short-id` values (and items inside
+	#   `short-id` sequences) are written as double-quoted strings.
+	# - Empty strings are preserved as empty quoted strings ("" remains "").
+	# - Null values are preserved and may be emitted explicitly (e.g. `! "").
+	# Lastly, use gsub to clean up any `! ""` tags
+	# Examples:
+	#   Input:  short-id: 00000000    -> Output: short-id: "00000000"
+	#   Input:  short-id: ""          -> Output: short-id: ""
+	#   Input:  short-id: "abc123"    -> Output: short-id: "abc123"
+	#   Input:  short-id: "1600e237"  -> Output: short-id: "1600e237"
+	#   Input:  short-id: null        -> Output: short-id: ""
 
 	def self.fix_short_id_quotes(yaml_content)
 		return yaml_content unless yaml_content.include?('short-id:')
 
 		begin
-			# First, normalize inline-map style unquoted short-id.
-			processed = yaml_content.gsub(INLINE_SHORT_ID_REGEX) do
-				"#{$1}\"#{$2}\""
-			end
+			stream = Psych.parse_stream(yaml_content)
 
-			lines = processed.lines
-			short_id_indices = lines.each_index.select { |i| lines[i] =~ SHORT_ID_REGEX }
-			short_id_indices.each do |short_id_index|
-				line = lines[short_id_index]
-				if line =~ SHORT_ID_REGEX
-					indent = $1
-					value = $2.strip
-					if value.empty?
-						(short_id_index + 1...lines.size).each do |i|
-							line = lines[i]
-							next if line.strip.empty?
-							if line[/^\s*/].length <= indent.length
-								break
-							end
-							if line =~ LIST_ITEM_REGEX
-								indent = $1
-								value = $2.strip
-								if value =~ KEY_REGEX
-									break
+			traverse = lambda do |node|
+				case node
+				when Psych::Nodes::Mapping
+					children = node.children || []
+					i = 0
+					while i < children.length
+						key = children[i]
+						val = children[i + 1]
+						if key.is_a?(Psych::Nodes::Scalar) && key.value == 'short-id'
+							if val.is_a?(Psych::Nodes::Scalar)
+								is_null_scalar = (val.tag == 'tag:yaml.org,2002:null') || (val.tag == '!!null') || (val.value =~ /^\s*(~|null|NULL|Null)\s*$/)
+								unless is_null_scalar
+									val.tag = nil
+									val.style = defined?(Psych::Nodes::Scalar::DOUBLE_QUOTED) ? Psych::Nodes::Scalar::DOUBLE_QUOTED : 2
 								end
-								if value !~ QUOTED_VALUE_REGEX
-									lines[i] = "#{indent}- \"#{value}\"\n"
+							elsif val.is_a?(Psych::Nodes::Sequence)
+								val.children.each do |child|
+									if child.is_a?(Psych::Nodes::Scalar)
+										is_null_child = (child.tag == 'tag:yaml.org,2002:null') || (child.tag == '!!null') || (child.value =~ /^\s*(~|null|NULL|Null)\s*$/)
+										unless is_null_child
+											child.tag = nil
+											child.style = defined?(Psych::Nodes::Scalar::DOUBLE_QUOTED) ? Psych::Nodes::Scalar::DOUBLE_QUOTED : 2
+										end
+									end
 								end
-							elsif line =~ KEY_REGEX
-								break
 							end
+						else
+							traverse.call(key) if key.respond_to?(:children)
+							traverse.call(val) if val.respond_to?(:children)
 						end
-					else
-						if value !~ QUOTED_VALUE_REGEX
-							lines[short_id_index] = "#{indent}short-id: \"#{value}\"\n"
-						end
+						i += 2
+					end
+				when Psych::Nodes::Sequence
+					(node.children || []).each { |c| traverse.call(c) }
+				when Psych::Nodes::Document, Psych::Nodes::Stream
+					(node.children || []).each { |c| traverse.call(c) }
+				else
+					if node.respond_to?(:children)
+						(node.children || []).each { |c| traverse.call(c) }
 					end
 				end
 			end
-			lines.join
+
+			stream.children.each do |doc_node|
+				if doc_node.is_a?(Psych::Nodes::Document)
+					traverse.call(doc_node.root) if doc_node.root
+				end
+			end
+
+			if stream.respond_to?(:to_yaml)
+				processed_yaml = stream.to_yaml
+				processed_yaml = processed_yaml.gsub(/^([ \t]*short-id:\s*)!\s*/, "\\1")
+				processed_yaml
+			else
+				yaml_content
+			end
 		rescue => e
 			LOG_ERROR("Fix short-id values type failed:【%s】" % [e.message])
 			yaml_content

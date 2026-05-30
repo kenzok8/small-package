@@ -885,6 +885,62 @@ o.template = "openclash/other_stream_option"
 o.value = "OpenAI"
 o:depends("stream_auto_select_openai", "1")
 
+-- Claude
+o = s:taboption("stream_enhance", Flag, "stream_auto_select_claude", font_red..translate("Claude")..font_off)
+o.default = 0
+o:depends("stream_auto_select", "1")
+
+o = s:taboption("stream_enhance", Value, "stream_auto_select_group_key_claude", translate("Group Filter"))
+o.placeholder = "Claude|AI"
+o.description = translate("It Will Be Searched According To The Regex When Auto Search Group Fails")
+o:depends("stream_auto_select_claude", "1")
+o.rmempty = true
+
+o = s:taboption("stream_enhance", Value, "stream_auto_select_region_key_claude", translate("Unlock Region Filter"))
+o.placeholder = "US"
+o.description = translate("It Will Be Selected Region(Country Shortcode) According To The Regex")
+o:depends("stream_auto_select_claude", "1")
+o.rmempty = true
+
+o = s:taboption("stream_enhance", Value, "stream_auto_select_node_key_claude", translate("Unlock Nodes Filter"))
+o.description = translate("It Will Be Selected Nodes According To The Regex")
+o:depends("stream_auto_select_claude", "1")
+o.rmempty = true
+
+o = s:taboption("stream_enhance", DummyValue, "Claude", translate("Manual Test"))
+o.rawhtml = true
+o.template = "openclash/other_stream_option"
+o.value = "Claude"
+o:depends("stream_auto_select_claude", "1")
+
+-- Gemini
+o = s:taboption("stream_enhance", Flag, "stream_auto_select_gemini", font_red..translate("Gemini")..font_off)
+o.default = 0
+o:depends("stream_auto_select", "1")
+
+o = s:taboption("stream_enhance", Value, "stream_auto_select_group_key_gemini", translate("Group Filter"))
+o.placeholder = "Gemini|AI"
+o.description = translate("It Will Be Searched According To The Regex When Auto Search Group Fails")
+o:depends("stream_auto_select_gemini", "1")
+o.rmempty = true
+
+o = s:taboption("stream_enhance", Value, "stream_auto_select_region_key_gemini", translate("Unlock Region Filter"))
+o.placeholder = "US"
+o.description = translate("It Will Be Selected Region(Country Shortcode) According To The Regex")
+o:depends("stream_auto_select_gemini", "1")
+o.rmempty = true
+
+o = s:taboption("stream_enhance", Value, "stream_auto_select_node_key_gemini", translate("Unlock Nodes Filter"))
+o.description = translate("It Will Be Selected Nodes According To The Regex")
+o:depends("stream_auto_select_gemini", "1")
+o.rmempty = true
+
+o = s:taboption("stream_enhance", DummyValue, "Gemini", translate("Manual Test"))
+o.rawhtml = true
+o.template = "openclash/other_stream_option"
+o.value = "Gemini"
+o:depends("stream_auto_select_gemini", "1")
+
 ---- update Settings
 o = s:taboption("geo_update", Flag, "geo_auto_update", font_red..bold_on..translate("Auto Update GeoIP MMDB")..bold_off..font_off)
 o.default = 0
@@ -912,9 +968,10 @@ o = s:taboption("geo_update", Value, "geo_custom_url")
 o.title = translate("Custom GeoIP MMDB URL")
 o.rmempty = true
 o.description = translate("Custom GeoIP MMDB URL, Click Button Below To Refresh After Edit")
-o:value("https://testingcf.jsdelivr.net/gh/alecthw/mmdb_china_ip_list@release/lite/Country.mmdb", translate("Alecthw-lite-Version")..translate("(Default mmdb)"))
-o:value("https://testingcf.jsdelivr.net/gh/alecthw/mmdb_china_ip_list@release/Country.mmdb", translate("Alecthw-Version")..translate("(All Info mmdb)"))
-o:value("https://testingcf.jsdelivr.net/gh/Hackl0us/GeoIP2-CN@release/Country.mmdb", translate("Hackl0us-Version")..translate("(Only CN)"))
+o:value("https://testingcf.jsdelivr.net/gh/alecthw/mmdb_china_ip_list@release/lite/Country.mmdb", translate("Alecthw-lite-testingcf-Version")..translate("(Default mmdb)"))
+o:value("https://testingcf.jsdelivr.net/gh/alecthw/mmdb_china_ip_list@release/Country.mmdb", translate("Alecthw-testingcf-Version")..translate("(All Info mmdb)"))
+o:value("https://testingcf.jsdelivr.net/gh/Hackl0us/GeoIP2-CN@release/Country.mmdb", translate("Hackl0us-testingcf-Version")..translate("(Only CN)"))
+o:value("https://github.com/alecthw/mmdb_china_ip_list/releases/latest/download/Country-lite.mmdb", translate("Alecthw-lite-github-Version"))
 o.default = "https://testingcf.jsdelivr.net/gh/alecthw/mmdb_china_ip_list@release/lite/Country.mmdb"
 o:depends("geo_auto_update", "1")
 
@@ -958,6 +1015,7 @@ o.rmempty = true
 o.description = translate("Custom GeoIP Dat URL, Click Button Below To Refresh After Edit")
 o:value("https://testingcf.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat", translate("Loyalsoldier-testingcf-jsdelivr-Version")..translate("(Default)"))
 o:value("https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat", translate("Loyalsoldier-fastly-jsdelivr-Version"))
+o:value("https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat", translate("Loyalsoldier-github-Version"))
 o.default = "https://testingcf.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat"
 o:depends("geoip_auto_update", "1")
 
@@ -1001,6 +1059,7 @@ o.rmempty = true
 o.description = translate("Custom GeoSite Data URL, Click Button Below To Refresh After Edit")
 o:value("https://testingcf.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat", translate("Loyalsoldier-testingcf-jsdelivr-Version")..translate("(Default)"))
 o:value("https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat", translate("Loyalsoldier-fastly-jsdelivr-Version"))
+o:value("https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat", translate("Loyalsoldier-github-Version"))
 o.default = "https://testingcf.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat"
 o:depends("geosite_auto_update", "1")
 
@@ -1044,6 +1103,7 @@ o.rmempty = true
 o.description = translate("Custom Geo ASN Data URL, Click Button Below To Refresh After Edit")
 o:value("https://testingcf.jsdelivr.net/gh/xishang0128/geoip@release/GeoLite2-ASN.mmdb", translate("xishang0128-testingcf-jsdelivr-Version")..translate("(Default)"))
 o:value("https://fastly.jsdelivr.net/gh/xishang0128/geoip@release/GeoLite2-ASN.mmdb", translate("xishang0128-fastly-jsdelivr-Version"))
+o:value("https://github.com/xishang0128/geoip/releases/latest/download/GeoLite2-ASN.mmdb", translate("xishang0128-github-Version"))
 o.default = "https://testingcf.jsdelivr.net/gh/xishang0128/geoip@release/GeoLite2-ASN.mmdb"
 o:depends("geoasn_auto_update", "1")
 
@@ -1088,6 +1148,7 @@ o:value("https://ispip.clang.cn/all_cn.txt", translate("Clang-CN")..translate("(
 o:value("https://ispip.clang.cn/all_cn_cidr.txt", translate("Clang-CN-CIDR"))
 o:value("https://fastly.jsdelivr.net/gh/Hackl0us/GeoIP2-CN@release/CN-ip-cidr.txt", translate("Hackl0us-CN-CIDR-fastly-jsdelivr"))
 o:value("https://testingcf.jsdelivr.net/gh/Hackl0us/GeoIP2-CN@release/CN-ip-cidr.txt", translate("Hackl0us-CN-CIDR-testingcf-jsdelivr"))
+o:value("https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt", translate("Loyalsoldier-github-Version"))
 o.default = "https://ispip.clang.cn/all_cn.txt"
 
 o = s:taboption("chnr_update", Value, "chnr6_custom_url")

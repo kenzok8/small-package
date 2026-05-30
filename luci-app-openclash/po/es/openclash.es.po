@@ -1955,6 +1955,9 @@ msgstr "No se pudo analizar el archivo de configuración,"
 msgid "Edit Provider Path Failed,"
 msgstr "Fallo al modificar la ruta del proveedor,"
 
+msgid "Edit Provider CDN Failed,"
+msgstr "Fallo al modificar la CDN del proveedor,"
+
 msgid "Edit URL-Test Group Tolerance Option Failed,"
 msgstr "Fallo al modificar la tolerancia del grupo URL-Test,"
 
@@ -2111,77 +2114,11 @@ msgstr "Filtro de regiones"
 msgid "Unlock Nodes Filter"
 msgstr "Filtro de nodos desbloqueados"
 
-msgid "Start Auto Select Proxy For Netflix Unlock..."
-msgstr "Iniciando selección automática de nodo para Netflix..."
+msgid "Start Auto Select Unlock Proxy For"
+msgstr "Iniciando selección automática de nodo"
 
-msgid "Start Auto Select Proxy For Disney Plus Unlock..."
-msgstr "Iniciando selección automática de nodo para Disney Plus..."
-
-msgid "Start Auto Select Proxy For HBO Max Unlock..."
-msgstr "Iniciando selección automática de nodo para HBO Max..."
-
-msgid "Start Auto Select Proxy For YouTube Premium Unlock..."
-msgstr "Iniciando selección automática de nodo para YouTube Premium..."
-
-msgid "Start Auto Select Proxy For TVB Anywhere+ Unlock..."
-msgstr "Iniciando selección automática de nodo para TVB Anywhere+..."
-
-msgid "Start Auto Select Proxy For Amazon Prime Video Unlock..."
-msgstr "Iniciando selección automática de nodo para Amazon Prime Video..."
-
-msgid "Start Auto Select Proxy For DAZN Unlock..."
-msgstr "Iniciando selección automática de nodo para DAZN..."
-
-msgid "Start Auto Select Proxy For Paramount Plus Unlock..."
-msgstr "Iniciando selección automática de nodo para Paramount Plus..."
-
-msgid "Start Auto Select Proxy For Discovery Plus Unlock..."
-msgstr "Iniciando selección automática de nodo para Discovery Plus..."
-
-msgid "Start Auto Select Proxy For Bilibili Unlock..."
-msgstr "Iniciando selección automática de nodo para Bilibili..."
-
-msgid "Start Auto Select Proxy For Google Not CN Unlock..."
-msgstr "Iniciando selección automática de nodo para Google fuera de China..."
-
-msgid "Start Auto Select Proxy For OpenAI Unlock..."
-msgstr "Iniciando selección automática de nodo para OpenAI..."
-
-msgid "Netflix Group:"
-msgstr "Grupo de Netflix:"
-
-msgid "Disney Plus Group:"
-msgstr "Grupo de Disney Plus:"
-
-msgid "HBO Max Group:"
-msgstr "Grupo de HBO Max:"
-
-msgid "TVB Anywhere+ Group:"
-msgstr "Grupo de TVB Anywhere+:"
-
-msgid "Amazon Prime Video Group:"
-msgstr "Grupo de Amazon Prime Video:"
-
-msgid "YouTube Premium Group:"
-msgstr "Grupo de YouTube Premium:"
-
-msgid "DAZN Group:"
-msgstr "Grupo de DAZN:"
-
-msgid "Paramount Plus Group:"
-msgstr "Grupo de Paramount Plus:"
-
-msgid "Discovery Plus Group:"
-msgstr "Grupo de Discovery Plus:"
-
-msgid "Bilibili Group:"
-msgstr "Grupo de Bilibili:"
-
-msgid "Google Group:"
-msgstr "Grupo de Google:"
-
-msgid "OpenAI Group:"
-msgstr "Grupo de OpenAI:"
+msgid "Group:"
+msgstr "Grupo:"
 
 msgid "full support"
 msgstr "desbloqueo completo"
@@ -2719,18 +2656,6 @@ msgstr "Habilita reglas por proceso (solo para procesos del router). Si no está
 
 msgid "Enable Process Rule"
 msgstr "Activar reglas por proceso"
-
-msgid "Because there is a port range"
-msgstr "Debido a que existe un rango de puertos"
-
-msgid "in the firewall rule settings"
-msgstr "en la configuración del firewall"
-
-msgid "auto bypassing may cause the normal connection of the client not to reach the core, if necessary, please add your own in the access control!"
-msgstr "el bypass automático puede impedir que conexiones legítimas lleguen al núcleo. Añade reglas manuales si es necesario."
-
-msgid "Start Add Port Bypassing Rules For Firewall Redirect and Firewall Rules..."
-msgstr "Añadiendo reglas de bypass de puertos para redirecciones de firewall..."
 
 msgid "DNS Hijacking Mode is Dnsmasq Redirect..."
 msgstr "Modo de secuestro DNS: redirección Dnsmasq..."
@@ -3856,3 +3781,36 @@ msgstr "Error en la sobrescritura YAML:"
 
 msgid "files selected"
 msgstr "archivos seleccionados"
+
+msgid "Global User-Agent"
+msgstr "Agente de usuario global"
+
+msgid "depended package reinstalling..."
+msgstr "reinstalando paquete dependiente..."
+
+msgid "failed to install, please try to install it manually..."
+msgstr "no se pudo instalar; por favor, intenta instalarlo manualmente."
+
+msgid "GeoIP Dat Download Failed: HTML Response Detected, Abort Update..."
+msgstr "Descarga de GeoIP Dat fallida: Respuesta HTML detectada, actualización abortada..."
+
+msgid "GeoIP Dat Download Failed: File Size Too Small, Abort Update..."
+msgstr "Descarga de GeoIP Dat fallida: Archivo demasiado pequeño, actualización abortada..."
+
+msgid "GeoSite Database Download Failed: HTML Response Detected, Abort Update..."
+msgstr "Descarga de GeoSite fallida: Respuesta HTML detectada, actualización abortada..."
+
+msgid "GeoSite Database Download Failed: File Size Too Small, Abort Update..."
+msgstr "Descarga de GeoSite fallida: Archivo demasiado pequeño, actualización abortada..."
+
+msgid "Geo ASN Database Download Failed: HTML Response Detected, Abort Update..."
+msgstr "Descarga de Geo ASN fallida: Respuesta HTML detectada, actualización abortada..."
+
+msgid "Geo ASN Database Download Failed: File Size Too Small, Abort Update..."
+msgstr "Descarga de Geo ASN fallida: Archivo demasiado pequeño, actualización abortada..."
+
+msgid "Geoip Database Download Failed: HTML Response Detected, Abort Update..."
+msgstr "Descarga de Geoip fallida: Respuesta HTML detectada, actualización abortada..."
+
+msgid "Geoip Database Download Failed: File Size Too Small, Abort Update..."
+msgstr "Descarga de Geoip fallida: Archivo demasiado pequeño, actualización abortada..."

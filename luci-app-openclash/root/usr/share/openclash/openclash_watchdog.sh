@@ -171,6 +171,8 @@ do
    stream_auto_select_bilibili=$(uci_get_config "stream_auto_select_bilibili" || echo 0)
    stream_auto_select_google_not_cn=$(uci_get_config "stream_auto_select_google_not_cn" || echo 0)
    stream_auto_select_openai=$(uci_get_config "stream_auto_select_openai" || echo 0)
+   stream_auto_select_claude=$(uci_get_config "stream_auto_select_claude" || echo 0)
+   stream_auto_select_gemini=$(uci_get_config "stream_auto_select_gemini" || echo 0)
    upnp_lease_file=$(uci -q get upnpd.config.upnp_lease_file)
 
 #wait for core start complete
@@ -372,52 +374,60 @@ fi
       if [ "$STREAM_AUTO_SELECT" -ne 0 ]; then
          if [ "$(expr "$STREAM_AUTO_SELECT" % "$stream_auto_select_interval")" -eq 0 ] || [ "$STREAM_AUTO_SELECT" -eq 1 ]; then
             if [ "$stream_auto_select_netflix" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Proxy For Netflix Unlock..."
+               LOG_TIP "Start Auto Select Unlock Proxy For【Netflix】..."
                /usr/share/openclash/openclash_streaming_unlock.lua "Netflix" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_disney" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Proxy For Disney Plus Unlock..."
+               LOG_TIP "Start Auto Select Unlock Proxy For【Disney Plus】..."
                /usr/share/openclash/openclash_streaming_unlock.lua "Disney Plus" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_google_not_cn" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Proxy For Google Not CN Unlock..."
+               LOG_TIP "Start Auto Select Unlock Proxy For【Google Not CN】..."
                /usr/share/openclash/openclash_streaming_unlock.lua "Google" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_ytb" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Proxy For YouTube Premium Unlock..."
+               LOG_TIP "Start Auto Select Unlock Proxy For【YouTube Premium】..."
                /usr/share/openclash/openclash_streaming_unlock.lua "YouTube Premium" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_prime_video" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Proxy For Amazon Prime Video Unlock..."
+               LOG_TIP "Start Auto Select Unlock Proxy For【Amazon Prime Video】..."
                /usr/share/openclash/openclash_streaming_unlock.lua "Amazon Prime Video" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_hbo_max" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Proxy For HBO Max Unlock..."
+               LOG_TIP "Start Auto Select Unlock Proxy For【HBO Max】..."
                /usr/share/openclash/openclash_streaming_unlock.lua "HBO Max" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_tvb_anywhere" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Proxy For TVB Anywhere+ Unlock..."
+               LOG_TIP "Start Auto Select Unlock Proxy For【TVB Anywhere+】..."
                /usr/share/openclash/openclash_streaming_unlock.lua "TVB Anywhere+" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_dazn" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Proxy For DAZN Unlock..."
+               LOG_TIP "Start Auto Select Unlock Proxy For【DAZN】..."
                /usr/share/openclash/openclash_streaming_unlock.lua "DAZN" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_paramount_plus" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Proxy For Paramount Plus Unlock..."
+               LOG_TIP "Start Auto Select Unlock Proxy For【Paramount Plus】..."
                /usr/share/openclash/openclash_streaming_unlock.lua "Paramount Plus" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_discovery_plus" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Proxy For Discovery Plus Unlock..."
+               LOG_TIP "Start Auto Select Unlock Proxy For【Discovery Plus】..."
                /usr/share/openclash/openclash_streaming_unlock.lua "Discovery Plus" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_bilibili" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Proxy For Bilibili Unlock..."
+               LOG_TIP "Start Auto Select Unlock Proxy For【Bilibili】..."
                /usr/share/openclash/openclash_streaming_unlock.lua "Bilibili" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_openai" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Proxy For OpenAI Unlock..."
+               LOG_TIP "Start Auto Select Unlock Proxy For【OpenAI】..."
                /usr/share/openclash/openclash_streaming_unlock.lua "OpenAI" >> $LOG_FILE
+            fi
+            if [ "$stream_auto_select_claude" -eq 1 ]; then
+               LOG_TIP "Start Auto Select Unlock Proxy For【Claude】..."
+               /usr/share/openclash/openclash_streaming_unlock.lua "Claude" >> $LOG_FILE
+            fi
+            if [ "$stream_auto_select_gemini" -eq 1 ]; then
+               LOG_TIP "Start Auto Select Unlock Proxy For【Gemini】..."
+               /usr/share/openclash/openclash_streaming_unlock.lua "Gemini" >> $LOG_FILE
             fi
          fi
       fi

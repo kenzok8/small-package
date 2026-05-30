@@ -2738,11 +2738,7 @@ var ConfigEditor = {
         model.querySelector('#overwrite-add-close').onclick = function() {
             document.body.removeChild(ocDiv);
         };
-        overlay.onclick = function(e) {
-            if (e.target === overlay) {
-                document.body.removeChild(ocDiv);
-            }
-        };
+
         model.querySelector('#overwrite-upload-cancel').onclick = function() {
             document.body.removeChild(ocDiv);
         };

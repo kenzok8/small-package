@@ -74,7 +74,7 @@ DOWNLOAD_FILE_CURL() {
         fi
     else
         CURL_OUTPUT=$(curl -w "\n%{http_code}" -SsL --connect-timeout 30 -m 60 --speed-time 30 --speed-limit 1 --retry 2 -H "User-Agent: ${DOWNLOAD_UA}" "$DOWNLOAD_URL" -o "$DOWNLOAD_PATH" 2>&1)
-        EXIR_CODE=${PIPESTATUS[0]}
+        EXIR_CODE=$?
         HTTP_CODE=$(echo "$CURL_OUTPUT" | tail -n1)
 
         if [ "$EXIR_CODE" -ne 0 ] || [ "$HTTP_CODE" -ne 200 ]; then

@@ -824,6 +824,8 @@ function poll_log(){
     var currentContent = "";
     var bufferToProcess = [];
 
+    clearTimeout(r);
+
     for(var i=0; i<titles.length; i++){
         if(titles[i].className === 'cbi-tab') {
             activeTabId = i;

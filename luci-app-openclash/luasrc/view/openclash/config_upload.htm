@@ -214,7 +214,7 @@
     padding: 10px 12px;
     border: 1px solid var(--border-light);
     border-radius: var(--radius-sm);
-    background: var(--bg-white);
+    background: var(--bg-white) !important;
     color: var(--text-primary);
     font-size: 14px;
     transition: all var(--transition-fast);
@@ -256,6 +256,10 @@
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.oc .form-textarea::placeholder {
+    color: var(--text-secondary);
 }
 
 .oc .form-row {
@@ -553,6 +557,10 @@
     box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.1);
 }
 
+.oc[data-darkmode="true"] .form-textarea::placeholder {
+    color: var(--text-secondary);
+}
+
 .oc[data-darkmode="true"] .checkmark {
     border-color: var(--border-light);
     background: var(--bg-gray);
@@ -752,8 +760,8 @@
                             <label for="subscribe-ua-input"><%:User-Agent%> (<%:Optional%>):</label>
                             <div class="form-select-wrapper">
                                 <select id="subscribe-ua-input" class="form-select">
-                                    <option value="clash.meta">clash.meta</option>
-                                    <option value="clash-verge/v1.5.1">clash-verge/v1.5.1</option>
+                                    <option value="clash-verge/v2.4.5">clash-verge/v2.4.5</option>
+                                    <option value="clash.meta/1.19.20">clash.meta/1.19.20</option>
                                     <option value="Clash">clash</option>
                                     <option value="custom"><%:Custom%></option>
                                 </select>
@@ -785,8 +793,8 @@
                                     <label for="convert-address-input"><%:Convert Address%>:</label>
                                     <div class="form-select-wrapper">
                                         <select id="convert-address-input" class="form-select">
-                                            <option value="https://api.wcc.best/sub">api.wcc.best</option>
                                             <option value="https://api.asailor.org/sub">api.asailor.org</option>
+                                            <option value="https://api.wcc.best/sub">api.wcc.best</option>
                                             <option value="custom"><%:Custom%></option>
                                         </select>
                                     </div>
@@ -1073,6 +1081,7 @@ var ConfigUploader = {
             } else {
                 advancedOptionsContainer.style.display = 'none';
                 self.resetAdvancedOptions();
+                self.updateSubmitButton();
             }
         });
 
@@ -1082,6 +1091,7 @@ var ConfigUploader = {
             } else {
                 subConvertOptions.style.display = 'none';
             }
+            self.updateSubmitButton();
         });
 
         convertAddressSelect.addEventListener('change', function() {
@@ -1116,12 +1126,6 @@ var ConfigUploader = {
 
         document.getElementById('config-upload-close').addEventListener('click', function() {
             if (!self.isProcessing) {
-                self.hide();
-            }
-        });
-
-        this.overlay.addEventListener('click', function(e) {
-            if (e.target === self.overlay && !self.isProcessing) {
                 self.hide();
             }
         });
@@ -1197,7 +1201,7 @@ var ConfigUploader = {
         this.switchMode('file');
         document.getElementById('config-filename-input').value = '';
         document.getElementById('subscribe-url-input').value = '';
-        document.getElementById('subscribe-ua-input').value = 'clash.meta';
+        document.getElementById('subscribe-ua-input').value = 'clash-verge/v2.4.5';
         document.getElementById('subscribe-ua-custom').style.display = 'none';
 
         document.getElementById('advanced-options-enable').checked = false;
@@ -1226,7 +1230,7 @@ var ConfigUploader = {
             document.getElementById('subscribe-url-input').value = data.address;
         }
         if (data.sub_ua) {
-            if (data.sub_ua === 'clash.meta' || data.sub_ua === 'clash-verge/v1.5.1' || data.sub_ua === 'Clash' || data.sub_ua === 'custom') {
+            if (data.sub_ua === 'clash.meta/1.19.20' || data.sub_ua === 'clash-verge/v2.4.5' || data.sub_ua === 'Clash' || data.sub_ua === 'custom') {
                 document.getElementById('subscribe-ua-input').value = data.sub_ua;
                 if (data.sub_ua === 'custom') {
                     document.getElementById('subscribe-ua-custom').style.display = 'block';
@@ -1390,10 +1394,10 @@ var ConfigUploader = {
     updateSubmitButton: function() {
         var filename = document.getElementById('config-filename-input').value.trim();
         var submitBtn = document.getElementById('config-upload-submit');
-        var isValid = false;
+        var isValidFormat = false;
 
         if (this.currentMode === 'file') {
-            isValid = this.selectedFile && filename;
+            isValidFormat = this.selectedFile && filename;
         } else if (this.currentMode === 'subscribe') {
             var url = document.getElementById('subscribe-url-input').value.trim();
             var advancedEnabled = document.getElementById('advanced-options-enable').checked;
@@ -1401,25 +1405,29 @@ var ConfigUploader = {
 
             if (url && filename) {
                 if (subConvert) {
+                    var linkPattern = /^(?:https?:\/\/|[a-zA-Z]+:\/\/|[^,\s]+,https?:\/\/.+|[^%\s]+%2Chttps?%3A%2F%2F.+)$/i;
+
                     if (url.indexOf('\n') !== -1 || url.indexOf('|') !== -1) {
-                        var links = url.indexOf('\n') !== -1 ? url.split('\n') : url.split('|');
+                        var links = url.split(/[\n|]/);
                         for (var i = 0; i < links.length; i++) {
                             var link = links[i].trim();
-                            if (link && (/^https?:\/\//.test(link) || /^[a-zA-Z]+:\/\//.test(link))) {
-                                isValid = true;
+                            if (link && linkPattern.test(link)) {
+                                isValidFormat = true;
                                 break;
                             }
                         }
                     } else {
-                        isValid = /^https?:\/\//.test(url) || /^[a-zA-Z]+:\/\//.test(url);
+                        isValidFormat = linkPattern.test(url);
                     }
                 } else {
-                    isValid = /^https?:\/\//.test(url) && url.indexOf('\n') === -1 && url.indexOf('|') === -1;
+                    if (/^https?:\/\//.test(url) && url.indexOf('\n') === -1 && url.indexOf('|') === -1) {
+                        isValidFormat = true;
+                    }
                 }
             }
         }
 
-        submitBtn.disabled = !isValid || this.isProcessing;
+        submitBtn.disabled = !isValidFormat || this.isProcessing;
     },
 
     uploadFile: function() {
@@ -1562,7 +1570,7 @@ var ConfigUploader = {
         }
 
         if (userAgent === 'custom') {
-            userAgent = subscribeUaCustom.value.trim() || 'clash.meta';
+            userAgent = subscribeUaCustom.value.trim();
         }
 
         if (!url || !filename) {
@@ -1573,25 +1581,19 @@ var ConfigUploader = {
         var isValidFormat = false;
 
         if (subConvert) {
-            if (url.indexOf('\n') !== -1 || url.indexOf('|') !== -1) {
-                var links = [];
-                if (url.indexOf('\n') !== -1) {
-                    links = url.split('\n');
-                } else {
-                    links = url.split('|');
-                }
+            var linkPattern = /^(?:https?:\/\/|[a-zA-Z]+:\/\/|[^,\s]+,https?:\/\/.+|[^%\s]+%2Chttps?%3A%2F%2F.+)$/i;
 
+            if (url.indexOf('\n') !== -1 || url.indexOf('|') !== -1) {
+                var links = url.split(/[\n|]/);
                 for (var i = 0; i < links.length; i++) {
                     var link = links[i].trim();
-                    if (link && (/^https?:\/\//.test(link) || /^[a-zA-Z]+:\/\//.test(link))) {
+                    if (link && linkPattern.test(link)) {
                         isValidFormat = true;
                         break;
                     }
                 }
             } else {
-                if (/^https?:\/\//.test(url) || /^[a-zA-Z]+:\/\//.test(url)) {
-                    isValidFormat = true;
-                }
+                isValidFormat = linkPattern.test(url);
             }
         } else {
             if (/^https?:\/\//.test(url) && url.indexOf('\n') === -1 && url.indexOf('|') === -1) {

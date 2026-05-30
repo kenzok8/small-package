@@ -21,6 +21,9 @@ yml_other_set()
 
    begin
       thread_pool = [];
+      # GEOIP replace
+      geoip_pattern = /GEOIP,([A-Za-z]{2}),([^,]+)(,.*)?/;
+      match_pattern = /(^MATCH.*|^FINAL.*)/;
       thread_pool << Thread.new{
          #BT/P2P DIRECT Rules
          begin
@@ -102,10 +105,6 @@ yml_other_set()
                   end;
                end;
 
-               # GEOIP replace
-               geoip_pattern = /GEOIP,([A-Za-z]{2}),([^,]+)(,.*)?/;
-               match_pattern = /(^MATCH.*|^FINAL.*)/;
-
                Value['rules'].to_a.collect!{|x|
                   x.to_s.gsub(geoip_pattern, 'GEOIP,\1,DIRECT\3').gsub(match_pattern, 'MATCH,DIRECT')
                };
@@ -136,6 +135,18 @@ yml_other_set()
                   { file: '/etc/openclash/custom/openclash_custom_rules_2.list', position: 'bottom' }
                ];
 
+                  # 在开始对 custom_files 进行插入之前，记录当前 rules 中 GEOIP、MATCH、DST-PORT,80 的原始规则文本（锚点）
+                  anchors_orig = {}
+                  if Value.has_key?('rules') and not Value['rules'].to_a.empty? then
+                     anchors_orig[:dst80_rule] = Value['rules'].grep(/DST-PORT,80/).last
+                     anchors_orig[:match_rule] = Value['rules'].grep(match_pattern).first
+                     anchors_orig[:geo_rule] = Value['rules'].grep(geoip_pattern).first
+                  else
+                     anchors_orig[:dst80_rule] = nil
+                     anchors_orig[:match_rule] = nil
+                     anchors_orig[:geo_rule] = nil
+                  end;
+
                custom_files.each{|file_info|
                   if File::exist?(file_info[:file]) then
                      custom_data = YAML.load_file(file_info[:file]);
@@ -164,9 +175,10 @@ yml_other_set()
                      cidr_regex = /\/\d+$/;
                      rule_suffix_regex = /^no-resolve$|^src$/;
 
+                     ip_rule_types = ['IP-CIDR', 'IP-CIDR6', 'SRC-IP-CIDR', 'SRC-IP-CIDR6', 'IP-SUFFIX', 'SRC-IP-SUFFIX'];
                      transformed_rules = rules_array.map{|x|
                         parts = x.split(',');
-                        if parts.length >= 2 then
+                        if parts.length >= 2 && ip_rule_types.include?(parts[0].strip.upcase) then
                            ip_part = parts[1].strip;
                            if ip_part !~ cidr_regex then
                               # IPv4
@@ -201,11 +213,15 @@ yml_other_set()
                         if file_info[:position] == 'top' then
                            valid_rules.reverse.each{|x| Value['rules'].insert(0,x)};
                         else
-                           if Value['rules'].grep(/GEOIP/)[0].nil? or Value['rules'].grep(/GEOIP/)[0].empty? then
-                              ruby_add_index = Value['rules'].index(Value['rules'].grep(/DST-PORT,80/).last);
-                              ruby_add_index ||= Value['rules'].index(Value['rules'].grep(/(MATCH|FINAL)/).first);
-                           else
-                              ruby_add_index = Value['rules'].index(Value['rules'].grep(/GEOIP/).first);
+                           ruby_add_index = nil;
+                           if anchors_orig[:dst80_rule]
+                              ruby_add_index = Value['rules'].rindex(anchors_orig[:dst80_rule])
+                           end;
+                           if ruby_add_index.nil? and anchors_orig[:match_rule]
+                              ruby_add_index = Value['rules'].rindex(anchors_orig[:match_rule])
+                           end;
+                           if ruby_add_index.nil? and anchors_orig[:geo_rule]
+                              ruby_add_index = Value['rules'].rindex(anchors_orig[:geo_rule])
                            end;
                            ruby_add_index ||= -1;
 
@@ -268,19 +284,13 @@ yml_other_set()
       thread_pool << Thread.new{
          threads = [];
 
-         #provider path
+         #provider CDN
          begin
             provider_configs = {'proxy-providers' => 'proxy_provider', 'rule-providers' => 'rule_provider'};
             provider_configs.each do |provider_type, path_prefix|
                if Value.key?(provider_type) && Value[provider_type].is_a?(Hash) then
                   Value[provider_type].each{|name, config|
                      threads << Thread.new {
-                        if config['path'] and not config['path'] =~ /.\/#{path_prefix}\/*/ then
-                           config['path'] = './'+path_prefix+'/'+File.basename(config['path']);
-                        elsif not config['path'] and config['type'] == 'http' then
-                           config['path'] = './'+path_prefix+'/'+name;
-                        end;
-
                         # CDN
                         if '$github_address_mod' != '0' and config['url'] then
                            if config['url'] =~ /^https:\/\/raw.githubusercontent.com/ then
@@ -305,7 +315,7 @@ yml_other_set()
                end;
             end;
          rescue Exception => e
-            YAML.LOG_ERROR('Edit Provider Path Failed,【' + e.message + '】');
+            YAML.LOG_ERROR('Edit Provider CDN Failed,【' + e.message + '】');
          end;
 
          # tolerance

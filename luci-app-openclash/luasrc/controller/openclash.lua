@@ -665,8 +665,12 @@ function get_sub_url(filename)
 					string.gsub(s.url, '[^\n]+', function(w) table.insert(info_tb, w) end)
 				end
 				if #info_tb == 1 then
-					local url, _ = parse_url_with_name(info_tb[1], filename)
-					sub_url = url
+					local url, name = parse_url_with_name(info_tb[1], filename)
+					if url ~= info_tb[1] then
+						table.insert(providers, {name = name, url = url})
+					else
+						sub_url = url
+					end
 				elseif #info_tb > 1 then
 					for _, raw in ipairs(info_tb) do
 						local url, name = parse_url_with_name(raw, filename)
@@ -2449,9 +2453,16 @@ function action_switch_oc_setting()
 		uci:set("openclash", "@overwrite[0]", "enable_respect_rules", tonumber(value))
 		uci:commit("openclash")
 	elseif setting == "oversea" then
+		oversea_v6_setting = fs.uci_get_config("config", "ipv6_enable") or "0"
+		if oversea_v6_setting ~= "0" then
+			uci:set("openclash", "config", "china_ip6_route", value)
+		end
 		uci:set("openclash", "config", "china_ip_route", value)
 		uci:commit("openclash")
 		if is_running() then
+			if oversea_v6_setting ~= "0" then
+				uci:set("openclash", "@overwrite[0]", "china_ip6_route", value)
+			end
 			uci:set("openclash", "@overwrite[0]", "china_ip_route", value)
 			uci:commit("openclash")
 			luci.sys.exec("/etc/init.d/openclash restart >/dev/null 2>&1 &")
@@ -3317,7 +3328,7 @@ end
 function action_add_subscription()
 	local name = luci.http.formvalue("name")
 	local address = luci.http.formvalue("address")
-	local sub_ua = luci.http.formvalue("sub_ua") or "clash.meta"
+	local sub_ua = luci.http.formvalue("sub_ua") or "clash-verge/v2.4.5"
 	local sub_convert = luci.http.formvalue("sub_convert") or "0"
 	local convert_address = luci.http.formvalue("convert_address") or ""
 	local template = luci.http.formvalue("template") or ""
@@ -3345,9 +3356,10 @@ function action_add_subscription()
 	local is_valid_url = false
 
 	if sub_convert == "1" then
-		if string.find(address, "^https?://") and not string.find(address, "\n") and not string.find(address, "|") then
-			is_valid_url = true
-		elseif string.find(address, "\n") or string.find(address, "|") then
+		local prefixed_http_pattern = "^[^,%s]+,https?://.+"
+		local encoded_prefixed_http_pattern = "^[^%%%s]+%%2[Cc]https?%%3[Aa]%%2[Ff]%%2[Ff].+"
+
+		if string.find(address, "\n") or string.find(address, "|") then
 			local links = {}
 			if string.find(address, "\n") then
 				for line in address:gmatch("[^\n]+") do
@@ -3361,15 +3373,20 @@ function action_add_subscription()
 
 			for _, link in ipairs(links) do
 				if link and link ~= "" then
-					if string.find(link, "^https?://") or string.find(link, "^[a-zA-Z]+://") then
+					if string.find(link, "^https?://")
+						or string.find(link, "^[a-zA-Z]+://")
+						or string.find(link, prefixed_http_pattern)
+						or string.find(link, encoded_prefixed_http_pattern) then
 						is_valid_url = true
 						break
 					end
 				end
 			end
 		else
-			if string.find(address, "^[a-zA-Z]+://") and
-			   not string.find(address, "\n") and not string.find(address, "|") then
+			if string.find(address, "^https?://")
+				or string.find(address, "^[a-zA-Z]+://")
+				or string.find(address, prefixed_http_pattern)
+				or string.find(address, encoded_prefixed_http_pattern) then
 				is_valid_url = true
 			end
 		end

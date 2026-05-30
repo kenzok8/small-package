@@ -1953,6 +1953,9 @@ msgstr "配置文件解析失败，"
 msgid "Edit Provider Path Failed,"
 msgstr "修改集路径失败，"
 
+msgid "Edit Provider CDN Failed,"
+msgstr "修改集 CDN 地址失败，"
+
 msgid "Edit URL-Test Group Tolerance Option Failed,"
 msgstr "修改 URL-Test 策略组容忍值失败，"
 
@@ -2109,77 +2112,11 @@ msgstr "解锁区域筛选"
 msgid "Unlock Nodes Filter"
 msgstr "解锁节点筛选"
 
-msgid "Start Auto Select Proxy For Netflix Unlock..."
-msgstr "开始自动选择（检测）Netflix 解锁节点..."
+msgid "Start Auto Select Unlock Proxy For"
+msgstr "开始自动选择（检测）解锁节点"
 
-msgid "Start Auto Select Proxy For Disney Plus Unlock..."
-msgstr "开始自动选择（检测）Disney Plus 解锁节点..."
-
-msgid "Start Auto Select Proxy For HBO Max Unlock..."
-msgstr "开始自动选择（检测）HBO Max 解锁节点..."
-
-msgid "Start Auto Select Proxy For YouTube Premium Unlock..."
-msgstr "开始自动选择（检测）YouTube Premium 解锁节点..."
-
-msgid "Start Auto Select Proxy For TVB Anywhere+ Unlock..."
-msgstr "开始自动选择（检测）TVB Anywhere+ 解锁节点..."
-
-msgid "Start Auto Select Proxy For Amazon Prime Video Unlock..."
-msgstr "开始自动选择（检测）Amazon Prime Video 解锁节点..."
-
-msgid "Start Auto Select Proxy For DAZN Unlock..."
-msgstr "开始自动选择（检测）DAZN 解锁节点..."
-
-msgid "Start Auto Select Proxy For Paramount Plus Unlock..."
-msgstr "开始自动选择（检测）Paramount Plus 解锁节点..."
-
-msgid "Start Auto Select Proxy For Discovery Plus Unlock..."
-msgstr "开始自动选择（检测）Discovery Plus 解锁节点..."
-
-msgid "Start Auto Select Proxy For Bilibili Unlock..."
-msgstr "开始自动选择（检测）Bilibili 解锁节点..."
-
-msgid "Start Auto Select Proxy For Google Not CN Unlock..."
-msgstr "开始自动选择（检测）Google 非送中节点..."
-
-msgid "Start Auto Select Proxy For OpenAI Unlock..."
-msgstr "开始自动选择（检测）OpenAI 解锁节点..."
-
-msgid "Netflix Group:"
-msgstr "Netflix 策略组："
-
-msgid "Disney Plus Group:"
-msgstr "Disney Plus 策略组："
-
-msgid "HBO Max Group:"
-msgstr "HBO Max 策略组："
-
-msgid "TVB Anywhere+ Group:"
-msgstr "TVB Anywhere+ 策略组："
-
-msgid "Amazon Prime Video Group:"
-msgstr "Amazon Prime Video 策略组："
-
-msgid "YouTube Premium Group:"
-msgstr "YouTube Premium 策略组："
-
-msgid "DAZN Group:"
-msgstr "DAZN 策略组："
-
-msgid "Paramount Plus Group:"
-msgstr "Paramount Plus 策略组："
-
-msgid "Discovery Plus Group:"
-msgstr "Discovery Plus 策略组："
-
-msgid "Bilibili Group:"
-msgstr "Bilibili 策略组："
-
-msgid "Google Group:"
-msgstr "Google 策略组："
-
-msgid "OpenAI Group:"
-msgstr "OpenAI 策略组："
+msgid "Group:"
+msgstr "策略组："
 
 msgid "full support"
 msgstr "完整解锁"
@@ -2437,7 +2374,7 @@ msgid "Geodata Loader Mode"
 msgstr "Geodata 数据加载方式"
 
 msgid "Memconservative"
-msgstr "小内存模式"
+msgstr "低内存模式"
 
 msgid "Standard"
 msgstr "标准模式"
@@ -2717,18 +2654,6 @@ msgstr "是否启用进程规则，仅能匹配路由器自身进程，在路由
 
 msgid "Enable Process Rule"
 msgstr "启用进程规则"
-
-msgid "Because there is a port range"
-msgstr "因为端口范围"
-
-msgid "in the firewall rule settings"
-msgstr "存在于防火墙规则设置"
-
-msgid "auto bypassing may cause the normal connection of the client not to reach the core, if necessary, please add your own in the access control!"
-msgstr "自动绕过后可能造成客户端的正常连接无法到达内核，如有需要，请在插件设置-来源流量访问控制中自行添加！"
-
-msgid "Start Add Port Bypassing Rules For Firewall Redirect and Firewall Rules..."
-msgstr "正在根据防火墙端口转发和防火墙通信规则添加端口绕过规则..."
 
 msgid "DNS Hijacking Mode is Dnsmasq Redirect..."
 msgstr "DNS 劫持模式为 Dnsmasq 转发..."
@@ -3863,3 +3788,36 @@ msgstr "YAML 覆写模块执行失败："
 
 msgid "files selected"
 msgstr "配置已选择"
+
+msgid "Global User-Agent"
+msgstr "全局 User-Agent"
+
+msgid "depended package reinstalling..."
+msgstr "依赖正在重新安装..."
+
+msgid "failed to install, please try to install it manually..."
+msgstr "依赖安装失败，请重试手动安装..."
+
+msgid "GeoIP Dat Download Failed: HTML Response Detected, Abort Update..."
+msgstr "GeoIP Dat 下载失败：响应内容为 HTML（可能为 CDN 错误页面），中止更新..."
+
+msgid "GeoIP Dat Download Failed: File Size Too Small, Abort Update..."
+msgstr "GeoIP Dat 下载失败：文件大小小于 1MB（可能被截断），中止更新..."
+
+msgid "GeoSite Database Download Failed: HTML Response Detected, Abort Update..."
+msgstr "GeoSite 数据库下载失败：响应内容为 HTML（可能为 CDN 错误页面），中止更新..."
+
+msgid "GeoSite Database Download Failed: File Size Too Small, Abort Update..."
+msgstr "GeoSite 数据库下载失败：文件大小小于 1MB（可能被截断），中止更新..."
+
+msgid "Geo ASN Database Download Failed: HTML Response Detected, Abort Update..."
+msgstr "Geo ASN 数据库下载失败：响应内容为 HTML（可能为 CDN 错误页面），中止更新..."
+
+msgid "Geo ASN Database Download Failed: File Size Too Small, Abort Update..."
+msgstr "Geo ASN 数据库下载失败：文件大小小于 10KB（可能被截断），中止更新..."
+
+msgid "Geoip Database Download Failed: HTML Response Detected, Abort Update..."
+msgstr "Geoip 数据库下载失败：响应内容为 HTML（可能为 CDN 错误页面），中止更新..."
+
+msgid "Geoip Database Download Failed: File Size Too Small, Abort Update..."
+msgstr "Geoip 数据库下载失败：文件大小小于 10KB（可能被截断），中止更新..."

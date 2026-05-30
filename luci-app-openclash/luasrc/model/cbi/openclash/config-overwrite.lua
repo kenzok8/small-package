@@ -328,6 +328,13 @@ o = s:taboption("meta", Flag, "enable_unified_delay", font_red..bold_on..transla
 o.description = font_red..bold_on..translate("Change The Delay Calculation Method To Remove Extra Delays Such as Handshaking")..bold_off..font_off
 o.default = "0"
 
+o = s:taboption("meta", Value, "global_ua", translate("Global User-Agent"))
+o:value("0", translate("Disable"))
+o:value("clash-verge/v2.4.5")
+o:value("clash.meta/1.19.20")
+o:value("Clash")
+o.default = "0"
+
 o = s:taboption("meta", ListValue, "find_process_mode", translate("Enable Process Rule"))
 o.description = translate("Whether to Enable Process Rules, Only Works on Routerself, If You Are Not Sure, Please Choose off Which Useful in Router Environment, Depend on kmod-inet-diag")
 o:value("0", translate("Disable"))

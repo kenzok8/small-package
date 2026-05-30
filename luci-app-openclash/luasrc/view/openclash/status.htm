@@ -27,9 +27,13 @@
     --radius-lg: 8px;
     --transition-fast: 0.15s ease;
     --transition-normal: 0.3s ease;
+    --stripe-color: rgba(255,255,255,0.24);
+    --stripe-opacity: 0.5;
+    --stripe-size: 40px;
 
     --control-height: 32px;
     --card-padding: 6px 8px;
+    --version-right: 8px;
     --gap-size: 10px;
 
     --row-1-height: 160px;
@@ -57,6 +61,8 @@
     --warning-color: #fa41c8;
     --watchdog-color: #c147f5;
     --info-color: #3b82f6;
+    --stripe-color: rgba(0, 0, 0, 0.255);
+    --stripe-opacity: 0.8;
 }
 
 .oc[data-darkmode="true"] .plugin-toggle-slider {
@@ -341,7 +347,7 @@
 
 .oc .version-display-container {
     position: absolute;
-    right: 10px;
+    right: var(--version-right);
     display: flex;
     gap: 8px;
     z-index: 2;
@@ -915,6 +921,7 @@
     min-height: 24px;
     min-width: 0;
     gap: 8px;
+    padding: 0 20px;
 }
 
 .oc .subscription-info-details {
@@ -946,6 +953,30 @@
     height: 100%;
     border-radius: 4px;
     transition: width 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.oc .subscription-progress-fill::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(45deg, var(--stripe-color) 25%, transparent 25%, transparent 50%, var(--stripe-color) 50%, var(--stripe-color) 75%, transparent 75%, transparent);
+    background-size: var(--stripe-size) var(--stripe-size);
+    animation: oc-stripes 2s linear infinite;
+    opacity: var(--stripe-opacity);
+    pointer-events: none;
+    mix-blend-mode: overlay;
+    border-radius: 4px;
+}
+
+@keyframes oc-stripes {
+    to { background-position: 40px 0; }
+}
+
+.oc[data-darkmode="true"] .subscription-progress-fill::before {
+    background-image: linear-gradient(45deg, var(--stripe-color) 25%, transparent 25%, transparent 50%, var(--stripe-color) 50%, var(--stripe-color) 75%, transparent 75%, transparent);
+    opacity: var(--stripe-opacity);
 }
 
 .oc .subscription-progress-fill.high {
@@ -1210,8 +1241,20 @@
     text-overflow: ellipsis;
     min-width: 0;
     max-width: 100%;
-    padding-left: 20px;
     overflow: hidden;
+}
+
+.oc .config-file-name .selected-file-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 0.2em;
+    margin-bottom: 0.2em;
+    background: var(--primary-color);
+    flex-shrink: 0;
+    animation: gentlePulse 4s cubic-bezier(.17,.67,.83,.67) infinite;
 }
 
 .oc .config-file-bottom {
@@ -1282,13 +1325,20 @@
     min-width: 0;
     max-width: 30vw;
     overflow: hidden;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+}
+
+.oc .file-info:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
 }
 
 .oc .file-info-item {
     display: block;
     align-items: center;
     white-space: nowrap;
-    padding-right: 20px;
+    padding: 2px 6px;
     font-size: 13px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2831,9 +2881,7 @@
                 var displayName = this.formatDisplayName(configFile);
                 if (configFile === this.rawCurrentConfig) {
                     configNameElement.innerHTML =
-                        '<svg width="0.6em" height="0.6em" viewBox="0 0 24 24" fill="var(--primary-color)" style="vertical-align:middle;margin-right:0.2em;margin-bottom:0.2em;">' +
-                        '<circle cx="12" cy="12" r="8" fill="var(--primary-color)"/>' +
-                        '</svg>' + displayName;
+                        '<span class="selected-file-dot"></span>' + displayName;
                 } else {
                     configNameElement.textContent = displayName;
                 }
@@ -3227,8 +3275,8 @@
                     }
 
                     var needsErrorHandling = false;
-                    if (x && x.status == 200 && status.providers) {
-                        var newProvidersLength = (status.providers) ? status.providers.length : 0;
+                    if (x && x.status == 200 && status.providers.length > 0) {
+                        var newProvidersLength = status.providers.length;
                         var cachedProvidersLength = (parsedData && parsedData.providers) ? parsedData.providers.length : 0;
 
                         if (newProvidersLength !== cachedProvidersLength && cachedProvidersLength > newProvidersLength) {
@@ -3597,25 +3645,17 @@
 
         bindEvents: function() {
             var textarea = document.getElementById('subscription-url-textarea');
-            var overlay = document.getElementById('subscription-url-overlay');
 
             if (textarea) {
                 textarea.addEventListener('keydown', this.handleKeyDown.bind(this));
-            }
-            if (overlay) {
-                overlay.addEventListener('click', this.handleOverlayClick.bind(this));
             }
         },
 
         unbindEvents: function() {
             var textarea = document.getElementById('subscription-url-textarea');
-            var overlay = document.getElementById('subscription-url-overlay');
 
             if (textarea) {
                 textarea.removeEventListener('keydown', this.handleKeyDown.bind(this));
-            }
-            if (overlay) {
-                overlay.removeEventListener('click', this.handleOverlayClick.bind(this));
             }
         },
 
@@ -3623,12 +3663,6 @@
             if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
                 this.submit();
             } else if (event.key === 'Escape') {
-                this.hide();
-            }
-        },
-
-        handleOverlayClick: function(event) {
-            if (event.target.id === 'subscription-url-overlay') {
                 this.hide();
             }
         },

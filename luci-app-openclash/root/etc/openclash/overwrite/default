@@ -116,6 +116,7 @@
 # GEOASN_CUSTOM_URL (GeoASN 数据自定义更新地址, URL or default)
 
 # --- 其它功能 ---
+# GLOBAL_UA (全局 User-Agent, 0:不覆写，或具体 UA)
 # SMALL_FLASH_MEMORY (小闪存模式, 0: 禁用, 1: 启用)
 # DISABLE_QUIC_GO_GSO (禁用 QUIC GO GSO, 0: 插件不覆写, 1: 启用)
 # DELAY_START (延时启动, 0: 禁用 or 秒数)
