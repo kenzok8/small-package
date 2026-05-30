@@ -983,7 +983,7 @@ o.inputstyle = "reload"
 o.write = function()
 	m.uci:set("openclash", "config", "enable", 1)
 	m.uci:commit("openclash")
-	SYS.call("/usr/share/openclash/openclash_ipdb.sh >/dev/null 2>&1 &")
+	SYS.call("/usr/share/openclash/openclash_geo.sh ipdb >/dev/null 2>&1 &")
 	HTTP.redirect(DISP.build_url("admin", "services", "openclash"))
 end
 
@@ -1027,7 +1027,7 @@ o.inputstyle = "reload"
 o.write = function()
 	m.uci:set("openclash", "config", "enable", 1)
 	m.uci:commit("openclash")
-	SYS.call("/usr/share/openclash/openclash_geoip.sh >/dev/null 2>&1 &")
+	SYS.call("/usr/share/openclash/openclash_geo.sh geoip >/dev/null 2>&1 &")
 	HTTP.redirect(DISP.build_url("admin", "services", "openclash"))
 end
 
@@ -1071,7 +1071,7 @@ o.inputstyle = "reload"
 o.write = function()
 	m.uci:set("openclash", "config", "enable", 1)
 	m.uci:commit("openclash")
-	SYS.call("/usr/share/openclash/openclash_geosite.sh >/dev/null 2>&1 &")
+	SYS.call("/usr/share/openclash/openclash_geo.sh geosite >/dev/null 2>&1 &")
 	HTTP.redirect(DISP.build_url("admin", "services", "openclash"))
 end
 
@@ -1115,7 +1115,7 @@ o.inputstyle = "reload"
 o.write = function()
 	m.uci:set("openclash", "config", "enable", 1)
 	m.uci:commit("openclash")
-	SYS.call("/usr/share/openclash/openclash_geoasn.sh >/dev/null 2>&1 &")
+	SYS.call("/usr/share/openclash/openclash_geo.sh geoasn >/dev/null 2>&1 &")
 	HTTP.redirect(DISP.build_url("admin", "services", "openclash"))
 end
 

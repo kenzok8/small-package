@@ -1590,77 +1590,29 @@ msgstr "大陆 IP 白名单下载失败，请检查网络或稍后再试..."
 msgid "Chnroute6 Cidr List Update Error, Please Try Again Later..."
 msgstr "大陆 IPv6 白名单下载失败，请检查网络或稍后再试..."
 
-msgid "Start Downloading GeoSite Database..."
-msgstr "开始下载 GeoSite 数据库..."
+msgid "Download Failed: HTML Response Detected, Abort Update..."
+msgstr "下载失败：检测到 HTML 响应（可能为 CDN 错误页面），终止更新..."
 
-msgid "GeoSite Database Download Success, Check Updated..."
-msgstr "GeoSite 数据库下载成功，检查数据库版本是否更新..."
+msgid "Download Failed: File Size Too Small, Abort Update..."
+msgstr "下载失败：文件大小过小（可能被截断），终止更新..."
 
-msgid "GeoSite Database Has Been Updated, Starting To Replace The Old Version..."
-msgstr "GeoSite 数据库版本有更新，开始替换数据库版本..."
+msgid "Download Success, Check Updated..."
+msgstr "下载成功，检查数据库是否已更新..."
 
-msgid "GeoSite Database Update Successful!"
-msgstr "GeoSite 数据库更新成功！"
+msgid "Has Been Updated, Starting To Replace The Old Version..."
+msgstr "有新版本，开始替换旧版本..."
 
-msgid "Updated GeoSite Database No Change, Do Nothing..."
-msgstr "GeoSite 数据库版本没有更新，停止继续操作..."
+msgid "Update Successful!"
+msgstr "更新成功！"
 
-msgid "GeoSite Database Update Error, Please Try Again Later..."
-msgstr "GeoSite 数据库下载失败，请检查网络或稍后再试..."
+msgid "No Change, Do Nothing..."
+msgstr "无变化，停止操作..."
 
-msgid "Start Downloading GeoIP Dat..."
-msgstr "开始下载 GeoIP Dat 数据库..."
+msgid "Update Error, Please Try Again Later..."
+msgstr "更新失败，请稍后再试..."
 
-msgid "GeoIP Dat Download Success, Check Updated..."
-msgstr "GeoIP Dat 数据库下载成功，检查数据库版本是否更新..."
-
-msgid "GeoIP Dat Has Been Updated, Starting To Replace The Old Version..."
-msgstr "GeoIP Dat 数据库版本有更新，开始替换数据库版本..."
-
-msgid "GeoIP Dat Update Successful!"
-msgstr "GeoIP Dat 数据库更新成功！"
-
-msgid "Updated GeoIP Dat No Change, Do Nothing..."
-msgstr "GeoIP Dat 数据库版本没有更新，停止继续操作..."
-
-msgid "GeoIP Dat Update Error, Please Try Again Later..."
-msgstr "GeoIP Dat 数据库下载失败，请检查网络或稍后再试..."
-
-msgid "Start Downloading Geoip Database..."
-msgstr "开始下载 GEOIP 数据库..."
-
-msgid "Geoip Database Download Success, Check Updated..."
-msgstr "GEOIP 数据库下载成功，检查数据库版本是否更新..."
-
-msgid "Geoip Database Has Been Updated, Starting To Replace The Old Version..."
-msgstr "GEOIP 数据库版本有更新，开始替换数据库版本..."
-
-msgid "Geoip Database Update Successful!"
-msgstr "GEOIP 数据库更新成功！"
-
-msgid "Updated Geoip Database No Change, Do Nothing..."
-msgstr "GEOIP 数据库版本没有更新，停止继续操作..."
-
-msgid "Geoip Database Update Error, Please Try Again Later..."
-msgstr "GEOIP 数据库下载失败，请检查网络或稍后再试..."
-
-msgid "Start Downloading Geo ASN Database..."
-msgstr "开始下载 GEO ASN 数据库..."
-
-msgid "Geo ASN Database Download Success, Check Updated..."
-msgstr "GEO ASN 数据库下载成功，检查数据库版本是否更新..."
-
-msgid "Geo ASN Database Has Been Updated, Starting To Replace The Old Version..."
-msgstr "GEO ASN 数据库版本有更新，开始替换数据库版本..."
-
-msgid "Geo ASN Database Update Successful!"
-msgstr "GEO ASN 数据库更新成功！"
-
-msgid "Updated Geo ASN Database No Change, Do Nothing..."
-msgstr "GEO ASN 数据库版本没有更新，停止继续操作..."
-
-msgid "Geo ASN Database Update Error, Please Try Again Later..."
-msgstr "GEO ASN 数据库下载失败，请检查网络或稍后再试..."
+msgid "Start Downloading Database..."
+msgstr "开始下载数据库..."
 
 msgid "Start Getting"
 msgstr "开始获取"
@@ -3797,27 +3749,3 @@ msgstr "依赖正在重新安装..."
 
 msgid "failed to install, please try to install it manually..."
 msgstr "依赖安装失败，请重试手动安装..."
-
-msgid "GeoIP Dat Download Failed: HTML Response Detected, Abort Update..."
-msgstr "GeoIP Dat 下载失败：响应内容为 HTML（可能为 CDN 错误页面），中止更新..."
-
-msgid "GeoIP Dat Download Failed: File Size Too Small, Abort Update..."
-msgstr "GeoIP Dat 下载失败：文件大小小于 1MB（可能被截断），中止更新..."
-
-msgid "GeoSite Database Download Failed: HTML Response Detected, Abort Update..."
-msgstr "GeoSite 数据库下载失败：响应内容为 HTML（可能为 CDN 错误页面），中止更新..."
-
-msgid "GeoSite Database Download Failed: File Size Too Small, Abort Update..."
-msgstr "GeoSite 数据库下载失败：文件大小小于 1MB（可能被截断），中止更新..."
-
-msgid "Geo ASN Database Download Failed: HTML Response Detected, Abort Update..."
-msgstr "Geo ASN 数据库下载失败：响应内容为 HTML（可能为 CDN 错误页面），中止更新..."
-
-msgid "Geo ASN Database Download Failed: File Size Too Small, Abort Update..."
-msgstr "Geo ASN 数据库下载失败：文件大小小于 10KB（可能被截断），中止更新..."
-
-msgid "Geoip Database Download Failed: HTML Response Detected, Abort Update..."
-msgstr "Geoip 数据库下载失败：响应内容为 HTML（可能为 CDN 错误页面），中止更新..."
-
-msgid "Geoip Database Download Failed: File Size Too Small, Abort Update..."
-msgstr "Geoip 数据库下载失败：文件大小小于 10KB（可能被截断），中止更新..."

@@ -38,17 +38,11 @@ add_cron()
    [ -z "$(grep "openclash.sh" "$CRON_FILE" 2>/dev/null)" ] && {
       [ "$(uci_get_config "auto_update")" -eq 1 ] && [ "$(uci_get_config "config_auto_update_mode")" -ne 1 ] && echo "0 $(uci_get_config "auto_update_time" || 1) * * $(uci_get_config "config_update_week_time" || 0) /usr/share/openclash/openclash.sh #openclash-cron-task" >> $CRON_FILE
    }
-   [ -z "$(grep "openclash_ipdb.sh" "$CRON_FILE" 2>/dev/null)" ] && {
-      [ "$(uci_get_config "geo_auto_update")" -eq 1 ] && echo "0 $(uci_get_config "geo_update_day_time" || 1) * * $(uci_get_config "geo_update_week_time" || 0) /usr/share/openclash/openclash_ipdb.sh #openclash-cron-task" >> $CRON_FILE
-   }
-   [ -z "$(grep "openclash_geosite.sh" "$CRON_FILE" 2>/dev/null)" ] && {
-      [ "$(uci_get_config "geosite_auto_update")" -eq 1 ] && echo "0 $(uci_get_config "geosite_update_day_time" || 1) * * $(uci_get_config "geosite_update_week_time" || 0) /usr/share/openclash/openclash_geosite.sh #openclash-cron-task" >> $CRON_FILE
-   }
-   [ -z "$(grep "openclash_geoip.sh" "$CRON_FILE" 2>/dev/null)" ] && {
-      [ "$(uci_get_config "geoip_auto_update")" -eq 1 ] && echo "0 $(uci_get_config "geoip_update_day_time" || 1) * * $(uci_get_config "geoip_update_week_time" || 0) /usr/share/openclash/openclash_geoip.sh #openclash-cron-task" >> $CRON_FILE
-   }
-   [ -z "$(grep "openclash_geoasn.sh" "$CRON_FILE" 2>/dev/null)" ] && {
-      [ "$(uci_get_config "geoasn_auto_update")" -eq 1 ] && echo "0 $(uci_get_config "geoasn_update_day_time" || 1) * * $(uci_get_config "geoasn_update_week_time" || 0) /usr/share/openclash/openclash_geoasn.sh #openclash-cron-task" >> $CRON_FILE
+   [ -z "$(grep "openclash_geo.sh" "$CRON_FILE" 2>/dev/null)" ] && {
+      [ "$(uci_get_config "geo_auto_update")" -eq 1 ] && echo "0 $(uci_get_config "geo_update_day_time" || 1) * * $(uci_get_config "geo_update_week_time" || 0) /usr/share/openclash/openclash_geo.sh ipdb #openclash-cron-task" >> $CRON_FILE
+      [ "$(uci_get_config "geosite_auto_update")" -eq 1 ] && echo "0 $(uci_get_config "geosite_update_day_time" || 1) * * $(uci_get_config "geosite_update_week_time" || 0) /usr/share/openclash/openclash_geo.sh geosite #openclash-cron-task" >> $CRON_FILE
+      [ "$(uci_get_config "geoip_auto_update")" -eq 1 ] && echo "0 $(uci_get_config "geoip_update_day_time" || 1) * * $(uci_get_config "geoip_update_week_time" || 0) /usr/share/openclash/openclash_geo.sh geoip #openclash-cron-task" >> $CRON_FILE
+      [ "$(uci_get_config "geoasn_auto_update")" -eq 1 ] && echo "0 $(uci_get_config "geoasn_update_day_time" || 1) * * $(uci_get_config "geoasn_update_week_time" || 0) /usr/share/openclash/openclash_geo.sh geoasn #openclash-cron-task" >> $CRON_FILE
    }
    [ -z "$(grep "openclash_chnroute.sh" "$CRON_FILE" 2>/dev/null)" ] && {
       [ "$(uci_get_config "chnr_auto_update")" -eq 1 ] && echo "0 $(uci_get_config "chnr_update_day_time" || 1) * * $(uci_get_config "chnr_update_week_time" || 0) /usr/share/openclash/openclash_chnroute.sh #openclash-cron-task" >> $CRON_FILE

@@ -1592,77 +1592,29 @@ msgstr "Error al descargar la lista CIDR de China (IPv4); inténtalo más tarde.
 msgid "Chnroute6 Cidr List Update Error, Please Try Again Later..."
 msgstr "Error al descargar la lista CIDR de China (IPv6); inténtalo más tarde."
 
-msgid "Start Downloading GeoSite Database..."
-msgstr "Iniciando descarga de la base de datos GeoSite..."
+msgid "Download Failed: HTML Response Detected, Abort Update..."
+msgstr "Descarga fallida: respuesta HTML detectada, aborto de la actualización..."
 
-msgid "GeoSite Database Download Success, Check Updated..."
-msgstr "GeoSite descargado correctamente, comprobando actualizaciones..."
+msgid "Download Failed: File Size Too Small, Abort Update..."
+msgstr "Descarga fallida: el archivo es demasiado pequeño, aborto de la actualización..."
 
-msgid "GeoSite Database Has Been Updated, Starting To Replace The Old Version..."
-msgstr "GeoSite tiene una nueva versión; iniciando reemplazo..."
+msgid "Download Success, Check Updated..."
+msgstr "Descarga correcta, comprobando actualizaciones..."
 
-msgid "GeoSite Database Update Successful!"
-msgstr "Base de datos GeoSite actualizada correctamente."
+msgid "Has Been Updated, Starting To Replace The Old Version..."
+msgstr "Tiene nueva versión; iniciando reemplazo..."
 
-msgid "Updated GeoSite Database No Change, Do Nothing..."
-msgstr "GeoSite no presenta cambios; operación detenida."
+msgid "Update Successful!"
+msgstr "Actualizado correctamente."
 
-msgid "GeoSite Database Update Error, Please Try Again Later..."
-msgstr "Error al descargar GeoSite; inténtalo más tarde."
+msgid "No Change, Do Nothing..."
+msgstr "Sin cambios, no hacer nada..."
 
-msgid "Start Downloading GeoIP Dat..."
-msgstr "Iniciando descarga de GeoIP Dat..."
+msgid "Update Error, Please Try Again Later..."
+msgstr "Error al actualizar; inténtalo más tarde..."
 
-msgid "GeoIP Dat Download Success, Check Updated..."
-msgstr "GeoIP Dat descargado correctamente, comprobando actualizaciones..."
-
-msgid "GeoIP Dat Has Been Updated, Starting To Replace The Old Version..."
-msgstr "GeoIP Dat tiene una nueva versión; iniciando reemplazo..."
-
-msgid "GeoIP Dat Update Successful!"
-msgstr "GeoIP Dat actualizado correctamente."
-
-msgid "Updated GeoIP Dat No Change, Do Nothing..."
-msgstr "GeoIP Dat no presenta cambios; operación detenida."
-
-msgid "GeoIP Dat Update Error, Please Try Again Later..."
-msgstr "Error al descargar GeoIP Dat; inténtalo más tarde."
-
-msgid "Start Downloading Geoip Database..."
-msgstr "Iniciando descarga de la base de datos GEOIP..."
-
-msgid "Geoip Database Download Success, Check Updated..."
-msgstr "GEOIP descargado correctamente, comprobando actualizaciones..."
-
-msgid "Geoip Database Has Been Updated, Starting To Replace The Old Version..."
-msgstr "GEOIP tiene una nueva versión; iniciando reemplazo..."
-
-msgid "Geoip Database Update Successful!"
-msgstr "Base de datos GEOIP actualizada correctamente."
-
-msgid "Updated Geoip Database No Change, Do Nothing..."
-msgstr "GEOIP no presenta cambios; operación detenida."
-
-msgid "Geoip Database Update Error, Please Try Again Later..."
-msgstr "Error al descargar GEOIP; inténtalo más tarde."
-
-msgid "Start Downloading Geo ASN Database..."
-msgstr "Iniciando descarga de la base de datos GEO ASN..."
-
-msgid "Geo ASN Database Download Success, Check Updated..."
-msgstr "GEO ASN descargado correctamente, comprobando actualizaciones..."
-
-msgid "Geo ASN Database Has Been Updated, Starting To Replace The Old Version..."
-msgstr "GEO ASN tiene una nueva versión; iniciando reemplazo..."
-
-msgid "Geo ASN Database Update Successful!"
-msgstr "Base de datos GEO ASN actualizada correctamente."
-
-msgid "Updated Geo ASN Database No Change, Do Nothing..."
-msgstr "GEO ASN no presenta cambios; operación detenida."
-
-msgid "Geo ASN Database Update Error, Please Try Again Later..."
-msgstr "Error al descargar GEO ASN; inténtalo más tarde."
+msgid "Start Downloading Database..."
+msgstr "Iniciando descarga de la base de datos..."
 
 msgid "Start Getting"
 msgstr "Iniciando obtención de"
@@ -3790,27 +3742,3 @@ msgstr "reinstalando paquete dependiente..."
 
 msgid "failed to install, please try to install it manually..."
 msgstr "no se pudo instalar; por favor, intenta instalarlo manualmente."
-
-msgid "GeoIP Dat Download Failed: HTML Response Detected, Abort Update..."
-msgstr "Descarga de GeoIP Dat fallida: Respuesta HTML detectada, actualización abortada..."
-
-msgid "GeoIP Dat Download Failed: File Size Too Small, Abort Update..."
-msgstr "Descarga de GeoIP Dat fallida: Archivo demasiado pequeño, actualización abortada..."
-
-msgid "GeoSite Database Download Failed: HTML Response Detected, Abort Update..."
-msgstr "Descarga de GeoSite fallida: Respuesta HTML detectada, actualización abortada..."
-
-msgid "GeoSite Database Download Failed: File Size Too Small, Abort Update..."
-msgstr "Descarga de GeoSite fallida: Archivo demasiado pequeño, actualización abortada..."
-
-msgid "Geo ASN Database Download Failed: HTML Response Detected, Abort Update..."
-msgstr "Descarga de Geo ASN fallida: Respuesta HTML detectada, actualización abortada..."
-
-msgid "Geo ASN Database Download Failed: File Size Too Small, Abort Update..."
-msgstr "Descarga de Geo ASN fallida: Archivo demasiado pequeño, actualización abortada..."
-
-msgid "Geoip Database Download Failed: HTML Response Detected, Abort Update..."
-msgstr "Descarga de Geoip fallida: Respuesta HTML detectada, actualización abortada..."
-
-msgid "Geoip Database Download Failed: File Size Too Small, Abort Update..."
-msgstr "Descarga de Geoip fallida: Archivo demasiado pequeño, actualización abortada..."
