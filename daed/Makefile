@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=daed
 PKG_VERSION:=2026.04.27
 PKG_WEB_VERSION:=1.27.2
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/ksong008/daed.git
@@ -121,6 +121,7 @@ define Build/Compile
 		$(GO_GENERAL_BUILD_CONFIG_VARS) \
 		$(GO_PKG_BUILD_CONFIG_VARS) \
 		$(GO_PKG_BUILD_VARS) ; \
+		go mod tidy ; \
 		go generate ./... ; \
 		cd dae-core ; \
 		export \
