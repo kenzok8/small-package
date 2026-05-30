@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dae
 PKG_VERSION:=2026.05.06
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/daeuniverse/dae.git
@@ -45,23 +45,6 @@ define Package/dae/Default
   URL:=https://github.com/daeuniverse/dae
 endef
 
-define Package/dae/config
-  choice
-    prompt "BPF dependency type"
-    default DAE_USE_VMLINUX_BTF
-    help
-      Select the BPF dependency type.
-      - BPF CO-RE (vmlinux-btf): Recommended. Does not require kernel headers.
-      - Kernel DEBUG_INFO_BTF (bpf-depends): Requires kernel to be compiled with BTF debug info.
-
-    config DAE_USE_VMLINUX_BTF
-      bool "BPF CO-RE (vmlinux-btf)"
-
-    config DAE_USE_BPF_DEPENDS
-      bool "Kernel DEBUG_INFO_BTF (bpf-depends)"
-  endchoice
-endef
-
 define Package/dae
   $(call Package/dae/Default)
   TITLE:=A lightweight and high-performance transparent proxy solution
@@ -69,14 +52,8 @@ define Package/dae
 
   DEPENDS:=$(GO_ARCH_DEPENDS) \
     +ca-bundle +kmod-sched-core +kmod-sched-bpf \
-    +kmod-veth +v2ray-geoip +v2ray-geosite
-
-  ifeq ($(CONFIG_DAE_USE_VMLINUX_BTF),y)
-    DEPENDS+=+vmlinux-btf
-  endif
-  ifeq ($(CONFIG_DAE_USE_BPF_DEPENDS),y)
-    DEPENDS+=$(BPF_DEPENDS) +kmod-xdp-sockets-diag
-  endif
+    +kmod-veth +v2ray-geoip +v2ray-geosite \
+    $(BPF_DEPENDS) +kmod-xdp-sockets-diag
 endef
 
 define Package/dae/description

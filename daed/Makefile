@@ -7,7 +7,7 @@ include $(TOPDIR)/rules.mk
 PKG_NAME:=daed
 PKG_VERSION:=2026.04.27
 PKG_WEB_VERSION:=1.27.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/ksong008/daed.git
@@ -52,37 +52,14 @@ define Package/daed/Default
   URL:=https://github.com/daeuniverse/daed
 endef
 
-define Package/daed/config
-  choice
-    prompt "BPF dependency type"
-    default DAED_USE_VMLINUX_BTF
-    help
-      Select the BPF dependency type.
-      - BPF CO-RE (vmlinux-btf): Recommended. Does not require kernel headers.
-      - Kernel DEBUG_INFO_BTF (bpf-depends): Requires kernel to be compiled with BTF debug info.
-
-    config DAED_USE_VMLINUX_BTF
-      bool "BPF CO-RE (vmlinux-btf)"
-
-    config DAED_USE_BPF_DEPENDS
-      bool "Kernel DEBUG_INFO_BTF (bpf-depends)"
-  endchoice
-endef
-
 define Package/daed
   $(call Package/daed/Default)
   TITLE:=A Modern Dashboard For dae
   # You need enable KERNEL_DEBUG_INFO_BTF and KERNEL_BPF_EVENTS
   DEPENDS:=$(GO_ARCH_DEPENDS) \
     +ca-bundle +kmod-sched-core +kmod-sched-bpf \
-    +kmod-veth +v2ray-geoip +v2ray-geosite
-
-  ifeq ($(CONFIG_DAED_USE_VMLINUX_BTF),y)
-    DEPENDS+=+vmlinux-btf
-  endif
-  ifeq ($(CONFIG_DAED_USE_BPF_DEPENDS),y)
-    DEPENDS+=$(BPF_DEPENDS) +kmod-xdp-sockets-diag
-  endif
+    +kmod-veth +v2ray-geoip +v2ray-geosite \
+    $(BPF_DEPENDS) +kmod-xdp-sockets-diag
 endef
 
 define Package/daed/description
