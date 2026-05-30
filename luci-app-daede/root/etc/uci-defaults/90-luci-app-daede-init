@@ -80,6 +80,30 @@ if [ -f /usr/share/v2ray/geosite.dat ] && [ ! -f /usr/share/daed/geosite.dat ]; 
 	ln -sf /usr/share/v2ray/geosite.dat /usr/share/daed/geosite.dat
 fi
 
+# Seed default dae form sections (group/routing/dns) for the LuCI editor.
+# Idempotent: only add what's missing. Lives in the `dae` UCI package,
+# consumed by gen-dae-config.sh.
+if [ -f /etc/config/dae ]; then
+	if ! uci -q show dae | grep -q "=group$"; then
+		g="$(uci add dae group)"
+		uci -q set "dae.$g.name=proxy"
+		uci -q set "dae.$g.policy=min_moving_avg"
+	fi
+	if ! uci -q get dae.routing >/dev/null 2>&1; then
+		uci -q set dae.routing=routing
+		uci -q set dae.routing.private_direct=1
+		uci -q set dae.routing.cn_direct=1
+		uci -q set dae.routing.block_ads=0
+		uci -q set dae.routing.fallback=proxy
+	fi
+	if ! uci -q get dae.dns >/dev/null 2>&1; then
+		uci -q set dae.dns=dns
+		uci -q set dae.dns.cn_upstream='udp://dns.alidns.com:53'
+		uci -q set dae.dns.fallback_upstream='tcp+udp://dns.google:53'
+	fi
+	uci -q commit dae
+fi
+
 INIT="/etc/init.d/daed"
 MARKER="# luci-app-daede: netns-cleanup"
 

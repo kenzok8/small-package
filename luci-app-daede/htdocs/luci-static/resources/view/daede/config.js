@@ -517,6 +517,270 @@ function detectPlaceholders(text) {
 	return out;
 }
 
+const GEN = '/usr/share/luci-app-daede/gen-dae-config.sh';
+
+/* Table cell renderer: truncate long links so rows stay compact; full value
+   stays visible in the edit dialog and on hover. */
+function ellipsisCell(section_id) {
+	const v = this.cfgvalue(section_id) || '';
+	const short = v.length > 52 ? v.slice(0, 52) + '…' : v;
+	return E('span', { 'title': v, 'style': 'font-family:ui-monospace,Menlo,monospace;font-size:12px' }, short);
+}
+
+/* Wrap every form section in a collapsible accordion. openTitles lists the
+   section titles that should start expanded; the rest start collapsed. */
+function accordionizeSections(mapNode, openTitles) {
+	const secs = mapNode.querySelectorAll('.cbi-section');
+	for (let i = 0; i < secs.length; i++) {
+		const sec = secs[i];
+		const h = sec.querySelector('h3');
+		const title = h ? h.textContent.trim() : _('Section');
+		const open = (openTitles || []).indexOf(title) >= 0;
+
+		const body = E('div', { 'class': 'dd-adv-body' });
+		while (sec.firstChild) body.appendChild(sec.firstChild);
+		/* drop the moved <h3> so it doesn't duplicate the accordion bar title */
+		const dupTitle = body.querySelector('h3');
+		if (dupTitle) dupTitle.parentNode.removeChild(dupTitle);
+
+		const wrap = E('div', { 'class': 'dd-adv' + (open ? '' : ' dd-closed') }, [
+			E('div', { 'class': 'dd-adv-bar' }, [
+				E('span', {}, title),
+				E('span', { 'class': 'dd-adv-chevron' }, '›')
+			]),
+			body
+		]);
+		wrap.firstChild.addEventListener('click', function() { wrap.classList.toggle('dd-closed'); });
+		sec.appendChild(wrap);
+	}
+}
+
+/* Friendly form UI for the dae backend. Form is the source of truth: on save we
+   commit the `dae` UCI package, then gen-dae-config.sh renders config.dae,
+   validates it and hot-reloads. */
+function renderDaeForms() {
+	let m, s, o;
+	m = new form.Map('dae', null, null);
+
+	/* Subscriptions */
+	s = m.section(form.GridSection, 'subscription', _('Subscriptions'),
+		_('Airport / subscription links. dae resolves them into the node pool.'));
+	s.addremove = true;
+	s.anonymous = true;
+	s.sortable = false;
+	o = s.option(form.Value, 'tag', _('Tag'));
+	o.placeholder = 'my_sub';
+	o = s.option(form.Value, 'url', _('Subscription URL'));
+	o.rmempty = false;
+	o.placeholder = 'https://example.com/sub';
+	o.textvalue = ellipsisCell;  /* keep long links from blowing up the row */
+	o.validate = function(sid, v) {
+		if (!v) return _('URL is required');
+		if (!/^(https?|https-file|file):\/\//.test(v)) return _('Must start with http(s):// or file://');
+		return true;
+	};
+	o = s.option(form.Flag, 'enabled', _('Enabled'));
+	o.default = '1';
+	o.editable = true;
+	/* add an Update button next to Edit/Delete in each row; dae re-pulls all
+	   subscriptions on reload, so the action is global regardless of the row */
+	const origRowActions = s.renderRowActions;
+	s.renderRowActions = function(section_id, more_label) {
+		const cell = origRowActions.call(this, section_id, more_label);
+		const btn = E('button', { 'class': 'cbi-button cbi-button-action', 'style': 'margin-right:.25em' }, _('Update'));
+		btn.addEventListener('click', function(ev) {
+			ev.preventDefault();
+			btn.disabled = true;
+			backend.detectRunning().then(function(r) {
+				if (!r || !r.dae)
+					return ui.addNotification(null, E('p', _('dae is stopped; it fetches subscriptions on start.')), 'warning');
+				return fs.exec(backend.BACKENDS.dae.initd, ['hot_reload']).then(function(res) {
+					if (res && res.code !== 0)
+						ui.addNotification(null, E('p', _('Update failed: %s').format(res.stderr || res.stdout || ('exit ' + res.code))), 'danger');
+					else
+						ui.addNotification(null, E('p', _('Subscriptions updated (dae reloaded)')), 'info');
+				});
+			}).catch(function(e) {
+				ui.addNotification(null, E('p', _('Update failed: %s').format(e.message || e)), 'danger');
+			}).finally(function() { btn.disabled = false; });
+		});
+		const firstBtn = cell.querySelector('button, a.cbi-button');
+		if (firstBtn && firstBtn.parentNode) firstBtn.parentNode.insertBefore(btn, firstBtn);
+		else cell.appendChild(btn);
+		return cell;
+	};
+
+	/* Manual nodes (share links) */
+	s = m.section(form.GridSection, 'node', _('Nodes'),
+		_('Single share links (ss / vmess / vless / trojan / tuic / hysteria2 / socks5 …).'));
+	s.addremove = true;
+	s.anonymous = true;
+	s.sortable = false;
+	o = s.option(form.Value, 'tag', _('Tag'));
+	o.placeholder = 'node1';
+	o = s.option(form.Value, 'link', _('Share Link'));
+	o.rmempty = false;
+	o.placeholder = 'vmess://...';
+	o.textvalue = ellipsisCell;
+	o = s.option(form.Flag, 'enabled', _('Enabled'));
+	o.default = '1';
+	o.editable = true;
+
+	/* Subscription tags for group filter dropdowns */
+	const subTags = (uci.sections('dae', 'subscription') || [])
+		.map(function(x) { return x.tag; }).filter(function(x) { return !!x; });
+
+	/* Groups (outbound) */
+	s = m.section(form.TypedSection, 'group', _('Groups'),
+		_('Outbound groups. Leave filters empty to use all nodes. Set the route fallback to one of these.'));
+	s.addremove = true;
+	s.anonymous = true;
+	o = s.option(form.Value, 'name', _('Name'));
+	o.rmempty = false;
+	o.placeholder = 'proxy';
+	o = s.option(form.ListValue, 'policy', _('Policy'));
+	o.value('min_moving_avg', _('Min moving average latency'));
+	o.value('min', _('Min last latency'));
+	o.value('min_avg10', _('Min average of last 10'));
+	o.value('random', _('Random'));
+	o.value('fixed(0)', _('Fixed (first node)'));
+	o.default = 'min_moving_avg';
+	o = s.option(form.DynamicList, 'filter_sub', _('Filter: subscriptions'),
+		_('Only use nodes from these subscription tags (empty = all).'));
+	subTags.forEach(function(t) { o.value(t, t); });
+	o = s.option(form.DynamicList, 'filter_node', _('Filter: node tags'),
+		_('Only use nodes with these tags (empty = all).'));
+
+	/* Routing presets */
+	const groupNames = (uci.sections('dae', 'group') || [])
+		.map(function(x) { return x.name; }).filter(function(x) { return !!x; });
+	s = m.section(form.NamedSection, 'routing', 'routing', _('Routing'));
+	s.addremove = false;
+	o = s.option(form.Flag, 'private_direct', _('Private IPs direct'),
+		_('LAN / private addresses bypass the proxy.'));
+	o.default = '1';
+	o = s.option(form.Flag, 'cn_direct', _('China direct'),
+		_('China mainland IPs and domains bypass the proxy.'));
+	o.default = '1';
+	o = s.option(form.Flag, 'block_ads', _('Block ads'),
+		_('Drop traffic matching the ad domain list.'));
+	o.default = '0';
+	o = s.option(form.Value, 'fallback', _('Fallback group'),
+		_('Default outbound for everything else.'));
+	if (groupNames.length)
+		groupNames.forEach(function(n) { o.value(n, n); });
+	else
+		o.value('proxy', 'proxy');
+	o = s.option(form.DynamicList, 'custom', _('Custom rules'),
+		_('Raw dae routing lines, evaluated before fallback, e.g. dip(geoip:jp) -> proxy'));
+
+	/* DNS presets */
+	s = m.section(form.NamedSection, 'dns', 'dns', _('DNS'));
+	s.addremove = false;
+	o = s.option(form.Value, 'cn_upstream', _('China upstream'),
+		_('Resolves China-mainland domains.'));
+	o.default = 'udp://dns.alidns.com:53';
+	o.placeholder = 'udp://dns.alidns.com:53';
+	o = s.option(form.Value, 'fallback_upstream', _('Fallback upstream'),
+		_('Resolves everything else.'));
+	o.default = 'tcp+udp://dns.google:53';
+	o.placeholder = 'tcp+udp://dns.google:53';
+
+	const status = E('span', { 'class': 'dd-editor-status' }, '');
+	let statusTimer = null;
+	function flash(text, kind, hold) {
+		status.textContent = text;
+		status.classList.remove('ok', 'err');
+		if (kind) status.classList.add(kind);
+		status.classList.add('show');
+		if (statusTimer) clearTimeout(statusTimer);
+		statusTimer = setTimeout(function() { status.classList.remove('show'); }, hold || 3000);
+	}
+
+	const save = E('button', { 'class': 'cbi-button cbi-button-positive' }, _('Save and Hot Reload'));
+
+	return m.render().then(function(mapNode) {
+		save.addEventListener('click', function(ev) {
+			ev.preventDefault();
+			save.disabled = true;
+			flash(_('Saving…'));
+			/* commit dae UCI (apply flushes the rpc session to /etc/config,
+			   which a CLI `uci commit` cannot see), then regenerate + hot reload */
+			m.save(null, true)
+				.then(function() { return uci.save(); })
+				.then(function() { return uci.apply(); })
+				.then(function() { return fs.exec(GEN, ['generate']); })
+				.then(function(res) {
+					if (res && res.code !== 0) {
+						const err = (res.stderr || res.stdout || ('exit ' + res.code)).trim().split('\n')[0];
+						flash(_('Apply failed: %s').format(err), 'err', 9000);
+						return;
+					}
+					/* reload to reflect committed state and clear the change badge */
+					flash(_('Saved · validated · hot-reloaded'), 'ok');
+					setTimeout(function() { window.location.reload(); }, 900);
+				})
+				.catch(function(e) {
+					if (e && e.name === 'CBIValidationError') {
+						flash(_('Please fix the highlighted fields.'), 'err', 6000);
+						return;
+					}
+					flash(_('Save failed: %s').format(e.message || e), 'err', 9000);
+				})
+				.finally(function() { save.disabled = false; });
+		});
+
+		/* make each form section collapsible; keep the two everyday ones open */
+		accordionizeSections(mapNode, [ _('Subscriptions'), _('Nodes') ]);
+
+		return E('div', { 'class': 'dd-card dd-settings-card' }, [
+			E('h4', { 'class': 'dd-card-title' }, _('dae Configuration')),
+			E('div', { 'class': 'dd-settings-descr' },
+				_('Fill in subscriptions or nodes and save — the config file is generated, validated and hot-reloaded for you.')),
+			mapNode,
+			E('div', { 'class': 'dd-editor-actions' }, [ save, status ])
+		]);
+	});
+}
+
+/* Import banner: offer to pull subscription/node from an existing hand-written
+   config.dae into the form when the form is still empty. */
+function renderDaeImportBanner() {
+	const hasForms = (uci.sections('dae', 'subscription') || []).length
+		|| (uci.sections('dae', 'node') || []).length;
+	if (hasForms)
+		return Promise.resolve(null);
+
+	return fs.read_direct(backend.BACKENDS.dae.config, 'text').then(function(content) {
+		if (!content || !/\b(subscription|node)\s*\{/.test(content))
+			return null;
+
+		const btn = E('button', { 'class': 'cbi-button cbi-button-action' }, _('Import from existing config'));
+		const note = E('span', { 'class': 'dd-meta', style: 'margin-left:8px' }, '');
+		btn.addEventListener('click', function(ev) {
+			ev.preventDefault();
+			btn.disabled = true;
+			note.textContent = _('Importing…');
+			fs.exec(GEN, ['import']).then(function(res) {
+				if (res && res.code === 0) {
+					note.textContent = _('Imported, reloading…');
+					setTimeout(function() { window.location.reload(); }, 600);
+				} else {
+					note.textContent = _('Import failed');
+					btn.disabled = false;
+				}
+			}).catch(function() { note.textContent = _('Import failed'); btn.disabled = false; });
+		});
+
+		return E('div', { 'class': 'dd-card', style: 'border-color:rgba(217,158,0,.4)' }, [
+			E('div', { 'class': 'dd-ph-warn-title' }, _('Existing config detected')),
+			E('div', { 'class': 'dd-settings-descr', style: 'margin:4px 0 8px' },
+				_('You have a hand-written config.dae. Import its subscriptions and nodes into the form, or keep editing manually below. Saving the form overwrites config.dae.')),
+			E('div', { 'class': 'dd-actions' }, [ btn, note ])
+		]);
+	}).catch(function() { return null; });
+}
+
 function renderDaeEditor() {
 	const textarea = E('textarea', {
 		'class': 'dd-editor',
@@ -710,47 +974,9 @@ function renderDaeEditor() {
 	loadConfig();
 
 	return E('div', { 'class': 'dd-card' }, [
-		E('h4', { 'class': 'dd-card-title' }, _('dae Configuration')),
-		(function() {
-			var subInput = E('input', { type: 'text', placeholder: _('Paste subscription URL here') });
-			var subApply = E('button', { 'class': 'dd-sub-apply' }, _('Apply and Save'));
-			var subStatus = E('span', { 'class': 'dd-sub-status' }, '');
-			subApply.addEventListener('click', function(ev) {
-				ev.preventDefault();
-				var url = subInput.value.trim();
-				if (!url) return;
-				subApply.disabled = true;
-				subStatus.textContent = _('Applying…');
-				subStatus.classList.add('show');
-				var current = textarea.value || '';
-				var updated = current.replace(/(my_sub:\s*)'[^']*'/, "$1'" + url + "'");
-				if (!updated.includes(url)) {
-					subStatus.textContent = _('Not found, load example first');
-					subApply.disabled = false;
-					return;
-				}
-				textarea.value = updated;
-				refreshPlaceholders();
-				fs.write(backend.BACKENDS.dae.config, updated, 384)
-					.then(function() { return backend.detectRunning(); })
-					.then(function(running) {
-						if (running && running.dae)
-							return fs.exec(backend.BACKENDS.dae.initd, ['hot_reload']).then(function(res) {
-								subStatus.textContent = (res && res.code !== 0) ? _('Saved, reload failed') : _('Saved and applied');
-							});
-						subStatus.textContent = _('Saved, start dae to apply');
-					})
-					.catch(function(e) { subStatus.textContent = _('Failed') + ': ' + (e.message || e); })
-					.finally(function() {
-						subApply.disabled = false;
-						setTimeout(function() { subStatus.classList.remove('show'); }, 4000);
-					});
-			});
-			return E('div', { 'class': 'dd-sub-card' }, [
-				E('div', { 'class': 'dd-sub-card-title' }, _('Subscription Management')),
-				E('div', { 'class': 'dd-sub-row' }, [subInput, subApply, subStatus])
-			]);
-		})(),
+		E('h4', { 'class': 'dd-card-title' }, _('Advanced / Manual Mode')),
+		E('div', { 'class': 'dd-settings-descr' },
+			_('Edit config.dae directly. Saving the form above regenerates the file and overwrites changes made here.')),
 		(function() {
 			var adv = E('div', { 'class': 'dd-adv dd-closed', style: 'margin-top:8px' }, [
 				E('div', { 'class': 'dd-adv-bar' }, [
@@ -811,6 +1037,8 @@ return view.extend({
 		if (!ctx.installed[ctx.name]) {
 			children.push(E('div', { 'class': 'dd-card dd-warning' }, _('Selected backend is not installed. Install dae or daed from the package feed first.')));
 		} else if (ctx.name === 'dae') {
+			children.push(renderDaeImportBanner());
+			children.push(renderDaeForms());
 			children.push(renderDaeEditor());
 		} else {
 			children.push(renderDaedSettings());
@@ -819,7 +1047,7 @@ return view.extend({
 		return Promise.all(children.map(function(child) {
 			return child && child.then ? child : Promise.resolve(child);
 		})).then(function(nodes) {
-			return E('div', { 'class': 'dd-wrap' }, nodes);
+			return E('div', { 'class': 'dd-wrap' }, nodes.filter(function(n) { return !!n; }));
 		});
 	}
 });

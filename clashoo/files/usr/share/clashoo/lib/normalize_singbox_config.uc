@@ -733,6 +733,72 @@ if (opt_bool(uci_opt('dns_leak_protect', '0'), false)) {
 	}
 }
 
+/* ===== 自定义分流规则（UCI: config addtype）→ route.rules，与 mihomo iprules.sh 对应 =====
+ * 用户在 LuCI 加的「域名/IP → 直连/代理」规则，插在 DNS 收口规则（hijack-dns / 853-reject）
+ * 之后、其余路由规则之前，保证纠错优先且不绕过 DNS 收口。 */
+let _proxy_outbound_tag = function() {
+	for (let ob in (cfg.outbounds || []))
+		if (ob && ob.tag == '🚀 节点选择' && (ob.type == 'selector' || ob.type == 'urltest'))
+			return ob.tag;
+	for (let ob in (cfg.outbounds || []))
+		if (ob && ob.type == 'selector' && s_len(ob.tag || '') && !_is_pseudo_tag(ob.tag))
+			return ob.tag;
+	return direct_outbound_tag();
+};
+let _load_addtype_rules = function() {
+	let out = [];
+	let dtag = direct_outbound_tag();
+	let ptag = null;
+	for (let s in uci_sections('addtype')) {
+		let o = s.options || {};
+		let addr = trim_s(o.ipaaddr || '');
+		let rtype = trim_s(o.type || '');
+		let pg = trim_s(o.pgroup || '');
+		if (!s_len(addr) || !s_len(rtype) || !s_len(pg))
+			continue;
+		let r = {};
+		if (rtype == 'DOMAIN')
+			r.domain = addr;
+		else if (rtype == 'DOMAIN-SUFFIX')
+			r.domain_suffix = addr;
+		else if (rtype == 'DOMAIN-KEYWORD')
+			r.domain_keyword = addr;
+		else if (rtype == 'IP-CIDR' || rtype == 'IP-CIDR6')
+			r.ip_cidr = addr;
+		else
+			continue;
+		if (pg == 'DIRECT')
+			r.outbound = dtag;
+		else {
+			if (ptag == null)
+				ptag = _proxy_outbound_tag();
+			r.outbound = ptag;
+		}
+		push(out, r);
+	}
+	return out;
+};
+let _addtype_rules = _load_addtype_rules();
+if (length(_addtype_rules)) {
+	let _nr = [];
+	let _ins = false;
+	for (let _i = 0; _i < length(cfg.route.rules); _i++) {
+		let _ru = cfg.route.rules[_i];
+		let _dns_front = _ru && type(_ru) == 'object' &&
+			(_ru.action == 'hijack-dns' || (_ru.action == 'reject' && _ru.port));
+		if (!_ins && !_dns_front) {
+			for (let _cr in _addtype_rules)
+				push(_nr, _cr);
+			_ins = true;
+		}
+		push(_nr, _ru);
+	}
+	if (!_ins)
+		for (let _cr in _addtype_rules)
+			push(_nr, _cr);
+	cfg.route.rules = _nr;
+}
+
 if (uci_opt('enhanced_mode', 'fake-ip') == 'fake-ip') {
 	add_remote_rule_set('geolocation-!cn',
 		'https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/sing/geo/geosite/geolocation-!cn.srs');

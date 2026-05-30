@@ -1611,7 +1611,17 @@ reload_service()
 		runtime_state_record_preflight "mihomo"
 		backend_remove_rules 2>/dev/null
 		yml_dns_change 2>/dev/null
+		ip_rules 2>/dev/null
 		cp -f "$CONFIG_YAML" "${CLASH_CONFIG}/config.yaml" 2>/dev/null
+		# 调 mihomo RESTful API 热重载配置（含自定义分流规则 addtype），进程不重启、隧道不断
+		local _dp _ds _lip
+		_dp="$(uci -q get clashoo.config.dash_port)"; [ -n "$_dp" ] || _dp=9090
+		_ds="$(uci -q get clashoo.config.dash_pass)"
+		_lip="$(uci -q get network.lan.ipaddr 2>/dev/null | awk -F'/' '{print $1}')"
+		[ -n "$_lip" ] || _lip=127.0.0.1
+		curl -m 5 -H "Authorization: Bearer ${_ds}" -H "Content-Type: application/json" \
+			-X PUT -d '{"path":"'"$CONFIG_YAML"'"}' \
+			"http://${_lip}:${_dp}/configs?force=true" >/dev/null 2>&1
 		backend_apply_rules 2>/dev/null
 		runtime_run_health_check >/dev/null 2>&1
 	fi

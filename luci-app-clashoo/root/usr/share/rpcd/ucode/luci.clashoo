@@ -2885,6 +2885,36 @@ return { ok: true, groups: groups };
 }
 },
 
+/* ── 探测主代理组：供自定义分流规则的「代理」(__PROXY__) 解析用 ──
+ * 取一个可切换的 Selector 组（优先名字像主代理组的，排除 GLOBAL），写入
+ * clashoo.config.primary_proxy_group，iprules.sh 注入 mihomo 规则时引用。 */
+detect_primary_group: {
+call: function() {
+let data = clash_api_json('/proxies', 6);
+if (!data || !data.proxies)
+	return { ok: false, reason: 'unreachable' };
+let proxies = data.proxies;
+let first = '';
+let preferred = '';
+for (let gname in proxies) {
+	let g = proxies[gname];
+	if (!g || type(g) != 'object') continue;
+	if ((g.type || '') != 'Selector') continue;
+	if (gname == 'GLOBAL') continue;
+	if (first == '') first = gname;
+	if (preferred == '' && match(gname, /节点选择|代理|Proxy|PROXY|🚀/))
+		preferred = gname;
+}
+let grp = preferred != '' ? preferred : first;
+if (grp == '')
+	return { ok: false, reason: 'no_selector' };
+let c = cursor();
+c.set('clashoo', 'config', 'primary_proxy_group', grp);
+c.commit('clashoo');
+return { ok: true, group: grp };
+}
+},
+
 proxy_select: {
 args: { group: 'group', name: 'name' },
 call: function(req) {

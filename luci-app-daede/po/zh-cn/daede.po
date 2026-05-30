@@ -438,3 +438,192 @@ msgstr "正常，%d 条代理流量"
 
 msgid "No proxy traffic"
 msgstr "暂无代理流量"
+
+# ---- config.js: dae friendly form ----
+msgid "Subscriptions"
+msgstr "订阅"
+
+msgid "Airport / subscription links. dae resolves them into the node pool."
+msgstr "机场 / 订阅链接，dae 会解析成节点池里的节点。"
+
+msgid "Tag"
+msgstr "标签"
+
+msgid "Subscription URL"
+msgstr "订阅链接"
+
+msgid "URL is required"
+msgstr "订阅链接不能为空"
+
+msgid "Must start with http(s):// or file://"
+msgstr "需以 http(s):// 或 file:// 开头"
+
+msgid "Enabled"
+msgstr "启用"
+
+msgid "Nodes"
+msgstr "节点"
+
+msgid "Single share links (ss / vmess / vless / trojan / tuic / hysteria2 / socks5 …)."
+msgstr "单条分享链接（ss / vmess / vless / trojan / tuic / hysteria2 / socks5 …）。"
+
+msgid "Share Link"
+msgstr "分享链接"
+
+msgid "Groups"
+msgstr "分组"
+
+msgid "Outbound groups. Leave filters empty to use all nodes. Set the route fallback to one of these."
+msgstr "出站分组。过滤留空表示用全部节点。路由兜底要指向其中一个分组。"
+
+msgid "Name"
+msgstr "名称"
+
+msgid "Policy"
+msgstr "策略"
+
+msgid "Min moving average latency"
+msgstr "最小移动平均延迟"
+
+msgid "Min last latency"
+msgstr "最小最近延迟"
+
+msgid "Min average of last 10"
+msgstr "最近 10 次最小均值"
+
+msgid "Random"
+msgstr "随机"
+
+msgid "Fixed (first node)"
+msgstr "固定（第一个节点）"
+
+msgid "Filter: subscriptions"
+msgstr "过滤：订阅"
+
+msgid "Only use nodes from these subscription tags (empty = all)."
+msgstr "只用这些订阅标签下的节点（留空 = 全部）。"
+
+msgid "Filter: node tags"
+msgstr "过滤：节点标签"
+
+msgid "Only use nodes with these tags (empty = all)."
+msgstr "只用带这些标签的节点（留空 = 全部）。"
+
+msgid "Routing"
+msgstr "路由"
+
+msgid "Private IPs direct"
+msgstr "私网 IP 直连"
+
+msgid "LAN / private addresses bypass the proxy."
+msgstr "局域网 / 私有地址不走代理。"
+
+msgid "China direct"
+msgstr "国内直连"
+
+msgid "China mainland IPs and domains bypass the proxy."
+msgstr "中国大陆 IP 和域名不走代理。"
+
+msgid "Block ads"
+msgstr "拦截广告"
+
+msgid "Drop traffic matching the ad domain list."
+msgstr "丢弃命中广告域名表的流量。"
+
+msgid "Fallback group"
+msgstr "兜底分组"
+
+msgid "Default outbound for everything else."
+msgstr "其余流量的默认出站。"
+
+msgid "Custom rules"
+msgstr "自定义规则"
+
+msgid "Raw dae routing lines, evaluated before fallback, e.g. dip(geoip:jp) -> proxy"
+msgstr "原始 dae 路由行，在兜底前生效，例如 dip(geoip:jp) -> proxy"
+
+msgid "China upstream"
+msgstr "国内 DNS 上游"
+
+msgid "Resolves China-mainland domains."
+msgstr "解析中国大陆域名。"
+
+msgid "Fallback upstream"
+msgstr "兜底 DNS 上游"
+
+msgid "Resolves everything else."
+msgstr "解析其余域名。"
+
+msgid "Fill in subscriptions or nodes and save — the config file is generated, validated and hot-reloaded for you."
+msgstr "填好订阅或节点再保存——配置文件会自动生成、校验并热重载。"
+
+msgid "Apply failed: %s"
+msgstr "应用失败：%s"
+
+msgid "Saved · validated · hot-reloaded"
+msgstr "已保存 · 已校验 · 已热重载"
+
+msgid "Please fix the highlighted fields."
+msgstr "请先修正高亮的字段。"
+
+msgid "Import from existing config"
+msgstr "从现有配置导入"
+
+msgid "Existing config detected"
+msgstr "检测到已有配置"
+
+msgid "You have a hand-written config.dae. Import its subscriptions and nodes into the form, or keep editing manually below. Saving the form overwrites config.dae."
+msgstr "你已有手写的 config.dae。可把里面的订阅和节点导入表单，或在下方继续手动编辑。表单保存会覆盖 config.dae。"
+
+msgid "Importing…"
+msgstr "导入中…"
+
+msgid "Imported, reloading…"
+msgstr "已导入，正在刷新…"
+
+msgid "Import failed"
+msgstr "导入失败"
+
+msgid "Advanced / Manual Mode"
+msgstr "高级 / 手动模式"
+
+msgid "Edit config.dae directly. Saving the form above regenerates the file and overwrites changes made here."
+msgstr "直接编辑 config.dae。上方表单保存会重新生成文件并覆盖这里的改动。"
+
+msgid "Update Subscriptions"
+msgstr "更新订阅"
+
+msgid "Re-fetch all airport subscriptions (reloads dae)"
+msgstr "重新拉取所有机场订阅（重载 dae）"
+
+msgid "Updating subscriptions…"
+msgstr "更新订阅中…"
+
+msgid "dae is stopped; it fetches subscriptions on start."
+msgstr "dae 未运行，启动时会自动拉取订阅。"
+
+msgid "Update failed: %s"
+msgstr "更新失败：%s"
+
+msgid "Subscriptions updated (dae reloaded)"
+msgstr "订阅已更新（dae 已重载）"
+
+msgid "Section"
+msgstr "区块"
+
+msgid "DNS"
+msgstr "DNS"
+
+msgid "dae config file is empty. Click \"Initialize from example\" to start, or paste your config here."
+msgstr "dae 配置文件为空。点击「从示例初始化」开始，或直接在此粘贴你的配置。"
+
+# ---- log.js: filter dropdown ----
+msgid "All"
+msgstr "全部"
+
+msgid "Node Status"
+msgstr "节点状态"
+
+msgid "Proxy Traffic"
+msgstr "代理流量"
+

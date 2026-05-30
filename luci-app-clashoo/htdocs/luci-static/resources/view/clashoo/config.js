@@ -149,6 +149,7 @@ var callSmartModelStatus = rpc.declare({ object: 'luci.clashoo', method: 'smart_
 var callSmartUpgradeLgbm = rpc.declare({ object: 'luci.clashoo', method: 'smart_upgrade_lgbm',  expect: {} });
 var callSmartUpgradeLgbmStatus = rpc.declare({ object: 'luci.clashoo', method: 'smart_upgrade_lgbm_status', expect: {} });
 var callSmartFlushCache  = rpc.declare({ object: 'luci.clashoo', method: 'smart_flush_cache',   expect: {} });
+var callDetectPrimaryGroup = rpc.declare({ object: 'luci.clashoo', method: 'detect_primary_group', expect: {} });
 
 function fastResolve(promise, timeoutMs, fallback) {
   var t = new Promise(function (resolve) {
@@ -1053,6 +1054,26 @@ return view.extend({
     o = sa.option(form.Value, 'username', '用户名');
     o = sa.option(form.Value, 'password', '密码');
 
+    var sr = m.section(form.TypedSection, 'addtype', '自定义分流规则',
+      '纠正分流：把某个域名或 IP 强制走「直连」或「代理」，规则优先于订阅自带规则，mihomo 与 sing-box 均生效。');
+    sr.anonymous = true; sr.addremove = true;
+    o = sr.option(form.Value, 'ipaaddr', '域名 / IP');
+    o.rmempty = false;
+    o.placeholder = 'example.com 或 1.2.3.0/24';
+    o = sr.option(form.ListValue, 'type', '类型');
+    o.value('DOMAIN-SUFFIX', '域名后缀（如 google.com）');
+    o.value('DOMAIN', '精确域名（如 www.google.com）');
+    o.value('DOMAIN-KEYWORD', '域名关键词（如 youtube）');
+    o.value('IP-CIDR', 'IP / CIDR（如 8.8.8.8/32）');
+    o.default = 'DOMAIN-SUFFIX';
+    o = sr.option(form.ListValue, 'pgroup', '走向');
+    o.value('DIRECT', '直连');
+    o.value('__PROXY__', '代理');
+    o.default = 'DIRECT';
+    o = sr.option(form.Flag, 'res', 'no-resolve');
+    o.depends('type', 'IP-CIDR');
+    o.description = 'IP 规则不触发 DNS 解析';
+
     m.render().then(function (node) {
       decorateControlWraps(node);
       container.appendChild(node);
@@ -1146,6 +1167,7 @@ return view.extend({
       makeSectionCollapsible(node, '端口配置', true);
       makeSectionCollapsible(node, 'Smart 策略设置', false);
       makeSectionCollapsible(node, '代理认证', false);
+      makeSectionCollapsible(node, '自定义分流规则', false);
 
       container.appendChild(E('div', { 'class': 'cl-save-bar' }, [
         E('button', { 'class': 'btn cbi-button', click: function () {
@@ -1155,8 +1177,10 @@ return view.extend({
             .catch(function (e) { ui.addNotification(null, E('p', '保存失败: ' + (e.message || e))); });
         }}, '保存配置'),
         E('button', { 'class': 'btn cbi-button-action', click: function () {
-          saveCommitApplyMaybeReload(m, '代理配置已保存并热重载服务', '代理配置已保存，服务未启动')
-            .catch(function (e) { ui.addNotification(null, E('p', '操作失败: ' + (e.message || e))); });
+          // 保存前探测主代理组，供自定义分流规则的「代理」(__PROXY__) 解析（失败忽略，注入器回退 GLOBAL）
+          callDetectPrimaryGroup().catch(function () {}).then(function () {
+            return saveCommitApplyMaybeReload(m, '代理配置已保存并热重载服务', '代理配置已保存，服务未启动');
+          }).catch(function (e) { ui.addNotification(null, E('p', '操作失败: ' + (e.message || e))); });
         }}, '应用配置')
       ]));
     });
