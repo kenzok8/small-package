@@ -4671,6 +4671,14 @@ div.cbi-value var.cbi-tooltip-container,
 	color: var(--on-surface-variant);
 }
 
+:is(body[data-page="admin-dashboard"], body[data-page="admin"], body[data-page=""]) .Dashboard .router-status-info .settings-info p span:nth-child(2) {
+	max-width: none;
+}
+
+:is(body[data-page="admin-dashboard"], body[data-page="admin"], body[data-page=""]) .Dashboard .settings-info p span:nth-child(2) {
+	vertical-align: top;
+}
+
 :is(body[data-page="admin-status-iptables"], body[data-page="admin-status-nftables-iptables"]) .cbi-tabmenu {
 	margin-top: 28px;
 }
