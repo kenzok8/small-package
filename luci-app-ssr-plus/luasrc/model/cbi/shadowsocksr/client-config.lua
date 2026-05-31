@@ -427,13 +427,24 @@ o.rmempty = false
 o:depends("type", "ssr")
 o:depends("type", "ss")
 o:depends("type", "ss-rust")
-o:depends("type", "v2ray")
 o:depends("type", "trojan")
 o:depends("type", "naiveproxy")
 o:depends("type", "hysteria2")
 o:depends("type", "tuic")
 o:depends("type", "shadowtls")
 o:depends("type", "socks5")
+local protocols = s.fields["v2ray_protocol"].keylist
+if protocols and type(protocols) == "table" and #protocols > 0 then
+	for _, proto in ipairs(protocols) do
+		if not proto:find("^_") then
+			if proto == "hysteria2" then
+				o:depends({type = "v2ray", v2ray_protocol = "hysteria2", hysteria2_realms = false})
+			else
+				o:depends({type = "v2ray", v2ray_protocol = proto})
+			end
+		end
+	end
+end
 
 o = s:option(Value, "server_port", translate("Server Port"))
 o.datatype = "port"
@@ -441,13 +452,24 @@ o.rmempty = true
 o:depends("type", "ssr")
 o:depends("type", "ss")
 o:depends("type", "ss-rust")
-o:depends("type", "v2ray")
 o:depends("type", "trojan")
 o:depends("type", "naiveproxy")
 o:depends("type", "hysteria2")
 o:depends("type", "tuic")
 o:depends("type", "shadowtls")
 o:depends("type", "socks5")
+local protocols = s.fields["v2ray_protocol"].keylist
+if protocols and type(protocols) == "table" and #protocols > 0 then
+	for _, proto in ipairs(protocols) do
+		if not proto:find("^_") then
+			if proto == "hysteria2" then
+				o:depends({type = "v2ray", v2ray_protocol = "hysteria2", hysteria2_realms = false})
+			else
+				o:depends({type = "v2ray", v2ray_protocol = proto})
+			end
+		end
+	end
+end
 
 o = s:option(Flag, "auth_enable", translate("Enable Authentication"))
 o.rmempty = false
@@ -573,6 +595,21 @@ o:depends("type", "ssr")
 
 
 -- [[ Hysteria2 ]]--
+o = s:option(Flag, "hysteria2_realms", translate("Hysteria2 Realms"))
+o.default = "0"
+if xray_version_val > 260509 then
+	o:depends({type = "v2ray", v2ray_protocol = "hysteria2"})
+else
+	o:depends({type = "v2ray", v2ray_protocol = "__hide"})
+end
+
+o = s:option(Value, "hysteria2_realm_url", translate("Realm URL"), translate("Example:") .. "realm://public@realm.hy2.io/your-realm-name")
+o:depends("hysteria2_realms", true)
+
+o = s:option(DynamicList, "hysteria2_realm_stun", translate("Realm STUN"))
+o.default = { "stun.sip.us:3478", "stun.nextcloud.com:3478", "global.stun.twilio.com:3478" }
+o:depends("hysteria2_realms", true)
+
 o = s:option(Value, "hy2_auth", translate("Users Authentication"))
 o:depends("type", "hysteria2")
 o:depends({type = "v2ray", v2ray_protocol = "hysteria2"})
@@ -581,7 +618,7 @@ o.rmempty = false
 
 o = s:option(Flag, "flag_port_hopping", translate("Enable Port Hopping"))
 o:depends("type", "hysteria2")
-o:depends({type = "v2ray", v2ray_protocol = "hysteria2"})
+o:depends({type = "v2ray", v2ray_protocol = "hysteria2", hysteria2_realms = false})
 o.rmempty = true
 o.default = "0"
 
@@ -1240,12 +1277,18 @@ o:depends("transport", "grpc")
 o = s:option(Flag, "enable_finalmask", translate("FinalMask"))
 o.rmempty = true
 o.default = "0"
-o:depends({type = "v2ray", v2ray_protocol = "vless"})
-o:depends({type = "v2ray", v2ray_protocol = "vmess"})
-o:depends({type = "v2ray", v2ray_protocol = "trojan"})
-o:depends({type = "v2ray", v2ray_protocol = "shadowsocks"})
-o:depends({type = "v2ray", v2ray_protocol = "wireguard"})
-o:depends({type = "v2ray", v2ray_protocol = "hysteria2"})
+local protocols = s.fields["v2ray_protocol"].keylist
+if protocols and type(protocols) == "table" and #protocols > 0 then
+	for _, proto in ipairs(protocols) do
+		if not proto:find("^_") then
+			if proto == "hysteria2" then
+				o:depends({type = "v2ray", v2ray_protocol = "hysteria2", hysteria2_realms = false})
+			elseif proto ~= "socks" and proto ~= "http" then
+				o:depends({type = "v2ray", v2ray_protocol = proto})
+			end
+		end
+	end
+end
 
 o = s:option(TextValue, "finalmask", " ")
 o.description = translate("An FinalMaskObject in JSON format, used for sharing.") .. "<br>" ..
@@ -1342,7 +1385,18 @@ if is_finded("xray") then
 	o = s:option(Flag, "enable_ech", translate("Enable ECH(optional)"))
 	o.rmempty = true
 	o.default = "0"
-	o:depends({type = "v2ray", tls = true})
+	local protocols = s.fields["v2ray_protocol"].keylist
+	if protocols and type(protocols) == "table" and #protocols > 0 then
+		for _, proto in ipairs(protocols) do
+			if not proto:find("^_") then
+				if proto == "hysteria2" then
+					o:depends({type = "v2ray", v2ray_protocol = "hysteria2", tls = true, hysteria2_realms = false})
+				else
+					o:depends({type = "v2ray", v2ray_protocol = proto, tls = true})
+				end
+			end
+		end
+	end
 
 	o = s:option(TextValue, "ech_config", translate("ECH Config"))
 	o.description = translate(
