@@ -430,14 +430,20 @@ msgid "Edit config DSL — subscriptions, nodes, routing, DNS. Load template via
 msgstr "编辑 dae DSL 配置——订阅、节点、路由、DNS。通过「从示例初始化」载入模板。保存前务必替换占位订阅链接。图形化管理请切换至 daed。"
 
 # ---- config.js: Proxy Health ----
-msgid "Check Proxy Status"
-msgstr "检测代理状态"
+msgid "Test YouTube"
+msgstr "测试 YouTube"
 
-msgid "OK, %d flows through proxy"
-msgstr "正常，%d 条代理流量"
+msgid "Testing…"
+msgstr "测试中…"
 
-msgid "No proxy traffic"
-msgstr "暂无代理流量"
+msgid "YouTube reachable · %d ms"
+msgstr "YouTube 可访问 · %d ms"
+
+msgid "YouTube unreachable (timeout)"
+msgstr "YouTube 无法访问（超时）"
+
+msgid "YouTube unreachable (HTTP %s)"
+msgstr "YouTube 无法访问（HTTP %s）"
 
 # ---- config.js: dae friendly form ----
 msgid "Subscriptions"
@@ -473,8 +479,8 @@ msgstr "分享链接"
 msgid "Groups"
 msgstr "分组"
 
-msgid "Outbound groups. Leave filters empty to use all nodes. Set the route fallback to one of these."
-msgstr "出站分组。过滤留空表示用全部节点。路由兜底要指向其中一个分组。"
+msgid "Outbound groups. Leave both filters empty to use all nodes. Set the route fallback to one of these."
+msgstr "出站分组。两个筛选都留空表示用全部节点。路由兜底要指向其中一个分组。"
 
 msgid "Name"
 msgstr "名称"
@@ -497,17 +503,17 @@ msgstr "随机"
 msgid "Fixed (first node)"
 msgstr "固定（第一个节点）"
 
-msgid "Filter: subscriptions"
-msgstr "过滤：订阅"
+msgid "Source subscriptions"
+msgstr "来源订阅"
 
-msgid "Only use nodes from these subscription tags (empty = all)."
-msgstr "只用这些订阅标签下的节点（留空 = 全部）。"
+msgid "Include nodes from these subscriptions."
+msgstr "包含这些订阅里的节点。"
 
-msgid "Filter: node tags"
-msgstr "过滤：节点标签"
+msgid "Match node name"
+msgstr "节点名匹配"
 
-msgid "Only use nodes with these tags (empty = all)."
-msgstr "只用带这些标签的节点（留空 = 全部）。"
+msgid "Also include nodes by name — pick a manual node, or type a keyword/regex. Combined with subscriptions as OR."
+msgstr "再按名字包含节点——选一个单条节点，或输入关键词/正则。与订阅是「或」关系（都会包含进来）。"
 
 msgid "Routing"
 msgstr "路由"
@@ -539,8 +545,8 @@ msgstr "其余流量的默认出站。"
 msgid "Custom rules"
 msgstr "自定义规则"
 
-msgid "Raw dae routing lines, evaluated before fallback, e.g. dip(geoip:jp) -> proxy"
-msgstr "原始 dae 路由行，在兜底前生效，例如 dip(geoip:jp) -> proxy"
+msgid "Raw dae routing lines, evaluated before fallback. Target must be a group name above (or direct/block)."
+msgstr "原始 dae 路由行，在兜底前生效。箭头右边要填上面的分组名（或 direct / block）。"
 
 msgid "China upstream"
 msgstr "国内 DNS 上游"
@@ -554,8 +560,8 @@ msgstr "兜底 DNS 上游"
 msgid "Resolves everything else."
 msgstr "解析其余域名。"
 
-msgid "Fill in subscriptions or nodes and save — the config file is generated, validated and hot-reloaded for you."
-msgstr "填好订阅或节点再保存——配置文件会自动生成、校验并热重载。"
+msgid "Add a subscription or node, then save — it takes effect automatically."
+msgstr "填好订阅或节点，点保存就自动生效。"
 
 msgid "Apply failed: %s"
 msgstr "应用失败：%s"
@@ -627,3 +633,18 @@ msgstr "节点状态"
 msgid "Proxy Traffic"
 msgstr "代理流量"
 
+
+msgid "Logging"
+msgstr "日志"
+
+msgid "dae is not running — saved config only works after you turn it on above."
+msgstr "dae 未运行，保存后用上方开关打开才生效。"
+
+msgid "Save manual config"
+msgstr "保存手动配置"
+
+msgid "Save and Apply"
+msgstr "保存并应用"
+
+msgid "Fixed link — nothing to fetch."
+msgstr "固定链接，无需更新。"

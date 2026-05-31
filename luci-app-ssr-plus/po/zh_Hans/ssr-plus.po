@@ -98,7 +98,7 @@ msgstr ""
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/server-config.lua:387
 msgid "Accept LAN Access"
-msgstr ""
+msgstr "接受局域网访问"
 
 #: applications/luci-app-ssr-plus/luasrc/controller/shadowsocksr.lua:627
 msgid "Access Control"
@@ -340,7 +340,7 @@ msgstr "伪装类型"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/server-config.lua:227
 msgid "Certificate File Path"
-msgstr ""
+msgstr "证书文件路径"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1513
 msgid "Certificate fingerprint"
@@ -637,10 +637,6 @@ msgstr "数据库"
 #: applications/luci-app-ssr-plus/luasrc/view/shadowsocksr/subscribe_schedule_compact.htm:87
 msgid "Day/Week"
 msgstr "日/周"
-
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1235
-msgid "Decimal numbers separated by \",\" or Base64-encoded strings."
-msgstr "用“,”隔开的十进制数字或 Base64 编码字符串。"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/server-config.lua:193
 msgid "Decryption"
@@ -955,7 +951,7 @@ msgstr "每周三"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:606
 msgid "Example:"
-msgstr ""
+msgstr "示例："
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:223
 msgid "Expecting: %s"
@@ -1902,7 +1898,7 @@ msgstr "上一页"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/server-config.lua:232
 msgid "Private Key File Path"
-msgstr ""
+msgstr "私钥文件路径"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1239
 msgid "Private key"
@@ -1933,7 +1929,7 @@ msgstr "公钥"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/server-config.lua:371
 msgid "QUIC Camouflage Type"
-msgstr ""
+msgstr "QUIC 伪装（混淆）类型"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1162
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/server-config.lua:367
@@ -2212,7 +2208,7 @@ msgstr "服务器节点数量"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/server-config.lua:223
 msgid "Server Name (SNI)"
-msgstr ""
+msgstr "服务器名称（SNI）"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:335
 msgid "Server Node Type"
@@ -2250,6 +2246,7 @@ msgid "Session Ticket"
 msgstr "会话凭据"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:358
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:558
 msgid "Shadow-TLS"
 msgstr ""
 
@@ -2284,13 +2281,10 @@ msgstr "ShadowTLS"
 msgid "Shadowsocks"
 msgstr "Shadowsocks"
 
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:774
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/server-config.lua:166
 msgid "Shadowsocks Password"
 msgstr ""
-
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:774
-msgid "Shadowsocks password"
-msgstr "shadowsocks密码"
 
 #: applications/luci-app-ssr-plus/luasrc/controller/shadowsocksr.lua:383
 msgid "Shadowsocks-rust"
@@ -2410,6 +2404,14 @@ msgstr "同时支持 AdGuard Home 和 DNSMASQ 格式的过滤列表"
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:644
 msgid "Supports a fixed value or a random range (e.g., 30, 5-30), minimum 5."
 msgstr "支持固定值或随机范围（如 30 或 5-30），最小 5 秒。"
+
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1235
+msgid ""
+"Supports decimal numbers separated by \",\" or Base64-encoded strings, with "
+"a maximum length of 3 bytes."
+msgstr ""
+"支持以“，”分隔的十进制数字，或者经过 Base64 编码的字符串，其最大长度为 3 个字"
+"节。"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/advanced.lua:84
 msgid "Switch check cycly(second)"
@@ -3105,7 +3107,7 @@ msgstr "使用 QUIC 流的无损 UDP 中继"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/server-config.lua:300
 msgid "mKCP Camouflage Type"
-msgstr ""
+msgstr "mKCP 伪装（混淆）类型"
 
 #: applications/luci-app-ssr-plus/luasrc/view/shadowsocksr/component.htm:46
 msgid "mihomo binary not found in archive"
@@ -3157,10 +3159,6 @@ msgstr ""
 msgid "shadow-TLS SNI"
 msgstr "服务器名称指示"
 
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:558
-msgid "shadow-tls"
-msgstr ""
-
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:734
 msgid "shadowTLS protocol Version"
 msgstr "ShadowTLS 协议版本"
@@ -3211,6 +3209,9 @@ msgstr "UDP 最大并发连接数"
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1561
 msgid "xudpProxyUDP443"
 msgstr "对被代理的 UDP/443 流量处理方式"
+
+#~ msgid "Shadowsocks password"
+#~ msgstr "shadowsocks密码"
 
 #~ msgid "Are you sure you want to delete subscribe link: %s ? "
 #~ msgstr "确定删除此订阅链接：%s 吗？"

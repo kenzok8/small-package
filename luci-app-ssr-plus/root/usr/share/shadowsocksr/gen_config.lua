@@ -237,20 +237,33 @@ function wireguard()
 	-- 处理 reserved 字段，支持逗号分隔的数字或 Base64 编码
 	local reserved = nil
 	if server.reserved then
-		local bytes = {}
-		if not server.reserved:match("[^%d,]+") then
-			-- 纯数字和逗号，解析为数字列表
-			server.reserved:gsub("%d+", function(b)
-				bytes[#bytes + 1] = tonumber(b)
-			end)
-		else
-			-- Base64 编码的二进制数据
-			local result = base64Decode(server.reserved)
-			for i = 1, #result do
-				bytes[i] = result:byte(i)
+		local all_bytes = {}
+		local reserved_values = server.reserved
+
+		-- 确保是 table 类型
+		if type(reserved_values) ~= "table" then
+			reserved_values = {reserved_values}
+		end
+
+		for _, reserved_str in ipairs(reserved_values) do
+			if type(reserved_str) == "string" then
+				if not reserved_str:match("[^%d,]+") then
+					-- 数字和逗号格式
+					reserved_str:gsub("%d+", function(b)
+						all_bytes[#all_bytes + 1] = tonumber(b)
+					end)
+				else
+					-- Base64 格式
+					local result = base64Decode(reserved_str)
+					if result then
+						for i = 1, #result do
+							all_bytes[#all_bytes + 1] = result:byte(i)
+						end
+					end
+				end
 			end
 		end
-		reserved = #bytes > 0 and bytes or nil
+		reserved = #all_bytes > 0 and all_bytes or nil
 	end
 
 	outbound_settings = {
@@ -265,10 +278,17 @@ function wireguard()
 				allowedIPs = (server.allowedips) or nil,
 			}
 		},
-		noKernelTun = (server.kernelmode == "1") and true or false,
+		kernelMode = (server.kernelmode == "1") and true or false,
 		reserved = reserved,
 		mtu = tonumber(server.mtu)
 	}
+	if server.finalmask and server.finalmask ~= "" then
+		local ok, fm = pcall(json.parse, base64Decode(server.finalmask))
+		if ok and type(fm) == "table" then
+			outbound_settings.streamSettings = outbound_settings.streamSettings or {}
+			outbound_settings.streamSettings.finalmask = fm
+		end
+	end
 end
 function xray_hysteria2()
 	outbound_settings = {

@@ -99,14 +99,24 @@ emit_group() {
 
 SUBS_ACC=""
 NODES_ACC=""
+# dae filter args are bare only for plain identifiers; anything with regex
+# chars / CJK / spaces must be wrapped as regex: '...' or the lexer chokes.
+filter_arg() {
+	case "$1" in
+		*[!A-Za-z0-9_]*) printf "regex: '%s'" "$1" ;;
+		*)               printf '%s' "$1" ;;
+	esac
+}
 _collect_subs() {
 	local v="$(sanitize "$1")"
 	[ -n "$v" ] || return 0
+	v="$(filter_arg "$v")"
 	if [ -n "$SUBS_ACC" ]; then SUBS_ACC="${SUBS_ACC}, ${v}"; else SUBS_ACC="$v"; fi
 }
 _collect_nodes() {
 	local v="$(sanitize "$1")"
 	[ -n "$v" ] || return 0
+	v="$(filter_arg "$v")"
 	if [ -n "$NODES_ACC" ]; then NODES_ACC="${NODES_ACC}, ${v}"; else NODES_ACC="$v"; fi
 }
 

@@ -27,7 +27,7 @@
 				"/usr/share/luci-app-daede/pkg-info.sh dae": [ "exec" ],
 				"/usr/share/luci-app-daede/pkg-info.sh daed": [ "exec" ],
 				"/usr/share/luci-app-daede/pkg-info.sh luci-app-daede": [ "exec" ],
-				"/bin/grep -c my_group /var/log/dae/dae.log": [ "exec" ]
+				"/usr/share/luci-app-daede/proxy-check.sh": [ "exec" ]
 			},
 			"ubus": {
 				"service": [ "list" ]
