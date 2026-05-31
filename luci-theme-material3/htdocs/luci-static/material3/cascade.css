@@ -2081,6 +2081,7 @@ header .brand {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	transition: color .3s ease;
 }
 
 header .pull-right {
