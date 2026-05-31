@@ -636,9 +636,10 @@ Xray.outbounds = {
 					local udp = {}
 					if (server.flag_obfs == "1" and (server.obfs_type and server.obfs_type ~= "")) then
 						local o = {
-							type = server.obfs_type,
+							type = "salamander",
 							settings = server.salamander and {
-								password = server.salamander
+								password = server.salamander,
+								packetSize = server.obfs_type == "gecko" and "512-1200" or nil
 							} or nil
 						}
 						udp[#udp+1] = o

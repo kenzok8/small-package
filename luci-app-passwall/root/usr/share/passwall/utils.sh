@@ -235,6 +235,44 @@ get_last_dns() {
 	[ "${__first}" ==  "${__last}" ] || echo "${__last}"
 }
 
+normalize_dns() {
+	local s="$1"
+	local addr port
+	case "$s" in
+		\[*\]:*)
+			# [ip6]:port
+			addr="${s%\]:*}"
+			addr="${addr#\[}"
+			port="${s##*:}"
+		;;
+		*\#*)
+			# ip4#port or ip6#port
+			addr="${s%\#*}"
+			port="${s##*\#}"
+		;;
+		*.*:*)
+			# ip4:port
+			addr="${s%:*}"
+			port="${s##*:}"
+		;;
+		\[*\])
+			# [ip6]
+			addr="${s#\[}"
+			addr="${addr%\]}"
+			port=""
+		;;
+		*)
+			addr="$s"
+			port=""
+		;;
+	esac
+	if [ -n "$port" ]; then
+		echo "${addr}#${port}"
+	else
+		echo "$addr"
+	fi
+}
+
 check_port_exists() {
 	local port=$1
 	local protocol=$2

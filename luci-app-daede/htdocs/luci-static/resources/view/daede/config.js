@@ -24,6 +24,12 @@ const CSS = [
 	'.dd-actions{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}',
 	'.dd-actions .cbi-button{font-size:11.5px;padding:4px 12px;border-radius:5px}',
 	'.dd-actions a.cbi-button{display:inline-flex;align-items:center;gap:4px}',
+	'.dd-wrap .cbi-button{font-size:11px !important;padding:4px 12px !important;border-radius:5px !important;border:1px solid rgba(128,128,128,.35) !important;background:transparent !important;color:inherit !important;box-shadow:none !important;cursor:pointer;white-space:nowrap}',
+	'.dd-wrap .cbi-button:hover{background:rgba(128,128,128,.12) !important}',
+	'.dd-wrap .cbi-button:disabled{opacity:.45;cursor:not-allowed}',
+	'.dd-wrap .cbi-button-action,.dd-wrap .cbi-button-positive,.dd-wrap .cbi-button-add,.dd-wrap .cbi-button-edit{border-color:#4aa065 !important;color:#4aa065 !important}',
+	'.dd-wrap .cbi-button-remove{border-color:#d96d6d !important;color:#d96d6d !important}',
+	'.dd-wrap .cbi-button-remove:hover{background:rgba(217,109,109,.12) !important}',
 	'.dd-switch{position:relative;width:42px;height:22px;border:0;border-radius:999px;background:rgba(128,128,128,.28);padding:0;cursor:pointer;transition:background .18s ease,opacity .18s ease;flex-shrink:0}',
 	'.dd-switch .dd-switch-knob{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.96);box-shadow:0 1px 4px rgba(0,0,0,.2);transition:transform .18s ease}',
 	'.dd-switch.is-on{background:rgba(74,160,101,.65)}',
@@ -54,6 +60,10 @@ const CSS = [
 	'.dd-settings-card .cbi-value-field input,.dd-settings-card .cbi-value-field select,.dd-settings-card .cbi-value-field textarea{font-size:12.5px !important;padding:5px 8px;border-radius:5px;border:1px solid rgba(128,128,128,.28);background:transparent;color:inherit}',
 	'.dd-settings-card .cbi-value-field input:focus,.dd-settings-card .cbi-value-field select:focus,.dd-settings-card .cbi-value-field textarea:focus{border-color:rgba(56,134,161,.7);outline:0;box-shadow:0 0 0 2px rgba(56,134,161,.15)}',
 	'.dd-settings-card .cbi-value-description,.dd-settings-card .cbi-value-helptext{font-size:11.5px !important;opacity:.6;line-height:1.45;padding-top:3px}',
+	'.dd-settings-card .cbi-section-remove{background:transparent !important;border:0 !important;box-shadow:none !important}',
+	'.dd-settings-card .cbi-section-remove .cbi-button{border-color:#d96d6d !important;color:#d96d6d !important}',
+	'.dd-settings-card input[type="checkbox"]{box-shadow:none !important}',
+	'.dd-settings-card input[type="checkbox"]:before{content:none !important;display:none !important;box-shadow:none !important}',
 	/* line the Subscriptions and Nodes grid tables up column-for-column. fixed
 	   layout + explicit per-column percentages make the widths authoritative
 	   across themes (Argon's auto layout otherwise sizes the empty Nodes table
@@ -66,9 +76,6 @@ const CSS = [
 	/* proxy-test result coloring */
 	'.dd-meta.dd-ok{color:#3da66a;font-weight:600}',
 	'.dd-meta.dd-err{color:#d96d6d;font-weight:600}',
-	/* inline notice (e.g. dae selected but not running) */
-	'.dd-form-banner{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:0 0 10px;padding:8px 12px;font-size:12px;line-height:1.5;border-radius:7px;background:rgba(217,158,0,.10);border:1px solid rgba(217,158,0,.40);color:#8a6300}',
-	'body.dark .dd-form-banner,html[data-theme="dark"] .dd-form-banner,html[data-bs-theme="dark"] .dd-form-banner{background:rgba(217,158,0,.12);color:#e0b34a}',
 	/* 手风琴折叠组 —— 视觉与 clashoo cl-component-adv 一致 */
 	'.dd-adv{margin-top:10px}',
 	'.dd-adv-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;user-select:none;font-size:12px;font-weight:600;background:rgba(128,128,128,.06);border:1px solid rgba(128,128,128,.16);border-radius:7px;color:inherit;opacity:.55}',
@@ -668,7 +675,7 @@ function renderDaeForms(ctx) {
 
 	/* Manual nodes (share links) */
 	s = m.section(form.GridSection, 'node', _('Nodes'),
-		_('Single share links (ss / vmess / vless / trojan / tuic / hysteria2 / socks5 …).'));
+		_('每行添加一个节点分享链接，支持 ss、vmess、vless、trojan、tuic、hysteria2、socks5。'));
 	s.addremove = true;
 	s.anonymous = true;
 	s.sortable = false;
@@ -826,22 +833,11 @@ function renderDaeForms(ctx) {
 			E('div', { 'class': 'dd-settings-descr' },
 				_('Add a subscription or node, then save — it takes effect automatically.'))
 		];
-		/* dae is the active backend here, but if it isn't running the saved
-		   config won't take effect until it's started — say so up front */
-		if (ctx && ctx.running && !ctx.running.dae)
-			cardChildren.push(renderDaeStoppedBanner());
 		cardChildren.push(mapNode);
 		cardChildren.push(E('div', { 'class': 'dd-editor-actions' }, [ save, status ]));
 
 		return E('div', { 'class': 'dd-card dd-settings-card' }, cardChildren);
 	});
-}
-
-/* Notice shown atop the dae form when dae is selected but not running. No start
-   button here — the status card's ON/OFF switch above already does that. */
-function renderDaeStoppedBanner() {
-	return E('div', { 'class': 'dd-form-banner' },
-		_('dae is not running — saved config only works after you turn it on above.'));
 }
 
 /* Import banner: offer to pull subscription/node from an existing hand-written

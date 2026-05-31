@@ -2534,6 +2534,34 @@ li.menu,
 	color: var(--text-color-highest) !important;
 }
 
+@media (hover: none), (pointer: coarse), (any-pointer: coarse) {
+	.nav>li:not(.active)>a:hover {
+		background: transparent;
+		color: var(--text-color-high);
+	}
+
+	.nav>li:not(.active)>a:hover::before {
+		background-color: var(--text-color-medium);
+	}
+
+	.nav>li:not(.active)>a:hover::after {
+		border-color: var(--text-color-medium);
+	}
+
+	.nav .dropdown-menu>li:not(.active):hover {
+		background: transparent;
+	}
+
+	.nav .dropdown-menu>li:not(.active)>a:hover {
+		color: var(--text-color-medium) !important;
+	}
+
+	.nav a:hover>.nav-menu-title {
+		-webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent);
+		mask-image: linear-gradient(90deg, #000 calc(100% - 24px), transparent);
+	}
+}
+
 .ripple {
 	position: absolute;
 	width: 200px;

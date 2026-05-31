@@ -471,7 +471,7 @@ msgid "Nodes"
 msgstr "节点"
 
 msgid "Single share links (ss / vmess / vless / trojan / tuic / hysteria2 / socks5 …)."
-msgstr "单条分享链接（ss / vmess / vless / trojan / tuic / hysteria2 / socks5 …）。"
+msgstr "每行添加一个节点分享链接，支持 ss、vmess、vless、trojan、tuic、hysteria2、socks5。"
 
 msgid "Share Link"
 msgstr "分享链接"
@@ -636,9 +636,6 @@ msgstr "代理流量"
 
 msgid "Logging"
 msgstr "日志"
-
-msgid "dae is not running — saved config only works after you turn it on above."
-msgstr "dae 未运行，保存后用上方开关打开才生效。"
 
 msgid "Save manual config"
 msgstr "保存手动配置"
