@@ -1831,6 +1831,12 @@ msgstr "手动获取"
 msgid "Fetch Failed"
 msgstr "获取失败"
 
+msgid "TLS Certificate (PEM)"
+msgstr "TLS 证书（PEM）"
+
+msgid "Full certificate (chain), PEM format."
+msgstr "完整证书（链），PEM 格式。"
+
 msgid "ECH Config"
 msgstr "ECH 配置"
 
