@@ -1804,13 +1804,14 @@ function gen_config(var)
 					-- remote dns outbound rules
 					if value.outboundTag == "blackhole" then
 						table.insert(remote_dns_out_rules, {
-							action = "reject",
+							action = "return",
+							rCode = 0,
 							domain = api.clone(value.domain)
 						})
 					else
 						table.insert(remote_dns_out_rules, {
 							action = "hijack",
-							qtype = "1,28",
+							qType = "1,28",
 							domain = api.clone(value.domain)
 						})
 					end
@@ -1877,7 +1878,7 @@ function gen_config(var)
 			if remote_dns_outbound.settings.rules then
 				table.insert(remote_dns_out_rules, {
 					action = "hijack",
-					qtype = "1,28"
+					qType = "1,28"
 				})
 				table.insert(remote_dns_out_rules, {
 					action = "direct"
