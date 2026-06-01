@@ -10,7 +10,8 @@
 # UCI model (package dae):
 #   config subscription      tag/url, enabled
 #   config node              tag/link, enabled
-#   config group             name/policy, list filter_sub, list filter_node
+#   config group             name/policy, list source, list name_filter
+#                            (old list filter_sub/filter_node still read as fallback)
 #   config routing 'routing' private_direct/cn_direct/block_ads/fallback, list custom
 #   config dns 'dns'         cn_upstream/fallback_upstream
 
@@ -79,26 +80,57 @@ emit_group() {
 
 	GROUP_BUF="${GROUP_BUF}    ${name} {
 "
-	# multiple filter lines = OR; subtag() picks subscriptions, name() picks nodes
-	config_list_foreach "$s" filter_sub _collect_subs
+	# Build the source: 'source' entries that match a subscription tag become
+	# subtag(), the rest (node tags / keywords) become name(). Old filter_sub /
+	# filter_node configs still work as a fallback when 'source' is unset.
+	SUBS_ACC=""; NODES_ACC=""; KW_ACC=""
+	# source: new field, else old filter_sub (decoupled from the name filter so
+	# editing one never silently drops the other)
+	config_list_foreach "$s" source _collect_source
+	[ -z "$SUBS_ACC" ] && [ -z "$NODES_ACC" ] && config_list_foreach "$s" filter_sub _collect_source
+	# optional name filter narrows the subscription pool only (AND); hand-picked
+	# nodes are explicit choices and stay in unconditionally
+	config_list_foreach "$s" name_filter _collect_kw
+	[ -z "$KW_ACC" ] && config_list_foreach "$s" filter_node _collect_kw
+	local andclause=""
+	[ -n "$KW_ACC" ] && andclause=" && name(${KW_ACC})"
+
+	local emitted=0
+	# multiple filter lines = OR, so subtag and name lines union the sources
 	if [ -n "$SUBS_ACC" ]; then
-		GROUP_BUF="${GROUP_BUF}        filter: subtag(${SUBS_ACC})
+		GROUP_BUF="${GROUP_BUF}        filter: subtag(${SUBS_ACC})${andclause}
 "
+		emitted=1
 	fi
-	config_list_foreach "$s" filter_node _collect_nodes
 	if [ -n "$NODES_ACC" ]; then
 		GROUP_BUF="${GROUP_BUF}        filter: name(${NODES_ACC})
+"
+		emitted=1
+	fi
+	# name filter with no source = filter the whole pool by name
+	if [ "$emitted" = 0 ] && [ -n "$KW_ACC" ]; then
+		GROUP_BUF="${GROUP_BUF}        filter: name(${KW_ACC})
 "
 	fi
 	GROUP_BUF="${GROUP_BUF}        policy: ${policy}
     }
 "
-	SUBS_ACC=""
-	NODES_ACC=""
+	SUBS_ACC=""; NODES_ACC=""; KW_ACC=""
 }
 
 SUBS_ACC=""
 NODES_ACC=""
+KW_ACC=""
+# Subscription tags, space-padded for membership tests (" tag " match).
+SUB_TAGS=""
+collect_subtag() {
+	local t; config_get t "$1" tag ""
+	t="$(sanitize "$t")"
+	[ -n "$t" ] && SUB_TAGS="${SUB_TAGS} ${t} "
+}
+is_subtag() {
+	case "$SUB_TAGS" in *" $1 "*) return 0 ;; *) return 1 ;; esac
+}
 # dae filter args are bare only for plain identifiers; anything with regex
 # chars / CJK / spaces must be wrapped as regex: '...' or the lexer chokes.
 filter_arg() {
@@ -107,17 +139,30 @@ filter_arg() {
 		*)               printf '%s' "$1" ;;
 	esac
 }
-_collect_subs() {
-	local v="$(sanitize "$1")"
-	[ -n "$v" ] || return 0
-	v="$(filter_arg "$v")"
-	if [ -n "$SUBS_ACC" ]; then SUBS_ACC="${SUBS_ACC}, ${v}"; else SUBS_ACC="$v"; fi
+# name-filter args do substring matching: regex metachars -> regex:, else keyword:.
+# Intentionally stricter than filter_arg: a plain CJK keyword here stays a
+# substring `keyword:` match, whereas filter_arg wraps any non-word char as regex.
+kw_arg() {
+	if printf '%s' "$1" | grep -q '[][|().*+?^$\\]'; then
+		printf "regex: '%s'" "$1"
+	else
+		printf "keyword: '%s'" "$1"
+	fi
 }
-_collect_nodes() {
+# classify a source entry: subscription tag -> subtag bucket, else name bucket
+_collect_source() {
 	local v="$(sanitize "$1")"
 	[ -n "$v" ] || return 0
-	v="$(filter_arg "$v")"
-	if [ -n "$NODES_ACC" ]; then NODES_ACC="${NODES_ACC}, ${v}"; else NODES_ACC="$v"; fi
+	if is_subtag "$v"; then
+		SUBS_ACC="${SUBS_ACC:+$SUBS_ACC, }$(filter_arg "$v")"
+	else
+		NODES_ACC="${NODES_ACC:+$NODES_ACC, }$(filter_arg "$v")"
+	fi
+}
+_collect_kw() {
+	local v="$(sanitize "$1")"
+	[ -n "$v" ] || return 0
+	KW_ACC="${KW_ACC:+$KW_ACC, }$(kw_arg "$v")"
 }
 
 generate() {
@@ -131,6 +176,8 @@ generate() {
 	config_get lan_interface config lan_interface ""
 
 	SUB_BUF=""; NODE_BUF=""; GROUP_BUF=""; FIRST_GROUP=""
+	SUB_TAGS=""
+	config_foreach collect_subtag subscription
 	config_foreach emit_sub subscription
 	config_foreach emit_node node
 	config_foreach emit_group group
@@ -189,6 +236,7 @@ generate() {
 		fi
 
 		echo "dns {"
+		echo "    ipversion_prefer: 4"
 		echo "    upstream {"
 		echo "        cndns: '${cn_up}'"
 		echo "        fallbackdns: '${fb_up}'"
@@ -209,7 +257,16 @@ generate() {
 
 		echo "routing {"
 		echo "    pname(NetworkManager) -> direct"
+		# multicast / broadcast direct (geoip:private doesn't cover these)
+		echo "    dip(224.0.0.0/3) -> direct"
+		echo "    dip(255.255.255.255/32) -> direct"
+		echo "    dip('ff00::/8') -> direct"
 		[ "$private_direct" = "1" ] && echo "    dip(geoip:private) -> direct"
+		# NTP time sync direct
+		echo "    l4proto(udp) && dport(123) -> direct"
+		# OS connectivity checks direct (avoid captive-portal false positives)
+		echo "    domain(connectivitycheck.gstatic.com) -> direct"
+		echo "    domain(msftconnecttest.com) -> direct"
 		if [ "$cn_direct" = "1" ]; then
 			echo "    dip(geoip:cn) -> direct"
 			echo "    domain(geosite:cn) -> direct"

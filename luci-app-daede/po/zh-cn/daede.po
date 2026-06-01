@@ -479,8 +479,8 @@ msgstr "分享链接"
 msgid "Groups"
 msgstr "分组"
 
-msgid "Outbound groups. Leave both filters empty to use all nodes. Set the route fallback to one of these."
-msgstr "出站分组。两个筛选都留空表示用全部节点。路由兜底要指向其中一个分组。"
+msgid "Outbound groups. Leave the source empty to use all nodes. Set the route fallback to one of these."
+msgstr "出站分组。来源留空表示用全部节点。路由兜底要指向其中一个分组。"
 
 msgid "Name"
 msgstr "名称"
@@ -503,17 +503,23 @@ msgstr "随机"
 msgid "Fixed (first node)"
 msgstr "固定（第一个节点）"
 
-msgid "Source subscriptions"
-msgstr "来源订阅"
+msgid "Source"
+msgstr "来源"
 
-msgid "Include nodes from these subscriptions."
-msgstr "包含这些订阅里的节点。"
+msgid "Subscriptions and nodes that feed this group. Pick from the list or type a name. Leave empty to use all nodes."
+msgstr "进入这个分组的订阅和节点。从列表里选，或手输名称。留空＝用全部节点。"
 
-msgid "Match node name"
-msgstr "节点名匹配"
+msgid "subscription"
+msgstr "订阅"
 
-msgid "Also include nodes by name — pick a manual node, or type a keyword/regex. Combined with subscriptions as OR."
-msgstr "再按名字包含节点——选一个单条节点，或输入关键词/正则。与订阅是「或」关系（都会包含进来）。"
+msgid "node"
+msgstr "节点"
+
+msgid "Name filter"
+msgstr "名称筛选"
+
+msgid "Optional. Narrows subscriptions in the source to nodes whose name matches — e.g. 香港 or 新加坡|日本. Nodes you picked by name are always kept."
+msgstr "可选。只对来源里的订阅做收窄，留下名称匹配的节点，如 香港 或 新加坡|日本；你手动挑的单个节点始终保留。"
 
 msgid "Routing"
 msgstr "路由"

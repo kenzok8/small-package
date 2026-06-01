@@ -62,7 +62,7 @@ const CSS = [
 	'.dd-settings-card .cbi-value-description,.dd-settings-card .cbi-value-helptext{font-size:11.5px !important;opacity:.6;line-height:1.45;padding-top:3px}',
 	'.dd-settings-card .cbi-section-remove{background:transparent !important;border:0 !important;box-shadow:none !important}',
 	'.dd-settings-card .cbi-section-remove .cbi-button{border-color:#d96d6d !important;color:#d96d6d !important}',
-	'.dd-settings-card input[type="checkbox"]{box-shadow:none !important}',
+	'.dd-settings-card input[type="checkbox"]{box-shadow:none !important;background-repeat:no-repeat !important;background-position:center !important;background-size:62% !important}',
 	'.dd-settings-card input[type="checkbox"]:before{content:none !important;display:none !important;box-shadow:none !important}',
 	/* line the Subscriptions and Nodes grid tables up column-for-column. fixed
 	   layout + explicit per-column percentages make the widths authoritative
@@ -697,7 +697,7 @@ function renderDaeForms(ctx) {
 
 	/* Groups (outbound) */
 	s = m.section(form.TypedSection, 'group', _('Groups'),
-		_('Outbound groups. Leave both filters empty to use all nodes. Set the route fallback to one of these.'));
+		_('Outbound groups. Leave the source empty to use all nodes. Set the route fallback to one of these.'));
 	s.addremove = true;
 	s.anonymous = true;
 	o = s.option(form.Value, 'name', _('Name'));
@@ -710,13 +710,13 @@ function renderDaeForms(ctx) {
 	o.value('random', _('Random'));
 	o.value('fixed(0)', _('Fixed (first node)'));
 	o.default = 'min_moving_avg';
-	o = s.option(form.DynamicList, 'filter_sub', _('Source subscriptions'),
-		_('Include nodes from these subscriptions.'));
-	subTags.forEach(function(t) { o.value(t, t); });
-	o = s.option(form.DynamicList, 'filter_node', _('Match node name'),
-		_('Also include nodes by name — pick a manual node, or type a keyword/regex. Combined with subscriptions as OR.'));
-	nodeTags.forEach(function(t) { o.value(t, t); });
-	o.placeholder = '香港|台湾';
+	o = s.option(form.DynamicList, 'source', _('Source'),
+		_('Subscriptions and nodes that feed this group. Pick from the list or type a name. Leave empty to use all nodes.'));
+	subTags.forEach(function(t) { o.value(t, t + ' (' + _('subscription') + ')'); });
+	nodeTags.forEach(function(t) { o.value(t, t + ' (' + _('node') + ')'); });
+	o = s.option(form.DynamicList, 'name_filter', _('Name filter'),
+		_('Optional. Narrows subscriptions in the source to nodes whose name matches — e.g. 香港 or 新加坡|日本. Nodes you picked by name are always kept.'));
+	o.placeholder = '新加坡|日本';
 
 	/* Routing presets */
 	const groupNames = (uci.sections('dae', 'group') || [])

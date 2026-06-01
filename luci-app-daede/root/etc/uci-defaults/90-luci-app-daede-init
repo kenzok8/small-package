@@ -101,6 +101,28 @@ if [ -f /etc/config/dae ]; then
 		uci -q set dae.dns.cn_upstream='udp://dns.alidns.com:53'
 		uci -q set dae.dns.fallback_upstream='tcp+udp://dns.google:53'
 	fi
+	# Migrate legacy group filters to the unified source / name_filter fields,
+	# then drop the old keys so the form shows real, editable values (the old
+	# fields used to re-populate the new ones and looked un-deletable).
+	# `uci get` joins a list into one space-separated line; the unquoted $() word-
+	# splits it back into items. dae tags/keywords are whitespace-free, so this is
+	# the intended split (do NOT set IFS=newline here — it would merge the items).
+	i=0
+	while uci -q get "dae.@group[$i]" >/dev/null 2>&1; do
+		if [ -z "$(uci -q get dae.@group[$i].source)" ]; then
+			for v in $(uci -q get dae.@group[$i].filter_sub 2>/dev/null); do
+				uci -q add_list dae.@group[$i].source="$v"
+			done
+		fi
+		if [ -z "$(uci -q get dae.@group[$i].name_filter)" ]; then
+			for v in $(uci -q get dae.@group[$i].filter_node 2>/dev/null); do
+				uci -q add_list dae.@group[$i].name_filter="$v"
+			done
+		fi
+		uci -q delete dae.@group[$i].filter_sub 2>/dev/null
+		uci -q delete dae.@group[$i].filter_node 2>/dev/null
+		i=$((i+1))
+	done
 	uci -q commit dae
 fi
 
