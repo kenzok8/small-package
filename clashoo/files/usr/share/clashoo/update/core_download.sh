@@ -136,11 +136,11 @@ map_mihomo_arch() {
 		amd64-v2)         echo "linux-amd64-v2" ;;
 		amd64-v3)         echo "linux-amd64-v3" ;;
 		amd64|x86_64)     echo "linux-amd64-compatible" ;;
-		arm64|aarch64_cortex-a53|aarch64_generic) echo "linux-arm64" ;;
-		armv7|arm_cortex-a7_neon-vfpv4) echo "linux-armv7" ;;
-		armv6|arm_arm1176jzf-s_vfp) echo "linux-armv6" ;;
-		armv5|arm_arm926ej-s) echo "linux-armv5" ;;
-		386|i386_pentium4) echo "linux-386" ;;
+		arm64|aarch64*) echo "linux-arm64" ;;
+		armv7|arm_cortex-a[7-9]*|arm_cortex-a1[0-9]*) echo "linux-armv7" ;;
+		armv6|arm_cortex-a[56]*|arm_arm1176*) echo "linux-armv6" ;;
+		armv5|arm_cortex-a5*|arm_arm926*) echo "linux-armv5" ;;
+		386|i[3-6]86|i386*) echo "linux-386" ;;
 		mipsle|mipsel_24kc) echo "linux-mipsle-softfloat" ;;
 		mips|mips_24kc) echo "linux-mips-softfloat" ;;
 		mips64le|mips64el_mips64r2) echo "linux-mips64le" ;;
@@ -153,16 +153,17 @@ map_mihomo_arch() {
 map_singbox_arch() {
 	case "$1" in
 		amd64|amd64-compatible|amd64-v1|amd64-v2|amd64-v3) echo "amd64" ;;
-		arm64)   echo "arm64" ;;
-		armv7)   echo "armv7" ;;
-		armv6)   echo "armv6" ;;
-		armv5)   echo "armv5" ;;
-		386)     echo "386" ;;
-		mips)    echo "mips" ;;
-		mipsle)  echo "mipsle" ;;
-		mips64)  echo "mips64" ;;
-		mips64le) echo "mips64le" ;;
-		*)       echo "amd64" ;;
+		arm64|aarch64*)             echo "arm64" ;;
+		armv7|arm_cortex-a[7-9]*|arm_cortex-a1[0-9]*) echo "armv7" ;;
+		armv6|arm_cortex-a[56]*|arm_arm1176*)         echo "armv6" ;;
+		armv5|arm_cortex-a5*|arm_arm926*)             echo "armv5" ;;
+		386|i[3-6]86|i386*)         echo "386" ;;
+		mips|mips_24kc)             echo "mips" ;;
+		mipsle|mipsel_24kc)         echo "mipsle" ;;
+		mips64|mips64_mips64r2)     echo "mips64" ;;
+		mips64le|mips64el_mips64r2) echo "mips64le" ;;
+		riscv64)                    echo "riscv64" ;;
+		*)                          echo "amd64" ;;
 	esac
 }
 
@@ -179,6 +180,48 @@ map_openwrt_arch() {
 		mips64le)     echo "mips64el_mips64r2" ;;
 		mips64)       echo "mips64_mips64r2" ;;
 		*)            echo "" ;;
+	esac
+}
+
+# Auto-detect normalized arch (MODELTYPE format) from the running device.
+# Tries opkg → DISTRIB_ARCH → apk --print-arch → uname -m.
+# Normalizes to MODELTYPE format (same vocabulary as luci.clashoo and system.js).
+_auto_detect_modeltype() {
+	local raw norm
+	if command -v opkg >/dev/null 2>&1; then
+		raw="$(opkg print-architecture 2>/dev/null | awk '$1=="arch" && $2!="all" && $2!="noarch" {a=$2} END{print a}')"
+	fi
+	if [ -z "$raw" ] && [ -r /etc/openwrt_release ]; then
+		raw="$(sed -n "s/^DISTRIB_ARCH=['\"]\\([^'\"]*\\)['\"]$/\\1/p" /etc/openwrt_release | head -n 1)"
+	fi
+	if [ -z "$raw" ] && command -v apk >/dev/null 2>&1; then
+		raw="$(apk --print-arch 2>/dev/null)"
+	fi
+	[ -z "$raw" ] && raw="$(uname -m 2>/dev/null)"
+	[ -z "$raw" ] && return 1
+	case "$raw" in
+		x86_64|amd64)         norm="amd64-compatible" ;;
+		aarch64*|arm64)       norm="arm64" ;;
+		armv7*|arm_cortex-a[7-9]*|arm_cortex-a1[0-9]*) norm="armv7" ;;
+		armv6*|arm_cortex-a[56]*|arm_arm1176*)         norm="armv6" ;;
+		armv5*|arm_cortex-a5*|arm_arm926*)             norm="armv5" ;;
+		arm*)                                         norm="armv5" ;;
+		i[3-6]86|i386*)       norm="386" ;;
+		mips64el*)            norm="mips64le" ;;
+		mips64*)              norm="mips64" ;;
+		mipsel*)              norm="mipsle" ;;
+		mips*)                norm="mips" ;;
+		riscv64*)             norm="riscv64" ;;
+	esac
+	[ -z "$norm" ] && return 1
+	echo "$norm"
+	return 0
+}
+
+_is_amd64_arch() {
+	case "$1" in
+		amd64-compatible|amd64-v1|amd64-v2|amd64-v3) return 0 ;;
+		*) return 1 ;;
 	esac
 }
 
@@ -241,6 +284,17 @@ detect_openwrt_arch() {
 	local arch
 	if command -v opkg >/dev/null 2>&1; then
 		arch="$(opkg print-architecture 2>/dev/null | awk '$1=="arch" && $2!="all" && $2!="noarch" {a=$2} END{print a}')"
+		[ -n "$arch" ] && { echo "$arch"; return 0; }
+	fi
+	# DISTRIB_ARCH is authoritative for OpenWrt package arch naming.
+	# apk --print-arch may return "aarch64" while sing-box release assets
+	# use the full sub-arch (e.g. aarch64_generic / aarch64_cortex-a53).
+	if [ -r /etc/openwrt_release ]; then
+		arch="$(sed -n "s/^DISTRIB_ARCH=['\"]\\([^'\"]*\\)['\"]$/\\1/p" /etc/openwrt_release | head -n 1)"
+		[ -n "$arch" ] && { echo "$arch"; return 0; }
+	fi
+	if command -v apk >/dev/null 2>&1; then
+		arch="$(apk --print-arch 2>/dev/null)"
 		[ -n "$arch" ] && { echo "$arch"; return 0; }
 	fi
 	map_openwrt_arch "$MODELTYPE"
@@ -730,6 +784,26 @@ install_with_rollback() {
 
 	return 0
 }
+
+# UCI template defaults to amd64-compatible. Auto-detect when MODELTYPE
+# is missing, or when MODELTYPE is an amd64 variant but the device is not.
+if [ -z "$MODELTYPE" ]; then
+	DETECTED="$(_auto_detect_modeltype)"
+	if [ -n "$DETECTED" ] && [ "$DETECTED" != "$MODELTYPE" ]; then
+		write_log "自动识别处理器架构：${DETECTED}"
+		MODELTYPE="$DETECTED"
+		uci set clashoo.config.download_core="$DETECTED" 2>/dev/null
+		uci commit clashoo 2>/dev/null
+	fi
+elif _is_amd64_arch "$MODELTYPE"; then
+	DETECTED="$(_auto_detect_modeltype)"
+	if [ -n "$DETECTED" ] && [ "$DETECTED" != "$MODELTYPE" ] && ! _is_amd64_arch "$DETECTED"; then
+		write_log "UCI 架构为 ${MODELTYPE}，但设备检测为 ${DETECTED}，自动修正"
+		MODELTYPE="$DETECTED"
+		uci set clashoo.config.download_core="$DETECTED" 2>/dev/null
+		uci commit clashoo 2>/dev/null
+	fi
+fi
 
 rm -f /tmp/clash.gz /tmp/clash /usr/share/clashoo/core_down_complete 2>/dev/null
 touch /var/run/core_update 2>/dev/null
