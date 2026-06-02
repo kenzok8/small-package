@@ -1684,12 +1684,13 @@ function gen_config(var)
 					blockTypes = (api.compare_versions(xray_version, "<", "26.4.25")) and { 65 } or nil,  -- Todo is to remove it
 					rules = (api.compare_versions(xray_version, ">", "26.4.17")) and {
 						{
-							qtype = "1,28",
+							qType = "1,28",
 							action = "hijack"
 						},
 						{
-							qtype = 65,
-							action = "reject",
+							qType = 65,
+							action = "return",
+							rCode = 0
 						},
 						{
 							action = "direct"
@@ -1708,11 +1709,12 @@ function gen_config(var)
 					nonIPQuery = (api.compare_versions(xray_version, "<", "26.4.25")) and "reject" or nil, -- Todo is to remove it
 					rules = (api.compare_versions(xray_version, ">", "26.4.17")) and {
 						{
-							qtype = "1,28",
+							qType = "1,28",
 							action = "hijack"
 						},
 						{
-							action = "reject"
+							action = "return",
+							rCode = 0
 						}
 					} or nil
 				}
