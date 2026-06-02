@@ -156,6 +156,7 @@ const inbound_type = [
 	['shadowsocks', _('Shadowsocks') + ' - ' + _('TCP/UDP')],
 	['mieru', _('Mieru') + ' - ' + _('TCP/UDP')],
 	['sudoku', _('Sudoku') + ' - ' + _('TCP')],
+	['snell', _('Snell') + ' - ' + _('TCP')],
 	['vmess', _('VMess') + ' - ' + _('TCP')],
 	['vless', _('VLESS') + ' - ' + _('TCP')],
 	['trojan', _('Trojan') + ' - ' + _('TCP')],

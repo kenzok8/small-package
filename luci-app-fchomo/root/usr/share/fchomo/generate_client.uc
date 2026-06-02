@@ -511,6 +511,8 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		down: cfg.hysteria_down_mbps ? cfg.hysteria_down_mbps + ' Mbps' : null,
 		obfs: cfg.hysteria_obfs_type,
 		"obfs-password": cfg.hysteria_obfs_password,
+		"obfs-min-packet-size": strToInt(cfg.hysteria_obfs_min_packet_size),
+		"obfs-max-packet-size": strToInt(cfg.hysteria_obfs_max_packet_size),
 		"realm-opts": cfg.hysteria2_realm === '1' ? {
 			enable: true,
 			"server-url": cfg.hysteria2_realm_server_url,
@@ -562,6 +564,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		/* Snell */
 		psk: cfg.snell_psk,
 		version: cfg.snell_version,
+		reuse: strToBool(cfg.snell_reuse),
 		"obfs-opts": cfg.type === 'snell' ? {
 			mode: cfg.plugin_opts_obfsmode,
 			host: cfg.plugin_opts_host,

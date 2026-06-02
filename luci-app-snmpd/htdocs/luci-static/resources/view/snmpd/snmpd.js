@@ -103,6 +103,7 @@ return L.view.extend({
 				return port;
 
 			const s = uci.get_first('snmpd', 'agent');
+			if (!s) return null;
 			const rawAddr = uci.get('snmpd', s['.name'], 'agentaddress');
 			if (!rawAddr)
 				return null;
@@ -162,13 +163,13 @@ return L.view.extend({
 		go.remove = function(section_id) {
 			const s = uci.get_first('snmpd', 'agentx');
 			if (s)
-				s.remove('snmpd', s['.name']);
+				uci.remove('snmpd', s['.name']);
 		};
 
 		go.write = function(section_id, value) {
 			const s = uci.get_first('snmpd', 'agentx');
 			var sid = s ? s['.name'] : uci.add('snmpd', 'agentx');
-			uci.set('snmpd', sid, 'agentxsocket', value);
+			return uci.set('snmpd', sid, 'agentxsocket', value);
 		};
 	},
 
@@ -363,10 +364,10 @@ return L.view.extend({
 		g.nodescriptions = true;
 		g.modaltitle = desc;
 
-		go = g.option(form.ListValue, 'Mode', _('Access Control'),
+		mode = g.option(form.ListValue, 'Mode', _('Access Control'),
 			_('Access restriction to readonly or Read/Write'));
-		go.value('rwcommunity', _('Read/Write'));
-		go.value('rocommunity', _('Readonly'));
+		mode.value('rwcommunity', _('Read/Write'));
+		mode.value('rocommunity', _('Readonly'));
 
 		community = g.option(form.Value, 'CommunityName',
 			_('Community Name'),
@@ -420,7 +421,7 @@ return L.view.extend({
 		this.oid.datatype = 'string';
 		this.oid.depends('RestrictOID', 'yes');
 
-		if (go === 'rocommunity') {
+		if (uci.get('snmpd', subsection, 'Mode') === 'rocommunity') {
 			this.ro_community = community;
 			this.ro_community_src = community_src;
 		} else {

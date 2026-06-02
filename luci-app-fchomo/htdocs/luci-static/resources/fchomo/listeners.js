@@ -193,6 +193,7 @@ function renderListeners(s, uciconfig, isClient) {
 	o = s.taboption('field_general', form.ListValue, 'hysteria_obfs_type', _('Obfuscate type'));
 	o.value('', _('Disable'));
 	o.value('salamander', _('Salamander'));
+	o.value('gecko', _('Gecko'));
 	o.depends('type', 'hysteria2');
 	o.modalonly = true;
 
@@ -202,6 +203,16 @@ function renderListeners(s, uciconfig, isClient) {
 	o.rmempty = false;
 	o.depends('type', 'hysteria');
 	o.depends({type: 'hysteria2', hysteria_obfs_type: /.+/});
+	o.modalonly = true;
+
+	o = s.taboption('field_general', form.Value, 'hysteria_obfs_min_packet_size', _('Obfuscate minimum packet size'));
+	o.placeholder = '512'
+	o.depends('hysteria_obfs_type', 'gecko');
+	o.modalonly = true;
+
+	o = s.taboption('field_general', form.Value, 'hysteria_obfs_max_packet_size', _('Obfuscate maximum packet size'));
+	o.placeholder = '1200'
+	o.depends('hysteria_obfs_type', 'gecko');
 	o.modalonly = true;
 
 	o = s.taboption('field_general', form.Value, 'hysteria_masquerade', _('Masquerade'),
@@ -440,6 +451,24 @@ function renderListeners(s, uciconfig, isClient) {
 	o.depends('sudoku_http_mask', '1');
 	o.modalonly = true;
 
+	/* Snell fields */
+	o = s.taboption('field_general', hm.GenValue, 'snell_psk', _('Pre-shared key'));
+	o.password = true;
+	o.rmempty = false;
+	o.validate = hm.validateAuthPassword;
+	o.depends('type', 'snell');
+	o.modalonly = true;
+
+	o = s.taboption('field_general', form.ListValue, 'snell_version', _('Version'));
+	o.value('1', _('v1'));
+	o.value('2', _('v2'));
+	o.value('3', _('v3'));
+	o.value('4', _('v4'));
+	o.value('5', _('v5'));
+	o.default = '4';
+	o.depends('type', 'snell');
+	o.modalonly = true;
+
 	/* Tuic fields */
 	o = s.taboption('field_general', hm.GenValue, 'uuid', _('UUID'));
 	o.rmempty = false;
@@ -539,6 +568,14 @@ function renderListeners(s, uciconfig, isClient) {
 	o.value('http', _('HTTP'));
 	o.value('tls', _('TLS'));
 	o.depends('plugin', 'obfs');
+	o.depends('type', 'snell');
+	o.modalonly = true;
+
+	o = s.taboption('field_general', form.Value, 'plugin_opts_host', _('Plugin: ') + _('Host that supports TLS 1.3'));
+	o.datatype = 'hostname';
+	o.placeholder = 'cloud.tencent.com';
+	o.rmempty = false;
+	o.depends('type', 'snell');
 	o.modalonly = true;
 
 	o = s.taboption('field_general', form.Value, 'plugin_opts_handshake_dest', _('Plugin: ') + _('Handshake target that supports TLS 1.3'));
@@ -605,8 +642,8 @@ function renderListeners(s, uciconfig, isClient) {
 	o.modalonly = true;
 
 	o = s.taboption('field_general', form.Flag, 'udp', _('UDP'));
-	o.default = o.disabled;
-	o.depends({type: /^(socks|mixed|shadowsocks)$/});
+	o.default = o.enabled;
+	o.depends({type: /^(socks|mixed|shadowsocks|snell)$/});
 	o.modalonly = true;
 
 	/* Vless Encryption fields */
@@ -855,6 +892,12 @@ function renderListeners(s, uciconfig, isClient) {
 	// @ 下面支持填写针对server-url的TLS配置(sni, skip-cert-verify, fingerprint, certificate, private-key, alpn)
 
 	/* TLS fields */
+	o = s.taboption('field_general', form.Flag, 'allow_insecure', _('Allow insecure connections'),
+		_('Only applicable when %s are used as a frontend.').format('nginx/caddy'));
+	o.default = o.disabled;
+	o.depends({type: /^(vless|trojan|anytls)$/});
+	o.modalonly = true;
+
 	o = s.taboption('field_general', form.Flag, 'tls', _('TLS'));
 	o.default = o.disabled;
 	o.validate = function(section_id, value) {
@@ -906,7 +949,7 @@ function renderListeners(s, uciconfig, isClient) {
 
 		return true;
 	}
-	o.depends({type: /^(http|socks|mixed|vmess|vless|trojan|anytls|tuic|hysteria2|hysteria2-realm|trusttunnel)$/});
+	o.depends({allow_insecure: '0', type: /^(http|socks|mixed|vmess|vless|trojan|anytls|tuic|hysteria2|hysteria2-realm|trusttunnel)$/});
 	o.modalonly = true;
 
 	o = s.taboption('field_tls', form.DynamicList, 'tls_alpn', _('TLS ALPN'),

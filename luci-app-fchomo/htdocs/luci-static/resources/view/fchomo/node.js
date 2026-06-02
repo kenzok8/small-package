@@ -298,6 +298,7 @@ return view.extend({
 		so = ss.taboption('field_general', form.ListValue, 'hysteria_obfs_type', _('Obfuscate type'));
 		so.value('', _('Disable'));
 		so.value('salamander', _('Salamander'));
+		so.value('gecko', _('Gecko'));
 		so.depends('type', 'hysteria2');
 		so.modalonly = true;
 
@@ -307,6 +308,16 @@ return view.extend({
 		so.rmempty = false;
 		so.depends('type', 'hysteria');
 		so.depends({type: 'hysteria2', hysteria_obfs_type: /.+/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'hysteria_obfs_min_packet_size', _('Obfuscate minimum packet size'));
+		so.placeholder = '512'
+		so.depends('hysteria_obfs_type', 'gecko');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'hysteria_obfs_max_packet_size', _('Obfuscate maximum packet size'));
+		so.placeholder = '1200'
+		so.depends('hysteria_obfs_type', 'gecko');
 		so.modalonly = true;
 
 		/* SSH fields */
@@ -508,8 +519,15 @@ return view.extend({
 		so.value('1', _('v1'));
 		so.value('2', _('v2'));
 		so.value('3', _('v3'));
-		so.default = '3';
+		so.value('4', _('v4'));
+		so.value('5', _('v5'));
+		so.default = '4';
 		so.depends('type', 'snell');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'snell_reuse', _('Connection reuse'));
+		so.default = so.disabled;
+		so.depends({type: 'snell', snell_version: /^(4|5)$/});
 		so.modalonly = true;
 
 		/* TUIC fields */
@@ -875,6 +893,7 @@ return view.extend({
 		so = ss.taboption('field_general', form.Flag, 'udp', _('UDP'));
 		so.default = so.disabled;
 		so.depends({type: /^(direct|socks5|ss|mieru|vmess|vless|trojan|anytls|trusttunnel|masque|wireguard)$/});
+		so.depends({type: 'snell', snell_version: /^(3|4|5)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Flag, 'uot', _('UoT'),
