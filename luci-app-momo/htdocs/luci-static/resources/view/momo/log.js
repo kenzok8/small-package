@@ -28,6 +28,9 @@ return view.extend({
 
         s.tab('log_config', _('Log Config'));
         
+        o = s.taboption('log_config', form.Flag, 'clear_at_stop', _('Clear At Stop'));
+        o.rmempty = false;
+        
         o = s.taboption('log_config', form.Flag, 'scheduled_clear', _('Scheduled Clear'));
         o.rmempty = false;
         

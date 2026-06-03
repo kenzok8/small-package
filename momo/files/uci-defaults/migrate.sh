@@ -51,6 +51,9 @@ section_mixin=$(uci -q get momo.mixin); [ -z "$section_mixin" ] && {
 	uci set momo.mixin.external_control_ui_download_url='https://github.com/Zephyruso/zashboard/releases/latest/download/dist-cdn-fonts.zip'
 }
 
+# since v1.2.1
+config_clear_at_stop=$(uci -q get momo.log.clear_at_stop); [ -z "$config_clear_at_stop" ] && uci set momo.log.clear_at_stop=1
+
 # commit
 uci commit momo
 

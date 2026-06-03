@@ -14,11 +14,11 @@ msgstr ""
 msgid "Access Control"
 msgstr ""
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:141
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:147
 msgid "Address Space Size Hard Limit"
 msgstr ""
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:137
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:143
 msgid "Address Space Size Soft Limit"
 msgstr ""
 
@@ -32,7 +32,7 @@ msgstr ""
 msgid "App Config"
 msgstr ""
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:53
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:56
 msgid "App Log"
 msgstr ""
 
@@ -92,8 +92,12 @@ msgstr ""
 msgid "Choose Profile"
 msgstr ""
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:57
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:90
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:31
+msgid "Clear At Stop"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:60
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:93
 msgid "Clear Log"
 msgstr ""
 
@@ -102,7 +106,7 @@ msgstr ""
 msgid "Commonly Used Port"
 msgstr ""
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:86
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:89
 msgid "Core Log"
 msgstr ""
 
@@ -151,7 +155,7 @@ msgstr ""
 msgid "DNS Strategy"
 msgstr ""
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:119
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:122
 msgid "Debug Log"
 msgstr ""
 
@@ -206,6 +210,10 @@ msgstr ""
 msgid "Enable"
 msgstr ""
 
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:173
+msgid "Environment Variable Config"
+msgstr ""
+
 #: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:50
 msgid "Expire At"
 msgstr ""
@@ -231,7 +239,7 @@ msgstr ""
 msgid "General Config"
 msgstr ""
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:123
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:126
 msgid "Generate & Download"
 msgstr ""
 
@@ -243,11 +251,11 @@ msgstr ""
 msgid "Group"
 msgstr ""
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:149
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:155
 msgid "Heap Size Hard Limit"
 msgstr ""
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:145
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:151
 msgid "Heap Size Soft Limit"
 msgstr ""
 
@@ -358,12 +366,20 @@ msgstr ""
 msgid "Not Running"
 msgstr ""
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:164
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:170
 msgid "Number of Open Files Hard Limit"
 msgstr ""
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:161
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:167
 msgid "Number of Open Files Soft Limit"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:140
+msgid "Number of Processes Hard Limit"
+msgstr ""
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:137
+msgid "Number of Processes Soft Limit"
 msgstr ""
 
 #: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:89
@@ -438,19 +454,19 @@ msgstr ""
 msgid "Running"
 msgstr ""
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:31
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:34
 msgid "Scheduled Clear"
 msgstr ""
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:34
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:37
 msgid "Scheduled Clear Cron"
 msgstr ""
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:39
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:42
 msgid "Scheduled Clear Size Limit"
 msgstr ""
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:45
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:48
 msgid "Scheduled Clear Size Limit Unit"
 msgstr ""
 
@@ -462,16 +478,16 @@ msgstr ""
 msgid "Scheduled Restart Cron"
 msgstr ""
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:80
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:113
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:83
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:116
 msgid "Scroll To Bottom"
 msgstr ""
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:157
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:163
 msgid "Stack Size Hard Limit"
 msgstr ""
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:153
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:159
 msgid "Stack Size Soft Limit"
 msgstr ""
 
@@ -554,12 +570,14 @@ msgstr ""
 msgid "UI Path"
 msgstr ""
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:139
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:143
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:147
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:151
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:155
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:159
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:145
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:149
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:153
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:157
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:161
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:165
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:177
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:181
 msgid "Unlimited"
 msgstr ""
 

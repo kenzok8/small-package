@@ -21,11 +21,11 @@ msgstr "API 密码"
 msgid "Access Control"
 msgstr "访问控制"
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:141
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:147
 msgid "Address Space Size Hard Limit"
 msgstr "地址空间大小硬限制"
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:137
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:143
 msgid "Address Space Size Soft Limit"
 msgstr "地址空间大小软限制"
 
@@ -39,7 +39,7 @@ msgstr "全部端口"
 msgid "App Config"
 msgstr "插件配置"
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:53
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:56
 msgid "App Log"
 msgstr "插件日志"
 
@@ -99,8 +99,12 @@ msgstr "选择文件"
 msgid "Choose Profile"
 msgstr "选择配置文件"
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:57
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:90
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:31
+msgid "Clear At Stop"
+msgstr "停止时清空"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:60
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:93
 msgid "Clear Log"
 msgstr "清空日志"
 
@@ -109,7 +113,7 @@ msgstr "清空日志"
 msgid "Commonly Used Port"
 msgstr "常用端口"
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:86
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:89
 msgid "Core Log"
 msgstr "核心日志"
 
@@ -158,7 +162,7 @@ msgstr "DNS 反向映射"
 msgid "DNS Strategy"
 msgstr "DNS 策略"
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:119
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:122
 msgid "Debug Log"
 msgstr "调试日志"
 
@@ -213,6 +217,10 @@ msgstr "编辑器"
 msgid "Enable"
 msgstr "启用"
 
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:173
+msgid "Environment Variable Config"
+msgstr "环境变量配置"
+
 #: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/profile.js:50
 msgid "Expire At"
 msgstr "到期时间"
@@ -238,7 +246,7 @@ msgstr "文件："
 msgid "General Config"
 msgstr "全局配置"
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:123
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:126
 msgid "Generate & Download"
 msgstr "生成并下载"
 
@@ -250,11 +258,11 @@ msgstr "授予访问 momo 程序的权限"
 msgid "Group"
 msgstr "用户组"
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:149
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:155
 msgid "Heap Size Hard Limit"
 msgstr "堆大小硬限制"
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:145
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:151
 msgid "Heap Size Soft Limit"
 msgstr "堆大小软限制"
 
@@ -365,13 +373,21 @@ msgstr "NTP 服务端口"
 msgid "Not Running"
 msgstr "未在运行"
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:164
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:170
 msgid "Number of Open Files Hard Limit"
 msgstr "打开文件数量硬限制"
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:161
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:167
 msgid "Number of Open Files Soft Limit"
 msgstr "打开文件数量软限制"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:140
+msgid "Number of Processes Hard Limit"
+msgstr "进程数硬限制"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:137
+msgid "Number of Processes Soft Limit"
+msgstr "进程数软限制"
 
 #: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:89
 msgid "Open Dashboard"
@@ -445,19 +461,19 @@ msgstr "路由器代理"
 msgid "Running"
 msgstr "运行中"
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:31
-msgid "Scheduled Clear"
-msgstr "定时清除""
-
 #: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:34
+msgid "Scheduled Clear"
+msgstr "定时清空"
+
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:37
 msgid "Scheduled Clear Cron"
 msgstr "Cron 表达式"
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:39
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:42
 msgid "Scheduled Clear Size Limit"
 msgstr "日志大小上限"
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:45
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:48
 msgid "Scheduled Clear Size Limit Unit"
 msgstr "日志大小上限单位"
 
@@ -469,16 +485,16 @@ msgstr "定时重启"
 msgid "Scheduled Restart Cron"
 msgstr "Cron 表达式"
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:80
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:113
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:83
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/log.js:116
 msgid "Scroll To Bottom"
 msgstr "滚动到底部"
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:157
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:163
 msgid "Stack Size Hard Limit"
 msgstr "栈大小硬限制"
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:153
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:159
 msgid "Stack Size Soft Limit"
 msgstr "栈大小软限制"
 
@@ -561,12 +577,14 @@ msgstr "UI 下载地址"
 msgid "UI Path"
 msgstr "UI 路径"
 
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:139
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:143
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:147
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:151
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:155
-#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:159
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:145
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:149
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:153
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:157
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:161
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:165
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:177
+#: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:181
 msgid "Unlimited"
 msgstr "无限制"
 
@@ -626,35 +644,3 @@ msgstr "用户代理（UA）"
 #: applications/luci-app-momo/htdocs/luci-static/resources/view/momo/app.js:128
 msgid "procd Config"
 msgstr "procd 配置"
-
-#~ msgid "Cron Expression"
-#~ msgstr "Cron 表达式"
-
-#~ msgid "Check log size at the configured cron schedule before cleaning up."
-#~ msgstr "按设定的 Cron 周期检查日志大小，满足条件后再清理。"
-
-#~ msgid ""
-#~ "Clear app, core and debug logs when their total size reaches this "
-#~ "threshold."
-#~ msgstr "当插件日志、核心日志和调试日志总大小达到该阈值时自动清理。"
-
-#~ msgid "Log Cleanup"
-#~ msgstr "日志清理"
-
-#~ msgid "Log Cleanup Cron Expression"
-#~ msgstr "日志清理 Cron 表达式"
-
-#~ msgid "Log Cleanup Size Threshold (MB)"
-#~ msgstr "日志清理大小阈值（MB）"
-
-#~ msgid "Log Size Check Cron Expression"
-#~ msgstr "日志大小检查 Cron 表达式"
-
-#~ msgid "Run unconditional log cleanup at the configured cron schedule."
-#~ msgstr "按设定的 Cron 时间无条件执行日志清理。"
-
-#~ msgid "Scheduled Log Cleanup"
-#~ msgstr "定时日志清理"
-
-#~ msgid "Size-based Log Cleanup"
-#~ msgstr "按大小触发日志清理"
