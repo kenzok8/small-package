@@ -1656,6 +1656,12 @@ msgstr "نام گواهی TLS (CertName)"
 msgid "TLS is used to verify the leaf certificate name."
 msgstr "TLS برای تأیید نام گواهی برگ (Leaf Certificate) استفاده می‌شود."
 
+msgid "TLS Certificate (PEM)"
+msgstr "گواهی TLS (PEM)"
+
+msgid "Full certificate (chain), PEM format."
+msgstr "گواهی کامل (زنجیره‌ای)، فرمت PEM."
+
 msgid "ECH Config"
 msgstr "پیکربندی ECH"
 
@@ -2281,8 +2287,8 @@ msgstr "نادیده گرفتن گره %s به دلیل ناسازگاری با 
 msgid "Skip node: %s. Because Sing-Box does not support the %s protocol's %s transmission method, Xray needs to be used instead."
 msgstr "صرف‌نظر از گره: %s. زیرا Sing-Box از روش انتقال %s پروتکل %s پشتیبانی نمی‌کند، باید به جای آن از Xray استفاده شود."
 
-msgid "Xray unsupport %s plugin."
-msgstr "Xray از افزونه %s پشتیبانی نمی‌کند."
+msgid "%s unsupport SS %s plugin."
+msgstr "%s از افزونه %s پشتیبانی نمی‌کند."
 
 msgid "Plugin options Incomplete."
 msgstr "گزینه‌های افزونه ناقص است."

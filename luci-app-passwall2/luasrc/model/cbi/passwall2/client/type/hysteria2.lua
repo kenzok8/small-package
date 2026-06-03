@@ -59,11 +59,13 @@ o.rewrite_option = o.option
 o = s:option(ListValue, _n("obfs_type"), translate("Obfs Type"))
 o:value("", translate("Disable"))
 o:value("salamander")
+o:value("gecko")
 o.rewrite_option = o.option
 
 o = s:option(Value, _n("obfs_password"), translate("Obfs Password"))
 o.rewrite_option = o.option
 o:depends({ [_n("obfs_type")] = "salamander" })
+o:depends({ [_n("obfs_type")] = "gecko" })
 
 o = s:option(Flag, _n("fast_open"), translate("Fast Open"))
 o.default = "0"

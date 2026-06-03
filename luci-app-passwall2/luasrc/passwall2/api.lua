@@ -154,12 +154,14 @@ function base64Encode(text)
 end
 
 function UrlEncode(szText)
+	if type(szText) ~= "string" then return "" end
 	return szText:gsub("([^%w%-_%.%~])", function(c)
 		return string.format("%%%02X", string.byte(c))
 	end)
 end
 
 function UrlDecode(szText)
+	if type(szText) ~= "string" then return "" end
 	return szText and szText:gsub("%+", " "):gsub("%%(%x%x)", function(h)
 		return string.char(tonumber(h, 16))
 	end) or nil

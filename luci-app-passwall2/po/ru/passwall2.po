@@ -1657,6 +1657,12 @@ msgstr "Имя TLS-сертификата (CertName)"
 msgid "TLS is used to verify the leaf certificate name."
 msgstr "Используется TLS для проверки имени конечного сертификата."
 
+msgid "TLS Certificate (PEM)"
+msgstr "Сертификат TLS (PEM)"
+
+msgid "Full certificate (chain), PEM format."
+msgstr "Полный сертификат (цепочка), формат PEM."
+
 msgid "ECH Config"
 msgstr "Конфигурация ECH"
 
@@ -2279,8 +2285,8 @@ msgstr "Пропуск сервера %s: несовместимость с яд
 msgid "Skip node: %s. Because Sing-Box does not support the %s protocol's %s transmission method, Xray needs to be used instead."
 msgstr "Пропуск сервера: %s. Sing-Box не поддерживает метод передачи %s протокола %s, необходимо использовать Xray."
 
-msgid "Xray unsupport %s plugin."
-msgstr "Xray не поддерживает плагин %s."
+msgid "%s unsupport SS %s plugin."
+msgstr "%s не поддерживает плагин %s."
 
 msgid "Plugin options Incomplete."
 msgstr "Опции плагина указаны не полностью."

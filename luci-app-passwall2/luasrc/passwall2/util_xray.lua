@@ -73,8 +73,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 		local run_socks_instance = true
 		if proxy_table ~= nil and type(proxy_table) == "table" then
 			proxy_tag = proxy_table.tag or nil
-			fragment = proxy_table.fragment or nil
-			noise = proxy_table.noise or nil
+			fragment = (proxy_table.fragment and not node.hysteria2_realms) and true or nil
+			noise = (proxy_table.noise and not node.hysteria2_realms) and true or nil
 			run_socks_instance = proxy_table.run_socks_instance
 		end
 
@@ -189,7 +189,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 								if not node.tls_CertByName then return "" end
 								return node.tls_CertByName
 							end)(),
-					echConfigList = (node.ech == "1") and node.ech_config or nil
+					echConfigList = (node.ech == "1") and node.ech_config or nil,
+					certificates = (node.tls_certificate == "1" and node.tls_certificate_pem ~= "") and {
+						certificate = api.split(node.tls_certificate_pem, "\n"),
+						usage = "verify"
+					} or nil
 				} or nil,
 				realitySettings = (node.stream_security == "reality") and {
 					serverName = node.tls_serverName,
@@ -298,14 +302,36 @@ function gen_outbound(flag, node, tag, proxy_table)
 						udp[#udp+1] = c
 						finalmask.udp = udp
 					elseif TP == "hysteria" then
+						local udp = {}
 						if node.hysteria2_obfs_type and node.hysteria2_obfs_type ~= "" then
-							finalmask.udp = {{
-								type = node.hysteria2_obfs_type,
+							local o = {
+								type = "salamander",
 								settings = node.hysteria2_obfs_password and {
-									password = node.hysteria2_obfs_password
+									password = node.hysteria2_obfs_password,
+									packetSize = node.hysteria2_obfs_type == "gecko" and "512-1200" or nil
 								} or nil
-							}}
+							}
+							udp[#udp+1] = o
 						end
+						if node.hysteria2_realms then
+							local realm = api.parse_realm_uri(node.hysteria2_realm_url)
+							local url, stun
+							if realm then
+								if realm.token and realm.server_url and realm.realm_id then
+									url = "realm://" .. realm.token .. "@" .. realm.server_url .. "/" .. realm.realm_id
+								end
+								stun = realm.stun_servers or node.hysteria2_realm_stun
+							end
+							local r = {
+								type = "realm",
+								settings = {
+									url = url,
+									stunServers = stun
+								}
+							}
+							udp[#udp+1] = r
+						end
+						finalmask.udp = udp
 						local up = tonumber(node.hysteria2_up_mbps) or 0
 						local down = tonumber(node.hysteria2_down_mbps) or 0
 						finalmask.quicParams = {
@@ -415,6 +441,13 @@ function gen_outbound(flag, node, tag, proxy_table)
 
 		if node.protocol == "wireguard" then
 			result.settings.kernelMode = false
+			if node.finalmask and node.finalmask ~= "" then
+				local ok, fm = pcall(jsonc.parse, api.base64Decode(node.finalmask))
+				if ok and type(fm) == "table" then
+					result.streamSettings = result.streamSettings or {}
+					result.streamSettings.finalmask = fm
+				end
+			end
 		end
 
 		local alpn = {}
@@ -487,9 +520,9 @@ function gen_config_server(node)
 
 	if node.protocol == "vmess" or node.protocol == "vless" then
 		if node.uuid then
-			local clients = {}
+			local users = {}
 			for i = 1, #node.uuid do
-				clients[i] = {
+				users[i] = {
 					id = node.uuid[i],
 					flow = (node.protocol == "vless"
 					and (node.tls == "1" or (node.decryption and node.decryption ~= "" and node.decryption ~= "none")) 
@@ -497,7 +530,7 @@ function gen_config_server(node)
 				}
 			end
 			settings = {
-				clients = clients,
+				users = users,
 				decryption = (node.protocol == "vless") and ((node.decryption and node.decryption ~= "") and node.decryption or "none") or nil
 			}
 		end
@@ -505,7 +538,7 @@ function gen_config_server(node)
 		settings = {
 			udp = ("1" == node.udp_forward) and true or false,
 			auth = ("1" == node.auth) and "password" or "noauth",
-			accounts = ("1" == node.auth) and {
+			users = ("1" == node.auth) and {
 				{
 					user = node.username,
 					pass = node.password
@@ -515,7 +548,7 @@ function gen_config_server(node)
 	elseif node.protocol == "http" then
 		settings = {
 			allowTransparent = false,
-			accounts = ("1" == node.auth) and {
+			users = ("1" == node.auth) and {
 				{
 					user = node.username,
 					pass = node.password
@@ -533,20 +566,20 @@ function gen_config_server(node)
 		}
 	elseif node.protocol == "trojan" then
 		if node.uuid then
-			local clients = {}
+			local users = {}
 			for i = 1, #node.uuid do
-				clients[i] = {
-					password = node.uuid[i]
+				users[i] = {
+					password = node.uuid[i],
 				}
 			end
 			settings = {
-				clients = clients
+				users = users
 			}
 		end
 	elseif node.protocol == "hysteria2" then
 		settings = {
 			version = 2,
-			clients = node.hysteria2_auth_password and {
+			users = node.hysteria2_auth_password and {
 				{ auth = node.hysteria2_auth_password }
 			}
 		}
@@ -724,14 +757,36 @@ function gen_config_server(node)
 							udp[#udp+1] = c
 							finalmask.udp = udp
 						elseif node.transport == "hysteria" then
+							local udp = {}
 							if node.hysteria2_obfs_type and node.hysteria2_obfs_type ~= "" then
-								finalmask.udp = {{
-									type = node.hysteria2_obfs_type,
+								local o = {
+									type = "salamander",
 									settings = node.hysteria2_obfs_password and {
-										password = node.hysteria2_obfs_password
+										password = node.hysteria2_obfs_password,
+										packetSize = node.hysteria2_obfs_type == "gecko" and "512-1200" or nil
 									} or nil
-								}}
+								}
+								udp[#udp+1] = o
 							end
+							if node.hysteria2_realms then
+								local realm = api.parse_realm_uri(node.hysteria2_realm_url)
+								local url, stun
+								if realm then
+									if realm.token and realm.server_url and realm.realm_id then
+										url = "realm://" .. realm.token .. "@" .. realm.server_url .. "/" .. realm.realm_id
+									end
+									stun = realm.stun_servers or node.hysteria2_realm_stun
+								end
+								local r = {
+									type = "realm",
+									settings = {
+										url = url,
+										stunServers = stun
+									}
+								}
+								udp[#udp+1] = r
+							end
+							finalmask.udp = udp
 							local ignore = tonumber(node.hysteria2_ignore_client_bandwidth) == 1
 							local up = (not ignore) and tonumber(node.hysteria2_up_mbps) or 0
 							local down = (not ignore) and tonumber(node.hysteria2_down_mbps) or 0
@@ -761,7 +816,7 @@ function gen_config_server(node)
 	}
 
 	local alpn = {}
-	if node.alpn then
+	if node.alpn and node.alpn ~= "default" then
 		string.gsub(node.alpn, '[^' .. "," .. ']+', function(w)
 			table.insert(alpn, w)
 		end)
@@ -907,7 +962,7 @@ function gen_config(var)
 		end
 		if local_socks_username and local_socks_password and local_socks_username ~= "" and local_socks_password ~= "" then
 			inbound.settings.auth = "password"
-			inbound.settings.accounts = {
+			inbound.settings.users = {
 				{
 					user = local_socks_username,
 					pass = local_socks_password
@@ -925,7 +980,7 @@ function gen_config(var)
 			settings = {allowTransparent = false}
 		}
 		if local_http_username and local_http_password and local_http_username ~= "" and local_http_password ~= "" then
-			inbound.settings.accounts = {
+			inbound.settings.users = {
 				{
 					user = local_http_username,
 					pass = local_http_password
@@ -2047,7 +2102,7 @@ function gen_proto_config(var)
 		}
 		if local_socks_username and local_socks_password and local_socks_username ~= "" and local_socks_password ~= "" then
 			inbound.settings.auth = "password"
-			inbound.settings.accounts = {
+			inbound.settings.users = {
 				{
 					user = local_socks_username,
 					pass = local_socks_password
@@ -2067,7 +2122,7 @@ function gen_proto_config(var)
 			}
 		}
 		if local_http_username and local_http_password and local_http_username ~= "" and local_http_password ~= "" then
-			inbound.settings.accounts = {
+			inbound.settings.users = {
 				{
 					user = local_http_username,
 					pass = local_http_password

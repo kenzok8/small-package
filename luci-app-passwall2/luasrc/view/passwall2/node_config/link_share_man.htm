@@ -600,7 +600,7 @@ local current_node = map:get(section)
 				v_password = opt.get("hysteria2_auth_password");
 				var dom_obfs = opt.get("hysteria2_obfs_password");
 				if (dom_obfs && dom_obfs.value != "") {
-					params += "&obfs=" + "salamander";
+					params += opt.query("obfs", "hysteria2_obfs_type");
 					params += opt.query("obfs-password", "hysteria2_obfs_password");
 				}
 				params += opt.query("mport", "hysteria2_hop");
@@ -1598,7 +1598,7 @@ local current_node = map:get(section)
 				opt.set(dom_prefix + 'protocol', "hysteria2");
 				opt.set(dom_prefix + 'hysteria2_auth_password', decodeURIComponent(password));
 				if (queryParam["obfs-password"] || queryParam["obfs_password"]) {
-					opt.set(dom_prefix + 'hysteria2_obfs_type', "salamander");
+					opt.set(dom_prefix + 'hysteria2_obfs_type', queryParam.obfs || "salamander");
 					opt.set(dom_prefix + 'hysteria2_obfs_password', queryParam["obfs-password"] || queryParam["obfs_password"]);
 				}
 				opt.set(dom_prefix + 'hysteria2_hop', queryParam.mport || "");
@@ -1609,7 +1609,7 @@ local current_node = map:get(section)
 				dom_prefix = "hysteria2_"
 				opt.set(dom_prefix + 'auth_password', decodeURIComponent(password));
 				if (queryParam["obfs-password"] || queryParam["obfs_password"]) {
-					opt.set(dom_prefix + 'obfs_type', "salamander");
+					opt.set(dom_prefix + 'obfs_type', queryParam.obfs || "salamander");
 					opt.set(dom_prefix + 'obfs_password', queryParam["obfs-password"] || queryParam["obfs_password"]);
 				}
 				opt.set(dom_prefix + 'hop', queryParam.mport || "");

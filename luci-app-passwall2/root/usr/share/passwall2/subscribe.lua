@@ -528,36 +528,50 @@ local function parseClashNode(node, add_mode, group, sub_cfg)
 		elseif node.plugin == "v2ray-plugin" then
 			result.plugin = "v2ray-plugin"
 		end
-		if node["plugin-opts"] then
-			if node.plugin == "obfs" then
-				local plugin_opts = ""
-				local opts_mode = node["plugin-opts"].mode
-				if opts_mode then
-					plugin_opts = plugin_opts .. "obfs=" .. opts_mode .. ";"
+		if result.plugin then
+			result.plugin_enabled = "1"
+			if result.type == 'Xray' then
+				if result.plugin ~= "obfs-local" then
+					result.plugin_enabled = nil
+					result.error_msg = i18n.translatef("%s unsupport SS %s plugin.", "Xray", result.plugin)
 				end
-				local opts_host = node["plugin-opts"].host
-				if opts_host then
-					plugin_opts = plugin_opts .. "obfs-host=" .. opts_host
+			elseif result.type == 'sing-box' then
+				if result.plugin ~= "obfs-local" and result.plugin ~= "v2ray-plugin" then
+					result.plugin_enabled = nil
+					result.error_msg = i18n.translatef("%s unsupport SS %s plugin.", "Sing-Box", result.plugin)
 				end
-				result.plugin_opts = plugin_opts
-			elseif node.plugin == "v2ray-plugin" then
-				local plugin_opts = ""
-				local opts_mode = node["plugin-opts"].mode
-				local opts_tls = node["plugin-opts"].tls
-				if opts_tls then
-					plugin_opts = plugin_opts .. "tls;"
+			end
+			if node["plugin-opts"] and result.plugin_enabled == "1" then
+				if node.plugin == "obfs" then
+					local plugin_opts = ""
+					local opts_mode = node["plugin-opts"].mode
+					if opts_mode then
+						plugin_opts = plugin_opts .. "obfs=" .. opts_mode .. ";"
+					end
+					local opts_host = node["plugin-opts"].host
+					if opts_host then
+						plugin_opts = plugin_opts .. "obfs-host=" .. opts_host
+					end
+					result.plugin_opts = plugin_opts
+				elseif node.plugin == "v2ray-plugin" then
+					local plugin_opts = ""
+					local opts_mode = node["plugin-opts"].mode
+					local opts_tls = node["plugin-opts"].tls
+					if opts_tls then
+						plugin_opts = plugin_opts .. "tls;"
+					end
+					local opts_skip_cert_verify = node["plugin-opts"]["skip-cert-verify"]
+					local opts_host = node["plugin-opts"].host
+					if opts_host then
+						plugin_opts = plugin_opts .. "host=" .. opts_host .. ";"
+					end
+					local opts_path = node["plugin-opts"].path
+					local opts_mux = node["plugin-opts"].mux
+					if node["plugin-opts"].headers then
+						--todo
+					end
+					result.plugin_opts = plugin_opts
 				end
-				local opts_skip_cert_verify = node["plugin-opts"]["skip-cert-verify"]
-				local opts_host = node["plugin-opts"].host
-				if opts_host then
-					plugin_opts = plugin_opts .. "host=" .. opts_host .. ";"
-				end
-				local opts_path = node["plugin-opts"].path
-				local opts_mux = node["plugin-opts"].mux
-				if node["plugin-opts"].headers then
-					--todo
-				end
-				result.plugin_opts = plugin_opts
 			end
 		end
 	elseif node.type == 'ssr' then
@@ -961,6 +975,11 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			result.tls = "0"
 		end
 
+		if info.ech and info.ech ~= "" then
+			result.ech = "1"
+			result.ech_config = info.ech
+		end
+
 		result.tcp_fast_open = info.tfo
 
 		info.fm = (info.fm and info.fm ~= "") and UrlDecode(info.fm) or nil
@@ -1090,7 +1109,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 				if result.type == 'Xray' then
 					-- The obfs-local plugin converts data to a format supported by xray.
 					if result.plugin ~= "obfs-local" then
-						result.error_msg = i18n.translatef("Xray unsupport %s plugin.", result.plugin)
+						result.error_msg = i18n.translatef("%s unsupport SS %s plugin.", "Xray", result.plugin)
 					else
 						local obfs = result.plugin_opts:match("obfs=([^;]+)") or ""
 						local obfs_host = result.plugin_opts:match("obfs%-host=([^;]+)") or ""
@@ -1109,6 +1128,12 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 						end
 						result.plugin = nil
 						result.plugin_opts = nil
+					end
+				elseif result.type == 'sing-box' then
+					if result.plugin ~= "obfs-local" and result.plugin ~= "v2ray-plugin" then
+						result.error_msg = i18n.translatef("%s unsupport SS %s plugin.", "Sing-Box", result.plugin)
+					else
+						result.plugin_enabled = "1"
 					end
 				else
 					result.plugin_enabled = "1"
@@ -1223,7 +1248,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 					local insecure = params.allowinsecure or params.allowInsecure or params.insecure
 					result.tls_allowInsecure = (insecure == "1" or insecure == "0") and insecure or (sub_allowinsecure and "1" or "0")
 					result.uot = params.udp
-				elseif (params.type ~= "tcp" and params.type ~= "raw") and (params.headerType and params.headerType ~= "none") then
+				else
 					result.error_msg = i18n.translatef("Please replace Xray or Sing-Box to support more transmission methods in Shadowsocks.")
 				end
 			end
@@ -1684,7 +1709,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 		result.hysteria2_down_mbps = params.downmbps or sub_hy_down_mbps
 		result.hysteria2_hop = params.mport
 		if params["obfs-password"] or params["obfs_password"] then
-			result.hysteria2_obfs_type = "salamander"
+			result.hysteria2_obfs_type = params.obfs or "salamander"
 			result.hysteria2_obfs_password = params["obfs-password"] or params["obfs_password"]
 		end
 
@@ -1817,6 +1842,10 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 					result.reality = "1"
 					result.reality_publicKey = params.pbk or nil
 					result.reality_shortId = params.sid or nil
+				end
+				if params.ech and params.ech ~= "" then
+					result.ech = "1"
+					result.ech_config = params.ech
 				end
 			end
 			result.port = port

@@ -48,12 +48,14 @@ o:depends({ [_n("custom")] = false })
 o = s:option(ListValue, _n("obfs_type"), translate("Obfs Type"))
 o:value("", translate("Disable"))
 o:value("salamander")
+o:value("gecko")
 o.rewrite_option = o.option
 o:depends({ [_n("custom")] = false })
 
 o = s:option(Value, _n("obfs_password"), translate("Obfs Password"))
 o.rewrite_option = o.option
 o:depends({ [_n("obfs_type")] = "salamander" })
+o:depends({ [_n("obfs_type")] = "gecko" })
 
 o = s:option(Flag, _n("udp"), translate("UDP"))
 o.default = "1"
