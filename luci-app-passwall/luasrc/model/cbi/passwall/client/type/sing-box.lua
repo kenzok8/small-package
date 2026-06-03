@@ -560,7 +560,6 @@ if singbox_tags:find("with_utls") then
 	o:depends({ [_n("protocol")] = "vless", [_n("tls")] = true })
 	o:depends({ [_n("protocol")] = "vmess", [_n("tls")] = true })
 	o:depends({ [_n("protocol")] = "shadowsocks", [_n("tls")] = true })
-	o:depends({ [_n("protocol")] = "socks", [_n("tls")] = true })
 	o:depends({ [_n("protocol")] = "trojan", [_n("tls")] = true })
 	o:depends({ [_n("protocol")] = "anytls", [_n("tls")] = true })
 	
@@ -585,7 +584,6 @@ else o:value("grpc", "gRPC-lite")
 end
 o:depends({ [_n("protocol")] = "vmess" })
 o:depends({ [_n("protocol")] = "vless" })
-o:depends({ [_n("protocol")] = "socks" })
 o:depends({ [_n("protocol")] = "shadowsocks" })
 o:depends({ [_n("protocol")] = "trojan" })
 
