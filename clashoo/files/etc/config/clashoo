@@ -139,3 +139,10 @@ config dns_policy
 	list nameserver 'https://cloudflare-dns.com/dns-query'
 
 config authentication
+
+# default empty custom-rule row so the section shows the input form, not just an add
+# button; injectors skip rules with an empty ipaaddr, so it generates nothing until filled
+config addtype
+	option type 'DOMAIN-SUFFIX'
+	option pgroup 'DIRECT'
+	option ipaaddr ''

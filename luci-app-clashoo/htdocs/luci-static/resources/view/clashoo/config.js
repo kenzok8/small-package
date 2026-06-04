@@ -304,7 +304,8 @@ function saveCommitApplyMaybeReload(m, runningMsg, stoppedMsg) {
     .then(function (st) { return !!(st && st.running); })
     .catch(function () { return false; })
     .then(function (running) {
-      return m.save()
+      /* silent=true so the caller's catch reports validation errors once (no double popup) */
+      return m.save(null, true)
         .then(function () { return clashoo.commitConfig(); })
         .then(function () {
           return running ? clashoo.reload() : { success: true, skipped: true };
@@ -1058,7 +1059,9 @@ return view.extend({
       '纠正分流：把某个域名或 IP 强制走「直连」或「代理」，规则优先于订阅自带规则，mihomo 与 sing-box 均生效。');
     sr.anonymous = true; sr.addremove = true;
     o = sr.option(form.Value, 'ipaaddr', '域名 / IP');
-    o.rmempty = false;
+    /* allow empty so the default placeholder row never blocks saving other settings;
+       empty rule rows are pruned on save (pruneEmptyAddtype) instead of erroring */
+    o.rmempty = true;
     o.placeholder = 'example.com 或 1.2.3.0/24';
     o = sr.option(form.ListValue, 'type', '类型');
     o.value('DOMAIN-SUFFIX', '域名后缀（如 google.com）');
@@ -1171,7 +1174,7 @@ return view.extend({
 
       container.appendChild(E('div', { 'class': 'cl-save-bar' }, [
         E('button', { 'class': 'btn cbi-button', click: function () {
-          m.save().then(function () { return clashoo.commitConfig(); })
+          m.save(null, true).then(function () { return clashoo.commitConfig(); })
             .then(function () { return clearClashooDirty(); })
             .then(function () { location.reload(); })
             .catch(function (e) { ui.addNotification(null, E('p', '保存失败: ' + (e.message || e))); });
@@ -1327,7 +1330,7 @@ return view.extend({
       container.appendChild(node);
       container.appendChild(E('div', { 'class': 'cl-save-bar' }, [
         E('button', { 'class': 'btn cbi-button', click: function () {
-          m.save().then(function () { return clashoo.commitConfig(); })
+          m.save(null, true).then(function () { return clashoo.commitConfig(); })
             .then(function () { return clearClashooDirty(); })
             .then(function () { location.reload(); })
             .catch(function (e) { ui.addNotification(null, E('p', '保存失败: ' + (e.message || e))); });

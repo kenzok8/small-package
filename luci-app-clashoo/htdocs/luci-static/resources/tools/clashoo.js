@@ -114,6 +114,7 @@ const callSetProxyMode  = rpc.declare({ object: 'luci.clashoo', method: 'set_pro
 const callSetCore       = rpc.declare({ object: 'luci.clashoo', method: 'set_core',         params: ['core', 'dcore'], expect: {} });
 const callSetPanel      = rpc.declare({ object: 'luci.clashoo', method: 'set_panel',        params: ['name'], expect: {} });
 const callUpdatePanel   = rpc.declare({ object: 'luci.clashoo', method: 'update_panel',     params: ['name'], expect: {} });
+const callPanelStatus   = rpc.declare({ object: 'luci.clashoo', method: 'panel_status',     expect: {} });
 const callReadLog       = rpc.declare({ object: 'luci.clashoo', method: 'read_log',         expect: {} });
 const callReadRealLog   = rpc.declare({ object: 'luci.clashoo', method: 'read_real_log',    expect: {} });
 const callClearLog      = rpc.declare({ object: 'luci.clashoo', method: 'clear_log',        expect: {} });
@@ -198,6 +199,7 @@ return baseclass.extend({
     setCore: function (core, dcore) { return L.resolveDefault(callSetCore(core, dcore), {}); },
     setPanel: function (name) { return L.resolveDefault(callSetPanel(name), {}); },
     updatePanel: function (name) { return L.resolveDefault(callUpdatePanel(name || 'zashboard'), {}); },
+    panelStatus: function () { return L.resolveDefault(callPanelStatus(), {}); },
 
     readLog: function () { return L.resolveDefault(callReadLog(), { content: '' }).then(r => r.content || ''); },
     readRealLog: function () { return L.resolveDefault(callReadRealLog(), { content: '' }).then(r => r.content || ''); },

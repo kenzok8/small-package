@@ -614,17 +614,12 @@ return view.extend({
         return new Promise(function (resolve) { setTimeout(resolve, 500); });
       })
       .then(function () { return self._pollStatus(); })
-      .then(function () {
-        var msg = targetCore === 'smart'
-          ? '已切换 Smart 内核，Smart 策略已自动启用。点击启动即可生效。'
-          : '内核已切换：' + targetLabel + '。需要代理时请点击启动。';
-        ui.addNotification(null, E('p', msg));
-      })
       .catch(function (e) {
         if (e && e.soft)
           return;
-        self._coreSwitchMsg = '切换失败';
-        ui.addNotification(null, E('p', '切换失败: ' + (e.message || e)));
+        /* card already surfaces this via _coreSwitchMsg; no toast needed */
+        self._coreSwitchMsg = '切换失败：' + (e.message || e);
+        self._refreshCoreSwitch();
       })
       .then(function () {
         self._coreSwitchBusy = false;
@@ -633,6 +628,50 @@ return view.extend({
           self._refreshCoreSwitch();
         }, 900);
       });
+  },
+
+  /* Inline panel-update feedback: button shows progress, status span shows result.
+     Replaces the old fire-and-forget toast so success/failure is visible in place. */
+  _runPanelUpdate: function (panel, btn, statusEl) {
+    var self = this;
+    if (btn.disabled) return;
+    var label = self._panelLabel(panel);
+    var orig = btn.textContent;
+    self._panelUpdateBusy = true;   /* pause overview poll so the rebuild won't wipe this feedback */
+    btn.disabled = true;
+    btn.textContent = '下载中…';
+    statusEl.textContent = '';
+    statusEl.className = 'cl-panel-status';
+
+    var done = function (cls, text) {
+      self._panelUpdateBusy = false;
+      btn.disabled = false;
+      btn.textContent = orig;
+      statusEl.textContent = text;
+      statusEl.className = 'cl-panel-status ' + cls;
+      setTimeout(function () {
+        statusEl.textContent = '';
+        statusEl.className = 'cl-panel-status';
+      }, 6000);
+    };
+
+    var tries = 0;
+    var poll = function () {
+      clashoo.panelStatus().then(function (s) {
+        s = s || {};
+        if (s.downloading && tries++ < 60) {
+          setTimeout(poll, 1200);
+          return;
+        }
+        if (s.state === 'success') done('ok', '✓ ' + label + ' 已更新');
+        else if (s.state === 'error') done('err', '✗ ' + (s.msg || '更新失败'));
+        else done('ok', '✓ ' + label + ' 已提交');
+      });
+    };
+
+    clashoo.updatePanel(panel)
+      .then(function () { setTimeout(poll, 600); })
+      .catch(function () { done('err', '✗ 提交失败'); });
   },
 
   _renderCoreSwitch: function (st) {
@@ -1495,6 +1534,8 @@ return view.extend({
         }));
     };
 
+    var panelStatusEl = E('span', { 'class': 'cl-panel-status' }, '');
+
     var panelSel = mkSel(panels.map(function (p) {
       return [p, self._panelLabel(p)];
     }), panelType, function (ev) {
@@ -1599,14 +1640,10 @@ return view.extend({
           E('button', {
             'class': 'btn cbi-button cl-btn-panel-update',
             click: function () {
-              var panelName = self._panelLabel(panelSel.value);
-              clashoo.updatePanel(panelSel.value).then(function () {
-                clashoo.toast(panelName + ' 更新任务已提交，请到系统/日志查看进度', {
-                  duration: 3600
-                });
-              });
+              self._runPanelUpdate(panelSel.value, this, panelStatusEl);
             }
           }, '更新'),
+          panelStatusEl,
           E('a', {
             'class': 'btn cbi-button cl-btn-panel-open',
             href: panelUrl,
@@ -1648,6 +1685,7 @@ return view.extend({
     this._applyThemeClass();
     if (!force && this._op) return Promise.resolve();
     if (!force && this._coreSwitchBusy) return Promise.resolve();
+    if (!force && this._panelUpdateBusy) return Promise.resolve();
     if (!force && document.hidden) return Promise.resolve();
     var self = this;
     return rpcOverview()

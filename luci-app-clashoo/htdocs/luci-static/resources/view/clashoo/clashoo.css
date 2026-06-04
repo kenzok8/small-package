@@ -1314,6 +1314,21 @@ html[data-bs-theme="dark"] .cl-wrap .cl-live-num {
   gap: 8px;
 }
 
+/* inline result of panel update (replaces the old toast) */
+.cl-wrap.cl-overview-page .cl-panel-status {
+  font-size: 13px;
+  line-height: 1.2;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+.cl-wrap.cl-overview-page .cl-panel-status.ok,
+.cl-wrap.cl-overview-page .cl-panel-status.err {
+  opacity: 1;
+}
+.cl-wrap.cl-overview-page .cl-panel-status.ok  { color: #16a34a; }
+.cl-wrap.cl-overview-page .cl-panel-status.err { color: #dc2626; }
+
 .cl-wrap.cl-overview-page .cl-ctrl-row select,
 .cl-wrap.cl-overview-page .cl-ctrl-row .cbi-input-select,
 .cl-wrap.cl-overview-page .cl-btn-panel-update,

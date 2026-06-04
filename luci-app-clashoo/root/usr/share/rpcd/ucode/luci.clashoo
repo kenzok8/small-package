@@ -393,84 +393,22 @@ return '';
 function format_core_log(content) {
 content = content || '';
 let out = ['=== 核心日志 ==='];
-let dropped = 0;
-let max_lines = 120;
+// No server-side noise filtering: the UI level dropdown (全部/INFO/WARN/ERROR/FATAL)
+// is the single filter, so "全部" really means all. Keep a generous cap so errors
+// aren't pushed out by connection chatter.
+let max_lines = 400;
 
 for (let line in split(content, '\n')) {
 line = replace(line || '', /\x1b\[[0-9;]*m/g, '');
 line = trim(line || '');
 if (!line) continue;
 
-let low = lc(line);
-let noisy =
-	index(low, 'level=debug') >= 0 ||
-	index(low, '[debug]') >= 0 ||
-	index(low, 'accepted ') >= 0 ||
-	index(low, 'closed ') >= 0 ||
-	index(low, 'connection closed') >= 0 ||
-	index(low, 'connection: open connection to') >= 0 ||
-	index(low, 'using outbound/') >= 0 ||
-	index(low, 'lookup ') >= 0 ||
-	index(low, 'context deadline exceeded') >= 0 ||
-	index(low, 'outbound connection to') >= 0 ||
-	index(low, 'outbound packet connection') >= 0 ||
-	index(low, 'inbound connection from') >= 0 ||
-	index(low, 'inbound connection to') >= 0 ||
-	index(low, 'inbound packet connection') >= 0 ||
-	index(low, 'inbound/mixed') >= 0 ||
-	index(low, 'inbound/tun') >= 0 ||
-	index(low, 'inbound/tproxy') >= 0 ||
-	index(low, 'inbound/redirect') >= 0 ||
-	index(low, 'outbound/direct') >= 0 ||
-	index(low, 'outbound/selector') >= 0 ||
-	index(low, 'outbound/shadowsocks') >= 0 ||
-	index(low, 'outbound/trojan') >= 0 ||
-	index(low, 'outbound/vmess') >= 0 ||
-	index(low, 'outbound/vless') >= 0 ||
-	index(low, 'outbound/hysteria') >= 0 ||
-	index(low, 'outbound/urltest') >= 0 ||
-	index(low, 'dns: exchanged') >= 0 ||
-	index(low, 'dns query') >= 0 ||
-	index(low, 'exchange ') >= 0 ||
-	index(low, 'download detour') >= 0 ||
-	index(low, 'router: match') >= 0 ||
-	index(low, 'route: match') >= 0 ||
-	index(low, 'dial_parallel') >= 0 ||
-	index(low, 'msg="[tcp]') >= 0 ||
-	index(low, 'msg="[udp]') >= 0;
-
-let important =
-	index(low, 'level=warning') >= 0 ||
-	index(low, 'level=error') >= 0 ||
-	index(low, 'level=fatal') >= 0 ||
-	index(low, '[warn]') >= 0 ||
-	index(low, '[error]') >= 0 ||
-	index(low, '[fatal]') >= 0 ||
-	index(low, 'fatal') >= 0 ||
-	index(low, 'error') >= 0 ||
-	index(low, 'warn') >= 0 ||
-	index(low, 'failed') >= 0 ||
-	index(low, 'timeout') >= 0 ||
-	index(low, 'refused') >= 0 ||
-	index(low, 'listen') >= 0 ||
-	index(low, 'server started') >= 0 ||
-	index(low, 'started (') >= 0 ||
-	index(low, 'restful api') >= 0 ||
-	index(low, 'updated default interface') >= 0 ||
-	index(low, 'deprecated') >= 0;
-
-	if (noisy && !important) {
-		dropped++;
-		continue;
-	}
-
 push(out, reformat_core_line(line));
 if (length(out) > max_lines + 1) shift(out);
 }
 
 	if (length(out) == 1)
-		push(out, '暂无核心异常');
-	if (dropped > 0) push(out, '--- 已过滤 ' + dropped + ' 行 ---');
+		push(out, '暂无核心日志');
 	return join('\n', out);
 }
 
@@ -703,6 +641,12 @@ let q = shell_quote(pkg);
 return shell_read("if command -v opkg >/dev/null 2>&1; then opkg status " + q + " 2>/dev/null | awk -F': ' '/^Version:/{print $2; exit}'; elif command -v apk >/dev/null 2>&1; then apk list -I " + q + " 2>/dev/null | awk '{print $1; exit}' | sed -n 's/^" + pkg + "-//p'; fi");
 }
 
+// lgbm has no version; use a short sha256 of the model as its identifier (like Smart's hash)
+function lgbm_local_ver() {
+if (!stat('/etc/clashoo/Model.bin')) return '';
+return trim(shell_read("sha256sum /etc/clashoo/Model.bin 2>/dev/null | cut -c1-12") || '');
+}
+
 function file_mtime_label(path) {
 let s = stat(path);
 if (!s) return '';
@@ -758,7 +702,7 @@ if (id == 'singbox') {
 let bin = find_binary_for_family('singbox');
 return bin ? (core_short_version(bin) || '已安装') : '未安装';
 }
-if (id == 'lgbm')  return file_mtime_label('/etc/clashoo/Model.bin') || '未安装';
+if (id == 'lgbm')  return lgbm_local_ver() || '未安装';
 if (id == 'china') return file_mtime_label('/usr/share/clashoo/nftables/geoip_cn.nft') || '未更新';
 if (id == 'geoip') return file_mtime_label('/etc/clashoo/Country.mmdb') || '未安装';
 return '';
@@ -883,6 +827,15 @@ let dir = trim(shell_read('mktemp -d 2>/dev/null') || '');
 if (!dir) return latest;
 
 let GH = 'https://github.com/';
+// geoip 远端版本跟随当前 geoip_source：从生效的 mmdb 源 URL 解析出 GitHub 仓库；
+// source=1 是 MaxMind（无 GitHub release），跳过
+let geoip_src = uci_get('clashoo', 'config', 'geoip_source') || '';
+let geoip_repo = '';
+if (geoip_src != '1') {
+	let mmdb_url = uci_get('clashoo', 'config', 'geoip_mmdb_url') || 'https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country.mmdb';
+	let gm = match(mmdb_url, /github[a-z]*\.com\/([^\/]+)\/([^\/]+)/);
+	if (gm) geoip_repo = gm[1] + '/' + gm[2];
+}
 let cmd = '';
 cmd += "curl -fsS -o /dev/null -w '%{redirect_url}' -m 8 " + shell_quote(GH + 'MetaCubeX/mihomo/releases/latest')  + ' >' + shell_quote(dir + '/ms') + ' 2>/dev/null &\n';
 cmd += "curl -fsS -o /dev/null -w '%{redirect_url}' -m 8 " + shell_quote(GH + 'SagerNet/sing-box/releases/latest') + ' >' + shell_quote(dir + '/ss') + ' 2>/dev/null &\n';
@@ -894,6 +847,11 @@ if (pkg_arch)
 		cmd += 'curl -fsSL -m 8 ' + shell_quote(B2_FEED_BASE + '/' + sdk + '/' + pkg_arch + '/' + B2_MANIFEST_NAME) + ' >' + shell_quote(dir + '/b_' + sdk) + ' 2>/dev/null &\n';
 // GitHub API 兜底，避免 expanded_assets 在部分网络下超时
 cmd += 'curl -fsSL -m 12 ' + shell_quote('https://api.github.com/repos/' + GH_CLASHOO_REPO + '/releases/latest') + ' >' + shell_quote(dir + '/gc') + ' 2>/dev/null &\n';
+// lgbm —— remote model sha256 from the release assets page (each asset lists its digest)
+cmd += 'curl -fsSL -m 12 ' + shell_quote(GH + 'vernesong/mihomo/releases/expanded_assets/LightGBM-Model') + ' >' + shell_quote(dir + '/lg') + ' 2>/dev/null &\n';
+// geoip —— 源仓库 releases/latest 的 302 tag（多为日期串）
+if (geoip_repo)
+	cmd += "curl -fsS -o /dev/null -w '%{redirect_url}' -m 8 " + shell_quote(GH + geoip_repo + '/releases/latest') + ' >' + shell_quote(dir + '/gi') + ' 2>/dev/null &\n';
 cmd += 'wait\n';
 let pp = popen(cmd);
 if (pp) { pp.read('all'); pp.close(); }
@@ -902,8 +860,26 @@ let m;
 // 稳定版 tag —— releases/latest 302 重定向
 m = match(readfile(dir + '/ms') || '', /\/tag\/([^\/?#\s]+)/); if (m) latest.mihomo_stable  = m[1];
 m = match(readfile(dir + '/ss') || '', /\/tag\/([^\/?#\s]+)/); if (m) latest.singbox_stable = m[1];
-// sing-box alpha —— atom feed 第一个 entry
-m = match(readfile(dir + '/sa') || '', /\/releases\/tag\/([^"?#]+)/); if (m) latest.singbox_alpha = m[1];
+// sing-box alpha —— atom feed 第一个 prerelease tag（带 -alpha/-beta/-rc）；
+// SagerNet 稳定与 alpha 并行发布，atom 按时间排序，最新 entry 可能是稳定版（如 v1.13.13），
+// 直接取第一个 entry 会让 alpha 通道误显示稳定版本号
+m = match(readfile(dir + '/sa') || '', /\/releases\/tag\/(v[^"?#\s]*-[^"?#\s]+)/); if (m) latest.singbox_alpha = m[1];
+// lgbm —— locate the configured asset in the assets page, then its sha256 digest
+let lg_html = readfile(dir + '/lg') || '';
+let lg_url = uci_get('clashoo', 'config', 'smart_lgbm_url') || 'Model.bin';
+let lg_parts = split(lg_url, '/');
+let lg_asset = lg_parts[length(lg_parts) - 1] || 'Model.bin';
+let lg_pos = index(lg_html, '/' + lg_asset + '"');
+if (lg_pos >= 0) {
+	let lg_sha = match(substr(lg_html, lg_pos), /sha256:([0-9a-f]{12})/);
+	if (lg_sha) latest.lgbm = lg_sha[1];
+}
+// geoip —— 源仓库最新 release tag（多为日期串 YYYYMMDDhhmm）→ YYYY-MM-DD
+let gt = match(readfile(dir + '/gi') || '', /\/tag\/([^\/?#\s]+)/);
+if (gt) {
+	let d8 = match(gt[1], /^(\d{4})(\d{2})(\d{2})/);
+	latest.geoip = d8 ? (d8[1] + '-' + d8[2] + '-' + d8[3]) : gt[1];
+}
 // mihomo alpha / smart —— Prerelease-Alpha 资源清单的 hash
 let v;
 v = alpha_asset_ver(readfile(dir + '/ma') || '', core_arch, 'alpha'); if (v) latest.mihomo_alpha = v;
@@ -1997,8 +1973,28 @@ else if (name == 'yacd') pretty = 'YACD';
 else if (name == 'zashboard') pretty = 'Zashboard';
 else if (name == 'razord') pretty = 'Razord';
 system("printf '%s - 面板更新任务已提交: " + shell_quote(pretty) + "\\n' \"$(date '+%Y-%m-%d %H:%M:%S')\" >>/tmp/clash_update.txt");
+// seed an immediate state so the UI poller never reads a stale prior result
+system("touch /var/run/panel_downloading; printf 'downloading:" + shell_quote(name) + ":开始下载' >/tmp/clash_panel_download_state");
 system("nohup sh /usr/share/clashoo/update/panel_download.sh " + shell_quote(name) + " >>/tmp/clash_update.txt 2>&1 </dev/null &");
 return { success: true };
+}
+},
+
+// panel download progress for inline UI feedback (state file: "state:panel:msg")
+panel_status: {
+call: function() {
+let downloading = access('/var/run/panel_downloading', 'r') ? true : false;
+let line = trim(readfile('/tmp/clash_panel_download_state') || '');
+let state = '', panel = '', msg = '';
+let i1 = index(line, ':');
+if (i1 >= 0) {
+state = substr(line, 0, i1);
+let rest = substr(line, i1 + 1);
+let i2 = index(rest, ':');
+if (i2 >= 0) { panel = substr(rest, 0, i2); msg = substr(rest, i2 + 1); }
+else panel = rest;
+}
+return { downloading: downloading, state: state, panel: panel, msg: msg };
 }
 },
 

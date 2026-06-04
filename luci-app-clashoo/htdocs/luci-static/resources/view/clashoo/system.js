@@ -540,7 +540,13 @@ return view.extend({
 
   /* 已装版与最新版不一致即视为可更新（alpha 按 hash 字符串差异判断）*/
   _compUpdatable: function (comp, latestMap) {
-    if (!comp || comp.kind === 'data') return false;
+    if (!comp) return false;
+    /* lgbm has no version; compare local vs remote model sha256 (kind=data skips generic path) */
+    if (comp.id === 'lgbm') {
+      var rem = latestMap.lgbm, ins = comp.installed_version;
+      return !!(rem && ins && this._compNorm(rem) !== this._compNorm(ins));
+    }
+    if (comp.kind === 'data') return false;
     var variant = this._compVariantOf(comp);
     var inst = this._compInstalledVersion(comp, variant);
     if (!inst || inst === '未安装' || inst === '未知') return false;
@@ -878,21 +884,29 @@ return view.extend({
     self._buildLogLine = buildLine;
     self._applyLogFilter = applyFilter;
 
-    /* highlight: detect level keyword in line, return CSS class */
-    function detectLevel(ln) {
+    /* parse level token; no keyword (e.g. mihomo info lines with [info] stripped) => info */
+    function detectLevelToken(ln) {
       var m = ln.match(/\b(DEBUG|INFO|WARN(?:ING)?|ERROR|FATAL|PANIC)\b/i);
-      if (!m) return '';
+      if (!m) return 'info';
       var l = m[1].toUpperCase();
-      if (l === 'DEBUG') return 'cl-log-debug';
-      if (l === 'INFO')  return 'cl-log-info';
-      if (l.startsWith('WARN')) return 'cl-log-warn';
-      return 'cl-log-error';
+      if (l === 'DEBUG') return 'debug';
+      if (l === 'INFO')  return 'info';
+      if (l.startsWith('WARN')) return 'warn';
+      if (l === 'FATAL' || l === 'PANIC') return 'fatal';
+      return 'error';
+    }
+    function levelClass(token) {
+      if (token === 'debug') return 'cl-log-debug';
+      if (token === 'warn')  return 'cl-log-warn';
+      if (token === 'error' || token === 'fatal') return 'cl-log-error';
+      return 'cl-log-info';
     }
 
     var MONTHS = { Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12' };
     /* render a single line as colored HTML */
     function buildLine(ln) {
-      var cls = detectLevel(ln);
+      var token = detectLevelToken(ln);
+      var cls = levelClass(token);
       var ts = '', msg = ln;
       /* core syslog: Mon DD HH:MM:SS YYYY → MM-DD HH:MM:SS */
       var cm = ln.match(/^(\w{3})\s+(\d{1,2})\s+(\d{2}:\d{2}:\d{2})\s+\d{4}\s+\S+\.(\S+)\s+\S+\[\d+\]:\s+(.*)$/);
@@ -905,9 +919,9 @@ return view.extend({
         if (msg.indexOf(' - ') === 0) msg = msg.substring(3);
       }
       if (ts) {
-        return '<div class="cl-log-line ' + cls + '"><span class="cl-log-ts">' + esc(ts) + '</span><span class="cl-log-msg">' + esc(msg) + '</span></div>';
+        return '<div class="cl-log-line ' + cls + '" data-level="' + token + '"><span class="cl-log-ts">' + esc(ts) + '</span><span class="cl-log-msg">' + esc(msg) + '</span></div>';
       }
-      return '<div class="cl-log-line ' + cls + '">' + esc(ln) + '</div>';
+      return '<div class="cl-log-line ' + cls + '" data-level="' + token + '">' + esc(ln) + '</div>';
     }
 
     function renderLines(text) {
@@ -920,10 +934,10 @@ return view.extend({
     }
 
     function applyFilter() {
-      var f = state.filter;
+      var f = state.filter;   /* '' = all, else exact level: info/warn/error/fatal */
       var els = document.querySelectorAll('#cl-log-area .cl-log-line');
       for (var i = 0; i < els.length; i++) {
-        if (!f || els[i].textContent.toLowerCase().indexOf(f) !== -1)
+        if (!f || els[i].getAttribute('data-level') === f)
           els[i].classList.remove('cl-log-hidden');
         else
           els[i].classList.add('cl-log-hidden');
