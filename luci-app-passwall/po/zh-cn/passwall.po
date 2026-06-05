@@ -1237,9 +1237,6 @@ msgstr "使用全局配置"
 msgid "User-Agent"
 msgstr "用户代理(User-Agent)"
 
-msgid "Used when the node link does not include this parameter."
-msgstr "当节点链接未包含该参数时，将使用此设置。"
-
 msgid "Add"
 msgstr "添加"
 

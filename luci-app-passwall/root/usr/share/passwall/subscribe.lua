@@ -29,7 +29,6 @@ local has_ssr = api.is_finded("ssr-local") and api.is_finded("ssr-redir")
 local has_singbox = api.finded_com("sing-box")
 local has_xray = api.finded_com("xray")
 local has_hysteria2 = api.finded_com("hysteria")
-local DEFAULT_ALLOWINSECURE = true
 local DEFAULT_FILTER_KEYWORD_MODE = uci:get(appname, "@global_subscribe[0]", "filter_keyword_mode") or "0"
 local DEFAULT_FILTER_KEYWORD_DISCARD_LIST = uci:get(appname, "@global_subscribe[0]", "filter_discard_list") or {}
 local DEFAULT_FILTER_KEYWORD_KEEP_LIST = uci:get(appname, "@global_subscribe[0]", "filter_keep_list") or {}
@@ -503,7 +502,6 @@ end
 -- 处理数据
 local function processData(szType, content, add_mode, group, sub_cfg)
 	--log(2, content, add_mode, group)
-	local sub_allowinsecure = DEFAULT_ALLOWINSECURE
 	local sub_ss_type = DEFAULT_SS_TYPE
 	local sub_trojan_type = DEFAULT_TROJAN_TYPE
 	local sub_vmess_type = DEFAULT_VMESS_TYPE
@@ -511,9 +509,6 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 	local sub_hysteria2_type = DEFAULT_HYSTERIA2_TYPE
 	local sub_hy_up_mbps, sub_hy_down_mbps = 1000, 1000
 	if sub_cfg then
-		if sub_cfg.allowInsecure and sub_cfg.allowInsecure ~= "1" then
-			sub_allowinsecure = nil
-		end
 		local ss_type = sub_cfg.ss_type or "global"
 		if ss_type ~= "global" and core_has[ss_type] then
 			sub_ss_type = ss_type
@@ -677,8 +672,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			result.tls_serverName = (info.sni and info.sni ~= "") and info.sni or info.host
 			result.tls_pinSHA256 = info.pcs
 			result.tls_CertByName = info.vcn
-			local insecure = info.allowinsecure or info.allowInsecure or info.insecure
-			result.tls_allowInsecure = (insecure == "1" or insecure == "0") and insecure or (sub_allowinsecure and "1" or "0")
+			result.tls_allowInsecure = info.allowinsecure or info.allowInsecure or info.insecure
 		else
 			result.tls = "0"
 		end
@@ -954,8 +948,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 							result.reality_mldsa65Verify = params.pqv or nil
 						end
 					end
-					local insecure = params.allowinsecure or params.allowInsecure or params.insecure
-					result.tls_allowInsecure = (insecure == "1" or insecure == "0") and insecure or (sub_allowinsecure and "1" or "0")
+					result.tls_allowInsecure = params.allowinsecure or params.allowInsecure or params.insecure
 					result.uot = params.udp
 				else
 					result.error_msg = "请更换 Xray 或 Sing-Box 来支持 SS 更多的传输方式。"
@@ -1057,8 +1050,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			result.tls_serverName = params.peer or params.sni or ""
 			result.tls_pinSHA256 = params.pcs
 			result.tls_CertByName = params.vcn
-			local insecure = params.allowinsecure or params.allowInsecure or params.insecure
-			result.tls_allowInsecure = (insecure == "1" or insecure == "0") and insecure or (sub_allowinsecure and "1" or "0")
+			result.tls_allowInsecure = params.allowinsecure or params.allowInsecure or params.insecure
 
 			if not params.type then params.type = "tcp" end
 			params.type = string.lower(params.type)
@@ -1309,8 +1301,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 					result.use_mldsa65Verify = (params.pqv and params.pqv ~= "") and "1" or nil
 					result.reality_mldsa65Verify = params.pqv or nil
 				end
-				local insecure = params.allowinsecure or params.allowInsecure or params.insecure
-				result.tls_allowInsecure = (insecure == "1" or insecure == "0") and insecure or (sub_allowinsecure and "1" or "0")
+				result.tls_allowInsecure = params.allowinsecure or params.allowInsecure or params.insecure
 			end
 
 			result.port = port
@@ -1366,8 +1357,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 		result.hysteria_auth_type = "string"
 		result.hysteria_auth_password = params.auth
 		result.tls_serverName = params.peer or params.sni or ""
-		local insecure = params.allowinsecure or params.allowInsecure or params.insecure
-		result.tls_allowInsecure = (insecure == "1" or insecure == "0") and insecure or (sub_allowinsecure and "1" or "0")
+		result.tls_allowInsecure = params.allowinsecure or params.allowInsecure or params.insecure
 		result.alpn = params.alpn
 		result.hysteria_up_mbps = params.upmbps or sub_hy_up_mbps
 		result.hysteria_down_mbps = params.downmbps or sub_hy_down_mbps
@@ -1412,8 +1402,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 		result.tls_serverName = params.sni
 		result.tls_pinSHA256 = params.pcs or params.pinsha256
 		result.tls_CertByName = params.vcn
-		local insecure = params.allowinsecure or params.insecure
-		result.tls_allowInsecure = (insecure == "1" or insecure == "0") and insecure or (sub_allowinsecure and "1" or "0")
+		result.tls_allowInsecure = params.allowinsecure or params.insecure
 		result.hysteria2_up_mbps = params.upmbps or sub_hy_up_mbps
 		result.hysteria2_down_mbps = params.downmbps or sub_hy_down_mbps
 		result.hysteria2_hop = params.mport
@@ -1490,8 +1479,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 		result.tuic_alpn = params.alpn or "h3"
 		result.tuic_congestion_control = params.congestion_control or "cubic"
 		result.tuic_udp_relay_mode = params.udp_relay_mode or "native"
-		local insecure = params.allowinsecure or params.insecure or params.allow_insecure
-		result.tls_allowInsecure = (insecure == "1" or insecure == "0") and insecure or (sub_allowinsecure and "1" or "0")
+		result.tls_allowInsecure = params.allowinsecure or params.insecure or params.allow_insecure
 	elseif szType == "anytls" then
 		if has_singbox then
 			result.type = 'sing-box'
@@ -1558,8 +1546,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 				end
 			end
 			result.port = port
-			local insecure = params.allowinsecure or params.insecure
-			result.tls_allowInsecure = (insecure == "1" or insecure == "0") and insecure or (sub_allowinsecure and "1" or "0")
+			result.tls_allowInsecure = params.allowinsecure or params.insecure
 		end
 	elseif szType == 'naive+https' or szType == 'naive+quic' then
 		if has_singbox then
@@ -1651,9 +1638,6 @@ local function curl(url, file, ua, mode)
 	ua = (ua and ua ~= "") and ua or "passwall"
 	ua = (ua == "passwall") and ("passwall/" .. api.get_version()) or ua
 	curl_args[#curl_args + 1] = '--user-agent "' .. ua .. '"'
-	if not ua:lower():find("clash", 1, true) then
-		curl_args[#curl_args + 1] = get_headers()
-	end
 
 	local return_code, result
 	if mode == "direct" then
@@ -1678,57 +1662,6 @@ local function curl(url, file, ua, mode)
 	end
 
 	return return_code, http_code, header_str
-end
-
-function get_headers()
-	local cache_file = "/tmp/etc/" .. appname .. "_tmp/sub_curl_headers"
-	if fs.access(cache_file) then
-		return luci.sys.exec("cat " .. cache_file)
-	end
-	local headers = {}
-
-	local function readfile(path)
-		local f = io.open(path, "r")
-		if not f then return nil end
-		local c = f:read("*a")
-		f:close()
-		return api.trim(c)
-	end
-
-	headers[#headers + 1] = "x-device-os: OpenWrt"
-
-	local rel = readfile("/etc/openwrt_release")
-	local os_ver = rel and rel:match("DISTRIB_RELEASE='([^']+)'")
-	if os_ver then
-		headers[#headers + 1] = "x-ver-os: " .. os_ver
-	end
-
-	local model = readfile("/tmp/sysinfo/model")
-	if model then
-		headers[#headers + 1] = "x-device-model: " .. model
-	end
-
-	local mac = readfile("/sys/class/net/eth0/address")
-	if mac and model then
-		local raw = mac .. "-" .. model
-		local p = io.popen("printf '%s' '" .. raw:gsub("'", "'\\''") .. "' | sha256sum")
-		if p then
-			local hash = p:read("*l")
-			p:close()
-			hash = hash and hash:match("^%w+")
-			if hash then
-				headers[#headers + 1] = "x-hwid: " .. hash
-			end
-		end
-	end
-
-	local out = {}
-	for i = 1, #headers do
-		out[i] = "-H '" .. headers[i]:gsub("'", "'\\''") .. "'"
-	end
-	local headers_str = table.concat(out, " ")
-	local f = io.open(cache_file, "w"); if f then f:write(headers_str); f:close() end
-	return headers_str
 end
 
 local function truncate_nodes(group)
