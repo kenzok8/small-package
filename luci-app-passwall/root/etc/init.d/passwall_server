@@ -2,6 +2,15 @@
 
 START=99
 
+boot_func() {
+	sleep 90
+	restart
+}
+
+boot() {
+	boot_func >/dev/null 2>&1 &
+}
+
 start() {
 	lua /usr/lib/lua/luci/passwall/server_app.lua start
 }
