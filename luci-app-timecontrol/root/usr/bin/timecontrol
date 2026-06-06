@@ -22,6 +22,9 @@ bin_iptables=$(which iptables 2>/dev/null)
 bin_ip6tables=$(which ip6tables 2>/dev/null)
 bin_conntrack=$(which conntrack 2>/dev/null)
 
+nftables_ver=0
+iptables_ver=0
+
 # 获取配置
 chain=$(config_t_get timecontrol chain 0 "forward")
 list_type=$(config_t_get timecontrol list_type 0 "blacklist")
@@ -53,7 +56,7 @@ parse_target() {
     # 去除空格
     target=$(echo "${target}" | xargs)
     
-    dbg "解析目标地址: $target"
+    # dbg "解析目标地址: $target"
     
     # IPv4单个地址
     if echo "$target" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
