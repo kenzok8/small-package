@@ -123,8 +123,7 @@ _detect_selected_core() {
 			return 1
 			;;
 		2|mihomo)
-			# 稳定版：clash-meta 优先（用户主动下载的稳定通道写入此路径），
-			# IPK 自带的 /usr/bin/mihomo 是 auto-bump-alpha，不该被稳定版误选。
+			# stable: clash-meta first (user-downloaded); /usr/bin/mihomo is auto-bump-alpha, skip it.
 			for _bin in /usr/bin/clash-meta /etc/clashoo/clash-meta /usr/bin/mihomo; do
 				[ -x "$_bin" ] && echo "$_bin" && return
 			done
@@ -151,9 +150,8 @@ core_supports_advanced_features() {
 	esac
 }
 
-# 仅认 procd 自家拉起的 clashoo 实例 PID；二进制可能叫 mihomo / clash / smart /
-# sing-box，与 openclash / nikki / passwall 共享名字，pidof 会误伤。学 nikki：
-# 一切信号源走 ubus service list，让 procd 做真相来源。
+# only trust procd instance PIDs (not binary name); openclash/nikki/passwall share
+# the same binary names. Use ubus service list as source of truth.
 _clashoo_instance_pid() {
 	ubus call service list "{\"name\":\"clashoo\",\"verbose\":true}" 2>/dev/null \
 		| jsonfilter -e '@.clashoo.instances.*.pid' 2>/dev/null | head -n1
@@ -165,8 +163,7 @@ _core_running() {
 	[ -n "$_pid" ] && [ -d "/proc/$_pid" ]
 }
 
-# 仅杀 clashoo 自家 procd 实例，绝不按二进制名 pidof —— 否则 openclash / nikki 的
-# mihomo、passwall 的 sing-box 会被一起干掉。
+# kill only clashoo procd instances, never by binary name — would hit co-installed plugins.
 _kill_core() {
 	local _pid _wait
 	_pid="$(_clashoo_instance_pid)"
@@ -257,8 +254,8 @@ prepare_singbox_runtime() {
 		[ -z "$mixed_port" ] && mixed_port=7890
 		[ -z "$dns_port" ] && dns_port=1053
 		[ -z "$dash_port" ] && dash_port=9090
-		# routing_mark 6666 必须与 /usr/share/clashoo/net/fw4.sh:CORE_ROUTING_MARK (0x1a0a) 一致。
-		# 不能复用 PROXY_FWMARK(0x162=354)：那个 mark 会被 ip rule 吸到 lo，出站 network unreachable。
+		# routing_mark 6666 must match fw4.sh CORE_ROUTING_MARK (0x1a0a).
+		# Never reuse PROXY_FWMARK (0x162) — it would pull egress to lo -> unreachable.
 		ucode /usr/share/clashoo/lib/normalize_singbox_config.uc \
 			/etc/sing-box/config.json "$redir_port" "$tproxy_port" "$mixed_port" "$has_tun_device" "6666" "$dns_port" "$dash_port" "$dash_pass" >/dev/null 2>&1 || {
 			_log_runtime_error "sing-box runtime config normalization failed"
@@ -275,9 +272,7 @@ prepare_singbox_runtime() {
 }
 
 _sync_singbox_binary() {
-	# 根据 dcore 把 /usr/bin/sing-box 同步成对应通道的 binary，让稳定版
-	# 与 Alpha 通过 /usr/bin/sing-box-stable / -alpha 分路径并存，互不覆盖。
-	# 老用户若分路径文件不存在则保留 /usr/bin/sing-box 现状（兼容首次升级）。
+	# Sync /usr/bin/sing-box to the dcore-selected channel (stable/alpha), coexisting via separate paths.
 	local dcore src
 	dcore="$(uci -q get clashoo.config.dcore 2>/dev/null)"
 	case "$dcore" in
@@ -297,7 +292,7 @@ start_singbox_service() {
 		return 1
 	fi
 	prepare_singbox_runtime || return 1
-	# 启动前干测：配置坏直接放弃，不污染防火墙与 dnsmasq
+	# preflight dry-run: bail on bad config without touching firewall/dnsmasq
 	if ! /usr/bin/sing-box -c /etc/sing-box/config.json check >> "$CORE_LOG_PATH" 2>&1; then
 		log_msg "sing-box config dry-run failed; firewall/DNS untouched" "sing-box 配置预检失败，未应用防火墙与 DNS 改动"
 		runtime_state_record_health "fail" "preflight:singbox_dry_run_failed"
@@ -309,10 +304,7 @@ start_singbox_service() {
 stop_singbox_service() {
 	uci -q set sing-box.main.enabled='0' && uci -q commit sing-box >/dev/null 2>&1 || true
 
-	# sing-box 自身 init.d 带 procd respawn，仅 kill 进程会被立刻拉起；
-	# /etc/init.d/sing-box stop 注销 procd 实例（实测不会死锁）。
-	# 注意：不能 pidof sing-box 兜底 —— passwall 等插件也可能跑 sing-box 进程，
-	# 按名 kill 会误伤。procd 注销已经把自家实例终结，足够了。
+	# Stop via /etc/init.d/sing-box stop (deregisters procd). Never pidof sing-box — co-installed plugins may share the binary.
 	[ -x /etc/init.d/sing-box ] && /etc/init.d/sing-box stop >/dev/null 2>&1 || true
 
 	local _wait=0 _pid
@@ -543,7 +535,7 @@ _service_enabled() {
 	"/etc/init.d/${svc}" enabled >/dev/null 2>&1
 }
 
-# 按优先级自动检测内核二进制：mihomo > clash-meta > 内置 clash
+# auto-detect core binary by priority: mihomo > clash-meta > built-in clash
 _detect_core() {
 	for _bin in $(_core_candidates); do
 		[ -x "$_bin" ] && echo "$_bin" && return
@@ -798,14 +790,13 @@ smart_inject() {
 	sed -i '/^    uselightgbm:/d; /^    collectdata:/d; /^    prefer-asn:/d; /^    sample-rate:/d' "$CONFIG_YAML" 2>/dev/null
 	sed -i '/^    policy-priority:/d' "$CONFIG_YAML" 2>/dev/null
 	sed -i '/^lgbm-auto-update:/d; /^lgbm-url:/d; /^lgbm-update-interval:/d' "$CONFIG_YAML" 2>/dev/null
-	# 把 url-test/load-balance 改写回 url-test，撤销上一次注入留下的 type: smart
+	# revert previous smart injection: type:smart -> url-test
 	if command -v yq >/dev/null 2>&1; then
 		yq e -i '(.["proxy-groups"] // []) |= map(if .type == "smart" then .type = "url-test" else . end)' "$CONFIG_YAML" 2>/dev/null
 	fi
 
 	[ "${smart_auto:-0}" != "1" ] && return 0
-	# 只在实际跑 smart binary（core=1）时才注入 smart 专属字段，
-	# 否则切到标准 mihomo (core=2/3) 时 `type: smart` 会让内核拒绝启动。
+	# only inject smart fields when core=1; type:smart rejected by standard mihomo.
 	[ "$(uci -q get clashoo.config.core 2>/dev/null)" = "1" ] || return 0
 
 	smart_priority=$(uci get clashoo.config.smart_policy_priority 2>/dev/null)
@@ -1323,7 +1314,7 @@ _start_prepare_config() {
 	yml_change >/dev/null 2>&1
 	dns_leak_protect=$(uci -q get clashoo.config.dns_leak_protect 2>/dev/null)
 	if command -v dns_mihomo_apply_leak_protect >/dev/null 2>&1; then
-		# dns_leak_protect=1 强制 ipv6: false；否则按 UCI enable_ipv6 收敛（true/false），未配置则不强制写
+		# dns_leak_protect=1 forces ipv6:false; otherwise follow UCI enable_ipv6 (omit when unset)
 		if [ "${dns_leak_protect:-0}" = "1" ]; then
 			_ipv6_value="false"
 		else
@@ -1374,7 +1365,7 @@ _start_launch_core() {
 	# in core-only the user is explicitly trusting their own config.
 	[ "$_core_only" = "1" ] && export SAFE_PATHS="/"
 
-	# 启动前干测：配置坏直接放弃，不污染防火墙与 dnsmasq
+	# preflight dry-run: bail on bad config without touching firewall/dnsmasq
 	if ! "$CLASH" -d "$CLASH_CONFIG" -t >> "$CORE_LOG_PATH" 2>&1; then
 		log_msg "Config dry-run failed; firewall/DNS untouched" "配置预检失败，未应用防火墙与 DNS 改动"
 		runtime_state_record_health "fail" "preflight:config_dry_run_failed"
@@ -1420,7 +1411,7 @@ _start_launch_core() {
 			sleep 1
 			if _core_running; then
 				runtime_run_health_check >/dev/null 2>&1
-				# 触发访问检查立即刷新一次，避免面板显示陈旧 down 状态（daemon 周期 5-20s）
+				# kick access check immediately so panel shows current state (daemon polls every 5-20s)
 				/usr/share/clashoo/net/access_check_cache.sh >/dev/null 2>&1 &
 				exit 0
 			fi
@@ -1496,7 +1487,7 @@ start_service(){
 				return 1
 			fi
 			if ! start_singbox_service; then
-				# 干测失败已写入 preflight:* detail，避免被外层兜底覆盖
+				# preflight failure already recorded; avoid blanket overwrite
 				case "$(grep '^health_detail=' "$RUNTIME_STATE_FILE" 2>/dev/null | cut -d= -f2-)" in
 					preflight:*) ;;
 					*) runtime_state_record_health "fail" "start:singbox_service_failed" ;;
@@ -1586,7 +1577,7 @@ stop_service(){
 			lang=$(uci get luci.main.lang 2>/dev/null)
 			tun_mode=$(uci get clashoo.config.tun_mode 2>/dev/null)
 
-			# server.list 现为只读包文件；停服时清理 /tmp 下的合并产物即可
+			# server.list is read-only; just clean up merged temp files in /tmp
 			rm -f /tmp/clashoo/fake_filter.list /tmp/clashoo/fake_filter.yaml 2>/dev/null
 
 			log_msg "Stopping Clashoo" "正在停止 Clashoo"
@@ -1624,8 +1615,7 @@ stop_service(){
 		runtime_state_set "health_detail" "service_stopped"
 		runtime_state_set "updated_at" "$(date +%s)"
 
-		# 触发访问检查立即刷新（proxy_listening 会立刻 fast-path 标 down，
-		# 配合前端 status.running=false 的 patch，UI ≤5s 反映"停代理"）
+		# kick access check on stop (proxy_listening fast-paths to down; UI reflects stop within 5s)
 		/usr/share/clashoo/net/access_check_cache.sh >/dev/null 2>&1 &
 
 #===========================================================================================================================
@@ -1649,7 +1639,7 @@ reload_service()
 		yml_dns_change 2>/dev/null
 		ip_rules 2>/dev/null
 		cp -f "$CONFIG_YAML" "${CLASH_CONFIG}/config.yaml" 2>/dev/null
-		# 调 mihomo RESTful API 热重载配置（含自定义分流规则 addtype），进程不重启、隧道不断
+		# hot-reload via mihomo REST API (config + addtype rules), no process restart or tunnel drop
 		local _dp _ds _lip
 		_dp="$(uci -q get clashoo.config.dash_port)"; [ -n "$_dp" ] || _dp=9090
 		_ds="$(uci -q get clashoo.config.dash_pass)"

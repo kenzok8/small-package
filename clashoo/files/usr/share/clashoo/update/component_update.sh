@@ -237,18 +237,24 @@ backup_config() {
   BACKUP_DIR="/etc/clashoo/backup/component-upgrade-${ts}"
   mkdir -p "$BACKUP_DIR/etc-config" "$BACKUP_DIR/etc-clashoo" >/dev/null 2>&1 || return 1
   [ -r /etc/config/clashoo ] && cp -a /etc/config/clashoo "$BACKUP_DIR/etc-config/clashoo"
+  # 只备份用户配置；Model.bin 等可重新下载的大文件不入备份，避免每次更新
+  # 复制 ~5MB 的同一模型，把备份目录撑大、堆满本就紧张的根分区。
   for path in \
     /etc/clashoo/config.yaml \
     /etc/clashoo/config.json \
     /etc/clashoo/*.yaml \
     /etc/clashoo/*.yml \
-    /etc/clashoo/*.json \
-    /etc/clashoo/Model.bin
+    /etc/clashoo/*.json
   do
     [ -e "$path" ] || continue
     cp -a "$path" "$BACKUP_DIR/etc-clashoo/" 2>/dev/null || true
   done
   log "已备份配置：${BACKUP_DIR}"
+
+  # 只保留最近 1 个备份，删除更早的，避免无限堆积占满磁盘。
+  ls -dt /etc/clashoo/backup/component-upgrade-* 2>/dev/null | tail -n +2 | while read -r _old; do
+    [ -n "$_old" ] && rm -rf "$_old" 2>/dev/null
+  done
 }
 
 restore_config_backup() {

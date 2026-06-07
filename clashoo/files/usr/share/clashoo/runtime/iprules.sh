@@ -12,12 +12,13 @@ trap 'rm -f "$CUSTOM_RULE_FILE" "$RULE" "$CLASH" "$CLASH_CONFIG"' EXIT
 
 [ -f "$CONFIG_YAML" ] || exit 0
 
-# 「代理」占位符 __PROXY__ → 实际主代理组(由 RPC detect_primary_group 探测并缓存）。
-# 探测不到时回退 GLOBAL（mihomo 内置全局策略组，始终存在）。
+
+# __PROXY__ placeholder -> primary proxy group (cached by RPC);
+# fallback to GLOBAL (built-in mihomo group)
 PRIMARY_GROUP="$(uci -q get clashoo.config.primary_proxy_group)"
 [ -n "$PRIMARY_GROUP" ] || PRIMARY_GROUP="GLOBAL"
 
-# ===== append_rules：把订阅自带的 rules 块整体挪到文件末尾（原有逻辑，保持不变） =====
+= # ===== append_rules: move subscription rules to end =====
 append=$(uci get clashoo.config.append_rules 2>/dev/null)
 if [ "${append:-0}" -eq 1 ];then
 
@@ -44,9 +45,9 @@ if [ "${append:-0}" -eq 1 ];then
 	rm -f $RULE $CLASH_CONFIG 2>/dev/null
 fi
 
-# ===== 自定义分流规则（UCI: config addtype），与 append_rules 解耦，始终生效 =====
-# 每条规则字段：type(DOMAIN/DOMAIN-SUFFIX/DOMAIN-KEYWORD/IP-CIDR)、ipaaddr(地址)、
-# pgroup(走向：DIRECT 或占位符 __PROXY__)、res(IP 规则的 no-resolve，1/0)。
+# ===== custom routing rules (UCI: config addtype), decoupled =====
+# fields: type(DOMAIN|SUFFIX|KEYWORD|IP-CIDR), ipaaddr, pgroup, res(no-resolve)
+# pgroup: DIRECT or __PROXY__ (resolved at injection)
 rm -f "$CUSTOM_RULE_FILE" 2>/dev/null
 
 ipadd()
@@ -63,8 +64,8 @@ ipadd()
 
 	[ "$pgroup" = "__PROXY__" ] && pgroup="$PRIMARY_GROUP"
 
-	# 缩进与现有 rules 列表一致 + 整条加引号（策略组名可能含空格/emoji，如「🚀 节点选择」），
-	# 否则与订阅自带的 2 空格缩进列表混用会让 mihomo 解析 YAML 失败。
+	# quote whole rule (group name may contain spaces/emoji)
+	# so mixed indent with subscription rules does not break YAML parsing
 	if [ "${res}" = "1" ];then
 		echo "${RULE_INDENT}- \"$type,$ipaaddr,$pgroup,no-resolve\"" >> "$CUSTOM_RULE_FILE"
 	else
@@ -72,14 +73,14 @@ ipadd()
 	fi
 }
 
-# 探测 rules: 段下现有条目的缩进，注入时对齐（默认 2 空格）
+# detect existing rules indent for alignment (default 2)
 RULE_INDENT="$(awk '/^[[:space:]]*rules:/{f=1;next} f&&/^[[:space:]]*-/{match($0,/^[[:space:]]*/);print substr($0,1,RLENGTH);exit}' "$CONFIG_YAML" 2>/dev/null)"
 [ -n "$RULE_INDENT" ] || RULE_INDENT="  "
 
 config_load "clashoo"
 config_foreach ipadd "addtype"
 
-# 先清掉上一轮注入的自定义块（幂等）
+# clean previous injection block (idempotent)
 sed -i '/#CUSTOMRULESTART#/,/#CUSTOMRULEEND#/d' "$CONFIG_YAML" 2>/dev/null
 
 if [ -f "$CUSTOM_RULE_FILE" ];then

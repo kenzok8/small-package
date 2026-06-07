@@ -1,18 +1,8 @@
 #!/usr/bin/ucode
-/*
- * yaml2singbox.uc — 把 mihomo (clash) YAML 订阅的 proxies 数组转换为 sing-box 的 outbounds
- *
- * 用法:  ucode yaml2singbox.uc <yaml-in> [template-json] [json-out]
- *   yaml-in        必填，clash/mihomo 订阅 yaml 文件路径
- *   template-json  可选，sing-box 模板路径，默认 /usr/share/clashoo/lib/templates/default.json
- *   json-out       可选，输出 json 路径，默认 stdout
- *
- * 设计:
- *   - 依赖 yq (mikefarah) 读 yaml → json（与 template_merge.sh 一致的技术栈）
- *   - 支持协议: shadowsocks, vmess, vless, trojan, hysteria2, tuic。其余协议跳过并告警
- *   - 模板里 "🚀 节点选择".outbounds 若包含字符串 "__NODES__"，会被展开为全部节点 tag
- *   - 日志走 stderr，JSON 输出走 stdout 或 json-out
- */
+/* yaml2singbox.uc — convert mihomo/clash YAML proxies to sing-box outbounds
+ * Usage: ucode yaml2singbox.uc <yaml-in> [template-json] [json-out]
+ * Supports: ss, vmess, vless, trojan, hysteria2, tuic. Others are skipped.
+ * "__NODES__" in the template selector outbounds is expanded to all node tags. */
 
 'use strict';
 
@@ -39,7 +29,7 @@ function die(msg, code) {
 	exit(code || 1);
 }
 
-/* ---------- YAML 读取（通过 yq） ---------- */
+/* ---------- YAML read (via yq) ---------- */
 function quote_sh(s) {
 	/* single-quote for shell; escape embedded quotes */
 	return "'" + replace(s, "'", "'\\''") + "'";
@@ -62,7 +52,7 @@ function read_yaml_as_json(path) {
 	return data;
 }
 
-/* ---------- 小工具 ---------- */
+/* ---------- helpers ---------- */
 function pick(obj, ...keys) {
 	for (let k in keys)
 		if (obj[k] != null)
@@ -101,7 +91,7 @@ function strip_null(obj) {
 	return out;
 }
 
-/* ---------- TLS 块组装（通用） ---------- */
+/* ---------- TLS block assembly ---------- */
 function build_tls(p) {
 	const enabled = tobool(p.tls) || (p.sni && length(p.sni) > 0) || (p.servername && length(p.servername) > 0);
 	if (!enabled) return null;
@@ -125,7 +115,7 @@ function build_tls(p) {
 	return strip_null(tls);
 }
 
-/* ---------- transport 组装（ws / grpc / http） ---------- */
+/* ---------- transport (ws / grpc / http) ---------- */
 function build_transport(p) {
 	const net = p.network;
 	if (!net || net === 'tcp') return null;
@@ -159,14 +149,13 @@ function build_transport(p) {
 	return null;
 }
 
-/* ---------- 协议各自的转换 ---------- */
+/* ---------- per-protocol conversion ---------- */
 function convert_ss(p) {
 	const plugin = p.plugin, popts = p['plugin-opts'] || {};
 	let plugin_opts = null;
 	if (plugin && type(popts) === 'object') {
-		/* 字段名映射：Clash simple-obfs 命名 → sing-box obfs-local 命名
-		 * Clash: mode=http;host=xxx
-		 * sing-box: obfs=http;obfs-host=xxx */
+		/* Field mapping: Clash simple-obfs -> sing-box obfs-local
+		 * Clash: mode=http;host=xxx  →  sing-box: obfs=http;obfs-host=xxx */
 		const FIELD_MAP = {
 			'mode': 'obfs',
 			'host': 'obfs-host',
@@ -180,7 +169,7 @@ function convert_ss(p) {
 		}
 		plugin_opts = join(';', parts);
 	}
-	/* sing-box 的 plugin 名：clash 的 obfs = sing-box 的 obfs-local */
+	/* Clash "obfs" maps to sing-box plugin "obfs-local" */
 	let sb_plugin = null;
 	if (plugin === 'obfs') sb_plugin = 'obfs-local';
 	else if (plugin === 'v2ray-plugin') sb_plugin = 'v2ray-plugin';
@@ -291,7 +280,7 @@ function convert_proxy(p) {
 	return null;
 }
 
-/* ---------- 去重：tag 必须唯一 ---------- */
+/* ---------- dedup (tag must be unique) ---------- */
 function dedupe_tags(nodes) {
 	const seen = {};
 	for (let n in nodes) {
@@ -306,10 +295,9 @@ function dedupe_tags(nodes) {
 	return nodes;
 }
 
-/* 机场常塞的"伪节点"标签：流量计费 / 到期日 / 套餐链接 / 客服等。
- * 它们是真实 SS/Vmess 配置（参与 sing-box 解析、能让 P2-H 抽流量到期信息），
- * 但服务端通常不真转发流量或被限速到不可用——必须从 selector/urltest 里剔除，
- * 否则 selector 默认选第一个、urltest 选延迟最低（同源 0ms），所有代理都会打到伪节点 → 国外 out。 */
+/* Drop airline pseudo-nodes (Traffic:/Expire:/quota/官网/QQ etc.) from selectors
+ * and urltests. They're real outbounds (so the UI can read traffic/expiry) but
+ * don't forward — in a selector/urltest they win (0ms) and swallow all traffic. */
 function is_pseudo_node_tag(tag) {
 	if (!tag) return false;
 	const t = '' + tag;
@@ -331,7 +319,7 @@ function is_pseudo_node_tag(tag) {
 	return false;
 }
 
-/* ---------- 按节点名识别地区，返回 'HK'/'JP'/'US'/'SG'/'OTHER'/'' ---------- */
+/* ---------- detect region from tag -> 'HK'/'JP'/'US'/'SG'/'OTHER'/'' ---------- */
 function region_of(tag) {
 	if (!tag) return '';
 	const t = '' + tag;
@@ -343,12 +331,12 @@ function region_of(tag) {
 	return '';
 }
 
-/* ---------- 把 __NODES__/__NODES_XX__ 占位符替换为真实 tag（剔除伪节点） ---------- */
+/* ---------- expand __NODES__/__NODES_XX__ placeholders to real tags (dropping pseudo-nodes) ---------- */
 function expand_node_placeholder(outbounds, node_tags) {
 	const real_tags = [];
 	for (let t in node_tags) if (!is_pseudo_node_tag(t)) push(real_tags, t);
 
-	/* 按地区分桶 */
+	/* bucket by region */
 	let tags_hk = [], tags_jp = [], tags_us = [], tags_sg = [], tags_other = [];
 	for (let t in real_tags) {
 		const r = region_of(t);
@@ -358,7 +346,7 @@ function expand_node_placeholder(outbounds, node_tags) {
 		else if (r === 'SG')    push(tags_sg,    t);
 		else if (r === 'OTHER') push(tags_other, t);
 	}
-	/* 某地区无节点时回退到全量，避免 selector/urltest outbounds 为空 */
+	/* when a region has no nodes, fall back to all nodes (avoid empty outbounds) */
 	if (!length(tags_hk))    tags_hk    = real_tags;
 	if (!length(tags_jp))    tags_jp    = real_tags;
 	if (!length(tags_us))    tags_us    = real_tags;
@@ -385,7 +373,7 @@ function expand_node_placeholder(outbounds, node_tags) {
 	return outbounds;
 }
 
-/* ---------- proxy-providers 解析 ---------- */
+/* ---------- proxy-providers ---------- */
 function resolve_providers(yaml) {
 	if (type(yaml['proxy-providers']) !== 'object')
 		return [];
@@ -445,7 +433,7 @@ const tpl = json(tpl_raw);
 if (!tpl || type(tpl.outbounds) !== 'array')
 	die(sprintf("template %s has no outbounds[]", tpl_path));
 
-/* 转换节点 */
+/* convert proxies */
 const nodes = [];
 let skipped = 0;
 for (let p in proxies) {
@@ -459,12 +447,12 @@ if (!length(nodes))
 
 logerr(sprintf("converted=%d skipped=%d", length(nodes), skipped));
 
-/* 拼装：节点插入到 outbounds 数组前部 */
+/* prepend converted nodes to template outbounds */
 const final_outbounds = [];
 for (let n in nodes) push(final_outbounds, n);
 for (let ob in tpl.outbounds) push(final_outbounds, ob);
 
-/* 展开 __NODES__ 占位符 */
+/* expand __NODES__ placeholders */
 const node_tags = map(nodes, (n) => n.tag);
 expand_node_placeholder(final_outbounds, node_tags);
 

@@ -52,12 +52,13 @@ dns_yaml_list_item() {
   printf "   - '%s'\n" "$value"
 }
 
-# 处理 mihomo dns 块：
-#   - 总是先擦掉历史注入痕迹（marker 块、所有 ipv6: 行）
-#   - 按 ipv6_value 重新写入 ipv6 行（空字符串则不写）
-#   - enabled=1 时在 fallback-filter 末尾追加 marker 包裹的 geosite gfw；
-#     fallback-filter 不存在则一并创建（含 geoip: false 骨架）
-# Marker：`# >>> clashoo:dns_leak_protect` ... `# <<< clashoo:dns_leak_protect`
+
+# handle mihomo dns block:
+#   - strip previous injection markers + all ipv6: lines
+#   - rewrite ipv6 from ipv6_value (skip when empty)
+#   - when enabled=1, append geosite gfw marker block to fallback-filter
+#     create fallback-filter (geoip: false skeleton) if absent
+# Marker:
 dns_mihomo_apply_leak_dns_block() {
   local cfg="$1" enabled="${2:-0}" ipv6_value="${3:-}" tmp="${1}.$$"
   [ -f "$cfg" ] || return 0
@@ -169,8 +170,8 @@ dns_mihomo_apply_leak_dns_block() {
   rm -f "$tmp" 2>/dev/null
 }
 
-# 处理 rules 段的 DST-PORT,853,REJECT 注入。
-# 只删除 Clashoo marker 块，不删除用户原有的同名规则。
+# handle DST-PORT,853,REJECT injection into rules block
+# only remove Clashoo marker block, never user original rules
 dns_mihomo_apply_leak_rule() {
   local cfg="$1" enabled="${2:-0}" tmp="${1}.$$" has_user_853
   [ -f "$cfg" ] || return 0

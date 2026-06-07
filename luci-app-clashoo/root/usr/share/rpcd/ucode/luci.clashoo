@@ -562,7 +562,9 @@ return updated <= 0 || (updated + ACCESS_CACHE_TTL) < now;
 }
 
 function trigger_access_cache_refresh() {
-system('nice -n 19 sh /usr/share/clashoo/net/access_check_cache.sh >/dev/null 2>&1 &');
+// Touch updating flag (empty) before spawning so concurrent polls skip; empty content
+// keeps cache.sh's pid-based lock recovery intact (a timestamp would look like a dead pid).
+system('mkdir -p /tmp/clashoo 2>/dev/null; : > ' + ACCESS_UPDATING_FLAG + ' 2>/dev/null; nice -n 19 sh /usr/share/clashoo/net/access_check_cache.sh >/dev/null 2>&1 &');
 }
 
 function access_check_is_updating(now) {
@@ -1507,9 +1509,8 @@ function migrate_singbox(cfg) {
   if (cfg.dns && cfg.dns.rules)
     cfg.dns.rules = map(cfg.dns.rules, migrate_geo_rule);
 
-  // 选 download_detour：模板和 subconverter 输出的 srs URL 都已用 gh-proxy.com（大陆直连可达），
-  // 所以必须走 DIRECT。绝不能选机场代理：首启动 rule_set 还没载入，机场域名解析会被未匹配
-  // 的 DNS rules 反复递归 → deadline → sing-box FATAL。
+  // download_detour must be DIRECT: at first start rule-sets aren't loaded, so
+  // routing it via a proxy deadlocks (DNS recursion -> sing-box FATAL).
   let pick_dl_detour = function() {
     if (cfg.outbounds) {
       for (let ob in cfg.outbounds) {
@@ -1593,14 +1594,14 @@ function migrate_singbox(cfg) {
     });
   }
 
-  // --- 修 reject method: sing-box 1.14 拒收 "dropped"，只接受 "default"/"drop" ---
+  // --- Fix reject method: sing-box 1.14 rejects "dropped", only "default"/"drop" ---
   if (cfg.dns && cfg.dns.rules) {
     cfg.dns.rules = map(cfg.dns.rules, function(rule) {
       if (rule.action !== 'reject' || !rule.method) return rule;
       let m = rule.method;
       if (m === 'dropped') m = 'drop';
       if (m !== 'default' && m !== 'drop') {
-        // 未知值直接去掉，让 sing-box 用默认 (default → NXDOMAIN)
+        // unknown value: drop it, sing-box defaults to NXDOMAIN
         let r = {};
         for (let k in rule) if (k !== 'method') r[k] = rule[k];
         return r;
@@ -1613,10 +1614,10 @@ function migrate_singbox(cfg) {
     });
   }
 
-  // --- Migrate TUN inbound inet4_address/inet6_address → address array (1.12+),
-  // and strip legacy inbound fields removed in 1.13 (sniff / sniff_override_destination /
-  // sniff_timeout / domain_strategy). 若任意 inbound 原本启用过 sniff，则在 route.rules
-  // 顶部补一条 { "action": "sniff" } 规则，等价表达。 ---
+  // --- Migrate TUN inet4_address/inet6_address -> address array (1.12+), and
+  // strip legacy inbound fields removed in 1.13 (sniff / sniff_override_destination /
+  // sniff_timeout / domain_strategy). If any inbound had sniff on, prepend a
+  // { "action": "sniff" } route rule as the equivalent. ---
   let had_sniff = false;
   if (cfg.inbounds) {
     cfg.inbounds = map(cfg.inbounds, function(ib) {
@@ -1655,8 +1656,8 @@ function migrate_singbox(cfg) {
     }
   }
 
-  // --- sing-box 1.14 强制要求 route.default_domain_resolver；缺失时补一个，
-  //     首选 dns.final，否则 dns.servers 的第一个有 tag 的 server。 ---
+  // --- sing-box 1.14 requires route.default_domain_resolver; add one if missing,
+  //     preferring dns.final, else the first dns.servers entry with a tag. ---
   if (cfg.route && !cfg.route.default_domain_resolver) {
     let resolver_tag = '';
     if (cfg.dns && cfg.dns.final) resolver_tag = cfg.dns.final;
@@ -1668,12 +1669,11 @@ function migrate_singbox(cfg) {
       cfg.route.default_domain_resolver = { server: resolver_tag };
   }
 
-  // --- Remove dangling outbound references from selectors/urltest，并剔除"机场伪节点" ---
-  // 1. subconverter 可能引用不存在的 tag（如 REJECT）
-  // 2. 机场塞的 "Traffic: xxx GB | yyy GB" / "Expire: 2026-08-15" / "剩余流量"
-  //    等伪节点是真 SS/Vmess outbound（参与 sing-box 解析、让 UI 能抽流量到期），
-  //    但服务端不真转发；放进 selector 后 selector 默认选第一个 / urltest 选最快
-  //    （同源 0ms），所有国外流量会被吸到伪节点 → 表现为"国内通、国外 out"。
+  // --- Remove dangling outbound refs from selectors/urltest, and drop airline
+  // pseudo-nodes. Two cases: (1) subconverter may reference a missing tag (e.g.
+  // REJECT); (2) "Traffic:.../Expire:.../quota" pseudo-nodes are real SS/Vmess
+  // outbounds (kept so the UI can read traffic/expiry) but don't forward — in a
+  // selector/urltest they win (0ms) and swallow all foreign traffic. ---
   let is_pseudo_tag = function(t) {
     if (!t) return false;
     return match(t, /^Traffic[：:]/) ||
@@ -1706,10 +1706,10 @@ function migrate_singbox(cfg) {
     });
   }
 
-  // --- 强制覆盖所有 remote rule_set 的 download_detour ---
-  // subconverter 常输出 download_detour="♻️ 自动选择"，但首启动时机场代理还不可用
-  // → urltest 测速死锁 → "fetch rule-set: deadline exceeded" → sing-box FATAL。
-  // 模板/转换器写入的 srs URL 都用 gh-proxy.com（大陆直连可达），必须无条件覆盖成 DIRECT。
+  // --- Force download_detour=DIRECT on every remote rule_set ---
+  // subconverter often emits download_detour="auto", but the proxy isn't ready at
+  // first start -> urltest deadlock ("fetch rule-set: deadline exceeded") -> FATAL.
+  // The srs URLs already use a CN-reachable mirror, so DIRECT is always correct.
   if (cfg.route && cfg.route.rule_set) {
     let dl_detour = pick_dl_detour();
     cfg.route.rule_set = map(cfg.route.rule_set, function(rs) {

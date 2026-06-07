@@ -607,7 +607,7 @@ return view.extend({
         self._lastSt.health_status = 'stopped';
       })
       .then(function () {
-        /* 切到 Smart 时后端 set_core 已自动开启 smart_auto_switch；启动后 init.d
+        /* set_core auto-enables smart_auto_switch; init.d at boot
          * smart_inject 会把 url-test/load-balance 转成 Smart 策略，无需手动操作。 */
         self._coreSwitchMsg = '已切换到 ' + targetLabel + '，点击启动后生效';
         self._refreshCoreSwitch();
@@ -1623,7 +1623,7 @@ return view.extend({
                 })
                 .then(function () {
                   sel.disabled = false;
-                  /* 强制立即刷新一次状态，让卡片/按钮拿到新 current（重启服务期间还会再次自然 poll） */
+                  /* force immediate state refresh so cards get new current */
                   return self._pollOverview(true);
                 });
             }),
@@ -1696,7 +1696,7 @@ return view.extend({
         var ac = ov.access || {};
         var stats = ov.stats || {};
 
-        /* 服务未运行时立即把 proxy 探测项强制标 down，避免显示陈旧绿色（不等 daemon 5-20s 刷新） */
+        /* force proxy probes down when stopped (skip daemon refresh) */
         if (!st.running && ac && ac.proxy) {
           var downProbe = { ok: false, state: 'down', code: '000', ok_count: 0, attempts: 1, loss: 1, avg_ms: 0 };
           Object.keys(ac.proxy).forEach(function (k) { ac.proxy[k] = downProbe; });
@@ -1709,7 +1709,7 @@ return view.extend({
         self._writeCachedOverview(ov);
         self._refreshCoreSwitch();
 
-        /* 只有用户能直接看到的字段变化时才重建 DOM——避免每 5 秒一次的"闪烁"，
+        /* only rebuild DOM on user-visible field changes, avoid flicker every 5s
            尤其是切换 tab 回到 overview 时缓存数据与首次 poll 数据通常一致 */
         var sig = JSON.stringify({
           running: st.running,
@@ -1859,12 +1859,12 @@ return view.extend({
   },
 
   /* fn: fire-and-forget RPC + 秒速轮询直到状态到位 */
-  /* 注：点按即翻转开关（秒回），不等 RPC 确认，体验如 OpenClash */
+  /* toggle switch instantly (optimistic), do not wait for RPC */
   _svc: function (fn, opKey) {
     if (this._busy) return Promise.resolve();
 
-    // 启动前 preflight：未选配置文件时拒绝启动并明示原因。
-    // 后端 select_config 也会失败兜底，但只发 toast 慢，UI 还会闪一下「启动中」。
+    // preflight: refuse start when no profile selected.
+    // backend select_config also defends but toast is slow, UI would flash.
     if (opKey === 'start' || opKey === 'restart') {
       var st0 = this._lastSt || {};
       var hasConfig = !!(st0.config || st0.conf_path);

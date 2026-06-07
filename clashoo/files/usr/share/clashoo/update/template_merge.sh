@@ -44,7 +44,7 @@ log "开始模板复写：$(basename "$SUB_FILE") <- $(basename "$TEMPLATE_FILE"
 export SUB_FILE TEMPLATE_FILE
 
 # 以模板为主结构，注入订阅节点/节点提供器。
-# 使用 yq load() 强制单文档输出，避免 eval-all 在部分模板上产生重复根键。
+       # use yq load() 强制单文档输出，避免 eval-all 在部分模板上产生重复根键。
 yq -n '
   load(strenv(SUB_FILE)) as $sub |
   load(strenv(TEMPLATE_FILE)) as $tpl |

@@ -99,7 +99,7 @@ var CSS = [
   '.cl-comp-var.on{background:rgba(var(--primary-rgb,0,122,255),.18);border-color:rgba(var(--primary-rgb,0,122,255),.64);color:var(--primary-color,#0b68dd);font-weight:800;box-shadow:0 0 0 1px rgba(var(--primary-rgb,0,122,255),.1) inset}',
   '.cl-comp-updatable{font-size:10px;font-weight:700;color:#239b56;margin-left:2px}',
   '@media(max-width:760px){.cl-component-head{display:block}.cl-component-head .btn{margin-top:10px}.cl-component-row{grid-template-columns:1fr;gap:6px}.cl-component-row .btn{width:auto;justify-self:start;padding-left:18px;padding-right:18px}}',
-  /* 统一 form.Map 字体大小与 config 页一致 */
+  /* align form.Map font with config page */
   '.cl-panel .cbi-section>h3{font-size:13px !important;font-weight:600;margin-bottom:8px}',
   '.cl-panel .cbi-value-title{font-size:13px !important}',
   '.cl-panel .cbi-value-field input,.cl-panel .cbi-value-field select,.cl-panel .cbi-value-field textarea{font-size:13px !important}',
@@ -110,7 +110,7 @@ var CSS = [
   '.cl-wrap .btn,.cl-wrap .cbi-button{padding:4px 10px;line-height:1.35}'
 ].join('');
 
-/* 组件更新：主区只显示 clashoo / 客户端，其余收进「高级设置」折叠面板 */
+/* component update: main area = clashoo/client only; rest in collapsible */
 var COMPONENT_MAIN_IDS = { clashoo: true, luci: true };
 
 function fastResolve(promise, timeoutMs, fallback) {
@@ -368,8 +368,8 @@ return view.extend({
     }, '检查更新');
     this._compRefreshBtn = refreshBtn;
 
-    /* 高级设置：内核 / 数据类组件，默认收起以免页面臃肿。
-       处理器架构常驻在外层 —— 它决定内核下载的二进制架构，不能藏 */
+    /* advanced: core/data, collapsed by default to keep page compact.
+       CPU arch stays outside — it decides core binary arch */
     var advWrap = E('div', { 'class': 'cl-component-adv cl-closed' }, [
       E('div', { 'class': 'cl-component-adv-bar' }, [
         E('span', {}, '高级设置（内核 / 数据组件）'),
@@ -381,7 +381,7 @@ return view.extend({
       advWrap.classList.toggle('cl-closed');
     });
 
-    /* 外层套一层 cl-component-map：复用 LuCI .cbi-map 容器结构，
+    /* wrap in cl-component-map, reuse LuCI .cbi-map container
        浅色出现灰托盘、暗色满宽对齐，与下方表单卡片同构 */
     container.appendChild(E('div', { 'class': 'cl-component-map' }, [
       E('div', { 'class': 'cl-component-card' }, [
@@ -512,7 +512,7 @@ return view.extend({
     children.forEach(function (child) { if (child) node.appendChild(child); });
   },
 
-  /* 检查更新用的 latest map key：mihomo/sing-box 带变体，smart 固定，pkg 用 id */
+  /* latest map key: mihomo/sing-box with variant; smart fixed; pkg by id */
   _compLatestKey: function (comp, variant) {
     if (comp.id === 'smart') return 'smart';
     if (comp.variant) return comp.id + '_' + (variant || 'stable');
@@ -538,7 +538,7 @@ return view.extend({
     return (comp && comp.installed_version) || '';
   },
 
-  /* 已装版与最新版不一致即视为可更新（alpha 按 hash 字符串差异判断）*/
+  /* install != latest = updatable (alpha compared by hash)*/
   _compUpdatable: function (comp, latestMap) {
     if (!comp) return false;
     /* lgbm has no version; compare local vs remote model sha256 (kind=data skips generic path) */
@@ -567,7 +567,7 @@ return view.extend({
     return '';
   },
 
-  /* CPU 架构行：自动检测 + 可手动覆盖（写 download_core UCI，内核下载共用此值）*/
+  /* CPU arch: auto-detected + manual override (download_core UCI)*/
   _renderComponentArchRow: function (arch) {
     var self = this;
     arch = arch || {};
@@ -586,7 +586,7 @@ return view.extend({
         .then(function () { return clearClashooDirty(); })
         .then(function () { clashoo.toast('处理器架构已设为 ' + sel.value, { kind: 'info' }); })
         .catch(function () {});
-      /* 重画一行：与检测值不符时显示推荐提示 */
+      /* re-render row: show hint when mismatched */
       if (self._compArchWrap)
         self._replaceChildren(self._compArchWrap,
           [self._renderComponentArchRow({ system: sys, download_core: sel.value })]);
@@ -596,7 +596,7 @@ return view.extend({
       E('span', { 'class': 'cl-component-arch-auto' }, '自动识别'),
       sel
     ];
-    /* 自动检测正确时不显示提示，保持简洁；仅手动选了非检测值才提示推荐架构 */
+    /* no hint when auto-detected matches; only show when manual choice differs */
     if (detected && cur !== detected)
       row.push(E('span', { 'class': 'cl-component-arch-hint' }, '推荐 ' + detected + '（按设备自动检测）'));
     return E('div', { 'class': 'cl-component-arch-row' }, row);
