@@ -997,6 +997,9 @@ return view.extend({
     o = s.option(form.Flag, 'dns_leak_protect', '防 DNS 泄漏');
     o.description = '阻止国内 DNS 解析国外域名、关闭 IPv6 解析、阻断 DoT/DoQ（853 端口）。切换后需重启服务生效。<br>' +
                     '<strong>注意：</strong>开启后 IPv6 网站只能通过 IPv4 访问，纯 IPv6 网络下可能无法上网。';
+    o = s.option(form.Flag, 'core_only', '仅内核（进阶）');
+    o.description = '只运行你导入的配置，不接管防火墙 / DNS / 路由。mihomo 配置原样运行，适配 nikki、OpenClash；sing-box 老配置自动迁移格式，兼容 momo、homeproxy。<br>' +
+                    '<strong>前提：</strong>配置需自带透明代理（TUN auto-route 或 TProxy 入站），否则流量不会走代理。切换后需重启生效。';
 
     s = m.section(form.NamedSection, 'config', 'clashoo', '端口配置');
     s.addremove = false;
@@ -1249,8 +1252,8 @@ return view.extend({
     o = s.option(form.ListValue,   'enhanced_mode',     '增强模式');
     o.value('fake-ip', 'Fake-IP'); o.value('redir-host', 'Redir-Host');
     o.default = 'fake-ip';
-    o.description = 'Fake-IP（默认）：解析快、分流准，大陆分流由内核完成。<br />' +
-      'Redir-Host：大陆流量在防火墙层直接绕过核心，DNS 体验略弱。按需选择。';
+    o.description = '<span style="display:inline-block;padding:1px 7px;border-radius:4px;font-size:12px;font-weight:600;background:rgba(var(--primary-rgb),0.14);color:var(--cl-primary,#3886a1);">Fake-IP · 推荐</span> 解析快、分流准，大陆分流由内核完成。<br />' +
+      '<span style="display:inline-block;padding:1px 7px;border-radius:4px;font-size:12px;background:rgba(128,128,128,0.16);color:var(--cl-label-muted,#888);">Redir-Host</span> 大陆流量在防火墙层直接绕过核心，DNS 体验略弱。按需选择。';
     o = s.option(form.Value,       'fake_ip_range',     'Fake-IP 网段');
     o.default = '198.18.0.1/16';
     o.placeholder = '198.18.0.1/16';
