@@ -101,6 +101,12 @@ detect_arch() {
     opkg print-architecture 2>/dev/null | awk '/^arch / {print $2}' | tail -n 1
     return
   fi
+  # apk: DISTRIB_ARCH is authoritative (e.g. aarch64_cortex-a53); apk --print-arch
+  # only gives the generic "aarch64" which won't match the .apk package suffix.
+  if [ -r /etc/openwrt_release ]; then
+    a="$(sed -n "s/^DISTRIB_ARCH=['\"]\\([^'\"]*\\)['\"]$/\\1/p" /etc/openwrt_release | head -n 1)"
+    [ -n "$a" ] && { printf '%s\n' "$a"; return; }
+  fi
   apk --print-arch 2>/dev/null
 }
 

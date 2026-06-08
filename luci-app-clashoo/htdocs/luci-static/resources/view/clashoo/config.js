@@ -937,7 +937,7 @@ return view.extend({
 
     if (otherFiles.length) {
       sections.push(E('div', { 'class': 'cl-section cl-card' }, [
-        E('h4', {}, '其他配置文件（上传 / 复写输出）'),
+        E('h4', {}, '其他配置文件（上传 / 覆写输出）'),
         E('div', { 'class': 'cl-fixed-600' }, [
           E('div', { 'class': 'cl-file-list' }, otherCards)
         ])
@@ -947,7 +947,7 @@ return view.extend({
 
       sections.push(
       E('div', { 'class': 'cl-section cl-card' }, [
-        E('h4', {}, '复写设置'),
+        E('h4', {}, '覆写设置'),
         E('div', { 'class': 'cl-form-wrap cl-rewrite-wrap cl-fixed-600' }, [
           E('div', { 'class': 'cl-rewrite-group cl-rewrite-group-template' }, [
             E('div', { 'class': 'cl-rewrite-group-title' }, '模板选择'),
