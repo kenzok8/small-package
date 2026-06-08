@@ -1949,6 +1949,39 @@ html[data-bs-theme="dark"] .cl-wrap.cl-system-page #cl-panel-kernel .cl-componen
   box-sizing: border-box;
 }
 
+/* issue #14: DynamicList 窄屏自适应 — 行宽跟容器走、输入框可收缩，
+   避免删除(×)/添加(+)按钮在窄手机上被挤出屏幕。 */
+.cl-wrap .cbi-dynlist {
+  display: flex !important;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.cl-wrap .cbi-dynlist .item,
+.cl-wrap .cbi-dynlist .add-item {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.cl-wrap .cbi-dynlist .item > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cl-wrap .cbi-dynlist .add-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cl-wrap .cbi-dynlist .add-item > .cbi-input-text,
+.cl-wrap .cbi-dynlist .add-item > input[type="text"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100% !important;
+}
+
 /* Smart 策略设置 — 行动按钮 + 当前版本说明（桌面端：横排，移动端：换行） */
 .cl-smart-action-row {
   display: flex;
