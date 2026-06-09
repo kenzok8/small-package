@@ -1264,7 +1264,8 @@ return view.extend({
     s.addremove = false;
     o = s.option(form.Flag,        'dnsforwader',       '强制转发 DNS');
     o = s.option(form.DynamicList, 'fake_ip_filter',    'Fake-IP 过滤域名');
-    o.placeholder = '*.lan / localhost.ptlogin2.qq.com';
+    o.placeholder = '*.lan / geosite:cn / rule-set:cn_domain';
+    o.description = '命中的域名走真 IP，不分配 fake-ip。填 <code>geosite:cn</code> 可让国内域名走真 IP，流量不入 TUN。';
     o.depends('enhanced_mode', 'fake-ip');
     o.remove = function () {};
     o = s.option(form.DynamicList, 'default_nameserver', 'Bootstrap DNS');

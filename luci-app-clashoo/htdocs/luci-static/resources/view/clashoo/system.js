@@ -55,13 +55,20 @@ var CSS = [
   '.cl-log-tab{padding:4px 12px;border:1px solid rgba(128,128,128,.2);border-radius:20px;font-size:12px;cursor:pointer;opacity:.6}',
   '.cl-log-tab.active{opacity:1;font-weight:600;background:rgba(128,128,128,.1)}',
   '.cl-log-line{display:block;padding:1px 4px;border-radius:3px}',
-	  '.cl-log-line.cl-log-info{color:#7fc7a8}',
-	  '.cl-log-line.cl-log-warn{color:#e8b95a}',
-	  '.cl-log-line.cl-log-error{color:#ea7878;background:rgba(234,120,120,.06)}',
-	  '.cl-log-line.cl-log-debug{color:#7a8290;opacity:.7}',
+	  /* Light theme: AA+ contrast on white bg (issue #16) */
+	  '.cl-log-line.cl-log-info{color:#1f6b3f}',
+	  '.cl-log-line.cl-log-warn{color:#8b5a00}',
+	  '.cl-log-line.cl-log-error{color:#c0392b;background:rgba(192,57,43,.06)}',
+	  '.cl-log-line.cl-log-debug{color:#5a6270;opacity:.85}',
 	  '.cl-log-line.cl-log-hidden{display:none}',
-	  '.cl-log-ts{color:#6b7480;margin-right:8px}',
+	  '.cl-log-ts{color:#5a6270;margin-right:8px}',
 	  '.cl-log-msg{color:inherit}',
+	  /* Dark theme overrides: original colors tuned for dark bg */
+	  '.cl-theme-dark .cl-log-line.cl-log-info{color:#7fc7a8}',
+	  '.cl-theme-dark .cl-log-line.cl-log-warn{color:#e8b95a}',
+	  '.cl-theme-dark .cl-log-line.cl-log-error{color:#ea7878;background:rgba(234,120,120,.06)}',
+	  '.cl-theme-dark .cl-log-line.cl-log-debug{color:#7a8290;opacity:.7}',
+	  '.cl-theme-dark .cl-log-ts{color:#6b7480}',
 	  '.cl-dl-hint{margin-top:6px;font-size:12px;min-height:18px;line-height:1.4}',
   '.cl-component-card{padding:16px 18px;border:1px solid var(--cl-surface-border,rgba(128,128,128,.14));border-radius:var(--border-radius,var(--cl-radius,12px));background:var(--cl-card-bg,#fff);box-shadow:var(--card-shadow,var(--cl-card-shadow));margin:0 14px 14px}',
   '.cl-component-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}',
@@ -83,7 +90,7 @@ var CSS = [
   '.cl-theme-dark .cl-component-version{color:rgba(210,220,235,.86)}',
   '.cl-component-status{font-size:12px;line-height:1.45;color:rgba(90,100,120,.95)}',
   '.cl-component-status.cl-st-running{color:#2f80ed}.cl-component-status.cl-st-success{color:#239b56}.cl-component-status.cl-st-failed{color:#d43f3a}',
-  '.cl-component-log{margin-top:10px;font-family:monospace;font-size:11px;white-space:pre-wrap;max-height:140px;overflow:auto;padding:9px;border:1px solid var(--cl-surface-border,rgba(128,128,128,.14));border-radius:8px;background:var(--cl-card-bg,#fff);color:#4a8c63}',
+  '.cl-component-log{margin-top:10px;font-family:monospace;font-size:11px;white-space:pre-wrap;max-height:140px;overflow:auto;padding:9px;border:1px solid var(--cl-surface-border,rgba(128,128,128,.14));border-radius:8px;background:var(--cl-card-bg,#fff);color:#1f6b3f}',
   '.cl-theme-dark .cl-component-log{color:#a3d9ad}',
   '.cl-component-arch{margin-bottom:12px}',
   '.cl-component-arch-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 12px;border:1px solid var(--cl-surface-border,rgba(128,128,128,.14));border-radius:8px;background:var(--cl-card-bg,#fff)}',
@@ -762,6 +769,13 @@ return view.extend({
     o.placeholder = 'clashoo';
     o = s.option(form.ListValue, 'dashboard_panel', '面板 UI');
     ['metacubexd','yacd','zashboard','razord'].forEach(function(p){ o.value(p,p); });
+
+    s = m.section(form.NamedSection, 'config', 'clashoo', '内核下载');
+    s.addremove = false;
+    o = s.option(form.Value, 'core_mirror_prefix', 'GitHub 加速前缀');
+    o.placeholder = 'https://gh-proxy.com/';
+    o.description = '内核 / 数据组件下载时优先走该前缀（末尾需带斜杠）。留空则使用内置 gh-proxy.com 与 ghfast.top 备选源。';
+    o.rmempty = true;
 
     m.render().then(function (node) {
       decorateSystemForm(node);
