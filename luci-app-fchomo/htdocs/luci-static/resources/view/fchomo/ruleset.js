@@ -11,7 +11,7 @@ const parseRulesetYaml = hm.parseYaml.extend({
 		if (!cfg.type)
 			return null;
 
-		// key mapping // 2026/01/17
+		// key mapping // 2026/06/06
 		let config = hm.removeBlankAttrs({
 			id: this.id,
 			label: this.label,
@@ -22,6 +22,7 @@ const parseRulesetYaml = hm.parseYaml.extend({
 				payload: cfg.payload, // string: array
 			} : {
 				url: cfg.url,
+				path_in_bundle: cfg["path-in-bundle"],
 				size_limit: cfg["size-limit"],
 				interval: cfg.interval,
 				proxy: cfg.proxy ? hm.preset_outbound.full.map(([key, label]) => key).includes(cfg.proxy) ? cfg.proxy : this.calcID(hm.glossary["proxy_group"].field, cfg.proxy) : null,
@@ -180,6 +181,13 @@ return view.extend({
 							"      - 'application/vnd.github.v3.raw'\n" +
 							'      Authorization:\n' +
 							"      - 'token 1231231'\n" +
+							'  cn:\n' +
+							'    type: http\n' +
+							'    path: ./provider/rule-set/geosite-cn.mrs\n' +
+							'    url: "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/cn.mrs"\n' +
+							'    behavior: domain\n' +
+							'    format: mrs\n' +
+							'    path-in-bundle: "geo/geosite/cn.mrs"\n' +
 							'  rule4:\n' +
 							'    type: inline\n' +
 							'    behavior: domain\n' +
@@ -269,6 +277,7 @@ return view.extend({
 				['select', 'type'],
 				['select', 'behavior'],
 				['select', 'format'],
+				['input', 'path_in_bundle'],
 				['textarea', '_editer']
 			], ...arguments);
 		}
@@ -371,6 +380,12 @@ return view.extend({
 		o.validate = hm.validateUrl;
 		o.rmempty = false;
 		o.depends('type', 'http');
+		o.modalonly = true;
+
+		o = s.option(form.Value, 'path_in_bundle', _('Path in bundle'),
+			_('Path in bundle: <code>%s</code>').format('BundleMRS.7z'));
+		o.placeholder = 'geo/geosite/cn.mrs';
+		o.depends({'type': /^(file|http)$/, 'format': 'mrs'});
 		o.modalonly = true;
 
 		o = s.option(form.Value, 'size_limit', _('Size limit'),

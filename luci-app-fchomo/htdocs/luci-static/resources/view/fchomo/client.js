@@ -13,7 +13,7 @@ const parseProxyGroupYaml = hm.parseYaml.extend({
 		if (!cfg.type)
 			return null;
 
-		// key mapping // 2025/02/13
+		// key mapping // 2026/06/06
 		let config = hm.removeBlankAttrs({
 			id: this.id,
 			label: this.label,
@@ -23,6 +23,7 @@ const parseProxyGroupYaml = hm.parseYaml.extend({
 			include_all: this.bool2str(cfg["include-all"]), // bool
 			include_all_proxies: this.bool2str(cfg["include-all-proxies"]), // bool
 			include_all_providers: this.bool2str(cfg["include-all-providers"]), // bool
+			empty_fallback: cfg["empty-fallback"] ? hm.preset_outbound.full.map(([key, label]) => key).includes(cfg["empty-fallback"]) ? cfg["empty-fallback"] : this.calcID(hm.glossary["proxy_group"].field, cfg["empty-fallback"]) : null, // string
 			// Url-test fields
 			tolerance: cfg.tolerance,
 			// Load-balance fields
@@ -972,6 +973,7 @@ return view.extend({
 							'- name: "load-balance"\n' +
 							'  type: load-balance\n' +
 							'  include-all: true\n' +
+							'  empty-fallback: COMPATIBLE\n' +
 							'  url: "https://cp.cloudflare.com/generate_204"\n' +
 							'  interval: 300\n' +
 							'  lazy: false\n' +
@@ -1080,6 +1082,14 @@ return view.extend({
 			_('Includes all Provider.'));
 		so.default = so.disabled;
 		so.editable = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'empty_fallback', _('Empty fallback'));
+		so.default = 'COMPATIBLE';
+		hm.preset_outbound.full.forEach((res) => {
+			so.value.apply(so, res);
+		})
+		so.load = L.bind(hm.loadProxyGroupLabel, so, hm.preset_outbound.full);
+		so.modalonly = true;
 
 		/* Override fields */
 		so = ss.taboption('field_override', form.Flag, 'disable_udp', _('Disable UDP'));

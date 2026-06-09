@@ -12,6 +12,7 @@ export const PRESET_OUTBOUND = [
 	'REJECT',
 	'REJECT-DROP',
 	'PASS',
+	'PASS-RULE',
 	'COMPATIBLE',
 	'GLOBAL'
 ];

@@ -1,7 +1,0 @@
-#!/bin/sh
-# Backfill geosite:cn into fake-ip-filter for upgraded installs
-# whose /etc/config/clashoo conffile is preserved. Idempotent.
-if ! uci -q get clashoo.config.fake_ip_filter 2>/dev/null | grep -q 'geosite:cn'; then
-	uci -q add_list clashoo.config.fake_ip_filter='geosite:cn' && uci -q commit clashoo
-fi
-exit 0

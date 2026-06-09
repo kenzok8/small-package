@@ -148,7 +148,7 @@ check_list_update() {
 
 	local list_info="$($wget -O- "https://api.github.com/repos/$listrepo/commits?sha=$listref&path=$listname")"
 	local list_sha="$(echo -e "$list_info" | jsonfilter -e "@[0].sha")"
-	local list_ver="$(echo -e "$list_info" | jsonfilter -e "@[0].commit.message" | grep -Eo "[0-9-]+" | tr -d '-')"
+	local list_ver="$(echo -e "$list_info" | jsonfilter -e "@[0].commit.message" | grep -Eo "[0-9-]+" | tr -d ' \n-')"
 	if [ -z "$list_sha" ] || [ -z "$list_ver" ]; then
 		log "[$(to_upper "$listtype")] Failed to get the latest version, please retry later."
 		return 1
@@ -182,7 +182,7 @@ check_list_update() {
 case "$1" in
 "ALL")
 	# Since the VER_PATH lock is not designed, parallelism is not currently supported.
-	for _type in geoip geosite asn china_ip4 china_ip6 gfw_list china_list; do
+	for _type in geoip geosite asn bundlemrs china_ip4 china_ip6 gfw_list china_list; do
 		"$0" "$_type"
 	done
 	# dashboard
@@ -208,6 +208,10 @@ case "$1" in
 	check_list_update "$1" "Loyalsoldier/geoip" "release" "GeoLite2-ASN.mmdb" &&
 		mv -f "$RESOURCES_DIR/asn.mmdb" "$RESOURCES_DIR/../asn.mmdb"
 	;;
+"bundlemrs")
+	check_list_update "$1" "MetaCubeX/meta-rules-dat" "release" "BundleMRS.7z" &&
+		mv -f "$RESOURCES_DIR/bundlemrs.7z" "$RESOURCES_DIR/../BundleMRS.7z"
+	;;
 "china_ip4")
 	check_list_update "$1" "fcshark-org/route-list" "release" "china_ipv4.txt"
 	;;
@@ -221,7 +225,7 @@ case "$1" in
 	check_list_update "$1" "fcshark-org/route-list" "release" "china_list2.txt"
 	;;
 *)
-	echo -e "Usage: $0 <ALL / dashboard / geoip / geosite / asn / china_ip4 / china_ip6 / gfw_list / china_list>"
+	echo -e "Usage: $0 <ALL / dashboard / geoip / geosite / asn / bundlemrs / china_ip4 / china_ip6 / gfw_list / china_list>"
 	exit 1
 	;;
 esac

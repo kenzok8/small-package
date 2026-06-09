@@ -361,43 +361,18 @@ function gen_outbound(flag, node, tag, proxy_table)
 				end)()
 			} or nil,
 			settings = {
-				vnext = (node.protocol == "vmess" or node.protocol == "vless") and {
-					{
-						address = node.address,
-						port = tonumber(node.port),
-						users = {
-							{
-								id = node.uuid,
-								level = 0,
-								security = (node.protocol == "vmess") and node.security or nil,
-								testpre = (node.protocol == "vless") and tonumber(node.preconns) or nil,
-								encryption = (node.protocol == "vless") and ((node.encryption and node.encryption ~= "") and node.encryption or "none") or nil,
-								flow = (node.protocol == "vless"
-									and (node.tls == "1" or (node.encryption and node.encryption ~= "" and node.encryption ~= "none"))
-									and node.flow and node.flow ~= "") and node.flow or nil
-							}
-						}
-					}
-				} or nil,
-				servers = (node.protocol == "socks" or node.protocol == "http" or node.protocol == "shadowsocks" or node.protocol == "trojan") and {
-					{
-						address = node.address,
-						port = tonumber(node.port),
-						method = (node.method == "chacha20-ietf-poly1305" and "chacha20-poly1305") or
-							(node.method == "xchacha20-ietf-poly1305" and "xchacha20-poly1305") or
-							(node.method ~= "" and node.method) or nil,
-						ivCheck = (node.protocol == "shadowsocks") and node.iv_check == "1" or nil,
-						uot = (node.protocol == "shadowsocks") and node.uot == "1" or nil,
-						password = node.password or "",
-						users = (node.username and node.password) and {
-							{
-								user = node.username,
-								pass = node.password
-							}
-						} or nil
-					}
-				} or nil,
-				address = (node.protocol == "wireguard" and node.wireguard_local_address) or (node.protocol == "hysteria" and node.address) or nil,
+				address = (node.protocol == "wireguard") and node.wireguard_local_address or node.address,
+				port = tonumber(node.port),
+				id = (node.protocol == "vmess" or node.protocol == "vless") and node.uuid or nil,
+				encryption = (node.protocol == "vless") and ((node.encryption and node.encryption ~= "") and node.encryption or "none") or nil,
+				flow = (node.protocol == "vless" and (node.tls == "1" or (node.encryption and node.encryption ~= "" and node.encryption ~= "none"))
+					and node.flow and node.flow ~= "") and node.flow or nil,
+				security = (node.protocol == "vmess") and node.security or nil,
+				user = (node.protocol == "socks" or node.protocol == "http") and node.username or nil,
+				pass = (node.protocol == "socks" or node.protocol == "http") and node.password or nil,
+				password = (node.protocol == "shadowsocks" or node.protocol == "trojan") and node.password or nil,
+				method = (node.protocol == "shadowsocks") and ((node.method == "chacha20-ietf-poly1305" and "chacha20-poly1305") or
+					(node.method == "xchacha20-ietf-poly1305" and "xchacha20-poly1305") or (node.method ~= "" and node.method) or nil) or nil,
 				secretKey = (node.protocol == "wireguard") and node.wireguard_secret_key or nil,
 				peers = (node.protocol == "wireguard") and {
 					{
@@ -409,8 +384,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 				} or nil,
 				mtu = (node.protocol == "wireguard" and node.wireguard_mtu) and tonumber(node.wireguard_mtu) or nil,
 				reserved = (node.protocol == "wireguard" and node.wireguard_reserved) and node.wireguard_reserved or nil,
-				port = (node.protocol == "hysteria" and node.port) and tonumber(node.port) or nil,
-				version = node.protocol == "hysteria" and 2 or nil
+				version = (node.protocol == "hysteria") and 2 or nil,
+				level = 0
 			}
 		}
 
@@ -538,7 +513,6 @@ function gen_config_server(node)
 		settings = {
 			method = node.method,
 			password = node.password,
-			ivCheck = ("1" == node.iv_check) and true or false,
 			network = node.ss_network or "TCP,UDP"
 		}
 	elseif node.protocol == "trojan" then

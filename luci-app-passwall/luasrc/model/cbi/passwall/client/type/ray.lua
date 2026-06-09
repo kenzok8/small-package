@@ -322,15 +322,6 @@ o.rewrite_option = "method"
 for a, t in ipairs(ss_method_list) do o:value(t) end
 o:depends({ [_n("protocol")] = "shadowsocks" })
 
-o = s:option(Flag, _n("iv_check"), translate("IV Check"))
-o:depends({ [_n("protocol")] = "shadowsocks", [_n("ss_method")] = "aes-128-gcm" })
-o:depends({ [_n("protocol")] = "shadowsocks", [_n("ss_method")] = "aes-256-gcm" })
-o:depends({ [_n("protocol")] = "shadowsocks", [_n("ss_method")] = "chacha20-poly1305" })
-o:depends({ [_n("protocol")] = "shadowsocks", [_n("ss_method")] = "xchacha20-poly1305" })
-
-o = s:option(Flag, _n("uot"), translate("UDP over TCP"))
-o:depends({ [_n("protocol")] = "shadowsocks" })
-
 o = s:option(ListValue, _n("flow"), translate("flow"))
 o.default = ""
 o:value("", translate("Disable"))
@@ -420,7 +411,6 @@ o:value("http/1.1")
 o:value("h2,http/1.1")
 o:value("h3,h2,http/1.1")
 o:depends({ [_n("tls")] = true, [_n("reality")] = false })
-o:depends({ [_n("protocol")] = "hysteria2" })
 
 -- o = s:option(Value, _n("minversion"), translate("minversion"))
 -- o.default = "1.3"
@@ -775,11 +765,6 @@ o.default = 0
 --[[tcpMptcp]]
 o = s:option(Flag, _n("tcpMptcp"), "tcpMptcp", translate("Enable Multipath TCP, need to be enabled in both server and client configuration."))
 o.default = 0
-
-o = s:option(Value, _n("preconns"), translate("Pre-connections"), translate("Number of early established connections to reduce latency."))
-o.datatype = "uinteger"
-o.placeholder = 0
-o:depends({ [_n("protocol")] = "vless" })
 
 o = s:option(ListValue, _n("domain_resolver"), translate("Domain DNS Resolve"))
 o.description = translate("If the node address is a domain name, this DNS will be used for resolution.") .. "<br>" .. string.format('<font color="red">%s</font>',
