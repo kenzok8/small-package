@@ -327,8 +327,8 @@ function generate_outbound(node) {
 			max_early_data: strToInt(node.websocket_early_data),
 			early_data_header_name: node.websocket_early_data_header,
 			service_name: node.grpc_servicename,
-			idle_timeout: (node.http_idle_timeout),
-			ping_timeout: (node.http_ping_timeout),
+			idle_timeout: strToTime(node.http_idle_timeout),
+			ping_timeout: strToTime(node.http_ping_timeout),
 			permit_without_stream: strToBool(node.grpc_permit_without_stream)
 		} : null,
 		udp_over_tcp: (node.udp_over_tcp === '1') ? {
