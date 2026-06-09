@@ -1668,16 +1668,12 @@ html[data-bs-theme="dark"] .cl-wrap .cl-live-num {
   margin: 0 0 14px !important;
 }
 
-/* 组件更新外层容器：与 LuCI 表单 .cbi-map 同构。
-   浅色 = 灰托盘 + 14px 内距（白卡片浮起）；暗色 = 透明无内距（卡片满宽对齐） */
+/* 组件更新外层容器：保持透明，让内容卡片与其他页面满宽对齐 */
 .cl-wrap.cl-system-page #cl-panel-kernel .cl-component-map {
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
   margin: 0 0 14px !important;
-}
-
-.cl-wrap.cl-theme-light.cl-system-page #cl-panel-kernel .cl-component-map {
-  background: #e8eaf0 !important;
-  padding: 14px !important;
-  border-radius: 14px !important;
 }
 
 .cl-wrap.cl-system-page #cl-panel-kernel .cbi-section > h3,
@@ -1950,36 +1946,46 @@ html[data-bs-theme="dark"] .cl-wrap.cl-system-page #cl-panel-kernel .cl-componen
 }
 
 /* issue #14: DynamicList 窄屏自适应 — 行宽跟容器走、输入框可收缩，
-   避免删除(×)/添加(+)按钮在窄手机上被挤出屏幕。 */
-.cl-wrap .cbi-dynlist {
-  display: flex !important;
-  flex-direction: column;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
+   避免删除(×)/添加(+)按钮在窄手机上被挤出屏幕。
+   仅在窄屏触发；桌面端沿用 LuCI 默认尺寸，避免不同 section 的父容器宽度差异
+   把 DynamicList 撑到 600/1450 等不同长度，造成同页上下输入框宽窄不一。 */
+@media (max-width: 768px) {
+  .cl-wrap .cbi-dynlist {
+    display: flex !important;
+    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .cl-wrap .cbi-dynlist .item,
+  .cl-wrap .cbi-dynlist .add-item {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .cl-wrap .cbi-dynlist .item > span {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cl-wrap .cbi-dynlist .add-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .cl-wrap .cbi-dynlist .add-item > .cbi-input-text,
+  .cl-wrap .cbi-dynlist .add-item > input[type="text"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100% !important;
+  }
 }
-.cl-wrap .cbi-dynlist .item,
-.cl-wrap .cbi-dynlist .add-item {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-.cl-wrap .cbi-dynlist .item > span {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.cl-wrap .cbi-dynlist .add-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.cl-wrap .cbi-dynlist .add-item > .cbi-input-text,
-.cl-wrap .cbi-dynlist .add-item > input[type="text"] {
-  flex: 1 1 auto;
-  min-width: 0;
-  max-width: 100% !important;
+
+/* 一键测速并应用：状态文案 — 浅色主题下与同页 .cbi-value-description
+   (Fake-IP / Redir-Host 单选描述)保持同色，视觉一致 */
+.cl-wrap.cl-theme-light .cl-dns-auto-status {
+  color: rgba(120, 130, 150, 0.9) !important;
 }
 
 /* Smart 策略设置 — 行动按钮 + 当前版本说明（桌面端：横排，移动端：换行） */
@@ -2033,7 +2039,7 @@ html[data-bs-theme="dark"] .cl-wrap.cl-system-page #cl-panel-kernel .cl-componen
    浅色主题对比度修复 (Argon light / Bootstrap light)
    - getThemeClass() 优先检测 dark.css 是否加载，返回 cl-theme-light
    - overview 页面不在选择器内，不受影响
-   - 核心思路：表单容器灰色底，section 白卡片浮在上面
+   - section 使用白卡片，外层容器保持透明满宽
    ══════════════════════════════════════════════════════════ */
 
 /* 1. CSS 变量覆盖 — 实色值取代半透明，确保白底上清晰可见 */
@@ -2048,13 +2054,13 @@ html[data-bs-theme="dark"] .cl-wrap.cl-system-page #cl-panel-kernel .cl-componen
   --cl-input-border: #c5c9d2;
 }
 
-/* 2. 表单容器灰色底：白卡片自然浮出 */
+/* 2. 表单外层透明满宽：与订阅页一致，不额外压缩内容区 */
 .cl-wrap.cl-theme-light.cl-config-page .cbi-map,
 .cl-wrap.cl-theme-light.cl-system-page .cbi-map {
-  background: #e8eaf0 !important;
-  padding: 14px !important;
-  border-radius: 14px !important;
-  margin-top: 4px !important;
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  margin-top: 0 !important;
 }
 
 /* 3. Section 白底 — config & system 页面共用 */

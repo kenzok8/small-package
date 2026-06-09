@@ -333,10 +333,10 @@ return view.extend({
       var link = document.createElement('link');
       link.id = 'cl-css-ext';
       link.rel = 'stylesheet';
-      link.href = L.resource('view/clashoo/clashoo.css') + '?v=20260608a1';
+      link.href = L.resource('view/clashoo/clashoo.css') + '?v=20260609b1';
       document.head.appendChild(link);
     } else {
-      document.getElementById('cl-css-ext').href = L.resource('view/clashoo/clashoo.css') + '?v=20260608a1';
+      document.getElementById('cl-css-ext').href = L.resource('view/clashoo/clashoo.css') + '?v=20260609b1';
     }
 
     this._lastSt      = st;
@@ -1717,6 +1717,7 @@ return view.extend({
           proxy_mode: st.proxy_mode,
           tcp_mode: st.tcp_mode,
           udp_mode: st.udp_mode,
+          stack: st.stack_type || st.stack,
           config: st.config,
           core_type: st.core_type,
           panel_type: st.panel_type,
