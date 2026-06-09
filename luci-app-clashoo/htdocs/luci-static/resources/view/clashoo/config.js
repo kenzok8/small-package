@@ -1263,9 +1263,16 @@ return view.extend({
     s = m.section(form.NamedSection, 'config', 'clashoo', '高级 DNS');
     s.addremove = false;
     o = s.option(form.Flag,        'dnsforwader',       '强制转发 DNS');
+    o = s.option(form.ListValue,   'fake_ip_filter_mode', 'Fake-IP 过滤模式');
+    o.value('blacklist', '黑名单（列入走真 IP，默认）');
+    o.value('whitelist', '白名单（仅列入走 fake-IP）');
+    o.value('rule',      '规则模式（与 rules 同语法）');
+    o.default = 'blacklist';
+    o.depends('enhanced_mode', 'fake-ip');
+
     o = s.option(form.DynamicList, 'fake_ip_filter',    'Fake-IP 过滤域名');
-    o.placeholder = '*.lan / geosite:cn / rule-set:cn_domain';
-    o.description = '命中的域名走真 IP，不分配 fake-ip。填 <code>geosite:cn</code> 可让国内域名走真 IP，流量不入 TUN。';
+    o.placeholder = '*.lan / geosite:cn / RULE-SET,cn_domain,real-ip';
+    o.description = '黑名单/白名单模式：填域名或 <code>geosite:cn</code> 简写。规则模式：填 <code>GEOSITE,cn,real-ip</code> / <code>RULE-SET,xxx,real-ip</code> 这种与 rules 同语法的条目，末尾通常加一条 <code>MATCH,fake-ip</code> 兜底。';
     o.depends('enhanced_mode', 'fake-ip');
     o.remove = function () {};
     o = s.option(form.DynamicList, 'default_nameserver', 'Bootstrap DNS');

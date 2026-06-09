@@ -5,7 +5,7 @@ PKG_SHORT_SHA:=d08c885
 PKG_COMMIT_DATE:=2026.06.07
 
 PKG_VERSION:=$(PKG_COMMIT_DATE)~$(PKG_SHORT_SHA)
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 
 PKG_SOURCE:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA)
@@ -56,6 +56,7 @@ define Package/clashoo/install
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_DIR) $(1)/etc/clashoo
 	$(INSTALL_DIR) $(1)/etc/clashoo/provider
 	$(INSTALL_DIR) $(1)/etc/clashoo/proxyprovider
@@ -73,6 +74,7 @@ define Package/clashoo/install
 	$(INSTALL_DIR) $(1)/usr/share/clashoo/config/custom
 
 	$(INSTALL_BIN) $(CURDIR)/files/etc/init.d/clashoo $(1)/etc/init.d/clashoo
+	$(INSTALL_BIN) $(CURDIR)/files/etc/uci-defaults/95-clashoo-fakeip-cn $(1)/etc/uci-defaults/95-clashoo-fakeip-cn
 	$(INSTALL_CONF) $(CURDIR)/files/etc/config/clashoo $(1)/etc/config/clashoo
 	$(INSTALL_DATA) $(CURDIR)/files/etc/config/clashoo $(1)/usr/share/clashoo/clashoo.default
 	$(CP) $(CURDIR)/files/usr/share/clashoo/* $(1)/usr/share/clashoo/
@@ -96,10 +98,6 @@ if [ -z "${IPKG_INSTROOT}" ]; then
 		/etc/init.d/clashoo enable 2>/dev/null || true
 	else
 		/etc/init.d/clashoo disable 2>/dev/null || true
-	fi
-	# Backfill geosite:cn into fake-ip-filter for upgraded installs (conffile preserved).
-	if ! uci -q get clashoo.config.fake_ip_filter 2>/dev/null | grep -q 'geosite:cn'; then
-		uci -q add_list clashoo.config.fake_ip_filter='geosite:cn' && uci -q commit clashoo
 	fi
 fi
 exit 0

@@ -294,9 +294,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 							local realm = api.parse_realm_uri(node.hysteria2_realm_url)
 							local url, stun
 							if realm then
-								if realm.token and realm.server_url and realm.realm_id then
-									url = "realm://" .. realm.token .. "@" .. realm.server_url .. "/" .. realm.realm_id
-								end
+								url = realm.scheme .. "://" .. realm.token .. "@" .. realm.server_url .. "/" .. realm.realm_id
 								stun = realm.stun_servers or node.hysteria2_realm_stun
 							end
 							local r = {
@@ -754,9 +752,7 @@ function gen_config_server(node)
 								local realm = api.parse_realm_uri(node.hysteria2_realm_url)
 								local url, stun
 								if realm then
-									if realm.token and realm.server_url and realm.realm_id then
-										url = "realm://" .. realm.token .. "@" .. realm.server_url .. "/" .. realm.realm_id
-									end
+									url = realm.scheme .. "://" .. realm.token .. "@" .. realm.server_url .. "/" .. realm.realm_id
 									stun = realm.stun_servers or node.hysteria2_realm_stun
 								end
 								local r = {

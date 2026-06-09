@@ -79,6 +79,10 @@ cfg['dns'] = {
 	'fake-ip-filter': [],
 	ipv6:           ab('enable_ipv6'),
 };
+/* fake-ip-filter-mode: blacklist (default) | whitelist | rule */
+let filter_mode = s(a('fake_ip_filter_mode'), 'blacklist');
+if (filter_mode != 'blacklist') cfg['dns']['fake-ip-filter-mode'] = filter_mode;
+
 /* fake-ip-filter */
 let filters = a('fake_ip_filter');
 if (type(filters) == 'array') { for (let f in filters) push(cfg['dns']['fake-ip-filter'], f); }
