@@ -18,7 +18,8 @@ const age_encryption = {
 	keypairs: {
 		types: [
 			['age-x25519', _('age-x25519')],
-			['age-mlkem768-x25519', _('age-mlkem768-x25519')]
+			['age-mlkem768-x25519', _('age-mlkem768-x25519')],
+			['age-convert', _('Derive from priv-key')]
 		]
 	}
 };
@@ -1718,6 +1719,7 @@ return view.extend({
 		so.password = true;
 		so.hm_options = {
 			type: age_encryption.keypairs.types[0][0],
+			params: '',
 			callback: function(result) {
 				const section_id = this.section.section;
 
@@ -1726,10 +1728,11 @@ return view.extend({
 					header = JSON.parse(this.section.formvalue(section_id, 'header').trim());
 				} catch {}
 
-				header['X-Age-Public-Key'] = [result.public_key];
+				header['X-Age-Public-Key'] = [result.public_key].filter(Boolean);
 
 				return [
-					[this.option, result.private_key],
+					[this.option, this.hm_options.params || result.private_key],
+					['age_public_key', result.public_key],
 					['header', JSON.stringify(header, null, 2)]
 				]
 			}
@@ -1758,6 +1761,10 @@ return view.extend({
 					class: 'cbi-button cbi-button-add',
 					click: ui.createHandlerFn(this, () => {
 						this.hm_options.type = document.getElementById(cbid).value;
+						if (this.hm_options.type === 'age-convert')
+							this.hm_options.params = this.formvalue(section_id);
+						else
+							this.hm_options.params = '';
 
 						return hm.handleGenKey.call(this, this.hm_options);
 					})
@@ -1766,6 +1773,10 @@ return view.extend({
 
 			return node;
 		}
+		so.depends('type', 'http');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', hm.CopyValue, 'age_public_key', _('age public key'));
 		so.depends('type', 'http');
 		so.modalonly = true;
 
