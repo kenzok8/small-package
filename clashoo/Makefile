@@ -7,11 +7,6 @@ PKG_COMMIT_DATE:=2026.06.10
 PKG_VERSION:=$(PKG_COMMIT_DATE)~$(PKG_SHORT_SHA)
 PKG_RELEASE:=2
 
-# Mihomo source is hosted as a pinned tarball, not fetched via git proto.
-# A git archive is regenerated locally on every build and its bytes depend on
-# the local tar/gzip version, so PKG_MIRROR_HASH never matched across machines
-# (issue #18). The Auto Bump Mihomo workflow uploads one canonical tarball that
-# everyone downloads, so PKG_HASH always verifies.
 PKG_SOURCE:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA)
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-alpha-$(PKG_SHORT_SHA)
@@ -65,11 +60,6 @@ define Package/clashoo/install
 	$(INSTALL_DIR) $(1)/etc/clashoo/proxyprovider
 	$(INSTALL_DIR) $(1)/etc/clashoo/ruleprovider
 	$(INSTALL_DIR) $(1)/usr/share/clashoo
-	$(INSTALL_DIR) $(1)/usr/share/clashoo/runtime
-	$(INSTALL_DIR) $(1)/usr/share/clashoo/update
-	$(INSTALL_DIR) $(1)/usr/share/clashoo/net
-	$(INSTALL_DIR) $(1)/usr/share/clashoo/rpc
-	$(INSTALL_DIR) $(1)/usr/share/clashoo/lib
 	$(INSTALL_DIR) $(1)/usr/share/clashbackup
 	$(INSTALL_DIR) $(1)/usr/share/clashoo/config
 	$(INSTALL_DIR) $(1)/usr/share/clashoo/config/sub
