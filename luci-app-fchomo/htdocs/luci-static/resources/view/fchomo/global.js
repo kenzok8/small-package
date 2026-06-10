@@ -385,6 +385,24 @@ return view.extend({
 
 		so = ss.option(form.DummyValue, '_china_list_version', _('China list version'));
 		so.cfgvalue = function() { return renderResVersion.call(this, null, 'china_list') };
+
+		so = ss.option(form.Value, 'github_token', _('GitHub token'));
+		so.password = true;
+		so.renderWidget = function(/* ... */) {
+			let node = form.Value.prototype.renderWidget.apply(this, arguments);
+
+			(node.querySelector('.control-group') || node).appendChild(E('button', {
+				class: 'cbi-button cbi-button-apply',
+				title: _('Save'),
+				click: ui.createHandlerFn(this, () => {
+					return this.map.save(null, true).then(() => {
+						ui.changes.apply(true);
+					});
+				}, this.option)
+			}, [ _('Save') ]));
+
+			return node;
+		}
 		/* Overview END */
 
 		/* General START */

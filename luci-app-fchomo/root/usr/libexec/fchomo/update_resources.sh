@@ -3,6 +3,7 @@
 . /usr/share/libubox/jshn.sh
 
 CONF="fchomo"
+GITHUB_TOKEN="$(uci -q get $CONF.resources.github_token)"
 
 RESOURCES_DIR="/etc/$CONF/resources"
 VER_PATH="/etc/$CONF/resources.json"
@@ -40,6 +41,7 @@ check_dashboard_update() {
 	local dashrepoid="$(echo -n "$dashrepo" | sed 's|\W|_|g' | tr 'A-Z' 'a-z')"
 	local lock="$RUN_DIR/update_resources-$dashtype.lock"
 	local wget="wget --tries=1 --timeout=10 -q"
+	[ -z "$GITHUB_TOKEN" ] || local github_token="--header=Authorization: Bearer $GITHUB_TOKEN"
 
 	exec 200>"$lock"
 	if ! flock -n 200 &> "/dev/null"; then
@@ -47,9 +49,9 @@ check_dashboard_update() {
 		return 2
 	fi
 
-	local dash_ver="$($wget -O- "https://api.github.com/repos/$dashrepo/releases/latest" | jsonfilter -e "@.tag_name" 2>/dev/null)"
+	local dash_ver="$($wget "${github_token:--q}" -O- "https://api.github.com/repos/$dashrepo/releases/latest" | jsonfilter -qe "@.tag_name" 2>/dev/null)"
 	[ -n "$dash_ver" ] || {
-		dash_ver="$($wget -O- "https://api.github.com/repos/$dashrepo/tags" | jsonfilter -e "@[*].name" | head -n1)"
+		dash_ver="$($wget "${github_token:--q}" -O- "https://api.github.com/repos/$dashrepo/tags" | jsonfilter -qe "@[*].name" | head -n1)"
 	}
 	if [ -z "$dash_ver" ]; then
 		log "[$(to_upper "$dashtype")] [$dashrepo] Failed to get the latest version, please retry later."
@@ -65,7 +67,7 @@ check_dashboard_update() {
 		log "[$(to_upper "$dashtype")] [$dashrepo] Local version: $local_dash_ver, latest version: $dash_ver."
 	fi
 
-	if ! $wget "https://codeload.github.com/$dashrepo/tar.gz/refs/heads/gh-pages" -O "$RUN_DIR/$dashtype.tgz" || ! tar -tzf "$RUN_DIR/$dashtype.tgz" >/dev/null; then
+	if ! $wget "${github_token:--q}" "https://codeload.github.com/$dashrepo/tar.gz/refs/heads/gh-pages" -O "$RUN_DIR/$dashtype.tgz" || ! tar -tzf "$RUN_DIR/$dashtype.tgz" >/dev/null; then
 		rm -f "$RUN_DIR/$dashtype.tgz"
 		log "[$(to_upper "$dashtype")] [$dashrepo] Update failed."
 		return 1
@@ -90,6 +92,7 @@ check_geodata_update() {
 	local georepo="$2"
 	local lock="$RUN_DIR/update_resources-$geotype.lock"
 	local wget="wget --tries=1 --timeout=10 -q"
+	[ -z "$GITHUB_TOKEN" ] || local github_token="--header=Authorization: Bearer $GITHUB_TOKEN"
 
 	exec 200>"$lock"
 	if ! flock -n 200 &> "/dev/null"; then
@@ -97,7 +100,7 @@ check_geodata_update() {
 		return 2
 	fi
 
-	local geodata_ver="$($wget -O- "https://api.github.com/repos/$georepo/releases/latest" | jsonfilter -e "@.tag_name")"
+	local geodata_ver="$($wget "${github_token:--q}" -O- "https://api.github.com/repos/$georepo/releases/latest" | jsonfilter -qe "@.tag_name")"
 	if [ -z "$geodata_ver" ]; then
 		log "[$(to_upper "$geotype")] Failed to get the latest version, please retry later."
 		return 1
@@ -113,8 +116,8 @@ check_geodata_update() {
 	fi
 
 	local geodata_hash
-	$wget "https://github.com/$georepo/releases/download/$geodata_ver/$geotype.dat" -O "$RUN_DIR/$geotype.dat"
-	geodata_hash="$($wget -O- "https://github.com/$georepo/releases/download/$geodata_ver/$geotype.dat.sha256sum" | awk '{print $1}')"
+	$wget "${github_token:--q}" "https://github.com/$georepo/releases/download/$geodata_ver/$geotype.dat" -O "$RUN_DIR/$geotype.dat"
+	geodata_hash="$($wget "${github_token:--q}" -O- "https://github.com/$georepo/releases/download/$geodata_ver/$geotype.dat.sha256sum" | awk '{print $1}')"
 	if ! echo -e "$geodata_hash $RUN_DIR/$geotype.dat" | sha256sum -s -c -; then
 		rm -f "$RUN_DIR/$geotype.dat"
 		log "[$(to_upper "$geotype")] Update failed."
@@ -139,6 +142,7 @@ check_list_update() {
 	local listname="$4"
 	local lock="$RUN_DIR/update_resources-$listtype.lock"
 	local wget="wget --tries=1 --timeout=10 -q"
+	[ -z "$GITHUB_TOKEN" ] || local github_token="--header=Authorization: Bearer $GITHUB_TOKEN"
 
 	exec 200>"$lock"
 	if ! flock -n 200 &> "/dev/null"; then
@@ -146,9 +150,9 @@ check_list_update() {
 		return 2
 	fi
 
-	local list_info="$($wget -O- "https://api.github.com/repos/$listrepo/commits?sha=$listref&path=$listname")"
-	local list_sha="$(echo -e "$list_info" | jsonfilter -e "@[0].sha")"
-	local list_ver="$(echo -e "$list_info" | jsonfilter -e "@[0].commit.message" | grep -Eo "[0-9-]+" | tr -d ' \n-')"
+	local list_info="$($wget "${github_token:--q}" -O- "https://api.github.com/repos/$listrepo/commits?sha=$listref&path=$listname")"
+	local list_sha="$(echo -e "$list_info" | jsonfilter -qe "@[0].sha")"
+	local list_ver="$(echo -e "$list_info" | jsonfilter -qe "@[0].commit.message" | grep -Eo "[0-9-]+" | tr -d ' \n-')"
 	if [ -z "$list_sha" ] || [ -z "$list_ver" ]; then
 		log "[$(to_upper "$listtype")] Failed to get the latest version, please retry later."
 		return 1
