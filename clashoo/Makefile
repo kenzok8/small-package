@@ -5,15 +5,19 @@ PKG_SHORT_SHA:=f74bd8b
 PKG_COMMIT_DATE:=2026.06.10
 
 PKG_VERSION:=$(PKG_COMMIT_DATE)~$(PKG_SHORT_SHA)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
+# Mihomo source is hosted as a pinned tarball, not fetched via git proto.
+# A git archive is regenerated locally on every build and its bytes depend on
+# the local tar/gzip version, so PKG_MIRROR_HASH never matched across machines
+# (issue #18). The Auto Bump Mihomo workflow uploads one canonical tarball that
+# everyone downloads, so PKG_HASH always verifies.
 PKG_SOURCE:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA)
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-alpha-$(PKG_SHORT_SHA)
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/MetaCubeX/mihomo.git
+PKG_SOURCE_URL:=https://github.com/kenzok8/openwrt-clashoo/releases/download/mihomo-src
 PKG_SOURCE_VERSION:=f74bd8badc234bda48c6b96ca9f4db0b767f8c90
-PKG_MIRROR_HASH:=0ebcb38eb31fed127cc7aef7427d165bb22804fbdce91ba76f7e114534e1c87c
+PKG_HASH:=05c71396f519e6cc5cfc556c98b13f1ebdf96ff1c73b9db8e76d168d1700700f
 PKG_BUILD_VERSION:=alpha-$(PKG_SHORT_SHA)
 
 PKG_LICENSE:=GPL3.0+

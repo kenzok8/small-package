@@ -42,8 +42,8 @@
 			"path": "fchomo/inbound"
 		}
 	},
-	"admin/services/fchomo/node": {
-		"title": "Node",
+	"admin/services/fchomo/outbound": {
+		"title": "Outbound",
 		"order": 30,
 		"action": {
 			"type": "view",
