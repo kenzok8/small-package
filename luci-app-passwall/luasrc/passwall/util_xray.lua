@@ -1462,11 +1462,10 @@ function gen_config(var)
 			if default_outboundTag then
 				local rule = {
 					_flag = "default",
-					type = "field",
 					outboundTag = default_outboundTag
 				}
 				if node.domainStrategy == "IPIfNonMatch" then
-					rule.ip = { "0.0.0.0/0", "::/0" }
+					rule.port = "1-65535"
 				else
 					rule.network = "tcp,udp"
 				end
