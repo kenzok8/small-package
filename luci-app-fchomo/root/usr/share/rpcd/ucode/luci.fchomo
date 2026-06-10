@@ -2,9 +2,9 @@
 
 'use strict';
 
-import { access, lsdir, lstat, popen, readfile, writefile } from 'fs';
+import { access, lsdir, lstat, mkstemp, popen, readfile, writefile } from 'fs';
 import {
-	shellQuote, isBinary, yqRead, yqReadFile,
+	shellQuote, isBinary, executeCommand, yqRead, yqReadFile,
 	HM_DIR, EXE_DIR, SDL_DIR, RUN_DIR
 } from 'fchomo';
 
@@ -44,13 +44,26 @@ const methods = {
 		args: { type: 'type', params: 'params' },
 		call: function(req) {
 			/* https://github.com/MetaCubeX/mihomo/blob/Alpha/component/generator/cmd.go */
-			if (!(req.args?.type in ['uuid', 'reality-keypair', 'wg-keypair', 'ech-keypair', 'vless-mlkem768', 'vless-x25519', 'sudoku-keypair']))
+			if (!(req.args?.type in ['uuid',
+				'reality-keypair', 'wg-keypair', 'sudoku-keypair',
+				'age-x25519', 'age-mlkem768-x25519', 'age-convert',
+				'vless-mlkem768', 'vless-x25519',
+				'ech-keypair'])) {
 				return { result: false, error: 'illegal type' };
+			}
 
 			const type = req.args?.type;
+			let cmd = `generate ${type}`;
 			let result = {};
 
-			const fd = popen('/usr/bin/mihomo generate ' + type + (req.args?.params ? ' ' + shellQuote(req.args.params) : ''));
+			if (type === 'age-x25519') {
+				cmd = 'age keygen';
+			} else if (type === 'age-mlkem768-x25519') {
+				cmd = 'age keygen-pq';
+			} else if (type === 'age-convert') {
+				cmd = 'age convert';
+			}
+			const fd = popen(`/usr/bin/mihomo ${cmd}` + (req.args?.params ? ' ' + shellQuote(req.args.params) : ''));
 			if (fd) {
 				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
 					if (type === 'uuid')
@@ -62,6 +75,15 @@ const methods = {
 						let pub = match(trim(line), /PublicKey: (.*)/);
 						if (pub)
 							result.public_key = pub[1];
+					} else if (type in ['age-x25519', 'age-mlkem768-x25519']) {
+						let priv = match(trim(line), /AGE-SECRET-KEY-.*/);
+						if (priv)
+							result.private_key = priv[0];
+						let pub = match(trim(line), /# public key: (.*)/);
+						if (pub)
+							result.public_key = pub[1];
+					} else if (type in ['age-convert']) {
+						result.public_key = trim(line);
 					} else if (type in ['vless-x25519', 'vless-mlkem768']) {
 						let priv = match(trim(line), /PrivateKey: (.*)/);
 						if (priv)
@@ -93,6 +115,56 @@ const methods = {
 			}
 
 			return { result };
+		}
+	},
+
+	age_crypto: {
+		args: { action: 'action', key: 'key', content: 'content'},
+		call: function(req) {
+			if (!(req.args?.action in ['decrypt', 'encrypt']))
+				return { result: false, error: 'illegal action' };
+
+			if (!req.args?.key)
+				return { result: false, error: 'illegal key' };
+
+			if (!req.args?.content)
+				return { result: '' };
+
+			let content = req.args?.content;
+			let infd = mkstemp();
+
+			if (content) {
+				content = trim(content);
+				content = replace(content, /\r\n?/g, '\n');
+			}
+			infd.write(content);
+
+			infd.seek();
+			const out = executeCommand(infd, '/usr/bin/mihomo age', req.args?.action, req.args?.key, '-', '-');
+			infd.close();
+
+			return out.exitcode === 0 ? { result: out.stdout } : { result: false, error: out.stderr };
+		}
+	},
+
+	age_crypto_file: {
+		args: { action: 'action', key: 'key', input: 'input', output: 'output'},
+		call: function(req) {
+			if (!(req.args?.action in ['decrypt', 'encrypt']))
+				return { result: false, error: 'illegal action' };
+
+			if (!req.args?.key)
+				return { result: false, error: 'illegal key' };
+
+			if ((!req.args?.input) || match(req.args?.input, /\.\.\//))
+				return { result: false, error: 'illegal input' };
+
+			if ((!req.args?.output) || match(req.args?.output, /\.\.\//))
+				return { result: false, error: 'illegal output' };
+
+			const out = executeCommand(null, '/usr/bin/mihomo age', req.args?.action, req.args?.key, req.args?.input, req.args?.output);
+
+			return out.exitcode === 0 ? { result: true } : { result: false, error: out.stderr };
 		}
 	},
 

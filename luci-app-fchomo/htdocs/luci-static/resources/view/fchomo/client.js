@@ -13,7 +13,7 @@ const parseProxyGroupYaml = hm.parseYaml.extend({
 		if (!cfg.type)
 			return null;
 
-		// key mapping // 2026/06/06
+		// key mapping // 2026/06/10
 		let config = hm.removeBlankAttrs({
 			id: this.id,
 			label: this.label,
@@ -1083,12 +1083,12 @@ return view.extend({
 		so.default = so.disabled;
 		so.editable = true;
 
-		so = ss.taboption('field_general', form.ListValue, 'empty_fallback', _('Empty fallback'));
-		so.default = 'COMPATIBLE';
-		hm.preset_outbound.full.forEach((res) => {
+		so = ss.taboption('field_general', form.Value, 'empty_fallback', _('Empty fallback'));
+		so.default = ''; // COMPATIBLE
+		hm.preset_outbound.proxy.forEach((res) => {
 			so.value.apply(so, res);
 		})
-		so.load = L.bind(hm.loadProxyGroupLabel, so, hm.preset_outbound.full);
+		so.load = L.bind(hm.loadNodeLabel, so, hm.preset_outbound.proxy);
 		so.modalonly = true;
 
 		/* Override fields */
