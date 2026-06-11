@@ -390,7 +390,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 		}
 
 		if node.protocol == "wireguard" then
-			result.settings.kernelMode = false
+			result.settings.noKernelTun = true
 			if node.finalmask and node.finalmask ~= "" then
 				local ok, fm = pcall(jsonc.parse, api.base64Decode(node.finalmask))
 				if ok and type(fm) == "table" then

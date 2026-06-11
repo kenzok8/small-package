@@ -360,3 +360,19 @@ msgstr ""
 
 msgid "Download"
 msgstr ""
+
+#: dae.js
+msgid "One node share link per line — ss, vmess, vless, trojan, tuic, hysteria2, socks5."
+msgstr ""
+
+#: dae.js
+msgid "⚠ Still needs a subscription link: %d placeholder URL line(s) detected"
+msgstr ""
+
+#: dae.js
+msgid "These "
+msgstr ""
+
+#: dae.js
+msgid " are placeholder addresses from dae's template, not real subscriptions. Replace the URL on any one line with your airport subscription link (delete the spare lines) and save."
+msgstr ""

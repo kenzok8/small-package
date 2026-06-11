@@ -651,3 +651,16 @@ msgstr "保存并应用"
 
 msgid "Fixed link — nothing to fetch."
 msgstr "固定链接，无需更新。"
+
+# ---- dae.js: i18n cleanup (was Chinese msgid) ----
+msgid "One node share link per line — ss, vmess, vless, trojan, tuic, hysteria2, socks5."
+msgstr "每行添加一个节点分享链接，支持 ss、vmess、vless、trojan、tuic、hysteria2、socks5。"
+
+msgid "⚠ Still needs a subscription link: %d placeholder URL line(s) detected"
+msgstr "⚠ 还差订阅链接才能跑：检测到 %d 行占位 URL"
+
+msgid "These "
+msgstr "这些 "
+
+msgid " are placeholder addresses from dae's template, not real subscriptions. Replace the URL on any one line with your airport subscription link (delete the spare lines) and save."
+msgstr " 都是 dae 官方模板留的假地址，不是真订阅。把其中任意一行的 URL 换成你机场的订阅链接（删掉多余行），保存即可跑通。"
