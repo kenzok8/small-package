@@ -138,7 +138,7 @@ git clone --depth 1 https://github.com/Openwrt-Passwall/openwrt-passwall passwal
 git clone --depth 1 https://github.com/SSSSSimon/tencentcloud-openwrt-plugin-ddns && mv -n tencentcloud-openwrt-plugin-ddns/tencentcloud_ddns ./luci-app-tencentddns; rm -rf tencentcloud-openwrt-plugin-ddns
 git clone --depth 1 https://github.com/Tencent-Cloud-Plugins/tencentcloud-openwrt-plugin-cos && mv -n tencentcloud-openwrt-plugin-cos/tencentcloud_cos ./luci-app-tencentcloud-cos; rm -rf tencentcloud-openwrt-plugin-cos
 git clone --depth 1 https://github.com/kiddin9/kwrt-packages && mv -n kwrt-packages/luci-app-bypass kwrt-packages/luci-app-fileassistant ./ ; rm -rf kwrt-packages
-git clone --depth 1 https://github.com/immortalwrt/packages && mv -n packages/net/{cdnspeedtest,dae,daed,vsftpd,transmission} ./ ; rm -rf packages
+git clone --depth 1 https://github.com/immortalwrt/packages && mv -n packages/net/{cdnspeedtest,vsftpd,transmission} ./ ; rm -rf packages
 git clone --depth 1 https://github.com/immortalwrt/luci && mv -n luci/applications/{luci-app-argon-config,luci-app-dae,luci-app-diskman,luci-app-filebrowser-go,luci-app-daed,luci-app-filebrowser,luci-app-gost,luci-app-usb-printer,luci-app-openlist,luci-app-vlmcsd,luci-app-transmission,luci-app-snmpd} ./ ; rm -rf luci
 git clone --depth 1 https://github.com/mingxiaoyu/luci-app-cloudflarespeedtest cloudflarespeedtest && mv -n cloudflarespeedtest/applications/* ./;rm -rf cloudflarespeedtest
 git clone --depth 1 https://github.com/doushang/luci-app-shortcutmenu luci-shortcutmenu && mv -n luci-shortcutmenu/luci-app-shortcutmenu ./ ; rm -rf luci-shortcutmenu
@@ -183,7 +183,7 @@ git clone --depth 1 https://github.com/Wulnut/luci-app-suselogin
 git clone https://github.com/Ausaci/luci-app-nat6-helper -b main-dev
 git clone --depth 1 https://github.com/animegasan/luci-app-droidmodem
 git clone --depth 1 https://github.com/kenzok78/luci-app-guest-wifi
-git clone --depth 1 https://github.com/kenzok8/openwrt-daede openwrt-daede && mv -n openwrt-daede/luci-app-daede ./; rm -rf openwrt-daede
+git clone --depth 1 https://github.com/kenzok8/openwrt-daede openwrt-daede && cp -rf openwrt-daede/{dae,daed,luci-app-daede} ./; rm -rf openwrt-daede
 git clone --depth 1 https://github.com/EkkoG/openwrt-natmap
 git clone --depth 1 https://github.com/EkkoG/luci-app-natmap
 git clone --depth 1 https://github.com/EasyTier/luci-app-easytier luci-app-easytier1 && mvdir luci-app-easytier1
