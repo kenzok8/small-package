@@ -31,7 +31,7 @@ const CSS = [
 	'.dd-up-name{font-weight:600;opacity:.85}',
 	'.dd-up-meta{opacity:.7;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
 	'.dd-up-version{font-size:11px;opacity:.55;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;white-space:nowrap}',
-	'.dd-up-btn{font-size:11px;padding:4px 12px;border-radius:5px;border:1px solid rgba(128,128,128,.35);background:transparent;color:inherit;cursor:pointer;white-space:nowrap}',
+	'.dd-up-btn{font-size:11px;line-height:1.4;min-height:0;height:auto;padding:4px 12px;border-radius:5px;border:1px solid rgba(128,128,128,.35);background:transparent;color:inherit;cursor:pointer;white-space:nowrap}',
 	'.dd-up-btn:hover{background:rgba(128,128,128,.12)}',
 	'.dd-up-btn:disabled{opacity:.45;cursor:not-allowed}',
 	'.dd-up-btn-primary{border-color:#4aa065;color:#4aa065}',

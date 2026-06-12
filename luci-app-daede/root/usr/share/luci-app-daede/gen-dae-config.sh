@@ -27,6 +27,19 @@ sanitize() {
 	printf '%s' "$1" | tr -d "'" | tr -d '\n\r'
 }
 
+# dae subscription/node tags are bareword identifiers: only [A-Za-z0-9_] are
+# valid tokens, so a CJK/spaced tag (e.g. 白月光) makes the parser choke. Map
+# any such tag to a stable ASCII slug; pure-word tags pass through unchanged.
+# Deterministic on the input, so a group's source reference resolves to the
+# same slug as the subscription it points at. Empty stays empty (anonymous).
+dae_tag() {
+	[ -n "$1" ] || return 0
+	case "$1" in
+		*[!A-Za-z0-9_]*) printf 's_%s' "$(printf '%s' "$1" | md5sum | cut -c1-10)" ;;
+		*)               printf '%s' "$1" ;;
+	esac
+}
+
 # ===================== generate =====================
 
 SUB_BUF=""
@@ -42,7 +55,7 @@ emit_sub() {
 	[ "$enabled" = "1" ] || return 0
 	url="$(sanitize "$url")"
 	[ -n "$url" ] || return 0
-	tag="$(sanitize "$tag")"
+	tag="$(dae_tag "$(sanitize "$tag")")"
 	if [ -n "$tag" ]; then
 		SUB_BUF="${SUB_BUF}    ${tag}: '${url}'
 "
@@ -60,7 +73,7 @@ emit_node() {
 	[ "$enabled" = "1" ] || return 0
 	link="$(sanitize "$link")"
 	[ -n "$link" ] || return 0
-	tag="$(sanitize "$tag")"
+	tag="$(dae_tag "$(sanitize "$tag")")"
 	if [ -n "$tag" ]; then
 		NODE_BUF="${NODE_BUF}    ${tag}: '${link}'
 "
@@ -125,7 +138,7 @@ KW_ACC=""
 SUB_TAGS=""
 collect_subtag() {
 	local t; config_get t "$1" tag ""
-	t="$(sanitize "$t")"
+	t="$(dae_tag "$(sanitize "$t")")"
 	[ -n "$t" ] && SUB_TAGS="${SUB_TAGS} ${t} "
 }
 is_subtag() {
@@ -153,8 +166,11 @@ kw_arg() {
 _collect_source() {
 	local v="$(sanitize "$1")"
 	[ -n "$v" ] || return 0
-	if is_subtag "$v"; then
-		SUBS_ACC="${SUBS_ACC:+$SUBS_ACC, }$(filter_arg "$v")"
+	# subscription refs resolve to the (ASCII) dae tag; node-name refs keep the
+	# original text (matched as a quoted regex against node names)
+	local dt="$(dae_tag "$v")"
+	if is_subtag "$dt"; then
+		SUBS_ACC="${SUBS_ACC:+$SUBS_ACC, }$(filter_arg "$dt")"
 	else
 		NODES_ACC="${NODES_ACC:+$NODES_ACC, }$(filter_arg "$v")"
 	fi

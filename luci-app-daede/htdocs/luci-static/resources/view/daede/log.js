@@ -17,7 +17,7 @@ const CSS = [
 	'.dd-log-toolbar label{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;cursor:pointer;margin:0;opacity:.85}',
 	'.dd-log-toolbar input[type="checkbox"]{margin:0}',
 	'.dd-log-toolbar input[type="text"]{font-size:11.5px;padding:4px 8px;border-radius:5px;border:1px solid rgba(128,128,128,.28);background:transparent;color:inherit;min-width:160px}',
-	'.dd-log-toolbar .dd-log-btn{font-size:11.5px;padding:4px 12px;border-radius:5px;border:1px solid rgba(128,128,128,.28);background:transparent;color:inherit;cursor:pointer}',
+	'.dd-log-toolbar .dd-log-btn{font-size:11.5px;line-height:1.4;min-height:0;height:auto;padding:4px 12px;border-radius:5px;border:1px solid rgba(128,128,128,.28);background:transparent;color:inherit;cursor:pointer}',
 	'.dd-log-toolbar .dd-log-btn:hover{background:rgba(128,128,128,.1)}',
 	'.dd-log-toolbar .dd-log-meta{margin-left:auto;font-size:10.5px;opacity:.55;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}',
 	'.dd-log-pane{height:60vh;min-height:360px;overflow:auto;padding:8px 10px;border:1px solid rgba(0,0,0,.08);border-radius:7px;background:#1a1d21;color:#d8dde6;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-size:11.5px;line-height:1.55;white-space:pre-wrap;word-break:break-all}',

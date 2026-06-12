@@ -52,6 +52,219 @@ dns_yaml_list_item() {
   printf "   - '%s'\n" "$value"
 }
 
+# Route DNS upstreams by rules and preserve the original setting.
+dns_mihomo_apply_respect_rules() {
+  local cfg="$1" enabled="${2:-0}" tmp="${1}.$$"
+  [ -f "$cfg" ] || return 0
+
+  awk -v enabled="$enabled" '
+    function indent_len(s) { match(s, /[^ ]/); return RSTART ? RSTART - 1 : length(s) }
+    function spaces(n,   out,i) {
+      out = ""
+      for (i = 0; i < n; i++)
+        out = out " "
+      return out
+    }
+    function trim_value(s) {
+      sub(/^[[:space:]]*/, "", s)
+      sub(/[[:space:]]*$/, "", s)
+      return s
+    }
+    function flush_dns(   i, sp) {
+      if (!in_dns)
+        return
+      sp = spaces(child_indent > 0 ? child_indent : dns_indent + 2)
+      print dns_lines[1]
+      if (enabled == "1") {
+        print sp "# >>> clashoo:dns_leak_protect_respect_rules"
+        print sp "# original-respect-rules: " (original_value != "" ? original_value : "absent")
+        print sp "respect-rules: true"
+        print sp "# <<< clashoo:dns_leak_protect_respect_rules"
+      } else if (original_value != "" && original_value != "absent") {
+        print sp "respect-rules: " original_value
+      }
+      for (i = 2; i <= dns_n; i++)
+        print dns_lines[i]
+      in_dns = 0
+      dns_n = 0
+    }
+
+    /^dns:[[:space:]]*$/ {
+      flush_dns()
+      in_dns = 1
+      dns_indent = indent_len($0)
+      child_indent = -1
+      dns_n = 1
+      dns_lines[dns_n] = $0
+      original_value = ""
+      in_marker = 0
+      next
+    }
+    in_dns {
+      cur_indent = indent_len($0)
+      if ($0 ~ /^[^[:space:]#][^:]*:/ && cur_indent <= dns_indent) {
+        flush_dns()
+        print
+        next
+      }
+      if ($0 ~ /^[[:space:]]*#[[:space:]]*>>>[[:space:]]*clashoo:dns_leak_protect_respect_rules[[:space:]]*$/) {
+        in_marker = 1
+        if (child_indent < 0) child_indent = cur_indent
+        next
+      }
+      if (in_marker) {
+        if ($0 ~ /^[[:space:]]*#[[:space:]]*original-respect-rules:[[:space:]]*/) {
+          value = $0
+          sub(/^[[:space:]]*#[[:space:]]*original-respect-rules:[[:space:]]*/, "", value)
+          original_value = trim_value(value)
+        }
+        if ($0 ~ /^[[:space:]]*#[[:space:]]*<<<[[:space:]]*clashoo:dns_leak_protect_respect_rules[[:space:]]*$/)
+          in_marker = 0
+        next
+      }
+      if ($0 ~ /^[[:space:]]*respect-rules:[[:space:]]*/) {
+        if (original_value == "") {
+          value = $0
+          sub(/^[[:space:]]*respect-rules:[[:space:]]*/, "", value)
+          original_value = trim_value(value)
+        }
+        if (child_indent < 0) child_indent = cur_indent
+        next
+      }
+      if ($0 ~ /^[[:space:]]*[^#[:space:]][^:]*:/ && cur_indent > dns_indent && child_indent < 0)
+        child_indent = cur_indent
+      dns_lines[++dns_n] = $0
+      next
+    }
+    { print }
+    END { flush_dns() }
+  ' "$cfg" > "$tmp" && mv "$tmp" "$cfg"
+  rm -f "$tmp" 2>/dev/null
+}
+
+# Use fallback DNS for queries; keep bootstrap DNS unchanged.
+dns_mihomo_apply_leak_nameservers() {
+  local cfg="$1" enabled="${2:-0}" state="${1}.dns-leak-nameserver"
+  local selected="${1}.dns-leak-selected" current="${1}.dns-leak-current" tmp="${1}.$$"
+  [ -f "$cfg" ] || return 0
+  command -v yq >/dev/null 2>&1 || return 0
+
+  if [ "$enabled" = "1" ]; then
+    yq e -r '.dns.fallback[]' "$cfg" > "$selected" 2>/dev/null || true
+    if [ ! -s "$selected" ]; then
+      printf '%s\n' 'https://1.1.1.1/dns-query' 'https://8.8.8.8/dns-query' > "$selected"
+    fi
+    yq e -r '.dns.nameserver[]' "$cfg" > "$current" 2>/dev/null || true
+
+    if [ ! -f "$state" ] ||
+       ! grep -q 'clashoo:dns_leak_protect_respect_rules' "$cfg" ||
+       ! cmp -s "$current" "$selected"; then
+      awk '
+        function indent_len(s) { match(s, /[^ ]/); return RSTART ? RSTART - 1 : length(s) }
+        /^dns:[[:space:]]*$/ { in_dns = 1; dns_indent = indent_len($0); next }
+        in_dns && /^[^[:space:]#][^:]*:/ { exit }
+        in_dns && /^[[:space:]]*nameserver:[[:space:]]*$/ {
+          in_ns = 1
+          ns_indent = indent_len($0)
+          print
+          next
+        }
+        in_ns {
+          cur_indent = indent_len($0)
+          if ($0 ~ /^[[:space:]]*$/ || cur_indent > ns_indent) {
+            print
+            next
+          }
+          exit
+        }
+      ' "$cfg" > "$state"
+      [ -s "$state" ] || printf '__ABSENT__\n' > "$state"
+    fi
+
+    awk -v selected="$selected" '
+      function indent_len(s) { match(s, /[^ ]/); return RSTART ? RSTART - 1 : length(s) }
+      function spaces(n,   out,i) {
+        out = ""
+        for (i = 0; i < n; i++) out = out " "
+        return out
+      }
+      function print_selected(sp,   line) {
+        print sp "nameserver:"
+        while ((getline line < selected) > 0)
+          if (line != "") print sp "  - " line
+        close(selected)
+        inserted = 1
+      }
+      /^dns:[[:space:]]*$/ {
+        in_dns = 1
+        dns_indent = indent_len($0)
+        child_indent = -1
+        print
+        next
+      }
+      in_dns && /^[^[:space:]#][^:]*:/ {
+        if (!inserted) print_selected(spaces(child_indent > 0 ? child_indent : dns_indent + 2))
+        in_dns = 0
+        print
+        next
+      }
+      in_dns && /^[[:space:]]*[^#[:space:]][^:]*:/ && child_indent < 0 {
+        child_indent = indent_len($0)
+      }
+      in_dns && /^[[:space:]]*nameserver:[[:space:]]*$/ {
+        ns_indent = indent_len($0)
+        print_selected(spaces(ns_indent))
+        skip_ns = 1
+        next
+      }
+      skip_ns {
+        cur_indent = indent_len($0)
+        if ($0 ~ /^[[:space:]]*$/ || cur_indent > ns_indent) next
+        skip_ns = 0
+      }
+      { print }
+      END {
+        if (in_dns && !inserted)
+          print_selected(spaces(child_indent > 0 ? child_indent : dns_indent + 2))
+      }
+    ' "$cfg" > "$tmp" && mv "$tmp" "$cfg"
+  elif [ -f "$state" ]; then
+    awk -v state="$state" '
+      function indent_len(s) { match(s, /[^ ]/); return RSTART ? RSTART - 1 : length(s) }
+      function print_original(   line) {
+        if ((getline line < state) > 0 && line != "__ABSENT__") {
+          print line
+          while ((getline line < state) > 0) print line
+        }
+        close(state)
+        restored = 1
+      }
+      /^dns:[[:space:]]*$/ { in_dns = 1; print; next }
+      in_dns && /^[^[:space:]#][^:]*:/ {
+        if (!restored) print_original()
+        in_dns = 0
+        print
+        next
+      }
+      in_dns && /^[[:space:]]*nameserver:[[:space:]]*$/ {
+        ns_indent = indent_len($0)
+        print_original()
+        skip_ns = 1
+        next
+      }
+      skip_ns {
+        cur_indent = indent_len($0)
+        if ($0 ~ /^[[:space:]]*$/ || cur_indent > ns_indent) next
+        skip_ns = 0
+      }
+      { print }
+      END { if (in_dns && !restored) print_original() }
+    ' "$cfg" > "$tmp" && mv "$tmp" "$cfg"
+    rm -f "$state"
+  fi
+  rm -f "$selected" "$current" "$tmp" 2>/dev/null
+}
+
 
 # handle mihomo dns block:
 #   - strip previous injection markers + all ipv6: lines
@@ -229,6 +442,8 @@ dns_mihomo_apply_leak_rule() {
 dns_mihomo_apply_leak_protect() {
   local cfg="$1" enabled="${2:-0}" ipv6_value="${3:-}"
   [ -f "$cfg" ] || return 0
+  dns_mihomo_apply_leak_nameservers "$cfg" "$enabled"
+  dns_mihomo_apply_respect_rules "$cfg" "$enabled"
   dns_mihomo_apply_leak_dns_block "$cfg" "$enabled" "$ipv6_value"
   dns_mihomo_apply_leak_rule "$cfg" "$enabled"
 }

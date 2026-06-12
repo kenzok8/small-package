@@ -993,7 +993,8 @@ return view.extend({
     o = s.option(form.Flag, 'ipv6_proxy',      'IPv6 代理');
     o = s.option(form.Flag, 'fake_ip_ping_hijack', '虚拟 IP Ping 劫持');
     o = s.option(form.Flag, 'dns_leak_protect', '防 DNS 泄漏');
-    o.description = '阻断 DoT/DoQ（853 端口），关闭 IPv6 解析，防止 DNS 泄漏。重启生效。<br>' +
+    o.description = '普通域名仅使用境外 DNS 并让 DNS 连接遵守代理规则，同时阻断 DoT/DoQ（853 端口）并关闭 IPv6 解析。重启生效。<br>' +
+                    '<strong>说明：</strong>代理节点域名仍使用直连 DNS 启动解析，不用于客户端普通域名查询。<br>' +
                     '<strong>注意：</strong>开启后 IPv6 网站只能通过 IPv4 访问，纯 IPv6 网络下可能无法上网。';
     o = s.option(form.Flag, 'core_only', '仅内核（进阶）');
     o.description = '只用你导入的配置跑内核，不接管防火墙 / DNS / 路由。<br>' +

@@ -9,7 +9,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=daed-src-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/kenzok8/openwrt-daede/releases/download/daed-src
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_HASH:=bd19b94bad8dfe71544ec6fb266be3f6fc3419c0abf5e02ffd48a3ce8e064556
+PKG_HASH:=699b2fb5af33bf7f18d87bb97b4dda24c438f7d8831061be07029470e71f6b79
 
 PKG_LICENSE:=AGPL-3.0-only MIT
 PKG_LICENSE_FILES:=LICENSE wing/LICENSE

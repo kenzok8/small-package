@@ -18,7 +18,7 @@ const CSS = [
 	'.dd-actions{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}',
 	'.dd-actions .cbi-button{font-size:11.5px;padding:4px 12px;border-radius:5px}',
 	'.dd-actions a.cbi-button{display:inline-flex;align-items:center;gap:4px}',
-	'.dd-wrap .cbi-button{font-size:11px !important;padding:4px 12px !important;border-radius:5px !important;border:1px solid rgba(128,128,128,.35) !important;background:transparent !important;color:inherit !important;box-shadow:none !important;cursor:pointer;white-space:nowrap}',
+	'.dd-wrap .cbi-button{font-size:11px !important;line-height:1.4 !important;min-height:0 !important;height:auto !important;padding:4px 12px !important;border-radius:5px !important;border:1px solid rgba(128,128,128,.35) !important;background:transparent !important;color:inherit !important;box-shadow:none !important;cursor:pointer;white-space:nowrap}',
 	'.dd-wrap .cbi-button:hover{background:rgba(128,128,128,.12) !important}',
 	'.dd-wrap .cbi-button:disabled{opacity:.45;cursor:not-allowed}',
 	'.dd-wrap .cbi-button-action,.dd-wrap .cbi-button-positive,.dd-wrap .cbi-button-add,.dd-wrap .cbi-button-edit{border-color:#4aa065 !important;color:#4aa065 !important}',
@@ -56,13 +56,18 @@ const CSS = [
 	'.dd-settings-card .cbi-value-description,.dd-settings-card .cbi-value-helptext{font-size:11.5px !important;opacity:.6;line-height:1.45;padding-top:3px}',
 	'.dd-settings-card .cbi-section-remove{background:transparent !important;border:0 !important;box-shadow:none !important}',
 	'.dd-settings-card .cbi-section-remove .cbi-button{border-color:#d96d6d !important;color:#d96d6d !important}',
-	'.dd-settings-card input[type="checkbox"]{box-shadow:none !important;background-repeat:no-repeat !important;background-position:center !important;background-size:62% !important}',
-	'.dd-settings-card input[type="checkbox"]:before{content:none !important;display:none !important;box-shadow:none !important}',
+	/* themes (esp. Argon) restyle checkboxes into faint, near-invisible boxes;
+	   force native rendering + brand accent so the checkmark is always clear */
+	'.dd-settings-card input[type="checkbox"]{-webkit-appearance:checkbox !important;appearance:checkbox !important;accent-color:#4aa065;width:16px;height:16px;background:none !important;border:0 !important;box-shadow:none !important;background-image:none !important}',
+	'.dd-settings-card input[type="checkbox"]:before,.dd-settings-card input[type="checkbox"]:after{content:none !important;display:none !important}',
 	/* line the Subscriptions and Nodes grid tables up column-for-column. fixed
 	   layout + explicit per-column percentages make the widths authoritative
 	   across themes (Argon's auto layout otherwise sizes the empty Nodes table
 	   by content, and even ignores px cell widths, so they drift apart) */
 	'.dd-settings-card .cbi-section-table{table-layout:fixed !important;width:100%}',
+	/* flatten the table header: Argon tints header cells (#f6f9fc), which reads
+	   as an off-colour band on the white card — keep it transparent */
+	'.dd-settings-card .cbi-section-table-titles,.dd-settings-card .cbi-section-table-titles .cbi-section-table-cell{background:transparent !important;background-image:none !important}',
 	'.dd-settings-card .cbi-section-table-cell:nth-child(1){width:14% !important}',
 	'.dd-settings-card .cbi-section-table-cell:nth-child(2){width:50% !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
 	'.dd-settings-card .cbi-section-table-cell:nth-child(3){width:12% !important}',
@@ -79,6 +84,30 @@ const CSS = [
 	'.dd-adv-body{margin-top:8px;padding:2px 4px 4px}',
 	'.dd-adv.dd-closed .dd-adv-body{display:none}',
 	'.dd-editor{width:100%;min-height:460px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-size:12px;line-height:1.5;box-sizing:border-box;resize:vertical;border-radius:6px 6px 0 0}',
+	/* syntax-highlight overlay: a <pre> sits behind a transparent <textarea>.
+	   both share identical box metrics so glyphs line up; the textarea stays the
+	   real editor (caret, selection, insert-at-cursor, jump-to-line all native) */
+	'.dd-edit-wrap{position:relative}',
+	'.dd-edit-wrap .dd-editor,.dd-edit-wrap .dd-hl{margin:0;padding:10px 12px;border-width:1px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-size:12px;line-height:1.5;letter-spacing:0;tab-size:4;white-space:pre-wrap;word-break:break-word;box-sizing:border-box}',
+	'.dd-edit-wrap .dd-hl{position:absolute;inset:0;margin:0;overflow:hidden;border:1px solid transparent;border-radius:6px 6px 0 0;pointer-events:none;background:transparent;color:#3b4252;z-index:1}',
+	'.dd-edit-wrap .dd-hl code{font:inherit;white-space:inherit;word-break:inherit;display:block}',
+	'.dd-edit-wrap .dd-editor-hl{position:relative;z-index:2;color:transparent;background:transparent;caret-color:#2f7288;border:1px solid rgba(128,128,128,.28)}',
+	'.dd-edit-wrap .dd-editor-hl::placeholder{color:rgba(128,128,128,.55)}',
+	'.dd-edit-wrap .dd-editor-hl::selection{background:rgba(56,134,161,.25)}',
+	'.dh-c{color:#8a919a;font-style:italic}',
+	'.dh-s{color:#2a8a4a}',
+	'.dh-k{color:#9a3fb5;font-weight:600}',
+	'.dh-f{color:#2f7288}',
+	'.dh-o{color:#c2772a}',
+	'.dh-g{color:#b0226a}',
+	'html[data-darkmode="true"] .dd-edit-wrap .dd-hl,body.dark .dd-edit-wrap .dd-hl,html[data-bs-theme="dark"] .dd-edit-wrap .dd-hl{color:#c8cdd6}',
+	'html[data-darkmode="true"] .dd-edit-wrap .dd-editor-hl,body.dark .dd-edit-wrap .dd-editor-hl,html[data-bs-theme="dark"] .dd-edit-wrap .dd-editor-hl{caret-color:#7fd0e8}',
+	'html[data-darkmode="true"] .dh-c,body.dark .dh-c{color:#6b7280}',
+	'html[data-darkmode="true"] .dh-s,body.dark .dh-s{color:#7ec699}',
+	'html[data-darkmode="true"] .dh-k,body.dark .dh-k{color:#c792ea}',
+	'html[data-darkmode="true"] .dh-f,body.dark .dh-f{color:#82c4dd}',
+	'html[data-darkmode="true"] .dh-o,body.dark .dh-o{color:#e0a35a}',
+	'html[data-darkmode="true"] .dh-g,body.dark .dh-g{color:#ec6fa8}',
 	'.dd-editor-footer{display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:5px 10px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:10.5px;background:rgba(128,128,128,.06);border:1px solid rgba(0,0,0,.06);border-top:0;border-radius:0 0 6px 6px;color:inherit;opacity:.78}',
 	'.dd-editor-footer .dd-fb-item{display:inline-flex;align-items:center;gap:5px}',
 	'.dd-editor-footer .dd-fb-key{opacity:.55}',

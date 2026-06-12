@@ -506,12 +506,36 @@ function renderDaeImportBanner() {
 	}).catch(function() { return null; });
 }
 
+/* Lightweight dae-DSL syntax highlighter: tokenises into spans for a <pre>
+   layer drawn behind a transparent textarea (no editor library needed). */
+function highlightDae(src) {
+	const re = /(#[^\n]*)|('[^'\n]*')|\b(global|subscription|node|group|routing|dns|include|upstream|request|response)\b|\b([A-Za-z_][\w-]*)(?=\s*\()|(->|&&|\|\|)|\b(geoip|geosite)(?=:)/g;
+	let out = '', last = 0, m;
+	const esc = function(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+	while ((m = re.exec(src)) !== null) {
+		out += esc(src.slice(last, m.index));
+		const cls = m[1] ? 'c' : m[2] ? 's' : m[3] ? 'k' : m[4] ? 'f' : m[5] ? 'o' : 'g';
+		out += '<span class="dh-' + cls + '">' + esc(m[0]) + '</span>';
+		last = m.index + m[0].length;
+	}
+	out += esc(src.slice(last));
+	return out;
+}
+
 function renderDaeEditor() {
 	const textarea = E('textarea', {
-		'class': 'dd-editor',
+		'class': 'dd-editor dd-editor-hl',
 		'spellcheck': 'false',
 		'placeholder': _('dae config file is empty. Click "Initialize from example" to start, or paste your config here.')
 	}, '');
+	const hlCode = E('code', {});
+	const hlPre = E('pre', { 'class': 'dd-hl', 'aria-hidden': 'true' }, hlCode);
+	const editWrap = E('div', { 'class': 'dd-edit-wrap' }, [ hlPre, textarea ]);
+	function syncHL() {
+		hlCode.innerHTML = highlightDae(textarea.value) + '\n';
+		hlPre.scrollTop = textarea.scrollTop;
+	}
+	textarea.addEventListener('scroll', function() { hlPre.scrollTop = textarea.scrollTop; });
 	const save = E('button', { 'class': 'cbi-button cbi-button-positive' }, _('Save manual config'));
 	const init = E('button', { 'class': 'cbi-button cbi-button-action' }, _('Initialize from example'));
 	const status = E('span', { 'class': 'dd-editor-status' }, '');
@@ -595,6 +619,7 @@ function renderDaeEditor() {
 	}
 
 	function refreshPlaceholders() {
+		syncHL();
 		const hits = detectPlaceholders(textarea.value);
 		const titleEl = phWarn.querySelector('.dd-ph-warn-title');
 		const howtoEl = phWarn.querySelector('.dd-ph-howto');
@@ -715,7 +740,7 @@ function renderDaeEditor() {
 						_('Edit config DSL — subscriptions, nodes, routing, DNS. Load template via Initialize. Replace placeholder URL before saving. Switch to daed for GUI.')
 					]),
 					phWarn,
-					textarea,
+					editWrap,
 					footer,
 					E('div', { 'class': 'dd-editor-actions' }, [ save, init, insertSelect, status ])
 				])

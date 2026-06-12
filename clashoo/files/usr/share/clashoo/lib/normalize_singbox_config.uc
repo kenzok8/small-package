@@ -425,7 +425,7 @@ function apply_dns_from_uci() {
 		bootstrap = uci_list('defaul_nameserver');
 	let resolver_uri = first_or(bootstrap, '223.5.5.5');
 	let direct_uri = first_or(dns_servers_by_role('direct-nameserver'), first_or(dns_servers_by_role('nameserver'), 'https://doh.pub/dns-query'));
-	let proxy_uri = first_or(dns_servers_by_role('proxy-server-nameserver'), first_or(dns_servers_by_role('fallback'), '1.1.1.1'));
+	let proxy_uri = first_or(dns_servers_by_role('fallback'), first_or(dns_servers_by_role('proxy-server-nameserver'), '1.1.1.1'));
 
 	let servers = [];
 	push(servers, dns_server_obj(resolver_uri, 'dns_resolver', 'udp'));
@@ -458,13 +458,13 @@ function apply_dns_from_uci() {
 			push(clean_servers, s);
 	cfg.dns.servers = clean_servers;
 	cfg.dns.rules = rules;
-	cfg.dns.final = 'dns_direct';
 
-	/* DNS leak protection: DNS is funneled via hijack-dns/853 reject; final stays on direct DNS
-	 * so unmatched queries (LAN PTR, CN domains) don't fall back to DoT and stall startup. */
+	/* Keep bootstrap direct; proxy unmatched queries in strict mode. */
 	if (opt_bool(uci_opt('dns_leak_protect', '0'), false)) {
+		cfg.dns.final = 'dns_proxy';
 		unshift(cfg.dns.rules, { query_type: ['AAAA'], action: 'reject', method: 'drop' });
-	}
+	} else
+		cfg.dns.final = 'dns_direct';
 
 	let ecs = trim_s(uci_opt('dns_ecs', ''));
 	if (s_len(ecs))
