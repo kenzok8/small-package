@@ -19,6 +19,16 @@ return view.extend({
 	},
 
 	render: function(ctx) {
+		/* themes signal dark differently — BootstrapDark sets data-darkmode,
+		   Argon just loads a dark stylesheet with no flag. Detect dark from the
+		   page background luminance and set data-darkmode so our dark rules
+		   (keyed on it) fire uniformly across every theme's dark mode. */
+		try {
+			const bg = getComputedStyle(document.body).backgroundColor.match(/\d+/g);
+			if (bg && (0.299 * bg[0] + 0.587 * bg[1] + 0.114 * bg[2]) < 128)
+				document.documentElement.setAttribute('data-darkmode', 'true');
+		} catch (e) {}
+
 		const listenAddr = uci.get('daed', 'config', 'listen_addr') || backend.BACKENDS.daed.defaultListen;
 		const children = [
 			E('style', {}, styles.CSS),
