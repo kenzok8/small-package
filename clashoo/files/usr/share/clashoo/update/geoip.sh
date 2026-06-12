@@ -32,11 +32,18 @@ cleanup() {
 }
 
 detect_proxy() {
-	if pidof mihomo >/dev/null 2>&1 || pidof clash-meta >/dev/null 2>&1 || pidof sing-box >/dev/null 2>&1; then
-		local p
-		p="$(uci -q get clashoo.config.mixed_port 2>/dev/null)"
-		[ -n "$p" ] && echo "http://127.0.0.1:$p"
+	pidof mihomo >/dev/null 2>&1 || pidof clash-meta >/dev/null 2>&1 || pidof sing-box >/dev/null 2>&1 || return 0
+	p="$(uci -q get clashoo.config.mixed_port 2>/dev/null)"
+	[ -n "$p" ] || return 0
+	proxy="http://127.0.0.1:$p"
+	# Only use it if it actually proxies anonymously. A coexisting plugin
+	# (e.g. OpenClash on the same 7890) may hold this port behind auth and
+	# answer HTTP 407 — in that case fall through to the mirrors instead.
+	if command -v curl >/dev/null 2>&1; then
+		curl -fsS --proxy "$proxy" --connect-timeout 3 --max-time 5 -o /dev/null \
+			http://www.gstatic.com/generate_204 >/dev/null 2>&1 || return 0
 	fi
+	echo "$proxy"
 }
 
 _fetch() {
@@ -52,7 +59,7 @@ _fetch() {
 	wget -q --timeout=120 --no-check-certificate --user-agent="Clash/OpenWRT" "$url" -O "$target"
 }
 
-# 多源拉取：本机代理 → 国内镜像（jsdelivr / ghproxy）→ 原 URL 兜底
+# 多源拉取：本机代理 → 国内镜像（gh-proxy / ghfast / jsdelivr）→ 原 URL 兜底
 download_to() {
 	url="$1"; target="$2"
 	[ -z "$url" ] && return 1
@@ -70,13 +77,18 @@ download_to() {
 			repo="${r1%%/*}"; r2="${r1#*/}"
 			branch="${r2%%/*}"; path="${r2#*/}"
 			for m in \
-				"https://cdn.jsdelivr.net/gh/${owner}/${repo}@${branch}/${path}" \
-				"https://mirror.ghproxy.com/${url}"; do
+				"https://gh-proxy.com/${url}" \
+				"https://ghfast.top/${url}" \
+				"https://cdn.jsdelivr.net/gh/${owner}/${repo}@${branch}/${path}"; do
 				_fetch "$m" "$target" "" && return 0
 			done
 			;;
 		https://github.com/*)
-			_fetch "https://mirror.ghproxy.com/${url}" "$target" "" && return 0
+			for m in \
+				"https://gh-proxy.com/${url}" \
+				"https://ghfast.top/${url}"; do
+				_fetch "$m" "$target" "" && return 0
+			done
 			;;
 	esac
 
