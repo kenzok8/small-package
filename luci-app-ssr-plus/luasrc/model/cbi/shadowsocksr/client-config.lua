@@ -659,7 +659,7 @@ o:depends("type", "hysteria2")
 o.rmempty = true
 o.default = "0"
 
-o = s:option(Value, "obfs_type", translate("Obfuscation Type"))
+o = s:option(ListValue, "obfs_type", translate("Obfuscation Type"))
 o:value("", translate("Disable"))
 o:value("salamander")
 o:value("gecko")

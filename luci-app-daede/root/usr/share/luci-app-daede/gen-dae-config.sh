@@ -89,6 +89,9 @@ emit_group() {
 	config_get policy "$s" policy "min_moving_avg"
 	name="$(sanitize "$name")"
 	[ -n "$name" ] || return 0
+	# dae fatals on duplicate outbound names; keep the first, skip later dupes
+	case " $GROUP_NAMES_SEEN " in *" $name "*) return 0 ;; esac
+	GROUP_NAMES_SEEN="$GROUP_NAMES_SEEN $name"
 	[ -n "$FIRST_GROUP" ] || FIRST_GROUP="$name"
 
 	GROUP_BUF="${GROUP_BUF}    ${name} {
@@ -191,7 +194,7 @@ generate() {
 	config_get wan_interface config wan_interface "auto"
 	config_get lan_interface config lan_interface ""
 
-	SUB_BUF=""; NODE_BUF=""; GROUP_BUF=""; FIRST_GROUP=""
+	SUB_BUF=""; NODE_BUF=""; GROUP_BUF=""; FIRST_GROUP=""; GROUP_NAMES_SEEN=""
 	SUB_TAGS=""
 	config_foreach collect_subtag subscription
 	config_foreach emit_sub subscription

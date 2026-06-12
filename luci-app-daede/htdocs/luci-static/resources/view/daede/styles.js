@@ -69,9 +69,11 @@ const CSS = [
 	   as an off-colour band on the white card — keep it transparent */
 	'.dd-settings-card .cbi-section-table-titles,.dd-settings-card .cbi-section-table-titles .cbi-section-table-cell{background:transparent !important;background-image:none !important}',
 	'.dd-settings-card .cbi-section-table-cell:nth-child(1){width:14% !important}',
-	'.dd-settings-card .cbi-section-table-cell:nth-child(2){width:50% !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
-	'.dd-settings-card .cbi-section-table-cell:nth-child(3){width:12% !important}',
-	'.dd-settings-card .cbi-section-table-cell:nth-child(4){width:24% !important;min-width:210px}',
+	'.dd-settings-card .cbi-section-table-cell:nth-child(2){width:62% !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+	'.dd-settings-card .cbi-section-table-cell:nth-child(3){width:10% !important}',
+	'.dd-settings-card .cbi-section-table-cell:nth-child(4){width:auto !important;min-width:0 !important;white-space:nowrap;text-align:right}',
+	/* icon row-action buttons stay narrow, never stretch to fill the cell */
+	'.dd-settings-card .cbi-section-actions .cbi-button-edit,.dd-settings-card .cbi-section-actions .cbi-button-remove{width:auto !important;min-width:0 !important;display:inline-block !important;flex:0 0 auto !important}',
 	/* proxy-test result coloring */
 	'.dd-meta.dd-ok{color:#3da66a;font-weight:600}',
 	'.dd-meta.dd-err{color:#d96d6d;font-weight:600}',
@@ -150,15 +152,32 @@ const CSS = [
 	'body.dark .dd-card,html[data-theme="dark"] .dd-card,html[data-bs-theme="dark"] .dd-card,html[data-darkmode="true"] .dd-card{border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.02)}',
 	'body.dark .dd-adv-bar,html[data-theme="dark"] .dd-adv-bar,html[data-bs-theme="dark"] .dd-adv-bar,html[data-darkmode="true"] .dd-adv-bar{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.10)}',
 	'body.dark .dd-settings-card .cbi-value-field input,body.dark .dd-settings-card .cbi-value-field select,body.dark .dd-settings-card .cbi-value-field textarea,html[data-theme="dark"] .dd-settings-card .cbi-value-field input,html[data-theme="dark"] .dd-settings-card .cbi-value-field select,html[data-theme="dark"] .dd-settings-card .cbi-value-field textarea,html[data-bs-theme="dark"] .dd-settings-card .cbi-value-field input,html[data-bs-theme="dark"] .dd-settings-card .cbi-value-field select,html[data-bs-theme="dark"] .dd-settings-card .cbi-value-field textarea,html[data-darkmode="true"] .dd-settings-card .cbi-value-field input,html[data-darkmode="true"] .dd-settings-card .cbi-value-field select,html[data-darkmode="true"] .dd-settings-card .cbi-value-field textarea{border-color:rgba(255,255,255,.18)}',
-	/* phone: render each subscription/node row as a self-contained card instead
-	   of a cramped table (LuCI already block-stacks the cells; we add the card
-	   frame, drop the desktop column widths, and shrink the action buttons) */
+	/* status card line-2 meta (backend · pid), below the badge+toggle line */
+	'.dd-status-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}',
+	/* compact icon-only row actions — the 编辑/删除 text buttons are too wide
+	   (esp. Bootstrap); show a pencil / trash glyph instead, both themes */
+	'.dd-settings-card .cbi-section-actions .cbi-button-edit,.dd-settings-card .cbi-section-actions .cbi-button-remove{font-size:0 !important;padding:4px 7px !important;min-width:0 !important}',
+	'.dd-settings-card .cbi-section-actions .cbi-button-edit::before{content:"\\270E";font-size:13px;line-height:1}',
+	'.dd-settings-card .cbi-section-actions .cbi-button-remove::before{content:"\\1F5D1\\FE0E";font-size:13px;line-height:1}',
+	/* phone: keep each subscription/node row on ONE line; the URL cell
+	   middle-ellipsizes (via ellipsisCell) and flex-shrinks to fit the screen */
 	'@media (max-width:600px){',
-	'.dd-settings-card .cbi-section-table-cell:nth-child(1),.dd-settings-card .cbi-section-table-cell:nth-child(2),.dd-settings-card .cbi-section-table-cell:nth-child(3),.dd-settings-card .cbi-section-table-cell:nth-child(4){width:auto !important;min-width:0 !important;white-space:normal !important;overflow:visible !important;text-overflow:clip !important}',
-	'.dd-settings-card .cbi-section-table-row{display:block;border:1px solid rgba(128,128,128,.2);border-radius:8px;padding:6px 10px;margin:0 0 8px;background:rgba(128,128,128,.03)}',
-	'.dd-settings-card .cbi-section-table-cell{display:block;padding:3px 0 !important}',
-	'.dd-settings-card .cbi-section-actions{display:flex;flex-wrap:wrap;gap:6px;padding-top:6px !important}',
-	'.dd-settings-card .cbi-section-actions .cbi-button{width:auto;margin:0;flex:0 0 auto}',
+	'.dd-settings-card .cbi-section-table-titles{display:none !important}',
+	/* drop table layout so flex rows are constrained to the card width and the
+	   URL cell can actually shrink (a flex <tr> inside table-layout:fixed grows
+	   past the table and overflows the screen on narrow/Argon) */
+	'.dd-settings-card .cbi-section-table{display:block !important;table-layout:auto !important;width:auto !important;overflow:visible !important}',
+	'.dd-settings-card .cbi-section-table>tbody,.dd-settings-card .cbi-section-table>div{display:block !important;width:auto !important}',
+	'.dd-settings-card .cbi-section-table-row{display:flex !important;flex-wrap:nowrap !important;width:auto !important;align-items:center;gap:6px;padding:5px 0;margin:0;border:0;border-bottom:1px solid rgba(128,128,128,.15);background:transparent}',
+	/* target the real cells (td.cbi-value-field / actions) — LuCI forces them
+	   block+full-width at mobile, so override on the direct children */
+	'.dd-settings-card .cbi-section-table-row>td{display:inline-block !important;align-self:center !important;width:auto !important;padding:0 !important;border:0 !important;background:transparent !important;box-shadow:none !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0 !important}',
+	'.dd-settings-card .cbi-section-table-row>td::before{content:none !important;display:none !important}',
+	'.dd-settings-card .cbi-section-table-row>td input{vertical-align:middle !important;margin:0 !important}',
+	'.dd-settings-card .cbi-section-table-row>td:nth-child(1){flex:0 0 auto !important;max-width:60px;opacity:.6;font-size:11px}',
+	'.dd-settings-card .cbi-section-table-row>td:nth-child(2){flex:1 1 auto !important}',
+	'.dd-settings-card .cbi-section-table-row>td:nth-child(3){flex:0 0 auto !important;text-align:center}',
+	'.dd-settings-card .cbi-section-table-row>td.cbi-section-actions{flex:0 0 auto !important;display:flex;gap:4px}',
 	'}'
 ].join('');
 

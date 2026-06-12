@@ -110,7 +110,9 @@ const GEN = '/usr/share/luci-app-daede/gen-dae-config.sh';
    stays visible in the edit dialog and on hover. */
 function ellipsisCell(section_id) {
 	const v = this.cfgvalue(section_id) || '';
-	const short = v.length > 52 ? v.slice(0, 52) + '…' : v;
+	/* middle-ellipsis keeps the host head + tail visible (the meaningful parts
+	   of a sub link) while staying short enough for one line on a phone */
+	const short = v.length > 30 ? v.slice(0, 18) + '…' + v.slice(-9) : v;
 	return E('span', { 'title': v, 'style': 'font-family:ui-monospace,Menlo,monospace;font-size:12px' }, short);
 }
 
@@ -224,7 +226,16 @@ function renderDaeForms(ctx) {
 	s.anonymous = true;
 	o = s.option(form.Value, 'name', _('Name'));
 	o.rmempty = false;
+	o.default = 'proxy';  /* real default value, editable — a bright placeholder looked filled and tripped the required check */
 	o.placeholder = 'proxy';
+	o.validate = function(sid, v) {
+		if (!v) return _('Name is required');
+		/* dae fatals on duplicate outbound names — keep group names unique */
+		const dup = (uci.sections('dae', 'group') || []).some(function(g) {
+			return g['.name'] !== sid && g.name === v;
+		});
+		return dup ? _('Group name must be unique') : true;
+	};
 	o = s.option(form.ListValue, 'policy', _('Policy'));
 	o.value('min_moving_avg', _('Min moving average latency'));
 	o.value('min', _('Min last latency'));
@@ -256,6 +267,7 @@ function renderDaeForms(ctx) {
 	o.default = '0';
 	o = s.option(form.Value, 'fallback', _('Fallback group'),
 		_('Default outbound for everything else.'));
+	o.default = 'proxy';  /* matches the default proxy group so the box works out of the box */
 	if (groupNames.length)
 		groupNames.forEach(function(n) { o.value(n, n); });
 	else
@@ -476,7 +488,10 @@ function renderDaeImportBanner() {
 	if (hasForms)
 		return Promise.resolve(null);
 
-	return fs.read_direct(backend.BACKENDS.dae.config, 'text').then(function(content) {
+	/* stat first (ubus): avoid a 404 when config.dae doesn't exist yet */
+	return fs.stat(backend.BACKENDS.dae.config).then(function() {
+		return fs.read_direct(backend.BACKENDS.dae.config, 'text');
+	}).then(function(content) {
 		if (!content || !/\b(subscription|node)\s*\{/.test(content))
 			return null;
 
@@ -650,7 +665,11 @@ function renderDaeEditor() {
 	textarea.addEventListener('input', refreshPlaceholders);
 
 	function loadConfig() {
-		return fs.read_direct(backend.BACKENDS.dae.config, 'text').then(function(content) {
+		/* stat first (ubus, no HTTP): a fresh install has no config.dae yet, and
+		   reading a missing file via fs.read_direct logs a noisy 404 */
+		return fs.stat(backend.BACKENDS.dae.config).then(function() {
+			return fs.read_direct(backend.BACKENDS.dae.config, 'text');
+		}).then(function(content) {
 			textarea.value = content || '';
 		}).catch(function() {
 			textarea.value = '';

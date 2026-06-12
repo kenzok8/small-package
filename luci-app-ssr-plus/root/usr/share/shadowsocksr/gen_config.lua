@@ -278,7 +278,7 @@ function wireguard()
 				allowedIPs = (server.allowedips) or nil,
 			}
 		},
-		kernelMode = (server.kernelmode == "1") and true or false,
+		noKernelTun = (server.kernelmode == "1") and true or false,
 		reserved = reserved,
 		mtu = tonumber(server.mtu)
 	}

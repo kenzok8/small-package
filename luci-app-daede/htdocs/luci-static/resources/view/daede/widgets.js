@@ -140,8 +140,6 @@ function renderStatusCard(ctx, listenAddr) {
 
 		if (state.running && state.pid)
 			meta.push(E('span', { 'class': 'dd-meta' }, [ E('span', { 'class': 'dd-meta-label' }, 'PID'), state.pid ]));
-		if (be.hasWebUI)
-			meta.push(E('span', { 'class': 'dd-meta' }, [ E('span', { 'class': 'dd-meta-label' }, _('Listen')), listenAddr || be.defaultListen ]));
 
 		const swErr = E('span', { 'class': 'dd-meta dd-err', 'style': 'display:none' }, '');
 		const sw = E('button', { 'class': 'dd-switch' + (state.running ? ' is-on' : ''), 'type': 'button', 'aria-label': _('Toggle service') }, [
@@ -173,15 +171,19 @@ function renderStatusCard(ctx, listenAddr) {
 				.finally(function() { sw.disabled = false; });
 		});
 
-		const row = E('div', { 'class': 'dd-status-row' }, [ badge ].concat(meta).concat([
+		/* line 1: badge + toggle (always aligned, never wraps); line 2: meta */
+		const row = E('div', { 'class': 'dd-status-row' }, [
+			badge,
 			E('span', { 'class': 'dd-grow' }),
 			swErr,
 			E('span', { 'class': 'dd-switch-wrap' }, [
 				E('span', { 'class': 'dd-switch-label' }, state.running ? 'ON' : 'OFF'),
 				sw
 			])
-		]));
+		]);
 		body.appendChild(row);
+		if (meta.length)
+			body.appendChild(E('div', { 'class': 'dd-status-meta' }, meta));
 
 		const actions = [];
 		if (be.hasWebUI && state.running) {
