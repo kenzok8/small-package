@@ -114,6 +114,29 @@ function ellipsisCell(section_id) {
 	return E('span', { 'title': v, 'style': 'font-family:ui-monospace,Menlo,monospace;font-size:12px' }, short);
 }
 
+/* Tag is auto-generated and rarely relevant to beginners — render it muted. */
+function mutedCell(section_id) {
+	const v = this.cfgvalue(section_id) || '';
+	return E('span', { 'class': 'dd-meta', 'style': 'opacity:.55;font-size:11.5px' }, v);
+}
+
+/* Fill blank tags of a section type with unique <prefix>_<n> values so dae's
+   config generator always has a stable identifier. Runs after m.save() wrote
+   the form values into the uci session, before uci.save(). */
+function autofillTags(stype, prefix) {
+	const secs = uci.sections('dae', stype) || [];
+	const used = {};
+	secs.forEach(function(s) { if (s.tag) used[s.tag] = 1; });
+	let n = 1;
+	secs.forEach(function(s) {
+		if (s.tag) return;
+		while (used[prefix + '_' + n]) n++;
+		const t = prefix + '_' + n;
+		uci.set('dae', s['.name'], 'tag', t);
+		used[t] = 1; n++;
+	});
+}
+
 /* Wrap every form section in a collapsible accordion. openTitles lists the
    section titles that should start expanded; the rest start collapsed. */
 function accordionizeSections(mapNode, openTitles) {
@@ -156,7 +179,8 @@ function renderDaeForms(ctx) {
 	s.anonymous = true;
 	s.sortable = false;
 	o = s.option(form.Value, 'tag', _('Tag'));
-	o.placeholder = 'my_sub';
+	o.placeholder = _('auto-generated');
+	o.textvalue = mutedCell;
 	o = s.option(form.Value, 'url', _('Subscription URL'));
 	o.rmempty = false;
 	o.placeholder = 'https://example.com/sub';
@@ -169,65 +193,16 @@ function renderDaeForms(ctx) {
 	o = s.option(form.Flag, 'enabled', _('Enabled'));
 	o.default = '1';
 	o.editable = true;
-	/* add an Update button next to Edit/Delete in each row; dae re-pulls all
-	   subscriptions on reload, so the action is global regardless of the row */
-	const origRowActions = s.renderRowActions;
-	s.renderRowActions = function(section_id, more_label) {
-		const cell = origRowActions.call(this, section_id, more_label);
-		/* only real subscription links (http/https) are re-fetchable; fixed share
-		   links (vless:// ss:// …) are static. Keep the button on every row for a
-		   consistent layout, but grey it out (disabled) on the fixed ones. */
-		const subUrl = uci.get('dae', section_id, 'url') || '';
-		const fetchable = /^https?:\/\//i.test(subUrl);
-		const btn = E('button', {
-			'class': 'cbi-button cbi-button-action',
-			'style': 'margin-right:.25em',
-			'disabled': fetchable ? null : '',
-			'title': fetchable ? '' : _('Fixed link — nothing to fetch.')
-		}, _('Update'));
-		const upMsg = E('span', { 'class': 'dd-meta', 'style': 'margin-left:8px;display:none' }, '');
-		function setUpMsg(text, kind) {
-			upMsg.textContent = text;
-			upMsg.style.display = '';
-			upMsg.style.color = (kind === 'err') ? 'var(--error-color, #d33)' : (kind === 'ok') ? 'var(--success-color, #2a8)' : '';
-			if (kind !== 'err')
-				setTimeout(function() { if (upMsg.textContent === text) upMsg.style.display = 'none'; }, 5000);
-		}
-		if (fetchable) {
-			btn.addEventListener('click', function(ev) {
-				ev.preventDefault();
-				btn.disabled = true;
-				setUpMsg(_('Updating…'));
-				backend.detectRunning().then(function(r) {
-					if (!r || !r.dae)
-						return setUpMsg(_('dae is stopped; it fetches subscriptions on start.'), 'warn');
-					return fs.exec(backend.BACKENDS.dae.initd, ['hot_reload']).then(function(res) {
-						if (res && res.code !== 0)
-							setUpMsg(_('Update failed: %s').format(res.stderr || res.stdout || ('exit ' + res.code)), 'err');
-						else
-							setUpMsg(_('Subscriptions updated (dae reloaded)'), 'ok');
-					});
-				}).catch(function(e) {
-					setUpMsg(_('Update failed: %s').format(e.message || e), 'err');
-				}).finally(function() { btn.disabled = false; });
-			});
-		}
-		const firstBtn = cell.querySelector('button, a.cbi-button');
-		if (firstBtn && firstBtn.parentNode) firstBtn.parentNode.insertBefore(btn, firstBtn);
-		else cell.appendChild(btn);
-		if (btn.parentNode) btn.parentNode.insertBefore(upMsg, btn.nextSibling);
-		else cell.appendChild(upMsg);
-		return cell;
-	};
 
 	/* Manual nodes (share links) */
-	s = m.section(form.GridSection, 'node', _('Nodes'),
+	s = m.section(form.GridSection, 'node', _('Manual nodes'),
 		_('One node share link per line — ss, vmess, vless, trojan, tuic, hysteria2, socks5.'));
 	s.addremove = true;
 	s.anonymous = true;
 	s.sortable = false;
 	o = s.option(form.Value, 'tag', _('Tag'));
-	o.placeholder = 'node1';
+	o.placeholder = _('auto-generated');
+	o.textvalue = mutedCell;
 	o = s.option(form.Value, 'link', _('Share Link'));
 	o.rmempty = false;
 	o.placeholder = 'vmess://...';
@@ -341,6 +316,11 @@ function renderDaeForms(ctx) {
 			/* commit dae UCI (apply flushes the rpc session to /etc/config,
 			   which a CLI `uci commit` cannot see), then regenerate + hot reload */
 			m.save(null, true)
+				.then(function() {
+					/* assign unique tags to any rows the user left blank */
+					autofillTags('subscription', 'subscription');
+					autofillTags('node', 'node');
+				})
 				.then(function() { return uci.save(); })
 				.then(function() {
 					/* apply flushes the rpc session to /etc/config so the
@@ -372,8 +352,70 @@ function renderDaeForms(ctx) {
 				.finally(function() { save.disabled = false; });
 		});
 
-		/* make each form section collapsible; keep the two everyday ones open */
-		accordionizeSections(mapNode, [ _('Subscriptions'), _('Nodes') ]);
+		/* area-level "Update all subscriptions" — dae re-pulls every subscription
+		   on hot reload, so the action is global, not per-row */
+		const upAllBtn = E('button', { 'class': 'cbi-button cbi-button-action' }, _('Update all subscriptions'));
+		const upAllMsg = E('span', { 'class': 'dd-meta', 'style': 'margin-left:8px;display:none' }, '');
+		function setUpAll(text, kind) {
+			upAllMsg.textContent = text;
+			upAllMsg.style.display = '';
+			upAllMsg.style.color = (kind === 'err') ? 'var(--error-color, #d33)' : (kind === 'ok') ? 'var(--success-color, #2a8)' : '';
+			if (kind !== 'err')
+				setTimeout(function() { if (upAllMsg.textContent === text) upAllMsg.style.display = 'none'; }, 5000);
+		}
+		upAllBtn.addEventListener('click', function(ev) {
+			ev.preventDefault();
+			upAllBtn.disabled = true;
+			setUpAll(_('Updating…'));
+			backend.detectRunning().then(function(r) {
+				if (!r || !r.dae)
+					return setUpAll(_('dae is stopped; it fetches subscriptions on start.'), 'warn');
+				return fs.exec(backend.BACKENDS.dae.initd, ['hot_reload']).then(function(res) {
+					if (res && res.code !== 0)
+						setUpAll(_('Update failed: %s').format(res.stderr || res.stdout || ('exit ' + res.code)), 'err');
+					else
+						setUpAll(_('Subscriptions updated (dae reloaded)'), 'ok');
+				});
+			}).catch(function(e) {
+				setUpAll(_('Update failed: %s').format(e.message || e), 'err');
+			}).finally(function() { upAllBtn.disabled = false; });
+		});
+		const upAllWrap = E('div', { 'class': 'dd-actions', 'style': 'margin:0 0 8px' }, [ upAllBtn, upAllMsg ]);
+		const subSecs = mapNode.querySelectorAll('.cbi-section');
+		for (let i = 0; i < subSecs.length; i++) {
+			const h = subSecs[i].querySelector('h3');
+			if (h && h.textContent.trim() === _('Subscriptions')) {
+				const tbl = subSecs[i].querySelector('.cbi-section-table') || subSecs[i].querySelector('table');
+				if (tbl && tbl.parentNode) tbl.parentNode.insertBefore(upAllWrap, tbl);
+				else subSecs[i].appendChild(upAllWrap);
+				break;
+			}
+		}
+
+		/* beginner default: only Subscriptions starts open; nodes/groups/routing/dns/logging collapse */
+		accordionizeSections(mapNode, [ _('Subscriptions') ]);
+
+		/* fold groups / routing / dns / logging under one "Advanced settings"
+		   collapsible so the everyday view is just subscriptions + nodes */
+		const advTitles = [ _('Groups'), _('Routing'), _('DNS'), _('Logging') ];
+		const advWraps = [];
+		mapNode.querySelectorAll('.dd-adv').forEach(function(w) {
+			const t = w.querySelector('.dd-adv-bar span');
+			if (t && advTitles.indexOf(t.textContent.trim()) >= 0) advWraps.push(w);
+		});
+		if (advWraps.length) {
+			const outerBody = E('div', { 'class': 'dd-adv-body' });
+			const outer = E('div', { 'class': 'dd-adv dd-closed' }, [
+				E('div', { 'class': 'dd-adv-bar' }, [
+					E('span', {}, _('Advanced settings')),
+					E('span', { 'class': 'dd-adv-chevron' }, '›')
+				]),
+				outerBody
+			]);
+			outer.firstChild.addEventListener('click', function() { outer.classList.toggle('dd-closed'); });
+			advWraps[0].parentNode.insertBefore(outer, advWraps[0]);
+			advWraps.forEach(function(w) { outerBody.appendChild(w); });
+		}
 
 		const cardChildren = [
 			E('h4', { 'class': 'dd-card-title' }, _('dae Configuration')),

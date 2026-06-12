@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-daede
-PKG_VERSION:=1.7
+PKG_VERSION:=1.8
 PKG_RELEASE:=1
 PKG_MAINTAINER:=kenzok8
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)

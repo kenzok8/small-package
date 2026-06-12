@@ -664,3 +664,15 @@ msgstr "这些 "
 
 msgid " are placeholder addresses from dae's template, not real subscriptions. Replace the URL on any one line with your airport subscription link (delete the spare lines) and save."
 msgstr " 都是 dae 官方模板留的假地址，不是真订阅。把其中任意一行的 URL 换成你机场的订阅链接（删掉多余行），保存即可跑通。"
+
+msgid "Manual nodes"
+msgstr "手动添加节点"
+
+msgid "Update all subscriptions"
+msgstr "更新全部订阅"
+
+msgid "Advanced settings"
+msgstr "高级设置"
+
+msgid "auto-generated"
+msgstr "自动生成"
