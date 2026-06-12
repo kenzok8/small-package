@@ -469,3 +469,27 @@ msgstr "高级设置"
 
 msgid "auto-generated"
 msgstr "自动生成"
+
+msgid "Save and Apply"
+msgstr "保存并应用"
+
+msgid "Save config"
+msgstr "保存配置"
+
+msgid "Save and Start"
+msgstr "保存并启动"
+
+msgid "Saved · applied"
+msgstr "已保存并应用"
+
+msgid "Saved"
+msgstr "已保存"
+
+msgid "Saved · started"
+msgstr "已保存并启动"
+
+msgid "Starting…"
+msgstr "启动中…"
+
+msgid "Start failed: %s"
+msgstr "启动失败：%s"

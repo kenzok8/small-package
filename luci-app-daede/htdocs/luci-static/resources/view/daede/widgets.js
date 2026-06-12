@@ -202,7 +202,7 @@ function renderStatusCard(ctx, listenAddr) {
 			});
 			actions.push(restart);
 		}
-		if (be.name === 'dae') {
+		if (state.running && be.name === 'dae') {
 			const hot = E('button', { 'class': 'cbi-button cbi-button-action' }, _('Hot Reload'));
 			hot.addEventListener('click', function(ev) {
 				ev.preventDefault();

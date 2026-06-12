@@ -75,9 +75,12 @@ function detectInstalledBackends() {
 }
 
 function detectRunning() {
+	/* pidof matches the program name exactly and, unlike busybox `pgrep -x`
+	   (which compares the full cmdline `/usr/bin/dae run …` and never hits),
+	   reliably tells dae from daed without substring false positives. */
 	return Promise.all([
-		execOk('/usr/bin/pgrep', ['-x', 'dae']),
-		execOk('/usr/bin/pgrep', ['-x', 'daed'])
+		execOk('/bin/pidof', ['dae']),
+		execOk('/bin/pidof', ['daed'])
 	]).then(function(r) {
 		return { dae: r[0], daed: r[1] };
 	});

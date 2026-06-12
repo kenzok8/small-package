@@ -5,7 +5,7 @@
 
 const CSS = [
 	'.dd-wrap{padding:4px 0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}',
-	'.dd-card{border:1px solid rgba(0,0,0,.06);border-radius:10px;padding:10px 14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.03);background:rgba(255,255,255,.02)}',
+	'.dd-card{border:1px solid rgba(0,0,0,.06);border-radius:10px;padding:9px 14px;margin-bottom:7px;box-shadow:0 2px 8px rgba(0,0,0,.03);background:rgba(255,255,255,.02)}',
 	'.dd-card-title{font-size:11px;font-weight:600;opacity:.55;margin:0 0 8px;letter-spacing:.3px;text-transform:uppercase}',
 	'.dd-status-row{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:0}',
 	'.dd-status-row .dd-grow{flex:1 1 auto}',
@@ -84,8 +84,8 @@ const CSS = [
 	'.dd-editor-footer .dd-fb-key{opacity:.55}',
 	'.dd-editor-footer .dd-fb-warn{color:#b07d00;font-weight:600}',
 	'.dd-editor-footer .dd-fb-ok{color:#3da66a;font-weight:600}',
-	'body.dark .dd-editor-footer,html[data-theme="dark"] .dd-editor-footer,html[data-bs-theme="dark"] .dd-editor-footer{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.04)}',
-	'body.dark .dd-editor-footer .dd-fb-warn,html[data-theme="dark"] .dd-editor-footer .dd-fb-warn,html[data-bs-theme="dark"] .dd-editor-footer .dd-fb-warn{color:#e0b34a}',
+	'body.dark .dd-editor-footer,html[data-theme="dark"] .dd-editor-footer,html[data-bs-theme="dark"] .dd-editor-footer,html[data-darkmode="true"] .dd-editor-footer{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.04)}',
+	'body.dark .dd-editor-footer .dd-fb-warn,html[data-theme="dark"] .dd-editor-footer .dd-fb-warn,html[data-bs-theme="dark"] .dd-editor-footer .dd-fb-warn,html[data-darkmode="true"] .dd-editor-footer .dd-fb-warn{color:#e0b34a}',
 	'.dd-insert-select{font-size:11.5px;padding:4px 8px;border-radius:5px;border:1px solid rgba(128,128,128,.35);background:transparent;color:inherit;cursor:pointer}',
 	'.dd-insert-select:hover{border-color:rgba(56,134,161,.55)}',
 	'.dd-editor-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}',
@@ -108,7 +108,7 @@ const CSS = [
 	'.dd-ph-warn{display:none;font-size:12px;line-height:1.6;margin:0 0 8px;padding:10px 12px;border-radius:6px;background:rgba(217,158,0,.08);color:inherit}',
 	'.dd-ph-warn.show{display:block}',
 	'.dd-ph-warn-title{font-weight:600;margin-bottom:6px;color:#b07d00;font-size:12.5px}',
-	'body.dark .dd-ph-warn-title,html[data-theme="dark"] .dd-ph-warn-title,html[data-bs-theme="dark"] .dd-ph-warn-title{color:#e0b34a}',
+	'body.dark .dd-ph-warn-title,html[data-theme="dark"] .dd-ph-warn-title,html[data-bs-theme="dark"] .dd-ph-warn-title,html[data-darkmode="true"] .dd-ph-warn-title{color:#e0b34a}',
 	'.dd-ph-howto{margin:4px 0 8px;opacity:.85}',
 	'.dd-ph-howto code{padding:1px 5px;border-radius:3px;background:rgba(128,128,128,.18);font-size:11px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}',
 	'.dd-ph-list{margin:6px 0 0;padding:6px 0 0;list-style:none;border-top:1px dashed rgba(217,158,0,.3)}',
@@ -116,11 +116,21 @@ const CSS = [
 	'.dd-ph-list li{padding:2px 0;display:flex;gap:8px;align-items:baseline;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:11px}',
 	'.dd-ph-list .dd-ph-ln{display:inline-block;min-width:38px;text-align:center;padding:1px 4px;border-radius:3px;background:rgba(217,158,0,.18);color:#8a6300;opacity:.95;cursor:pointer;font-weight:600;text-decoration:none}',
 	'.dd-ph-list .dd-ph-ln:hover{background:rgba(217,158,0,.32)}',
-	'body.dark .dd-ph-list .dd-ph-ln,html[data-theme="dark"] .dd-ph-list .dd-ph-ln,html[data-bs-theme="dark"] .dd-ph-list .dd-ph-ln{color:#f0c763;background:rgba(217,158,0,.22)}',
+	'body.dark .dd-ph-list .dd-ph-ln,html[data-theme="dark"] .dd-ph-list .dd-ph-ln,html[data-bs-theme="dark"] .dd-ph-list .dd-ph-ln,html[data-darkmode="true"] .dd-ph-list .dd-ph-ln{color:#f0c763;background:rgba(217,158,0,.22)}',
 	'.dd-ph-list .dd-ph-txt{opacity:.7;word-break:break-all}',
-	'body.dark .dd-card,html[data-theme="dark"] .dd-card,html[data-bs-theme="dark"] .dd-card{border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.02)}',
-	'body.dark .dd-adv-bar,html[data-theme="dark"] .dd-adv-bar,html[data-bs-theme="dark"] .dd-adv-bar{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.10)}',
-	'body.dark .dd-settings-card .cbi-value-field input,body.dark .dd-settings-card .cbi-value-field select,body.dark .dd-settings-card .cbi-value-field textarea,html[data-theme="dark"] .dd-settings-card .cbi-value-field input,html[data-theme="dark"] .dd-settings-card .cbi-value-field select,html[data-theme="dark"] .dd-settings-card .cbi-value-field textarea,html[data-bs-theme="dark"] .dd-settings-card .cbi-value-field input,html[data-bs-theme="dark"] .dd-settings-card .cbi-value-field select,html[data-bs-theme="dark"] .dd-settings-card .cbi-value-field textarea{border-color:rgba(255,255,255,.18)}'
+	'body.dark .dd-card,html[data-theme="dark"] .dd-card,html[data-bs-theme="dark"] .dd-card,html[data-darkmode="true"] .dd-card{border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.02)}',
+	'body.dark .dd-adv-bar,html[data-theme="dark"] .dd-adv-bar,html[data-bs-theme="dark"] .dd-adv-bar,html[data-darkmode="true"] .dd-adv-bar{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.10)}',
+	'body.dark .dd-settings-card .cbi-value-field input,body.dark .dd-settings-card .cbi-value-field select,body.dark .dd-settings-card .cbi-value-field textarea,html[data-theme="dark"] .dd-settings-card .cbi-value-field input,html[data-theme="dark"] .dd-settings-card .cbi-value-field select,html[data-theme="dark"] .dd-settings-card .cbi-value-field textarea,html[data-bs-theme="dark"] .dd-settings-card .cbi-value-field input,html[data-bs-theme="dark"] .dd-settings-card .cbi-value-field select,html[data-bs-theme="dark"] .dd-settings-card .cbi-value-field textarea,html[data-darkmode="true"] .dd-settings-card .cbi-value-field input,html[data-darkmode="true"] .dd-settings-card .cbi-value-field select,html[data-darkmode="true"] .dd-settings-card .cbi-value-field textarea{border-color:rgba(255,255,255,.18)}',
+	/* phone: render each subscription/node row as a self-contained card instead
+	   of a cramped table (LuCI already block-stacks the cells; we add the card
+	   frame, drop the desktop column widths, and shrink the action buttons) */
+	'@media (max-width:600px){',
+	'.dd-settings-card .cbi-section-table-cell:nth-child(1),.dd-settings-card .cbi-section-table-cell:nth-child(2),.dd-settings-card .cbi-section-table-cell:nth-child(3),.dd-settings-card .cbi-section-table-cell:nth-child(4){width:auto !important;min-width:0 !important;white-space:normal !important;overflow:visible !important;text-overflow:clip !important}',
+	'.dd-settings-card .cbi-section-table-row{display:block;border:1px solid rgba(128,128,128,.2);border-radius:8px;padding:6px 10px;margin:0 0 8px;background:rgba(128,128,128,.03)}',
+	'.dd-settings-card .cbi-section-table-cell{display:block;padding:3px 0 !important}',
+	'.dd-settings-card .cbi-section-actions{display:flex;flex-wrap:wrap;gap:6px;padding-top:6px !important}',
+	'.dd-settings-card .cbi-section-actions .cbi-button{width:auto;margin:0;flex:0 0 auto}',
+	'}'
 ].join('');
 
 return baseclass.extend({ CSS: CSS });

@@ -392,3 +392,35 @@ msgstr ""
 #: dae.js
 msgid "auto-generated"
 msgstr ""
+
+#: dae.js
+msgid "Save and Apply"
+msgstr ""
+
+#: dae.js
+msgid "Save config"
+msgstr ""
+
+#: dae.js
+msgid "Save and Start"
+msgstr ""
+
+#: dae.js
+msgid "Saved · applied"
+msgstr ""
+
+#: dae.js
+msgid "Saved"
+msgstr ""
+
+#: dae.js
+msgid "Saved · started"
+msgstr ""
+
+#: dae.js
+msgid "Starting…"
+msgstr ""
+
+#: dae.js
+msgid "Start failed: %s"
+msgstr ""
