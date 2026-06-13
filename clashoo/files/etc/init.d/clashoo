@@ -752,10 +752,20 @@ select_config(){
 CONFIG_YAML_PATH=$(uci get clashoo.config.use_config 2>/dev/null)
 log_msg "Checking Config file" "正在检查配置文件"
 
+# Runtime dir may be missing (e.g. after a broken uninstall left the package
+# installed but its /etc/clashoo dir removed). Recreate it so the cp below
+# can't silently fail and leave the core without a config.
+mkdir -p "$(dirname "$CONFIG_YAML")" 2>/dev/null
+
 if [ -f "$CONFIG_YAML_PATH" ] && [ -s "$CONFIG_YAML_PATH" ];then
 
-	cp "$CONFIG_YAML_PATH" "$CONFIG_YAML" 2>/dev/null
-	
+	if ! cp "$CONFIG_YAML_PATH" "$CONFIG_YAML" 2>/dev/null || [ ! -s "$CONFIG_YAML" ];then
+		log_msg "Failed to stage config file" "配置写入失败：运行目录缺失或不可写"
+		sleep 5
+		echo "Clashoo" >$REAL_LOG
+		return 1
+	fi
+
 elif [ ! -f "$CONFIG_YAML_PATH" ] && [ ! -f "$CONFIG_YAML" ];then
 
 		log_msg "No config found" "找不到配置文章"
