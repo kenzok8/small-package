@@ -65,6 +65,7 @@
 				"/usr/share/luci-app-daede/update-pkg.sh dae": [ "exec" ],
 				"/usr/share/luci-app-daede/update-pkg.sh daed": [ "exec" ],
 				"/usr/share/luci-app-daede/update-pkg.sh luci-app-daede": [ "exec" ],
+				"/usr/share/luci-app-daede/fetch-clash-yaml.sh *": [ "exec" ],
 				"/usr/share/luci-app-daede/gen-dae-config.sh generate": [ "exec" ],
 				"/usr/share/luci-app-daede/gen-dae-config.sh import": [ "exec" ]
 			},

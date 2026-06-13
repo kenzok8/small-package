@@ -17,9 +17,17 @@
 			"path": "daede/config"
 		}
 	},
+	"admin/services/daede/converter": {
+		"title": "Subscription Converter",
+		"order": 20,
+		"action": {
+			"type": "view",
+			"path": "daede/converter"
+		}
+	},
 	"admin/services/daede/updates": {
 		"title": "Updates",
-		"order": 20,
+		"order": 30,
 		"action": {
 			"type": "view",
 			"path": "daede/updates"
@@ -27,7 +35,7 @@
 	},
 	"admin/services/daede/log": {
 		"title": "Log",
-		"order": 30,
+		"order": 40,
 		"action": {
 			"type": "view",
 			"path": "daede/log"

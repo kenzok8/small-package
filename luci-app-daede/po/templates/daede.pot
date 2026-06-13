@@ -422,5 +422,181 @@ msgid "Starting…"
 msgstr ""
 
 #: dae.js
+msgid "Name is required"
+msgstr ""
+
+#: dae.js
+msgid "Group name must be unique"
+msgstr ""
+
+#: dae.js
+msgid "Updating…"
+msgstr ""
+
+#: dae.js
+msgid "Subscriptions updated (dae reloaded)"
+msgstr ""
+
+#: dae.js
+msgid "Save manual config"
+msgstr ""
+
+#: dae.js
 msgid "Start failed: %s"
+msgstr ""
+
+#: converter.js
+msgid "Subscription Converter"
+msgstr ""
+
+#: converter.js
+msgid "Convert Clash YAML into share links, preview the result, then import selected nodes into dae or daed. Inputs and credentials are not saved."
+msgstr ""
+
+#: converter.js
+msgid "1. Input Clash YAML"
+msgstr ""
+
+#: converter.js
+msgid "Fetch and parse"
+msgstr ""
+
+#: converter.js
+msgid "Or paste Clash YAML here"
+msgstr ""
+
+#: converter.js
+msgid "Parse pasted YAML"
+msgstr ""
+
+#: converter.js
+msgid "2. Conversion Preview"
+msgstr ""
+
+#: converter.js
+msgid "Select compatible new nodes"
+msgstr ""
+
+#: converter.js
+msgid "Clear selection"
+msgstr ""
+
+#: converter.js
+msgid "Filter name or protocol"
+msgstr ""
+
+#: converter.js
+msgid "3. Import Selected Nodes"
+msgstr ""
+
+#: converter.js
+msgid "Target backend"
+msgstr ""
+
+#: converter.js
+msgid "Import selected nodes (%d)"
+msgstr ""
+
+#: converter.js
+msgid "Detected %d · compatible %d · duplicates %d · incompatible %d"
+msgstr ""
+
+#: converter.js
+msgid "Ready to import"
+msgstr ""
+
+#: converter.js
+msgid "Already exists, skipped"
+msgstr ""
+
+#: converter.js
+msgid "Sign in to daed"
+msgstr ""
+
+#: converter.js
+msgid "Credentials are used only for this import and are not saved."
+msgstr ""
+
+#: converter.js
+msgid "Sign in and import"
+msgstr ""
+
+#: converter.js
+#: converter.js
+msgid "YAML parser failed to load"
+msgstr ""
+
+#: converter.js
+msgid "daed returned HTTP %s"
+msgstr ""
+
+#: converter.js
+msgid "Username"
+msgstr ""
+
+#: converter.js
+msgid "Password"
+msgstr ""
+
+#: converter.js
+msgid "Cancel"
+msgstr ""
+
+#: converter.js
+msgid "Import cancelled"
+msgstr ""
+
+#: converter.js
+msgid "Import selected nodes"
+msgstr ""
+
+#: converter.js
+msgid "No YAML parsed yet"
+msgstr ""
+
+#: converter.js
+msgid "YAML parse failed: %s"
+msgstr ""
+
+#: converter.js
+msgid "No top-level proxies list was found"
+msgstr ""
+
+#: converter.js
+msgid "Conversion preview is ready"
+msgstr ""
+
+#: converter.js
+msgid "Enter an HTTP or HTTPS subscription URL"
+msgstr ""
+
+#: converter.js
+msgid "Fetching subscription…"
+msgstr ""
+
+#: converter.js
+msgid "Fetch failed"
+msgstr ""
+
+#: converter.js
+msgid "Fetch failed: %s"
+msgstr ""
+
+#: converter.js
+msgid "Paste Clash YAML first"
+msgstr ""
+
+#: converter.js
+msgid "or"
+msgstr ""
+
+#: converter.js
+msgid "Importing selected nodes…"
+msgstr ""
+
+#: converter.js
+msgid "Import failed: %s"
+msgstr ""
+
+msgid "Import complete: added %d, duplicates %d, failed %d"
 msgstr ""

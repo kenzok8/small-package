@@ -689,6 +689,21 @@ msgstr "已保存并应用"
 msgid "Saved"
 msgstr "已保存"
 
+msgid "Name is required"
+msgstr "名称不能为空"
+
+msgid "Group name must be unique"
+msgstr "分组名称必须唯一"
+
+msgid "Updating…"
+msgstr "更新中…"
+
+msgid "Subscriptions updated (dae reloaded)"
+msgstr "订阅已更新（dae 已重载）"
+
+msgid "Save manual config"
+msgstr "保存手动配置"
+
 msgid "Saved · started"
 msgstr "已保存并启动"
 
@@ -697,3 +712,121 @@ msgstr "启动中…"
 
 msgid "Start failed: %s"
 msgstr "启动失败：%s"
+
+# ---- converter.js ----
+msgid "Subscription Converter"
+msgstr "订阅转换"
+
+msgid "Convert Clash YAML into share links, preview the result, then import selected nodes into dae or daed. Inputs and credentials are not saved."
+msgstr "将 Clash YAML 转换为分享链接，预览后把所选节点导入 dae 或 daed。输入内容和凭据不会保存。"
+
+msgid "1. Input Clash YAML"
+msgstr "1. 输入 Clash YAML"
+
+msgid "Fetch and parse"
+msgstr "获取并解析"
+
+msgid "Or paste Clash YAML here"
+msgstr "或在此粘贴 Clash YAML"
+
+msgid "Parse pasted YAML"
+msgstr "解析粘贴内容"
+
+msgid "2. Conversion Preview"
+msgstr "2. 转换预览"
+
+msgid "Select compatible new nodes"
+msgstr "选择可导入的新节点"
+
+msgid "Clear selection"
+msgstr "清空选择"
+
+msgid "Filter name or protocol"
+msgstr "筛选节点名称或协议"
+
+msgid "3. Import Selected Nodes"
+msgstr "3. 导入所选节点"
+
+msgid "Target backend"
+msgstr "目标后端"
+
+msgid "Import selected nodes (%d)"
+msgstr "导入所选节点（%d）"
+
+msgid "Detected %d · compatible %d · duplicates %d · incompatible %d"
+msgstr "检测到 %d 个 · 可导入 %d 个 · 重复 %d 个 · 不兼容 %d 个"
+
+msgid "Ready to import"
+msgstr "可导入"
+
+msgid "Already exists, skipped"
+msgstr "已存在，跳过"
+
+msgid "Sign in to daed"
+msgstr "登录 daed"
+
+msgid "Credentials are used only for this import and are not saved."
+msgstr "凭据仅用于本次导入，不会保存。"
+
+msgid "Sign in and import"
+msgstr "登录并导入"
+
+msgid "YAML parser failed to load"
+msgstr "YAML 解析器加载失败"
+
+msgid "daed returned HTTP %s"
+msgstr "daed 返回 HTTP %s"
+
+msgid "Username"
+msgstr "用户名"
+
+msgid "Password"
+msgstr "密码"
+
+msgid "Cancel"
+msgstr "取消"
+
+msgid "Import cancelled"
+msgstr "导入已取消"
+
+msgid "Import selected nodes"
+msgstr "导入所选节点"
+
+msgid "No YAML parsed yet"
+msgstr "尚未解析 YAML"
+
+msgid "YAML parse failed: %s"
+msgstr "YAML 解析失败：%s"
+
+msgid "No top-level proxies list was found"
+msgstr "未找到顶层 proxies 列表"
+
+msgid "Conversion preview is ready"
+msgstr "转换预览已就绪"
+
+msgid "Enter an HTTP or HTTPS subscription URL"
+msgstr "请输入 HTTP 或 HTTPS 订阅链接"
+
+msgid "Fetching subscription…"
+msgstr "获取订阅中…"
+
+msgid "Fetch failed"
+msgstr "获取失败"
+
+msgid "Fetch failed: %s"
+msgstr "获取失败：%s"
+
+msgid "Paste Clash YAML first"
+msgstr "请先粘贴 Clash YAML"
+
+msgid "or"
+msgstr "或"
+
+msgid "Importing selected nodes…"
+msgstr "导入所选节点中…"
+
+msgid "Import failed: %s"
+msgstr "导入失败：%s"
+
+msgid "Import complete: added %d, duplicates %d, failed %d"
+msgstr "导入完成：新增 %d，重复 %d，失败 %d"

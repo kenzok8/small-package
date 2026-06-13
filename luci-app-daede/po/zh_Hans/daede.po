@@ -374,14 +374,8 @@ msgstr "自动滚动"
 msgid "Pause"
 msgstr "暂停"
 
-msgid "All"
-msgstr "全部"
-
-msgid "Node Status"
-msgstr "节点状态"
-
-msgid "Proxy Traffic"
-msgstr "代理流量"
+msgid "Filter (substring)"
+msgstr "过滤（子串）"
 
 msgid "Clear View"
 msgstr "清空显示"
@@ -436,14 +430,227 @@ msgid "Edit config DSL — subscriptions, nodes, routing, DNS. Load template via
 msgstr "编辑 dae DSL 配置——订阅、节点、路由、DNS。通过「从示例初始化」载入模板。保存前务必替换占位订阅链接。图形化管理请切换至 daed。"
 
 # ---- config.js: Proxy Health ----
-msgid "Check Proxy Status"
-msgstr "检测代理状态"
+msgid "Test YouTube"
+msgstr "测试 YouTube"
 
-msgid "OK, %d flows through proxy"
-msgstr "正常，%d 条代理流量"
+msgid "Testing…"
+msgstr "测试中…"
 
-msgid "No proxy traffic"
-msgstr "暂无代理流量"
+msgid "YouTube reachable · %d ms"
+msgstr "YouTube 可访问 · %d ms"
+
+msgid "YouTube unreachable (timeout)"
+msgstr "YouTube 无法访问（超时）"
+
+msgid "YouTube unreachable (HTTP %s)"
+msgstr "YouTube 无法访问（HTTP %s）"
+
+# ---- config.js: dae friendly form ----
+msgid "Subscriptions"
+msgstr "订阅"
+
+msgid "Airport / subscription links. dae resolves them into the node pool."
+msgstr "机场 / 订阅链接，dae 会解析成节点池里的节点。"
+
+msgid "Tag"
+msgstr "标签"
+
+msgid "Subscription URL"
+msgstr "订阅链接"
+
+msgid "URL is required"
+msgstr "订阅链接不能为空"
+
+msgid "Must start with http(s):// or file://"
+msgstr "需以 http(s):// 或 file:// 开头"
+
+msgid "Enabled"
+msgstr "启用"
+
+msgid "Nodes"
+msgstr "节点"
+
+msgid "Single share links (ss / vmess / vless / trojan / tuic / hysteria2 / socks5 …)."
+msgstr "每行添加一个节点分享链接，支持 ss、vmess、vless、trojan、tuic、hysteria2、socks5。"
+
+msgid "Share Link"
+msgstr "分享链接"
+
+msgid "Groups"
+msgstr "分组"
+
+msgid "Outbound groups. Leave the source empty to use all nodes. Set the route fallback to one of these."
+msgstr "出站分组。来源留空表示用全部节点。路由兜底要指向其中一个分组。"
+
+msgid "Name"
+msgstr "名称"
+
+msgid "Policy"
+msgstr "策略"
+
+msgid "Min moving average latency"
+msgstr "最小移动平均延迟"
+
+msgid "Min last latency"
+msgstr "最小最近延迟"
+
+msgid "Min average of last 10"
+msgstr "最近 10 次最小均值"
+
+msgid "Random"
+msgstr "随机"
+
+msgid "Fixed (first node)"
+msgstr "固定（第一个节点）"
+
+msgid "Source"
+msgstr "来源"
+
+msgid "Subscriptions and nodes that feed this group. Pick from the list or type a name. Leave empty to use all nodes."
+msgstr "进入这个分组的订阅和节点。从列表里选，或手输名称。留空＝用全部节点。"
+
+msgid "subscription"
+msgstr "订阅"
+
+msgid "node"
+msgstr "节点"
+
+msgid "Name filter"
+msgstr "名称筛选"
+
+msgid "Optional. Narrows subscriptions in the source to nodes whose name matches — e.g. 香港 or 新加坡|日本. Nodes you picked by name are always kept."
+msgstr "可选。只对来源里的订阅做收窄，留下名称匹配的节点，如 香港 或 新加坡|日本；你手动挑的单个节点始终保留。"
+
+msgid "Routing"
+msgstr "路由"
+
+msgid "Private IPs direct"
+msgstr "私网 IP 直连"
+
+msgid "LAN / private addresses bypass the proxy."
+msgstr "局域网 / 私有地址不走代理。"
+
+msgid "China direct"
+msgstr "国内直连"
+
+msgid "China mainland IPs and domains bypass the proxy."
+msgstr "中国大陆 IP 和域名不走代理。"
+
+msgid "Block ads"
+msgstr "拦截广告"
+
+msgid "Drop traffic matching the ad domain list."
+msgstr "丢弃命中广告域名表的流量。"
+
+msgid "Fallback group"
+msgstr "兜底分组"
+
+msgid "Default outbound for everything else."
+msgstr "其余流量的默认出站。"
+
+msgid "Custom rules"
+msgstr "自定义规则"
+
+msgid "Raw dae routing lines, evaluated before fallback. Target must be a group name above (or direct/block)."
+msgstr "原始 dae 路由行，在兜底前生效。箭头右边要填上面的分组名（或 direct / block）。"
+
+msgid "China upstream"
+msgstr "国内 DNS 上游"
+
+msgid "Resolves China-mainland domains."
+msgstr "解析中国大陆域名。"
+
+msgid "Fallback upstream"
+msgstr "兜底 DNS 上游"
+
+msgid "Resolves everything else."
+msgstr "解析其余域名。"
+
+msgid "Add a subscription or node, then save — it takes effect automatically."
+msgstr "填好订阅或节点，点保存就自动生效。"
+
+msgid "Apply failed: %s"
+msgstr "应用失败：%s"
+
+msgid "Saved · validated · hot-reloaded"
+msgstr "已保存 · 已校验 · 已热重载"
+
+msgid "Please fix the highlighted fields."
+msgstr "请先修正高亮的字段。"
+
+msgid "Import from existing config"
+msgstr "从现有配置导入"
+
+msgid "Existing config detected"
+msgstr "检测到已有配置"
+
+msgid "You have a hand-written config.dae. Import its subscriptions and nodes into the form, or keep editing manually below. Saving the form overwrites config.dae."
+msgstr "你已有手写的 config.dae。可把里面的订阅和节点导入表单，或在下方继续手动编辑。表单保存会覆盖 config.dae。"
+
+msgid "Importing…"
+msgstr "导入中…"
+
+msgid "Imported, reloading…"
+msgstr "已导入，正在刷新…"
+
+msgid "Import failed"
+msgstr "导入失败"
+
+msgid "Advanced / Manual Mode"
+msgstr "高级 / 手动模式"
+
+msgid "Edit config.dae directly. Saving the form above regenerates the file and overwrites changes made here."
+msgstr "直接编辑 config.dae。上方表单保存会重新生成文件并覆盖这里的改动。"
+
+msgid "Update Subscriptions"
+msgstr "更新订阅"
+
+msgid "Re-fetch all airport subscriptions (reloads dae)"
+msgstr "重新拉取所有机场订阅（重载 dae）"
+
+msgid "Updating subscriptions…"
+msgstr "更新订阅中…"
+
+msgid "dae is stopped; it fetches subscriptions on start."
+msgstr "dae 未运行，启动时会自动拉取订阅。"
+
+msgid "Update failed: %s"
+msgstr "更新失败：%s"
+
+msgid "Subscriptions updated (dae reloaded)"
+msgstr "订阅已更新（dae 已重载）"
+
+msgid "Section"
+msgstr "区块"
+
+msgid "DNS"
+msgstr "DNS"
+
+msgid "dae config file is empty. Click \"Initialize from example\" to start, or paste your config here."
+msgstr "dae 配置文件为空。点击「从示例初始化」开始，或直接在此粘贴你的配置。"
+
+# ---- log.js: filter dropdown ----
+msgid "All"
+msgstr "全部"
+
+msgid "Node Status"
+msgstr "节点状态"
+
+msgid "Proxy Traffic"
+msgstr "代理流量"
+
+
+msgid "Logging"
+msgstr "日志"
+
+msgid "Save manual config"
+msgstr "保存手动配置"
+
+msgid "Save and Apply"
+msgstr "保存并应用"
+
+msgid "Fixed link — nothing to fetch."
+msgstr "固定链接，无需更新。"
 
 # ---- dae.js: i18n cleanup (was Chinese msgid) ----
 msgid "One node share link per line — ss, vmess, vless, trojan, tuic, hysteria2, socks5."
@@ -470,9 +677,6 @@ msgstr "高级设置"
 msgid "auto-generated"
 msgstr "自动生成"
 
-msgid "Save and Apply"
-msgstr "保存并应用"
-
 msgid "Save config"
 msgstr "保存配置"
 
@@ -485,6 +689,21 @@ msgstr "已保存并应用"
 msgid "Saved"
 msgstr "已保存"
 
+msgid "Name is required"
+msgstr "名称不能为空"
+
+msgid "Group name must be unique"
+msgstr "分组名称必须唯一"
+
+msgid "Updating…"
+msgstr "更新中…"
+
+msgid "Subscriptions updated (dae reloaded)"
+msgstr "订阅已更新（dae 已重载）"
+
+msgid "Save manual config"
+msgstr "保存手动配置"
+
 msgid "Saved · started"
 msgstr "已保存并启动"
 
@@ -493,3 +712,121 @@ msgstr "启动中…"
 
 msgid "Start failed: %s"
 msgstr "启动失败：%s"
+
+# ---- converter.js ----
+msgid "Subscription Converter"
+msgstr "订阅转换"
+
+msgid "Convert Clash YAML into share links, preview the result, then import selected nodes into dae or daed. Inputs and credentials are not saved."
+msgstr "将 Clash YAML 转换为分享链接，预览后把所选节点导入 dae 或 daed。输入内容和凭据不会保存。"
+
+msgid "1. Input Clash YAML"
+msgstr "1. 输入 Clash YAML"
+
+msgid "Fetch and parse"
+msgstr "获取并解析"
+
+msgid "Or paste Clash YAML here"
+msgstr "或在此粘贴 Clash YAML"
+
+msgid "Parse pasted YAML"
+msgstr "解析粘贴内容"
+
+msgid "2. Conversion Preview"
+msgstr "2. 转换预览"
+
+msgid "Select compatible new nodes"
+msgstr "选择可导入的新节点"
+
+msgid "Clear selection"
+msgstr "清空选择"
+
+msgid "Filter name or protocol"
+msgstr "筛选节点名称或协议"
+
+msgid "3. Import Selected Nodes"
+msgstr "3. 导入所选节点"
+
+msgid "Target backend"
+msgstr "目标后端"
+
+msgid "Import selected nodes (%d)"
+msgstr "导入所选节点（%d）"
+
+msgid "Detected %d · compatible %d · duplicates %d · incompatible %d"
+msgstr "检测到 %d 个 · 可导入 %d 个 · 重复 %d 个 · 不兼容 %d 个"
+
+msgid "Ready to import"
+msgstr "可导入"
+
+msgid "Already exists, skipped"
+msgstr "已存在，跳过"
+
+msgid "Sign in to daed"
+msgstr "登录 daed"
+
+msgid "Credentials are used only for this import and are not saved."
+msgstr "凭据仅用于本次导入，不会保存。"
+
+msgid "Sign in and import"
+msgstr "登录并导入"
+
+msgid "YAML parser failed to load"
+msgstr "YAML 解析器加载失败"
+
+msgid "daed returned HTTP %s"
+msgstr "daed 返回 HTTP %s"
+
+msgid "Username"
+msgstr "用户名"
+
+msgid "Password"
+msgstr "密码"
+
+msgid "Cancel"
+msgstr "取消"
+
+msgid "Import cancelled"
+msgstr "导入已取消"
+
+msgid "Import selected nodes"
+msgstr "导入所选节点"
+
+msgid "No YAML parsed yet"
+msgstr "尚未解析 YAML"
+
+msgid "YAML parse failed: %s"
+msgstr "YAML 解析失败：%s"
+
+msgid "No top-level proxies list was found"
+msgstr "未找到顶层 proxies 列表"
+
+msgid "Conversion preview is ready"
+msgstr "转换预览已就绪"
+
+msgid "Enter an HTTP or HTTPS subscription URL"
+msgstr "请输入 HTTP 或 HTTPS 订阅链接"
+
+msgid "Fetching subscription…"
+msgstr "获取订阅中…"
+
+msgid "Fetch failed"
+msgstr "获取失败"
+
+msgid "Fetch failed: %s"
+msgstr "获取失败：%s"
+
+msgid "Paste Clash YAML first"
+msgstr "请先粘贴 Clash YAML"
+
+msgid "or"
+msgstr "或"
+
+msgid "Importing selected nodes…"
+msgstr "导入所选节点中…"
+
+msgid "Import failed: %s"
+msgstr "导入失败：%s"
+
+msgid "Import complete: added %d, duplicates %d, failed %d"
+msgstr "导入完成：新增 %d，重复 %d，失败 %d"
