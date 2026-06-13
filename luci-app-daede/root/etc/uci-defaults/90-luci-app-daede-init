@@ -1,14 +1,8 @@
 #!/bin/sh
-# Patch the daed package's /etc/init.d/daed to clean up /run/netns/daens on
-# stop_service(). Without this, restarting daed fails with:
-#   fatal: failed to create netns: open /run/netns/daens: file exists
-#
-# This script lives under /etc/uci-defaults/ which OpenWrt runs once on
-# every package install/upgrade and then removes - so each time luci-app-daede
-# is (re-)installed we re-patch the daed init.d even if it was overwritten
-# by a daed package upgrade in between.
-#
-# The patch is idempotent: a marker comment guards against double-injection.
+# Run once on every (re-)install/upgrade of luci-app-daede: migrate legacy
+# config, drop stale files from the old luci-app-daed package, and seed the
+# default dae form sections. The netns cleanup that used to be patched into
+# daed's init from here now lives directly in daed's own stop_service().
 
 set -e
 
@@ -125,25 +119,5 @@ if [ -f /etc/config/dae ]; then
 	done
 	uci -q commit dae
 fi
-
-INIT="/etc/init.d/daed"
-MARKER="# luci-app-daede: netns-cleanup"
-
-[ -f "$INIT" ] || exit 0
-grep -q "$MARKER" "$INIT" && exit 0
-
-# Inject `ip netns del daens 2>/dev/null || true` right after `rm -f "$LOG"`
-# inside stop_service(). awk is more reliable than sed for multiline contexts.
-awk -v marker="$MARKER" '
-	BEGIN { in_stop = 0; injected = 0 }
-	/^stop_service\(\)/    { in_stop = 1 }
-	in_stop && /^}/        { in_stop = 0 }
-	{ print }
-	in_stop && !injected && /rm -f "\$LOG"/ {
-		print "\tip netns del daens 2>/dev/null || true  " marker
-		injected = 1
-	}
-' "$INIT" > "${INIT}.new" && mv "${INIT}.new" "$INIT"
-chmod +x "$INIT"
 
 exit 0

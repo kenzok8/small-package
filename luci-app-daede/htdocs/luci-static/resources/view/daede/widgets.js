@@ -26,7 +26,11 @@ function toggleService(be, turnOn, running) {
 	const enabled = turnOn ? '1' : '0';
 	const action = turnOn ? 'start' : 'stop';
 
-	return rejectIfOtherRunning(be, running)
+	// Only guard on start: two backends share the eBPF/cgroup attachment, so
+	// starting one while the other runs is unsafe. Stopping is always allowed.
+	const guard = turnOn ? rejectIfOtherRunning(be, running) : Promise.resolve();
+
+	return guard
 		.then(function() { return fs.exec('/sbin/uci', ['set', be.uci + '.config.enabled=' + enabled]); })
 		.then(function() { return fs.exec('/sbin/uci', ['commit', be.uci]); })
 		.then(function() {

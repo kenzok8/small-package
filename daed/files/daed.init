@@ -40,6 +40,9 @@ start_service() {
 
 stop_service() {
 	rm -f "$LOG"
+	# daed creates /run/netns/daens on start; a stale entry makes the next
+	# start fail with "failed to create netns: ... file exists". Clean it here.
+	ip netns del daens 2>/dev/null || true
 }
 
 service_triggers() {

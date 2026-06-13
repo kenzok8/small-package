@@ -219,6 +219,11 @@ return view.extend({
 						btn.textContent = _('Unavailable');
 					} else if (sameVersion) {
 						meta = _('installed') + ': ' + entry.r.installed + ' · ' + _('up to date');
+						btn.disabled = true;
+					} else if (!entry.r.latest) {
+						// latest unknown (registry unreachable) - nothing to upgrade to
+						meta = _('installed') + ': ' + entry.r.installed + ' · ' + _('latest version unknown');
+						btn.disabled = true;
 					} else if (updatable) {
 						meta = _('installed') + ': ' + entry.r.installed + ' → ' + _('latest') + ': ' + entry.r.latest;
 						} else {
@@ -263,6 +268,12 @@ return view.extend({
 				if (ctx.backend.useNetns && ns && ns.exists) {
 					const btn = E('button', { 'class': 'dd-up-btn' }, _('Clean'));
 					btn.addEventListener('click', function() {
+						const daedRunning = !!(running && running[ctx.name]);
+						const msg = daedRunning
+							? _('%s is running. Deleting the daens netns now will break its networking until you restart it. Continue?').format(ctx.name)
+							: _('Delete the daens netns?');
+						if (!confirm(msg))
+							return;
 						btn.disabled = true;
 						fs.exec('/sbin/ip', ['netns', 'del', 'daens']).finally(function() { btn.disabled = false; });
 					});
