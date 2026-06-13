@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=daed
 PKG_VERSION:=2026.06.08
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=daed-src-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/kenzok8/openwrt-daede/releases/download/daed-src
@@ -21,6 +21,13 @@ PKG_BUILD_DIR:=$(DAED_BUILD_DIR)/wing
 PKG_BUILD_DEPENDS:=golang/host bpf-headers
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
+
+# armv7 lacks a CO-RE vmlinux.h for the trace eBPF (under wing/dae-core), so
+# trace's bpf2go fails there. Apply sbwml/openwrt_helloworld's arm patches
+# (add vmlinux-arm.h + drop the kprobe that doesn't work) to build on arm.
+ifeq ($(ARCH),arm)
+PATCH_DIR:=$(CURDIR)/patches_arm
+endif
 
 GO_PKG:=github.com/daeuniverse/dae-wing
 
@@ -87,6 +94,7 @@ endef
 define Build/Prepare
 	mkdir -p $(DAED_BUILD_DIR)
 	$(TAR) --strip-components=1 -C $(DAED_BUILD_DIR) -xzf $(DL_DIR)/$(PKG_SOURCE)
+	$(if $(wildcard $(PATCH_DIR)/*.patch),$(call PatchDir,$(PKG_BUILD_DIR),$(PATCH_DIR),))
 endef
 
 DAE_CFLAGS:= \

@@ -72,13 +72,24 @@ static uint32_t fixed_attr_get_u32(const struct nlattr *attr) {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Cached MNL_SOCKET_BUFFER_SIZE: that macro calls sysconf() twice per expansion
+// and SEND_BUF_LEN/RECV_BUF_LEN use it several times per packet. Computed once
+// below (before main()); the fallback is the documented maximum.
+size_t ua2f_mnl_socket_buffer_size = 8192;
+
+__attribute__((constructor)) static void ua2f_init_mnl_socket_buffer_size(void) {
+    ua2f_mnl_socket_buffer_size = (size_t)(MNL_SOCKET_BUFFER_SIZE);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // helper
-// Return NULL on failure
-struct nlmsghdr *nfqueue_put_header(int queue_num, int msg_type) {
+// Fill a caller-provided buffer (>= SEND_BUF_LEN, aligned) with an nfqueue
+// netlink header, without allocating, so the verdict path can reuse one buffer.
+// Return NULL on failure.
+struct nlmsghdr *nfqueue_put_header_buf(void *buf, int queue_num, int msg_type) {
     if (MNL_ALIGN(sizeof(struct nlmsghdr)) > SEND_BUF_LEN) // check buffer size
         return NULL;
-    void *buf = malloc(SEND_BUF_LEN);
-    ASSERT(buf != NULL);
     struct nlmsghdr *nlh = mnl_nlmsg_put_header(buf);
     ASSERT(nlh != NULL); // fixme: workaround CLion bug
 
@@ -86,15 +97,27 @@ struct nlmsghdr *nfqueue_put_header(int queue_num, int msg_type) {
     nlh->nlmsg_flags = NLM_F_REQUEST;
 
     if (nlh->nlmsg_len + MNL_ALIGN(sizeof(struct nfgenmsg)) > SEND_BUF_LEN) // check buffer size
-    {
-        free(buf);
         return NULL;
-    }
     struct nfgenmsg *nfg = mnl_nlmsg_put_extra_header(nlh, sizeof(struct nfgenmsg));
     nfg->nfgen_family = AF_UNSPEC;
     nfg->version = NFNETLINK_V0;
     nfg->res_id = htons(queue_num);
 
+    return nlh;
+}
+
+// helper
+// Return NULL on failure. Allocates a fresh buffer; caller frees the returned
+// pointer. Used by the non-hot setup/command paths.
+struct nlmsghdr *nfqueue_put_header(int queue_num, int msg_type) {
+    if (MNL_ALIGN(sizeof(struct nlmsghdr)) > SEND_BUF_LEN) // check buffer size
+        return NULL;
+    void *buf = malloc(SEND_BUF_LEN);
+    ASSERT(buf != NULL);
+    struct nlmsghdr *nlh = nfqueue_put_header_buf(buf, queue_num, msg_type);
+    if (nlh == NULL) {
+        free(buf);
+    }
     return nlh;
 }
 
@@ -404,8 +427,6 @@ static bool read_addr_tuple(struct nlattr *attr, struct ip_tuple *tuple) {
 // Return false on failure
 static bool nfqueue_parse(const struct nlmsghdr *nlh, struct nf_packet *packet) {
     memset(packet, 0, sizeof(*packet));
-    clock_gettime(CLOCK_MONOTONIC_RAW, &packet->mono_time);
-    clock_gettime(CLOCK_REALTIME, &packet->wall_time);
 
     struct nlattr *attr[NFQA_MAX + 1] = {0};
 
@@ -449,23 +470,6 @@ static bool nfqueue_parse(const struct nlmsghdr *nlh, struct nf_packet *packet) 
     ASSERT(packet->payload != NULL);
     memmove(packet->payload, payload, packet->payload_len);
 
-    // Timestamp
-    // Note: Packet timestamps do not always work reliably, e.g. kernel 4.4 always passes timestamp zero.
-    // See https://patchwork.ozlabs.org/patch/269090/
-    packet->has_timestamp = false;
-    if (attr[NFQA_TIMESTAMP]) {
-        struct nfqnl_msg_packet_timestamp *ts = mnl_attr_get_payload(attr[NFQA_TIMESTAMP]);
-        if (ts->sec != 0 || ts->usec != 0) {
-            packet->has_timestamp = true;
-            packet->timestamp.tv_sec = __be64_to_cpu(ts->sec);
-            packet->timestamp.tv_usec = __be64_to_cpu(ts->usec);
-        }
-    }
-    if (!packet->has_timestamp) {
-        LOG_ONCE(LOG_WARNING, "Kernel does not support packet timestamps");
-        DEBUG("Packet timestamp not set");
-    }
-
     // Conntrack data
     if (attr[NFQA_CT]) {
         struct nlattr *attr1[CTA_MAX + 1] = {0};
@@ -487,11 +491,8 @@ static bool nfqueue_parse(const struct nlmsghdr *nlh, struct nf_packet *packet) 
                 LOG_SYSERR("read_addr_tuple(orig)");
                 return false;
             }
-        if (attr1[CTA_TUPLE_REPLY])
-            if (!read_addr_tuple(attr1[CTA_TUPLE_REPLY], &packet->reply)) {
-                LOG_SYSERR("read_addr_tuple(reply)");
-                return false;
-            }
+        // packet->reply (CTA_TUPLE_REPLY) is not consumed by the handler, so we
+        // skip the extra nested parse it would require.
     } else {
         packet->has_conntrack = false;
         LOG_ONCE(LOG_WARNING, "Kernel does not support conntrack");
@@ -505,27 +506,6 @@ static bool nfqueue_parse(const struct nlmsghdr *nlh, struct nf_packet *packet) 
             DEBUG("Conntrack state not passed by kernel");
 
     return true;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Helpers and workarounds
-
-// Helper
-// Return <0 on failure
-// See http://www.masterraghu.com/subjects/np/introduction/unix_network_programming_v1.3/ch14lev1sec2.html
-static int recv_timeout(int fd, int64_t timeout_ms) {
-    fd_set rset;
-    FD_ZERO(&rset);
-    FD_SET(fd, &rset);
-    struct timespec ts =
-            {
-                    .tv_sec = timeout_ms / 1000,
-                    .tv_nsec = (timeout_ms % 1000) * 1000000};
-    int retval = pselect(fd + 1, &rset, NULL, NULL, timeout_ms > 0 ? &ts : NULL, NULL);
-    if (retval == -1 && errno == EINTR) // signal
-        return 0;                       // no data
-    else
-        return retval; // >0 if descriptor is readable
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -573,7 +553,9 @@ bool nfqueue_open(struct nf_queue *q, int queue_num, uint32_t queue_len, bool sk
 
     DEBUG("Initializing nfqueue %d", queue_num);
 
-    if ((q->nl_socket = mnl_socket_open2(NETLINK_NETFILTER, SOCK_NONBLOCK)) == NULL) {
+    // Blocking socket: a blocking recv bounded by SO_RCVTIMEO (below) avoids the
+    // per-packet pselect() the previous non-blocking poll required.
+    if ((q->nl_socket = mnl_socket_open2(NETLINK_NETFILTER, 0)) == NULL) {
         LOG_SYSERR("mnl_socket_open");
         return false;
     }
@@ -582,6 +564,15 @@ bool nfqueue_open(struct nf_queue *q, int queue_num, uint32_t queue_len, bool sk
         LOG_SYSERR("mnl_socket_bind");
         return false;
     }
+
+    // Wake recv every second so main_loop can observe should_exit; bound send too.
+    const struct timeval io_timeout = {.tv_sec = 1, .tv_usec = 0};
+    const int nl_fd = mnl_socket_get_fd(q->nl_socket);
+    if (setsockopt(nl_fd, SOL_SOCKET, SO_RCVTIMEO, &io_timeout, sizeof(io_timeout)) < 0) {
+        LOG_SYSERR("setsockopt SO_RCVTIMEO");
+        return false;
+    }
+    (void)setsockopt(nl_fd, SOL_SOCKET, SO_SNDTIMEO, &io_timeout, sizeof(io_timeout));
 
     if (nfqueue_bind(q->nl_socket, queue_num) < 0) {
         LOG_SYSERR("nfqueue_bind");
@@ -645,25 +636,13 @@ int nfqueue_receive(struct nf_queue *q, struct nf_buffer *buf, int64_t timeout_m
         ASSERT(buf->data != NULL);
     }
 
-    // Note: We execute recv_timeout() when timeout_ms is zero, because we had set SOCK_NONBLOCK when opening the socket.
-    // recv_timeout() with zero timeout blocks until data becomes available.
-    int retval = recv_timeout(mnl_socket_get_fd(q->nl_socket), timeout_ms);
-    if (retval == 0) // timeout
-    {
-        DEBUG("Netlink socket timeout");
-        return IO_NOTREADY;
-    } else if (retval < 1) // error
-    {
-        if (errno == EINTR)
-            return IO_NOTREADY;
-        LOG_SYSERR("recv_timeout");
-        return IO_ERROR;
-    }
-    // else data is ready
+    (void)timeout_ms; // recv wakeup cadence is fixed by SO_RCVTIMEO at open time
 
+    // Block directly in recv. SO_RCVTIMEO bounds the wait so the caller can
+    // re-check should_exit; EAGAIN/EWOULDBLOCK means "timed out, no data yet".
     int len = (int) mnl_socket_recvfrom(q->nl_socket, buf->data, RECV_BUF_LEN);
     if (len < 0) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) // no data
+        if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) // timeout / signal / no data
         {
             DEBUG("No data from Netlink socket");
             return IO_NOTREADY;

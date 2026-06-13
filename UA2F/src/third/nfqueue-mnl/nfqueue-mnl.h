@@ -198,8 +198,11 @@ static uint32_t fixed_attr_get_u32(const struct nlattr *attr);
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Sending Netlink commands
 
-#define SEND_BUF_LEN MNL_SOCKET_BUFFER_SIZE
-#define RECV_BUF_LEN (MNL_SOCKET_BUFFER_SIZE + 0xFFFF)
+// Use the cached buffer size (see nfqueue-mnl.c) rather than MNL_SOCKET_BUFFER_SIZE,
+// which calls sysconf() on every expansion and is used several times per packet.
+extern size_t ua2f_mnl_socket_buffer_size;
+#define SEND_BUF_LEN (ua2f_mnl_socket_buffer_size)
+#define RECV_BUF_LEN (ua2f_mnl_socket_buffer_size + 0xFFFF)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Public interface
@@ -255,6 +258,10 @@ int nfqueue_receive(struct nf_queue *q, struct nf_buffer *buf, int64_t timeout_m
 int nfqueue_next(struct nf_buffer *buf, struct nf_packet *packet);
 
 struct nlmsghdr *nfqueue_put_header(int queue_num, int msg_type);
+
+// Fill a caller-provided buffer (>= SEND_BUF_LEN, suitably aligned) instead of
+// allocating. Returns NULL on failure; caller must not free the buffer here.
+struct nlmsghdr *nfqueue_put_header_buf(void *buf, int queue_num, int msg_type);
 
 #pragma clang diagnostic pop
 #endif // NFQUEUE_MNL_H

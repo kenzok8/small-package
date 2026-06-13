@@ -55,6 +55,15 @@ char *fill_time_string(const double sec) {
 }
 
 void try_print_statistics() {
+    // Runs per packet: gate the shared-atomic check behind a thread-local counter
+    // so the common case is a local increment. Stats are informational; the
+    // >=8192 trigger below still fires promptly.
+    static _Thread_local unsigned int local_skip = 0;
+    if (++local_skip < 1024) {
+        return;
+    }
+    local_skip = 0;
+
     const long long ua_count = atomic_load_explicit(&user_agent_packet_count, memory_order_relaxed);
     long long last_count = atomic_load_explicit(&last_report_count, memory_order_relaxed);
     if (ua_count / last_count == 2 || ua_count - last_count >= 8192) {

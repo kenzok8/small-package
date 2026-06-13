@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dae
 PKG_VERSION:=2026.06.08
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=dae-src-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/kenzok8/openwrt-daede/releases/download/dae-src
@@ -21,6 +21,13 @@ PKG_BUILD_DIR:=$(DAE_BUILD_DIR)/core
 PKG_BUILD_DEPENDS:=golang/host bpf-headers
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_FLAGS:=no-mips16
+
+# armv7 lacks a CO-RE vmlinux.h for the trace eBPF, so trace's bpf2go fails to
+# build there. Apply sbwml/openwrt_helloworld's arm patches (add vmlinux-arm.h
+# + drop the kprobe that doesn't work) to let dae build on arm targets.
+ifeq ($(ARCH),arm)
+PATCH_DIR:=$(CURDIR)/patches_arm
+endif
 
 GO_PKG:=github.com/daeuniverse/dae
 GO_PKG_EXCLUDES:=control/kern/tests
@@ -92,6 +99,7 @@ DAE_CFLAGS:= \
 define Build/Prepare
 	mkdir -p $(DAE_BUILD_DIR)
 	$(TAR) --strip-components=1 -C $(DAE_BUILD_DIR) -xzf $(DL_DIR)/$(PKG_SOURCE)
+	$(if $(wildcard $(PATCH_DIR)/*.patch),$(call PatchDir,$(PKG_BUILD_DIR),$(PATCH_DIR),))
 endef
 
 define Build/Compile

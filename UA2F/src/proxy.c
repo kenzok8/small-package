@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -129,7 +130,13 @@ struct proxy_connection {
     struct proxy_buffer target_to_client;
     struct epoll_ref client_ref;
     struct epoll_ref target_ref;
+
+    // Event mask currently armed on each fd; lets us skip redundant EPOLL_CTL_MOD.
+    uint32_t client_armed;
+    uint32_t target_armed;
 };
+
+#define PROXY_EVENTS_UNSET UINT32_MAX
 
 struct proxy_context {
     int epoll_fd;
@@ -177,6 +184,12 @@ static int set_cloexec(int fd) {
         return -1;
     }
     return fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
+}
+
+static void set_tcp_nodelay(int fd) {
+    // Disabling Nagle avoids the delayed-ACK stall on the request/response ping-pong.
+    const int one = 1;
+    (void)setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
 }
 
 static ssize_t proxy_splice(int in_fd, int out_fd, size_t len) {
@@ -365,6 +378,19 @@ static int epoll_set(int epoll_fd, int op, int fd, struct epoll_ref *ref, uint32
     return epoll_ctl(epoll_fd, op, fd, &event);
 }
 
+// Re-arm an fd only when the desired interest mask differs from what is armed,
+// avoiding an EPOLL_CTL_MOD syscall on every event in steady state.
+static int epoll_rearm(int epoll_fd, int fd, struct epoll_ref *ref, uint32_t *armed, uint32_t desired) {
+    if (*armed == desired) {
+        return 0;
+    }
+    if (epoll_set(epoll_fd, EPOLL_CTL_MOD, fd, ref, desired) != 0) {
+        return -1;
+    }
+    *armed = desired;
+    return 0;
+}
+
 static void connection_schedule_close(struct proxy_connection *conn);
 static void connection_update_events(struct proxy_connection *conn);
 
@@ -450,7 +476,7 @@ static void connection_update_events(struct proxy_connection *conn) {
     }
 
     if (!conn->target_connected) {
-        if (epoll_set(conn->ctx->epoll_fd, EPOLL_CTL_MOD, conn->target_fd, &conn->target_ref, EPOLLOUT) != 0) {
+        if (epoll_rearm(conn->ctx->epoll_fd, conn->target_fd, &conn->target_ref, &conn->target_armed, EPOLLOUT) != 0) {
             syslog(LOG_WARNING, "epoll target connect modify failed: %s", strerror(errno));
             connection_schedule_close(conn);
         }
@@ -472,12 +498,12 @@ static void connection_update_events(struct proxy_connection *conn) {
         target_events |= EPOLLOUT;
     }
 
-    if (epoll_set(conn->ctx->epoll_fd, EPOLL_CTL_MOD, conn->client_fd, &conn->client_ref, client_events) != 0) {
+    if (epoll_rearm(conn->ctx->epoll_fd, conn->client_fd, &conn->client_ref, &conn->client_armed, client_events) != 0) {
         syslog(LOG_WARNING, "epoll client modify failed: %s", strerror(errno));
         connection_schedule_close(conn);
         return;
     }
-    if (epoll_set(conn->ctx->epoll_fd, EPOLL_CTL_MOD, conn->target_fd, &conn->target_ref, target_events) != 0) {
+    if (epoll_rearm(conn->ctx->epoll_fd, conn->target_fd, &conn->target_ref, &conn->target_armed, target_events) != 0) {
         syslog(LOG_WARNING, "epoll target modify failed: %s", strerror(errno));
         connection_schedule_close(conn);
     }
@@ -704,6 +730,8 @@ static int connect_target(const struct sockaddr_storage *dst, socklen_t dst_len,
         return -1;
     }
 
+    set_tcp_nodelay(fd);
+
     const int mark = UA2F_PROXY_SO_MARK;
     if (setsockopt(fd, SOL_SOCKET, SO_MARK, &mark, sizeof(mark)) != 0) {
         syslog(LOG_WARNING, "setsockopt SO_MARK failed: %s", strerror(errno));
@@ -743,6 +771,7 @@ static bool finish_target_connect(struct proxy_connection *conn) {
         syslog(LOG_WARNING, "epoll client add failed: %s", strerror(errno));
         return false;
     }
+    conn->client_armed = EPOLLIN;
     return true;
 }
 
@@ -951,21 +980,26 @@ static struct proxy_connection *create_connection(struct proxy_context *ctx, int
     conn->target_ref.type = EPOLL_REF_CONNECTION;
     conn->target_ref.connection.conn = conn;
     conn->target_ref.connection.side = PROXY_SIDE_TARGET;
+    conn->client_armed = PROXY_EVENTS_UNSET;
+    conn->target_armed = PROXY_EVENTS_UNSET;
     http_parser_init_session(&conn->session);
     connection_add(ctx, conn);
 
-    if (epoll_set(ctx->epoll_fd, EPOLL_CTL_ADD, target_fd, &conn->target_ref,
-                  target_in_progress ? EPOLLOUT : EPOLLIN) != 0) {
+    const uint32_t target_initial = target_in_progress ? EPOLLOUT : EPOLLIN;
+    if (epoll_set(ctx->epoll_fd, EPOLL_CTL_ADD, target_fd, &conn->target_ref, target_initial) != 0) {
         syslog(LOG_WARNING, "epoll target add failed: %s", strerror(errno));
         connection_schedule_close(conn);
         return NULL;
     }
+    conn->target_armed = target_initial;
 
-    if (!target_in_progress &&
-        epoll_set(ctx->epoll_fd, EPOLL_CTL_ADD, client_fd, &conn->client_ref, EPOLLIN) != 0) {
-        syslog(LOG_WARNING, "epoll client add failed: %s", strerror(errno));
-        connection_schedule_close(conn);
-        return NULL;
+    if (!target_in_progress) {
+        if (epoll_set(ctx->epoll_fd, EPOLL_CTL_ADD, client_fd, &conn->client_ref, EPOLLIN) != 0) {
+            syslog(LOG_WARNING, "epoll client add failed: %s", strerror(errno));
+            connection_schedule_close(conn);
+            return NULL;
+        }
+        conn->client_armed = EPOLLIN;
     }
 
     connection_update_events(conn);
@@ -999,6 +1033,8 @@ static void accept_listener_connections(struct proxy_context *ctx, const struct 
             proxy_release_connection();
             continue;
         }
+
+        set_tcp_nodelay(client_fd);
 
         struct sockaddr_storage dst;
         socklen_t dst_len = sizeof(dst);

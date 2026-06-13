@@ -286,12 +286,6 @@ void handle_packet(const struct packet_io *io, void *io_ctx, const struct nf_pac
         verdict_sent = true;                                                                                              \
     } while (0)
 
-    // Level 1: cache check
-    if (ct_ok && should_ignore(pkt)) {
-        SEND_VERDICT(NF_ACCEPT, MARK_NOT_HTTP, NULL);
-        goto end;
-    }
-
     const int type = get_pkt_ip_version(pkt);
     if (type == IP_UNK) {
         syslog(LOG_WARNING, "Received unknown ip packet type %x. You may set wrong firewall rules.", pkt->hw_protocol);
@@ -305,9 +299,17 @@ void handle_packet(const struct packet_io *io, void *io_ctx, const struct nf_pac
         count_ip_packet(type);
         counted_ip_packet = true;
         if (!has_tcp_payload) {
+            // Fast path for empty segments (pure ACKs dominate large transfers):
+            // nothing to inspect, so accept before the cache lookup / pktb_alloc.
             SEND_VERDICT(NF_ACCEPT, MARK_NONE, NULL);
             goto end;
         }
+    }
+
+    // Level 1: cache check (only payload-bearing packets can be classified).
+    if (ct_ok && should_ignore(pkt)) {
+        SEND_VERDICT(NF_ACCEPT, MARK_NOT_HTTP, NULL);
+        goto end;
     }
 
     pkt_buff = pktb_alloc(type == IPV4 ? AF_INET : AF_INET6, pkt->payload, pkt->payload_len, 0);

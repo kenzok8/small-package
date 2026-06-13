@@ -16,10 +16,18 @@ static void nfqueue_send_verdict(void *ctx, const struct nf_packet *pkt, int ver
     assert(pkt != NULL && "Packet cannot be NULL");
     assert(queue->nl_socket != NULL && "Netlink socket cannot be NULL");
 
-    struct nlmsghdr *nlh = nfqueue_put_header(pkt->queue_num, NFQNL_MSG_VERDICT);
+    // Per-thread, reused across verdicts to avoid a SEND_BUF_LEN malloc/free per
+    // packet (each nfqueue worker has its own thread and verdicts serially).
+    // SEND_BUF_LEN is a runtime value capped at the documented 8192, so this
+    // fixed, mnl-aligned buffer is always large enough (asserted below).
+    enum { VERDICT_BUF_SIZE = 8192 };
+    static _Thread_local _Alignas(16) uint8_t verdict_buf[VERDICT_BUF_SIZE];
+    assert((size_t)SEND_BUF_LEN <= sizeof(verdict_buf) && "verdict buffer too small for SEND_BUF_LEN");
+
+    struct nlmsghdr *nlh = nfqueue_put_header_buf(verdict_buf, pkt->queue_num, NFQNL_MSG_VERDICT);
     if (nlh == NULL) {
         syslog(LOG_ERR, "failed to put nfqueue header");
-        goto end;
+        return;
     }
     nfq_nlmsg_verdict_put(nlh, (int)pkt->packet_id, verdict);
 
@@ -27,11 +35,11 @@ static void nfqueue_send_verdict(void *ctx, const struct nf_packet *pkt, int ver
         struct nlattr *nest = mnl_attr_nest_start_check(nlh, SEND_BUF_LEN, NFQA_CT);
         if (nest == NULL) {
             syslog(LOG_ERR, "failed to put nfqueue attr");
-            goto end;
+            return;
         }
         if (!mnl_attr_put_u32_check(nlh, SEND_BUF_LEN, CTA_MARK, htonl(mark.mark))) {
             syslog(LOG_ERR, "failed to put nfqueue attr");
-            goto end;
+            return;
         }
         mnl_attr_nest_end(nlh, nest);
     }
@@ -45,11 +53,6 @@ static void nfqueue_send_verdict(void *ctx, const struct nf_packet *pkt, int ver
     const __auto_type ret = mnl_socket_sendto(queue->nl_socket, nlh, nlh->nlmsg_len);
     if (ret == -1) {
         syslog(LOG_ERR, "failed to send verdict: %s", strerror(errno));
-    }
-
-end:
-    if (nlh != NULL) {
-        free(nlh);
     }
 }
 
