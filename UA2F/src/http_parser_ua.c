@@ -17,12 +17,27 @@ static int on_header_field(llhttp_t *parser, const char *data, size_t len) {
         session->field_buf_len = 0;
         session->field_matched = false;
         session->field_too_long = false;
+        session->field_ua_candidate = true;
+        session->field_decided = false;
         session->in_ua_value = false;
         session->ua_value_seen_len = 0;
     }
     session->last_was_value = false;
 
     if (session->field_too_long) {
+        return 0;
+    }
+
+    // "User-Agent" is the only header we care about. Decide from the field's
+    // first byte (case-insensitive 'U') whether it can match; if not, skip the
+    // buffering memcpy and the later strncasecmp for this field entirely. The
+    // decision is made exactly once per field (field_decided) so a chunk
+    // boundary cannot turn a non-matching name into a false positive.
+    if (!session->field_decided && len > 0) {
+        session->field_ua_candidate = (data[0] == 'U' || data[0] == 'u');
+        session->field_decided = true;
+    }
+    if (!session->field_ua_candidate) {
         return 0;
     }
 

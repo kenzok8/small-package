@@ -162,24 +162,33 @@ REDIRECT/TPROXY 需要自行配置对应的 netfilter 规则。TPROXY 还需要 
 
 ## Benchmark
 
-测试对象为 UA2F 和 [UA3F](https://github.com/SunBK201/UA3F)。测试环境为 WSL2 x86_64 / `Linux 6.18.26.1-microsoft-standard-WSL2` / `16` cores / `go1.26.3 linux/amd64`，客户端在独立 network namespace 中通过 PREROUTING 透明代理访问 `10.250.0.1:18080` origin server。UA2F 使用 `RelWithDebInfo` 构建，UA3F 使用 `GLOBAL` rewrite mode 和 `FFF` User-Agent；两者均完成 User-Agent 改写。
+测试对象为 UA2F 和 [UA3F](https://github.com/SunBK201/UA3F)。测试环境：WSL2 x86_64 / `Linux 6.18.33.1-microsoft-standard-WSL2` / `16` 核 / `go1.26.3 linux/amd64`；客户端在独立 network namespace 中以并发 `128`、HTTP keep-alive 通过 PREROUTING 透明代理访问 `10.250.0.1:18080` origin server。UA2F 使用 `RelWithDebInfo` 构建，UA3F 使用 `GLOBAL` rewrite mode 和 `FFF` User-Agent；两者均完成 User-Agent 改写。
 
-| 响应 | 请求数 | 模式 | 工具 | Req/s | Mbps | Avg/P95 ms | CPU % | RSS MB | HWM MB |
-| --- | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 KiB | 50000 | DIRECT | 原始流量 | 101023.33 | 1059.17 | 1.21 / 3.54 | - | - | - |
-| 1 KiB | 50000 | REDIRECT | UA2F | 68544.50 | 718.65 | 1.78 / 4.23 | 207.00 | 2.47 | 2.93 |
-| 1 KiB | 50000 | REDIRECT | [UA3F](https://github.com/SunBK201/UA3F) | 59661.38 | 625.52 | 2.07 / 4.92 | 427.18 | 43.43 | 47.40 |
-|  |  |  | UA2F / UA3F | 1.15x | 1.15x | 0.86x / 0.86x | 0.48x | 0.06x | 0.06x |
-| 1 KiB | 50000 | TPROXY | UA2F | 64939.07 | 680.85 | 1.89 / 4.79 | 206.51 | 2.53 | 2.96 |
-| 1 KiB | 50000 | TPROXY | [UA3F](https://github.com/SunBK201/UA3F) | 64341.75 | 674.59 | 1.92 / 4.68 | 428.52 | 45.84 | 45.88 |
-|  |  |  | UA2F / UA3F | 1.01x | 1.01x | 0.98x / 1.02x | 0.48x | 0.06x | 0.06x |
-| 64 KiB | 100000 | DIRECT | 原始流量 | 92629.47 | 48777.77 | 1.33 / 4.02 | - | - | - |
-| 64 KiB | 100000 | REDIRECT | UA2F | 61288.57 | 32273.96 | 2.05 / 5.04 | 256.19 | 2.47 | 3.05 |
-| 64 KiB | 100000 | REDIRECT | [UA3F](https://github.com/SunBK201/UA3F) | 56559.67 | 29783.77 | 2.21 / 5.27 | 449.08 | 43.93 | 47.22 |
-|  |  |  | UA2F / UA3F | 1.08x | 1.08x | 0.93x / 0.96x | 0.57x | 0.06x | 0.06x |
-| 64 KiB | 100000 | TPROXY | UA2F | 62754.99 | 33046.16 | 1.98 / 5.03 | 245.37 | 2.54 | 3.05 |
-| 64 KiB | 100000 | TPROXY | [UA3F](https://github.com/SunBK201/UA3F) | 56478.45 | 29741.00 | 2.19 / 5.32 | 436.58 | 43.69 | 48.98 |
-|  |  |  | UA2F / UA3F | 1.11x | 1.11x | 0.90x / 0.95x | 0.56x | 0.06x | 0.06x |
+> 表中 Req/s、Mbps 越高越好；延迟、CPU、内存越低越好。`UA2F / UA3F` 行为两者的比值。
+
+### 1 KiB 响应（50000 请求）
+
+| 模式 | 工具 | Req/s | Mbps | 平均延迟 | P95 延迟 | CPU | RSS | 峰值内存 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| DIRECT | 原始流量 | 92155 | 966 | 1.30 ms | 3.80 ms | — | — | — |
+| REDIRECT | UA2F | 73515 | 771 | 1.69 ms | 4.11 ms | 224% | 2.5 MB | 3.0 MB |
+| REDIRECT | UA3F | 60474 | 634 | 2.02 ms | 4.68 ms | 489% | 45.6 MB | 48.0 MB |
+| REDIRECT | UA2F / UA3F | 1.22× | 1.22× | 0.84× | 0.88× | 0.46× | 0.054× | 0.063× |
+| TPROXY | UA2F | 69188 | 725 | 1.79 ms | 4.39 ms | 224% | 2.5 MB | 3.1 MB |
+| TPROXY | UA3F | 60260 | 632 | 2.06 ms | 4.76 ms | 471% | 46.3 MB | 46.9 MB |
+| TPROXY | UA2F / UA3F | 1.15× | 1.15× | 0.87× | 0.92× | 0.48× | 0.055× | 0.067× |
+
+### 64 KiB 响应（100000 请求）
+
+| 模式 | 工具 | Req/s | Mbps | 平均延迟 | P95 延迟 | CPU | RSS | 峰值内存 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| DIRECT | 原始流量 | 74548 | 39256 | 1.67 ms | 4.89 ms | — | — | — |
+| REDIRECT | UA2F | 55697 | 29330 | 2.24 ms | 5.56 ms | 245% | 2.5 MB | 3.0 MB |
+| REDIRECT | UA3F | 54491 | 28694 | 2.29 ms | 5.55 ms | 440% | 46.3 MB | 50.1 MB |
+| REDIRECT | UA2F / UA3F | 1.02× | 1.02× | 0.98× | 1.00× | 0.56× | 0.054× | 0.060× |
+| TPROXY | UA2F | 61178 | 32216 | 2.04 ms | 5.10 ms | 242% | 2.5 MB | 3.0 MB |
+| TPROXY | UA3F | 43040 | 22665 | 2.90 ms | 6.86 ms | 401% | 44.5 MB | 47.3 MB |
+| TPROXY | UA2F / UA3F | 1.42× | 1.42× | 0.70× | 0.74× | 0.60× | 0.057× | 0.063× |
 
 ### 复现实验
 

@@ -1343,6 +1343,10 @@ start_udp() {
 
 start_local() {
 	[ "$LOCAL_SERVER" = "nil" ] && return 1
+	if [ "$LOCAL_SERVER" != "nil" ] && [ "$GLOBAL_SERVER" = "nil" ]; then
+		echolog "Global_Socks5:主节点未配置，不启动 SOCKS5 代理"
+		return 1
+	fi
 	local local_port="${1:-$(uci_get_by_type socks5_proxy local_port)}"
 	local local_server_type=$(uci_get_by_name $LOCAL_SERVER type)
 	local probe_instance_key="$(printf '%s' "${SSR_SWITCH_PROBE_INSTANCE_KEY:-}" | tr -cd '0-9A-Za-z._-')"

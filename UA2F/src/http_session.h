@@ -43,6 +43,8 @@ struct http_session {
     int field_buf_len;
     bool field_matched;
     bool field_too_long;
+    bool field_ua_candidate; // current header could still be "User-Agent"
+    bool field_decided;      // field_ua_candidate has been set for this field
 
     bool last_was_value;
     bool in_ua_value;

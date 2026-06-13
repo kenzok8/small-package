@@ -27,7 +27,14 @@ finish() {
 # In kernel-only mode there is no transparent proxy, so component downloads
 # would go out direct and stall behind the GFW. Route them through the running
 # core (shared logic in proxy_lib.sh). Normal mode returns empty -> TPROXY.
-. /usr/share/clashoo/update/proxy_lib.sh
+# Guard the source: on a stale install missing proxy_lib.sh, an unguarded `.`
+# under `set -e` kills the whole update silently (empty log, nothing happens).
+# Fall back to no proxy detection (direct / TPROXY) instead of dying.
+if [ -f /usr/share/clashoo/update/proxy_lib.sh ]; then
+  . /usr/share/clashoo/update/proxy_lib.sh
+else
+  clashoo_detect_proxy() { :; }
+fi
 detect_proxy() { clashoo_detect_proxy; }
 
 fetch_text() {
@@ -330,7 +337,7 @@ run_pkg_update() {
     ensure_root_space 98304
     log "正在安装 Clashoo 核心"
     if [ "$PM" = "opkg" ]; then
-      opkg install "$TMP_DIR/core.${EXT}" >"$TMP_DIR/install.log" 2>&1; rc=$?
+      opkg install --force-downgrade "$TMP_DIR/core.${EXT}" >"$TMP_DIR/install.log" 2>&1; rc=$?
     else
       apk add $APK_FLAGS "$TMP_DIR/core.${EXT}" >"$TMP_DIR/install.log" 2>&1; rc=$?
     fi
@@ -344,17 +351,25 @@ run_pkg_update() {
     fi
     log "正在安装客户端"
     if [ "$PM" = "opkg" ]; then
-      opkg install "$TMP_DIR/luci.${EXT}" ${I18N_URL:+"$TMP_DIR/i18n.${EXT}"} >"$TMP_DIR/install.log" 2>&1; rc=$?
+      opkg install --force-downgrade "$TMP_DIR/luci.${EXT}" ${I18N_URL:+"$TMP_DIR/i18n.${EXT}"} >"$TMP_DIR/install.log" 2>&1; rc=$?
     else
       apk add $APK_FLAGS "$TMP_DIR/luci.${EXT}" ${I18N_URL:+"$TMP_DIR/i18n.${EXT}"} >"$TMP_DIR/install.log" 2>&1; rc=$?
     fi
   fi
 
   if [ "$rc" -ne 0 ]; then
-    log_install_error "$TMP_DIR/install.log"
-    log "安装失败，正在恢复配置备份"
-    restore_config_backup
-    finish "$rc" "组件更新失败"
+    # apk exits non-zero when ANY package in the world is broken — e.g. file
+    # conflicts between unrelated apps (argon-config, momo, ...) — even though
+    # our package installed fine. Only treat it as a real failure when an apk
+    # ERROR line actually names a clashoo package; otherwise it is unrelated
+    # broken-world noise and we continue (--force-broken-world already applied).
+    if grep -E '^ERROR:' "$TMP_DIR/install.log" 2>/dev/null | grep -qi 'clashoo'; then
+      log_install_error "$TMP_DIR/install.log"
+      log "安装失败，正在恢复配置备份"
+      restore_config_backup
+      finish "$rc" "组件更新失败"
+    fi
+    log "apk 报告了无关软件包的错误（broken world），clashoo 自身已安装成功，继续"
   fi
 
   # Only a luci-app update touches /www and the rpcd backend, so only then

@@ -1115,7 +1115,10 @@ _has_valid_local_mmdb() {
 }
 
 _config_needs_geosite() {
-	grep -Eq "^[[:space:]]*-[[:space:]]*[\"']?GEOSITE,|^[[:space:]]*geosite:[[:space:]]*|^[[:space:]]*'geosite:" "$CONFIG_YAML"
+	# Matches: routing rules (- GEOSITE,...), geosite: child blocks, and
+	# list-item refs like `- geosite:cn` / `- 'geosite:cn'` used in
+	# fake-ip-filter (the default config ships one, easy to miss).
+	grep -Eq "^[[:space:]]*-[[:space:]]*[\"']?GEOSITE,|^[[:space:]]*geosite:[[:space:]]*|^[[:space:]]*'geosite:|^[[:space:]]*-[[:space:]]*[\"']?geosite:" "$CONFIG_YAML"
 }
 
 _has_valid_local_geosite() {
@@ -1227,6 +1230,8 @@ _prepare_geo_bootstrap_mode() {
 		_strip_yaml_child_block '^[[:space:]]*geosite:[[:space:]]*$'
 		_strip_yaml_child_block "^[[:space:]]*'geosite:[^']*'[[:space:]]*:[[:space:]]*$"
 		sed -i '/^[[:space:]]*geosite:[[:space:]]*[^[:space:]].*/d' "$CONFIG_YAML" 2>/dev/null
+		# list-item refs (e.g. fake-ip-filter: - geosite:cn / - 'geosite:cn')
+		sed -i "/^[[:space:]]*-[[:space:]]*[\"']\{0,1\}geosite:/d" "$CONFIG_YAML" 2>/dev/null
 	fi
 
 	_start_geoip_update_async

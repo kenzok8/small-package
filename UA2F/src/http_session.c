@@ -218,6 +218,8 @@ void session_reset_per_message(struct http_session *session) {
     session->field_buf_len = 0;
     session->field_matched = false;
     session->field_too_long = false;
+    session->field_ua_candidate = true;
+    session->field_decided = false;
     session->last_was_value = false;
     session->in_ua_value = false;
     session->ua_value_seen_len = 0;
