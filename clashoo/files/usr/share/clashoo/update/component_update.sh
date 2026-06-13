@@ -24,13 +24,21 @@ finish() {
   exit "$rc"
 }
 
+# In kernel-only mode there is no transparent proxy, so component downloads
+# would go out direct and stall behind the GFW. Route them through the running
+# core (shared logic in proxy_lib.sh). Normal mode returns empty -> TPROXY.
+. /usr/share/clashoo/update/proxy_lib.sh
+detect_proxy() { clashoo_detect_proxy; }
+
 fetch_text() {
   url="$1"
+  proxy="$(detect_proxy)"
   if command -v curl >/dev/null 2>&1; then
-    curl -fsSL "$url"
+    curl -fsSL ${proxy:+--proxy "$proxy"} "$url"
     return $?
   fi
   if command -v wget >/dev/null 2>&1; then
+    [ -n "$proxy" ] && { http_proxy="$proxy" https_proxy="$proxy" wget -qO- "$url"; return $?; }
     wget -qO- "$url"
     return $?
   fi
@@ -40,8 +48,13 @@ fetch_text() {
 download_file() {
   url="$1"
   out="$2"
+  proxy="$(detect_proxy)"
   if command -v curl >/dev/null 2>&1; then
-    curl -fL "$url" -o "$out"
+    curl -fL ${proxy:+--proxy "$proxy"} "$url" -o "$out"
+    return $?
+  fi
+  if [ -n "$proxy" ]; then
+    http_proxy="$proxy" https_proxy="$proxy" wget -qO "$out" "$url"
     return $?
   fi
   wget -qO "$out" "$url"
@@ -280,8 +293,11 @@ clashoo_was_running() {
 }
 
 restart_web_stack() {
-  /etc/init.d/rpcd restart >/dev/null 2>&1 || true
-  /etc/init.d/uhttpd restart >/dev/null 2>&1 || true
+  # reload (not restart) rpcd so the LuCI login session survives a plugin
+  # update — rpcd restart drops every ubus session and forces a re-login
+  # (issue #12). reload still picks up the new ucode RPC backend. uhttpd needs
+  # nothing: updated static assets are served on the next request.
+  /etc/init.d/rpcd reload >/dev/null 2>&1 || true
 }
 
 # which: clashoo（仅核心）/ luci（luci-app + 语言包）。两者拆开，clashoo
@@ -341,8 +357,13 @@ run_pkg_update() {
     finish "$rc" "组件更新失败"
   fi
 
-  log "正在刷新 LuCI 服务"
-  restart_web_stack
+  # Only a luci-app update touches /www and the rpcd backend, so only then
+  # refresh the web stack. The clashoo core package ships no web files — a
+  # web-stack refresh there is pointless churn that just disturbs the UI.
+  if [ "$which" = "luci" ]; then
+    log "正在刷新 LuCI 服务"
+    restart_web_stack
+  fi
   # 仅核心更新且原本运行中才重启 Clashoo；纯客户端更新不动服务
   if [ "$which" = "clashoo" ] && [ "$was_running" -eq 1 ]; then
     log "Clashoo 原本运行中，正在重启服务"
@@ -358,15 +379,12 @@ run_core_update() {
   dcore="$1"
   label="$2"
   log "正在更新 ${label}"
-  uci set clashoo.config.dcore="$dcore" >/dev/null 2>&1
-  if [ "$dcore" = "4" ] || [ "$dcore" = "5" ]; then
-    uci set clashoo.config.core_type='singbox' >/dev/null 2>&1
-  else
-    uci set clashoo.config.core_type='mihomo' >/dev/null 2>&1
-  fi
-  uci commit clashoo >/dev/null 2>&1
+  # Pass the target as an arg so core_download refreshes only that binary
+  # without switching the active kernel. It restarts only if the target is the
+  # currently-running core (see core_download.sh finalize). Switching kernels
+  # stays a separate, explicit user action.
   touch /var/run/core_update
-  sh /usr/share/clashoo/update/core_download.sh >>/tmp/clash_update.txt 2>&1
+  sh /usr/share/clashoo/update/core_download.sh "$dcore" >>/tmp/clash_update.txt 2>&1
   rc=$?
   rm -f /var/run/core_update
   [ "$rc" -eq 0 ] || finish "$rc" "${label} 更新失败"

@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-clashoo
-PKG_VERSION:=1.26.10
+PKG_VERSION:=1.27.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=kenzok8
 
@@ -54,8 +54,11 @@ define Package/luci-app-clashoo/postinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
-	/etc/init.d/rpcd restart >/dev/null 2>&1 || true
-	/etc/init.d/uhttpd restart >/dev/null 2>&1 || true
+	# reload (not restart) rpcd so the LuCI login session survives the upgrade —
+	# rpcd restart drops every ubus session and forces a re-login (issue #12).
+	# reload still picks up the new ucode backend + ACL. uhttpd needs nothing:
+	# updated static assets are served on the next request.
+	/etc/init.d/rpcd reload >/dev/null 2>&1 || true
 fi
 exit 0
 endef
@@ -76,8 +79,9 @@ endef
 define Package/luci-i18n-clashoo-zh-cn/postinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
+	# just clear the LuCI cache so the new translations load on next request;
+	# no service restart needed (and none that would drop the login session).
 	rm -rf /tmp/luci*
-	/etc/init.d/uhttpd restart >/dev/null 2>&1 || true
 fi
 exit 0
 endef

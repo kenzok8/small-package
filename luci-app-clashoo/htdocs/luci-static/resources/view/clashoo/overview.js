@@ -147,7 +147,7 @@ var CSS = [
   '@media(max-width:480px){.cl-cards{grid-template-columns:1fr}.cl-controls{grid-template-columns:1fr}.cl-live-grid{grid-template-columns:1fr}}'
 ].join('');
 
-var callDownloadSubs = rpc.declare({ object: 'luci.clashoo', method: 'download_subs', expect: {} });
+var callUpdateCurrentSubscription = rpc.declare({ object: 'luci.clashoo', method: 'update_current_subscription', expect: {} });
 var callOverview = rpc.declare({ object: 'luci.clashoo', method: 'overview', expect: {} });
 var callProxiesList = rpc.declare({ object: 'luci.clashoo', method: 'proxies_list', expect: {} });
 var callProxySelect = rpc.declare({ object: 'luci.clashoo', method: 'proxy_select', params: ['group', 'name'], expect: {} });
@@ -655,22 +655,33 @@ return view.extend({
       }, 6000);
     };
 
-    var tries = 0;
+    var polls = 0;
     var poll = function () {
       clashoo.panelStatus().then(function (s) {
         s = s || {};
-        if (s.downloading && tries++ < 60) {
-          setTimeout(poll, 1200);
-          return;
-        }
         if (s.state === 'success') done('ok', '✓ ' + label + ' 已更新');
         else if (s.state === 'error') done('err', '✗ ' + (s.msg || '更新失败'));
-        else done('ok', '✓ ' + label + ' 已提交');
+        else if (polls++ >= 600) done('err', '✗ 面板更新超时');
+        else {
+          statusEl.textContent = s.msg || '正在下载…';
+          setTimeout(poll, 1200);
+        }
       });
     };
 
     clashoo.updatePanel(panel)
-      .then(function () { setTimeout(poll, 600); })
+      .then(function (r) {
+        if (r && r.busy) {
+          statusEl.textContent = r.message || '面板正在下载';
+          setTimeout(poll, 600);
+          return;
+        }
+        if (!r || r.success === false) {
+          done('err', '✗ ' + ((r && r.message) || '提交失败'));
+          return;
+        }
+        setTimeout(poll, 600);
+      })
       .catch(function () { done('err', '✗ 提交失败'); });
   },
 
@@ -1930,8 +1941,13 @@ return view.extend({
   _restart: function () { return this._svc(function () { return clashoo.restart(); }, 'restart'); },
 
   _updSubs: function () {
-    return L.resolveDefault(callDownloadSubs(), {}).then(function (r) {
-      ui.addNotification(null, E('p', r.success ? '订阅更新成功' : ('更新失败: ' + (r.message || '未知错误'))));
+    return L.resolveDefault(callUpdateCurrentSubscription(), {}).then(function (r) {
+      if (r && r.reason === 'not_subscription') {
+        ui.addNotification(null, E('p', '当前配置为自定义文件，无需更新订阅'), 'info');
+        return;
+      }
+      ui.addNotification(null, E('p', r.success ? (r.message || '订阅更新成功')
+        : ('更新失败: ' + (r.message || '当前配置未记录订阅链接'))));
     });
   },
 

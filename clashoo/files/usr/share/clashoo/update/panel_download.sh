@@ -66,8 +66,19 @@ cleanup() {
 	rm -f "$RUN_FILE" >/dev/null 2>&1
 }
 
+# Route the panel download through the running core in kernel-only mode
+# (shared logic in proxy_lib.sh). Normal mode returns empty -> TPROXY.
+. /usr/share/clashoo/update/proxy_lib.sh
+detect_proxy() { clashoo_detect_proxy; }
+
 download_zip() {
+	proxy="$(detect_proxy)"
 	for url in $URLS; do
+		if [ -n "$proxy" ] && command -v curl >/dev/null 2>&1 &&
+			curl -fsSL --connect-timeout 15 --max-time 300 --retry 1 \
+				--proxy "$proxy" -A "Clash/OpenWRT" "$url" -o "$ZIP_FILE"; then
+			return 0
+		fi
 		if wget -q --timeout=60 --no-check-certificate --user-agent="Clash/OpenWRT" "$url" -O "$ZIP_FILE"; then
 			return 0
 		fi

@@ -82,6 +82,16 @@ var CSS = [
   '.cl-dns-auto-status{font-size:12px;color:var(--cl-meta);line-height:1.55}',
   '.cl-dns-auto-result{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:6px 14px;padding:8px 10px;border:1px solid var(--cl-card-border);border-radius:8px;background:var(--cl-card-bg);color:var(--cl-meta);font-size:12px;line-height:1.5}',
   '.cl-dns-auto-result b{font-weight:700;opacity:.72;margin-right:4px}',
+  '.cl-sub-schedule{display:flex;flex-direction:column;gap:5px;max-width:760px;box-sizing:border-box;margin:2px 0 14px;padding:8px 2px 4px 6px}',
+  '.cl-sub-schedule-row{display:flex;align-items:center;gap:10px;flex-wrap:nowrap}',
+  '.cl-sub-schedule-toggle{display:inline-flex;align-items:center;gap:8px;height:30px;font-size:13px;font-weight:600;line-height:30px;cursor:pointer;white-space:nowrap}',
+  '.cl-sub-schedule-toggle input[type="checkbox"]{appearance:none!important;-webkit-appearance:none!important;position:static!important;top:auto!important;bottom:auto!important;width:16px!important;height:16px!important;min-width:16px!important;min-height:16px!important;margin:0!important;padding:0!important;border:1px solid rgba(128,128,128,.7)!important;border-radius:3px!important;background:transparent!important;box-shadow:none!important;vertical-align:middle!important;flex:0 0 16px}',
+  '.cl-sub-schedule-toggle input[type="checkbox"]:checked{border-color:var(--cl-primary)!important;background:var(--cl-primary) url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cpath fill=%27none%27 stroke=%27white%27 stroke-width=%272.2%27 d=%27M3 8l3 3 7-7%27/%3E%3C/svg%3E") center/12px 12px no-repeat!important}',
+  '.cl-sub-schedule-status{font-size:11px;color:var(--cl-meta);line-height:1.45}',
+  '.cl-sub-schedule-interval{display:inline-flex;align-items:center;gap:6px;height:30px;font-size:12px;line-height:30px;color:var(--cl-meta);white-space:nowrap}',
+  '.cl-sub-schedule-interval input[type="number"]{width:52px!important;height:30px!important;min-height:30px!important;box-sizing:border-box!important;margin:0!important;padding:2px 6px!important;line-height:24px!important;text-align:center}',
+  '.cl-sub-schedule-row .btn,.cl-sub-schedule-row .cbi-button{height:30px!important;min-height:30px!important;box-sizing:border-box!important;padding:3px 10px!important;line-height:22px!important}',
+  '.cl-sub-schedule-row :disabled{cursor:not-allowed;opacity:.48}',
   '.cl-section-toggle{font-size:12px;cursor:pointer;flex-shrink:0;margin-left:auto}',
   '.cl-collapsible.cl-closed>*:not(h3){display:none!important}',
   /* 折叠标题：通过 .clashoo-section-header wrapper class 上色，不裸改 LuCI 默认 h3 样式 */
@@ -127,7 +137,8 @@ var CSS = [
   '@media(max-width:680px){.cl-file-name-text,.cl-file-size,.cl-sub-traffic,.cl-sub-expire,.cl-sb-list td,.cl-sb-size,.cl-dns-auto-status,.cl-dns-auto-result{color:#4b5870!important}}',
   '@media(max-width:680px){html body .cl-wrap .cl-file-item .cl-file-meta .cl-file-size{color:#4b5870!important}}',
   '@media(max-width:680px){.cl-form-wrap{max-width:100%}}',
-  '@media(max-width:680px){.cl-dns-auto,.cl-dns-auto-result{max-width:100%;width:100%;box-sizing:border-box}.cl-dns-auto-result{grid-template-columns:1fr}}'
+  '@media(max-width:680px){.cl-dns-auto,.cl-dns-auto-result{max-width:100%;width:100%;box-sizing:border-box}.cl-dns-auto-result{grid-template-columns:1fr}}',
+  '@media(max-width:680px){.cl-sub-schedule{width:100%;padding:8px 0 4px 4px}.cl-sub-schedule-row{gap:8px;flex-wrap:wrap}.cl-sub-schedule-toggle{width:100%}.cl-sub-schedule-interval{gap:5px}.cl-sub-schedule-row .cbi-button-action{white-space:nowrap}}'
 ].join('');
 
 var callListSubs      = rpc.declare({ object: 'luci.clashoo', method: 'list_subscriptions',  expect: {} });
@@ -135,6 +146,9 @@ var callListDir       = rpc.declare({ object: 'luci.clashoo', method: 'list_dir_
 var callDownloadSubs  = rpc.declare({ object: 'luci.clashoo', method: 'download_subs',       expect: {} });
 var callDownloadSubsStatus = rpc.declare({ object: 'luci.clashoo', method: 'download_subs_status', expect: {} });
 var callUpdateSub     = rpc.declare({ object: 'luci.clashoo', method: 'update_sub',          params: ['name'], expect: {} });
+var callSubscriptionUpdateAll = rpc.declare({ object: 'luci.clashoo', method: 'subscription_update_all', expect: {} });
+var callSubscriptionUpdateStatus = rpc.declare({ object: 'luci.clashoo', method: 'subscription_update_status', expect: {} });
+var callSetSubscriptionUpdateSchedule = rpc.declare({ object: 'luci.clashoo', method: 'set_subscription_update_schedule', params: ['enabled', 'interval'], expect: {} });
 var callSetConfig     = rpc.declare({ object: 'luci.clashoo', method: 'set_config',          params: ['name'], expect: {} });
 var callDeleteCfg     = rpc.declare({ object: 'luci.clashoo', method: 'delete_config',       params: ['name', 'type'], expect: {} });
 var callUploadConfig  = rpc.declare({ object: 'luci.clashoo', method: 'upload_config',       params: ['name', 'content', 'type'], expect: {} });
@@ -164,9 +178,111 @@ function loadUiState() {
       core_type:      uci.get('clashoo', 'config', 'core_type') || 'mihomo',
       subscribe_url:  uci.get('clashoo', 'config', 'subscribe_url') || '',
       config_name:    uci.get('clashoo', 'config', 'config_name') || '',
-      sub_ua:         uci.get('clashoo', 'config', 'sub_ua') || ''
+      sub_ua:         uci.get('clashoo', 'config', 'sub_ua') || '',
+      auto_subscription_update: uci.get('clashoo', 'config', 'auto_subscription_update') || '0',
+      subscription_update_interval: uci.get('clashoo', 'config', 'subscription_update_interval') || '72'
     };
   });
+}
+
+function buildSubscriptionSchedule(uiData, initialStatus) {
+  var enabled = E('input', {
+    type: 'checkbox',
+    checked: uiData.auto_subscription_update === '1' ? '' : null
+  });
+  var interval = E('input', {
+    type: 'number',
+    min: '1',
+    max: '8760',
+    value: uiData.subscription_update_interval || '72'
+  });
+  var statusEl = E('div', { 'class': 'cl-sub-schedule-status' });
+  var saveBtn, runBtn, timer;
+
+  function syncScheduleState() {
+    interval.disabled = !enabled.checked;
+  }
+
+  enabled.addEventListener('change', syncScheduleState);
+
+  function renderStatus(st) {
+    st = st || {};
+    if (st.running) {
+      statusEl.textContent = '正在更新全部订阅…';
+      return;
+    }
+    if (!st.last_run) {
+      statusEl.textContent = '仅覆盖已记录来源链接的订阅，不会生成重复文件。';
+      return;
+    }
+    var when = new Date(st.last_run * 1000).toLocaleString();
+    statusEl.textContent = '上次执行：' + when + '；更新 ' + (st.updated || 0) +
+      '，未变化 ' + (st.unchanged || 0) + '，失败 ' + (st.failed || 0) +
+      '，跳过 ' + (st.skipped || 0) + '。';
+  }
+
+  function pollStatus() {
+    L.resolveDefault(callSubscriptionUpdateStatus(), {}).then(function (st) {
+      renderStatus(st);
+      if (!st.running) {
+        if (timer) clearInterval(timer);
+        timer = null;
+        runBtn.disabled = false;
+        runBtn.textContent = '立即更新全部';
+      }
+    });
+  }
+
+  saveBtn = E('button', {
+    'class': 'btn cbi-button cl-btn-sm',
+    click: function () {
+      var hours = parseInt(interval.value, 10);
+      if (!hours || hours < 1 || hours > 8760) {
+        ui.addNotification(null, E('p', '更新间隔必须为 1 到 8760 小时'));
+        return;
+      }
+      saveBtn.disabled = true;
+      L.resolveDefault(callSetSubscriptionUpdateSchedule(enabled.checked ? '1' : '0', String(hours)), {}).then(function (r) {
+        saveBtn.disabled = false;
+        ui.addNotification(null, E('p', r && r.success ? '定时更新设置已保存' : ('保存失败: ' + ((r && r.message) || ''))));
+      });
+    }
+  }, '保存');
+
+  runBtn = E('button', {
+    'class': 'btn cbi-button-action cl-btn-sm',
+    click: function () {
+      runBtn.disabled = true;
+      runBtn.textContent = '更新中…';
+      L.resolveDefault(callSubscriptionUpdateAll(), {}).then(function (r) {
+        if (!r || (!r.success && !r.running)) {
+          runBtn.disabled = false;
+          runBtn.textContent = '立即更新全部';
+          ui.addNotification(null, E('p', '启动失败: ' + ((r && r.message) || '')));
+          return;
+        }
+        renderStatus({ running: true });
+        timer = setInterval(pollStatus, 2000);
+        setTimeout(pollStatus, 500);
+      });
+    }
+  }, '立即更新全部');
+
+  syncScheduleState();
+  renderStatus(initialStatus);
+  return E('div', { 'class': 'cl-sub-schedule' }, [
+    E('div', { 'class': 'cl-sub-schedule-row' }, [
+      E('label', { 'class': 'cl-sub-schedule-toggle' }, [enabled, E('span', {}, '定时更新订阅')]),
+      E('div', { 'class': 'cl-sub-schedule-interval' }, [
+        E('span', {}, '每'),
+        interval,
+        E('span', {}, '小时')
+      ]),
+      saveBtn,
+      runBtn
+    ]),
+    statusEl
+  ]);
 }
 
 var SUB_UA_PRESETS = ['', 'clash', 'clash.meta', 'mihomo'];
@@ -501,7 +617,8 @@ return view.extend({
       fastResolve(callListTemplates(), 1200, { files: [] }),
       fastResolve(loadUiState(), 1200, { core_type: 'mihomo', subscribe_url: '', config_name: '', sub_ua: '' }),
       fastResolve(clashoo.listSingboxProfiles(), 1200, { profiles: [], active: '' }),
-      fastResolve(callSmartModelStatus(), 1500, { has_model: false, version: '' })
+      fastResolve(callSmartModelStatus(), 1500, { has_model: false, version: '' }),
+      fastResolve(callSubscriptionUpdateStatus(), 1200, {})
     ]);
   },
 
@@ -515,6 +632,7 @@ return view.extend({
     var uiData     = data[5] || { core_type: 'mihomo', subscribe_url: '', config_name: '', sub_ua: '' };
     var sbData          = data[6] || { profiles: [], active: '' };
     var smartModelData  = data[7] || { has_model: false, version: '' };
+    var subscriptionUpdateStatus = data[8] || {};
     var coreType   = uiData.core_type || 'mihomo';
 
     if (!document.getElementById('cl-css')) {
@@ -532,7 +650,7 @@ return view.extend({
       document.getElementById('cl-css-ext').href = L.resource('view/clashoo/clashoo.css') + '?v=20260609b1';
     }
 
-    if (coreType === 'singbox') return this._renderSingbox(sbData);
+    if (coreType === 'singbox') return this._renderSingbox(sbData, uiData, subscriptionUpdateStatus);
 
     var tabs = [
       { id: 'subs', label: '订阅' },
@@ -546,7 +664,7 @@ return view.extend({
     var panelEls = {};
 
     var subPanel = E('div', { 'class': 'cl-panel' + (this._tab === 'subs' ? ' active' : ''), id: 'cl-panel-subs' },
-      this._buildSubsPanel(subsData, subFiles, upFiles, customFiles, tplFiles, uiData)
+      this._buildSubsPanel(subsData, subFiles, upFiles, customFiles, tplFiles, uiData, subscriptionUpdateStatus)
     );
     panelEls['subs'] = subPanel;
 
@@ -587,7 +705,7 @@ return view.extend({
     return E('div', { 'class': 'cl-wrap clashoo-container cl-config-page cl-form-page ' + getThemeClass() }, [tabBar, subPanel, proxyPanel, dnsPanel]);
   },
 
-  _buildSubsPanel: function (subsData, subFiles, upFiles, customFiles, tplFiles, uiData) {
+  _buildSubsPanel: function (subsData, subFiles, upFiles, customFiles, tplFiles, uiData, subscriptionUpdateStatus) {
     var self = this;
     var sanitizeText = function (v) { return (v == null || v === 'null') ? '' : String(v); };
     var subUrl      = sanitizeText(uiData && uiData.subscribe_url);
@@ -920,6 +1038,7 @@ return view.extend({
       ]),
       E('div', { 'class': 'cl-section cl-card' }, [
         E('h4', {}, '已下载订阅'),
+        buildSubscriptionSchedule(uiData, subscriptionUpdateStatus),
         subs.length ? E('div', { 'class': 'cl-fixed-600' }, [
           E('div', { 'class': 'cl-file-list' }, subCards)
         ])
@@ -1356,7 +1475,7 @@ return view.extend({
 
   /* ── sing-box UI ── */
 
-  _renderSingbox: function (sbData) {
+  _renderSingbox: function (sbData, uiData, subscriptionUpdateStatus) {
     var self = this;
     var profiles = sbData.profiles || [];
     var tabEls = {}, panelEls = {};
@@ -1388,7 +1507,7 @@ return view.extend({
     );
 
     var profilesPanel = E('div', { 'class': 'cl-panel' + (this._sbTab === 'profiles' ? ' active' : ''), id: 'cl-panel-profiles' },
-      self._buildSbProfilesPanel(profiles, sbData.active || ''));
+      self._buildSbProfilesPanel(profiles, sbData.active || '', uiData, subscriptionUpdateStatus));
     panelEls['profiles'] = profilesPanel;
 
     var wizardPanel = E('div', { 'class': 'cl-panel' + (this._sbTab === 'wizard' ? ' active' : ''), id: 'cl-panel-wizard' },
@@ -1398,7 +1517,7 @@ return view.extend({
     return E('div', { 'class': 'cl-wrap clashoo-container cl-config-page cl-form-page ' + getThemeClass() }, [tabBar, profilesPanel, wizardPanel]);
   },
 
-  _buildSbProfilesPanel: function (profiles, activeProfile) {
+  _buildSbProfilesPanel: function (profiles, activeProfile, uiData, subscriptionUpdateStatus) {
     var self = this;
     var safeText = function (v) { return (v == null || v === 'null') ? '' : String(v); };
     var formatJsonForEditor = function (content) {
@@ -1539,6 +1658,10 @@ return view.extend({
     });
 
     return [
+      E('div', { 'class': 'cl-section cl-card cl-sb-card' }, [
+        E('h4', {}, '订阅更新'),
+        buildSubscriptionSchedule(uiData || {}, subscriptionUpdateStatus || {})
+      ]),
       E('div', { 'class': 'cl-section cl-card cl-sb-card' }, [
         E('h4', {}, 'sing-box 配置文件'),
         E('table', { 'class': 'cl-sub-list cl-sb-list' }, [

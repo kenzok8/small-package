@@ -2,7 +2,11 @@
 
 LOG_FILE="/tmp/clash_update.txt"
 MODELTYPE=$(uci get clashoo.config.download_core 2>/dev/null)
-CORETYPE=$(uci get clashoo.config.dcore 2>/dev/null)
+# When invoked with a target dcore arg (the component "core update" button),
+# download that core WITHOUT switching the active kernel — see finalize().
+# No arg = legacy callers (manual download_core RPC / boot) use the active dcore.
+TARGET_DCORE="$1"
+CORETYPE=${TARGET_DCORE:-$(uci get clashoo.config.dcore 2>/dev/null)}
 MIRROR_PREFIX=$(uci get clashoo.config.core_mirror_prefix 2>/dev/null)
 CUSTOM_CORE_URL=$(uci get clashoo.config.core_download_url 2>/dev/null)
 CORE_INSTALLED=0
@@ -20,16 +24,28 @@ write_log() {
 
 finalize() {
 	if [ "$CORE_INSTALLED" = "1" ]; then
-		# Smart 内核下载后自动切换
-		if [ "$CORETYPE" = "1" ]; then
-			uci set clashoo.config.core_type="mihomo" 2>/dev/null
-			uci set clashoo.config.smart_auto_switch="1" 2>/dev/null
-			uci commit clashoo 2>/dev/null
-			write_log "Smart 内核已就绪，自动启用 Smart 策略"
-		fi
-		write_log "内核已替换，重启 Clashoo"
-		if ! /etc/init.d/clashoo restart >/dev/null 2>&1; then
-			write_log "重启 Clashoo 失败"
+		if [ -n "$TARGET_DCORE" ]; then
+			# "core update" path: only refresh the binary. Apply (restart) only
+			# when we updated the kernel that is actually running, so updating
+			# smart / sing-box never hijacks the active kernel — and updating
+			# several cores doesn't rotate through a restart for each. Switching
+			# kernels stays a separate user action (set_core handles strategy).
+			if [ "$TARGET_DCORE" = "$(uci get clashoo.config.dcore 2>/dev/null)" ]; then
+				write_log "当前内核已更新，重启 Clashoo 生效"
+				/etc/init.d/clashoo restart >/dev/null 2>&1 || write_log "重启 Clashoo 失败"
+			else
+				write_log "内核二进制已更新（非当前内核，不切换、不重启）"
+			fi
+		else
+			# legacy callers (manual download_core RPC / boot): unchanged behavior
+			if [ "$CORETYPE" = "1" ]; then
+				uci set clashoo.config.core_type="mihomo" 2>/dev/null
+				uci set clashoo.config.smart_auto_switch="1" 2>/dev/null
+				uci commit clashoo 2>/dev/null
+				write_log "Smart 内核已就绪，自动启用 Smart 策略"
+			fi
+			write_log "内核已替换，重启 Clashoo"
+			/etc/init.d/clashoo restart >/dev/null 2>&1 || write_log "重启 Clashoo 失败"
 		fi
 	fi
 	rm -f /var/run/core_update >/dev/null 2>&1
@@ -92,13 +108,10 @@ fetch_url_try() {
 	return 127
 }
 
-detect_proxy() {
-	if pidof mihomo >/dev/null 2>&1 || pidof clash-meta >/dev/null 2>&1 || pidof sing-box >/dev/null 2>&1; then
-		local p
-		p="$(uci -q get clashoo.config.mixed_port 2>/dev/null)"
-		[ -n "$p" ] && echo "http://127.0.0.1:$p"
-	fi
-}
+# Route core downloads through the running core in kernel-only mode (shared
+# logic in proxy_lib.sh: handles smart core + sing-box's own profile port).
+. /usr/share/clashoo/update/proxy_lib.sh
+detect_proxy() { clashoo_detect_proxy; }
 
 download_file_try() {
 	url="$1"

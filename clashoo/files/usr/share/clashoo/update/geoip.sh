@@ -31,11 +31,12 @@ cleanup() {
 	rm -f /var/run/geoip_update >/dev/null 2>&1
 }
 
+# Shared port detection (handles smart core + sing-box profile port); keep the
+# local anonymity probe so we skip a coexisting plugin's auth-locked proxy.
+. /usr/share/clashoo/update/proxy_lib.sh
 detect_proxy() {
-	pidof mihomo >/dev/null 2>&1 || pidof clash-meta >/dev/null 2>&1 || pidof sing-box >/dev/null 2>&1 || return 0
-	p="$(uci -q get clashoo.config.mixed_port 2>/dev/null)"
-	[ -n "$p" ] || return 0
-	proxy="http://127.0.0.1:$p"
+	proxy="$(clashoo_detect_proxy)"
+	[ -n "$proxy" ] || return 0
 	# Only use it if it actually proxies anonymously. A coexisting plugin
 	# (e.g. OpenClash on the same 7890) may hold this port behind auth and
 	# answer HTTP 407 — in that case fall through to the mirrors instead.

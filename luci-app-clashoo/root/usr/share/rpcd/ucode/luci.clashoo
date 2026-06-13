@@ -54,6 +54,9 @@ const COMPONENT_UPDATE_RUNNER = '/tmp/clashoo_component_update_runner.sh';
 const COMPONENT_UPDATE_RUN_FILE = '/var/run/clashoo_component_update';
 const COMPONENT_UPDATE_LOG_FILE = '/tmp/clashoo_component_update.log';
 const COMPONENT_UPDATE_STATE_FILE = '/tmp/clashoo_component_update_state';
+const SUBSCRIPTION_UPDATE_SCRIPT = '/usr/share/clashoo/update/subscription_update.sh';
+const SUBSCRIPTION_UPDATE_STATUS_FILE = '/usr/share/clashbackup/subscription_update.status';
+const SUBSCRIPTION_UPDATE_LOCK_DIR = '/tmp/clashoo_subscription_update.lock';
 
 function uci_get(pkg, sec, opt) {
 let c = cursor();
@@ -63,6 +66,23 @@ return c.get(pkg, sec, opt) || '';
 
 function shell_quote(s) {
 return "'" + replace(s || '', /'/g, "'\\''") + "'";
+}
+
+function subscription_update_status_data() {
+let out = { running: !!access(SUBSCRIPTION_UPDATE_LOCK_DIR, 'r') };
+if (!access(SUBSCRIPTION_UPDATE_STATUS_FILE, 'r')) return out;
+let raw = readfile(SUBSCRIPTION_UPDATE_STATUS_FILE) || '';
+for (let line in split(raw, '\n')) {
+	let pos = index(line, '=');
+	if (pos <= 0) continue;
+	let key = substr(line, 0, pos);
+	let value = substr(line, pos + 1);
+	if (key == 'last_run' || key == 'finished_at' || key == 'updated' ||
+	         key == 'unchanged' || key == 'failed' || key == 'skipped')
+		out[key] = int(value) || 0;
+	else if (key == 'message') out.message = value;
+}
+return out;
 }
 
 function dashboard_panel_dir(name) {
@@ -838,6 +858,12 @@ if (geoip_src != '1') {
 	let gm = match(mmdb_url, /github[a-z]*\.com\/([^\/]+)\/([^\/]+)/);
 	if (gm) geoip_repo = gm[1] + '/' + gm[2];
 }
+// In kernel-only mode there is no TPROXY, so these github/api/B2 probes would
+// leak out direct and stall at their -m timeout behind the GFW (the "检查更新
+// 半天不出反馈"). Route them through the running core, same as the download
+// scripts (shared logic in proxy_lib.sh). Normal mode -> empty -> TPROXY.
+let cdp = trim(shell_read('. /usr/share/clashoo/update/proxy_lib.sh; clashoo_detect_proxy 2>/dev/null') || '');
+let px = cdp ? ('--proxy ' + shell_quote(cdp) + ' ') : '';
 let cmd = '';
 cmd += "curl -fsS -o /dev/null -w '%{redirect_url}' -m 8 " + shell_quote(GH + 'MetaCubeX/mihomo/releases/latest')  + ' >' + shell_quote(dir + '/ms') + ' 2>/dev/null &\n';
 cmd += "curl -fsS -o /dev/null -w '%{redirect_url}' -m 8 " + shell_quote(GH + 'SagerNet/sing-box/releases/latest') + ' >' + shell_quote(dir + '/ss') + ' 2>/dev/null &\n';
@@ -854,6 +880,8 @@ cmd += 'curl -fsSL -m 12 ' + shell_quote(GH + 'vernesong/mihomo/releases/expande
 // geoip —— 源仓库 releases/latest 的 302 tag（多为日期串）
 if (geoip_repo)
 	cmd += "curl -fsS -o /dev/null -w '%{redirect_url}' -m 8 " + shell_quote(GH + geoip_repo + '/releases/latest') + ' >' + shell_quote(dir + '/gi') + ' 2>/dev/null &\n';
+// inject the local-core proxy into every probe above (no-op when px is empty)
+if (px) cmd = replace(cmd, 'curl ', 'curl ' + px);
 cmd += 'wait\n';
 let pp = popen(cmd);
 if (pp) { pp.read('all'); pp.close(); }
@@ -1960,6 +1988,8 @@ return { success: true, activated };
 update_panel: {
 args: { name: 'name' },
 call: function(req) {
+if (access('/var/run/panel_downloading', 'r'))
+return { success: false, busy: true, message: '面板正在下载' };
 let name = req.args?.name || 'zashboard';
 if (name != 'metacubexd' && name != 'yacd' && name != 'zashboard' && name != 'razord')
 name = 'zashboard';
@@ -2946,43 +2976,74 @@ args: { name: 'name' },
 call: function(req) {
 let name = req.args?.name || '';
 if (!name) return { error: 'missing name' };
-let c = cursor(); c.load('clashoo');
-c.set('clashoo', 'config', 'config_update_name', name);
-c.commit('clashoo');
-let rc = system('sh /usr/share/clashoo/update/update.sh >/dev/null 2>&1');
+let rc = system('sh ' + shell_quote(SUBSCRIPTION_UPDATE_SCRIPT) + ' --mihomo ' + shell_quote(name) + ' >/dev/null 2>&1');
 if (rc != 0) {
 return { success: false, code: rc, message: '更新失败: ' + name };
 }
+return { success: true, code: rc, message: '更新完成: ' + name };
+}
+},
 
-let msg = '更新完成: ' + name;
-let b = find_template_binding(name);
-let btpl = b ? find_template_path(b.template_name) : '';
-if (b && b.enabled == '1' && btpl) {
-let sub_path = SUB_DIR + '/' + name;
-let output_name = template_output_name(name, b.template_name);
-let out_path = TEMPLATE_DIR + '/' + output_name;
-let merge_cmd = 'sh /usr/share/clashoo/update/template_merge.sh '
-  + shell_quote(sub_path) + ' '
-  + shell_quote(btpl) + ' '
-  + shell_quote(out_path)
-  + ' >/dev/null 2>&1';
-if (system(merge_cmd) == 0) {
-let current = c.get('clashoo', 'config', 'use_config') || '';
-if (replace(current, /^.*\//, '') == name) {
-c.set('clashoo', 'config', 'use_config', out_path);
-c.set('clashoo', 'config', 'config_type', '3');
+update_current_subscription: {
+call: function() {
+let c = cursor(); c.load('clashoo');
+if (get_core_type() == 'singbox') {
+	let name = c.get('clashoo', 'config', 'singbox_active') || '';
+	let path = SINGBOX_DIR + '/' + name;
+	if (!name || !access(path + '.url', 'r') || !trim(readfile(path + '.url') || ''))
+		return { success: false, reason: 'not_subscription', message: '当前配置未记录订阅链接' };
+	let rc = system('sh ' + shell_quote(SUBSCRIPTION_UPDATE_SCRIPT) + ' --singbox ' + shell_quote(name) + ' >/dev/null 2>&1');
+	return { success: rc == 0, code: rc, message: rc == 0 ? '当前订阅更新完成' : '当前订阅更新失败' };
+}
+
+let path = c.get('clashoo', 'config', 'use_config') || '';
+let slash = rindex(path, '/');
+let name = slash >= 0 ? substr(path, slash + 1) : path;
+let found = false;
+for (let sub in read_subscriptions()) {
+	if (sub.name == name && sub.url) {
+		found = true;
+		break;
+	}
+}
+if (!found)
+	return { success: false, reason: 'not_subscription', message: '当前配置未记录订阅链接' };
+let rc = system('sh ' + shell_quote(SUBSCRIPTION_UPDATE_SCRIPT) + ' --mihomo ' + shell_quote(name) + ' >/dev/null 2>&1');
+return { success: rc == 0, code: rc, message: rc == 0 ? '当前订阅更新完成' : '当前订阅更新失败' };
+}
+},
+
+subscription_update_all: {
+call: function() {
+if (access(SUBSCRIPTION_UPDATE_LOCK_DIR, 'r'))
+	return { success: false, running: true, message: '订阅更新正在运行' };
+let rc = system('sh ' + shell_quote(SUBSCRIPTION_UPDATE_SCRIPT) + ' --all >/dev/null 2>&1 &');
+return { success: rc == 0, running: rc == 0, message: rc == 0 ? '已开始更新全部订阅' : '启动失败' };
+}
+},
+
+subscription_update_status: {
+call: function() {
+return subscription_update_status_data();
+}
+},
+
+set_subscription_update_schedule: {
+args: { enabled: 'enabled', interval: 'interval' },
+call: function(req) {
+let enabled = req.args?.enabled == '1' ? '1' : '0';
+let interval_raw = '' + (req.args?.interval || '');
+if (!match(interval_raw, /^[0-9]+$/))
+	return { success: false, message: '更新间隔必须为数字' };
+let interval = int(interval_raw);
+if (interval < 1 || interval > 8760)
+	return { success: false, message: '更新间隔必须为 1 到 8760 小时' };
+let c = cursor(); c.load('clashoo');
+c.set('clashoo', 'config', 'auto_subscription_update', enabled);
+c.set('clashoo', 'config', 'subscription_update_interval', '' + interval);
 c.commit('clashoo');
-if (is_running())
-system('service ' + get_service_name() + ' restart >/dev/null 2>&1');
-}
-msg = msg + '，模板已生成';
-}
-else {
-msg = msg + '，模板生成失败';
-}
-}
-
-return { success: true, code: rc, message: msg };
+system('/etc/init.d/clashoo refresh_cron >/dev/null 2>&1');
+return { success: true, enabled: enabled, interval: interval };
 }
 },
 
@@ -3616,56 +3677,8 @@ call: function(req) {
 let name = req.args?.name || '';
 if (!name || index(name, '/') >= 0 || index(name, '..') >= 0)
   return { success: false, message: 'invalid name' };
-let dir  = '/usr/share/clashoo/config/singbox';
-let path = dir + '/' + name;
-if (!access(path + '.url', 'r'))
-  return { success: false, message: '该配置未记录订阅链接，无法更新' };
-let sub_url = trim(readfile(path + '.url') || '');
-if (!sub_url) return { success: false, message: '订阅链接为空' };
-let tmp_json = '/tmp/clashoo_sb_native_upd.json';
-let tmp_hdr  = '/tmp/clashoo_sb_native_upd.hdr';
-system('rm -f ' + shell_quote(tmp_json) + ' ' + shell_quote(tmp_hdr) + ' >/dev/null 2>&1');
-let sub_ua = uci_get('clashoo', 'config', 'sub_ua') || 'clash.meta';
-let dl_cmd = 'curl -fsSL --connect-timeout 8 --max-time 20'
-  + ' -D ' + shell_quote(tmp_hdr)
-  + ' -A ' + shell_quote(sub_ua)
-  + ' ' + shell_quote(sub_url)
-  + ' -o ' + shell_quote(tmp_json)
-  + ' >/dev/null 2>&1';
-if (system(dl_cmd) != 0 || !access(tmp_json, 'r')) {
-  system('rm -f ' + shell_quote(tmp_json) + ' ' + shell_quote(tmp_hdr) + ' >/dev/null 2>&1');
-  return { success: false, message: '下载失败' };
-}
-let raw = readfile(tmp_json) || '';
-if (length(raw) < 10 || substr(trim(raw), 0, 1) !== '{') {
-  system('rm -f ' + shell_quote(tmp_json) + ' ' + shell_quote(tmp_hdr) + ' >/dev/null 2>&1');
-  return { success: false, message: '下载内容不是 JSON' };
-}
-let cfg = json(raw);
-if (!cfg || type(cfg.outbounds) !== 'array' || length(cfg.outbounds) == 0) {
-  system('rm -f ' + shell_quote(tmp_json) + ' ' + shell_quote(tmp_hdr) + ' >/dev/null 2>&1');
-  return { success: false, message: 'JSON 解析失败或缺少 outbounds' };
-}
-if (writefile(path, raw) === null) {
-  system('rm -f ' + shell_quote(tmp_json) + ' ' + shell_quote(tmp_hdr) + ' >/dev/null 2>&1');
-  return { success: false, message: '保存失败' };
-}
-if (access(tmp_hdr, 'r')) {
-  let hdr_raw = readfile(tmp_hdr) || '';
-  for (let line in split(hdr_raw, '\n')) {
-    let ll = lc(trim(line));
-    if (substr(ll, 0, 22) == 'subscription-userinfo:') {
-      let info_val = trim(substr(line, 22));
-      if (info_val) writefile(path + '.info', info_val);
-      break;
-    }
-  }
-}
-system('rm -f ' + shell_quote(tmp_json) + ' ' + shell_quote(tmp_hdr) + ' >/dev/null 2>&1');
-let active = uci_get('clashoo', 'config', 'singbox_active') || '';
-if (active === name)
-  system('cp -f ' + shell_quote(path) + ' /etc/sing-box/config.json >/dev/null 2>&1');
-return { success: true, message: name + ' 已更新' };
+let rc = system('sh ' + shell_quote(SUBSCRIPTION_UPDATE_SCRIPT) + ' --singbox ' + shell_quote(name) + ' >/dev/null 2>&1');
+return { success: rc == 0, code: rc, message: rc == 0 ? name + ' 已更新' : name + ' 更新失败' };
 }
 },
 
