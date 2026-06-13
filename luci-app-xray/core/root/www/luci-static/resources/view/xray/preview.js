@@ -86,8 +86,8 @@ return view.extend({
         s.tab('dynamic_direct', _('Dynamic Direct'));
 
         s.taboption('dynamic_direct', form.Flag, 'dynamic_direct_tcp4', _('Enable for IPv4 TCP'), _("This should improve performance with large number of connections."));
-        s.taboption('dynamic_direct', form.Flag, 'dynamic_direct_tcp6', _('Enable for IPv4 UDP'), _("This may cause problems but worth a try."));
-        s.taboption('dynamic_direct', form.Flag, 'dynamic_direct_udp4', _('Enable for IPv6 TCP'), _("This may not be very useful but it should be good enough for a try."));
+        s.taboption('dynamic_direct', form.Flag, 'dynamic_direct_udp4', _('Enable for IPv4 UDP'), _("This may cause problems but worth a try."));
+        s.taboption('dynamic_direct', form.Flag, 'dynamic_direct_tcp6', _('Enable for IPv6 TCP'), _("This may not be very useful but it should be good enough for a try."));
         s.taboption('dynamic_direct', form.Flag, 'dynamic_direct_udp6', _('Enable for IPv6 UDP'), _("This may cause problems and is not very useful at the same time. Not recommended."));
 
         let dynamic_direct_timeout = s.taboption('dynamic_direct', form.Value, 'dynamic_direct_timeout', _('Dynamic Direct Timeout'), _("Larger value consumes more memory and performs generally better. Unit in seconds."));

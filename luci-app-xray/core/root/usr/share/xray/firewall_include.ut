@@ -360,8 +360,8 @@
 {% if (length(fakedns) > 0): %}
         ip protocol tcp ip daddr {{ general.pool_v4 || "198.18.0.0/15" }} {{ counter }} tproxy ip to :{{ general.tproxy_port_tcp_f4 || 1086 }} accept
         ip protocol udp ip daddr {{ general.pool_v4 || "198.18.0.0/15" }} {{ counter }} tproxy ip to :{{ general.tproxy_port_udp_f4 || 1088 }} accept
-        ip6 nexthdr tcp ip6 daddr {{ general.pool_v6 || "fc00::/18" }} {{ counter }} tproxy ip6 to :{{ general.tproxy_port_tcp_f6 || 1087 }} accept
-        ip6 nexthdr udp ip6 daddr {{ general.pool_v6 || "fc00::/18" }} {{ counter }} tproxy ip6 to :{{ general.tproxy_port_udp_f6 || 1089 }} accept
+        ip6 nexthdr tcp ip6 daddr {{ general.pool_v6 || "2001:2::/48" }} {{ counter }} tproxy ip6 to :{{ general.tproxy_port_tcp_f6 || 1087 }} accept
+        ip6 nexthdr udp ip6 daddr {{ general.pool_v6 || "2001:2::/48" }} {{ counter }} tproxy ip6 to :{{ general.tproxy_port_udp_f6 || 1089 }} accept
 {% endif %}
 {% if (length(manual_tproxy_source_ips) > 0): %}
         ip protocol tcp ip daddr @tp_spec_dv4_mt {{ counter }} tproxy ip to :{{ general.tproxy_port_tcp_v4 || 1082 }} accept
@@ -522,8 +522,8 @@
 {% if (length(fakedns) > 0): %}
         ip protocol tcp ip daddr {{ general.pool_v4 || "198.18.0.0/15" }} {{ counter }} goto tp_spec_lan_fw comment "Xray FakeDNS IPv4 Pool TCP"
         ip protocol udp ip daddr {{ general.pool_v4 || "198.18.0.0/15" }} {{ counter }} goto tp_spec_lan_fw comment "Xray FakeDNS IPv4 Pool UDP"
-        ip6 nexthdr tcp ip6 daddr {{ general.pool_v6 || "fc00::/18" }} {{ counter }} goto tp_spec_lan_fw comment "Xray FakeDNS IPv6 Pool TCP"
-        ip6 nexthdr udp ip6 daddr {{ general.pool_v6 || "fc00::/18" }} {{ counter }} goto tp_spec_lan_fw comment "Xray FakeDNS IPv6 Pool UDP"
+        ip6 nexthdr tcp ip6 daddr {{ general.pool_v6 || "2001:2::/48" }} {{ counter }} goto tp_spec_lan_fw comment "Xray FakeDNS IPv6 Pool TCP"
+        ip6 nexthdr udp ip6 daddr {{ general.pool_v6 || "2001:2::/48" }} {{ counter }} goto tp_spec_lan_fw comment "Xray FakeDNS IPv6 Pool UDP"
 {% endif %}
 {% if (length(manual_tproxy_source_ips) > 0): %}
         ip protocol tcp ip daddr @tp_spec_dv4_mt {{ counter }} goto tp_spec_lan_fw comment "Xray manual transparent proxy TCP"
@@ -622,7 +622,7 @@
     chain xray_fakedns_ping_prerouting {
         type nat hook prerouting priority dstnat {{ firewall_priority }}; policy accept;
         ip daddr {{ general.pool_v4 || "198.18.0.0/15" }} icmp type echo-request {{ counter }} redirect comment "Xray FakeDNS IPv4 Pool ICMP"
-        ip6 daddr {{ general.pool_v6 || "fc00::/18" }} icmpv6 type echo-request {{ counter }} redirect comment "Xray FakeDNS IPv6 Pool ICMPv6"
+        ip6 daddr {{ general.pool_v6 || "2001:2::/48" }} icmpv6 type echo-request {{ counter }} redirect comment "Xray FakeDNS IPv6 Pool ICMPv6"
     }
 {% endif %}
 
@@ -630,7 +630,7 @@
     chain xray_fakedns_ping_output {
         type nat hook output priority dstnat {{ firewall_priority }}; policy accept;
         ip daddr {{ general.pool_v4 || "198.18.0.0/15" }} icmp type echo-request {{ counter }} redirect comment "Xray FakeDNS IPv4 Pool ICMP"
-        ip6 daddr {{ general.pool_v6 || "fc00::/18" }} icmpv6 type echo-request {{ counter }} redirect comment "Xray FakeDNS IPv6 Pool ICMPv6"
+        ip6 daddr {{ general.pool_v6 || "2001:2::/48" }} icmpv6 type echo-request {{ counter }} redirect comment "Xray FakeDNS IPv6 Pool ICMPv6"
     }
 {% endif %}
 {% endif %}

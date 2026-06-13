@@ -490,7 +490,7 @@ return view.extend({
 
         let pool_v6 = s.taboption('fake_dns', form.Value, 'pool_v6', _('Address Pool (IPv6)'));
         pool_v6.datatype = 'ip6addr';
-        pool_v6.placeholder = "fc00::/18";
+        pool_v6.placeholder = "2001:2::/48";
 
         let pool_v6_size = s.taboption('fake_dns', form.Value, 'pool_v6_size', _('Address Pool Size (IPv6)'));
         pool_v6_size.datatype = 'integer';
