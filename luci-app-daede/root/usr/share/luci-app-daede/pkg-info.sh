@@ -23,7 +23,16 @@ if command -v apk >/dev/null 2>&1; then
 			}
 		')
 	fi
-	latest=$(apk search "^${PKG}\$" 2>/dev/null | sort -V | tail -1 | sed "s/^${PKG}-//")
+	# apk search treats ^ and $ as literal chars (not regex anchors), so the old
+	# `apk search "^pkg$"` matched nothing. Enumerate the exact-name package
+	# across all feeds via `apk list` and take the highest version. Restricting
+	# to "<pkg>-<digit>" avoids sibling names like <pkg>-geoip / luci-app-<pkg>.
+	latest=$(apk list "$PKG" 2>/dev/null | awk -v p="$PKG" '
+		$1 ~ "^" p "-[0-9]" {
+			v = $1; sub("^" p "-", "", v);
+			print v
+		}
+	' | sort -V | tail -1)
 elif command -v opkg >/dev/null 2>&1; then
 	installed=$(opkg status "$PKG" 2>/dev/null | awk -F': ' '$1=="Version"{print $2; exit}')
 	latest=$(opkg info "$PKG" 2>/dev/null | awk -F': ' '$1=="Version"{print $2; exit}')

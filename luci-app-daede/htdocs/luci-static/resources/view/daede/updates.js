@@ -63,6 +63,29 @@ function fmtMtime(epoch) {
 	return d.toISOString().slice(0, 10);
 }
 
+// Compare two version strings like `sort -V`: split into numeric / non-numeric
+// chunks and compare chunk by chunk (numeric chunks numerically). Returns
+// <0 if a<b, 0 if equal, >0 if a>b. Used so a stale third-party feed that
+// happens to provide an OLDER build (e.g. compile-jell) is never offered as an
+// "upgrade" over a newer locally installed package.
+function cmpVer(a, b) {
+	const ax = String(a).match(/(\d+|\D+)/g) || [];
+	const bx = String(b).match(/(\d+|\D+)/g) || [];
+	const n = Math.max(ax.length, bx.length);
+	for (let i = 0; i < n; i++) {
+		const as = ax[i], bs = bx[i];
+		if (as === undefined) return -1;
+		if (bs === undefined) return 1;
+		if (/^\d+$/.test(as) && /^\d+$/.test(bs)) {
+			const d = parseInt(as, 10) - parseInt(bs, 10);
+			if (d !== 0) return d < 0 ? -1 : 1;
+		} else if (as !== bs) {
+			return as < bs ? -1 : 1;
+		}
+	}
+	return 0;
+}
+
 function probeFile(path) {
 	return L.resolveDefault(fs.stat(path), null).then(function(st) {
 		return { exists: !!st, size: st ? st.size : 0, mtime: st ? st.mtime : 0 };
@@ -210,24 +233,27 @@ return view.extend({
 				]).forEach(function(entry) {
 					const btn = E('button', { 'class': 'dd-up-btn dd-up-btn-primary' }, _('Upgrade'));
 					btn.addEventListener('click', function() { upgradePkg(entry.k, btn); });
-					const sameVersion = entry.r.installed && entry.r.latest && entry.r.installed === entry.r.latest;
-					const updatable = entry.r.installed && entry.r.latest && entry.r.installed !== entry.r.latest;
+					// Only treat it as upgradable when the feed version is STRICTLY
+					// higher than what's installed. A lower/equal feed version (e.g.
+					// a stale compile-jell build) must never be offered as an upgrade.
+					const cmp = (entry.r.installed && entry.r.latest)
+						? cmpVer(entry.r.latest, entry.r.installed) : null;
+					const updatable = cmp !== null && cmp > 0;
 					let meta;
 					if (!entry.r.installed) {
 						meta = _('not installed via package manager');
 						btn.disabled = true;
 						btn.textContent = _('Unavailable');
-					} else if (sameVersion) {
-						meta = _('installed') + ': ' + entry.r.installed + ' · ' + _('up to date');
-						btn.disabled = true;
 					} else if (!entry.r.latest) {
 						// latest unknown (registry unreachable) - nothing to upgrade to
 						meta = _('installed') + ': ' + entry.r.installed + ' · ' + _('latest version unknown');
 						btn.disabled = true;
 					} else if (updatable) {
 						meta = _('installed') + ': ' + entry.r.installed + ' → ' + _('latest') + ': ' + entry.r.latest;
-						} else {
-						meta = _('installed') + ': ' + entry.r.installed + (entry.r.latest ? ' · ' + _('latest') + ': ' + entry.r.latest : '');
+					} else {
+						// installed >= feed: already up to date (feed may even be older)
+						meta = _('installed') + ': ' + entry.r.installed + ' · ' + _('up to date');
+						btn.disabled = true;
 					}
 					pkgBody.appendChild(mkRow(
 						updatable ? '⚠' : (entry.r.installed ? '✓' : '✗'),
