@@ -1,12 +1,17 @@
 # shellcheck shell=sh
 # Shared proxy detection for clashoo's own outbound requests.
 #
-# Only kernel-only mode (core_only=1) needs this: it deliberately skips TPROXY
-# to coexist with other proxy plugins, so clashoo's self-initiated downloads
-# (update checks, component/panel/core/geoip downloads, subscriptions) would
-# otherwise leak out direct and stall behind the GFW. Route them through the
-# running core's mixed port instead. Normal mode returns empty on purpose —
-# TPROXY already redirects everything transparently.
+# clashoo's self-initiated downloads (update checks, component/panel/core/geoip
+# downloads, subscriptions) and health checks must reach GitHub through the
+# running core, otherwise they leak out direct and stall behind the GFW. Route
+# them through the core's mixed port whenever a core is running — in BOTH modes:
+#   - core-only mode deliberately skips TPROXY to coexist with other plugins;
+#   - normal mode used to rely on transparent redirect, but the router's OWN
+#     output redirect is fragile (e.g. PPPoE/GL.iNet stacks where Redirect to
+#     loopback never completes — issue #25), so don't depend on it. The explicit
+#     mixed port works on every network stack.
+# When no core is running (e.g. bootstrapping the very first core download),
+# returns empty so the caller falls back to direct / mirror sources.
 #
 # Port source depends on the running kernel (no `ss` on this busybox, so the
 # liveness gate is pidof, not a listening-socket probe):
@@ -16,7 +21,6 @@
 #                                    (a custom config's port may differ from uci)
 # uci mixed_port is the last-resort fallback for both.
 clashoo_detect_proxy() {
-	[ "$(uci -q get clashoo.config.core_only 2>/dev/null)" = "1" ] || return 0
 	_cdp_port=""
 	if pidof sing-box >/dev/null 2>&1; then
 		_cdp_port="$(jsonfilter -i /etc/sing-box/config.json \

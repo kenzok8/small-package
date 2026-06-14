@@ -293,10 +293,19 @@ start_singbox_service() {
 		return 1
 	fi
 	prepare_singbox_runtime || return 1
-	# preflight dry-run: bail on bad config without touching firewall/dnsmasq
-	if ! /usr/bin/sing-box -c /etc/sing-box/config.json check >> "$CORE_LOG_PATH" 2>&1; then
-		log_msg "sing-box config dry-run failed; firewall/DNS untouched" "sing-box 配置预检失败，未应用防火墙与 DNS 改动"
-		runtime_state_record_health "fail" "preflight:singbox_dry_run_failed"
+	# preflight dry-run with watchdog: bail on bad config without touching
+	# firewall/dnsmasq, and never let a hung check freeze startup/UI.
+	_run_with_timeout 15 /usr/bin/sing-box -c /etc/sing-box/config.json check >> "$CORE_LOG_PATH" 2>&1
+	_pf_rc=$?
+	if [ "$_pf_rc" -ne 0 ]; then
+		_pf_reason="$(_preflight_reason)"
+		if [ "$_pf_rc" -eq 124 ]; then
+			log_msg "sing-box config preflight timed out, retry shortly. ${_pf_reason}" "sing-box 配置预检超时，稍后自动重试。${_pf_reason}"
+			runtime_state_record_health "fail" "preflight:singbox_timeout"
+		else
+			log_msg "sing-box config dry-run failed; firewall/DNS untouched. ${_pf_reason}" "sing-box 配置预检失败，未应用防火墙与 DNS 改动。${_pf_reason}"
+			runtime_state_record_health "fail" "preflight:singbox_dry_run_failed"
+		fi
 		return 1
 	fi
 	/etc/init.d/sing-box start >/dev/null 2>&1
@@ -322,6 +331,38 @@ _log_runtime_error() {
 	local message="$1"
 	echo "$message" > "$REAL_LOG"
 	echo "  $(date "+%Y-%m-%d %H:%M:%S") - $message" >> /usr/share/clashoo/clashoo.txt
+}
+
+# Run a command with a self-watchdog timeout. busybox has no `timeout` binary,
+# so poll the backgrounded pid and kill it on overrun. Returns the command's
+# exit status, or 124 when the watchdog fired (timed out).
+_run_with_timeout() {
+	local _to="$1"; shift
+	local _pid _i=0
+	"$@" &
+	_pid=$!
+	while [ "$_i" -lt "$_to" ]; do
+		kill -0 "$_pid" 2>/dev/null || { wait "$_pid"; return $?; }
+		sleep 1
+		_i=$((_i + 1))
+	done
+	kill -TERM "$_pid" 2>/dev/null
+	sleep 1
+	kill -KILL "$_pid" 2>/dev/null
+	wait "$_pid" 2>/dev/null
+	return 124
+}
+
+# Pull a concise failure reason out of the core log so users see the real error
+# (e.g. "can't download MMDB") instead of only "preflight failed".
+_preflight_reason() {
+	local line
+	line="$(grep -E 'level=(error|fatal)' "$CORE_LOG_PATH" 2>/dev/null | tail -1)"
+	[ -n "$line" ] || line="$(tail -1 "$CORE_LOG_PATH" 2>/dev/null)"
+	case "$line" in
+		*'msg="'*) line="$(printf '%s' "$line" | sed -n 's/.*msg="\([^"]*\)".*/\1/p')" ;;
+	esac
+	printf '%s' "$line"
 }
 
 log_msg() {
@@ -501,7 +542,11 @@ runtime_run_health_check() {
 	fi
 
 	detail="dns:${dns_state};explicit:${explicit_state};transparent:${transparent_state}"
-	if [ "$explicit_state" = "ok" ] && [ "$transparent_state" = "ok" ]; then
+	# Pass on explicit (local mixed-port) reachability alone. The transparent
+	# probe tests the router's OWN output-redirect path, which is unreliable on
+	# some stacks (PPPoE/GL.iNet, issue #25) yet does not reflect LAN-client
+	# proxying — keep it informational in `detail`, not a pass gate.
+	if [ "$explicit_state" = "ok" ]; then
 		if [ "$require_fakeip" = "0" ] || [ "$dns_state" = "ok" ] || [ "$dns_state" = "compat" ] || [ "$dns_state" = "na" ]; then
 			runtime_state_accepts_health_update || return 1
 			runtime_state_record_health "pass" "$detail"
@@ -1234,8 +1279,42 @@ _prepare_geo_bootstrap_mode() {
 		sed -i "/^[[:space:]]*-[[:space:]]*[\"']\{0,1\}geosite:/d" "$CONFIG_YAML" 2>/dev/null
 	fi
 
-	_start_geoip_update_async
-	log_msg "Geo data missing, start in bootstrap mode and update in background" "Geo 数据缺失，已切换为引导模式并后台更新"
+	# Defer the geo download until the core is up: a fresh box has no working
+	# proxy yet, so fetching now would hit the (likely blocked) mirrors and fail.
+	# Record what was missing so the post-start watcher can fetch geo through the
+	# live proxy and only reload once geo is complete. See _finish_geo_bootstrap.
+	printf '%s %s\n' "$needs_mmdb" "$needs_geosite" > /var/run/clashoo_bootstrap_pending 2>/dev/null
+	log_msg "Geo data missing, started in bootstrap mode; will fetch geo via proxy then reload" "Geo 数据缺失，已切换为引导模式；待代理可用后自动补全并重载"
+}
+
+# After the core is up in bootstrap mode, fetch the missing geo data through the
+# now-working proxy and, once it is complete, reload the full (un-stripped)
+# config so geo rules take effect. Loop-safe: only reloads when the geo that was
+# actually missing is now valid, so the next start won't re-enter bootstrap.
+_finish_geo_bootstrap() {
+	local need_mmdb need_geosite still
+	[ -f /var/run/clashoo_bootstrap_pending ] || return 0
+	# core-only never strips, so a flag there would be stale — clear and skip.
+	if [ "$(uci -q get clashoo.config.core_only 2>/dev/null)" = "1" ]; then
+		rm -f /var/run/clashoo_bootstrap_pending >/dev/null 2>&1
+		return 0
+	fi
+	read need_mmdb need_geosite < /var/run/clashoo_bootstrap_pending 2>/dev/null
+
+	log_msg "Bootstrap: fetching geo data via proxy" "引导模式：正在通过代理补全 Geo 数据"
+	/usr/share/clashoo/update/geoip.sh >/dev/null 2>&1
+
+	still=0
+	[ "$need_mmdb" = "1" ] && ! _has_valid_local_mmdb && still=1
+	[ "$need_geosite" = "1" ] && ! _has_valid_local_geosite && still=1
+	if [ "$still" = "1" ]; then
+		log_msg "Bootstrap: geo fetch incomplete, will retry on next update" "引导模式：Geo 补全未完成，将在下次更新时重试"
+		return 0
+	fi
+
+	rm -f /var/run/clashoo_bootstrap_pending >/dev/null 2>&1
+	log_msg "Bootstrap: geo ready, reloading full config" "引导模式：Geo 数据已就绪，正在重载完整配置"
+	/etc/init.d/clashoo restart >/dev/null 2>&1
 }
 
 
@@ -1400,10 +1479,21 @@ _start_launch_core() {
 	# in core-only the user is explicitly trusting their own config.
 	[ "$_core_only" = "1" ] && export SAFE_PATHS="/"
 
-	# preflight dry-run: bail on bad config without touching firewall/dnsmasq
-	if ! "$CLASH" -d "$CLASH_CONFIG" -t >> "$CORE_LOG_PATH" 2>&1; then
-		log_msg "Config dry-run failed; firewall/DNS untouched" "配置预检失败，未应用防火墙与 DNS 改动"
-		runtime_state_record_health "fail" "preflight:config_dry_run_failed"
+	# preflight dry-run with watchdog: bail on bad config without touching
+	# firewall/dnsmasq, and never let a geo auto-download (mihomo blocks ~90s on
+	# a missing GeoIP/GeoSite when GitHub is unreachable) freeze startup/UI.
+	_run_with_timeout 15 "$CLASH" -d "$CLASH_CONFIG" -t >> "$CORE_LOG_PATH" 2>&1
+	_pf_rc=$?
+	if [ "$_pf_rc" -ne 0 ]; then
+		_pf_reason="$(_preflight_reason)"
+		if [ "$_pf_rc" -eq 124 ]; then
+			log_msg "Config preflight timed out (likely downloading geo data), retry shortly. ${_pf_reason}" "配置预检超时（可能正在下载 Geo 数据），稍后自动重试。${_pf_reason}"
+			runtime_state_record_health "fail" "preflight:timeout"
+			_start_geoip_update_async
+		else
+			log_msg "Config dry-run failed; firewall/DNS untouched. ${_pf_reason}" "配置预检失败，未应用防火墙与 DNS 改动。${_pf_reason}"
+			runtime_state_record_health "fail" "preflight:config_dry_run_failed"
+		fi
 		echo "Clashoo" > "$REAL_LOG"
 		return 1
 	fi
@@ -1448,6 +1538,8 @@ _start_launch_core() {
 				runtime_run_health_check >/dev/null 2>&1
 				# kick access check immediately so panel shows current state (daemon polls every 5-20s)
 				/usr/share/clashoo/net/access_check_cache.sh >/dev/null 2>&1 &
+				# bootstrap mode: now that the proxy is up, fetch geo + reload full config
+				_finish_geo_bootstrap
 				exit 0
 			fi
 			bg_wait=$((bg_wait + 1))
