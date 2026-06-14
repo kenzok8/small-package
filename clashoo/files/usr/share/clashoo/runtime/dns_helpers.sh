@@ -163,10 +163,12 @@ dns_mihomo_apply_leak_nameservers() {
         function indent_len(s) { match(s, /[^ ]/); return RSTART ? RSTART - 1 : length(s) }
         /^dns:[[:space:]]*$/ { in_dns = 1; dns_indent = indent_len($0); next }
         in_dns && /^[^[:space:]#][^:]*:/ { exit }
-        in_dns && /^[[:space:]]*nameserver:[[:space:]]*$/ {
-          in_ns = 1
-          ns_indent = indent_len($0)
+        in_dns && /^[[:space:]]*nameserver:/ {
           print
+          rest = $0
+          sub(/^[[:space:]]*nameserver:[[:space:]]*/, "", rest)
+          sub(/[[:space:]]*(#.*)?$/, "", rest)
+          if (rest == "") { in_ns = 1; ns_indent = indent_len($0) }
           next
         }
         in_ns {
@@ -211,10 +213,13 @@ dns_mihomo_apply_leak_nameservers() {
       in_dns && /^[[:space:]]*[^#[:space:]][^:]*:/ && child_indent < 0 {
         child_indent = indent_len($0)
       }
-      in_dns && /^[[:space:]]*nameserver:[[:space:]]*$/ {
+      in_dns && /^[[:space:]]*nameserver:/ {
         ns_indent = indent_len($0)
+        rest = $0
+        sub(/^[[:space:]]*nameserver:[[:space:]]*/, "", rest)
+        sub(/[[:space:]]*(#.*)?$/, "", rest)
         print_selected(spaces(ns_indent))
-        skip_ns = 1
+        if (rest == "") skip_ns = 1
         next
       }
       skip_ns {
@@ -246,10 +251,13 @@ dns_mihomo_apply_leak_nameservers() {
         print
         next
       }
-      in_dns && /^[[:space:]]*nameserver:[[:space:]]*$/ {
+      in_dns && /^[[:space:]]*nameserver:/ {
         ns_indent = indent_len($0)
+        rest = $0
+        sub(/^[[:space:]]*nameserver:[[:space:]]*/, "", rest)
+        sub(/[[:space:]]*(#.*)?$/, "", rest)
         print_original()
-        skip_ns = 1
+        if (rest == "") skip_ns = 1
         next
       }
       skip_ns {
