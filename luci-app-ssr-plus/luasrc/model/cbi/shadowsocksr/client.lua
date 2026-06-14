@@ -197,7 +197,7 @@ if is_finded("chinadns-ng") then
 	o:depends("pdnsd_enable", "6")
 
 	o = s:option(Value, "chinadns_forward", translate("Domestic DNS Server"))
-	o:value("", translate("Disable ChinaDNS-NG"))
+	o:value("none", translate("Disable ChinaDNS-NG"))
 	o:value("wan", translate("Use DNS from WAN"))
 	o:value("wan_114", translate("Use DNS from WAN and 114DNS"))
 	o:value("114.114.114.114:53", translate("Nanjing Xinfeng 114DNS (114.114.114.114)"))
@@ -212,7 +212,7 @@ if is_finded("chinadns-ng") then
 	o.description = translate("Custom DNS Server format as IP:PORT (default: disabled)")
 	o.validate = function(self, value, section)
 		if (section and value) then
-			if value == "wan" or value == "wan_114" then
+			if value == "none" or value == "wan" or value == "wan_114" then
 				return value
 			end
 

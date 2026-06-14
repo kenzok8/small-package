@@ -208,18 +208,20 @@ while [ "1" == "1" ]; do #死循环
 	fi
 	#chinadns-ng(china)
 	if [ "$(uci -q get "dhcp.@dnsmasq[0]._unused_ssrp_changed")" = "1" ]; then
-		icount=$(ps_list | grep $TMP_BIN_PATH/chinadns-ng | grep -v grep | wc -l)
-		if [ "$icount" -lt 1 ]; then #如果进程挂掉就重启它
-			logger -t "$NAME" "chinadns-ng tunnel error.restart!"
-			echolog "chinadns-ng tunnel error.restart!"
-			chinadns=$(uci_get_by_type global chinadns_forward)
-			wandns="$(ifstatus wan | jsonfilter -e '@["dns-server"][0]' || echo "119.29.29.29")"
-			case "$chinadns" in
-			"wan") chinadns="$wandns" ;;
-			""|"wan_114") chinadns="$wandns,114.114.114.114" ;;
-			esac
-			kill -9 $(ps_list | grep $TMP_BIN_PATH/chinadns-ng | grep -v grep | awk '{print $1}') >/dev/null 2>&1
-			ln_start_bin $(first_type chinadns-ng) chinadns-ng -l $china_dns_port -4 china -p 3 -c ${chinadns/:/#} -t 127.0.0.1#$dns_port -N -f -r
+		chinadns=$(uci_get_by_type global chinadns_forward)
+		if [ -n "$chinadns" ] && [ "$chinadns" != "none" ]; then
+			icount=$(ps_list | grep $TMP_BIN_PATH/chinadns-ng | grep -v grep | wc -l)
+			if [ "$icount" -lt 1 ]; then #如果进程挂掉就重启它
+				logger -t "$NAME" "chinadns-ng tunnel error.restart!"
+				echolog "chinadns-ng tunnel error.restart!"
+				wandns="$(ifstatus wan | jsonfilter -e '@["dns-server"][0]' || echo "119.29.29.29")"
+				case "$chinadns" in
+				"wan") chinadns="$wandns" ;;
+				""|"wan_114") chinadns="$wandns,114.114.114.114" ;;
+				esac
+				kill -9 $(ps_list | grep $TMP_BIN_PATH/chinadns-ng | grep -v grep | awk '{print $1}') >/dev/null 2>&1
+				ln_start_bin $(first_type chinadns-ng) chinadns-ng -l $china_dns_port -4 china -p 3 -c ${chinadns/:/#} -t 127.0.0.1#$dns_port -N -f -r
+			fi
 		fi
 	fi
 done

@@ -589,7 +589,7 @@ get_host_ip() {
 	[ -n "$ip" ] || ip=""
 
 	local chinadns="$(uci_get_by_type global chinadns_forward)"
-	if [ -n "$chinadns" ] && [ "$ip" != "$host" ]; then
+	if [ -n "$chinadns" ] && [ "$chinadns" != "none" ] && [ "$ip" != "$host" ]; then
 		grep -q "$host" "$TMP_DNSMASQ_PATH/chinadns_fixed_server.conf" 2>"/dev/null" || \
 			echo -e "address=/$host/$ip" >> "$TMP_DNSMASQ_PATH/chinadns_fixed_server.conf"
 	fi
@@ -954,7 +954,7 @@ start_dns() {
 
 		if [ "$run_mode" = "router" ]; then
 			local chinadns="$(uci_get_by_type global chinadns_forward)"
-			if [ -n "$chinadns" ]; then
+			if [ -n "$chinadns" ] && [ "$chinadns" != "none" ]; then
 				local wandns="$(ifstatus wan | jsonfilter -e '@["dns-server"][0]' || echo "119.29.29.29")"
 				case "$chinadns" in
 				"wan") chinadns="$wandns" ;;
