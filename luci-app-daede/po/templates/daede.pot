@@ -462,6 +462,24 @@ msgid "Fetch and parse"
 msgstr ""
 
 #: converter.js
+msgid "Subscription User-Agent"
+msgstr ""
+
+#: converter.js
+msgid "Auto User-Agent (recommended)"
+msgstr ""
+
+#: converter.js
+msgid "Browser User-Agent"
+msgstr ""
+
+msgid "Fetcher returned an invalid response"
+msgstr ""
+
+msgid "Failed to read subscription data"
+msgstr ""
+
+#: converter.js
 msgid "Or paste Clash YAML here"
 msgstr ""
 
@@ -498,7 +516,7 @@ msgid "Import selected nodes (%d)"
 msgstr ""
 
 #: converter.js
-msgid "Detected %d · compatible %d · duplicates %d · incompatible %d"
+msgid "Detected %d · compatible %d · duplicates %d · incompatible %d · ignored info %d"
 msgstr ""
 
 #: converter.js
@@ -563,7 +581,19 @@ msgid "No top-level proxies list was found"
 msgstr ""
 
 #: converter.js
+msgid "The server returned a Base64/share-link subscription, not Clash YAML. Try another subscription User-Agent or add the URL directly as a native subscription."
+msgstr ""
+
+#: converter.js
 msgid "Conversion preview is ready"
+msgstr ""
+
+#: converter.js
+msgid "Conversion completed, but no supported nodes were found"
+msgstr ""
+
+#: converter.js
+msgid "Unsupported protocol: %s"
 msgstr ""
 
 #: converter.js
@@ -599,4 +629,112 @@ msgid "Import failed: %s"
 msgstr ""
 
 msgid "Import complete: added %d, duplicates %d, failed %d"
+msgstr ""
+
+msgid "Create new airport"
+msgstr ""
+
+msgid "Existing airport"
+msgstr ""
+
+msgid "Airport name"
+msgstr ""
+
+msgid "Sync airport"
+msgstr ""
+
+msgid "Sync airport (%d nodes)"
+msgstr ""
+
+msgid "Already exists, will be reused"
+msgstr ""
+
+msgid "Enter an airport name"
+msgstr ""
+
+msgid "No usable nodes were imported"
+msgstr ""
+
+msgid "Synchronizing airport…"
+msgstr ""
+
+msgid "Sync complete: added %d, reused %d, failed %d"
+msgstr ""
+
+msgid "Sync failed: %s"
+msgstr ""
+
+msgid "This will delete the old nodes in \"%s\" and import %d new nodes. Continue?"
+msgstr ""
+
+msgid "3. Sync Airport Group"
+msgstr ""
+
+msgid "The selected nodes are kept together as one airport group. Re-syncing an existing airport safely replaces its old managed nodes."
+msgstr ""
+
+msgid "Detected"
+msgstr ""
+
+msgid "Compatible"
+msgstr ""
+
+msgid "Duplicates"
+msgstr ""
+
+msgid "Incompatible"
+msgstr ""
+
+msgid "Ignored info"
+msgstr ""
+
+msgid "No nodes to preview yet. Fetch or paste Clash YAML above."
+msgstr ""
+
+msgid "Group name"
+msgstr ""
+
+msgid "Import node group"
+msgstr ""
+
+msgid "Import node group (%d)"
+msgstr ""
+
+msgid "Update node group (%d)"
+msgstr ""
+
+msgid "Enter a group name to import the selected nodes."
+msgstr ""
+
+msgid "dae group names may only contain letters, numbers, underscores, and hyphens, and must start with a letter or underscore."
+msgstr ""
+
+msgid "Update node group \"%s\": replace it with %d selected nodes on %s."
+msgstr ""
+
+msgid "Import %d selected nodes into group \"%s\" on %s."
+msgstr ""
+
+msgid "Enter a group name"
+msgstr ""
+
+msgid "Replace node group \"%s\" with %d selected nodes?"
+msgstr ""
+
+msgid "Importing node group…"
+msgstr ""
+
+msgid "Node group imported: added %d, reused %d, failed %d"
+msgstr ""
+
+msgid "Node group import failed: %s"
+msgstr ""
+
+msgid "3. Import Node Group"
+msgstr ""
+
+msgid "Import the selected nodes as one named group, so large airport node lists stay easy to manage."
+msgstr ""
+
+msgid "Node group \"%s\" is available on %s. Select nodes above to update it."
 msgstr ""

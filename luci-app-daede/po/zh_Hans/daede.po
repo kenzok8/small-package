@@ -146,10 +146,6 @@ msgstr "dae 没有内置 WebUI，下面的 DSL 配置需要手工编辑（订阅
 msgid "dae config file is empty. Click \"Initialize from example\" to start, or paste your config here."
 msgstr "dae 配置文件为空。点「从示例初始化」开始，或直接粘贴你的配置。"
 
-# ---- config.js: dae Parameters ----
-msgid "dae Parameters"
-msgstr "dae 参数"
-
 msgid "Edit config DSL — subscriptions, nodes, routing, DNS. Load template via Initialize. Replace placeholder URL before saving. Switch to daed for GUI."
 msgstr "编辑 dae DSL 配置——订阅、节点、路由、DNS。通过「从示例初始化」载入模板。保存前务必替换占位订阅链接。图形化管理请切换至 daed。"
 
@@ -426,9 +422,6 @@ msgstr "已保存（启动 dae 后生效）"
 msgid "Configuration Editor"
 msgstr "配置编辑"
 
-msgid "Edit config DSL — subscriptions, nodes, routing, DNS. Load template via Initialize. Replace placeholder URL before saving. Switch to daed for GUI."
-msgstr "编辑 dae DSL 配置——订阅、节点、路由、DNS。通过「从示例初始化」载入模板。保存前务必替换占位订阅链接。图形化管理请切换至 daed。"
-
 # ---- config.js: Proxy Health ----
 msgid "Test YouTube"
 msgstr "测试 YouTube"
@@ -626,9 +619,6 @@ msgstr "区块"
 msgid "DNS"
 msgstr "DNS"
 
-msgid "dae config file is empty. Click \"Initialize from example\" to start, or paste your config here."
-msgstr "dae 配置文件为空。点击「从示例初始化」开始，或直接在此粘贴你的配置。"
-
 # ---- log.js: filter dropdown ----
 msgid "All"
 msgstr "全部"
@@ -698,12 +688,6 @@ msgstr "分组名称必须唯一"
 msgid "Updating…"
 msgstr "更新中…"
 
-msgid "Subscriptions updated (dae reloaded)"
-msgstr "订阅已更新（dae 已重载）"
-
-msgid "Save manual config"
-msgstr "保存手动配置"
-
 msgid "Saved · started"
 msgstr "已保存并启动"
 
@@ -725,6 +709,21 @@ msgstr "1. 输入 Clash YAML"
 
 msgid "Fetch and parse"
 msgstr "获取并解析"
+
+msgid "Subscription User-Agent"
+msgstr "订阅 User-Agent"
+
+msgid "Auto User-Agent (recommended)"
+msgstr "自动选择 User-Agent（推荐）"
+
+msgid "Browser User-Agent"
+msgstr "浏览器 User-Agent"
+
+msgid "Fetcher returned an invalid response"
+msgstr "获取程序返回了无效响应"
+
+msgid "Failed to read subscription data"
+msgstr "读取订阅数据失败"
 
 msgid "Or paste Clash YAML here"
 msgstr "或在此粘贴 Clash YAML"
@@ -753,8 +752,8 @@ msgstr "目标后端"
 msgid "Import selected nodes (%d)"
 msgstr "导入所选节点（%d）"
 
-msgid "Detected %d · compatible %d · duplicates %d · incompatible %d"
-msgstr "检测到 %d 个 · 可导入 %d 个 · 重复 %d 个 · 不兼容 %d 个"
+msgid "Detected %d · compatible %d · duplicates %d · incompatible %d · ignored info %d"
+msgstr "检测到 %d 个 · 可导入 %d 个 · 重复 %d 个 · 不兼容 %d 个 · 已忽略信息 %d 个"
 
 msgid "Ready to import"
 msgstr "可导入"
@@ -801,8 +800,17 @@ msgstr "YAML 解析失败：%s"
 msgid "No top-level proxies list was found"
 msgstr "未找到顶层 proxies 列表"
 
+msgid "The server returned a Base64/share-link subscription, not Clash YAML. Try another subscription User-Agent or add the URL directly as a native subscription."
+msgstr "服务器返回的是 Base64/分享链接订阅，不是 Clash YAML。请尝试其他订阅 User-Agent，或直接将该链接添加为原生订阅。"
+
 msgid "Conversion preview is ready"
 msgstr "转换预览已就绪"
+
+msgid "Conversion completed, but no supported nodes were found"
+msgstr "转换完成，但未找到支持的节点"
+
+msgid "Unsupported protocol: %s"
+msgstr "不支持的协议：%s"
 
 msgid "Enter an HTTP or HTTPS subscription URL"
 msgstr "请输入 HTTP 或 HTTPS 订阅链接"
@@ -830,3 +838,111 @@ msgstr "导入失败：%s"
 
 msgid "Import complete: added %d, duplicates %d, failed %d"
 msgstr "导入完成：新增 %d，重复 %d，失败 %d"
+
+msgid "Create new airport"
+msgstr "新建机场"
+
+msgid "Existing airport"
+msgstr "已有机场"
+
+msgid "Airport name"
+msgstr "机场名称"
+
+msgid "Sync airport"
+msgstr "同步机场"
+
+msgid "Sync airport (%d nodes)"
+msgstr "同步机场（%d 个节点）"
+
+msgid "Already exists, will be reused"
+msgstr "已存在，将复用"
+
+msgid "Enter an airport name"
+msgstr "请输入机场名称"
+
+msgid "No usable nodes were imported"
+msgstr "未导入任何可用节点"
+
+msgid "Synchronizing airport…"
+msgstr "正在同步机场…"
+
+msgid "Sync complete: added %d, reused %d, failed %d"
+msgstr "同步完成：新增 %d，复用 %d，失败 %d"
+
+msgid "Sync failed: %s"
+msgstr "同步失败：%s"
+
+msgid "This will delete the old nodes in \"%s\" and import %d new nodes. Continue?"
+msgstr "将删除“%s”的旧节点并导入 %d 个新节点，是否继续？"
+
+msgid "3. Sync Airport Group"
+msgstr "3. 同步机场分组"
+
+msgid "The selected nodes are kept together as one airport group. Re-syncing an existing airport safely replaces its old managed nodes."
+msgstr "所选节点会作为一个机场分组管理。再次同步已有机场时，会安全替换该机场原有的受管节点。"
+
+msgid "Detected"
+msgstr "检测"
+
+msgid "Compatible"
+msgstr "可导入"
+
+msgid "Duplicates"
+msgstr "重复"
+
+msgid "Incompatible"
+msgstr "不兼容"
+
+msgid "Ignored info"
+msgstr "忽略信息"
+
+msgid "No nodes to preview yet. Fetch or paste Clash YAML above."
+msgstr "暂无可预览节点，请先在上方获取或粘贴 Clash YAML。"
+
+msgid "Group name"
+msgstr "组名"
+
+msgid "Import node group"
+msgstr "导入节点组"
+
+msgid "Import node group (%d)"
+msgstr "导入节点组（%d）"
+
+msgid "Update node group (%d)"
+msgstr "更新节点组（%d）"
+
+msgid "Enter a group name to import the selected nodes."
+msgstr "输入组名后，将所选节点作为一个节点组导入。"
+
+msgid "dae group names may only contain letters, numbers, underscores, and hyphens, and must start with a letter or underscore."
+msgstr "dae 组名只能包含字母、数字、下划线和连字符，并且必须以字母或下划线开头。"
+
+msgid "Update node group \"%s\": replace it with %d selected nodes on %s."
+msgstr "更新节点组“%s”：使用所选的 %d 个节点替换，目标后端为 %s。"
+
+msgid "Import %d selected nodes into group \"%s\" on %s."
+msgstr "将所选的 %d 个节点归入“%s”组，并导入 %s。"
+
+msgid "Enter a group name"
+msgstr "请输入组名"
+
+msgid "Replace node group \"%s\" with %d selected nodes?"
+msgstr "使用当前所选节点替换节点组“%s”，共 %d 个节点，是否继续？"
+
+msgid "Importing node group…"
+msgstr "正在导入节点组…"
+
+msgid "Node group imported: added %d, reused %d, failed %d"
+msgstr "节点组导入完成：新增 %d，复用 %d，失败 %d"
+
+msgid "Node group import failed: %s"
+msgstr "节点组导入失败：%s"
+
+msgid "3. Import Node Group"
+msgstr "3. 导入节点组"
+
+msgid "Import the selected nodes as one named group, so large airport node lists stay easy to manage."
+msgstr "将所选节点作为一个命名节点组导入，避免机场节点较多时难以管理。"
+
+msgid "Node group \"%s\" is available on %s. Select nodes above to update it."
+msgstr "节点组“%s”已导入 %s。重新选择上方节点即可更新此组。"

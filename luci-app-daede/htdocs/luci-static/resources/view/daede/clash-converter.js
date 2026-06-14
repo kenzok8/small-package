@@ -94,6 +94,26 @@ function convertSs(node) {
 	return 'ss://' + auth + '@' + endpoint(node.server, node.port) + query + '#' + encodeURIComponent(node.name || 'Node');
 }
 
+function convertSsr(node) {
+	requireFields(node, [ 'server', 'port', 'cipher', 'password', 'protocol', 'obfs' ]);
+	const query = [];
+	query.push('remarks=' + base64Url(node.name || 'Node'));
+	if (node['protocol-param'])
+		query.push('protoparam=' + base64Url(node['protocol-param']));
+	if (node['obfs-param'])
+		query.push('obfsparam=' + base64Url(node['obfs-param']));
+
+	const payload = [
+		node.server,
+		node.port,
+		node.protocol,
+		node.cipher,
+		node.obfs,
+		base64Url(node.password)
+	].join(':') + '/?' + query.join('&');
+	return 'ssr://' + base64Url(payload);
+}
+
 function convertVmess(node) {
 	requireFields(node, [ 'server', 'port', 'uuid' ]);
 	const network = node.network || 'tcp';
@@ -200,10 +220,22 @@ function convertAnytls(node) {
 		(params.toString() ? '?' + params.toString() : '') + '#' + encodeURIComponent(node.name || 'Node');
 }
 
+function isMetadataProxy(node) {
+	const name = String(node && node.name || '').trim();
+	if (!name)
+		return false;
+
+	return /^(?:traffic|bandwidth|expire|expiry|expiration|subscription(?:\s+info)?|official\s+website|website)\s*[:：|]/i.test(name) ||
+		/^(?:(?:剩余|可用|已用|总)?流量|套餐到期|到期时间|到期日|过期时间|有效期|订阅信息)\s*[:：|]/i.test(name) ||
+		/^(?:官方网站|官网地址|官方网址|网站地址)\s*[:：|]/i.test(name) ||
+		/^(?:加入|联系|客服)?\s*QQ\s*(?:群|交流群|客服|联系)\s*[:：|]/i.test(name);
+}
+
 function convertProxy(node) {
 	const type = String(node && node.type || '').toLowerCase();
 	const converters = {
 		ss: convertSs,
+		ssr: convertSsr,
 		vmess: convertVmess,
 		vless: convertVless,
 		trojan: convertTrojan,
@@ -249,6 +281,7 @@ function normalizeLink(link) {
 const api = {
 	convertProxy: convertProxy,
 	convertProxies: convertProxies,
+	isMetadataProxy: isMetadataProxy,
 	normalizeLink: normalizeLink
 };
 

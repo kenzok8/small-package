@@ -55,17 +55,18 @@ function detectLevel(line) {
 	return 'dd-error';
 }
 
-/* 简化时间戳并按本地时区显示：
- * - daed 默认输出 UTC ISO 8601 (e.g. "2026-05-28T19:07:54Z")，转成本地时间
+/* 简化时间戳并按北京时间显示：
+ * - daed 默认输出 UTC ISO 8601 (e.g. "2026-05-28T19:07:54Z")，转成北京时间
  * - 旧 logrus 短格式 (e.g. "May 25 07:04:59") 无时区信息，原样提取
  */
 function shortTs(raw) {
 	if (!raw) return raw;
-	if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(raw)) {
+	if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})$/.test(raw)) {
 		const d = new Date(raw);
 		if (!isNaN(d.getTime())) {
+			const beijing = new Date(d.getTime() + 8 * 60 * 60 * 1000);
 			const pad = n => String(n).padStart(2, '0');
-			return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+			return pad(beijing.getUTCHours()) + ':' + pad(beijing.getUTCMinutes()) + ':' + pad(beijing.getUTCSeconds());
 		}
 	}
 	const m = raw.match(/(\d{2}:\d{2}:\d{2})/);
