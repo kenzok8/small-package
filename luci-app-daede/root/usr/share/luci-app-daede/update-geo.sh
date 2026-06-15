@@ -44,6 +44,7 @@ fi
 	exec >"$LOG" 2>&1
 	trap 'rm -f "$LOCK"' EXIT INT TERM
 
+	rc=0
 	TMP="${DEST}.new"
 	mkdir -p "$(dirname "$DEST")"
 	echo "$(date '+%F %T') begin: $URL"
@@ -51,18 +52,19 @@ fi
 	if ! curl -fsSL --connect-timeout 15 --max-time 240 -o "$TMP" "$URL"; then
 		echo "$(date '+%F %T') download failed"
 		rm -f "$TMP"
-		exit 1
+		rc=1
+	else
+		size=$(wc -c < "$TMP" 2>/dev/null || echo 0)
+		if [ "$size" -lt 102400 ]; then
+			echo "$(date '+%F %T') file too small ($size bytes)"
+			rm -f "$TMP"
+			rc=2
+		else
+			mv "$TMP" "$DEST"
+			echo "$(date '+%F %T') updated $DEST ($size bytes)"
+		fi
 	fi
-
-	size=$(wc -c < "$TMP" 2>/dev/null || echo 0)
-	if [ "$size" -lt 102400 ]; then
-		echo "$(date '+%F %T') file too small ($size bytes)"
-		rm -f "$TMP"
-		exit 2
-	fi
-
-	mv "$TMP" "$DEST"
-	echo "$(date '+%F %T') updated $DEST ($size bytes)"
+	echo "$(date '+%F %T') done (rc=$rc)"
 ) </dev/null >/dev/null 2>&1 &
 
 echo "started in background, see $LOG"

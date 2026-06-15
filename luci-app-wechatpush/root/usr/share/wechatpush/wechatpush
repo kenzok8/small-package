@@ -2293,8 +2293,8 @@ monitor_logins() {
 		trap cleanup_child SIGINT SIGTERM
 
 		(
-			# 监听系统日志，-f 表示跟随实时日志，-p 表示日志级别为 notice
-			run_with_tag logread -f -p notice | while IFS= read -r line; do
+			# 监听系统日志，-f 表示跟随实时日志
+			run_with_tag logread -f | while IFS= read -r line; do
 				[ -n "$web_logged" ] && {
 					web_login_ip=$(echo "$line" | grep -i "accepted login" | awk '{print $NF}')
 					[ -n "$web_login_ip" ] && process_login "$web_login_ip" $(echo "$line" | awk '{print $4}') web_login_counts
@@ -2317,7 +2317,7 @@ monitor_logins() {
 					# 如果未能提取到 IP，从日志标识符提取失败用户的 ID，并再次提取 IP
 					if [ -z "$ssh_failed_ip" ]; then
 						ssh_failed_num=$(echo "$line" | sed -n 's/.*authpriv\.warn dropbear\[\([0-9]\+\)\]: Login attempt for nonexistent user/\1/p')
-						[ -n "$ssh_failed_num" ] && ssh_failed_ip=$(logread notice | grep "authpriv\.info dropbear\[${ssh_failed_num}\].*Child connection from" | awk '{print $NF}' | sed -nr 's#^(.*):[0-9]{1,5}#\1#gp' | sed -e 's/%.*//' | tail -n 1)
+						[ -n "$ssh_failed_num" ] && ssh_failed_ip=$(logread | grep "authpriv\.info dropbear\[${ssh_failed_num}\].*Child connection from" | awk '{print $NF}' | sed -nr 's#^(.*):[0-9]{1,5}#\1#gp' | sed -e 's/%.*//' | tail -n 1)
 					fi
 
 					# 如果成功提取到 IP 地址，调用 process_login 处理
@@ -2578,13 +2578,13 @@ login_send() {
 	# 登录方式
 	if [[ "$log_type" == "web"* ]]; then
 		# Web 登录、非法登录
-		local login_mode=$(logread notice | grep -E ".* $login_time.*$login_ip.*" | awk '{print $13}' | tail -n 1)
+		local login_mode=$(logread | grep -E ".* $login_time.*$login_ip.*" | awk '{print $13}' | tail -n 1)
 		[ "$login_mode" = "/" ] && login_mode="$(translate "/ (Homepage login)")"
 	elif [[ "$log_type" == "ssh_login"* ]]; then
 		# SSH 登录
-		local login_mode=$(logread notice | grep -E ".* $login_time.*$login_ip.*" | awk '{print $8}' | tail -n 1)
+		local login_mode=$(logread | grep -E ".* $login_time.*$login_ip.*" | awk '{print $8}' | tail -n 1)
 	else
-		local login_mode=$(logread notice | grep -E ".* $login_time.*$login_ip.*" | awk '{for(i=8;i<NF;i++) if($i=="from") break; else printf $i " "}' | tail -n 1)
+		local login_mode=$(logread | grep -E ".* $login_time.*$login_ip.*" | awk '{for(i=8;i<NF;i++) if($i=="from") break; else printf $i " "}' | tail -n 1)
 	fi
 
 	if [ -z "$login_disturb" ] || [ "$login_disturb" -ne "1" ]; then

@@ -27,6 +27,7 @@ const CSS = [
 	'.dd-up-icon{font-size:14px;text-align:center;line-height:1}',
 	'.dd-up-ok{color:#3da66a}',
 	'.dd-up-warn{color:#d39e00}',
+	'.dd-up-new{color:#4a8cff}',
 	'.dd-up-err{color:#d96d6d}',
 	'.dd-up-name{font-weight:600;opacity:.85}',
 	'.dd-up-meta{opacity:.7;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
@@ -101,17 +102,10 @@ function probePkg(pkg) {
 	});
 }
 
-function tailLog(path, into) {
-	return L.resolveDefault(fs.read_direct(path, 'text'), '').then(function(content) {
-		if (content) {
-			into.textContent = content;
-			into.classList.add('show');
-		}
-	});
-}
-
 return view.extend({
 	load: function() {
+		// background apk update so new versions show on next poll
+		fs.exec('/usr/share/luci-app-daede/refresh-index.sh', []).catch(function() {});
 		return Promise.all([
 			backend.detectBackend(),
 			uci.load('daed').catch(function() {})
@@ -145,35 +139,37 @@ return view.extend({
 			]);
 		};
 
-		// === Data updates (GeoIP / GeoSite) ===
-		const updateGeo = function(kind, btn) {
-			const label = kind === 'geoip' ? 'GeoIP' : 'GeoSite';
+		// run a backgrounded script and stream its log into the log pane until it
+		// logs "done (rc=N)"; then refresh the badges. Result shows inline (no popup).
+		const runJob = function(script, arg, btn, logPath) {
+			const orig = btn.textContent;
 			btn.disabled = true;
 			btn.textContent = '...';
-			return fs.exec('/usr/share/luci-app-daede/update-geo.sh', [kind]).then(function(res) {
-				if (res.code === 0) {
-					setTimeout(function() { tailLog('/tmp/luci-app-daede.' + kind + '.log', logPane); }, 2000);
-				}
+			let tries = 0;
+			const poll = function() {
+				return L.resolveDefault(fs.read_direct(logPath, 'text'), '').then(function(c) {
+					if (c) { logPane.textContent = c; logPane.classList.add('show'); }
+					if (/done \(rc=\d+\)/.test(c)) { refresh(); return; }
+					if (tries++ > 90) return;
+					return new Promise(function(r) { setTimeout(r, 2000); }).then(poll);
+				});
+			};
+			return fs.exec('/usr/share/luci-app-daede/' + script, [arg]).then(function(res) {
+				if (res.code === 0) return poll();
 			}).catch(function() {}).finally(function() {
 				btn.disabled = false;
-				btn.textContent = _('Update');
+				btn.textContent = orig;
 			});
+		};
+
+		// === Data updates (GeoIP / GeoSite) ===
+		const updateGeo = function(kind, btn) {
+			return runJob('update-geo.sh', kind, btn, '/tmp/luci-app-daede.' + kind + '.log');
 		};
 
 		// === Package updates (dae|daed / luci-app-daede) ===
 		const upgradePkg = function(pkg, btn) {
-			if (!confirm(_('Run "apk upgrade %s" now? This may restart the active backend.').format(pkg)))
-				return;
-			btn.disabled = true;
-			btn.textContent = '...';
-			return fs.exec('/usr/share/luci-app-daede/update-pkg.sh', [pkg]).then(function(res) {
-				if (res.code === 0) {
-					setTimeout(function() { tailLog('/tmp/luci-app-daede.pkg-' + pkg + '.log', logPane); }, 3000);
-				}
-			}).catch(function() {}).finally(function() {
-				btn.disabled = false;
-				btn.textContent = _('Upgrade');
-			});
+			return runJob('update-pkg.sh', pkg, btn, '/tmp/luci-app-daede.pkg-' + pkg + '.log');
 		};
 
 		const refresh = function() {
@@ -256,8 +252,8 @@ return view.extend({
 						btn.disabled = true;
 					}
 					pkgBody.appendChild(mkRow(
-						updatable ? '⚠' : (entry.r.installed ? '✓' : '✗'),
-						updatable ? 'dd-up-warn' : (entry.r.installed ? 'dd-up-ok' : 'dd-up-err'),
+						updatable ? '↑' : (entry.r.installed ? '✓' : '✗'),
+						updatable ? 'dd-up-new' : (entry.r.installed ? 'dd-up-ok' : 'dd-up-err'),
 						entry.name,
 						meta,
 						btn
