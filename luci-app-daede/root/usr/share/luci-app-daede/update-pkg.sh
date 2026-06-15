@@ -13,6 +13,16 @@ case "$PKG" in
 		;;
 esac
 
+# run from a /tmp copy so upgrading luci-app-daede (which replaces this script)
+# can't corrupt the in-flight upgrade
+case "$0" in
+	/tmp/.daede-upd-*) ;;
+	*)
+		_self="/tmp/.daede-upd-$$"
+		cp "$0" "$_self" 2>/dev/null && exec sh "$_self" "$@"
+		;;
+esac
+
 LOCK="/tmp/luci-app-daede.pkg-${PKG}.lock"
 LOG="/tmp/luci-app-daede.pkg-${PKG}.log"
 
@@ -33,7 +43,7 @@ fi
 
 (
 	exec >"$LOG" 2>&1
-	trap 'rm -f "$LOCK"' EXIT INT TERM
+	trap 'rm -f "$LOCK"; [ "${0#/tmp/.daede-upd-}" != "$0" ] && rm -f "$0"' EXIT INT TERM
 
 	echo "$(date '+%F %T') begin upgrade: $PKG"
 
