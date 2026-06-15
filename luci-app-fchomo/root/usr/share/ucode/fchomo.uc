@@ -85,7 +85,7 @@ export function yqRead(flags, command, content) {
 };
 
 export function yqReadFile(flags, command, filepath) {
-	const out = executeCommand(null, 'yq', flags, shellQuote(command), filepath);
+	const out = executeCommand(null, 'yq', flags, shellQuote(command), shellQuote(filepath));
 
 	return out.stdout;
 };

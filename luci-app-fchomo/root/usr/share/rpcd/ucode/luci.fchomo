@@ -53,9 +53,9 @@ const methods = {
 			}
 
 			const type = req.args?.type;
-			let cmd = `generate ${type}`;
 			let result = {};
 
+			let cmd = `generate ${type}`;
 			if (type === 'age-x25519') {
 				cmd = 'age keygen';
 			} else if (type === 'age-mlkem768-x25519') {
@@ -63,7 +63,8 @@ const methods = {
 			} else if (type === 'age-convert') {
 				cmd = 'age convert';
 			}
-			const fd = popen(`/usr/bin/mihomo ${cmd}` + (req.args?.params ? ' ' + shellQuote(req.args.params) : ''));
+
+			const fd = popen(`/usr/bin/mihomo ${cmd} ${shellQuote(req.args.params ?? '')}`);
 			if (fd) {
 				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
 					if (type === 'uuid')
@@ -140,7 +141,7 @@ const methods = {
 			infd.write(content);
 
 			infd.seek();
-			const out = executeCommand(infd, '/usr/bin/mihomo age', req.args?.action, req.args?.key, '-', '-');
+			const out = executeCommand(infd, '/usr/bin/mihomo age', req.args?.action, shellQuote(req.args?.key), '-', '-');
 			infd.close();
 
 			return out.exitcode === 0 ? { result: out.stdout } : { result: false, error: out.stderr };
@@ -162,7 +163,7 @@ const methods = {
 			if ((!req.args?.output) || match(req.args?.output, /\.\.\//))
 				return { result: false, error: 'illegal output' };
 
-			const out = executeCommand(null, '/usr/bin/mihomo age', req.args?.action, req.args?.key, req.args?.input, req.args?.output);
+			const out = executeCommand(null, '/usr/bin/mihomo age', req.args?.action, shellQuote(req.args?.key), shellQuote(req.args?.input), shellQuote(req.args?.output));
 
 			return out.exitcode === 0 ? { result: true } : { result: false, error: out.stderr };
 		}
@@ -228,7 +229,7 @@ const methods = {
 			if (!req.args?.url)
 				return { httpcode: null, error: 'illegal url' };
 
-			const httpcode = trim(popen(`wget --spider -t1 -ST3 '${req.args?.url}' 2>&1 | awk '/^\\s*HTTP\\//{print $2}'`).read('all')) || '-1';
+			const httpcode = trim(popen(`wget --spider -t1 -ST3 ${shellQuote(req.args?.url)} 2>&1 | awk '/^\\s*HTTP\\//{print $2}'`).read('all')) || '-1';
 
 			return { httpcode: httpcode };
 		}
@@ -239,8 +240,10 @@ const methods = {
 		call: function(req) {
 			if (req.args?.type == 'resources') {
 				system(`sed -i "/${replace(EXE_DIR, "/", "\\/")}\\/update_resources.sh/d" /etc/crontabs/root`);
-				if (req.args?.expr)
+				if ((req.args?.expr && match(req.args?.expr, /^[0-9 ,\*\/\?-]+$/)))
 					system(`echo -e "` + req.args?.expr + ` ${EXE_DIR}/update_resources.sh ALL" >> /etc/crontabs/root`);
+				else
+					return { result: false, error: 'illegal expr' };
 			} else
 				return { result: false, error: 'illegal type' };
 
@@ -396,7 +399,7 @@ const methods = {
 			if ((!req.args?.filename) || match(req.args?.filename, /\.\.\//))
 				return { result: false, error: 'illegal filename' };
 
-			system(`rm -f ${HM_DIR}/${req.args?.type}/${req.args?.filename}`);
+			system(`rm -f ${HM_DIR}/${req.args?.type}/${shellQuote(req.args?.filename)}`);
 
 			return { result: true };
 		}
