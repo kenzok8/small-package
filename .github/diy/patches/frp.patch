@@ -1,0 +1,18 @@
+--- a/frp/Makefile
++++ b/frp/Makefile
+@@ -28,15 +28,6 @@ define Package/frp/install
+ 	$(INSTALL_DIR) $(1)/etc/frp/$(2).d/
+ 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/conf/legacy/$(2)_legacy_full.ini $(1)/etc/frp/$(2).d/
+ 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/conf/$(2)_full_example.toml $(1)/etc/frp/$(2).d/
+-	$(INSTALL_DIR) $(1)/etc/config/
+-	$(INSTALL_CONF) ./files/$(2).config $(1)/etc/config/$(2)
+-	$(INSTALL_DIR) $(1)/etc/init.d/
+-	$(INSTALL_BIN) ./files/$(2).init $(1)/etc/init.d/$(2)
+-
+-	if [ -r ./files/$(2).uci-defaults ]; then \
+-		$(INSTALL_DIR) $(1)/etc/uci-defaults; \
+-		$(INSTALL_DATA) ./files/$(2).uci-defaults $(1)/etc/uci-defaults/$(2); \
+-	fi
+ endef
+ 
+ define Package/frp/template

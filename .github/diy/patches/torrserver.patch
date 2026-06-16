@@ -1,0 +1,19 @@
+--- a/torrserver/Makefile
++++ b/torrserver/Makefile
+@@ -8,13 +8,15 @@
+ include $(TOPDIR)/rules.mk
+ 
+ PKG_NAME:=torrserver
+-PKG_VERSION:=MatriX.141.2
++PKG_REAL_VERSION:=MatriX.141.2
++PKG_VERSION:=141.2
+ PKG_RELEASE:=15
+ 
+ PKG_SOURCE_PROTO:=git
+ PKG_SOURCE_URL:=https://github.com/YouROK/TorrServer.git
+ PKG_SOURCE_VERSION:=a104f57a5aafa4eea3d1eea38f20fe7a4fddef74
+ PKG_MIRROR_HASH:=skip
++PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_REAL_VERSION)
+ 
+ PKG_MAINTAINER:=Konstantine Shevlakov <shevlakov@132lan.ru>
+ PKG_LICENSE:=MIT

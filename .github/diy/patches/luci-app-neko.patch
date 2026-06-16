@@ -1,0 +1,55 @@
+--- a/luci-app-neko/root/etc/uci-defaults/99_neko
++++ b/luci-app-neko/root/etc/uci-defaults/99_neko
+@@ -9,11 +9,36 @@ tmp_dir="/tmp"
+ echo "[ `date +%T` ] - Checking Files..."
+ 
+ files_check() {
+-    uci set uhttpd.main.index_page='index.php'
+-    uci set uhttpd.main.interpreter='.php=/usr/bin/php-cgi'
+-    uci commit uhttpd
++    if [ -n "$(command -v nginx)" ];then
++cat << 'EOF' > /etc/nginx/conf.d/nekoclash.locations
++location /nekoclash {
++    alias /www/nekoclash;
++    index index.php index.html index.htm;
+ 
+-    /etc/init.d/uhttpd restart
++    location ~ \.php$ {
++        if (!-f $request_filename) {
++            return 404;
++        }
++        fastcgi_pass unix:/var/run/php8-fpm.sock;
++        fastcgi_index index.php;
++        include fastcgi_params;
++        fastcgi_param SCRIPT_FILENAME $request_filename;
++    }
++}
++EOF
++        /etc/init.d/nginx restart
++    elif [ -n "$(command -v lighttpd)" ];then
++cat << 'EOF' > /etc/lighttpd/conf.d/81-php.conf
++cgi.assign += ( ".php" => "/usr/bin/php-cgi" )
++EOF
++        /etc/init.d/lighttpd restart
++    else
++        uci set uhttpd.main.index_page='index.php'
++        uci set uhttpd.main.interpreter='.php=/usr/bin/php-cgi'
++        uci commit uhttpd
++
++        /etc/init.d/uhttpd restart
++    fi
+ }
+ if [ -f "/tmp/neko/neko.bak" ]; then
+     echo "[ `date +%T` ] - Old Configs"
+
+--- a/luci-app-neko/Makefile
++++ b/luci-app-neko/Makefile
+@@ -15,7 +15,7 @@ define Package/$(PKG_NAME)
+ 	SUBMENU:=3. Applications
+ 	TITLE:=LuCI support for mihomo
+ 	PKGARCH:=all
+-	DEPENDS:=+kmod-tun +bash +curl +jq +mihomo +sing-box +php8 +php8-mod-curl
++	DEPENDS:=+kmod-tun +bash +curl +jq +mihomo +sing-box +php8 +php8-mod-curl +php8-cgi +php8-fpm
+ endef
+ 
+ define Package/$(PKG_NAME)/description

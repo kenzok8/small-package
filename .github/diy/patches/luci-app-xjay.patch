@@ -1,0 +1,22 @@
+--- a/luci-app-xjay/Makefile
++++ b/luci-app-xjay/Makefile
+@@ -15,7 +15,9 @@ define Package/$(PKG_NAME)
+ 	SECTION:=Custom
+ 	CATEGORY:=Extra packages
+ 	TITLE:=LuCI Support for Xray
+-	DEPENDS:=+luci-base +xray-core +xray-geodata +jsonfilter
++	DEPENDS:=+luci-base +xray-core +xray-geodata +jsonfilter \
++		 +PACKAGE_XRAY_INCLUDE_IPTABLES_SUPPORT:kmod-nft-tproxy \
++		 +PACKAGE_XRAY_INCLUDE_IPTABLES_SUPPORT:kmod-nft-socket
+ 	PKGARCH:=all
+ endef
+ 
+@@ -39,7 +41,7 @@ config PACKAGE_XRAY_INCLUDE_NFTABLES_SUPPORT
+ 	select PACKAGE_nftables-json
+ 	select PACKAGE_kmod-nft-tproxy
+ 	select PACKAGE_kmod-nft-socket
+-	default n
++	default y
+ 
+ endmenu
+ endef

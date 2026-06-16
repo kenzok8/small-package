@@ -1,0 +1,14 @@
+--- a/luci-app-fileassistant/luasrc/controller/fileassistant.lua
++++ b/luci-app-fileassistant/luasrc/controller/fileassistant.lua
+@@ -2,10 +2,8 @@ module("luci.controller.fileassistant", package.seeall)
+ 
+ function index()
+ 
+-    entry({"admin", "nas"}, firstchild(), "NAS", 44).dependent = false
+-
+     local page
+-    page = entry({"admin", "nas", "fileassistant"}, template("fileassistant"), _("文件助手"), 1)
++    page = entry({"admin", "system", "fileassistant"}, template("fileassistant"), _("文件管理"), 50)
+     page.i18n = "base"
+     page.dependent = true
+ 

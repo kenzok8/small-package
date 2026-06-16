@@ -1,0 +1,21 @@
+--- a/luci-app-xray/Makefile
++++ b/luci-app-xray/Makefile
+@@ -144,6 +144,8 @@ endif
+ 	$(INSTALL_DATA) ./root/usr/share/xray/protocol/vmess.mjs $(1)/usr/share/xray/protocol/vmess.mjs
+ 	$(INSTALL_DATA) ./root/usr/share/xray/protocol/socks.mjs $(1)/usr/share/xray/protocol/socks.mjs
+ 	$(INSTALL_DATA) ./root/usr/share/xray/protocol/http.mjs $(1)/usr/share/xray/protocol/http.mjs
++	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/i18n
++	po2lmo ./po/zh-cn/xray.zh-cn.po $(1)/usr/lib/lua/luci/i18n/xray.zh-cn.lmo
+ endef
+ 
+ $(eval $(call BuildPackage,$(PKG_NAME)))
+
+--- a/luci-app-xray/root/etc/config/xray_core
++++ b/luci-app-xray/root/etc/config/xray_core
+@@ -6,5 +6,5 @@ config general
+ 	list geoip_direct_code_list_v6 'cn'
+ 	list tproxy_ifaces_v4 'br-lan'
+ 	list tproxy_ifaces_v6 'br-lan'
+-	option transparent_proxy_enable '1'
++	option transparent_proxy_enable '0'
+ 	option xray_bin '/usr/bin/xray'

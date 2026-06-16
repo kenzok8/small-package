@@ -1,0 +1,11 @@
+--- a/luci-app-openclash/Makefile
++++ b/luci-app-openclash/Makefile
+@@ -35,7 +35,8 @@ define Package/$(PKG_NAME)
+ 	TITLE:=LuCI support for clash
+ 	PKGARCH:=all
+ 	DEPENDS:=+dnsmasq-full +coreutils +coreutils-nohup +bash +curl +ca-certificates +ip-full \
+-	+libcap +libcap-bin +ruby +ruby-yaml +kmod-tun +unzip
++	+libcap +libcap-bin +ruby +ruby-yaml +kmod-tun +unzip \
++	+kmod-inet-diag +luci-compat
+ 	MAINTAINER:=vernesong
+ endef

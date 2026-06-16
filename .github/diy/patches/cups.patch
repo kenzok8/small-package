@@ -1,0 +1,10 @@
+--- a/cups/Makefile
++++ b/cups/Makefile
+@@ -165,6 +165,7 @@ define Build/Configure
+ 		--without-perl \
+ 		--without-python \
+ 		--without-php \
++		--without-tls \
+ 		--enable-default-shared \
+ 		--enable-shared \
+ 		--enable-image \

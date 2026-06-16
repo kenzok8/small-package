@@ -1,0 +1,11 @@
+--- a/luci-theme-openmptcprouter/luasrc/view/themes/openmptcprouter/header.htm
++++ b/luci-theme-openmptcprouter/luasrc/view/themes/openmptcprouter/header.htm
+@@ -50,7 +50,7 @@
+ 		<header>
+ 			<div class="fill">
+ 				<div class="container">
+-					<a class="brand" href="#" alt="OpenMPTCProuter"><img src="<%=resource%>/openmptcprouter/images/omr-logo.png" height="30" width="30" alt="OMR" /> OpenMPTCProuter</a>
++					<a class="brand" href="#" alt="OpenMPTCProuter"><img src="<%=resource%>/openmptcprouter/images/omr-logo.png" height="30" width="30" alt="OMR" /> <%=striptags(boardinfo.hostname or "?") %></a>
+ 					<ul class="nav" id="topmenu" style="display:none"></ul>
+ 					<div id="indicators" class="pull-right"></div>
+ 				</div>

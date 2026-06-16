@@ -1,0 +1,63 @@
+--- a/dockerd/Makefile
++++ b/dockerd/Makefile
+@@ -47,6 +47,8 @@ define Package/dockerd
+     +kmod-veth \
+     +tini \
+     +uci-firewall \
++    +fuse-overlayfs \
++    +kmod-vxlan +kmod-macvlan +kmod-dummy +kmod-crypto-gcm +kmod-crypto-seqiv +kmod-crypto-ghash +kmod-ipsec +kmod-nf-nathelper +kmod-nf-nathelper-extra +btrfs-progs \
+     @!(mips||mips64||mipsel)
+   USERID:=docker:docker
+   MENU:=1
+@@ -94,13 +96,13 @@ define Build/Prepare
+ 	$(Build/Prepare/Default)
+ 
+ 	# Verify dependencies are the vendored version
+-	$(call EnsureVendoredVersion,../containerd/Makefile,containerd.installer)
+-	$(call EnsureVendoredVersion,../runc/Makefile,runc.installer)
+-	$(call EnsureVendoredVersion,../tini/Makefile,tini.installer)
++	$(call EnsureVendoredVersion,../../packages/utils/containerd/Makefile,containerd.installer)
++	$(call EnsureVendoredVersion,../../packages/utils/runc/Makefile,runc.installer)
++	$(call EnsureVendoredVersion,../../packages/utils/tini/Makefile,tini.installer)
+ 
+ 	# Verify CLI is the same version
+ 	( \
+-		CLI_MAKEFILE="../docker/Makefile"; \
++		CLI_MAKEFILE="../../packages/utils/docker/Makefile"; \
+ 		CLI_VERSION=$$$$( grep --only-matching --perl-regexp '(?<=PKG_VERSION:=)(.*)' "$$$${CLI_MAKEFILE}" ); \
+ 		if [ "$$$${CLI_VERSION}" != "$(PKG_VERSION)" ]; then \
+ 			echo "ERROR: Expected 'PKG_VERSION:=$(PKG_VERSION)' in '$$$${CLI_MAKEFILE}', found 'PKG_VERSION:=$$$${CLI_VERSION}'"; \
+@@ -142,6 +144,9 @@ define Package/dockerd/install
+ 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bundles/binary-daemon/dockerd $(1)/usr/bin/
+ 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bundles/binary-daemon/docker-proxy $(1)/usr/bin/
+ 
++	$(INSTALL_DIR) $(1)/etc/uci-defaults
++	$(INSTALL_DATA) ./files/dockerd.uci-defaults $(1)/etc/uci-defaults/dockerd
++
+ 	$(INSTALL_DIR) $(1)/opt/docker/
+ 
+   ifeq ($(CONFIG_DOCKER_CHECK_CONFIG),y)
+
+--- a/dockerd/files/dockerd.init
++++ b/dockerd/files/dockerd.init
+@@ -36,6 +36,9 @@ uciadd() {
+ 		uci_quiet set firewall.@zone[-1].input="ACCEPT"
+ 		uci_quiet set firewall.@zone[-1].output="ACCEPT"
+ 		uci_quiet set firewall.@zone[-1].forward="ACCEPT"
++		uci_quiet set firewall.dockerd=forwarding
++		uci_quiet set firewall.@forwarding[-1].src="${zone}"
++		uci_quiet set firewall.@forwarding[-1].dest='wan'
+ 		uci_quiet commit firewall
+ 	fi
+
+
+--- a/dockerd/files/etc/config/dockerd
++++ b/dockerd/files/etc/config/dockerd
+@@ -34,5 +34,5 @@ config globals 'globals'
+ # then docker restarted to load in new changes.
+ config firewall 'firewall'
+ 	option device 'docker0'
+-	list blocked_interfaces 'wan'
++#	list blocked_interfaces 'wan'
+ #	option extra_iptables_args '--match conntrack ! --ctstate RELATED,ESTABLISHED' # allow outbound connections
+ 

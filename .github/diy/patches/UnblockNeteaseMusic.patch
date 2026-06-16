@@ -1,0 +1,11 @@
+--- a/UnblockNeteaseMusic/Makefile
++++ b/UnblockNeteaseMusic/Makefile
+@@ -33,7 +33,7 @@ endef
+ 
+ define Build/Prepare
+ 	mkdir -p $(PKG_BUILD_DIR)
+-	xzcat $(DL_DIR)/$(PKG_SOURCE) | $(TAR) -C $(PKG_BUILD_DIR) $(TAR_OPTIONS)
++	tar -xf $(DL_DIR)/$(PKG_SOURCE) -C $(PKG_BUILD_DIR)
+ endef
+ 
+ define Build/Configure

@@ -1,0 +1,19 @@
+diff --git a/luci-app-accesscontrol-plus/po/zh-Hans/miaplus.po b/luci-app-accesscontrol-plus/po/zh_Hans/miaplus.po
+similarity index 90%
+rename from luci-app-accesscontrol-plus/po/zh-Hans/miaplus.po
+rename to luci-app-accesscontrol-plus/po/zh_Hans/miaplus.po
+index fedd5ae..ad85175 100644
+--- a/luci-app-accesscontrol-plus/po/zh-Hans/miaplus.po
++++ b/luci-app-accesscontrol-plus/po/zh_Hans/miaplus.po
+@@ -7,6 +7,12 @@ msgstr "设置客户端访问互联网的时间"
+ msgid "General switch"
+ msgstr "开启/关闭"
+ 
++msgid "Base Setting"
++msgstr "基本设置"
++
++msgid "Advance Setting"
++msgstr "高级设置"
++
+ msgid "Strict Mode"
+ msgstr "严格模式"

@@ -1,0 +1,35 @@
+--- a/luci-app-syscontrol/root/usr/bin/ram_release.sh
++++ b/luci-app-syscontrol/root/usr/bin/ram_release.sh
+@@ -15,13 +15,13 @@
+ . /lib/functions.sh
+ . /usr/share/libubox/jshn.sh
+ 
+-export TZ='Asia/Jakarta'
++export TZ='Asia/Shanghai'
+ 
+ LOG_FILE="/var/log/ram_release.log"
+ PID_FILE="/var/run/ram_release.pid"
+ 
+ log_message() {
+-    local timestamp=$(TZ='Asia/Jakarta' date +"%Y-%m-%d %H:%M:%S %Z")
++    local timestamp=$(TZ='Asia/Shanghai' date +"%Y-%m-%d %H:%M:%S %Z")
+     echo "$timestamp: $1" >> "$LOG_FILE"
+     logger -t "RAM Release" -- "$1"
+ }
+@@ -43,7 +43,7 @@ update_cron() {
+         cron_days=$(echo $days | sed 's/mon/1/g; s/tue/2/g; s/wed/3/g; s/thu/4/g; s/fri/5/g; s/sat/6/g; s/sun/0/g')
+         hour=$(echo $time | cut -d: -f1)
+         minute=$(echo $time | cut -d: -f2)
+-        cron_entry="$minute $hour * * $cron_days TZ='Asia/Jakarta' /usr/bin/ram_release.sh release"
++        cron_entry="$minute $hour * * $cron_days TZ='Asia/Shanghai' /usr/bin/ram_release.sh release"
+         echo "$cron_entry" >> /etc/crontabs/root
+         log_message "Cron job updated: $cron_entry"
+     else
+
+--- a/luci-app-syscontrol/root/etc/config/77_syscontrol
++++ b/luci-app-syscontrol/root/etc/config/77_syscontrol
+@@ -1,4 +1,4 @@
+ config ram_release 'schedule'
+-    option enabled '1'
++    option enabled '0'
+     option time '03:00'

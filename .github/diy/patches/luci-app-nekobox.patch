@@ -1,0 +1,101 @@
+--- a/luci-app-nekobox/Makefile
++++ b/luci-app-nekobox/Makefile
+@@ -16,7 +16,7 @@ define Package/$(PKG_NAME)
+ 	SUBMENU:=3. Applications
+ 	TITLE:=LuCI support for mihomo & sing-box
+ 	PKGARCH:=all
+-	DEPENDS:=+kmod-tun +bash +curl +jq +php8 +php8-cgi +php8-mod-curl +php8-mod-intl +zoneinfo-asia 
++	DEPENDS:=+kmod-tun +bash +curl +jq +php8 +php8-cgi +php8-fpm +php8-mod-curl +php8-mod-intl +zoneinfo-asia 
+ endef
+ 
+ define Package/$(PKG_NAME)/description
+
+--- a/luci-app-nekobox/htdocs/nekobox/index.php
++++ b/luci-app-nekobox/htdocs/nekobox/index.php
+@@ -543,7 +543,7 @@ function readLogFile($filePath) {
+ <?php
+ $isNginx = false;
+ if (isset($_SERVER['SERVER_SOFTWARE']) && strpos($_SERVER['SERVER_SOFTWARE'], 'nginx') !== false) {
+-    $isNginx = true;
++    $isNginx = false;
+ }
+ ?>
+ 
+
+--- a/luci-app-nekobox/root/etc/uci-defaults/99_neko
++++ b/luci-app-nekobox/root/etc/uci-defaults/99_neko
+@@ -9,11 +9,36 @@ tmp_dir="/tmp"
+ echo "[ `date +%T` ] - Checking Files..."
+ 
+ files_check() {
++    if [ -n "$(command -v nginx)" ];then
++cat << 'EOF' > /etc/nginx/conf.d/nekobox.locations
++location /nekobox {
++    alias /www/nekobox;
++    index index.php index.html index.htm;
++
++    location ~ \.php$ {
++        if (!-f $request_filename) {
++            return 404;
++        }
++        fastcgi_pass unix:/var/run/php8-fpm.sock;
++        fastcgi_index index.php;
++        include fastcgi_params;
++        fastcgi_param SCRIPT_FILENAME $request_filename;
++    }
++}
++EOF
++        /etc/init.d/nginx restart
++    elif [ -n "$(command -v lighttpd)" ];then
++cat << 'EOF' > /etc/lighttpd/conf.d/81-php.conf
++cgi.assign += ( ".php" => "/usr/bin/php-cgi" )
++EOF
++        /etc/init.d/lighttpd restart
++    else
+     uci set uhttpd.main.index_page='index.php'
+     uci set uhttpd.main.interpreter='.php=/usr/bin/php-cgi'
+     uci commit uhttpd
+ 
+     /etc/init.d/uhttpd restart
++    fi
+ }
+ if [ -f "/tmp/neko/neko.bak" ]; then
+     echo "[ `date +%T` ] - Old Configs"
+
+--- a/luci-theme-spectra/root/etc/uci-defaults/30_luci-theme-spectra
++++ b/luci-theme-spectra/root/etc/uci-defaults/30_luci-theme-spectra
+@@ -8,6 +8,33 @@ commit luci
+ EOF
+ 
+     rm -rf /tmp/luci-*
+-    /etc/init.d/uhttpd restart
++    if [ -n "$(command -v nginx)" ];then
++        if [ ! -f /etc/nginx/conf.d/spectra.locations ]; then
++cat << 'EOF' > /etc/nginx/conf.d/spectra.locations
++location /luci-static/spectra/ {
++    location ~ \.php$ {
++        if (!-f $request_filename) {
++            return 404;
++        }
++        fastcgi_pass unix:/var/run/php8-fpm.sock;
++        fastcgi_index index.php;
++        include fastcgi_params;
++        fastcgi_param SCRIPT_FILENAME $request_filename;
++    }
++}
++EOF
++            /etc/init.d/nginx restart
++        fi
++    elif [ -n "$(command -v lighttpd)" ];then
++cat << 'EOF' > /etc/lighttpd/conf.d/81-php.conf
++cgi.assign += ( ".php" => "/usr/bin/php-cgi" )
++EOF
++        /etc/init.d/lighttpd restart
++    else
++        uci set uhttpd.main.index_page='index.php'
++        uci set uhttpd.main.interpreter='.php=/usr/bin/php-cgi'
++        uci commit uhttpd
++        /etc/init.d/uhttpd restart
++    fi
+ fi
+ exit 0

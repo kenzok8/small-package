@@ -1,0 +1,78 @@
+--- a/luci-app-timedreboot/luasrc/model/cbi/timedreboot.lua
++++ b/luci-app-timedreboot/luasrc/model/cbi/timedreboot.lua
+@@ -39,9 +39,4 @@ once=s:option(Flag,"once",translate("Only once"))
+ once.rmempty = false
+ once.default=0
+ 
+-local apply =luci.http.formvalue("cbi.apply")
+-if apply then
+-    luci.sys.call("/etc/init.d/timedreboot restart")
+-end
+-
+ return m
+
+--- a/luci-app-timedreboot/po/zh_Hans
++++ /dev/null
+@@ -1 +0,0 @@
+-zh-cn
+\ No newline at end of file
+
+--- a/luci-app-timedreboot/root/etc/init.d/timedreboot
++++ b/luci-app-timedreboot/root/etc/init.d/timedreboot
+@@ -1,6 +1,11 @@
+ #!/bin/sh /etc/rc.common
++
+ START=50
+ 
++boot() {
++	exit 0;
++}
++
+ run_reboot()
+ {
+     if [ -e "/usr/bin/dorboot" ]; then
+
+--- /dev/null
++++ b/luci-app-timedreboot/root/etc/uci-defaults/luci-timedreboot
+@@ -0,0 +1,11 @@
++#!/bin/sh
++
++uci -q batch <<-EOF >/dev/null
++	delete ucitrack.@timedreboot[-1]
++	add ucitrack timedreboot
++	set ucitrack.@timedreboot[-1].init=timedreboot
++	commit ucitrack
++EOF
++
++rm -f /tmp/luci-indexcache
++exit 0
+\ No newline at end of file
+
+--- a/luci-app-timedreboot/root/usr/bin/dorboot
++++ b/luci-app-timedreboot/root/usr/bin/dorboot
+@@ -3,8 +3,6 @@
+ # [K] (C)2020
+ # http://github.com/kongfl888/luci-app-timedreboot
+ 
+-sleep 5s
+-
+ if [ ! -e "/etc/config/timedreboot" ]; then
+     echo "timedreboot cfg is not exit" >> /tmp/timedreboot.log
+     logger "timedreboot cfg is not exit. Stop!"
+@@ -60,7 +58,6 @@ rebootsys() {
+     fi
+     sleep 5s
+     touch /etc/banner
+-    sleep 5s
+     reboot
+ }
+ 
+@@ -123,8 +120,6 @@ if [ "${1}" = "0" -o "${1}" = "1" ]; then
+     rebootsys
+ else
+     justcfg
+-    sleep 10s
+-    justcfg
+ fi
+ 
+ exit 0
