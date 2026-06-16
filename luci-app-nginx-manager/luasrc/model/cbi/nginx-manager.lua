@@ -1,5 +1,5 @@
 local fs = require "nixio.fs"
-local m = Map("nginx-manager",translate("Nginx Manager"), translate("A simple Nginx manager") .. [[<br /><br /><a href="https://github.com/sundaqiang/openwrt-packages" target="_blank">Powered by sundaqiang</a>]])
+local m = Map("nginx-manager",translate("Nginx Manager"), translate("A simple Nginx manager") .. [[<br /><a href="https://github.com/sundaqiang/openwrt-packages" target="_blank">Powered by sundaqiang</a>]])
 s = m:section(TypedSection, "nginx", translate("Web site list"))
 s.template = "nginx-manager/index"
 s.addremove = true

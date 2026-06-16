@@ -230,4 +230,5 @@ end
 local dns_defaults_section = m:section(SimpleSection)
 dns_defaults_section.template = "shadowsocksr/client_dns_defaults"
 
+m:section(SimpleSection).template = "shadowsocksr/status_bottom"
 return m

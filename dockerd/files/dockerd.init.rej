@@ -1,0 +1,12 @@
+--- dockerd/files/dockerd.init
++++ dockerd/files/dockerd.init
+@@ -36,6 +36,9 @@ uciadd() {
+ 		uci_quiet set firewall.@zone[-1].input="ACCEPT"
+ 		uci_quiet set firewall.@zone[-1].output="ACCEPT"
+ 		uci_quiet set firewall.@zone[-1].forward="ACCEPT"
++		uci_quiet set firewall.dockerd=forwarding
++		uci_quiet set firewall.@forwarding[-1].src="${zone}"
++		uci_quiet set firewall.@forwarding[-1].dest='wan'
+ 		uci_quiet commit firewall
+ 	fi
+ 

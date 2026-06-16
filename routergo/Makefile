@@ -27,7 +27,7 @@ define Package/$(PKG_NAME)
 	CATEGORY:=Network
 	SUBMENU:=Web Servers/Proxies
 	TITLE:=RouterGo
-	DEPENDS:=@(x86_64||aarch64||arm) +docker
+	DEPENDS:=@(x86_64||aarch64||arm) +docker +luci-app-linkease
 	URL:=https://github.com/Carseason/openwrt-packages
 endef
 

@@ -28,6 +28,16 @@ include $(INCLUDE_DIR)/cmake.mk
 
 STRIP:=$(TARGET_CROSS)strip $(call qstrip,$(CONFIG_STRIP_ARGS))
 
+define Host/Prepare
+	$(call Host/Prepare/Default)
+	$(SED) 's/^qt_internal_check_if_path_has_symlinks/# &/' $(HOST_BUILD_DIR)/CMakeLists.txt
+endef
+
+define Build/Prepare
+	$(call Build/Prepare/Default)
+	$(SED) 's/^qt_internal_check_if_path_has_symlinks/# &/' $(PKG_BUILD_DIR)/CMakeLists.txt
+endef
+
 define Package/libQt6/Default
   SECTION:=libs
   CATEGORY:=Libraries

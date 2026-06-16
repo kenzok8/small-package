@@ -946,3 +946,53 @@ msgstr "将所选节点作为一个命名节点组导入，避免机场节点较
 
 msgid "Node group \"%s\" is available on %s. Select nodes above to update it."
 msgstr "节点组“%s”已导入 %s。重新选择上方节点即可更新此组。"
+
+msgid "Config Backup"
+msgstr "配置备份"
+
+msgid "Export"
+msgstr "导出"
+
+msgid "Import"
+msgstr "导入"
+
+msgid "Back up / restore the whole daede config (kernels excluded)"
+msgstr "备份 / 还原整个 daede 配置（不含内核）"
+
+msgid "Import overwrites the current daede config and restarts the backend. Continue?"
+msgstr "导入会覆盖当前 daede 配置并重启后端，确定继续？"
+
+msgid "Data Source"
+msgstr "数据源"
+
+msgid "Custom"
+msgstr "自定义"
+
+msgid "Auto-update"
+msgstr "自动更新"
+
+msgid "Daily"
+msgstr "每天"
+
+msgid "Weekly"
+msgstr "每周"
+
+msgid "Save"
+msgstr "保存"
+
+msgid "Geo data source saved."
+msgstr "数据源已保存。"
+
+msgid "Save failed"
+msgstr "保存失败"
+
+msgid "latest version unknown"
+msgstr "最新版本未知"
+
+msgid "Delete the daens netns?"
+msgstr "删除 daens netns？"
+
+msgid ""
+"%s is running. Deleting the daens netns now will break its networking until "
+"you restart it. Continue?"
+msgstr "%s 正在运行。现在删除 daens netns 会中断其网络，直到重启它。确定继续？"

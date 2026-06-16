@@ -1,0 +1,10 @@
+--- luci-app-passwall/Makefile
++++ luci-app-passwall/Makefile
+@@ -93,7 +93,6 @@
+ config PACKAGE_$(PKG_NAME)_INCLUDE_Geoview
+ 
+ 	bool "Include Geoview"
+ 
+ 	select PACKAGE_geoview
+ 
+-	default y if aarch64||arm||i386||x86_64

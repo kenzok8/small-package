@@ -1,0 +1,11 @@
+--- luci-app-ssr-plus/root/etc/uci-defaults/luci-ssr-plus
++++ luci-app-ssr-plus/root/etc/uci-defaults/luci-ssr-plus
+@@ -43,5 +43,8 @@ if [ -s "/etc/uwsgi/vassals/luci-webui.ini" ];then
+ 	/etc/init.d/uwsgi restart
+ fi
+ 
++grep -q ip-api.com /etc/ssrplus/black.list ||
++	sed -i '$a ip-api.com' /etc/ssrplus/black.list
++
+ rm -rf /tmp/luci-modulecache /tmp/luci-indexcache
+ exit 0

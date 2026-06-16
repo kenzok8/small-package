@@ -1,0 +1,21 @@
+--- luci-app-my-dnshelper/htdocs/luci-static/resources/view/my-dnshelper/filters.js
++++ luci-app-my-dnshelper/htdocs/luci-static/resources/view/my-dnshelper/filters.js
+@@ -38,12 +38,12 @@ return view.extend({
+ 		s.anonymous = true;
+ 
+ 		o = s.option(form.DynamicList, "url", _("Filter Rules Subscription URL"));
+-		o.value("https://cdn.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/adblock-for-dnsmasq.conf", _("anti-AD (Privacy-Protect|Preferred)"));
+-		o.value("https://gcore.jsdelivr.net/gh/AdguardTeam/AdGuardSDNSFilter@gh-pages/Filters/filter.txt", _("AdGuard Filter"));
+-		o.value("https://gcore.jsdelivr.net/gh/Cats-Team/AdRules/hosts.txt", _("Cats-Team Hosts"));
+-		o.value("https://cdn.jsdelivr.net/gh/VeleSila/yhosts/hosts.txt", _("yhosts"));
+-		o.value("https://cdn.jsdelivr.net/gh/kongfl888/ad-rules/malhosts.txt", _("Anti-Mal Hosts"));
+-		o.value("https://cdn.jsdelivr.net/gh/kongfl888/ad-rules/antihosts-gambling-porn.txt", _("Anti-Gambling-Porn"));
++		o.value("https://fastly.jsdelivr.net/gh/privacy-protection-tools/anti-AD@master/adblock-for-dnsmasq.conf", _("anti-AD (Privacy-Protect|Preferred)"));
++		o.value("https://fastly.jsdelivr.net/gh/AdguardTeam/AdGuardSDNSFilter@gh-pages/Filters/filter.txt", _("AdGuard Filter"));
++		o.value("https://fastly.jsdelivr.net/gh/Cats-Team/AdRules/hosts.txt", _("Cats-Team Hosts"));
++		o.value("https://fastly.jsdelivr.net/gh/VeleSila/yhosts/hosts.txt", _("yhosts"));
++		o.value("https://fastly.jsdelivr.net/gh/kongfl888/ad-rules/malhosts.txt", _("Anti-Mal Hosts"));
++		o.value("https://fastly.jsdelivr.net/gh/kongfl888/ad-rules/antihosts-gambling-porn.txt", _("Anti-Gambling-Porn"));
+ 		o.value("https://easylist-downloads.adblockplus.org/easylistchina+easylist.txt", _("Easylistchina+Easylist"));
+ 
+ 		o = s.option(form.Button, "bfilter");

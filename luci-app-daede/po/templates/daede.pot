@@ -738,3 +738,56 @@ msgstr ""
 
 msgid "Node group \"%s\" is available on %s. Select nodes above to update it."
 msgstr ""
+
+msgid "Config Backup"
+msgstr ""
+
+msgid "Export"
+msgstr ""
+
+msgid "Import"
+msgstr ""
+
+msgid "dae + daed"
+msgstr ""
+
+msgid "Back up / restore the whole daede config (kernels excluded)"
+msgstr ""
+
+msgid "Import overwrites the current daede config and restarts the backend. Continue?"
+msgstr ""
+
+msgid "Data Source"
+msgstr ""
+
+msgid "Custom"
+msgstr ""
+
+msgid "Auto-update"
+msgstr ""
+
+msgid "Daily"
+msgstr ""
+
+msgid "Weekly"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Geo data source saved."
+msgstr ""
+
+msgid "Save failed"
+msgstr ""
+
+msgid "latest version unknown"
+msgstr ""
+
+msgid "Delete the daens netns?"
+msgstr ""
+
+msgid ""
+"%s is running. Deleting the daens netns now will break its networking until "
+"you restart it. Continue?"
+msgstr ""

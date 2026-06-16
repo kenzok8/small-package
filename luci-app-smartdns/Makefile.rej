@@ -1,0 +1,10 @@
+--- luci-app-smartdns/Makefile
++++ luci-app-smartdns/Makefile
+@@ -18,6 +18,7 @@ PKG_CONFIG_DEPENDS:=CONFIG_PACKAGE_luci-app-smartdns_INCLUDE_WebUI
+ define Package/luci-app-smartdns/config
+   config PACKAGE_luci-app-smartdns_INCLUDE_WebUI
+     bool "Include WebUI support"
++    default y
+ endef
+ 
+ include ../../luci.mk

@@ -19,6 +19,7 @@
 				"/tmp/luci-app-daede.pkg-dae.log": [ "read" ],
 				"/tmp/luci-app-daede.pkg-daed.log": [ "read" ],
 				"/tmp/luci-app-daede.pkg-luci-app-daede.log": [ "read" ],
+				"/tmp/luci-app-daede.backup.log": [ "read" ],
 				"/bin/pidof dae": [ "exec" ],
 				"/bin/pidof daed": [ "exec" ],
 				"/usr/bin/dae validate -c /tmp/dae-validate.dae": [ "exec" ],
@@ -28,7 +29,8 @@
 				"/usr/share/luci-app-daede/pkg-info.sh daed": [ "exec" ],
 				"/usr/share/luci-app-daede/pkg-info.sh luci-app-daede": [ "exec" ],
 				"/usr/share/luci-app-daede/refresh-index.sh": [ "exec" ],
-				"/usr/share/luci-app-daede/proxy-check.sh": [ "exec" ]
+				"/usr/share/luci-app-daede/proxy-check.sh": [ "exec" ],
+				"/usr/share/luci-app-daede/config-backup.sh export": [ "exec" ]
 			},
 			"ubus": {
 				"service": [ "list" ]
@@ -39,6 +41,8 @@
 			"file": {
 				"/etc/dae/config.dae": [ "write" ],
 				"/tmp/dae-validate.dae": [ "write" ],
+				"/tmp/daede-import.b64": [ "write" ],
+				"/usr/share/luci-app-daede/config-backup.sh import": [ "exec" ],
 				"/etc/config/daede": [ "write" ],
 				"/var/log/dae/dae.log": [ "write" ],
 				"/var/log/daed/daed.log": [ "write" ],
@@ -63,6 +67,8 @@
 				"/sbin/ip netns del daens": [ "exec" ],
 				"/usr/share/luci-app-daede/update-geo.sh geoip": [ "exec" ],
 				"/usr/share/luci-app-daede/update-geo.sh geosite": [ "exec" ],
+				"/usr/share/luci-app-daede/geo-cron.sh enable": [ "exec" ],
+				"/usr/share/luci-app-daede/geo-cron.sh disable": [ "exec" ],
 				"/usr/share/luci-app-daede/update-pkg.sh dae": [ "exec" ],
 				"/usr/share/luci-app-daede/update-pkg.sh daed": [ "exec" ],
 				"/usr/share/luci-app-daede/update-pkg.sh luci-app-daede": [ "exec" ],

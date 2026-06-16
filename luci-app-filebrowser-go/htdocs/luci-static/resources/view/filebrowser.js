@@ -28,7 +28,7 @@ function renderStatus(isRunning, port) {
 	if (isRunning) {
 		let button = String.format('&#160;<a class="btn cbi-button" href="http://%s:%s" target="_blank" rel="noreferrer noopener">%s</a>',
 			window.location.hostname, port, _('Open Web Interface'));
-		renderHTML = spanTemp.format('green', _('FileBrowser'), _('RUNNING')) + button;
+		renderHTML = spanTemp.format('green', _('FileBrowser'), _('RUNNING')) + button + "<span> 默认用户名与密码:admin</span>" ;
 	} else {
 		renderHTML = spanTemp.format('red', _('FileBrowser'), _('NOT RUNNING'));
 	}

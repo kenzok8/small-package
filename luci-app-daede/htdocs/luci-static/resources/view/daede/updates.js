@@ -13,6 +13,22 @@ const DATA_PATHS = {
 	geosite: '/usr/share/v2ray/geosite.dat'
 };
 
+// Geo data source presets. `loyalsoldier` keeps both URLs empty so the actual
+// default lives in one place — update-geo.sh — avoiding UI/script drift.
+const GEO_PRESETS = {
+	loyalsoldier: { geoip: '', geosite: '' },
+	v2fly: {
+		geoip:   'https://github.com/v2fly/geoip/releases/latest/download/geoip.dat',
+		geosite: 'https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat'
+	}
+};
+
+function currentPreset(gi, gs) {
+	if (!gi && !gs) return 'loyalsoldier';
+	if (gi === GEO_PRESETS.v2fly.geoip && gs === GEO_PRESETS.v2fly.geosite) return 'v2fly';
+	return 'custom';
+}
+
 const HEALTH_PATHS = {
 	btf: '/sys/kernel/btf/vmlinux',
 	netns: '/run/netns/daens'
@@ -36,6 +52,11 @@ const CSS = [
 	'.dd-up-btn:hover{background:rgba(128,128,128,.12)}',
 	'.dd-up-btn:disabled{opacity:.45;cursor:not-allowed}',
 	'.dd-up-btn-primary{border-color:#4aa065;color:#4aa065}',
+	'.dd-geo-row{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:center;font-size:12px;padding:6px 0}',
+	'.dd-geo-row label{opacity:.75;font-weight:600}',
+	'.dd-geo-row input[type=text],.dd-geo-row select{font-size:12px;padding:4px 8px;border:1px solid rgba(128,128,128,.35);border-radius:5px;background:transparent;color:inherit;width:100%}',
+	'.dd-geo-chk{display:flex;align-items:center;gap:6px}',
+	'.dd-geo-actions{margin-top:10px;display:flex;gap:10px;align-items:center}',
 	'.dd-up-log{margin-top:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:11px;padding:10px;border:1px solid rgba(128,128,128,.14);border-radius:8px;max-height:200px;overflow:auto;white-space:pre-wrap;word-break:break-all;display:none;background:inherit;color:#4a8c63}',
 	'.dd-up-log.show{display:block}',
 		'body.dark .dd-up-log,html[data-theme="dark"] .dd-up-log,html[data-bs-theme="dark"] .dd-up-log{color:#a3d9ad}',
@@ -102,13 +123,20 @@ function probePkg(pkg) {
 	});
 }
 
+// YYYYMMDD-HHMM stamp for backup filenames
+function stamp() {
+	const d = new Date(), p = n => (n < 10 ? '0' : '') + n;
+	return '' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes());
+}
+
 return view.extend({
 	load: function() {
 		// background apk update so new versions show on next poll
 		fs.exec('/usr/share/luci-app-daede/refresh-index.sh', []).catch(function() {});
 		return Promise.all([
 			backend.detectBackend(),
-			uci.load('daed').catch(function() {})
+			uci.load('daed').catch(function() {}),
+			uci.load('daede').catch(function() {})
 		]).then(function(r) {
 			return r[0];
 		});
@@ -171,6 +199,49 @@ return view.extend({
 		const upgradePkg = function(pkg, btn) {
 			return runJob('update-pkg.sh', pkg, btn, '/tmp/luci-app-daede.pkg-' + pkg + '.log');
 		};
+
+		// === Config backup (export / import the whole daede config) ===
+		const exportBtn = E('button', { 'class': 'dd-up-btn' }, _('Export'));
+		const importBtn = E('button', { 'class': 'dd-up-btn' }, _('Import'));
+		const fileInput = E('input', { 'type': 'file', 'accept': '.tar.gz,.gz,application/gzip', 'style': 'display:none' });
+
+		exportBtn.addEventListener('click', function() {
+			const orig = exportBtn.textContent;
+			exportBtn.disabled = true; exportBtn.textContent = '...';
+			fs.exec('/usr/share/luci-app-daede/config-backup.sh', ['export']).then(function(res) {
+				if (res.code !== 0 || !res.stdout) {
+					logPane.textContent = String(res.stderr || res.stdout || 'export failed').trim();
+					logPane.classList.add('show');
+					return;
+				}
+				const bin = atob(res.stdout.trim());
+				const arr = new Uint8Array(bin.length);
+				for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+				const url = URL.createObjectURL(new Blob([arr], { 'type': 'application/gzip' }));
+				const a = E('a', { 'href': url, 'download': 'daede-config-' + stamp() + '.tar.gz' });
+				document.body.appendChild(a); a.click(); document.body.removeChild(a);
+				setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+			}).catch(function() {}).finally(function() {
+				exportBtn.disabled = false; exportBtn.textContent = orig;
+			});
+		});
+
+		importBtn.addEventListener('click', function() { fileInput.click(); });
+		fileInput.addEventListener('change', function(ev) {
+			const file = ev.target.files && ev.target.files[0];
+			if (!file) return;
+			if (!confirm(_('Import overwrites the current daede config and restarts the backend. Continue?'))) {
+				fileInput.value = ''; return;
+			}
+			const reader = new FileReader();
+			reader.onload = function(e) {
+				const b64 = String(e.target.result).split(',')[1] || '';
+				fs.write('/tmp/daede-import.b64', b64).then(function() {
+					return runJob('config-backup.sh', 'import', importBtn, '/tmp/luci-app-daede.backup.log');
+				}).catch(function() {}).finally(function() { fileInput.value = ''; });
+			};
+			reader.readAsDataURL(file);
+		});
 
 		const refresh = function() {
 			const probes = [
@@ -309,15 +380,112 @@ return view.extend({
 		poll.add(refresh);
 		refresh();
 
+		// === Geo data source (preset / custom URL + auto-update) ===
+		const geoSettings = (function() {
+			const gi0 = uci.get('daede', 'config', 'geoip_url') || '';
+			const gs0 = uci.get('daede', 'config', 'geosite_url') || '';
+			const auto0 = uci.get('daede', 'config', 'geo_auto') === '1';
+			const freq0 = uci.get('daede', 'config', 'geo_auto_freq') || 'daily';
+			const preset0 = currentPreset(gi0, gs0);
+
+			const presetSel = E('select', {}, [
+				E('option', { 'value': 'loyalsoldier' }, 'Loyalsoldier'),
+				E('option', { 'value': 'v2fly' }, 'v2fly'),
+				E('option', { 'value': 'custom' }, _('Custom'))
+			]);
+			presetSel.value = preset0;
+
+			const giInput = E('input', { 'type': 'text', 'placeholder': 'https://…/geoip.dat' });
+			const gsInput = E('input', { 'type': 'text', 'placeholder': 'https://…/geosite.dat' });
+			giInput.value = preset0 === 'custom' ? gi0 : '';
+			gsInput.value = preset0 === 'custom' ? gs0 : '';
+
+			const customRows = E('div', {}, [
+				E('div', { 'class': 'dd-geo-row' }, [ E('label', {}, 'GeoIP URL'), giInput ]),
+				E('div', { 'class': 'dd-geo-row' }, [ E('label', {}, 'GeoSite URL'), gsInput ])
+			]);
+			const syncCustom = function() {
+				customRows.style.display = presetSel.value === 'custom' ? '' : 'none';
+			};
+			presetSel.addEventListener('change', syncCustom);
+			syncCustom();
+
+			const autoCb = E('input', { 'type': 'checkbox' });
+			autoCb.checked = auto0;
+			const freqSel = E('select', {}, [
+				E('option', { 'value': 'daily' }, _('Daily')),
+				E('option', { 'value': 'weekly' }, _('Weekly'))
+			]);
+			freqSel.value = freq0;
+
+			const saveBtn = E('button', { 'class': 'dd-up-btn dd-up-btn-primary' }, _('Save'));
+			saveBtn.addEventListener('click', function() {
+				const p = presetSel.value;
+				let gi = '', gs = '';
+				if (p === 'v2fly') { gi = GEO_PRESETS.v2fly.geoip; gs = GEO_PRESETS.v2fly.geosite; }
+				else if (p === 'custom') { gi = giInput.value.trim(); gs = gsInput.value.trim(); }
+				uci.set('daede', 'config', 'geoip_url', gi);
+				uci.set('daede', 'config', 'geosite_url', gs);
+				uci.set('daede', 'config', 'geo_auto', autoCb.checked ? '1' : '0');
+				uci.set('daede', 'config', 'geo_auto_freq', freqSel.value);
+				const orig = saveBtn.textContent;
+				saveBtn.disabled = true; saveBtn.textContent = '...';
+				uci.save().then(function() { return uci.apply(); }).then(function() {
+					return fs.exec('/usr/share/luci-app-daede/geo-cron.sh', [autoCb.checked ? 'enable' : 'disable']);
+				}).then(function() {
+					logPane.textContent = _('Geo data source saved.');
+					logPane.classList.add('show');
+					ui.changes.init();
+				}).catch(function(e) {
+					logPane.textContent = _('Save failed') + ': ' + (e && e.message ? e.message : e);
+					logPane.classList.add('show');
+				}).finally(function() {
+					saveBtn.disabled = false; saveBtn.textContent = orig;
+				});
+			});
+
+			const adv = E('div', { 'class': 'dd-adv dd-closed' }, [
+				E('div', { 'class': 'dd-adv-bar' }, [
+					E('span', {}, _('Data Source')),
+					E('span', { 'class': 'dd-adv-chevron' }, '›')
+				]),
+				E('div', { 'class': 'dd-adv-body' }, [
+					E('div', { 'class': 'dd-geo-row' }, [ E('label', {}, _('Source')), presetSel ]),
+					customRows,
+					E('div', { 'class': 'dd-geo-row' }, [
+						E('label', {}, _('Auto-update')),
+						E('div', { 'class': 'dd-geo-chk' }, [ autoCb, freqSel ])
+					]),
+					E('div', { 'class': 'dd-geo-actions' }, [ saveBtn ])
+				])
+			]);
+			adv.firstChild.addEventListener('click', function() {
+				adv.classList.toggle('dd-closed');
+			});
+			return adv;
+		})();
+
 		return E('div', { 'class': 'dd-up-wrap' }, [
 			E('style', {}, CSS),
 			E('div', { 'class': 'dd-card' }, [
 				E('h4', { 'class': 'dd-card-title' }, _('Data Updates')),
-				dataBody
+				dataBody,
+				geoSettings
 			]),
 			E('div', { 'class': 'dd-card' }, [
 				E('h4', { 'class': 'dd-card-title' }, _('Package Updates')),
 				pkgBody
+			]),
+			E('div', { 'class': 'dd-card' }, [
+				E('h4', { 'class': 'dd-card-title' }, _('Config Backup')),
+				E('div', { 'class': 'dd-up-row' }, [
+					E('span', { 'class': 'dd-up-icon dd-up-new' }, '⤓'),
+					E('span', { 'class': 'dd-up-name' }, _('dae + daed')),
+					E('span', { 'class': 'dd-up-meta' }, _('Back up / restore the whole daede config (kernels excluded)')),
+					exportBtn,
+					importBtn
+				]),
+				fileInput
 			]),
 			(function() {
 				const adv = E('div', { 'class': 'dd-adv dd-closed' }, [

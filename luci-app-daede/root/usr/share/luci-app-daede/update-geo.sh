@@ -5,13 +5,18 @@
 # in /tmp prevents concurrent runs.
 
 TYPE="$1"
+# Default source: Loyalsoldier/v2ray-rules-dat — daily-built, China-optimized,
+# ships both geoip.dat and geosite.dat. Users can override per-type via
+# daede.config.geoip_url / geosite_url (empty falls back to the default below).
 case "$TYPE" in
 	geoip)
-		URL="https://github.com/v2fly/geoip/releases/latest/download/geoip.dat"
+		DEF_URL="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
+		URL="$(uci -q get daede.config.geoip_url)"
 		DEST="/usr/share/v2ray/geoip.dat"
 		;;
 	geosite)
-		URL="https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat"
+		DEF_URL="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
+		URL="$(uci -q get daede.config.geosite_url)"
 		DEST="/usr/share/v2ray/geosite.dat"
 		;;
 	*)
@@ -19,6 +24,7 @@ case "$TYPE" in
 		exit 64
 		;;
 esac
+[ -n "$URL" ] || URL="$DEF_URL"
 
 LOCK="/tmp/luci-app-daede.${TYPE}.lock"
 LOG="/tmp/luci-app-daede.${TYPE}.log"

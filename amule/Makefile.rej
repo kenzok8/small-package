@@ -1,0 +1,19 @@
+--- amule/Makefile
++++ amule/Makefile
+@@ -85,12 +98,16 @@ endef
+ 
+ define Package/amule/install
+ 	$(INSTALL_DIR) $(1)/usr/bin
++	$(INSTALL_DIR) $(1)/usr/share/amule/webserver
+ 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/amulecmd $(1)/usr/bin/amulecmd
+ 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/amuled $(1)/usr/bin/amuled
+ 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/amuleweb $(1)/usr/bin/amuleweb
++	$(CP) $(PKG_BUILD_DIR)/src/webserver/default $(1)/usr/share/amule/webserver
++	$(CP) $(PKG_BUILD_DIR)/AmuleWebUI-Reloaded-master $(1)/usr/share/amule/webserver/AmuleWebUI-Reloaded
+ 
+ 	$(INSTALL_DIR) $(1)/usr/share
+ 	$(CP) $(PKG_INSTALL_DIR)/usr/share/amule $(1)/usr/share/
+ endef
+ 
++$(eval $(call Download,AmuleWebUI))
+ $(eval $(call BuildPackage,amule))

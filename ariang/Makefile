@@ -33,7 +33,6 @@ Package/ariang-nginx/description = $(Package/ariang/description)
 
 define Package/ariang
   $(Package/ariang/default)
-  DEPENDS += +uhttpd
   TITLE += for uhttpd webserver
 endef
 

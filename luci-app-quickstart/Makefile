@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=LuCI support for quickstart 
-LUCI_DEPENDS:=+quickstart +luci-app-store
+LUCI_DEPENDS:=+quickstart +luci-app-ttyd
 LUCI_PKGARCH:=all
 
 PKG_VERSION:=0.12.7-r1

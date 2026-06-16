@@ -175,7 +175,7 @@ start_sub_service() {
 
 stop() {
 	echo "stop function" >> $LOG_FILE
-	killall -9 homebridge >> $LOG_FILE 2>&1
+	killall -9 `which homebridge` >> $LOG_FILE 2>&1
 #	config_load homebridge
 #	stop_main_service
 #	config_foreach stop_sub_service platform
@@ -227,4 +227,7 @@ status(){
 	fi
 }
 
+service_triggers() {
+      procd_add_reload_trigger "homebridge"
+}
 

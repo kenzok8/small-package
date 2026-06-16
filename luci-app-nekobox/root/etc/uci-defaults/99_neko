@@ -9,11 +9,36 @@ tmp_dir="/tmp"
 echo "[ `date +%T` ] - Checking Files..."
 
 files_check() {
+    if [ -n "$(command -v nginx)" ];then
+cat << 'EOF' > /etc/nginx/conf.d/nekobox.locations
+location /nekobox {
+    alias /www/nekobox;
+    index index.php index.html index.htm;
+
+    location ~ \.php$ {
+        if (!-f $request_filename) {
+            return 404;
+        }
+        fastcgi_pass unix:/var/run/php8-fpm.sock;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $request_filename;
+    }
+}
+EOF
+        /etc/init.d/nginx restart
+    elif [ -n "$(command -v lighttpd)" ];then
+cat << 'EOF' > /etc/lighttpd/conf.d/81-php.conf
+cgi.assign += ( ".php" => "/usr/bin/php-cgi" )
+EOF
+        /etc/init.d/lighttpd restart
+    else
     uci set uhttpd.main.index_page='index.php'
     uci set uhttpd.main.interpreter='.php=/usr/bin/php-cgi'
     uci commit uhttpd
 
     /etc/init.d/uhttpd restart
+    fi
 }
 if [ -f "/tmp/neko/neko.bak" ]; then
     echo "[ `date +%T` ] - Old Configs"

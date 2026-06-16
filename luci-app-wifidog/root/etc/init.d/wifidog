@@ -150,3 +150,8 @@ start_service() {
 status() {
     /usr/bin/wdctl status
 }
+
+service_triggers() {
+	procd_add_reload_trigger "wifidog"
+}
+

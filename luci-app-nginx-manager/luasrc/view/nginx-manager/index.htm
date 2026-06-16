@@ -24,9 +24,6 @@
 				<input type="submit" name="cbi.rts.<%=self.config%>.<%=k%>" onclick="this.form.cbi_state='del-section'; return true" value="<%:Delete%>" class="cbi-button" />
 			</div>
 		<%- end %>
-
-		<%+cbi/tabmenu%>
-
 		<fieldset class="cbi-section-node<% if self.tabs then %> cbi-section-node-tabbed<% end %>" id="cbi-<%=self.config%>-<%=section%>" style="border-bottom: 1px solid #ddd;border-radius: 0px">
 			<%+cbi/ucisection%>
 		</fieldset>

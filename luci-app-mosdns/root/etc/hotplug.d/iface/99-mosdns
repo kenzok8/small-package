@@ -1,2 +1,2 @@
 #!/bin/sh
-[ "$ACTION" = ifup ] && /etc/init.d/mosdns restart
+[[ "$ACTION" = ifup && "$(uci -q get mosdns.mosdns.enabled)" == 1 ]] && /etc/init.d/mosdns restart

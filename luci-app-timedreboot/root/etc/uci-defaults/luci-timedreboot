@@ -1,0 +1,11 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@timedreboot[-1]
+	add ucitrack timedreboot
+	set ucitrack.@timedreboot[-1].init=timedreboot
+	commit ucitrack
+EOF
+
+rm -f /tmp/luci-indexcache
+exit 0

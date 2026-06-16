@@ -1,0 +1,13 @@
+#!/bin/sh
+
+[ ! -f "/usr/share/ucitrack/luci-app-autoreboot.json" ] && {
+    cat > /usr/share/ucitrack/luci-app-autoreboot.json << EEOF
+{
+    "config": "autoreboot",
+    "init": "autoreboot"
+}
+EEOF
+}
+
+rm -f /tmp/luci-indexcache
+exit 0
