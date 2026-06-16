@@ -617,8 +617,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 					result.server_port = nil
 					local realm = api.parse_realm_uri(node.hysteria2_realm_url)
 					if realm then
-						realm.server_url = realm.server_url and "https://" .. realm.server_url or nil
+						realm.server_url = (realm.scheme == "realm+http" and "http://" or "https://") .. realm.server_url
 						realm.stun_servers = realm.stun_servers or node.hysteria2_realm_stun
+						realm.scheme = nil
 						return realm
 					end
 					return nil
@@ -959,8 +960,9 @@ function gen_config_server(node)
 			realm = node.hysteria2_realms and (function()
 				local realm = api.parse_realm_uri(node.hysteria2_realm_url)
 				if realm then
-					realm.server_url = realm.server_url and "https://" .. realm.server_url or nil
+					realm.server_url = (realm.scheme == "realm+http" and "http://" or "https://") .. realm.server_url
 					realm.stun_servers = realm.stun_servers or node.hysteria2_realm_stun
+					realm.scheme = nil
 					realm.stun_domain_resolver = "direct"
 					return realm
 				end
@@ -1797,13 +1799,12 @@ function gen_config(var)
 		end
 	end
 
-	table.insert(route.rules, {
-		action = "route",
-		ip_is_private = true,
-		outbound = "direct"
-	})
-
 	if COMMON.default_outbound_tag then
+		table.insert(route.rules, {
+			action = "route",
+			port_range = { "0:65535" },
+			outbound = COMMON.default_outbound_tag
+		})
 		route.final = COMMON.default_outbound_tag
 	end
 

@@ -1251,9 +1251,6 @@ msgstr "پاک کردن گزارش‌ها"
 msgid "Password"
 msgstr "رمز عبور"
 
-msgid "IV Check"
-msgstr "بررسی IV"
-
 msgid "UDP over TCP"
 msgstr "UDP بر روی TCP"
 
@@ -1265,12 +1262,6 @@ msgstr "پورت محلی"
 
 msgid "Fast Open"
 msgstr "بازگشایی سریع (Fast Open)"
-
-msgid "Pre-connections"
-msgstr "پیش‌اتصالات"
-
-msgid "Number of early established connections to reduce latency."
-msgstr "تعداد اتصالات از پیش برقرار شده برای کاهش تاخیر."
 
 msgid "plugin"
 msgstr "افزونه"

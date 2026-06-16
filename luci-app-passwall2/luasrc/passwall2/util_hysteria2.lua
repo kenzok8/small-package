@@ -64,7 +64,8 @@ function gen_config(var)
 		server_host = api.get_ipv6_full(server_host)
 	end
 
-	local server = server_host .. ":" .. ((server_port or "") .. "," .. (node.hysteria2_hop or "")):gsub("^[%s,]+", ""):gsub("[%s,]+$", ""):gsub(":", "-")
+	local port_hop = ((server_port or "") .. "," .. (node.hysteria2_hop or "")):gsub("^[%s,]+", ""):gsub("[%s,]+$", ""):gsub(":", "-")
+	local server = server_host .. ":" .. (port_hop ~= "" and port_hop or "443")
 
 	local config = {
 		server = (function()

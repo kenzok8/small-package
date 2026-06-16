@@ -93,7 +93,8 @@ cfg['dns']['fallback-filter'] = { geoip: ab('fallback_filter_geoip') };
 
 /* profile */
 let store_selected = ab('selection_cache');
-let store_fake     = ab('fake_ip_cache');
+/* fake-ip cache defaults ON to survive restarts; opt out with '0' */
+let store_fake     = a('fake_ip_cache') == null ? true : ab('fake_ip_cache');
 if (store_selected || store_fake) {
 	cfg['profile'] = {};
 	if (store_selected) cfg['profile']['store-selected'] = true;

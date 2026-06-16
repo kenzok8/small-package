@@ -88,6 +88,23 @@ config shunt_rules 'Russia'
 	option ip_list 'geoip:ru
 #rule-set:remote:https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/refs/heads/release/sing-box/rule-set-geoip/geoip-ru.srs'
 
+config shunt_rules 'PrivateIP'
+	option remarks 'PrivateIP'
+	option network 'tcp,udp'
+	option ip_list '10.0.0.0/8
+127.0.0.0/8
+198.51.100.0/24
+192.0.0.0/24
+169.254.0.0/16
+224.0.0.0/3
+192.168.0.0/16
+192.88.99.0/24
+100.64.0.0/10
+172.16.0.0/12
+0.0.0.0/8
+192.0.2.0/24
+203.0.113.0/24'
+
 config nodes 'examplenode'
 	option remarks 'Example'
 	option type 'Xray'
@@ -104,6 +121,7 @@ config nodes 'rulenode'
 	option remarks 'rulenode'
 	option type 'Xray'
 	option protocol '_shunt'
+	option PrivateIP '_direct'
 	option default_node 'examplenode'
 	option domainStrategy 'IPOnDemand'
 	option domainMatcher 'hybrid'

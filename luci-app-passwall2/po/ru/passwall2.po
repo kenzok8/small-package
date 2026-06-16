@@ -1252,9 +1252,6 @@ msgstr "Очистить журнал"
 msgid "Password"
 msgstr "Пароль"
 
-msgid "IV Check"
-msgstr "Проверка IV"
-
 msgid "UDP over TCP"
 msgstr "UDP через TCP"
 
@@ -1266,12 +1263,6 @@ msgstr "Локальный порт"
 
 msgid "Fast Open"
 msgstr "Fast Open"
-
-msgid "Pre-connections"
-msgstr "Предварительные соединения"
-
-msgid "Number of early established connections to reduce latency."
-msgstr "Количество заранее установленных соединений для снижения задержки."
 
 msgid "plugin"
 msgstr "Плагин"

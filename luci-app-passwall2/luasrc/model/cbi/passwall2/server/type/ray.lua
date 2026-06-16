@@ -97,9 +97,6 @@ o.rewrite_option = "method"
 for a, t in ipairs(x_ss_method_list) do o:value(t) end
 o:depends({ [_n("protocol")] = "shadowsocks" })
 
-o = s:option(Flag, _n("iv_check"), translate("IV Check"))
-o:depends({ [_n("protocol")] = "shadowsocks" })
-
 o = s:option(ListValue, _n("ss_network"), translate("Transport"))
 o.default = "tcp,udp"
 o:value("tcp", "TCP")
@@ -232,7 +229,6 @@ o:value("http/1.1")
 o:value("h2,http/1.1")
 o:value("h3,h2,http/1.1")
 o:depends({ [_n("tls")] = true, [_n("reality")] = false })
-o:depends({ [_n("protocol")] = "hysteria2"})
 
 o = s:option(Flag, _n("use_mldsa65Seed"), translate("ML-DSA-65"))
 o.default = "0"

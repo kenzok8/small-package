@@ -1243,9 +1243,6 @@ msgstr "清空日誌"
 msgid "Password"
 msgstr "密碼"
 
-msgid "IV Check"
-msgstr "IV 檢查"
-
 msgid "UDP over TCP"
 msgstr "TCP 封装 UDP"
 
@@ -1257,12 +1254,6 @@ msgstr "本地端口"
 
 msgid "Fast Open"
 msgstr "快速打開"
-
-msgid "Pre-connections"
-msgstr "預連接"
-
-msgid "Number of early established connections to reduce latency."
-msgstr "預連接的數量，用於降低延遲。"
 
 msgid "plugin"
 msgstr "插件"
