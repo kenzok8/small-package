@@ -1,0 +1,16 @@
+--- a/src/widgets/kernel/qtooltip.cpp
++++ b/src/widgets/kernel/qtooltip.cpp
+@@ -380,11 +380,13 @@
+ /** \internal
+   Cleanup the _q_stylesheet_parent property.
+  */
++#if QT_CONFIG(style_stylesheet)
+ void QTipLabel::styleSheetParentDestroyed()
+ {
+     setProperty("_q_stylesheet_parent", QVariant());
+     styleSheetParent = nullptr;
+ }
++#endif
+ 
+ /*!
+     Shows \a text as a tool tip, with the global position \a pos as
