@@ -1,6 +1,6 @@
 --- a/src/widgets/kernel/qtooltip.cpp
 +++ b/src/widgets/kernel/qtooltip.cpp
-@@ -380,11 +380,13 @@
+@@ -379,9 +379,13 @@
  /** \internal
    Cleanup the _q_stylesheet_parent property.
   */
@@ -10,6 +10,8 @@
      setProperty("_q_stylesheet_parent", QVariant());
      styleSheetParent = nullptr;
  }
++#else
++void QTipLabel::styleSheetParentDestroyed() {}
 +#endif
  
  /*!
