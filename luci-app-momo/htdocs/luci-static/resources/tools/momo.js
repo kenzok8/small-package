@@ -19,6 +19,12 @@ const callRCInit = rpc.declare({
     expect: { '': {} }
 });
 
+const callFileWrite = rpc.declare({
+    object: 'file',
+    method: 'write',
+    params: ['path', 'data', 'append', 'mode']
+});
+
 const callMomoGetPaths = rpc.declare({
     object: 'luci.momo',
     method: 'get_paths',
@@ -81,6 +87,31 @@ return baseclass.extend({
         return callRCInit('momo', 'restart');
     },
 
+    writefile: function (path, data, mode) {
+        data = (data != null) ? String(data) : '';
+        mode = (mode != null) ? mode : 0o644;
+
+        const encoder = new TextEncoder();
+        const decoder = new TextDecoder();
+        const chunkSize = 8 * 1024;
+
+        const bytes = encoder.encode(data);
+
+        if (bytes.length <= chunkSize) {
+            return callFileWrite(path, data, false, mode);
+        }
+
+        let promise = Promise.resolve();
+        for(let offset = 0; offset < bytes.length; offset += chunkSize) {
+            const chunkBytes = bytes.slice(offset, Math.min(offset + chunkSize, bytes.length));
+            const chunk = decoder.decode(chunkBytes);
+            const append = offset > 0;
+            promise = promise.then(() => callFileWrite(path, chunk, append, mode));
+        }
+
+        return promise;
+    },
+
     version: function () {
         return callMomoVersion();
     },
@@ -138,12 +169,12 @@ return baseclass.extend({
 
     clearAppLog: async function () {
         const paths = await this.getPaths();
-        return fs.write(paths.app_log_path);
+        return this.writefile(paths.app_log_path);
     },
 
     clearCoreLog: async function () {
         const paths = await this.getPaths();
-        return fs.write(paths.core_log_path);
+        return this.writefile(paths.core_log_path);
     },
 
     debug: function () {

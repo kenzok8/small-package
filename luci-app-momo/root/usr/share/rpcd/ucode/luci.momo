@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { access, popen, readfile } from 'fs';
-import { get_paths, merge_exists, get_users, get_groups, get_cgroups, load_profile, save_profile } from '/etc/momo/ucode/include.uc';
+import { popen } from 'fs';
+import { get_paths, merge_exists, get_users, get_groups, get_cgroups, load_profile } from '/etc/momo/ucode/include.uc';
 
 const methods = {
 	get_paths: {

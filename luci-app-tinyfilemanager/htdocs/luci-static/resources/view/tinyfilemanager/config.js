@@ -38,8 +38,6 @@ return view.extend({
 			return fs.exec('/etc/init.d/tinyfilemanager', ['reload'])
 				.catch((e) => { ui.addNotification(null, E('p', e.message), 'error') });
 		};
-		if (! has_location)
-			o.description = _('To enable SSL support, you may need to install <b>%s</b><br/>').format(['php-nginx']);
 
 		o = s.option(form.Flag, 'use_auth', _('Enable Authentication'));
 		o.rmempty = false;

@@ -26,9 +26,9 @@ FIREWALL_INCLUDE_SH="$SH_DIR/firewall_include.sh"
 DEBUG_SH="$SH_DIR/debug.sh"
 
 ## firewall
-NFT_DIR="$HOME_DIR/firewall"
-GEOIP_CN_NFT="$NFT_DIR/geoip_cn.nft"
-GEOIP6_CN_NFT="$NFT_DIR/geoip6_cn.nft"
+FIREWALL_DIR="$HOME_DIR/firewall"
+GEOIP_CN_NFT="$FIREWALL_DIR/geoip_cn.nft"
+GEOIP6_CN_NFT="$FIREWALL_DIR/geoip6_cn.nft"
 
 ## log
 LOG_DIR="/var/log/momo"
@@ -63,7 +63,7 @@ get_paths() {
 	json_add_string firewall_include_sh "$FIREWALL_INCLUDE_SH"
 	json_add_string debug_sh "$DEBUG_SH"
 
-	json_add_string nft_dir "$NFT_DIR"
+	json_add_string firewall_dir "$FIREWALL_DIR"
 	json_add_string geoip_cn_nft "$GEOIP_CN_NFT"
 	json_add_string geoip6_cn_nft "$GEOIP6_CN_NFT"
 

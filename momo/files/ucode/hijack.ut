@@ -6,11 +6,9 @@
 	import { readfile } from 'fs';
 	import { cursor } from 'uci';
 	import { connect } from 'ubus';
-	import { get_paths, uci_bool, uci_array, get_cgroups_version, get_users, get_groups, get_cgroups } from '/etc/momo/ucode/include.uc';
+	import { uci_bool, uci_array, get_cgroups_version, get_users, get_groups, get_cgroups, load_profile } from '/etc/momo/ucode/include.uc';
 
 	const fw4 = require('fw4');
-
-	const paths = get_paths();
 
 	const cgroups_version = get_cgroups_version();
 
@@ -21,7 +19,7 @@
 	const uci = cursor();
 	const ubus = connect();
 
-	const profile = json(readfile(paths.run_profile_path));
+	const profile = load_profile();
 
 	uci.load('momo');
 
