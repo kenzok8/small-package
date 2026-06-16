@@ -1,0 +1,11 @@
+--- a/transmission/Makefile
++++ b/transmission/Makefile
+@@ -109,6 +109,8 @@
+ 	-DUSE_SYSTEM_DHT:BOOL=YES \
+ 	-DUSE_SYSTEM_MINIUPNPC:BOOL=YES \
+ 	-DUSE_SYSTEM_NATPMP:BOOL=YES \
++	-DMINIUPNPC_INCLUDE_DIR=$(STAGING_DIR)/usr/include \
++	-DMINIUPNPC_LIBRARY=$(STAGING_DIR)/usr/lib/libminiupnpc.so \
+ 	-DUSE_SYSTEM_UTP:BOOL=YES \
+ 	-DUSE_SYSTEM_B64:BOOL=YES \
+ 	-DUSE_SYSTEM_PSL:BOOL=YES \
