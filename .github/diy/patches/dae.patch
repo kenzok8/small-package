@@ -1,0 +1,11 @@
+--- a/dae/Makefile
++++ b/dae/Makefile
+@@ -46,7 +46,7 @@
+ GO_PKG_BUILD_VARS+= GOFLAGS="-trimpath -buildvcs=false -pgo=auto"
+ GO_PKG_TARGET_VARS+= \
+ 	CGO_LDFLAGS="$(TARGET_LDFLAGS) -static -Wl,-s" \
+-	GOEXPERIMENT=newinliner,simd
++	GOEXPERIMENT=newinliner
+ 
+ define Package/dae/Default
+   SECTION:=net
