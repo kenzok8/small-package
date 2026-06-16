@@ -211,7 +211,7 @@ return view.extend({
 	render(data) {
 		let m, s, o, ss, so;
 
-		m = new form.Map('fchomo', _('Edit node'));
+		m = new form.Map('fchomo', _('Edit outbound'));
 
 		s = m.section(form.NamedSection, 'global', 'fchomo');
 
@@ -1050,7 +1050,7 @@ return view.extend({
 		so = ss.taboption('field_tls', form.Value, 'tls_sni', _('TLS SNI'),
 			_('Used to verify the hostname on the returned certificates.'));
 		so.depends({tls: '1', type: /^(http|vmess|vless|trojan|anytls|hysteria|hysteria2|trusttunnel)$/});
-		so.depends({tls: '1', tls_disable_sni: '0', type: /^(tuic)$/});
+		so.depends({tls: '1', type: /^(tuic)$/, tls_disable_sni: '0'});
 		so.modalonly = true;
 
 		so = ss.taboption('field_tls', form.DynamicList, 'tls_alpn', _('TLS ALPN'),

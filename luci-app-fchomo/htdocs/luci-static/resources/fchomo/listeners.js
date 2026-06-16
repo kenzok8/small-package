@@ -893,17 +893,12 @@ function renderListeners(s, uciconfig, isClient) {
 	// @ 下面支持填写针对server-url的TLS配置(sni, skip-cert-verify, fingerprint, certificate, private-key, alpn)
 
 	/* TLS fields */
-	o = s.taboption('field_general', form.Flag, 'allow_insecure', _('Allow insecure connections'),
-		_('Only applicable when %s are used as a frontend.').format('nginx/caddy'));
-	o.default = o.disabled;
-	o.depends({type: /^(vless|trojan|anytls)$/});
-	o.modalonly = true;
-
 	o = s.taboption('field_general', form.Flag, 'tls', _('TLS'));
 	o.default = o.disabled;
 	o.validate = function(section_id, value) {
 		const type = this.section.getOption('type').formvalue(section_id);
 		let tls = this.section.getUIElement(section_id, 'tls').node.querySelector('input');
+		let allow_insecure = this.section.getUIElement(section_id, 'allow_insecure').node.querySelector('input');
 		let tls_alpn = this.section.getUIElement(section_id, 'tls_alpn');
 		let tls_reality = this.section.getUIElement(section_id, 'tls_reality').node.querySelector('input');
 
@@ -935,6 +930,12 @@ function renderListeners(s, uciconfig, isClient) {
 		}
 
 		// Force disabled
+		if (!['vless', 'trojan', 'anytls'].includes(type)) {
+			allow_insecure.checked = false;
+		} else if (allow_insecure.checked) {
+			tls.checked = false;
+			tls.disabled = true;
+		}
 		if (['trusttunnel'].includes(type)) {
 			tls_alpn.node.querySelector('input').disabled = true;
 			tls_alpn.setValue('');
@@ -950,7 +951,13 @@ function renderListeners(s, uciconfig, isClient) {
 
 		return true;
 	}
-	o.depends({allow_insecure: '0', type: /^(http|socks|mixed|vmess|vless|trojan|anytls|tuic|hysteria2|hysteria2-realm|trusttunnel)$/});
+	o.depends({type: /^(http|socks|mixed|vmess|vless|trojan|anytls|tuic|hysteria2|hysteria2-realm|trusttunnel)$/});
+	o.modalonly = true;
+
+	o = s.taboption('field_general', form.Flag, 'allow_insecure', _('Allow insecure connections'),
+		_('Only applicable when %s are used as a frontend.').format('nginx/caddy'));
+	o.default = o.disabled;
+	o.depends({type: /^(vless|trojan|anytls)$/});
 	o.modalonly = true;
 
 	o = s.taboption('field_tls', form.DynamicList, 'tls_alpn', _('TLS ALPN'),

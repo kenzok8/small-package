@@ -798,7 +798,7 @@ msgstr "強制覆蓋 ECS"
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:1605
 msgid "EDNS Client Subnet"
-msgstr ""
+msgstr "EDNS 客戶端子網"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:433
 msgid "ETag support"
@@ -819,6 +819,10 @@ msgstr "編輯入站"
 #: htdocs/luci-static/resources/view/fchomo/node.js:214
 msgid "Edit node"
 msgstr "編輯節點"
+
+#: htdocs/luci-static/resources/view/fchomo/node.js:214
+msgid "Edit outbound"
+msgstr "編輯出站"
 
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:138
 msgid "Edit ruleset"
@@ -1104,7 +1108,7 @@ msgstr "兜底 DNS 伺服器  (用於已被投毒汙染的網域)"
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:137
 msgid "Firewall"
-msgstr ""
+msgstr "防火牆"
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:535
 #: htdocs/luci-static/resources/view/fchomo/node.js:660
@@ -1335,7 +1339,7 @@ msgstr "握手超時"
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:244
 msgid "Header to read real client IP from (e.g. X-Forwarded-For)"
-msgstr ""
+msgstr "用於讀取客戶端真實 IP 的 Header（例如 X-Forwarded-For）"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:751
 msgid "Health check"
@@ -1525,7 +1529,7 @@ msgstr "單位為毫秒。留空則使用 <code>%s</code>。"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:1350
 msgid "In milliseconds."
-msgstr ""
+msgstr "單位為毫秒。"
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:418
 #: htdocs/luci-static/resources/fchomo/listeners.js:487
@@ -3882,7 +3886,7 @@ msgstr "包含 %d 個字元的有效 base64 金鑰"
 #: htdocs/luci-static/resources/fchomo.js:1579
 #: htdocs/luci-static/resources/fchomo.js:1585
 msgid "valid format: 2x, 2p, 4v"
-msgstr ""
+msgstr "有效格式: 2x, 2p, 4v"
 
 #: htdocs/luci-static/resources/fchomo.js:1566
 msgid "valid key length with %d characters"

@@ -805,6 +805,10 @@ msgstr ""
 msgid "Edit node"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/node.js:214
+msgid "Edit outbound"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:138
 msgid "Edit ruleset"
 msgstr ""
