@@ -140,6 +140,10 @@ function applyUciChanges() {
 		// uci.apply() resolves before its rollback-confirm RPC has finished.
 		// A second immediate apply is rejected, so wait for that confirmation.
 		return new Promise(function(resolve) { window.setTimeout(resolve, 1800); });
+	}).then(function() {
+		// refresh LuCI's header indicator so the just-committed changes stop
+		// showing as "Unsaved Changes".
+		return ui.changes.init();
 	});
 }
 
