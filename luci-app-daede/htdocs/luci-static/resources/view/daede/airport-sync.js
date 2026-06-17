@@ -98,6 +98,7 @@ function parseAirportSection(section) {
 		name: String(section.name || ''),
 		source_hash: String(section.source_hash || ''),
 		group_id: String(section.group_id || ''),
+		subscription_id: String(section.subscription_id || ''),
 		node_ids: list(section.node_id)
 	};
 }
@@ -109,6 +110,7 @@ function airportSectionValues(record) {
 		name: String(record.name || ''),
 		source_hash: String(record.sourceHash || record.source_hash || ''),
 		group_id: String(record.groupId || record.group_id || ''),
+		subscription_id: String(record.subscriptionId || record.subscription_id || ''),
 		node_id: list(record.nodeIds || record.node_ids)
 	};
 }

@@ -12,6 +12,7 @@
 
 const FETCHER = '/usr/share/luci-app-daede/fetch-clash-yaml.sh';
 const GENERATOR = '/usr/share/luci-app-daede/gen-dae-config.sh';
+const SUB_STAGE = '/tmp/daede-sub.txt';
 const FETCH_CHUNK_BYTES = 16384;
 
 function decodeHexChunks(chunks) {
@@ -130,17 +131,6 @@ function requestDaedCredentials() {
 	});
 }
 
-function uniqueNodeTag(existing, index) {
-	let n = index + 1;
-	let tag = 'converted_' + n;
-	while (existing[tag]) {
-		n++;
-		tag = 'converted_' + n;
-	}
-	existing[tag] = true;
-	return tag;
-}
-
 function applyUciChanges() {
 	return uci.save().then(function() {
 		return uci.changes().then(function(changes) {
@@ -165,7 +155,12 @@ function writeAirportRecord(existing, record) {
 	const sid = existing && existing.sid ? existing.sid : uci.add('daede', 'airport');
 	const values = airportSync.airportSectionValues(record);
 	Object.keys(values).forEach(function(key) {
-		uci.set('daede', sid, key, values[key]);
+		const v = values[key];
+		// uci/set rejects an empty list value; clear the option instead.
+		if (Array.isArray(v) && v.length === 0)
+			uci.unset('daede', sid, key);
+		else
+			uci.set('daede', sid, key, v);
 	});
 	return sid;
 }
@@ -485,114 +480,125 @@ return view.extend({
 			const existingAirport = currentAirport();
 			const airportId = existingAirport ? existingAirport.id : airportSync.makeAirportId();
 			const groupName = airportSync.backendGroupName(airportName.value, 'dae', airportId);
-			const batchId = Date.now().toString(36);
-			const foundGroupSection = existingAirport && existingAirport.group_id ? uciSection('dae', existingAirport.group_id) : null;
-			const foundOldGroup = foundGroupSection && foundGroupSection.name === existingAirport.name ? foundGroupSection : null;
+			// the group sources this tag; gen-dae-config slugs tag and source the
+			// same way, so subtag() resolves even for CJK/hyphen names.
+			const subTag = groupName;
+			const subUrl = 'file://subscriptions/' + airportId + '.sub';
+			const subContent = items.map(function(item) { return item.link; }).join('\n') + '\n';
+
+			let subSid = existingAirport && existingAirport.subscription_id ? existingAirport.subscription_id : '';
+			let groupSid = existingAirport && existingAirport.group_id ? existingAirport.group_id : '';
+			const foundOldSub = (subSid && uciSection('dae', subSid)) || null;
+			const foundOldGroup = (groupSid && uciSection('dae', groupSid)) || null;
+			const oldSubSection = foundOldSub ? JSON.parse(JSON.stringify(foundOldSub)) : null;
 			const oldGroupSection = foundOldGroup ? JSON.parse(JSON.stringify(foundOldGroup)) : null;
-			const usedTags = {};
-			const nodesByLink = {};
-			(uci.sections('dae', 'node') || []).forEach(function(section) {
-				if (section.tag)
-					usedTags[section.tag] = true;
-				if (section.link)
-					nodesByLink[clashConverter.normalizeLink(section.link)] = section;
-			});
-			const oldOwned = existingAirport ? existingAirport.node_ids : [];
-			const owned = [];
-			const sources = [];
-			const created = [];
-			items.forEach(function(item, index) {
-				const existingNode = nodesByLink[clashConverter.normalizeLink(item.link)];
-				if (existingNode) {
-					sources.push(existingNode.tag);
-					if (oldOwned.indexOf(existingNode['.name']) >= 0)
-						owned.push(existingNode['.name']);
-					return;
-				}
-				const sid = uci.add('dae', 'node', airportId + '_node_' + batchId + '_' + (index + 1));
-				const tag = uniqueNodeTag(usedTags, index);
-				uci.set('dae', sid, 'tag', tag);
-				uci.set('dae', sid, 'link', item.link);
-				uci.set('dae', sid, 'enabled', '1');
-				sources.push(tag);
-				owned.push(sid);
-				created.push(sid);
-			});
-
-			let groupSid = foundOldGroup ? existingAirport.group_id : '';
+			const oldNodeIds = existingAirport ? existingAirport.node_ids : [];
+			let subCreated = false;
 			let groupCreated = false;
-			if (!groupSid) {
-				const groupBase = airportId + '_group';
-				groupSid = groupBase;
-				let suffix = 2;
-				while (uci.get('dae', groupSid))
-					groupSid = groupBase + '_' + suffix++;
-				uci.add('dae', 'group', groupSid);
-				groupCreated = true;
-			}
-			uci.set('dae', groupSid, 'name', groupName);
-			uci.set('dae', groupSid, 'policy', 'min_moving_avg');
-			uci.set('dae', groupSid, 'source', sources);
 
-			return applyUciChanges().then(runGenerator).catch(function(error) {
-				created.forEach(function(sid) { uci.remove('dae', sid); });
-				if (groupCreated) {
-					uci.remove('dae', groupSid);
-				} else if (oldGroupSection) {
-					const current = uciSection('dae', groupSid) || {};
-					Object.keys(current).forEach(function(key) {
-						if (key.charAt(0) !== '.' && !Object.prototype.hasOwnProperty.call(oldGroupSection, key))
-							uci.unset('dae', groupSid, key);
-					});
-					Object.keys(oldGroupSection).forEach(function(key) {
-						if (key.charAt(0) !== '.')
-							uci.set('dae', groupSid, key, oldGroupSection[key]);
-					});
+			const restoreSection = function(sid, snapshot) {
+				const current = uciSection('dae', sid) || {};
+				Object.keys(current).forEach(function(key) {
+					if (key.charAt(0) !== '.' && !Object.prototype.hasOwnProperty.call(snapshot, key))
+						uci.unset('dae', sid, key);
+				});
+				Object.keys(snapshot).forEach(function(key) {
+					if (key.charAt(0) !== '.')
+						uci.set('dae', sid, key, snapshot[key]);
+				});
+			};
+
+			// 1. stage the converted links and let the backend write the local
+			// .sub file (mkdir + chmod 0600 — dae rejects loose perms).
+			return fs.write(SUB_STAGE, subContent).then(function() {
+				return fs.exec(GENERATOR, [ 'write-sub', airportId ]);
+			}).then(function(res) {
+				if (res && res.code !== 0)
+					throw new Error((res && (res.stderr || res.stdout)) || _('Failed to write subscription file'));
+
+				// 2. one file:// subscription for the whole airport
+				if (!foundOldSub) {
+					subSid = uci.add('dae', 'subscription', airportId + '_sub');
+					subCreated = true;
 				}
-				return applyUciChanges().then(runGenerator).catch(function() {}).then(function() { throw error; });
+				uci.set('dae', subSid, 'tag', subTag);
+				uci.set('dae', subSid, 'url', subUrl);
+				uci.set('dae', subSid, 'enabled', '1');
+
+				// 3. group that sources the subscription
+				if (!foundOldGroup) {
+					const groupBase = airportId + '_group';
+					groupSid = groupBase;
+					let suffix = 2;
+					while (uci.get('dae', groupSid))
+						groupSid = groupBase + '_' + suffix++;
+					uci.add('dae', 'group', groupSid);
+					groupCreated = true;
+				}
+				uci.set('dae', groupSid, 'name', groupName);
+				uci.set('dae', groupSid, 'policy', 'min_moving_avg');
+				uci.set('dae', groupSid, 'source', [ subTag ]);
+
+				return applyUciChanges().then(runGenerator).catch(function(error) {
+					if (subCreated) uci.remove('dae', subSid);
+					else if (oldSubSection) restoreSection(subSid, oldSubSection);
+					if (groupCreated) uci.remove('dae', groupSid);
+					else if (oldGroupSection) restoreSection(groupSid, oldGroupSection);
+					return applyUciChanges().then(runGenerator).catch(function() {})
+						.then(function() {
+							if (subCreated) return fs.exec(GENERATOR, [ 'delete-sub', airportId ]).catch(function() {});
+						})
+						.then(function() { throw error; });
+				});
 			}).then(function() {
-				const referencedTags = {};
-				(uci.sections('dae', 'group') || []).filter(function(group) {
-					return group['.name'] !== groupSid;
-				}).forEach(function(group) {
-					const source = Array.isArray(group.source) ? group.source : (group.source ? [ group.source ] : []);
-					source.forEach(function(tag) { referencedTags[tag] = true; });
+				// 4. drop this airport's legacy converted_N manual nodes
+				oldNodeIds.forEach(function(sid) {
+					if (uciSection('dae', sid)) uci.remove('dae', sid);
 				});
-				const stale = oldOwned.filter(function(sid) {
-					const section = uciSection('dae', sid);
-					return owned.indexOf(sid) < 0 && !(section && referencedTags[section.tag]);
-				});
-				stale.forEach(function(sid) { uci.remove('dae', sid); });
 				writeAirportRecord(existingAirport, {
 					id: airportId,
 					backend: 'dae',
 					name: airportName.value.trim(),
 					sourceHash: state.sourceHash,
 					groupId: groupSid,
-					nodeIds: owned
+					subscriptionId: subSid,
+					nodeIds: []
 				});
 				return applyUciChanges().then(runGenerator);
 			}).then(function() {
 				items.forEach(function(item) { item.duplicate = true; item.selected = false; });
-				return { added: created.length, duplicates: items.length - created.length, failed: 0 };
+				return { added: items.length, duplicates: 0, failed: 0 };
 			});
 		};
 
 		const importDaed = function(items) {
 			let credentials;
 			let token = '';
-			let existingAirport = currentAirport();
+			const existingAirport = currentAirport();
 			const airportId = existingAirport ? existingAirport.id : airportSync.makeAirportId();
 			const name = airportName.value.trim();
-			const managedName = airportSync.backendId(airportId);
 			const groupName = airportSync.backendGroupName(name, 'daed', airportId);
-			const batchTag = managedName + Date.now().toString(36);
 			const endpoint = daedEndpoint();
+			// daed can't read file:// — it HTTP-fetches a subscription link. Stage
+			// the converted links (base64) and let daed pull them from the
+			// loopback-only CGI, so the import lands as ONE subscription.
+			const subToken = airportSync.backendId(airportId) + Date.now().toString(36);
+			const stageFile = '/tmp/daede-daedsub-' + subToken;
+			const subUrl = 'http://127.0.0.1/cgi-bin/daede-sub?t=' + subToken;
+			const b64 = btoa(items.map(function(item) { return item.link; }).join('\n') + '\n');
+
 			let before;
-			const createdIds = [];
+			let newSubId = '';
 			let createdGroupId = '';
 			let groupReady = false;
-			return requestDaedCredentials().then(function(value) {
+			const oldSubId = existingAirport ? existingAirport.subscription_id : '';
+			const oldNodeIds = existingAirport ? existingAirport.node_ids : [];
+
+			const dropStage = function() { return fs.exec('/bin/rm', [ '-f', stageFile ]).catch(function() {}); };
+
+			return fs.write(stageFile, b64).then(function() {
+				return requestDaedCredentials();
+			}).then(function(value) {
 				credentials = value;
 				return graphQL(endpoint,
 					'query Login($username:String!,$password:String!){token(username:$username,password:$password)}',
@@ -601,61 +607,33 @@ return view.extend({
 				token = login.token;
 				credentials.password = '';
 				credentials = null;
-				return graphQL(endpoint, 'query AirportState{nodes(first:10000){edges{id link tag}} groups{id name nodes{id}}}', {}, token);
+				return graphQL(endpoint, 'query State{groups{id name nodes{id} subscriptions{subscription{id}}}}', {}, token);
 			}).then(function(dataValue) {
 				before = dataValue;
-				const existing = {};
-				(before.nodes.edges || []).forEach(function(node) {
-					existing[clashConverter.normalizeLink(node.link)] = node;
-				});
-				const fresh = items.filter(function(item) {
-					const duplicate = existing[clashConverter.normalizeLink(item.link)];
-					if (duplicate) {
-						item.duplicate = true;
-					}
-					return !duplicate;
-				});
-				if (!fresh.length)
-					return { importNodes: [], fresh: fresh, existing: existing };
+				// drop this airport's previous subscription first: the new one
+				// reuses the same tag (group name) and daed enforces unique tags.
+				if (!oldSubId)
+					return null;
+				return graphQL(endpoint, 'mutation RmSub($ids:[ID!]!){removeSubscriptions(ids:$ids)}', { ids: [ oldSubId ] }, token).catch(function() {});
+			}).then(function() {
+				// import the whole converted batch as one subscription
 				return graphQL(endpoint,
-					'mutation ImportNodes($args:[ImportArgument!]!){importNodes(rollbackError:false,args:$args){link error node{id}}}',
-					{ args: fresh.map(function(item, index) { return { link: item.link, tag: batchTag + (index + 1) }; }) }, token)
-					.then(function(value) { value.fresh = fresh; value.existing = existing; return value; });
+					'mutation Import($a:ImportArgument!){importSubscription(rollbackError:false,arg:$a){sub{id} nodeImportResult{error}}}',
+					{ a: { link: subUrl, tag: groupName } }, token);
 			}).then(function(result) {
-				const rows = result.importNodes || [];
-				const nodeIds = [];
-				const ownedIds = [];
-				const rowByLink = {};
-				rows.forEach(function(row) {
-					rowByLink[clashConverter.normalizeLink(row.link)] = row;
-				});
-				let failed = rows.filter(function(row) { return !!row.error && row.error !== 'node already exists'; }).length;
-				items.forEach(function(item) {
-					const key = clashConverter.normalizeLink(item.link);
-					const row = rowByLink[key];
-					const old = result.existing[key];
-					const id = row && row.node && row.node.id || old && old.id;
-					if (id)
-						nodeIds.push(id);
-					if (row && !row.error && row.node) {
-						ownedIds.push(row.node.id);
-						createdIds.push(row.node.id);
-					}
-					else if (existingAirport && existingAirport.node_ids.indexOf(id) >= 0)
-						ownedIds.push(id);
-				});
-				if (!nodeIds.length) {
-					const details = rows.filter(function(row) { return !!row.error; }).map(function(row) {
-						return row.error;
-					}).filter(function(error, index, errors) {
-						return errors.indexOf(error) === index;
-					}).join('; ');
+				const sub = result.importSubscription && result.importSubscription.sub;
+				if (!sub || !sub.id) {
+					const rows = (result.importSubscription && result.importSubscription.nodeImportResult) || [];
+					const details = rows.map(function(r) { return r.error; }).filter(Boolean).join('; ');
 					throw new Error(details || _('No usable nodes were imported'));
 				}
+				newSubId = sub.id;
+				const rows = result.importSubscription.nodeImportResult || [];
+				const failed = rows.filter(function(r) { return !!r.error && r.error !== 'node already exists'; }).length;
+
 				const oldGroup = airportSync.findManagedGroup(before.groups, existingAirport);
-				const group = oldGroup;
-				const ensureGroup = group
-					? Promise.resolve(group.id)
+				const ensureGroup = oldGroup
+					? Promise.resolve(oldGroup.id)
 					: graphQL(endpoint,
 						'mutation CreateGroup($name:String!,$policy:Policy!){createGroup(name:$name,policy:$policy){id}}',
 						{ name: groupName, policy: 'min_moving_avg' }, token).then(function(value) {
@@ -663,64 +641,65 @@ return view.extend({
 							return createdGroupId;
 						});
 				return ensureGroup.then(function(groupId) {
-					const rename = group && group.name !== groupName
-						? graphQL(endpoint, 'mutation RenameGroup($id:ID!,$name:String!){renameGroup(id:$id,name:$name)}', { id: groupId, name: groupName }, token)
+					const rename = oldGroup && oldGroup.name !== groupName
+						? graphQL(endpoint, 'mutation Rename($id:ID!,$name:String!){renameGroup(id:$id,name:$name)}', { id: groupId, name: groupName }, token)
 						: Promise.resolve();
 					return rename.then(function() {
-						return graphQL(endpoint, 'mutation SetPolicy($id:ID!,$policy:Policy!){groupSetPolicy(id:$id,policy:$policy)}', { id: groupId, policy: 'min_moving_avg' }, token);
+						return graphQL(endpoint, 'mutation Pol($id:ID!,$policy:Policy!){groupSetPolicy(id:$id,policy:$policy)}', { id: groupId, policy: 'min_moving_avg' }, token);
 					}).then(function() {
-						return graphQL(endpoint, 'mutation AddNodes($id:ID!,$nodeIDs:[ID!]!){groupAddNodes(id:$id,nodeIDs:$nodeIDs)}', { id: groupId, nodeIDs: nodeIds }, token);
+						// attach the whole subscription to the group
+						return graphQL(endpoint, 'mutation AddSubs($id:ID!,$ids:[ID!]!){groupAddSubscriptions(id:$id,subscriptionIDs:$ids)}', { id: groupId, ids: [ newSubId ] }, token);
 					}).then(function() {
 						groupReady = true;
-						const oldMembers = group ? group.nodes.map(function(node) { return node.id; }) : [];
-						const removedMembers = oldMembers.filter(function(id) { return nodeIds.indexOf(id) < 0; });
-						return (removedMembers.length
-							? graphQL(endpoint, 'mutation DelNodes($id:ID!,$nodeIDs:[ID!]!){groupDelNodes(id:$id,nodeIDs:$nodeIDs)}', { id: groupId, nodeIDs: removedMembers }, token)
-							: Promise.resolve()).catch(function() {
-							failed++;
+						// scrub the group of its previous members: old manual nodes
+						// (from the legacy importNodes flow) and any other subscription.
+						const oldMemberNodes = oldGroup ? (oldGroup.nodes || []).map(function(n) { return n.id; }) : [];
+						const oldGroupSubs = oldGroup
+							? (oldGroup.subscriptions || []).map(function(s) { return s.subscription && s.subscription.id; }).filter(function(id) { return id && id !== newSubId; })
+							: [];
+						const scrub = [];
+						if (oldMemberNodes.length)
+							scrub.push(graphQL(endpoint, 'mutation DelNodes($id:ID!,$nodeIDs:[ID!]!){groupDelNodes(id:$id,nodeIDs:$nodeIDs)}', { id: groupId, nodeIDs: oldMemberNodes }, token).catch(function() {}));
+						if (oldGroupSubs.length)
+							scrub.push(graphQL(endpoint, 'mutation DelSubs($id:ID!,$ids:[ID!]!){groupDelSubscriptions(id:$id,subscriptionIDs:$ids)}', { id: groupId, ids: oldGroupSubs }, token).catch(function() {}));
+						return Promise.all(scrub).then(function() {
+							// delete this airport's orphaned legacy manual nodes (the old
+							// subscription was already removed before the import).
+							if (!oldNodeIds.length)
+								return null;
+							return graphQL(endpoint, 'mutation Rm($ids:[ID!]!){removeNodes(ids:$ids)}', { ids: oldNodeIds }, token).catch(function() {});
 						}).then(function() {
-							const otherAirportNodes = airportRecords().filter(function(record) {
-								return record.backend === 'daed' && (!existingAirport || record.id !== existingAirport.id);
-							}).map(function(record) { return record.node_ids; });
-							const otherGroupNodes = before.groups.filter(function(other) {
-								return other.id !== groupId;
-							}).map(function(other) { return other.nodes.map(function(node) { return node.id; }); });
-							const stale = airportSync.safeOldNodeIds(existingAirport ? existingAirport.node_ids : [], ownedIds, otherAirportNodes, otherGroupNodes);
-							return (stale.length
-								? graphQL(endpoint, 'mutation RemoveNodes($ids:[ID!]!){removeNodes(ids:$ids)}', { ids: stale }, token)
-								: Promise.resolve()).catch(function() {
-								failed++;
-							}).then(function() {
-								writeAirportRecord(existingAirport, {
-									id: airportId,
-									backend: 'daed',
-									name: name,
-									sourceHash: state.sourceHash,
-									groupId: groupId,
-									nodeIds: ownedIds
-								});
-								return applyUciChanges().then(function() {
-									items.forEach(function(item) { item.duplicate = true; item.selected = false; });
-									return { added: ownedIds.length, duplicates: items.length - ownedIds.length, failed: failed };
-								});
+							writeAirportRecord(existingAirport, {
+								id: airportId,
+								backend: 'daed',
+								name: name,
+								sourceHash: state.sourceHash,
+								groupId: groupId,
+								subscriptionId: newSubId,
+								nodeIds: []
+							});
+							return applyUciChanges().then(function() {
+								items.forEach(function(item) { item.duplicate = true; item.selected = false; });
+								return { added: items.length, duplicates: 0, failed: failed };
 							});
 						});
 					});
 				});
 			}).catch(function(error) {
-				if (groupReady || !token || (!createdIds.length && !createdGroupId))
+				if (groupReady || !token || (!newSubId && !createdGroupId))
 					throw error;
 				const cleanup = [];
-				if (createdIds.length)
-					cleanup.push(graphQL(endpoint, 'mutation RemoveNodes($ids:[ID!]!){removeNodes(ids:$ids)}', { ids: createdIds }, token));
+				if (newSubId)
+					cleanup.push(graphQL(endpoint, 'mutation Rm($ids:[ID!]!){removeSubscriptions(ids:$ids)}', { ids: [ newSubId ] }, token));
 				if (createdGroupId)
-					cleanup.push(graphQL(endpoint, 'mutation RemoveGroup($id:ID!){removeGroup(id:$id)}', { id: createdGroupId }, token));
+					cleanup.push(graphQL(endpoint, 'mutation RmG($id:ID!){removeGroup(id:$id)}', { id: createdGroupId }, token));
 				return Promise.all(cleanup).catch(function() {}).then(function() { throw error; });
 			}).finally(function() {
 				if (credentials)
 					credentials.password = '';
 				credentials = null;
 				token = '';
+				return dropStage();
 			});
 		};
 

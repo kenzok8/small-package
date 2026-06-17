@@ -570,10 +570,10 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"udp-over-stream": strToBool(cfg.tuic_udp_over_stream),
 		"udp-over-stream-version": cfg.tuic_udp_over_stream_version,
 		"max-udp-relay-packet-size": strToInt(cfg.tuic_max_udp_relay_packet_size) || null,
+		"fast-open": strToBool(cfg.tuic_fast_open),
 		"reduce-rtt": strToBool(cfg.tuic_reduce_rtt),
 		"heartbeat-interval": strToInt(cfg.tuic_heartbeat) || null,
 		"request-timeout": strToInt(cfg.tuic_request_timeout) || null,
-		// @"fast-open": true,
 		"max-open-streams": strToInt(cfg.tuic_max_open_streams) || null,
 
 		/* Trojan */
@@ -600,7 +600,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		network: cfg.masque_network || null,
 
 		/* TrustTunnel */
-		"health-check": cfg.trusttunnel_health_check === '0' ? false : true,
+		"health-check": cfg.type === 'trusttunnel' ? (cfg.trusttunnel_health_check === '0' ? false : true) : null,
 		quic: strToBool(cfg.trusttunnel_quic),
 
 		/* WireGuard */

@@ -604,7 +604,7 @@ function renderListeners(s, uciconfig, isClient) {
 	if (isClient) {
 		o = s.taboption('field_general', form.Value, 'routing_mark', _('Routing mark (Fwmark)'));
 		o.datatype = 'uinteger';
-		o.modalonly = true;
+		o.editable = true;
 
 		o = s.taboption('field_general', hm.ListValue, 'rule', _('Sub rule'),
 			_('Name of the Sub rule used for inbound matching.'));

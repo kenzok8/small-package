@@ -591,6 +591,11 @@ return view.extend({
 		so.depends('type', 'tuic');
 		so.modalonly = true;
 
+		so = ss.taboption('field_general', form.Flag, 'tuic_fast_open', _('Enable fast open'));
+		so.default = so.disabled;
+		so.depends('type', 'tuic');
+		so.modalonly = true;
+
 		so = ss.taboption('field_general', form.Flag, 'tuic_reduce_rtt', _('Enable 0-RTT handshake'),
 			_('Enable 0-RTT QUIC connection handshake on the client side. This is not impacting much on the performance, as the protocol is fully multiplexed.<br/>' +
 				'Disabling this is highly recommended, as it is vulnerable to replay attacks.'));

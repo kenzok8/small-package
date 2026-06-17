@@ -70,7 +70,7 @@ fi
 			echo "$(date '+%F %T') updated $DEST ($size bytes)"
 		fi
 	fi
-	echo "$(date '+%F %T') done (rc=$rc)"
+	if [ "$rc" = 0 ]; then echo "$(date '+%F %T') ✓ 完成"; else echo "$(date '+%F %T') ✗ 失败 (rc=$rc)"; fi
 ) </dev/null >/dev/null 2>&1 &
 
 echo "started in background, see $LOG"

@@ -168,7 +168,7 @@ return view.extend({
 		};
 
 		// run a backgrounded script and stream its log into the log pane until it
-		// logs "done (rc=N)"; then refresh the badges. Result shows inline (no popup).
+		// logs a final ✓/✗ status line; then refresh the badges. Inline, no popup.
 		const runJob = function(script, arg, btn, logPath) {
 			const orig = btn.textContent;
 			btn.disabled = true;
@@ -177,7 +177,7 @@ return view.extend({
 			const poll = function() {
 				return L.resolveDefault(fs.read_direct(logPath, 'text'), '').then(function(c) {
 					if (c) { logPane.textContent = c; logPane.classList.add('show'); }
-					if (/done \(rc=\d+\)/.test(c)) { refresh(); return; }
+					if (/[✓✗]/.test(c)) { refresh(); return; }
 					if (tries++ > 90) return;
 					return new Promise(function(r) { setTimeout(r, 2000); }).then(poll);
 				});

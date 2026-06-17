@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-daede
 PKG_VERSION:=1.13.0
-PKG_RELEASE:=4
+PKG_RELEASE:=6
 PKG_MAINTAINER:=kenzok8
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
@@ -77,6 +77,9 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) ./root/usr/share/luci-app-daede/gen-dae-config.sh $(1)/usr/share/luci-app-daede/gen-dae-config.sh
 	$(INSTALL_BIN) ./root/usr/share/luci-app-daede/proxy-check.sh $(1)/usr/share/luci-app-daede/proxy-check.sh
 	$(INSTALL_BIN) ./root/usr/share/luci-app-daede/fetch-clash-yaml.sh $(1)/usr/share/luci-app-daede/fetch-clash-yaml.sh
+
+	$(INSTALL_DIR) $(1)/www/cgi-bin
+	$(INSTALL_BIN) ./root/www/cgi-bin/daede-sub $(1)/www/cgi-bin/daede-sub
 
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/view/daede
 	$(INSTALL_DATA) ./htdocs/luci-static/resources/view/daede/*.js $(1)/www/luci-static/resources/view/daede/

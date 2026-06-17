@@ -1,0 +1,25 @@
+#!/bin/sh
+# daede-sub - serve a converter's staged node list to the local daed only.
+#
+# daed (dae-wing) can only build a subscription by HTTP-fetching a link, and it
+# does not read file:// like dae core. So the converter stages the base64 share
+# links in /tmp/daede-daedsub-<token> and points daed's importSubscription at
+# http://127.0.0.1/cgi-bin/daede-sub?t=<token>. This CGI is the read side.
+#
+# Locked to loopback (REMOTE_ADDR), so even though uhttpd listens on the LAN no
+# remote client can pull the links. The frontend deletes the staged file after
+# the import (success or failure), so the exposure is one local fetch.
+
+deny() { printf 'Status: 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nforbidden\n'; exit 0; }
+
+[ "$REMOTE_ADDR" = "127.0.0.1" ] || deny
+
+# token: only [A-Za-z0-9] so the path can't escape /tmp
+t=$(printf '%s' "$QUERY_STRING" | sed -n 's/^.*\bt=\([A-Za-z0-9]\{1,64\}\).*$/\1/p')
+[ -n "$t" ] || deny
+
+f="/tmp/daede-daedsub-$t"
+[ -f "$f" ] || deny
+
+printf 'Content-Type: text/plain\r\n\r\n'
+cat "$f"

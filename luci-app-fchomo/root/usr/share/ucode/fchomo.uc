@@ -217,7 +217,7 @@ export function parseListener(cfg, isClient, label) {
 		type: cfg.type,
 
 		listen: cfg.listen || '::',
-		port: cfg.port,
+		port: strToInt(cfg.port),
 		...(isClient ? {
 			"routing-mark": strToInt(cfg.routing_mark) || null,
 			rule: cfg.rule,

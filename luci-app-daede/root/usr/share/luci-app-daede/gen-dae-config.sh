@@ -21,6 +21,8 @@ CONFIG_DAE="/etc/dae/config.dae"
 TMP_GEN="/tmp/dae-gen.dae"
 DAE_BIN="/usr/bin/dae"
 DAE_INITD="/etc/init.d/dae"
+SUBS_DIR="/etc/dae/subscriptions"
+SUB_STAGE="/tmp/daede-sub.txt"
 
 # dae single-quoted strings have no escaping; strip quotes/newlines defensively.
 sanitize() {
@@ -378,10 +380,36 @@ do_import() {
 	echo "ok"
 }
 
+# Converter writes a batch of share links to a local file that dae reads as a
+# file:// subscription, so a converted airport is one subscription instead of
+# hundreds of manual nodes. $1=id (airport id), reads links from SUB_STAGE.
+# id is restricted to [A-Za-z0-9_] to keep the path inside SUBS_DIR.
+do_write_sub() {
+	local id="$1"
+	case "$id" in ''|*[!A-Za-z0-9_]*) echo "bad id" >&2; return 2 ;; esac
+	[ -f "$SUB_STAGE" ] || { echo "no staged data" >&2; return 1; }
+	mkdir -p "$SUBS_DIR"
+	# dae rejects subscription/config files readable by group/other (needs <=0640)
+	cp "$SUB_STAGE" "$SUBS_DIR/$id.sub.tmp" || { echo "write failed" >&2; return 1; }
+	chmod 0600 "$SUBS_DIR/$id.sub.tmp"
+	mv "$SUBS_DIR/$id.sub.tmp" "$SUBS_DIR/$id.sub"
+	rm -f "$SUB_STAGE"
+	echo "ok"
+}
+
+do_delete_sub() {
+	local id="$1"
+	case "$id" in ''|*[!A-Za-z0-9_]*) return 0 ;; esac
+	rm -f "$SUBS_DIR/$id.sub"
+	echo "ok"
+}
+
 # ===================== entry =====================
 
 case "$1" in
-	generate) generate ;;
-	import)   do_import ;;
-	*) echo "usage: $0 {generate|import}" >&2; exit 2 ;;
+	generate)   generate ;;
+	import)     do_import ;;
+	write-sub)  do_write_sub "$2" ;;
+	delete-sub) do_delete_sub "$2" ;;
+	*) echo "usage: $0 {generate|import|write-sub <id>|delete-sub <id>}" >&2; exit 2 ;;
 esac

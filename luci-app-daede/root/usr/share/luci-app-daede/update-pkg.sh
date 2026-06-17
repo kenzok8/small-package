@@ -85,7 +85,7 @@ fi
 		exit 3
 	fi
 
-	echo "$(date '+%F %T') done (rc=$rc)"
+	if [ "$rc" = 0 ]; then echo "$(date '+%F %T') ✓ 完成"; else echo "$(date '+%F %T') ✗ 失败 (rc=$rc)"; fi
 
 	# luci-app-daede upgrade replaces ACL JSON — reload rpcd so changes apply.
 	if [ "$PKG" = "luci-app-daede" ] && [ "$rc" = "0" ]; then
