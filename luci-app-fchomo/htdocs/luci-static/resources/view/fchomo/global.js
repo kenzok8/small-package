@@ -648,6 +648,9 @@ return view.extend({
 			'To access the API on a private network from a public website, it must be enabled.'));
 		so.default = so.enabled;
 
+		so = ss.option(form.Value, 'external_controller_routing_mark', _('API routing mark (Fwmark)'));
+		so.datatype = 'uinteger';
+
 		so = ss.option(form.Value, 'external_controller_port', _('API HTTP port'));
 		so.datatype = 'port';
 		so.placeholder = '9090';

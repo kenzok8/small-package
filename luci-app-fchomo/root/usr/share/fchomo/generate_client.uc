@@ -259,11 +259,13 @@ config.tls = {
 /* API START */
 const api_port = uci.get(uciconf, uciapi, 'external_controller_port');
 const api_tls_port = uci.get(uciconf, uciapi, 'external_controller_tls_port');
+const api_routing_mark = uci.get(uciconf, uciapi, 'external_controller_routing_mark');
 /* API settings */
 config["external-controller-cors"] = {
 	"allow-origins": uci.get(uciconf, uciapi, 'external_controller_cors_allow_origins') || ['*'],
 	"allow-private-network" : (uci.get(uciconf, uciapi, 'external_controller_cors_allow_private_network') === '0') ? false : true
 };
+config["external-controller-routing-mark"] = strToInt(api_routing_mark) || null;
 config["external-controller"] = api_port ? '[::]:' + api_port : null;
 config["external-controller-tls"] = api_tls_port ? '[::]:' + api_tls_port : null;
 config["external-doh-server"] = uci.get(uciconf, uciapi, 'external_doh_server');
@@ -386,6 +388,7 @@ config.dns = {
 	enable: true,
 	"prefer-h3": false,
 	listen: '[::]:' + (uci.get(uciconf, ucidns, 'dns_port') || '7853'),
+	"listen-routing-mark": strToInt(uci.get(uciconf, ucidns, 'routing_mark')) || null,
 	ipv6: (uci.get(uciconf, ucidns, 'ipv6') === '0') ? false : true,
 	"enhanced-mode": 'redir-host',
 	"use-hosts": true,
@@ -479,14 +482,16 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"routing-mark": strToInt(cfg.routing_mark) || null,
 		"ip-version": cfg.ip_version,
 
-		/* HTTP / SOCKS / Shadowsocks / VMess / VLESS / Trojan / hysteria2 / TUIC / SSH / WireGuard / Masque */
+		/* Rematch */
+		"target-rematch-name": cfg.target_rematch_name,
+		"target-sub-rule": cfg.target_sub_rule,
+
+		/* HTTP / SOCKS / Shadowsocks / VMess / VLESS / Trojan / hysteria2 / TUIC / WireGuard / Masque */
 		username: cfg.username,
 		uuid: cfg.vmess_uuid || cfg.uuid,
 		cipher: cfg.vmess_chipher || cfg.shadowsocks_chipher,
 		password: cfg.shadowsocks_password || cfg.password,
 		headers: cfg.headers ? json(cfg.headers) : null,
-		"private-key": cfg.masque_private_key || cfg.wireguard_private_key || cfg.ssh_priv_key,
-		"public-key": cfg.masque_endpoint_public_key || cfg.wireguard_peer_public_key,
 		ip: cfg.masque_ip || cfg.wireguard_ip,
 		ipv6: cfg.masque_ipv6 || cfg.wireguard_ipv6,
 		mtu: strToInt(cfg.masque_mtu ?? cfg.wireguard_mtu) || null,
@@ -591,6 +596,9 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"packet-encoding": cfg.vmess_packet_encoding,
 		encryption: cfg.vless_encryption === '1' ? cfg.vless_encryption_encryption : null,
 
+		/* Masque */
+		network: cfg.masque_network || null,
+
 		/* TrustTunnel */
 		"health-check": cfg.trusttunnel_health_check === '0' ? false : true,
 		quic: strToBool(cfg.trusttunnel_quic),
@@ -619,6 +627,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"udp-over-tcp": strToBool(cfg.uot),
 		"udp-over-tcp-version": cfg.uot_version,
 
+		/* SSH / WireGuard / Masque */
 		/* TLS fields */
 		tls: (cfg.type in ['trojan', 'anytls', 'hysteria', 'hysteria2', 'tuic', 'trusttunnel']) ? null : strToBool(cfg.tls),
 		"disable-sni": strToBool(cfg.tls_disable_sni),
@@ -627,7 +636,8 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		alpn: cfg.tls_alpn, // Array
 		"skip-cert-verify": strToBool(cfg.tls_skip_cert_verify),
 		certificate: cfg.tls_cert_path, // mTLS
-		"private-key": cfg.tls_key_path, // mTLS
+		"private-key": cfg.masque_private_key || cfg.wireguard_private_key || cfg.ssh_priv_key || cfg.tls_key_path, // mTLS/SSH/WireGuard/Masque
+		"public-key": cfg.masque_endpoint_public_key || cfg.wireguard_peer_public_key, // WireGuard/Masque
 		"client-fingerprint": cfg.tls_client_fingerprint,
 		"ech-opts": cfg.tls_ech === '1' ? {
 			enable: true,

@@ -184,6 +184,7 @@ const load_balance_strategy = [
 ];
 
 const outbound_type = [
+	['rematch', _('Rematch'), _('Rematching routing rules')],
 	['direct', _('DIRECT') + ' - ' + _('TCP/UDP')],
 	['http', _('HTTP') + ' - ' + _('TCP')],
 	['socks5', _('SOCKS5') + ' - ' + _('TCP/UDP')],
@@ -281,6 +282,7 @@ const rules_type = [
 	//['IN-TYPE'],
 	//['IN-USER'],
 	//['IN-NAME'],
+	['REMATCH-NAME'],
 
 	['PROCESS-PATH'],
 	['PROCESS-PATH-REGEX'],
@@ -300,7 +302,7 @@ const rules_type = [
 
 const rules_type_allowparms = [
 	// params only available for types other than
-	// https://github.com/muink/mihomo/blob/300eb8b12a75504c4bd4a6037d2f6503fd3b347f/rules/parser.go#L12
+	// https://github.com/muink/mihomo/blob/ea19cda0c9b666aa0fc1b0412ae6fbc0ea9d44e0/rules/parser.go#L12
 	'GEOIP',
 	'IP-ASN',
 	'IP-CIDR',
@@ -1192,6 +1194,31 @@ function loadSubRuleGroup(preadds, section_id) {
 	return this.super('load', section_id);
 }
 
+function loadRematchName(preadds, section_id) {
+	delete this.keylist;
+	delete this.vallist;
+
+	preadds?.forEach((arr) => {
+		this.value.apply(this, arr);
+	});
+	let names = {};
+	for (const section_type of ['rules', 'subrules'])
+		uci.sections(this.config, section_type, (res) => {
+			if (res.enabled !== '0')
+				try {
+					const obj = JSON.parse(res?.entry?.trim() || '{}');
+					for (const p of obj.payload || [])
+						if (p.type === 'REMATCH-NAME')
+							names[p.factor] = p.factor;
+				} catch {}
+		});
+	Object.keys(names).forEach((name) => {
+		this.value(name, name);
+	});
+
+	return this.super('load', section_id);
+}
+
 function renderStatus(ElId, isRunning, instance, noGlobal) {
 	const visible = isRunning && (isRunning.http || isRunning.https);
 
@@ -1797,6 +1824,7 @@ return baseclass.extend({
 	loadProviderLabel,
 	loadRulesetLabel,
 	loadSubRuleGroup,
+	loadRematchName,
 	// render
 	renderStatus,
 	updateStatus,

@@ -310,7 +310,7 @@ const parseRulesYaml = hm.parseYaml.extend({
 		if (!entry)
 			return null;
 
-		// key mapping // 2026/01/18
+		// key mapping // 2026/06/12
 		let config = {
 			id: this.id,
 			label: '%s %s'.format(this.id.slice(0,7), _('(Imported)')),
@@ -365,7 +365,7 @@ const parseRulesYaml = hm.parseYaml.extend({
 
 	ParseRule(tp, payload, target, params) {
 		// parse rules
-		// https://github.com/muink/mihomo/blob/487de9b5482d838acc33b067045a0dc293e35d40/rules/parser.go#L12
+		// https://github.com/muink/mihomo/blob/ea19cda0c9b666aa0fc1b0412ae6fbc0ea9d44e0/rules/parser.go#L12
 
 		// nested ParseRule
 		let logical_payload, subrule;
@@ -427,7 +427,7 @@ const parseRulesYaml = hm.parseYaml.extend({
 
 	parseRules(line) {
 		// parse rules
-		// https://github.com/muink/mihomo/blob/300eb8b12a75504c4bd4a6037d2f6503fd3b347f/config/config.go#L1038-L1062
+		// https://github.com/muink/mihomo/blob/ad730ae9744971dfaa75bda20cfc2ffe07eeb59d/config/config.go#L1090-L1118
 		let [tp, payload, target, params] = this.ParseRulePayload(line, true);
 		if (!target)
 			return null; // error: format invalid
@@ -561,6 +561,14 @@ function renderPayload(s, total, uciconfig) {
 		o.depends(Object.fromEntries([[prefix + 'type', /\bPROCESS\b/]]));
 		initPayload(o, n, 'factor', uciconfig);
 
+		o = s.option(form.Value, prefix + 'rematchname', _('Factor') + ` ${n+1}`);
+		o.value('rematch1');
+		o.validate = hm.validateAuthUsername;
+		if (n === 0)
+			o.depends('type', 'REMATCH-NAME');
+		o.depends(prefix + 'type', 'REMATCH-NAME');
+		initPayload(o, n, 'factor', uciconfig);
+
 		o = s.option(form.Value, prefix + 'uint', _('Factor') + ` ${n+1}`);
 		o.datatype = 'uinteger';
 		if (n === 0)
@@ -571,7 +579,7 @@ function renderPayload(s, total, uciconfig) {
 		o = s.option(form.Value, prefix + 'ip', _('Factor') + ` ${n+1}`);
 		o.datatype = 'cidr';
 		if (n === 0) {
-			o.depends({type: /\b(CIDR|CIDR6)\b/});
+			o.depends({type: /\bCIDR6?\b/});
 			o.depends({type: /\bIP-SUFFIX\b/});
 		}
 		o.depends(Object.fromEntries([[prefix + 'type', /\bCIDR6?\b/]]));
@@ -1385,6 +1393,9 @@ return view.extend({
 		so.datatype = 'port'
 		so.placeholder = '7853';
 		so.rmempty = false;
+
+		so = ss.option(form.Value, 'routing_mark', _('Listen routing mark (Fwmark)'));
+		so.datatype = 'uinteger'
 
 		so = ss.option(form.Flag, 'ipv6', _('IPv6 support'));
 		so.default = so.enabled;

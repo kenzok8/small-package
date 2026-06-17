@@ -247,7 +247,7 @@ return view.extend({
 		so.default = so.enabled;
 		so.editable = true;
 
-		so = ss.taboption('field_general', form.ListValue, 'type', _('Type'));
+		so = ss.taboption('field_general', form.RichListValue, 'type', _('Type'));
 		so.default = hm.outbound_type[0][0];
 		hm.outbound_type.forEach((res) => {
 			so.value.apply(so, res);
@@ -256,12 +256,24 @@ return view.extend({
 		so = ss.taboption('field_general', form.Value, 'server', _('Server address'));
 		so.datatype = 'host';
 		so.rmempty = false;
-		so.depends({type: 'direct', '!reverse': true});
+		so.depends({type: /^(rematch|direct)$/, '!reverse': true});
 
 		so = ss.taboption('field_general', form.Value, 'port', _('Port'));
 		so.datatype = 'port';
 		so.rmempty = false;
-		so.depends({type: /^(direct|mieru)$/, '!reverse': true});
+		so.depends({type: /^(rematch|direct|mieru)$/, '!reverse': true});
+
+		/* Rematch fields */
+		so = ss.taboption('field_general', form.ListValue, 'target_rematch_name', _('REMATCH-NAME marking'));
+		so.load = L.bind(hm.loadRematchName, so, [['', _('-- Please choose --')]]);
+		so.rmempty = false;
+		so.depends('type', 'rematch');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'target_sub_rule', _('Use sub rule'));
+		so.load = L.bind(hm.loadSubRuleGroup, so, [['', _('-- Please choose --')]]);
+		so.depends('type', 'rematch');
+		so.modalonly = true;
 
 		/* HTTP / SOCKS fields */
 		/* hm.validateAuth */
@@ -721,18 +733,38 @@ return view.extend({
 		so.datatype = 'ip4addr(1)';
 		so.placeholder = '172.16.0.2';
 		so.rmempty = false;
-		so.depends('type', 'masque');
+		so.depends({type: 'masque', masque_network: /^(|h2)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Value, 'masque_ipv6', _('Local IPv6 address'),
 			_('The %s address used by local machine in the Cloudflare WARP network.').format('IPv6'));
 		so.datatype = 'ip6addr(1)';
-		so.depends('type', 'masque');
+		so.depends({type: 'masque', masque_network: /^(|h2)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Value, 'masque_mtu', _('MTU'));
 		so.datatype = 'range(0,9000)';
 		so.placeholder = '1280';
+		so.depends({type: 'masque', masque_network: /^(|h2)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'masque_network', _('Network'));
+		so.default = '';
+		so.value('', _('h3'));
+		so.value('h3-l4proxy', _('h3-l4proxy'));
+		so.value('h2', _('h2'));
+		so.validate = function(section_id, value) {
+			const udp = this.section.getUIElement(section_id, 'udp').node.querySelector('input');
+
+			// Force disabled
+			if (value === 'h3-l4proxy') {
+				udp.checked = false;
+				udp.disabled = true;
+			} else
+				udp.removeAttribute('disabled');
+
+			return true;
+		}
 		so.depends('type', 'masque');
 		so.modalonly = true;
 
@@ -889,7 +921,8 @@ return view.extend({
 		hm.congestion_controller.forEach((res) => {
 			so.value.apply(so, res);
 		})
-		so.depends({type: /^(tuic|masque|trusttunnel)$/});
+		so.depends({type: /^(tuic|trusttunnel)$/});
+		so.depends({type: 'masque', masque_network: /^(|h3-l4proxy)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.ListValue, 'bbr_profile', _('BBR profile'));
@@ -903,7 +936,7 @@ return view.extend({
 
 		so = ss.taboption('field_general', form.Flag, 'udp', _('UDP'));
 		so.default = so.disabled;
-		so.depends({type: /^(direct|socks5|ss|mieru|vmess|vless|trojan|anytls|trusttunnel|masque|wireguard)$/});
+		so.depends({type: /^(rematch|direct|socks5|ss|mieru|vmess|vless|trojan|anytls|trusttunnel|masque|wireguard)$/});
 		so.depends({type: 'snell', snell_version: /^(3|4|5)$/});
 		so.modalonly = true;
 
@@ -1038,7 +1071,7 @@ return view.extend({
 
 			return true;
 		}
-		so.depends({type: /^(http|socks5|vmess|vless|trojan|anytls|hysteria|hysteria2|tuic|masque|trusttunnel)$/});
+		so.depends({type: /^(http|socks5|vmess|vless|trojan|anytls|hysteria|hysteria2|tuic|trusttunnel)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_tls', form.Flag, 'tls_disable_sni', _('Disable SNI'),
@@ -1081,9 +1114,6 @@ return view.extend({
 					case 'vless':
 						def_alpn = ['h3', 'h2', 'http/1.1'];
 						break;
-					case 'masque':
-						def_alpn = ['h2'];
-						break;
 					case 'trusttunnel':
 						def_alpn = ['h3', 'h2'];
 						break;
@@ -1096,7 +1126,7 @@ return view.extend({
 
 			return true;
 		}
-		so.depends({tls: '1', type: /^(vmess|vless|trojan|anytls|hysteria|hysteria2|tuic|masque|trusttunnel)$/});
+		so.depends({tls: '1', type: /^(vmess|vless|trojan|anytls|hysteria|hysteria2|tuic|trusttunnel)$/});
 		so.depends({type: 'ss', plugin: 'shadow-tls'});
 		so.modalonly = true;
 
@@ -1470,10 +1500,12 @@ return view.extend({
 		/* Dial fields */
 		so = ss.taboption('field_dial', form.Flag, 'tfo', _('TFO'));
 		so.default = so.disabled;
+		so.depends({type: /^(rematch)$/, '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_dial', form.Flag, 'mptcp', _('mpTCP'));
 		so.default = so.disabled;
+		so.depends({type: /^(rematch)$/, '!reverse': true});
 		so.modalonly = true;
 
 		/* Features are implemented in proxy chain
@@ -1487,11 +1519,13 @@ return view.extend({
 			_('Priority: Proxy Node > Global.'));
 		so.multiple = false;
 		so.noaliases = true;
+		so.depends({type: /^(rematch)$/, '!reverse': true});
 		so.modalonly = true;
 
-		so = ss.taboption('field_dial', form.Value, 'routing_mark', _('Routing mark'),
+		so = ss.taboption('field_dial', form.Value, 'routing_mark', _('Routing mark (Fwmark)'),
 			_('Priority: Proxy Node > Global.'));
 		so.datatype = 'uinteger';
+		so.depends({type: /^(rematch)$/, '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.taboption('field_dial', form.ListValue, 'ip_version', _('IP version'));
@@ -1499,6 +1533,7 @@ return view.extend({
 		hm.ip_version.forEach((res) => {
 			so.value.apply(so, res);
 		})
+		so.depends({type: /^(rematch)$/, '!reverse': true});
 		so.modalonly = true;
 		/* Proxy Node END */
 
@@ -1874,7 +1909,7 @@ return view.extend({
 		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
-		so = ss.taboption('field_override', form.Value, 'override_routing_mark', _('Routing mark'),
+		so = ss.taboption('field_override', form.Value, 'override_routing_mark', _('Routing mark (Fwmark)'),
 			_('Priority: Proxy Node > Global.'));
 		so.datatype = 'uinteger';
 		so.depends({type: 'inline', '!reverse': true});

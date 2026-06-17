@@ -219,6 +219,7 @@ export function parseListener(cfg, isClient, label) {
 		listen: cfg.listen || '::',
 		port: cfg.port,
 		...(isClient ? {
+			"routing-mark": strToInt(cfg.routing_mark) || null,
 			rule: cfg.rule,
 			proxy: label,
 		} : {}),
