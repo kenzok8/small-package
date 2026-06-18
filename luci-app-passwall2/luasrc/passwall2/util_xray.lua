@@ -1836,7 +1836,7 @@ function gen_config(var)
 						end
 					end
 				end
-				if dns_outbound and #dns_out_rules > 0 then
+				if dns_outbound and dns_outbound.settings.rules and #dns_out_rules > 0 then
 					for i = #dns_out_rules, 1, -1 do
 						table.insert(dns_outbound.settings.rules, 1, dns_out_rules[i])
 					end
