@@ -99,7 +99,7 @@ git clone --depth 1 https://github.com/sirpdboy/sirpdboy-package && mv -n sirpdb
 git clone --depth 1 https://github.com/sundaqiang/openwrt-packages && mv -n openwrt-packages/luci-* ./; rm -rf openwrt-packages
 git clone --depth 1 https://github.com/zxlhhyccc/luci-app-v2raya
 git clone --depth 1 https://github.com/kenzok8/luci-app-openclaw
-git clone --depth 1 https://github.com/kenzok8/vmlinux-btf vmlinux_temp && cp -rf vmlinux_temp/vmlinux-btf/* ./ && rm -rf vmlinux_temp
+git_clone https://github.com/kenzok8/vmlinux-btf vmlinux_temp && cp -rf vmlinux_temp/vmlinux-btf ./ && rm -rf vmlinux_temp
 git clone --depth 1 https://github.com/kenzok78/luci-theme-infinityfreedom ifit && mv -n ifit/luci-theme-ifit ./;rm -rf ifit
 git clone --depth 1 https://github.com/kenzok8/openwrt-clashoo openwrt-clashoo && mv -n openwrt-clashoo/*clashoo ./; rm -rf openwrt-clashoo
 git clone --depth 1 https://github.com/kenzok78/openwrt-minisign
