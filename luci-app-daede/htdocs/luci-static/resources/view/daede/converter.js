@@ -73,6 +73,10 @@ function loadYamlParser() {
 }
 
 function daedEndpoint() {
+	// HTTPS page: browser blocks the plain-HTTP :2023 fetch as mixed
+	// content, so relay via a same-origin CGI. HTTP: hit daed direct. #11
+	if (window.location.protocol === 'https:')
+		return '/cgi-bin/daede-graphql';
 	const listen = uci.get('daed', 'config', 'listen_addr') || '0.0.0.0:2023';
 	const match = String(listen).match(/:(\d+)$/);
 	const port = match ? match[1] : '2023';

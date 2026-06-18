@@ -112,10 +112,10 @@ if has_wan_route; then
 	f_dy="${TMP_FILE}.dy"
 	f_pb="${TMP_FILE}.pb"
 	f_py="${TMP_FILE}.py"
-	probe_run "http://www.qualcomm.cn/generate_204" "direct" >"$f_db" &
+	probe_run "http://www.douyin.com" "direct" >"$f_db" &
 	probe_run "https://www.youtube.com/generate_204" "direct" >"$f_dy" &
 	if proxy_listening; then
-		probe_run "http://www.qualcomm.cn/generate_204" "proxy"  >"$f_pb" &
+		probe_run "http://www.douyin.com" "proxy"  >"$f_pb" &
 		probe_run "https://www.youtube.com/generate_204" "proxy"  >"$f_py" &
 	else
 		# 代理端口未监听（clashoo 已停止），跳过探测，直接标 down

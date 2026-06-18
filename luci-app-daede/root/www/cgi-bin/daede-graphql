@@ -1,0 +1,39 @@
+#!/bin/sh
+# daede-graphql - same-origin GraphQL relay to local daed.
+#
+# HTTPS LuCI pages can't fetch daed's plain-HTTP :2023 (mixed content),
+# so the converter posts here and we relay to 127.0.0.1 over loopback.
+# daed still checks its own bearer token; no extra exposure. See #11.
+
+reply() { printf 'Status: %s\r\nContent-Type: application/json\r\n\r\n%s\n' "$1" "$2"; exit 0; }
+fail() { reply '502 Bad Gateway' '{"errors":[{"message":"daed relay failed"}]}'; }
+
+[ "$REQUEST_METHOD" = "POST" ] || reply '405 Method Not Allowed' '{"errors":[{"message":"POST only"}]}'
+
+# daed listen port from uci, default 2023
+port=$(uci -q get daed.config.listen_addr | sed -n 's/.*:\([0-9]\{1,5\}\)$/\1/p')
+[ -n "$port" ] || port=2023
+
+len=${CONTENT_LENGTH:-0}
+[ "$len" -gt 0 ] 2>/dev/null || fail
+
+body=$(mktemp /tmp/daede-gql.XXXXXX) || fail
+head -c "$len" > "$body"
+
+if [ -n "$HTTP_AUTHORIZATION" ]; then
+	resp=$(uclient-fetch -q -O - \
+		--header="Content-Type: ${CONTENT_TYPE:-application/json}" \
+		--header="Authorization: $HTTP_AUTHORIZATION" \
+		--post-file="$body" \
+		"http://127.0.0.1:$port/graphql" 2>/dev/null)
+else
+	resp=$(uclient-fetch -q -O - \
+		--header="Content-Type: ${CONTENT_TYPE:-application/json}" \
+		--post-file="$body" \
+		"http://127.0.0.1:$port/graphql" 2>/dev/null)
+fi
+rc=$?
+rm -f "$body"
+
+[ "$rc" = 0 ] || fail
+reply '200 OK' "$resp"

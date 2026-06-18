@@ -131,8 +131,6 @@ function stamp() {
 
 return view.extend({
 	load: function() {
-		// background apk update so new versions show on next poll
-		fs.exec('/usr/share/luci-app-daede/refresh-index.sh', []).catch(function() {});
 		return Promise.all([
 			backend.detectBackend(),
 			uci.load('daed').catch(function() {}),
@@ -379,6 +377,10 @@ return view.extend({
 
 		poll.add(refresh);
 		refresh();
+		// First paint reads the cached index (fast). Refresh the index, then
+		// re-probe once it's current so a freshly published version shows
+		// without waiting for a poll tick. refresh-index.sh self-throttles.
+		fs.exec('/usr/share/luci-app-daede/refresh-index.sh', []).then(refresh).catch(function() {});
 
 		// === Geo data source (preset / custom URL + auto-update) ===
 		const geoSettings = (function() {
