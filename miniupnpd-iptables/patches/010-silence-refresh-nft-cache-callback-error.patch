@@ -1,0 +1,11 @@
+--- a/netfilter_nft/nftnlrdr_misc.c
++++ b/netfilter_nft/nftnlrdr_misc.c
+@@ -743,7 +743,7 @@
+ 		}
+ 		ret = mnl_cb_run(buf, n, mnl_seq, mnl_portid, table_cb, &data);
+ 		if (ret <= -1 /*== MNL_CB_ERROR*/) {
+-			syslog(LOG_ERR, "%s: mnl_cb_run returned %d",
++			syslog(LOG_DEBUG, "%s: mnl_cb_run returned %d",
+ 			       "refresh_nft_cache", ret);
+ 			return -1;
+ 		}

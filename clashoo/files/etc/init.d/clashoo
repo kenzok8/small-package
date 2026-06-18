@@ -1418,6 +1418,10 @@ _start_prepare_config() {
 		uci set clashoo.config.p_mode="rule" && uci commit clashoo
 	fi
 
+	# flatten YAML merge anchors first (yq 4.53+ breaks "<<" keys on rewrite)
+	if command -v yq >/dev/null 2>&1 && grep -q '<<[[:space:]]*:' "$CONFIG_YAML" 2>/dev/null; then
+		yq e -i 'explode(.)' "$CONFIG_YAML" 2>/dev/null || true
+	fi
 	yml_change >/dev/null 2>&1
 	dns_leak_protect=$(uci -q get clashoo.config.dns_leak_protect 2>/dev/null)
 	if command -v dns_mihomo_apply_leak_protect >/dev/null 2>&1; then

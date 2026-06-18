@@ -43,11 +43,10 @@ mkdir -p "$(dirname "$OUT_FILE")" >/dev/null 2>&1
 log "开始模板复写：$(basename "$SUB_FILE") <- $(basename "$TEMPLATE_FILE")"
 export SUB_FILE TEMPLATE_FILE
 
-# 以模板为主结构，注入订阅节点/节点提供器。
-       # use yq load() 强制单文档输出，避免 eval-all 在部分模板上产生重复根键。
+# template is base; load() forces single-doc; explode anchors first (yq 4.53+ breaks "<<")
 yq -n '
-  load(strenv(SUB_FILE)) as $sub |
-  load(strenv(TEMPLATE_FILE)) as $tpl |
+  (load(strenv(SUB_FILE)) | explode(.)) as $sub |
+  (load(strenv(TEMPLATE_FILE)) | explode(.)) as $tpl |
   (
     ($tpl * {
       "proxies": (((($tpl.proxies // []) + ($sub.proxies // [])) | unique_by(.name))),

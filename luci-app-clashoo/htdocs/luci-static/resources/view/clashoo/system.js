@@ -254,6 +254,26 @@ function saveCommitApplyMaybeReload(m, runningMsg, stoppedMsg) {
     });
 }
 
+// tab persistence (hash + localStorage), shared shape with config.js so save/apply
+// reloads keep the active tab instead of snapping back to the first one
+function readSavedTab(key, fallback, allowed) {
+  var raw = '';
+  if (window.location.hash)
+    raw = window.location.hash.replace(/^#/, '');
+  if (!raw) {
+    try { raw = window.localStorage.getItem(key) || ''; } catch (e) {}
+  }
+  return allowed.indexOf(raw) >= 0 ? raw : fallback;
+}
+
+function rememberTab(key, id) {
+  try { window.localStorage.setItem(key, id); } catch (e) {}
+  if (window.history && window.history.replaceState)
+    window.history.replaceState(null, '', '#' + id);
+  else
+    window.location.hash = id;
+}
+
 return view.extend({
   _tab:    'kernel',
   _logTab: 'plugin',
@@ -291,6 +311,9 @@ return view.extend({
       document.getElementById('cl-css-ext').href = L.resource('view/clashoo/clashoo.css') + '?v=20260609b1';
     }
 
+    // restore last-viewed tab so save/apply reloads stay put instead of jumping to kernel
+    this._tab = readSavedTab('clashoo.system.tab', this._tab || 'kernel', ['kernel', 'rules', 'logs']);
+    rememberTab('clashoo.system.tab', this._tab);
     var tabs = [
       { id: 'kernel', label: '内核与数据' },
       { id: 'rules',  label: '规则与控制' },
@@ -308,6 +331,7 @@ return view.extend({
               panelEls[k].className = 'cl-panel' + (k === t.id ? ' active' : '');
             });
             self._tab = t.id;
+            rememberTab('clashoo.system.tab', t.id);
           }
         }, t.label);
         tabEls[t.id] = el;
@@ -859,7 +883,17 @@ return view.extend({
     o = s.option(form.Flag,  'auto_clear_log',    '定时清理日志');
     o = s.option(form.Value, 'clear_time','清理间隔（小时）');
     o = s.option(form.ListValue, 'geoip_source', 'GeoIP 数据源');
-    o.value('2', 'GitHub'); o.value('4', '自定义');
+    o.value('3', 'Loyalsoldier'); o.value('5', 'v2fly'); o.value('4', '自定义');
+    o.default = '3';
+    o = s.option(form.Value, 'geoip_mmdb_url', 'Country.mmdb URL');
+    o.depends('geoip_source', '4');
+    o.placeholder = 'https://…/Country.mmdb';
+    o = s.option(form.Value, 'geosite_url', 'geosite.dat URL');
+    o.depends('geoip_source', '4');
+    o.placeholder = 'https://…/geosite.dat';
+    o = s.option(form.Value, 'geoip_dat_url', 'geoip.dat URL');
+    o.depends('geoip_source', '4');
+    o.placeholder = 'https://…/geoip.dat';
 
     m.render().then(function (node) {
       decorateSystemForm(node);
@@ -1094,6 +1128,7 @@ return view.extend({
       panelEls[k].className = 'cl-panel' + (k === id ? ' active' : '');
     });
     this._tab = id;
+    rememberTab('clashoo.system.tab', id);
   },
 
   handleSaveApply: null,

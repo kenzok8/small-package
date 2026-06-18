@@ -18,9 +18,13 @@ DEFAULT_GEOSITE_URL="https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/
 DEFAULT_GEOIP_DAT_URL="https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/release/geoip.dat"
 DEFAULT_GEOIP_ASN_URL="https://github.com/xishang0128/geoip/releases/download/latest/GeoLite2-ASN.mmdb"
 
-OPENCLASH_MMDB_URL="https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country.mmdb"
-OPENCLASH_GEOSITE_URL="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/geosite.dat"
-OPENCLASH_GEOIP_DAT_URL="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/geoip.dat"
+LOYALSOLDIER_MMDB_URL="https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country.mmdb"
+LOYALSOLDIER_GEOSITE_URL="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/geosite.dat"
+LOYALSOLDIER_GEOIP_DAT_URL="https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/geoip.dat"
+
+# v2fly ships no Country.mmdb — borrow Loyalsoldier's for the mmdb slot
+V2FLY_GEOSITE_URL="https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat"
+V2FLY_GEOIP_DAT_URL="https://github.com/v2fly/geoip/releases/latest/download/geoip.dat"
 
 log() {
 	echo "  $(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"
@@ -202,15 +206,25 @@ case "$geoip_source" in
 		log "Country.mmdb updated"
 		;;
 	3)
-		mmdb_url="$OPENCLASH_MMDB_URL"
-		geosite_url="$OPENCLASH_GEOSITE_URL"
-		geoip_dat_url="$OPENCLASH_GEOIP_DAT_URL"
+		# Loyalsoldier (default)
+		mmdb_url="$LOYALSOLDIER_MMDB_URL"
+		geosite_url="$LOYALSOLDIER_GEOSITE_URL"
+		geoip_dat_url="$LOYALSOLDIER_GEOIP_DAT_URL"
+		geoip_asn_url="$DEFAULT_GEOIP_ASN_URL"
+		;;
+	5)
+		# v2fly (mmdb borrowed from Loyalsoldier)
+		mmdb_url="$LOYALSOLDIER_MMDB_URL"
+		geosite_url="$V2FLY_GEOSITE_URL"
+		geoip_dat_url="$V2FLY_GEOIP_DAT_URL"
+		geoip_asn_url="$DEFAULT_GEOIP_ASN_URL"
 		;;
 	4)
+		# custom — asn falls back to default when left blank
 		mmdb_url="$cfg_mmdb_url"
 		geosite_url="$cfg_geosite_url"
 		geoip_dat_url="$cfg_geoip_dat_url"
-		geoip_asn_url="$cfg_geoip_asn_url"
+		geoip_asn_url="${cfg_geoip_asn_url:-$DEFAULT_GEOIP_ASN_URL}"
 		;;
 	*)
 		mmdb_url="${cfg_mmdb_url:-$DEFAULT_MMDB_URL}"
