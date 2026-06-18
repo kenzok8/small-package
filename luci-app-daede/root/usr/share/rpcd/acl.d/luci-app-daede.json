@@ -20,6 +20,7 @@
 				"/tmp/luci-app-daede.pkg-daed.log": [ "read" ],
 				"/tmp/luci-app-daede.pkg-luci-app-daede.log": [ "read" ],
 				"/tmp/luci-app-daede.backup.log": [ "read" ],
+				"/tmp/luci-app-daede.idx.status": [ "read" ],
 				"/bin/pidof dae": [ "exec" ],
 				"/bin/pidof daed": [ "exec" ],
 				"/usr/bin/dae validate -c /tmp/dae-validate.dae": [ "exec" ],

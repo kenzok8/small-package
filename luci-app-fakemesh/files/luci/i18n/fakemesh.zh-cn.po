@@ -1,53 +1,121 @@
 msgid ""
-msgstr "Content-Type: text/plain; charset=UTF-8\n"
+msgstr ""
+"Project-Id-Version: luci-app-fakemesh\n"
+"PO-Revision-Date: 2026-06-19 00:00+0800\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Chinese (Simplified)\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 
-msgid "Fake Mesh Setup"
-msgstr "假Mesh设置"
+msgid "Mesh"
+msgstr "Mesh 组网"
 
-msgid "Fake Mesh"
-msgstr "假Mesh"
+msgid "FakeMesh"
+msgstr "FakeMesh"
+
+msgid "FakeMesh Settings"
+msgstr "FakeMesh 设置"
+
+msgid "Configure the FakeMesh overlay network."
+msgstr "配置 FakeMesh 覆盖网络。"
+
+msgid "Enable"
+msgstr "启用"
+
+msgid "Mesh ID"
+msgstr "Mesh ID"
+
+msgid "Key"
+msgstr "密钥"
+
+msgid "Leave empty if encryption is not required."
+msgstr "不需要加密时请留空。"
+
+msgid "Band"
+msgstr "频段"
+
+msgid "5G"
+msgstr "5G"
+
+msgid "2G"
+msgstr "2G"
 
 msgid "Role"
 msgstr "角色"
 
-msgid "Leave empty if encryption is not required."
-msgstr "不需要加密请留空白。"
+msgid "Use the gateway router as the controller and all other nodes as agents."
+msgstr "将网关路由器设为控制器，其他节点设为卫星。"
 
-msgid "Set the gateway router as controller, others as agent."
-msgstr "把网关路由器设置成控制器，其他设置成卫星。"
+msgid "Wired AP (Ethernet backhaul)"
+msgstr "有线 AP（以太网回程）"
 
-msgid "Wired AP (ethernet as backhaul)"
-msgstr "有线AP（有线回程）"
-
-msgid "Agent (wifi as backhaul)"
-msgstr "卫星（无线回程）"
+msgid "Agent (Wi-Fi backhaul)"
+msgstr "卫星（Wi-Fi 回程）"
 
 msgid "Controller (AC)"
-msgstr "控制器 (AC)"
+msgstr "控制器（AC）"
 
-msgid "The simple ip address to access the controller."
-msgstr "访问控制器的简单ip地址。"
+msgid "Controller Access IP"
+msgstr "控制器访问 IP"
 
-msgid "Access IP address"
-msgstr "访问 IP 地址"
+msgid "IP address used to access the controller."
+msgstr "用于访问控制器的 IP 地址。"
 
-msgid "Sync Config"
+msgid "Sync Configuration"
 msgstr "同步配置"
 
-msgid "Sync config from the Controller."
-msgstr "从AC控制器同步配置。"
+msgid "Sync configuration from the controller."
+msgstr "从控制器同步配置。"
+
+msgid "Band Steering Helper"
+msgstr "频段引导辅助"
+
+msgid "None"
+msgstr "无"
+
+msgid "usteer"
+msgstr "usteer"
+
+msgid "DAWN"
+msgstr "DAWN"
+
+msgid "Disable Fronthaul"
+msgstr "禁用前传"
+
+msgid "Disable this node's fronthaul Wi-Fi so other AP nodes cannot connect through it."
+msgstr "禁用此节点的前传 Wi-Fi，使其他 AP 节点无法通过此节点接入。"
 
 msgid "Wireless Management"
 msgstr "无线管理"
 
-msgid "Not available on AP"
-msgstr "在AP上不可用"
+msgid "Managed by the controller; read-only on AP nodes."
+msgstr "由控制器管理；在 AP 节点上只读。"
 
-msgid "Band Steer Helper"
-msgstr "漫游组件"
+msgid "<abbr title=\"Extended Service Set Identifier\">ESSID</abbr>"
+msgstr "<abbr title=\"扩展服务集标识符\">ESSID</abbr>"
 
-msgid "Fronthaul Disabled"
-msgstr "关闭前传"
+msgid "Encryption"
+msgstr "加密方式"
 
-msgid "Disable fronthaul Wi-Fi signal on this node."
-msgstr "这个节点关闭前传无线信号。"
+msgid "No Encryption"
+msgstr "不加密"
+
+msgid "WPA-PSK"
+msgstr "WPA-PSK"
+
+msgid "WPA2-PSK"
+msgstr "WPA2-PSK"
+
+msgid "WPA-PSK/WPA2-PSK Mixed Mode"
+msgstr "WPA-PSK/WPA2-PSK 混合模式"
+
+msgid "WPA3-SAE"
+msgstr "WPA3-SAE"
+
+msgid "WPA2-PSK/WPA3-SAE Mixed Mode"
+msgstr "WPA2-PSK/WPA3-SAE 混合模式"
+
+msgid "2G+5G"
+msgstr "2G+5G"

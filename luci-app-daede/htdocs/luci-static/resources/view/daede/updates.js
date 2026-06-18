@@ -377,10 +377,21 @@ return view.extend({
 
 		poll.add(refresh);
 		refresh();
-		// First paint reads the cached index (fast). Refresh the index, then
-		// re-probe once it's current so a freshly published version shows
-		// without waiting for a poll tick. refresh-index.sh self-throttles.
-		fs.exec('/usr/share/luci-app-daede/refresh-index.sh', []).then(refresh).catch(function() {});
+		// Start the potentially slow index refresh without holding a LuCI RPC
+		// request open, then re-probe promptly when its status changes to done.
+		const waitIndexRefresh = function(tries) {
+			return L.resolveDefault(fs.read_direct('/tmp/luci-app-daede.idx.status', 'text'), '').then(function(status) {
+				if (String(status).trim() === 'done')
+					return refresh();
+				if (tries <= 0)
+					return;
+				return new Promise(function(resolve) { setTimeout(resolve, 1000); })
+					.then(function() { return waitIndexRefresh(tries - 1); });
+			});
+		};
+		fs.exec('/usr/share/luci-app-daede/refresh-index.sh', [])
+			.then(function() { return waitIndexRefresh(30); })
+			.catch(function() {});
 
 		// === Geo data source (preset / custom URL + auto-update) ===
 		const geoSettings = (function() {

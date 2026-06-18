@@ -1,6 +1,6 @@
 {
 	"admin/mesh": {
-		"title": "MESH",
+		"title": "Mesh",
 		"order": 60,
 		"action": {
 			"type": "firstchild",
@@ -11,7 +11,7 @@
 		}
 	},
 	"admin/mesh/fakemesh": {
-		"title": "Fake Mesh",
+		"title": "FakeMesh",
 		"order": 1,
 		"action": {
 			"type": "firstchild",
