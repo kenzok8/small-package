@@ -264,6 +264,7 @@ generate() {
 		echo "    }"
 		echo "    routing {"
 		echo "        request {"
+		[ "$block_ads" = "1" ] && echo "            qname(geosite:category-ads-all) -> reject"
 		echo "            qname(geosite:cn) -> cndns"
 		echo "            fallback: fallbackdns"
 		echo "        }"
