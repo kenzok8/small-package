@@ -560,6 +560,25 @@ runtime_run_health_check() {
 	return 1
 }
 
+# check now; on fail detach a bounded re-check so cold-start false-fails self-correct
+runtime_run_health_check_settle() {
+	runtime_run_health_check && return 0
+	local lock="/tmp/clashoo_health_recheck.lock"
+	( set -C; echo "$$" >"$lock" ) 2>/dev/null || return 1
+	(
+		exec 1000>&- 2>/dev/null
+		trap 'rm -f "$lock"' EXIT
+		_i=0
+		while [ "$_i" -lt 8 ]; do
+			sleep 15
+			_selected_core_running || break
+			runtime_run_health_check && break
+			_i=$((_i + 1))
+		done
+	) </dev/null >/dev/null 2>&1 &
+	return 1
+}
+
 _require_runtime_network_stack() {
 	local missing=""
 
@@ -1539,7 +1558,7 @@ _start_launch_core() {
 		while [ "$bg_wait" -lt "$_bg_max" ]; do
 			sleep 1
 			if _core_running; then
-				runtime_run_health_check >/dev/null 2>&1
+				runtime_run_health_check_settle >/dev/null 2>&1
 				# kick access check immediately so panel shows current state (daemon polls every 5-20s)
 				/usr/share/clashoo/net/access_check_cache.sh >/dev/null 2>&1 &
 				# bootstrap mode: now that the proxy is up, fetch geo + reload full config
@@ -1642,7 +1661,7 @@ start_service(){
 				echo "Clashoo" > "$REAL_LOG"
 				return 1
 			fi
-			(exec 1000>&-; runtime_run_health_check >/dev/null 2>&1) &
+			(exec 1000>&-; runtime_run_health_check_settle >/dev/null 2>&1) &
 			echo "Clashoo" > "$REAL_LOG"
 			return 0
 		fi
@@ -1761,7 +1780,7 @@ reload_service()
 			prepare_singbox_runtime >/dev/null 2>&1
 			/etc/init.d/sing-box restart >/dev/null 2>&1
 			singbox_dns_change >/dev/null 2>&1
-			runtime_run_health_check >/dev/null 2>&1
+			runtime_run_health_check_settle >/dev/null 2>&1
 		fi
 	elif _core_running; then
 		resolve_effective_tp_modes
@@ -1780,7 +1799,7 @@ reload_service()
 			-X PUT -d '{"path":"'"$CONFIG_YAML"'"}' \
 			"http://${_lip}:${_dp}/configs?force=true" >/dev/null 2>&1
 		backend_apply_rules 2>/dev/null
-		runtime_run_health_check >/dev/null 2>&1
+		runtime_run_health_check_settle >/dev/null 2>&1
 	fi
 }
 
