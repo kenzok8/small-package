@@ -60,7 +60,7 @@ const CSS = [
 	'.dd-up-log{margin-top:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:11px;padding:10px;border:1px solid rgba(128,128,128,.14);border-radius:8px;max-height:200px;overflow:auto;white-space:pre-wrap;word-break:break-all;display:none;background:inherit;color:#4a8c63}',
 	'.dd-up-log.show{display:block}',
 		'body.dark .dd-up-log,html[data-theme="dark"] .dd-up-log,html[data-bs-theme="dark"] .dd-up-log{color:#a3d9ad}',
-	/* 手风琴折叠组 —— 与 config.js dd-adv 同构 */
+	/* accordion — same structure as config.js dd-adv */
 	'.dd-adv{margin-bottom:14px}',
 	'.dd-adv-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;cursor:pointer;user-select:none;font-size:11.5px;font-weight:600;background:rgba(128,128,128,.04);border:1px solid rgba(0,0,0,.06);border-radius:10px;color:inherit;letter-spacing:.3px;text-transform:uppercase;opacity:.7;box-shadow:0 2px 8px rgba(0,0,0,.03)}',
 	'.dd-adv-bar:hover{background:rgba(56,134,161,.06);opacity:.95}',
@@ -214,14 +214,29 @@ return view.extend({
 					logPane.classList.add('show');
 					return;
 				}
-				const bin = atob(res.stdout.trim());
+				let bin;
+				try {
+					bin = atob(res.stdout.trim());
+				} catch (e) {
+					logPane.textContent = _('Export failed: invalid base64 data from server');
+					logPane.classList.add('show');
+					return;
+				}
+				if (!bin || bin.length === 0) {
+					logPane.textContent = _('Export failed: empty archive');
+					logPane.classList.add('show');
+					return;
+				}
 				const arr = new Uint8Array(bin.length);
 				for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
 				const url = URL.createObjectURL(new Blob([arr], { 'type': 'application/gzip' }));
 				const a = E('a', { 'href': url, 'download': 'daede-config-' + stamp() + '.tar.gz' });
 				document.body.appendChild(a); a.click(); document.body.removeChild(a);
 				setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
-			}).catch(function() {}).finally(function() {
+			}).catch(function(e) {
+				logPane.textContent = _('Export failed') + ': ' + (e ? (e.message || String(e)) : _('script not found'));
+				logPane.classList.add('show');
+			}).finally(function() {
 				exportBtn.disabled = false; exportBtn.textContent = orig;
 			});
 		});
@@ -238,7 +253,10 @@ return view.extend({
 				const b64 = String(e.target.result).split(',')[1] || '';
 				fs.write('/tmp/daede-import.b64', b64).then(function() {
 					return runJob('config-backup.sh', 'import', importBtn, '/tmp/luci-app-daede.backup.log');
-				}).catch(function() {}).finally(function() { fileInput.value = ''; });
+				}).catch(function(e) {
+					logPane.textContent = _('Import failed') + ': ' + (e ? (e.message || String(e)) : _('unknown error'));
+					logPane.classList.add('show');
+				}).finally(function() { fileInput.value = ''; });
 			};
 			reader.readAsDataURL(file);
 		});
