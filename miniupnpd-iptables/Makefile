@@ -49,6 +49,7 @@ define Package/miniupnpd-iptables
 	+libnetfilter-conntrack
   TITLE+= (iptables)
   VARIANT:=iptables
+  DEFAULT_VARIANT:=1
 endef
 
 define Package/miniupnpd-nftables
@@ -57,7 +58,6 @@ define Package/miniupnpd-nftables
 	+libnftnl
   TITLE+= (nftables)
   VARIANT:=nftables
-  DEFAULT_VARIANT:=1
   CONFLICTS:=miniupnpd-iptables
 endef
 

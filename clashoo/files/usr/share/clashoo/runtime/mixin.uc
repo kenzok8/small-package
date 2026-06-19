@@ -83,10 +83,16 @@ cfg['dns'] = {
 let filter_mode = s(a('fake_ip_filter_mode'), 'blacklist');
 if (filter_mode != 'blacklist') cfg['dns']['fake-ip-filter-mode'] = filter_mode;
 
-/* fake-ip-filter */
+/* map geosite:cn to bundled cn.mrs rule-set so mihomo skips the 10MB geosite.dat */
+let need_cn_rs = false;
+let push_filter = function(f) {
+	if (f == 'geosite:cn') { f = 'rule-set:cn_domain'; need_cn_rs = true; }
+	else if (f == 'rule-set:cn_domain') need_cn_rs = true;
+	push(cfg['dns']['fake-ip-filter'], f);
+};
 let filters = a('fake_ip_filter');
-if (type(filters) == 'array') { for (let f in filters) push(cfg['dns']['fake-ip-filter'], f); }
-else if (filters != null) push(cfg['dns']['fake-ip-filter'], filters);
+if (type(filters) == 'array') { for (let f in filters) push_filter(f); }
+else if (filters != null) push_filter(filters);
 
 /* fallback-filter（默认 geoip:false，防止冷启动依赖 MMDB） */
 cfg['dns']['fallback-filter'] = { geoip: ab('fallback_filter_geoip') };
@@ -99,6 +105,17 @@ if (store_selected || store_fake) {
 	cfg['profile'] = {};
 	if (store_selected) cfg['profile']['store-selected'] = true;
 	if (store_fake)     cfg['profile']['store-fake-ip']   = true;
+}
+
+/* bundled cn.mrs rule-provider, referenced by fake-ip-filter rule-set:cn_domain */
+if (need_cn_rs) {
+	if (!cfg['rule-providers']) cfg['rule-providers'] = {};
+	cfg['rule-providers']['cn_domain'] = {
+		type:     'file',
+		path:     './ruleset/cn.mrs',
+		format:   'mrs',
+		behavior: 'domain',
+	};
 }
 
 

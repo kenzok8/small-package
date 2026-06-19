@@ -1441,6 +1441,13 @@ _start_prepare_config() {
 	if command -v yq >/dev/null 2>&1 && grep -q '<<[[:space:]]*:' "$CONFIG_YAML" 2>/dev/null; then
 		yq e -i 'explode(.)' "$CONFIG_YAML" 2>/dev/null || true
 	fi
+	# stage bundled cn.mrs into the core dir; mihomo rejects rule-set paths outside /etc/clashoo
+	if [ -f /usr/share/clashoo/ruleset/cn.mrs ]; then
+		if [ ! -f /etc/clashoo/ruleset/cn.mrs ] || [ /usr/share/clashoo/ruleset/cn.mrs -nt /etc/clashoo/ruleset/cn.mrs ]; then
+			mkdir -p /etc/clashoo/ruleset
+			cp -f /usr/share/clashoo/ruleset/cn.mrs /etc/clashoo/ruleset/cn.mrs 2>/dev/null
+		fi
+	fi
 	yml_change >/dev/null 2>&1
 	dns_leak_protect=$(uci -q get clashoo.config.dns_leak_protect 2>/dev/null)
 	if command -v dns_mihomo_apply_leak_protect >/dev/null 2>&1; then

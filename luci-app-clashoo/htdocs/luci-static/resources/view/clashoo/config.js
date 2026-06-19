@@ -1392,7 +1392,7 @@ return view.extend({
 
     o = s.option(form.DynamicList, 'fake_ip_filter',    'Fake-IP 过滤域名');
     o.placeholder = '*.lan / geosite:cn / RULE-SET,cn_domain,real-ip';
-    o.description = '黑名单/白名单模式：填域名或 <code>geosite:cn</code> 简写。规则模式：填 <code>GEOSITE,cn,real-ip</code> / <code>RULE-SET,xxx,real-ip</code> 这种与 rules 同语法的条目，末尾通常加一条 <code>MATCH,fake-ip</code> 兜底。';
+    o.description = '黑名单/白名单模式：填域名或 <code>geosite:cn</code> 简写。规则模式：填 <code>GEOSITE,cn,real-ip</code> / <code>RULE-SET,xxx,real-ip</code> 这种与 rules 同语法的条目，末尾通常加一条 <code>MATCH,fake-ip</code> 兜底。填 <code>geosite:cn</code> 会自动改用内置 cn.mrs 加速，免加载 10MB geosite.dat。';
     o.depends('enhanced_mode', 'fake-ip');
     o.remove = function () {};
     o = s.option(form.DynamicList, 'default_nameserver', 'Bootstrap DNS');
