@@ -532,7 +532,34 @@ msgid "Sign in to daed"
 msgstr ""
 
 #: converter.js
-msgid "Credentials are used only for this import and are not saved."
+msgid "The password is not saved. Sign-in is remembered in this browser for up to 30 days."
+msgstr ""
+
+msgid "3. Import Subscription"
+msgstr ""
+
+msgid "Import selected nodes as one subscription and add it to the default proxy group."
+msgstr ""
+
+msgid "Subscription name"
+msgstr ""
+
+msgid "Enter a subscription name to import the selected nodes."
+msgstr ""
+
+msgid "Subscription \"%s\" is available on daed. Select nodes above to update it."
+msgstr ""
+
+msgid "Update subscription \"%s\" with %d selected nodes in default group \"proxy\"."
+msgstr ""
+
+msgid "Import %d selected nodes as subscription \"%s\" into default group \"proxy\"."
+msgstr ""
+
+msgid "Update subscription (%d)"
+msgstr ""
+
+msgid "Import subscription (%d)"
 msgstr ""
 
 #: converter.js

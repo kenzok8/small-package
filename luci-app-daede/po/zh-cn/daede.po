@@ -764,8 +764,35 @@ msgstr "已存在，跳过"
 msgid "Sign in to daed"
 msgstr "登录 daed"
 
-msgid "Credentials are used only for this import and are not saved."
-msgstr "凭据仅用于本次导入，不会保存。"
+msgid "The password is not saved. Sign-in is remembered in this browser for up to 30 days."
+msgstr "不会保存密码。此浏览器将在 30 天内记住登录状态。"
+
+msgid "3. Import Subscription"
+msgstr "3. 导入订阅"
+
+msgid "Import selected nodes as one subscription and add it to the default proxy group."
+msgstr "将所选节点作为一条订阅导入，并加入默认 proxy 群组。"
+
+msgid "Subscription name"
+msgstr "订阅名称"
+
+msgid "Enter a subscription name to import the selected nodes."
+msgstr "请输入订阅名称以导入所选节点。"
+
+msgid "Subscription \"%s\" is available on daed. Select nodes above to update it."
+msgstr "daed 中已有订阅“%s”。请在上方选择节点以更新。"
+
+msgid "Update subscription \"%s\" with %d selected nodes in default group \"proxy\"."
+msgstr "更新订阅“%s”，使用 %d 个所选节点，并保留在默认 proxy 群组中。"
+
+msgid "Import %d selected nodes as subscription \"%s\" into default group \"proxy\"."
+msgstr "将 %d 个所选节点作为订阅“%s”导入默认 proxy 群组。"
+
+msgid "Update subscription (%d)"
+msgstr "更新订阅（%d）"
+
+msgid "Import subscription (%d)"
+msgstr "导入订阅（%d）"
 
 msgid "Sign in and import"
 msgstr "登录并导入"

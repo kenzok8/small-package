@@ -154,6 +154,10 @@ function findManagedGroup(groups, record) {
 	}) || null;
 }
 
+function findGroupByName(groups, name) {
+	return (groups || []).find(function(group) { return group.name === name; }) || null;
+}
+
 const api = {
 	deriveAirportName: deriveAirportName,
 	nextPastedName: nextPastedName,
@@ -167,6 +171,7 @@ const api = {
 	airportSectionValues: airportSectionValues,
 	matchAirport: matchAirport,
 	findManagedGroup: findManagedGroup,
+	findGroupByName: findGroupByName,
 	safeOldNodeIds: safeOldNodeIds
 };
 

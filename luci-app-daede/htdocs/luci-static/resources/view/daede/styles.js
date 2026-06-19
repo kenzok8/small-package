@@ -237,7 +237,12 @@ const CSS = [
 	'.dd-conv-submit{justify-content:flex-end}',
 	'.dd-conv-import .cbi-button{margin-left:auto}',
 	'.dd-conv-status{margin-top:9px;font-size:11.5px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;min-height:16px}',
-	'@media(max-width:640px){.dd-conv-card{padding:14px}.dd-conv-heading{align-items:flex-start}.dd-conv-heading .dd-card-title{width:100%}.dd-conv-summary{justify-content:flex-start;width:100%;gap:5px 12px;padding-top:2px}.dd-conv-summary-item{min-width:74px}.dd-conv-filter{margin-left:0;width:100%}.dd-conv-result{grid-template-columns:20px minmax(90px,1fr) 68px}.dd-conv-result-state{grid-column:2/4;font-size:11px}.dd-conv-submit .cbi-button{width:100%!important}.dd-conv-airport{grid-template-columns:82px minmax(0,1fr)}.dd-conv-airport>*{max-width:none !important}.dd-conv-url-row{grid-template-columns:1fr}.dd-conv-url-row input,.dd-conv-url-row .dd-conv-ua,.dd-conv-url-row .cbi-button{width:100%;max-width:none}}'
+	'.dd-daed-login{box-sizing:border-box;width:min(560px,100%);margin:0 auto}',
+	'.dd-daed-login .cbi-value{display:grid!important;grid-template-columns:110px minmax(0,1fr)!important;gap:12px;align-items:center;padding:6px 0!important}',
+	'.dd-daed-login .cbi-value-title,.dd-daed-login .cbi-value-field{box-sizing:border-box;width:auto!important;min-width:0!important;margin:0!important;padding:0!important}',
+	'.dd-daed-login .cbi-value-field input{box-sizing:border-box;width:100%!important;max-width:none!important;min-width:0!important;height:36px!important;margin:0!important;padding:6px 10px!important}',
+	'.dd-daed-login-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}',
+	'@media(max-width:640px){.dd-conv-card{padding:14px}.dd-conv-heading{align-items:flex-start}.dd-conv-heading .dd-card-title{width:100%}.dd-conv-summary{justify-content:flex-start;width:100%;gap:5px 12px;padding-top:2px}.dd-conv-summary-item{min-width:74px}.dd-conv-filter{margin-left:0;width:100%}.dd-conv-result{grid-template-columns:20px minmax(90px,1fr) 68px}.dd-conv-result-state{grid-column:2/4;font-size:11px}.dd-conv-submit .cbi-button{width:100%!important}.dd-conv-airport{grid-template-columns:82px minmax(0,1fr)}.dd-conv-airport>*{max-width:none !important}.dd-conv-url-row{grid-template-columns:1fr}.dd-conv-url-row input,.dd-conv-url-row .dd-conv-ua,.dd-conv-url-row .cbi-button{width:100%;max-width:none}.dd-daed-login .cbi-value{grid-template-columns:1fr!important;gap:4px}.dd-daed-login-actions .cbi-button{flex:1 1 0}}'
 ].join('');
 
 return baseclass.extend({ CSS: CSS });

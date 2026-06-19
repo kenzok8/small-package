@@ -225,7 +225,8 @@ function isMetadataProxy(node) {
 	if (!name)
 		return false;
 
-	return /^(?:traffic|bandwidth|expire|expiry|expiration|subscription(?:\s+info)?|official\s+website|website)\s*[:：|]/i.test(name) ||
+	return /(?:官网|QQ|流量|续费|应急|重置|到期|过期|剩余|套餐)/i.test(name) ||
+		/^(?:traffic|bandwidth|expire|expiry|expiration|subscription(?:\s+info)?|official\s+website|website)\s*[:：|]/i.test(name) ||
 		/^(?:(?:剩余|可用|已用|总)?流量|套餐到期|到期时间|到期日|过期时间|有效期|订阅信息)\s*[:：|]/i.test(name) ||
 		/^(?:官方网站|官网地址|官方网址|网站地址)\s*[:：|]/i.test(name) ||
 		/^(?:加入|联系|客服)?\s*QQ\s*(?:群|交流群|客服|联系)\s*[:：|]/i.test(name);
