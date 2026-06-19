@@ -111,7 +111,7 @@ const callListConfigs   = rpc.declare({ object: 'luci.clashoo', method: 'list_co
 const callSetConfig     = rpc.declare({ object: 'luci.clashoo', method: 'set_config',       params: ['name'], expect: {} });
 const callSetMode       = rpc.declare({ object: 'luci.clashoo', method: 'set_mode',         params: ['mode'], expect: {} });
 const callSetProxyMode  = rpc.declare({ object: 'luci.clashoo', method: 'set_proxy_mode',   params: ['mode'], expect: {} });
-const callSetCore       = rpc.declare({ object: 'luci.clashoo', method: 'set_core',         params: ['core', 'dcore'], expect: {} });
+const callSetCore       = rpc.declare({ object: 'luci.clashoo', method: 'set_core',         params: ['core', 'dcore', 'action'], expect: {} });
 const callSetPanel      = rpc.declare({ object: 'luci.clashoo', method: 'set_panel',        params: ['name'], expect: {} });
 const callUpdatePanel   = rpc.declare({ object: 'luci.clashoo', method: 'update_panel',     params: ['name'], expect: {} });
 const callPanelStatus   = rpc.declare({ object: 'luci.clashoo', method: 'panel_status',     expect: {} });
@@ -196,7 +196,7 @@ return baseclass.extend({
     setConfig: function (name) { return L.resolveDefault(callSetConfig(name), {}); },
     setMode: function (mode) { return L.resolveDefault(callSetMode(mode), {}); },
     setProxyMode: function (mode) { return L.resolveDefault(callSetProxyMode(mode), {}); },
-    setCore: function (core, dcore) { return L.resolveDefault(callSetCore(core, dcore), {}); },
+    setCore: function (core, dcore, action) { return L.resolveDefault(callSetCore(core, dcore, action), {}); },
     setPanel: function (name) { return L.resolveDefault(callSetPanel(name), {}); },
     updatePanel: function (name) { return L.resolveDefault(callUpdatePanel(name || 'zashboard'), {}); },
     panelStatus: function () { return L.resolveDefault(callPanelStatus(), {}); },

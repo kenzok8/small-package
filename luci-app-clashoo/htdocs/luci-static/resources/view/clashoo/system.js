@@ -254,6 +254,45 @@ function saveCommitApplyMaybeReload(m, runningMsg, stoppedMsg) {
     });
 }
 
+function coreChoiceFromConfig(coreType, dcore) {
+  if (coreType === 'singbox')
+    return dcore === '5' ? 'singbox-alpha' : 'singbox-stable';
+  if (dcore === '1') return 'smart';
+  if (dcore === '3') return 'mihomo-alpha';
+  return 'mihomo-stable';
+}
+
+function coreChoiceTarget(choice) {
+  var targets = {
+    'mihomo-stable':  { core: 'mihomo',  dcore: '2' },
+    'mihomo-alpha':   { core: 'mihomo',  dcore: '3' },
+    'smart':          { core: 'mihomo',  dcore: '1' },
+    'singbox-stable': { core: 'singbox', dcore: '4' },
+    'singbox-alpha':  { core: 'singbox', dcore: '5' }
+  };
+  return targets[choice] || targets['mihomo-stable'];
+}
+
+function waitForCoreTarget(target, attempts, sawRestart) {
+  attempts = attempts == null ? 50 : attempts;
+  sawRestart = !!sawRestart;
+  return clashoo.status().then(function (st) {
+    st = st || {};
+    var selected = st.core_type === target.core && String(st.dcore || '') === target.dcore;
+    var transitioning = !st.running || st.health_status === 'stopped' || st.health_status === 'starting';
+    sawRestart = sawRestart || transitioning;
+    if (sawRestart && selected && st.running && st.health_status !== 'stopped' && st.health_status !== 'fail')
+      return st;
+    if (selected && st.health_status === 'fail')
+      throw new Error('新内核启动失败，请查看内核日志');
+    if (attempts <= 0)
+      throw new Error('等待新内核启动超时，请查看内核日志');
+    return new Promise(function (resolve) {
+      setTimeout(resolve, 600);
+    }).then(function () { return waitForCoreTarget(target, attempts - 1, sawRestart); });
+  });
+}
+
 // tab persistence (hash + localStorage), shared shape with config.js so save/apply
 // reloads keep the active tab instead of snapping back to the first one
 function readSavedTab(key, fallback, allowed) {
@@ -777,13 +816,25 @@ return view.extend({
     var detectedArch = this._detectMihomoArch(cpuArch);
     var m = new form.Map('clashoo', '', '');
     var s, o;
+	var originalCoreChoice = coreChoiceFromConfig(
+		uci.get('clashoo', 'config', 'core_type') || 'mihomo',
+		uci.get('clashoo', 'config', 'dcore') || '2'
+	);
+	var selectedCoreChoice = originalCoreChoice;
 
     s = m.section(form.NamedSection, 'config', 'clashoo', '后端核心');
     s.addremove = false;
-    o = s.option(form.ListValue, 'core_type', '核心类型');
-    o.value('mihomo', 'mihomo（Clash Meta 内核）');
-    o.value('singbox', 'sing-box（需已安装并启用 clash_api）');
+    o = s.option(form.ListValue, '_core_choice', '核心类型');
+	o.value('mihomo-stable', 'mihomo 稳定版');
+	o.value('mihomo-alpha', 'mihomo Alpha');
+	o.value('smart', 'Smart');
+	o.value('singbox-stable', 'sing-box 稳定版');
+	o.value('singbox-alpha', 'sing-box Alpha');
+	o.cfgvalue = function () { return originalCoreChoice; };
+	o.write = function (sectionId, value) { selectedCoreChoice = value; };
+	o.remove = function () {};
     o.description = '';
+	var coreChoiceOption = o;
 
     s = m.section(form.NamedSection, 'config', 'clashoo', '管理面板配置');
     s.addremove = false;
@@ -805,15 +856,51 @@ return view.extend({
       decorateSystemForm(node);
       enhanceDashPasswordField(node);
       container.appendChild(node);
+
+	  var saveKernelForm = function (applyNow) {
+		var choice = coreChoiceOption.formvalue('config') || selectedCoreChoice || originalCoreChoice;
+		var target = coreChoiceTarget(choice);
+		var changed = choice !== originalCoreChoice;
+
+		return m.save()
+		  .then(function () { return clashoo.commitConfig(); })
+		  .then(function () {
+			if (applyNow)
+			  return clashoo.setCore(target.core, target.dcore, 'apply');
+			if (changed)
+			  return clashoo.setCore(target.core, target.dcore, 'save');
+			return { success: true };
+		  })
+		  .then(function (res) {
+			if (!res || res.success === false)
+			  throw new Error((res && res.message) || '内核配置保存失败');
+			if (applyNow && res.restarting)
+			  return waitForCoreTarget(target).then(function () { return res; });
+			return res;
+		  })
+		  .then(function (res) {
+			return clearClashooDirty().then(function () { return res; });
+		  })
+		  .then(function (res) {
+			var msg;
+			if (!applyNow)
+			  msg = changed ? '内核类型已保存，下次启动或重启后生效' : '配置已保存';
+			else if (res.restarting)
+			  msg = '配置已保存，已切换并启动所选内核';
+			else
+			  msg = '配置已保存，服务保持停止';
+			ui.addNotification(null, E('p', msg));
+			window.setTimeout(function () { location.reload(); }, 300);
+		  });
+	  };
+
       container.appendChild(E('div', { 'class': 'cl-save-bar' }, [
         E('button', { 'class': 'cbi-button', click: function () {
-          m.save().then(function () { return clashoo.commitConfig(); })
-            .then(function () { return clearClashooDirty(); })
-            .then(function () { location.reload(); })
+		  saveKernelForm(false)
             .catch(function (e) { ui.addNotification(null, E('p', '保存失败: ' + (e.message || e))); });
         }}, '保存配置'),
         E('button', { 'class': 'btn cbi-button-action', click: function () {
-          saveCommitApplyMaybeReload(m, '配置已保存并热重载服务', '配置已保存，服务未启动')
+		  saveKernelForm(true)
             .catch(function (e) { ui.addNotification(null, E('p', '操作失败: ' + (e.message || e))); });
         }}, '应用配置')
       ]));

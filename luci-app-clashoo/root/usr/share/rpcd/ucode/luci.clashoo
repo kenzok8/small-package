@@ -252,6 +252,30 @@ legacy = dcore == '1' ? '1' : dcore == '3' ? '3' : '2';
 c.set('clashoo', 'config', 'core', legacy);
 }
 
+function core_target_error(core, dcore) {
+if (core == 'mihomo' && dcore == '1') {
+	if (find_smart_binary()) return null;
+	return { error: 'smart_core_missing', message: '未检测到 Smart 内核，请先在“组件更新”中安装 Smart' };
+}
+if (core == 'mihomo' && dcore == '2') {
+	if (access('/usr/bin/clash-meta', 'x') || access('/etc/clashoo/clash-meta', 'x')) return null;
+	return { error: 'mihomo_stable_missing', message: '未检测到 mihomo 稳定版，请先在“组件更新”中更新稳定版' };
+}
+if (core == 'mihomo' && dcore == '3') {
+	if (access('/usr/bin/mihomo', 'x')) return null;
+	return { error: 'mihomo_alpha_missing', message: '未检测到 mihomo Alpha，请先在“组件更新”中更新 Alpha' };
+}
+if (core == 'singbox' && dcore == '4') {
+	if (access('/usr/bin/sing-box-stable', 'x')) return null;
+	return { error: 'singbox_stable_missing', message: '未检测到 sing-box 稳定版，请先在“组件更新”中更新稳定版' };
+}
+if (core == 'singbox' && dcore == '5') {
+	if (access('/usr/bin/sing-box-alpha', 'x')) return null;
+	return { error: 'singbox_alpha_missing', message: '未检测到 sing-box Alpha，请先在“组件更新”中更新 Alpha' };
+}
+return { error: 'invalid_core_target', message: '无效的内核类型与版本组合' };
+}
+
 function prepare_singbox_runtime() {
 let active = uci_get('clashoo', 'config', 'singbox_active') || '';
 let src = active ? ('/usr/share/clashoo/config/singbox/' + active) : '/etc/sing-box/config.json';
@@ -1928,29 +1952,22 @@ return { success: true };
 },
 
 set_core: {
-args: { core: 'core', dcore: 'dcore' },
+args: { core: 'core', dcore: 'dcore', action: 'action' },
 call: function(req) {
 let core = req.args?.core || 'mihomo';
 if (core == 'sing-box') core = 'singbox';
 let dcore = req.args?.dcore || '';
-if (core != 'mihomo' && core != 'singbox')
-return { success: false, error: 'invalid core', message: '无效内核类型，仅支持 mihomo / singbox' };
-if (core == 'mihomo' && dcore == '1' && !find_smart_binary())
-return {
-success: false,
-error: 'smart_core_missing',
-message: '未检测到 Smart 内核。「更新模型」只更新 Smart 模型，不会安装 Smart 内核；请到「系统 → 内核更新」选择 mihomo Smart 版并下载。'
-};
-if (core == 'singbox' && !find_binary_for_family('singbox'))
-return {
-success: false,
-error: 'singbox_core_missing',
-message: '未检测到 sing-box 内核；请到「系统 → 内核更新」下载 sing-box。'
-};
+let action = req.args?.action || 'stop';
+if (action != 'stop' && action != 'save' && action != 'apply')
+return { success: false, error: 'invalid_action', message: '无效的内核切换动作' };
+let target_error = core_target_error(core, dcore);
+if (target_error)
+return { success: false, error: target_error.error, message: target_error.message };
+
+let running_before = is_running();
 
 let c = cursor(); c.load('clashoo');
 c.set('clashoo', 'config', 'core_type', core);
-if (dcore)
 c.set('clashoo', 'config', 'dcore', dcore);
 /* Smart 策略仅 Smart 内核（dcore=1）有意义。切到 Smart 时自动开启
  * smart_auto_switch；切回普通 mihomo / sing-box 时自动关闭，避免
@@ -1960,13 +1977,21 @@ sync_legacy_core_fields(c);
 c.commit('clashoo');
 system('uci commit clashoo >/dev/null 2>&1');
 
-// 异步停服务，避免阻塞 RPC 响应。同步调用会让前端 setCore() 卡 1-3s，
-// 若用户已先点过 stop，两次 init.d stop 并发执行 firewall/dnsmasq restart
-// 会互相拖累，UI 总卡顿可达 20s。rpc_async.sh 用 flock 串行化，互不冲突。
-if (is_running())
-system('sh /usr/share/clashoo/rpc/rpc_async.sh stop >/dev/null 2>&1');
+// Overview 旧调用默认 stop；System 页可显式 save 或 apply。
+// 所有耗时 init 操作仍由 rpc_async.sh + flock 串行化。
+let restarting = false;
+if (action == 'save') {
+	// Persist only. The selected core takes effect on the next start/restart.
+}
+else if (running_before && action == 'stop')
+	system('sh /usr/share/clashoo/rpc/rpc_async.sh stop >/dev/null 2>&1');
+else if (running_before && action == 'apply') {
+	system('sh /usr/share/clashoo/rpc/rpc_async.sh restart >/dev/null 2>&1');
+	restarting = true;
+}
 
-return { success: true, core_type: core, stopped: true };
+return { success: true, core_type: core, dcore,
+	running_before, restarting, stopped: running_before && action == 'stop' };
 }
 },
 

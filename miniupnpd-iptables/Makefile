@@ -58,7 +58,6 @@ define Package/miniupnpd-nftables
 	+libnftnl
   TITLE+= (nftables)
   VARIANT:=nftables
-  CONFLICTS:=miniupnpd-iptables
 endef
 
 define Package/miniupnpd/conffiles/Default
