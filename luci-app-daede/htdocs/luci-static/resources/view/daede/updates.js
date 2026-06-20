@@ -55,6 +55,8 @@ const CSS = [
 	'.dd-geo-row{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:center;font-size:12px;padding:6px 0}',
 	'.dd-geo-row label{opacity:.75;font-weight:600}',
 	'.dd-geo-row input[type=text],.dd-geo-row select{font-size:12px;padding:4px 8px;border:1px solid rgba(128,128,128,.35);border-radius:5px;background:transparent;color:inherit;width:100%}',
+	/* fixed width so the Source and Auto-update selects line up consistently */
+	'.dd-geo-row select{width:180px;flex:0 0 auto}',
 	'.dd-geo-chk{display:flex;align-items:center;gap:6px}',
 	'.dd-geo-actions{margin-top:10px;display:flex;gap:10px;align-items:center}',
 	'.dd-up-log{margin-top:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:11px;padding:10px;border:1px solid rgba(128,128,128,.14);border-radius:8px;max-height:200px;overflow:auto;white-space:pre-wrap;word-break:break-all;display:none;background:inherit;color:#4a8c63}',

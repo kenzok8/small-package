@@ -10,7 +10,7 @@
 'require view.daede.daed as daedView';
 
 return view.extend({
-	load: function() {
+	_loadContext: function() {
 		return backend.detectBackend().then(function(ctx) {
 			return uci.load(ctx.backend.uci).catch(function() {}).then(function() {
 				return ctx;
@@ -18,22 +18,57 @@ return view.extend({
 		});
 	},
 
+	load: function() {
+		return this._loadContext();
+	},
+
 	render: function(ctx) {
+		const self = this;
+		const themeHref = Array.prototype.map.call(document.styleSheets, function(sheet) { return sheet.href || ''; }).join(' ');
+		document.documentElement.setAttribute('data-daede-theme', /\/argon\//.test(themeHref) ? 'argon' : 'bootstrap');
+
 		/* themes signal dark differently — BootstrapDark sets data-darkmode,
-		   Argon just loads a dark stylesheet with no flag. Detect dark from the
-		   page background luminance and set data-darkmode so our dark rules
-		   (keyed on it) fire uniformly across every theme's dark mode. */
+		   Argon just loads a dark stylesheet with no flag. Read the first opaque
+		   background up the tree; a transparent body (CSS not applied yet) must
+		   NOT count as black, else argon light is misdetected as dark. */
 		try {
-			const bg = getComputedStyle(document.body).backgroundColor.match(/\d+/g);
-			if (bg && (0.299 * bg[0] + 0.587 * bg[1] + 0.114 * bg[2]) < 128)
-				document.documentElement.setAttribute('data-darkmode', 'true');
+			const probe = [document.body, document.documentElement];
+			for (let i = 0; i < probe.length; i++) {
+				const m = getComputedStyle(probe[i]).backgroundColor.match(/[\d.]+/g);
+				if (!m) continue;
+				const a = m.length >= 4 ? parseFloat(m[3]) : 1;
+				if (a < 0.1) continue; // transparent — keep looking
+				if (0.299 * m[0] + 0.587 * m[1] + 0.114 * m[2] < 128)
+					document.documentElement.setAttribute('data-darkmode', 'true');
+				break; // first opaque background decides
+			}
 		} catch (e) {}
+
+		const redrawBackend = function(name, message) {
+			self._backendHint = message;
+			return self._loadContext()
+				.then(function(nextCtx) { return self.render(nextCtx); })
+				.then(function(nextRoot) {
+					const current = document.querySelector('.dd-config-page');
+					if (!current) return;
+					Array.prototype.forEach.call(current.querySelectorAll('.dd-status-card'), function(card) {
+						if (card._ddCleanup) card._ddCleanup();
+					});
+					current.replaceWith(nextRoot);
+					if (self._backendHintTimer) clearTimeout(self._backendHintTimer);
+					self._backendHintTimer = setTimeout(function() {
+						self._backendHint = '';
+						const hint = document.querySelector('.dd-config-page .dd-backend-help');
+						if (hint) hint.textContent = '';
+					}, 3500);
+				});
+		};
 
 		const listenAddr = uci.get('daed', 'config', 'listen_addr') || backend.BACKENDS.daed.defaultListen;
 		const children = [
 			E('style', {}, styles.CSS),
 			widgets.renderStatusCard(ctx, listenAddr),
-			widgets.renderBackendSwitcher(ctx)
+			widgets.renderBackendSwitcher(ctx, redrawBackend, self._backendHint)
 		].filter(function(node) { return !!node; });
 
 		if (!ctx.installed[ctx.name]) {
@@ -49,7 +84,7 @@ return view.extend({
 		return Promise.all(children.map(function(child) {
 			return child && child.then ? child : Promise.resolve(child);
 		})).then(function(nodes) {
-			return E('div', { 'class': 'dd-wrap' }, nodes.filter(function(n) { return !!n; }));
+			return E('div', { 'class': 'dd-wrap dd-config-page' }, nodes.filter(function(n) { return !!n; }));
 		});
 	},
 

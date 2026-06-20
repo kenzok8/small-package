@@ -194,7 +194,7 @@ generate() {
 	config_get dial_mode config dial_mode "domain"
 	config_get log_level config log_level "info"
 	config_get wan_interface config wan_interface "auto"
-	config_get lan_interface config lan_interface ""
+	config_get lan_interface config lan_interface "br-lan"
 
 	SUB_BUF=""; NODE_BUF=""; GROUP_BUF=""; FIRST_GROUP=""; GROUP_NAMES_SEEN=""
 	SUB_TAGS=""

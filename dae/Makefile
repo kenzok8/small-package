@@ -4,7 +4,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dae
 PKG_VERSION:=2026.06.14
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=dae-src-2026.06.14-fa89ea7197a5.tar.gz
 PKG_SOURCE_URL:=https://github.com/kenzok8/openwrt-daede/releases/download/dae-src
@@ -128,6 +128,7 @@ define Package/dae/install
 
 	$(INSTALL_DIR) $(1)/etc/dae
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/example.dae $(1)/etc/dae/example.dae
+	$(SED) 's|^[[:space:]]*#lan_interface: docker0|    lan_interface: br-lan|' $(1)/etc/dae/example.dae
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) $(CURDIR)/files/dae.config $(1)/etc/config/dae

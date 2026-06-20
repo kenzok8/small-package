@@ -6,7 +6,9 @@
 const CSS = [
 	'.dd-wrap{padding:4px 0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}',
 	'.dd-card{border:1px solid rgba(0,0,0,.06);border-radius:10px;padding:9px 14px;margin-bottom:7px;box-shadow:0 2px 8px rgba(0,0,0,.03);background:rgba(255,255,255,.02)}',
-	'.dd-card-title{font-size:11px;font-weight:600;opacity:.55;margin:0 0 8px;letter-spacing:.3px;text-transform:uppercase}',
+	/* padding:0 neutralizes Argon's h4{padding:.75rem 1.25rem}, which otherwise
+	   indents the title 20px past the card body and looks misaligned */
+	'.dd-card-title{font-size:11px;font-weight:600;opacity:.55;margin:0 0 8px;padding:0;letter-spacing:.3px;text-transform:uppercase}',
 	'.dd-status-row{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:0}',
 	'.dd-status-row .dd-grow{flex:1 1 auto}',
 	'.dd-badge{display:inline-flex;align-items:center;gap:5px;padding:2px 10px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.3px;border:1px solid transparent;line-height:1.3}',
@@ -33,7 +35,7 @@ const CSS = [
 	'.dd-switch-wrap{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}',
 	'.dd-backend-card{padding:10px 14px}',
 	'.dd-backend-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}',
-	'.dd-backend-label{min-width:100px;font-size:12px;font-weight:600;opacity:.72}',
+	'.dd-backend-label{flex:0 0 calc(200px - 10px);font-size:12px;font-weight:600;opacity:.72}',
 	'.dd-backend-segment{display:inline-flex;align-items:center;gap:2px;padding:2px;border-radius:7px;background:rgba(128,128,128,.10)}',
 	'.dd-backend-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:78px;height:24px;padding:0 10px;border:0;border-radius:5px;background:transparent;color:inherit;font-size:11px;font-weight:500;opacity:.65;cursor:pointer;transition:background .18s ease,color .18s ease,opacity .18s ease}',
 	'.dd-backend-btn:hover{background:rgba(128,128,128,.10)}',
@@ -41,8 +43,16 @@ const CSS = [
 	'.dd-backend-btn:disabled{opacity:.55;cursor:not-allowed}',
 	'.dd-backend-state{font-size:10.5px;font-weight:500;opacity:.70;margin-left:2px}',
 	'.dd-backend-btn.is-active .dd-backend-state{opacity:.85}',
-	'.dd-backend-help{margin:6px 0 0 110px;font-size:11.5px;line-height:1.45;opacity:.66}',
-	'@media (max-width:640px){.dd-backend-label{min-width:0;width:100%}.dd-backend-segment{width:100%}.dd-backend-btn{flex:1;min-width:0}.dd-backend-help{margin-left:0}}',
+	'.dd-backend-help{margin:6px 0 0 200px;font-size:11.5px;line-height:1.45;opacity:.66}',
+	'.dd-backend-help:empty{display:none}',
+	'html[data-daede-theme="argon"] .dd-backend-label{flex-basis:calc(240px - 10px)}',
+	'html[data-daede-theme="argon"] .dd-backend-help{margin-left:240px}',
+	'html[data-daede-theme="argon"]:not([data-darkmode="true"]) .dd-config-page .dd-card{background:rgba(255,255,255,.78);border-color:rgba(50,50,93,.12);box-shadow:0 2px 8px rgba(50,50,93,.06)}',
+	'html[data-daede-theme="argon"]:not([data-darkmode="true"]) .dd-config-page .dd-card-title{opacity:.78}',
+	'html[data-daede-theme="argon"]:not([data-darkmode="true"]) .dd-config-page .dd-settings-card .cbi-value-title{opacity:1}',
+	'html[data-daede-theme="argon"]:not([data-darkmode="true"]) .dd-config-page .dd-settings-card .cbi-value-field input,html[data-daede-theme="argon"]:not([data-darkmode="true"]) .dd-config-page .dd-settings-card .cbi-value-field select,html[data-daede-theme="argon"]:not([data-darkmode="true"]) .dd-config-page .dd-settings-card .cbi-value-field textarea{background:#fff!important;border-color:rgba(50,50,93,.24)!important}',
+	'html[data-daede-theme="argon"]:not([data-darkmode="true"]) .dd-config-page .dd-adv-bar{background:rgba(50,50,93,.04);border-color:rgba(50,50,93,.14);opacity:.78}',
+	'@media (max-width:640px){.dd-backend-label{flex-basis:100%!important;width:100%}.dd-backend-segment{width:100%}.dd-backend-btn{flex:1;min-width:0}.dd-backend-help{margin-left:0!important}}',
 	/* daed/dae settings card —— LuCI form.Map 字体/边框对齐 dd 卡片体系 */
 	'.dd-settings-card{padding:10px 14px}',
 	'.dd-settings-card>h2,.dd-settings-card .cbi-map>h2,.dd-settings-card .cbi-section>h3{display:none}',
@@ -50,6 +60,10 @@ const CSS = [
 	'.dd-settings-descr{font-size:11.5px;opacity:.62;margin:0 0 8px;line-height:1.45}',
 	'.dd-settings-card .cbi-section{margin:0;padding:0;background:transparent;border:0;box-shadow:none}',
 	'.dd-settings-card .cbi-value{padding:6px 0;border:0;min-height:0}',
+	/* Argon's .td.cbi-value-field padding + 40px .cbi-checkbox make table rows
+	   too tall — tighten both for our compact subscription/node tables */
+	'.dd-settings-card .cbi-section-table-row>td{padding:6px 10px !important}',
+	'.dd-settings-card .cbi-section-table-row .cbi-checkbox{height:20px !important;min-height:0 !important}',
 	'.dd-settings-card .cbi-value-title{font-size:12.5px !important;font-weight:500;opacity:.85;padding:6px 12px 6px 0;min-width:140px}',
 	'.dd-settings-card .cbi-value-field input,.dd-settings-card .cbi-value-field select,.dd-settings-card .cbi-value-field textarea{font-size:12.5px !important;padding:5px 8px;border-radius:5px;border:1px solid rgba(128,128,128,.28);background:transparent;color:inherit}',
 	'.dd-settings-card .cbi-value-field input:focus,.dd-settings-card .cbi-value-field select:focus,.dd-settings-card .cbi-value-field textarea:focus{border-color:rgba(56,134,161,.7);outline:0;box-shadow:0 0 0 2px rgba(56,134,161,.15)}',
@@ -92,10 +106,14 @@ const CSS = [
 	'.dd-edit-wrap{position:relative}',
 	'.dd-edit-wrap .dd-editor,.dd-edit-wrap .dd-hl{margin:0;padding:10px 12px;border-width:1px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-size:12px;line-height:1.5;letter-spacing:0;tab-size:4;white-space:pre-wrap;word-break:break-word;box-sizing:border-box}',
 	'.dd-edit-wrap .dd-hl{position:absolute;inset:0;margin:0;overflow:hidden;border:1px solid transparent;border-radius:6px 6px 0 0;pointer-events:none;background:#f6f8fa;color:#3b4252;z-index:1}',
-	'.dd-edit-wrap .dd-hl code{font:inherit;white-space:inherit;word-break:inherit;display:block}',
+	/* reset Argon's code{background:var(--lighter)} so the overlay inherits the
+	   pre background uniformly — otherwise a dark pre shows as side bars */
+	'.dd-edit-wrap .dd-hl code{font:inherit;white-space:inherit;word-break:inherit;display:block;background:transparent !important}',
 	'.dd-edit-wrap .dd-editor-hl{position:relative;z-index:2;color:transparent !important;background:transparent !important;caret-color:#2f7288;border:1px solid rgba(128,128,128,.28)}',
 	'.dd-edit-wrap .dd-editor-hl::placeholder{color:rgba(128,128,128,.55)}',
-	'.dd-edit-wrap .dd-editor-hl::selection{background:rgba(56,134,161,.25)}',
+	/* keep selected text transparent too — else the browser force-colors it and
+	   it ghosts over the highlight pre underneath */
+	'.dd-edit-wrap .dd-editor-hl::selection{background:rgba(56,134,161,.25);color:transparent}',
 	'.dh-c{color:#8a919a;font-style:italic}',
 	'.dh-s{color:#2a8a4a}',
 	'.dh-k{color:#9a3fb5;font-weight:600}',
@@ -117,7 +135,8 @@ const CSS = [
 	'.dd-editor-footer .dd-fb-ok{color:#3da66a;font-weight:600}',
 	'body.dark .dd-editor-footer,html[data-theme="dark"] .dd-editor-footer,html[data-bs-theme="dark"] .dd-editor-footer,html[data-darkmode="true"] .dd-editor-footer{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.04)}',
 	'body.dark .dd-editor-footer .dd-fb-warn,html[data-theme="dark"] .dd-editor-footer .dd-fb-warn,html[data-bs-theme="dark"] .dd-editor-footer .dd-fb-warn,html[data-darkmode="true"] .dd-editor-footer .dd-fb-warn{color:#e0b34a}',
-	'.dd-insert-select{font-size:11.5px;padding:4px 8px;border-radius:5px;border:1px solid rgba(128,128,128,.35);background:transparent;color:inherit;cursor:pointer}',
+	/* match the action buttons' size (h25 / 11px / 5px radius) for a consistent row */
+	'.dd-insert-select{font-size:11px;line-height:1.4;height:25px;padding:0 10px;border-radius:5px;border:1px solid rgba(128,128,128,.35);background:transparent;color:inherit;cursor:pointer;box-sizing:border-box}',
 	'.dd-insert-select:hover{border-color:rgba(56,134,161,.55)}',
 	'.dd-editor-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}',
 	'.dd-editor-status{margin-left:auto;font-size:11.5px;opacity:0;transition:opacity .25s ease;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}',
@@ -152,24 +171,9 @@ const CSS = [
 	'body.dark .dd-card,html[data-theme="dark"] .dd-card,html[data-bs-theme="dark"] .dd-card,html[data-darkmode="true"] .dd-card{border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.02)}',
 	'body.dark .dd-adv-bar,html[data-theme="dark"] .dd-adv-bar,html[data-bs-theme="dark"] .dd-adv-bar,html[data-darkmode="true"] .dd-adv-bar{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.10)}',
 	'body.dark .dd-settings-card .cbi-value-field input,body.dark .dd-settings-card .cbi-value-field select,body.dark .dd-settings-card .cbi-value-field textarea,html[data-theme="dark"] .dd-settings-card .cbi-value-field input,html[data-theme="dark"] .dd-settings-card .cbi-value-field select,html[data-theme="dark"] .dd-settings-card .cbi-value-field textarea,html[data-bs-theme="dark"] .dd-settings-card .cbi-value-field input,html[data-bs-theme="dark"] .dd-settings-card .cbi-value-field select,html[data-bs-theme="dark"] .dd-settings-card .cbi-value-field textarea,html[data-darkmode="true"] .dd-settings-card .cbi-value-field input,html[data-darkmode="true"] .dd-settings-card .cbi-value-field select,html[data-darkmode="true"] .dd-settings-card .cbi-value-field textarea{border-color:rgba(255,255,255,.18)}',
-	// Argon dark sets no DOM attr (esp. follow-system) — mirror dark rules via @media
-	'@media (prefers-color-scheme: dark){',
-	'.dd-edit-wrap .dd-hl{color:#c8cdd6;background:#1e2228}',
-	'.dd-edit-wrap .dd-editor-hl{caret-color:#7fd0e8}',
-	'.dh-c{color:#6b7280}',
-	'.dh-s{color:#7ec699}',
-	'.dh-k{color:#c792ea}',
-	'.dh-f{color:#82c4dd}',
-	'.dh-o{color:#e0a35a}',
-	'.dh-g{color:#ec6fa8}',
-	'.dd-editor-footer{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.04)}',
-	'.dd-editor-footer .dd-fb-warn{color:#e0b34a}',
-	'.dd-ph-warn-title{color:#e0b34a}',
-	'.dd-ph-list .dd-ph-ln{color:#f0c763;background:rgba(217,158,0,.22)}',
-	'.dd-card{border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.02)}',
-	'.dd-adv-bar{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.10)}',
-	'.dd-settings-card .cbi-value-field input,.dd-settings-card .cbi-value-field select,.dd-settings-card .cbi-value-field textarea{border-color:rgba(255,255,255,.18)}',
-	'}',
+	/* No prefers-color-scheme dark block: OS dark mode must NOT force a dark
+	   editor when the user picked a LIGHT theme. Dark styling is driven solely
+	   by data-darkmode (config.js reads the real page background). */
 	/* status card line-2 meta (backend · pid), below the badge+toggle line */
 	'.dd-status-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}',
 	/* compact icon-only row actions — the 编辑/删除 text buttons are too wide
@@ -196,6 +200,9 @@ const CSS = [
 	'.dd-settings-card .cbi-section-table-row>td:nth-child(2){flex:1 1 auto !important}',
 	'.dd-settings-card .cbi-section-table-row>td:nth-child(3){flex:0 0 auto !important;text-align:center}',
 	'.dd-settings-card .cbi-section-table-row>td.cbi-section-actions{flex:0 0 auto !important;display:flex;gap:4px}',
+	/* clear the floated title so a Flag description gets the full row width
+	   instead of wrapping around it (e.g. "局域网 / 私有地址不走代理。") */
+	'.dd-settings-card .cbi-value-description,.dd-settings-card .cbi-value-helptext{clear:both;width:100%}',
 	'}',
 	'.dd-converter{width:100%!important;max-width:1180px;margin:0 auto}',
 	'.dd-conv-card{padding:18px 20px;margin-bottom:12px}',

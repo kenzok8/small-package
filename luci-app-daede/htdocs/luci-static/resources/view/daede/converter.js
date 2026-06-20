@@ -250,7 +250,6 @@ return view.extend({
 		const airportName = E('input', { 'class': 'dd-conv-airport-name', 'placeholder': _('Group name'), 'autocomplete': 'off' });
 		const importButton = E('button', { 'class': 'cbi-button cbi-button-positive', 'disabled': 'disabled' }, _('Import node group'));
 		const importTitle = E('h4', { 'class': 'dd-card-title' });
-		const importDescription = E('p', { 'class': 'dd-settings-descr' });
 		const airportNameLabel = E('label');
 		const summary = E('div', { 'class': 'dd-conv-summary' });
 		const groupSummary = E('div', { 'class': 'dd-conv-group-summary' });
@@ -299,9 +298,6 @@ return view.extend({
 		const updateResultSummary = function() {
 			const isDaed = state.target === 'daed';
 			importTitle.textContent = isDaed ? _('3. Import Subscription') : _('3. Import Node Group');
-			importDescription.textContent = isDaed
-				? _('Import selected nodes as one subscription and add it to the default proxy group.')
-				: _('Import the selected nodes as one named group, so large airport node lists stay easy to manage.');
 			airportNameLabel.textContent = isDaed ? _('Subscription name') : _('Group name');
 			const compatible = state.results.filter(function(item) { return item.ok; }).length;
 			const unsupported = state.results.length - compatible;
@@ -775,7 +771,7 @@ return view.extend({
 		return E('div', { 'class': 'dd-wrap dd-converter' }, [
 			E('style', {}, styles.CSS),
 			E('div', { 'class': 'dd-card dd-conv-card' }, [
-				E('p', { 'class': 'dd-settings-descr' }, _('Convert Clash YAML into share links, preview the result, then import selected nodes into dae or daed. Inputs and credentials are not saved.')),
+				E('p', { 'class': 'dd-settings-descr' }, _('Convert Clash YAML to share links and import the nodes you pick. Nothing is saved.')),
 				E('h4', { 'class': 'dd-card-title' }, _('1. Input Clash YAML')),
 				E('div', { 'class': 'dd-conv-url-row' }, [ urlInput, uaSelect, parseUrl ]),
 				E('div', { 'class': 'dd-conv-or' }, _('or')),
@@ -793,7 +789,6 @@ return view.extend({
 			]),
 			E('div', { 'class': 'dd-card dd-conv-card' }, [
 				importTitle,
-				importDescription,
 				E('div', { 'class': 'dd-conv-import dd-conv-airport' }, [
 					airportNameLabel,
 					airportName,

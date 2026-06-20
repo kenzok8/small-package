@@ -8,6 +8,14 @@
 
 function notifyAction() {}
 
+function execChecked(command, args) {
+	return fs.exec(command, args || []).then(function(res) {
+		if (res && res.code !== 0)
+			throw new Error((res.stderr || res.stdout || ('exit ' + res.code)).trim());
+		return res;
+	});
+}
+
 function execInit(be, action) {
 	return fs.exec(be.initd, [action]).then(function(res) {
 		notifyAction(action, res);
@@ -22,30 +30,43 @@ function rejectIfOtherRunning(be, running) {
 	return Promise.reject(new Error(_('%s is already running. Stop %s before starting %s because both backends share the same eBPF/cgroup attachment.').format(other, other, be.name)));
 }
 
-function toggleService(be, turnOn, running) {
+function toggleService(be, turnOn) {
 	const enabled = turnOn ? '1' : '0';
 	const action = turnOn ? 'start' : 'stop';
 
 	// Only guard on start: two backends share the eBPF/cgroup attachment, so
 	// starting one while the other runs is unsafe. Stopping is always allowed.
-	const guard = turnOn ? rejectIfOtherRunning(be, running) : Promise.resolve();
+	const guard = turnOn
+		? backend.detectRunning().then(function(running) { return rejectIfOtherRunning(be, running); })
+		: Promise.resolve();
 
 	return guard
-		.then(function() { return fs.exec('/sbin/uci', ['set', be.uci + '.config.enabled=' + enabled]); })
-		.then(function() { return fs.exec('/sbin/uci', ['commit', be.uci]); })
+		.then(function() { return execChecked('/sbin/uci', ['set', be.uci + '.config.enabled=' + enabled]); })
+		.then(function() { return execChecked('/sbin/uci', ['commit', be.uci]); })
 		.then(function() {
 			if (turnOn)
-				return fs.exec(be.initd, ['enable']);
-			return fs.exec(be.initd, ['disable']);
+				return execChecked(be.initd, ['enable']);
+			return execChecked(be.initd, ['disable']);
 		})
 		.then(function() {
 			if (turnOn && be.useNetns)
 				return fs.exec('/sbin/ip', ['netns', 'del', 'daens']).catch(function() {});
 		})
-		.then(function() { return fs.exec(be.initd, [action]); });
+		.then(function() { return execChecked(be.initd, [action]); });
 }
 
-function renderBackendSwitcher(ctx) {
+function waitForService(be, turnOn, attempts) {
+	return backend.serviceStatus(be.name).then(function(state) {
+		if (!!state.running === turnOn)
+			return state;
+		if (attempts <= 0)
+			throw new Error(turnOn ? _('Service did not start in time.') : _('Service did not stop in time.'));
+		return new Promise(function(resolve) { setTimeout(resolve, 250); })
+			.then(function() { return waitForService(be, turnOn, attempts - 1); });
+	});
+}
+
+function renderBackendSwitcher(ctx, onSwitched, initialHint) {
 	if (!ctx.installed.dae && !ctx.installed.daed)
 		return null;
 
@@ -57,7 +78,7 @@ function renderBackendSwitcher(ctx) {
 		])
 	]);
 	const segment = wrap.querySelector('.dd-backend-segment');
-	const hint = E('div', { 'class': 'dd-backend-help' }, _('Switching backend stops the current service first. Click start when you want the new backend to run.'));
+	const hint = E('div', { 'class': 'dd-backend-help' }, initialHint || '');
 	let busy = false;
 
 	const showHint = function(msg) {
@@ -69,7 +90,8 @@ function renderBackendSwitcher(ctx) {
 
 		['dae', 'daed'].forEach(function(name) {
 			if (running && running[name])
-				stops.push(fs.exec(backend.BACKENDS[name].initd, ['stop']).catch(function() {}));
+				stops.push(execChecked(backend.BACKENDS[name].initd, ['stop'])
+					.then(function() { return waitForService(backend.BACKENDS[name], false, 40); }));
 		});
 
 		if (stops.length)
@@ -107,8 +129,9 @@ function renderBackendSwitcher(ctx) {
 				.then(stopIfRunning)
 				.then(function() { return backend.setActiveBackend(name); })
 				.then(function() {
-					showHint(_('Switched to %s. Click start when you want it to run.').format(name));
-					setTimeout(function() { window.location.reload(); }, 650);
+					const message = _('Switched to %s. Click start when you want it to run.').format(name);
+					showHint(message);
+					return onSwitched ? onSwitched(name, message) : null;
 				})
 				.catch(function(e) {
 					busy = false;
@@ -125,13 +148,16 @@ function renderBackendSwitcher(ctx) {
 
 function renderStatusCard(ctx, listenAddr) {
 	const be = ctx.backend;
+	let busy = false;
+	let lastError = '';
+	let refreshGeneration = 0;
 	const body = E('div', { 'id': 'dd-status-body' }, E('em', {}, _('Collecting data…')));
-	const card = E('div', { 'class': 'dd-card' }, [
+	const card = E('div', { 'class': 'dd-card dd-status-card' }, [
 		E('h4', { 'class': 'dd-card-title' }, _('Service Status')),
 		body
 	]);
 
-	const render = function(state, running) {
+	const render = function(state) {
 		while (body.firstChild) body.removeChild(body.firstChild);
 
 		const badge = state.running
@@ -145,14 +171,17 @@ function renderStatusCard(ctx, listenAddr) {
 		if (state.running && state.pid)
 			meta.push(E('span', { 'class': 'dd-meta' }, [ E('span', { 'class': 'dd-meta-label' }, 'PID'), state.pid ]));
 
-		const swErr = E('span', { 'class': 'dd-meta dd-err', 'style': 'display:none' }, '');
+		const swErr = E('span', { 'class': 'dd-meta dd-err', 'style': lastError ? '' : 'display:none' }, lastError);
 		const sw = E('button', { 'class': 'dd-switch' + (state.running ? ' is-on' : ''), 'type': 'button', 'aria-label': _('Toggle service') }, [
 			E('span', { 'class': 'dd-switch-knob' })
 		]);
 		sw.addEventListener('click', function(ev) {
 			ev.preventDefault();
-			if (sw.disabled) return;
+			if (busy) return;
+			refreshGeneration++;
+			busy = true;
 			sw.disabled = true;
+			lastError = '';
 			swErr.style.display = 'none';
 			const turnOn = !state.running;
 			/* instant optimistic feedback — the start/stop chain (esp. dae's eBPF
@@ -161,18 +190,17 @@ function renderStatusCard(ctx, listenAddr) {
 			sw.classList.toggle('is-on', turnOn);
 			const lbl = sw.parentNode && sw.parentNode.querySelector('.dd-switch-label');
 			if (lbl) lbl.textContent = '…';
-			toggleService(be, turnOn, running)
-				/* refresh as soon as the command returns, not on the next poll
-				   tick — this is what made feedback feel laggy */
-				.then(function() { return refresh(); })
-				.catch(function(e) {
-					/* revert the optimistic flip and show the reason inline */
-					sw.classList.toggle('is-on', !turnOn);
-					if (lbl) lbl.textContent = state.running ? 'ON' : 'OFF';
-					swErr.textContent = _('Toggle failed: %s').format(e.message || e);
-					swErr.style.display = '';
+			toggleService(be, turnOn)
+				.then(function() { return waitForService(be, turnOn, 40); })
+				.then(function() {
+					busy = false;
+					return refresh(true);
 				})
-				.finally(function() { sw.disabled = false; });
+				.catch(function(e) {
+					busy = false;
+					lastError = _('Toggle failed: %s').format(e.message || e);
+					return refresh(true);
+				});
 		});
 
 		/* line 1: badge + toggle (always aligned, never wraps); line 2: meta */
@@ -256,17 +284,19 @@ function renderStatusCard(ctx, listenAddr) {
 			body.appendChild(E('div', { 'class': 'dd-actions' }, actions));
 	};
 
-	const refresh = function() {
-		return Promise.all([
-			backend.serviceStatus(be.name),
-			backend.detectRunning()
-		]).then(function(r) {
-			render(r[0], r[1]);
+	const refresh = function(force) {
+		if (busy && !force)
+			return Promise.resolve();
+		const generation = refreshGeneration;
+		return backend.serviceStatus(be.name).then(function(state) {
+			if (generation !== refreshGeneration || (busy && !force)) return;
+			render(state);
 		});
 	};
 
 	poll.add(refresh);
 	refresh();
+	card._ddCleanup = function() { poll.remove(refresh); };
 	return card;
 }
 

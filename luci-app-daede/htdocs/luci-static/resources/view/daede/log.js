@@ -15,7 +15,8 @@ const CSS = [
 	'.dd-log-card-title{font-size:11px;font-weight:600;opacity:.55;margin:0 0 8px;letter-spacing:.3px;text-transform:uppercase}',
 	'.dd-log-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:0 0 8px;margin-bottom:8px;border-bottom:1px dashed rgba(128,128,128,.2)}',
 	'.dd-log-toolbar label{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;cursor:pointer;margin:0;opacity:.85}',
-	'.dd-log-toolbar input[type="checkbox"]{margin:0}',
+	/* Argon shifts label>checkbox down by top:.4rem; reset so flex centers it with the text */
+	'.dd-log-toolbar input[type="checkbox"]{position:static;top:auto;right:auto;margin:0}',
 	'.dd-log-toolbar input[type="text"]{font-size:11.5px;padding:4px 8px;border-radius:5px;border:1px solid rgba(128,128,128,.28);background:transparent;color:inherit;min-width:160px}',
 	'.dd-log-toolbar .dd-log-btn{font-size:11.5px;line-height:1.4;min-height:0;height:auto;padding:4px 12px;border-radius:5px;border:1px solid rgba(128,128,128,.28);background:transparent;color:inherit;cursor:pointer}',
 	'.dd-log-toolbar .dd-log-btn:hover{background:rgba(128,128,128,.1)}',

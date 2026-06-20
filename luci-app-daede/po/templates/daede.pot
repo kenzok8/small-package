@@ -49,9 +49,6 @@ msgstr ""
 msgid "%s is not installed. Install it first, then switch backend."
 msgstr ""
 
-msgid "Switching backend stops the current service first. Click start when you want the new backend to run."
-msgstr ""
-
 msgid "Stopping current backend…"
 msgstr ""
 
@@ -82,19 +79,19 @@ msgstr ""
 msgid "Toggle failed: %s"
 msgstr ""
 
+msgid "Service did not start in time."
+msgstr ""
+
+msgid "Service did not stop in time."
+msgstr ""
+
 msgid "%s is already running. Stop %s before starting %s because both backends share the same eBPF/cgroup attachment."
 msgstr ""
 
 msgid "daede Settings"
 msgstr ""
 
-msgid "A modern dashboard for dae. Subscriptions, nodes, routing and DNS are managed in the daed WebUI."
-msgstr ""
-
 msgid "Listen Address"
-msgstr ""
-
-msgid "Host:port that the daed WebUI and GraphQL API listen on."
 msgstr ""
 
 msgid "Max Log Size (MB)"

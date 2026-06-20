@@ -14,8 +14,7 @@ function renderDaedSettings() {
 	s.addremove = false;
 	s.anonymous = true;
 
-	o = s.option(form.Value, 'listen_addr', _('Listen Address'),
-		_('Host:port that the daed WebUI and GraphQL API listen on.'));
+	o = s.option(form.Value, 'listen_addr', _('Listen Address'));
 	o.datatype = 'ipaddrport(1)';
 	o.default = '0.0.0.0:2023';
 	o.rmempty = false;
@@ -32,7 +31,7 @@ function renderDaedSettings() {
 
 	return widgets.wrapSettingsCard(
 		_('daede Settings'),
-		_('A modern dashboard for dae. Subscriptions, nodes, routing and DNS are managed in the daed WebUI.'),
+		null,
 		m.render(),
 		_('Log Advanced Settings'),
 		['log_maxsize', 'log_maxbackups']

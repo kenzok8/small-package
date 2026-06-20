@@ -78,6 +78,9 @@ fi
 # Idempotent: only add what's missing. Lives in the `dae` UCI package,
 # consumed by gen-dae-config.sh.
 if [ -f /etc/config/dae ]; then
+	if ! uci -q get dae.config.lan_interface >/dev/null 2>&1; then
+		uci -q set dae.config.lan_interface='br-lan'
+	fi
 	if ! uci -q show dae | grep -q "=group$"; then
 		g="$(uci add dae group)"
 		uci -q set "dae.$g.name=proxy"
