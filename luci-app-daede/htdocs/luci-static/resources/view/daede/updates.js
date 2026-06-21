@@ -55,9 +55,11 @@ const CSS = [
 	'.dd-geo-row{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:center;font-size:12px;padding:6px 0}',
 	'.dd-geo-row label{opacity:.75;font-weight:600}',
 	'.dd-geo-row input[type=text],.dd-geo-row select{font-size:12px;padding:4px 8px;border:1px solid rgba(128,128,128,.35);border-radius:5px;background:transparent;color:inherit;width:100%}',
-	/* fixed width so the Source and Auto-update selects line up consistently */
-	'.dd-geo-row select{width:180px;flex:0 0 auto}',
-	'.dd-geo-chk{display:flex;align-items:center;gap:6px}',
+	/* selects cap at 200px on wide screens, shrink to the column on mobile (no overflow) */
+	'.dd-geo-row select{width:100%!important;max-width:200px;box-sizing:border-box}',
+	'.dd-geo-auto{display:inline-flex;align-items:center;gap:6px}',
+	/* Argon shifts label>checkbox down (top:.4rem); reset so flex centers it */
+	'.dd-geo-auto input[type="checkbox"]{position:static;top:auto;right:auto;margin:0}',
 	'.dd-geo-actions{margin-top:10px;display:flex;gap:10px;align-items:center}',
 	'.dd-up-log{margin-top:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:11px;padding:10px;border:1px solid rgba(128,128,128,.14);border-radius:8px;max-height:200px;overflow:auto;white-space:pre-wrap;word-break:break-all;display:none;background:inherit;color:#4a8c63}',
 	'.dd-up-log.show{display:block}',
@@ -473,8 +475,8 @@ return view.extend({
 					E('div', { 'class': 'dd-geo-row' }, [ E('label', {}, _('Source')), presetSel ]),
 					customRows,
 					E('div', { 'class': 'dd-geo-row' }, [
-						E('label', {}, _('Auto-update')),
-						E('div', { 'class': 'dd-geo-chk' }, [ autoCb, freqSel ])
+						E('label', { 'class': 'dd-geo-auto' }, [ E('span', {}, _('Auto-update')), autoCb ]),
+						freqSel
 					]),
 					E('div', { 'class': 'dd-geo-actions' }, [ saveBtn ])
 				])

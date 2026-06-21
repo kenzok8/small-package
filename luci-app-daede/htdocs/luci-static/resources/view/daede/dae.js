@@ -327,6 +327,23 @@ function renderDaeForms(ctx) {
 
 	/* Logging — folded into the main form so the single Save button covers it
 	   too (no separate native save bar) */
+		/* Network interfaces — override dae auto WAN detect, fails on legacy swconfig (#15).
+		   Combobox: dropdown of real devices but still free-text for undetectable WANs */
+		const netDevs = (ctx && ctx.netDevs) || [];
+		s = m.section(form.NamedSection, 'config', 'dae', _('Network interfaces'));
+		s.addremove = false;
+		o = s.option(form.Value, 'lan_interface', _('LAN interface'),
+			_('Interface to proxy the LAN from. Usually br-lan.'));
+		o.default = 'br-lan';
+		o.placeholder = 'br-lan';
+		netDevs.forEach(function(d) { o.value(d); });
+		o = s.option(form.Value, 'wan_interface', _('WAN interface'),
+			_('Uplink. auto = detect by default route; on legacy swconfig or multi-WAN set it, e.g. eth0.2.'));
+		o.default = 'auto';
+		o.placeholder = 'auto';
+		o.value('auto', 'auto');
+		netDevs.forEach(function(d) { o.value(d); });
+
 	s = m.section(form.NamedSection, 'config', 'dae', _('Logging'));
 	s.addremove = false;
 	o = s.option(form.Value, 'log_maxsize', _('Max Log Size (MB)'),

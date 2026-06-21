@@ -117,8 +117,8 @@ msgstr "保留旧日志数"
 msgid "Number of rotated log files to keep."
 msgstr "轮转后保留的旧日志文件数。"
 
-msgid "Log Advanced Settings"
-msgstr "日志高级设置"
+msgid "Log Settings"
+msgstr "日志设置"
 
 # ---- config.js: dae Settings ----
 msgid "dae Parameters"
@@ -1014,3 +1014,21 @@ msgid ""
 "%s is running. Deleting the daens netns now will break its networking until "
 "you restart it. Continue?"
 msgstr "%s 正在运行。现在删除 daens netns 会中断其网络，直到重启它。确定继续？"
+
+# ---- dae.js: Network interfaces ----
+msgid "Network interfaces"
+msgstr "网络接口"
+
+msgid "LAN interface"
+msgstr "LAN 接口"
+
+msgid "WAN interface"
+msgstr "WAN 接口"
+
+msgid "Interface to proxy the LAN from. Usually br-lan."
+msgstr "要绑定的 LAN 接口，通常是 br-lan。"
+
+msgid ""
+"Uplink. auto = detect by default route; on legacy swconfig or multi-WAN set "
+"it, e.g. eth0.2."
+msgstr "上行 WAN 接口。auto 按默认路由自动检测；老式 swconfig 交换机或多 WAN 时手动指定，例如 eth0.2。"

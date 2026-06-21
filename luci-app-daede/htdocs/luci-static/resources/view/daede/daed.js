@@ -33,7 +33,7 @@ function renderDaedSettings() {
 		_('daede Settings'),
 		null,
 		m.render(),
-		_('Log Advanced Settings'),
+		_('Log Settings'),
 		['log_maxsize', 'log_maxbackups']
 	).then(function(card) {
 		/* native Save/Apply footer is suppressed view-wide, so daed carries its

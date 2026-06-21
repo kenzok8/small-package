@@ -2,6 +2,7 @@
 
 'use strict';
 'require uci';
+'require network';
 'require view';
 'require view.daede.backend as backend';
 'require view.daede.styles as styles';
@@ -13,7 +14,13 @@ return view.extend({
 	_loadContext: function() {
 		return backend.detectBackend().then(function(ctx) {
 			return uci.load(ctx.backend.uci).catch(function() {}).then(function() {
-				return ctx;
+				/* enumerate L3 devices so the dae LAN/WAN fields offer a dropdown
+				   (still free-text, so undetectable WANs can be typed) */
+				return network.getDevices().catch(function() { return []; }).then(function(devs) {
+					ctx.netDevs = (devs || []).map(function(d) { return d.getName(); })
+						.filter(function(n) { return n && n !== 'dae0'; }).sort();
+					return ctx;
+				});
 			});
 		});
 	},

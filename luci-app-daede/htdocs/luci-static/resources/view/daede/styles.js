@@ -72,7 +72,7 @@ const CSS = [
 	'.dd-settings-card .cbi-section-remove .cbi-button{border-color:#d96d6d !important;color:#d96d6d !important}',
 	/* themes (esp. Argon) restyle checkboxes into faint, near-invisible boxes;
 	   force native rendering + brand accent so the checkmark is always clear */
-	'.dd-settings-card input[type="checkbox"]{-webkit-appearance:checkbox !important;appearance:checkbox !important;accent-color:#4aa065;width:16px;height:16px;background:none !important;border:0 !important;box-shadow:none !important;background-image:none !important}',
+	'.dd-settings-card input[type="checkbox"]{-webkit-appearance:checkbox !important;appearance:checkbox !important;width:16px;height:16px;background:none !important;border:0 !important;box-shadow:none !important;background-image:none !important}',
 	'.dd-settings-card input[type="checkbox"]:before,.dd-settings-card input[type="checkbox"]:after{content:none !important;display:none !important}',
 	/* line the Subscriptions and Nodes grid tables up column-for-column. fixed
 	   layout + explicit per-column percentages make the widths authoritative
