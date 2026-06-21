@@ -30,7 +30,7 @@ function getThemeClass() {
 }
 
 var CSS = [
-  '.cl-wrap{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;--cl-card-border:rgba(128,128,128,.22);--cl-card-bg:rgba(128,128,128,.08);--cl-card-shadow:0 4px 12px rgba(0,0,0,.08);--cl-muted:rgba(92,102,120,.72);--cl-meta:var(--cl-muted);--cl-primary:rgba(0,122,255,.8);--cl-primary-border:rgba(0,122,255,.45);--cl-primary-soft:rgba(0,122,255,.08)}',
+  '.cl-wrap{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif;--cl-card-border:rgba(128,128,128,.22);--cl-card-bg:rgba(128,128,128,.08);--cl-card-shadow:0 4px 12px rgba(0,0,0,.08);--cl-muted:rgba(74,85,104,.9);--cl-meta:var(--cl-muted);--cl-primary:rgba(0,122,255,.8);--cl-primary-border:rgba(0,122,255,.45);--cl-primary-soft:rgba(0,122,255,.08)}',
   '.cl-tabs{display:flex;border-bottom:2px solid rgba(128,128,128,.15);margin-bottom:18px}',
   '.cl-tab{padding:10px 20px;cursor:pointer;font-size:13px;opacity:.55;border-bottom:2px solid transparent;margin-bottom:-2px;transition:opacity .15s}',
   '.cl-tab.active{opacity:1;border-bottom-color:currentColor;font-weight:600}',
@@ -91,7 +91,7 @@ var CSS = [
   '.cl-sub-schedule-interval{display:inline-flex;align-items:center;gap:6px;height:30px;font-size:12px;line-height:30px;color:var(--cl-meta);white-space:nowrap}',
   '.cl-sub-schedule-interval input[type="number"]{width:52px!important;height:30px!important;min-height:30px!important;box-sizing:border-box!important;margin:0!important;padding:2px 6px!important;line-height:24px!important;text-align:center}',
   '.cl-sub-schedule-row .btn,.cl-sub-schedule-row .cbi-button{height:30px!important;min-height:30px!important;box-sizing:border-box!important;padding:3px 10px!important;line-height:22px!important}',
-  '.cl-sub-schedule-row :disabled{cursor:not-allowed;opacity:.48}',
+  '.cl-sub-schedule-row :disabled{cursor:not-allowed;opacity:.62}',
   '.cl-section-toggle{font-size:12px;cursor:pointer;flex-shrink:0;margin-left:auto}',
   '.cl-collapsible.cl-closed>*:not(h3){display:none!important}',
   /* 折叠标题：通过 .clashoo-section-header wrapper class 上色，不裸改 LuCI 默认 h3 样式 */

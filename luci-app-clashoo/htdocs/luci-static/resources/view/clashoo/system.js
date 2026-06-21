@@ -52,6 +52,12 @@ var CSS = [
   '.cl-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}',
   '.cl-log-area{font-family:monospace;font-size:11px;opacity:.75;max-height:300px;overflow-y:auto;border:1px solid rgba(128,128,128,.2);border-radius:8px;padding:10px;white-space:pre-wrap;margin-top:8px}',
   '.cl-log-tabs{display:flex;gap:8px;margin-bottom:8px}',
+  '.cl-log-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px}',
+  '.cl-log-toolbar label{font-size:11px;display:inline-flex;align-items:center;gap:4px;cursor:pointer;margin:0}',
+  /* Argon shifts label>checkbox down (top:.4rem); reset so flex centers it */
+  '.cl-log-toolbar input[type=checkbox]{position:static;top:auto;right:auto;margin:0}',
+  /* unify select + button heights so the row lines up */
+  '.cl-log-toolbar>select,.cl-log-toolbar>button{height:26px;box-sizing:border-box;font-size:11px;line-height:1;padding:0 10px;margin:0}',
   '.cl-log-tab{padding:4px 12px;border:1px solid rgba(128,128,128,.2);border-radius:20px;font-size:12px;cursor:pointer;opacity:.6}',
   '.cl-log-tab.active{opacity:1;font-weight:600;background:rgba(128,128,128,.1)}',
   '.cl-log-line{display:block;padding:1px 4px;border-radius:3px}',
@@ -1128,7 +1134,7 @@ return view.extend({
     var cbPause = E('input', { type: 'checkbox' });
     cbPause.addEventListener('change', function () { state.paused = cbPause.checked; });
 
-    var selFilter = E('select', { 'class': 'cbi-button', style: 'font-size:11px;padding:2px 8px' }, [
+    var selFilter = E('select', { 'class': 'cbi-button' }, [
       E('option', { value: '' }, '全部'),
       E('option', { value: 'info' }, 'INFO'),
       E('option', { value: 'warn' }, 'WARN'),
@@ -1140,10 +1146,10 @@ return view.extend({
       applyFilter();
     });
 
-    var btnClearView = E('button', { 'class': 'cbi-button', style: 'font-size:11px;padding:2px 8px' }, '清空显示');
+    var btnClearView = E('button', { 'class': 'cbi-button' }, '清空显示');
     btnClearView.addEventListener('click', function () { logArea.innerHTML = ''; });
 
-    var btnDownload = E('button', { 'class': 'cbi-button', style: 'font-size:11px;padding:2px 8px' }, '下载');
+    var btnDownload = E('button', { 'class': 'cbi-button' }, '下载');
     btnDownload.addEventListener('click', function () {
       var blob = new Blob([logArea.textContent || ''], { type: 'text/plain' });
       var url = URL.createObjectURL(blob);
@@ -1154,7 +1160,7 @@ return view.extend({
       URL.revokeObjectURL(url);
     });
 
-    clearBtn = E('button', { 'class': 'cbi-button', style: 'font-size:11px;padding:2px 8px' }, '清空文件');
+    clearBtn = E('button', { 'class': 'cbi-button' }, '清空文件');
     clearBtn.addEventListener('click', function () {
       var ct = currentType();
       if (!ct.clear) return;
@@ -1163,9 +1169,9 @@ return view.extend({
     });
     syncClearButton();
 
-    var toolbar = E('div', { style: 'display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px' }, [
-      E('label', { style: 'font-size:11px;display:inline-flex;align-items:center;gap:3px;cursor:pointer' }, [cbAuto, '自动滚动']),
-      E('label', { style: 'font-size:11px;display:inline-flex;align-items:center;gap:3px;cursor:pointer' }, [cbPause, '暂停']),
+    var toolbar = E('div', { 'class': 'cl-log-toolbar' }, [
+      E('label', {}, [cbAuto, '自动滚动']),
+      E('label', {}, [cbPause, '暂停']),
       selFilter,
       btnClearView,
       btnDownload,
