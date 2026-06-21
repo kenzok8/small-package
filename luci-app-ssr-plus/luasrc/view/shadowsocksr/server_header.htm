@@ -1,0 +1,78 @@
+<script type="text/javascript">
+	//<![CDATA[
+	let sid = "<%=self.section%>";
+
+	function fetchCertSha256(el) {
+		if (el.getAttribute("data-loading") === "1") return;
+		el.setAttribute("data-loading", "1");
+		el.style.pointerEvents = "none";
+		el.style.color = "red";
+		XHR.get('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "fetch_certsha256")%>',
+			{ sid: sid },
+			function(x, res) {
+			el.setAttribute("data-loading", "0");
+			el.style.pointerEvents = "";
+			el.style.color = "";
+			if (!x || x.status !== 200) {
+				alert("<%:Error%>");
+				return;
+			}
+			if (!res || res.code !== 1 || !res.data) {
+				alert(res && res.msg ? res.msg : "<%:Fetch Failed%> !");
+				return;
+			}
+			const inputs = document.querySelectorAll('input[id$=".tls_CertSha"]');
+			if (inputs.length > 0) {
+				inputs.forEach(function(input) {
+					input.value = res.data;
+					// 触发 change 事件，让 LuCI 检测到字段已修改
+					const event = new Event('change', { bubbles: true });
+					input.dispatchEvent(event);
+				});
+				// 成功提示（只有找到输入框时才提示）
+				alert(res && res.msg ? res.msg : "<%:Successfully retrieved certificate fingerprint:%> " + res.data);
+			} else {
+				// 未找到输入框时提示
+				alert("<%:Certificate fingerprint retrieved successfully, but no input field found!%>");
+			}
+		});
+	}
+
+	function fetchCertByName(el) {
+		if (el.getAttribute("data-loading") === "1") return;
+		el.setAttribute("data-loading", "1");
+		el.style.pointerEvents = "none";
+		el.style.color = "red";
+		XHR.get
+			('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "fetch_certbyname")%>', 
+			{ sid: sid }, 
+			function(x, res) {
+			el.setAttribute("data-loading", "0");
+			el.style.pointerEvents = "";
+			el.style.color = "";
+			if (!x || x.status !== 200) {
+				alert("<%:Error%>");
+				return;
+			}
+			if (!res || res.code !== 1 || !res.data) {
+				alert(res && res.msg ? res.msg : "<%:Fetch Failed%> !");
+				return;
+			}
+			const inputs = document.querySelectorAll('input[id$=".tls_CertByName"]');
+			if (inputs.length > 0) {
+				inputs.forEach(function(input) {
+					input.value = res.data;
+					// 触发 change 事件，让 LuCI 检测到字段已修改
+					const event = new Event('change', { bubbles: true });
+					input.dispatchEvent(event);
+				});
+				// 成功提示（只有找到输入框时才提示）
+				alert(res && res.msg ? res.msg : "<%:Successfully retrieved certificate name:%> " + res.data);
+			} else {
+				// 未找到输入框时提示
+				alert("<%:Certificate name retrieved successfully, but no input field found!%>");
+			}
+		});
+	}
+	//]]>
+</script>

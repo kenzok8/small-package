@@ -107,6 +107,7 @@ choice
 	config PACKAGE_$(PKG_NAME)_INCLUDE_Xray
 	bool "Xray-core"
 	select PACKAGE_xray-core
+	select PACKAGE_coreutils-timeout
 endchoice
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_ChinaDNS_NG

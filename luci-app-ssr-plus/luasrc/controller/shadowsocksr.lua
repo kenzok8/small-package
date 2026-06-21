@@ -661,6 +661,8 @@ function index()
 	entry({"admin", "services", "shadowsocksr", "clash_client_policies"}, call("clash_client_policies")).leaf = true
 	entry({"admin", "services", "shadowsocksr", "clash_client_rule_save"}, call("clash_client_rule_save")).leaf = true
 	entry({"admin", "services", "shadowsocksr", "clash_client_rule_clear"}, call("clash_client_rule_clear")).leaf = true
+	entry({"admin", "services", "shadowsocksr", "fetch_certsha256"}, call("fetch_certsha256")).leaf = true
+	entry({"admin", "services", "shadowsocksr", "fetch_certbyname"}, call("fetch_certbyname")).leaf = true
 	--[[Backup]]
 	entry({"admin", "services", "shadowsocksr", "backup"}, call("create_backup")).leaf = true
 end
@@ -1269,6 +1271,84 @@ function clash_client_rule_clear()
 		reapplied = reapplied,
 		rules = {}
 	})
+end
+
+function fetch_certsha256()
+	local function fetch_cert_sha256(host, port, sni, timeout)
+		if not host then return "" end
+		port = tonumber(port) or 443
+		sni = sni or host
+		timeout = tonumber(timeout) or 5
+        
+		local cmd = string.format(
+			"timeout %d openssl s_client -connect %s:%d -servername %s -showcerts </dev/null 2>/dev/null " ..
+			"| awk 'BEGIN{c=0}/BEGIN CERT/{c++} c==1{print} /END CERT/{if(c==1)exit}' " ..
+			"| openssl x509 -outform der 2>/dev/null " ..
+			"| sha256sum 2>/dev/null",
+			timeout, host, port, sni
+		)
+        
+		local out = trim(luci.sys.exec(cmd))
+
+		local fp = out:match("^([0-9a-fA-F]+)")
+		if not fp or fp:lower():match("^e3b0c44298fc1c149afbf4c8996fb924") then
+			return ""
+		end
+		return fp:upper()
+	end
+
+	local sid = luci.http.formvalue("sid") or ""
+	local address = (sid ~= "") and uci:get("shadowsocksr", sid, "server") or ""
+	local port_raw = (sid ~= "") and uci:get("shadowsocksr", sid, "server_port") or ""
+	local port = tonumber(port_raw) or 0
+	local sni = (id ~= "") and uci:get("shadowsocksr", sid, "tls_host") or ""
+	sni = (sni and sni ~= "") and sni or address
+	if address == "" or port == 0 then
+		luci.http.prepare_content("application/json")
+		luci.http.write_json({ code = 0, msg = "Address or Port is invalid" })
+		return
+	end
+	local data = fetch_cert_sha256(address, port, sni, 5)
+	luci.http.prepare_content("application/json")
+	luci.http.write_json(data ~= "" and { code = 1, data = data } or { code = 0 })
+end
+
+function fetch_certbyname()
+	local function fetch_cert_byname(host, port, sni, timeout)
+		if not host then return "" end
+		port = tonumber(port) or 443
+		sni = sni or host
+		timeout = tonumber(timeout) or 5
+        
+		local cmd = string.format(
+			"timeout %d openssl s_client -connect %s:%d -servername %s -showcerts </dev/null 2>/dev/null " ..
+			"| openssl x509 -noout -subject 2>/dev/null " ..
+			"| awk '{gsub(/^.*=[[:space:]]*/, \"\"); gsub(/,.*$/, \"\"); print}'",
+			timeout, host, port, sni
+		)
+        
+		local out = trim(luci.sys.exec(cmd))
+        
+		if out == "" then
+			return ""
+		end
+		return out
+	end
+
+	local sid = luci.http.formvalue("sid") or ""
+	local address = (sid ~= "") and uci:get("shadowsocksr", sid, "server") or ""
+	local port_raw = (sid ~= "") and uci:get("shadowsocksr", sid, "server_port") or ""
+	local port = tonumber(port_raw) or 0
+	local sni = (id ~= "") and uci:get("shadowsocksr", sid, "tls_host") or ""
+	sni = (sni and sni ~= "") and sni or address
+	if address == "" or port == 0 then
+		luci.http.prepare_content("application/json")
+		luci.http.write_json({ code = 0, msg = "Address or Port is invalid" })
+		return
+	end
+	local data = fetch_cert_byname(address, port, sni, 5)
+	luci.http.prepare_content("application/json")
+	luci.http.write_json(data ~= "" and { code = 1, data = data } or { code = 0 })
 end
 
 function act_ping()

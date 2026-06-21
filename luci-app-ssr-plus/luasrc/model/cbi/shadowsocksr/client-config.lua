@@ -321,6 +321,10 @@ m.on_after_save = function(self)
 	end
 end
 
+local server_header = Template("/shadowsocksr/server_header")
+server_header.section = sid
+m:append(server_header)
+
 -- [[ Servers Setting ]]--
 s = m:section(NamedSection, sid, "servers")
 s.anonymous = true
@@ -1542,14 +1546,18 @@ end
 if xray_version_val >= 260131 then
 	-- Xray 版本大于等于 26.1.31
 	-- [[ Xray TLS pinSHA256 ]] --
-	o = s:option(Value, "tls_CertSha", translate("TLS Chain Fingerprint (SHA256)"), translate("Once set, connects only when the server’s chain fingerprint matches."))
+	o = s:option(Value, "tls_CertSha", translate("TLS Chain Fingerprint (SHA256)"))
 	o.rmempty = true
 	o:depends({type = "v2ray", tls = true})
+	o.description = translate("Once set, connects only when the server’s chain fingerprint matches.") ..
+			string.format("<a href='javascript:void(0)' onclick='javascript:fetchCertSha256(this)'>%s</a>", "→ " .. translate("Fetch Manually"))
 
 	-- [[ Xray TLS verify leaf certificate name ]] --
-	o = s:option(Value, "tls_CertByName", translate("TLS Certificate Name (CertName)"), translate("TLS is used to verify the leaf certificate name."))
+	o = s:option(Value, "tls_CertByName", translate("TLS Certificate Name (CertName)"))
 	o.rmempty = true
 	o:depends({type = "v2ray", tls = true})
+	o.description = translate("TLS is used to verify the leaf certificate name.") ..
+			string.format("<a href='javascript:void(0)' onclick='javascript:fetchCertByName(this)'>%s</a>", "→ " .. translate("Fetch Manually"))
 end
 
 -- [[ Hysteria2 TLS pinSHA256 ]] --
