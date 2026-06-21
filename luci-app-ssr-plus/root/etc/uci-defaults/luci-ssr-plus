@@ -55,6 +55,13 @@ if [ -s "/etc/config/shadowsocksr" ]; then
         uci -q set shadowsocksr.@server_subscribe[0].proxy='1'
     fi
 
+    current_filter_words="$(uci -q get shadowsocksr.@server_subscribe[0].filter_words)"
+    if [ -z "$current_filter_words" ]; then
+        uci -q set shadowsocksr.@server_subscribe[0].filter_words='过期/重置/套餐/剩余/网址/QQ群/官网/防失联/回国'
+    elif ! printf '%s\n' "$current_filter_words" | grep -q '重置'; then
+        uci -q set shadowsocksr.@server_subscribe[0].filter_words="${current_filter_words}/重置"
+    fi
+
     if ! uci -q get shadowsocksr.@global_xray_fragment[0] > /dev/null; then
         uci -q add shadowsocksr global_xray_fragment
         uci -q set shadowsocksr.@global_xray_fragment[0].fragment='0'

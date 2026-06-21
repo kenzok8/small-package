@@ -504,6 +504,14 @@ msgstr "组件升级"
 msgid "Configure XHTTP Extra Settings (JSON format), see:"
 msgstr "配置 XHTTP 额外设置（JSON 格式），具体请参见："
 
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:553
+msgid "Convert Address"
+msgstr "转换订阅模板API服务器"
+
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:549
+msgid "Convert subscriptions to Clash/Mihomo YAML with a subscription template URL."
+msgstr "使用订阅转换模板 URL 将订阅转换为 Clash/Mihomo YAML。"
+
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:839
 msgid "Congestion control algorithm"
 msgstr "拥塞控制算法"
@@ -2369,6 +2377,10 @@ msgstr "订阅高级设置"
 msgid "Subscribe Default Auto-Switch"
 msgstr "订阅新节点自动切换设置"
 
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:548
+msgid "Subscribe Convert Online"
+msgstr "在线订阅转换"
+
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:459
 msgid "Subscribe Filter Words"
 msgstr "订阅节点关键字过滤"
@@ -2380,6 +2392,10 @@ msgstr "订阅日志"
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:465
 msgid "Subscribe Save Words"
 msgstr "订阅节点关键字保留检查"
+
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:561
+msgid "Subscribe Template URL"
+msgstr "订阅转换模板 URL"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:551
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:575

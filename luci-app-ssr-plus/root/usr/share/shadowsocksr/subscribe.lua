@@ -26,9 +26,12 @@ local ucic = require "luci.model.uci".cursor()
 local proxy = ucic:get_first(name, 'server_subscribe', 'proxy', '0')
 local switch = ucic:get_first(name, 'server_subscribe', 'switch', '1')
 local allow_insecure = ucic:get_first(name, 'server_subscribe', 'allow_insecure', '0')
-local filter_words = ucic:get_first(name, 'server_subscribe', 'filter_words', '过期/套餐/剩余/网址/QQ群/官网/防失联/回国')
+local filter_words = ucic:get_first(name, 'server_subscribe', 'filter_words', '过期/重置/套餐/剩余/网址/QQ群/官网/防失联/回国')
 local save_words = ucic:get_first(name, 'server_subscribe', 'save_words', '')
 local user_agent = ucic:get_first(name, 'server_subscribe', 'user_agent', 'v2rayN/9.99')
+local sub_convert = ucic:get_first(name, 'server_subscribe', 'sub_convert', '0')
+local convert_address = ucic:get_first(name, 'server_subscribe', 'convert_address', 'https://api.asailor.org/sub')
+local template_url = ucic:get_first(name, 'server_subscribe', 'template_url', '')
 local local_clash_dir = "/etc/ssrplus/clash"
 local target_subscribe_sid = tostring(arg and arg[1] or ""):gsub("^%s*(.-)%s*$", "%1")
 
@@ -122,6 +125,11 @@ end
 local function urlEncode(szText)
 	local str = szText:gsub("([^0-9a-zA-Z ])", get_urlencode)
 	str = str:gsub(" ", "+")
+	return str
+end
+
+local function urlEncodeRFC3986(szText)
+	local str = tostring(szText or ""):gsub("([^0-9a-zA-Z%-_%.~])", get_urlencode)
 	return str
 end
 
@@ -1983,6 +1991,56 @@ local function curl(url, user_agent)
 	return stdout, md5
 end
 
+local function build_convert_url(url)
+	if sub_convert ~= "1" then
+		return url, false
+	end
+
+	local tpl = trim(template_url or "")
+	local endpoint = trim(convert_address or "")
+	local exclude = trim(filter_words or "")
+	if tpl == "" or endpoint == "" then
+		return url, false
+	end
+
+	endpoint = endpoint:gsub("%s+$", ""):gsub("^%s+", ""):gsub("%z", ""):gsub("[\r\n]", "")
+	local sep = endpoint:find("?", 1, true) and "&" or "?"
+	local query = "target=clash"
+		.. "&new_name=true"
+		.. "&url=" .. urlEncodeRFC3986(url)
+		.. "&config=" .. urlEncodeRFC3986(tpl)
+		.. "&exclude=" .. urlEncodeRFC3986(exclude)
+		.. "&emoji=false"
+		.. "&list=false"
+		.. "&sort=false"
+		.. "&udp=true"
+		.. "&scv=" .. (allow_insecure == "1" and "true" or "false")
+		.. "&fdn=true"
+
+	return endpoint .. sep .. query, true
+end
+
+local function filterClashYamlRaw(raw)
+	if not raw or raw == "" then
+		return raw, 0
+	end
+
+	local tmp = string.format("/tmp/ssrplus-subscribe-filter-%d-%d.yaml", nixio.getpid(), os.time())
+	local ok = nixio.fs.writefile(tmp, raw)
+	if not ok then
+		return raw, 0
+	end
+
+	local removed = tonumber(trim(luci.sys.exec(string.format(
+		"/usr/bin/lua /usr/share/shadowsocksr/clash_yaml.lua filter %s %s 2>/dev/null",
+		shell_quote(tmp),
+		shell_quote(filter_words)
+	)))) or 0
+	local filtered = nixio.fs.readfile(tmp) or raw
+	nixio.fs.remove(tmp)
+	return filtered, removed
+end
+
 local function collect_wan_interfaces()
 	local ifaces = {}
 	local seen = {}
@@ -2393,7 +2451,8 @@ local execute = function()
 	local selected_hashes = {}
 
 	for _, item in ipairs(subscribe_items) do
-		selected_hashes[md5(item.url)] = true
+		local fetch_url = build_convert_url(item.url)
+		selected_hashes[md5(fetch_url)] = true
 	end
 
 	if target_subscribe_sid ~= "" then
@@ -2402,12 +2461,27 @@ local execute = function()
 
 	for _, item in ipairs(subscribe_items) do
 		local url = item.url
-		local raw, new_md5 = curl(url, user_agent)
+		local fetch_url, converted = build_convert_url(url)
+		local raw, new_md5 = curl(fetch_url, user_agent)
+		local yaml_removed_count = 0
+		if isClashYAML(raw) then
+			raw, yaml_removed_count = filterClashYamlRaw(raw)
+			if yaml_removed_count and yaml_removed_count > 0 then
+				new_md5 = md5_string(raw)
+			end
+		end
 		log("raw 长度: "..#raw)
-		local groupHash = md5(url)
+		local groupHash = md5(fetch_url)
 		local old_md5 = read_old_md5(groupHash)
 
 		log("处理订阅: " .. url)
+		if converted then
+			log("使用订阅转换模板: " .. template_url)
+			log("转换服务: " .. convert_address)
+		end
+		if yaml_removed_count and yaml_removed_count > 0 then
+			log("Clash/Mihomo YAML 已按订阅过滤关键词移除节点数量: " .. tostring(yaml_removed_count))
+		end
 		log("groupHash: " .. groupHash)
 		log("old_md5: " .. tostring(old_md5))
 		log("new_md5: " .. tostring(new_md5))
@@ -2450,7 +2524,7 @@ local execute = function()
 
 					if isClashYAML(raw) then
 						is_clash_subscription = true
-						local result = processClashSubscription(url)
+						local result = processClashSubscription(fetch_url)
 						if result and not check_filer(result) and not cache[groupHash][result.hashkey] then
 							result.grouphashkey = groupHash
 							table.insert(nodeResult[index], result)

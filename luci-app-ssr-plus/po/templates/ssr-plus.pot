@@ -500,6 +500,14 @@ msgstr ""
 msgid "Configure XHTTP Extra Settings (JSON format), see:"
 msgstr ""
 
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:553
+msgid "Convert Address"
+msgstr ""
+
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:549
+msgid "Convert subscriptions to Clash/Mihomo YAML with a subscription template URL."
+msgstr ""
+
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:839
 msgid "Congestion control algorithm"
 msgstr ""
@@ -2353,6 +2361,10 @@ msgstr ""
 msgid "Subscribe Default Auto-Switch"
 msgstr ""
 
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:548
+msgid "Subscribe Convert Online"
+msgstr ""
+
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:459
 msgid "Subscribe Filter Words"
 msgstr ""
@@ -2363,6 +2375,10 @@ msgstr ""
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:465
 msgid "Subscribe Save Words"
+msgstr ""
+
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:561
+msgid "Subscribe Template URL"
 msgstr ""
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/servers.lua:551

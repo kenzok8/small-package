@@ -470,7 +470,7 @@ clash_cache() {
 
 filter_clash_yaml_proxies() {
 	local yaml_file="$1"
-	local filter_words="$(uci_get_by_type server_subscribe filter_words '过期时间/剩余流量')"
+	local filter_words="$(uci_get_by_type server_subscribe filter_words '过期/重置/套餐/剩余/网址/QQ群/官网/防失联/回国')"
 	local names_file="$TMP_PATH/clash-proxy-names.$$"
 	local removed_file="$TMP_PATH/clash-proxy-removed.$$"
 	local removed_count=0
