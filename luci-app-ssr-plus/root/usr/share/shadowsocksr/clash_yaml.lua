@@ -1,5 +1,6 @@
 #!/usr/bin/lua
 
+require "nixio"
 require "nixio.fs"
 require "luci.model.uci"
 
@@ -582,6 +583,376 @@ local function string_or_nil(value)
 	return tostring(value)
 end
 
+local build_shadowsocks_plugin
+
+local function first_nonempty(...)
+	for i = 1, select("#", ...) do
+		local value = select(i, ...)
+		if value ~= nil and value ~= "" then
+			return value
+		end
+	end
+	return nil
+end
+
+local function split_alpn(value)
+	local items = {}
+	for part in tostring(value or ""):gmatch("[^,;|%s]+") do
+		items[#items + 1] = part
+	end
+	return items
+end
+
+local function parse_wireguard_reserved(sid)
+	local raw = get_server_field(sid, "reserved", nil)
+	local values = {}
+	local bytes = {}
+
+	if raw == nil or raw == "" then
+		return nil
+	end
+	if type(raw) == "table" then
+		values = raw
+	else
+		values = { raw }
+	end
+	for _, item in ipairs(values) do
+		local text = tostring(item or "")
+		if text ~= "" then
+			if not text:match("[^%d,]+") then
+				for byte in text:gmatch("%d+") do
+					bytes[#bytes + 1] = tonumber(byte)
+				end
+			else
+				local decoded = nixio.bin.b64decode(text)
+				if decoded then
+					for i = 1, #decoded do
+						bytes[#bytes + 1] = decoded:byte(i)
+					end
+				end
+			end
+		end
+	end
+	return #bytes > 0 and bytes or nil
+end
+
+local function split_local_addresses(value)
+	local items = {}
+	if type(value) == "table" then
+		for _, item in ipairs(value) do
+			if item and item ~= "" then
+				items[#items + 1] = tostring(item)
+			end
+		end
+	elseif value and value ~= "" then
+		for item in tostring(value):gmatch("[^,%s]+") do
+			items[#items + 1] = item
+		end
+	end
+	return items
+end
+
+local function split_wireguard_addresses(value)
+	local ip, ipv6
+	for _, item in ipairs(split_local_addresses(value)) do
+		if item:find(":", 1, true) then
+			ipv6 = ipv6 or item
+		else
+			ip = ip or item
+		end
+	end
+	return ip, ipv6
+end
+
+local function apply_v2ray_tls_options(proxy, sid)
+	local tls = get_server_field(sid, "tls", "0")
+	local reality = get_server_field(sid, "reality", "0")
+	if tls ~= "1" and reality ~= "1" then
+		return
+	end
+
+	proxy.tls = true
+	proxy.servername = string_or_nil(get_server_field(sid, "tls_host", ""))
+	proxy["client-fingerprint"] = string_or_nil(get_server_field(sid, "fingerprint", ""))
+	proxy.fingerprint = string_or_nil(get_server_field(sid, "tls_CertSha", ""))
+	proxy["skip-cert-verify"] = bool_enabled(get_server_field(sid, "insecure", "0"))
+
+	local alpn = split_alpn(get_server_field(sid, "tls_alpn", ""))
+	if #alpn > 0 then
+		proxy.alpn = alpn
+	end
+
+	if reality == "1" then
+		proxy["reality-opts"] = {
+			["public-key"] = string_or_nil(get_server_field(sid, "reality_publickey", "")),
+			["short-id"] = string_or_nil(get_server_field(sid, "reality_shortid", "")),
+			["support-x25519mlkem768"] = bool_enabled(get_server_field(sid, "enable_mldsa65verify", "0"))
+		}
+	end
+
+	if get_server_field(sid, "enable_ech", "0") == "1" then
+		proxy["ech-opts"] = {
+			enable = true,
+			config = string_or_nil(get_server_field(sid, "ech_config", ""))
+		}
+	end
+end
+
+local function apply_trojan_tls_options(proxy, sid)
+	proxy.sni = string_or_nil(get_server_field(sid, "tls_host", ""))
+	proxy["client-fingerprint"] = string_or_nil(get_server_field(sid, "fingerprint", ""))
+	proxy.fingerprint = string_or_nil(get_server_field(sid, "tls_CertSha", ""))
+	proxy["skip-cert-verify"] = bool_enabled(get_server_field(sid, "insecure", "0"))
+
+	local alpn = split_alpn(get_server_field(sid, "tls_alpn", ""))
+	if #alpn > 0 then
+		proxy.alpn = alpn
+	end
+
+	if get_server_field(sid, "reality", "0") == "1" then
+		proxy["reality-opts"] = {
+			["public-key"] = string_or_nil(get_server_field(sid, "reality_publickey", "")),
+			["short-id"] = string_or_nil(get_server_field(sid, "reality_shortid", ""))
+		}
+	end
+end
+
+local function apply_v2ray_transport_options(proxy, sid)
+	local transport = get_server_field(sid, "transport", "raw")
+	if transport == "raw" or transport == "tcp" or transport == "" then
+		return
+	end
+
+	if transport == "ws" then
+		proxy.network = "ws"
+		proxy["ws-opts"] = {
+			path = string_or_nil(get_server_field(sid, "ws_path", "")),
+			headers = first_nonempty(get_server_field(sid, "ws_host", ""), get_server_field(sid, "tls_host", "")) and {
+				Host = first_nonempty(get_server_field(sid, "ws_host", ""), get_server_field(sid, "tls_host", ""))
+			} or nil
+		}
+	elseif transport == "httpupgrade" then
+		proxy.network = "ws"
+		proxy["ws-opts"] = {
+			path = string_or_nil(get_server_field(sid, "httpupgrade_path", "")),
+			headers = first_nonempty(get_server_field(sid, "httpupgrade_host", ""), get_server_field(sid, "tls_host", "")) and {
+				Host = first_nonempty(get_server_field(sid, "httpupgrade_host", ""), get_server_field(sid, "tls_host", ""))
+			} or nil,
+			["v2ray-http-upgrade"] = true
+		}
+	elseif transport == "h2" then
+		local host = first_nonempty(get_server_field(sid, "h2_host", ""), get_server_field(sid, "tls_host", ""))
+		proxy.network = "h2"
+		proxy["h2-opts"] = {
+			host = host and split_alpn(host) or nil,
+			path = string_or_nil(get_server_field(sid, "h2_path", ""))
+		}
+	elseif transport == "grpc" then
+		proxy.network = "grpc"
+		proxy["grpc-opts"] = {
+			["grpc-service-name"] = string_or_nil(get_server_field(sid, "serviceName", ""))
+		}
+	elseif transport == "xhttp" and proxy.type == "vless" then
+		proxy.network = "xhttp"
+		proxy["xhttp-opts"] = {
+			path = string_or_nil(get_server_field(sid, "xhttp_path", "")),
+			host = string_or_nil(get_server_field(sid, "xhttp_host", "")),
+			mode = string_or_nil(get_server_field(sid, "xhttp_mode", ""))
+		}
+	end
+end
+
+local function can_mihomo_handle_v2ray_transport(protocol, sid)
+	local transport = get_server_field(sid, "transport", "raw")
+	if transport == "" or transport == "raw" or transport == "tcp" then
+		if get_server_field(sid, "tcp_guise", "none") == "http" then
+			return false
+		end
+		return true
+	end
+	if protocol == "socks" or protocol == "http" then
+		return false
+	end
+	if transport == "ws" or transport == "httpupgrade" or transport == "h2" or transport == "grpc" then
+		return true
+	end
+	return protocol == "vless" and transport == "xhttp"
+end
+
+local function build_v2ray_mihomo_proxy(sid)
+	local node_type = get_server_field(sid, "type", "")
+	local protocol = get_server_field(sid, "v2ray_protocol", "vmess")
+	local proxy = {
+		name = sid,
+		server = get_server_field(sid, "server", ""),
+		port = tonumber(get_server_field(sid, "server_port", "0")) or 0,
+		udp = true,
+		tfo = bool_enabled(get_server_field(sid, "fast_open", "0"))
+	}
+
+	if node_type == "socks5" then
+		proxy.type = "socks5"
+		if get_server_field(sid, "auth_enable", "0") == "1" then
+			proxy.username = string_or_nil(get_server_field(sid, "username", ""))
+			proxy.password = string_or_nil(get_server_field(sid, "password", ""))
+		end
+	elseif protocol == "vmess" then
+		if not can_mihomo_handle_v2ray_transport(protocol, sid) then
+			return nil
+		end
+		proxy.type = "vmess"
+		proxy.uuid = first_nonempty(get_server_field(sid, "vmess_id", ""), get_server_field(sid, "vmess_uuid", "")) or ""
+		proxy.alterId = tonumber(get_server_field(sid, "alter_id", "0")) or 0
+		proxy.cipher = first_nonempty(get_server_field(sid, "security", ""), get_server_field(sid, "vmess_method", ""), "auto")
+		apply_v2ray_tls_options(proxy, sid)
+		apply_v2ray_transport_options(proxy, sid)
+	elseif protocol == "vless" then
+		if not can_mihomo_handle_v2ray_transport(protocol, sid) then
+			return nil
+		end
+		proxy.type = "vless"
+		proxy.uuid = get_server_field(sid, "vmess_id", "")
+		proxy.flow = string_or_nil(get_server_field(sid, "tls_flow", ""))
+		proxy.encryption = get_server_field(sid, "vless_encryption", "")
+		apply_v2ray_tls_options(proxy, sid)
+		apply_v2ray_transport_options(proxy, sid)
+	elseif protocol == "trojan" then
+		if not can_mihomo_handle_v2ray_transport(protocol, sid) then
+			return nil
+		end
+		proxy.type = "trojan"
+		proxy.password = get_server_field(sid, "password", "")
+		apply_trojan_tls_options(proxy, sid)
+		apply_v2ray_transport_options(proxy, sid)
+	elseif protocol == "shadowsocks" then
+		if not can_mihomo_handle_v2ray_transport(protocol, sid) then
+			return nil
+		end
+		proxy.type = "ss"
+		proxy.cipher = get_server_field(sid, "encrypt_method_ss", "none")
+		proxy.password = get_server_field(sid, "password", "")
+		build_shadowsocks_plugin(proxy, sid)
+	elseif protocol == "hysteria2" then
+		proxy.type = "hysteria2"
+		proxy.password = get_server_field(sid, "hy2_auth", "")
+		proxy.ports = string_or_nil(get_server_field(sid, "port_range", ""))
+		proxy.up = string_or_nil(get_server_field(sid, "uplink_capacity", "")) and (get_server_field(sid, "uplink_capacity", "") .. " Mbps") or nil
+		proxy.down = string_or_nil(get_server_field(sid, "downlink_capacity", "")) and (get_server_field(sid, "downlink_capacity", "") .. " Mbps") or nil
+		proxy.sni = string_or_nil(get_server_field(sid, "tls_host", ""))
+		proxy.fingerprint = string_or_nil(get_server_field(sid, "tls_CertSha", ""))
+		proxy["skip-cert-verify"] = bool_enabled(get_server_field(sid, "insecure", "0"))
+		local alpn = split_alpn(get_server_field(sid, "tls_alpn", ""))
+		if #alpn > 0 then
+			proxy.alpn = alpn
+		end
+		if get_server_field(sid, "flag_obfs", "0") == "1" then
+			proxy.obfs = string_or_nil(get_server_field(sid, "obfs_type", ""))
+			proxy["obfs-password"] = string_or_nil(get_server_field(sid, "salamander", ""))
+		end
+	elseif protocol == "socks" then
+		if not can_mihomo_handle_v2ray_transport(protocol, sid) then
+			return nil
+		end
+		proxy.type = "socks5"
+		if get_server_field(sid, "socks_ver", "5") ~= "5" then
+			return nil
+		end
+		if get_server_field(sid, "auth_enable", "0") == "1" then
+			proxy.username = string_or_nil(get_server_field(sid, "username", ""))
+			proxy.password = string_or_nil(get_server_field(sid, "password", ""))
+		end
+		apply_v2ray_tls_options(proxy, sid)
+	elseif protocol == "http" then
+		if not can_mihomo_handle_v2ray_transport(protocol, sid) then
+			return nil
+		end
+		proxy.type = "http"
+		if get_server_field(sid, "auth_enable", "0") == "1" then
+			proxy.username = string_or_nil(get_server_field(sid, "username", ""))
+			proxy.password = string_or_nil(get_server_field(sid, "password", ""))
+		end
+		apply_v2ray_tls_options(proxy, sid)
+	elseif protocol == "wireguard" then
+		local ip, ipv6 = split_wireguard_addresses(get_server_field(sid, "local_addresses", ""))
+		proxy.type = "wireguard"
+		proxy["private-key"] = get_server_field(sid, "private_key", "")
+		proxy["public-key"] = get_server_field(sid, "peer_pubkey", "")
+		proxy["pre-shared-key"] = string_or_nil(get_server_field(sid, "preshared_key", ""))
+		proxy.ip = ip
+		proxy.ipv6 = ipv6
+		proxy["allowed-ips"] = split_local_addresses(get_server_field(sid, "allowedips", "0.0.0.0/0"))
+		proxy.reserved = parse_wireguard_reserved(sid)
+		proxy["persistent-keepalive"] = number_or_nil(get_server_field(sid, "keepaliveperiod", ""))
+		proxy.mtu = number_or_nil(get_server_field(sid, "mtu", ""))
+	elseif protocol == "snell" then
+		proxy.type = "snell"
+		proxy.psk = get_server_field(sid, "snell_psk", "")
+		proxy.version = number_or_nil(get_server_field(sid, "snell_version", ""))
+		local obfs_mode = string_or_nil(get_server_field(sid, "snell_obfs", ""))
+		local obfs_host = string_or_nil(get_server_field(sid, "snell_obfs_host", ""))
+		if obfs_mode or obfs_host then
+			proxy["obfs-opts"] = {
+				mode = obfs_mode,
+				host = obfs_host
+			}
+		end
+	else
+		return nil
+	end
+
+	if not proxy.server or proxy.server == "" or not proxy.port or proxy.port == 0 then
+		return nil
+	end
+	if proxy.type == "snell" and (not proxy.psk or proxy.psk == "") then
+		return nil
+	end
+	return proxy
+end
+
+local function build_single_proxy_runtime_doc(proxy, local_port, socks_port, mode)
+	local dns_mode = uci:get_first("shadowsocksr", "global", "pdnsd_enable", "0")
+	local listen_port = tonumber(local_port)
+	local socks_listen = tonumber(socks_port)
+	local doc = {
+		["allow-lan"] = true,
+		["bind-address"] = "0.0.0.0",
+		mode = "rule",
+		["log-level"] = "silent",
+		["find-process-mode"] = "off",
+		["unified-delay"] = true,
+		["tcp-concurrent"] = true,
+		["routing-mark"] = 255,
+		proxies = { proxy },
+		["proxy-groups"] = {
+			{
+				name = "PROXY",
+				type = "select",
+				proxies = { proxy.name }
+			}
+		},
+		rules = { "MATCH,PROXY" },
+		tun = { enable = false },
+		profile = { ["store-selected"] = true },
+		dns = {
+			enable = dns_mode == "7",
+			["enhanced-mode"] = "redir-host",
+			listen = "127.0.0.1:5335",
+			ipv6 = get_filter_aaaa() ~= "1"
+		}
+	}
+
+	if mode == "socks" then
+		doc["socks-port"] = listen_port
+	else
+		doc["redir-port"] = listen_port
+		doc["tproxy-port"] = listen_port
+		if socks_listen and socks_listen > 0 then
+			doc["socks-port"] = socks_listen
+		end
+	end
+	return doc
+end
+
 local function pick_plugin_opt(plugin_opts, ...)
 	for i = 1, select("#", ...) do
 		local key = select(i, ...)
@@ -661,7 +1032,7 @@ local function normalize_plugin_name(plugin)
 	return value
 end
 
-local function build_shadowsocks_plugin(proxy, sid)
+function build_shadowsocks_plugin(proxy, sid)
 	local plugin = normalize_plugin_name(get_server_field(sid, "plugin", ""))
 	local plugin_opts = parse_plugin_opts(get_server_field(sid, "plugin_opts", ""))
 
@@ -871,6 +1242,22 @@ local function generate_shadowsocks_runtime(sid, output_path, local_port, socks_
 	return true
 end
 
+local function generate_v2ray_runtime(sid, output_path, local_port, socks_port, mode)
+	local proxy = build_v2ray_mihomo_proxy(sid)
+	if not proxy then
+		io.stderr:write("unsupported_or_invalid_v2ray_node\n")
+		return false
+	end
+	local doc = build_single_proxy_runtime_doc(proxy, local_port, socks_port, mode)
+	local ok, rendered = pcall(lyaml.dump, { doc })
+	if not ok or not rendered then
+		io.stderr:write("dump_failed\n")
+		return false
+	end
+	write_file(output_path, rendered)
+	return true
+end
+
 local function build_shadowsocks_server_doc(sid)
 	local server_port = tonumber(get_server_field(sid, "server_port", "0")) or 0
 	local method = get_server_field(sid, "encrypt_method_ss", "aes-128-gcm")
@@ -916,6 +1303,86 @@ local function generate_shadowsocks_server(sid, output_path)
 	return true
 end
 
+local function build_mihomo_listener_doc(sid)
+	local ltype = get_server_field(sid, "type", "")
+	local server_port = tonumber(get_server_field(sid, "server_port", "0")) or 0
+	local listener = {
+		name = sid,
+		type = ltype,
+		listen = "::",
+		port = server_port
+	}
+
+	if ltype == "vmess" then
+		listener.users = {
+			{
+				username = "1",
+				uuid = get_server_field(sid, "uuid", ""),
+				alterId = tonumber(get_server_field(sid, "alter_id", "0")) or 0
+			}
+		}
+	elseif ltype == "vless" then
+		listener.users = {
+			{
+				username = "1",
+				uuid = get_server_field(sid, "uuid", ""),
+				flow = string_or_nil(get_server_field(sid, "flow", ""))
+			}
+		}
+	elseif ltype == "trojan" then
+		listener.users = {
+			{
+				username = "1",
+				password = get_server_field(sid, "trojan_password", "")
+			}
+		}
+	elseif ltype == "shadowsocks" then
+		listener.type = "shadowsocks"
+		listener.cipher = get_server_field(sid, "security", "chacha20-ietf-poly1305")
+		listener.password = get_server_field(sid, "ss_password", "")
+		listener.udp = true
+	else
+		return nil
+	end
+
+	local network = get_server_field(sid, "network", "tcp")
+	if network == "ws" then
+		listener["ws-path"] = string_or_nil(get_server_field(sid, "ws_path", "/"))
+	elseif network == "grpc" then
+		listener["grpc-service-name"] = string_or_nil(get_server_field(sid, "grpc_service", ""))
+	end
+
+	local cert = get_server_field(sid, "certpath", "")
+	local key = get_server_field(sid, "keypath", "")
+	if cert ~= "" and key ~= "" then
+		listener.certificate = cert
+		listener["private-key"] = key
+	end
+
+	return {
+		["allow-lan"] = true,
+		["bind-address"] = "*",
+		["log-level"] = "silent",
+		["find-process-mode"] = "off",
+		listeners = { listener }
+	}
+end
+
+local function generate_mihomo_listener(sid, output_path)
+	local doc = build_mihomo_listener_doc(sid)
+	if not doc then
+		io.stderr:write("unsupported_listener\n")
+		return false
+	end
+	local ok, rendered = pcall(lyaml.dump, { doc })
+	if not ok or not rendered then
+		io.stderr:write("dump_failed\n")
+		return false
+	end
+	write_file(output_path, rendered)
+	return true
+end
+
 local action = arg[1]
 if action == "validate" then
 	os.exit(validate(arg[2]) and 0 or 1)
@@ -931,9 +1398,13 @@ elseif action == "tuic" then
 	os.exit(generate_tuic_runtime(arg[2], arg[3], arg[4], arg[5], arg[6]) and 0 or 1)
 elseif action == "ss" then
 	os.exit(generate_shadowsocks_runtime(arg[2], arg[3], arg[4], arg[5], arg[6]) and 0 or 1)
+elseif action == "v2ray" then
+	os.exit(generate_v2ray_runtime(arg[2], arg[3], arg[4], arg[5], arg[6]) and 0 or 1)
 elseif action == "ss_server" then
 	os.exit(generate_shadowsocks_server(arg[2], arg[3]) and 0 or 1)
+elseif action == "v2ray_server" then
+	os.exit(generate_mihomo_listener(arg[2], arg[3]) and 0 or 1)
 else
-	io.stderr:write("usage: clash_yaml.lua validate <yaml> | filter <yaml> <words> | prepare <input> <output> | merge <raw> <overlay> <output> | append_client_policy_rules <runtime_yaml> <sid> | tuic <sid> <output> <local_port> [socks_port] [mode] | ss <sid> <output> <local_port> [socks_port] [mode] | ss_server <sid> <output>\n")
+	io.stderr:write("usage: clash_yaml.lua validate <yaml> | filter <yaml> <words> | prepare <input> <output> | merge <raw> <overlay> <output> | append_client_policy_rules <runtime_yaml> <sid> | tuic <sid> <output> <local_port> [socks_port] [mode] | ss <sid> <output> <local_port> [socks_port] [mode] | v2ray <sid> <output> <local_port> [socks_port] [mode] | ss_server <sid> <output> | v2ray_server <sid> <output>\n")
 	os.exit(1)
 end

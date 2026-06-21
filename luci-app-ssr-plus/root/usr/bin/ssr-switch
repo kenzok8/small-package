@@ -29,11 +29,11 @@ CURRENT_SERVER="$DEFAULT_SERVER"
 ENABLE_SERVER="nil"
 
 cleanup_probe_socks() {
-	ps_list | grep -v "grep" | grep -E "tcp-http-ssr-switch-local\\.json|ss-${PROBE_INSTANCE_KEY}/config\\.yaml|tuic-${PROBE_INSTANCE_KEY}/config\\.yaml" | awk '{print $1}' | xargs kill >/dev/null 2>&1
+	ps_list | grep -v "grep" | grep -E "tcp-http-ssr-switch-local\\.json|ss-${PROBE_INSTANCE_KEY}/config\\.yaml|tuic-${PROBE_INSTANCE_KEY}/config\\.yaml|v2ray-${PROBE_INSTANCE_KEY}/config\\.yaml" | awk '{print $1}' | xargs kill >/dev/null 2>&1
 	sleep 1
-	ps_list | grep -v "grep" | grep -E "tcp-http-ssr-switch-local\\.json|ss-${PROBE_INSTANCE_KEY}/config\\.yaml|tuic-${PROBE_INSTANCE_KEY}/config\\.yaml" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+	ps_list | grep -v "grep" | grep -E "tcp-http-ssr-switch-local\\.json|ss-${PROBE_INSTANCE_KEY}/config\\.yaml|tuic-${PROBE_INSTANCE_KEY}/config\\.yaml|v2ray-${PROBE_INSTANCE_KEY}/config\\.yaml" | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
 	rm -f "$TMP_PATH/tcp-http-ssr-switch-local.json" 2>/dev/null
-	rm -rf "$TMP_PATH/ss-${PROBE_INSTANCE_KEY}" "$TMP_PATH/tuic-${PROBE_INSTANCE_KEY}" 2>/dev/null
+	rm -rf "$TMP_PATH/ss-${PROBE_INSTANCE_KEY}" "$TMP_PATH/tuic-${PROBE_INSTANCE_KEY}" "$TMP_PATH/v2ray-${PROBE_INSTANCE_KEY}" 2>/dev/null
 	rm -f /tmp/ssr-switch-probe.log 2>/dev/null
 }
 
@@ -54,21 +54,13 @@ start_probe_socks() {
 	tmp_local_port=
 	mode="tcp,udp"
 
-	if [ "$server_type" = "v2ray" ]; then
-		export SSR_SWITCH_PROBE=1
-		gen_config_file "$LOCAL_SERVER" "$server_type" 4 0 "$probe_socks_port" >/tmp/ssr-switch-probe.log 2>&1 || return 1
-		unset SSR_SWITCH_PROBE
-		local xray_bin
-		xray_bin="$(first_type xray)"
-		[ -x "$xray_bin" ] || return 1
-		"$xray_bin" run -c "$local_config_file" >>/tmp/ssr-switch-probe.log 2>&1 &
-	else
-		export SSR_SWITCH_PROBE=1
-		export SSR_SWITCH_PROBE_INSTANCE_KEY="$PROBE_INSTANCE_KEY"
-		start_local_with_port "$probe_socks_port" >/tmp/ssr-switch-probe.log 2>&1 || return 1
-		unset SSR_SWITCH_PROBE_INSTANCE_KEY
-		unset SSR_SWITCH_PROBE
-	fi
+	export SSR_SWITCH_PROBE=1
+	export SSR_SWITCH_PROBE_INSTANCE_KEY="$PROBE_INSTANCE_KEY"
+	start_local_with_port "$probe_socks_port" >/tmp/ssr-switch-probe.log 2>&1
+	local rc=$?
+	unset SSR_SWITCH_PROBE_INSTANCE_KEY
+	unset SSR_SWITCH_PROBE
+	[ "$rc" = "0" ] || return 1
 
 	sleep 2
 	return 0

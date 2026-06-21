@@ -3,7 +3,7 @@
 local map = self.map
 
 local has_ss_rust = luci.sys.exec('type -t -p sslocal 2>/dev/null || type -t -p ssserver 2>/dev/null') ~= ""
-local has_mihomo = luci.sys.exec('type -t -p mihomo -p /usr/libexec/mihomo 2>/dev/null') ~= ""
+local has_mihomo = luci.sys.exec('type -t -p mihomo 2>/dev/null || { test -x /usr/libexec/mihomo && echo /usr/libexec/mihomo; }') ~= ""
 local has_xray = luci.sys.exec('type -t -p xray 2>/dev/null') ~= ""
 -%>
 <script type="text/javascript">
@@ -11,6 +11,9 @@ local has_xray = luci.sys.exec('type -t -p xray 2>/dev/null') ~= ""
 let has_ss_rust = "<%=has_ss_rust%>"
 let has_mihomo = "<%=has_mihomo%>"
 let has_xray = "<%=has_xray%>"
+function hasMihomoOrXray() {
+	return has_mihomo === "true" || has_xray === "true";
+}
 
 function padright(str, cnt, pad) {
 	return str + Array(cnt + 1).join(pad);
@@ -112,6 +115,31 @@ function import_ssr_url(btn, urlname, sid) {
 		var event = document.createEvent("HTMLEvents");
 		event.initEvent("change", true, true);
 		switch (ssu[0]) {
+		case "snell":
+			if (has_mihomo !== "true") {
+				s.innerHTML = "<font style=\'color:red\'><%:No available Mihomo core to import this Snell node.%></font>";
+				return false;
+			}
+			try {
+				var url = new URL("http://" + ssu[1]);
+				var params = url.searchParams;
+			} catch(e) {
+				alert(e);
+				return false;
+			}
+			document.getElementsByName('cbid.shadowsocksr.' + sid + '.type')[0].value = "v2ray";
+			document.getElementsByName('cbid.shadowsocksr.' + sid + '.type')[0].dispatchEvent(event);
+			document.getElementsByName('cbid.shadowsocksr.' + sid + '.v2ray_protocol')[0].value = "snell";
+			document.getElementsByName('cbid.shadowsocksr.' + sid + '.v2ray_protocol')[0].dispatchEvent(event);
+			document.getElementsByName('cbid.shadowsocksr.' + sid + '.server')[0].value = normalizeHost(url.hostname);
+			document.getElementsByName('cbid.shadowsocksr.' + sid + '.server_port')[0].value = url.port;
+			document.getElementsByName('cbid.shadowsocksr.' + sid + '.snell_psk')[0].value = decodeURIComponent(url.username || params.get("psk") || params.get("password") || "");
+			document.getElementsByName('cbid.shadowsocksr.' + sid + '.snell_version')[0].value = params.get("version") || params.get("v") || "4";
+			document.getElementsByName('cbid.shadowsocksr.' + sid + '.snell_obfs')[0].value = params.get("obfs") || params.get("obfs-mode") || params.get("obfs_mode") || "";
+			document.getElementsByName('cbid.shadowsocksr.' + sid + '.snell_obfs_host')[0].value = params.get("obfs-host") || params.get("obfs_host") || params.get("host") || "";
+			document.getElementsByName('cbid.shadowsocksr.' + sid + '.alias')[0].value = url.hash ? decodeURIComponent(url.hash.slice(1)) : "";
+			s.innerHTML = "<font style=\'color:green\'><%:Import configuration information successfully.%></font>";
+			return false;
 		case "hysteria2":
 		case "hy2":
 			try {
@@ -122,8 +150,8 @@ function import_ssr_url(btn, urlname, sid) {
 				return false;
 			}
 
-				// Xray Hysteria2 导入函数
-				function importAsXrayHy2() {
+				// Mihomo/Xray Hysteria2 导入函数
+				function importAsV2RayHy2() {
 					document.getElementsByName('cbid.shadowsocksr.' + sid + '.type')[0].value = "v2ray"
 				document.getElementsByName('cbid.shadowsocksr.' + sid + '.type')[0].dispatchEvent(event);
 				document.getElementsByName('cbid.shadowsocksr.' + sid + '.v2ray_protocol')[0].value = (ssu[0] === "hy2") ? "hysteria2" : ssu[0];
@@ -152,11 +180,11 @@ function import_ssr_url(btn, urlname, sid) {
 				}
 			}
 
-				if (has_xray !== "true") {
-					s.innerHTML = "<font style=\'color:red\'><%:No available Xray core to import this Hysteria2 node.%></font>";
+				if (!hasMihomoOrXray()) {
+					s.innerHTML = "<font style=\'color:red\'><%:No available Mihomo or Xray core to import this Hysteria2 node.%></font>";
 					return false;
 				}
-				importAsXrayHy2();
+				importAsV2RayHy2();
 
 			document.getElementsByName('cbid.shadowsocksr.' + sid + '.alias')[0].value = url.hash ? decodeURIComponent(url.hash.slice(1)) : "";
 			document.getElementsByName('cbid.shadowsocksr.' + sid + '.server')[0].value = normalizeHost(url.hostname);
@@ -535,19 +563,19 @@ function import_ssr_url(btn, urlname, sid) {
 				}
 
 				let finalSSBackend;
-				const finalXray = (params.security && params.security !== "none") ||   // TLS/XTLS/Reality
+				const finalV2Ray = (params.security && params.security !== "none") ||   // TLS/XTLS/Reality
 								  (params.type && ["ws", "httpupgrade", "xhttp", "splithttp", "grpc", "quic", "kcp", "http", "h2"].includes(params.type));
-				if (finalXray && has_xray === "true") {
+				if (finalV2Ray && hasMihomoOrXray()) {
 					finalSSBackend = "v2ray";
 				} else {
 					finalSSBackend = preferredSSBackend();
 				}
 				if (finalSSBackend === null) {
-					s.innerHTML = "<font style=\'color:red\'><%:No available core (Shadowsocks or Xray) to import this node.%></font>";
+					s.innerHTML = "<font style=\'color:red\'><%:No available core (Shadowsocks, Mihomo or Xray) to import this node.%></font>";
 					return false;
 				}
 				if (finalSSBackend === "v2ray" && ssNode.plugin && ssNode.plugin !== "none") {
-					s.innerHTML = "<font style='color:red'>Xray fallback does not support importing Shadowsocks links with SIP003 plugins.</font>";
+					s.innerHTML = "<font style='color:red'>V2Ray fallback does not support importing Shadowsocks links with SIP003 plugins.</font>";
 					return false;
 				}
 				if (finalSSBackend === "v2ray") importAsXraySS(ssNode);
@@ -625,8 +653,8 @@ function import_ssr_url(btn, urlname, sid) {
 				return true;
 			}
 
-			// Xray Trojan 导入逻辑
-			function importAsXrayTrojan() {
+			// Mihomo/Xray Trojan 导入逻辑
+			function importAsV2RayTrojan() {
 				document.getElementsByName('cbid.shadowsocksr.' + sid + '.alias')[0].value = url.hash ? decodeURIComponent(url.hash.slice(1)) : "";
 				document.getElementsByName('cbid.shadowsocksr.' + sid + '.type')[0].value = "v2ray";
 				document.getElementsByName('cbid.shadowsocksr.' + sid + '.type')[0].dispatchEvent(event);
@@ -732,13 +760,12 @@ function import_ssr_url(btn, urlname, sid) {
 				return true;
 			}
 
-			// 主逻辑：Trojan 统一使用 Xray
-			function hasXrayCore() { return has_xray === "true"; }
-			if (!hasXrayCore()) {
-				s.innerHTML = "<font style=\'color:red\'><%:No available core (Xray) to import this node.%></font>";
+			// 主逻辑：Trojan 使用 Mihomo/Xray 兼容的 v2ray 节点格式
+			if (!hasMihomoOrXray()) {
+				s.innerHTML = "<font style=\'color:red\'><%:No available core (Mihomo or Xray) to import this node.%></font>";
 				return false;
 			}
-			importAsXrayTrojan();
+			importAsV2RayTrojan();
 			return false;
 		case "vmess":
 			var sstr = b64DecodeUnicode((ssu[1] || "").replace(/#.*/, "").trim());

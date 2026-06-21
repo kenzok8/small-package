@@ -817,6 +817,13 @@ function add_subscribe_item()
 		return
 	end
 
+	local commit_subscribe = luci.sys.call("uci -q commit shadowsocksr >/dev/null 2>&1")
+	if commit_subscribe ~= 0 then
+		luci.http.prepare_content("application/json")
+		luci.http.write_json({ ret = 0, error = "commit failed" })
+		return
+	end
+
 	luci.http.prepare_content("application/json")
 	luci.http.write_json({ ret = 1, sid = sid, alias = alias, enabled = "1" })
 end

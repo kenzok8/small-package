@@ -3,8 +3,8 @@ include $(TOPDIR)/rules.mk
 LUCI_TITLE:=luci-app-ssr-plus
 LUCI_PKGARCH:=all
 PKG_NAME:=luci-app-ssr-plus
-PKG_VERSION:=193
-PKG_RELEASE:=23
+PKG_VERSION:=195
+PKG_RELEASE:=5
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_$(PKG_NAME)_Iptables_Transparent_Proxy \
@@ -99,7 +99,6 @@ endchoice
 
 choice
 	prompt "V2ray-core Selection"
-	default PACKAGE_$(PKG_NAME)_INCLUDE_Xray
 	default PACKAGE_$(PKG_NAME)_INCLUDE_NONE_V2RAY
 
 	config PACKAGE_$(PKG_NAME)_INCLUDE_NONE_V2RAY

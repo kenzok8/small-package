@@ -7,7 +7,7 @@ require "nixio.fs"
 local m, s, o
 local sid = arg[1]
 
--- ¼ÓÃÜ·½Ê½£¨SS/SSRÓÃ£©
+-- åŠ å¯†æ–¹å¼ï¼ˆSS/SSRç”¨ï¼‰
 local encrypt_methods = {
 	"rc4-md5", "rc4-md5-6", "rc4", "table",
 	"aes-128-cfb", "aes-192-cfb", "aes-256-cfb",
@@ -23,13 +23,13 @@ local encrypt_methods_ss = {
 	"2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305"
 }
 
--- Shadowsocks ¼ÓÃÜ·½·¨£¨Xray °æ£©
+-- Shadowsocks åŠ å¯†æ–¹æ³•ï¼ˆXray ç‰ˆï¼‰
 local v_ss_encrypt_method_list = {
 	"aes-128-cfb", "aes-256-cfb", "aes-128-gcm", "aes-256-gcm",
 	"chacha20", "chacha20-ietf", "chacha20-poly1305", "chacha20-ietf-poly1305"
 }
 
--- Î±×°ÀàĞÍ£¨ÓÃÓÚ mKCP/QUIC£©
+-- ä¼ªè£…ç±»å‹ï¼ˆç”¨äº mKCP/QUICï¼‰
 local header_type_list = {
 	"none", "srtp", "utp", "wechat-video", "dtls", "wireguard"
 }
@@ -50,7 +50,7 @@ s = m:section(NamedSection, sid, "server_config")
 s.anonymous = true
 s.addremove = false
 
--- ========== »ù±¾ÉèÖÃ ==========
+-- ========== åŸºæœ¬è®¾ç½® ==========
 o = s:option(Flag, "enable", translate("Enable"))
 o.default = 1
 o.rmempty = false
@@ -63,12 +63,14 @@ end
 if nixio.fs.access("/usr/bin/ssr-server") then
 	o:value("ssr", translate("ShadowsocksR"))
 end
--- Xray Ğ­ÒéÖ§³Ö
-if nixio.fs.access("/usr/bin/xray") or nixio.fs.access("/usr/libexec/xray") then
-	o:value("vmess", "VMess (Xray)")
-	o:value("vless", "VLESS (Xray)")
-	o:value("trojan", "Trojan (Xray)")
-	o:value("shadowsocks", "Shadowsocks (Xray)")
+-- Xray åè®®æ”¯æŒ
+if nixio.fs.access("/usr/bin/mihomo") or nixio.fs.access("/usr/libexec/mihomo")
+	or nixio.fs.access("/usr/bin/xray") or nixio.fs.access("/usr/libexec/xray")
+then
+	o:value("vmess", "VMess (Mihomo/Xray)")
+	o:value("vless", "VLESS (Mihomo/Xray)")
+	o:value("trojan", "Trojan (Mihomo/Xray)")
+	o:value("shadowsocks", "Shadowsocks (Mihomo/Xray)")
 end
 o.default = "socks5"
 
@@ -99,7 +101,7 @@ o:depends("type", "ssr")
 o:depends("type", "trojan")
 o:depends("type", "shadowsocks")
 
--- ========== SS/SSR Ğ­ÒéÌØÓĞ ==========
+-- ========== SS/SSR åè®®ç‰¹æœ‰ ==========
 o = s:option(ListValue, "encrypt_method", translate("Encrypt Method"))
 for _, v in ipairs(encrypt_methods) do o:value(v) end
 o.rmempty = false
@@ -128,8 +130,8 @@ o.rmempty = false
 o:depends("type", "ss")
 o:depends("type", "ssr")
 
--- ========== Xray Ğ­ÒéÍ¨ÓÃ×Ö¶Î ==========
--- ÓÃ»§±¸×¢
+-- ========== Xray åè®®é€šç”¨å­—æ®µ ==========
+-- ç”¨æˆ·å¤‡æ³¨
 o = s:option(Value, "remarks", translate("Remarks"))
 o.default = translate("Remarks")
 o.rmempty = true
@@ -138,7 +140,7 @@ o:depends("type", "vless")
 o:depends("type", "trojan")
 o:depends("type", "shadowsocks")
 
--- ÓÃ»§µÈ¼¶
+-- ç”¨æˆ·ç­‰çº§
 o = s:option(Value, "level", translate("User Level"))
 o.datatype = "uinteger"
 o.default = 1
@@ -148,21 +150,21 @@ o:depends("type", "vless")
 o:depends("type", "shadowsocks")
 o:depends("type", "trojan")
 
--- ========== Xray Ğ­ÒéÈÏÖ¤×Ö¶Î ==========
--- UUID (ÓÃÓÚ vmess/vless)
+-- ========== Xray åè®®è®¤è¯å­—æ®µ ==========
+-- UUID (ç”¨äº vmess/vless)
 o = s:option(Value, "uuid", translate("UUID"))
 o.description = translate("Required for VMess/VLESS. Generate with: uuidgen")
 o.rmempty = true
 o:depends("type", "vmess")
 o:depends("type", "vless")
 
--- Trojan ÃÜÂë
+-- Trojan å¯†ç 
 o = s:option(Value, "trojan_password", translate("Trojan Password"))
 o.password = true
 o.rmempty = true
 o:depends("type", "trojan")
 
--- Shadowsocks ÃÜÂëºÍ¼ÓÃÜ£¨Xray ÄÚÖÃ£©
+-- Shadowsocks å¯†ç å’ŒåŠ å¯†ï¼ˆXray å†…ç½®ï¼‰
 o = s:option(Value, "ss_password", translate("Shadowsocks Password"))
 o.password = true
 o.rmempty = true
@@ -195,7 +197,7 @@ o.default = "none"
 o.rmempty = true
 o:depends("type", "vless")
 
--- ========== TLS / XTLS ÉèÖÃ ==========
+-- ========== TLS / XTLS è®¾ç½® ==========
 o = s:option(Flag, "tls", translate("TLS"))
 o.default = 0
 o.rmempty = true
@@ -234,7 +236,7 @@ o.description = translate("e.g.: /etc/ssl/private.key")
 o.rmempty = true
 o:depends("tls", "1")
 
--- ========== ´«Êä²ãÉèÖÃ (Transport) ==========
+-- ========== ä¼ è¾“å±‚è®¾ç½® (Transport) ==========
 o = s:option(ListValue, "transport", translate("Transport Protocol"))
 o:value("tcp", "TCP")
 o:value("mkcp", "mKCP")
@@ -248,7 +250,7 @@ o:depends("type", "vmess")
 o:depends("type", "vless")
 o:depends("type", "trojan")
 
--- ----- WebSocket ÉèÖÃ -----
+-- ----- WebSocket è®¾ç½® -----
 o = s:option(Value, "ws_host", translate("WebSocket Host"))
 o.rmempty = true
 o:depends("transport", "ws")
@@ -264,7 +266,7 @@ o:depends("type", "vmess")
 o:depends("type", "vless")
 o:depends("type", "trojan")
 
--- ----- HTTP/2 ÉèÖÃ -----
+-- ----- HTTP/2 è®¾ç½® -----
 o = s:option(Value, "h2_host", translate("HTTP/2 Host"))
 o.rmempty = true
 o:depends("transport", "h2")
@@ -278,7 +280,7 @@ o:depends("transport", "h2")
 o:depends("type", "vmess")
 o:depends("type", "vless")
 
--- ----- TCP Î±×°ÉèÖÃ -----
+-- ----- TCP ä¼ªè£…è®¾ç½® -----
 o = s:option(ListValue, "tcp_guise", translate("TCP Camouflage Type"))
 o:value("none", "none")
 o:value("http", "http")
@@ -296,7 +298,7 @@ o = s:option(DynamicList, "tcp_guise_http_path", translate("HTTP Path"))
 o.rmempty = true
 o:depends("tcp_guise", "http")
 
--- ----- mKCP ÉèÖÃ -----
+-- ----- mKCP è®¾ç½® -----
 o = s:option(ListValue, "mkcp_guise", translate("mKCP Camouflage Type"))
 for _, v in ipairs(header_type_list) do o:value(v) end
 o.default = "none"
@@ -349,13 +351,13 @@ o.datatype = "uinteger"
 o.rmempty = true
 o:depends("transport", "mkcp")
 
--- ----- DomainSocket ÉèÖÃ -----
+-- ----- DomainSocket è®¾ç½® -----
 o = s:option(Value, "ds_path", translate("DomainSocket Path"))
 o.description = translate("A legal file path. This file must not exist before running.")
 o.rmempty = true
 o:depends("transport", "ds")
 
--- ----- QUIC ÉèÖÃ -----
+-- ----- QUIC è®¾ç½® -----
 o = s:option(ListValue, "quic_security", translate("QUIC Security"))
 o:value("none", "none")
 o:value("aes-128-gcm", "aes-128-gcm")
@@ -374,7 +376,7 @@ o.default = "none"
 o.rmempty = true
 o:depends("transport", "quic")
 
--- ========== ·ÃÎÊ¿ØÖÆ ==========
+-- ========== è®¿é—®æ§åˆ¶ ==========
 o = s:option(Flag, "bind_local", translate("Bind Local Only"))
 o.description = translate("When selected, it can only be accessed locally. Recommended when using reverse proxies.")
 o.default = 0

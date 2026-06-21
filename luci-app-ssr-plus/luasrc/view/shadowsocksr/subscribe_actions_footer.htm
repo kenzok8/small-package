@@ -133,23 +133,56 @@ end
 		);
 	}
 
+	function createSubscribeCell(sid, name, title, widget, html) {
+		var td = document.createElement('td');
+		td.className = 'td cbi-value-field';
+		td.setAttribute('data-name', name);
+		if (widget) td.setAttribute('data-widget', widget);
+		if (title) td.setAttribute('data-title', title);
+
+		var wrap = document.createElement('div');
+		wrap.id = 'cbi-shadowsocksr-' + sid + '-' + name;
+		wrap.innerHTML = html;
+		td.appendChild(wrap);
+		return td;
+	}
+
+	function createFallbackRow(sid) {
+		var newRow = document.createElement('tr');
+		newRow.className = 'tr cbi-section-table-row cbi-rowstyle-1';
+
+		newRow.appendChild(createSubscribeCell(sid, 'enabled', '<%:Enable%>', 'Flag',
+			'<input type="hidden" value="0" name="cbi.cbe.shadowsocksr.' + sid + '.enabled" />' +
+			'<input class="cbi-input-checkbox" type="checkbox" value="1" name="cbid.shadowsocksr.' + sid + '.enabled" id="cbid.shadowsocksr.' + sid + '.enabled" />'));
+		newRow.appendChild(createSubscribeCell(sid, 'alias', '<%:Alias%>', 'Value',
+			'<input class="cbi-input-text" type="text" name="cbid.shadowsocksr.' + sid + '.alias" id="cbid.shadowsocksr.' + sid + '.alias" value="" />'));
+		newRow.appendChild(createSubscribeCell(sid, 'url', '<%:Subscribe URL%>', 'Value',
+			'<input class="cbi-input-text" type="text" name="cbid.shadowsocksr.' + sid + '.url" id="cbid.shadowsocksr.' + sid + '.url" value="" />'));
+
+		var actions = document.createElement('td');
+		actions.className = 'td cbi-section-table-cell nowrap cbi-section-actions';
+		actions.innerHTML = '<div class="ssr-subscribe-actions">' +
+			'<input class="btn cbi-button cbi-button-save" type="button" value="<%:Save%>" title="<%:Save%>" onclick="saveAllSubscribeItems(this)" />' +
+			'<input class="btn cbi-button cbi-button-remove" type="button" value="<%:Delete%>" data-sid="' + sid + '" onclick="deleteSubscribeItem(this); return false;" />' +
+			'<input type="button" class="btn cbi-button cbi-button-apply" value="<%:Update%>" data-original-value="<%:Update%>" data-sid="' + sid + '" data-title="Subscribe" onclick="return window.ssrUpdateSubscribeItem(this)" />' +
+			'</div>';
+		newRow.appendChild(actions);
+		return newRow;
+	}
+
 	function createEmptyRow(sid) {
 		var templateRow = document.querySelector('#cbi-shadowsocksr-server_subscribe_item .cbi-section-table-row:not(.cbi-section-table-titles):not(.placeholder)');
-		if (!templateRow) {
-			console.error('No template row found');
-			return null;
-		}
-
-		var newRow = templateRow.cloneNode(true);
-		newRow.id = 'cbi-shadowsocksr-server_subscribe_item-' + sid;
+		var newRow = templateRow ? templateRow.cloneNode(true) : createFallbackRow(sid);
+		newRow.id = 'cbi-shadowsocksr-' + sid;
 
 		var inputs = newRow.querySelectorAll('input');
 		inputs.forEach(function(input) {
 			if (input.name) {
-				input.name = input.name.replace(/cbid\.shadowsocksr\.[^.]+\./, 'cbid.shadowsocksr.' + sid + '.');
+				input.name = input.name.replace(/(cbid|cbi\.cbe)\.shadowsocksr\.[^.]+\./, '$1.shadowsocksr.' + sid + '.');
 			}
 			if (input.id) {
-				input.id = input.id.replace(/cfg[^.]+/, sid);
+				input.id = input.id.replace(/(cbid|cbi)-shadowsocksr-[^-]+-/, '$1-shadowsocksr-' + sid + '-');
+				input.id = input.id.replace(/(cbid|cbi\.cbe)\.shadowsocksr\.[^.]+\./, '$1.shadowsocksr.' + sid + '.');
 			}
 			if (input.type === 'checkbox') {
 				input.checked = false;
@@ -159,6 +192,10 @@ end
 				input.defaultValue = '';
 			}
 			input.disabled = false;
+		});
+
+		newRow.querySelectorAll('[id^="cbi-shadowsocksr-"]').forEach(function(node) {
+			node.id = node.id.replace(/cbi-shadowsocksr-[^-]+-/, 'cbi-shadowsocksr-' + sid + '-');
 		});
 
 		var delBtn = newRow.querySelector('.cbi-button-remove');
