@@ -245,6 +245,7 @@ if load_balancing_options then -- [[ Load balancing Start ]]
 	o:value("https://www.youtube.com/generate_204", "YouTube")
 	o:value("https://connect.rom.miui.com/generate_204", "MIUI (CN)")
 	o:value("https://connectivitycheck.platform.hicloud.com/generate_204", "HiCloud (CN)")
+	o:value("https://wifi.vivo.com.cn/generate_204", "VIVO (CN)")
 	o.default = o.keylist[3]
 	o.description = translate("The URL used to detect the connection status.")
 
