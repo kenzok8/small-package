@@ -33,7 +33,6 @@ const BACKENDS = {
 		log: '/var/log/dae/dae.log',
 		pkg: 'dae',
 		config: '/etc/dae/config.dae',
-		example: '/etc/dae/example.dae',
 		hasWebUI: false,
 		useNetns: false
 	}

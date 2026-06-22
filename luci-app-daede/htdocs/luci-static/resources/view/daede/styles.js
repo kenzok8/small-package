@@ -107,8 +107,10 @@ const CSS = [
 	'.dd-edit-wrap .dd-editor,.dd-edit-wrap .dd-hl{margin:0;padding:10px 12px;border-width:1px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-size:12px;line-height:1.5;letter-spacing:0;tab-size:4;white-space:pre-wrap;word-break:break-word;box-sizing:border-box}',
 	'.dd-edit-wrap .dd-hl{position:absolute;inset:0;margin:0;overflow:hidden;border:1px solid transparent;border-radius:6px 6px 0 0;pointer-events:none;background:#f6f8fa;color:#3b4252;z-index:1}',
 	/* reset Argon's code{background:var(--lighter)} so the overlay inherits the
-	   pre background uniformly — otherwise a dark pre shows as side bars */
-	'.dd-edit-wrap .dd-hl code{font:inherit;white-space:inherit;word-break:inherit;display:block;background:transparent !important}',
+	   pre background uniformly — otherwise a dark pre shows as side bars.
+	   color:inherit so plain text follows .dd-hl (light in dark mode) instead of
+	   the theme's own code{color}, which is dark and vanishes on a dark pre */
+	'.dd-edit-wrap .dd-hl code{font:inherit;white-space:inherit;word-break:inherit;display:block;color:inherit !important;background:transparent !important}',
 	'.dd-edit-wrap .dd-editor-hl{position:relative;z-index:2;color:transparent !important;background:transparent !important;caret-color:#2f7288;border:1px solid rgba(128,128,128,.28)}',
 	'.dd-edit-wrap .dd-editor-hl::placeholder{color:rgba(128,128,128,.55)}',
 	/* keep selected text transparent too — else the browser force-colors it and

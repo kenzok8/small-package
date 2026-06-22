@@ -140,23 +140,17 @@ msgstr "纯文本模式。"
 msgid "dae has no built-in WebUI. Edit the config DSL below by hand (subscriptions, nodes, routing, DNS). \"Initialize from example\" loads the bundled template — replace the placeholder subscription URL with your own before saving. For point-and-click management, switch backend to daed."
 msgstr "dae 没有内置 WebUI，下面的 DSL 配置需要手工编辑（订阅、节点、路由、DNS）。「从示例初始化」会载入官方模板——保存前请把占位的订阅链接换成你自己的。想图形化点选管理，请把后端切回 daed。"
 
-msgid "dae config file is empty. Click \"Initialize from example\" to start, or paste your config here."
-msgstr "dae 配置文件为空。点「从示例初始化」开始，或直接粘贴你的配置。"
+msgid "dae config file is empty. Click \"Load default config\" to start, or paste your config here."
+msgstr "dae 配置文件为空。点「初始化默认配置」开始，或直接粘贴你的配置。"
 
-msgid "Edit the dae DSL directly. Initialize loads a template. Use daed for a GUI."
-msgstr "直接编辑 dae DSL，「从示例初始化」载入模板。图形界面用 daed。"
+msgid "Edit the dae DSL directly. \"Load default config\" gives a ready-to-run starting point. Use daed for a GUI."
+msgstr "直接编辑 dae DSL，「初始化默认配置」给一份开箱即用的起点。图形界面用 daed。"
 
 msgid "Save and Hot Reload"
 msgstr "保存并热重载"
 
-msgid "Initialize from example"
-msgstr "从示例初始化"
-
-msgid "+ Insert Block…"
-msgstr "+ 插入块…"
-
-msgid "Insert config block at cursor"
-msgstr "在光标处插入配置块"
+msgid "Load default config"
+msgstr "初始化默认配置"
 
 msgid "lines"
 msgstr "行"
@@ -200,11 +194,8 @@ msgstr "已校验 · 已保存 · 已热重载"
 msgid "Save failed: %s"
 msgstr "保存失败：%s"
 
-msgid "Loading example…"
-msgstr "加载示例中…"
-
-msgid "Example loaded"
-msgstr "示例已加载"
+msgid "Default config loaded — replace the subscription link, then save"
+msgstr "已载入默认配置——把订阅链接换成你自己的，然后保存"
 
 msgid "Init failed: %s"
 msgstr "初始化失败：%s"
@@ -409,9 +400,6 @@ msgstr "失败"
 
 msgid "This will replace your current config. Continue?"
 msgstr "这将覆盖当前配置，继续？"
-
-msgid "Example loaded — save to apply"
-msgstr "示例已载入，保存后生效"
 
 msgid "Saved OK (start dae to apply)"
 msgstr "已保存（启动 dae 后生效）"

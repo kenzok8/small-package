@@ -11,84 +11,62 @@
 /* dae 示例里的占位订阅特征 —— example.com、relative/path/to 或中文占位文本 */
 const RE_PLACEHOLDER_URL = /(['"])(?:(?:https?|https-file|file):\/\/[^'"]*?(?:example\.com|relative\/path\/to)[^'"]*|你的订阅链接或者机场链接)\1/;
 
-/* 常用块片段 —— 给文本模式用户一键插入官方推荐结构 */
-const SNIPPETS = {
-	subscription:
-		'\nsubscription {\n' +
-		'    # 把下面这行换成你的机场订阅链接\n' +
-		"    my_sub: '你的订阅链接或者机场链接'\n" +
-		'}\n',
-	node:
-		'\nnode {\n' +
-		'    # 单条节点链接（ss/vmess/trojan/vless 等 share link）\n' +
-		"    # 'ss://...'\n" +
-		'}\n',
-	group:
-		'\ngroup {\n' +
-		'    my_group {\n' +
-		'        # 节点选择策略：min_moving_avg / min / random / fixed(0)\n' +
-		'        policy: min_moving_avg\n' +
-		'    }\n' +
-		'}\n',
-	routing:
-		'\nrouting {\n' +
-		'    # 私网直连\n' +
-		'    dip(geoip:private) -> direct\n' +
-		'    # 国内直连\n' +
-		'    dip(geoip:cn) -> direct\n' +
-		'    domain(geosite:cn) -> direct\n' +
-		'    # 兜底：走代理组\n' +
-		'    fallback: my_group\n' +
-		'}\n',
-	dns:
-		'\ndns {\n' +
-		'    upstream {\n' +
-		"        alidns: 'udp://dns.alidns.com:53'\n" +
-		"        googledns: 'tcp+udp://dns.google:53'\n" +
-		'    }\n' +
-		'    routing {\n' +
-		'        request {\n' +
-		'            qname(geosite:cn) -> alidns\n' +
-		'            fallback: googledns\n' +
-		'        }\n' +
-		'    }\n' +
-		'}\n',
-	include:
-		'\ninclude {\n' +
-		'    # 相对路径：相对于 dae -c 指定的入口配置目录\n' +
-		'    config.d/*.dae\n' +
-		'}\n'
-};
-
-/* 把 example.dae 的 subscription 块瘦身成「只保留 1 行占位 + 中文引导注释」，
-   降低用户认知负担。其他块（global/node/group/routing/dns）原样保留。 */
-function simplifySubscriptionBlock(text) {
-	if (!text) return text;
-	const lines = text.split('\n');
-	let start = -1, end = -1, depth = 0;
-	for (let i = 0; i < lines.length; i++) {
-		if (start < 0) {
-			if (/^\s*subscription\s*\{/.test(lines[i])) {
-				start = i;
-				depth = 1;
-				continue;
-			}
-		} else {
-			depth += (lines[i].match(/\{/g) || []).length;
-			depth -= (lines[i].match(/\}/g) || []).length;
-			if (depth <= 0) { end = i; break; }
-		}
-	}
-	if (start < 0 || end < 0) return text;
-	/* 整块替换：保留原有 block 缩进风格（4 空格） */
-	const replacement = [
-		'subscription {',
-		'    # ⚠ 把下面这行的 URL 换成你机场的订阅链接，然后保存。',
-		"    my_sub: '你的订阅链接或者机场链接'",
-		'}'
-	];
-	return lines.slice(0, start).concat(replacement).concat(lines.slice(end + 1)).join('\n');
-}
+/* Minimal ready-to-run default: gen-dae-config.sh defaults + a placeholder subscription to swap. */
+const DEFAULT_TEMPLATE =
+	'# luci-app-daede 默认配置：把 subscription 里的占位链接换成你的机场订阅，保存即可运行。\n' +
+	'global {\n' +
+	'    tproxy_port: 12345\n' +
+	'    tproxy_port_protect: true\n' +
+	'    log_level: info\n' +
+	'    lan_interface: br-lan\n' +
+	'    wan_interface: auto\n' +
+	'    auto_config_kernel_parameter: true\n' +
+	'    dial_mode: domain\n' +
+	"    tcp_check_url: 'http://cp.cloudflare.com,1.1.1.1,2606:4700:4700::1111'\n" +
+	"    udp_check_dns: 'dns.google:53,8.8.8.8,2001:4860:4860::8888'\n" +
+	'    check_interval: 30s\n' +
+	'    check_tolerance: 50ms\n' +
+	'}\n' +
+	'\n' +
+	'subscription {\n' +
+	'    # ⚠ 把下面这行的 URL 换成你机场的订阅链接，然后保存。\n' +
+	"    my_airport: 'https://example.com/sub'\n" +
+	'}\n' +
+	'\n' +
+	'dns {\n' +
+	'    ipversion_prefer: 4\n' +
+	'    upstream {\n' +
+	"        cndns: 'udp://dns.alidns.com:53'\n" +
+	"        fallbackdns: 'tcp+udp://dns.google:53'\n" +
+	'    }\n' +
+	'    routing {\n' +
+	'        request {\n' +
+	'            qname(geosite:cn) -> cndns\n' +
+	'            fallback: fallbackdns\n' +
+	'        }\n' +
+	'    }\n' +
+	'}\n' +
+	'\n' +
+	'group {\n' +
+	'    proxy {\n' +
+	'        filter: subtag(my_airport)\n' +
+	'        policy: min_moving_avg\n' +
+	'    }\n' +
+	'}\n' +
+	'\n' +
+	'routing {\n' +
+	'    pname(NetworkManager) -> direct\n' +
+	'    dip(224.0.0.0/3) -> direct\n' +
+	'    dip(255.255.255.255/32) -> direct\n' +
+	"    dip('ff00::/8') -> direct\n" +
+	'    dip(geoip:private) -> direct\n' +
+	'    l4proto(udp) && dport(123) -> direct\n' +
+	'    domain(connectivitycheck.gstatic.com) -> direct\n' +
+	'    domain(msftconnecttest.com) -> direct\n' +
+	'    dip(geoip:cn) -> direct\n' +
+	'    domain(geosite:cn) -> direct\n' +
+	'    fallback: proxy\n' +
+	'}\n';
 
 function detectPlaceholders(text) {
 	if (!text) return [];
@@ -584,7 +562,7 @@ function renderDaeEditor() {
 	const textarea = E('textarea', {
 		'class': 'dd-editor dd-editor-hl',
 		'spellcheck': 'false',
-		'placeholder': _('dae config file is empty. Click "Initialize from example" to start, or paste your config here.')
+		'placeholder': _('dae config file is empty. Click "Load default config" to start, or paste your config here.')
 	}, '');
 	const hlCode = E('code', {});
 	const hlPre = E('pre', { 'class': 'dd-hl', 'aria-hidden': 'true' }, hlCode);
@@ -595,7 +573,7 @@ function renderDaeEditor() {
 	}
 	textarea.addEventListener('scroll', function() { hlPre.scrollTop = textarea.scrollTop; });
 	const save = E('button', { 'class': 'cbi-button cbi-button-positive' }, _('Save manual config'));
-	const init = E('button', { 'class': 'cbi-button cbi-button-action' }, _('Initialize from example'));
+	const init = E('button', { 'class': 'cbi-button cbi-button-action' }, _('Load default config'));
 	const status = E('span', { 'class': 'dd-editor-status' }, '');
 
 	const phWarn = E('div', { 'class': 'dd-ph-warn' }, [
@@ -605,39 +583,11 @@ function renderDaeEditor() {
 		E('ul', { 'class': 'dd-ph-list' })
 	]);
 
-	/* Insert Block 下拉：选完后自动复位到首项 */
-	const insertSelect = E('select', { 'class': 'dd-insert-select', 'title': _('Insert config block at cursor') }, [
-		E('option', { 'value': '' }, _('+ Insert Block…')),
-		E('option', { 'value': 'subscription' }, 'subscription'),
-		E('option', { 'value': 'node' }, 'node'),
-		E('option', { 'value': 'group' }, 'group'),
-		E('option', { 'value': 'routing' }, 'routing'),
-		E('option', { 'value': 'dns' }, 'dns'),
-		E('option', { 'value': 'include' }, 'include')
-	]);
-
 	/* Footer：dae version · 行数 · 占位剩余 */
 	const fbVer  = E('span', { 'class': 'dd-fb-item' }, [ E('span', { 'class': 'dd-fb-key' }, 'dae'), E('span', {}, '—') ]);
 	const fbLine = E('span', { 'class': 'dd-fb-item' }, [ E('span', { 'class': 'dd-fb-key' }, _('lines')), E('span', {}, '0') ]);
 	const fbStat = E('span', { 'class': 'dd-fb-item dd-fb-ok' }, '✓ ready');
 	const footer = E('div', { 'class': 'dd-editor-footer' }, [ fbVer, fbLine, fbStat ]);
-
-	function insertAtCursor(text) {
-		const start = textarea.selectionStart;
-		const end   = textarea.selectionEnd;
-		const v     = textarea.value;
-		textarea.value = v.slice(0, start) + text + v.slice(end);
-		const pos = start + text.length;
-		textarea.focus();
-		textarea.setSelectionRange(pos, pos);
-		refreshPlaceholders();
-	}
-
-	insertSelect.addEventListener('change', function() {
-		const key = insertSelect.value;
-		insertSelect.value = '';
-		if (key && SNIPPETS[key]) insertAtCursor(SNIPPETS[key]);
-	});
 
 	let statusTimer = null;
 	function flashStatus(text, kind, holdMs) {
@@ -762,16 +712,9 @@ function renderDaeEditor() {
 		ev.preventDefault();
 		if (textarea.value.trim() && !confirm(_('This will replace your current config. Continue?')))
 			return;
-		init.disabled = true;
-		flashStatus(_('Loading example…'));
-		fs.read_direct(backend.BACKENDS.dae.example, 'text')
-			.then(function(content) {
-				textarea.value = simplifySubscriptionBlock(content || '');
-				refreshPlaceholders();
-				flashStatus(_('Example loaded — save to apply'), 'ok');
-			})
-			.catch(function(e) { flashStatus(_('Init failed: %s').format(e.message || e), 'err'); })
-			.finally(function() { init.disabled = false; });
+		textarea.value = DEFAULT_TEMPLATE;
+		refreshPlaceholders();
+		flashStatus(_('Default config loaded — replace the subscription link, then save'), 'ok');
 	});
 
 	/* 一次性探测 dae --version；失败就显示 unknown，不影响主流程 */
@@ -797,12 +740,12 @@ function renderDaeEditor() {
 					E('div', { 'class': 'dd-editor-hint', style: 'margin:0 0 10px' }, [
 						E('b', {}, _('Text-only mode.')),
 						' ',
-						_('Edit the dae DSL directly. Initialize loads a template. Use daed for a GUI.')
+						_('Edit the dae DSL directly. "Load default config" gives a ready-to-run starting point. Use daed for a GUI.')
 					]),
 					phWarn,
 					editWrap,
 					footer,
-					E('div', { 'class': 'dd-editor-actions' }, [ save, init, insertSelect, status ])
+					E('div', { 'class': 'dd-editor-actions' }, [ save, init, status ])
 				])
 			]);
 			adv.firstChild.addEventListener('click', function() { adv.classList.toggle('dd-closed'); });

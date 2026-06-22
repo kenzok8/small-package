@@ -9,16 +9,80 @@ test -e /usr/share/natflow/ipops.lua && IPOPS="lua /usr/share/natflow/ipops.lua"
 
 auth_idx=0
 
-# ipset_add ipsetname net
-ipv4set_add()
-{
-	local ipsetname=$1
-	local net=$2
-	#hack for 0.0.0.0/0
-	[ "$net" = "0.0.0.0/0" ] && net="0.0.0.0/1 128.0.0.0/1"
-	for n in $net; do
-		ipset add $ipsetname $n
+# 分流处理 IP 字符串：v4 交给 ipops.lua 处理，v6 直接透传
+format_ip_strings() {
+	local input="$1"
+	local v4_list=""
+	local v6_list=""
+
+	# 将逗号替换为空格并遍历
+	for ip in $(echo "$input" | tr ',' ' '); do
+		case "$ip" in
+			*:*)
+				# 包含冒号的视为 IPv6，直接收集 (空格分隔)
+				v6_list="$v6_list $ip"
+				;;
+			*)
+				# 不含冒号的视为 IPv4，重新拼成逗号分隔的形式给 ipops 处理
+				if [ -z "$v4_list" ]; then
+					v4_list="$ip"
+				else
+					v4_list="$v4_list,$ip"
+				fi
+				;;
+		esac
 	done
+
+	local processed_v4=""
+	if [ -n "$v4_list" ]; then
+		# 【修复点】：把 ipops.lua 返回的逗号分隔结果强制转换为空格分隔
+		processed_v4=$($IPOPS netStrings2ipcidrStrings "$v4_list" | tr ',' ' ')
+	fi
+
+	# 返回合并后的字符串 (全空格分隔，确保外层 for 循环能逐个正确解析)
+	echo "$processed_v4 $v6_list"
+}
+
+# 智能识别 IP 类型，添加到对应的 _v4 或 _v6 子集合中
+ip_set_add()
+{
+	local basename=$1
+	local net=$2
+
+	# hack for 0.0.0.0/0 and ::/0
+	[ "$net" = "0.0.0.0/0" ] && net="0.0.0.0/1 128.0.0.0/1"
+	[ "$net" = "::/0" ] && net="::/1 8000::/1"
+
+	for n in $net; do
+		case "$n" in
+			*:*)
+				ipset add ${basename}_v6 $n 2>/dev/null
+				;;
+			*)
+				ipset add ${basename}_v4 $n 2>/dev/null
+				;;
+		esac
+	done
+}
+
+# 辅助函数：创建支持双栈的聚合集合 (list:set)
+create_dual_stack_set()
+{
+	local basename=$1
+
+	# 创建底层 IPv4 和 IPv6 集合
+	ipset create ${basename}_v4 nethash family inet 2>/dev/null
+	ipset flush ${basename}_v4
+	ipset create ${basename}_v6 nethash family inet6 2>/dev/null
+	ipset flush ${basename}_v6
+
+	# 创建顶层容器集合 (list:set)，保持名称不变
+	ipset create ${basename} list:set 2>/dev/null
+	ipset flush ${basename}
+
+	# 将子集合加入容器中
+	ipset add ${basename} ${basename}_v4 2>/dev/null
+	ipset add ${basename} ${basename}_v6 2>/dev/null
 }
 
 natflow_user_setup()
@@ -37,32 +101,33 @@ natflow_user_setup()
 
 	[ "$enabled" = "1" ] || return 0
 
-	#echo auth id=0,szone=0,type=auto,sipgrp=auth_sipgrp,ipwhite=,macwhite=
+	# ---------------- Setup sipgrp ----------------
+	sipgrp=$(format_ip_strings "$sipgrp")
+	create_dual_stack_set "auth_sipgrp_$idx"
 
-	sipgrp=$($IPOPS netStrings2ipcidrStrings "$sipgrp")
-	ipset create auth_sipgrp_$idx nethash 2>/dev/null
-	ipset flush auth_sipgrp_$idx
-	for net in $(echo "$sipgrp" | sed 's/,/ /g'); do
-		ipv4set_add auth_sipgrp_$idx $net
+	# 此时的 $sipgrp 已经是纯粹的空格分隔，可以安全地遍历
+	for net in $sipgrp; do
+		ip_set_add "auth_sipgrp_$idx" $net
 	done
-
 	cmd="auth id=$idx,szone=$szone,type=$type,sipgrp=auth_sipgrp_$idx"
+
+	# ---------------- Setup ipwhite ----------------
 	if test -n "$ipwhite"; then
-		ipwhite=$($IPOPS netStrings2ipcidrStrings "$ipwhite")
-		ipset create auth_ipwhite_$idx nethash 2>/dev/null
-		ipset flush auth_ipwhite_$idx
-		for net in $(echo "$ipwhite" | sed 's/,/ /g'); do
-			ipv4set_add auth_ipwhite_$idx $net
+		ipwhite=$(format_ip_strings "$ipwhite")
+		create_dual_stack_set "auth_ipwhite_$idx"
+		for net in $ipwhite; do
+			ip_set_add "auth_ipwhite_$idx" $net
 		done
 		cmd="$cmd,ipwhite=auth_ipwhite_$idx"
 	else
 		cmd="$cmd,ipwhite="
 	fi
 
+	# ---------------- Setup macwhite ----------------
 	if test -n "$macwhite"; then
 		ipset create auth_macwhite_$idx machash 2>/dev/null
 		ipset flush auth_macwhite_$idx
-		for mac in $(echo "$macwhite" | sed 's/,/ /g'); do
+		for mac in $(echo "$macwhite" | tr ',' ' '); do
 			ipset add auth_macwhite_$idx $mac
 		done
 		cmd="$cmd,macwhite=auth_macwhite_$idx"
@@ -98,8 +163,15 @@ stop() {
 	test -c $DEVCTL || return 0
 
 	echo disabled=1 >$DEVCTL
-	ipset list -n | grep ^auth_ | while read ipset; do
-		ipset destroy $ipset
+
+	# 先 flush 解除引用
+	ipset list -n | grep ^auth_ | while read ipset_name; do
+		ipset flush $ipset_name 2>/dev/null
+	done
+
+	# 后 destroy 销毁
+	ipset list -n | grep ^auth_ | while read ipset_name; do
+		ipset destroy $ipset_name 2>/dev/null
 	done
 }
 
