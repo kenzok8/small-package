@@ -347,7 +347,7 @@ if has_mihomo then
 	o:value("ss", translate("ShadowSocks"))
 end
 if has_ss_rust then
-	o:value("ss-rust", translate("ShadowSocks"))
+	o:value("ss-rust", translate("ShadowSocks-Rust"))
 end
 if is_finded("naive") then
 	o:value("naiveproxy", translate("NaiveProxy"))

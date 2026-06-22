@@ -8,32 +8,75 @@ test -e /usr/share/natflow/ipops.lua && IPOPS="lua /usr/share/natflow/ipops.lua"
 
 get_rate_data()
 {
-	local cnt num unit
-	echo -n $1 | grep -qi "bps$" || {
-		num=$1
-		echo -n $((num)) # assume num B/s
-		return
-	}
-	cnt=`echo -n $1 | wc -c || echo 0`
-	test $cnt -le 4 && echo -n 0 && return # assume 0 B/s
+	local rate num int frac frac_value digit scale mul div
 
-	num=`echo -n $1 | cut -c0-$((cnt-4))`
-	unit=`echo -n $1 | cut -c$((cnt-3))-$cnt | tr A-Z a-z`
-	case $unit in
-		"kbps")
-			num=$((num*128))
+	rate=$1
+	case "$rate" in
+		*[Gg][Bb][Pp][Ss])
+			num=${rate%[Gg][Bb][Pp][Ss]}
+			mul=$((128*1024*1024))
+			div=1
 		;;
-		"mbps")
-			num=$((num*128*1024))
+		*[Mm][Bb][Pp][Ss])
+			num=${rate%[Mm][Bb][Pp][Ss]}
+			mul=$((128*1024))
+			div=1
 		;;
-		"gbps")
-			num=$((num*128*1024*1024))
+		*[Kk][Bb][Pp][Ss])
+			num=${rate%[Kk][Bb][Pp][Ss]}
+			mul=128
+			div=1
+		;;
+		*[Bb][Pp][Ss])
+			num=${rate%[Bb][Pp][Ss]}
+			mul=1
+			div=8
 		;;
 		*)
-			num=$((num/8))
+			num=$rate
+			mul=1
+			div=1
 		;;
 	esac
-	echo -n $num # assume num bps
+
+	case "$num" in
+		''|*[!0-9.]*)
+			echo -n 0
+			return
+		;;
+	esac
+
+	case "$num" in
+		*.*)
+			int=${num%%.*}
+			frac=${num#*.}
+			test -n "$int" || int=0
+			while test "${int#0}" != "$int" && test "$int" != "0"; do
+				int=${int#0}
+			done
+			case "$frac" in
+				''|*.*)
+					echo -n 0
+					return
+				;;
+			esac
+			frac_value=0
+			scale=1
+			while test -n "$frac"; do
+				digit=${frac%"${frac#?}"}
+				frac=${frac#?}
+				frac_value=$((frac_value*10 + digit))
+				scale=$((scale*10))
+			done
+			echo -n $((((int*scale + frac_value)*mul)/scale/div))
+		;;
+		*)
+			while test "${num#0}" != "$num" && test "$num" != "0"; do
+				num=${num#0}
+			done
+			echo -n $((num*mul/div))
+		;;
+	esac
 }
 
 dispatch_userinfo_event_fifo()

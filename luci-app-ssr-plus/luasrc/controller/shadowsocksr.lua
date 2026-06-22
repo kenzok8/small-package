@@ -338,14 +338,14 @@ local function global_client_running()
 		return true
 	end
 
-	if (global_type == "clash" or global_type == "tuic" or global_type == "ss")
+	if (global_type == "clash" or global_type == "v2ray" or global_type == "tuic" or global_type == "ss")
 		and process_list:find("ssr%-retcp") then
 		return true
 	end
 
-	if (global_type == "clash" or global_type == "tuic" or global_type == "ss")
+	if (global_type == "clash" or global_type == "v2ray" or global_type == "tuic" or global_type == "ss")
 		and process_list:find("mihomo")
-		and (process_list:find("/clash%-") or process_list:find("/tuic%-") or process_list:find("/ss%-")) then
+		and (process_list:find("/clash%-") or process_list:find("/v2ray%-") or process_list:find("/tuic%-") or process_list:find("/ss%-")) then
 		return true
 	end
 
@@ -367,6 +367,8 @@ local function get_active_node_runtime(sid)
 	local proto = (uci:get("shadowsocksr", sid, "v2ray_protocol") or ""):lower()
 	local backend
 	local protocol
+
+	local is_mihomo_running = clash_process_running()
 
 	if stype == "ss" then
 		backend = translate("Mihomo")
@@ -391,7 +393,11 @@ local function get_active_node_runtime(sid)
 			shadowsocks = "Shadowsocks",
 			http = "HTTP"
 		}
-		backend = translate("Xray")
+		if is_mihomo_running then
+			backend = translate("Mihomo")
+		else
+			backend = translate("Xray")
+		end
 		if proto_map[proto] then
 			protocol = translate(proto_map[proto])
 		end
