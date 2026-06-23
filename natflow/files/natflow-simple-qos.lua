@@ -234,10 +234,10 @@ end
 
 local function fs_mkfifo(path)
 	if nfs.mkfifo then
-		return nfs.mkfifo(path, 384)
+		return nfs.mkfifo(path, 666)
 	end
 	if nixio.mkfifo then
-		return nixio.mkfifo(path, 384)
+		return nixio.mkfifo(path, 666)
 	end
 	return false
 end
@@ -268,22 +268,32 @@ local function load_ipops()
 end
 
 local IPOPS = load_ipops()
-local ipops_netstrings_test = type(IPOPS) == "table" and IPOPS.netStrings_test_netStrings or nil
-ipops_netstrings_test = ipops_netstrings_test or _G.netStrings_test_netStrings
+local ipops_netstring_set_to_ranges = type(IPOPS) == "table" and IPOPS.netStringSet2rangeSet or nil
+local ipops_range_set_in_range_set = type(IPOPS) == "table" and IPOPS.rangeSet_in_rangeSet or nil
 
 local function ipops_test_netstrings(user, ip)
 	if user == "" then
 		return true
 	end
-	if not ipops_netstrings_test then
+	if not ipops_netstring_set_to_ranges or not ipops_range_set_in_range_set then
 		return false
 	end
 
-	local ok, result = pcall(ipops_netstrings_test, user, ip)
+	local ok_user, user_ranges = pcall(ipops_netstring_set_to_ranges, split_list(user))
+	if not ok_user then
+		return false
+	end
+
+	local ok_ip, ip_ranges = pcall(ipops_netstring_set_to_ranges, { ip })
+	if not ok_ip then
+		return false
+	end
+
+	local ok, result = pcall(ipops_range_set_in_range_set, ip_ranges, user_ranges)
 	if not ok then
 		return false
 	end
-	return result == true or result == 0
+	return result == true
 end
 
 local function rate_to_bytes(rate)
@@ -373,7 +383,7 @@ end
 -- Existing behavior applies the first matching qos_simple section.
 local function apply_ip(rules, ip, verbose)
 	for _, rule in ipairs(rules) do
-		if rule.disabled ~= "1" and user_matches(rule, ip) then
+		if rule.disabled == "0" and user_matches(rule, ip) then
 			local command = string.format("set-token-ctrl %s %d %d", ip, rule.rx_bytes, rule.tx_bytes)
 			if verbose then
 				print(command)
@@ -419,7 +429,7 @@ end
 
 -- Non-blocking FIFO write avoids spawning a helper process per event.
 local function dispatch_event(line)
-	local fd = nixio.open(EVENT_FIFO, "wronly,nonblock")
+	local fd = nixio.open(EVENT_FIFO, nixio.open_flags("wronly", "nonblock"))
 	if not fd then
 		return
 	end

@@ -13,14 +13,13 @@ start_service() {
 	[ -x "$PROG" ] || return 0
 
 	procd_open_instance
-	procd_set_param command /usr/bin/lua "$PROG" run
+	procd_set_param command "$PROG" run
 	procd_set_param respawn 3600 5 5
 	procd_close_instance
 }
 
-stop_service() {
-	procd_kill "$NAME"
-	[ -x "$PROG" ] && /usr/bin/lua "$PROG" cleanup
+reload_service() {
+	restart "$@"
 }
 
 service_triggers() {
