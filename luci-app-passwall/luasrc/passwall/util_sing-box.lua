@@ -586,6 +586,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 						realm.server_url = (realm.scheme == "realm+http" and "http://" or "https://") .. realm.server_url
 						realm.stun_servers = realm.stun_servers or node.hysteria2_realm_stun
 						realm.scheme = nil
+						realm.address = nil
+						realm.port = nil
 						return realm
 					end
 					return nil
@@ -933,6 +935,8 @@ function gen_config_server(node)
 					realm.server_url = (realm.scheme == "realm+http" and "http://" or "https://") .. realm.server_url
 					realm.stun_servers = realm.stun_servers or node.hysteria2_realm_stun
 					realm.scheme = nil
+					realm.address = nil
+					realm.port = nil
 					realm.stun_domain_resolver = "direct"
 					return realm
 				end

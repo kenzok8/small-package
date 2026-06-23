@@ -389,6 +389,14 @@ function gen_outbound(flag, node, tag, proxy_table)
 			}
 		}
 
+		if node.protocol == "hysteria" and node.hysteria2_realms then
+			local realm = api.parse_realm_uri(node.hysteria2_realm_url)
+			if realm then
+				result.settings.address = realm.address
+				result.settings.port = realm.port
+			end
+		end
+
 		if node.protocol == "wireguard" then
 			result.settings.noKernelTun = true
 			if node.finalmask and node.finalmask ~= "" then

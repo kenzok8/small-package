@@ -1610,10 +1610,14 @@ function parse_realm_uri(uri)
 	local scheme, token, server_url, realm_id, query = trim(uri):match("^(realm%+http|realm)://([^@]+)@([^/]+)/([^?]*)%??(.*)$")
 	if not scheme or not token or not server_url or not realm_id then return nil end
 	realm_id = realm_id:gsub("/+$", "")
+	local address, port = server_url:match("^%[?([^%]]+)%]?:?(%d*)$")
+	port = tonumber(port) or (scheme == "realm+http" and 80 or 443)
 	local realm = {
 		scheme = scheme,
 		token = token,
 		server_url = server_url,
+		address = address,
+		port = port,
 		realm_id = realm_id
 	}
 	-- 解析 query 中的 stun=
