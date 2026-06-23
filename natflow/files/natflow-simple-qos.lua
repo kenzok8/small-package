@@ -4,7 +4,7 @@ local DEV_USERINFO = "/dev/userinfo_ctl"
 local DEV_EVENT = "/dev/userinfo_event_ctl"
 local EVENT_FIFO = "/tmp/userinfo_event_fifo"
 
-local uci = require "uci"
+local uci = require "luci.model.uci"
 local nixio = require "nixio"
 local nfs = require "nixio.fs"
 

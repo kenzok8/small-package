@@ -80,7 +80,7 @@ define Package/natflow-auth
   CATEGORY:=X
   SUBMENU:=Fast Forward Stacks
   TITLE:=natflow auth init script
-  DEPENDS:= +kmod-natflow +ipset +lua-ipops +libuci-lua +luci-lib-nixio
+  DEPENDS:= +kmod-natflow +ipset +lua-ipops +luci-lua-runtime +luci-lib-nixio
 endef
 
 define Package/natflow-auth/conffiles

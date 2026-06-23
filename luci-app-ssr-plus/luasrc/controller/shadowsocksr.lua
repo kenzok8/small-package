@@ -368,7 +368,7 @@ local function get_active_node_runtime(sid)
 	local backend
 	local protocol
 
-	local is_mihomo_running = clash_process_running()
+	local is_mihomo_running = luci.sys.call("pgrep -x ssr-retcp >/dev/null 2>&1") == 0
 
 	if stype == "ss" then
 		backend = translate("Mihomo")
