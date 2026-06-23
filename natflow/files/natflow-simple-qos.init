@@ -2,171 +2,27 @@
 # Copyright (C) 2006-2011 OpenWrt.org
 
 START=95
+USE_PROCD=1
 
-IPOPS="lua /usr/lib/lua/ipops.lua"
-test -e /usr/share/natflow/ipops.lua && IPOPS="lua /usr/share/natflow/ipops.lua"
+PROG=/usr/libexec/natflow-simple-qos
+NAME=natflow-simple-qos
 
-get_rate_data()
-{
-	local rate num int frac frac_value digit scale mul div
+start_service() {
+	[ -c /dev/userinfo_ctl ] || return 0
+	[ -c /dev/userinfo_event_ctl ] || return 0
+	[ -x "$PROG" ] || return 0
 
-	rate=$1
-	case "$rate" in
-		*[Gg][Bb][Pp][Ss])
-			num=${rate%[Gg][Bb][Pp][Ss]}
-			mul=$((128*1024*1024))
-			div=1
-		;;
-		*[Mm][Bb][Pp][Ss])
-			num=${rate%[Mm][Bb][Pp][Ss]}
-			mul=$((128*1024))
-			div=1
-		;;
-		*[Kk][Bb][Pp][Ss])
-			num=${rate%[Kk][Bb][Pp][Ss]}
-			mul=128
-			div=1
-		;;
-		*[Bb][Pp][Ss])
-			num=${rate%[Bb][Pp][Ss]}
-			mul=1
-			div=8
-		;;
-		*)
-			num=$rate
-			mul=1
-			div=1
-		;;
-	esac
-
-	case "$num" in
-		''|*[!0-9.]*)
-			echo -n 0
-			return
-		;;
-	esac
-
-	case "$num" in
-		*.*)
-			int=${num%%.*}
-			frac=${num#*.}
-			test -n "$int" || int=0
-			while test "${int#0}" != "$int" && test "$int" != "0"; do
-				int=${int#0}
-			done
-			case "$frac" in
-				''|*.*)
-					echo -n 0
-					return
-				;;
-			esac
-			frac_value=0
-			scale=1
-			while test -n "$frac"; do
-				digit=${frac%"${frac#?}"}
-				frac=${frac#?}
-				frac_value=$((frac_value*10 + digit))
-				scale=$((scale*10))
-			done
-			echo -n $((((int*scale + frac_value)*mul)/scale/div))
-		;;
-		*)
-			while test "${num#0}" != "$num" && test "$num" != "0"; do
-				num=${num#0}
-			done
-			echo -n $((num*mul/div))
-		;;
-	esac
+	procd_open_instance
+	procd_set_param command /usr/bin/lua "$PROG" run
+	procd_set_param respawn 3600 5 5
+	procd_close_instance
 }
 
-dispatch_userinfo_event_fifo()
-{
-	pgrep -f "sh -c echo .*>/tmp/userinfo_event_fifo" >/dev/null && {
-		#event fifo is busy
-		return
-	}
-	sh -c "echo $1>/tmp/userinfo_event_fifo" &
-	return 0
+stop_service() {
+	procd_kill "$NAME"
+	[ -x "$PROG" ] && /usr/bin/lua "$PROG" cleanup
 }
 
-qos_simple_watch()
-{
-	dispatch_userinfo_event_fifo ""
-
-	cat /dev/userinfo_event_ctl 2>/dev/null | while read line; do
-		dispatch_userinfo_event_fifo "$line"
-		ip=${line//,*}
-		idx=0
-		if test -n "${ip//*:*}"; then
-		while uci get natflow.@qos_simple[$idx] &>/dev/null; do
-			disabled=$(uci get natflow.@qos_simple[$idx].disabled 2>/dev/null || echo 0)
-			if [ "$disabled" = "0" ]; then
-				user=$(uci get natflow.@qos_simple[$idx].user 2>/dev/null)
-				if test -z "$user" || $IPOPS netStrings_test_netStrings "$user" "$ip"; then
-					rx_rate=$(uci get natflow.@qos_simple[$idx].rx_rate 2>/dev/null)
-					tx_rate=$(uci get natflow.@qos_simple[$idx].tx_rate 2>/dev/null)
-					rx_rate=$(get_rate_data "$rx_rate")
-					tx_rate=$(get_rate_data "$tx_rate")
-					echo set-token-ctrl $ip $rx_rate $tx_rate >/dev/userinfo_ctl
-					break
-				fi
-			fi
-			idx=$((idx+1))
-		done
-		fi
-		test -z "${ip//*:*}" && {
-			mac=$(echo $line | cut -d, -f2)
-			for iface in $(ip -6 neigh show $ip | grep -o "dev .*" | awk '{print $2}'); do
-				[ "$(fw3 -q device $iface 2>/dev/null)" = "lan" ] && ip -6 neigh replace $ip lladdr $mac dev $iface nud reachable
-			done
-		}
-	done
-}
-
-start() {
-	cat /dev/userinfo_ctl | while read line; do
-		ip=${line//,*}
-		idx=0
-		if test -n "${ip//*:*}"; then
-		while uci get natflow.@qos_simple[$idx] &>/dev/null; do
-			disabled=$(uci get natflow.@qos_simple[$idx].disabled 2>/dev/null || echo 0)
-			if [ "$disabled" = "0" ]; then
-				user=$(uci get natflow.@qos_simple[$idx].user 2>/dev/null)
-				if test -z "$user" || $IPOPS netStrings_test_netStrings "$user" "$ip"; then
-					rx_rate=$(uci get natflow.@qos_simple[$idx].rx_rate 2>/dev/null)
-					tx_rate=$(uci get natflow.@qos_simple[$idx].tx_rate 2>/dev/null)
-					rx_rate=$(get_rate_data "$rx_rate")
-					tx_rate=$(get_rate_data "$tx_rate")
-					echo set-token-ctrl $ip $rx_rate $tx_rate
-					echo set-token-ctrl $ip $rx_rate $tx_rate >/dev/userinfo_ctl
-					break
-				fi
-			fi
-			idx=$((idx+1))
-		done
-		fi
-		test -z "${ip//*:*}" && {
-			mac=$(echo $line | cut -d, -f2)
-			for iface in $(ip -6 neigh show $ip | grep -o "dev .*" | awk '{print $2}'); do
-				[ "$(fw3 -q device $iface 2>/dev/null)" = "lan" ] && ip -6 neigh replace $ip lladdr $mac dev $iface nud reachable
-			done
-		}
-	done
-
-	test -e /tmp/userinfo_event_fifo || mkfifo /tmp/userinfo_event_fifo
-	qos_simple_watch &
-}
-
-stop() {
-	kill -TERM $(pgrep -f "cat /dev/userinfo_event_ctl") &>/dev/null
-	kill -TERM $(pgrep -f "sh -c echo .*>/tmp/userinfo_event_fifo") &>/dev/null
-	cat /dev/userinfo_ctl | while read line; do
-		ip=${line//,*}
-		echo set-token-ctrl $ip 0 0 >/dev/userinfo_ctl
-	done
-}
-
-restart() {
-	stop
-	start
+service_triggers() {
+	procd_add_reload_trigger natflow
 }

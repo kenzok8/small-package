@@ -80,7 +80,7 @@ define Package/natflow-auth
   CATEGORY:=X
   SUBMENU:=Fast Forward Stacks
   TITLE:=natflow auth init script
-  DEPENDS:= +kmod-natflow +ipset +lua-ipops
+  DEPENDS:= +kmod-natflow +ipset +lua-ipops +libuci-lua +luci-lib-nixio
 endef
 
 define Package/natflow-auth/conffiles
@@ -89,7 +89,9 @@ endef
 
 define Package/natflow-auth/install
 	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_DIR) $(1)/usr/libexec
 	$(INSTALL_BIN) ./files/natflow-simple-qos.init $(1)/etc/init.d/natflow-simple-qos
+	$(INSTALL_BIN) ./files/natflow-simple-qos.lua $(1)/usr/libexec/natflow-simple-qos
 	$(INSTALL_BIN) ./files/natflow-qos.init $(1)/etc/init.d/natflow-qos
 	$(INSTALL_BIN) ./files/natflow-user.init $(1)/etc/init.d/natflow-user
 	$(INSTALL_BIN) ./files/natflow-zone.init $(1)/etc/init.d/natflow-zone
