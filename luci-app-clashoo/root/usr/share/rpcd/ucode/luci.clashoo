@@ -792,9 +792,9 @@ if (id == 'singbox') {
 return out;
 }
 
-const B2_FEED_BASE = 'https://kenzo111.s3.us-west-004.backblazeb2.com/openwrt-feed/clashoo';
+const FEED_BASE = 'https://down.dllkids.xyz/openwrt-feed/clashoo';
 // bucket 多项目共用，按项目区分文件名免互相 sync 覆盖
-const B2_MANIFEST_NAME = 'manifest-clashoo.txt';
+const FEED_MANIFEST_NAME = 'manifest-clashoo.txt';
 const GH_CLASHOO_REPO = 'kenzok8/openwrt-clashoo';
 
 // 上游 amd64 默认是 AMD64-v3（要 AVX2），LXC/KVM 跑不起来；老值统一兜底 compatible
@@ -896,7 +896,7 @@ cmd += 'curl -fsSL -m 20 ' + shell_quote(GH + 'vernesong/mihomo/releases/expande
 cmd += 'curl -fsSL -m 12 ' + shell_quote(GH + 'SagerNet/sing-box/releases.atom') + ' >' + shell_quote(dir + '/sa') + ' 2>/dev/null &\n';
 if (pkg_arch)
 	for (let sdk in sdks)
-		cmd += 'curl -fsSL -m 8 ' + shell_quote(B2_FEED_BASE + '/' + sdk + '/' + pkg_arch + '/' + B2_MANIFEST_NAME) + ' >' + shell_quote(dir + '/b_' + sdk) + ' 2>/dev/null &\n';
+		cmd += 'curl -fsSL -m 8 ' + shell_quote(FEED_BASE + '/' + sdk + '/' + pkg_arch + '/' + FEED_MANIFEST_NAME) + ' >' + shell_quote(dir + '/b_' + sdk) + ' 2>/dev/null &\n';
 // GitHub API 兜底，避免 expanded_assets 在部分网络下超时
 cmd += 'curl -fsSL -m 12 ' + shell_quote('https://api.github.com/repos/' + GH_CLASHOO_REPO + '/releases/latest') + ' >' + shell_quote(dir + '/gc') + ' 2>/dev/null &\n';
 // lgbm —— remote model sha256 from the release assets page (each asset lists its digest)
@@ -938,7 +938,7 @@ if (gt) {
 let v;
 v = alpha_asset_ver(readfile(dir + '/ma') || '', core_arch, 'alpha'); if (v) latest.mihomo_alpha = v;
 v = alpha_asset_ver(readfile(dir + '/sm') || '', core_arch, 'smart'); if (v) latest.smart = v;
-// clashoo / luci —— B2 manifest，按 SDK 候选取第一个命中
+// clashoo / luci —— R2 feed manifest，按 SDK 候选取第一个命中
 if (pkg_arch)
 for (let sdk in sdks) {
 	let txt = readfile(dir + '/b_' + sdk);
@@ -958,7 +958,7 @@ for (let sdk in sdks) {
 	}
 	if (hit) break;
 }
-// B2 缺啥用 GitHub 兜底
+// R2 feed 缺啥用 GitHub 兜底
 if (!latest.clashoo || !latest.luci) {
 	let gh = gh_assets_versions(readfile(dir + '/gc') || '');
 	if (!latest.clashoo && gh.clashoo) latest.clashoo = gh.clashoo;
@@ -2225,7 +2225,7 @@ return { success: rc == 0, started: rc == 0, running: rc == 0 };
 },
 
 // 点「检查更新」时调用：稳定版走 releases/latest 重定向，alpha/smart 走
-// Prerelease-Alpha 资源清单，clashoo/客户端走 B2 manifest —— 均不碰
+// Prerelease-Alpha 资源清单，clashoo/客户端走 R2 feed manifest —— 均不碰
 // GitHub API。返回按变体分键，前端按当前选的 stable/alpha 比对。
 component_check_updates: {
 call: function() {

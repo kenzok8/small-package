@@ -4,7 +4,7 @@ LOG_FILE="/tmp/clashoo_component_update.log"
 RUN_FILE="/var/run/clashoo_component_update"
 STATE_FILE="/tmp/clashoo_component_update_state"
 TMP_DIR="/tmp/clashoo-component-update"
-B2_FEED_BASE_URL="https://kenzo111.s3.us-west-004.backblazeb2.com/openwrt-feed/clashoo"
+FEED_BASE_URL="https://down.dllkids.xyz/openwrt-feed/clashoo"
 GITHUB_API_URL="https://api.github.com/repos/kenzok8/openwrt-clashoo/releases/latest"
 GITHUB_PROXY_PREFIX="${GITHUB_PROXY_PREFIX:-https://ghfast.top/}"
 
@@ -179,7 +179,7 @@ find_manifest_value() {
 load_manifest_urls() {
   sdk="$1"
   arch="$2"
-  manifest_url="${B2_FEED_BASE_URL}/${sdk}/${arch}/manifest-clashoo.txt"
+  manifest_url="${FEED_BASE_URL}/${sdk}/${arch}/manifest-clashoo.txt"
   manifest_text="$(fetch_text "$manifest_url" || true)"
   [ -n "$manifest_text" ] || return 1
 
@@ -189,11 +189,11 @@ load_manifest_urls() {
   [ -n "$core_file" ] || return 1
   [ -n "$luci_file" ] || return 1
 
-  CORE_URL="${B2_FEED_BASE_URL}/${sdk}/${arch}/${core_file}"
-  LUCI_URL="${B2_FEED_BASE_URL}/${sdk}/${arch}/${luci_file}"
+  CORE_URL="${FEED_BASE_URL}/${sdk}/${arch}/${core_file}"
+  LUCI_URL="${FEED_BASE_URL}/${sdk}/${arch}/${luci_file}"
   I18N_URL=""
-  [ -n "$i18n_file" ] && I18N_URL="${B2_FEED_BASE_URL}/${sdk}/${arch}/${i18n_file}"
-  SOURCE_LABEL="B2 ${sdk}/${arch}"
+  [ -n "$i18n_file" ] && I18N_URL="${FEED_BASE_URL}/${sdk}/${arch}/${i18n_file}"
+  SOURCE_LABEL="R2 feed ${sdk}/${arch}"
   return 0
 }
 
