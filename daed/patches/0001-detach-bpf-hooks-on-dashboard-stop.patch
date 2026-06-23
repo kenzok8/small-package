@@ -1,0 +1,42 @@
+From: kenzok8 <kenzok8@noreply>
+Date: 2026-06-23
+Subject: [PATCH] daed: detach BPF hooks when stopping from dashboard
+
+The dashboard "stop" (GraphQL Run(dry:true)) is delivered to dae-wing as a
+reload to EmptyConfig. The fast-reload path keeps the eBPF hooks attached via
+EjectBpf() (it only skips bpf.Close(), the TC/clsact filters stay bound). On a
+genuine stop this leaves the LAN/WAN clsact programs attached with no tproxy
+behind them, so every TCP/UDP packet (including DNS:53) is steered into a dead
+tproxy and black-holed; only `network restart`/reboot recovers. ICMP is not
+hijacked, so the box still pings IPs ("internal works, external dead").
+
+dae-core already has DetachBpfHooks() for exactly this, but upstream only calls
+it from the standalone dae SIGTERM handler (dae-core/cmd/run.go), never on
+dae-wing's stop path. Call it explicitly when reloading to EmptyConfig.
+
+Reported: https://github.com/kenzok8/openwrt-daede/issues/13
+---
+--- a/dae/run.go
++++ b/dae/run.go
+@@ -138,6 +138,21 @@
+ 			/* dae-wing start */
+ 			newConf := newReloadMsg.Config
+ 			/* dae-wing end */
++
++			// openwrt-daede patch: a "stop" from the dashboard is delivered as a
++			// reload to EmptyConfig. The fast-reload path keeps the eBPF hooks
++			// attached via EjectBpf (only bpf.Close() is skipped, the TC filters
++			// stay bound). On a real stop that leaves the LAN/WAN clsact programs
++			// attached with no tproxy behind them, black-holing all TCP/UDP
++			// (incl. DNS) until `network restart`/reboot. Upstream only calls
++			// DetachBpfHooks() from the standalone dae SIGTERM handler, never on
++			// dae-wing's stop path. Detach this generation's BPF hooks now so the
++			// datapath is fully removed when stopping.
++			if newConf == EmptyConfig {
++				if e := c.DetachBpfHooks(); e != nil {
++					log.Errorln("[Stop] DetachBpfHooks:", e)
++				}
++			}
+ 			// New logger.
+ 			oldLogOutput := log.Out
+ 			log = logrus.New()

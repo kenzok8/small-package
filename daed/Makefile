@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=daed
 PKG_VERSION:=2026.06.14
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=daed-src-2026.06.14-4e215048068a.tar.gz
 PKG_SOURCE_URL:=https://github.com/kenzok8/openwrt-daede/releases/download/daed-src
@@ -96,7 +96,8 @@ endef
 define Build/Prepare
 	mkdir -p $(DAED_BUILD_DIR)
 	$(TAR) --strip-components=1 -C $(DAED_BUILD_DIR) -xzf $(DL_DIR)/$(PKG_SOURCE)
-	$(if $(wildcard $(PATCH_DIR)/*.patch),$(call PatchDir,$(PKG_BUILD_DIR),$(PATCH_DIR),))
+	$(if $(wildcard $(CURDIR)/patches/*.patch),$(call PatchDir,$(PKG_BUILD_DIR),$(CURDIR)/patches,))
+	$(if $(filter arm,$(ARCH)),$(if $(wildcard $(CURDIR)/patches_arm/*.patch),$(call PatchDir,$(PKG_BUILD_DIR),$(CURDIR)/patches_arm,)))
 endef
 
 DAE_CFLAGS:= \
