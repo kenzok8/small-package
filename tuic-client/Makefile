@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tuic-client
-PKG_VERSION:=1.8.8
+PKG_VERSION:=1.8.9
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/Itsusinn/tuic/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=f4cf4f0dcf8dbc3f8170771e9b33e6fc8e93ad8f04afd018de99556878ccafbc
+PKG_HASH:=36e895c4926ea6aa758d4c849719935cb2e5cdf7b0b756df80459443d3abf68b
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
