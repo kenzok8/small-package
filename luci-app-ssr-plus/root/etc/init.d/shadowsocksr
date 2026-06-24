@@ -2589,14 +2589,17 @@ stop() {
 		uci -q del "dhcp.@dnsmasq[0]._unused_ssrp_changed"
 		uci -q commit "dhcp"
 	fi
-		if [ -f "$DNSMASQ_CONF_DIR/dnsmasq-ssrplus.conf" ]; then
-			rm -rf $DNSMASQ_CONF_DIR/dnsmasq-ssrplus.conf \
-				$TMP_DNSMASQ_PATH \
-				$TMP_PATH/*-ssr-*.json \
-				$TMP_PATH/3proxy* \
-				$TMP_PATH/clash-* \
-				$TMP_PATH/ssr-server*.json \
-				$TMP_PATH/*-config-*.json
+	if [ -f "$DNSMASQ_CONF_DIR/dnsmasq-ssrplus.conf" ]; then
+		rm -rf $DNSMASQ_CONF_DIR/dnsmasq-ssrplus.conf \
+			$TMP_DNSMASQ_PATH \
+			$TMP_PATH/*-ssr-*.json \
+			$TMP_PATH/3proxy* \
+			$TMP_PATH/clash-* \
+			$TMP_PATH/v2ray-* \
+			$TMP_PATH/tuic-* \
+			$TMP_PATH/ss-* \
+			$TMP_PATH/ssr-server*.json \
+			$TMP_PATH/*-config-*.json
 
 		/etc/init.d/dnsmasq restart >/dev/null 2>&1
 	fi
