@@ -59,10 +59,14 @@ local function parse_realm_uri(uri)
 	local scheme, token, server_url, realm_id, query = trim(uri):match("^(realm%+http|realm)://([^@]+)@([^/]+)/([^?]*)%??(.*)$")
 	if not scheme or not token or not server_url or not realm_id then return nil end
 	realm_id = realm_id:gsub("/+$", "")
+	local address, port = server_url:match("^%[?([^%]]+)%]?:?(%d*)$")
+	port = tonumber(port) or (scheme == "realm+http" and 80 or 443)
 	local realm = {
 		scheme = scheme,
 		token = token,
 		server_url = server_url,
+		address = address,
+		port = port,
 		realm_id = realm_id
 	}
 	-- 解析 query 中的 stun=
@@ -292,6 +296,15 @@ function xray_hysteria2()
 		address = server.server,
 		port = tonumber(server.server_port)
 	}
+
+	-- Realm 支持：使用 Realm 服务器地址覆盖默认地址
+	if server.v2ray_protocol == "hysteria2" and server.hysteria2_realms then
+		local realm = parse_realm_uri(server.hysteria2_realm_url)
+		if realm then
+			outbound_settings.address = realm.address
+			outbound_settings.port = realm.port
+		end
+	end
 end
 local outbound = {}
 function outbound:new(o)

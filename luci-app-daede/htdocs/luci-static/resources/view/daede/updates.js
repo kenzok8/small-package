@@ -452,7 +452,13 @@ return view.extend({
 				uci.set('daede', 'config', 'geo_auto_freq', freqSel.value);
 				const orig = saveBtn.textContent;
 				saveBtn.disabled = true; saveBtn.textContent = '...';
-				uci.save().then(function() { return uci.apply(); }).then(function() {
+				uci.save().then(function() {
+					return uci.changes();
+				}).then(function(changes) {
+					// apply only when changed; empty changeset fails apply (#16)
+					if (changes && Object.keys(changes).length)
+						return uci.apply();
+				}).then(function() {
 					return fs.exec('/usr/share/luci-app-daede/geo-cron.sh', [autoCb.checked ? 'enable' : 'disable']);
 				}).then(function() {
 					logPane.textContent = _('Geo data source saved.');
