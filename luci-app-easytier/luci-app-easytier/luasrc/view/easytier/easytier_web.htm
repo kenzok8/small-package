@@ -15,6 +15,7 @@ local uci = require "luci.model.uci".cursor()
 	--info: #2196F3;
 	--warning: #FF9800;
 	--hover-bg: #f5f5f5;
+	--field-width: 520px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -33,17 +34,17 @@ local uci = require "luci.model.uci".cursor()
 
 .web-console-container {
 	max-width: 1200px;
-	margin: 20px auto;
-	padding: 0 20px;
+	margin: 12px auto;
+	padding: 0 12px;
 }
 
 .web-card {
 	background: var(--card-bg);
 	border: 1px solid var(--border-color);
-	border-radius: 16px;
-	padding: 28px;
-	margin-bottom: 24px;
-	box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+	border-radius: 10px;
+	padding: 18px;
+	margin-bottom: 16px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 	transition: box-shadow 0.3s ease;
 }
 
@@ -52,47 +53,47 @@ local uci = require "luci.model.uci".cursor()
 }
 
 .web-card h3 {
-	margin: 0 0 24px 0;
+	margin: 0 0 16px 0;
 	color: var(--text-primary);
-	font-size: 20px;
+	font-size: 16px;
 	font-weight: 600;
-	border-bottom: 3px solid var(--info);
-	padding-bottom: 14px;
+	border-bottom: 2px solid var(--info);
+	padding-bottom: 10px;
 	display: flex;
 	align-items: center;
-	gap: 12px;
+	gap: 8px;
 }
 
 .web-card h3::before {
 	content: "⚙️";
-	font-size: 24px;
+	font-size: 18px;
 }
 
 .form-row {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-	gap: 20px;
-	margin-bottom: 20px;
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	gap: 12px;
+	margin-bottom: 12px;
 }
 
 .form-group {
-	margin-bottom: 24px;
+	margin-bottom: 14px;
 }
 
 .form-group label {
 	display: block;
-	margin-bottom: 10px;
+	margin-bottom: 6px;
 	color: var(--text-primary);
 	font-weight: 600;
-	font-size: 14px;
+	font-size: 12px;
 }
 
 .form-group .description {
 	display: block;
-	margin-top: 6px;
+	margin-top: 4px;
 	color: var(--text-secondary);
-	font-size: 12px;
-	line-height: 1.6;
+	font-size: 11px;
+	line-height: 1.45;
 	padding-left: 0;
 	opacity: 0.8;
 }
@@ -108,13 +109,17 @@ local uci = require "luci.model.uci".cursor()
 }
 
 .form-control {
+	box-sizing: border-box;
 	width: 100%;
-	padding: 12px 16px;
-	border: 2px solid var(--border-color);
-	border-radius: 8px;
+	max-width: var(--field-width);
+	height: 32px;
+	padding: 6px 10px;
+	border: 1px solid var(--border-color);
+	border-radius: 6px;
 	background: var(--card-bg);
 	color: var(--text-primary);
-	font-size: 14px;
+	font-size: 12px;
+	line-height: 1.2;
 	transition: all 0.2s ease;
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
@@ -122,7 +127,7 @@ local uci = require "luci.model.uci".cursor()
 .form-control:focus {
 	outline: none;
 	border-color: var(--info);
-	box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+	box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
 }
 
 .form-control:disabled {
@@ -132,13 +137,17 @@ local uci = require "luci.model.uci".cursor()
 }
 
 .checkbox-wrapper {
+	box-sizing: border-box;
 	display: block;
-	padding: 12px 16px;
+	width: 100%;
+	max-width: var(--field-width);
+	padding: 8px 10px;
 	background: var(--hover-bg);
-	border-radius: 8px;
+	border-radius: 6px;
 	transition: background 0.2s;
 	position: relative;
-	min-height: 26px;
+	min-height: 20px;
+	vertical-align: top;
 }
 
 .checkbox-wrapper:hover {
@@ -150,8 +159,11 @@ local uci = require "luci.model.uci".cursor()
 	cursor: pointer;
 	user-select: none;
 	display: block;
-	line-height: 26px;
-	padding-right: 60px;
+	line-height: 20px;
+	padding-right: 48px;
+	white-space: nowrap;
+	word-break: keep-all;
+	overflow-wrap: normal;
 }
 
 .checkbox-wrapper label::before {
@@ -161,10 +173,10 @@ local uci = require "luci.model.uci".cursor()
 /* iOS风格开关 */
 .switch {
 	position: absolute;
-	width: 48px;
-	height: 26px;
-	right: 16px;
-	top: 12px;
+	width: 38px;
+	height: 20px;
+	right: 10px;
+	top: 8px;
 }
 
 .switch input {
@@ -179,21 +191,21 @@ local uci = require "luci.model.uci".cursor()
 	cursor: pointer;
 	top: 0;
 	left: 0;
-	width: 48px;
-	height: 26px;
+	width: 38px;
+	height: 20px;
 	background-color: #ccc;
 	-webkit-transition: 0.3s;
 	transition: 0.3s;
-	border-radius: 26px;
+	border-radius: 20px;
 }
 
 .slider:before {
 	position: absolute;
 	content: "";
-	height: 20px;
-	width: 20px;
-	left: 3px;
-	top: 3px;
+	height: 16px;
+	width: 16px;
+	left: 2px;
+	top: 2px;
 	background-color: white;
 	-webkit-transition: 0.3s;
 	transition: 0.3s;
@@ -206,9 +218,9 @@ input:checked + .slider {
 }
 
 input:checked + .slider:before {
-	-webkit-transform: translateX(22px);
-	-ms-transform: translateX(22px);
-	transform: translateX(22px);
+	-webkit-transform: translateX(18px);
+	-ms-transform: translateX(18px);
+	transform: translateX(18px);
 }
 
 input:disabled + .slider {
@@ -217,16 +229,16 @@ input:disabled + .slider {
 }
 
 .btn {
-	padding: 12px 28px;
+	padding: 8px 16px;
 	border: none;
-	border-radius: 8px;
-	font-size: 15px;
+	border-radius: 6px;
+	font-size: 13px;
 	font-weight: 600;
 	cursor: pointer;
 	transition: all 0.2s ease;
 	display: inline-flex;
 	align-items: center;
-	gap: 8px;
+	gap: 6px;
 	box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
@@ -259,17 +271,17 @@ input:disabled + .slider {
 
 .btn-group {
 	display: flex;
-	gap: 16px;
-	margin-top: 32px;
-	padding-top: 24px;
-	border-top: 2px dashed var(--border-color);
+	gap: 10px;
+	margin-top: 20px;
+	padding-top: 16px;
+	border-top: 1px dashed var(--border-color);
 }
 
 .iframe-container {
 	width: 100%;
 	height: 800px;
-	border: 2px solid var(--border-color);
-	border-radius: 12px;
+	border: 1px solid var(--border-color);
+	border-radius: 8px;
 	overflow: hidden;
 	background: var(--card-bg);
 	box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
@@ -284,18 +296,18 @@ input:disabled + .slider {
 .status-badge {
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
-	padding: 6px 16px;
-	border-radius: 20px;
-	font-size: 13px;
+	gap: 5px;
+	padding: 4px 10px;
+	border-radius: 14px;
+	font-size: 11px;
 	font-weight: 600;
 	margin-left: auto;
 }
 
 .status-badge::before {
 	content: "";
-	width: 8px;
-	height: 8px;
+	width: 6px;
+	height: 6px;
 	border-radius: 50%;
 	animation: pulse 2s infinite;
 }
@@ -345,9 +357,9 @@ input:disabled + .slider {
 }
 
 .alert {
-	padding: 14px 20px;
-	border-radius: 8px;
-	font-size: 14px;
+	padding: 10px 14px;
+	border-radius: 6px;
+	font-size: 12px;
 	font-weight: 500;
 	position: fixed;
 	top: 80px;
@@ -356,7 +368,7 @@ input:disabled + .slider {
 	-ms-transform: translateX(-50%);
 	transform: translateX(-50%);
 	z-index: 10000;
-	min-width: 320px;
+	min-width: 260px;
 	max-width: 500px;
 	text-align: center;
 	box-shadow: 0 4px 16px rgba(0,0,0,0.3);
@@ -408,39 +420,39 @@ input:disabled + .slider {
 
 .modal-content {
 	background: var(--card-bg);
-	border-radius: 12px;
-	padding: 24px;
+	border-radius: 8px;
+	padding: 18px;
 	max-width: 500px;
 	width: 90%;
 	box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 .modal-title {
-	font-size: 18px;
+	font-size: 15px;
 	font-weight: 600;
 	color: var(--text-primary);
-	margin-bottom: 16px;
+	margin-bottom: 12px;
 }
 
 .modal-message {
-	font-size: 14px;
+	font-size: 12px;
 	color: var(--text-secondary);
-	margin-bottom: 24px;
-	line-height: 1.6;
+	margin-bottom: 16px;
+	line-height: 1.5;
 }
 
 .modal-buttons {
 	display: flex;
-	gap: 12px;
+	gap: 8px;
 	justify-content: flex-end;
 }
 
 .modal-btn {
-	padding: 10px 20px;
+	padding: 7px 14px;
 	border: none;
 	border-radius: 6px;
 	cursor: pointer;
-	font-size: 14px;
+	font-size: 12px;
 	font-weight: 500;
 	transition: all 0.2s;
 }
@@ -457,6 +469,84 @@ input:disabled + .slider {
 .modal-btn-secondary {
 	background: var(--border-color);
 	color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+	.web-console-container {
+		margin: 8px auto;
+		padding: 0 8px;
+	}
+
+	.web-card {
+		border-radius: 8px;
+		padding: 12px;
+		margin-bottom: 12px;
+	}
+
+	.web-card h3 {
+		font-size: 15px;
+		margin-bottom: 12px;
+		padding-bottom: 8px;
+	}
+
+	.web-card h3::before {
+		font-size: 16px;
+	}
+
+	.form-row {
+		grid-template-columns: 1fr;
+		gap: 8px;
+		margin-bottom: 8px;
+	}
+
+	.form-group {
+		margin-bottom: 10px;
+	}
+
+	.form-control {
+		height: 30px;
+		padding: 5px 8px;
+		font-size: 12px;
+	}
+
+	.checkbox-wrapper {
+		padding: 7px 8px;
+	}
+
+	.checkbox-wrapper label {
+		font-size: 12px;
+		padding-right: 44px;
+		white-space: normal;
+		word-break: keep-all;
+	}
+
+	.switch {
+		right: 8px;
+		top: 7px;
+	}
+
+	.btn {
+		padding: 7px 12px;
+		font-size: 12px;
+		white-space: nowrap;
+		word-break: keep-all;
+	}
+
+	.btn-group {
+		gap: 8px;
+		margin-top: 14px;
+		padding-top: 12px;
+		flex-wrap: wrap;
+	}
+
+	.alert {
+		min-width: 220px;
+		max-width: calc(100vw - 24px);
+	}
+
+	.modal-content {
+		padding: 14px;
+	}
 }
 </style>
 
@@ -479,7 +569,7 @@ input:disabled + .slider {
 				<label for="web_db_path"><%:Database File Path%></label>
 				<div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
 					<input type="text" class="form-control" id="web_db_path" name="web_db_path" placeholder="/etc/easytier/et.db" style="flex:1;min-width:200px;">
-					<button type="button" class="btn" onclick="showResetDbModal()" style="background:var(--error);color:white;padding:12px 16px;white-space:nowrap;">
+					<button type="button" class="btn" onclick="showResetDbModal()" style="background:var(--error);color:white;padding:8px 12px;white-space:nowrap;">
 						<%:Reset Database%>
 					</button>
 				</div>
@@ -602,7 +692,7 @@ input:disabled + .slider {
 			</div>
 			
 			<!-- OIDC单点登录配置 -->
-			<div style="margin-top:32px;padding-top:24px;border-top:2px dashed var(--border-color);">
+			<div style="margin-top:20px;padding-top:16px;border-top:1px dashed var(--border-color);">
 				<div class="form-group">
 					<div class="checkbox-wrapper">
 						<label for="web_oidc_enabled"><%:Enable OIDC Single Sign-On%></label>
@@ -676,7 +766,7 @@ input:disabled + .slider {
 			</div>
 
 			<!-- Webhook高级配置 -->
-			<div style="margin-top:32px;padding-top:24px;border-top:2px dashed var(--border-color);">
+			<div style="margin-top:20px;padding-top:16px;border-top:1px dashed var(--border-color);">
 				<div class="form-group">
 					<div class="checkbox-wrapper">
 						<label for="web_webhook_enabled"><%:Enable Webhook Integration%></label>
@@ -745,12 +835,12 @@ input:disabled + .slider {
 	<div class="modal-content">
 		<div class="modal-title" style="color:var(--error);">⚠️ <%:Warning%></div>
 		<div class="modal-message">
-			<div style="color:var(--error);font-weight:600;margin-bottom:12px;">
+			<div style="color:var(--error);font-weight:600;margin-bottom:8px;">
 				<%:Are you sure you want to reset the database?%>
 			</div>
-			<div style="font-size:13px;line-height:1.6;color:var(--text-secondary);">
+			<div style="font-size:12px;line-height:1.5;color:var(--text-secondary);">
 				<%:This will delete all database files and cannot be recovered%>:<br>
-				<code id="reset_db_files" style="display:block;margin-top:8px;padding:8px;background:var(--hover-bg);border-radius:4px;word-break:break-all;font-size:12px;"></code>
+				<code id="reset_db_files" style="display:block;margin-top:6px;padding:6px;background:var(--hover-bg);border-radius:4px;word-break:break-all;font-size:11px;"></code>
 			</div>
 		</div>
 		<div class="modal-buttons">
@@ -765,7 +855,7 @@ input:disabled + .slider {
 	<div class="modal-content">
 		<div class="modal-title"><%:Database Reset Successful%></div>
 		<div class="modal-message">
-			<pre id="restart_web_message" style="white-space:pre-wrap;word-break:break-all;font-size:13px;line-height:1.6;"></pre>
+			<pre id="restart_web_message" style="white-space:pre-wrap;word-break:break-all;font-size:12px;line-height:1.5;"></pre>
 		</div>
 		<div class="modal-buttons">
 			<button class="modal-btn modal-btn-secondary" onclick="closeRestartModal()"><%:Later%></button>

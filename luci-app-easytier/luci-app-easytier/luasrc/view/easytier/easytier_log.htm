@@ -118,16 +118,36 @@ local translate = i18n.translate
 	flex-wrap: wrap;
 }
 
+.log-wiki-link {
+	display: inline-flex;
+	align-items: center;
+	height: 36px;
+	margin-right: 8px;
+	flex: 0 0 auto;
+}
+
+.log-wiki-link img {
+	display: block;
+	max-height: 20px;
+}
+
 .log-select {
-	padding: 8px 14px;
+	box-sizing: border-box;
+	width: auto;
+	min-width: 0;
+	height: 34px;
+	padding: 6px 24px 6px 10px;
 	border: 1px solid var(--log-border);
 	background: var(--log-bg);
 	color: var(--log-text);
 	border-radius: 8px;
 	cursor: pointer;
 	font-size: 13px;
+	line-height: 1.2;
 	transition: all 0.3s ease;
 	box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+	flex: 0 0 auto;
+	max-width: 136px;
 }
 
 .log-select:hover, .log-select:focus {
@@ -138,6 +158,12 @@ local translate = i18n.translate
 }
 
 .log-btn {
+	box-sizing: border-box;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 0;
+	height: 34px;
 	padding: 8px 16px;
 	border: 1px solid var(--log-border);
 	background: var(--log-bg);
@@ -148,6 +174,10 @@ local translate = i18n.translate
 	font-weight: 500;
 	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+	flex: 0 0 auto;
+	white-space: nowrap;
+	word-break: keep-all;
+	overflow-wrap: normal;
 }
 
 .log-btn:hover {
@@ -162,15 +192,65 @@ local translate = i18n.translate
 	box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.log-btn-primary {
-	background: var(--tab-active);
-	color: white;
-	border-color: var(--tab-active);
+.log-switch {
+	box-sizing: border-box;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 34px;
+	padding: 0 4px;
+	color: var(--log-text);
+	cursor: pointer;
+	flex: 0 0 auto;
+	user-select: none;
+	white-space: nowrap;
+	word-break: keep-all;
+	overflow-wrap: normal;
 }
 
-.log-btn-primary:hover {
-	opacity: 0.9;
-	box-shadow: 0 4px 12px rgba(33,150,243,0.3);
+.log-switch input {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.log-switch-track {
+	position: relative;
+	width: 42px;
+	height: 22px;
+	border-radius: 999px;
+	background: var(--log-border);
+	box-shadow: inset 0 1px 3px rgba(0,0,0,0.18);
+	transition: background 0.2s ease, box-shadow 0.2s ease;
+	flex: 0 0 auto;
+}
+
+.log-switch-track::after {
+	content: '';
+	position: absolute;
+	top: 3px;
+	left: 3px;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: #ffffff;
+	box-shadow: 0 1px 4px rgba(0,0,0,0.28);
+	transition: transform 0.2s ease;
+}
+
+.log-switch input:checked + .log-switch-track {
+	background: var(--tab-active);
+	box-shadow: inset 0 1px 3px rgba(0,0,0,0.12), 0 0 0 2px rgba(33,150,243,0.16);
+}
+
+.log-switch input:checked + .log-switch-track::after {
+	transform: translateX(20px);
+}
+
+.log-switch-text {
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1;
 }
 
 .log-content {
@@ -256,28 +336,129 @@ local translate = i18n.translate
 	.log-header {
 		flex-direction: column;
 		align-items: stretch;
-		padding: 12px 16px;
+		padding: 10px 12px;
+		gap: 10px;
 	}
 	
 	.log-tabs {
 		width: 100%;
-		justify-content: space-around;
+		justify-content: flex-start;
+		gap: 6px;
+	}
+
+	.log-tab {
+		padding: 7px 12px;
+		font-size: 12px;
+		border-radius: 6px;
 	}
 	
 	.log-controls {
 		width: 100%;
-		justify-content: space-between;
+		justify-content: flex-start;
+		align-items: center;
+		gap: 6px;
+	}
+
+	.log-wiki-link {
+		height: 30px;
+		margin-right: 2px;
+	}
+
+	.log-wiki-link img {
+		max-width: 96px;
+	}
+
+	.log-select {
+		height: 28px;
+		max-width: 96px;
+		padding: 3px 18px 3px 6px;
+		font-size: 12px;
+		line-height: 1.1;
+		border-radius: 6px;
 	}
 	
 	.log-content {
-		height: 400px;
+		height: 60vh;
+		min-height: 320px;
 		font-size: 12px;
-		padding: 16px;
+		padding: 12px;
 	}
 	
 	.log-btn {
-		flex: 1;
-		text-align: center;
+		flex: 0 0 auto;
+		height: 28px;
+		padding: 4px 8px;
+		font-size: 12px;
+		border-radius: 6px;
+		line-height: 1.1;
+		white-space: nowrap;
+		word-break: keep-all;
+		overflow-wrap: normal;
+	}
+
+	.log-switch {
+		height: 28px;
+		gap: 5px;
+		padding: 0 2px;
+	}
+
+	.log-switch-track {
+		width: 34px;
+		height: 18px;
+	}
+
+	.log-switch-track::after {
+		top: 2px;
+		left: 2px;
+		width: 14px;
+		height: 14px;
+	}
+
+	.log-switch input:checked + .log-switch-track::after {
+		transform: translateX(16px);
+	}
+
+	.log-switch-text {
+		font-size: 12px;
+	}
+
+	.log-footer {
+		padding: 6px 12px;
+		text-align: left;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
+@media (max-width: 420px) {
+	.log-container {
+		border-radius: 8px;
+		margin: 10px 0;
+	}
+
+	.log-header {
+		padding: 8px;
+	}
+
+	.log-controls {
+		gap: 5px;
+	}
+
+	.log-wiki-link img {
+		max-width: 82px;
+	}
+
+	.log-select {
+		max-width: 88px;
+	}
+
+	.log-btn {
+		padding: 4px 6px;
+	}
+
+	.log-switch-text {
+		font-size: 11px;
 	}
 }
 </style>
@@ -291,11 +472,16 @@ local translate = i18n.translate
 			<button class="log-tab" data-log="web" onclick="switchLog('web')">
 				<%=translate("web log")%>
 			</button>
+			<a class="log-wiki-link" href="https://deepwiki.com/EasyTier/EasyTier" target="_blank">
+				<img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki">
+			</a>
 		</div>
 		<div class="log-controls">
-			<a href="https://deepwiki.com/EasyTier/EasyTier" target="_blank" style="display:inline-block;height:36px;line-height:36px;margin-right:8px;">
-				<img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" style="vertical-align:middle;">
-			</a>
+			<label class="log-switch" id="auto_refresh_switch" title="<%=translate("Auto Refresh")%>">
+				<span class="log-switch-text"><%=translate("Auto Refresh")%></span>
+				<input type="checkbox" id="auto_refresh_toggle" checked onchange="toggleAutoRefresh(true)">
+				<span class="log-switch-track" aria-hidden="true"></span>
+			</label>
 			<select id="log_level_filter" class="log-select" onchange="filterLogLevel()">
 				<option value="all"><%=translate("All Levels")%></option>
 				<option value="INFO">INFO</option>
@@ -304,9 +490,6 @@ local translate = i18n.translate
 				<option value="DEBUG">DEBUG</option>
 				<option value="TRACE">TRACE</option>
 			</select>
-			<button class="log-btn log-btn-primary" id="auto_refresh_btn" onclick="toggleAutoRefresh()">
-				<%=translate("Stop Auto Refresh")%>
-			</button>
 			<button class="log-btn" onclick="clearCurrentLog()"><%=translate("Clear Logs")%></button>
 			<button class="log-btn" onclick="downloadCurrentLog()"><%=translate("Download Log")%></button>
 		</div>
@@ -521,18 +704,20 @@ function startPolling() {
 	}, 2000);
 }
 
-function toggleAutoRefresh() {
-	autoRefreshEnabled = !autoRefreshEnabled;
-	var btn = document.getElementById('auto_refresh_btn');
+function toggleAutoRefresh(refreshNow) {
+	var toggle = document.getElementById('auto_refresh_toggle');
+	var wrapper = document.getElementById('auto_refresh_switch');
+	autoRefreshEnabled = toggle ? toggle.checked : !autoRefreshEnabled;
+
 	if (autoRefreshEnabled) {
-		btn.textContent = '<%=translate("Stop Auto Refresh")%>';
-		btn.classList.add('log-btn-primary');
+		if (wrapper) wrapper.title = '<%=translate("Stop Auto Refresh")%>';
+		if (refreshNow) refreshLog();
 	} else {
-		btn.textContent = '<%=translate("Start Auto Refresh")%>';
-		btn.classList.remove('log-btn-primary');
+		if (wrapper) wrapper.title = '<%=translate("Start Auto Refresh")%>';
 	}
 }
 
+toggleAutoRefresh(false);
 refreshLog();
 startPolling();
 
