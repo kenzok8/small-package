@@ -703,15 +703,56 @@ Xray.outbounds = {
 					local n_maxsplit = xray_fragment.fragment_maxSplit
 					--local domainstr = xray_noise.domainStrategy
 					finalmask.tcp = finalmask.tcp or {}
+
+					-- 辅助函数：将逗号分隔的字符串拆分为数组
+					local function split_to_array(str)
+						if not str or str == "" then return nil end
+						local result = {}
+						for value in string.gmatch(str, "[^,]+") do
+							value = value:gsub("^%s*(.-)%s*$", "%1")  -- 去除首尾空格
+							if value ~= "" then
+								table.insert(result, value)
+							end
+						end
+						return #result > 0 and result or nil
+					end
+
+					-- 构建 fragment settings
+					local fragment_settings = {
+						packets = (n_packets and n_packets ~= "") and n_packets or nil,
+						maxSplit = (n_maxsplit and n_maxsplit ~= "") and n_maxsplit or nil
+					}
+    
+					-- 根据 Xray 版本决定使用旧格式还是新格式
+					if xray_version_val <= 260601 then
+						-- 旧版本：使用 length 和 delay（单个值）
+						if n_length and n_length ~= "" then
+							fragment_settings.length = n_length
+						end
+						if n_delay and n_delay ~= "" then
+							if type(n_delay) == "string" and n_delay:find("-", 1, true) then
+								fragment_settings.delay = n_delay
+							else
+								fragment_settings.delay = tonumber(n_delay)
+							end
+						end
+					else
+						-- 新版本：使用 lengths 和 delays（数组）
+						-- 拆分逗号分隔的字符串
+						local lengths_array = split_to_array(n_length)
+						if lengths_array then
+							fragment_settings.lengths = lengths_array
+						end
+        
+						local delays_array = split_to_array(n_delay)
+						if delays_array then
+							fragment_settings.delays = delays_array
+						end
+					end
+    
 					finalmask.tcp[#finalmask.tcp + 1] = {
 						type = "fragment",
-						settings = {
-							--domainStrategy = (xray_fragment.noise == "1" and xray_noise.enabled == "1") and domainstr or nil,
-							packets = (n_packets and n_packets ~= "") and n_packets or nil,
-							length = (n_length and n_length ~= "") and n_length or nil,
-							delay = (type(n_delay) == "string" and string.find(n_delay, "-")) and n_delay or (n_delay and tonumber(n_delay)),
-							maxSplit = (n_maxsplit and n_maxsplit ~= "") and n_maxsplit or nil
-						}
+						settings = fragment_settings
 					}
 				end
 				if xray_fragment.noise == "1" and (TP == "kcp" or (TP == "xhttp" and (server.tls_alpn == "h3" or server.tls_alpn == "h3,h2"))) then 

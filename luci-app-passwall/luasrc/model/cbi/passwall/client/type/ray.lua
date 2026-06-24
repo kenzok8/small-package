@@ -351,6 +351,12 @@ end
 
 o = s:option(Value, _n("hysteria2_realm_url"), translate("Realm URL"), translate("Example:") .. "realm://public@realm.hy2.io/your-realm-name")
 o:depends({ [_n("hysteria2_realms")] = "1" })
+o.validate = function(self, value)
+	value = api.trim(value)
+	local realm = api.parse_realm_uri(value)
+	if realm then return value end
+	return nil, translate("Invalid Realm URL.")
+end
 
 o = s:option(DynamicList, _n("hysteria2_realm_stun"), translate("Realm STUN"))
 o.default = { "stun.sip.us:3478", "stun.nextcloud.com:3478", "global.stun.twilio.com:3478" }

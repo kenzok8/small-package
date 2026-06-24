@@ -2125,3 +2125,6 @@ msgstr "并发隧道连接数"
 
 msgid "Processing, please wait…"
 msgstr "正在处理，请稍候…"
+
+msgid "Invalid Realm URL."
+msgstr "Realm URL 不正确。"

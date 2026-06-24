@@ -68,6 +68,26 @@ end
 
 table.sort(key_table)
 
+-- 获取 Xray 版本号
+if is_finded("xray") then
+	local version = luci.sys.exec("xray version 2>&1")
+	if version and version ~= "" then
+		xray_version = version:match("Xray%s+([%d%.]+)")
+	end
+end
+
+-- 将 Xray 版本号转换为数字
+if xray_version and xray_version ~= "" then
+	local major, minor, patch =
+		xray_version:match("(%d+)%.?(%d*)%.?(%d*)")
+
+	major = tonumber(major) or 0
+	minor = tonumber(minor) or 0
+	patch = tonumber(patch) or 0
+
+	xray_version_val = major * 10000 + minor * 100 + patch
+end
+
 m = Map("shadowsocksr")
 -- [[ global ]]--
 s = m:section(TypedSection, "global", translate("Server failsafe auto swith and custom update settings"))
@@ -237,15 +257,31 @@ if is_finded("xray") then
 	o:value("1-5", "1-5")
 	o:depends("fragment", true)
 
-	o = s:option(Value, "fragment_length", translate("Fragment Length"), translate("Fragmented packet length (byte)"))
-	o.datatype = "or(uinteger,portrange)"
+	o = s:option(Value, "fragment_length", translate("Fragment Length"))
+	if xray_version_val <= 260601 then
+		o.datatype = "or(uinteger,portrange)"
+	end
 	o.default = "100-200"
 	o:depends("fragment", true)
+	o.description = translate(
+    	"<ul>" ..
+    	"<li>" .. translate("Fragmented packet length (byte)") .. "</li>" .. 
+    	"<li>" .. translate("Note: When version is higher than 26.6.1, input multiple fragment lengths saperate with ','.") .. "</li>" ..
+    	"</ul>"
+	)
 
-	o = s:option(Value, "fragment_delay", translate("Fragment Delay"), translate("Fragmentation interval (ms)"))
-	o.datatype = "or(uinteger,portrange)"
+	o = s:option(Value, "fragment_delay", translate("Fragment Delay"))
+	if xray_version_val <= 260601 then
+		o.datatype = "or(uinteger,portrange)"
+	end
 	o.default = "10-20"
 	o:depends("fragment", true)
+	o.description = translate(
+    	"<ul>" ..
+    	"<li>" .. translate("Fragmentation interval (ms)") .. "</li>" .. 
+    	"<li>" .. translate("Note: When version is higher than 26.6.1, input multiple fragment intervals saperate with ','.") .. "</li>" ..
+    	"</ul>"
+	)
 
 	o = s:option(Value, "fragment_maxSplit", translate("Max Split"), translate("Limit the maximum number of splits."))
 	o.datatype = "or(uinteger,portrange)"
