@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=natflow
-PKG_VERSION:=20260623
+PKG_VERSION:=20260625
 
 PKG_SOURCE_URL:=https://codeload.github.com/ptpt52/natflow/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=a221ee6d118900f9738a61f64813ce6a72ed04ff4beb5f53fb51f6304da26ca3
+PKG_HASH:=17dccf8d52b6431cebb0d0a016ebc0014fb80153d760f9214ba9a42d0e171111
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 PKG_MAINTAINER:=Chen Minqiang <ptpt52@gmail.com>
