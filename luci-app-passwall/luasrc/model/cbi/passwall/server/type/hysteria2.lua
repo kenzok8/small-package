@@ -65,6 +65,20 @@ o.rewrite_option = o.option
 o:depends({ [_n("obfs_type")] = "salamander" })
 o:depends({ [_n("obfs_type")] = "gecko" })
 
+o = s:option(Value, _n("obfs_MinPacketSize"), translate("Gecko Packet Size (min)"))
+o.datatype = "uinteger"
+o.placeholder = "512"
+o.default = "512"
+o:depends({ [_n("obfs_type")] = "gecko" })
+o.rewrite_option = o.option
+
+o = s:option(Value, _n("obfs_MaxPacketSize"), translate("Gecko Packet Size (max)"))
+o.datatype = "uinteger"
+o.placeholder = "1200"
+o.default = "1200"
+o:depends({ [_n("obfs_type")] = "gecko" })
+o.rewrite_option = o.option
+
 o = s:option(Flag, _n("udp"), translate("UDP"))
 o.default = "1"
 o.rewrite_option = o.option

@@ -1419,6 +1419,10 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			result.hysteria2_obfs_type = params.obfs or "salamander"
 			result.hysteria2_obfs_password = params["obfs-password"] or params["obfs_password"]
 		end
+		if params.obfs == "gecko" then
+			result.hysteria2_obfs_MinPacketSize = params.minpacketsize or "512"
+			result.hysteria2_obfs_MaxPacketSize = params.maxpacketsize or "1200"
+		end
 
 		if (sub_hysteria2_type == "sing-box" and has_singbox) or (sub_hysteria2_type == "xray" and has_xray) then
 			local is_singbox = sub_hysteria2_type == "sing-box" and has_singbox

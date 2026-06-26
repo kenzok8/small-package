@@ -39,6 +39,18 @@ function gen_config_server(node)
 			stunServers = node.hysteria2_realm_stun
 		} or nil
 	}
+
+	if config.obfs and config.obfs.gecko then
+		local min = tonumber(node.hysteria2_obfs_MinPacketSize) or 512
+		local max = tonumber(node.hysteria2_obfs_MaxPacketSize) or 1200
+		if min <= 0 or min > max or max > 2048 then
+			min = 512
+			max = 1200
+		end
+		config.obfs.gecko.minPacketSize = min
+		config.obfs.gecko.maxPacketSize = max
+	end
+
 	return config
 end
 
@@ -156,6 +168,17 @@ function gen_config(var)
 			listen = "0.0.0.0:" .. local_udp_redir_port
 		} or nil
 	}
+
+	if config.obfs and config.obfs.gecko then
+		local min = tonumber(node.hysteria2_obfs_MinPacketSize) or 512
+		local max = tonumber(node.hysteria2_obfs_MaxPacketSize) or 1200
+		if min <= 0 or min > max or max > 2048 then
+			min = 512
+			max = 1200
+		end
+		config.obfs.gecko.minPacketSize = min
+		config.obfs.gecko.maxPacketSize = max
+	end
 
 	return jsonc.stringify(config, 1)
 end

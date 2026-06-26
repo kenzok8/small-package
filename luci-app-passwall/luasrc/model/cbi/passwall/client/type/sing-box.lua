@@ -400,6 +400,18 @@ if singbox_tags:find("with_quic") then
 	o:depends({ [_n("hysteria2_obfs_type")] = "salamander" })
 	o:depends({ [_n("hysteria2_obfs_type")] = "gecko" })
 
+	o = s:option(Value, _n("hysteria2_obfs_MinPacketSize"), translate("Gecko Packet Size (min)"))
+	o.datatype = "uinteger"
+	o.placeholder = "512"
+	o.default = "512"
+	o:depends({ [_n("hysteria2_obfs_type")] = "gecko" })
+
+	o = s:option(Value, _n("hysteria2_obfs_MaxPacketSize"), translate("Gecko Packet Size (max)"))
+	o.datatype = "uinteger"
+	o.placeholder = "1200"
+	o.default = "1200"
+	o:depends({ [_n("hysteria2_obfs_type")] = "gecko" })
+
 	o = s:option(Value, _n("hysteria2_up_mbps"), translate("Max upload Mbps"))
 	o:depends({ [_n("protocol")] = "hysteria2" })
 

@@ -398,6 +398,8 @@ local function encode_hysteria2(node)
 	if node["ports"] then table.insert(p, "mport=" .. urlencode(node["ports"])) end
 	if node.obfs then table.insert(p, "obfs=" .. node.obfs) end
 	if node["obfs-password"] then table.insert(p, "obfs-password=" .. node["obfs-password"]) end
+	if node["obfs-min-packet-size"] then table.insert(p, "minPacketSize=" .. node["obfs-min-packet-size"]) end
+	if node["obfs-max-packet-size"] then table.insert(p, "maxPacketSize=" .. node["obfs-max-packet-size"]) end
 	if node.up then table.insert(p, "upmbps=" .. node.up) end
 	if node.down then table.insert(p, "downmbps=" .. node.down) end
 

@@ -598,10 +598,14 @@ local current_node = map:get(section)
 			
 			if (v_type === "Hysteria2") {
 				v_password = opt.get("hysteria2_auth_password");
-				var dom_obfs = opt.get("hysteria2_obfs_password");
-				if (dom_obfs && dom_obfs.value != "") {
+				var dom_obfs_type = opt.get("hysteria2_obfs_type");
+				if (dom_obfs_type && dom_obfs_type.value != "") {
 					params += opt.query("obfs", "hysteria2_obfs_type");
 					params += opt.query("obfs-password", "hysteria2_obfs_password");
+					if (dom_obfs_type.value === "gecko") {
+						params += opt.query("minPacketSize", "hysteria2_obfs_MinPacketSize");
+						params += opt.query("maxPacketSize", "hysteria2_obfs_MaxPacketSize");
+					}
 				}
 				params += opt.query("mport", "hysteria2_hop");
 			} else {
@@ -610,6 +614,10 @@ local current_node = map:get(section)
 				if (dom_obfs_type && dom_obfs_type.value != "") {
 					params += opt.query("obfs", dom_prefix + "hysteria2_obfs_type");
 					params += opt.query("obfs-password", dom_prefix + "hysteria2_obfs_password");
+					if (dom_obfs_type.value === "gecko") {
+						params += opt.query("minPacketSize", dom_prefix + "hysteria2_obfs_MinPacketSize");
+						params += opt.query("maxPacketSize", dom_prefix + "hysteria2_obfs_MaxPacketSize");
+					}
 				}
 				params += opt.query("mport", dom_prefix + "hysteria2_hop");
 				if (opt.get(dom_prefix + "use_finalmask")?.checked) {
@@ -1600,6 +1608,10 @@ local current_node = map:get(section)
 					opt.set(dom_prefix + 'hysteria2_obfs_type', queryParam.obfs || "salamander");
 					opt.set(dom_prefix + 'hysteria2_obfs_password', queryParam["obfs-password"] || queryParam["obfs_password"]);
 				}
+				if (queryParam.obfs === "gecko") {
+					opt.set(dom_prefix + 'hysteria2_obfs_MinPacketSize', queryParam.minPacketSize || "512");
+					opt.set(dom_prefix + 'hysteria2_obfs_MaxPacketSize', queryParam.maxPacketSize || "1200");
+				}
 				opt.set(dom_prefix + 'hysteria2_hop', queryParam.mport || "");
 				opt.set(dom_prefix + 'use_finalmask', !!queryParam.fm);
 				opt.set(dom_prefix + 'finalmask', queryParam.fm || "");
@@ -1610,6 +1622,10 @@ local current_node = map:get(section)
 				if (queryParam["obfs-password"] || queryParam["obfs_password"]) {
 					opt.set(dom_prefix + 'obfs_type', queryParam.obfs || "salamander");
 					opt.set(dom_prefix + 'obfs_password', queryParam["obfs-password"] || queryParam["obfs_password"]);
+				}
+				if (queryParam.obfs === "gecko") {
+					opt.set(dom_prefix + 'obfs_MinPacketSize', queryParam.minPacketSize || "512");
+					opt.set(dom_prefix + 'obfs_MaxPacketSize', queryParam.maxPacketSize || "1200");
 				}
 				opt.set(dom_prefix + 'hop', queryParam.mport || "");
 			}
