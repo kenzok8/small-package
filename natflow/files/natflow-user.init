@@ -71,9 +71,9 @@ create_dual_stack_set()
 	local basename=$1
 
 	# 创建底层 IPv4 和 IPv6 集合
-	ipset create ${basename}_v4 nethash family inet 2>/dev/null
+	ipset create ${basename}_v4 nethash family inet hashsize 64 maxelem 1024 2>/dev/null
 	ipset flush ${basename}_v4
-	ipset create ${basename}_v6 nethash family inet6 2>/dev/null
+	ipset create ${basename}_v6 nethash family inet6 hashsize 64 maxelem 1024 2>/dev/null
 	ipset flush ${basename}_v6
 
 	# 创建顶层容器集合 (list:set)，保持名称不变
@@ -125,7 +125,7 @@ natflow_user_setup()
 
 	# ---------------- Setup macwhite ----------------
 	if test -n "$macwhite"; then
-		ipset create auth_macwhite_$idx machash 2>/dev/null
+		ipset create auth_macwhite_$idx machash hashsize 64 maxelem 1024 2>/dev/null
 		ipset flush auth_macwhite_$idx
 		for mac in $(echo "$macwhite" | tr ',' ' '); do
 			ipset add auth_macwhite_$idx $mac

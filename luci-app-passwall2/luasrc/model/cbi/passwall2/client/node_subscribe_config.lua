@@ -325,4 +325,10 @@ for k, v in pairs(nodes_table) do
 	end
 end
 
+o = s:option(Flag, "hwid", translate("Send HWID"))
+o.default = 0
+o.description = translate("Some subscription providers may require a hardware identifier (HWID) for authentication.") .. "<br>" ..
+		translate("Enabling this option will send a hashed HWID when updating subscriptions.") .. "<br>" ..
+		translate("This may reveal limited hardware information. Enable only if you trust your provider.")
+
 return m

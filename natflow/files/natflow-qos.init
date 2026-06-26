@@ -63,9 +63,9 @@ create_dual_stack_set()
 {
 	local basename=$1
 
-	ipset create ${basename}_v4 nethash family inet 2>/dev/null
+	ipset create ${basename}_v4 nethash family inet hashsize 64 maxelem 1024 2>/dev/null
 	ipset flush ${basename}_v4
-	ipset create ${basename}_v6 nethash family inet6 2>/dev/null
+	ipset create ${basename}_v6 nethash family inet6 hashsize 64 maxelem 1024 2>/dev/null
 	ipset flush ${basename}_v6
 
 	ipset create ${basename} list:set 2>/dev/null

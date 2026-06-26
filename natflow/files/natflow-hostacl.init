@@ -59,7 +59,7 @@ start()
 		ip=$(uci get hostacl.@rule[$idx].ip 2>/dev/null)
 		ip=$($IPOPS netStrings2ipcidrStrings "$ip")
 		if [ "$(echo $ip | sed 's/,/ /g' | wc -w)" -ge 1 ]; then
-			ipset create host_acl_rule${idx}_ipv4 hash:net family inet 2>/dev/null
+			ipset create host_acl_rule${idx}_ipv4 hash:net family inet hashsize 64 maxelem 1024 2>/dev/null
 			ipset flush host_acl_rule${idx}_ipv4
 			for net in $(echo $ip | sed 's/,/ /g'); do
 				ipv4set_add host_acl_rule${idx}_ipv4 $net
@@ -68,7 +68,7 @@ start()
 
 		ipv6=$(uci get hostacl.@rule[$idx].ipv6 2>/dev/null)
 		if test -n "$ipv6"; then
-			ipset create host_acl_rule${idx}_ipv6 hash:net family inet6 2>/dev/null
+			ipset create host_acl_rule${idx}_ipv6 hash:net family inet6 hashsize 64 maxelem 1024 2>/dev/null
 			ipset flush host_acl_rule${idx}_ipv6
 			for net in $(echo $ipv6 | sed "s/,/ /g;s/'/ /g"); do
 				ipv6set_add host_acl_rule${idx}_ipv6 $net
@@ -77,7 +77,7 @@ start()
 
 		mac=$(uci get hostacl.@rule[$idx].mac 2>/dev/null)
 		if test -n "$mac"; then
-			ipset create host_acl_rule${idx}_mac hash:mac 2>/dev/null
+			ipset create host_acl_rule${idx}_mac hash:mac hashsize 64 maxelem 1024 2>/dev/null
 			ipset flush host_acl_rule${idx}_mac
 			for net in $(echo $mac | sed "s/,/ /g;s/'/ /g"); do
 				ipset add host_acl_rule${idx}_mac $net

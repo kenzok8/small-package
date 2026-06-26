@@ -1759,6 +1759,18 @@ msgstr "Сервер выхода"
 msgid "Only support a layer of proxy."
 msgstr "Поддерживается только один уровень цепочки."
 
+msgid "Send HWID"
+msgstr "Отправлять HWID"
+
+msgid "Some subscription providers may require a hardware identifier (HWID) for authentication."
+msgstr "Некоторые поставщики подписок могут требовать аппаратный идентификатор (HWID) для аутентификации."
+
+msgid "Enabling this option will send a hashed HWID when updating subscriptions."
+msgstr "При включении этой опции во время обновления подписок будет отправляться хэшированный HWID."
+
+msgid "This may reveal limited hardware information. Enable only if you trust your provider."
+msgstr "Это может раскрыть ограниченную информацию об оборудовании. Включайте эту опцию только в том случае, если доверяете своему поставщику."
+
 msgid ""
 "Chained proxy works only with Xray or Sing-box nodes.<br>"
 "You can only use manual or imported nodes as chained nodes."
