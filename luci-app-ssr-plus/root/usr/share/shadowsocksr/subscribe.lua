@@ -2522,17 +2522,19 @@ local execute = function()
 				local nodes, szType
 				local is_clash_subscription = false
 
-					if isClashYAML(raw) then
-						is_clash_subscription = true
-						local result = processClashSubscription(fetch_url)
-						if result and not check_filer(result) and not cache[groupHash][result.hashkey] then
-							result.grouphashkey = groupHash
-							table.insert(nodeResult[index], result)
-							cache[groupHash][result.hashkey] = result
-							log('成功导入 Clash 总节点: ' .. result.alias)
-						else
-							log('丢弃无效 Clash 总节点: ' .. url)
-						end
+						if isClashYAML(raw) then
+							is_clash_subscription = true
+							local result = processClashSubscription(fetch_url)
+							if result and check_filer(result) then
+								log('过滤 Clash 总节点: ' .. result.alias)
+							elseif result and not cache[groupHash][result.hashkey] then
+								result.grouphashkey = groupHash
+								table.insert(nodeResult[index], result)
+								cache[groupHash][result.hashkey] = result
+								log('成功导入 Clash 总节点: ' .. result.alias)
+							else
+								log('丢弃无效 Clash 总节点: ' .. url)
+							end
 					-- SSD 似乎是这种格式 ssd:// 开头的
 					elseif raw:find('ssd://') then
 						szType = 'ssd'
@@ -2619,20 +2621,23 @@ local execute = function()
 								log('跳过未知类型: ' .. szType)
 							end
 							-- log(result)
-							if result then
-								-- 中文做地址的 也没有人拿中文域名搞，就算中文域也有Puny Code SB 机场
-									if not result.server or not result.server_port
+								if result then
+									local filtered = check_filer(result)
+									-- 中文做地址的 也没有人拿中文域名搞，就算中文域也有Puny Code SB 机场
+									local invalid = not result.server or not result.server_port
 										or (result.type ~= "clash" and result.server == "127.0.0.1")
 										or result.alias == "NULL"
-										or check_filer(result)
 										or (result.type ~= "clash" and result.server:match("[^0-9a-zA-Z%-_%.%s]"))
-										or cache[groupHash][result.hashkey] then
-									log('丢弃无效节点: ' .. result.alias)
-								else
-									-- 暂存节点
-									table.insert(groupRawNodes, result)
+										or cache[groupHash][result.hashkey]
+									if filtered then
+										log('过滤节点: ' .. result.alias)
+									elseif invalid then
+										log('丢弃无效节点: ' .. result.alias)
+									else
+										-- 暂存节点
+										table.insert(groupRawNodes, result)
+									end
 								end
-							end
 						end, function(err)
 							log(string.format("解析节点出错: %s\n原始数据: %s", tostring(err), tostring(v)))
 						end)

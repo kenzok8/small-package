@@ -323,6 +323,8 @@ link_mihomo_geodata() {
 	else
 		[ -s /etc/openclash/geoip.dat ] && ln -sf /etc/openclash/geoip.dat "$workdir/geoip.dat"
 	fi
+
+	return 0
 }
 
 prepare_tuic_runtime_config() {
