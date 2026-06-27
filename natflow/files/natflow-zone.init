@@ -23,7 +23,7 @@ natflow_zone_setup()
 	done; \
 	for ifn in $ifname; do
 		echo $ifn
-	done) | sed 's/\*$/+/' | sort | uniq | while read IFN; do
+	done) | sed 's/\*$/+/' | sort | uniq | while read -r IFN; do
 		echo $type $idx=$IFN >$DEVCTL
 	done
 }

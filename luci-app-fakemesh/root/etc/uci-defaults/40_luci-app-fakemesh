@@ -1,3 +1,4 @@
+#!/bin/sh
 touch /etc/config/fakemesh
 touch /etc/config/wireless
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-[ "$ACTION" = ifup -o "$ACTION" = ifupdate ] || exit 0
+[ "$ACTION" = ifup ] || [ "$ACTION" = ifupdate ] || exit 0
 
 interface=lan
 
@@ -14,7 +14,7 @@ role="$(uci get fakemesh.default.role)"
 #change hostname if mesh enabled
 if [ "$enabled" = "1" ]; then
 	old_hostname="$(uci get system.@system[0].hostname || echo X-WRT)"
-	new_hostname="$(uci get network.meshx0.hostname || echo $old_hostname)"
+	new_hostname="$(uci get network.meshx0.hostname || echo "$old_hostname")"
 	[ "$old_hostname" != "$new_hostname" ] && {
 		uci set system.@system[0].hostname="$new_hostname"
 		uci commit system
@@ -29,7 +29,7 @@ band_steer_helper="$band_steer_helper" /usr/sbin/fakemesh band_steer_helper_swit
 
 [ "$interface" = "meshx0" ] && uci get umdns.@umdns[0] && {
 	old_net=$(uci get umdns.@umdns[0].network)
-	new_net=$(for net in $old_net meshx0; do echo $net; done | sort | uniq)
+	new_net=$(for net in $old_net meshx0; do echo "$net"; done | sort | uniq)
 	new_net=$(echo $new_net)
 #FIXME: since umdns bug, this just an workaroud only
 	new_net="meshx0"
@@ -46,7 +46,7 @@ band_steer_helper="$band_steer_helper" /usr/sbin/fakemesh band_steer_helper_swit
 }
 [ "$interface" = "lan" ] && uci get umdns.@umdns[0] && {
 	old_net=$(uci get umdns.@umdns[0].network)
-	new_net=$(for net in $old_net lan; do [ "$net" = "meshx0" ] || echo $net; done | sort | uniq)
+	new_net=$(for net in $old_net lan; do [ "$net" = "meshx0" ] || echo "$net"; done | sort | uniq)
 	new_net=$(echo $new_net)
 	[ "$old_net" != "$new_net" ] && {
 		uci delete umdns.@umdns[0].network >/dev/null 2>&1
@@ -71,7 +71,7 @@ uci get usteer.@usteer[0] && {
 	}
 }
 
-status="$(ubus -S call network.interface.$INTERFACE status)"
+status="$(ubus -S call network.interface."$INTERFACE" status)"
 [ -n "$status" ] && {
 	address=$(echo "$status" | jsonfilter -e '@["ipv4-address"][0].address')
 	mask=$(echo "$status" | jsonfilter -e '@["ipv4-address"][0].mask')

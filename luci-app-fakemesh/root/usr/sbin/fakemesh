@@ -63,39 +63,39 @@ test $enabled -eq 0 && {
 	/etc/init.d/umdns restart
 	}
 
-	uci delete wireless.meshx0 &>/dev/null
-	uci delete wireless.meshx1 &>/dev/null
+	uci delete wireless.meshx0 >/dev/null 2>&1
+	uci delete wireless.meshx1 >/dev/null 2>&1
 
 	I=0
-	while uci get wireless.@wifi-iface[$I] &>/dev/null; do
+	while uci get wireless.@wifi-iface[$I] >/dev/null 2>&1; do
 		echo "$(uci get wireless.@wifi-iface[$I].network)" | grep -q "^meshx" && {
 			uci set wireless.@wifi-iface[$I].network="lan"
 		}
 		I=$((I+1))
 	done
 
-	uci delete fakemesh.default.wifim_md5 &>/dev/null
-	uci delete dhcp.meshx0 &>/dev/null
-	uci delete network.meshx0 &>/dev/null
-	uci delete network.meshx0_6 &>/dev/null
-	uci delete firewall.fakemesh &>/dev/null
+	uci delete fakemesh.default.wifim_md5 >/dev/null 2>&1
+	uci delete dhcp.meshx0 >/dev/null 2>&1
+	uci delete network.meshx0 >/dev/null 2>&1
+	uci delete network.meshx0_6 >/dev/null 2>&1
+	uci delete firewall.fakemesh >/dev/null 2>&1
 	sed -i "/.* controller.fakemesh/d" /etc/hosts
 	sed -i "/sh \/usr\/share\/fakemesh\/firewall.include.*/d" /etc/firewall.include
 
 	#re-enable lan
-	uci delete network.lan.auto &>/dev/null
+	uci delete network.lan.auto >/dev/null 2>&1
 	#re-enable wan
-	uci delete network.wan.auto &>/dev/null
-	uci delete network.wan6.auto &>/dev/null
+	uci delete network.wan.auto >/dev/null 2>&1
+	uci delete network.wan6.auto >/dev/null 2>&1
 	#del wan port from br-lan
 	lan_idx=0
-	while uci get network.@device[$lan_idx] &>/dev/null && [ $(uci get network.@device[$lan_idx].name) != "br-lan" ]; do lan_idx=$((lan_idx+1)); done
+	while uci get network.@device[$lan_idx] >/dev/null 2>&1 && [ "$(uci get network.@device[$lan_idx].name)" != "br-lan" ]; do lan_idx=$((lan_idx+1)); done
 	lan_ports="$(uci get network.@device[$lan_idx].ports 2>/dev/null)"
 	wan_port="$(uci get network.wan.device 2>/dev/null)"
-	newlan_ports=$(for lp in $lan_ports; do [ "$lp" = "$wan_port" ] || echo $lp; done | sort | uniq)
-	newlan_ports=$(echo $newlan_ports)
+	newlan_ports=$(for lp in $lan_ports; do [ "$lp" = "$wan_port" ] || echo "$lp"; done | sort | uniq)
+	newlan_ports=$(printf "%s\n" "$newlan_ports" | awk '{ for (i = 1; i <= NF; i++) out = out (out ? " " : "") $i } END { print out }')
 	[ "$lan_ports" != "$newlan_ports" ] && {
-		uci delete network.@device[$lan_idx].ports &>/dev/null
+		uci delete network.@device[$lan_idx].ports >/dev/null 2>&1
 		for lp in $newlan_ports; do
 			uci add_list network.@device[$lan_idx].ports="$lp"
 		done
@@ -103,12 +103,12 @@ test $enabled -eq 0 && {
 
 	#delete meshx0 from lan zone
 	lan_idx=0
-	while uci get firewall.@zone[$lan_idx] &>/dev/null && [ $(uci get firewall.@zone[$lan_idx].name) != "lan" ]; do lan_idx=$((lan_idx+1)); done
+	while uci get firewall.@zone[$lan_idx] >/dev/null 2>&1 && [ "$(uci get firewall.@zone[$lan_idx].name)" != "lan" ]; do lan_idx=$((lan_idx+1)); done
 	lan_net="$(uci get firewall.@zone[$lan_idx].network 2>/dev/null)"
-	newlan_net=$(for ln in $lan_net; do [ "$ln" = "meshx0" -o "$ln" = "meshx0_6" ] || echo $ln; done | sort | uniq)
-	newlan_net=$(echo $newlan_net)
+	newlan_net=$(for ln in $lan_net; do [ "$ln" = "meshx0" ] || [ "$ln" = "meshx0_6" ] || echo "$ln"; done | sort | uniq)
+	newlan_net=$(printf "%s\n" "$newlan_net" | awk '{ for (i = 1; i <= NF; i++) out = out (out ? " " : "") $i } END { print out }')
 	[ "$lan_net" != "$newlan_net" ] && {
-		uci delete firewall.@zone[$lan_idx].network &>/dev/null
+		uci delete firewall.@zone[$lan_idx].network >/dev/null 2>&1
 		for ln in $newlan_net; do
 			uci add_list firewall.@zone[$lan_idx].network="$ln"
 		done
@@ -124,7 +124,7 @@ test $enabled -eq 0 && {
 	uci commit network
 	/etc/init.d/network reload
 	/etc/init.d/dnsmasq reload
-	/etc/init.d/firewall reload &>/dev/null
+	/etc/init.d/firewall reload >/dev/null 2>&1
 	exit 0
 }
 
@@ -153,7 +153,7 @@ agent_lost_ac()
 	fi
 
 	#re-enable lan
-	uci delete network.lan.auto &>/dev/null
+	uci delete network.lan.auto >/dev/null 2>&1
 	uci set network.lan.ipaddr="192.168.16.1"
 	for lip in `seq 16 20`; do
 		if ip route | grep -q "192.168.$lip.0/"; then
@@ -171,9 +171,9 @@ agent_lost_ac()
 	ssid_passwd=$(uci get base_config.@status[0].SSID_PASSWD)
 	K=0
 	for band in 2g 5g; do
-		wbandstr=$(uci show wireless | grep .band=\'${band}\'$ -m1)
+		wbandstr=$(uci show wireless | grep ".band='${band}'$" -m1)
 		if test -n "$wbandstr"; then
-			radio=$(echo $wbandstr | cut -d\. -f2)
+			radio=$(echo "$wbandstr" | cut -d. -f2)
 
 			uci set wireless.wifinet$K=wifi-iface
 			uci set wireless.wifinet$K.device="${radio}"
@@ -212,7 +212,7 @@ agent_lost_ac()
 
 	#drop all in-comming DHCP request from eth port
 	for brif in $(cd /sys/class/net/br-lan/brif/ && ls); do
-		iwinfo $brif info &>/dev/null && [ "$brif" != "meshx0" ] && [ "$brif" != "meshx1" ] && continue
+		iwinfo $brif info >/dev/null 2>&1 && [ "$brif" != "meshx0" ] && [ "$brif" != "meshx1" ] && continue
 		nft_add_brmeshfilters $brif
 	done
 
@@ -230,7 +230,7 @@ agent_lost_ac()
 	#drop all in-comming DHCP request from eth port
 	#XXX: since network reload, netdevice may unregister and re-create, it is safe to re-add filter rules again.
 	for brif in $(cd /sys/class/net/br-lan/brif/ && ls); do
-		iwinfo $brif info &>/dev/null && [ "$brif" != "meshx0" ] && [ "$brif" != "meshx1" ] && continue
+		iwinfo $brif info >/dev/null 2>&1 && [ "$brif" != "meshx0" ] && [ "$brif" != "meshx1" ] && continue
 		nft_add_brmeshfilters $brif
 	done
 
@@ -348,17 +348,17 @@ agent_sync_config()
 			logger -t fakemesh "agent_sync_config($pid): config change!"
 			#delete old wifi config
 			I=0
-			while uci get wireless.@wifi-iface[$I] &>/dev/null; do
+			while uci get wireless.@wifi-iface[$I] >/dev/null 2>&1; do
 				if uci show wireless.@wifi-iface[$I] | grep -q wireless.meshx[01]=wifi-iface; then
 					I=$((I+1))
 					continue
 				fi
-				uci delete wireless.@wifi-iface[$I] &>/dev/null
+				uci delete wireless.@wifi-iface[$I] >/dev/null 2>&1
 			done
 
 			J=0
 			K=0
-			while uci get fakemeshac.@wifim[$J] &>/dev/null; do
+			while uci get fakemeshac.@wifim[$J] >/dev/null 2>&1; do
 				ssid=$(uci get fakemeshac.@wifim[$J].ssid)
 				encryption=$(uci get fakemeshac.@wifim[$J].encryption)
 				key=$(uci get fakemeshac.@wifim[$J].key)
@@ -371,7 +371,7 @@ agent_sync_config()
 					for band in $bands; do
 						for wbandstr in $(uci show wireless | grep .band=\'${band}\'$); do
 						if test -n "$wbandstr"; then
-							radio=$(echo $wbandstr | cut -d\. -f2)
+							radio=$(echo "$wbandstr" | cut -d. -f2)
 
 							uci set wireless.wifinet$K=wifi-iface
 							uci set wireless.wifinet$K.device="${radio}"
@@ -455,8 +455,8 @@ agent_keep_alive()
 
 	sta_lost=0
 
-	wbandstr=$(uci show wireless | grep .band=\'${band}\'$ -m1)
-	radio=$(echo $wbandstr | cut -d\. -f2)
+	wbandstr=$(uci show wireless | grep ".band='${band}'$" -m1)
+	radio=$(echo "$wbandstr" | cut -d. -f2)
 	channel=$(uci get wireless.${radio}.channel)
 	test -n "$channel" || return 1
 
@@ -497,8 +497,8 @@ agent_fix_channel()
 
 	[ "$role" = "agent" ] || return 0
 
-	wbandstr=$(uci show wireless | grep .band=\'${band}\'$ -m1)
-	radio=$(echo $wbandstr | cut -d\. -f2)
+	wbandstr=$(uci show wireless | grep ".band='${band}'$" -m1)
+	radio=$(echo "$wbandstr" | cut -d. -f2)
 	channel=$(uci get wireless.${radio}.channel)
 	test -n "$channel" || return 1
 
@@ -565,7 +565,7 @@ agent_fix_channel()
 	[ "$role" = "controller" ] && {
 		hash=$(echo -n ${Xid}${Xkey} | md5sum | head -c32)
 		ln -s /etc/config/fakemesh /www/fakemesh.$hash 2>/dev/null
-		for f in $(ls /www/fakemesh.*); do
+		for f in /www/fakemesh.*; do
 			[ "$f" != "/www/fakemesh.$hash" ] && rm -f "$f"
 		done
 	}
@@ -581,10 +581,10 @@ rm -rf /tmp/fakemesh_lck*
 MACADDR=""
 test -e /usr/share/natcapd/board_mac.lua && MACADDR=$(lua /usr/share/natcapd/board_mac.lua)
 test -n "$MACADDR" || MACADDR=$(. /lib/functions/system.sh; get_mac_label | tr a-f A-F)
-test -n "$MACADDR" || MACADDR=$(cat /etc/board.json | jsonfilter -e "$['network']['wan']['macaddr']" | tr a-f A-F)
-test -n "$MACADDR" || MACADDR=$(cat /etc/board.json | jsonfilter -e "$['network']['lan']['macaddr']" | tr a-f A-F)
-test -n "$MACADDR" || MACADDR=$(cat /sys/class/net/eth0/address | tr a-f A-F)
-test -n "$MACADDR" || MACADDR=$(cat /sys/class/net/eth1/address | tr a-f A-F)
+test -n "$MACADDR" || MACADDR=$(jsonfilter -i /etc/board.json -e '$["network"]["wan"]["macaddr"]' 2>/dev/null | tr a-f A-F)
+test -n "$MACADDR" || MACADDR=$(jsonfilter -i /etc/board.json -e '$["network"]["lan"]["macaddr"]' 2>/dev/null | tr a-f A-F)
+test -n "$MACADDR" || MACADDR=$(cat /sys/class/net/eth0/address 2>/dev/null | tr a-f A-F)
+test -n "$MACADDR" || MACADDR=$(cat /sys/class/net/eth1/address 2>/dev/null | tr a-f A-F)
 test -n "$MACADDR" || MACADDR=$(head -c6 /dev/urandom | hexdump -e '/1 "%02X:"' | head -c17)
 test -n "$MACADDR" || MACADDR=$(head -c6 /dev/random | hexdump -e '/1 "%02X:"' | head -c17)
 
@@ -602,16 +602,16 @@ if [ "$role" = "controller" ]; then
 		\"txt\": [ \"id=${Xid}\" ]
 	}
 }"
-	[ "$(cat /tmp/fakemesh.umdns.json 2>/dev/null | md5sum | head -c32)" = "$(echo "$umdns_json" | md5sum | head -c32)" ] || {
+	[ "$(md5sum /tmp/fakemesh.umdns.json 2>/dev/null | head -c32)" = "$(echo "$umdns_json" | md5sum | head -c32)" ] || {
 	echo "$umdns_json" >/tmp/fakemesh.umdns.json
 	/etc/init.d/umdns restart
 	}
 	}
 
 	# wireless.radio0.band='2g'
-	wbandstr=$(uci show wireless | grep .band=\'${band}\'$ -m1)
+	wbandstr=$(uci show wireless | grep ".band='${band}'$" -m1)
 	if test -n "$wbandstr"; then
-		radio=$(echo $wbandstr | cut -d\. -f2) # radio0
+		radio=$(echo "$wbandstr" | cut -d. -f2) # radio0
 
 		#meshx0
 		uci set wireless.meshx0=wifi-iface
@@ -637,27 +637,27 @@ if [ "$role" = "controller" ]; then
 		fi
 
 		#meshx1
-		uci delete wireless.meshx1 &>/dev/null
+		uci delete wireless.meshx1 >/dev/null 2>&1
 	fi
 
-	uci delete dhcp.meshx0 &>/dev/null
-	uci delete network.meshx0 &>/dev/null
-	uci delete network.meshx0_6 &>/dev/null
+	uci delete dhcp.meshx0 >/dev/null 2>&1
+	uci delete network.meshx0 >/dev/null 2>&1
+	uci delete network.meshx0_6 >/dev/null 2>&1
 
 	#re-enable lan
-	uci delete network.lan.auto &>/dev/null
+	uci delete network.lan.auto >/dev/null 2>&1
 	#re-enable wan
-	uci delete network.wan.auto &>/dev/null
-	uci delete network.wan6.auto &>/dev/null
+	uci delete network.wan.auto >/dev/null 2>&1
+	uci delete network.wan6.auto >/dev/null 2>&1
 	#del wan port from br-lan
 	lan_idx=0
-	while uci get network.@device[$lan_idx] &>/dev/null && [ $(uci get network.@device[$lan_idx].name) != "br-lan" ]; do lan_idx=$((lan_idx+1)); done
+	while uci get network.@device[$lan_idx] >/dev/null 2>&1 && [ "$(uci get network.@device[$lan_idx].name)" != "br-lan" ]; do lan_idx=$((lan_idx+1)); done
 	lan_ports="$(uci get network.@device[$lan_idx].ports 2>/dev/null)"
 	wan_port="$(uci get network.wan.device 2>/dev/null)"
-	newlan_ports=$(for lp in $lan_ports; do [ "$lp" = "$wan_port" ] || echo $lp; done | sort | uniq)
-	newlan_ports=$(echo $newlan_ports)
+	newlan_ports=$(for lp in $lan_ports; do [ "$lp" = "$wan_port" ] || echo "$lp"; done | sort | uniq)
+	newlan_ports=$(printf "%s\n" "$newlan_ports" | awk '{ for (i = 1; i <= NF; i++) out = out (out ? " " : "") $i } END { print out }')
 	[ "$lan_ports" != "$newlan_ports" ] && {
-		uci delete network.@device[$lan_idx].ports &>/dev/null
+		uci delete network.@device[$lan_idx].ports >/dev/null 2>&1
 		for lp in $newlan_ports; do
 			uci add_list network.@device[$lan_idx].ports="$lp"
 		done
@@ -665,12 +665,12 @@ if [ "$role" = "controller" ]; then
 
 	#delete meshx0 from lan zone
 	lan_idx=0
-	while uci get firewall.@zone[$lan_idx] &>/dev/null && [ $(uci get firewall.@zone[$lan_idx].name) != "lan" ]; do lan_idx=$((lan_idx+1)); done
+	while uci get firewall.@zone[$lan_idx] >/dev/null 2>&1 && [ "$(uci get firewall.@zone[$lan_idx].name)" != "lan" ]; do lan_idx=$((lan_idx+1)); done
 	lan_net="$(uci get firewall.@zone[$lan_idx].network 2>/dev/null)"
-	newlan_net=$(for ln in $lan_net; do [ "$ln" = "meshx0" -o "$ln" = "meshx0_6" ] || echo $ln; done | sort | uniq)
-	newlan_net=$(echo $newlan_net)
+	newlan_net=$(for ln in $lan_net; do [ "$ln" = "meshx0" ] || [ "$ln" = "meshx0_6" ] || echo "$ln"; done | sort | uniq)
+	newlan_net=$(printf "%s\n" "$newlan_net" | awk '{ for (i = 1; i <= NF; i++) out = out (out ? " " : "") $i } END { print out }')
 	[ "$lan_net" != "$newlan_net" ] && {
-		uci delete firewall.@zone[$lan_idx].network &>/dev/null
+		uci delete firewall.@zone[$lan_idx].network >/dev/null 2>&1
 		for ln in $newlan_net; do
 			uci add_list firewall.@zone[$lan_idx].network="$ln"
 		done
@@ -678,7 +678,7 @@ if [ "$role" = "controller" ]; then
 	}
 
 	# reload firewall
-	uci delete firewall.fakemesh &>/dev/null && uci commit firewall
+	uci delete firewall.fakemesh >/dev/null 2>&1 && uci commit firewall
 
 	mkdir -p /usr/share/fakemesh
 	cat >/tmp/fakemesh.firewall.include <<-EOT
@@ -705,13 +705,13 @@ EOT
 		/etc/init.d/dnsmasq reload
 	}
 
-	/etc/init.d/firewall reload &>/dev/null
+	/etc/init.d/firewall reload >/dev/null 2>&1
 
 	exec /usr/sbin/fakemesh gen_config &
 
 	uci changes
 
-	test $(uci changes 2>/dev/null | grep -v "='dhcp'\|='interface'\|='wifi-iface'" | wc -l) -le 0 && {
+	test "$(uci changes 2>/dev/null | grep -c -v "='dhcp'\|='interface'\|='wifi-iface'")" -le 0 && {
 		uci revert wireless
 		uci revert dhcp
 		uci revert network
@@ -738,9 +738,9 @@ else
 	}
 
 	# wireless.radio0.band='2g'
-	wbandstr=$(uci show wireless | grep .band=\'${band}\'$ -m1)
+	wbandstr=$(uci show wireless | grep ".band='${band}'$" -m1)
 	if test -n "$wbandstr"; then
-		radio=$(echo $wbandstr | cut -d\. -f2) # radio0
+		radio=$(echo "$wbandstr" | cut -d. -f2) # radio0
 
 		#meshx0
 		uci set wireless.meshx0=wifi-iface
@@ -804,7 +804,7 @@ else
 	uci set network.meshx0.proto='dhcp'
 	uci set network.meshx0.defaultroute='1'
 	uci set network.meshx0.metric='10'
-	uci set network.meshx0.hostname="MESH-AGENT_$(echo -n $MACADDR | sed 's/://g' | tr a-f A-F)"
+	uci set network.meshx0.hostname="MESH-AGENT_$(printf "%s" "$MACADDR" | sed 's/://g' | tr a-f A-F)"
 
 	uci set network.meshx0_6=interface
 	uci set network.meshx0_6.proto='dhcpv6'
@@ -812,16 +812,16 @@ else
 	uci set network.meshx0_6.reqaddress='try'
 	uci set network.meshx0_6.reqprefix='auto'
 	uci set network.meshx0_6.delegate='0'
-	uci set network.meshx0_6.hostname="MESH-AGENT_$(echo -n $MACADDR | sed 's/://g' | tr a-f A-F)"
+	uci set network.meshx0_6.hostname="MESH-AGENT_$(printf "%s" "$MACADDR" | sed 's/://g' | tr a-f A-F)"
 
 	#add meshx0 to lan zone
 	lan_idx=0
-	while uci get firewall.@zone[$lan_idx] &>/dev/null && [ $(uci get firewall.@zone[$lan_idx].name) != "lan" ]; do lan_idx=$((lan_idx+1)); done
+	while uci get firewall.@zone[$lan_idx] >/dev/null 2>&1 && [ "$(uci get firewall.@zone[$lan_idx].name)" != "lan" ]; do lan_idx=$((lan_idx+1)); done
 	lan_net="$(uci get firewall.@zone[$lan_idx].network 2>/dev/null)"
-	newlan_net=$(for ln in $lan_net meshx0 meshx0_6; do echo $ln; done | sort | uniq)
-	newlan_net=$(echo $newlan_net)
+	newlan_net=$(for ln in $lan_net meshx0 meshx0_6; do echo "$ln"; done | sort | uniq)
+	newlan_net=$(printf "%s\n" "$newlan_net" | awk '{ for (i = 1; i <= NF; i++) out = out (out ? " " : "") $i } END { print out }')
 	[ "$lan_net" != "$newlan_net" ] && {
-		uci delete firewall.@zone[$lan_idx].network &>/dev/null
+		uci delete firewall.@zone[$lan_idx].network >/dev/null 2>&1
 		for ln in $newlan_net; do
 			uci add_list firewall.@zone[$lan_idx].network="$ln"
 		done
@@ -833,20 +833,20 @@ else
 	uci set network.wan6.auto='0' 2>/dev/null
 	#add wan port to br-lan
 	lan_idx=0
-	while uci get network.@device[$lan_idx] &>/dev/null && [ $(uci get network.@device[$lan_idx].name) != "br-lan" ]; do lan_idx=$((lan_idx+1)); done
+	while uci get network.@device[$lan_idx] >/dev/null 2>&1 && [ "$(uci get network.@device[$lan_idx].name)" != "br-lan" ]; do lan_idx=$((lan_idx+1)); done
 	lan_ports="$(uci get network.@device[$lan_idx].ports 2>/dev/null)"
 	wan_port="$(uci get network.wan.device 2>/dev/null)"
-	newlan_ports=$(for lp in $lan_ports $wan_port; do echo $lp; done | sort | uniq)
-	newlan_ports=$(echo $newlan_ports)
+	newlan_ports=$(for lp in $lan_ports $wan_port; do echo "$lp"; done | sort | uniq)
+	newlan_ports=$(printf "%s\n" "$newlan_ports" | awk '{ for (i = 1; i <= NF; i++) out = out (out ? " " : "") $i } END { print out }')
 	[ "$lan_ports" != "$newlan_ports" ] && {
-		uci delete network.@device[$lan_idx].ports &>/dev/null
+		uci delete network.@device[$lan_idx].ports >/dev/null 2>&1
 		for lp in $newlan_ports; do
 			uci add_list network.@device[$lan_idx].ports="$lp"
 		done
 	}
 
 	# reload firewall
-	uci delete firewall.fakemesh &>/dev/null && uci commit firewall
+	uci delete firewall.fakemesh >/dev/null 2>&1 && uci commit firewall
 
 	mkdir -p /usr/share/fakemesh
 	cat >/tmp/fakemesh.firewall.include <<-EOT
@@ -865,11 +865,11 @@ EOT
 	ln -s /tmp/fakemesh.firewall.include /usr/share/fakemesh/firewall.include 2>/dev/null
 	grep -q "^sh /usr/share/fakemesh/firewall.include" /etc/firewall.include || echo "sh /usr/share/fakemesh/firewall.include" >>/etc/firewall.include
 
-	/etc/init.d/firewall reload &>/dev/null
+	/etc/init.d/firewall reload >/dev/null 2>&1
 
 	uci changes
 
-	test $(uci changes 2>/dev/null | grep -v "='dhcp'\|='interface'\|='wifi-iface'" | wc -l) -le 0 && {
+	test "$(uci changes 2>/dev/null | grep -c -v "='dhcp'\|='interface'\|='wifi-iface'")" -le 0 && {
 		uci revert wireless
 		uci revert dhcp
 		uci revert network

@@ -165,12 +165,12 @@ stop() {
 	echo disabled=1 >$DEVCTL
 
 	# 先 flush 解除引用
-	ipset list -n | grep ^auth_ | while read ipset_name; do
+	ipset list -n | grep ^auth_ | while read -r ipset_name; do
 		ipset flush $ipset_name 2>/dev/null
 	done
 
 	# 后 destroy 销毁
-	ipset list -n | grep ^auth_ | while read ipset_name; do
+	ipset list -n | grep ^auth_ | while read -r ipset_name; do
 		ipset destroy $ipset_name 2>/dev/null
 	done
 }

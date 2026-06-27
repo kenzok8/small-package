@@ -1,3 +1,4 @@
+#!/bin/sh
 
 ssid=$(uci get base_config.@status[0].SSID)
 ssid_passwd=$(uci get base_config.@status[0].SSID_PASSWD)
