@@ -12,6 +12,9 @@ s = m:section(TypedSection, "global_app", translate("App Update"),
 s.anonymous = true
 s:append(Template(appname .. "/app_update/app_version"))
 
+o = s:option(Flag, "github_proxy", translate("GitHub Proxy"), translate("Use gh-proxy instead of proxy nodes for component updates."))
+o.default = 0
+
 local k, v
 local com = require "luci.passwall.com"
 for _, k in ipairs(com.order) do

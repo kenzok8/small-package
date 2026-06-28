@@ -996,7 +996,14 @@ local default_file_tree = {
 
 local function get_api_json(url)
 	local jsonc = require "luci.jsonc"
-	local return_code, content = curl_auto(url, nil, curl_args)
+	local gh_proxy = uci_get_type("global_app", "github_proxy", "0")
+	local return_code, content
+	if gh_proxy == "1" then
+		url = "https://gh-proxy.org/" .. url
+		return_code, content = curl_base(url, nil, curl_args)
+	else
+		return_code, content = curl_auto(url, nil, curl_args)
+	end
 	if return_code ~= 0 or content == "" then return {} end
 	return jsonc.parse(content) or {}
 end
@@ -1113,7 +1120,14 @@ function to_download(app_name, url, size)
 	local _curl_args = clone(curl_args)
 	table.insert(_curl_args, "--speed-limit 51200 --speed-time 15 --max-time 300")
 
-	local return_code, result = curl_auto(url, tmp_file, _curl_args)
+	local gh_proxy = uci_get_type("global_app", "github_proxy", "0")
+	local return_code, result
+	if gh_proxy == "1" then
+		url = "https://gh-proxy.org/" .. url
+		return_code, result = curl_base(url, tmp_file, _curl_args)
+	else
+		return_code, result = curl_auto(url, tmp_file, _curl_args)
+	end
 	result = return_code == 0
 
 	if not result then

@@ -1156,6 +1156,12 @@ msgstr "%s 客户端程序路径"
 msgid "alternate API URL for version checking"
 msgstr "用于版本检查的 API URL"
 
+msgid "GitHub Proxy"
+msgstr "GitHub 反代"
+
+msgid "Use gh-proxy instead of proxy nodes for component updates."
+msgstr "开启后将使用 gh-proxy 反向代理，不通过节点更新组件。"
+
 msgid "Node Subscribe"
 msgstr "节点订阅"
 
