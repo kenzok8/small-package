@@ -1,0 +1,13 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@virtualdog[-1]
+	add ucitrack virtualdog
+	set ucitrack.@virtualdog[-1].init=virtualdog
+	commit ucitrack
+EOF
+
+/etc/init.d/virtualdog enable
+/etc/init.d/virtualdog start
+
+exit 0

@@ -1,0 +1,39 @@
+#!/bin/sh /etc/rc.common
+
+START=93
+USE_PROCD=1
+
+get_config() {
+	config_get_bool enabled "$1" enabled 1
+	config_get data_dir "$1" data_dir ""
+	config_get port "$1" port "8080"
+	config_get access_token "$1" access_token ""
+}
+
+start_service() {
+	config_load virtualdog
+	config_foreach get_config virtualdog
+	if [ "$enabled" != 1 ]; then
+		return 1
+	fi
+	if [ -z "$data_dir" ]; then
+		logger -t virtualdog "data_dir is empty; please set option data_dir in /etc/config/virtualdog"
+		return 1
+	fi
+
+	mkdir -p "$data_dir" || return 1
+
+	logger -t virtualdog "Starting VirtualDog Service"
+	procd_open_instance virtualdog
+	procd_set_param command /usr/sbin/virtualdogd --port "$port" --data "$data_dir"
+	if [ -n "$access_token" ]; then
+		procd_append_param command --access-token "$access_token"
+	fi
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance
+}
+
+service_triggers() {
+	procd_add_reload_trigger "virtualdog"
+}

@@ -1,0 +1,47 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "VirtualDog"
+msgstr "VirtualDog"
+
+msgid "VirtualDog provides a QEMU/KVM VM management UI."
+msgstr "VirtualDog 提供一个 QEMU/KVM 虚拟机管理界面。"
+
+msgid "Global settings"
+msgstr "全局设置"
+
+msgid "Enable"
+msgstr "启用"
+
+msgid "Data directory"
+msgstr "数据目录"
+
+msgid "Required. VirtualDog stores VM metadata, runtime files and disk images under this directory."
+msgstr "必填。VirtualDog 会将虚拟机元数据、运行文件和磁盘镜像保存在此目录下。"
+
+msgid "Listen port"
+msgstr "监听端口"
+
+msgid "Port for VirtualDog HTTP server."
+msgstr "VirtualDog HTTP 服务端口。"
+
+msgid "Access token"
+msgstr "访问令牌"
+
+msgid "KVM packages"
+msgstr "KVM 依赖"
+
+msgid "The VirtualDog service is not running."
+msgstr "VirtualDog 服务未运行。"
+
+msgid "The VirtualDog service is running."
+msgstr "VirtualDog 服务运行中。"
+
+msgid "Click to open VirtualDog"
+msgstr "点击打开 VirtualDog"
+
+msgid "Status"
+msgstr "状态"
+
+msgid "Collecting data..."
+msgstr "正在获取数据..."
