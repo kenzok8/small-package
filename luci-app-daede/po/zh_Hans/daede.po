@@ -120,6 +120,36 @@ msgstr "轮转后保留的旧日志文件数。"
 msgid "Log Settings"
 msgstr "日志设置"
 
+msgid "daed Username"
+msgstr "daed 用户名"
+
+msgid "Used by LuCI to update daed subscriptions through GraphQL. It does not change the daed Web login account."
+msgstr "LuCI 通过 GraphQL 更新 daed 订阅时使用；不会修改 daed Web 的登录账号。"
+
+msgid "daed Password"
+msgstr "daed 密码"
+
+msgid "Enable subscription auto-update"
+msgstr "启用订阅自动更新"
+
+msgid "Update Cycle"
+msgstr "更新周期"
+
+msgid "Update Time"
+msgstr "更新时间"
+
+msgid "Update subscriptions now"
+msgstr "立即更新订阅"
+
+msgid "Updating daed subscriptions…"
+msgstr "正在更新 daed 订阅…"
+
+msgid "Subscriptions updated"
+msgstr "订阅已更新"
+
+msgid "Subscription update failed: %s"
+msgstr "订阅更新失败：%s"
+
 # ---- config.js: dae Settings ----
 msgid "dae Parameters"
 msgstr "dae 参数"

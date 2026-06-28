@@ -3,6 +3,7 @@
 'use strict';
 'require baseclass';
 'require form';
+'require fs';
 'require uci';
 'require view.daede.widgets as widgets';
 
@@ -18,6 +19,31 @@ function renderDaedSettings() {
 	o.datatype = 'ipaddrport(1)';
 	o.default = '0.0.0.0:2023';
 	o.rmempty = false;
+
+	o = s.option(form.Value, 'dashboard_username', _('daed Username'),
+		_('Used by LuCI to update daed subscriptions through GraphQL. It does not change the daed Web login account.'));
+	o.placeholder = 'admin';
+	o.rmempty = false;
+
+	o = s.option(form.Value, 'dashboard_password', _('daed Password'));
+	o.password = true;
+
+	o = s.option(form.Flag, 'subscribe_auto_update', _('Enable subscription auto-update'));
+	o.default = '0';
+
+	o = s.option(form.ListValue, 'subscribe_update_cycle', _('Update Cycle'));
+	o.value('daily', _('Daily'));
+	o.value('weekly', _('Weekly'));
+	o.default = 'daily';
+	o.depends('subscribe_auto_update', '1');
+
+	o = s.option(form.ListValue, 'subscribe_update_hour', _('Update Time'));
+	for (let h = 0; h < 24; h++) {
+		const hh = ('0' + h).slice(-2);
+		o.value(String(h), hh + ':00');
+	}
+	o.default = '4';
+	o.depends('subscribe_auto_update', '1');
 
 	o = s.option(form.Value, 'log_maxsize', _('Max Log Size (MB)'),
 		_('Rotate the log file once it grows past this many megabytes.'));
@@ -48,7 +74,24 @@ function renderDaedSettings() {
 			if (statusTimer) clearTimeout(statusTimer);
 			statusTimer = setTimeout(function() { status.classList.remove('show'); }, hold || 3000);
 		}
+
 		const save = E('button', { 'class': 'cbi-button cbi-button-positive' }, _('Save and Apply'));
+		const update = E('button', { 'class': 'cbi-button cbi-button-action' }, _('Update subscriptions now'));
+		update.addEventListener('click', function(ev) {
+			ev.preventDefault();
+			update.disabled = true;
+			flash(_('Updating daed subscriptions…'));
+			fs.exec('/usr/share/luci-app-daede/daed-sub-update.sh', []).then(function(res) {
+				if (res && res.code !== 0) {
+					const err = (res.stderr || res.stdout || ('exit ' + res.code)).trim().split('\n')[0];
+					flash(_('Subscription update failed: %s').format(err), 'err', 9000);
+				} else {
+					flash(_('Subscriptions updated'), 'ok');
+				}
+			}).catch(function(e) {
+				flash(_('Subscription update failed: %s').format(e.message || e), 'err', 9000);
+			}).finally(function() { update.disabled = false; });
+		});
 		save.addEventListener('click', function(ev) {
 			ev.preventDefault();
 			save.disabled = true;
@@ -58,6 +101,14 @@ function renderDaedSettings() {
 					return uci.changes().then(function(ch) {
 						return (ch && Object.keys(ch).length) ? uci.apply() : null;
 					});
+				})
+				.then(function() {
+					const enabled = uci.get('daed', 'config', 'subscribe_auto_update') === '1';
+					return fs.exec('/usr/share/luci-app-daede/daed-sub-cron.sh', [ enabled ? 'enable' : 'disable' ]);
+				})
+				.then(function(res) {
+					if (res && res.code !== 0)
+						throw new Error((res.stderr || res.stdout || ('exit ' + res.code)).trim());
 				})
 				.then(function() {
 					/* no success popup — the reload is feedback enough */
@@ -71,7 +122,7 @@ function renderDaedSettings() {
 				})
 				.finally(function() { save.disabled = false; });
 		});
-		card.appendChild(E('div', { 'class': 'dd-editor-actions' }, [ save, status ]));
+		card.appendChild(E('div', { 'class': 'dd-editor-actions' }, [ update, save, status ]));
 		return card;
 	});
 }

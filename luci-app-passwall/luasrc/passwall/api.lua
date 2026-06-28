@@ -1278,7 +1278,14 @@ end
 function to_check_self()
 	local url = "https://raw.githubusercontent.com/Openwrt-Passwall/openwrt-passwall/main/luci-app-passwall/Makefile"
 	local tmp_file = "/tmp/passwall_makefile"
-	local return_code, result = curl_auto(url, tmp_file, curl_args)
+	local gh_proxy = uci_get_type("global_app", "github_proxy", "0")
+	local return_code, result
+	if gh_proxy == "1" then
+		url = "https://gh-proxy.org/" .. url
+		return_code, result = curl_base(url, tmp_file, curl_args)
+	else
+		return_code, result = curl_auto(url, tmp_file, curl_args)
+	end
 	result = return_code == 0
 	if not result then
 		exec("/bin/rm", {"-f", tmp_file})

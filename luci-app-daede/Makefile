@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-daede
 PKG_VERSION:=1.14.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_MAINTAINER:=kenzok8
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
@@ -80,6 +80,8 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) ./root/usr/share/luci-app-daede/config-backup.sh $(1)/usr/share/luci-app-daede/config-backup.sh
 	$(INSTALL_BIN) ./root/usr/share/luci-app-daede/refresh-index.sh $(1)/usr/share/luci-app-daede/refresh-index.sh
 	$(INSTALL_BIN) ./root/usr/share/luci-app-daede/geo-cron.sh $(1)/usr/share/luci-app-daede/geo-cron.sh
+	$(INSTALL_BIN) ./root/usr/share/luci-app-daede/daed-sub-update.sh $(1)/usr/share/luci-app-daede/daed-sub-update.sh
+	$(INSTALL_BIN) ./root/usr/share/luci-app-daede/daed-sub-cron.sh $(1)/usr/share/luci-app-daede/daed-sub-cron.sh
 	$(INSTALL_DIR) $(1)/www/cgi-bin
 	$(INSTALL_BIN) ./root/www/cgi-bin/daede-sub $(1)/www/cgi-bin/daede-sub
 	$(INSTALL_BIN) ./root/www/cgi-bin/daede-graphql $(1)/www/cgi-bin/daede-graphql

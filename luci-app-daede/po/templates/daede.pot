@@ -106,6 +106,36 @@ msgstr ""
 msgid "Number of rotated log files to keep."
 msgstr ""
 
+msgid "daed Username"
+msgstr ""
+
+msgid "Used by LuCI to update daed subscriptions through GraphQL. It does not change the daed Web login account."
+msgstr ""
+
+msgid "daed Password"
+msgstr ""
+
+msgid "Enable subscription auto-update"
+msgstr ""
+
+msgid "Update Cycle"
+msgstr ""
+
+msgid "Update Time"
+msgstr ""
+
+msgid "Update subscriptions now"
+msgstr ""
+
+msgid "Updating daed subscriptions…"
+msgstr ""
+
+msgid "Subscriptions updated"
+msgstr ""
+
+msgid "Subscription update failed: %s"
+msgstr ""
+
 msgid "Log Advanced Settings"
 msgstr ""
 

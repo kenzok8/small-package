@@ -39,6 +39,14 @@ function parse_users(cfg) {
 /* Main */
 const config = {};
 
+/* Cache START */
+/* Cache settings */
+config.profile = {
+	"store-selected": false,
+	"store-fake-ip": false
+};
+/* Cache END */
+
 /* Inbound START */
 config.listeners = [];
 uci.foreach(uciconf, uciserver, (cfg) => {
