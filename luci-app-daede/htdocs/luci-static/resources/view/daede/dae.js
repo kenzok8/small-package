@@ -35,6 +35,7 @@ const DEFAULT_TEMPLATE =
 	'\n' +
 	'dns {\n' +
 	'    ipversion_prefer: 4\n' +
+	'    response_ttl: 0\n' +
 	'    upstream {\n' +
 	"        cndns: 'udp://dns.alidns.com:53'\n" +
 	"        fallbackdns: 'tcp+udp://dns.google:53'\n" +
@@ -302,6 +303,11 @@ function renderDaeForms(ctx) {
 		_('Resolves everything else.'));
 	o.default = 'tcp+udp://dns.google:53';
 	o.placeholder = 'tcp+udp://dns.google:53';
+	o = s.option(form.Value, 'response_ttl', _('DNS response TTL'),
+		_('TTL returned to LAN DNS clients. 0 keeps dae default behavior.'));
+	o.datatype = 'uinteger';
+	o.default = '0';
+	o.placeholder = '60';
 
 	/* Logging — folded into the main form so the single Save button covers it
 	   too (no separate native save bar) */

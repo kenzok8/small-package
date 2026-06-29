@@ -13,7 +13,7 @@
 #   config group             name/policy, list source, list name_filter
 #                            (old list filter_sub/filter_node still read as fallback)
 #   config routing 'routing' private_direct/cn_direct/block_ads/fallback, list custom
-#   config dns 'dns'         cn_upstream/fallback_upstream
+#   config dns 'dns'         cn_upstream/fallback_upstream/response_ttl
 
 . /lib/functions.sh
 
@@ -213,7 +213,7 @@ generate() {
 	fi
 
 	# routing / dns singletons
-	local private_direct cn_direct block_ads fallback cn_up fb_up
+	local private_direct cn_direct block_ads fallback cn_up fb_up response_ttl
 	config_get_bool private_direct routing private_direct 1
 	config_get_bool cn_direct routing cn_direct 1
 	config_get_bool block_ads routing block_ads 0
@@ -222,8 +222,12 @@ generate() {
 	fallback="$(sanitize "$fallback")"
 	config_get cn_up dns cn_upstream "udp://dns.alidns.com:53"
 	config_get fb_up dns fallback_upstream "tcp+udp://dns.google:53"
+	config_get response_ttl dns response_ttl "0"
 	cn_up="$(sanitize "$cn_up")"
 	fb_up="$(sanitize "$fb_up")"
+	case "$response_ttl" in
+		''|*[!0-9]*) response_ttl=0 ;;
+	esac
 
 	{
 		echo "# 本配置由 luci-app-daede 表单自动生成，再次保存表单会覆盖你的手动修改。"
@@ -258,6 +262,7 @@ generate() {
 
 		echo "dns {"
 		echo "    ipversion_prefer: 4"
+		[ "$response_ttl" -gt 0 ] && echo "    response_ttl: ${response_ttl}"
 		echo "    upstream {"
 		echo "        cndns: '${cn_up}'"
 		echo "        fallbackdns: '${fb_up}'"

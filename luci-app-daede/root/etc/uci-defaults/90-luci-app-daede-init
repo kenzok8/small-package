@@ -97,6 +97,7 @@ if [ -f /etc/config/dae ]; then
 		uci -q set dae.dns=dns
 		uci -q set dae.dns.cn_upstream='udp://dns.alidns.com:53'
 		uci -q set dae.dns.fallback_upstream='tcp+udp://dns.google:53'
+		uci -q set dae.dns.response_ttl='0'
 	fi
 	# Migrate legacy group filters to the unified source / name_filter fields,
 	# then drop the old keys so the form shows real, editable values (the old

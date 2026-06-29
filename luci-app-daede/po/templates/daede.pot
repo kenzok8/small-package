@@ -845,3 +845,9 @@ msgid ""
 "%s is running. Deleting the daens netns now will break its networking until "
 "you restart it. Continue?"
 msgstr ""
+
+msgid "DNS response TTL"
+msgstr ""
+
+msgid "TTL returned to LAN DNS clients. 0 keeps dae default behavior."
+msgstr ""

@@ -574,6 +574,12 @@ msgstr "兜底 DNS 上游"
 msgid "Resolves everything else."
 msgstr "解析其余域名。"
 
+msgid "DNS response TTL"
+msgstr "DNS 响应 TTL"
+
+msgid "TTL returned to LAN DNS clients. 0 keeps dae default behavior."
+msgstr "返回给局域网 DNS 客户端的 TTL。0 表示保持 dae 默认行为。"
+
 msgid "Apply failed: %s"
 msgstr "应用失败：%s"
 

@@ -1,0 +1,121 @@
+--- a/cmd/reload_manager.go
++++ b/cmd/reload_manager.go
+@@ -411,0 +412,3 @@ func dnsConfigFingerprint(dns config.Dns
++	b.WriteString("response_ttl=")
++	b.WriteString(strconv.Itoa(dns.ResponseTtl))
++	b.WriteByte(';')
+--- a/cmd/run_shutdown_test.go
++++ b/cmd/run_shutdown_test.go
+@@ -605,0 +606 @@ func TestDNSConfigFingerprintCoversAllDn
++		"ResponseTtl":        {},
+--- a/config/config.go
++++ b/config/config.go
+@@ -156,0 +157 @@ type Dns struct {
++	ResponseTtl        int             `mapstructure:"response_ttl" default:"0"`
+--- a/config/desc.go
++++ b/config/desc.go
+@@ -68,0 +69 @@ var DnsDesc = Desc{
++	"response_ttl":     "Override the TTL returned to downstream DNS clients. Zero keeps dae's default behavior.",
+--- a/control/control_plane.go
++++ b/control/control_plane.go
+@@ -774,0 +775 @@ func NewControlPlane(
++	plane.dnsResponseTtl = dnsConfig.ResponseTtl
+@@ -1273,0 +1275 @@ func (c *ControlPlane) dnsControllerOption() *DnsControllerOption {
++		ResponseTtl:    c.dnsResponseTtl,
+--- a/control/dns_control.go
++++ b/control/dns_control.go
+@@ -80,0 +81 @@ type DnsControllerOption struct {
++	ResponseTtl           int
+@@ -96,0 +98 @@ type dnsControllerRuntimeState struct {
++	responseTtl           int
+@@ -174,0 +177,3 @@ func normalizeDnsRuntimeBehavior(option *DnsControllerOption) (qtypePrefer uint
++	if option.ResponseTtl < 0 {
++		return 0, false, 0, 0, fmt.Errorf("response_ttl must be greater than or equal to 0")
++	}
+@@ -424,0 +430 @@ func (c *DnsController) TryUpdateRuntime(routing *dns.Dns, option *DnsControlle
++		responseTtl:           option.ResponseTtl,
+@@ -1550 +1556,7 @@ func (c *DnsController) NormalizeAndCacheDnsResp_(msg *dnsmessage.Msg, response
+-	// For A/AAAA records, we set TTL to 0 to prevent downstream caching while we manage it.
++	responseTtl := 0
++	if rt := c.runtime(); rt != nil {
++		responseTtl = rt.responseTtl
++	}
++
++	// For A/AAAA records, we set TTL to 0 by default to prevent downstream caching while we manage it.
++	// When response_ttl is set, use it as the downstream-visible TTL.
+@@ -1553 +1565 @@ func (c *DnsController) NormalizeAndCacheDnsResp_(msg *dnsmessage.Msg, response
+-			msg.Answer[i].Header().Ttl = 0
++			msg.Answer[i].Header().Ttl = uint32(responseTtl)
+--- /dev/null
++++ b/control/dns_response_ttl_test.go
+@@ -0,0 +1,64 @@
++/*
++ * SPDX-License-Identifier: AGPL-3.0-only
++ * Copyright (c) 2022-2026, daeuniverse Organization <dae@v2raya.org>
++ */
++
++package control
++
++import (
++	"net"
++	"testing"
++	"time"
++
++	dnsmessage "github.com/miekg/dns"
++	"github.com/stretchr/testify/require"
++)
++
++func TestDnsController_ResponseTtlOverride(t *testing.T) {
++	for _, tt := range []struct {
++		name        string
++		responseTtl int
++		wantTtl     uint32
++	}{
++		{name: "default_zero", responseTtl: 0, wantTtl: 0},
++		{name: "override", responseTtl: 60, wantTtl: 60},
++	} {
++		t.Run(tt.name, func(t *testing.T) {
++			ctrl := setTestDnsControllerRuntime(newTestDnsController(), func(rt *dnsControllerRuntimeState) {
++				rt.responseTtl = tt.responseTtl
++				rt.newCache = func(fqdn string, answers, ns, extra []dnsmessage.RR, deadline time.Time, originalDeadline time.Time) (*DnsCache, error) {
++					return &DnsCache{
++						Answer:           answers,
++						NS:               ns,
++						Extra:            extra,
++						Deadline:         deadline,
++						OriginalDeadline: originalDeadline,
++					}, nil
++				}
++			})
++
++			msg := new(dnsmessage.Msg)
++			msg.SetReply(&dnsmessage.Msg{
++				Question: []dnsmessage.Question{{
++					Name:   "example.com.",
++					Qtype:  dnsmessage.TypeA,
++					Qclass: dnsmessage.ClassINET,
++				}},
++			})
++			msg.Answer = []dnsmessage.RR{
++				&dnsmessage.A{
++					Hdr: dnsmessage.RR_Header{
++						Name:   "example.com.",
++						Rrtype: dnsmessage.TypeA,
++						Class:  dnsmessage.ClassINET,
++						Ttl:    300,
++					},
++					A: net.IPv4(93, 184, 216, 34),
++				},
++			}
++
++			require.NoError(t, ctrl.NormalizeAndCacheDnsResp_(msg, "example.com.:1"))
++			require.Equal(t, tt.wantTtl, msg.Answer[0].Header().Ttl)
++		})
++	}
++}
+--- a/control/dns_runtime.go
++++ b/control/dns_runtime.go
+@@ -22,0 +23 @@ type controlPlaneDNSRuntime struct {
++	dnsResponseTtl            int
+@@ -264,0 +266 @@ func (r *controlPlaneDNSRuntime) release() {
++	r.dnsResponseTtl = 0
