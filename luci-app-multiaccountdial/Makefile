@@ -10,7 +10,7 @@ LUCI_TITLE:=multi account Virtual WAN config generator
 LUCI_PKGARCH:=all
 LUCI_DEPENDS:=+kmod-macvlan +luci-app-mwan3
 
-PKG_VERSION:=2.2-2
+PKG_VERSION:=2.2-r2
 PKG_RELEASE:=
 
 define Package/luci-app-multiaccountdial/conffiles

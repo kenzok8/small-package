@@ -46,7 +46,7 @@ start() {
 	echo "delay_pkts=$delay_pkts" >/dev/natflow_ctl
 	echo "go_slowpath_if_no_qos=$go_slowpath_if_no_qos" >/dev/natflow_ctl
 	echo "ifname_group_type=$ifname_group_type" >/dev/natflow_ctl
-	echo "ifname_group_clear=$ifname_group_clear" >/dev/natflow_ctl
+	echo "ifname_group_clear" >/dev/natflow_ctl
 	for ifn in ${ifname_group}; do
 		echo "ifname_group_add=$ifn" >/dev/natflow_ctl
 	done
