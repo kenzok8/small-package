@@ -35,6 +35,12 @@ cleanup() {
 	rm -f /var/run/geoip_update >/dev/null 2>&1
 }
 
+config_needs_geosite() {
+	_cfg="/etc/clashoo/config.yaml"
+	[ -f "$_cfg" ] || return 1
+	grep -Eq "^[[:space:]]*-[[:space:]]*[\"']?GEOSITE,|^[[:space:]]*geosite:[[:space:]]*|^[[:space:]]*'geosite:|^[[:space:]]*-[[:space:]]*[\"']?geosite:" "$_cfg"
+}
+
 # Shared port detection (handles smart core + sing-box profile port); keep the
 # local anonymity probe so we skip a coexisting plugin's auth-locked proxy.
 . /usr/share/clashoo/update/proxy_lib.sh
@@ -242,7 +248,11 @@ if [ "$geoip_source" != "1" ]; then
 	fi
 	log "Country.mmdb updated"
 
-	download_geosite "$geosite_url"
+	if config_needs_geosite; then
+		download_geosite "$geosite_url"
+	else
+		log "GeoSite.dat skip (no geosite reference in config)"
+	fi
 	download_optional "$geoip_dat_url" /etc/clashoo/geoip.dat "geoip.dat"
 	download_optional "$geoip_asn_url" /etc/clashoo/GeoLite2-ASN.mmdb "GeoLite2-ASN.mmdb"
 fi

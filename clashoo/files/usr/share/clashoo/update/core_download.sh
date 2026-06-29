@@ -795,6 +795,7 @@ install_with_rollback() {
 		return 1
 	fi
 
+	rm -f "${target}.bak" 2>/dev/null
 	return 0
 }
 
