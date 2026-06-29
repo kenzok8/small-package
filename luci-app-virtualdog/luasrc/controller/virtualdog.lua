@@ -17,9 +17,11 @@ function virtualdog_status()
 	local sys = require "luci.sys"
 	local uci = require "luci.model.uci".cursor()
 	local port = uci:get_first("virtualdog", "virtualdog", "port") or "8080"
+	local access_token = uci:get_first("virtualdog", "virtualdog", "access_token") or ""
 	local status = {
 		running = (sys.call("pidof virtualdogd >/dev/null") == 0),
-		port = port
+		port = port,
+		access_token = access_token
 	}
 	http.prepare_content("application/json")
 	http.write_json(status)

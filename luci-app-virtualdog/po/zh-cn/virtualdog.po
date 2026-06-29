@@ -28,8 +28,6 @@ msgstr "VirtualDog HTTP 服务端口。"
 msgid "Access token"
 msgstr "访问令牌"
 
-msgid "KVM packages"
-msgstr "KVM 依赖"
 
 msgid "The VirtualDog service is not running."
 msgstr "VirtualDog 服务未运行。"

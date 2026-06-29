@@ -7,7 +7,7 @@ XHR.poll(5, '<%=url("admin/services/virtualdog_status")%>', null, function(x, st
 		}
 		if (st.running) {
 			el.innerHTML = '<br/><em style="color:green"><%:The VirtualDog service is running.%></em>'
-				+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open VirtualDog%> \" onclick=\"window.open('http://" + window.location.hostname + ":" + st.port + "/')\"/>";
+				+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open VirtualDog%> \" onclick=\"window.open('http://" + window.location.hostname + ":" + st.port + "/auth?token=" + st.access_token + "')\"/>";
 		}
 	}
 });

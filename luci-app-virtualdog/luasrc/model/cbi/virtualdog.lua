@@ -23,12 +23,5 @@ port.description = translate("Port for VirtualDog HTTP server.")
 
 local access_token = s:option(Value, "access_token", translate("Access token"))
 access_token.password = true
-access_token.optional = true
-
-local help = s:option(DummyValue, "_kvm_help", translate("KVM packages"))
-help.rawhtml = true
-function help.cfgvalue()
-	return "<pre>" .. virtualdog_model.kvm_help() .. "</pre>"
-end
 
 return m
