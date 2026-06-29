@@ -260,8 +260,10 @@ if is_finded("xray") then
 	o = s:option(Value, "fragment_length", translate("Fragment Length"))
 	if xray_version_val <= 260601 then
 		o.datatype = "or(uinteger,portrange)"
+		o.default = "100-200"
+	else
+		o.default = "3-5,6-8,10-20"
 	end
-	o.default = "100-200"
 	o:depends("fragment", true)
 	o.description = translate(
     	"<ul>" ..
@@ -273,8 +275,10 @@ if is_finded("xray") then
 	o = s:option(Value, "fragment_delay", translate("Fragment Delay"))
 	if xray_version_val <= 260601 then
 		o.datatype = "or(uinteger,portrange)"
+		o.default = "10-20"
+	else
+		o.default = "1-2,5-6,10-20"
 	end
-	o.default = "10-20"
 	o:depends("fragment", true)
 	o.description = translate(
     	"<ul>" ..
@@ -285,7 +289,12 @@ if is_finded("xray") then
 
 	o = s:option(Value, "fragment_maxSplit", translate("Max Split"), translate("Limit the maximum number of splits."))
 	o.datatype = "or(uinteger,portrange)"
-	o.default = "100-200"
+	if xray_version_val <= 260601 then
+		o.datatype = "or(uinteger,portrange)"
+		o.default = "100-200"
+	else
+		o.default = "3-6-8"
+	end
 	o:depends("fragment", true)
 
 	o = s:option(Flag, "noise", translate("Noise"), translate("UDP noise, Under some circumstances it can bypass some UDP based protocol restrictions."))

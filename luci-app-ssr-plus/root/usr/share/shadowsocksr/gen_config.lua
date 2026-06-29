@@ -11,6 +11,14 @@ local socks_port     = arg[4] or "0"
 
 local chain          = arg[5] or "0"
 
+-- trim
+local function trim(text)
+	if not text or text == "" then
+		return ""
+	end
+	return (text:gsub("^%s*(.-)%s*$", "%1"))
+end
+
 -- 辅助函数：拆分字符串（若 luci.util 未加载则定义）
 local function split(str, pat)
 	local t = {}
@@ -732,26 +740,11 @@ Xray.outbounds = {
 					local n_maxsplit = xray_fragment.fragment_maxSplit
 					--local domainstr = xray_noise.domainStrategy
 					finalmask.tcp = finalmask.tcp or {}
-
-					-- 辅助函数：将逗号分隔的字符串拆分为数组
-					local function split_to_array(str)
-						if not str or str == "" then return nil end
-						local result = {}
-						for value in string.gmatch(str, "[^,]+") do
-							value = value:gsub("^%s*(.-)%s*$", "%1")  -- 去除首尾空格
-							if value ~= "" then
-								table.insert(result, value)
-							end
-						end
-						return #result > 0 and result or nil
-					end
-
 					-- 构建 fragment settings
 					local fragment_settings = {
 						packets = (n_packets and n_packets ~= "") and n_packets or nil,
 						maxSplit = (n_maxsplit and n_maxsplit ~= "") and n_maxsplit or nil
 					}
-    
 					-- 根据 Xray 版本决定使用旧格式还是新格式
 					if xray_version_val <= 260601 then
 						-- 旧版本：使用 length 和 delay（单个值）
@@ -767,18 +760,30 @@ Xray.outbounds = {
 						end
 					else
 						-- 新版本：使用 lengths 和 delays（数组）
-						-- 拆分逗号分隔的字符串
+						-- 将逗号分隔的字符串拆分为数组
+						local function split_to_array(str)
+							if not str or str == "" then return nil end
+								local result = {}
+								local trimmed = trim(str)
+								if trimmed and trimmed ~= "" then
+									trimmed:gsub("[^,]+", function(w)
+									w = w:gsub("%s+", "")
+									if w ~= "" then
+										result[#result + 1] = w
+									end
+								end)
+							end
+							return #result > 0 and result or nil
+						end
 						local lengths_array = split_to_array(n_length)
 						if lengths_array then
 							fragment_settings.lengths = lengths_array
 						end
-        
 						local delays_array = split_to_array(n_delay)
 						if delays_array then
 							fragment_settings.delays = delays_array
 						end
 					end
-    
 					finalmask.tcp[#finalmask.tcp + 1] = {
 						type = "fragment",
 						settings = fragment_settings
