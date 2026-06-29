@@ -206,8 +206,13 @@ function import_ssr_url(btn, urlname, sid) {
 				document.getElementsByName('cbid.shadowsocksr.' + sid + '.flag_obfs')[0].checked = true; // 设置 flag_obfs 为 true
 				document.getElementsByName('cbid.shadowsocksr.' + sid + '.flag_obfs')[0].dispatchEvent(event); // 触发事件
 
-			document.getElementsByName('cbid.shadowsocksr.' + sid + '.obfs_type')[0].value = params.get("obfs");
-			document.getElementsByName('cbid.shadowsocksr.' + sid + '.salamander')[0].value = params.get("obfs-password") || params.get("obfs_password");
+				document.getElementsByName('cbid.shadowsocksr.' + sid + '.obfs_type')[0].value = params.get("obfs");
+				document.getElementsByName('cbid.shadowsocksr.' + sid + '.obfs_type')[0].dispatchEvent(event); // 触发事件
+				document.getElementsByName('cbid.shadowsocksr.' + sid + '.salamander')[0].value = params.get("obfs-password") || params.get("obfs_password");
+				if (params.get("obfs") === "gecko") {
+					document.getElementsByName('cbid.shadowsocksr.' + sid + '.obfs_MinPacketSize')[0].value = params.get("minPacketSize") || "512";
+					document.getElementsByName('cbid.shadowsocksr.' + sid + '.obfs_MaxPacketSize')[0].value = params.get("maxPacketSize") || "1200";
+				}
 			}
 			var allowInsecureValue = params.get("allowInsecure") || params.get("insecure");
 			if (allowInsecureValue === "1" || allowInsecureValue === "true") {

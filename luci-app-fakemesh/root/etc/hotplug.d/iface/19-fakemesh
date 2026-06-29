@@ -4,8 +4,8 @@
 
 interface=lan
 
-enabled="$(uci get fakemesh.default.enabled)"
-role="$(uci get fakemesh.default.role)"
+enabled="$(uci -q get fakemesh.default.enabled 2>/dev/null)"
+role="$(uci -q get fakemesh.default.role 2>/dev/null)"
 
 [ "$enabled" = "1" ] && [ "$role" != "controller" ] && interface=meshx0
 
@@ -22,7 +22,7 @@ if [ "$enabled" = "1" ]; then
 		/etc/init.d/umdns running && /etc/init.d/umdns restart
 	}
 fi
-band_steer_helper=$(uci get fakemesh.default.band_steer_helper || echo none)
+band_steer_helper=$(uci -q get fakemesh.default.band_steer_helper 2>/dev/null || echo none)
 band_steer_helper="$band_steer_helper" /usr/sbin/fakemesh band_steer_helper_switch
 
 /etc/init.d/umdns enabled && {
@@ -61,13 +61,13 @@ band_steer_helper="$band_steer_helper" /usr/sbin/fakemesh band_steer_helper_swit
 
 } ##/etc/init.d/umdns enabled
 
-uci get usteer.@usteer[0] && {
+uci -q get usteer.@usteer[0] >/dev/null && [ "$enabled" = "1" ] && [ "$band_steer_helper" = "usteer" ] && {
 	old_net=$(uci get usteer.@usteer[0].network)
 	new_net="$interface"
 	[ "$old_net" != "$new_net" ] && {
 		uci set usteer.@usteer[0].network="$new_net"
 		uci commit usteer
-		[ "$band_steer_helper" = "usteer" ] && /etc/init.d/usteer restart
+		/etc/init.d/usteer restart
 	}
 }
 
@@ -77,12 +77,12 @@ status="$(ubus -S call network.interface."$INTERFACE" status)"
 	mask=$(echo "$status" | jsonfilter -e '@["ipv4-address"][0].mask')
 	test -n "$address" && test -n "$mask" && {
 		broadcast="$(ipcalc.sh "$address/$mask" | grep BROADCAST | cut -d= -f2)"
-		uci get dawn.@network[0] && {
+		uci -q get dawn.@network[0] >/dev/null && [ "$enabled" = "1" ] && [ "$band_steer_helper" = "dawn" ] && {
 			old_broadcast="$(uci get dawn.@network[0].broadcast_ip)"
 			[ "$broadcast" = "$old_broadcast" ] || {
 				uci set dawn.@network[0].broadcast_ip="$broadcast"
 				uci commit dawn
-				[ "$band_steer_helper" = "dawn" ] && /etc/init.d/dawn reload
+				/etc/init.d/dawn reload
 			}
 		}
 	}

@@ -11,7 +11,7 @@ start() {
 	touch /tmp/fakemesh.ac.config
 	ln -s /tmp/fakemesh.ac.config /etc/config/fakemeshac 2>/dev/null
 
-	band_steer_helper=$(uci get fakemesh.default.band_steer_helper || echo none) exec /usr/sbin/fakemesh band_steer_helper_switch &
+	band_steer_helper=$(uci -q get fakemesh.default.band_steer_helper 2>/dev/null || echo none) exec /usr/sbin/fakemesh band_steer_helper_switch &
 	/usr/sbin/fakemesh
 }
 

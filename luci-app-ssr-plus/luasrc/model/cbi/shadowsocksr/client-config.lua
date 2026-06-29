@@ -75,6 +75,40 @@ local function base64Encode(text)
 	end
 end
 
+local function parse_realm_uri(uri)
+	uri = trim(uri)
+	if uri == "" then return nil end
+	-- realm[+http]://token@server/realm_id?query
+	local scheme = (uri:match("^realm%+http://") and "realm+http") or (uri:match("^realm://") and "realm")
+	if not scheme then return nil end
+	uri = uri:gsub("^realm%+http://", ""):gsub("^realm://", "")
+	local token, server_url, realm_id, query = uri:match("^([^@]+)@([^/]+)/([^?]*)%??(.*)$")
+	if not token or not server_url or not realm_id then return nil end
+	realm_id = realm_id:gsub("/+$", "")
+	local address, port = server_url:match("^%[([^%]]+)%]:(%d+)$") --ipv6:port
+	if not address then
+		address, port = server_url:match("^([^:]+):(%d+)$") --ipv4[domain]:port
+	end
+	address = address or server_url:match("^%[([^%]]+)%]$") or server_url
+	port = tonumber(port) or (scheme == "realm+http" and 80 or 443)
+	local realm = {
+		scheme = scheme,
+		token = token,
+		server_url = server_url,
+		address = address,
+		port = port,
+		realm_id = realm_id
+	}
+	-- 解析 query 中的 stun=
+	local stun_servers
+	for v in (query or ""):gmatch("[Ss][Tt][Uu][Nn]=([^&]+)") do
+		stun_servers = stun_servers or {}
+		stun_servers[#stun_servers + 1] = v
+	end
+	realm.stun_servers = stun_servers
+	return realm
+end
+
 -- 获取 Xray 版本号
 if is_finded("xray") then
 	local version = luci.sys.exec("xray version 2>&1")
@@ -617,6 +651,12 @@ end
 
 o = s:option(Value, "hysteria2_realm_url", translate("Realm URL"), translate("Example:") .. "realm://public@realm.hy2.io/your-realm-name")
 o:depends("hysteria2_realms", true)
+o.validate = function(self, value)
+	value = trim(value)
+	local realm = parse_realm_uri(value)
+	if realm then return value end
+	return nil, translate("Invalid Realm URL.")
+end
 
 o = s:option(DynamicList, "hysteria2_realm_stun", translate("Realm STUN"))
 o.default = { "stun.sip.us:3478", "stun.nextcloud.com:3478", "global.stun.twilio.com:3478" }
@@ -678,6 +718,20 @@ o:value("gecko")
 o.rmempty = true
 o:depends({type = "hysteria2", flag_obfs = true})
 o:depends({type = "v2ray", v2ray_protocol = "hysteria2", flag_obfs = true})
+
+o = s:option(Value, "obfs_MinPacketSize", translate("Gecko Packet Size (min)"))
+o.datatype = "uinteger"
+o.placeholder = "512"
+o.default = "512"
+o:depends({type = "hysteria2", flag_obfs = true, obfs_type = "gecko"})
+o:depends({type = "v2ray", v2ray_protocol = "hysteria2", flag_obfs = true, obfs_type = "gecko"})
+
+o = s:option(Value, "obfs_MaxPacketSize", translate("Gecko Packet Size (max)"))
+o.datatype = "uinteger"
+o.placeholder = "1200"
+o.default = "1200"
+o:depends({type = "hysteria2", flag_obfs = true, obfs_type = "gecko"})
+o:depends({type = "v2ray", v2ray_protocol = "hysteria2", flag_obfs = true, obfs_type = "gecko"})
 
 o = s:option(Value, "salamander", translate("Obfuscation Password"))
 o.password = true

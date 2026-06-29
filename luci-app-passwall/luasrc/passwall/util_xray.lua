@@ -883,13 +883,21 @@ function gen_config(var)
 	local xray_settings = uci:get_all(appname, "@global_xray[0]") or {}
 
 	if xray_settings.fragment == "1" then
-		local delay = xray_settings.fragment_delay
+		local lengths, delays = {}, {}
+		api.trim(xray_settings.fragment_lengths):gsub("[^,]+", function(w)
+		    w = w:gsub("%s+", "")
+		    if w ~= "" then lengths[#lengths+1] = w end
+		end)
+		api.trim(xray_settings.fragment_delays):gsub("[^,]+", function(w)
+		    w = w:gsub("%s+", "")
+		    if w ~= "" then delays[#delays+1] = w end
+		end)
 		fragment_table = {
 			type = "fragment",
 			settings = {
 				packets = xray_settings.fragment_packets,
-				length = xray_settings.fragment_length,
-				delay = delay and (delay:find("-", 1, true) and delay or tonumber(delay)) or nil,
+				lengths = #lengths > 0 and lengths or nil,
+				delays = #delays > 0 and delays or nil,
 				maxSplit = xray_settings.fragment_maxSplit
 			}
 		}

@@ -840,14 +840,26 @@ local function build_v2ray_mihomo_proxy(sid)
 		proxy.down = string_or_nil(get_server_field(sid, "downlink_capacity", "")) and (get_server_field(sid, "downlink_capacity", "") .. " Mbps") or nil
 		proxy.sni = string_or_nil(get_server_field(sid, "tls_host", ""))
 		proxy.fingerprint = string_or_nil(get_server_field(sid, "tls_CertSha", ""))
+		proxy["cert-name"] = string_or_nil(get_server_field(sid, "tls_CertByName", ""))
 		proxy["skip-cert-verify"] = bool_enabled(get_server_field(sid, "insecure", "0"))
 		local alpn = split_alpn(get_server_field(sid, "tls_alpn", ""))
 		if #alpn > 0 then
 			proxy.alpn = alpn
 		end
 		if get_server_field(sid, "flag_obfs", "0") == "1" then
-			proxy.obfs = string_or_nil(get_server_field(sid, "obfs_type", ""))
+			local obfs_type = get_server_field(sid, "obfs_type", "")
+			proxy.obfs = string_or_nil(obfs_type)
 			proxy["obfs-password"] = string_or_nil(get_server_field(sid, "salamander", ""))
+			if obfs_type == "gecko" then
+				local min = tonumber(get_server_field(sid, "obfs_MinPacketSize", "")) or 512
+				local max = tonumber(get_server_field(sid, "obfs_MaxPacketSize", "")) or 1200
+				if min <= 0 or min > max or max > 2048 then
+					min = 512
+					max = 1200
+				end
+				proxy["obfs-min-packet-size"] = min
+				proxy["obfs-max-packet-size"] = max
+			end
 		end
 	elseif protocol == "socks" then
 		if not can_mihomo_handle_v2ray_transport(protocol, sid) then

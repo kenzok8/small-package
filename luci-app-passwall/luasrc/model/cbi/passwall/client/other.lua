@@ -179,19 +179,17 @@ if has_xray then
 	o:value("1-5", "1-5")
 	o:depends("fragment", true)
 
-	o = s_xray:option(Value, "fragment_length", translate("Fragment Length"), translate("Fragmented packet length (byte)"))
-	o.datatype = "or(uinteger,portrange)"
-	o.default = "100-200"
+	o = s_xray:option(Value, "fragment_lengths", translate("Fragment Length"), translate("Fragmented packet length (byte)"))
+	o.default = "3-5,6-8,10-20"
 	o:depends("fragment", true)
 
-	o = s_xray:option(Value, "fragment_delay", translate("Fragment Delay"), translate("Fragmentation interval (ms)"))
-	o.datatype = "or(uinteger,portrange)"
+	o = s_xray:option(Value, "fragment_delays", translate("Fragment Delay"), translate("Fragmentation interval (ms)"))
 	o.default = "10-20"
 	o:depends("fragment", true)
 
 	o = s_xray:option(Value, "fragment_maxSplit", translate("Max Split"), translate("Limit the maximum number of splits."))
 	o.datatype = "or(uinteger,portrange)"
-	o.default = "100-200"
+	o.default = "3-6"
 	o:depends("fragment", true)
 
 	o = s_xray:option(Flag, "noise", translate("Noise"), translate("UDP noise, Under some circumstances it can bypass some UDP based protocol restrictions."))

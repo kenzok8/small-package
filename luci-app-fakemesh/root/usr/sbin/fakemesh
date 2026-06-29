@@ -3,10 +3,13 @@
 . /lib/functions.sh
 . /lib/functions/network.sh
 
+band_steer_helper=${band_steer_helper:-$(uci -q get fakemesh.default.band_steer_helper 2>/dev/null)}
 band_steer_helper=${band_steer_helper:-none}
 
 band_steer_helper_switch()
 {
+	[ "$(uci -q get fakemesh.default.enabled 2>/dev/null)" = "1" ] || return 0
+
 	if [ "$band_steer_helper" = "usteer" ]; then
 		uci delete usteer.@usteer[0].event_log_types 2>/dev/null
 		uci delete usteer.@usteer[0].ssid_list 2>/dev/null
@@ -334,8 +337,8 @@ agent_sync_config()
 
 		test $lost_ac -gt 0 && logger -t fakemesh "agent_sync_config($pid): fetch config ok!"
 
-		oldbsh=$(uci get fakemesh.default.band_steer_helper || echo none)
-		newbsh=$(uci get fakemeshac.default.band_steer_helper || echo none)
+		oldbsh=$(uci -q get fakemesh.default.band_steer_helper 2>/dev/null || echo none)
+		newbsh=$(uci -q get fakemeshac.default.band_steer_helper 2>/dev/null || echo none)
 		[ "${oldbsh}" = "${newbsh}" ] || {
 			uci set fakemesh.default.band_steer_helper="${newbsh}"
 			uci commit fakemesh

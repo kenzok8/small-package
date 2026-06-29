@@ -1,0 +1,18 @@
+From: kenzok8 <kenzok8@noreply>
+Date: 2026-06-29
+Subject: [PATCH] daed: use bounded probes for manual latency tests
+
+Use the existing bounded probe for manual dashboard latency tests.
+Reported: https://github.com/kenzok8/openwrt-daede/issues/20
+---
+--- a/graphql/service/node/latency_mutation_utils.go
++++ b/graphql/service/node/latency_mutation_utils.go
+@@ -108,7 +108,7 @@ func testSingleNodeLatency(option *diale
+ 	}
+ 	defer d.Close()
+ 
+-	result, err := d.ProbeLatency()
++	result, err := d.ProbeLatencyFast()
+ 	if err != nil {
+ 		msg := err.Error()
+ 		resolver.MessageV = &msg
