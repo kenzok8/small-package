@@ -1,6 +1,10 @@
 <script type="text/javascript">
 //<![CDATA[
 	var componentMeta = {
+		mainprogram: {
+			label: '<%:SSR Plus+ Main Program%>',
+			help: '<%:The online upgrade downloads the latest luci-app-ssr-plus package from fw876/helloworld releases and installs the matching IPK or APK package for this system.%>'
+		},
 		xray: {
 			label: '<%:Xray-core%>',
 			help: '<%:The online upgrade downloads the matching Xray-core linux archive for the current ARCH from the official GitHub release page.%>'
@@ -46,12 +50,14 @@
 		'mihomo binary not found in archive': '<%:mihomo binary not found in archive%>',
 		'naive binary not found in archive': '<%:naive binary not found in archive%>',
 		'Install failed': '<%:Install failed%>',
-		'Installed binary failed to run': '<%:Installed binary failed to run%>'
+		'Installed binary failed to run': '<%:Installed binary failed to run%>',
+		'Unsupported package manager': '<%:Unsupported package manager%>',
+		'Installed package check failed': '<%:Installed package check failed%>'
 	};
 
 	function selectedComponent() {
 		var selector = document.getElementById('component-selector');
-		return selector ? selector.value : 'xray';
+		return selector ? selector.value : 'mainprogram';
 	}
 
 	function selectedMirror() {
@@ -74,6 +80,7 @@
 
 		var map = {
 			unsupported_arch: '<%:Unsupported ARCH%>',
+			unsupported_package_manager: '<%:Unsupported package manager%>',
 			fetch_failed: '<%:Failed to fetch release metadata%>',
 			asset_not_found: '<%:Matching release asset not found%>',
 			unsupported_component: '<%:Unsupported component%>',
@@ -107,6 +114,9 @@
 
 		html.push('<div><strong><%:Installed Version%>:</strong> ' + (data.current_version || '<%:Not installed%>') + '</div>');
 		html.push('<div><strong><%:Latest Version%>:</strong> ' + (data.latest_version || '<%:Unknown%>') + '</div>');
+		if (data.package_manager) {
+			html.push('<div><strong><%:Package Manager%>:</strong> ' + data.package_manager + '</div>');
+		}
 		html.push('<div><strong><%:Current ARCH%>:</strong> ' + (data.arch || '<%:Unknown%>') + '</div>');
 		html.push('<div><strong><%:Release Asset%>:</strong> ' + (data.asset || '<%:Unknown%>') + '</div>');
 
@@ -391,6 +401,7 @@
 								<span><%:Package Name%></span>
 							</div>
 							<select id="component-selector" class="cbi-input-select component-selector" onchange="onComponentChange()">
+								<option value="mainprogram"><%:SSR Plus+ Main Program%></option>
 								<option value="xray"><%:Xray-core%></option>
 								<option value="mihomo"><%:Mihomo%></option>
 								<option value="naiveproxy"><%:NaiveProxy%></option>

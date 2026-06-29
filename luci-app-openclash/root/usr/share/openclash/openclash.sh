@@ -49,7 +49,7 @@ config_test()
 {
    if [ -f "$CLASH" ]; then
       LOG_OUT "Config File Download Successful, Test If There is Any Errors..."
-      test_info=$($CLASH -t -d $CLASH_CONFIG -f "$CFG_FILE")
+      test_info=$($CLASH -t -d $CLASH_CONFIG -f "$CFG_FILE" -age-secret-key "$SECRET_KEY")
       local IFS=$'\n'
       for i in $test_info; do
          if [ -n "$(echo "$i" |grep "configuration file")" ]; then
@@ -72,15 +72,14 @@ config_download()
 LOG_TIP "Config File【$name】Downloading User-Agent【$sub_ua】..."
 if [ -n "$subscribe_url_param" ] && [ -n "$c_address" ]; then
    LOG_INFO "Config File【$name】Downloading URL【$c_address$subscribe_url_param】..."
-   local DOWNLOAD_URL="${c_address}${subscribe_url_param}"
-   local DOWNLOAD_PARAM="$sub_ua"
+   DOWNLOAD_URL="${c_address}${subscribe_url_param}"
 fi
 if [ -z "$DOWNLOAD_URL" ]; then
    LOG_INFO "Config File【$name】Downloading URL【$subscribe_url】..."
-   local DOWNLOAD_URL="${subscribe_url}"
-   local DOWNLOAD_PARAM="$sub_ua"
+   DOWNLOAD_URL="${subscribe_url}"
 fi
-DOWNLOAD_FILE_CURL "$DOWNLOAD_URL" "$CFG_FILE" "$CONFIG_FILE" "$DOWNLOAD_PARAM"
+DOWNLOAD_PARAM="$sub_ua"
+DOWNLOAD_FILE_CURL "$DOWNLOAD_URL" "$CFG_FILE" "$CONFIG_FILE" "$DOWNLOAD_PARAM" "$SECRET_KEY"
 DOWNLOAD_RESULT=$?
 }
 
@@ -317,7 +316,7 @@ convert_custom_param()
 
 sub_info_get()
 {
-   local section="$1" subscribe_url template_path subscribe_url_param template_path_encode key_match_param key_ex_match_param c_address de_ex_keyword sub_ua append_custom_params
+   local section="$1" subscribe_url template_path subscribe_url_param template_path_encode key_match_param key_ex_match_param c_address de_ex_keyword sub_ua append_custom_params SECRET_KEY DOWNLOAD_URL DOWNLOAD_PARAM
    config_get_bool "enabled" "$section" "enabled" "1"
    config_get "name" "$section" "name" "config"
    config_get "sub_convert" "$section" "sub_convert" ""
@@ -335,6 +334,7 @@ sub_info_get()
    config_get "custom_template_url" "$section" "custom_template_url" ""
    config_get "de_ex_keyword" "$section" "de_ex_keyword" ""
    config_get "sub_ua" "$section" "sub_ua" "clash-verge/v2.4.5"
+   SECRET_KEY=$(uci_get_age_secret_keys "$name")
 
    CONFIG_FILE="/etc/openclash/config/$name.yaml"
    CFG_FILE="/tmp/$name.yaml"

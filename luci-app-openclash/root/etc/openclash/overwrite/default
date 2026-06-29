@@ -123,6 +123,8 @@
 # SKIP_PROXY_ADDRESS (跳过代理地址, 0: 禁用, 1: 启用)
 # SUB_INFO_URL (订阅信息 URL)
 # DOWNLOAD_FILE (下载外部文件到指定路径, need URL and path)
+# AGE_PUBLIC_KEY (指定配置文件的 AGE 公钥)
+# AGE_SECRET_KEY (指定配置文件的 AGE 私钥)
 # RESTART (模块更新后重启插件, true: 启用, false: 禁用)
 # =========================
 

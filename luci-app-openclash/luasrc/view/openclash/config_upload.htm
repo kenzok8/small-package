@@ -1,697 +1,3 @@
-<style>
-.oc .config-upload-model-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 10000;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(2px);
-}
-
-.oc .config-upload-model-overlay.show {
-    display: flex;
-}
-
-.oc .config-upload-model {
-    background: var(--bg-white);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
-    width: 90vw;
-    max-width: 550px;
-    min-width: 400px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border: 1px solid var(--border-light);
-    max-height: 85vh;
-    transition: all var(--transition-fast);
-}
-
-.oc .config-upload-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px;
-    border-bottom: 1px solid var(--border-light);
-    background: var(--bg-gray);
-    flex-shrink: 0;
-}
-
-.oc .config-upload-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.oc .config-upload-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px;
-    border-top: 1px solid var(--border-light);
-    background: var(--bg-gray);
-    flex-shrink: 0;
-}
-
-.oc .config-upload-status {
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
-.oc .config-upload-buttons {
-    display: flex;
-    gap: 12px;
-}
-
-.oc .config-upload-content {
-    padding: 24px;
-    flex: 1;
-    overflow-y: auto;
-}
-
-.oc .upload-mode-selector {
-    margin-bottom: 24px;
-    border-radius: var(--radius-md);
-}
-
-.oc .mode-tabs {
-    display: flex;
-    background: var(--bg-gray);
-    border-radius: var(--radius-md);
-    padding: 4px;
-    gap: 4px;
-}
-
-.oc .mode-tab {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 12px 16px;
-    border: none;
-    border-radius: calc(var(--radius-md) - 2px);
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.oc .mode-tab:hover {
-    color: var(--text-primary);
-    background: rgba(59, 130, 246, 0.1);
-}
-
-.oc .mode-tab.active {
-    background: var(--primary-color);
-    color: white;
-    box-shadow: var(--shadow-sm);
-}
-
-.oc .mode-tab svg {
-    flex-shrink: 0;
-}
-
-.oc .upload-mode-content {
-    transition: all var(--transition-fast);
-}
-
-.oc .upload-zone {
-    border: 2px dashed var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 40px 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    background: var(--bg-light);
-}
-
-.oc .upload-zone:hover {
-    border-color: var(--primary-color);
-    background: rgba(59, 130, 246, 0.05);
-}
-
-.oc .upload-zone.dragover {
-    border-color: var(--primary-color);
-    background: rgba(59, 130, 246, 0.1);
-}
-
-.oc .upload-zone.has-file {
-    border-color: var(--success-color);
-    background: rgba(5, 150, 105, 0.05);
-}
-
-.oc .upload-icon {
-    margin-bottom: 16px;
-    color: var(--text-secondary);
-}
-
-.oc .upload-zone.has-file .upload-icon {
-    color: var(--success-color);
-}
-
-.oc .upload-primary {
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--text-primary);
-    margin: 0 0 8px 0;
-}
-
-.oc .upload-secondary {
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin: 0;
-}
-
-.oc .subscribe-form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.oc .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    position: relative;
-}
-
-.oc .form-group label {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.oc .form-select-wrapper {
-    position: relative;
-}
-
-.oc .form-select-wrapper::after {
-    content: '';
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 0;
-    height: 0;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 4px solid var(--text-secondary);
-    pointer-events: none;
-}
-
-.oc .form-input,
-.oc .form-select {
-    width: 100%;
-    height: 40px;
-    padding: 10px 12px;
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-sm);
-    background: var(--bg-white) !important;
-    color: var(--text-primary);
-    font-size: 14px;
-    transition: all var(--transition-fast);
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-}
-
-.oc .form-input:focus,
-.oc .form-select:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.oc .form-input::placeholder {
-    color: var(--text-secondary);
-}
-
-.oc .form-select {
-    cursor: pointer;
-}
-
-.oc .form-textarea {
-    width: 100%;
-    min-height: 80px;
-    padding: 10px 12px;
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-sm);
-    background: var(--bg-white);
-    color: var(--text-primary);
-    font-size: 14px;
-    font-family: inherit;
-    resize: vertical;
-    transition: all var(--transition-fast);
-}
-
-.oc .form-textarea:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.oc .form-textarea::placeholder {
-    color: var(--text-secondary);
-}
-
-.oc .form-row {
-    display: flex;
-    gap: 16px;
-    padding-top: 5px;
-}
-
-.oc .form-half {
-    flex: 1;
-}
-
-.oc .form-checkbox {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    color: var(--text-primary);
-    margin-bottom: 5px;
-}
-
-.oc .form-checkbox input[type="checkbox"] {
-    display: none;
-}
-
-.oc .checkmark {
-    width: 16px;
-    height: 16px;
-    border: 2px solid var(--border-light);
-    border-radius: 3px;
-    background: var(--bg-white);
-    position: relative;
-    transition: all var(--transition-fast);
-    flex-shrink: 0;
-}
-
-.oc .form-checkbox input[type="checkbox"]:checked + .checkmark {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
-}
-
-.oc .form-checkbox input[type="checkbox"]:checked + .checkmark::after {
-    content: '';
-    position: absolute;
-    left: 3px;
-    top: 0px;
-    width: 4px;
-    height: 8px;
-    border: solid white;
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
-}
-
-.oc .form-checkbox-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-.oc .form-help {
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-top: 0%;
-    margin-bottom: 10px;
-    line-height: 1.4;
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-}
-
-.oc .form-help::before {
-    content: '';
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    flex-shrink: 0;
-    margin-top: 2px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpath d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3'%3E%3C/path%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'%3E%3C/line%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-    opacity: 0.7;
-}
-
-.oc .filename-input-container {
-    margin-top: 20px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.oc .filename-input-container label {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-    white-space: nowrap;
-}
-
-.oc .filename-input-container input {
-    flex: 1;
-    height: 36px;
-    padding: 8px 12px;
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-sm);
-    background: var(--bg-white);
-    color: var(--text-primary);
-    font-size: 14px;
-    transition: all var(--transition-fast);
-}
-
-.oc .filename-input-container input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.oc .filename-extension {
-    font-size: 14px;
-    color: var(--text-secondary);
-    font-weight: 500;
-}
-
-.oc .upload-progress {
-    margin-top: 20px;
-}
-
-.oc .progress-bar {
-    height: 8px;
-    background: var(--bg-gray);
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 8px;
-}
-
-.oc .progress-fill {
-    height: 100%;
-    background: var(--primary-color);
-    border-radius: 4px;
-    transition: width 0.3s ease;
-    width: 0%;
-}
-
-.oc .progress-text {
-    font-size: 12px;
-    color: var(--text-secondary);
-    text-align: center;
-}
-
-.oc .config-upload-buttons .btn {
-    padding: 8px 16px;
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.oc .cancel-btn {
-    background: var(--bg-white);
-    color: var(--text-secondary);
-}
-
-.oc .cancel-btn:hover {
-    background: var(--hover-bg);
-    color: var(--text-primary);
-}
-
-.oc .upload-btn {
-    background: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
-}
-
-.oc .upload-btn:hover:not(:disabled) {
-    background: var(--primary-color);
-    opacity: 0.9;
-}
-
-.oc .upload-btn:disabled {
-    background: var(--bg-gray);
-    color: var(--text-secondary);
-    border-color: var(--border-light);
-    cursor: not-allowed;
-}
-
-.oc .advanced-options-container {
-    padding: 16px;
-    background: var(--bg-light);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-light);
-    transition: all var(--transition-fast);
-}
-
-.oc .advanced-options-container .form-group:last-child {
-    margin-bottom: 0;
-}
-
-.oc .advanced-options-container .sub-convert-options {
-    margin: 12px auto;
-    margin-left: 0;
-    background: rgba(59, 130, 246, 0.03);
-    border-color: rgba(59, 130, 246, 0.2);
-    max-width: 100%;
-}
-
-.oc .sub-convert-options {
-    margin: 16px auto;
-    padding: 16px;
-    background: var(--bg-light);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-light);
-    max-width: 95%;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.oc[data-darkmode="true"] .config-upload-model {
-    background: var(--bg-white);
-    border-color: var(--border-light);
-}
-
-.oc[data-darkmode="true"] .config-upload-header,
-.oc[data-darkmode="true"] .config-upload-footer {
-    background: var(--bg-gray);
-    border-color: var(--border-light);
-}
-
-.oc[data-darkmode="true"] .mode-tab {
-    color: var(--text-secondary);
-}
-
-.oc[data-darkmode="true"] .mode-tab:hover {
-    color: var(--text-primary);
-    background: rgba(96, 165, 250, 0.1);
-}
-
-.oc[data-darkmode="true"] .mode-tab.active {
-    background: var(--primary-color);
-    color: white;
-}
-
-.oc[data-darkmode="true"] .upload-zone {
-    border-color: var(--border-color);
-    background: var(--bg-light);
-}
-
-.oc[data-darkmode="true"] .upload-zone:hover {
-    border-color: var(--primary-color);
-    background: rgba(96, 165, 250, 0.05);
-}
-
-.oc[data-darkmode="true"] .upload-zone.dragover {
-    border-color: var(--primary-color);
-    background: rgba(96, 165, 250, 0.1);
-}
-
-.oc[data-darkmode="true"] .upload-zone.has-file {
-    border-color: var(--success-color);
-    background: rgba(52, 211, 153, 0.05);
-}
-
-.oc[data-darkmode="true"] .upload-zone.has-file .upload-icon {
-    color: var(--success-color);
-}
-
-.oc[data-darkmode="true"] .form-input,
-.oc[data-darkmode="true"] .form-select,
-.oc[data-darkmode="true"] .filename-input-container input {
-    background: var(--bg-white);
-    border-color: var(--border-light);
-    color: var(--text-primary);
-    background-color: var(--bg-gray) !important;
-}
-
-.oc[data-darkmode="true"] .form-input:focus,
-.oc[data-darkmode="true"] .form-select:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.1);
-}
-
-.oc[data-darkmode="true"] .form-input::placeholder {
-    color: var(--text-secondary);
-}
-
-.oc[data-darkmode="true"] .form-textarea {
-    background: var(--bg-gray);
-    border-color: var(--border-light);
-    color: var(--text-primary);
-}
-
-.oc[data-darkmode="true"] .form-textarea:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.1);
-}
-
-.oc[data-darkmode="true"] .form-textarea::placeholder {
-    color: var(--text-secondary);
-}
-
-.oc[data-darkmode="true"] .checkmark {
-    border-color: var(--border-light);
-    background: var(--bg-gray);
-}
-
-.oc[data-darkmode="true"] .progress-bar {
-    background: var(--bg-gray);
-}
-
-.oc[data-darkmode="true"] .progress-fill {
-    background: var(--primary-color);
-}
-
-.oc[data-darkmode="true"] .cancel-btn {
-    background: var(--bg-white);
-    color: var(--text-secondary);
-    border-color: var(--border-light);
-}
-
-.oc[data-darkmode="true"] .cancel-btn:hover {
-    background: var(--hover-bg);
-    color: var(--text-primary);
-}
-
-.oc[data-darkmode="true"] .upload-btn {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
-}
-
-.oc[data-darkmode="true"] .upload-btn:disabled {
-    background: var(--bg-gray);
-    color: var(--text-secondary);
-    border-color: var(--border-light);
-}
-
-.oc[data-darkmode="true"] .sub-convert-options {
-    background: rgba(96, 165, 250, 0.05);
-    border-color: var(--border-light);
-}
-
-.oc[data-darkmode="true"] .advanced-options-container {
-    background: rgba(96, 165, 250, 0.05);
-    border-color: var(--border-light);
-}
-
-.oc[data-darkmode="true"] .advanced-options-container .sub-convert-options {
-    background: rgba(96, 165, 250, 0.08);
-    border-color: var(--border-light);
-}
-
-.oc[data-darkmode="true"] .form-help::before {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23d0cfcf' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpath d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3'%3E%3C/path%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'%3E%3C/line%3E%3C/svg%3E");
-    opacity: 0.6;
-}
-
-@media screen and (max-width: 768px) {
-    .oc .form-help {
-        font-size: 11px;
-        margin-bottom: 10px;
-        gap: 5px;
-    }
-
-    .oc .form-help::before {
-        width: 11px;
-        height: 11px;
-        margin-top: 1px;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpath d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3'%3E%3C/path%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'%3E%3C/line%3E%3C/svg%3E");
-    }
-
-    .oc[data-darkmode="true"] .form-help::before {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23d0cfcf' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpath d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3'%3E%3C/path%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'%3E%3C/line%3E%3C/svg%3E");
-    }
-
-    .oc .sub-convert-options {
-        margin: 12px auto;
-        padding: 12px;
-        max-width: 98%;
-    }
-}
-
-@media screen and (max-width: 575px) {
-    .oc .form-help {
-        font-size: 10px;
-        margin-bottom: 8px;
-        gap: 4px;
-    }
-
-    .oc .form-help::before {
-        width: 10px;
-        height: 10px;
-        margin-top: 1px;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpath d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3'%3E%3C/path%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'%3E%3C/line%3E%3C/svg%3E");
-    }
-
-    .oc[data-darkmode="true"] .form-help::before {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23d0cfcf' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpath d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3'%3E%3C/path%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'%3E%3C/line%3E%3C/svg%3E");
-    }
-
-    .oc .sub-convert-options {
-        margin: 10px auto;
-        padding: 10px;
-        max-width: 100%;
-    }
-}
-
-@media screen and (max-width: 500px) {
-    .oc .config-upload-model {
-        width: 95vw;
-        min-width: 320px;
-    }
-
-    .oc .config-upload-content {
-        padding: 20px;
-    }
-
-    .oc .upload-zone {
-        padding: 30px 15px;
-    }
-
-    .oc .mode-tab {
-        padding: 10px 12px;
-        font-size: 13px;
-    }
-
-    .oc .mode-tab svg {
-        width: 14px;
-        height: 14px;
-    }
-}
-</style>
-
 <div class="oc">
     <div class="config-upload-model-overlay" id="config-upload-overlay">
         <div class="config-upload-model" id="config-upload-model">
@@ -745,6 +51,18 @@
                             <div class="upload-secondary"><%:Support YAML file, max size 10MB%></div>
                         </div>
                         <input type="file" id="config-file-input" accept=".yaml,.yml" style="display: none;">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-checkbox">
+                            <input type="checkbox" id="advanced-options-enable-file" class="advanced-options-enable">
+                            <span class="checkmark"></span>
+                            <%:Advanced Options%>
+                        </label>
+                        <div class="form-help"><%:Show more upload options%></div>
+                    </div>
+
+                    <div class="advanced-options-container" id="advanced-options-container-file" style="display: none;">
                     </div>
                 </div>
 
@@ -929,10 +247,64 @@
                                     </label>
                                 </div>
                             </div>
+
+                            <div class="form-group" id="age-encryption-group">
+                                <div class="form-group">
+                                    <label style="display:block; margin-bottom:6px;"><%:Age Key Type%></label>
+                                    <div style="display:flex; align-items:center;">
+                                        <div style="flex:1;">
+                                            <div class="form-select-wrapper">
+                                                <select id="age-algo-select" class="form-select">
+                                                    <option value="keygen">x25519</option>
+                                                    <option value="pq">PQ (mlkem768-x25519)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <button type="button" id="age-generate-btn" class="icon-btn" style="margin-left:8px;" title="<%:Generate Age Key%>">
+                                            <svg height="16" viewBox="0 0 16 16" width="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M10.5 0a5.499 5.499 0 1 1-1.288 10.848l-.932.932a.749.749 0 0 1-.53.22H7v.75a.749.749 0 0 1-.22.53l-.5.5a.749.749 0 0 1-.53.22H5v.75a.749.749 0 0 1-.22.53l-.5.5a.749.749 0 0 1-.53.22h-2A1.75 1.75 0 0 1 0 14.25v-2c0-.199.079-.389.22-.53l4.932-4.932A5.5 5.5 0 0 1 10.5 0Zm-4 5.5c-.001.431.069.86.205 1.269a.75.75 0 0 1-.181.768L1.5 12.56v1.69c0 .138.112.25.25.25h1.69l.06-.06v-1.19a.75.75 0 0 1 .75-.75h1.19l.06-.06v-1.19a.75.75 0 0 1 .75-.75h1.19l1.023-1.025a.75.75 0 0 1 .768-.18A4 4 0 1 0 6.5 5.5ZM11 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div class="form-help"><%:Age Encryption For Config, Click For More:%> <a href="javascript:void(0);" onclick="window.open('https://wiki.metacubex.one/config/proxy-providers/?age-secret-key#age-secret-key', '_blank');" class="help-link"> <%:Age Encryption Introduce%></a></div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="age-secret-input"><%:Secret Key%>:</label>
+                                    <div style="display:flex; align-items:center;">
+                                        <input type="text" id="age-secret-input" class="form-input" style="flex:1;" />
+                                        <button type="button" id="age-copy-secret" class="icon-btn" style="margin-left:8px;" title="<%:Copy%>">
+                                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                                <path d="M16 1H4a2 2 0 00-2 2v12h2V3h12V1zM20 5H8a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2zm0 16H8V7h12v14z" fill="currentColor"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="age-public-input"><%:Public Key%>:</label>
+                                    <div style="display:flex; align-items:center;">
+                                        <input type="text" id="age-public-input" class="form-input" style="flex:1;" />
+                                        <button type="button" id="age-copy-public" class="icon-btn" style="margin-left:8px;" title="<%:Copy%>">
+                                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                                <path d="M16 1H4a2 2 0 00-2 2v12h2V3h12V1zM20 5H8a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2zm0 16H8V7h12v14z" fill="currentColor"/>
+                                            </svg>
+                                        </button>
+                                        <button type="button" id="age-calculate-public" class="icon-btn" style="margin-left:8px;" title="<%:Calculate Public Key%>">
+                                            <svg width="16" height="16" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M28 32.5H42" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                                                <path d="M28 41.5H42" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                                                <path d="M6 13H22" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                                                <path d="M14 5L14 21" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                                                <path d="M42 5L6 41" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-
                 <div class="filename-input-container">
                     <label for="config-filename-input"><%:Config Name%>:</label>
                     <input type="text" id="config-filename-input" placeholder="<%:Enter config name (without extension)%>" class="form-input"/>
@@ -967,7 +339,7 @@
             </div>
             <div class="config-upload-content">
                 <div class="form-group">
-                    <label><%:Paste the new url of subscribe infos sources here:%></label>
+                    <label class="highlight-label"><%:Paste the new url of subscribe infos sources here:%></label>
                     <textarea id="subscription-url-textarea" class="form-textarea" placeholder="<%:Enter URLs, one per line, use #name=example end for specifing display name%> (https://example.com#name=example)" rows="5"></textarea>
                 </div>
             </div>
@@ -989,6 +361,7 @@ var ConfigUploader = {
     selectedFile: null,
     isProcessing: false,
     currentMode: 'file',
+    _linkRe: /^(?:https?:\/\/\S+|[a-zA-Z]+:\/\/\S+|[^,\s]+,https?:\/\/\S+|[^%\s]+%2Chttps?%3A%2F%2F\S+)$/i,
 
     init: function() {
         this.overlay = document.getElementById('config-upload-overlay');
@@ -1059,6 +432,9 @@ var ConfigUploader = {
         var customTemplateGroup = document.getElementById('custom-template-group');
         var advancedOptionsEnable = document.getElementById('advanced-options-enable');
         var advancedOptionsContainer = document.getElementById('advanced-options-container');
+        var advancedOptionsEnableFile = document.getElementById('advanced-options-enable-file');
+        var advancedOptionsContainerFile = document.getElementById('advanced-options-container-file');
+        var ageFormNode = document.getElementById('age-encryption-group');
 
         subscribeUrlInput.addEventListener('input', function() {
             self.autoFillConfigName();
@@ -1068,47 +444,138 @@ var ConfigUploader = {
         filenameInput.addEventListener('input', this.updateSubmitButton.bind(this));
 
         subscribeUaSelect.addEventListener('change', function() {
-            if (this.value === 'custom') {
-                subscribeUaCustom.style.display = 'block';
-            } else {
-                subscribeUaCustom.style.display = 'none';
-            }
+            subscribeUaCustom.style.display = this.value === 'custom' ? 'block' : 'none';
         });
 
         advancedOptionsEnable.addEventListener('change', function() {
             if (this.checked) {
                 advancedOptionsContainer.style.display = 'block';
+                if (ageFormNode && advancedOptionsContainer && ageFormNode.parentNode !== advancedOptionsContainer) {
+                    advancedOptionsContainer.appendChild(ageFormNode);
+                }
             } else {
                 advancedOptionsContainer.style.display = 'none';
                 self.resetAdvancedOptions();
                 self.updateSubmitButton();
+                if (ageFormNode && advancedOptionsContainer && ageFormNode.parentNode !== advancedOptionsContainer) {
+                    advancedOptionsContainer.appendChild(ageFormNode);
+                }
             }
         });
 
+        if (advancedOptionsEnableFile) {
+            advancedOptionsEnableFile.addEventListener('change', function() {
+                if (this.checked) {
+                    advancedOptionsContainerFile.style.display = 'block';
+                    if (ageFormNode && advancedOptionsContainerFile && ageFormNode.parentNode !== advancedOptionsContainerFile) {
+                        advancedOptionsContainerFile.appendChild(ageFormNode);
+                    }
+                } else {
+                    advancedOptionsContainerFile.style.display = 'none';
+                    self.resetAdvancedOptions();
+                    self.updateSubmitButton();
+                    if (ageFormNode && advancedOptionsContainer && ageFormNode.parentNode === advancedOptionsContainerFile) {
+                        advancedOptionsContainer.appendChild(ageFormNode);
+                    }
+                }
+            });
+        }
+
         subConvertEnable.addEventListener('change', function() {
-            if (this.checked) {
-                subConvertOptions.style.display = 'block';
-            } else {
-                subConvertOptions.style.display = 'none';
-            }
+            subConvertOptions.style.display = this.checked ? 'block' : 'none';
             self.updateSubmitButton();
         });
 
         convertAddressSelect.addEventListener('change', function() {
-            if (this.value === 'custom') {
-                convertAddressCustom.style.display = 'block';
-            } else {
-                convertAddressCustom.style.display = 'none';
-            }
+            convertAddressCustom.style.display = this.value === 'custom' ? 'block' : 'none';
         });
 
         templateSelect.addEventListener('change', function() {
-            if (this.value === '0') {
-                customTemplateGroup.style.display = 'block';
-            } else {
-                customTemplateGroup.style.display = 'none';
-            }
+            customTemplateGroup.style.display = this.value === '0' ? 'block' : 'none';
         });
+
+        var ageGenerateBtn = document.getElementById('age-generate-btn');
+        var ageCopyPublic = document.getElementById('age-copy-public');
+        var ageCopySecret = document.getElementById('age-copy-secret');
+        var agePublicInput = document.getElementById('age-public-input');
+        var ageSecretInput = document.getElementById('age-secret-input');
+        var ageCalPublic = document.getElementById('age-calculate-public');
+
+        if (ageGenerateBtn) {
+            ageGenerateBtn.addEventListener('click', function() {
+                var algo = document.getElementById('age-algo-select') ? document.getElementById('age-algo-select').value : 'keygen';
+                ageGenerateBtn.disabled = true;
+                XHR.get('<%=luci.dispatcher.build_url("admin", "services", "openclash", "generate_age_key")%>', {
+                    algo: algo
+                }, function(x, data) {
+                    ageGenerateBtn.disabled = false;
+                    if (x && x.status == 200 && data.status === 'success') {
+                        if (ageSecretInput) {
+                            ageSecretInput.value = data.secret || '';
+                        }
+                        if (agePublicInput) {
+                            agePublicInput.value = data.public || '';
+                        }
+                        self.updateSubmitButton();
+                    } else {
+                        alert('<%:Failed to generate age key%>');
+                    }
+                });
+            });
+        }
+
+        if (ageCopyPublic) {
+            ageCopyPublic.addEventListener('click', function() {
+                var v = agePublicInput.value || '';
+                if (v === '') { alert('<%:No public key%>'); return; }
+                copyToClipboard(v);
+            });
+        }
+
+        if (ageCopySecret) {
+            ageCopySecret.addEventListener('click', function() {
+                var v = ageSecretInput.value || '';
+                if (v === '') { alert('<%:No secret key%>'); return; }
+                copyToClipboard(v);
+            });
+        }
+
+        if (ageCalPublic) {
+            ageCalPublic.addEventListener('click', function() {
+                var secret = ageSecretInput.value || '';
+                if (secret === '') { alert('<%:Please enter the Age Secret Key to calculate the public key!%>'); return; }
+                ageCalPublic.disabled = true;
+                XHR.get('<%=luci.dispatcher.build_url("admin", "services", "openclash", "cal_age_public_key")%>', {
+                    secret: secret
+                }, function(x, data) {
+                    ageCalPublic.disabled = false;
+                    if (x && x.status == 200 && data.status === 'success') {
+                        if (agePublicInput) {
+                            agePublicInput.value = data.public || '';
+                        }
+                        self.updateSubmitButton();
+                    } else {
+                        alert('<%:Failed to calculate public key%>');
+                    }
+                });
+            });
+        }
+
+        if (agePublicInput) agePublicInput.addEventListener('input', self.updateSubmitButton.bind(self));
+        if (ageSecretInput) ageSecretInput.addEventListener('input', self.updateSubmitButton.bind(self));
+
+        function copyToClipboard(text) {
+            if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text);
+            } else {
+                var ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+            }
+        }
 
         document.getElementById('config-upload-submit').addEventListener('click', function() {
             if (self.currentMode === 'file') {
@@ -1146,12 +613,64 @@ var ConfigUploader = {
     showEditSubscribe: function(subscribeData, filename) {
         this.overlay.classList.add('show');
         this.reset();
-        this.isEditMode = true;
         this.editFilename = filename;
-        this.switchMode('subscribe');
-        document.getElementById('config-upload-title').textContent = '<%:Edit Subscription%>';
-        document.getElementById('config-upload-submit').textContent = '<%:Edit Config%>';
-        this.fillSubscribeForm(subscribeData);
+
+        var isSubscribe = subscribeData && subscribeData.address;
+        var advFileEnable = document.getElementById('advanced-options-enable-file');
+        var advFileContainer = document.getElementById('advanced-options-container-file');
+        var ageNode = document.getElementById('age-encryption-group');
+        var secretEl = document.getElementById('age-secret-input');
+        var publicEl = document.getElementById('age-public-input');
+        var algoSelect = document.getElementById('age-algo-select');
+        this.isEditMode = false;
+
+        if (isSubscribe) {
+            this.switchMode('subscribe');
+            document.getElementById('config-upload-title').textContent = '<%:Edit Subscription%>';
+            document.getElementById('config-upload-submit').textContent = '<%:Edit Config%>';
+            this.fillSubscribeForm(subscribeData);
+        } else {
+            this.switchMode('file');
+            document.getElementById('config-upload-title').textContent = '<%:Edit Config%>';
+            document.getElementById('config-upload-submit').textContent = '<%:Edit Config%>';
+
+            if (this.editFilename) {
+                document.getElementById('config-filename-input').value = this.editFilename;
+            }
+
+            try {
+                if (subscribeData) {
+                    var hasAge = false;
+                    if (subscribeData.config_age_secret) {
+                        if (secretEl) secretEl.value = subscribeData.config_age_secret;
+                        hasAge = true;
+                    }
+                    if (subscribeData.config_age_public) {
+                        if (publicEl) publicEl.value = subscribeData.config_age_public;
+                        hasAge = true;
+                    }
+                    if (subscribeData.config_age_algo) {
+                        if (algoSelect) try { algoSelect.value = subscribeData.config_age_algo; } catch (e) {}
+                        hasAge = true;
+                    }
+
+                    if (hasAge && advFileEnable && advFileContainer) {
+                        advFileEnable.checked = true;
+                        advFileContainer.style.display = 'block';
+                        
+                        if (ageNode && ageNode.parentNode !== advFileContainer) advFileContainer.appendChild(ageNode);
+                    }
+                }
+            } catch (e) {}
+        }
+
+        if (subscribeData) {
+            if (subscribeData.config_age_hidden) {
+                advFileEnable.parentNode.parentNode.style.display = 'none';
+                ageNode.style.display = 'none';
+            }
+        }
+
         this.updateSubmitButton();
     },
 
@@ -1189,6 +708,12 @@ var ConfigUploader = {
         document.getElementById('exclude-traffic').checked = false;
         document.getElementById('exclude-plan').checked = false;
         document.getElementById('exclude-website').checked = false;
+        document.getElementById('age-secret-input').value = '';
+        document.getElementById('age-public-input').value = '';
+        var advFileEnable = document.getElementById('advanced-options-enable-file');
+        if (advFileEnable) advFileEnable.checked = false;
+        var advFileContainer = document.getElementById('advanced-options-container-file');
+        if (advFileContainer) advFileContainer.style.display = 'none';
     },
 
     reset: function() {
@@ -1206,6 +731,7 @@ var ConfigUploader = {
 
         document.getElementById('advanced-options-enable').checked = false;
         document.getElementById('advanced-options-container').style.display = 'none';
+        document.getElementById('config-upload-cancel').disabled = false;
         this.resetAdvancedOptions();
 
         var templateSelect = document.getElementById('template-select');
@@ -1243,7 +769,7 @@ var ConfigUploader = {
             }
         }
 
-        if (data.sub_convert === '1' || data.convert_address || data.template || data.emoji === 'true' || data.udp === 'true' || data.skip_cert_verify === 'true' || data.sort === 'true' || data.node_type === 'true' || data.rule_provider === 'true' || data.custom_params || data.keyword || data.ex_keyword || data.de_ex_keyword) {
+        if (data.sub_convert === '1' || data.convert_address || data.template || data.custom_template_url || data.emoji === 'true' || data.udp === 'true' || data.skip_cert_verify === 'true' || data.sort === 'true' || data.node_type === 'true' || data.rule_provider === 'true' || data.custom_params || data.keyword || data.ex_keyword || data.de_ex_keyword || data.config_age_secret || data.config_age_public || data.config_age_algo) {
             document.getElementById('advanced-options-enable').checked = true;
             document.getElementById('advanced-options-container').style.display = 'block';
 
@@ -1282,7 +808,7 @@ var ConfigUploader = {
                     } else if (data.template === '0') {
                         templateSelect.value = '0';
                         document.getElementById('custom-template-group').style.display = 'block';
-                        document.getElementById('custom-template-input').value = data.custom_template || '';
+                        document.getElementById('custom-template-input').value = data.custom_template_url || data.custom_template || '';
                     }
                 }
 
@@ -1311,6 +837,17 @@ var ConfigUploader = {
                 document.getElementById('exclude-plan').checked = defaults.indexOf(document.getElementById('exclude-plan').value) !== -1;
                 document.getElementById('exclude-website').checked = defaults.indexOf(document.getElementById('exclude-website').value) !== -1;
             }
+
+            var secretEl = document.getElementById('age-secret-input');
+            var publicEl = document.getElementById('age-public-input');
+            if (secretEl) secretEl.value = data.config_age_secret || '';
+            if (publicEl) publicEl.value = data.config_age_public || '';
+            if (data.config_age_algo) {
+                var algoSelect = document.getElementById('age-algo-select');
+                if (algoSelect) {
+                    try { algoSelect.value = data.config_age_algo; } catch (e) {}
+                }
+            }
         }
     },
 
@@ -1327,18 +864,39 @@ var ConfigUploader = {
         modeFileTab.style.display = this.isEditMode ? 'none' : '';
         modeSubscribeTab.style.display = '';
 
+        modeFileTab.classList.remove('active');
+        modeSubscribeTab.classList.remove('active');
+        modeFileContent.style.display = 'none';
+        modeSubscribeContent.style.display = 'none';
+
         if (mode === 'file') {
             modeFileTab.classList.add('active');
-            modeSubscribeTab.classList.remove('active');
             modeFileContent.style.display = 'block';
-            modeSubscribeContent.style.display = 'none';
             statusText.textContent = '<%:Ready to upload file%>';
-        } else {
-            modeFileTab.classList.remove('active');
+        } else if (mode === 'subscribe') {
             modeSubscribeTab.classList.add('active');
-            modeFileContent.style.display = 'none';
             modeSubscribeContent.style.display = 'block';
             statusText.textContent = this.isEditMode ? '<%:Ready to edit subscription%>' : '<%:Ready to add subscription%>';
+        }
+
+        var ageNode = document.getElementById('age-encryption-group');
+        var advancedOptionsEnableEl = document.getElementById('advanced-options-enable');
+        var advancedOptionsContainerEl = document.getElementById('advanced-options-container');
+        var advancedOptionsEnableFileEl = document.getElementById('advanced-options-enable-file');
+        var advancedOptionsContainerFileEl = document.getElementById('advanced-options-container-file');
+
+        if (ageNode) {
+            if (mode === 'file') {
+                if (advancedOptionsEnableFileEl && advancedOptionsEnableFileEl.checked && advancedOptionsContainerFileEl) {
+                    if (ageNode.parentNode !== advancedOptionsContainerFileEl) advancedOptionsContainerFileEl.appendChild(ageNode);
+                } else if (advancedOptionsContainerEl) {
+                    if (ageNode.parentNode !== advancedOptionsContainerEl) advancedOptionsContainerEl.appendChild(ageNode);
+                }
+            } else if (mode === 'subscribe') {
+                if (advancedOptionsContainerEl) {
+                    if (ageNode.parentNode !== advancedOptionsContainerEl) advancedOptionsContainerEl.appendChild(ageNode);
+                }
+            }
         }
 
         this.selectedFile = null;
@@ -1397,15 +955,23 @@ var ConfigUploader = {
         var isValidFormat = false;
 
         if (this.currentMode === 'file') {
-            isValidFormat = this.selectedFile && filename;
+            if (this.selectedFile && filename) {
+                isValidFormat = true;
+            } else if (this.editFilename && filename) {
+                isValidFormat = true;
+            } else {
+                isValidFormat = false;
+            }
         } else if (this.currentMode === 'subscribe') {
             var url = document.getElementById('subscribe-url-input').value.trim();
             var advancedEnabled = document.getElementById('advanced-options-enable').checked;
             var subConvert = advancedEnabled && document.getElementById('sub-convert-enable').checked;
+            var agePublic = document.getElementById('age-public-input') ? document.getElementById('age-public-input').value.trim() : '';
+            var ageSecret = document.getElementById('age-secret-input') ? document.getElementById('age-secret-input').value.trim() : '';
 
             if (url && filename) {
                 if (subConvert) {
-                    var linkPattern = /^(?:https?:\/\/|[a-zA-Z]+:\/\/|[^,\s]+,https?:\/\/.+|[^%\s]+%2Chttps?%3A%2F%2F.+)$/i;
+                    var linkPattern = this._linkRe;
 
                     if (url.indexOf('\n') !== -1 || url.indexOf('|') !== -1) {
                         var links = url.split(/[\n|]/);
@@ -1424,14 +990,23 @@ var ConfigUploader = {
                         isValidFormat = true;
                     }
                 }
+            } else if (filename && (agePublic || ageSecret)) {
+                if (this.isEditMode) {
+                    isValidFormat = true;
+                } else {
+                    isValidFormat = false;
+                }
             }
+        }
+        else if (this.currentMode === 'age') {
+            isValidFormat = !!filename;
         }
 
         submitBtn.disabled = !isValidFormat || this.isProcessing;
     },
 
     uploadFile: function() {
-        if (!this.selectedFile || this.isProcessing) return;
+        if (this.isProcessing) return;
 
         var filename = document.getElementById('config-filename-input').value.trim();
         if (!filename) {
@@ -1442,6 +1017,21 @@ var ConfigUploader = {
         if (!/^[a-zA-Z0-9_\-\s\u4e00-\u9fa5\.]+$/.test(filename)) {
             alert('<%:Filename contains invalid characters%>');
             return;
+        }
+
+        if (this.editFilename || this.selectedFile) {
+            var ageSecret = document.getElementById('age-secret-input').value || '';
+            var agePublic = document.getElementById('age-public-input').value || '';
+            var ageAlgoEl = document.getElementById('age-algo-select'), ageAlgo = ageAlgoEl ? ageAlgoEl.value : '';
+
+            XHR.get('<%=luci.dispatcher.build_url("admin", "services", "openclash", "add_age_config")%>', {
+                name: filename,
+                age_secret: ageSecret,
+                age_public: agePublic,
+                age_algo: ageAlgo
+            }, function(x3, data3) {
+
+            });
         }
 
         var self = this;
@@ -1457,6 +1047,18 @@ var ConfigUploader = {
         submitBtn.disabled = true;
         cancelBtn.disabled = true;
         statusText.textContent = '<%:Uploading...%>';
+
+        if (!this.selectedFile) {
+            statusText.textContent = '<%:Upload successful%>';
+            setTimeout(function() {
+                self.hide();
+                if (typeof ConfigFileManager !== 'undefined' && ConfigFileManager.refreshConfigList) {
+                    ConfigFileManager.refreshConfigList();
+                }
+            }, 2000);
+            return;
+        }
+
         progressContainer.style.display = 'block';
 
         var progress = 0;
@@ -1535,6 +1137,7 @@ var ConfigUploader = {
         var sort = false;
         var nodeType = false;
         var ruleProvider = false;
+        var customTemplateUrl = '';
         var customParams = '';
         var keywords = '';
         var excludeKeywords = '';
@@ -1565,7 +1168,7 @@ var ConfigUploader = {
             }
 
             if (template === '0') {
-                template = customTemplate.trim();
+                customTemplateUrl = customTemplate.trim();
             }
         }
 
@@ -1573,7 +1176,15 @@ var ConfigUploader = {
             userAgent = subscribeUaCustom.value.trim();
         }
 
-        if (!url || !filename) {
+        var ageSecretVal = document.getElementById('age-secret-input') ? document.getElementById('age-secret-input').value.trim() : '';
+        var agePublicVal = document.getElementById('age-public-input') ? document.getElementById('age-public-input').value.trim() : '';
+
+        if (!filename) {
+            alert('<%:Please enter subscription config name%>');
+            return;
+        }
+
+        if ((!url || url === '') && !ageSecretVal && !agePublicVal) {
             alert('<%:Please enter subscription URL and config name%>');
             return;
         }
@@ -1581,7 +1192,7 @@ var ConfigUploader = {
         var isValidFormat = false;
 
         if (subConvert) {
-            var linkPattern = /^(?:https?:\/\/|[a-zA-Z]+:\/\/|[^,\s]+,https?:\/\/.+|[^%\s]+%2Chttps?%3A%2F%2F.+)$/i;
+            var linkPattern = this._linkRe;
 
             if (url.indexOf('\n') !== -1 || url.indexOf('|') !== -1) {
                 var links = url.split(/[\n|]/);
@@ -1633,51 +1244,68 @@ var ConfigUploader = {
             }
         }, 100);
 
-        XHR.get('<%=luci.dispatcher.build_url("admin", "services", "openclash", "add_subscription")%>', {
-            name: filename,
-            address: url,
-            sub_ua: userAgent,
-            sub_convert: subConvert ? '1' : '0',
-            convert_address: convertAddress,
-            template: template,
-            emoji: emoji ? 'true' : 'false',
-            udp: udp ? 'true' : 'false',
-            skip_cert_verify: skipCert ? 'true' : 'false',
-            sort: sort ? 'true' : 'false',
-            node_type: nodeType ? 'true' : 'false',
-            rule_provider: ruleProvider ? 'true' : 'false',
-            custom_params: customParams,
-            keyword: keywords,
-            ex_keyword: excludeKeywords,
-            de_ex_keyword: excludeDefaults.join(' ')
-        }, function(x, data) {
-            if (x && x.status == 200 && data.status === 'success') {
-                XHR.get('<%=luci.dispatcher.build_url("admin", "services", "openclash", "update_config")%>', {
-                    filename: filename
-                }, function(x2, data2) {
-                    clearInterval(progressInterval);
-                    if (x2 && x2.status == 200) {
-                        progressFill.style.width = '100%';
-                        if (data2.status === 'success') {
-                            progressText.textContent = (this.isEditMode ? '<%:Subscription updated successfully%>' : '<%:Subscription added successfully%>') + ' 100%';
-                            statusText.textContent = this.isEditMode ? '<%:Subscription updated successfully%>' : '<%:Subscription added successfully%>';
-                            setTimeout(function() {
-                                self.hide();
-                                if (typeof ConfigFileManager !== 'undefined' && ConfigFileManager.refreshConfigList) {
-                                    ConfigFileManager.refreshConfigList();
-                                }
-                            }, 2000);
+        var ageSecret = document.getElementById('age-secret-input').value || '';
+        var agePublic = document.getElementById('age-public-input').value || '';
+        var ageAlgoEl = document.getElementById('age-algo-select'), ageAlgo = ageAlgoEl ? ageAlgoEl.value : '';
+
+        var doAddSubscription = function() {
+            XHR.get('<%=luci.dispatcher.build_url("admin", "services", "openclash", "add_subscription")%>', {
+                name: filename,
+                address: url,
+                sub_ua: userAgent,
+                sub_convert: subConvert ? '1' : '0',
+                convert_address: convertAddress,
+                template: template,
+                custom_template_url: customTemplateUrl,
+                emoji: emoji ? 'true' : 'false',
+                udp: udp ? 'true' : 'false',
+                skip_cert_verify: skipCert ? 'true' : 'false',
+                sort: sort ? 'true' : 'false',
+                node_type: nodeType ? 'true' : 'false',
+                rule_provider: ruleProvider ? 'true' : 'false',
+                custom_params: customParams,
+                keyword: keywords,
+                ex_keyword: excludeKeywords,
+                de_ex_keyword: excludeDefaults.join(' ')
+            }, function(x, data) {
+                if (x && x.status == 200 && data.status === 'success') {
+                    XHR.get('<%=luci.dispatcher.build_url("admin", "services", "openclash", "update_config")%>', {
+                        filename: filename
+                    }, function(x2, data2) {
+                        clearInterval(progressInterval);
+                        if (x2 && x2.status == 200) {
+                            progressFill.style.width = '100%';
+                            if (data2.status === 'success') {
+                                progressText.textContent = (this.isEditMode ? '<%:Subscription updated successfully%>' : '<%:Subscription added successfully%>') + ' 100%';
+                                statusText.textContent = this.isEditMode ? '<%:Subscription updated successfully%>' : '<%:Subscription added successfully%>';
+
+                                setTimeout(function() {
+                                    self.hide();
+                                    if (typeof ConfigFileManager !== 'undefined' && ConfigFileManager.refreshConfigList) {
+                                        ConfigFileManager.refreshConfigList();
+                                    }
+                                }, 2000);
+                            } else {
+                                self.handleError(this.isEditMode ? '<%:Failed to update subscription config%>' : '<%:Failed to download subscription config%>');
+                            }
                         } else {
                             self.handleError(this.isEditMode ? '<%:Failed to update subscription config%>' : '<%:Failed to download subscription config%>');
                         }
-                    } else {
-                        self.handleError(this.isEditMode ? '<%:Failed to update subscription config%>' : '<%:Failed to download subscription config%>');
-                    }
-                });
-            } else {
-                clearInterval(progressInterval);
-                self.handleError(this.isEditMode ? '<%:Failed to update subscription%>' : '<%:Failed to add subscription%>');
-            }
+                    });
+                } else {
+                    clearInterval(progressInterval);
+                    self.handleError(this.isEditMode ? '<%:Failed to update subscription%>' : '<%:Failed to add subscription%>');
+                }
+            });
+        };
+
+        XHR.get('<%=luci.dispatcher.build_url("admin", "services", "openclash", "add_age_config")%>', {
+            name: filename,
+            age_secret: ageSecret,
+            age_public: agePublic,
+            age_algo: ageAlgo
+        }, function(x3, data3) {
+            doAddSubscription();
         });
     },
 
@@ -1687,7 +1315,18 @@ var ConfigUploader = {
 
         if (!filenameInput.value.trim() && url) {
             try {
-                var urlObj = new URL(url);
+                var match = url.match(/https?:\/\/[^,\s|]+/i);
+                if (!match) {
+                    try {
+                        var decoded = decodeURIComponent(url);
+                        match = decoded.match(/https?:\/\/[^,\s|]+/i);
+                    } catch (e) {
+                        match = null;
+                    }
+                }
+
+                var urlToParse = match ? match[0] : url;
+                var urlObj = new URL(urlToParse);
                 var hostname = urlObj.hostname;
 
                 var configName = hostname

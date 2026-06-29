@@ -1,34 +1,9 @@
+<%
+    local fs = require "luci.openclash"
+    local plugin_version = fs.oc_version()
+%>
 <head>
-<style>
-
-.tabs > li {
-    vertical-align: middle !important;;
-}
-
-.tool_label:hover {
-	border-color: rgba(0, 0, 0, 0) !important;;
-	background-color: unset !important;;
-	color: unset !important;;
-	cursor: unset !important;;
-}
-
-.tool_label::after {
-	border-color: rgba(0, 0, 0, 0) !important;;
-	background-color: unset !important;;
-	color: unset !important;;
-	cursor: unset !important;;
-	content: unset !important;;
-}
-
-.tool_label_span {
-  display: inline-block;
-  white-space: nowrap;
-}
-
-.tool_label_select {
-	width: auto;
-}
-</style>
+<link rel="stylesheet" href="/luci-static/resources/openclash/css/oc.css?v=<%=plugin_version%>">
 </head>
 
 <li id="tool_label" class="tool_label">
@@ -41,6 +16,7 @@
 	</span>
 </li>
 
+<script src="/luci-static/resources/openclash/js/common.js"></script>
 <script type="text/javascript">//<![CDATA[
 
 		var config_name = document.getElementById('cfg_name');
@@ -163,11 +139,4 @@
         return false; 
     }
 	
-	function winOpen(url)
-	{
-		var winOpen = window.open(url);
-		if(winOpen == null || typeof(winOpen) == 'undefined'){
-			window.location.href=url;
-		}
-	}
 //]]></script>

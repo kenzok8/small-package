@@ -9,7 +9,7 @@
 'require view';
 
 var testlibsslv3 = function() {
-	return fs.exec('/usr/bin/ldd', [ '/usr/lib/libnetsnmp.so.40' ]).then(function (res) {
+	return fs.exec('/usr/bin/ldd', [ '/usr/lib/libnetsnmp.so' ]).then(function (res) {
 		return res.stdout.includes('libssl');
 	});
 };
@@ -458,10 +458,14 @@ return L.view.extend({
 		go = g.option(form.ListValue, 'auth_type',
 			_('SNMPv3 authentication type'));
 		go.value('', _('none'));
+		go.value('SHA-512', _('SHA-512'));
+		go.value('SHA-384', _('SHA-384'));
+		go.value('SHA-256', _('SHA-256'));
+		go.value('SHA-224', _('SHA-224'));
 		go.value('SHA', _('SHA'));
 		go.value('MD5', _('MD5'));
-		go.rmempty = true;
-		go.default = 'SHA';
+		go.default = 'SHA-256';
+		go.rmempty = false;
 
 		// SNMPv3 auth pass
 		go = g.option(form.Value, 'auth_pass',
@@ -477,10 +481,12 @@ return L.view.extend({
 		go = g.option(form.ListValue, 'privacy_type',
 			_('SNMPv3 encryption type'));
 		go.value('', _('none'));
+		go.value('AES-256', _('AES-256'));
+		go.value('AES-192', _('AES-192'));
 		go.value('AES', _('AES'));
 		go.value('DES', _('DES'));
-		go.rmempty = true;
 		go.default = 'AES';
+		go.rmempty = false;
 
 		// SNMPv3 privacy/encryption pass
 		go = g.option(form.Value, 'privacy_pass',

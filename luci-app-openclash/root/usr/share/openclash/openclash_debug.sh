@@ -16,9 +16,9 @@ del_lock() {
 ipk_v()
 {
    if [ -x "/bin/opkg" ]; then
-      echo $(opkg status "$1" 2>/dev/null |grep 'Version' |awk -F ': ' '{print $2}' 2>/dev/null)
+      echo $(rm -f /var/lock/opkg.lock && opkg status "$1" 2>/dev/null |grep 'Version' |awk -F ': ' '{print $2}' 2>/dev/null)
    elif [ -x "/usr/bin/apk" ]; then
-      echo $(apk list "$1" 2>/dev/null |grep 'installed' | grep -oE '\d+(\.\d+)*' | head -1)
+      echo $(rm -f /lib/apk/db/lock && apk list "$1" 2>/dev/null |grep 'installed' | grep -oE '\d+(\.\d+)*' | head -1)
    fi
 }
 
@@ -42,9 +42,9 @@ RAW_CONFIG_FILE=$(uci_get_config "config_path")
 CONFIG_FILE="/etc/openclash/$(uci_get_config "config_path" |awk -F '/' '{print $5}' 2>/dev/null)"
 core_model=$(uci_get_config "core_version")
 if [ -x "/bin/opkg" ]; then
-   cpu_model=$(opkg status libc 2>/dev/null |grep 'Architecture' |awk -F ': ' '{print $2}' 2>/dev/null)
+   cpu_model=$(rm -f /var/lock/opkg.lock && opkg status libc 2>/dev/null |grep 'Architecture' |awk -F ': ' '{print $2}' 2>/dev/null)
 elif [ -x "/usr/bin/apk" ]; then
-   cpu_model=$(apk list libc 2>/dev/null|awk '{print $2}')
+   cpu_model=$(rm -f /lib/apk/db/lock && apk list libc 2>/dev/null|awk '{print $2}')
 fi
 core_meta_version=$(/etc/openclash/core/clash_meta -v 2>/dev/null |awk -F ' ' '{print $3}' |head -1 2>/dev/null)
 op_version=$(ipk_v "luci-app-openclash")
@@ -54,6 +54,19 @@ router_self_proxy=$(uci_get_config "router_self_proxy")
 core_type=$(uci_get_config "core_type" || echo "Dev")
 da_password=$(uci_get_config "dashboard_password")
 cn_port=$(uci_get_config "cn_port")
+stack_type=$(uci_get_config "stack_type")
+delay_start=$(uci_get_config "delay_start")
+log_size=$(uci_get_config "log_size")
+bypass_gateway_compatible=$(uci_get_config "bypass_gateway_compatible")
+disable_quic_go_gso=$(uci_get_config "disable_quic_go_gso")
+small_flash_memory=$(uci_get_config "small_flash_memory")
+enable_meta_sniffer=$(uci_get_config "enable_meta_sniffer")
+enable_respect_rules=$(uci_get_config "enable_respect_rules")
+skip_proxy_address=$(uci_get_config "skip_proxy_address")
+disable_udp_quic=$(uci_get_config "disable_udp_quic")
+lan_ac_mode=$(uci_get_config "lan_ac_mode")
+ipv6_mode=$(uci_get_config "ipv6_mode")
+china_ip6_route=$(uci_get_config "china_ip6_route")
 lan_interface_name=$(uci_get_config "lan_interface_name" || echo "0")
 if [ "$lan_interface_name" = "0" ]; then
    lan_ip=$(uci -q get network.lan.ipaddr |awk -F '/' '{print $1}' 2>/dev/null || ip address show $(uci -q -p /tmp/state get network.lan.ifname || uci -q -p /tmp/state get network.lan.device) | grep -w "inet"  2>/dev/null |grep -Eo 'inet [0-9\.]+' | awk '{print $2}' |head -1 || ip addr show 2>/dev/null | grep -w 'inet' | grep 'global' | grep 'brd' | grep -Eo 'inet [0-9\.]+' | awk '{print $2}' | head -n 1)
@@ -122,6 +135,12 @@ cat >> "$DEBUG_LOG" <<-EOF
 LuCI版本: $(ipk_v "luci")
 内核版本: $(uname -r 2>/dev/null)
 处理器架构: $cpu_model
+系统运行时间: $(uptime 2>/dev/null)
+
+#磁盘与内存
+$(df -h / /tmp /etc/openclash 2>/dev/null)
+$(free -m 2>/dev/null)
+$(cat /proc/meminfo 2>/dev/null | grep -E '^(MemTotal|MemAvailable|SwapTotal|SwapFree)')
 
 #此项有值时,如不使用IPv6,建议到网络-接口-lan的设置中禁用IPV6的DHCP
 IPV6-DHCP: $(uci -q get dhcp.lan.dhcpv6)
@@ -129,6 +148,8 @@ IPV6-DHCP: $(uci -q get dhcp.lan.dhcpv6)
 DNS劫持: $(dns_re "$enable_redirect_dns")
 #DNS劫持为Dnsmasq时，此项结果应仅有配置文件的DNS监听地址
 Dnsmasq转发设置: $(uci -q get dhcp.@dnsmasq[0].server)
+Dnsmasq完整配置:
+$(uci show dhcp.@dnsmasq[0] 2>/dev/null)
 EOF
 
 cat >> "$DEBUG_LOG" <<-EOF
@@ -147,6 +168,8 @@ ruby: $(ts_re "$(ipk_v "ruby")")
 ruby-yaml: $(ts_re "$(ipk_v "ruby-yaml")")
 ruby-psych: $(ts_re "$(ipk_v "ruby-psych")")
 ruby-pstore: $(ts_re "$(ipk_v "ruby-pstore")")
+ruby版本: $(ruby --version 2>/dev/null || echo "未安装")
+ruby功能测试: $(ruby -e "require 'yaml'; YAML.load('test: ok'); puts '正常'" 2>/dev/null || echo "异常")
 kmod-tun(TUN模式): $(ts_re "$(ipk_v "kmod-tun")")
 luci-compat(Luci >= 19.07): $(ts_re "$(ipk_v "luci-compat")")
 kmod-inet-diag(PROCESS-NAME): $(ts_re "$(ipk_v "kmod-inet-diag")")
@@ -165,6 +188,12 @@ kmod-ipt-extra: $(ts_re "$(ipk_v "kmod-ipt-extra")")
 kmod-ipt-nat: $(ts_re "$(ipk_v "kmod-ipt-nat")")
 EOF
 fi
+
+cat >> "$DEBUG_LOG" <<-EOF
+
+#内核模块加载状态:
+$(lsmod | grep -E 'tun|tproxy|inet_diag' 2>/dev/null || echo "无相关模块")
+EOF
 
 #core
 cat >> "$DEBUG_LOG" <<-EOF
@@ -219,6 +248,22 @@ fi
 
 cat >> "$DEBUG_LOG" <<-EOF
 
+#===================== GEO 数据文件 =====================#
+
+$(ls -lh /etc/openclash/Country.mmdb /etc/openclash/GeoIP.dat /etc/openclash/GeoSite.dat /etc/openclash/ASN.mmdb 2>/dev/null)
+
+#===================== 模型、缓存文件状态 =====================#
+
+Model.bin: $(ls -lh /etc/openclash/Model.bin 2>/dev/null || echo "不存在")
+cache.db: $(ls -lh /etc/openclash/cache.db 2>/dev/null || echo "不存在")
+
+#===================== 冲突插件检测 =====================#
+
+$(ps | grep -E 'passwall|ssr-plus|bypass|helloworld' | grep -v grep 2>/dev/null || echo "未检测到冲突插件")
+EOF
+
+cat >> "$DEBUG_LOG" <<-EOF
+
 #===================== 插件设置 =====================#
 
 当前配置文件: $RAW_CONFIG_FILE
@@ -236,7 +281,27 @@ IPV6-DNS解析: $(ts_cf "$ipv6_dns")
 仅允许常用端口流量: $(ts_cf "$common_ports")
 绕过中国大陆IP: $(ts_cf "$china_ip_route")
 路由本机代理: $(ts_cf "$router_self_proxy")
+TUN堆栈类型: ${stack_type:-system}
+启动延迟: ${delay_start:-0}秒
+日志大小: ${log_size:-1024}KB
+旁路由兼容: $(ts_cf "$bypass_gateway_compatible")
+禁用quic-go GSO: $(ts_cf "$disable_quic_go_gso")
+小闪存模式: $(ts_cf "$small_flash_memory")
+域名嗅探: $(ts_cf "$enable_meta_sniffer")
+DNS代理: $(ts_cf "$enable_respect_rules")
+绕过服务器地址: $(ts_cf "$skip_proxy_address")
+禁用QUIC: $(ts_cf "$disable_udp_quic")
+访问控制模式: $([ "$lan_ac_mode" = "1" ] && echo "White" || echo "Black")
+IPv6模式: ${ipv6_mode:-0}
+绕过IPv6区域: $(ts_cf "$china_ip6_route")
 
+EOF
+
+cat >> "$DEBUG_LOG" <<-EOF
+
+#===================== Cron 定时任务 =====================#
+
+$(crontab -l 2>/dev/null | grep -i openclash || echo "无 OpenClash 相关 cron 任务")
 EOF
 
 cat >> "$DEBUG_LOG" <<-EOF
@@ -408,6 +473,14 @@ netstat -nlp |grep clash >> "$DEBUG_LOG" 2>/dev/null
 
 cat >> "$DEBUG_LOG" <<-EOF
 
+#===================== 网络接口状态 =====================#
+
+EOF
+ip link show >> "$DEBUG_LOG" 2>/dev/null
+ip addr show | grep -E 'inet |utun' >> "$DEBUG_LOG" 2>/dev/null
+
+cat >> "$DEBUG_LOG" <<-EOF
+
 #===================== 测试本机DNS查询(www.baidu.com) =====================#
 
 EOF
@@ -460,6 +533,15 @@ if pidof clash >/dev/null; then
    curl -SsIL -m 3 --retry 2 "$VERSION_URL" >> "$DEBUG_LOG" 2>/dev/null
 else
    curl -SsIL -m 3 --retry 2 "$VERSION_URL" >> "$DEBUG_LOG" 2>/dev/null
+fi
+
+if pidof clash >/dev/null; then
+cat >> "$DEBUG_LOG" <<-EOF
+
+#===================== Mihomo API 健康检查 =====================#
+
+EOF
+curl -Ss -m 3 http://127.0.0.1:${cn_port}/version >> "$DEBUG_LOG" 2>/dev/null
 fi
 
 cat >> "$DEBUG_LOG" <<-EOF

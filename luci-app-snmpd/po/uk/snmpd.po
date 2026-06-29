@@ -17,9 +17,17 @@ msgstr ""
 msgid "A group maps com2sec names to access names"
 msgstr "Група зіставляє імена com2sec з іменами доступу"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:480
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:486
 msgid "AES"
 msgstr "AES"
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:485
+msgid "AES-192"
+msgstr ""
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:484
+msgid "AES-256"
+msgstr ""
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:367
 msgid "Access Control"
@@ -33,7 +41,7 @@ msgstr "Обмеження доступу лише для читання або 
 msgid "Actions"
 msgstr "Дії"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:635
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:641
 msgid "Advanced Settings"
 msgstr "Розширені налаштування"
 
@@ -67,20 +75,20 @@ msgstr "Автентифікація"
 msgid "Authentication and encryption"
 msgstr "Автентифікація та шифрування"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:640
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:646
 msgid "Communities for any hosts"
 msgstr "Спільноти для будь-яких вузлів"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:644
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:650
 msgid "Communities via IP-Address range"
 msgstr "Спільноти за діапазоном IP-адрес"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:642
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:648
 msgid "Communities via hostname"
 msgstr "Спільноти через імʼя вузла"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:245
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:543
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:549
 msgid "Community"
 msgstr "Спільнота"
 
@@ -104,7 +112,7 @@ msgstr "Контакт"
 msgid "Context"
 msgstr "Контекст"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:481
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:487
 msgid "DES"
 msgstr "DES"
 
@@ -125,11 +133,11 @@ msgstr "Порожнє значення вимикає AgentX"
 msgid "Enable SNMP"
 msgstr "Увімкнути SNMP"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:572
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:578
 msgid "Enable logging to file"
 msgstr "Увімкнути журналювання у файл"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:599
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:605
 msgid "Enable logging to syslog"
 msgstr "Увімкнути журналювання в syslog"
 
@@ -141,7 +149,7 @@ msgstr "Увімкнути використання SNMP"
 msgid "Exact"
 msgstr "Точний"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:631
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:637
 msgid "General"
 msgstr "Загальне"
 
@@ -154,7 +162,7 @@ msgstr "Надати доступ до UCI для luci-app-snmpd"
 msgid "Group"
 msgstr "Група"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:564
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:570
 msgid "Here you can configure Logging settings"
 msgstr "Тут можна налаштувати параметри журналювання"
 
@@ -210,11 +218,11 @@ msgstr "Рівень безпеки"
 msgid "Location"
 msgstr "Розташування"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:657
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:663
 msgid "Logging"
 msgstr "Журналювання"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:462
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:466
 msgid "MD5"
 msgstr "MD5"
 
@@ -223,7 +231,7 @@ msgid "Name"
 msgstr "Імʼя"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:411
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:497
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:503
 msgid "No"
 msgstr "Ні"
 
@@ -246,16 +254,16 @@ msgid "Notify access modification for groups"
 msgstr "Зміна доступу до сповіщень для груп"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:419
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:505
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:511
 msgid "OID"
 msgstr "OID"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:409
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:496
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:502
 msgid "OID-Restriction"
 msgstr "OID-обмеження"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:625
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:631
 msgid "On this page you may configure SNMP settings"
 msgstr "На цій сторінці можна налаштувати параметри SNMP"
 
@@ -275,12 +283,12 @@ msgstr "Тільки SNMPv3"
 msgid "Password must be at least 8 characters"
 msgstr "Пароль має містити щонайменше 8 символів"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:578
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:584
 msgid "Path to log file"
 msgstr "Шлях до файлу журналу"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:95
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:535
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:541
 msgid "Port"
 msgstr "Порт"
 
@@ -290,7 +298,7 @@ msgstr "Порт"
 msgid "Prefix"
 msgstr "Префікс"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:585
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:591
 msgid "Priority for file logging"
 msgstr "Пріоритет для журналювання у файл"
 
@@ -318,9 +326,25 @@ msgstr "Обмежити наведеним вузлом/гілкою OID"
 msgid "Restriction to specific OID"
 msgstr "Обмеження на певний OID"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:461
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:465
 msgid "SHA"
 msgstr "SHA"
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:464
+msgid "SHA-224"
+msgstr ""
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:463
+msgid "SHA-256"
+msgstr ""
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:462
+msgid "SHA-384"
+msgstr ""
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:461
+msgid "SHA-512"
+msgstr ""
 
 #: applications/luci-app-snmpd/root/usr/share/luci/menu.d/luci-app-snmpd.json:16
 msgid "SNMP"
@@ -330,7 +354,7 @@ msgstr "SNMP"
 msgid "SNMP - MIB Download"
 msgstr "SNMP — Завантаження MIB"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:624
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:630
 msgid "SNMP Settings"
 msgstr "Налаштування SNMP"
 
@@ -352,7 +376,7 @@ msgstr "SNMPD"
 msgid "SNMPv1"
 msgstr "SNMPv1"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:551
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:557
 msgid "SNMPv1 Trap Receiver"
 msgstr "Приймач пасток SNMPv1"
 
@@ -364,7 +388,7 @@ msgstr "SNMPv1 і SNMPv2c"
 msgid "SNMPv1, SNMPv2c and SNMPv3"
 msgstr "SNMPv1, SNMPv2c і SNMPv3"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:638
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:644
 msgid "SNMPv1/SNMPv2c"
 msgstr "SNMPv1/SNMPv2c"
 
@@ -373,21 +397,21 @@ msgstr "SNMPv1/SNMPv2c"
 msgid "SNMPv2c"
 msgstr "SNMPv2c"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:553
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:559
 msgid "SNMPv2c Inform Receiver"
 msgstr "Приймач Inform SNMPv2c"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:552
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:558
 msgid "SNMPv2c Trap Receiver"
 msgstr "Приймач пасток SNMPv2c"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:270
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:305
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:647
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:653
 msgid "SNMPv3"
 msgstr "SNMPv3"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:468
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:472
 msgid "SNMPv3 authentication passphrase"
 msgstr "Парольна фраза для автентифікації SNMPv3"
 
@@ -395,11 +419,11 @@ msgstr "Парольна фраза для автентифікації SNMPv3"
 msgid "SNMPv3 authentication type"
 msgstr "Тип автентифікації SNMPv3"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:487
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:493
 msgid "SNMPv3 encryption passphrase"
 msgstr "Парольна фраза для шифрування SNMPv3"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:478
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:482
 msgid "SNMPv3 encryption type"
 msgstr "Тип шифрування SNMPv3"
 
@@ -424,7 +448,7 @@ msgstr "Джерело описує вузол або мережу"
 msgid "Specification how context of requests is matched to context"
 msgstr "Визначення того, як контекст запитів зіставляється з контекстом"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:605
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:611
 msgid "Syslog facility"
 msgstr "Засіб системного журналу"
 
@@ -460,7 +484,7 @@ msgstr "Версія, що використовується для налашт�
 msgid "The used version for the group"
 msgstr "Версія, що використовується для групи"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:651
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:657
 msgctxt "SNMP"
 msgid "Traps"
 msgstr "Пастки"
@@ -471,7 +495,7 @@ msgstr ""
 "Довірене джерело для доступу спільноти до читання SNMP (імʼя вузла або IP-"
 "адреса)"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:550
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:556
 msgid "Type"
 msgstr "Тип"
 
@@ -480,7 +504,7 @@ msgstr "Тип"
 msgid "Version"
 msgstr "Версія"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:586
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:592
 msgid "Will log messages of selected priority and above."
 msgstr "Журналюватимуться повідомлення з вибраним пріоритетом і вище."
 
@@ -493,7 +517,7 @@ msgid "Write access modification for groups"
 msgstr "Зміна доступу до запису для груп"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:412
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:498
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:504
 msgid "Yes"
 msgstr "Так"
 
@@ -506,7 +530,7 @@ msgid "localhost"
 msgstr "localhost"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:460
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:479
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:483
 msgid "none"
 msgstr "немає"
 

@@ -22,7 +22,7 @@ yml_other_set()
    begin
       thread_pool = [];
       # GEOIP replace
-      geoip_pattern = /GEOIP,([A-Za-z]{2}),([^,]+)(,.*)?/;
+      geoip_pattern = /^GEOIP,([A-Za-z]{2}),([^,]+)(,.*)?/;
       match_pattern = /(^MATCH.*|^FINAL.*)/;
       thread_pool << Thread.new{
          #BT/P2P DIRECT Rules

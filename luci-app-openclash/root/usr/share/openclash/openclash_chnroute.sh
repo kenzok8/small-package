@@ -44,8 +44,8 @@ if [ -z "$CHNR_CUSTOM_URL" ]; then
 else
    DOWNLOAD_FILE_CURL "$CHNR_CUSTOM_URL" "/tmp/china_ip_route.txt" "$chnr_path"
 fi
-
-if [ "$?" -eq 0 ]; then
+DOWNLOAD_RESULT=$?
+if [ "$DOWNLOAD_RESULT" -eq 0 ]; then
    LOG_OUT "Chnroute Cidr List Download Success, Check Updated..."
    #预处理
    if [ -n "$FW4" ]; then
@@ -69,7 +69,7 @@ if [ "$?" -eq 0 ]; then
    else
       LOG_OUT "Updated Chnroute Cidr List No Change, Do Nothing..."
    fi
-elif [ "$?" -eq 2 ]; then
+elif [ "$DOWNLOAD_RESULT" -eq 2 ]; then
    LOG_OUT "Updated Chnroute Cidr List No Change, Do Nothing..."
 else
    LOG_OUT "Chnroute Cidr List Update Error, Please Try Again Later..."

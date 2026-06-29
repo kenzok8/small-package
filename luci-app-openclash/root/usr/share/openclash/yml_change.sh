@@ -427,9 +427,9 @@ begin
             Value['external-ui-url'] = 'https://codeload.github.com/MetaCubeX/Yacd-meta/zip/refs/heads/gh-pages'
          end
          when 'metacubexd'
-         Value['external-ui-url'] = 'https://codeload.github.com/MetaCubeX/metacubexd/zip/refs/heads/gh-pages'
+            Value['external-ui-url'] = 'https://codeload.github.com/MetaCubeX/metacubexd/zip/refs/heads/gh-pages'
          when 'zashboard'
-         Value['external-ui-url'] = 'https://codeload.github.com/Zephyruso/zashboard/zip/refs/heads/gh-pages-cdn-fonts'
+            Value['external-ui-url'] = 'https://codeload.github.com/Zephyruso/zashboard/zip/refs/heads/gh-pages-cdn-fonts'
          end
          if !Value.key?('keep-alive-interval') && !Value.key?('keep-alive-idle')
             Value['keep-alive-interval'] = 15
@@ -456,7 +456,7 @@ begin
          end
 
          if smart_collect
-         (Value['profile'] ||= {})['smart-collector-size'] = smart_collect_size.to_f
+            (Value['profile'] ||= {})['smart-collector-size'] = smart_collect_size.to_f
          end
 
          Value['geox-url'] ||= {}

@@ -373,14 +373,14 @@ sev = s:option(TextValue, "user")
 sev.rows = 40
 sev.wrap = "off"
 sev.cfgvalue = function(self, section)
-	return NXFS.readfile(conf) or NXFS.readfile(dconf) or ""
+	return fs.readfile(conf) or fs.readfile(dconf) or ""
 end
 sev.write = function(self, section, value)
 if (CHIF == "0") then
 	value = value:gsub("\r\n?", "\n")
-	local old_value = NXFS.readfile(conf)
+	local old_value = fs.readfile(conf)
 	if value ~= old_value then
-		NXFS.writefile(conf, value)
+		fs.writefile(conf, value)
 	end
 end
 end
@@ -395,7 +395,7 @@ def.rows = 40
 def.wrap = "off"
 def.readonly = true
 def.cfgvalue = function(self, section)
-	return NXFS.readfile(sconf) or NXFS.readfile(dconf) or ""
+	return fs.readfile(sconf) or fs.readfile(dconf) or ""
 end
 def.write = function(self, section, value)
 end

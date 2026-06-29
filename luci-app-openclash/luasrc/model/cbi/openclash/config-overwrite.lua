@@ -205,14 +205,14 @@ custom_fallback_filter.wrap = "off"
 custom_fallback_filter:depends("custom_fallback_filter", "1")
 
 function custom_fallback_filter.cfgvalue(self, section)
-	return NXFS.readfile("/etc/openclash/custom/openclash_custom_fallback_filter.yaml") or ""
+	return fs.readfile("/etc/openclash/custom/openclash_custom_fallback_filter.yaml") or ""
 end
 function custom_fallback_filter.write(self, section, value)
 	if value then
 		value = value:gsub("\r\n?", "\n")
-		local old_value = NXFS.readfile("/etc/openclash/custom/openclash_custom_fallback_filter.yaml")
+		local old_value = fs.readfile("/etc/openclash/custom/openclash_custom_fallback_filter.yaml")
 		if value ~= old_value then
-			NXFS.writefile("/etc/openclash/custom/openclash_custom_fallback_filter.yaml", value)
+			fs.writefile("/etc/openclash/custom/openclash_custom_fallback_filter.yaml", value)
 		end
 	end
 end
@@ -237,14 +237,14 @@ custom_fake_black.wrap = "off"
 custom_fake_black:depends("custom_fakeip_filter", "1")
 
 function custom_fake_black.cfgvalue(self, section)
-	return NXFS.readfile("/etc/openclash/custom/openclash_custom_fake_filter.list") or ""
+	return fs.readfile("/etc/openclash/custom/openclash_custom_fake_filter.list") or ""
 end
 function custom_fake_black.write(self, section, value)
 	if value then
 		value = value:gsub("\r\n?", "\n")
-		local old_value = NXFS.readfile("/etc/openclash/custom/openclash_custom_fake_filter.list")
+		local old_value = fs.readfile("/etc/openclash/custom/openclash_custom_fake_filter.list")
 		if value ~= old_value then
-			NXFS.writefile("/etc/openclash/custom/openclash_custom_fake_filter.list", value)
+			fs.writefile("/etc/openclash/custom/openclash_custom_fake_filter.list", value)
 		end
 	end
 end
@@ -261,14 +261,14 @@ custom_domain_dns_policy.wrap = "off"
 custom_domain_dns_policy:depends("custom_name_policy", "1")
 
 function custom_domain_dns_policy.cfgvalue(self, section)
-	return NXFS.readfile("/etc/openclash/custom/openclash_custom_domain_dns_policy.list") or ""
+	return fs.readfile("/etc/openclash/custom/openclash_custom_domain_dns_policy.list") or ""
 end
 function custom_domain_dns_policy.write(self, section, value)
 	if value then
 		value = value:gsub("\r\n?", "\n")
-		local old_value = NXFS.readfile("/etc/openclash/custom/openclash_custom_domain_dns_policy.list")
+		local old_value = fs.readfile("/etc/openclash/custom/openclash_custom_domain_dns_policy.list")
 		if value ~= old_value then
-			NXFS.writefile("/etc/openclash/custom/openclash_custom_domain_dns_policy.list", value)
+			fs.writefile("/etc/openclash/custom/openclash_custom_domain_dns_policy.list", value)
 		end
 	end
 end
@@ -284,14 +284,14 @@ custom_proxy_server_dns_policy.wrap = "off"
 custom_proxy_server_dns_policy:depends("custom_proxy_server_policy", "1")
 
 function custom_proxy_server_dns_policy.cfgvalue(self, section)
-	return NXFS.readfile("/etc/openclash/custom/openclash_custom_proxy_server_dns_policy.list") or ""
+	return fs.readfile("/etc/openclash/custom/openclash_custom_proxy_server_dns_policy.list") or ""
 end
 function custom_proxy_server_dns_policy.write(self, section, value)
 	if value then
 		value = value:gsub("\r\n?", "\n")
-		local old_value = NXFS.readfile("/etc/openclash/custom/openclash_custom_proxy_server_dns_policy.list")
+		local old_value = fs.readfile("/etc/openclash/custom/openclash_custom_proxy_server_dns_policy.list")
 		if value ~= old_value then
-			NXFS.writefile("/etc/openclash/custom/openclash_custom_proxy_server_dns_policy.list", value)
+			fs.writefile("/etc/openclash/custom/openclash_custom_proxy_server_dns_policy.list", value)
 		end
 	end
 end
@@ -307,14 +307,14 @@ custom_hosts.wrap = "off"
 custom_hosts:depends("custom_host", "1")
 
 function custom_hosts.cfgvalue(self, section)
-	return NXFS.readfile("/etc/openclash/custom/openclash_custom_hosts.list") or ""
+	return fs.readfile("/etc/openclash/custom/openclash_custom_hosts.list") or ""
 end
 function custom_hosts.write(self, section, value)
 	if value then
 		value = value:gsub("\r\n?", "\n")
-		local old_value = NXFS.readfile("/etc/openclash/custom/openclash_custom_hosts.list")
+		local old_value = fs.readfile("/etc/openclash/custom/openclash_custom_hosts.list")
 		if value ~= old_value then
-			NXFS.writefile("/etc/openclash/custom/openclash_custom_hosts.list", value)
+			fs.writefile("/etc/openclash/custom/openclash_custom_hosts.list", value)
 		end
 	end
 end
@@ -374,14 +374,14 @@ sniffer_custom.rows = 20
 sniffer_custom.wrap = "off"
 
 function sniffer_custom.cfgvalue(self, section)
-	return NXFS.readfile("/etc/openclash/custom/openclash_custom_sniffer.yaml") or ""
+	return fs.readfile("/etc/openclash/custom/openclash_custom_sniffer.yaml") or ""
 end
 function sniffer_custom.write(self, section, value)
 	if value then
 		value = value:gsub("\r\n?", "\n")
-		local old_value = NXFS.readfile("/etc/openclash/custom/openclash_custom_sniffer.yaml")
+		local old_value = fs.readfile("/etc/openclash/custom/openclash_custom_sniffer.yaml")
 		if value ~= old_value then
-			NXFS.writefile("/etc/openclash/custom/openclash_custom_sniffer.yaml", value)
+			fs.writefile("/etc/openclash/custom/openclash_custom_sniffer.yaml", value)
 		end
 	end
 end
@@ -466,14 +466,14 @@ custom_rules.rows = 20
 custom_rules.wrap = "off"
 
 function custom_rules.cfgvalue(self, section)
-	return NXFS.readfile("/etc/openclash/custom/openclash_custom_rules.list") or ""
+	return fs.readfile("/etc/openclash/custom/openclash_custom_rules.list") or ""
 end
 function custom_rules.write(self, section, value)
 	if value then
 		value = value:gsub("\r\n?", "\n")
-		local old_value = NXFS.readfile("/etc/openclash/custom/openclash_custom_rules.list")
+		local old_value = fs.readfile("/etc/openclash/custom/openclash_custom_rules.list")
 		if value ~= old_value then
-			NXFS.writefile("/etc/openclash/custom/openclash_custom_rules.list", value)
+			fs.writefile("/etc/openclash/custom/openclash_custom_rules.list", value)
 		end
 	end
 end
@@ -486,14 +486,14 @@ custom_rules_2.rows = 20
 custom_rules_2.wrap = "off"
 
 function custom_rules_2.cfgvalue(self, section)
-	return NXFS.readfile("/etc/openclash/custom/openclash_custom_rules_2.list") or ""
+	return fs.readfile("/etc/openclash/custom/openclash_custom_rules_2.list") or ""
 end
 function custom_rules_2.write(self, section, value)
 	if value then
 		value = value:gsub("\r\n?", "\n")
-		local old_value = NXFS.readfile("/etc/openclash/custom/openclash_custom_rules_2.list")
+		local old_value = fs.readfile("/etc/openclash/custom/openclash_custom_rules_2.list")
 		if value ~= old_value then
-			NXFS.writefile("/etc/openclash/custom/openclash_custom_rules_2.list", value)
+			fs.writefile("/etc/openclash/custom/openclash_custom_rules_2.list", value)
 		end
 	end
 end

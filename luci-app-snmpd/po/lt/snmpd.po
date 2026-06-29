@@ -17,9 +17,17 @@ msgstr ""
 msgid "A group maps com2sec names to access names"
 msgstr "Grupę persiunčią „com2sec“ pavadinimus į prieigos pavadinimus"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:480
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:486
 msgid "AES"
 msgstr "„AES“"
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:485
+msgid "AES-192"
+msgstr ""
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:484
+msgid "AES-256"
+msgstr ""
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:367
 msgid "Access Control"
@@ -33,7 +41,7 @@ msgstr "Prieigos apribojimas į – tik skaitymui arba skaitymui/rašymui"
 msgid "Actions"
 msgstr "Veiksmai"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:635
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:641
 msgid "Advanced Settings"
 msgstr "Pažangūs nustatymai"
 
@@ -67,20 +75,20 @@ msgstr "Autentifikavimas"
 msgid "Authentication and encryption"
 msgstr "Autentifikavimas ir šifravimas"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:640
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:646
 msgid "Communities for any hosts"
 msgstr "bendruomenės, skirtos bet kokiems skleidėjams/vedėjams"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:644
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:650
 msgid "Communities via IP-Address range"
 msgstr "Bendruomenės per IP adresų diapazoną"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:642
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:648
 msgid "Communities via hostname"
 msgstr "Bendruomenės per Įrenginio (t.y skleidėjo/vedėjo) pavadinimą"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:245
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:543
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:549
 msgid "Community"
 msgstr "Bendruomenė"
 
@@ -104,7 +112,7 @@ msgstr "Kontaktas/Adresatas"
 msgid "Context"
 msgstr "Kontekstas"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:481
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:487
 msgid "DES"
 msgstr "„DES“"
 
@@ -125,11 +133,11 @@ msgstr "Palikite tuščia, norint išjungti/išgalinti „AgentX“"
 msgid "Enable SNMP"
 msgstr "Įjungti/Įgalinti „SNMP“"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:572
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:578
 msgid "Enable logging to file"
 msgstr "Įjungti/Įgalinti žurnalinimą į failą"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:599
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:605
 msgid "Enable logging to syslog"
 msgstr "Įjungti/Įgalinti žurnalinimą į – „Syslog“"
 
@@ -141,7 +149,7 @@ msgstr "Įjunkite/Įgalinkite, kad naudotumėte „SNMP“"
 msgid "Exact"
 msgstr "Tikslus/-i//-ūs/-ios"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:631
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:637
 msgid "General"
 msgstr "Bendra/-i/-ai/-s"
 
@@ -154,7 +162,7 @@ msgstr "Suteikti „UCI“ prieigą – „luci-app-snmpd“"
 msgid "Group"
 msgstr "Grupė"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:564
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:570
 msgid "Here you can configure Logging settings"
 msgstr "Čia Jūs galite konfigūruoti žurnalinimo nustatymus"
 
@@ -212,11 +220,11 @@ msgstr "Apsaugos lygis"
 msgid "Location"
 msgstr "Vietovė"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:657
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:663
 msgid "Logging"
 msgstr "Žurnalinimas"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:462
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:466
 msgid "MD5"
 msgstr "„MD5“"
 
@@ -225,7 +233,7 @@ msgid "Name"
 msgstr "Pavadinimas"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:411
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:497
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:503
 msgid "No"
 msgstr "Ne"
 
@@ -248,16 +256,16 @@ msgid "Notify access modification for groups"
 msgstr "Pranešti prieigos modifikavimą grupėms"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:419
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:505
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:511
 msgid "OID"
 msgstr "„OID“"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:409
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:496
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:502
 msgid "OID-Restriction"
 msgstr "„OID“ apribojimas"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:625
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:631
 msgid "On this page you may configure SNMP settings"
 msgstr "Šiame puslapyje Jūs galite konfigūruoti „SNMP“ nustatymus"
 
@@ -277,12 +285,12 @@ msgstr "Tik „SNMPv3“"
 msgid "Password must be at least 8 characters"
 msgstr "Slaptažodis turi būti sudarytas iš bent 8 rašmenų"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:578
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:584
 msgid "Path to log file"
 msgstr "Kelias į žurnalo failą"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:95
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:535
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:541
 msgid "Port"
 msgstr "Prievadas"
 
@@ -292,7 +300,7 @@ msgstr "Prievadas"
 msgid "Prefix"
 msgstr "Prielinksnis/Priešdėlis"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:585
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:591
 msgid "Priority for file logging"
 msgstr "Pirmenybė, skirtai failo žurnalinimui"
 
@@ -320,9 +328,25 @@ msgstr "Apriboti iki šio „OID“ tinklo mazgo/šakos"
 msgid "Restriction to specific OID"
 msgstr "Apriboti iki savito „OID“"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:461
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:465
 msgid "SHA"
 msgstr "„SHA“"
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:464
+msgid "SHA-224"
+msgstr ""
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:463
+msgid "SHA-256"
+msgstr ""
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:462
+msgid "SHA-384"
+msgstr ""
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:461
+msgid "SHA-512"
+msgstr ""
 
 #: applications/luci-app-snmpd/root/usr/share/luci/menu.d/luci-app-snmpd.json:16
 msgid "SNMP"
@@ -332,7 +356,7 @@ msgstr "„SNMP“"
 msgid "SNMP - MIB Download"
 msgstr "„SNMP“ – „MIB“ atsisiuntimas"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:624
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:630
 msgid "SNMP Settings"
 msgstr "„SNMP“ nustatymai"
 
@@ -353,7 +377,7 @@ msgstr "„SNMPD“"
 msgid "SNMPv1"
 msgstr "„SNMPv1“"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:551
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:557
 msgid "SNMPv1 Trap Receiver"
 msgstr "„SNMPv1“ kritiško/nenumatomo atvejo pranešimo gavėjas"
 
@@ -365,7 +389,7 @@ msgstr "„SNMPv1“ ir „SNMPv2c“"
 msgid "SNMPv1, SNMPv2c and SNMPv3"
 msgstr "„SNMPv1“, „SNMPv2c“ ir „SNMPv3“"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:638
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:644
 msgid "SNMPv1/SNMPv2c"
 msgstr "„SNMPv1“/„SNMPv2c“"
 
@@ -374,21 +398,21 @@ msgstr "„SNMPv1“/„SNMPv2c“"
 msgid "SNMPv2c"
 msgstr "„SNMPv2c“"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:553
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:559
 msgid "SNMPv2c Inform Receiver"
 msgstr "„SNMPv2c“ informacijos gavėjas"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:552
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:558
 msgid "SNMPv2c Trap Receiver"
 msgstr "„SNMPv2c“ kritiško/nenumatomo atvejo pranešimo gavėjas"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:270
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:305
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:647
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:653
 msgid "SNMPv3"
 msgstr "„SNMPv3“"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:468
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:472
 msgid "SNMPv3 authentication passphrase"
 msgstr "„SNMPv3“ autentifikavimo slaptafrazė"
 
@@ -396,11 +420,11 @@ msgstr "„SNMPv3“ autentifikavimo slaptafrazė"
 msgid "SNMPv3 authentication type"
 msgstr "„SNMPv3“ autentifikavimo tipas"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:487
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:493
 msgid "SNMPv3 encryption passphrase"
 msgstr "SNMPv3 šifravimo slaptafrazė"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:478
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:482
 msgid "SNMPv3 encryption type"
 msgstr "„SNMPv3“ šifravimo tipas"
 
@@ -427,7 +451,7 @@ msgstr "Šaltinis aprašo skleidėja/vedėja arba tinklą"
 msgid "Specification how context of requests is matched to context"
 msgstr "Specifikacija, kaip užklausų kontekstas yra sutampamas su kontekstu"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:605
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:611
 msgid "Syslog facility"
 msgstr "„Syslog“ priemonė"
 
@@ -463,7 +487,7 @@ msgstr "Naudojama versija, skirta prieigos konfigūracijai"
 msgid "The used version for the group"
 msgstr "Naudojama versija, skirta grupei"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:651
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:657
 msgctxt "SNMP"
 msgid "Traps"
 msgstr "Kritiško/Nenumatomo atvejo pranešimai („Traps“)"
@@ -474,7 +498,7 @@ msgstr ""
 "Patikimas „SNMP“ skaitymo bendruomenės prieigos šaltinis (Įrenginio (t.y "
 "skleidėjo/vedėjo) pavadinimas arba IP)"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:550
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:556
 msgid "Type"
 msgstr "Tipas"
 
@@ -483,7 +507,7 @@ msgstr "Tipas"
 msgid "Version"
 msgstr "Versija"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:586
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:592
 msgid "Will log messages of selected priority and above."
 msgstr "Bus sužurnalinti pranešimai pasirinktos pirmenybės ir aukščiau."
 
@@ -496,7 +520,7 @@ msgid "Write access modification for groups"
 msgstr "Rašymo prieigos pakeitimas/redagavimas, skirta grupėms"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:412
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:498
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:504
 msgid "Yes"
 msgstr "Taip"
 
@@ -509,7 +533,7 @@ msgid "localhost"
 msgstr "„localhost“"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:460
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:479
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:483
 msgid "none"
 msgstr "joks (-ia/-ie/-ios)"
 

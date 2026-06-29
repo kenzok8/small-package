@@ -1055,11 +1055,24 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			end
 			result.port = port
 
-			result.tls = '1'
-			result.tls_serverName = params.peer or params.sni or ""
-			result.tls_pinSHA256 = params.pcs
-			result.tls_CertByName = params.vcn
-			result.tls_allowInsecure = params.allowinsecure or params.allowInsecure or params.insecure
+			params.security = params.security or "tls"
+			if params.security == "tls" or params.security == "reality" then
+				result.tls = '1'
+				result.tls_serverName = params.peer or params.sni or ""
+				result.alpn = params.alpn
+				if params.fp and params.fp ~= "" then
+					result.utls = "1"
+					result.fingerprint = params.fp
+				end
+				if params.security == "reality" then
+					result.reality = "1"
+					result.reality_publicKey = params.pbk or nil
+					result.reality_shortId = params.sid or nil
+				end
+				result.tls_pinSHA256 = params.pcs
+				result.tls_CertByName = params.vcn
+				result.tls_allowInsecure = params.allowinsecure or params.allowInsecure or params.insecure
+			end
 
 			if not params.type then params.type = "tcp" end
 			params.type = string.lower(params.type)
@@ -1133,7 +1146,6 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 				result.httpupgrade_path = params.path
 			end
 
-			result.alpn = params.alpn
 			result.tcp_fast_open = params.tfo
 			result.use_finalmask = (params.fm and params.fm ~= "") and "1" or nil
 			result.finalmask = (params.fm and params.fm ~= "") and api.base64Encode(params.fm) or nil

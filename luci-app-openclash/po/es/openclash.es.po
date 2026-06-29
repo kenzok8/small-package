@@ -101,6 +101,9 @@ msgstr "Registros de depuración"
 msgid "Generate Logs"
 msgstr "Generar registros"
 
+msgid "Generated Logs"
+msgstr "Registros generados"
+
 msgid "Click to Generate"
 msgstr "Haz clic para generar"
 
@@ -326,13 +329,62 @@ msgstr "Archivo del núcleo"
 msgid "Upload"
 msgstr "Subir"
 
+msgid "Age Encryption"
+msgstr "Cifrado Age"
+
+msgid "Age Encryption File"
+msgstr "Archivo de cifrado Age"
+
+msgid "Generate Age Key"
+msgstr "Generar clave Age"
+
+msgid "Generating..."
+msgstr "Generando..."
+
+msgid "Public Key"
+msgstr "Clave pública"
+
+msgid "Secret Key"
+msgstr "Clave secreta"
+
+msgid "Age Key Type"
+msgstr "Tipo de clave"
+
+msgid "x25519"
+msgstr "x25519"
+
+msgid "PQ (mlkem768-x25519)"
+msgstr "PQ (mlkem768-x25519)"
+
+msgid "Failed to generate age key"
+msgstr "Error al generar la clave Age"
+
+msgid "No public key"
+msgstr "No hay clave pública"
+
+msgid "No secret key"
+msgstr "No hay clave secreta"
+
+msgid "Age Encryption For Config, Click For More:"
+msgstr "Cifrado Age para la configuración. Haz clic aquí para obtener más información:"
+
+msgid "Age Encryption Introduce"
+msgstr "Presentación del cifrado Age"
+
+msgid "Calculate Public Key"
+msgstr "Calcular clave pública"
+
+msgid "Please enter the Age Secret Key to calculate the public key!"
+msgstr "¡Introduce la clave secreta de Age para calcular la clave pública!"
+
+msgid "Failed to calculate public key"
+msgstr "No se ha podido calcular la clave pública"
+
 msgid "Add"
 msgstr "Añadir"
 
 msgid "File saved to"
-msgstr "Archivo guardado en"
-
-msgid "upload file error."
+msgstr "Archivo guardado en"msgid "upload file error."
 msgstr "Error al subir el archivo."
 
 msgid "No specify upload file."
@@ -1139,6 +1191,12 @@ msgstr "Restaurando..."
 msgid "Saving..."
 msgstr "Guardando..."
 
+msgid "Save successful"
+msgstr "Guardado con éxito"
+
+msgid "Failed to save age config"
+msgstr "Error al guardar la configuración de age"
+
 msgid "Firewall Rules Reset Failed"
 msgstr "Error al restablecer las reglas del firewall"
 
@@ -1436,6 +1494,18 @@ msgstr "Iniciando descarga"
 msgid "Download successful, start pre update test..."
 msgstr "Descarga completa, iniciando pruebas previas a la actualización..."
 
+msgid "opkg update failed or timed out, retrying..."
+msgstr "opkg update falló o expiró, reintentando..."
+
+msgid "opkg update failed, trying pre update test..."
+msgstr "opkg update falló, se sigue intentando la prueba previa..."
+
+msgid "apk update failed or timed out, retrying..."
+msgstr "apk update falló o expiró, reintentando..."
+
+msgid "apk update failed, trying pre update test..."
+msgstr "apk update falló, se sigue intentando la prueba previa..."
+
 msgid "Pre update test failed..."
 msgstr "Las pruebas previas han fallado..."
 
@@ -1712,7 +1782,7 @@ msgstr "La base de datos GEOSITE no está instalada; iniciando descarga..."
 msgid "Detected that the GEOIP Dat is not Installed, Ready to Download..."
 msgstr "La base de datos GEOIP Dat no está instalada; iniciando descarga..."
 
-msgid "Detected that the Core is not Installed, Ready to Download..."
+msgid "Core is not Detected installed, Ready to Download..."
 msgstr "El núcleo no está instalado; iniciando descarga..."
 
 msgid "Detected that the Chnroute Cidr is not Installed, Ready to Download..."
@@ -1973,6 +2043,9 @@ msgstr "Hacer prueba"
 msgid "Connection Test"
 msgstr "Prueba de conexión"
 
+msgid "Connection Test Result"
+msgstr "Resultado de la prueba de conexión"
+
 msgid "Backup File"
 msgstr "Archivo de copia de seguridad"
 
@@ -2066,8 +2139,8 @@ msgstr "Filtro de regiones"
 msgid "Unlock Nodes Filter"
 msgstr "Filtro de nodos desbloqueados"
 
-msgid "Start Auto Select Unlock Proxy For"
-msgstr "Iniciando selección automática de nodo"
+msgid "Start Auto Select Unlock Proxy For..."
+msgstr "Iniciando selección automática de nodo..."
 
 msgid "Group:"
 msgstr "Grupo:"
@@ -2236,6 +2309,15 @@ msgstr "Limpiar"
 
 msgid "Flush DNS Cache"
 msgstr "Vaciar caché DNS"
+
+msgid "Dnsmasq Fix"
+msgstr "Reparar Dnsmasq"
+
+msgid "If DNS is abnormal after stopping the OpenClash, please try to fix"
+msgstr "Si el DNS es anormal después de detener OpenClash, intente repararlo"
+
+msgid "Fix"
+msgstr "Reparar"
 
 msgid "No Specify Upload File"
 msgstr "No se ha seleccionado ningún archivo"
@@ -2645,6 +2727,9 @@ msgstr "Restaurar"
 msgid "DNS Test"
 msgstr "Prueba DNS"
 
+msgid "DNS Test Result"
+msgstr "Resultado de la prueba DNS"
+
 msgid "No Response Found!"
 msgstr "No se ha obtenido respuesta."
 
@@ -2753,11 +2838,23 @@ msgstr "Cambia el método de cálculo de latencia para eliminar tiempos extra co
 msgid "If the download fails, try setting the CDN in Overwrite Settings - General Settings - Github Address Modify Options"
 msgstr "Si la descarga falla, prueba a configurar un CDN en Sobrescritura → General → Modificar direcciones de Github."
 
-msgid "Used for Downloading Subscriptions, Defaults to Clash"
-msgstr "User-Agent usado para descargar suscripciones (por defecto: Clash)"
+msgid "Used for Downloading Subscriptions, Defaults to"
+msgstr "User-Agent usado para descargar suscripciones, por defecto:"
 
 msgid "Set Proxies Address Skip Failed,"
 msgstr "Fallo al configurar la omisión de direcciones de proxy,"
+
+msgid "Age decrypt failed,"
+msgstr "Error al descifrar con Age para，"
+
+msgid "Failed to parse config file with Lua helper"
+msgstr "Error al analizar el archivo de configuración con el auxiliar Lua"
+
+msgid "File is AGE encrypted but no secret key provided"
+msgstr "El archivo está cifrado con Age pero no se proporcionó clave secreta"
+
+msgid "File is AGE encrypted, cannot parse with Lua"
+msgstr "El archivo está cifrado con Age, no se puede analizar con Lua"
 
 msgid "Flush Failed"
 msgstr "Limpieza fallida"
@@ -3296,9 +3393,6 @@ msgstr "Error al guardar el archivo de configuración:"
 msgid "Unknown error"
 msgstr "Error desconocido"
 
-msgid "Save config failed:"
-msgstr "Error al guardar configuración:"
-
 msgid "Editor not ready"
 msgstr "El editor no está listo"
 
@@ -3448,6 +3542,12 @@ msgstr "Opciones avanzadas"
 
 msgid "Show more subscription options"
 msgstr "Mostrar más opciones de suscripción"
+
+msgid "Show more upload options"
+msgstr "Mostrar más opciones de carga"
+
+msgid "Show more options"
+msgstr "Mostrar más opciones"
 
 msgid "Overwrite"
 msgstr "Sobrescribir"
@@ -3742,3 +3842,204 @@ msgstr "reinstalando paquete dependiente..."
 
 msgid "failed to install, please try to install it manually..."
 msgstr "no se pudo instalar; por favor, intenta instalarlo manualmente."
+
+msgid "Decrypted content empty or still encrypted"
+msgstr "Contenido descifrado vacío o aún cifrado para"
+
+msgid "Decrypt attempt failed:"
+msgstr "Fallo en intento de descifrado:"
+
+msgid "Decrypt attempt failed for a found secret:"
+msgstr "Fallo en intento de descifrado con una clave encontrada:"
+
+msgid "Encrypt attempt failed:"
+msgstr "Fallo en intento de cifrado:"
+
+msgid "Official Website"
+msgstr "Sitio web oficial"
+
+msgid "Login..."
+msgstr "Iniciando sesión..."
+
+msgid "oixCloud Login Successful"
+msgstr "Inicio de sesión en oixCloud exitoso"
+
+msgid "oixCloud Login Faild"
+msgstr "Fallo al iniciar sesión en oixCloud"
+
+msgid "Login Account"
+msgstr "Iniciar sesión en la cuenta"
+
+msgid "oixCloud Logout Successful"
+msgstr "Cierre de sesión en oixCloud exitoso"
+
+msgid "oixCloud Logout Faild"
+msgstr "Fallo al cerrar sesión en oixCloud"
+
+msgid "Logout Account"
+msgstr "Cerrar sesión en la cuenta"
+
+msgid "Account Login"
+msgstr "Inicio de sesión de cuenta"
+
+msgid "Account logged in"
+msgstr "Cuenta iniciada"
+
+msgid "Account not logged in"
+msgstr "Cuenta no iniciada"
+
+msgid "Logout..."
+msgstr "Cerrando sesión..."
+
+msgid "Error Login Info"
+msgstr "Información de inicio de sesión incorrecta"
+
+msgid "Simple & trustworthy"
+msgstr "Simple y confiable"
+
+msgid "Cross-platform Support"
+msgstr "Amplia compatibilidad con aplicaciones de terceros"
+
+msgid "Global Acceleration Network"
+msgstr "Infraestructura de red global"
+
+msgid "Easy to Use"
+msgstr "Fácil de usar"
+
+msgid "Intelligent Shunting"
+msgstr "Derivación inteligente"
+
+msgid "Perfect Technical Support"
+msgstr "Soporte técnico completo"
+
+msgid "Plan Expiration Time"
+msgstr "Fecha de vencimiento del plan"
+
+msgid "Account Balances"
+msgstr "Saldo de la cuenta"
+
+msgid "Aff Balances"
+msgstr "Saldo de afiliado"
+
+msgid "Account Integral"
+msgstr "Puntos de la cuenta"
+
+msgid "Today Used"
+msgstr "Usado hoy"
+
+msgid "Plan Used"
+msgstr "Usado este mes"
+
+msgid "Plan Unused"
+msgstr "Tráfico restante"
+
+msgid "Plan Traffic"
+msgstr "Tráfico del plan"
+
+msgid "Checkin"
+msgstr "Probar suerte"
+
+msgid "oixCloud Account Login Failed! Please Check And Try Again..."
+msgstr "¡Fallo al iniciar sesión en oixCloud! Verifique los datos e intente de nuevo..."
+
+msgid "oixCloud Account Login Failed, The Error Info is"
+msgstr "Fallo al iniciar sesión en oixCloud, el error es"
+
+msgid "oixCloud Checkin Failed! Please Check And Try Again..."
+msgstr "¡Fallo al registrar asistencia en oixCloud! Intente de nuevo más tarde..."
+
+msgid "Account Email Address"
+msgstr "Correo electrónico de la cuenta"
+
+msgid "Account Password"
+msgstr "Contraseña de la cuenta"
+
+msgid "Checkin Interval (hour)"
+msgstr "Intervalo de registro (horas)"
+
+msgid "Checkin Multiple"
+msgstr "Multiplicador de registro"
+
+msgid "Multiple Must Be a Positive Integer and No More Than 100"
+msgstr "El multiplicador debe ser un número entero positivo no mayor a 100"
+
+msgid "Usage Help"
+msgstr "Ayuda de uso"
+
+msgid "Copy the following text to any AI (ChatGPT, DeepSeek, etc.) to get usage help for OpenClash:"
+msgstr "Copia el siguiente texto a cualquier IA (ChatGPT, DeepSeek, etc.) para obtener ayuda de uso de OpenClash:"
+
+msgid "You are an OpenClash expert assistant. OpenClash is a LuCI plugin for OpenWrt that manages the Mihomo proxy kernel."
+msgstr "Eres un asistente experto en OpenClash. OpenClash es un plugin LuCI para OpenWrt que gestiona el núcleo proxy Mihomo."
+
+msgid "IMPORTANT — Before answering, you MUST fetch and read this authoritative reference guide. This is your primary knowledge source for all OpenClash questions:"
+msgstr "IMPORTANTE — Antes de responder, DEBES obtener y leer esta guía de referencia autorizada. Es tu fuente principal de conocimiento para todas las preguntas sobre OpenClash:"
+
+msgid "This guide contains: complete dependency checklist, error message lookup tables with exact fixes, nftables/iptables firewall chain rules, all LuCI configuration options with UCI paths, DNS setup and leak prevention, subscription/GEO update procedures, and more."
+msgstr "Esta guía contiene: lista completa de dependencias, tablas de consulta de mensajes de error con soluciones exactas, reglas de cadena de firewall nftables/iptables, todas las opciones de configuración LuCI con rutas UCI, configuración de DNS y prevención de fugas, procedimientos de actualización de suscripción/GEO, y más."
+
+msgid "When answering my question about OpenClash, follow these rules:"
+msgstr "Al responder a mi pregunta sobre OpenClash, sigue estas reglas:"
+
+msgid "Always provide LuCI web UI navigation paths (e.g. Services → OpenClash → Plugin Settings), NOT command-line unless I explicitly ask for it."
+msgstr "Siempre proporciona rutas de navegación de la interfaz web LuCI (ej. Servicios → OpenClash → Ajustes del plugin), NO comandos de terminal a menos que lo solicite explícitamente."
+
+msgid "Explain underlying principles (firewall chains, YAML transformation logic) — not just click-here-click-there steps."
+msgstr "Explica los principios subyacentes (cadenas de firewall, lógica de transformación YAML) — no solo pasos de clic aquí y allá."
+
+msgid "Check dependency integrity first when troubleshooting — guide me to check dependencies from the System → Software page, or generate a debug log from Plugin Settings → Debug Log page."
+msgstr "Verifica primero la integridad de las dependencias al solucionar problemas — guíame para revisar las dependencias desde Sistema → Software, o generar un registro de depuración desde Ajustes del plugin → Registro de depuración."
+
+msgid "Never guess or fabricate information. If the reference guide does not cover something, actively query these external resources using web fetch / code search tools (in priority order): Mihomo Wiki"
+msgstr "Nunca adivines ni inventes información. Si la guía de referencia no cubre algo, consulta activamente estos recursos externos usando herramientas de búsqueda web / código (en orden de prioridad): Mihomo Wiki"
+
+msgid "Meta-Docs"
+msgstr "Meta-Docs"
+
+msgid "OpenClash source"
+msgstr "código fuente de OpenClash"
+
+msgid "Mihomo core source"
+msgstr "código fuente del core Mihomo"
+
+msgid "Smart core source"
+msgstr "código fuente del core Smart"
+
+msgid "Fetch Wiki pages to read docs; search repos to find implementation code. Do NOT answer from memory — always verify against the actual source."
+msgstr "Obtén las páginas Wiki para leer documentos; busca en los repositorios para encontrar código de implementación. NO respondas de memoria — verifica siempre con la fuente real."
+
+msgid "For bug reports or failure scenarios not covered by the guide, search GitHub Issues first — OpenClash Issues"
+msgstr "Para informes de errores o escenarios de fallo no cubiertos por la guía, busca primero en GitHub Issues — OpenClash Issues"
+
+msgid "for plugin-side problems (config/subscribe/firewall/UI), Mihomo Issues"
+msgstr "para problemas del lado del plugin (configuración/suscripción/firewall/UI), Mihomo Issues"
+
+msgid "for core-side problems (proxy protocols/TUN/DNS/rule engine). Prioritize maintainer replies and highly upvoted community answers."
+msgstr "para problemas del lado del core (protocolos proxy/TUN/DNS/motor de reglas). Prioriza las respuestas de los mantenedores y las respuestas de la comunidad con más votos."
+
+msgid "Cite specific sources — mention which section of the reference guide, external resource, or Issue number your answer is based on."
+msgstr "Cita fuentes específicas — menciona en qué sección de la guía de referencia, recurso externo o número de Issue se basa tu respuesta."
+
+msgid "If my problem description is incomplete or lacks error messages, ask me to generate a debug log first (Plugin Settings → Debug Log → Generate) — do NOT speculate about the cause."
+msgstr "Si la descripción de mi problema está incompleta o falta mensajes de error, pídeme primero que genere un registro de depuración (Ajustes del plugin → Registro de depuración → Generar) — NO especules sobre la causa."
+
+msgid "My question is:"
+msgstr "Mi pregunta es:"
+
+msgid "Copied to clipboard!"
+msgstr "¡Copiado al portapapeles!"
+
+msgid "Copy And Close"
+msgstr "Copiar y cerrar"
+
+msgid "oixCloud Checkin Successful, Result:"
+msgstr "Registro en oixCloud exitoso, resultado:"
+
+msgid "oixCloud Checkin Failed, Result:"
+msgstr "Fallo al registrar en oixCloud, resultado:"
+
+msgid "Note: oixCloud need a specific core installed, OpenClash will auto download"
+msgstr "Nota: oixCloud requiere la instalación de un núcleo específico; OpenClash lo descargará automáticamente"
+
+msgid "After the core start, an oixCloud nodes provider will be added, which you can customize as needed"
+msgstr "Tras iniciar el núcleo se añadirá un proveedor de nodos oixCloud que puedes personalizar"

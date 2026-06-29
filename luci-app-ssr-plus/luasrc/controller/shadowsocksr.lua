@@ -18,6 +18,7 @@ local SERVER_DETECT_CACHE = "/tmp/ssrplus_server_detect.json"
 local SERVER_DETECT_LOCK = "/tmp/ssrplus_server_detect.lock"
 local CLASH_RULES_DIR = "/etc/ssrplus/clash"
 local SUPPORTED_COMPONENTS = {
+	mainprogram = true,
 	xray = true,
 	mihomo = true,
 	naiveproxy = true
@@ -594,6 +595,7 @@ local function write_component_json(data)
 		previous_version = data.previous_version or "",
 		arch = data.arch or "",
 		asset = data.asset or "",
+		package_manager = data.package_manager or "",
 		can_upgrade = data.can_upgrade == "1",
 		success = data.success == "1",
 		error = data.error or "",

@@ -17,6 +17,7 @@ uci -q commit firewall
 
 mkdir -p /etc/openclash/config
 mkdir -p /etc/openclash/proxy_provider
+mkdir -p /etc/openclash/rule_provider
 mkdir -p /etc/openclash/core
 mkdir -p /etc/openclash/history
 mkdir -p /usr/share/openclash/backup/overwrite
@@ -143,6 +144,7 @@ cp -f "/etc/openclash/custom/openclash_custom_overwrite.sh" "/usr/share/openclas
 cp -f "/etc/openclash/china_ip_route.ipset" "/usr/share/openclash/backup/china_ip_route.ipset" >/dev/null 2>&1
 cp -f "/etc/openclash/china_ip6_route.ipset" "/usr/share/openclash/backup/china_ip6_route.ipset" >/dev/null 2>&1
 cp -f "/etc/openclash/overwrite/default" "/usr/share/openclash/backup/overwrite/default" >/dev/null 2>&1
+cp -f "/etc/openclash/rule_provider/oc-cn-domain.mrs" "/usr/share/openclash/backup/oc-cn-domain.mrs" >/dev/null 2>&1
 
 #Restore
 if [ -f "/tmp/openclash.bak" ]; then
@@ -177,6 +179,10 @@ if [ -f "/tmp/openclash.bak" ]; then
 		rm -rf "/www/luci-static/resources/openclash/pac/" >/dev/null 2>&1
 		cp -rf "/tmp/pac/." "/www/luci-static/resources/openclash/pac/" >/dev/null 2>&1
 		rm -rf "/tmp/pac/" >/dev/null 2>&1
+	fi
+	#oc-domain
+	if [ -f "/etc/openclash/rule_provider/oc-cn-domain.mrs" ]; then
+		cp -f "/usr/share/openclash/backup/oc-cn-domain.mrs" "/etc/openclash/rule_provider/oc-cn-domain.mrs" >/dev/null 2>&1
 	fi
 	rm -rf "/etc/openclash/openclash" >/dev/null 2>&1
 	rm -rf "/tmp/openclash" >/dev/null 2>&1

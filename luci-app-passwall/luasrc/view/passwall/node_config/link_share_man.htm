@@ -552,8 +552,9 @@ local current_node = map:get(section)
 			}
 			params += "&type=" + v_transport;
 
+			var v_security = "none";
 			if (opt.get(dom_prefix + "tls").checked) {
-				var v_security = "tls";
+				v_security = "tls";
 				if (opt.get(dom_prefix + "fingerprint") && opt.get(dom_prefix + "fingerprint").value != "") {
 					let v_fp = opt.get(dom_prefix + "fingerprint").value;
 					params += "&fp=" + v_fp;
@@ -565,7 +566,6 @@ local current_node = map:get(section)
 					params += opt.query("spx", dom_prefix + "reality_spiderX");
 					params += opt.query("pqv", dom_prefix + "reality_mldsa65Verify");
 				}
-				params += "&security=" + v_security;
 				params += opt.query("alpn", dom_prefix + "alpn");
 				params += opt.query("sni", dom_prefix + "tls_serverName");
 				params += opt.query("allowinsecure", dom_prefix + "tls_allowInsecure");
@@ -573,6 +573,7 @@ local current_node = map:get(section)
 				params += opt.query("vcn", dom_prefix + "tls_CertByName");
 				params += opt.query("ech", dom_prefix + "ech_config");
 			}
+			params += "&security=" + v_security;
 
 			opt.get(dom_prefix + "tcp_fast_open")?.checked && (params += "&tfo=1");
 			if (opt.get(dom_prefix + "use_finalmask")?.checked) {
@@ -1302,17 +1303,37 @@ local current_node = map:get(section)
 			}
 
 			queryParam.security = queryParam.security || "tls";
-			opt.set(dom_prefix + 'tls', queryParam.security === "tls");
-			if (queryParam.security === "tls") {
-				opt.set(dom_prefix + 'tls_serverName', queryParam.peer || queryParam.sni || "");
-				opt.set(dom_prefix + 'alpn', queryParam.alpn || 'default');
-				opt.set(dom_prefix + 'tls_pinSHA256', queryParam.pcs || '');
-				opt.set(dom_prefix + 'tls_CertByName', queryParam.vcn || '');
+			if (queryParam.security == "tls" || queryParam.security == "reality") {
+				if (queryParam.security == "tls") {
+					opt.set(dom_prefix + 'tls', true);
+					opt.set(dom_prefix + 'reality', false);
+					opt.set(dom_prefix + 'alpn', queryParam.alpn || 'default');
+					opt.set(dom_prefix + 'tls_serverName', queryParam.peer || queryParam.sni || "");
+					if (queryParam.fp && queryParam.fp.trim() != "") {
+						opt.set(dom_prefix + 'utls', true);
+						opt.set(dom_prefix + 'fingerprint', queryParam.fp);
+					}
+					opt.set(dom_prefix + 'tls_pinSHA256', queryParam.pcs || '');
+					opt.set(dom_prefix + 'tls_CertByName', queryParam.vcn || '');
+					opt.set(
+						dom_prefix + 'tls_allowInsecure',
+						!((queryParam.allowinsecure ?? '0') === '0' && (queryParam.allowInsecure ?? '0') === '0' && (queryParam.insecure ?? '0') === '0')
+					);
+				}
+				if (queryParam.security == "reality") {
+					opt.set(dom_prefix + 'tls', true);
+					opt.set(dom_prefix + 'reality', true);
+					opt.set(dom_prefix + 'alpn', queryParam.alpn || 'default');
+					opt.set(dom_prefix + 'tls_serverName', queryParam.peer || queryParam.sni || "");
+					if (queryParam.fp && queryParam.fp.trim() != "") {
+						opt.set(dom_prefix + 'utls', true);
+						opt.set(dom_prefix + 'fingerprint', queryParam.fp);
+					}
+					opt.set(dom_prefix + 'reality_publicKey', queryParam.pbk || '');
+					opt.set(dom_prefix + 'reality_shortId', queryParam.sid || '');
+				}
 			}
-			opt.set(
-				dom_prefix + 'tls_allowInsecure',
-				!((queryParam.allowinsecure ?? '0') === '0' && (queryParam.allowInsecure ?? '0') === '0' && (queryParam.insecure ?? '0') === '0')
-			);
+
 			opt.set(dom_prefix + 'tcp_fast_open', queryParam.tfo);
 			opt.set(dom_prefix + 'use_finalmask', !!queryParam.fm);
 			opt.set(dom_prefix + 'finalmask', queryParam.fm || "");

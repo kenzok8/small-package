@@ -5,6 +5,7 @@
 . /usr/share/openclash/uci.sh
 
 LOG_FILE="/tmp/openclash.log"
+CLASH="/etc/openclash/clash"
 CFG_UPDATE_INT=0
 SKIP_PROXY_ADDRESS=1
 SKIP_PROXY_ADDRESS_INTERVAL=30
@@ -29,8 +30,6 @@ begin
       exit;
    end
 
-   require 'thread'
-
    servers_to_process = Array.new
 
    # Servers from proxies
@@ -46,20 +45,41 @@ begin
          if provider.key?('path') and not provider['path'].empty?
             path = provider['path'].start_with?('./') ? '/etc/openclash/' + provider['path'][2..-1] : provider['path']
             if File.exist?(path)
+               file_is_age_encrypted = File.read(path, 512).include?('BEGIN AGE ENCRYPTED FILE') rescue false
                begin
-                  provider_config = YAML.load_file(path)
+                  if provider.key?('age-secret-key') and not provider['age-secret-key'].to_s.empty?
+                     begin
+                        provider_config = YAML.load_file(path, secret: provider['age-secret-key']) rescue nil
+                     rescue Exception => e
+                        YAML.LOG_WARN('Set Proxies Address Skip Failed,【' + path + ': ' + e.message+'】')
+                        continue
+                     end
+                  else
+                     if file_is_age_encrypted
+                        YAML.LOG_WARN('Set Proxies Address Skip Failed,【' + path + ': File is AGE encrypted but no secret key provided】')
+                        next
+                     end
+                     provider_config = YAML.load_file(path)
+                  end
+
                   if provider_config.is_a?(Hash) and provider_config.key?('proxies') and not provider_config['proxies'].nil?
                      provider_config['proxies'].each do |p|
                         servers_to_process.push(p['server']) if p.key?('server')
                      end
                   end
                rescue Psych::SyntaxError, ArgumentError
-                  begin
-                     syscall = \"lua /usr/share/openclash/openclash_sub_parser.lua \\\"#{path}\\\"\"
-                     sub_servers = IO.popen(syscall).read.split(/\n+/)
-                     servers_to_process.concat(sub_servers) if sub_servers
-                  rescue Exception => e
-                     YAML.LOG_WARN('Failed to parse subscription file with Lua helper ' + path + ': ' + e.message)
+                  if not provider.key?('age-secret-key') or provider['age-secret-key'].to_s.empty?
+                     if file_is_age_encrypted
+                        YAML.LOG_WARN('Failed to parse config file with Lua helper【' + path + ': File is AGE encrypted, cannot parse with Lua】')
+                        next
+                     end
+                     begin
+                        syscall = \"lua /usr/share/openclash/openclash_sub_parser.lua \\\"#{path}\\\"\"
+                        sub_servers = IO.popen(syscall).read.split(/\n+/)
+                        servers_to_process.concat(sub_servers) if sub_servers
+                     rescue Exception => e
+                        YAML.LOG_WARN('Failed to parse config file with Lua helper【' + path + ': ' + e.message+'】')
+                     end
                   end
                end
             end
@@ -195,8 +215,8 @@ fi
 ## Log File Size Manage:
    LOGSIZE=`ls -l /tmp/openclash.log |awk '{print int($5/1024)}'`
    if [ "$LOGSIZE" -gt "$log_size" ]; then
-   : > /tmp/openclash.log
-   LOG_WATCHDOG "Log Size Limit, Clean Up All Log Records..."
+      : > /tmp/openclash.log
+      LOG_WATCHDOG "Log Size Limit, Clean Up All Log Records..."
    fi
 
 ## 防火墙检查
@@ -361,6 +381,9 @@ fi
       fi
    fi
 
+##Dler Cloud Checkin
+   /usr/share/openclash/openclash_oix_checkin.lua >/dev/null 2>&1
+
 ## 配置文件循环更新
    if [ "$cfg_update" -eq 1 ] && [ "$cfg_update_mode" -eq 1 ]; then
       if [ "$CFG_UPDATE_INT" -ne 0 ]; then
@@ -374,59 +397,59 @@ fi
       if [ "$STREAM_AUTO_SELECT" -ne 0 ]; then
          if [ "$(expr "$STREAM_AUTO_SELECT" % "$stream_auto_select_interval")" -eq 0 ] || [ "$STREAM_AUTO_SELECT" -eq 1 ]; then
             if [ "$stream_auto_select_netflix" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Unlock Proxy For【Netflix】..."
+               LOG_TIP "【Netflix】Start Auto Select Unlock Proxy..."
                /usr/share/openclash/openclash_streaming_unlock.lua "Netflix" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_disney" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Unlock Proxy For【Disney Plus】..."
+               LOG_TIP "【Disney Plus】Start Auto Select Unlock Proxy..."
                /usr/share/openclash/openclash_streaming_unlock.lua "Disney Plus" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_google_not_cn" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Unlock Proxy For【Google Not CN】..."
+               LOG_TIP "【Google Not CN】Start Auto Select Unlock Proxy..."
                /usr/share/openclash/openclash_streaming_unlock.lua "Google" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_ytb" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Unlock Proxy For【YouTube Premium】..."
+               LOG_TIP "【YouTube Premium】Start Auto Select Unlock Proxy..."
                /usr/share/openclash/openclash_streaming_unlock.lua "YouTube Premium" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_prime_video" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Unlock Proxy For【Amazon Prime Video】..."
+               LOG_TIP "【Amazon Prime Video】Start Auto Select Unlock Proxy..."
                /usr/share/openclash/openclash_streaming_unlock.lua "Amazon Prime Video" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_hbo_max" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Unlock Proxy For【HBO Max】..."
+               LOG_TIP "【HBO Max】Start Auto Select Unlock Proxy..."
                /usr/share/openclash/openclash_streaming_unlock.lua "HBO Max" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_tvb_anywhere" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Unlock Proxy For【TVB Anywhere+】..."
+               LOG_TIP "【TVB Anywhere+】Start Auto Select Unlock Proxy..."
                /usr/share/openclash/openclash_streaming_unlock.lua "TVB Anywhere+" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_dazn" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Unlock Proxy For【DAZN】..."
+               LOG_TIP "【DAZN】Start Auto Select Unlock Proxy..."
                /usr/share/openclash/openclash_streaming_unlock.lua "DAZN" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_paramount_plus" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Unlock Proxy For【Paramount Plus】..."
+               LOG_TIP "【Paramount Plus】Start Auto Select Unlock Proxy..."
                /usr/share/openclash/openclash_streaming_unlock.lua "Paramount Plus" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_discovery_plus" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Unlock Proxy For【Discovery Plus】..."
+               LOG_TIP "【Discovery Plus】Start Auto Select Unlock Proxy..."
                /usr/share/openclash/openclash_streaming_unlock.lua "Discovery Plus" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_bilibili" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Unlock Proxy For【Bilibili】..."
+               LOG_TIP "【Bilibili】Start Auto Select Unlock Proxy..."
                /usr/share/openclash/openclash_streaming_unlock.lua "Bilibili" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_openai" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Unlock Proxy For【OpenAI】..."
+               LOG_TIP "【OpenAI】Start Auto Select Unlock Proxy..."
                /usr/share/openclash/openclash_streaming_unlock.lua "OpenAI" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_claude" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Unlock Proxy For【Claude】..."
+               LOG_TIP "【Claude】Start Auto Select Unlock Proxy..."
                /usr/share/openclash/openclash_streaming_unlock.lua "Claude" >> $LOG_FILE
             fi
             if [ "$stream_auto_select_gemini" -eq 1 ]; then
-               LOG_TIP "Start Auto Select Unlock Proxy For【Gemini】..."
+               LOG_TIP "【Gemini】Start Auto Select Unlock Proxy..."
                /usr/share/openclash/openclash_streaming_unlock.lua "Gemini" >> $LOG_FILE
             fi
          fi

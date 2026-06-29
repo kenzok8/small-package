@@ -51,12 +51,31 @@ version_compare() {
     return 1
 }
 
+run_with_timeout() {
+   local timeout_sec="$1"
+   shift
+   "$@" &
+   local _pid=$!
+   (
+      sleep "$timeout_sec"
+      kill $_pid 2>/dev/null
+      sleep 0.5
+      kill -9 $_pid 2>/dev/null
+   ) &
+   local _watchdog=$!
+   wait $_pid 2>/dev/null
+   local _ret=$?
+   kill $_watchdog 2>/dev/null
+   wait $_watchdog 2>/dev/null
+   return $_ret
+}
+
 LAST_OPVER="/tmp/openclash_last_version"
 LAST_VER=$(sed -n 1p "$LAST_OPVER" 2>/dev/null |sed "s/^v//g" |tr -d "\n")
 if [ -x "/bin/opkg" ]; then
    OP_CV=$(rm -f /var/lock/opkg.lock && opkg status luci-app-openclash 2>/dev/null |grep 'Version' |awk -F 'Version: ' '{print $2}' 2>/dev/null)
 elif [ -x "/usr/bin/apk" ]; then
-   OP_CV=$(apk list luci-app-openclash 2>/dev/null|grep "installed" | grep -oE '[0-9]+(\.[0-9]+)*' | head -1 2>/dev/null)
+   OP_CV=$(rm -f /lib/apk/db/lock && apk list luci-app-openclash 2>/dev/null|grep "installed" | grep -oE '[0-9]+(\.[0-9]+)*' | head -1 2>/dev/null)
 fi
 OP_LV=$(sed -n 1p "$LAST_OPVER" 2>/dev/null |sed "s/^v//g" |tr -d "\n")
 RELEASE_BRANCH=$(uci_get_config "release_branch" || echo "master")
@@ -129,27 +148,48 @@ if [ -n "$OP_CV" ] && [ -n "$OP_LV" ] && version_compare "$OP_CV" "$OP_LV" && [ 
          LOG_TIP "【$retry_count/$max_retries】【OpenClash - v$LAST_VER】Download successful, start pre update test..."
 
          pre_test_success=false
-         pkg_update_success=true
 
          if [ -x "/bin/opkg" ]; then
-            opkg update >/dev/null 2>&1
-            if [ $? -ne 0 ]; then
-               sleep 2
-               pkg_update_success=false
-               continue
-            fi
+            update_retry=0
+            max_update_retry=2
+            while [ $update_retry -lt $max_update_retry ]; do
+               update_retry=$((update_retry + 1))
+               run_with_timeout 30 opkg update >/dev/null 2>&1
+               opkg_ret=$?
+               rm -f /var/lock/opkg.lock
+               if [ $opkg_ret -eq 0 ]; then
+                  break
+               fi
+               if [ $update_retry -lt $max_update_retry ]; then
+                  LOG_ERROR "【$update_retry/$max_update_retry】【OpenClash - v$LAST_VER】opkg update failed or timed out, retrying..."
+                  sleep 2
+               else
+                  LOG_ERROR "【$update_retry/$max_update_retry】【OpenClash - v$LAST_VER】opkg update failed, trying pre update test..."
+               fi
+            done
             if [ -s "/tmp/openclash.ipk" ]; then
                if [ -n "$(opkg install /tmp/openclash.ipk --noaction 2>/dev/null |grep 'Upgrading luci-app-openclash on root' 2>/dev/null)" ]; then
                   pre_test_success=true
                fi
             fi
          elif [ -x "/usr/bin/apk" ]; then
-            apk update >/dev/null 2>&1
-            if [ $? -ne 0 ]; then
-               sleep 2
-               pkg_update_success=false
-               continue
-            fi
+            update_retry=0
+            max_update_retry=2
+            while [ $update_retry -lt $max_update_retry ]; do
+               update_retry=$((update_retry + 1))
+               run_with_timeout 30 apk update >/dev/null 2>&1
+               apk_ret=$?
+               rm -f /lib/apk/db/lock /tmp/apk.lock
+               if [ $apk_ret -eq 0 ]; then
+                  break
+               fi
+               if [ $update_retry -lt $max_update_retry ]; then
+                  LOG_ERROR "【$update_retry/$max_update_retry】【OpenClash - v$LAST_VER】apk update failed or timed out, retrying..."
+                  sleep 2
+               else
+                  LOG_ERROR "【$update_retry/$max_update_retry】【OpenClash - v$LAST_VER】apk update failed, trying pre update test..."
+               fi
+            done
             if [ -s "/tmp/openclash.apk" ]; then
                apk add -s -q --force-overwrite --clean-protected --allow-untrusted /tmp/openclash.apk >/dev/null 2>&1
                if [ $? -eq 0 ]; then

@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"PO-Revision-Date: 2026-03-07 19:24+0000\n"
+"PO-Revision-Date: 2026-06-25 19:51+0000\n"
 "Last-Translator: Pavel Borecki <pavel.borecki@gmail.com>\n"
 "Language-Team: Czech <https://hosted.weblate.org/projects/openwrt/"
 "luciapplicationssnmpd/cs/>\n"
@@ -10,15 +10,23 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
-"X-Generator: Weblate 5.17-dev\n"
+"X-Generator: Weblate 2026.7.dev0\n"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:261
 msgid "A group maps com2sec names to access names"
 msgstr "Skupina mapuje com2sec názvy na přístupové názvy"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:480
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:486
 msgid "AES"
 msgstr "AES"
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:485
+msgid "AES-192"
+msgstr "AES-192"
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:484
+msgid "AES-256"
+msgstr "AES-256"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:367
 msgid "Access Control"
@@ -32,7 +40,7 @@ msgstr "Omezení přístupu na pouze pro čtení nebo čtení/zápis"
 msgid "Actions"
 msgstr "Akce"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:635
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:641
 msgid "Advanced Settings"
 msgstr "Pokročilá nastavení"
 
@@ -66,20 +74,20 @@ msgstr "Ověřování se"
 msgid "Authentication and encryption"
 msgstr "Ověřování a šifrování"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:640
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:646
 msgid "Communities for any hosts"
 msgstr "Komunity pro jakékoli hostitele"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:644
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:650
 msgid "Communities via IP-Address range"
 msgstr "Komunity prostřednictvím rozsahu IP adres"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:642
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:648
 msgid "Communities via hostname"
 msgstr "Komunity prostřednictvím názvu hostitele"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:245
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:543
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:549
 msgid "Community"
 msgstr "Komunita"
 
@@ -103,7 +111,7 @@ msgstr "Kontakt"
 msgid "Context"
 msgstr "Kontext"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:481
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:487
 msgid "DES"
 msgstr "DES"
 
@@ -124,11 +132,11 @@ msgstr "Pokud chcete AgentX vypnout, nevyplňujte"
 msgid "Enable SNMP"
 msgstr "Zapnout SNMP"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:572
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:578
 msgid "Enable logging to file"
 msgstr "Zapnout zaznamenávání událostí do souboru"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:599
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:605
 msgid "Enable logging to syslog"
 msgstr "Zapnout zaznamenávání do syslog"
 
@@ -140,7 +148,7 @@ msgstr "Zapněte, pokud chcete používat SNMP"
 msgid "Exact"
 msgstr "Přesné"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:631
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:637
 msgid "General"
 msgstr "Obecné"
 
@@ -153,7 +161,7 @@ msgstr "Udělit luci-app-snmpd přístup do UCI nastavování"
 msgid "Group"
 msgstr "Skupina"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:564
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:570
 msgid "Here you can configure Logging settings"
 msgstr "Zde je možné nastavit zaznamenávání událostí"
 
@@ -209,11 +217,11 @@ msgstr "Úroveň zabezpečení"
 msgid "Location"
 msgstr "Umístění"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:657
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:663
 msgid "Logging"
 msgstr "Zaznamenávání událostí"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:462
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:466
 msgid "MD5"
 msgstr "MD5"
 
@@ -222,7 +230,7 @@ msgid "Name"
 msgstr "Název"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:411
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:497
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:503
 msgid "No"
 msgstr "Ne"
 
@@ -245,16 +253,16 @@ msgid "Notify access modification for groups"
 msgstr "Upozornit na změnu přístupu pro skupiny"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:419
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:505
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:511
 msgid "OID"
 msgstr "OID"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:409
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:496
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:502
 msgid "OID-Restriction"
 msgstr "Omezení OID"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:625
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:631
 msgid "On this page you may configure SNMP settings"
 msgstr "Na této stránce je možné nastavit SNMP"
 
@@ -274,12 +282,12 @@ msgstr "Pouze SNMPv3"
 msgid "Password must be at least 8 characters"
 msgstr "Je třeba, aby heslo mělo alespoň 8 znaků"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:578
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:584
 msgid "Path to log file"
 msgstr "Popis umístění souboru se záznamem událostí"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:95
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:535
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:541
 msgid "Port"
 msgstr "Port"
 
@@ -289,7 +297,7 @@ msgstr "Port"
 msgid "Prefix"
 msgstr "Předpona"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:585
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:591
 msgid "Priority for file logging"
 msgstr "Priorita pro zaznamenávání do souboru"
 
@@ -317,9 +325,25 @@ msgstr "Omezit na následující OID uzel/větev"
 msgid "Restriction to specific OID"
 msgstr "Omezit na konkrétní OID"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:461
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:465
 msgid "SHA"
 msgstr "SHA"
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:464
+msgid "SHA-224"
+msgstr "SHA-224"
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:463
+msgid "SHA-256"
+msgstr "SHA-256"
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:462
+msgid "SHA-384"
+msgstr "SHA-384"
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:461
+msgid "SHA-512"
+msgstr "SHA-512"
 
 #: applications/luci-app-snmpd/root/usr/share/luci/menu.d/luci-app-snmpd.json:16
 msgid "SNMP"
@@ -329,7 +353,7 @@ msgstr "SNMP"
 msgid "SNMP - MIB Download"
 msgstr "SNMP – stažení MIB"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:624
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:630
 msgid "SNMP Settings"
 msgstr "Nastavení pro SNMP"
 
@@ -350,7 +374,7 @@ msgstr "SNMPD"
 msgid "SNMPv1"
 msgstr "SNMPv1"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:551
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:557
 msgid "SNMPv1 Trap Receiver"
 msgstr "Přijímač SNMPv1 trapů"
 
@@ -362,7 +386,7 @@ msgstr "SNMPv1 a SNMPv2c"
 msgid "SNMPv1, SNMPv2c and SNMPv3"
 msgstr "SNMPv1, SNMPv2c a SNMPv3"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:638
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:644
 msgid "SNMPv1/SNMPv2c"
 msgstr "SNMPv1/SNMPv2c"
 
@@ -371,21 +395,21 @@ msgstr "SNMPv1/SNMPv2c"
 msgid "SNMPv2c"
 msgstr "SNMPv2c"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:553
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:559
 msgid "SNMPv2c Inform Receiver"
 msgstr "Přijímač SNMPv2c informování"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:552
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:558
 msgid "SNMPv2c Trap Receiver"
 msgstr "Přijímač SNMPv2c trapů"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:270
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:305
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:647
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:653
 msgid "SNMPv3"
 msgstr "SNMPv3"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:468
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:472
 msgid "SNMPv3 authentication passphrase"
 msgstr "SNMPv3 ověřovací heslová fráze"
 
@@ -393,11 +417,11 @@ msgstr "SNMPv3 ověřovací heslová fráze"
 msgid "SNMPv3 authentication type"
 msgstr "SNMPv3 typ ověřování"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:487
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:493
 msgid "SNMPv3 encryption passphrase"
 msgstr "SNMPv3 šifrovací heslová fráze"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:478
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:482
 msgid "SNMPv3 encryption type"
 msgstr "SNMPv3 typ šifrování"
 
@@ -422,7 +446,7 @@ msgstr "Zdroj popisuje hostitele nebo síť"
 msgid "Specification how context of requests is matched to context"
 msgstr "Specifikace toho, jak je hledána shoda kontextu požadavku s kontextem"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:605
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:611
 msgid "Syslog facility"
 msgstr "Syslog kategorie"
 
@@ -458,7 +482,7 @@ msgstr "Verze použitá pro nastavení přístupu"
 msgid "The used version for the group"
 msgstr "Verze použitá pro skupinu"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:651
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:657
 msgctxt "SNMP"
 msgid "Traps"
 msgstr "Trapy"
@@ -468,7 +492,7 @@ msgid "Trusted source for SNMP read community access (hostname or IP)"
 msgstr ""
 "Důvěryhodný zdroj pro přístup SNMP komunity pro čtení (název stroje nebo IP)"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:550
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:556
 msgid "Type"
 msgstr "Typ"
 
@@ -477,7 +501,7 @@ msgstr "Typ"
 msgid "Version"
 msgstr "Verze"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:586
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:592
 msgid "Will log messages of selected priority and above."
 msgstr "Bude zaznamenávat zprávy s vybranou a vyšší prioritou."
 
@@ -490,7 +514,7 @@ msgid "Write access modification for groups"
 msgstr "Modifikace přístupu pro zápis pro skupiny"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:412
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:498
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:504
 msgid "Yes"
 msgstr "Ano"
 
@@ -503,7 +527,7 @@ msgid "localhost"
 msgstr "localhost"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:460
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:479
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:483
 msgid "none"
 msgstr "žádné"
 

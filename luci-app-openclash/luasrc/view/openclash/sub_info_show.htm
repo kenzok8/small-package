@@ -1,567 +1,4 @@
 <%+cbi/valueheader%>
-<style>
-.sub_div {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: nowrap;
-    width: calc(100% - 24px);
-    box-sizing: border-box;
-    min-width: 280px;
-    max-width: 350px;
-    margin: 0 auto;
-}
-
-.sub_div > span:first-child {
-    flex: 1;
-    min-width: 0;
-}
-
-.sub_tab {
-    display: block;
-    white-space: nowrap;
-    font-size: 12px;
-    margin: 0;
-    opacity: 0;
-    width: 100%;
-    max-width: 100%;
-    overflow: hidden;
-    box-sizing: border-box;
-}
-
-.sub_tab_show {
-    display: block;
-    white-space: nowrap;
-    font-size: 12px;
-    margin: 0;
-    -webkit-transition: all 1s;
-    -moz-transition: all 1s;
-    -ms-transition: all 1s;
-    -o-transition: all 1s;
-    transition: all 1s;
-    opacity: 1;
-    width: 100%;
-    max-width: 100%;
-    overflow: hidden;
-    box-sizing: border-box;
-}
-
-.sub_setting {
-    display: inline-block;
-    white-space: nowrap;
-    margin: 0;
-    opacity: 1;
-    vertical-align: middle;
-    line-height: 0;
-    flex-shrink: 0;
-    cursor: pointer;
-    background-color: unset;
-    border: unset;
-}
-
-.sub_setting svg {
-    vertical-align: middle;
-    display: inline-block;
-    width: 18px;
-    height: 18px;
-    color: #414c5c;
-    padding-left: 2px;
-}
-
-.sub_setting:hover svg {
-    opacity: 0.7;
-}
-
-.text_show {
-    color: #333333;
-    line-height: 1.2;
-}
-
-.progress_bar_bg {
-    border: 1px solid #999999;
-    background-color: #f5f5f5;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 220px;
-    box-sizing: border-box;
-    border-radius: 6px;
-    height: 36px;
-}
-
-.progress_bar_high {
-    background-color: #9edd9e;
-}
-
-.progress_bar_medium {
-    background-color: #ffc99f;
-}
-
-.progress_bar_low {
-    background-color: #ffb9b9;
-}
-
-.sub-info-url-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(2px);
-}
-
-.sub-info-url-model {
-    background: var(--bg-white, white);
-    border-radius: var(--radius-lg, 8px);
-    box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,0.15));
-    width: 90vw;
-    max-width: 550px;
-    min-width: 400px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border: 1px solid var(--border-light, #e5e7eb);
-    max-height: 85vh;
-    transition: all var(--transition-fast, 0.2s);
-}
-
-.sub-info-url-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px;
-    border-bottom: 1px solid var(--border-light, #e5e7eb);
-    background: var(--bg-gray, #f9fafb);
-    flex-shrink: 0;
-}
-
-.sub-info-url-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary, #1f2937);
-}
-
-.sub-info-url-footer {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 20px;
-    border-top: 1px solid var(--border-light, #e5e7eb);
-    background: var(--bg-gray, #f9fafb);
-    flex-shrink: 0;
-    gap: 12px;
-}
-
-.sub-info-url-content {
-    padding: 24px;
-    flex: 1;
-    overflow-y: auto;
-}
-
-.sub-info-url-form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.sub-info-url-form-group label {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary, #1f2937);
-}
-
-.sub-info-url-form-textarea {
-    width: 100%;
-    min-height: 120px;
-    padding: 10px 12px;
-    border: 1px solid var(--border-light, #e5e7eb);
-    border-radius: var(--radius-sm, 4px);
-    background: var(--bg-white, white);
-    color: var(--text-primary, #1f2937);
-    font-size: 14px;
-    font-family: inherit;
-    resize: vertical;
-    transition: all var(--transition-fast, 0.2s);
-    box-sizing: border-box;
-}
-
-.sub-info-url-form-textarea:focus {
-    outline: none;
-    border-color: var(--primary-color, #3b82f6);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.sub-info-url-form-textarea::placeholder {
-    color: var(--text-secondary, #6b7280);
-}
-
-.sub-info-url-btn {
-    padding: 8px 16px;
-    border: 1px solid var(--border-light, #e5e7eb);
-    border-radius: var(--radius-sm, 4px);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-fast, 0.2s);
-    white-space: nowrap;
-}
-
-.sub-info-url-cancel-btn {
-    background: var(--bg-white, white);
-    color: var(--text-secondary, #6b7280);
-    border-color: var(--border-light, #e5e7eb);
-}
-
-.sub-info-url-cancel-btn:hover {
-    background: var(--hover-bg, #f3f4f6);
-    color: var(--text-primary, #1f2937);
-}
-
-.sub-info-url-submit-btn {
-    background: var(--primary-color, #3b82f6);
-    color: white;
-    border-color: var(--primary-color, #3b82f6);
-}
-
-.sub-info-url-submit-btn:hover:not(:disabled) {
-    background: var(--primary-color, #3b82f6);
-    opacity: 0.9;
-}
-
-.sub-info-url-submit-btn:disabled {
-    background: var(--bg-gray, #f9fafb);
-    color: var(--text-secondary, #6b7280);
-    border-color: var(--border-light, #e5e7eb);
-    cursor: not-allowed;
-}
-
-:root[data-darkmode="true"] .sub_setting svg {
-    color: #e0e0e0;
-}
-
-:root[data-darkmode="true"] .text_show {
-    color: #e0e0e0;
-    line-height: 1.2;
-}
-
-:root[data-darkmode="true"] .progress_bar_bg {
-    border: 1px solid #666666;
-    background-color: #333333;
-}
-
-:root[data-darkmode="true"] .progress_bar_high {
-    background-color: #5da05d;
-}
-
-:root[data-darkmode="true"] .progress_bar_medium {
-    background-color: #cc8550;
-}
-
-:root[data-darkmode="true"] .progress_bar_low {
-    background-color: #cc6262;
-}
-
-:root[data-darkmode="true"] .sub-info-url-model {
-    background: var(--bg-white, #1f2937);
-    border-color: var(--border-light, #374151);
-}
-
-:root[data-darkmode="true"] .sub-info-url-header,
-:root[data-darkmode="true"] .sub-info-url-footer {
-    background: var(--bg-gray, #111827);
-    border-color: var(--border-light, #374151);
-}
-
-:root[data-darkmode="true"] .sub-info-url-title {
-    color: var(--text-primary, #f3f4f6);
-}
-
-:root[data-darkmode="true"] .sub-info-url-form-group label {
-    color: var(--text-primary, #f3f4f6);
-}
-
-:root[data-darkmode="true"] .sub-info-url-form-textarea {
-    background: var(--bg-gray, #374151);
-    border-color: var(--border-light, #4b5563);
-    color: var(--text-primary, #f3f4f6);
-}
-
-:root[data-darkmode="true"] .sub-info-url-form-textarea:focus {
-    border-color: var(--primary-color, #60a5fa);
-    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.1);
-}
-
-:root[data-darkmode="true"] .sub-info-url-form-textarea::placeholder {
-    color: var(--text-secondary, #9ca3af);
-}
-
-:root[data-darkmode="true"] .sub-info-url-cancel-btn {
-    background: var(--bg-white, #374151);
-    color: var(--text-secondary, #9ca3af);
-    border-color: var(--border-light, #4b5563);
-}
-
-:root[data-darkmode="true"] .sub-info-url-cancel-btn:hover {
-    background: var(--hover-bg, #4b5563);
-    color: var(--text-primary, #f3f4f6);
-}
-
-:root[data-darkmode="true"] .sub-info-url-submit-btn {
-    background: var(--primary-color, #3b82f6);
-    border-color: var(--primary-color, #3b82f6);
-}
-
-:root[data-darkmode="true"] .sub-info-url-submit-btn:disabled {
-    background: var(--bg-gray, #4b5563);
-    color: var(--text-secondary, #9ca3af);
-    border-color: var(--border-light, #374151);
-}
-
-@media (max-width: 1024px) {
-    .sub_tab, .sub_tab_show {
-        font-size: 11px;
-    }
-
-    .progress_bar_bg {
-        min-width: 220px;
-    }
-
-    .sub_div {
-        gap: 6px;
-        width: calc(100% - 20px);
-        margin: 0 10px;
-    }
-}
-
-@media (max-width: 768px) {
-    .sub_tab, .sub_tab_show {
-        font-size: 10px;
-    }
-
-    .progress_bar_bg {
-        min-width: 200px;
-    }
-
-    .sub_div {
-        gap: 4px;
-        width: calc(100% - 16px);
-        margin: 0 8px;
-    }
-}
-
-@media (max-width: 480px) {
-    .sub_tab, .sub_tab_show {
-        font-size: 9px;
-    }
-
-    .progress_bar_bg {
-        min-width: 180px !important;
-    }
-
-    .sub_div {
-        gap: 2px;
-        width: calc(100% - 12px);
-        margin: 0 6px;
-    }
-}
-
-@media (max-width: 320px) {
-    .sub_tab, .sub_tab_show {
-        font-size: 8px;
-    }
-
-    .progress_bar_bg {
-        min-width: 160px !important;
-    }
-
-    .sub_div {
-        width: calc(100% - 8px);
-        margin: 0 4px;
-    }
-}
-
-/* Multiple providers container */
-.sub_providers_container {
-    display: flex;
-    gap: 4px;
-    flex: 1;
-    min-width: 0;
-    overflow-x: auto;
-    scrollbar-width: thin;
-    cursor: grab;
-    user-select: none;
-}
-
-.sub_providers_container.no-scroll {
-    overflow-x: hidden;
-    cursor: default;
-}
-
-.sub_providers_container::-webkit-scrollbar {
-    height: 4px;
-}
-
-.sub_providers_container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 2px;
-}
-
-.sub_providers_container::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 2px;
-}
-
-.sub_providers_container::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
-
-.sub_providers_container.dragging {
-    cursor: grabbing;
-}
-
-.sub_provider_item {
-    flex: 0 0 auto;
-    width: 100px;
-    position: relative;
-    min-height: 36px;
-    background-color: #f5f5f5;
-    border: 1px solid #999999;
-    border-radius: 6px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    gap: 2px;
-}
-
-.sub_provider_fill {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    transition: width 0.3s ease;
-    border-radius: 5px;
-}
-
-.sub_provider_name {
-    position: relative;
-    z-index: 1;
-    font-size: 12px;
-    color: #333;
-    font-weight: 500;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-    padding: 0 4px;
-    line-height: 1;
-}
-
-.sub_provider_percent {
-    position: relative;
-    z-index: 1;
-    font-size: 12px;
-    color: #333;
-    font-weight: 400;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-    padding: 0 4px;
-    line-height: 1;
-}
-
-/* Dark mode support */
-:root[data-darkmode="true"] .sub_provider_item {
-    background-color: #333333;
-    border-color: #666666;
-}
-
-:root[data-darkmode="true"] .sub_provider_name {
-    color: #e0e0e0;
-}
-
-:root[data-darkmode="true"] .sub_provider_percent {
-    color: #e0e0e0;
-}
-
-/* Responsive adjustments for multiple providers */
-@media (max-width: 1024px) {
-    .sub_providers_container {
-        gap: 3px;
-    }
-
-    .sub_provider_item {
-        width: 90px;
-    }
-
-    .sub_provider_name {
-        font-size: 11px;
-    }
-
-    .sub_provider_percent {
-        font-size: 11px;
-    }
-}
-
-@media (max-width: 768px) {
-    .sub_providers_container {
-        gap: 2px;
-    }
-
-    .sub_provider_item {
-        width: 80px;
-        min-height: 32px;
-    }
-
-    .sub_provider_name {
-        font-size: 10px;
-    }
-
-    .sub_provider_percent {
-        font-size: 10px;
-    }
-}
-
-@media (max-width: 480px) {
-    .sub_provider_item {
-        width: 70px;
-        min-height: 30px;
-        padding: 0 2px;
-    }
-
-    .sub_provider_name {
-        font-size: 9px;
-    }
-
-    .sub_provider_percent {
-        font-size: 9px;
-    }
-}
-
-@media (max-width: 320px) {
-    .sub_provider_item {
-        width: 60px;
-        min-height: 28px;
-    }
-
-    .sub_provider_name {
-        font-size: 8px;
-    }
-
-    .sub_provider_percent {
-        font-size: 8px;
-    }
-}
-</style>
-
 <%
 	local fs = require "luci.openclash"
 	local val = self:cfgvalue(section)
@@ -851,48 +288,69 @@ function set_subinfo_url_<%=idname%>(btn, filename) {
     }
 
     var dialogDiv = document.createElement('div');
-    dialogDiv.className = 'sub-info-url-overlay';
+    dialogDiv.className = 'config-upload-model-overlay show';
 
     var contentDiv = document.createElement('div');
-    contentDiv.className = 'sub-info-url-model';
+    contentDiv.className = 'config-upload-model';
 
     var headerDiv = document.createElement('div');
-    headerDiv.className = 'sub-info-url-header';
+    headerDiv.className = 'config-upload-header';
 
     var titleDiv = document.createElement('div');
-    titleDiv.className = 'sub-info-url-title';
-    titleDiv.innerHTML = '<%:Paste the new url of subscribe infos sources here:%>';
+    titleDiv.className = 'config-upload-title';
+    titleDiv.innerHTML = '<%:Set Subscription Info URL%>';
     headerDiv.appendChild(titleDiv);
 
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'icon-btn';
+    closeBtn.type = 'button';
+    closeBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+    closeBtn.onclick = function() {
+        document.body.removeChild(portal);
+    };
+    headerDiv.appendChild(closeBtn);
+
     var bodyDiv = document.createElement('div');
-    bodyDiv.className = 'sub-info-url-content';
+    bodyDiv.className = 'config-upload-content';
 
     var formGroup = document.createElement('div');
-    formGroup.className = 'sub-info-url-form-group';
+    formGroup.className = 'form-group';
+
+    var label = document.createElement('label');
+    label.className = 'highlight-label';
+    label.innerHTML = '<%:Paste the new url of subscribe infos sources here:%>';
+    formGroup.appendChild(label);
 
     var textarea = document.createElement('textarea');
-    textarea.className = 'sub-info-url-form-textarea';
+    textarea.className = 'form-textarea';
     textarea.placeholder = '<%:Enter URLs, one per line, use #name=example end for specifing display name%> (https://example.com#name=example)';
     formGroup.appendChild(textarea);
 
     bodyDiv.appendChild(formGroup);
 
     var footerDiv = document.createElement('div');
-    footerDiv.className = 'sub-info-url-footer';
+    footerDiv.className = 'config-upload-footer';
+
+    var statusDiv = document.createElement('div');
+    statusDiv.className = 'config-upload-status';
+    footerDiv.appendChild(statusDiv);
+
+    var buttonsDiv = document.createElement('div');
+    buttonsDiv.className = 'config-upload-buttons';
 
     var cancelBtn = document.createElement('button');
-    cancelBtn.className = 'sub-info-url-btn sub-info-url-cancel-btn';
+    cancelBtn.className = 'btn cancel-btn';
     cancelBtn.type = 'button';
     cancelBtn.innerHTML = '<%:Cancel%>';
 
     var confirmBtn = document.createElement('button');
-    confirmBtn.className = 'sub-info-url-btn sub-info-url-submit-btn';
+    confirmBtn.className = 'btn upload-btn';
     confirmBtn.type = 'button';
     confirmBtn.innerHTML = '<%:Submit%>';
 
     confirmBtn.onclick = function() {
         var new_url = textarea.value.trim();
-        document.body.removeChild(dialogDiv);
+        document.body.removeChild(portal);
 
         XHR.get('<%=luci.dispatcher.build_url("admin", "services", "openclash", "set_subinfo_url")%>', {filename: filename, url: new_url}, function(x, status) {
             if (x && x.status == 200 && status.info == "Success") {
@@ -908,17 +366,22 @@ function set_subinfo_url_<%=idname%>(btn, filename) {
     };
 
     cancelBtn.onclick = function() {
-        document.body.removeChild(dialogDiv);
+        document.body.removeChild(portal);
     };
 
-    footerDiv.appendChild(cancelBtn);
-    footerDiv.appendChild(confirmBtn);
+    buttonsDiv.appendChild(cancelBtn);
+    buttonsDiv.appendChild(confirmBtn);
+    footerDiv.appendChild(buttonsDiv);
 
     contentDiv.appendChild(headerDiv);
     contentDiv.appendChild(bodyDiv);
     contentDiv.appendChild(footerDiv);
     dialogDiv.appendChild(contentDiv);
-    document.body.appendChild(dialogDiv);
+
+    var portal = document.createElement('div');
+    portal.className = 'oc';
+    portal.appendChild(dialogDiv);
+    document.body.appendChild(portal);
 
     textarea.focus();
 

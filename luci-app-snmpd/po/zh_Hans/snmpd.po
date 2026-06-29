@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"PO-Revision-Date: 2026-06-05 19:01+0000\n"
-"Last-Translator: 大王叫我来巡山 "
+"PO-Revision-Date: 2026-06-24 12:59+0000\n"
+"Last-Translator: Hosted Weblate user 54392 "
 "<hamburger2048@users.noreply.hosted.weblate.org>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
 "projects/openwrt/luciapplicationssnmpd/zh_Hans/>\n"
@@ -11,15 +11,23 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 2026.6\n"
+"X-Generator: Weblate 2026.7.dev0\n"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:261
 msgid "A group maps com2sec names to access names"
 msgstr "一个组映射 com2sec 名到访问名"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:480
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:486
 msgid "AES"
 msgstr "AES"
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:485
+msgid "AES-192"
+msgstr "AES-192"
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:484
+msgid "AES-256"
+msgstr "AES-256"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:367
 msgid "Access Control"
@@ -33,7 +41,7 @@ msgstr "限制访问权限为只读或读取/写入"
 msgid "Actions"
 msgstr "操作"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:635
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:641
 msgid "Advanced Settings"
 msgstr "高级设置"
 
@@ -67,20 +75,20 @@ msgstr "认证"
 msgid "Authentication and encryption"
 msgstr "身份认证和加密"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:640
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:646
 msgid "Communities for any hosts"
 msgstr "任意主机的社区"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:644
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:650
 msgid "Communities via IP-Address range"
 msgstr "借助 IP 地址段的社区"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:642
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:648
 msgid "Communities via hostname"
 msgstr "借助主机名的社区"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:245
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:543
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:549
 msgid "Community"
 msgstr "社区"
 
@@ -104,7 +112,7 @@ msgstr "联系"
 msgid "Context"
 msgstr "上下文"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:481
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:487
 msgid "DES"
 msgstr "DES"
 
@@ -125,11 +133,11 @@ msgstr "留空禁用 AgentX"
 msgid "Enable SNMP"
 msgstr "启用 SNMP"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:572
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:578
 msgid "Enable logging to file"
 msgstr "允许记录到文件"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:599
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:605
 msgid "Enable logging to syslog"
 msgstr "允许记录到系统日志"
 
@@ -141,7 +149,7 @@ msgstr "允许使用 SNMP"
 msgid "Exact"
 msgstr "精确"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:631
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:637
 msgid "General"
 msgstr "常规"
 
@@ -154,7 +162,7 @@ msgstr "授予 luci-app-snmpd 的 UCI 访问权限"
 msgid "Group"
 msgstr "组"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:564
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:570
 msgid "Here you can configure Logging settings"
 msgstr "你可以在此配置记录设置"
 
@@ -210,11 +218,11 @@ msgstr "安全等级"
 msgid "Location"
 msgstr "位置"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:657
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:663
 msgid "Logging"
 msgstr "日志"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:462
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:466
 msgid "MD5"
 msgstr "MD5"
 
@@ -223,7 +231,7 @@ msgid "Name"
 msgstr "名称"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:411
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:497
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:503
 msgid "No"
 msgstr "不"
 
@@ -246,16 +254,16 @@ msgid "Notify access modification for groups"
 msgstr "通知群的权限更改"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:419
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:505
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:511
 msgid "OID"
 msgstr "OID"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:409
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:496
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:502
 msgid "OID-Restriction"
 msgstr "OID 限制"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:625
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:631
 msgid "On this page you may configure SNMP settings"
 msgstr "你可以在这个页面配置 SNMP 设置"
 
@@ -275,12 +283,12 @@ msgstr "仅 SNMPv3"
 msgid "Password must be at least 8 characters"
 msgstr "密码长度至少为 8 个字符"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:578
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:584
 msgid "Path to log file"
 msgstr "日志文件路径"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:95
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:535
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:541
 msgid "Port"
 msgstr "端口"
 
@@ -290,7 +298,7 @@ msgstr "端口"
 msgid "Prefix"
 msgstr "前缀"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:585
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:591
 msgid "Priority for file logging"
 msgstr "文件记录优先级"
 
@@ -318,9 +326,25 @@ msgstr "仅限下列 OID 节点/分支"
 msgid "Restriction to specific OID"
 msgstr "仅限特定 OID"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:461
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:465
 msgid "SHA"
 msgstr "SHA"
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:464
+msgid "SHA-224"
+msgstr "SHA-224"
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:463
+msgid "SHA-256"
+msgstr "SHA-256"
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:462
+msgid "SHA-384"
+msgstr "SHA-384"
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:461
+msgid "SHA-512"
+msgstr "SHA-512"
 
 #: applications/luci-app-snmpd/root/usr/share/luci/menu.d/luci-app-snmpd.json:16
 msgid "SNMP"
@@ -330,7 +354,7 @@ msgstr "SNMP"
 msgid "SNMP - MIB Download"
 msgstr "SNMP - MIB 下载"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:624
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:630
 msgid "SNMP Settings"
 msgstr "SNMP 设置"
 
@@ -351,7 +375,7 @@ msgstr "SNMPD"
 msgid "SNMPv1"
 msgstr "SNMPv1"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:551
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:557
 msgid "SNMPv1 Trap Receiver"
 msgstr "SNMPv1 Trap 接收器"
 
@@ -363,7 +387,7 @@ msgstr "SNMPv1 和 SNMPv2c"
 msgid "SNMPv1, SNMPv2c and SNMPv3"
 msgstr "SNMPv1、SNMPv2c 和 SNMPv3"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:638
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:644
 msgid "SNMPv1/SNMPv2c"
 msgstr "SNMPv1/SNMPv2c"
 
@@ -372,21 +396,21 @@ msgstr "SNMPv1/SNMPv2c"
 msgid "SNMPv2c"
 msgstr "SNMPv2c"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:553
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:559
 msgid "SNMPv2c Inform Receiver"
 msgstr "SNMPv2c Inform 接收器"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:552
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:558
 msgid "SNMPv2c Trap Receiver"
 msgstr "SNMPv2c Trap 接收器"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:270
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:305
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:647
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:653
 msgid "SNMPv3"
 msgstr "SNMPv3"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:468
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:472
 msgid "SNMPv3 authentication passphrase"
 msgstr "SNMPv3 身份认证密码短语"
 
@@ -394,11 +418,11 @@ msgstr "SNMPv3 身份认证密码短语"
 msgid "SNMPv3 authentication type"
 msgstr "SNMPv3 身份认证类型"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:487
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:493
 msgid "SNMPv3 encryption passphrase"
 msgstr "SNMPv3 加密密码短语"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:478
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:482
 msgid "SNMPv3 encryption type"
 msgstr "SNMPv3 加密类型"
 
@@ -423,7 +447,7 @@ msgstr "源描述主机或网络"
 msgid "Specification how context of requests is matched to context"
 msgstr "明确请求上下文如何匹配上下文"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:605
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:611
 msgid "Syslog facility"
 msgstr "系统日志工具"
 
@@ -459,7 +483,7 @@ msgstr "访问配置的所用版本"
 msgid "The used version for the group"
 msgstr "组的所用版本"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:651
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:657
 msgctxt "SNMP"
 msgid "Traps"
 msgstr "Traps"
@@ -468,7 +492,7 @@ msgstr "Traps"
 msgid "Trusted source for SNMP read community access (hostname or IP)"
 msgstr "SNMP 读取社区访问的可信源（主机名或 IP)"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:550
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:556
 msgid "Type"
 msgstr "类型"
 
@@ -477,7 +501,7 @@ msgstr "类型"
 msgid "Version"
 msgstr "版本"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:586
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:592
 msgid "Will log messages of selected priority and above."
 msgstr "会记录所选优先级和更高优先级的消息。"
 
@@ -490,7 +514,7 @@ msgid "Write access modification for groups"
 msgstr "组的写入权限修改"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:412
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:498
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:504
 msgid "Yes"
 msgstr "是"
 
@@ -503,7 +527,7 @@ msgid "localhost"
 msgstr "本地主机"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:460
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:479
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:483
 msgid "none"
 msgstr "无"
 

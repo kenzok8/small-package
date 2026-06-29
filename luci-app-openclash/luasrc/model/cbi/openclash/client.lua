@@ -13,7 +13,9 @@ m.reset = false
 m.submit = false
 
 m:section(SimpleSection).template = "openclash/status"
-
+if fs.uci_get_config("config", "oix_token") then
+	m:append(Template("openclash/oixcloud"))
+end
 m:append(Template("openclash/myip"))
 m:append(Template("openclash/developer"))
 m:append(Template("openclash/select_git_cdn"))

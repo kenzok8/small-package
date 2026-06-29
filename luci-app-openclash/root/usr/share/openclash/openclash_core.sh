@@ -35,7 +35,9 @@ fi
 CORE_TYPE="$1"
 C_CORE_TYPE=$(uci_get_config "core_type")
 SMART_ENABLE=$(uci_get_config "smart_enable" || echo 0)
+OIX_TOKEN=$(uci_get_config "oix_token")
 [ "$SMART_ENABLE" -eq 1 ] && CORE_TYPE="Smart"
+[ "$CORE_TYPE" = "Oix" ] || [ -n "$OIX_TOKEN" ] && CORE_TYPE="Oix"
 [ -z "$CORE_TYPE" ] && CORE_TYPE="Meta"
 small_flash_memory=$(uci_get_config "small_flash_memory")
 CPU_MODEL=$(uci_get_config "core_version")
@@ -62,31 +64,45 @@ else
 fi
 
 CORE_CV=$($meta_core_path -v 2>/dev/null |awk -F ' ' '{print $3}' |head -1)
-DOWNLOAD_FILE="/tmp/clash_meta.tar.gz"
 TMP_FILE="/tmp/clash_meta"
 TARGET_CORE_PATH="$meta_core_path"
 
-if [ "$CORE_TYPE" = "Smart" ]; then
+if [ "$CORE_TYPE" = "Oix" ]; then
+   CORE_URL_PATH=""
+   DOWNLOAD_FILE="/tmp/clash_meta.gz"
+   CORE_LV=$(sed -n 1p /tmp/clash_last_version 2>/dev/null)
+elif [ "$CORE_TYPE" = "Smart" ]; then
    CORE_URL_PATH="$RELEASE_BRANCH/smart"
+   DOWNLOAD_FILE="/tmp/clash_meta.tar.gz"
    CORE_LV=$(sed -n 2p /tmp/clash_last_version 2>/dev/null)
 else
    CORE_URL_PATH="$RELEASE_BRANCH/meta"
+   DOWNLOAD_FILE="/tmp/clash_meta.tar.gz"
    CORE_LV=$(sed -n 1p /tmp/clash_last_version 2>/dev/null)
 fi
 
-[ "$C_CORE_TYPE" = "$CORE_TYPE" ] || [ -z "$C_CORE_TYPE" ] && restart=1
+[ "$C_CORE_TYPE" != "$CORE_TYPE" ] || [ -z "$C_CORE_TYPE" ] && restart=1
 
 if [ "$CORE_CV" != "$CORE_LV" ] || [ -z "$CORE_CV" ]; then
    if [ "$CPU_MODEL" != 0 ]; then
       LOG_TIP "【$CORE_TYPE】Core Downloading, Please Try to Download and Upload Manually If Fails"
-      if [ "$github_address_mod" != "0" ]; then
-         if [ "$github_address_mod" == "https://cdn.jsdelivr.net/" ] || [ "$github_address_mod" == "https://fastly.jsdelivr.net/" ] || [ "$github_address_mod" == "https://testingcf.jsdelivr.net/" ]; then
-            DOWNLOAD_URL="${github_address_mod}gh/vernesong/OpenClash@core/${CORE_URL_PATH}/clash-${CPU_MODEL}.tar.gz"
+      if [ "$CORE_TYPE" = "Oix" ]; then
+         OIX_CORE_URL="https://github.com/vernesong/mihomo-oix/releases/download/Pre-Alpha/mihomo-${CPU_MODEL}-${CORE_LV}.gz"
+         if [ "$github_address_mod" != "0" ] && [ "$github_address_mod" != "https://cdn.jsdelivr.net/" ] && [ "$github_address_mod" != "https://fastly.jsdelivr.net/" ] && [ "$github_address_mod" != "https://testingcf.jsdelivr.net/" ]; then
+            DOWNLOAD_URL="${github_address_mod}${OIX_CORE_URL}"
          else
-            DOWNLOAD_URL="${github_address_mod}https://raw.githubusercontent.com/vernesong/OpenClash/core/${CORE_URL_PATH}/clash-${CPU_MODEL}.tar.gz"
+            DOWNLOAD_URL="$OIX_CORE_URL"
          fi
       else
-         DOWNLOAD_URL="https://raw.githubusercontent.com/vernesong/OpenClash/core/${CORE_URL_PATH}/clash-${CPU_MODEL}.tar.gz"
+         if [ "$github_address_mod" != "0" ]; then
+            if [ "$github_address_mod" == "https://cdn.jsdelivr.net/" ] || [ "$github_address_mod" == "https://fastly.jsdelivr.net/" ] || [ "$github_address_mod" == "https://testingcf.jsdelivr.net/" ]; then
+               DOWNLOAD_URL="${github_address_mod}gh/vernesong/OpenClash@core/${CORE_URL_PATH}/clash-${CPU_MODEL}.tar.gz"
+            else
+               DOWNLOAD_URL="${github_address_mod}https://raw.githubusercontent.com/vernesong/OpenClash/core/${CORE_URL_PATH}/clash-${CPU_MODEL}.tar.gz"
+            fi
+         else
+            DOWNLOAD_URL="https://raw.githubusercontent.com/vernesong/OpenClash/core/${CORE_URL_PATH}/clash-${CPU_MODEL}.tar.gz"
+         fi
       fi
 
       retry_count=0
@@ -107,8 +123,12 @@ if [ "$CORE_CV" != "$CORE_LV" ] || [ -z "$CORE_CV" ]; then
                LOG_TIP "【"$CORE_TYPE"】Core Download Successful, Start Update..."
                extract_success=true
                [ -s "$DOWNLOAD_FILE" ] && {
-                  tar zxvfo "$DOWNLOAD_FILE" -C /tmp >/dev/null 2>&1 || extract_success=false
-                  mv /tmp/clash "$TMP_FILE" >/dev/null 2>&1 || extract_success=false
+                  if [ "$CORE_TYPE" = "Oix" ]; then
+                     gzip -dc "$DOWNLOAD_FILE" > "$TMP_FILE" 2>/dev/null || extract_success=false
+                  else
+                     tar zxvfo "$DOWNLOAD_FILE" -C /tmp >/dev/null 2>&1 || extract_success=false
+                     mv /tmp/clash "$TMP_FILE" >/dev/null 2>&1 || extract_success=false
+                  fi
                   rm -rf "$DOWNLOAD_FILE" >/dev/null 2>&1
                   chmod 4755 "$TMP_FILE" >/dev/null 2>&1 || extract_success=false
                   "$TMP_FILE" -v >/dev/null 2>&1 || extract_success=false

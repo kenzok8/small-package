@@ -101,6 +101,9 @@ msgstr "调试日志"
 msgid "Generate Logs"
 msgstr "生成日志"
 
+msgid "Generated Logs"
+msgstr "日志生成结果"
+
 msgid "Click to Generate"
 msgstr "点击生成"
 
@@ -325,6 +328,57 @@ msgstr "内核文件"
 
 msgid "Upload"
 msgstr "上传"
+
+msgid "Age Encryption"
+msgstr "Age 加密"
+
+msgid "Age Encryption File"
+msgstr "Age 加密文件"
+
+msgid "Generate Age Key"
+msgstr "生成 Age 密钥"
+
+msgid "Generating..."
+msgstr "生成中..."
+
+msgid "Public Key"
+msgstr "公钥"
+
+msgid "Secret Key"
+msgstr "私钥"
+
+msgid "Age Key Type"
+msgstr "Age 密钥类型"
+
+msgid "x25519"
+msgstr "x25519"
+
+msgid "PQ (mlkem768-x25519)"
+msgstr "PQ (mlkem768-x25519)"
+
+msgid "Failed to generate age key"
+msgstr "生成 Age 密钥失败"
+
+msgid "No public key"
+msgstr "没有公钥"
+
+msgid "No secret key"
+msgstr "没有私钥"
+
+msgid "Age Encryption For Config, Click For More:"
+msgstr "使用 Age 加密配置，点击获取更多信息："
+
+msgid "Age Encryption Introduce"
+msgstr "Age 加密介绍"
+
+msgid "Calculate Public Key"
+msgstr "计算公钥"
+
+msgid "Please enter the Age Secret Key to calculate the public key!"
+msgstr "请先输入私钥来计算公钥！"
+
+msgid "Failed to calculate public key"
+msgstr "公钥计算失败"
 
 msgid "Add"
 msgstr "添加"
@@ -1137,6 +1191,12 @@ msgstr "正在还原..."
 msgid "Saving..."
 msgstr "正在保存..."
 
+msgid "Save successful"
+msgstr "保存成功"
+
+msgid "Failed to save age config"
+msgstr "保存 age 配置失败"
+
 msgid "Firewall Rules Reset Failed"
 msgstr "防火墙规则重置失败"
 
@@ -1434,6 +1494,18 @@ msgstr "开始下载"
 msgid "Download successful, start pre update test..."
 msgstr "下载成功，开始进行更新前测试..."
 
+msgid "opkg update failed or timed out, retrying..."
+msgstr "opkg update 失败或超时，正在重试..."
+
+msgid "opkg update failed, trying pre update test..."
+msgstr "opkg update 失败，尝试进行预安装..."
+
+msgid "apk update failed or timed out, retrying..."
+msgstr "apk update 失败或超时，正在重试..."
+
+msgid "apk update failed, trying pre update test..."
+msgstr "apk update 失败，尝试进行预安装..."
+
 msgid "Pre update test failed..."
 msgstr "更新前测试失败..."
 
@@ -1710,8 +1782,8 @@ msgstr "检测到 GEOSITE 数据库文件不存在，准备开始下载..."
 msgid "Detected that the GEOIP Dat is not Installed, Ready to Download..."
 msgstr "检测到 GEOIP Dat 数据库文件不存在，准备开始下载..."
 
-msgid "Detected that the Core is not Installed, Ready to Download..."
-msgstr "检测到内核文件不存在，准备开始下载..."
+msgid "Core is not Detected installed, Ready to Download..."
+msgstr "内核不存在，准备开始下载..."
 
 msgid "Detected that the Chnroute Cidr is not Installed, Ready to Download..."
 msgstr "检测到大陆白名单列表不存在，准备开始下载..."
@@ -1971,6 +2043,9 @@ msgstr "点击测试"
 msgid "Connection Test"
 msgstr "连接测试"
 
+msgid "Connection Test Result"
+msgstr "连接测试结果"
+
 msgid "Backup File"
 msgstr "备份文件"
 
@@ -2064,8 +2139,8 @@ msgstr "解锁区域筛选"
 msgid "Unlock Nodes Filter"
 msgstr "解锁节点筛选"
 
-msgid "Start Auto Select Unlock Proxy For"
-msgstr "开始自动选择（检测）解锁节点"
+msgid "Start Auto Select Unlock Proxy..."
+msgstr "开始自动选择（检测）解锁节点..."
 
 msgid "Group:"
 msgstr "策略组："
@@ -2234,6 +2309,15 @@ msgstr "清理"
 
 msgid "Flush DNS"
 msgstr "清理 DNS 缓存"
+
+msgid "Dnsmasq Fix"
+msgstr "Dnsmasq 修复"
+
+msgid "If DNS is abnormal after stopping the OpenClash, please try to fix"
+msgstr "如果关闭 OpenClash 后 DNS 异常，请尝试修复"
+
+msgid "Fix"
+msgstr "修复"
 
 msgid "No Specify Upload File"
 msgstr "未选择上传文件"
@@ -2643,6 +2727,9 @@ msgstr "还原"
 msgid "DNS Test"
 msgstr "DNS 测试"
 
+msgid "DNS Test Result"
+msgstr "DNS 测试结果"
+
 msgid "No Response Found!"
 msgstr "结果获取失败！"
 
@@ -2757,11 +2844,23 @@ msgstr "更换延迟计算方式，通过去除握手等额外开销来降低延
 msgid "If the download fails, try setting the CDN in Overwrite Settings - General Settings - Github Address Modify Options"
 msgstr "如果下载失败，您可以尝试在覆写设置 - 常规设置 - Github 地址修改选项中设置 CDN"
 
-msgid "Used for Downloading Subscriptions, Defaults to Clash"
-msgstr "用于下载订阅时指定 UA，默认为 Clash"
+msgid "Used for Downloading Subscriptions, Defaults to"
+msgstr "用于下载订阅时指定 UA，默认为"
 
 msgid "Set Proxies Address Skip Failed,"
 msgstr "绕过代理服务器地址设置失败，"
+
+msgid "Age decrypt failed,"
+msgstr "绕过代理服务器地址 Age 解密失败，"
+
+msgid "Failed to parse config file with Lua helper"
+msgstr "绕过代理服务器地址解析失败"
+
+msgid "File is AGE encrypted but no secret key provided"
+msgstr "文件已 Age 加密但未提供密钥"
+
+msgid "File is AGE encrypted, cannot parse with Lua"
+msgstr "文件已 Age 加密，无法使用 Lua 解析"
 
 msgid "Flush Failed"
 msgstr "清理失败"
@@ -3309,9 +3408,6 @@ msgstr "配置文件保存失败："
 msgid "Unknown error"
 msgstr "未知错误"
 
-msgid "Save config failed:"
-msgstr "配置保存失败："
-
 msgid "Editor not ready"
 msgstr "编辑器未准备就绪"
 
@@ -3461,6 +3557,9 @@ msgstr "高级选项"
 
 msgid "Show more subscription options"
 msgstr "显示更多订阅设置"
+
+msgid "Show more upload options"
+msgstr "显示更多上传设置"
 
 msgid "Overwrite"
 msgstr "覆写"
@@ -3749,3 +3848,205 @@ msgstr "依赖正在重新安装..."
 
 msgid "failed to install, please try to install it manually..."
 msgstr "依赖安装失败，请重试手动安装..."
+
+msgid "Decrypted content empty or still encrypted"
+msgstr "解密后内容为空或仍为加密状态"
+
+msgid "Decrypt attempt failed:"
+msgstr "解密尝试失败:"
+
+msgid "Decrypt attempt failed for a found secret:"
+msgstr "使用找到的私钥解密尝试失败:"
+
+msgid "Encrypt attempt failed:"
+msgstr "加密尝试失败:"
+
+msgid "Official Website"
+msgstr "官方网站"
+
+msgid "Login..."
+msgstr "登录中..."
+
+msgid "oixCloud Login Successful"
+msgstr "oixCloud 登录成功"
+
+msgid "oixCloud Login Faild"
+msgstr "oixCloud 登录失败"
+
+msgid "Login Account"
+msgstr "登录账号"
+
+msgid "oixCloud Logout Successful"
+msgstr "oixCloud 已成功退出"
+
+msgid "oixCloud Logout Faild"
+msgstr "oixCloud 退出失败"
+
+msgid "Logout Account"
+msgstr "退出账号"
+
+msgid "Account Login"
+msgstr "账号登录"
+
+msgid "Account logged in"
+msgstr "账号已登录"
+
+msgid "Account not logged in"
+msgstr "账号未登录"
+
+msgid "Logout..."
+msgstr "退出中..."
+
+msgid "Error Login Info"
+msgstr "登录信息错误"
+
+
+msgid "Simple & trustworthy"
+msgstr "简单 & 值得信赖"
+
+msgid "Cross-platform Support"
+msgstr "丰富的第三方应用兼容性"
+
+msgid "Global Acceleration Network"
+msgstr "全球网络基础设施"
+
+msgid "Easy to Use"
+msgstr "操作简易"
+
+msgid "Intelligent Shunting"
+msgstr "智能分流"
+
+msgid "Perfect Technical Support"
+msgstr "完善技术支持"
+
+msgid "Plan Expiration Time"
+msgstr "到期时间"
+
+msgid "Account Balances"
+msgstr "账户余额"
+
+msgid "Aff Balances"
+msgstr "返利余额"
+
+msgid "Account Integral"
+msgstr "账户积分"
+
+msgid "Today Used"
+msgstr "今日已用"
+
+msgid "Plan Used"
+msgstr "本月已用"
+
+msgid "Plan Unused"
+msgstr "剩余流量"
+
+msgid "Plan Traffic"
+msgstr "套餐流量"
+
+msgid "Checkin"
+msgstr "试试手气"
+
+msgid "oixCloud Account Login Failed! Please Check And Try Again..."
+msgstr "oixCloud 账户登录失败！请检查账户信息并重试..."
+
+msgid "oixCloud Account Login Failed, The Error Info is"
+msgstr "oixCloud 账户登录失败，错误信息"
+
+msgid "oixCloud Checkin Failed! Please Check And Try Again..."
+msgstr "oixCloud 签到失败，请稍后再试！"
+
+msgid "Account Email Address"
+msgstr "账号地址"
+
+msgid "Account Password"
+msgstr "账号密码"
+
+msgid "Checkin Interval (hour)"
+msgstr "签到间隔（小时）"
+
+msgid "Checkin Multiple"
+msgstr "签到倍数"
+
+msgid "Multiple Must Be a Positive Integer and No More Than 100"
+msgstr "倍数必须是正整数且不大于 100"
+
+msgid "Usage Help"
+msgstr "使用帮助"
+
+msgid "Copy the following text to any AI (ChatGPT, DeepSeek, etc.) to get usage help for OpenClash:"
+msgstr "将以下文本复制到任意 AI 工具（ChatGPT、DeepSeek 等），即可获取 OpenClash 的使用帮助："
+
+msgid "You are an OpenClash expert assistant. OpenClash is a LuCI plugin for OpenWrt that manages the Mihomo core."
+msgstr "你是 OpenClash 专家助手。OpenClash 是 OpenWrt 上管理 Mihomo 内核的 LuCI 插件。"
+
+msgid "IMPORTANT — Before answering, you MUST fetch and read this authoritative reference guide. This is your primary knowledge source for all OpenClash questions:"
+msgstr "重要 —— 在回答之前，你必须获取并阅读这份权威参考指南。这是你回答所有 OpenClash 问题的主要知识来源："
+
+msgid "This guide contains: complete dependency checklist, error message lookup tables with exact fixes, nftables/iptables firewall chain rules, all LuCI configuration options with UCI paths, DNS setup and leak prevention, subscription/GEO update procedures, and more."
+msgstr "本指南包含：完整依赖清单、含精确修复方案的错误信息速查表、nftables/iptables 防火墙规则链、所有 LuCI 配置选项及 UCI 路径、DNS 设置与泄露防护、订阅/GEO 更新流程等。"
+
+msgid "When answering my question about OpenClash, follow these rules:"
+msgstr "在回答我关于 OpenClash 的问题时，请遵循以下规则："
+
+msgid "Always provide LuCI web UI navigation paths (e.g. Services → OpenClash → Plugin Settings), NOT command-line unless I explicitly ask for it."
+msgstr "始终提供 LuCI Web 界面操作路径（如 服务 → OpenClash → 插件设置），除非我明确要求，不要给出命令行操作。"
+
+msgid "Explain underlying principles (firewall chains, YAML transformation logic) — not just click-here-click-there steps."
+msgstr "解释底层原理（防火墙规则链、YAML 转换逻辑）—— 而不只是点击步骤。"
+
+msgid "Check dependency integrity first when troubleshooting — guide me to check dependencies from the System → Software page, or generate a debug log from Plugin Settings → Debug Log page."
+msgstr "排查问题时首先检查依赖完整性 —— 指导我从 系统 → 软件包 页面检查依赖，或从 插件设置 → 调试日志 页面生成调试日志。"
+
+msgid "Never guess or fabricate information. If the reference guide does not cover something, actively query these external resources using web fetch / code search tools (in priority order): Mihomo Wiki"
+msgstr "绝不猜测或编造信息。如参考指南未覆盖某项内容，请使用网页抓取/代码搜索工具主动查询以下外部资源（按优先级）：Mihomo Wiki"
+
+msgid "Meta-Docs"
+msgstr "Meta-Docs"
+
+msgid "OpenClash source"
+msgstr "OpenClash 源码"
+
+msgid "Mihomo core source"
+msgstr "Mihomo 核心源码"
+
+msgid "Smart core source"
+msgstr "Smart 核心源码"
+
+msgid "Fetch Wiki pages to read docs; search repos to find implementation code. Do NOT answer from memory — always verify against the actual source."
+msgstr "抓取 Wiki 页面阅读文档；搜索仓库查找实现代码。禁止凭记忆回答 —— 必须对照实际来源验证。"
+
+msgid "For bug reports or failure scenarios not covered by the guide, search GitHub Issues first — OpenClash Issues"
+msgstr "对于指南未覆盖的 bug 报告或故障场景，优先搜索 GitHub Issues —— OpenClash Issues"
+
+msgid "for plugin-side problems (config/subscribe/firewall/UI), Mihomo Issues"
+msgstr "用于插件侧问题（配置/订阅/防火墙/UI），Mihomo Issues"
+
+msgid "for core-side problems (proxy protocols/TUN/DNS/rule engine). Prioritize maintainer replies and highly upvoted community answers."
+msgstr "用于内核侧问题（代理协议/TUN/DNS/规则引擎）。优先参考维护者的回复和高赞社区答案。"
+
+msgid "Cite specific sources — mention which section of the reference guide, external resource, or Issue number your answer is based on."
+msgstr "注明具体来源 —— 说明你的回答基于参考指南的哪个章节、哪个外部资源或哪个 Issue 编号。"
+
+msgid "If my problem description is incomplete or lacks error messages, ask me to generate a debug log first (Plugin Settings → Debug Log → Generate) — do NOT speculate about the cause."
+msgstr "如果我的问题描述不完整或缺少错误信息，请先要求我生成调试日志（插件设置 → 调试日志 → 生成）—— 不要猜测原因。"
+
+msgid "My question is:"
+msgstr "我的问题是："
+
+msgid "Copied to clipboard!"
+msgstr "已复制到剪贴板！"
+
+msgid "Copy And Close"
+msgstr "复制并关闭"
+
+msgid "oixCloud Checkin Successful, Result:"
+msgstr "oixCloud 签到成功，结果："
+
+msgid "oixCloud Checkin Failed, Result:"
+msgstr "oixCloud 签到失败，结果："
+
+msgid "Note: oixCloud need a specific core installed, OpenClash will auto download"
+msgstr "注意：oixCloud 需要安装专用内核才能使用，插件会自动识别并进行内核下载"
+
+msgid "After the core start, an oixCloud nodes provider will be added, which you can customize as needed"
+msgstr "专用内核启动后，会添加一个 oixCloud 节点组到配置文件，供您自定义使用"

@@ -16,9 +16,17 @@ msgstr ""
 msgid "A group maps com2sec names to access names"
 msgstr "Eine Gruppe ordnet com2sec-Namen Zugriffsnamen zu"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:480
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:486
 msgid "AES"
 msgstr "AES"
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:485
+msgid "AES-192"
+msgstr ""
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:484
+msgid "AES-256"
+msgstr ""
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:367
 msgid "Access Control"
@@ -32,7 +40,7 @@ msgstr "Zugriffsbeschränkung auf Nur Lesen oder Lesen/Schreiben"
 msgid "Actions"
 msgstr "Aktionen"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:635
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:641
 msgid "Advanced Settings"
 msgstr "Erweiterte Einstellungen"
 
@@ -66,20 +74,20 @@ msgstr "Authentifizierung"
 msgid "Authentication and encryption"
 msgstr "Authentifizierung und Verschlüsselung"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:640
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:646
 msgid "Communities for any hosts"
 msgstr "Communities für alle Hosts"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:644
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:650
 msgid "Communities via IP-Address range"
 msgstr "Gemeinschaften via IP-Adressbereich"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:642
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:648
 msgid "Communities via hostname"
 msgstr "Gemeinschaften via Hostname"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:245
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:543
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:549
 msgid "Community"
 msgstr "Community"
 
@@ -103,7 +111,7 @@ msgstr "Kontakt"
 msgid "Context"
 msgstr "Kontext"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:481
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:487
 msgid "DES"
 msgstr "DES"
 
@@ -124,11 +132,11 @@ msgstr "Um AgentX zu deaktivieren Leer lassen"
 msgid "Enable SNMP"
 msgstr "SNMP aktivieren"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:572
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:578
 msgid "Enable logging to file"
 msgstr "Aufzeichnung in Datei aktivieren"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:599
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:605
 msgid "Enable logging to syslog"
 msgstr "Aufzeichnung in Syslog aktivieren"
 
@@ -140,7 +148,7 @@ msgstr "SNMP Nutzung ermöglichen"
 msgid "Exact"
 msgstr "Exakt"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:631
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:637
 msgid "General"
 msgstr "Allgemein"
 
@@ -153,7 +161,7 @@ msgstr "UCI Zugang auf luci-app-snmpd gewähren"
 msgid "Group"
 msgstr "Gruppe"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:564
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:570
 msgid "Here you can configure Logging settings"
 msgstr "Hier kannst du Aufzeichnungseinstellungen konfigurieren"
 
@@ -209,11 +217,11 @@ msgstr "Sicherheitsniveau"
 msgid "Location"
 msgstr "Standort"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:657
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:663
 msgid "Logging"
 msgstr "Protokollierung"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:462
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:466
 msgid "MD5"
 msgstr "MD5"
 
@@ -222,7 +230,7 @@ msgid "Name"
 msgstr "Name"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:411
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:497
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:503
 msgid "No"
 msgstr "Nein"
 
@@ -245,16 +253,16 @@ msgid "Notify access modification for groups"
 msgstr "Benachrichtigen Sie die Zutrittsänderung für Gruppen"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:419
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:505
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:511
 msgid "OID"
 msgstr "OID"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:409
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:496
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:502
 msgid "OID-Restriction"
 msgstr "OID-Beschränkung"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:625
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:631
 msgid "On this page you may configure SNMP settings"
 msgstr "Auf dieser Seite kannst du SNMP-Einstellungen konfigurieren"
 
@@ -274,12 +282,12 @@ msgstr "Nur SNMPv3"
 msgid "Password must be at least 8 characters"
 msgstr "Passwort muss aus mindestens 8 Zeichen bestehen"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:578
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:584
 msgid "Path to log file"
 msgstr "Pfad zur Aufzeichnungsdatei"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:95
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:535
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:541
 msgid "Port"
 msgstr "Port"
 
@@ -289,7 +297,7 @@ msgstr "Port"
 msgid "Prefix"
 msgstr "Präfix"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:585
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:591
 msgid "Priority for file logging"
 msgstr "Priorität für die Dateiprotokollierung"
 
@@ -317,9 +325,25 @@ msgstr "Beschränkung auf den folgenden OID-Knoten/Brench"
 msgid "Restriction to specific OID"
 msgstr "Beschränkung auf bestimmte OID"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:461
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:465
 msgid "SHA"
 msgstr "SHA"
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:464
+msgid "SHA-224"
+msgstr ""
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:463
+msgid "SHA-256"
+msgstr ""
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:462
+msgid "SHA-384"
+msgstr ""
+
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:461
+msgid "SHA-512"
+msgstr ""
 
 #: applications/luci-app-snmpd/root/usr/share/luci/menu.d/luci-app-snmpd.json:16
 msgid "SNMP"
@@ -329,7 +353,7 @@ msgstr "SNMP"
 msgid "SNMP - MIB Download"
 msgstr "SNMP - MIB herunterladen"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:624
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:630
 msgid "SNMP Settings"
 msgstr "SNMP Einstellungen"
 
@@ -350,7 +374,7 @@ msgstr "SNMPD"
 msgid "SNMPv1"
 msgstr "SNMPv1"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:551
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:557
 msgid "SNMPv1 Trap Receiver"
 msgstr "SNMPv1 Trap Receiver"
 
@@ -362,7 +386,7 @@ msgstr "SNMPv1 und SNMPv2c"
 msgid "SNMPv1, SNMPv2c and SNMPv3"
 msgstr "SNMPv1, SNMPv2c und SNMPv3"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:638
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:644
 msgid "SNMPv1/SNMPv2c"
 msgstr "SNMPv1/SNMPv2c"
 
@@ -371,21 +395,21 @@ msgstr "SNMPv1/SNMPv2c"
 msgid "SNMPv2c"
 msgstr "SNMPv2c"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:553
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:559
 msgid "SNMPv2c Inform Receiver"
 msgstr "SNMPv2c Inform Empfänger"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:552
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:558
 msgid "SNMPv2c Trap Receiver"
 msgstr "SNMPv2c Trap Empfänger"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:270
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:305
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:647
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:653
 msgid "SNMPv3"
 msgstr "SNMPv3"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:468
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:472
 msgid "SNMPv3 authentication passphrase"
 msgstr "SNMPv3 Authentifizierungs Passphrase"
 
@@ -393,11 +417,11 @@ msgstr "SNMPv3 Authentifizierungs Passphrase"
 msgid "SNMPv3 authentication type"
 msgstr "SNMPv3 Authentifizierungstyp"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:487
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:493
 msgid "SNMPv3 encryption passphrase"
 msgstr "SNMPv3 Verschlüsselungspassphrase"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:478
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:482
 msgid "SNMPv3 encryption type"
 msgstr "SNMPv3 Verschlüsselungsart"
 
@@ -423,7 +447,7 @@ msgid "Specification how context of requests is matched to context"
 msgstr ""
 "Spezifikation, wie der Kontext der Anfragen an den Kontext angepasst ist"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:605
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:611
 msgid "Syslog facility"
 msgstr "Syslog-Einrichtung"
 
@@ -461,7 +485,7 @@ msgstr "Die verwendete Version für die Zugriffskonfiguration"
 msgid "The used version for the group"
 msgstr "Die verwendete Version für die Gruppe"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:651
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:657
 msgctxt "SNMP"
 msgid "Traps"
 msgstr "Tranchen"
@@ -471,7 +495,7 @@ msgid "Trusted source for SNMP read community access (hostname or IP)"
 msgstr ""
 "Vertrauenswürdige Quelle für den SNMP-Lesezugriff (Hostname oder IP-Adresse)"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:550
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:556
 msgid "Type"
 msgstr "Typ"
 
@@ -480,7 +504,7 @@ msgstr "Typ"
 msgid "Version"
 msgstr "Version"
 
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:586
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:592
 msgid "Will log messages of selected priority and above."
 msgstr ""
 "Es werden Meldungen der ausgewählten Priorität und höher protokolliert."
@@ -494,7 +518,7 @@ msgid "Write access modification for groups"
 msgstr "Zugriffsänderung für Gruppen schreiben"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:412
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:498
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:504
 msgid "Yes"
 msgstr "Ja"
 
@@ -507,7 +531,7 @@ msgid "localhost"
 msgstr "lokalhost"
 
 #: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:460
-#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:479
+#: applications/luci-app-snmpd/htdocs/luci-static/resources/view/snmpd/snmpd.js:483
 msgid "none"
 msgstr "kein"
 

@@ -1,0 +1,74 @@
+<%+cbi/valueheader%>
+<script type="text/javascript">
+//<![CDATA[
+(function(){
+  var algoSelect = document.querySelector('select[name$="config_age_algo"]') || document.querySelector('select[name*="config_age_algo"]');
+  var age_public = document.querySelector('input[name$="config_age_public"]') || document.querySelector('input[name*="config_age_public"]');
+  var age_secret = document.querySelector('input[name$="config_age_secret"]') || document.querySelector('input[name*="config_age_secret"]');
+  if (!algoSelect || !age_public || !age_secret) return;
+  var btn = document.createElement('input');
+  btn.type = 'button';
+  btn.className = 'btn cbi-button cbi-button-apply';
+  btn.id = 'cbi-age-generate-btn';
+  btn.value = '<%:Generate Age Key%>';
+  var parent = algoSelect.parentNode || algoSelect;
+  parent.insertBefore(btn, algoSelect.nextSibling);
+
+  var pbtn = document.createElement('input');
+  pbtn.type = 'button';
+  pbtn.className = 'btn cbi-button cbi-button-apply';
+  pbtn.id = 'cbi-age-cal-public-btn';
+  pbtn.value = '<%:Calculate Public Key%>';
+  var pparent = age_public.parentNode || age_public;
+  pparent.appendChild(pbtn);
+
+  btn.onclick = function() {
+    var algo = (algoSelect && algoSelect.value) ? algoSelect.value : 'keygen';
+    btn.disabled = true;
+    var old = btn.value;
+    btn.value = '<%:Generating...%>';
+    XHR.get("<%=luci.dispatcher.build_url('admin','services','openclash','generate_age_key')%>", { algo: algo }, function(xhr, data) {
+      btn.disabled = false;
+      btn.value = old;
+      if (xhr && xhr.status == 200 && data && data.status === 'success') {
+        if (age_secret) age_secret.value = data.secret || '';
+        if (age_public) age_public.value = data.public || '';
+        btn.value = '<%:Generate Age Key%>';
+        setTimeout(function(){ btn.value = old; }, 4000);
+      } else {
+        btn.value = '<%:Failed to generate age key%>';
+        setTimeout(function(){ btn.value = old; }, 4000);
+      }
+    });
+    return false;
+  };
+
+  pbtn.onclick = function() {
+    var secret = age_secret.value.trim();
+    pbtn.disabled = true;
+    var old = pbtn.value;
+    pbtn.value = '<%:Generating...%>';
+    if (!secret) {
+      alert("<%:Please enter the Age Secret Key to calculate the public key!%>");
+    } else {
+      XHR.get("<%=luci.dispatcher.build_url('admin','services','openclash','cal_age_public_key')%>", { secret: secret }, function(xhr, data) {
+        pbtn.disabled = false;
+        pbtn.value = old;
+        if (xhr && xhr.status == 200 && data && data.status === 'success') {
+          if (age_public) age_public.value = data.public || '';
+          pbtn.value = '<%:Calculate Public Key%>';
+          setTimeout(function(){ pbtn.value = old; }, 4000);
+        } else {
+          pbtn.value = '<%:Failed to calculate public key%>';
+          setTimeout(function(){ pbtn.value = old; }, 4000);
+        }
+      });
+    }
+    pbtn.disabled = false;
+    pbtn.value = old;
+    return false;
+  };
+})();
+//]]>
+</script>
+<%+cbi/valuefooter%>

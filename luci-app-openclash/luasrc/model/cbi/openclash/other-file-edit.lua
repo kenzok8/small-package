@@ -24,15 +24,15 @@ o.wrap = "off"
 function o.write(self, section, value)
 	if value then
 		value = value:gsub("\r\n?", "\n")
-		local old_value = NXFS.readfile(file_path)
+		local old_value = fs.readfile(file_path)
 		if value ~= old_value then
-			NXFS.writefile(file_path, value)
+			fs.writefile(file_path, value)
 		end
 	end
 end
 
 function o.cfgvalue(self, section)
-	return NXFS.readfile(file_path) or ""
+	return fs.readfile(file_path) or ""
 end
 
 local t = {

@@ -3764,3 +3764,18 @@ msgstr "对被代理的 UDP/443 流量处理方式"
 
 #~ msgid "Include Mihomo (Clash Support)"
 #~ msgstr "包含 Mihomo（Clash 支持）"
+
+msgid "SSR Plus+ Main Program"
+msgstr "SSR Plus+ 主程序"
+
+msgid "The online upgrade downloads the latest luci-app-ssr-plus package from fw876/helloworld releases and installs the matching IPK or APK package for this system."
+msgstr "在线更新会从 fw876/helloworld 发布页下载最新 luci-app-ssr-plus，并根据当前系统安装匹配的 IPK 或 APK 包。"
+
+msgid "Package Manager"
+msgstr "包管理器"
+
+msgid "Unsupported package manager"
+msgstr "不支持的包管理器"
+
+msgid "Installed package check failed"
+msgstr "安装后软件包检查失败"
