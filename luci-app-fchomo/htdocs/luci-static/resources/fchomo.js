@@ -496,7 +496,7 @@ const CBIDynamicList = form.DynamicList.extend({ // @less_25_12
 	}
 });
 
-const CBIMultiValue = form.MultiValue.extend({ // @prxxxx_merged
+const CBIMultiValue = form.MultiValue.extend({ // @pr8758_merged
 	__name__: 'CBI.MultiValue',
 
 	renderWidget(section_id, option_index, cfgvalue) {
@@ -813,7 +813,7 @@ const UIDynamicList = ui.DynamicList.extend({ // @less_25_12
 });
 
 // keep selected order for multiple selection
-const UIDropdown = ui.Dropdown.extend({ // @prxxxx_merged
+const UIDropdown = ui.Dropdown.extend({ // @pr8758_merged
 	__init__(value, choices, options) {
 		if (typeof(choices) != 'object')
 			choices = {};

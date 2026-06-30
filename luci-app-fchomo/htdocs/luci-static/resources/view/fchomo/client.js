@@ -1057,7 +1057,7 @@ return view.extend({
 			so.value.apply(so, res);
 		})
 
-		so = ss.taboption('field_general', hm.MultiValue, 'groups', _('Group')); // @prxxxx_merged
+		so = ss.taboption('field_general', hm.MultiValue, 'groups', _('Group')); // @pr8758_merged
 		hm.preset_outbound.proxy.forEach((res) => {
 			so.value.apply(so, res);
 		})
@@ -1070,7 +1070,7 @@ return view.extend({
 		}
 		so.editable = true;
 
-		so = ss.taboption('field_general', hm.MultiValue, 'proxies', _('Node')); // @prxxxx_merged
+		so = ss.taboption('field_general', hm.MultiValue, 'proxies', _('Node')); // @pr8758_merged
 		so.value('', _('-- Please choose --'));
 		so.keep_order = true;
 		so.load = function(section_id) {
@@ -1090,7 +1090,7 @@ return view.extend({
 		}
 		so.editable = true;
 
-		so = ss.taboption('field_general', hm.MultiValue, 'use', _('Provider')); // @prxxxx_merged
+		so = ss.taboption('field_general', hm.MultiValue, 'use', _('Provider')); // @pr8758_merged
 		so.value('', _('-- Please choose --'));
 		so.keep_order = true;
 		so.load = function(section_id) {
