@@ -675,7 +675,6 @@ local function apply_v2ray_tls_options(proxy, sid)
 	proxy.servername = string_or_nil(get_server_field(sid, "tls_host", ""))
 	proxy["client-fingerprint"] = string_or_nil(get_server_field(sid, "fingerprint", ""))
 	proxy.fingerprint = string_or_nil(get_server_field(sid, "tls_CertSha", ""))
-	proxy["cert-name"] = string_or_nil(get_server_field(sid, "tls_CertByName", ""))
 	proxy["skip-cert-verify"] = bool_enabled(get_server_field(sid, "insecure", "0"))
 
 	local alpn = split_alpn(get_server_field(sid, "tls_alpn", ""))
@@ -703,7 +702,6 @@ local function apply_trojan_tls_options(proxy, sid)
 	proxy.sni = string_or_nil(get_server_field(sid, "tls_host", ""))
 	proxy["client-fingerprint"] = string_or_nil(get_server_field(sid, "fingerprint", ""))
 	proxy.fingerprint = string_or_nil(get_server_field(sid, "tls_CertSha", ""))
-	proxy["cert-name"] = string_or_nil(get_server_field(sid, "tls_CertByName", ""))
 	proxy["skip-cert-verify"] = bool_enabled(get_server_field(sid, "insecure", "0"))
 
 	local alpn = split_alpn(get_server_field(sid, "tls_alpn", ""))
@@ -842,7 +840,6 @@ local function build_v2ray_mihomo_proxy(sid)
 		proxy.down = string_or_nil(get_server_field(sid, "downlink_capacity", "")) and (get_server_field(sid, "downlink_capacity", "") .. " Mbps") or nil
 		proxy.sni = string_or_nil(get_server_field(sid, "tls_host", ""))
 		proxy.fingerprint = string_or_nil(get_server_field(sid, "tls_CertSha", ""))
-		proxy["cert-name"] = string_or_nil(get_server_field(sid, "tls_CertByName", ""))
 		proxy["skip-cert-verify"] = bool_enabled(get_server_field(sid, "insecure", "0"))
 		local alpn = split_alpn(get_server_field(sid, "tls_alpn", ""))
 		if #alpn > 0 then
