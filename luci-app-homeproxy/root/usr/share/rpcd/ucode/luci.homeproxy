@@ -163,7 +163,7 @@ const methods = {
 			const type = req.args?.type;
 			let result = {};
 
-			const fd = popen('/usr/bin/sing-box generate ' + type + ` ${req.args?.params || ''}`);
+			const fd = popen(`/usr/bin/sing-box generate ${type} ${shellquote(req.args?.params || '')}`);
 			if (fd) {
 				let ech_cfg_set = false;
 				let ech_key_set = false;
