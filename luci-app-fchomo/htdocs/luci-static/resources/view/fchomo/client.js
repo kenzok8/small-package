@@ -18,12 +18,12 @@ const parseProxyGroupYaml = hm.parseYaml.extend({
 			id: this.id,
 			label: this.label,
 			type: cfg.type,
-			groups: cfg.proxies ? cfg.proxies.map((grop) => hm.preset_outbound.full.map(([key, label]) => key).includes(grop) ? grop : this.calcID(hm.glossary["proxy_group"].field, grop)) : null, // array
+			groups: cfg.proxies ? cfg.proxies.map((grop) => hm.preset_outbound.proxy.map(([key, label]) => key).includes(grop) ? grop : this.calcID(hm.glossary["proxy_group"].field, grop)) : null, // array
 			use: cfg.use ? cfg.use.map((prov) => this.calcID(hm.glossary["provider"].field, prov)) : null, // array
 			include_all: this.bool2str(cfg["include-all"]), // bool
 			include_all_proxies: this.bool2str(cfg["include-all-proxies"]), // bool
 			include_all_providers: this.bool2str(cfg["include-all-providers"]), // bool
-			empty_fallback: cfg["empty-fallback"] ? hm.preset_outbound.full.map(([key, label]) => key).includes(cfg["empty-fallback"]) ? cfg["empty-fallback"] : this.calcID(hm.glossary["proxy_group"].field, cfg["empty-fallback"]) : null, // string
+			empty_fallback: cfg["empty-fallback"] ? hm.preset_outbound.proxy.map(([key, label]) => key).includes(cfg["empty-fallback"]) ? cfg["empty-fallback"] : this.calcID(hm.glossary["proxy_group"].field, cfg["empty-fallback"]) : null, // string
 			// Url-test fields
 			tolerance: cfg.tolerance,
 			// Load-balance fields
@@ -255,7 +255,7 @@ const parseDNSYaml = hm.parseYaml.extend({
 
 		let detour = addr.parseParam('detour');
 		if (detour)
-			addr.setParam('detour', hm.preset_outbound.full.map(([key, label]) => key).includes(detour) ? detour : this.calcID(hm.glossary["proxy_group"].field, detour));
+			addr.setParam('detour', hm.preset_outbound.dns.map(([key, label]) => key).includes(detour) ? detour : detour === 'RULES' ? '' : this.calcID(hm.glossary["proxy_group"].field, detour));
 
 		// key mapping // 2026/01/17
 		let config = {
@@ -614,7 +614,7 @@ function renderPayload(s, total, uciconfig) {
 		o.depends(prefix + 'type', 'RULE-SET');
 		initPayload(o, n, 'factor', uciconfig);
 		o.load = L.bind(function(n, key, uciconfig, section_id) {
-			hm.loadRulesetLabel.call(this, [], null, section_id);
+			hm.loadLabel.call(this, hm.loadLabelValues(this.config, 'ruleset'), section_id);
 
 			return new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayload(n)[key];
 		}, o, n, 'factor', uciconfig)
@@ -688,8 +688,11 @@ function renderPayload(s, total, uciconfig) {
 				['tcp', _('TCP')],
 				['RULESET', '-- RULE-SET --']
 			];
-			hm.loadRulesetLabel.call(this, fusedval, null, section_id);
-			this.super('load', section_id);
+
+			hm.loadLabel.call(this, [
+				...fusedval,
+				...hm.loadLabelValues(this.config, 'ruleset')
+			], section_id);
 
 			return new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayloads().slice(n).map(e => e[key] ?? '');
 		}, o, n, 'factor', uciconfig)
@@ -791,7 +794,10 @@ function renderRules(s, uciconfig) {
 
 	o = s.option(hm.ListValue, 'detour', _('Proxy group'));
 	o.load = function(section_id) {
-		hm.loadProxyGroupLabel.call(this, hm.preset_outbound.full, section_id);
+		hm.loadLabel.call(this, [
+			...hm.preset_outbound.full,
+			...hm.loadLabelValues(this.config, 'proxy_group')
+		], section_id);
 
 		return new RulesEntry(uci.get(uciconfig, section_id, 'entry')).detour;
 	}
@@ -867,7 +873,12 @@ function renderPolicies(s, uciconfig) {
 	o = s.option(form.MultiValue, 'rule_set', _('Rule set'),
 		_('Match rule set.'));
 	o.value('', _('-- Please choose --'));
-	o.load = L.bind(hm.loadRulesetLabel, o, [['', _('-- Please choose --')]], ['domain', 'classical']);
+	o.load = function(section_id) {
+		return hm.loadLabel.call(this, [
+			['', _('-- Please choose --')],
+			...hm.loadLabelValues(this.config, 'ruleset', {behaviors: ['domain', 'classical']})
+		], section_id);
+	}
 	o.depends('type', 'rule_set');
 	o.modalonly = true;
 
@@ -893,7 +904,12 @@ function renderPolicies(s, uciconfig) {
 	hm.preset_outbound.direct.forEach((res) => {
 		o.value.apply(o, res);
 	})
-	o.load = L.bind(hm.loadProxyGroupLabel, o, hm.preset_outbound.direct);
+	o.load = function(section_id) {
+		return hm.loadLabel.call(this, [
+			...hm.preset_outbound.direct,
+			...hm.loadLabelValues(this.config, 'proxy_group')
+		], section_id);
+	}
 	o.editable = true;
 }
 
@@ -1041,16 +1057,28 @@ return view.extend({
 			so.value.apply(so, res);
 		})
 
-		so = ss.taboption('field_general', form.MultiValue, 'groups', _('Group'));
-		hm.preset_outbound.full.forEach((res) => {
+		so = ss.taboption('field_general', hm.MultiValue, 'groups', _('Group')); // @prxxxx_merged
+		hm.preset_outbound.proxy.forEach((res) => {
 			so.value.apply(so, res);
 		})
-		so.load = L.bind(hm.loadProxyGroupLabel, so, hm.preset_outbound.full);
+		so.keep_order = true;
+		so.load = function(section_id) {
+			return hm.loadLabel.call(this, [
+				...hm.preset_outbound.proxy,
+				...hm.loadLabelValues(this.config, 'proxy_group')
+			], section_id);
+		}
 		so.editable = true;
 
-		so = ss.taboption('field_general', form.MultiValue, 'proxies', _('Node'));
+		so = ss.taboption('field_general', hm.MultiValue, 'proxies', _('Node')); // @prxxxx_merged
 		so.value('', _('-- Please choose --'));
-		so.load = L.bind(hm.loadNodeLabel, so, [['', _('-- Please choose --')]]);
+		so.keep_order = true;
+		so.load = function(section_id) {
+			return hm.loadLabel.call(this, [
+				['', _('-- Please choose --')],
+				...hm.loadLabelValues(this.config, 'node')
+			], section_id);
+		}
 		so.validate = function(section_id, value) {
 			if (this.section.getOption('include_all').formvalue(section_id) === '1' ||
 			    this.section.getOption('include_all_proxies').formvalue(section_id) === '1')
@@ -1062,9 +1090,15 @@ return view.extend({
 		}
 		so.editable = true;
 
-		so = ss.taboption('field_general', form.MultiValue, 'use', _('Provider'));
+		so = ss.taboption('field_general', hm.MultiValue, 'use', _('Provider')); // @prxxxx_merged
 		so.value('', _('-- Please choose --'));
-		so.load = L.bind(hm.loadProviderLabel, so, [['', _('-- Please choose --')]]);
+		so.keep_order = true;
+		so.load = function(section_id) {
+			return hm.loadLabel.call(this, [
+				['', _('-- Please choose --')],
+				...hm.loadLabelValues(this.config, 'provider')
+			], section_id);
+		}
 		so.validate = function(section_id, value) {
 			if (this.section.getOption('include_all').formvalue(section_id) === '1' ||
 			    this.section.getOption('include_all_providers').formvalue(section_id) === '1')
@@ -1096,8 +1130,13 @@ return view.extend({
 		hm.preset_outbound.proxy.forEach((res) => {
 			so.value.apply(so, res);
 		})
-		so.load = L.bind(hm.loadNodeLabel, so, hm.preset_outbound.proxy);
-		so.modalonly = true;
+		so.load = function(section_id) {
+			return hm.loadLabel.call(this, [
+				...hm.preset_outbound.proxy,
+				...hm.loadLabelValues(this.config, 'node')
+			], section_id);
+		}
+		so.textvalue = hm.textvalue2Value;
 
 		/* Override fields */
 		so = ss.taboption('field_override', form.Flag, 'disable_udp', _('Disable UDP'));
@@ -1293,7 +1332,10 @@ return view.extend({
 
 		so = ss.option(form.ListValue, 'SUB-RULE', _('SUB-RULE'));
 		so.load = function(section_id) {
-			hm.loadSubRuleGroup.call(this, [['', _('-- Please choose --')]], section_id);
+			hm.loadLabel.call(this, [
+				['', _('-- Please choose --')],
+				...hm.loadLabelValues(this.config, 'subrule-group')
+			], section_id);
 
 			return new RulesEntry(uci.get(data[0], section_id, 'entry')).subrule || '';
 		}
@@ -1563,7 +1605,10 @@ return view.extend({
 
 		so = ss.option(hm.ListValue, 'detour', _('Proxy group'));
 		so.load = function(section_id) {
-			hm.loadProxyGroupLabel.call(this, hm.preset_outbound.dns, section_id);
+			hm.loadLabel.call(this, [
+				...hm.preset_outbound.dns,
+				...hm.loadLabelValues(this.config, 'proxy_group')
+			], section_id);
 
 			return new DNSAddress(uci.get(data[0], section_id, 'address')).parseParam('detour');
 		}

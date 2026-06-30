@@ -28,7 +28,7 @@ const CBIBubblesValue = form.DummyValue.extend({
 	__name__: 'CBI.BubblesValue',
 
 	load(section_id) {
-		const uciconfig = this.config || this.section.configthis.config || this.map.config;
+		const uciconfig = this.config || this.section.config || this.map.config;
 		const type = uci.get(uciconfig, section_id, 'type');
 		const detour = uci.get(uciconfig, section_id, 'chain_tail_group') || uci.get(uciconfig, section_id, 'chain_tail');
 
@@ -116,7 +116,7 @@ const parseProviderYaml = hm.parseYaml.extend({
 				url: cfg.url,
 				size_limit: cfg["size-limit"],
 				interval: cfg.interval,
-				proxy: cfg.proxy ? hm.preset_outbound.full.map(([key, label]) => key).includes(cfg.proxy) ? cfg.proxy : this.calcID(hm.glossary["proxy_group"].field, cfg.proxy) : null,
+				proxy: cfg.proxy ? hm.preset_outbound.direct.map(([key, label]) => key).includes(cfg.proxy) ? cfg.proxy : this.calcID(hm.glossary["proxy_group"].field, cfg.proxy) : null,
 				age_private_key: cfg["age-secret-key"],
 				header: cfg.header ? JSON.stringify(cfg.header, null, 2) : null, // string: object
 				/* Health fields */
@@ -265,13 +265,23 @@ return view.extend({
 
 		/* Rematch fields */
 		so = ss.taboption('field_general', form.ListValue, 'target_rematch_name', _('REMATCH-NAME marking'));
-		so.load = L.bind(hm.loadRematchName, so, [['', _('-- Please choose --')]]);
+		so.load = function(section_id) {
+			return hm.loadLabel.call(this, [
+				['', _('-- Please choose --')],
+				...hm.loadLabelValues(this.config, 'rematch-name')
+			], section_id);
+		}
 		so.rmempty = false;
 		so.depends('type', 'rematch');
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.ListValue, 'target_sub_rule', _('Use sub rule'));
-		so.load = L.bind(hm.loadSubRuleGroup, so, [['', _('-- Please choose --')]]);
+		so.load = function(section_id) {
+			return hm.loadLabel.call(this, [
+				['', _('-- Please choose --')],
+				...hm.loadLabelValues(this.config, 'subrule-group')
+			], section_id);
+		}
 		so.depends('type', 'rematch');
 		so.modalonly = true;
 
@@ -1750,7 +1760,12 @@ return view.extend({
 		hm.preset_outbound.direct.forEach((res) => {
 			so.value.apply(so, res);
 		})
-		so.load = L.bind(hm.loadProxyGroupLabel, so, hm.preset_outbound.direct);
+		so.load = function(section_id) {
+			return hm.loadLabel.call(this, [
+				...hm.preset_outbound.direct,
+				...hm.loadLabelValues(this.config, 'proxy_group')
+			], section_id);
+		}
 		so.textvalue = hm.textvalue2Value;
 		//so.editable = true;
 		so.depends('type', 'http');
@@ -2032,13 +2047,23 @@ return view.extend({
 		so.modalonly = false;
 
 		so = ss.option(form.ListValue, 'chain_head_sub', _('Destination provider'));
-		so.load = L.bind(hm.loadProviderLabel, so, [['', _('-- Please choose --')]]);
+		so.load = function(section_id) {
+			return hm.loadLabel.call(this, [
+				['', _('-- Please choose --')],
+				...hm.loadLabelValues(this.config, 'provider')
+			], section_id);
+		}
 		so.rmempty = false;
 		so.depends('type', 'provider');
 		so.modalonly = true;
 
 		so = ss.option(form.ListValue, 'chain_head', _('Destination proxy node'));
-		so.load = L.bind(hm.loadNodeLabel, so, [['', _('-- Please choose --')]]);
+		so.load = function(section_id) {
+			return hm.loadLabel.call(this, [
+				['', _('-- Please choose --')],
+				...hm.loadLabelValues(this.config, 'node')
+			], section_id);
+		}
 		so.rmempty = false;
 		so.validate = function(section_id, value) {
 			const chain_tail = this.section.getUIElement(section_id, 'chain_tail').getValue();
@@ -2052,13 +2077,23 @@ return view.extend({
 		so.modalonly = true;
 
 		so = ss.option(form.ListValue, 'chain_tail_group', _('Transit proxy group'));
-		so.load = L.bind(hm.loadProxyGroupLabel, so, [['', _('-- Please choose --')]]);
+		so.load = function(section_id) {
+			return hm.loadLabel.call(this, [
+				['', _('-- Please choose --')],
+				...hm.loadLabelValues(this.config, 'proxy_group')
+			], section_id);
+		}
 		so.rmempty = false;
 		so.depends({chain_tail: /.+/, '!reverse': true});
 		so.modalonly = true;
 
 		so = ss.option(form.ListValue, 'chain_tail', _('Transit proxy node'));
-		so.load = L.bind(hm.loadNodeLabel, so, [['', _('-- Please choose --')]]);
+		so.load = function(section_id) {
+			return hm.loadLabel.call(this, [
+				['', _('-- Please choose --')],
+				...hm.loadLabelValues(this.config, 'node')
+			], section_id);
+		}
 		so.rmempty = false;
 		so.validate = function(section_id, value) {
 			const chain_head = this.section.getUIElement(section_id, 'chain_head').getValue();

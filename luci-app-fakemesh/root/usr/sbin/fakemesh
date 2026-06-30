@@ -684,18 +684,25 @@ if [ "$role" = "controller" ]; then
 	uci delete firewall.fakemesh >/dev/null 2>&1 && uci commit firewall
 
 	mkdir -p /usr/share/fakemesh
-	cat >/tmp/fakemesh.firewall.include <<-EOT
+	cat >/tmp/fakemesh.firewall.include <<EOT
 #!/bin/sh
-iptables -t nat -C prerouting_lan_rule -d $access_ip/32 -p tcp --dport 80 -j REDIRECT --to-ports 80 2>/dev/null || \
-iptables -t nat -A prerouting_lan_rule -d $access_ip/32 -p tcp --dport 80 -j REDIRECT --to-ports 80 2>/dev/null
-iptables -t nat -C prerouting_lan_rule -d $access_ip/32 -p tcp --dport 443 -j REDIRECT --to-ports 443 2>/dev/null || \
-iptables -t nat -A prerouting_lan_rule -d $access_ip/32 -p tcp --dport 443 -j REDIRECT --to-ports 443 2>/dev/null
-
-nft -a list chain inet fw4 dstnat 2>/dev/null | grep -o "fakemesh.*" | while read _ _ _ handle; do nft delete rule inet fw4 dstnat handle \$handle; done
-nft insert rule inet fw4 dstnat iifname { \$(echo \$(fw4 -q zone lan | grep -v '*' | sort | uniq | sed 's/\(.*\)/"\1",/g') | sed 's/,$//') } ip daddr $access_ip/32 tcp dport 80 counter redirect to :80 comment "fakemesh" 2>/dev/null
-nft insert rule inet fw4 dstnat iifname { \$(echo \$(fw4 -q zone lan | grep -v '*' | sort | uniq | sed 's/\(.*\)/"\1",/g') | sed 's/,$//') } ip daddr $access_ip/32 tcp dport 443 counter redirect to :443 comment "fakemesh" 2>/dev/null
-
+if ! command -v nft &>/dev/null; then
+	iptables -t nat -C prerouting_lan_rule -d $access_ip/32 -p tcp --dport 80 -j REDIRECT --to-ports 80 2>/dev/null || \
+	iptables -t nat -A prerouting_lan_rule -d $access_ip/32 -p tcp --dport 80 -j REDIRECT --to-ports 80 2>/dev/null
+	iptables -t nat -C prerouting_lan_rule -d $access_ip/32 -p tcp --dport 443 -j REDIRECT --to-ports 443 2>/dev/null || \
+	iptables -t nat -A prerouting_lan_rule -d $access_ip/32 -p tcp --dport 443 -j REDIRECT --to-ports 443 2>/dev/null
+else
+	nft_cmds=\$(nft -a list chain inet fw4 dstnat 2>/dev/null | awk -F 'handle ' '/fakemesh/ {print "delete rule inet fw4 dstnat handle "\$2}')
+	lan_ifnames=\$(fw4 -q zone lan 2>/dev/null | awk '!/\*/ && !seen[\$0]++ {if(s) s=s", "; s=s"\""\$0"\""} END {print s}')
+	if [ -n "\$lan_ifnames" ]; then
+		nft_cmds="\${nft_cmds}\${nft_cmds:+
+		}insert rule inet fw4 dstnat iifname { \$lan_ifnames } ip daddr $access_ip/32 tcp dport 80 counter redirect to :80 comment \"fakemesh\"
+		insert rule inet fw4 dstnat iifname { \$lan_ifnames } ip daddr $access_ip/32 tcp dport 443 counter redirect to :443 comment \"fakemesh\""
+	fi
+	[ -n "\$nft_cmds" ] && echo "\$nft_cmds" | nft -f - 2>/dev/null
+fi
 EOT
+
 	ln -s /tmp/fakemesh.firewall.include /usr/share/fakemesh/firewall.include 2>/dev/null
 	grep -q "^sh /usr/share/fakemesh/firewall.include" /etc/firewall.include || echo "sh /usr/share/fakemesh/firewall.include" >>/etc/firewall.include
 
@@ -852,18 +859,27 @@ else
 	uci delete firewall.fakemesh >/dev/null 2>&1 && uci commit firewall
 
 	mkdir -p /usr/share/fakemesh
-	cat >/tmp/fakemesh.firewall.include <<-EOT
+	cat >/tmp/fakemesh.firewall.include <<EOT
 #!/bin/sh
-iptables -t filter -C output_lan_rule -j MARK --set-xmark 0x00010000/0x00010000 2>/dev/null || \
-iptables -t filter -A output_lan_rule -j MARK --set-xmark 0x00010000/0x00010000 2>/dev/null
-iptables -t nat -C zone_lan_postrouting -m mark --mark 0x00010000/0x00010000 -j MASQUERADE 2>/dev/null || \
-iptables -t nat -A zone_lan_postrouting -m mark --mark 0x00010000/0x00010000 -j MASQUERADE 2>/dev/null
-
-nft -a list chain inet fw4 output_lan 2>/dev/null | grep -o "fakemesh_mark_0x10000.*" | while read _ _ _ handle; do nft delete rule inet fw4 output_lan handle \$handle; done
-nft insert rule inet fw4 output_lan counter meta mark set mark or 0x10000 comment "fakemesh_mark_0x10000" 2>/dev/null
-
-nft -a list chain inet fw4 srcnat 2>/dev/null | grep -o "fakemesh_mark_0x10000.*" | while read _ _ _ handle; do nft delete rule inet fw4 srcnat handle \$handle; done
-nft insert rule inet fw4 srcnat oifname { \$(echo \$(fw4 -q zone lan | grep -v '*' | sort | uniq | sed 's/\(.*\)/"\1",/g') | sed 's/,$//') } mark and 0x10000 == 0x10000 counter masquerade comment "fakemesh_mark_0x10000" 2>/dev/null
+if ! command -v nft &>/dev/null; then
+	iptables -t filter -C output_lan_rule -j MARK --set-xmark 0x00010000/0x00010000 2>/dev/null || \
+	iptables -t filter -A output_lan_rule -j MARK --set-xmark 0x00010000/0x00010000 2>/dev/null
+	iptables -t nat -C zone_lan_postrouting -m mark --mark 0x00010000/0x00010000 -j MASQUERADE 2>/dev/null || \
+	iptables -t nat -A zone_lan_postrouting -m mark --mark 0x00010000/0x00010000 -j MASQUERADE 2>/dev/null
+else
+	nft_cmds=\$(
+		nft -a list chain inet fw4 output_lan 2>/dev/null | awk -F 'handle ' '/fakemesh_mark_0x10000/ {print "delete rule inet fw4 output_lan handle "\$2}'
+		nft -a list chain inet fw4 srcnat 2>/dev/null | awk -F 'handle ' '/fakemesh_mark_0x10000/ {print "delete rule inet fw4 srcnat handle "\$2}'
+	)
+	nft_cmds="\${nft_cmds}\${nft_cmds:+
+	}insert rule inet fw4 output_lan counter meta mark set mark or 0x10000 comment \"fakemesh_mark_0x10000\""
+	lan_ifs=\$(fw4 -q zone lan 2>/dev/null | awk '!/\*/ && !seen[\$0]++ {if(s) s=s", "; s=s"\""\$0"\""} END {print s}')
+	if [ -n "\$lan_ifs" ]; then
+		nft_cmds="\${nft_cmds}\${nft_cmds:+
+		}insert rule inet fw4 srcnat oifname { \$lan_ifs } mark and 0x10000 == 0x10000 counter masquerade comment \"fakemesh_mark_0x10000\""
+	fi
+	[ -n "\$nft_cmds" ] && echo "\$nft_cmds" | nft -f - 2>/dev/null
+fi
 EOT
 	ln -s /tmp/fakemesh.firewall.include /usr/share/fakemesh/firewall.include 2>/dev/null
 	grep -q "^sh /usr/share/fakemesh/firewall.include" /etc/firewall.include || echo "sh /usr/share/fakemesh/firewall.include" >>/etc/firewall.include

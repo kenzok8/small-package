@@ -25,7 +25,7 @@ const parseRulesetYaml = hm.parseYaml.extend({
 				path_in_bundle: cfg["path-in-bundle"],
 				size_limit: cfg["size-limit"],
 				interval: cfg.interval,
-				proxy: cfg.proxy ? hm.preset_outbound.full.map(([key, label]) => key).includes(cfg.proxy) ? cfg.proxy : this.calcID(hm.glossary["proxy_group"].field, cfg.proxy) : null,
+				proxy: cfg.proxy ? hm.preset_outbound.direct.map(([key, label]) => key).includes(cfg.proxy) ? cfg.proxy : this.calcID(hm.glossary["proxy_group"].field, cfg.proxy) : null,
 				header: cfg.header ? JSON.stringify(cfg.header, null, 2) : null, // string: object
 			})
 		});
@@ -406,7 +406,12 @@ return view.extend({
 		hm.preset_outbound.direct.forEach((res) => {
 			o.value.apply(o, res);
 		})
-		o.load = L.bind(hm.loadProxyGroupLabel, o, hm.preset_outbound.direct);
+		o.load = function(section_id) {
+			return hm.loadLabel.call(this, [
+				...hm.preset_outbound.direct,
+				...hm.loadLabelValues(this.config, 'proxy_group')
+			], section_id);
+		}
 		o.textvalue = hm.textvalue2Value;
 		//o.editable = true;
 		o.depends('type', 'http');

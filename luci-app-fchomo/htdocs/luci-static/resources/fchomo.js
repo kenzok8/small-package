@@ -2,6 +2,7 @@
 'require baseclass';
 'require form';
 'require fs';
+'require dom';
 'require rpc';
 'require uci';
 'require ui';
@@ -495,6 +496,31 @@ const CBIDynamicList = form.DynamicList.extend({ // @less_25_12
 	}
 });
 
+const CBIMultiValue = form.MultiValue.extend({ // @prxxxx_merged
+	__name__: 'CBI.MultiValue',
+
+	renderWidget(section_id, option_index, cfgvalue) {
+		const value = (cfgvalue != null) ? cfgvalue : this.default;
+		const choices = this.transformChoices();
+
+		const widget = new UIDropdown(L.toArray(value), choices, {
+			id: this.cbid(section_id),
+			sort: this.keylist,
+			multiple: true,
+			keep_order: this.keep_order,
+			optional: this.optional || this.rmempty,
+			select_placeholder: this.placeholder,
+			create: this.create,
+			display_items: this.display_size ?? this.size ?? 3,
+			dropdown_items: this.dropdown_size ?? this.size ?? -1,
+			validate: this.getValidator(section_id),
+			disabled: (this.readonly != null) ? this.readonly : this.map.readonly
+		});
+
+		return widget.render();
+	}
+});
+
 const CBIStaticList = form.DynamicList.extend({
 	__name__: 'CBI.StaticList',
 
@@ -783,6 +809,360 @@ const UIDynamicList = ui.DynamicList.extend({ // @less_25_12
 			const sbVal = ev.detail.value;
 			sbVal?.element.removeAttribute('unselectable');
 		}
+	}
+});
+
+// keep selected order for multiple selection
+const UIDropdown = ui.Dropdown.extend({ // @prxxxx_merged
+	__init__(value, choices, options) {
+		if (typeof(choices) != 'object')
+			choices = {};
+
+		if (!Array.isArray(value))
+			this.values = (value != null && value != '') ? [ value ] : [];
+		else
+			this.values = value;
+
+		this.orderCounter = this.values.length;
+		this.choices = choices;
+		this.options = Object.assign({
+			sort:               true,
+			multiple:           Array.isArray(value),
+			keep_order:         false,
+			optional:           true,
+			select_placeholder: _('-- Please choose --'),
+			custom_placeholder: _('-- custom --'),
+			display_items:      3,
+			dropdown_items:     -1,
+			create:             false,
+			create_query:       '.create-item-input',
+			create_template:    'script[type="item-template"]'
+		}, options);
+	},
+
+	render() {
+		const sb = E('div', {
+			'id': this.options.id,
+			'class': 'cbi-dropdown',
+			'multiple': this.options.multiple ? '' : null,
+			'keep_order': this.options.keep_order ? '' : null,
+			'optional': this.options.optional ? '' : null,
+			'disabled': this.options.disabled ? '' : null,
+			'tabindex': -1
+		}, E('ul'));
+
+		let keys = Object.keys(this.choices);
+
+		if (this.options.sort === true)
+			keys.sort(L.naturalCompare);
+		else if (Array.isArray(this.options.sort))
+			keys = this.options.sort;
+
+		if (this.options.create)
+			for (let i = 0; i < this.values.length; i++)
+				if (!this.choices.hasOwnProperty(this.values[i]))
+					keys.push(this.values[i]);
+
+		for (let i = 0; i < keys.length; i++) {
+			let label = this.choices[keys[i]];
+
+			if (dom.elem(label))
+				label = label.cloneNode(true);
+
+			sb.lastElementChild.appendChild(E('li', {
+				'data-value': keys[i],
+				'selected': (this.values.indexOf(keys[i]) > -1) ? '' : null
+			}, [ label ?? keys[i] ]));
+		}
+
+		if (this.options.create) {
+			const createEl = E('input', {
+				'type': 'text',
+				'class': 'create-item-input',
+				'readonly': this.options.readonly ? '' : null,
+				'maxlength': this.options.maxlength,
+				'placeholder': this.options.custom_placeholder ?? this.options.placeholder,
+				'inputmode': 'text',
+				'enterkeyhint': 'done'
+			});
+
+			if (this.options.datatype || this.options.validate)
+				UI.prototype.addValidator(createEl, this.options.datatype ?? 'string',
+				                          true, this.options.validate, 'blur', 'keyup');
+
+			sb.lastElementChild.appendChild(E('li', { 'data-value': '-' }, createEl));
+		}
+
+		if (this.options.create_markup)
+			sb.appendChild(E('script', { type: 'item-template' },
+				this.options.create_markup));
+
+		return this.bind(sb);
+	},
+
+	bind(sb) {
+		const o = this.options;
+
+		o.multiple = sb.hasAttribute('multiple');
+		o.keep_order = sb.hasAttribute('keep_order');
+		o.optional = sb.hasAttribute('optional');
+		o.placeholder = sb.getAttribute('placeholder') ?? o.placeholder;
+		o.display_items = parseInt(sb.getAttribute('display-items') ?? o.display_items);
+		o.dropdown_items = parseInt(sb.getAttribute('dropdown-items') ?? o.dropdown_items);
+		o.create_query = sb.getAttribute('item-create') ?? o.create_query;
+		o.create_template = sb.getAttribute('item-template') ?? o.create_template;
+
+		const ul = sb.querySelector('ul');
+		const more = sb.appendChild(E('span', { class: 'more', tabindex: -1 }, '···'));
+		sb.appendChild(E('span', { class: 'open', tabindex: -1 }, '▾'));
+		const canary = sb.appendChild(E('div'));
+		const create = sb.querySelector(this.options.create_query);
+		let ndisplay = this.options.display_items;
+		let n = 0;
+
+		if (this.options.multiple) {
+			let items = ul.querySelectorAll('li');
+
+			for (let i = 0; i < items.length; i++) {
+				this.transformItem(sb, items[i]);
+
+				if (items[i].hasAttribute('selected')) {
+					if (ndisplay-- > 0)
+						items[i].setAttribute('display', n++);
+
+					if (this.options.keep_order) {
+						const value = items[i].getAttribute('data-value');
+						if (this.values.includes(value))
+							items[i].setAttribute('data-order', this.values.indexOf(value) + 1);
+					}
+				}
+			}
+		}
+		else {
+			if (this.options.optional && !ul.querySelector('li[data-value=""]')) {
+				const placeholder = E('li', { placeholder: '' },
+					this.options.select_placeholder ?? this.options.placeholder);
+
+				ul.firstChild
+					? ul.insertBefore(placeholder, ul.firstChild)
+					: ul.appendChild(placeholder);
+			}
+
+			let items = ul.querySelectorAll('li');
+			const sel = sb.querySelectorAll('[selected]');
+
+			sel.forEach(s => {
+				s.removeAttribute('selected');
+			});
+
+			const s = sel[0] ?? items[0];
+			if (s) {
+				s.setAttribute('selected', '');
+				s.setAttribute('display', n++);
+			}
+
+			ndisplay--;
+		}
+
+		this.saveValues(sb, ul);
+
+		ul.setAttribute('tabindex', -1);
+		sb.setAttribute('tabindex', 0);
+
+		if (ndisplay < 0)
+			sb.setAttribute('more', '')
+		else
+			sb.removeAttribute('more');
+
+		if (ndisplay == this.options.display_items)
+			sb.setAttribute('empty', '')
+		else
+			sb.removeAttribute('empty');
+
+		dom.content(more, (ndisplay == this.options.display_items)
+			? (this.options.select_placeholder ?? this.options.placeholder) : '···');
+
+
+		sb.addEventListener('click', this.handleClick.bind(this));
+		sb.addEventListener('keydown', this.handleKeydown.bind(this));
+		sb.addEventListener('cbi-dropdown-close', this.handleDropdownClose.bind(this));
+		sb.addEventListener('cbi-dropdown-select', this.handleDropdownSelect.bind(this));
+
+		if ('ontouchstart' in window) {
+			sb.addEventListener('touchstart', ev => ev.stopPropagation());
+			window.addEventListener('touchstart', this.closeAllDropdowns);
+		}
+		else {
+			sb.addEventListener('focus', this.handleFocus.bind(this));
+
+			canary.addEventListener('focus', this.handleCanaryFocus.bind(this));
+
+			window.addEventListener('click', this.closeAllDropdowns);
+		}
+
+		if (create) {
+			create.addEventListener('keydown', this.handleCreateKeydown.bind(this));
+			create.addEventListener('focus', this.handleCreateFocus.bind(this));
+			create.addEventListener('blur', this.handleCreateBlur.bind(this));
+
+			const li = findParent(create, 'li');
+
+			li.setAttribute('unselectable', '');
+			li.addEventListener('click', this.handleCreateClick.bind(this));
+		}
+
+		this.node = sb;
+
+		this.setUpdateEvents(sb, 'cbi-dropdown-open', 'cbi-dropdown-close');
+		this.setChangeEvents(sb, 'cbi-dropdown-change', 'cbi-dropdown-close');
+
+		dom.bindClassInstance(sb, this);
+
+		return sb;
+	},
+
+	toggleItem(sb, li, force_state) {
+		const ul = li.parentNode;
+
+		if (li.hasAttribute('unselectable'))
+			return;
+
+		if (this.options.multiple) {
+			const cbox = li.querySelector('input[type="checkbox"]');
+			const items = li.parentNode.querySelectorAll('li');
+			const label = sb.querySelector('ul.preview');
+			let sel = li.parentNode.querySelectorAll('[selected]').length;
+			const more = sb.querySelector('.more');
+			let ndisplay = this.options.display_items;
+			let n = 0;
+
+			if (li.hasAttribute('selected')) {
+				if (force_state !== true) {
+					if (sel > 1 || this.options.optional) {
+						li.removeAttribute('selected');
+						cbox.checked = cbox.disabled = false;
+						sel--;
+
+						if (this.options.keep_order)
+							li.removeAttribute('data-order');
+					}
+					else {
+						cbox.disabled = true;
+					}
+				}
+			}
+			else {
+				if (force_state !== false) {
+					li.setAttribute('selected', '');
+					cbox.checked = true;
+					cbox.disabled = false;
+					sel++;
+
+					if (this.options.keep_order)
+						li.setAttribute('data-order', ++this.orderCounter);
+				}
+			}
+
+			while (label && label.firstElementChild)
+				label.removeChild(label.firstElementChild);
+
+			for (let i = 0; i < items.length; i++) {
+				items[i].removeAttribute('display');
+				if (items[i].hasAttribute('selected')) {
+					if (ndisplay-- > 0) {
+						items[i].setAttribute('display', n++);
+						if (label)
+							label.appendChild(items[i].cloneNode(true));
+					}
+					const c = items[i].querySelector('input[type="checkbox"]');
+					if (c)
+						c.disabled = (sel == 1 && !this.options.optional);
+				}
+			}
+
+			if (ndisplay < 0)
+				sb.setAttribute('more', '');
+			else
+				sb.removeAttribute('more');
+
+			if (ndisplay === this.options.display_items)
+				sb.setAttribute('empty', '');
+			else
+				sb.removeAttribute('empty');
+
+			dom.content(more, (ndisplay === this.options.display_items)
+				? (this.options.select_placeholder ?? this.options.placeholder) : '···');
+		}
+		else {
+			let sel = li.parentNode.querySelector('[selected]');
+			if (sel) {
+				sel.removeAttribute('display');
+				sel.removeAttribute('selected');
+			}
+
+			li.setAttribute('display', 0);
+			li.setAttribute('selected', '');
+
+			this.closeDropdown(sb);
+		}
+
+		this.saveValues(sb, ul);
+	},
+
+	saveValues(sb, ul) {
+		const sel = Array.from(ul.querySelectorAll('li[selected]'));
+		const div = sb.lastElementChild;
+		const name = this.options.name;
+		let strval = '';
+		const values = [];
+
+		if (this.options.keep_order) {
+			sel.sort((a, b) =>
+				(+a.getAttribute('data-order') || 0) -
+				(+b.getAttribute('data-order') || 0)
+			);
+		}
+
+		while (div.lastElementChild)
+			div.removeChild(div.lastElementChild);
+
+		sel.forEach(s => {
+			if (s.hasAttribute('placeholder'))
+				return;
+
+			const v = {
+				text: s.innerText,
+				value: s.hasAttribute('data-value') ? s.getAttribute('data-value') : s.innerText,
+				element: s
+			};
+
+			div.appendChild(E('input', {
+				type: 'hidden',
+				name: name,
+				value: v.value
+			}));
+
+			values.push(v);
+
+			strval += strval.length ? ` ${v.value}` : v.value;
+		});
+
+		const detail = {
+			instance: this,
+			element: sb
+		};
+
+		if (this.options.multiple)
+			detail.values = values;
+		else
+			detail.value = values.length ? values[0] : null;
+
+		sb.value = strval;
+
+		sb.dispatchEvent(new CustomEvent('cbi-dropdown-change', {
+			bubbles: true,
+			detail: detail
+		}));
 	}
 });
 
@@ -1114,109 +1494,80 @@ function loadModalTitle(title, addtitle, section_id) {
 	return label ? title + ' » ' + label : addtitle;
 }
 
-function loadProxyGroupLabel(preadds, section_id) {
+function loadLabel(preadds, section_id) {
 	delete this.keylist;
 	delete this.vallist;
 
-	preadds?.forEach((arr) => {
-		this.value.apply(this, arr);
-	});
-	uci.sections(this.config, 'proxy_group', (res) => {
-		if (res.enabled !== '0')
-			this.value(res['.name'], res.label);
-	});
+	for (const arr of preadds || [])
+		this.value(...arr);
 
 	return this.super('load', section_id);
 }
 
-function loadNodeLabel(preadds, section_id) {
-	delete this.keylist;
-	delete this.vallist;
+function loadLabelValues(uciconfig, sectiontype, options = {}) {
+	const values = [];
 
-	preadds?.forEach((arr) => {
-		this.value.apply(this, arr);
-	});
-	uci.sections(this.config, 'node', (res) => {
-		if (res.enabled !== '0')
-			this.value(res['.name'], res.label);
-	});
+	switch (sectiontype) {
+		case 'proxy_group':
+		case 'node':
+		case 'provider':
+			uci.sections(uciconfig, sectiontype, (res) => {
+				if (res.enabled !== '0')
+					values.push([res['.name'], res.label]);
+			});
+			break;
+		case 'ruleset':
+			uci.sections(uciconfig, sectiontype, (res) => {
+				if (
+					res.enabled !== '0' &&
+					(!options.behaviors ||
+					  options.behaviors.includes(res.behavior))
+				) {
+					values.push([res['.name'], res.label]);
+				}
+			});
+			break;
+		case 'subrule-group': {
+			const groups = new Set();
 
-	return this.super('load', section_id);
-}
+			uci.sections(uciconfig, 'subrules', (res) => {
+				if (res.enabled !== '0')
+					groups.add(res.group);
+			});
 
-function loadProviderLabel(preadds, section_id) {
-	delete this.keylist;
-	delete this.vallist;
+			for (const group of groups)
+				values.push([group, group]);
+			break;
+		}
+		case 'rematch-name': {
+			const names = new Set();
 
-	preadds?.forEach((arr) => {
-		this.value.apply(this, arr);
-	});
-	uci.sections(this.config, 'provider', (res) => {
-		if (res.enabled !== '0')
-			this.value(res['.name'], res.label);
-	});
+			for (const type of ['rules', 'subrules']) {
+				uci.sections(uciconfig, type, (res) => {
+					if (res.enabled === '0')
+						return;
 
-	return this.super('load', section_id);
-}
+					try {
+						const payload =
+							JSON.parse(res?.entry?.trim() || '{}').payload || [];
 
-function loadRulesetLabel(preadds, behaviors, section_id) {
-	delete this.keylist;
-	delete this.vallist;
+						for (const p of payload)
+							if (p.type === 'REMATCH-NAME')
+								names.add(p.factor);
+					} catch {}
+				});
+			}
 
-	preadds?.forEach((arr) => {
-		this.value.apply(this, arr);
-	});
-	uci.sections(this.config, 'ruleset', (res) => {
-		if (res.enabled !== '0')
-			if (behaviors ? behaviors.includes(res.behavior) : true)
-				this.value(res['.name'], res.label);
-	});
+			for (const name of names)
+				values.push([name, name]);
 
-	return this.super('load', section_id);
-}
+			break;
+		}
+		default:
+			break;
+	}
 
-function loadSubRuleGroup(preadds, section_id) {
-	delete this.keylist;
-	delete this.vallist;
-
-	preadds?.forEach((arr) => {
-		this.value.apply(this, arr);
-	});
-	let groups = {};
-	uci.sections(this.config, 'subrules', (res) => {
-		if (res.enabled !== '0')
-			groups[res.group] = res.group;
-	});
-	Object.keys(groups).forEach((group) => {
-		this.value(group, group);
-	});
-
-	return this.super('load', section_id);
-}
-
-function loadRematchName(preadds, section_id) {
-	delete this.keylist;
-	delete this.vallist;
-
-	preadds?.forEach((arr) => {
-		this.value.apply(this, arr);
-	});
-	let names = {};
-	for (const section_type of ['rules', 'subrules'])
-		uci.sections(this.config, section_type, (res) => {
-			if (res.enabled !== '0')
-				try {
-					const obj = JSON.parse(res?.entry?.trim() || '{}');
-					for (const p of obj.payload || [])
-						if (p.type === 'REMATCH-NAME')
-							names[p.factor] = p.factor;
-				} catch {}
-		});
-	Object.keys(names).forEach((name) => {
-		this.value(name, name);
-	});
-
-	return this.super('load', section_id);
+	return values;
 }
 
 function renderStatus(ElId, isRunning, instance, noGlobal) {
@@ -1790,6 +2141,7 @@ return baseclass.extend({
 	/* Prototype */
 	GridSection: CBIGridSection,
 	DynamicList: CBIDynamicList,
+	MultiValue: CBIMultiValue,
 	StaticList: CBIStaticList,
 	ListValue: CBIListValue,
 	RichValue: CBIRichValue,
@@ -1819,12 +2171,8 @@ return baseclass.extend({
 	// load
 	loadDefaultLabel,
 	loadModalTitle,
-	loadProxyGroupLabel,
-	loadNodeLabel,
-	loadProviderLabel,
-	loadRulesetLabel,
-	loadSubRuleGroup,
-	loadRematchName,
+	loadLabel,
+	loadLabelValues,
 	// render
 	renderStatus,
 	updateStatus,

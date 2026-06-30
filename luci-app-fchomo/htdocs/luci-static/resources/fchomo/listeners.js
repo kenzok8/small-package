@@ -609,7 +609,12 @@ function renderListeners(s, uciconfig, isClient) {
 		o = s.taboption('field_general', hm.ListValue, 'rule', _('Sub rule'),
 			_('Name of the Sub rule used for inbound matching.'));
 		o.value.apply(o, ['', _('null')]);
-		o.load = L.bind(hm.loadSubRuleGroup, o, [['', _('null')]]);
+		o.load = function(section_id) {
+			return hm.loadLabel.call(this, [
+				['', _('null')],
+				...hm.loadLabelValues(this.config, 'subrule-group')
+			], section_id);
+		}
 		o.editable = true;
 
 		o = s.taboption('field_general', hm.ListValue, 'proxy', _('Proxy group'),
@@ -618,7 +623,12 @@ function renderListeners(s, uciconfig, isClient) {
 		hm.preset_outbound.direct.forEach((res) => {
 			o.value.apply(o, res);
 		})
-		o.load = L.bind(hm.loadProxyGroupLabel, o, hm.preset_outbound.direct);
+		o.load = function(section_id) {
+			return hm.loadLabel.call(this, [
+				...hm.preset_outbound.direct,
+				...hm.loadLabelValues(this.config, 'proxy_group')
+			], section_id);
+		}
 		o.editable = true;
 	}
 

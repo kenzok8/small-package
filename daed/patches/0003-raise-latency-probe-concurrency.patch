@@ -1,0 +1,19 @@
+From: kenzok8 <kenzok8@noreply>
+Date: 2026-06-30
+Subject: [PATCH] daed: raise manual latency probe concurrency to 16
+
+Raise concurrent probes 8->16 so manual latency tests finish faster
+when many nodes (incl. dead/timeout ones) are present.
+Reported: https://github.com/kenzok8/openwrt-daede/issues/20
+---
+--- a/graphql/service/node/latency_mutation_utils.go
++++ b/graphql/service/node/latency_mutation_utils.go
+@@ -19,7 +19,7 @@
+ 	"github.com/sirupsen/logrus"
+ )
+ 
+-const latencyProbeConcurrency = 8
++const latencyProbeConcurrency = 16
+ 
+ func TestLatencies(ctx context.Context, ids *[]graphql.ID) ([]*LatencyResolver, error) {
+ 	option, err := latencyProbeOption(ctx)
