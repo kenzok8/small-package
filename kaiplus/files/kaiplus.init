@@ -1,0 +1,74 @@
+#!/bin/sh /etc/rc.common
+
+START=93
+USE_PROCD=1
+
+get_config() {
+	config_get_bool enabled "$1" enabled 1
+	config_get data_dir "$1" data_dir ""
+	config_get port "$1" port "8198"
+	config_get system_role "$1" system_role "istoreos"
+}
+
+mkdir_p() {
+	[ -d "$1" ] || mkdir -p "$1"
+}
+
+start_service() {
+	config_load kaiplus
+	config_foreach get_config kaiplus
+
+	if [ "$enabled" != 1 ]; then
+		return 1
+	fi
+	if [ -z "$data_dir" ]; then
+		logger -t kaiplus "data_dir is empty; please set option data_dir in /etc/config/kaiplus"
+		return 1
+	fi
+
+	mkdir_p "$data_dir"
+	mkdir_p "$data_dir/workspace"
+	mkdir_p "$data_dir/cache"
+	mkdir_p "$data_dir/config"
+	mkdir_p "$data_dir/state"
+
+	helper_token_file="$data_dir/state/ssh-helper.token"
+	if [ ! -s "$helper_token_file" ]; then
+		umask 077
+		if [ -r /proc/sys/kernel/random/uuid ]; then
+			cat /proc/sys/kernel/random/uuid > "$helper_token_file"
+		else
+			{
+				date +%s
+				cat /proc/uptime 2>/dev/null
+				dd if=/dev/urandom bs=24 count=1 2>/dev/null || true
+			} | sha256sum | awk '{print $1}' > "$helper_token_file"
+		fi
+	fi
+	helper_token="$(cat "$helper_token_file")"
+
+	logger -t kaiplus "Starting KaiPlus service"
+	procd_open_instance kaiplus_bin
+	procd_set_param env \
+		KAIPLUS_HOME="$data_dir" \
+		KAIPLUS_SYSTEM_ROLE="$system_role" \
+		KAIPLUS_WORKSPACE_HELPER_DIR="/usr/share/kaiplus/helpers" \
+		KAIPLUS_WORKSPACE_TOOL_INSTALL_DIR="/tmp/kaiplus_workspace_tool" \
+		KAIPLUS_SSH_HELPER_TOKEN="$helper_token" \
+		REASONIX_CREDENTIALS_STORE="file"
+	procd_set_param command /usr/sbin/kaiplus_bin kaiplus-web
+	procd_append_param command --addr "0.0.0.0:$port"
+	procd_append_param command --data-dir "$data_dir"
+	procd_append_param command --static-dir /usr/share/kaiplus/www
+	procd_append_param command --defaults-dir /usr/share/kaiplus/defaults
+	procd_append_param command --system-role "$system_role"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance
+	logger -t kaiplus "KaiPlus service started"
+}
+
+service_triggers() {
+	procd_add_reload_trigger "kaiplus"
+}

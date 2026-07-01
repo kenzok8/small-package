@@ -1,0 +1,21 @@
+<script type="text/javascript">//<![CDATA[
+XHR.poll(5, '<%=url("admin/services/kaiplus_status")%>', null, function(x, st) {
+	var el = document.getElementById('kaiplus_status');
+	if (st && el) {
+		if (!st.running) {
+			el.innerHTML = '<br/><em style=\"color:red\"><%:The KaiPlus service is not running.%></em>';
+		}
+		if (st.running) {
+			el.innerHTML = '<br/><em style=\"color:green\"><%:The KaiPlus service is running.%></em>'
+				+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open KaiPlus%> \" onclick=\"window.open('http://" + window.location.hostname + ":" + st.port + "/')\"/>";
+		}
+	}
+});
+//]]></script>
+
+<fieldset class="cbi-section">
+	<legend><%:Status%></legend>
+	<p id="kaiplus_status">
+		<em><%:Collecting data...%></em>
+	</p>
+</fieldset>

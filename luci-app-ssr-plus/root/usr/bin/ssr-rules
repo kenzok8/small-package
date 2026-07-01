@@ -136,6 +136,26 @@ check_ip_list_changed() {
 	fi
 }
 
+# Configure kernel parameters for TPROXY support
+set_tproxy_sysctl() {
+	# Disable IPv4 rp_filter for TPROXY compatibility.
+	# rp_filter (Reverse Path Filtering) must be disabled for TPROXY to work properly
+	sysctl -w net.ipv4.conf.all.rp_filter=0 >/dev/null 2>&1
+	sysctl -w net.ipv4.conf.default.rp_filter=0 >/dev/null 2>&1
+
+	# Disable redirects to prevent routing issues
+	# sysctl -w net.ipv4.conf.all.accept_redirects=0 >/dev/null 2>&1
+	# sysctl -w net.ipv4.conf.all.send_redirects=0 >/dev/null 2>&1
+
+	# Disable rp_filter for all network interfaces
+	local f
+	for f in /proc/sys/net/ipv4/conf/*/rp_filter; do
+		echo 0 > "$f" 2>/dev/null
+	done
+
+	loger 6 "TPROXY sysctl settings applied"
+}
+
 # Cleanup persistence and runtime module files
 cleanup_persistence_files() {
 	if [ "$USE_NFT" != "1" ]; then
@@ -807,6 +827,10 @@ ac_rule_iptables() {
 
 tp_rule() {
 	[ -n "$TPROXY" ] || return 0
+
+	# Apply sysctl settings for TPROXY
+	set_tproxy_sysctl
+
 	if [ "$USE_NFT" = "1" ]; then
 		tp_rule_nft
 	else
