@@ -9,8 +9,6 @@ s.anonymous = true
 
 s:option(Flag, "enabled", translate("Enable")).rmempty = false
 
-local virtualdog_model = require "luci.model.virtualdog"
-
 local data_dir = s:option(Value, "data_dir", translate("Data directory"))
 data_dir.rmempty = false
 data_dir.description = translate("Required. VirtualDog stores VM metadata, runtime files and disk images under this directory.")
