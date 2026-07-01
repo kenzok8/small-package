@@ -1407,8 +1407,8 @@ function act_ping()
 			iret = luci.sys.call("ipset add ss_spec_wan_ac " .. domain .. " 2>/dev/null") == 0
 		end
 	end
-	-- Hysteria2 节点轻量 UDP 端口检测
-	if proto:find("hysteria2") or type:find("hysteria2") then
+	-- Hysteria2、TUIC 节点轻量 UDP 端口检测
+	if proto:find("hysteria2") or type:find("hysteria2") or proto:find("tuic") or type:find("tuic") then
 		local udp_cmd = string.format("nping --udp -c 1 -p %d %s 2>/dev/null", port, domain)
 		local udp_raw = luci.sys.exec(udp_cmd) or ""
 		local udp_rtt = udp_raw:match("Avg rtt:%s*([0-9.]+)ms")
