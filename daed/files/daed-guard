@@ -1,0 +1,6 @@
+#!/bin/sh
+
+. /usr/share/daed/cleanup.sh
+
+daed_cleanup_runtime
+exec /usr/bin/daed "$@"

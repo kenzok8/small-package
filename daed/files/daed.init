@@ -5,8 +5,10 @@ USE_PROCD=1
 START=99
 
 CONF="daed"
-PROG="/usr/bin/daed"
+PROG="/usr/bin/daed-guard"
 LOG="/var/log/daed/daed.log"
+
+. /usr/share/daed/cleanup.sh
 
 start_service() {
 	config_load "$CONF"
@@ -40,19 +42,7 @@ start_service() {
 
 stop_service() {
 	rm -f "$LOG"
-	# kill lingering procs in daens: TERM first, then KILL for stubborn ones
-	for pid in $(ip netns pids daens 2>/dev/null); do kill "$pid" 2>/dev/null; done
-	if [ -n "$(ip netns pids daens 2>/dev/null)" ]; then
-		sleep 1
-		for pid in $(ip netns pids daens 2>/dev/null); do kill -9 "$pid" 2>/dev/null; done
-	fi
-	# cleanup daens netns; ip-full needed for netns, busybox fallback via umount
-	if ! ip netns del daens 2>/dev/null; then
-		umount /run/netns/daens 2>/dev/null
-		rm -f /run/netns/daens
-	fi
-	# clean orphaned dae0
-	ip link del dae0 2>/dev/null || true
+	daed_cleanup_runtime
 }
 
 service_triggers() {

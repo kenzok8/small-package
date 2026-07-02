@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=daed
 PKG_VERSION:=2026.06.14
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 
 PKG_SOURCE:=daed-src-2026.06.14-4e215048068a.tar.gz
 PKG_SOURCE_URL:=https://github.com/kenzok8/openwrt-daede/releases/download/daed-src
@@ -132,6 +132,10 @@ define Package/daed/install
 	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/dae-wing $(1)/usr/bin/daed
+	$(INSTALL_BIN) $(CURDIR)/files/daed-guard $(1)/usr/bin/daed-guard
+
+	$(INSTALL_DIR) $(1)/usr/share/daed
+	$(INSTALL_DATA) $(CURDIR)/files/daed-cleanup.sh $(1)/usr/share/daed/cleanup.sh
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) $(CURDIR)/files/daed.config $(1)/etc/config/daed
