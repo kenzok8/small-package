@@ -19,6 +19,7 @@ local b64decode = nixio.bin.b64decode
 local b64encode = nixio.bin.b64encode
 local URL = require "url"
 local cache = {}
+local old_groupHash_cache = {}
 local nodeResult = setmetatable({}, {__index = cache}) -- update result
 local name = 'shadowsocksr'
 local uciType = 'servers'
@@ -378,14 +379,14 @@ local function isClashYAML(str)
 	return false
 end
 
-local function processClashSubscription(url)
+local function processClashSubscription(url, groupHash)
 	local ok, parsed = pcall(URL.parse, url)
 	if not ok or not parsed or not parsed.host then
 		return nil
 	end
 
-	local url_hash = string.sub(md5(url), 1, 8)
-	local alias = "Clash_" .. parsed.host .. "_" .. url_hash
+	local groupHash_short = string.sub(groupHash, 1, 8)
+	local alias = "Clash_" .. parsed.host .. "_" .. groupHash_short
 	local server_port = parsed.port or ((parsed.scheme == "http") and "80" or "443")
 	local result = {
 		type = "clash",
@@ -2005,14 +2006,55 @@ end
 local function read_old_md5(groupHash)
 	local path = get_md5_path(groupHash)
 	if nixio.fs.access(path) then
-		return trim(nixio.fs.readfile(path) or "")
+		local content = trim(nixio.fs.readfile(path) or "")
+		if content ~= "" then
+			-- 尝试解析 JSON 格式
+			local ok, data = pcall(jsonParse, content)
+			if ok and data and data.md5 then
+				return data.md5
+			end
+			-- 兼容旧格式（纯 MD5 值）
+			return content
+		end
 	end
 	return ""
 end
 
+-- 读取上次保存的 groupHash（扫描所有 sub_md5_* 文件，通过 url 匹配）
+local function read_old_groupHash(url)
+	-- 检查缓存
+	if old_groupHash_cache[url] then
+		return old_groupHash_cache[url]
+	end
+
+	local files = nixio.fs.dir("/tmp/") or {}
+    for file in files do
+		if file:match("^sub_md5_") then
+			local full_path = "/tmp/" .. file
+			if nixio.fs.access(full_path) then
+				local content = trim(nixio.fs.readfile(full_path) or "")
+				if content ~= "" then
+					local ok, data = pcall(jsonParse, content)
+					if ok and data and data.url and data.url == url then
+						return data.hash, data.url
+					end
+				end
+			end
+		end
+	end
+	return nil
+end
+
 -- 将订阅分组最新内容的 MD5 值保存到对应的临时文件中，以便下次更新时进行对比。
-local function write_new_md5(groupHash, md5)
-	nixio.fs.writefile(get_md5_path(groupHash), md5)
+-- 同时保存 groupHash 和 url，用于检测 groupHash 的值变化
+local function write_new_md5(groupHash, md5, url)
+	local path = get_md5_path(groupHash)
+	local data = {
+		md5 = md5,
+		hash = groupHash,
+		url = url
+	}
+	nixio.fs.writefile(path, jsonStringify(data))
 end
 
 -- curl
@@ -2511,6 +2553,7 @@ end
 local execute = function()
 	local updated = false
 	local selected_hashes = {}
+	local old_groupHash = nil
 
 	for _, item in ipairs(subscribe_items) do
 		local fetch_url = build_convert_url(item.url)
@@ -2531,7 +2574,11 @@ local execute = function()
 		local raw, new_md5
 		local groupHash
 		local yaml_removed_count = 0
-		
+
+		-- 读取旧的 groupHash
+		old_groupHash = read_old_groupHash(url)
+		log("读取到旧的 groupHash: " .. tostring(old_groupHash))
+
 		if should_use_mihomo_mode() then
 			raw, new_md5 = curl(fetch_url, user_agent)
 			if isClashYAML(raw) then
@@ -2557,7 +2604,7 @@ local execute = function()
 		if should_use_mihomo_mode() and yaml_removed_count and yaml_removed_count > 0 then
 			log("Clash/Mihomo YAML 已按订阅过滤关键词移除节点数量: " .. tostring(yaml_removed_count))
 		end
-		log("groupHash: " .. groupHash)
+		log("groupHash: " .. tostring(groupHash))
 		log("old_md5: " .. tostring(old_md5))
 		log("new_md5: " .. tostring(new_md5))
 
@@ -2589,8 +2636,18 @@ local execute = function()
 				log("订阅内容未变化但本地节点不存在，强制重建订阅节点: " .. url)
 			end
 			updated = true
-			-- 保存更新后的 MD5 值到以 groupHash 为标识的临时文件中，用于下次订阅更新时进行对比
-			write_new_md5(groupHash, new_md5)
+
+			-- 当 groupHash 变化时，删除旧的 MD5 文件
+			if old_groupHash and old_groupHash ~= groupHash then
+				local old_path = get_md5_path(old_groupHash)
+				if nixio.fs.access(old_path) then
+					nixio.fs.remove(old_path)
+					log("groupHash 已变化，删除旧 MD5 文件: " .. old_path)
+				end
+			end
+            
+			-- 保存更新后的 groupHash、MD5 和 URL 值
+			write_new_md5(groupHash, new_md5, url)
 
 			cache[groupHash] = {}
 			tinsert(nodeResult, {})
@@ -2600,7 +2657,7 @@ local execute = function()
 
 			if isClashYAML(raw) then
 				is_clash_subscription = true
-				local result = processClashSubscription(fetch_url)
+				local result = processClashSubscription(fetch_url, groupHash)
 				if result and check_filer(result) then
 					log('过滤 Clash 总节点: ' .. result.alias)
 				elseif result and not cache[groupHash][result.hashkey] then

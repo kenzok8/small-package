@@ -835,7 +835,7 @@ Xray.outbounds = {
 				tcpcongestion = server.custom_tcpcongestion, -- 连接服务器节点的 TCP 拥塞控制算法
 				-- 出站的 dialerProxy（与 fragment 中的 tag 保持一致）
 				dialerProxy = (xray_fragment.fragment == "1" or xray_fragment.noise == "1") and
-				              ((remarks ~= nil and remarks ~= "") and (node_id .. "." .. remarks) or node_id) or nil
+				              ((remarks and remarks ~= "") and (node_id .. "." .. remarks) or ("direct" .. "." .. node_id)) or nil
 			}
 		} or nil,
 		mux = (server.v2ray_protocol ~= "hysteria2" and server.v2ray_protocol ~= "wireguard") and {
@@ -872,7 +872,7 @@ if xray_fragment.fragment ~= "0" or (xray_fragment.noise ~= "0" and xray_noise.e
 	local n_domainstrategy = xray_noise.domainStrategy
 	table.insert(Xray.outbounds, {
 		protocol = "freedom",
-		tag = (remarks ~= nil and remarks ~= "") and (node_id .. "." .. remarks) or node_id,
+		tag = (remarks and remarks ~= "") and (node_id .. "." .. remarks) or ("direct" .. "." .. node_id),
 		settings = (xray_fragment.noise == "1" and xray_noise.enabled == "1") and n_domainstrategy and n_domainstrategy ~= "" and {
 			domainStrategy = n_domainstrategy
 		} or nil,
