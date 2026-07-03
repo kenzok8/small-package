@@ -43,7 +43,7 @@ local excluded_domain = {
 local mydnsip = '127.0.0.1'
 local mydnsport = '5335'
 local ipsetname = 'gfwlist'
-local new_appledns = uci:get_first("shadowsocksr", "global", "apple_dns")
+local new_appledns = uci:get_first("shadowsocksr", "global", "apple_dns", "")
 local bc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 -- base64decoding
 local function base64_dec(data)
@@ -111,10 +111,10 @@ local function generate_apple(type)
 			end
 		end
 	end
-	for _, domain in ipairs(domains) do
-        if new_appledns and new_appledns ~= "" then
-            out:write(string.format("server=/%s/%s\n", domain, new_appledns))
-        end
+	if new_appledns and new_appledns ~= "" then
+		for _, domain in ipairs(domains) do
+			out:write(string.format("server=/%s/%s\n", domain, new_appledns))
+		end
 	end
 	out:close()
 	os.remove("/tmp/ssr-update.tmp")
@@ -178,7 +178,11 @@ local function update(url, file, type, file2)
 			apple = io.open("/tmp/ssr-update.tmp", "w")
 			apple:write(decode)
 			apple:close()
-			generate_apple(type)
+			if new_appledns and new_appledns ~= "" then
+				generate_apple(type)
+			else
+				os.remove("/tmp/ssr-update.tmp")
+			end
 		end
 		if type == "ad_data" then
 			local adblock = io.open("/tmp/ssr-update." .. type, "r")
