@@ -123,8 +123,8 @@ msgstr "日志设置"
 msgid "daed Username"
 msgstr "daed 用户名"
 
-msgid "Used by LuCI to update daed subscriptions through GraphQL. It does not change the daed Web login account."
-msgstr "LuCI 通过 GraphQL 更新 daed 订阅时使用；不会修改 daed Web 的登录账号。"
+msgid "Used by LuCI to access daed (subscription updates and import). If daed is not initialized yet, this account is used to create the daed admin."
+msgstr "供 LuCI 访问 daed 使用（订阅更新与导入）。若 daed 尚未初始化，将用此账号创建 daed 管理员。"
 
 msgid "daed Password"
 msgstr "daed 密码"
@@ -781,6 +781,18 @@ msgstr "登录 daed"
 
 msgid "The password is not saved. Sign-in is remembered in this browser for up to 30 days."
 msgstr "不会保存密码。此浏览器将在 30 天内记住登录状态。"
+
+msgid "Initialize daed"
+msgstr "初始化 daed"
+
+msgid "Initialize and import"
+msgstr "初始化并导入"
+
+msgid "daed has not been initialized yet. The account below will be created as the daed admin (password needs at least 6 characters with both letters and numbers), then used to import."
+msgstr "daed 尚未初始化。下方账号将被创建为 daed 管理员（密码至少 6 位，且需同时包含字母和数字），随后用于导入。"
+
+msgid "daed is not initialized yet. Open the daed web panel (port 2023) to create an admin account, then import again."
+msgstr "daed 尚未初始化。请先打开 daed 网页面板（2023 端口）创建管理员账号，再重新导入。"
 
 msgid "3. Import Subscription"
 msgstr "3. 导入订阅"

@@ -109,7 +109,7 @@ msgstr ""
 msgid "daed Username"
 msgstr ""
 
-msgid "Used by LuCI to update daed subscriptions through GraphQL. It does not change the daed Web login account."
+msgid "Used by LuCI to access daed (subscription updates and import). If daed is not initialized yet, this account is used to create the daed admin."
 msgstr ""
 
 msgid "daed Password"
@@ -560,6 +560,22 @@ msgstr ""
 
 #: converter.js
 msgid "The password is not saved. Sign-in is remembered in this browser for up to 30 days."
+msgstr ""
+
+#: converter.js
+msgid "Initialize daed"
+msgstr ""
+
+#: converter.js
+msgid "Initialize and import"
+msgstr ""
+
+#: converter.js
+msgid "daed has not been initialized yet. The account below will be created as the daed admin (password needs at least 6 characters with both letters and numbers), then used to import."
+msgstr ""
+
+#: converter.js
+msgid "daed is not initialized yet. Open the daed web panel (port 2023) to create an admin account, then import again."
 msgstr ""
 
 msgid "3. Import Subscription"

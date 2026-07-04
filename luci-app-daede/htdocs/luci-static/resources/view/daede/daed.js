@@ -21,7 +21,7 @@ function renderDaedSettings() {
 	o.rmempty = false;
 
 	o = s.option(form.Value, 'dashboard_username', _('daed Username'),
-		_('Used by LuCI to update daed subscriptions through GraphQL. It does not change the daed Web login account.'));
+		_('Used by LuCI to access daed (subscription updates and import). If daed is not initialized yet, this account is used to create the daed admin.'));
 	o.placeholder = 'admin';
 	o.rmempty = false;
 

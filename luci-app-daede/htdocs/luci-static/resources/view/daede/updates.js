@@ -31,6 +31,7 @@ function currentPreset(gi, gs) {
 
 const HEALTH_PATHS = {
 	btf: '/sys/kernel/btf/vmlinux',
+	btfDetached: '/usr/lib/debug/boot/vmlinux',
 	netns: '/run/netns/daens'
 };
 
@@ -270,6 +271,7 @@ return view.extend({
 				probeFile(DATA_PATHS.geoip),
 				probeFile(DATA_PATHS.geosite),
 				probeFile(HEALTH_PATHS.btf),
+				probeFile(HEALTH_PATHS.btfDetached),
 				backend.detectRunning(),
 				backend.serviceStatus(ctx.name)
 			];
@@ -283,8 +285,8 @@ return view.extend({
 				probes.push(probeFile(HEALTH_PATHS.netns));
 
 			return Promise.all(probes).then(function(r) {
-				const geoip = r[0], geosite = r[1], btf = r[2], running = r[3], service = r[4];
-				const pkgOffset = 5;
+				const geoip = r[0], geosite = r[1], btf = r[2], btfDetached = r[3], running = r[4], service = r[5];
+				const pkgOffset = 6;
 				const coreInfo = {};
 				corePkgs.forEach(function(pkg, i) {
 					coreInfo[pkg] = r[pkgOffset + i];
@@ -364,6 +366,8 @@ return view.extend({
 
 				if (btf.exists)
 					healthBody.appendChild(mkRow('✓', 'dd-up-ok', _('Kernel BTF'), HEALTH_PATHS.btf + ' · ' + fmtBytes(btf.size)));
+				else if (btfDetached.exists)
+					healthBody.appendChild(mkRow('✓', 'dd-up-ok', _('Kernel BTF'), HEALTH_PATHS.btfDetached + ' · ' + fmtBytes(btfDetached.size)));
 				else
 					healthBody.appendChild(mkRow('✗', 'dd-up-err', _('Kernel BTF'), _('not available — eBPF needs CONFIG_DEBUG_INFO_BTF or vmlinux-btf')));
 

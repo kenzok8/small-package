@@ -13,6 +13,7 @@
 				"/usr/share/v2ray/geoip.dat": [ "read" ],
 				"/usr/share/v2ray/geosite.dat": [ "read" ],
 				"/sys/kernel/btf/vmlinux": [ "read" ],
+				"/usr/lib/debug/boot/vmlinux": [ "read" ],
 				"/run/netns/daens": [ "read" ],
 				"/tmp/luci-app-daede.geoip.log": [ "read" ],
 				"/tmp/luci-app-daede.geosite.log": [ "read" ],

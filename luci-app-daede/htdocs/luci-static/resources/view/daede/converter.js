@@ -105,19 +105,29 @@ function graphQL(endpoint, query, variables, token) {
 	});
 }
 
-function requestDaedCredentials() {
+function requestDaedCredentials(mode) {
+	const init = (mode === 'init');
 	return new Promise(function(resolve, reject) {
 		const username = E('input', { 'class': 'cbi-input-text', 'autocomplete': 'username', 'placeholder': _('Username') });
-		const password = E('input', { 'class': 'cbi-input-password', 'type': 'password', 'autocomplete': 'current-password', 'placeholder': _('Password') });
+		const password = E('input', { 'class': 'cbi-input-password', 'type': 'password', 'autocomplete': init ? 'new-password' : 'current-password', 'placeholder': _('Password') });
+		if (init) {
+			// prefill from the config-page account so the daed admin created here
+			// matches what cron subscription updates use.
+			username.value = uci.get('daed', 'config', 'dashboard_username') || '';
+			password.value = uci.get('daed', 'config', 'dashboard_password') || '';
+		}
 		const cancel = E('button', { 'class': 'btn cbi-button' }, _('Cancel'));
-		const login = E('button', { 'class': 'btn cbi-button cbi-button-positive' }, _('Sign in and import'));
+		const submit = E('button', { 'class': 'btn cbi-button cbi-button-positive' },
+			init ? _('Initialize and import') : _('Sign in and import'));
 
 		cancel.addEventListener('click', function() {
 			password.value = '';
 			ui.hideModal();
-			reject(new Error(_('Import cancelled')));
+			reject(new Error(init
+				? _('daed is not initialized yet. Open the daed web panel (port 2023) to create an admin account, then import again.')
+				: _('Import cancelled')));
 		});
-		login.addEventListener('click', function() {
+		submit.addEventListener('click', function() {
 			if (!username.value || !password.value)
 				return;
 			const result = { username: username.value, password: password.value };
@@ -126,11 +136,15 @@ function requestDaedCredentials() {
 			resolve(result);
 		});
 
-		ui.showModal(_('Sign in to daed'), [ E('div', { 'class': 'dd-daed-login' }, [
-			E('p', {}, _('The password is not saved. Sign-in is remembered in this browser for up to 30 days.')),
+		const intro = init
+			? _('daed has not been initialized yet. The account below will be created as the daed admin (password needs at least 6 characters with both letters and numbers), then used to import.')
+			: _('The password is not saved. Sign-in is remembered in this browser for up to 30 days.');
+
+		ui.showModal(init ? _('Initialize daed') : _('Sign in to daed'), [ E('div', { 'class': 'dd-daed-login' }, [
+			E('p', {}, intro),
 			E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Username')), E('div', { 'class': 'cbi-value-field' }, username) ]),
 			E('div', { 'class': 'cbi-value' }, [ E('label', { 'class': 'cbi-value-title' }, _('Password')), E('div', { 'class': 'cbi-value-field' }, password) ]),
-			E('div', { 'class': 'right dd-daed-login-actions' }, [ cancel, ' ', login ])
+			E('div', { 'class': 'right dd-daed-login-actions' }, [ cancel, ' ', submit ])
 		]) ]);
 		username.focus();
 	});
@@ -141,19 +155,28 @@ function requestDaedToken(endpoint, forceLogin) {
 	if (cached)
 		return Promise.resolve({ token: cached, cached: true });
 
-	let credentials;
-	return requestDaedCredentials().then(function(value) {
-		credentials = value;
-		return graphQL(endpoint,
-			'query Login($username:String!,$password:String!){token(username:$username,password:$password)}',
-			credentials);
-	}).then(function(login) {
-		daedSession.save(window.localStorage, login.token);
-		return { token: login.token, cached: false };
-	}).finally(function() {
-		if (credentials)
-			credentials.password = '';
-		credentials = null;
+	// numberUsers is unauthenticated; 0 means the daed panel was never
+	// initialized, so log-in can never succeed — bootstrap it with createUser.
+	return graphQL(endpoint, 'query Init{numberUsers}', {}).then(function(state) {
+		const needInit = !state || state.numberUsers === 0;
+		let credentials;
+		return requestDaedCredentials(needInit ? 'init' : 'login').then(function(value) {
+			credentials = value;
+			if (needInit)
+				return graphQL(endpoint,
+					'mutation Init($username:String!,$password:String!){createUser(username:$username,password:$password)}',
+					credentials).then(function(r) { return r.createUser; });
+			return graphQL(endpoint,
+				'query Login($username:String!,$password:String!){token(username:$username,password:$password)}',
+				credentials).then(function(r) { return r.token; });
+		}).then(function(token) {
+			daedSession.save(window.localStorage, token);
+			return { token: token, cached: false };
+		}).finally(function() {
+			if (credentials)
+				credentials.password = '';
+			credentials = null;
+		});
 	});
 }
 
