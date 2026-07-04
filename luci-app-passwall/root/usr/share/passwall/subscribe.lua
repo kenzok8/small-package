@@ -1299,6 +1299,10 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			result.encryption = params.encryption or "none"
 			result.flow = params.flow
 
+			if (not params.security or params.security == "") and params.flow then
+				params.security = "tls"
+			end
+
 			result.tls = "0"
 			if params.security == "tls" or params.security == "reality" then
 				result.tls = "1"

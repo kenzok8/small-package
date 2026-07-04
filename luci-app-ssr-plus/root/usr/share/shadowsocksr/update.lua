@@ -111,10 +111,8 @@ local function generate_apple(type)
 			end
 		end
 	end
-	if new_appledns and new_appledns ~= "" then
-		for _, domain in ipairs(domains) do
-			out:write(string.format("server=/%s/%s\n", domain, new_appledns))
-		end
+	for _, domain in ipairs(domains) do
+		out:write(string.format("server=/%s/%s\n", domain, new_appledns))
 	end
 	out:close()
 	os.remove("/tmp/ssr-update.tmp")

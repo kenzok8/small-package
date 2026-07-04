@@ -648,7 +648,7 @@ return view.extend({
 				return requestDaedToken(endpoint, forceLogin).then(function(auth) {
 					token = auth.token;
 					usedCachedToken = auth.cached;
-					return graphQL(endpoint, 'query State{groups{id name nodes{id} subscriptions{subscription{id}}}}', {}, token);
+					return graphQL(endpoint, 'query State{groups{id name nodes{id}}}', {}, token);
 				});
 			};
 

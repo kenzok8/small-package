@@ -446,14 +446,17 @@ local function encode_anytls(node)
 	local link = "anytls://" .. (node.password or "") .. "@" .. host_format(node.server) .. ":" .. node.port
 	local p = {}
 
+	if o.tls.security then table.insert(p, "security=" .. o.tls.security) end
+	if o.tls.pbk then table.insert(p, "pbk=" .. urlencode(o.tls.pbk)) end
+	if o.tls.sid then table.insert(p, "sid=" .. urlencode(o.tls.sid)) end
 	if o.tls.sni then table.insert(p, "sni=" .. urlencode(o.tls.sni)) end
 	if o.tls.alpn then table.insert(p, "alpn=" .. urlencode(o.tls.alpn)) end
 	if o.tls.fp then table.insert(p, "fp=" .. urlencode(o.tls.fp)) end
 	if o.tls.ech then table.insert(p, "ech=" .. urlencode(o.tls.ech)) end
 	if o.tls.pcs then
-		table.insert(p, "allowInsecure=1")
+		table.insert(p, "insecure=1")
 	else
-		table.insert(p, "allowInsecure=" .. (o.tls.insecure and "1" or "0"))
+		table.insert(p, "insecure=" .. (o.tls.insecure and "1" or "0"))
 	end
 
 	if #p > 0 then
