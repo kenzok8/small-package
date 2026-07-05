@@ -242,7 +242,6 @@ const proxy_group_type = [
 	['fallback', _('Fallback')],
 	['url-test', _('URL test')],
 	['load-balance', _('Load balance')],
-	//['relay', _('Relay')], // Deprecated
 ];
 
 const routing_port_type = [
