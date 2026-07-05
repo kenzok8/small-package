@@ -315,13 +315,13 @@ link_mihomo_geodata() {
 		ln -sf /usr/share/v2ray/geosite.dat "$workdir/geosite.dat"
 	else
 		[ -s /etc/openclash/GeoSite.dat ] && ln -sf /etc/openclash/GeoSite.dat "$workdir/GeoSite.dat"
-		[ -s /etc/openclash/geosite.dat ] && ln -sf /etc/openclash/geosite.dat "$workdir/geosite.dat"
+		[ -s /etc/openclash/GeoSite.dat ] && ln -sf /etc/openclash/GeoSite.dat "$workdir/geosite.dat"
 	fi
 
 	if [ -s /usr/share/v2ray/geoip.dat ]; then
 		ln -sf /usr/share/v2ray/geoip.dat "$workdir/geoip.dat"
 	else
-		[ -s /etc/openclash/geoip.dat ] && ln -sf /etc/openclash/geoip.dat "$workdir/geoip.dat"
+		[ -s /etc/openclash/GeoIP.dat ] && ln -sf /etc/openclash/GeoIP.dat "$workdir/geoip.dat"
 	fi
 
 	return 0

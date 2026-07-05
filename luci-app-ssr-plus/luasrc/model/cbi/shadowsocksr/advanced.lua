@@ -293,7 +293,7 @@ if is_finded("xray") then
 		o.datatype = "or(uinteger,portrange)"
 		o.default = "100-200"
 	else
-		o.default = "3-6-8"
+		o.default = "3-6"
 	end
 	o:depends("fragment", true)
 

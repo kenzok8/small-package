@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { access, popen, glob, readfile, writefile, stat, unlink } from 'fs';
+import { access, popen, glob, readfile, writefile, stat, unlink, open } from 'fs';
 import { cursor } from 'uci';
 
 const BINARY_PATHS = [
@@ -3370,6 +3370,38 @@ let path = dir + '/' + name;
 if (writefile(path, content) === null)
 return { success: false, error: 'write_failed', message: '写入文件失败' };
 return { success: true, name, path };
+}
+},
+
+upload_config_chunk: {
+args: { name: 'name', content: 'content', type: 'type', index: 'index', total: 'total' },
+call: function(req) {
+let name     = safe_name(ensure_yaml_name(req.args?.name || ''));
+let content  = req.args?.content;
+let cfg_type = req.args?.type || '2';
+let index    = int(req.args?.index || 0);
+let total    = int(req.args?.total || 0);
+if (!name) return { success: false, error: 'invalid_name', message: '文件名无效' };
+if (type(content) != 'string') return { success: false, error: 'invalid_content', message: '文件内容无效' };
+if (total < 1 || index < 0 || index >= total) return { success: false, error: 'invalid_chunk', message: '上传分片无效' };
+if (total == 1 && !content) return { success: false, error: 'empty_content', message: '文件内容为空' };
+let dir = config_dir_by_type(cfg_type);
+if (!dir) dir = '/usr/share/clashoo/config/upload';
+system('mkdir -p ' + shell_quote(dir));
+let path = dir + '/' + name;
+
+if (index == 0) {
+	if (writefile(path, content) === null)
+		return { success: false, error: 'write_failed', message: '写入文件失败' };
+} else {
+	let fp = open(path, 'a');
+	if (!fp) return { success: false, error: 'write_failed', message: '打开文件失败' };
+	let ok = fp.write(content);
+	fp.close();
+	if (ok === null) return { success: false, error: 'write_failed', message: '写入文件失败' };
+}
+
+return { success: true, name, path, index, total, complete: index + 1 >= total };
 }
 },
 

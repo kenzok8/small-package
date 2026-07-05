@@ -151,7 +151,7 @@ var callSubscriptionUpdateStatus = rpc.declare({ object: 'luci.clashoo', method:
 var callSetSubscriptionUpdateSchedule = rpc.declare({ object: 'luci.clashoo', method: 'set_subscription_update_schedule', params: ['enabled', 'interval'], expect: {} });
 var callSetConfig     = rpc.declare({ object: 'luci.clashoo', method: 'set_config',          params: ['name'], expect: {} });
 var callDeleteCfg     = rpc.declare({ object: 'luci.clashoo', method: 'delete_config',       params: ['name', 'type'], expect: {} });
-var callUploadConfig  = rpc.declare({ object: 'luci.clashoo', method: 'upload_config',       params: ['name', 'content', 'type'], expect: {} });
+var callUploadConfigChunk = rpc.declare({ object: 'luci.clashoo', method: 'upload_config_chunk', params: ['name', 'content', 'type', 'index', 'total'], expect: {} });
 var callReadOtherConfig = rpc.declare({ object: 'luci.clashoo', method: 'read_other_config',  params: ['name', 'type'], expect: {} });
 var callListTemplates = rpc.declare({ object: 'luci.clashoo', method: 'list_templates',      expect: {} });
 var callUploadTemplate= rpc.declare({ object: 'luci.clashoo', method: 'upload_template',     params: ['name', 'content'], expect: {} });
@@ -170,6 +170,24 @@ function fastResolve(promise, timeoutMs, fallback) {
     setTimeout(function () { resolve(fallback); }, timeoutMs);
   });
   return Promise.race([L.resolveDefault(promise, fallback), t]);
+}
+
+function uploadConfigContent(name, content, type) {
+  var chunkSize = 24576;
+  var total = Math.max(1, Math.ceil((content || '').length / chunkSize));
+  var index = 0;
+
+  function sendNext() {
+    var chunk = (content || '').slice(index * chunkSize, (index + 1) * chunkSize);
+    return L.resolveDefault(callUploadConfigChunk(name, chunk, type || '2', index, total), {}).then(function (r) {
+      if (!r || !r.success)
+        throw new Error((r && (r.message || r.error)) || '上传失败');
+      index++;
+      return index < total ? sendNext() : r;
+    });
+  }
+
+  return sendNext();
 }
 
 function loadUiState() {
@@ -857,9 +875,11 @@ return view.extend({
       if (!file) return;
       var reader = new FileReader();
       reader.onload = function (e) {
-        L.resolveDefault(callUploadConfig(file.name, e.target.result, '2'), {}).then(function (r) {
-          ui.addNotification(null, E('p', r.success ? '上传成功: ' + r.name : '上传失败'));
+        uploadConfigContent(file.name, e.target.result, '2').then(function (r) {
+          ui.addNotification(null, E('p', '上传成功: ' + r.name));
           location.reload();
+        }).catch(function (err) {
+          ui.addNotification(null, E('p', '上传失败: ' + (err && err.message ? err.message : err)));
         });
       };
       reader.readAsText(file);
@@ -963,9 +983,11 @@ return view.extend({
       click: function () {
         var meta = otherEd.textarea.dataset;
         if (!meta.name) return;
-        L.resolveDefault(callUploadConfig(meta.name, otherEd.getValue(), meta.type), {}).then(function (r) {
+        uploadConfigContent(meta.name, otherEd.getValue(), meta.type).then(function (r) {
           if (r && r.success) ui.addNotification(null, E('p', meta.name + ' 已保存'));
           else ui.addNotification(null, E('p', '保存失败: ' + ((r && (r.message || r.error)) || '')));
+        }).catch(function (err) {
+          ui.addNotification(null, E('p', '保存失败: ' + (err && err.message ? err.message : err)));
         });
       }
     }, '保存');
