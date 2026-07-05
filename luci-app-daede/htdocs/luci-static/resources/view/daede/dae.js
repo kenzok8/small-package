@@ -17,6 +17,7 @@ const DEFAULT_TEMPLATE =
 	'global {\n' +
 	'    tproxy_port: 12345\n' +
 	'    tproxy_port_protect: true\n' +
+	'    so_mark_from_dae: 0\n' +
 	'    log_level: info\n' +
 	'    lan_interface: br-lan\n' +
 	'    wan_interface: auto\n' +

@@ -234,6 +234,7 @@ generate() {
 		echo "global {"
 		echo "    tproxy_port: 12345"
 		echo "    tproxy_port_protect: true"
+		echo "    so_mark_from_dae: 0"
 		echo "    log_level: ${log_level}"
 		[ -n "$lan_interface" ] && echo "    lan_interface: ${lan_interface}"
 		echo "    wan_interface: ${wan_interface}"

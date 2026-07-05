@@ -662,6 +662,7 @@ return view.extend({
 			let before;
 			let newSubId = '';
 			let createdGroupId = '';
+			const createdNodeIds = [];
 			let groupReady = false;
 			const oldSubId = existingAirport ? existingAirport.subscription_id : '';
 			const oldNodeIds = existingAirport ? existingAirport.node_ids : [];
@@ -671,7 +672,113 @@ return view.extend({
 				return requestDaedToken(endpoint, forceLogin).then(function(auth) {
 					token = auth.token;
 					usedCachedToken = auth.cached;
-					return graphQL(endpoint, 'query State{groups{id name nodes{id}}}', {}, token);
+					return graphQL(endpoint, 'query State{nodes(first:10000){edges{id link tag}} groups{id name nodes{id}}}', {}, token);
+				});
+			};
+			const importDirectNodes = function() {
+				const existing = {};
+				(((before || {}).nodes || {}).edges || []).forEach(function(node) {
+					existing[clashConverter.normalizeLink(node.link)] = node;
+				});
+				const fresh = items.filter(function(item) {
+					const duplicate = existing[clashConverter.normalizeLink(item.link)];
+					if (duplicate)
+						item.duplicate = true;
+					return !duplicate;
+				});
+				const imported = fresh.length
+					? graphQL(endpoint,
+						'mutation ImportNodes($args:[ImportArgument!]!){importNodes(rollbackError:false,args:$args){link error node{id}}}',
+						{ args: fresh.map(function(item, index) { return { link: item.link, tag: airportSync.backendId(airportId) + Date.now().toString(36) + (index + 1) }; }) }, token)
+					: Promise.resolve({ importNodes: [] });
+
+				return imported.then(function(result) {
+					const rows = result.importNodes || [];
+					const nodeIds = [];
+					const ownedIds = [];
+					const rowByLink = {};
+					rows.forEach(function(row) {
+						rowByLink[clashConverter.normalizeLink(row.link)] = row;
+					});
+					let failed = rows.filter(function(row) { return !!row.error && row.error !== 'node already exists'; }).length;
+					items.forEach(function(item) {
+						const key = clashConverter.normalizeLink(item.link);
+						const row = rowByLink[key];
+						const old = existing[key];
+						const id = row && row.node && row.node.id || old && old.id;
+						if (id)
+							nodeIds.push(id);
+						if (row && !row.error && row.node) {
+							ownedIds.push(row.node.id);
+							createdNodeIds.push(row.node.id);
+						}
+						else if (existingAirport && oldNodeIds.indexOf(id) >= 0)
+							ownedIds.push(id);
+					});
+					if (!nodeIds.length) {
+						const details = rows.filter(function(row) { return !!row.error; }).map(function(row) {
+							return row.error;
+						}).filter(function(error, index, errors) {
+							return errors.indexOf(error) === index;
+						}).join('; ');
+						throw new Error(details || _('No usable nodes were imported'));
+					}
+
+					const oldManagedGroup = airportSync.findManagedGroup(before.groups, existingAirport);
+					const ensureGroup = oldManagedGroup
+						? Promise.resolve(oldManagedGroup.id)
+						: graphQL(endpoint,
+							'mutation CreateGroup($name:String!,$policy:Policy!){createGroup(name:$name,policy:$policy){id}}',
+							{ name: groupName, policy: 'min_moving_avg' }, token).then(function(value) {
+								createdGroupId = value.createGroup.id;
+								return createdGroupId;
+							});
+					return ensureGroup.then(function(groupId) {
+						const rename = oldManagedGroup && oldManagedGroup.name !== groupName
+							? graphQL(endpoint, 'mutation RenameGroup($id:ID!,$name:String!){renameGroup(id:$id,name:$name)}', { id: groupId, name: groupName }, token)
+							: Promise.resolve();
+						return rename.then(function() {
+							return graphQL(endpoint, 'mutation SetPolicy($id:ID!,$policy:Policy!){groupSetPolicy(id:$id,policy:$policy)}', { id: groupId, policy: 'min_moving_avg' }, token);
+						}).then(function() {
+							return graphQL(endpoint, 'mutation AddNodes($id:ID!,$nodeIDs:[ID!]!){groupAddNodes(id:$id,nodeIDs:$nodeIDs)}', { id: groupId, nodeIDs: nodeIds }, token);
+						}).then(function() {
+							groupReady = true;
+							const oldMembers = oldManagedGroup ? oldManagedGroup.nodes.map(function(node) { return node.id; }) : [];
+							const removedMembers = oldMembers.filter(function(id) { return nodeIds.indexOf(id) < 0; });
+							return (removedMembers.length
+								? graphQL(endpoint, 'mutation DelNodes($id:ID!,$nodeIDs:[ID!]!){groupDelNodes(id:$id,nodeIDs:$nodeIDs)}', { id: groupId, nodeIDs: removedMembers }, token)
+								: Promise.resolve()).catch(function() {
+								failed++;
+							}).then(function() {
+								const otherAirportNodes = airportRecords().filter(function(record) {
+									return record.backend === 'daed' && (!existingAirport || record.id !== existingAirport.id);
+								}).map(function(record) { return record.node_ids; });
+								const otherGroupNodes = before.groups.filter(function(other) {
+									return other.id !== groupId;
+								}).map(function(other) { return other.nodes.map(function(node) { return node.id; }); });
+								const stale = airportSync.safeOldNodeIds(oldNodeIds, ownedIds, otherAirportNodes, otherGroupNodes);
+								return (stale.length
+									? graphQL(endpoint, 'mutation RemoveNodes($ids:[ID!]!){removeNodes(ids:$ids)}', { ids: stale }, token)
+									: Promise.resolve()).catch(function() {
+									failed++;
+								}).then(function() {
+									writeAirportRecord(existingAirport, {
+										id: airportId,
+										backend: 'daed',
+										name: name,
+										sourceHash: state.sourceHash,
+										groupId: groupId,
+										subscriptionId: '',
+										nodeIds: ownedIds
+									});
+									return applyUciChanges().then(function() {
+										items.forEach(function(item) { item.duplicate = true; item.selected = false; });
+										return { added: ownedIds.length, duplicates: items.length - ownedIds.length, failed: failed };
+									});
+								});
+							});
+						});
+					});
 				});
 			};
 
@@ -693,14 +800,35 @@ return view.extend({
 				// import the whole converted batch as one subscription
 				return graphQL(endpoint,
 					'mutation Import($a:ImportArgument!){importSubscription(rollbackError:false,arg:$a){sub{id} nodeImportResult{error}}}',
-					{ a: { link: subUrl, tag: groupName } }, token);
+					{ a: { link: subUrl, tag: groupName } }, token).then(function(result) {
+						const sub = result.importSubscription && result.importSubscription.sub;
+						const rows = (result.importSubscription && result.importSubscription.nodeImportResult) || [];
+						const usable = rows.length
+							? rows.some(function(r) { return !r.error || r.error === 'node already exists'; })
+							: !!(sub && sub.id);
+						if (!sub || !sub.id || !usable) {
+							const details = rows.map(function(r) { return r.error; }).filter(Boolean).join('; ');
+							if (sub && sub.id)
+								newSubId = sub.id;
+							throw new Error(details || _('No usable nodes were imported'));
+						}
+						return result;
+					}).catch(function(error) {
+						if (daedSession.isAccessDenied(error))
+							throw error;
+						const cleanupSub = newSubId
+							? graphQL(endpoint, 'mutation Rm($ids:[ID!]!){removeSubscriptions(ids:$ids)}', { ids: [ newSubId ] }, token).catch(function() {})
+							: Promise.resolve();
+						newSubId = '';
+						return cleanupSub.then(importDirectNodes).then(function(result) {
+							return { directResult: result };
+						});
+					});
 			}).then(function(result) {
+				if (result.directResult)
+					return result.directResult;
+
 				const sub = result.importSubscription && result.importSubscription.sub;
-				if (!sub || !sub.id) {
-					const rows = (result.importSubscription && result.importSubscription.nodeImportResult) || [];
-					const details = rows.map(function(r) { return r.error; }).filter(Boolean).join('; ');
-					throw new Error(details || _('No usable nodes were imported'));
-				}
 				newSubId = sub.id;
 				const rows = result.importSubscription.nodeImportResult || [];
 				const failed = rows.filter(function(r) { return !!r.error && r.error !== 'node already exists'; }).length;
@@ -745,11 +873,13 @@ return view.extend({
 			}).catch(function(error) {
 				if (daedSession.isAccessDenied(error))
 					daedSession.clear(window.localStorage);
-				if (groupReady || !token || (!newSubId && !createdGroupId))
+				if (groupReady || !token || (!newSubId && !createdGroupId && !createdNodeIds.length))
 					throw error;
 				const cleanup = [];
 				if (newSubId)
 					cleanup.push(graphQL(endpoint, 'mutation Rm($ids:[ID!]!){removeSubscriptions(ids:$ids)}', { ids: [ newSubId ] }, token));
+				if (createdNodeIds.length)
+					cleanup.push(graphQL(endpoint, 'mutation Rm($ids:[ID!]!){removeNodes(ids:$ids)}', { ids: createdNodeIds }, token));
 				if (createdGroupId)
 					cleanup.push(graphQL(endpoint, 'mutation RmG($id:ID!){removeGroup(id:$id)}', { id: createdGroupId }, token));
 				return Promise.all(cleanup).catch(function() {}).then(function() { throw error; });
