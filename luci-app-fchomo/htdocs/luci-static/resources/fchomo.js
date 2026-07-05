@@ -1762,7 +1762,7 @@ function textvalue2Value(section_id) {
 	let cval = this.cfgvalue(section_id);
 	let i = this.keylist.indexOf(cval);
 
-	return this.vallist[i];
+	return this.vallist[i] ?? cval;
 }
 
 function validateAuth(section_id, value) {

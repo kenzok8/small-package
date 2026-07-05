@@ -121,7 +121,7 @@ function parse_filter(cfg) {
 		return cfg;
 }
 
-function get_proxy(cfg) {
+function get_proxy(cfg, pass_undefined) {
 	if (isEmpty(cfg))
 		return null;
 
@@ -129,9 +129,12 @@ function get_proxy(cfg) {
 		return cfg;
 
 	const label = uci.get(uciconf, cfg, 'label');
-	if (isEmpty(label))
-		die(sprintf("%s's label is missing, please check your configuration.", cfg));
-	else
+	if (isEmpty(label)) {
+		if (pass_undefined)
+			return cfg;
+		else
+			die(sprintf("%s's label is missing, please check your configuration.", cfg));
+	} else
 		return label;
 }
 
@@ -440,6 +443,7 @@ if (!isEmpty(config.dns.fallback))
 		ipcidr: uci.get(uciconf, ucidns, 'fallback_filter_ipcidr') || [],
 		domain: uci.get(uciconf, ucidns, 'fallback_filter_domain') || [],
 	};
+config.dns["fallback-lazy-query"] = strToBool(uci.get(uciconf, ucidns, 'fallback_lazy_query'));
 /* DNS END */
 
 /* Hosts START */
@@ -744,7 +748,9 @@ uci.foreach(uciconf, ucipgrp, (cfg) => {
 		"include-all": strToBool(cfg.include_all),
 		"include-all-proxies": strToBool(cfg.include_all_proxies),
 		"include-all-providers": strToBool(cfg.include_all_providers),
-		"empty-fallback": cfg.empty_fallback ? get_proxy(cfg.empty_fallback) : null,
+		"empty-fallback": cfg.empty_fallback ? get_proxy(cfg.empty_fallback, true) : null,
+		// Select fields
+		"default-selected": cfg.default_selected ? get_proxy(cfg.default_selected, true) : null,
 		// Url-test fields
 		tolerance: (cfg.type === 'url-test') ? strToInt(cfg.tolerance) ?? 150 : null,
 		// Load-balance fields

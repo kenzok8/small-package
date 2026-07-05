@@ -13,7 +13,7 @@ const parseProxyGroupYaml = hm.parseYaml.extend({
 		if (!cfg.type)
 			return null;
 
-		// key mapping // 2026/06/10
+		// key mapping // 2026/07/05
 		let config = hm.removeBlankAttrs({
 			id: this.id,
 			label: this.label,
@@ -23,7 +23,9 @@ const parseProxyGroupYaml = hm.parseYaml.extend({
 			include_all: this.bool2str(cfg["include-all"]), // bool
 			include_all_proxies: this.bool2str(cfg["include-all-proxies"]), // bool
 			include_all_providers: this.bool2str(cfg["include-all-providers"]), // bool
-			empty_fallback: cfg["empty-fallback"] ? hm.preset_outbound.proxy.map(([key, label]) => key).includes(cfg["empty-fallback"]) ? cfg["empty-fallback"] : this.calcID(hm.glossary["proxy_group"].field, cfg["empty-fallback"]) : null, // string
+			empty_fallback: cfg["empty-fallback"], // string
+			// Select fields
+			default_selected: cfg["default-selected"], // string
 			// Url-test fields
 			tolerance: cfg.tolerance,
 			// Load-balance fields
@@ -683,10 +685,10 @@ function renderPayload(s, total, uciconfig) {
 		initDynamicPayload(o, n, 'factor', uciconfig);
 		o.load = L.bind(function(n, key, uciconfig, section_id) {
 			let fusedval = [
-				['NETWORK', '-- NETWORK --'],
+				['NETWORK', _('-- NETWORK --')],
 				['udp', _('UDP')],
 				['tcp', _('TCP')],
-				['RULESET', '-- RULE-SET --']
+				['RULESET', _('-- RULE-SET --')]
 			];
 
 			hm.loadLabel.call(this, [
@@ -1011,6 +1013,7 @@ return view.extend({
 							'- name: AllProvider\n' +
 							'  type: select\n' +
 							'  include-all-providers: true\n' +
+							'  default-selected: proxy1\n' +
 							'  filter: "(?i)港|hk|hongkong|hong kong"\n' +
 							'  exclude-filter: "美|日"\n' +
 							'  exclude-type: "Shadowsocks|Http"\n' +
@@ -1133,6 +1136,7 @@ return view.extend({
 		so.load = function(section_id) {
 			return hm.loadLabel.call(this, [
 				...hm.preset_outbound.proxy,
+				['NODE', _('-- PROXY-NODE --')],
 				...hm.loadLabelValues(this.config, 'node')
 			], section_id);
 		}
@@ -1188,6 +1192,23 @@ return view.extend({
 		so.placeholder = '5';
 		so.depends({type: 'select', '!reverse': true});
 		so.modalonly = true;
+
+		/* Select fields */
+		so = ss.taboption('field_general', form.Value, 'default_selected', _('Default selected'));
+		hm.preset_outbound.proxy.forEach((res) => {
+			so.value.apply(so, res);
+		})
+		so.load = function(section_id) {
+			return hm.loadLabel.call(this, [
+				...hm.preset_outbound.proxy,
+				['GROUP', _('-- PROXY-GROUP --')],
+				...hm.loadLabelValues(this.config, 'proxy_group'),
+				['NODE', _('-- PROXY-NODE --')],
+				...hm.loadLabelValues(this.config, 'node')
+			], section_id);
+		}
+		so.depends('type', 'select');
+		so.textvalue = hm.textvalue2Value;
 
 		/* Url-test fields */
 		so = ss.taboption('field_general', form.Value, 'tolerance', _('Node switch tolerance'),
@@ -1888,6 +1909,23 @@ return view.extend({
 		so = ss.option(form.DynamicList, 'fallback_filter_domain', _('Domain'),
 			_('Match domain. Support wildcards.</br>') +
 			_('The matching <code>%s</code> will be deemed as poisoned.').format(_('Domain')));
+
+		so = ss.option(form.Flag, 'fallback_lazy_query', _('Lazy query'),
+			_('Lazy query.'));
+		so.default = so.disabled;
+		so.validate = function(section_id, value) {
+			let desc = this.getUIElement(section_id).node.nextSibling;
+			value = this.formvalue(section_id);
+
+			if (value == 1)
+				desc.innerHTML = _('Check the response from the <code>%s</code>, only initiate query if the <code>%s</code> is satisfied.')
+					.format(_('Default DNS server'), _('Fallback filter'));
+			else
+				desc.innerHTML = _('Send queries to both the <code>%s</code> and the <code>%s</code>.')
+					.format(_('Default DNS server'), _('Fallback DNS server'));
+
+			return true;
+		}
 		/* Fallback filter END */
 
 		return m.render();
