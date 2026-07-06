@@ -179,9 +179,9 @@ insert_nftset() {
 				printf "%s\n" "$@"
 			else
 				cat
-			fi | tr -s ' \t' '\n' | awk -v s="$suffix" -v n="$nftset_name" -v t="$NFTABLE_NAME" '
-				{
-					gsub(/^[ \t\r]+|[ \t\r]+$/, "");
+			fi | awk -v s="$suffix" -v n="$nftset_name" -v t="$NFTABLE_NAME" '
+				BEGIN {
+					RS = "[ \t\n\r]+"
 				}
 				$0 != "" {
 					if (first == 0) {
