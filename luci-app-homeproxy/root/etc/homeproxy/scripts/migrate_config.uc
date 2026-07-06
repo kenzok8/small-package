@@ -8,7 +8,7 @@
 'use strict';
 
 import { cursor } from 'uci';
-import { isEmpty, parseURL } from 'homeproxy';
+import { isEmpty, parseURL, validation } from 'homeproxy';
 
 const uci = cursor();
 
