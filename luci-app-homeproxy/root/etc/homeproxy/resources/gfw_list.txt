@@ -13,6 +13,7 @@
 173ng.com
 18board.com
 18comic.org
+18mh.net
 1984bbs.com
 1991way.com
 1e100.net
@@ -25,6 +26,7 @@
 2047.one
 2049bbs.xyz
 233abc.com
+24hbook.com
 24hrs.ca
 32red.com
 36rain.com
@@ -72,6 +74,7 @@
 9cache.com
 9gag.com
 9news.com.au
+9oju31.launches.appsflyersdk.com
 a-normal-day.com
 a248.e.akamai.net
 aamacau.com
@@ -86,8 +89,10 @@ about.gitlab.com
 about.me
 abplive.com
 acast.com
+accountboy.com
 accountkit.com
 acevpn.com
+acg.mn
 acg.rip
 acg18.me
 acgbox.org
@@ -126,6 +131,7 @@ aiosearch.com
 aiph.net
 airconsole.com
 airitilibrary.com
+airuniversity.af.edu
 airvpn.org
 ait.org.tw
 aiweiweiblog.com
@@ -205,13 +211,18 @@ aoxvpn.com
 apartmentratings.com
 apartments.com
 apat1989.org
+api-gl.lbkrs.com
 api-secure.recaptcha.net
 api-verify.recaptcha.net
 api.ai
+api.futunn.com
+api.lbkrs.com
+api.moomoobull.com
 api.palworldgame.com
 api.pureapk.com
 api.recaptcha.net
 api.steampowered.com
+api5.futunn.com
 apiary.io
 apigee.com
 apk.support
@@ -257,6 +268,7 @@ arte.tv
 artstation.com
 arvanstorage.ir
 arweave.org
+as.mr
 asacp.org
 asiaharvest.org
 asianage.com
@@ -321,6 +333,7 @@ bangchen.net
 bangdream.space
 bangkokpost.com
 bangumi.moe
+bangumi.tv
 bangyoulater.com
 bankmobilevibe.com
 bannedbook.org
@@ -376,6 +389,7 @@ bettween.com
 betvictor.com
 bfnn.org
 bfsh.hk
+bgm.tv
 bgme.me
 bgvpn.com
 biblesforamerica.org
@@ -386,6 +400,7 @@ bigjapanesesex.com
 bignews.org
 bigone.com
 bild.de
+bilinovel.com
 biliworld.com
 binance.com
 binance.org
@@ -413,6 +428,7 @@ bl-doujinsouko.com
 blacked.com
 blackmagicdesign.com
 blackvpn.com
+bleepingcomputer.com
 blinkx.com
 blip.tv
 blockcast.it
@@ -525,6 +541,7 @@ bookdepository.com
 books.com.tw
 booktopia.com.au
 bookwalker.com.tw
+boomplay.com
 bootstrapcdn.com
 borgenmagazine.com
 botanwang.com
@@ -648,6 +665,7 @@ cdjp.org
 cdn-images.mailchimp.com
 cdn-telegram.org
 cdn.arstechnica.net
+cdn.futustatic.com
 cdn.jwplayer.com
 cdn.printfriendly.com
 cdn.seatguru.com
@@ -671,6 +689,7 @@ centurys.net
 certificate-transparency.org
 certificate.revocationcheck.com
 cfr.org
+cg.play-analytics.com
 cgdepot.org
 change.org
 changp.com
@@ -692,6 +711,7 @@ chenpokongvip.com
 chenshan20042005.wordpress.com
 cherrysave.com
 chhongbi.org
+chii.in
 china-mmm.net
 china-review.com.ua
 china-week.com
@@ -736,6 +756,7 @@ chineseupress.com
 chingcheong.com
 chinman.net
 chobit.cc
+chonglangtv.org
 chrdnet.com
 christianfreedom.org
 christianstudy.com
@@ -850,6 +871,7 @@ crazypool.org
 crazyshit.com
 crbug.com
 crchina.org
+creader.com
 creaders.net
 creativelab5.com
 cristyli.com
@@ -871,6 +893,7 @@ csw.org.uk
 ct.org.tw
 ctinets.com
 ctinews.com
+ctinsider.com
 ctitv.com.tw
 ctowc.org
 cts.com.tw
@@ -913,6 +936,7 @@ darpa.mil
 darrenliuwei.com
 dashlane.com
 data-vocabulary.org
+data18.com
 daum.net
 david-kilgour.com
 dawangidc.com
@@ -1011,7 +1035,9 @@ doublethinklab.org
 douchi.space
 dougscripts.com
 doujincafe.com
+dowjones.io
 download.dappcdn.com
+download.futunn.com
 dpool.top
 dpp.org.tw
 dpr.info
@@ -1024,6 +1050,7 @@ dropboxapi.com
 dropboxusercontent.com
 dscn.info
 dstk.dk
+dt18.com
 dtiblog.com
 dtic.mil
 dubox.com
@@ -1065,6 +1092,7 @@ ecfa.org.tw
 ecimg.tw
 economist.com
 edgecastcdn.net
+edigest.hk
 edubridge.com
 edx-cdn.org
 eesti.ee
@@ -1135,6 +1163,7 @@ expatshield.com
 expecthim.com
 expekt.com
 exploader.net
+expressnews.com
 expressvpn.com
 exrates.me
 extmatrix.com
@@ -1143,6 +1172,7 @@ eyny.com
 f-droid.org
 f2pool.com
 f8.com
+f95zone.to
 facebook.com
 facebook.de
 facebook.design
@@ -1324,12 +1354,42 @@ funkyimg.com
 furbo.org
 furinkan.com
 furrybar.com
+futu.cn
+futu.com
+futu.link
+futu0.com
+futu1.com
+futu2.com
+futu3.com
+futu4.com
+futu5.com
+futu6.com
+futu7.com
+futu8.com
+futu9.com
+futuau.com
+futubull.cn
+futuchain.com
+futuesop.com
+futufin.com
+futuhk.com
+futuhk2.com
+futuhkapp.com
+futuhn.com
+futuholdings.com
+futuinc.com
+futuniuniu.com
+futunn.com
 futuremessage.org
+futustatic.com
+fututrade.com
+fututrustee.com
 fw.cm
 fxcm-chinese.com
 fxnetworks.com
 g-area.org
 g-queen.com
+g.ai
 g.co
 g0v.social
 g6hentai.com
@@ -1346,6 +1406,7 @@ gaoming.net
 gaopi.net
 gartlive.com
 garudalinux.org
+gate.com
 gate.io
 gatecoin.com
 gather.com
@@ -1361,10 +1422,12 @@ gdaily.org
 geek-art.net
 gekikame.com
 gelbooru.com
+gencraft.com
 generated.photos
 genius.com
 geph.io
 get.app
+get.dappcdn.com
 get.dev
 get.how
 get.page
@@ -1722,6 +1785,7 @@ gtv.org
 gtv1.org
 gu-chu-sum.org
 guaguass.com
+guangming.com.my
 guishan.org
 gumroad.com
 gunsamerica.com
@@ -1775,6 +1839,7 @@ heyuedi.com
 hicairo.com
 hiccears.com
 hidden-advent.org
+hiddify.com
 hide.me
 hideipvpn.com
 hideman.net
@@ -1790,6 +1855,7 @@ hindustantimes.com
 hinet.net
 hitbtc.com
 hitomi.la
+hive.blog
 hiveon.net
 hk-pub.com
 hk.gradconnection.com
@@ -1810,6 +1876,7 @@ hkgolden.com
 hkgpao.com
 hklts.org.hk
 hkmap.live
+hkong.hk
 hkopentv.com
 hkpeanut.com
 hkreporter.com
@@ -1964,6 +2031,7 @@ indiatoday.in
 indiemerch.com
 inews-api.tvb.com
 info-graf.fr
+infosec.exchange
 infura.io
 inherit.live
 initiativesforchina.org
@@ -2023,6 +2091,7 @@ itasoftware.com
 itch.io
 itemfix.com
 itiger.com
+itigerup.com
 itshidden.com
 itweet.net
 iuhrdf.org
@@ -2102,6 +2171,7 @@ kanshifang.com
 kantie.org
 kaotic.com
 karayou.com
+kathmandupost.com
 kawaiikawaii.jp
 kawase.com
 kb.monitorware.com
@@ -2111,6 +2181,7 @@ kenengba.com
 kepard.com
 kex.com
 keycdn.com
+kfor.com
 khatrimaza.org
 kichiku-doujinko.com
 kik.com
@@ -2160,12 +2231,15 @@ landofhope.tv
 lantern.io
 laogai.org
 laogairesearch.org
+laohu8.com
 laqingdan.net
 larsgeorge.com
 lastcombat.com
 lastfm.es
 lausan.hk
 lbank.info
+lbctrl.com
+lbkrs.com
 ldplayer.net
 ldplayer.tw
 le-vpn.com
@@ -2176,7 +2250,9 @@ left21.hk
 legra.ph
 leisurepro.com
 lematin.ch
+lemonde.fr
 lenwhite.com
+leonardo.ai
 lesoir.be
 letscorp.net
 lexica.art
@@ -2188,6 +2264,7 @@ liaowangxizang.net
 liberal.org.hk
 libertysculpturepark.com
 libertytimes.com.tw
+libgen.is
 library-access.sk
 library.usc.cuhk.edu.hk
 libredd.it
@@ -2231,6 +2308,15 @@ localdomain.ws
 lockestek.com
 login.target.com
 logos.com.hk
+longbridge.cloud
+longbridge.com
+longbridge.global
+longbridge.hk
+longbridge.sg
+longbridgeapp.com
+longbridgehk.com
+longportapp.cn
+longportapp.com
 longtermly.net
 longtoes.com
 lookpic.com
@@ -2283,6 +2369,7 @@ martau.com
 martsangkagyuofficial.org
 marxist.net
 marxists.org
+mas.to
 mash.to
 mastodon.cloud
 mastodon.host
@@ -2309,6 +2396,7 @@ meansys.com
 media.nu.nl
 mediachinese.com
 mediafreakcity.com
+mediamatters.org
 mediawiki.org
 medium.com
 meee.com.tw
@@ -2346,6 +2434,7 @@ mfxmedia.com
 mgoon.com
 mgstage.com
 mh4u.org
+mhwindow.org
 microvpn.com
 mihua.org
 mij.rip
@@ -2388,6 +2477,7 @@ mixx.com
 mizzmona.com
 mji.rip
 mjj.rip
+mjj.today
 mjlsh.usc.cuhk.edu.hk
 mlc.ai
 mlzs.work
@@ -2414,6 +2504,9 @@ monitorchina.org
 monocloud.me
 monster.com
 moodyz.com
+moomoo.com
+moomooequity.com
+moomootrustee.com
 moon.fm
 moonbbs.com
 moonbingo.com
@@ -2425,6 +2518,7 @@ mosavi.io
 motherless.com
 movements.org
 moviefap.com
+mozilla.ai
 mpettis.com
 mpfinance.com
 mpinews.com
@@ -2437,6 +2531,7 @@ mthruf.com
 mubi.com
 mullvad.net
 multiply.com
+music.amazon.com
 musixmatch.com
 muzi.com
 muzi.net
@@ -2487,6 +2582,7 @@ ncn.org
 ndi.org
 nekoslovakia.net
 neo-miracle.com
+neodb.social
 neowin.net
 nephobox.com
 netalert.me
@@ -2510,10 +2606,12 @@ news1.kr
 news18.com
 newsancai.com
 newsblur.com
+newshub.co.nz
 newsmax.com
 newstamago.com
 newstapa.org
 newstatesman.com
+newstimes.com
 newsweek.com
 newtalk.tw
 newthuhole.com
@@ -2528,6 +2626,8 @@ nflximg.com
 nflximg.net
 nflxso.net
 nflxvideo.net
+nfsc.press
+nfscofficial.com
 nftstorage.link
 nga.mil
 nhentai.net
@@ -2647,6 +2747,13 @@ ooni.io
 ooni.org
 open.firstory.me
 openai.com
+openapi-quote.longbridge.cn
+openapi-quote.longbridge.com
+openapi-trade.longbridge.cn
+openapi-trade.longbridge.com
+openapi.futunn.com
+openapi.longbridge.cn
+openapi.longbridge.com
 openart.ai
 opencritic.com
 opendemocracy.net
@@ -2673,6 +2780,7 @@ oursteps.com.au
 ourtv.hk
 overcast.fm
 overdaily.org
+overdrive.com
 overplay.net
 oversea.istarshine.com
 ovpn.com
@@ -2685,7 +2793,6 @@ pachosting.com
 pacom.mil
 pacopacomama.com
 page.link
-pages.dev
 paimon.moe
 pancakeswap.finance
 pandafan.pub
@@ -2712,6 +2819,7 @@ pbs.org
 pbworks.com
 pbxes.com
 pbxes.org
+pcgamesn.com
 pcgamestorrents.com
 pcij.org
 pct.org.tw
@@ -2724,11 +2832,13 @@ pekingduck.org
 pemulihan.or.id
 pen.io
 pendrivelinux.com
+penguin.com.au
 pentoy.hk
 peoplenews.tw
 peopo.org
 perfect-privacy.com
 periscope.tv
+perma.cc
 perplexity.ai
 pewresearch.org
 phayul.com
@@ -2900,12 +3010,15 @@ qmp4.com
 qoos.com
 qq.co.za
 qstatus.com
+qtcard.futunn.com
+qtcardfthk.futufin.com
 qtrac.eu
 questvisual.com
 quitccp.org
 quiz.directory
 quora.com
 quoracdn.net
+quote.longbridge.global
 quran.com
 qz.com
 r-pool.net
@@ -2931,6 +3044,7 @@ raindrop.io
 raizoji.or.jp
 rakuten.co.jp
 ramcity.com.au
+raphael.app
 rapidmoviez.com
 rapidvpn.com
 rarbgprx.org
@@ -2973,6 +3087,7 @@ rentry.co
 renyurenquan.org
 resilio.com
 resistchina.org
+restofworld.org
 retweetrank.com
 reuters.com
 reutersmedia.net
@@ -3009,6 +3124,8 @@ rthk.org.hk
 rti.org.tw
 rti.tw
 rtm.tnt-ea.com
+rts.ch
+rule34.us
 rule34.xxx
 rule34video.com
 rumble.com
@@ -3043,10 +3160,11 @@ savetibetstore.org
 saveuighur.org
 sbme.me
 sbti.unun.dev
-scache.vzw.com
-scache1.vzw.com
-scache2.vzw.com
 schema.org
+schwab.co.uk
+schwab.com
+schwab.com.cn
+schwab.com.hk
 scmp.com
 scramble.io
 scratch.mit.edu
@@ -3085,6 +3203,7 @@ sexinsex.net
 sf.net
 sfshibao.com
 sftuk.org
+sgqt0j.launches.appsflyersdk.com
 shadeyouvpn.com
 shadowsocks.be
 shadowsocks.com.hk
@@ -3109,11 +3228,13 @@ shodanhq.com
 shooshtime.com
 shopee.tw
 shopping.yahoo.co.jp
+shortconn.im.qcloud.com
 showwe.tw
 shutterstock.com
 shwchurch.org
 shwchurch3.com
 sidelinesnews.com
+sider.ai
 signal.org
 silvergatebank.com
 simbolostwitter.com
@@ -3123,6 +3244,7 @@ simplecd.org
 simpleswap.io
 simplex.chat
 sina.com.hk
+sinchew.com.my
 singaporepools.com.sg
 singlelogin.se
 singtao.com
@@ -3131,6 +3253,7 @@ sinoants.com
 sinoca.com
 sinocast.com
 sinoinsider.com
+sinyalee.com
 sipml5.org
 sis001.com
 site.new
@@ -3166,7 +3289,7 @@ socialblade.com
 socks-proxy.net
 sockslist.net
 socrec.org
-softether-download.com
+softether.co.jp
 softether.org
 softfamous.com
 softwarebychuck.com
@@ -3187,6 +3310,7 @@ sorting-algorithms.com
 sos.org
 sosad.fun
 sosreader.com
+sotwe.com
 soubory.com
 soulcaliburhentai.net
 soundcloud.com
@@ -3199,6 +3323,7 @@ southmongolia.org
 southnews.com.tw
 southpark.cc.com
 sowers.org.hk
+spaceforce.mil
 spaces.hightail.com
 spacex.com
 spankbang.com
@@ -3225,7 +3350,6 @@ springwood.me
 sproutcore.com
 squirrelvpn.com
 ss-link.com
-ss7.vzw.com
 ssglobal.co
 ssl.webpack.de
 sspanel.net
@@ -3290,11 +3414,14 @@ supchina.com
 superpages.com
 supervpn.net
 superzooi.com
+support.futunn.com
+supremecourt.gov
 suprememastertv.com
 surfeasy.com
 surfeasy.com.au
 surfshark.com
 surrenderat20.net
+suyingtv.com
 swagbucks.com
 swapspace.co
 swissinfo.ch
@@ -3345,6 +3472,7 @@ tbsec.org
 tbsn.org
 tbssqh.org
 teachparentstech.org
+techbang.com
 technews.tw
 techviz.net
 teck.in
@@ -3375,6 +3503,8 @@ tfhub.dev
 tfiflve.com
 tg-me.com
 tg.dev
+tgstat.com
+the-sun.com
 theatlantic.com
 theatrum-belli.com
 thebcomplex.com
@@ -3397,6 +3527,7 @@ thehansindia.com
 thehindu.com
 thehun.net
 theinitium.com
+theintercept.com
 thenewslens.com
 thepiratebay.org
 theporndude.com
@@ -3407,6 +3538,7 @@ thestandnews.com
 thetatoken.org
 thetibetpost.com
 thetvdb.com
+theweek.com
 thewgo.org
 thewirechina.com
 theync.com
@@ -3474,6 +3606,12 @@ tibettelegraph.com
 tibettimes.net
 tibettruth.com
 tibetwrites.org
+tigerbbs.cn
+tigerbbs.com
+tigerbrokers.com
+tigerbrokers.net
+tigerbrokers.nz
+tigerfintech.com
 tigervpn.com
 tiktok.com
 tiktokcdn-eu.com
@@ -3536,6 +3674,9 @@ totalvpn.com
 tou.tv
 tpi.org.tw
 tracfone.com
+trade.futunn.com
+trade.longportapp.com
+tradeup.com
 tradingview.com
 translate.goog
 transparency.org
@@ -3544,6 +3685,7 @@ trendsmap.com
 tronscan.org
 trouw.nl
 trt.net.tr
+trtworld.com
 truebuddha-md.org
 trustwallet.com
 truthsocial.com
@@ -3580,6 +3722,7 @@ tv.com
 tv.jtbc.joins.com
 tvbanywhere.com
 tvboxnow.com
+tvdy1.com
 tvunetworks.com
 tw-blog.com
 tw.jiepang.com
@@ -3638,6 +3781,7 @@ twitturk.com
 twitturly.com
 twkan.com
 twreporter.org
+twstalker.com
 twt.tl
 twtkr.com
 twttr.com
@@ -3666,6 +3810,7 @@ ulop.net
 ultrasurf.us
 ultravpn.com
 ultravpn.fr
+umap.openstreetmap.fr
 unblock-us.com
 unblock.cn.com
 unblockdmm.com
@@ -3689,6 +3834,7 @@ upghsbc.com
 upmedia.mg
 upornia.com
 uproxy.org
+upsangel.com
 uptodown.com
 uraban.me
 urbandictionary.com
@@ -3736,6 +3882,7 @@ vaticannews.va
 vatn.org
 vcf-online.org
 vcfbuilder.org
+veed.io
 vegas.williamhill.com
 vegasred.com
 venetianmacao.com
@@ -3787,6 +3934,7 @@ vod.wwe.com
 voicettank.org
 vot.org
 vovo2000.com
+vox.com
 voxer.com
 vpl.bibliocommons.com
 vpn.ac
@@ -3848,6 +3996,7 @@ wanz-factory.com
 warroom.org
 waselpro.com
 washingtonpost.com
+washingtontimes.com
 watchinese.com
 watchmygf.net
 watchout.tw
@@ -3856,6 +4005,7 @@ wav.tv
 waveprotocol.org
 waybig.com
 waymo.com
+wbrks.com
 wd.bible
 wealth.com.tw
 wearn.com
@@ -3865,6 +4015,7 @@ webmproject.org
 webpkgcache.com
 webrtc.org
 websdr.org
+webshare.io
 website.new
 webwarper.net
 wechatlawsuit.com
@@ -3962,12 +4113,14 @@ work2icu.org
 workatruna.com
 workerempowerment.org
 workers.dev
+worldjournal.com
 worldvpn.net
 wowgirls.com
 wowhead.com
 wowporn.com
 woyaolian.org
 wp.com
+wplace.live
 wpoforum.com
 writesonic.com
 wsj.com
@@ -4032,6 +4185,7 @@ xgmyd.com
 xhamster.com
 xianjian.tw
 xiaohexie.com
+xiaohu8.com
 xiaolan.me
 xiaoma.org
 xiaomi.eu
@@ -4056,6 +4210,7 @@ xn--noss43i.com
 xn--oiq.cc
 xn--p8j9a0d9c9a.xn--q9jyb4c
 xn--u2u927b.com
+xn--vuqv2cf7wzyig79c.com
 xnpool.com
 xnxx.com
 xpud.org
@@ -4064,6 +4219,7 @@ xskywalker.com
 xt.com
 xt.pub
 xtube.com
+xuan.com.my
 xuchao.net
 xuchao.org
 xuehua.us
@@ -4102,7 +4258,6 @@ yeyeclub.com
 yfsp.tv
 yhcw.net
 yibaochina.com
-yidio.com
 yigeni.com
 yipub.com
 yizhihongxing.com
@@ -4165,11 +4320,14 @@ zh.ecdm.wikia.com
 zh.pokerstrategy.com
 zh.wikiquote.org
 zhangtianliang.com
+zhangzhehan.net
 zhanlve.org
 zhao.1984.city
 zhengjian.org
 zhengwunet.org
 zhenxiang.biz
+zhijianfengyi.cn
+zhijianfengyi.com
 zhizhu.top
 zhongguo.ca
 zhongguotese.net
