@@ -677,9 +677,24 @@ return view.extend({
 			};
 			const importDirectNodes = function() {
 				const existing = {};
+				const usedTags = {};
 				(((before || {}).nodes || {}).edges || []).forEach(function(node) {
 					existing[clashConverter.normalizeLink(node.link)] = node;
+					if (node.tag)
+						usedTags[String(node.tag)] = true;
 				});
+				const readableNodeTag = function(item, index) {
+					const base = String(item.name || '').replace(/[\x00-\x1f\x7f]+/g, ' ').replace(/\s+/g, ' ').trim()
+						|| _('Node %d').format(index + 1);
+					let tag = base.slice(0, 96);
+					let suffix = 2;
+					while (usedTags[tag]) {
+						const tail = ' ' + suffix++;
+						tag = base.slice(0, 96 - tail.length) + tail;
+					}
+					usedTags[tag] = true;
+					return tag;
+				};
 				const fresh = items.filter(function(item) {
 					const duplicate = existing[clashConverter.normalizeLink(item.link)];
 					if (duplicate)
@@ -689,7 +704,7 @@ return view.extend({
 				const imported = fresh.length
 					? graphQL(endpoint,
 						'mutation ImportNodes($args:[ImportArgument!]!){importNodes(rollbackError:false,args:$args){link error node{id}}}',
-						{ args: fresh.map(function(item, index) { return { link: item.link, tag: airportSync.backendId(airportId) + Date.now().toString(36) + (index + 1) }; }) }, token)
+						{ args: fresh.map(function(item, index) { return { link: item.link, tag: readableNodeTag(item, index) }; }) }, token)
 					: Promise.resolve({ importNodes: [] });
 
 				return imported.then(function(result) {
