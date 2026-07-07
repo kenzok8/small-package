@@ -38,4 +38,13 @@ elif command -v opkg >/dev/null 2>&1; then
 	latest=$(opkg info "$PKG" 2>/dev/null | awk -F': ' '$1=="Version"{print $2; exit}')
 fi
 
+case "$PKG" in
+	dae|daed)
+		case "$installed" in
+			20[0-9][0-9].[0-9]*) ;;
+			*) installed="" ;;
+		esac
+		;;
+esac
+
 printf '%s\t%s\n' "$installed" "$latest"
