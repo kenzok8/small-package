@@ -24,7 +24,7 @@ end
 data_dir.default = default_path
 
 local port = s:option(Value, "port", translate("Listen port"))
-port.default = "8080"
+port.default = "10780"
 port.rmempty = false
 port.datatype = "port"
 port.description = translate("Port for BaiduDrive HTTP server.")

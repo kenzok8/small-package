@@ -6,7 +6,51 @@ USE_PROCD=1
 get_config() {
 	config_get_bool enabled "$1" enabled 1
 	config_get data_dir "$1" data_dir ""
-	config_get port "$1" port "8080"
+	config_get host "$1" host "0.0.0.0"
+	config_get port "$1" port "10780"
+	config_get sdk_dir "$1" sdk_dir "/opt/baidunas-sdk"
+	config_get sdk_host "$1" sdk_host "127.0.0.1"
+	config_get sdk_port "$1" sdk_port "8001"
+	config_get macid "$1" macid ""
+	config_get device_type "$1" device_type ""
+	config_get usb_path "$1" usb_path ""
+	config_get download_path "$1" download_path "/"
+	config_get quota_path "$1" quota_path ""
+	config_get tmp_path "$1" tmp_path ""
+	config_get log_level "$1" log_level "7"
+}
+
+require_start_value() {
+	local name="$1"
+	local value="$2"
+	if [ -z "$value" ]; then
+		logger -t baidudrive "$name is empty; please set option $name in /etc/config/baidudrive"
+		return 1
+	fi
+	return 0
+}
+
+require_executable() {
+	local path="$1"
+	if [ ! -x "$path" ]; then
+		logger -t baidudrive "missing executable: $path"
+		return 1
+	fi
+	return 0
+}
+
+require_file() {
+	local path="$1"
+	if [ ! -e "$path" ]; then
+		logger -t baidudrive "missing runtime file: $path"
+		return 1
+	fi
+	return 0
+}
+
+storage_root_from_data_dir() {
+	local path="$1"
+	df -P "$path" 2>/dev/null | awk 'NR == 2 { print $6 }'
 }
 
 start_service() {
@@ -15,16 +59,74 @@ start_service() {
 	if [ "$enabled" != 1 ]; then
 		return 1
 	fi
-	if [ -z "$data_dir" ]; then
-		logger -t baidudrive "data_dir is empty; please set option data_dir in /etc/config/baidudrive"
-		return 1
-	fi
+
+	require_start_value data_dir "$data_dir" || return 1
+	require_start_value macid "$macid" || return 1
+	require_start_value device_type "$device_type" || return 1
+	require_executable /usr/sbin/baidudrive || return 1
+	require_executable "$sdk_dir/baiduNas" || return 1
+	require_executable "$sdk_dir/P2PClient" || return 1
+	require_executable "$sdk_dir/P2PClient.bin" || return 1
+	require_file "$sdk_dir/libkernel.so" || return 1
+	require_file /opt/baidunas-glibc || return 1
 
 	mkdir -p "$data_dir" || return 1
 
+	local storage_root
+	storage_root="$(storage_root_from_data_dir "$data_dir")"
+	if [ -n "$storage_root" ]; then
+		[ -n "$usb_path" ] && [ "$usb_path" != "/mnt" ] || usb_path="$storage_root"
+		[ -n "$quota_path" ] && [ "$quota_path" != "/mnt" ] || quota_path="$storage_root"
+	fi
+	[ -n "$usb_path" ] || usb_path="$data_dir"
+	[ -n "$quota_path" ] || quota_path="$usb_path"
+	[ -n "$tmp_path" ] || tmp_path="$data_dir/sdk-tmp"
+
+	mkdir -p "$tmp_path" || return 1
+	rm -rf /mnt/mnt /mnt/.baidudrive-write-test-* 2>/dev/null || true
+
+	logger -t baidudrive "Starting Baidu NAS SDK"
+	procd_open_instance baiduNas
+	procd_set_param command "$sdk_dir/baiduNas" \
+		-ip "$sdk_host" \
+		-port "$sdk_port" \
+		-macid "$macid" \
+		-type "$device_type" \
+		-tmppath "$tmp_path" \
+		-usbpath "$usb_path" \
+		-downloadpath "$download_path" \
+		-order lifo \
+		-forceipv4 \
+		-loglevel "$log_level"
+	procd_set_param dir "$sdk_dir"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance
+
+	logger -t baidudrive "Starting Baidu NAS SDK init loop"
+	procd_open_instance sdk-init
+	procd_set_param command /usr/libexec/baidudrive/sdk-init.sh
+	procd_set_param env \
+		DATA_DIR="$data_dir" \
+		BAIDU_NAS_HOST="$sdk_host" \
+		BAIDU_NAS_PORT="$sdk_port" \
+		BAIDU_NAS_USB_PATH="$usb_path" \
+		BAIDU_NAS_QUOTA_PATH="$quota_path"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance
+
 	logger -t baidudrive "Starting BaiduDrive Service"
 	procd_open_instance baidudrive
-	procd_set_param command /usr/sbin/baidudrive --port "$port" --data "$data_dir"
+	procd_set_param env \
+		BAIDU_NAS_MACID="$macid" \
+		BAIDU_NAS_DEVICE_TYPE="$device_type" \
+		BAIDU_NAS_USB_PATH="$usb_path" \
+		BAIDU_NAS_QUOTA_PATH="$quota_path"
+	procd_set_param command /usr/sbin/baidudrive --host "$host" --port "$port" --data "$data_dir"
+	procd_set_param stdout 1
 	procd_set_param stderr 1
 	procd_set_param respawn
 	procd_close_instance

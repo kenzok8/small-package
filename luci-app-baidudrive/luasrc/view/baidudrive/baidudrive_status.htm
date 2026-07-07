@@ -3,7 +3,9 @@ XHR.poll(5, '<%=url("admin/services/baidudrive_status")%>', null, function(x, st
 	var el = document.getElementById('baidudrive_status');
 	if (st && el) {
 		if (!st.running) {
-			el.innerHTML = '<br/><em style=\"color:red\"><%:The BaiduDrive service is not running.%></em>';
+			el.innerHTML = '<br/><em style=\"color:red\"><%:The BaiduDrive service is not running.%></em>'
+				+ '<br/><small>baidudrive: ' + (st.app_running ? 'running' : 'stopped')
+				+ ', baiduNas: ' + (st.sdk_running ? 'running' : 'stopped') + '</small>';
 		}
 		if (st.running) {
 			el.innerHTML = '<br/><em style=\"color:green\"><%:The BaiduDrive service is running.%></em>'

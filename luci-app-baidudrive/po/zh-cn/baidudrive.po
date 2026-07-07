@@ -1,0 +1,56 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: luasrc/controller/baidudrive.lua:10 luasrc/model/cbi/baidudrive.lua:3
+msgid "BaiduDrive"
+msgstr "百度网盘"
+
+#: luasrc/model/cbi/baidudrive.lua:3
+msgid "BaiduDrive provides a Baidu Netdisk Web UI."
+msgstr "百度网盘提供 WEBUI"
+
+#: luasrc/view/baidudrive/baidudrive_status.htm:10
+msgid "Click to open BaiduDrive"
+msgstr "点击打开百度网盘 WEBUI"
+
+#: luasrc/view/baidudrive/baidudrive_status.htm:19
+msgid "Collecting data..."
+msgstr ""
+
+#: luasrc/model/cbi/baidudrive.lua:16
+msgid "Data directory"
+msgstr "数据文件夹"
+
+#: luasrc/model/cbi/baidudrive.lua:10
+msgid "Enable"
+msgstr "启用"
+
+#: luasrc/model/cbi/baidudrive.lua:6
+msgid "Global settings"
+msgstr "全局设置"
+
+#: luasrc/model/cbi/baidudrive.lua:26
+msgid "Listen port"
+msgstr "监听端口"
+
+#: luasrc/model/cbi/baidudrive.lua:30
+msgid "Port for BaiduDrive HTTP server."
+msgstr "百度网盘 HTTP 服务的端口号"
+
+#: luasrc/model/cbi/baidudrive.lua:18
+msgid ""
+"Required. BaiduDrive stores its config, session and task data under this "
+"directory."
+msgstr "必需。百度网盘在此文件夹下保存配置和会话，以及任务数据"
+
+#: luasrc/view/baidudrive/baidudrive_status.htm:17
+msgid "Status"
+msgstr "状态"
+
+#: luasrc/view/baidudrive/baidudrive_status.htm:6
+msgid "The BaiduDrive service is not running."
+msgstr "百度网盘未运行"
+
+#: luasrc/view/baidudrive/baidudrive_status.htm:9
+msgid "The BaiduDrive service is running."
+msgstr "百度网盘运行中"
