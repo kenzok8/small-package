@@ -22,6 +22,11 @@ function execInit(be, action) {
 	}).catch(function() {});
 }
 
+function restartService(be) {
+	return execChecked(be.initd, ['restart'])
+		.then(function() { return waitForService(be, true, 80); });
+}
+
 function rejectIfOtherRunning(be, running) {
 	const other = be.name === 'dae' ? 'daed' : 'dae';
 	if (!running || !running[other])
@@ -231,8 +236,21 @@ function renderStatusCard(ctx, listenAddr) {
 			const restart = E('button', { 'class': 'cbi-button cbi-button-positive' }, _('Restart'));
 			restart.addEventListener('click', function(ev) {
 				ev.preventDefault();
+				if (busy) return;
+				busy = true;
 				restart.disabled = true;
-				execInit(be, 'restart').finally(function() { restart.disabled = false; });
+				lastError = '';
+				swErr.style.display = 'none';
+				restartService(be)
+					.then(function() {
+						busy = false;
+						return refresh(true);
+					})
+					.catch(function(e) {
+						busy = false;
+						lastError = _('Restart failed: %s').format(e.message || e);
+						return refresh(true);
+					});
 			});
 			actions.push(restart);
 		}

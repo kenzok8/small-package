@@ -1,0 +1,48 @@
+From: kenzok8 <kenzok8@noreply>
+Date: 2026-07-08
+Subject: [PATCH] daed: restart process when dashboard reload hangs
+
+Dashboard "Apply" can leave dae's runtime half-reloaded on some OpenWrt
+netns/veth setups. Bound the GraphQL reload request and let procd respawn daed
+so daed-guard can clean stale runtime state before starting again.
+
+Reported: https://github.com/kenzok8/openwrt-daede/issues/31
+---
+--- a/graphql/service/config/mutation_utils.go
++++ b/graphql/service/config/mutation_utils.go
+@@ -11,0 +12 @@
++	"os"
+@@ -16,0 +18 @@
++	"time"
+@@ -260,0 +263,9 @@
++const reloadWaitTimeout = 75 * time.Second
++
++func restartAfterReloadTimeout() {
++	go func() {
++		time.Sleep(time.Second)
++		os.Exit(1)
++	}()
++}
++
+@@ -458 +469 @@
+-	dae.ChReloadConfigs <- &dae.ReloadMessage{
++	reloadMsg := &dae.ReloadMessage{
+@@ -462,3 +473,5 @@
+-	errReload := <-chReloadCallback
+-	if errReload != nil {
+-		return 0, fmt.Errorf("failed to load new config: %w; see more in log", errReload)
++	select {
++	case dae.ChReloadConfigs <- reloadMsg:
++	case <-time.After(reloadWaitTimeout):
++		restartAfterReloadTimeout()
++		return 0, fmt.Errorf("failed to submit reload within %s; restarting daed to recover runtime", reloadWaitTimeout)
+@@ -465,0 +479,9 @@
++	select {
++	case errReload := <-chReloadCallback:
++		if errReload != nil {
++			return 0, fmt.Errorf("failed to load new config: %w; see more in log", errReload)
++		}
++	case <-time.After(reloadWaitTimeout):
++		restartAfterReloadTimeout()
++		return 0, fmt.Errorf("reload timed out after %s; restarting daed to recover runtime", reloadWaitTimeout)
++	}

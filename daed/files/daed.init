@@ -46,6 +46,13 @@ stop_service() {
 	daed_cleanup_runtime
 }
 
+restart() {
+	stop
+	sleep 1
+	daed_cleanup_runtime
+	start
+}
+
 service_triggers() {
 	procd_add_reload_trigger "$CONF"
 }
