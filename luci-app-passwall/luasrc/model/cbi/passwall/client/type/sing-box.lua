@@ -652,12 +652,12 @@ o = s:option(Flag, _n("http_h2_health_check"), translate("Health check"))
 o:depends({ [_n("tls")] = true, [_n("transport")] = "http" })
 
 o = s:option(Value, _n("http_h2_read_idle_timeout"), translate("Idle timeout"))
-o.default = "10"
-o:depends({ [_n("tls")] = true, [_n("transport")] = "http", [_n("http_h2_health_check")] = true })
+o.default = "15"
+o:depends({ [_n("http_h2_health_check")] = true })
 
 o = s:option(Value, _n("http_h2_health_check_timeout"), translate("Health check timeout"))
 o.default = "15"
-o:depends({ [_n("tls")] = true, [_n("transport")] = "http", [_n("http_h2_health_check")] = true })
+o:depends({ [_n("http_h2_health_check")] = true })
 
 -- [[ WebSocket部分 ]]--
 o = s:option(Value, _n("ws_host"), translate("WebSocket Host"))
@@ -693,11 +693,11 @@ o = s:option(Flag, _n("grpc_health_check"), translate("Health check"))
 o:depends({ [_n("transport")] = "grpc" })
 
 o = s:option(Value, _n("grpc_idle_timeout"), translate("Idle timeout"))
-o.default = "10"
+o.default = "15"
 o:depends({ [_n("grpc_health_check")] = true })
 
 o = s:option(Value, _n("grpc_health_check_timeout"), translate("Health check timeout"))
-o.default = "20"
+o.default = "15"
 o:depends({ [_n("grpc_health_check")] = true })
 
 o = s:option(Flag, _n("grpc_permit_without_stream"), translate("Permit without stream"))
