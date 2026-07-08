@@ -58,9 +58,6 @@ const CSS = [
 	'.dd-geo-row input[type=text],.dd-geo-row select{font-size:12px;padding:4px 8px;border:1px solid rgba(128,128,128,.35);border-radius:5px;background:transparent;color:inherit;width:100%}',
 	/* selects cap at 200px on wide screens, shrink to the column on mobile (no overflow) */
 	'.dd-geo-row select{width:100%!important;max-width:200px;box-sizing:border-box}',
-	'.dd-geo-auto{display:inline-flex;align-items:center;gap:6px}',
-	/* Argon shifts label>checkbox down (top:.4rem); reset so flex centers it */
-	'.dd-geo-auto input[type="checkbox"]{position:static;top:auto;right:auto;margin:0}',
 	'.dd-geo-actions{margin-top:10px;display:flex;gap:10px;align-items:center}',
 	'.dd-up-log{margin-top:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:11px;padding:10px;border:1px solid rgba(128,128,128,.14);border-radius:8px;max-height:200px;overflow:auto;white-space:pre-wrap;word-break:break-all;display:none;background:inherit;color:#4a8c63}',
 	'.dd-up-log.show{display:block}',
@@ -436,24 +433,25 @@ return view.extend({
 			presetSel.addEventListener('change', syncCustom);
 			syncCustom();
 
-			const autoCb = E('input', { 'type': 'checkbox' });
-			autoCb.checked = auto0;
-			const freqSel = E('select', {}, [
+			const autoSel = E('select', {}, [
+				E('option', { 'value': 'off' }, _('Disabled')),
 				E('option', { 'value': 'daily' }, _('Daily')),
 				E('option', { 'value': 'weekly' }, _('Weekly'))
 			]);
-			freqSel.value = freq0;
+			autoSel.value = auto0 ? freq0 : 'off';
 
 			const saveBtn = E('button', { 'class': 'dd-up-btn dd-up-btn-primary' }, _('Save'));
 			saveBtn.addEventListener('click', function() {
 				const p = presetSel.value;
 				let gi = '', gs = '';
+				const geoAuto = autoSel.value !== 'off';
+				const geoFreq = autoSel.value === 'weekly' ? 'weekly' : 'daily';
 				if (p === 'v2fly') { gi = GEO_PRESETS.v2fly.geoip; gs = GEO_PRESETS.v2fly.geosite; }
 				else if (p === 'custom') { gi = giInput.value.trim(); gs = gsInput.value.trim(); }
 				uci.set('daede', 'config', 'geoip_url', gi);
 				uci.set('daede', 'config', 'geosite_url', gs);
-				uci.set('daede', 'config', 'geo_auto', autoCb.checked ? '1' : '0');
-				uci.set('daede', 'config', 'geo_auto_freq', freqSel.value);
+				uci.set('daede', 'config', 'geo_auto', geoAuto ? '1' : '0');
+				uci.set('daede', 'config', 'geo_auto_freq', geoFreq);
 				const orig = saveBtn.textContent;
 				saveBtn.disabled = true; saveBtn.textContent = '...';
 				uci.save().then(function() {
@@ -463,7 +461,7 @@ return view.extend({
 					if (changes && Object.keys(changes).length)
 						return uci.apply();
 				}).then(function() {
-					return fs.exec('/usr/share/luci-app-daede/geo-cron.sh', [autoCb.checked ? 'enable' : 'disable']);
+					return fs.exec('/usr/share/luci-app-daede/geo-cron.sh', [geoAuto ? 'enable' : 'disable']);
 				}).then(function() {
 					logPane.textContent = _('Geo data source saved.');
 					logPane.classList.add('show');
@@ -485,8 +483,8 @@ return view.extend({
 					E('div', { 'class': 'dd-geo-row' }, [ E('label', {}, _('Source')), presetSel ]),
 					customRows,
 					E('div', { 'class': 'dd-geo-row' }, [
-						E('label', { 'class': 'dd-geo-auto' }, [ E('span', {}, _('Auto-update')), autoCb ]),
-						freqSel
+						E('label', {}, _('Auto-update')),
+						autoSel
 					]),
 					E('div', { 'class': 'dd-geo-actions' }, [ saveBtn ])
 				])

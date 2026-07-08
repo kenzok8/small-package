@@ -836,6 +836,9 @@ msgstr ""
 msgid "Auto-update"
 msgstr ""
 
+msgid "Disabled"
+msgstr ""
+
 msgid "Daily"
 msgstr ""
 

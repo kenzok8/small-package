@@ -4,8 +4,21 @@
 'require baseclass';
 'require form';
 'require fs';
+'require ui';
 'require uci';
 'require view.daede.widgets as widgets';
+
+function applyUciChanges() {
+	return uci.save().then(function() {
+		return uci.changes().then(function(ch) {
+			return (ch && Object.keys(ch).length) ? uci.apply() : null;
+		});
+	}).then(function() {
+		return new Promise(function(resolve) { window.setTimeout(resolve, 1800); });
+	}).then(function() {
+		return ui.changes.init();
+	});
+}
 
 function renderDaedSettings() {
 	let m, s, o;
@@ -96,12 +109,7 @@ function renderDaedSettings() {
 			ev.preventDefault();
 			save.disabled = true;
 			m.save(null, true)
-				.then(function() { return uci.save(); })
-				.then(function() {
-					return uci.changes().then(function(ch) {
-						return (ch && Object.keys(ch).length) ? uci.apply() : null;
-					});
-				})
+				.then(applyUciChanges)
 				.then(function() {
 					const enabled = uci.get('daed', 'config', 'subscribe_auto_update') === '1';
 					return fs.exec('/usr/share/luci-app-daede/daed-sub-cron.sh', [ enabled ? 'enable' : 'disable' ]);

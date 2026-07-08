@@ -1025,6 +1025,9 @@ msgstr "自定义"
 msgid "Auto-update"
 msgstr "自动更新"
 
+msgid "Disabled"
+msgstr "关闭"
+
 msgid "Daily"
 msgstr "每天"
 
