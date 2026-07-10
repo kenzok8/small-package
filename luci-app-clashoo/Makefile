@@ -2,8 +2,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-clashoo
 PKG_VERSION:=1.27.6
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=kenzok8
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -22,6 +23,11 @@ define Package/luci-app-clashoo/description
 endef
 
 define Build/Configure
+endef
+
+define Build/Prepare
+	mkdir -p $(PKG_BUILD_DIR)
+	po2lmo ./po/zh-cn/clashoo.po $(PKG_BUILD_DIR)/clashoo.zh-cn.lmo
 endef
 
 define Build/Compile
@@ -73,7 +79,7 @@ endef
 
 define Package/luci-i18n-clashoo-zh-cn/install
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/i18n
-	$(INSTALL_DATA) ./po/zh-cn/clashoo.zh-cn.lmo $(1)/usr/lib/lua/luci/i18n
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/clashoo.zh-cn.lmo $(1)/usr/lib/lua/luci/i18n/clashoo.zh-cn.lmo
 endef
 
 define Package/luci-i18n-clashoo-zh-cn/postinst

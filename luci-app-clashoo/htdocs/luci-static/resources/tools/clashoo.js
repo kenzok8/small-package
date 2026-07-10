@@ -160,21 +160,21 @@ function localizeLogLine(line) {
     var msg = String(line || '').replace(/^\s*\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\s*-?\s*/, '');
     var rules = [
         // LightGBM 模型更新
-        [/^Start downloading LightGBM model from:?\s*(.*)$/i, '开始下载 LightGBM 模型：$1'],
-        [/^Model unchanged, no update needed$/i,              '模型已是最新版本，无需更新'],
-        [/^LightGBM model updated successfully$/i,            'LightGBM 模型更新成功'],
-        [/^Download failed \(rc=(\d+)\)$/i,                   '下载失败（错误码 $1）'],
-        [/^Failed to install model to (.*)$/i,                '模型安装失败：$1'],
-        [/^No curl or wget found$/i,                          '未找到 curl 或 wget'],
+        [/^Start downloading LightGBM model from:?\s*(.*)$/i, _("Start downloading LightGBM model: $1")],
+        [/^Model unchanged, no update needed$/i,              _("Model is already up to date")],
+        [/^LightGBM model updated successfully$/i,            _("LightGBM model updated successfully")],
+        [/^Download failed \(rc=(\d+)\)$/i,                   _("Download failed (error code $1)")],
+        [/^Failed to install model to (.*)$/i,                _("Model install failed: $1")],
+        [/^No curl or wget found$/i,                          _("curl or wget not found")],
         // GeoIP / GeoSite 更新
-        [/^Updating (.+)$/i,                                  '正在更新 $1'],
-        [/^(.+) updated$/i,                                   '$1 已更新'],
-        [/^GeoIP update completed, apply on next Clashoo restart$/i, 'GeoIP 更新完成，重启 Clashoo 后生效'],
-        [/^GeoIP update completed$/i,                         'GeoIP 更新完成'],
-        [/^GeoIP update failed$/i,                            'GeoIP 更新失败'],
+        [/^Updating (.+)$/i,                                  _("Updating $1")],
+        [/^(.+) updated$/i,                                   _("$1 updated")],
+        [/^GeoIP update completed, apply on next Clashoo restart$/i, _("GeoIP update completed, applies after Clashoo restarts")],
+        [/^GeoIP update completed$/i,                         _("GeoIP update completed")],
+        [/^GeoIP update failed$/i,                            _("GeoIP update failed")],
         // 通用
-        [/^Download succeeded$/i,                             '下载成功'],
-        [/^Already up to date$/i,                             '已是最新版本']
+        [/^Download succeeded$/i,                             _("Download succeeded")],
+        [/^Already up to date$/i,                             _("Already up to date")]
     ];
     for (var i = 0; i < rules.length; i++) {
         if (rules[i][0].test(msg)) return msg.replace(rules[i][0], rules[i][1]);

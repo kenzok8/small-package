@@ -1,0 +1,1504 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid " (auto-detected by device)"
+msgstr ""
+
+msgid " (expired)"
+msgstr ""
+
+msgid " (refreshing)"
+msgstr ""
+
+msgid " candidates"
+msgstr ""
+
+msgid " days)"
+msgstr ""
+
+msgid " files)"
+msgstr ""
+
+msgid " groups"
+msgstr ""
+
+msgid " hours ago"
+msgstr ""
+
+msgid " latency test failed: "
+msgstr ""
+
+msgid " minutes ago"
+msgstr ""
+
+msgid " saved"
+msgstr ""
+
+msgid " seconds"
+msgstr ""
+
+msgid " seconds ago"
+msgstr ""
+
+msgid " switch error"
+msgstr ""
+
+msgid " switch failed: "
+msgstr ""
+
+msgid " update succeeded"
+msgstr ""
+
+msgid " updated"
+msgstr ""
+
+msgid " updates available"
+msgstr ""
+
+msgid "$1 updated"
+msgstr ""
+
+msgid "(empty)"
+msgstr ""
+
+msgid ", click Start to take effect"
+msgstr ""
+
+msgid ", failed "
+msgstr ""
+
+msgid ", skipped "
+msgstr ""
+
+msgid ", switched to active configuration"
+msgstr ""
+
+msgid ", switching to active configuration..."
+msgstr ""
+
+msgid ", unchanged "
+msgstr ""
+
+msgid "; updated "
+msgstr ""
+
+msgid "<em>(empty)</em>"
+msgstr ""
+
+msgid "<span style=\"display:inline-block;padding:1px 7px;border-radius:4px;font-size:12px;background:rgba(128,128,128,0.16);color:var(--cl-label-muted,#888);\">Redir-Host</span> China traffic bypasses the core at firewall level; DNS behavior is slightly weaker. Choose as needed."
+msgstr ""
+
+msgid "<span style=\"display:inline-block;padding:1px 7px;border-radius:4px;font-size:12px;font-weight:600;background:rgba(var(--primary-rgb),0.14);color:var(--cl-primary,#3886a1);\">Fake-IP · Recommended</span> Fast resolution and accurate routing; China routing is handled by the core.<br />"
+msgstr ""
+
+msgid "<strong>Note:</strong> Proxy node domains still use direct DNS for startup resolution, not for normal client domain queries.<br>"
+msgstr ""
+
+msgid "<strong>Prerequisite:</strong> The configuration must include transparent proxying (TUN auto-route or TProxy inbound). Restart after switching."
+msgstr ""
+
+msgid "<strong>Warning:</strong> After enabling, IPv6 sites can only be accessed over IPv4; pure IPv6 networks may lose connectivity."
+msgstr ""
+
+msgid "Access Check"
+msgstr ""
+
+msgid "Access Control"
+msgstr ""
+
+msgid "Access Secret"
+msgstr ""
+
+msgid "Actions"
+msgstr ""
+
+msgid "Active"
+msgstr ""
+
+msgid "Advanced DNS"
+msgstr ""
+
+msgid "Advanced Settings (core / data components)"
+msgstr ""
+
+msgid "After fetching, click Update on the corresponding item in the Configuration Files tab to fetch the latest configuration again."
+msgstr ""
+
+msgid "All"
+msgstr ""
+
+msgid "All components are up to date"
+msgstr ""
+
+msgid "All Devices"
+msgstr ""
+
+msgid "All Ports"
+msgstr ""
+
+msgid "Allow LAN Access"
+msgstr ""
+
+msgid "Allowlist"
+msgstr ""
+
+msgid "Allowlist (only listed items use fake-IP)"
+msgstr ""
+
+msgid "Alpha"
+msgstr ""
+
+msgid "Already up to date"
+msgstr ""
+
+msgid "Apply Configuration"
+msgstr ""
+
+msgid "Applying…"
+msgstr ""
+
+msgid "ASN Priority"
+msgstr ""
+
+msgid "Auto Scroll"
+msgstr ""
+
+msgid "Auto setup completed."
+msgstr ""
+
+msgid "Auto Update Model"
+msgstr ""
+
+msgid "Auto-detected"
+msgstr ""
+
+msgid "Automatically choose available DNS and update only upstream servers; split policies and advanced settings remain unchanged."
+msgstr ""
+
+msgid "Automatically switch Url-test and Load-balance policy groups to Smart policy groups"
+msgstr ""
+
+msgid "Automation Tasks"
+msgstr ""
+
+msgid "Backend Core"
+msgstr ""
+
+msgid "Backup and Restore"
+msgstr ""
+
+msgid "Backup exported ("
+msgstr ""
+
+msgid "Backup restored, restarting service"
+msgstr ""
+
+msgid "Basic DNS"
+msgstr ""
+
+msgid "Blocklist"
+msgstr ""
+
+msgid "Blocklist (listed items use real IP, default)"
+msgstr ""
+
+msgid "Blocklist/allowlist mode: enter domains or shorthand like <code>geosite:cn</code>. Rule mode: enter items with the same syntax as rules, such as <code>GEOSITE,cn,real-ip</code> / <code>RULE-SET,xxx,real-ip</code>; usually add <code>MATCH,fake-ip</code> at the end as fallback. <code>geosite:cn</code> automatically uses built-in cn.mrs acceleration and avoids loading the 10MB geosite.dat."
+msgstr ""
+
+msgid "Bypass China IP"
+msgstr ""
+
+msgid "Bypass Ports"
+msgstr ""
+
+msgid "Bypass Rules"
+msgstr ""
+
+msgid "ByteDance"
+msgstr ""
+
+msgid "Cannot connect to core API. Check runtime status."
+msgstr ""
+
+msgid "Check and Update"
+msgstr ""
+
+msgid "Check Updates"
+msgstr ""
+
+msgid "Checking configuration file"
+msgstr ""
+
+msgid "Checking environment…"
+msgstr ""
+
+msgid "Checking…"
+msgstr ""
+
+msgid "Cleaning mihomo network rules"
+msgstr ""
+
+msgid "Cleaning sing-box network rules"
+msgstr ""
+
+msgid "Cleanup failed (mihomo may not be running)"
+msgstr ""
+
+msgid "Cleanup interval (hours)"
+msgstr ""
+
+msgid "Clear"
+msgstr ""
+
+msgid "Clear File"
+msgstr ""
+
+msgid "Clear Smart Cache"
+msgstr ""
+
+msgid "Clear the current log file? This cannot be undone."
+msgstr ""
+
+msgid "Clear View"
+msgstr ""
+
+msgid "Click Save after editing; switching configuration automatically restarts the service"
+msgstr ""
+
+msgid "Collapse"
+msgstr ""
+
+msgid "Collect node latency data for LightGBM model training"
+msgstr ""
+
+msgid "Collect Training Data"
+msgstr ""
+
+msgid "Common Ports"
+msgstr ""
+
+msgid "Completed"
+msgstr ""
+
+msgid "Component update task submitted"
+msgstr ""
+
+msgid "Component Updates"
+msgstr ""
+
+msgid "Configuration"
+msgstr ""
+
+msgid "Configuration content appears here after selecting a file…"
+msgstr ""
+
+msgid "Configuration file name (optional, blank auto-generates singbox.json)"
+msgstr ""
+
+msgid "Configuration Files"
+msgstr ""
+
+msgid "Configuration is up to date; no fixes needed"
+msgstr ""
+
+msgid "Configuration saved"
+msgstr ""
+
+msgid "Configuration saved and service hot-reloaded"
+msgstr ""
+
+msgid "Configuration saved, service is not running"
+msgstr ""
+
+msgid "Configuration saved, service remains stopped"
+msgstr ""
+
+msgid "Configuration saved, switched and started selected core"
+msgstr ""
+
+msgid "Connection failed"
+msgstr ""
+
+msgid "Connections"
+msgstr ""
+
+msgid "Convert YAML subscriptions to sing-box JSON, automatically injecting TUN transparent proxy and China direct rules. Files with the same name are overwritten; use the same name when updating."
+msgstr ""
+
+msgid "Core and Data"
+msgstr ""
+
+msgid "Core did not start within 15 seconds (procd is recovering)"
+msgstr ""
+
+msgid "Core Download"
+msgstr ""
+
+msgid "Core is not running. Start it before switching nodes."
+msgstr ""
+
+msgid "Core Log"
+msgstr ""
+
+msgid "Core Only (advanced)"
+msgstr ""
+
+msgid "Core Switch"
+msgstr ""
+
+msgid "Core switch failed"
+msgstr ""
+
+msgid "Core Type"
+msgstr ""
+
+msgid "Core type saved, takes effect on next start or restart"
+msgstr ""
+
+msgid "Core verification failed. Check System → Core."
+msgstr ""
+
+msgid "Correct routing by forcing a domain or IP to Direct or Proxy. These rules take priority over subscription rules and apply to both mihomo and sing-box."
+msgstr ""
+
+msgid "CPU Architecture"
+msgstr ""
+
+msgid "CPU architecture set to "
+msgstr ""
+
+msgid "curl or wget not found"
+msgstr ""
+
+msgid "Current configuration has no manually switchable proxy groups"
+msgstr ""
+
+msgid "Current configuration has no recorded subscription URL"
+msgstr ""
+
+msgid "Current configuration is a custom file; no subscription update needed"
+msgstr ""
+
+msgid "Current version: "
+msgstr ""
+
+msgid "Current: "
+msgstr ""
+
+msgid "Custom"
+msgstr ""
+
+msgid "Custom Ports"
+msgstr ""
+
+msgid "Custom Routing Rules"
+msgstr ""
+
+msgid "Custom User-Agent"
+msgstr ""
+
+msgid "Customize..."
+msgstr ""
+
+msgid "Dashboard"
+msgstr ""
+
+msgid "Dashboard Port"
+msgstr ""
+
+msgid "Dashboard Settings"
+msgstr ""
+
+msgid "Default"
+msgstr ""
+
+msgid "Degraded"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "Delete "
+msgstr ""
+
+msgid "Direct"
+msgstr ""
+
+msgid "Direct Domain Resolver"
+msgstr ""
+
+msgid "Disable QUIC GSO"
+msgstr ""
+
+msgid "Disabling DNS cache"
+msgstr ""
+
+msgid "DNS Address"
+msgstr ""
+
+msgid "DNS Auto Setup"
+msgstr ""
+
+msgid "DNS auto setup applied, service is restarting"
+msgstr ""
+
+msgid "DNS auto setup failed"
+msgstr ""
+
+msgid "DNS auto setup failed: "
+msgstr ""
+
+msgid "DNS auto setup saved, service is not running"
+msgstr ""
+
+msgid "DNS configuration saved and service hot-reloaded"
+msgstr ""
+
+msgid "DNS configuration saved, service is not running"
+msgstr ""
+
+msgid "DNS Listen Port"
+msgstr ""
+
+msgid "DNS Policy"
+msgstr ""
+
+msgid "Domain / IP"
+msgstr ""
+
+msgid "Domain keyword (e.g. youtube)"
+msgstr ""
+
+msgid "Domain Split DNS"
+msgstr ""
+
+msgid "Domain suffix (e.g. google.com)"
+msgstr ""
+
+msgid "Domestic"
+msgstr ""
+
+msgid "Domestic Upstream DNS"
+msgstr ""
+
+msgid "Download"
+msgstr ""
+
+msgid "Download failed (error code $1)"
+msgstr ""
+
+msgid "Download Subscription"
+msgstr ""
+
+msgid "Download succeeded"
+msgstr ""
+
+msgid "Downloaded Subscriptions"
+msgstr ""
+
+msgid "Downloading LightGBM model..."
+msgstr ""
+
+msgid "Downloading subscription..."
+msgstr ""
+
+msgid "Downloading..."
+msgstr ""
+
+msgid "Downloading…"
+msgstr ""
+
+msgid "ECS Client Subnet"
+msgstr ""
+
+msgid "Edit"
+msgstr ""
+
+msgid "Editing: "
+msgstr ""
+
+msgid "Enable"
+msgstr ""
+
+msgid "Enable DNS Module"
+msgstr ""
+
+msgid "Enable LightGBM Model"
+msgstr ""
+
+msgid "Enable Service"
+msgstr ""
+
+msgid "Enhanced Mode"
+msgstr ""
+
+msgid "Enter remote template URL, e.g. https://raw.githubusercontent.com/…/Clash.yaml"
+msgstr ""
+
+msgid "Enter subscription URL (injected into template proxy-providers)"
+msgstr ""
+
+msgid "Every"
+msgstr ""
+
+msgid "Exact domain (e.g. www.google.com)"
+msgstr ""
+
+msgid "example.com or 1.2.3.0/24"
+msgstr ""
+
+msgid "Example: geosite:cn uses https://dns.alidns.com/dns-query; geosite:geolocation-!cn uses https://cloudflare-dns.com/dns-query."
+msgstr ""
+
+msgid "Expand"
+msgstr ""
+
+msgid "Expires: "
+msgstr ""
+
+msgid "Export a backup before changing cores or configuration, so it can be restored if needed. Includes configuration and settings only, not cores."
+msgstr ""
+
+msgid "Export Backup"
+msgstr ""
+
+msgid "Export failed: "
+msgstr ""
+
+msgid "Exporting…"
+msgstr ""
+
+msgid "Factory defaults restored"
+msgstr ""
+
+msgid "Failed"
+msgstr ""
+
+msgid "Failed to check updates, please check the network"
+msgstr ""
+
+msgid "Failed to save core configuration"
+msgstr ""
+
+msgid "Failed to submit component update task"
+msgstr ""
+
+msgid "Fake-IP Filter Domains"
+msgstr ""
+
+msgid "Fake-IP Filter Mode"
+msgstr ""
+
+msgid "Fake-IP Range"
+msgstr ""
+
+msgid "Fallback"
+msgstr ""
+
+msgid "Fallback GeoIP Filter"
+msgstr ""
+
+msgid "Fetch and Apply"
+msgstr ""
+
+msgid "Fetch Configuration"
+msgstr ""
+
+msgid "Fetching…"
+msgstr ""
+
+msgid "File Name"
+msgstr ""
+
+msgid "File name (optional, blank for automatic name)"
+msgstr ""
+
+msgid "File name (optional, blank to auto-generate)"
+msgstr ""
+
+msgid "Fix Deprecated Fields"
+msgstr ""
+
+msgid "Fix failed: "
+msgstr ""
+
+msgid "Fixed deprecated fields: "
+msgstr ""
+
+msgid "For providers that directly offer sing-box JSON subscriptions, or links already converted by external tools.\n"
+msgstr ""
+
+msgid "Force ASN lookup and prefer target ASN information when selecting nodes for a more stable experience"
+msgstr ""
+
+msgid "Force DNS Forwarding"
+msgstr ""
+
+msgid "Force ECS Override"
+msgstr ""
+
+msgid "Full URL / no protocol prefix"
+msgstr ""
+
+msgid "Generate Configuration"
+msgstr ""
+
+msgid "Generate error: "
+msgstr ""
+
+msgid "Generate failed: "
+msgstr ""
+
+msgid "Generated: "
+msgstr ""
+
+msgid "Generating…"
+msgstr ""
+
+msgid "Generation is taking longer, refreshing to show results…"
+msgstr ""
+
+msgid "GeoIP Source"
+msgstr ""
+
+msgid "GeoIP update completed"
+msgstr ""
+
+msgid "GeoIP update completed, applies after Clashoo restarts"
+msgstr ""
+
+msgid "GeoIP update failed"
+msgstr ""
+
+msgid "GitHub acceleration prefix"
+msgstr ""
+
+msgid "Global"
+msgstr ""
+
+msgid "Health check failed"
+msgstr ""
+
+msgid "Health check in progress…"
+msgstr ""
+
+msgid "Health check passed"
+msgstr ""
+
+msgid "hours"
+msgstr ""
+
+msgid "HTTP Port"
+msgstr ""
+
+msgid "Import failed: "
+msgstr ""
+
+msgid "Import Restore"
+msgstr ""
+
+msgid "Importing will overwrite all current configuration and settings with the backup. Existing subscriptions/configuration files will be replaced. Continue?"
+msgstr ""
+
+msgid "Information Input"
+msgstr ""
+
+msgid "Initializing…"
+msgstr ""
+
+msgid "Intercept IPv6 DNS traffic to prevent devices with hard-coded DNS from bypassing the traffic."
+msgstr ""
+
+msgid "IP / CIDR (e.g. 8.8.8.8/32)"
+msgstr ""
+
+msgid "IP Allowlist"
+msgstr ""
+
+msgid "IP Blocklist"
+msgstr ""
+
+msgid "IP rules do not trigger DNS resolution"
+msgstr ""
+
+msgid "IPv4 DNS Hijack"
+msgstr ""
+
+msgid "IPv4 Proxy"
+msgstr ""
+
+msgid "IPv6 DNS Hijack"
+msgstr ""
+
+msgid "IPv6 Proxy"
+msgstr ""
+
+msgid "just now"
+msgstr ""
+
+msgid "Keep the default if unsure."
+msgstr ""
+
+msgid "LAN Control"
+msgstr ""
+
+msgid "Last check: "
+msgstr ""
+
+msgid "Last check: initializing"
+msgstr ""
+
+msgid "Last run: "
+msgstr ""
+
+msgid "LightGBM model file download URL; leave blank to use the default official URL"
+msgstr ""
+
+msgid "LightGBM model updated successfully"
+msgstr ""
+
+msgid "Load failed"
+msgstr ""
+
+msgid "Load-balance"
+msgstr ""
+
+msgid "Loading…"
+msgstr ""
+
+msgid "Local Template"
+msgstr ""
+
+msgid "Log"
+msgstr ""
+
+msgid "Match Rule"
+msgstr ""
+
+msgid "Memory usage "
+msgstr ""
+
+msgid "mihomo restarted successfully, please wait for servers to come online."
+msgstr ""
+
+msgid "mihomo runs as-is for nikki/OpenClash compatibility; sing-box automatically upgrades old formats for momo/homeproxy compatibility.<br>"
+msgstr ""
+
+msgid "mihomo Stable"
+msgstr ""
+
+msgid "mihomo started successfully, please wait for servers to come online."
+msgstr ""
+
+msgid "mihomo writes the ecs parameter to DNS URLs; sing-box writes dns.client_subnet. Leave empty to skip."
+msgstr ""
+
+msgid "Mixed Mode"
+msgstr ""
+
+msgid "Mixed Port"
+msgstr ""
+
+msgid "Mode"
+msgstr ""
+
+msgid "Model Download URL"
+msgstr ""
+
+msgid "Model install failed: $1"
+msgstr ""
+
+msgid "Model is already up to date"
+msgstr ""
+
+msgid "Model not installed"
+msgstr ""
+
+msgid "Network Stack"
+msgstr ""
+
+msgid "Network Stack Type"
+msgstr ""
+
+msgid "No auto setup result yet"
+msgstr ""
+
+msgid "No component update logs yet"
+msgstr ""
+
+msgid "No configuration file found. Import a subscription or upload a configuration on the Configuration page first."
+msgstr ""
+
+msgid "No configuration file selected. Select or upload one on the Configuration page before starting."
+msgstr ""
+
+msgid "No configuration files yet. Use Quick Wizard to generate one or upload a JSON file."
+msgstr ""
+
+msgid "No proxy groups"
+msgstr ""
+
+msgid "No subscriptions"
+msgstr ""
+
+msgid "Node Panel ›"
+msgstr ""
+
+msgid "Node Selection"
+msgstr ""
+
+msgid "Node Subscription"
+msgstr ""
+
+msgid "Node weight bonus. <1 means lower priority, >1 means higher priority. Modify as needed; leave blank to skip policy-priority injection."
+msgstr ""
+
+msgid "Not installed"
+msgstr ""
+
+msgid "Not running"
+msgstr ""
+
+msgid "Off"
+msgstr ""
+
+msgid "Only subscriptions with recorded source URLs are overwritten; no duplicate files are created."
+msgstr ""
+
+msgid "Open Dashboard"
+msgstr ""
+
+msgid "OpenClash is enabled; disable it first to avoid rule conflicts"
+msgstr ""
+
+msgid "Operation failed: "
+msgstr ""
+
+msgid "Other Configuration Files (upload / overwrite output)"
+msgstr ""
+
+msgid "Output file name (without extension, blank to auto-fill)"
+msgstr ""
+
+msgid "Overseas Encrypted DNS (anti-pollution)"
+msgstr ""
+
+msgid "Overview"
+msgstr ""
+
+msgid "Overwrite Settings"
+msgstr ""
+
+msgid "Panel"
+msgstr ""
+
+msgid "Panel is downloading"
+msgstr ""
+
+msgid "Panel switch failed: "
+msgstr ""
+
+msgid "Panel UI"
+msgstr ""
+
+msgid "Password"
+msgstr ""
+
+msgid "Paste native sing-box subscription URL (direct JSON response)"
+msgstr ""
+
+msgid "Paste subscription URL (supports vmess / vless / trojan, etc.)"
+msgstr ""
+
+msgid "Pause"
+msgstr ""
+
+msgid "Period for automatically fetching a new model; also controls the cron trigger frequency, default 72 hours"
+msgstr ""
+
+msgid "Please enter a remote template URL"
+msgstr ""
+
+msgid "Please enter a subscription URL"
+msgstr ""
+
+msgid "Please enter an output file name"
+msgstr ""
+
+msgid "Please select a local template file"
+msgstr ""
+
+msgid "Plugin Log"
+msgstr ""
+
+msgid "Policy Priority (weight bonus)"
+msgstr ""
+
+msgid "Policy Type"
+msgstr ""
+
+msgid "Port"
+msgstr ""
+
+msgid "Port Settings"
+msgstr ""
+
+msgid "Prevent DNS Leaks"
+msgstr ""
+
+msgid "Processing…"
+msgstr ""
+
+msgid "Protocol"
+msgstr ""
+
+msgid "Proxy"
+msgstr ""
+
+msgid "Proxy Authentication"
+msgstr ""
+
+msgid "Proxy configuration saved and service hot-reloaded"
+msgstr ""
+
+msgid "Proxy configuration saved, service is not running"
+msgstr ""
+
+msgid "Proxy Domain Split DNS"
+msgstr ""
+
+msgid "Proxy Mode"
+msgstr ""
+
+msgid "Proxy Node Domain Resolver"
+msgstr ""
+
+msgid "Quick Wizard"
+msgstr ""
+
+msgid "Random"
+msgstr ""
+
+msgid "Ready · "
+msgstr ""
+
+msgid "Ready ✓"
+msgstr ""
+
+msgid "Recommended "
+msgstr ""
+
+msgid "Recommended blank"
+msgstr ""
+
+msgid "Redirect Port"
+msgstr ""
+
+msgid "Refresh"
+msgstr ""
+
+msgid "Refresh Access Check"
+msgstr ""
+
+msgid "Regular domains only use overseas DNS and DNS connections follow proxy rules; DoT/DoQ (port 853) is blocked and IPv6 resolution is disabled. Takes effect after restart.<br>"
+msgstr ""
+
+msgid "Regularly update rule data"
+msgstr ""
+
+msgid "Relay"
+msgstr ""
+
+msgid "Remote Template"
+msgstr ""
+
+msgid "Remote: "
+msgstr ""
+
+msgid "Removing Cron scheduled tasks"
+msgstr ""
+
+msgid "Requires MMDB. If enabled while the local GeoIP database is missing, the core may fail to start. Usually not needed."
+msgstr ""
+
+msgid "Restarting client..."
+msgstr ""
+
+msgid "Restarting Dnsmasq"
+msgstr ""
+
+msgid "Restore Clashoo settings to factory defaults (subscriptions and configuration files are kept). Continue?"
+msgstr ""
+
+msgid "Restore Defaults"
+msgstr ""
+
+msgid "Restore failed: "
+msgstr ""
+
+msgid "Restoring…"
+msgstr ""
+
+msgid "Role"
+msgstr ""
+
+msgid "Rule"
+msgstr ""
+
+msgid "Rule data includes China allowlist (direct IP ranges) and GeoIP / GeoSite databases"
+msgstr ""
+
+msgid "Rule mode (same syntax as rules)"
+msgstr ""
+
+msgid "Rules and Control"
+msgstr ""
+
+msgid "Run Mode"
+msgstr ""
+
+msgid "Run mode setting failed: "
+msgstr ""
+
+msgid "Run only the core with your imported configuration, without taking over firewall / DNS / routing.<br>"
+msgstr ""
+
+msgid "Running degraded"
+msgstr ""
+
+msgid "Running 🟢"
+msgstr ""
+
+msgid "Runtime Status"
+msgstr ""
+
+msgid "Sample Rate"
+msgstr ""
+
+msgid "sample-rate, 1 = sample every latency test; increase to reduce sampling frequency"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Save Configuration"
+msgstr ""
+
+msgid "Save failed: "
+msgstr ""
+
+msgid "Scheduled Log Cleanup"
+msgstr ""
+
+msgid "Scheduled Subscription Update"
+msgstr ""
+
+msgid "Scheduled update settings saved"
+msgstr ""
+
+msgid "Select a configuration above to edit it here"
+msgstr ""
+
+msgid "Select local template file"
+msgstr ""
+
+msgid "Select YAML file to upload"
+msgstr ""
+
+msgid "Selector"
+msgstr ""
+
+msgid "Service disabled"
+msgstr ""
+
+msgid "Service stopped"
+msgstr ""
+
+msgid "Setting Cron scheduled tasks and starting process supervisor..."
+msgstr ""
+
+msgid "Setting DNS forwarder / enabling custom DNS"
+msgstr ""
+
+msgid "Setting mihomo network rules"
+msgstr ""
+
+msgid "Setting sing-box network rules"
+msgstr ""
+
+msgid "Show/Hide"
+msgstr ""
+
+msgid "sing-box Configuration Files"
+msgstr ""
+
+msgid "sing-box core not detected; download sing-box from the System page"
+msgstr ""
+
+msgid "sing-box Independent DNS Cache"
+msgstr ""
+
+msgid "sing-box restarted successfully, please wait for servers to come online."
+msgstr ""
+
+msgid "sing-box service failed to start. Check System → Log."
+msgstr ""
+
+msgid "sing-box Stable"
+msgstr ""
+
+msgid "sing-box started successfully, please wait for servers to come online."
+msgstr ""
+
+msgid "Size"
+msgstr ""
+
+msgid "Smart"
+msgstr ""
+
+msgid "Smart cache cleared"
+msgstr ""
+
+msgid "Smart core not detected; updating the model will not install the core"
+msgstr ""
+
+msgid "Smart core not detected; updating the model will not install the core. Download the Smart build from the System page."
+msgstr ""
+
+msgid "Smart Policy Auto Switch"
+msgstr ""
+
+msgid "Smart Policy Settings"
+msgstr ""
+
+msgid "smart-collector-size, maximum retained training samples, default 100"
+msgstr ""
+
+msgid "Sniffer (streaming compatibility)"
+msgstr ""
+
+msgid "SOCKS5 Port"
+msgstr ""
+
+msgid "Stable"
+msgstr ""
+
+msgid "Start downloading LightGBM model: $1"
+msgstr ""
+
+msgid "Start failed: "
+msgstr ""
+
+msgid "Start Service"
+msgstr ""
+
+msgid "Started ("
+msgstr ""
+
+msgid "Starting client"
+msgstr ""
+
+msgid "Starting core…"
+msgstr ""
+
+msgid "Starting…"
+msgstr ""
+
+msgid "Stop Service"
+msgstr ""
+
+msgid "Stopped (not enabled at boot)"
+msgstr ""
+
+msgid "Stopped ⚪"
+msgstr ""
+
+msgid "Stopped ✓"
+msgstr ""
+
+msgid "Stopping client..."
+msgstr ""
+
+msgid "Stopping mihomo"
+msgstr ""
+
+msgid "Stopping mihomo process supervisor"
+msgstr ""
+
+msgid "Stopping sing-box"
+msgstr ""
+
+msgid "Stopping sing-box process supervisor"
+msgstr ""
+
+msgid "Stopping…"
+msgstr ""
+
+msgid "Submission failed"
+msgstr ""
+
+msgid "Submitting"
+msgstr ""
+
+msgid "Subscription"
+msgstr ""
+
+msgid "Subscription download failed"
+msgstr ""
+
+msgid "Subscription Update"
+msgstr ""
+
+msgid "Subscription updated successfully"
+msgstr ""
+
+msgid "Subscription URL"
+msgstr ""
+
+msgid "Subscription URLs (one per line)"
+msgstr ""
+
+msgid "Switch"
+msgstr ""
+
+msgid "Switch configuration failed: "
+msgstr ""
+
+msgid "Switch failed: "
+msgstr ""
+
+msgid "Switched to "
+msgstr ""
+
+msgid "Switching to "
+msgstr ""
+
+msgid "Syncing"
+msgstr ""
+
+msgid "Syncing runtime state"
+msgstr ""
+
+msgid "System"
+msgstr ""
+
+msgid "System is missing nftables runtime"
+msgstr ""
+
+msgid "Target"
+msgstr ""
+
+msgid "TCP Mode"
+msgstr ""
+
+msgid "Template Selection"
+msgstr ""
+
+msgid "Template upload failed: "
+msgstr ""
+
+msgid "Template uploaded: "
+msgstr ""
+
+msgid "Test and Apply"
+msgstr ""
+
+msgid "Test Latency"
+msgstr ""
+
+msgid "Testing"
+msgstr ""
+
+msgid "Testing latency and writing upstream DNS…"
+msgstr ""
+
+msgid "The new core failed to start, please check the core log"
+msgstr ""
+
+msgid "Time"
+msgstr ""
+
+msgid "Timeout waiting for new core to start, please check the core log"
+msgstr ""
+
+msgid "Total "
+msgstr ""
+
+msgid "TPROXY Port"
+msgstr ""
+
+msgid "Traffic Monitor"
+msgstr ""
+
+msgid "Training Data Size"
+msgstr ""
+
+msgid "Transparent Proxy"
+msgstr ""
+
+msgid "TUN Mode"
+msgstr ""
+
+msgid "Type"
+msgstr ""
+
+msgid "UDP Mode"
+msgstr ""
+
+msgid "Unknown"
+msgstr ""
+
+msgid "Unknown error"
+msgstr ""
+
+msgid "Update"
+msgstr ""
+
+msgid "Update All Now"
+msgstr ""
+
+msgid "Update available"
+msgstr ""
+
+msgid "Update components individually to facilitate locating failures. Click \"Check for Updates\" to get the latest version."
+msgstr ""
+
+msgid "Update failed"
+msgstr ""
+
+msgid "Update failed: "
+msgstr ""
+
+msgid "Update interval (hours)"
+msgstr ""
+
+msgid "Update interval must be 1 to 8760 hours"
+msgstr ""
+
+msgid "Update Log"
+msgstr ""
+
+msgid "Update Model"
+msgstr ""
+
+msgid "Update Subscription"
+msgstr ""
+
+msgid "Update succeeded"
+msgstr ""
+
+msgid "Updating"
+msgstr ""
+
+msgid "Updating $1"
+msgstr ""
+
+msgid "Updating all subscriptions…"
+msgstr ""
+
+msgid "Updating…"
+msgstr ""
+
+msgid "Upload"
+msgstr ""
+
+msgid "Upload Configuration File"
+msgstr ""
+
+msgid "Upload failed"
+msgstr ""
+
+msgid "Upload failed: "
+msgstr ""
+
+msgid "Upload JSON Configuration"
+msgstr ""
+
+msgid "Upload succeeded: "
+msgstr ""
+
+msgid "Upload YAML Template"
+msgstr ""
+
+msgid "Upstream DNS"
+msgstr ""
+
+msgid "Url-test"
+msgstr ""
+
+msgid "Use DNS"
+msgstr ""
+
+msgid "Use LightGBM model to predict weights"
+msgstr ""
+
+msgid "Used to resolve DoH/DoT/DoQ server domains; plain IP DNS is recommended."
+msgstr ""
+
+msgid "User-Agent (UA)"
+msgstr ""
+
+msgid "Username"
+msgstr ""
+
+msgid "Virtual IP Ping Hijacking"
+msgstr ""
+
+msgid "Wait for the current task to complete"
+msgstr ""
+
+msgid "Waiting for data..."
+msgstr ""
+
+msgid "When downloading core/data components, this prefix will be used first (a slash is required at the end). Leave blank to use the built-in gh-proxy.com and ghfast.top alternative sources."
+msgstr ""
+
+msgid "When enabled, direct / proxy / fallback roles each use an independent DNS cache. Useful when the same domain needs different resolver chains by routing. Usually not needed."
+msgstr ""
+
+msgid "When enabled, sniffer configuration is injected automatically to improve streaming domain detection and routing stability."
+msgstr ""
+
+msgid "YAML Subscription Conversion"
+msgstr ""
+
+msgid "⏳ A download task is already running..."
+msgstr ""
+
+msgid "⏳ Fetch timed out, refreshing to show results..."
+msgstr ""
+
+msgid "⏳ Fetching configuration..."
+msgstr ""
+
+msgid "⏳ Starting update task..."
+msgstr ""
+
+msgid "⏳ Submitting download task..."
+msgstr ""
+
+msgid "✗ Fetch error: "
+msgstr ""
+
+msgid "✗ Fetch failed: "
+msgstr ""
+
+msgid "✗ Panel update timeout"
+msgstr ""
+
+msgid "✗ Please enter a subscription URL"
+msgstr ""
+
+msgid "✗ Please enter a subscription URL first"
+msgstr ""
+
+msgid "✗ Start failed"
+msgstr ""
+
+msgid "✗ Start failed: "
+msgstr ""
+
+msgid "✗ Submission failed"
+msgstr ""
+

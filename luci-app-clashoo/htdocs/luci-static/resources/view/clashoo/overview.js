@@ -173,60 +173,60 @@ function rpcOverview() {
 var MSGS = {
   mihomo: {
     start: [
-      '启动客户端',
-      '正在检查配置文件',
-      '设置 mihomo 网络规则',
-      '设置 DNS 转发器 / 启用自定义 DNS',
-      '设置 Cron → 计划任务，启动进程守护程序...',
-      '重启 Dnsmasq 程序',
-      'mihomo 启动成功，请等待服务器上线！'
+      _("Starting client"),
+      _("Checking configuration file"),
+      _("Setting mihomo network rules"),
+      _("Setting DNS forwarder / enabling custom DNS"),
+      _("Setting Cron scheduled tasks and starting process supervisor..."),
+      _("Restarting Dnsmasq"),
+      _("mihomo started successfully, please wait for servers to come online.")
     ],
     stop: [
-      '正在停止客户端...',
-      '清理 mihomo 网络规则',
-      '禁用 DNS 缓存',
-      'mihomo 停止进程守护程序',
-      '删除 Cron → 计划任务',
-      '重启 Dnsmasq 程序'
+      _("Stopping client..."),
+      _("Cleaning mihomo network rules"),
+      _("Disabling DNS cache"),
+      _("Stopping mihomo process supervisor"),
+      _("Removing Cron scheduled tasks"),
+      _("Restarting Dnsmasq")
     ],
     restart: [
-      '正在重启客户端...',
-      '清理 mihomo 网络规则',
-      '停止 mihomo',
-      '启动客户端',
-      '正在检查配置文件',
-      '设置 mihomo 网络规则',
-      '重启 Dnsmasq 程序',
-      'mihomo 重启成功，请等待服务器上线！'
+      _("Restarting client..."),
+      _("Cleaning mihomo network rules"),
+      _("Stopping mihomo"),
+      _("Starting client"),
+      _("Checking configuration file"),
+      _("Setting mihomo network rules"),
+      _("Restarting Dnsmasq"),
+      _("mihomo restarted successfully, please wait for servers to come online.")
     ]
   },
   singbox: {
     start: [
-      '启动客户端',
-      '正在检查配置文件',
-      '设置 sing-box 网络规则',
-      '设置 DNS 转发器 / 启用自定义 DNS',
-      '设置 Cron → 计划任务，启动进程守护程序...',
-      '重启 Dnsmasq 程序',
-      'sing-box 启动成功，请等待服务器上线！'
+      _("Starting client"),
+      _("Checking configuration file"),
+      _("Setting sing-box network rules"),
+      _("Setting DNS forwarder / enabling custom DNS"),
+      _("Setting Cron scheduled tasks and starting process supervisor..."),
+      _("Restarting Dnsmasq"),
+      _("sing-box started successfully, please wait for servers to come online.")
     ],
     stop: [
-      '正在停止客户端...',
-      '清理 sing-box 网络规则',
-      '禁用 DNS 缓存',
-      'sing-box 停止进程守护程序',
-      '删除 Cron → 计划任务',
-      '重启 Dnsmasq 程序'
+      _("Stopping client..."),
+      _("Cleaning sing-box network rules"),
+      _("Disabling DNS cache"),
+      _("Stopping sing-box process supervisor"),
+      _("Removing Cron scheduled tasks"),
+      _("Restarting Dnsmasq")
     ],
     restart: [
-      '正在重启客户端...',
-      '清理 sing-box 网络规则',
-      '停止 sing-box',
-      '启动客户端',
-      '正在检查配置文件',
-      '设置 sing-box 网络规则',
-      '重启 Dnsmasq 程序',
-      'sing-box 重启成功，请等待服务器上线！'
+      _("Restarting client..."),
+      _("Cleaning sing-box network rules"),
+      _("Stopping sing-box"),
+      _("Starting client"),
+      _("Checking configuration file"),
+      _("Setting sing-box network rules"),
+      _("Restarting Dnsmasq"),
+      _("sing-box restarted successfully, please wait for servers to come online.")
     ]
   }
 };
@@ -347,7 +347,7 @@ return view.extend({
     var root = E('div', { 'class': 'cl-wrap clashoo-container cl-overview-page' }, [
       E('div', { 'class': 'cl-cards', id: 'cl-cards' }, this._cards(st, cfgData, ac)),
       E('div', { 'class': 'cl-traffic-wrap', id: 'cl-traffic-wrap' }, [
-        this._card('流量监控', this._renderRealtimePanel(), 'cl-card-traffic')
+        this._card(_("Traffic Monitor"), this._renderRealtimePanel(), 'cl-card-traffic')
       ]),
       E('div', { 'class': 'cl-controls', id: 'cl-controls' }, this._controls(st, cfgData)),
       this._renderProxyModal()
@@ -514,9 +514,9 @@ return view.extend({
 
   _coreLabel: function (family, channel) {
     if (!family)
-      return '未运行';
+      return _("Not running");
     var f = family === 'singbox' ? 'sing-box' : 'mihomo';
-    var c = channel === 'smart' ? 'Smart 版' : channel === 'alpha' ? 'Alpha 版' : '稳定版';
+    var c = channel === 'smart' ? _("Smart") : channel === 'alpha' ? _("Alpha") : _("Stable");
     return f + ' ' + c;
   },
 
@@ -566,7 +566,7 @@ return view.extend({
       return Promise.resolve();
 
     if (targetCore === 'smart' && self._lastSt && self._lastSt.has_smart === false) {
-      self._showCoreSwitchHint('未检测到 Smart 内核；更新模型不会安装内核，请到系统页下载 Smart 版');
+      self._showCoreSwitchHint(_("Smart core not detected; updating the model will not install the core. Download the Smart build from the System page."));
       return Promise.resolve();
     }
 
@@ -585,21 +585,21 @@ return view.extend({
     }
 
     self._coreSwitchBusy = true;
-    self._coreSwitchMsg = '正在切换到 ' + targetLabel + '...';
+    self._coreSwitchMsg = _("Switching to ") + targetLabel + '...';
     self._refreshCoreSwitch();
 
     return clashoo.setCore(rpcCore, nextDcore)
       .then(function (r) {
         if (r && r.success === false && r.error === 'smart_core_missing') {
-          self._showCoreSwitchHint('未检测到 Smart 内核；更新模型不会安装内核，请到系统页下载 Smart 版');
+          self._showCoreSwitchHint(_("Smart core not detected; updating the model will not install the core. Download the Smart build from the System page."));
           throw { soft: true };
         }
         if (r && r.success === false && r.error === 'singbox_core_missing') {
-          self._showCoreSwitchHint('未检测到 sing-box 内核；请到系统页下载 sing-box');
+          self._showCoreSwitchHint(_("sing-box core not detected; download sing-box from the System page"));
           throw { soft: true };
         }
         if (r && r.success === false)
-          throw new Error(r.message || '切换内核失败');
+          throw new Error(r.message || _("Core switch failed"));
         self._lastSt = self._lastSt || {};
         self._lastSt.core_type = rpcCore;
         self._lastSt.dcore = nextDcore;          /* 乐观更新，避免重绘前 uci 缓存滞后 */
@@ -609,7 +609,7 @@ return view.extend({
       .then(function () {
         /* set_core auto-enables smart_auto_switch; init.d at boot
          * smart_inject 会把 url-test/load-balance 转成 Smart 策略，无需手动操作。 */
-        self._coreSwitchMsg = '已切换到 ' + targetLabel + '，点击启动后生效';
+        self._coreSwitchMsg = _("Switched to ") + targetLabel + _(", click Start to take effect");
         self._refreshCoreSwitch();
         return new Promise(function (resolve) { setTimeout(resolve, 500); });
       })
@@ -618,7 +618,7 @@ return view.extend({
         if (e && e.soft)
           return;
         /* card already surfaces this via _coreSwitchMsg; no toast needed */
-        self._coreSwitchMsg = '切换失败：' + (e.message || e);
+        self._coreSwitchMsg = _("Switch failed: ") + (e.message || e);
         self._refreshCoreSwitch();
       })
       .then(function () {
@@ -639,7 +639,7 @@ return view.extend({
     var orig = btn.textContent;
     self._panelUpdateBusy = true;   /* pause overview poll so the rebuild won't wipe this feedback */
     btn.disabled = true;
-    btn.textContent = '下载中…';
+    btn.textContent = _("Downloading…");
     statusEl.textContent = '';
     statusEl.className = 'cl-panel-status';
 
@@ -659,11 +659,11 @@ return view.extend({
     var poll = function () {
       clashoo.panelStatus().then(function (s) {
         s = s || {};
-        if (s.state === 'success') done('ok', '✓ ' + label + ' 已更新');
-        else if (s.state === 'error') done('err', '✗ ' + (s.msg || '更新失败'));
-        else if (polls++ >= 600) done('err', '✗ 面板更新超时');
+        if (s.state === 'success') done('ok', '✓ ' + label + _(" updated"));
+        else if (s.state === 'error') done('err', '✗ ' + (s.msg || _("Update failed")));
+        else if (polls++ >= 600) done('err', _("✗ Panel update timeout"));
         else {
-          statusEl.textContent = s.msg || '正在下载…';
+          statusEl.textContent = s.msg || _("Downloading…");
           setTimeout(poll, 1200);
         }
       });
@@ -672,17 +672,17 @@ return view.extend({
     clashoo.updatePanel(panel)
       .then(function (r) {
         if (r && r.busy) {
-          statusEl.textContent = r.message || '面板正在下载';
+          statusEl.textContent = r.message || _("Panel is downloading");
           setTimeout(poll, 600);
           return;
         }
         if (!r || r.success === false) {
-          done('err', '✗ ' + ((r && r.message) || '提交失败'));
+          done('err', '✗ ' + ((r && r.message) || _("Submission failed")));
           return;
         }
         setTimeout(poll, 600);
       })
-      .catch(function () { done('err', '✗ 提交失败'); });
+      .catch(function () { done('err', _("✗ Submission failed")); });
   },
 
   _renderCoreSwitch: function (st) {
@@ -695,7 +695,7 @@ return view.extend({
       var missingSmart = core === 'smart' && st && st.has_smart === false;
       return E('button', {
         type: 'button',
-        title: missingSmart ? '未检测到 Smart 内核；更新模型不会安装内核' : null,
+        title: missingSmart ? _("Smart core not detected; updating the model will not install the core") : null,
         'class': 'cl-core-btn' + (active ? ' active' : ''),
         disabled: self._coreSwitchBusy ? '' : null,
         click: function (ev) {
@@ -722,7 +722,7 @@ return view.extend({
   },
 
   _proxyModeLabel: function (mode) {
-    var map = { rule: '规则', global: '全局', direct: '直连' };
+    var map = { rule: _("Rule"), global: _("Global"), direct: _("Direct") };
     return map[mode] || mode || '—';
   },
 
@@ -733,7 +733,7 @@ return view.extend({
       zashboard: 'Zashboard',
       razord: 'Razord'
     };
-    return map[name] || name || '面板';
+    return map[name] || name || _("Panel");
   },
 
   _renderServiceSwitch: function (st) {
@@ -742,10 +742,10 @@ return view.extend({
     var running = known && st.running === true;
     var disabled = this._busy || !known || this._coreSwitchBusy;
     return E('div', { 'class': 'cl-service-tools' }, [
-      E('span', { 'class': 'cl-service-label' }, '启用服务'),
+      E('span', { 'class': 'cl-service-label' }, _("Enable Service")),
       E('button', {
         type: 'button',
-        title: !known ? '正在同步运行状态' : (running ? '停止服务' : '启动服务'),
+        title: !known ? _("Syncing runtime state") : (running ? _("Stop Service") : _("Start Service")),
         'aria-pressed': running ? 'true' : 'false',
         'class': 'cl-service-switch' + (running ? ' is-on' : ' is-off'),
         disabled: disabled ? '' : null,
@@ -766,32 +766,32 @@ return view.extend({
 
     var statusChildren = [
       !statusKnown
-        ? E('span', { 'class': 'cl-status-state cl-status-state-sync' }, '同步中')
+        ? E('span', { 'class': 'cl-status-state cl-status-state-sync' }, _("Syncing"))
         : running
-        ? E('span', { 'class': 'cl-status-state cl-status-state-run' }, '运行中 🟢')
-        : E('span', { 'class': 'cl-status-state cl-status-state-stop' }, '已停止 ⚪'),
+        ? E('span', { 'class': 'cl-status-state cl-status-state-run' }, _("Running 🟢"))
+        : E('span', { 'class': 'cl-status-state cl-status-state-stop' }, _("Stopped ⚪")),
       E('span', { 'class': 'cl-status-note cl-status-note-core' }, configuredCoreLabel)
     ];
     if (st.runtime_degraded)
-      statusChildren.push(E('span', { 'class': 'cl-status-note cl-status-note-degraded' }, '已降级运行'));
+      statusChildren.push(E('span', { 'class': 'cl-status-note cl-status-note-degraded' }, _("Running degraded")));
     if (running && health === 'fail')
-      statusChildren.push(E('span', { 'class': 'cl-status-note cl-status-note-fail' }, '健康检查失败'));
+      statusChildren.push(E('span', { 'class': 'cl-status-note cl-status-note-fail' }, _("Health check failed")));
     else if (running && health === 'pass')
-      statusChildren.push(E('span', { 'class': 'cl-status-note cl-status-note-pass' }, '健康检查通过'));
+      statusChildren.push(E('span', { 'class': 'cl-status-note cl-status-note-pass' }, _("Health check passed")));
     var statusEl = E('span', { id: 'cl-status-val' }, statusChildren);
 
     return [
-      this._card('运行状态', statusEl, 'cl-card-status',
+      this._card(_("Runtime Status"), statusEl, 'cl-card-status',
         this._renderServiceSwitch(st)),
-      this._card('内核切换',
+      this._card(_("Core Switch"),
         E('div', { id: 'cl-core-switch-inline-wrap' }, [
           this._renderCoreSwitch(st),
           this._proxyTriggerBtn()
         ]),
         'cl-card-kernel'
       ),
-      this._card('透明代理', this._renderTpMode(st), 'cl-card-mode'),
-      this._card('访问检查', this._renderCheckStatus(st, ac), 'cl-card-access', this._renderAccessRefresh(ac))
+      this._card(_("Transparent Proxy"), this._renderTpMode(st), 'cl-card-mode'),
+      this._card(_("Access Check"), this._renderCheckStatus(st, ac), 'cl-card-access', this._renderAccessRefresh(ac))
     ];
   },
 
@@ -832,7 +832,7 @@ return view.extend({
       redir: 'Redirect',
       tproxy: 'TProxy',
       tun: 'TUN',
-      off: '关闭'
+      off: _("Off")
     };
     if (map[m]) return map[m];
     if (!mode) return '—';
@@ -852,8 +852,8 @@ return view.extend({
 
     return {
       rows: [
-        { proto: 'TCP', mode: this._tpModeName(tcpRaw), suffix: String(tcpRaw).toLowerCase() === 'off' ? '' : '模式' },
-        { proto: 'UDP', mode: this._tpModeName(udpRaw), suffix: String(udpRaw).toLowerCase() === 'off' ? '' : '模式' }
+        { proto: 'TCP', mode: this._tpModeName(tcpRaw), suffix: String(tcpRaw).toLowerCase() === 'off' ? '' : _("Mode") },
+        { proto: 'UDP', mode: this._tpModeName(udpRaw), suffix: String(udpRaw).toLowerCase() === 'off' ? '' : _("Mode") }
       ],
       stack: this._stackLabel(stackRaw)
     };
@@ -884,13 +884,13 @@ return view.extend({
     });
     rows.push(
       E('div', { 'class': 'cl-mode-row cl-mode-row-stack' }, [
-        E('span', { 'class': 'cl-mode-proto' }, '网络栈'),
+        E('span', { 'class': 'cl-mode-proto' }, _("Network Stack")),
         E('span', { 'class': 'cl-mode-name' }, data.stack),
-        E('span', { 'class': 'cl-mode-suffix' }, '模式')
+        E('span', { 'class': 'cl-mode-suffix' }, _("Mode"))
       ])
     );
     if (this._isTpModeDegraded(st))
-      rows.push(E('div', { 'class': 'cl-check-updated cl-mode-degraded' }, '降级运行'));
+      rows.push(E('div', { 'class': 'cl-check-updated cl-mode-degraded' }, _("Degraded")));
 
     return E('div', { id: 'cl-tpmode', 'class': 'cl-mode-stack' }, rows);
   },
@@ -903,7 +903,7 @@ return view.extend({
     return E('button', {
       type: 'button',
       id: 'cl-access-refresh',
-      title: '刷新访问检查',
+      title: _("Refresh Access Check"),
       'class': 'cl-icon-btn' + (loading ? ' is-loading' : ''),
       click: function (ev) {
         ev.preventDefault();
@@ -940,14 +940,14 @@ return view.extend({
   },
 
   _pgTypeLabel: function (t) {
-    var m = { 'Selector': '选择器', 'URLTest': '自动测速', 'Fallback': '故障转移',
-              'LoadBalance': '负载均衡', 'Relay': '链式代理' };
+    var m = { 'Selector': _("Selector"), 'URLTest': _("Url-test"), 'Fallback': _("Fallback"),
+              'LoadBalance': _("Load-balance"), 'Relay': _("Relay") };
     return m[t] || t;
   },
 
   _proxyTriggerBtn: function () {
     var self = this;
-    var btn = E('button', { 'class': 'cl-pm-open' }, '节点面板 ›');
+    var btn = E('button', { 'class': 'cl-pm-open' }, _("Node Panel ›"));
     btn.addEventListener('click', function () { self._openProxyModal(); });
     return btn;
   },
@@ -966,14 +966,14 @@ return view.extend({
     this._pmStatusEl = statusEl;
     this._pmBodyEl = body;
 
-    var refreshBtn = E('button', { 'class': 'cl-pm-close' }, '刷新');
+    var refreshBtn = E('button', { 'class': 'cl-pm-close' }, _("Refresh"));
     refreshBtn.addEventListener('click', function () { self._loadProxies(); });
-    var closeBtn = E('button', { 'class': 'cl-pm-close' }, '关闭');
+    var closeBtn = E('button', { 'class': 'cl-pm-close' }, _("Off"));
     closeBtn.addEventListener('click', function () { self._closeProxyModal(); });
 
     var modal = E('div', { 'class': 'cl-pm', id: 'cl-pm' }, [
       E('div', { 'class': 'cl-pm-head' }, [
-        E('div', { 'class': 'cl-pm-ttl' }, [E('span', {}, '节点选择'), statusEl]),
+        E('div', { 'class': 'cl-pm-ttl' }, [E('span', {}, _("Node Selection")), statusEl]),
         E('div', { 'class': 'cl-pm-acts' }, [refreshBtn, closeBtn])
       ]),
       body
@@ -1021,34 +1021,34 @@ return view.extend({
     var st = this._lastSt || {};
     if (!st.running) {
       body.innerHTML = '';
-      body.appendChild(E('div', { 'class': 'cl-pm-empty' }, '核心未运行，启动后可切换节点'));
-      this._setPmStatus('未运行', 'err');
+      body.appendChild(E('div', { 'class': 'cl-pm-empty' }, _("Core is not running. Start it before switching nodes.")));
+      this._setPmStatus(_("Not running"), 'err');
       return;
     }
     body.innerHTML = '';
-    body.appendChild(E('div', { 'class': 'cl-pm-empty' }, '加载中…'));
-    this._setPmStatus('加载中…', '');
+    body.appendChild(E('div', { 'class': 'cl-pm-empty' }, _("Loading…")));
+    this._setPmStatus(_("Loading…"), '');
     callProxiesList().then(function (r) {
       var b = self._pmBodyEl;
       if (!b) return;
       b.innerHTML = '';
       if (!r || !r.ok) {
-        b.appendChild(E('div', { 'class': 'cl-pm-empty' }, '无法连接核心 API，请检查运行状态'));
-        self._setPmStatus('连接失败', 'err');
+        b.appendChild(E('div', { 'class': 'cl-pm-empty' }, _("Cannot connect to core API. Check runtime status.")));
+        self._setPmStatus(_("Connection failed"), 'err');
         return;
       }
       var groups = r.groups || [];
       if (!groups.length) {
-        b.appendChild(E('div', { 'class': 'cl-pm-empty' }, '当前配置没有可手动切换的节点组'));
-        self._setPmStatus('无节点组', '');
+        b.appendChild(E('div', { 'class': 'cl-pm-empty' }, _("Current configuration has no manually switchable proxy groups")));
+        self._setPmStatus(_("No proxy groups"), '');
         return;
       }
       groups.forEach(function (g) { b.appendChild(self._renderProxyGroup(g)); });
-      self._setPmStatus('就绪 · ' + groups.length + ' 组', 'ok');
+      self._setPmStatus(_("Ready · ") + groups.length + _(" groups"), 'ok');
     }).catch(function () {
       var b = self._pmBodyEl;
-      if (b) { b.innerHTML = ''; b.appendChild(E('div', { 'class': 'cl-pm-empty' }, '加载失败')); }
-      self._setPmStatus('加载失败', 'err');
+      if (b) { b.innerHTML = ''; b.appendChild(E('div', { 'class': 'cl-pm-empty' }, _("Load failed"))); }
+      self._setPmStatus(_("Load failed"), 'err');
     });
   },
 
@@ -1056,11 +1056,11 @@ return view.extend({
     callProxySelect(group, name).then(function (r) {
       if (r && r.ok) { if (onOk) onOk(); }
       else {
-        ui.addNotification(null, E('p', group + ' 切换失败: ' + ((r && r.message) || '')));
+        ui.addNotification(null, E('p', group + _(" switch failed: ") + ((r && r.message) || '')));
         if (onFail) onFail();
       }
     }).catch(function () {
-      ui.addNotification(null, E('p', group + ' 切换异常'));
+      ui.addNotification(null, E('p', group + _(" switch error")));
       if (onFail) onFail();
     });
   },
@@ -1100,15 +1100,15 @@ return view.extend({
       ]));
     }
 
-    var testBtn = E('button', { 'class': 'cl-pm-test' }, '测速');
+    var testBtn = E('button', { 'class': 'cl-pm-test' }, _("Test Latency"));
     testBtn.addEventListener('click', function () {
       testBtn.disabled = true;
-      testBtn.textContent = '测速中';
+      testBtn.textContent = _("Testing");
       callProxyDelay(g.name).then(function (r) {
         testBtn.disabled = false;
-        testBtn.textContent = '测速';
+        testBtn.textContent = _("Test Latency");
         if (!r || !r.ok) {
-          ui.addNotification(null, E('p', g.name + ' 测速失败: ' + ((r && r.message) || '')));
+          ui.addNotification(null, E('p', g.name + _(" latency test failed: ") + ((r && r.message) || '')));
           return;
         }
         var fresh = {
@@ -1121,7 +1121,7 @@ return view.extend({
         if (row.parentNode) row.parentNode.replaceChild(newRow, row);
       }).catch(function () {
         testBtn.disabled = false;
-        testBtn.textContent = '测速';
+        testBtn.textContent = _("Test Latency");
       });
     });
     row.appendChild(testBtn);
@@ -1238,7 +1238,7 @@ return view.extend({
           E('span', { 'class': 'cl-live-num', id: mainId }, '0'),
           E('span', { 'class': 'cl-live-unit', id: unitId }, name === 'conn' ? '' : 'B/s')
         ]),
-        E('div', { 'class': 'cl-live-foot', id: footId }, '等待数据...')
+        E('div', { 'class': 'cl-live-foot', id: footId }, _("Waiting for data..."))
       ])
     ]);
   },
@@ -1247,9 +1247,9 @@ return view.extend({
     this._initRealtimeHistory();
     return E('div', { 'class': 'cl-live-box' }, [
       E('div', { 'class': 'cl-live-grid' }, [
-        this._renderRealtimeCard('up', '上传'),
-        this._renderRealtimeCard('down', '下载'),
-        this._renderRealtimeCard('conn', '连接')
+        this._renderRealtimeCard('up', _("Upload")),
+        this._renderRealtimeCard('down', _("Download")),
+        this._renderRealtimeCard('conn', _("Connections"))
       ])
     ]);
   },
@@ -1298,17 +1298,17 @@ return view.extend({
 
     setText('cl-live-up-main', upRate.value);
     setText('cl-live-up-unit', upRate.unit);
-    setText('cl-live-up-foot', '总计 ' + this._fmtBytes(upTotal));
+    setText('cl-live-up-foot', _("Total ") + this._fmtBytes(upTotal));
     setChart('cl-live-up-chart', upHist, 'up');
 
     setText('cl-live-down-main', downRate.value);
     setText('cl-live-down-unit', downRate.unit);
-    setText('cl-live-down-foot', '总计 ' + this._fmtBytes(downTotal));
+    setText('cl-live-down-foot', _("Total ") + this._fmtBytes(downTotal));
     setChart('cl-live-down-chart', downHist, 'down');
 
     setText('cl-live-conn-main', '' + conn);
     setText('cl-live-conn-unit', '');
-    setText('cl-live-conn-foot', '内存使用 ' + this._fmtMiB(mem));
+    setText('cl-live-conn-foot', _("Memory usage ") + this._fmtMiB(mem));
     setChart('cl-live-conn-chart', connHist, 'conn');
 
     this._setLiveCardState('up', up, 512 * 1024, online);
@@ -1326,7 +1326,7 @@ return view.extend({
       google: 'Google',
       github: 'GitHub',
       youtube: 'YouTube',
-      bytedance: '字节跳动',
+      bytedance: _("ByteDance"),
       cloudflare: 'Cloudflare',
       bilibili: 'Bilibili',
       taobao: 'Taobao'
@@ -1472,21 +1472,21 @@ return view.extend({
     var now = Math.floor(Date.now() / 1000);
     var delta = now - (parseInt(ts, 10) || 0);
     if (!isFinite(delta) || delta < 0) delta = 0;
-    if (delta < 5) return '刚刚';
-    if (delta < 60) return delta + ' 秒前';
-    if (delta < 3600) return Math.floor(delta / 60) + ' 分钟前';
-    return Math.floor(delta / 3600) + ' 小时前';
+    if (delta < 5) return _("just now");
+    if (delta < 60) return delta + _(" seconds ago");
+    if (delta < 3600) return Math.floor(delta / 60) + _(" minutes ago");
+    return Math.floor(delta / 3600) + _(" hours ago");
   },
 
   _renderCheckUpdated: function (ac) {
     if (!ac) return null;
     var updatedAt = parseInt(ac.updated_at || '0', 10) || 0;
     if (updatedAt <= 0) {
-      return E('div', { 'class': 'cl-check-updated' }, '上次检查：初始化中');
+      return E('div', { 'class': 'cl-check-updated' }, _("Last check: initializing"));
     }
-    var msg = '上次检查：' + this._timeAgoText(updatedAt);
+    var msg = _("Last check: ") + this._timeAgoText(updatedAt);
     if (ac.updating && this._accessRefreshing)
-      msg += '（刷新中）';
+      msg += _(" (refreshing)");
     return E('div', { 'class': 'cl-check-updated' }, msg);
   },
 
@@ -1502,7 +1502,7 @@ return view.extend({
         E('span', { 'class': 'cl-skel-line' }),
         E('span', { 'class': 'cl-skel-line short' })
       ]),
-      E('div', { 'class': 'cl-check-updated' }, '上次检查：初始化中')
+      E('div', { 'class': 'cl-check-updated' }, _("Last check: initializing"))
     ]);
   },
 
@@ -1562,7 +1562,7 @@ return view.extend({
       }).catch(function (e) {
         self._lastSt.panel_type = prev;
         ev.target.value = prev;
-        ui.addNotification(null, E('p', '面板切换失败: ' + (e.message || e)));
+        ui.addNotification(null, E('p', _("Panel switch failed: ") + (e.message || e)));
       }).then(function () {
         ev.target.disabled = false;
       });
@@ -1570,13 +1570,13 @@ return view.extend({
 
     return [
       E('div', { 'class': 'cl-ctrl' }, [
-        E('label', {}, '代理模式'),
-        mkSel([['rule','规则'],['global','全局'],['direct','直连']], proxyMode,
+        E('label', {}, _("Proxy Mode")),
+        mkSel([['rule',_("Rule")],['global',_("Global")],['direct',_("Direct")]], proxyMode,
           function (ev) { clashoo.setProxyMode(ev.target.value); })
       ]),
       E('div', { 'class': 'cl-ctrl' }, [
-        E('label', {}, '运行模式'),
-        mkSel([['fake-ip','Fake-IP'],['tun','TUN 模式'],['mixed','Mixed 模式']], tpMode,
+        E('label', {}, _("Run Mode")),
+        mkSel([['fake-ip','Fake-IP'],['tun',_("TUN Mode")],['mixed',_("Mixed Mode")]], tpMode,
           function (ev) {
             var mode = ev.target.value;
             ev.target.disabled = true;
@@ -1597,10 +1597,10 @@ return view.extend({
             }
             clashoo.setMode(mode).then(function (r) {
               if (r && r.error)
-                ui.addNotification(null, E('p', '运行模式设置失败: ' + r.error));
+                ui.addNotification(null, E('p', _("Run mode setting failed: ") + r.error));
               return self._pollOverview(true);
             }).catch(function (e) {
-              ui.addNotification(null, E('p', '运行模式设置失败: ' + (e.message || e)));
+              ui.addNotification(null, E('p', _("Run mode setting failed: ") + (e.message || e)));
             }).then(function () {
               self._op = null;
               ev.target.disabled = false;
@@ -1608,9 +1608,9 @@ return view.extend({
           })
       ]),
       E('div', { 'class': 'cl-ctrl' }, [
-        E('label', {}, '配置文件'),
+        E('label', {}, _("Configuration Files")),
         E('div', { 'class': 'cl-ctrl-row cl-config-row' }, [
-          mkSel(configs.length ? configs.map(function(c){return[c,c];}) : [['','（空）']], current,
+          mkSel(configs.length ? configs.map(function(c){return[c,c];}) : [['',_("(empty)")]], current,
             function (ev) {
               var sel = ev.target;
               var name = sel.value;
@@ -1622,14 +1622,14 @@ return view.extend({
               setter
                 .then(function (r) {
                   if (r && r.error) {
-                    ui.addNotification(null, E('p', '切换配置失败: ' + r.error));
+                    ui.addNotification(null, E('p', _("Switch configuration failed: ") + r.error));
                     sel.value = prev;
                     return;
                   }
                   sel.setAttribute('data-cl-prev', name);
                 })
                 .catch(function (e) {
-                  ui.addNotification(null, E('p', '切换配置失败: ' + (e.message || e)));
+                  ui.addNotification(null, E('p', _("Switch configuration failed: ") + (e.message || e)));
                   sel.value = prev;
                 })
                 .then(function () {
@@ -1641,11 +1641,11 @@ return view.extend({
           E('button', {
             'class': 'btn cbi-button-action cl-btn-update-sub',
             click: L.bind(this._updSubs, this)
-          }, '更新订阅')
+          }, _("Update Subscription"))
         ])
       ]),
       E('div', { 'class': 'cl-ctrl' }, [
-        E('label', {}, '管理面板'),
+        E('label', {}, _("Dashboard")),
         E('div', { 'class': 'cl-ctrl-row' }, [
           panelSel,
           E('button', {
@@ -1653,7 +1653,7 @@ return view.extend({
             click: function () {
               self._runPanelUpdate(panelSel.value, this, panelStatusEl);
             }
-          }, '更新'),
+          }, _("Update")),
           panelStatusEl,
           E('a', {
             'class': 'btn cbi-button cl-btn-panel-open',
@@ -1664,7 +1664,7 @@ return view.extend({
               ev.preventDefault();
               window.open(self._dashboardUrl(self._lastSt || st), '_blank', 'noopener');
             }
-          }, '打开面板')
+          }, _("Open Dashboard"))
         ])
       ])
     ];
@@ -1774,7 +1774,7 @@ return view.extend({
     if (!cards) return;
     var st = this._lastSt || {};
     var ac = this._lastAc || {};
-    var newCard = this._card('访问检查', this._renderCheckStatus(st, ac), 'cl-card-access', this._renderAccessRefresh(ac));
+    var newCard = this._card(_("Access Check"), this._renderCheckStatus(st, ac), 'cl-card-access', this._renderAccessRefresh(ac));
     var oldCard = cards.querySelector('.cl-card-access');
     if (oldCard && oldCard.parentNode) {
       oldCard.parentNode.replaceChild(newCard, oldCard);
@@ -1840,16 +1840,16 @@ return view.extend({
   /* health_detail → 用户看得懂的中文（参考 P2-F 字典；详细状态时只在状态卡上展示） */
   _friendlyHealth: function (detail) {
     var map = {
-      'boot_disabled':                    '已停止（开机不自启动）',
-      'service_disabled':                 '服务已禁用',
-      'service_stopped':                  '服务已停止',
-      'preflight:openclash_conflict':     'OpenClash 已启用，请先停用以避免规则冲突',
-      'preflight:config_missing':         '未找到配置文件，请先在「配置」页导入订阅或上传配置',
-      'preflight:missing_fw4_stack':      '系统缺少 nftables 运行时',
-      'preflight:core_validation_failed': '内核校验未通过，请到「系统 → 内核」检查',
-      'start:core_not_running':           '内核未在 15 秒内启动（procd 自愈中）',
-      'start:singbox_service_failed':     'sing-box 服务启动失败，请到「系统 → 日志」查看',
-      'init':                             '初始化中…'
+      'boot_disabled':                    _("Stopped (not enabled at boot)"),
+      'service_disabled':                 _("Service disabled"),
+      'service_stopped':                  _("Service stopped"),
+      'preflight:openclash_conflict':     _("OpenClash is enabled; disable it first to avoid rule conflicts"),
+      'preflight:config_missing':         _("No configuration file found. Import a subscription or upload a configuration on the Configuration page first."),
+      'preflight:missing_fw4_stack':      _("System is missing nftables runtime"),
+      'preflight:core_validation_failed': _("Core verification failed. Check System → Core."),
+      'start:core_not_running':           _("Core did not start within 15 seconds (procd is recovering)"),
+      'start:singbox_service_failed':     _("sing-box service failed to start. Check System → Log."),
+      'init':                             _("Initializing…")
     };
     return map[detail] || '';
   },
@@ -1858,16 +1858,16 @@ return view.extend({
   _opPhase: function (opKey, st) {
     var hd = (st && st.health_detail) || '';
     if (opKey === 'stop') {
-      if (st && st.running === false) return '已停止 ✓';
-      return '停止中…';
+      if (st && st.running === false) return _("Stopped ✓");
+      return _("Stopping…");
     }
-    if (!st || st.running !== true) return '启动内核…';
-    if (hd === 'init')                    return '检查环境…';
-    if (hd.indexOf('preflight:') === 0)   return '检查环境…';
-    if (hd.indexOf('start:') === 0)       return this._friendlyHealth(hd) || '启动内核…';
-    if (st.health_status === 'pass')      return '已就绪 ✓';
-    if (st.health_status === 'fail')      return '已启动（' + (this._friendlyHealth(hd) || '健康检查未通过') + '）';
-    return '健康检查中…';
+    if (!st || st.running !== true) return _("Starting core…");
+    if (hd === 'init')                    return _("Checking environment…");
+    if (hd.indexOf('preflight:') === 0)   return _("Checking environment…");
+    if (hd.indexOf('start:') === 0)       return this._friendlyHealth(hd) || _("Starting core…");
+    if (st.health_status === 'pass')      return _("Ready ✓");
+    if (st.health_status === 'fail')      return _("Started (") + (this._friendlyHealth(hd) || _("Health check failed")) + ')';
+    return _("Health check in progress…");
   },
 
   /* fn: fire-and-forget RPC + 秒速轮询直到状态到位 */
@@ -1881,7 +1881,7 @@ return view.extend({
       var st0 = this._lastSt || {};
       var hasConfig = !!(st0.config || st0.conf_path);
       if (!hasConfig) {
-        ui.addNotification(null, E('p', '未选择配置文件，请先到「配置」页选择或上传后选中再启动'), 'warning');
+        ui.addNotification(null, E('p', _("No configuration file selected. Select or upload one on the Configuration page before starting.")), 'warning');
         return Promise.resolve();
       }
     }
@@ -1899,7 +1899,7 @@ return view.extend({
         btn.setAttribute('aria-pressed', newRunning ? 'true' : 'false');
         btn.className = 'cl-service-switch' + (newRunning ? ' is-on' : ' is-off');
       }
-      self._showOpMsg(opKey === 'stop' ? '停止中…' : '启动中…');
+      self._showOpMsg(opKey === 'stop' ? _("Stopping…") : _("Starting…"));
     }
 
     var maxWait = opKey === 'stop' ? 15000 : 35000;
@@ -1921,9 +1921,9 @@ return view.extend({
         st = st || {};
         var elapsed = Date.now() - started;
         if (opKey === 'stop') {
-          if (st.running === false)          return finish('已停止 ⚪');
+          if (st.running === false)          return finish(_("Stopped ⚪"));
         } else {
-          if (st.running === true)           return finish('运行中 🟢');
+          if (st.running === true)           return finish(_("Running 🟢"));
           if (st.health_status === 'fail')   return finish(null);
         }
         if (elapsed >= maxWait) return finish(null);
@@ -1943,11 +1943,11 @@ return view.extend({
   _updSubs: function () {
     return L.resolveDefault(callUpdateCurrentSubscription(), {}).then(function (r) {
       if (r && r.reason === 'not_subscription') {
-        ui.addNotification(null, E('p', '当前配置为自定义文件，无需更新订阅'), 'info');
+        ui.addNotification(null, E('p', _("Current configuration is a custom file; no subscription update needed")), 'info');
         return;
       }
-      ui.addNotification(null, E('p', r.success ? (r.message || '订阅更新成功')
-        : ('更新失败: ' + (r.message || '当前配置未记录订阅链接'))));
+      ui.addNotification(null, E('p', r.success ? (r.message || _("Subscription updated successfully"))
+        : (_("Update failed: ") + (r.message || _("Current configuration has no recorded subscription URL")))));
     });
   },
 

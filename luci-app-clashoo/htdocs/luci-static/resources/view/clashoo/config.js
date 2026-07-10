@@ -181,7 +181,7 @@ function uploadConfigContent(name, content, type) {
     var chunk = (content || '').slice(index * chunkSize, (index + 1) * chunkSize);
     return L.resolveDefault(callUploadConfigChunk(name, chunk, type || '2', index, total), {}).then(function (r) {
       if (!r || !r.success)
-        throw new Error((r && (r.message || r.error)) || '上传失败');
+        throw new Error((r && (r.message || r.error)) || _("Upload failed"));
       index++;
       return index < total ? sendNext() : r;
     });
@@ -226,17 +226,17 @@ function buildSubscriptionSchedule(uiData, initialStatus) {
   function renderStatus(st) {
     st = st || {};
     if (st.running) {
-      statusEl.textContent = '正在更新全部订阅…';
+      statusEl.textContent = _("Updating all subscriptions…");
       return;
     }
     if (!st.last_run) {
-      statusEl.textContent = '仅覆盖已记录来源链接的订阅，不会生成重复文件。';
+      statusEl.textContent = _("Only subscriptions with recorded source URLs are overwritten; no duplicate files are created.");
       return;
     }
     var when = new Date(st.last_run * 1000).toLocaleString();
-    statusEl.textContent = '上次执行：' + when + '；更新 ' + (st.updated || 0) +
-      '，未变化 ' + (st.unchanged || 0) + '，失败 ' + (st.failed || 0) +
-      '，跳过 ' + (st.skipped || 0) + '。';
+    statusEl.textContent = _("Last run: ") + when + _("; updated ") + (st.updated || 0) +
+      _(", unchanged ") + (st.unchanged || 0) + _(", failed ") + (st.failed || 0) +
+      _(", skipped ") + (st.skipped || 0) + '.';
   }
 
   function pollStatus() {
@@ -246,7 +246,7 @@ function buildSubscriptionSchedule(uiData, initialStatus) {
         if (timer) clearInterval(timer);
         timer = null;
         runBtn.disabled = false;
-        runBtn.textContent = '立即更新全部';
+        runBtn.textContent = _("Update All Now");
       }
     });
   }
@@ -256,27 +256,27 @@ function buildSubscriptionSchedule(uiData, initialStatus) {
     click: function () {
       var hours = parseInt(interval.value, 10);
       if (!hours || hours < 1 || hours > 8760) {
-        ui.addNotification(null, E('p', '更新间隔必须为 1 到 8760 小时'));
+        ui.addNotification(null, E('p', _("Update interval must be 1 to 8760 hours")));
         return;
       }
       saveBtn.disabled = true;
       L.resolveDefault(callSetSubscriptionUpdateSchedule(enabled.checked ? '1' : '0', String(hours)), {}).then(function (r) {
         saveBtn.disabled = false;
-        ui.addNotification(null, E('p', r && r.success ? '定时更新设置已保存' : ('保存失败: ' + ((r && r.message) || ''))));
+        ui.addNotification(null, E('p', r && r.success ? _("Scheduled update settings saved") : (_("Save failed: ") + ((r && r.message) || ''))));
       });
     }
-  }, '保存');
+  }, _("Save"));
 
   runBtn = E('button', {
     'class': 'btn cbi-button-action cl-btn-sm',
     click: function () {
       runBtn.disabled = true;
-      runBtn.textContent = '更新中…';
+      runBtn.textContent = _("Updating…");
       L.resolveDefault(callSubscriptionUpdateAll(), {}).then(function (r) {
         if (!r || (!r.success && !r.running)) {
           runBtn.disabled = false;
-          runBtn.textContent = '立即更新全部';
-          ui.addNotification(null, E('p', '启动失败: ' + ((r && r.message) || '')));
+          runBtn.textContent = _("Update All Now");
+          ui.addNotification(null, E('p', _("Start failed: ") + ((r && r.message) || '')));
           return;
         }
         renderStatus({ running: true });
@@ -284,17 +284,17 @@ function buildSubscriptionSchedule(uiData, initialStatus) {
         setTimeout(pollStatus, 500);
       });
     }
-  }, '立即更新全部');
+  }, _("Update All Now"));
 
   syncScheduleState();
   renderStatus(initialStatus);
   return E('div', { 'class': 'cl-sub-schedule' }, [
     E('div', { 'class': 'cl-sub-schedule-row' }, [
-      E('label', { 'class': 'cl-sub-schedule-toggle' }, [enabled, E('span', {}, '定时更新订阅')]),
+      E('label', { 'class': 'cl-sub-schedule-toggle' }, [enabled, E('span', {}, _("Scheduled Subscription Update"))]),
       E('div', { 'class': 'cl-sub-schedule-interval' }, [
-        E('span', {}, '每'),
+        E('span', {}, _("Every")),
         interval,
-        E('span', {}, '小时')
+        E('span', {}, _("hours"))
       ]),
       saveBtn,
       runBtn
@@ -316,7 +316,7 @@ function buildUaPicker(initialValue) {
   var customInput = E('input', {
     'class': 'cl-sub-url',
     type: 'text',
-    placeholder: '自定义 User-Agent',
+    placeholder: _("Custom User-Agent"),
     value: customVal,
     style: 'margin-top:0;' + (pickerVal === '__custom__' ? '' : 'display:none')
   });
@@ -329,18 +329,18 @@ function buildUaPicker(initialValue) {
       if (ev.target.value === '__custom__') customInput.focus();
     }
   }, [
-    E('option', { value: '',           selected: pickerVal === ''           ? '' : null }, '默认'),
+    E('option', { value: '',           selected: pickerVal === ''           ? '' : null }, _("Default")),
     E('option', { value: 'clash',      selected: pickerVal === 'clash'      ? '' : null }, 'clash'),
     E('option', { value: 'clash.meta', selected: pickerVal === 'clash.meta' ? '' : null }, 'clash.meta'),
     E('option', { value: 'mihomo',     selected: pickerVal === 'mihomo'     ? '' : null }, 'mihomo'),
-    E('option', { value: '__custom__', selected: pickerVal === '__custom__' ? '' : null }, '自定义...')
+    E('option', { value: '__custom__', selected: pickerVal === '__custom__' ? '' : null }, _("Customize..."))
   ]);
 
   return {
     wrap: E('div', { 'class': 'cl-ua-picker', style: 'display:flex;flex-direction:column;gap:6px;margin-top:0' }, [
-      E('label', { style: 'font-size:12px;color:var(--text-secondary, #888)' }, '用户代理（UA）'),
+      E('label', { style: 'font-size:12px;color:var(--text-secondary, #888)' }, _("User-Agent (UA)")),
       selectEl, customInput,
-      E('div', { style: 'font-size:12px;color:var(--text-secondary, #888)' }, '不确定时保持默认。')
+      E('div', { style: 'font-size:12px;color:var(--text-secondary, #888)' }, _("Keep the default if unsure."))
     ]),
     getValue: function () {
       return selectEl.value === '__custom__' ? customInput.value.trim() : selectEl.value;
@@ -399,7 +399,7 @@ function renderExpire(ts) {
   var daysLeft = Math.ceil((ts * 1000 - Date.now()) / 86400000);
   var cls = 'cl-sub-expire' + (daysLeft <= 7 ? ' cl-expire-soon' : '');
   return E('div', { 'class': cls },
-    '到期：' + fmtExpireDate(ts) + (daysLeft > 0 ? '（' + daysLeft + ' 天）' : '（已过期）'));
+    _("Expires: ") + fmtExpireDate(ts) + (daysLeft > 0 ? ' (' + daysLeft + _(" days)") : _(" (expired)")));
 }
 
 function decorateControlWraps(root) {
@@ -454,25 +454,25 @@ function saveCommitApplyMaybeReload(m, runningMsg, stoppedMsg) {
 
 function dnsAutoSummaryNode(res) {
   if (!res || !res.success)
-    return E('div', { 'class': 'cl-dns-auto-status' }, '暂无自动配置结果');
+    return E('div', { 'class': 'cl-dns-auto-status' }, _("No auto setup result yet"));
   var elapsed = Math.max(0, parseInt(res.elapsed_ms || 0, 10));
   var failed = parseInt(res.failed_count || 0, 10);
   return E('div', { 'class': 'cl-dns-auto-result' }, [
-    E('span', [E('b', '国内'), res.nameserver || '-']),
-    E('span', [E('b', '代理'), res.proxy_nameserver || '-']),
+    E('span', [E('b', _("Domestic")), res.nameserver || '-']),
+    E('span', [E('b', _("Proxy")), res.proxy_nameserver || '-']),
     E('span', [E('b', 'Fallback'), res.fallback || '-']),
     E('span', [E('b', 'Bootstrap'), res.bootstrap || res.direct_nameserver || '-']),
-    E('span', [E('b', '耗时'), elapsed ? (elapsed / 1000).toFixed(1) + ' 秒' : '-']),
-    E('span', [E('b', '失败'), failed + ' 个候选'])
+    E('span', [E('b', _("Time")), elapsed ? (elapsed / 1000).toFixed(1) + _(" seconds") : '-']),
+    E('span', [E('b', _("Failed")), failed + _(" candidates")])
   ]);
 }
 
 function dnsAutoResultMessage(res) {
   if (!res || !res.success)
-    return (res && res.message) || 'DNS 自动配置失败';
+    return (res && res.message) || _("DNS auto setup failed");
   return res.restarted
-    ? 'DNS 自动配置已应用，服务正在重启'
-    : 'DNS 自动配置已保存，服务未启动';
+    ? _("DNS auto setup applied, service is restarting")
+    : _("DNS auto setup saved, service is not running");
 }
 
 function storeDnsAutoResult(res) {
@@ -523,9 +523,9 @@ function makeSectionCollapsible(root, title, open) {
     click: function (ev) {
       ev.preventDefault();
       section.classList.toggle('cl-closed');
-      btn.textContent = section.classList.contains('cl-closed') ? '展开' : '折叠';
+      btn.textContent = section.classList.contains('cl-closed') ? _("Expand") : _("Collapse");
     }
-  }, open ? '折叠' : '展开');
+  }, open ? _("Collapse") : _("Expand"));
   var h3 = section.querySelector('h3');
   if (h3) {
     h3.classList.add('clashoo-section-header');
@@ -575,7 +575,7 @@ function createConfigEditor(mode) {
   var LARGE = 512 * 1024;
   var ta = E('textarea', {
     'class': 'cl-json-editor',
-    placeholder: '选择配置文件后内容将显示在这里…'
+    placeholder: _("Configuration content appears here after selecting a file…")
   });
   var host = E('div', { 'class': 'cl-cm-host', style: 'display:none' });
   var wrap = E('div', { 'class': 'cl-cm-wrap' }, [host, ta]);
@@ -671,8 +671,8 @@ return view.extend({
     if (coreType === 'singbox') return this._renderSingbox(sbData, uiData, subscriptionUpdateStatus);
 
     var tabs = [
-      { id: 'subs', label: '订阅' },
-      { id: 'proxy', label: '代理' },
+      { id: 'subs', label: _("Subscription") },
+      { id: 'proxy', label: _("Proxy") },
       { id: 'dns',   label: 'DNS' }
     ];
     var allowedTabs = tabs.map(function (t) { return t.id; });
@@ -735,14 +735,14 @@ return view.extend({
     var urlInput = E('input', {
       'class': 'cl-sub-url',
       type: 'text',
-      placeholder: '订阅链接（多条用换行分隔）',
+      placeholder: _("Subscription URLs (one per line)"),
       value: subUrl
     });
 
     var nameInput = E('input', {
       'class': 'cl-sub-url',
       type: 'text',
-      placeholder: '文件名（选填，留空自动生成）',
+      placeholder: _("File name (optional, blank to auto-generate)"),
       value: savedName,
       style: 'margin-top:0'
     });
@@ -765,14 +765,14 @@ return view.extend({
       'class': 'btn cbi-button-action cl-btn-sm',
       click: function () {
         if (!urlInput.value.trim()) {
-          setDlStatus('✗ 请先填写订阅链接', 'error');
+          setDlStatus(_("✗ Please enter a subscription URL first"), 'error');
           setTimeout(function () { setDlStatus(''); }, 4000);
           return;
         }
         stopDlPoll();
         dlBtn.disabled = true;
-        dlBtn.textContent = '下载中…';
-        setDlStatus('⏳ 正在提交下载任务...', 'progress');
+        dlBtn.textContent = _("Downloading…");
+        setDlStatus(_("⏳ Submitting download task..."), 'progress');
 
         var pollCount = 0;
         var pollDl = function () {
@@ -782,7 +782,7 @@ return view.extend({
             var raw  = st.last_line || '';
             var line = clashoo.localizeLogLine(raw);
             if (st.running) {
-              setDlStatus('⏳ ' + (line || '正在下载订阅...'), 'progress');
+              setDlStatus('⏳ ' + (line || _("Downloading subscription...")), 'progress');
               return;
             }
             /* sh has not flushed yet, wait a few polls */
@@ -795,9 +795,9 @@ return view.extend({
                all fail: show real cause; partial: summary + cause */
             var detail = st.fail_detail ? clashoo.localizeLogLine(st.fail_detail) : '';
             var shown = ok ? (line + (detail ? ' · ' + detail : ''))
-                           : (detail || line || '订阅下载失败');
+                           : (detail || line || _("Subscription download failed"));
             dlBtn.disabled = false;
-            dlBtn.textContent = '下载订阅';
+            dlBtn.textContent = _("Download Subscription");
             setDlStatus((ok ? '✓ ' : '✗ ') + shown, ok ? 'success' : 'error');
             setTimeout(function () { location.reload(); }, 1200);
           }).catch(function () {});
@@ -814,22 +814,22 @@ return view.extend({
           .then(function () { return clearClashooDirty(); })
           .then(function () { return L.resolveDefault(callDownloadSubs(), {}); })
           .then(function (r) {
-            if (r && r.running) setDlStatus('⏳ 已有下载任务进行中...', 'progress');
+            if (r && r.running) setDlStatus(_("⏳ A download task is already running..."), 'progress');
             self._subDlTimer = setInterval(pollDl, 2000);
             setTimeout(pollDl, 800);
           })
           .catch(function (e) {
             stopDlPoll();
             dlBtn.disabled = false;
-            dlBtn.textContent = '下载订阅';
-            setDlStatus('✗ 启动失败: ' + (e && e.message || e), 'error');
+            dlBtn.textContent = _("Download Subscription");
+            setDlStatus(_("✗ Start failed: ") + (e && e.message || e), 'error');
           });
       }
-    }, '下载订阅');
+    }, _("Download Subscription"));
 
     var subCards = subs.map(function (sub) {
       var nameNodes = [];
-      if (sub.active) nameNodes.push(E('span', { 'class': 'cl-active-badge' }, '使用中'));
+      if (sub.active) nameNodes.push(E('span', { 'class': 'cl-active-badge' }, _("Active")));
       nameNodes.push(E('span', { 'class': 'cl-file-name-text' }, safeText(sub.name)));
 
       var used = (parseInt(sub.sub_upload) || 0) + (parseInt(sub.sub_download) || 0);
@@ -847,24 +847,24 @@ return view.extend({
             'class': 'btn cbi-button cl-btn-sm cl-btn-update-sub',
             click: function () {
               L.resolveDefault(callUpdateSub(sub.name), {}).then(function (r) {
-                ui.addNotification(null, E('p', r.success ? sub.name + ' 更新成功' : '更新失败'));
+                ui.addNotification(null, E('p', r.success ? sub.name + _(" update succeeded") : _("Update failed")));
                 location.reload();
               });
             }
-          }, '更新'),
+          }, _("Update")),
           E('button', {
             'class': 'btn cbi-button cl-btn-sm cl-btn-switch',
             click: function () {
               L.resolveDefault(callSetConfig(sub.name), {}).then(function () { location.reload(); });
             }
-          }, '切换'),
+          }, _("Switch")),
           E('button', {
             'class': 'btn cbi-button cl-btn-sm cl-btn-delete',
             click: function () {
-              if (!confirm('删除 ' + sub.name + '？')) return;
+              if (!confirm(_("Delete ") + sub.name + '?')) return;
               L.resolveDefault(callDeleteCfg(sub.name, '1'), {}).then(function () { location.reload(); });
             }
-          }, '删除')
+          }, _("Delete"))
         ])
       ]);
     });
@@ -876,10 +876,10 @@ return view.extend({
       var reader = new FileReader();
       reader.onload = function (e) {
         uploadConfigContent(file.name, e.target.result, '2').then(function (r) {
-          ui.addNotification(null, E('p', '上传成功: ' + r.name));
+          ui.addNotification(null, E('p', _("Upload succeeded: ") + r.name));
           location.reload();
         }).catch(function (err) {
-          ui.addNotification(null, E('p', '上传失败: ' + (err && err.message ? err.message : err)));
+          ui.addNotification(null, E('p', _("Upload failed: ") + (err && err.message ? err.message : err)));
         });
       };
       reader.readAsText(file);
@@ -894,7 +894,7 @@ return view.extend({
     };
 
     /* ── 模板复写（注入订阅 URL 模式）── */
-    var tplSel     = mkSel(tplFiles, '选择本地模板文件');
+    var tplSel     = mkSel(tplFiles, _("Select local template file"));
     tplSel.classList.add('cl-template-select');
     tplSel.setAttribute('title', tplSel.value || '');
     tplSel.addEventListener('change', function () { tplSel.setAttribute('title', tplSel.value || ''); });
@@ -907,19 +907,19 @@ return view.extend({
       reader.onload = function (e) {
         L.resolveDefault(callUploadTemplate(file.name, e.target.result), {}).then(function (r) {
           if (r && r.success) {
-            ui.addNotification(null, E('p', '模板上传成功: ' + (r.name || file.name)));
+            ui.addNotification(null, E('p', _("Template uploaded: ") + (r.name || file.name)));
             location.reload();
             return;
           }
-          ui.addNotification(null, E('p', '模板上传失败: ' + ((r && (r.message || r.error)) || '未知错误')));
+          ui.addNotification(null, E('p', _("Template upload failed: ") + ((r && (r.message || r.error)) || _("Unknown error"))));
         });
       };
       reader.readAsText(file);
     });
 
-    var tplUrlIn   = E('input', { type: 'text', 'class': 'cl-sub-url', placeholder: '输入远程模板 URL，例如 https://raw.githubusercontent.com/…/Clash.yaml' });
-    var subUrlIn   = E('input', { type: 'text', 'class': 'cl-sub-url', placeholder: '输入订阅链接 URL（注入到模板的 proxy-providers）' });
-    var outNameIn  = E('input', { type: 'text', 'class': 'cl-sub-url', placeholder: '输出文件名（不含扩展名，留空自动填写）' });
+    var tplUrlIn   = E('input', { type: 'text', 'class': 'cl-sub-url', placeholder: _("Enter remote template URL, e.g. https://raw.githubusercontent.com/…/Clash.yaml") });
+    var subUrlIn   = E('input', { type: 'text', 'class': 'cl-sub-url', placeholder: _("Enter subscription URL (injected into template proxy-providers)") });
+    var outNameIn  = E('input', { type: 'text', 'class': 'cl-sub-url', placeholder: _("Output file name (without extension, blank to auto-fill)") });
     var rwMode     = 'local';
 
     function rwAutoFill() {
@@ -936,7 +936,7 @@ return view.extend({
         E('button', {
           'class': 'btn cbi-button cl-btn-sm cl-btn-template-upload',
           click: function () { document.getElementById('cl-template-upload-input').click(); }
-        }, '上传 YAML 模板')
+        }, _("Upload YAML Template"))
       ])
     ]);
     var remotePanel = E('div', { 'class': 'cl-rw-pane cl-rw-pane-remote', style: 'display:none' }, [tplUrlIn]);
@@ -950,7 +950,7 @@ return view.extend({
         outNameIn.value = '';
         rwAutoFill();
       }
-    }, '本地模板');
+    }, _("Local Template"));
     var tabRemote = E('button', { 'class': 'btn cbi-button cl-btn-sm',
       click: function () {
         rwMode = 'remote';
@@ -959,23 +959,23 @@ return view.extend({
         tabLocal.classList.remove('cl-mode-tab-active');
         outNameIn.value = '';
       }
-    }, '远程模板');
+    }, _("Remote Template"));
 
     var rwApply = function (setActive) {
       var tplSrc = rwMode === 'local' ? tplSel.value : tplUrlIn.value.trim();
       var subUrl = subUrlIn.value.trim();
       var out    = outNameIn.value.trim();
-      if (!tplSrc) { ui.addNotification(null, E('p', rwMode === 'local' ? '请选择本地模板文件' : '请输入远程模板 URL')); return; }
-      if (!subUrl) { ui.addNotification(null, E('p', '请输入订阅链接 URL')); return; }
-      if (!out)    { ui.addNotification(null, E('p', '请填写输出文件名')); return; }
+      if (!tplSrc) { ui.addNotification(null, E('p', rwMode === 'local' ? _("Please select a local template file") : _("Please enter a remote template URL"))); return; }
+      if (!subUrl) { ui.addNotification(null, E('p', _("Please enter a subscription URL"))); return; }
+      if (!out)    { ui.addNotification(null, E('p', _("Please enter an output file name"))); return; }
       L.resolveDefault(callApplyTplUrl(tplSrc, subUrl, out, setActive ? '1' : '0'), {}).then(function (r) {
-        ui.addNotification(null, E('p', r && r.success ? (r.message || '生成成功: ' + r.output_name) : ('生成失败: ' + (r && r.message || '未知错误'))));
+        ui.addNotification(null, E('p', r && r.success ? (r.message || _("Generated: ") + r.output_name) : (_("Generate failed: ") + (r && r.message || _("Unknown error")))));
         if (r && r.success) location.reload();
       });
     };
 
     /* ── 其他配置文件（上传 + 自定义/复写输出）── */
-    var otherEditorTitle    = E('span', { 'class': 'cl-editor-hdr' }, '选择上方配置后可在此处编辑');
+    var otherEditorTitle    = E('span', { 'class': 'cl-editor-hdr' }, _("Select a configuration above to edit it here"));
     var otherEd             = createConfigEditor('yaml');
     var otherSaveBtn        = E('button', {
       'class': 'btn cbi-button-action cl-btn-sm',
@@ -984,29 +984,29 @@ return view.extend({
         var meta = otherEd.textarea.dataset;
         if (!meta.name) return;
         uploadConfigContent(meta.name, otherEd.getValue(), meta.type).then(function (r) {
-          if (r && r.success) ui.addNotification(null, E('p', meta.name + ' 已保存'));
-          else ui.addNotification(null, E('p', '保存失败: ' + ((r && (r.message || r.error)) || '')));
+          if (r && r.success) ui.addNotification(null, E('p', meta.name + _(" saved")));
+          else ui.addNotification(null, E('p', _("Save failed: ") + ((r && (r.message || r.error)) || '')));
         }).catch(function (err) {
-          ui.addNotification(null, E('p', '保存失败: ' + (err && err.message ? err.message : err)));
+          ui.addNotification(null, E('p', _("Save failed: ") + (err && err.message ? err.message : err)));
         });
       }
-    }, '保存');
+    }, _("Save"));
 
     var otherEditorBox = E('div', { 'class': 'cl-section cl-card cl-sb-editor' }, [
       otherEditorTitle,
       otherEd.el,
       E('div', { 'class': 'cl-actions cl-sb-row-actions cl-sb-editor-actions' }, [
         otherSaveBtn,
-        E('span', { 'class': 'cl-hint' }, '编辑后点击保存；切换配置后服务将自动重启')
+        E('span', { 'class': 'cl-hint' }, _("Click Save after editing; switching configuration automatically restarts the service"))
       ])
     ]);
 
     function loadOtherEditor(name, type) {
-      otherEditorTitle.textContent = '编辑：' + name;
+      otherEditorTitle.textContent = _("Editing: ") + name;
       otherSaveBtn.removeAttribute('disabled');
       otherEd.textarea.dataset.name = name;
       otherEd.textarea.dataset.type = type;
-      otherEd.setValue('加载中…');
+      otherEd.setValue(_("Loading…"));
       L.resolveDefault(callReadOtherConfig(name, type), {}).then(function (r) {
         otherEd.setValue(r.content || '');
       });
@@ -1015,7 +1015,7 @@ return view.extend({
     var makeOtherCards = function (files, type) {
       return files.map(function (f) {
         var nameNodes = [];
-        if (f.active) nameNodes.push(E('span', { 'class': 'cl-active-badge' }, '使用中'));
+        if (f.active) nameNodes.push(E('span', { 'class': 'cl-active-badge' }, _("Active")));
         nameNodes.push(E('span', { 'class': 'cl-file-name-text' }, safeText(f.name)));
 
         return E('div', { 'class': 'cl-file-item' + (f.active ? ' is-active' : '') }, [
@@ -1027,20 +1027,20 @@ return view.extend({
             E('button', {
               'class': 'btn cbi-button cl-btn-sm cl-btn-edit',
               click: function () { loadOtherEditor(f.name, type); }
-            }, '编辑'),
+            }, _("Edit")),
             E('button', {
               'class': 'btn cbi-button cl-btn-sm cl-btn-switch',
               click: function () {
                 L.resolveDefault(callSetConfig(f.name), {}).then(function () { location.reload(); });
               }
-            }, '切换'),
+            }, _("Switch")),
             E('button', {
               'class': 'btn cbi-button cl-btn-sm cl-btn-delete',
               click: function () {
-                if (!confirm('删除 ' + f.name + '？')) return;
+                if (!confirm(_("Delete ") + f.name + '?')) return;
                 L.resolveDefault(callDeleteCfg(f.name, type), {}).then(function () { location.reload(); });
               }
-            }, '删除')
+            }, _("Delete"))
           ])
         ]);
       });
@@ -1055,30 +1055,30 @@ return view.extend({
 
     var sections = [
       E('div', { 'class': 'cl-section cl-card' }, [
-        E('h4', {}, '订阅链接'),
+        E('h4', {}, _("Subscription URL")),
         E('div', { 'class': 'cl-form-wrap cl-fixed-600' }, [urlInput, nameInput, uaPicker.wrap, dlBtn, dlStatusEl])
       ]),
       E('div', { 'class': 'cl-section cl-card' }, [
-        E('h4', {}, '已下载订阅'),
+        E('h4', {}, _("Downloaded Subscriptions")),
         buildSubscriptionSchedule(uiData, subscriptionUpdateStatus),
         subs.length ? E('div', { 'class': 'cl-fixed-600' }, [
           E('div', { 'class': 'cl-file-list' }, subCards)
         ])
-          : E('p', { style: 'opacity:.5;font-size:13px' }, '暂无订阅')
+          : E('p', { style: 'opacity:.5;font-size:13px' }, _("No subscriptions"))
       ]),
       E('div', { 'class': 'cl-section cl-card' }, [
-        E('h4', {}, '上传配置文件'),
+        E('h4', {}, _("Upload Configuration File")),
         uploadInput,
         E('button', {
           'class': 'btn cbi-button cl-btn-sm cl-btn-upload-config',
           click: function () { document.getElementById('cl-upload-input').click(); }
-        }, '选择 YAML 文件上传')
+        }, _("Select YAML file to upload"))
       ])
     ];
 
     if (otherFiles.length) {
       sections.push(E('div', { 'class': 'cl-section cl-card' }, [
-        E('h4', {}, '其他配置文件（上传 / 覆写输出）'),
+        E('h4', {}, _("Other Configuration Files (upload / overwrite output)")),
         E('div', { 'class': 'cl-fixed-600' }, [
           E('div', { 'class': 'cl-file-list' }, otherCards)
         ])
@@ -1088,22 +1088,22 @@ return view.extend({
 
       sections.push(
       E('div', { 'class': 'cl-section cl-card' }, [
-        E('h4', {}, '覆写设置'),
+        E('h4', {}, _("Overwrite Settings")),
         E('div', { 'class': 'cl-form-wrap cl-rewrite-wrap cl-fixed-600' }, [
           E('div', { 'class': 'cl-rewrite-group cl-rewrite-group-template' }, [
-            E('div', { 'class': 'cl-rewrite-group-title' }, '模板选择'),
+            E('div', { 'class': 'cl-rewrite-group-title' }, _("Template Selection")),
             E('div', { 'class': 'cl-mode-tabs' }, [tabLocal, tabRemote]),
             localPanel,
             remotePanel
           ]),
           E('div', { 'class': 'cl-rw-divider' }),
           E('div', { 'class': 'cl-rewrite-group cl-rewrite-group-input' }, [
-            E('div', { 'class': 'cl-rewrite-group-title' }, '信息录入'),
+            E('div', { 'class': 'cl-rewrite-group-title' }, _("Information Input")),
             subUrlIn,
             outNameIn,
             E('div', { 'class': 'cl-actions cl-rewrite-actions' }, [
-              E('button', { 'class': 'btn cbi-button cl-btn-sm', click: function(){ rwApply(false); } }, '生成配置'),
-              E('button', { 'class': 'btn cbi-button-action cl-btn-sm cl-btn-generate-switch', click: function(){ rwApply(true); } }, '应用配置')
+              E('button', { 'class': 'btn cbi-button cl-btn-sm', click: function(){ rwApply(false); } }, _("Generate Configuration")),
+              E('button', { 'class': 'btn cbi-button-action cl-btn-sm cl-btn-generate-switch', click: function(){ rwApply(true); } }, _("Apply Configuration"))
             ])
           ])
         ])
@@ -1118,108 +1118,108 @@ return view.extend({
     var s, o;
     modelStatus = modelStatus || {};
 
-    s = m.section(form.NamedSection, 'config', 'clashoo', '透明代理');
+    s = m.section(form.NamedSection, 'config', 'clashoo', _("Transparent Proxy"));
     s.addremove = false;
-    o = s.option(form.ListValue, 'tcp_mode', 'TCP 模式');
-    o.value('redirect', 'Redirect'); o.value('tproxy', 'TPROXY'); o.value('tun', 'TUN'); o.value('off', '关闭');
-    o = s.option(form.ListValue, 'udp_mode', 'UDP 模式');
-    o.value('tun', 'TUN'); o.value('tproxy', 'TPROXY'); o.value('off', '关闭');
-    o = s.option(form.ListValue, 'stack', '网络栈类型');
+    o = s.option(form.ListValue, 'tcp_mode', _("TCP Mode"));
+    o.value('redirect', 'Redirect'); o.value('tproxy', 'TPROXY'); o.value('tun', 'TUN'); o.value('off', _("Off"));
+    o = s.option(form.ListValue, 'udp_mode', _("UDP Mode"));
+    o.value('tun', 'TUN'); o.value('tproxy', 'TPROXY'); o.value('off', _("Off"));
+    o = s.option(form.ListValue, 'stack', _("Network Stack Type"));
     o.value('system', 'System'); o.value('gvisor', 'gVisor'); o.value('mixed', 'Mixed');
-    o = s.option(form.Flag, 'disable_quic_gso', '禁用 QUIC GSO');
-    o = s.option(form.Flag, 'ipv4_dns_hijack', 'IPv4 DNS 劫持');
-    o = s.option(form.Flag, 'ipv6_dns_hijack', 'IPv6 DNS 劫持');
-    o.description = '拦截 IPv6 DNS 流量，防止写死 DNS 的设备绕过分流。';
-    o = s.option(form.Flag, 'ipv4_proxy',      'IPv4 代理');
-    o = s.option(form.Flag, 'ipv6_proxy',      'IPv6 代理');
-    o = s.option(form.Flag, 'fake_ip_ping_hijack', '虚拟 IP Ping 劫持');
-    o = s.option(form.Flag, 'dns_leak_protect', '防 DNS 泄漏');
-    o.description = '普通域名仅使用境外 DNS 并让 DNS 连接遵守代理规则，同时阻断 DoT/DoQ（853 端口）并关闭 IPv6 解析。重启生效。<br>' +
-                    '<strong>说明：</strong>代理节点域名仍使用直连 DNS 启动解析，不用于客户端普通域名查询。<br>' +
-                    '<strong>注意：</strong>开启后 IPv6 网站只能通过 IPv4 访问，纯 IPv6 网络下可能无法上网。';
-    o = s.option(form.Flag, 'core_only', '仅内核（进阶）');
-    o.description = '只用你导入的配置跑内核，不接管防火墙 / DNS / 路由。<br>' +
-                    'mihomo 原样运行，适配 nikki、OpenClash；sing-box 自动升级老格式，兼容 momo、homeproxy。<br>' +
-                    '<strong>前提：</strong>配置自带透明代理（TUN auto-route 或 TProxy 入站），切换后需重启生效。';
+    o = s.option(form.Flag, 'disable_quic_gso', _("Disable QUIC GSO"));
+    o = s.option(form.Flag, 'ipv4_dns_hijack', _("IPv4 DNS Hijack"));
+    o = s.option(form.Flag, 'ipv6_dns_hijack', _("IPv6 DNS Hijack"));
+    o.description = _("Intercept IPv6 DNS traffic to prevent devices with hard-coded DNS from bypassing the traffic.");
+    o = s.option(form.Flag, 'ipv4_proxy',      _("IPv4 Proxy"));
+    o = s.option(form.Flag, 'ipv6_proxy',      _("IPv6 Proxy"));
+    o = s.option(form.Flag, 'fake_ip_ping_hijack', _("Virtual IP Ping Hijacking"));
+    o = s.option(form.Flag, 'dns_leak_protect', _("Prevent DNS Leaks"));
+    o.description = _("Regular domains only use overseas DNS and DNS connections follow proxy rules; DoT/DoQ (port 853) is blocked and IPv6 resolution is disabled. Takes effect after restart.<br>") +
+                    _("<strong>Note:</strong> Proxy node domains still use direct DNS for startup resolution, not for normal client domain queries.<br>") +
+                    _("<strong>Warning:</strong> After enabling, IPv6 sites can only be accessed over IPv4; pure IPv6 networks may lose connectivity.");
+    o = s.option(form.Flag, 'core_only', _("Core Only (advanced)"));
+    o.description = _("Run only the core with your imported configuration, without taking over firewall / DNS / routing.<br>") +
+                    _("mihomo runs as-is for nikki/OpenClash compatibility; sing-box automatically upgrades old formats for momo/homeproxy compatibility.<br>") +
+                    _("<strong>Prerequisite:</strong> The configuration must include transparent proxying (TUN auto-route or TProxy inbound). Restart after switching.");
 
-    s = m.section(form.NamedSection, 'config', 'clashoo', '端口配置');
+    s = m.section(form.NamedSection, 'config', 'clashoo', _("Port Settings"));
     s.addremove = false;
-    o = s.option(form.Flag,  'allow_lan',   '允许局域网连接');
-    o = s.option(form.Value, 'http_port',   'HTTP 端口');
-    o = s.option(form.Value, 'socks_port',  'SOCKS5 端口');
-    o = s.option(form.Value, 'mixed_port',  '混合端口');
-    o = s.option(form.Value, 'redir_port',  'Redirect 端口');
-    o = s.option(form.Value, 'tproxy_port', 'TPROXY 端口');
+    o = s.option(form.Flag,  'allow_lan',   _("Allow LAN Access"));
+    o = s.option(form.Value, 'http_port',   _("HTTP Port"));
+    o = s.option(form.Value, 'socks_port',  _("SOCKS5 Port"));
+    o = s.option(form.Value, 'mixed_port',  _("Mixed Port"));
+    o = s.option(form.Value, 'redir_port',  _("Redirect Port"));
+    o = s.option(form.Value, 'tproxy_port', _("TPROXY Port"));
 
-    s = m.section(form.NamedSection, 'config', 'clashoo', 'Smart 策略设置');
+    s = m.section(form.NamedSection, 'config', 'clashoo', _("Smart Policy Settings"));
     s.addremove = false;
 
-    o = s.option(form.Flag,  'smart_auto_switch', 'Smart 策略自动切换');
-    o.description = '自动切换 Url-test、Load-balance 策略组到 Smart 策略组';
+    o = s.option(form.Flag,  'smart_auto_switch', _("Smart Policy Auto Switch"));
+    o.description = _("Automatically switch Url-test and Load-balance policy groups to Smart policy groups");
 
-    o = s.option(form.Value, 'smart_policy_priority', 'Policy Priority（权重加成）');
+    o = s.option(form.Value, 'smart_policy_priority', _("Policy Priority (weight bonus)"));
     o.default = 'Premium:0.9;SG:1.3';
     o.placeholder = 'Premium:0.9;SG:1.3';
     o.rmempty = true;
-    o.description = '节点权重加成，<1 表示较低优先级，>1 表示较高优先级；可按需修改，留空则不注入 policy-priority';
+    o.description = _("Node weight bonus. <1 means lower priority, >1 means higher priority. Modify as needed; leave blank to skip policy-priority injection.");
 
-    o = s.option(form.Flag,  'smart_prefer_asn', 'ASN 优先');
-    o.description = '选择节点时强制查找并优先使用目标的 ASN 信息，以获得更稳定的体验';
+    o = s.option(form.Flag,  'smart_prefer_asn', _("ASN Priority"));
+    o.description = _("Force ASN lookup and prefer target ASN information when selecting nodes for a more stable experience");
 
-    o = s.option(form.Flag,  'smart_uselightgbm', '启用 LightGBM 模型');
-    o.description = '使用 LightGBM 模型来预测权重';
+    o = s.option(form.Flag,  'smart_uselightgbm', _("Enable LightGBM Model"));
+    o.description = _("Use LightGBM model to predict weights");
 
-    o = s.option(form.Flag,  'smart_collectdata', '收集训练数据');
-    o.description = '收集节点延迟数据供 LightGBM 模型训练';
+    o = s.option(form.Flag,  'smart_collectdata', _("Collect Training Data"));
+    o.description = _("Collect node latency data for LightGBM model training");
 
-    o = s.option(form.Value, 'smart_collect_size', '训练数据量');
+    o = s.option(form.Value, 'smart_collect_size', _("Training Data Size"));
     o.datatype = 'uinteger';
     o.placeholder = '100';
-    o.description = 'smart-collector-size，最多保留的训练样本数，默认 100';
+    o.description = _("smart-collector-size, maximum retained training samples, default 100");
 
-    o = s.option(form.Value, 'smart_collect_rate', '采样率');
+    o = s.option(form.Value, 'smart_collect_rate', _("Sample Rate"));
     o.datatype = 'uinteger';
     o.placeholder = '1';
-    o.description = 'sample-rate，1 = 每次测速都采样，调大可降低采集频率';
+    o.description = _("sample-rate, 1 = sample every latency test; increase to reduce sampling frequency");
 
-    o = s.option(form.Flag,  'smart_lgbm_auto_update', '自动更新模型');
+    o = s.option(form.Flag,  'smart_lgbm_auto_update', _("Auto Update Model"));
 
-    o = s.option(form.Value, 'smart_lgbm_update_interval', '更新间隔（小时）');
+    o = s.option(form.Value, 'smart_lgbm_update_interval', _("Update interval (hours)"));
     o.datatype = 'uinteger';
     o.placeholder = '72';
-    o.description = '自动拉取新模型的周期，同时决定 cron 触发频率，默认 72 小时';
+    o.description = _("Period for automatically fetching a new model; also controls the cron trigger frequency, default 72 hours");
 
-    o = s.option(form.Value, 'smart_lgbm_url', '模型下载 URL');
+    o = s.option(form.Value, 'smart_lgbm_url', _("Model Download URL"));
     o.placeholder = 'https://github.com/vernesong/mihomo/releases/download/LightGBM-Model/Model.bin';
     o.rmempty = true;
-    o.description = 'LightGBM 模型文件下载地址，留空使用默认官方地址';
+    o.description = _("LightGBM model file download URL; leave blank to use the default official URL");
 
-    var sa = m.section(form.TypedSection, 'authentication', '代理认证');
+    var sa = m.section(form.TypedSection, 'authentication', _("Proxy Authentication"));
     sa.anonymous = true; sa.addremove = true;
-    o = sa.option(form.Value, 'username', '用户名');
-    o = sa.option(form.Value, 'password', '密码');
+    o = sa.option(form.Value, 'username', _("Username"));
+    o = sa.option(form.Value, 'password', _("Password"));
 
-    var sr = m.section(form.TypedSection, 'addtype', '自定义分流规则',
-      '纠正分流：把某个域名或 IP 强制走「直连」或「代理」，规则优先于订阅自带规则，mihomo 与 sing-box 均生效。');
+    var sr = m.section(form.TypedSection, 'addtype', _("Custom Routing Rules"),
+      _("Correct routing by forcing a domain or IP to Direct or Proxy. These rules take priority over subscription rules and apply to both mihomo and sing-box."));
     sr.anonymous = true; sr.addremove = true;
-    o = sr.option(form.Value, 'ipaaddr', '域名 / IP');
+    o = sr.option(form.Value, 'ipaaddr', _("Domain / IP"));
     /* allow empty so the default placeholder row never blocks saving other settings;
        empty rule rows are pruned on save (pruneEmptyAddtype) instead of erroring */
     o.rmempty = true;
-    o.placeholder = 'example.com 或 1.2.3.0/24';
-    o = sr.option(form.ListValue, 'type', '类型');
-    o.value('DOMAIN-SUFFIX', '域名后缀（如 google.com）');
-    o.value('DOMAIN', '精确域名（如 www.google.com）');
-    o.value('DOMAIN-KEYWORD', '域名关键词（如 youtube）');
-    o.value('IP-CIDR', 'IP / CIDR（如 8.8.8.8/32）');
+    o.placeholder = _("example.com or 1.2.3.0/24");
+    o = sr.option(form.ListValue, 'type', _("Type"));
+    o.value('DOMAIN-SUFFIX', _("Domain suffix (e.g. google.com)"));
+    o.value('DOMAIN', _("Exact domain (e.g. www.google.com)"));
+    o.value('DOMAIN-KEYWORD', _("Domain keyword (e.g. youtube)"));
+    o.value('IP-CIDR', _("IP / CIDR (e.g. 8.8.8.8/32)"));
     o.default = 'DOMAIN-SUFFIX';
-    o = sr.option(form.ListValue, 'pgroup', '走向');
-    o.value('DIRECT', '直连');
-    o.value('__PROXY__', '代理');
+    o = sr.option(form.ListValue, 'pgroup', _("Target"));
+    o.value('DIRECT', _("Direct"));
+    o.value('__PROXY__', _("Proxy"));
     o.default = 'DIRECT';
     o = sr.option(form.Flag, 'res', 'no-resolve');
     o.depends('type', 'IP-CIDR');
-    o.description = 'IP 规则不触发 DNS 解析';
+    o.description = _("IP rules do not trigger DNS resolution");
 
     m.render().then(function (node) {
       decorateControlWraps(node);
@@ -1235,10 +1235,10 @@ return view.extend({
       if (smartSec) {
         var verEl = modelStatus.has_model
           ? E('span', { 'class': 'cl-ver-tag' }, [
-              E('span', { 'class': 'cl-ver-label' }, '当前版本: '),
+              E('span', { 'class': 'cl-ver-label' }, _("Current version: ")),
               E('span', { 'class': 'cl-ver-value' }, modelStatus.version)
             ])
-          : E('span', { 'class': 'cl-ver-tag cl-ver-label' }, '模型未安装');
+          : E('span', { 'class': 'cl-ver-tag cl-ver-label' }, _("Model not installed"));
         var statusEl = E('div', { 'class': 'cl-update-status', style: 'margin-top:6px;font-size:12px;min-height:18px;line-height:1.4' });
         var upgPoller = null;
         function stopUpgPoller() { if (upgPoller) { clearInterval(upgPoller); upgPoller = null; } }
@@ -1256,40 +1256,40 @@ return view.extend({
             var rawLine = st.last_line || '';
             var line = clashoo.localizeLogLine(rawLine);
             if (st.running) {
-              setStatus('⏳ ' + (line || '正在下载 LightGBM 模型...'), 'progress');
+              setStatus('⏳ ' + (line || _("Downloading LightGBM model...")), 'progress');
               return;
             }
             stopUpgPoller();
-            upgBtn.disabled = false; upgBtn.textContent = '检查并更新';
+            upgBtn.disabled = false; upgBtn.textContent = _("Check and Update");
             var ok = /success|complete|done|完成|成功|无需更新|已是最新/i.test(rawLine + ' ' + line) || (st.has_model && st.size_kb > 100);
-            var sizeTxt = st.size_kb ? '（' + (st.size_kb >= 1024 ? (st.size_kb/1024).toFixed(1) + ' MB' : st.size_kb + ' KB') + '）' : '';
-            setStatus((ok ? '✓ ' : '✗ ') + (line || (ok ? '更新成功' : '更新失败')) + sizeTxt, ok ? 'success' : 'error');
+            var sizeTxt = st.size_kb ? ' (' + (st.size_kb >= 1024 ? (st.size_kb/1024).toFixed(1) + ' MB' : st.size_kb + ' KB') + ')' : '';
+            setStatus((ok ? '✓ ' : '✗ ') + (line || (ok ? _("Update succeeded") : _("Update failed"))) + sizeTxt, ok ? 'success' : 'error');
             // 刷新版本标签
             if (verEl && st.version) {
               var valEl = verEl.querySelector('.cl-ver-value');
               if (valEl) valEl.textContent = st.version;
-              else verEl.textContent = '当前版本: ' + st.version;
+              else verEl.textContent = _("Current version: ") + st.version;
             }
             setTimeout(function () { setStatus(''); }, 8000);
           });
         }
         var upgBtn = E('button', { 'class': 'btn cbi-button-action', 'click': function () {
           stopUpgPoller();
-          upgBtn.disabled = true; upgBtn.textContent = '下载中...';
-          setStatus('⏳ 正在启动更新任务...', 'progress');
+          upgBtn.disabled = true; upgBtn.textContent = _("Downloading...");
+          setStatus(_("⏳ Starting update task..."), 'progress');
           callSmartUpgradeLgbm().then(function () {
             // 开启状态轮询：每 2s 一次直到结束
             upgPoller = setInterval(pollUpgStatus, 2000);
             // 立即先拉一次，反馈更快
             setTimeout(pollUpgStatus, 500);
           }).catch(function () {
-            upgBtn.disabled = false; upgBtn.textContent = '检查并更新';
-            setStatus('✗ 启动失败', 'error');
+            upgBtn.disabled = false; upgBtn.textContent = _("Check and Update");
+            setStatus(_("✗ Start failed"), 'error');
             setTimeout(function () { setStatus(''); }, 5000);
           });
-        }}, '检查并更新');
+        }}, _("Check and Update"));
         smartSec.appendChild(E('div', { 'class': 'cbi-value' }, [
-          E('label', { 'class': 'cbi-value-title' }, '更新模型'),
+          E('label', { 'class': 'cbi-value-title' }, _("Update Model")),
           E('div', { 'class': 'cbi-value-field' }, [
             E('div', { 'class': 'cl-btn-ver-wrap' }, [
               upgBtn,
@@ -1302,33 +1302,33 @@ return view.extend({
           flushBtn.disabled = true;
           callSmartFlushCache().then(function (res) {
             flushBtn.disabled = false;
-            ui.addNotification(null, E('p', (res && res.success) ? 'Smart 缓存已清理' : '清理失败（mihomo 可能未运行）'));
+            ui.addNotification(null, E('p', (res && res.success) ? _("Smart cache cleared") : _("Cleanup failed (mihomo may not be running)")));
           }).catch(function () { flushBtn.disabled = false; });
-        }}, '清理');
+        }}, _("Clear"));
         smartSec.appendChild(E('div', { 'class': 'cbi-value' }, [
-          E('label', { 'class': 'cbi-value-title' }, '清理 Smart 缓存'),
+          E('label', { 'class': 'cbi-value-title' }, _("Clear Smart Cache")),
           E('div', { 'class': 'cbi-value-field' }, [flushBtn])
         ]));
       }
-      makeSectionCollapsible(node, '透明代理', true);
-      makeSectionCollapsible(node, '端口配置', true);
-      makeSectionCollapsible(node, 'Smart 策略设置', false);
-      makeSectionCollapsible(node, '代理认证', false);
-      makeSectionCollapsible(node, '自定义分流规则', false);
+      makeSectionCollapsible(node, _("Transparent Proxy"), true);
+      makeSectionCollapsible(node, _("Port Settings"), true);
+      makeSectionCollapsible(node, _("Smart Policy Settings"), false);
+      makeSectionCollapsible(node, _("Proxy Authentication"), false);
+      makeSectionCollapsible(node, _("Custom Routing Rules"), false);
 
       container.appendChild(E('div', { 'class': 'cl-save-bar' }, [
         E('button', { 'class': 'btn cbi-button', click: function () {
           m.save(null, true).then(function () { return clashoo.commitConfig(); })
             .then(function () { return clearClashooDirty(); })
             .then(function () { location.reload(); })
-            .catch(function (e) { ui.addNotification(null, E('p', '保存失败: ' + (e.message || e))); });
-        }}, '保存配置'),
+            .catch(function (e) { ui.addNotification(null, E('p', _("Save failed: ") + (e.message || e))); });
+        }}, _("Save Configuration")),
         E('button', { 'class': 'btn cbi-button-action', click: function () {
           // 保存前探测主代理组，供自定义分流规则的「代理」(__PROXY__) 解析（失败忽略，注入器回退 GLOBAL）
           callDetectPrimaryGroup().catch(function () {}).then(function () {
-            return saveCommitApplyMaybeReload(m, '代理配置已保存并热重载服务', '代理配置已保存，服务未启动');
-          }).catch(function (e) { ui.addNotification(null, E('p', '操作失败: ' + (e.message || e))); });
-        }}, '应用配置')
+            return saveCommitApplyMaybeReload(m, _("Proxy configuration saved and service hot-reloaded"), _("Proxy configuration saved, service is not running"));
+          }).catch(function (e) { ui.addNotification(null, E('p', _("Operation failed: ") + (e.message || e))); });
+        }}, _("Apply Configuration"))
       ]));
     });
   },
@@ -1337,33 +1337,33 @@ return view.extend({
     var m = new form.Map('clashoo', '', '');
     var s, o;
 
-    s = m.section(form.NamedSection, 'config', 'clashoo', '基础 DNS');
+    s = m.section(form.NamedSection, 'config', 'clashoo', _("Basic DNS"));
     s.addremove = false;
-    o = s.option(form.DummyValue, '_dns_auto_setup', 'DNS 自动配置');
+    o = s.option(form.DummyValue, '_dns_auto_setup', _("DNS Auto Setup"));
     o.cfgvalue = function () {
       var statusEl = E('div', { 'class': 'cl-dns-auto-status' }, []);
       var last = readDnsAutoResult();
       if (last && last.success)
         setDnsAutoStatus(statusEl, dnsAutoSummaryNode(last));
       else
-        statusEl.textContent = '自动选择可用 DNS，仅更新上游服务器；分流策略和高级设置保持不变。';
+        statusEl.textContent = _("Automatically choose available DNS and update only upstream servers; split policies and advanced settings remain unchanged.");
       if (last && last.success)
         window.setTimeout(function () {
           clearDnsAutoResult();
-          statusEl.textContent = '自动选择可用 DNS，仅更新上游服务器；分流策略和高级设置保持不变。';
+          statusEl.textContent = _("Automatically choose available DNS and update only upstream servers; split policies and advanced settings remain unchanged.");
         }, 6000);
       var btn = E('button', {
         'class': 'btn cbi-button-action',
         click: function (ev) {
           ev.preventDefault();
           btn.disabled = true;
-          setDnsAutoStatus(statusEl, '正在测速并写入 DNS 上游…');
+          setDnsAutoStatus(statusEl, _("Testing latency and writing upstream DNS…"));
           clashoo.dnsAutoSetup()
             .then(function (res) {
               btn.disabled = false;
               if (!res || !res.success) {
-                setDnsAutoStatus(statusEl, (res && res.message) || 'DNS 自动配置失败');
-                ui.addNotification(null, E('p', (res && res.message) || 'DNS 自动配置失败'));
+                setDnsAutoStatus(statusEl, (res && res.message) || _("DNS auto setup failed"));
+                ui.addNotification(null, E('p', (res && res.message) || _("DNS auto setup failed")));
                 return;
               }
               storeDnsAutoResult(res);
@@ -1371,126 +1371,126 @@ return view.extend({
               ui.addNotification(null, E('p', dnsAutoResultMessage(res)));
               window.setTimeout(function () {
                 clearDnsAutoResult();
-                statusEl.textContent = '自动配置已完成。';
+                statusEl.textContent = _("Auto setup completed.");
               }, 6000);
             })
             .catch(function (e) {
               btn.disabled = false;
-              setDnsAutoStatus(statusEl, 'DNS 自动配置失败: ' + (e.message || e));
-              ui.addNotification(null, E('p', 'DNS 自动配置失败: ' + (e.message || e)));
+              setDnsAutoStatus(statusEl, _("DNS auto setup failed: ") + (e.message || e));
+              ui.addNotification(null, E('p', _("DNS auto setup failed: ") + (e.message || e)));
             });
         }
-      }, '一键测速并应用');
+      }, _("Test and Apply"));
       return E('div', { 'class': 'cl-dns-auto' }, [
         E('div', { 'class': 'cl-dns-auto-actions' }, [btn]),
         statusEl
       ]);
     };
     o.write = function () {};
-    o = s.option(form.Flag,        'enable_dns',        '启用 DNS 模块');
-    o = s.option(form.Value,       'listen_port',       'DNS 监听端口');
+    o = s.option(form.Flag,        'enable_dns',        _("Enable DNS Module"));
+    o = s.option(form.Value,       'listen_port',       _("DNS Listen Port"));
     o.datatype = 'port';
-    o = s.option(form.ListValue,   'enhanced_mode',     '增强模式');
+    o = s.option(form.ListValue,   'enhanced_mode',     _("Enhanced Mode"));
     o.value('fake-ip', 'Fake-IP'); o.value('redir-host', 'Redir-Host');
     o.default = 'fake-ip';
-    o.description = '<span style="display:inline-block;padding:1px 7px;border-radius:4px;font-size:12px;font-weight:600;background:rgba(var(--primary-rgb),0.14);color:var(--cl-primary,#3886a1);">Fake-IP · 推荐</span> 解析快、分流准，大陆分流由内核完成。<br />' +
-      '<span style="display:inline-block;padding:1px 7px;border-radius:4px;font-size:12px;background:rgba(128,128,128,0.16);color:var(--cl-label-muted,#888);">Redir-Host</span> 大陆流量在防火墙层直接绕过核心，DNS 体验略弱。按需选择。';
-    o = s.option(form.Value,       'fake_ip_range',     'Fake-IP 网段');
+    o.description = _("<span style=\"display:inline-block;padding:1px 7px;border-radius:4px;font-size:12px;font-weight:600;background:rgba(var(--primary-rgb),0.14);color:var(--cl-primary,#3886a1);\">Fake-IP · Recommended</span> Fast resolution and accurate routing; China routing is handled by the core.<br />") +
+      _("<span style=\"display:inline-block;padding:1px 7px;border-radius:4px;font-size:12px;background:rgba(128,128,128,0.16);color:var(--cl-label-muted,#888);\">Redir-Host</span> China traffic bypasses the core at firewall level; DNS behavior is slightly weaker. Choose as needed.");
+    o = s.option(form.Value,       'fake_ip_range',     _("Fake-IP Range"));
     o.default = '198.18.0.1/16';
     o.placeholder = '198.18.0.1/16';
     o.depends('enhanced_mode', 'fake-ip');
     o.remove = function () {};
     o = s.option(form.Flag,        'enable_ipv6',       'IPv6 DNS');
 
-    s = m.section(form.NamedSection, 'config', 'clashoo', '高级 DNS');
+    s = m.section(form.NamedSection, 'config', 'clashoo', _("Advanced DNS"));
     s.addremove = false;
-    o = s.option(form.Flag,        'dnsforwader',       '强制转发 DNS');
-    o = s.option(form.ListValue,   'fake_ip_filter_mode', 'Fake-IP 过滤模式');
-    o.value('blacklist', '黑名单（列入走真 IP，默认）');
-    o.value('whitelist', '白名单（仅列入走 fake-IP）');
-    o.value('rule',      '规则模式（与 rules 同语法）');
+    o = s.option(form.Flag,        'dnsforwader',       _("Force DNS Forwarding"));
+    o = s.option(form.ListValue,   'fake_ip_filter_mode', _("Fake-IP Filter Mode"));
+    o.value('blacklist', _("Blocklist (listed items use real IP, default)"));
+    o.value('whitelist', _("Allowlist (only listed items use fake-IP)"));
+    o.value('rule',      _("Rule mode (same syntax as rules)"));
     o.default = 'blacklist';
     o.depends('enhanced_mode', 'fake-ip');
 
-    o = s.option(form.DynamicList, 'fake_ip_filter',    'Fake-IP 过滤域名');
+    o = s.option(form.DynamicList, 'fake_ip_filter',    _("Fake-IP Filter Domains"));
     o.placeholder = '*.lan / geosite:cn / RULE-SET,cn_domain,real-ip';
-    o.description = '黑名单/白名单模式：填域名或 <code>geosite:cn</code> 简写。规则模式：填 <code>GEOSITE,cn,real-ip</code> / <code>RULE-SET,xxx,real-ip</code> 这种与 rules 同语法的条目，末尾通常加一条 <code>MATCH,fake-ip</code> 兜底。填 <code>geosite:cn</code> 会自动改用内置 cn.mrs 加速，免加载 10MB geosite.dat。';
+    o.description = _("Blocklist/allowlist mode: enter domains or shorthand like <code>geosite:cn</code>. Rule mode: enter items with the same syntax as rules, such as <code>GEOSITE,cn,real-ip</code> / <code>RULE-SET,xxx,real-ip</code>; usually add <code>MATCH,fake-ip</code> at the end as fallback. <code>geosite:cn</code> automatically uses built-in cn.mrs acceleration and avoids loading the 10MB geosite.dat.");
     o.depends('enhanced_mode', 'fake-ip');
     o.remove = function () {};
     o = s.option(form.DynamicList, 'default_nameserver', 'Bootstrap DNS');
     o.placeholder = '223.5.5.5';
-    o.description = '用于解析 DoH/DoT/DoQ 服务器域名，建议填写纯 IP DNS。';
-    o = s.option(form.Value, 'dns_ecs', 'ECS 客户端子网');
-    o.placeholder = '推荐留空';
-    o.description = 'Mihomo 写入 DNS URL 的 ecs 参数；sing-box 写入 dns.client_subnet。清空则不写入。';
+    o.description = _("Used to resolve DoH/DoT/DoQ server domains; plain IP DNS is recommended.");
+    o = s.option(form.Value, 'dns_ecs', _("ECS Client Subnet"));
+    o.placeholder = _("Recommended blank");
+    o.description = _("mihomo writes the ecs parameter to DNS URLs; sing-box writes dns.client_subnet. Leave empty to skip.");
     o.rmempty = true;
-    o = s.option(form.Flag, 'dns_ecs_override', '强制覆盖 ECS');
+    o = s.option(form.Flag, 'dns_ecs_override', _("Force ECS Override"));
     o.default = '0';
-    o = s.option(form.Flag, 'fallback_filter_geoip', 'Fallback GeoIP 过滤');
+    o = s.option(form.Flag, 'fallback_filter_geoip', _("Fallback GeoIP Filter"));
     o.default = '0';
-    o.description = '依赖 MMDB；若启用但本地 GeoIP 数据库缺失，可能导致内核启动失败。一般无需开启。';
+    o.description = _("Requires MMDB. If enabled while the local GeoIP database is missing, the core may fail to start. Usually not needed.");
     o = s.option(form.DynamicList, 'fallback_filter_ipcidr', 'Fallback IP CIDR');
     o.placeholder = '240.0.0.0/4';
-    o = s.option(form.Flag, 'singbox_independent_cache', 'sing-box 独立 DNS 缓存');
+    o = s.option(form.Flag, 'singbox_independent_cache', _("sing-box Independent DNS Cache"));
     o.default = '0';
-    o.description = '开启后，direct / proxy / fallback 等角色各自独立 DNS 缓存；适用于同一域名按分流走不同解析链的场景。一般无需开启。';
+    o.description = _("When enabled, direct / proxy / fallback roles each use an independent DNS cache. Useful when the same domain needs different resolver chains by routing. Usually not needed.");
 
-    s = m.section(form.TypedSection, 'dnsservers', '上游 DNS');
+    s = m.section(form.TypedSection, 'dnsservers', _("Upstream DNS"));
     s.addremove = true; s.anonymous = true;
-    o = s.option(form.Flag, 'enabled', '启用');
+    o = s.option(form.Flag, 'enabled', _("Enable"));
     o.default = '1';
-    o = s.option(form.ListValue, 'ser_type', '角色');
-    o.value('nameserver', '国内上游 DNS');
-    o.value('direct-nameserver', '直连域名解析');
-    o.value('proxy-server-nameserver', '节点域名解析专用');
-    o.value('fallback', '国外加密 DNS（防污染）');
+    o = s.option(form.ListValue, 'ser_type', _("Role"));
+    o.value('nameserver', _("Domestic Upstream DNS"));
+    o.value('direct-nameserver', _("Direct Domain Resolver"));
+    o.value('proxy-server-nameserver', _("Proxy Node Domain Resolver"));
+    o.value('fallback', _("Overseas Encrypted DNS (anti-pollution)"));
     o.default = 'nameserver';
-    o = s.option(form.Value,     'ser_address', 'DNS 地址');
+    o = s.option(form.Value,     'ser_address', _("DNS Address"));
     o.placeholder = 'https://dns.alidns.com/dns-query / https://doh.pub/dns-query';
-    o = s.option(form.ListValue, 'protocol',    '协议');
-    o.value('none', '完整 URL / 不补协议');
+    o = s.option(form.ListValue, 'protocol',    _("Protocol"));
+    o.value('none', _("Full URL / no protocol prefix"));
     o.value('udp://', 'UDP');
     o.value('tcp://', 'TCP');
     o.value('tls://', 'DoT / TLS');
     o.value('https://', 'DoH / HTTPS');
     o.value('quic://', 'DoQ / QUIC');
     o.default = 'none';
-    o = s.option(form.Value, 'ser_port', '端口');
+    o = s.option(form.Value, 'ser_port', _("Port"));
     o.placeholder = '853 / 784';
     o.rmempty = true;
 
-    s = m.section(form.TypedSection, 'dns_policy', '分流解析策略');
+    s = m.section(form.TypedSection, 'dns_policy', _("DNS Policy"));
     s.addremove = true; s.anonymous = true;
-    o = s.option(form.Flag, 'enabled', '启用');
+    o = s.option(form.Flag, 'enabled', _("Enable"));
     o.default = '1';
-    o = s.option(form.ListValue, 'policy_type', '策略类型');
-    o.value('nameserver-policy', '域名分流解析');
-    o.value('proxy-server-nameserver-policy', '代理域名分流解析');
+    o = s.option(form.ListValue, 'policy_type', _("Policy Type"));
+    o.value('nameserver-policy', _("Domain Split DNS"));
+    o.value('proxy-server-nameserver-policy', _("Proxy Domain Split DNS"));
     o.default = 'nameserver-policy';
-    o = s.option(form.Value, 'matcher', '匹配规则');
+    o = s.option(form.Value, 'matcher', _("Match Rule"));
     o.placeholder = 'geosite:cn / domain:example.com / domain-suffix:google.com';
-    o = s.option(form.DynamicList, 'nameserver', '使用 DNS');
+    o = s.option(form.DynamicList, 'nameserver', _("Use DNS"));
     o.placeholder = 'udp://223.5.5.5';
-    o.description = '示例：geosite:cn 使用 https://dns.alidns.com/dns-query；geosite:geolocation-!cn 使用 https://cloudflare-dns.com/dns-query。';
+    o.description = _("Example: geosite:cn uses https://dns.alidns.com/dns-query; geosite:geolocation-!cn uses https://cloudflare-dns.com/dns-query.");
 
     m.render().then(function (node) {
       decorateControlWraps(node);
-      makeSectionCollapsible(node, '基础 DNS', true);
-      makeSectionCollapsible(node, '高级 DNS', false);
-      makeSectionCollapsible(node, '上游 DNS', false);
-      makeSectionCollapsible(node, '分流解析策略', false);
+      makeSectionCollapsible(node, _("Basic DNS"), true);
+      makeSectionCollapsible(node, _("Advanced DNS"), false);
+      makeSectionCollapsible(node, _("Upstream DNS"), false);
+      makeSectionCollapsible(node, _("DNS Policy"), false);
       container.appendChild(node);
       container.appendChild(E('div', { 'class': 'cl-save-bar' }, [
         E('button', { 'class': 'btn cbi-button', click: function () {
           m.save(null, true).then(function () { return clashoo.commitConfig(); })
             .then(function () { return clearClashooDirty(); })
             .then(function () { location.reload(); })
-            .catch(function (e) { ui.addNotification(null, E('p', '保存失败: ' + (e.message || e))); });
-        }}, '保存配置'),
+            .catch(function (e) { ui.addNotification(null, E('p', _("Save failed: ") + (e.message || e))); });
+        }}, _("Save Configuration")),
         E('button', { 'class': 'btn cbi-button-action', click: function () {
-          saveCommitApplyMaybeReload(m, 'DNS 配置已保存并热重载服务', 'DNS 配置已保存，服务未启动')
-            .catch(function (e) { ui.addNotification(null, E('p', '操作失败: ' + (e.message || e))); });
-        }}, '应用配置')
+          saveCommitApplyMaybeReload(m, _("DNS configuration saved and service hot-reloaded"), _("DNS configuration saved, service is not running"))
+            .catch(function (e) { ui.addNotification(null, E('p', _("Operation failed: ") + (e.message || e))); });
+        }}, _("Apply Configuration"))
       ]));
     });
   },
@@ -1503,8 +1503,8 @@ return view.extend({
     var tabEls = {}, panelEls = {};
 
     var tabs = [
-      { id: 'profiles', label: '配置文件' },
-      { id: 'wizard',   label: '快速向导' }
+      { id: 'profiles', label: _("Configuration Files") },
+      { id: 'wizard',   label: _("Quick Wizard") }
     ];
     var allowedTabs = tabs.map(function (t) { return t.id; });
     this._sbTab = readSavedTab('clashoo.config.singbox.tab', this._sbTab || 'profiles', allowedTabs);
@@ -1551,7 +1551,7 @@ return view.extend({
     };
 
     /* ── JSON editor (initially hidden) ── */
-    var editorTitle = E('span', { 'class': 'cl-editor-hdr' }, '选择上方配置后可在此处编辑');
+    var editorTitle = E('span', { 'class': 'cl-editor-hdr' }, _("Select a configuration above to edit it here"));
     var ed          = createConfigEditor({ name: 'javascript', json: true });
     var saveBtn = E('button', {
       'class': 'btn cbi-button-action cl-btn-sm',
@@ -1560,11 +1560,11 @@ return view.extend({
         var name = ed.textarea.dataset.name;
         if (!name) return;
         clashoo.saveSingboxProfile(name, formatJsonForEditor(ed.getValue())).then(function (r) {
-          if (r.success) ui.addNotification(null, E('p', name + ' 已保存'));
-          else ui.addNotification(null, E('p', '保存失败: ' + (r.message || r.error || '')));
+          if (r.success) ui.addNotification(null, E('p', name + _(" saved")));
+          else ui.addNotification(null, E('p', _("Save failed: ") + (r.message || r.error || '')));
         });
       }
-    }, '保存');
+    }, _("Save"));
 
     var migrateBtn = E('button', {
       'class': 'btn cbi-button cl-btn-sm',
@@ -1574,16 +1574,16 @@ return view.extend({
         if (!name) return;
         L.resolveDefault(callMigrateSbProfile(name), {}).then(function (r) {
           if (r && r.success) {
-            var msg = r.changes && r.changes.length ? '已修复废弃字段: ' + r.changes.join(', ') : '配置已是最新，无需修复';
+            var msg = r.changes && r.changes.length ? _("Fixed deprecated fields: ") + r.changes.join(', ') : _("Configuration is up to date; no fixes needed");
             ui.addNotification(null, E('p', msg));
             /* 重新加载编辑器内容 */
             clashoo.getSingboxProfile(name).then(function (gr) { ed.setValue(formatJsonForEditor(gr.content || '')); });
           } else {
-            ui.addNotification(null, E('p', '修复失败: ' + ((r && r.message) || '')));
+            ui.addNotification(null, E('p', _("Fix failed: ") + ((r && r.message) || '')));
           }
         });
       }
-    }, '修复废弃字段');
+    }, _("Fix Deprecated Fields"));
 
     var editorBox = E('div', { 'class': 'cl-section cl-card cl-sb-card cl-sb-editor' }, [
       editorTitle,
@@ -1591,16 +1591,16 @@ return view.extend({
       E('div', { 'class': 'cl-actions cl-sb-row-actions cl-sb-editor-actions' }, [
         saveBtn,
         migrateBtn,
-        E('span', { 'class': 'cl-hint' }, '编辑后点击保存；切换配置后服务将自动重启')
+        E('span', { 'class': 'cl-hint' }, _("Click Save after editing; switching configuration automatically restarts the service"))
       ])
     ]);
 
     function loadEditor(name) {
-      editorTitle.textContent = '编辑：' + name;
+      editorTitle.textContent = _("Editing: ") + name;
       saveBtn.removeAttribute('disabled');
       migrateBtn.removeAttribute('disabled');
       ed.textarea.dataset.name = name;
-      ed.setValue('加载中…');
+      ed.setValue(_("Loading…"));
       clashoo.getSingboxProfile(name).then(function (r) {
         ed.setValue(formatJsonForEditor(r.content || ''));
       });
@@ -1611,7 +1611,7 @@ return view.extend({
       ? profiles.map(function (p) {
           var nameCell = [
             E('div', { 'class': 'cl-sb-file-name' }, [
-              p.active ? E('span', { 'class': 'cl-active-badge' }, '使用中') : '',
+              p.active ? E('span', { 'class': 'cl-active-badge' }, _("Active")) : '',
               E('span', { 'class': 'cl-file-name-text' }, safeText(p.name))
             ])
           ];
@@ -1627,42 +1627,42 @@ return view.extend({
               p.source !== 'native' ? E('button', {
                 'class': 'btn cbi-button cl-btn-sm cl-btn-sb-action cl-btn-sb-edit',
                 click: function () { loadEditor(p.name); }
-              }, '编辑') : '',
+              }, _("Edit")) : '',
               E('button', {
                 'class': 'btn cbi-button-action cl-btn-sm cl-btn-sb-action cl-btn-sb-switch',
                 click: function () {
                   clashoo.setSingboxProfile(p.name).then(function (r) {
-                    ui.addNotification(null, E('p', r.success ? '已切换至 ' + p.name : ('切换失败: ' + (r.message || ''))));
+                    ui.addNotification(null, E('p', r.success ? _("Switched to ") + p.name : (_("Switch failed: ") + (r.message || ''))));
                     if (r.success) location.reload();
                   });
                 }
-              }, '切换'),
+              }, _("Switch")),
               p.source === 'native' && p.sub_url ? E('button', {
                 'class': 'btn cbi-button cl-btn-sm cl-btn-sb-action',
                 click: function (ev) {
                   var btn = ev.currentTarget;
                   btn.disabled = true;
-                  btn.textContent = '更新中…';
+                  btn.textContent = _("Updating…");
                   clashoo.updateSingboxNative(p.name).then(function (r) {
                     btn.disabled = false;
-                    btn.textContent = '更新';
-                    ui.addNotification(null, E('p', r.success ? (r.message || p.name + ' 已更新') : ('更新失败: ' + (r.message || ''))));
+                    btn.textContent = _("Update");
+                    ui.addNotification(null, E('p', r.success ? (r.message || p.name + _(" updated")) : (_("Update failed: ") + (r.message || ''))));
                     if (r.success) location.reload();
                   });
                 }
-              }, '更新') : '',
+              }, _("Update")) : '',
               E('button', {
                 'class': 'btn cbi-button-negative cl-btn-sm cl-btn-sb-action cl-btn-sb-delete',
                 click: function () {
-                  if (!confirm('删除 ' + p.name + '？')) return;
+                  if (!confirm(_("Delete ") + p.name + '?')) return;
                   clashoo.deleteSingboxProfile(p.name).then(function () { location.reload(); });
                 }
-              }, '删除')
+              }, _("Delete"))
               ])
             ])
           ]);
         })
-      : [E('tr', {}, [E('td', { 'class': 'cl-sb-empty', colspan: '3' }, '暂无配置文件，请使用快速向导生成或上传 JSON 文件')])];
+      : [E('tr', {}, [E('td', { 'class': 'cl-sb-empty', colspan: '3' }, _("No configuration files yet. Use Quick Wizard to generate one or upload a JSON file."))])];
 
     /* ── Upload ── */
     var uploadInput = E('input', { type: 'file', accept: '.json', style: 'display:none', id: 'sb-upload' });
@@ -1672,8 +1672,8 @@ return view.extend({
       var reader = new FileReader();
       reader.onload = function (e) {
         clashoo.saveSingboxProfile(file.name, e.target.result).then(function (r) {
-          if (r.success) { ui.addNotification(null, E('p', '上传成功: ' + r.name)); location.reload(); }
-          else ui.addNotification(null, E('p', '上传失败: ' + (r.message || r.error || '')));
+          if (r.success) { ui.addNotification(null, E('p', _("Upload succeeded: ") + r.name)); location.reload(); }
+          else ui.addNotification(null, E('p', _("Upload failed: ") + (r.message || r.error || '')));
         });
       };
       reader.readAsText(file);
@@ -1681,13 +1681,13 @@ return view.extend({
 
     return [
       E('div', { 'class': 'cl-section cl-card cl-sb-card' }, [
-        E('h4', {}, '订阅更新'),
+        E('h4', {}, _("Subscription Update")),
         buildSubscriptionSchedule(uiData || {}, subscriptionUpdateStatus || {})
       ]),
       E('div', { 'class': 'cl-section cl-card cl-sb-card' }, [
-        E('h4', {}, 'sing-box 配置文件'),
+        E('h4', {}, _("sing-box Configuration Files")),
         E('table', { 'class': 'cl-sub-list cl-sb-list' }, [
-          E('thead', {}, E('tr', {}, [E('th', {}, '文件名'), E('th', {}, '大小'), E('th', {}, '操作')])),
+          E('thead', {}, E('tr', {}, [E('th', {}, _("File Name")), E('th', {}, _("Size")), E('th', {}, _("Actions"))])),
           E('tbody', {}, rows)
         ]),
         uploadInput,
@@ -1695,7 +1695,7 @@ return view.extend({
           E('button', {
             'class': 'btn cbi-button-add cl-btn-sm cl-btn-sb-upload',
             click: function () { document.getElementById('sb-upload').click(); }
-          }, '上传 JSON 配置')
+          }, _("Upload JSON Configuration"))
         ])
       ]),
       editorBox
@@ -1706,12 +1706,12 @@ return view.extend({
     var urlInput = E('input', {
       'class': 'cl-sub-url',
       type: 'text',
-      placeholder: '粘贴订阅链接（支持 vmess / vless / trojan 等）'
+      placeholder: _("Paste subscription URL (supports vmess / vless / trojan, etc.)")
     });
     var nameInput = E('input', {
       'class': 'cl-sub-url',
       type: 'text',
-      placeholder: '配置文件名（选填，留空自动生成 singbox.json）',
+      placeholder: _("Configuration file name (optional, blank auto-generates singbox.json)"),
       style: 'margin-top:0'
     });
     var savedUa = '';
@@ -1727,7 +1727,7 @@ return view.extend({
         if (busy) {
           if (!b.dataset.label) b.dataset.label = b.textContent;
           if (b === activeBtn)
-            b.textContent = b._clBusyLabel || '处理中…';
+            b.textContent = b._clBusyLabel || _("Processing…");
         } else if (b.dataset.label) {
           b.textContent = b.dataset.label;
         }
@@ -1735,7 +1735,7 @@ return view.extend({
     }
     function doCreate(setActive) {
       var url = urlInput.value.trim();
-      if (!url) { ui.addNotification(null, E('p', '请填写订阅链接')); return; }
+      if (!url) { ui.addNotification(null, E('p', _("Please enter a subscription URL"))); return; }
       setBusy(true, setActive ? applyBtn : genBtn);
       // 保存 UA 到 UCI，后端 create_singbox_config 会读这个字段
       var uaPromise = L.resolveDefault(uci.load('clashoo'), null).then(function () {
@@ -1752,19 +1752,19 @@ return view.extend({
            * 此时后端可能仍在跑（yaml2singbox 转 90 节点等），让用户直接刷新页
            * 看实际产物，而不是误报"失败"。 */
           if (!r || typeof r.success === 'undefined') {
-            ui.addNotification(null, E('p', '生成时间较长，正在刷新查看结果…'));
+            ui.addNotification(null, E('p', _("Generation is taking longer, refreshing to show results…")));
             setBusy(false);
             setTimeout(function () { location.reload(); }, 1500);
             return;
           }
           if (!r.success) {
             setBusy(false);
-            ui.addNotification(null, E('p', '生成失败: ' + (r.message || '')));
+            ui.addNotification(null, E('p', _("Generate failed: ") + (r.message || '')));
             return;
           }
           if (setActive) {
             return clashoo.setSingboxProfile(r.name).then(function () {
-              ui.addNotification(null, E('p', r.message + '，已切换为活动配置'));
+              ui.addNotification(null, E('p', r.message + _(", switched to active configuration")));
               location.reload();
             });
           }
@@ -1772,26 +1772,26 @@ return view.extend({
           location.reload();
         }).catch(function (e) {
           setBusy(false);
-          ui.addNotification(null, E('p', '生成异常: ' + (e && e.message || e)));
+          ui.addNotification(null, E('p', _("Generate error: ") + (e && e.message || e)));
         });
     }
 
-    genBtn   = E('button', { 'class': 'btn cbi-button cl-btn-sm',        click: function () { doCreate(false); } }, '生成配置');
-    applyBtn = E('button', { 'class': 'btn cbi-button-action cl-btn-sm', click: function () { doCreate(true);  } }, '应用配置');
-    genBtn._clBusyLabel = '生成中…';
-    applyBtn._clBusyLabel = '应用中…';
+    genBtn   = E('button', { 'class': 'btn cbi-button cl-btn-sm',        click: function () { doCreate(false); } }, _("Generate Configuration"));
+    applyBtn = E('button', { 'class': 'btn cbi-button-action cl-btn-sm', click: function () { doCreate(true);  } }, _("Apply Configuration"));
+    genBtn._clBusyLabel = _("Generating…");
+    applyBtn._clBusyLabel = _("Applying…");
 
     /* ── native sing-box subscription card ── */
     // 注：原生 sing-box JSON 订阅不需要 UA 选项（机场按链接参数/路径区分格式）
     var nativeUrlInput = E('input', {
       'class': 'cl-sub-url',
       type: 'text',
-      placeholder: '粘贴原生 sing-box 订阅链接（直接返回 JSON 的链接）'
+      placeholder: _("Paste native sing-box subscription URL (direct JSON response)")
     });
     var nativeNameInput = E('input', {
       'class': 'cl-sub-url',
       type: 'text',
-      placeholder: '文件名（选填，留空自动命名）',
+      placeholder: _("File name (optional, blank for automatic name)"),
       style: 'margin-top:0'
     });
 
@@ -1810,7 +1810,7 @@ return view.extend({
         b.disabled = busy ? '' : null;
         if (busy) {
           if (!b.dataset.label) b.dataset.label = b.textContent;
-          b.textContent = '拉取中…';
+          b.textContent = _("Fetching…");
         } else if (b.dataset.label) {
           b.textContent = b.dataset.label;
         }
@@ -1819,28 +1819,28 @@ return view.extend({
     function doFetchNative(setActive) {
       var url = nativeUrlInput.value.trim();
       if (!url) {
-        setFetchStatus('✗ 请填写订阅链接', 'error');
+        setFetchStatus(_("✗ Please enter a subscription URL"), 'error');
         setTimeout(function () { setFetchStatus(''); }, 4000);
         return;
       }
       setNativeBusy(true);
-      setFetchStatus('⏳ 正在拉取配置...', 'progress');
+      setFetchStatus(_("⏳ Fetching configuration..."), 'progress');
       clashoo.fetchSingboxNative(url, nativeNameInput.value.trim())
         .then(function (r) {
           setNativeBusy(false);
           if (!r || typeof r.success === 'undefined') {
-            setFetchStatus('⏳ 拉取超时，正在刷新查看结果...', 'progress');
+            setFetchStatus(_("⏳ Fetch timed out, refreshing to show results..."), 'progress');
             setTimeout(function () { location.reload(); }, 1500);
             return;
           }
           if (!r.success) {
-            setFetchStatus('✗ 拉取失败: ' + (r.message || ''), 'error');
+            setFetchStatus(_("✗ Fetch failed: ") + (r.message || ''), 'error');
             return;
           }
           if (setActive) {
-            setFetchStatus('⏳ ' + r.message + '，正在切换为活动配置...', 'progress');
+            setFetchStatus('⏳ ' + r.message + _(", switching to active configuration..."), 'progress');
             return clashoo.setSingboxProfile(r.name).then(function () {
-              setFetchStatus('✓ ' + r.message + '，已切换为活动配置', 'success');
+              setFetchStatus('✓ ' + r.message + _(", switched to active configuration"), 'success');
               setTimeout(function () { location.reload(); }, 1200);
             });
           }
@@ -1848,28 +1848,28 @@ return view.extend({
           setTimeout(function () { location.reload(); }, 1200);
         }).catch(function (e) {
           setNativeBusy(false);
-          setFetchStatus('✗ 拉取异常: ' + (e && e.message || e), 'error');
+          setFetchStatus(_("✗ Fetch error: ") + (e && e.message || e), 'error');
         });
     }
 
-    fetchBtn      = E('button', { 'class': 'btn cbi-button cl-btn-sm',        click: function () { doFetchNative(false); } }, '拉取配置');
-    fetchApplyBtn = E('button', { 'class': 'btn cbi-button-action cl-btn-sm', click: function () { doFetchNative(true);  } }, '拉取并应用');
+    fetchBtn      = E('button', { 'class': 'btn cbi-button cl-btn-sm',        click: function () { doFetchNative(false); } }, _("Fetch Configuration"));
+    fetchApplyBtn = E('button', { 'class': 'btn cbi-button-action cl-btn-sm', click: function () { doFetchNative(true);  } }, _("Fetch and Apply"));
 
     return [
       E('div', { 'class': 'cl-section cl-card cl-sb-card' }, [
-        E('h4', {}, '节点订阅'),
+        E('h4', {}, _("Node Subscription")),
         E('div', { 'class': 'cl-form-wrap cl-fixed-600 cl-sb-form' }, [
           nativeUrlInput, nativeNameInput,
           E('div', { 'class': 'cl-actions cl-sb-top-actions' }, [fetchBtn, fetchApplyBtn]),
           fetchStatusEl
         ]),
         E('p', { 'class': 'cl-sb-note' },
-          '适用于机场直接提供 sing-box JSON 格式订阅、或已用外部工具转换好的链接。\n' +
-          '拉取后可在「配置文件」标签的对应条目点击「更新」重新拉取最新配置。'
+          _("For providers that directly offer sing-box JSON subscriptions, or links already converted by external tools.\n") +
+          _("After fetching, click Update on the corresponding item in the Configuration Files tab to fetch the latest configuration again.")
         )
       ]),
       E('div', { 'class': 'cl-section cl-card cl-sb-card' }, [
-        E('h4', {}, 'YAML 订阅转换'),
+        E('h4', {}, _("YAML Subscription Conversion")),
         E('div', { 'class': 'cl-form-wrap cl-fixed-600 cl-sb-form' }, [
           urlInput, nameInput, convertUaPicker.wrap,
           E('div', { 'class': 'cl-actions cl-sb-top-actions' }, [
@@ -1878,7 +1878,7 @@ return view.extend({
           ])
         ]),
         E('p', { 'class': 'cl-sb-note' },
-          '将 YAML 订阅转换为 sing-box JSON，自动注入 TUN 透明代理与大陆直连规则。同名文件直接覆盖，更新时填相同名称即可。'
+          _("Convert YAML subscriptions to sing-box JSON, automatically injecting TUN transparent proxy and China direct rules. Files with the same name are overwritten; use the same name when updating.")
         )
       ])
     ];

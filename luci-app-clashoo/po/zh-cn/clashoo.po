@@ -1,0 +1,1510 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Project-Id-Version: luci-app-clashoo\n"
+"PO-Revision-Date: 2026-07-10 09:23+0800\n"
+"Last-Translator: kenzok8 <kenzok8@gmail.com>\n"
+"Language-Team: Chinese (Simplified)\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid " (auto-detected by device)"
+msgstr "（按设备自动检测）"
+
+msgid " (expired)"
+msgstr "（已过期）"
+
+msgid " (refreshing)"
+msgstr "（刷新中）"
+
+msgid " candidates"
+msgstr " 个候选"
+
+msgid " days)"
+msgstr " 天）"
+
+msgid " files)"
+msgstr " 个文件）"
+
+msgid " groups"
+msgstr " 组"
+
+msgid " hours ago"
+msgstr " 小时前"
+
+msgid " latency test failed: "
+msgstr " 测速失败: "
+
+msgid " minutes ago"
+msgstr " 分钟前"
+
+msgid " saved"
+msgstr " 已保存"
+
+msgid " seconds"
+msgstr " 秒"
+
+msgid " seconds ago"
+msgstr " 秒前"
+
+msgid " switch error"
+msgstr " 切换异常"
+
+msgid " switch failed: "
+msgstr " 切换失败: "
+
+msgid " update succeeded"
+msgstr " 更新成功"
+
+msgid " updated"
+msgstr " 已更新"
+
+msgid " updates available"
+msgstr " 项可更新"
+
+msgid "$1 updated"
+msgstr "$1 已更新"
+
+msgid "(empty)"
+msgstr "（空）"
+
+msgid ", click Start to take effect"
+msgstr "，点击启动后生效"
+
+msgid ", failed "
+msgstr "，失败 "
+
+msgid ", skipped "
+msgstr "，跳过 "
+
+msgid ", switched to active configuration"
+msgstr "，已切换为活动配置"
+
+msgid ", switching to active configuration..."
+msgstr "，正在切换为活动配置..."
+
+msgid ", unchanged "
+msgstr "，未变化 "
+
+msgid "; updated "
+msgstr "；更新 "
+
+msgid "<em>(empty)</em>"
+msgstr "<em>（空）</em>"
+
+msgid "<span style=\"display:inline-block;padding:1px 7px;border-radius:4px;font-size:12px;background:rgba(128,128,128,0.16);color:var(--cl-label-muted,#888);\">Redir-Host</span> China traffic bypasses the core at firewall level; DNS behavior is slightly weaker. Choose as needed."
+msgstr "<span style=\"display:inline-block;padding:1px 7px;border-radius:4px;font-size:12px;background:rgba(128,128,128,0.16);color:var(--cl-label-muted,#888);\">Redir-Host</span> 大陆流量在防火墙层直接绕过核心，DNS 体验略弱。按需选择。"
+
+msgid "<span style=\"display:inline-block;padding:1px 7px;border-radius:4px;font-size:12px;font-weight:600;background:rgba(var(--primary-rgb),0.14);color:var(--cl-primary,#3886a1);\">Fake-IP · Recommended</span> Fast resolution and accurate routing; China routing is handled by the core.<br />"
+msgstr "<span style=\"display:inline-block;padding:1px 7px;border-radius:4px;font-size:12px;font-weight:600;background:rgba(var(--primary-rgb),0.14);color:var(--cl-primary,#3886a1);\">Fake-IP · 推荐</span> 解析快、分流准，大陆分流由内核完成。<br />"
+
+msgid "<strong>Note:</strong> Proxy node domains still use direct DNS for startup resolution, not for normal client domain queries.<br>"
+msgstr "<strong>说明：</strong>代理节点域名仍使用直连 DNS 启动解析，不用于客户端普通域名查询。<br>"
+
+msgid "<strong>Prerequisite:</strong> The configuration must include transparent proxying (TUN auto-route or TProxy inbound). Restart after switching."
+msgstr "<strong>前提：</strong>配置自带透明代理（TUN auto-route 或 TProxy 入站），切换后需重启生效。"
+
+msgid "<strong>Warning:</strong> After enabling, IPv6 sites can only be accessed over IPv4; pure IPv6 networks may lose connectivity."
+msgstr "<strong>注意：</strong>开启后 IPv6 网站只能通过 IPv4 访问，纯 IPv6 网络下可能无法上网。"
+
+msgid "Access Check"
+msgstr "访问检查"
+
+msgid "Access Control"
+msgstr "访问控制"
+
+msgid "Access Secret"
+msgstr "访问密钥"
+
+msgid "Actions"
+msgstr "操作"
+
+msgid "Active"
+msgstr "使用中"
+
+msgid "Advanced DNS"
+msgstr "高级 DNS"
+
+msgid "Advanced Settings (core / data components)"
+msgstr "高级设置（内核 / 数据组件）"
+
+msgid "After fetching, click Update on the corresponding item in the Configuration Files tab to fetch the latest configuration again."
+msgstr "拉取后可在「配置文件」标签的对应条目点击「更新」重新拉取最新配置。"
+
+msgid "All"
+msgstr "全部"
+
+msgid "All components are up to date"
+msgstr "所有组件已是最新"
+
+msgid "All Devices"
+msgstr "所有设备"
+
+msgid "All Ports"
+msgstr "所有端口"
+
+msgid "Allow LAN Access"
+msgstr "允许局域网连接"
+
+msgid "Allowlist"
+msgstr "白名单"
+
+msgid "Allowlist (only listed items use fake-IP)"
+msgstr "白名单（仅列入走 fake-IP）"
+
+msgid "Alpha"
+msgstr "Alpha 版"
+
+msgid "Already up to date"
+msgstr "已是最新版本"
+
+msgid "Apply Configuration"
+msgstr "应用配置"
+
+msgid "Applying…"
+msgstr "应用中…"
+
+msgid "ASN Priority"
+msgstr "ASN 优先"
+
+msgid "Auto Scroll"
+msgstr "自动滚动"
+
+msgid "Auto setup completed."
+msgstr "自动配置已完成。"
+
+msgid "Auto Update Model"
+msgstr "自动更新模型"
+
+msgid "Auto-detected"
+msgstr "自动识别"
+
+msgid "Automatically choose available DNS and update only upstream servers; split policies and advanced settings remain unchanged."
+msgstr "自动选择可用 DNS，仅更新上游服务器；分流策略和高级设置保持不变。"
+
+msgid "Automatically switch Url-test and Load-balance policy groups to Smart policy groups"
+msgstr "自动切换 Url-test、Load-balance 策略组到 Smart 策略组"
+
+msgid "Automation Tasks"
+msgstr "自动化任务"
+
+msgid "Backend Core"
+msgstr "后端核心"
+
+msgid "Backup and Restore"
+msgstr "备份与还原"
+
+msgid "Backup exported ("
+msgstr "备份已导出（"
+
+msgid "Backup restored, restarting service"
+msgstr "已还原备份，正在重启服务"
+
+msgid "Basic DNS"
+msgstr "基础 DNS"
+
+msgid "Blocklist"
+msgstr "黑名单"
+
+msgid "Blocklist (listed items use real IP, default)"
+msgstr "黑名单（列入走真 IP，默认）"
+
+msgid "Blocklist/allowlist mode: enter domains or shorthand like <code>geosite:cn</code>. Rule mode: enter items with the same syntax as rules, such as <code>GEOSITE,cn,real-ip</code> / <code>RULE-SET,xxx,real-ip</code>; usually add <code>MATCH,fake-ip</code> at the end as fallback. <code>geosite:cn</code> automatically uses built-in cn.mrs acceleration and avoids loading the 10MB geosite.dat."
+msgstr "黑名单/白名单模式：填域名或 <code>geosite:cn</code> 简写。规则模式：填 <code>GEOSITE,cn,real-ip</code> / <code>RULE-SET,xxx,real-ip</code> 这种与 rules 同语法的条目，末尾通常加一条 <code>MATCH,fake-ip</code> 兜底。填 <code>geosite:cn</code> 会自动改用内置 cn.mrs 加速，免加载 10MB geosite.dat。"
+
+msgid "Bypass China IP"
+msgstr "大陆 IP 绕过"
+
+msgid "Bypass Ports"
+msgstr "绕过端口"
+
+msgid "Bypass Rules"
+msgstr "绕过规则"
+
+msgid "ByteDance"
+msgstr "字节跳动"
+
+msgid "Cannot connect to core API. Check runtime status."
+msgstr "无法连接核心 API，请检查运行状态"
+
+msgid "Check and Update"
+msgstr "检查并更新"
+
+msgid "Check Updates"
+msgstr "检查更新"
+
+msgid "Checking configuration file"
+msgstr "正在检查配置文件"
+
+msgid "Checking environment…"
+msgstr "检查环境…"
+
+msgid "Checking…"
+msgstr "检查中…"
+
+msgid "Cleaning mihomo network rules"
+msgstr "清理 mihomo 网络规则"
+
+msgid "Cleaning sing-box network rules"
+msgstr "清理 sing-box 网络规则"
+
+msgid "Cleanup failed (mihomo may not be running)"
+msgstr "清理失败（mihomo 可能未运行）"
+
+msgid "Cleanup interval (hours)"
+msgstr "清理间隔（小时）"
+
+msgid "Clear"
+msgstr "清理"
+
+msgid "Clear File"
+msgstr "清空文件"
+
+msgid "Clear Smart Cache"
+msgstr "清理 Smart 缓存"
+
+msgid "Clear the current log file? This cannot be undone."
+msgstr "确定要清空当前日志文件吗？此操作不可恢复。"
+
+msgid "Clear View"
+msgstr "清空显示"
+
+msgid "Click Save after editing; switching configuration automatically restarts the service"
+msgstr "编辑后点击保存；切换配置后服务将自动重启"
+
+msgid "Collapse"
+msgstr "折叠"
+
+msgid "Collect node latency data for LightGBM model training"
+msgstr "收集节点延迟数据供 LightGBM 模型训练"
+
+msgid "Collect Training Data"
+msgstr "收集训练数据"
+
+msgid "Common Ports"
+msgstr "常用端口"
+
+msgid "Completed"
+msgstr "已完成"
+
+msgid "Component update task submitted"
+msgstr "组件更新任务已提交"
+
+msgid "Component Updates"
+msgstr "组件更新"
+
+msgid "Configuration"
+msgstr "配置"
+
+msgid "Configuration content appears here after selecting a file…"
+msgstr "选择配置文件后内容将显示在这里…"
+
+msgid "Configuration file name (optional, blank auto-generates singbox.json)"
+msgstr "配置文件名（选填，留空自动生成 singbox.json）"
+
+msgid "Configuration Files"
+msgstr "配置文件"
+
+msgid "Configuration is up to date; no fixes needed"
+msgstr "配置已是最新，无需修复"
+
+msgid "Configuration saved"
+msgstr "配置已保存"
+
+msgid "Configuration saved and service hot-reloaded"
+msgstr "配置已保存并热重载服务"
+
+msgid "Configuration saved, service is not running"
+msgstr "配置已保存，服务未启动"
+
+msgid "Configuration saved, service remains stopped"
+msgstr "配置已保存，服务保持停止"
+
+msgid "Configuration saved, switched and started selected core"
+msgstr "配置已保存，已切换并启动所选内核"
+
+msgid "Connection failed"
+msgstr "连接失败"
+
+msgid "Connections"
+msgstr "连接"
+
+msgid "Convert YAML subscriptions to sing-box JSON, automatically injecting TUN transparent proxy and China direct rules. Files with the same name are overwritten; use the same name when updating."
+msgstr "将 YAML 订阅转换为 sing-box JSON，自动注入 TUN 透明代理与大陆直连规则。同名文件直接覆盖，更新时填相同名称即可。"
+
+msgid "Core and Data"
+msgstr "内核与数据"
+
+msgid "Core did not start within 15 seconds (procd is recovering)"
+msgstr "内核未在 15 秒内启动（procd 自愈中）"
+
+msgid "Core Download"
+msgstr "内核下载"
+
+msgid "Core is not running. Start it before switching nodes."
+msgstr "核心未运行，启动后可切换节点"
+
+msgid "Core Log"
+msgstr "核心日志"
+
+msgid "Core Only (advanced)"
+msgstr "仅内核（进阶）"
+
+msgid "Core Switch"
+msgstr "内核切换"
+
+msgid "Core switch failed"
+msgstr "切换内核失败"
+
+msgid "Core Type"
+msgstr "核心类型"
+
+msgid "Core type saved, takes effect on next start or restart"
+msgstr "内核类型已保存，下次启动或重启后生效"
+
+msgid "Core verification failed. Check System → Core."
+msgstr "内核校验未通过，请到「系统 → 内核」检查"
+
+msgid "Correct routing by forcing a domain or IP to Direct or Proxy. These rules take priority over subscription rules and apply to both mihomo and sing-box."
+msgstr "纠正分流：把某个域名或 IP 强制走「直连」或「代理」，规则优先于订阅自带规则，mihomo 与 sing-box 均生效。"
+
+msgid "CPU Architecture"
+msgstr "处理器架构"
+
+msgid "CPU architecture set to "
+msgstr "处理器架构已设为 "
+
+msgid "curl or wget not found"
+msgstr "未找到 curl 或 wget"
+
+msgid "Current configuration has no manually switchable proxy groups"
+msgstr "当前配置没有可手动切换的节点组"
+
+msgid "Current configuration has no recorded subscription URL"
+msgstr "当前配置未记录订阅链接"
+
+msgid "Current configuration is a custom file; no subscription update needed"
+msgstr "当前配置为自定义文件，无需更新订阅"
+
+msgid "Current version: "
+msgstr "当前版本: "
+
+msgid "Current: "
+msgstr "当前："
+
+msgid "Custom"
+msgstr "自定义"
+
+msgid "Custom Ports"
+msgstr "自定义端口"
+
+msgid "Custom Routing Rules"
+msgstr "自定义分流规则"
+
+msgid "Custom User-Agent"
+msgstr "自定义 User-Agent"
+
+msgid "Customize..."
+msgstr "自定义..."
+
+msgid "Dashboard"
+msgstr "管理面板"
+
+msgid "Dashboard Port"
+msgstr "面板端口"
+
+msgid "Dashboard Settings"
+msgstr "管理面板配置"
+
+msgid "Default"
+msgstr "默认"
+
+msgid "Degraded"
+msgstr "降级运行"
+
+msgid "Delete"
+msgstr "删除"
+
+msgid "Delete "
+msgstr "删除 "
+
+msgid "Direct"
+msgstr "直连"
+
+msgid "Direct Domain Resolver"
+msgstr "直连域名解析"
+
+msgid "Disable QUIC GSO"
+msgstr "禁用 QUIC GSO"
+
+msgid "Disabling DNS cache"
+msgstr "禁用 DNS 缓存"
+
+msgid "DNS Address"
+msgstr "DNS 地址"
+
+msgid "DNS Auto Setup"
+msgstr "DNS 自动配置"
+
+msgid "DNS auto setup applied, service is restarting"
+msgstr "DNS 自动配置已应用，服务正在重启"
+
+msgid "DNS auto setup failed"
+msgstr "DNS 自动配置失败"
+
+msgid "DNS auto setup failed: "
+msgstr "DNS 自动配置失败: "
+
+msgid "DNS auto setup saved, service is not running"
+msgstr "DNS 自动配置已保存，服务未启动"
+
+msgid "DNS configuration saved and service hot-reloaded"
+msgstr "DNS 配置已保存并热重载服务"
+
+msgid "DNS configuration saved, service is not running"
+msgstr "DNS 配置已保存，服务未启动"
+
+msgid "DNS Listen Port"
+msgstr "DNS 监听端口"
+
+msgid "DNS Policy"
+msgstr "分流解析策略"
+
+msgid "Domain / IP"
+msgstr "域名 / IP"
+
+msgid "Domain keyword (e.g. youtube)"
+msgstr "域名关键词（如 youtube）"
+
+msgid "Domain Split DNS"
+msgstr "域名分流解析"
+
+msgid "Domain suffix (e.g. google.com)"
+msgstr "域名后缀（如 google.com）"
+
+msgid "Domestic"
+msgstr "国内"
+
+msgid "Domestic Upstream DNS"
+msgstr "国内上游 DNS"
+
+msgid "Download"
+msgstr "下载"
+
+msgid "Download failed (error code $1)"
+msgstr "下载失败（错误码 $1）"
+
+msgid "Download Subscription"
+msgstr "下载订阅"
+
+msgid "Download succeeded"
+msgstr "下载成功"
+
+msgid "Downloaded Subscriptions"
+msgstr "已下载订阅"
+
+msgid "Downloading LightGBM model..."
+msgstr "正在下载 LightGBM 模型..."
+
+msgid "Downloading subscription..."
+msgstr "正在下载订阅..."
+
+msgid "Downloading..."
+msgstr "下载中..."
+
+msgid "Downloading…"
+msgstr "下载中…"
+
+msgid "ECS Client Subnet"
+msgstr "ECS 客户端子网"
+
+msgid "Edit"
+msgstr "编辑"
+
+msgid "Editing: "
+msgstr "编辑："
+
+msgid "Enable"
+msgstr "启用"
+
+msgid "Enable DNS Module"
+msgstr "启用 DNS 模块"
+
+msgid "Enable LightGBM Model"
+msgstr "启用 LightGBM 模型"
+
+msgid "Enable Service"
+msgstr "启用服务"
+
+msgid "Enhanced Mode"
+msgstr "增强模式"
+
+msgid "Enter remote template URL, e.g. https://raw.githubusercontent.com/…/Clash.yaml"
+msgstr "输入远程模板 URL，例如 https://raw.githubusercontent.com/…/Clash.yaml"
+
+msgid "Enter subscription URL (injected into template proxy-providers)"
+msgstr "输入订阅链接 URL（注入到模板的 proxy-providers）"
+
+msgid "Every"
+msgstr "每"
+
+msgid "Exact domain (e.g. www.google.com)"
+msgstr "精确域名（如 www.google.com）"
+
+msgid "example.com or 1.2.3.0/24"
+msgstr "example.com 或 1.2.3.0/24"
+
+msgid "Example: geosite:cn uses https://dns.alidns.com/dns-query; geosite:geolocation-!cn uses https://cloudflare-dns.com/dns-query."
+msgstr "示例：geosite:cn 使用 https://dns.alidns.com/dns-query；geosite:geolocation-!cn 使用 https://cloudflare-dns.com/dns-query。"
+
+msgid "Expand"
+msgstr "展开"
+
+msgid "Expires: "
+msgstr "到期："
+
+msgid "Export a backup before changing cores or configuration, so it can be restored if needed. Includes configuration and settings only, not cores."
+msgstr "折腾内核或配置前先导出一份，改坏了能一键导入还原。仅含配置与设置，不含内核。"
+
+msgid "Export Backup"
+msgstr "导出备份"
+
+msgid "Export failed: "
+msgstr "导出失败："
+
+msgid "Exporting…"
+msgstr "导出中…"
+
+msgid "Factory defaults restored"
+msgstr "已还原出厂默认设置"
+
+msgid "Failed"
+msgstr "失败"
+
+msgid "Failed to check updates, please check the network"
+msgstr "检查更新失败，请检查网络"
+
+msgid "Failed to save core configuration"
+msgstr "内核配置保存失败"
+
+msgid "Failed to submit component update task"
+msgstr "组件更新任务提交失败"
+
+msgid "Fake-IP Filter Domains"
+msgstr "Fake-IP 过滤域名"
+
+msgid "Fake-IP Filter Mode"
+msgstr "Fake-IP 过滤模式"
+
+msgid "Fake-IP Range"
+msgstr "Fake-IP 网段"
+
+msgid "Fallback"
+msgstr "故障转移"
+
+msgid "Fallback GeoIP Filter"
+msgstr "Fallback GeoIP 过滤"
+
+msgid "Fetch and Apply"
+msgstr "拉取并应用"
+
+msgid "Fetch Configuration"
+msgstr "拉取配置"
+
+msgid "Fetching…"
+msgstr "拉取中…"
+
+msgid "File Name"
+msgstr "文件名"
+
+msgid "File name (optional, blank for automatic name)"
+msgstr "文件名（选填，留空自动命名）"
+
+msgid "File name (optional, blank to auto-generate)"
+msgstr "文件名（选填，留空自动生成）"
+
+msgid "Fix Deprecated Fields"
+msgstr "修复废弃字段"
+
+msgid "Fix failed: "
+msgstr "修复失败: "
+
+msgid "Fixed deprecated fields: "
+msgstr "已修复废弃字段: "
+
+msgid "For providers that directly offer sing-box JSON subscriptions, or links already converted by external tools.\n"
+msgstr "适用于机场直接提供 sing-box JSON 格式订阅、或已用外部工具转换好的链接。\n"
+
+msgid "Force ASN lookup and prefer target ASN information when selecting nodes for a more stable experience"
+msgstr "选择节点时强制查找并优先使用目标的 ASN 信息，以获得更稳定的体验"
+
+msgid "Force DNS Forwarding"
+msgstr "强制转发 DNS"
+
+msgid "Force ECS Override"
+msgstr "强制覆盖 ECS"
+
+msgid "Full URL / no protocol prefix"
+msgstr "完整 URL / 不补协议"
+
+msgid "Generate Configuration"
+msgstr "生成配置"
+
+msgid "Generate error: "
+msgstr "生成异常: "
+
+msgid "Generate failed: "
+msgstr "生成失败: "
+
+msgid "Generated: "
+msgstr "生成成功: "
+
+msgid "Generating…"
+msgstr "生成中…"
+
+msgid "Generation is taking longer, refreshing to show results…"
+msgstr "生成时间较长，正在刷新查看结果…"
+
+msgid "GeoIP Source"
+msgstr "GeoIP 数据源"
+
+msgid "GeoIP update completed"
+msgstr "GeoIP 更新完成"
+
+msgid "GeoIP update completed, applies after Clashoo restarts"
+msgstr "GeoIP 更新完成，重启 Clashoo 后生效"
+
+msgid "GeoIP update failed"
+msgstr "GeoIP 更新失败"
+
+msgid "GitHub acceleration prefix"
+msgstr "GitHub 加速前缀"
+
+msgid "Global"
+msgstr "全局"
+
+msgid "Health check failed"
+msgstr "健康检查失败"
+
+msgid "Health check in progress…"
+msgstr "健康检查中…"
+
+msgid "Health check passed"
+msgstr "健康检查通过"
+
+msgid "hours"
+msgstr "小时"
+
+msgid "HTTP Port"
+msgstr "HTTP 端口"
+
+msgid "Import failed: "
+msgstr "导入失败："
+
+msgid "Import Restore"
+msgstr "导入还原"
+
+msgid "Importing will overwrite all current configuration and settings with the backup. Existing subscriptions/configuration files will be replaced. Continue?"
+msgstr "导入将用备份覆盖当前的全部配置与设置，原有的订阅/配置文件会被替换。确定继续吗？"
+
+msgid "Information Input"
+msgstr "信息录入"
+
+msgid "Initializing…"
+msgstr "初始化中…"
+
+msgid "Intercept IPv6 DNS traffic to prevent devices with hard-coded DNS from bypassing the traffic."
+msgstr "拦截 IPv6 DNS 流量，防止写死 DNS 的设备绕过分流。"
+
+msgid "IP / CIDR (e.g. 8.8.8.8/32)"
+msgstr "IP / CIDR（如 8.8.8.8/32）"
+
+msgid "IP Allowlist"
+msgstr "IP白名单"
+
+msgid "IP Blocklist"
+msgstr "IP黑名单"
+
+msgid "IP rules do not trigger DNS resolution"
+msgstr "IP 规则不触发 DNS 解析"
+
+msgid "IPv4 DNS Hijack"
+msgstr "IPv4 DNS 劫持"
+
+msgid "IPv4 Proxy"
+msgstr "IPv4 代理"
+
+msgid "IPv6 DNS Hijack"
+msgstr "IPv6 DNS 劫持"
+
+msgid "IPv6 Proxy"
+msgstr "IPv6 代理"
+
+msgid "just now"
+msgstr "刚刚"
+
+msgid "Keep the default if unsure."
+msgstr "不确定时保持默认。"
+
+msgid "LAN Control"
+msgstr "局域网控制"
+
+msgid "Last check: "
+msgstr "上次检查："
+
+msgid "Last check: initializing"
+msgstr "上次检查：初始化中"
+
+msgid "Last run: "
+msgstr "上次执行："
+
+msgid "LightGBM model file download URL; leave blank to use the default official URL"
+msgstr "LightGBM 模型文件下载地址，留空使用默认官方地址"
+
+msgid "LightGBM model updated successfully"
+msgstr "LightGBM 模型更新成功"
+
+msgid "Load failed"
+msgstr "加载失败"
+
+msgid "Load-balance"
+msgstr "负载均衡"
+
+msgid "Loading…"
+msgstr "加载中…"
+
+msgid "Local Template"
+msgstr "本地模板"
+
+msgid "Log"
+msgstr "日志"
+
+msgid "Match Rule"
+msgstr "匹配规则"
+
+msgid "Memory usage "
+msgstr "内存使用 "
+
+msgid "mihomo restarted successfully, please wait for servers to come online."
+msgstr "mihomo 重启成功，请等待服务器上线！"
+
+msgid "mihomo runs as-is for nikki/OpenClash compatibility; sing-box automatically upgrades old formats for momo/homeproxy compatibility.<br>"
+msgstr "mihomo 原样运行，适配 nikki、OpenClash；sing-box 自动升级老格式，兼容 momo、homeproxy。<br>"
+
+msgid "mihomo Stable"
+msgstr "mihomo 稳定版"
+
+msgid "mihomo started successfully, please wait for servers to come online."
+msgstr "mihomo 启动成功，请等待服务器上线！"
+
+msgid "mihomo writes the ecs parameter to DNS URLs; sing-box writes dns.client_subnet. Leave empty to skip."
+msgstr "Mihomo 写入 DNS URL 的 ecs 参数；sing-box 写入 dns.client_subnet。清空则不写入。"
+
+msgid "Mixed Mode"
+msgstr "Mixed 模式"
+
+msgid "Mixed Port"
+msgstr "混合端口"
+
+msgid "Mode"
+msgstr "模式"
+
+msgid "Model Download URL"
+msgstr "模型下载 URL"
+
+msgid "Model install failed: $1"
+msgstr "模型安装失败：$1"
+
+msgid "Model is already up to date"
+msgstr "模型已是最新版本，无需更新"
+
+msgid "Model not installed"
+msgstr "模型未安装"
+
+msgid "Network Stack"
+msgstr "网络栈"
+
+msgid "Network Stack Type"
+msgstr "网络栈类型"
+
+msgid "No auto setup result yet"
+msgstr "暂无自动配置结果"
+
+msgid "No component update logs yet"
+msgstr "暂无组件更新日志"
+
+msgid "No configuration file found. Import a subscription or upload a configuration on the Configuration page first."
+msgstr "未找到配置文件，请先在「配置」页导入订阅或上传配置"
+
+msgid "No configuration file selected. Select or upload one on the Configuration page before starting."
+msgstr "未选择配置文件，请先到「配置」页选择或上传后选中再启动"
+
+msgid "No configuration files yet. Use Quick Wizard to generate one or upload a JSON file."
+msgstr "暂无配置文件，请使用快速向导生成或上传 JSON 文件"
+
+msgid "No proxy groups"
+msgstr "无节点组"
+
+msgid "No subscriptions"
+msgstr "暂无订阅"
+
+msgid "Node Panel ›"
+msgstr "节点面板 ›"
+
+msgid "Node Selection"
+msgstr "节点选择"
+
+msgid "Node Subscription"
+msgstr "节点订阅"
+
+msgid "Node weight bonus. <1 means lower priority, >1 means higher priority. Modify as needed; leave blank to skip policy-priority injection."
+msgstr "节点权重加成，<1 表示较低优先级，>1 表示较高优先级；可按需修改，留空则不注入 policy-priority"
+
+msgid "Not installed"
+msgstr "未安装"
+
+msgid "Not running"
+msgstr "未运行"
+
+msgid "Off"
+msgstr "关闭"
+
+msgid "Only subscriptions with recorded source URLs are overwritten; no duplicate files are created."
+msgstr "仅覆盖已记录来源链接的订阅，不会生成重复文件。"
+
+msgid "Open Dashboard"
+msgstr "打开面板"
+
+msgid "OpenClash is enabled; disable it first to avoid rule conflicts"
+msgstr "OpenClash 已启用，请先停用以避免规则冲突"
+
+msgid "Operation failed: "
+msgstr "操作失败: "
+
+msgid "Other Configuration Files (upload / overwrite output)"
+msgstr "其他配置文件（上传 / 覆写输出）"
+
+msgid "Output file name (without extension, blank to auto-fill)"
+msgstr "输出文件名（不含扩展名，留空自动填写）"
+
+msgid "Overseas Encrypted DNS (anti-pollution)"
+msgstr "国外加密 DNS（防污染）"
+
+msgid "Overview"
+msgstr "概览"
+
+msgid "Overwrite Settings"
+msgstr "覆写设置"
+
+msgid "Panel"
+msgstr "面板"
+
+msgid "Panel is downloading"
+msgstr "面板正在下载"
+
+msgid "Panel switch failed: "
+msgstr "面板切换失败: "
+
+msgid "Panel UI"
+msgstr "面板 UI"
+
+msgid "Password"
+msgstr "密码"
+
+msgid "Paste native sing-box subscription URL (direct JSON response)"
+msgstr "粘贴原生 sing-box 订阅链接（直接返回 JSON 的链接）"
+
+msgid "Paste subscription URL (supports vmess / vless / trojan, etc.)"
+msgstr "粘贴订阅链接（支持 vmess / vless / trojan 等）"
+
+msgid "Pause"
+msgstr "暂停"
+
+msgid "Period for automatically fetching a new model; also controls the cron trigger frequency, default 72 hours"
+msgstr "自动拉取新模型的周期，同时决定 cron 触发频率，默认 72 小时"
+
+msgid "Please enter a remote template URL"
+msgstr "请输入远程模板 URL"
+
+msgid "Please enter a subscription URL"
+msgstr "请输入订阅链接 URL"
+
+msgid "Please enter an output file name"
+msgstr "请填写输出文件名"
+
+msgid "Please select a local template file"
+msgstr "请选择本地模板文件"
+
+msgid "Plugin Log"
+msgstr "插件日志"
+
+msgid "Policy Priority (weight bonus)"
+msgstr "Policy Priority（权重加成）"
+
+msgid "Policy Type"
+msgstr "策略类型"
+
+msgid "Port"
+msgstr "端口"
+
+msgid "Port Settings"
+msgstr "端口配置"
+
+msgid "Prevent DNS Leaks"
+msgstr "防 DNS 泄漏"
+
+msgid "Processing…"
+msgstr "处理中…"
+
+msgid "Protocol"
+msgstr "协议"
+
+msgid "Proxy"
+msgstr "代理"
+
+msgid "Proxy Authentication"
+msgstr "代理认证"
+
+msgid "Proxy configuration saved and service hot-reloaded"
+msgstr "代理配置已保存并热重载服务"
+
+msgid "Proxy configuration saved, service is not running"
+msgstr "代理配置已保存，服务未启动"
+
+msgid "Proxy Domain Split DNS"
+msgstr "代理域名分流解析"
+
+msgid "Proxy Mode"
+msgstr "代理模式"
+
+msgid "Proxy Node Domain Resolver"
+msgstr "节点域名解析专用"
+
+msgid "Quick Wizard"
+msgstr "快速向导"
+
+msgid "Random"
+msgstr "随机"
+
+msgid "Ready · "
+msgstr "就绪 · "
+
+msgid "Ready ✓"
+msgstr "已就绪 ✓"
+
+msgid "Recommended "
+msgstr "推荐 "
+
+msgid "Recommended blank"
+msgstr "推荐留空"
+
+msgid "Redirect Port"
+msgstr "Redirect 端口"
+
+msgid "Refresh"
+msgstr "刷新"
+
+msgid "Refresh Access Check"
+msgstr "刷新访问检查"
+
+msgid "Regular domains only use overseas DNS and DNS connections follow proxy rules; DoT/DoQ (port 853) is blocked and IPv6 resolution is disabled. Takes effect after restart.<br>"
+msgstr "普通域名仅使用境外 DNS 并让 DNS 连接遵守代理规则，同时阻断 DoT/DoQ（853 端口）并关闭 IPv6 解析。重启生效。<br>"
+
+msgid "Regularly update rule data"
+msgstr "定时更新规则数据"
+
+msgid "Relay"
+msgstr "链式代理"
+
+msgid "Remote Template"
+msgstr "远程模板"
+
+msgid "Remote: "
+msgstr "远端："
+
+msgid "Removing Cron scheduled tasks"
+msgstr "删除 Cron → 计划任务"
+
+msgid "Requires MMDB. If enabled while the local GeoIP database is missing, the core may fail to start. Usually not needed."
+msgstr "依赖 MMDB；若启用但本地 GeoIP 数据库缺失，可能导致内核启动失败。一般无需开启。"
+
+msgid "Restarting client..."
+msgstr "正在重启客户端..."
+
+msgid "Restarting Dnsmasq"
+msgstr "重启 Dnsmasq 程序"
+
+msgid "Restore Clashoo settings to factory defaults (subscriptions and configuration files are kept). Continue?"
+msgstr "将把 clashoo 的设置恢复为出厂默认值（订阅与配置文件保留）。确定继续吗？"
+
+msgid "Restore Defaults"
+msgstr "还原默认配置"
+
+msgid "Restore failed: "
+msgstr "还原失败："
+
+msgid "Restoring…"
+msgstr "还原中…"
+
+msgid "Role"
+msgstr "角色"
+
+msgid "Rule"
+msgstr "规则"
+
+msgid "Rule data includes China allowlist (direct IP ranges) and GeoIP / GeoSite databases"
+msgstr "规则数据包含：大陆白名单（直连 IP 段）与 GeoIP / GeoSite 地理库"
+
+msgid "Rule mode (same syntax as rules)"
+msgstr "规则模式（与 rules 同语法）"
+
+msgid "Rules and Control"
+msgstr "规则与控制"
+
+msgid "Run Mode"
+msgstr "运行模式"
+
+msgid "Run mode setting failed: "
+msgstr "运行模式设置失败: "
+
+msgid "Run only the core with your imported configuration, without taking over firewall / DNS / routing.<br>"
+msgstr "只用你导入的配置跑内核，不接管防火墙 / DNS / 路由。<br>"
+
+msgid "Running degraded"
+msgstr "已降级运行"
+
+msgid "Running 🟢"
+msgstr "运行中 🟢"
+
+msgid "Runtime Status"
+msgstr "运行状态"
+
+msgid "Sample Rate"
+msgstr "采样率"
+
+msgid "sample-rate, 1 = sample every latency test; increase to reduce sampling frequency"
+msgstr "sample-rate，1 = 每次测速都采样，调大可降低采集频率"
+
+msgid "Save"
+msgstr "保存"
+
+msgid "Save Configuration"
+msgstr "保存配置"
+
+msgid "Save failed: "
+msgstr "保存失败: "
+
+msgid "Scheduled Log Cleanup"
+msgstr "定时清理日志"
+
+msgid "Scheduled Subscription Update"
+msgstr "定时更新订阅"
+
+msgid "Scheduled update settings saved"
+msgstr "定时更新设置已保存"
+
+msgid "Select a configuration above to edit it here"
+msgstr "选择上方配置后可在此处编辑"
+
+msgid "Select local template file"
+msgstr "选择本地模板文件"
+
+msgid "Select YAML file to upload"
+msgstr "选择 YAML 文件上传"
+
+msgid "Selector"
+msgstr "选择器"
+
+msgid "Service disabled"
+msgstr "服务已禁用"
+
+msgid "Service stopped"
+msgstr "服务已停止"
+
+msgid "Setting Cron scheduled tasks and starting process supervisor..."
+msgstr "设置 Cron → 计划任务，启动进程守护程序..."
+
+msgid "Setting DNS forwarder / enabling custom DNS"
+msgstr "设置 DNS 转发器 / 启用自定义 DNS"
+
+msgid "Setting mihomo network rules"
+msgstr "设置 mihomo 网络规则"
+
+msgid "Setting sing-box network rules"
+msgstr "设置 sing-box 网络规则"
+
+msgid "Show/Hide"
+msgstr "显示/隐藏"
+
+msgid "sing-box Configuration Files"
+msgstr "sing-box 配置文件"
+
+msgid "sing-box core not detected; download sing-box from the System page"
+msgstr "未检测到 sing-box 内核；请到系统页下载 sing-box"
+
+msgid "sing-box Independent DNS Cache"
+msgstr "sing-box 独立 DNS 缓存"
+
+msgid "sing-box restarted successfully, please wait for servers to come online."
+msgstr "sing-box 重启成功，请等待服务器上线！"
+
+msgid "sing-box service failed to start. Check System → Log."
+msgstr "sing-box 服务启动失败，请到「系统 → 日志」查看"
+
+msgid "sing-box Stable"
+msgstr "sing-box 稳定版"
+
+msgid "sing-box started successfully, please wait for servers to come online."
+msgstr "sing-box 启动成功，请等待服务器上线！"
+
+msgid "Size"
+msgstr "大小"
+
+msgid "Smart"
+msgstr "Smart 版"
+
+msgid "Smart cache cleared"
+msgstr "Smart 缓存已清理"
+
+msgid "Smart core not detected; updating the model will not install the core"
+msgstr "未检测到 Smart 内核；更新模型不会安装内核"
+
+msgid "Smart core not detected; updating the model will not install the core. Download the Smart build from the System page."
+msgstr "未检测到 Smart 内核；更新模型不会安装内核，请到系统页下载 Smart 版"
+
+msgid "Smart Policy Auto Switch"
+msgstr "Smart 策略自动切换"
+
+msgid "Smart Policy Settings"
+msgstr "Smart 策略设置"
+
+msgid "smart-collector-size, maximum retained training samples, default 100"
+msgstr "smart-collector-size，最多保留的训练样本数，默认 100"
+
+msgid "Sniffer (streaming compatibility)"
+msgstr "嗅探功能（流媒体兼容）"
+
+msgid "SOCKS5 Port"
+msgstr "SOCKS5 端口"
+
+msgid "Stable"
+msgstr "稳定版"
+
+msgid "Start downloading LightGBM model: $1"
+msgstr "开始下载 LightGBM 模型：$1"
+
+msgid "Start failed: "
+msgstr "启动失败: "
+
+msgid "Start Service"
+msgstr "启动服务"
+
+msgid "Started ("
+msgstr "已启动（"
+
+msgid "Starting client"
+msgstr "启动客户端"
+
+msgid "Starting core…"
+msgstr "启动内核…"
+
+msgid "Starting…"
+msgstr "启动中…"
+
+msgid "Stop Service"
+msgstr "停止服务"
+
+msgid "Stopped (not enabled at boot)"
+msgstr "已停止（开机不自启动）"
+
+msgid "Stopped ⚪"
+msgstr "已停止 ⚪"
+
+msgid "Stopped ✓"
+msgstr "已停止 ✓"
+
+msgid "Stopping client..."
+msgstr "正在停止客户端..."
+
+msgid "Stopping mihomo"
+msgstr "停止 mihomo"
+
+msgid "Stopping mihomo process supervisor"
+msgstr "mihomo 停止进程守护程序"
+
+msgid "Stopping sing-box"
+msgstr "停止 sing-box"
+
+msgid "Stopping sing-box process supervisor"
+msgstr "sing-box 停止进程守护程序"
+
+msgid "Stopping…"
+msgstr "停止中…"
+
+msgid "Submission failed"
+msgstr "提交失败"
+
+msgid "Submitting"
+msgstr "提交中"
+
+msgid "Subscription"
+msgstr "订阅"
+
+msgid "Subscription download failed"
+msgstr "订阅下载失败"
+
+msgid "Subscription Update"
+msgstr "订阅更新"
+
+msgid "Subscription updated successfully"
+msgstr "订阅更新成功"
+
+msgid "Subscription URL"
+msgstr "订阅链接"
+
+msgid "Subscription URLs (one per line)"
+msgstr "订阅链接（多条用换行分隔）"
+
+msgid "Switch"
+msgstr "切换"
+
+msgid "Switch configuration failed: "
+msgstr "切换配置失败: "
+
+msgid "Switch failed: "
+msgstr "切换失败: "
+
+msgid "Switched to "
+msgstr "已切换至 "
+
+msgid "Switching to "
+msgstr "正在切换到 "
+
+msgid "Syncing"
+msgstr "同步中"
+
+msgid "Syncing runtime state"
+msgstr "正在同步运行状态"
+
+msgid "System"
+msgstr "系统"
+
+msgid "System is missing nftables runtime"
+msgstr "系统缺少 nftables 运行时"
+
+msgid "Target"
+msgstr "走向"
+
+msgid "TCP Mode"
+msgstr "TCP 模式"
+
+msgid "Template Selection"
+msgstr "模板选择"
+
+msgid "Template upload failed: "
+msgstr "模板上传失败: "
+
+msgid "Template uploaded: "
+msgstr "模板上传成功: "
+
+msgid "Test and Apply"
+msgstr "一键测速并应用"
+
+msgid "Test Latency"
+msgstr "测速"
+
+msgid "Testing"
+msgstr "测速中"
+
+msgid "Testing latency and writing upstream DNS…"
+msgstr "正在测速并写入 DNS 上游…"
+
+msgid "The new core failed to start, please check the core log"
+msgstr "新内核启动失败，请查看内核日志"
+
+msgid "Time"
+msgstr "耗时"
+
+msgid "Timeout waiting for new core to start, please check the core log"
+msgstr "等待新内核启动超时，请查看内核日志"
+
+msgid "Total "
+msgstr "总计 "
+
+msgid "TPROXY Port"
+msgstr "TPROXY 端口"
+
+msgid "Traffic Monitor"
+msgstr "流量监控"
+
+msgid "Training Data Size"
+msgstr "训练数据量"
+
+msgid "Transparent Proxy"
+msgstr "透明代理"
+
+msgid "TUN Mode"
+msgstr "TUN 模式"
+
+msgid "Type"
+msgstr "类型"
+
+msgid "UDP Mode"
+msgstr "UDP 模式"
+
+msgid "Unknown"
+msgstr "未知"
+
+msgid "Unknown error"
+msgstr "未知错误"
+
+msgid "Update"
+msgstr "更新"
+
+msgid "Update All Now"
+msgstr "立即更新全部"
+
+msgid "Update available"
+msgstr "可更新"
+
+msgid "Update components individually to facilitate locating failures. Click \"Check for Updates\" to get the latest version."
+msgstr "按组件单独更新，便于定位失败。点「检查更新」获取最新版本。"
+
+msgid "Update failed"
+msgstr "更新失败"
+
+msgid "Update failed: "
+msgstr "更新失败: "
+
+msgid "Update interval (hours)"
+msgstr "更新间隔（小时）"
+
+msgid "Update interval must be 1 to 8760 hours"
+msgstr "更新间隔必须为 1 到 8760 小时"
+
+msgid "Update Log"
+msgstr "更新日志"
+
+msgid "Update Model"
+msgstr "更新模型"
+
+msgid "Update Subscription"
+msgstr "更新订阅"
+
+msgid "Update succeeded"
+msgstr "更新成功"
+
+msgid "Updating"
+msgstr "更新中"
+
+msgid "Updating $1"
+msgstr "正在更新 $1"
+
+msgid "Updating all subscriptions…"
+msgstr "正在更新全部订阅…"
+
+msgid "Updating…"
+msgstr "更新中…"
+
+msgid "Upload"
+msgstr "上传"
+
+msgid "Upload Configuration File"
+msgstr "上传配置文件"
+
+msgid "Upload failed"
+msgstr "上传失败"
+
+msgid "Upload failed: "
+msgstr "上传失败: "
+
+msgid "Upload JSON Configuration"
+msgstr "上传 JSON 配置"
+
+msgid "Upload succeeded: "
+msgstr "上传成功: "
+
+msgid "Upload YAML Template"
+msgstr "上传 YAML 模板"
+
+msgid "Upstream DNS"
+msgstr "上游 DNS"
+
+msgid "Url-test"
+msgstr "自动测速"
+
+msgid "Use DNS"
+msgstr "使用 DNS"
+
+msgid "Use LightGBM model to predict weights"
+msgstr "使用 LightGBM 模型来预测权重"
+
+msgid "Used to resolve DoH/DoT/DoQ server domains; plain IP DNS is recommended."
+msgstr "用于解析 DoH/DoT/DoQ 服务器域名，建议填写纯 IP DNS。"
+
+msgid "User-Agent (UA)"
+msgstr "用户代理（UA）"
+
+msgid "Username"
+msgstr "用户名"
+
+msgid "Virtual IP Ping Hijacking"
+msgstr "虚拟 IP Ping 劫持"
+
+msgid "Wait for the current task to complete"
+msgstr "等待当前任务完成"
+
+msgid "Waiting for data..."
+msgstr "等待数据..."
+
+msgid "When downloading core/data components, this prefix will be used first (a slash is required at the end). Leave blank to use the built-in gh-proxy.com and ghfast.top alternative sources."
+msgstr "内核 / 数据组件下载时优先走该前缀（末尾需带斜杠）。留空则使用内置 gh-proxy.com 与 ghfast.top 备选源。"
+
+msgid "When enabled, direct / proxy / fallback roles each use an independent DNS cache. Useful when the same domain needs different resolver chains by routing. Usually not needed."
+msgstr "开启后，direct / proxy / fallback 等角色各自独立 DNS 缓存；适用于同一域名按分流走不同解析链的场景。一般无需开启。"
+
+msgid "When enabled, sniffer configuration is injected automatically to improve streaming domain detection and routing stability."
+msgstr "启用后自动注入 sniffer 配置，提升流媒体域名识别与分流稳定性。"
+
+msgid "YAML Subscription Conversion"
+msgstr "YAML 订阅转换"
+
+msgid "⏳ A download task is already running..."
+msgstr "⏳ 已有下载任务进行中..."
+
+msgid "⏳ Fetch timed out, refreshing to show results..."
+msgstr "⏳ 拉取超时，正在刷新查看结果..."
+
+msgid "⏳ Fetching configuration..."
+msgstr "⏳ 正在拉取配置..."
+
+msgid "⏳ Starting update task..."
+msgstr "⏳ 正在启动更新任务..."
+
+msgid "⏳ Submitting download task..."
+msgstr "⏳ 正在提交下载任务..."
+
+msgid "✗ Fetch error: "
+msgstr "✗ 拉取异常: "
+
+msgid "✗ Fetch failed: "
+msgstr "✗ 拉取失败: "
+
+msgid "✗ Panel update timeout"
+msgstr "✗ 面板更新超时"
+
+msgid "✗ Please enter a subscription URL"
+msgstr "✗ 请填写订阅链接"
+
+msgid "✗ Please enter a subscription URL first"
+msgstr "✗ 请先填写订阅链接"
+
+msgid "✗ Start failed"
+msgstr "✗ 启动失败"
+
+msgid "✗ Start failed: "
+msgstr "✗ 启动失败: "
+
+msgid "✗ Submission failed"
+msgstr "✗ 提交失败"

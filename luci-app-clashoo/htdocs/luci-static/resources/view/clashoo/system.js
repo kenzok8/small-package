@@ -196,7 +196,7 @@ function enhanceDashPasswordField(root) {
   var eyeBtn = E('button', {
     type: 'button',
     'class': 'btn cbi-button cl-pass-btn',
-    title: '显示/隐藏',
+    title: _("Show/Hide"),
     click: function (ev) {
       ev.preventDefault();
       var show = input.type === 'password';
@@ -215,7 +215,7 @@ function enhanceDashPasswordField(root) {
       eyeBtn.textContent = '🙈';
       input.dispatchEvent(new Event('change', { bubbles: true }));
     }
-  }, '随机');
+  }, _("Random"));
 
   wrap.appendChild(eyeBtn);
   wrap.appendChild(genBtn);
@@ -290,9 +290,9 @@ function waitForCoreTarget(target, attempts, sawRestart) {
     if (sawRestart && selected && st.running && st.health_status !== 'stopped' && st.health_status !== 'fail')
       return st;
     if (selected && st.health_status === 'fail')
-      throw new Error('新内核启动失败，请查看内核日志');
+      throw new Error(_("The new core failed to start, please check the core log"));
     if (attempts <= 0)
-      throw new Error('等待新内核启动超时，请查看内核日志');
+      throw new Error(_("Timeout waiting for new core to start, please check the core log"));
     return new Promise(function (resolve) {
       setTimeout(resolve, 600);
     }).then(function () { return waitForCoreTarget(target, attempts - 1, sawRestart); });
@@ -360,9 +360,9 @@ return view.extend({
     this._tab = readSavedTab('clashoo.system.tab', this._tab || 'kernel', ['kernel', 'rules', 'logs']);
     rememberTab('clashoo.system.tab', this._tab);
     var tabs = [
-      { id: 'kernel', label: '内核与数据' },
-      { id: 'rules',  label: '规则与控制' },
-      { id: 'logs',   label: '日志' }
+      { id: 'kernel', label: _("Core and Data") },
+      { id: 'rules',  label: _("Rules and Control") },
+      { id: 'logs',   label: _("Log") }
     ];
     var tabEls = {}, panelEls = {};
 
@@ -438,17 +438,17 @@ return view.extend({
       click: function (ev) {
         ev.preventDefault();
         refreshBtn.disabled = true;
-        refreshBtn.textContent = '检查中…';
+        refreshBtn.textContent = _("Checking…");
         self._refreshComponentUpdatePanel(listEl, logEl, true);
       }
-    }, '检查更新');
+    }, _("Check Updates"));
     this._compRefreshBtn = refreshBtn;
 
     /* advanced: core/data, collapsed by default to keep page compact.
        CPU arch stays outside — it decides core binary arch */
     var advWrap = E('div', { 'class': 'cl-component-adv cl-closed' }, [
       E('div', { 'class': 'cl-component-adv-bar' }, [
-        E('span', {}, '高级设置（内核 / 数据组件）'),
+        E('span', {}, _("Advanced Settings (core / data components)")),
         E('span', { 'class': 'cl-component-adv-chevron' }, '›')
       ]),
       E('div', { 'class': 'cl-component-adv-body' }, [advListEl])
@@ -463,8 +463,8 @@ return view.extend({
       E('div', { 'class': 'cl-component-card' }, [
         E('div', { 'class': 'cl-component-head' }, [
           E('div', {}, [
-            E('h4', {}, '组件更新'),
-            E('div', { 'class': 'cl-component-sub' }, '按组件单独更新，便于定位失败。点「检查更新」获取最新版本。')
+            E('h4', {}, _("Component Updates")),
+            E('div', { 'class': 'cl-component-sub' }, _("Update components individually to facilitate locating failures. Click \"Check for Updates\" to get the latest version."))
           ]),
           refreshBtn
         ]),
@@ -488,17 +488,17 @@ return view.extend({
              '-' + p(d.getHours()) + p(d.getMinutes());
     }
 
-    var exportBtn = E('button', { 'class': 'btn cbi-button cbi-button-neutral' }, '导出备份');
+    var exportBtn = E('button', { 'class': 'btn cbi-button cbi-button-neutral' }, _("Export Backup"));
     exportBtn.addEventListener('click', function (ev) {
       ev.preventDefault();
       exportBtn.disabled = true;
       var orig = exportBtn.textContent;
-      exportBtn.textContent = '导出中…';
+      exportBtn.textContent = _("Exporting…");
       var done = function () { exportBtn.disabled = false; exportBtn.textContent = orig; };
       callBackupExport().then(function (r) {
         done();
         if (!r || !r.success) {
-          clashoo.toast('导出失败：' + ((r && r.message) || '未知错误'), { kind: 'err' });
+          clashoo.toast(_("Export failed: ") + ((r && r.message) || _("Unknown error")), { kind: 'err' });
           return;
         }
         var text = JSON.stringify({ manifest: r.manifest, files: r.files || {} }, null, 2);
@@ -509,10 +509,10 @@ return view.extend({
         document.body.removeChild(a);
         setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
         var n = 0; if (r.files) for (var k in r.files) n++;
-        clashoo.toast('备份已导出（' + n + ' 个文件）', { kind: 'ok' });
+        clashoo.toast(_("Backup exported (") + n + _(" files)"), { kind: 'ok' });
       }).catch(function (e) {
         done();
-        clashoo.toast('导出失败：' + (e.message || e), { kind: 'err' });
+        clashoo.toast(_("Export failed: ") + (e.message || e), { kind: 'err' });
       });
     });
 
@@ -522,7 +522,7 @@ return view.extend({
     fileInput.addEventListener('change', function (ev) {
       var file = ev.target.files && ev.target.files[0];
       if (!file) return;
-      if (!confirm('导入将用备份覆盖当前的全部配置与设置，原有的订阅/配置文件会被替换。确定继续吗？')) {
+      if (!confirm(_("Importing will overwrite all current configuration and settings with the backup. Existing subscriptions/configuration files will be replaced. Continue?"))) {
         fileInput.value = '';
         return;
       }
@@ -531,40 +531,40 @@ return view.extend({
         callBackupImport(e.target.result).then(function (r) {
           fileInput.value = '';
           if (r && r.success)
-            clashoo.toast(r.message || '已还原备份，正在重启服务', { kind: 'ok' });
+            clashoo.toast(r.message || _("Backup restored, restarting service"), { kind: 'ok' });
           else
-            clashoo.toast('导入失败：' + ((r && r.message) || '未知错误'), { kind: 'err' });
+            clashoo.toast(_("Import failed: ") + ((r && r.message) || _("Unknown error")), { kind: 'err' });
         }).catch(function (err) {
           fileInput.value = '';
-          clashoo.toast('导入失败：' + (err.message || err), { kind: 'err' });
+          clashoo.toast(_("Import failed: ") + (err.message || err), { kind: 'err' });
         });
       };
       reader.readAsText(file);
     });
-    var importBtn = E('button', { 'class': 'btn cbi-button cbi-button-neutral' }, '导入还原');
+    var importBtn = E('button', { 'class': 'btn cbi-button cbi-button-neutral' }, _("Import Restore"));
     importBtn.addEventListener('click', function (ev) {
       ev.preventDefault();
       fileInput.click();
     });
 
-    var resetBtn = E('button', { 'class': 'btn cbi-button cbi-button-negative' }, '还原默认配置');
+    var resetBtn = E('button', { 'class': 'btn cbi-button cbi-button-negative' }, _("Restore Defaults"));
     resetBtn.addEventListener('click', function (ev) {
       ev.preventDefault();
-      if (!confirm('将把 clashoo 的设置恢复为出厂默认值（订阅与配置文件保留）。确定继续吗？'))
+      if (!confirm(_("Restore Clashoo settings to factory defaults (subscriptions and configuration files are kept). Continue?")))
         return;
       resetBtn.disabled = true;
       var orig = resetBtn.textContent;
-      resetBtn.textContent = '还原中…';
+      resetBtn.textContent = _("Restoring…");
       var done = function () { resetBtn.disabled = false; resetBtn.textContent = orig; };
       callBackupReset().then(function (r) {
         done();
         if (r && r.success)
-          clashoo.toast(r.message || '已还原出厂默认设置', { kind: 'ok' });
+          clashoo.toast(r.message || _("Factory defaults restored"), { kind: 'ok' });
         else
-          clashoo.toast('还原失败：' + ((r && r.message) || '未知错误'), { kind: 'err' });
+          clashoo.toast(_("Restore failed: ") + ((r && r.message) || _("Unknown error")), { kind: 'err' });
       }).catch(function (e) {
         done();
-        clashoo.toast('还原失败：' + (e.message || e), { kind: 'err' });
+        clashoo.toast(_("Restore failed: ") + (e.message || e), { kind: 'err' });
       });
     });
 
@@ -572,9 +572,9 @@ return view.extend({
       E('div', { 'class': 'cl-component-card' }, [
         E('div', { 'class': 'cl-component-head' }, [
           E('div', {}, [
-            E('h4', {}, '备份与还原'),
+            E('h4', {}, _("Backup and Restore")),
             E('div', { 'class': 'cl-component-sub' },
-              '折腾内核或配置前先导出一份，改坏了能一键导入还原。仅含配置与设置，不含内核。')
+              _("Export a backup before changing cores or configuration, so it can be restored if needed. Includes configuration and settings only, not cores."))
           ])
         ]),
         E('div', { 'class': 'cl-backup-actions' }, [exportBtn, importBtn, resetBtn, fileInput])
@@ -625,7 +625,7 @@ return view.extend({
     if (comp.kind === 'data') return false;
     var variant = this._compVariantOf(comp);
     var inst = this._compInstalledVersion(comp, variant);
-    if (!inst || inst === '未安装' || inst === '未知') return false;
+    if (!inst || inst === _("Not installed") || inst === _("Unknown")) return false;
     var latest = latestMap[this._compLatestKey(comp, variant)];
     if (!latest) return false;
     return this._compNorm(latest) !== this._compNorm(inst);
@@ -633,13 +633,13 @@ return view.extend({
 
   _componentStatusText: function (comp, globalRunning) {
     if (comp.status === 'running')
-      return comp.message || '更新中';
+      return comp.message || _("Updating");
     if (comp.status === 'success')
-      return comp.message || '已完成';
+      return comp.message || _("Completed");
     if (comp.status === 'failed')
-      return comp.message || '失败';
+      return comp.message || _("Failed");
     if (globalRunning)
-      return '等待当前任务完成';
+      return _("Wait for the current task to complete");
     return '';
   },
 
@@ -647,7 +647,7 @@ return view.extend({
   _renderComponentArchRow: function (arch) {
     var self = this;
     arch = arch || {};
-    var sys = arch.system || '未知';
+    var sys = arch.system || _("Unknown");
     var detected = this._detectMihomoArch(this._compCpuArch || sys) || '';
     var cur = arch.download_core || detected || 'amd64-compatible';
     var archList = ['amd64-compatible', 'amd64-v1', 'amd64-v2', 'amd64-v3', 'arm64', 'armv7', 'armv6', 'armv5', '386', 'mips', 'mipsle', 'mips64', 'mips64le'];
@@ -660,7 +660,7 @@ return view.extend({
       uci.save()
         .then(function () { return clashoo.commitConfig(); })
         .then(function () { return clearClashooDirty(); })
-        .then(function () { clashoo.toast('处理器架构已设为 ' + sel.value, { kind: 'info' }); })
+        .then(function () { clashoo.toast(_("CPU architecture set to ") + sel.value, { kind: 'info' }); })
         .catch(function () {});
       /* re-render row: show hint when mismatched */
       if (self._compArchWrap)
@@ -668,13 +668,13 @@ return view.extend({
           [self._renderComponentArchRow({ system: sys, download_core: sel.value })]);
     });
     var row = [
-      E('span', { 'class': 'cl-component-arch-label' }, '处理器架构'),
-      E('span', { 'class': 'cl-component-arch-auto' }, '自动识别'),
+      E('span', { 'class': 'cl-component-arch-label' }, _("CPU Architecture")),
+      E('span', { 'class': 'cl-component-arch-auto' }, _("Auto-detected")),
       sel
     ];
     /* no hint when auto-detected matches; only show when manual choice differs */
     if (detected && cur !== detected)
-      row.push(E('span', { 'class': 'cl-component-arch-hint' }, '推荐 ' + detected + '（按设备自动检测）'));
+      row.push(E('span', { 'class': 'cl-component-arch-hint' }, _("Recommended ") + detected + _(" (auto-detected by device)")));
     return E('div', { 'class': 'cl-component-arch-row' }, row);
   },
 
@@ -701,16 +701,16 @@ return view.extend({
         });
         return b;
       };
-      variantBox = E('div', { 'class': 'cl-comp-var-box' }, [mkV('stable', '稳定版'), mkV('alpha', 'Alpha')]);
-      inst = this._compInstalledVersion(comp, variant) || '未安装';
+      variantBox = E('div', { 'class': 'cl-comp-var-box' }, [mkV('stable', _("Stable")), mkV('alpha', 'Alpha')]);
+      inst = this._compInstalledVersion(comp, variant) || _("Not installed");
     }
     var latest = latestMap[this._compLatestKey(comp, variant || this._compVariantOf(comp))];
     if (!statusText && latest)
-      statusText = '远端：' + latest;
+      statusText = _("Remote: ") + latest;
 
     /* 绿色「可更新」徽标：最新版与已装不一致时显示 */
     var badge = this._compUpdatable(comp, latestMap)
-      ? E('span', { 'class': 'cl-comp-updatable' }, '可更新')
+      ? E('span', { 'class': 'cl-comp-updatable' }, _("Update available"))
       : null;
 
     var btn = E('button', {
@@ -719,19 +719,19 @@ return view.extend({
       click: function (ev) {
         ev.preventDefault();
         btn.disabled = true;
-        btn.textContent = '提交中';
+        btn.textContent = _("Submitting");
         if (self._compLogEl) self._compLogEl.style.display = '';
         clashoo.componentUpdate(comp.id, variant).then(function (res) {
           if (res && res.success)
-            clashoo.toast('组件更新任务已提交', { kind: 'info' });
+            clashoo.toast(_("Component update task submitted"), { kind: 'info' });
           else
-            clashoo.toast((res && res.message) || '组件更新任务提交失败', { kind: 'error' });
+            clashoo.toast((res && res.message) || _("Failed to submit component update task"), { kind: 'error' });
           setTimeout(function () { self._refreshComponentUpdatePanel(listEl, logEl, false); }, 700);
         });
       }
-    }, comp.status === 'running' ? '更新中' : '更新');
+    }, comp.status === 'running' ? _("Updating") : _("Update"));
 
-    var verChildren = [E('span', {}, '当前：' + (inst || '未知') + ' ')];
+    var verChildren = [E('span', {}, _("Current: ") + (inst || _("Unknown")) + ' ')];
     if (badge) verChildren.push(badge);
     var verBlock = [E('div', {}, verChildren)];
     if (variantBox) verBlock.push(variantBox);
@@ -772,7 +772,7 @@ return view.extend({
           self._replaceChildren(self._compAdvListEl, advComps.map(render));
       };
       paint();
-      logEl.textContent = data.log || data.last_log || '暂无组件更新日志';
+      logEl.textContent = data.log || data.last_log || _("No component update logs yet");
 
       if (data.running) {
         /* 有任务运行：展开日志，取消收起计时 */
@@ -801,16 +801,16 @@ return view.extend({
             }, 0);
             if (self._compRefreshBtn) {
               self._compRefreshBtn.disabled = false;
-              self._compRefreshBtn.textContent = '检查更新';
+              self._compRefreshBtn.textContent = _("Check Updates");
             }
-            clashoo.toast(n > 0 ? (n + ' 项可更新') : '所有组件已是最新',
+            clashoo.toast(n > 0 ? (n + _(" updates available")) : _("All components are up to date"),
               { kind: n > 0 ? 'info' : 'success' });
           }).catch(function () {
             if (self._compRefreshBtn) {
               self._compRefreshBtn.disabled = false;
-              self._compRefreshBtn.textContent = '检查更新';
+              self._compRefreshBtn.textContent = _("Check Updates");
             }
-            clashoo.toast('检查更新失败，请检查网络', { kind: 'error' });
+            clashoo.toast(_("Failed to check updates, please check the network"), { kind: 'error' });
           });
         }
       }
@@ -828,13 +828,13 @@ return view.extend({
 	);
 	var selectedCoreChoice = originalCoreChoice;
 
-    s = m.section(form.NamedSection, 'config', 'clashoo', '后端核心');
+    s = m.section(form.NamedSection, 'config', 'clashoo', _("Backend Core"));
     s.addremove = false;
-    o = s.option(form.ListValue, '_core_choice', '核心类型');
-	o.value('mihomo-stable', 'mihomo 稳定版');
+    o = s.option(form.ListValue, '_core_choice', _("Core Type"));
+	o.value('mihomo-stable', _("mihomo Stable"));
 	o.value('mihomo-alpha', 'mihomo Alpha');
 	o.value('smart', 'Smart');
-	o.value('singbox-stable', 'sing-box 稳定版');
+	o.value('singbox-stable', _("sing-box Stable"));
 	o.value('singbox-alpha', 'sing-box Alpha');
 	o.cfgvalue = function () { return originalCoreChoice; };
 	o.write = function (sectionId, value) { selectedCoreChoice = value; };
@@ -842,20 +842,20 @@ return view.extend({
     o.description = '';
 	var coreChoiceOption = o;
 
-    s = m.section(form.NamedSection, 'config', 'clashoo', '管理面板配置');
+    s = m.section(form.NamedSection, 'config', 'clashoo', _("Dashboard Settings"));
     s.addremove = false;
-    o = s.option(form.Value, 'dash_port', '面板端口');
+    o = s.option(form.Value, 'dash_port', _("Dashboard Port"));
     o.placeholder = '9090';
-    o = s.option(form.Value, 'dash_pass', '访问密钥');
+    o = s.option(form.Value, 'dash_pass', _("Access Secret"));
     o.placeholder = 'clashoo';
-    o = s.option(form.ListValue, 'dashboard_panel', '面板 UI');
+    o = s.option(form.ListValue, 'dashboard_panel', _("Panel UI"));
     ['metacubexd','yacd','zashboard','razord'].forEach(function(p){ o.value(p,p); });
 
-    s = m.section(form.NamedSection, 'config', 'clashoo', '内核下载');
+    s = m.section(form.NamedSection, 'config', 'clashoo', _("Core Download"));
     s.addremove = false;
-    o = s.option(form.Value, 'core_mirror_prefix', 'GitHub 加速前缀');
+    o = s.option(form.Value, 'core_mirror_prefix', _("GitHub acceleration prefix"));
     o.placeholder = 'https://gh-proxy.com/';
-    o.description = '内核 / 数据组件下载时优先走该前缀（末尾需带斜杠）。留空则使用内置 gh-proxy.com 与 ghfast.top 备选源。';
+    o.description = _("When downloading core/data components, this prefix will be used first (a slash is required at the end). Leave blank to use the built-in gh-proxy.com and ghfast.top alternative sources.");
     o.rmempty = true;
 
     m.render().then(function (node) {
@@ -879,7 +879,7 @@ return view.extend({
 		  })
 		  .then(function (res) {
 			if (!res || res.success === false)
-			  throw new Error((res && res.message) || '内核配置保存失败');
+			  throw new Error((res && res.message) || _("Failed to save core configuration"));
 			if (applyNow && res.restarting)
 			  return waitForCoreTarget(target).then(function () { return res; });
 			return res;
@@ -890,11 +890,11 @@ return view.extend({
 		  .then(function (res) {
 			var msg;
 			if (!applyNow)
-			  msg = changed ? '内核类型已保存，下次启动或重启后生效' : '配置已保存';
+			  msg = changed ? _("Core type saved, takes effect on next start or restart") : _("Configuration saved");
 			else if (res.restarting)
-			  msg = '配置已保存，已切换并启动所选内核';
+			  msg = _("Configuration saved, switched and started selected core");
 			else
-			  msg = '配置已保存，服务保持停止';
+			  msg = _("Configuration saved, service remains stopped");
 			ui.addNotification(null, E('p', msg));
 			window.setTimeout(function () { location.reload(); }, 300);
 		  });
@@ -903,12 +903,12 @@ return view.extend({
       container.appendChild(E('div', { 'class': 'cl-save-bar' }, [
         E('button', { 'class': 'cbi-button', click: function () {
 		  saveKernelForm(false)
-            .catch(function (e) { ui.addNotification(null, E('p', '保存失败: ' + (e.message || e))); });
-        }}, '保存配置'),
+            .catch(function (e) { ui.addNotification(null, E('p', _("Save failed: ") + (e.message || e))); });
+        }}, _("Save Configuration")),
         E('button', { 'class': 'btn cbi-button-action', click: function () {
 		  saveKernelForm(true)
-            .catch(function (e) { ui.addNotification(null, E('p', '操作失败: ' + (e.message || e))); });
-        }}, '应用配置')
+            .catch(function (e) { ui.addNotification(null, E('p', _("Operation failed: ") + (e.message || e))); });
+        }}, _("Apply Configuration"))
       ]));
     });
   },
@@ -917,30 +917,30 @@ return view.extend({
     var m = new form.Map('clashoo', '', '');
     var s, o;
 
-    s = m.section(form.NamedSection, 'config', 'clashoo', '绕过规则');
+    s = m.section(form.NamedSection, 'config', 'clashoo', _("Bypass Rules"));
     s.addremove = false;
-    o = s.option(form.Flag, 'bypass_china',  '大陆 IP 绕过');
-    o = s.option(form.ListValue, 'bypass_port_mode', '绕过端口');
-    o.value('all', '所有端口');
-    o.value('common', '常用端口');
-    o.value('custom', '自定义');
+    o = s.option(form.Flag, 'bypass_china',  _("Bypass China IP"));
+    o = s.option(form.ListValue, 'bypass_port_mode', _("Bypass Ports"));
+    o.value('all', _("All Ports"));
+    o.value('common', _("Common Ports"));
+    o.value('custom', _("Custom"));
     o.default = 'all';
 
-    o = s.option(form.Value, 'bypass_port_custom', '自定义端口');
+    o = s.option(form.Value, 'bypass_port_custom', _("Custom Ports"));
     o.depends('bypass_port_mode', 'custom');
     o.placeholder = '22,53,80,443,8080,8443';
     o.datatype = 'string';
     o.rmempty = true;
 
-    o = s.option(form.Flag, 'sniffer_streaming', '嗅探功能（流媒体兼容）');
+    o = s.option(form.Flag, 'sniffer_streaming', _("Sniffer (streaming compatibility)"));
     o.default = '1';
     o.rmempty = false;
-    o.description = '启用后自动注入 sniffer 配置，提升流媒体域名识别与分流稳定性。';
+    o.description = _("When enabled, sniffer configuration is injected automatically to improve streaming domain detection and routing stability.");
 
-    s = m.section(form.NamedSection, 'config', 'clashoo', '局域网控制');
+    s = m.section(form.NamedSection, 'config', 'clashoo', _("LAN Control"));
     s.addremove = false;
-    o = s.option(form.ListValue, 'access_control', '访问控制');
-    o.value('0', '所有设备'); o.value('1', '白名单'); o.value('2', '黑名单');
+    o = s.option(form.ListValue, 'access_control', _("Access Control"));
+    o.value('0', _("All Devices")); o.value('1', _("Allowlist")); o.value('2', _("Blocklist"));
 
     /* Populate host hints for both IP list fields */
     var hints = this._hostHints || {};
@@ -958,25 +958,25 @@ return view.extend({
       });
     });
 
-    o = s.option(form.DynamicList, 'proxy_lan_ips', 'IP白名单');
+    o = s.option(form.DynamicList, 'proxy_lan_ips', _("IP Allowlist"));
     o.placeholder = '192.168.1.100';
     o.depends('access_control', '1');
     hostOptions.forEach(function (kv) { o.value(kv[0], kv[1]); });
 
-    o = s.option(form.DynamicList, 'reject_lan_ips', 'IP黑名单');
+    o = s.option(form.DynamicList, 'reject_lan_ips', _("IP Blocklist"));
     o.placeholder = '192.168.1.100';
     o.depends('access_control', '2');
     hostOptions.forEach(function (kv) { o.value(kv[0], kv[1]); });
 
-    s = m.section(form.NamedSection, 'config', 'clashoo', '自动化任务');
+    s = m.section(form.NamedSection, 'config', 'clashoo', _("Automation Tasks"));
     s.addremove = false;
-    o = s.option(form.Flag,  'auto_update',   '定时更新规则数据');
-    o.description = '规则数据包含：大陆白名单（直连 IP 段）与 GeoIP / GeoSite 地理库';
-    o = s.option(form.Value, 'auto_update_time',   '更新间隔（小时）');
-    o = s.option(form.Flag,  'auto_clear_log',    '定时清理日志');
-    o = s.option(form.Value, 'clear_time','清理间隔（小时）');
-    o = s.option(form.ListValue, 'geoip_source', 'GeoIP 数据源');
-    o.value('3', 'Loyalsoldier'); o.value('5', 'v2fly'); o.value('4', '自定义');
+    o = s.option(form.Flag,  'auto_update',   _("Regularly update rule data"));
+    o.description = _("Rule data includes China allowlist (direct IP ranges) and GeoIP / GeoSite databases");
+    o = s.option(form.Value, 'auto_update_time',   _("Update interval (hours)"));
+    o = s.option(form.Flag,  'auto_clear_log',    _("Scheduled Log Cleanup"));
+    o = s.option(form.Value, 'clear_time',_("Cleanup interval (hours)"));
+    o = s.option(form.ListValue, 'geoip_source', _("GeoIP Source"));
+    o.value('3', 'Loyalsoldier'); o.value('5', 'v2fly'); o.value('4', _("Custom"));
     o.default = '3';
     o = s.option(form.Value, 'geoip_mmdb_url', 'Country.mmdb URL');
     o.depends('geoip_source', '4');
@@ -996,12 +996,12 @@ return view.extend({
           m.save().then(function () { return clashoo.commitConfig(); })
             .then(function () { return clearClashooDirty(); })
             .then(function () { location.reload(); })
-            .catch(function (e) { ui.addNotification(null, E('p', '保存失败: ' + (e.message || e))); });
-        }}, '保存配置'),
+            .catch(function (e) { ui.addNotification(null, E('p', _("Save failed: ") + (e.message || e))); });
+        }}, _("Save Configuration")),
         E('button', { 'class': 'btn cbi-button-action', click: function () {
-          saveCommitApplyMaybeReload(m, '配置已保存并热重载服务', '配置已保存，服务未启动')
-            .catch(function (e) { ui.addNotification(null, E('p', '操作失败: ' + (e.message || e))); });
-        }}, '应用配置')
+          saveCommitApplyMaybeReload(m, _("Configuration saved and service hot-reloaded"), _("Configuration saved, service is not running"))
+            .catch(function (e) { ui.addNotification(null, E('p', _("Operation failed: ") + (e.message || e))); });
+        }}, _("Apply Configuration"))
       ]));
     });
   },
@@ -1009,9 +1009,9 @@ return view.extend({
   _buildLogsPanel: function (runLog) {
     var self = this;
     var logTypes = [
-      { id: 'plugin', label: '插件日志', read: clashoo.readLog.bind(clashoo),              clear: clashoo.clearLog.bind(clashoo) },
-      { id: 'core',   label: '核心日志', read: clashoo.readCoreLog.bind(clashoo),           clear: clashoo.clearCoreLog.bind(clashoo) },
-      { id: 'update', label: '更新日志', read: clashoo.readUpdateMergedLog.bind(clashoo),   clear: clashoo.clearUpdateMergedLog.bind(clashoo) }
+      { id: 'plugin', label: _("Plugin Log"), read: clashoo.readLog.bind(clashoo),              clear: clashoo.clearLog.bind(clashoo) },
+      { id: 'core',   label: _("Core Log"), read: clashoo.readCoreLog.bind(clashoo),           clear: clashoo.clearCoreLog.bind(clashoo) },
+      { id: 'update', label: _("Update Log"), read: clashoo.readUpdateMergedLog.bind(clashoo),   clear: clashoo.clearUpdateMergedLog.bind(clashoo) }
     ];
     var MAX_LINES = 5000;
 
@@ -1087,7 +1087,7 @@ return view.extend({
 
     var logTabEls = {};
     var logArea = E('div', { 'class': 'cl-log-area', id: 'cl-log-area' });
-    logArea.innerHTML = runLog ? renderLines(runLog) : '<em>（空）</em>';
+    logArea.innerHTML = runLog ? renderLines(runLog) : _("<em>(empty)</em>");
 
     var clearBtn = null;
 
@@ -1099,7 +1099,7 @@ return view.extend({
       self._logTab = logType.id;
       syncClearButton();
       return logType.read().then(function (content) {
-        logArea.innerHTML = (content && content.trim()) ? renderLines(content) : '<em>（空）</em>';
+        logArea.innerHTML = (content && content.trim()) ? renderLines(content) : _("<em>(empty)</em>");
         applyFilter();
         if (state.autoScroll) logArea.scrollTop = logArea.scrollHeight;
       });
@@ -1135,7 +1135,7 @@ return view.extend({
     cbPause.addEventListener('change', function () { state.paused = cbPause.checked; });
 
     var selFilter = E('select', { 'class': 'cbi-button' }, [
-      E('option', { value: '' }, '全部'),
+      E('option', { value: '' }, _("All")),
       E('option', { value: 'info' }, 'INFO'),
       E('option', { value: 'warn' }, 'WARN'),
       E('option', { value: 'error' }, 'ERROR'),
@@ -1146,10 +1146,10 @@ return view.extend({
       applyFilter();
     });
 
-    var btnClearView = E('button', { 'class': 'cbi-button' }, '清空显示');
+    var btnClearView = E('button', { 'class': 'cbi-button' }, _("Clear View"));
     btnClearView.addEventListener('click', function () { logArea.innerHTML = ''; });
 
-    var btnDownload = E('button', { 'class': 'cbi-button' }, '下载');
+    var btnDownload = E('button', { 'class': 'cbi-button' }, _("Download"));
     btnDownload.addEventListener('click', function () {
       var blob = new Blob([logArea.textContent || ''], { type: 'text/plain' });
       var url = URL.createObjectURL(blob);
@@ -1160,18 +1160,18 @@ return view.extend({
       URL.revokeObjectURL(url);
     });
 
-    clearBtn = E('button', { 'class': 'cbi-button' }, '清空文件');
+    clearBtn = E('button', { 'class': 'cbi-button' }, _("Clear File"));
     clearBtn.addEventListener('click', function () {
       var ct = currentType();
       if (!ct.clear) return;
-      if (!confirm('确定要清空当前日志文件吗？此操作不可恢复。')) return;
+      if (!confirm(_("Clear the current log file? This cannot be undone."))) return;
       ct.clear().then(function () { logArea.innerHTML = ''; });
     });
     syncClearButton();
 
     var toolbar = E('div', { 'class': 'cl-log-toolbar' }, [
-      E('label', {}, [cbAuto, '自动滚动']),
-      E('label', {}, [cbPause, '暂停']),
+      E('label', {}, [cbAuto, _("Auto Scroll")]),
+      E('label', {}, [cbPause, _("Pause")]),
       selFilter,
       btnClearView,
       btnDownload,
@@ -1179,7 +1179,7 @@ return view.extend({
     ]);
 
     return E('div', { 'class': 'cl-section cl-card cl-log-card' }, [
-      E('h4', {}, '日志'),
+      E('h4', {}, _("Log")),
       logTabBar,
       toolbar,
       logArea
@@ -1200,7 +1200,7 @@ return view.extend({
     };
     var readFn = logFns[this._logTab] || logFns.plugin;
     return readFn().then(function (content) {
-      if (!content || !content.trim()) { el.innerHTML = '<em>（空）</em>'; return; }
+      if (!content || !content.trim()) { el.innerHTML = _("<em>(empty)</em>"); return; }
       var html = '';
       var lines = content.split('\n').filter(function(l) { return l; });
       for (var i = 0; i < lines.length; i++) {

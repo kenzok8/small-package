@@ -10,7 +10,7 @@
     }
   },
   "admin/services/clashoo/overview": {
-    "title": "概览",
+    "title": "Overview",
     "order": 10,
     "action": {
       "type": "view",
@@ -21,7 +21,7 @@
     }
   },
   "admin/services/clashoo/config": {
-    "title": "配置",
+    "title": "Configuration",
     "order": 20,
     "action": {
       "type": "view",
@@ -32,7 +32,7 @@
     }
   },
   "admin/services/clashoo/system": {
-    "title": "系统",
+    "title": "System",
     "order": 30,
     "action": {
       "type": "view",
