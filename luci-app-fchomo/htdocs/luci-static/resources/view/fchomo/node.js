@@ -1272,6 +1272,8 @@ return view.extend({
 		so.depends('tls_reality', '1');
 		so.modalonly = true;
 
+		// @VMess-TLSmirror fields
+
 		/* Transport fields */
 		so = ss.taboption('field_general', form.Flag, 'transport_enabled', _('Transport'));
 		so.default = so.disabled;
@@ -1285,6 +1287,8 @@ return view.extend({
 		so.value('grpc', _('gRPC'));
 		so.value('ws', _('WebSocket'));
 		so.value('xhttp', _('XHTTP'));
+		//so.value('mkcp', _('mKCP')); // VMess only
+		//so.value('mekya', _('Mekya')); // VMess only
 		so.validate = function(section_id, value) {
 			const type = this.section.getOption('type').formvalue(section_id);
 

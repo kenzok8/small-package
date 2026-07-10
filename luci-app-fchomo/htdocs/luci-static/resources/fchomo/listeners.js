@@ -1144,6 +1144,8 @@ function renderListeners(s, uciconfig, isClient) {
 	o.depends('tls_reality', '1');
 	o.modalonly = true;
 
+	// @VMess-TLSmirror fields
+
 	/* Transport fields */
 	o = s.taboption('field_general', form.Flag, 'transport_enabled', _('Transport'));
 	o.default = o.disabled;
@@ -1154,6 +1156,8 @@ function renderListeners(s, uciconfig, isClient) {
 	o.value('grpc', _('gRPC'));
 	o.value('ws', _('WebSocket'));
 	o.value('xhttp', _('XHTTP'));
+	//o.value('mkcp', _('mKCP')); // VMess only
+	//o.value('mekya', _('Mekya')); // VMess only
 	o.validate = function(section_id, value) {
 		const type = this.section.getOption('type').formvalue(section_id);
 
