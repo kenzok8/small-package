@@ -461,6 +461,9 @@ function renderListeners(s, uciconfig, isClient) {
 	o.modalonly = true;
 
 	o = s.taboption('field_general', form.ListValue, 'snell_version', _('Version'));
+	o.value('1', _('v1'));
+	o.value('2', _('v2'));
+	o.value('3', _('v3'));
 	o.value('4', _('v4'));
 	o.value('5', _('v5'));
 	o.default = '4';
@@ -558,6 +561,7 @@ function renderListeners(s, uciconfig, isClient) {
 	o.value('', _('none'));
 	o.value('obfs', _('obfs-simple'));
 	o.value('shadow-tls', _('shadow-tls'));
+	o.value('restls', _('restls'));
 	//o.value('kcp-tun', _('kcp-tun'));
 	o.validate = function(section_id, value) {
 		const type = this.section.getOption('type').formvalue(section_id);
@@ -591,13 +595,13 @@ function renderListeners(s, uciconfig, isClient) {
 	o.datatype = 'hostport';
 	o.placeholder = 'cloud.tencent.com:443';
 	o.rmempty = false;
-	o.depends({plugin: 'shadow-tls'});
+	o.depends({plugin: /^(shadow-tls|restls)$/});
 	o.modalonly = true;
 
 	o = s.taboption('field_general', hm.GenValue, 'plugin_opts_thetlspassword', _('Plugin: ') + _('Password'));
 	o.password = true;
 	o.rmempty = false;
-	o.depends({plugin: 'shadow-tls'});
+	o.depends({plugin: /^(shadow-tls|restls)$/});
 	o.modalonly = true;
 
 	o = s.taboption('field_general', form.ListValue, 'plugin_opts_shadowtls_version', _('Plugin: ') + _('Version'));
@@ -606,6 +610,12 @@ function renderListeners(s, uciconfig, isClient) {
 	o.value('3', _('v3'));
 	o.default = '3';
 	o.depends({plugin: 'shadow-tls'});
+	o.modalonly = true;
+
+	o = s.taboption('field_general', form.Value, 'plugin_opts_restls_script', _('Plugin: ') + _('Restls script'));
+	o.default = '300?100<1,400~100,350~100,600~100,300~200,300~100';
+	o.rmempty = false;
+	o.depends({plugin: 'restls'});
 	o.modalonly = true;
 
 	/* Extra fields */
@@ -1216,6 +1226,35 @@ function renderListeners(s, uciconfig, isClient) {
 	o.datatype = 'uinteger';
 	o.placeholder = '1000000';
 	o.depends({transport_enabled: '1', transport_type: 'xhttp'});
+	o.modalonly = true;
+
+	/* Multiplex fields */
+	o = s.taboption('field_general', form.Flag, 'smux_enabled', _('Multiplex'));
+	o.default = o.disabled;
+	o.depends({type: /^(shadowsocks|vmess|vless|trojan|tuic|hysteria2|sudoku)$/});
+	o.modalonly = true;
+
+	o = s.taboption('field_multiplex', form.Flag, 'smux_padding', _('Enable padding'));
+	o.default = o.disabled;
+	o.depends('smux_enabled', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_multiplex', form.Flag, 'smux_brutal', _('Enable TCP Brutal'),
+		_('Enable TCP Brutal congestion control algorithm'));
+	o.default = o.disabled;
+	o.depends('smux_enabled', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_multiplex', form.Value, 'smux_brutal_up', _('Upload bandwidth'),
+		_('Upload bandwidth in Mbps.'));
+	o.datatype = 'uinteger';
+	o.depends('smux_brutal', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_multiplex', form.Value, 'smux_brutal_down', _('Download bandwidth'),
+		_('Download bandwidth in Mbps.'));
+	o.datatype = 'uinteger';
+	o.depends('smux_brutal', '1');
 	o.modalonly = true;
 }
 

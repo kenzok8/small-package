@@ -363,6 +363,16 @@ export function parseListener(cfg, isClient, label) {
 						dest: cfg.plugin_opts_handshake_dest
 					}
 				}
+			} : cfg.plugin === 'restls' ? {
+			// restls
+				"res-tls": {
+					enable: true,
+					dest: cfg.plugin_opts_handshake_dest,
+					password: cfg.plugin_opts_thetlspassword,
+					"restls-script": cfg.plugin_opts_restls_script,
+					//"min-record-len": 0,
+					//proxy: ""
+				}
 			} : {}
 		) : {}),
 
@@ -405,7 +415,17 @@ export function parseListener(cfg, isClient, label) {
 				"sc-max-each-post-bytes": strToInt(cfg.transport_xhttp_sc_max_each_post_bytes) || null,
 				// @其他的配置
 			} : null
-		} : {})
+		} : {}),
+
+		/* Multiplex fields */
+		"mux-option": cfg.smux_enabled === '1' ? {
+			padding: strToBool(cfg.smux_padding),
+			brutal: cfg.smux_brutal === '1' ? {
+				enabled: true,
+				up: strToInt(cfg.smux_brutal_up) || null, // Mbps
+				down: strToInt(cfg.smux_brutal_down) || null // Mbps
+			} : null
+		} : null
 	}
 };
 /* String universal end */

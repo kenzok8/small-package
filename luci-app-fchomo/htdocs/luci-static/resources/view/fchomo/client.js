@@ -13,7 +13,7 @@ const parseProxyGroupYaml = hm.parseYaml.extend({
 		if (!cfg.type)
 			return null;
 
-		// key mapping // 2026/07/05
+		// key mapping // 2026/07/08
 		let config = hm.removeBlankAttrs({
 			id: this.id,
 			label: this.label,
@@ -259,7 +259,7 @@ const parseDNSYaml = hm.parseYaml.extend({
 		if (detour)
 			addr.setParam('detour', hm.preset_outbound.dns.map(([key, label]) => key).includes(detour) ? detour : detour === 'RULES' ? '' : this.calcID(hm.glossary["proxy_group"].field, detour));
 
-		// key mapping // 2026/01/17
+		// key mapping // 2026/07/08
 		let config = {
 			id: this.id,
 			label: this.label,
@@ -291,7 +291,7 @@ const parseDNSPolicyYaml = hm.parseYaml.extend({
 				break;
 		}
 
-		// key mapping // 2026/01/17
+		// key mapping // 2026/07/08
 		let config = {
 			id: this.id,
 			label: this.label,
@@ -312,7 +312,7 @@ const parseRulesYaml = hm.parseYaml.extend({
 		if (!entry)
 			return null;
 
-		// key mapping // 2026/06/12
+		// key mapping // 2026/07/08
 		let config = {
 			id: this.id,
 			label: '%s %s'.format(this.id.slice(0,7), _('(Imported)')),
@@ -563,13 +563,19 @@ function renderPayload(s, total, uciconfig) {
 		o.depends(Object.fromEntries([[prefix + 'type', /\bPROCESS\b/]]));
 		initPayload(o, n, 'factor', uciconfig);
 
-		o = s.option(form.Value, prefix + 'rematchname', _('Factor') + ` ${n+1}`);
-		o.value('rematch1');
-		o.validate = hm.validateAuthUsername;
+		o = s.option(form.ListValue, prefix + 'rematchname', _('Factor') + ` ${n+1}`);
 		if (n === 0)
 			o.depends('type', 'REMATCH-NAME');
 		o.depends(prefix + 'type', 'REMATCH-NAME');
 		initPayload(o, n, 'factor', uciconfig);
+		o.load = L.bind(function(n, key, uciconfig, section_id) {
+			hm.loadLabel.call(this, [
+				['', _('-- Please choose --')],
+				...hm.loadLabelValues(this.config, 'rematch-name')
+			], section_id);
+
+			return new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayload(n)[key];
+		}, o, n, 'factor', uciconfig)
 
 		o = s.option(form.Value, prefix + 'uint', _('Factor') + ` ${n+1}`);
 		o.datatype = 'uinteger';
@@ -684,15 +690,13 @@ function renderPayload(s, total, uciconfig) {
 		})
 		initDynamicPayload(o, n, 'factor', uciconfig);
 		o.load = L.bind(function(n, key, uciconfig, section_id) {
-			let fusedval = [
+			hm.loadLabel.call(this, [
+				['REMATCHNAME', _('-- REMATCH-NAME --')],
+				...hm.loadLabelValues(this.config, 'rematch-name'),
 				['NETWORK', _('-- NETWORK --')],
 				['udp', _('UDP')],
 				['tcp', _('TCP')],
-				['RULESET', _('-- RULE-SET --')]
-			];
-
-			hm.loadLabel.call(this, [
-				...fusedval,
+				['RULESET', _('-- RULE-SET --')],
 				...hm.loadLabelValues(this.config, 'ruleset')
 			], section_id);
 
@@ -1899,7 +1903,8 @@ return view.extend({
 
 		so = ss.option(form.DynamicList, 'fallback_filter_geosite', _('Geosite'),
 			_('Match geosite.</br>') +
-			_('The matching <code>%s</code> will be deemed as poisoned.').format(_('Domain')));
+			_('The matching <code>%s</code> will be deemed as poisoned.').format(_('Domain')) + `</br>` +
+			_('Option is deprecated. Please use <code>%s</code> instead.').format(_('DNS policy')));
 
 		so = ss.option(form.DynamicList, 'fallback_filter_ipcidr', _('IP CIDR'),
 			_('Match response with ipcidr.</br>') +

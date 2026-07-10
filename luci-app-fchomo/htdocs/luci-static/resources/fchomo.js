@@ -1541,25 +1541,13 @@ function loadLabelValues(uciconfig, sectiontype, options = {}) {
 		case 'rematch-name': {
 			const names = new Set();
 
-			for (const type of ['rules', 'subrules']) {
-				uci.sections(uciconfig, type, (res) => {
-					if (res.enabled === '0')
-						return;
-
-					try {
-						const payload =
-							JSON.parse(res?.entry?.trim() || '{}').payload || [];
-
-						for (const p of payload)
-							if (p.type === 'REMATCH-NAME')
-								names.add(p.factor);
-					} catch {}
-				});
-			}
+			uci.sections(uciconfig, 'node', (res) => {
+				if (res.enabled !== '0' && res.target_rematch_name)
+					names.add(res.target_rematch_name);
+			});
 
 			for (const name of names)
 				values.push([name, name]);
-
 			break;
 		}
 		default:
