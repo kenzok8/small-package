@@ -1935,6 +1935,10 @@ function gen_config(var)
 
 	if inbounds or outbounds then
 		local config = {
+			env = (function()
+				local asset_location = uci:get(appname, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
+				return { XRAY_LOCATION_ASSET = asset_location }
+			end)(),
 			log = {
 				-- error = string.format("/tmp/etc/%s/%s.log", appname, node[".name"]),
 				loglevel = loglevel
