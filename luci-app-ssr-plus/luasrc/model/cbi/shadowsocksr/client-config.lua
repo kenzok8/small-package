@@ -1479,6 +1479,7 @@ if is_finded("xray") then
 	o:value("qq", translate("qq"))
 	o:value("random", translate("random"))
 	o:value("randomized", translate("randomized"))
+	o:value("unsafe", translate("unsafe"))
 	o:value("", translate("disable"))
 	o:depends({type = "v2ray", tls = true})
 	o:depends({type = "v2ray", reality = true})
