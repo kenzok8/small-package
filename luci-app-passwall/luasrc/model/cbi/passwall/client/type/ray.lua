@@ -514,6 +514,7 @@ o:value("ios")
 o:value("android")
 o:value("random")
 o:value("randomized")
+o:value("unsafe")
 o.default = "chrome"
 o:depends({ [_n("tls")] = true, [_n("utls")] = true })
 o:depends({ [_n("tls")] = true, [_n("reality")] = true })
