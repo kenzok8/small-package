@@ -367,6 +367,18 @@ function strToTable(str)
 	return loadstring("return " .. str)()
 end
 
+function is_timehhmm(timeStr)
+	local hour, minute = string.match(timeStr, "^(%d?%d):(%d%d)$")
+    if hour and minute then
+        hour = tonumber(hour)
+        minute = tonumber(minute)
+        if hour >= 0 and hour <= 23 and minute >= 0 and minute <= 59 then
+            return true
+        end
+    end
+    return false
+end
+
 function is_normal_node(e)
 	if e and e.type and e.protocol and (e.protocol == "_balancing" or e.protocol == "_shunt" or e.protocol == "_iface" or e.protocol == "_urltest") then
 		return false
@@ -1449,7 +1461,7 @@ function luci_types(id, m, s, type_name, option_prefix)
 		end
 	end
 end
-function format_go_time(input)
+function format_go_time(input, default)
 	input = input and trim(input)
 	local N = 0
 	if input and input:match("^%d+$") then
@@ -1467,7 +1479,7 @@ function format_go_time(input)
 		end
 	end
 	if N <= 0 then
-		return "0s"
+		return default or "0s"
 	end
 	local result = ""
 	local h = math.floor(N / 3600)
@@ -1610,22 +1622,34 @@ function get_dnsmasq_server_domain()
 end
 
 function parse_realm_uri(uri)
-	if type(uri) ~= "string" then return nil end
+	uri = trim(uri)
+	if uri == "" then return nil end
 	-- realm[+http]://token@server/realm_id?query
-	local scheme, token, server_url, realm_id, query = trim(uri):match("^(realm%+http|realm)://([^@]+)@([^/]+)/([^?]*)%??(.*)$")
-	if not scheme or not token or not server_url or not realm_id then return nil end
+	local scheme = (uri:match("^realm%+http://") and "realm+http") or (uri:match("^realm://") and "realm")
+	if not scheme then return nil end
+	uri = uri:gsub("^realm%+http://", ""):gsub("^realm://", "")
+	local token, server_url, realm_id, query = uri:match("^([^@]+)@([^/]+)/([^?]*)%??(.*)$")
+	if not token or not server_url or not realm_id then return nil end
 	realm_id = realm_id:gsub("/+$", "")
+	local address, port = server_url:match("^%[([^%]]+)%]:(%d+)$") --ipv6:port
+	if not address then
+		address, port = server_url:match("^([^:]+):(%d+)$") --ipv4[domain]:port
+	end
+	address = address or server_url:match("^%[([^%]]+)%]$") or server_url
+	port = tonumber(port) or (scheme == "realm+http" and 80 or 443)
 	local realm = {
 		scheme = scheme,
 		token = token,
 		server_url = server_url,
+		address = address,
+		port = port,
 		realm_id = realm_id
 	}
 	-- Parse stun= in the query
 	local stun_servers
-	for value in (query or ""):gmatch("[?&]?[Ss][Tt][Uu][Nn]=([^&]+)") do
-		if not stun_servers then stun_servers = {} end
-		stun_servers[#stun_servers + 1] = value
+	for v in (query or ""):gmatch("[Ss][Tt][Uu][Nn]=([^&]+)") do
+		stun_servers = stun_servers or {}
+		stun_servers[#stun_servers + 1] = v
 	end
 	realm.stun_servers = stun_servers
 	return realm

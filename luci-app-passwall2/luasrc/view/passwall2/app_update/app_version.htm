@@ -1,7 +1,7 @@
+<div id="app_version">
 <%
-local api = require "luci.passwall2.api"
-local com = require "luci.passwall2.com"
-local version = {}
+local api = self.api
+local com = self.com
 -%>
 
 <script type="text/javascript">
@@ -192,15 +192,14 @@ local version = {}
 	</div>
 </div>
 
-<%for k, v in pairs(com) do
-	version[k] = api.get_app_version(k)%>
+<%for k, v in pairs(com) do%>
 <div class="cbi-value">
 	<label class="cbi-value-title"><%=v.name%>
 		<%:Version%>
 	</label>
 	<div class="cbi-value-field">
 		<div class="cbi-value-description">
-			<span>【 <%=version[k] ~="" and version[k] or translate("Null") %> 】</span>
+			<span>【 <span class="com_version" key="<%=k%>"><%=translate("Null")%></span> 】</span>
 			<input class="btn cbi-button cbi-button-apply" type="button" id="_<%=k%>-check_btn"
 				onclick="onBtnClick(this,'<%=k%>');" value="<%:Check update%>" />
 			<input class="btn cbi-button cbi-button-apply" type="button" id="_<%=k%>-force_btn"
@@ -210,3 +209,27 @@ local version = {}
 	</div>
 </div>
 <%end%>
+
+<script type="text/javascript">
+	//<![CDATA[
+	document.addEventListener("DOMContentLoaded", function () {
+		let coms = document.getElementsByClassName("com_version");
+		if (coms.length > 0) {
+			for (let i = 0; i < coms.length; i++) {
+				let key = coms[i].getAttribute("key");
+				coms[i].innerHTML = "<%=translate("Collecting data...")%>";
+				XHR.get('<%=api.url("version_")%>' + key, null, function(x, result) {
+					if (x.status == 200 && result.code == 1) {
+						let data = result.data;
+						let t = "<%=translate("Null")%>";
+						if (data && data != "")
+							t = data;
+						coms[i].innerHTML = t;
+					}
+				});
+			}
+		}
+	});
+	//]]>
+</script>
+</div>

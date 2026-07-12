@@ -815,34 +815,32 @@ start_crontab() {
 	stop_week_mode=$(config_t_get global_delay stop_week_mode)
 	stop_time_mode=$(config_t_get global_delay stop_time_mode)
 	if [ -n "$stop_week_mode" ]; then
-		local t="0 $stop_time_mode * * $stop_week_mode"
-		[ "$stop_week_mode" = "7" ] && t="0 $stop_time_mode * * *"
-		if [ "$stop_week_mode" = "8" ]; then
-			update_loop=1
-		else
-			echo "$t /etc/init.d/$CONFIG stop > /dev/null 2>&1 &" >>/etc/crontabs/root
-		fi
+		stop_time_hh=$(echo $stop_time_mode | awk -F ':' '{print $1}')
+		stop_time_mm=$(echo $stop_time_mode | awk -F ':' '{print $2}')
+		local t="$stop_time_mm $stop_time_hh * * $stop_week_mode"
+		[ "$stop_week_mode" = "7" ] && t="$stop_time_mm $stop_time_hh * * *"
+		echo "$t /etc/init.d/$CONFIG stop > /dev/null 2>&1 &" >>/etc/crontabs/root
 		log_i18n 0 "Scheduled tasks: Auto stop service."
 	fi
 
 	start_week_mode=$(config_t_get global_delay start_week_mode)
 	start_time_mode=$(config_t_get global_delay start_time_mode)
 	if [ -n "$start_week_mode" ]; then
-		local t="0 $start_time_mode * * $start_week_mode"
-		[ "$start_week_mode" = "7" ] && t="0 $start_time_mode * * *"
-		if [ "$start_week_mode" = "8" ]; then
-			update_loop=1
-		else
-			echo "$t /etc/init.d/$CONFIG start > /dev/null 2>&1 &" >>/etc/crontabs/root
-		fi
+		start_time_hh=$(echo $start_time_mode | awk -F ':' '{print $1}')
+		start_time_mm=$(echo $start_time_mode | awk -F ':' '{print $2}')
+		local t="$start_time_mm $start_time_hh * * $start_week_mode"
+		[ "$start_week_mode" = "7" ] && t="$start_time_mm $start_time_hh * * *"
+		echo "$t /etc/init.d/$CONFIG start > /dev/null 2>&1 &" >>/etc/crontabs/root
 		log_i18n 0 "Scheduled tasks: Auto start service."
 	fi
 
 	restart_week_mode=$(config_t_get global_delay restart_week_mode)
 	restart_time_mode=$(config_t_get global_delay restart_time_mode)
 	if [ -n "$restart_week_mode" ]; then
-		local t="0 $restart_time_mode * * $restart_week_mode"
-		[ "$restart_week_mode" = "7" ] && t="0 $restart_time_mode * * *"
+		restart_time_hh=$(echo $restart_time_mode | awk -F ':' '{print $1}')
+		restart_time_mm=$(echo $restart_time_mode | awk -F ':' '{print $2}')
+		local t="$restart_time_mm $restart_time_hh * * $restart_week_mode"
+		[ "$restart_week_mode" = "7" ] && t="$restart_time_mm $restart_time_hh * * *"
 		if [ "$restart_week_mode" = "8" ]; then
 			update_loop=1
 		else
@@ -851,13 +849,14 @@ start_crontab() {
 		log_i18n 0 "Scheduled tasks: Auto restart service."
 	fi
 
-	autoupdate=$(config_t_get global_rules auto_update)
-	weekupdate=$(config_t_get global_rules week_update)
-	dayupdate=$(config_t_get global_rules time_update)
-	if [ "$autoupdate" = "1" ]; then
-		local t="0 $dayupdate * * $weekupdate"
-		[ "$weekupdate" = "7" ] && t="0 $dayupdate * * *"
-		if [ "$weekupdate" = "8" ]; then
+	rules_update_week_mode=$(config_t_get global_rules update_week_mode)
+	rules_update_time_mode=$(config_t_get global_rules update_time_mode)
+	if [ -n "$rules_update_week_mode" ]; then
+		rules_update_time_hh=$(echo $rules_update_time_mode | awk -F ':' '{print $1}')
+		rules_update_time_mm=$(echo $rules_update_time_mode | awk -F ':' '{print $2}')
+		local t="$rules_update_time_mm $rules_update_time_hh * * $rules_update_week_mode"
+		[ "$rules_update_week_mode" = "7" ] && t="$rules_update_time_mm $rules_update_time_hh * * *"
+		if [ "$rules_update_week_mode" = "8" ]; then
 			update_loop=1
 		else
 			echo "$t lua $APP_PATH/rule_update.lua log all cron > /dev/null 2>&1 &" >>/etc/crontabs/root
@@ -868,24 +867,26 @@ start_crontab() {
 	TMP_SUB_PATH=$TMP_PATH/sub_crontabs
 	mkdir -p $TMP_SUB_PATH
 	for item in $(uci show ${CONFIG} | grep "=subscribe_list" | cut -d '.' -sf 2 | cut -d '=' -sf 1); do
-		if [ "$(config_n_get $item auto_update 0)" = "1" ]; then
+		sub_update_week_mode=$(config_n_get $item update_week_mode)
+		if [ -n "$sub_update_week_mode" ]; then
 			cfgid=$(uci show ${CONFIG}.$item | head -n 1 | cut -d '.' -sf 2 | cut -d '=' -sf 1)
 			remark=$(config_n_get $item remark)
-			week_update=$(config_n_get $item week_update)
-			time_update=$(config_n_get $item time_update)
-			echo "$cfgid" >> $TMP_SUB_PATH/${week_update}_${time_update}
+			sub_update_time_mode=$(config_n_get $item update_time_mode)
+			echo "$cfgid" >> $TMP_SUB_PATH/${sub_update_week_mode}_${sub_update_time_mode}
 			log_i18n 0 "Scheduled tasks: Auto update [%s] subscription." "${remark}"
 		fi
 	done
 
 	[ -d "${TMP_SUB_PATH}" ] && {
 		for name in $(ls ${TMP_SUB_PATH}); do
-			week_update=$(echo $name | awk -F '_' '{print $1}')
-			time_update=$(echo $name | awk -F '_' '{print $2}')
 			cfgids=$(echo -n $(cat ${TMP_SUB_PATH}/${name}) | sed 's# #,#g')
-			local t="0 $time_update * * $week_update"
-			[ "$week_update" = "7" ] && t="0 $time_update * * *"
-			if [ "$week_update" = "8" ]; then
+			sub_update_week_mode=$(echo $name | awk -F '_' '{print $1}')
+			sub_update_time_mode=$(echo $name | awk -F '_' '{print $2}')
+			sub_update_time_hh=$(echo $sub_update_time_mode | awk -F ':' '{print $1}')
+			sub_update_time_mm=$(echo $sub_update_time_mode | awk -F ':' '{print $2}')
+			local t="$sub_update_time_mm $sub_update_time_hh * * $sub_update_week_mode"
+			[ "$sub_update_week_mode" = "7" ] && t="$sub_update_time_mm $sub_update_time_hh * * *"
+			if [ "$sub_update_week_mode" = "8" ]; then
 				update_loop=1
 			else
 				echo "$t lua $APP_PATH/subscribe.lua start $cfgids cron > /dev/null 2>&1 &" >>/etc/crontabs/root
@@ -1228,8 +1229,9 @@ stop() {
 			kill -9 "$pid" >/dev/null 2>&1
 		fi
 	done
-	busybox pgrep -f "sleep.*(6s|9s|58s)" | xargs kill -9 >/dev/null 2>&1
-	busybox pgrep -af "${CONFIG}/" | awk '! /app\.sh|subscribe\.lua|rule_update\.lua|tasks\.sh|server_app\.lua|ujail/{print $1}' | xargs kill -9 >/dev/null 2>&1
+	busybox pgrep -af "${CONFIG}/monitor\.sh" | xargs -r kill -9 >/dev/null 2>&1
+	busybox pgrep -f "sleep.*(6s|9s|58s)" | xargs -r kill -9 >/dev/null 2>&1
+	busybox pgrep -af "${CONFIG}/" | awk '! /app\.sh|subscribe\.lua|rule_update\.lua|tasks\.sh|server_app\.lua|ujail/{print $1}' | xargs -r kill -9 >/dev/null 2>&1
 	unset V2RAY_LOCATION_ASSET
 	unset XRAY_LOCATION_ASSET
 	unset SS_SYSTEM_DNS_RESOLVER_FORCE_BUILTIN

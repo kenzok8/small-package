@@ -14,6 +14,8 @@ local GLOBAL = {
 
 local xray_version = api.get_app_version("xray")
 
+local xray_min_version = "26.3.27"
+
 local function get_domain_excluded()
 	local path = string.format("/usr/share/%s/domains_excluded", appname)
 	local content = fs.readfile(path)
@@ -308,10 +310,18 @@ function gen_outbound(flag, node, tag, proxy_table)
 							local o = {
 								type = "salamander",
 								settings = node.hysteria2_obfs_password and {
-									password = node.hysteria2_obfs_password,
-									packetSize = node.hysteria2_obfs_type == "gecko" and "512-1200" or nil
+									password = node.hysteria2_obfs_password
 								} or nil
 							}
+							if node.hysteria2_obfs_type == "gecko" then
+								local min = tonumber(node.hysteria2_obfs_MinPacketSize) or 512
+								local max = tonumber(node.hysteria2_obfs_MaxPacketSize) or 1200
+								if min <= 0 or min > max or max > 2048 then
+									min = 512
+									max = 1200
+								end
+								o.settings.packetSize = min .. "-" .. max
+							end
 							udp[#udp+1] = o
 						end
 						if node.hysteria2_realms then
@@ -412,6 +422,14 @@ function gen_outbound(flag, node, tag, proxy_table)
 				level = 0
 			}
 		}
+
+		if node.protocol == "hysteria" and node.hysteria2_realms then
+			local realm = api.parse_realm_uri(node.hysteria2_realm_url)
+			if realm then
+				result.settings.address = realm.address
+				result.settings.port = realm.port
+			end
+		end
 
 		if node.protocol == "wireguard" then
 			result.settings.noKernelTun = true
@@ -736,10 +754,18 @@ function gen_config_server(node)
 								local o = {
 									type = "salamander",
 									settings = node.hysteria2_obfs_password and {
-										password = node.hysteria2_obfs_password,
-										packetSize = node.hysteria2_obfs_type == "gecko" and "512-1200" or nil
+										password = node.hysteria2_obfs_password
 									} or nil
 								}
+								if node.hysteria2_obfs_type == "gecko" then
+									local min = tonumber(node.hysteria2_obfs_MinPacketSize) or 512
+									local max = tonumber(node.hysteria2_obfs_MaxPacketSize) or 1200
+									if min <= 0 or min > max or max > 2048 then
+										min = 512
+										max = 1200
+									end
+									o.settings.packetSize = min .. "-" .. max
+								end
 								udp[#udp+1] = o
 							end
 							if node.hysteria2_realms then
@@ -784,7 +810,10 @@ function gen_config_server(node)
 			}
 		},
 		outbounds = outbounds,
-		routing = routing
+		routing = routing,
+		version = {
+			min = xray_min_version
+		}
 	}
 
 	local alpn = {}
@@ -881,13 +910,21 @@ function gen_config(var)
 	local xray_settings = uci:get_all(appname, "@global_xray[0]") or {}
 
 	if xray_settings.fragment == "1" then
-		local delay = xray_settings.fragment_delay
+		local lengths, delays = {}, {}
+		api.trim(xray_settings.fragment_lengths):gsub("[^,]+", function(w)
+		    w = w:gsub("%s+", "")
+		    if w ~= "" then lengths[#lengths+1] = w end
+		end)
+		api.trim(xray_settings.fragment_delays):gsub("[^,]+", function(w)
+		    w = w:gsub("%s+", "")
+		    if w ~= "" then delays[#delays+1] = w end
+		end)
 		fragment_table = {
 			type = "fragment",
 			settings = {
 				packets = xray_settings.fragment_packets,
-				length = xray_settings.fragment_length,
-				delay = delay and (delay:find("-", 1, true) and delay or tonumber(delay)) or nil,
+				lengths = #lengths > 0 and lengths or nil,
+				delays = #delays > 0 and delays or nil,
 				maxSplit = xray_settings.fragment_maxSplit
 			}
 		}
@@ -1971,6 +2008,10 @@ function gen_config(var)
 	
 	if inbounds or outbounds then
 		local config = {
+			env = (function()
+				local asset_location = uci:get(appname, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
+				return { XRAY_LOCATION_ASSET = asset_location }
+			end)(),
 			log = {
 				--access = string.format("/tmp/etc/%s/%s_access.log", appname, "global"),
 				--error = string.format("/tmp/etc/%s/%s_error.log", appname, "global"),
@@ -2000,6 +2041,9 @@ function gen_config(var)
 				--     statsInboundUplink = false,
 				--     statsInboundDownlink = false
 				-- }
+			},
+			version = {
+				min = xray_min_version
 			}
 		}
 

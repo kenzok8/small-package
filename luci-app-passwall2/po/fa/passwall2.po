@@ -672,8 +672,8 @@ msgstr "واحد: دقیقه"
 msgid "stop automatically mode"
 msgstr "حالت توقف خودکار"
 
-msgid "stop Time(Every day)"
-msgstr "زمان توقف (هر روز)"
+msgid "stop Time"
+msgstr "زمان را متوقف کنید"
 
 msgid "stop Interval(Hour)"
 msgstr "بازه توقف (ساعت)"
@@ -681,8 +681,8 @@ msgstr "بازه توقف (ساعت)"
 msgid "start automatically mode"
 msgstr "حالت شروع خودکار"
 
-msgid "start Time(Every day)"
-msgstr "زمان شروع (هر روز)"
+msgid "start Time"
+msgstr "زمان شروع"
 
 msgid "start Interval(Hour)"
 msgstr "بازه شروع (ساعت)"
@@ -690,8 +690,8 @@ msgstr "بازه شروع (ساعت)"
 msgid "restart automatically mode"
 msgstr "حالت راه‌اندازی مجدد خودکار"
 
-msgid "restart Time(Every day)"
-msgstr "زمان راه‌اندازی مجدد (هر روز)"
+msgid "restart Time"
+msgstr "زمان راه اندازی مجدد"
 
 msgid "restart Interval(Hour)"
 msgstr "بازه راه‌اندازی مجدد (ساعت)"
@@ -756,11 +756,11 @@ msgstr "ربودن ICMP (PING)"
 msgid "Hijacking ICMPv6 (IPv6 PING)"
 msgstr "ربودن ICMPv6 (IPv6 PING)"
 
-msgid "Force Proxy LAN IP"
-msgstr "IP پروکسی LAN را مجبور کنید"
+msgid "Direct IP List"
+msgstr "لیست آی‌پی‌های مستقیم"
 
-msgid "By default, commonly used internal network IP ranges will be connect directly (not entering the core). If you want a certain network range to go through a proxy, please add it here."
-msgstr "به طور پیش‌فرض، محدوده‌های IP شبکه داخلی که معمولاً استفاده می‌شوند، مستقیماً متصل می‌شوند (و وارد هسته نمی‌شوند). اگر می‌خواهید محدوده شبکه خاصی از طریق پروکسی عبور کند، لطفاً آن را اینجا اضافه کنید."
+msgid "These had been joined ip addresses will connect directly (not entering the core)."
+msgstr "این آدرس‌های IP که به هم متصل شده‌اند، مستقیماً متصل می‌شوند (و وارد هسته نمی‌شوند)."
 
 msgid "Sniffing"
 msgstr "شنود (Sniffing)"
@@ -897,17 +897,14 @@ msgstr "بازگردانی"
 msgid "Rollbacking..."
 msgstr "در حال بازگردانی..."
 
-msgid "Enable auto update rules"
-msgstr "فعال‌سازی به‌روزرسانی خودکار قوانین"
-
-msgid "Update Time(every day)"
-msgstr "زمان به‌روزرسانی (هر روز)"
+msgid "Update Time"
+msgstr "زمان به‌روزرسانی"
 
 msgid "Update Interval(hour)"
 msgstr "بازه به‌روزرسانی (ساعت)"
 
-msgid "Update Mode"
-msgstr "حالت به‌روزرسانی"
+msgid "Auto Update Mode"
+msgstr "حالت به‌روزرسانی خودکار"
 
 msgid "Loop Mode"
 msgstr "حالت حلقه"
@@ -1004,9 +1001,6 @@ msgstr "در حال انتقال..."
 
 msgid "App Update"
 msgstr "به‌روزرسانی برنامه"
-
-msgid "Please confirm that your firmware supports FPU."
-msgstr "لطفاً تأیید کنید که سیستم‌عامل شما از FPU پشتیبانی می‌کند."
 
 msgid "if you want to run from memory, change the path, /tmp beginning then save the application and update it manually."
 msgstr "اگر می‌خواهید از حافظه اجرا کنید، مسیر را تغییر دهید، با /tmp شروع شود سپس برنامه را ذخیره و دستی به‌روزرسانی کنید."
@@ -2394,3 +2388,12 @@ msgstr "اشتراک کامل شد..."
 
 msgid "Processing, please wait…"
 msgstr "در حال پردازش، لطفا صبر کنید…"
+
+msgid "Invalid Realm URL."
+msgstr "آدرس اینترنتی (URL) نامعتبر است."
+
+msgid "Gecko Packet Size (min)"
+msgstr "اندازه بسته Gecko (دقیقه)"
+
+msgid "Gecko Packet Size (max)"
+msgstr "اندازه بسته Gecko (حداکثر)"

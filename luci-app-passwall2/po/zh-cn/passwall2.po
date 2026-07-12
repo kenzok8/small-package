@@ -581,10 +581,10 @@ msgid "Certificate fingerprint"
 msgstr "证书指纹"
 
 msgid "Max upload Mbps"
-msgstr "最大上行(Mbps)"
+msgstr "最大上行（Mbps）"
 
 msgid "Max download Mbps"
-msgstr "最大下行(Mbps)"
+msgstr "最大下行（Mbps）"
 
 msgid "QUIC stream receive window"
 msgstr "QUIC 流接收窗口"
@@ -664,8 +664,8 @@ msgstr "单位：分钟"
 msgid "stop automatically mode"
 msgstr "定时关闭模式"
 
-msgid "stop Time(Every day)"
-msgstr "关闭时间(每天)"
+msgid "stop Time"
+msgstr "关闭时间"
 
 msgid "stop Interval(Hour)"
 msgstr "关闭间隔(小时)"
@@ -673,8 +673,8 @@ msgstr "关闭间隔(小时)"
 msgid "start automatically mode"
 msgstr "定时开启模式"
 
-msgid "start Time(Every day)"
-msgstr "开启时间(每天)"
+msgid "start Time"
+msgstr "开启时间"
 
 msgid "start Interval(Hour)"
 msgstr "开启间隔(小时)"
@@ -682,8 +682,8 @@ msgstr "开启间隔(小时)"
 msgid "restart automatically mode"
 msgstr "定时重启模式"
 
-msgid "restart Time(Every day)"
-msgstr "重启时间(每天)"
+msgid "restart Time"
+msgstr "重启时间"
 
 msgid "restart Interval(Hour)"
 msgstr "重启间隔(小时)"
@@ -748,11 +748,11 @@ msgstr "劫持ICMP (PING)"
 msgid "Hijacking ICMPv6 (IPv6 PING)"
 msgstr "劫持ICMPv6 (IPv6 PING)"
 
-msgid "Force Proxy LAN IP"
-msgstr "强制代理内网IP段"
+msgid "Direct IP List"
+msgstr "直连 IP 列表"
 
-msgid "By default, commonly used internal network IP ranges will be connect directly (not entering the core). If you want a certain network range to go through a proxy, please add it here."
-msgstr "默认情况下，常用内网IP网段将直连（不进入内核），如果你希望某个网段走代理，请在此添加。"
+msgid "These had been joined ip addresses will connect directly (not entering the core)."
+msgstr "加入的IP段将直连（不进入内核）。"
 
 msgid "Sniffing"
 msgstr "流量嗅探"
@@ -889,17 +889,14 @@ msgstr "回滚"
 msgid "Rollbacking..."
 msgstr "回滚中..."
 
-msgid "Enable auto update rules"
-msgstr "开启自动更新规则"
-
-msgid "Update Time(every day)"
-msgstr "更新时间(每天)"
+msgid "Update Time"
+msgstr "更新时间"
 
 msgid "Update Interval(hour)"
 msgstr "更新间隔(小时)"
 
-msgid "Update Mode"
-msgstr "更新模式"
+msgid "Auto Update Mode"
+msgstr "自动更新模式"
 
 msgid "Loop Mode"
 msgstr "循环"
@@ -996,9 +993,6 @@ msgstr "移动中"
 
 msgid "App Update"
 msgstr "组件更新"
-
-msgid "Please confirm that your firmware supports FPU."
-msgstr "请确认你的固件支持FPU。"
 
 msgid "if you want to run from memory, change the path, /tmp beginning then save the application and update it manually."
 msgstr "如果你希望从内存中运行，请更改路径，/tmp 开头，然后保存应用后，再手动更新。"
@@ -2380,3 +2374,12 @@ msgstr "订阅完毕..."
 
 msgid "Processing, please wait…"
 msgstr "正在处理，请稍候。"
+
+msgid "Invalid Realm URL."
+msgstr "Realm URL 不正确。"
+
+msgid "Gecko Packet Size (min)"
+msgstr "Gecko 包大小（最小）"
+
+msgid "Gecko Packet Size (max)"
+msgstr "Gecko 包大小（最大）"

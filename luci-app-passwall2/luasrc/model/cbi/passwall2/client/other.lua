@@ -29,7 +29,9 @@ o.rmempty = true
 for index, value in ipairs({"stop", "start", "restart"}) do
 	o = s:option(ListValue, value .. "_week_mode", translate(value .. " automatically mode"))
 	o:value("", translate("Disable"))
-	o:value(8, translate("Loop Mode"))
+	if value == "restart" then
+		o:value(8, translate("Loop Mode"))
+	end
 	o:value(7, translate("Every day"))
 	o:value(1, translate("Every Monday"))
 	o:value(2, translate("Every Tuesday"))
@@ -39,9 +41,25 @@ for index, value in ipairs({"stop", "start", "restart"}) do
 	o:value(6, translate("Every Saturday"))
 	o:value(0, translate("Every Sunday"))
 
-	o = s:option(ListValue, value .. "_time_mode", translate(value .. " Time(Every day)"))
-	for t = 0, 23 do o:value(t, t .. ":00") end
-	o.default = 0
+	o = s:option(Value, value .. "_time_mode", translate(value .. " Time"))
+	o:value("0:00")
+	for t = 0, 23 do
+		if t == 12 then
+			o:value(t .. ":30")
+		elseif t == 23 then
+			o:value(t .. ":59")
+		else
+			o:value(t .. ":00")
+		end
+	end
+	o.default = "0:00"
+	o.validate = function(self, value)
+		local b = api.is_timehhmm(value)
+		if b then
+			return value
+		end
+		return nil
+	end
 	o:depends(value .. "_week_mode", "0")
 	o:depends(value .. "_week_mode", "1")
 	o:depends(value .. "_week_mode", "2")
@@ -150,8 +168,45 @@ o = s:option(Flag, "accept_icmpv6", translate("Hijacking ICMPv6 (IPv6 PING)"))
 o:depends("ipv6_tproxy", true)
 o.default = 0
 
-o = s:option(DynamicList, "force_proxy_lan_ip", translate("Force Proxy LAN IP"), translate("By default, commonly used internal network IP ranges will be connect directly (not entering the core). If you want a certain network range to go through a proxy, please add it here."))
-o.datatype = "or(ipmask4,ipmask6)"
+function clean_text(text)
+	local nbsp = string.char(0xC2, 0xA0)
+	local fullwidth_space = string.char(0xE3, 0x80, 0x80)
+	return text
+		:gsub("\t", " ")
+		:gsub(nbsp, " ")
+		:gsub(fullwidth_space, " ")
+		:gsub("^%s+", "")
+		:gsub("%s+$", "\n")
+		:gsub("\r\n", "\n")
+		:gsub("[ \t]*\n[ \t]*", "\n")
+end
+
+local direct_ip_file = "/usr/share/passwall2/direct_ip"
+o = s:option(TextValue, "direct_ip", translate("Direct IP List"), "<font color='red'>" .. translate("These had been joined ip addresses will connect directly (not entering the core).") .. "</font>")
+o.rows = 15
+o.wrap = "off"
+o.cfgvalue = function(self, section)
+	return fs.readfile(direct_ip_file) or ""
+end
+o.write = function(self, section, value)
+	fs.writefile(direct_ip_file, value:gsub("\r\n", "\n"))
+end
+o.remove = function(self, section, value)
+	fs.writefile(direct_ip_file, "")
+end
+o.validate = function(self, value)
+	local ipmasks= {}
+	value = clean_text(value)
+	string.gsub(value, '[^' .. "\r\n" .. ']+', function(w) table.insert(ipmasks, api.trim(w)) end)
+	for index, ipmask in ipairs(ipmasks) do
+		if ipmask ~= "" and not ipmask:find("^#") and not ipmask:find("^geoip:") then
+			if not ( datatypes.ipmask4(ipmask) or datatypes.ipmask6(ipmask) ) then
+				return nil, ipmask .. " " .. translate("Not valid IP format, please re-enter!")
+			end
+		end
+	end
+	return value
+end
 
 if has_xray then
 	s_xray = m:section(TypedSection, "global_xray", "Xray " .. translate("Settings"))
@@ -170,19 +225,17 @@ if has_xray then
 	o:value("1-5", "1-5")
 	o:depends("fragment", true)
 
-	o = s_xray:option(Value, "fragment_length", translate("Fragment Length"), translate("Fragmented packet length (byte)"))
-	o.datatype = "or(uinteger,portrange)"
-	o.default = "100-200"
+	o = s_xray:option(Value, "fragment_lengths", translate("Fragment Length"), translate("Fragmented packet length (byte)"))
+	o.default = "3-5,6-8,10-20"
 	o:depends("fragment", true)
 
-	o = s_xray:option(Value, "fragment_delay", translate("Fragment Delay"), translate("Fragmentation interval (ms)"))
-	o.datatype = "or(uinteger,portrange)"
+	o = s_xray:option(Value, "fragment_delays", translate("Fragment Delay"), translate("Fragmentation interval (ms)"))
 	o.default = "10-20"
 	o:depends("fragment", true)
 
 	o = s_xray:option(Value, "fragment_maxSplit", translate("Max Split"), translate("Limit the maximum number of splits."))
 	o.datatype = "or(uinteger,portrange)"
-	o.default = "100-200"
+	o.default = "3-6"
 	o:depends("fragment", true)
 
 	o = s_xray:option(Flag, "noise", translate("Noise"), translate("UDP noise, Under some circumstances it can bypass some UDP based protocol restrictions."))

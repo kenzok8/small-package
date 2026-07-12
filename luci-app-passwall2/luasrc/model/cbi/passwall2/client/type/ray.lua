@@ -32,10 +32,10 @@ if formvalue_proto then s.val["protocol"] = formvalue_proto end
 local arg_select_proto = luci.http.formvalue("select_proto") or ""
 
 local ss_method_list = {
-	"none", "plain", "aes-128-gcm", "aes-256-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305", "xchacha20-poly1305", "xchacha20-ietf-poly1305", "2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305"
+	"aes-128-gcm", "aes-256-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305", "xchacha20-poly1305", "xchacha20-ietf-poly1305", "2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305"
 }
 
-local security_list = { "none", "auto", "aes-128-gcm", "chacha20-poly1305", "zero" }
+local security_list = { "auto", "aes-128-gcm", "chacha20-poly1305" }
 
 local header_type_list = {
 	"none", "srtp", "utp", "wechat-video", "dtls", "wireguard", "dns"
@@ -243,7 +243,8 @@ if load_balancing_options then -- [[ Load balancing Start ]]
 	o:value("https://www.youtube.com/generate_204", "YouTube")
 	o:value("https://connect.rom.miui.com/generate_204", "MIUI (CN)")
 	o:value("https://connectivitycheck.platform.hicloud.com/generate_204", "HiCloud (CN)")
-	o.default = "https://www.google.com/generate_204"
+	o:value("https://wifi.vivo.com.cn/generate_204", "VIVO (CN)")
+	o.default = o.keylist[3]
 	o.description = translate("The URL used to detect the connection status.")
 
 	o = s:option(Value, _n("probeInterval"), translate("Probe Interval"))
@@ -348,6 +349,12 @@ end
 
 o = s:option(Value, _n("hysteria2_realm_url"), translate("Realm URL"), translate("Example:") .. "realm://public@realm.hy2.io/your-realm-name")
 o:depends({ [_n("hysteria2_realms")] = "1" })
+o.validate = function(self, value)
+	value = api.trim(value)
+	local realm = api.parse_realm_uri(value)
+	if realm then return value end
+	return nil, translate("Invalid Realm URL.")
+end
 
 o = s:option(DynamicList, _n("hysteria2_realm_stun"), translate("Realm STUN"))
 o.default = { "stun.sip.us:3478", "stun.nextcloud.com:3478", "global.stun.twilio.com:3478" }
@@ -365,6 +372,18 @@ o:depends({ [_n("protocol")] = "hysteria2" })
 
 o = s:option(Value, _n("hysteria2_obfs_password"), translate("Obfs Password"))
 o:depends({ [_n("hysteria2_obfs_type")] = "salamander" })
+o:depends({ [_n("hysteria2_obfs_type")] = "gecko" })
+
+o = s:option(Value, _n("hysteria2_obfs_MinPacketSize"), translate("Gecko Packet Size (min)"))
+o.datatype = "uinteger"
+o.placeholder = "512"
+o.default = "512"
+o:depends({ [_n("hysteria2_obfs_type")] = "gecko" })
+
+o = s:option(Value, _n("hysteria2_obfs_MaxPacketSize"), translate("Gecko Packet Size (max)"))
+o.datatype = "uinteger"
+o.placeholder = "1200"
+o.default = "1200"
 o:depends({ [_n("hysteria2_obfs_type")] = "gecko" })
 
 o = s:option(Value, _n("hysteria2_up_mbps"), translate("Max upload Mbps"))
@@ -493,6 +512,7 @@ o:value("ios")
 o:value("android")
 o:value("random")
 o:value("randomized")
+o:value("unsafe")
 o.default = "chrome"
 o:depends({ [_n("tls")] = true, [_n("utls")] = true })
 o:depends({ [_n("tls")] = true, [_n("reality")] = true })

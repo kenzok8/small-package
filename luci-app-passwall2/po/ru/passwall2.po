@@ -673,8 +673,8 @@ msgstr "Единица: минуты"
 msgid "stop automatically mode"
 msgstr "Режим автоотключения"
 
-msgid "stop Time(Every day)"
-msgstr "Время отключения (ежедневно)"
+msgid "stop Time"
+msgstr "Время отключения"
 
 msgid "stop Interval(Hour)"
 msgstr "Интервал отключения (часы)"
@@ -682,8 +682,8 @@ msgstr "Интервал отключения (часы)"
 msgid "start automatically mode"
 msgstr "Режим автозапуска"
 
-msgid "start Time(Every day)"
-msgstr "Время запуска (ежедневно)"
+msgid "start Time"
+msgstr "Время запуска"
 
 msgid "start Interval(Hour)"
 msgstr "Интервал запуска (часы)"
@@ -691,8 +691,8 @@ msgstr "Интервал запуска (часы)"
 msgid "restart automatically mode"
 msgstr "Режим автоперезапуска"
 
-msgid "restart Time(Every day)"
-msgstr "Время перезапуска (ежедневно)"
+msgid "restart Time"
+msgstr "Время перезапуска"
 
 msgid "restart Interval(Hour)"
 msgstr "Интервал перезапуска (часы)"
@@ -757,11 +757,11 @@ msgstr "Перехват ICMP (PING)"
 msgid "Hijacking ICMPv6 (IPv6 PING)"
 msgstr "Перехват ICMPv6 (IPv6 PING)"
 
-msgid "Force Proxy LAN IP"
-msgstr "Принудительное использование IP-адреса локальной сети (Local IP)"
+msgid "Direct IP List"
+msgstr "Список прямых IP-адресов"
 
-msgid "By default, commonly used internal network IP ranges will be connect directly (not entering the core). If you want a certain network range to go through a proxy, please add it here."
-msgstr "По умолчанию, часто используемые диапазоны IP-адресов внутренней сети будут подключаться напрямую (без доступа к ядру сети). Если вы хотите, чтобы определенный диапазон IP-адресов сети проходил через прокси-сервер, укажите это здесь."
+msgid "These had been joined ip addresses will connect directly (not entering the core)."
+msgstr "Эти объединенные IP-адреса будут подключаться напрямую (не входя в ядро ​​сети)."
 
 msgid "Sniffing"
 msgstr "Анализ трафика"
@@ -898,17 +898,14 @@ msgstr "Откатить"
 msgid "Rollbacking..."
 msgstr "Выполняется откат..."
 
-msgid "Enable auto update rules"
-msgstr "Автообновление правил"
-
-msgid "Update Time(every day)"
-msgstr "Время обновления (ежедневно)"
+msgid "Update Time"
+msgstr "Время обновления"
 
 msgid "Update Interval(hour)"
 msgstr "Интервал обновления (часы)"
 
-msgid "Update Mode"
-msgstr "Режим обновления"
+msgid "Auto Update Mode"
+msgstr "Режим автоматического обновления"
 
 msgid "Loop Mode"
 msgstr "Циклический"
@@ -1005,9 +1002,6 @@ msgstr "Перемещение..."
 
 msgid "App Update"
 msgstr "Обновление компонентов"
-
-msgid "Please confirm that your firmware supports FPU."
-msgstr "Убедитесь, что ваша прошивка поддерживает FPU."
 
 msgid "if you want to run from memory, change the path, /tmp beginning then save the application and update it manually."
 msgstr "Если вы хотите запускать из оперативной памяти, измените путь на начинающийся с /tmp, затем сохраните настройки и обновите компонент вручную."
@@ -2392,3 +2386,12 @@ msgstr "Подписка завершена..."
 
 msgid "Processing, please wait…"
 msgstr "Обработка, пожалуйста, подождите…"
+
+msgid "Invalid Realm URL."
+msgstr "Неверный URL-адрес области."
+
+msgid "Gecko Packet Size (min)"
+msgstr "Размер упаковки Gecko (мин)"
+
+msgid "Gecko Packet Size (max)"
+msgstr "Размер упаковки Gecko (макс)"

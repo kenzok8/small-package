@@ -103,6 +103,7 @@ function index()
 	for com, _ in pairs(coms) do
 		entry({"admin", "services", appname, "check_" .. com}, call("com_check", com)).leaf = true
 		entry({"admin", "services", appname, "update_" .. com}, call("com_update", com)).leaf = true
+		entry({"admin", "services", appname, "version_" .. com}, call("com_version", com)).leaf = true
 	end
 
 	--[[Backup]]
@@ -697,6 +698,11 @@ function com_update(comname)
 	end
 
 	http_write_json(json)
+end
+
+function com_version(comname)
+	local version = api.get_app_version(comname)
+	http_write_json_ok(version)
 end
 
 local backup_files = {
