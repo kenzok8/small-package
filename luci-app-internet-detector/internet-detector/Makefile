@@ -64,4 +64,15 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./files/usr/lib/lua/internet-detector/modules/mod_regular_script.lua $(1)/usr/lib/lua/internet-detector/modules/mod_regular_script.lua
 endef
 
+define Package/$(PKG_NAME)/postinst
+#!/bin/sh
+
+ID_CONF="/etc/internet-detector"
+SYSUP_CONF="/etc/sysupgrade.conf"
+
+grep -e "^$${ID_CONF}" "$$SYSUP_CONF" > /dev/null || echo "$$ID_CONF" >> "$$SYSUP_CONF"
+
+exit 0
+endef
+
 $(eval $(call BuildPackage,$(PKG_NAME)))
