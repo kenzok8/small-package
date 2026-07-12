@@ -781,8 +781,8 @@ msgstr "单位：分钟"
 msgid "stop automatically mode"
 msgstr "定时关闭模式"
 
-msgid "stop Time(Every day)"
-msgstr "关闭时间(每天)"
+msgid "stop Time"
+msgstr "关闭时间"
 
 msgid "stop Interval(Hour)"
 msgstr "关闭间隔(小时)"
@@ -790,8 +790,8 @@ msgstr "关闭间隔(小时)"
 msgid "start automatically mode"
 msgstr "定时开启模式"
 
-msgid "start Time(Every day)"
-msgstr "开启时间(每天)"
+msgid "start Time"
+msgstr "开启时间"
 
 msgid "start Interval(Hour)"
 msgstr "开启间隔(小时)"
@@ -799,8 +799,8 @@ msgstr "开启间隔(小时)"
 msgid "restart automatically mode"
 msgstr "定时重启模式"
 
-msgid "restart Time(Every day)"
-msgstr "重启时间(每天)"
+msgid "restart Time"
+msgstr "重启时间"
 
 msgid "restart Interval(Hour)"
 msgstr "重启间隔(小时)"
@@ -1015,17 +1015,14 @@ msgstr "中国域名列表(Chnlist)更新URL"
 msgid "Rule status"
 msgstr "规则版本"
 
-msgid "Enable auto update rules"
-msgstr "开启自动更新规则"
-
-msgid "Update Time(every day)"
-msgstr "更新时间(每天)"
+msgid "Update Time"
+msgstr "更新时间"
 
 msgid "Update Interval(hour)"
 msgstr "更新间隔(小时)"
 
-msgid "Update Mode"
-msgstr "更新模式"
+msgid "Auto Update Mode"
+msgstr "自动更新模式"
 
 msgid "Loop Mode"
 msgstr "循环"
@@ -1134,9 +1131,6 @@ msgstr "移动中"
 
 msgid "App Update"
 msgstr "组件更新"
-
-msgid "Please confirm that your firmware supports FPU."
-msgstr "请确认你的固件支持 FPU。"
 
 msgid "if you want to run from memory, change the path, /tmp beginning then save the application and update it manually."
 msgstr "如果你希望从内存中运行，请更改路径，/tmp 开头，然后保存应用后，再手动更新。"

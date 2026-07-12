@@ -97,13 +97,8 @@ if has_xray or has_singbox then
 	end
 end
 
----- Auto Update
-o = s:option(Flag, "auto_update", translate("Enable auto update rules"))
-o.default = 0
-o.rmempty = false
-
----- Week Update
-o = s:option(ListValue, "week_update", translate("Update Mode"))
+o = s:option(ListValue, "update_week_mode", translate("Auto Update Mode"))
+o:value("", translate("Disable"))
 o:value(8, translate("Loop Mode"))
 o:value(7, translate("Every day"))
 o:value(1, translate("Every Monday"))
@@ -113,29 +108,30 @@ o:value(4, translate("Every Thursday"))
 o:value(5, translate("Every Friday"))
 o:value(6, translate("Every Saturday"))
 o:value(0, translate("Every Sunday"))
-o.default = 7
-o:depends("auto_update", true)
-o.rmempty = true
 
----- Time Update
-o = s:option(ListValue, "time_update", translate("Update Time(every day)"))
-for t = 0, 23 do o:value(t, t .. ":00") end
-o.default = 0
-o:depends("week_update", "0")
-o:depends("week_update", "1")
-o:depends("week_update", "2")
-o:depends("week_update", "3")
-o:depends("week_update", "4")
-o:depends("week_update", "5")
-o:depends("week_update", "6")
-o:depends("week_update", "7")
-o.rmempty = true
+o = s:option(Value, "update_time_mode", translate("Update Time"))
+for t = 0, 23 do o:value(t .. ":00") end
+o.default = "0:00"
+o.validate = function(self, value)
+	local b = api.is_timehhmm(value)
+	if b then
+		return value
+	end
+	return nil
+end
+o:depends("update_week_mode", "0")
+o:depends("update_week_mode", "1")
+o:depends("update_week_mode", "2")
+o:depends("update_week_mode", "3")
+o:depends("update_week_mode", "4")
+o:depends("update_week_mode", "5")
+o:depends("update_week_mode", "6")
+o:depends("update_week_mode", "7")
 
----- Interval Update
-o = s:option(ListValue, "interval_update", translate("Update Interval(hour)"))
+o = s:option(ListValue, "update_interval_mode", translate("Update Interval(hour)"))
 for t = 1, 24 do o:value(t, t .. " " .. translate("hour")) end
 o.default = 2
-o:depends("week_update", "8")
+o:depends("update_week_mode", "8")
 o.rmempty = true
 
 ---- 更新选项，始终被js隐藏

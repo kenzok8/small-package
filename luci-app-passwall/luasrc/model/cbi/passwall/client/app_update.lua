@@ -1,22 +1,24 @@
 local api = require "luci.passwall.api"
+local com = require "luci.passwall.com"
 local appname = "passwall"
 
 m = Map(appname)
 api.set_apply_on_parse(m)
 
 -- [[ App Settings ]]--
-s = m:section(TypedSection, "global_app", translate("App Update"),
-				"<font color='red'>" ..
-				translate("Please confirm that your firmware supports FPU.") ..
-				"</font>")
+s = m:section(TypedSection, "global_app", translate("App Update"))
 s.anonymous = true
-s:append(Template(appname .. "/app_update/app_version"))
+
+local app_version = Template(appname .. "/app_update/app_version")
+app_version.api = api
+app_version.config = m.config
+app_version.com = com
+s:append(app_version)
 
 o = s:option(Flag, "github_proxy", translate("GitHub Proxy"), translate("Use gh-proxy instead of proxy nodes for component updates."))
 o.default = 0
 
 local k, v
-local com = require "luci.passwall.com"
 for _, k in ipairs(com.order) do
 	v = com[k]
 	if k ~= "chinadns-ng" then

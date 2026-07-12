@@ -29,7 +29,9 @@ o.rmempty = true
 for index, value in ipairs({"stop", "start", "restart"}) do
 	o = s:option(ListValue, value .. "_week_mode", translate(value .. " automatically mode"))
 	o:value("", translate("Disable"))
-	o:value(8, translate("Loop Mode"))
+	if value == "restart" then
+		o:value(8, translate("Loop Mode"))
+	end
 	o:value(7, translate("Every day"))
 	o:value(1, translate("Every Monday"))
 	o:value(2, translate("Every Tuesday"))
@@ -38,9 +40,16 @@ for index, value in ipairs({"stop", "start", "restart"}) do
 	o:value(5, translate("Every Friday"))
 	o:value(6, translate("Every Saturday"))
 	o:value(0, translate("Every Sunday"))
-	o = s:option(ListValue, value .. "_time_mode", translate(value .. " Time(Every day)"))
-	for t = 0, 23 do o:value(t, t .. ":00") end
-	o.default = 0
+	o = s:option(Value, value .. "_time_mode", translate(value .. " Time"))
+	for t = 0, 23 do o:value(t .. ":00") end
+	o.default = "0:00"
+	o.validate = function(self, value)
+		local b = api.is_timehhmm(value)
+		if b then
+			return value
+		end
+		return nil
+	end
 	o:depends(value .. "_week_mode", "0")
 	o:depends(value .. "_week_mode", "1")
 	o:depends(value .. "_week_mode", "2")

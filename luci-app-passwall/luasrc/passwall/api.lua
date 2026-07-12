@@ -348,6 +348,18 @@ function strToTable(str)
 	return loadstring("return " .. str)()
 end
 
+function is_timehhmm(timeStr)
+	local hour, minute = string.match(timeStr, "^(%d?%d):(%d%d)$")
+	if hour and minute then
+		hour = tonumber(hour)
+		minute = tonumber(minute)
+		if hour >= 0 and hour <= 23 and minute >= 0 and minute <= 59 then
+			return true
+		end
+	end
+	return false
+end
+
 function is_normal_node(e)
 	if e and e.type and e.protocol and (e.protocol == "_balancing" or e.protocol == "_shunt" or e.protocol == "_iface" or e.protocol == "_urltest") then
 		return false
