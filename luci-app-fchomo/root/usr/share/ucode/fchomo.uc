@@ -246,37 +246,6 @@ export function parseListener(cfg, isClient, label) {
 			...arrToObj([[cfg.uuid, cfg.password]])
 		} : null),
 
-		/* Hysteria2 */
-		up: strToInt(cfg.hysteria_up_mbps),
-		down: strToInt(cfg.hysteria_down_mbps),
-		"ignore-client-bandwidth": strToBool(cfg.hysteria_ignore_client_bandwidth),
-		obfs: cfg.hysteria_obfs_type,
-		"obfs-password": cfg.hysteria_obfs_password,
-		"obfs-min-packet-size": strToInt(cfg.hysteria_obfs_min_packet_size),
-		"obfs-max-packet-size": strToInt(cfg.hysteria_obfs_max_packet_size),
-		masquerade: cfg.hysteria_masquerade,
-		"realm-opts": cfg.hysteria2_realm === '1' ? {
-			enable: true,
-			"server-url": cfg.hysteria2_realm_server_url,
-			token: cfg.hysteria2_realm_token,
-			"realm-id": cfg.hysteria2_realm_id,
-			"stun-servers": cfg.hysteria2_realm_stun_servers,
-			// @TLS of server-url
-			//sni,
-			//alpn,
-			//"skip-cert-verify",
-			//fingerprint,
-			//certificate,
-			//"private-key"
-		} : null,
-
-		/* Hysteria2 Realmserver */
-		token: cfg.hysteria2_realmserver_token,
-		"max-realms": strToInt(cfg.hysteria2_realmserver_max_realms),
-		"max-realms-per-ip": strToInt(cfg.hysteria2_realmserver_max_realms_per_ip),
-		"trusted-proxy-header": cfg.hysteria2_realmserver_trusted_proxy_header,
-		"realm-name-pattern": cfg.hysteria2_realmserver_realm_name_pattern,
-
 		/* Shadowsocks */
 		cipher: cfg.shadowsocks_chipher,
 		password: cfg.shadowsocks_password,
@@ -308,10 +277,8 @@ export function parseListener(cfg, isClient, label) {
 		psk: cfg.snell_psk,
 		version: cfg.snell_version,
 
-		/* Tuic */
-		"max-idle-time": durationToSecond(cfg.tuic_max_idle_time),
-		"authentication-timeout": durationToSecond(cfg.tuic_authentication_timeout),
-		"max-udp-relay-packet-size": strToInt(cfg.tuic_max_udp_relay_packet_size),
+		/* VMess / VLESS */
+		decryption: cfg.vless_decryption === '1' ? parseVlessEncryption(cfg.vless_encryption_hmpayload, 'server') : null,
 
 		/* Trojan */
 		"ss-option": cfg.trojan_ss_enabled === '1' ? {
@@ -323,8 +290,43 @@ export function parseListener(cfg, isClient, label) {
 		/* AnyTLS */
 		"padding-scheme": cfg.anytls_padding_scheme,
 
-		/* VMess / VLESS */
-		decryption: cfg.vless_decryption === '1' ? parseVlessEncryption(cfg.vless_encryption_hmpayload, 'server') : null,
+		/* Tuic */
+		"max-idle-time": durationToSecond(cfg.tuic_max_idle_time),
+		"authentication-timeout": durationToSecond(cfg.tuic_authentication_timeout),
+		"max-udp-relay-packet-size": strToInt(cfg.tuic_max_udp_relay_packet_size),
+
+		/* Hysteria2 */
+		up: strToInt(cfg.hysteria_up_mbps),
+		down: strToInt(cfg.hysteria_down_mbps),
+		"ignore-client-bandwidth": strToBool(cfg.hysteria_ignore_client_bandwidth),
+		obfs: cfg.hysteria_obfs_type,
+		"obfs-password": cfg.hysteria_obfs_password,
+		"obfs-min-packet-size": strToInt(cfg.hysteria_obfs_min_packet_size),
+		"obfs-max-packet-size": strToInt(cfg.hysteria_obfs_max_packet_size),
+		masquerade: cfg.hysteria_masquerade,
+		"realm-opts": cfg.hysteria2_realm === '1' ? {
+			enable: true,
+			"server-url": cfg.hysteria2_realm_server_url,
+			token: cfg.hysteria2_realm_token,
+			"realm-id": cfg.hysteria2_realm_id,
+			"stun-servers": cfg.hysteria2_realm_stun_servers,
+			// @TLS of server-url
+			//sni,
+			//alpn,
+			//"skip-cert-verify",
+			//fingerprint,
+			//certificate,
+			//"private-key"
+		} : null,
+
+		/* Hysteria2 Realmserver */
+		token: cfg.hysteria2_realmserver_token,
+		"max-realms": strToInt(cfg.hysteria2_realmserver_max_realms),
+		"max-realms-per-ip": strToInt(cfg.hysteria2_realmserver_max_realms_per_ip),
+		"trusted-proxy-header": cfg.hysteria2_realmserver_trusted_proxy_header,
+		"realm-name-pattern": cfg.hysteria2_realmserver_realm_name_pattern,
+
+		/* TrustTunnel */
 
 		/* Tunnel */
 		target: cfg.tunnel_target,

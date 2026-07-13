@@ -130,7 +130,7 @@ const parseProviderYaml = hm.parseYaml.extend({
 				override_prefix: this.jq(cfg, "override.additional-prefix"),
 				override_suffix: this.jq(cfg, "override.additional-suffix"),
 				override_replace: (this.jq(cfg, "override.proxy-name") || []).map((obj) => JSON.stringify(obj)), // array.string: array.object
-				// Configuration Items
+				// Other configuration items
 				override_tfo: this.bool2str(this.jq(cfg, "override.tfo")), // bool
 				override_mptcp: this.bool2str(this.jq(cfg, "override.mptcp")), // bool
 				override_udp: this.bool2str(this.jq(cfg, "override.udp")), // bool
@@ -306,82 +306,13 @@ return view.extend({
 		so = ss.taboption('field_general', form.Value, 'password', _('Password'));
 		so.password = true;
 		so.validate = hm.validateAuthPassword;
-		so.depends({type: /^(http|socks5|mieru|trojan|anytls|hysteria2|tuic|trusttunnel|ssh)$/});
+		so.depends({type: /^(http|socks5|mieru|trojan|anytls|tuic|hysteria2|trusttunnel|ssh)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', hm.TextValue, 'headers', _('HTTP header'));
 		so.placeholder = '{\n  "User-Agent": [\n    "mihomo/1.18.3"\n  ],\n  "Authorization": [\n    //"token 1231231"\n  ]\n}';
 		so.validate = hm.validateJson;
 		so.depends('type', 'http');
-		so.modalonly = true;
-
-		/* Hysteria / Hysteria2 fields */
-		so = ss.taboption('field_general', form.DynamicList, 'hysteria_ports', _('Ports pool'));
-		so.datatype = 'or(port, portrange)';
-		so.depends({type: /^(hysteria|hysteria2)$/});
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Value, 'hysteria_hop_interval', _('Port hop interval'),
-			_('In seconds. <code>%s</code> will be used if empty.').format('30'));
-		so.placeholder = '15 OR 15-30';
-		so.depends('type', 'hysteria2');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Value, 'hysteria_up_mbps', _('Max upload speed'),
-			_('In Mbps.'));
-		so.datatype = 'uinteger';
-		so.depends({type: /^(hysteria|hysteria2)$/});
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Value, 'hysteria_down_mbps', _('Max download speed'),
-			_('In Mbps.'));
-		so.datatype = 'uinteger';
-		so.depends({type: /^(hysteria|hysteria2)$/});
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.ListValue, 'hysteria_obfs_type', _('Obfuscate type'));
-		so.value('', _('Disable'));
-		so.value('salamander', _('Salamander'));
-		so.value('gecko', _('Gecko'));
-		so.depends('type', 'hysteria2');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Value, 'hysteria_obfs_password', _('Obfuscate password'),
-			_('Enabling obfuscation will make the server incompatible with standard QUIC connections, losing the ability to masquerade with HTTP/3.'));
-		so.password = true;
-		so.rmempty = false;
-		so.depends('type', 'hysteria');
-		so.depends({type: 'hysteria2', hysteria_obfs_type: /.+/});
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Value, 'hysteria_obfs_min_packet_size', _('Obfuscate minimum packet size'));
-		so.placeholder = '512'
-		so.depends('hysteria_obfs_type', 'gecko');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Value, 'hysteria_obfs_max_packet_size', _('Obfuscate maximum packet size'));
-		so.placeholder = '1200'
-		so.depends('hysteria_obfs_type', 'gecko');
-		so.modalonly = true;
-
-		/* SSH fields */
-		so = ss.taboption('field_general', form.TextValue, 'ssh_priv_key', _('Priv-key'));
-		so.depends('type', 'ssh');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Value, 'ssh_priv_key_passphrase', _('Priv-key passphrase'));
-		so.password = true;
-		so.depends({type: 'ssh', ssh_priv_key: /.+/});
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.DynamicList, 'ssh_host_key_algorithms', _('Host-key algorithms'));
-		so.placeholder = 'rsa';
-		so.depends('type', 'ssh');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.DynamicList, 'ssh_host_key', _('Host-key'));
-		so.placeholder = 'ssh-rsa AAAAB3NzaC1yc2EAA...';
-		so.depends({type: 'ssh', ssh_host_key_algorithms: /.+/});
 		so.modalonly = true;
 
 		/* Shadowsocks fields */
@@ -574,6 +505,100 @@ return view.extend({
 		so.depends({type: 'snell', snell_version: /^(4|5)$/});
 		so.modalonly = true;
 
+		/* VMess / VLESS fields */
+		so = ss.taboption('field_general', form.Value, 'vmess_uuid', _('UUID'));
+		so.rmempty = false;
+		so.validate = hm.validateUUID;
+		so.depends({type: /^(vmess|vless)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'vless_flow', _('Flow'));
+		so.default = hm.vless_flow[0][0];
+		hm.vless_flow.forEach((res) => {
+			so.value.apply(so, res);
+		})
+		so.depends('type', 'vless');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'vmess_alterid', _('Alter ID'));
+		so.datatype = 'uinteger';
+		so.default = '0';
+		so.depends('type', 'vmess');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'vmess_chipher', _('Chipher'));
+		so.default = 'auto';
+		so.value('auto', _('auto'));
+		so.value('none', _('none'));
+		so.value('zero', _('zero'));
+		so.value('aes-128-gcm', _('aes-128-gcm'));
+		so.value('chacha20-poly1305', _('chacha20-poly1305'));
+		so.depends('type', 'vmess');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'vmess_global_padding', _('Global padding'),
+			_('Protocol parameter. Will waste traffic randomly if enabled (enabled by default in v2ray and cannot be disabled).'));
+		so.default = so.enabled;
+		so.depends('type', 'vmess');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'vmess_authenticated_length', _('Authenticated length'),
+			_('Protocol parameter. Enable length block encryption.'));
+		so.default = so.disabled;
+		so.depends('type', 'vmess');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'vmess_packet_encoding', _('Packet encoding'));
+		so.value('', _('none'));
+		so.value('packetaddr', _('packet addr (v2ray-core v5+)'));
+		so.value('xudp', _('Xudp (Xray-core)'));
+		so.depends({type: /^(vmess|vless)$/});
+		so.modalonly = true;
+
+		/* Trojan fields */
+		so = ss.taboption('field_general', form.Flag, 'trojan_ss_enabled', _('Shadowsocks encrypt'));
+		so.default = so.disabled;
+		so.depends('type', 'trojan');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'trojan_ss_chipher', _('Shadowsocks chipher'));
+		so.default = hm.trojan_cipher_methods[0][0];
+		hm.trojan_cipher_methods.forEach((res) => {
+			so.value.apply(so, res);
+		})
+		so.depends({type: 'trojan', trojan_ss_enabled: '1'});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'trojan_ss_password', _('Shadowsocks password'));
+		so.password = true;
+		so.validate = function(section_id, value) {
+			const encmode = this.section.getOption('trojan_ss_chipher').formvalue(section_id);
+			return hm.validateShadowsocksPassword.call(this, encmode, section_id, value);
+		}
+		so.depends({type: 'trojan', trojan_ss_enabled: '1'});
+		so.modalonly = true;
+
+		/* AnyTLS fields */
+		so = ss.taboption('field_general', form.Value, 'anytls_idle_session_check_interval', _('Idle session check interval'),
+			_('In seconds.'));
+		so.placeholder = '30';
+		so.validate = hm.validateTimeDuration;
+		so.depends('type', 'anytls');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'anytls_idle_session_timeout', _('Idle session timeout'),
+			_('In seconds.'));
+		so.placeholder = '30';
+		so.validate = hm.validateTimeDuration;
+		so.depends('type', 'anytls');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'anytls_min_idle_session', _('Min of idle sessions to keep'));
+		so.datatype = 'uinteger';
+		so.placeholder = '0';
+		so.depends('type', 'anytls');
+		so.modalonly = true;
+
 		/* TUIC fields */
 		so = ss.taboption('field_general', form.Value, 'uuid', _('UUID'));
 		so.rmempty = false;
@@ -644,165 +669,53 @@ return view.extend({
 		so.depends('type', 'tuic');
 		so.modalonly = true;
 
-		/* Trojan fields */
-		so = ss.taboption('field_general', form.Flag, 'trojan_ss_enabled', _('Shadowsocks encrypt'));
-		so.default = so.disabled;
-		so.depends('type', 'trojan');
+		/* Hysteria / Hysteria2 fields */
+		so = ss.taboption('field_general', form.DynamicList, 'hysteria_ports', _('Ports pool'));
+		so.datatype = 'or(port, portrange)';
+		so.depends({type: /^(hysteria|hysteria2)$/});
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.ListValue, 'trojan_ss_chipher', _('Shadowsocks chipher'));
-		so.default = hm.trojan_cipher_methods[0][0];
-		hm.trojan_cipher_methods.forEach((res) => {
-			so.value.apply(so, res);
-		})
-		so.depends({type: 'trojan', trojan_ss_enabled: '1'});
+		so = ss.taboption('field_general', form.Value, 'hysteria_hop_interval', _('Port hop interval'),
+			_('In seconds. <code>%s</code> will be used if empty.').format('30'));
+		so.placeholder = '15 OR 15-30';
+		so.depends('type', 'hysteria2');
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.Value, 'trojan_ss_password', _('Shadowsocks password'));
-		so.password = true;
-		so.validate = function(section_id, value) {
-			const encmode = this.section.getOption('trojan_ss_chipher').formvalue(section_id);
-			return hm.validateShadowsocksPassword.call(this, encmode, section_id, value);
-		}
-		so.depends({type: 'trojan', trojan_ss_enabled: '1'});
-		so.modalonly = true;
-
-		/* AnyTLS fields */
-		so = ss.taboption('field_general', form.Value, 'anytls_idle_session_check_interval', _('Idle session check interval'),
-			_('In seconds.'));
-		so.placeholder = '30';
-		so.validate = hm.validateTimeDuration;
-		so.depends('type', 'anytls');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Value, 'anytls_idle_session_timeout', _('Idle session timeout'),
-			_('In seconds.'));
-		so.placeholder = '30';
-		so.validate = hm.validateTimeDuration;
-		so.depends('type', 'anytls');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Value, 'anytls_min_idle_session', _('Min of idle sessions to keep'));
+		so = ss.taboption('field_general', form.Value, 'hysteria_up_mbps', _('Max upload speed'),
+			_('In Mbps.'));
 		so.datatype = 'uinteger';
-		so.placeholder = '0';
-		so.depends('type', 'anytls');
+		so.depends({type: /^(hysteria|hysteria2)$/});
 		so.modalonly = true;
 
-		/* VMess / VLESS fields */
-		so = ss.taboption('field_general', form.Value, 'vmess_uuid', _('UUID'));
-		so.rmempty = false;
-		so.validate = hm.validateUUID;
-		so.depends({type: /^(vmess|vless)$/});
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.ListValue, 'vless_flow', _('Flow'));
-		so.default = hm.vless_flow[0][0];
-		hm.vless_flow.forEach((res) => {
-			so.value.apply(so, res);
-		})
-		so.depends('type', 'vless');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Value, 'vmess_alterid', _('Alter ID'));
+		so = ss.taboption('field_general', form.Value, 'hysteria_down_mbps', _('Max download speed'),
+			_('In Mbps.'));
 		so.datatype = 'uinteger';
-		so.default = '0';
-		so.depends('type', 'vmess');
+		so.depends({type: /^(hysteria|hysteria2)$/});
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.ListValue, 'vmess_chipher', _('Chipher'));
-		so.default = 'auto';
-		so.value('auto', _('auto'));
-		so.value('none', _('none'));
-		so.value('zero', _('zero'));
-		so.value('aes-128-gcm', _('aes-128-gcm'));
-		so.value('chacha20-poly1305', _('chacha20-poly1305'));
-		so.depends('type', 'vmess');
+		so = ss.taboption('field_general', form.ListValue, 'hysteria_obfs_type', _('Obfuscate type'));
+		so.value('', _('Disable'));
+		so.value('salamander', _('Salamander'));
+		so.value('gecko', _('Gecko'));
+		so.depends('type', 'hysteria2');
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.Flag, 'vmess_global_padding', _('Global padding'),
-			_('Protocol parameter. Will waste traffic randomly if enabled (enabled by default in v2ray and cannot be disabled).'));
-		so.default = so.enabled;
-		so.depends('type', 'vmess');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Flag, 'vmess_authenticated_length', _('Authenticated length'),
-			_('Protocol parameter. Enable length block encryption.'));
-		so.default = so.disabled;
-		so.depends('type', 'vmess');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.ListValue, 'vmess_packet_encoding', _('Packet encoding'));
-		so.value('', _('none'));
-		so.value('packetaddr', _('packet addr (v2ray-core v5+)'));
-		so.value('xudp', _('Xudp (Xray-core)'));
-		so.depends({type: /^(vmess|vless)$/});
-		so.modalonly = true;
-
-		/* Masque fields */
-		so = ss.taboption('field_general', form.Value, 'masque_private_key', _('Private key'),
-			_('Base64 encoded ECDSA private key on the NIST P-256 curve.'));
+		so = ss.taboption('field_general', form.Value, 'hysteria_obfs_password', _('Obfuscate password'),
+			_('Enabling obfuscation will make the server incompatible with standard QUIC connections, losing the ability to masquerade with HTTP/3.'));
 		so.password = true;
-		so.validate = L.bind(hm.validateBase64Key, so, 164);
 		so.rmempty = false;
-		so.depends('type', 'masque');
+		so.depends('type', 'hysteria');
+		so.depends({type: 'hysteria2', hysteria_obfs_type: /.+/});
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.Value, 'masque_endpoint_public_key', _('Endpoint pubkic key'),
-			_('Base64 encoded ECDSA public key on the NIST P-256 curve.'));
-		so.validate = L.bind(hm.validateBase64Key, so, 124);
-		so.rmempty = false;
-		so.depends('type', 'masque');
+		so = ss.taboption('field_general', form.Value, 'hysteria_obfs_min_packet_size', _('Obfuscate minimum packet size'));
+		so.placeholder = '512'
+		so.depends('hysteria_obfs_type', 'gecko');
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.Value, 'masque_ip', _('Local address'),
-			_('The %s address used by local machine in the Cloudflare WARP network.').format('IPv4'));
-		so.datatype = 'ip4addr(1)';
-		so.placeholder = '172.16.0.2';
-		so.rmempty = false;
-		so.depends({type: 'masque', masque_network: /^(|h2)$/});
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Value, 'masque_ipv6', _('Local IPv6 address'),
-			_('The %s address used by local machine in the Cloudflare WARP network.').format('IPv6'));
-		so.datatype = 'ip6addr(1)';
-		so.depends({type: 'masque', masque_network: /^(|h2)$/});
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Value, 'masque_mtu', _('MTU'));
-		so.datatype = 'range(0,9000)';
-		so.placeholder = '1280';
-		so.depends({type: 'masque', masque_network: /^(|h2)$/});
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.ListValue, 'masque_network', _('Network'));
-		so.default = '';
-		so.value('', _('h3'));
-		so.value('h3-l4proxy', _('h3-l4proxy'));
-		so.value('h2', _('h2'));
-		so.validate = function(section_id, value) {
-			const udp = this.section.getUIElement(section_id, 'udp').node.querySelector('input');
-
-			// Force disabled
-			if (value === 'h3-l4proxy') {
-				udp.checked = false;
-				udp.disabled = true;
-			} else
-				udp.removeAttribute('disabled');
-
-			return true;
-		}
-		so.depends('type', 'masque');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Flag, 'masque_remote_dns_resolve', _('Remote DNS resolve'),
-			_('Force DNS remote resolution.'));
-		so.default = so.disabled;
-		so.depends('type', 'masque');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.DynamicList, 'masque_dns', _('DNS server'));
-		so.datatype = 'or(host, hostport)';
-		so.depends('masque_remote_dns_resolve', '1');
+		so = ss.taboption('field_general', form.Value, 'hysteria_obfs_max_packet_size', _('Obfuscate maximum packet size'));
+		so.placeholder = '1200'
+		so.depends('hysteria_obfs_type', 'gecko');
 		so.modalonly = true;
 
 		/* TrustTunnel fields */
@@ -886,6 +799,93 @@ return view.extend({
 		so = ss.taboption('field_general', form.DynamicList, 'wireguard_dns', _('DNS server'));
 		so.datatype = 'or(host, hostport)';
 		so.depends('wireguard_remote_dns_resolve', '1');
+		so.modalonly = true;
+
+		/* Masque fields */
+		so = ss.taboption('field_general', form.Value, 'masque_private_key', _('Private key'),
+			_('Base64 encoded ECDSA private key on the NIST P-256 curve.'));
+		so.password = true;
+		so.validate = L.bind(hm.validateBase64Key, so, 164);
+		so.rmempty = false;
+		so.depends('type', 'masque');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'masque_endpoint_public_key', _('Endpoint pubkic key'),
+			_('Base64 encoded ECDSA public key on the NIST P-256 curve.'));
+		so.validate = L.bind(hm.validateBase64Key, so, 124);
+		so.rmempty = false;
+		so.depends('type', 'masque');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'masque_ip', _('Local address'),
+			_('The %s address used by local machine in the Cloudflare WARP network.').format('IPv4'));
+		so.datatype = 'ip4addr(1)';
+		so.placeholder = '172.16.0.2';
+		so.rmempty = false;
+		so.depends({type: 'masque', masque_network: /^(|h2)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'masque_ipv6', _('Local IPv6 address'),
+			_('The %s address used by local machine in the Cloudflare WARP network.').format('IPv6'));
+		so.datatype = 'ip6addr(1)';
+		so.depends({type: 'masque', masque_network: /^(|h2)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'masque_mtu', _('MTU'));
+		so.datatype = 'range(0,9000)';
+		so.placeholder = '1280';
+		so.depends({type: 'masque', masque_network: /^(|h2)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'masque_network', _('Network'));
+		so.default = '';
+		so.value('', _('h3'));
+		so.value('h3-l4proxy', _('h3-l4proxy'));
+		so.value('h2', _('h2'));
+		so.validate = function(section_id, value) {
+			const udp = this.section.getUIElement(section_id, 'udp').node.querySelector('input');
+
+			// Force disabled
+			if (value === 'h3-l4proxy') {
+				udp.checked = false;
+				udp.disabled = true;
+			} else
+				udp.removeAttribute('disabled');
+
+			return true;
+		}
+		so.depends('type', 'masque');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'masque_remote_dns_resolve', _('Remote DNS resolve'),
+			_('Force DNS remote resolution.'));
+		so.default = so.disabled;
+		so.depends('type', 'masque');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.DynamicList, 'masque_dns', _('DNS server'));
+		so.datatype = 'or(host, hostport)';
+		so.depends('masque_remote_dns_resolve', '1');
+		so.modalonly = true;
+
+		/* SSH fields */
+		so = ss.taboption('field_general', form.TextValue, 'ssh_priv_key', _('Priv-key'));
+		so.depends('type', 'ssh');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'ssh_priv_key_passphrase', _('Priv-key passphrase'));
+		so.password = true;
+		so.depends({type: 'ssh', ssh_priv_key: /.+/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.DynamicList, 'ssh_host_key_algorithms', _('Host-key algorithms'));
+		so.placeholder = 'rsa';
+		so.depends('type', 'ssh');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.DynamicList, 'ssh_host_key', _('Host-key'));
+		so.placeholder = 'ssh-rsa AAAAB3NzaC1yc2EAA...';
+		so.depends({type: 'ssh', ssh_host_key_algorithms: /.+/});
 		so.modalonly = true;
 
 		/* Plugin fields */
@@ -975,12 +975,12 @@ return view.extend({
 			_('The default value is <code>%s</code>, indicating that only the outer connection timeout is used.').format('0'));
 		so.datatype = 'uinteger';
 		so.placeholder = '30';
-		so.depends({type: /^(masque|openvpn)$/});
+		so.depends({type: /^(openvpn|masque)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Flag, 'udp', _('UDP'));
 		so.default = so.disabled;
-		so.depends({type: /^(rematch|direct|socks5|ss|mieru|vmess|vless|trojan|anytls|trusttunnel|masque|wireguard)$/});
+		so.depends({type: /^(rematch|direct|socks5|ss|mieru|vmess|vless|trojan|anytls|trusttunnel|wireguard|masque)$/});
 		so.depends({type: 'snell', snell_version: /^(3|4|5)$/});
 		so.modalonly = true;
 
@@ -1115,7 +1115,7 @@ return view.extend({
 
 			return true;
 		}
-		so.depends({type: /^(http|socks5|vmess|vless|trojan|anytls|hysteria|hysteria2|tuic|trusttunnel|masque)$/});
+		so.depends({type: /^(http|socks5|vmess|vless|trojan|anytls|tuic|hysteria|hysteria2|trusttunnel|masque)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_tls', form.Flag, 'tls_disable_sni', _('Disable SNI'),
@@ -1146,9 +1146,9 @@ return view.extend({
 					case 'snell':
 						def_alpn = ['h2', 'http/1.1']; // when plugin === 'shadow-tls'
 						break;
+					case 'tuic':
 					case 'hysteria':
 					case 'hysteria2':
-					case 'tuic':
 						def_alpn = ['h3'];
 						break;
 					case 'vmess':
@@ -1171,7 +1171,7 @@ return view.extend({
 
 			return true;
 		}
-		so.depends({tls: '1', type: /^(vmess|vless|trojan|anytls|hysteria|hysteria2|tuic|trusttunnel)$/});
+		so.depends({tls: '1', type: /^(vmess|vless|trojan|anytls|tuic|hysteria|hysteria2|trusttunnel)$/});
 		so.depends({type: /^(ss|snell)$/, plugin: 'shadow-tls'});
 		so.modalonly = true;
 
@@ -1193,7 +1193,7 @@ return view.extend({
 			'<br/>' +
 			_('This is <strong>DANGEROUS</strong>, your traffic is almost like <strong>PLAIN TEXT</strong>! Use at your own risk!'));
 		so.default = so.disabled;
-		so.depends({tls: '1', type: /^(http|socks5|vmess|vless|trojan|anytls|hysteria|hysteria2|tuic|trusttunnel)$/});
+		so.depends({tls: '1', type: /^(http|socks5|vmess|vless|trojan|anytls|tuic|hysteria|hysteria2|trusttunnel)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_tls', form.Value, 'tls_cert_path', _('Certificate path') + _(' (mTLS)'),
@@ -1226,7 +1226,7 @@ return view.extend({
 
 		so = ss.taboption('field_tls', form.Flag, 'tls_ech', _('Enable ECH'));
 		so.default = so.disabled;
-		so.depends({tls: '1', type: /^(vmess|vless|trojan|anytls|hysteria|hysteria2|tuic)$/});
+		so.depends({tls: '1', type: /^(vmess|vless|trojan|anytls|tuic|hysteria|hysteria2)$/});
 		so.depends({type: 'ss', plugin: /^(v2ray-plugin|gost-plugin)$/});
 		so.modalonly = true;
 
@@ -1899,7 +1899,7 @@ return view.extend({
 		so = ss.taboption('field_override', form.DummyValue, '_config_items', null);
 		so.load = function() {
 			return '<a target="_blank" href="%s" rel="noreferrer noopener">%s</a>'
-				.format('https://wiki.metacubex.one/config/proxy-providers/#_2', _('Configuration Items'));
+				.format('https://wiki.metacubex.one/config/proxy-providers/#override_1', _('Other configuration items'));
 		}
 		so.rawhtml = true;
 		so.depends({type: 'inline', '!reverse': true});

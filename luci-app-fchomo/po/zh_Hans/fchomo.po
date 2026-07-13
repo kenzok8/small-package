@@ -580,8 +580,8 @@ msgid "Complete"
 msgstr "完成"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:1898
-msgid "Configuration Items"
-msgstr "配置项"
+msgid "Other configuration items"
+msgstr "其他配置项"
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:653
 #: htdocs/luci-static/resources/view/fchomo/node.js:955
@@ -1468,8 +1468,8 @@ msgid "Hysteria2"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo.js:167
-msgid "Hysteria2 Realm"
-msgstr "Hysteria2 Realm"
+msgid "Hysteria2 Realm Server"
+msgstr "Hysteria2 Realm 服务器"
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:121
 #: htdocs/luci-static/resources/view/fchomo/node.js:235

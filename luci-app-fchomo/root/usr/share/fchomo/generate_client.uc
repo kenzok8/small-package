@@ -490,7 +490,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"target-rematch-name": cfg.target_rematch_name,
 		"target-sub-rule": cfg.target_sub_rule,
 
-		/* HTTP / SOCKS / Shadowsocks / VMess / VLESS / Trojan / hysteria2 / TUIC / WireGuard / Masque */
+		/* HTTP / SOCKS / Shadowsocks / VMess / VLESS / Trojan / TUIC / hysteria2 / WireGuard / Masque */
 		username: cfg.username,
 		uuid: cfg.vmess_uuid || cfg.uuid,
 		cipher: cfg.vmess_chipher || cfg.shadowsocks_chipher,
@@ -501,35 +501,6 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		mtu: strToInt(cfg.masque_mtu ?? cfg.wireguard_mtu) || null,
 		"remote-dns-resolve": strToBool(cfg.masque_remote_dns_resolve ?? cfg.wireguard_remote_dns_resolve),
 		dns: cfg.masque_dns || cfg.wireguard_dns,
-
-		/* Hysteria / Hysteria2 */
-		ports: isEmpty(cfg.hysteria_ports) ? null : join(',', cfg.hysteria_ports),
-		"hop-interval": strToInt(cfg.hysteria_hop_interval), // @DEBUG ERROR data type *utils.IntRanges[uint16]
-		up: cfg.hysteria_up_mbps ? cfg.hysteria_up_mbps + ' Mbps' : null,
-		down: cfg.hysteria_down_mbps ? cfg.hysteria_down_mbps + ' Mbps' : null,
-		obfs: cfg.hysteria_obfs_type,
-		"obfs-password": cfg.hysteria_obfs_password,
-		"obfs-min-packet-size": strToInt(cfg.hysteria_obfs_min_packet_size),
-		"obfs-max-packet-size": strToInt(cfg.hysteria_obfs_max_packet_size),
-		"realm-opts": cfg.hysteria2_realm === '1' ? {
-			enable: true,
-			"server-url": cfg.hysteria2_realm_server_url,
-			token: cfg.hysteria2_realm_token,
-			"realm-id": cfg.hysteria2_realm_id,
-			"stun-servers": cfg.hysteria2_realm_stun_servers,
-			// @TLS of server-url
-			//sni,
-			//alpn,
-			//"skip-cert-verify",
-			//fingerprint,
-			//certificate,
-			//"private-key"
-		} : null,
-
-		/* SSH */
-		"private-key-passphrase": cfg.ssh_priv_key_passphrase,
-		"host-key-algorithms": cfg.ssh_host_key_algorithms,
-		"host-key": cfg.ssh_host_key,
 
 		/* Shadowsocks */
 
@@ -564,17 +535,13 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		version: cfg.snell_version,
 		reuse: strToBool(cfg.snell_reuse),
 
-		/* TUIC */
-		ip: cfg.tuic_ip,
-		"udp-relay-mode": cfg.tuic_udp_relay_mode,
-		"udp-over-stream": strToBool(cfg.tuic_udp_over_stream),
-		"udp-over-stream-version": cfg.tuic_udp_over_stream_version,
-		"max-udp-relay-packet-size": strToInt(cfg.tuic_max_udp_relay_packet_size) || null,
-		"fast-open": strToBool(cfg.tuic_fast_open),
-		"reduce-rtt": strToBool(cfg.tuic_reduce_rtt),
-		"heartbeat-interval": strToInt(cfg.tuic_heartbeat) || null,
-		"request-timeout": strToInt(cfg.tuic_request_timeout) || null,
-		"max-open-streams": strToInt(cfg.tuic_max_open_streams) || null,
+		/* VMess / VLESS */
+		flow: cfg.vless_flow,
+		alterId: strToInt(cfg.vmess_alterid),
+		"global-padding": cfg.type === 'vmess' ? (cfg.vmess_global_padding === '0' ? false : true) : null,
+		"authenticated-length": strToBool(cfg.vmess_authenticated_length),
+		"packet-encoding": cfg.vmess_packet_encoding,
+		encryption: cfg.vless_encryption === '1' ? cfg.vless_encryption_encryption : null,
 
 		/* Trojan */
 		"ss-opts": cfg.trojan_ss_enabled === '1' ? {
@@ -588,16 +555,41 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"idle-session-timeout": durationToSecond(cfg.anytls_idle_session_timeout),
 		"min-idle-session": strToInt(cfg.anytls_min_idle_session),
 
-		/* VMess / VLESS */
-		flow: cfg.vless_flow,
-		alterId: strToInt(cfg.vmess_alterid),
-		"global-padding": cfg.type === 'vmess' ? (cfg.vmess_global_padding === '0' ? false : true) : null,
-		"authenticated-length": strToBool(cfg.vmess_authenticated_length),
-		"packet-encoding": cfg.vmess_packet_encoding,
-		encryption: cfg.vless_encryption === '1' ? cfg.vless_encryption_encryption : null,
+		/* TUIC */
+		ip: cfg.tuic_ip,
+		"udp-relay-mode": cfg.tuic_udp_relay_mode,
+		"udp-over-stream": strToBool(cfg.tuic_udp_over_stream),
+		"udp-over-stream-version": cfg.tuic_udp_over_stream_version,
+		"max-udp-relay-packet-size": strToInt(cfg.tuic_max_udp_relay_packet_size) || null,
+		"fast-open": strToBool(cfg.tuic_fast_open),
+		"reduce-rtt": strToBool(cfg.tuic_reduce_rtt),
+		"heartbeat-interval": strToInt(cfg.tuic_heartbeat) || null,
+		"request-timeout": strToInt(cfg.tuic_request_timeout) || null,
+		"max-open-streams": strToInt(cfg.tuic_max_open_streams) || null,
 
-		/* Masque */
-		network: cfg.masque_network || null,
+		/* Hysteria / Hysteria2 */
+		ports: isEmpty(cfg.hysteria_ports) ? null : join(',', cfg.hysteria_ports),
+		"hop-interval": strToInt(cfg.hysteria_hop_interval), // @DEBUG ERROR data type *utils.IntRanges[uint16]
+		up: cfg.hysteria_up_mbps ? cfg.hysteria_up_mbps + ' Mbps' : null,
+		down: cfg.hysteria_down_mbps ? cfg.hysteria_down_mbps + ' Mbps' : null,
+		obfs: cfg.hysteria_obfs_type,
+		"obfs-password": cfg.hysteria_obfs_password,
+		"obfs-min-packet-size": strToInt(cfg.hysteria_obfs_min_packet_size),
+		"obfs-max-packet-size": strToInt(cfg.hysteria_obfs_max_packet_size),
+		"realm-opts": cfg.hysteria2_realm === '1' ? {
+			enable: true,
+			"server-url": cfg.hysteria2_realm_server_url,
+			token: cfg.hysteria2_realm_token,
+			"realm-id": cfg.hysteria2_realm_id,
+			"stun-servers": cfg.hysteria2_realm_stun_servers,
+			// @TLS of server-url
+			//sni,
+			//alpn,
+			//"skip-cert-verify",
+			//fingerprint,
+			//certificate,
+			//"private-key"
+		} : null,
 
 		/* TrustTunnel */
 		"health-check": cfg.type === 'trusttunnel' ? (cfg.trusttunnel_health_check === '0' ? false : true) : null,
@@ -608,6 +600,14 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"allowed-ips": cfg.wireguard_allowed_ips,
 		reserved: cfg.wireguard_reserved,
 		"persistent-keepalive": strToInt(cfg.wireguard_persistent_keepalive),
+
+		/* Masque */
+		network: cfg.masque_network || null,
+
+		/* SSH */
+		"private-key-passphrase": cfg.ssh_priv_key_passphrase,
+		"host-key-algorithms": cfg.ssh_host_key_algorithms,
+		"host-key": cfg.ssh_host_key,
 
 		/* Plugin fields */
 		...(cfg.plugin ? (
@@ -820,7 +820,7 @@ uci.foreach(uciconf, uciprov, (cfg) => {
 				"additional-prefix": cfg.override_prefix,
 				"additional-suffix": cfg.override_suffix,
 				"proxy-name": isEmpty(cfg.override_replace) ? null : map(cfg.override_replace, obj => json(obj)),
-				// Configuration Items
+				// Other configuration items
 				tfo: strToBool(cfg.override_tfo),
 				mptcp: strToBool(cfg.override_mptcp),
 				udp: (cfg.override_udp === '0') ? null : true,

@@ -52,19 +52,26 @@ fi
 		(
 			flock 9
 			apk update 2>&1
-			# pin exact latest version + --force-broken-world so unrelated broken
-			# packages can't block this upgrade (cf. clashoo component_update)
 			ver=$(apk list "$PKG" 2>/dev/null | awk -v p="$PKG" '$1 ~ "^" p "-[0-9]" { v=$1; sub("^" p "-", "", v); print v }' | sort -V | tail -1)
 			if [ -n "$ver" ]; then
-				echo "--- apk add $PKG=$ver ---"
-				apk add "$PKG=$ver" --force-broken-world 2>&1
+				constraint="$PKG=$ver"
 			else
-				echo "--- apk add $PKG ---"
-				apk add "$PKG" --force-broken-world 2>&1
+				constraint="$PKG"
+			fi
+
+			echo "--- apk add -s $constraint ---"
+			if apk add -s "$constraint" 2>&1; then
+				echo "--- apk add $constraint ---"
+				apk add "$constraint" 2>&1
+			else
+				echo "result: apk cannot resolve $constraint; no packages were changed"
+				exit 1
 			fi
 		) 9>/tmp/luci-app-daede.apk.lock
-		# apk's exit code is unreliable (broken-world noise); judge by state instead
-		if ! apk list --installed 2>/dev/null | grep -q "^${PKG}-"; then
+		rc=$?
+		if [ "$rc" != 0 ]; then
+			:
+		elif ! apk list --installed 2>/dev/null | grep -q "^${PKG}-"; then
 			echo "result: $PKG is not installed"
 			rc=1
 		elif apk list -u 2>/dev/null | grep -q "^${PKG}-"; then

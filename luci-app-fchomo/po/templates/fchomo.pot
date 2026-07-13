@@ -566,7 +566,7 @@ msgid "Complete"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:1898
-msgid "Configuration Items"
+msgid "Other configuration items"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:653
@@ -1442,7 +1442,7 @@ msgid "Hysteria2"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo.js:167
-msgid "Hysteria2 Realm"
+msgid "Hysteria2 Realm Server"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:121
