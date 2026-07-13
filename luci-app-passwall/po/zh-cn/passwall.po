@@ -500,9 +500,6 @@ msgstr ""
 "多组条件之间可使用 <code>||</code>（或）分隔，任意一组匹配即视为成功。<br>"
 "示例：<code>A && B || C && D</code> 表示 (A 且 B) 或 (C 且 D)。"
 
-msgid "Keep the match scope small. Too many nodes can impact router performance."
-msgstr "建议尽量缩小匹配范围，节点过多会增加路由器负载。"
-
 msgid "Balancing Strategy"
 msgstr "负载均衡策略"
 

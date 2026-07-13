@@ -1537,7 +1537,7 @@ function match_node_rule(name, rule)
 	-- split rule by || into OR groups
 	local function split_or(expr)
 		local t = {}
-		for part in expr:gmatch("[^|]+") do
+		for part in (expr .. "||"):gmatch("(.-)%|%|") do
 			part = trim(part)
 			if part ~= "" then
 				table.insert(t, part)
@@ -1548,7 +1548,7 @@ function match_node_rule(name, rule)
 	-- split rule by &&
 	local function split_and(expr)
 		local t = {}
-		for part in expr:gmatch("[^&]+") do
+		for part in (expr .. "&&"):gmatch("(.-)%&%&") do
 			part = trim(part)
 			if part ~= "" then
 				table.insert(t, part)

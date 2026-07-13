@@ -154,8 +154,7 @@ if load_urltest_options then -- [[ URLTest Start ]]
 	descrStr = descrStr .. "Conditions are joined by <code>&&</code> (AND), and their order does not affect the result.<br>"
 	descrStr = descrStr .. "Multiple groups can be separated by <code>||</code> (OR), matching succeeds if any group matches.<br>"
 	descrStr = descrStr .. "Example: <code>A && B || C && D</code> means (A AND B) OR (C AND D)."
-	o.description = translate(descrStr) .. string.format("<br><font color='red'>%s</font>",
-			translate("Keep the match scope small. Too many nodes can impact router performance."))
+	o.description = translate(descrStr)
 
 	o = s:option(Value, _n("urltest_url"), translate("Probe URL"))
 	o:depends({ [_n("protocol")] = "_urltest" })

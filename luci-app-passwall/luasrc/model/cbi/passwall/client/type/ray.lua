@@ -155,8 +155,7 @@ if load_balancing_options then -- [[ Load balancing Start ]]
 	descrStr = descrStr .. "Conditions are joined by <code>&&</code> (AND), and their order does not affect the result.<br>"
 	descrStr = descrStr .. "Multiple groups can be separated by <code>||</code> (OR), matching succeeds if any group matches.<br>"
 	descrStr = descrStr .. "Example: <code>A && B || C && D</code> means (A AND B) OR (C AND D)."
-	o.description = translate(descrStr) .. string.format("<br><font color='red'>%s</font>",
-			translate("Keep the match scope small. Too many nodes can impact router performance."))
+	o.description = translate(descrStr)
 
 	o = s:option(ListValue, _n("balancingStrategy"), translate("Balancing Strategy"))
 	o:depends({ [_n("protocol")] = "_balancing" })
