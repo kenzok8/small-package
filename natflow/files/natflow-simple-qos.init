@@ -9,7 +9,7 @@ NAME=natflow-simple-qos
 
 start_service() {
 	[ -c /dev/userinfo_ctl ] || return 0
-	[ -c /dev/userinfo_event_ctl ] || return 0
+	[ -c /dev/natflow_userinfo_queue ] || return 0
 	[ -x "$PROG" ] || return 0
 
 	procd_open_instance

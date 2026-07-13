@@ -1,8 +1,13 @@
 #!/usr/bin/lua
 
 local DEV_USERINFO = "/dev/userinfo_ctl"
-local DEV_EVENT = "/dev/userinfo_event_ctl"
+local DEV_EVENT = "/dev/natflow_userinfo_queue"
 local EVENT_FIFO = "/tmp/userinfo_event_fifo"
+local EVENT_CACHE_LIMIT = 256
+local USERINFO_EVENT_SIZE = 86
+local USERINFO_EVENT_READ_SIZE = USERINFO_EVENT_SIZE * 32
+local AF_INET = 2
+local AF_INET6 = 10
 
 local uci = require "luci.model.uci"
 local nixio = require "nixio"
@@ -37,6 +42,145 @@ end
 
 local function first_field(line)
 	return tostring(line or ""):match("^([^,]*)") or ""
+end
+
+local function sleep_msec(msec)
+	if nixio.nanosleep then
+		nixio.nanosleep(math.floor(msec / 1000), (msec % 1000) * 1000000)
+	else
+		os.execute("sleep " .. tostring(math.max(1, math.floor((msec + 999) / 1000))))
+	end
+end
+
+local function read_u16(data, pos, le)
+	local a, b = data:byte(pos, pos + 1)
+	if not b then
+		return nil
+	end
+	if le then
+		return a + b * 256
+	end
+	return a * 256 + b
+end
+
+local function read_u32(data, pos, le)
+	local a, b, c, d = data:byte(pos, pos + 3)
+	if not d then
+		return nil
+	end
+	if le then
+		return a + b * 256 + c * 65536 + d * 16777216
+	end
+	return a * 16777216 + b * 65536 + c * 256 + d
+end
+
+local function read_u64_decimal(data, pos, le)
+	local chunks = { 0 }
+	local base = 1000000
+
+	for i = 1, 8 do
+		local idx = le and (pos + 8 - i) or (pos + i - 1)
+		local byte = data:byte(idx)
+		local carry = byte or 0
+
+		for j = 1, #chunks do
+			local value = chunks[j] * 256 + carry
+			chunks[j] = value % base
+			carry = math.floor(value / base)
+		end
+		while carry > 0 do
+			chunks[#chunks + 1] = carry % base
+			carry = math.floor(carry / base)
+		end
+	end
+
+	local out = tostring(chunks[#chunks])
+	for i = #chunks - 1, 1, -1 do
+		out = out .. string.format("%06d", chunks[i])
+	end
+	return out
+end
+
+local function format_ipv4(data, pos)
+	local a, b, c, d = data:byte(pos, pos + 3)
+	if not d then
+		return nil
+	end
+	return string.format("%u.%u.%u.%u", a, b, c, d)
+end
+
+local function format_ipv6(data, pos)
+	local groups = {}
+	for i = 0, 7 do
+		local hi, lo = data:byte(pos + i * 2, pos + i * 2 + 1)
+		if not lo then
+			return nil
+		end
+		groups[#groups + 1] = string.format("%x", hi * 256 + lo)
+	end
+	return table.concat(groups, ":")
+end
+
+local function format_mac(data, pos)
+	local a, b, c, d, e, f = data:byte(pos, pos + 5)
+	if not f then
+		return nil
+	end
+	return string.format("%02x:%02x:%02x:%02x:%02x:%02x", a, b, c, d, e, f)
+end
+
+local function parse_userinfo_event(record)
+	local b1, b2 = record:byte(1, 2)
+	local le
+	if b1 == 2 and b2 == 0 then
+		le = true
+	elseif b1 == 0 and b2 == 2 then
+		le = false
+	else
+		return nil
+	end
+
+	local version = read_u16(record, 1, le)
+	local header_len = read_u16(record, 3, le)
+	local record_len = read_u16(record, 5, le)
+	if version ~= 2 or header_len ~= USERINFO_EVENT_SIZE or record_len ~= USERINFO_EVENT_SIZE then
+		return nil
+	end
+
+	local family = read_u16(record, 7, le)
+	local idle_time = read_u32(record, 9, le) or 0
+	local ip
+	if family == AF_INET then
+		ip = format_ipv4(record, 13)
+	elseif family == AF_INET6 then
+		ip = format_ipv6(record, 13)
+	end
+	if not ip then
+		return nil
+	end
+
+	local mac = format_mac(record, 29)
+	if not mac then
+		return nil
+	end
+
+	local auth_type = record:byte(35) or 0
+	local auth_status = record:byte(36) or 0
+	local auth_rule_id = read_u16(record, 37, le) or 0
+	local rx_packets = read_u64_decimal(record, 39, le)
+	local rx_bytes = read_u64_decimal(record, 47, le)
+	local tx_packets = read_u64_decimal(record, 55, le)
+	local tx_bytes = read_u64_decimal(record, 63, le)
+	local rx_speed_packets = read_u32(record, 71, le) or 0
+	local rx_speed_bytes = read_u32(record, 75, le) or 0
+	local tx_speed_packets = read_u32(record, 79, le) or 0
+	local tx_speed_bytes = read_u32(record, 83, le) or 0
+
+	local line = string.format("%s,%s,0x%x,0x%x,%u,%u,%s:%s,%s:%s,%u:%u,%u:%u",
+		ip, mac, auth_type, auth_status, auth_rule_id, idle_time,
+		rx_packets, rx_bytes, tx_packets, tx_bytes,
+		rx_speed_packets, rx_speed_bytes, tx_speed_packets, tx_speed_bytes)
+	return line, ip
 end
 
 local function is_ipv6(value)
@@ -427,6 +571,100 @@ local function ensure_fifo()
 	fs_mkfifo(EVENT_FIFO)
 end
 
+local function fd_write_all(fd, data)
+	if type(fd.writeall) == "function" then
+		local ok = fd:writeall(data)
+		return ok ~= nil and ok ~= false
+	end
+
+	if type(fd.write) ~= "function" then
+		return false
+	end
+
+	local offset = 1
+
+	while offset <= #data do
+		local len = fd:write(data:sub(offset))
+
+		if len == nil or len == false then
+			return false
+		end
+
+		if len == true then
+			return true
+		end
+
+		if type(len) ~= "number" or len <= 0 then
+			return false
+		end
+
+		offset = offset + len
+	end
+
+	return true
+end
+
+local function open_event_queue()
+	local fd = nixio.open(DEV_EVENT, nixio.open_flags("rdwr"))
+	if not fd then
+		return nil
+	end
+
+	if not fd_write_all(fd, string.format("cache=%u\n", EVENT_CACHE_LIMIT)) then
+		fd:close()
+		return nil
+	end
+	return fd
+end
+
+local function wait_event_queue(fd)
+	if type(nixio.poll) ~= "function" or type(nixio.poll_flags) ~= "function" then
+		sleep_msec(1000)
+		return true
+	end
+
+	local ok, ready = pcall(function()
+		local fds = {
+			{
+				fd = fd,
+				events = nixio.poll_flags("in"),
+			}
+		}
+		return nixio.poll(fds, -1)
+	end)
+	if not ok or ready == nil then
+		sleep_msec(1000)
+		return true
+	end
+	if type(ready) == "number" then
+		return ready >= 0
+	end
+	return ready ~= false
+end
+
+local function read_event_batch(fd, pending, callback)
+	local data = fd:read(USERINFO_EVENT_READ_SIZE)
+	if not data then
+		return false, pending, false
+	end
+	if #data == 0 then
+		return true, pending, false
+	end
+
+	data = pending .. data
+	local offset = 1
+	while #data - offset + 1 >= USERINFO_EVENT_SIZE do
+		local record = data:sub(offset, offset + USERINFO_EVENT_SIZE - 1)
+		local line, ip = parse_userinfo_event(record)
+		if line and ip then
+			callback(line, ip)
+		end
+		offset = offset + USERINFO_EVENT_SIZE
+	end
+
+	return true, data:sub(offset), true
+end
+
 -- Non-blocking FIFO write avoids spawning a helper process per event.
 local function dispatch_event(line)
 	local fd = nixio.open(EVENT_FIFO, nixio.open_flags("wronly", "nonblock"))
@@ -434,7 +672,7 @@ local function dispatch_event(line)
 		return
 	end
 
-	fd:writeall(tostring(line or "") .. "\n")
+	fd_write_all(fd, tostring(line or "") .. "\n")
 	fd:close()
 end
 
@@ -462,18 +700,30 @@ local function run_worker()
 	ensure_fifo()
 	dispatch_event("")
 
-	local fp = io.open(DEV_EVENT, "r")
-	if not fp then
+	local fd = open_event_queue()
+	if not fd then
 		return 1
 	end
 
-	for line in fp:lines() do
-		local ip = first_field(line)
-		dispatch_event(line)
-		apply_ip(rules, ip, false)
-		refresh_ipv6_neighbor(line, ip)
+	local pending = ""
+	while wait_event_queue(fd) do
+		for _ = 1, 32 do
+			local ok, new_pending, had_events = read_event_batch(fd, pending, function(line, ip)
+				dispatch_event(line)
+				apply_ip(rules, ip, false)
+				refresh_ipv6_neighbor(line, ip)
+			end)
+			pending = new_pending
+			if not ok then
+				fd:close()
+				return 1
+			end
+			if not had_events then
+				break
+			end
+		end
 	end
-	fp:close()
+	fd:close()
 	return 0
 end
 
