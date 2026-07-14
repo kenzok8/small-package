@@ -81,23 +81,14 @@ o = s:option(Flag, "enable_autoswitch", translate("Auto Switch"))
 o.default = 0
 o.rmempty = false
 
-o = s:option(Value, "autoswitch_testing_time", translate("How often to test"), translate("Units:seconds"))
-o.datatype = "min(10)"
-o.default = 30
+o = s:option(ListValue, "backup_node_add_mode", translate("Backup Node Addition Method"))
 o:depends("enable_autoswitch", true)
+o.default = "manual"
+o:value("manual", translate("Manual"))
+o:value("batch", translate("Batch"))
 
-o = s:option(Value, "autoswitch_connect_timeout", translate("Timeout seconds"), translate("Units:seconds"))
-o.datatype = "min(1)"
-o.default = 3
-o:depends("enable_autoswitch", true)
-
-o = s:option(Value, "autoswitch_retry_num", translate("Timeout retry num"))
-o.datatype = "min(1)"
-o.default = 1
-o:depends("enable_autoswitch", true)
-	
 o = s:option(DynamicList, "autoswitch_backup_node", translate("List of backup nodes"))
-o:depends("enable_autoswitch", true)
+o:depends("backup_node_add_mode", "manual")
 o.template = appname .. "/cbi/nodes_dynamiclist"
 o.group = {}
 o.write = function(self, section, value)
@@ -119,6 +110,44 @@ for i, v in pairs(nodes_table) do
 	socks_node.group[#socks_node.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 end
 
+o = s:option(MultiValue, "backup_node_group", translate("Select Group"))
+o:depends("backup_node_add_mode", "batch")
+o.widget = "checkbox"
+o:value("default", translate("default"))
+local groups = {}
+m.uci:foreach(appname, "nodes", function(s)
+	if s.group and s.group ~= "" then
+		groups[s.group] = true
+	end
+end)
+for k, v in pairs(groups) do
+	o:value(api.UrlEncode(k), k)
+end
+
+o = s:option(Value, "backup_node_match_rule", translate("Node Matching Rules"))
+o:depends("backup_node_add_mode", "batch")
+local descrStr = "Example: <code>^A && B && !C && D$</code><br>"
+descrStr = descrStr .. "This means the node remark must start with A (^), include B, exclude C (!), and end with D ($).<br>"
+descrStr = descrStr .. "Conditions are joined by <code>&&</code> (AND), and their order does not affect the result.<br>"
+descrStr = descrStr .. "Multiple groups can be separated by <code>||</code> (OR), matching succeeds if any group matches.<br>"
+descrStr = descrStr .. "Example: <code>A && B || C && D</code> means (A AND B) OR (C AND D)."
+o.description = translate(descrStr)
+
+o = s:option(Value, "autoswitch_testing_time", translate("How often to test"), translate("Units:seconds"))
+o.datatype = "min(10)"
+o.default = 30
+o:depends("enable_autoswitch", true)
+
+o = s:option(Value, "autoswitch_connect_timeout", translate("Timeout seconds"), translate("Units:seconds"))
+o.datatype = "min(1)"
+o.default = 3
+o:depends("enable_autoswitch", true)
+
+o = s:option(Value, "autoswitch_retry_num", translate("Timeout retry num"))
+o.datatype = "min(1)"
+o.default = 1
+o:depends("enable_autoswitch", true)
+	
 o = s:option(Flag, "autoswitch_restore_switch", translate("Restore Switch"), translate("When detects main node is available, switch back to the main node."))
 o:depends("enable_autoswitch", true)
 
@@ -135,6 +164,6 @@ o:depends("enable_autoswitch", true)
 
 o = s:option(DummyValue, "btn")
 o.template = appname .. "/socks_auto_switch/btn"
-o:depends("enable_autoswitch", true)
+o:depends("backup_node_add_mode", "manual")
 
 return m

@@ -123,6 +123,40 @@ read_config() {
 	cron
 }
 
+get_signal_dbm() {
+	local mac="$1"
+	local device
+	local wxjk_dbm
+
+	[ -z "$mac" ] && return 1
+	echo "$mac" | grep -qE "^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$" || return 1
+
+	for device in /sys/class/net/*; do
+		device=$(basename "$device")
+		[ -d "/sys/class/net/$device/wireless" ] || continue
+		iwinfo "$device" info >/dev/null 2>&1 || continue
+
+		wxjk_dbm=$(iwinfo "$device" assoclist 2>/dev/null | awk -v mac="$mac" '
+			index(tolower($0), tolower(mac)) {
+				line = tolower($0)
+				if (match(line, /-?[0-9]+[[:space:]]*dbm/)) {
+					val = substr(line, RSTART, RLENGTH)
+					gsub(/[[:space:]]*dbm/, "", val)
+					print val
+				} else {
+					print "__SEEN__"
+				}
+				exit
+			}
+		')
+
+		[ "$wxjk_dbm" = "__SEEN__" ] && return 1
+		[ -n "$wxjk_dbm" ] && echo "$wxjk_dbm" | awk '{ $1=$1 };1' && return 0
+	done
+
+	return 1
+}
+
 # 初始化
 init() {
 	# 检测程序开关
@@ -968,15 +1002,66 @@ usage() {
 	elif [ $1 == "get" ]; then
 		[ ! -f "${dir}/usage.db" ] && [ -z "$3" ] && echo $(bytes_for_humans "0") && return
 		[ ! -f "${dir}/usage.db" ] && [ -n "$3" ] && echo "0" && return
-		[ -z "$total_n" ] && total_n=$(cat ${dir}/usage.db | head -n1 | grep "total" | sed 's/,/\n/g' | awk '/total/{print NR}') 2>/dev/null
+		[ -z "$total_n" ] && total_n=$(head -n1 "${dir}/usage.db" | sed 's/,/\n/g' | awk '$0=="total"{print NR; exit}') 2>/dev/null
+		[ -z "$in_n" ] && in_n=$(head -n1 "${dir}/usage.db" | sed 's/,/\n/g' | awk '$0=="in"{print NR; exit}') 2>/dev/null
+		[ -z "$out_n" ] && out_n=$(head -n1 "${dir}/usage.db" | sed 's/,/\n/g' | awk '$0=="out"{print NR; exit}') 2>/dev/null
 		[ -z "$total_n" ] && total_n="6"
-		[ -n "$2" ] && local tmptotal=$(cat ${dir}/usage.db | sed 's/,,,/,0,0,/g' | sed 's/,,/,0,/g' | sed 's/,/ /g' | grep -i -w ${2} | awk "{print "'$'$total_n"}" | grep -v "^$" | sort -u | head -n1) 2>/dev/null
+		local selected_n="$total_n"
+		case "$4" in
+			in) selected_n="$in_n" ;;
+			out) selected_n="$out_n" ;;
+			total|"") selected_n="$total_n" ;;
+			*) selected_n="$total_n" ;;
+		esac
+		case "$4" in
+			in|out) [ -z "$selected_n" ] && return ;;
+			*) [ -z "$selected_n" ] && selected_n="$total_n" ;;
+		esac
+		[ -n "$2" ] && local tmptotal=$(cat "${dir}/usage.db" | sed 's/,,,/,0,0,/g' | sed 's/,,/,0,/g' | sed 's/,/ /g' | awk -v key="$2" -v column="$selected_n" '{for (i=1; i<=NF; i++) if (tolower($i)==tolower(key)) {print $column; exit}}' | grep -v "^$" | sort -u | head -n1) 2>/dev/null
 		[ -z "$tmptotal" ] && local tmptotal="0"
 		[ -z "$3" ] && echo $(bytes_for_humans "${tmptotal}") || echo "$tmptotal"
 	# 剔除
 	elif [ $1 == "down" ]; then
 		[ "$2" ] && sed -i "/,${2},/d" ${dir}/usage.db 2>/dev/null
 	fi
+}
+
+get_usage_stats() {
+	local mac="$1"
+	local has_direction="0"
+
+	if [ ! -f "/usr/sbin/wrtbwmon" ] || [ -z "$mac" ] || [ ! -f "${dir}/usage.db" ]; then
+		echo "0 0 0 0"
+		return
+	fi
+
+	[ -z "$total_n" ] && total_n=$(head -n1 "${dir}/usage.db" | sed 's/,/\n/g' | awk '$0=="total"{print NR; exit}') 2>/dev/null
+	[ -z "$in_n" ] && in_n=$(head -n1 "${dir}/usage.db" | sed 's/,/\n/g' | awk '$0=="in"{print NR; exit}') 2>/dev/null
+	[ -z "$out_n" ] && out_n=$(head -n1 "${dir}/usage.db" | sed 's/,/\n/g' | awk '$0=="out"{print NR; exit}') 2>/dev/null
+	[ -z "$total_n" ] && total_n="6"
+	[ -n "$in_n" ] && [ -n "$out_n" ] && has_direction="1"
+
+	awk -F, -v key="$mac" -v total_col="$total_n" -v in_col="$in_n" -v out_col="$out_n" -v has_direction="$has_direction" '
+		{
+			for (i = 1; i <= NF; i++) {
+				if (tolower($i) == tolower(key)) {
+					total = $total_col + 0
+					in_bytes = 0
+					out_bytes = 0
+					if (has_direction == "1") {
+						in_bytes = $in_col + 0
+						out_bytes = $out_col + 0
+					}
+					print total, in_bytes, out_bytes, has_direction
+					found = 1
+					exit
+				}
+			}
+		}
+		END {
+			if (!found) print 0, 0, 0, has_direction
+		}
+	' "${dir}/usage.db" 2>/dev/null
 }
 
 # ------------------------------------
@@ -1829,7 +1914,13 @@ ${str_linefeed}${str_tab} - $(translate "Client IP:")${str_space}${str_space}${s
 ${str_linefeed}${str_tab} - $(translate "Client MAC:")${str_space}${str_space}${str_space}${str_space}${mac}\
 ${str_linefeed}${str_tab} - $(translate "Network Interface:")${str_space}${str_space}${str_space}${str_space}${str_space}${interface}"
 
-			log_change "${disturb_text} $(translate "New device %s %s connected" "$name" "$ip")"
+			local up_dbm=$(get_signal_dbm "$mac")
+			[ -n "$up_dbm" ] && content="${content}\
+${str_linefeed}${str_tab} - $(translate "Signal Strength:")${str_space}${str_space}${up_dbm} dBm"
+
+			local up_log=$(translate "New device %s %s connected" "$name" "$ip")
+			[ -n "$up_dbm" ] && up_log="${up_log} dbm:${up_dbm}"
+			log_change "${disturb_text} ${up_log}"
 
 			[ -n "$title" ] && echo "$title" >"${dir}/title"
 			[ -n "$content" ] && echo -n "$content" >>"${dir}/content"
@@ -2065,16 +2156,24 @@ get_client_usage() {
 	if [ "$(($(date +%s) - $get_client_usage_time))" -ge "60" ]; then
 		>${dir}/client_usage_aliases
 		for mac in $MACLIST; do
-			echo "$mac" $(usage get ${mac} bytes) >>${dir}/client_usage_aliases
-			[ -f "${dir}/old_client_usage_aliases" ] && get_client_usage_bytes=$(cat ${dir}/old_client_usage_aliases | grep -i -w $mac | awk '{print $2}' | grep -v "^$" | sort -u | head -n1) || continue
+			local cur_total cur_in cur_out cur_has_direction
+			read -r cur_total cur_in cur_out cur_has_direction <<<"$(get_usage_stats "$mac")"
+			echo "$mac ${cur_total} ${cur_in} ${cur_out} ${cur_has_direction}" >>${dir}/client_usage_aliases
+			[ -f "${dir}/old_client_usage_aliases" ] || continue
+			local old_line=$(awk -v key="$mac" 'tolower($1)==tolower(key){print; exit}' "${dir}/old_client_usage_aliases" 2>/dev/null)
+			[ -z "$old_line" ] && continue
 
-			[ -z "$get_client_usage_bytes" ] && get_client_usage_bytes="0"
-			if [ "$(($(usage get ${mac} bytes) - $get_client_usage_bytes))" -ge "$client_usage_max" ]; then
+			local old_mac prev_total prev_in prev_out old_has_direction
+			read -r old_mac prev_total prev_in prev_out old_has_direction <<<"$old_line"
+			[ -z "$prev_total" ] && prev_total="0"
+			local delta_total=$((cur_total - prev_total))
+			[ "$delta_total" -lt "0" ] && continue
+			if [ "$delta_total" -ge "$client_usage_max" ]; then
 				local ip=$(jq -r --arg mac "$mac" '.devices[] | select((.mac | ascii_downcase) == ($mac | ascii_downcase) and .status == "online") | .ip' "$devices_json")
 				local ip_name=$(getname ${ip} ${mac})
-				local tmp_usage=$(bytes_for_humans $(expr $(usage get ${mac} bytes) - ${get_client_usage_bytes}))
+				local tmp_usage=$(bytes_for_humans "$delta_total")
 				local time_up=$(jq -r --arg mac "$mac" '.devices[] | select((.mac | ascii_downcase) == ($mac | ascii_downcase) and .status == "online") | .uptime' "$devices_json")
-				local ip_total=$(usage get $mac) && [ -n "$ip_total" ] && local ip_total="${str_linefeed}${str_tab} - $(translate "Total Traffic:") ${str_space}${str_space}${str_space}${str_space}${ip_total}"
+				local ip_total=$(bytes_for_humans "$cur_total") && [ -n "$ip_total" ] && local ip_total="${str_linefeed}${str_tab} - $(translate "Total Traffic:") ${str_space}${str_space}${str_space}${str_space}${ip_total}"
 				local time1=$(date +%s)
 				local time1=$(time_for_humans $(expr ${time1} - ${time_up}))
 				
@@ -2088,14 +2187,31 @@ get_client_usage() {
 					local content_title="${str_splitline}${str_title_start}$(translate "Device abnormal traffic")${str_title_end}"
 				fi
 
+				local detail_upload=""
+				local detail_download=""
+				if [ "$cur_has_direction" = "1" ] && [ "$old_has_direction" = "1" ]; then
+					[ -z "$prev_in" ] && prev_in="0"
+					[ -z "$prev_out" ] && prev_out="0"
+					local delta_in=$((cur_in - prev_in))
+					local delta_out=$((cur_out - prev_out))
+					[ "$delta_in" -lt "0" ] && delta_in="0"
+					[ "$delta_out" -lt "0" ] && delta_out="0"
+					detail_upload="${str_linefeed}${str_tab} - $(translate "Upload Traffic:")${str_space}${str_space}$(bytes_for_humans "$delta_out")"
+					detail_download="${str_linefeed}${str_tab} - $(translate "Download Traffic:")${str_space}$(bytes_for_humans "$delta_in")"
+				fi
+
+				local detail_dbm=""
+				local wxjk_dbm=$(get_signal_dbm "$mac")
+				[ -n "$wxjk_dbm" ] && detail_dbm="${str_linefeed}${str_tab} - $(translate "Signal Strength:")${str_space}${str_space}${wxjk_dbm} dBm"
+
 				content="\
 ${content}\
 ${content_title}\
 ${str_linefeed}${str_tab} - $(translate "Client Name:")${str_space}${str_space}${str_space}${str_space}${str_space}${ip_name}\
 ${str_linefeed}${str_tab} - $(translate "Client IP:")${str_space}${str_space}${str_space}${str_space}${ip}\
 ${str_linefeed}${str_tab} - $(translate "Client MAC:")${str_space}${str_space}${str_space}${str_space}${mac}${ip_total}\
-${str_linefeed}${str_tab} - $(translate "Traffic in 1 minute:")${str_space}${str_space}${str_space}${tmp_usage}\
-${str_linefeed}${str_tab} - $(translate "Uptime:")${str_space}${str_space}${str_space}${str_space}${time1}"
+${str_linefeed}${str_tab} - $(translate "Traffic in 1 minute:")${str_space}${str_space}${str_space}${tmp_usage}${detail_upload}${detail_download}\
+${str_linefeed}${str_tab} - $(translate "Uptime:")${str_space}${str_space}${str_space}${str_space}${time1}${detail_dbm}"
 			fi
 		done
 		cat ${dir}/client_usage_aliases >${dir}/old_client_usage_aliases
@@ -2657,7 +2773,13 @@ ${str_linefeed}${str_tab} - $(translate "Client IP:")${str_space}${str_space}${s
 ${str_linefeed}${str_tab} - $(translate "Client MAC:")${str_space}${str_space}${str_space}${str_space}${mac}${ip_total}\
 ${str_linefeed}${str_tab} - $(translate "Uptime:")${str_space}${str_space}${str_space}${str_space}${time1}"
 
-		log_change "${disturb_text} $(translate "Device %s %s disconnected" "$name" "$ip")"
+		local down_dbm=$(get_signal_dbm "$mac")
+		[ -n "$down_dbm" ] && content="${content}\
+${str_linefeed}${str_tab} - $(translate "Signal Strength:")${str_space}${str_space}${down_dbm} dBm"
+
+		local down_log=$(translate "Device %s %s disconnected" "$name" "$ip")
+		[ -n "$down_dbm" ] && down_log="${down_log} dbm:${down_dbm}"
+		log_change "${disturb_text} ${down_log}"
 		
 	done
 	silent_run LockFile lock

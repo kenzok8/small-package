@@ -1342,6 +1342,15 @@ msgstr "设备状态变化"
 msgid "Traffic in 1 minute:"
 msgstr "一分钟内流量："
 
+msgid "Upload Traffic:"
+msgstr "上传流量："
+
+msgid "Download Traffic:"
+msgstr "下载流量："
+
+msgid "Signal Strength:"
+msgstr "dBm："
+
 msgid "Whitelist add failed, IP format error"
 msgstr "白名单添加失败，IP 格式错误"
 
