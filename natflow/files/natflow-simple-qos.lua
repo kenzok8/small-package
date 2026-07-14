@@ -1,6 +1,6 @@
 #!/usr/bin/lua
 
-local DEV_USERINFO = "/dev/userinfo_ctl"
+local DEV_USERINFO = "/dev/natflow_userinfo_ctl"
 local DEV_EVENT = "/dev/natflow_userinfo_queue"
 local EVENT_FIFO = "/tmp/userinfo_event_fifo"
 local EVENT_CACHE_LIMIT = 256
@@ -676,7 +676,7 @@ local function dispatch_event(line)
 	fd:close()
 end
 
--- Reading /dev/userinfo_ctl lists current users; writing to it sends commands.
+-- Reading /dev/natflow_userinfo_ctl lists current users; writing to it sends commands.
 local function foreach_userinfo(callback)
 	local fp = io.open(DEV_USERINFO, "r")
 	if not fp then

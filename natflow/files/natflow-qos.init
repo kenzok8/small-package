@@ -3,7 +3,7 @@
 
 START=95
 
-DEVCTL=/dev/qos_ctl
+DEVCTL=/dev/natflow_qos_ctl
 IPOPS="lua /usr/lib/lua/ipops.lua"
 test -e /usr/share/natflow/ipops.lua && IPOPS="lua /usr/share/natflow/ipops.lua"
 
@@ -242,7 +242,7 @@ natflow_qos_zone_setup_tc()
 			ifconfig -a | grep "^$ifn " | awk '{print $1}' | while read -r lan; do
 				if [ "${lan}" = "${lan//:}" ]; then
 					qos_id=0
-					grep "^add user=" < /dev/qos_ctl | while read -r line; do
+					grep "^add user=" < /dev/natflow_qos_ctl | while read -r line; do
 						line="${line/*rxbytes=}"
 						rxbytes="${line/,*}"
 						quantum=$(($rxbytes/1000))
@@ -268,7 +268,7 @@ natflow_qos_zone_setup_tc()
 			ifconfig -a | grep "^$ifn " | awk '{print $1}' | while read -r wan; do
 				if [ "${wan}" = "${wan//:}" ]; then
 					qos_id=0
-					grep "^add user=" < /dev/qos_ctl | while read -r line; do
+					grep "^add user=" < /dev/natflow_qos_ctl | while read -r line; do
 						txbytes="${line/*,txbytes=}"
 						quantum=$(($txbytes/1000))
 						if test $quantum -lt 256; then
@@ -315,10 +315,10 @@ start() {
 	natflow_qos_clear_tc
 
 	if [ "$(uci get natflow.main.tc_classid_mode 2>/dev/null || echo 0)" = "1" ] && command -v tc >/dev/null 2>&1; then
-		echo tc_classid_mode=1 >/dev/qos_ctl
+		echo tc_classid_mode=1 >/dev/natflow_qos_ctl
 		config_foreach natflow_qos_zone_setup_tc zone
 	else
-		echo tc_classid_mode=0 >/dev/qos_ctl
+		echo tc_classid_mode=0 >/dev/natflow_qos_ctl
 	fi
 
 	mkdir -p /tmp/config
