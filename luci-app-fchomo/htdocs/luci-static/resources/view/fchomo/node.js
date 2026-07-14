@@ -104,7 +104,7 @@ const parseProviderYaml = hm.parseYaml.extend({
 		if (!cfg.type)
 			return null;
 
-		// key mapping // 2026/06/06
+		// key mapping // 2026/07/12
 		let config = hm.removeBlankAttrs({
 			id: this.id,
 			label: this.label,
@@ -130,6 +130,8 @@ const parseProviderYaml = hm.parseYaml.extend({
 				override_prefix: this.jq(cfg, "override.additional-prefix"),
 				override_suffix: this.jq(cfg, "override.additional-suffix"),
 				override_replace: (this.jq(cfg, "override.proxy-name") || []).map((obj) => JSON.stringify(obj)), // array.string: array.object
+				// Programmable replacement
+				override_expr: this.jq(cfg, "override.override-expr") || [], // array.string
 				// Other configuration items
 				override_tfo: this.bool2str(this.jq(cfg, "override.tfo")), // bool
 				override_mptcp: this.bool2str(this.jq(cfg, "override.mptcp")), // bool
@@ -137,6 +139,7 @@ const parseProviderYaml = hm.parseYaml.extend({
 				override_uot: this.bool2str(this.jq(cfg, "override.udp-over-tcp")), // bool
 				override_up: this.jq(cfg, "override.up"),
 				override_down: this.jq(cfg, "override.down"),
+				override_name_cert_verify: this.jq(cfg, "override.name-cert-verify"),
 				override_skip_cert_verify: this.bool2str(this.jq(cfg, "override.skip-cert-verify")), // bool
 				//override_dialer_proxy: this.jq(cfg, "override.dialer-proxy"),
 				override_interface_name: this.jq(cfg, "override.interface-name"),
@@ -301,13 +304,13 @@ return view.extend({
 		/* hm.validateAuth */
 		so = ss.taboption('field_general', form.Value, 'username', _('Username'));
 		so.validate = hm.validateAuthUsername;
-		so.depends({type: /^(http|socks5|mieru|trusttunnel|ssh)$/});
+		so.depends({type: /^(http|socks5|mieru|shadowquic|trusttunnel|ssh)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Value, 'password', _('Password'));
 		so.password = true;
 		so.validate = hm.validateAuthPassword;
-		so.depends({type: /^(http|socks5|mieru|trojan|anytls|tuic|hysteria2|trusttunnel|ssh)$/});
+		so.depends({type: /^(http|socks5|mieru|trojan|anytls|tuic|hysteria2|shadowquic|trusttunnel|ssh)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', hm.TextValue, 'headers', _('HTTP header'));
@@ -664,12 +667,6 @@ return view.extend({
 		so.depends('type', 'tuic');
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.Value, 'tuic_max_open_streams', _('Max open streams'));
-		so.datatype = 'uinteger';
-		so.placeholder = '100';
-		so.depends('type', 'tuic');
-		so.modalonly = true;
-
 		/* Hysteria / Hysteria2 fields */
 		so = ss.taboption('field_general', form.DynamicList, 'hysteria_ports', _('Ports pool'));
 		so.datatype = 'or(port, portrange)';
@@ -728,6 +725,31 @@ return view.extend({
 		so = ss.taboption('field_general', form.Flag, 'trusttunnel_quic', _('QUIC'));
 		so.default = so.disabled;
 		so.depends('type', 'trusttunnel');
+		so.modalonly = true;
+
+		/* ShadowQUIC fields */
+		so = ss.taboption('field_general', form.DynamicList, 'shadowquic_quic_versions', _('QUIC versions'),
+			_('Support %s, default %s.').format('v1/v2', 'v1'));
+		so.default = 'v1';
+		so.rmempty = false;
+		so.depends('type', 'shadowquic');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'shadowquic_udp_over_stream', _('UDP over stream'));
+		so.default = so.disabled;
+		so.depends('type', 'shadowquic');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'shadowquic_zero_rtt', _('QUIC based 0-RTT'));
+		so.default = so.disabled;
+		so.depends('type', 'shadowquic');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'shadowquic_heartbeat', _('Heartbeat interval'),
+			_('In millisecond.'));
+		so.datatype = 'uinteger';
+		so.placeholder = '10000';
+		so.depends('type', 'shadowquic');
 		so.modalonly = true;
 
 		/* WireGuard fields */
@@ -895,7 +917,7 @@ return view.extend({
 		hm.congestion_controller.forEach((res) => {
 			so.value.apply(so, res);
 		})
-		so.depends({type: /^(tuic|trusttunnel)$/});
+		so.depends({type: /^(tuic|shadowquic|trusttunnel)$/});
 		so.depends({type: 'masque', masque_network: /^(|h3-l4proxy)$/});
 		so.modalonly = true;
 
@@ -904,8 +926,14 @@ return view.extend({
 		hm.bbr_profiles.forEach((res) => {
 			so.value.apply(so, res);
 		})
-		so.depends({congestion_controller: 'bbr'});
-		so.depends({type: 'hysteria2'});
+		so.depends('congestion_controller', 'bbr');
+		so.depends('type', 'hysteria2');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'max_open_streams', _('Max open streams'));
+		so.datatype = 'uinteger';
+		so.placeholder = '1024';
+		so.depends({type: /^(tuic|shadowquic)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Value, 'handshake_timeout', _('Handshake timeout'),
@@ -947,6 +975,7 @@ return view.extend({
 		//so.value('gost-plugin', _('gost-plugin'));
 		so.value('shadow-tls', _('shadow-tls'));
 		so.value('restls', _('restls'));
+		so.value('jls', _('jls'));
 		//so.value('kcptun', _('kcptun'));
 		so.validate = function(section_id, value) {
 			const type = this.section.getOption('type').formvalue(section_id);
@@ -973,13 +1002,19 @@ return view.extend({
 		so.datatype = 'hostname';
 		so.placeholder = 'cloud.tencent.com';
 		so.rmempty = false;
-		so.depends({plugin_type: /^(obfs|v2ray-plugin|shadow-tls|restls)$/});
+		so.depends({plugin_type: /^(obfs|v2ray-plugin|shadow-tls|restls|jls)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_plugin', form.Value, 'plugin_opts_thetlsusername', _('Username'));
+		so.validate = hm.validateAuthUsername;
+		so.rmempty = false;
+		so.depends({plugin_type: 'jls'});
 		so.modalonly = true;
 
 		so = ss.taboption('field_plugin', form.Value, 'plugin_opts_thetlspassword', _('Password'));
 		so.password = true;
 		so.rmempty = false;
-		so.depends({plugin_type: /^(shadow-tls|restls)$/});
+		so.depends({plugin_type: /^(shadow-tls|restls|jls)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_plugin', form.ListValue, 'plugin_opts_shadowtls_version', _('Version'));
@@ -1101,7 +1136,7 @@ return view.extend({
 		so.depends('hysteria2_realm', '1');
 		so.modalonly = true;
 
-		// @ 下面支持填写针对server-url的TLS配置(sni, skip-cert-verify, fingerprint, certificate, private-key, alpn)
+		// @ 下面支持填写针对server-url的TLS配置(sni, skip-cert-verify, name-cert-verify, fingerprint, certificate, private-key, alpn)
 
 		/* TLS fields */
 		so = ss.taboption('field_general', form.Flag, 'tls', _('TLS'));
@@ -1111,7 +1146,7 @@ return view.extend({
 			let tls = this.section.getUIElement(section_id, 'tls').node.querySelector('input');
 
 			// Force enabled
-			if (['trojan', 'anytls', 'hysteria', 'hysteria2', 'tuic', 'trusttunnel', 'masque'].includes(type)) {
+			if (['trojan', 'anytls', 'tuic', 'hysteria', 'hysteria2', 'shadowquic', 'trusttunnel', 'masque'].includes(type)) {
 				tls.checked = true;
 				tls.disabled = true;
 			} else {
@@ -1120,7 +1155,7 @@ return view.extend({
 
 			return true;
 		}
-		so.depends({type: /^(http|socks5|vmess|vless|trojan|anytls|tuic|hysteria|hysteria2|trusttunnel|masque)$/});
+		so.depends({type: /^(http|socks5|vmess|vless|trojan|anytls|tuic|hysteria|hysteria2|shadowquic|trusttunnel|masque)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_tls', form.Flag, 'tls_disable_sni', _('Disable SNI'),
@@ -1130,8 +1165,8 @@ return view.extend({
 		so.modalonly = true;
 
 		so = ss.taboption('field_tls', form.Value, 'tls_sni', _('TLS SNI'),
-			_('Used to verify the hostname on the returned certificates.'));
-		so.depends({tls: '1', type: /^(http|vmess|vless|trojan|anytls|hysteria|hysteria2|trusttunnel|masque)$/});
+			_('Hostname that the client attempts to connect to at the start of the TLS handshake process.'));
+		so.depends({tls: '1', type: /^(http|vmess|vless|trojan|anytls|hysteria|hysteria2|shadowquic|trusttunnel|masque)$/});
 		so.depends({tls: '1', type: /^(tuic)$/, tls_disable_sni: '0'});
 		so.modalonly = true;
 
@@ -1149,11 +1184,12 @@ return view.extend({
 				switch (type) {
 					case 'ss':
 					case 'snell':
-						def_alpn = ['h2', 'http/1.1']; // when plugin_type === 'shadow-tls'
+						def_alpn = ['h2', 'http/1.1']; // when plugin_type in ['shadow-tls', 'jls']
 						break;
 					case 'tuic':
 					case 'hysteria':
 					case 'hysteria2':
+					case 'shadowquic':
 						def_alpn = ['h3'];
 						break;
 					case 'vmess':
@@ -1176,8 +1212,9 @@ return view.extend({
 
 			return true;
 		}
-		so.depends({tls: '1', type: /^(vmess|vless|trojan|anytls|tuic|hysteria|hysteria2|trusttunnel)$/});
+		so.depends({tls: '1', type: /^(vmess|vless|trojan|anytls|tuic|hysteria|hysteria2|shadowquic|trusttunnel)$/});
 		so.depends({type: /^(ss|snell)$/, plugin_type: 'shadow-tls'});
+		so.depends({type: 'ss', plugin_type: 'jls'});
 		so.modalonly = true;
 
 		so = ss.taboption('field_tls', form.Value, 'tls_fingerprint', _('Cert fingerprint'),
@@ -1191,6 +1228,12 @@ return view.extend({
 			return true;
 		}
 		so.depends({tls: '1', type: /^(http|socks5|vmess|vless|trojan|hysteria|hysteria2)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_tls', form.Value, 'tls_name_cert_verify', _('Override cert DNSName'),
+			_('Used to verify the hostname on the returned certificates.'));
+		so.datatype = 'hostname';
+		so.depends({tls: '1', type: /^(http|socks5|vmess|vless|trojan|anytls|tuic|hysteria|hysteria2|trusttunnel)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_tls', form.Flag, 'tls_skip_cert_verify', _('Skip cert verify'),
@@ -1254,6 +1297,7 @@ return view.extend({
 		})
 		so.depends({tls: '1', type: /^(vmess|vless|trojan|anytls|trusttunnel)$/});
 		so.depends({type: /^(ss|snell)$/, plugin_type: /^(shadow-tls|restls)$/});
+		so.depends({type: 'ss', plugin_type: 'jls'});
 		so.modalonly = true;
 
 		so = ss.taboption('field_tls', form.Flag, 'tls_reality', _('REALITY'));
@@ -1643,6 +1687,7 @@ return view.extend({
 							'      udp-over-tcp: false\n' +
 							'      down: "50 Mbps"\n' +
 							'      up: "10 Mbps"\n' +
+							'      name-cert-verify: example.com\n' +
 							'      skip-cert-verify: true\n' +
 							'      dialer-proxy: proxy\n' +
 							'      interface-name: tailscale0\n' +
@@ -1655,6 +1700,19 @@ return view.extend({
 							'          target: "TEST"\n' +
 							'        - pattern: "IPLC-(.*?)倍"\n' +
 							'          target: "iplc x $1"\n' +
+							'      override-expr:\n' +
+							"        - '.name = \"[provider1] \" + .name'                   # 普通赋值\n" +
+							"        - '.plugin-opts.mode = \"tls\"'                        # 自动创建缺失的 mapping\n" +
+							"        - '.alpn[] |= upcase'                                # 更新数组中的每一项\n" +
+							"        - 'del(.skip-cert-verify)'                           # 删除字段\n" +
+							"        - '.name = (.name | trim | upcase)'                  # 赋值右侧的管道需加括号\n" +
+							"        - '.name = \"[\\(.type)] \\(.name):\\(.port)\"'           # 字符串插值\n" +
+							"        - '(select(.port == 443) | .tls) = true'             # 条件不匹配时不修改\n" +
+							"        - '.tags |= (unique | sort)'                         # 去重后排序\n" +
+							"        - '.names = [.servers[] | select(.enabled) | .name]' # 收集多个结果\n" +
+							"        - '.servers |= map(select(.enabled))'                # 筛选数组\n" +
+							"        - '.options |= with_entries(.key |= upcase)'         # 转换 mapping\n" +
+							"        - '. | with_entries(.key |= upcase)'                 # 整体过滤结果仍须为 mapping\n" +
 							'    filter: "(?i)港|hk|hongkong|hong kong"\n' +
 							'    exclude-filter: "xxx"\n' +
 							'    exclude-type: "ss|http"\n' +
@@ -1901,6 +1959,13 @@ return view.extend({
 		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 
+		so = ss.taboption('field_override', form.DynamicList, 'override_expr', _('Programmable replacement'),
+			_('For format see <a target="_blank" href="%s" rel="noreferrer noopener">%s</a>.')
+				.format('https://wiki.metacubex.one/config/proxy-providers/#override_expr', _('override.override-expr')));
+		so.placeholder = '.name = "[provider1] " + .name';
+		so.depends({type: 'inline', '!reverse': true});
+		so.modalonly = true;
+
 		so = ss.taboption('field_override', form.DummyValue, '_config_items', null);
 		so.load = function() {
 			return '<a target="_blank" href="%s" rel="noreferrer noopener">%s</a>'
@@ -1940,6 +2005,12 @@ return view.extend({
 		so = ss.taboption('field_override', form.Value, 'override_down', _('down'),
 			_('In Mbps.'));
 		so.datatype = 'uinteger';
+		so.depends({type: 'inline', '!reverse': true});
+		so.modalonly = true;
+
+		so = ss.taboption('field_override', form.Value, 'override_name_cert_verify', _('Override cert DNSName'),
+			_('Used to verify the hostname on the returned certificates.'));
+		so.datatype = 'hostname';
 		so.depends({type: 'inline', '!reverse': true});
 		so.modalonly = true;
 

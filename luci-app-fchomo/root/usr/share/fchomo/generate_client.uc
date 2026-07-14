@@ -345,6 +345,12 @@ uci.foreach(uciconf, uciinbd, (cfg) => {
 
 	const listener = parseListener(cfg);
 	listener.proxy = get_proxy(listener.proxy);
+	if (listener["res-tls"])
+		listener["res-tls"].proxy = get_proxy(listener["res-tls"].proxy);
+	if (listener["jls-config"])
+		listener["jls-config"].proxy = get_proxy(listener["jls-config"].proxy);
+	if (listener["jls-upstream"])
+		listener["jls-upstream"].proxy = get_proxy(listener["jls-upstream"].proxy);
 
 	push(config.listeners, listener);
 });
@@ -493,7 +499,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"target-rematch-name": cfg.target_rematch_name,
 		"target-sub-rule": cfg.target_sub_rule,
 
-		/* HTTP / SOCKS / Shadowsocks / VMess / VLESS / Trojan / TUIC / hysteria2 / WireGuard / Masque */
+		/* HTTP / SOCKS / Shadowsocks / VMess / VLESS / Trojan / TUIC / hysteria2 / ShadowQUIC / WireGuard / Masque */
 		username: cfg.username,
 		uuid: cfg.vmess_uuid || cfg.uuid,
 		cipher: cfg.vmess_chipher || cfg.shadowsocks_chipher,
@@ -561,14 +567,11 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		/* TUIC */
 		ip: cfg.tuic_ip,
 		"udp-relay-mode": cfg.tuic_udp_relay_mode,
-		"udp-over-stream": strToBool(cfg.tuic_udp_over_stream),
 		"udp-over-stream-version": cfg.tuic_udp_over_stream_version,
 		"max-udp-relay-packet-size": strToInt(cfg.tuic_max_udp_relay_packet_size) || null,
 		"fast-open": strToBool(cfg.tuic_fast_open),
 		"reduce-rtt": strToBool(cfg.tuic_reduce_rtt),
-		"heartbeat-interval": strToInt(cfg.tuic_heartbeat) || null,
 		"request-timeout": strToInt(cfg.tuic_request_timeout) || null,
-		"max-open-streams": strToInt(cfg.tuic_max_open_streams) || null,
 
 		/* Hysteria / Hysteria2 */
 		ports: isEmpty(cfg.hysteria_ports) ? null : join(',', cfg.hysteria_ports),
@@ -594,6 +597,15 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 			//"private-key"
 		} : null,
 
+		/* ShadowQUIC */
+		"quic-versions": cfg.shadowquic_quic_versions,
+		"zero-rtt": strToBool(cfg.shadowquic_zero_rtt),
+		// @# cwnd: 10 # default: 32,
+		// @# max-datagram-frame-size: 1400,
+		// @# recv-window-conn: 0,
+		// @# recv-window: 0,
+		// @# disable-mtu-discovery: false,
+
 		/* TrustTunnel */
 		"health-check": cfg.type === 'trusttunnel' ? (cfg.trusttunnel_health_check === '0' ? false : true) : null,
 		quic: strToBool(cfg.trusttunnel_quic),
@@ -613,8 +625,13 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"host-key": cfg.ssh_host_key,
 
 		/* Extra fields */
+		"udp-over-stream": strToBool(cfg.shadowquic_udp_over_stream || cfg.tuic_udp_over_stream),
+		"heartbeat-interval": strToInt(cfg.tuic_heartbeat) || null,
+		"keep-alive-interval": strToInt(cfg.shadowquic_heartbeat) || null,
 		"congestion-controller": cfg.congestion_controller,
 		"bbr-profile": cfg.bbr_profile,
+		"max-open-streams": strToInt(cfg.max_open_streams) || null,
+
 		"handshake-timeout": strToInt(cfg.handshake_timeout),
 		udp: strToBool(cfg.udp),
 		"udp-over-tcp": strToBool(cfg.uot),
@@ -625,7 +642,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 			cfg.type === 'snell' ? {
 				// snell
 				"obfs-opts": {
-					mode: cfg.plugin_type in ['shadow-tls'] ? cfg.plugin_type : cfg.plugin_opts_obfsmode,
+					mode: cfg.plugin_type === 'shadow-tls' ? cfg.plugin_type : cfg.plugin_opts_obfsmode,
 					host: cfg.plugin_opts_host,
 					password: cfg.plugin_opts_thetlspassword,
 					version: strToInt(cfg.plugin_opts_shadowtls_version),
@@ -637,6 +654,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 				"plugin-opts": {
 					mode: cfg.plugin_opts_obfsmode,
 					host: cfg.plugin_opts_host,
+					username: cfg.plugin_opts_thetlsusername,
 					password: cfg.plugin_opts_thetlspassword,
 					version: strToInt(cfg.plugin_opts_shadowtls_version),
 					alpn: cfg.tls_alpn, // Array
@@ -648,11 +666,12 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 
 		/* SSH / WireGuard / Masque */
 		/* TLS fields */
-		tls: (cfg.type in ['trojan', 'anytls', 'hysteria', 'hysteria2', 'tuic', 'trusttunnel']) ? null : strToBool(cfg.tls),
+		tls: (cfg.type in ['trojan', 'anytls', 'tuic', 'hysteria', 'hysteria2', 'shadowquic', 'trusttunnel']) ? null : strToBool(cfg.tls),
 		"disable-sni": strToBool(cfg.tls_disable_sni),
 		...arrToObj([[(cfg.type in ['vmess', 'vless']) ? 'servername' : 'sni', cfg.tls_sni]]),
 		fingerprint: cfg.tls_fingerprint,
-		alpn: cfg.plugin_type in ['shadow-tls'] ? null : cfg.tls_alpn, // Array
+		alpn: cfg.plugin_type in ['shadow-tls', 'jls'] ? null : cfg.tls_alpn, // Array
+		"name-cert-verify": cfg.tls_name_cert_verify,
 		"skip-cert-verify": strToBool(cfg.tls_skip_cert_verify),
 		certificate: cfg.tls_cert_path, // mTLS
 		"private-key": cfg.masque_private_key || cfg.wireguard_private_key || cfg.ssh_priv_key || cfg.tls_key_path, // mTLS/SSH/WireGuard/Masque
@@ -830,11 +849,13 @@ uci.foreach(uciconf, uciprov, (cfg) => {
 				"udp-over-tcp": strToBool(cfg.override_uot),
 				up: cfg.override_up ? cfg.override_up + ' Mbps' : null,
 				down: cfg.override_down ? cfg.override_down + ' Mbps' : null,
+				"name-cert-verify": cfg.override_name_cert_verify,
 				"skip-cert-verify": cfg.override_skip_cert_verify ? strToBool(cfg.override_skip_cert_verify) || false : null,
 				"dialer-proxy": dialerproxy[cfg['.name']]?.detour,
 				"interface-name": cfg.override_interface_name,
 				"routing-mark": strToInt(cfg.override_routing_mark) || null,
-				"ip-version": cfg.override_ip_version
+				"ip-version": cfg.override_ip_version,
+				"override-expr": cfg.override_expr
 			},
 			/* General fields */
 			filter: parse_filter(cfg.filter),

@@ -17,6 +17,14 @@ isDefined() {
 }
 
 migrate() {
+	# tuic_max_idle_time -> max_idle_time
+	if isDefined "$1" tuic_max_idle_time; then
+		local tuic_max_idle_time
+		config_get tuic_max_idle_time "$1" tuic_max_idle_time ""
+		uci_remove "$CONF" "$1" tuic_max_idle_time
+		uci_set "$CONF" "$1" max_idle_time "$tuic_max_idle_time"
+	fi
+
 	# plugin -> plugin_type
 	if isDefined "$1" plugin; then
 		local plugin

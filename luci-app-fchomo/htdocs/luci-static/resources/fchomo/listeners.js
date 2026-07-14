@@ -161,14 +161,14 @@ function renderListeners(s, uciconfig, isClient) {
 	/* hm.validateAuth */
 	o = s.taboption('field_general', form.Value, 'username', _('Username'));
 	o.validate = hm.validateAuthUsername;
-	o.depends({type: /^(http|socks|mixed|mieru|trojan|anytls|hysteria2|trusttunnel)$/});
+	o.depends({type: /^(http|socks|mixed|mieru|trojan|anytls|hysteria2|shadowquic|trusttunnel)$/});
 	o.modalonly = true;
 
 	o = s.taboption('field_general', hm.GenValue, 'password', _('Password'));
 	o.password = true;
 	o.validate = hm.validateAuthPassword;
 	o.rmempty = false;
-	o.depends({type: /^(http|socks|mixed|mieru|trojan|anytls|hysteria2|trusttunnel)$/, username: /.+/});
+	o.depends({type: /^(http|socks|mixed|mieru|trojan|anytls|hysteria2|shadowquic|trusttunnel)$/, username: /.+/});
 	o.depends({type: /^(tuic)$/, uuid: /.+/});
 	o.modalonly = true;
 
@@ -454,13 +454,6 @@ function renderListeners(s, uciconfig, isClient) {
 	o.depends('type', 'tuic');
 	o.modalonly = true;
 
-	o = s.taboption('field_general', form.Value, 'tuic_max_idle_time', _('Idle timeout'),
-		_('In seconds.'));
-	o.default = '15000';
-	o.validate = hm.validateTimeDuration;
-	o.depends('type', 'tuic');
-	o.modalonly = true;
-
 	o = s.taboption('field_general', form.Value, 'tuic_authentication_timeout', _('Auth timeout'),
 		_('In seconds.'));
 	o.default = '1000';
@@ -548,6 +541,19 @@ function renderListeners(s, uciconfig, isClient) {
 	o.depends('type', 'hysteria2-realm');
 	o.modalonly = true;
 
+	/* ShadowQUIC fields */
+	o = s.taboption('field_general', form.DynamicList, 'shadowquic_quic_versions', _('QUIC versions'),
+		_('Default version, Support %s.').format('v1/v2'));
+	o.default = 'v1';
+	o.rmempty = false;
+	o.depends('type', 'shadowquic');
+	o.modalonly = true;
+
+	o = s.taboption('field_general', form.Flag, 'shadowquic_zero_rtt', _('QUIC based 0-RTT'));
+	o.default = o.disabled;
+	o.depends('type', 'shadowquic');
+	o.modalonly = true;
+
 	/* TrustTunnel fields */
 
 	/* Tunnel fields */
@@ -597,7 +603,7 @@ function renderListeners(s, uciconfig, isClient) {
 	hm.congestion_controller.forEach((res) => {
 		o.value.apply(o, res);
 	})
-	o.depends({type: /^(tuic|trusttunnel)$/});
+	o.depends({type: /^(tuic|shadowquic|trusttunnel)$/});
 	o.modalonly = true;
 
 	o = s.taboption('field_general', form.ListValue, 'bbr_profile', _('BBR profile'));
@@ -605,8 +611,15 @@ function renderListeners(s, uciconfig, isClient) {
 	hm.bbr_profiles.forEach((res) => {
 		o.value.apply(o, res);
 	})
-	o.depends({congestion_controller: 'bbr'});
-	o.depends({type: 'hysteria2'});
+	o.depends('congestion_controller', 'bbr');
+	o.depends('type', 'hysteria2');
+	o.modalonly = true;
+
+	o = s.taboption('field_general', form.Value, 'max_idle_time', _('Idle timeout'),
+		_('In seconds.'));
+	o.placeholder = '15000';
+	o.validate = hm.validateTimeDuration;
+	o.depends({type: /^(tuic|shadowquic)$/});
 	o.modalonly = true;
 
 	o = s.taboption('field_general', form.MultiValue, 'network', _('Network type'));
@@ -631,6 +644,7 @@ function renderListeners(s, uciconfig, isClient) {
 	o.value('obfs', _('obfs-simple'));
 	o.value('shadow-tls', _('shadow-tls'));
 	o.value('restls', _('restls'));
+	o.value('jls', _('jls'));
 	//o.value('kcp-tun', _('kcp-tun'));
 	o.validate = function(section_id, value) {
 		const type = this.section.getOption('type').formvalue(section_id);
@@ -664,13 +678,20 @@ function renderListeners(s, uciconfig, isClient) {
 	o.datatype = 'hostport';
 	o.placeholder = 'cloud.tencent.com:443';
 	o.rmempty = false;
-	o.depends({plugin_type: /^(shadow-tls|restls)$/});
+	o.depends({plugin_type: /^(shadow-tls|restls|jls)$/});
+	o.depends({type: 'shadowquic'});
+	o.modalonly = true;
+
+	o = s.taboption('field_plugin', form.Value, 'plugin_opts_thetlsusername', _('Username'));
+	o.validate = hm.validateAuthUsername;
+	o.rmempty = false;
+	o.depends({plugin_type: 'jls'});
 	o.modalonly = true;
 
 	o = s.taboption('field_plugin', hm.GenValue, 'plugin_opts_thetlspassword', _('Password'));
 	o.password = true;
 	o.rmempty = false;
-	o.depends({plugin_type: /^(shadow-tls|restls)$/});
+	o.depends({plugin_type: /^(shadow-tls|restls|jls)$/});
 	o.modalonly = true;
 
 	o = s.taboption('field_plugin', form.ListValue, 'plugin_opts_shadowtls_version', _('Version'));
@@ -685,6 +706,37 @@ function renderListeners(s, uciconfig, isClient) {
 	o.default = '300?100<1,400~100,350~100,600~100,300~200,300~100';
 	o.rmempty = false;
 	o.depends({plugin_type: 'restls'});
+	o.modalonly = true;
+
+	if (isClient) {
+		o = s.taboption('field_plugin', form.ListValue, 'plugin_opts_dest_proxy', _('Handshake target proxy'),
+			_('The proxy used to connect to the handshake target.'));
+		o.default = hm.preset_outbound.direct[0][0];
+		hm.preset_outbound.direct.forEach((res) => {
+			o.value.apply(o, res);
+		})
+		o.load = function(section_id) {
+			return hm.loadLabel.call(this, [
+				...hm.preset_outbound.direct,
+				...hm.loadLabelValues(this.config, 'proxy_group')
+			], section_id);
+		}
+		o.depends({plugin_type: /^(restls|jls)$/});
+		o.depends({type: 'shadowquic'});
+		o.modalonly = true;
+	}
+
+	o = s.taboption('field_plugin', form.Value, 'plugin_opts_rate_limit', _('Forwarding rate limit'),
+		_('In bps. 0 means no speed limit.'));
+	o.datatype = 'uinteger';
+	o.depends({plugin_type: 'jls'});
+	o.depends({type: 'shadowquic'});
+	o.modalonly = true;
+
+	o = s.taboption('field_plugin', form.Flag, 'plugin_opts_quic_version_probe', _('QUIC version probe'),
+		_('Probe the QUIC version of the handshake target during the first connection.'));
+	o.default = o.disabled;
+	o.depends({type: 'shadowquic'});
 	o.modalonly = true;
 
 	/* Vless Encryption fields */
@@ -930,7 +982,7 @@ function renderListeners(s, uciconfig, isClient) {
 	o.depends('hysteria2_realm', '1');
 	o.modalonly = true;
 
-	// @ 下面支持填写针对server-url的TLS配置(sni, skip-cert-verify, fingerprint, certificate, private-key, alpn)
+	// @ 下面支持填写针对server-url的TLS配置(sni, skip-cert-verify, name-cert-verify, fingerprint, certificate, private-key, alpn)
 
 	/* TLS fields */
 	o = s.taboption('field_general', form.Flag, 'tls', _('TLS'));
@@ -939,24 +991,65 @@ function renderListeners(s, uciconfig, isClient) {
 		const type = this.section.getOption('type').formvalue(section_id);
 		let tls = this.section.getUIElement(section_id, 'tls').node.querySelector('input');
 		let allow_insecure = this.section.getUIElement(section_id, 'allow_insecure').node.querySelector('input');
-		let tls_alpn = this.section.getUIElement(section_id, 'tls_alpn');
 		let tls_reality = this.section.getUIElement(section_id, 'tls_reality').node.querySelector('input');
 
 		// Force enabled
-		if (['trojan', 'anytls', 'tuic', 'hysteria2', 'trusttunnel'].includes(type)) {
+		if (['trojan', 'anytls', 'tuic', 'hysteria2', 'shadowquic', 'trusttunnel'].includes(type)) {
 			tls.checked = true;
 			tls.disabled = true;
 		} else {
 			tls.removeAttribute('disabled');
 		}
 
+		// Force disabled
+		if (!['vless', 'trojan', 'anytls'].includes(type)) {
+			allow_insecure.checked = false;
+		} else if (allow_insecure.checked) {
+			tls.checked = false;
+			tls.disabled = true;
+		}
+		if (!['vmess', 'vless', 'trojan'].includes(type)) {
+			tls_reality.checked = false;
+			tls_reality.disabled = true;
+		} else {
+			tls_reality.removeAttribute('disabled');
+		}
+
+		return true;
+	}
+	o.depends({type: /^(http|socks|mixed|vmess|vless|trojan|anytls|tuic|hysteria2|hysteria2-realm|shadowquic|trusttunnel)$/});
+	o.modalonly = true;
+
+	o = s.taboption('field_general', form.Flag, 'allow_insecure', _('Allow insecure connections'),
+		_('Only applicable when %s are used as a frontend.').format('nginx/caddy'));
+	o.default = o.disabled;
+	o.depends({type: /^(vless|trojan|anytls)$/});
+	o.modalonly = true;
+
+	o = s.taboption('field_tls', form.Value, 'tls_sni', _('TLS SNI'),
+		_('Hostname that the client attempts to connect to at the start of the TLS handshake process.'));
+	o.depends('plugin_type', 'jls');
+	o.depends({tls: '1', type: 'shadowquic'});
+	o.modalonly = true;
+
+	o = s.taboption('field_tls', form.DynamicList, 'tls_alpn', _('TLS ALPN'),
+		_('List of supported application level protocols, in order of preference.'));
+	o.validate = function(section_id, value) {
+		const type = this.section.getOption('type').formvalue(section_id);
+		//const plugin_type = this.section.getOption('plugin_type').formvalue(section_id);
+		let tls_alpn = this.section.getUIElement(section_id, 'tls_alpn');
+
 		// Default alpn
 		if (!`${tls_alpn.getValue()}`) {
 			let def_alpn;
 
 			switch (type) {
+				case 'shadowsocks':
+					def_alpn = ['h2', 'http/1.1']; // when plugin_type in ['jls']
+					break;
 				case 'tuic':
 				case 'hysteria2':
+				case 'shadowquic':
 					def_alpn = ['h3'];
 					break;
 				case 'hysteria2-realm':
@@ -970,45 +1063,23 @@ function renderListeners(s, uciconfig, isClient) {
 		}
 
 		// Force disabled
-		if (!['vless', 'trojan', 'anytls'].includes(type)) {
-			allow_insecure.checked = false;
-		} else if (allow_insecure.checked) {
-			tls.checked = false;
-			tls.disabled = true;
-		}
 		if (['trusttunnel'].includes(type)) {
 			tls_alpn.node.querySelector('input').disabled = true;
 			tls_alpn.setValue('');
 		} else {
 			tls_alpn.node.querySelector('input').removeAttribute('disabled');
 		}
-		if (!['vmess', 'vless', 'trojan'].includes(type)) {
-			tls_reality.checked = false;
-			tls_reality.disabled = true;
-		} else {
-			tls_reality.removeAttribute('disabled');
-		}
 
 		return true;
 	}
-	o.depends({type: /^(http|socks|mixed|vmess|vless|trojan|anytls|tuic|hysteria2|hysteria2-realm|trusttunnel)$/});
-	o.modalonly = true;
-
-	o = s.taboption('field_general', form.Flag, 'allow_insecure', _('Allow insecure connections'),
-		_('Only applicable when %s are used as a frontend.').format('nginx/caddy'));
-	o.default = o.disabled;
-	o.depends({type: /^(vless|trojan|anytls)$/});
-	o.modalonly = true;
-
-	o = s.taboption('field_tls', form.DynamicList, 'tls_alpn', _('TLS ALPN'),
-		_('List of supported application level protocols, in order of preference.'));
 	o.depends('tls', '1');
+	o.depends({type: 'shadowsocks', plugin_type: 'jls'});
 	o.modalonly = true;
 
 	o = s.taboption('field_tls', form.Value, 'tls_cert_path', _('Certificate path'),
 		_('The %s public key, in PEM format.').format(_('Server')));
 	o.value('/etc/fchomo/certs/server_publickey.pem');
-	o.depends({tls: '1', tls_reality: '0'});
+	o.depends({tls: '1', tls_reality: '0', type: /^(http|socks|mixed|vmess|vless|trojan|anytls|tuic|hysteria2|hysteria2-realm|trusttunnel)$/});
 	o.rmempty = false;
 	o.modalonly = true;
 

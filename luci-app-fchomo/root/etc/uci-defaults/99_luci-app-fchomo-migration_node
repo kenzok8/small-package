@@ -51,6 +51,14 @@ migrate() {
 		uci_set "$CONF" "$1" congestion_controller "$masque_congestion_controller"
 	fi
 
+	# tuic_max_open_streams -> max_open_streams
+	if isDefined "$1" tuic_max_open_streams; then
+		local tuic_max_open_streams
+		config_get tuic_max_open_streams "$1" tuic_max_open_streams ""
+		uci_remove "$CONF" "$1" tuic_max_open_streams
+		uci_set "$CONF" "$1" max_open_streams "$tuic_max_open_streams"
+	fi
+
 	# plugin -> plugin_type
 	if isDefined "$1" plugin; then
 		local plugin
