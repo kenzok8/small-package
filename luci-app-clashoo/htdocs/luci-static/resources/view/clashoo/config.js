@@ -136,6 +136,7 @@ var CSS = [
   '@media(max-width:680px){.cl-wrap{--cl-meta:#4b5870}.cl-sub-list.cl-sb-list td:first-child{white-space:normal;overflow:visible;text-overflow:clip}}',
   '@media(max-width:680px){.cl-file-name-text,.cl-file-size,.cl-sub-traffic,.cl-sub-expire,.cl-sb-list td,.cl-sb-size,.cl-dns-auto-status,.cl-dns-auto-result{color:#4b5870!important}}',
   '@media(max-width:680px){html body .cl-wrap .cl-file-item .cl-file-meta .cl-file-size{color:#4b5870!important}}',
+  '@media(max-width:680px){.cl-file-item{flex-direction:column;align-items:stretch;gap:8px}.cl-file-meta{flex-direction:column;align-items:stretch;gap:6px}.cl-file-name-text{white-space:normal;overflow-wrap:anywhere}.cl-file-actions{justify-content:flex-end}.cl-sub-expire,.cl-sub-traffic{white-space:normal}}',
   '@media(max-width:680px){.cl-form-wrap{max-width:100%}}',
   '@media(max-width:680px){.cl-dns-auto,.cl-dns-auto-result{max-width:100%;width:100%;box-sizing:border-box}.cl-dns-auto-result{grid-template-columns:1fr}}',
   '@media(max-width:680px){.cl-sub-schedule{width:100%;padding:8px 0 4px 4px}.cl-sub-schedule-row{gap:8px;flex-wrap:wrap}.cl-sub-schedule-toggle{width:100%}.cl-sub-schedule-interval{gap:5px}.cl-sub-schedule-row .cbi-button-action{white-space:nowrap}}'
@@ -1127,8 +1128,7 @@ return view.extend({
     o.value('system', 'System'); o.value('gvisor', 'gVisor'); o.value('mixed', 'Mixed');
     o = s.option(form.Flag, 'disable_quic_gso', _("Disable QUIC GSO"));
     o = s.option(form.Flag, 'block_quic', _("Block QUIC"));
-    o.description = _("Many providers blackhole UDP 443 on their lines, so QUIC gets no reply and Google Play / Chrome downloads hang forever instead of falling back. This rejects proxied UDP 443 with an ICMP error, making clients switch to TCP immediately.<br>") +
-      _("Only proxied traffic is affected: domestic QUIC (Bilibili, Douyin…) keeps working, and node protocols such as Hysteria2 / TUIC are untouched. Turn this on if downloads stall while normal browsing works.");
+    o.description = _("Reject proxied UDP 443 so clients fall back to TCP. Turn on when the provider blocks QUIC and Google Play downloads hang. Domestic QUIC and node protocols are unaffected.");
     o = s.option(form.Flag, 'ipv4_dns_hijack', _("IPv4 DNS Hijack"));
     o = s.option(form.Flag, 'ipv6_dns_hijack', _("IPv6 DNS Hijack"));
     o.description = _("Intercept IPv6 DNS traffic to prevent devices with hard-coded DNS from bypassing the traffic.");
@@ -1424,7 +1424,7 @@ return view.extend({
     o.description = _("Used to resolve DoH/DoT/DoQ server domains; plain IP DNS is recommended.");
     o = s.option(form.Flag, 'dns_respect_rules', _("DNS Respect Rules"));
     o.default = '1';
-    o.description = _("Upstream DNS queries follow the routing rules, so overseas domains are resolved through the proxy instead of a polluted local result. Requires proxy-server-nameserver. Turning this off may break QUIC / Google Play downloads.");
+    o.description = _("DNS queries follow the routing rules, so overseas domains resolve through the proxy instead of a polluted result. Requires proxy-server-nameserver.");
     o = s.option(form.Value, 'dns_ecs', _("ECS Client Subnet"));
     o.placeholder = _("Recommended blank");
     o.description = _("mihomo writes the ecs parameter to DNS URLs; sing-box writes dns.client_subnet. Leave empty to skip.");

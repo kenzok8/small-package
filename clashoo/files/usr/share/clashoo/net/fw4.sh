@@ -358,6 +358,12 @@ apply_block_quic_rule() {
 	nft -f - <<EOF
 table inet ${QUIC_BLOCK_TABLE} {
 	${china_set}
+	chain prerouting {
+		type filter hook prerouting priority mangle - 1; policy accept;
+		${china_rule:-}
+		${scope} udp dport 443 counter reject with icmpx type port-unreachable
+	}
+
 	chain forward {
 		type filter hook forward priority -10; policy accept;
 		${china_rule:-}
