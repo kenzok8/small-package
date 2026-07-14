@@ -42,6 +42,9 @@ config clashoo 'config'
 	option dns_ecs_override '0'
 	option fallback_filter_geoip '0'
 	list fallback_filter_ipcidr '240.0.0.0/4'
+	option dns_respect_rules '1'
+	option dns_migrated '1'
+	option block_quic '0'
 	option singbox_independent_cache '0'
 	option udp_mode 'tproxy'
 	option ipv4_dns_hijack '1'
@@ -96,32 +99,25 @@ config hosts
 config dnsservers
 	option enabled '1'
 	option ser_type 'nameserver'
-	option ser_address 'https://dns.alidns.com/dns-query'
+	option ser_address 'https://1.1.1.1/dns-query'
 	option protocol 'none'
 
 config dnsservers
 	option enabled '1'
 	option ser_type 'nameserver'
-	option ser_address 'https://doh.pub/dns-query'
+	option ser_address 'https://8.8.8.8/dns-query'
 	option protocol 'none'
 
 config dnsservers
 	option enabled '1'
 	option ser_type 'proxy-server-nameserver'
-	option ser_address '1.1.1.1'
-	option protocol 'tls://'
-	option ser_port '853'
-
-config dnsservers
-	option enabled '1'
-	option ser_type 'fallback'
-	option ser_address 'https://cloudflare-dns.com/dns-query'
+	option ser_address 'https://223.5.5.5/dns-query'
 	option protocol 'none'
 
 config dnsservers
 	option enabled '1'
-	option ser_type 'fallback'
-	option ser_address 'https://dns.google/dns-query'
+	option ser_type 'proxy-server-nameserver'
+	option ser_address 'https://doh.pub/dns-query'
 	option protocol 'none'
 
 config dnsservers
@@ -134,14 +130,8 @@ config dns_policy
 	option enabled '1'
 	option policy_type 'nameserver-policy'
 	option matcher 'geosite:cn'
-	list nameserver 'https://dns.alidns.com/dns-query'
+	list nameserver 'https://223.5.5.5/dns-query'
 	list nameserver 'https://doh.pub/dns-query'
-
-config dns_policy
-	option enabled '1'
-	option policy_type 'nameserver-policy'
-	option matcher 'geosite:geolocation-!cn'
-	list nameserver 'https://cloudflare-dns.com/dns-query'
 
 config authentication
 

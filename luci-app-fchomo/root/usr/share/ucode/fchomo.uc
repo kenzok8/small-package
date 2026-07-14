@@ -211,18 +211,16 @@ export function parseVlessEncryption(payload, side) {
 		(isEmpty(content.keypairs) ? '' : '.' + join('.', map(content.keypairs, e => e[side]))); // Required
 };
 
-export function parseListener(cfg, isClient, label) {
+export function parseListener(cfg) {
 	return {
 		name: cfg['.name'],
 		type: cfg.type,
 
 		listen: cfg.listen || '::',
 		port: strToInt(cfg.port),
-		...(isClient ? {
-			"routing-mark": strToInt(cfg.routing_mark) || null,
-			rule: cfg.rule,
-			proxy: label,
-		} : {}),
+		"routing-mark": strToInt(cfg.routing_mark) || null,
+		rule: cfg.rule,
+		proxy: cfg.proxy, // raw data need post-processing
 
 		/* HTTP / SOCKS / VMess / VLESS / Trojan / AnyTLS / Tuic / Hysteria2 */
 		users: (cfg.type in ['http', 'socks', 'mixed', 'vmess', 'vless', 'trojan', 'trusttunnel']) ? [

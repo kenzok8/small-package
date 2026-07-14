@@ -11,6 +11,7 @@ BUILTIN_NFT_DIR="/usr/share/clashoo/nftables"
 GEOIP_CN_NFT="${BUILTIN_NFT_DIR}/geoip_cn.nft"
 GEOIP6_CN_NFT="${BUILTIN_NFT_DIR}/geoip6_cn.nft"
 LOCAL_OUTPUT_TABLE="clashoo_local"
+QUIC_BLOCK_TABLE="clashoo_quic"
 # PROXY_FWMARK: inbound TPROXY mark, ip rule -> table PROXY_ROUTE_TABLE -> lo.
 # CORE_ROUTING_MARK: mihomo outbound SO_MARK (= routing-mark in config).
 # Must differ: otherwise mihomo egress is pulled to lo -> unreachable.
@@ -72,6 +73,10 @@ config_ipv6_dns_hijack() {
 
 config_bypass_china() {
 	uci_get clashoo.config.bypass_china
+}
+
+config_block_quic() {
+	uci_get clashoo.config.block_quic
 }
 
 config_bypass_port_mode() {
@@ -334,6 +339,38 @@ remove_local_output_rule() {
 	nft delete table ip ${LOCAL_OUTPUT_TABLE} >/dev/null 2>&1 || true
 }
 
+apply_block_quic_rule() {
+	local fake_ip_range china_set china_rule scope
+	nft delete table inet ${QUIC_BLOCK_TABLE} >/dev/null 2>&1 || true
+	bool_enabled "$(config_block_quic)" || return 0
+
+	fake_ip_range="$(config_fake_ip_range)"
+	china_set=""
+	scope="ip daddr ${fake_ip_range}"
+	if [ "$(uci_get clashoo.config.enhanced_mode)" != "fake-ip" ]; then
+		if bool_enabled "$(config_bypass_china)" && [ -s "$GEOIP_CN_NFT" ]; then
+			china_set="$(cat "$GEOIP_CN_NFT")"
+			china_rule="ip daddr @clashoo_china return"
+		fi
+		scope=""
+	fi
+
+	nft -f - <<EOF
+table inet ${QUIC_BLOCK_TABLE} {
+	${china_set}
+	chain forward {
+		type filter hook forward priority -10; policy accept;
+		${china_rule:-}
+		${scope} udp dport 443 counter reject with icmpx type port-unreachable
+	}
+}
+EOF
+}
+
+remove_block_quic_rule() {
+	nft delete table inet ${QUIC_BLOCK_TABLE} >/dev/null 2>&1 || true
+}
+
 write_empty_set() {
 	local set_name="$1"
 	local set_type="$2"
@@ -407,7 +444,7 @@ generate_rules() {
 
 	: > "$OUTPUT_RULES"
 
-	
+
 # DNS hijack rules go atop DSTNAT_RULES: must run for all TCP modes
 		# (redirect/tproxy/tun) and BEFORE proxy redirect rules so port 53 is not stolen.
 	render_dns_hijack > "$DSTNAT_RULES"
@@ -459,6 +496,9 @@ EOF
 			if [ -n "$fwmark_elements" ]; then
 				printf 'meta mark { %s } return\n' "$fwmark_elements"
 			fi
+			if bool_enabled "$(config_block_quic)"; then
+				printf 'meta l4proto udp udp dport 443 return\n'
+			fi
 			if [ "$tcp_mode" = "tproxy" ]; then
 				printf '%s tproxy to :%s meta mark set %s accept\n' "$tcp_match" "$tproxy_port" "$PROXY_FWMARK"
 			fi
@@ -488,14 +528,17 @@ apply_rules() {
 	fi
 	/etc/init.d/firewall restart >/dev/null 2>&1 || /etc/init.d/firewall reload >/dev/null 2>&1 || true
 	apply_local_output_rule
+	apply_block_quic_rule
 }
 
 remove_rules() {
 	remove_local_output_rule
+	remove_block_quic_rule
 	remove_firewall_include clash_fw4_sets
 	remove_firewall_include clash_fw4_dstnat
 	remove_firewall_include clash_fw4_output
 	remove_firewall_include clash_fw4_mangle
+	remove_firewall_include clash_fw4_forward
 	uci commit firewall >/dev/null 2>&1 || true
 	rm -f "$SETS_RULES" "$DSTNAT_RULES" "$OUTPUT_RULES" "$MANGLE_RULES"
 	ip rule del fwmark "$PROXY_FWMARK" table "$PROXY_ROUTE_TABLE" >/dev/null 2>&1 || true

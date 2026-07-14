@@ -97,6 +97,67 @@ else if (filters != null) push_filter(filters);
 /* fallback-filter（默认 geoip:false，防止冷启动依赖 MMDB） */
 cfg['dns']['fallback-filter'] = { geoip: ab('fallback_filter_geoip') };
 
+let dns_present = {};
+for (let f in split(s(getenv('CLASHOO_DNS_PRESENT'), ''), ','))
+	if (length(trim(f))) dns_present[trim(f)] = true;
+
+function dns_scheme(protocol) {
+	switch (trim(protocol || '')) {
+	case '':
+	case 'none':                     return '';
+	case 'udp': case 'udp://':       return 'udp://';
+	case 'tcp': case 'tcp://':       return 'tcp://';
+	case 'dot': case 'tls': case 'tls://':     return 'tls://';
+	case 'doh': case 'https': case 'https://': return 'https://';
+	case 'doq': case 'quic': case 'quic://':   return 'quic://';
+	default:                         return protocol;
+	}
+}
+
+function dns_server(address, protocol, port) {
+	let addr = trim(address || '');
+	if (!length(addr)) return null;
+	if (match(addr, /^[A-Za-z][A-Za-z0-9+.-]*:\/\//)) return addr;
+	let prefix = dns_scheme(protocol);
+	return length(trim(port || '')) ? prefix + addr + ':' + trim(port) : prefix + addr;
+}
+
+let dns_roles = {};
+uci.foreach('clashoo', 'dnsservers', function(sec) {
+	if (b(sec.enabled) == false) return;
+	let role = s(sec.ser_type, 'nameserver');
+	if (role == 'fallback' && cfg['dns']['enhanced-mode'] == 'fake-ip') return;
+	let srv = dns_server(sec.ser_address, sec.protocol, sec.ser_port);
+	if (!srv) return;
+	if (!dns_roles[role]) dns_roles[role] = [];
+	push(dns_roles[role], srv);
+});
+for (let role in keys(dns_roles))
+	if (!dns_present[role]) cfg['dns'][role] = dns_roles[role];
+
+let bootstrap = a('default_nameserver');
+if (type(bootstrap) != 'array') bootstrap = bootstrap != null ? [bootstrap] : [];
+if (length(bootstrap) && !dns_present['default-nameserver'])
+	cfg['dns']['default-nameserver'] = bootstrap;
+
+let policies = {};
+uci.foreach('clashoo', 'dns_policy', function(sec) {
+	if (b(sec.enabled) == false) return;
+	if (s(sec.policy_type, 'nameserver-policy') != 'nameserver-policy') return;
+	let matcher = trim(sec.matcher || '');
+	let servers = sec.nameserver;
+	if (type(servers) != 'array') servers = servers != null ? [servers] : [];
+	if (!length(matcher) || !length(servers)) return;
+	policies[matcher] = servers;
+});
+if (length(keys(policies)) && !dns_present['nameserver-policy'])
+	cfg['dns']['nameserver-policy'] = policies;
+
+let respect_rules = a('dns_respect_rules') == null ? true : ab('dns_respect_rules');
+if (respect_rules && length(cfg['dns']['proxy-server-nameserver'] || [])
+    && !dns_present['respect-rules'] && !dns_present['prefer-h3'])
+	cfg['dns']['respect-rules'] = true;
+
 /* profile */
 let store_selected = ab('selection_cache');
 /* fake-ip cache defaults ON to survive restarts; opt out with '0' */

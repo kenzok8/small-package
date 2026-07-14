@@ -53,7 +53,7 @@ uci.foreach(uciconf, uciserver, (cfg) => {
 	if (cfg.enabled === '0')
 		return;
 
-	push(config.listeners, parseListener(cfg, false));
+	push(config.listeners, parseListener(cfg));
 });
 /* Inbound END */
 

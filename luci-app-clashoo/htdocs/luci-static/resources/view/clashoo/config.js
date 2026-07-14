@@ -458,9 +458,8 @@ function dnsAutoSummaryNode(res) {
   var elapsed = Math.max(0, parseInt(res.elapsed_ms || 0, 10));
   var failed = parseInt(res.failed_count || 0, 10);
   return E('div', { 'class': 'cl-dns-auto-result' }, [
-    E('span', [E('b', _("Domestic")), res.nameserver || '-']),
-    E('span', [E('b', _("Proxy")), res.proxy_nameserver || '-']),
-    E('span', [E('b', 'Fallback'), res.fallback || '-']),
+    E('span', [E('b', _("Overseas")), res.nameserver || '-']),
+    E('span', [E('b', _("Domestic")), res.proxy_nameserver || '-']),
     E('span', [E('b', 'Bootstrap'), res.bootstrap || res.direct_nameserver || '-']),
     E('span', [E('b', _("Time")), elapsed ? (elapsed / 1000).toFixed(1) + _(" seconds") : '-']),
     E('span', [E('b', _("Failed")), failed + _(" candidates")])
@@ -1127,6 +1126,9 @@ return view.extend({
     o = s.option(form.ListValue, 'stack', _("Network Stack Type"));
     o.value('system', 'System'); o.value('gvisor', 'gVisor'); o.value('mixed', 'Mixed');
     o = s.option(form.Flag, 'disable_quic_gso', _("Disable QUIC GSO"));
+    o = s.option(form.Flag, 'block_quic', _("Block QUIC"));
+    o.description = _("Many providers blackhole UDP 443 on their lines, so QUIC gets no reply and Google Play / Chrome downloads hang forever instead of falling back. This rejects proxied UDP 443 with an ICMP error, making clients switch to TCP immediately.<br>") +
+      _("Only proxied traffic is affected: domestic QUIC (Bilibili, Douyin…) keeps working, and node protocols such as Hysteria2 / TUIC are untouched. Turn this on if downloads stall while normal browsing works.");
     o = s.option(form.Flag, 'ipv4_dns_hijack', _("IPv4 DNS Hijack"));
     o = s.option(form.Flag, 'ipv6_dns_hijack', _("IPv6 DNS Hijack"));
     o.description = _("Intercept IPv6 DNS traffic to prevent devices with hard-coded DNS from bypassing the traffic.");
@@ -1420,6 +1422,9 @@ return view.extend({
     o = s.option(form.DynamicList, 'default_nameserver', 'Bootstrap DNS');
     o.placeholder = '223.5.5.5';
     o.description = _("Used to resolve DoH/DoT/DoQ server domains; plain IP DNS is recommended.");
+    o = s.option(form.Flag, 'dns_respect_rules', _("DNS Respect Rules"));
+    o.default = '1';
+    o.description = _("Upstream DNS queries follow the routing rules, so overseas domains are resolved through the proxy instead of a polluted local result. Requires proxy-server-nameserver. Turning this off may break QUIC / Google Play downloads.");
     o = s.option(form.Value, 'dns_ecs', _("ECS Client Subnet"));
     o.placeholder = _("Recommended blank");
     o.description = _("mihomo writes the ecs parameter to DNS URLs; sing-box writes dns.client_subnet. Leave empty to skip.");

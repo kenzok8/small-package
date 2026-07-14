@@ -121,7 +121,7 @@ function parse_filter(cfg) {
 		return cfg;
 }
 
-function get_proxy(cfg, pass_undefined) {
+function get_proxy(cfg, no_verify) {
 	if (isEmpty(cfg))
 		return null;
 
@@ -130,7 +130,7 @@ function get_proxy(cfg, pass_undefined) {
 
 	const label = uci.get(uciconf, cfg, 'label');
 	if (isEmpty(label)) {
-		if (pass_undefined)
+		if (no_verify)
 			return cfg;
 		else
 			die(sprintf("%s's label is missing, please check your configuration.", cfg));
@@ -343,7 +343,10 @@ uci.foreach(uciconf, uciinbd, (cfg) => {
 	if (cfg.enabled === '0')
 		return;
 
-	push(config.listeners, parseListener(cfg, true, get_proxy(cfg.proxy)));
+	const listener = parseListener(cfg);
+	listener.proxy = get_proxy(listener.proxy);
+
+	push(config.listeners, listener);
 });
 /* Tun settings */
 if (match(proxy_mode, /tun/))

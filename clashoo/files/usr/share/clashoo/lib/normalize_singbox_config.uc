@@ -424,8 +424,8 @@ function apply_dns_from_uci() {
 	if (!length(bootstrap))
 		bootstrap = uci_list('defaul_nameserver');
 	let resolver_uri = first_or(bootstrap, '223.5.5.5');
-	let direct_uri = first_or(dns_servers_by_role('direct-nameserver'), first_or(dns_servers_by_role('nameserver'), 'https://doh.pub/dns-query'));
-	let proxy_uri = first_or(dns_servers_by_role('fallback'), first_or(dns_servers_by_role('proxy-server-nameserver'), '1.1.1.1'));
+	let direct_uri = first_or(dns_servers_by_role('direct-nameserver'), first_or(dns_servers_by_role('proxy-server-nameserver'), 'https://doh.pub/dns-query'));
+	let proxy_uri = first_or(dns_servers_by_role('nameserver'), first_or(dns_servers_by_role('fallback'), 'https://1.1.1.1/dns-query'));
 
 	let servers = [];
 	push(servers, dns_server_obj(resolver_uri, 'dns_resolver', 'udp'));
