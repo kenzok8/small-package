@@ -565,10 +565,6 @@ msgstr ""
 msgid "Complete"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1898
-msgid "Other configuration items"
-msgstr ""
-
 #: htdocs/luci-static/resources/fchomo/listeners.js:653
 #: htdocs/luci-static/resources/view/fchomo/node.js:955
 msgid "Congestion controller"
@@ -2168,6 +2164,10 @@ msgstr ""
 msgid "Option is deprecated. Please use <code>%s</code> instead."
 msgstr ""
 
+#: htdocs/luci-static/resources/view/fchomo/node.js:1907
+msgid "Other configuration items"
+msgstr ""
+
 #: root/usr/share/luci/menu.d/luci-app-fchomo.json:46
 msgid "Outbound"
 msgstr ""
@@ -2327,6 +2327,16 @@ msgstr ""
 #: htdocs/luci-static/resources/view/fchomo/node.js:942
 #: htdocs/luci-static/resources/view/fchomo/node.js:948
 msgid "Plugin:"
+msgstr ""
+
+#: htdocs/luci-static/resources/fchomo/listeners.js:120
+#: htdocs/luci-static/resources/view/fchomo/node.js:234
+msgid "Plugin fields"
+msgstr ""
+
+#: htdocs/luci-static/resources/fchomo/listeners.js:630
+#: htdocs/luci-static/resources/view/fchomo/node.js:944
+msgid "Plugin type"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:261

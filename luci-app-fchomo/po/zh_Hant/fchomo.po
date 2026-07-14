@@ -579,10 +579,6 @@ msgstr "常用連接埠（繞過 P2P 流量）"
 msgid "Complete"
 msgstr "完成"
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1898
-msgid "Other configuration items"
-msgstr "其他配置項"
-
 #: htdocs/luci-static/resources/fchomo/listeners.js:653
 #: htdocs/luci-static/resources/view/fchomo/node.js:955
 msgid "Congestion controller"
@@ -2200,6 +2196,10 @@ msgstr "運作模式"
 msgid "Option is deprecated. Please use <code>%s</code> instead."
 msgstr "該選項已棄用，請使用<code>%s</code>作為代替。"
 
+#: htdocs/luci-static/resources/view/fchomo/node.js:1907
+msgid "Other configuration items"
+msgstr "其他配置項"
+
 #: root/usr/share/luci/menu.d/luci-app-fchomo.json:46
 msgid "Outbound"
 msgstr "出站"
@@ -2347,7 +2347,7 @@ msgstr "請輸入 mihomo 配置的 <code>%s</code> 欄位。</br>"
 #: htdocs/luci-static/resources/fchomo/listeners.js:560
 #: htdocs/luci-static/resources/view/fchomo/node.js:892
 msgid "Plugin"
-msgstr "插件"
+msgstr "外掛"
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:581
 #: htdocs/luci-static/resources/fchomo/listeners.js:587
@@ -2362,7 +2362,17 @@ msgstr "插件"
 #: htdocs/luci-static/resources/view/fchomo/node.js:942
 #: htdocs/luci-static/resources/view/fchomo/node.js:948
 msgid "Plugin:"
-msgstr "插件："
+msgstr "外掛："
+
+#: htdocs/luci-static/resources/fchomo/listeners.js:120
+#: htdocs/luci-static/resources/view/fchomo/node.js:234
+msgid "Plugin fields"
+msgstr "外掛欄位"
+
+#: htdocs/luci-static/resources/fchomo/listeners.js:630
+#: htdocs/luci-static/resources/view/fchomo/node.js:944
+msgid "Plugin type"
+msgstr "外掛類型"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:261
 msgid "Port"

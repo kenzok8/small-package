@@ -24,6 +24,14 @@ migrate() {
 		uci_remove "$CONF" "$1" tuic_congestion_controller
 		uci_set "$CONF" "$1" congestion_controller "$tuic_congestion_controller"
 	fi
+
+	# plugin -> plugin_type
+	if isDefined "$1" plugin; then
+		local plugin
+		config_get plugin "$1" plugin ""
+		uci_set "$CONF" "$1" plugin "1"
+		uci_set "$CONF" "$1" plugin_type "$plugin"
+	fi
 }
 
 config_foreach migrate server

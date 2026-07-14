@@ -579,10 +579,6 @@ msgstr "常用端口（绕过 P2P 流量）"
 msgid "Complete"
 msgstr "完成"
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1898
-msgid "Other configuration items"
-msgstr "其他配置项"
-
 #: htdocs/luci-static/resources/fchomo/listeners.js:653
 #: htdocs/luci-static/resources/view/fchomo/node.js:955
 msgid "Congestion controller"
@@ -2200,6 +2196,10 @@ msgstr "运行模式"
 msgid "Option is deprecated. Please use <code>%s</code> instead."
 msgstr "该选项已弃用，请使用<code>%s</code>作为代替。"
 
+#: htdocs/luci-static/resources/view/fchomo/node.js:1907
+msgid "Other configuration items"
+msgstr "其他配置项"
+
 #: root/usr/share/luci/menu.d/luci-app-fchomo.json:46
 msgid "Outbound"
 msgstr "出站"
@@ -2363,6 +2363,16 @@ msgstr "插件"
 #: htdocs/luci-static/resources/view/fchomo/node.js:948
 msgid "Plugin:"
 msgstr "插件："
+
+#: htdocs/luci-static/resources/fchomo/listeners.js:120
+#: htdocs/luci-static/resources/view/fchomo/node.js:234
+msgid "Plugin fields"
+msgstr "插件字段"
+
+#: htdocs/luci-static/resources/fchomo/listeners.js:630
+#: htdocs/luci-static/resources/view/fchomo/node.js:944
+msgid "Plugin type"
+msgstr "插件类型"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:261
 msgid "Port"

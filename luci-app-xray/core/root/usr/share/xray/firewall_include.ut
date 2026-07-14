@@ -481,6 +481,7 @@
 
     chain xray_output {
         type route hook output priority mangle {{ firewall_priority }}; policy accept;
+        ct direction reply {{ counter }} accept comment "Xray reply to inbound connection"
 {% if (length(uids_direct) > 0): %}
         meta skuid { {{ join(", ", uids_direct) }} } {{ counter }} accept
 {% endif %}

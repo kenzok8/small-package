@@ -609,12 +609,20 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"host-key-algorithms": cfg.ssh_host_key_algorithms,
 		"host-key": cfg.ssh_host_key,
 
+		/* Extra fields */
+		"congestion-controller": cfg.congestion_controller,
+		"bbr-profile": cfg.bbr_profile,
+		"handshake-timeout": strToInt(cfg.handshake_timeout),
+		udp: strToBool(cfg.udp),
+		"udp-over-tcp": strToBool(cfg.uot),
+		"udp-over-tcp-version": cfg.uot_version,
+
 		/* Plugin fields */
-		...(cfg.plugin ? (
+		...(cfg.plugin === '1' ? (
 			cfg.type === 'snell' ? {
 				// snell
 				"obfs-opts": {
-					mode: cfg.plugin in ['shadow-tls'] ? cfg.plugin : cfg.plugin_opts_obfsmode,
+					mode: cfg.plugin_type in ['shadow-tls'] ? cfg.plugin_type : cfg.plugin_opts_obfsmode,
 					host: cfg.plugin_opts_host,
 					password: cfg.plugin_opts_thetlspassword,
 					version: strToInt(cfg.plugin_opts_shadowtls_version),
@@ -622,7 +630,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 				}
 			} : {
 				// others
-				plugin: cfg.plugin,
+				plugin: cfg.plugin_type,
 				"plugin-opts": {
 					mode: cfg.plugin_opts_obfsmode,
 					host: cfg.plugin_opts_host,
@@ -635,21 +643,13 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 			}
 		) : {}),
 
-		/* Extra fields */
-		"congestion-controller": cfg.congestion_controller,
-		"bbr-profile": cfg.bbr_profile,
-		"handshake-timeout": strToInt(cfg.handshake_timeout),
-		udp: strToBool(cfg.udp),
-		"udp-over-tcp": strToBool(cfg.uot),
-		"udp-over-tcp-version": cfg.uot_version,
-
 		/* SSH / WireGuard / Masque */
 		/* TLS fields */
 		tls: (cfg.type in ['trojan', 'anytls', 'hysteria', 'hysteria2', 'tuic', 'trusttunnel']) ? null : strToBool(cfg.tls),
 		"disable-sni": strToBool(cfg.tls_disable_sni),
 		...arrToObj([[(cfg.type in ['vmess', 'vless']) ? 'servername' : 'sni', cfg.tls_sni]]),
 		fingerprint: cfg.tls_fingerprint,
-		alpn: cfg.plugin in ['shadow-tls'] ? null : cfg.tls_alpn, // Array
+		alpn: cfg.plugin_type in ['shadow-tls'] ? null : cfg.tls_alpn, // Array
 		"skip-cert-verify": strToBool(cfg.tls_skip_cert_verify),
 		certificate: cfg.tls_cert_path, // mTLS
 		"private-key": cfg.masque_private_key || cfg.wireguard_private_key || cfg.ssh_priv_key || cfg.tls_key_path, // mTLS/SSH/WireGuard/Masque
