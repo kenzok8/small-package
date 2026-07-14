@@ -973,9 +973,9 @@ return view.extend({
 		so.value('obfs', _('obfs-simple'));
 		//so.value('v2ray-plugin', _('v2ray-plugin'));
 		//so.value('gost-plugin', _('gost-plugin'));
-		so.value('shadow-tls', _('shadow-tls'));
-		so.value('restls', _('restls'));
-		so.value('jls', _('jls'));
+		so.value('shadow-tls', _('ShadowTLS'));
+		so.value('restls', _('Restls'));
+		so.value('jls', _('JLS'));
 		//so.value('kcptun', _('kcptun'));
 		so.validate = function(section_id, value) {
 			const type = this.section.getOption('type').formvalue(section_id);
@@ -983,7 +983,7 @@ return view.extend({
 			if (value) {
 				if (type === 'snell' && !['obfs', 'shadow-tls'].includes(value)) {
 					return _('Expecting: only support %s.').format(_('obfs-simple') +
-						' / ' + _('shadow-tls'));
+						' / ' + _('ShadowTLS'));
 				}
 			}
 

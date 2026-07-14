@@ -642,9 +642,9 @@ function renderListeners(s, uciconfig, isClient) {
 
 	o = s.taboption('field_plugin', form.ListValue, 'plugin_type', _('Plugin type'));
 	o.value('obfs', _('obfs-simple'));
-	o.value('shadow-tls', _('shadow-tls'));
-	o.value('restls', _('restls'));
-	o.value('jls', _('jls'));
+	o.value('shadow-tls', _('ShadowTLS'));
+	o.value('restls', _('Restls'));
+	o.value('jls', _('JLS'));
 	//o.value('kcp-tun', _('kcp-tun'));
 	o.validate = function(section_id, value) {
 		const type = this.section.getOption('type').formvalue(section_id);
@@ -652,7 +652,7 @@ function renderListeners(s, uciconfig, isClient) {
 		if (value) {
 			if (type === 'snell' && !['obfs', 'shadow-tls'].includes(value)) {
 				return _('Expecting: only support %s.').format(_('obfs-simple') +
-					' / ' + _('shadow-tls'));
+					' / ' + _('ShadowTLS'));
 			}
 		}
 
