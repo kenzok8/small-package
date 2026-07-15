@@ -417,7 +417,7 @@ export function parseListener(cfg) {
 
 		/* TLS fields */
 		...(cfg.allow_insecure === '1' ? { "allow-insecure": true } : cfg.tls === '1' ? {
-			alpn: cfg.tls_alpn,
+			alpn: cfg.plugin_type in ['jls'] ? null : cfg.tls_alpn,
 			...(cfg.tls_reality === '1' ? {
 				"reality-config": {
 					dest: cfg.tls_reality_dest,

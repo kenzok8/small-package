@@ -638,6 +638,7 @@ function renderListeners(s, uciconfig, isClient) {
 	o = s.taboption('field_general', form.Flag, 'plugin', _('Plugin'));
 	o.default = o.disabled;
 	o.depends({type: /^(shadowsocks|snell)$/});
+	o.depends({type: /^(vmess|vless|trojan|anytls)$/});
 	o.modalonly = true;
 
 	o = s.taboption('field_plugin', form.ListValue, 'plugin_type', _('Plugin type'));
@@ -651,8 +652,11 @@ function renderListeners(s, uciconfig, isClient) {
 
 		if (value) {
 			if (type === 'snell' && !['obfs', 'shadow-tls'].includes(value)) {
-				return _('Expecting: only support %s.').format(_('obfs-simple') +
+				return _('Expecting: Only support %s.').format(_('obfs-simple') +
 					' / ' + _('ShadowTLS'));
+			}
+			if (['vmess', 'vless', 'trojan', 'anytls'].includes(type) && !['jls'].includes(value)) {
+				return _('Expecting: Only support %s.').format(_('JLS'));
 			}
 		}
 
@@ -1045,6 +1049,10 @@ function renderListeners(s, uciconfig, isClient) {
 
 			switch (type) {
 				case 'shadowsocks':
+				case 'vmess':
+				case 'vless':
+				case 'trojan':
+				case 'anytls':
 					def_alpn = ['h2', 'http/1.1']; // when plugin_type in ['jls']
 					break;
 				case 'tuic':
@@ -1079,8 +1087,21 @@ function renderListeners(s, uciconfig, isClient) {
 	o = s.taboption('field_tls', form.Value, 'tls_cert_path', _('Certificate path'),
 		_('The %s public key, in PEM format.').format(_('Server')));
 	o.value('/etc/fchomo/certs/server_publickey.pem');
-	o.depends({tls: '1', tls_reality: '0', type: /^(http|socks|mixed|vmess|vless|trojan|anytls|tuic|hysteria2|hysteria2-realm|trusttunnel)$/});
-	o.rmempty = false;
+	o.validate = function(section_id, value) {
+		const plugin_type = this.section.getOption('plugin_type').formvalue(section_id);
+		const tls_reality = this.section.getOption('tls_reality').formvalue(section_id);
+
+		if (plugin_type === 'jls' || tls_reality == 1) {
+			if (value)
+				return _('Expecting: Keep empty when %s is enabled.').format(_('JLS') +
+					' / ' + _('REALITY'));
+		} else if (!value) {
+			return _('Expecting: Cannot be empty.');
+		}
+
+		return true;
+	}
+	o.depends({tls: '1', type: /^(http|socks|mixed|vmess|vless|trojan|anytls|tuic|hysteria2|hysteria2-realm|trusttunnel)$/});
 	o.modalonly = true;
 
 	o = s.taboption('field_tls', form.Button, '_upload_cert', _('Upload certificate'),
@@ -1181,6 +1202,15 @@ function renderListeners(s, uciconfig, isClient) {
 	// uTLS fields
 	o = s.taboption('field_tls', form.Flag, 'tls_reality', _('REALITY'));
 	o.default = o.disabled;
+	o.validate = function(section_id, value) {
+		const plugin_type = this.section.getOption('plugin_type').formvalue(section_id);
+		value = this.formvalue(section_id);
+
+		if (value == 1 && plugin_type === 'jls')
+			return _('Expecting: Cannot be enabled when %s is enabled.').format(_('JLS'));
+
+		return true;
+	}
 	o.depends('tls', '1');
 	o.modalonly = true;
 
@@ -1243,14 +1273,14 @@ function renderListeners(s, uciconfig, isClient) {
 		switch (type) {
 			case 'vless':
 				if (!['grpc', 'ws', 'xhttp'].includes(value))
-					return _('Expecting: only support %s.').format(_('gRPC') +
+					return _('Expecting: Only support %s.').format(_('gRPC') +
 						' / ' + _('WebSocket') +
 						' / ' + _('XHTTP'));
 				break;
 			case 'vmess':
 			case 'trojan':
 				if (!['grpc', 'ws'].includes(value))
-					return _('Expecting: only support %s.').format(_('gRPC') +
+					return _('Expecting: Only support %s.').format(_('gRPC') +
 						' / ' + _('WebSocket'));
 				break;
 			default:

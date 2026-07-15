@@ -682,6 +682,10 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 			config: cfg.tls_ech_config,
 			"query-server-name": cfg.tls_ech_query_server_name
 		} : null,
+		"jls-opts": cfg.tls_jls === '1' ? {
+			"username": cfg.tls_jls_username,
+			"password": cfg.tls_jls_password
+		} : null,
 		"reality-opts": cfg.tls_reality === '1' ? {
 			"public-key": cfg.tls_reality_public_key,
 			"short-id": cfg.tls_reality_short_id,
