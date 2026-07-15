@@ -197,6 +197,9 @@ msgstr ""
 msgid "Basic DNS"
 msgstr ""
 
+msgid "Block QUIC"
+msgstr ""
+
 msgid "Blocklist"
 msgstr ""
 
@@ -462,6 +465,12 @@ msgid "DNS Listen Port"
 msgstr ""
 
 msgid "DNS Policy"
+msgstr ""
+
+msgid "DNS queries follow the routing rules, so overseas domains resolve through the proxy instead of a polluted result. Requires proxy-server-nameserver."
+msgstr ""
+
+msgid "DNS Respect Rules"
 msgstr ""
 
 msgid "Domain / IP"
@@ -881,6 +890,9 @@ msgstr ""
 msgid "Output file name (without extension, blank to auto-fill)"
 msgstr ""
 
+msgid "Overseas"
+msgstr ""
+
 msgid "Overseas Encrypted DNS (anti-pollution)"
 msgstr ""
 
@@ -1005,6 +1017,9 @@ msgid "Regular domains only use overseas DNS and DNS connections follow proxy ru
 msgstr ""
 
 msgid "Regularly update rule data"
+msgstr ""
+
+msgid "Reject proxied UDP 443 so some apps fall back to TCP. Try only when downloads or video stall."
 msgstr ""
 
 msgid "Relay"
@@ -1501,4 +1516,3 @@ msgstr ""
 
 msgid "✗ Submission failed"
 msgstr ""
-

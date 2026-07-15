@@ -964,6 +964,50 @@ yml_change() {
 		rm -f /tmp/_clashoo_mixin.yaml 2>/dev/null
 }
 
+_uci_fake_ip_filter_extras() {
+	local item
+	for item in $(uci_list clashoo.config.fake_ip_filter); do
+		case "$item" in
+			'*.lan'|'localhost.ptlogin2.qq.com'|'rule-set:cn_domain')
+				continue ;;
+			geosite:cn)
+				printf '%s\n' 'rule-set:cn_domain' ;;
+			*)
+				printf '%s\n' "$item" ;;
+		esac
+	done
+}
+
+_ensure_cn_domain_rule_provider() {
+	command -v yq >/dev/null 2>&1 || return 0
+	[ -s "$CONFIG_YAML" ] || return 0
+	yq -M e -i '
+		.["rule-providers"].cn_domain = {
+			"type": "file",
+			"path": "./ruleset/cn.mrs",
+			"format": "mrs",
+			"behavior": "domain"
+		}
+	' "$CONFIG_YAML" 2>/dev/null || true
+}
+
+append_luci_fake_ip_filter_extras() {
+	[ -n "${CLASHOO_KEEP_FAKEIP_FILTER:-}" ] || return 0
+	command -v yq >/dev/null 2>&1 || return 0
+	[ -s "$CONFIG_YAML" ] || return 0
+
+	local item needs_cn
+	needs_cn=0
+	for item in $(_uci_fake_ip_filter_extras); do
+		[ -n "$item" ] || continue
+		[ "$item" = "rule-set:cn_domain" ] && needs_cn=1
+		CLASHOO_FAKEIP_FILTER_ITEM="$item" yq -M e -i '
+			.dns."fake-ip-filter" = (((.dns."fake-ip-filter" // []) + [strenv(CLASHOO_FAKEIP_FILTER_ITEM)]) | unique)
+		' "$CONFIG_YAML" 2>/dev/null || true
+	done
+	[ "$needs_cn" = "1" ] && _ensure_cn_domain_rule_provider
+}
+
 ip_rules() {
 #===========================================================================================================================
 	sh /usr/share/clashoo/runtime/iprules.sh 2>/dev/null
@@ -1559,6 +1603,7 @@ _start_prepare_config() {
 		fi
 	fi
 	yml_change >/dev/null 2>&1
+	append_luci_fake_ip_filter_extras >/dev/null 2>&1
 	dns_leak_protect=$(uci -q get clashoo.config.dns_leak_protect 2>/dev/null)
 	if command -v dns_mihomo_apply_leak_protect >/dev/null 2>&1; then
 		# dns_leak_protect=1 forces ipv6:false; otherwise follow UCI enable_ipv6 (omit when unset)
