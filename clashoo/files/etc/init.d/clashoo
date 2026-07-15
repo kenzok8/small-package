@@ -948,6 +948,16 @@ yml_change() {
 	CLASHOO_DNS_PRESENT="$(_user_dns_fields "$CLASHOO_DNS_FORCE")"
 	export CLASHOO_DNS_FORCE
 	export CLASHOO_DNS_PRESENT
+	CLASHOO_KEEP_FAKEIP_FILTER=""
+	CLASHOO_KEEP_SNIFFER=""
+	if command -v yq >/dev/null 2>&1 && [ -s "$CONFIG_YAML" ]; then
+		[ "$(yq -M e '(.dns // {}) | has("fake-ip-filter")' "$CONFIG_YAML" 2>/dev/null)" = "true" ] &&
+			CLASHOO_KEEP_FAKEIP_FILTER=1
+		[ "$(yq -M e 'has("sniffer")' "$CONFIG_YAML" 2>/dev/null)" = "true" ] &&
+			CLASHOO_KEEP_SNIFFER=1
+	fi
+	export CLASHOO_KEEP_FAKEIP_FILTER
+	export CLASHOO_KEEP_SNIFFER
 	ucode /usr/share/clashoo/runtime/mixin.uc 2>/dev/null | yq -M -p json -o yaml > /tmp/_clashoo_mixin.yaml 2>/dev/null &&
 		yq -M eval-all '. as $item ireduce ({}; . * $item)' "$CONFIG_YAML" /tmp/_clashoo_mixin.yaml > "${CONFIG_YAML}.mixin" 2>/dev/null && 
 		mv -f "${CONFIG_YAML}.mixin" "$CONFIG_YAML" 2>/dev/null && 

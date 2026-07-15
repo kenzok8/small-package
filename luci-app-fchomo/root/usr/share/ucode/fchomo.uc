@@ -292,10 +292,12 @@ export function parseListener(cfg) {
 		"authentication-timeout": durationToSecond(cfg.tuic_authentication_timeout),
 		"max-udp-relay-packet-size": strToInt(cfg.tuic_max_udp_relay_packet_size),
 
+		/* Brutal */
+		up: strToInt(cfg.brutal_up_mbps),
+		down: strToInt(cfg.brutal_down_mbps),
+		"ignore-client-bandwidth": strToBool(cfg.brutal_ignore_client_bandwidth),
+
 		/* Hysteria2 */
-		up: strToInt(cfg.hysteria_up_mbps),
-		down: strToInt(cfg.hysteria_down_mbps),
-		"ignore-client-bandwidth": strToBool(cfg.hysteria_ignore_client_bandwidth),
 		obfs: cfg.hysteria_obfs_type,
 		"obfs-password": cfg.hysteria_obfs_password,
 		"obfs-min-packet-size": strToInt(cfg.hysteria_obfs_min_packet_size),

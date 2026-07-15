@@ -573,11 +573,13 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"reduce-rtt": strToBool(cfg.tuic_reduce_rtt),
 		"request-timeout": strToInt(cfg.tuic_request_timeout) || null,
 
+		/* Brutal */
+		up: strToInt(cfg.brutal_up_mbps),
+		down: strToInt(cfg.brutal_down_mbps),
+
 		/* Hysteria / Hysteria2 */
 		ports: isEmpty(cfg.hysteria_ports) ? null : join(',', cfg.hysteria_ports),
 		"hop-interval": strToInt(cfg.hysteria_hop_interval), // @DEBUG ERROR data type *utils.IntRanges[uint16]
-		up: cfg.hysteria_up_mbps ? cfg.hysteria_up_mbps + ' Mbps' : null,
-		down: cfg.hysteria_down_mbps ? cfg.hysteria_down_mbps + ' Mbps' : null,
 		obfs: cfg.hysteria_obfs_type,
 		"obfs-password": cfg.hysteria_obfs_password,
 		"obfs-min-packet-size": strToInt(cfg.hysteria_obfs_min_packet_size),

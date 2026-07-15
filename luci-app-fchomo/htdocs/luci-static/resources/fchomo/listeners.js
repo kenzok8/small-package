@@ -461,25 +461,26 @@ function renderListeners(s, uciconfig, isClient) {
 	o.depends('type', 'tuic');
 	o.modalonly = true;
 
-	/* Hysteria2 fields */
-	o = s.taboption('field_general', form.Value, 'hysteria_up_mbps', _('Max upload speed'),
+	/* Brutal fields */
+	o = s.taboption('field_general', form.Value, 'brutal_up_mbps', _('Max upload speed'),
 		_('In Mbps.'));
 	o.datatype = 'uinteger';
-	o.depends('type', 'hysteria2');
+	o.depends({type: /^(hysteria2|shadowquic)$/});
 	o.modalonly = true;
 
-	o = s.taboption('field_general', form.Value, 'hysteria_down_mbps', _('Max download speed'),
+	o = s.taboption('field_general', form.Value, 'brutal_down_mbps', _('Max download speed'),
 		_('In Mbps.'));
 	o.datatype = 'uinteger';
-	o.depends('type', 'hysteria2');
+	o.depends({type: /^(hysteria2|shadowquic)$/});
 	o.modalonly = true;
 
-	o = s.taboption('field_general', form.Flag, 'hysteria_ignore_client_bandwidth', _('Ignore client bandwidth'),
+	o = s.taboption('field_general', form.Flag, 'brutal_ignore_client_bandwidth', _('Ignore client bandwidth'),
 		_('Tell the client to use the BBR flow control algorithm instead of Hysteria CC.'));
 	o.default = o.disabled;
-	o.depends({type: 'hysteria2', hysteria_up_mbps: '', hysteria_down_mbps: ''});
+	o.depends({type: /^(hysteria2|shadowquic)$/, brutal_up_mbps: '', brutal_down_mbps: ''});
 	o.modalonly = true;
 
+	/* Hysteria2 fields */
 	o = s.taboption('field_general', form.ListValue, 'hysteria_obfs_type', _('Obfuscate type'));
 	o.value('', _('Disable'));
 	o.value('salamander', _('Salamander'));

@@ -667,6 +667,19 @@ return view.extend({
 		so.depends('type', 'tuic');
 		so.modalonly = true;
 
+		/* Brutal fields */
+		so = ss.taboption('field_general', form.Value, 'brutal_up_mbps', _('Max upload speed'),
+			_('In Mbps.'));
+		so.datatype = 'uinteger';
+		so.depends({type: /^(hysteria|hysteria2|shadowquic)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'brutal_down_mbps', _('Max download speed'),
+			_('In Mbps.'));
+		so.datatype = 'uinteger';
+		so.depends({type: /^(hysteria|hysteria2|shadowquic)$/});
+		so.modalonly = true;
+
 		/* Hysteria / Hysteria2 fields */
 		so = ss.taboption('field_general', form.DynamicList, 'hysteria_ports', _('Ports pool'));
 		so.datatype = 'or(port, portrange)';
@@ -677,18 +690,6 @@ return view.extend({
 			_('In seconds. <code>%s</code> will be used if empty.').format('30'));
 		so.placeholder = '15 OR 15-30';
 		so.depends('type', 'hysteria2');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Value, 'hysteria_up_mbps', _('Max upload speed'),
-			_('In Mbps.'));
-		so.datatype = 'uinteger';
-		so.depends({type: /^(hysteria|hysteria2)$/});
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Value, 'hysteria_down_mbps', _('Max download speed'),
-			_('In Mbps.'));
-		so.datatype = 'uinteger';
-		so.depends({type: /^(hysteria|hysteria2)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.ListValue, 'hysteria_obfs_type', _('Obfuscate type'));
@@ -716,17 +717,6 @@ return view.extend({
 		so.depends('hysteria_obfs_type', 'gecko');
 		so.modalonly = true;
 
-		/* TrustTunnel fields */
-		so = ss.taboption('field_general', form.Flag, 'trusttunnel_health_check', _('Health check'));
-		so.default = so.enabled;
-		so.depends('type', 'trusttunnel');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Flag, 'trusttunnel_quic', _('QUIC'));
-		so.default = so.disabled;
-		so.depends('type', 'trusttunnel');
-		so.modalonly = true;
-
 		/* ShadowQUIC fields */
 		so = ss.taboption('field_general', form.DynamicList, 'shadowquic_quic_versions', _('QUIC versions'),
 			_('Support %s, default %s.').format('v1/v2', 'v1'));
@@ -750,6 +740,17 @@ return view.extend({
 		so.datatype = 'uinteger';
 		so.placeholder = '10000';
 		so.depends('type', 'shadowquic');
+		so.modalonly = true;
+
+		/* TrustTunnel fields */
+		so = ss.taboption('field_general', form.Flag, 'trusttunnel_health_check', _('Health check'));
+		so.default = so.enabled;
+		so.depends('type', 'trusttunnel');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'trusttunnel_quic', _('QUIC'));
+		so.default = so.disabled;
+		so.depends('type', 'trusttunnel');
 		so.modalonly = true;
 
 		/* WireGuard fields */

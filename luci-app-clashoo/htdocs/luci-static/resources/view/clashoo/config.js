@@ -1128,7 +1128,7 @@ return view.extend({
     o.value('system', 'System'); o.value('gvisor', 'gVisor'); o.value('mixed', 'Mixed');
     o = s.option(form.Flag, 'disable_quic_gso', _("Disable QUIC GSO"));
     o = s.option(form.Flag, 'block_quic', _("Block QUIC"));
-    o.description = _("Reject proxied UDP 443 so clients fall back to TCP. Turn on when the provider blocks QUIC and Google Play downloads hang. Domestic QUIC and node protocols are unaffected.");
+    o.description = _("Reject proxied UDP 443 so some apps fall back to TCP. Try only when downloads or video stall.");
     o = s.option(form.Flag, 'ipv4_dns_hijack', _("IPv4 DNS Hijack"));
     o = s.option(form.Flag, 'ipv6_dns_hijack', _("IPv6 DNS Hijack"));
     o.description = _("Intercept IPv6 DNS traffic to prevent devices with hard-coded DNS from bypassing the traffic.");

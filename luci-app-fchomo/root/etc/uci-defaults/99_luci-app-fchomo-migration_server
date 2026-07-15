@@ -33,6 +33,30 @@ migrate() {
 		uci_set "$CONF" "$1" max_idle_time "$tuic_max_idle_time"
 	fi
 
+	# hysteria_up_mbps -> brutal_up_mbps
+	if isDefined "$1" hysteria_up_mbps; then
+		local hysteria_up_mbps
+		config_get hysteria_up_mbps "$1" hysteria_up_mbps ""
+		uci_remove "$CONF" "$1" hysteria_up_mbps
+		uci_set "$CONF" "$1" brutal_up_mbps "$hysteria_up_mbps"
+	fi
+
+	# hysteria_down_mbps -> brutal_down_mbps
+	if isDefined "$1" hysteria_down_mbps; then
+		local hysteria_down_mbps
+		config_get hysteria_down_mbps "$1" hysteria_down_mbps ""
+		uci_remove "$CONF" "$1" hysteria_down_mbps
+		uci_set "$CONF" "$1" brutal_down_mbps "$hysteria_down_mbps"
+	fi
+
+	# hysteria_ignore_client_bandwidth -> brutal_ignore_client_bandwidth
+	if isDefined "$1" hysteria_ignore_client_bandwidth; then
+		local hysteria_ignore_client_bandwidth
+		config_get hysteria_ignore_client_bandwidth "$1" hysteria_ignore_client_bandwidth ""
+		uci_remove "$CONF" "$1" hysteria_ignore_client_bandwidth
+		uci_set "$CONF" "$1" brutal_ignore_client_bandwidth "$hysteria_ignore_client_bandwidth"
+	fi
+
 	# plugin -> plugin_type
 	if isDefined "$1" plugin; then
 		local plugin
