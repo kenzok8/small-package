@@ -464,7 +464,7 @@ return view.extend({
         E('div', { 'class': 'cl-component-head' }, [
           E('div', {}, [
             E('h4', {}, _("Component Updates")),
-            E('div', { 'class': 'cl-component-sub' }, _("Update components individually to facilitate locating failures. Click \"Check for Updates\" to get the latest version."))
+            E('div', { 'class': 'cl-component-sub' }, _("Update components individually. Click Check Updates to refresh versions."))
           ]),
           refreshBtn
         ]),
@@ -731,7 +731,7 @@ return view.extend({
       }
     }, comp.status === 'running' ? _("Updating") : _("Update"));
 
-    var verChildren = [E('span', {}, _("Current: ") + (inst || _("Unknown")) + ' ')];
+    var verChildren = [E('span', {}, _("Current: %s").replace('%s', inst || _("Unknown")) + ' ')];
     if (badge) verChildren.push(badge);
     var verBlock = [E('div', {}, verChildren)];
     if (variantBox) verBlock.push(variantBox);
@@ -803,7 +803,7 @@ return view.extend({
               self._compRefreshBtn.disabled = false;
               self._compRefreshBtn.textContent = _("Check Updates");
             }
-            clashoo.toast(n > 0 ? (n + _(" updates available")) : _("All components are up to date"),
+            clashoo.toast(n > 0 ? _("%d updates available").replace('%d', String(n)) : _("All components are up to date"),
               { kind: n > 0 ? 'info' : 'success' });
           }).catch(function () {
             if (self._compRefreshBtn) {

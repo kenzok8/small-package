@@ -52,5 +52,29 @@ local api = self.api
 			}
 		});
 	}
+
+	function fetchCertSha256(el) {
+		if (el.getAttribute("data-loading") === "1") return;
+		el.setAttribute("data-loading", "1");
+		el.style.pointerEvents = "none";
+		el.style.color = "red";
+		XHR.get('<%=api.url("fetch_certsha256")%>', { id: node_id }, function(x, res) {
+			el.setAttribute("data-loading", "0");
+			el.style.pointerEvents = "";
+			el.style.color = "";
+			if (!x || x.status !== 200) {
+				alert("<%:Error%>");
+				return;
+			}
+			if (!res || res.code !== 1 || !res.data) {
+				alert(res && res.msg ? res.msg : "<%:Fetch Failed%> !");
+				return;
+			}
+			const inputs = document.querySelectorAll('input[id$=".xray_tls_pinSHA256"]');
+			inputs.forEach(function(input) {
+				input.value = res.data;
+			});
+		});
+	}
 	//]]>
 </script>

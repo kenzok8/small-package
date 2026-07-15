@@ -1,6 +1,8 @@
 local api = require "luci.passwall2.api"
 local appname = api.appname
 
+api.set_default_cbi()
+
 m = Map(appname)
 api.set_apply_on_parse(m)
 
@@ -379,4 +381,4 @@ for k, v in pairs(nodes_table) do
 	end
 end
 
-return m
+return api.return_map(m)

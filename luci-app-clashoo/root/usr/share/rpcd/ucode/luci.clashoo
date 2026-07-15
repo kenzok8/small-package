@@ -1912,23 +1912,22 @@ return res;
 set_mode: {
 args: { mode: 'mode' },
 call: function(req) {
-let mode = req.args?.mode || 'fake-ip';
-if (mode != 'fake-ip' && mode != 'tun' && mode != 'mixed')
-return { error: 'invalid mode' };
-let c = cursor(); c.load('clashoo');
-if (mode == 'tun' || mode == 'mixed') {
-c.set('clashoo', 'config', 'tun_mode', '1');
-c.set('clashoo', 'config', 'tcp_mode', 'tun');
-c.set('clashoo', 'config', 'udp_mode', 'tun');
-c.set('clashoo', 'config', 'stack', mode == 'mixed' ? 'mixed' : 'system');
-c.set('clashoo', 'config', 'enable_udp', '1');
-c.set('clashoo', 'config', 'enhanced_mode', 'fake-ip');
+	let mode = req.args?.mode || 'fake-ip';
+	if (mode != 'fake-ip' && mode != 'tun-system' && mode != 'tun-gvisor' && mode != 'tun-mixed')
+	return { error: 'invalid mode' };
+	let c = cursor(); c.load('clashoo');
+	if (mode == 'tun-system' || mode == 'tun-gvisor' || mode == 'tun-mixed') {
+	c.set('clashoo', 'config', 'tun_mode', '1');
+	c.set('clashoo', 'config', 'tcp_mode', 'tun');
+	c.set('clashoo', 'config', 'udp_mode', 'tun');
+	c.set('clashoo', 'config', 'stack', mode == 'tun-mixed' ? 'mixed' : (mode == 'tun-gvisor' ? 'gvisor' : 'system'));
+	c.set('clashoo', 'config', 'enable_udp', '1');
+	c.set('clashoo', 'config', 'enhanced_mode', 'fake-ip');
 } else {
-c.set('clashoo', 'config', 'tun_mode', '0');
-c.set('clashoo', 'config', 'tcp_mode', 'redirect');
-c.set('clashoo', 'config', 'udp_mode', 'tproxy');
-c.set('clashoo', 'config', 'stack', 'gvisor');
-c.set('clashoo', 'config', 'enhanced_mode', 'fake-ip');
+	c.set('clashoo', 'config', 'tun_mode', '0');
+	c.set('clashoo', 'config', 'tcp_mode', 'redirect');
+	c.set('clashoo', 'config', 'udp_mode', 'tproxy');
+	c.set('clashoo', 'config', 'enhanced_mode', 'fake-ip');
 }
 c.commit('clashoo');
 system('uci commit clashoo >/dev/null 2>&1');

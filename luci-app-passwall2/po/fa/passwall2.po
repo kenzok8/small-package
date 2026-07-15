@@ -379,6 +379,9 @@ msgstr "توزیع بار"
 msgid "Node Addition Method"
 msgstr "روش افزودن گره"
 
+msgid "Backup Node Addition Method"
+msgstr "روش افزودن گره پشتیبان"
+
 msgid "Manual"
 msgstr "دستی"
 
@@ -1651,6 +1654,12 @@ msgstr "گواهی TLS (PEM)"
 msgid "Full certificate (chain), PEM format."
 msgstr "گواهی کامل (زنجیره‌ای)، فرمت PEM."
 
+msgid "Fetch Manually"
+msgstr "دریافت دستی"
+
+msgid "Fetch Failed"
+msgstr "واکشی ناموفق"
+
 msgid "ECH Config"
 msgstr "پیکربندی ECH"
 
@@ -2401,3 +2410,6 @@ msgstr "اندازه بسته Gecko (دقیقه)"
 
 msgid "Gecko Packet Size (max)"
 msgstr "اندازه بسته Gecko (حداکثر)"
+
+msgid "valid time (hh:mm)"
+msgstr "زمان معتبر (ساعت:میلی‌متر)"

@@ -23,22 +23,13 @@ msgstr ""
 msgid " groups"
 msgstr ""
 
-msgid " hours ago"
-msgstr ""
-
 msgid " latency test failed: "
-msgstr ""
-
-msgid " minutes ago"
 msgstr ""
 
 msgid " saved"
 msgstr ""
 
 msgid " seconds"
-msgstr ""
-
-msgid " seconds ago"
 msgstr ""
 
 msgid " switch error"
@@ -51,9 +42,6 @@ msgid " update succeeded"
 msgstr ""
 
 msgid " updated"
-msgstr ""
-
-msgid " updates available"
 msgstr ""
 
 msgid "$1 updated"
@@ -86,10 +74,10 @@ msgstr ""
 msgid "<em>(empty)</em>"
 msgstr ""
 
-msgid "<span style=\"display:inline-block;padding:1px 7px;border-radius:4px;font-size:12px;background:rgba(128,128,128,0.16);color:var(--cl-label-muted,#888);\">Redir-Host</span> China traffic bypasses the core at firewall level; DNS behavior is slightly weaker. Choose as needed."
+msgid "China traffic bypasses the core at firewall level; DNS behavior is slightly weaker. Choose as needed."
 msgstr ""
 
-msgid "<span style=\"display:inline-block;padding:1px 7px;border-radius:4px;font-size:12px;font-weight:600;background:rgba(var(--primary-rgb),0.14);color:var(--cl-primary,#3886a1);\">Fake-IP · Recommended</span> Fast resolution and accurate routing; China routing is handled by the core.<br />"
+msgid "Fast resolution and accurate routing; China routing is handled by the core."
 msgstr ""
 
 msgid "<strong>Note:</strong> Proxy node domains still use direct DNS for startup resolution, not for normal client domain queries.<br>"
@@ -386,7 +374,7 @@ msgstr ""
 msgid "Current version: "
 msgstr ""
 
-msgid "Current: "
+msgid "Current: %s"
 msgstr ""
 
 msgid "Custom"
@@ -752,10 +740,22 @@ msgstr ""
 msgid "LAN Control"
 msgstr ""
 
-msgid "Last check: "
+msgid "%d updates available"
 msgstr ""
 
 msgid "Last check: initializing"
+msgstr ""
+
+msgid "Last check: just now"
+msgstr ""
+
+msgid "Last check: %d seconds ago"
+msgstr ""
+
+msgid "Last check: %d minutes ago"
+msgstr ""
+
+msgid "Last check: %d hours ago"
 msgstr ""
 
 msgid "Last run: "
@@ -785,7 +785,7 @@ msgstr ""
 msgid "Match Rule"
 msgstr ""
 
-msgid "Memory usage "
+msgid "Memory usage %s"
 msgstr ""
 
 msgid "mihomo restarted successfully, please wait for servers to come online."
@@ -866,6 +866,9 @@ msgstr ""
 msgid "Not installed"
 msgstr ""
 
+msgid "Not enabled"
+msgstr ""
+
 msgid "Not running"
 msgstr ""
 
@@ -876,6 +879,9 @@ msgid "Only subscriptions with recorded source URLs are overwritten; no duplicat
 msgstr ""
 
 msgid "Open Dashboard"
+msgstr ""
+
+msgid "TUN stack is used when either TCP or UDP mode is TUN."
 msgstr ""
 
 msgid "OpenClash is enabled; disable it first to avoid rule conflicts"
@@ -999,6 +1005,9 @@ msgid "Ready ✓"
 msgstr ""
 
 msgid "Recommended "
+msgstr ""
+
+msgid "Recommended"
 msgstr ""
 
 msgid "Recommended blank"
@@ -1226,10 +1235,7 @@ msgstr ""
 msgid "Stopped (not enabled at boot)"
 msgstr ""
 
-msgid "Stopped ⚪"
-msgstr ""
-
-msgid "Stopped ✓"
+msgid "Stopped"
 msgstr ""
 
 msgid "Stopping client..."
@@ -1337,7 +1343,7 @@ msgstr ""
 msgid "Timeout waiting for new core to start, please check the core log"
 msgstr ""
 
-msgid "Total "
+msgid "Total %s"
 msgstr ""
 
 msgid "TPROXY Port"
@@ -1353,6 +1359,9 @@ msgid "Transparent Proxy"
 msgstr ""
 
 msgid "TUN Mode"
+msgstr ""
+
+msgid "TUN Network Stack"
 msgstr ""
 
 msgid "Type"
@@ -1376,7 +1385,7 @@ msgstr ""
 msgid "Update available"
 msgstr ""
 
-msgid "Update components individually to facilitate locating failures. Click \"Check for Updates\" to get the latest version."
+msgid "Update components individually. Click Check Updates to refresh versions."
 msgstr ""
 
 msgid "Update failed"

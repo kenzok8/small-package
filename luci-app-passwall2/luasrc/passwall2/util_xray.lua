@@ -176,21 +176,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 				security = node.stream_security,
 				tlsSettings = (node.stream_security == "tls") and {
 					serverName = node.tls_serverName,
-					allowInsecure = (function()
-								if node.tls_pinSHA256 and node.tls_pinSHA256 ~= "" then return nil end
-								if api.compare_versions(os.date("%Y.%m.%d"), "<", "2026.6.1") and node.tls_allowInsecure == "1" then return true end
-							end)(),
 					fingerprint = (node.type == "Xray" and node.utls == "1" and node.fingerprint and node.fingerprint ~= "") and node.fingerprint or nil,
-					pinnedPeerCertSha256 = (function()
-								if api.compare_versions(xray_version, "<", "26.1.31") then return nil end
-								if not node.tls_pinSHA256 then return "" end
-								return node.tls_pinSHA256
-							end)(),
-					verifyPeerCertByName = (function()
-								if api.compare_versions(xray_version, "<", "26.1.31") then return nil end
-								if not node.tls_CertByName then return "" end
-								return node.tls_CertByName
-							end)(),
+					pinnedPeerCertSha256 = node.tls_pinSHA256,
+					verifyPeerCertByName = node.tls_CertByName,
 					echConfigList = (node.ech == "1") and node.ech_config or nil,
 					certificates = (node.tls_certificate == "1" and node.tls_certificate_pem ~= "") and {
 						certificate = api.split(node.tls_certificate_pem, "\n"),
@@ -839,7 +827,8 @@ function gen_config_server(node)
 				serverNames = node.reality_serverNames or {},
 				privateKey = node.reality_private_key,
 				shortIds = node.reality_shortId or "",
-				mldsa65Seed = (node.use_mldsa65Seed == "1") and node.reality_mldsa65Seed or nil
+				mldsa65Seed = (node.use_mldsa65Seed == "1") and node.reality_mldsa65Seed or nil,
+				minClientVer = "1.0.0"
 			} or nil
 		end
 	end
@@ -1032,33 +1021,6 @@ function gen_config(var)
 		end
 	end
 
-	local nodes_list = {}
-	function get_balancer_batch_nodes(_node)
-		if #nodes_list == 0 then
-			for k, e in ipairs(api.get_valid_nodes()) do
-				if e.node_type == "normal" and (not e.chain_proxy or e.chain_proxy == "") then
-					nodes_list[#nodes_list + 1] = {
-						id = e[".name"],
-						remarks = e["remarks"],
-						group = e["group"]
-					}
-				end
-			end
-		end
-		if not _node.node_group or _node.node_group == "" then return {} end
-		local nodes = {}
-		for g in _node.node_group:gmatch("%S+") do
-			g = api.UrlDecode(g)
-			for k, v in pairs(nodes_list) do
-				local gn = (v.group and v.group ~= "") and v.group or "default"
-				if gn:lower() == g:lower() and api.match_node_rule(v.remarks, _node.node_match_rule) then
-					nodes[#nodes + 1] = v.id
-				end
-			end
-		end
-		return nodes
-	end
-
 	function gen_loopback(outbound_tag, loopback_dst)
 		if not outbound_tag or outbound_tag == "" then return nil end
 		local inbound_tag = loopback_dst and "lo-to-" .. loopback_dst or outbound_tag .. "-lo"
@@ -1090,7 +1052,7 @@ function gen_config(var)
 		-- new balancer
 		local blc_nodes
 		if _node.node_add_mode and _node.node_add_mode == "batch" then
-			blc_nodes = get_balancer_batch_nodes(_node)
+			blc_nodes = api.get_batch_nodes(_node)
 		else
 			blc_nodes = _node.balancing_node
 		end

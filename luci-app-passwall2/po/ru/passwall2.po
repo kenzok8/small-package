@@ -376,6 +376,9 @@ msgstr "Балансировка"
 msgid "Node Addition Method"
 msgstr "Способ добавления узлов"
 
+msgid "Backup Node Addition Method"
+msgstr "Метод добавления резервного узла"
+
 msgid "Manual"
 msgstr "Вручную"
 
@@ -1652,6 +1655,12 @@ msgstr "Сертификат TLS (PEM)"
 msgid "Full certificate (chain), PEM format."
 msgstr "Полный сертификат (цепочка), формат PEM."
 
+msgid "Fetch Manually"
+msgstr "Получить вручную"
+
+msgid "Fetch Failed"
+msgstr "Не удалось получить данные."
+
 msgid "ECH Config"
 msgstr "Конфигурация ECH"
 
@@ -2399,3 +2408,6 @@ msgstr "Размер упаковки Gecko (мин)"
 
 msgid "Gecko Packet Size (max)"
 msgstr "Размер упаковки Gecko (макс)"
+
+msgid "valid time (hh:mm)"
+msgstr "Время действия (чч:мм)"

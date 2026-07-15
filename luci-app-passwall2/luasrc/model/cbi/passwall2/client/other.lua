@@ -8,6 +8,8 @@ local port_validate = function(self, value, t)
 	return value:gsub("-", ":")
 end
 
+api.set_default_cbi()
+
 m = Map(appname)
 api.set_apply_on_parse(m)
 
@@ -53,13 +55,7 @@ for index, value in ipairs({"stop", "start", "restart"}) do
 		end
 	end
 	o.default = "0:00"
-	o.validate = function(self, value)
-		local b = api.is_timehhmm(value)
-		if b then
-			return value
-		end
-		return nil
-	end
+	o.datatype = "timehhmm"
 	o:depends(value .. "_week_mode", "0")
 	o:depends(value .. "_week_mode", "1")
 	o:depends(value .. "_week_mode", "2")
@@ -312,4 +308,4 @@ if has_singbox then
 	o.default = 0
 end
 
-return m
+return api.return_map(m)

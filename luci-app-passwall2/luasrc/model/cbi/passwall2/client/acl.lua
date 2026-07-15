@@ -2,6 +2,8 @@ local api = require "luci.passwall2.api"
 local appname = api.appname
 local sys = api.sys
 
+api.set_default_cbi()
+
 m = Map(appname)
 api.set_apply_on_parse(m)
 
@@ -13,7 +15,8 @@ o.rmempty = false
 o.default = false
 
 -- [[ ACLs Settings ]]--
-s = m:section(TypedSection, "acl_rule")
+local cfgname = "acl_rule"
+s = m:section(TypedSection, cfgname)
 s.template = "cbi/tblsection"
 s.sortable = true
 s.anonymous = true
@@ -65,4 +68,9 @@ i.cfgvalue = function(t, n)
 	return v
 end
 
-return m
+local sortable = Template(appname .. "/cbi/sortable")
+sortable.api = api
+sortable.target_cfgname = cfgname
+m:append(sortable)
+
+return api.return_map(m)

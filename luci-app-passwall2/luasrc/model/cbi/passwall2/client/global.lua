@@ -4,6 +4,8 @@ datatypes = api.datatypes
 has_singbox = api.finded_com("sing-box")
 has_xray = api.finded_com("xray")
 
+api.set_default_cbi()
+
 m = Map(appname)
 api.set_apply_on_parse(m)
 
@@ -386,4 +388,4 @@ footer.shunt_list = api.jsonc.stringify(shunt_list)
 
 m:append(footer)
 
-return m
+return api.return_map(m)

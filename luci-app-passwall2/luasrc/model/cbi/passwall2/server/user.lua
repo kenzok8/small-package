@@ -2,6 +2,8 @@ api = require "luci.passwall2.api"
 appname = api.appname
 fs = api.fs
 
+api.set_default_cbi()
+
 m = Map("passwall2_server", translate("Server Config"))
 m.redirect = api.url("server")
 api.set_apply_on_parse(m)
@@ -54,4 +56,4 @@ footer.config = m.config
 footer.section = arg[1]
 m:append(footer)
 
-return m
+return api.return_map(m)

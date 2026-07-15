@@ -166,9 +166,8 @@ start() {
 	retry_num=$(config_n_get $id autoswitch_retry_num 1)
 	restore_switch=$(config_n_get $id autoswitch_restore_switch 0)
 	probe_url=$(config_n_get $id autoswitch_probe_url "https://www.google.com/generate_204")
-	backup_node=$(config_n_get $id autoswitch_backup_node)
+	backup_node=$(lua_api "get_socks_backup_nodes(\"${id}\")")
 	if [ -n "$backup_node" ]; then
-		backup_node=$(echo "$backup_node" | tr -s ' ' '\n' | uniq | tr -s '\n' ' ')
 		backup_node_num=$(printf "%s\n" "$backup_node" | wc -w)
 		if [ "$backup_node_num" -eq 1 ]; then
 			[ "$main_node" = "$backup_node" ] && return

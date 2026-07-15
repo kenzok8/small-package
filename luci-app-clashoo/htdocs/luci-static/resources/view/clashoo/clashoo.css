@@ -1376,10 +1376,10 @@ html[data-bs-theme="dark"] .cl-wrap .cl-live-num {
 
 .cl-wrap.cl-overview-page .cl-card-mode .cl-mode-row {
   display: grid !important;
-  grid-template-columns: 58px 102px 34px !important;
+  grid-template-columns: 142px 83px 30px !important;
   align-items: center !important;
   column-gap: 4px !important;
-  width: 210px !important;
+  width: 263px !important;
   max-width: 100% !important;
   margin: 0 !important;
 }

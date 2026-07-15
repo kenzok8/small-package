@@ -1,5 +1,5 @@
 local api = require "luci.passwall2.api"
-local appname = "passwall2"
+local appname = api.appname
 local fs = api.fs
 local uci = api.uci
 

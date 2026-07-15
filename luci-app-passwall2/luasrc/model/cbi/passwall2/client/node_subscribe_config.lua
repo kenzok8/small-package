@@ -1,6 +1,8 @@
 local api = require "luci.passwall2.api"
 local appname = api.appname
 
+api.set_default_cbi()
+
 m = Map(appname)
 m.redirect = api.url("node_subscribe")
 api.set_apply_on_parse(m)
@@ -255,13 +257,7 @@ for t = 0, 23 do
 	end
 end
 o.default = "0:00"
-o.validate = function(self, value)
-	local b = api.is_timehhmm(value)
-	if b then
-		return value
-	end
-	return nil
-end
+o.datatype = "timehhmm"
 o:depends("update_week_mode", "0")
 o:depends("update_week_mode", "1")
 o:depends("update_week_mode", "2")
@@ -336,4 +332,4 @@ o.description = translate("Some subscription providers may require a hardware id
 		translate("Enabling this option will send a hashed HWID when updating subscriptions.") .. "<br>" ..
 		translate("This may reveal limited hardware information. Enable only if you trust your provider.")
 
-return m
+return api.return_map(m)

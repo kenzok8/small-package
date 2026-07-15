@@ -376,6 +376,9 @@ msgstr "負載均衡"
 msgid "Node Addition Method"
 msgstr "節點新增方式"
 
+msgid "Backup Node Addition Method"
+msgstr "備用節點新增方式"
+
 msgid "Manual"
 msgstr "手動"
 
@@ -1643,6 +1646,12 @@ msgstr "TLS 憑證（PEM）"
 msgid "Full certificate (chain), PEM format."
 msgstr "完整憑證（鏈），PEM 格式。"
 
+msgid "Fetch Manually"
+msgstr "手動獲取"
+
+msgid "Fetch Failed"
+msgstr "獲取失敗"
+
 msgid "ECH Config"
 msgstr "ECH 配置"
 
@@ -2393,3 +2402,6 @@ msgstr "Gecko 包大小（最小）"
 
 msgid "Gecko Packet Size (max)"
 msgstr "Gecko 包大小（最大）"
+
+msgid "valid time (hh:mm)"
+msgstr "有效時間（hh:mm）"

@@ -367,8 +367,16 @@ function strToTable(str)
 	return loadstring("return " .. str)()
 end
 
-function is_timehhmm(timeStr)
-	local hour, minute = string.match(timeStr, "^(%d?%d):(%d%d)$")
+function is_json(str)
+	if str and jsonc.parse(str) then
+		return true
+	end
+	return false
+end
+datatypes.json = is_json
+
+function is_timehhmm(str)
+	local hour, minute = string.match(str, "^(%d?%d):(%d%d)$")
     if hour and minute then
         hour = tonumber(hour)
         minute = tonumber(minute)
@@ -378,6 +386,7 @@ function is_timehhmm(timeStr)
     end
     return false
 end
+datatypes.timehhmm = is_timehhmm
 
 function is_normal_node(e)
 	if e and e.type and e.protocol and (e.protocol == "_balancing" or e.protocol == "_shunt" or e.protocol == "_iface" or e.protocol == "_urltest") then
@@ -1380,6 +1389,40 @@ function set_apply_on_parse(map)
 	end
 end
 
+function set_default_cbi()
+	local cbi = require "luci.cbi"
+	if true then
+		--TextValue
+		local TextValue = cbi.TextValue
+		local original_init = TextValue.__init__
+		function TextValue.__init__(self, ...)
+			original_init(self, ...)
+			self.template  = appname .. "/cbi/tvalue"
+		end
+	end
+end
+
+function return_map(map)
+	local cbi = require "luci.cbi"
+	local api = require "luci.passwall2.api"
+	if true then
+		-- header
+		local header = cbi.Template(appname .. "/cbi/header")
+		header.api = api
+		header.config = map.config
+		table.insert(map.children, 1, header)
+	end
+	if true then
+		-- footer
+		local footer = cbi.Template(appname .. "/cbi/footer")
+		footer.api = api
+		footer.config = map.config
+		map:append(footer)
+	end
+
+	return map
+end
+
 function luci_types(id, m, s, type_name, option_prefix)
 	local fv_type
 	local field_type = s.fields["type"]
@@ -1585,6 +1628,56 @@ function match_node_rule(name, rule)
 	return false
 end
 
+local normal_nodes = {}
+function get_batch_nodes(node)
+	if #normal_nodes == 0 then
+		for k, e in ipairs(get_valid_nodes()) do
+			if e.node_type == "normal" and (not e.chain_proxy or e.chain_proxy == "") then
+				normal_nodes[#normal_nodes + 1] = {
+					id = e[".name"],
+					remarks = e["remarks"],
+					group = e["group"]
+				}
+			end
+		end
+	end
+	if not node.node_group or node.node_group == "" then return {} end
+	local nodes = {}
+	for g in node.node_group:gmatch("%S+") do
+		g = UrlDecode(g)
+		for k, v in pairs(normal_nodes) do
+			local gn = (v.group and v.group ~= "") and v.group or "default"
+			if gn:lower() == g:lower() and match_node_rule(v.remarks, node.node_match_rule) then
+				nodes[#nodes + 1] = v.id
+			end
+		end
+	end
+	return nodes
+end
+
+function get_socks_backup_nodes(id)
+	id = trim(id)
+	if id == "" then return "" end
+	local socks = uci:get_all(appname, id)
+	local nodes
+	if socks.backup_node_add_mode and socks.backup_node_add_mode == "batch" then
+		local node = {}
+		node.node_group = socks.backup_node_group
+		node.node_match_rule = socks.backup_node_match_rule
+		nodes = get_batch_nodes(node)
+	else
+		nodes = socks.autoswitch_backup_node
+	end
+	local backup_nodes, seen = {}, {}
+	for _, v in ipairs(nodes or {}) do
+		if v ~= socks.node and not seen[v] then
+			seen[v] = true
+			table.insert(backup_nodes, v)
+		end
+	end
+	return table.concat(backup_nodes, " ")
+end
+
 function get_core(field, candidates)
 	local v = uci:get(appname, "@global_subscribe[0]", field)
 	if v and v ~= "" then
@@ -1608,6 +1701,26 @@ function cleanEmptyTables(t)
 		end
 	end
 	return next(t) and t or nil
+end
+
+function fetch_cert_sha256(host, port, sni, timeout)
+	if not host then return "" end
+	port = tonumber(port) or 443
+	sni = sni or host
+	timeout = tonumber(timeout) or 5
+	local cmd = string.format(
+		"timeout %d openssl s_client -connect %s:%d -servername %s -showcerts </dev/null 2>/dev/null " ..
+		"| awk 'BEGIN{c=0}/BEGIN CERT/{c++} c==1{print} /END CERT/{if(c==1)exit}' " ..
+		"| openssl x509 -outform der 2>/dev/null " ..
+		"| sha256sum 2>/dev/null",
+		timeout, host, port, sni
+	)
+	local out = trim(sys.exec(cmd))
+	local fp = out:match("^([0-9a-fA-F]+)")
+	if not fp or fp:lower():match("^e3b0c44298fc1c149afbf4c8996fb924") then
+		return ""
+	end
+	return fp:upper()
 end
 
 function get_dnsmasq_server_domain()

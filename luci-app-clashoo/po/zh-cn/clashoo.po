@@ -30,23 +30,14 @@ msgstr " 个文件）"
 msgid " groups"
 msgstr " 组"
 
-msgid " hours ago"
-msgstr " 小时前"
-
 msgid " latency test failed: "
 msgstr " 测速失败: "
-
-msgid " minutes ago"
-msgstr " 分钟前"
 
 msgid " saved"
 msgstr " 已保存"
 
 msgid " seconds"
 msgstr " 秒"
-
-msgid " seconds ago"
-msgstr " 秒前"
 
 msgid " switch error"
 msgstr " 切换异常"
@@ -59,9 +50,6 @@ msgstr " 更新成功"
 
 msgid " updated"
 msgstr " 已更新"
-
-msgid " updates available"
-msgstr " 项可更新"
 
 msgid "$1 updated"
 msgstr "$1 已更新"
@@ -93,11 +81,11 @@ msgstr "；更新 "
 msgid "<em>(empty)</em>"
 msgstr "<em>（空）</em>"
 
-msgid "<span style=\"display:inline-block;padding:1px 7px;border-radius:4px;font-size:12px;background:rgba(128,128,128,0.16);color:var(--cl-label-muted,#888);\">Redir-Host</span> China traffic bypasses the core at firewall level; DNS behavior is slightly weaker. Choose as needed."
-msgstr "<span style=\"display:inline-block;padding:1px 7px;border-radius:4px;font-size:12px;background:rgba(128,128,128,0.16);color:var(--cl-label-muted,#888);\">Redir-Host</span> 大陆流量在防火墙层直接绕过核心，DNS 体验略弱。按需选择。"
+msgid "China traffic bypasses the core at firewall level; DNS behavior is slightly weaker. Choose as needed."
+msgstr "大陆流量在防火墙层直接绕过核心，DNS 体验略弱。按需选择。"
 
-msgid "<span style=\"display:inline-block;padding:1px 7px;border-radius:4px;font-size:12px;font-weight:600;background:rgba(var(--primary-rgb),0.14);color:var(--cl-primary,#3886a1);\">Fake-IP · Recommended</span> Fast resolution and accurate routing; China routing is handled by the core.<br />"
-msgstr "<span style=\"display:inline-block;padding:1px 7px;border-radius:4px;font-size:12px;font-weight:600;background:rgba(var(--primary-rgb),0.14);color:var(--cl-primary,#3886a1);\">Fake-IP · 推荐</span> 解析快、分流准，大陆分流由内核完成。<br />"
+msgid "Fast resolution and accurate routing; China routing is handled by the core."
+msgstr "解析快、分流准，大陆分流由内核完成。"
 
 msgid "<strong>Note:</strong> Proxy node domains still use direct DNS for startup resolution, not for normal client domain queries.<br>"
 msgstr "<strong>说明：</strong>代理节点域名仍使用直连 DNS 启动解析，不用于客户端普通域名查询。<br>"
@@ -393,8 +381,8 @@ msgstr "当前配置为自定义文件，无需更新订阅"
 msgid "Current version: "
 msgstr "当前版本: "
 
-msgid "Current: "
-msgstr "当前："
+msgid "Current: %s"
+msgstr "当前：%s"
 
 msgid "Custom"
 msgstr "自定义"
@@ -759,11 +747,23 @@ msgstr "不确定时保持默认。"
 msgid "LAN Control"
 msgstr "局域网控制"
 
-msgid "Last check: "
-msgstr "上次检查："
+msgid "%d updates available"
+msgstr "发现 %d 项可更新"
 
 msgid "Last check: initializing"
 msgstr "上次检查：初始化中"
+
+msgid "Last check: just now"
+msgstr "上次检查：刚刚"
+
+msgid "Last check: %d seconds ago"
+msgstr "上次检查：%d 秒前"
+
+msgid "Last check: %d minutes ago"
+msgstr "上次检查：%d 分钟前"
+
+msgid "Last check: %d hours ago"
+msgstr "上次检查：%d 小时前"
 
 msgid "Last run: "
 msgstr "上次执行："
@@ -792,8 +792,8 @@ msgstr "日志"
 msgid "Match Rule"
 msgstr "匹配规则"
 
-msgid "Memory usage "
-msgstr "内存使用 "
+msgid "Memory usage %s"
+msgstr "内存使用 %s"
 
 msgid "mihomo restarted successfully, please wait for servers to come online."
 msgstr "mihomo 重启成功，请等待服务器上线！"
@@ -873,6 +873,9 @@ msgstr "节点权重加成，<1 表示较低优先级，>1 表示较高优先级
 msgid "Not installed"
 msgstr "未安装"
 
+msgid "Not enabled"
+msgstr "未启用"
+
 msgid "Not running"
 msgstr "未运行"
 
@@ -884,6 +887,9 @@ msgstr "仅覆盖已记录来源链接的订阅，不会生成重复文件。"
 
 msgid "Open Dashboard"
 msgstr "打开面板"
+
+msgid "TUN stack is used when either TCP or UDP mode is TUN."
+msgstr "TCP 或 UDP 任意一个选择 TUN 时，该栈设置才会生效。"
 
 msgid "OpenClash is enabled; disable it first to avoid rule conflicts"
 msgstr "OpenClash 已启用，请先停用以避免规则冲突"
@@ -1007,6 +1013,9 @@ msgstr "已就绪 ✓"
 
 msgid "Recommended "
 msgstr "推荐 "
+
+msgid "Recommended"
+msgstr "推荐"
 
 msgid "Recommended blank"
 msgstr "推荐留空"
@@ -1233,11 +1242,8 @@ msgstr "停止服务"
 msgid "Stopped (not enabled at boot)"
 msgstr "已停止（开机不自启动）"
 
-msgid "Stopped ⚪"
-msgstr "已停止 ⚪"
-
-msgid "Stopped ✓"
-msgstr "已停止 ✓"
+msgid "Stopped"
+msgstr "已停止"
 
 msgid "Stopping client..."
 msgstr "正在停止客户端..."
@@ -1344,8 +1350,8 @@ msgstr "耗时"
 msgid "Timeout waiting for new core to start, please check the core log"
 msgstr "等待新内核启动超时，请查看内核日志"
 
-msgid "Total "
-msgstr "总计 "
+msgid "Total %s"
+msgstr "总计 %s"
 
 msgid "TPROXY Port"
 msgstr "TPROXY 端口"
@@ -1361,6 +1367,9 @@ msgstr "透明代理"
 
 msgid "TUN Mode"
 msgstr "TUN 模式"
+
+msgid "TUN Network Stack"
+msgstr "TUN 网络栈"
 
 msgid "Type"
 msgstr "类型"
@@ -1383,8 +1392,8 @@ msgstr "立即更新全部"
 msgid "Update available"
 msgstr "可更新"
 
-msgid "Update components individually to facilitate locating failures. Click \"Check for Updates\" to get the latest version."
-msgstr "按组件单独更新，便于定位失败。点「检查更新」获取最新版本。"
+msgid "Update components individually. Click Check Updates to refresh versions."
+msgstr "按组件单独更新，便于定位失败。点击「检查更新」刷新版本。"
 
 msgid "Update failed"
 msgstr "更新失败"
