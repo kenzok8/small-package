@@ -228,12 +228,24 @@ local current_sid = self.map:get(section, "global_server") or "nil"
 			filter: brightness(1.08);
 		}
 
-		@media (max-width: 700px) {
+		/* 手机端优化 */
+		#ssr-clash-main-buttons {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 8px;
+			padding: 6px 0;
+		}
+
+		@media (max-width: 900px) {
 			#ssr-clash-modal {
+				top: 8px;
+				left: 8px;
 				width: calc(100vw - 16px);
 				max-height: calc(100vh - 24px);
 				min-height: min(420px, calc(100vh - 24px));
 				padding: 10px 12px 12px;
+				transform: none;
 			}
 
 			#ssr-clash-modal-header {
@@ -249,21 +261,85 @@ local current_sid = self.map:get(section, "global_server") or "nil"
 				width: 100%;
 				justify-content: flex-start;
 				margin-left: 0;
+				flex-wrap: wrap;
+				gap: 8px; 
 			}
 
 			#ssr-clash-modal-header #ssr-clash-rules-add {
 				margin-left: 0;
 			}
+
+			#ssr-clash-modal-actions .btn,
+			#ssr-clash-main-buttons .btn {
+				flex: 1 1 0;
+				margin: 0 0;
+			}
 		}
 	</style>
 
 	<script type="text/javascript">
+	if (!window.ssrXHR) {
+		window.ssrXHR = (function() {
+			function encode(data) {
+				var pairs = [];
+				var key;
+				for (key in (data || {})) {
+					if (Object.prototype.hasOwnProperty.call(data, key)) {
+						pairs.push(encodeURIComponent(key) + '=' + encodeURIComponent(data[key] == null ? '' : data[key]));
+					}
+				}
+				return pairs.join('&');
+			}
+
+			function request(method, url, data, callback) {
+				var lower = method.toLowerCase();
+				if (window.XHR && typeof window.XHR[lower] === 'function') {
+					return window.XHR[lower](url, data, callback);
+				}
+
+				var xhr = new XMLHttpRequest();
+				var payload = encode(data);
+				var finalUrl = url;
+
+				if (lower === 'get' && payload) {
+					finalUrl += (url.indexOf('?') === -1 ? '?' : '&') + payload;
+				}
+
+				xhr.open(method, finalUrl, true);
+				xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+				if (lower !== 'get') {
+					xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+				}
+				xhr.onreadystatechange = function() {
+					if (xhr.readyState !== 4) return;
+
+					var rv = null;
+					try {
+						rv = JSON.parse(xhr.responseText || 'null');
+					} catch (e) {}
+
+					if (callback) callback(xhr, rv);
+				};
+				xhr.send(lower === 'get' ? null : payload);
+			}
+
+			return {
+				get: function(url, data, callback) {
+					return request('GET', url, data, callback);
+				},
+				post: function(url, data, callback) {
+					return request('POST', url, data, callback);
+				}
+			};
+		})();
+	}
+
 	if (typeof(window.ssrClashRefreshSubscription) !== "function") {
 		window.ssrClashRefreshSubscription = function(btn, sid) {
 			var original = btn.value;
 			btn.disabled = true;
 			btn.value = '<%:Reloading YAML...%>';
-			XHR.get('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "clash_refresh")%>', {
+			window.ssrXHR.get('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "clash_refresh")%>', {
 				sid: sid
 			}, function(x, result) {
 				btn.disabled = false;
@@ -288,7 +364,7 @@ local current_sid = self.map:get(section, "global_server") or "nil"
 			}
 			btn.disabled = true;
 			btn.value = '<%:Resetting Defaults...%>';
-			XHR.get('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "clash_reset_defaults")%>', {
+			window.ssrXHR.get('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "clash_reset_defaults")%>', {
 				sid: sid
 			}, function(x, result) {
 				btn.disabled = false;
@@ -642,7 +718,7 @@ local current_sid = self.map:get(section, "global_server") or "nil"
 
 				select.onchange = function() {
 					setPanelStatus('<%:Switching...%>', '#0072c3');
-					XHR.get('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "clash_switch")%>', {
+						window.ssrXHR.get('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "clash_switch")%>', {
 						sid: currentPanelSid,
 						group: group.name,
 						name: select.value
@@ -699,7 +775,7 @@ local current_sid = self.map:get(section, "global_server") or "nil"
 				payload['rule_' + index + '_policy_group'] = rule.policy_group || '';
 			});
 
-			XHR.post('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "clash_client_rule_save")%>', payload, function(x, result) {
+			window.ssrXHR.post('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "clash_client_rule_save")%>', payload, function(x, result) {
 				btn.disabled = false;
 				btn.value = original;
 				if (result && result.success) {
@@ -733,7 +809,7 @@ local current_sid = self.map:get(section, "global_server") or "nil"
 			if (importBtn) importBtn.style.display = '';
 			if (refreshBtn) refreshBtn.style.display = 'none';
 
-			XHR.get('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "clash_client_policies")%>', {
+			window.ssrXHR.get('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "clash_client_policies")%>', {
 				sid: sid
 			}, function(x, result) {
 				if (!result || !result.active) {
@@ -785,7 +861,7 @@ local current_sid = self.map:get(section, "global_server") or "nil"
 			if (exportBtn) exportBtn.style.display = 'none';
 			if (importBtn) importBtn.style.display = 'none';
 			if (refreshBtn) refreshBtn.style.display = '';
-			XHR.get('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "clash_groups")%>', {
+			window.ssrXHR.get('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "clash_groups")%>', {
 				sid: sid
 			}, function(x, result) {
 				if (result && result.sid) {
@@ -842,6 +918,7 @@ local current_sid = self.map:get(section, "global_server") or "nil"
 			var customRulesBtn = document.getElementById('ssr-clash-main-client-rules');
 			var resetBtn = document.getElementById('ssr-clash-main-reset-defaults');
 			var panelBtn = document.getElementById('ssr-clash-main-open');
+			var btnContainer = document.getElementById('ssr-clash-main-buttons');
 			if (!select || !row || !customRulesBtn || !resetBtn || !panelBtn) {
 				return;
 			}
@@ -852,11 +929,13 @@ local current_sid = self.map:get(section, "global_server") or "nil"
 				customRulesBtn.setAttribute('data-sid', sid);
 				resetBtn.setAttribute('data-sid', sid);
 				panelBtn.setAttribute('data-sid', sid);
+				if (btnContainer) btnContainer.style.display = 'flex';
 			} else {
 				row.style.display = 'none';
 				customRulesBtn.setAttribute('data-sid', '');
 				resetBtn.setAttribute('data-sid', '');
 				panelBtn.setAttribute('data-sid', '');
+				if (btnContainer) btnContainer.style.display = 'none';
 			}
 		}
 
@@ -872,9 +951,11 @@ local current_sid = self.map:get(section, "global_server") or "nil"
 			var modalMask = document.getElementById('ssr-clash-modal-mask');
 			var wrap = document.getElementById('ssr-clash-main-panel-wrap');
 			var row = wrap ? wrap.closest('.cbi-value') : null;
+			var btnContainer = document.getElementById('ssr-clash-main-buttons');
 
 			if (row && !clashNodes['<%=current_sid%>']) {
 				row.style.display = 'none';
+				if (btnContainer) btnContainer.style.display = 'none';
 			}
 
 			if (select) {
@@ -955,7 +1036,7 @@ local current_sid = self.map:get(section, "global_server") or "nil"
 						return false;
 					}
 					modalRulesClearBtn.disabled = true;
-					XHR.post('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "clash_client_rule_clear")%>', {
+					window.ssrXHR.post('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "clash_client_rule_clear")%>', {
 						sid: currentEditorSid
 					}, function(x, result) {
 						modalRulesClearBtn.disabled = false;
@@ -984,27 +1065,29 @@ local current_sid = self.map:get(section, "global_server") or "nil"
 	})();
 	</script>
 
-	<input
-		type="button"
-		id="ssr-clash-main-client-rules"
-		class="btn cbi-button"
-		value="<%:Custom Client Proxies Rules%>"
-		title="<%:Custom Client Proxies Rules%>"
-		data-sid="<%=current_sid%>" />
-	<input
-		type="button"
-		id="ssr-clash-main-reset-defaults"
-		class="btn cbi-button"
-		value="<%:Reset Default Proxies Rules%>"
-		title="<%:Reset Default Proxies Rules%>"
-		data-sid="<%=current_sid%>" />
-	<input
-		type="button"
-		id="ssr-clash-main-open"
-		class="btn cbi-button cbi-button-apply"
-		value="<%:Mihomo Pannel%>"
-		title="<%:Mihomo Pannel%>"
-		data-sid="<%=current_sid%>" />
+	<div id="ssr-clash-main-buttons">
+		<input
+			type="button"
+			id="ssr-clash-main-client-rules"
+			class="btn cbi-button"
+			value="<%:Custom Client Proxies Rules%>"
+			title="<%:Custom Client Proxies Rules%>"
+			data-sid="<%=current_sid%>" />
+		<input
+			type="button"
+			id="ssr-clash-main-reset-defaults"
+			class="btn cbi-button"
+			value="<%:Reset Default Proxies Rules%>"
+			title="<%:Reset Default Proxies Rules%>"
+			data-sid="<%=current_sid%>" />
+		<input
+			type="button"
+			id="ssr-clash-main-open"
+			class="btn cbi-button cbi-button-apply"
+			value="<%:Mihomo Pannel%>"
+			title="<%:Mihomo Pannel%>"
+			data-sid="<%=current_sid%>" />
+	</div>
 
 	<div id="ssr-clash-modal-mask"></div>
 	<div id="ssr-clash-modal" role="dialog" aria-modal="true" aria-labelledby="ssr-clash-modal-title">

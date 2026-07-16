@@ -59,6 +59,62 @@ end
 
 <script type="text/javascript">
 		//<![CDATA[
+		if (!window.ssrXHR) {
+			window.ssrXHR = (function() {
+				function encode(data) {
+					var pairs = [];
+					var key;
+					for (key in (data || {})) {
+						if (Object.prototype.hasOwnProperty.call(data, key)) {
+							pairs.push(encodeURIComponent(key) + '=' + encodeURIComponent(data[key] == null ? '' : data[key]));
+						}
+					}
+					return pairs.join('&');
+				}
+
+				function request(method, url, data, callback) {
+					var lower = method.toLowerCase();
+					if (window.XHR && typeof window.XHR[lower] === "function") {
+						return window.XHR[lower](url, data, callback);
+					}
+
+					var xhr = new XMLHttpRequest();
+					var payload = encode(data);
+					var finalUrl = url;
+
+					if (lower === "get" && payload) {
+						finalUrl += (url.indexOf('?') === -1 ? '?' : '&') + payload;
+					}
+
+					xhr.open(method, finalUrl, true);
+					xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+					if (lower !== "get") {
+						xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+					}
+					xhr.onreadystatechange = function() {
+						if (xhr.readyState !== 4) return;
+
+						var rv = null;
+						try {
+							rv = JSON.parse(xhr.responseText || 'null');
+						} catch (e) {}
+
+						if (callback) callback(xhr, rv);
+					};
+					xhr.send(lower === "get" ? null : payload);
+				}
+
+				return {
+					get: function(url, data, callback) {
+						return request('GET', url, data, callback);
+					},
+					post: function(url, data, callback) {
+						return request('POST', url, data, callback);
+					}
+				};
+			})();
+		}
+
 		window.addEventListener('load', function () {
 			const doms = document.getElementsByClassName('pingtime');
 			const ports = document.getElementsByClassName("socket-connected");
@@ -165,7 +221,7 @@ end
 						return;
 					}
 					port.innerHTML = '<font style=\"color:#0072c3\">connect</font>';
-						XHR.get('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "ping")%>', {
+							window.ssrXHR.get('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "ping")%>', {
 							index,
 							sid: dom.getAttribute("data-sid"),
 							domain: dom.getAttribute("hint"),
@@ -280,7 +336,7 @@ end
 		var server_page = pageElem ? pageElem.value : '<%=self.server_page or 1%>';
 		var server_page_size = pageSizeElem ? pageSizeElem.value : '<%=self.server_page_size or 0%>';
 		if (input) input.value = order;
-		XHR.post('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "save_order")%>', {
+		window.ssrXHR.post('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "save_order")%>', {
 			order: order,
 			page: server_page,
 			page_size: server_page_size

@@ -197,6 +197,77 @@ end
 
 <!-- tblsection -->
 <div class="cbi-section cbi-tblsection" id="cbi-<%=self.config%>-<%=self.sectiontype%>">
+	<script type="text/javascript">
+		if (!window.ssrXHR) {
+			window.ssrXHR = (function() {
+				function encode(data) {
+					var pairs = [];
+					var key;
+					for (key in (data || {})) {
+						if (Object.prototype.hasOwnProperty.call(data, key)) {
+							pairs.push(encodeURIComponent(key) + '=' + encodeURIComponent(data[key] == null ? '' : data[key]));
+						}
+					}
+					return pairs.join('&');
+				}
+
+				function request(method, url, data, callback) {
+					var lower = method.toLowerCase();
+					if (window.XHR && typeof window.XHR[lower] === "function") {
+						return window.XHR[lower](url, data, callback);
+					}
+
+					var xhr = new XMLHttpRequest();
+					var payload = encode(data);
+					var finalUrl = url;
+
+					if (lower === "get" && payload) {
+						finalUrl += (url.indexOf('?') === -1 ? '?' : '&') + payload;
+					}
+
+					xhr.open(method, finalUrl, true);
+					xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+					if (lower !== "get") {
+						xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+					}
+					xhr.onreadystatechange = function() {
+						if (xhr.readyState !== 4) return;
+
+						var rv = null;
+						try {
+							rv = JSON.parse(xhr.responseText || 'null');
+						} catch (e) {}
+
+						if (callback) callback(xhr, rv);
+					};
+					xhr.send(lower === "get" ? null : payload);
+				}
+
+				return {
+					get: function(url, data, callback) {
+						return request('GET', url, data, callback);
+					},
+					post: function(url, data, callback) {
+						return request('POST', url, data, callback);
+					}
+				};
+			})();
+		}
+
+		if (typeof window.ssrDeleteNode !== "function") {
+			window.ssrDeleteNode = function(sid) {
+				window.ssrXHR.post('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "delete_node")%>', {
+					sid: sid
+				}, function(x, result) {
+					result = result || {};
+					if (result.ret == 1) {
+						window.location.reload();
+					}
+				});
+				return false;
+			};
+		}
+	</script>
 	<% if self.title and #self.title > 0 then -%>
 		<h3><%=self.title%></h3>
 	<%- end %>
@@ -244,22 +315,10 @@ end
 							%> onclick="location.href='<%=self:extedit(section)%>'"
 							<%- end
 							%> alt="<%:Edit%>" title="<%:Edit%>" />
-						<% end; if self.addremove then %>
-							<input class="btn cbi-button cbi-button-remove" type="button" value="<%:Delete%>"
-								onclick="
-									var sid = '<%=k%>';
-									XHR.post('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "delete_node")%>', {
-										sid: sid
-									}, function(x, result) {
-										result = result || {};
-										if (result.ret == 1) {
-											window.location.reload();
-											return;
-										}
-									});
-									return false;
-								"
-							/>
+							<% end; if self.addremove then %>
+								<input class="btn cbi-button cbi-button-remove" type="button" value="<%:Delete%>"
+									onclick="return window.ssrDeleteNode('<%=k%>')"
+								/>
 						<%- end -%>
 					</div>
 				</td>

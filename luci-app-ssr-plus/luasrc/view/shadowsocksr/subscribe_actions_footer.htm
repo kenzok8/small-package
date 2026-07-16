@@ -20,6 +20,36 @@ local function width(o)
 end
 -%>
 <script type="text/javascript">//<![CDATA[
+	function ssrPost(url, data, callback) {
+		if (window.XHR && typeof window.XHR.post === 'function') {
+			return window.XHR.post(url, data, callback);
+		}
+
+		var xhr = new XMLHttpRequest();
+		var payload = [];
+		var key;
+		for (key in (data || {})) {
+			if (Object.prototype.hasOwnProperty.call(data, key)) {
+				payload.push(encodeURIComponent(key) + '=' + encodeURIComponent(data[key] == null ? '' : data[key]));
+			}
+		}
+
+		xhr.open('POST', url, true);
+		xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+		xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState !== 4) return;
+
+			var rv = null;
+			try {
+				rv = JSON.parse(xhr.responseText || 'null');
+			} catch (e) {}
+
+			if (callback) callback(xhr, rv);
+		};
+		xhr.send(payload.join('&'));
+	}
+
 	window.ssrUpdateSubscribeItem = window.ssrUpdateSubscribeItem || function(btn) {
 		if (!btn) return false;
 
@@ -72,9 +102,9 @@ end
 			for (var field in fields) {
 				var value = fields[field];
 				var promise = new Promise(function(resolve, reject) {
-					XHR.post(
-						'<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "toggle_subscribe_item_enabled")%>',
-						{ sid: sid, field: field, value: value },
+					ssrPost(
+							'<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "toggle_subscribe_item_enabled")%>',
+							{ sid: sid, field: field, value: value },
 						function(x, rv) {
 							if (rv && Number(rv.ret) === 1) {
 								resolve();
@@ -112,7 +142,7 @@ end
 		if (!confirm('<%:Are you sure you want to delete subscribe link: %s ?%>'.replace('%s', sid))) return;
 
 		btn.disabled = true;
-		XHR.post('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "delete_subscribe_item")%>',
+		ssrPost('<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "delete_subscribe_item")%>',
 			{ sid: sid },
 			function(x, rv) {
 				btn.disabled = false;
@@ -218,7 +248,7 @@ end
 		btn.disabled = true;
 		btn.value = '<%:Adding...%>';
 
-		XHR.post(
+		ssrPost(
 			'<%=luci.dispatcher.build_url("admin", "services", "shadowsocksr", "add_subscribe_item")%>',
 			{},
 			function(x, rv) {

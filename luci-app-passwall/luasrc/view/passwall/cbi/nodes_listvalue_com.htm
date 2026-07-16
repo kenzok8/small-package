@@ -403,7 +403,7 @@
 	function lv_expandGroupOfCurrent(cbid, listContainer, hiddenSelect) {
 		const key = hiddenSelect.options[0].value;
 		if (!key) return;
-		const targetLi = listContainer.querySelector("li[data-key='" + key.replace(/'/g,"\\'") + "']");
+		const targetLi = listContainer.querySelector(`li[data-key='${CSS.escape(key)}']`);
 		if (!targetLi) return;
 		let parentGroup = targetLi.closest(".lv-group");
 		if (parentGroup) {
