@@ -635,11 +635,15 @@ table td, .table .td {
 					if (cacheData && cacheData.savetime && (now - cacheData.timestamp) < cacheData.savetime) {
 						const a = ping_value[i].firstElementChild;
 						let color = "red";
-						if (cacheData.value < 100)
-							color = "green";
-						else if (cacheData.value < 200)
-							color = "#fb9a05";
-						a.innerText = cacheData.value + " ms";
+						if (cacheData.value >= 0) {
+							a.innerText = cacheData.value + " ms";
+							if (cacheData.value < 100)
+								color = "green";
+							else if (cacheData.value < 200)
+								color = "#fb9a05";
+						} else {
+							a.innerText = "<%:Timeout%>";
+						}
 						a.style.color = color;
 						a.onclick = function () {
 							ping_node(cbi_id, this, auto_detection_time);
@@ -679,15 +683,23 @@ table td, .table .td {
 									const cache_data = {
 										dom_id: strs[i],
 										timestamp: Date.now(),
-										savetime: 60 * 1000,
+										savetime: 150 * 1000,
 										value: ping
 									};
-									text = result.ping + " ms";
 									localStorage.setItem(auto_detection_time + ":" + dom.address + ":" + dom.port, JSON.stringify(cache_data));
+									text = result.ping + " ms";
 									if (ping < 100)
 										color = "green";
 									else if (ping < 200)
 										color = "#fb9a05";
+								} else {
+									const cache_data = {
+										dom_id: strs[i],
+										timestamp: Date.now(),
+										savetime: 60 * 1000,
+										value: -1
+									};
+									localStorage.setItem(auto_detection_time + ":" + dom.address + ":" + dom.port, JSON.stringify(cache_data));
 								}
 								a.innerText = text;
 								a.style.color = color;
@@ -1099,6 +1111,15 @@ table td, .table .td {
 				el.blur();
 				auto_detection_time = el.value;
 				onChange("auto_detection_time", auto_detection_time);
+			});
+		});
+		
+		const links = document.querySelectorAll('a');
+		links.forEach(link => {
+			link.addEventListener('click', (e) => {
+				if (link.getAttribute('target') !== '_blank') {
+					ajaxAbortAll();
+				}
 			});
 		});
 	});

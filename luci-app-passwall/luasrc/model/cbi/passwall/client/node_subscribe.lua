@@ -38,6 +38,8 @@ if has_hysteria2 then
 	table.insert(hysteria2_type, s)
 end
 
+api.set_default_cbi()
+
 m = Map(appname)
 api.set_apply_on_parse(m)
 
@@ -225,4 +227,4 @@ end
 
 m:append(Template(appname .. "/node_subscribe/js"))
 
-return m
+return api.return_map(m)

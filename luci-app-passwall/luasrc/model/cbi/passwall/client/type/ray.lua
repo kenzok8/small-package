@@ -667,6 +667,14 @@ o = s:option(TextValue, _n("xhttp_extra"), "　", translate("An XHttpObject in J
 o:depends({ [_n("use_xhttp_extra")] = true })
 o.rows = 10
 o.wrap = "off"
+o.datatype = "json"
+local o_validate = o.validate
+o.validate = function(self, value)
+	value = api.trim(value):gsub("\r\n", "\n"):gsub("^[ \t]*\n", ""):gsub("\n[ \t]*$", ""):gsub("\n[ \t]*\n", "\n")
+	local v = o_validate(self, value)
+	if v then return v end
+	return nil, "XHTTP Extra " .. translate("Must be JSON text!")
+end
 o.custom_cfgvalue = function(self, section, value)
 	local raw = m:get(section, "xhttp_extra")
 	if raw then
@@ -687,14 +695,6 @@ o.custom_write = function(self, section, value)
 		end
 	else
 		m:del(section, "download_address")
-	end
-end
-o.validate = function(self, value)
-	value = api.trim(value):gsub("\r\n", "\n"):gsub("^[ \t]*\n", ""):gsub("\n[ \t]*$", ""):gsub("\n[ \t]*\n", "\n")
-	if api.jsonc.parse(value) then
-		return value
-	else
-		return nil, "XHTTP Extra " .. translate("Must be JSON text!")
 	end
 end
 o.custom_remove = function(self, section, value)
@@ -752,6 +752,14 @@ o.rows = 10
 o.wrap = "off"
 o.description = translate("An FinalMaskObject in JSON format, used for sharing.") .. "<br>" ..
 		translate("Custom finalmask overrides mkcp, hysteria2, fragment, noise, and related settings.")
+o.datatype = "json"
+local o_validate = o.validate
+o.validate = function(self, value)
+	value = api.trim(value):gsub("\r\n", "\n"):gsub("^[ \t]*\n", ""):gsub("\n[ \t]*$", ""):gsub("\n[ \t]*\n", "\n")
+	local v = o_validate(self, value)
+	if v then return v end
+	return nil, "FinalMask " .. translate("Must be JSON text!")
+end
 o.custom_cfgvalue = function(self, section, value)
 	local raw = m:get(section, "finalmask")
 	if raw then
@@ -760,14 +768,6 @@ o.custom_cfgvalue = function(self, section, value)
 end
 o.custom_write = function(self, section, value)
 	m:set(section, "finalmask", api.base64Encode(value) or "")
-end
-o.validate = function(self, value)
-	value = api.trim(value):gsub("\r\n", "\n"):gsub("^[ \t]*\n", ""):gsub("\n[ \t]*$", ""):gsub("\n[ \t]*\n", "\n")
-	if api.jsonc.parse(value) then
-		return value
-	else
-		return nil, "FinalMask " .. translate("Must be JSON text!")
-	end
 end
 
 --[[Fast Open]]

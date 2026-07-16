@@ -1,6 +1,8 @@
 api = require "luci.passwall.api"
 appname = "passwall"
 
+api.set_default_cbi()
+
 m = Map(appname, translate("Node Config"))
 m.redirect = api.url("node_list")
 api.set_apply_on_parse(m)
@@ -120,7 +122,6 @@ local footer = Template(appname .. "/node_config/footer")
 footer.api = api
 footer.config = m.config
 footer.section = arg[1]
-
 m:append(footer)
 
-return m
+return api.return_map(m)

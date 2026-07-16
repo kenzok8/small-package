@@ -1,6 +1,8 @@
 local api = require "luci.passwall.api"
 local appname = "passwall"
 
+api.set_default_cbi()
+
 m = Map(appname)
 m.redirect = api.url()
 api.set_apply_on_parse(m)
@@ -166,4 +168,4 @@ o = s:option(DummyValue, "btn")
 o.template = appname .. "/socks_auto_switch/btn"
 o:depends("backup_node_add_mode", "manual")
 
-return m
+return api.return_map(m)

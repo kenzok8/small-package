@@ -2,6 +2,8 @@ local api = require "luci.passwall.api"
 local uci = api.uci
 local appname = "passwall"
 
+api.set_default_cbi()
+
 m = Map(appname)
 m.redirect = api.url("node_subscribe")
 api.set_apply_on_parse(m)
@@ -244,13 +246,7 @@ o:value(0, translate("Every Sunday"))
 o = s:option(Value, "update_time_mode", translate("Update Time"))
 for t = 0, 23 do o:value(t .. ":00") end
 o.default = "0:00"
-o.validate = function(self, value)
-	local b = api.is_timehhmm(value)
-	if b then
-		return value
-	end
-	return nil
-end
+o.datatype = "timehhmm"
 o:depends("update_week_mode", "0")
 o:depends("update_week_mode", "1")
 o:depends("update_week_mode", "2")
@@ -321,4 +317,4 @@ for k, v in pairs(nodes_table) do
 	end
 end
 
-return m
+return api.return_map(m)

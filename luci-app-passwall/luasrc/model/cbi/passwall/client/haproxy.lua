@@ -15,6 +15,8 @@ for k, e in ipairs(api.get_valid_nodes()) do
 	end
 end
 
+api.set_default_cbi()
+
 m = Map(appname, "HAPROXY " .. translate("Load Balancing"))
 api.set_apply_on_parse(m)
 
@@ -179,4 +181,4 @@ o.rmempty = false
 
 m:append(Template(appname .. "/haproxy/js"))
 
-return m
+return api.return_map(m)

@@ -3,6 +3,8 @@ local appname = "passwall"
 local sys = api.sys
 local datatypes = api.datatypes
 
+api.set_default_cbi()
+
 m = Map(appname)
 api.set_apply_on_parse(m)
 
@@ -33,4 +35,4 @@ s:append(Template(appname .. "/node_list/link_add_node"))
 
 m:append(Template(appname .. "/node_list/node_list"))
 
-return m
+return api.return_map(m)

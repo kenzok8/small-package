@@ -2,6 +2,8 @@ local api = require "luci.passwall.api"
 local appname = "passwall"
 local sys = api.sys
 
+api.set_default_cbi()
+
 m = Map(appname)
 api.set_apply_on_parse(m)
 
@@ -101,4 +103,4 @@ o:value("1:65535", translate("All"))
 o:value("53", "53")
 ]]--
 
-return m
+return api.return_map(m)
