@@ -965,13 +965,10 @@ yml_change() {
 }
 
 _uci_fake_ip_filter_extras() {
-	local line item key
-	key='clashoo.config.fake_ip_filter'
-	uci -q show "$key" 2>/dev/null | while IFS= read -r line; do
-		item="${line#${key}=}"
-		[ "$item" != "$line" ] || continue
-		item="${item#\'}"
-		item="${item%\'}"
+	local item list
+	list="$(uci -q get clashoo.config.fake_ip_filter 2>/dev/null)"
+	set -f
+	for item in $list; do
 		case "$item" in
 			'*.lan'|'localhost.ptlogin2.qq.com'|'rule-set:cn_domain')
 				continue ;;
@@ -981,6 +978,7 @@ _uci_fake_ip_filter_extras() {
 				printf '%s\n' "$item" ;;
 		esac
 	done
+	set +f
 }
 
 _ensure_cn_domain_rule_provider() {
