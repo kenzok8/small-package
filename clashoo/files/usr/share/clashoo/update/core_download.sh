@@ -32,7 +32,9 @@ finalize() {
 			# kernels stays a separate user action (set_core handles strategy).
 			if [ "$TARGET_DCORE" = "$(uci get clashoo.config.dcore 2>/dev/null)" ]; then
 				write_log "当前内核已更新，重启 Clashoo 生效"
-				/etc/init.d/clashoo restart >/dev/null 2>&1 || write_log "重启 Clashoo 失败"
+				if [ "$(uci -q get clashoo.config.enable 2>/dev/null)" = "1" ]; then
+					/etc/init.d/clashoo restart >/dev/null 2>&1 || write_log "重启 Clashoo 失败"
+				fi
 			else
 				write_log "内核二进制已更新（非当前内核，不切换、不重启）"
 			fi
@@ -45,7 +47,9 @@ finalize() {
 				write_log "Smart 内核已就绪，自动启用 Smart 策略"
 			fi
 			write_log "内核已替换，重启 Clashoo"
-			/etc/init.d/clashoo restart >/dev/null 2>&1 || write_log "重启 Clashoo 失败"
+			if [ "$(uci -q get clashoo.config.enable 2>/dev/null)" = "1" ]; then
+				/etc/init.d/clashoo restart >/dev/null 2>&1 || write_log "重启 Clashoo 失败"
+			fi
 		fi
 	fi
 	rm -f /var/run/core_update >/dev/null 2>&1
@@ -501,8 +505,7 @@ fetch_latest_tag() {
 	# 再试一次 releases/latest 的 302 跳转
 	u="$(prefixed_url "$p" "$web_url")"
 	if command -v curl >/dev/null 2>&1; then
-		tag="$(curl -fsSIL --connect-timeout "$CONNECT_TIMEOUT" --max-time "$REQUEST_TIMEOUT" -A "Clash/OpenWRT" "$u" 2>/dev/null | sed -n 's#^[Ll]ocation: .*/releases/tag/\([^[:space:]
-]*\).*#\1#p' | head -n 1)"
+		tag="$(curl -fsSIL --connect-timeout "$CONNECT_TIMEOUT" --max-time "$REQUEST_TIMEOUT" -A "Clash/OpenWRT" "$u" 2>/dev/null | sed -n 's#^[Ll]ocation: .*/releases/tag/\([^[:space:][:cntrl:]]*\).*#\1#p' | head -n 1)"
 	else
 		tag="$(wget -S --spider --timeout="$CONNECT_TIMEOUT" --no-check-certificate --user-agent="Clash/OpenWRT" "$u" 2>&1 | sed -n 's#^  Location: .*/releases/tag/\([^[:space:]]*\).*#\1#p' | head -n 1)"
 	fi

@@ -48,6 +48,10 @@ backend_remove_rules() {
 	fi
 }
 
+_clashoo_enabled() {
+	[ "$(uci -q get clashoo.config.enable 2>/dev/null)" = "1" ]
+}
+
 # Compute start-wait window: TUN needs longer for utun setup + fake-ip pool init.
 # Override via `uci set clashoo.config.start_wait_secs=N` for slow devices.
 _compute_start_wait() {
@@ -1521,6 +1525,7 @@ _finish_geo_bootstrap() {
 	fi
 
 	rm -f /var/run/clashoo_bootstrap_pending >/dev/null 2>&1
+	_clashoo_enabled || return 0
 	log_msg "Bootstrap: geo ready, reloading full config" "引导模式：Geo 数据已就绪，正在重载完整配置"
 	/etc/init.d/clashoo restart >/dev/null 2>&1
 }
@@ -1793,6 +1798,7 @@ boot(){
 		(
 			exec 1000>&- </dev/null >/dev/null 2>&1
 			sleep 5
+			_clashoo_enabled || exit 0
 			/etc/init.d/clashoo start
 		) &
 	else
@@ -1932,6 +1938,12 @@ stop_service(){
 			rm -f /tmp/clashoo/fake_filter.list /tmp/clashoo/fake_filter.yaml 2>/dev/null
 
 			log_msg "Stopping Clashoo" "正在停止 Clashoo"
+			_ac_pid="$(cat /tmp/clashoo/access_check_daemon.pid 2>/dev/null)"
+			if [ -n "$_ac_pid" ] && tr '\0' ' ' < "/proc/$_ac_pid/cmdline" 2>/dev/null | grep -q access_check_daemon; then
+				kill "$_ac_pid" 2>/dev/null
+			fi
+			rm -rf /tmp/clashoo/access_check_daemon.pid /tmp/clashoo/access_check_daemon.lock 2>/dev/null
+			rm -f /var/run/clashoo_bootstrap_pending 2>/dev/null
 		log_msg "Removing firewall rules" "清理防火墙规则"
 		backend_remove_rules >/dev/null 2>&1
 		cleanup_stale_core_nft >/dev/null 2>&1
@@ -1961,6 +1973,10 @@ stop_service(){
 		if _core_running; then
 			_kill_core
 		fi
+		for _cpid in $(pgrep -f /etc/clashoo 2>/dev/null); do
+			_ccl="$(tr '\0' ' ' < "/proc/$_cpid/cmdline" 2>/dev/null)"
+			printf '%s' "$_ccl" | grep -q -e '-d /etc/clashoo' -e '-f /etc/clashoo/config.yaml' && kill "$_cpid" 2>/dev/null
+		done
 		runtime_state_reset
 		runtime_state_set "health_status" "stopped"
 		runtime_state_set "health_detail" "service_stopped"

@@ -380,7 +380,7 @@ run_pkg_update() {
     restart_web_stack
   fi
   # 仅核心更新且原本运行中才重启 Clashoo；纯客户端更新不动服务
-  if [ "$which" = "clashoo" ] && [ "$was_running" -eq 1 ]; then
+  if [ "$which" = "clashoo" ] && [ "$was_running" -eq 1 ] && [ "$(uci -q get clashoo.config.enable 2>/dev/null)" = "1" ]; then
     log "Clashoo 原本运行中，正在重启服务"
     sh /usr/share/clashoo/rpc/rpc_async.sh restart >/dev/null 2>&1 || /etc/init.d/clashoo restart >/dev/null 2>&1 || true
   elif [ "$which" = "clashoo" ]; then
