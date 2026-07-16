@@ -459,9 +459,10 @@ function dnsAutoSummaryNode(res) {
   var elapsed = Math.max(0, parseInt(res.elapsed_ms || 0, 10));
   var failed = parseInt(res.failed_count || 0, 10);
   return E('div', { 'class': 'cl-dns-auto-result' }, [
-    E('span', [E('b', _("Overseas")), res.nameserver || '-']),
-    E('span', [E('b', _("Domestic")), res.proxy_nameserver || '-']),
-    E('span', [E('b', 'Bootstrap'), res.bootstrap || res.direct_nameserver || '-']),
+    E('span', [E('b', _("Domestic")), res.nameserver || '-']),
+    E('span', [E('b', _("Proxy")), res.proxy_nameserver || '-']),
+    E('span', [E('b', _("Fallback")), res.fallback || '-']),
+    E('span', [E('b', _("Bootstrap")), res.bootstrap || res.direct_nameserver || '-']),
     E('span', [E('b', _("Time")), elapsed ? (elapsed / 1000).toFixed(1) + _(" seconds") : '-']),
     E('span', [E('b', _("Failed")), failed + _(" candidates")])
   ]);
@@ -857,7 +858,7 @@ return view.extend({
             click: function () {
               L.resolveDefault(callSetConfig(sub.name), {}).then(function () { location.reload(); });
             }
-          }, _("Switch")),
+          }, _("Switch Profile")),
           E('button', {
             'class': 'btn cbi-button cl-btn-sm cl-btn-delete',
             click: function () {
@@ -1033,7 +1034,7 @@ return view.extend({
               click: function () {
                 L.resolveDefault(callSetConfig(f.name), {}).then(function () { location.reload(); });
               }
-            }, _("Switch")),
+            }, _("Switch Profile")),
             E('button', {
               'class': 'btn cbi-button cl-btn-sm cl-btn-delete',
               click: function () {
@@ -1644,7 +1645,7 @@ return view.extend({
                     if (r.success) location.reload();
                   });
                 }
-              }, _("Switch")),
+              }, _("Switch Profile")),
               p.source === 'native' && p.sub_url ? E('button', {
                 'class': 'btn cbi-button cl-btn-sm cl-btn-sb-action',
                 click: function (ev) {
@@ -1872,8 +1873,7 @@ return view.extend({
           fetchStatusEl
         ]),
         E('p', { 'class': 'cl-sb-note' },
-          _("For providers that directly offer sing-box JSON subscriptions, or links already converted by external tools.\n") +
-          _("After fetching, click Update on the corresponding item in the Configuration Files tab to fetch the latest configuration again.")
+          _("For providers that directly offer sing-box JSON subscriptions, or links already converted by external tools. After fetching, click Update on the corresponding item in the Configuration Files tab to fetch the latest configuration again.")
         )
       ]),
       E('div', { 'class': 'cl-section cl-card cl-sb-card' }, [

@@ -862,22 +862,29 @@ _migrate_dns_roles() {
 		uci -q set clashoo."$sec".ser_type="$1"
 		uci -q set clashoo."$sec".ser_address="$2"
 		uci -q set clashoo."$sec".protocol="${3:-none}"
+		[ -n "$4" ] && uci -q set clashoo."$sec".ser_port="$4"
 	}
-	_add_dnsserver 'nameserver' 'https://1.1.1.1/dns-query'
-	_add_dnsserver 'nameserver' 'https://8.8.8.8/dns-query'
-	_add_dnsserver 'proxy-server-nameserver' 'https://223.5.5.5/dns-query'
-	_add_dnsserver 'proxy-server-nameserver' 'https://doh.pub/dns-query'
+	_add_dnsserver 'nameserver' 'https://dns.alidns.com/dns-query'
+	_add_dnsserver 'nameserver' 'https://doh.pub/dns-query'
+	_add_dnsserver 'proxy-server-nameserver' '1.1.1.1' 'tls://' '853'
+	_add_dnsserver 'fallback' 'https://cloudflare-dns.com/dns-query'
+	_add_dnsserver 'fallback' 'https://dns.google/dns-query'
 	_add_dnsserver 'direct-nameserver' '223.5.5.5' 'udp://'
 	local sec
 	sec="$(uci -q add clashoo dns_policy)"
 	uci -q set clashoo."$sec".enabled='1'
 	uci -q set clashoo."$sec".policy_type='nameserver-policy'
 	uci -q set clashoo."$sec".matcher='geosite:cn'
-	uci -q add_list clashoo."$sec".nameserver='https://223.5.5.5/dns-query'
+	uci -q add_list clashoo."$sec".nameserver='https://dns.alidns.com/dns-query'
 	uci -q add_list clashoo."$sec".nameserver='https://doh.pub/dns-query'
+	sec="$(uci -q add clashoo dns_policy)"
+	uci -q set clashoo."$sec".enabled='1'
+	uci -q set clashoo."$sec".policy_type='nameserver-policy'
+	uci -q set clashoo."$sec".matcher='geosite:geolocation-!cn'
+	uci -q add_list clashoo."$sec".nameserver='https://cloudflare-dns.com/dns-query'
 	uci -q set clashoo.config.dns_migrated='1'
 	uci -q commit clashoo
-	log_msg "Upstream DNS roles migrated" "上游 DNS 角色已迁移为境外解析走代理，修复 QUIC / Google Play 卡住"
+	log_msg "Upstream DNS roles migrated" "上游 DNS 角色已恢复为经典防污染模型（国内主解析 + 境外 fallback）"
 }
 
 _user_dns_fields() {
@@ -1030,6 +1037,12 @@ ensure_dns_cn_policy_fallback() {
 		yq -M e -i '.dns."nameserver-policy"."rule-set:cn_domain" = ["https://223.5.5.5/dns-query", "https://doh.pub/dns-query"]' "$CONFIG_YAML" 2>/dev/null || true
 	fi
 	_ensure_cn_domain_rule_provider
+}
+
+_remap_dns_system_nameserver() {
+	command -v yq >/dev/null 2>&1 || return 0
+	[ -s "$CONFIG_YAML" ] || return 0
+	yq -M e -i '(.dns | .. | select(. == "system")) |= "223.5.5.5"' "$CONFIG_YAML" 2>/dev/null || true
 }
 
 ip_rules() {
@@ -1650,6 +1663,7 @@ _start_prepare_config() {
 	fi
 
 	_prepare_geo_bootstrap_mode
+	_remap_dns_system_nameserver >/dev/null 2>&1
 	ensure_dns_cn_policy_fallback >/dev/null 2>&1
 
 
@@ -1973,9 +1987,7 @@ reload_service()
 		resolve_effective_tp_modes
 		runtime_state_record_preflight "mihomo"
 		backend_remove_rules 2>/dev/null
-		yml_dns_change 2>/dev/null
-		ip_rules 2>/dev/null
-		cp -f "$CONFIG_YAML" "${CLASH_CONFIG}/config.yaml" 2>/dev/null
+		( select_config && _start_prepare_config ) >/dev/null 2>&1
 		# hot-reload via mihomo REST API (config + addtype rules), no process restart or tunnel drop
 		local _dp _ds _lip
 		_dp="$(uci -q get clashoo.config.dash_port)"; [ -n "$_dp" ] || _dp=9090

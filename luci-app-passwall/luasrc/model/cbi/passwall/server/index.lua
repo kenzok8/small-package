@@ -13,7 +13,8 @@ t.addremove = false
 e = t:option(Flag, "enable", translate("Enable"))
 e.rmempty = false
 
-t = m:section(TypedSection, "user", translate("Users Manager"))
+local cfgname = "user"
+t = m:section(TypedSection, cfgname, translate("Users Manager"))
 t.anonymous = true
 t.addremove = true
 t.sortable = true
@@ -87,6 +88,12 @@ e = t:option(DummyValue, "port", translate("Port"))
 e = t:option(Flag, "log", translate("Log"))
 e.default = "1"
 e.rmempty = false
+
+local sortable = Template(appname .. "/cbi/sortable")
+sortable.api = api
+sortable.appname = m.config
+sortable.target_cfgname = cfgname
+m:append(sortable)
 
 m:append(Template(appname .. "/server/log"))
 

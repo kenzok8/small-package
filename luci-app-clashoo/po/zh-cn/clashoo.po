@@ -117,8 +117,8 @@ msgstr "高级 DNS"
 msgid "Advanced Settings (core / data components)"
 msgstr "高级设置（内核 / 数据组件）"
 
-msgid "After fetching, click Update on the corresponding item in the Configuration Files tab to fetch the latest configuration again."
-msgstr "拉取后可在「配置文件」标签的对应条目点击「更新」重新拉取最新配置。"
+msgid "For providers that directly offer sing-box JSON subscriptions, or links already converted by external tools. After fetching, click Update on the corresponding item in the Configuration Files tab to fetch the latest configuration again."
+msgstr "适用于机场直接提供 sing-box JSON 格式订阅、或已用外部工具转换好的链接。拉取后可在「配置文件」标签的对应条目点击「更新」重新拉取最新配置。"
 
 msgid "All"
 msgstr "全部"
@@ -603,6 +603,9 @@ msgstr "故障转移"
 msgid "Fallback GeoIP Filter"
 msgstr "Fallback GeoIP 过滤"
 
+msgid "Bootstrap"
+msgstr "引导 DNS"
+
 msgid "Fetch and Apply"
 msgstr "拉取并应用"
 
@@ -629,9 +632,6 @@ msgstr "修复失败: "
 
 msgid "Fixed deprecated fields: "
 msgstr "已修复废弃字段: "
-
-msgid "For providers that directly offer sing-box JSON subscriptions, or links already converted by external tools.\n"
-msgstr "适用于机场直接提供 sing-box JSON 格式订阅、或已用外部工具转换好的链接。\n"
 
 msgid "Force ASN lookup and prefer target ASN information when selecting nodes for a more stable experience"
 msgstr "选择节点时强制查找并优先使用目标的 ASN 信息，以获得更稳定的体验"
@@ -1044,8 +1044,8 @@ msgstr "链式代理"
 msgid "Remote Template"
 msgstr "远程模板"
 
-msgid "Remote: "
-msgstr "远端："
+msgid "Remote: %s"
+msgstr "远端：%s"
 
 msgid "Removing Cron scheduled tasks"
 msgstr "删除 Cron → 计划任务"
@@ -1288,6 +1288,9 @@ msgid "Subscription URLs (one per line)"
 msgstr "订阅链接（多条用换行分隔）"
 
 msgid "Switch"
+msgstr "切换"
+
+msgid "Switch Profile"
 msgstr "切换"
 
 msgid "Switch configuration failed: "

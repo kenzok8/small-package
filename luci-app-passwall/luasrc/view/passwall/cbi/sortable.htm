@@ -1,0 +1,159 @@
+<%
+local api = self.api
+local appname = self.appname or api.appname
+local target_cfgname = self.target_cfgname
+-%>
+<script src="<%=resource%>/view/<%=api.appname%>/Sortable.min.js"></script>
+<style>
+	table .cbi-button-up,
+	table .cbi-button-down,
+	.td.cbi-section-actions .cbi-button-up,
+	.td.cbi-section-actions .cbi-button-down {
+		display: none !important;
+	}
+
+	.drag-handle {
+		vertical-align: middle;
+		cursor: grab !important;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 20px;
+		font-weight: 100;
+		padding: 0 !important;
+		line-height: inherit;
+		user-select: none;
+		align-self: stretch;
+		background-color: transparent;
+	}
+
+	.drag-handle:hover {
+		background: transparent;
+	}
+
+	.dragging-row {
+		background-color: rgba(131, 191, 255, 0.7) !important;
+		box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+	}
+	
+	@media screen and (max-width: 1152px) {
+		#cbi-<%=appname%>-<%=target_cfgname%> .cbi-section-table-titles {
+			display: none !important;
+		}
+	}
+</style>
+<script>
+	//<![CDATA[
+	//Add drag-and-drop sorting
+	document.addEventListener("DOMContentLoaded", function () {
+		function initSortableForTable() {
+			var section = document.getElementById("cbi-<%=appname%>-<%=target_cfgname%>");
+			if (!section) return;
+
+			// === insert drag handle ===
+			var rows = section.querySelectorAll("tr");
+			rows.forEach(function(row) {
+				var btn = row.querySelector(".cbi-button-remove:last-of-type");
+				if (!btn) return;
+				if (btn.nextElementSibling && btn.nextElementSibling.classList.contains("drag-handle")) return;
+				var handle = document.createElement("span");
+				handle.className = "drag-handle center";
+				handle.title = "<%:Drag to reorder%>";
+				handle.innerHTML = "⠿";
+				btn.after(handle);
+			});
+
+			// === init Sortable ===
+			var table = section.getElementsByTagName("table")[0];
+			if (!table) return;
+			var root = table.tBodies[0] || table;
+			if (root._sortable_initialized) return root._sortable_instance;
+			root._sortable_initialized = true;
+
+			// save origin order
+			root._origOrder = getCurrentOrder(root);
+
+			try {
+				root._sortable_instance = Sortable.create(root, {
+					handle: ".drag-handle",
+					draggable: "tr.cbi-section-table-row",
+					animation: 150,
+					ghostClass: "dragging-row",
+					fallbackOnBody: true,
+					forceFallback: false,
+					swapThreshold: 0.65,
+					onEnd: function (evt) {
+						updateHiddenInput(root, section);
+					}
+				});
+				return root._sortable_instance;
+			} catch (e) {
+				root._sortable_initialized = false;
+				console.error("Sortable init failed:", e);
+			}
+		}
+
+		// get table current line order
+		function getCurrentOrder(root) {
+			var order = [];
+			var rows = root.querySelectorAll("tr.cbi-section-table-row");
+			rows.forEach(function (tr) {
+				var id = tr.id || "";
+				if (id.startsWith("cbi-<%=appname%>-"))
+					id = id.replace("cbi-<%=appname%>-", "");
+				order.push(id);
+			});
+			return order;
+		}
+
+		// update after drag and drop hidden input
+		function updateHiddenInput(root, section) {
+			var newOrder = getCurrentOrder(root);
+			var changed = newOrder.join(" ") !== root._origOrder.join(" ");
+			var hiddenInput = section.querySelector('input[type="hidden"][id^="cbi.sts."]');
+			if (hiddenInput) {
+				hiddenInput.value = changed ? newOrder.join(" ") : "";
+			}
+		}
+		
+		// hide lua luci version up/down
+		function hideSortColumn(section) {
+			var table = section.getElementsByTagName("table")[0];
+			if(!table) return;
+			var rows = table.querySelectorAll("tr.cbi-section-table-row");
+			if(!rows.length) return;
+			var colCount = rows[0].children.length, sortCol = -1;
+			for(var col=0; col<colCount; col++){
+				var hasSort=false, invalid=false;
+				rows.forEach(function(tr){
+					var td=tr.children[col]; if(!td) return;
+					if(td.querySelector(".cbi-button-edit, .cbi-button-remove")) invalid=true;
+					if(td.querySelector(".cbi-button-up, .cbi-button-down")) hasSort=true;
+				});
+				if(!invalid && hasSort){ sortCol=col; break; }
+			}
+			if(sortCol===-1) return;
+			table.querySelectorAll("tr").forEach(function(tr){
+				var c=tr.children[sortCol]; if(c) c.style.display="none";
+			});
+		}
+
+		// === wait TypedSection ===
+		(function waitStable() {
+			var last = 0, stable = 0;
+			var THRESHOLD = 5;
+			function tick() {
+				var count = document.querySelectorAll("tr.cbi-section-table-row").length;
+				if (count && count === last) stable++;
+				else stable = 0;
+
+				last = count;
+				if (stable >= THRESHOLD)
+					setTimeout(initSortableForTable, 200);
+				else
+					requestAnimationFrame(tick);
+			}
+			tick();
+		})();
+	});
+</script>

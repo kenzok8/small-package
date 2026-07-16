@@ -110,7 +110,7 @@ msgstr ""
 msgid "Advanced Settings (core / data components)"
 msgstr ""
 
-msgid "After fetching, click Update on the corresponding item in the Configuration Files tab to fetch the latest configuration again."
+msgid "For providers that directly offer sing-box JSON subscriptions, or links already converted by external tools. After fetching, click Update on the corresponding item in the Configuration Files tab to fetch the latest configuration again."
 msgstr ""
 
 msgid "All"
@@ -596,6 +596,9 @@ msgstr ""
 msgid "Fallback GeoIP Filter"
 msgstr ""
 
+msgid "Bootstrap"
+msgstr ""
+
 msgid "Fetch and Apply"
 msgstr ""
 
@@ -621,9 +624,6 @@ msgid "Fix failed: "
 msgstr ""
 
 msgid "Fixed deprecated fields: "
-msgstr ""
-
-msgid "For providers that directly offer sing-box JSON subscriptions, or links already converted by external tools.\n"
 msgstr ""
 
 msgid "Force ASN lookup and prefer target ASN information when selecting nodes for a more stable experience"
@@ -1037,7 +1037,7 @@ msgstr ""
 msgid "Remote Template"
 msgstr ""
 
-msgid "Remote: "
+msgid "Remote: %s"
 msgstr ""
 
 msgid "Removing Cron scheduled tasks"
@@ -1281,6 +1281,9 @@ msgid "Subscription URLs (one per line)"
 msgstr ""
 
 msgid "Switch"
+msgstr ""
+
+msgid "Switch Profile"
 msgstr ""
 
 msgid "Switch configuration failed: "

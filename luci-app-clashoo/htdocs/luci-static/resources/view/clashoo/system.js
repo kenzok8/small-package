@@ -706,7 +706,7 @@ return view.extend({
     }
     var latest = latestMap[this._compLatestKey(comp, variant || this._compVariantOf(comp))];
     if (!statusText && latest)
-      statusText = _("Remote: ") + latest;
+      statusText = _("Remote: %s").replace('%s', latest);
 
     /* 绿色「可更新」徽标：最新版与已装不一致时显示 */
     var badge = this._compUpdatable(comp, latestMap)

@@ -103,7 +103,8 @@ end
 o:depends("health_check_type", "passwall_logic")
 
 -- [[ Balancing Settings ]]--
-s = m:section(TypedSection, "haproxy_config", translate("Node List"))
+local cfgname = "haproxy_config"
+s = m:section(TypedSection, cfgname, translate("Node List"))
 s.description = "<font color='red'>" ..
 		translate("Add a node, Export Of Multi WAN Only support Multi Wan. Load specific gravity range 1-256. Multiple primary servers can be load balanced, standby will only be enabled when the primary server is offline! Multiple groups can be set, Haproxy port same one for each group.") .. "<br>" ..
 		translate("Note that the node configuration parameters for load balancing must be consistent when use TCP health check type, otherwise it cannot be used normally!") .. "</font>"
@@ -178,6 +179,11 @@ o = s:option(ListValue, "backup", translate("Mode"))
 o:value(0, translate("Primary"))
 o:value(1, translate("Standby"))
 o.rmempty = false
+
+local sortable = Template(appname .. "/cbi/sortable")
+sortable.api = api
+sortable.target_cfgname = cfgname
+m:append(sortable)
 
 m:append(Template(appname .. "/haproxy/js"))
 

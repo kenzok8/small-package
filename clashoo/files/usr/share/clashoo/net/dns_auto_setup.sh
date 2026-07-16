@@ -177,9 +177,10 @@ apply_result() {
 	uci -q set clashoo.config.enable_dns='1' || { uci -q revert clashoo; return 1; }
 	set_default_nameserver "$BOOTSTRAP" || { uci -q revert clashoo; return 1; }
 	while uci -q delete clashoo.@dnsservers[0] >/dev/null 2>&1; do :; done
-	add_dnsserver 'nameserver' "$OVERSEAS_NS" 'none' '' || { uci -q revert clashoo; return 1; }
+	add_dnsserver 'nameserver' "$NAMESERVER" 'none' '' || { uci -q revert clashoo; return 1; }
 	add_dnsserver 'direct-nameserver' "$BOOTSTRAP" 'udp://' '' || { uci -q revert clashoo; return 1; }
-	add_dnsserver 'proxy-server-nameserver' "$DOMESTIC_NS" 'none' '' || { uci -q revert clashoo; return 1; }
+	add_dnsserver 'proxy-server-nameserver' "$PROXY_NS" 'none' '' || { uci -q revert clashoo; return 1; }
+	add_dnsserver 'fallback' "$FALLBACK_NS" 'none' '' || { uci -q revert clashoo; return 1; }
 	uci -q commit clashoo || { uci -q revert clashoo; return 1; }
 	return 0
 }
@@ -187,6 +188,7 @@ apply_result() {
 FAILED_COUNT=0
 BOOTSTRAP_CANDIDATES=""
 DOMESTIC_CANDIDATES=""
+PROXY_CANDIDATES=""
 
 for ns in $(current_default_nameservers); do
 	is_ipv4 "$ns" && BOOTSTRAP_CANDIDATES="$(append_unique "$BOOTSTRAP_CANDIDATES" "$ns")"
@@ -195,24 +197,24 @@ for ns in 223.5.5.5 119.29.29.29 180.184.1.1; do
 	BOOTSTRAP_CANDIDATES="$(append_unique "$BOOTSTRAP_CANDIDATES" "$ns")"
 done
 
-for ns in $(servers_for_role 'proxy-server-nameserver') $(servers_for_role 'direct-nameserver'); do
-	case "$ns" in
-		https://223.5.5.5/*|https://doh.pub/*|https://dns.alidns.com/*|udp://*|tcp://*)
-			DOMESTIC_CANDIDATES="$(append_unique "$DOMESTIC_CANDIDATES" "$ns")" ;;
-	esac
+for ns in $(servers_for_role 'nameserver') $(servers_for_role 'direct-nameserver'); do
+	DOMESTIC_CANDIDATES="$(append_unique "$DOMESTIC_CANDIDATES" "$ns")"
 done
-for ns in https://223.5.5.5/dns-query https://doh.pub/dns-query https://dns.alidns.com/dns-query; do
+for ns in https://dns.alidns.com/dns-query https://doh.pub/dns-query; do
 	DOMESTIC_CANDIDATES="$(append_unique "$DOMESTIC_CANDIDATES" "$ns")"
 done
 
+for ns in $(servers_for_role 'proxy-server-nameserver') $(servers_for_role 'fallback'); do
+	PROXY_CANDIDATES="$(append_unique "$PROXY_CANDIDATES" "$ns")"
+done
+for ns in https://cloudflare-dns.com/dns-query https://dns.google/dns-query; do
+	PROXY_CANDIDATES="$(append_unique "$PROXY_CANDIDATES" "$ns")"
+done
+
 BOOTSTRAP="$(select_best "$BOOTSTRAP_CANDIDATES" www.baidu.com 223.5.5.5)"
-DOMESTIC_NS="$(select_best "$DOMESTIC_CANDIDATES" www.baidu.com https://223.5.5.5/dns-query)"
-OVERSEAS_NS="$(servers_for_role 'nameserver' | head -n1)"
-case "$OVERSEAS_NS" in
-	''|udp://*|tcp://*|*223.5.5.5*|*119.29.29.29*|*doh.pub*|*alidns*|*114.114.114.114*)
-		OVERSEAS_NS='https://1.1.1.1/dns-query' ;;
-esac
-is_ipv4 "$OVERSEAS_NS" && OVERSEAS_NS='https://1.1.1.1/dns-query'
+NAMESERVER="$(select_best "$DOMESTIC_CANDIDATES" www.baidu.com https://dns.alidns.com/dns-query)"
+PROXY_NS="$(select_best "$PROXY_CANDIDATES" www.google.com https://cloudflare-dns.com/dns-query)"
+FALLBACK_NS="$PROXY_NS"
 
 APPLIED=false
 if [ "$APPLY" = "1" ]; then
@@ -232,9 +234,10 @@ printf '"success":true,'
 printf '"applied":%s,' "$APPLIED"
 printf '"restarted":false,'
 json_pair bootstrap "$BOOTSTRAP"; printf ','
-json_pair nameserver "$OVERSEAS_NS"; printf ','
+json_pair nameserver "$NAMESERVER"; printf ','
 json_pair direct_nameserver "$BOOTSTRAP"; printf ','
-json_pair proxy_nameserver "$DOMESTIC_NS"; printf ','
+json_pair proxy_nameserver "$PROXY_NS"; printf ','
+json_pair fallback "$FALLBACK_NS"; printf ','
 printf '"failed_count":%s,' "$FAILED_COUNT"
 printf '"elapsed_ms":%s' "$ELAPSED_MS"
 printf '}\n'
