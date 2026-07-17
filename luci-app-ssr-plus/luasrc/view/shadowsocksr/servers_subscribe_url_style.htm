@@ -157,10 +157,52 @@
 		font-size: 0.96rem !important;
 	}
 
+	.ssr-schedule-inline {
+		display: flex !important;
+		flex-direction: row !important;
+		align-items: center !important;
+		gap: 1rem !important;
+		width: 50% !important;
+		box-sizing: border-box !important;
+	}
+
+	.ssr-schedule-item {
+		flex: 1 !important;
+		display: flex !important;
+		flex-direction: column !important;
+		min-width: 0 !important;
+	}
+
+	.ssr-schedule-subtitle {
+		text-align: center !important;
+		margin-bottom: 0.35rem !important;
+		line-height: 1.2 !important;
+	}
+
+	select[name^="cbid.shadowsocksr."][name*="_time"] {
+		width: 100% !important;
+		min-width: 0 !important;
+		max-width: 100% !important;
+		height: 2.1rem !important;
+		padding: 0 0.35rem !important;
+		box-sizing: border-box !important;
+	}
+
 	@media (max-width: 900px) {
 		#cbi-shadowsocksr-server_subscribe_item > .table {
-			display: block;
-			overflow-x: auto;
+			display: block !important;
+			overflow-x: auto !important;
+			white-space: nowrap !important;
+		}
+
+		.ssr-schedule-inline {
+			width: 100% !important;
+			gap: 1rem !important;
+		}
+
+		.ssr-schedule-item select {
+			width: 100% !important;
+			min-width: 0 !important;
 		}
 	}
 </style>

@@ -531,27 +531,62 @@ end
 		#cbi-shadowsocksr-server_subscribe_item .cbi-section-table td.cbi-section-actions {
 			width: 100% !important;
 			max-width: 100% !important;
+			min-width: 0 !important;
 			display: block !important;
+			box-sizing: border-box !important;
+		}
+
+		/* 重置操作列内可能存在的 div 包装层，强行让其拉满 100% */
+		#cbi-shadowsocksr-server_subscribe_item .td.cbi-section-actions > div {
+			display: flex !important;
+			width: 100% !important;
+			max-width: 100% !important;
 			box-sizing: border-box !important;
 		}
 
 		/* 按钮区域 */
 		#cbi-shadowsocksr-server_subscribe_item .ssr-subscribe-actions {
 			display: flex !important;
-			gap: 8px;
-			width: 100%;
+			gap: 8px !important;
+			width: 100% !important;
+			max-width: 100% !important;
+			box-sizing: border-box !important;
 		}
 
 		/* 保存、删除、更新 三个按钮均分 */
-		#cbi-shadowsocksr-server_subscribe_item .ssr-subscribe-actions .btn {
-			flex: 1;
+		#cbi-shadowsocksr-server_subscribe_item .ssr-subscribe-actions .btn,
+		#cbi-shadowsocksr-server_subscribe_item .td.cbi-section-actions .btn {
+			flex: 1 1 0% !important;
+			width: 100% !important;
 			margin: 0 !important;
-			white-space: nowrap;
+			white-space: nowrap !important;
+			text-align: center !important;
 		}
 
 		/* 修复手机端卡片化布局中 placeholder 行的显示问题 */
 		#cbi-shadowsocksr-server_subscribe_item .placeholder td {
 			display: table-cell !important;
+		}
+
+		#ssr-subscribe-modal {
+			top: 8px;
+			left: 8px;
+			width: calc(100vw - 16px);
+			max-height: calc(100vh - 24px);
+			min-height: min(420px, calc(100vh - 24px));
+			padding: 10px 12px 12px;
+			transform: none;
+			border-radius: 8px;
+		}
+
+		#ssr-subscribe-modal-header {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+		
+		#ssr-subscribe-log {
+			max-height: calc(100vh - 260px);
+			min-height: 280px;
 		}
 	}
 </style>

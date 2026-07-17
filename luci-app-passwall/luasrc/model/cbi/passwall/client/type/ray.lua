@@ -808,6 +808,9 @@ o:value("UseIPv6v4", translate("Prefer IPv6"))
 o:value("UseIPv4", translate("IPv4 Only"))
 o:value("UseIPv6", translate("IPv6 Only"))
 
+o = s:option(Flag, _n("happy_eyeballs"), translate("Enable Happy Eyeballs"), translate("Attempts IPv4 and IPv6 simultaneously; automatically uses the faster connection."))
+o.default = 0
+
 local protocols = s.fields[_n("protocol")].keylist
 if #protocols > 0 then
 	for i, v in ipairs(protocols) do
@@ -819,7 +822,11 @@ if #protocols > 0 then
 			s.fields[_n("address")]:depends(depends_condition)
 			s.fields[_n("port")]:depends(depends_condition)
 			s.fields[_n("domain_resolver")]:depends(depends_condition)
-			s.fields[_n("domain_strategy")]:depends(depends_condition)
+			s.fields[_n("happy_eyeballs")]:depends(depends_condition)
+
+			local strategy_depends = api.clone(depends_condition)
+			strategy_depends[_n("happy_eyeballs")] = false
+			s.fields[_n("domain_strategy")]:depends(strategy_depends)
 
 			if v ~= "hysteria2" then
 				s.fields[_n("tcp_fast_open")]:depends({ [_n("protocol")] = v })
