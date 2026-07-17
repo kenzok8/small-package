@@ -9,6 +9,8 @@ local gfwlist_path = "/usr/share/passwall/rules/gfwlist"
 local chnlist_path = "/usr/share/passwall/rules/chnlist"
 local chnroute_path = "/usr/share/passwall/rules/chnroute"
 
+api.set_default_cbi()
+
 m = Map(appname)
 api.set_apply_on_parse(m)
 
@@ -335,4 +337,4 @@ m.on_before_save = function(self)
 	m:set("@global[0]", "flush_set", "1")
 end
 
-return m
+return api.return_map(m)

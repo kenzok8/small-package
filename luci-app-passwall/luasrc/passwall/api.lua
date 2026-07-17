@@ -1541,9 +1541,6 @@ function set_apply_on_parse(map)
 			if old then old(self) end
 			map:set("@global[0]", "timestamp", os.time())
 		end
-		-- 优化页面
-		local cbi = require "luci.cbi"
-		map:append(cbi.Template(appname .. "/cbi/optimize_cbi_ui"))
 	end
 end
 
