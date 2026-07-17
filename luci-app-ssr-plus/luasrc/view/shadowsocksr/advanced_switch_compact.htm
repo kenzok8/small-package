@@ -1,31 +1,59 @@
 <style type="text/css">
-.ssr-advanced-switch-inline {
-	display: flex;
-	gap: 2%;
-	align-items: flex-start;
-	flex-wrap: nowrap;
-}
+	.ssr-advanced-switch-inline {
+		display: flex !important;
+		flex-direction: row !important;
+		align-items: center !important;
+		gap: 1rem !important;
+		width: 50% !important;
+		box-sizing: border-box !important;
+		flex-wrap: nowrap !important;
+	}
 
-.ssr-advanced-switch-item {
-	width: 30%;
-	min-width: 0;
-}
+	.ssr-advanced-switch-item {
+		flex: 1 !important;
+		min-width: 0 !important;
+		display: flex !important;
+		flex-direction: column !important;
+	}
 
-.ssr-advanced-switch-item input {
-	width: 100%;
-	box-sizing: border-box;
-}
+	.ssr-advanced-switch-subtitle {
+		font-size: 12px;
+		color: #666;
+		margin-bottom: 4px;
+		line-height: 1.2;
+		text-align: center;
+	}
 
-.ssr-advanced-switch-subtitle {
-	font-size: 12px;
-	color: #666;
-	margin-bottom: 4px;
-	line-height: 1.2;
-}
+	.ssr-advanced-switch-hidden {
+		display: none !important;
+	}
 
-.ssr-advanced-switch-hidden {
-	display: none !important;
-}
+	.ssr-advanced-switch-item input[type="text"] {
+		width: 100% !important;
+		min-width: 0 !important;
+		max-width: 100% !important;
+		height: 2.1rem !important;
+		padding: 0 0.35rem !important;
+		box-sizing: border-box !important;
+		text-align: center !important;
+	}
+
+	@media (max-width: 900px) {
+		.ssr-advanced-switch-inline {
+			width: 100% !important;
+			gap: 0.7rem !important;
+			flex-wrap: wrap !important;
+		}
+
+		.ssr-advanced-switch-item {
+			flex: 1 1 calc(33.33% - 0.5rem) !important;
+			min-width: 80px !important;
+		}
+
+		.ssr-advanced-switch-item input[type="text"] {
+			height: 2.4rem !important;
+		}
+	}
 </style>
 
 <script type="text/javascript">
