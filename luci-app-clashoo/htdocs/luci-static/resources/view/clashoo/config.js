@@ -180,7 +180,7 @@ function uploadConfigContent(name, content, type) {
 
   function sendNext() {
     var chunk = (content || '').slice(index * chunkSize, (index + 1) * chunkSize);
-    return L.resolveDefault(callUploadConfigChunk(name, chunk, type || '2', index, total), {}).then(function (r) {
+    return L.resolveDefault(callUploadConfigChunk(name, chunk, type || '2', String(index), String(total)), {}).then(function (r) {
       if (!r || !r.success)
         throw new Error((r && (r.message || r.error)) || _("Upload failed"));
       index++;
