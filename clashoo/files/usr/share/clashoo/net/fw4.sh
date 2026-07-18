@@ -272,6 +272,9 @@ render_port_match() {
 # devices still go through dnsmasq -> core. Gated on UCI IPv4/IPv6 toggles.
 # return 0: no output when both off, avoid set -e false-positive.
 render_dns_hijack() {
+	local access_control="$1"
+	[ "$access_control" = "1" ] && printf '%s\n' 'ip saddr != @clash_proxy_lan return'
+	[ "$access_control" = "2" ] && printf '%s\n' 'ip saddr @clash_reject_lan return'
 	bool_enabled "$(config_ipv4_dns_hijack)" && \
 		printf '%s\n' 'meta nfproto ipv4 meta l4proto { tcp, udp } th dport 53 counter redirect to :53'
 	bool_enabled "$(config_ipv6_dns_hijack)" && \
@@ -453,7 +456,7 @@ generate_rules() {
 
 # DNS hijack rules go atop DSTNAT_RULES: must run for all TCP modes
 		# (redirect/tproxy/tun) and BEFORE proxy redirect rules so port 53 is not stolen.
-	render_dns_hijack > "$DSTNAT_RULES"
+	render_dns_hijack "$access_control" > "$DSTNAT_RULES"
 
 	
 # TCP rules: redirect mode appends proxy redirect; tproxy/tun skip this chain

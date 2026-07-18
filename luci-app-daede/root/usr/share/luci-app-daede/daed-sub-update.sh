@@ -115,4 +115,16 @@ while IFS= read -r id || [ -n "$id" ]; do
 done < "$TMPDIR/ids"
 
 log "finished daed subscription update: ok=$ok fail=$fail total=$count"
-[ "$fail" -eq 0 ]
+
+if [ "$fail" -ne 0 ]; then
+	exit 1
+fi
+
+if [ "$count" -gt 0 ] && [ "$ok" -gt 0 ] && /bin/pidof daed >/dev/null 2>&1; then
+	log "restarting daed to apply updated subscriptions"
+	if ! /etc/init.d/daed restart >>"$LOG" 2>&1; then
+		fail 8 "daed restart failed after subscription update"
+	fi
+fi
+
+exit 0

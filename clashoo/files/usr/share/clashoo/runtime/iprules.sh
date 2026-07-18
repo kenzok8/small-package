@@ -18,7 +18,6 @@ trap 'rm -f "$CUSTOM_RULE_FILE" "$RULE" "$CLASH" "$CLASH_CONFIG"' EXIT
 PRIMARY_GROUP="$(uci -q get clashoo.config.primary_proxy_group)"
 [ -n "$PRIMARY_GROUP" ] || PRIMARY_GROUP="GLOBAL"
 
-= # ===== append_rules: move subscription rules to end =====
 append=$(uci get clashoo.config.append_rules 2>/dev/null)
 if [ "${append:-0}" -eq 1 ];then
 

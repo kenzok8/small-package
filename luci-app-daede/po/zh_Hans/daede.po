@@ -628,6 +628,9 @@ msgstr "更新失败：%s"
 msgid "Subscriptions updated (dae reloaded)"
 msgstr "订阅已更新（dae 已重载）"
 
+msgid "Subscriptions updated (daed restarted)"
+msgstr "订阅已更新，daed 已重启"
+
 msgid "Section"
 msgstr "区块"
 

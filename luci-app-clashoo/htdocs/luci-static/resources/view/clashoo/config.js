@@ -1411,6 +1411,7 @@ return view.extend({
     s = m.section(form.NamedSection, 'config', 'clashoo', _("Advanced DNS"));
     s.addremove = false;
     o = s.option(form.Flag,        'dnsforwader',       _("Force DNS Forwarding"));
+    o.depends('enable_dns', '1');
     o = s.option(form.ListValue,   'fake_ip_filter_mode', _("Fake-IP Filter Mode"));
     o.value('blacklist', _("Blocklist (listed items use real IP, default)"));
     o.value('whitelist', _("Allowlist (only listed items use fake-IP)"));

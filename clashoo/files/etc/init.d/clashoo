@@ -497,7 +497,7 @@ runtime_run_health_check() {
 	explicit_state="na"
 	transparent_state="na"
 	require_fakeip="0"
-	[ "$(uci -q get clashoo.config.enhanced_mode 2>/dev/null)" = "fake-ip" ] && require_fakeip="1"
+	[ "$(uci -q get clashoo.config.enable_dns 2>/dev/null)" != "0" ] && [ "$(uci -q get clashoo.config.enhanced_mode 2>/dev/null)" = "fake-ip" ] && require_fakeip="1"
 
 	if command_exists nslookup; then
 		dns_state="fail"
@@ -1283,6 +1283,10 @@ yml_dns_change(){
 	fi
 	dnsforwader=$(uci get clashoo.config.dnsforwader 2>/dev/null)
 	dnscache=$(uci get clashoo.config.dnscache 2>/dev/null)
+	if [ "$(uci -q get clashoo.config.enable_dns 2>/dev/null)" = "0" ]; then
+		revert_dns >/dev/null 2>&1
+		return 0
+	fi
 	backup_dnsmasq_state
 	if [ "${dns_port:-0}" -eq 53 ]; then
 			sed -i "s@^\([[:space:]]*listen:[[:space:]]*\)0\.0\.0\.0:53@\10.0.0.0:${listen_port}@g" "$CONFIG_YAML"
