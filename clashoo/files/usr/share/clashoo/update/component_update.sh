@@ -7,6 +7,11 @@ TMP_DIR="/tmp/clashoo-component-update"
 FEED_BASE_URL="https://down.dllkids.xyz/openwrt-feed/clashoo"
 GITHUB_API_URL="https://api.github.com/repos/kenzok8/openwrt-clashoo/releases/latest"
 GITHUB_PROXY_PREFIX="${GITHUB_PROXY_PREFIX:-https://ghfast.top/}"
+CONNECT_TIMEOUT="${CONNECT_TIMEOUT:-8}"
+REQUEST_TIMEOUT="${REQUEST_TIMEOUT:-20}"
+DOWNLOAD_TIMEOUT="${DOWNLOAD_TIMEOUT:-90}"
+LOW_SPEED_TIME="${LOW_SPEED_TIME:-30}"
+LOW_SPEED_LIMIT="${LOW_SPEED_LIMIT:-1024}"
 
 log() {
   mkdir -p "$(dirname "$LOG_FILE")" "$(dirname "$STATE_FILE")" >/dev/null 2>&1
@@ -41,12 +46,12 @@ fetch_text() {
   url="$1"
   proxy="$(detect_proxy)"
   if command -v curl >/dev/null 2>&1; then
-    curl -fsSL ${proxy:+--proxy "$proxy"} "$url"
+    curl -fsSL --connect-timeout "$CONNECT_TIMEOUT" --max-time "$REQUEST_TIMEOUT" ${proxy:+--proxy "$proxy"} "$url"
     return $?
   fi
   if command -v wget >/dev/null 2>&1; then
-    [ -n "$proxy" ] && { http_proxy="$proxy" https_proxy="$proxy" wget -qO- "$url"; return $?; }
-    wget -qO- "$url"
+    [ -n "$proxy" ] && { http_proxy="$proxy" https_proxy="$proxy" wget -qO- --timeout="$REQUEST_TIMEOUT" --tries=1 "$url"; return $?; }
+    wget -qO- --timeout="$REQUEST_TIMEOUT" --tries=1 "$url"
     return $?
   fi
   return 127
@@ -57,14 +62,14 @@ download_file() {
   out="$2"
   proxy="$(detect_proxy)"
   if command -v curl >/dev/null 2>&1; then
-    curl -fL ${proxy:+--proxy "$proxy"} "$url" -o "$out"
+    curl -fL --connect-timeout "$CONNECT_TIMEOUT" --max-time "$DOWNLOAD_TIMEOUT" --speed-time "$LOW_SPEED_TIME" --speed-limit "$LOW_SPEED_LIMIT" ${proxy:+--proxy "$proxy"} "$url" -o "$out"
     return $?
   fi
   if [ -n "$proxy" ]; then
-    http_proxy="$proxy" https_proxy="$proxy" wget -qO "$out" "$url"
+    http_proxy="$proxy" https_proxy="$proxy" wget -qO "$out" --timeout="$REQUEST_TIMEOUT" --tries=1 "$url"
     return $?
   fi
-  wget -qO "$out" "$url"
+  wget -qO "$out" --timeout="$REQUEST_TIMEOUT" --tries=1 "$url"
 }
 
 download_url() {
@@ -113,6 +118,17 @@ detect_manager() {
     return
   fi
   echo unsupported
+}
+
+installed_package_version() {
+  pkg="$1"
+  if command -v opkg >/dev/null 2>&1; then
+    opkg status "$pkg" 2>/dev/null | awk -F': ' '/^Version:/{print $2; exit}'
+    return
+  fi
+  if command -v apk >/dev/null 2>&1; then
+    apk list -I "$pkg" 2>/dev/null | awk '{print $1; exit}' | sed -n "s/^${pkg}-//p"
+  fi
 }
 
 detect_arch() {
@@ -188,6 +204,9 @@ load_manifest_urls() {
   i18n_file="$(find_manifest_value "i18n" "$manifest_text")"
   [ -n "$core_file" ] || return 1
   [ -n "$luci_file" ] || return 1
+  case "$core_file" in *."$EXT") ;; *) return 1 ;; esac
+  case "$luci_file" in *."$EXT") ;; *) return 1 ;; esac
+  case "$i18n_file" in ""|*."$EXT") ;; *) return 1 ;; esac
 
   CORE_URL="${FEED_BASE_URL}/${sdk}/${arch}/${core_file}"
   LUCI_URL="${FEED_BASE_URL}/${sdk}/${arch}/${luci_file}"
@@ -225,12 +244,16 @@ load_github_urls() {
 package_version_from_url() {
   file="${1##*/}"
   case "$file" in
-    clashoo_*.ipk) printf '%s\n' "$file" | sed -n 's/^clashoo_\(.*\)_.*\.ipk$/\1/p' ;;
+    clashoo_*_"$ARCH".ipk)
+      v="${file#clashoo_}"
+      printf '%s\n' "${v%_${ARCH}.ipk}"
+      ;;
+    clashoo_*.ipk) printf '%s\n' "$file" | sed -n 's/^clashoo_\(.*\)_[^_][^_]*\.ipk$/\1/p' ;;
     luci-app-clashoo_*.ipk) printf '%s\n' "$file" | sed -n 's/^luci-app-clashoo_\(.*\)_all\.ipk$/\1/p' ;;
     luci-i18n-clashoo-zh-cn_*.ipk) printf '%s\n' "$file" | sed -n 's/^luci-i18n-clashoo-zh-cn_\(.*\)_all\.ipk$/\1/p' ;;
-    clashoo-*.apk) printf '%s\n' "$file" | sed -n 's/^clashoo-\(.*-r[0-9][0-9]*\)-.*\.apk$/\1/p' ;;
-    luci-app-clashoo-*.apk) printf '%s\n' "$file" | sed -n 's/^luci-app-clashoo-\(.*-r[0-9][0-9]*\)-.*\.apk$/\1/p' ;;
-    luci-i18n-clashoo-zh-cn-*.apk) printf '%s\n' "$file" | sed -n 's/^luci-i18n-clashoo-zh-cn-\(.*-r[0-9][0-9]*\)-.*\.apk$/\1/p' ;;
+    clashoo-*.apk) printf '%s\n' "$file" | sed -n -e 's/^clashoo-\(.*-r[0-9][0-9]*\)-.*\.apk$/\1/p' -e 's/^clashoo-\(.*-r[0-9][0-9]*\)\.apk$/\1/p' | head -n 1 ;;
+    luci-app-clashoo-*.apk) printf '%s\n' "$file" | sed -n -e 's/^luci-app-clashoo-\(.*-r[0-9][0-9]*\)-.*\.apk$/\1/p' -e 's/^luci-app-clashoo-\(.*-r[0-9][0-9]*\)\.apk$/\1/p' | head -n 1 ;;
+    luci-i18n-clashoo-zh-cn-*.apk) printf '%s\n' "$file" | sed -n -e 's/^luci-i18n-clashoo-zh-cn-\(.*-r[0-9][0-9]*\)-.*\.apk$/\1/p' -e 's/^luci-i18n-clashoo-zh-cn-\(.*-r[0-9][0-9]*\)\.apk$/\1/p' | head -n 1 ;;
     *) printf '%s\n' "$file" ;;
   esac
 }
@@ -317,6 +340,22 @@ run_pkg_update() {
   fi
   log "更新来源：${SOURCE_LABEL}"
 
+  if [ "$which" = "clashoo" ]; then
+    core_ver="$(package_version_from_url "$CORE_URL")"
+    log "目标版本：Clashoo 核心 ${core_ver}"
+    cur_ver="$(installed_package_version clashoo)"
+    if [ -n "$core_ver" ] && [ "$cur_ver" = "$core_ver" ]; then
+      finish 0 "Clashoo 核心已是最新版本"
+    fi
+  else
+    luci_ver="$(package_version_from_url "$LUCI_URL")"
+    log "目标版本：客户端 ${luci_ver}"
+    cur_ver="$(installed_package_version luci-app-clashoo)"
+    if [ -n "$luci_ver" ] && [ "$cur_ver" = "$luci_ver" ]; then
+      finish 0 "客户端已是最新版本"
+    fi
+  fi
+
   rm -rf "$TMP_DIR"
   mkdir -p "$TMP_DIR" || finish 1 "创建临时目录失败"
 
@@ -327,11 +366,9 @@ run_pkg_update() {
   # apk 默认会对 world 做一致性求解，若系统上别的包（如 daed 缺 kmod-sched-bpf）
   # 处于 broken 状态，会让 apk add 整个失败，连本次升级都装不上。这里通过
   # --force-broken-world 让 apk 忽略不相关的 world 失败，只完成本次升级。
-  APK_FLAGS="--allow-untrusted --force-broken-world"
+  APK_FLAGS="--allow-untrusted --force-broken-world --force-missing-repositories --no-network --timeout 8"
 
   if [ "$which" = "clashoo" ]; then
-    core_ver="$(package_version_from_url "$CORE_URL")"
-    log "目标版本：Clashoo 核心 ${core_ver}"
     log "正在下载 Clashoo 核心"
     download_file "$(download_url "$CORE_URL")" "$TMP_DIR/core.${EXT}" || finish 1 "下载 clashoo 失败"
     ensure_root_space 98304
@@ -342,8 +379,6 @@ run_pkg_update() {
       apk add $APK_FLAGS "$TMP_DIR/core.${EXT}" >"$TMP_DIR/install.log" 2>&1; rc=$?
     fi
   else
-    luci_ver="$(package_version_from_url "$LUCI_URL")"
-    log "目标版本：客户端 ${luci_ver}"
     log "正在下载客户端（LuCI + 语言包）"
     download_file "$(download_url "$LUCI_URL")" "$TMP_DIR/luci.${EXT}" || finish 1 "下载 luci-app-clashoo 失败"
     if [ -n "$I18N_URL" ]; then

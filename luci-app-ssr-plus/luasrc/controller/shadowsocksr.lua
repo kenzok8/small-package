@@ -24,9 +24,10 @@ local SUPPORTED_COMPONENTS = {
 	naiveproxy = true
 }
 local SUPPORTED_GEO_COMPONENTS = {
-	country_mmdb = true,
-	geosite = true,
-	v2ray_geo = true
+	{ name = "country_mmdb", require = nil },
+	{ name = "geosite", require = "/etc/openclash" },
+	{ name = "v2ray_geoip", require = nil },
+	{ name = "v2ray_geosite", require = nil }
 }
 
 local function trim(value)
@@ -576,7 +577,15 @@ local function read_component_state(component, action)
 end
 
 local function read_geo_state(component, action)
-	if not SUPPORTED_GEO_COMPONENTS[component] then
+	local is_supported = false
+	for _, item in ipairs(SUPPORTED_GEO_COMPONENTS) do
+		if item.name == component then
+			is_supported = true
+			break
+		end
+	end
+
+	if not is_supported then
 		return nil, 400, "unsupported_component"
 	end
 
@@ -649,6 +658,7 @@ function index()
 	entry({"admin", "services", "shadowsocksr", "component_set_mirror"}, call("component_set_mirror")).leaf = true
 	entry({"admin", "services", "shadowsocksr", "component_status"}, call("component_status")).leaf = true
 	entry({"admin", "services", "shadowsocksr", "component_upgrade"}, call("component_upgrade")).leaf = true
+	entry({"admin", "services", "shadowsocksr", "geo_component"}, call("geo_component")).leaf = true
 	entry({"admin", "services", "shadowsocksr", "geo_local_status"}, call("geo_local_status")).leaf = true
 	entry({"admin", "services", "shadowsocksr", "geo_status"}, call("geo_status")).leaf = true
 	entry({"admin", "services", "shadowsocksr", "geo_upgrade"}, call("geo_upgrade")).leaf = true
@@ -1016,6 +1026,20 @@ function geo_status()
 	write_geo_json(data)
 end
 
+function geo_component()
+	local component = {}
+	for _, item in ipairs(SUPPORTED_GEO_COMPONENTS) do
+		local available = true
+		if item.require then
+			available = nixio.fs.access(item.require)
+		end
+		if available then
+			table.insert(component, item.name)
+		end
+	end
+	write_geo_json({ component = component })
+end
+
 function geo_local_status()
 	local component = luci.http.formvalue("component")
 	local data, status, err = read_geo_state(component, "local_info")
@@ -1035,6 +1059,19 @@ function geo_upgrade()
 		write_geo_json({component = component, error = err or "bad_request", success = "0"})
 		return
 	end
+
+	local info = read_geo_state(component, "info")
+	if info then
+		for key, value in pairs(info) do
+			if data[key] == nil or data[key] == "" then
+				data[key] = value
+			end
+		end
+		if data.success == "1" then
+			data.can_upgrade = info.can_upgrade
+		end
+	end
+	
 	write_geo_json(data)
 end
 
@@ -1287,22 +1324,30 @@ function clash_client_rule_clear()
 end
 
 function fetch_certsha256()
-	local function fetch_cert_sha256(host, port, sni, timeout)
+	local function fetch_cert_sha256(host, port, sni, timeout, http3)
 		if not host then return "" end
 		port = tonumber(port) or 443
 		sni = sni or host
 		timeout = tonumber(timeout) or 5
-        
-		local cmd = string.format(
-			"timeout %d openssl s_client -connect %s:%d -servername %s -showcerts </dev/null 2>/dev/null " ..
-			"| awk 'BEGIN{c=0}/BEGIN CERT/{c++} c==1{print} /END CERT/{if(c==1)exit}' " ..
-			"| openssl x509 -outform der 2>/dev/null " ..
-			"| sha256sum 2>/dev/null",
-			timeout, host, port, sni
-		)
-        
+		local cmd
+		if http3 then
+			cmd = string.format(
+				"timeout %d curl --http3 -k -w '%%{certs}' -o /dev/null https://%s:%d 2>/dev/null " ..
+				"| awk 'BEGIN{c=0}/BEGIN CERT/{c++} c==1{print} /END CERT/{if(c==1)exit}' " ..
+				"| openssl x509 -outform der 2>/dev/null " ..
+				"| sha256sum 2>/dev/null",
+				timeout, host, port
+			)
+		else
+			cmd = string.format(
+				"timeout %d openssl s_client -connect %s:%d -servername %s -showcerts </dev/null 2>/dev/null " ..
+				"| awk 'BEGIN{c=0}/BEGIN CERT/{c++} c==1{print} /END CERT/{if(c==1)exit}' " ..
+				"| openssl x509 -outform der 2>/dev/null " ..
+				"| sha256sum 2>/dev/null",
+				timeout, host, port, sni
+			)
+		end
 		local out = trim(luci.sys.exec(cmd))
-
 		local fp = out:match("^([0-9a-fA-F]+)")
 		if not fp or fp:lower():match("^e3b0c44298fc1c149afbf4c8996fb924") then
 			return ""
@@ -1316,12 +1361,22 @@ function fetch_certsha256()
 	local port = tonumber(port_raw) or 0
 	local sni = (id ~= "") and uci:get("shadowsocksr", sid, "tls_host") or ""
 	sni = (sni and sni ~= "") and sni or address
+	local protocol = uci:get("shadowsocksr", id, "v2ray_protocol") or ""
+	local h3, timeout = false, 10
+	if protocol == "hysteria2" then
+		h3 = true
+		timeout = 60
+		if port == 0 then
+			local hop = uci:get("shadowsocksr", id, "port_range") or "0"
+			port = tonumber(hop:match("^%s*(%d+)"))
+		end
+	end
 	if address == "" or port == 0 then
 		luci.http.prepare_content("application/json")
 		luci.http.write_json({ code = 0, msg = "Address or Port is invalid" })
 		return
 	end
-	local data = fetch_cert_sha256(address, port, sni, 5)
+	local data = fetch_cert_sha256(address, port, sni, timeout, h3)
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(data ~= "" and { code = 1, data = data } or { code = 0 })
 end

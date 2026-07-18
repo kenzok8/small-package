@@ -889,21 +889,21 @@ if (geoip_src != '1') {
 let cdp = trim(shell_read('. /usr/share/clashoo/update/proxy_lib.sh; clashoo_detect_proxy 2>/dev/null') || '');
 let px = cdp ? ('--proxy ' + shell_quote(cdp) + ' ') : '';
 let cmd = '';
-cmd += "curl -fsS -o /dev/null -w '%{redirect_url}' -m 8 " + shell_quote(GH + 'MetaCubeX/mihomo/releases/latest')  + ' >' + shell_quote(dir + '/ms') + ' 2>/dev/null &\n';
-cmd += "curl -fsS -o /dev/null -w '%{redirect_url}' -m 8 " + shell_quote(GH + 'SagerNet/sing-box/releases/latest') + ' >' + shell_quote(dir + '/ss') + ' 2>/dev/null &\n';
-cmd += 'curl -fsSL -m 20 ' + shell_quote(GH + 'MetaCubeX/mihomo/releases/expanded_assets/Prerelease-Alpha') + ' >' + shell_quote(dir + '/ma') + ' 2>/dev/null &\n';
-cmd += 'curl -fsSL -m 20 ' + shell_quote(GH + 'vernesong/mihomo/releases/expanded_assets/Prerelease-Alpha') + ' >' + shell_quote(dir + '/sm') + ' 2>/dev/null &\n';
-cmd += 'curl -fsSL -m 12 ' + shell_quote(GH + 'SagerNet/sing-box/releases.atom') + ' >' + shell_quote(dir + '/sa') + ' 2>/dev/null &\n';
+cmd += "curl -fsS --connect-timeout 4 -o /dev/null -w '%{redirect_url}' -m 8 " + shell_quote(GH + 'MetaCubeX/mihomo/releases/latest')  + ' >' + shell_quote(dir + '/ms') + ' 2>/dev/null &\n';
+cmd += "curl -fsS --connect-timeout 4 -o /dev/null -w '%{redirect_url}' -m 8 " + shell_quote(GH + 'SagerNet/sing-box/releases/latest') + ' >' + shell_quote(dir + '/ss') + ' 2>/dev/null &\n';
+cmd += 'curl -fsSL --connect-timeout 4 -m 8 ' + shell_quote(GH + 'MetaCubeX/mihomo/releases/expanded_assets/Prerelease-Alpha') + ' >' + shell_quote(dir + '/ma') + ' 2>/dev/null &\n';
+cmd += 'curl -fsSL --connect-timeout 4 -m 8 ' + shell_quote(GH + 'vernesong/mihomo/releases/expanded_assets/Prerelease-Alpha') + ' >' + shell_quote(dir + '/sm') + ' 2>/dev/null &\n';
+cmd += 'curl -fsSL --connect-timeout 4 -m 8 ' + shell_quote(GH + 'SagerNet/sing-box/releases.atom') + ' >' + shell_quote(dir + '/sa') + ' 2>/dev/null &\n';
 if (pkg_arch)
 	for (let sdk in sdks)
-		cmd += 'curl -fsSL -m 8 ' + shell_quote(FEED_BASE + '/' + sdk + '/' + pkg_arch + '/' + FEED_MANIFEST_NAME) + ' >' + shell_quote(dir + '/b_' + sdk) + ' 2>/dev/null &\n';
+		cmd += 'curl -fsSL --connect-timeout 4 -m 8 ' + shell_quote(FEED_BASE + '/' + sdk + '/' + pkg_arch + '/' + FEED_MANIFEST_NAME) + ' >' + shell_quote(dir + '/b_' + sdk) + ' 2>/dev/null &\n';
 // GitHub API 兜底，避免 expanded_assets 在部分网络下超时
-cmd += 'curl -fsSL -m 12 ' + shell_quote('https://api.github.com/repos/' + GH_CLASHOO_REPO + '/releases/latest') + ' >' + shell_quote(dir + '/gc') + ' 2>/dev/null &\n';
+cmd += 'curl -fsSL --connect-timeout 4 -m 8 ' + shell_quote('https://api.github.com/repos/' + GH_CLASHOO_REPO + '/releases/latest') + ' >' + shell_quote(dir + '/gc') + ' 2>/dev/null &\n';
 // lgbm —— remote model sha256 from the release assets page (each asset lists its digest)
-cmd += 'curl -fsSL -m 12 ' + shell_quote(GH + 'vernesong/mihomo/releases/expanded_assets/LightGBM-Model') + ' >' + shell_quote(dir + '/lg') + ' 2>/dev/null &\n';
+cmd += 'curl -fsSL --connect-timeout 4 -m 8 ' + shell_quote(GH + 'vernesong/mihomo/releases/expanded_assets/LightGBM-Model') + ' >' + shell_quote(dir + '/lg') + ' 2>/dev/null &\n';
 // geoip —— 源仓库 releases/latest 的 302 tag（多为日期串）
 if (geoip_repo)
-	cmd += "curl -fsS -o /dev/null -w '%{redirect_url}' -m 8 " + shell_quote(GH + geoip_repo + '/releases/latest') + ' >' + shell_quote(dir + '/gi') + ' 2>/dev/null &\n';
+	cmd += "curl -fsS --connect-timeout 4 -o /dev/null -w '%{redirect_url}' -m 8 " + shell_quote(GH + geoip_repo + '/releases/latest') + ' >' + shell_quote(dir + '/gi') + ' 2>/dev/null &\n';
 // inject the local-core proxy into every probe above (no-op when px is empty)
 if (px) cmd = replace(cmd, 'curl ', 'curl ' + px);
 cmd += 'wait\n';

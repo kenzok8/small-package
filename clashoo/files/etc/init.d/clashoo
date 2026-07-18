@@ -524,7 +524,7 @@ runtime_run_health_check() {
 	[ -z "$mixed_port" ] && mixed_port="7890"
 	if command_exists curl; then
 			explicit_state="fail"
-			for _url in https://www.google.com/generate_204 https://www.gstatic.com/generate_204; do
+			for _url in https://www.google.com/generate_204 https://www.gstatic.com/generate_204 https://www.youtube.com/generate_204; do
 				for _try in 1 2; do
 					if curl -4 --proxy "http://127.0.0.1:${mixed_port}" -I --max-time 6 -sS "$_url" 2>/dev/null | curl_has_final_http_response; then
 						explicit_state="ok"

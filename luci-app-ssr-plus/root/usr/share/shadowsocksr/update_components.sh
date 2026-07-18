@@ -9,15 +9,20 @@ HELLOWORLD_RELEASE_API="https://api.github.com/repos/fw876/helloworld/releases/l
 XRAY_BINARY="/usr/bin/xray"
 MIHOMO_BINARY="/usr/bin/mihomo"
 NAIVEPROXY_BINARY="/usr/bin/naive"
-COUNTRY_MMDB_URL="https://testingcf.jsdelivr.net/gh/alecthw/mmdb_china_ip_list@release/lite/Country.mmdb"
-GEOSITE_URL="https://testingcf.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geosite.dat"
-GEOIP_DAT_URL="https://testingcf.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/geoip.dat"
+
+# Geo 数据文件 URL
+GEOIP_REPO="Loyalsoldier/geoip"
+GEOSITE_REPO="Loyalsoldier/v2ray-rules-dat"
+COUNTRY_MMDB_REPO="alecthw/mmdb_china_ip_list"
+
+# Geo 数据文件路径
 COUNTRY_MMDB_FILE="/usr/share/shadowsocksr/Country.mmdb"
 GEOIP_DAT_FILE="/usr/share/v2ray/geoip.dat"
 GEOSITE_DAT_FILE="/usr/share/v2ray/geosite.dat"
 OPENCLASH_GEOSITE_FILE="/etc/openclash/GeoSite.dat"
-OPENCLASH_GEOIP_DAT_FILE="/etc/openclash/geoip.dat"
-OPENCLASH_GEOSITE_DAT_FILE="/etc/openclash/geosite.dat"
+
+# geo 版本存储
+GEO_VERSION_FILE="/tmp/ssrplus-geo/geo_versions.json"
 
 log_kv() {
 	key="$1"
@@ -28,44 +33,10 @@ log_kv() {
 file_mtime() {
 	local path="$1"
 	[ -f "$path" ] || {
-		printf '%s' 'File Not Exist'
+		printf '%s' ''
 		return 0
 	}
-	date -r "$path" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || printf '%s' 'Unknown'
-}
-
-file_size() {
-	local path="$1"
-	[ -f "$path" ] || {
-		printf '%s' '0'
-		return 0
-	}
-	wc -c < "$path" 2>/dev/null | tr -d '[:space:]'
-}
-
-resolve_existing_geo_file() {
-	local primary="$1"
-	local fallback="$2"
-
-	if [ -f "$primary" ]; then
-		printf '%s' "$primary"
-	elif [ -n "$fallback" ] && [ -f "$fallback" ]; then
-		printf '%s' "$fallback"
-	else
-		printf '%s' "$primary"
-	fi
-}
-
-resolve_geosite_file() {
-	resolve_existing_geo_file "$GEOSITE_DAT_FILE" "$OPENCLASH_GEOSITE_FILE"
-}
-
-resolve_v2ray_geoip_file() {
-	resolve_existing_geo_file "$GEOIP_DAT_FILE" "$OPENCLASH_GEOIP_DAT_FILE"
-}
-
-resolve_v2ray_geosite_file() {
-	resolve_existing_geo_file "$GEOSITE_DAT_FILE" "$OPENCLASH_GEOSITE_DAT_FILE"
+	date -r "$path" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || printf '%s' ''
 }
 
 trim_version() {
@@ -105,6 +76,15 @@ mirror_wrap_url() {
 					;;
 				https://github.com/MetaCubeX/mihomo/releases/download/*)
 					printf '%s' "$raw_url" | sed 's#https://github.com/MetaCubeX/mihomo/releases/download/\(v[^/]*\)/\(.*\)#https://fastly.jsdelivr.net/gh/MetaCubeX/mihomo@\1/\2#'
+					;;
+				https://github.com/Loyalsoldier/geoip/releases/download/*)
+					printf '%s' "$raw_url" | sed 's#https://github.com/Loyalsoldier/geoip/releases/download/\([^/]*\)/\(.*\)#https://testingcf.jsdelivr.net/gh/Loyalsoldier/geoip@release/\2#'
+					;;
+				https://github.com/Loyalsoldier/v2ray-rules-dat/releases/download/*)
+					printf '%s' "$raw_url" | sed 's#https://github.com/Loyalsoldier/v2ray-rules-dat/releases/download/\([^/]*\)/\(.*\)#https://testingcf.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/\2#'
+					;;
+				https://github.com/alecthw/mmdb_china_ip_list/releases/download/*)
+					printf '%s' "$raw_url" | sed 's#https://github.com/alecthw/mmdb_china_ip_list/releases/download/\([^/]*\)/\(.*\)#https://testingcf.jsdelivr.net/gh/alecthw/mmdb_china_ip_list@release/lite/\2#' | sed 's#-lite##'
 					;;
 				*)
 					printf '%s' "$raw_url"
@@ -427,204 +407,672 @@ download_file() {
 	"$wget_cmd" --no-check-certificate --timeout=20 --tries=3 -O "$output" "$url" >/dev/null 2>&1
 }
 
-geo_validate_download() {
-	local new_file="$1"
-	local current_file="$2"
-	local new_size current_size
-
-	new_size="$(file_size "$new_file")"
-	[ "${new_size:-0}" -gt 0 ] 2>/dev/null || return 1
-
-	if [ -f "$current_file" ]; then
-		current_size="$(file_size "$current_file")"
-		[ "${new_size:-0}" -ge "${current_size:-0}" ] 2>/dev/null || return 1
-	fi
-
-	return 0
-}
-
-geo_safe_replace() {
-	local new_file="$1"
-	local current_file="$2"
-	local backup_file="$3"
-
-	mkdir -p "$(dirname "$current_file")" || return 1
-	[ -f "$current_file" ] && cp -fp "$current_file" "$backup_file" 2>/dev/null || true
-
-	if ! cp -f "$new_file" "$current_file"; then
-		[ -f "$backup_file" ] && cp -f "$backup_file" "$current_file" 2>/dev/null || true
-		return 1
-	fi
-
-	return 0
-}
-
-geo_local_info() {
+store_geo_version() {
 	local geo="$1"
-	local file1=""
-	local file2=""
+	local version="$2"
+	
+	mkdir -p "$(dirname "$GEO_VERSION_FILE")"
+	
+	if [ -f "$GEO_VERSION_FILE" ]; then
+		if grep -q "\"$geo\":" "$GEO_VERSION_FILE" 2>/dev/null; then
+			sed -i "s/\"$geo\":\"[^\"]*\"/\"$geo\":\"$version\"/" "$GEO_VERSION_FILE"
+		else
+			sed -i "s/}$/,\"$geo\":\"$version\"}/" "$GEO_VERSION_FILE"
+		fi
+	else
+		echo "{\"$geo\":\"$version\"}" > "$GEO_VERSION_FILE"
+	fi
+}
 
-	case "$geo" in
-		country_mmdb)
-			file1="$COUNTRY_MMDB_FILE"
-			;;
-		geosite)
-			file1="$(resolve_geosite_file)"
-			;;
-		v2ray_geo)
-			file1="$(resolve_v2ray_geoip_file)"
-			file2="$(resolve_v2ray_geosite_file)"
-			;;
-		*)
-			log_kv error 'unsupported_component'
-			return 1
-			;;
-	esac
+get_stored_geo_version() {
+	local geo="$1"
+	local version=""
+	
+	if [ -f "$GEO_VERSION_FILE" ]; then
+		version="$(cat "$GEO_VERSION_FILE" 2>/dev/null | grep -o "\"$geo\":\"[^\"]*\"" | cut -d'"' -f4)"
+	fi
+	printf '%s' "$version"
+}
 
-	log_kv component "$geo"
-	log_kv installed "$([ -f "$file1" ] && echo 1 || echo 0)"
-	log_kv current_version "$(file_mtime "$file1")"
-	log_kv current_version_extra "$([ -n "$file2" ] && file_mtime "$file2" || echo '')"
+get_geo_current_version() {
+	local geo="$1"
+	local file_path="$2"
+	local stored_version=""
+	local file_version=""
+	
+	stored_version="$(get_stored_geo_version "$geo")"
+	if [ -n "$stored_version" ]; then
+		printf '%s' "$stored_version"
+		return 0
+	fi
+	
+	if [ -f "$file_path" ]; then
+		file_version="$(file_mtime "$file_path")"
+		if [ -n "$file_version" ]; then
+			store_geo_version "$geo" "$file_version"
+		fi
+		printf '%s' "$file_version"
+		return 0
+	fi
+	
+	return 1
+}
+
+get_geo_latest_tag() {
+	local repo="$1"
+	local location tag
+
+	location="$(effective_url "https://github.com/$repo/releases/latest" 2>/dev/null)" || return 1
+	tag="$(printf '%s' "$location" | sed -n 's#.*/tag/\([0-9][^/]*\)$#\1#p' | sed -n '1p')"
+	[ -n "$tag" ] || return 1
+	printf '%s' "$tag"
+}
+
+get_geo_latest_info() {
+	local repo="$1"
+	local asset="$2"
+	local tag version url
+	
+	tag="$(get_geo_latest_tag "$repo")" || return 3
+	version="$(trim_version "$tag")"
+	url="$(mirror_wrap_url "https://github.com/$repo/releases/download/$tag/$asset")"
+	
+	[ -n "$tag" ] && [ -n "$version" ] && [ -n "$url" ] || return 4
+	
+	log_kv latest_version "$version"
+	log_kv download_url "$url"
+	return 0
+}
+
+get_country_mmdb_current_version() {
+	get_geo_current_version "country_mmdb" "$COUNTRY_MMDB_FILE"
+}
+
+get_geosite_current_version() {
+	get_geo_current_version "GeoSite" "$OPENCLASH_GEOSITE_FILE"
+}
+
+get_v2ray_geoip_current_version() {
+	get_geo_current_version "v2ray_geoip" "$GEOIP_DAT_FILE"
+}
+
+get_v2ray_geosite_current_version() {
+	get_geo_current_version "v2ray_geosite" "$GEOSITE_DAT_FILE"
+}
+
+country_mmdb_info() {
+	local current installed latest_output latest_rc latest_version can_upgrade
+
+	installed=0
+	current=""
+	
+	if current="$(get_country_mmdb_current_version)" && [ -n "$current" ]; then
+		installed=1
+	fi
+
+	latest_output="$(get_geo_latest_info "$COUNTRY_MMDB_REPO" "Country-lite.mmdb" 2>/dev/null)"
+	latest_rc=$?
+
+	log_kv component country_mmdb
+	log_kv installed "$installed"
+	log_kv current_version "$current"
+
+	if [ $latest_rc -ne 0 ]; then
+		log_kv can_upgrade 0
+		case "$latest_rc" in
+			3) log_kv error 'fetch_failed' ;;
+			4) log_kv error 'asset_not_found' ;;
+			*) log_kv error 'unknown_error' ;;
+		esac
+		return 0
+	fi
+
+	latest_version="$(printf '%s\n' "$latest_output" | sed -n 's/^latest_version=//p' | sed -n '1p')"
+	can_upgrade=0
+	if [ -z "$current" ] || version_gt "$latest_version" "$current"; then
+		can_upgrade=1
+	fi
+
+	printf '%s\n' "$latest_output" | sed '/^download_url=/d'
+	log_kv can_upgrade "$can_upgrade"
+	log_kv error ''
+}
+
+geosite_info() {
+	local current installed latest_output latest_rc latest_version can_upgrade
+
+	installed=0
+	current=""
+	
+	if current="$(get_geosite_current_version)" && [ -n "$current" ]; then
+		installed=1
+	fi
+
+	latest_output="$(get_geo_latest_info "$GEOSITE_REPO" "geosite.dat" 2>/dev/null)"
+	latest_rc=$?
+
+	log_kv component geosite
+	log_kv installed "$installed"
+	log_kv current_version "$current"
+
+	if [ $latest_rc -ne 0 ]; then
+		log_kv can_upgrade 0
+		case "$latest_rc" in
+			3) log_kv error 'fetch_failed' ;;
+			4) log_kv error 'asset_not_found' ;;
+			*) log_kv error 'unknown_error' ;;
+		esac
+		return 0
+	fi
+
+	latest_version="$(printf '%s\n' "$latest_output" | sed -n 's/^latest_version=//p' | sed -n '1p')"
+	can_upgrade=0
+	if [ -z "$current" ] || version_gt "$latest_version" "$current"; then
+		can_upgrade=1
+	fi
+
+	printf '%s\n' "$latest_output" | sed '/^download_url=/d'
+	log_kv can_upgrade "$can_upgrade"
+	log_kv error ''
+}
+
+v2ray_geoip_info() {
+	local current installed latest_output latest_rc latest_version can_upgrade
+
+	installed=0
+	current=""
+	
+	if current="$(get_v2ray_geoip_current_version)" && [ -n "$current" ]; then
+		installed=1
+	fi
+
+	latest_output="$(get_geo_latest_info "$GEOIP_REPO" "geoip-only-cn-private.dat" 2>/dev/null)"
+	latest_rc=$?
+
+	log_kv component v2ray_geoip
+	log_kv installed "$installed"
+	log_kv current_version "$current"
+
+	if [ $latest_rc -ne 0 ]; then
+		log_kv can_upgrade 0
+		case "$latest_rc" in
+			3) log_kv error 'fetch_failed' ;;
+			4) log_kv error 'asset_not_found' ;;
+			*) log_kv error 'unknown_error' ;;
+		esac
+		return 0
+	fi
+
+	latest_version="$(printf '%s\n' "$latest_output" | sed -n 's/^latest_version=//p' | sed -n '1p')"
+	can_upgrade=0
+	if [ -z "$current" ] || version_gt "$latest_version" "$current"; then
+		can_upgrade=1
+	fi
+
+	printf '%s\n' "$latest_output" | sed '/^download_url=/d'
+	log_kv can_upgrade "$can_upgrade"
+	log_kv error ''
+}
+
+v2ray_geosite_info() {
+	local current installed latest_output latest_rc latest_version can_upgrade
+
+	installed=0
+	current=""
+	
+	if current="$(get_v2ray_geosite_current_version)" && [ -n "$current" ]; then
+		installed=1
+	fi
+
+	latest_output="$(get_geo_latest_info "$GEOSITE_REPO" "geosite.dat" 2>/dev/null)"
+	latest_rc=$?
+
+	log_kv component v2ray_geosite
+	log_kv installed "$installed"
+	log_kv current_version "$current"
+
+	if [ $latest_rc -ne 0 ]; then
+		log_kv can_upgrade 0
+		case "$latest_rc" in
+			3) log_kv error 'fetch_failed' ;;
+			4) log_kv error 'asset_not_found' ;;
+			*) log_kv error 'unknown_error' ;;
+		esac
+		return 0
+	fi
+
+	latest_version="$(printf '%s\n' "$latest_output" | sed -n 's/^latest_version=//p' | sed -n '1p')"
+	can_upgrade=0
+	if [ -z "$current" ] || version_gt "$latest_version" "$current"; then
+		can_upgrade=1
+	fi
+
+	printf '%s\n' "$latest_output" | sed '/^download_url=/d'
+	log_kv can_upgrade "$can_upgrade"
+	log_kv error ''
+}
+
+country_mmdb_local_info() {
+	local current installed
+
+	installed=0
+	current=""
+	
+	if current="$(get_country_mmdb_current_version)" && [ -n "$current" ]; then
+		installed=1
+	fi
+
+	log_kv component country_mmdb
+	log_kv installed "$installed"
+	log_kv current_version "$current"
 	log_kv latest_version ''
 	log_kv can_upgrade 0
 	log_kv error ''
 }
 
-geo_upgrade() {
-	local geo="$1"
-	local tmp_dir file_a url_a file_b url_b msg
+geosite_local_info() {
+	local current installed
 
-	tmp_dir="$(mktemp -d /tmp/ssrplus-geo.XXXXXX)"
-	[ -n "$tmp_dir" ] && [ -d "$tmp_dir" ] || {
-		log_kv component "$geo"
+	installed=0
+	current=""
+
+	if current="$(get_geosite_current_version)" && [ -n "$current" ]; then
+		installed=1
+	fi
+
+	log_kv component geosite
+	log_kv installed "$installed"
+	log_kv current_version "$current"
+	log_kv latest_version ''
+	log_kv can_upgrade 0
+	log_kv error ''
+}
+
+v2ray_geoip_local_info() {
+	local current installed
+
+	installed=0
+	current=""
+	
+	if current="$(get_v2ray_geoip_current_version)" && [ -n "$current" ]; then
+		installed=1
+	fi
+
+	log_kv component v2ray_geoip
+	log_kv installed "$installed"
+	log_kv current_version "$current"
+	log_kv latest_version ''
+	log_kv can_upgrade 0
+	log_kv error ''
+}
+
+v2ray_geosite_local_info() {
+	local current installed
+
+	installed=0
+	current=""
+	
+	if current="$(get_v2ray_geosite_current_version)" && [ -n "$current" ]; then
+		installed=1
+	fi
+
+	log_kv component v2ray_geosite
+	log_kv installed "$installed"
+	log_kv current_version "$current"
+	log_kv latest_version ''
+	log_kv can_upgrade 0
+	log_kv error ''
+}
+
+country_mmdb_upgrade() {
+	local latest_output latest_rc latest_version download_url tmp_dir backup_file current_before current_after
+
+	latest_output="$(get_geo_latest_info "$COUNTRY_MMDB_REPO" "Country-lite.mmdb" 2>/dev/null)"
+	latest_rc=$?
+	if [ $latest_rc -ne 0 ]; then
+		log_kv success 0
+		case "$latest_rc" in
+			3) log_kv message 'Failed to fetch release metadata' ;;
+			4) log_kv message 'Matching release asset not found' ;;
+			*) log_kv message 'Unknown error' ;;
+		esac
+		return 0
+	fi
+
+	latest_version="$(printf '%s\n' "$latest_output" | sed -n 's/^latest_version=//p' | sed -n '1p')"
+	download_url="$(printf '%s\n' "$latest_output" | sed -n 's/^download_url=//p' | sed -n '1p')"
+	current_before="$(get_country_mmdb_current_version 2>/dev/null || true)"
+	
+	if [ -n "$current_before" ] && ! version_gt "$latest_version" "$current_before"; then
+		log_kv success 1
+		log_kv previous_version "$current_before"
+		log_kv current_version "$current_before"
+		log_kv latest_version "$latest_version"
+		log_kv message 'Already up to date'
+		return 0
+	fi
+
+	tmp_dir="$(mktemp -d /tmp/ssrplus-countrymmdb.XXXXXX)"
+	if [ -z "$tmp_dir" ] || [ ! -d "$tmp_dir" ]; then
 		log_kv success 0
 		log_kv message 'Failed to create temp directory'
 		return 0
-	}
+	fi
+
+	backup_file="$tmp_dir/countrymmdb.backup"
+
 	trap "rm -rf '$tmp_dir'" EXIT INT TERM
 
-	case "$geo" in
-		country_mmdb)
-			file_a="$COUNTRY_MMDB_FILE"
-			url_a="$(mirror_wrap_url "$COUNTRY_MMDB_URL")"
-			download_file "$url_a" "$tmp_dir/file_a" || {
-				log_kv component "$geo"
-				log_kv success 0
-				log_kv message 'Download failed'
-				return 0
-			}
-			geo_validate_download "$tmp_dir/file_a" "$file_a" || {
-				log_kv component "$geo"
-				log_kv success 1
-				log_kv current_version "$(file_mtime "$file_a")"
-				log_kv current_version_extra ''
-				log_kv latest_version "$(file_mtime "$file_a")"
-				log_kv can_upgrade 0
-				log_kv message 'Already up to date'
-				return 0
-			}
-			geo_safe_replace "$tmp_dir/file_a" "$file_a" "$tmp_dir/file_a.bak" || {
-				log_kv component "$geo"
-				log_kv success 0
-				log_kv message 'Install failed'
-				return 0
-			}
-			msg='Upgrade completed'
-			;;
-		geosite)
-			file_a="$(resolve_geosite_file)"
-			url_a="$(mirror_wrap_url "$GEOSITE_URL")"
-			download_file "$url_a" "$tmp_dir/file_a" || {
-				log_kv component "$geo"
-				log_kv success 0
-				log_kv message 'Download failed'
-				return 0
-			}
-			geo_validate_download "$tmp_dir/file_a" "$file_a" || {
-				log_kv component "$geo"
-				log_kv success 1
-				log_kv current_version "$(file_mtime "$file_a")"
-				log_kv current_version_extra ''
-				log_kv latest_version "$(file_mtime "$file_a")"
-				log_kv can_upgrade 0
-				log_kv message 'Already up to date'
-				return 0
-			}
-			geo_safe_replace "$tmp_dir/file_a" "$file_a" "$tmp_dir/file_a.bak" || {
-				log_kv component "$geo"
-				log_kv success 0
-				log_kv message 'Install failed'
-				return 0
-			}
-			msg='Upgrade completed'
-			;;
-		v2ray_geo)
-			file_a="$(resolve_v2ray_geoip_file)"
-			url_a="$(mirror_wrap_url "$GEOIP_DAT_URL")"
-			file_b="$(resolve_v2ray_geosite_file)"
-			url_b="$(mirror_wrap_url "$GEOSITE_URL")"
-			download_file "$url_a" "$tmp_dir/file_a" || {
-				log_kv component "$geo"
-				log_kv success 0
-				log_kv message 'Download failed'
-				return 0
-			}
-			download_file "$url_b" "$tmp_dir/file_b" || {
-				log_kv component "$geo"
-				log_kv success 0
-				log_kv message 'Download failed'
-				return 0
-			}
-			geo_validate_download "$tmp_dir/file_a" "$file_a" || {
-				log_kv component "$geo"
-				log_kv success 1
-				log_kv current_version "$(file_mtime "$file_a")"
-				log_kv current_version_extra "$(file_mtime "$file_b")"
-				log_kv latest_version "$(file_mtime "$file_a")"
-				log_kv can_upgrade 0
-				log_kv message 'Already up to date'
-				return 0
-			}
-			geo_validate_download "$tmp_dir/file_b" "$file_b" || {
-				log_kv component "$geo"
-				log_kv success 1
-				log_kv current_version "$(file_mtime "$file_a")"
-				log_kv current_version_extra "$(file_mtime "$file_b")"
-				log_kv latest_version "$(file_mtime "$file_a")"
-				log_kv can_upgrade 0
-				log_kv message 'Already up to date'
-				return 0
-			}
-			geo_safe_replace "$tmp_dir/file_a" "$file_a" "$tmp_dir/file_a.bak" || {
-				log_kv component "$geo"
-				log_kv success 0
-				log_kv message 'Install failed'
-				return 0
-			}
-			geo_safe_replace "$tmp_dir/file_b" "$file_b" "$tmp_dir/file_b.bak" || {
-				[ -f "$tmp_dir/file_a.bak" ] && cp -f "$tmp_dir/file_a.bak" "$file_a" 2>/dev/null || true
-				log_kv component "$geo"
-				log_kv success 0
-				log_kv message 'Install failed'
-				return 0
-			}
-			msg='Upgrade completed'
-			;;
-		*)
-			log_kv component "$geo"
-			log_kv success 0
-			log_kv message 'Unsupported component'
-			return 0
-			;;
-	esac
+	if ! download_file "$download_url" "$tmp_dir/Country.mmdb"; then
+		log_kv success 0
+		log_kv message 'Download failed'
+		return 0
+	fi
 
-	log_kv component "$geo"
+	if [ ! -s "$tmp_dir/Country.mmdb" ]; then
+		log_kv success 0
+		log_kv message 'Download failed'
+		return 0
+	fi
+	
+	if [ -f "$COUNTRY_MMDB_FILE" ]; then
+		cp -fp "$COUNTRY_MMDB_FILE" "$backup_file" 2>/dev/null || true
+	fi
+
+	if ! cp -f "$tmp_dir/Country.mmdb" "$COUNTRY_MMDB_FILE"; then
+		if [ -f "$backup_file" ]; then
+			cp -fp "$backup_file" "$COUNTRY_MMDB_FILE" 2>/dev/null || true
+		fi
+		log_kv success 0
+		log_kv message 'Install failed'
+		return 0
+	fi
+
+	store_geo_version "country_mmdb" "$latest_version"
+
+	current_after="$(get_country_mmdb_current_version 2>/dev/null || true)"
+	if [ -z "$current_after" ]; then
+		if [ -f "$backup_file" ]; then
+			cp -fp "$backup_file" "$COUNTRY_MMDB_FILE" 2>/dev/null || true
+		fi
+		log_kv success 0
+		log_kv message 'Installed file failed to verify'
+		return 0
+	fi
+
+	if [ -x /etc/init.d/shadowsocksr ]; then
+		/etc/init.d/shadowsocksr restart >/dev/null 2>&1 || true
+	fi
+
 	log_kv success 1
-	log_kv current_version "$(file_mtime "$file_a")"
-	log_kv current_version_extra "$([ -n "${file_b:-}" ] && file_mtime "$file_b" || echo '')"
-	log_kv latest_version "$(file_mtime "$file_a")"
-	log_kv can_upgrade 0
-	log_kv message "$msg"
+	log_kv previous_version "$current_before"
+	log_kv current_version "$current_after"
+	log_kv latest_version "$latest_version"
+	log_kv message 'Upgrade completed'
+	return 0
+}
+
+geosite_upgrade() {
+	local latest_output latest_rc latest_version download_url tmp_dir backup_file current_before current_after
+
+	latest_output="$(get_geo_latest_info "$GEOSITE_REPO" "geosite.dat" 2>/dev/null)"
+	latest_rc=$?
+	if [ $latest_rc -ne 0 ]; then
+		log_kv success 0
+		case "$latest_rc" in
+			3) log_kv message 'Failed to fetch release metadata' ;;
+			4) log_kv message 'Matching release asset not found' ;;
+			*) log_kv message 'Unknown error' ;;
+		esac
+		return 0
+	fi
+
+	latest_version="$(printf '%s\n' "$latest_output" | sed -n 's/^latest_version=//p' | sed -n '1p')"
+	download_url="$(printf '%s\n' "$latest_output" | sed -n 's/^download_url=//p' | sed -n '1p')"
+	current_before="$(get_geosite_current_version 2>/dev/null || true)"
+	
+	if [ -n "$current_before" ] && ! version_gt "$latest_version" "$current_before"; then
+		log_kv success 1
+		log_kv previous_version "$current_before"
+		log_kv current_version "$current_before"
+		log_kv latest_version "$latest_version"
+		log_kv message 'Already up to date'
+		return 0
+	fi
+	
+	tmp_dir="$(mktemp -d /tmp/ssrplus-GeoSite.XXXXXX)"
+	if [ -z "$tmp_dir" ] || [ ! -d "$tmp_dir" ]; then
+		log_kv success 0
+		log_kv message 'Failed to create temp directory'
+		return 0
+	fi
+
+	backup_file="$tmp_dir/GeoSite.backup"
+
+	trap "rm -rf '$tmp_dir'" EXIT INT TERM
+
+	if ! download_file "$download_url" "$tmp_dir/GeoSite.dat"; then
+		log_kv success 0
+		log_kv message 'Download failed'
+		return 0
+	fi
+
+	if [ ! -s "$tmp_dir/GeoSite.dat" ]; then
+		log_kv success 0
+		log_kv message 'Download failed'
+		return 0
+	fi
+	
+	if [ -f "$OPENCLASH_GEOSITE_FILE" ]; then
+		cp -fp "$OPENCLASH_GEOSITE_FILE" "$backup_file" 2>/dev/null || true
+	fi
+
+	if ! cp -f "$tmp_dir/GeoSite.dat" "$OPENCLASH_GEOSITE_FILE"; then
+		if [ -f "$backup_file" ]; then
+			cp -fp "$backup_file" "$OPENCLASH_GEOSITE_FILE" 2>/dev/null || true
+		fi
+		log_kv success 0
+		log_kv message 'Install failed'
+		return 0
+	fi
+
+	store_geo_version "GeoSite" "$latest_version"
+
+	current_after="$(get_geosite_current_version 2>/dev/null || true)"
+	if [ -z "$current_after" ]; then
+		if [ -f "$backup_file" ]; then
+			cp -fp "$backup_file" "$OPENCLASH_GEOSITE_FILE" 2>/dev/null || true
+		fi
+		log_kv success 0
+		log_kv message 'Installed file failed to verify'
+		return 0
+	fi
+
+	if [ -x /etc/init.d/shadowsocksr ]; then
+		/etc/init.d/shadowsocksr restart >/dev/null 2>&1 || true
+	fi
+
+	log_kv success 1
+	log_kv previous_version "$current_before"
+	log_kv current_version "$current_after"
+	log_kv latest_version "$latest_version"
+	log_kv message 'Upgrade completed'
+	return 0
+}
+
+v2ray_geoip_upgrade() {
+	local latest_output latest_rc latest_version download_url tmp_dir backup_file current_before current_after
+
+	latest_output="$(get_geo_latest_info "$GEOIP_REPO" "geoip-only-cn-private.dat" 2>/dev/null)"
+	latest_rc=$?
+	if [ $latest_rc -ne 0 ]; then
+		log_kv success 0
+		case "$latest_rc" in
+			3) log_kv message 'Failed to fetch release metadata' ;;
+			4) log_kv message 'Matching release asset not found' ;;
+			*) log_kv message 'Unknown error' ;;
+		esac
+		return 0
+	fi
+
+	latest_version="$(printf '%s\n' "$latest_output" | sed -n 's/^latest_version=//p' | sed -n '1p')"
+	download_url="$(printf '%s\n' "$latest_output" | sed -n 's/^download_url=//p' | sed -n '1p')"
+	current_before="$(get_v2ray_geoip_current_version 2>/dev/null || true)"
+	
+	if [ -n "$current_before" ] && ! version_gt "$latest_version" "$current_before"; then
+		log_kv success 1
+		log_kv previous_version "$current_before"
+		log_kv current_version "$current_before"
+		log_kv latest_version "$latest_version"
+		log_kv message 'Already up to date'
+		return 0
+	fi
+	
+	tmp_dir="$(mktemp -d /tmp/ssrplus-v2raygeoip.XXXXXX)"
+	if [ -z "$tmp_dir" ] || [ ! -d "$tmp_dir" ]; then
+		log_kv success 0
+		log_kv message 'Failed to create temp directory'
+		return 0
+	fi
+
+	backup_file="$tmp_dir/v2raygeoip.backup"
+
+	trap "rm -rf '$tmp_dir'" EXIT INT TERM
+
+	if ! download_file "$download_url" "$tmp_dir/geoip.dat"; then
+		log_kv success 0
+		log_kv message 'Download failed'
+		return 0
+	fi
+
+	if [ ! -s "$tmp_dir/geoip.dat" ]; then
+		log_kv success 0
+		log_kv message 'Download failed'
+		return 0
+	fi
+	
+	if [ -f "$GEOIP_DAT_FILE" ]; then
+		cp -fp "$GEOIP_DAT_FILE" "$backup_file" 2>/dev/null || true
+	fi
+
+	if ! cp -f "$tmp_dir/geoip.dat" "$GEOIP_DAT_FILE"; then
+		if [ -f "$backup_file" ]; then
+			cp -fp "$backup_file" "$GEOIP_DAT_FILE" 2>/dev/null || true
+		fi
+		log_kv success 0
+		log_kv message 'Install failed'
+		return 0
+	fi
+
+	store_geo_version "v2ray_geoip" "$latest_version"
+
+	current_after="$(get_v2ray_geoip_current_version 2>/dev/null || true)"
+	if [ -z "$current_after" ]; then
+		if [ -f "$backup_file" ]; then
+			cp -fp "$backup_file" "$GEOIP_DAT_FILE" 2>/dev/null || true
+		fi
+		log_kv success 0
+		log_kv message 'Installed file failed to verify'
+		return 0
+	fi
+
+	if [ -x /etc/init.d/shadowsocksr ]; then
+		/etc/init.d/shadowsocksr restart >/dev/null 2>&1 || true
+	fi
+
+	log_kv success 1
+	log_kv previous_version "$current_before"
+	log_kv current_version "$current_after"
+	log_kv latest_version "$latest_version"
+	log_kv message 'Upgrade completed'
+	return 0
+}
+
+v2ray_geosite_upgrade() {
+	local latest_output latest_rc latest_version download_url tmp_dir backup_file current_before current_after
+
+	latest_output="$(get_geo_latest_info "$GEOSITE_REPO" "geosite.dat" 2>/dev/null)"
+	latest_rc=$?
+	if [ $latest_rc -ne 0 ]; then
+		log_kv success 0
+		case "$latest_rc" in
+			3) log_kv message 'Failed to fetch release metadata' ;;
+			4) log_kv message 'Matching release asset not found' ;;
+			*) log_kv message 'Unknown error' ;;
+		esac
+		return 0
+	fi
+
+	latest_version="$(printf '%s\n' "$latest_output" | sed -n 's/^latest_version=//p' | sed -n '1p')"
+	download_url="$(printf '%s\n' "$latest_output" | sed -n 's/^download_url=//p' | sed -n '1p')"
+	current_before="$(get_v2ray_geosite_current_version 2>/dev/null || true)"
+	
+	if [ -n "$current_before" ] && ! version_gt "$latest_version" "$current_before"; then
+		log_kv success 1
+		log_kv previous_version "$current_before"
+		log_kv current_version "$current_before"
+		log_kv latest_version "$latest_version"
+		log_kv message 'Already up to date'
+		return 0
+	fi
+	
+	tmp_dir="$(mktemp -d /tmp/ssrplus-v2raygeosite.XXXXXX)"
+	if [ -z "$tmp_dir" ] || [ ! -d "$tmp_dir" ]; then
+		log_kv success 0
+		log_kv message 'Failed to create temp directory'
+		return 0
+	fi
+
+	backup_file="$tmp_dir/v2raygeosite.backup"
+
+	trap "rm -rf '$tmp_dir'" EXIT INT TERM
+
+	if ! download_file "$download_url" "$tmp_dir/geosite.dat"; then
+		log_kv success 0
+		log_kv message 'Download failed'
+		return 0
+	fi
+
+	if [ ! -s "$tmp_dir/geosite.dat" ]; then
+		log_kv success 0
+		log_kv message 'Download failed'
+		return 0
+	fi
+	
+	if [ -f "$GEOSITE_DAT_FILE" ]; then
+		cp -fp "$GEOSITE_DAT_FILE" "$backup_file" 2>/dev/null || true
+	fi
+
+	if ! cp -f "$tmp_dir/geosite.dat" "$GEOSITE_DAT_FILE"; then
+		if [ -f "$backup_file" ]; then
+			cp -fp "$backup_file" "$GEOSITE_DAT_FILE" 2>/dev/null || true
+		fi
+		log_kv success 0
+		log_kv message 'Install failed'
+		return 0
+	fi
+
+	store_geo_version "v2ray_geosite" "$latest_version"
+
+	current_after="$(get_v2ray_geosite_current_version 2>/dev/null || true)"
+	if [ -z "$current_after" ]; then
+		if [ -f "$backup_file" ]; then
+			cp -fp "$backup_file" "$GEOSITE_DAT_FILE" 2>/dev/null || true
+		fi
+		log_kv success 0
+		log_kv message 'Installed file failed to verify'
+		return 0
+	fi
+
+	if [ -x /etc/init.d/shadowsocksr ]; then
+		/etc/init.d/shadowsocksr restart >/dev/null 2>&1 || true
+	fi
+
+	log_kv success 1
+	log_kv previous_version "$current_before"
+	log_kv current_version "$current_after"
+	log_kv latest_version "$latest_version"
+	log_kv message 'Upgrade completed'
 	return 0
 }
 
@@ -1614,7 +2062,9 @@ naiveproxy_upgrade() {
 	return 0
 }
 
+# ==================== 主程序入口 ====================
 case "${1:-}" in
+	# 主程序相关
 	mainprogram_info)
 		mainprogram_info
 		;;
@@ -1624,6 +2074,7 @@ case "${1:-}" in
 	mainprogram_upgrade)
 		mainprogram_upgrade
 		;;
+	# Xray 相关
 	xray_info)
 		xray_info
 		;;
@@ -1633,6 +2084,7 @@ case "${1:-}" in
 	xray_upgrade)
 		xray_upgrade
 		;;
+	# Mihomo 相关
 	mihomo_info)
 		mihomo_info
 		;;
@@ -1642,6 +2094,7 @@ case "${1:-}" in
 	mihomo_upgrade)
 		mihomo_upgrade
 		;;
+	# Naiveproxy 相关
 	naiveproxy_info)
 		naiveproxy_info
 		;;
@@ -1651,36 +2104,49 @@ case "${1:-}" in
 	naiveproxy_upgrade)
 		naiveproxy_upgrade
 		;;
+	# Country MMDB 相关
 	country_mmdb_info)
-		geo_local_info country_mmdb
+		country_mmdb_info
 		;;
 	country_mmdb_local_info)
-		geo_local_info country_mmdb
+		country_mmdb_local_info
 		;;
 	country_mmdb_upgrade)
-		geo_upgrade country_mmdb
+		country_mmdb_upgrade
 		;;
+	# Geosite (OpenClash) 相关
 	geosite_info)
-		geo_local_info geosite
+		geosite_info
 		;;
 	geosite_local_info)
-		geo_local_info geosite
+		geosite_local_info
 		;;
 	geosite_upgrade)
-		geo_upgrade geosite
+		geosite_upgrade
 		;;
-	v2ray_geo_info)
-		geo_local_info v2ray_geo
+	# V2Ray GeoIP 相关
+	v2ray_geoip_info)
+		v2ray_geoip_info
 		;;
-	v2ray_geo_local_info)
-		geo_local_info v2ray_geo
+	v2ray_geoip_local_info)
+		v2ray_geoip_local_info
 		;;
-	v2ray_geo_upgrade)
-		geo_upgrade v2ray_geo
+	v2ray_geoip_upgrade)
+		v2ray_geoip_upgrade
+		;;
+	# V2Ray Geosite 相关
+	v2ray_geosite_info)
+		v2ray_geosite_info
+		;;
+	v2ray_geosite_local_info)
+		v2ray_geosite_local_info
+		;;
+	v2ray_geosite_upgrade) 
+		v2ray_geosite_upgrade
 		;;
 	*)
 		log_kv success 0
-		log_kv message 'Usage: update_components.sh mainprogram_info|mainprogram_local_info|mainprogram_upgrade|xray_info|xray_local_info|xray_upgrade|mihomo_info|mihomo_local_info|mihomo_upgrade|naiveproxy_info|naiveproxy_local_info|naiveproxy_upgrade|country_mmdb_info|country_mmdb_local_info|country_mmdb_upgrade|geosite_info|geosite_local_info|geosite_upgrade|v2ray_geo_info|v2ray_geo_local_info|v2ray_geo_upgrade'
+		log_kv message 'Usage: update_components.sh mainprogram_info|mainprogram_local_info|mainprogram_upgrade|xray_info|xray_local_info|xray_upgrade|mihomo_info|mihomo_local_info|mihomo_upgrade|naiveproxy_info|naiveproxy_local_info|naiveproxy_upgrade|country_mmdb_info|country_mmdb_local_info|country_mmdb_upgrade|geosite_info|geosite_local_info|geosite_upgrade|v2ray_geoip_info|v2ray_geoip_local_info|v2ray_geoip_upgrade|v2ray_geosite_info|v2ray_geosite_local_info|v2ray_geosite_upgrade'
 		return 1 2>/dev/null || exit 1
 		;;
 esac
