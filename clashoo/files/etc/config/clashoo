@@ -140,12 +140,6 @@ config dns_policy
 	list nameserver 'https://dns.alidns.com/dns-query'
 	list nameserver 'https://doh.pub/dns-query'
 
-config dns_policy
-	option enabled '1'
-	option policy_type 'nameserver-policy'
-	option matcher 'geosite:geolocation-!cn'
-	list nameserver 'https://cloudflare-dns.com/dns-query'
-
 config authentication
 
 # default empty custom-rule row so the section shows the input form, not just an add

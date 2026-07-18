@@ -48,12 +48,14 @@ let tun_mode = i(a('tun_mode'), 0);
 let tcp_mode = s(a('tcp_mode'), 'redirect');
 let udp_mode = s(a('udp_mode'), 'tproxy');
 let tun_enabled = (tun_mode == 1 || tcp_mode == 'tun' || udp_mode == 'tun');
+let access_control = i(a('access_control'), 0);
+let tun_acl = tun_enabled && (access_control == 1 || access_control == 2);
 
 cfg['tun'] = {
 	enable:                tun_enabled,
 	stack:                 s(a('stack'), 'gvisor'),
 	'auto-route':          true,
-	'auto-redirect':       true,
+	'auto-redirect':       !tun_acl,
 	'auto-detect-interface': true,
 };
 let tun_mtu = a('tun_mtu');

@@ -19,6 +19,9 @@ QUIC_BLOCK_TABLE="clashoo_quic"
 PROXY_FWMARK="0x162"
 PROXY_ROUTE_TABLE="0x162"
 CORE_ROUTING_MARK="0x1a0a"  # = 6666
+ACL_BYPASS_FWMARK="0x163"
+ACL_BYPASS_PREF="8998"
+DNSMASQ_BYPASS_PREF="8999"
 
 uci_get() {
 	uci -q get "$1" 2>/dev/null || true
@@ -61,6 +64,41 @@ config_udp_mode() {
 
 config_access_control() {
 	uci_get clashoo.config.access_control
+}
+
+config_enable_dns() {
+	uci_get clashoo.config.enable_dns
+}
+
+config_dns_port() {
+	local port
+	if [ "$(uci_get clashoo.config.core_type)" != "singbox" ]; then
+		port="$(sed -n 's/^[[:space:]]*listen:.*:[[:space:]]*['"'"'"]*\([0-9]\{1,\}\)['"'"'"]*[[:space:]]*$/\1/p' /etc/clashoo/config.yaml 2>/dev/null | head -n1)"
+	fi
+	[ -n "$port" ] || port="$(uci_get clashoo.config.listen_port)"
+	printf '%s' "$port" | grep -Eq '^[0-9]+$' || port=1053
+	printf '%s\n' "$port"
+}
+
+lan_dns_split_enabled() {
+	local access_control="${1:-$(config_access_control)}"
+	[ "$(uci_get clashoo.config.core_type)" != "singbox" ] || return 1
+	case "$access_control" in
+		1|2) ;;
+		*) return 1 ;;
+	esac
+	bool_enabled "$(config_enable_dns)" || return 1
+	bool_enabled "$(config_ipv4_dns_hijack)" || bool_enabled "$(config_ipv6_dns_hijack)"
+}
+
+tun_acl_enabled() {
+	local access_control="${1:-$(config_access_control)}"
+	[ "$(uci_get clashoo.config.core_type)" != "singbox" ] || return 1
+	case "$access_control" in
+		1|2) ;;
+		*) return 1 ;;
+	esac
+	[ "$(config_tcp_mode)" = "tun" ] || [ "$(config_udp_mode)" = "tun" ]
 }
 
 config_ipv4_dns_hijack() {
@@ -268,23 +306,26 @@ render_port_match() {
 	fi
 }
 
-# DNS hijack: redirect plaintext DNS (port 53) to local dnsmasq so hardcoded-DNS
-# devices still go through dnsmasq -> core. Gated on UCI IPv4/IPv6 toggles.
+# Split proxied clients to the core DNS while ACL-bypassed clients use dnsmasq.
+# Gated on UCI IPv4/IPv6 toggles.
 # return 0: no output when both off, avoid set -e false-positive.
 render_dns_hijack() {
-	local access_control="$1"
+	local access_control="$1" redirect_port=53
 	[ "$access_control" = "1" ] && printf '%s\n' 'ip saddr != @clash_proxy_lan return'
 	[ "$access_control" = "2" ] && printf '%s\n' 'ip saddr @clash_reject_lan return'
+	if lan_dns_split_enabled "$access_control"; then
+		redirect_port="$(config_dns_port)"
+	fi
 	bool_enabled "$(config_ipv4_dns_hijack)" && \
-		printf '%s\n' 'meta nfproto ipv4 meta l4proto { tcp, udp } th dport 53 counter redirect to :53'
+		printf '%s\n' "meta nfproto ipv4 meta l4proto { tcp, udp } th dport 53 counter redirect to :${redirect_port}"
 	bool_enabled "$(config_ipv6_dns_hijack)" && \
-		printf '%s\n' 'meta nfproto ipv6 meta l4proto { tcp, udp } th dport 53 counter redirect to :53'
+		printf '%s\n' "meta nfproto ipv6 meta l4proto { tcp, udp } th dport 53 counter redirect to :${redirect_port}"
 	return 0
 }
 
 apply_local_output_rule() {
 	local redir_port fake_ip_range tcp_mode bypass_fwmark bypass_china
-	local fwmark_elements fwmark_rule china_set china_rule
+	local fwmark_elements fwmark_rule china_set china_rule dnsmasq_rule dnsmasq_uid
 	redir_port="$(config_redir_port)"
 	fake_ip_range="$(config_fake_ip_range)"
 	tcp_mode="$(config_tcp_mode)"
@@ -315,6 +356,12 @@ apply_local_output_rule() {
 		china_rule="ip daddr @clashoo_china return"
 	fi
 
+	dnsmasq_rule=""
+	if lan_dns_split_enabled; then
+		dnsmasq_uid="$(id -u dnsmasq 2>/dev/null)"
+		printf '%s' "$dnsmasq_uid" | grep -Eq '^[0-9]+$' && dnsmasq_rule="meta skuid ${dnsmasq_uid} return"
+	fi
+
 	nft -f - <<EOF
 table ip ${LOCAL_OUTPUT_TABLE} {
 	set clashoo_localnetwork {
@@ -328,6 +375,7 @@ table ip ${LOCAL_OUTPUT_TABLE} {
 	${china_set}
 	chain output {
 		type nat hook output priority dstnat; policy accept;
+		${dnsmasq_rule}
 		${fwmark_rule}
 		ip daddr @clashoo_localnetwork return
 		${china_rule}
@@ -340,6 +388,30 @@ EOF
 
 remove_local_output_rule() {
 	nft delete table ip ${LOCAL_OUTPUT_TABLE} >/dev/null 2>&1 || true
+}
+
+remove_acl_bypass_rules() {
+	local dnsmasq_uid
+	ip rule del pref "$ACL_BYPASS_PREF" fwmark "$ACL_BYPASS_FWMARK" lookup main >/dev/null 2>&1 || true
+	ip -6 rule del pref "$ACL_BYPASS_PREF" fwmark "$ACL_BYPASS_FWMARK" lookup main >/dev/null 2>&1 || true
+	dnsmasq_uid="$(id -u dnsmasq 2>/dev/null)"
+	if printf '%s' "$dnsmasq_uid" | grep -Eq '^[0-9]+$'; then
+		ip rule del pref "$DNSMASQ_BYPASS_PREF" uidrange "${dnsmasq_uid}-${dnsmasq_uid}" lookup main >/dev/null 2>&1 || true
+		ip -6 rule del pref "$DNSMASQ_BYPASS_PREF" uidrange "${dnsmasq_uid}-${dnsmasq_uid}" lookup main >/dev/null 2>&1 || true
+	fi
+}
+
+apply_acl_bypass_rules() {
+	local dnsmasq_uid
+	remove_acl_bypass_rules
+	tun_acl_enabled || return 0
+	ip rule add pref "$ACL_BYPASS_PREF" fwmark "$ACL_BYPASS_FWMARK" lookup main >/dev/null 2>&1 || true
+	ip -6 rule add pref "$ACL_BYPASS_PREF" fwmark "$ACL_BYPASS_FWMARK" lookup main >/dev/null 2>&1 || true
+	dnsmasq_uid="$(id -u dnsmasq 2>/dev/null)"
+	if printf '%s' "$dnsmasq_uid" | grep -Eq '^[0-9]+$'; then
+		ip rule add pref "$DNSMASQ_BYPASS_PREF" uidrange "${dnsmasq_uid}-${dnsmasq_uid}" lookup main >/dev/null 2>&1 || true
+		ip -6 rule add pref "$DNSMASQ_BYPASS_PREF" uidrange "${dnsmasq_uid}-${dnsmasq_uid}" lookup main >/dev/null 2>&1 || true
+	fi
 }
 
 apply_block_quic_rule() {
@@ -477,25 +549,33 @@ EOF
 			;;
 	esac
 
-	# UDP rules: tproxy via mangle (tun mode needs no nftables rule)
-	# Also handle TCP tproxy mode here (both TCP+UDP in mangle)
-	local need_mangle=0
+	# UDP rules: tproxy via mangle. TUN uses mangle only for LAN ACL bypass.
+	# Also handle TCP tproxy mode here (both TCP+UDP in mangle).
+	local need_mangle=0 tun_acl=0
 	[ "$tcp_mode" = "tproxy" ] && need_mangle=1
 	[ "$udp_mode" = "tproxy" ] && need_mangle=1
+	if tun_acl_enabled "$access_control"; then
+		need_mangle=1
+		tun_acl=1
+	fi
 
 	if [ "$need_mangle" -eq 1 ]; then
 		tcp_match="$(render_port_match tcp "$proxy_tcp_dport")"
 		udp_match="$(render_port_match udp "$proxy_udp_dport")"
 		{
 			printf 'ip daddr @clashoo_localnetwork return\n'
+			if [ "$tun_acl" -eq 1 ]; then
+				[ "$access_control" = "1" ] && printf 'ip saddr != @clash_proxy_lan meta mark set %s return\n' "$ACL_BYPASS_FWMARK"
+				[ "$access_control" = "2" ] && printf 'ip saddr @clash_reject_lan meta mark set %s return\n' "$ACL_BYPASS_FWMARK"
+			fi
 			if bool_enabled "$bypass_china"; then
 				printf 'meta nfproto ipv6 ip6 daddr @clashoo_china6 return\n'
 				printf 'ip daddr @clashoo_china return\n'
 			fi
-			if [ "$access_control" = "1" ]; then
+			if [ "$tun_acl" -eq 0 ] && [ "$access_control" = "1" ]; then
 				printf 'ip saddr != @clash_proxy_lan return\n'
 			fi
-			if [ "$access_control" = "2" ]; then
+			if [ "$tun_acl" -eq 0 ] && [ "$access_control" = "2" ]; then
 				printf 'ip saddr @clash_reject_lan return\n'
 			fi
 			if [ -n "$dscp_elements" ]; then
@@ -536,11 +616,13 @@ apply_rules() {
 		remove_firewall_include clash_fw4_mangle
 	fi
 	/etc/init.d/firewall restart >/dev/null 2>&1 || /etc/init.d/firewall reload >/dev/null 2>&1 || true
+	apply_acl_bypass_rules
 	apply_local_output_rule
 	apply_block_quic_rule
 }
 
 remove_rules() {
+	remove_acl_bypass_rules
 	remove_local_output_rule
 	remove_block_quic_rule
 	remove_firewall_include clash_fw4_sets

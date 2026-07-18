@@ -524,7 +524,7 @@ runtime_run_health_check() {
 	[ -z "$mixed_port" ] && mixed_port="7890"
 	if command_exists curl; then
 			explicit_state="fail"
-			for _url in https://www.google.com/generate_204 https://www.gstatic.com/generate_204 https://www.youtube.com/generate_204; do
+			for _url in https://www.google.com/generate_204 https://www.gstatic.com/generate_204; do
 				for _try in 1 2; do
 					if curl -4 --proxy "http://127.0.0.1:${mixed_port}" -I --max-time 6 -sS "$_url" 2>/dev/null | curl_has_final_http_response; then
 						explicit_state="ok"
@@ -878,12 +878,32 @@ _dns_roles_look_broken() {
 	return $broken
 }
 
+_dns_drop_legacy_geolocation_policy() {
+	local i=0 matcher nameserver
+	while uci -q get "clashoo.@dns_policy[$i]" >/dev/null 2>&1; do
+		matcher="$(uci -q get "clashoo.@dns_policy[$i].matcher" 2>/dev/null)"
+		nameserver="$(uci -q get "clashoo.@dns_policy[$i].nameserver" 2>/dev/null)"
+		if [ "$matcher" = "geosite:geolocation-!cn" ] && [ "$nameserver" = "https://cloudflare-dns.com/dns-query" ]; then
+			uci -q delete "clashoo.@dns_policy[$i]"
+			continue
+		fi
+		i=$((i + 1))
+	done
+}
+
 _migrate_dns_roles() {
 	local ver
 	ver="$(uci -q get clashoo.config.dns_migrated 2>/dev/null)"
-	[ "$ver" = "2" ] && return 0
+	[ "$ver" = "3" ] && return 0
+	if [ "$ver" = "2" ]; then
+		_dns_drop_legacy_geolocation_policy
+		uci -q set clashoo.config.dns_migrated='3'
+		uci -q commit clashoo
+		return 0
+	fi
 	if [ "$ver" = "1" ] && ! _dns_roles_look_broken; then
-		uci -q set clashoo.config.dns_migrated='2'
+		_dns_drop_legacy_geolocation_policy
+		uci -q set clashoo.config.dns_migrated='3'
 		uci -q commit clashoo
 		return 0
 	fi
@@ -911,12 +931,7 @@ _migrate_dns_roles() {
 	uci -q set clashoo."$sec".matcher='geosite:cn'
 	uci -q add_list clashoo."$sec".nameserver='https://dns.alidns.com/dns-query'
 	uci -q add_list clashoo."$sec".nameserver='https://doh.pub/dns-query'
-	sec="$(uci -q add clashoo dns_policy)"
-	uci -q set clashoo."$sec".enabled='1'
-	uci -q set clashoo."$sec".policy_type='nameserver-policy'
-	uci -q set clashoo."$sec".matcher='geosite:geolocation-!cn'
-	uci -q add_list clashoo."$sec".nameserver='https://cloudflare-dns.com/dns-query'
-	uci -q set clashoo.config.dns_migrated='2'
+	uci -q set clashoo.config.dns_migrated='3'
 	uci -q commit clashoo
 	log_msg "Upstream DNS roles migrated" "上游 DNS 角色已恢复为经典防污染模型（国内主解析 + 境外 fallback）"
 }
@@ -1270,6 +1285,17 @@ smart_inject() {
 }
 
 
+_lan_dns_split_enabled() {
+	is_singbox_selected && return 1
+	case "$(uci -q get clashoo.config.access_control 2>/dev/null)" in
+		1|2) ;;
+		*) return 1 ;;
+	esac
+	[ "$(uci -q get clashoo.config.enable_dns 2>/dev/null)" != "0" ] || return 1
+	[ "$(uci -q get clashoo.config.ipv4_dns_hijack 2>/dev/null)" = "1" ] ||
+		[ "$(uci -q get clashoo.config.ipv6_dns_hijack 2>/dev/null)" = "1" ]
+}
+
 yml_dns_change(){
 #=========================================================================================================================== 	
 	dns_port=$(sed -n 's/^[[:space:]]*listen:.*:[[:space:]]*['"'"'"]*\([0-9]\{1,\}\)['"'"'"]*[[:space:]]*$/\1/p' /etc/clashoo/config.yaml 2>/dev/null | head -n1)
@@ -1284,6 +1310,10 @@ yml_dns_change(){
 	dnsforwader=$(uci get clashoo.config.dnsforwader 2>/dev/null)
 	dnscache=$(uci get clashoo.config.dnscache 2>/dev/null)
 	if [ "$(uci -q get clashoo.config.enable_dns 2>/dev/null)" = "0" ]; then
+		revert_dns >/dev/null 2>&1
+		return 0
+	fi
+	if _lan_dns_split_enabled; then
 		revert_dns >/dev/null 2>&1
 		return 0
 	fi
