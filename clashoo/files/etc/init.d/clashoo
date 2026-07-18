@@ -855,8 +855,38 @@ fi
 
 
 
+_dns_roles_look_broken() {
+	local i=0 t a en broken=1 fb_total=0 fb_domestic=0
+	while :; do
+		t="$(uci -q get clashoo.@dnsservers[$i].ser_type 2>/dev/null)"
+		[ -n "$t" ] || break
+		en="$(uci -q get clashoo.@dnsservers[$i].enabled 2>/dev/null)"
+		a="$(uci -q get clashoo.@dnsservers[$i].ser_address 2>/dev/null)"
+		i=$((i + 1))
+		[ "$en" = "0" ] && continue
+		case "$t" in
+			nameserver)
+				printf '%s' "$a" | grep -qE '1\.1\.1\.1|1\.0\.0\.1|one\.one\.one\.one|cloudflare|8\.8\.8\.8|8\.8\.4\.4|dns\.google|9\.9\.9\.9' && broken=0
+				;;
+			fallback)
+				fb_total=$((fb_total + 1))
+				printf '%s' "$a" | grep -qE '223\.5\.5\.5|223\.6\.6\.6|119\.29\.29\.29|119\.28\.28\.28|114\.114|180\.184|alidns|doh\.pub|dnspod' && fb_domestic=$((fb_domestic + 1))
+				;;
+		esac
+	done
+	[ "$fb_total" -gt 0 ] && [ "$fb_total" = "$fb_domestic" ] && broken=0
+	return $broken
+}
+
 _migrate_dns_roles() {
-	[ "$(uci -q get clashoo.config.dns_migrated 2>/dev/null)" = "1" ] && return 0
+	local ver
+	ver="$(uci -q get clashoo.config.dns_migrated 2>/dev/null)"
+	[ "$ver" = "2" ] && return 0
+	if [ "$ver" = "1" ] && ! _dns_roles_look_broken; then
+		uci -q set clashoo.config.dns_migrated='2'
+		uci -q commit clashoo
+		return 0
+	fi
 	while uci -q delete clashoo.@dnsservers[0] >/dev/null 2>&1; do :; done
 	while uci -q delete clashoo.@dns_policy[0] >/dev/null 2>&1; do :; done
 	_add_dnsserver() {
@@ -886,7 +916,7 @@ _migrate_dns_roles() {
 	uci -q set clashoo."$sec".policy_type='nameserver-policy'
 	uci -q set clashoo."$sec".matcher='geosite:geolocation-!cn'
 	uci -q add_list clashoo."$sec".nameserver='https://cloudflare-dns.com/dns-query'
-	uci -q set clashoo.config.dns_migrated='1'
+	uci -q set clashoo.config.dns_migrated='2'
 	uci -q commit clashoo
 	log_msg "Upstream DNS roles migrated" "上游 DNS 角色已恢复为经典防污染模型（国内主解析 + 境外 fallback）"
 }
@@ -1938,10 +1968,11 @@ stop_service(){
 			rm -f /tmp/clashoo/fake_filter.list /tmp/clashoo/fake_filter.yaml 2>/dev/null
 
 			log_msg "Stopping Clashoo" "正在停止 Clashoo"
-			_ac_pid="$(cat /tmp/clashoo/access_check_daemon.pid 2>/dev/null)"
-			if [ -n "$_ac_pid" ] && tr '\0' ' ' < "/proc/$_ac_pid/cmdline" 2>/dev/null | grep -q access_check_daemon; then
-				kill "$_ac_pid" 2>/dev/null
-			fi
+			for _ac_sig in TERM KILL; do
+				for _ac_pid in $(pgrep -f access_check_daemon 2>/dev/null); do
+					tr '\0' ' ' < "/proc/$_ac_pid/cmdline" 2>/dev/null | grep -q access_check_daemon.sh && kill -"$_ac_sig" "$_ac_pid" 2>/dev/null
+				done
+			done
 			rm -rf /tmp/clashoo/access_check_daemon.pid /tmp/clashoo/access_check_daemon.lock 2>/dev/null
 			rm -f /var/run/clashoo_bootstrap_pending 2>/dev/null
 		log_msg "Removing firewall rules" "清理防火墙规则"

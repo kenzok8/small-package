@@ -87,18 +87,6 @@ candidate_host_port() {
 	printf '%s %s\n' "$host" "$port"
 }
 
-probe_doh() {
-	url="$1"
-	domain="$2"
-	case "$url" in
-		*\?*) q="$url&name=$domain&type=A" ;;
-		*) q="$url?name=$domain&type=A" ;;
-	esac
-	command -v curl >/dev/null 2>&1 || return 1
-	curl -fsS --connect-timeout "$TIMEOUT" --max-time "$TIMEOUT" \
-		-H 'accept: application/dns-json' "$q" >/dev/null 2>&1
-}
-
 probe_tls() {
 	uri="$1"
 	set -- $(candidate_host_port "$uri" 853)
@@ -115,16 +103,32 @@ probe_ip_dns() {
 	nslookup "$domain" "$ip" >/dev/null 2>&1
 }
 
-probe_candidate() {
+probe_latency_ms() {
 	candidate="$1"
 	domain="$2"
-	case "$candidate" in
-		https://*) probe_doh "$candidate" "$domain" ;;
-		tls://*) probe_tls "$candidate" ;;
-		udp://*) probe_ip_dns "${candidate#udp://}" "$domain" ;;
-		tcp://*) probe_ip_dns "${candidate#tcp://}" "$domain" ;;
-		*) is_ipv4 "$candidate" && probe_ip_dns "$candidate" "$domain" ;;
-	esac
+	if [ "${candidate#https://}" != "$candidate" ]; then
+		if printf '%s' "$candidate" | grep -q '?'; then
+			q="$candidate&name=$domain&type=A"
+		else
+			q="$candidate?name=$domain&type=A"
+		fi
+		command -v curl >/dev/null 2>&1 || return 1
+		t="$(curl -fsS --connect-timeout "$TIMEOUT" --max-time "$TIMEOUT" \
+			-H 'accept: application/dns-json' -o /dev/null -w '%{time_total}' "$q" 2>/dev/null)" || return 1
+		printf '%s' "$t" | awk '{ms=$1*1000; if (ms<1) ms=1; printf "%d", ms}'
+	elif [ "${candidate#tls://}" != "$candidate" ]; then
+		probe_tls "$candidate" || return 1
+		printf '900'
+	elif [ "${candidate#udp://}" != "$candidate" ]; then
+		probe_ip_dns "${candidate#udp://}" "$domain" || return 1
+		printf '950'
+	elif [ "${candidate#tcp://}" != "$candidate" ]; then
+		probe_ip_dns "${candidate#tcp://}" "$domain" || return 1
+		printf '950'
+	else
+		is_ipv4 "$candidate" && probe_ip_dns "$candidate" "$domain" || return 1
+		printf '950'
+	fi
 }
 
 select_best() {
@@ -133,17 +137,14 @@ select_best() {
 	fallback="$3"
 	best=""
 	best_score=999999
+	order=0
 	for candidate in $list; do
-		start="$(date +%s 2>/dev/null || echo 0)"
-		if probe_candidate "$candidate" "$domain"; then
-			end="$(date +%s 2>/dev/null || echo "$start")"
-			score=$((end - start))
-			if [ "$score" -lt "$best_score" ]; then
-				best="$candidate"
-				best_score="$score"
-			fi
-		else
-			FAILED_COUNT=$((FAILED_COUNT + 1))
+		order=$((order + 1))
+		ms="$(probe_latency_ms "$candidate" "$domain")" || { FAILED_COUNT=$((FAILED_COUNT + 1)); continue; }
+		score=$((ms * 100 + order))
+		if [ "$score" -lt "$best_score" ]; then
+			best="$candidate"
+			best_score="$score"
 		fi
 	done
 	[ -n "$best" ] || best="$fallback"
@@ -185,36 +186,32 @@ apply_result() {
 	return 0
 }
 
+is_domestic_dns() {
+	printf '%s' "$1" | grep -qE 'alidns|doh\.pub|dnspod|223\.5\.5\.5|223\.6\.6\.6|119\.29\.29\.29|119\.28\.28\.28|114\.114|180\.184|onedns'
+}
+is_overseas_dns() {
+	printf '%s' "$1" | grep -qE 'cloudflare|1\.1\.1\.1|1\.0\.0\.1|one\.one\.one\.one|dns\.google|8\.8\.8\.8|8\.8\.4\.4|9\.9\.9\.9|quad9|opendns|208\.67\.'
+}
+
 FAILED_COUNT=0
-BOOTSTRAP_CANDIDATES=""
-DOMESTIC_CANDIDATES=""
-PROXY_CANDIDATES=""
+BOOTSTRAP_CANDIDATES="223.5.5.5 119.29.29.29 180.184.1.1"
+DOMESTIC_CANDIDATES="https://dns.alidns.com/dns-query https://doh.pub/dns-query udp://223.5.5.5 udp://119.29.29.29"
+FALLBACK_CANDIDATES="https://cloudflare-dns.com/dns-query https://dns.google/dns-query tls://1.1.1.1:853"
 
 for ns in $(current_default_nameservers); do
 	is_ipv4 "$ns" && BOOTSTRAP_CANDIDATES="$(append_unique "$BOOTSTRAP_CANDIDATES" "$ns")"
 done
-for ns in 223.5.5.5 119.29.29.29 180.184.1.1; do
-	BOOTSTRAP_CANDIDATES="$(append_unique "$BOOTSTRAP_CANDIDATES" "$ns")"
-done
-
 for ns in $(servers_for_role 'nameserver') $(servers_for_role 'direct-nameserver'); do
-	DOMESTIC_CANDIDATES="$(append_unique "$DOMESTIC_CANDIDATES" "$ns")"
+	is_domestic_dns "$ns" && DOMESTIC_CANDIDATES="$(append_unique "$DOMESTIC_CANDIDATES" "$ns")"
 done
-for ns in https://dns.alidns.com/dns-query https://doh.pub/dns-query; do
-	DOMESTIC_CANDIDATES="$(append_unique "$DOMESTIC_CANDIDATES" "$ns")"
-done
-
-for ns in $(servers_for_role 'proxy-server-nameserver') $(servers_for_role 'fallback'); do
-	PROXY_CANDIDATES="$(append_unique "$PROXY_CANDIDATES" "$ns")"
-done
-for ns in https://cloudflare-dns.com/dns-query https://dns.google/dns-query; do
-	PROXY_CANDIDATES="$(append_unique "$PROXY_CANDIDATES" "$ns")"
+for ns in $(servers_for_role 'fallback'); do
+	is_overseas_dns "$ns" && FALLBACK_CANDIDATES="$(append_unique "$FALLBACK_CANDIDATES" "$ns")"
 done
 
 BOOTSTRAP="$(select_best "$BOOTSTRAP_CANDIDATES" www.baidu.com 223.5.5.5)"
 NAMESERVER="$(select_best "$DOMESTIC_CANDIDATES" www.baidu.com https://dns.alidns.com/dns-query)"
-PROXY_NS="$(select_best "$PROXY_CANDIDATES" www.google.com https://cloudflare-dns.com/dns-query)"
-FALLBACK_NS="$PROXY_NS"
+PROXY_NS="tls://1.1.1.1:853"
+FALLBACK_NS="$(select_best "$FALLBACK_CANDIDATES" www.google.com https://cloudflare-dns.com/dns-query)"
 
 APPLIED=false
 if [ "$APPLY" = "1" ]; then
