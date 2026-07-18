@@ -24,7 +24,7 @@ import {
 import {
     syntaxHighlighting, HighlightStyle, bracketMatching,
     foldGutter, indentOnInput, StreamLanguage, foldKeymap, indentUnit,
-    getIndentUnit, foldable
+    getIndentUnit, foldable, ensureSyntaxTree
 } from "@codemirror/language"
 
 // ---- Tags ----
@@ -467,7 +467,7 @@ function mihomoCompletion(context) {
     return { from: word.from, options, validFor: /^[\w-]*$/ }
 }
 
-function yamlLinter() {
+function yamlLinter(delay = 750) {
     return linter(view => {
         const diagnostics = []
         try { loadAll(view.state.doc.toString(), { schema: YAML11_SCHEMA }) } catch (e) {
@@ -484,7 +484,7 @@ function yamlLinter() {
             }
         }
         return diagnostics
-    })
+    }, typeof delay === 'number' ? { delay: delay } : undefined)
 }
 
 var _levelTagMap = null
@@ -563,6 +563,28 @@ const logHighlightStyle = HighlightStyle.define([
     { tag: logTag.levelWatchdog, class: "cmt-log-level-watchdog" },
 ])
 
+function syntaxPreload(buffer = 1000) {
+    return ViewPlugin.fromClass(class {
+        constructor(view) { this._preload(view) }
+        update(u) {
+            if (u.viewportChanged || u.docChanged) {
+                if (this._rafId) cancelAnimationFrame(this._rafId)
+                var self = this
+                this._rafId = requestAnimationFrame(function() {
+                    self._rafId = null
+                    self._preload(u.view)
+                })
+            }
+        }
+        _preload(view) {
+            var doc = view.state.doc
+            var ll = doc.lineAt(view.viewport.to).number
+            var target = Math.min(ll + buffer, doc.lines)
+            ensureSyntaxTree(view.state, doc.line(target).to, 50)
+        }
+    })
+}
+
 function baseExtensions(extra = []) {
     return [
         lineNumbers(), highlightActiveLine(), highlightActiveLineGutter(),
@@ -572,6 +594,7 @@ function baseExtensions(extra = []) {
         indentOnInput(), history(),
         highlightSelectionMatches(), EditorView.lineWrapping,
         closeBrackets(),
+        syntaxPreload(),
         cmKeymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, ...closeBracketsKeymap, ...foldKeymap, { key: 'Tab', run: function(v) { return acceptCompletion(v) || indentMore(v) } }]),
         ...extra
     ]
@@ -579,9 +602,11 @@ function baseExtensions(extra = []) {
 
 // ============================================================
 // Custom indentation markers
-// Replaces @replit/codemirror-indentation-markers (unmaintained).
 // Fixes left:2px→6px: @codemirror/view >=~6.29 changed .cm-line
 // padding from "0 2px" to "0 2px 0 6px".
+// The ::before pseudo-element fills the full line height (no gaps)
+// but is capped at one visual row (--oc-lh) so it never bleeds
+// through wrapped text on long lines.
 // ============================================================
 
 const _ocImBaseTheme = EditorView.baseTheme({
@@ -592,7 +617,7 @@ const _ocImBaseTheme = EditorView.baseTheme({
         top: 0,
         left: '6px',
         right: 0,
-        bottom: 0,
+        height: 'var(--oc-lh, 100%)',
         background: 'var(--oc-im)',
         pointerEvents: 'none',
         zIndex: '-1',
@@ -611,9 +636,6 @@ function _ocImIndent(text, ts) {
     return n
 }
 
-// Compute per-line structural nesting depth using CM6's foldable() function.
-// foldable(state, lineStart, lineEnd) → {from, to} | null
-// Returns an array of depths indexed by (lineNo - fl).
 function _foldDepth(state, fl, ll, doc) {
     var ranges = []
     for (var n = fl; n <= ll; n++) {
@@ -631,8 +653,6 @@ function _foldDepth(state, fl, ll, doc) {
     return depths
 }
 
-// Single-line version of _foldDepth, for measure.read where the full
-// array hasn't been precomputed.
 function _foldDepth1(state, lineNo, fl, ll, doc) {
     var pos = doc.line(lineNo).from, d = 0
     for (var n = fl; n <= ll; n++) {
@@ -642,7 +662,7 @@ function _foldDepth1(state, lineNo, fl, ll, doc) {
     return d
 }
 
-function indentMarkerExtension({ highlightActiveBlock = true, hideFirstIndent = false, thickness = 1, colors } = {}) {
+function indentMarkerExtension({ highlightActiveBlock = true, hideFirstIndent = false, thickness = 1, colors, deferMode = 'raf', buffer = 1000 } = {}) {
     var extra = colors ? EditorView.baseTheme({
         '&light': { '--oc-im-c': colors.light || '#e1e4e8', '--oc-im-ca': colors.activeLight || '#d0d7de' },
         '&dark':  { '--oc-im-c': colors.dark  || '#30363d', '--oc-im-ca': colors.activeDark  || '#484f58' },
@@ -654,7 +674,7 @@ function indentMarkerExtension({ highlightActiveBlock = true, hideFirstIndent = 
         ViewPlugin.fromClass(class {
             constructor(view) {
                 this._view = view
-                this._stepPx = null            // measured indent-unit pixel width
+                this._stepPx = null
                 this._measurePending = false
                 this.decorations = this._build(view)
                 this._scheduleMeasure(view)
@@ -665,6 +685,19 @@ function indentMarkerExtension({ highlightActiveBlock = true, hideFirstIndent = 
                 var needsRebuild = u.docChanged || u.viewportChanged ||
                     (highlightActiveBlock && u.selectionSet)
                 if (needsRebuild) {
+                    if (deferMode === 'raf' && u.viewportChanged && !u.docChanged) {
+                        if (this._rafId) cancelAnimationFrame(this._rafId)
+                        var self = this
+                        this._rafId = requestAnimationFrame(function() {
+                            self._rafId = null
+                            self._stepPx = null
+                            self._measurePending = false
+                            self.decorations = self._build(u.view)
+                            self._scheduleMeasure(u.view)
+                        })
+                        return
+                    }
+                    if (this._rafId) { cancelAnimationFrame(this._rafId); this._rafId = null }
                     this._stepPx = null
                     this._measurePending = false
                     this.decorations = this._build(u.view)
@@ -680,44 +713,55 @@ function indentMarkerExtension({ highlightActiveBlock = true, hideFirstIndent = 
                 this._measureId = view.requestMeasure(this._mkSpec())
             }
 
-            // Measure one indent unit's pixel width in the read phase
-            // (coordsAtPos is only safe here, not during update).
             _mkSpec() {
                 var self = this
                 return {
                     read: function(view) {
-                        var sa = hideFirstIndent ? 1 : 0
                         var state = view.state, iw = getIndentUnit(state), ts = state.tabSize, doc = state.doc
                         var fl = doc.lineAt(view.viewport.from).number
                         var ll = doc.lineAt(view.viewport.to).number
-                        var bl = Math.max(1, fl - 80), el = Math.min(doc.lines, ll + 80)
 
-                        // Compute max fold depth in visible range
-                        var maxLvl = 0
+                        var hasIndent = false
                         for (var n = fl; n <= ll; n++) {
-                            if (n < bl || n > el) continue
-                            var fd = _foldDepth1(state, n, fl, ll, doc)
-                            if (fd > maxLvl) maxLvl = fd
+                            if (_ocImIndent(doc.line(n).text, ts) >= iw) { hasIndent = true; break }
                         }
-                        if (maxLvl <= sa) return -1
 
-                        // Measure exact pixel width of one indent unit
-                        var stepPx = 0
-                        for (var n = fl; n <= ll; n++) {
-                            if (n < bl || n > el) continue
-                            var t = doc.line(n).text
-                            if (t.trim() === '') continue
-                            if (_ocImIndent(t, ts) >= iw) {
-                                var c0 = view.coordsAtPos(doc.line(n).from)
-                                var c1 = view.coordsAtPos(doc.line(n).from + iw)
-                                if (c0 && c1) { stepPx = Math.round((c1.left - c0.left) * 100) / 100; break }
+                        var stepPx = 0, lineHeight = 0
+
+                        if (hasIndent) {
+                            for (var n = fl; n <= ll; n++) {
+                                var t = doc.line(n).text
+                                if (t.trim() === '') continue
+                                if (_ocImIndent(t, ts) >= iw) {
+                                    var c0 = view.coordsAtPos(doc.line(n).from)
+                                    var c1 = view.coordsAtPos(doc.line(n).from + iw)
+                                    if (c0 && c1) { stepPx = Math.round((c1.left - c0.left) * 100) / 100; break }
+                                }
                             }
                         }
-                        return stepPx > 0 ? stepPx : -1
+
+                        if (fl < doc.lines) {
+                            var c0 = view.coordsAtPos(doc.line(fl).from)
+                            var c1 = view.coordsAtPos(doc.line(fl + 1).from)
+                            if (c0 && c1) lineHeight = Math.round(c1.top - c0.top)
+                        }
+
+                        return lineHeight > 0
+                            ? { stepPx: stepPx > 0 ? stepPx : -1, lineHeight: lineHeight }
+                            : (stepPx > 0 ? stepPx : -1)
                     },
-                    write: function(stepPx) {
+                    write: function(result) {
+                        var stepPx, lineHeight
+                        if (typeof result === 'number') {
+                            stepPx = result; lineHeight = 0
+                        } else if (result) {
+                            stepPx = result.stepPx; lineHeight = result.lineHeight || 0
+                        } else {
+                            stepPx = -1; lineHeight = 0
+                        }
                         if (typeof stepPx === 'number') {
                             self._stepPx = stepPx > 0 ? stepPx : -1
+                            self._lineHeight = lineHeight
                             self._measurePending = true
                             var v = self._view
                             // Defer dispatch past the current update cycle
@@ -737,9 +781,8 @@ function indentMarkerExtension({ highlightActiveBlock = true, hideFirstIndent = 
                 var doc = state.doc
                 var fl = doc.lineAt(view.viewport.from).number
                 var ll = doc.lineAt(view.viewport.to).number
-                var bl = Math.max(1, fl - 80), el = Math.min(doc.lines, ll + 80)
+                var bl = Math.max(1, fl - buffer), el = Math.min(doc.lines, ll + buffer)
 
-                // Compute visual indent levels
                 var lvls = new Int32Array(el - bl + 1)
                 var bk = new Uint8Array(el - bl + 1)
                 for (var n = bl; n <= el; n++) {
@@ -748,7 +791,6 @@ function indentMarkerExtension({ highlightActiveBlock = true, hideFirstIndent = 
                     bk[n - bl] = b ? 1 : 0
                     lvls[n - bl] = b ? -1 : Math.floor(_ocImIndent(t, ts) / iw)
                 }
-                // Blank lines inherit the shallower of prev/next non-blank level
                 for (var n = bl; n <= el; n++) {
                     if (!bk[n - bl]) continue
                     var p = 0, nx = 0
@@ -757,49 +799,83 @@ function indentMarkerExtension({ highlightActiveBlock = true, hideFirstIndent = 
                     lvls[n - bl] = Math.min(p, nx)
                 }
 
-                // Structural depth from CM6's fold system
-                var foldDepths = _foldDepth(state, fl, ll, doc)
+                var maxLvl = 0
+                for (var n = fl; n <= ll; n++) {
+                    var lv = lvls[n - bl]
+                    if (lv > maxLvl) maxLvl = lv
+                }
+                if (maxLvl <= sa) return Decoration.none
 
-                // Indent-unit width: measured or character-width fallback
-                var stepPx = this._stepPx
-                if (stepPx === null || stepPx <= 0)
-                    stepPx = iw * (view.defaultCharacterWidth || 8)
+                var scopeOpen = new Uint8Array(maxLvl)
+                var showGuides = new Array(ll - fl + 1)
 
-                // Highlight the active block (guide at cursor's deepest ancestor level)
-                var activeLvl
-                if (highlightActiveBlock) {
-                    var cn = doc.lineAt(state.selection.main.head).number
-                    if (cn >= bl && cn <= el) {
-                        var cl = lvls[cn - bl]
-                        var cfd = foldDepths[cn - fl] || 0
-                        var cel = Math.max(cl, cfd)
-                        if (cel > sa) activeLvl = cel - 1
+                for (var n = bl; n <= el; n++) {
+                    var lv = lvls[n - bl]
+                    var isBlank = bk[n - bl] === 1
+
+                    if (!isBlank) {
+                        for (var k = lv; k < maxLvl; k++) scopeOpen[k] = 0
+                    }
+
+                    if (n >= fl && n <= ll) {
+                        var guides = new Uint8Array(maxLvl)
+                        showGuides[n - fl] = guides
+                        if (lv > sa) {
+                            for (var k = sa; k < lv && k < maxLvl; k++) {
+                                if (scopeOpen[k]) guides[k] = 1
+                            }
+                        }
+                    }
+
+                    if (!isBlank) {
+                        var nextN = -1, nextLv = -1
+                        for (var x = n + 1; x <= el; x++) {
+                            if (!bk[x - bl]) { nextN = x; nextLv = lvls[x - bl]; break }
+                        }
+                        if (nextN >= 0 && nextLv > lv && lv < maxLvl) {
+                            scopeOpen[lv] = 1
+                        }
                     }
                 }
 
+                var activeLvl = undefined
+                if (highlightActiveBlock) {
+                    var cn = doc.lineAt(state.selection.main.head).number
+                    if (cn >= fl && cn <= ll) {
+                        var cl = lvls[cn - bl]
+                        var cGuides = showGuides[cn - fl]
+                        if (cGuides && cl > sa) {
+                            for (var k = cl - 1; k >= sa; k--) {
+                                if (cGuides[k]) { activeLvl = k; break }
+                            }
+                        }
+                    }
+                }
+
+                var stepPx = this._stepPx
+                if (stepPx === null || stepPx <= 0)
+                    stepPx = iw * (view.defaultCharacterWidth || 8)
+                var lh = this._lineHeight
+
                 var builder = new RangeSetBuilder()
                 for (var n = fl; n <= ll; n++) {
-                    if (n < bl || n > el) continue
-                    var lv = lvls[n - bl]
-                    var fd = foldDepths[n - fl]
-                    var effectiveLv = Math.max(lv, fd)
-
-                    if (effectiveLv <= sa) continue
+                    var guides = showGuides[n - fl]
+                    if (!guides) continue
                     var parts = []
-                    // Start from level 1 — level 0 (0 px) is never useful
-                    var startL = Math.max(sa, 1)
-                    for (var l = startL; l <= effectiveLv; l++) {
-                        if (l > lv) break   // cap at visual indent
-                        var pos = Math.round(l * stepPx)
-                        var cv = (activeLvl !== undefined && l === activeLvl)
+                    for (var k = sa; k < maxLvl; k++) {
+                        if (!guides[k]) continue
+                        var pos = Math.round(k * stepPx)
+                        var cv = (activeLvl !== undefined && k === activeLvl)
                             ? 'var(--oc-im-ca)' : 'var(--oc-im-c)'
                         parts.push('linear-gradient(' + cv + ',' + cv + ') ' + pos + 'px 0/' + thickness + 'px 100% no-repeat')
                     }
                     if (!parts.length) continue
                     var line = doc.line(n)
+                    var style = '--oc-im:' + parts.join(',')
+                    if (lh > 0) style += ';--oc-lh:' + lh + 'px'
                     builder.add(line.from, line.from, Decoration.line({
                         class: 'cm-oc-im',
-                        attributes: { style: '--oc-im:' + parts.join(',') }
+                        attributes: { style: style }
                     }))
                 }
                 return builder.finish()
@@ -824,6 +900,93 @@ const mergeDefaultConfig = {
 }
 
 // ============================================================
+// Merge scrollbar mirror — clones .cm-scroller scrollbar rules from
+// the active CM6 theme onto .cm-mergeView and #debug-rendered so
+// that all scrollbars share the same theme-aware appearance.
+// Also injects .cm-merge-revert button colours.
+// ============================================================
+function mirrorThemeScrollbar() {
+    var styles = document.querySelectorAll('style');
+    var themeStyle = null;
+    var themeText = null;
+
+    for (var i = 0; i < styles.length; i++) {
+        var text = styles[i].textContent || '';
+        if (text.indexOf('.cm-scroller::-webkit-scrollbar') === -1) continue;
+        themeStyle = styles[i];
+        themeText = text;
+        break;
+    }
+
+    var editorEl = document.querySelector('.cm-editor');
+    var contentEl = editorEl ? editorEl.querySelector('.cm-content') : null;
+    var cs = contentEl ? getComputedStyle(contentEl) : null;
+    var txt = cs ? cs.color : null;
+    var rgb = txt ? txt.match(/[\d.]+/g) : null;
+    var r, g, b;
+    if (rgb && rgb.length >= 3) { r = rgb[0]; g = rgb[1]; b = rgb[2]; }
+
+    if (r) {
+        var thumbColor = 'rgba(' + r + ',' + g + ',' + b + ',0.60)';
+        var thumbHover = 'rgba(' + r + ',' + g + ',' + b + ',0.70)';
+    } else {
+        var thumbColor = _isDarkMode() ? 'rgba(255,255,255,0.60)' : 'rgba(0,0,0,0.60)';
+        var thumbHover  = _isDarkMode() ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.70)';
+    }
+
+    if (!themeText) return;
+
+    var parts = [], m;
+    var reWebkit = /([^{}]*)\.cm-scroller(::-webkit-scrollbar[^{]*)\{([^}]*)\}/gi;
+    while ((m = reWebkit.exec(themeText)) !== null) {
+        var body = m[3].replace(/;/g, ' !important;');
+        parts.push('.cm-mergeView' + m[2] + '{' + m[3] + '}');
+        parts.push('#debug-rendered' + m[2] + '{' + body + '}');
+        parts.push('#debug-rendered pre' + m[2] + '{' + body + '}');
+    }
+    // Clone Firefox rules
+    var reFF = /([^{}]*)\.cm-scroller\{([^}]*scrollbar-(?:width|color)[^}]*)\}/gi;
+    while ((m = reFF.exec(themeText)) !== null) {
+        var body = m[2];
+        var sw = body.match(/scrollbar-width\s*:\s*[^;]+;?/);
+        var sc = body.match(/scrollbar-color\s*:\s*[^;]+;?/);
+        if (sw || sc) {
+            var ffRule = (sw ? sw[0] : '') + (sc ? sc[0] : '');
+            parts.push('.cm-mergeView{' + ffRule + '}');
+            parts.push('#debug-rendered{' + ffRule + '}');
+            parts.push('#debug-rendered pre{' + ffRule + '}');
+        }
+    }
+
+    var gutterBg = r ? 'rgba(' + r + ',' + g + ',' + b + ',0.06)' : 'rgba(175,184,193,0.06)';
+    parts.push(
+        '.cm-merge-revert{background:' + gutterBg + '}' +
+        '.cm-merge-revert button{color:' + (r ? 'rgba(' + r + ',' + g + ',' + b + ',0.5)' : '#656d76') + '}' +
+        '.cm-merge-revert button:hover{color:' + (txt || '#1f2328') + ';background:' + (r ? 'rgba(' + r + ',' + g + ',' + b + ',0.12)' : 'rgba(175,184,193,0.2)') + '}'
+    );
+
+    var marker = '/*oc-merge-mirror*/';
+    var idx = themeStyle.textContent.indexOf(marker);
+    if (idx !== -1) {
+        themeStyle.textContent = themeStyle.textContent.substring(0, idx);
+    }
+
+    var thumbVal = thumbColor + ' !important';
+    var hoverVal = thumbHover + ' !important';
+    parts.push(
+        '.cm-editor .cm-scroller::-webkit-scrollbar-thumb,' +
+        '.cm-mergeView::-webkit-scrollbar-thumb,' +
+        '#debug-rendered::-webkit-scrollbar-thumb,' +
+        '#debug-rendered pre::-webkit-scrollbar-thumb{background:' + thumbVal + ';background-color:' + thumbVal + '}',
+        '.cm-editor .cm-scroller::-webkit-scrollbar-thumb:hover,' +
+        '.cm-mergeView::-webkit-scrollbar-thumb:hover,' +
+        '#debug-rendered::-webkit-scrollbar-thumb:hover,' +
+        '#debug-rendered pre::-webkit-scrollbar-thumb:hover{background:' + hoverVal + ';background-color:' + hoverVal + '}'
+    );
+    themeStyle.textContent += marker + parts.join('');
+}
+
+// ============================================================
 // Theme compartment — allows dynamic light/dark switching
 // ============================================================
 const themeCompartment = new Compartment
@@ -836,6 +999,8 @@ function dispatchTheme(view, isDark) {
     view.dispatch({
         effects: themeCompartment.reconfigure(isDark ? githubDark : githubLight)
     })
+    // Mirror scrollbar rules into the new theme stylesheet
+    mirrorThemeScrollbar();
 }
 
 // ============================================================
@@ -867,29 +1032,14 @@ function toggleFullscreen(dom) {
 }
 
 // ============================================================
-// Theme observer — watch data-darkmode on <html> for all CM6 editors
+// Theme detection — reads localStorage then falls back to system preference
 // ============================================================
-var _themeObserverInstalled = false;
 
-function startThemeObserver() {
-    if (_themeObserverInstalled || typeof MutationObserver === 'undefined') return;
-    _themeObserverInstalled = true;
-    var observer = new MutationObserver(function() {
-        var theme = localStorage.getItem('oc-theme') || 'auto';
-        var isDark;
-        if (theme === 'dark') isDark = true;
-        else if (theme === 'light') isDark = false;
-        else isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        switchHljsTheme(isDark);
-        var editors = document.querySelectorAll('.cm-editor');
-        for (var i = 0; i < editors.length; i++) {
-            var view = editors[i].cmView && editors[i].cmView.view;
-            if (view) {
-                try { dispatchTheme(view, isDark); } catch(e) {}
-            }
-        }
-    });
-    observer.observe(document.body, { attributes: true, attributeFilter: ['data-darkmode'], subtree: true });
+function _isDarkMode() {
+    var theme = localStorage.getItem('oc-theme') || 'auto';
+    if (theme === 'dark') return true;
+    if (theme === 'light') return false;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
 // ============================================================
@@ -900,11 +1050,7 @@ var _hljsCSSInjected = false
 function injectHljsCSS() {
     if (_hljsCSSInjected) return
     _hljsCSSInjected = true
-    var theme = localStorage.getItem('oc-theme') || 'auto'
-    var isDark
-    if (theme === 'dark') isDark = true
-    else if (theme === 'light') isDark = false
-    else isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+    var isDark = _isDarkMode()
     var style = document.createElement("style")
     style.id = "hljs-theme"
     style.textContent = isDark ? githubDarkCSS : githubLightCSS
@@ -931,9 +1077,9 @@ marked.use({
             if (lang && hljs.getLanguage(lang)) {
                 injectHljsCSS()
                 var result = hljs.highlight(token.text, { language: lang, ignoreIllegals: true })
-                return '<pre><code class="hljs language-' + lang + '">' + result.value + '</code></pre>'
+                return '<pre><code class="hljs language-' + lang + '"><span class="code-content">' + result.value + '</span></code></pre>'
             }
-            return '<pre><code>' + escapeHtml(token.text) + '</code></pre>'
+            return '<pre><code><span class="code-content">' + escapeHtml(token.text) + '</span></code></pre>'
         }
     }
 })
@@ -960,10 +1106,10 @@ export {
     githubDark, githubLight,
     MergeView,
     logLanguage, logHighlightStyle,
-    baseExtensions, placeholderExtension, indentMarkerExtension,
-    topSearchExtension, mergeDefaultConfig,
+    baseExtensions, syntaxPreload, placeholderExtension, indentMarkerExtension,
+    topSearchExtension, mergeDefaultConfig, mirrorThemeScrollbar,
     themeExtension, dispatchTheme,
-    startThemeObserver,
+    switchHljsTheme,
     renderMarkdown,
     getActiveEditor, toggleFullscreen
 }

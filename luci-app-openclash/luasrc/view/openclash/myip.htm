@@ -3,21 +3,20 @@
 <meta charset="utf-8">
 <meta http-equiv="x-dns-prefetch-control" content="on">
 <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+<%
+    local fs = require "luci.openclash"
+    local plugin_version = fs.oc_version()
+%>
+<script src="/luci-static/resources/openclash/js/oc-icons.js?v=<%=plugin_version%>"></script>
 <link rel="dns-prefetch" href="//whois.pconline.com.cn">
 <link rel="dns-prefetch" href="//pubstatic.b0.upaiyun.com">
 <link rel="dns-prefetch" href="//api.ip.sb">
 <link rel="dns-prefetch" href="//api.ipify.org">
-<link rel="dns-prefetch" href="//api.ttt.sh">
 <link rel="dns-prefetch" href="//myip.ipip.net">
-<link rel="dns-prefetch" href="//qqwry.api.skk.moe">
-<link rel="dns-prefetch" href="//d.skk.moe">
 <link rel="preconnect" href="https://pubstatic.b0.upaiyun.com">
 <link rel="preconnect" href="https://whois.pconline.com.cn">
 <link rel="preconnect" href="https://api.ip.sb">
 <link rel="preconnect" href="https://api.ipify.org">
-<link rel="preconnect" href="https://api.ttt.sh">
-<link rel="preconnect" href="https://qqwry.api.skk.moe">
-<link rel="preconnect" href="https://d.skk.moe">
 <link rel="preconnect" href="http://myip.ipip.net">
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,minimal-ui">
@@ -97,10 +96,9 @@
                                             <path d="M12 28L12 8" stroke="#333" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
                                             <path d="M36 28V8" stroke="#333" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
-                                        <svg id="data-refresh-icon" class="myip-icon-btn" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" onclick="return refresh_myip(this)">
+                                        <svg id="data-refresh-icon" class="myip-icon-btn" width="20" height="20" onclick="return refresh_myip(this)">
                                             <title><%:Refresh%></title>
-                                            <path d="M23 4v6h-6"></path>
-                                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                            <use href="#oc-icon-refresh"/>
                                         </svg>
                                     </span>
                                 </p>

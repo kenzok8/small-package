@@ -94,7 +94,7 @@ o:value("http://captive.apple.com/generate_204")
 o.default = "0"
 
 o = s:taboption("settings", Value, "github_address_mod", translate("Github Address Modify"))
-o.description = translate("Modify The Github Address In The Config And OpenClash With Proxy(CDN) To Prevent File Download Faild. Format Reference:").." ".."<a href='javascript:void(0)' onclick='javascript:return winOpen(\"https://ghfast.top/\")'>https://ghfast.top/</a>"
+o.description = translate("Modify The Github Address In The Config And OpenClash With Proxy(CDN) To Prevent File Download Failed. Format Reference:").." ".."<a href='javascript:void(0)' onclick='javascript:return winOpen(\"https://ghfast.top/\")'>https://ghfast.top/</a>"
 o:value("0", translate("Disable"))
 o:value("https://fastly.jsdelivr.net/")
 o:value("https://testingcf.jsdelivr.net/")
@@ -215,6 +215,7 @@ function custom_fallback_filter.write(self, section, value)
 			fs.writefile("/etc/openclash/custom/openclash_custom_fallback_filter.yaml", value)
 		end
 	end
+	return true
 end
 
 if op_mode == "fake-ip" then
@@ -247,6 +248,7 @@ function custom_fake_black.write(self, section, value)
 			fs.writefile("/etc/openclash/custom/openclash_custom_fake_filter.list", value)
 		end
 	end
+	return true
 end
 end
 
@@ -271,6 +273,7 @@ function custom_domain_dns_policy.write(self, section, value)
 			fs.writefile("/etc/openclash/custom/openclash_custom_domain_dns_policy.list", value)
 		end
 	end
+	return true
 end
 
 o = s:taboption("dns", Flag, "custom_proxy_server_policy", translate("Proxy-Server-Nameserver-Policy"))
@@ -294,6 +297,7 @@ function custom_proxy_server_dns_policy.write(self, section, value)
 			fs.writefile("/etc/openclash/custom/openclash_custom_proxy_server_dns_policy.list", value)
 		end
 	end
+	return true
 end
 
 o = s:taboption("dns", Flag, "custom_host", translate("Hosts"))
@@ -317,6 +321,7 @@ function custom_hosts.write(self, section, value)
 			fs.writefile("/etc/openclash/custom/openclash_custom_hosts.list", value)
 		end
 	end
+	return true
 end
 
 -- Meta
@@ -384,6 +389,7 @@ function sniffer_custom.write(self, section, value)
 			fs.writefile("/etc/openclash/custom/openclash_custom_sniffer.yaml", value)
 		end
 	end
+	return true
 end
 
 -- Smart Settings
@@ -476,6 +482,7 @@ function custom_rules.write(self, section, value)
 			fs.writefile("/etc/openclash/custom/openclash_custom_rules.list", value)
 		end
 	end
+	return true
 end
 
 custom_rules_2 = s:taboption("rules", Value, "custom_rules_2")
@@ -496,6 +503,7 @@ function custom_rules_2.write(self, section, value)
 			fs.writefile("/etc/openclash/custom/openclash_custom_rules_2.list", value)
 		end
 	end
+	return true
 end
 
 -- [[ Edit Custom DNS ]] --
