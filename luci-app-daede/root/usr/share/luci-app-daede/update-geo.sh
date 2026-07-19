@@ -61,10 +61,15 @@ fi
 		rc=1
 	else
 		size=$(wc -c < "$TMP" 2>/dev/null || echo 0)
-		if [ "$size" -lt 102400 ]; then
+		magic=$(hexdump -n 1 -e '1/1 "%02x"' "$TMP" 2>/dev/null)
+		if [ "$size" -lt 1024 ]; then
 			echo "$(date '+%F %T') file too small ($size bytes)"
 			rm -f "$TMP"
 			rc=2
+		elif [ "$magic" != "0a" ]; then
+			echo "$(date '+%F %T') invalid geodata format"
+			rm -f "$TMP"
+			rc=3
 		else
 			mv "$TMP" "$DEST"
 			echo "$(date '+%F %T') updated $DEST ($size bytes)"

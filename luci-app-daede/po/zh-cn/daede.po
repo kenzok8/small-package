@@ -400,6 +400,18 @@ msgstr "清空文件"
 msgid "Download"
 msgstr "下载"
 
+msgid "Stop daed"
+msgstr "停止 daed"
+
+msgid "Stop daed now?"
+msgstr "立即停止 daed？"
+
+msgid "daed stopped"
+msgstr "daed 已停止"
+
+msgid "Failed to stop daed: %s"
+msgstr "停止 daed 失败：%s"
+
 # ---- config.js: Subscription Card ----
 msgid "Subscription Management"
 msgstr "订阅管理"
@@ -628,8 +640,8 @@ msgstr "更新失败：%s"
 msgid "Subscriptions updated (dae reloaded)"
 msgstr "订阅已更新（dae 已重载）"
 
-msgid "Subscriptions updated (daed restarted)"
-msgstr "订阅已更新，daed 已重启"
+msgid "Subscriptions updated and applied"
+msgstr "订阅已更新并应用"
 
 msgid "Section"
 msgstr "区块"

@@ -15,9 +15,13 @@ daed_cleanup_runtime() {
 	fi
 
 	if ! ip netns del daens 2>/dev/null; then
-		umount /run/netns/daens 2>/dev/null
+		umount -l /run/netns/daens 2>/dev/null
 		rm -f /run/netns/daens
 	fi
 
 	ip link del dae0 2>/dev/null || true
+
+	[ ! -e /run/netns/daens ] || return 1
+	! ip netns list 2>/dev/null | awk '$1 == "daens" { found=1 } END { exit !found }' || return 1
+	! ip link show dae0 >/dev/null 2>&1 || return 1
 }

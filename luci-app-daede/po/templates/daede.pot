@@ -388,6 +388,18 @@ msgstr ""
 msgid "Download"
 msgstr ""
 
+msgid "Stop daed"
+msgstr ""
+
+msgid "Stop daed now?"
+msgstr ""
+
+msgid "daed stopped"
+msgstr ""
+
+msgid "Failed to stop daed: %s"
+msgstr ""
+
 #: dae.js
 msgid "One node share link per line — ss, vmess, vless, trojan, tuic, hysteria2, socks5."
 msgstr ""
@@ -462,6 +474,9 @@ msgstr ""
 
 #: dae.js
 msgid "Subscriptions updated (dae reloaded)"
+msgstr ""
+
+msgid "Subscriptions updated and applied"
 msgstr ""
 
 #: dae.js

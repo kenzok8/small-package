@@ -53,11 +53,11 @@ check_run_environment() {
 		if [ "$USE_TABLES" = "iptables" ]; then
 			dep_list="iptables-mod-tproxy iptables-mod-socket iptables-mod-iprange iptables-mod-conntrack-extra kmod-ipt-nat"
 		else
-			dep_list="kmod-nft-socket kmod-nft-tproxy kmod-nft-nat"
+			dep_list="kmod-nft-socket kmod-nft-tproxy kmod-nft-nat kmod-nf-reject kmod-nf-reject6"
 			nftflag=1
 			local v_num=$(echo "$dnsmasq_ver" | tr -cd '0-9')
-			if [ "${v_num:-0}" -lt 290 ]; then
-				echolog "提示：Dnsmasq ($dnsmasq_ver) 低于 2.90，建议升级以增强稳定性。"
+			if [ "${v_num:-0}" -lt 292 ]; then
+				echolog "提示：Dnsmasq ($dnsmasq_ver) 低于 2.92，建议升级以增强稳定性。"
 			fi
 		fi
 		local pkg

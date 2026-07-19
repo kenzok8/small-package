@@ -1,0 +1,51 @@
+From: kenzok8 <kenzok8@noreply>
+Date: 2026-07-19
+Subject: [PATCH] daed: bound startup network wait
+
+Purge stale dae filters before probing the network and stop waiting after 60
+seconds so the dashboard remains available for recovery.
+---
+--- a/dae/utils.go
++++ b/dae/utils.go
+@@ -97 +97 @@
+-func WaitForNetwork(log *logrus.Logger) {
++func WaitForNetwork(log *logrus.Logger) error {
+@@ -98,0 +99 @@
++	deadline := time.Now().Add(60 * time.Second)
+@@ -117,0 +119,3 @@
++		if time.Now().After(deadline) {
++			return fmt.Errorf("network unavailable after 60 seconds")
++		}
+@@ -136,0 +141 @@
++	return nil
+--- a/dae/run.go
++++ b/dae/run.go
+@@ -35 +35,2 @@
+-var onceWaitingNetwork sync.Once
++var waitingNetworkMu sync.Mutex
++var networkReady bool
+@@ -54,0 +56,13 @@
++func waitForNetwork(log *logrus.Logger) error {
++	waitingNetworkMu.Lock()
++	defer waitingNetworkMu.Unlock()
++	if networkReady {
++		return nil
++	}
++	if err := WaitForNetwork(log); err != nil {
++		return err
++	}
++	networkReady = true
++	return nil
++}
++
+@@ -223,0 +238,3 @@
++	if bpf == nil {
++		control.PurgeStaleTCFilters(log)
++	}
+@@ -231,3 +248,3 @@
+-		onceWaitingNetwork.Do(func() {
+-			WaitForNetwork(log)
+-		})
++		if err = waitForNetwork(log); err != nil {
++			return nil, err
++		}

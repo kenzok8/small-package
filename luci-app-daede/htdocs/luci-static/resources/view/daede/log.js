@@ -9,6 +9,14 @@
 
 const MAX_LINES = 5000;
 
+function execChecked(command, args) {
+	return fs.exec(command, args || []).then(function(res) {
+		if (res && res.code !== 0)
+			throw new Error((res.stderr || res.stdout || ('exit ' + res.code)).trim());
+		return res;
+	});
+}
+
 const CSS = [
 	'.dd-log-wrap{padding:4px 0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}',
 	'.dd-log-card{border:1px solid rgba(0,0,0,.06);border-radius:10px;padding:10px 14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.03);background:rgba(255,255,255,.02)}',
@@ -20,6 +28,7 @@ const CSS = [
 	'.dd-log-toolbar input[type="text"]{font-size:11.5px;padding:4px 8px;border-radius:5px;border:1px solid rgba(128,128,128,.28);background:transparent;color:inherit;min-width:160px}',
 	'.dd-log-toolbar .dd-log-btn{font-size:11.5px;line-height:1.4;min-height:0;height:auto;padding:4px 12px;border-radius:5px;border:1px solid rgba(128,128,128,.28);background:transparent;color:inherit;cursor:pointer}',
 	'.dd-log-toolbar .dd-log-btn:hover{background:rgba(128,128,128,.1)}',
+	'.dd-log-toolbar .dd-log-stop{color:#d9534f;border-color:rgba(217,83,79,.45)}',
 	'.dd-log-toolbar .dd-log-meta{margin-left:auto;font-size:10.5px;opacity:.55;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}',
 	'.dd-log-pane{height:60vh;min-height:360px;overflow:auto;padding:8px 10px;border:1px solid rgba(0,0,0,.08);border-radius:7px;background:#1a1d21;color:#d8dde6;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-size:11.5px;line-height:1.55;white-space:pre-wrap;word-break:break-all}',
 	'.dd-log-pane .dd-line{padding:1px 4px;border-radius:3px;display:block}',
@@ -192,6 +201,25 @@ return view.extend({
 			}).catch(function() {});
 		});
 
+		let btnStop = null;
+		if (ctx.name === 'daed') {
+			btnStop = E('button', { 'class': 'dd-log-btn dd-log-stop' }, _('Stop daed'));
+			btnStop.addEventListener('click', function() {
+				if (!confirm(_('Stop daed now?')))
+					return;
+				btnStop.disabled = true;
+				execChecked('/sbin/uci', ['set', 'daed.config.enabled=0'])
+					.then(function() { return execChecked('/sbin/uci', ['commit', 'daed']); })
+					.then(function() { return execChecked('/etc/init.d/daed', ['disable']); })
+					.then(function() { return execChecked('/etc/init.d/daed', ['stop']); })
+					.then(function() { btnStop.textContent = _('daed stopped'); })
+					.catch(function(e) {
+						btnStop.disabled = false;
+						ui.addNotification(null, E('p', {}, _('Failed to stop daed: %s').format(e.message || e)), 'error');
+					});
+			});
+		}
+
 		function applyFilter() {
 			const f = state.filter;
 			pane.querySelectorAll('.dd-line').forEach(function(el) {
@@ -281,15 +309,17 @@ return view.extend({
 		poll.add(tick);
 		tick();
 
-		const toolbar = E('div', { 'class': 'dd-log-toolbar' }, [
+		const toolbarItems = [
 			E('label', {}, [ cbAuto, _('Auto-scroll') ]),
 			E('label', {}, [ cbPause, _('Pause') ]),
 			selFilter,
 			btnClear,
 			btnDownload,
-			btnTruncate,
-			meta
-		]);
+			btnTruncate
+		];
+		if (btnStop) toolbarItems.push(btnStop);
+		toolbarItems.push(meta);
+		const toolbar = E('div', { 'class': 'dd-log-toolbar' }, toolbarItems);
 
 		return E('div', { 'class': 'dd-log-wrap' }, [
 			E('style', {}, CSS),

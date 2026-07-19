@@ -99,7 +99,7 @@ function renderDaedSettings() {
 					const err = (res.stderr || res.stdout || ('exit ' + res.code)).trim().split('\n')[0];
 					flash(_('Subscription update failed: %s').format(err), 'err', 9000);
 				} else {
-					flash(_('Subscriptions updated (daed restarted)'), 'ok');
+					flash(_('Subscriptions updated and applied'), 'ok');
 				}
 			}).catch(function(e) {
 				flash(_('Subscription update failed: %s').format(e.message || e), 'err', 9000);

@@ -121,9 +121,12 @@ if [ "$fail" -ne 0 ]; then
 fi
 
 if [ "$count" -gt 0 ] && [ "$ok" -gt 0 ] && /bin/pidof daed >/dev/null 2>&1; then
-	log "restarting daed to apply updated subscriptions"
-	if ! /etc/init.d/daed restart >>"$LOG" 2>&1; then
-		fail 8 "daed restart failed after subscription update"
+	run_body="$TMPDIR/run.json"
+	run_resp="$TMPDIR/run.out"
+	printf '{"query":"mutation Run($dry:Boolean!){run(dry:$dry)}","variables":{"dry":false}}' > "$run_body"
+	log "applying updated subscriptions"
+	if ! post_graphql "$run_body" "$run_resp" "$token" || grep -q '"errors"' "$run_resp"; then
+		fail 8 "failed to apply updated subscriptions: $(cat "$run_resp" 2>/dev/null)"
 	fi
 fi
 
