@@ -385,7 +385,8 @@ export function parseListener(cfg) {
 						],
 					} : { password: cfg.plugin_opts_thetlspassword }),
 					handshake: {
-						dest: cfg.plugin_opts_handshake_dest
+						dest: cfg.plugin_opts_handshake_dest,
+						proxy: cfg.plugin_opts_dest_proxy // raw data need post-processing
 					}
 				}
 			} : cfg.plugin_type === 'restls' ? {

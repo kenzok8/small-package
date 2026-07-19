@@ -58,7 +58,7 @@ migrate() {
 	fi
 
 	# plugin -> plugin_type
-	if isDefined "$1" plugin; then
+	if isDefined "$1" plugin && ! isDefined "$1" plugin_type; then
 		local plugin
 		config_get plugin "$1" plugin ""
 		uci_set "$CONF" "$1" plugin "1"
