@@ -52,9 +52,6 @@ set -- -4 -L --max-time 5 --connect-timeout 3 -s -o /dev/null -w '%{http_code} %
 if [ "$mode" = "direct" ]; then
 	# 强制不走任何代理，避免误读 http_proxy 环境变量
 	set -- "$@" --noproxy '*'
-	# 尝试固定 WAN 出口并使用真实 DNS 结果，降低 Fake-IP/透明链干扰
-	wan_dev="$(ip route get 223.5.5.5 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="dev"){print $(i+1); exit}}')"
-	[ -n "$wan_dev" ] && set -- "$@" --interface "$wan_dev"
 	host="$(url_host "$url")"
 	port="$(url_port "$url")"
 	real_ip="$(resolve_real_ip "$host")"
