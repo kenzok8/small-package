@@ -5,7 +5,7 @@ PKG_SHORT_SHA:=05b5334
 PKG_COMMIT_DATE:=2026.07.20
 
 PKG_VERSION:=$(PKG_COMMIT_DATE)~$(PKG_SHORT_SHA)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA)
@@ -80,13 +80,13 @@ endef
 
 define Package/clashoo/postinst
 #!/bin/sh
-if [ -z "${IPKG_INSTROOT}" ]; then
+if [ -z "$${IPKG_INSTROOT}" ]; then
 	[ -x /usr/bin/mihomo ] && [ ! -x /usr/bin/clash-meta ] && ln -sf /usr/bin/mihomo /usr/bin/clash-meta
 	rm -f /usr/share/clashoo/check_luci_version.sh /usr/share/clashoo/check_clash_meta_version.sh /usr/share/clashoo/check_mihomo_core_version.sh
 	rm -f /usr/share/clashoo/cuslist.sh /usr/share/clashoo/groups.sh /usr/share/clashoo/load_groups.sh /usr/share/clashoo/panel_diag.sh
 	rm -f /usr/share/clashoo/rmlist.sh /usr/share/clashoo/uplist.sh /usr/share/clashoo/rpc_restart_async.sh /usr/share/clashoo/rpc_update_china_ip_async.sh
 	rm -rf /usr/share/clashoo/create
-	if [ "$(uci -q get clashoo.config.enable 2>/dev/null)" = "1" ]; then
+	if [ "$$(uci -q get clashoo.config.enable 2>/dev/null)" = "1" ]; then
 		/etc/init.d/clashoo enable 2>/dev/null || true
 	else
 		/etc/init.d/clashoo disable 2>/dev/null || true
