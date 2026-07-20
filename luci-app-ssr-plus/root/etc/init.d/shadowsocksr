@@ -2028,68 +2028,68 @@ Start_Run() {
 		ln_start_bin "$mihomo_bin" ssr-retcp -d "$tuic_workdir" -f "$tuic_workdir/config.yaml"
 		echolog "Main node:Mihomo (TUIC) Started!"
 		;;
-		shadowtls)
-			if [ -z "$socks_port" ]; then
-				gen_config_file $GLOBAL_SERVER $type 1 "10${tmp_tcp_local_port}"
-				gen_config_file $GLOBAL_SERVER $type 1 "10${tmp_tcp_local_port}" 0 chain
+	shadowtls)
+		if [ -z "$socks_port" ]; then
+			gen_config_file $GLOBAL_SERVER $type 1 "10${tmp_tcp_local_port}"
+			gen_config_file $GLOBAL_SERVER $type 1 "10${tmp_tcp_local_port}" 0 chain
+		else
+			gen_config_file $GLOBAL_SERVER $type 1 "10${tmp_tcp_local_port}"
+			gen_config_file $GLOBAL_SERVER $type 1 "10${tmp_tcp_local_port}" $socks_port chain
+		fi
+		local chain_type=$(uci_get_by_name $GLOBAL_SERVER chain_type)
+		case ${chain_type} in
+		vmess)
+			local enable_mihomo=$(uci_get_by_type server_subscribe enable_mihomo "")
+			ln_start_bin $(first_type shadow-tls) shadow-tls config --config $chain_config_file
+			if [ "$enable_mihomo" = "1" ] && start_v2ray_with_mihomo "$GLOBAL_SERVER" "$tcp_port" "$socks_port" "${GLOBAL_SERVER}-shadowtls" "redir" "shadowtls-vmess" "Main node:shadow-tls chain-to"; then
+				:
 			else
-				gen_config_file $GLOBAL_SERVER $type 1 "10${tmp_tcp_local_port}"
-				gen_config_file $GLOBAL_SERVER $type 1 "10${tmp_tcp_local_port}" $socks_port chain
-			fi
-			local chain_type=$(uci_get_by_name $GLOBAL_SERVER chain_type)
-			case ${chain_type} in
-			vmess)
-				local enable_mihomo=$(uci_get_by_type server_subscribe enable_mihomo "")
-				ln_start_bin $(first_type shadow-tls) shadow-tls config --config $chain_config_file
-				if [ "$enable_mihomo" = "1" ] && start_v2ray_with_mihomo "$GLOBAL_SERVER" "$tcp_port" "$socks_port" "${GLOBAL_SERVER}-shadowtls" "redir" "shadowtls-vmess" "Main node:shadow-tls chain-to"; then
-					:
+				# enable_mihomo=0 或 Mihomo 启动失败 → 尝试 Xray
+				local xray_bin="$(first_type xray)"
+				if [ -n "$xray_bin" ]; then
+					ln_start_bin $(first_type xray) v2ray run -c $tcp_config_file
+					echolog "Mian node:shadow-tls chain-to $($(first_type xray) --version) Started!"
 				else
-					# enable_mihomo=0 或 Mihomo 启动失败 → 尝试 Xray
-					local xray_bin="$(first_type xray)"
-					if [ -n "$xray_bin" ]; then
-						ln_start_bin $(first_type xray) v2ray run -c $tcp_config_file
-						echolog "Mian node:shadow-tls chain-to $($(first_type xray) --version) Started!"
+					# Xray 不存在但 Mihomo 存在，回退到 Mihomo（当 enable_mihomo=0 时）
+					if start_v2ray_with_mihomo "$GLOBAL_SERVER" "$tcp_port" "$socks_port" "${GLOBAL_SERVER}-shadowtls" "redir" "shadowtls-vmess" "Main node:shadow-tls chain-to"; then
+						echolog "Main node:shadow-tls chain-to Xray 内核不存在，已回退到 Mihomo 内核启动。"
 					else
-						# Xray 不存在但 Mihomo 存在，回退到 Mihomo（当 enable_mihomo=0 时）
-						if start_v2ray_with_mihomo "$GLOBAL_SERVER" "$tcp_port" "$socks_port" "${GLOBAL_SERVER}-shadowtls" "redir" "shadowtls-vmess" "Main node:shadow-tls chain-to"; then
-							echolog "Main node:shadow-tls chain-to Xray 内核不存在，已回退到 Mihomo 内核启动。"
-						else
-							echolog "Main node:shadow-tls chain-to Xray 和 Mihomo 内核均不存在，无法启动。"
-							return 1
-						fi
+						echolog "Main node:shadow-tls chain-to Xray 和 Mihomo 内核均不存在，无法启动。"
+						return 1
 					fi
 				fi
-				;;
-			sslocal)
-				ln_start_bin $(first_type shadow-tls) shadow-tls config --config $chain_config_file
-				ln_start_bin $(first_type sslocal) sslocal -c $tcp_config_file
-				echolog "Main node:shadow-tls chain-to $($(first_type sslocal) --version) Started!"
-				;;
-			esac
-			;;
-		clash)
-			local clash_socks_port=0
-			local mihomo_bin="$(first_type mihomo)"
-			clash_socks_port="$(resolve_global_clash_socks_port)"
-			if [ -z "$clash_socks_port" ] && [ "$_local" == "1" ] && [ "$LOCAL_SERVER" = "$GLOBAL_SERVER" ]; then
-				clash_socks_port=$(uci_get_by_type socks5_proxy local_port 1080)
 			fi
-			[ -x "$mihomo_bin" ] || {
-				echolog "Main node:Mihomo 内核不存在，请确认 /usr/bin/mihomo 或 /usr/libexec/mihomo 可执行。"
-				return 1
-			}
-			download_clash_config "$GLOBAL_SERVER" || {
-				echolog "Main node:Clash 配置不可用，启动中止。"
-				return 1
-			}
-			prepare_clash_runtime_config "$GLOBAL_SERVER" "$tcp_port" "$clash_socks_port" || {
-				echolog "Main node:Clash 运行配置生成失败，启动中止。"
-				return 1
-			}
-			local clash_workdir="$(get_clash_workdir "$GLOBAL_SERVER")"
-			ln_start_bin "$mihomo_bin" ssr-retcp -d "$clash_workdir" -f "$clash_workdir/config.yaml"
-			echolog "Main node:Mihomo (Clash) Started!"
 			;;
+		sslocal)
+			ln_start_bin $(first_type shadow-tls) shadow-tls config --config $chain_config_file
+			ln_start_bin $(first_type sslocal) sslocal -c $tcp_config_file
+			echolog "Main node:shadow-tls chain-to $($(first_type sslocal) --version) Started!"
+			;;
+		esac
+		;;
+	clash)
+		local clash_socks_port=0
+		local mihomo_bin="$(first_type mihomo)"
+		clash_socks_port="$(resolve_global_clash_socks_port)"
+		if [ -z "$clash_socks_port" ] && [ "$_local" == "1" ] && [ "$LOCAL_SERVER" = "$GLOBAL_SERVER" ]; then
+			clash_socks_port=$(uci_get_by_type socks5_proxy local_port 1080)
+		fi
+		[ -x "$mihomo_bin" ] || {
+			echolog "Main node:Mihomo 内核不存在，请确认 /usr/bin/mihomo 或 /usr/libexec/mihomo 可执行。"
+			return 1
+		}
+		download_clash_config "$GLOBAL_SERVER" || {
+			echolog "Main node:Clash 配置不可用，启动中止。"
+			return 1
+		}
+		prepare_clash_runtime_config "$GLOBAL_SERVER" "$tcp_port" "$clash_socks_port" || {
+			echolog "Main node:Clash 运行配置生成失败，启动中止。"
+			return 1
+		}
+		local clash_workdir="$(get_clash_workdir "$GLOBAL_SERVER")"
+		ln_start_bin "$mihomo_bin" ssr-retcp -d "$clash_workdir" -f "$clash_workdir/config.yaml"
+		echolog "Main node: $($mihomo_bin -v 2>&1 | head -1 | awk '{print $1, $3}') (Clash) Started!"
+		;;
 	socks5)
 		if start_socks5_redir_with_ipt2socks "$GLOBAL_SERVER" "$tcp_port" "$threads"; then
 			:

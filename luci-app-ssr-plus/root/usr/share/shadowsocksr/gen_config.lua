@@ -481,7 +481,7 @@ Xray.outbounds = {
 		tag = (remarks ~= nil and remarks ~= "") and (node_id .. ":" .. remarks) or node_id,
 		-- 底层传输配置
 		streamSettings = (server.v2ray_protocol ~= "wireguard") and {
-			network = (server.v2ray_protocol == "hysteria2") and "hysteria" or (server.transport or "raw"),
+			[(xray_version_val >= 260711) and "method" or "network"] = (server.v2ray_protocol == "hysteria2") and "hysteria" or (server.transport or "raw"),
 			security = (server.xtls == '1') and "xtls" or (server.tls == '1') and "tls" or (server.reality == '1') and "reality" or nil,
 			tlsSettings = (server.tls == '1') and {
 				-- tls
