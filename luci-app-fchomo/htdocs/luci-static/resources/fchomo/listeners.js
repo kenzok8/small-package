@@ -161,14 +161,14 @@ function renderListeners(s, uciconfig, isClient) {
 	/* hm.validateAuth */
 	o = s.taboption('field_general', form.Value, 'username', _('Username'));
 	o.validate = hm.validateAuthUsername;
-	o.depends({type: /^(http|socks|mixed|mieru|trojan|anytls|hysteria2|shadowquic|trusttunnel)$/});
+	o.depends({type: /^(http|socks|mixed|mieru|trojan|anytls|hysteria2|trusttunnel)$/});
 	o.modalonly = true;
 
 	o = s.taboption('field_general', hm.GenValue, 'password', _('Password'));
 	o.password = true;
 	o.validate = hm.validateAuthPassword;
 	o.rmempty = false;
-	o.depends({type: /^(http|socks|mixed|mieru|trojan|anytls|hysteria2|shadowquic|trusttunnel)$/, username: /.+/});
+	o.depends({type: /^(http|socks|mixed|mieru|trojan|anytls|hysteria2|trusttunnel)$/, username: /.+/});
 	o.depends({type: /^(tuic)$/, uuid: /.+/});
 	o.modalonly = true;
 
@@ -724,12 +724,14 @@ function renderListeners(s, uciconfig, isClient) {
 	o.validate = hm.validateAuthUsername;
 	o.rmempty = false;
 	o.depends({plugin_type: 'jls'});
+	o.depends({type: 'shadowquic'});
 	o.modalonly = true;
 
 	o = s.taboption('field_plugin', hm.GenValue, 'plugin_opts_thetlspassword', _('Password'));
 	o.password = true;
 	o.rmempty = false;
 	o.depends({plugin_type: /^(shadow-tls|restls|jls)$/});
+	o.depends({type: 'shadowquic'});
 	o.modalonly = true;
 
 	o = s.taboption('field_plugin', form.ListValue, 'plugin_opts_shadowtls_version', _('Version'));

@@ -222,10 +222,10 @@ export function parseListener(cfg) {
 		rule: cfg.rule,
 		proxy: cfg.proxy, // raw data need post-processing
 
-		/* HTTP / SOCKS / Mieru / VMess / VLESS / Trojan / AnyTLS / Tuic / Hysteria2 / ShadowQUIC / TrustTunnel */
-		users: (cfg.type in ['http', 'socks', 'mixed', 'vmess', 'vless', 'trojan', 'shadowquic', 'trusttunnel']) ? [
+		/* HTTP / SOCKS / Mieru / VMess / VLESS / Trojan / AnyTLS / Tuic / Hysteria2 / TrustTunnel */
+		users: (cfg.type in ['http', 'socks', 'mixed', 'vmess', 'vless', 'trojan', 'trusttunnel']) ? [
 			(cfg.username || cfg.vmess_uuid) ? {
-				/* HTTP / SOCKS / Trojan / ShadowQUIC / TrustTunnel */
+				/* HTTP / SOCKS / Trojan / TrustTunnel */
 				username: cfg.username,
 				password: cfg.password,
 
@@ -326,6 +326,14 @@ export function parseListener(cfg) {
 		"realm-name-pattern": cfg.hysteria2_realmserver_realm_name_pattern,
 
 		/* ShadowQUIC */
+		...(cfg.type === 'shadowquic' ? {
+			users: [
+				{
+					username: cfg.plugin_opts_thetlsusername,
+					password: cfg.plugin_opts_thetlspassword
+				}
+			]
+		} : {}),
 		"quic-versions": cfg.shadowquic_quic_versions,
 		"zero-rtt": strToBool(cfg.shadowquic_zero_rtt),
 		"jls-upstream": cfg.type === 'shadowquic' ? {
