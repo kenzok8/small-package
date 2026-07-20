@@ -545,8 +545,7 @@ function renderListeners(s, uciconfig, isClient) {
 	/* ShadowQUIC fields */
 	o = s.taboption('field_general', form.DynamicList, 'shadowquic_quic_versions', _('QUIC versions'),
 		_('Default version, Support %s.').format('v1/v2'));
-	o.default = 'v1';
-	o.rmempty = false;
+	o.placeholder = 'v1';
 	o.depends('type', 'shadowquic');
 	o.modalonly = true;
 

@@ -57,4 +57,11 @@ uci.foreach(uciconf, uciserver, (cfg) => {
 });
 /* Inbound END */
 
+/* Routing rules START */
+/* Routing rules */
+config.rules = [
+	"MATCH,DIRECT"
+];
+/* Routing rules END */
+
 printf('%.J\n', removeBlankAttrs(config));

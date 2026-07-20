@@ -720,8 +720,7 @@ return view.extend({
 		/* ShadowQUIC fields */
 		so = ss.taboption('field_general', form.DynamicList, 'shadowquic_quic_versions', _('QUIC versions'),
 			_('Support %s, default %s.').format('v1/v2', 'v1'));
-		so.default = 'v1';
-		so.rmempty = false;
+		so.placeholder = 'v1';
 		so.depends('type', 'shadowquic');
 		so.modalonly = true;
 
