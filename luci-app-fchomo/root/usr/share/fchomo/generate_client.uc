@@ -604,11 +604,11 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		/* ShadowQUIC */
 		"quic-versions": cfg.shadowquic_quic_versions,
 		"zero-rtt": strToBool(cfg.shadowquic_zero_rtt),
-		// @# cwnd: 10 # default: 32,
-		// @# max-datagram-frame-size: 1400,
-		// @# recv-window-conn: 0,
-		// @# recv-window: 0,
-		// @# disable-mtu-discovery: false,
+		cwnd: strToInt(cfg.shadowquic_cwnd),
+		"max-datagram-frame-size": strToInt(cfg.shadowquic_max_datagram_frame_size),
+		"recv-window-conn": strToInt(cfg.shadowquic_recv_window_conn),
+		"recv-window": strToInt(cfg.shadowquic_recv_window),
+		"disable-mtu-discovery": cfg.shadowquic_mtu_discovery === '0' ? true : null,
 
 		/* TrustTunnel */
 		"health-check": cfg.type === 'trusttunnel' ? (cfg.trusttunnel_health_check === '0' ? false : true) : null,
@@ -644,6 +644,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		/* Plugin fields */
 		...(cfg.plugin === '1' ? (
 			cfg.type in ['vmess', 'vless', 'trojan', 'anytls'] ? {
+				tls: true,
 				...arrToObj([[(cfg.type in ['vmess', 'vless']) ? 'servername' : 'sni', cfg.plugin_opts_host]]),
 				// shadow-tls
 				"shadow-tls-opts": cfg.plugin_type === 'shadow-tls' ? {
@@ -681,11 +682,11 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 
 		/* SSH / WireGuard / Masque */
 		/* TLS fields */
-		tls: (cfg.type in ['trojan', 'anytls', 'tuic', 'hysteria', 'hysteria2', 'shadowquic', 'trusttunnel', 'masque']) ? null : strToBool(cfg.tls),
+		...(strToBool(cfg.tls) ? {tls: cfg.type in ['trojan', 'anytls', 'tuic', 'hysteria', 'hysteria2', 'shadowquic', 'trusttunnel', 'masque'] ? null : true} : {}),
 		"disable-sni": strToBool(cfg.tls_disable_sni),
 		...(cfg.tls_sni ? arrToObj([[(cfg.type in ['vmess', 'vless']) ? 'servername' : 'sni', cfg.tls_sni]]) : {}),
 		fingerprint: cfg.tls_fingerprint,
-		alpn: cfg.tls === '1' ? cfg.tls_alpn : null, // Array
+		alpn: strToBool(cfg.tls) ? cfg.tls_alpn : null, // Array
 		"name-cert-verify": cfg.tls_name_cert_verify,
 		"skip-cert-verify": strToBool(cfg.tls_skip_cert_verify),
 		certificate: cfg.tls_cert_path, // mTLS
