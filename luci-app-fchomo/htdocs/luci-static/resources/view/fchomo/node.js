@@ -304,13 +304,13 @@ return view.extend({
 		/* hm.validateAuth */
 		so = ss.taboption('field_general', form.Value, 'username', _('Username'));
 		so.validate = hm.validateAuthUsername;
-		so.depends({type: /^(http|socks5|mieru|shadowquic|trusttunnel|ssh)$/});
+		so.depends({type: /^(http|socks5|mieru|trusttunnel|ssh)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Value, 'password', _('Password'));
 		so.password = true;
 		so.validate = hm.validateAuthPassword;
-		so.depends({type: /^(http|socks5|mieru|trojan|anytls|tuic|hysteria2|shadowquic|trusttunnel|ssh)$/});
+		so.depends({type: /^(http|socks5|mieru|trojan|anytls|tuic|hysteria2|trusttunnel|ssh)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', hm.TextValue, 'headers', _('HTTP header'));
@@ -1040,18 +1040,21 @@ return view.extend({
 		so.placeholder = 'cloud.tencent.com';
 		so.rmempty = false;
 		so.depends({plugin_type: /^(obfs|v2ray-plugin|shadow-tls|restls|jls)$/});
+		so.depends('type', 'shadowquic');
 		so.modalonly = true;
 
 		so = ss.taboption('field_plugin', form.Value, 'plugin_opts_thetlsusername', _('Username'));
 		so.validate = hm.validateAuthUsername;
 		so.rmempty = false;
 		so.depends({plugin_type: 'jls'});
+		so.depends('type', 'shadowquic');
 		so.modalonly = true;
 
 		so = ss.taboption('field_plugin', form.Value, 'plugin_opts_thetlspassword', _('Password'));
 		so.password = true;
 		so.rmempty = false;
 		so.depends({plugin_type: /^(shadow-tls|restls|jls)$/});
+		so.depends('type', 'shadowquic');
 		so.modalonly = true;
 
 		so = ss.taboption('field_plugin', form.ListValue, 'plugin_opts_shadowtls_version', _('Version'));
@@ -1205,7 +1208,7 @@ return view.extend({
 
 		so = ss.taboption('field_tls', form.Value, 'tls_sni', _('TLS SNI'),
 			_('Hostname that the client attempts to connect to at the start of the TLS handshake process.'));
-		so.depends({tls: '1', type: /^(http|vmess|vless|trojan|anytls|hysteria|hysteria2|shadowquic|trusttunnel|masque)$/});
+		so.depends({tls: '1', type: /^(http|vmess|vless|trojan|anytls|hysteria|hysteria2|trusttunnel|masque)$/});
 		so.depends({tls: '1', type: /^(tuic)$/, tls_disable_sni: '0'});
 		so.modalonly = true;
 
