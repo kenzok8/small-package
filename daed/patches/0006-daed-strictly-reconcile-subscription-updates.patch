@@ -1,0 +1,619 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: kenzok8 <kenzok8@gmail.com>
+Date: Tue, 21 Jul 2026 02:53:42 +0800
+Subject: [PATCH] daed: strictly reconcile subscription updates
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+订阅更新按节点链接精确对账，普通组里的失效节点删除，fixed 组固定节点转成独立节点保留。
+
+数据库提交后按运行状态应用配置，补齐并发地址校验、导入失败回滚和 reload 超时恢复。
+---
+ cmd/run.go                                    |   6 +-
+ graphql/mutation.go                           |   9 +-
+ graphql/root_schema.go                        |   2 +-
+ graphql/service/config/mutation_utils.go      |  59 ++++-
+ .../service/subscription/mutation_utils.go    | 181 +++++++++++----
+ .../subscription/mutation_utils_test.go       | 212 ++++++++++++++++++
+ 6 files changed, 408 insertions(+), 61 deletions(-)
+ create mode 100644 graphql/service/subscription/mutation_utils_test.go
+
+diff --git a/cmd/run.go b/cmd/run.go
+index 7dce577..978f46c 100644
+--- a/cmd/run.go
++++ b/cmd/run.go
+@@ -161,11 +161,8 @@ func restoreRunningState() (err error) {
+ 	if !reload {
+ 		return nil
+ 	}
+-	tx := db.BeginTx(context.TODO())
+ 	// Reload.
+-	if _, err = config.Run(tx, false); err != nil {
+-		tx.Rollback()
+-
++	if _, err = config.Run(context.TODO(), false); err != nil {
+ 		// Another tx.
+ 		// Set running = false.
+ 		tx2 := db.BeginTx(context.TODO())
+@@ -183,7 +180,6 @@ func restoreRunningState() (err error) {
+ 		tx2.Commit()
+ 		return err
+ 	}
+-	tx.Commit()
+ 	return nil
+ }
+ 
+diff --git a/graphql/mutation.go b/graphql/mutation.go
+index fcbf440..adb747c 100644
+--- a/graphql/mutation.go
++++ b/graphql/mutation.go
+@@ -256,14 +256,7 @@ func (r *MutationResolver) SelectConfig(args *struct {
+ func (r *MutationResolver) Run(args *struct {
+ 	Dry bool
+ }) (int32, error) {
+-	tx := db.BeginTx(context.TODO())
+-	ret, err := config.Run(tx, args.Dry)
+-	if err != nil {
+-		tx.Rollback()
+-		return 0, err
+-	}
+-	tx.Commit()
+-	return ret, nil
++	return config.Run(context.TODO(), args.Dry)
+ }
+ 
+ func (r *MutationResolver) CreateDns(args *struct {
+diff --git a/graphql/root_schema.go b/graphql/root_schema.go
+index 8b82db6..a96cace 100644
+--- a/graphql/root_schema.go
++++ b/graphql/root_schema.go
+@@ -121,7 +121,7 @@ type Mutation {
+ 	# tagSubscription is to give the subscription a new tag.
+ 	tagSubscription(id: ID!, tag: String!): Int! @hasRole(role: ADMIN)
+ 
+-	# updateSubscription is to re-fetch subscription and resolve subscription into nodes. Old nodes that independently belong to any groups will not be removed.
++	# updateSubscription re-fetches and strictly reconciles subscription nodes. Stale nodes pinned by fixed groups become independent nodes.
+ 	updateSubscription(id: ID!): Subscription! @hasRole(role: ADMIN)
+ 
+ 	# updateSubscriptionLink is to update the subscription link without re-fetching nodes.
+diff --git a/graphql/service/config/mutation_utils.go b/graphql/service/config/mutation_utils.go
+index fd61554..feb94d3 100644
+--- a/graphql/service/config/mutation_utils.go
++++ b/graphql/service/config/mutation_utils.go
+@@ -21,6 +21,7 @@ import (
+ 	"github.com/daeuniverse/dae-wing/dae"
+ 	"github.com/daeuniverse/dae-wing/db"
+ 	"github.com/daeuniverse/dae-wing/graphql/service/config/global"
++	"github.com/daeuniverse/dae-wing/graphql/service/general"
+ 	daeConfig "github.com/daeuniverse/dae/config"
+ 	"github.com/daeuniverse/dae/pkg/config_parser"
+ 	"github.com/graph-gophers/graphql-go"
+@@ -269,21 +270,69 @@ func restartAfterReloadTimeout() {
+ 	}()
+ }
+ 
+-func Run(d *gorm.DB, noLoad bool) (n int32, err error) {
++func runTransaction(ctx context.Context, noLoad bool) (n int32, err error) {
++	tx := db.BeginTx(ctx)
++	if tx.Error != nil {
++		return 0, tx.Error
++	}
++	n, err = runLocked(tx, noLoad)
++	if err != nil {
++		tx.Rollback()
++		return 0, err
++	}
++	if err = tx.Commit().Error; err != nil {
++		return 0, err
++	}
++	return n, nil
++}
++
++func Run(ctx context.Context, noLoad bool) (n int32, err error) {
+ 	if ok := runLock.TryLock(); !ok {
+ 		return 0, fmt.Errorf("the last request didn't complete; make a cup of tea and take a break")
+ 	}
+ 	defer runLock.Unlock()
++	return runTransaction(ctx, noLoad)
++}
++
++func ApplyIfRunning(ctx context.Context) error {
++	runLock.Lock()
++	defer runLock.Unlock()
++
++	daeResolver := general.DaeResolver{Ctx: ctx}
++	running, err := daeResolver.Running()
++	if err != nil || !running {
++		return err
++	}
++	modified, err := daeResolver.Modified()
++	if err != nil || !modified {
++		return err
++	}
++	_, err = runTransaction(ctx, false)
++	return err
++}
++
++func runLocked(d *gorm.DB, noLoad bool) (n int32, err error) {
+ 	//// Dry run.
+ 	if noLoad {
+ 		ch := make(chan error)
+-		dae.ChReloadConfigs <- &dae.ReloadMessage{
++		reloadMsg := &dae.ReloadMessage{
+ 			Config:   dae.EmptyConfig,
+ 			Callback: ch,
+ 		}
+-		err = <-ch
+-		if err != nil {
+-			return 0, fmt.Errorf("failed to dryrun: %w; see more in log and report bugs", err)
++		select {
++		case dae.ChReloadConfigs <- reloadMsg:
++		case <-time.After(reloadWaitTimeout):
++			restartAfterReloadTimeout()
++			return 0, fmt.Errorf("failed to submit dryrun within %s; restarting daed to recover runtime", reloadWaitTimeout)
++		}
++		select {
++		case err = <-ch:
++			if err != nil {
++				return 0, fmt.Errorf("failed to dryrun: %w; see more in log and report bugs", err)
++			}
++		case <-time.After(reloadWaitTimeout):
++			restartAfterReloadTimeout()
++			return 0, fmt.Errorf("dryrun timed out after %s; restarting daed to recover runtime", reloadWaitTimeout)
+ 		}
+ 
+ 		// Running -> false
+diff --git a/graphql/service/subscription/mutation_utils.go b/graphql/service/subscription/mutation_utils.go
+index e55e65b..e01a342 100644
+--- a/graphql/service/subscription/mutation_utils.go
++++ b/graphql/service/subscription/mutation_utils.go
+@@ -18,6 +18,7 @@ import (
+ 	"github.com/daeuniverse/dae-wing/dae"
+ 	"github.com/daeuniverse/dae-wing/db"
+ 	"github.com/daeuniverse/dae-wing/graphql/internal"
++	"github.com/daeuniverse/dae-wing/graphql/service/config"
+ 	"github.com/daeuniverse/dae-wing/graphql/service/node"
+ 	"github.com/daeuniverse/dae/common/subscription"
+ 	"github.com/go-co-op/gocron"
+@@ -171,8 +172,9 @@ func AutoUpdateVersionByIds(d *gorm.DB, ids []uint) (err error) {
+ }
+ 
+ var (
+-	schedulerCache = make(map[uint]*gocron.Scheduler)
+-	schedulerMu    sync.RWMutex
++	schedulerCache       = make(map[uint]*gocron.Scheduler)
++	schedulerMu          sync.RWMutex
++	subscriptionUpdateMu sync.Mutex
+ )
+ 
+ func UpdateAll(ctx context.Context) {
+@@ -258,68 +260,161 @@ func Update(ctx context.Context, _id graphql.ID) (r *Resolver, err error) {
+ 	return &Resolver{Subscription: m}, nil
+ }
+ 
+-func UpdateById(ctx context.Context, subId uint) (sub *db.Subscription, err error) {
+-	// Fetch node links.
+-	var m db.Subscription
+-	if err = db.DB(ctx).Where(&db.Subscription{ID: subId}).First(&m).Error; err != nil {
+-		return nil, err
++func reconcileSubscriptionNodes(tx *gorm.DB, subId uint, links []string) error {
++	var existing []db.Node
++	if err := tx.Where("subscription_id = ?", subId).Find(&existing).Error; err != nil {
++		return err
+ 	}
+-	links, err := fetchLinks(m.Link)
+-	if err != nil {
+-		return nil, err
++
++	incoming := make(map[string]struct{}, len(links))
++	for _, link := range links {
++		incoming[link] = struct{}{}
+ 	}
+ 
+-	tx := db.BeginTx(ctx)
+-	defer func() {
+-		if err == nil {
+-			tx.Commit()
++	current := make(map[string]struct{}, len(existing))
++	var staleIds []uint
++	for _, n := range existing {
++		if _, ok := incoming[n.Link]; ok {
++			current[n.Link] = struct{}{}
++			continue
++		}
++		staleIds = append(staleIds, n.ID)
++	}
++
++	fixed := make(map[uint]struct{})
++	if len(staleIds) > 0 {
++		var fixedIds []uint
++		if err := tx.Table("group_nodes").
++			Distinct("group_nodes.node_id").
++			Joins("INNER JOIN groups ON groups.id = group_nodes.group_id").
++			Where("groups.policy = ?", "fixed").
++			Where("group_nodes.node_id IN ?", staleIds).
++			Pluck("group_nodes.node_id", &fixedIds).Error; err != nil {
++			return err
++		}
++		for _, id := range fixedIds {
++			fixed[id] = struct{}{}
++		}
++	}
++
++	var detachIds, deleteIds []uint
++	for _, id := range staleIds {
++		if _, ok := fixed[id]; ok {
++			detachIds = append(detachIds, id)
+ 		} else {
+-			tx.Rollback()
++			deleteIds = append(deleteIds, id)
++		}
++	}
++
++	if len(staleIds) > 0 {
++		if err := node.AutoUpdateVersionByIds(tx, staleIds); err != nil {
++			return err
++		}
++	}
++	if len(detachIds) > 0 {
++		if err := tx.Model(&db.Node{}).
++			Where("id IN ?", detachIds).
++			Update("subscription_id", nil).Error; err != nil {
++			return err
++		}
++	}
++	if len(deleteIds) > 0 {
++		if err := tx.Exec("DELETE FROM group_nodes WHERE node_id IN ?", deleteIds).Error; err != nil {
++			return err
++		}
++		if err := tx.Where("id IN ?", deleteIds).Delete(&db.Node{}).Error; err != nil {
++			return err
+ 		}
+-	}()
+-	// Remove those nodes whose subscription are independent from any groups.
+-	subQuery := tx.Raw(`select nodes.id as id
+-                from nodes
+-                inner join group_nodes on group_nodes.node_id = nodes.id
+-                where subscription_id = ?`, subId)
+-
+-	if err = tx.Where("subscription_id = ?", subId).
+-		Where("id not in (?)", subQuery).
+-		Select(clause.Associations).
+-		Delete(&db.Node{}).Error; err != nil {
+-		return nil, err
+ 	}
+-	// Import node links.
++
++	seen := make(map[string]struct{}, len(links))
+ 	var args []*internal.ImportArgument
+ 	for _, link := range links {
++		if _, ok := seen[link]; ok {
++			continue
++		}
++		seen[link] = struct{}{}
++		if _, ok := current[link]; ok {
++			continue
++		}
+ 		args = append(args, &internal.ImportArgument{Link: link})
+ 	}
+-	result, err := node.Import(tx, false, &subId, args)
++	result, err := node.Import(tx, true, &subId, args)
+ 	if err != nil {
+-		return nil, err
++		return errors.New("failed to import subscription node")
+ 	}
+-	hasAnyCandidate := false
+ 	for _, r := range result {
+-		if r.Error == nil {
+-			hasAnyCandidate = true
+-			break
++		if r.Error != nil {
++			return errors.New("failed to import subscription node")
+ 		}
+ 	}
+-	if !hasAnyCandidate {
+-		return nil, fmt.Errorf("interrupt to update subscription: no any valid node can be imported")
++
++	var count int64
++	if err := tx.Model(&db.Node{}).Where("subscription_id = ?", subId).Count(&count).Error; err != nil {
++		return err
+ 	}
+-	// Update updated_at and return the latest version.
+-	if err = tx.Model(&m).
++	if count == 0 {
++		return fmt.Errorf("interrupt to update subscription: no any valid node can be imported")
++	}
++	return nil
++}
++
++func updateSubscriptionTx(ctx context.Context, m *db.Subscription, subId uint, links []string) (err error) {
++	subscriptionUpdateMu.Lock()
++	defer subscriptionUpdateMu.Unlock()
++
++	tx := db.BeginTx(ctx)
++	if tx.Error != nil {
++		return tx.Error
++	}
++	defer func() {
++		if err != nil {
++			tx.Rollback()
++		}
++	}()
++	var current db.Subscription
++	if err = tx.Where(&db.Subscription{ID: subId}).First(&current).Error; err != nil {
++		return err
++	}
++	if current.Link != m.Link {
++		return fmt.Errorf("subscription changed during update; retry")
++	}
++	*m = current
++
++	if err = reconcileSubscriptionNodes(tx, subId, links); err != nil {
++		return err
++	}
++	q := tx.Model(m).
+ 		Clauses(clause.Returning{}).
+ 		Where(&db.Subscription{ID: subId}).
+-		Update("updated_at", time.Now()).Error; err != nil {
+-		return nil, err
++		Update("updated_at", time.Now())
++	if q.Error != nil {
++		return q.Error
++	}
++	if q.RowsAffected == 0 {
++		return fmt.Errorf("no such subscription")
+ 	}
+-
+-	// Update modified if subscription is referenced by running config.
+ 	if err = AutoUpdateVersionByIds(tx, []uint{subId}); err != nil {
++		return err
++	}
++	return tx.Commit().Error
++}
++
++func UpdateById(ctx context.Context, subId uint) (sub *db.Subscription, err error) {
++	var m db.Subscription
++	if err = db.DB(ctx).Where(&db.Subscription{ID: subId}).First(&m).Error; err != nil {
++		return nil, err
++	}
++	links, err := fetchLinks(m.Link)
++	if err != nil {
+ 		return nil, err
+ 	}
++	if err = updateSubscriptionTx(ctx, &m, subId, links); err != nil {
++		return nil, err
++	}
++	if err = config.ApplyIfRunning(ctx); err != nil {
++		return nil, fmt.Errorf("subscription updated but failed to apply runtime: %w", err)
++	}
+ 	return &m, nil
+ }
+ 
+@@ -399,6 +494,8 @@ func UpdateLink(ctx context.Context, _id graphql.ID, link string) (r *Resolver,
+ 	if err != nil {
+ 		return nil, err
+ 	}
++	subscriptionUpdateMu.Lock()
++	defer subscriptionUpdateMu.Unlock()
+ 
+ 	tx := db.BeginTx(ctx)
+ 	defer func() {
+diff --git a/graphql/service/subscription/mutation_utils_test.go b/graphql/service/subscription/mutation_utils_test.go
+new file mode 100644
+index 0000000..18ff9b9
+--- /dev/null
++++ b/graphql/service/subscription/mutation_utils_test.go
+@@ -0,0 +1,212 @@
++/*
++ * SPDX-License-Identifier: AGPL-3.0-only
++ * Copyright (c) 2023, daeuniverse Organization <team@v2raya.org>
++ */
++
++package subscription
++
++import (
++	"context"
++	"fmt"
++	"testing"
++	"time"
++
++	"github.com/daeuniverse/dae-wing/db"
++)
++
++func mustNoError(t *testing.T, err error) {
++	t.Helper()
++	if err != nil {
++		t.Fatal(err)
++	}
++}
++
++func assertError(t *testing.T, err error) {
++	t.Helper()
++	if err == nil {
++		t.Fatal("expected error")
++	}
++}
++
++func assertEqualValues(t *testing.T, want, got interface{}) {
++	t.Helper()
++	if fmt.Sprint(want) != fmt.Sprint(got) {
++		t.Fatalf("want %v, got %v", want, got)
++	}
++}
++
++func assertNotNil(t *testing.T, value *uint) {
++	t.Helper()
++	if value == nil {
++		t.Fatal("expected non-nil value")
++	}
++}
++
++func assertNil(t *testing.T, value *uint) {
++	t.Helper()
++	if value != nil {
++		t.Fatalf("expected nil, got %v", *value)
++	}
++}
++
++func assertZero(t *testing.T, value int64) {
++	t.Helper()
++	if value != 0 {
++		t.Fatalf("expected zero, got %d", value)
++	}
++}
++
++func initReconcileTestDB(t *testing.T) context.Context {
++	t.Helper()
++	mustNoError(t, db.InitDatabase(t.TempDir()))
++	return context.Background()
++}
++
++func createTestSubscription(t *testing.T, ctx context.Context, links ...string) (db.Subscription, []db.Node) {
++	t.Helper()
++	sub := db.Subscription{
++		UpdatedAt: time.Now(),
++		Link:      "https://example.invalid/subscription",
++		Status:    "",
++		Info:      "",
++	}
++	mustNoError(t, db.DB(ctx).Create(&sub).Error)
++
++	nodes := make([]db.Node, 0, len(links))
++	for i, link := range links {
++		node := db.Node{
++			Link:           link,
++			Name:           "node",
++			Address:        "192.0.2.1",
++			Protocol:       "ss",
++			SubscriptionID: &sub.ID,
++		}
++		node.Name += string(rune('A' + i))
++		mustNoError(t, db.DB(ctx).Create(&node).Error)
++		nodes = append(nodes, node)
++	}
++	return sub, nodes
++}
++
++func createTestGroup(t *testing.T, ctx context.Context, policy string, systemID *uint, nodes ...db.Node) db.Group {
++	t.Helper()
++	group := db.Group{Name: policy + time.Now().Format("150405.000000000"), Policy: policy, SystemID: systemID}
++	mustNoError(t, db.DB(ctx).Create(&group).Error)
++	mustNoError(t, db.DB(ctx).Model(&group).Association("Node").Append(nodes))
++	return group
++}
++
++func countGroupNode(t *testing.T, ctx context.Context, groupID, nodeID uint) int64 {
++	t.Helper()
++	var count int64
++	mustNoError(t, db.DB(ctx).Table("group_nodes").
++		Where("group_id = ? AND node_id = ?", groupID, nodeID).
++		Count(&count).Error)
++	return count
++}
++
++func TestReconcileKeepsCurrentReferencedNode(t *testing.T) {
++	ctx := initReconcileTestDB(t)
++	sub, nodes := createTestSubscription(t, ctx, "ss://current")
++	group := createTestGroup(t, ctx, "min_moving_avg", nil, nodes[0])
++
++	mustNoError(t, reconcileSubscriptionNodes(db.DB(ctx), sub.ID, []string{"ss://current"}))
++
++	var got db.Node
++	mustNoError(t, db.DB(ctx).First(&got, nodes[0].ID).Error)
++	assertNotNil(t, got.SubscriptionID)
++	assertEqualValues(t, sub.ID, *got.SubscriptionID)
++	assertEqualValues(t, 1, countGroupNode(t, ctx, group.ID, got.ID))
++}
++
++func TestReconcileDeletesStaleUnreferencedNode(t *testing.T) {
++	ctx := initReconcileTestDB(t)
++	sub, nodes := createTestSubscription(t, ctx, "ss://current", "ss://stale")
++
++	mustNoError(t, reconcileSubscriptionNodes(db.DB(ctx), sub.ID, []string{"ss://current"}))
++
++	var count int64
++	mustNoError(t, db.DB(ctx).Model(&db.Node{}).Where("id = ?", nodes[1].ID).Count(&count).Error)
++	assertZero(t, count)
++}
++
++func TestReconcileDeletesStaleNormalGroupNode(t *testing.T) {
++	ctx := initReconcileTestDB(t)
++	system := db.System{Running: true}
++	mustNoError(t, db.DB(ctx).Create(&system).Error)
++	sub, nodes := createTestSubscription(t, ctx, "ss://current", "ss://stale")
++	group := createTestGroup(t, ctx, "min_moving_avg", &system.ID, nodes...)
++
++	mustNoError(t, reconcileSubscriptionNodes(db.DB(ctx), sub.ID, []string{"ss://current"}))
++
++	var gotGroup db.Group
++	mustNoError(t, db.DB(ctx).First(&gotGroup, group.ID).Error)
++	assertEqualValues(t, 1, gotGroup.Version)
++	assertEqualValues(t, 0, countGroupNode(t, ctx, group.ID, nodes[1].ID))
++}
++
++func TestReconcileDetachesStaleFixedNode(t *testing.T) {
++	ctx := initReconcileTestDB(t)
++	sub, nodes := createTestSubscription(t, ctx, "ss://current", "ss://fixed-stale")
++	group := createTestGroup(t, ctx, "fixed", nil, nodes[1])
++
++	mustNoError(t, reconcileSubscriptionNodes(db.DB(ctx), sub.ID, []string{"ss://current"}))
++
++	var got db.Node
++	mustNoError(t, db.DB(ctx).First(&got, nodes[1].ID).Error)
++	assertNil(t, got.SubscriptionID)
++	assertEqualValues(t, 1, countGroupNode(t, ctx, group.ID, got.ID))
++}
++
++func TestReconcilePreservesNodeReferencedByFixedAndNormalGroups(t *testing.T) {
++	ctx := initReconcileTestDB(t)
++	sub, nodes := createTestSubscription(t, ctx, "ss://current", "ss://shared-stale")
++	fixed := createTestGroup(t, ctx, "fixed", nil, nodes[1])
++	normal := createTestGroup(t, ctx, "min", nil, nodes[1])
++
++	mustNoError(t, reconcileSubscriptionNodes(db.DB(ctx), sub.ID, []string{"ss://current"}))
++
++	var got db.Node
++	mustNoError(t, db.DB(ctx).First(&got, nodes[1].ID).Error)
++	assertNil(t, got.SubscriptionID)
++	assertEqualValues(t, 1, countGroupNode(t, ctx, fixed.ID, got.ID))
++	assertEqualValues(t, 1, countGroupNode(t, ctx, normal.ID, got.ID))
++}
++
++func TestReconcileAllLinksAlreadyExistSucceeds(t *testing.T) {
++	ctx := initReconcileTestDB(t)
++	sub, nodes := createTestSubscription(t, ctx, "ss://one", "ss://two")
++
++	mustNoError(t, reconcileSubscriptionNodes(db.DB(ctx), sub.ID, []string{"ss://one", "ss://two", "ss://two"}))
++
++	var count int64
++	mustNoError(t, db.DB(ctx).Model(&db.Node{}).Where("subscription_id = ?", sub.ID).Count(&count).Error)
++	assertEqualValues(t, len(nodes), count)
++}
++
++func TestReconcileRollsBackWhenAnyIncomingNodeIsInvalid(t *testing.T) {
++	ctx := initReconcileTestDB(t)
++	sub, nodes := createTestSubscription(t, ctx, "ss://current", "ss://stale")
++	tx := db.BeginTx(ctx)
++
++	assertError(t, reconcileSubscriptionNodes(tx, sub.ID, []string{"ss://current", "not-a-node-link"}))
++	mustNoError(t, tx.Rollback().Error)
++
++	var count int64
++	mustNoError(t, db.DB(ctx).Model(&db.Node{}).Where("id IN ?", []uint{nodes[0].ID, nodes[1].ID}).Count(&count).Error)
++	assertEqualValues(t, 2, count)
++}
++
++func TestUpdateSubscriptionRejectsChangedLink(t *testing.T) {
++	ctx := initReconcileTestDB(t)
++	sub, nodes := createTestSubscription(t, ctx, "ss://current")
++	snapshot := sub
++	mustNoError(t, db.DB(ctx).Model(&sub).Update("link", "https://example.invalid/changed").Error)
++
++	assertError(t, updateSubscriptionTx(ctx, &snapshot, sub.ID, []string{"ss://replacement"}))
++
++	var got db.Node
++	mustNoError(t, db.DB(ctx).First(&got, nodes[0].ID).Error)
++	assertNotNil(t, got.SubscriptionID)
++	assertEqualValues(t, sub.ID, *got.SubscriptionID)
++}

@@ -121,12 +121,27 @@ if [ "$fail" -ne 0 ]; then
 fi
 
 if [ "$count" -gt 0 ] && [ "$ok" -gt 0 ] && /bin/pidof daed >/dev/null 2>&1; then
+	state_body="$TMPDIR/state.json"
+	state_resp="$TMPDIR/state.out"
+	printf '%s' '{"query":"query General{general{dae{running modified}}}","variables":{}}' > "$state_body"
+	if ! post_graphql "$state_body" "$state_resp" "$token" || grep -q '"errors"' "$state_resp"; then
+		fail 8 "failed to query daed runtime state: $(cat "$state_resp" 2>/dev/null)"
+	fi
+	if ! grep -q '"running"[[:space:]]*:[[:space:]]*true' "$state_resp"; then
+		log "daed proxy is stopped; skipping runtime apply"
+		exit 0
+	fi
+	if ! grep -q '"modified"[[:space:]]*:[[:space:]]*true' "$state_resp"; then
+		log "daed runtime is already up to date"
+		exit 0
+	fi
+
 	run_body="$TMPDIR/run.json"
 	run_resp="$TMPDIR/run.out"
 	printf '{"query":"mutation Run($dry:Boolean!){run(dry:$dry)}","variables":{"dry":false}}' > "$run_body"
 	log "applying updated subscriptions"
 	if ! post_graphql "$run_body" "$run_resp" "$token" || grep -q '"errors"' "$run_resp"; then
-		fail 8 "failed to apply updated subscriptions: $(cat "$run_resp" 2>/dev/null)"
+		fail 9 "failed to apply updated subscriptions: $(cat "$run_resp" 2>/dev/null)"
 	fi
 fi
 
