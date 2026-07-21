@@ -18,6 +18,270 @@ XHR.poll(3, '<%=url([[admin]], [[services]], [[pushbot]], [[status]])%>', null,
 );
 
 (function() {
+	/* hidden container preserves form elements for UCI submission — must be inside <form> */
+	var hiddenBox = document.createElement('div');
+	hiddenBox.id = 'pushbot_hidden_fields';
+	hiddenBox.style.display = 'none';
+	var luciForm = document.querySelector('form');
+	(luciForm || document.body).appendChild(hiddenBox);
+
+	function stashFormElements(row) {
+		var els = row.querySelectorAll('input, select, textarea');
+		for (var si = 0; si < els.length; si++) {
+			hiddenBox.appendChild(els[si]);
+		}
+		row.remove();
+	}
+
+	function findRowByFieldName(fieldName) {
+		var rows = Array.prototype.slice.call(document.querySelectorAll('.cbi-value'));
+		for (var i = 0; i < rows.length; i++) {
+			var row = rows[i];
+			if (!row) continue;
+			var widget = row.querySelector('input, select, textarea');
+			if (widget && widget.name) {
+				var name = widget.name.split('.').pop();
+				if (name === fieldName) return row;
+			}
+			var title = row.querySelector('.cbi-value-title');
+			var titleText = title ? title.textContent : '';
+			if (titleText && titleText.indexOf(fieldName) >= 0) return row;
+		}
+		return null;
+	}
+
+	function cloneWidget(origWidget, origDesc, onChange) {
+		var wrapper = document.createElement('div');
+		wrapper.className = 'pushbot-inline-field';
+		var title = document.createElement('div');
+		title.className = 'pushbot-inline-title';
+		var titleEl = origWidget.closest('.cbi-value');
+		if (titleEl) {
+			var t = titleEl.querySelector('.cbi-value-title');
+			title.textContent = t ? t.textContent : '';
+		}
+		wrapper.appendChild(title);
+		var body = document.createElement('div');
+		body.className = 'pushbot-inline-body';
+		var clone = origWidget.cloneNode(true);
+		if (clone.id) clone.id = clone.id + '_card';
+		body.appendChild(clone);
+		if (origDesc) {
+			var d = document.createElement('div');
+			d.className = 'pushbot-inline-description';
+			d.innerHTML = origDesc.innerHTML;
+			body.appendChild(d);
+		}
+		wrapper.appendChild(body);
+
+		clone.addEventListener('change', function(e) {
+			e.stopPropagation();
+			if (clone.type === 'checkbox') origWidget.checked = clone.checked;
+			else origWidget.value = clone.value;
+			origWidget.dispatchEvent(new Event('change', { bubbles: true }));
+			if (onChange) onChange();
+		});
+		origWidget.addEventListener('change', function() {
+			if (clone.type === 'checkbox') clone.checked = origWidget.checked;
+			else clone.value = origWidget.value;
+		});
+		return wrapper;
+	}
+
+	function initPushModeCard() {
+		if (document.getElementById('pushbot_pushmode_card')) return;
+
+		var modeRow = findRowByFieldName('jsonpath');
+		var modeSelect = modeRow ? modeRow.querySelector('select') : null;
+		var deviceRow = findRowByFieldName('device_name');
+		var intervalRow = findRowByFieldName('sleeptime');
+		var testRow = findRowByFieldName('发送测试');
+		if (!modeRow || !modeSelect || !deviceRow || !intervalRow || !testRow) return;
+
+		/* ── build card ── */
+		var card = document.createElement('div');
+		card.id = 'pushbot_pushmode_card';
+		card.className = 'pushbot-mode-card pushbot-pushmode-card';
+
+		card.innerHTML = [
+			'<div class="pushbot-card-top" style="margin-bottom:6px">',
+				'<span class="pushbot-card-title" style="font-size:16px;font-weight:800">推送模式</span>',
+			'</div>',
+			/* row1: device_name + sleeptime */
+			'<div class="pushbot-pushmode-row" id="pm_row1">',
+				'<div class="pushbot-pushmode-column" id="pm_col_device"></div>',
+				'<div class="pushbot-pushmode-column" id="pm_col_interval"></div>',
+			'</div>',
+			/* row2: mode buttons */
+			'<div class="pushbot-pushmode-row" id="pm_row2">',
+				'<div class="pushbot-choice-list pushbot-pushmode-list" id="pm_mode_list"></div>',
+			'</div>',
+			/* row3: current settings + test button */
+			'<div class="pushbot-pushmode-row" id="pm_row3">',
+				'<div class="pushbot-pushmode-column" id="pm_col_settings">',
+					'<div class="pushbot-inline-title">当前设置</div>',
+					'<div class="pushbot-pushmode-settings" id="pm_settings_body"></div>',
+				'</div>',
+				'<div class="pushbot-pushmode-column pushbot-pushmode-action-column" id="pm_col_test"></div>',
+			'</div>'
+		].join('');
+
+		/* ── insert card after running-control card ── */
+		var runCard = document.getElementById('pushbot_mode_card');
+		if (runCard && runCard.parentNode) {
+			runCard.parentNode.insertBefore(card, runCard.nextSibling);
+		} else {
+			var hc = document.querySelector('.pushbot-header-card');
+			if (hc && hc.parentNode) { hc.parentNode.insertBefore(card, hc.nextSibling); }
+			else { modeRow.parentNode.insertBefore(card, modeRow); }
+		}
+
+		/* ── device name ── */
+		var devInp = deviceRow.querySelector('input');
+		var devDesc = deviceRow.querySelector('.cbi-value-description');
+		if (devInp) {
+			var devWrapper = cloneWidget(devInp, devDesc);
+			document.getElementById('pm_col_device').appendChild(devWrapper);
+		}
+		deviceRow.remove();
+
+		/* ── sleeptime ── */
+		var intInp = intervalRow.querySelector('input');
+		var intDesc = intervalRow.querySelector('.cbi-value-description');
+		if (intInp) {
+			var intWrapper = cloneWidget(intInp, intDesc);
+			document.getElementById('pm_col_interval').appendChild(intWrapper);
+		}
+		intervalRow.remove();
+
+		/* ── mode select buttons ── */
+		var modeList = document.getElementById('pm_mode_list');
+		var modeSvgs = {
+			'钉钉': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 8.16c-.34.88-2.17 2.36-2.17 2.36l-.03.02h.03s.86 1.14 1.22 1.68c.36.54.04.68-.5.36l-1.7-1.14-.84-.56c-.02 0-.18.14-.18.14s-1.3 1.86-1.66 2.28c-.36.42-.72.24-.62-.22.1-.46.92-2.18.92-2.18l-2.32-3.46c-.24-.36.08-.54.48-.34L12 12l2.3-1.52c.4-.26.78.02.34.68z"/></svg>',
+			'企业微信': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM8.5 6.5h7c.83 0 1.5.67 1.5 1.5v2c0 .83-.67 1.5-1.5 1.5h-7A1.5 1.5 0 0 1 7 10V8c0-.83.67-1.5 1.5-1.5zm0 6h4c.83 0 1.5.67 1.5 1.5v2c0 .83-.67 1.5-1.5 1.5h-4A1.5 1.5 0 0 1 7 16v-2c0-.83.67-1.5 1.5-1.5z"/></svg>',
+			'飞书': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1.5 6h3c.83 0 1.5.67 1.5 1.5v1c0 .83-.67 1.5-1.5 1.5h-3A1.5 1.5 0 0 1 9 10.5v-1c0-.83.67-1.5 1.5-1.5zm0 4h5c.83 0 1.5.67 1.5 1.5v1c0 .83-.67 1.5-1.5 1.5h-5A1.5 1.5 0 0 1 9 13v-1c0-.83.67-1.5 1.5-1.5z"/></svg>',
+			'Bark': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
+			'PushPlus': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 5h-2v5l4 2.4 1-1.6-3-1.8V7z"/></svg>',
+			'PushDeer': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 16a6 6 0 1 1 0-12 6 6 0 0 1 0 12z"/></svg>',
+			'自定义推送': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1 14H9v-2h2v2zm0-4H9V8h2v4z"/></svg>'
+		};
+		var modeOpts = [
+			{ v: '/usr/bin/pushbot/api/dingding.json', l: '钉钉' },
+			{ v: '/usr/bin/pushbot/api/ent_wechat.json', l: '企业微信' },
+			{ v: '/usr/bin/pushbot/api/feishu.json', l: '飞书' },
+			{ v: '/usr/bin/pushbot/api/bark.json', l: 'Bark' },
+			{ v: '/usr/bin/pushbot/api/pushplus.json', l: 'PushPlus' },
+			{ v: '/usr/bin/pushbot/api/pushdeer.json', l: 'PushDeer' },
+			{ v: '/usr/bin/pushbot/api/diy.json', l: '自定义推送' }
+		];
+		var btns = [];
+		modeOpts.forEach(function(o) {
+			var b = document.createElement('button');
+			b.type = 'button';
+			b.className = 'pushbot-choice-button';
+			var svg = modeSvgs[o.l] || '';
+			b.innerHTML = svg + '<span>' + o.l + '</span>';
+			b.setAttribute('data-v', o.v);
+			b.addEventListener('click', function(e) {
+				e.preventDefault();
+				modeSelect.value = o.v;
+				modeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+				syncBtns();
+				renderSettings();
+			});
+			btns.push(b);
+			modeList.appendChild(b);
+		});
+		function syncBtns() {
+			btns.forEach(function(b) {
+				var on = b.getAttribute('data-v') === modeSelect.value;
+				b.className = 'pushbot-choice-button ' + (on ? 'is-on' : 'is-off');
+			});
+		}
+		modeSelect.addEventListener('change', function() { syncBtns(); renderSettings(); });
+		stashFormElements(modeRow);
+
+		/* ── mode-field map ── */
+		var fieldMap = {
+			'/usr/bin/pushbot/api/dingding.json'  : ['dd_webhook'],
+			'/usr/bin/pushbot/api/ent_wechat.json': ['we_webhook'],
+			'/usr/bin/pushbot/api/feishu.json'    : ['fs_webhook'],
+			'/usr/bin/pushbot/api/bark.json'      : ['bark_token', 'bark_srv_enable', 'bark_srv', 'bark_sound', 'bark_icon_enable', 'bark_icon', 'bark_level'],
+			'/usr/bin/pushbot/api/pushplus.json'  : ['pp_token', 'pp_channel', 'pp_webhook', 'pp_topic_enable', 'pp_topic'],
+			'/usr/bin/pushbot/api/pushdeer.json'  : ['pushdeer_key', 'pushdeer_srv_enable', 'pushdeer_srv'],
+			'/usr/bin/pushbot/api/diy.json'       : ['diy_json']
+		};
+
+		/* hide ALL mode-field rows in original tab */
+		var allFieldNames = [];
+		for (var k in fieldMap) {
+			fieldMap[k].forEach(function(fn) { allFieldNames.push(fn); });
+		}
+		(function hideModeRows() {
+			var rows = document.querySelectorAll('.cbi-value');
+			for (var ri = 0; ri < rows.length; ri++) {
+				var row = rows[ri];
+				var w = row.querySelector('input, select, textarea');
+				if (w && w.name) {
+					var n = w.name.split('.').pop();
+					if (allFieldNames.indexOf(n) >= 0) {
+						row.style.display = 'none';
+					}
+				}
+			}
+		})();
+
+		function renderSettings() {
+			var body = document.getElementById('pm_settings_body');
+			body.innerHTML = '';
+			var fields = fieldMap[modeSelect.value] || [];
+			if (!fields.length) {
+				body.innerHTML = '<div class="pushbot-inline-description" style="margin-top:6px">当前模式无需附加配置项。</div>';
+				return;
+			}
+			fields.forEach(function(fn) {
+				var row = findRowByFieldName(fn);
+				if (!row) return;
+				var w = row.querySelector('input, select, textarea');
+				var d = row.querySelector('.cbi-value-description');
+				if (!w) return;
+				var wrapper = cloneWidget(w, d);
+				/* clear clone name — hidden original is the sole submitter */
+				var ci = wrapper.querySelector('input, select, textarea');
+				if (ci) ci.name = '';
+				body.appendChild(wrapper);
+				row.style.display = 'none';
+			});
+		}
+
+		/* ── test button (standalone, XHR — no form submit) ── */
+		var testBtn = testRow.querySelector('.cbi-button');
+		if (testBtn) {
+			var tc = document.createElement('button');
+			tc.type = 'button';
+			tc.textContent = '发送测试';
+			tc.className = 'pushbot-sendtest-btn';
+			tc.addEventListener('click', function(e) {
+				e.preventDefault();
+				tc.disabled = true;
+				tc.textContent = '发送中...';
+				XHR.get('<%=url([[admin]], [[services]], [[pushbot]], [[send_test]])%>', null,
+					function() {
+						tc.disabled = false;
+						tc.textContent = '发送测试';
+					}
+				);
+			});
+			var testContainer = document.getElementById('pm_col_test');
+			testContainer.appendChild(tc);
+		}
+		testRow.remove();
+
+		/* ── init ── */
+		syncBtns();
+		renderSettings();
+	}
+
 	var cardId = 'pushbot_mode_card';
 	var iconMap = {
 		device: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm2 3v10h12V7H6zm2 2h8v2H8V9zm0 4h5v2H8v-2z"/></svg>',
@@ -55,8 +319,8 @@ XHR.poll(3, '<%=url([[admin]], [[services]], [[pushbot]], [[status]])%>', null,
 			return;
 		}
 
-		enableRow.style.display = 'none';
-		liteRow.style.display = 'none';
+		stashFormElements(enableRow);
+		stashFormElements(liteRow);
 
 		var card = document.createElement('div');
 		card.id = cardId;
@@ -85,7 +349,12 @@ XHR.poll(3, '<%=url([[admin]], [[services]], [[pushbot]], [[status]])%>', null,
 			'</div>'
 		].join('');
 
-		liteRow.parentNode.insertBefore(card, liteRow);
+		var hc = document.querySelector('.pushbot-header-card');
+		if (hc && hc.parentNode) {
+			hc.parentNode.insertBefore(card, hc.nextSibling);
+		} else {
+			liteRow.parentNode.insertBefore(card, liteRow);
+		}
 
 		var toggleButton = card.querySelector('.pushbot-toggle-button');
 		var choiceButtons = Array.prototype.slice.call(card.querySelectorAll('.pushbot-choice-button'));
@@ -142,6 +411,8 @@ XHR.poll(3, '<%=url([[admin]], [[services]], [[pushbot]], [[status]])%>', null,
 	}
 	window.addEventListener('load', initCard);
 	setTimeout(initCard, 500);
+	window.addEventListener('load', initPushModeCard);
+	setTimeout(initPushModeCard, 500);
 })();
 //]]>
 </script>
@@ -149,7 +420,7 @@ XHR.poll(3, '<%=url([[admin]], [[services]], [[pushbot]], [[status]])%>', null,
 .mar-10 {margin-left: 50px; margin-right: 10px;}
 
 .pushbot-mode-card {
-	margin: 10px 0 16px 22px;
+	margin: 10px 0 16px 0;
 	padding: 16px 18px 18px;
 	border: 1px solid rgba(148, 163, 184, 0.24);
 	border-radius: 16px;
@@ -162,6 +433,89 @@ XHR.poll(3, '<%=url([[admin]], [[services]], [[pushbot]], [[status]])%>', null,
 .pushbot-header-card {
 	margin: 0 0 16px 0;
 	padding: 18px 20px;
+}
+
+.pushbot-pushmode-card {
+	margin: 0 0 16px 0;
+	padding: 18px 20px;
+}
+
+.pushbot-pushmode-row {
+	display: flex;
+	gap: 12px;
+	flex-wrap: wrap;
+	margin-top: 12px;
+}
+
+.pushbot-pushmode-column {
+	flex: 1 1 240px;
+	min-width: 0;
+}
+
+.pushbot-pushmode-action-column {
+	flex: 0 1 180px;
+	display: flex;
+	align-items: flex-end;
+	justify-content: flex-end;
+	padding-bottom: 4px;
+}
+
+.pushbot-inline-field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 10px 12px;
+	border-radius: 12px;
+	background: rgba(255, 255, 255, 0.62);
+	border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.pushbot-inline-title {
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	color: #475569;
+	text-transform: uppercase;
+}
+
+.pushbot-inline-body {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.pushbot-inline-body-compact {
+	gap: 4px;
+}
+
+.pushbot-inline-body input,
+.pushbot-inline-body select,
+.pushbot-inline-body textarea {
+	width: 100%;
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+.pushbot-inline-body .cbi-button {
+	width: auto;
+	min-width: 104px;
+	align-self: flex-start;
+}
+
+.pushbot-inline-description {
+	font-size: 12px;
+	line-height: 1.6;
+	color: #64748b;
+}
+
+.pushbot-pushmode-list {
+	margin-top: 2px;
+}
+
+.pushbot-pushmode-settings {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 }
 
 .pushbot-header-content {
@@ -228,11 +582,33 @@ XHR.poll(3, '<%=url([[admin]], [[services]], [[pushbot]], [[status]])%>', null,
 		color: #dcfce7 !important;
 	}
 
+	.pushbot-inline-field {
+		background: rgba(17, 24, 39, 0.72) !important;
+		border-color: rgba(255, 255, 255, 0.08) !important;
+	}
+
+	.pushbot-inline-title {
+		color: #e2e8f0 !important;
+	}
+
+	.pushbot-inline-description {
+		color: #cbd5e1 !important;
+	}
+
 	.pushbot-choice-button {
 		background: linear-gradient(180deg, #2f2f33 0%, #242426 100%) !important;
 		color: #d8d8d8 !important;
 		border-color: rgba(255, 255, 255, 0.08) !important;
 		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 2px 8px rgba(0, 0, 0, 0.28) !important;
+	}
+
+	.pushbot-sendtest-btn {
+		background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+		color: #ffffff !important;
+		box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35) !important;
+	}
+	.pushbot-sendtest-btn:hover {
+		box-shadow: 0 10px 22px rgba(37, 99, 235, 0.5) !important;
 	}
 }
 
@@ -312,6 +688,29 @@ XHR.poll(3, '<%=url([[admin]], [[services]], [[pushbot]], [[status]])%>', null,
 	color: #0f172a;
 	box-shadow: 0 10px 20px rgba(37, 99, 235, 0.24);
 	transform: translateY(-1px);
+}
+
+.pushbot-sendtest-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 9px 22px;
+	border: 1px solid transparent;
+	border-radius: 999px;
+	font-size: 13px;
+	font-weight: 700;
+	font-family: inherit;
+	cursor: pointer;
+	background: linear-gradient(135deg, #3b82f6, #2563eb);
+	color: #ffffff;
+	box-shadow: 0 8px 18px rgba(37, 99, 235, 0.26);
+	transition: all 0.2s ease;
+	align-self: center;
+	margin-top: 4px;
+}
+.pushbot-sendtest-btn:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 10px 22px rgba(37, 99, 235, 0.34);
 }
 
 @media (prefers-color-scheme: dark) {

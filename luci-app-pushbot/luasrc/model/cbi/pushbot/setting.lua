@@ -147,9 +147,7 @@ a:depends("jsonpath","/usr/bin/pushbot/api/diy.json")
 
 a=s:taboption("basic", Button,"__add",translate("发送测试"))
 a.inputtitle=translate("发送")
-a.inputstyle = "apply"
 function a.write(self, section)
-	luci.sys.call("cbi.apply")
 	luci.sys.call("/usr/bin/pushbot/pushbot test &")
 end
 
@@ -663,23 +661,21 @@ b.datatype="uinteger"
 b:depends({public_ip_event="1"})
 
 -- 在线设备
-local client_val = s:taboption("client", TextValue, "pushbot_client", translate("在线设备输出"))
-client_val.rows = 20
-client_val.wrap = "off"
-client_val.readonly = true
-client_val.rmempty = true
-client_val.cfgvalue = function(self, section)
-	return sys.exec("/usr/bin/pushbot/pushbot client")
+local client_val = s:taboption("client", DummyValue, "_client", translate("在线设备输出"))
+client_val.rawhtml = true
+client_val.value = function(self, section)
+	local out = sys.exec("/usr/bin/pushbot/pushbot client")
+	return '<pre style="white-space:pre-wrap;font-family:Menlo,Consolas,monospace;max-height:400px;overflow-y:auto;margin:4px 0">'
+		.. luci.util.pcdata(out) .. '</pre>'
 end
 
 -- 日志
-local log_val = s:taboption("log", TextValue, "pushbot_log", translate("日志输出"))
-log_val.rows = 20
-log_val.wrap = "off"
-log_val.readonly = true
-log_val.rmempty = true
-log_val.cfgvalue = function(self, section)
-	return fs.readfile("/tmp/pushbot/pushbot.log") or ""
+local log_val = s:taboption("log", DummyValue, "_log", translate("日志输出"))
+log_val.rawhtml = true
+log_val.value = function(self, section)
+	local log = fs.readfile("/tmp/pushbot/pushbot.log") or ""
+	return '<textarea class="cbi-input-textarea" style="width:100%;max-height:400px" rows="24" wrap="off" readonly>'
+		.. luci.util.pcdata(log) .. '</textarea>'
 end
 
 return m

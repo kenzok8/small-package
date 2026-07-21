@@ -9,6 +9,13 @@ function index()
 	entry({"admin", "services", "pushbot", "get_log"}, call("get_log")).leaf = true
 	entry({"admin", "services", "pushbot", "clear_log"}, call("clear_log")).leaf = true
 	entry({"admin", "services", "pushbot", "status"}, call("act_status")).leaf = true
+	entry({"admin", "services", "pushbot", "send_test"}, call("act_send_test")).leaf = true
+end
+
+function act_send_test()
+	luci.sys.call("/usr/bin/pushbot/pushbot test &")
+	luci.http.prepare_content("application/json")
+	luci.http.write_json({ok=true})
 end
 
 function act_status()
