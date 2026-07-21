@@ -70,6 +70,7 @@ define Package/$(PKG_NAME)/postinst
 ID_CONF="/etc/internet-detector"
 SYSUP_CONF="/etc/sysupgrade.conf"
 
+test -w "$$SYSUP_CONF" || exit 0
 grep -e "^$${ID_CONF}" "$$SYSUP_CONF" > /dev/null || echo "$$ID_CONF" >> "$$SYSUP_CONF"
 
 exit 0

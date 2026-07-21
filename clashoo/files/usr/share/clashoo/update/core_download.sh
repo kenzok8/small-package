@@ -13,6 +13,8 @@ CORE_INSTALLED=0
 CONNECT_TIMEOUT=15
 REQUEST_TIMEOUT=30
 DOWNLOAD_TIMEOUT=60
+LOW_SPEED_TIME=15
+LOW_SPEED_LIMIT=32768
 ATTEMPTS_PER_MIRROR=1
 MAX_TOTAL_SECONDS=200
 TAG_FETCH_RETRIES=2
@@ -82,11 +84,15 @@ mirror_prefixes() {
 	# gh.idayer.com/ghproxy.net 限速截断；只保留 gh-proxy.com + ghfast.top 两条快通道。
 	# 末尾会自动追加裸 GitHub（download_with_mirrors 末尾会 push 一个空 prefix）。
 	custom="$(normalize_prefix "$MIRROR_PREFIX")"
-	if [ -n "$custom" ]; then
-		echo "$custom https://gh-proxy.com/ https://ghfast.top/"
-	else
-		echo "https://gh-proxy.com/ https://ghfast.top/"
-	fi
+	prefixes=""
+	for prefix in "$custom" "https://gh-proxy.com/" "https://ghfast.top/"; do
+		[ -n "$prefix" ] || continue
+		case " $prefixes " in
+			*" $prefix "*) ;;
+			*) prefixes="${prefixes}${prefixes:+ }${prefix}" ;;
+		esac
+	done
+	printf '%s\n' "$prefixes"
 }
 
 prefixed_url() {
@@ -123,9 +129,9 @@ download_file_try() {
 	proxy="$3"
 	if command -v curl >/dev/null 2>&1; then
 		if [ -n "$proxy" ]; then
-			curl -fsSL --connect-timeout "$CONNECT_TIMEOUT" --max-time "$DOWNLOAD_TIMEOUT" --retry 0 -A "Clash/OpenWRT" --proxy "$proxy" "$url" -o "$out"
+			curl -fsSL --connect-timeout "$CONNECT_TIMEOUT" --max-time "$DOWNLOAD_TIMEOUT" --speed-time "$LOW_SPEED_TIME" --speed-limit "$LOW_SPEED_LIMIT" --retry 0 -A "Clash/OpenWRT" --proxy "$proxy" "$url" -o "$out"
 		else
-			curl -fsSL --connect-timeout "$CONNECT_TIMEOUT" --max-time "$DOWNLOAD_TIMEOUT" --retry 0 -A "Clash/OpenWRT" "$url" -o "$out"
+			curl -fsSL --connect-timeout "$CONNECT_TIMEOUT" --max-time "$DOWNLOAD_TIMEOUT" --speed-time "$LOW_SPEED_TIME" --speed-limit "$LOW_SPEED_LIMIT" --retry 0 -A "Clash/OpenWRT" "$url" -o "$out"
 		fi
 		return $?
 	fi
@@ -662,13 +668,19 @@ download_with_mirrors() {
 	outfile="$2"
 	verify_mode="${3:-gzip}"
 	proxy="$(detect_proxy)"
-	for p in $(mirror_prefixes) ""; do
+	if [ -n "$proxy" ]; then
+		download_prefixes="__direct__ $(mirror_prefixes)"
+	else
+		download_prefixes="$(mirror_prefixes) __direct__"
+	fi
+	for p in $download_prefixes; do
+		[ "$p" = "__direct__" ] && p=""
 		ensure_not_timed_out || return 1
 		u="$(prefixed_url "$p" "$base_url")"
 		i=1
 		while [ "$i" -le "$ATTEMPTS_PER_MIRROR" ]; do
 			ensure_not_timed_out || return 1
-			write_log "Downloading from ${u} (try ${i})"
+			write_log "Downloading from ${u}"
 			rm -f "$outfile" 2>/dev/null
 			if download_file_try "$u" "$outfile" "$proxy"; then
 				case "$verify_mode" in
@@ -778,6 +790,14 @@ verify_binary() {
 	"$bin" -v >/dev/null 2>&1 && return 0
 	"$bin" version >/dev/null 2>&1 && return 0
 	return 1
+}
+
+installed_version_matches() {
+	version_file="$1"
+	expected_version="$2"
+	[ -r "$version_file" ] || return 1
+	[ -n "$expected_version" ] || return 1
+	[ "$(sed -n '1p' "$version_file" 2>/dev/null)" = "$expected_version" ]
 }
 
 install_with_rollback() {
@@ -989,6 +1009,11 @@ if [ -z "$ASSET" ]; then
 fi
 write_log "版本标签：$TAG"
 write_log "匹配内核文件：$ASSET"
+
+if [ -n "$TARGET_DCORE" ] && installed_version_matches "$VERSION_FILE" "$VERSION_VALUE" && verify_binary "$TARGET"; then
+	write_log "内核已是最新版本：$VERSION_VALUE"
+	exit 0
+fi
 
 write_log "开始下载内核"
 if ! download_with_mirrors "$URL" /tmp/clash.gz; then

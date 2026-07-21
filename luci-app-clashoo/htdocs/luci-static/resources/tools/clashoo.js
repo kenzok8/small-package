@@ -141,9 +141,6 @@ const callAccessCheckRefresh= rpc.declare({ object: 'luci.clashoo', method: 'acc
 const callOverviewStats     = rpc.declare({ object: 'luci.clashoo', method: 'overview_stats',     expect: {} });
 const callOverview          = rpc.declare({ object: 'luci.clashoo', method: 'overview',           expect: {} });
 const callSmartFlushCache       = rpc.declare({ object: 'luci.clashoo', method: 'smart_flush_cache',       expect: {} });
-const callSmartUpgradeLgbm      = rpc.declare({ object: 'luci.clashoo', method: 'smart_upgrade_lgbm',      expect: {} });
-const callSmartUpgradeLgbmStatus= rpc.declare({ object: 'luci.clashoo', method: 'smart_upgrade_lgbm_status', expect: {} });
-const callSmartModelStatus      = rpc.declare({ object: 'luci.clashoo', method: 'smart_model_status',      expect: {} });
 const callListSingboxProfiles   = rpc.declare({ object: 'luci.clashoo', method: 'list_singbox_profiles',   expect: {} });
 const callGetSingboxProfile     = rpc.declare({ object: 'luci.clashoo', method: 'get_singbox_profile',     params: ['name'],                   expect: {} });
 const callSaveSingboxProfile    = rpc.declare({ object: 'luci.clashoo', method: 'save_singbox_profile',    params: ['name', 'content'],         expect: {} });
@@ -235,9 +232,6 @@ return baseclass.extend({
         });
     },
     smartFlushCache:    function () { return L.resolveDefault(callSmartFlushCache(),  { success: false }); },
-    smartUpgradeLgbm:       function () { return L.resolveDefault(callSmartUpgradeLgbm(), { success: false }); },
-    smartUpgradeLgbmStatus: function () { return L.resolveDefault(callSmartUpgradeLgbmStatus(), { running: false }); },
-    smartModelStatus:   function () { return L.resolveDefault(callSmartModelStatus(),  { has_model: false, version: '' }); },
 
     listSingboxProfiles:  function ()           { return L.resolveDefault(callListSingboxProfiles(),          { profiles: [], active: '' }); },
     getSingboxProfile:    function (name)        { return L.resolveDefault(callGetSingboxProfile(name),        {}); },

@@ -6,12 +6,7 @@ local net = require "luci.model.network".init()
 local sys = require "luci.sys"
 local ifaces = sys.net:devices()
 
-m=Map("pushbot",translate("PushBot"),
-translate("「全能推送」，英文名「PushBot」，是一款从服务器推送报警信息和日志到各平台的工具。<br>支持钉钉推送，企业微信推送，PushPlus推送。<br>本插件由tty228/luci-app-serverchan创建，然后七年修改为全能推送自用。<br /><br />如果你在使用中遇到问题，请到这里提交：")
-.. [[<a href="https://github.com/zzsj0928/luci-app-pushbot" target="_blank">]]
-.. translate("github 项目地址")
-.. [[</a>]]
-)
+m=Map("pushbot", "", "")
 
 m:section(SimpleSection).template  = "pushbot/pushbot_status"
 
@@ -20,6 +15,9 @@ s:tab("basic", translate("基本设置"))
 s:tab("content", translate("推送内容"))
 s:tab("crontab", translate("定时推送"))
 s:tab("disturb", translate("免打扰"))
+s:tab("advanced", translate("高级设置"))
+s:tab("client", translate("在线设备"))
+s:tab("log", translate("日志"))
 s.addremove = false
 s.anonymous = true
 
@@ -548,5 +546,140 @@ a = s:taboption("disturb", DynamicList, "MAC_offline_list", translate("任意离
 nt.mac_hints(function(mac, name) a:value(mac, "%s (%s)" %{ mac, name }) end)
 a.rmempty = true
 a:depends({macmechanism2="MAC_offline"})
+
+-- 高级设置
+
+b=s:taboption("advanced", Value,"up_timeout",translate('设备上线检测超时（s）'))
+b.default = "2"
+b.optional=false
+b.datatype="uinteger"
+
+b=s:taboption("advanced", Value,"down_timeout",translate('设备离线检测超时（s）'))
+b.default = "20"
+b.optional=false
+b.datatype="uinteger"
+
+b=s:taboption("advanced", Value,"timeout_retry_count",translate('离线检测次数'))
+b.default = "2"
+b.optional=false
+b.datatype="uinteger"
+b.description = translate("若无二级路由设备，信号强度良好，可以减少以上数值<br/>因夜间 wifi 休眠较为玄学，遇到设备频繁推送断开，烦请自行调整参数<br/>..╮(╯_╰）╭..")
+
+b=s:taboption("advanced", Value,"thread_num",translate('最大并发进程数'))
+b.default = "3"
+b.datatype="uinteger"
+
+b=s:taboption("advanced", Value, "soc_code", "自定义温度读取命令")
+b.rmempty = true 
+b:value("",translate("默认"))
+b:value("pve",translate("PVE 虚拟机"))
+b.description = translate("请尽量避免使用特殊符号，如双引号、$、!等，执行结果需为数字，用于温度对比")
+
+b=s:taboption("advanced", Value,"pve_host",translate("宿主机地址"))
+b.rmempty=true
+b.default="10.0.0.2"
+b.description = translate("请确认已经设置好密钥登陆，否则会引起脚本无法正常运行等错误！<br/>PVE 安装 sensors 命令自行百度<br/>密钥登陆例：<br/>opkg update #更新列表<br/>opkg install openssh-client openssh-keygen #安装openssh客户端<br/>ssh-keygen -t rsa # 生成密钥文件（自行设定密码等信息）<br/>ssh root@10.0.0.2 \"tee -a ~/.ssh/id_rsa.pub\" < ~/.ssh/id_rsa.pub # 传送公钥到 PVE<br/>ssh -i ~/.ssh/id_rsa root@10.0.0.2 sensors # 测试温度命令")
+b:depends({soc_code="pve"})
+
+b=s:taboption("advanced", Value,"pve_port",translate("SSH端口"))
+b.rmempty=true
+b.default="22"
+b.description = translate("默认为22，如有自定义，请填写自定义SSH端口")
+b:depends({soc_code="pve"})
+
+b=s:taboption("advanced", Button,"soc",translate("测试温度命令"))
+b.inputtitle = translate("输出信息")
+b.write = function()
+	luci.sys.call("/usr/bin/pushbot/pushbot soc")
+	luci.http.redirect(luci.dispatcher.build_url("admin","services","pushbot","setting"))
+end
+
+if nixio.fs.access("/tmp/pushbot/soc_tmp") then
+	e=s:taboption("advanced", TextValue,"soc_tmp")
+	e.rows=2
+	e.readonly=true
+	e.cfgvalue = function()
+		return luci.sys.exec("cat /tmp/pushbot/soc_tmp && rm -f /tmp/pushbot/soc_tmp")
+	end
+end
+
+b=s:taboption("advanced", Flag,"err_enable",translate("无人值守任务"))
+b.default=0
+b.rmempty=true
+b.description = translate("请确认脚本可以正常运行，否则可能造成频繁重启等错误！")
+
+b=s:taboption("advanced", Flag,"err_sheep_enable",translate("仅在免打扰时段重拨"))
+b.default=0
+b.rmempty=true
+b.description = translate("避免白天重拨 ddns 域名等待解析，此功能不影响断网检测<br/>因夜间跑流量问题，该功能可能不稳定")
+b:depends({err_enable="1"})
+
+b=s:taboption("advanced", DynamicList, "err_device_aliases", translate("关注列表"))
+b.rmempty = true 
+b.description = translate("只会在列表中设备都不在线时才会执行<br/>免打扰时段一小时后，关注设备五分钟低流量（约100kb/m）将视为离线")
+nt.mac_hints(function(mac, name) b :value(mac, "%s (%s)" %{ mac, name }) end)
+b:depends({err_enable="1"})
+
+b=s:taboption("advanced", ListValue,"network_err_event",translate("网络断开时"))
+b.default=""
+b:depends({err_enable="1"})
+b:value("",translate("无操作"))
+b:value("1",translate("重启路由器"))
+b:value("2",translate("重新拨号"))
+b:value("3",translate("修改相关设置项，尝试自动修复网络"))
+b.description = translate("选项 1 选项 2 不会修改设置，并最多尝试 2 次。<br/>选项 3 会将设置项备份于 /usr/bin/pushbot/configbak 目录，并在失败后还原。<br/>【！！无法保证兼容性！！】不熟悉系统设置项，不会救砖请勿使用")
+
+b=s:taboption("advanced", ListValue,"system_time_event",translate("定时重启"))
+b.default=""
+b:depends({err_enable="1"})
+b:value("",translate("无操作"))
+b:value("1",translate("重启路由器"))
+b:value("2",translate("重新拨号"))
+
+b=s:taboption("advanced", Value, "autoreboot_time", "系统运行时间大于")
+b.rmempty = true 
+b.default = "24"
+b.datatype="uinteger"
+b:depends({system_time_event="1"})
+b.description = translate("单位为小时")
+
+b=s:taboption("advanced", Value, "network_restart_time", "网络在线时间大于")
+b.rmempty = true 
+b.default = "24"
+b.datatype="uinteger"
+b:depends({system_time_event="2"})
+b.description = translate("单位为小时")
+
+b=s:taboption("advanced", Flag,"public_ip_event",translate("重拨尝试获取公网 ip"))
+b.default=0
+b.rmempty=true
+b:depends({err_enable="1"})
+b.description = translate("重拨时不会推送 ip 变动通知，并会导致你的域名无法及时更新 ip 地址<br/>请确认你可以通过重拨获取公网 ip，否则这不仅徒劳无功还会引起频繁断网<br/>移动等大内网你就别挣扎了！！")
+
+b=s:taboption("advanced", Value, "public_ip_retry_count", "当天最大重试次数")
+b.rmempty = true 
+b.default = "10"
+b.datatype="uinteger"
+b:depends({public_ip_event="1"})
+
+-- 在线设备
+local client_val = s:taboption("client", TextValue, "pushbot_client", translate("在线设备输出"))
+client_val.rows = 20
+client_val.wrap = "off"
+client_val.readonly = true
+client_val.rmempty = true
+client_val.cfgvalue = function(self, section)
+	return sys.exec("/usr/bin/pushbot/pushbot client")
+end
+
+-- 日志
+local log_val = s:taboption("log", TextValue, "pushbot_log", translate("日志输出"))
+log_val.rows = 20
+log_val.wrap = "off"
+log_val.readonly = true
+log_val.rmempty = true
+log_val.cfgvalue = function(self, section)
+	return fs.readfile("/tmp/pushbot/pushbot.log") or ""
+end
 
 return m

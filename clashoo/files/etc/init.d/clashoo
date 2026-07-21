@@ -1994,6 +1994,18 @@ remove_mark(){
 
 stop_service(){
 #===========================================================================================================================
+		# The updater restarts once after an in-place APK upgrade. Skip the
+		# package-manager pre-deinstall stop to avoid its ~120s script wait.
+		if [ -r /var/run/clashoo_package_upgrade ]; then
+			_upgrade_pid="$(cat /var/run/clashoo_package_upgrade 2>/dev/null)"
+			case "$_upgrade_pid" in
+				''|*[!0-9]*) rm -f /var/run/clashoo_package_upgrade ;;
+				*)
+					[ -d "/proc/$_upgrade_pid" ] && return 0
+					rm -f /var/run/clashoo_package_upgrade
+					;;
+			esac
+		fi
 		
 			lang=$(uci get luci.main.lang 2>/dev/null)
 			tun_mode=$(uci get clashoo.config.tun_mode 2>/dev/null)

@@ -160,9 +160,6 @@ var callApplyRewrite  = rpc.declare({ object: 'luci.clashoo', method: 'apply_rew
 var callFetchUrl      = rpc.declare({ object: 'luci.clashoo', method: 'fetch_rewrite_url',      params: ['url','name'], expect: {} });
 var callApplyTplUrl   = rpc.declare({ object: 'luci.clashoo', method: 'apply_template_with_url', params: ['template_source','sub_url','output_name','set_active'], expect: {} });
 var callMigrateSbProfile = rpc.declare({ object: 'luci.clashoo', method: 'migrate_singbox_profile', params: ['name'], expect: {} });
-var callSmartModelStatus = rpc.declare({ object: 'luci.clashoo', method: 'smart_model_status',  expect: {} });
-var callSmartUpgradeLgbm = rpc.declare({ object: 'luci.clashoo', method: 'smart_upgrade_lgbm',  expect: {} });
-var callSmartUpgradeLgbmStatus = rpc.declare({ object: 'luci.clashoo', method: 'smart_upgrade_lgbm_status', expect: {} });
 var callSmartFlushCache  = rpc.declare({ object: 'luci.clashoo', method: 'smart_flush_cache',   expect: {} });
 var callDetectPrimaryGroup = rpc.declare({ object: 'luci.clashoo', method: 'detect_primary_group', expect: {} });
 
@@ -636,7 +633,6 @@ return view.extend({
       fastResolve(callListTemplates(), 1200, { files: [] }),
       fastResolve(loadUiState(), 1200, { core_type: 'mihomo', subscribe_url: '', config_name: '', sub_ua: '' }),
       fastResolve(clashoo.listSingboxProfiles(), 1200, { profiles: [], active: '' }),
-      fastResolve(callSmartModelStatus(), 1500, { has_model: false, version: '' }),
       fastResolve(callSubscriptionUpdateStatus(), 1200, {})
     ]);
   },
@@ -650,8 +646,7 @@ return view.extend({
     var tplFiles   = (data[4] && data[4].files) || [];
     var uiData     = data[5] || { core_type: 'mihomo', subscribe_url: '', config_name: '', sub_ua: '' };
     var sbData          = data[6] || { profiles: [], active: '' };
-    var smartModelData  = data[7] || { has_model: false, version: '' };
-    var subscriptionUpdateStatus = data[8] || {};
+    var subscriptionUpdateStatus = data[7] || {};
     var coreType   = uiData.core_type || 'mihomo';
 
     if (!document.getElementById('cl-css')) {
@@ -696,7 +691,7 @@ return view.extend({
     var built = { subs: true, proxy: false, dns: false };
     var ensureBuilt = function (id) {
       if (built[id]) return;
-      if (id === 'proxy') self._buildProxyForm(proxyPanel, smartModelData);
+      if (id === 'proxy') self._buildProxyForm(proxyPanel);
       else if (id === 'dns') self._buildDnsForm(dnsPanel);
       built[id] = true;
     };
@@ -1114,10 +1109,9 @@ return view.extend({
     return sections.filter(function (n) { return n !== null && n !== undefined; });
   },
 
-  _buildProxyForm: function (container, modelStatus) {
+  _buildProxyForm: function (container) {
     var m = new form.Map('clashoo', '', '');
     var s, o;
-    modelStatus = modelStatus || {};
 
     s = m.section(form.NamedSection, 'config', 'clashoo', _("Transparent Proxy"));
     s.addremove = false;
@@ -1237,71 +1231,6 @@ return view.extend({
         if (h3 && h3.textContent.indexOf('Smart') >= 0) { smartSec = sections[i]; break; }
       }
       if (smartSec) {
-        var verEl = modelStatus.has_model
-          ? E('span', { 'class': 'cl-ver-tag' }, [
-              E('span', { 'class': 'cl-ver-label' }, _("Current version: ")),
-              E('span', { 'class': 'cl-ver-value' }, modelStatus.version)
-            ])
-          : E('span', { 'class': 'cl-ver-tag cl-ver-label' }, _("Model not installed"));
-        var statusEl = E('div', { 'class': 'cl-update-status', style: 'margin-top:6px;font-size:12px;min-height:18px;line-height:1.4' });
-        var upgPoller = null;
-        function stopUpgPoller() { if (upgPoller) { clearInterval(upgPoller); upgPoller = null; } }
-        function setStatus(text, tone) {
-          // tone: '' / 'success' / 'error' / 'progress'
-          statusEl.textContent = text || '';
-          statusEl.style.color = tone === 'success' ? 'var(--success-color, #2e7d32)'
-                                : tone === 'error'   ? 'var(--error-color, #d32f2f)'
-                                : tone === 'progress'? 'var(--tip-color, #1976d2)'
-                                : '';
-        }
-        function pollUpgStatus() {
-          callSmartUpgradeLgbmStatus().then(function (st) {
-            st = st || {};
-            var rawLine = st.last_line || '';
-            var line = clashoo.localizeLogLine(rawLine);
-            if (st.running) {
-              setStatus('⏳ ' + (line || _("Downloading LightGBM model...")), 'progress');
-              return;
-            }
-            stopUpgPoller();
-            upgBtn.disabled = false; upgBtn.textContent = _("Check and Update");
-            var ok = /success|complete|done|完成|成功|无需更新|已是最新/i.test(rawLine + ' ' + line) || (st.has_model && st.size_kb > 100);
-            var sizeTxt = st.size_kb ? ' (' + (st.size_kb >= 1024 ? (st.size_kb/1024).toFixed(1) + ' MB' : st.size_kb + ' KB') + ')' : '';
-            setStatus((ok ? '✓ ' : '✗ ') + (line || (ok ? _("Update succeeded") : _("Update failed"))) + sizeTxt, ok ? 'success' : 'error');
-            // 刷新版本标签
-            if (verEl && st.version) {
-              var valEl = verEl.querySelector('.cl-ver-value');
-              if (valEl) valEl.textContent = st.version;
-              else verEl.textContent = _("Current version: ") + st.version;
-            }
-            setTimeout(function () { setStatus(''); }, 8000);
-          });
-        }
-        var upgBtn = E('button', { 'class': 'btn cbi-button-action', 'click': function () {
-          stopUpgPoller();
-          upgBtn.disabled = true; upgBtn.textContent = _("Downloading...");
-          setStatus(_("⏳ Starting update task..."), 'progress');
-          callSmartUpgradeLgbm().then(function () {
-            // 开启状态轮询：每 2s 一次直到结束
-            upgPoller = setInterval(pollUpgStatus, 2000);
-            // 立即先拉一次，反馈更快
-            setTimeout(pollUpgStatus, 500);
-          }).catch(function () {
-            upgBtn.disabled = false; upgBtn.textContent = _("Check and Update");
-            setStatus(_("✗ Start failed"), 'error');
-            setTimeout(function () { setStatus(''); }, 5000);
-          });
-        }}, _("Check and Update"));
-        smartSec.appendChild(E('div', { 'class': 'cbi-value' }, [
-          E('label', { 'class': 'cbi-value-title' }, _("Update Model")),
-          E('div', { 'class': 'cbi-value-field' }, [
-            E('div', { 'class': 'cl-btn-ver-wrap' }, [
-              upgBtn,
-              verEl
-            ]),
-            statusEl
-          ])
-        ]));
         var flushBtn = E('button', { 'class': 'btn cbi-button', 'click': function () {
           flushBtn.disabled = true;
           callSmartFlushCache().then(function (res) {

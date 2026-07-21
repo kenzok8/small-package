@@ -55,7 +55,7 @@
 - 用于 OpenWRT/LEDE 路由器上进行 Server酱 微信/Telegram 推送的插件
 - 基于 serverchan 提供的接口发送信息，Server酱说明：http://sc.ftqq.com/1.version
 - **基于斐讯 k3 制作，不同系统不同设备，请自行修改部分代码，无测试条件无法重现的 bug 不考虑修复**
-- 依赖 iputils-arping + curl 命令，安装前请 `opkg update`，小内存路由谨慎安装
+- 依赖 iputils-arping + curl 命令，安装前请 `opkg update` 或 `apk update`，小内存路由谨慎安装
 - 使用主动探测设备连接的方式检测设备在线状态，以避免WiFi休眠机制，主动探测较为耗时，**如遇设备休眠频繁，请自行调整超时设置**
 - 流量统计功能依赖 wrtbwmon ，自行选装或编译，该插件与 Routing/NAT 、Flow Offloading 冲突，开启无法获取流量，自行选择，L大版本直接编译 luci-app-wrtbwmon
 

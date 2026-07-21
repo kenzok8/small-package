@@ -1,0 +1,10 @@
+<%
+local sys = require "luci.sys"
+local output = sys.exec("/usr/bin/pushbot/pushbot client")
+-%>
+<div class="pushbot-card-group">
+	<div class="pushbot-card-group-header"><%:在线设备%></div>
+	<div class="pushbot-card-group-body">
+		<pre class="cbi-value-description" style="white-space: pre-wrap; font-family: Menlo, Consolas, monospace;"><%=output%></pre>
+	</div>
+</div>

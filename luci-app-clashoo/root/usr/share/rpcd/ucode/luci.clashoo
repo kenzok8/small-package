@@ -3434,47 +3434,6 @@ return { success: (code == '204' || code == '200'), code };
 }
 },
 
-smart_upgrade_lgbm: {
-call: function() {
-system('sh /usr/share/clashoo/update/lgbm_update.sh >/tmp/lgbm_update.log 2>&1 &');
-return { success: true };
-}
-},
-
-smart_upgrade_lgbm_status: {
-call: function() {
-let log_path   = '/tmp/lgbm_update.log';
-let model_path = '/etc/clashoo/Model.bin';
-// 用括号正则避免匹配 grep 自身；busybox ash 下比 pgrep -f 更可靠
-let p = popen('ps w 2>/dev/null | grep "[l]gbm_update.sh" | head -1');
-let line = ''; if (p) { line = trim(p.read('all')); p.close(); }
-let running = (line && line != '');
-let last_line = '';
-let p2 = popen('tail -1 ' + shell_quote(log_path) + ' 2>/dev/null');
-if (p2) { last_line = trim(p2.read('all')); p2.close(); }
-let version = ''; let size_kb = 0;
-let s = stat(model_path);
-if (s) {
-  size_kb = int(s.size / 1024);
-  let p3 = popen('date -d @' + s.mtime + ' "+%Y-%m-%d %H:%M:%S" 2>/dev/null || date -r ' + shell_quote(model_path) + ' "+%Y-%m-%d %H:%M:%S" 2>/dev/null');
-  if (p3) { version = trim(p3.read('all')); p3.close(); }
-}
-return { running, last_line, version, size_kb, has_model: !!s };
-}
-},
-
-smart_model_status: {
-call: function() {
-let model_path = '/etc/clashoo/Model.bin';
-let s = stat(model_path);
-if (!s) return { has_model: false, version: '' };
-let p = popen('date -d @' + s.mtime + ' "+%Y-%m-%d %H:%M:%S" 2>/dev/null || date -r ' + shell_quote(model_path) + ' "+%Y-%m-%d %H:%M:%S" 2>/dev/null');
-let ts = '';
-if (p) { ts = trim(p.read('all')); p.close(); }
-return { has_model: true, version: ts || ('' + s.mtime), size_kb: int(s.size / 1024) };
-}
-},
-
 /* ── sing-box profile management ── */
 
 list_singbox_profiles: {

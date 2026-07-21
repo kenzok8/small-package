@@ -1,5 +1,7 @@
 #!/bin/sh
 
+. /usr/bin/pushbot/package_manager.sh
+
 # 读取设置文件
 function get_config(){
 	while [[ "$*" != "" ]]; do
@@ -21,7 +23,8 @@ function read_config(){
 	"jsonpath" "dd_webhook" "we_webhook" "pp_token" "pp_channel" "pp_webhook" "pp_topic_enable" "pp_topic" "fs_webhook" "pushdeer_key" "pushdeer_srv_enable" "pushdeer_srv" "bark_srv_enable" "bark_srv" "bark_token" "bark_sound" "bark_icon" "bark_icon_enable" "bark_level"
 	
 	for str_version in "wrtbwmon" "iputils-arping" "curl" "iw"; do
-		eval `echo ${str_version:0:2}"_version"`=`opkg list-installed|grep -w ^${str_version}|awk '{print $3}'` 2>/dev/null
+		pkg_var="${str_version:0:2}_version"
+		eval "${pkg_var}=\$(get_package_version \"${str_version}\")"
 	done
 	dir="/tmp/pushbot/" && mkdir -p ${dir}
 	tempjsonpath="/tmp/pushbot/temp.json"

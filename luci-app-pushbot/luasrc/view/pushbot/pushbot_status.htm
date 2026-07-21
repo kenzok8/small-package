@@ -1,22 +1,372 @@
 <script type="text/javascript">//<![CDATA[
 XHR.poll(3, '<%=url([[admin]], [[services]], [[pushbot]], [[status]])%>', null,
 	function(x, data) {
-		var tb = document.getElementById('pushbot_status');
-		if (data && tb) {
-			if (data.running) {
-				var links = '<em><b><font color=green>pushbot <%:RUNNING%></font></b></em>';
-				tb.innerHTML = links;
+		var badge = document.getElementById('pushbot_status_badge');
+		var text = document.getElementById('pushbot_status_text');
+		if (badge && text) {
+			if (data && data.running) {
+				badge.classList.remove('is-stopped');
+				badge.classList.add('is-running');
+				text.textContent = '<%:RUNNING%>';
 			} else {
-				tb.innerHTML = '<em><b><font color=red>pushbot <%:NOT RUNNING%></font></b></em>';
+				badge.classList.remove('is-running');
+				badge.classList.add('is-stopped');
+				text.textContent = '<%:NOT RUNNING%>';
 			}
 		}
 	}
 );
+
+(function() {
+	var cardId = 'pushbot_mode_card';
+	var iconMap = {
+		device: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm2 3v10h12V7H6zm2 2h8v2H8V9zm0 4h5v2H8v-2z"/></svg>',
+		nowtime: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm1 4h-2v7l5.5 3.2 1-1.7-4.5-2.6V6z"/></svg>',
+		content: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm2 3v2h10V7H7zm0 4v2h6v-2H7zm0 4v2h8v-2H7z"/></svg>'
+	};
+
+	function initCard() {
+		if (document.getElementById(cardId)) {
+			return;
+		}
+
+		var rows = Array.prototype.slice.call(document.querySelectorAll('.cbi-value'));
+		var enableRow = null;
+		var liteRow = null;
+
+		rows.forEach(function(row) {
+			var title = row.querySelector('.cbi-value-title');
+			var text = title ? title.textContent : '';
+			if (!enableRow && /启用/.test(text)) {
+				enableRow = row;
+			}
+			if (!liteRow && /精简模式/.test(text)) {
+				liteRow = row;
+			}
+		});
+
+		if (!enableRow || !liteRow) {
+			return;
+		}
+
+		var enableInput = enableRow.querySelector('input[type="checkbox"]');
+		var liteInputs = Array.prototype.slice.call(liteRow.querySelectorAll('input[type="checkbox"]'));
+		if (!enableInput || !liteInputs.length) {
+			return;
+		}
+
+		enableRow.style.display = 'none';
+		liteRow.style.display = 'none';
+
+		var card = document.createElement('div');
+		card.id = cardId;
+		card.className = 'pushbot-mode-card';
+		card.innerHTML = [
+			'<div class="pushbot-card-top">',
+				'<span class="pushbot-card-title">运行控制</span>',
+				'<button type="button" class="pushbot-toggle-button is-off">',
+					'<span class="pushbot-toggle-status">已禁用</span>',
+				'</button>',
+			'</div>',
+			'<div class="pushbot-card-subtitle">精简模式</div>',
+			'<div class="pushbot-choice-list">',
+				'<button type="button" class="pushbot-choice-button is-off" data-value="device">',
+					'<span class="pushbot-choice-icon">' + iconMap.device + '</span>',
+					'<span class="pushbot-choice-label">精简当前设备列表</span>',
+				'</button>',
+				'<button type="button" class="pushbot-choice-button is-off" data-value="nowtime">',
+					'<span class="pushbot-choice-icon">' + iconMap.nowtime + '</span>',
+					'<span class="pushbot-choice-label">精简当前时间</span>',
+				'</button>',
+				'<button type="button" class="pushbot-choice-button is-off" data-value="content">',
+					'<span class="pushbot-choice-icon">' + iconMap.content + '</span>',
+					'<span class="pushbot-choice-label">只推送标题</span>',
+				'</button>',
+			'</div>'
+		].join('');
+
+		liteRow.parentNode.insertBefore(card, liteRow);
+
+		var toggleButton = card.querySelector('.pushbot-toggle-button');
+		var choiceButtons = Array.prototype.slice.call(card.querySelectorAll('.pushbot-choice-button'));
+
+		function syncState() {
+			var enabled = enableInput.checked;
+			toggleButton.classList.toggle('is-on', enabled);
+			toggleButton.classList.toggle('is-off', !enabled);
+			toggleButton.querySelector('.pushbot-toggle-status').textContent = enabled ? '已启用' : '已禁用';
+
+			choiceButtons.forEach(function(button) {
+				var value = button.getAttribute('data-value');
+				var matched = liteInputs.filter(function(input) {
+					return input.value === value;
+				});
+				var active = matched.length > 0 && matched[0].checked;
+				button.classList.toggle('is-on', active);
+				button.classList.toggle('is-off', !active);
+			});
+		}
+
+		toggleButton.addEventListener('click', function(e) {
+			e.preventDefault();
+			enableInput.checked = !enableInput.checked;
+			syncState();
+		});
+
+		choiceButtons.forEach(function(button) {
+			button.addEventListener('click', function(e) {
+				e.preventDefault();
+				var value = button.getAttribute('data-value');
+				var matched = liteInputs.filter(function(input) {
+					return input.value === value;
+				});
+				if (matched.length) {
+					matched[0].checked = !matched[0].checked;
+					syncState();
+				}
+			});
+		});
+
+		enableInput.addEventListener('change', syncState);
+		liteInputs.forEach(function(input) {
+			input.addEventListener('change', syncState);
+		});
+
+		syncState();
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', initCard);
+	} else {
+		initCard();
+	}
+	window.addEventListener('load', initCard);
+	setTimeout(initCard, 500);
+})();
 //]]>
 </script>
-<style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
+<style>
+.mar-10 {margin-left: 50px; margin-right: 10px;}
+
+.pushbot-mode-card {
+	margin: 10px 0 16px 22px;
+	padding: 16px 18px 18px;
+	border: 1px solid rgba(148, 163, 184, 0.24);
+	border-radius: 16px;
+	background: rgba(246, 247, 250, 0.86);
+	box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+}
+
+.pushbot-header-card {
+	margin: 0 0 16px 0;
+	padding: 18px 20px;
+}
+
+.pushbot-header-content {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+
+.pushbot-status-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	border: 1px solid transparent;
+	box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+	white-space: nowrap;
+}
+
+.pushbot-status-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 999px;
+	background: currentColor;
+	box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.24);
+}
+
+.pushbot-status-badge.is-running {
+	background: linear-gradient(135deg, #10b981, #059669);
+	color: #ffffff;
+}
+
+.pushbot-status-badge.is-stopped {
+	background: linear-gradient(135deg, #fecaca, #fda4af);
+	color: #b91c1c;
+}
+
+@media (prefers-color-scheme: dark) {
+	.pushbot-mode-card {
+		background: rgba(10, 10, 18, 0.75) !important;
+		border-color: rgba(255, 255, 255, 0.08) !important;
+		box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+	}
+
+	.pushbot-card-title {
+		color: #e8e8e8 !important;
+	}
+
+	.pushbot-card-subtitle {
+		color: #d9d9d9 !important;
+	}
+
+	.pushbot-status-badge.is-stopped {
+		background: linear-gradient(135deg, rgba(248, 113, 113, 0.28), rgba(244, 63, 94, 0.32)) !important;
+		color: #fecaca !important;
+	}
+
+	.pushbot-status-badge.is-running {
+		background: linear-gradient(135deg, rgba(16, 185, 129, 0.42), rgba(5, 150, 105, 0.46)) !important;
+		color: #dcfce7 !important;
+	}
+
+	.pushbot-choice-button {
+		background: linear-gradient(180deg, #2f2f33 0%, #242426 100%) !important;
+		color: #d8d8d8 !important;
+		border-color: rgba(255, 255, 255, 0.08) !important;
+		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 2px 8px rgba(0, 0, 0, 0.28) !important;
+	}
+}
+
+.pushbot-card-top {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 8px;
+}
+
+.pushbot-card-title {
+	font-size: 22px;
+	font-weight: 800;
+	letter-spacing: 0.02em;
+	line-height: 1.2;
+	color: #111827;
+}
+
+.pushbot-card-subtitle {
+	margin: 2px 0 0 0;
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1.7;
+	color: #475569;
+}
+
+
+.pushbot-toggle-button,
+.pushbot-choice-button {
+	border: 1px solid transparent;
+	transition: all 0.2s ease;
+	font-family: inherit;
+}
+
+.pushbot-toggle-button {
+	padding: 8px 14px;
+	border-radius: 999px;
+	font-weight: 700;
+	font-size: 13px;
+	cursor: pointer;
+}
+
+.pushbot-toggle-button.is-on {
+	background: linear-gradient(135deg, #10b981, #059669);
+	color: #ffffff;
+	box-shadow: 0 8px 18px rgba(16, 185, 129, 0.26);
+}
+
+.pushbot-toggle-button.is-off {
+	background: linear-gradient(135deg, #fecaca, #fda4af);
+	color: #b91c1c;
+	box-shadow: 0 8px 18px rgba(239, 68, 68, 0.14);
+}
+
+.pushbot-choice-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.pushbot-choice-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 9px 12px;
+	border-radius: 12px;
+	background: rgba(255, 255, 255, 0.75);
+	color: #334155;
+	cursor: pointer;
+}
+
+
+.pushbot-choice-button.is-on {
+	background: linear-gradient(135deg, rgba(59, 130, 246, 0.28), rgba(14, 165, 233, 0.34));
+	border-color: rgba(59, 130, 246, 0.55);
+	color: #0f172a;
+	box-shadow: 0 10px 20px rgba(37, 99, 235, 0.24);
+	transform: translateY(-1px);
+}
+
+@media (prefers-color-scheme: dark) {
+	.pushbot-choice-button {
+		background: #1f2023 !important;
+		color: #c8c8c8 !important;
+	}
+
+	.pushbot-choice-button.is-on {
+		background: linear-gradient(135deg, rgba(56, 139, 253, 0.55), rgba(34, 211, 238, 0.36)) !important;
+		border-color: rgba(96, 165, 250, 0.8) !important;
+		color: #f8fafc !important;
+		box-shadow: 0 10px 22px rgba(59, 130, 246, 0.4) !important;
+		transform: translateY(-1px);
+	}
+}
+
+body.dark .pushbot-choice-button.is-on,
+body[data-theme="dark"] .pushbot-choice-button.is-on,
+body[data-theme="black"] .pushbot-choice-button.is-on,
+body[class*="dark"] .pushbot-choice-button.is-on {
+	color: #f8fafc;
+}
+
+.pushbot-choice-button.is-off {
+	filter: grayscale(0.95);
+	opacity: 0.8;
+}
+
+.pushbot-choice-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	flex-shrink: 0;
+}
+
+.pushbot-choice-icon svg {
+	width: 18px;
+	height: 18px;
+	fill: currentColor;
+}
+</style>
 <fieldset class="cbi-section">
-	<p id="pushbot_status">
-		<em><%:Collecting data...%></em>
-	</p>
+	<div class="pushbot-mode-card pushbot-header-card">
+		<div class="pushbot-card-top">
+			<div class="pushbot-header-content">
+				<div class="pushbot-card-title">PushBot</div>
+				<div class="pushbot-card-subtitle">「全能推送」，英文名「PushBot」，是一款从服务器推送报警信息和日志到各平台的工具。<br>支持钉钉推送，企业微信推送，PushPlus推送。<br>本插件由 tty228/luci-app-serverchan 创建，然后七年修改为全能推送自用。<br><br>如果你在使用中遇到问题，请到这里提交：<a href="https://github.com/zzsj0928/luci-app-pushbot" target="_blank">github 项目地址</a></div>
+			</div>
+			<div id="pushbot_status_badge" class="pushbot-status-badge is-stopped" role="status" aria-live="polite">
+				<span class="pushbot-status-dot"></span>
+				<span id="pushbot_status_text"><%:NOT RUNNING%></span>
+			</div>
+		</div>
+	</div>
 </fieldset>

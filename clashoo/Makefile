@@ -5,7 +5,7 @@ PKG_SHORT_SHA:=e40b596
 PKG_COMMIT_DATE:=2026.07.20
 
 PKG_VERSION:=$(PKG_COMMIT_DATE)~$(PKG_SHORT_SHA)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA)
@@ -91,15 +91,6 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 	else
 		/etc/init.d/clashoo disable 2>/dev/null || true
 	fi
-fi
-exit 0
-endef
-
-define Package/clashoo/prerm
-#!/bin/sh
-if [ -z "${IPKG_INSTROOT}" ]; then
-	/etc/init.d/clashoo stop >/dev/null 2>&1
-	/etc/init.d/clashoo disable 2>/dev/null
 fi
 exit 0
 endef

@@ -4,6 +4,7 @@ LOG_FILE="/tmp/clashoo_component_update.log"
 RUN_FILE="/var/run/clashoo_component_update"
 STATE_FILE="/tmp/clashoo_component_update_state"
 TMP_DIR="/tmp/clashoo-component-update"
+APK_UPGRADE_FLAG="/var/run/clashoo_package_upgrade"
 FEED_BASE_URL="https://down.dllkids.xyz/openwrt-feed/clashoo"
 GITHUB_API_URL="https://api.github.com/repos/kenzok8/openwrt-clashoo/releases/latest"
 GITHUB_PROXY_PREFIX="${GITHUB_PROXY_PREFIX:-https://ghfast.top/}"
@@ -12,6 +13,8 @@ REQUEST_TIMEOUT="${REQUEST_TIMEOUT:-20}"
 DOWNLOAD_TIMEOUT="${DOWNLOAD_TIMEOUT:-90}"
 LOW_SPEED_TIME="${LOW_SPEED_TIME:-30}"
 LOW_SPEED_LIMIT="${LOW_SPEED_LIMIT:-1024}"
+
+trap 'rm -f "$APK_UPGRADE_FLAG"' EXIT
 
 log() {
   mkdir -p "$(dirname "$LOG_FILE")" "$(dirname "$STATE_FILE")" >/dev/null 2>&1
@@ -25,7 +28,7 @@ finish() {
   STATUS="success"
   [ "$rc" -eq 0 ] || STATUS="failed"
   log "$msg"
-  rm -f "$RUN_FILE"
+  rm -f "$RUN_FILE" "$APK_UPGRADE_FLAG"
   exit "$rc"
 }
 
@@ -376,7 +379,9 @@ run_pkg_update() {
     if [ "$PM" = "opkg" ]; then
       opkg install --force-downgrade "$TMP_DIR/core.${EXT}" >"$TMP_DIR/install.log" 2>&1; rc=$?
     else
+      printf '%s\n' "$$" >"$APK_UPGRADE_FLAG"
       apk add $APK_FLAGS "$TMP_DIR/core.${EXT}" >"$TMP_DIR/install.log" 2>&1; rc=$?
+      rm -f "$APK_UPGRADE_FLAG"
     fi
   else
     log "正在下载客户端（LuCI + 语言包）"
