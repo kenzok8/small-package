@@ -49,19 +49,15 @@ a:value("/usr/bin/pushbot/api/diy.json",translate("自定义推送"))
 
 a=s:taboption("basic", Value,"dd_webhook",translate('Webhook'), translate("钉钉机器人 Webhook").."，只输入access_token=后面的即可<br>调用代码获取<a href='https://developers.dingtalk.com/document/robots/custom-robot-access' target='_blank'>点击这里</a><br><br>")
 a.rmempty = true
-a:depends("jsonpath","/usr/bin/pushbot/api/dingding.json")
 
 a=s:taboption("basic", Value, "we_webhook", translate("Webhook"),translate("企业微信机器人 Webhook").."，只输入key=后面的即可<br>调用代码获取<a href='https://work.weixin.qq.com/api/doc/90000/90136/91770' target='_blank'>点击这里</a><br><br>")
 a.rmempty = true
-a:depends("jsonpath","/usr/bin/pushbot/api/ent_wechat.json")
 
 a=s:taboption("basic", Value,"pp_token",translate('PushPlus Token'), translate("PushPlus Token").."<br>调用代码获取<a href='http://pushplus.plus/doc/' target='_blank'>点击这里</a><br><br>")
 a.rmempty = true
-a:depends("jsonpath","/usr/bin/pushbot/api/pushplus.json")
 
 a=s:taboption("basic", ListValue,"pp_channel",translate('PushPlus Channel'))
 a.rmempty = true
-a:depends("jsonpath","/usr/bin/pushbot/api/pushplus.json")
 a:value("wechat",translate("wechat：PushPlus微信公众号"))
 a:value("cp",translate("cp：企业微信应用"))
 a:value("webhook",translate("webhook：第三方webhook"))
@@ -71,67 +67,52 @@ a.description = translate("第三方webhook：企业微信、钉钉、飞书、s
 
 a=s:taboption("basic", Value,"pp_webhook",translate('PushPlus Custom Webhook'), translate("PushPlus 自定义Webhook").."<br>第三方webhook或企业微信调用<br>具体自定义Webhook设定参见：<a href='http://pushplus.plus/doc/extend/webhook.html' target='_blank'>点击这里</a><br><br>")
 a.rmempty = true
-a:depends("pp_channel","cp")
-a:depends("pp_channel","webhook")
 
 a=s:taboption("basic", Flag,"pp_topic_enable",translate("PushPlus 一对多推送"))
 a.default=0
 a.rmempty = true
-a:depends("pp_channel","wechat")
 
 a=s:taboption("basic", Value,"pp_topic",translate('PushPlus Topic'), translate("PushPlus 群组编码").."<br>一对多推送时指定的群组编码<br>具体群组编码Topic设定参见：<a href='http://www.pushplus.plus/push2.html' target='_blank'>点击这里</a><br><br>")
 a.rmempty = true
-a:depends("pp_topic_enable","1")
 
 a=s:taboption("basic", Value,"pushdeer_key",translate('PushDeer Key'), translate("PushDeer Key").."<br>调用代码获取<a href='http://www.pushdeer.com/' target='_blank'>点击这里</a><br><br>")
 a.rmempty = true
-a:depends("jsonpath","/usr/bin/pushbot/api/pushdeer.json")
 
 a=s:taboption("basic", Flag,"pushdeer_srv_enable",translate("自建 PushDeer 服务器"))
 a.default=0
 a.rmempty = true
-a:depends("jsonpath","/usr/bin/pushbot/api/pushdeer.json")
 
 a=s:taboption("basic", Value,"pushdeer_srv",translate('PushDeer Server'), translate("PushDeer 自建服务器地址").."<br>如https://your.domain:port<br>具体自建服务器设定参见：<a href='http://www.pushdeer.com/selfhosted.html' target='_blank'>点击这里</a><br><br>")
 a.rmempty = true
-a:depends("pushdeer_srv_enable","1")
 
 a=s:taboption("basic", Value,"fs_webhook",translate('WebHook'), translate("飞书 WebHook").."<br>调用代码获取<a href='https://www.feishu.cn/hc/zh-CN/articles/360024984973' target='_blank'>点击这里</a><br><br>")
 a.rmempty = true
-a:depends("jsonpath","/usr/bin/pushbot/api/feishu.json")
 
 a=s:taboption("basic", Value,"bark_token",translate('Bark Token'), translate("Bark Token").."<br>调用代码获取<a href='https://github.com/Finb/Bark' target='_blank'>点击这里</a><br><br>")
 a.rmempty = true
-a:depends("jsonpath","/usr/bin/pushbot/api/bark.json")
 
 a=s:taboption("basic", Flag,"bark_srv_enable",translate("自建 Bark 服务器"))
 a.default=0
 a.rmempty = true
-a:depends("jsonpath","/usr/bin/pushbot/api/bark.json")
 
 a=s:taboption("basic", Value,"bark_srv",translate('Bark Server'), translate("Bark 自建服务器地址").."<br>如https://your.domain:port<br>具体自建服务器设定参见：<a href='https://github.com/Finb/Bark' target='_blank'>点击这里</a><br><br>")
 a.rmempty = true
-a:depends("bark_srv_enable","1")
 
 a=s:taboption("basic", Value,"bark_sound",translate('Bark Sound'), translate("Bark 通知声音").."<br>如silence.caf<br>具体设定参见：<a href='https://github.com/Finb/Bark/tree/master/Sounds' target='_blank'>点击这里</a><br><br>")
 a.rmempty = true
 a.default = "silence.caf"
-a:depends("jsonpath","/usr/bin/pushbot/api/bark.json")
 
 a=s:taboption("basic", Flag,"bark_icon_enable",translate(" Bark 通知图标"))
 a.default=0
 a.rmempty = true
-a:depends("jsonpath","/usr/bin/pushbot/api/bark.json")
 
 a=s:taboption("basic", Value,"bark_icon",translate('Bark Icon'), translate("Bark 通知图标").."(仅 iOS15 或以上支持)<br>如http://day.app/assets/images/avatar.jpg<br>具体设定参见：<a href='https://github.com/Finb/Bark#%E5%85%B6%E4%BB%96%E5%8F%82%E6%95%B0' target='_blank'>点击这里</a><br><br>")
 a.rmempty = true
 a.default = "http://day.app/assets/images/avatar.jpg"
-a:depends("bark_icon_enable","1")
 
 a=s:taboption("basic", Value,"bark_level",translate('Bark Level'), translate("Bark 时效性通知").."<br>可选参数值：<br/>active：不设置时的默认值，系统会立即亮屏显示通知。<br/>timeSensitive：时效性通知，可在专注状态下显示通知。<br/>passive：仅将通知添加到通知列表，不会亮屏提醒。")
 a.rmempty = true
 a.default = "active"
-a:depends("jsonpath","/usr/bin/pushbot/api/bark.json")
 
 a=s:taboption("basic", TextValue, "diy_json", translate("自定义推送"))
 a.optional = false
@@ -143,7 +124,6 @@ end
 a.write = function(self, section, value)
     fs.writefile("/usr/bin/pushbot/api/diy.json", value:gsub("\r\n", "\n"))
 end
-a:depends("jsonpath","/usr/bin/pushbot/api/diy.json")
 
 a=s:taboption("basic", Button,"__add",translate("发送测试"))
 a.inputtitle=translate("发送")
@@ -472,6 +452,17 @@ a:value("",translate("关闭"))
 a:value("1",translate("模式一：脚本挂起"))
 a:value("2",translate("模式二：静默模式"))
 a.description = translate("模式一停止一切检测，包括无人值守。")
+
+local _sheep_write = a.write
+a.write = function(self, section, value)
+	_sheep_write(self, section, value)
+	if not value or value == "" then
+		local u = self.map.uci
+		u:delete(self.config, section, "starttime")
+		u:delete(self.config, section, "endtime")
+	end
+end
+
 a=s:taboption("disturb", ListValue,"starttime",translate("免打扰开始时间"))
 a.rmempty = true
 
@@ -500,15 +491,21 @@ a:value("block",translate("仅通知列表内设备"))
 a:value("interface",translate("仅通知此接口设备"))
 a.rmempty = true
 
+local _mac_write = a.write
+a.write = function(self, section, value)
+	_mac_write(self, section, value)
+	local u = self.map.uci
+	if value ~= "allow" then u:delete(self.config, section, "pushbot_whitelist") end
+	if value ~= "block" then u:delete(self.config, section, "pushbot_blacklist") end
+	if value ~= "interface" then u:delete(self.config, section, "pushbot_interface") end
+end
 
 a = s:taboption("disturb", DynamicList, "pushbot_whitelist", translate("忽略列表"))
-nt.mac_hints(function(mac, name) a :value(mac, "%s (%s)" %{ mac, name }) end)
 a.rmempty = true
 a:depends({macmechanism="allow"})
 a.description = translate("AA:AA:AA:AA:AA:AA\\|BB:BB:BB:BB:BB:B 可以将多个 MAC 视为同一用户<br/>任一设备在线后不再推送，设备全部离线时才会推送，避免双 wifi 频繁推送")
 
 a = s:taboption("disturb", DynamicList, "pushbot_blacklist", translate("关注列表"))
-nt.mac_hints(function(mac, name) a:value(mac, "%s (%s)" %{ mac, name }) end)
 a.rmempty = true
 a:depends({macmechanism="block"})
 a.description = translate("AA:AA:AA:AA:AA:AA\\|BB:BB:BB:BB:BB:B 可以将多个 MAC 视为同一用户<br/>任一设备在线后不再推送，设备全部离线时才会推送，避免双 wifi 频繁推送")
@@ -535,13 +532,19 @@ a:value("MAC_online",translate("列表内任意设备在线时免打扰"))
 a:value("MAC_offline",translate("列表内设备都离线后免打扰"))
 a.rmempty = true
 
+local _mac2_write = a.write
+a.write = function(self, section, value)
+	_mac2_write(self, section, value)
+	local u = self.map.uci
+	if value ~= "MAC_online" then u:delete(self.config, section, "MAC_online_list") end
+	if value ~= "MAC_offline" then u:delete(self.config, section, "MAC_offline_list") end
+end
+
 a = s:taboption("disturb", DynamicList, "MAC_online_list", translate("在线免打扰列表"))
-nt.mac_hints(function(mac, name) a:value(mac, "%s (%s)" %{ mac, name }) end)
 a.rmempty = true
 a:depends({macmechanism2="MAC_online"})
 
 a = s:taboption("disturb", DynamicList, "MAC_offline_list", translate("任意离线免打扰列表"))
-nt.mac_hints(function(mac, name) a:value(mac, "%s (%s)" %{ mac, name }) end)
 a.rmempty = true
 a:depends({macmechanism2="MAC_offline"})
 
