@@ -613,6 +613,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 				idle_session_check_interval = "30s",
 				idle_session_timeout = "30s",
 				min_idle_session = 5,
+				disable_reuse = (node.anytls_disable_reuse == "1") and true or nil,
 				tls = tls
 			}
 		end

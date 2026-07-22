@@ -114,7 +114,44 @@ cleanup_stale_core_nft() {
 }
 
 _core_candidates() {
-	echo "/usr/bin/mihomo /usr/bin/clash-meta /etc/clashoo/clash"
+	echo "/usr/bin/mihomo-stable /usr/bin/mihomo /usr/bin/clash-meta /etc/clashoo/clash"
+}
+
+_migrate_legacy_mihomo_stable() {
+	local legacy=/usr/bin/clash-meta version
+	[ -x /usr/bin/mihomo-stable ] && return 0
+	[ -x "$legacy" ] && [ ! -L "$legacy" ] || return 0
+	version=$("$legacy" -v 2>/dev/null | head -n 1)
+	[ -n "$version" ] || return 0
+	echo "$version" | grep -Eiq '(alpha|beta|rc|pre|smart)' && return 0
+	cp -f "$legacy" /usr/bin/mihomo-stable 2>/dev/null && chmod 0755 /usr/bin/mihomo-stable
+}
+
+_fallback_missing_mihomo_core() {
+	local selected fallback
+	is_singbox_selected && return 0
+	selected="$(uci -q get clashoo.config.core 2>/dev/null)"
+	case "$selected" in
+		2)
+			[ -x /usr/bin/mihomo-stable ] && return 0
+			[ -x /usr/bin/mihomo ] || return 0
+			fallback=3
+			;;
+		3)
+			[ -x /usr/bin/mihomo ] && return 0
+			[ -x /usr/bin/mihomo-stable ] || return 0
+			fallback=2
+			;;
+		*) return 0 ;;
+	esac
+	uci -q set clashoo.config.core="$fallback"
+	uci -q set clashoo.config.dcore="$fallback"
+	uci -q commit clashoo >/dev/null 2>&1
+	if [ "$fallback" = "3" ]; then
+		log_msg "Stable core missing, falling back to Alpha" "稳定版内核缺失，自动回退到 Alpha"
+	else
+		log_msg "Alpha core missing, falling back to stable" "Alpha 内核缺失，自动回退到稳定版"
+	fi
 }
 
 _detect_selected_core() {
@@ -128,16 +165,11 @@ _detect_selected_core() {
 			return 1
 			;;
 		2|mihomo)
-			# stable: clash-meta first (user-downloaded); /usr/bin/mihomo is auto-bump-alpha, skip it.
-			for _bin in /usr/bin/clash-meta /etc/clashoo/clash-meta /usr/bin/mihomo; do
-				[ -x "$_bin" ] && echo "$_bin" && return
-			done
+			[ -x /usr/bin/mihomo-stable ] && echo /usr/bin/mihomo-stable && return
 			return 1
 			;;
 		3|mihomo-alpha)
-			for _bin in /usr/bin/mihomo /usr/bin/clash-meta; do
-				[ -x "$_bin" ] && echo "$_bin" && return
-			done
+			[ -x /usr/bin/mihomo ] && echo /usr/bin/mihomo && return
 			return 1
 			;;
 	esac
@@ -146,7 +178,7 @@ _detect_selected_core() {
 
 core_supports_advanced_features() {
 	case "$CLASH" in
-		*/mihomo|*/clash-meta|*/smart)
+		*/mihomo|*/mihomo-stable|*/clash-meta|*/smart)
 			return 0
 			;;
 		*)
@@ -1679,7 +1711,7 @@ _start_prepare_config() {
 	if { egrep -q '^ {0,}rule-providers:' "/etc/clashoo/config.yaml" || egrep -q '^ {0,}script:' "/etc/clashoo/config.yaml"; } && ! core_supports_advanced_features; then
 		if [ -x /usr/bin/mihomo ]; then
 			uci set clashoo.config.core="3" && uci commit clashoo
-		elif [ -x /usr/bin/clash-meta ] || [ -x /etc/clashoo/clash-meta ]; then
+		elif [ -x /usr/bin/mihomo-stable ]; then
 			uci set clashoo.config.core="2" && uci commit clashoo
 		else
 			log_msg "Current config requires mihomo/clash-meta core" "当前配置需要 mihomo 或 clash-meta 内核"
@@ -1884,6 +1916,8 @@ start_service(){
 	core_only=$(uci -q get clashoo.config.core_only 2>/dev/null)
 
 	sync_legacy_core_field
+	_migrate_legacy_mihomo_stable
+	_fallback_missing_mihomo_core
 	CLASH="$(_detect_selected_core)"
 
 	cleanup_legacy_startup_backups
@@ -2060,7 +2094,7 @@ stop_service(){
 		runtime_state_set "updated_at" "$(date +%s)"
 
 		# kick access check on stop (proxy_listening fast-paths to down; UI reflects stop within 5s)
-		/usr/share/clashoo/net/access_check_cache.sh >/dev/null 2>&1 &
+		(exec 1000>&-; /usr/share/clashoo/net/access_check_cache.sh >/dev/null 2>&1) &
 
 #===========================================================================================================================
 }

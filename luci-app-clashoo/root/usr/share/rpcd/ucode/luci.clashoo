@@ -6,6 +6,7 @@ import { access, popen, glob, readfile, writefile, stat, unlink, open } from 'fs
 import { cursor } from 'uci';
 
 const BINARY_PATHS = [
+'/usr/bin/mihomo-stable',
 '/usr/bin/mihomo',
 '/usr/bin/clash-meta',
 '/usr/bin/clash',
@@ -172,6 +173,24 @@ return '';
 }
 
 function find_binary_for_family(family) {
+if (family === 'mihomo') {
+	let pid = procd_instance_pid('clashoo');
+	if (pid > 0) {
+		let p = popen('readlink -f /proc/' + pid + '/exe 2>/dev/null');
+		if (p) {
+			let running = trim(p.read('all'));
+			p.close();
+			if (running && access(running, 'x')) return running;
+		}
+	}
+	let channel = get_core_channel('mihomo');
+	if (channel == 'stable' && access('/usr/bin/mihomo-stable', 'x')) return '/usr/bin/mihomo-stable';
+	if (channel == 'alpha' && access('/usr/bin/mihomo', 'x')) return '/usr/bin/mihomo';
+	if (channel == 'smart') {
+		for (let path in SMART_BINARY_PATHS)
+			if (access(path, 'x')) return path;
+	}
+}
 let paths = family === 'singbox' ? SINGBOX_BINARY_PATHS : BINARY_PATHS;
 for (let path in paths)
 if (access(path, 'x')) return path;
@@ -252,13 +271,20 @@ legacy = dcore == '1' ? '1' : dcore == '3' ? '3' : '2';
 c.set('clashoo', 'config', 'core', legacy);
 }
 
+function has_mihomo_stable() {
+if (access('/usr/bin/mihomo-stable', 'x')) return true;
+if (system("[ -x /usr/bin/clash-meta ] && [ ! -L /usr/bin/clash-meta ]") != 0) return false;
+let version = get_core_version('/usr/bin/clash-meta');
+return !!version && !match(version, /(alpha|beta|rc|pre|smart)/i);
+}
+
 function core_target_error(core, dcore) {
 if (core == 'mihomo' && dcore == '1') {
 	if (find_smart_binary()) return null;
 	return { error: 'smart_core_missing', message: '未检测到 Smart 内核，请先在“组件更新”中安装 Smart' };
 }
 if (core == 'mihomo' && dcore == '2') {
-	if (access('/usr/bin/clash-meta', 'x') || access('/etc/clashoo/clash-meta', 'x')) return null;
+	if (has_mihomo_stable()) return null;
 	return { error: 'mihomo_stable_missing', message: '未检测到 mihomo 稳定版，请先在“组件更新”中更新稳定版' };
 }
 if (core == 'mihomo' && dcore == '3') {
@@ -769,8 +795,8 @@ return !!match(ver || '', /(alpha|beta|rc|pre|smart)/i);
 function component_installed_versions(id) {
 let out = {};
 if (id == 'mihomo') {
-	let stable = read_first_line('/usr/share/clashoo/clash_meta_version');
-	if (!stable && access('/usr/bin/clash-meta', 'x')) stable = core_short_version('/usr/bin/clash-meta');
+	let stable = access('/usr/bin/mihomo-stable', 'x') ? read_first_line('/usr/share/clashoo/clash_meta_version') : '';
+	if (!stable && access('/usr/bin/mihomo-stable', 'x')) stable = core_short_version('/usr/bin/mihomo-stable');
 	if (is_prerelease_label(stable)) stable = '';
 	let alpha = read_first_line('/usr/share/clashoo/mihomo_version');
 	if (match(alpha, /^smart-/)) alpha = '';
@@ -2553,6 +2579,7 @@ backend:           detect_firewall_backend(),
 missing_fw4_tools: detect_missing_fw4_tools(),
 has_singbox:       !!find_binary_for_family('singbox'),
 has_mihomo:        !!access('/usr/bin/mihomo', 'x'),
+has_mihomo_stable: has_mihomo_stable(),
 has_smart:         !!find_smart_binary(),
 has_clash_meta:    !!access('/usr/bin/clash-meta', 'x'),
 has_builtin_core:  !!access('/etc/clashoo/clash', 'x')

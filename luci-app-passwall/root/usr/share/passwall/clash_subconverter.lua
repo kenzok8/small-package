@@ -459,6 +459,8 @@ local function encode_anytls(node)
 		table.insert(p, "insecure=" .. (o.tls.insecure and "1" or "0"))
 	end
 
+	if node["disable-reuse"] then table.insert(p, "disable_reuse=1") end
+
 	if #p > 0 then
 		link = link .. "?" .. table.concat(p, "&")
 	end

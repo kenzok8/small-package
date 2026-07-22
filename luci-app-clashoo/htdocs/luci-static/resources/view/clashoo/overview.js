@@ -516,7 +516,9 @@ return view.extend({
     if (!family)
       return _("Not running");
     var f = family === 'singbox' ? 'sing-box' : 'mihomo';
-    var c = channel === 'smart' ? _("Smart") : channel === 'alpha' ? _("Alpha") : _("Stable");
+    if (channel !== 'smart' && channel !== 'alpha')
+      return _(family === 'singbox' ? "sing-box Stable" : "mihomo Stable");
+    var c = channel === 'smart' ? _("Smart") : _("Alpha");
     return f + ' ' + c;
   },
 

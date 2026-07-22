@@ -1562,7 +1562,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			end
 			if params.security == "tls" or params.security == "reality" then
 				result.tls = "1"
-				result.tls_serverName = params.sni
+				result.tls_serverName = params.sni or params.peer
 				result.alpn = params.alpn
 				if params.fp and params.fp ~= "" then
 					result.utls = "1"
@@ -1580,6 +1580,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			end
 			result.port = port
 			result.tls_allowInsecure = params.allowinsecure or params.insecure
+			result.anytls_disable_reuse = params.disable_reuse
 		end
 	elseif szType == 'naive+https' or szType == 'naive+quic' then
 		if has_singbox then

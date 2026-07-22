@@ -855,7 +855,7 @@ if [ -n "$CUSTOM_CORE_URL" ]; then
 		TARGET="/usr/bin/mihomo"
 		VERSION_FILE="/usr/share/clashoo/mihomo_version"
 	else
-		TARGET="/usr/bin/clash-meta"
+		TARGET="/usr/bin/mihomo-stable"
 		VERSION_FILE="/usr/share/clashoo/clash_meta_version"
 	fi
 	TAG="custom"
@@ -978,7 +978,7 @@ elif [ "$CORETYPE" = "2" ]; then
 	[ -z "$TAG" ] && write_log "获取稳定版版本号失败" && exit 1
 	ASSET=$(pick_mihomo_asset "MetaCubeX/mihomo" "$TAG" "$(map_mihomo_arch "$MODELTYPE")" "stable")
 	URL="https://github.com/MetaCubeX/mihomo/releases/download/${TAG}/${ASSET}"
-	TARGET="/usr/bin/clash-meta"
+	TARGET="/usr/bin/mihomo-stable"
 	VERSION_FILE="/usr/share/clashoo/clash_meta_version"
  	VERSION_VALUE="$TAG"
 else

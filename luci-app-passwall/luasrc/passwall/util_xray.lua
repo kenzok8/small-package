@@ -1049,7 +1049,7 @@ function gen_config(var)
 
 			api.log("  - 加载 Xray 负载均衡 节点【" .. (_node.remarks or "") .. "】，子节点数量：" .. #(blc_nodes or {}))
 
-			local valid_nodes, valid_fallback = {}, true
+			local valid_nodes = {}
 			for i = 1, #(blc_nodes or {}) do
 				local blc_node_id = blc_nodes[i]
 				local blc_node_tag = "blc-" .. blc_node_id
@@ -1069,14 +1069,14 @@ function gen_config(var)
 				end
 				-- Check if balancing node duplicates fallback node
 				if _node.fallback_node == blc_node_id then
-					valid_fallback = false
+					_node.fallback_node = nil
 				end
 			end
 			if #valid_nodes == 0 then return nil end
 
 			-- fallback node
 			local fallback_node_id = _node.fallback_node
-			fallback_node_id = (valid_fallback and fallback_node_id and fallback_node_id ~= "") and fallback_node_id or nil
+			fallback_node_id = (fallback_node_id and fallback_node_id ~= "") and fallback_node_id or nil
 			local fallback_node_tag = (fallback_node_id == "_direct") and "direct" or "blackhole"
 			if fallback_node_id and fallback_node_id ~= "_direct" then
 				local is_new_node = true

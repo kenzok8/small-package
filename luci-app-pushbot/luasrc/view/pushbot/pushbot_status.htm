@@ -1324,6 +1324,344 @@ end)
 	if (document.readyState !== 'loading') {
 		try { initCard(); } catch(e) {}
 	}
+
+	/* ── initScheduledPushCard inside IIFE to access helper functions ── */
+	function initScheduledPushCard() {
+	if (document.getElementById('pushbot_scheduled_card')) return;
+
+	/* find original rows */
+	var crontabRow = findRowByFieldName('crontab');
+	var crontabSel = crontabRow ? crontabRow.querySelector('select') : null;
+	if (!crontabRow || !crontabSel) { setTimeout(initScheduledPushCard, 300); return; }
+
+	var reg1Row = findRowByFieldName('regular_time');
+	var reg1Sel = reg1Row ? reg1Row.querySelector('select') : null;
+	var reg2Row = findRowByFieldName('regular_time_2');
+	var reg2Sel = reg2Row ? reg2Row.querySelector('select') : null;
+	var reg3Row = findRowByFieldName('regular_time_3');
+	var reg3Sel = reg3Row ? reg3Row.querySelector('select') : null;
+	var intervalRow = findRowByFieldName('interval_time');
+	var intervalSel = intervalRow ? intervalRow.querySelector('select') : null;
+	var titleRow = findRowByFieldName('send_title');
+	var titleInp = titleRow ? titleRow.querySelector('input') : null;
+	var titleDesc = titleRow ? titleRow.querySelector('.cbi-value-description') : null;
+	var googleRow = findRowByFieldName('google_check_timeout');
+	var googleInp = googleRow ? googleRow.querySelector('input') : null;
+	var googleDesc = googleRow ? googleRow.querySelector('.cbi-value-description') : null;
+	var sendBtnRow = findRowByFieldName('手动发送');
+	var sendBtn = sendBtnRow ? sendBtnRow.querySelector('.cbi-button') : null;
+
+	/* find flag rows by title text */
+	function frTitle(tag) {
+		var all = document.querySelectorAll('.cbi-value');
+		for (var xi = 0; xi < all.length; xi++) {
+			var t = all[xi].querySelector('.cbi-value-title');
+			if (t && t.textContent.indexOf(tag) >= 0) return all[xi];
+		}
+		return null;
+	}
+	var statusRow = frTitle('系统运行情况');
+	var statusCb = statusRow ? statusRow.querySelector('input[type="checkbox"]') : null;
+	var tempRow = frTitle('设备温度');
+	var tempCb = tempRow ? tempRow.querySelector('input[type="checkbox"]') : null;
+	var wanRow = frTitle('WAN信息');
+	var wanCb = wanRow ? wanRow.querySelector('input[type="checkbox"]') : null;
+	var clientRow = frTitle('客户端列表');
+	var clientCb = clientRow ? clientRow.querySelector('input[type="checkbox"]') : null;
+
+	/* stash rows */
+	stashFormElements(crontabRow);
+	if (reg1Row) stashFormElements(reg1Row);
+	if (reg2Row) stashFormElements(reg2Row);
+	if (reg3Row) stashFormElements(reg3Row);
+	if (intervalRow) stashFormElements(intervalRow);
+	if (titleRow) stashFormElements(titleRow);
+	if (googleRow) stashFormElements(googleRow);
+	if (sendBtnRow) stashFormElements(sendBtnRow);
+	[statusRow, tempRow, wanRow, clientRow].forEach(function(r) { if (r) stashFormElements(r); });
+
+	/* ── build card ── */
+	var card = document.createElement('div');
+	card.id = 'pushbot_scheduled_card';
+	card.className = 'pushbot-mode-card';
+
+	/* header */
+	var header = document.createElement('div');
+	header.className = 'pushbot-card-top';
+	header.innerHTML = '<span class="pushbot-card-title" style="font-size:16px;font-weight:800">定时推送</span>';
+	card.appendChild(header);
+
+	/* ── Row: 定时任务设定 ── */
+	var taskTitle = document.createElement('div');
+	taskTitle.className = 'pushbot-inline-title';
+	taskTitle.style.cssText = 'margin:6px 0 6px 2px;text-transform:none;font-size:13px';
+	taskTitle.textContent = '定时任务设定';
+	card.appendChild(taskTitle);
+
+	var crontabLabels = {'': '关闭', '1': '定时发送', '2': '间隔发送'};
+	var crontabList = document.createElement('div');
+	crontabList.className = 'pushbot-choice-list';
+
+	var crontabBtns = [];
+	var crontabOpts = [];
+	for (var oi = 0; oi < crontabSel.options.length; oi++) {
+		var opt = crontabSel.options[oi];
+		crontabOpts.push({ v: opt.value, l: crontabLabels[opt.value] || opt.text });
+	}
+	crontabOpts.forEach(function(o) {
+		var b = document.createElement('button');
+		b.type = 'button';
+		b.className = 'pushbot-choice-button';
+		b.textContent = o.l;
+		b.setAttribute('data-v', o.v);
+		b.addEventListener('click', function(e) {
+			e.preventDefault();
+			crontabSel.value = o.v;
+			syncCrontab();
+			renderCrontabContent();
+		});
+		crontabBtns.push(b);
+		crontabList.appendChild(b);
+	});
+	function syncCrontab() {
+		crontabBtns.forEach(function(b) {
+			var on = b.getAttribute('data-v') === crontabSel.value;
+			b.className = 'pushbot-choice-button ' + (on ? 'is-on' : 'is-off');
+		});
+	}
+	crontabSel.addEventListener('change', function() { syncCrontab(); renderCrontabContent(); });
+	syncCrontab();
+	card.appendChild(crontabList);
+
+	/* ── conditional content container ── */
+	var contentBody = document.createElement('div');
+	contentBody.id = 'sp_content_body';
+	card.appendChild(contentBody);
+
+	function renderCrontabContent() {
+		contentBody.innerHTML = '';
+		var mode = crontabSel.value;
+
+		if (mode === '' || mode === null) return; /* 关闭, no content */
+
+		/* ── time settings ── */
+		if (mode === '1') {
+			/* 定时发送 - three time selectors */
+			var timeTitle = document.createElement('div');
+			timeTitle.className = 'pushbot-inline-title';
+			timeTitle.style.cssText = 'margin:12px 0 6px 2px;text-transform:none;font-size:13px';
+			timeTitle.textContent = '发送时间';
+			contentBody.appendChild(timeTitle);
+
+			var timeRow = document.createElement('div');
+			timeRow.style.cssText = 'display:flex;gap:12px;flex-wrap:wrap';
+
+			/* helper to make hour selector */
+			function makeHourSelect(origSel, label) {
+				var wrap = document.createElement('div');
+				wrap.style.cssText = 'flex:1;min-width:120px';
+				var lbl = document.createElement('div');
+				lbl.className = 'pushbot-inline-title';
+				lbl.style.cssText = 'text-transform:none;font-size:12px;margin-bottom:4px';
+				lbl.textContent = label;
+				wrap.appendChild(lbl);
+
+				var sel = document.createElement('select');
+				sel.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit;font-family:inherit';
+				/* build options 0-23 + 关闭 for time 2,3 */
+				if (origSel) {
+					for (var hi = 0; hi < origSel.options.length; hi++) {
+						var o = document.createElement('option');
+						o.value = origSel.options[hi].value;
+						o.textContent = origSel.options[hi].textContent;
+						if (origSel.options[hi].selected) o.selected = true;
+						sel.appendChild(o);
+					}
+				} else {
+					for (var hi = 0; hi <= 23; hi++) {
+						var o = document.createElement('option');
+						o.value = hi;
+						o.textContent = '每天' + hi + '点';
+						sel.appendChild(o);
+					}
+				}
+				sel.addEventListener('change', function() {
+					if (origSel) origSel.value = this.value;
+				});
+				wrap.appendChild(sel);
+				return wrap;
+			}
+
+			timeRow.appendChild(makeHourSelect(reg1Sel, '时间一'));
+			timeRow.appendChild(makeHourSelect(reg2Sel, '时间二'));
+			timeRow.appendChild(makeHourSelect(reg3Sel, '时间三'));
+			contentBody.appendChild(timeRow);
+		}
+
+		if (mode === '2') {
+			/* 间隔发送 */
+			var intTitle = document.createElement('div');
+			intTitle.className = 'pushbot-inline-title';
+			intTitle.style.cssText = 'margin:12px 0 6px 2px;text-transform:none;font-size:13px';
+			intTitle.textContent = '发送间隔';
+			contentBody.appendChild(intTitle);
+
+			var intWrap = document.createElement('div');
+			intWrap.className = 'pushbot-inline-field';
+			intWrap.style.cssText = 'margin:0';
+			var intSel = document.createElement('select');
+			intSel.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit;font-family:inherit';
+			if (intervalSel) {
+				for (var hi = 0; hi < intervalSel.options.length; hi++) {
+					var o = document.createElement('option');
+					o.value = intervalSel.options[hi].value;
+					o.textContent = intervalSel.options[hi].textContent;
+					if (intervalSel.options[hi].selected) o.selected = true;
+					intSel.appendChild(o);
+				}
+				intSel.addEventListener('change', function() { intervalSel.value = this.value; });
+			} else {
+				for (var hi = 1; hi <= 23; hi++) {
+					var o = document.createElement('option');
+					o.value = hi;
+					o.textContent = hi + '小时';
+					intSel.appendChild(o);
+				}
+			}
+			intWrap.appendChild(intSel);
+			var intDesc = document.createElement('div');
+			intDesc.className = 'pushbot-inline-description';
+			intDesc.textContent = '从 00:00 开始，每 * 小时发送一次';
+			intWrap.appendChild(intDesc);
+			contentBody.appendChild(intWrap);
+		}
+
+		/* ── push content flags ── */
+		var contentTitle = document.createElement('div');
+		contentTitle.className = 'pushbot-inline-title';
+		contentTitle.style.cssText = 'margin:14px 0 6px 2px;text-transform:none;font-size:13px';
+		contentTitle.textContent = '推送内容';
+		contentBody.appendChild(contentTitle);
+
+		var contentList = document.createElement('div');
+		contentList.className = 'pushbot-choice-list';
+		var flags = [
+			{ cb: statusCb, label: '系统运行情况' },
+			{ cb: tempCb, label: '设备温度' },
+			{ cb: wanCb, label: 'WAN信息' },
+			{ cb: clientCb, label: '客户端列表' }
+		];
+		flags.forEach(function(f) {
+			if (!f.cb) return;
+			var b = document.createElement('button');
+			b.type = 'button';
+			b.className = 'pushbot-choice-button';
+			var on = !!(f.cb.checked);
+			b.className = 'pushbot-choice-button ' + (on ? 'is-on' : 'is-off');
+			b.innerHTML = '<span>' + f.label + '</span>';
+			b.addEventListener('click', function(e) {
+				e.preventDefault();
+				f.cb.checked = !f.cb.checked;
+				var on2 = f.cb.checked;
+				this.className = 'pushbot-choice-button ' + (on2 ? 'is-on' : 'is-off');
+			});
+			contentList.appendChild(b);
+		});
+		contentBody.appendChild(contentList);
+
+		/* ── row: 推送标题 + 全球互联检测超时时间 ── */
+		var bottomRow = document.createElement('div');
+		bottomRow.style.cssText = 'display:flex;gap:12px;margin-top:14px;flex-wrap:wrap';
+
+		/* left: 推送标题 */
+		if (titleInp) {
+			var titleWrap = document.createElement('div');
+			titleWrap.style.cssText = 'flex:2;min-width:200px';
+			var ttl = document.createElement('div');
+			ttl.className = 'pushbot-inline-title';
+			ttl.style.cssText = 'text-transform:none;font-size:12px;margin-bottom:4px';
+			ttl.textContent = '推送标题';
+			titleWrap.appendChild(ttl);
+			var inpClone = titleInp.cloneNode(true);
+			inpClone.removeAttribute('name');
+			inpClone.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit';
+			inpClone.addEventListener('change', function() { titleInp.value = this.value; });
+			titleInp.addEventListener('change', function() { inpClone.value = titleInp.value; });
+			titleWrap.appendChild(inpClone);
+			if (titleDesc) {
+				var td = document.createElement('div');
+				td.className = 'pushbot-inline-description';
+				td.style.cssText = 'margin-top:4px';
+				td.innerHTML = titleDesc.innerHTML;
+				titleWrap.appendChild(td);
+			}
+			bottomRow.appendChild(titleWrap);
+		}
+
+		/* right: 全球互联检测超时时间 */
+		if (googleInp) {
+			var googleWrap = document.createElement('div');
+			googleWrap.style.cssText = 'flex:1;min-width:150px';
+			var gt = document.createElement('div');
+			gt.className = 'pushbot-inline-title';
+			gt.style.cssText = 'text-transform:none;font-size:12px;margin-bottom:4px';
+			gt.textContent = '全球互联检测超时时间';
+			googleWrap.appendChild(gt);
+			var gClone = googleInp.cloneNode(true);
+			gClone.removeAttribute('name');
+			gClone.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit';
+			gClone.addEventListener('change', function() { googleInp.value = this.value; });
+			googleInp.addEventListener('change', function() { gClone.value = googleInp.value; });
+			googleWrap.appendChild(gClone);
+			if (googleDesc) {
+				var gd = document.createElement('div');
+				gd.className = 'pushbot-inline-description';
+				gd.style.cssText = 'margin-top:4px';
+				gd.innerHTML = googleDesc.innerHTML;
+				googleWrap.appendChild(gd);
+			}
+			bottomRow.appendChild(googleWrap);
+		}
+
+		contentBody.appendChild(bottomRow);
+
+		/* ── 手动发送 button (right-aligned) ── */
+		var origSendBtn = document.querySelector('[name$="._add"]');
+		if (origSendBtn) {
+			var sendRow = document.createElement('div');
+			sendRow.style.cssText = 'display:flex;justify-content:flex-end;margin-top:16px';
+			var sBtn = document.createElement('button');
+			sBtn.type = 'button';
+			sBtn.textContent = '手动发送';
+			sBtn.className = 'pushbot-sendtest-btn';
+			sBtn.addEventListener('click', function(e) {
+				e.preventDefault();
+				/* trigger the original CBI button's action: save config then send */
+				sBtn.disabled = true;
+				sBtn.textContent = '发送中...';
+				/* set the original button as the clicked submit button */
+				origSendBtn.click();
+			});
+			sendRow.appendChild(sBtn);
+			contentBody.appendChild(sendRow);
+		}
+	}
+
+	/* ── initial render ── */
+	renderCrontabContent();
+
+	/* insert into scheduled pane */
+	var pane = document.getElementById('pushbot_pane_scheduled');
+	if (pane) {
+		pane.innerHTML = '';
+		pane.appendChild(card);
+	}
+}
+
+	/* also call initScheduledPushCard with retry logic */
+	setTimeout(function() {
+		try { initScheduledPushCard(); } catch(e) {}
+	}, 700);
 })();
 
 function initModernTabs() {
@@ -1345,6 +1683,7 @@ function initModernTabs() {
 	tabBar.innerHTML =
 		'<button type="button" class="pushbot-tab is-active" data-tab="basic">基本设置</button>' +
 		'<button type="button" class="pushbot-tab" data-tab="content">推送内容</button>' +
+		'<button type="button" class="pushbot-tab" data-tab="scheduled">定时推送</button>' +
 		'<button type="button" class="pushbot-tab" data-tab="client">在线设备</button>' +
 		'<button type="button" class="pushbot-tab" data-tab="log">日志</button>';
 
@@ -1359,6 +1698,11 @@ function initModernTabs() {
 	contentPane.id = 'pushbot_pane_content';
 	contentPane.className = 'pushbot-tab-pane';
 	contentPane.innerHTML = '<div class="pushbot-mode-card" style="padding:32px;text-align:center;color:#94a3b8;font-size:14px">推送内容设置即将到来</div>';
+
+	var scheduledPane = document.createElement('div');
+	scheduledPane.id = 'pushbot_pane_scheduled';
+	scheduledPane.className = 'pushbot-tab-pane';
+	scheduledPane.innerHTML = '<div class="pushbot-mode-card" style="padding:32px;text-align:center;color:#94a3b8;font-size:14px">加载中...</div>';
 
 	var clientPane = document.createElement('div');
 	clientPane.id = 'pushbot_pane_client';
@@ -1388,7 +1732,8 @@ function initModernTabs() {
 
 	tabBar.parentNode.insertBefore(basicPane, tabBar.nextSibling);
 	tabBar.parentNode.insertBefore(contentPane, basicPane.nextSibling);
-	tabBar.parentNode.insertBefore(clientPane, contentPane.nextSibling);
+	tabBar.parentNode.insertBefore(scheduledPane, contentPane.nextSibling);
+	tabBar.parentNode.insertBefore(clientPane, scheduledPane.nextSibling);
 	tabBar.parentNode.insertBefore(logPane, clientPane.nextSibling);
 
 	/* move cards (运行控制 + 推送模式 + 终端信息) into basic pane */
@@ -1404,7 +1749,7 @@ function initModernTabs() {
 	if (oldTabMenu) {
 		var links = oldTabMenu.querySelectorAll('a');
 		links.forEach(function(a) {
-			if (a.textContent.indexOf('基本设置') >= 0 || a.textContent.indexOf('日志') >= 0 || a.textContent.indexOf('免打扰') >= 0 || a.textContent.indexOf('在线设备') >= 0) {
+			if (a.textContent.indexOf('基本设置') >= 0 || a.textContent.indexOf('日志') >= 0 || a.textContent.indexOf('免打扰') >= 0 || a.textContent.indexOf('在线设备') >= 0 || a.textContent.indexOf('定时推送') >= 0) {
 				var li = a.parentNode;
 				if (li) li.style.display = 'none';
 			}
@@ -1424,12 +1769,13 @@ function initModernTabs() {
 			var name = tab.getAttribute('data-tab');
 			tabs.forEach(function(t) { t.classList.remove('is-active'); });
 			tab.classList.add('is-active');
-			document.getElementById('pushbot_pane_basic').classList.toggle('is-visible', name === 'basic');
-			document.getElementById('pushbot_pane_content').classList.toggle('is-visible', name === 'content');
-			document.getElementById('pushbot_pane_client').classList.toggle('is-visible', name === 'client');
-			document.getElementById('pushbot_pane_log').classList.toggle('is-visible', name === 'log');
-			if (name === 'log') loadLog();
-			if (name === 'client') loadClients();
+		document.getElementById('pushbot_pane_basic').classList.toggle('is-visible', name === 'basic');
+		document.getElementById('pushbot_pane_content').classList.toggle('is-visible', name === 'content');
+		document.getElementById('pushbot_pane_scheduled').classList.toggle('is-visible', name === 'scheduled');
+		document.getElementById('pushbot_pane_client').classList.toggle('is-visible', name === 'client');
+		document.getElementById('pushbot_pane_log').classList.toggle('is-visible', name === 'log');
+		if (name === 'log') loadLog();
+		if (name === 'client') loadClients();
 		});
 	});
 

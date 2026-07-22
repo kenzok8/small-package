@@ -590,6 +590,10 @@ if singbox_tags:find("with_utls") then
 	o:depends({ [_n("reality")] = true })
 end
 
+o = s:option(Flag, _n("anytls_disable_reuse"), translate("Disable TLS Reuse"))
+o.default = 0
+o:depends({ [_n("protocol")] = "anytls" })
+
 o = s:option(ListValue, _n("transport"), translate("Transport"))
 o:value("tcp", "TCP")
 o:value("http", "HTTP")
