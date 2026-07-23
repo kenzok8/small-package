@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=virtualdog
-PKG_VERSION:=0.0.3
+PKG_VERSION:=0.0.4
 PKG_RELEASE:=
 # Point this at the released binary tarball when you publish builds.
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/Carseason/openwrt-packages/releases/download/prebuilt/
-PKG_HASH:=83f2d979b1a09bf5cdd0fe08215d83dcfd3a618580dbadbce1ab394f27fdaed5
+PKG_HASH:=8e359984d7cfe0cc6f90f65e053bf3904fb37b31130ddb505beb78a436d20917
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-binary-$(PKG_VERSION)
 
 PKG_BUILD_PARALLEL:=1
@@ -22,18 +22,12 @@ include $(INCLUDE_DIR)/package.mk
 
 PKG_ARCH_virtualdog:=$(ARCH)
 
-ifeq ($(ARCH),x86_64)
-	VIRTUALDOG_QEMU_PKG:=qemu-x86_64-softmmu
-else ifeq ($(ARCH),aarch64)
-	VIRTUALDOG_QEMU_PKG:=qemu-aarch64-softmmu
-endif
-
 define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
 	SUBMENU:=Web Servers/Proxies
 	TITLE:=VirtualDog
-	DEPENDS:=@(x86_64||aarch64) +$(VIRTUALDOG_QEMU_PKG) +qemu-img +qemu-bridge-helper +kmod-tun
+	DEPENDS:=@(x86_64||aarch64) +qemu-x86_64-softmmu +qemu-aarch64-softmmu +qemu-img +qemu-bridge-helper +kmod-tun +virtualdog-efi
 	URL:=https://example.invalid/virtualdog
 endef
 
