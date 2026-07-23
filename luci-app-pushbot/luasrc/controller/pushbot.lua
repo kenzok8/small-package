@@ -11,6 +11,17 @@ function index()
 	entry({"admin", "services", "pushbot", "status"}, call("act_status")).leaf = true
 	entry({"admin", "services", "pushbot", "client_list"}, call("act_client_list")).leaf = true
 	entry({"admin", "services", "pushbot", "send_test"}, call("act_send_test")).leaf = true
+	entry({"admin", "services", "pushbot", "soc_test"}, call("act_soc_test")).leaf = true
+	entry({"admin", "services", "pushbot", "soc_result"}, call("act_soc_result")).leaf = true
+end
+
+function act_soc_test()
+	luci.sys.call("/usr/bin/pushbot/pushbot soc")
+	luci.http.redirect(luci.dispatcher.build_url("admin","services","pushbot","setting"))
+end
+
+function act_soc_result()
+	luci.http.write(luci.sys.exec("cat /tmp/pushbot/soc_tmp 2>/dev/null || echo \"无输出\""))
 end
 
 function act_send_test()

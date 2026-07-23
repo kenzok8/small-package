@@ -50,6 +50,90 @@ nt.mac_hints(function(mac, name)
 end)
 %>
 <script type="text/javascript">var PUSHBOT_MAC_HINTS=[<% for i,h in ipairs(mac_hints) do if i>1 then %>,<% end %>{m:"<%=pcdata(h.mac)%>",n:"<%=pcdata(h.name)%>"}<% end %>];</script>
+
+<%
+-- inject advanced settings UCI values
+local function uci_g(opt) local v=uci:get("pushbot","pushbot",opt) return (v~=nil and v~="") and v or nil end
+local function uci_b(opt) return (uci:get("pushbot","pushbot",opt)=="1") end
+local function js_s(s) return s and s:gsub("\\","\\\\"):gsub("'","\\'"):gsub("\n","\\n"):gsub("\r","\\r") or "" end
+local adv_err_aliases = get_list_vals("pushbot","pushbot","err_device_aliases")
+-- content tab settings
+local function uci_lv(opt) return uci:get("pushbot","pushbot",opt) or "" end
+	local c_ipv4 = uci_lv("pushbot_ipv4")
+	local c_ipv4_iface = uci_lv("ipv4_interface")
+	local c_ipv6 = uci_lv("pushbot_ipv6")
+	local c_ipv6_iface = uci_lv("ipv6_interface")
+	local c_ip_white = get_list_vals("pushbot","pushbot","ip_white_list")
+	local c_client_white = get_list_vals("pushbot","pushbot","client_usage_whitelist")
+	-- file-backed values
+	local fs = require "nixio.fs"
+	local c_ipv4_list_val = luci.sys.exec("cat /usr/bin/pushbot/api/ipv4.list 2>/dev/null || true") or ""
+	local c_ipv6_list_val = luci.sys.exec("cat /usr/bin/pushbot/api/ipv6.list 2>/dev/null || true") or ""
+	local c_ip_black_val = luci.sys.exec("cat /usr/bin/pushbot/api/ip_blacklist 2>/dev/null || true") or ""
+	-- collect network interfaces for dropdowns
+	local iface_list = {}
+	local net = require "luci.model.network".init()
+	local sys = require "luci.sys"
+	for _, iface in ipairs(sys.net:devices()) do
+		if not (iface == "lo" or iface:match("^ifb.*")) then
+			iface_list[#iface_list+1] = iface
+		end
+	end
+	-- IP neighbor hints for ip_white_list
+	local ip_hints = {}
+	luci.ip.neighbors({family = 4}, function(entry)
+		if entry.reachable and entry.dest then
+			ip_hints[#ip_hints+1] = entry.dest:string()
+		end
+	end)
+%>
+<script type="text/javascript">
+var ADV_ERR_ENABLE=<%=uci_b("err_enable") and "true" or "false"%>;
+var ADV_ERR_SHEEP=<%=uci_b("err_sheep_enable") and "true" or "false"%>;
+var ADV_SOC_CODE='<%=pcdata(uci_g("soc_code") or "")%>';
+var ADV_PVE_HOST='<%=pcdata(uci_g("pve_host") or "10.0.0.2")%>';
+var ADV_PVE_PORT='<%=pcdata(uci_g("pve_port") or "22")%>';
+var ADV_UP_TIMEOUT='<%=pcdata(uci_g("up_timeout") or "2")%>';
+var ADV_DOWN_TIMEOUT='<%=pcdata(uci_g("down_timeout") or "20")%>';
+var ADV_TIMEOUT_RETRY='<%=pcdata(uci_g("timeout_retry_count") or "2")%>';
+var ADV_THREAD_NUM='<%=pcdata(uci_g("thread_num") or "3")%>';
+var ADV_NET_ERR='<%=pcdata(uci_g("network_err_event") or "")%>';
+var ADV_SYS_TIME='<%=pcdata(uci_g("system_time_event") or "")%>';
+var ADV_AUTOREBOOT='<%=pcdata(uci_g("autoreboot_time") or "24")%>';
+var ADV_NETRESTART='<%=pcdata(uci_g("network_restart_time") or "24")%>';
+var ADV_PUBLIC_IP=<%=uci_b("public_ip_event") and "true" or "false"%>;
+var ADV_PUBLIC_RETRY='<%=pcdata(uci_g("public_ip_retry_count") or "10")%>';
+var ADV_ERR_DEVICES=[<% for i,v in ipairs(adv_err_aliases) do if i>1 then %>,<% end %>"<%=js_s(v)%>"<% end %>];
+/* content tab */
+var CT_IPV4='<%=pcdata(c_ipv4)%>';
+var CT_IPV4_IFACE='<%=pcdata(c_ipv4_iface)%>';
+var CT_IPV6='<%=pcdata(c_ipv6)%>';
+var CT_IPV6_IFACE='<%=pcdata(c_ipv6_iface)%>';
+var CT_PUSH_UP=<%=uci_b("pushbot_up") and "true" or "false"%>;
+var CT_PUSH_DOWN=<%=uci_b("pushbot_down") and "true" or "false"%>;
+var CT_CPU_LOAD_EN=<%=uci_b("cpuload_enable") and "true" or "false"%>;
+var CT_CPU_LOAD='<%=pcdata(uci_lv("cpuload"))%>';
+var CT_TEMP_EN=<%=uci_b("temperature_enable") and "true" or "false"%>;
+var CT_TEMP='<%=pcdata(uci_lv("temperature"))%>';
+var CT_USAGE=<%=uci_b("client_usage") and "true" or "false"%>;
+var CT_USAGE_MAX='<%=pcdata(uci_lv("client_usage_max"))%>';
+var CT_USAGE_DISTURB=<%=uci_b("client_usage_disturb") and "true" or "false"%>;
+var CT_WEB_LOG=<%=uci_b("web_logged") and "true" or "false"%>;
+var CT_SSH_LOG=<%=uci_b("ssh_logged") and "true" or "false"%>;
+var CT_WEB_FAIL=<%=uci_b("web_login_failed") and "true" or "false"%>;
+var CT_SSH_FAIL=<%=uci_b("ssh_login_failed") and "true" or "false"%>;
+var CT_LOGIN_MAX='<%=pcdata(uci_lv("login_max_num"))%>';
+var CT_AUTO_BAN=<%=uci_b("web_login_black") and "true" or "false"%>;
+var CT_BAN_TIMEOUT='<%=pcdata(uci_lv("ip_black_timeout"))%>';
+var CT_IP_WHITE=[<% for i,v in ipairs(c_ip_white) do if i>1 then %>,<% end %>"<%=js_s(v)%>"<% end %>];
+var CT_CLIENT_WHITE=[<% for i,v in ipairs(c_client_white) do if i>1 then %>,<% end %>"<%=js_s(v)%>"<% end %>];
+var CT_IFACES=[<% for i,v in ipairs(iface_list) do if i>1 then %>,<% end %>"<%=js_s(v)%>"<% end %>];
+var CT_IP_HINTS=[<% for i,v in ipairs(ip_hints) do if i>1 then %>,<% end %>"<%=js_s(v)%>"<% end %>];
+var CT_IPV4_LIST='<%=js_s(c_ipv4_list_val)%>';
+var CT_IPV6_LIST='<%=js_s(c_ipv6_list_val)%>';
+var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
+</script>
+
 <script type="text/javascript">//<![CDATA[
 (function() {
 	/* hidden container preserves form elements for UCI submission — must be inside <form> */
@@ -1664,6 +1748,711 @@ end)
 	}, 700);
 })();
 
+function initMonitorCard() {
+	if (document.getElementById('pushbot_monitor_card_container')) return;
+	var pane = document.getElementById('pushbot_pane_monitor');
+	if (!pane) { setTimeout(initMonitorCard, 150); return; }
+
+	var hb = document.getElementById('mon_hidden_fields') || (function(){
+		var d=document.createElement('div'); d.id='mon_hidden_fields'; d.style.display='none';
+		(document.querySelector('form')||document.body).appendChild(d); return d;
+	})();
+
+	function mkHidden(name, val) {
+		var i = document.createElement('input'); i.type = 'hidden';
+		i.name = 'cbid.pushbot.pushbot.' + name; i.value = val;
+		hb.appendChild(i); return i;
+	}
+	function mkText(name, label, val, desc) {
+		var w = document.createElement('div'); w.className = 'pushbot-inline-field'; w.style.cssText = 'margin:4px 0';
+		var t = document.createElement('div'); t.className = 'pushbot-inline-title';
+		t.style.cssText = 'margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+		t.textContent = label; w.appendChild(t);
+		var b = document.createElement('div'); b.className = 'pushbot-inline-body';
+		var inp = document.createElement('input'); inp.type = 'text'; inp.className = 'cbi-input-text';
+		inp.value = val;
+		inp.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit';
+		var hi = mkHidden(name, val);
+		inp.addEventListener('change', function() { hi.value = this.value; });
+		b.appendChild(inp);
+		if (desc) { var d = document.createElement('div'); d.className = 'pushbot-inline-description'; d.innerHTML = desc; b.appendChild(d); }
+		w.appendChild(b); return w;
+	}
+	function mkToggle(label, isOn, onToggle) {
+		var b = document.createElement('button'); b.type = 'button';
+		b.className = 'pushbot-choice-button ' + (isOn ? 'is-on' : 'is-off');
+		b.innerHTML = '<span>' + label + '</span>';
+		b.addEventListener('click', function(e) {
+			e.preventDefault();
+			var newOn = !isOn; isOn = newOn;
+			b.className = 'pushbot-choice-button ' + (newOn ? 'is-on' : 'is-off');
+			if (onToggle) onToggle(newOn);
+		});
+		return b;
+	}
+	function mkChoiceList(opts, curVal, onChange) {
+		var c = document.createElement('div'); c.className = 'pushbot-choice-list';
+		var btns = [];
+		opts.forEach(function(o) {
+			var b = document.createElement('button'); b.type = 'button'; b.className = 'pushbot-choice-button';
+			b.textContent = o.l; b.setAttribute('data-v', o.v);
+			if (o.v === curVal) b.className += ' is-on';
+			b.addEventListener('click', function(e) {
+				e.preventDefault(); curVal = o.v;
+				btns.forEach(function(b2) { b2.className = 'pushbot-choice-button' + (b2.getAttribute('data-v') === curVal ? ' is-on' : ''); });
+				if (onChange) onChange(curVal);
+			});
+			btns.push(b); c.appendChild(b);
+		});
+		return c;
+	}
+
+	var container = document.createElement('div'); container.id = 'pushbot_monitor_card_container';
+
+	/* ═══ CARD 1: 设备监测 ═══ */
+	var c1 = document.createElement('div'); c1.className = 'pushbot-mode-card';
+	c1.innerHTML = '<div class="pushbot-card-top"><span class="pushbot-card-title">设备监测</span></div>';
+	var b1 = document.createElement('div'); b1.style.cssText = 'margin-top:6px';
+	var r1 = document.createElement('div'); r1.style.cssText = 'display:flex;gap:12px';
+	var c1a = document.createElement('div'); c1a.style.cssText = 'flex:1;min-width:0';
+	c1a.appendChild(mkText('up_timeout', '设备上线检测超时（s）', ADV_UP_TIMEOUT));
+	r1.appendChild(c1a);
+	var c1b = document.createElement('div'); c1b.style.cssText = 'flex:1;min-width:0';
+	c1b.appendChild(mkText('thread_num', '最大并发进程数', ADV_THREAD_NUM));
+	r1.appendChild(c1b);
+	b1.appendChild(r1);
+	var r2 = document.createElement('div'); r2.style.cssText = 'display:flex;gap:12px';
+	var c2a = document.createElement('div'); c2a.style.cssText = 'flex:1;min-width:0';
+	c2a.appendChild(mkText('down_timeout', '设备离线检测超时（s）', ADV_DOWN_TIMEOUT));
+	r2.appendChild(c2a);
+	var c2b = document.createElement('div'); c2b.style.cssText = 'flex:1;min-width:0';
+	c2b.appendChild(mkText('timeout_retry_count', '离线检测次数', ADV_TIMEOUT_RETRY,
+		'若无二级路由设备，信号强度良好，可以减少以上数值<br/>因夜间 wifi 休眠较为玄学，遇到设备频繁推送断开，烦请自行调整参数<br/>..╮(\u2570_\u2570)\uff0d..'));
+	r2.appendChild(c2b);
+	b1.appendChild(r2); c1.appendChild(b1); container.appendChild(c1);
+
+	/* ═══ CARD 2: 温度监测 ═══ */
+	var c2 = document.createElement('div'); c2.className = 'pushbot-mode-card';
+	c2.innerHTML = '<div class="pushbot-card-top"><span class="pushbot-card-title">温度监测</span></div>';
+	var b2 = document.createElement('div'); b2.style.cssText = 'margin-top:6px';
+
+	var socCur = ADV_SOC_CODE, socPVE = (socCur === 'pve'), socCust = (socCur !== '' && socCur !== 'pve');
+	var socHi = mkHidden('soc_code', socCur);
+
+	var sf = document.createElement('div'); sf.className = 'pushbot-inline-field'; sf.style.cssText = 'margin:4px 0';
+	var st = document.createElement('div'); st.className = 'pushbot-inline-title';
+	st.style.cssText = 'margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+	st.textContent = '自定义温度读取命令'; sf.appendChild(st);
+	var sb = document.createElement('div'); sb.className = 'pushbot-inline-body';
+	var ss = document.createElement('select'); ss.className = 'cbi-input-select';
+	ss.style.cssText = 'width:100%;padding:6px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+	[{v:'',l:'默认'},{v:'pve',l:'PVE\u00a0虚拟机'},{v:'__custom__',l:'自定义命令'}].forEach(function(o) {
+		var op = document.createElement('option'); op.value = o.v; op.textContent = o.l;
+		if (o.v === socCur || (socCust && o.v === '__custom__')) op.selected = true;
+		ss.appendChild(op);
+	});
+	var ci = document.createElement('input'); ci.type='text'; ci.className='cbi-input-text';
+	ci.placeholder = '输入自定义温度读取命令'; ci.value = socCust ? socCur : '';
+	ci.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit;margin-top:6px;display:'+(socCust?'block':'none');
+	function syncSoc() {
+		var v = ss.value==='__custom__' ? ci.value : ss.value;
+		socHi.value = v; togPVE();
+	}
+	ss.addEventListener('change', function() {
+		if (this.value==='__custom__') { ci.style.display='block'; ci.focus(); syncSoc(); }
+		else { ci.style.display='none'; ci.value=''; syncSoc(); }
+	});
+	ci.addEventListener('change', syncSoc);
+	var socDesc = '请尽量避免使用特殊符号，如双引号、$、!等，执行结果需为数字，用于温度对比';
+	var sd = document.createElement('div'); sd.className='pushbot-inline-description'; sd.innerHTML=socDesc; sb.appendChild(sd);
+	sb.appendChild(ss); sb.appendChild(ci); sf.appendChild(sb); b2.appendChild(sf);
+
+	/* PVE fields */
+	var pveDescHost = '请确认已经设置好密钥登陆，否则会引起脚本无法正常运行等错误！<br/>PVE 安装 sensors 命令自行百度<br/>密钥登陆例：<br/>opkg update #更新列表<br/>opkg install openssh-client openssh-keygen #安装openssh客户端<br/>ssh-keygen -t rsa # 生成密钥文件（自行设定密码等信息）<br/>ssh root@10.0.0.2 \"tee -a ~/.ssh/id_rsa.pub\" < ~/.ssh/id_rsa.pub # 传送公钥到 PVE<br/>ssh -i ~/.ssh/id_rsa root@10.0.0.2 sensors # 测试温度命令';
+	var pveDescPort = '默认为22，如有自定义，请填写自定义SSH端口';
+	var pc = document.createElement('div'); pc.id='mon_pve_fields'; pc.style.cssText='margin-top:6px';
+	var pvg = document.createElement('div'); pvg.style.cssText='display:flex;gap:12px';
+	pvg.appendChild(mkText('pve_host', '宿主机地址', ADV_PVE_HOST, pveDescHost));
+	pvg.appendChild(mkText('pve_port', 'SSH端口', ADV_PVE_PORT, pveDescPort));
+	pc.appendChild(pvg); b2.appendChild(pc);
+	function togPVE() { pc.style.display = ((socHi && socHi.value) === 'pve') ? 'block' : 'none'; }
+	togPVE();
+
+	/* Test button */
+	var tr = document.createElement('div'); tr.style.cssText='display:flex;align-items:center;gap:12px;margin-top:10px';
+	var tb = document.createElement('a'); tb.className='cbi-button cbi-input-apply';
+	tb.href='<%=url([[admin]],[[services]],[[pushbot]],[[soc_test]])%>'; tb.textContent='测试温度';
+	tb.style.cssText='white-space:nowrap;padding:6px 16px;text-decoration:none';
+	tr.appendChild(tb);
+	var rl = document.createElement('span'); rl.style.cssText='font-size:13px;font-weight:600'; rl.textContent='温度结果:';
+	tr.appendChild(rl);
+	var ro = document.createElement('span'); ro.style.cssText='padding:4px 10px;background:rgba(148,163,184,0.08);border-radius:6px;font-family:Menlo,Consolas,monospace;font-size:12px';
+	ro.textContent = '加载中...';
+	(function(){
+		var x = new XMLHttpRequest();
+		x.open('GET', '<%=url([[admin]], [[services]], [[pushbot]], [[soc_result]])%>?_=' + Date.now(), true);
+		x.onload = function() { ro.textContent = x.responseText || '无输出'; };
+		x.onerror = function() { ro.textContent = '无输出'; };
+		x.send();
+	})();
+	tr.appendChild(ro);
+	b2.appendChild(tr);
+	c2.appendChild(b2); container.appendChild(c2);
+
+	/* ═══ CARD 3: 无人值守 ═══ */
+	var c3 = document.createElement('div'); c3.className = 'pushbot-mode-card';
+
+	/* Find original err_enable CBI checkbox for proper Flag form submission */
+	var errOrig = document.querySelector('[name$=".err_enable"][type="checkbox"]');
+	var errOn = errOrig ? errOrig.checked : ADV_ERR_ENABLE;
+	var errDesc = '请确认脚本可以正常运行，否则可能造成频繁重启等错误！';
+	var errToggle = mkToggle('无人值守任务', errOn, function(on) {
+		if (errOrig) errOrig.checked = on;
+		var ec = document.getElementById('mon_err_content');
+		if (ec) ec.style.display = on ? 'block' : 'none';
+	});
+	c3.appendChild(errToggle);
+	var dDesc = document.createElement('div'); dDesc.className = 'pushbot-inline-description'; dDesc.innerHTML = errDesc;
+	c3.appendChild(dDesc);
+
+	var ec = document.createElement('div'); ec.id = 'mon_err_content'; ec.style.cssText = 'margin-top:10px';
+	ec.style.display = errOn ? 'block' : 'none';
+	c3.appendChild(ec);
+
+	/* err_sheep_enable */
+	(function(){
+		var d = document.createElement('div'); d.className = 'pushbot-inline-description';
+		d.innerHTML = '避免白天重拨 ddns 域名等待解析，此功能不影响断网检测<br/>因夜间跑流量问题，该功能可能不稳定';
+		ec.appendChild(d);
+		/* find original CBI checkbox */
+		var shOrig = document.querySelector('[name$=".err_sheep_enable"][type="checkbox"]');
+		var shOn = shOrig ? shOrig.checked : ADV_ERR_SHEEP;
+		var shTog = mkToggle('仅在免打扰时段重拨', shOn, function(on) {
+			if (shOrig) shOrig.checked = on;
+		});
+		ec.appendChild(shTog);
+	})();
+	ec.appendChild(document.createElement('hr')).style.cssText = 'border:none;border-top:1px solid rgba(148,163,184,0.2);margin:10px 0';
+
+	/* network_err_event */
+	(function(){
+		var nl = document.createElement('div'); nl.className = 'pushbot-inline-title';
+		nl.style.cssText = 'margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+		nl.textContent = '网络断开时'; ec.appendChild(nl);
+		var netHi = mkHidden('network_err_event', ADV_NET_ERR);
+		var netL = [
+			{v:'',l:'无操作'},
+			{v:'1',l:'重启路由器'},
+			{v:'2',l:'重新拨号'},
+			{v:'3',l:'修改相关设置项，尝试自动修复网络'}
+		];
+		ec.appendChild(mkChoiceList(netL, ADV_NET_ERR, function(v) { netHi.value = v; }));
+		var netDesc = '选项 1 选项 2 不会修改设置，并最多尝试 2 次。<br/>选项 3 会将设置项备份于 /usr/bin/pushbot/configbak 目录，并在失败后还原。<br/>【！！无法保证兼容性！！】不熟悉系统设置项，不会救砖请勿使用';
+		var nd = document.createElement('div'); nd.className = 'pushbot-inline-description'; nd.innerHTML = netDesc; ec.appendChild(nd);
+	})();
+	ec.appendChild(document.createElement('hr')).style.cssText = 'border:none;border-top:1px solid rgba(148,163,184,0.2);margin:10px 0';
+
+	/* err_device_aliases */
+	(function(){
+		var dl = document.createElement('div'); dl.className = 'pushbot-inline-title';
+		dl.style.cssText = 'margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+		dl.textContent = '关注列表'; ec.appendChild(dl);
+		var dc = document.createElement('div'); dc.style.cssText = 'margin:4px 0';
+		var tl = document.createElement('div'); tl.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px';
+		var ir = document.createElement('div'); ir.style.cssText = 'display:flex;gap:4px';
+		var inp = document.createElement('input'); inp.type='text'; inp.className='cbi-input-text';
+		inp.placeholder = 'XX:XX:XX:XX:XX:XX';
+		inp.style.cssText = 'flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+		/* datalist for MAC hints - same style as 免打扰 MAC filter */
+		var listId = 'mh_err_device';
+		inp.setAttribute('list', listId);
+		var dlist = document.createElement('datalist');
+		dlist.id = listId;
+		if (typeof PUSHBOT_MAC_HINTS !== 'undefined') {
+			PUSHBOT_MAC_HINTS.forEach(function(h) {
+				var o = document.createElement('option');
+				o.value = h.m;
+				o.textContent = h.n ? h.m + ' (' + h.n + ')' : h.m;
+				dlist.appendChild(o);
+			});
+		}
+		var addB = document.createElement('button'); addB.type='button'; addB.className='pushbot-choice-button is-on';
+		addB.textContent = '添加';
+		ir.appendChild(inp); ir.appendChild(dlist); ir.appendChild(addB);
+		dc.appendChild(tl); dc.appendChild(ir); ec.appendChild(dc);
+
+		var curVals = ADV_ERR_DEVICES.slice();
+		function renderTags(){
+			tl.innerHTML='';
+			curVals.forEach(function(v){if(!v)return;
+				var t=document.createElement('span');
+				t.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(148,163,184,0.12);border-radius:4px;font-size:12px';
+				t.textContent=v;
+				var x=document.createElement('span');x.textContent='\u00d7';
+				x.style.cssText='cursor:pointer;font-weight:bold;margin-left:2px;opacity:0.6';
+				x.addEventListener('click',function(){var idx=curVals.indexOf(v);if(idx>=0){curVals.splice(idx,1);renderTags();syncH();}});
+				t.appendChild(x);tl.appendChild(t);
+			});
+		}
+		function syncH(){
+			/* remove old hidden inputs */
+			var ex=hb.querySelectorAll('input[name$=".err_device_aliases"]');
+			ex.forEach(function(el){el.remove();});
+			curVals.forEach(function(v){if(!v)return;
+				var i2=document.createElement('input');i2.type='hidden';i2.name='cbid.pushbot.pushbot.err_device_aliases';i2.value=v;
+				hb.appendChild(i2);
+			});
+		}
+		function addTag(v){v=v.trim().toUpperCase();if(!v||curVals.indexOf(v)>=0)return;curVals.push(v);renderTags();syncH();}
+		addB.addEventListener('click',function(){addTag(inp.value);inp.value='';inp.focus();});
+		inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();addTag(inp.value);inp.value='';}});
+		renderTags();
+		syncH();
+
+		var devDesc = '只会在列表中设备都不在线时才会执行<br/>免打扰时段一小时后，关注设备五分钟低流量（约100kb/m）将视为离线';
+		var d2 = document.createElement('div'); d2.className = 'pushbot-inline-description'; d2.innerHTML = devDesc; ec.appendChild(d2);
+	})();
+	ec.appendChild(document.createElement('hr')).style.cssText = 'border:none;border-top:1px solid rgba(148,163,184,0.2);margin:10px 0';
+
+	/* system_time_event */
+	(function(){
+		var sl = document.createElement('div'); sl.className = 'pushbot-inline-title';
+		sl.style.cssText = 'margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+		sl.textContent = '定时重启'; ec.appendChild(sl);
+		var sysHi = mkHidden('system_time_event', ADV_SYS_TIME);
+		var sysL = [{v:'',l:'无操作'},{v:'1',l:'重启路由器'},{v:'2',l:'重新拨号'}];
+		ec.appendChild(mkChoiceList(sysL, ADV_SYS_TIME, function(v) {
+			sysHi.value = v;
+			var rf=document.getElementById('mon_autoreboot');
+			var nrf=document.getElementById('mon_netrestart');
+			if(rf)rf.style.display=(v==='1')?'block':'none';
+			if(nrf)nrf.style.display=(v==='2')?'block':'none';
+		}));
+		var stc = document.createElement('div'); stc.style.cssText = 'margin-top:6px';
+		var ar = document.createElement('div'); ar.id = 'mon_autoreboot';
+		ar.style.display = (ADV_SYS_TIME === '1') ? 'block' : 'none';
+		ar.appendChild(mkText('autoreboot_time', '系统运行时间大于', ADV_AUTOREBOOT, '单位为小时'));
+		stc.appendChild(ar);
+		var nr = document.createElement('div'); nr.id = 'mon_netrestart';
+		nr.style.display = (ADV_SYS_TIME === '2') ? 'block' : 'none';
+		nr.appendChild(mkText('network_restart_time', '网络在线时间大于', ADV_NETRESTART, '单位为小时'));
+		stc.appendChild(nr);
+		ec.appendChild(stc);
+	})();
+	ec.appendChild(document.createElement('hr')).style.cssText = 'border:none;border-top:1px solid rgba(148,163,184,0.2);margin:10px 0';
+
+	/* public_ip_event */
+	(function(){
+		var pubDesc = '重拨时不会推送 ip 变动通知，并会导致你的域名无法及时更新 ip 地址<br/>请确认你可以通过重拨获取公网 ip，否则这不仅徒劳无功还会引起频繁断网<br/>移动等大内网你就别挣扎了！！';
+		var pd = document.createElement('div'); pd.className = 'pushbot-inline-description'; pd.innerHTML = pubDesc; ec.appendChild(pd);
+		/* find original CBI checkbox */
+		var pubOrig = document.querySelector('[name$=".public_ip_event"][type="checkbox"]');
+		var pubOn = pubOrig ? pubOrig.checked : ADV_PUBLIC_IP;
+		var pubRow = document.createElement('div'); pubRow.style.cssText = 'display:flex;align-items:center;gap:12px;margin-top:6px';
+		var pubToggle = mkToggle('重拨尝试获取公网 ip', pubOn, function(on) {
+			if (pubOrig) pubOrig.checked = on;
+			var prc = document.getElementById('mon_pubretry');
+			if (prc) prc.style.display = on ? 'flex' : 'none';
+		});
+		pubRow.appendChild(pubToggle);
+		var prc = document.createElement('div'); prc.id = 'mon_pubretry';
+		prc.style.cssText = 'display:'+(pubOn?'flex':'none')+';align-items:center;gap:12px;flex:1';
+		prc.appendChild(mkText('public_ip_retry_count', '当天最大重试次数', ADV_PUBLIC_RETRY));
+		pubRow.appendChild(prc);
+		ec.appendChild(pubRow);
+	})();
+
+	container.appendChild(c3);
+	pane.innerHTML = '';
+	pane.appendChild(container);
+
+		/* Disable old advanced tab CBI elements to prevent duplicate submission */
+		var monHidden = document.getElementById('mon_hidden_fields');
+		var advFields = [
+			'up_timeout','down_timeout','timeout_retry_count','thread_num',
+			'soc_code','pve_host','pve_port',
+			'err_device_aliases',
+			'network_err_event','system_time_event','autoreboot_time',
+			'network_restart_time','public_ip_retry_count'
+		];
+		if (monHidden) {
+			advFields.forEach(function(name) {
+				/* match both exact name and DynamicList '[]' suffix */
+				document.querySelectorAll('[name$="' + name + '"]').forEach(function(el) {
+					if (!monHidden.contains(el)) el.name = '';
+				});
+				document.querySelectorAll('input').forEach(function(el) {
+					if (el.name && el.name.indexOf('.' + name + '[]') >= 0 && !monHidden.contains(el)) {
+						el.name = '';
+					}
+				});
+			});
+		}
+	}
+
+/* pre-load monitor card content with retry */
+setTimeout(function(){
+	function tryMon(){
+		var p = document.getElementById('pushbot_pane_monitor');
+		if (!p) { setTimeout(tryMon, 200); return; }
+		try{initMonitorCard();}catch(e){try{console.error('monitor:',e);}catch(e2){}setTimeout(tryMon, 500);}
+	}
+	tryMon();
+}, 1000);
+
+function initContentCard() {
+	var pane = document.getElementById('pushbot_pane_content');
+	if (!pane) { setTimeout(initContentCard, 150); return; }
+	if (document.getElementById('pushbot_content_card_container')) return;
+
+	var hb = document.getElementById('con_hidden_fields') || (function(){
+		var d=document.createElement('div'); d.id='con_hidden_fields'; d.style.display='none';
+		(document.querySelector('form')||document.body).appendChild(d); return d;
+	})();
+
+	function mkH(name, val) {
+		var i=document.createElement('input'); i.type='hidden';
+		i.name='cbid.pushbot.pushbot.'+name; i.value=val; hb.appendChild(i); return i;
+	}
+	function mkBtn(label, isOn, onClick) {
+		var on = !!isOn;
+		var b=document.createElement('button'); b.type='button';
+		b.className='pushbot-choice-button '+(on?'is-on':'is-off');
+		b.innerHTML='<span>'+label+'</span>';
+		b.addEventListener('click',function(e){
+			e.preventDefault(); on=!on;
+			b.className='pushbot-choice-button '+(on?'is-on':'is-off');
+			if(onClick)onClick(on);
+		}); return b;
+	}
+	function mkChoice(opts, cur, onChange) {
+		var c=document.createElement('div');c.className='pushbot-choice-list';
+		var btns=[];
+		opts.forEach(function(o){
+			var b=document.createElement('button');b.type='button';b.className='pushbot-choice-button';
+			b.textContent=o.l;b.setAttribute('data-v',o.v);
+			if(o.v===cur)b.className+=' is-on';
+			b.addEventListener('click',function(e){
+				e.preventDefault();cur=o.v;
+				btns.forEach(function(b2){b2.className='pushbot-choice-button'+(b2.getAttribute('data-v')===cur?' is-on':'');});
+				if(onChange)onChange(cur);
+			});btns.push(b);c.appendChild(b);
+		});return c;
+	}
+	function mkTxt(name, label, val, desc) {
+		var w=document.createElement('div');w.className='pushbot-inline-field';w.style.cssText='margin:4px 0';
+		var t=document.createElement('div');t.className='pushbot-inline-title';
+		t.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+		t.textContent=label;w.appendChild(t);
+		var b=document.createElement('div');b.className='pushbot-inline-body';
+		var inp=document.createElement('input');inp.type='text';inp.className='cbi-input-text';
+		inp.value=val;
+		inp.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit';
+		var hi=mkH(name,val);
+		inp.addEventListener('change',function(){hi.value=this.value;});
+		b.appendChild(inp);
+		if(desc){var d=document.createElement('div');d.className='pushbot-inline-description';d.innerHTML=desc;b.appendChild(d);}
+		w.appendChild(b);return w;
+	}
+	function mkSel(name, label, val, opts, desc, onChange) {
+		var w=document.createElement('div');w.className='pushbot-inline-field';w.style.cssText='margin:4px 0';
+		var t=document.createElement('div');t.className='pushbot-inline-title';
+		t.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+		t.textContent=label;w.appendChild(t);
+		var b=document.createElement('div');b.className='pushbot-inline-body';
+		var sel=document.createElement('select');sel.className='cbi-input-select';
+		sel.style.cssText='width:100%;padding:6px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+		opts.forEach(function(o){var op=document.createElement('option');op.value=o.v;op.textContent=o.l;if(o.v===val)op.selected=true;sel.appendChild(op);});
+		var hi=mkH(name,val);
+		sel.addEventListener('change',function(){hi.value=this.value;if(onChange)onChange(this.value);});
+		b.appendChild(sel);
+		if(desc){var d=document.createElement('div');d.className='pushbot-inline-description';d.innerHTML=desc;b.appendChild(d);}
+		w.appendChild(b);return w;
+	}
+
+	var container = document.createElement('div'); container.id = 'pushbot_content_card_container';
+
+	/* ═══ CARD 1: 网络监控 ═══ */
+	var c1 = document.createElement('div'); c1.className = 'pushbot-mode-card';
+	c1.innerHTML = '<div class="pushbot-card-top"><span class="pushbot-card-title">网络监控</span></div>';
+	var b1 = document.createElement('div'); b1.style.cssText = 'margin-top:6px';
+
+	/* IPv4 row */
+	var iv4Hi = mkH('pushbot_ipv4', CT_IPV4);
+	var iv4Opts=[{v:'',l:'关闭'},{v:'1',l:'通过接口获取'},{v:'2',l:'通过URL获取'}];
+	var iv4Choices = mkChoice(iv4Opts, CT_IPV4, function(v){iv4Hi.value=v; toggleIPv4(v);});
+	var iv4Lbl = document.createElement('div'); iv4Lbl.className='pushbot-inline-title';
+	iv4Lbl.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+	iv4Lbl.textContent='IPv4 变更通知'; b1.appendChild(iv4Lbl); b1.appendChild(iv4Choices);
+	var iv4Sub = document.createElement('div'); iv4Sub.id='ct_ipv4_extra'; iv4Sub.style.cssText='margin-top:6px;display:none';
+	/* interface selector */
+	var iv4Sub1 = document.createElement('div'); iv4Sub1.id='ct_ipv4_iface'; iv4Sub1.style.cssText='display:none';
+	var iv4IfOpts=[{v:'',l:'-- 选择接口 --'}];
+	CT_IFACES.forEach(function(f){iv4IfOpts.push({v:f,l:f});});
+	iv4Sub1.appendChild(mkSel('ipv4_interface','接口名称',CT_IPV4_IFACE,iv4IfOpts,'一般选择 wan 接口，多拨环境请自行选择'));
+	iv4Sub.appendChild(iv4Sub1);
+	/* URL list textarea */
+	var iv4Sub2 = document.createElement('div'); iv4Sub2.id='ct_ipv4_url'; iv4Sub2.style.cssText='display:none';
+	var iv4UrlLbl = document.createElement('div'); iv4UrlLbl.className='pushbot-inline-title';
+	iv4UrlLbl.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+	iv4UrlLbl.textContent='IPv4 API列表'; iv4Sub2.appendChild(iv4UrlLbl);
+	var iv4Ta=document.createElement('textarea');iv4Ta.className='cbi-input-textarea';iv4Ta.rows=4;
+	iv4Ta.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit;resize:vertical';
+	iv4Ta.textContent=CT_IPV4_LIST;
+	var iv4UrlHi=mkH('ipv4_list',CT_IPV4_LIST);
+	iv4Ta.addEventListener('input',function(){iv4UrlHi.value=this.value;});
+	iv4Sub2.appendChild(iv4Ta);
+	iv4Sub.appendChild(iv4Sub2);
+	b1.appendChild(iv4Sub);
+	function toggleIPv4(v){
+		iv4Sub.style.display=(v==='1'||v==='2')?'block':'none';
+		iv4Sub1.style.display=(v==='1')?'block':'none';
+		iv4Sub2.style.display=(v==='2')?'block':'none';
+	}
+	toggleIPv4(CT_IPV4);
+
+	/* IPv6 row */
+	var iv6Hi = mkH('pushbot_ipv6', CT_IPV6);
+	var iv6Opts=[{v:'0',l:'关闭'},{v:'1',l:'通过接口获取'},{v:'2',l:'通过URL获取'}];
+	var iv6Choices = mkChoice(iv6Opts, CT_IPV6, function(v){iv6Hi.value=v; toggleIPv6(v);});
+	var iv6Lbl = document.createElement('div'); iv6Lbl.className='pushbot-inline-title';
+	iv6Lbl.style.cssText='margin:8px 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+	iv6Lbl.textContent='IPv6 变更通知'; b1.appendChild(iv6Lbl); b1.appendChild(iv6Choices);
+	var iv6Sub = document.createElement('div'); iv6Sub.id='ct_ipv6_extra'; iv6Sub.style.cssText='margin-top:6px;display:none';
+	var iv6Sub1 = document.createElement('div'); iv6Sub1.style.cssText='display:none';
+	var iv6IfOpts=[{v:'',l:'-- 选择接口 --'}];
+	CT_IFACES.forEach(function(f){iv6IfOpts.push({v:f,l:f});});
+	iv6Sub1.appendChild(mkSel('ipv6_interface','接口名称',CT_IPV6_IFACE,iv6IfOpts,'一般选择 wan 接口，多拨环境请自行选择'));
+	iv6Sub.appendChild(iv6Sub1);
+	var iv6Sub2 = document.createElement('div'); iv6Sub2.id='ct_ipv6_url'; iv6Sub2.style.cssText='display:none';
+	var iv6UrlLbl = document.createElement('div'); iv6UrlLbl.className='pushbot-inline-title';
+	iv6UrlLbl.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+	iv6UrlLbl.textContent='IPv6 API列表'; iv6Sub2.appendChild(iv6UrlLbl);
+	var iv6Ta=document.createElement('textarea');iv6Ta.className='cbi-input-textarea';iv6Ta.rows=4;
+	iv6Ta.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit;resize:vertical';
+	iv6Ta.textContent=CT_IPV6_LIST;
+	var iv6UrlHi=mkH('ipv6_list',CT_IPV6_LIST);
+	iv6Ta.addEventListener('input',function(){iv6UrlHi.value=this.value;});
+	iv6Sub2.appendChild(iv6Ta);
+	iv6Sub.appendChild(iv6Sub2);
+	b1.appendChild(iv6Sub);
+	function toggleIPv6(v){
+		iv6Sub.style.display=(v==='1'||v==='2')?'block':'none';
+		iv6Sub1.style.display=(v==='1')?'block':'none';
+		iv6Sub2.style.display=(v==='2')?'block':'none';
+	}
+	toggleIPv6(CT_IPV6);
+
+	/* device up/down toggles - use original CBI checkboxes */
+	var upOrig = document.querySelector('[name$=".pushbot_up"][type="checkbox"]');
+	var dnOrig = document.querySelector('[name$=".pushbot_down"][type="checkbox"]');
+	var upOn = upOrig ? upOrig.checked : CT_PUSH_UP;
+	var dnOn = dnOrig ? dnOrig.checked : CT_PUSH_DOWN;
+	var dRow=document.createElement('div');dRow.style.cssText='display:flex;gap:12px;margin-top:8px';
+	dRow.appendChild(mkBtn('设备上线通知',upOn,function(on){if(upOrig)upOrig.checked=on;}));
+	dRow.appendChild(mkBtn('设备下线通知',dnOn,function(on){if(dnOrig)dnOrig.checked=on;}));
+	b1.appendChild(dRow);
+
+	c1.appendChild(b1); container.appendChild(c1);
+
+	/* ═══ CARD 2: 性能监控 ═══ */
+	var c2 = document.createElement('div'); c2.className = 'pushbot-mode-card';
+	c2.innerHTML = '<div class="pushbot-card-top"><span class="pushbot-card-title">性能监控</span></div>';
+	var b2 = document.createElement('div'); b2.style.cssText = 'margin-top:6px';
+
+	/* CPU load */
+	var clOrig = document.querySelector('[name$=".cpuload_enable"][type="checkbox"]');
+	var clOn = clOrig ? clOrig.checked : CT_CPU_LOAD_EN;
+	var clRow=document.createElement('div');clRow.style.cssText='margin-bottom:8px';
+	clRow.appendChild(mkBtn('CPU 负载报警',clOn,function(on){if(clOrig)clOrig.checked=on;toggleCl(on);}));
+	b2.appendChild(clRow);
+	var clSub=document.createElement('div');clSub.id='ct_cpuload_sub';clSub.style.cssText='margin-top:4px;display:'+(CT_CPU_LOAD_EN?'block':'none');
+	clSub.appendChild(mkTxt('cpuload','负载报警阈值',CT_CPU_LOAD));b2.appendChild(clSub);
+	function toggleCl(on){clSub.style.display=on?'block':'none';}
+
+	/* CPU temp */
+	var tmOrig = document.querySelector('[name$=".temperature_enable"][type="checkbox"]');
+	var tmOn = tmOrig ? tmOrig.checked : CT_TEMP_EN;
+var tmRow=document.createElement('div');tmRow.style.cssText='margin-bottom:8px';
+tmRow.appendChild(mkBtn('CPU 温度报警',tmOn,function(on){if(tmOrig)tmOrig.checked=on;toggleTm(on);}));
+b2.appendChild(tmRow);
+	var tmSub=document.createElement('div');tmSub.id='ct_temp_sub';tmSub.style.cssText='margin-top:4px;display:'+(CT_TEMP_EN?'block':'none');
+	tmSub.appendChild(mkTxt('temperature','温度报警阈值',CT_TEMP,'设备报警只会在连续五分钟超过设定值时才会推送<br/>而且一个小时内不会再提醒第二次'));b2.appendChild(tmSub);
+	function toggleTm(on){tmSub.style.display=on?'block':'none';}
+
+	/* client usage */
+		var cuOrig = document.querySelector('[name$=".client_usage"][type="checkbox"]');
+		var cuOn = cuOrig ? cuOrig.checked : CT_USAGE;
+		var cuRow=document.createElement('div');cuRow.style.cssText='margin-bottom:8px';
+		cuRow.appendChild(mkBtn('设备异常流量',cuOn,function(on){if(cuOrig)cuOrig.checked=on;toggleCu(on);}));
+		b2.appendChild(cuRow);
+	var cuSub=document.createElement('div');cuSub.id='ct_usage_sub';cuSub.style.cssText='margin-top:4px;display:'+(CT_USAGE?'block':'none');
+	cuSub.appendChild(mkTxt('client_usage_max','每分钟流量限制',CT_USAGE_MAX,'设备异常流量警报（byte），你可以追加 K 或者 M'));
+	/* disturb toggle */
+/* client usage disturb - use original CBI checkbox */
+var cdOrig = document.querySelector('[name$=".client_usage_disturb"][type="checkbox"]');
+var cdOn = cdOrig ? cdOrig.checked : CT_USAGE_DISTURB;
+cuSub.appendChild(mkBtn('异常流量免打扰',cdOn,function(on){if(cdOrig)cdOrig.checked=on;toggleCd(on);}));
+	var cdSub=document.createElement('div');cdSub.id='ct_disturb_sub';cdSub.style.cssText='margin-top:4px;display:'+(CT_USAGE_DISTURB?'block':'none');
+	/* whitelist with MAC dropdown */
+	var wlCtr=document.createElement('div');wlCtr.style.cssText='margin:4px 0';
+	var wlLbl=document.createElement('div');wlLbl.className='pushbot-inline-title';
+	wlLbl.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+	wlLbl.textContent='异常流量关注列表';wlCtr.appendChild(wlLbl);
+	var wlTags=document.createElement('div');wlTags.style.cssText='display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px';
+	var wlIR=document.createElement('div');wlIR.style.cssText='display:flex;gap:4px';
+	var wlInp=document.createElement('input');wlInp.type='text';wlInp.className='cbi-input-text';
+	wlInp.placeholder='XX:XX:XX:XX:XX:XX';wlInp.style.cssText='flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+	wlInp.setAttribute('list','mh_client_white');
+	var wlDl=document.createElement('datalist');wlDl.id='mh_client_white';
+	if(typeof PUSHBOT_MAC_HINTS!=='undefined'){PUSHBOT_MAC_HINTS.forEach(function(h){var o=document.createElement('option');o.value=h.m;o.textContent=h.n?h.m+' ('+h.n+')':h.m;wlDl.appendChild(o);});}
+	wlIR.appendChild(wlInp);wlIR.appendChild(wlDl);
+	var wlAdd=document.createElement('button');wlAdd.type='button';wlAdd.className='pushbot-choice-button is-on';wlAdd.textContent='添加';wlIR.appendChild(wlAdd);
+	wlCtr.appendChild(wlTags);wlCtr.appendChild(wlIR);cdSub.appendChild(wlCtr);
+	var wlVals=CT_CLIENT_WHITE.slice();
+	function wlSync(){
+		var ex=hb.querySelectorAll('[name$=".client_usage_whitelist"]');ex.forEach(function(el){el.remove();});
+		wlVals.forEach(function(v){if(!v)return;var i=document.createElement('input');i.type='hidden';i.name='cbid.pushbot.pushbot.client_usage_whitelist';i.value=v;hb.appendChild(i);});
+	}
+	function wlRender(){
+		wlTags.innerHTML='';
+		wlVals.forEach(function(v){if(!v)return;
+			var t=document.createElement('span');t.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(148,163,184,0.12);border-radius:4px;font-size:12px';
+			t.textContent=v;
+			var x=document.createElement('span');x.textContent='\u00d7';x.style.cssText='cursor:pointer;font-weight:bold;margin-left:2px;opacity:0.6';
+			x.addEventListener('click',function(){var idx=wlVals.indexOf(v);if(idx>=0){wlVals.splice(idx,1);wlRender();wlSync();}});
+			t.appendChild(x);wlTags.appendChild(t);
+		});
+	}
+	wlAdd.addEventListener('click',function(){var v=wlInp.value.trim().toUpperCase();if(v&&wlVals.indexOf(v)<0){wlVals.push(v);wlRender();wlSync();}wlInp.value='';wlInp.focus();});
+	wlInp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();var v=wlInp.value.trim().toUpperCase();if(v&&wlVals.indexOf(v)<0){wlVals.push(v);wlRender();wlSync();}wlInp.value='';}});
+	wlRender();wlSync();
+	cuSub.appendChild(cdSub);b2.appendChild(cuSub);
+	function toggleCu(on){cuSub.style.display=on?'block':'none';}
+	function toggleCd(on){cdSub.style.display=on?'block':'none';}
+
+	c2.appendChild(b2); container.appendChild(c2);
+
+	/* ═══ CARD 3: 安全监控 ═══ */
+	var c3 = document.createElement('div'); c3.className = 'pushbot-mode-card';
+	c3.innerHTML = '<div class="pushbot-card-top"><span class="pushbot-card-title">安全监控</span></div>';
+	var b3 = document.createElement('div'); b3.style.cssText = 'margin-top:6px';
+
+	var wlOrig = document.querySelector('[name$=".web_logged"][type="checkbox"]');
+	var slOrig = document.querySelector('[name$=".ssh_logged"][type="checkbox"]');
+	var wlOn = wlOrig ? wlOrig.checked : CT_WEB_LOG;
+	var slOn = slOrig ? slOrig.checked : CT_SSH_LOG;
+	/* web/ssh fail - use original CBI checkboxes */
+	var wfOrig = document.querySelector('[name$=".web_login_failed"][type="checkbox"]');
+	var sfOrig = document.querySelector('[name$=".ssh_login_failed"][type="checkbox"]');
+	var wfOn = wfOrig ? wfOrig.checked : CT_WEB_FAIL;
+	var sfOn = sfOrig ? sfOrig.checked : CT_SSH_FAIL;
+
+	/* row1: web log + ssh log */
+	var r1=document.createElement('div');r1.style.cssText='display:flex;gap:12px';
+	r1.appendChild(mkBtn('Web 登录提醒',wlOn,function(on){if(wlOrig)wlOrig.checked=on;}));
+	r1.appendChild(mkBtn('SSH 登录提醒',slOn,function(on){if(slOrig)slOrig.checked=on;}));
+	b3.appendChild(r1);
+	/* row2: web fail + ssh fail */
+	var r2=document.createElement('div');r2.style.cssText='display:flex;gap:12px;margin-top:4px';
+	r2.appendChild(mkBtn('Web 错误尝试提醒',wfOn,function(on){if(wfOrig)wfOrig.checked=on;toggleFail();}));
+	r2.appendChild(mkBtn('SSH 错误尝试提醒',sfOn,function(on){if(sfOrig)sfOrig.checked=on;toggleFail();}));
+	b3.appendChild(r2);
+
+	var failSub=document.createElement('div');failSub.id='ct_fail_sub';failSub.style.cssText='margin-top:8px';
+	var failOn=CT_WEB_FAIL||CT_SSH_FAIL;
+	failSub.style.display=failOn?'block':'none';
+	failSub.appendChild(mkTxt('login_max_num','错误尝试次数',CT_LOGIN_MAX,'超过次数后推送提醒'));
+
+	var banOrig = document.querySelector('[name$=".web_login_black"][type="checkbox"]');
+	var banOn = banOrig ? banOrig.checked : CT_AUTO_BAN;
+	failSub.appendChild(mkBtn('自动拉黑',banOn,function(on){if(banOrig)banOrig.checked=on;toggleBan(on);}));
+	var banSub=document.createElement('div');banSub.id='ct_ban_sub';banSub.style.cssText='margin-top:4px;display:'+(CT_AUTO_BAN?'block':'none');
+	banSub.appendChild(mkTxt('ip_black_timeout','拉黑时间(秒)',CT_BAN_TIMEOUT,'0 为永久拉黑，慎用<br>如不幸误操作，请更改设备 IP 进入 LUCI 界面清空规则'));
+	/* IP white list */
+	var ipCtr=document.createElement('div');ipCtr.style.cssText='margin:4px 0';
+	var ipLbl=document.createElement('div');ipLbl.className='pushbot-inline-title';
+	ipLbl.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+	ipLbl.textContent='白名单 IP 列表';ipCtr.appendChild(ipLbl);
+	var ipTags=document.createElement('div');ipTags.style.cssText='display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px';
+	var ipIR=document.createElement('div');ipIR.style.cssText='display:flex;gap:4px';
+	var ipInp=document.createElement('input');ipInp.type='text';ipInp.className='cbi-input-text';
+	ipInp.placeholder='192.168.x.x';ipInp.style.cssText='flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+	ipInp.setAttribute('list','mh_ip_white');
+	var ipDl=document.createElement('datalist');ipDl.id='mh_ip_white';
+	(CT_IP_HINTS||[]).forEach(function(h){var o=document.createElement('option');o.value=h;ipDl.appendChild(o);});
+	ipIR.appendChild(ipInp);ipIR.appendChild(ipDl);
+	var ipAdd=document.createElement('button');ipAdd.type='button';ipAdd.className='pushbot-choice-button is-on';ipAdd.textContent='添加';ipIR.appendChild(ipAdd);
+	ipCtr.appendChild(ipTags);ipCtr.appendChild(ipIR);banSub.appendChild(ipCtr);
+	/* blacklist textarea (simplified as text input for now) */
+	var blHi=mkH('ip_black_list',CT_IP_BLACK);
+	var blTxt=document.createElement('div');blTxt.style.cssText='margin:4px 0';
+	var blLbl=document.createElement('div');blLbl.className='pushbot-inline-title';
+	blLbl.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+	blLbl.textContent='IP 黑名单列表';blTxt.appendChild(blLbl);
+	var blTa=document.createElement('textarea');blTa.className='cbi-input-textarea';blTa.rows=4;
+	blTa.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit;resize:vertical';
+	blTa.textContent=CT_IP_BLACK;
+	blTa.addEventListener('input',function(){blHi.value=this.value;});
+	blTxt.appendChild(blTa);banSub.appendChild(blTxt);
+	/* IP white list tag logic */
+	var ipVals=CT_IP_WHITE.slice();
+	function ipSync(){
+		var ex=hb.querySelectorAll('[name$=".ip_white_list"]');ex.forEach(function(el){el.remove();});
+		ipVals.forEach(function(v){if(!v)return;var i=document.createElement('input');i.type='hidden';i.name='cbid.pushbot.pushbot.ip_white_list';i.value=v;hb.appendChild(i);});
+	}
+	function ipRender(){
+		ipTags.innerHTML='';
+		ipVals.forEach(function(v){if(!v)return;
+			var t=document.createElement('span');t.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(148,163,184,0.12);border-radius:4px;font-size:12px';
+			t.textContent=v;
+			var x=document.createElement('span');x.textContent='\u00d7';x.style.cssText='cursor:pointer;font-weight:bold;margin-left:2px;opacity:0.6';
+			x.addEventListener('click',function(){var idx=ipVals.indexOf(v);if(idx>=0){ipVals.splice(idx,1);ipRender();ipSync();}});
+			t.appendChild(x);ipTags.appendChild(t);
+		});
+	}
+	ipAdd.addEventListener('click',function(){var v=ipInp.value.trim();if(v&&ipVals.indexOf(v)<0){ipVals.push(v);ipRender();ipSync();}ipInp.value='';ipInp.focus();});
+	ipInp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();var v=ipInp.value.trim();if(v&&ipVals.indexOf(v)<0){ipVals.push(v);ipRender();ipSync();}ipInp.value='';}});
+	ipRender();ipSync();
+
+	failSub.appendChild(banSub);b3.appendChild(failSub);
+	function toggleFail(){
+		var on=(wfOrig?wfOrig.checked:false)||(sfOrig?sfOrig.checked:false);
+		failSub.style.display=on?'block':'none';
+	}
+	function toggleBan(on){banSub.style.display=on?'block':'none';}
+
+	c3.appendChild(b3); container.appendChild(c3);
+
+	pane.innerHTML = '';
+	pane.appendChild(container);
+
+	/* Disable old CBI elements to prevent duplicate submission */
+	var conHidden = document.getElementById('con_hidden_fields');
+	if (conHidden) {
+		['pushbot_ipv4','ipv4_interface','pushbot_ipv6','ipv6_interface',
+		 'cpuload','temperature','client_usage_max',
+		 'client_usage_whitelist',
+		 'login_max_num',
+		 'ip_black_timeout','ip_white_list'
+		].forEach(function(n){
+			document.querySelectorAll('input[name$="' + n + '"], input[name$="' + n + '[]"], select[name$="' + n + '"]').forEach(function(el){
+				if(!conHidden.contains(el))el.name='';
+			});
+		});
+	}
+}
+
+/* pre-load content card with retry */
+setTimeout(function(){
+	function tryLoad(){
+		var p = document.getElementById('pushbot_pane_content');
+		if (!p) { setTimeout(tryLoad, 300); return; }
+		try{initContentCard();}catch(e){try{console.error('content:',e);}catch(e2){}setTimeout(tryLoad, 500);}
+	}
+	tryLoad();
+}, 1000);
+
 function initModernTabs() {
 	if (document.getElementById('pushbot_modern_tabs')) return;
 
@@ -1684,6 +2473,7 @@ function initModernTabs() {
 		'<button type="button" class="pushbot-tab is-active" data-tab="basic">基本设置</button>' +
 		'<button type="button" class="pushbot-tab" data-tab="content">推送内容</button>' +
 		'<button type="button" class="pushbot-tab" data-tab="scheduled">定时推送</button>' +
+		'<button type="button" class="pushbot-tab" data-tab="monitor">高级设置</button>' +
 		'<button type="button" class="pushbot-tab" data-tab="client">在线设备</button>' +
 		'<button type="button" class="pushbot-tab" data-tab="log">日志</button>';
 
@@ -1697,12 +2487,17 @@ function initModernTabs() {
 	var contentPane = document.createElement('div');
 	contentPane.id = 'pushbot_pane_content';
 	contentPane.className = 'pushbot-tab-pane';
-	contentPane.innerHTML = '<div class="pushbot-mode-card" style="padding:32px;text-align:center;color:#94a3b8;font-size:14px">推送内容设置即将到来</div>';
+	contentPane.innerHTML = '<div class="pushbot-mode-card" style="padding:32px;text-align:center;color:#94a3b8;font-size:14px">加载中...</div>';
 
 	var scheduledPane = document.createElement('div');
 	scheduledPane.id = 'pushbot_pane_scheduled';
 	scheduledPane.className = 'pushbot-tab-pane';
 	scheduledPane.innerHTML = '<div class="pushbot-mode-card" style="padding:32px;text-align:center;color:#94a3b8;font-size:14px">加载中...</div>';
+
+	var monitorPane = document.createElement('div');
+	monitorPane.id = 'pushbot_pane_monitor';
+	monitorPane.className = 'pushbot-tab-pane';
+	monitorPane.innerHTML = '<div class="pushbot-mode-card" style="padding:32px;text-align:center;color:#94a3b8;font-size:14px">加载中...</div>';
 
 	var clientPane = document.createElement('div');
 	clientPane.id = 'pushbot_pane_client';
@@ -1733,32 +2528,39 @@ function initModernTabs() {
 	tabBar.parentNode.insertBefore(basicPane, tabBar.nextSibling);
 	tabBar.parentNode.insertBefore(contentPane, basicPane.nextSibling);
 	tabBar.parentNode.insertBefore(scheduledPane, contentPane.nextSibling);
-	tabBar.parentNode.insertBefore(clientPane, scheduledPane.nextSibling);
+	tabBar.parentNode.insertBefore(monitorPane, scheduledPane.nextSibling);
+	tabBar.parentNode.insertBefore(clientPane, monitorPane.nextSibling);
 	tabBar.parentNode.insertBefore(logPane, clientPane.nextSibling);
 
 	/* move cards (运行控制 + 推送模式 + 终端信息) into basic pane */
 	var runCard = document.getElementById('pushbot_mode_card');
 	var pushCard = document.getElementById('pushbot_pushmode_card');
 	var termCard = document.getElementById('pushbot_terminal_card');
+	var distCard = document.getElementById('pushbot_disturb_card');
 	if (runCard) basicPane.appendChild(runCard);
 	if (pushCard) basicPane.appendChild(pushCard);
 	if (termCard) basicPane.appendChild(termCard);
+	if (distCard) basicPane.appendChild(distCard);
 
 	/* hide old "基本设置" and "日志" LuCI tabs, switch to "推送内容" */
 	var oldTabMenu = document.querySelector('.cbi-tabmenu');
 	if (oldTabMenu) {
 		var links = oldTabMenu.querySelectorAll('a');
 		links.forEach(function(a) {
-			if (a.textContent.indexOf('基本设置') >= 0 || a.textContent.indexOf('日志') >= 0 || a.textContent.indexOf('免打扰') >= 0 || a.textContent.indexOf('在线设备') >= 0 || a.textContent.indexOf('定时推送') >= 0) {
+			if (a.textContent.indexOf('基本设置') >= 0 || a.textContent.indexOf('日志') >= 0 || a.textContent.indexOf('免打扰') >= 0 || a.textContent.indexOf('在线设备') >= 0 || a.textContent.indexOf('定时推送') >= 0 || a.textContent.indexOf('高级设置') >= 0 || a.textContent.indexOf('推送内容') >= 0) {
 				var li = a.parentNode;
 				if (li) li.style.display = 'none';
 			}
 		});
-		links.forEach(function(a) {
-			if (a.textContent.indexOf('推送内容') >= 0) {
-				a.click();
-			}
-		});
+		/* hide the entire old tab container (menu + all tab content) */
+		var tabParent = oldTabMenu.parentNode;
+		if (tabParent) {
+			tabParent.style.display = 'none';
+			/* Ensure all form elements inside remain enabled for submission */
+			tabParent.querySelectorAll('input, select, textarea').forEach(function(el) {
+				el.disabled = false;
+			});
+		}
 	}
 
 	/* tab switching — old tabs remain visible below */
@@ -1772,8 +2574,11 @@ function initModernTabs() {
 		document.getElementById('pushbot_pane_basic').classList.toggle('is-visible', name === 'basic');
 		document.getElementById('pushbot_pane_content').classList.toggle('is-visible', name === 'content');
 		document.getElementById('pushbot_pane_scheduled').classList.toggle('is-visible', name === 'scheduled');
+		document.getElementById('pushbot_pane_monitor').classList.toggle('is-visible', name === 'monitor');
 		document.getElementById('pushbot_pane_client').classList.toggle('is-visible', name === 'client');
 		document.getElementById('pushbot_pane_log').classList.toggle('is-visible', name === 'log');
+		if (name === 'content') { try { initContentCard(); } catch(e) {} }
+		if (name === 'monitor') { try { initMonitorCard(); } catch(e) {} }
 		if (name === 'log') loadLog();
 		if (name === 'client') loadClients();
 		});
@@ -2003,80 +2808,84 @@ function initModernTabs() {
 	color: #b91c1c;
 }
 
-@media (prefers-color-scheme: dark) {
-	.pushbot-mode-card {
-		background: rgba(10, 10, 18, 0.75) !important;
-		border-color: rgba(255, 255, 255, 0.08) !important;
-		box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
-	}
+.pushbot-dk .pushbot-mode-card {
+			background: rgba(10, 10, 18, 0.75) !important;
+			border-color: rgba(255, 255, 255, 0.08) !important;
+			box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+		}
 
-	.pushbot-card-title {
-		color: #e8e8e8 !important;
-	}
+		.pushbot-dk .pushbot-card-title {
+			color: #e8e8e8 !important;
+		}
 
-	.pushbot-card-subtitle {
-		color: #d9d9d9 !important;
-	}
+		.pushbot-dk .pushbot-card-subtitle {
+			color: #d9d9d9 !important;
+		}
 
-	.pushbot-status-badge.is-stopped {
-		background: linear-gradient(135deg, rgba(248, 113, 113, 0.28), rgba(244, 63, 94, 0.32)) !important;
-		color: #fecaca !important;
-	}
+		.pushbot-dk .pushbot-status-badge.is-stopped {
+			background: linear-gradient(135deg, rgba(248, 113, 113, 0.28), rgba(244, 63, 94, 0.32)) !important;
+			color: #fecaca !important;
+		}
 
-	.pushbot-status-badge.is-running {
-		background: linear-gradient(135deg, rgba(16, 185, 129, 0.42), rgba(5, 150, 105, 0.46)) !important;
-		color: #dcfce7 !important;
-	}
+		.pushbot-dk .pushbot-status-badge.is-running {
+			background: linear-gradient(135deg, rgba(16, 185, 129, 0.42), rgba(5, 150, 105, 0.46)) !important;
+			color: #dcfce7 !important;
+		}
 
-	.pushbot-inline-field {
-		background: rgba(17, 24, 39, 0.72) !important;
-		border-color: rgba(255, 255, 255, 0.08) !important;
-	}
+		.pushbot-dk .pushbot-inline-field {
+			background: rgba(17, 24, 39, 0.72) !important;
+			border-color: rgba(255, 255, 255, 0.08) !important;
+		}
 
-	.pushbot-inline-title {
-		color: #e2e8f0 !important;
-	}
+		.pushbot-dk .pushbot-inline-title {
+			color: #e2e8f0 !important;
+		}
 
-	.pushbot-inline-description {
-		color: #cbd5e1 !important;
-	}
+		.pushbot-dk .pushbot-inline-description {
+			color: #cbd5e1 !important;
+		}
 
-	.pushbot-choice-button {
-		background: linear-gradient(180deg, #2f2f33 0%, #242426 100%) !important;
-		color: #d8d8d8 !important;
-		border-color: rgba(255, 255, 255, 0.08) !important;
-		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 2px 8px rgba(0, 0, 0, 0.28) !important;
-	}
+		.pushbot-dk .pushbot-choice-button {
+			background: linear-gradient(180deg, #2f2f33 0%, #242426 100%) !important;
+			color: #d8d8d8 !important;
+			border-color: rgba(255, 255, 255, 0.08) !important;
+			box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 2px 8px rgba(0, 0, 0, 0.28) !important;
+		}
 
-	.pushbot-sendtest-btn {
-		background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
-		color: #ffffff !important;
-		box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35) !important;
-	}
-	.pushbot-sendtest-btn:hover {
-		box-shadow: 0 10px 22px rgba(37, 99, 235, 0.5) !important;
-	}
-}
+		.pushbot-dk .pushbot-sendtest-btn {
+			background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+			color: #ffffff !important;
+			box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35) !important;
+		}
+		.pushbot-dk .pushbot-sendtest-btn:hover {
+			box-shadow: 0 10px 22px rgba(37, 99, 235, 0.5) !important;
+		}
 
-/* ── terminal card alias dark mode ── */
-@media (prefers-color-scheme: dark) {
-	.pushbot-alias-input {
+		.pushbot-dk .cbi-input-textarea,
+		.pushbot-dk .cbi-input-text,
+		.pushbot-dk .cbi-input-select {
+			background: rgba(30, 41, 59, 0.78) !important;
+			color: #e2e8f0 !important;
+			border-color: rgba(255, 255, 255, 0.10) !important;
+		}
+
+	/* ── terminal card alias dark mode ── */
+	.pushbot-dk .pushbot-alias-input {
 		background: rgba(30, 41, 59, 0.72) !important;
 		border-color: rgba(255, 255, 255, 0.10) !important;
 		color: #e2e8f0 !important;
 	}
-	.pushbot-alias-tag {
+			.pushbot-dk .pushbot-alias-tag {
 		background: rgba(59, 130, 246, 0.20) !important;
 		border-color: rgba(59, 130, 246, 0.35) !important;
 	}
-	.pushbot-dnd-input {
+			.pushbot-dk .pushbot-dnd-input {
 		background: rgba(30, 41, 59, 0.72) !important;
 		border-color: rgba(255, 255, 255, 0.10) !important;
 		color: #e2e8f0 !important;
 	}
-}
 
-/* ── log viewer ── */
+	/* ── log viewer ── */
 .pushbot-log-container {
 	display: flex;
 	flex-direction: column;
@@ -2199,46 +3008,44 @@ function initModernTabs() {
 	word-break: break-all;
 	color: #333;
 }
-@media (prefers-color-scheme: dark) {
-	.pushbot-log-content {
-		background: rgba(0, 0, 0, 0.20) !important;
-	}
-	.pushbot-log-content pre {
-		color: #cbd5e1 !important;
-	}
-	.pushbot-log-switch {
-		color: #cbd5e1 !important;
-	}
-	.pushbot-log-switch-track {
-		background: #475569 !important;
-	}
-	.pushbot-log-btn {
-		background: rgba(30, 41, 59, 0.5) !important;
-		border-color: rgba(255, 255, 255, 0.10) !important;
-		color: #cbd5e1 !important;
-	}
-	.pushbot-log-btn:hover {
-		background: rgba(239, 68, 68, 0.15) !important;
-		color: #fca5a5 !important;
-	}
-	.pushbot-log-header {
-		border-color: rgba(255, 255, 255, 0.06) !important;
-	}
-	.pushbot-client-table thead th {
-		color: #cbd5e1 !important;
-		border-color: rgba(255,255,255,0.10) !important;
-		background: rgba(10,10,18,0.5) !important;
-	}
-	.pushbot-client-table tbody td {
-		color: #d9d9d9 !important;
-		border-color: rgba(255,255,255,0.05) !important;
-	}
-	.pushbot-client-table tbody tr:hover {
-		background: rgba(96,165,250,0.10) !important;
-	}
-}
+			.pushbot-dk .pushbot-log-content {
+				background: rgba(0, 0, 0, 0.20) !important;
+			}
+			.pushbot-dk .pushbot-log-content pre {
+				color: #cbd5e1 !important;
+			}
+			.pushbot-dk .pushbot-log-switch {
+				color: #cbd5e1 !important;
+			}
+			.pushbot-dk .pushbot-log-switch-track {
+				background: #475569 !important;
+			}
+			.pushbot-dk .pushbot-log-btn {
+				background: rgba(30, 41, 59, 0.5) !important;
+				border-color: rgba(255, 255, 255, 0.10) !important;
+				color: #cbd5e1 !important;
+			}
+			.pushbot-dk .pushbot-log-btn:hover {
+				background: rgba(239, 68, 68, 0.15) !important;
+				color: #fca5a5 !important;
+			}
+			.pushbot-dk .pushbot-log-header {
+				border-color: rgba(255, 255, 255, 0.06) !important;
+			}
+			.pushbot-dk .pushbot-client-table thead th {
+				color: #cbd5e1 !important;
+				border-color: rgba(255,255,255,0.10) !important;
+				background: rgba(10,10,18,0.5) !important;
+			}
+			.pushbot-dk .pushbot-client-table tbody td {
+				color: #d9d9d9 !important;
+				border-color: rgba(255,255,255,0.05) !important;
+			}
+			.pushbot-dk .pushbot-client-table tbody tr:hover {
+				background: rgba(96,165,250,0.10) !important;
+			}
 
-/* ── modern tabs ── */
+	/* ── modern tabs ── */
 .pushbot-tab-bar {
 	display: flex;
 	gap: 4px;
@@ -2278,24 +3085,22 @@ function initModernTabs() {
 	display: block;
 }
 
-@media (prefers-color-scheme: dark) {
-	.pushbot-tab-bar {
-		background: rgba(30, 41, 59, 0.70) !important;
-		border-color: rgba(255, 255, 255, 0.08) !important;
-	}
-	.pushbot-tab {
-		color: #cbd5e1 !important;
-	}
-	.pushbot-tab.is-active {
-		background: rgba(30, 41, 59, 0.92) !important;
-		color: #f1f5f9 !important;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.30), inset 0 -2px 0 #60a5fa !important;
-	}
-	.pushbot-tab:hover:not(.is-active) {
-		color: #f8fafc !important;
-		background: rgba(51, 65, 85, 0.50) !important;
-	}
-}
+.pushbot-dk .pushbot-tab-bar {
+			background: rgba(30, 41, 59, 0.70) !important;
+			border-color: rgba(255, 255, 255, 0.08) !important;
+		}
+		.pushbot-dk .pushbot-tab {
+			color: #cbd5e1 !important;
+		}
+		.pushbot-dk .pushbot-tab.is-active {
+			background: rgba(30, 41, 59, 0.92) !important;
+			color: #f1f5f9 !important;
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.30), inset 0 -2px 0 #60a5fa !important;
+		}
+		.pushbot-dk .pushbot-tab:hover:not(.is-active) {
+			color: #f8fafc !important;
+			background: rgba(51, 65, 85, 0.50) !important;
+		}
 
 .pushbot-card-top {
 	display: flex;
@@ -2398,32 +3203,30 @@ function initModernTabs() {
 	box-shadow: 0 10px 22px rgba(37, 99, 235, 0.34);
 }
 
-@media (prefers-color-scheme: dark) {
-	.pushbot-choice-button {
-		background: #1f2023 !important;
-		color: #c8c8c8 !important;
-	}
+.pushbot-dk .pushbot-choice-button {
+			background: #1f2023 !important;
+			color: #c8c8c8 !important;
+		}
 
-	.pushbot-choice-button.is-on {
-		background: linear-gradient(135deg, rgba(56, 139, 253, 0.55), rgba(34, 211, 238, 0.36)) !important;
-		border-color: rgba(96, 165, 250, 0.8) !important;
-		color: #f8fafc !important;
-		box-shadow: 0 10px 22px rgba(59, 130, 246, 0.4) !important;
-		transform: translateY(-1px);
-	}
-}
+		.pushbot-dk .pushbot-choice-button.is-on {
+			background: linear-gradient(135deg, rgba(56, 139, 253, 0.55), rgba(34, 211, 238, 0.36)) !important;
+			border-color: rgba(96, 165, 250, 0.8) !important;
+			color: #f8fafc !important;
+			box-shadow: 0 10px 22px rgba(59, 130, 246, 0.4) !important;
+			transform: translateY(-1px);
+		}
 
-body.dark .pushbot-choice-button.is-on,
-body[data-theme="dark"] .pushbot-choice-button.is-on,
-body[data-theme="black"] .pushbot-choice-button.is-on,
-body[class*="dark"] .pushbot-choice-button.is-on {
-	color: #f8fafc;
-}
+		.pushbot-dk body.dark .pushbot-choice-button.is-on,
+		.pushbot-dk body[data-theme="dark"] .pushbot-choice-button.is-on,
+		.pushbot-dk body[data-theme="black"] .pushbot-choice-button.is-on,
+		.pushbot-dk body[class*="dark"] .pushbot-choice-button.is-on {
+			color: #f8fafc !important;
+		}
 
-.pushbot-choice-button.is-off {
-	filter: grayscale(0.95);
-	opacity: 0.8;
-}
+	body.dark .pushbot-choice-button.is-off,
+	body[data-theme="dark"] .pushbot-choice-button.is-off {
+		filter: grayscale(0.95);
+		opacity: 0.8;
 
 .pushbot-choice-icon {
 	display: inline-flex;
@@ -2438,8 +3241,33 @@ body[class*="dark"] .pushbot-choice-button.is-on {
 	width: 18px;
 	height: 18px;
 	fill: currentColor;
-}
+	}
 </style>
+<script>
+(function(){
+var b=document.body;if(!b)return;
+/* Check explicit dark indicators */
+var explicitDark = b.matches('body.dark, body[data-theme="dark"], body[data-theme="black"]') || b.classList.contains('dark');
+if (explicitDark) {
+	document.documentElement.classList.add('pushbot-dk');
+	return;
+}
+/* Check actual rendered background to detect theme's effective mode */
+var bg=getComputedStyle(b).backgroundColor||'';
+var rgb=bg.match(/\d+/g);
+if(rgb&&rgb.length>=3){
+	var avg=(+rgb[0]+ +rgb[1]+ +rgb[2])/3;
+	if(avg<128){document.documentElement.classList.add('pushbot-dk');return;}
+	if(avg>=180){document.documentElement.classList.remove('pushbot-dk');return;}
+}
+/* Fallback: follow OS */
+if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches){
+	document.documentElement.classList.add('pushbot-dk');
+} else {
+	document.documentElement.classList.remove('pushbot-dk');
+}
+})();
+</script>
 <fieldset class="cbi-section">
 	<div class="pushbot-mode-card pushbot-header-card">
 		<div class="pushbot-card-top">

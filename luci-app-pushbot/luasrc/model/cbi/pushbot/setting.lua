@@ -122,7 +122,10 @@ a.cfgvalue = function(self, section)
     return fs.readfile("/usr/bin/pushbot/api/diy.json")
 end
 a.write = function(self, section, value)
-    fs.writefile("/usr/bin/pushbot/api/diy.json", value:gsub("\r\n", "\n"))
+    if type(value) == "table" then value = value[#value] end
+    if type(value) == "string" and value ~= "" then
+        fs.writefile("/usr/bin/pushbot/api/diy.json", value:gsub("\r\n", "\n"))
+    end
 end
 
 a=s:taboption("basic", Button,"__add",translate("发送测试"))
@@ -199,8 +202,11 @@ a.cfgvalue = function(self, section)
     return fs.readfile("/usr/bin/pushbot/api/ipv4.list")
 end
 a.write = function(self, section, value)
-    fs.writefile("/usr/bin/pushbot/api/ipv4.list", value:gsub("\r\n", "\n"))
-end
+	    if type(value) == "table" then value = value[#value] end
+	    if type(value) == "string" and value ~= "" then
+	        fs.writefile("/usr/bin/pushbot/api/ipv4.list", value:gsub("\r\n", "\n"))
+	    end
+	end
 a.description = translate("<br/>会因服务器稳定性、连接频繁等原因导致获取失败<br/>如接口可以正常获取 IP，不推荐使用<br/>从以上列表中随机地址访问")
 a:depends({pushbot_ipv4="2"})
 
@@ -235,8 +241,11 @@ a.cfgvalue = function(self, section)
     return fs.readfile("/usr/bin/pushbot/api/ipv6.list")
 end
 a.write = function(self, section, value)
-    fs.writefile("/usr/bin/pushbot/api/ipv6.list", value:gsub("\r\n", "\n"))
-end
+	    if type(value) == "table" then value = value[#value] end
+	    if type(value) == "string" and value ~= "" then
+	        fs.writefile("/usr/bin/pushbot/api/ipv6.list", value:gsub("\r\n", "\n"))
+	    end
+	end
 a.description = translate("<br/>会因服务器稳定性、连接频繁等原因导致获取失败<br/>如接口可以正常获取 IP，不推荐使用<br/>从以上列表中随机地址访问")
 a:depends({pushbot_ipv6="2"})
 
@@ -349,8 +358,11 @@ a.cfgvalue = function(self, section)
     return fs.readfile("/usr/bin/pushbot/api/ip_blacklist")
 end
 a.write = function(self, section, value)
-    fs.writefile("/usr/bin/pushbot/api/ip_blacklist", value:gsub("\r\n", "\n"))
-end
+	    if type(value) == "table" then value = value[#value] end
+	    if type(value) == "string" and value ~= "" then
+	        fs.writefile("/usr/bin/pushbot/api/ip_blacklist", value:gsub("\r\n", "\n"))
+	    end
+	end
 a:depends("web_login_black","1")
 
 --定时推送
@@ -548,6 +560,7 @@ a = s:taboption("disturb", DynamicList, "MAC_offline_list", translate("任意离
 a.rmempty = true
 a:depends({macmechanism2="MAC_offline"})
 
+
 -- 高级设置
 
 b=s:taboption("advanced", Value,"up_timeout",translate('设备上线检测超时（s）'))
@@ -595,14 +608,15 @@ b.write = function()
 	luci.http.redirect(luci.dispatcher.build_url("admin","services","pushbot","setting"))
 end
 
-if nixio.fs.access("/tmp/pushbot/soc_tmp") then
-	e=s:taboption("advanced", TextValue,"soc_tmp")
-	e.rows=2
-	e.readonly=true
-	e.cfgvalue = function()
-		return luci.sys.exec("cat /tmp/pushbot/soc_tmp && rm -f /tmp/pushbot/soc_tmp")
+	if nixio.fs.access("/tmp/pushbot/soc_tmp") then
+		e=s:taboption("advanced", TextValue,"soc_tmp")
+		e.rows=2
+		e.readonly=true
+		e.cfgvalue = function()
+			return luci.sys.exec("cat /tmp/pushbot/soc_tmp 2>/dev/null || true")
+		end
+		e.write = function(self, section, value) end
 	end
-end
 
 b=s:taboption("advanced", Flag,"err_enable",translate("无人值守任务"))
 b.default=0
