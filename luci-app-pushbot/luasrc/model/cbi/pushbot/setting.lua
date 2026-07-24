@@ -301,12 +301,15 @@ a.cfgvalue = function(self, section)
     return data or ""
 end
 a.write = function(self, section, value)
-    if value == nil then return end
-    if type(value) == "table" then value = value[#value] end
-    if value and type(value) == "string" and value ~= "" then
-        fs.writefile("/usr/bin/pushbot/api/ip_blacklist", value:gsub("\r\n", "\n"))
-    end
-end
+	    if value == nil then return end
+	    if type(value) == "table" then value = value[#value] end
+	    if value and type(value) == "string" then
+	        fs.writefile("/usr/bin/pushbot/api/ip_blacklist", value:gsub("\r\n", "\n"))
+	    else
+	        -- 清空黑名单文件
+	        fs.writefile("/usr/bin/pushbot/api/ip_blacklist", "")
+	    end
+	end
 
 -- 高级设置
 b=s:option( Value,"up_timeout",""); b.render = function() end; b.default = "2"

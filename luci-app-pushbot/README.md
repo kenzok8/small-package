@@ -2,6 +2,9 @@
 - 本插件由[tty228/luci-app-serverchan](https://github.com/tty228/luci-app-serverchan)原创.
 - 由  然后七年  @zzsj0928 重新修改为本插件，为钉钉机器人API使用。
 - 本插件工作在：OpenWRT
+- 自20260725之后的版本，全面重构 Lua CBI，移除旧版界面，全新的 Tab 卡片式 UI；
+  初始配置加载优化（去除所有阻塞性系统调用）；
+  IP 拉黑支持 nftables / iptables 双模式
 - 自20270724之后的版本，支持APK，改为现代UI
 - 自20210911之后的版本，支持Bark群组，群组名默认为设备名
 - 自20210901之后的版本，增加依赖jq，请重新编译或在安装前同步安装jq

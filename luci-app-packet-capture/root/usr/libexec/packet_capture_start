@@ -3,11 +3,17 @@
 . /usr/share/libubox/jshn.sh
 
 PIDFILE="/var/run/packet_capture.pid"
+WORKDIR="/var/run/packet_capture"
+FILTERFILE="$WORKDIR/tcpdump_filter"
+PCAPFILE="$WORKDIR/capture.pcap"
 
-if [ -f "$PIDFILE"];then
+if [ -f "$PIDFILE" ]; then
     echo "error: Packet capture is running"
     exit 1
 fi
+
+mkdir -p "$WORKDIR"
+chmod 0700 "$WORKDIR"
 
 json_load "$1"
 json_get_var interface interface
@@ -20,13 +26,19 @@ json_get_var file file
 
 args="-n"
 
-if [ "$domains" == "1" ];then
+if [ "$domains" = "1" ];then
 	args=""
 fi
 
 if  [ -n "$interface" ];then
+	case "$interface" in
+		*[!A-Za-z0-9_.:-]*)
+			echo "error: Incorrect format of an interface"
+			exit 1
+		;;
+	esac
 	ip a show "$interface" > /dev/null 2>&1
-	if [ "$?" == "1" ]; then
+	if [ "$?" -ne 0 ]; then
         echo "error: Incorrect format of an interface"
         exit 1
     fi
@@ -35,7 +47,7 @@ if  [ -n "$interface" ];then
 fi
 
 if [ -n "$packets" ];then
-    echo "$packets" | egrep  '^[0-9]*$'
+    echo "$packets" | egrep '^[0-9]+$' >/dev/null
     if [ "$?" -eq 0 ];then
         args="$args -c $packets"
     else
@@ -44,13 +56,21 @@ if [ -n "$packets" ];then
     fi
 fi
 
-if [ "$verbose" == "1"  ];then
+if [ -n "$duration" ];then
+	echo "$duration" | egrep '^[0-9]+$' >/dev/null
+	if [ "$?" -ne 0 ];then
+		echo "error: Incorrect duration argument"
+		exit 1
+	fi
+fi
+
+if [ "$verbose" = "1"  ];then
 	args="$args  -e"
 fi
 
-if [ "$file" == "1" ];then
+if [ "$file" = "1" ];then
 	mem=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
-	args="$args -W 2 -C $((mem/(1024 * 10))) -w /tmp/capture.pcap -z /usr/libexec/packet_capture_stop"
+	args="$args -W 2 -C $((mem/(1024 * 10))) -w $PCAPFILE -z /usr/libexec/packet_capture_stop"
 fi
 
 if [ -n "$filter" ];then
@@ -59,7 +79,7 @@ if [ -n "$filter" ];then
 		echo "error: Incorrect filter argument"
 		exit 1
 	fi
-	echo "$filter" > /tmp/tcpdump_filter
+	( umask 077; printf '%s\n' "$filter" > "$FILTERFILE" )
 fi
 
 (/usr/libexec/packet_capture "$args" "$duration")&

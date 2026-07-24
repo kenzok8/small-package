@@ -1,0 +1,97 @@
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2024-01-01 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:177
+msgid "Capture packets with tcpdump."
+msgstr "Захват пакетов с помощью tcpdump."
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:247
+msgid "Close"
+msgstr "Закрыть"
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:201
+msgid "Convert host addresses to names."
+msgstr "Преобразовывать адреса хостов в имена."
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:277
+msgid "Download"
+msgstr "Скачать"
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:275
+msgid "Download capture file"
+msgstr "Скачать файл захвата"
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:193
+msgid "Duration"
+msgstr "Длительность"
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:193
+msgid "Duration of packet capturing in seconds."
+msgstr "Длительность захвата пакетов в секундах."
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:189
+msgid "Filter"
+msgstr "Фильтр"
+
+#: luci-app-packet-capture/root/usr/share/rpcd/acl.d/luci-app-packet-capture.json:3
+msgid "Grant access to tcpdump ubus object"
+msgstr "Предоставить доступ к объекту ubus tcpdump"
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:181
+msgid "Interface"
+msgstr "Интерфейс"
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:197
+msgid "Number of packets to be captured."
+msgstr "Количество пакетов для захвата."
+
+#: luci-app-packet-capture/root/usr/share/luci/menu.d/luci-app-packet-capture.json:3
+msgid "Packet Capture"
+msgstr "Захват пакетов"
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:177
+msgid "Packet Capture - Tcpdump"
+msgstr "Захват пакетов — Tcpdump"
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:197
+msgid "Packets"
+msgstr "Пакеты"
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:203
+msgid "Print the link-level header on each dump line."
+msgstr "Печатать заголовок канального уровня в каждой строке дампа."
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:201
+msgid "Resolve domains"
+msgstr "Разрешать домены"
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:205
+msgid "Save capture to pcap file."
+msgstr "Сохранить захват в файл pcap."
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:205
+msgid "Save to file"
+msgstr "Сохранить в файл"
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:207
+msgid "Start tcpdump"
+msgstr "Запустить tcpdump"
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:263
+msgid "Stop tcpdump"
+msgstr "Остановить tcpdump"
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:189
+msgid "Tcpdump filter like protocol, port etc."
+msgstr "Фильтр tcpdump: протокол, порт и т.д."
+
+#: luci-app-packet-capture/htdocs/luci-static/resources/view/packet_capture/tcpdump.js:203
+msgid "Verbose output"
+msgstr "Подробный вывод"

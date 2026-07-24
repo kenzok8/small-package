@@ -1086,27 +1086,118 @@ function login_send(){
 
 }
 
-# 添加黑名单
+# 添加黑名单 — 支持 nftables / iptables 双模式
 function add_ip_black(){
-	[ -f "${ip_blacklist_path}" ] && local logrow=$(grep -c "" ${ip_blacklist_path}) || local logrow="0"
-	[ ! -f "${ip_blacklist_path}" ] && local logrow="0"
-	[ ! -z "$web_login_black" ] && [ "$web_login_black" -eq "0" ] || [ -z "$web_login_black" ] && local logrow="0"
-	ipset flush ip_blacklist >/dev/null 2>&1
-	
-	if [ $logrow -le "0" ]; then
-		iptables -D INPUT -m set --match-set ip_blacklist src -j DROP >/dev/null 2>&1
-		ipset destroy ip_blacklist >/dev/null 2>&1
-		return
+	# 只添加不存在的 IP，避免重复行（精确匹配整行）
+	if [ -n "$1" ]; then
+		if ! grep -q -x "$1" "${ip_blacklist_path}" 2>/dev/null; then
+			echo "$1" >> ${ip_blacklist_path}
+		fi
 	fi
 	
-	ipset list ip_blacklist >/dev/null 2>&1 || ipset create ip_blacklist hash:ip timeout ${ip_black_timeout} >/dev/null 2>&1
-	iptables -C INPUT -m set --match-set ip_blacklist src -j DROP >/dev/null 2>&1 || iptables -I INPUT -m set --match-set ip_blacklist src -j DROP >/dev/null 2>&1
-	echo "$1" >> ${ip_blacklist_path}
-	for ip_black in `cat ${ip_blacklist_path}`; do
-		ip_black=`echo "$ip_black"|grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"`
-		ipset -! add ip_blacklist $ip_black >/dev/null 2>&1
-	done
-	ipset list ip_blacklist|grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" > ${ip_blacklist_path}
+	# 判断是否需要更新防火墙：黑名单文件变化 或 开关状态变化
+	local need_update=false
+	local prev_onoff=""
+	[ -f "${dir}ip_blacklist.onoff" ] && prev_onoff=$(cat ${dir}ip_blacklist.onoff)
+	local cur_onoff="${web_login_black:-0}"
+	[ "$prev_onoff" != "$cur_onoff" ] && need_update=true
+	echo "$cur_onoff" > ${dir}ip_blacklist.onoff
+	
+	local prev_file="${dir}ip_blacklist.prev"
+	if ! $need_update && [ -f "$prev_file" ]; then
+		diff -q "$prev_file" "${ip_blacklist_path}" >/dev/null 2>&1 || need_update=true
+	fi
+	cp "${ip_blacklist_path}" "$prev_file" 2>/dev/null || true
+	
+	if ! $need_update; then
+		return  # 无变化，跳过防火墙操作
+	fi
+	
+	[ -f "${ip_blacklist_path}" ] && local logrow=$(grep -c "" ${ip_blacklist_path}) || local logrow="0"
+	[ ! -f "${ip_blacklist_path}" ] && local logrow="0"
+	
+	# 收集有效 IP
+	local black_ips=""
+	local ip_count=0
+	# 如果自动拉黑功能已关闭，直接跳过 IP 收集以清空防火墙规则
+	if [ -z "$web_login_black" ] || [ "$web_login_black" = "0" ]; then
+		echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】自动拉黑功能已关闭，将清空防火墙拉黑策略" >> ${logfile}
+	else
+		for ip_black in `cat ${ip_blacklist_path} 2>/dev/null`; do
+			ip_black=`echo "$ip_black"|grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"`
+			[ -z "$ip_black" ] && continue
+			ip_count=$((ip_count+1))
+			[ -z "$black_ips" ] && black_ips="$ip_black" || black_ips="${black_ips},$ip_black"
+		done
+	fi
+	
+	# 判断防火墙工具
+	local use_nft=false
+	if command -v nft >/dev/null 2>&1; then
+		use_nft=true
+		echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】检测到 nftables，将采用 nftables 防火墙策略" >> ${logfile}
+	else
+		echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】检测到只有 iptables，将采用 iptables 防火墙策略" >> ${logfile}
+	fi
+	
+	if $use_nft; then
+		if [ $ip_count -le "0" ]; then
+			local del_rule_handle=$(nft -a list chain inet fw4 input 2>/dev/null | grep "@pushbot_blacklist" | grep -o "handle [0-9]*" | head -1 | cut -d' ' -f2)
+			if [ -n "$del_rule_handle" ]; then
+				nft delete rule inet fw4 input handle $del_rule_handle 2>/dev/null || true
+			fi
+			nft delete set inet fw4 pushbot_blacklist 2>/dev/null || true
+			echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】黑名单列表为空，清空 nftables 防火墙拉黑策略" >> ${logfile}
+			> ${ip_blacklist_path}
+			return
+		fi
+		if [ "$ip_black_timeout" = "0" ]; then
+			nft add set inet fw4 pushbot_blacklist { type ipv4_addr\; } 2>/dev/null || true
+		else
+			nft add set inet fw4 pushbot_blacklist { type ipv4_addr\; timeout ${ip_black_timeout}s\; } 2>/dev/null || true
+		fi
+		local rule_exists=$(nft list chain inet fw4 input 2>/dev/null | grep -c "@pushbot_blacklist")
+		if [ "$rule_exists" -eq "0" ]; then
+			nft add rule inet fw4 input ip saddr @pushbot_blacklist drop 2>/dev/null || true
+		fi
+		nft flush set inet fw4 pushbot_blacklist 2>/dev/null || true
+		for ip_black in `echo "$black_ips"|tr ',' ' '`; do
+			nft add element inet fw4 pushbot_blacklist { $ip_black } 2>/dev/null || true
+		done
+		echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】已 nftables 拉黑 ${black_ips}" >> ${logfile}
+		nft list set inet fw4 pushbot_blacklist 2>/dev/null | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" > ${ip_blacklist_path}.tmp
+		if [ -s "${ip_blacklist_path}.tmp" ]; then
+			mv ${ip_blacklist_path}.tmp ${ip_blacklist_path}
+		else
+			rm -f ${ip_blacklist_path}.tmp
+		fi
+	else
+		ipset flush ip_blacklist >/dev/null 2>&1
+		if [ $ip_count -le "0" ]; then
+			iptables -D INPUT -m set --match-set ip_blacklist src -j DROP >/dev/null 2>&1
+			ipset destroy ip_blacklist >/dev/null 2>&1
+			echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】黑名单列表为空，清空 iptables 防火墙拉黑策略" >> ${logfile}
+			> ${ip_blacklist_path}
+			return
+		fi
+		local log_enable="拉黑"
+		[ -z "$debuglevel" ] && log_enable=""
+		if [ -n "$log_enable" ]; then
+			echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】拉黑功能已启用，且读取到黑名单列表，将生成防火墙策略" >> ${logfile}
+		fi
+		ipset list ip_blacklist >/dev/null 2>&1 || ipset create ip_blacklist hash:ip timeout ${ip_black_timeout} >/dev/null 2>&1
+		iptables -C INPUT -m set --match-set ip_blacklist src -j DROP >/dev/null 2>&1 || iptables -I INPUT -m set --match-set ip_blacklist src -j DROP >/dev/null 2>&1
+		for ip_black in `echo "$black_ips"|tr ',' ' '`; do
+			ipset -! add ip_blacklist $ip_black >/dev/null 2>&1
+		done
+		ipset list ip_blacklist 2>/dev/null | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" > ${ip_blacklist_path}.tmp
+		if [ -s "${ip_blacklist_path}.tmp" ]; then
+			mv ${ip_blacklist_path}.tmp ${ip_blacklist_path}
+		else
+			rm -f ${ip_blacklist_path}.tmp
+		fi
+		echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】已 iptables 拉黑 ${black_ips}" >> ${logfile}
+	fi
 }
 
 # 发送定时数据

@@ -11,17 +11,68 @@ end
 
 local args = "-n"
 local duration = ""
+local workdir = "/var/run/packet_capture"
+local filterfile = workdir .. "/tcpdump_filter"
+local pcapbase = workdir .. "/capture.pcap"
+local outputfile = "/tmp/capture.pcap"
+
+local function validate_args(value)
+	if type(value) ~= "string" or value == "" then
+		return false
+	end
+	local tokens = {}
+	for token in value:gmatch("%S+") do
+		tokens[#tokens + 1] = token
+	end
+	local i = 1
+	while i <= #tokens do
+		local token = tokens[i]
+		if token == "-n" or token == "-e" then
+			i = i + 1
+		elseif token == "-i" then
+			if not tokens[i + 1] or not tokens[i + 1]:match("^[%w_.:-]+$") then return false end
+			i = i + 2
+		elseif token == "-c" then
+			if not tokens[i + 1] or not tokens[i + 1]:match("^%d+$") then return false end
+			i = i + 2
+		elseif token == "-W" then
+			if tokens[i + 1] ~= "2" then return false end
+			i = i + 2
+		elseif token == "-C" then
+			if not tokens[i + 1] or not tokens[i + 1]:match("^%d+$") then return false end
+			i = i + 2
+		elseif token == "-w" then
+			if tokens[i + 1] ~= pcapbase then return false end
+			i = i + 2
+		elseif token == "-z" then
+			if tokens[i + 1] ~= "/usr/libexec/packet_capture_stop" then return false end
+			i = i + 2
+		elseif token == "-F" then
+			if tokens[i + 1] ~= filterfile then return false end
+			i = i + 2
+		else
+			return false
+		end
+	end
+	return true
+end
 
 if arg[1] ~= nil then
 	args = arg[1]
-	if arg[2] ~= "" then
+	if not validate_args(args) then
+		error("Invalid tcpdump arguments")
+	end
+	if arg[2] ~= nil and arg[2] ~= "" then
 		duration = arg[2]
+		if not duration:match("^%d+$") then
+			error("Invalid duration")
+		end
 	end
 end
 
-local filter = fs.stat("/tmp/tcpdump_filter")
+local filter = fs.stat(filterfile)
 if filter then
-	args = args .. " -F /tmp/tcpdump_filter"
+	args = args .. " -F " .. filterfile
 end
 
 local ubus_objects = {
@@ -48,14 +99,14 @@ for line in pipe:lines() do
 		conn:notify(ubus_objects.tcpdump.__ubusobj, "tcpdump.data", params)
 end
 
-local pcap = fs.stat("/tmp/capture.pcap0")
+local pcap = fs.stat(pcapbase .. "0")
 if pcap then
-	fs.move("/tmp/capture.pcap0","/tmp/capture.pcap")
-	fs.remove("/tmp/capture.pcap1")
+	fs.move(pcapbase .. "0", outputfile)
+	fs.remove(pcapbase .. "1")
 end
 
 if filter then
-	fs.remove("/tmp/tcpdump_filter")
+	fs.remove(filterfile)
 end
 
 conn:close()
