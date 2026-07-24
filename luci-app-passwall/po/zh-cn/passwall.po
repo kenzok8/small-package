@@ -893,8 +893,8 @@ msgstr "备用节点的列表"
 msgid "Restore Switch"
 msgstr "恢复切换"
 
-msgid "When detects main node is available, switch back to the main node."
-msgstr "当检测到主节点可用时，切换回主节点。"
+msgid "Immediately switch back to the main node when it becomes available."
+msgstr "当主节点可用时，立即切换回主节点。"
 
 msgid "Add nodes to the standby node list by keywords"
 msgstr "通过关键字添加节点到备用节点列表"

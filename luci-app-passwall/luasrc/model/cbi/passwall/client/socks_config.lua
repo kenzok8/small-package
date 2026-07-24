@@ -150,7 +150,7 @@ o.datatype = "min(1)"
 o.default = 1
 o:depends("enable_autoswitch", true)
 	
-o = s:option(Flag, "autoswitch_restore_switch", translate("Restore Switch"), translate("When detects main node is available, switch back to the main node."))
+o = s:option(Flag, "autoswitch_restore_switch", translate("Restore Switch"), translate("Immediately switch back to the main node when it becomes available."))
 o:depends("enable_autoswitch", true)
 
 o = s:option(Value, "autoswitch_probe_url", translate("Probe URL"), translate("The URL used to detect the connection status."))

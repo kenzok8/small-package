@@ -1,5 +1,8 @@
+<style>
+.cbi-tabmenu, .cbi-tabcontainer, .cbi-value, .cbi-tab, .cbi-optionals, .cbi-value-last, .cbi-section[id*="pushbot"] { display: none !important; }
+</style>
 <script type="text/javascript">//<![CDATA[
-XHR.poll(3, '<%=url([[admin]], [[services]], [[pushbot]], [[status]])%>', null,
+	XHR.poll(3, '<%=url([[admin]], [[services]], [[pushbot]], [[status]])%>', null,
 	function(x, data) {
 		var badge = document.getElementById('pushbot_status_badge');
 		var text = document.getElementById('pushbot_status_text');
@@ -45,8 +48,10 @@ local ofl_inject = get_list_vals("pushbot", "pushbot", "MAC_offline_list")
 <%
 local nt = require("luci.sys").net
 local mac_hints = {}
-nt.mac_hints(function(mac, name)
-	if mac and mac ~= "" then mac_hints[#mac_hints+1] = {mac = mac, name = (name or "")} end
+pcall(function()
+	nt.mac_hints(function(mac, name)
+		if mac and mac ~= "" then mac_hints[#mac_hints+1] = {mac = mac, name = (name or "")} end
+	end)
 end)
 %>
 <script type="text/javascript">var PUSHBOT_MAC_HINTS=[<% for i,h in ipairs(mac_hints) do if i>1 then %>,<% end %>{m:"<%=pcdata(h.mac)%>",n:"<%=pcdata(h.name)%>"}<% end %>];</script>
@@ -67,25 +72,39 @@ local function uci_lv(opt) return uci:get("pushbot","pushbot",opt) or "" end
 	local c_client_white = get_list_vals("pushbot","pushbot","client_usage_whitelist")
 	-- file-backed values
 	local fs = require "nixio.fs"
-	local c_ipv4_list_val = luci.sys.exec("cat /usr/bin/pushbot/api/ipv4.list 2>/dev/null || true") or ""
-	local c_ipv6_list_val = luci.sys.exec("cat /usr/bin/pushbot/api/ipv6.list 2>/dev/null || true") or ""
-	local c_ip_black_val = luci.sys.exec("cat /usr/bin/pushbot/api/ip_blacklist 2>/dev/null || true") or ""
-	-- collect network interfaces for dropdowns
-	local iface_list = {}
-	local net = require "luci.model.network".init()
-	local sys = require "luci.sys"
-	for _, iface in ipairs(sys.net:devices()) do
-		if not (iface == "lo" or iface:match("^ifb.*")) then
-			iface_list[#iface_list+1] = iface
-		end
+	-- Use shell with timeout to avoid hangs
+	local function safe_read(path)
+		local ok, out = pcall(function()
+			return luci.sys.exec("timeout 3 cat " .. path .. " 2>/dev/null || true")
+		end)
+		if ok and out then return out else return "" end
 	end
-	-- IP neighbor hints for ip_white_list
-	local ip_hints = {}
-	luci.ip.neighbors({family = 4}, function(entry)
-		if entry.reachable and entry.dest then
-			ip_hints[#ip_hints+1] = entry.dest:string()
+	local c_ipv4_list_val = safe_read("/usr/bin/pushbot/api/ipv4.list")
+	local c_ipv6_list_val = safe_read("/usr/bin/pushbot/api/ipv6.list")
+	local c_ip_black_val = safe_read("/usr/bin/pushbot/api/ip_blacklist")
+	-- Use /sys/class/net (timeout-guarded) instead of netlink-based sys.net:devices()
+	local iface_list = {}
+	local tmp_h = io.popen("timeout 3 ls /sys/class/net 2>/dev/null")
+	if tmp_h then
+		for iface in tmp_h:lines() do
+			if iface ~= "lo" and not iface:match("^ifb.*") then
+				iface_list[#iface_list+1] = iface
+			end
 		end
-	end)
+		tmp_h:close()
+	end
+	-- IP neighbor hints via /proc/net/arp (timeout-guarded)
+	local ip_hints = {}
+	local arp_h = io.popen("timeout 3 grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' /proc/net/arp 2>/dev/null")
+	if arp_h then
+		for line in arp_h:lines() do
+			local ip = line:match("^(%d+%.%d+%.%d+%.%d+)")
+			if ip and not ip:match("^0%.0%.0%.0$") and not ip:match("^127%.0%.0%.1$") then
+				ip_hints[#ip_hints+1] = ip
+			end
+		end
+		arp_h:close()
+	end
 %>
 <script type="text/javascript">
 var ADV_ERR_ENABLE=<%=uci_b("err_enable") and "true" or "false"%>;
@@ -135,6 +154,17 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 </script>
 
 <script type="text/javascript">//<![CDATA[
+	/* ── Global helper: update flag hidden input. Uses Value type which accepts "0". ── */
+	function updateFlagInput(name, isOn) {
+		var el = document.querySelector('[name="cbid.pushbot.pushbot.' + name + '"]');
+		if (!el) {
+			el = document.createElement('input'); el.type = 'hidden';
+			el.name = 'cbid.pushbot.pushbot.' + name;
+			var hb = document.getElementById('pushbot_hidden_fields');
+			(hb || document.querySelector('form') || document.body).appendChild(el);
+		}
+		el.value = isOn ? '1' : '0';
+	}
 (function() {
 	/* hidden container preserves form elements for UCI submission — must be inside <form> */
 	var hiddenBox = document.createElement('div');
@@ -142,6 +172,28 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 	hiddenBox.style.display = 'none';
 	var luciForm = document.querySelector('form');
 	(luciForm || document.body).appendChild(hiddenBox);
+
+	/* ── Pre-create hidden inputs for all flag fields. Always submits "1" or "0". ── */
+	/* CBI option type changed to Value which accepts "0" without deleting. */
+	/* content card flags */
+	var CT_FLAG_MAP = {
+		pushbot_up: CT_PUSH_UP,
+		pushbot_down: CT_PUSH_DOWN,
+		cpuload_enable: CT_CPU_LOAD_EN,
+		temperature_enable: CT_TEMP_EN,
+		client_usage: CT_USAGE,
+		client_usage_disturb: CT_USAGE_DISTURB,
+		web_logged: CT_WEB_LOG,
+		ssh_logged: CT_SSH_LOG,
+		web_login_failed: CT_WEB_FAIL,
+		ssh_login_failed: CT_SSH_FAIL,
+		web_login_black: CT_AUTO_BAN
+	};
+	for (var fn in CT_FLAG_MAP) updateFlagInput(fn, CT_FLAG_MAP[fn]);
+	/* monitor card flags */
+	updateFlagInput('err_enable', ADV_ERR_ENABLE);
+	updateFlagInput('err_sheep_enable', ADV_ERR_SHEEP);
+	updateFlagInput('public_ip_event', ADV_PUBLIC_IP);
 
 	function stashFormElements(row) {
 		var els = row.querySelectorAll('input, select, textarea');
@@ -1325,7 +1377,11 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 							srcSel = allSels[si]; break;
 						}
 					}
+					/* if still not a valid select, force fallback */
+					if (!srcSel || !srcSel.options || srcSel.options.length === 0) { srcSel = null; }
 				}
+				/* disable the stashed original widget so only our hidden input submits */
+				if (ifWidget) { ifWidget.name = ''; }
 				var sel = document.createElement('select');
 				sel.style.cssText = 'width:100%;padding:7px;border-radius:8px;border:1px solid rgba(148,163,184,0.3)';
 				/* ensure form submission — add hidden fallback input */
@@ -1345,12 +1401,30 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 						sel.appendChild(opt);
 					}
 				} else {
-					/* last resort: text input */
-					var inp = document.createElement('input');
-					inp.type = 'text';
-					inp.placeholder = 'br-lan';
-					inp.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit';
-					sel = inp;
+					/* fallback: use CT_IFACES from template for dropdown */
+					if (typeof CT_IFACES !== 'undefined' && CT_IFACES.length > 0) {
+						CT_IFACES.forEach(function(f) {
+							var opt = document.createElement('option');
+							opt.value = f; opt.textContent = f;
+							sel.appendChild(opt);
+						});
+						/* set initial value from UCI if available */
+						if (ifWidget) {
+							for (var oi2 = 0; oi2 < sel.options.length; oi2++) {
+								if (sel.options[oi2].value === ifWidget.value) {
+									sel.options[oi2].selected = true;
+									hiddenIf.value = ifWidget.value;
+								}
+							}
+						}
+					} else {
+						/* last resort: text input */
+						var inp = document.createElement('input');
+						inp.type = 'text';
+						inp.placeholder = 'br-lan';
+						inp.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit';
+						sel = inp;
+					}
 				}
 				sel.addEventListener('change', function() {
 					var val = this.value;
@@ -1562,6 +1636,13 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 						sel.appendChild(o);
 					}
 				} else {
+					/* when origSel not found, include 关闭 for time_2 and time_3 */
+					if (label !== '时间一') {
+						var oc = document.createElement('option');
+						oc.value = '';
+						oc.textContent = '关闭';
+						sel.appendChild(oc);
+					}
 					for (var hi = 0; hi <= 23; hi++) {
 						var o = document.createElement('option');
 						o.value = hi;
@@ -1902,12 +1983,12 @@ function initMonitorCard() {
 	/* ═══ CARD 3: 无人值守 ═══ */
 	var c3 = document.createElement('div'); c3.className = 'pushbot-mode-card';
 
-	/* Find original err_enable CBI checkbox for proper Flag form submission */
-	var errOrig = document.querySelector('[name$=".err_enable"][type="checkbox"]');
-	var errOn = errOrig ? errOrig.checked : ADV_ERR_ENABLE;
+	/* Use hidden input for err_enable Flag form submission */
+	var errHi = document.querySelector('[name="cbid.pushbot.pushbot.err_enable"]');
+	var errOn = ADV_ERR_ENABLE;
 	var errDesc = '请确认脚本可以正常运行，否则可能造成频繁重启等错误！';
 	var errToggle = mkToggle('无人值守任务', errOn, function(on) {
-		if (errOrig) errOrig.checked = on;
+		updateFlagInput('err_enable', on);
 		var ec = document.getElementById('mon_err_content');
 		if (ec) ec.style.display = on ? 'block' : 'none';
 	});
@@ -1924,11 +2005,11 @@ function initMonitorCard() {
 		var d = document.createElement('div'); d.className = 'pushbot-inline-description';
 		d.innerHTML = '避免白天重拨 ddns 域名等待解析，此功能不影响断网检测<br/>因夜间跑流量问题，该功能可能不稳定';
 		ec.appendChild(d);
-		/* find original CBI checkbox */
-		var shOrig = document.querySelector('[name$=".err_sheep_enable"][type="checkbox"]');
-		var shOn = shOrig ? shOrig.checked : ADV_ERR_SHEEP;
+		/* use hidden input for err_sheep_enable */
+		var shHi = document.querySelector('[name="cbid.pushbot.pushbot.err_sheep_enable"]');
+		var shOn = ADV_ERR_SHEEP;
 		var shTog = mkToggle('仅在免打扰时段重拨', shOn, function(on) {
-			if (shOrig) shOrig.checked = on;
+			updateFlagInput('err_sheep_enable', on);
 		});
 		ec.appendChild(shTog);
 	})();
@@ -2045,12 +2126,12 @@ function initMonitorCard() {
 	(function(){
 		var pubDesc = '重拨时不会推送 ip 变动通知，并会导致你的域名无法及时更新 ip 地址<br/>请确认你可以通过重拨获取公网 ip，否则这不仅徒劳无功还会引起频繁断网<br/>移动等大内网你就别挣扎了！！';
 		var pd = document.createElement('div'); pd.className = 'pushbot-inline-description'; pd.innerHTML = pubDesc; ec.appendChild(pd);
-		/* find original CBI checkbox */
-		var pubOrig = document.querySelector('[name$=".public_ip_event"][type="checkbox"]');
-		var pubOn = pubOrig ? pubOrig.checked : ADV_PUBLIC_IP;
+		/* use hidden input for public_ip_event */
+		var pubHi = document.querySelector('[name="cbid.pushbot.pushbot.public_ip_event"]');
+		var pubOn = ADV_PUBLIC_IP;
 		var pubRow = document.createElement('div'); pubRow.style.cssText = 'display:flex;align-items:center;gap:12px;margin-top:6px';
 		var pubToggle = mkToggle('重拨尝试获取公网 ip', pubOn, function(on) {
-			if (pubOrig) pubOrig.checked = on;
+			updateFlagInput('public_ip_event', on);
 			var prc = document.getElementById('mon_pubretry');
 			if (prc) prc.style.display = on ? 'flex' : 'none';
 		});
@@ -2068,9 +2149,11 @@ function initMonitorCard() {
 
 		/* Disable old advanced tab CBI elements to prevent duplicate submission */
 		var monHidden = document.getElementById('mon_hidden_fields');
+		var globalHidden = document.getElementById('pushbot_hidden_fields');
 		var advFields = [
 			'up_timeout','down_timeout','timeout_retry_count','thread_num',
 			'soc_code','pve_host','pve_port',
+			'err_enable','err_sheep_enable','public_ip_event',
 			'err_device_aliases',
 			'network_err_event','system_time_event','autoreboot_time',
 			'network_restart_time','public_ip_retry_count'
@@ -2078,11 +2161,11 @@ function initMonitorCard() {
 		if (monHidden) {
 			advFields.forEach(function(name) {
 				/* match both exact name and DynamicList '[]' suffix */
-				document.querySelectorAll('[name$="' + name + '"]').forEach(function(el) {
-					if (!monHidden.contains(el)) el.name = '';
+					document.querySelectorAll('[name$="' + name + '"]').forEach(function(el) {
+					if (!monHidden.contains(el) && (!globalHidden || !globalHidden.contains(el))) el.name = '';
 				});
 				document.querySelectorAll('input').forEach(function(el) {
-					if (el.name && el.name.indexOf('.' + name + '[]') >= 0 && !monHidden.contains(el)) {
+					if (el.name && el.name.indexOf('.' + name + '[]') >= 0 && !monHidden.contains(el) && (!globalHidden || !globalHidden.contains(el))) {
 						el.name = '';
 					}
 				});
@@ -2243,14 +2326,14 @@ function initContentCard() {
 	}
 	toggleIPv6(CT_IPV6);
 
-	/* device up/down toggles - use original CBI checkboxes */
-	var upOrig = document.querySelector('[name$=".pushbot_up"][type="checkbox"]');
-	var dnOrig = document.querySelector('[name$=".pushbot_down"][type="checkbox"]');
-	var upOn = upOrig ? upOrig.checked : CT_PUSH_UP;
-	var dnOn = dnOrig ? dnOrig.checked : CT_PUSH_DOWN;
+	/* device up/down toggles - use pre-created global hidden inputs */
+	var upHi = document.querySelector('[name="cbid.pushbot.pushbot.pushbot_up"]');
+	var dnHi = document.querySelector('[name="cbid.pushbot.pushbot.pushbot_down"]');
+	var upOn = CT_PUSH_UP;
+	var dnOn = CT_PUSH_DOWN;
 	var dRow=document.createElement('div');dRow.style.cssText='display:flex;gap:12px;margin-top:8px';
-	dRow.appendChild(mkBtn('设备上线通知',upOn,function(on){if(upOrig)upOrig.checked=on;}));
-	dRow.appendChild(mkBtn('设备下线通知',dnOn,function(on){if(dnOrig)dnOrig.checked=on;}));
+	dRow.appendChild(mkBtn('设备上线通知',upOn,function(on){ updateFlagInput('pushbot_up', on); }));
+	dRow.appendChild(mkBtn('设备下线通知',dnOn,function(on){ updateFlagInput('pushbot_down', on); }));
 	b1.appendChild(dRow);
 
 	c1.appendChild(b1); container.appendChild(c1);
@@ -2261,38 +2344,38 @@ function initContentCard() {
 	var b2 = document.createElement('div'); b2.style.cssText = 'margin-top:6px';
 
 	/* CPU load */
-	var clOrig = document.querySelector('[name$=".cpuload_enable"][type="checkbox"]');
-	var clOn = clOrig ? clOrig.checked : CT_CPU_LOAD_EN;
+	var clHi = document.querySelector('[name="cbid.pushbot.pushbot.cpuload_enable"]');
+	var clOn = CT_CPU_LOAD_EN;
 	var clRow=document.createElement('div');clRow.style.cssText='margin-bottom:8px';
-	clRow.appendChild(mkBtn('CPU 负载报警',clOn,function(on){if(clOrig)clOrig.checked=on;toggleCl(on);}));
+	clRow.appendChild(mkBtn('CPU 负载报警',clOn,function(on){updateFlagInput('cpuload_enable',on);toggleCl(on);}));
 	b2.appendChild(clRow);
 	var clSub=document.createElement('div');clSub.id='ct_cpuload_sub';clSub.style.cssText='margin-top:4px;display:'+(CT_CPU_LOAD_EN?'block':'none');
 	clSub.appendChild(mkTxt('cpuload','负载报警阈值',CT_CPU_LOAD));b2.appendChild(clSub);
 	function toggleCl(on){clSub.style.display=on?'block':'none';}
 
 	/* CPU temp */
-	var tmOrig = document.querySelector('[name$=".temperature_enable"][type="checkbox"]');
-	var tmOn = tmOrig ? tmOrig.checked : CT_TEMP_EN;
+	var tmHi = document.querySelector('[name="cbid.pushbot.pushbot.temperature_enable"]');
+	var tmOn = CT_TEMP_EN;
 var tmRow=document.createElement('div');tmRow.style.cssText='margin-bottom:8px';
-tmRow.appendChild(mkBtn('CPU 温度报警',tmOn,function(on){if(tmOrig)tmOrig.checked=on;toggleTm(on);}));
+tmRow.appendChild(mkBtn('CPU 温度报警',tmOn,function(on){updateFlagInput('temperature_enable',on);toggleTm(on);}));
 b2.appendChild(tmRow);
 	var tmSub=document.createElement('div');tmSub.id='ct_temp_sub';tmSub.style.cssText='margin-top:4px;display:'+(CT_TEMP_EN?'block':'none');
 	tmSub.appendChild(mkTxt('temperature','温度报警阈值',CT_TEMP,'设备报警只会在连续五分钟超过设定值时才会推送<br/>而且一个小时内不会再提醒第二次'));b2.appendChild(tmSub);
 	function toggleTm(on){tmSub.style.display=on?'block':'none';}
 
 	/* client usage */
-		var cuOrig = document.querySelector('[name$=".client_usage"][type="checkbox"]');
-		var cuOn = cuOrig ? cuOrig.checked : CT_USAGE;
-		var cuRow=document.createElement('div');cuRow.style.cssText='margin-bottom:8px';
-		cuRow.appendChild(mkBtn('设备异常流量',cuOn,function(on){if(cuOrig)cuOrig.checked=on;toggleCu(on);}));
-		b2.appendChild(cuRow);
+	var cuHi = document.querySelector('[name="cbid.pushbot.pushbot.client_usage"]');
+	var cuOn = CT_USAGE;
+	var cuRow=document.createElement('div');cuRow.style.cssText='margin-bottom:8px';
+	cuRow.appendChild(mkBtn('设备异常流量',cuOn,function(on){updateFlagInput('client_usage',on);toggleCu(on);}));
+	b2.appendChild(cuRow);
 	var cuSub=document.createElement('div');cuSub.id='ct_usage_sub';cuSub.style.cssText='margin-top:4px;display:'+(CT_USAGE?'block':'none');
 	cuSub.appendChild(mkTxt('client_usage_max','每分钟流量限制',CT_USAGE_MAX,'设备异常流量警报（byte），你可以追加 K 或者 M'));
 	/* disturb toggle */
-/* client usage disturb - use original CBI checkbox */
-var cdOrig = document.querySelector('[name$=".client_usage_disturb"][type="checkbox"]');
-var cdOn = cdOrig ? cdOrig.checked : CT_USAGE_DISTURB;
-cuSub.appendChild(mkBtn('异常流量免打扰',cdOn,function(on){if(cdOrig)cdOrig.checked=on;toggleCd(on);}));
+/* client usage disturb - use hidden input */
+var cdHi = document.querySelector('[name="cbid.pushbot.pushbot.client_usage_disturb"]');
+var cdOn = CT_USAGE_DISTURB;
+cuSub.appendChild(mkBtn('异常流量免打扰',cdOn,function(on){updateFlagInput('client_usage_disturb',on);toggleCd(on);}));
 	var cdSub=document.createElement('div');cdSub.id='ct_disturb_sub';cdSub.style.cssText='margin-top:4px;display:'+(CT_USAGE_DISTURB?'block':'none');
 	/* whitelist with MAC dropdown */
 	var wlCtr=document.createElement('div');wlCtr.style.cssText='margin:4px 0';
@@ -2338,25 +2421,25 @@ cuSub.appendChild(mkBtn('异常流量免打扰',cdOn,function(on){if(cdOrig)cdOr
 	c3.innerHTML = '<div class="pushbot-card-top"><span class="pushbot-card-title">安全监控</span></div>';
 	var b3 = document.createElement('div'); b3.style.cssText = 'margin-top:6px';
 
-	var wlOrig = document.querySelector('[name$=".web_logged"][type="checkbox"]');
-	var slOrig = document.querySelector('[name$=".ssh_logged"][type="checkbox"]');
-	var wlOn = wlOrig ? wlOrig.checked : CT_WEB_LOG;
-	var slOn = slOrig ? slOrig.checked : CT_SSH_LOG;
-	/* web/ssh fail - use original CBI checkboxes */
-	var wfOrig = document.querySelector('[name$=".web_login_failed"][type="checkbox"]');
-	var sfOrig = document.querySelector('[name$=".ssh_login_failed"][type="checkbox"]');
-	var wfOn = wfOrig ? wfOrig.checked : CT_WEB_FAIL;
-	var sfOn = sfOrig ? sfOrig.checked : CT_SSH_FAIL;
+	var wlHi = document.querySelector('[name="cbid.pushbot.pushbot.web_logged"]');
+	var slHi = document.querySelector('[name="cbid.pushbot.pushbot.ssh_logged"]');
+	var wlOn = CT_WEB_LOG;
+	var slOn = CT_SSH_LOG;
+	/* web/ssh fail - use hidden inputs */
+	var wfHi = document.querySelector('[name="cbid.pushbot.pushbot.web_login_failed"]');
+	var sfHi = document.querySelector('[name="cbid.pushbot.pushbot.ssh_login_failed"]');
+	var wfOn = CT_WEB_FAIL;
+	var sfOn = CT_SSH_FAIL;
 
 	/* row1: web log + ssh log */
 	var r1=document.createElement('div');r1.style.cssText='display:flex;gap:12px';
-	r1.appendChild(mkBtn('Web 登录提醒',wlOn,function(on){if(wlOrig)wlOrig.checked=on;}));
-	r1.appendChild(mkBtn('SSH 登录提醒',slOn,function(on){if(slOrig)slOrig.checked=on;}));
+	r1.appendChild(mkBtn('Web 登录提醒',wlOn,function(on){updateFlagInput('web_logged',on);}));
+	r1.appendChild(mkBtn('SSH 登录提醒',slOn,function(on){updateFlagInput('ssh_logged',on);}));
 	b3.appendChild(r1);
 	/* row2: web fail + ssh fail */
 	var r2=document.createElement('div');r2.style.cssText='display:flex;gap:12px;margin-top:4px';
-	r2.appendChild(mkBtn('Web 错误尝试提醒',wfOn,function(on){if(wfOrig)wfOrig.checked=on;toggleFail();}));
-	r2.appendChild(mkBtn('SSH 错误尝试提醒',sfOn,function(on){if(sfOrig)sfOrig.checked=on;toggleFail();}));
+	r2.appendChild(mkBtn('Web 错误尝试提醒',wfOn,function(on){updateFlagInput('web_login_failed',on);toggleFail();}));
+	r2.appendChild(mkBtn('SSH 错误尝试提醒',sfOn,function(on){updateFlagInput('ssh_login_failed',on);toggleFail();}));
 	b3.appendChild(r2);
 
 	var failSub=document.createElement('div');failSub.id='ct_fail_sub';failSub.style.cssText='margin-top:8px';
@@ -2364,9 +2447,9 @@ cuSub.appendChild(mkBtn('异常流量免打扰',cdOn,function(on){if(cdOrig)cdOr
 	failSub.style.display=failOn?'block':'none';
 	failSub.appendChild(mkTxt('login_max_num','错误尝试次数',CT_LOGIN_MAX,'超过次数后推送提醒'));
 
-	var banOrig = document.querySelector('[name$=".web_login_black"][type="checkbox"]');
-	var banOn = banOrig ? banOrig.checked : CT_AUTO_BAN;
-	failSub.appendChild(mkBtn('自动拉黑',banOn,function(on){if(banOrig)banOrig.checked=on;toggleBan(on);}));
+	var banHi = document.querySelector('[name="cbid.pushbot.pushbot.web_login_black"]');
+	var banOn = CT_AUTO_BAN;
+	failSub.appendChild(mkBtn('自动拉黑',banOn,function(on){updateFlagInput('web_login_black',on);toggleBan(on);}));
 	var banSub=document.createElement('div');banSub.id='ct_ban_sub';banSub.style.cssText='margin-top:4px;display:'+(CT_AUTO_BAN?'block':'none');
 	banSub.appendChild(mkTxt('ip_black_timeout','拉黑时间(秒)',CT_BAN_TIMEOUT,'0 为永久拉黑，慎用<br>如不幸误操作，请更改设备 IP 进入 LUCI 界面清空规则'));
 	/* IP white list */
@@ -2417,7 +2500,9 @@ cuSub.appendChild(mkBtn('异常流量免打扰',cdOn,function(on){if(cdOrig)cdOr
 
 	failSub.appendChild(banSub);b3.appendChild(failSub);
 	function toggleFail(){
-		var on=(wfOrig?wfOrig.checked:false)||(sfOrig?sfOrig.checked:false);
+		var wfEl = document.querySelector('[name="cbid.pushbot.pushbot.web_login_failed"]');
+		var sfEl = document.querySelector('[name="cbid.pushbot.pushbot.ssh_login_failed"]');
+		var on = (wfEl && wfEl.value === '1') || (sfEl && sfEl.value === '1');
 		failSub.style.display=on?'block':'none';
 	}
 	function toggleBan(on){banSub.style.display=on?'block':'none';}
@@ -2429,15 +2514,19 @@ cuSub.appendChild(mkBtn('异常流量免打扰',cdOn,function(on){if(cdOrig)cdOr
 
 	/* Disable old CBI elements to prevent duplicate submission */
 	var conHidden = document.getElementById('con_hidden_fields');
+	var globalHidden = document.getElementById('pushbot_hidden_fields');
 	if (conHidden) {
 		['pushbot_ipv4','ipv4_interface','pushbot_ipv6','ipv6_interface',
-		 'cpuload','temperature','client_usage_max',
+		 'cpuload','cpuload_enable','temperature','temperature_enable','client_usage_max',
+		 'client_usage','client_usage_disturb',
+		 'pushbot_up','pushbot_down',
+		 'web_logged','ssh_logged','web_login_failed','ssh_login_failed','web_login_black',
 		 'client_usage_whitelist',
 		 'login_max_num',
 		 'ip_black_timeout','ip_white_list'
 		].forEach(function(n){
 			document.querySelectorAll('input[name$="' + n + '"], input[name$="' + n + '[]"], select[name$="' + n + '"]').forEach(function(el){
-				if(!conHidden.contains(el))el.name='';
+				if(!conHidden.contains(el) && (!globalHidden || !globalHidden.contains(el)))el.name='';
 			});
 		});
 	}
@@ -2668,6 +2757,7 @@ function initModernTabs() {
 //]]&gt;
 </script>
 <style>
+/* Old CBI elements are hidden by CSS at top of page */
 .mar-10 {margin-left: 50px; margin-right: 10px;}
 
 .pushbot-mode-card {

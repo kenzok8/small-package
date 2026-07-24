@@ -64,6 +64,12 @@ function act_client_list()
 end
 
 function get_log()
+	local uci = require("luci.model.uci").cursor()
+	local debug = uci:get("pushbot", "pushbot", "debuglevel")
+	if debug ~= "1" then
+		luci.http.write("日志已关闭")
+		return
+	end
 	luci.http.write(luci.sys.exec(
 		"[ -f '/tmp/pushbot/pushbot.log' ] && cat /tmp/pushbot/pushbot.log"))
 end
