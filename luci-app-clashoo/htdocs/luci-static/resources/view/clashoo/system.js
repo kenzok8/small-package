@@ -122,11 +122,12 @@ var CSS = [
   '.cl-wrap .cbi-input-text,.cl-wrap .cbi-input-select,.cl-wrap select,.cl-wrap input,.cl-wrap textarea,.cl-wrap .btn,.cl-wrap .cbi-button{font-size:13px !important;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif !important}',
   '.cl-wrap .btn,.cl-wrap .cbi-button{padding:4px 10px;line-height:1.35}',
   '#cbi-clashoo-lan_acl{overflow-x:visible!important}',
-  '#cbi-clashoo-lan_acl .cbi-section-table{display:flex;width:100%;overflow:visible!important;flex-direction:column}',
+  '#cbi-clashoo-lan_acl .cbi-section-table{display:flex;width:100%;overflow:visible!important;flex-direction:column;border:0!important}',
   '#cbi-clashoo-lan_acl .cbi-section-thead{display:none}',
   '#cbi-clashoo-lan_acl .cbi-section-tbody{display:flex;width:100%;flex-direction:column}',
   '#cbi-clashoo-lan_acl .cbi-section-table-row{display:flex;width:100%;padding:14px 0;border-top:1px solid rgba(128,128,128,.16);flex-direction:column;align-items:stretch}',
   '#cbi-clashoo-lan_acl .cbi-section-table-row:first-child{border-top:0}',
+  '#cbi-clashoo-lan_acl .cl-acl-empty-row,#cbi-clashoo-lan_acl .cl-acl-empty-row>*{border:0!important;box-shadow:none!important}',
   '#cbi-clashoo-lan_acl .cl-acl-value{width:100%;border:0!important;box-sizing:border-box}',
   '#cbi-clashoo-lan_acl .cl-acl-value .cbi-dropdown[open]>ul.dropdown{width:max-content;min-width:100%;max-width:calc(100vw - 48px)}',
   '@media(max-width:600px){#cbi-clashoo-lan_acl .cl-acl-value .cbi-dropdown[open]>ul.dropdown{width:100%!important;min-width:0;max-width:100%}#cbi-clashoo-lan_acl .cl-acl-value .cbi-dropdown[open]>ul.dropdown>li{height:auto;white-space:normal;overflow-wrap:anywhere;line-height:1.35}}',
@@ -163,6 +164,12 @@ function decorateSystemForm(root) {
 }
 
 function normalizeLanAclLayout(root) {
+  var rows = root.querySelectorAll('#cbi-clashoo-lan_acl .cbi-section-table-row');
+  for (var r = 0; r < rows.length; r++) {
+    if (!rows[r].querySelector('input, select, button, .cbi-dropdown'))
+      rows[r].classList.add('cl-acl-empty-row');
+  }
+
   var cells = root.querySelectorAll('#cbi-clashoo-lan_acl .cbi-section-table-row > td.cbi-value-field:not(.cl-acl-value)');
   for (var i = 0; i < cells.length; i++) {
     var cell = cells[i];
@@ -1018,7 +1025,7 @@ return view.extend({
     o.rmempty = false;
     o.description = _("When enabled, sniffer configuration is injected automatically to improve streaming domain detection and routing stability.");
 
-    s = m.section(form.TableSection, 'lan_acl', _("LAN ACL Groups"));
+    s = m.section(form.TableSection, 'lan_acl', _("Access Control"));
     s.addremove = true;
     s.anonymous = true;
     s.sortable = true;
@@ -1068,11 +1075,11 @@ return view.extend({
     macOptions.forEach(function (kv) { o.value(kv[0], kv[1]); });
 
     o = s.option(form.Flag, 'dns', _("DNS Takeover"));
-    o.default = '1';
+    o.default = '0';
     o.rmempty = false;
 
     o = s.option(form.Flag, 'proxy', _("Proxy"));
-    o.default = '1';
+    o.default = '0';
     o.rmempty = false;
 
     s = m.section(form.NamedSection, 'config', 'clashoo', _("Automation Tasks"));

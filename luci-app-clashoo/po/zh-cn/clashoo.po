@@ -990,9 +990,6 @@ msgstr "IPv4"
 msgid "IPv6"
 msgstr "IPv6"
 
-msgid "LAN ACL Groups"
-msgstr "LAN 访问控制"
-
 msgid "MAC"
 msgstr "MAC"
 

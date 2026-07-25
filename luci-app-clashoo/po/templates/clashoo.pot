@@ -983,9 +983,6 @@ msgstr ""
 msgid "IPv6"
 msgstr ""
 
-msgid "LAN ACL Groups"
-msgstr ""
-
 msgid "MAC"
 msgstr ""
 
