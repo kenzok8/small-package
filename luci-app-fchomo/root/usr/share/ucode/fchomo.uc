@@ -340,8 +340,7 @@ export function parseListener(cfg) {
 			addr: cfg.plugin_opts_handshake_dest,
 			sni: cfg.plugin_opts_host,
 			proxy: cfg.plugin_opts_dest_proxy, // raw data need post-processing
-			"rate-limit": strToInt(cfg.plugin_opts_rate_limit),
-			"quic-version-probe": strToBool(cfg.plugin_opts_quic_version_probe)
+			"rate-limit": strToInt(cfg.plugin_opts_rate_limit)
 		} : null,
 		cwnd: strToInt(cfg.shadowquic_cwnd),
 		"max-datagram-frame-size": strToInt(cfg.shadowquic_max_datagram_frame_size),
