@@ -84,13 +84,14 @@ done
 
 # 此处直接使用 cat 因为有 sed '/#/d' 删除了 数据
 if [ "$nft_support" = "1" ]; then
-	cat /etc/ssrplus/black.list | sed '/^$/d' | sed '/#/d' | sed "/.*/s/.*/server=\/&\/127.0.0.1#$dns_port\nnftset=\/&\/inet#ss_spec#blacklist/" >$TMP_DNSMASQ_PATH/blacklist_forward.conf
-	cat /etc/ssrplus/white.list | sed '/^$/d' | sed '/#/d' | sed "/.*/s/.*/server=\/&\/127.0.0.1\nnftset=\/&\/inet#ss_spec#whitelist/" >$TMP_DNSMASQ_PATH/whitelist_forward.conf
+	sed -e 's/[[:space:]]*#.*$//' -e '/^[[:space:]]*$/d' -e "s/.*/server=\/&\/127.0.0.1#$dns_port\nnftset=\/&\/inet#ss_spec#blacklist/" /etc/ssrplus/black.list > "$TMP_DNSMASQ_PATH/blacklist_forward.conf"
+	sed -e 's/[[:space:]]*#.*$//' -e '/^[[:space:]]*$/d' -e "s/.*/server=\/&\/127.0.0.1\nnftset=\/&\/inet#ss_spec#whitelist/" /etc/ssrplus/white.list > "$TMP_DNSMASQ_PATH/whitelist_forward.conf"
 elif [ "$nft_support" = "0" ]; then
-	cat /etc/ssrplus/black.list | sed '/^$/d' | sed '/#/d' | sed "/.*/s/.*/server=\/&\/127.0.0.1#$dns_port\nipset=\/&\/blacklist/" >$TMP_DNSMASQ_PATH/blacklist_forward.conf
-	cat /etc/ssrplus/white.list | sed '/^$/d' | sed '/#/d' | sed "/.*/s/.*/server=\/&\/127.0.0.1\nipset=\/&\/whitelist/" >$TMP_DNSMASQ_PATH/whitelist_forward.conf
+	sed -e 's/[[:space:]]*#.*$//' -e '/^[[:space:]]*$/d' -e "s/.*/server=\/&\/127.0.0.1#$dns_port\nipset=\/&\/blacklist/" /etc/ssrplus/black.list > "$TMP_DNSMASQ_PATH/blacklist_forward.conf"
+	sed -e 's/[[:space:]]*#.*$//' -e '/^[[:space:]]*$/d' -e "s/.*/server=\/&\/127.0.0.1\nipset=\/&\/whitelist/" /etc/ssrplus/white.list > "$TMP_DNSMASQ_PATH/whitelist_forward.conf"
 fi
-cat /etc/ssrplus/deny.list | sed '/^$/d' | sed '/#/d' | sed "/.*/s/.*/address=\/&\//" >$TMP_DNSMASQ_PATH/denylist.conf
+
+sed -e 's/[[:space:]]*#.*$//' -e '/^[[:space:]]*$/d' -e "s/.*/address=\/&\//" /etc/ssrplus/deny.list > "$TMP_DNSMASQ_PATH/denylist.conf"
 
 if [ "$(uci_get_by_type global adblock 0)" == "1" ]; then
 	cp -f /etc/ssrplus/ad.conf "$TMP_DNSMASQ_PATH/"
