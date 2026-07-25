@@ -5,6 +5,7 @@ UPDATE_LOG="/tmp/clash_update.txt"
 LIST_FILE="/usr/share/clashbackup/confit_list.conf"
 SUB_DIR="/usr/share/clashoo/config/sub"
 TMP_PREFIX="/tmp/clash_sub_$$"
+DEFAULT_SUB_UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
 
 subtype="$(uci -q get clashoo.config.subcri 2>/dev/null)"
 config_name_raw="$(uci -q get clashoo.config.config_name 2>/dev/null)"
@@ -183,7 +184,7 @@ download_subscription() {
 	err="${TMP_PREFIX}.err"
 
 	ua="$(uci -q get clashoo.config.sub_ua 2>/dev/null)"
-	[ -n "$ua" ] || ua='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
+	[ -n "$ua" ] || ua="$DEFAULT_SUB_UA"
 
 	if command -v curl >/dev/null 2>&1; then
 		http_code="$(curl_subscription "$url" "$tmp" "$hdr" "$err" "$ua" "")"
@@ -240,6 +241,7 @@ download_subscription() {
 		rm -f "$tmp" >/dev/null 2>&1
 		return 1
 	}
+	printf '%s\n' "$ua" >"${target}.ua"
 
 	return 0
 }

@@ -2844,6 +2844,7 @@ if (unlink(target) === null) return { success: false, error: 'delete failed' };
 if (type == '1') {
 unlink(target + '.info');
 unlink(target + '.url');
+unlink(target + '.ua');
 }
 }
 else if (type != '1') {
@@ -2854,6 +2855,7 @@ if (type == '1' && alt_target != target && access(alt_target, 'r')) {
 unlink(alt_target);
 unlink(alt_target + '.info');
 unlink(alt_target + '.url');
+unlink(alt_target + '.ua');
 }
 
 let c = cursor();
@@ -3639,6 +3641,7 @@ if (!access(path, 'r')) return { success: false, error: 'not found' };
 if (unlink(path) === null) return { success: false, error: 'delete_failed' };
 unlink(path + '.info');
 unlink(path + '.url');
+unlink(path + '.ua');
 let c = cursor(); c.load('clashoo');
 if (c.get('clashoo', 'config', 'singbox_active') == name) {
   c.delete('clashoo', 'config', 'singbox_active');
@@ -3697,6 +3700,7 @@ if (writefile(path, raw) === null) {
   return { success: false, message: '保存失败' };
 }
 writefile(path + '.url', sub_url);
+writefile(path + '.ua', sub_ua);
 if (access(tmp_hdr, 'r')) {
   let hdr_raw = readfile(tmp_hdr) || '';
   for (let line in split(hdr_raw, '\n')) {

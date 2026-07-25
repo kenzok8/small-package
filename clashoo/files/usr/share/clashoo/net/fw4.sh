@@ -20,6 +20,7 @@ PROXY_FWMARK="0x162"
 PROXY_ROUTE_TABLE="0x162"
 CORE_ROUTING_MARK="0x1a0a"  # = 6666
 ACL_BYPASS_FWMARK="0x163"
+SINGBOX_BYPASS_FWMARK="0x2024"
 ACL_BYPASS_PREF="8998"
 DNSMASQ_BYPASS_PREF="8999"
 
@@ -63,7 +64,45 @@ config_udp_mode() {
 }
 
 config_access_control() {
+	[ "$(uci_get clashoo.config.acl_migrated)" = "1" ] && {
+		printf '0\n'
+		return
+	}
 	uci_get clashoo.config.access_control
+}
+
+acl_sections() {
+	uci -q show clashoo 2>/dev/null | sed -n 's/^clashoo\.\([^.=]*\)=lan_acl$/\1/p'
+}
+
+acl_list() {
+	uci_get "$1"
+}
+
+grouped_acl_enabled() {
+	local section
+	[ "$(uci_get clashoo.config.acl_migrated)" = "1" ] || return 1
+	for section in $(acl_sections); do
+		[ "$(uci_get "clashoo.${section}.enabled")" != "0" ] && return 0
+	done
+	return 1
+}
+
+acl_has_catchall() {
+	local section
+	for section in $(acl_sections); do
+		[ "$(uci_get "clashoo.${section}.enabled")" != "0" ] || continue
+		[ -z "$(acl_list "clashoo.${section}.ip")$(acl_list "clashoo.${section}.ip6")$(acl_list "clashoo.${section}.mac")" ] && return 0
+	done
+	return 1
+}
+
+lan_acl_enabled() {
+	grouped_acl_enabled && return 0
+	case "$(config_access_control)" in
+		1|2) return 0 ;;
+	esac
+	return 1
 }
 
 config_enable_dns() {
@@ -71,7 +110,7 @@ config_enable_dns() {
 }
 
 config_dns_port() {
-	local port
+	local port=""
 	if [ "$(uci_get clashoo.config.core_type)" != "singbox" ]; then
 		port="$(sed -n 's/^[[:space:]]*listen:.*:[[:space:]]*['"'"'"]*\([0-9]\{1,\}\)['"'"'"]*[[:space:]]*$/\1/p' /etc/clashoo/config.yaml 2>/dev/null | head -n1)"
 	fi
@@ -81,23 +120,13 @@ config_dns_port() {
 }
 
 lan_dns_split_enabled() {
-	local access_control="${1:-$(config_access_control)}"
-	[ "$(uci_get clashoo.config.core_type)" != "singbox" ] || return 1
-	case "$access_control" in
-		1|2) ;;
-		*) return 1 ;;
-	esac
+	lan_acl_enabled || return 1
 	bool_enabled "$(config_enable_dns)" || return 1
 	bool_enabled "$(config_ipv4_dns_hijack)" || bool_enabled "$(config_ipv6_dns_hijack)"
 }
 
 tun_acl_enabled() {
-	local access_control="${1:-$(config_access_control)}"
-	[ "$(uci_get clashoo.config.core_type)" != "singbox" ] || return 1
-	case "$access_control" in
-		1|2) ;;
-		*) return 1 ;;
-	esac
+	lan_acl_enabled || return 1
 	[ "$(config_tcp_mode)" = "tun" ] || [ "$(config_udp_mode)" = "tun" ]
 }
 
@@ -107,6 +136,19 @@ config_ipv4_dns_hijack() {
 
 config_ipv6_dns_hijack() {
 	uci_get clashoo.config.ipv6_dns_hijack
+}
+
+config_ipv4_proxy() {
+	uci_get clashoo.config.ipv4_proxy
+}
+
+config_ipv6_proxy() {
+	uci_get clashoo.config.ipv6_proxy
+}
+
+singbox_tun_active() {
+	[ "$(uci_get clashoo.config.core_type)" = "singbox" ] || return 1
+	[ "$(config_tcp_mode)" = "tun" ] || [ "$(config_udp_mode)" = "tun" ]
 }
 
 config_bypass_china() {
@@ -306,15 +348,134 @@ render_port_match() {
 	fi
 }
 
+render_acl_dns_rules() {
+	local redirect_port="$1" section ipv4 ipv6 mac ipv4_elements ipv6_elements mac_elements action
+	for section in $(acl_sections); do
+		[ "$(uci_get "clashoo.${section}.enabled")" != "0" ] || continue
+		if bool_enabled "$(uci_get "clashoo.${section}.dns")"; then
+			action="counter redirect to :${redirect_port}"
+		elif singbox_tun_active; then
+			action="meta mark set ${SINGBOX_BYPASS_FWMARK} ct mark set meta mark counter return"
+		else
+			action="counter return"
+		fi
+		ipv4="$(acl_list "clashoo.${section}.ip")"
+		ipv6="$(acl_list "clashoo.${section}.ip6")"
+		mac="$(acl_list "clashoo.${section}.mac")"
+		ipv4_elements="$(render_ip_elements "$ipv4")"
+		ipv6_elements="$(render_ip_elements "$ipv6")"
+		mac_elements="$(render_ip_elements "$mac")"
+
+		if [ -z "$ipv4_elements$ipv6_elements$mac_elements" ]; then
+			bool_enabled "$(config_ipv4_dns_hijack)" && printf 'meta nfproto ipv4 meta l4proto { tcp, udp } th dport 53 %s\n' "$action"
+			bool_enabled "$(config_ipv6_dns_hijack)" && printf 'meta nfproto ipv6 meta l4proto { tcp, udp } th dport 53 %s\n' "$action"
+			continue
+		fi
+		if [ -n "$ipv4_elements" ] && bool_enabled "$(config_ipv4_dns_hijack)"; then
+			printf 'meta nfproto ipv4 ip saddr { %s } meta l4proto { tcp, udp } th dport 53 %s\n' "$ipv4_elements" "$action"
+		fi
+		if [ -n "$ipv6_elements" ] && bool_enabled "$(config_ipv6_dns_hijack)"; then
+			printf 'meta nfproto ipv6 ip6 saddr { %s } meta l4proto { tcp, udp } th dport 53 %s\n' "$ipv6_elements" "$action"
+		fi
+		if [ -n "$mac_elements" ]; then
+			bool_enabled "$(config_ipv4_dns_hijack)" && printf 'meta nfproto ipv4 ether saddr { %s } meta l4proto { tcp, udp } th dport 53 %s\n' "$mac_elements" "$action"
+			bool_enabled "$(config_ipv6_dns_hijack)" && printf 'meta nfproto ipv6 ether saddr { %s } meta l4proto { tcp, udp } th dport 53 %s\n' "$mac_elements" "$action"
+		fi
+	done
+}
+
+render_acl_proxy_rules() {
+	local mode="$1" proto="$2" port_match="$3" target_port="$4"
+	local section ipv4 ipv6 mac ipv4_elements ipv6_elements mac_elements enabled action4 action6
+
+	for section in $(acl_sections); do
+		[ "$(uci_get "clashoo.${section}.enabled")" != "0" ] || continue
+		enabled="$(uci_get "clashoo.${section}.proxy")"
+		case "$mode" in
+			redirect)
+				if bool_enabled "$enabled"; then
+					if singbox_tun_active; then
+						action4="${port_match} ct mark set ${SINGBOX_BYPASS_FWMARK} counter redirect to :${target_port}"
+					else
+						action4="${port_match} counter redirect to :${target_port}"
+					fi
+					action6="$action4"
+				elif singbox_tun_active; then
+					action4="meta l4proto ${proto} meta mark set ${SINGBOX_BYPASS_FWMARK} ct mark set meta mark counter return"
+					action6="$action4"
+				else
+					action4="meta l4proto ${proto} counter return"
+					action6="$action4"
+				fi
+				;;
+			tproxy)
+				if bool_enabled "$enabled"; then
+					if singbox_tun_active; then
+						action4="${port_match} ct mark set ${SINGBOX_BYPASS_FWMARK} tproxy ip to :${target_port} meta mark set ${PROXY_FWMARK} counter accept"
+						action6="${port_match} ct mark set ${SINGBOX_BYPASS_FWMARK} tproxy ip6 to :${target_port} meta mark set ${PROXY_FWMARK} counter accept"
+					else
+						action4="${port_match} tproxy ip to :${target_port} meta mark set ${PROXY_FWMARK} counter accept"
+						action6="${port_match} tproxy ip6 to :${target_port} meta mark set ${PROXY_FWMARK} counter accept"
+					fi
+				elif singbox_tun_active; then
+					action4="meta l4proto ${proto} meta mark set ${SINGBOX_BYPASS_FWMARK} ct mark set meta mark counter return"
+					action6="$action4"
+				else
+					action4="meta l4proto ${proto} counter return"
+					action6="$action4"
+				fi
+				;;
+			tun)
+				if bool_enabled "$enabled"; then
+					action4="meta l4proto ${proto} counter return"
+				elif singbox_tun_active; then
+					action4="meta l4proto ${proto} meta mark set ${SINGBOX_BYPASS_FWMARK} ct mark set meta mark counter accept"
+				else
+					action4="meta l4proto ${proto} meta mark set ${ACL_BYPASS_FWMARK} counter accept"
+				fi
+				action6="$action4"
+				;;
+		esac
+
+		ipv4="$(acl_list "clashoo.${section}.ip")"
+		ipv6="$(acl_list "clashoo.${section}.ip6")"
+		mac="$(acl_list "clashoo.${section}.mac")"
+		ipv4_elements="$(render_ip_elements "$ipv4")"
+		ipv6_elements="$(render_ip_elements "$ipv6")"
+		mac_elements="$(render_ip_elements "$mac")"
+
+		if [ -z "$ipv4_elements$ipv6_elements$mac_elements" ]; then
+			bool_enabled "$(config_ipv4_proxy)" && printf 'meta nfproto ipv4 %s\n' "$action4"
+			bool_enabled "$(config_ipv6_proxy)" && printf 'meta nfproto ipv6 %s\n' "$action6"
+			continue
+		fi
+		if [ -n "$ipv4_elements" ] && bool_enabled "$(config_ipv4_proxy)"; then
+			printf 'meta nfproto ipv4 ip saddr { %s } %s\n' "$ipv4_elements" "$action4"
+		fi
+		if [ -n "$ipv6_elements" ] && bool_enabled "$(config_ipv6_proxy)"; then
+			printf 'meta nfproto ipv6 ip6 saddr { %s } %s\n' "$ipv6_elements" "$action6"
+		fi
+		if [ -n "$mac_elements" ]; then
+			bool_enabled "$(config_ipv4_proxy)" && printf 'meta nfproto ipv4 ether saddr { %s } %s\n' "$mac_elements" "$action4"
+			bool_enabled "$(config_ipv6_proxy)" && printf 'meta nfproto ipv6 ether saddr { %s } %s\n' "$mac_elements" "$action6"
+		fi
+	done
+}
+
 # Split proxied clients to the core DNS while ACL-bypassed clients use dnsmasq.
 # Gated on UCI IPv4/IPv6 toggles.
 # return 0: no output when both off, avoid set -e false-positive.
 render_dns_hijack() {
 	local access_control="$1" redirect_port=53
-	[ "$access_control" = "1" ] && printf '%s\n' 'ip saddr != @clash_proxy_lan return'
-	[ "$access_control" = "2" ] && printf '%s\n' 'ip saddr @clash_reject_lan return'
-	if lan_dns_split_enabled "$access_control"; then
+	if lan_dns_split_enabled; then
 		redirect_port="$(config_dns_port)"
+	fi
+	if grouped_acl_enabled; then
+		render_acl_dns_rules "$redirect_port"
+		acl_has_catchall && return 0
+	else
+		[ "$access_control" = "1" ] && printf '%s\n' 'ip saddr != @clash_proxy_lan return'
+		[ "$access_control" = "2" ] && printf '%s\n' 'ip saddr @clash_reject_lan return'
 	fi
 	bool_enabled "$(config_ipv4_dns_hijack)" && \
 		printf '%s\n' "meta nfproto ipv4 meta l4proto { tcp, udp } th dport 53 counter redirect to :${redirect_port}"
@@ -475,11 +636,13 @@ append_set_from_file_or_empty() {
 generate_rules() {
 	local redir_port tproxy_port tcp_mode udp_mode access_control fake_ip_range proxy_lan_ips reject_lan_ips
 	local proxy_tcp_dport proxy_udp_dport bypass_dscp bypass_fwmark
+	local acl_catchall=0
 	redir_port="$(config_redir_port)"
 	tproxy_port="$(config_tproxy_port)"
 	tcp_mode="$(config_tcp_mode)"
 	udp_mode="$(config_udp_mode)"
 	access_control="$(config_access_control)"
+	grouped_acl_enabled && acl_has_catchall && acl_catchall=1
 	bypass_china="$(config_bypass_china)"
 	proxy_tcp_dport="$(config_proxy_tcp_dport)"
 	proxy_udp_dport="$(config_proxy_udp_dport)"
@@ -506,6 +669,8 @@ generate_rules() {
 	reject_elements="$(render_ip_elements "$reject_lan_ips")"
 	dscp_elements="$(render_token_elements "$bypass_dscp")"
 	fwmark_elements="$(merge_fwmark_tokens "$bypass_fwmark")"
+	tcp_match="$(render_port_match tcp "$proxy_tcp_dport")"
+	udp_match="$(render_port_match udp "$proxy_udp_dport")"
 
 	{
 		printf 'set clashoo_localnetwork {\n\ttype ipv4_addr;\n\tflags interval;\n\tauto-merge;\n'
@@ -520,7 +685,18 @@ generate_rules() {
 
 		printf 'set clash_reject_lan {\n\ttype ipv4_addr;\n\tflags interval;\n\tauto-merge;\n'
 		[ -n "$reject_elements" ] && printf '\telements = { %s }\n' "$reject_elements"
-		printf '}\n'
+		printf '}\n\n'
+
+		if grouped_acl_enabled && [ "$tcp_mode" = "tun" ]; then
+			printf 'chain clashoo_acl_tun_tcp {\n'
+			render_acl_proxy_rules tun tcp "$tcp_match" "$tproxy_port"
+			printf '}\n\n'
+		fi
+		if grouped_acl_enabled && [ "$udp_mode" = "tun" ]; then
+			printf 'chain clashoo_acl_tun_udp {\n'
+			render_acl_proxy_rules tun udp "$udp_match" "$tproxy_port"
+			printf '}\n'
+		fi
 	} > "$SETS_RULES"
 
 	: > "$OUTPUT_RULES"
@@ -536,15 +712,18 @@ generate_rules() {
 		redirect)
 			tcp_match="$(render_port_match tcp "$proxy_tcp_dport")"
 			cat >> "$DSTNAT_RULES" <<EOF
-ip daddr @clashoo_localnetwork return
+$( render_common_returns )
 $( bool_enabled "$bypass_china" && printf '%s\n' 'ip6 daddr @clashoo_china6 return' )
 $( bool_enabled "$bypass_china" && printf '%s\n' 'ip daddr @clashoo_china return' )
-$( [ "$access_control" = "1" ] && printf '%s\n' 'ip saddr != @clash_proxy_lan return' )
-$( [ "$access_control" = "2" ] && printf '%s\n' 'ip saddr @clash_reject_lan return' )
 $( [ -n "$dscp_elements" ] && printf '%s\n' "ip dscp { ${dscp_elements} } return" )
 $( [ -n "$dscp_elements" ] && printf '%s\n' "ip6 dscp { ${dscp_elements} } return" )
 $( [ -n "$fwmark_elements" ] && printf '%s\n' "meta mark { ${fwmark_elements} } return" )
-${tcp_match} redirect to :${redir_port}
+$( ! bool_enabled "$(config_ipv4_proxy)" && printf '%s\n' 'meta nfproto ipv4 return' )
+$( ! bool_enabled "$(config_ipv6_proxy)" && printf '%s\n' 'meta nfproto ipv6 return' )
+$( grouped_acl_enabled && render_acl_proxy_rules redirect tcp "$tcp_match" "$redir_port" )
+$( [ "$access_control" = "1" ] && printf '%s\n' 'ip saddr != @clash_proxy_lan return' )
+$( [ "$access_control" = "2" ] && printf '%s\n' 'ip saddr @clash_reject_lan return' )
+$( [ "$acl_catchall" -eq 0 ] && { singbox_tun_active && printf '%s ct mark set %s redirect to :%s\n' "$tcp_match" "$SINGBOX_BYPASS_FWMARK" "$redir_port" || printf '%s redirect to :%s\n' "$tcp_match" "$redir_port"; } )
 EOF
 			;;
 	esac
@@ -563,20 +742,10 @@ EOF
 		tcp_match="$(render_port_match tcp "$proxy_tcp_dport")"
 		udp_match="$(render_port_match udp "$proxy_udp_dport")"
 		{
-			printf 'ip daddr @clashoo_localnetwork return\n'
-			if [ "$tun_acl" -eq 1 ]; then
-				[ "$access_control" = "1" ] && printf 'ip saddr != @clash_proxy_lan meta mark set %s return\n' "$ACL_BYPASS_FWMARK"
-				[ "$access_control" = "2" ] && printf 'ip saddr @clash_reject_lan meta mark set %s return\n' "$ACL_BYPASS_FWMARK"
-			fi
+			render_common_returns
 			if bool_enabled "$bypass_china"; then
 				printf 'meta nfproto ipv6 ip6 daddr @clashoo_china6 return\n'
 				printf 'ip daddr @clashoo_china return\n'
-			fi
-			if [ "$tun_acl" -eq 0 ] && [ "$access_control" = "1" ]; then
-				printf 'ip saddr != @clash_proxy_lan return\n'
-			fi
-			if [ "$tun_acl" -eq 0 ] && [ "$access_control" = "2" ]; then
-				printf 'ip saddr @clash_reject_lan return\n'
 			fi
 			if [ -n "$dscp_elements" ]; then
 				printf 'ip dscp { %s } return\n' "$dscp_elements"
@@ -585,14 +754,36 @@ EOF
 			if [ -n "$fwmark_elements" ]; then
 				printf 'meta mark { %s } return\n' "$fwmark_elements"
 			fi
+			bool_enabled "$(config_ipv4_proxy)" || printf 'meta nfproto ipv4 return\n'
+			bool_enabled "$(config_ipv6_proxy)" || printf 'meta nfproto ipv6 return\n'
+			if grouped_acl_enabled; then
+				[ "$tcp_mode" = "tproxy" ] && render_acl_proxy_rules tproxy tcp "$tcp_match" "$tproxy_port"
+				[ "$tcp_mode" = "tun" ] && printf 'meta l4proto tcp jump clashoo_acl_tun_tcp\n'
+				[ "$udp_mode" = "tproxy" ] && render_acl_proxy_rules tproxy udp "$udp_match" "$tproxy_port"
+				[ "$udp_mode" = "tun" ] && printf 'meta l4proto udp jump clashoo_acl_tun_udp\n'
+			elif [ "$tun_acl" -eq 1 ]; then
+				[ "$access_control" = "1" ] && printf 'ip saddr != @clash_proxy_lan meta mark set %s return\n' "$ACL_BYPASS_FWMARK"
+				[ "$access_control" = "2" ] && printf 'ip saddr @clash_reject_lan meta mark set %s return\n' "$ACL_BYPASS_FWMARK"
+			else
+				[ "$access_control" = "1" ] && printf 'ip saddr != @clash_proxy_lan return\n'
+				[ "$access_control" = "2" ] && printf 'ip saddr @clash_reject_lan return\n'
+			fi
 			if bool_enabled "$(config_block_quic)"; then
 				printf 'meta l4proto udp udp dport 443 return\n'
 			fi
-			if [ "$tcp_mode" = "tproxy" ]; then
-				printf '%s tproxy to :%s meta mark set %s accept\n' "$tcp_match" "$tproxy_port" "$PROXY_FWMARK"
+			if [ "$tcp_mode" = "tproxy" ] && [ "$acl_catchall" -eq 0 ]; then
+				if singbox_tun_active; then
+					printf '%s ct mark set %s tproxy to :%s meta mark set %s accept\n' "$tcp_match" "$SINGBOX_BYPASS_FWMARK" "$tproxy_port" "$PROXY_FWMARK"
+				else
+					printf '%s tproxy to :%s meta mark set %s accept\n' "$tcp_match" "$tproxy_port" "$PROXY_FWMARK"
+				fi
 			fi
-			if [ "$udp_mode" = "tproxy" ]; then
-				printf '%s tproxy to :%s meta mark set %s accept\n' "$udp_match" "$tproxy_port" "$PROXY_FWMARK"
+			if [ "$udp_mode" = "tproxy" ] && [ "$acl_catchall" -eq 0 ]; then
+				if singbox_tun_active; then
+					printf '%s ct mark set %s tproxy to :%s meta mark set %s accept\n' "$udp_match" "$SINGBOX_BYPASS_FWMARK" "$tproxy_port" "$PROXY_FWMARK"
+				else
+					printf '%s tproxy to :%s meta mark set %s accept\n' "$udp_match" "$tproxy_port" "$PROXY_FWMARK"
+				fi
 			fi
 		} > "$MANGLE_RULES"
 	else

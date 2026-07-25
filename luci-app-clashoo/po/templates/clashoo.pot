@@ -974,6 +974,24 @@ msgstr ""
 msgid "Proxy"
 msgstr ""
 
+msgid "DNS Takeover"
+msgstr ""
+
+msgid "IPv4"
+msgstr ""
+
+msgid "IPv6"
+msgstr ""
+
+msgid "LAN ACL Groups"
+msgstr ""
+
+msgid "MAC"
+msgstr ""
+
+msgid "Rules are matched from top to bottom. Unmatched devices use DNS takeover and proxy by default."
+msgstr ""
+
 msgid "Proxy Authentication"
 msgstr ""
 

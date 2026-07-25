@@ -350,6 +350,26 @@ function array_has_value(arr, val) {
 	return false;
 }
 
+let dnsmasq_uid = null;
+let _dnsmasq_uid_pipe = popen("id -u dnsmasq 2>/dev/null");
+if (_dnsmasq_uid_pipe) {
+	let value = trim_s(_dnsmasq_uid_pipe.read('all'));
+	_dnsmasq_uid_pipe.close();
+	if (match(value, /^[0-9]+$/))
+		dnsmasq_uid = +value;
+}
+
+function ensure_tun_dnsmasq_exclude(ib) {
+	if (dnsmasq_uid == null)
+		return;
+	let excludes = ib.exclude_uid;
+	if (type(excludes) != 'array')
+		excludes = excludes != null ? [ excludes ] : [];
+	if (!array_has_value(excludes, dnsmasq_uid))
+		push(excludes, dnsmasq_uid);
+	ib.exclude_uid = excludes;
+}
+
 function ensure_tun_cn_exclude(ib) {
 	let excludes = ib.route_exclude_address_set;
 	if (type(excludes) != 'array')
@@ -509,8 +529,11 @@ for (let ib in inbounds) {
 				ib.address = [ '172.19.0.1/30', 'fdfe:dcba:9876::1/126' ];
 			ib.auto_route = true;
 			ib.auto_redirect = true;
+			ib.auto_redirect_input_mark = '0x2023';
+			ib.auto_redirect_output_mark = '0x2024';
 			ib.strict_route = true;
 			ib.stack = tun_stack;
+			ensure_tun_dnsmasq_exclude(ib);
 			ensure_tun_cn_exclude(ib);
 			push(normalized, ib);
 			has_tun = true;
@@ -595,9 +618,12 @@ if (wants_tun && !has_tun) {
 		address: [ '172.19.0.1/30', 'fdfe:dcba:9876::1/126' ],
 		auto_route: true,
 		auto_redirect: true,
+		auto_redirect_input_mark: '0x2023',
+		auto_redirect_output_mark: '0x2024',
 		strict_route: true,
 		stack: tun_stack
 	};
+	ensure_tun_dnsmasq_exclude(tun_ib);
 	ensure_tun_cn_exclude(tun_ib);
 	push(normalized, tun_ib);
 }

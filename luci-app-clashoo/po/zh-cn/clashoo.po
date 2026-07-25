@@ -981,6 +981,24 @@ msgstr "协议"
 msgid "Proxy"
 msgstr "代理"
 
+msgid "DNS Takeover"
+msgstr "DNS 接管"
+
+msgid "IPv4"
+msgstr "IPv4"
+
+msgid "IPv6"
+msgstr "IPv6"
+
+msgid "LAN ACL Groups"
+msgstr "LAN 访问控制"
+
+msgid "MAC"
+msgstr "MAC"
+
+msgid "Rules are matched from top to bottom. Unmatched devices use DNS takeover and proxy by default."
+msgstr "规则按从上到下的顺序匹配；未命中的设备默认接管 DNS 并走代理。"
+
 msgid "Proxy Authentication"
 msgstr "代理认证"
 

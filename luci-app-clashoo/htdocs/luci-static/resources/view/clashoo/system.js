@@ -120,7 +120,19 @@ var CSS = [
   '.cl-panel .cbi-section{margin-bottom:12px}',
   '.cl-wrap .cbi-section>h3,.cl-wrap .cbi-value-title,.cl-wrap .cbi-section-descr,.cl-wrap .cbi-value-helptext{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif !important}',
   '.cl-wrap .cbi-input-text,.cl-wrap .cbi-input-select,.cl-wrap select,.cl-wrap input,.cl-wrap textarea,.cl-wrap .btn,.cl-wrap .cbi-button{font-size:13px !important;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif !important}',
-  '.cl-wrap .btn,.cl-wrap .cbi-button{padding:4px 10px;line-height:1.35}'
+  '.cl-wrap .btn,.cl-wrap .cbi-button{padding:4px 10px;line-height:1.35}',
+  '#cbi-clashoo-lan_acl{overflow-x:visible!important}',
+  '#cbi-clashoo-lan_acl .cbi-section-table{display:flex;width:100%;overflow:visible!important;flex-direction:column}',
+  '#cbi-clashoo-lan_acl .cbi-section-thead{display:none}',
+  '#cbi-clashoo-lan_acl .cbi-section-tbody{display:flex;width:100%;flex-direction:column}',
+  '#cbi-clashoo-lan_acl .cbi-section-table-row{display:flex;width:100%;padding:14px 0;border-top:1px solid rgba(128,128,128,.16);flex-direction:column;align-items:stretch}',
+  '#cbi-clashoo-lan_acl .cbi-section-table-row:first-child{border-top:0}',
+  '#cbi-clashoo-lan_acl .cl-acl-value{width:100%;border:0!important;box-sizing:border-box}',
+  '#cbi-clashoo-lan_acl .cl-acl-value .cbi-dropdown[open]>ul.dropdown{width:max-content;min-width:100%;max-width:calc(100vw - 48px)}',
+  '@media(max-width:600px){#cbi-clashoo-lan_acl .cl-acl-value .cbi-dropdown[open]>ul.dropdown{width:100%!important;min-width:0;max-width:100%}#cbi-clashoo-lan_acl .cl-acl-value .cbi-dropdown[open]>ul.dropdown>li{height:auto;white-space:normal;overflow-wrap:anywhere;line-height:1.35}}',
+  '#cbi-clashoo-lan_acl .cbi-section-actions{display:flex!important;justify-content:flex-end;width:auto!important;padding:8px 0 0!important;border:0!important}',
+  '#cbi-clashoo-lan_acl .cbi-section-actions>div{display:flex;gap:8px}',
+  '#cbi-clashoo-lan_acl .cbi-section-create{padding-top:10px}'
 ].join('');
 
 /* component update: main area = clashoo/client only; rest in collapsible */
@@ -148,6 +160,75 @@ function decorateSystemForm(root) {
     if (sections[j] && sections[j].classList)
       sections[j].classList.add('cl-form-card');
   }
+}
+
+function normalizeLanAclLayout(root) {
+  var cells = root.querySelectorAll('#cbi-clashoo-lan_acl .cbi-section-table-row > td.cbi-value-field:not(.cl-acl-value)');
+  for (var i = 0; i < cells.length; i++) {
+    var cell = cells[i];
+    var control = cell.firstElementChild;
+    if (!control)
+      continue;
+
+    cell.parentElement.classList.add('cbi-section-node', 'cl-acl-node');
+
+    var field = document.createElement('div');
+    field.className = 'cbi-value-field';
+    field.appendChild(control);
+
+    var label = document.createElement('label');
+    label.className = 'cbi-value-title';
+    label.textContent = cell.getAttribute('data-title') || '';
+
+    cell.textContent = '';
+    cell.className = 'cbi-value cl-acl-value';
+    cell.appendChild(label);
+    cell.appendChild(field);
+  }
+}
+
+function syncLanAclControlWidth(root) {
+  var reference = root.querySelector('#cbi-clashoo-config-bypass_port_mode select');
+  if (!reference)
+    return;
+
+  var referenceWidth = reference.getBoundingClientRect().width;
+  if (!referenceWidth)
+    return;
+
+  var section = root.querySelector('#cbi-clashoo-lan_acl');
+  var sectionRect = section.getBoundingClientRect();
+  var sectionStyle = window.getComputedStyle(section);
+  var contentRight = sectionRect.right - parseFloat(sectionStyle.paddingRight || 0);
+  var lists = root.querySelectorAll('#cbi-clashoo-lan_acl .cbi-dynlist');
+  for (var i = 0; i < lists.length; i++) {
+    var left = lists[i].getBoundingClientRect().left;
+    var width = Math.min(referenceWidth, contentRight - left);
+    lists[i].style.width = Math.max(0, width) + 'px';
+    lists[i].style.minWidth = '0';
+    lists[i].style.maxWidth = 'none';
+
+    var controls = lists[i].querySelectorAll('.add-item, .cbi-dropdown');
+    for (var j = 0; j < controls.length; j++) {
+      controls[j].style.width = '100%';
+      controls[j].style.minWidth = '0';
+      controls[j].style.maxWidth = '100%';
+      controls[j].style.boxSizing = 'border-box';
+    }
+  }
+}
+
+function watchLanAclLayout(root) {
+  normalizeLanAclLayout(root);
+  syncLanAclControlWidth(root);
+  var observer = new MutationObserver(function () {
+    normalizeLanAclLayout(root);
+    syncLanAclControlWidth(root);
+  });
+  observer.observe(root, { childList: true, subtree: true });
+  window.addEventListener('resize', function () {
+    syncLanAclControlWidth(root);
+  });
 }
 
 function randomSecret(len) {
@@ -937,36 +1018,62 @@ return view.extend({
     o.rmempty = false;
     o.description = _("When enabled, sniffer configuration is injected automatically to improve streaming domain detection and routing stability.");
 
-    s = m.section(form.NamedSection, 'config', 'clashoo', _("LAN Control"));
-    s.addremove = false;
-    o = s.option(form.ListValue, 'access_control', _("Access Control"));
-    o.value('0', _("All Devices")); o.value('1', _("Allowlist")); o.value('2', _("Blocklist"));
+    s = m.section(form.TableSection, 'lan_acl', _("LAN ACL Groups"));
+    s.addremove = true;
+    s.anonymous = true;
+    s.sortable = true;
+    s.description = _("Rules are matched from top to bottom. Unmatched devices use DNS takeover and proxy by default.");
 
-    /* Populate host hints for both IP list fields */
     var hints = this._hostHints || {};
-    var hostOptions = [];
-    var seen = {};
+    var hostOptions = [], host6Options = [], macOptions = [];
+    var seen = {}, seen6 = {};
     Object.keys(hints).forEach(function (mac) {
       var h = hints[mac] || {};
       var macU = mac.toUpperCase();
       var addrs = h.ipaddrs || (h.ipv4 ? [h.ipv4] : []);
+      var addrs6 = h.ip6addrs || [];
+      var label = h.name || addrs[0] || addrs6[0] || '';
       addrs.forEach(function (ip) {
         if (ip && !seen[ip]) {
           seen[ip] = true;
           hostOptions.push([ip, ip + ' (' + macU + ')']);
         }
       });
+      addrs6.forEach(function (ip) {
+        if (ip && !seen6[ip]) {
+          seen6[ip] = true;
+          host6Options.push([ip, ip + ' (' + macU + ')']);
+        }
+      });
+      macOptions.push([macU, label ? macU + ' (' + label + ')' : macU]);
     });
 
-    o = s.option(form.DynamicList, 'proxy_lan_ips', _("IP Allowlist"));
+    o = s.option(form.Flag, 'enabled', _("Enable"));
+    o.default = '1';
+    o.rmempty = false;
+
+    o = s.option(form.DynamicList, 'ip', _("IPv4"));
     o.placeholder = '192.168.1.100';
-    o.depends('access_control', '1');
+    o.datatype = 'ip4addr';
     hostOptions.forEach(function (kv) { o.value(kv[0], kv[1]); });
 
-    o = s.option(form.DynamicList, 'reject_lan_ips', _("IP Blocklist"));
-    o.placeholder = '192.168.1.100';
-    o.depends('access_control', '2');
-    hostOptions.forEach(function (kv) { o.value(kv[0], kv[1]); });
+    o = s.option(form.DynamicList, 'ip6', _("IPv6"));
+    o.placeholder = 'fd00::100';
+    o.datatype = 'ip6addr';
+    host6Options.forEach(function (kv) { o.value(kv[0], kv[1]); });
+
+    o = s.option(form.DynamicList, 'mac', _("MAC"));
+    o.placeholder = '00:11:22:33:44:55';
+    o.datatype = 'macaddr';
+    macOptions.forEach(function (kv) { o.value(kv[0], kv[1]); });
+
+    o = s.option(form.Flag, 'dns', _("DNS Takeover"));
+    o.default = '1';
+    o.rmempty = false;
+
+    o = s.option(form.Flag, 'proxy', _("Proxy"));
+    o.default = '1';
+    o.rmempty = false;
 
     s = m.section(form.NamedSection, 'config', 'clashoo', _("Automation Tasks"));
     s.addremove = false;
@@ -989,8 +1096,10 @@ return view.extend({
     o.placeholder = 'https://…/geoip.dat';
 
     m.render().then(function (node) {
+      normalizeLanAclLayout(node);
       decorateSystemForm(node);
       container.appendChild(node);
+      watchLanAclLayout(node);
       container.appendChild(E('div', { 'class': 'cl-save-bar' }, [
         E('button', { 'class': 'cbi-button', click: function () {
           m.save().then(function () { return clashoo.commitConfig(); })

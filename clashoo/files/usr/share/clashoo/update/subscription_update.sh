@@ -11,6 +11,8 @@ LOCK_DIR="${CLASHOO_LOCK_DIR:-/tmp/clashoo_subscription_update.lock}"
 UPDATE_LOG="${CLASHOO_UPDATE_LOG:-/tmp/clash_update.txt}"
 SERVICE_CMD="${CLASHOO_SERVICE_CMD:-/etc/init.d/clashoo}"
 TMP_DIR="${CLASHOO_TMP_DIR:-/tmp}"
+DEFAULT_SUB_UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
+DOWNLOAD_ERROR=""
 
 # Subscriptions are fetched direct first (many airports are domestic / geo-fence
 # foreign exit IPs). Only used as a last-resort fallback, see download_to.
@@ -105,13 +107,39 @@ curl_download() {
 	fi
 }
 
+subscription_ua() {
+	local target ua
+	target="$1"
+	ua=""
+	[ -r "${target}.ua" ] && ua="$(sed -n '1p' "${target}.ua" 2>/dev/null)"
+	[ -n "$ua" ] || ua="$(uci -q get clashoo.config.sub_ua 2>/dev/null)"
+	[ -n "$ua" ] || ua="$DEFAULT_SUB_UA"
+	printf '%s' "$ua"
+}
+
+save_subscription_ua() {
+	printf '%s\n' "$2" >"${1}.ua"
+}
+
+curl_error() {
+	case "$1" in
+		6) printf '%s' "DNS 解析失败" ;;
+		7) printf '%s' "连接失败" ;;
+		28) printf '%s' "连接超时" ;;
+		35) printf '%s' "TLS 握手失败" ;;
+		60) printf '%s' "证书校验失败" ;;
+		*) printf '网络错误（curl rc=%s）' "${1:-unknown}" ;;
+	esac
+}
+
 download_to() {
-	local url out hdr ua code rc host dns ip
+	local url out hdr ua code rc last_rc host dns ip proxy
 	url="$1"
 	out="$2"
 	hdr="$3"
-	ua="$(uci -q get clashoo.config.sub_ua 2>/dev/null)"
-	[ -n "$ua" ] || ua="clash.meta"
+	ua="$4"
+	[ -n "$ua" ] || ua="$DEFAULT_SUB_UA"
+	DOWNLOAD_ERROR=""
 
 	rm -f "$out" "$hdr" >/dev/null 2>&1
 	if command -v curl >/dev/null 2>&1; then
@@ -120,6 +148,11 @@ download_to() {
 		if [ "$rc" -eq 0 ] && [ "$code" = "200" ]; then
 			return 0
 		fi
+		if [ "$rc" -eq 0 ] && [ -n "$code" ] && [ "$code" != "000" ]; then
+			DOWNLOAD_ERROR="HTTP ${code}"
+			return 1
+		fi
+		last_rc="$rc"
 		host="$(extract_host "$url")"
 		for dns in 223.5.5.5 119.29.29.29 1.1.1.1 8.8.8.8; do
 			ip="$(resolve_via "$host" "$dns")"
@@ -128,6 +161,11 @@ download_to() {
 			code="$(curl_download "$url" "$out" "$hdr" "$ua" "$host" "$ip")"
 			rc=$?
 			[ "$rc" -eq 0 ] && [ "$code" = "200" ] && return 0
+			if [ "$rc" -eq 0 ] && [ -n "$code" ] && [ "$code" != "000" ]; then
+				DOWNLOAD_ERROR="HTTP ${code}"
+				return 1
+			fi
+			last_rc="$rc"
 		done
 		# Last resort: direct + DNS-override both failed, so the source may be
 		# GFW-blocked (e.g. a github-hosted sub). In kernel-only mode try once
@@ -139,11 +177,22 @@ download_to() {
 			code="$(curl -sSL --connect-timeout 15 --max-time 60 --speed-time 30 \
 				--speed-limit 1 --retry 1 -A "$ua" -D "$hdr" -o "$out" \
 				--proxy "$proxy" -w '%{http_code}' "$url" 2>/dev/null)"
-			[ "$?" -eq 0 ] && [ "$code" = "200" ] && return 0
+			rc=$?
+			[ "$rc" -eq 0 ] && [ "$code" = "200" ] && return 0
+			if [ "$rc" -eq 0 ] && [ -n "$code" ] && [ "$code" != "000" ]; then
+				DOWNLOAD_ERROR="HTTP ${code}"
+				return 1
+			fi
+			last_rc="$rc"
 		fi
+		DOWNLOAD_ERROR="$(curl_error "$last_rc")"
 		return 1
 	fi
 	wget -q --tries=4 --timeout=20 --user-agent="$ua" "$url" -O "$out"
+	rc=$?
+	[ "$rc" -eq 0 ] && return 0
+	DOWNLOAD_ERROR="网络错误（wget rc=${rc}）"
+	return 1
 }
 
 update_info() {
@@ -195,7 +244,7 @@ apply_template() {
 }
 
 update_mihomo() {
-	local name url typ target tmp hdr use_config config_type
+	local name url typ target tmp hdr ua use_config config_type
 	name="$1"
 	url="$2"
 	typ="$3"
@@ -205,9 +254,10 @@ update_mihomo() {
 	[ -f "$target" ] || { skipped=$((skipped + 1)); return 0; }
 	tmp="$TMP_DIR/clashoo_sub_$$.yaml"
 	hdr="$TMP_DIR/clashoo_sub_$$.hdr"
-	if ! download_to "$url" "$tmp" "$hdr"; then
+	ua="$(subscription_ua "$target")"
+	if ! download_to "$url" "$tmp" "$hdr" "$ua"; then
 		failed=$((failed + 1))
-		log_update "更新失败（下载失败）：$name"
+		log_update "更新失败（${DOWNLOAD_ERROR:-下载失败}）：$name"
 		rm -f "$tmp" "$hdr"
 		return 1
 	fi
@@ -219,6 +269,7 @@ update_mihomo() {
 	fi
 	if cmp -s "$tmp" "$target"; then
 		update_info "$hdr" "$target"
+		save_subscription_ua "$target" "$ua"
 		unchanged=$((unchanged + 1))
 		rm -f "$tmp" "$hdr"
 		return 0
@@ -229,6 +280,7 @@ update_mihomo() {
 		return 1
 	fi
 	update_info "$hdr" "$target"
+	save_subscription_ua "$target" "$ua"
 	rm -f "$hdr"
 	updated=$((updated + 1))
 	use_config="$(uci -q get clashoo.config.use_config 2>/dev/null)"
@@ -243,7 +295,7 @@ valid_singbox() {
 }
 
 update_singbox() {
-	local name target url tmp hdr active
+	local name target url tmp hdr ua active
 	name="$1"
 	safe_name "$name" || return 1
 	target="$SINGBOX_DIR/$name"
@@ -252,7 +304,14 @@ update_singbox() {
 	[ -n "$url" ] || { skipped=$((skipped + 1)); return 0; }
 	tmp="$TMP_DIR/clashoo_sb_$$.json"
 	hdr="$TMP_DIR/clashoo_sb_$$.hdr"
-	if ! download_to "$url" "$tmp" "$hdr" || ! valid_singbox "$tmp"; then
+	ua="$(subscription_ua "$target")"
+	if ! download_to "$url" "$tmp" "$hdr" "$ua"; then
+		failed=$((failed + 1))
+		log_update "更新失败（${DOWNLOAD_ERROR:-下载失败}）：$name"
+		rm -f "$tmp" "$hdr"
+		return 1
+	fi
+	if ! valid_singbox "$tmp"; then
 		failed=$((failed + 1))
 		log_update "更新失败（无效 sing-box 配置）：$name"
 		rm -f "$tmp" "$hdr"
@@ -260,6 +319,7 @@ update_singbox() {
 	fi
 	if cmp -s "$tmp" "$target"; then
 		update_info "$hdr" "$target"
+		save_subscription_ua "$target" "$ua"
 		unchanged=$((unchanged + 1))
 		rm -f "$tmp" "$hdr"
 		return 0
@@ -270,6 +330,7 @@ update_singbox() {
 		return 1
 	fi
 	update_info "$hdr" "$target"
+	save_subscription_ua "$target" "$ua"
 	rm -f "$hdr"
 	updated=$((updated + 1))
 	active="$(uci -q get clashoo.config.singbox_active 2>/dev/null)"

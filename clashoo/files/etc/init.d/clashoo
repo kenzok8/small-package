@@ -753,28 +753,29 @@ restore_dnsmasq_state() {
 
 ensure_dns_when_core_stopped() {
 #===========================================================================================================================
-	# Safety net: when core is stopped, never leave dnsmasq forwarding only to local Clashoo DNS.
-	if _selected_core_running; then
-		return 0
-	fi
-
-	local servers token has_remote
-	has_remote=0
+	local force="${1:-0}" servers token remote_servers
+	[ "$force" = "1" ] || ! _selected_core_running || return 0
 	servers="$(uci -q get dhcp.@dnsmasq[0].server 2>/dev/null)"
+	remote_servers=""
 	for token in $servers; do
-		if [ "$token" != "127.0.0.1#1053" ] && [ "$token" != "127.0.0.1#5300" ] && [ "$token" != "127.0.0.1#7874" ]; then
-			has_remote=1
-			break
-		fi
+		case "$token" in
+			127.0.0.1#1053|127.0.0.1#5300|127.0.0.1#7874) ;;
+			*) remote_servers="${remote_servers} ${token}" ;;
+		esac
 	done
 
-	if [ "$has_remote" -eq 0 ]; then
+	if [ "$force" = "1" ] || [ -z "$remote_servers" ]; then
 		uci -q delete dhcp.@dnsmasq[0].server >/dev/null 2>&1
+		for token in $remote_servers; do
+			uci add_list dhcp.@dnsmasq[0].server="$token" >/dev/null 2>&1
+		done
+	fi
+	if [ -z "$remote_servers" ]; then
 		uci add_list dhcp.@dnsmasq[0].server='119.29.29.29' >/dev/null 2>&1
 		uci add_list dhcp.@dnsmasq[0].server='223.5.5.5' >/dev/null 2>&1
+	fi
+	if [ "$force" = "1" ] || [ -z "$remote_servers" ]; then
 		uci set dhcp.@dnsmasq[0].noresolv='0' >/dev/null 2>&1
-		uci commit dhcp >/dev/null 2>&1
-		/etc/init.d/dnsmasq restart >/dev/null 2>&1
 	fi
 #===========================================================================================================================
 }
@@ -782,7 +783,7 @@ ensure_dns_when_core_stopped() {
 revert_dns() {
 #===========================================================================================================================  
 	restore_dnsmasq_state
-	ensure_dns_when_core_stopped
+	ensure_dns_when_core_stopped "${1:-0}"
 	rm -rf "$CUSLIST" "$CUSLITT" "$CUSLISTV" "$CUSLITTV" 2>/dev/null
 	uci commit dhcp
 	/etc/init.d/dnsmasq restart >/dev/null 2>&1
@@ -1317,12 +1318,20 @@ smart_inject() {
 }
 
 
-_lan_dns_split_enabled() {
-	is_singbox_selected && return 1
+_lan_acl_enabled() {
+	local section
+	for section in $(uci -q show clashoo 2>/dev/null | sed -n 's/^clashoo\.\([^.=]*\)=lan_acl$/\1/p'); do
+		[ "$(uci -q get "clashoo.${section}.enabled" 2>/dev/null)" != "0" ] && return 0
+	done
+	[ "$(uci -q get clashoo.config.acl_migrated 2>/dev/null)" = "1" ] && return 1
 	case "$(uci -q get clashoo.config.access_control 2>/dev/null)" in
-		1|2) ;;
-		*) return 1 ;;
+		1|2) return 0 ;;
 	esac
+	return 1
+}
+
+_lan_dns_split_enabled() {
+	_lan_acl_enabled || return 1
 	[ "$(uci -q get clashoo.config.enable_dns 2>/dev/null)" != "0" ] || return 1
 	[ "$(uci -q get clashoo.config.ipv4_dns_hijack 2>/dev/null)" = "1" ] ||
 		[ "$(uci -q get clashoo.config.ipv6_dns_hijack 2>/dev/null)" = "1" ]
@@ -1346,7 +1355,7 @@ yml_dns_change(){
 		return 0
 	fi
 	if _lan_dns_split_enabled; then
-		revert_dns >/dev/null 2>&1
+		revert_dns 1 >/dev/null 2>&1
 		return 0
 	fi
 	backup_dnsmasq_state
@@ -1397,6 +1406,10 @@ yml_dns_change(){
 singbox_dns_change() {
 #===========================================================================================================================
 	local dnsforwader dnscache dns_port
+	if _lan_dns_split_enabled; then
+		revert_dns 1 >/dev/null 2>&1
+		return 0
+	fi
 	dnsforwader="$(uci get clashoo.config.dnsforwader 2>/dev/null)"
 	if [ "${dnsforwader:-0}" -eq 0 ]; then
 		return 0
@@ -1922,6 +1935,7 @@ start_service(){
 
 	cleanup_legacy_startup_backups
 	migrate_legacy_clash_dir
+	/usr/share/clashoo/migrate_lan_acl.sh >/dev/null 2>&1 || true
 	runtime_state_reset
 
 	if [ "${enable:-0}" -eq 1 ]; then
