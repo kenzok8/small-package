@@ -124,8 +124,10 @@ o.group = {"",""}
 o:depends("_node_sel_other", "1")
 o.remove = function(self, section)
 	local v = s.fields["shunt_udp_node"]:formvalue(section)
-	if not v then
+	if not v or v == "close" then
 		return m:del(section, self.option)
+	else
+		return m:set(section, self.option, "tcp")
 	end
 end
 

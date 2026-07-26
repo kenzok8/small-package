@@ -257,18 +257,48 @@ end
 
 function get_redir_log()
 	local name = http.formvalue("name")
-	local proto = http.formvalue("proto")
+	local proto = http.formvalue("proto"):upper()
 	local path = "/tmp/etc/passwall/acl/" .. name
-	proto = proto:upper()
-	if proto == "UDP" and (uci:get(appname, "@global[0]", "udp_node") or "nil") == "tcp" and not fs.access(path .. "/" .. proto .. ".log") then
-		proto = "TCP"
+
+	local function alert(msg)
+		http.write(string.format("<script>alert('%s');window.close();</script>", i18n.translate(msg)))
 	end
+
+	if name == "default" then
+		if proto == "UDP" and (uci:get(appname, "@global[0]", "udp_node") or "nil") == "tcp" and not fs.access(path .. "/" .. proto .. ".log") then
+			proto = "TCP"
+		end
+	else
+		local global_tcp = uci:get(appname, "@global[0]", "tcp_node") or "nil"
+		local global_udp = uci:get(appname, "@global[0]", "udp_node") or "nil"
+		local acl_tcp = uci:get(appname, name, "tcp_node") or "nil"
+		local acl_udp = uci:get(appname, name, "udp_node") or "nil"
+		local global_enabled = uci:get(appname, "@global[0]", "enabled") == "1"
+		if proto == "TCP" and acl_tcp == global_tcp and global_enabled then
+			path = "/tmp/etc/passwall/acl/default"
+			if uci:get(appname, "@global[0]", "log_tcp") ~= "1" then
+				alert("The access control node is the same as the global node. Please enable global logging.")
+				return
+			end
+		end
+		if proto == "UDP" and acl_udp == global_udp and global_enabled then
+			path = "/tmp/etc/passwall/acl/default"
+			if uci:get(appname, "@global[0]", "log_udp") ~= "1" then
+				alert("The access control node is the same as the global node. Please enable global logging.")
+				return
+			end
+		end
+		if proto == "UDP" and acl_udp == "tcp" and not fs.access(path .. "/" .. proto .. ".log") then
+			proto = "TCP"
+		end
+	end
+
 	if fs.access(path .. "/" .. proto .. ".log") then
 		local content = luci.sys.exec("tail -n 19999 ".. path .. "/" .. proto .. ".log")
 		content = content:gsub("\n", "<br />")
 		http.write(content)
 	else
-		http.write(string.format("<script>alert('%s');window.close();</script>", i18n.translate("Not enabled log")))
+		alert("Not enabled log")
 	end
 end
 
@@ -287,6 +317,18 @@ end
 function get_chinadns_log()
 	local flag = http.formvalue("flag")
 	local path = "/tmp/etc/passwall/acl/" .. flag .. "/chinadns_ng.log"
+	if flag ~= "default" then
+		local global_tcp = uci:get(appname, "@global[0]", "tcp_node") or "nil"
+		local acl_tcp = uci:get(appname, flag, "tcp_node") or "nil"
+		if acl_tcp == global_tcp and uci:get(appname, "@global[0]", "enabled") == "1" then
+			path = "/tmp/etc/passwall/acl/default/chinadns_ng.log"
+			if uci:get(appname, "@global[0]", "log_chinadns_ng") ~= "1" then
+				http.write(string.format("<script>alert('%s');window.close();</script>", i18n.translate("The access control node is the same as the global node. Please enable global logging.")))
+				return
+			end
+		end
+	end
+
 	if fs.access(path) then
 		local content = luci.sys.exec("tail -n 5000 ".. path)
 		content = content:gsub("\n", "<br />")

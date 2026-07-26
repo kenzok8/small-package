@@ -597,7 +597,7 @@ function unattended(){
 	[ -z "$public_ip_today" ] && public_ip_today=`date +"%d"`
 	[ -z "$public_ip_count" ] && public_ip_count="0"
 	[ $public_ip_today -ne `date +"%d"` ] && public_ip_today=`date +"%d"` && public_ip_count=1
-	if [ ! -z "$public_ip_event" ] && [ ! -z "$public_ip_retry_count" ] && [ "$public_ip_count" -le "$public_ip_retry_count" ]; then
+	if [ "$public_ip_event" = "1" ] && [ ! -z "$public_ip_retry_count" ] && [ "$public_ip_count" -lt "$public_ip_retry_count" ]; then
 		public_ip_count=`expr $public_ip_count + 1`
 		local wanIP=`getip wanipv4`
 		local hostIP=`getip hostipv4`
@@ -617,13 +617,13 @@ function unattended(){
 
 # 检测网络状态
 function rand_geturl(){
-	local urllist="https://www.163.com https://www.qq.com https://www.baidu.com https://www.qidian.com https://www.douban.com"
-	local total=5
+	local urllist="https://www.baidu.com https://www.aliyun.com https://www.taobao.com https://cn.bing.com https://www.qq.com https://www.mi.com https://www.163.com https://www.deepseek.com https://www.360.com"
+	local total=9
 	local used=""
 	local ok=1
-	for i in 1 2 3; do
+	for i in 1 2 3 4 5; do
 		local pick
-		for j in 1 2 3 4 5; do
+		for j in 1 2 3 4 5 6 7 8 9; do
 			local n=$(( ( $(rand 1 100) % total ) + 1 ))
 			local u=$(echo "$urllist" | awk -v i="$n" '{print $i}')
 			case "$used" in *"|$u|"*) continue;; esac

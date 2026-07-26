@@ -1670,6 +1670,9 @@ msgstr "要执行的 Shell 命令，用 %s 代替日志内容。"
 msgid "Not enabled log"
 msgstr "未启用日志"
 
+msgid "The access control node is the same as the global node. Please enable global logging."
+msgstr "访问控制节点与全局节点相同，请开启全局日志。"
+
 msgid "It is recommended to disable logging during regular use to reduce system overhead."
 msgstr "正常使用时建议关闭日志，以减少系统开销。"
 

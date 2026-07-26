@@ -303,13 +303,13 @@ run_dns2socks() {
 }
 
 run_chinadns_ng() {
-	local _flag _listen_port _dns_local _dns_trust _no_ipv6_trust _use_direct_list _use_proxy_list _gfwlist _chnlist _default_mode _default_tag _no_logic_log _tcp_node _filter_https
+	local _flag _listen_port _dns_local _dns_trust _no_ipv6_trust _use_direct_list _use_proxy_list _gfwlist _chnlist _default_mode _default_tag _no_logic_log _tcp_node _filter_https _log
 	local _extra_param=""
 	eval_set_val "$@"
 
 	local _CONF_FILE=$TMP_ACL_PATH/$_flag/chinadns_ng.conf
 	local _LOG_FILE="/dev/null"
-	[ "$(config_t_get global log_chinadns_ng "0")" = "1" ] &&  _LOG_FILE=$TMP_ACL_PATH/$_flag/chinadns_ng.log
+	[ "${_log}" = "1" ] && _LOG_FILE=$TMP_ACL_PATH/$_flag/chinadns_ng.log
 
 	_extra_param="-FLAG ${_flag} -TCP_NODE ${_tcp_node} -LISTEN_PORT ${_listen_port} -DNS_LOCAL ${_dns_local} -DNS_TRUST ${_dns_trust}"
 	_extra_param="${_extra_param} -USE_DIRECT_LIST ${_use_direct_list} -USE_PROXY_LIST ${_use_proxy_list} -USE_BLOCK_LIST ${_use_block_list}"
@@ -1430,7 +1430,8 @@ start_dns() {
 			_default_tag=$(config_t_get global chinadns_ng_default_tag smart) \
 			_no_logic_log=0 \
 			_tcp_node=${TCP_NODE} \
-			_filter_https=$(config_t_get global force_https_soa 0)
+			_filter_https=$(config_t_get global force_https_soa 0) \
+			_log=$(config_t_get global log_chinadns_ng 0)
 
 		USE_DEFAULT_DNS="chinadns_ng"
 	}
@@ -1515,6 +1516,9 @@ acl_app() {
 			local sid=$(uci -q show "${CONFIG}.${item}" | grep "=acl_rule" | awk -F '=' '{print $1}' | awk -F '.' '{print $2}')
 			[ "$(config_n_get $sid enabled)" = "1" ] || continue
 			eval $(uci -q show "${CONFIG}.${item}" | cut -d'.' -sf 3-)
+
+			log=${log:-0}
+			loglevel=${loglevel:-warning}
 
 			if [ -n "${sources}" ]; then
 				for s in $sources; do
@@ -1676,7 +1680,8 @@ acl_app() {
 										_default_tag=${chinadns_ng_default_tag:-smart} \
 										_no_logic_log=1 \
 										_tcp_node=${tcp_node} \
-										_filter_https=${force_https_soa:-0}
+										_filter_https=${force_https_soa:-0} \
+										_log=${log}
 
 									use_default_dns="chinadns_ng"
 								}
@@ -1714,6 +1719,8 @@ acl_app() {
 								redir_port=$(get_new_port $(expr $redir_port + 1))
 								set_cache_var "node_${tcp_node}_redir_port" "${redir_port}"
 								tcp_port=$redir_port
+								local log_file="/dev/null"
+								[ "${log}" = "1" ] && log_file="${TMP_ACL_PATH}/${sid}/TCP.log"
 
 								if [ "${type}" = "sing-box" ] || [ "${type}" = "xray" ]; then
 									config_file="acl/${tcp_node}_TCP_${redir_port}.json"
@@ -1736,12 +1743,12 @@ acl_app() {
 									}
 									config_file="$TMP_PATH/$config_file"
 									[ "${type}" = "sing-box" ] && type="singbox"
-									run_${type} flag=$tcp_node node=$tcp_node tcp_redir_port=$redir_port ${_extra_param} config_file=$config_file
+									run_${type} flag=$tcp_node node=$tcp_node tcp_redir_port=$redir_port ${_extra_param} config_file=$config_file log_file=$log_file loglevel=$loglevel
 								else
 									config_file="acl/${tcp_node}_SOCKS_${socks_port}.json"
 									run_socks flag=$tcp_node node=$tcp_node bind=127.0.0.1 socks_port=$socks_port config_file=$config_file
-									local log_file=$TMP_ACL_PATH/ipt2socks_${tcp_node}_${redir_port}.log
-									log_file="/dev/null"
+									# local log_file=$TMP_ACL_PATH/ipt2socks_${tcp_node}_${redir_port}.log
+									# log_file="/dev/null"
 									run_ipt2socks flag=acl_${tcp_node} tcp_tproxy=${is_tproxy} local_port=$redir_port socks_address=127.0.0.1 socks_port=$socks_port log_file=$log_file
 								fi
 								run_dns ${_dns_port}
@@ -1793,6 +1800,8 @@ acl_app() {
 								redir_port=$(get_new_port $(expr $redir_port + 1))
 								set_cache_var "node_${udp_node}_redir_port" "${redir_port}"
 								udp_port=$redir_port
+								local log_file="/dev/null"
+								[ "${log}" = "1" ] && log_file="${TMP_ACL_PATH}/${sid}/UDP.log"
 
 								local type
 								if [ "$(config_get_type ${udp_node#Socks_})" = "socks" ]; then
@@ -1808,12 +1817,12 @@ acl_app() {
 									config_file="acl/${udp_node}_UDP_${redir_port}.json"
 									config_file="$TMP_PATH/$config_file"
 									[ "${type}" = "sing-box" ] && type="singbox"
-									run_${type} flag=$udp_node node=$udp_node udp_redir_port=$redir_port config_file=$config_file
+									run_${type} flag=$udp_node node=$udp_node udp_redir_port=$redir_port config_file=$config_file log_file=$log_file loglevel=$loglevel
 								else
 									config_file="acl/${udp_node}_SOCKS_${socks_port}.json"
 									run_socks flag=$udp_node node=$udp_node bind=127.0.0.1 socks_port=$socks_port config_file=$config_file
-									local log_file=$TMP_ACL_PATH/ipt2socks_${udp_node}_${redir_port}.log
-									log_file="/dev/null"
+									# local log_file=$TMP_ACL_PATH/ipt2socks_${udp_node}_${redir_port}.log
+									# log_file="/dev/null"
 									run_ipt2socks flag=acl_${udp_node} local_port=$redir_port socks_address=127.0.0.1 socks_port=$socks_port log_file=$log_file
 								fi
 							fi
@@ -1824,7 +1833,7 @@ acl_app() {
 				fi
 			}
 			unset enabled sid remarks sources interface tcp_no_redir_ports udp_no_redir_ports use_global_config tcp_node udp_node use_direct_list use_proxy_list use_block_list use_gfw_list chn_list tcp_proxy_mode udp_proxy_mode filter_proxy_ipv6 dns_mode remote_dns v2ray_dns_mode remote_dns_doh remote_dns_client_ip
-			unset _ip _mac _iprange _ipset _ip_or_mac source_list tcp_port udp_port config_file _extra_param dns_cache_key
+			unset _ip _mac _iprange _ipset _ip_or_mac source_list tcp_port udp_port config_file _extra_param dns_cache_key log loglevel
 			unset _china_ng_listen _chinadns_local_dns _direct_dns_mode chinadns_ng_default_tag dnsmasq_filter_proxy_ipv6 remote_fakedns force_https_soa use_fakedns
 		done
 		unset socks_port redir_port dns_port dnsmasq_port chinadns_port

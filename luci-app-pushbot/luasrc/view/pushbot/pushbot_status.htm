@@ -1994,12 +1994,12 @@ function initModernTabs() {
 	tabBar.id = 'pushbot_modern_tabs';
 	tabBar.className = 'pushbot-tab-bar';
 	tabBar.innerHTML =
-		'<button type="button" class="pushbot-tab is-active" data-tab="basic">基本设置</button>' +
-		'<button type="button" class="pushbot-tab" data-tab="content">推送内容</button>' +
-		'<button type="button" class="pushbot-tab" data-tab="scheduled">定时推送</button>' +
-		'<button type="button" class="pushbot-tab" data-tab="monitor">高级设置</button>' +
-		'<button type="button" class="pushbot-tab" data-tab="client">在线设备</button>' +
-		'<button type="button" class="pushbot-tab" data-tab="log">日志</button>';
+		'<button type="button" class="pushbot-tab is-active" data-tab="basic"><span class="pb-txt"><span>基本</span><span>设置</span></span></button>' +
+		'<button type="button" class="pushbot-tab" data-tab="content"><span class="pb-txt"><span>推送</span><span>内容</span></span></button>' +
+		'<button type="button" class="pushbot-tab" data-tab="scheduled"><span class="pb-txt"><span>定时</span><span>推送</span></span></button>' +
+		'<button type="button" class="pushbot-tab" data-tab="monitor"><span class="pb-txt"><span>高级</span><span>设置</span></span></button>' +
+		'<button type="button" class="pushbot-tab" data-tab="client"><span class="pb-txt"><span>在线</span><span>设备</span></span></button>' +
+		'<button type="button" class="pushbot-tab" data-tab="log"><span class="pb-txt"><span>日志</span></span></button>';
 
 	headerCard.parentNode.insertBefore(tabBar, headerCard.nextSibling);
 
@@ -2107,6 +2107,20 @@ function initModernTabs() {
 		if (name === 'client') loadClients();
 		});
 	});
+
+	/* ── responsive tab resize handler ── */
+	function _updateTabLayout() {
+		var bw = tabBar.clientWidth;
+		if (bw < 540) { tabBar.classList.add('pb-tabs-row2'); } else { tabBar.classList.remove('pb-tabs-row2'); }
+		if (bw < 360) { tabBar.classList.add('pb-tabs-narrow'); } else { tabBar.classList.remove('pb-tabs-narrow'); }
+	}
+	if (window.ResizeObserver) {
+		var tabRO = new ResizeObserver(_updateTabLayout);
+		tabRO.observe(tabBar);
+	} else {
+		window.addEventListener('resize', _updateTabLayout);
+	}
+	_updateTabLayout();
 
 	/* ── log viewer ── */
 	var logTimer = null;
@@ -2782,6 +2796,7 @@ window.addEventListener('DOMContentLoaded', function() {
 	/* ── modern tabs ── */
 .pushbot-tab-bar {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 4px;
 	margin: 0 0 14px 0;
 	padding: 4px;
@@ -2801,7 +2816,17 @@ window.addEventListener('DOMContentLoaded', function() {
 	color: #475569;
 	background: transparent;
 	transition: all 0.2s ease;
+	flex: 0 1 auto;
+	white-space: nowrap;
 }
+.pushbot-tab .pb-txt {
+	display: inline-flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	gap: 0;
+}
+.pushbot-tab .pb-txt > span { line-height: 1.4; }
 .pushbot-tab.is-active {
 	background: #ffffff;
 	color: #0f172a;
@@ -2835,6 +2860,43 @@ window.addEventListener('DOMContentLoaded', function() {
 			color: #f8fafc !important;
 			background: rgba(51, 65, 85, 0.50) !important;
 		}
+
+	/* ── responsive tab layout ── */
+/* Row-2: 3 tabs per row when space is tight */
+.pushbot-tab-bar.pb-tabs-row2 .pushbot-tab {
+	flex: 1 1 calc(33.33% - 6px);
+	min-width: 0;
+	white-space: nowrap;
+	padding: 8px 6px;
+	text-align: center;
+	justify-content: center;
+}
+.pushbot-tab-bar.pb-tabs-row2 .pushbot-tab .pb-txt {
+	display: inline-flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 0;
+}
+
+/* Narrow: stacked 2-char labels + tiny font */
+.pushbot-tab-bar.pb-tabs-narrow .pushbot-tab {
+	flex: 1 1 calc(33.33% - 6px);
+	min-width: 0;
+	padding: 4px 2px;
+	font-size: 10px;
+	text-align: center;
+	justify-content: center;
+	border-radius: 8px;
+}
+.pushbot-tab-bar.pb-tabs-narrow .pushbot-tab .pb-txt {
+	flex-direction: column;
+	line-height: 1.2;
+}
+.pushbot-tab-bar.pb-tabs-narrow .pushbot-tab .pb-txt > span {
+	padding: 0;
+	line-height: 1.2;
+}
+.pushbot-dk .pushbot-tab-bar.pb-tabs-narrow .pushbot-tab { border-radius: 8px !important; }
 
 .pushbot-card-top {
 	display: flex;

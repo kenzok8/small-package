@@ -1,0 +1,120 @@
+<%
+local api = self.api
+local cfgid = self.cfgid
+-%>
+<script type="text/javascript">
+	//<![CDATA[
+	function to_edit_node(btn) {
+		if (!btn) return;
+		const idReg = /^cbid\..*\..*node$/;
+		let hidden_select = null;
+		const selects = document.querySelectorAll('select[id^="cbid."][id*="."][id$="node"]');
+		for (const sel of selects) {
+			if ( idReg.test(sel.id) && getComputedStyle(sel).display === "none" && (sel.compareDocumentPosition(btn) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+				hidden_select = sel;
+			}
+		}
+		if (!hidden_select) return;
+		let node_select_value = hidden_select?.options[0]?.value;
+		if (!node_select_value || node_select_value.indexOf("tcp") === 0) {
+			return;
+		}
+		let to_url = '<%=api.url("node_config")%>/' + node_select_value;
+		if (node_select_value.indexOf("Socks_") === 0) {
+			to_url = '<%=api.url("socks_config")%>/' + node_select_value.substring("Socks_".length);
+		}
+		location.href = to_url;
+	}
+
+	document.addEventListener('DOMContentLoaded', function () {
+		function go() {
+			const node = document.querySelector(".cbi-section-node");
+			if (!node) return false;
+			let changed = false;
+			const all_node = node.querySelectorAll("[id]");
+			const reg1 = /^cbid\..*\.(tcp_node|udp_node)\.main$/;
+
+			for (const el of all_node) {
+				if (!reg1.test(el.id)) continue;
+
+				if (el.querySelector(".node-actions")) continue;
+
+				const cbid = el.id.replace(/\.main$/, "");
+				const hidden_select = document.getElementById(cbid);
+				const node_select_value = hidden_select?.options[0]?.value;
+				if (!node_select_value || node_select_value.indexOf("tcp") === 0) {
+					continue;
+				}
+
+				let html = '<a href="#" onclick="return to_edit_node(this);"><%:Edit%></a>';
+
+				const m = cbid.match(/\.(tcp|udp)_node$/);
+				if (m && (m[1] === "tcp" || m[1] === "udp")) {
+					html += '<a href="#" onclick="window.open(\'' + '<%=api.url("get_redir_log") .. "?name=" .. cfgid%>&proto=' + m[1] + '\', \'_blank\')"><%:Log%></a>';
+				}
+
+				html = '<div class="node-actions" style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap; margin-left:4px;">' + html + '</div>'
+
+				el.insertAdjacentHTML("beforeend", html);
+				changed = true;
+			}
+			return changed;
+		}
+
+		const target = document.querySelector('form') || document.body;
+		const observer = new MutationObserver(() => go() ? observer.disconnect() : 0);
+		observer.observe(target, { childList: true, subtree: true });
+		const timer = setInterval(() => go() ? (clearInterval(timer), observer.disconnect()) : 0, 300);
+		setTimeout(() => { clearInterval(timer); observer.disconnect(); }, 5000);
+	});
+
+	(function () {
+		const startTime = Date.now();
+		const TIMEOUT = 3000;
+
+		const waitForDnsSelect = () => {
+			const dns_select = document.querySelector("select[id*='dns_shunt']");
+			if (dns_select) {
+				initDnsSelect(dns_select);
+				return;
+			}
+			if (Date.now() - startTime >= TIMEOUT) {
+				return;
+			}
+			requestAnimationFrame(waitForDnsSelect);
+		};
+		waitForDnsSelect();
+
+		const initDnsSelect = (dns_select) => {
+			if (dns_select.value === "chinadns-ng") {
+				addLogLink(dns_select);
+			}
+			if (dns_select._dnsLogBinded) return;
+			dns_select._dnsLogBinded = true;
+
+			dns_select.addEventListener("change", () => {
+				const existingLogLink = dns_select.parentElement.querySelector("a.dns-log-link");
+				if (existingLogLink) {
+					existingLogLink.remove();
+				}
+				if (dns_select.value === "chinadns-ng") {
+					addLogLink(dns_select);
+				}
+			});
+		};
+
+		const addLogLink = (select) => {
+			if (select.parentElement.querySelector("a.dns-log-link")) {
+				return;
+			}
+			const logLink = document.createElement("a");
+			logLink.innerHTML = "<%:Log%>";
+			logLink.href = "#";
+			logLink.className = "dns-log-link";
+			logLink.style.marginLeft = "10px";
+			logLink.setAttribute("onclick", "window.open('" + '<%=api.url("get_chinadns_log") .. "?flag=" .. cfgid%>' + "', '_blank')");
+			select.insertAdjacentElement("afterend", logLink);
+		};
+	})();
+	//]]>
+</script>
