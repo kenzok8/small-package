@@ -1,157 +1,61 @@
-<style>
-.cbi-tabmenu, .cbi-tabcontainer, .cbi-value, .cbi-tab, .cbi-optionals, .cbi-value-last, .cbi-section[id*="pushbot"] { display: none !important; }
-</style>
+<%+header%>
 <script type="text/javascript">//<![CDATA[
+if (typeof XHR === 'undefined') {
+	var XHR = {};
+	XHR.get = function(url, data, cb) {
+		var x = new XMLHttpRequest();
+		x.open('GET', url, true);
+		x.onload = function() {
+			var d = null;
+			try { d = JSON.parse(x.responseText); } catch(e) {}
+			if (cb) cb(x, d);
+		};
+		x.onerror = function() { if (cb) cb(x, null); };
+		x.send();
+	};
+	XHR.poll = function(interval, url, data, cb) {
+		XHR.get(url, null, cb);
+		return setInterval(function() { XHR.get(url, null, cb); }, interval * 1000);
+	};
+}
+/* suppress LuCI UI framework errors for missing CBI tabs */
+try{if(typeof L!=='undefined'&&L.dom){var _hw=function(fn){return function(){try{return fn.apply(this,arguments)}catch(e){}}};if(L.dom.initTabGroup)L.dom.initTabGroup=_hw(L.dom.initTabGroup);if(L.dom.init)L.dom.init=_hw(L.dom.init);}}catch(e){}
+(function() {
+	var badge = document.getElementById('pushbot_status_badge');
+	var text = document.getElementById('pushbot_status_text');
+	if (!badge || !text) { setTimeout(arguments.callee, 200); return; }
 	XHR.poll(3, '<%=url([[admin]], [[services]], [[pushbot]], [[status]])%>', null,
 	function(x, data) {
-		var badge = document.getElementById('pushbot_status_badge');
-		var text = document.getElementById('pushbot_status_text');
-		if (badge && text) {
-			if (data && data.running) {
-				badge.classList.remove('is-stopped');
-				badge.classList.add('is-running');
-				text.textContent = '<%:RUNNING%>';
-			} else {
-				badge.classList.remove('is-running');
-				badge.classList.add('is-stopped');
-				text.textContent = '<%:NOT RUNNING%>';
-			}
+		if (data && data.running) {
+			badge.classList.remove('is-stopped');
+			badge.classList.add('is-running');
+			text.textContent = '<%:RUNNING%>';
+		} else {
+			badge.classList.remove('is-running');
+			badge.classList.add('is-stopped');
+			text.textContent = '<%:NOT RUNNING%>';
 		}
 	}
-);
+	);
+})();
 //]]></script>
 
-<%
-local uci = require("luci.model.uci").cursor()
-local function get_list_vals(cfg, sec, opt)
-	local t = {}
-	local ok, raw = pcall(function() return uci:get_list(cfg, sec, opt) end)
-	if ok and type(raw) == "table" then
-		for _, v in ipairs(raw) do if v and v ~= "" then t[#t+1] = v end end
-	else
-		raw = uci:get(cfg, sec, opt)
-		if raw and raw ~= "" then for v in raw:gmatch("%S+") do t[#t+1] = v end end
-	end
-	return t
-end
-local alias_inject = get_list_vals("pushbot", "pushbot", "device_aliases")
-local wl_inject = get_list_vals("pushbot", "pushbot", "pushbot_whitelist")
-local bl_inject = get_list_vals("pushbot", "pushbot", "pushbot_blacklist")
-local ol_inject = get_list_vals("pushbot", "pushbot", "MAC_online_list")
-local ofl_inject = get_list_vals("pushbot", "pushbot", "MAC_offline_list")
-%>
-<script type="text/javascript">var PUSHBOT_DEVICE_ALIASES=[<% for i,v in ipairs(alias_inject) do if i>1 then %>,<% end %>"<%=pcdata(v)%>"<% end %>];</script>
-<script type="text/javascript">var PUSHBOT_WL=[<% for i,v in ipairs(wl_inject) do if i>1 then %>,<% end %>"<%=pcdata(v)%>"<% end %>];</script>
-<script type="text/javascript">var PUSHBOT_BL=[<% for i,v in ipairs(bl_inject) do if i>1 then %>,<% end %>"<%=pcdata(v)%>"<% end %>];</script>
-<script type="text/javascript">var PUSHBOT_OL=[<% for i,v in ipairs(ol_inject) do if i>1 then %>,<% end %>"<%=pcdata(v)%>"<% end %>];</script>
-<script type="text/javascript">var PUSHBOT_OFL=[<% for i,v in ipairs(ofl_inject) do if i>1 then %>,<% end %>"<%=pcdata(v)%>"<% end %>];</script>
-<%
-local nt = require("luci.sys").net
-local mac_hints = {}
-pcall(function()
-	nt.mac_hints(function(mac, name)
-		if mac and mac ~= "" then mac_hints[#mac_hints+1] = {mac = mac, name = (name or "")} end
-	end)
-end)
-%>
-<script type="text/javascript">var PUSHBOT_MAC_HINTS=[<% for i,h in ipairs(mac_hints) do if i>1 then %>,<% end %>{m:"<%=pcdata(h.mac)%>",n:"<%=pcdata(h.name)%>"}<% end %>];</script>
+<script type="text/javascript">//<![CDATA[
+var PB_CONFIG = null;
+var PB_READY = [];
+function PB_onReady(fn) { if (PB_CONFIG) { fn(); } else { PB_READY.push(fn); } }
+function PB_val(opt, def) { return (PB_CONFIG && PB_CONFIG.config && PB_CONFIG.config[opt] !== undefined) ? PB_CONFIG.config[opt] : (def !== undefined ? def : null); }
+function PB_list(opt) { var v = PB_CONFIG && PB_CONFIG.lists && PB_CONFIG.lists[opt]; return Array.isArray(v) ? v : []; }
+function PB_file(name) { var v = PB_CONFIG && PB_CONFIG.files && PB_CONFIG.files[name]; return (v && typeof v === 'string') ? v : ''; }
+function PB_sys(name) { var v = PB_CONFIG && PB_CONFIG.system && PB_CONFIG.system[name]; return Array.isArray(v) ? v : []; }
+function PB_bool(opt) { return PB_val(opt) === '1'; }
 
-<%
--- inject advanced settings UCI values
-local function uci_g(opt) local v=uci:get("pushbot","pushbot",opt) return (v~=nil and v~="") and v or nil end
-local function uci_b(opt) return (uci:get("pushbot","pushbot",opt)=="1") end
-local function js_s(s) return s and s:gsub("\\","\\\\"):gsub("'","\\'"):gsub("\n","\\n"):gsub("\r","\\r") or "" end
-local adv_err_aliases = get_list_vals("pushbot","pushbot","err_device_aliases")
--- content tab settings
-local function uci_lv(opt) return uci:get("pushbot","pushbot",opt) or "" end
-	local c_ipv4 = uci_lv("pushbot_ipv4")
-	local c_ipv4_iface = uci_lv("ipv4_interface")
-	local c_ipv6 = uci_lv("pushbot_ipv6")
-	local c_ipv6_iface = uci_lv("ipv6_interface")
-	local c_ip_white = get_list_vals("pushbot","pushbot","ip_white_list")
-	local c_client_white = get_list_vals("pushbot","pushbot","client_usage_whitelist")
-	-- file-backed values
-	local fs = require "nixio.fs"
-	-- Use shell with timeout to avoid hangs
-	local function safe_read(path)
-		local ok, out = pcall(function()
-			return luci.sys.exec("timeout 3 cat " .. path .. " 2>/dev/null || true")
-		end)
-		if ok and out then return out else return "" end
-	end
-	local c_ipv4_list_val = safe_read("/usr/bin/pushbot/api/ipv4.list")
-	local c_ipv6_list_val = safe_read("/usr/bin/pushbot/api/ipv6.list")
-	local c_ip_black_val = safe_read("/usr/bin/pushbot/api/ip_blacklist")
-	-- Use /sys/class/net (timeout-guarded) instead of netlink-based sys.net:devices()
-	local iface_list = {}
-	local tmp_h = io.popen("timeout 3 ls /sys/class/net 2>/dev/null")
-	if tmp_h then
-		for iface in tmp_h:lines() do
-			if iface ~= "lo" and not iface:match("^ifb.*") then
-				iface_list[#iface_list+1] = iface
-			end
-		end
-		tmp_h:close()
-	end
-	-- IP neighbor hints via /proc/net/arp (timeout-guarded)
-	local ip_hints = {}
-	local arp_h = io.popen("timeout 3 grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' /proc/net/arp 2>/dev/null")
-	if arp_h then
-		for line in arp_h:lines() do
-			local ip = line:match("^(%d+%.%d+%.%d+%.%d+)")
-			if ip and not ip:match("^0%.0%.0%.0$") and not ip:match("^127%.0%.0%.1$") then
-				ip_hints[#ip_hints+1] = ip
-			end
-		end
-		arp_h:close()
-	end
-%>
-<script type="text/javascript">
-var ADV_ERR_ENABLE=<%=uci_b("err_enable") and "true" or "false"%>;
-var ADV_ERR_SHEEP=<%=uci_b("err_sheep_enable") and "true" or "false"%>;
-var ADV_SOC_CODE='<%=pcdata(uci_g("soc_code") or "")%>';
-var ADV_PVE_HOST='<%=pcdata(uci_g("pve_host") or "10.0.0.2")%>';
-var ADV_PVE_PORT='<%=pcdata(uci_g("pve_port") or "22")%>';
-var ADV_UP_TIMEOUT='<%=pcdata(uci_g("up_timeout") or "2")%>';
-var ADV_DOWN_TIMEOUT='<%=pcdata(uci_g("down_timeout") or "20")%>';
-var ADV_TIMEOUT_RETRY='<%=pcdata(uci_g("timeout_retry_count") or "2")%>';
-var ADV_THREAD_NUM='<%=pcdata(uci_g("thread_num") or "3")%>';
-var ADV_NET_ERR='<%=pcdata(uci_g("network_err_event") or "")%>';
-var ADV_SYS_TIME='<%=pcdata(uci_g("system_time_event") or "")%>';
-var ADV_AUTOREBOOT='<%=pcdata(uci_g("autoreboot_time") or "24")%>';
-var ADV_NETRESTART='<%=pcdata(uci_g("network_restart_time") or "24")%>';
-var ADV_PUBLIC_IP=<%=uci_b("public_ip_event") and "true" or "false"%>;
-var ADV_PUBLIC_RETRY='<%=pcdata(uci_g("public_ip_retry_count") or "10")%>';
-var ADV_ERR_DEVICES=[<% for i,v in ipairs(adv_err_aliases) do if i>1 then %>,<% end %>"<%=js_s(v)%>"<% end %>];
-/* content tab */
-var CT_IPV4='<%=pcdata(c_ipv4)%>';
-var CT_IPV4_IFACE='<%=pcdata(c_ipv4_iface)%>';
-var CT_IPV6='<%=pcdata(c_ipv6)%>';
-var CT_IPV6_IFACE='<%=pcdata(c_ipv6_iface)%>';
-var CT_PUSH_UP=<%=uci_b("pushbot_up") and "true" or "false"%>;
-var CT_PUSH_DOWN=<%=uci_b("pushbot_down") and "true" or "false"%>;
-var CT_CPU_LOAD_EN=<%=uci_b("cpuload_enable") and "true" or "false"%>;
-var CT_CPU_LOAD='<%=pcdata(uci_lv("cpuload"))%>';
-var CT_TEMP_EN=<%=uci_b("temperature_enable") and "true" or "false"%>;
-var CT_TEMP='<%=pcdata(uci_lv("temperature"))%>';
-var CT_USAGE=<%=uci_b("client_usage") and "true" or "false"%>;
-var CT_USAGE_MAX='<%=pcdata(uci_lv("client_usage_max"))%>';
-var CT_USAGE_DISTURB=<%=uci_b("client_usage_disturb") and "true" or "false"%>;
-var CT_WEB_LOG=<%=uci_b("web_logged") and "true" or "false"%>;
-var CT_SSH_LOG=<%=uci_b("ssh_logged") and "true" or "false"%>;
-var CT_WEB_FAIL=<%=uci_b("web_login_failed") and "true" or "false"%>;
-var CT_SSH_FAIL=<%=uci_b("ssh_login_failed") and "true" or "false"%>;
-var CT_LOGIN_MAX='<%=pcdata(uci_lv("login_max_num"))%>';
-var CT_AUTO_BAN=<%=uci_b("web_login_black") and "true" or "false"%>;
-var CT_BAN_TIMEOUT='<%=pcdata(uci_lv("ip_black_timeout"))%>';
-var CT_IP_WHITE=[<% for i,v in ipairs(c_ip_white) do if i>1 then %>,<% end %>"<%=js_s(v)%>"<% end %>];
-var CT_CLIENT_WHITE=[<% for i,v in ipairs(c_client_white) do if i>1 then %>,<% end %>"<%=js_s(v)%>"<% end %>];
-var CT_IFACES=[<% for i,v in ipairs(iface_list) do if i>1 then %>,<% end %>"<%=js_s(v)%>"<% end %>];
-var CT_IP_HINTS=[<% for i,v in ipairs(ip_hints) do if i>1 then %>,<% end %>"<%=js_s(v)%>"<% end %>];
-var CT_IPV4_LIST='<%=js_s(c_ipv4_list_val)%>';
-var CT_IPV6_LIST='<%=js_s(c_ipv6_list_val)%>';
-var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
-</script>
+XHR.get('<%=url([[admin]], [[services]], [[pushbot]], [[get_config]])%>', null, function(x, data) {
+	PB_CONFIG = data;
+	PB_READY.forEach(function(fn) { try { fn(); } catch(e) { console.warn('PB_onReady:', e); } });
+	PB_READY = [];
+});
+//]]></script>
 
 <script type="text/javascript">//<![CDATA[
 	/* ── Global helper: update flag hidden input. Uses Value type which accepts "0". ── */
@@ -161,139 +65,175 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 			el = document.createElement('input'); el.type = 'hidden';
 			el.name = 'cbid.pushbot.pushbot.' + name;
 			var hb = document.getElementById('pushbot_hidden_fields');
-			(hb || document.querySelector('form') || document.body).appendChild(el);
+			(hb || document.querySelector('form') || document.body || document.documentElement).appendChild(el);
 		}
 		el.value = isOn ? '1' : '0';
 	}
 (function() {
-	/* hidden container preserves form elements for UCI submission — must be inside <form> */
 	var hiddenBox = document.createElement('div');
 	hiddenBox.id = 'pushbot_hidden_fields';
 	hiddenBox.style.display = 'none';
 	var luciForm = document.querySelector('form');
-	(luciForm || document.body).appendChild(hiddenBox);
+	var target = luciForm || document.body || document.documentElement;
+	target.appendChild(hiddenBox);
 
-	/* ── Pre-create hidden inputs for all flag fields. Always submits "1" or "0". ── */
-	/* CBI option type changed to Value which accepts "0" without deleting. */
-	/* content card flags */
-	var CT_FLAG_MAP = {
-		pushbot_up: CT_PUSH_UP,
-		pushbot_down: CT_PUSH_DOWN,
-		cpuload_enable: CT_CPU_LOAD_EN,
-		temperature_enable: CT_TEMP_EN,
-		client_usage: CT_USAGE,
-		client_usage_disturb: CT_USAGE_DISTURB,
-		web_logged: CT_WEB_LOG,
-		ssh_logged: CT_SSH_LOG,
-		web_login_failed: CT_WEB_FAIL,
-		ssh_login_failed: CT_SSH_FAIL,
-		web_login_black: CT_AUTO_BAN
-	};
-	for (var fn in CT_FLAG_MAP) updateFlagInput(fn, CT_FLAG_MAP[fn]);
-	/* monitor card flags */
-	updateFlagInput('err_enable', ADV_ERR_ENABLE);
-	updateFlagInput('err_sheep_enable', ADV_ERR_SHEEP);
-	updateFlagInput('public_ip_event', ADV_PUBLIC_IP);
-
-	function stashFormElements(row) {
-		var els = row.querySelectorAll('input, select, textarea');
-		for (var si = 0; si < els.length; si++) {
-			hiddenBox.appendChild(els[si]);
+	function makeHidden(name, value) {
+		var el = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.' + name + '"]');
+		if (!el) {
+			el = document.createElement('input'); el.type = 'hidden';
+			el.name = 'cbid.pushbot.pushbot.' + name;
+			hiddenBox.appendChild(el);
 		}
-		row.remove();
+		el.value = (value !== null && value !== undefined) ? String(value) : '';
+		return el;
+	}
+	function makeMultiHidden(name, value) {
+		var el = document.createElement('input'); el.type = 'hidden';
+		el.name = 'cbid.pushbot.pushbot.' + name;
+		el.value = String(value);
+		hiddenBox.appendChild(el);
+		return el;
 	}
 
-	function findRowByFieldName(fieldName) {
-		/* 1) search .cbi-value rows by widget name or label text */
-		var rows = Array.prototype.slice.call(document.querySelectorAll('.cbi-value'));
-		for (var i = 0; i < rows.length; i++) {
-			var row = rows[i];
-			if (!row) continue;
-			var widget = row.querySelector('input, select, textarea');
-			if (widget && widget.name) {
-				var name = widget.name.split('.').pop();
-				if (name === fieldName) return row;
-			}
-			var title = row.querySelector('.cbi-value-title');
-			var titleText = title ? title.textContent : '';
-			if (titleText && titleText.indexOf(fieldName) >= 0) return row;
-		}
-		/* 2) fallback: find widget by name attribute anywhere in document */
-		var el = document.querySelector('[name$=".' + fieldName + '"], [name="' + fieldName + '"]');
-		if (el) {
-			var r = el.closest('.cbi-value') || el.parentNode;
-			return r;
-		}
-		return null;
-	}
-
-	function cloneWidget(origWidget, origDesc, onChange) {
+	function makeField(name, cfg) {
+		var value = cfg.value !== undefined ? cfg.value : (cfg.file ? PB_file(name) : PB_val(name, ''));
 		var wrapper = document.createElement('div');
 		wrapper.className = 'pushbot-inline-field';
 		var title = document.createElement('div');
 		title.className = 'pushbot-inline-title';
-		var titleEl = origWidget.closest('.cbi-value');
-		if (titleEl) {
-			var t = titleEl.querySelector('.cbi-value-title');
-			title.textContent = t ? t.textContent : '';
-		}
+		title.textContent = cfg.label || name;
 		wrapper.appendChild(title);
 		var body = document.createElement('div');
 		body.className = 'pushbot-inline-body';
-		var clone = origWidget.cloneNode(true);
-		if (clone.id) clone.id = clone.id + '_card';
-		body.appendChild(clone);
-		if (origDesc) {
+		var input;
+		if (cfg.type === 'select') {
+			input = document.createElement('select');
+			input.className = 'cbi-input-select';
+			(cfg.choices || []).forEach(function(c) {
+				var opt = document.createElement('option');
+				opt.value = c.v; opt.textContent = c.l || c.v; input.appendChild(opt);
+			});
+			if (value !== null && value !== '' && value !== undefined) input.value = String(value);
+		} else if (cfg.type === 'flag') {
+			input = document.createElement('input');
+			input.type = 'checkbox';
+			input.checked = value === '1' || value === true;
+		} else if (cfg.type === 'textarea') {
+			input = document.createElement('textarea');
+			input.className = 'cbi-input-textarea';
+			if (cfg.rows) input.rows = cfg.rows;
+			if (cfg.wrap) input.wrap = cfg.wrap;
+			if (value != null) input.value = value;
+		} else {
+			input = document.createElement('input');
+			input.type = 'text';
+			input.className = 'cbi-input-text';
+			if (cfg.placeholder) input.placeholder = cfg.placeholder;
+			if (value !== null && value !== '' && value !== undefined) input.value = value;
+		}
+		body.appendChild(input);
+		if (cfg.desc) {
 			var d = document.createElement('div');
 			d.className = 'pushbot-inline-description';
-			d.innerHTML = origDesc.innerHTML;
+			d.innerHTML = cfg.desc;
 			body.appendChild(d);
 		}
 		wrapper.appendChild(body);
-
-		clone.addEventListener('change', function(e) {
-			e.stopPropagation();
-			if (clone.type === 'checkbox') origWidget.checked = clone.checked;
-			else origWidget.value = clone.value;
-			origWidget.dispatchEvent(new Event('change', { bubbles: true }));
-			if (onChange) onChange();
-		});
-		origWidget.addEventListener('change', function() {
-			if (clone.type === 'checkbox') clone.checked = origWidget.checked;
-			else clone.value = origWidget.value;
-		});
+		if (!cfg.noHidden) {
+			var isFlag = cfg.type === 'flag';
+			var hidden = makeHidden(name, isFlag ? (input.checked ? '1' : '0') : (value != null ? value : ''));
+			input.addEventListener('change', function() {
+				hidden.value = (input.type === 'checkbox') ? (input.checked ? '1' : '0') : input.value;
+			});
+		}
+		wrapper._input = input;
+		wrapper._hidden = hidden;
 		return wrapper;
+	}
+
+	function makeChoiceToggle(name, label, iconHtml, onChange) {
+		var hidden = makeHidden(name, PB_val(name, '0'));
+		var on = hidden.value === '1';
+		var btn = document.createElement('button');
+		btn.type = 'button';
+		btn.className = 'pushbot-choice-button ' + (on ? 'is-on' : 'is-off');
+		if (iconHtml) {
+			var sp = document.createElement('span'); sp.className = 'pushbot-choice-icon'; sp.innerHTML = iconHtml; btn.appendChild(sp);
+		}
+		var ls = document.createElement('span'); ls.className = 'pushbot-choice-label'; ls.textContent = label; btn.appendChild(ls);
+		btn.addEventListener('click', function(e) {
+			e.preventDefault();
+			var now = hidden.value === '1';
+			hidden.value = now ? '0' : '1';
+			btn.className = 'pushbot-choice-button ' + (now ? 'is-off' : 'is-on');
+			hidden.dispatchEvent(new Event('change', { bubbles: true }));
+			if (onChange) onChange(!now);
+		});
+		return btn;
+	}
+
+	function makeChoiceButtons(name, choices, labels) {
+		var hidden = makeHidden(name, PB_val(name, ''));
+		var list = document.createElement('div');
+		list.className = 'pushbot-choice-list';
+		var btns = [];
+		choices.forEach(function(v) {
+			var b = document.createElement('button');
+			b.type = 'button';
+			var on = String(v) === String(hidden.value);
+			b.className = 'pushbot-choice-button ' + (on ? 'is-on' : 'is-off');
+			b.textContent = (labels && labels[v]) ? labels[v] : v;
+			b.addEventListener('click', function(e) {
+				e.preventDefault();
+				hidden.value = String(v);
+				btns.forEach(function(b2) {
+					b2.className = 'pushbot-choice-button ' + (b2 === b ? 'is-on' : 'is-off');
+				});
+				if (labels && labels._onChange) labels._onChange(v);
+			});
+			btns.push(b);
+			list.appendChild(b);
+		});
+		return list;
+	}
+
+	var CT_FLAG_NAMES = [
+		'pushbot_up', 'pushbot_down', 'cpuload_enable', 'temperature_enable',
+		'client_usage', 'client_usage_disturb', 'web_logged', 'ssh_logged',
+		'web_login_failed', 'ssh_login_failed', 'web_login_black'
+	];
+	PB_onReady(function() {
+		CT_FLAG_NAMES.forEach(function(n) { makeHidden(n, PB_bool(n) ? '1' : '0'); });
+		makeHidden('err_enable', PB_bool('err_enable') ? '1' : '0');
+		makeHidden('err_sheep_enable', PB_bool('err_sheep_enable') ? '1' : '0');
+		makeHidden('public_ip_event', PB_bool('public_ip_event') ? '1' : '0');
+	});
+
+	function hourChoices() {
+		var a = []; for (var t = 0; t <= 23; t++) a.push({v: String(t), l: '每天' + t + '点'}); return a;
 	}
 
 	function initPushModeCard() {
 		if (document.getElementById('pushbot_pushmode_card')) return;
+		if (!PB_CONFIG) { setTimeout(initPushModeCard, 200); return; }
 
-		var modeRow = findRowByFieldName('jsonpath');
-		var modeSelect = modeRow ? modeRow.querySelector('select') : null;
-		var deviceRow = findRowByFieldName('device_name');
-		var intervalRow = findRowByFieldName('sleeptime');
-		var testRow = findRowByFieldName('发送测试');
-		if (!modeRow || !modeSelect || !deviceRow || !intervalRow || !testRow) return;
+		makeHidden('jsonpath', PB_val('jsonpath', '/usr/bin/pushbot/api/dingding.json'));
+		var modeHidden = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.jsonpath"]');
 
-		/* ── build card ── */
 		var card = document.createElement('div');
 		card.id = 'pushbot_pushmode_card';
 		card.className = 'pushbot-mode-card pushbot-pushmode-card';
-
 		card.innerHTML = [
 			'<div class="pushbot-card-top" style="margin-bottom:6px">',
 				'<span class="pushbot-card-title" style="font-size:16px;font-weight:800">推送模式</span>',
 			'</div>',
-			/* row1: device_name + sleeptime */
 			'<div class="pushbot-pushmode-row" id="pm_row1">',
 				'<div class="pushbot-pushmode-column" id="pm_col_device"></div>',
 				'<div class="pushbot-pushmode-column" id="pm_col_interval"></div>',
 			'</div>',
-			/* row2: mode buttons */
 			'<div class="pushbot-pushmode-row" id="pm_row2">',
 				'<div class="pushbot-choice-list pushbot-pushmode-list" id="pm_mode_list"></div>',
 			'</div>',
-			/* row3: current settings + test button */
 			'<div class="pushbot-pushmode-row" id="pm_row3">',
 				'<div class="pushbot-pushmode-column" id="pm_col_settings">',
 					'<div class="pushbot-inline-title">当前设置</div>',
@@ -303,33 +243,22 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 			'</div>'
 		].join('');
 
-		/* ── insert card after running-control card ── */
 		var runCard = document.getElementById('pushbot_mode_card');
 		if (runCard && runCard.parentNode) {
 			runCard.parentNode.insertBefore(card, runCard.nextSibling);
 		} else {
 			var hc = document.querySelector('.pushbot-header-card');
 			if (hc && hc.parentNode) { hc.parentNode.insertBefore(card, hc.nextSibling); }
-			else { modeRow.parentNode.insertBefore(card, modeRow); }
+			else { document.querySelector('.pushbot-body').appendChild(card); }
 		}
 
 		/* ── device name ── */
-		var devInp = deviceRow.querySelector('input');
-		var devDesc = deviceRow.querySelector('.cbi-value-description');
-		if (devInp) {
-			var devWrapper = cloneWidget(devInp, devDesc);
-			document.getElementById('pm_col_device').appendChild(devWrapper);
-		}
-		deviceRow.remove();
+		var devField = makeField('device_name', { label: '本设备名称', desc: '在推送信息标题中会标识本设备名称，用于区分推送信息的来源设备' });
+		document.getElementById('pm_col_device').appendChild(devField);
 
 		/* ── sleeptime ── */
-		var intInp = intervalRow.querySelector('input');
-		var intDesc = intervalRow.querySelector('.cbi-value-description');
-		if (intInp) {
-			var intWrapper = cloneWidget(intInp, intDesc);
-			document.getElementById('pm_col_interval').appendChild(intWrapper);
-		}
-		intervalRow.remove();
+		var intField = makeField('sleeptime', { label: '检测时间间隔', desc: '越短的时间时间响应越及时，但会占用更多的系统资源' });
+		document.getElementById('pm_col_interval').appendChild(intField);
 
 		/* ── mode select buttons ── */
 		var modeList = document.getElementById('pm_mode_list');
@@ -351,366 +280,178 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 			{ v: '/usr/bin/pushbot/api/pushdeer.json', l: 'PushDeer' },
 			{ v: '/usr/bin/pushbot/api/diy.json', l: '自定义推送' }
 		];
-		var btns = [];
+		var modeBtns = [];
 		modeOpts.forEach(function(o) {
 			var b = document.createElement('button');
 			b.type = 'button';
 			b.className = 'pushbot-choice-button';
 			var svg = modeSvgs[o.l] || '';
 			b.innerHTML = svg + '<span>' + o.l + '</span>';
-			b.setAttribute('data-v', o.v);
 			b.addEventListener('click', function(e) {
 				e.preventDefault();
-				modeSelect.value = o.v;
-				syncBtns();
-				renderSettings();
+				modeHidden.value = o.v;
+				syncModeBtns();
+				renderModeSettings();
 			});
-			btns.push(b);
+			modeBtns.push(b);
 			modeList.appendChild(b);
 		});
-		function syncBtns() {
-			btns.forEach(function(b) {
-				var on = b.getAttribute('data-v') === modeSelect.value;
+		function syncModeBtns() {
+			var v = modeHidden.value;
+			modeBtns.forEach(function(b) { b.className = 'pushbot-choice-button ' + (b.textContent.indexOf(modeOpts.filter(function(o2){return o2.v===v;})[0]&&modeOpts.filter(function(o2){return o2.v===v;})[0].l||'') >=0 ? 'is-on' : 'is-off'); });
+			modeBtns.forEach(function(b) {
+				var idx = modeOpts.findIndex(function(o){return b.innerHTML.indexOf(o.l)>=0;});
+				var on = idx >=0 && modeOpts[idx].v === v;
 				b.className = 'pushbot-choice-button ' + (on ? 'is-on' : 'is-off');
 			});
 		}
-		modeSelect.addEventListener('change', function() { syncBtns(); renderSettings(); });
-		stashFormElements(modeRow);
 
-		/* ── mode-field map ── */
-		var fieldMap = {
-			'/usr/bin/pushbot/api/dingding.json'  : ['dd_webhook'],
-			'/usr/bin/pushbot/api/ent_wechat.json': ['we_webhook'],
-			'/usr/bin/pushbot/api/feishu.json'    : ['fs_webhook'],
-			'/usr/bin/pushbot/api/bark.json'      : ['bark_token', 'bark_srv_enable', 'bark_srv', 'bark_sound', 'bark_icon_enable', 'bark_icon', 'bark_level'],
-			'/usr/bin/pushbot/api/pushplus.json'  : ['pp_token', 'pp_channel', 'pp_webhook', 'pp_topic_enable', 'pp_topic'],
-			'/usr/bin/pushbot/api/pushdeer.json'  : ['pushdeer_key', 'pushdeer_srv_enable', 'pushdeer_srv'],
-			'/usr/bin/pushbot/api/diy.json'       : ['diy_json']
+		/* ── mode-field map with full field configs ── */
+		var MODE_FIELD_CFG = {
+			'/usr/bin/pushbot/api/dingding.json': [
+				{ name: 'dd_webhook', type: 'text', label: 'Webhook', desc: '钉钉机器人 Webhook，只输入access_token=后面的即可<br>调用代码获取<a href=\'https://developers.dingtalk.com/document/robots/custom-robot-access\' target=\'_blank\'>点击这里</a><br><br>' }
+			],
+			'/usr/bin/pushbot/api/ent_wechat.json': [
+				{ name: 'we_webhook', type: 'text', label: 'Webhook', desc: '企业微信机器人 Webhook，只输入key=后面的即可<br>调用代码获取<a href=\'https://work.weixin.qq.com/api/doc/90000/90136/91770\' target=\'_blank\'>点击这里</a><br><br>' }
+			],
+			'/usr/bin/pushbot/api/feishu.json': [
+				{ name: 'fs_webhook', type: 'text', label: 'WebHook', desc: '飞书 WebHook<br>调用代码获取<a href=\'https://www.feishu.cn/hc/zh-CN/articles/360024984973\' target=\'_blank\'>点击这里</a><br><br>' }
+			],
+			'/usr/bin/pushbot/api/bark.json': [
+				{ name: 'bark_token', type: 'text', label: 'Bark Token', desc: 'Bark Token<br>调用代码获取<a href=\'https://github.com/Finb/Bark\' target=\'_blank\'>点击这里</a><br><br>' },
+				{ name: 'bark_srv_enable', type: 'toggle', label: '自建 Bark 服务器' },
+				{ name: 'bark_srv', type: 'text', label: 'Bark Server', desc: 'Bark 自建服务器地址<br>如https://your.domain:port<br>具体自建服务器设定参见：<a href=\'http://www.pushdeer.com/selfhosted.html\' target=\'_blank\'>点击这里</a><br><br>', depends: 'bark_srv_enable' },
+				{ name: 'bark_sound', type: 'text', label: 'Bark Sound', desc: 'Bark 通知声音<br>如silence.caf<br>具体设定参见：<a href=\'https://github.com/Finb/Bark/tree/master/Sounds\' target=\'_blank\'>点击这里</a><br><br>' },
+				{ name: 'bark_icon_enable', type: 'toggle', label: 'Bark 通知图标' },
+				{ name: 'bark_icon', type: 'text', label: 'Bark Icon', desc: 'Bark 通知图标(仅 iOS15 或以上支持)<br>如http://day.app/assets/images/avatar.jpg<br>具体设定参见：<a href=\'https://github.com/Finb/Bark#%E5%85%B6%E4%BB%96%E5%8F%82%E6%95%B0\' target=\'_blank\'>点击这里</a><br><br>', depends: 'bark_icon_enable' },
+				{ name: 'bark_level', type: 'select', label: 'Bark Level', choices: [{v:'active',l:'active：默认'},{v:'timeSensitive',l:'timeSensitive：时效性通知'},{v:'passive',l:'passive：仅添加到通知列表'}], desc: 'Bark 时效性通知<br>可选参数值：<br/>active：不设置时的默认值，系统会立即亮屏显示通知。<br/>timeSensitive：时效性通知，可在专注状态下显示通知。<br/>passive：仅将通知添加到通知列表，不会亮屏提醒。' }
+			],
+			'/usr/bin/pushbot/api/pushplus.json': [
+				{ name: 'pp_token', type: 'text', label: 'PushPlus Token', desc: 'PushPlus Token<br>调用代码获取<a href=\'http://pushplus.plus/doc/\' target=\'_blank\'>点击这里</a><br><br>' },
+				{ name: 'pp_channel', type: 'select', label: 'PushPlus Channel', choices: [{v:'wechat',l:'wechat：PushPlus微信公众号'},{v:'cp',l:'cp：企业微信应用'},{v:'webhook',l:'webhook：第三方webhook'},{v:'sms',l:'sms：短信'},{v:'mail',l:'mail：邮箱'}], desc: '第三方webhook：企业微信、钉钉、飞书、server酱<br>sms短信/mail邮箱：PushPlus暂未开放<br>具体channel设定参见：<a href=\'http://pushplus.plus/doc/extend/webhook.html\' target=\'_blank\'>点击这里</a>' },
+				{ name: 'pp_webhook', type: 'text', label: 'PushPlus Custom Webhook', desc: 'PushPlus 自定义Webhook<br>第三方webhook或企业微信调用<br>具体自定义Webhook设定参见：<a href=\'http://pushplus.plus/doc/extend/webhook.html\' target=\'_blank\'>点击这里</a><br><br>', showWhen: { field: 'pp_channel', values: ['cp','webhook'] } },
+				{ name: 'pp_topic_enable', type: 'toggle', label: 'PushPlus 一对多推送' },
+				{ name: 'pp_topic', type: 'text', label: 'PushPlus Topic', desc: 'PushPlus 群组编码<br>一对多推送时指定的群组编码<br>具体群组编码Topic设定参见：<a href=\'http://www.pushplus.plus/push2.html\' target=\'_blank\'>点击这里</a><br><br>', depends: 'pp_topic_enable' }
+			],
+			'/usr/bin/pushbot/api/pushdeer.json': [
+				{ name: 'pushdeer_key', type: 'text', label: 'PushDeer Key', desc: 'PushDeer Key<br>调用代码获取<a href=\'http://www.pushdeer.com/\' target=\'_blank\'>点击这里</a><br><br>' },
+				{ name: 'pushdeer_srv_enable', type: 'toggle', label: '自建 PushDeer 服务器' },
+				{ name: 'pushdeer_srv', type: 'text', label: 'PushDeer Server', desc: 'PushDeer 自建服务器地址<br>如https://your.domain:port<br>具体自建服务器设定参见：<a href=\'http://www.pushdeer.com/selfhosted.html\' target=\'_blank\'>点击这里</a><br><br>', depends: 'pushdeer_srv_enable' }
+			],
+			'/usr/bin/pushbot/api/diy.json': [
+				{ name: 'diy_json', type: 'textarea', label: '自定义推送', desc: '', rows: 28, file: true }
+			]
 		};
 
-		/* hide ALL mode-field rows in original tab */
-		var allFieldNames = [];
-		for (var k in fieldMap) {
-			fieldMap[k].forEach(function(fn) { allFieldNames.push(fn); });
-		}
-		(function hideModeRows() {
-			var rows = document.querySelectorAll('.cbi-value');
-			for (var ri = 0; ri < rows.length; ri++) {
-				var row = rows[ri];
-				var w = row.querySelector('input, select, textarea');
-				if (w && w.name) {
-					var n = w.name.split('.').pop();
-					if (allFieldNames.indexOf(n) >= 0) {
-						row.style.display = 'none';
-					}
-				}
-			}
-		})();
-
-		/* ── switch toggles: which fields act as switches, and their dependents ── */
-		var switchDeps = {
-			'bark_srv_enable': ['bark_srv'],
-			'bark_icon_enable': ['bark_icon'],
-			'pp_topic_enable': ['pp_topic'],
-			'pushdeer_srv_enable': ['pushdeer_srv']
-		};
-
-		/* ── select-based deps: { selectField: { depField: [showValues] } } ── */
-		var selectDeps = {
-			'pp_channel': { 'pp_webhook': ['cp', 'webhook'] }
-		};
-
-		/* helper: get original widget + row + description for a field */
-		function getOrig(fn) {
-			var row = findRowByFieldName(fn);
-			var w = row ? row.querySelector('input, select, textarea') : document.querySelector('[name$=".' + fn + '"]');
-			var d = row ? row.querySelector('.cbi-value-description') : null;
-			return { w: w, row: row, desc: d };
-		}
-
-		function makeFallbackField(fn) {
-			var hidden = document.createElement('input');
-			hidden.type = 'hidden';
-			hidden.name = 'cbid.pushbot.pushbot.' + fn;
-			hidden.value = '';
-			hiddenBox.appendChild(hidden);
-
-			var wrapper = document.createElement('div');
-			wrapper.className = 'pushbot-inline-field';
-			var title = document.createElement('div');
-			title.className = 'pushbot-inline-title';
-			title.textContent = fn;
-			wrapper.appendChild(title);
-			var body = document.createElement('div');
-			body.className = 'pushbot-inline-body';
-			var inp = document.createElement('input');
-			inp.type = 'text';
-			inp.placeholder = fn;
-			inp.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit';
-			inp.addEventListener('change', function() { hidden.value = this.value; });
-			body.appendChild(inp);
-			wrapper.appendChild(body);
-			return wrapper;
-		}
-
-		/* ── render a choice-style toggle button for a switch field ── */
-		function makeChoiceToggle(origWidget, labelText, onToggle) {
-			var btn = document.createElement('button');
-			btn.type = 'button';
-			var on = !!(origWidget.checked);
-			btn.className = 'pushbot-choice-button ' + (on ? 'is-on' : 'is-off');
-			btn.innerHTML = '<span>' + labelText + '</span>';
-			btn.addEventListener('click', function(e) {
-				e.preventDefault();
-				var newOn = !origWidget.checked;
-				origWidget.checked = newOn;
-				btn.className = 'pushbot-choice-button ' + (newOn ? 'is-on' : 'is-off');
-				origWidget.dispatchEvent(new Event('change', { bubbles: true }));
-				if (onToggle) onToggle(newOn);
-			});
-			return btn;
-		}
-
-		function renderSettings() {
+		function renderModeSettings() {
 			var body = document.getElementById('pm_settings_body');
 			body.innerHTML = '';
-			var fields = fieldMap[modeSelect.value] || [];
+			var fields = MODE_FIELD_CFG[modeHidden.value] || [];
 			if (!fields.length) {
 				body.innerHTML = '<div class="pushbot-inline-description" style="margin-top:6px">当前模式无需附加配置项。</div>';
 				return;
 			}
+			fields.forEach(function(cfg) {
+				if (cfg.depends) {
+					var parentHidden = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.' + cfg.depends + '"]');
+					var parentOn = parentHidden && parentHidden.value === '1';
 
-			/* collect switch-dependent field names for the current mode */
-			var depSet = {};
-			fields.forEach(function(fn) {
-				if (switchDeps[fn]) {
-					switchDeps[fn].forEach(function(df) { depSet[df] = true; });
-				}
-			});
+					var depWrap = document.createElement('div');
+					depWrap.style.cssText = 'margin:4px 0 4px 20px;padding-left:12px;border-left:2px solid rgba(148,163,184,0.2)';
+					depWrap.style.display = parentOn ? '' : 'none';
 
-			/* helper: check if a field is a select-dependent */
-			function isSelectDep(fn) {
-				for (var sf in selectDeps) {
-					if (selectDeps[sf].hasOwnProperty(fn)) return true;
-				}
-				return false;
-			}
-
-			fields.forEach(function(fn) {
-				/* skip dependent fields — they are rendered by their parent switch */
-				if (depSet[fn]) return;
-
-				if (switchDeps[fn]) {
-					/* ── switch field: choice-style toggle + conditional children ── */
-					var orig = getOrig(fn);
-					if (!orig.w) { body.appendChild(makeFallbackField(fn)); return; }
-
-					/* get label from original CBI row */
-					var label = fn;
-					var te = orig.w.closest('.cbi-value');
-					if (te) { var t = te.querySelector('.cbi-value-title'); if (t && t.textContent) label = t.textContent; }
-
-					var childWraps = [];
-					var btn = makeChoiceToggle(orig.w, label, function(newOn) {
-						childWraps.forEach(function(cw) { cw.style.display = newOn ? '' : 'none'; });
-					});
-					btn.style.marginBottom = '8px';
-					body.appendChild(btn);
-					if (orig.row) orig.row.style.display = 'none';
-
-					/* render dependent fields indented under the toggle */
-					switchDeps[fn].forEach(function(df) {
-						var depOrig = getOrig(df);
-						if (!depOrig.w) { body.appendChild(makeFallbackField(df)); return; }
-						var dw = document.createElement('div');
-						dw.style.cssText = 'margin:4px 0 4px 20px;padding-left:12px;border-left:2px solid rgba(148,163,184,0.2)';
-						dw.style.display = orig.w.checked ? '' : 'none';
-						var clone = cloneWidget(depOrig.w, depOrig.desc);
-						var ci = clone.querySelector('input, select, textarea');
-						if (ci) ci.name = '';
-						dw.appendChild(clone);
-						body.appendChild(dw);
-						if (depOrig.row) depOrig.row.style.display = 'none';
-						childWraps.push(dw);
-					});
-				} else if (selectDeps[fn]) {
-					/* ── select-controlled field: render as choice buttons ── */
-					var orig = getOrig(fn);
-					if (!orig.w || !orig.w.options) { body.appendChild(makeFallbackField(fn)); return; }
-
-					/* read options from original select */
-					var selOpts = [];
-					for (var oi = 0; oi < orig.w.options.length; oi++) {
-						if (orig.w.options[oi].value !== '')
-							selOpts.push({ v: orig.w.options[oi].value, l: orig.w.options[oi].text });
-					}
-					if (!selOpts.length) { body.appendChild(makeFallbackField(fn)); return; }
-
-					var selWrap = document.createElement('div');
-					selWrap.className = 'pushbot-inline-field';
-
-					var title = document.createElement('div');
-					title.className = 'pushbot-inline-title';
-					var te = orig.w.closest('.cbi-value');
-					if (te) { var t = te.querySelector('.cbi-value-title'); title.textContent = t ? t.textContent : ''; }
-					selWrap.appendChild(title);
-
-					var btnRow = document.createElement('div');
-					btnRow.className = 'pushbot-choice-list';
-
-					var btns = [];
-					selOpts.forEach(function(opt) {
-						var b = document.createElement('button');
-						b.type = 'button';
-						b.className = 'pushbot-choice-button';
-						b.textContent = opt.l;
-						b.setAttribute('data-v', opt.v);
-						b.addEventListener('click', function(e) {
-							e.preventDefault();
-							orig.w.value = opt.v;
-							btns.forEach(function(b2) { syncBtn(b2); });
-							orig.w.dispatchEvent(new Event('change', { bubbles: true }));
-						});
-						btns.push(b);
-						btnRow.appendChild(b);
-					});
-					function syncBtn(b) {
-						var on = b.getAttribute('data-v') === orig.w.value;
-						b.className = 'pushbot-choice-button ' + (on ? 'is-on' : 'is-off');
-					}
-					btns.forEach(function(b) { syncBtn(b); });
-					selWrap.appendChild(btnRow);
-
-					if (orig.desc) {
-						var d = document.createElement('div');
-						d.className = 'pushbot-inline-description';
-						d.innerHTML = orig.desc.innerHTML;
-						selWrap.appendChild(d);
-					}
-					body.appendChild(selWrap);
-					if (orig.row) orig.row.style.display = 'none';
-				} else {
-					/* ── regular field (possibly select-controlled) ── */
-					var orig = getOrig(fn);
-					if (!orig.w) { body.appendChild(makeFallbackField(fn)); return; }
-
-					var wrapper = cloneWidget(orig.w, orig.desc);
-					var ci = wrapper.querySelector('input, select, textarea');
+					var childField = makeField(cfg.name, cfg);
+					var ci = childField.querySelector('input, select, textarea');
 					if (ci) ci.name = '';
+					depWrap.appendChild(childField);
+					body.appendChild(depWrap);
 
-					/* if this field IS a select-dependent, wrap for show/hide */
-					if (isSelectDep(fn)) {
-						var sdWrap = document.createElement('div');
-						sdWrap.setAttribute('data-dep', fn);
-						sdWrap.appendChild(wrapper);
-						body.appendChild(sdWrap);
+					if (parentHidden) {
+						var origOnChange = parentHidden.onchange;
+						parentHidden.onchange = null;
+						var toggleVis = function() {
+							depWrap.style.display = parentHidden.value === '1' ? '' : 'none';
+						};
+						var obs = new MutationObserver(toggleVis);
+						obs.observe(parentHidden, { attributes: true, attributeFilter: ['value'] });
+						parentHidden.addEventListener('change', toggleVis);
+						toggleVis();
 					}
-					else {
-						body.appendChild(wrapper);
-					}
-
-					if (orig.row) orig.row.style.display = 'none';
+					return;
 				}
+				if (cfg.showWhen) {
+					var selHidden = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.' + cfg.showWhen.field + '"]');
+					var showWrap = document.createElement('div');
+					showWrap.setAttribute('data-dep', cfg.name);
+					var swField = makeField(cfg.name, cfg);
+					var swCi = swField.querySelector('input, select, textarea');
+					if (swCi) swCi.name = '';
+					showWrap.appendChild(swField);
+					body.appendChild(showWrap);
+					var toggleSw = function() {
+						if (selHidden) {
+							showWrap.style.display = cfg.showWhen.values.indexOf(selHidden.value) >= 0 ? '' : 'none';
+						}
+					};
+					if (selHidden) {
+						selHidden.addEventListener('change', toggleSw);
+						var obsSw = new MutationObserver(toggleSw);
+						obsSw.observe(selHidden, { attributes: true, attributeFilter: ['value'] });
+					}
+					toggleSw();
+					return;
+				}
+				if (cfg.type === 'toggle') {
+					var tb = makeChoiceToggle(cfg.name, cfg.label, '');
+					var tbi = tb.querySelector('button');
+					body.appendChild(tb);
+					return;
+				}
+				if (cfg.type === 'flag') {
+					var flagField = makeField(cfg.name, cfg);
+					var fi = flagField.querySelector('input');
+					if (fi) fi.name = '';
+					body.appendChild(flagField);
+					return;
+				}
+				var fw = makeField(cfg.name, cfg);
+				var ci = fw.querySelector('input, select, textarea');
+				if (ci) ci.name = '';
+				body.appendChild(fw);
 			});
-
-			/* ── wire up select-based dependencies (use original select change event) ── */
-			for (var selFn in selectDeps) {
-				var selOrig = getOrig(selFn);
-				if (!selOrig.w) continue;
-				var sd = selectDeps[selFn];
-				for (var depFn in sd) {
-					var showVals = sd[depFn];
-					var depWrap = body.querySelector('[data-dep="' + depFn + '"]');
-					if (!depWrap) continue;
-					(function(sel, wrap, vals) {
-						function sync() { wrap.style.display = vals.indexOf(sel.value) >= 0 ? '' : 'none'; }
-						sel.addEventListener('change', sync);
-						sync();
-					})(selOrig.w, depWrap, showVals);
-				}
-			}
 		}
 
-		/* ── test button (standalone, XHR — no form submit) ── */
-		var testBtn = testRow.querySelector('.cbi-button');
-		if (testBtn) {
-			var tc = document.createElement('button');
-			tc.type = 'button';
-			tc.textContent = '发送测试';
-			tc.className = 'pushbot-sendtest-btn';
-			tc.addEventListener('click', function(e) {
-				e.preventDefault();
-				tc.disabled = true;
-				tc.textContent = '发送中...';
-				XHR.get('<%=url([[admin]], [[services]], [[pushbot]], [[send_test]])%>', null,
-					function() {
-						tc.disabled = false;
-						tc.textContent = '发送测试';
-					}
-				);
-			});
-			var testContainer = document.getElementById('pm_col_test');
-			testContainer.appendChild(tc);
-		}
-		testRow.remove();
+		/* ── test button ── */
+		var tc = document.createElement('button');
+		tc.type = 'button';
+		tc.textContent = '发送测试';
+		tc.className = 'pushbot-sendtest-btn';
+		tc.addEventListener('click', function(e) {
+			e.preventDefault();
+			tc.disabled = true;
+			tc.textContent = '发送中...';
+			XHR.get('<%=url([[admin]], [[services]], [[pushbot]], [[send_test]])%>', null,
+				function() { tc.disabled = false; tc.textContent = '发送测试'; });
+		});
+		document.getElementById('pm_col_test').appendChild(tc);
 
-		/* ── init ── */
-		syncBtns();
-		renderSettings();
+		syncModeBtns();
+		renderModeSettings();
 	}
 
 	function initTerminalCard() {
 		if (document.getElementById('pushbot_terminal_card')) return;
+		if (!PB_CONFIG) { setTimeout(initTerminalCard, 200); return; }
 		if (!document.getElementById('pushbot_pushmode_card')) {
-			setTimeout(initTerminalCard, 200);
-			return;
+			setTimeout(initTerminalCard, 200); return;
 		}
 
-		/* find oui_data row — try name match then title fallback */
-		var ouiRow = findRowByFieldName('oui_data');
-		if (!ouiRow) {
-			var all = document.querySelectorAll('.cbi-value');
-			for (var xi = 0; xi < all.length; xi++) {
-				var t = all[xi].querySelector('.cbi-value-title');
-				if (t && t.textContent.indexOf('MAC设备') >= 0) { ouiRow = all[xi]; break; }
-			}
-		}
-		var ouiSelect = ouiRow ? ouiRow.querySelector('select') : null;
-		if (!ouiRow || !ouiSelect) { setTimeout(initTerminalCard, 300); return; }
-
-		/* find device_aliases row */
-		var aliasRow = findRowByFieldName('device_aliases');
-		if (!aliasRow) {
-			var all2 = document.querySelectorAll('.cbi-value');
-			for (var xi2 = 0; xi2 < all2.length; xi2++) {
-				var t2 = all2[xi2].querySelector('.cbi-value-title');
-				if (t2 && t2.textContent.indexOf('设备别名') >= 0) { aliasRow = all2[xi2]; break; }
-			}
-		}
-		var aliasInput = aliasRow ? aliasRow.querySelector('input') : null;
+		makeHidden('oui_data', PB_val('oui_data', ''));
 
 		var card = document.createElement('div');
 		card.id = 'pushbot_terminal_card';
 		card.className = 'pushbot-mode-card';
 		card.style.margin = '0 0 16px 0';
-
-		/* collect oui options */
-		var ouiOpts = [];
-		for (var oi = 0; oi < ouiSelect.options.length; oi++) {
-			var opt = ouiSelect.options[oi];
-			ouiOpts.push({ v: opt.value, l: opt.text });
-		}
-		var ouiLabels = { '': '关闭', '1': '简化版', '2': '完整版', '3': '网络查询' };
-
-		/* device aliases */
-		var aliasDesc = aliasRow ? aliasRow.querySelector('.cbi-value-description') : null;
-
-		/* stash originals — move form elements to hidden container, remove rows */
-		stashFormElements(ouiRow);
-		/* for alias: keep original row hidden so DynamicList stays intact */
-		if (aliasRow) {
-			aliasRow.style.display = 'none';
-		}
 
 		var header = document.createElement('div');
 		header.className = 'pushbot-card-top';
@@ -724,32 +465,29 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 		dbTitle.textContent = 'MAC设备信息数据库';
 		card.appendChild(dbTitle);
 
-		var ouiList = document.createElement('div');
-		ouiList.className = 'pushbot-choice-list';
+		var ouiHidden = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.oui_data"]');
+		var ouiOpts = [
+			{ v: '', l: '关闭' },
+			{ v: '1', l: '简化版' },
+			{ v: '2', l: '完整版' },
+			{ v: '3', l: '网络查询' }
+		];
 		var ouiBtns = [];
 		ouiOpts.forEach(function(o) {
 			var b = document.createElement('button');
 			b.type = 'button';
-			b.className = 'pushbot-choice-button';
-			b.textContent = ouiLabels[o.v] || o.l;
-			b.setAttribute('data-oui', o.v);
+			b.className = 'pushbot-choice-button ' + (String(ouiHidden.value) === o.v ? 'is-on' : 'is-off');
+			b.textContent = o.l;
 			b.addEventListener('click', function(e) {
 				e.preventDefault();
-				ouiSelect.value = o.v;
-				syncOui();
+				ouiHidden.value = o.v;
+				ouiBtns.forEach(function(b2) {
+					b2.className = 'pushbot-choice-button ' + (b2 === b ? 'is-on' : 'is-off');
+				});
 			});
 			ouiBtns.push(b);
-			ouiList.appendChild(b);
 		});
-		card.appendChild(ouiList);
-		function syncOui() {
-			ouiBtns.forEach(function(b) {
-				var on = b.getAttribute('data-oui') === ouiSelect.value;
-				b.className = 'pushbot-choice-button ' + (on ? 'is-on' : 'is-off');
-			});
-		}
-		ouiSelect.addEventListener('change', syncOui);
-		syncOui();
+		ouiBtns.forEach(function(b) { card.appendChild(b); });
 
 		/* ── device aliases ── */
 		var aliasTitle = document.createElement('div');
@@ -769,13 +507,11 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 		aliasInp.placeholder = 'XX:XX:XX:XX:XX:XX-我的手机';
 		aliasInp.style.cssText = 'flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
 		aliasInp.className = 'pushbot-alias-input';
-
 		var addBtn = document.createElement('button');
 		addBtn.type = 'button';
 		addBtn.textContent = '添加';
 		addBtn.className = 'pushbot-choice-button is-on';
 		addBtn.style.cssText = 'padding:7px 14px;font-size:12px';
-
 		aliasRow2.appendChild(aliasInp);
 		aliasRow2.appendChild(addBtn);
 		aliasBox.appendChild(aliasRow2);
@@ -784,8 +520,8 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 		tagContainer.className = 'pushbot-alias-tags';
 		tagContainer.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:8px';
 
-		/* hidden container for DynamicList: one hidden input per value */
 		var aliasHiddenBox = document.createElement('div');
+		aliasHiddenBox.id = 'term_hidden_fields';
 		aliasHiddenBox.style.display = 'none';
 
 		function rebuildHiddenAliases(vals) {
@@ -811,11 +547,7 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 			del.innerHTML = '✕';
 			del.style.cssText = 'border:none;background:none;cursor:pointer;font-size:12px;color:#94a3b8;padding:0 2px';
 			del.title = '移除';
-			del.addEventListener('click', function(e) {
-				e.preventDefault();
-				tag.remove();
-				syncAliases();
-			});
+			del.addEventListener('click', function(e) { e.preventDefault(); tag.remove(); syncAliases(); });
 			tag.appendChild(del);
 			tagContainer.appendChild(tag);
 			syncAliases();
@@ -831,25 +563,7 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 			rebuildHiddenAliases(vals);
 		}
 
-		/* load existing aliases from all original DynamicList inputs */
-		var existingVals = [];
-		if (aliasRow) {
-			var allOrigInputs = aliasRow.querySelectorAll('input[name$=".device_aliases"]');
-			allOrigInputs.forEach(function(inp) {
-				if (inp.value) existingVals.push(inp.value);
-			});
-		}
-		/* fallback: use server-injected values if DOM read returned nothing */
-		if (existingVals.length === 0 && typeof PUSHBOT_DEVICE_ALIASES !== 'undefined' && PUSHBOT_DEVICE_ALIASES.length > 0) {
-			existingVals = PUSHBOT_DEVICE_ALIASES;
-		}
-		existingVals.forEach(function(v) { if (v) addTag(v); });
-
-		/* remove original DynamicList row entirely — only our hidden inputs will submit */
-		if (aliasRow) {
-			aliasRow.remove();
-			aliasRow = null;
-		}
+		(PB_list('device_aliases') || []).forEach(function(v) { if (v) addTag(v); });
 
 		addBtn.addEventListener('click', function(e) {
 			e.preventDefault();
@@ -857,26 +571,19 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 			if (val) { addTag(val); aliasInp.value = ''; }
 		});
 		aliasInp.addEventListener('keydown', function(e) {
-			if (e.key === 'Enter') {
-				e.preventDefault();
-				var val = aliasInp.value.trim();
-				if (val) { addTag(val); aliasInp.value = ''; }
-			}
+			if (e.key === 'Enter') { e.preventDefault(); var val = aliasInp.value.trim(); if (val) { addTag(val); aliasInp.value = ''; } }
 		});
 
 		aliasBox.appendChild(tagContainer);
 		aliasBox.appendChild(aliasHiddenBox);
 		card.appendChild(aliasBox);
 
-		if (aliasDesc) {
-			var d2 = document.createElement('div');
-			d2.className = 'pushbot-inline-description';
-			d2.style.cssText = 'margin:6px 0 0 2px';
-			d2.innerHTML = aliasDesc.innerHTML;
-			card.appendChild(d2);
-		}
+		var desc = document.createElement('div');
+		desc.className = 'pushbot-inline-description';
+		desc.style.cssText = 'margin:6px 0 0 2px';
+		desc.textContent = '输入 MAC-别名，如 XX:XX:XX:XX:XX:XX-我的手机';
+		card.appendChild(desc);
 
-		/* insert after push mode card */
 		var pushCard = document.getElementById('pushbot_pushmode_card');
 		if (pushCard && pushCard.parentNode) {
 			pushCard.parentNode.insertBefore(card, pushCard.nextSibling);
@@ -885,64 +592,24 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 		}
 	}
 
-	var cardId = 'pushbot_mode_card';
-	var iconMap = {
-		device: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm2 3v10h12V7H6zm2 2h8v2H8V9zm0 4h5v2H8v-2z"/></svg>',
-		nowtime: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm1 4h-2v7l5.5 3.2 1-1.7-4.5-2.6V6z"/></svg>',
-		content: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm2 3v2h10V7H7zm0 4v2h6v-2H7zm0 4v2h8v-2H7z"/></svg>'
-	};
-
 	function initCard() {
-		if (document.getElementById(cardId)) {
-			return;
-		}
+		if (document.getElementById('pushbot_mode_card')) return;
+		if (!PB_CONFIG) { setTimeout(initCard, 200); return; }
 
-		var rows = Array.prototype.slice.call(document.querySelectorAll('.cbi-value'));
-		var enableRow = null;
-		var liteRow = null;
+		var enHidden = makeHidden('pushbot_enable', PB_val('pushbot_enable', '0'));
+		var liteVals = PB_val('lite_enable', []);
+		if (!Array.isArray(liteVals)) liteVals = typeof liteVals === 'string' ? (liteVals ? liteVals.split(' ') : []) : [];
 
-		rows.forEach(function(row) {
-			var title = row.querySelector('.cbi-value-title');
-			var text = title ? title.textContent : '';
-			if (!enableRow && /启用/.test(text)) {
-				enableRow = row;
-			}
-			if (!liteRow && /精简模式/.test(text)) {
-				liteRow = row;
-			}
+		var liteOpts = ['device', 'nowtime', 'content'];
+		liteOpts.forEach(function(v) {
+			if (liteVals.indexOf(v) >= 0) makeMultiHidden('lite_enable', v);
 		});
 
-		if (!enableRow || !liteRow) {
-			return;
-		}
-
-		var enableInput = enableRow.querySelector('input[type="checkbox"]');
-		var liteInputs = Array.prototype.slice.call(liteRow.querySelectorAll('input[type="checkbox"]'));
-		if (!enableInput || !liteInputs.length) {
-			return;
-		}
-
-		stashFormElements(enableRow);
-		stashFormElements(liteRow);
-
-		/* ── extra flags: 下载到内存, 重置流量, 开启日志 ── */
-		var extraFlagNames = ['oui_dir', 'reset_regularly', 'debuglevel'];
-		var extraFlagRows = [];
-		var extraFlagInputs = [];
-		extraFlagNames.forEach(function(name) {
-			var r = findRowByFieldName(name);
-			if (r) {
-				var inp = r.querySelector('input[type="checkbox"]');
-				if (inp) {
-					extraFlagRows.push(r);
-					extraFlagInputs.push(inp);
-					stashFormElements(r);
-				}
-			}
-		});
+		var extraFlags = ['oui_dir', 'reset_regularly', 'debuglevel'];
+		extraFlags.forEach(function(n) { makeHidden(n, PB_val(n, '0')); });
 
 		var card = document.createElement('div');
-		card.id = cardId;
+		card.id = 'pushbot_mode_card';
 		card.className = 'pushbot-mode-card';
 		card.innerHTML = [
 			'<div class="pushbot-card-top">',
@@ -968,174 +635,104 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 			'<div class="pushbot-card-subtitle">精简模式</div>',
 			'<div class="pushbot-choice-list">',
 				'<button type="button" class="pushbot-choice-button is-off" data-value="device">',
-					'<span class="pushbot-choice-icon">' + iconMap.device + '</span>',
+					'<span class="pushbot-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm2 3v10h12V7H6zm2 2h8v2H8V9zm0 4h5v2H8v-2z"/></svg></span>',
 					'<span class="pushbot-choice-label">精简当前设备列表</span>',
 				'</button>',
 				'<button type="button" class="pushbot-choice-button is-off" data-value="nowtime">',
-					'<span class="pushbot-choice-icon">' + iconMap.nowtime + '</span>',
+					'<span class="pushbot-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm1 4h-2v7l5.5 3.2 1-1.7-4.5-2.6V6z"/></svg></span>',
 					'<span class="pushbot-choice-label">精简当前时间</span>',
 				'</button>',
 				'<button type="button" class="pushbot-choice-button is-off" data-value="content">',
-					'<span class="pushbot-choice-icon">' + iconMap.content + '</span>',
+					'<span class="pushbot-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm2 3v2h10V7H7zm0 4v2h6v-2H7zm0 4v2h8v-2H7z"/></svg></span>',
 					'<span class="pushbot-choice-label">只推送标题</span>',
 				'</button>',
 			'</div>'
 		].join('');
 
 		var hc = document.querySelector('.pushbot-header-card');
-		if (hc && hc.parentNode) {
-			hc.parentNode.insertBefore(card, hc.nextSibling);
-		} else {
-			liteRow.parentNode.insertBefore(card, liteRow);
-		}
+		if (hc && hc.parentNode) hc.parentNode.insertBefore(card, hc.nextSibling);
+
+		var enEl = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.pushbot_enable"]');
+		var flagEls = extraFlags.map(function(n) { return hiddenBox.querySelector('[name="cbid.pushbot.pushbot.' + n + '"]'); });
 
 		var toggleButton = card.querySelector('.pushbot-toggle-button');
-		var choiceButtons = Array.prototype.slice.call(card.querySelectorAll('.pushbot-choice-button'));
-		var flagButtons = Array.prototype.slice.call(card.querySelectorAll('[data-flag]'));
+		var liteChoiceBtns = Array.prototype.slice.call(card.querySelectorAll('[data-value]'));
+		var flagChoiceBtns = Array.prototype.slice.call(card.querySelectorAll('[data-flag]'));
 
 		function syncState() {
-			var enabled = enableInput.checked;
+			var enabled = enEl.value === '1';
 			toggleButton.classList.toggle('is-on', enabled);
 			toggleButton.classList.toggle('is-off', !enabled);
 			toggleButton.querySelector('.pushbot-toggle-status').textContent = enabled ? '已启用' : '已禁用';
 
-			choiceButtons.forEach(function(button) {
-				var value = button.getAttribute('data-value');
-				var matched = liteInputs.filter(function(input) {
-					return input.value === value;
-				});
-				var active = matched.length > 0 && matched[0].checked;
-				button.classList.toggle('is-on', active);
-				button.classList.toggle('is-off', !active);
+			liteChoiceBtns.forEach(function(b) {
+				var v = b.getAttribute('data-value');
+				var h = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.lite_enable"][value="' + v + '"]');
+				var active = !!h;
+				b.className = 'pushbot-choice-button ' + (active ? 'is-on' : 'is-off');
 			});
 
-			flagButtons.forEach(function(button) {
-				var flag = button.getAttribute('data-flag');
-				var matched = extraFlagInputs.filter(function(inp) {
-					return inp.name.split('.').pop() === flag;
-				});
-				var active = matched.length > 0 && matched[0].checked;
-				button.classList.toggle('is-on', active);
-				button.classList.toggle('is-off', !active);
+			flagChoiceBtns.forEach(function(b) {
+				var n = b.getAttribute('data-flag');
+				var h = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.' + n + '"]');
+				var active = h && h.value === '1';
+				b.className = 'pushbot-choice-button ' + (active ? 'is-on' : 'is-off');
 			});
 		}
 
 		toggleButton.addEventListener('click', function(e) {
 			e.preventDefault();
-			enableInput.checked = !enableInput.checked;
+			enEl.value = enEl.value === '1' ? '0' : '1';
 			syncState();
 		});
 
-		choiceButtons.forEach(function(button) {
-			button.addEventListener('click', function(e) {
+		liteChoiceBtns.forEach(function(b) {
+			b.addEventListener('click', function(e) {
 				e.preventDefault();
-				var value = button.getAttribute('data-value');
-				var matched = liteInputs.filter(function(input) {
-					return input.value === value;
-				});
-				if (matched.length) {
-					matched[0].checked = !matched[0].checked;
-					syncState();
+				var v = b.getAttribute('data-value');
+				var h = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.lite_enable"][value="' + v + '"]');
+				if (h) {
+					h.parentNode.removeChild(h);
+				} else {
+					makeMultiHidden('lite_enable', v);
 				}
+				syncState();
 			});
 		});
 
-		flagButtons.forEach(function(button) {
-			button.addEventListener('click', function(e) {
+		flagChoiceBtns.forEach(function(b) {
+			b.addEventListener('click', function(e) {
 				e.preventDefault();
-				var flag = button.getAttribute('data-flag');
-				var matched = extraFlagInputs.filter(function(inp) {
-					return inp.name.split('.').pop() === flag;
-				});
-				if (matched.length) {
-					matched[0].checked = !matched[0].checked;
-					syncState();
-				}
+				var n = b.getAttribute('data-flag');
+				var h = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.' + n + '"]');
+				if (h) h.value = h.value === '1' ? '0' : '1';
+				syncState();
 			});
-		});
-
-		enableInput.addEventListener('change', syncState);
-		liteInputs.forEach(function(input) {
-			input.addEventListener('change', syncState);
-		});
-		extraFlagInputs.forEach(function(input) {
-			input.addEventListener('change', syncState);
 		});
 
 		syncState();
 	}
 
 	function initDisturbCard() {
-	if (document.getElementById('pushbot_disturb_card')) return;
-	if (!document.getElementById('pushbot_terminal_card')) {
+		if (document.getElementById('pushbot_disturb_card')) return;
+		if (!PB_CONFIG) { setTimeout(initDisturbCard, 200); return; }
+		if (!document.getElementById('pushbot_terminal_card')) {
 			setTimeout(initDisturbCard, 200);
 			return;
 		}
 
-		/* find rows by title text */
-		function frTitle(tag) {
-			var all = document.querySelectorAll('.cbi-value');
-			for (var xi = 0; xi < all.length; xi++) {
-				var t = all[xi].querySelector('.cbi-value-title');
-				if (t && t.textContent.indexOf(tag) >= 0) return all[xi];
-			}
-			return null;
-		}
-		var sheepRow = frTitle('免打扰时段');
-		var sheepSel = sheepRow ? sheepRow.querySelector('select') : null;
-		var startRow = frTitle('免打扰开始');
-		var startSel = startRow ? startRow.querySelector('select') : null;
-		var endRow = frTitle('免打扰结束');
-		var endSel = endRow ? endRow.querySelector('select') : null;
-		var mac1Row = frTitle('MAC过滤');
-		/* skip MAC过滤2 */
-		var allValRows = document.querySelectorAll('.cbi-value');
-		var mac1Found = false;
-		for (var xi2 = 0; xi2 < allValRows.length; xi2++) {
-			var t2 = allValRows[xi2].querySelector('.cbi-value-title');
-			if (t2 && t2.textContent.indexOf('MAC过滤') >= 0) {
-				if (!mac1Found) { mac1Row = allValRows[xi2]; mac1Found = true; }
-			}
-		}
-		var mac1Sel = mac1Row ? mac1Row.querySelector('select') : null;
-		var mac2Row = frTitle('MAC过滤2');
-		var mac2Sel = mac2Row ? mac2Row.querySelector('select') : null;
-		var wlRow = findRowByFieldName('pushbot_whitelist');
-		var blRow = findRowByFieldName('pushbot_blacklist');
-		var ifaceRow = findRowByFieldName('pushbot_interface');
-		var olRow = findRowByFieldName('MAC_online_list');
-		var oflRow = findRowByFieldName('MAC_offline_list');
-
-		if (!sheepRow || !sheepSel) { setTimeout(initDisturbCard, 300); return; }
-
-		/* stash select rows — selects go to hiddenBox */
-		[sheepRow, startRow, endRow, mac1Row, mac2Row].forEach(function(r) { if (r) stashFormElements(r); });
-
-		/* for conditional rows: save their inputs into a safe box, remove rows */
-		var macSafeBox = document.createElement('div');
-		macSafeBox.style.display = 'none';
-		macSafeBox.id = 'pushbot_mac_safe';
-		(document.querySelector('form') || document.body).appendChild(macSafeBox);
-		function saveWidget(row) {
-			if (!row) return null;
-			var w = row.querySelector('input') || row.querySelector('select') || row.querySelector('textarea');
-			if (w) macSafeBox.appendChild(w);
-			row.remove();
-			return w;
-		}
-		var ifWidget = saveWidget(ifaceRow);
-
-		var card = document.createElement('div');
-		card.id = 'pushbot_disturb_card';
-		card.className = 'pushbot-mode-card';
-		card.style.margin = '0 0 16px 0';
-
-		/* helper: hidden container for DynamicList — one hidden input per value */
-		/* append to hiddenBox (inside <form>) to ensure submission */
+		/* ── read config from PB_CONFIG (no CBI DOM) ── */
+		var sheepCur     = PB_val('pushbot_sheep', '');
+		var startCur     = PB_val('starttime', '0');
+		var endCur       = PB_val('endtime', '8');
+		var mac1Cur      = PB_val('macmechanism', '');
+		var mac2Cur      = PB_val('macmechanism2', '');
+		var ifaceCur     = PB_val('pushbot_interface', '');
+		/* hidden input container for DynamicList submission */
 		var macHiddenBox = document.createElement('div');
+		macHiddenBox.id = 'disturb_hidden_fields';
 		macHiddenBox.style.display = 'none';
-		var hf = document.getElementById('pushbot_hidden_fields') || document.querySelector('form');
-		(hf || document.body).appendChild(macHiddenBox);
+		(document.getElementById('pushbot_hidden_fields') || document.querySelector('form') || document.body || document.documentElement).appendChild(macHiddenBox);
 		function rebuildMacHidden(optionName, vals) {
 			var sel = '[name="cbid.pushbot.pushbot.' + optionName + '"]';
 			macHiddenBox.querySelectorAll(sel).forEach(function(el) { el.remove(); });
@@ -1148,317 +745,300 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 				macHiddenBox.appendChild(inp);
 			});
 		}
-		/* read ALL values from DynamicList rows before removing them */
-		function readAllVals(row) {
-			var vals = [];
-			if (!row) return vals;
-			row.querySelectorAll('input, select').forEach(function(el) {
-				if (el.value) vals.push(el.value);
-			});
-			return vals;
-		}
-		var _wl = readAllVals(wlRow); var wlVals = _wl.length > 0 ? _wl : (typeof PUSHBOT_WL !== 'undefined' ? PUSHBOT_WL : []);
-		var _bl = readAllVals(blRow); var blVals = _bl.length > 0 ? _bl : (typeof PUSHBOT_BL !== 'undefined' ? PUSHBOT_BL : []);
-		var _ol = readAllVals(olRow); var olVals = _ol.length > 0 ? _ol : (typeof PUSHBOT_OL !== 'undefined' ? PUSHBOT_OL : []);
-		var _ofl = readAllVals(oflRow); var oflVals = _ofl.length > 0 ? _ofl : (typeof PUSHBOT_OFL !== 'undefined' ? PUSHBOT_OFL : []);
-		/* then remove rows — our hidden inputs in macHiddenBox handle submission */
-		[wlRow, blRow, olRow, oflRow].forEach(function(r) { if (r) r.remove(); });
-		rebuildMacHidden('pushbot_whitelist', wlVals);
-		rebuildMacHidden('pushbot_blacklist', blVals);
-		rebuildMacHidden('MAC_online_list', olVals);
-		rebuildMacHidden('MAC_offline_list', oflVals);
 
-		/* ── helper: make a choice-list row from select options ── */
-		function makeChoiceList(sel, labelMap, onChange) {
-			var div = document.createElement('div');
-			div.className = 'pushbot-choice-list';
-			var btns = [];
-			for (var oi = 0; oi < sel.options.length; oi++) {
-				var opt = sel.options[oi];
-				var b = document.createElement('button');
-				b.type = 'button';
-				b.className = 'pushbot-choice-button';
-				b.textContent = labelMap[opt.value] || opt.text;
-				b.setAttribute('data-v', opt.value);
-				b.addEventListener('click', function(e) {
-					e.preventDefault();
-					sel.value = this.getAttribute('data-v');
-					btns.forEach(function(b2) { syncChoice(b2, sel); });
-					if (onChange) onChange();
-				});
-				btns.push(b);
-				div.appendChild(b);
-			}
-			function syncChoice(btn, s) {
-				var on = btn.getAttribute('data-v') === s.value;
-				btn.className = 'pushbot-choice-button ' + (on ? 'is-on' : 'is-off');
-			}
-			sel.addEventListener('change', function() { btns.forEach(function(b) { syncChoice(b, sel); }); if(onChange) onChange(); });
-			btns.forEach(function(b) { syncChoice(b, sel); });
-			return div;
-		}
-
+		var card = document.createElement('div');
+		card.id = 'pushbot_disturb_card';
+		card.className = 'pushbot-mode-card';
+		card.style.margin = '0 0 16px 0';
 		card.innerHTML = '<div class="pushbot-card-top"><span class="pushbot-card-title" style="font-size:16px;font-weight:800">免打扰</span></div>';
 
+		/* helper: choice buttons backed by hidden input */
+		function mkChoice(name, choices, labels, onChange) {
+			var hi = makeHidden(name, PB_val(name, ''));
+			var list = document.createElement('div');
+			list.className = 'pushbot-choice-list';
+			var btns = [];
+			choices.forEach(function(v) {
+				var b = document.createElement('button');
+				b.type = 'button';
+				var on = String(v) === String(hi.value);
+				b.className = 'pushbot-choice-button ' + (on ? 'is-on' : 'is-off');
+				b.textContent = (labels && labels[v] !== undefined) ? labels[v] : v;
+				b.addEventListener('click', function(e) {
+					e.preventDefault();
+					hi.value = v;
+					btns.forEach(function(b2) { b2.className = 'pushbot-choice-button ' + (b2 === b ? 'is-on' : 'is-off'); });
+					if (onChange) onChange(v);
+				});
+				btns.push(b);
+				list.appendChild(b);
+			});
+			return list;
+		}
+
 		/* ── 免打扰设置 ── */
-		var st = document.createElement('div');
-		st.className = 'pushbot-inline-title';
-		st.style.cssText = 'margin:8px 0 6px 2px;text-transform:none;font-size:13px';
-		st.textContent = '免打扰设置';
-		card.appendChild(st);
-		var sheepLabels = {'':'关闭','1':'模式一：脚本挂起','2':'模式二：静默模式'};
-		card.appendChild(makeChoiceList(sheepSel, sheepLabels, function() { renderTime(); }));
+		(function() {
+			var title = document.createElement('div');
+			title.className = 'pushbot-inline-title';
+			title.style.cssText = 'margin:8px 0 6px 2px;text-transform:none;font-size:13px';
+			title.textContent = '免打扰设置';
+			card.appendChild(title);
+			card.appendChild(mkChoice('pushbot_sheep', ['', '1', '2'],
+				{'':'关闭','1':'模式一：脚本挂起','2':'模式二：静默模式'},
+				function(v) {
+					var tw = document.getElementById('pm_dnd_time');
+					if (tw) tw.style.display = (v === '1' || v === '2') ? '' : 'none';
+				}
+			));
+		})();
 
 		/* ── 免打扰时间 ── */
-		var timeWrap = document.createElement('div');
-		timeWrap.id = 'pm_dnd_time';
-		var tt = document.createElement('div');
-		tt.className = 'pushbot-inline-title';
-		tt.style.cssText = 'margin:12px 0 6px 2px;text-transform:none;font-size:13px';
-		tt.textContent = '免打扰时间（每天）';
-		timeWrap.appendChild(tt);
-		var tr = document.createElement('div');
-		tr.style.cssText = 'display:flex;align-items:center;gap:10px;flex-wrap:wrap';
-		var stInp = document.createElement('input');
-		stInp.type = 'number'; stInp.min = 0; stInp.max = 23;
-		stInp.style.cssText = 'width:72px;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;text-align:center;background:rgba(255,255,255,0.7);color:inherit';
-		stInp.className = 'pushbot-dnd-input';
-		stInp.value = startSel ? startSel.value : '0';
-		stInp.addEventListener('change', function() { if (startSel) startSel.value = stInp.value; });
-		var dash = document.createElement('span');
-		dash.textContent = '—';
-		dash.style.cssText = 'font-size:16px;font-weight:700;color:#94a3b8';
-		var enInp = document.createElement('input');
-		enInp.type = 'number'; enInp.min = 0; enInp.max = 23;
-		enInp.style.cssText = 'width:72px;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;text-align:center;background:rgba(255,255,255,0.7);color:inherit';
-		enInp.className = 'pushbot-dnd-input';
-		enInp.value = endSel ? endSel.value : '8';
-		enInp.addEventListener('change', function() { if (endSel) endSel.value = enInp.value; });
-		tr.appendChild(stInp); tr.appendChild(dash); tr.appendChild(enInp);
-		timeWrap.appendChild(tr);
-		card.appendChild(timeWrap);
-
-		function renderTime() {
-			var show = sheepSel.value === '1' || sheepSel.value === '2';
-			timeWrap.style.display = show ? '' : 'none';
-		}
-		renderTime();
+		(function() {
+			var timeWrap = document.createElement('div');
+			timeWrap.id = 'pm_dnd_time';
+			timeWrap.style.display = (sheepCur === '1' || sheepCur === '2') ? '' : 'none';
+			var tt = document.createElement('div');
+			tt.className = 'pushbot-inline-title';
+			tt.style.cssText = 'margin:12px 0 6px 2px;text-transform:none;font-size:13px';
+			tt.textContent = '免打扰时间（每天）';
+			timeWrap.appendChild(tt);
+			var tr = document.createElement('div');
+			tr.style.cssText = 'display:flex;align-items:center;gap:10px;flex-wrap:wrap';
+			var stHi = makeHidden('starttime', startCur);
+			var enHi = makeHidden('endtime', endCur);
+			var stInp = document.createElement('input');
+			stInp.type = 'number'; stInp.min = 0; stInp.max = 23;
+			stInp.style.cssText = 'width:72px;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;text-align:center;background:rgba(255,255,255,0.7);color:inherit';
+			stInp.value = startCur;
+			stInp.addEventListener('change', function() { stHi.value = this.value; });
+			var dash = document.createElement('span');
+			dash.textContent = '—';
+			dash.style.cssText = 'font-size:16px;font-weight:700;color:#94a3b8';
+			var enInp = document.createElement('input');
+			enInp.type = 'number'; enInp.min = 0; enInp.max = 23;
+			enInp.style.cssText = 'width:72px;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;text-align:center;background:rgba(255,255,255,0.7);color:inherit';
+			enInp.value = endCur;
+			enInp.addEventListener('change', function() { enHi.value = this.value; });
+			tr.appendChild(stInp); tr.appendChild(dash); tr.appendChild(enInp);
+			timeWrap.appendChild(tr);
+			card.appendChild(timeWrap);
+		})();
 
 		/* ── MAC 过滤 1 ── */
-		var m1t = document.createElement('div');
-		m1t.className = 'pushbot-inline-title';
-		m1t.style.cssText = 'margin:14px 0 6px 2px;text-transform:none;font-size:13px';
-		m1t.textContent = 'MAC 过滤';
-		card.appendChild(m1t);
-		if (mac1Sel) {
-			var mac1Labels = {'':'禁用','allow':'忽略列表内设备','block':'仅通知列表内设备','interface':'仅通知此接口设备'};
-			card.appendChild(makeChoiceList(mac1Sel, mac1Labels, function() { renderMac1(); }));
-		}
+		(function() {
+			var title = document.createElement('div');
+			title.className = 'pushbot-inline-title';
+			title.style.cssText = 'margin:14px 0 6px 2px;text-transform:none;font-size:13px';
+			title.textContent = 'MAC 过滤';
+			card.appendChild(title);
+			card.appendChild(mkChoice('macmechanism', ['', 'allow', 'block', 'interface'],
+				{'':'禁用','allow':'忽略列表内设备','block':'仅通知列表内设备','interface':'仅通知此接口设备'},
+				function(v) { renderMac1(v); }
+			));
 
-		/* ── MAC 1 conditional ── */
-		var mac1Body = document.createElement('div');
-		mac1Body.id = 'pm_mac1_body';
-		card.appendChild(mac1Body);
-		function makeMacTagField(optionName, tag, container) {
-			var t = document.createElement('div');
-			t.className = 'pushbot-inline-title';
-			t.style.cssText = 'margin:10px 0 4px 2px;text-transform:none;font-size:12px;color:#64748b';
-			t.textContent = tag;
-			container.appendChild(t);
+			var mac1Body = document.createElement('div');
+			mac1Body.id = 'pm_mac1_body';
+			card.appendChild(mac1Body);
 
-			var box = document.createElement('div');
-			box.className = 'pushbot-inline-field';
-			box.style.cssText = 'padding:10px 12px;margin:0';
-
-			var row = document.createElement('div');
-			row.style.cssText = 'display:flex;gap:8px;align-items:center';
-			var inp = document.createElement('input');
-			inp.type = 'text';
-			inp.placeholder = 'XX:XX:XX:XX:XX:XX';
-			inp.style.cssText = 'flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
-			/* datalist for MAC hints */
-			var listId = 'mh_' + optionName;
-			inp.setAttribute('list', listId);
-			var dlist = document.createElement('datalist');
-			dlist.id = listId;
-			if (typeof PUSHBOT_MAC_HINTS !== 'undefined') {
-				PUSHBOT_MAC_HINTS.forEach(function(h) {
-					var o = document.createElement('option');
-					o.value = h.m;
-					o.textContent = h.n ? h.m + ' (' + h.n + ')' : h.m;
-					dlist.appendChild(o);
-				});
-			}
-			row.appendChild(inp);
-			row.appendChild(dlist);
-
-			var addBtn = document.createElement('button');
-			addBtn.type = 'button';
-			addBtn.textContent = '添加';
-			addBtn.className = 'pushbot-choice-button is-on';
-			addBtn.style.cssText = 'padding:7px 14px;font-size:12px';
-			row.appendChild(addBtn);
-			box.appendChild(row);
-
-			var tagC = document.createElement('div');
-			tagC.className = 'pushbot-alias-tags';
-			tagC.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:8px';
-			box.appendChild(tagC);
-
-			function sync() {
-				var vals = [];
-				tagC.querySelectorAll('.pushbot-alias-tag').forEach(function(el) {
-					var txt = el.textContent.replace('✕', '').trim();
-					if (txt) vals.push(txt);
-				});
-				rebuildMacHidden(optionName, vals);
-			}
-			function addTag(text) {
-				if (!text) return;
-				var el = document.createElement('span');
-				el.className = 'pushbot-alias-tag';
-				el.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;font-size:12px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25);color:inherit';
-				el.textContent = text;
-				var del = document.createElement('button');
-				del.type = 'button';
-				del.innerHTML = '✕';
-				del.style.cssText = 'border:none;background:none;cursor:pointer;font-size:12px;color:#94a3b8;padding:0 2px';
-				del.title = '移除';
-				del.addEventListener('click', function(e) { e.preventDefault(); el.remove(); sync(); });
-				el.appendChild(del);
-				tagC.appendChild(el);
-				sync();
-			}
-			addBtn.addEventListener('click', function(e) {
-				e.preventDefault();
-				var val = inp.value.trim(); if (val) { addTag(val); inp.value = ''; }
-			});
-			inp.addEventListener('keydown', function(e) {
-				if (e.key === 'Enter') { e.preventDefault(); var val = inp.value.trim(); if (val) { addTag(val); inp.value = ''; } }
-			});
-
-			/* load existing values — fallback to server-side injected data */
-			var existing = [];
-			macHiddenBox.querySelectorAll('[name="cbid.pushbot.pushbot.' + optionName + '"]').forEach(function(el) {
-				if (el.value) existing.push(el.value);
-			});
-			if (existing.length === 0) {
-				var svr = {
-					pushbot_whitelist: typeof PUSHBOT_WL !== 'undefined' ? PUSHBOT_WL : [],
-					pushbot_blacklist: typeof PUSHBOT_BL !== 'undefined' ? PUSHBOT_BL : [],
-					MAC_online_list: typeof PUSHBOT_OL !== 'undefined' ? PUSHBOT_OL : [],
-					MAC_offline_list: typeof PUSHBOT_OFL !== 'undefined' ? PUSHBOT_OFL : []
-				};
-				existing = svr[optionName] || [];
-				if (existing.length > 0) rebuildMacHidden(optionName, existing);
-			}
-			existing.forEach(function(v) { if (v) addTag(v); });
-
-			container.appendChild(box);
-		}
-
-		function renderMac1() {
-			mac1Body.innerHTML = '';
-			var v = mac1Sel ? mac1Sel.value : '';
-			if (v === 'allow') makeMacTagField('pushbot_whitelist', '忽略列表', mac1Body);
-			if (v === 'block') makeMacTagField('pushbot_blacklist', '关注列表', mac1Body);
-			if (v === 'interface') {
+			function makeTagField(opt, tag) {
 				var t = document.createElement('div');
 				t.className = 'pushbot-inline-title';
 				t.style.cssText = 'margin:10px 0 4px 2px;text-transform:none;font-size:12px;color:#64748b';
-				t.textContent = '接口名称';
+				t.textContent = tag;
 				mac1Body.appendChild(t);
-				/* use ifWidget if found, else find any interface select in DOM */
-				var srcSel = ifWidget;
-				if (!srcSel || !srcSel.options || srcSel.options.length === 0) {
-					var allSels = document.querySelectorAll('select[name$=".ipv4_interface"], select[name$=".pushbot_interface"]');
-					for (var si = 0; si < allSels.length; si++) {
-						if (allSels[si].options && allSels[si].options.length > 0) {
-							srcSel = allSels[si]; break;
-						}
-					}
-					/* if still not a valid select, force fallback */
-					if (!srcSel || !srcSel.options || srcSel.options.length === 0) { srcSel = null; }
+				var box = document.createElement('div');
+				box.className = 'pushbot-inline-field';
+				box.style.cssText = 'padding:10px 12px;margin:0';
+				var row = document.createElement('div');
+				row.style.cssText = 'display:flex;gap:8px;align-items:center';
+				var inp = document.createElement('input');
+				inp.type = 'text'; inp.placeholder = 'XX:XX:XX:XX:XX:XX';
+				inp.style.cssText = 'flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+				var dlId = 'mh_' + opt;
+				inp.setAttribute('list', dlId);
+				var dlist = document.createElement('datalist');
+				dlist.id = dlId;
+				PB_sys('mac_hints').forEach(function(h) {
+					var o = document.createElement('option');
+					o.value = h.m; o.textContent = h.n ? h.m + ' (' + h.n + ')' : h.m;
+					dlist.appendChild(o);
+				});
+				row.appendChild(inp); row.appendChild(dlist);
+				var addBtn = document.createElement('button');
+				addBtn.type = 'button'; addBtn.textContent = '添加';
+				addBtn.className = 'pushbot-choice-button is-on';
+				addBtn.style.cssText = 'padding:7px 14px;font-size:12px';
+				row.appendChild(addBtn);
+				box.appendChild(row);
+				var tagC = document.createElement('div');
+				tagC.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:8px';
+				box.appendChild(tagC);
+				function sync() {
+					var vals = [];
+					tagC.querySelectorAll('[data-mactag]').forEach(function(el) {
+						var txt = el.getAttribute('data-mactag');
+						if (txt) vals.push(txt);
+					});
+					rebuildMacHidden(opt, vals);
 				}
-				/* disable the stashed original widget so only our hidden input submits */
-				if (ifWidget) { ifWidget.name = ''; }
-				var sel = document.createElement('select');
-				sel.style.cssText = 'width:100%;padding:7px;border-radius:8px;border:1px solid rgba(148,163,184,0.3)';
-				/* ensure form submission — add hidden fallback input */
-				var hiddenIf = document.createElement('input');
-				hiddenIf.type = 'hidden';
-				hiddenIf.name = 'cbid.pushbot.pushbot.pushbot_interface';
-				hiddenIf.value = '';
-				if (srcSel) {
-					for (var oi = 0; oi < srcSel.options.length; oi++) {
-						var opt = document.createElement('option');
-						opt.value = srcSel.options[oi].value;
-						opt.textContent = srcSel.options[oi].text;
-						if (srcSel.options[oi].selected) {
-							opt.selected = true;
-							hiddenIf.value = srcSel.options[oi].value;
-						}
-						sel.appendChild(opt);
-					}
-				} else {
-					/* fallback: use CT_IFACES from template for dropdown */
-					if (typeof CT_IFACES !== 'undefined' && CT_IFACES.length > 0) {
-						CT_IFACES.forEach(function(f) {
+				function addTag(text) {
+					if (!text) return;
+					var el = document.createElement('span');
+					el.className = 'pushbot-alias-tag';
+					el.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;font-size:12px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25);color:inherit';
+					el.textContent = text; el.setAttribute('data-mactag', text);
+					var del = document.createElement('button');
+					del.type = 'button'; del.innerHTML = '✕';
+					del.style.cssText = 'border:none;background:none;cursor:pointer;font-size:12px;color:#94a3b8;padding:0 2px';
+					del.addEventListener('click', function(e) { e.preventDefault(); el.remove(); sync(); });
+					el.appendChild(del);
+					tagC.appendChild(el);
+					sync();
+				}
+				addBtn.addEventListener('click', function(e) {
+					e.preventDefault();
+					var val = inp.value.trim(); if (val) { addTag(val); inp.value = ''; }
+				});
+				inp.addEventListener('keydown', function(e) {
+					if (e.key === 'Enter') { e.preventDefault(); var val = inp.value.trim(); if (val) { addTag(val); inp.value = ''; } }
+				});
+				var existing = PB_list(opt);
+				if (existing.length > 0) {
+					rebuildMacHidden(opt, existing);
+					existing.forEach(function(v) { if (v) addTag(v); });
+				}
+				mac1Body.appendChild(box);
+			}
+
+			function renderMac1(v) {
+				mac1Body.innerHTML = '';
+				if (v === 'allow') makeTagField('pushbot_whitelist', '忽略列表');
+				if (v === 'block') makeTagField('pushbot_blacklist', '关注列表');
+				if (v === 'interface') {
+					var t = document.createElement('div');
+					t.className = 'pushbot-inline-title';
+					t.style.cssText = 'margin:10px 0 4px 2px;text-transform:none;font-size:12px;color:#64748b';
+					t.textContent = '接口名称';
+					mac1Body.appendChild(t);
+					var ifaces = PB_sys('ifaces');
+					var hi = makeHidden('pushbot_interface', ifaceCur);
+					if (ifaces.length > 0) {
+						var sel = document.createElement('select');
+						sel.style.cssText = 'width:100%;padding:7px;border-radius:8px;border:1px solid rgba(148,163,184,0.3)';
+						ifaces.forEach(function(f) {
 							var opt = document.createElement('option');
 							opt.value = f; opt.textContent = f;
+							if (f === ifaceCur) { opt.selected = true; hi.value = f; }
 							sel.appendChild(opt);
 						});
-						/* set initial value from UCI if available */
-						if (ifWidget) {
-							for (var oi2 = 0; oi2 < sel.options.length; oi2++) {
-								if (sel.options[oi2].value === ifWidget.value) {
-									sel.options[oi2].selected = true;
-									hiddenIf.value = ifWidget.value;
-								}
-							}
-						}
+						sel.addEventListener('change', function() { hi.value = this.value; });
+						mac1Body.appendChild(sel);
 					} else {
-						/* last resort: text input */
 						var inp = document.createElement('input');
-						inp.type = 'text';
-						inp.placeholder = 'br-lan';
+						inp.type = 'text'; inp.placeholder = 'br-lan';
 						inp.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit';
-						sel = inp;
+						inp.value = ifaceCur;
+						inp.addEventListener('change', function() { hi.value = this.value; });
+						mac1Body.appendChild(inp);
 					}
 				}
-				sel.addEventListener('change', function() {
-					var val = this.value;
-					hiddenIf.value = val;
-					if (ifWidget) ifWidget.value = val;
-				});
-				mac1Body.appendChild(sel);
-				mac1Body.appendChild(hiddenIf);
 			}
-		}
-		renderMac1();
+			renderMac1(mac1Cur);
+		})();
 
 		/* ── MAC 过滤 2 ── */
-		var m2t = document.createElement('div');
-		m2t.className = 'pushbot-inline-title';
-		m2t.style.cssText = 'margin:14px 0 6px 2px;text-transform:none;font-size:13px';
-		m2t.textContent = 'MAC 过滤 2';
-		card.appendChild(m2t);
-		if (mac2Sel) {
-			var mac2Labels = {'':'禁用','MAC_online':'列表内任意设备在线时免打扰','MAC_offline':'列表内设备都离线后免打扰'};
-			card.appendChild(makeChoiceList(mac2Sel, mac2Labels, function() { renderMac2(); }));
-		}
+		(function() {
+			var title = document.createElement('div');
+			title.className = 'pushbot-inline-title';
+			title.style.cssText = 'margin:14px 0 6px 2px;text-transform:none;font-size:13px';
+			title.textContent = 'MAC 过滤 2';
+			card.appendChild(title);
+			card.appendChild(mkChoice('macmechanism2', ['', 'MAC_online', 'MAC_offline'],
+				{'':'禁用','MAC_online':'列表内任意设备在线时免打扰','MAC_offline':'列表内设备都离线后免打扰'},
+				function(v) { renderMac2(v); }
+			));
 
-		/* ── MAC 2 conditional ── */
-		var mac2Body = document.createElement('div');
-		mac2Body.id = 'pm_mac2_body';
-		card.appendChild(mac2Body);
-		function renderMac2() {
-			mac2Body.innerHTML = '';
-			var v = mac2Sel ? mac2Sel.value : '';
-			if (v === 'MAC_online') makeMacTagField('MAC_online_list', '在线免打扰列表', mac2Body);
-			if (v === 'MAC_offline') makeMacTagField('MAC_offline_list', '任意离线免打扰列表', mac2Body);
-		}
-		renderMac2();
+			var mac2Body = document.createElement('div');
+			mac2Body.id = 'pm_mac2_body';
+			card.appendChild(mac2Body);
+
+			function makeTagField(opt, tag) {
+				var t = document.createElement('div');
+				t.className = 'pushbot-inline-title';
+				t.style.cssText = 'margin:10px 0 4px 2px;text-transform:none;font-size:12px;color:#64748b';
+				t.textContent = tag;
+				mac2Body.appendChild(t);
+				var box = document.createElement('div');
+				box.className = 'pushbot-inline-field';
+				box.style.cssText = 'padding:10px 12px;margin:0';
+				var row = document.createElement('div');
+				row.style.cssText = 'display:flex;gap:8px;align-items:center';
+				var inp = document.createElement('input');
+				inp.type = 'text'; inp.placeholder = 'XX:XX:XX:XX:XX:XX';
+				inp.style.cssText = 'flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+				var dlId = 'mh_' + opt;
+				inp.setAttribute('list', dlId);
+				var dlist = document.createElement('datalist');
+				dlist.id = dlId;
+				PB_sys('mac_hints').forEach(function(h) {
+					var o = document.createElement('option');
+					o.value = h.m; o.textContent = h.n ? h.m + ' (' + h.n + ')' : h.m;
+					dlist.appendChild(o);
+				});
+				row.appendChild(inp); row.appendChild(dlist);
+				var addBtn = document.createElement('button');
+				addBtn.type = 'button'; addBtn.textContent = '添加';
+				addBtn.className = 'pushbot-choice-button is-on';
+				addBtn.style.cssText = 'padding:7px 14px;font-size:12px';
+				row.appendChild(addBtn);
+				box.appendChild(row);
+				var tagC = document.createElement('div');
+				tagC.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:8px';
+				box.appendChild(tagC);
+				function sync() {
+					var vals = [];
+					tagC.querySelectorAll('[data-mactag]').forEach(function(el) {
+						var txt = el.getAttribute('data-mactag');
+						if (txt) vals.push(txt);
+					});
+					rebuildMacHidden(opt, vals);
+				}
+				function addTag(text) {
+					if (!text) return;
+					var el = document.createElement('span');
+					el.className = 'pushbot-alias-tag';
+					el.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;font-size:12px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25);color:inherit';
+					el.textContent = text; el.setAttribute('data-mactag', text);
+					var del = document.createElement('button');
+					del.type = 'button'; del.innerHTML = '✕';
+					del.style.cssText = 'border:none;background:none;cursor:pointer;font-size:12px;color:#94a3b8;padding:0 2px';
+					del.addEventListener('click', function(e) { e.preventDefault(); el.remove(); sync(); });
+					el.appendChild(del);
+					tagC.appendChild(el);
+					sync();
+				}
+				addBtn.addEventListener('click', function(e) {
+					e.preventDefault();
+					var val = inp.value.trim(); if (val) { addTag(val); inp.value = ''; }
+				});
+				inp.addEventListener('keydown', function(e) {
+					if (e.key === 'Enter') { e.preventDefault(); var val = inp.value.trim(); if (val) { addTag(val); inp.value = ''; } }
+				});
+				var existing = PB_list(opt);
+				if (existing.length > 0) {
+					rebuildMacHidden(opt, existing);
+					existing.forEach(function(v) { if (v) addTag(v); });
+				}
+				mac2Body.appendChild(box);
+			}
+
+			function renderMac2(v) {
+				mac2Body.innerHTML = '';
+				if (v === 'MAC_online') makeTagField('MAC_online_list', '在线免打扰列表');
+				if (v === 'MAC_offline') makeTagField('MAC_offline_list', '任意离线免打扰列表');
+			}
+			renderMac2(mac2Cur);
+		})();
 
 		/* insert after terminal card */
 		var termCard = document.getElementById('pushbot_terminal_card');
@@ -1473,11 +1053,11 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 	window.addEventListener('load', initTerminalCard);
 	window.addEventListener('load', initDisturbCard);
 	window.addEventListener('load', initModernTabs);
-	setTimeout(initCard, 500);
-	setTimeout(initPushModeCard, 500);
-	setTimeout(initTerminalCard, 550);
-	setTimeout(initDisturbCard, 600);
-	setTimeout(initModernTabs, 650);
+	setTimeout(function(){try{initCard();}catch(e){console.error('initCard:',e);}}, 500);
+	setTimeout(function(){try{initPushModeCard();}catch(e){console.error('initPushModeCard:',e);}}, 500);
+	setTimeout(function(){try{initTerminalCard();}catch(e){console.error('initTerminalCard:',e);}}, 550);
+	setTimeout(function(){try{initDisturbCard();}catch(e){console.error('initDisturbCard:',e);}}, 600);
+	setTimeout(function(){try{initModernTabs();}catch(e){console.error('initModernTabs:',e);}}, 650);
 	/* also try direct call if DOM ready, but guard against errors */
 	if (document.readyState !== 'loading') {
 		try { initCard(); } catch(e) {}
@@ -1486,64 +1066,26 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 	/* ── initScheduledPushCard inside IIFE to access helper functions ── */
 	function initScheduledPushCard() {
 	if (document.getElementById('pushbot_scheduled_card')) return;
+	if (!PB_CONFIG) { setTimeout(initScheduledPushCard, 200); return; }
+	var pane = document.getElementById('pushbot_pane_scheduled');
+	if (!pane) { setTimeout(initScheduledPushCard, 150); return; }
 
-	/* find original rows */
-	var crontabRow = findRowByFieldName('crontab');
-	var crontabSel = crontabRow ? crontabRow.querySelector('select') : null;
-	if (!crontabRow || !crontabSel) { setTimeout(initScheduledPushCard, 300); return; }
+	var crontab = PB_val('crontab', '');
+	var regular_time = PB_val('regular_time', '8');
+	var regular_time_2 = PB_val('regular_time_2', '');
+	var regular_time_3 = PB_val('regular_time_3', '');
+	var interval_time = PB_val('interval_time', '6');
+	var send_title = PB_val('send_title', '');
+	var router_status = PB_bool('router_status');
+	var router_temp = PB_bool('router_temp');
+	var router_wan = PB_bool('router_wan');
+	var client_list = PB_bool('client_list');
+	var google_check_timeout = PB_val('google_check_timeout', '10');
 
-	var reg1Row = findRowByFieldName('regular_time');
-	var reg1Sel = reg1Row ? reg1Row.querySelector('select') : null;
-	var reg2Row = findRowByFieldName('regular_time_2');
-	var reg2Sel = reg2Row ? reg2Row.querySelector('select') : null;
-	var reg3Row = findRowByFieldName('regular_time_3');
-	var reg3Sel = reg3Row ? reg3Row.querySelector('select') : null;
-	var intervalRow = findRowByFieldName('interval_time');
-	var intervalSel = intervalRow ? intervalRow.querySelector('select') : null;
-	var titleRow = findRowByFieldName('send_title');
-	var titleInp = titleRow ? titleRow.querySelector('input') : null;
-	var titleDesc = titleRow ? titleRow.querySelector('.cbi-value-description') : null;
-	var googleRow = findRowByFieldName('google_check_timeout');
-	var googleInp = googleRow ? googleRow.querySelector('input') : null;
-	var googleDesc = googleRow ? googleRow.querySelector('.cbi-value-description') : null;
-	var sendBtnRow = findRowByFieldName('手动发送');
-	var sendBtn = sendBtnRow ? sendBtnRow.querySelector('.cbi-button') : null;
-
-	/* find flag rows by title text */
-	function frTitle(tag) {
-		var all = document.querySelectorAll('.cbi-value');
-		for (var xi = 0; xi < all.length; xi++) {
-			var t = all[xi].querySelector('.cbi-value-title');
-			if (t && t.textContent.indexOf(tag) >= 0) return all[xi];
-		}
-		return null;
-	}
-	var statusRow = frTitle('系统运行情况');
-	var statusCb = statusRow ? statusRow.querySelector('input[type="checkbox"]') : null;
-	var tempRow = frTitle('设备温度');
-	var tempCb = tempRow ? tempRow.querySelector('input[type="checkbox"]') : null;
-	var wanRow = frTitle('WAN信息');
-	var wanCb = wanRow ? wanRow.querySelector('input[type="checkbox"]') : null;
-	var clientRow = frTitle('客户端列表');
-	var clientCb = clientRow ? clientRow.querySelector('input[type="checkbox"]') : null;
-
-	/* stash rows */
-	stashFormElements(crontabRow);
-	if (reg1Row) stashFormElements(reg1Row);
-	if (reg2Row) stashFormElements(reg2Row);
-	if (reg3Row) stashFormElements(reg3Row);
-	if (intervalRow) stashFormElements(intervalRow);
-	if (titleRow) stashFormElements(titleRow);
-	if (googleRow) stashFormElements(googleRow);
-	if (sendBtnRow) stashFormElements(sendBtnRow);
-	[statusRow, tempRow, wanRow, clientRow].forEach(function(r) { if (r) stashFormElements(r); });
-
-	/* ── build card ── */
 	var card = document.createElement('div');
 	card.id = 'pushbot_scheduled_card';
 	card.className = 'pushbot-mode-card';
 
-	/* header */
 	var header = document.createElement('div');
 	header.className = 'pushbot-card-top';
 	header.innerHTML = '<span class="pushbot-card-title" style="font-size:16px;font-weight:800">定时推送</span>';
@@ -1556,288 +1098,189 @@ var CT_IP_BLACK='<%=js_s(c_ip_black_val)%>';
 	taskTitle.textContent = '定时任务设定';
 	card.appendChild(taskTitle);
 
-	var crontabLabels = {'': '关闭', '1': '定时发送', '2': '间隔发送'};
-	var crontabList = document.createElement('div');
-	crontabList.className = 'pushbot-choice-list';
-
-	var crontabBtns = [];
-	var crontabOpts = [];
-	for (var oi = 0; oi < crontabSel.options.length; oi++) {
-		var opt = crontabSel.options[oi];
-		crontabOpts.push({ v: opt.value, l: crontabLabels[opt.value] || opt.text });
-	}
-	crontabOpts.forEach(function(o) {
-		var b = document.createElement('button');
-		b.type = 'button';
-		b.className = 'pushbot-choice-button';
-		b.textContent = o.l;
-		b.setAttribute('data-v', o.v);
-		b.addEventListener('click', function(e) {
-			e.preventDefault();
-			crontabSel.value = o.v;
-			syncCrontab();
-			renderCrontabContent();
-		});
-		crontabBtns.push(b);
-		crontabList.appendChild(b);
+	var crHi = makeHidden('crontab', crontab);
+	var crOpts = [{v:'',l:'关闭'},{v:'1',l:'定时发送'},{v:'2',l:'间隔发送'}];
+	var crCur = crontab;
+	var crList = document.createElement('div');
+	crList.className = 'pushbot-choice-list';
+	var crBtns = [];
+	crOpts.forEach(function(o){
+		var b=document.createElement('button');b.type='button';b.className='pushbot-choice-button';
+		b.textContent=o.l;b.setAttribute('data-v',o.v);
+		if(o.v===crCur)b.className+=' is-on';
+		b.addEventListener('click',function(e){
+			e.preventDefault();crCur=o.v;crHi.value=o.v;
+			crBtns.forEach(function(b2){b2.className='pushbot-choice-button'+(b2.getAttribute('data-v')===crCur?' is-on':'');});
+			renderScheduledContent();
+		});crBtns.push(b);crList.appendChild(b);
 	});
-	function syncCrontab() {
-		crontabBtns.forEach(function(b) {
-			var on = b.getAttribute('data-v') === crontabSel.value;
-			b.className = 'pushbot-choice-button ' + (on ? 'is-on' : 'is-off');
-		});
-	}
-	crontabSel.addEventListener('change', function() { syncCrontab(); renderCrontabContent(); });
-	syncCrontab();
-	card.appendChild(crontabList);
+	card.appendChild(crList);
 
-	/* ── conditional content container ── */
+	/* ── conditional content ── */
 	var contentBody = document.createElement('div');
 	contentBody.id = 'sp_content_body';
 	card.appendChild(contentBody);
 
-	function renderCrontabContent() {
+	function hourOpts(includeClose) {
+		var a = [];
+		if (includeClose) a.push({v:'',l:'关闭'});
+		for (var t=0;t<=23;t++) a.push({v:String(t),l:'每天'+t+'点'});
+		return a;
+	}
+
+	function mkTxtS(opt, label, val, desc) {
+		var w=document.createElement('div');w.className='pushbot-inline-field';w.style.cssText='margin:4px 0';
+		var t=document.createElement('div');t.className='pushbot-inline-title';
+		t.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+		t.textContent=label;w.appendChild(t);
+		var b=document.createElement('div');b.className='pushbot-inline-body';
+		var inp=document.createElement('input');inp.type='text';inp.className='cbi-input-text';inp.value=val;
+		inp.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit';
+		var hi=makeHidden(opt,val);
+		inp.addEventListener('change',function(){hi.value=this.value;});
+		b.appendChild(inp);
+		if(desc){var d=document.createElement('div');d.className='pushbot-inline-description';d.innerHTML=desc;b.appendChild(d);}
+		w.appendChild(b);return w;
+	}
+	function mkSelS(opt, label, val, opts, desc) {
+		var w=document.createElement('div');w.className='pushbot-inline-field';w.style.cssText='margin:4px 0';
+		var t=document.createElement('div');t.className='pushbot-inline-title';
+		t.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+		t.textContent=label;w.appendChild(t);
+		var b=document.createElement('div');b.className='pushbot-inline-body';
+		var sel=document.createElement('select');sel.className='cbi-input-select';
+		sel.style.cssText='width:100%;padding:6px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+		opts.forEach(function(o){var op=document.createElement('option');op.value=o.v;op.textContent=o.l;if(o.v===val)op.selected=true;sel.appendChild(op);});
+		var hi=makeHidden(opt,val);
+		sel.addEventListener('change',function(){hi.value=this.value;});
+		b.appendChild(sel);
+		if(desc){var d=document.createElement('div');d.className='pushbot-inline-description';d.innerHTML=desc;b.appendChild(d);}
+		w.appendChild(b);return w;
+	}
+
+	function renderScheduledContent() {
 		contentBody.innerHTML = '';
-		var mode = crontabSel.value;
+		var mode = crCur;
+		if (mode === '' || mode === null) return;
 
-		if (mode === '' || mode === null) return; /* 关闭, no content */
-
-		/* ── time settings ── */
+		/* ── time selectors ── */
 		if (mode === '1') {
-			/* 定时发送 - three time selectors */
-			var timeTitle = document.createElement('div');
-			timeTitle.className = 'pushbot-inline-title';
-			timeTitle.style.cssText = 'margin:12px 0 6px 2px;text-transform:none;font-size:13px';
-			timeTitle.textContent = '发送时间';
-			contentBody.appendChild(timeTitle);
-
-			var timeRow = document.createElement('div');
-			timeRow.style.cssText = 'display:flex;gap:12px;flex-wrap:wrap';
-
-			/* helper to make hour selector */
-			function makeHourSelect(origSel, label) {
-				var wrap = document.createElement('div');
-				wrap.style.cssText = 'flex:1;min-width:120px';
-				var lbl = document.createElement('div');
-				lbl.className = 'pushbot-inline-title';
-				lbl.style.cssText = 'text-transform:none;font-size:12px;margin-bottom:4px';
-				lbl.textContent = label;
-				wrap.appendChild(lbl);
-
-				var sel = document.createElement('select');
-				sel.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit;font-family:inherit';
-				/* build options 0-23 + 关闭 for time 2,3 */
-				if (origSel) {
-					for (var hi = 0; hi < origSel.options.length; hi++) {
-						var o = document.createElement('option');
-						o.value = origSel.options[hi].value;
-						o.textContent = origSel.options[hi].textContent;
-						if (origSel.options[hi].selected) o.selected = true;
-						sel.appendChild(o);
-					}
-				} else {
-					/* when origSel not found, include 关闭 for time_2 and time_3 */
-					if (label !== '时间一') {
-						var oc = document.createElement('option');
-						oc.value = '';
-						oc.textContent = '关闭';
-						sel.appendChild(oc);
-					}
-					for (var hi = 0; hi <= 23; hi++) {
-						var o = document.createElement('option');
-						o.value = hi;
-						o.textContent = '每天' + hi + '点';
-						sel.appendChild(o);
-					}
-				}
-				sel.addEventListener('change', function() {
-					if (origSel) origSel.value = this.value;
-				});
-				wrap.appendChild(sel);
-				return wrap;
-			}
-
-			timeRow.appendChild(makeHourSelect(reg1Sel, '时间一'));
-			timeRow.appendChild(makeHourSelect(reg2Sel, '时间二'));
-			timeRow.appendChild(makeHourSelect(reg3Sel, '时间三'));
-			contentBody.appendChild(timeRow);
+			var ttl = document.createElement('div');
+			ttl.className = 'pushbot-inline-title';
+			ttl.style.cssText = 'margin:12px 0 6px 2px;text-transform:none;font-size:13px';
+			ttl.textContent = '发送时间';
+			contentBody.appendChild(ttl);
+			var tr = document.createElement('div');
+			tr.style.cssText = 'display:flex;gap:12px;flex-wrap:wrap';
+			tr.appendChild(mkSelS('regular_time','时间一', regular_time, hourOpts(false)));
+			tr.appendChild(mkSelS('regular_time_2','时间二', regular_time_2, hourOpts(true)));
+			tr.appendChild(mkSelS('regular_time_3','时间三', regular_time_3, hourOpts(true)));
+			contentBody.appendChild(tr);
 		}
 
 		if (mode === '2') {
-			/* 间隔发送 */
-			var intTitle = document.createElement('div');
-			intTitle.className = 'pushbot-inline-title';
-			intTitle.style.cssText = 'margin:12px 0 6px 2px;text-transform:none;font-size:13px';
-			intTitle.textContent = '发送间隔';
-			contentBody.appendChild(intTitle);
-
-			var intWrap = document.createElement('div');
-			intWrap.className = 'pushbot-inline-field';
-			intWrap.style.cssText = 'margin:0';
-			var intSel = document.createElement('select');
-			intSel.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit;font-family:inherit';
-			if (intervalSel) {
-				for (var hi = 0; hi < intervalSel.options.length; hi++) {
-					var o = document.createElement('option');
-					o.value = intervalSel.options[hi].value;
-					o.textContent = intervalSel.options[hi].textContent;
-					if (intervalSel.options[hi].selected) o.selected = true;
-					intSel.appendChild(o);
-				}
-				intSel.addEventListener('change', function() { intervalSel.value = this.value; });
-			} else {
-				for (var hi = 1; hi <= 23; hi++) {
-					var o = document.createElement('option');
-					o.value = hi;
-					o.textContent = hi + '小时';
-					intSel.appendChild(o);
-				}
-			}
-			intWrap.appendChild(intSel);
-			var intDesc = document.createElement('div');
-			intDesc.className = 'pushbot-inline-description';
-			intDesc.textContent = '从 00:00 开始，每 * 小时发送一次';
-			intWrap.appendChild(intDesc);
-			contentBody.appendChild(intWrap);
+			var ittl = document.createElement('div');
+			ittl.className = 'pushbot-inline-title';
+			ittl.style.cssText = 'margin:12px 0 6px 2px;text-transform:none;font-size:13px';
+			ittl.textContent = '发送间隔';
+			contentBody.appendChild(ittl);
+			var intOpts = [];
+			for (var t=1;t<=23;t++) intOpts.push({v:String(t),l:t+'小时'});
+			contentBody.appendChild(mkSelS('interval_time','',interval_time,intOpts,'从 00:00 开始，每 * 小时发送一次'));
 		}
 
 		/* ── push content flags ── */
-		var contentTitle = document.createElement('div');
-		contentTitle.className = 'pushbot-inline-title';
-		contentTitle.style.cssText = 'margin:14px 0 6px 2px;text-transform:none;font-size:13px';
-		contentTitle.textContent = '推送内容';
-		contentBody.appendChild(contentTitle);
+		var fl = document.createElement('div');
+		fl.className = 'pushbot-inline-title';
+		fl.style.cssText = 'margin:14px 0 6px 2px;text-transform:none;font-size:13px';
+		fl.textContent = '推送内容';
+		contentBody.appendChild(fl);
 
-		var contentList = document.createElement('div');
-		contentList.className = 'pushbot-choice-list';
-		var flags = [
-			{ cb: statusCb, label: '系统运行情况' },
-			{ cb: tempCb, label: '设备温度' },
-			{ cb: wanCb, label: 'WAN信息' },
-			{ cb: clientCb, label: '客户端列表' }
-		];
-		flags.forEach(function(f) {
-			if (!f.cb) return;
-			var b = document.createElement('button');
-			b.type = 'button';
-			b.className = 'pushbot-choice-button';
-			var on = !!(f.cb.checked);
-			b.className = 'pushbot-choice-button ' + (on ? 'is-on' : 'is-off');
-			b.innerHTML = '<span>' + f.label + '</span>';
-			b.addEventListener('click', function(e) {
-				e.preventDefault();
-				f.cb.checked = !f.cb.checked;
-				var on2 = f.cb.checked;
-				this.className = 'pushbot-choice-button ' + (on2 ? 'is-on' : 'is-off');
+		var fc = document.createElement('div');
+		fc.className = 'pushbot-choice-list';
+		[
+			{opt:'router_status',label:'系统运行情况',on:router_status},
+			{opt:'router_temp',label:'设备温度',on:router_temp},
+			{opt:'router_wan',label:'WAN信息',on:router_wan},
+			{opt:'client_list',label:'客户端列表',on:client_list}
+		].forEach(function(f){
+			var b=document.createElement('button');b.type='button';b.className='pushbot-choice-button';
+			var on=f.on;b.className+=' '+(on?'is-on':'is-off');
+			b.innerHTML='<span>'+f.label+'</span>';
+			b.addEventListener('click',function(e){
+				e.preventDefault();on=!on;updateFlagInput(f.opt, on);
+				b.className='pushbot-choice-button '+(on?'is-on':'is-off');
 			});
-			contentList.appendChild(b);
+			fc.appendChild(b);
 		});
-		contentBody.appendChild(contentList);
+		contentBody.appendChild(fc);
 
-		/* ── row: 推送标题 + 全球互联检测超时时间 ── */
-		var bottomRow = document.createElement('div');
-		bottomRow.style.cssText = 'display:flex;gap:12px;margin-top:14px;flex-wrap:wrap';
+		/* ── bottom row: 推送标题 + 全球互联检测超时时间 ── */
+		var br = document.createElement('div');
+		br.style.cssText = 'display:flex;gap:12px;margin-top:14px;flex-wrap:wrap';
 
-		/* left: 推送标题 */
-		if (titleInp) {
-			var titleWrap = document.createElement('div');
-			titleWrap.style.cssText = 'flex:2;min-width:200px';
-			var ttl = document.createElement('div');
-			ttl.className = 'pushbot-inline-title';
-			ttl.style.cssText = 'text-transform:none;font-size:12px;margin-bottom:4px';
-			ttl.textContent = '推送标题';
-			titleWrap.appendChild(ttl);
-			var inpClone = titleInp.cloneNode(true);
-			inpClone.removeAttribute('name');
-			inpClone.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit';
-			inpClone.addEventListener('change', function() { titleInp.value = this.value; });
-			titleInp.addEventListener('change', function() { inpClone.value = titleInp.value; });
-			titleWrap.appendChild(inpClone);
-			if (titleDesc) {
-				var td = document.createElement('div');
-				td.className = 'pushbot-inline-description';
-				td.style.cssText = 'margin-top:4px';
-				td.innerHTML = titleDesc.innerHTML;
-				titleWrap.appendChild(td);
-			}
-			bottomRow.appendChild(titleWrap);
-		}
+		var tw = document.createElement('div');
+		tw.style.cssText = 'flex:2;min-width:200px';
+		tw.appendChild(mkTxtS('send_title','推送标题',send_title));
+		br.appendChild(tw);
 
-		/* right: 全球互联检测超时时间 */
-		if (googleInp) {
-			var googleWrap = document.createElement('div');
-			googleWrap.style.cssText = 'flex:1;min-width:150px';
-			var gt = document.createElement('div');
-			gt.className = 'pushbot-inline-title';
-			gt.style.cssText = 'text-transform:none;font-size:12px;margin-bottom:4px';
-			gt.textContent = '全球互联检测超时时间';
-			googleWrap.appendChild(gt);
-			var gClone = googleInp.cloneNode(true);
-			gClone.removeAttribute('name');
-			gClone.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit';
-			gClone.addEventListener('change', function() { googleInp.value = this.value; });
-			googleInp.addEventListener('change', function() { gClone.value = googleInp.value; });
-			googleWrap.appendChild(gClone);
-			if (googleDesc) {
-				var gd = document.createElement('div');
-				gd.className = 'pushbot-inline-description';
-				gd.style.cssText = 'margin-top:4px';
-				gd.innerHTML = googleDesc.innerHTML;
-				googleWrap.appendChild(gd);
-			}
-			bottomRow.appendChild(googleWrap);
-		}
+		var gw = document.createElement('div');
+		gw.style.cssText = 'flex:1;min-width:150px';
+		gw.appendChild(mkTxtS('google_check_timeout','全球互联检测超时时间',google_check_timeout,'单位为秒'));
+		br.appendChild(gw);
 
-		contentBody.appendChild(bottomRow);
+		contentBody.appendChild(br);
 
-		/* ── 手动发送 button (right-aligned) ── */
-		var origSendBtn = document.querySelector('[name$="._add"]');
-		if (origSendBtn) {
-			var sendRow = document.createElement('div');
-			sendRow.style.cssText = 'display:flex;justify-content:flex-end;margin-top:16px';
-			var sBtn = document.createElement('button');
-			sBtn.type = 'button';
-			sBtn.textContent = '手动发送';
-			sBtn.className = 'pushbot-sendtest-btn';
-			sBtn.addEventListener('click', function(e) {
-				e.preventDefault();
-				/* trigger the original CBI button's action: save config then send */
-				sBtn.disabled = true;
-				sBtn.textContent = '发送中...';
-				/* set the original button as the clicked submit button */
-				origSendBtn.click();
-			});
-			sendRow.appendChild(sBtn);
-			contentBody.appendChild(sendRow);
-		}
+		/* ── 手动发送 button ── */
+		var sr = document.createElement('div');
+		sr.style.cssText = 'display:flex;justify-content:flex-end;margin-top:16px';
+		var sb = document.createElement('button');
+		sb.type = 'button'; sb.textContent = '手动发送';
+		sb.className = 'pushbot-sendtest-btn';
+		sb.addEventListener('click', function(e) {
+			e.preventDefault(); sb.disabled = true; sb.textContent = '发送中...';
+			var data = window.__pbCollectData ? __pbCollectData() : {};
+			var x = new XMLHttpRequest();
+			x.open('POST', '<%=url([[admin]],[[services]],[[pushbot]],[[save_config]])%>', true);
+			x.setRequestHeader('Content-Type', 'application/json');
+			x.onload = function() {
+				var y = new XMLHttpRequest();
+				y.open('GET', '<%=url([[admin]],[[services]],[[pushbot]],[[send_manual]])%>', true);
+				y.onload = function() { sb.disabled = false; sb.textContent = '手动发送'; };
+				y.onerror = function() { sb.disabled = false; sb.textContent = '手动发送'; };
+				y.send();
+			};
+			x.onerror = function() { sb.disabled = false; sb.textContent = '手动发送'; };
+			x.send(JSON.stringify(data));
+		});
+		sr.appendChild(sb);
+		contentBody.appendChild(sr);
 	}
 
-	/* ── initial render ── */
-	renderCrontabContent();
-
-	/* insert into scheduled pane */
-	var pane = document.getElementById('pushbot_pane_scheduled');
-	if (pane) {
-		pane.innerHTML = '';
-		pane.appendChild(card);
-	}
+	renderScheduledContent();
+	pane.innerHTML = '';
+	pane.appendChild(card);
 }
 
-	/* also call initScheduledPushCard with retry logic */
-	setTimeout(function() {
-		try { initScheduledPushCard(); } catch(e) {}
-	}, 700);
+	/* pre-load scheduled card */
+	PB_onReady(function trySch() {
+		var p = document.getElementById('pushbot_pane_scheduled');
+		if (!p) { setTimeout(trySch, 300); return; }
+		try{initScheduledPushCard();}catch(e){console.error('scheduled card:',e);}
+	});
 })();
 
 function initMonitorCard() {
 	if (document.getElementById('pushbot_monitor_card_container')) return;
+	if (!PB_CONFIG) { setTimeout(initMonitorCard, 200); return; }
 	var pane = document.getElementById('pushbot_pane_monitor');
 	if (!pane) { setTimeout(initMonitorCard, 150); return; }
 
 	var hb = document.getElementById('mon_hidden_fields') || (function(){
 		var d=document.createElement('div'); d.id='mon_hidden_fields'; d.style.display='none';
-		(document.querySelector('form')||document.body).appendChild(d); return d;
+		(document.querySelector('form')||document.body||document.documentElement).appendChild(d); return d;
 	})();
+	hb.innerHTML = '';
 
 	function mkHidden(name, val) {
 		var i = document.createElement('input'); i.type = 'hidden';
@@ -1888,6 +1331,14 @@ function initMonitorCard() {
 		return c;
 	}
 
+	var ADV_UP_TIMEOUT = PB_val('up_timeout', '2');
+	var ADV_DOWN_TIMEOUT = PB_val('down_timeout', '20');
+	var ADV_TIMEOUT_RETRY = PB_val('timeout_retry_count', '2');
+	var ADV_THREAD_NUM = PB_val('thread_num', '3');
+	var ADV_SOC_CODE = PB_val('soc_code', '');
+	var ADV_PVE_HOST = PB_val('pve_host', '10.0.0.2');
+	var ADV_PVE_PORT = PB_val('pve_port', '22');
+	var ADV_PUBLIC_RETRY = PB_val('public_ip_retry_count', '10');
 	var container = document.createElement('div'); container.id = 'pushbot_monitor_card_container';
 
 	/* ═══ CARD 1: 设备监测 ═══ */
@@ -1985,7 +1436,7 @@ function initMonitorCard() {
 
 	/* Use hidden input for err_enable Flag form submission */
 	var errHi = document.querySelector('[name="cbid.pushbot.pushbot.err_enable"]');
-	var errOn = ADV_ERR_ENABLE;
+	var errOn = PB_bool('err_enable');
 	var errDesc = '请确认脚本可以正常运行，否则可能造成频繁重启等错误！';
 	var errToggle = mkToggle('无人值守任务', errOn, function(on) {
 		updateFlagInput('err_enable', on);
@@ -2007,7 +1458,7 @@ function initMonitorCard() {
 		ec.appendChild(d);
 		/* use hidden input for err_sheep_enable */
 		var shHi = document.querySelector('[name="cbid.pushbot.pushbot.err_sheep_enable"]');
-		var shOn = ADV_ERR_SHEEP;
+		var shOn = PB_bool('err_sheep_enable');
 		var shTog = mkToggle('仅在免打扰时段重拨', shOn, function(on) {
 			updateFlagInput('err_sheep_enable', on);
 		});
@@ -2020,6 +1471,7 @@ function initMonitorCard() {
 		var nl = document.createElement('div'); nl.className = 'pushbot-inline-title';
 		nl.style.cssText = 'margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
 		nl.textContent = '网络断开时'; ec.appendChild(nl);
+		var ADV_NET_ERR = PB_val('network_err_event', '');
 		var netHi = mkHidden('network_err_event', ADV_NET_ERR);
 		var netL = [
 			{v:'',l:'无操作'},
@@ -2049,20 +1501,18 @@ function initMonitorCard() {
 		inp.setAttribute('list', listId);
 		var dlist = document.createElement('datalist');
 		dlist.id = listId;
-		if (typeof PUSHBOT_MAC_HINTS !== 'undefined') {
-			PUSHBOT_MAC_HINTS.forEach(function(h) {
-				var o = document.createElement('option');
-				o.value = h.m;
-				o.textContent = h.n ? h.m + ' (' + h.n + ')' : h.m;
-				dlist.appendChild(o);
-			});
-		}
+		PB_sys('mac_hints').forEach(function(h) {
+			var o = document.createElement('option');
+			o.value = h.m;
+			o.textContent = h.n ? h.m + ' (' + h.n + ')' : h.m;
+			dlist.appendChild(o);
+		});
 		var addB = document.createElement('button'); addB.type='button'; addB.className='pushbot-choice-button is-on';
 		addB.textContent = '添加';
 		ir.appendChild(inp); ir.appendChild(dlist); ir.appendChild(addB);
 		dc.appendChild(tl); dc.appendChild(ir); ec.appendChild(dc);
 
-		var curVals = ADV_ERR_DEVICES.slice();
+		var curVals = PB_list('err_device_aliases').slice();
 		function renderTags(){
 			tl.innerHTML='';
 			curVals.forEach(function(v){if(!v)return;
@@ -2100,6 +1550,7 @@ function initMonitorCard() {
 		var sl = document.createElement('div'); sl.className = 'pushbot-inline-title';
 		sl.style.cssText = 'margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
 		sl.textContent = '定时重启'; ec.appendChild(sl);
+		var ADV_SYS_TIME = PB_val('system_time_event', '');
 		var sysHi = mkHidden('system_time_event', ADV_SYS_TIME);
 		var sysL = [{v:'',l:'无操作'},{v:'1',l:'重启路由器'},{v:'2',l:'重新拨号'}];
 		ec.appendChild(mkChoiceList(sysL, ADV_SYS_TIME, function(v) {
@@ -2110,6 +1561,8 @@ function initMonitorCard() {
 			if(nrf)nrf.style.display=(v==='2')?'block':'none';
 		}));
 		var stc = document.createElement('div'); stc.style.cssText = 'margin-top:6px';
+		var ADV_AUTOREBOOT = PB_val('autoreboot_time', '24');
+		var ADV_NETRESTART = PB_val('network_restart_time', '24');
 		var ar = document.createElement('div'); ar.id = 'mon_autoreboot';
 		ar.style.display = (ADV_SYS_TIME === '1') ? 'block' : 'none';
 		ar.appendChild(mkText('autoreboot_time', '系统运行时间大于', ADV_AUTOREBOOT, '单位为小时'));
@@ -2128,7 +1581,7 @@ function initMonitorCard() {
 		var pd = document.createElement('div'); pd.className = 'pushbot-inline-description'; pd.innerHTML = pubDesc; ec.appendChild(pd);
 		/* use hidden input for public_ip_event */
 		var pubHi = document.querySelector('[name="cbid.pushbot.pushbot.public_ip_event"]');
-		var pubOn = ADV_PUBLIC_IP;
+		var pubOn = PB_bool('public_ip_event');
 		var pubRow = document.createElement('div'); pubRow.style.cssText = 'display:flex;align-items:center;gap:12px;margin-top:6px';
 		var pubToggle = mkToggle('重拨尝试获取公网 ip', pubOn, function(on) {
 			updateFlagInput('public_ip_event', on);
@@ -2138,7 +1591,7 @@ function initMonitorCard() {
 		pubRow.appendChild(pubToggle);
 		var prc = document.createElement('div'); prc.id = 'mon_pubretry';
 		prc.style.cssText = 'display:'+(pubOn?'flex':'none')+';align-items:center;gap:12px;flex:1';
-		prc.appendChild(mkText('public_ip_retry_count', '当天最大重试次数', ADV_PUBLIC_RETRY));
+		prc.appendChild(mkText('public_ip_retry_count', '当天最大重试次数', PB_val('public_ip_retry_count', '10')));
 		pubRow.appendChild(prc);
 		ec.appendChild(pubRow);
 	})();
@@ -2146,52 +1599,27 @@ function initMonitorCard() {
 	container.appendChild(c3);
 	pane.innerHTML = '';
 	pane.appendChild(container);
-
-		/* Disable old advanced tab CBI elements to prevent duplicate submission */
-		var monHidden = document.getElementById('mon_hidden_fields');
-		var globalHidden = document.getElementById('pushbot_hidden_fields');
-		var advFields = [
-			'up_timeout','down_timeout','timeout_retry_count','thread_num',
-			'soc_code','pve_host','pve_port',
-			'err_enable','err_sheep_enable','public_ip_event',
-			'err_device_aliases',
-			'network_err_event','system_time_event','autoreboot_time',
-			'network_restart_time','public_ip_retry_count'
-		];
-		if (monHidden) {
-			advFields.forEach(function(name) {
-				/* match both exact name and DynamicList '[]' suffix */
-					document.querySelectorAll('[name$="' + name + '"]').forEach(function(el) {
-					if (!monHidden.contains(el) && (!globalHidden || !globalHidden.contains(el))) el.name = '';
-				});
-				document.querySelectorAll('input').forEach(function(el) {
-					if (el.name && el.name.indexOf('.' + name + '[]') >= 0 && !monHidden.contains(el) && (!globalHidden || !globalHidden.contains(el))) {
-						el.name = '';
-					}
-				});
-			});
-		}
 	}
 
-/* pre-load monitor card content with retry */
-setTimeout(function(){
-	function tryMon(){
-		var p = document.getElementById('pushbot_pane_monitor');
-		if (!p) { setTimeout(tryMon, 200); return; }
-		try{initMonitorCard();}catch(e){try{console.error('monitor:',e);}catch(e2){}setTimeout(tryMon, 500);}
-	}
-	tryMon();
-}, 1000);
+/* pre-load monitor card content (1 retry if pane not ready) */
+function tryMonOnce(){
+	var p = document.getElementById('pushbot_pane_monitor');
+	if (!p) { setTimeout(tryMonOnce, 300); return; }
+	try{initMonitorCard();}catch(e){console.error('monitor card:',e);}
+}
+PB_onReady(function(){ tryMonOnce(); });
 
 function initContentCard() {
+	if (!PB_CONFIG) { setTimeout(initContentCard, 200); return; }
 	var pane = document.getElementById('pushbot_pane_content');
 	if (!pane) { setTimeout(initContentCard, 150); return; }
 	if (document.getElementById('pushbot_content_card_container')) return;
 
 	var hb = document.getElementById('con_hidden_fields') || (function(){
 		var d=document.createElement('div'); d.id='con_hidden_fields'; d.style.display='none';
-		(document.querySelector('form')||document.body).appendChild(d); return d;
+		(document.querySelector('form')||document.body||document.documentElement).appendChild(d); return d;
 	})();
+	hb.innerHTML = '';
 
 	function mkH(name, val) {
 		var i=document.createElement('input'); i.type='hidden';
@@ -2252,6 +1680,34 @@ function initContentCard() {
 		if(desc){var d=document.createElement('div');d.className='pushbot-inline-description';d.innerHTML=desc;b.appendChild(d);}
 		w.appendChild(b);return w;
 	}
+
+	var CT_IFACES = PB_sys('ifaces');
+	var CT_IP_HINTS = PB_sys('ip_hints');
+	var CT_IPV4 = PB_val('pushbot_ipv4', '');
+	var CT_IPV4_IFACE = PB_val('ipv4_interface', '');
+	var CT_IPV6 = PB_val('pushbot_ipv6', 'disable');
+	var CT_IPV6_IFACE = PB_val('ipv6_interface', '');
+	var CT_PUSH_UP = PB_bool('pushbot_up');
+	var CT_PUSH_DOWN = PB_bool('pushbot_down');
+	var CT_CPU_LOAD_EN = PB_bool('cpuload_enable');
+	var CT_CPU_LOAD = PB_val('cpuload', '2');
+	var CT_TEMP_EN = PB_bool('temperature_enable');
+	var CT_TEMP = PB_val('temperature', '80');
+	var CT_USAGE = PB_bool('client_usage');
+	var CT_USAGE_MAX = PB_val('client_usage_max', '10M');
+	var CT_USAGE_DISTURB = PB_bool('client_usage_disturb');
+	var CT_WEB_LOG = PB_bool('web_logged');
+	var CT_SSH_LOG = PB_bool('ssh_logged');
+	var CT_WEB_FAIL = PB_bool('web_login_failed');
+	var CT_SSH_FAIL = PB_bool('ssh_login_failed');
+	var CT_LOGIN_MAX = PB_val('login_max_num', '3');
+	var CT_AUTO_BAN = PB_bool('web_login_black');
+	var CT_BAN_TIMEOUT = PB_val('ip_black_timeout', '86400');
+	var CT_IP_WHITE = PB_list('ip_white_list');
+	var CT_CLIENT_WHITE = PB_list('client_usage_whitelist');
+	var CT_IPV4_LIST = PB_file('ipv4_list');
+	var CT_IPV6_LIST = PB_file('ipv6_list');
+	var CT_IP_BLACK = PB_file('ip_black_list');
 
 	var container = document.createElement('div'); container.id = 'pushbot_content_card_container';
 
@@ -2388,7 +1844,7 @@ cuSub.appendChild(mkBtn('异常流量免打扰',cdOn,function(on){updateFlagInpu
 	wlInp.placeholder='XX:XX:XX:XX:XX:XX';wlInp.style.cssText='flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
 	wlInp.setAttribute('list','mh_client_white');
 	var wlDl=document.createElement('datalist');wlDl.id='mh_client_white';
-	if(typeof PUSHBOT_MAC_HINTS!=='undefined'){PUSHBOT_MAC_HINTS.forEach(function(h){var o=document.createElement('option');o.value=h.m;o.textContent=h.n?h.m+' ('+h.n+')':h.m;wlDl.appendChild(o);});}
+	PB_sys('mac_hints').forEach(function(h){var o=document.createElement('option');o.value=h.m;o.textContent=h.n?h.m+' ('+h.n+')':h.m;wlDl.appendChild(o);});
 	wlIR.appendChild(wlInp);wlIR.appendChild(wlDl);
 	var wlAdd=document.createElement('button');wlAdd.type='button';wlAdd.className='pushbot-choice-button is-on';wlAdd.textContent='添加';wlIR.appendChild(wlAdd);
 	wlCtr.appendChild(wlTags);wlCtr.appendChild(wlIR);cdSub.appendChild(wlCtr);
@@ -2511,36 +1967,15 @@ cuSub.appendChild(mkBtn('异常流量免打扰',cdOn,function(on){updateFlagInpu
 
 	pane.innerHTML = '';
 	pane.appendChild(container);
-
-	/* Disable old CBI elements to prevent duplicate submission */
-	var conHidden = document.getElementById('con_hidden_fields');
-	var globalHidden = document.getElementById('pushbot_hidden_fields');
-	if (conHidden) {
-		['pushbot_ipv4','ipv4_interface','pushbot_ipv6','ipv6_interface',
-		 'cpuload','cpuload_enable','temperature','temperature_enable','client_usage_max',
-		 'client_usage','client_usage_disturb',
-		 'pushbot_up','pushbot_down',
-		 'web_logged','ssh_logged','web_login_failed','ssh_login_failed','web_login_black',
-		 'client_usage_whitelist',
-		 'login_max_num',
-		 'ip_black_timeout','ip_white_list'
-		].forEach(function(n){
-			document.querySelectorAll('input[name$="' + n + '"], input[name$="' + n + '[]"], select[name$="' + n + '"]').forEach(function(el){
-				if(!conHidden.contains(el) && (!globalHidden || !globalHidden.contains(el)))el.name='';
-			});
-		});
-	}
 }
 
-/* pre-load content card with retry */
-setTimeout(function(){
-	function tryLoad(){
-		var p = document.getElementById('pushbot_pane_content');
-		if (!p) { setTimeout(tryLoad, 300); return; }
-		try{initContentCard();}catch(e){try{console.error('content:',e);}catch(e2){}setTimeout(tryLoad, 500);}
-	}
-	tryLoad();
-}, 1000);
+/* pre-load content card (1 retry if pane not ready) */
+function tryContentOnce(){
+	var p = document.getElementById('pushbot_pane_content');
+	if (!p) { setTimeout(tryContentOnce, 300); return; }
+	try{initContentCard();}catch(e){console.error('content card:',e);}
+}
+PB_onReady(function(){ tryContentOnce(); });
 
 function initModernTabs() {
 	if (document.getElementById('pushbot_modern_tabs')) return;
@@ -2666,51 +2101,64 @@ function initModernTabs() {
 		document.getElementById('pushbot_pane_monitor').classList.toggle('is-visible', name === 'monitor');
 		document.getElementById('pushbot_pane_client').classList.toggle('is-visible', name === 'client');
 		document.getElementById('pushbot_pane_log').classList.toggle('is-visible', name === 'log');
-		if (name === 'content') { try { initContentCard(); } catch(e) {} }
-		if (name === 'monitor') { try { initMonitorCard(); } catch(e) {} }
-		if (name === 'log') loadLog();
+		if (name === 'content') { try { initContentCard(); } catch(e) { console.error('content tab:',e); } }
+		if (name === 'monitor') { try { initMonitorCard(); } catch(e) { console.error('monitor tab:',e); } }
+		if (name === 'log') { _logInit(); }
 		if (name === 'client') loadClients();
 		});
 	});
 
 	/* ── log viewer ── */
 	var logTimer = null;
+	var _logInitialized = false;
+	function _logInit() {
+		if (_logInitialized) return;
+		_logInitialized = true;
+		var toggle = document.getElementById('log_auto_toggle');
+		var clearBtn = document.getElementById('log_clear_btn');
+		if (toggle) {
+			toggle.addEventListener('change', function() {
+				if (this.checked) {
+					logTimer = setInterval(loadLog, 3000);
+					loadLog();
+				} else {
+					if (logTimer) { clearInterval(logTimer); logTimer = null; }
+				}
+			});
+			toggle.checked = true;
+			logTimer = setInterval(loadLog, 3000);
+			loadLog();
+		}
+		if (clearBtn) {
+			clearBtn.addEventListener('click', function(e) {
+				e.preventDefault();
+				XHR.get('<%=url([[admin]], [[services]], [[pushbot]], [[clear_log]])%>', null,
+					function() {
+						var pre = document.querySelector('#pushbot_log_content pre');
+						if (pre) pre.textContent = '(空)';
+					}
+				);
+			});
+		}
+	}
 	function loadLog() {
 		var pre = document.querySelector('#pushbot_log_content pre');
 		if (!pre) return;
 		XHR.get('<%=url([[admin]], [[services]], [[pushbot]], [[get_log]])%>', null,
 			function(x) {
 				if (x && x.status == 200) {
-					pre.textContent = x.responseText || '(空)';
-					pre.scrollTop = pre.scrollHeight;
+					var txt = x.responseText || '(空)';
+					var lines = txt.split('\n');
+					if (lines.length > 2) {
+						lines.pop();
+						lines.reverse();
+						txt = lines.join('\n');
+					}
+					pre.textContent = txt;
+					pre.scrollTop = 0;
 				}
 			}
 		);
-	}
-	var logToggle = document.getElementById('log_auto_toggle');
-	var logClear = document.getElementById('log_clear_btn');
-	if (logToggle) {
-		logToggle.addEventListener('change', function() {
-			if (this.checked) {
-				logTimer = setInterval(loadLog, 3000);
-				loadLog();
-			} else {
-				if (logTimer) { clearInterval(logTimer); logTimer = null; }
-			}
-		});
-		/* start auto-refresh by default when log tab is first activated */
-		logToggle.checked = true;
-	}
-	if (logClear) {
-		logClear.addEventListener('click', function(e) {
-			e.preventDefault();
-			XHR.get('<%=url([[admin]], [[services]], [[pushbot]], [[clear_log]])%>', null,
-				function() {
-					var pre = document.querySelector('#pushbot_log_content pre');
-					if (pre) pre.textContent = '(空)';
-				}
-			);
-		});
 	}
 
 	/* ── client (在线设备) viewer ── */
@@ -2754,6 +2202,174 @@ function initModernTabs() {
 		if (pane && pane.classList.contains('is-visible')) loadClients();
 	}, 5000);
 }
+/* ── Collect hidden input data from all containers ── */
+window.__pbCollectData = function() {
+	var ids = ['pushbot_hidden_fields','con_hidden_fields','mon_hidden_fields','term_hidden_fields','disturb_hidden_fields'];
+	var data = {};
+	ids.forEach(function(id) {
+		var ct = document.getElementById(id);
+		if (!ct) return;
+		ct.querySelectorAll('input[type="hidden"]').forEach(function(inp) {
+			if (!inp.name || inp.name.indexOf('.') < 0) return;
+			var opt = inp.name.split('.').pop();
+			if (opt.endsWith('[]')) opt = opt.slice(0, -2);
+			if (!opt || inp.value === undefined || inp.value === null) return;
+			if (data[opt] === undefined) {
+				data[opt] = inp.value;
+			} else if (typeof data[opt] === 'string') {
+				data[opt] = [data[opt], inp.value];
+			} else {
+				data[opt].push(inp.value);
+			}
+		});
+	});
+	for (var k in data) {
+		if (Array.isArray(data[k])) {
+			var u = [];
+			data[k].forEach(function(v) { if (u.indexOf(v) < 0) u.push(v); });
+			data[k] = u.length === 1 ? u[0] : u;
+		}
+	}
+	return data;
+};
+/* ── Toast notification ── */
+var pbToast = null;
+function pbShowToast(ok) {
+	var old = document.querySelector('.pushbot-toast-overlay');
+	if (old) old.remove();
+	var o = document.createElement('div');
+	o.className = 'pushbot-toast-overlay';
+	var b = document.createElement('div');
+	b.className = 'pushbot-toast-banner ' + (ok ? 'is-ok' : 'is-err');
+	b.textContent = ok ? '✓ 已保存' : '✗ 保存失败';
+	o.appendChild(b);
+	document.body.appendChild(o);
+	setTimeout(function() { o.classList.add('show'); }, 10);
+	setTimeout(function() { o.classList.remove('show'); setTimeout(function() { o.remove(); }, 300); }, ok ? 500 : 1000);
+}
+/* ── Option labels for preview ── */
+var PB_LABELS = {
+	pushbot_enable:'启用', lite_enable:'精简模式', device_name:'本设备名称', sleeptime:'检测时间间隔',
+	jsonpath:'推送模式', dd_webhook:'钉钉Webhook', we_webhook:'企业微信Webhook', fs_webhook:'飞书Webhook',
+	pp_token:'PushPlus Token', pp_channel:'PushPlus Channel', pp_webhook:'PushPlus Webhook',
+	pp_topic_enable:'PushPlus 一对多', pp_topic:'PushPlus Topic',
+	pushdeer_key:'PushDeer Key', pushdeer_srv_enable:'自建PushDeer', pushdeer_srv:'PushDeer Server',
+	bark_token:'Bark Token', bark_srv_enable:'自建Bark', bark_srv:'Bark Server',
+	bark_sound:'Bark Sound', bark_icon_enable:'Bark图标', bark_icon:'Bark Icon', bark_level:'Bark Level',
+	diy_json:'自定义推送', oui_data:'OUI数据', oui_dir:'OUI目录', reset_regularly:'定时重置', debuglevel:'调试',
+	pushbot_sheep:'免打扰', starttime:'免打扰开始', endtime:'免打扰结束',
+	macmechanism:'MAC过滤', pushbot_interface:'接口', macmechanism2:'MAC过滤2',
+	crontab:'定时任务', regular_time:'定时发送时间', regular_time_2:'定时发送时间2', regular_time_3:'定时发送时间3',
+	interval_time:'间隔发送', send_title:'推送标题',
+	router_status:'路由器状态', router_temp:'路由器温度', router_wan:'WAN状态', client_list:'设备列表',
+	google_check_timeout:'网络检测超时',
+	pushbot_up:'宽带重拨', pushbot_down:'宽带掉线', cpuload_enable:'CPU负载', cpuload:'CPU阈值',
+	temperature_enable:'温度监控', temperature:'温度阈值',
+	client_usage:'流量异常', client_usage_max:'流量上限', client_usage_disturb:'流量免打扰',
+	pushbot_ipv4:'IPv4变更', ipv4_interface:'IPv4接口', pushbot_ipv6:'IPv6变更', ipv6_interface:'IPv6接口',
+	web_logged:'Web登录', ssh_logged:'SSH登录', web_login_failed:'Web错误尝试', ssh_login_failed:'SSH错误尝试',
+	login_max_num:'错误次数', web_login_black:'自动拉黑', ip_black_timeout:'拉黑时间',
+	up_timeout:'重拨超时', down_timeout:'掉线超时', timeout_retry_count:'重试次数', thread_num:'线程数',
+	soc_code:'SOC码', pve_host:'PVE主机', pve_port:'PVE端口',
+	err_enable:'无人值守', err_sheep_enable:'无人值守免打扰', err_device_aliases:'关注列表',
+	network_err_event:'网络错误', system_time_event:'定时重启', autoreboot_time:'重启时间', network_restart_time:'重拨时间',
+	public_ip_event:'公网IP事件', public_ip_retry_count:'公网IP重试',
+	pushbot_whitelist:'忽略列表', pushbot_blacklist:'关注列表',
+	MAC_online_list:'在线免打扰列表', MAC_offline_list:'离线免打扰列表',
+	ip_white_list:'IP白名单', client_usage_whitelist:'流量关注列表',
+	device_aliases:'设备别名', ipv4_list:'IPv4 API列表', ipv6_list:'IPv6 API列表', ip_black_list:'IP黑名单',
+	pushbot_enable:'启用', err_enable:'无人值守', err_sheep_enable:'无人值守免打扰', public_ip_event:'公网IP事件',
+	pushbot_up:'宽带重拨', pushbot_down:'宽带掉线', cpuload_enable:'CPU负载', temperature_enable:'温度监控',
+	client_usage:'流量异常', client_usage_disturb:'流量免打扰', web_logged:'Web登录', ssh_logged:'SSH登录',
+	web_login_failed:'Web错误尝试', ssh_login_failed:'SSH错误尝试', web_login_black:'自动拉黑'
+};
+function pbFmtVal(v) {
+	if (v === null || v === undefined) return '<span class="pb-pv-null">(空)</span>';
+	if (Array.isArray(v)) return v.length ? v.join('<span class="pb-pv-arrsep">, </span>') : '<span class="pb-pv-null">(空)</span>';
+	if (v === '1' || v === true) return '<span class="pb-pv-on">开启</span>';
+	if (v === '0' || v === false) return '<span class="pb-pv-off">关闭</span>';
+	return '<span class="pb-pv-str">' + String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</span>';
+}
+function pbShowPreview() {
+	var oldOv = document.querySelector('.pb-preview-overlay');
+	if (oldOv) { oldOv.remove(); return; }
+	var pend = window.__pbCollectData();
+	var changes = [];
+	for (var k in pend) {
+		var oldV = (PB_CONFIG && PB_CONFIG.lists && PB_CONFIG.lists[k] !== undefined) ? PB_CONFIG.lists[k]
+			: (PB_CONFIG && PB_CONFIG.config && PB_CONFIG.config[k] !== undefined) ? PB_CONFIG.config[k]
+			: (PB_CONFIG && PB_CONFIG.files && PB_CONFIG.files[k] !== undefined) ? PB_CONFIG.files[k] : undefined;
+		var newV = pend[k];
+		if (JSON.stringify(oldV) === JSON.stringify(newV)) continue;
+		if (!oldV && (!newV || (Array.isArray(newV) && !newV.length))) continue;
+		changes.push({ opt: k, label: PB_LABELS[k] || k, old: oldV, new: newV });
+	}
+	var ov = document.createElement('div');
+	ov.className = 'pb-preview-overlay';
+	var box = document.createElement('div');
+	box.className = 'pb-preview-box';
+	var tit = document.createElement('div');
+	tit.className = 'pb-preview-title'; tit.textContent = '预览更改项';
+	box.appendChild(tit);
+	if (changes.length === 0) {
+		var emp = document.createElement('div');
+		emp.className = 'pb-preview-empty'; emp.textContent = '暂无更改';
+		box.appendChild(emp);
+	} else {
+		var lst = document.createElement('div');
+		lst.className = 'pb-preview-list';
+		changes.forEach(function(c) {
+			var r = document.createElement('div');
+			r.className = 'pb-preview-item';
+			var lb = document.createElement('div');
+			lb.className = 'pb-preview-item-label'; lb.textContent = c.label;
+			r.appendChild(lb);
+			var dv = document.createElement('div');
+			dv.className = 'pb-preview-item-diff';
+			dv.innerHTML = '<span class="pb-pv-arrow">←</span> ' + pbFmtVal(c.old) + ' <span class="pb-pv-arrow">→</span> ' + pbFmtVal(c.new);
+			r.appendChild(dv);
+			lst.appendChild(r);
+		});
+		box.appendChild(lst);
+	}
+	var btns = document.createElement('div');
+	btns.className = 'pb-preview-btns';
+	var disc = document.createElement('button');
+	disc.type = 'button'; disc.className = 'pb-preview-btn pb-preview-btn-disc'; disc.textContent = '撤销更改';
+	disc.addEventListener('click', function() { ov.remove(); });
+	btns.appendChild(disc);
+	var conf = document.createElement('button');
+	conf.type = 'button'; conf.className = 'pb-preview-btn pb-preview-btn-conf'; conf.textContent = '确认应用';
+	conf.addEventListener('click', function() {
+		ov.remove();
+		var btn = document.getElementById('pushbot_save_btn');
+		if (btn && !btn.disabled) submitAll();
+	});
+	btns.appendChild(conf);
+	box.appendChild(btns);
+	ov.appendChild(box);
+	document.body.appendChild(ov);
+	setTimeout(function() { ov.classList.add('show'); }, 10);
+}
+/* ── Save all hidden inputs via API ── */
+function submitAll() {
+	var btn = document.getElementById('pushbot_save_btn');
+	if (!btn) return;
+	btn.disabled = true; btn.textContent = '保存中...';
+	var data = window.__pbCollectData();
+	var x = new XMLHttpRequest();
+	x.open('POST', '<%=url([[admin]],[[services]],[[pushbot]],[[save_config]])%>', true);
+	x.setRequestHeader('Content-Type', 'application/json');
+	x.onload = function() { btn.disabled = false; btn.textContent = '保存并应用'; pbShowToast(x.status == 200); };
+	x.onerror = function() { btn.disabled = false; btn.textContent = '保存并应用'; pbShowToast(false); };
+	x.send(JSON.stringify(data));
+}
+window.addEventListener('DOMContentLoaded', function() {
+	var btn = document.getElementById('pushbot_save_btn');
+	if (btn) btn.addEventListener('click', submitAll);
+	var pv = document.getElementById('pushbot_preview_btn');
+	if (pv) pv.addEventListener('click', pbShowPreview);
+});
 //]]&gt;
 </script>
 <style>
@@ -2763,12 +2379,10 @@ function initModernTabs() {
 .pushbot-mode-card {
 	margin: 10px 0 16px 0;
 	padding: 16px 18px 18px;
-	border: 1px solid rgba(148, 163, 184, 0.24);
+	border: 1px solid rgba(148, 163, 184, 0.22);
 	border-radius: 16px;
-	background: rgba(246, 247, 250, 0.86);
-	box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
-	backdrop-filter: blur(10px);
-	-webkit-backdrop-filter: blur(10px);
+	background: #ffffff;
+	box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 .pushbot-header-card {
@@ -2807,8 +2421,9 @@ function initModernTabs() {
 	gap: 6px;
 	padding: 10px 12px;
 	border-radius: 12px;
-	background: rgba(255, 255, 255, 0.62);
-	border: 1px solid rgba(148, 163, 184, 0.2);
+	background: #f8fafc;
+	border: 1px solid rgba(148, 163, 184, 0.3);
+	box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
 }
 
 .pushbot-inline-title {
@@ -2898,6 +2513,25 @@ function initModernTabs() {
 	color: #b91c1c;
 }
 
+.pushbot-toast-overlay {
+	position: fixed; inset: 0; z-index: 9999;
+	display: flex; align-items: center; justify-content: center;
+	background: rgba(255,255,255,0.25); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+	opacity: 0; transition: opacity .3s ease;
+}
+.pushbot-toast-overlay.show { opacity: 1; }
+.pushbot-toast-banner {
+	padding: 16px 36px; border-radius: 14px;
+	font-size: 17px; font-weight: 700; letter-spacing: .5px;
+	box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+	transform: translateY(-10px); transition: transform .3s ease;
+	color: #fff;
+}
+.pushbot-toast-overlay.show .pushbot-toast-banner { transform: translateY(0); }
+.pushbot-toast-banner.is-ok { background: linear-gradient(135deg, #22c55e, #16a34a); }
+.pushbot-toast-banner.is-err { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.pushbot-dk .pushbot-toast-overlay { background: rgba(0,0,0,0.35); }
+
 .pushbot-dk .pushbot-mode-card {
 			background: rgba(10, 10, 18, 0.75) !important;
 			border-color: rgba(255, 255, 255, 0.08) !important;
@@ -2949,6 +2583,16 @@ function initModernTabs() {
 		}
 		.pushbot-dk .pushbot-sendtest-btn:hover {
 			box-shadow: 0 10px 22px rgba(37, 99, 235, 0.5) !important;
+		}
+		.pushbot-dk .pushbot-preview-btn {
+			background: rgba(30,41,59,0.6) !important;
+			border-color: #334155 !important;
+			color: #94a3b8 !important;
+		}
+		.pushbot-dk .pushbot-preview-btn:hover {
+			background: #1e293b !important;
+			border-color: #475569 !important;
+			color: #e2e8f0 !important;
 		}
 
 		.pushbot-dk .cbi-input-textarea,
@@ -3239,9 +2883,10 @@ function initModernTabs() {
 }
 
 .pushbot-toggle-button.is-off {
-	background: linear-gradient(135deg, #fecaca, #fda4af);
-	color: #b91c1c;
-	box-shadow: 0 8px 18px rgba(239, 68, 68, 0.14);
+	background: linear-gradient(135deg, #fee2e2, #fecaca);
+	color: #991b1b;
+	border-color: #fca5a5;
+	box-shadow: 0 4px 12px rgba(239, 68, 68, 0.12);
 }
 
 .pushbot-choice-list {
@@ -3256,17 +2901,19 @@ function initModernTabs() {
 	gap: 8px;
 	padding: 9px 12px;
 	border-radius: 12px;
-	background: rgba(255, 255, 255, 0.75);
+	background: #f1f5f9;
+	border-color: #e2e8f0;
 	color: #334155;
 	cursor: pointer;
+	box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
 
 
 .pushbot-choice-button.is-on {
-	background: linear-gradient(135deg, rgba(59, 130, 246, 0.28), rgba(14, 165, 233, 0.34));
-	border-color: rgba(59, 130, 246, 0.55);
-	color: #0f172a;
-	box-shadow: 0 10px 20px rgba(37, 99, 235, 0.24);
+	background: linear-gradient(135deg, #dbeafe, #bae6fd);
+	border-color: #60a5fa;
+	color: #1e40af;
+	box-shadow: 0 4px 12px rgba(59, 130, 246, 0.18);
 	transform: translateY(-1px);
 }
 
@@ -3292,6 +2939,155 @@ function initModernTabs() {
 	transform: translateY(-1px);
 	box-shadow: 0 10px 22px rgba(37, 99, 235, 0.34);
 }
+
+.pushbot-preview-btn {
+	display: inline-flex;
+	align-items: center;
+	padding: 12px 22px;
+	border: 1.5px solid #cbd5e1;
+	border-radius: 12px;
+	font-size: 14px;
+	font-weight: 600;
+	font-family: inherit;
+	cursor: pointer;
+	background: rgba(255,255,255,0.6);
+	color: #475569;
+	transition: all 0.2s ease;
+	user-select: none;
+}
+.pushbot-preview-btn:hover {
+	background: #fff;
+	border-color: #94a3b8;
+	color: #1e293b;
+}
+
+.pushbot-save-row {
+	margin-top: 28px;
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 12px;
+	padding: 0 4px;
+}
+.pushbot-save-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 32px;
+	border: none;
+	border-radius: 12px;
+	font-size: 15px;
+	font-weight: 700;
+	font-family: inherit;
+	cursor: pointer;
+	background: linear-gradient(135deg, #6366f1, #8b5cf6);
+	color: #fff;
+	box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35), 0 1px 3px rgba(0,0,0,0.08);
+	transition: all 0.25s ease;
+	letter-spacing: 0.3px;
+	user-select: none;
+}
+.pushbot-save-btn:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 25px rgba(99, 102, 241, 0.45), 0 2px 6px rgba(0,0,0,0.1);
+}
+.pushbot-save-btn:active {
+	transform: translateY(0);
+	box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+.pushbot-save-btn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+	transform: none !important;
+}
+.pushbot-dk .pushbot-save-btn {
+	box-shadow: 0 4px 14px rgba(99, 102, 241, 0.5);
+}
+.pushbot-dk .pushbot-save-btn:hover {
+	box-shadow: 0 8px 25px rgba(99, 102, 241, 0.6);
+}
+
+/* ── Preview overlay ── */
+.pb-preview-overlay {
+	position: fixed; inset: 0; z-index: 9998;
+	display: flex; align-items: center; justify-content: center;
+	background: rgba(255,255,255,0.2); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+	opacity: 0; transition: opacity 0.3s ease;
+}
+.pb-preview-overlay.show { opacity: 1; }
+.pb-preview-box {
+	background: #fff;
+	border-radius: 18px;
+	padding: 28px 32px 24px;
+	width: 480px; max-width: 90vw;
+	max-height: 80vh;
+	display: flex; flex-direction: column;
+	box-shadow: 0 25px 60px rgba(0,0,0,0.18);
+	transform: translateY(12px); transition: transform 0.3s ease;
+}
+.pb-preview-overlay.show .pb-preview-box { transform: translateY(0); }
+.pb-preview-title {
+	font-size: 18px; font-weight: 800; color: #0f172a;
+	margin-bottom: 16px; padding-bottom: 12px;
+	border-bottom: 1px solid #e2e8f0;
+}
+.pb-preview-empty {
+	text-align: center; color: #94a3b8; font-size: 14px; padding: 32px 0;
+}
+.pb-preview-list {
+	flex: 1; overflow-y: auto; margin: 0 -8px; padding: 0 8px;
+}
+.pb-preview-item {
+	padding: 10px 0;
+	border-bottom: 1px solid #f1f5f9;
+}
+.pb-preview-item:last-child { border-bottom: none; }
+.pb-preview-item-label {
+	font-size: 13px; font-weight: 700; color: #334155;
+	margin-bottom: 4px;
+}
+.pb-preview-item-diff {
+	font-size: 13px; line-height: 1.6;
+	color: #475569;
+}
+.pb-pv-arrow { color: #94a3b8; font-weight: 600; margin: 0 4px; }
+.pb-pv-on { color: #16a34a; font-weight: 700; }
+.pb-pv-off { color: #94a3b8; }
+.pb-pv-null { color: #cbd5e1; font-style: italic; }
+.pb-pv-str { color: #0f172a; }
+.pb-pv-arrsep { color: #cbd5e1; }
+.pb-preview-btns {
+	display: flex; gap: 10px; justify-content: flex-end;
+	margin-top: 18px; padding-top: 14px;
+	border-top: 1px solid #e2e8f0;
+}
+.pb-preview-btn {
+	padding: 10px 24px; border-radius: 10px;
+	font-size: 14px; font-weight: 700; font-family: inherit;
+	cursor: pointer; border: none; transition: all 0.2s ease;
+}
+.pb-preview-btn-disc {
+	background: #f1f5f9; color: #475569;
+}
+.pb-preview-btn-disc:hover { background: #e2e8f0; color: #1e293b; }
+.pb-preview-btn-conf {
+	background: linear-gradient(135deg, #6366f1, #8b5cf6);
+	color: #fff; box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+}
+.pb-preview-btn-conf:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 6px 18px rgba(99,102,241,0.4);
+}
+.pushbot-dk .pb-preview-box { background: #1e293b; }
+.pushbot-dk .pb-preview-title { color: #f1f5f9; border-color: #334155; }
+.pushbot-dk .pb-preview-item { border-color: #334155; }
+.pushbot-dk .pb-preview-item-label { color: #cbd5e1; }
+.pushbot-dk .pb-preview-item-diff { color: #94a3b8; }
+.pushbot-dk .pb-preview-btn-disc { background: #334155; color: #94a3b8; }
+.pushbot-dk .pb-preview-btn-disc:hover { background: #475569; color: #e2e8f0; }
+.pushbot-dk .pb-preview-empty { color: #475569; }
+.pushbot-dk .pb-preview-overlay { background: rgba(0,0,0,0.35); }
+.pushbot-dk .pb-pv-str { color: #e2e8f0; }
 
 .pushbot-dk .pushbot-choice-button {
 			background: #1f2023 !important;
@@ -3336,10 +3132,15 @@ function initModernTabs() {
 <script>
 (function(){
 var b=document.body;if(!b)return;
-/* Check explicit dark indicators */
-var explicitDark = b.matches('body.dark, body[data-theme="dark"], body[data-theme="black"]') || b.classList.contains('dark');
+var d=document.documentElement;
+/* Check explicit dark indicators on body OR html */
+var explicitDark = b.matches('body.dark, body[data-theme="dark"], body[data-theme="black"]')
+	|| b.classList.contains('dark')
+	|| d.classList.contains('dark')
+	|| d.matches('html[data-theme="dark"], html[data-theme="black"]')
+	|| d.getAttribute('data-bs-theme') === 'dark';
 if (explicitDark) {
-	document.documentElement.classList.add('pushbot-dk');
+	d.classList.add('pushbot-dk');
 	return;
 }
 /* Check actual rendered background to detect theme's effective mode */
@@ -3358,7 +3159,7 @@ if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches){
 }
 })();
 </script>
-<fieldset class="cbi-section">
+<div class="pushbot-body">
 	<div class="pushbot-mode-card pushbot-header-card">
 		<div class="pushbot-card-top">
 			<div class="pushbot-header-content">
@@ -3371,4 +3172,9 @@ if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches){
 			</div>
 		</div>
 	</div>
-</fieldset>
+	<div class="pushbot-save-row">
+		<button type="button" class="pushbot-preview-btn" id="pushbot_preview_btn">预览更改项</button>
+		<button type="button" class="pushbot-save-btn" id="pushbot_save_btn">保存并应用</button>
+	</div>
+</div>
+<%+footer%>

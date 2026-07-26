@@ -135,8 +135,15 @@ function deltemp(){
 	unset title	content ipAddress_logrow online_list online_mac mac_online_status
 	rm -f ${dir}title ${dir}content ${dir}tmp_downlist ${dir}send_enable.lock ${tempjsonpath} >/dev/null 2>&1
 	LockFile unlock
-	[ -f ${logfile} ] && local logrow=$(grep -c "" ${logfile}) || local logrow="0"
-	[ $logrow -gt 500 ] && sed -i '1,100d' ${logfile} && echo "`date "+%Y-%m-%d %H:%M:%S"`  【清理】日志超出上限，删除前 100 条" >> ${logfile}
+	if [ -f "${logfile}" ]; then
+		local logrow=$(grep -c "" "${logfile}" 2>/dev/null)
+		[ -z "$logrow" ] && logrow=0
+	fi
+	if [ "${logrow:-0}" -gt "500" ] 2>/dev/null; then
+		local tmpf="/tmp/pushbot_log_$$.tmp"
+		tail -n +101 "${logfile}" > "$tmpf" 2>/dev/null && mv "$tmpf" "${logfile}" && echo "$(date "+%Y-%m-%d %H:%M:%S")  【清理】日志超出上限，删除前 100 条" >> "${logfile}"
+		rm -f "$tmpf" 2>/dev/null
+	fi
 }
 
 # 检测程序开关
@@ -610,98 +617,104 @@ function unattended(){
 
 # 检测网络状态
 function rand_geturl(){
-	function getcheck(){
-		local urllist="https://www.163.com https://www.qq.com https://www.baidu.com https://www.qidian.com https://www.douban.com"
-		local url_number=`expr $(echo "$urllist"|grep -o ' '|wc -l) + 1`
-		local url_str=`echo "$urllist"|awk -v i=$(rand 1 $url_number) '{print $i}'`
-		echo `curl -k -s -w "%{http_code}" -m 5 ${url_str} -A "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36" -o /dev/null`
-	}
-	local check=`getcheck`
-	while [ -z "$check" ] || [ "$check" -ne "200" ]; do
-		local check=`getcheck`
-		if [ ! -z "$check" ] && [ "$check" -eq "200" ]; then
-			[ ! -z "$network_enable" ] && [ "$network_enable" -eq "404" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【网络状态】网络恢复正常.." >> ${logfile}
-			local network_enable="200"
-		else
-			[ -z "$network_enable" ] || [ "$network_enable" -eq "200" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！！】当前网络不通！停止检测！ " >> ${logfile}
-			local network_enable="404"
-			[ -z "$network_err_time" ] && network_err_time=`date +%s`
-			if [ ! -z "$network_err_event" ] && [ "$((`date +%s`-$network_err_time))" -ge "600" ]; then
-				> ${dir}send_enable.lock && pushbot_first && deltemp
-				geterrdevicealiases
-				if [ "$?" -eq "0" ]; then
-					[ -f /usr/bin/pushbot/autoreboot_count ] && retry_count=`cat /usr/bin/pushbot/autoreboot_count` && rm -f /usr/bin/pushbot/autoreboot_count >/dev/null 2>&1
-					[ ! -z ${retry_count} ] && retry_count=0;retry_count=`expr $retry_count + 1`
-					if [ "$network_err_event" -eq "1" ] ;then
-						if [ "$retry_count" -lt "3" ] ;then
-							echo "$retry_count" > /usr/bin/pushbot/autoreboot_count
-							echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！！】正在尝试重启路由，当前第 $retry_count 次 " >> ${logfile}
-							cat ${logfile} > /usr/bin/pushbot/errlog
-							sleep 2 && reboot && exit
-						fi
-						[ "$retry_count" -eq "3" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！！】已经重启路由2次，修复失败，请主人自行修复哦" >> ${logfile}
-					elif [ "$network_err_event" -eq "2" ] ;then
-						[ "$retry_count" -lt "3" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！！】正在尝试重启网络，当前第 $retry_count 次 " >> ${logfile} && ifup wan >/dev/null 2>&1
-						[ "$retry_count" -eq "3" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！！】已经重启网络2次，修复失败，请主人自行修复哦 " >> ${logfile}
-					elif [ "$network_err_event" -eq "3" ] ;then
-						if [ "$retry_count" -eq "1" ] ;then
-							echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！！】正在尝试修复网络，当前第 1 次，重启网络服务中 " >> ${logfile} && network_restart
-						elif [ "$retry_count" -eq "2" ] ;then
-							echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！！】正在尝试修复网络，当前第 2 次，关闭可能造成网络断开的软件" >> ${logfile}
-							[ `uci get koolproxy.@global[0].enabled 2>/dev/null` -eq "1" ] && [ `uci get koolproxy.@global[0].koolproxy_mode 2>/dev/null` -eq "1" ] && /etc/init.d/koolproxy stop >/dev/null 2>&1
-							[ `uci get adbyby.@adbyby[0].enable 2>/dev/null` -eq "1" ] && [ `uci get adbyby.@adbyby[0].wan_mode 2>/dev/null` -eq "0" ] && /etc/init.d/adbyby stop >/dev/null 2>&1
-							[ `uci get passwall.@global[0].enabled 2>/dev/null` -eq "1" ] && [ `uci get passwall.@global[0].proxy_mode 2>/dev/null|grep global` ] && /etc/init.d/koolproxy stop >/dev/null 2>&1
-							local shadowsocksr_enabled=`uci get shadowsocksr.@global[0].global_server 2>/dev/null|grep nil`
-							local shadowsocksr_run_mode=`uci get shadowsocksr.@global[0].run_mode 2>/dev/null|grep all`
-							[ -z "$shadowsocksr_enabled" ] && [ ! -z "$shadowsocksr_run_mode" ] && /etc/init.d/shadowsocksr stop >/dev/null 2>&1
-							sleep 60 && network_restart
-						elif [ "$retry_count" -eq "3" ] ;then
-							echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！！】正在尝试修复网络，当前第 3 次，备份设置项，并修改相关设置" >> ${logfile}
-							mkdir -p /usr/bin/pushbot/configbak
-							cp -p -f /etc/config/network /usr/bin/pushbot/configbak/network
-							cp -p -f /etc/config/dhcp /usr/bin/pushbot/configbak/dhcp
-							cp -p -f /etc/config/firewall /usr/bin/pushbot/configbak/firewall
-							cp -p -f /etc/firewall.user /usr/bin/pushbot/configbak/firewall.user
-							uci set network.wan.peerdns='0'
-							uci delete network.wan.dns
-							uci add_list network.wan.dns='223.5.5.5'
-							uci add_list network.wan.dns='119.29.29.29'
-							uci delete network.wan.mtu
-							uci commit network
-							uci set dhcp.@dnsmasq[0].port='53'
-							uci set dhcp.@dnsmasq[0].resolvfile='/tmp/resolv.conf.auto'
-							uci delete dhcp.@dnsmasq[0].server
-							uci delete dhcp.@dnsmasq[0].noresolv
-							uci commit dhcp
-							uci delete firewall.redirect
-							>/etc/firewall.user
-							uci commit firewall
-							sleep 60 && network_restart
-						elif [ "$retry_count" -eq "4" ] ;then
-							echo "$retry_count" > /usr/bin/pushbot/autoreboot_count
-							cat ${logfile} > /usr/bin/pushbot/errlog
-							sleep 2 && reboot && exit
-						elif [ "$retry_count" -eq "5" ] ;then
-							echo "$retry_count" > /usr/bin/pushbot/autoreboot_count
-							echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！！】修复失败，还原设置中，请自行检查网络设置" >> ${logfile}
-							cp -p -f /usr/bin/pushbot/configbak/network /etc/config/network
-							cp -p -f /usr/bin/pushbot/configbak/dhcp /etc/config/dhcp
-							cp -p -f /usr/bin/pushbot/configbak/firewall /etc/config/firewall
-							cp -p -f /usr/bin/pushbot/configbak/firewall.user /etc/firewall.user
-							cat ${logfile} > /usr/bin/pushbot/errlog
-							sleep 2 && reboot && exit
-						fi
+	local urllist="https://www.163.com https://www.qq.com https://www.baidu.com https://www.qidian.com https://www.douban.com"
+	local total=5
+	local used=""
+	local ok=1
+	for i in 1 2 3; do
+		local pick
+		for j in 1 2 3 4 5; do
+			local n=$(( ( $(rand 1 100) % total ) + 1 ))
+			local u=$(echo "$urllist" | awk -v i="$n" '{print $i}')
+			case "$used" in *"|$u|"*) continue;; esac
+			pick="$u"; break
+		done
+		[ -z "$pick" ] && pick=$(echo "$urllist" | awk '{print $1}')
+		used="$used|$pick|"
+		local code=$(curl -k -s -w "%{http_code}" -m 5 "$pick" -A "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36" -o /dev/null)
+		if [ "$code" = "200" ]; then ok=0; break; fi
+	done
+	if [ "$ok" -eq "0" ]; then
+		[ "$network_enable" = "404" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【网络状态】网络恢复正常.." >> ${logfile}
+		network_enable="200"
+		rm -f /usr/bin/pushbot/autoreboot_count >/dev/null 2>&1
+	else
+		[ -z "$network_enable" ] || [ "$network_enable" = "200" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！！】当前网络不通！停止检测！ " >> ${logfile}
+		network_enable="404"
+		[ -z "$network_err_time" ] && network_err_time=`date +%s`
+		if [ ! -z "$network_err_event" ] && [ "$((`date +%s`-$network_err_time))" -ge "600" ]; then
+			> ${dir}send_enable.lock && pushbot_first && deltemp
+			geterrdevicealiases
+			if [ "$?" -eq "0" ]; then
+				[ -f /usr/bin/pushbot/autoreboot_count ] && retry_count=`cat /usr/bin/pushbot/autoreboot_count` && rm -f /usr/bin/pushbot/autoreboot_count >/dev/null 2>&1
+				[ ! -z ${retry_count} ] && retry_count=0;retry_count=`expr $retry_count + 1`
+				if [ "$network_err_event" -eq "1" ] ;then
+					if [ "$retry_count" -lt "3" ] ;then
+						echo "$retry_count" > /usr/bin/pushbot/autoreboot_count
+						echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！！】正在尝试重启路由，当前第 $retry_count 次 " >> ${logfile}
+						cat ${logfile} > /usr/bin/pushbot/errlog
+						sleep 2 && reboot && exit
+					fi
+					[ "$retry_count" -eq "3" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！！】已经重启路由2次，修复失败，请主人自行修复哦" >> ${logfile}
+				elif [ "$network_err_event" -eq "2" ] ;then
+					[ "$retry_count" -lt "3" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！！】正在尝试重启网络，当前第 $retry_count 次 " >> ${logfile} && ifup wan >/dev/null 2>&1
+					[ "$retry_count" -eq "3" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！！】已经重启网络2次，修复失败，请主人自行修复哦 " >> ${logfile}
+				elif [ "$network_err_event" -eq "3" ] ;then
+					if [ "$retry_count" -eq "1" ] ;then
+						echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！！】正在尝试修复网络，当前第 1 次，重启网络服务中 " >> ${logfile} && network_restart
+					elif [ "$retry_count" -eq "2" ] ;then
+						echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！！】正在尝试修复网络，当前第 2 次，关闭可能造成网络断开的软件" >> ${logfile}
+						[ `uci get koolproxy.@global[0].enabled 2>/dev/null` -eq "1" ] && [ `uci get koolproxy.@global[0].koolproxy_mode 2>/dev/null` -eq "1" ] && /etc/init.d/koolproxy stop >/dev/null 2>&1
+						[ `uci get adbyby.@adbyby[0].enable 2>/dev/null` -eq "1" ] && [ `uci get adbyby.@adbyby[0].wan_mode 2>/dev/null` -eq "0" ] && /etc/init.d/adbyby stop >/dev/null 2>&1
+						[ `uci get passwall.@global[0].enabled 2>/dev/null` -eq "1" ] && [ `uci get passwall.@global[0].proxy_mode 2>/dev/null|grep global` ] && /etc/init.d/koolproxy stop >/dev/null 2>&1
+						local shadowsocksr_enabled=`uci get shadowsocksr.@global[0].global_server 2>/dev/null|grep nil`
+						local shadowsocksr_run_mode=`uci get shadowsocksr.@global[0].run_mode 2>/dev/null|grep all`
+						[ -z "$shadowsocksr_enabled" ] && [ ! -z "$shadowsocksr_run_mode" ] && /etc/init.d/shadowsocksr stop >/dev/null 2>&1
+						sleep 60 && network_restart
+					elif [ "$retry_count" -eq "3" ] ;then
+						echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！！】正在尝试修复网络，当前第 3 次，备份设置项，并修改相关设置" >> ${logfile}
+						mkdir -p /usr/bin/pushbot/configbak
+						cp -p -f /etc/config/network /usr/bin/pushbot/configbak/network
+						cp -p -f /etc/config/dhcp /usr/bin/pushbot/configbak/dhcp
+						cp -p -f /etc/config/firewall /usr/bin/pushbot/configbak/firewall
+						cp -p -f /etc/firewall.user /usr/bin/pushbot/configbak/firewall.user
+						uci set network.wan.peerdns='0'
+						uci delete network.wan.dns
+						uci add_list network.wan.dns='223.5.5.5'
+						uci add_list network.wan.dns='119.29.29.29'
+						uci delete network.wan.mtu
+						uci commit network
+						uci set dhcp.@dnsmasq[0].port='53'
+						uci set dhcp.@dnsmasq[0].resolvfile='/tmp/resolv.conf.auto'
+						uci delete dhcp.@dnsmasq[0].server
+						uci delete dhcp.@dnsmasq[0].noresolv
+						uci commit dhcp
+						uci delete firewall.redirect
+						>/etc/firewall.user
+						uci commit firewall
+						sleep 60 && network_restart
+					elif [ "$retry_count" -eq "4" ] ;then
+						echo "$retry_count" > /usr/bin/pushbot/autoreboot_count
+						cat ${logfile} > /usr/bin/pushbot/errlog
+						sleep 2 && reboot && exit
+					elif [ "$retry_count" -eq "5" ] ;then
+						echo "$retry_count" > /usr/bin/pushbot/autoreboot_count
+						echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！！】修复失败，还原设置中，请自行检查网络设置" >> ${logfile}
+						cp -p -f /usr/bin/pushbot/configbak/network /etc/config/network
+						cp -p -f /usr/bin/pushbot/configbak/dhcp /etc/config/dhcp
+						cp -p -f /usr/bin/pushbot/configbak/firewall /etc/config/firewall
+						cp -p -f /usr/bin/pushbot/configbak/firewall.user /etc/firewall.user
+						cat ${logfile} > /usr/bin/pushbot/errlog
+						sleep 2 && reboot && exit
 					fi
 				fi
-			elif [ -f /usr/bin/pushbot/autoreboot_count ]; then
-				network_err_time=`expr $network_err_time - 600` && sleep 60
 			fi
-			enable_detection
-			sleep $sleeptime
+		elif [ -f /usr/bin/pushbot/autoreboot_count ]; then
+			network_err_time=`expr $network_err_time - 600` && sleep 60
 		fi
-	continue
-	done
-	rm -f /usr/bin/pushbot/autoreboot_count >/dev/null 2>&1
+		enable_detection
+		sleep $sleeptime
+	fi
 }
 
 # 检测 ip 状况
