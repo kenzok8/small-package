@@ -1746,9 +1746,9 @@ acl_app() {
 									run_${type} flag=$tcp_node node=$tcp_node tcp_redir_port=$redir_port ${_extra_param} config_file=$config_file log_file=$log_file loglevel=$loglevel
 								else
 									config_file="acl/${tcp_node}_SOCKS_${socks_port}.json"
-									run_socks flag=$tcp_node node=$tcp_node bind=127.0.0.1 socks_port=$socks_port config_file=$config_file
-									# local log_file=$TMP_ACL_PATH/ipt2socks_${tcp_node}_${redir_port}.log
-									# log_file="/dev/null"
+									run_socks flag=$tcp_node node=$tcp_node bind=127.0.0.1 socks_port=$socks_port config_file=$config_file log_file=$log_file
+									# log_file=$TMP_ACL_PATH/ipt2socks_${tcp_node}_${redir_port}.log
+									log_file="/dev/null"
 									run_ipt2socks flag=acl_${tcp_node} tcp_tproxy=${is_tproxy} local_port=$redir_port socks_address=127.0.0.1 socks_port=$socks_port log_file=$log_file
 								fi
 								run_dns ${_dns_port}
@@ -1820,9 +1820,9 @@ acl_app() {
 									run_${type} flag=$udp_node node=$udp_node udp_redir_port=$redir_port config_file=$config_file log_file=$log_file loglevel=$loglevel
 								else
 									config_file="acl/${udp_node}_SOCKS_${socks_port}.json"
-									run_socks flag=$udp_node node=$udp_node bind=127.0.0.1 socks_port=$socks_port config_file=$config_file
-									# local log_file=$TMP_ACL_PATH/ipt2socks_${udp_node}_${redir_port}.log
-									# log_file="/dev/null"
+									run_socks flag=$udp_node node=$udp_node bind=127.0.0.1 socks_port=$socks_port config_file=$config_file log_file=$log_file
+									# log_file=$TMP_ACL_PATH/ipt2socks_${udp_node}_${redir_port}.log
+									log_file="/dev/null"
 									run_ipt2socks flag=acl_${udp_node} local_port=$redir_port socks_address=127.0.0.1 socks_port=$socks_port log_file=$log_file
 								fi
 							fi
