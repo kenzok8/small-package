@@ -1,0 +1,52 @@
+#!/bin/sh
+
+if ! uci -q get linkeaselite.@linkeaselite[0] >/dev/null; then
+	uci -q add linkeaselite linkeaselite >/dev/null
+fi
+
+set_default() {
+	key="$1"
+	value="$2"
+	current="$(uci -q get "linkeaselite.@linkeaselite[0].$key" 2>/dev/null || true)"
+	[ -n "$current" ] && return 0
+	uci -q set "linkeaselite.@linkeaselite[0].$key=$value"
+}
+
+set_default enabled 1
+set_default port 8897
+set_default allowPublic 0
+uci -q commit linkeaselite
+
+port="$(uci -q get linkeaselite.@linkeaselite[0].port 2>/dev/null || true)"
+[ -n "$port" ] || port=8897
+allow_public="$(uci -q get linkeaselite.@linkeaselite[0].allowPublic 2>/dev/null || true)"
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@linkeaselite[-1]
+	add ucitrack linkeaselite
+	set ucitrack.@linkeaselite[-1].init=linkeaselite
+	commit ucitrack
+EOF
+
+if [ "$allow_public" = "1" ]; then
+	uci -q batch <<-EOF >/dev/null
+		delete firewall.linkeaselite
+		set firewall.linkeaselite=rule
+		set firewall.linkeaselite.name="linkeaselite"
+		set firewall.linkeaselite.target="ACCEPT"
+		set firewall.linkeaselite.src="wan"
+		set firewall.linkeaselite.proto="tcp"
+		set firewall.linkeaselite.dest_port="$port"
+		commit firewall
+EOF
+else
+	uci -q batch <<-EOF >/dev/null
+		delete firewall.linkeaselite
+		commit firewall
+EOF
+fi
+
+/etc/init.d/linkeaselite enable
+/etc/init.d/linkeaselite restart
+
+exit 0

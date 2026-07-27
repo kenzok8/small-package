@@ -1,0 +1,42 @@
+<script type="text/javascript">//<![CDATA[
+	XHR.poll(5, '<%=url("admin/services/linkeaselite_status")%>', null,
+		function(x, st)
+		{
+			var tb = document.getElementById('linkeaselite_status');
+			if (st && tb)
+			{
+				var legacyUrl = "http://" + window.location.hostname + ":" + (st.port || 8897) + "/";
+				var overallStatus = st.running
+					? '<br/><em style=\"color:green\"><%:The LinkEaseLite service is running.%></em>'
+					: '<br/><em style=\"color:red\"><%:The LinkEaseLite service is not running.%></em>';
+				tb.innerHTML = overallStatus;
+
+				function appendBreak()
+				{
+					tb.appendChild(document.createElement("br"));
+				}
+
+				function appendButton(value, action)
+				{
+					var button = document.createElement("input");
+					button.className = "btn cbi-button cbi-button-apply";
+					button.type = "button";
+					button.value = value;
+					button.onclick = action;
+					tb.appendChild(button);
+				}
+
+				appendBreak();
+				appendBreak();
+				appendButton(" <%:Click to open LinkEaseLite%> ", function() { window.open(legacyUrl); });
+			}
+		}
+	);
+//]]></script>
+
+<fieldset class="cbi-section">
+	<legend><%:LinkEaseLite Status%></legend>
+	<p id="linkeaselite_status">
+		<em><%:Collecting data...%></em>
+	</p>
+</fieldset>
