@@ -213,6 +213,135 @@ XHR.get('<%=url([[admin]], [[services]], [[pushbot]], [[get_config]])%>', null, 
 		var a = []; for (var t = 0; t <= 23; t++) a.push({v: String(t), l: '每天' + t + '点'}); return a;
 	}
 
+
+/* ═══════════════════════════════════════════ */
+/* Tab: 基本设置 — 运行控制 */
+/* ═══════════════════════════════════════════ */
+	function initCard() {
+		if (document.getElementById('pushbot_mode_card')) return;
+		if (!PB_CONFIG) { setTimeout(initCard, 200); return; }
+
+		var enHidden = makeHidden('pushbot_enable', PB_val('pushbot_enable', '0'));
+		var liteVals = PB_val('lite_enable', []);
+		if (!Array.isArray(liteVals)) liteVals = typeof liteVals === 'string' ? (liteVals ? liteVals.split(' ') : []) : [];
+
+		var liteOpts = ['device', 'nowtime', 'content'];
+		liteOpts.forEach(function(v) {
+			if (liteVals.indexOf(v) >= 0) makeMultiHidden('lite_enable', v);
+		});
+
+		var extraFlags = ['oui_dir', 'reset_regularly', 'debuglevel'];
+		extraFlags.forEach(function(n) { makeHidden(n, PB_val(n, '0')); });
+
+		var card = document.createElement('div');
+		card.id = 'pushbot_mode_card';
+		card.className = 'pushbot-mode-card';
+		card.innerHTML = [
+			'<div class="pushbot-card-top">',
+				'<span class="pushbot-card-title">运行控制</span>',
+				'<button type="button" class="pushbot-toggle-button is-off">',
+					'<span class="pushbot-toggle-status">已禁用</span>',
+				'</button>',
+			'</div>',
+			'<div class="pushbot-choice-list" style="margin:6px 0 8px 2px">',
+				'<button type="button" class="pushbot-choice-button is-off" data-flag="oui_dir">',
+					'<span class="pushbot-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:16px;height:16px"><path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg></span>',
+					'<span class="pushbot-choice-label">下载到内存</span>',
+				'</button>',
+				'<button type="button" class="pushbot-choice-button is-off" data-flag="reset_regularly">',
+					'<span class="pushbot-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:16px;height:16px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 14h-2v-6h2v6zm0-8h-2V6h2v2z"/></svg></span>',
+					'<span class="pushbot-choice-label">每天零点重置流量</span>',
+				'</button>',
+				'<button type="button" class="pushbot-choice-button is-off" data-flag="debuglevel">',
+					'<span class="pushbot-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:16px;height:16px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 14h-2v-2h2v2zm0-4h-2V8h2v4z"/></svg></span>',
+					'<span class="pushbot-choice-label">开启日志</span>',
+				'</button>',
+			'</div>',
+			'<div class="pushbot-card-subtitle">精简模式</div>',
+			'<div class="pushbot-choice-list">',
+				'<button type="button" class="pushbot-choice-button is-off" data-value="device">',
+					'<span class="pushbot-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm2 3v10h12V7H6zm2 2h8v2H8V9zm0 4h5v2H8v-2z"/></svg></span>',
+					'<span class="pushbot-choice-label">精简当前设备列表</span>',
+				'</button>',
+				'<button type="button" class="pushbot-choice-button is-off" data-value="nowtime">',
+					'<span class="pushbot-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm1 4h-2v7l5.5 3.2 1-1.7-4.5-2.6V6z"/></svg></span>',
+					'<span class="pushbot-choice-label">精简当前时间</span>',
+				'</button>',
+				'<button type="button" class="pushbot-choice-button is-off" data-value="content">',
+					'<span class="pushbot-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm2 3v2h10V7H7zm0 4v2h6v-2H7zm0 4v2h8v-2H7z"/></svg></span>',
+					'<span class="pushbot-choice-label">只推送标题</span>',
+				'</button>',
+			'</div>'
+		].join('');
+
+		var hc = document.querySelector('.pushbot-header-card');
+		if (hc && hc.parentNode) hc.parentNode.insertBefore(card, hc.nextSibling);
+
+		var enEl = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.pushbot_enable"]');
+		var flagEls = extraFlags.map(function(n) { return hiddenBox.querySelector('[name="cbid.pushbot.pushbot.' + n + '"]'); });
+
+		var toggleButton = card.querySelector('.pushbot-toggle-button');
+		var liteChoiceBtns = Array.prototype.slice.call(card.querySelectorAll('[data-value]'));
+		var flagChoiceBtns = Array.prototype.slice.call(card.querySelectorAll('[data-flag]'));
+
+		function syncState() {
+			var enabled = enEl.value === '1';
+			toggleButton.classList.toggle('is-on', enabled);
+			toggleButton.classList.toggle('is-off', !enabled);
+			toggleButton.querySelector('.pushbot-toggle-status').textContent = enabled ? '已启用' : '已禁用';
+
+			liteChoiceBtns.forEach(function(b) {
+				var v = b.getAttribute('data-value');
+				var h = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.lite_enable"][value="' + v + '"]');
+				var active = !!h;
+				b.className = 'pushbot-choice-button ' + (active ? 'is-on' : 'is-off');
+			});
+
+			flagChoiceBtns.forEach(function(b) {
+				var n = b.getAttribute('data-flag');
+				var h = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.' + n + '"]');
+				var active = h && h.value === '1';
+				b.className = 'pushbot-choice-button ' + (active ? 'is-on' : 'is-off');
+			});
+		}
+
+		toggleButton.addEventListener('click', function(e) {
+			e.preventDefault();
+			enEl.value = enEl.value === '1' ? '0' : '1';
+			syncState();
+		});
+
+		liteChoiceBtns.forEach(function(b) {
+			b.addEventListener('click', function(e) {
+				e.preventDefault();
+				var v = b.getAttribute('data-value');
+				var h = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.lite_enable"][value="' + v + '"]');
+				if (h) {
+					h.parentNode.removeChild(h);
+				} else {
+					makeMultiHidden('lite_enable', v);
+				}
+				syncState();
+			});
+		});
+
+		flagChoiceBtns.forEach(function(b) {
+			b.addEventListener('click', function(e) {
+				e.preventDefault();
+				var n = b.getAttribute('data-flag');
+				var h = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.' + n + '"]');
+				if (h) h.value = h.value === '1' ? '0' : '1';
+				syncState();
+			});
+		});
+
+		syncState();
+	}
+
+
+/* ═══════════════════════════════════════════ */
+/* Tab: 基本设置 — 推送模式 */
+/* ═══════════════════════════════════════════ */
 	function initPushModeCard() {
 		if (document.getElementById('pushbot_pushmode_card')) return;
 		if (!PB_CONFIG) { setTimeout(initPushModeCard, 200); return; }
@@ -439,6 +568,10 @@ XHR.get('<%=url([[admin]], [[services]], [[pushbot]], [[get_config]])%>', null, 
 		renderModeSettings();
 	}
 
+
+/* ═══════════════════════════════════════════ */
+/* Tab: 基本设置 — 终端信息 */
+/* ═══════════════════════════════════════════ */
 	function initTerminalCard() {
 		if (document.getElementById('pushbot_terminal_card')) return;
 		if (!PB_CONFIG) { setTimeout(initTerminalCard, 200); return; }
@@ -592,127 +725,10 @@ XHR.get('<%=url([[admin]], [[services]], [[pushbot]], [[get_config]])%>', null, 
 		}
 	}
 
-	function initCard() {
-		if (document.getElementById('pushbot_mode_card')) return;
-		if (!PB_CONFIG) { setTimeout(initCard, 200); return; }
 
-		var enHidden = makeHidden('pushbot_enable', PB_val('pushbot_enable', '0'));
-		var liteVals = PB_val('lite_enable', []);
-		if (!Array.isArray(liteVals)) liteVals = typeof liteVals === 'string' ? (liteVals ? liteVals.split(' ') : []) : [];
-
-		var liteOpts = ['device', 'nowtime', 'content'];
-		liteOpts.forEach(function(v) {
-			if (liteVals.indexOf(v) >= 0) makeMultiHidden('lite_enable', v);
-		});
-
-		var extraFlags = ['oui_dir', 'reset_regularly', 'debuglevel'];
-		extraFlags.forEach(function(n) { makeHidden(n, PB_val(n, '0')); });
-
-		var card = document.createElement('div');
-		card.id = 'pushbot_mode_card';
-		card.className = 'pushbot-mode-card';
-		card.innerHTML = [
-			'<div class="pushbot-card-top">',
-				'<span class="pushbot-card-title">运行控制</span>',
-				'<button type="button" class="pushbot-toggle-button is-off">',
-					'<span class="pushbot-toggle-status">已禁用</span>',
-				'</button>',
-			'</div>',
-			'<div class="pushbot-choice-list" style="margin:6px 0 8px 2px">',
-				'<button type="button" class="pushbot-choice-button is-off" data-flag="oui_dir">',
-					'<span class="pushbot-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:16px;height:16px"><path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg></span>',
-					'<span class="pushbot-choice-label">下载到内存</span>',
-				'</button>',
-				'<button type="button" class="pushbot-choice-button is-off" data-flag="reset_regularly">',
-					'<span class="pushbot-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:16px;height:16px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 14h-2v-6h2v6zm0-8h-2V6h2v2z"/></svg></span>',
-					'<span class="pushbot-choice-label">每天零点重置流量</span>',
-				'</button>',
-				'<button type="button" class="pushbot-choice-button is-off" data-flag="debuglevel">',
-					'<span class="pushbot-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:16px;height:16px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 14h-2v-2h2v2zm0-4h-2V8h2v4z"/></svg></span>',
-					'<span class="pushbot-choice-label">开启日志</span>',
-				'</button>',
-			'</div>',
-			'<div class="pushbot-card-subtitle">精简模式</div>',
-			'<div class="pushbot-choice-list">',
-				'<button type="button" class="pushbot-choice-button is-off" data-value="device">',
-					'<span class="pushbot-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm2 3v10h12V7H6zm2 2h8v2H8V9zm0 4h5v2H8v-2z"/></svg></span>',
-					'<span class="pushbot-choice-label">精简当前设备列表</span>',
-				'</button>',
-				'<button type="button" class="pushbot-choice-button is-off" data-value="nowtime">',
-					'<span class="pushbot-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm1 4h-2v7l5.5 3.2 1-1.7-4.5-2.6V6z"/></svg></span>',
-					'<span class="pushbot-choice-label">精简当前时间</span>',
-				'</button>',
-				'<button type="button" class="pushbot-choice-button is-off" data-value="content">',
-					'<span class="pushbot-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm2 3v2h10V7H7zm0 4v2h6v-2H7zm0 4v2h8v-2H7z"/></svg></span>',
-					'<span class="pushbot-choice-label">只推送标题</span>',
-				'</button>',
-			'</div>'
-		].join('');
-
-		var hc = document.querySelector('.pushbot-header-card');
-		if (hc && hc.parentNode) hc.parentNode.insertBefore(card, hc.nextSibling);
-
-		var enEl = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.pushbot_enable"]');
-		var flagEls = extraFlags.map(function(n) { return hiddenBox.querySelector('[name="cbid.pushbot.pushbot.' + n + '"]'); });
-
-		var toggleButton = card.querySelector('.pushbot-toggle-button');
-		var liteChoiceBtns = Array.prototype.slice.call(card.querySelectorAll('[data-value]'));
-		var flagChoiceBtns = Array.prototype.slice.call(card.querySelectorAll('[data-flag]'));
-
-		function syncState() {
-			var enabled = enEl.value === '1';
-			toggleButton.classList.toggle('is-on', enabled);
-			toggleButton.classList.toggle('is-off', !enabled);
-			toggleButton.querySelector('.pushbot-toggle-status').textContent = enabled ? '已启用' : '已禁用';
-
-			liteChoiceBtns.forEach(function(b) {
-				var v = b.getAttribute('data-value');
-				var h = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.lite_enable"][value="' + v + '"]');
-				var active = !!h;
-				b.className = 'pushbot-choice-button ' + (active ? 'is-on' : 'is-off');
-			});
-
-			flagChoiceBtns.forEach(function(b) {
-				var n = b.getAttribute('data-flag');
-				var h = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.' + n + '"]');
-				var active = h && h.value === '1';
-				b.className = 'pushbot-choice-button ' + (active ? 'is-on' : 'is-off');
-			});
-		}
-
-		toggleButton.addEventListener('click', function(e) {
-			e.preventDefault();
-			enEl.value = enEl.value === '1' ? '0' : '1';
-			syncState();
-		});
-
-		liteChoiceBtns.forEach(function(b) {
-			b.addEventListener('click', function(e) {
-				e.preventDefault();
-				var v = b.getAttribute('data-value');
-				var h = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.lite_enable"][value="' + v + '"]');
-				if (h) {
-					h.parentNode.removeChild(h);
-				} else {
-					makeMultiHidden('lite_enable', v);
-				}
-				syncState();
-			});
-		});
-
-		flagChoiceBtns.forEach(function(b) {
-			b.addEventListener('click', function(e) {
-				e.preventDefault();
-				var n = b.getAttribute('data-flag');
-				var h = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.' + n + '"]');
-				if (h) h.value = h.value === '1' ? '0' : '1';
-				syncState();
-			});
-		});
-
-		syncState();
-	}
-
+/* ═══════════════════════════════════════════ */
+/* Tab: 基本设置 — 免打扰 */
+/* ═══════════════════════════════════════════ */
 	function initDisturbCard() {
 		if (document.getElementById('pushbot_disturb_card')) return;
 		if (!PB_CONFIG) { setTimeout(initDisturbCard, 200); return; }
@@ -1048,567 +1064,10 @@ XHR.get('<%=url([[admin]], [[services]], [[pushbot]], [[get_config]])%>', null, 
 	}
 
 	/* register all init functions FIRST, before any direct call that might throw */
-	window.addEventListener('load', initCard);
-	window.addEventListener('load', initPushModeCard);
-	window.addEventListener('load', initTerminalCard);
-	window.addEventListener('load', initDisturbCard);
-	window.addEventListener('load', initModernTabs);
-	setTimeout(function(){try{initCard();}catch(e){console.error('initCard:',e);}}, 500);
-	setTimeout(function(){try{initPushModeCard();}catch(e){console.error('initPushModeCard:',e);}}, 500);
-	setTimeout(function(){try{initTerminalCard();}catch(e){console.error('initTerminalCard:',e);}}, 550);
-	setTimeout(function(){try{initDisturbCard();}catch(e){console.error('initDisturbCard:',e);}}, 600);
-	setTimeout(function(){try{initModernTabs();}catch(e){console.error('initModernTabs:',e);}}, 650);
-	/* also try direct call if DOM ready, but guard against errors */
-	if (document.readyState !== 'loading') {
-		try { initCard(); } catch(e) {}
-	}
 
-	/* ── initScheduledPushCard inside IIFE to access helper functions ── */
-	function initScheduledPushCard() {
-	if (document.getElementById('pushbot_scheduled_card')) return;
-	if (!PB_CONFIG) { setTimeout(initScheduledPushCard, 200); return; }
-	var pane = document.getElementById('pushbot_pane_scheduled');
-	if (!pane) { setTimeout(initScheduledPushCard, 150); return; }
-
-	var crontab = PB_val('crontab', '');
-	var regular_time = PB_val('regular_time', '8');
-	var regular_time_2 = PB_val('regular_time_2', '');
-	var regular_time_3 = PB_val('regular_time_3', '');
-	var interval_time = PB_val('interval_time', '6');
-	var send_title = PB_val('send_title', '');
-	var router_status = PB_bool('router_status');
-	var router_temp = PB_bool('router_temp');
-	var router_wan = PB_bool('router_wan');
-	var client_list = PB_bool('client_list');
-	var google_check_timeout = PB_val('google_check_timeout', '10');
-
-	var card = document.createElement('div');
-	card.id = 'pushbot_scheduled_card';
-	card.className = 'pushbot-mode-card';
-
-	var header = document.createElement('div');
-	header.className = 'pushbot-card-top';
-	header.innerHTML = '<span class="pushbot-card-title" style="font-size:16px;font-weight:800">定时推送</span>';
-	card.appendChild(header);
-
-	/* ── Row: 定时任务设定 ── */
-	var taskTitle = document.createElement('div');
-	taskTitle.className = 'pushbot-inline-title';
-	taskTitle.style.cssText = 'margin:6px 0 6px 2px;text-transform:none;font-size:13px';
-	taskTitle.textContent = '定时任务设定';
-	card.appendChild(taskTitle);
-
-	var crHi = makeHidden('crontab', crontab);
-	var crOpts = [{v:'',l:'关闭'},{v:'1',l:'定时发送'},{v:'2',l:'间隔发送'}];
-	var crCur = crontab;
-	var crList = document.createElement('div');
-	crList.className = 'pushbot-choice-list';
-	var crBtns = [];
-	crOpts.forEach(function(o){
-		var b=document.createElement('button');b.type='button';b.className='pushbot-choice-button';
-		b.textContent=o.l;b.setAttribute('data-v',o.v);
-		if(o.v===crCur)b.className+=' is-on';
-		b.addEventListener('click',function(e){
-			e.preventDefault();crCur=o.v;crHi.value=o.v;
-			crBtns.forEach(function(b2){b2.className='pushbot-choice-button'+(b2.getAttribute('data-v')===crCur?' is-on':'');});
-			renderScheduledContent();
-		});crBtns.push(b);crList.appendChild(b);
-	});
-	card.appendChild(crList);
-
-	/* ── conditional content ── */
-	var contentBody = document.createElement('div');
-	contentBody.id = 'sp_content_body';
-	card.appendChild(contentBody);
-
-	function hourOpts(includeClose) {
-		var a = [];
-		if (includeClose) a.push({v:'',l:'关闭'});
-		for (var t=0;t<=23;t++) a.push({v:String(t),l:'每天'+t+'点'});
-		return a;
-	}
-
-	function mkTxtS(opt, label, val, desc) {
-		var w=document.createElement('div');w.className='pushbot-inline-field';w.style.cssText='margin:4px 0';
-		var t=document.createElement('div');t.className='pushbot-inline-title';
-		t.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
-		t.textContent=label;w.appendChild(t);
-		var b=document.createElement('div');b.className='pushbot-inline-body';
-		var inp=document.createElement('input');inp.type='text';inp.className='cbi-input-text';inp.value=val;
-		inp.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit';
-		var hi=makeHidden(opt,val);
-		inp.addEventListener('change',function(){hi.value=this.value;});
-		b.appendChild(inp);
-		if(desc){var d=document.createElement('div');d.className='pushbot-inline-description';d.innerHTML=desc;b.appendChild(d);}
-		w.appendChild(b);return w;
-	}
-	function mkSelS(opt, label, val, opts, desc) {
-		var w=document.createElement('div');w.className='pushbot-inline-field';w.style.cssText='margin:4px 0';
-		var t=document.createElement('div');t.className='pushbot-inline-title';
-		t.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
-		t.textContent=label;w.appendChild(t);
-		var b=document.createElement('div');b.className='pushbot-inline-body';
-		var sel=document.createElement('select');sel.className='cbi-input-select';
-		sel.style.cssText='width:100%;padding:6px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
-		opts.forEach(function(o){var op=document.createElement('option');op.value=o.v;op.textContent=o.l;if(o.v===val)op.selected=true;sel.appendChild(op);});
-		var hi=makeHidden(opt,val);
-		sel.addEventListener('change',function(){hi.value=this.value;});
-		b.appendChild(sel);
-		if(desc){var d=document.createElement('div');d.className='pushbot-inline-description';d.innerHTML=desc;b.appendChild(d);}
-		w.appendChild(b);return w;
-	}
-
-	function renderScheduledContent() {
-		contentBody.innerHTML = '';
-		var mode = crCur;
-		if (mode === '' || mode === null) return;
-
-		/* ── time selectors ── */
-		if (mode === '1') {
-			var ttl = document.createElement('div');
-			ttl.className = 'pushbot-inline-title';
-			ttl.style.cssText = 'margin:12px 0 6px 2px;text-transform:none;font-size:13px';
-			ttl.textContent = '发送时间';
-			contentBody.appendChild(ttl);
-			var tr = document.createElement('div');
-			tr.style.cssText = 'display:flex;gap:12px;flex-wrap:wrap';
-			tr.appendChild(mkSelS('regular_time','时间一', regular_time, hourOpts(false)));
-			tr.appendChild(mkSelS('regular_time_2','时间二', regular_time_2, hourOpts(true)));
-			tr.appendChild(mkSelS('regular_time_3','时间三', regular_time_3, hourOpts(true)));
-			contentBody.appendChild(tr);
-		}
-
-		if (mode === '2') {
-			var ittl = document.createElement('div');
-			ittl.className = 'pushbot-inline-title';
-			ittl.style.cssText = 'margin:12px 0 6px 2px;text-transform:none;font-size:13px';
-			ittl.textContent = '发送间隔';
-			contentBody.appendChild(ittl);
-			var intOpts = [];
-			for (var t=1;t<=23;t++) intOpts.push({v:String(t),l:t+'小时'});
-			contentBody.appendChild(mkSelS('interval_time','',interval_time,intOpts,'从 00:00 开始，每 * 小时发送一次'));
-		}
-
-		/* ── push content flags ── */
-		var fl = document.createElement('div');
-		fl.className = 'pushbot-inline-title';
-		fl.style.cssText = 'margin:14px 0 6px 2px;text-transform:none;font-size:13px';
-		fl.textContent = '推送内容';
-		contentBody.appendChild(fl);
-
-		var fc = document.createElement('div');
-		fc.className = 'pushbot-choice-list';
-		[
-			{opt:'router_status',label:'系统运行情况',on:router_status},
-			{opt:'router_temp',label:'设备温度',on:router_temp},
-			{opt:'router_wan',label:'WAN信息',on:router_wan},
-			{opt:'client_list',label:'客户端列表',on:client_list}
-		].forEach(function(f){
-			var b=document.createElement('button');b.type='button';b.className='pushbot-choice-button';
-			var on=f.on;b.className+=' '+(on?'is-on':'is-off');
-			b.innerHTML='<span>'+f.label+'</span>';
-			b.addEventListener('click',function(e){
-				e.preventDefault();on=!on;updateFlagInput(f.opt, on);
-				b.className='pushbot-choice-button '+(on?'is-on':'is-off');
-			});
-			fc.appendChild(b);
-		});
-		contentBody.appendChild(fc);
-
-		/* ── bottom row: 推送标题 + 全球互联检测超时时间 ── */
-		var br = document.createElement('div');
-		br.style.cssText = 'display:flex;gap:12px;margin-top:14px;flex-wrap:wrap';
-
-		var tw = document.createElement('div');
-		tw.style.cssText = 'flex:2;min-width:200px';
-		tw.appendChild(mkTxtS('send_title','推送标题',send_title));
-		br.appendChild(tw);
-
-		var gw = document.createElement('div');
-		gw.style.cssText = 'flex:1;min-width:150px';
-		gw.appendChild(mkTxtS('google_check_timeout','全球互联检测超时时间',google_check_timeout,'单位为秒'));
-		br.appendChild(gw);
-
-		contentBody.appendChild(br);
-
-		/* ── 手动发送 button ── */
-		var sr = document.createElement('div');
-		sr.style.cssText = 'display:flex;justify-content:flex-end;margin-top:16px';
-		var sb = document.createElement('button');
-		sb.type = 'button'; sb.textContent = '手动发送';
-		sb.className = 'pushbot-sendtest-btn';
-		sb.addEventListener('click', function(e) {
-			e.preventDefault(); sb.disabled = true; sb.textContent = '发送中...';
-			var data = window.__pbCollectData ? __pbCollectData() : {};
-			var x = new XMLHttpRequest();
-			x.open('POST', '<%=url([[admin]],[[services]],[[pushbot]],[[save_config]])%>', true);
-			x.setRequestHeader('Content-Type', 'application/json');
-			x.onload = function() {
-				var y = new XMLHttpRequest();
-				y.open('GET', '<%=url([[admin]],[[services]],[[pushbot]],[[send_manual]])%>', true);
-				y.onload = function() { sb.disabled = false; sb.textContent = '手动发送'; };
-				y.onerror = function() { sb.disabled = false; sb.textContent = '手动发送'; };
-				y.send();
-			};
-			x.onerror = function() { sb.disabled = false; sb.textContent = '手动发送'; };
-			x.send(JSON.stringify(data));
-		});
-		sr.appendChild(sb);
-		contentBody.appendChild(sr);
-	}
-
-	renderScheduledContent();
-	pane.innerHTML = '';
-	pane.appendChild(card);
-}
-
-	/* pre-load scheduled card */
-	PB_onReady(function trySch() {
-		var p = document.getElementById('pushbot_pane_scheduled');
-		if (!p) { setTimeout(trySch, 300); return; }
-		try{initScheduledPushCard();}catch(e){console.error('scheduled card:',e);}
-	});
-})();
-
-function initMonitorCard() {
-	if (document.getElementById('pushbot_monitor_card_container')) return;
-	if (!PB_CONFIG) { setTimeout(initMonitorCard, 200); return; }
-	var pane = document.getElementById('pushbot_pane_monitor');
-	if (!pane) { setTimeout(initMonitorCard, 150); return; }
-
-	var hb = document.getElementById('mon_hidden_fields') || (function(){
-		var d=document.createElement('div'); d.id='mon_hidden_fields'; d.style.display='none';
-		(document.querySelector('form')||document.body||document.documentElement).appendChild(d); return d;
-	})();
-	hb.innerHTML = '';
-
-	function mkHidden(name, val) {
-		var i = document.createElement('input'); i.type = 'hidden';
-		i.name = 'cbid.pushbot.pushbot.' + name; i.value = val;
-		hb.appendChild(i); return i;
-	}
-	function mkText(name, label, val, desc) {
-		var w = document.createElement('div'); w.className = 'pushbot-inline-field'; w.style.cssText = 'margin:4px 0';
-		var t = document.createElement('div'); t.className = 'pushbot-inline-title';
-		t.style.cssText = 'margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
-		t.textContent = label; w.appendChild(t);
-		var b = document.createElement('div'); b.className = 'pushbot-inline-body';
-		var inp = document.createElement('input'); inp.type = 'text'; inp.className = 'cbi-input-text';
-		inp.value = val;
-		inp.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit';
-		var hi = mkHidden(name, val);
-		inp.addEventListener('change', function() { hi.value = this.value; });
-		b.appendChild(inp);
-		if (desc) { var d = document.createElement('div'); d.className = 'pushbot-inline-description'; d.innerHTML = desc; b.appendChild(d); }
-		w.appendChild(b); return w;
-	}
-	function mkToggle(label, isOn, onToggle) {
-		var b = document.createElement('button'); b.type = 'button';
-		b.className = 'pushbot-choice-button ' + (isOn ? 'is-on' : 'is-off');
-		b.innerHTML = '<span>' + label + '</span>';
-		b.addEventListener('click', function(e) {
-			e.preventDefault();
-			var newOn = !isOn; isOn = newOn;
-			b.className = 'pushbot-choice-button ' + (newOn ? 'is-on' : 'is-off');
-			if (onToggle) onToggle(newOn);
-		});
-		return b;
-	}
-	function mkChoiceList(opts, curVal, onChange) {
-		var c = document.createElement('div'); c.className = 'pushbot-choice-list';
-		var btns = [];
-		opts.forEach(function(o) {
-			var b = document.createElement('button'); b.type = 'button'; b.className = 'pushbot-choice-button';
-			b.textContent = o.l; b.setAttribute('data-v', o.v);
-			if (o.v === curVal) b.className += ' is-on';
-			b.addEventListener('click', function(e) {
-				e.preventDefault(); curVal = o.v;
-				btns.forEach(function(b2) { b2.className = 'pushbot-choice-button' + (b2.getAttribute('data-v') === curVal ? ' is-on' : ''); });
-				if (onChange) onChange(curVal);
-			});
-			btns.push(b); c.appendChild(b);
-		});
-		return c;
-	}
-
-	var ADV_UP_TIMEOUT = PB_val('up_timeout', '2');
-	var ADV_DOWN_TIMEOUT = PB_val('down_timeout', '20');
-	var ADV_TIMEOUT_RETRY = PB_val('timeout_retry_count', '2');
-	var ADV_THREAD_NUM = PB_val('thread_num', '3');
-	var ADV_SOC_CODE = PB_val('soc_code', '');
-	var ADV_PVE_HOST = PB_val('pve_host', '10.0.0.2');
-	var ADV_PVE_PORT = PB_val('pve_port', '22');
-	var ADV_PUBLIC_RETRY = PB_val('public_ip_retry_count', '10');
-	var container = document.createElement('div'); container.id = 'pushbot_monitor_card_container';
-
-	/* ═══ CARD 1: 设备监测 ═══ */
-	var c1 = document.createElement('div'); c1.className = 'pushbot-mode-card';
-	c1.innerHTML = '<div class="pushbot-card-top"><span class="pushbot-card-title">设备监测</span></div>';
-	var b1 = document.createElement('div'); b1.style.cssText = 'margin-top:6px';
-	var r1 = document.createElement('div'); r1.style.cssText = 'display:flex;gap:12px';
-	var c1a = document.createElement('div'); c1a.style.cssText = 'flex:1;min-width:0';
-	c1a.appendChild(mkText('up_timeout', '设备上线检测超时（s）', ADV_UP_TIMEOUT));
-	r1.appendChild(c1a);
-	var c1b = document.createElement('div'); c1b.style.cssText = 'flex:1;min-width:0';
-	c1b.appendChild(mkText('thread_num', '最大并发进程数', ADV_THREAD_NUM));
-	r1.appendChild(c1b);
-	b1.appendChild(r1);
-	var r2 = document.createElement('div'); r2.style.cssText = 'display:flex;gap:12px';
-	var c2a = document.createElement('div'); c2a.style.cssText = 'flex:1;min-width:0';
-	c2a.appendChild(mkText('down_timeout', '设备离线检测超时（s）', ADV_DOWN_TIMEOUT));
-	r2.appendChild(c2a);
-	var c2b = document.createElement('div'); c2b.style.cssText = 'flex:1;min-width:0';
-	c2b.appendChild(mkText('timeout_retry_count', '离线检测次数', ADV_TIMEOUT_RETRY,
-		'若无二级路由设备，信号强度良好，可以减少以上数值<br/>因夜间 wifi 休眠较为玄学，遇到设备频繁推送断开，烦请自行调整参数<br/>..╮(\u2570_\u2570)\uff0d..'));
-	r2.appendChild(c2b);
-	b1.appendChild(r2); c1.appendChild(b1); container.appendChild(c1);
-
-	/* ═══ CARD 2: 温度监测 ═══ */
-	var c2 = document.createElement('div'); c2.className = 'pushbot-mode-card';
-	c2.innerHTML = '<div class="pushbot-card-top"><span class="pushbot-card-title">温度监测</span></div>';
-	var b2 = document.createElement('div'); b2.style.cssText = 'margin-top:6px';
-
-	var socCur = ADV_SOC_CODE, socPVE = (socCur === 'pve'), socCust = (socCur !== '' && socCur !== 'pve');
-	var socHi = mkHidden('soc_code', socCur);
-
-	var sf = document.createElement('div'); sf.className = 'pushbot-inline-field'; sf.style.cssText = 'margin:4px 0';
-	var st = document.createElement('div'); st.className = 'pushbot-inline-title';
-	st.style.cssText = 'margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
-	st.textContent = '自定义温度读取命令'; sf.appendChild(st);
-	var sb = document.createElement('div'); sb.className = 'pushbot-inline-body';
-	var ss = document.createElement('select'); ss.className = 'cbi-input-select';
-	ss.style.cssText = 'width:100%;padding:6px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
-	[{v:'',l:'默认'},{v:'pve',l:'PVE\u00a0虚拟机'},{v:'__custom__',l:'自定义命令'}].forEach(function(o) {
-		var op = document.createElement('option'); op.value = o.v; op.textContent = o.l;
-		if (o.v === socCur || (socCust && o.v === '__custom__')) op.selected = true;
-		ss.appendChild(op);
-	});
-	var ci = document.createElement('input'); ci.type='text'; ci.className='cbi-input-text';
-	ci.placeholder = '输入自定义温度读取命令'; ci.value = socCust ? socCur : '';
-	ci.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit;margin-top:6px;display:'+(socCust?'block':'none');
-	function syncSoc() {
-		var v = ss.value==='__custom__' ? ci.value : ss.value;
-		socHi.value = v; togPVE();
-	}
-	ss.addEventListener('change', function() {
-		if (this.value==='__custom__') { ci.style.display='block'; ci.focus(); syncSoc(); }
-		else { ci.style.display='none'; ci.value=''; syncSoc(); }
-	});
-	ci.addEventListener('change', syncSoc);
-	var socDesc = '请尽量避免使用特殊符号，如双引号、$、!等，执行结果需为数字，用于温度对比';
-	var sd = document.createElement('div'); sd.className='pushbot-inline-description'; sd.innerHTML=socDesc; sb.appendChild(sd);
-	sb.appendChild(ss); sb.appendChild(ci); sf.appendChild(sb); b2.appendChild(sf);
-
-	/* PVE fields */
-	var pveDescHost = '请确认已经设置好密钥登陆，否则会引起脚本无法正常运行等错误！<br/>PVE 安装 sensors 命令自行百度<br/>密钥登陆例：<br/>opkg update #更新列表<br/>opkg install openssh-client openssh-keygen #安装openssh客户端<br/>ssh-keygen -t rsa # 生成密钥文件（自行设定密码等信息）<br/>ssh root@10.0.0.2 \"tee -a ~/.ssh/id_rsa.pub\" < ~/.ssh/id_rsa.pub # 传送公钥到 PVE<br/>ssh -i ~/.ssh/id_rsa root@10.0.0.2 sensors # 测试温度命令';
-	var pveDescPort = '默认为22，如有自定义，请填写自定义SSH端口';
-	var pc = document.createElement('div'); pc.id='mon_pve_fields'; pc.style.cssText='margin-top:6px';
-	var pvg = document.createElement('div'); pvg.style.cssText='display:flex;gap:12px';
-	pvg.appendChild(mkText('pve_host', '宿主机地址', ADV_PVE_HOST, pveDescHost));
-	pvg.appendChild(mkText('pve_port', 'SSH端口', ADV_PVE_PORT, pveDescPort));
-	pc.appendChild(pvg); b2.appendChild(pc);
-	function togPVE() { pc.style.display = ((socHi && socHi.value) === 'pve') ? 'block' : 'none'; }
-	togPVE();
-
-	/* Test button */
-	var tr = document.createElement('div'); tr.style.cssText='display:flex;align-items:center;gap:12px;margin-top:10px';
-	var tb = document.createElement('a'); tb.className='cbi-button cbi-input-apply';
-	tb.href='<%=url([[admin]],[[services]],[[pushbot]],[[soc_test]])%>'; tb.textContent='测试温度';
-	tb.style.cssText='white-space:nowrap;padding:6px 16px;text-decoration:none';
-	tr.appendChild(tb);
-	var rl = document.createElement('span'); rl.style.cssText='font-size:13px;font-weight:600'; rl.textContent='温度结果:';
-	tr.appendChild(rl);
-	var ro = document.createElement('span'); ro.style.cssText='padding:4px 10px;background:rgba(148,163,184,0.08);border-radius:6px;font-family:Menlo,Consolas,monospace;font-size:12px';
-	ro.textContent = '加载中...';
-	(function(){
-		var x = new XMLHttpRequest();
-		x.open('GET', '<%=url([[admin]], [[services]], [[pushbot]], [[soc_result]])%>?_=' + Date.now(), true);
-		x.onload = function() { ro.textContent = x.responseText || '无输出'; };
-		x.onerror = function() { ro.textContent = '无输出'; };
-		x.send();
-	})();
-	tr.appendChild(ro);
-	b2.appendChild(tr);
-	c2.appendChild(b2); container.appendChild(c2);
-
-	/* ═══ CARD 3: 无人值守 ═══ */
-	var c3 = document.createElement('div'); c3.className = 'pushbot-mode-card';
-
-	/* Use hidden input for err_enable Flag form submission */
-	var errHi = document.querySelector('[name="cbid.pushbot.pushbot.err_enable"]');
-	var errOn = PB_bool('err_enable');
-	var errDesc = '请确认脚本可以正常运行，否则可能造成频繁重启等错误！';
-	var errToggle = mkToggle('无人值守任务', errOn, function(on) {
-		updateFlagInput('err_enable', on);
-		var ec = document.getElementById('mon_err_content');
-		if (ec) ec.style.display = on ? 'block' : 'none';
-	});
-	c3.appendChild(errToggle);
-	var dDesc = document.createElement('div'); dDesc.className = 'pushbot-inline-description'; dDesc.innerHTML = errDesc;
-	c3.appendChild(dDesc);
-
-	var ec = document.createElement('div'); ec.id = 'mon_err_content'; ec.style.cssText = 'margin-top:10px';
-	ec.style.display = errOn ? 'block' : 'none';
-	c3.appendChild(ec);
-
-	/* err_sheep_enable */
-	(function(){
-		var d = document.createElement('div'); d.className = 'pushbot-inline-description';
-		d.innerHTML = '避免白天重拨 ddns 域名等待解析，此功能不影响断网检测<br/>因夜间跑流量问题，该功能可能不稳定';
-		ec.appendChild(d);
-		/* use hidden input for err_sheep_enable */
-		var shHi = document.querySelector('[name="cbid.pushbot.pushbot.err_sheep_enable"]');
-		var shOn = PB_bool('err_sheep_enable');
-		var shTog = mkToggle('仅在免打扰时段重拨', shOn, function(on) {
-			updateFlagInput('err_sheep_enable', on);
-		});
-		ec.appendChild(shTog);
-	})();
-	ec.appendChild(document.createElement('hr')).style.cssText = 'border:none;border-top:1px solid rgba(148,163,184,0.2);margin:10px 0';
-
-	/* network_err_event */
-	(function(){
-		var nl = document.createElement('div'); nl.className = 'pushbot-inline-title';
-		nl.style.cssText = 'margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
-		nl.textContent = '网络断开时'; ec.appendChild(nl);
-		var ADV_NET_ERR = PB_val('network_err_event', '');
-		var netHi = mkHidden('network_err_event', ADV_NET_ERR);
-		var netL = [
-			{v:'',l:'无操作'},
-			{v:'1',l:'重启路由器'},
-			{v:'2',l:'重新拨号'},
-			{v:'3',l:'修改相关设置项，尝试自动修复网络'}
-		];
-		ec.appendChild(mkChoiceList(netL, ADV_NET_ERR, function(v) { netHi.value = v; }));
-		var netDesc = '选项 1 选项 2 不会修改设置，并最多尝试 2 次。<br/>选项 3 会将设置项备份于 /usr/bin/pushbot/configbak 目录，并在失败后还原。<br/>【！！无法保证兼容性！！】不熟悉系统设置项，不会救砖请勿使用';
-		var nd = document.createElement('div'); nd.className = 'pushbot-inline-description'; nd.innerHTML = netDesc; ec.appendChild(nd);
-	})();
-	ec.appendChild(document.createElement('hr')).style.cssText = 'border:none;border-top:1px solid rgba(148,163,184,0.2);margin:10px 0';
-
-	/* err_device_aliases */
-	(function(){
-		var dl = document.createElement('div'); dl.className = 'pushbot-inline-title';
-		dl.style.cssText = 'margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
-		dl.textContent = '关注列表'; ec.appendChild(dl);
-		var dc = document.createElement('div'); dc.style.cssText = 'margin:4px 0';
-		var tl = document.createElement('div'); tl.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px';
-		var ir = document.createElement('div'); ir.style.cssText = 'display:flex;gap:4px';
-		var inp = document.createElement('input'); inp.type='text'; inp.className='cbi-input-text';
-		inp.placeholder = 'XX:XX:XX:XX:XX:XX';
-		inp.style.cssText = 'flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
-		/* datalist for MAC hints - same style as 免打扰 MAC filter */
-		var listId = 'mh_err_device';
-		inp.setAttribute('list', listId);
-		var dlist = document.createElement('datalist');
-		dlist.id = listId;
-		PB_sys('mac_hints').forEach(function(h) {
-			var o = document.createElement('option');
-			o.value = h.m;
-			o.textContent = h.n ? h.m + ' (' + h.n + ')' : h.m;
-			dlist.appendChild(o);
-		});
-		var addB = document.createElement('button'); addB.type='button'; addB.className='pushbot-choice-button is-on';
-		addB.textContent = '添加';
-		ir.appendChild(inp); ir.appendChild(dlist); ir.appendChild(addB);
-		dc.appendChild(tl); dc.appendChild(ir); ec.appendChild(dc);
-
-		var curVals = PB_list('err_device_aliases').slice();
-		function renderTags(){
-			tl.innerHTML='';
-			curVals.forEach(function(v){if(!v)return;
-				var t=document.createElement('span');
-				t.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(148,163,184,0.12);border-radius:4px;font-size:12px';
-				t.textContent=v;
-				var x=document.createElement('span');x.textContent='\u00d7';
-				x.style.cssText='cursor:pointer;font-weight:bold;margin-left:2px;opacity:0.6';
-				x.addEventListener('click',function(){var idx=curVals.indexOf(v);if(idx>=0){curVals.splice(idx,1);renderTags();syncH();}});
-				t.appendChild(x);tl.appendChild(t);
-			});
-		}
-		function syncH(){
-			/* remove old hidden inputs */
-			var ex=hb.querySelectorAll('input[name$=".err_device_aliases"]');
-			ex.forEach(function(el){el.remove();});
-			curVals.forEach(function(v){if(!v)return;
-				var i2=document.createElement('input');i2.type='hidden';i2.name='cbid.pushbot.pushbot.err_device_aliases';i2.value=v;
-				hb.appendChild(i2);
-			});
-		}
-		function addTag(v){v=v.trim().toUpperCase();if(!v||curVals.indexOf(v)>=0)return;curVals.push(v);renderTags();syncH();}
-		addB.addEventListener('click',function(){addTag(inp.value);inp.value='';inp.focus();});
-		inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();addTag(inp.value);inp.value='';}});
-		renderTags();
-		syncH();
-
-		var devDesc = '只会在列表中设备都不在线时才会执行<br/>免打扰时段一小时后，关注设备五分钟低流量（约100kb/m）将视为离线';
-		var d2 = document.createElement('div'); d2.className = 'pushbot-inline-description'; d2.innerHTML = devDesc; ec.appendChild(d2);
-	})();
-	ec.appendChild(document.createElement('hr')).style.cssText = 'border:none;border-top:1px solid rgba(148,163,184,0.2);margin:10px 0';
-
-	/* system_time_event */
-	(function(){
-		var sl = document.createElement('div'); sl.className = 'pushbot-inline-title';
-		sl.style.cssText = 'margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
-		sl.textContent = '定时重启'; ec.appendChild(sl);
-		var ADV_SYS_TIME = PB_val('system_time_event', '');
-		var sysHi = mkHidden('system_time_event', ADV_SYS_TIME);
-		var sysL = [{v:'',l:'无操作'},{v:'1',l:'重启路由器'},{v:'2',l:'重新拨号'}];
-		ec.appendChild(mkChoiceList(sysL, ADV_SYS_TIME, function(v) {
-			sysHi.value = v;
-			var rf=document.getElementById('mon_autoreboot');
-			var nrf=document.getElementById('mon_netrestart');
-			if(rf)rf.style.display=(v==='1')?'block':'none';
-			if(nrf)nrf.style.display=(v==='2')?'block':'none';
-		}));
-		var stc = document.createElement('div'); stc.style.cssText = 'margin-top:6px';
-		var ADV_AUTOREBOOT = PB_val('autoreboot_time', '24');
-		var ADV_NETRESTART = PB_val('network_restart_time', '24');
-		var ar = document.createElement('div'); ar.id = 'mon_autoreboot';
-		ar.style.display = (ADV_SYS_TIME === '1') ? 'block' : 'none';
-		ar.appendChild(mkText('autoreboot_time', '系统运行时间大于', ADV_AUTOREBOOT, '单位为小时'));
-		stc.appendChild(ar);
-		var nr = document.createElement('div'); nr.id = 'mon_netrestart';
-		nr.style.display = (ADV_SYS_TIME === '2') ? 'block' : 'none';
-		nr.appendChild(mkText('network_restart_time', '网络在线时间大于', ADV_NETRESTART, '单位为小时'));
-		stc.appendChild(nr);
-		ec.appendChild(stc);
-	})();
-	ec.appendChild(document.createElement('hr')).style.cssText = 'border:none;border-top:1px solid rgba(148,163,184,0.2);margin:10px 0';
-
-	/* public_ip_event */
-	(function(){
-		var pubDesc = '重拨时不会推送 ip 变动通知，并会导致你的域名无法及时更新 ip 地址<br/>请确认你可以通过重拨获取公网 ip，否则这不仅徒劳无功还会引起频繁断网<br/>移动等大内网你就别挣扎了！！';
-		var pd = document.createElement('div'); pd.className = 'pushbot-inline-description'; pd.innerHTML = pubDesc; ec.appendChild(pd);
-		/* use hidden input for public_ip_event */
-		var pubHi = document.querySelector('[name="cbid.pushbot.pushbot.public_ip_event"]');
-		var pubOn = PB_bool('public_ip_event');
-		var pubRow = document.createElement('div'); pubRow.style.cssText = 'display:flex;align-items:center;gap:12px;margin-top:6px';
-		var pubToggle = mkToggle('重拨尝试获取公网 ip', pubOn, function(on) {
-			updateFlagInput('public_ip_event', on);
-			var prc = document.getElementById('mon_pubretry');
-			if (prc) prc.style.display = on ? 'flex' : 'none';
-		});
-		pubRow.appendChild(pubToggle);
-		var prc = document.createElement('div'); prc.id = 'mon_pubretry';
-		prc.style.cssText = 'display:'+(pubOn?'flex':'none')+';align-items:center;gap:12px;flex:1';
-		prc.appendChild(mkText('public_ip_retry_count', '当天最大重试次数', PB_val('public_ip_retry_count', '10')));
-		pubRow.appendChild(prc);
-		ec.appendChild(pubRow);
-	})();
-
-	container.appendChild(c3);
-	pane.innerHTML = '';
-	pane.appendChild(container);
-	}
-
-/* pre-load monitor card content (1 retry if pane not ready) */
-function tryMonOnce(){
-	var p = document.getElementById('pushbot_pane_monitor');
-	if (!p) { setTimeout(tryMonOnce, 300); return; }
-	try{initMonitorCard();}catch(e){console.error('monitor card:',e);}
-}
-PB_onReady(function(){ tryMonOnce(); });
-
+/* ═══════════════════════════════════════════ */
+/* Tab: 推送内容 */
+/* ═══════════════════════════════════════════ */
 function initContentCard() {
 	if (!PB_CONFIG) { setTimeout(initContentCard, 200); return; }
 	var pane = document.getElementById('pushbot_pane_content');
@@ -1977,6 +1436,583 @@ function tryContentOnce(){
 }
 PB_onReady(function(){ tryContentOnce(); });
 
+
+/* ═══════════════════════════════════════════ */
+/* Tab: 定时推送 */
+/* ═══════════════════════════════════════════ */
+	/* ── initScheduledPushCard inside IIFE to access helper functions ── */
+	function initScheduledPushCard() {
+	if (document.getElementById('pushbot_scheduled_card')) return;
+	if (!PB_CONFIG) { setTimeout(initScheduledPushCard, 200); return; }
+	var pane = document.getElementById('pushbot_pane_scheduled');
+	if (!pane) { setTimeout(initScheduledPushCard, 150); return; }
+
+	var crontab = PB_val('crontab', '');
+	var regular_time = PB_val('regular_time', '8');
+	var regular_time_2 = PB_val('regular_time_2', '');
+	var regular_time_3 = PB_val('regular_time_3', '');
+	var interval_time = PB_val('interval_time', '6');
+	var send_title = PB_val('send_title', '');
+	var router_status = PB_bool('router_status');
+	var router_temp = PB_bool('router_temp');
+	var router_wan = PB_bool('router_wan');
+	var client_list = PB_bool('client_list');
+	var google_check_timeout = PB_val('google_check_timeout', '10');
+
+	var card = document.createElement('div');
+	card.id = 'pushbot_scheduled_card';
+	card.className = 'pushbot-mode-card';
+
+	var header = document.createElement('div');
+	header.className = 'pushbot-card-top';
+	header.innerHTML = '<span class="pushbot-card-title" style="font-size:16px;font-weight:800">定时推送</span>';
+	card.appendChild(header);
+
+	/* ── Row: 定时任务设定 ── */
+	var taskTitle = document.createElement('div');
+	taskTitle.className = 'pushbot-inline-title';
+	taskTitle.style.cssText = 'margin:6px 0 6px 2px;text-transform:none;font-size:13px';
+	taskTitle.textContent = '定时任务设定';
+	card.appendChild(taskTitle);
+
+	var crHi = makeHidden('crontab', crontab);
+	var crOpts = [{v:'',l:'关闭'},{v:'1',l:'定时发送'},{v:'2',l:'间隔发送'}];
+	var crCur = crontab;
+	var crList = document.createElement('div');
+	crList.className = 'pushbot-choice-list';
+	var crBtns = [];
+	crOpts.forEach(function(o){
+		var b=document.createElement('button');b.type='button';b.className='pushbot-choice-button';
+		b.textContent=o.l;b.setAttribute('data-v',o.v);
+		if(o.v===crCur)b.className+=' is-on';
+		b.addEventListener('click',function(e){
+			e.preventDefault();crCur=o.v;crHi.value=o.v;
+			crBtns.forEach(function(b2){b2.className='pushbot-choice-button'+(b2.getAttribute('data-v')===crCur?' is-on':'');});
+			renderScheduledContent();
+		});crBtns.push(b);crList.appendChild(b);
+	});
+	card.appendChild(crList);
+
+	/* ── conditional content ── */
+	var contentBody = document.createElement('div');
+	contentBody.id = 'sp_content_body';
+	card.appendChild(contentBody);
+
+	function hourOpts(includeClose) {
+		var a = [];
+		if (includeClose) a.push({v:'',l:'关闭'});
+		for (var t=0;t<=23;t++) a.push({v:String(t),l:'每天'+t+'点'});
+		return a;
+	}
+
+	function mkTxtS(opt, label, val, desc) {
+		var w=document.createElement('div');w.className='pushbot-inline-field';w.style.cssText='margin:4px 0';
+		var t=document.createElement('div');t.className='pushbot-inline-title';
+		t.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+		t.textContent=label;w.appendChild(t);
+		var b=document.createElement('div');b.className='pushbot-inline-body';
+		var inp=document.createElement('input');inp.type='text';inp.className='cbi-input-text';inp.value=val;
+		inp.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit';
+		var hi=makeHidden(opt,val);
+		inp.addEventListener('change',function(){hi.value=this.value;});
+		b.appendChild(inp);
+		if(desc){var d=document.createElement('div');d.className='pushbot-inline-description';d.innerHTML=desc;b.appendChild(d);}
+		w.appendChild(b);return w;
+	}
+	function mkSelS(opt, label, val, opts, desc) {
+		var w=document.createElement('div');w.className='pushbot-inline-field';w.style.cssText='margin:4px 0';
+		var t=document.createElement('div');t.className='pushbot-inline-title';
+		t.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+		t.textContent=label;w.appendChild(t);
+		var b=document.createElement('div');b.className='pushbot-inline-body';
+		var sel=document.createElement('select');sel.className='cbi-input-select';
+		sel.style.cssText='width:100%;padding:6px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+		opts.forEach(function(o){var op=document.createElement('option');op.value=o.v;op.textContent=o.l;if(o.v===val)op.selected=true;sel.appendChild(op);});
+		var hi=makeHidden(opt,val);
+		sel.addEventListener('change',function(){hi.value=this.value;});
+		b.appendChild(sel);
+		if(desc){var d=document.createElement('div');d.className='pushbot-inline-description';d.innerHTML=desc;b.appendChild(d);}
+		w.appendChild(b);return w;
+	}
+
+	function renderScheduledContent() {
+		contentBody.innerHTML = '';
+		var mode = crCur;
+		if (mode === '' || mode === null) return;
+
+		/* ── time selectors ── */
+		if (mode === '1') {
+			var ttl = document.createElement('div');
+			ttl.className = 'pushbot-inline-title';
+			ttl.style.cssText = 'margin:12px 0 6px 2px;text-transform:none;font-size:13px';
+			ttl.textContent = '发送时间';
+			contentBody.appendChild(ttl);
+			var tr = document.createElement('div');
+			tr.style.cssText = 'display:flex;gap:12px;flex-wrap:wrap';
+			tr.appendChild(mkSelS('regular_time','时间一', regular_time, hourOpts(false)));
+			tr.appendChild(mkSelS('regular_time_2','时间二', regular_time_2, hourOpts(true)));
+			tr.appendChild(mkSelS('regular_time_3','时间三', regular_time_3, hourOpts(true)));
+			contentBody.appendChild(tr);
+		}
+
+		if (mode === '2') {
+			var ittl = document.createElement('div');
+			ittl.className = 'pushbot-inline-title';
+			ittl.style.cssText = 'margin:12px 0 6px 2px;text-transform:none;font-size:13px';
+			ittl.textContent = '发送间隔';
+			contentBody.appendChild(ittl);
+			var intOpts = [];
+			for (var t=1;t<=23;t++) intOpts.push({v:String(t),l:t+'小时'});
+			contentBody.appendChild(mkSelS('interval_time','',interval_time,intOpts,'从 00:00 开始，每 * 小时发送一次'));
+		}
+
+		/* ── push content flags ── */
+		var fl = document.createElement('div');
+		fl.className = 'pushbot-inline-title';
+		fl.style.cssText = 'margin:14px 0 6px 2px;text-transform:none;font-size:13px';
+		fl.textContent = '推送内容';
+		contentBody.appendChild(fl);
+
+		var fc = document.createElement('div');
+		fc.className = 'pushbot-choice-list';
+		[
+			{opt:'router_status',label:'系统运行情况',on:router_status},
+			{opt:'router_temp',label:'设备温度',on:router_temp},
+			{opt:'router_wan',label:'WAN信息',on:router_wan},
+			{opt:'client_list',label:'客户端列表',on:client_list}
+		].forEach(function(f){
+			var b=document.createElement('button');b.type='button';b.className='pushbot-choice-button';
+			var on=f.on;b.className+=' '+(on?'is-on':'is-off');
+			b.innerHTML='<span>'+f.label+'</span>';
+			b.addEventListener('click',function(e){
+				e.preventDefault();on=!on;updateFlagInput(f.opt, on);
+				b.className='pushbot-choice-button '+(on?'is-on':'is-off');
+			});
+			fc.appendChild(b);
+		});
+		contentBody.appendChild(fc);
+
+		/* ── bottom row: 推送标题 + 全球互联检测超时时间 ── */
+		var br = document.createElement('div');
+		br.style.cssText = 'display:flex;gap:12px;margin-top:14px;flex-wrap:wrap';
+
+		var tw = document.createElement('div');
+		tw.style.cssText = 'flex:2;min-width:200px';
+		tw.appendChild(mkTxtS('send_title','推送标题',send_title));
+		br.appendChild(tw);
+
+		var gw = document.createElement('div');
+		gw.style.cssText = 'flex:1;min-width:150px';
+		gw.appendChild(mkTxtS('google_check_timeout','全球互联检测超时时间',google_check_timeout,'单位为秒'));
+		br.appendChild(gw);
+
+		contentBody.appendChild(br);
+
+		/* ── 手动发送 button ── */
+		var sr = document.createElement('div');
+		sr.style.cssText = 'display:flex;justify-content:flex-end;margin-top:16px';
+		var sb = document.createElement('button');
+		sb.type = 'button'; sb.textContent = '手动发送';
+		sb.className = 'pushbot-sendtest-btn';
+		sb.addEventListener('click', function(e) {
+			e.preventDefault(); sb.disabled = true; sb.textContent = '发送中...';
+			var data = window.__pbCollectData ? __pbCollectData() : {};
+			var x = new XMLHttpRequest();
+			x.open('POST', '<%=url([[admin]],[[services]],[[pushbot]],[[save_config]])%>', true);
+			x.setRequestHeader('Content-Type', 'application/json');
+			x.onload = function() {
+				var y = new XMLHttpRequest();
+				y.open('GET', '<%=url([[admin]],[[services]],[[pushbot]],[[send_manual]])%>', true);
+				y.onload = function() { sb.disabled = false; sb.textContent = '手动发送'; };
+				y.onerror = function() { sb.disabled = false; sb.textContent = '手动发送'; };
+				y.send();
+			};
+			x.onerror = function() { sb.disabled = false; sb.textContent = '手动发送'; };
+			x.send(JSON.stringify(data));
+		});
+		sr.appendChild(sb);
+		contentBody.appendChild(sr);
+	}
+
+	renderScheduledContent();
+	pane.innerHTML = '';
+	pane.appendChild(card);
+}
+
+	/* pre-load scheduled card */
+	PB_onReady(function trySch() {
+		var p = document.getElementById('pushbot_pane_scheduled');
+		if (!p) { setTimeout(trySch, 300); return; }
+		try{initScheduledPushCard();}catch(e){console.error('scheduled card:',e);}
+	});
+
+	window.addEventListener('load', initCard);
+	window.addEventListener('load', initPushModeCard);
+	window.addEventListener('load', initTerminalCard);
+	window.addEventListener('load', initDisturbCard);
+	window.addEventListener('load', initModernTabs);
+	setTimeout(function(){try{initCard();}catch(e){console.error('initCard:',e);}}, 200);
+	setTimeout(function(){try{initPushModeCard();}catch(e){console.error('initPushModeCard:',e);}}, 200);
+	setTimeout(function(){try{initTerminalCard();}catch(e){console.error('initTerminalCard:',e);}}, 250);
+	setTimeout(function(){try{initDisturbCard();}catch(e){console.error('initDisturbCard:',e);}}, 300);
+	setTimeout(function(){try{initModernTabs();}catch(e){console.error('initModernTabs:',e);}}, 350);
+	/* also try direct call if DOM ready, but guard against errors */
+	if (document.readyState !== 'loading') {
+		try { initCard(); } catch(e) {}
+	}
+	/* expose for initModernTabs (outside IIFE) */
+	window.initContentCard = initContentCard;
+})();
+
+
+
+
+
+/* ═══════════════════════════════════════════ */
+/* Tab: 高级设置 */
+/* ═══════════════════════════════════════════ */
+function initMonitorCard() {
+	if (document.getElementById('pushbot_monitor_card_container')) return;
+	if (!PB_CONFIG) { setTimeout(initMonitorCard, 200); return; }
+	var pane = document.getElementById('pushbot_pane_monitor');
+	if (!pane) { setTimeout(initMonitorCard, 150); return; }
+
+	var hb = document.getElementById('mon_hidden_fields') || (function(){
+		var d=document.createElement('div'); d.id='mon_hidden_fields'; d.style.display='none';
+		(document.querySelector('form')||document.body||document.documentElement).appendChild(d); return d;
+	})();
+	hb.innerHTML = '';
+
+	function mkHidden(name, val) {
+		var i = document.createElement('input'); i.type = 'hidden';
+		i.name = 'cbid.pushbot.pushbot.' + name; i.value = val;
+		hb.appendChild(i); return i;
+	}
+	function mkText(name, label, val, desc) {
+		var w = document.createElement('div'); w.className = 'pushbot-inline-field'; w.style.cssText = 'margin:4px 0';
+		var t = document.createElement('div'); t.className = 'pushbot-inline-title';
+		t.style.cssText = 'margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+		t.textContent = label; w.appendChild(t);
+		var b = document.createElement('div'); b.className = 'pushbot-inline-body';
+		var inp = document.createElement('input'); inp.type = 'text'; inp.className = 'cbi-input-text';
+		inp.value = val;
+		inp.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit';
+		var hi = mkHidden(name, val);
+		inp.addEventListener('change', function() { hi.value = this.value; });
+		b.appendChild(inp);
+		if (desc) { var d = document.createElement('div'); d.className = 'pushbot-inline-description'; d.innerHTML = desc; b.appendChild(d); }
+		w.appendChild(b); return w;
+	}
+	function mkToggle(label, isOn, onToggle) {
+		var b = document.createElement('button'); b.type = 'button';
+		b.className = 'pushbot-choice-button ' + (isOn ? 'is-on' : 'is-off');
+		b.innerHTML = '<span>' + label + '</span>';
+		b.addEventListener('click', function(e) {
+			e.preventDefault();
+			var newOn = !isOn; isOn = newOn;
+			b.className = 'pushbot-choice-button ' + (newOn ? 'is-on' : 'is-off');
+			if (onToggle) onToggle(newOn);
+		});
+		return b;
+	}
+	function mkChoiceList(opts, curVal, onChange) {
+		var c = document.createElement('div'); c.className = 'pushbot-choice-list';
+		var btns = [];
+		opts.forEach(function(o) {
+			var b = document.createElement('button'); b.type = 'button'; b.className = 'pushbot-choice-button';
+			b.textContent = o.l; b.setAttribute('data-v', o.v);
+			if (o.v === curVal) b.className += ' is-on';
+			b.addEventListener('click', function(e) {
+				e.preventDefault(); curVal = o.v;
+				btns.forEach(function(b2) { b2.className = 'pushbot-choice-button' + (b2.getAttribute('data-v') === curVal ? ' is-on' : ''); });
+				if (onChange) onChange(curVal);
+			});
+			btns.push(b); c.appendChild(b);
+		});
+		return c;
+	}
+
+	var ADV_UP_TIMEOUT = PB_val('up_timeout', '2');
+	var ADV_DOWN_TIMEOUT = PB_val('down_timeout', '20');
+	var ADV_TIMEOUT_RETRY = PB_val('timeout_retry_count', '2');
+	var ADV_THREAD_NUM = PB_val('thread_num', '3');
+	var ADV_SOC_CODE = PB_val('soc_code', '');
+	var ADV_PVE_HOST = PB_val('pve_host', '10.0.0.2');
+	var ADV_PVE_PORT = PB_val('pve_port', '22');
+	var ADV_PUBLIC_RETRY = PB_val('public_ip_retry_count', '10');
+	var container = document.createElement('div'); container.id = 'pushbot_monitor_card_container';
+
+	/* ═══ CARD 1: 设备监测 ═══ */
+	var c1 = document.createElement('div'); c1.className = 'pushbot-mode-card';
+	c1.innerHTML = '<div class="pushbot-card-top"><span class="pushbot-card-title">设备监测</span></div>';
+	var b1 = document.createElement('div'); b1.style.cssText = 'margin-top:6px';
+	var r1 = document.createElement('div'); r1.style.cssText = 'display:flex;gap:12px';
+	var c1a = document.createElement('div'); c1a.style.cssText = 'flex:1;min-width:0';
+	c1a.appendChild(mkText('up_timeout', '设备上线检测超时（s）', ADV_UP_TIMEOUT));
+	r1.appendChild(c1a);
+	var c1b = document.createElement('div'); c1b.style.cssText = 'flex:1;min-width:0';
+	c1b.appendChild(mkText('thread_num', '最大并发进程数', ADV_THREAD_NUM));
+	r1.appendChild(c1b);
+	b1.appendChild(r1);
+	var r2 = document.createElement('div'); r2.style.cssText = 'display:flex;gap:12px';
+	var c2a = document.createElement('div'); c2a.style.cssText = 'flex:1;min-width:0';
+	c2a.appendChild(mkText('down_timeout', '设备离线检测超时（s）', ADV_DOWN_TIMEOUT));
+	r2.appendChild(c2a);
+	var c2b = document.createElement('div'); c2b.style.cssText = 'flex:1;min-width:0';
+	c2b.appendChild(mkText('timeout_retry_count', '离线检测次数', ADV_TIMEOUT_RETRY,
+		'若无二级路由设备，信号强度良好，可以减少以上数值<br/>因夜间 wifi 休眠较为玄学，遇到设备频繁推送断开，烦请自行调整参数<br/>..╮(\u2570_\u2570)\uff0d..'));
+	r2.appendChild(c2b);
+	b1.appendChild(r2); c1.appendChild(b1); container.appendChild(c1);
+
+	/* ═══ CARD 2: 温度监测 ═══ */
+	var c2 = document.createElement('div'); c2.className = 'pushbot-mode-card';
+	c2.innerHTML = '<div class="pushbot-card-top"><span class="pushbot-card-title">温度监测</span></div>';
+	var b2 = document.createElement('div'); b2.style.cssText = 'margin-top:6px';
+
+	var socCur = ADV_SOC_CODE, socPVE = (socCur === 'pve'), socCust = (socCur !== '' && socCur !== 'pve');
+	var socHi = mkHidden('soc_code', socCur);
+
+	var sf = document.createElement('div'); sf.className = 'pushbot-inline-field'; sf.style.cssText = 'margin:4px 0';
+	var st = document.createElement('div'); st.className = 'pushbot-inline-title';
+	st.style.cssText = 'margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+	st.textContent = '自定义温度读取命令'; sf.appendChild(st);
+	var sb = document.createElement('div'); sb.className = 'pushbot-inline-body';
+	var ss = document.createElement('select'); ss.className = 'cbi-input-select';
+	ss.style.cssText = 'width:100%;padding:6px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+	[{v:'',l:'默认'},{v:'pve',l:'PVE\u00a0虚拟机'},{v:'__custom__',l:'自定义命令'}].forEach(function(o) {
+		var op = document.createElement('option'); op.value = o.v; op.textContent = o.l;
+		if (o.v === socCur || (socCust && o.v === '__custom__')) op.selected = true;
+		ss.appendChild(op);
+	});
+	var ci = document.createElement('input'); ci.type='text'; ci.className='cbi-input-text';
+	ci.placeholder = '输入自定义温度读取命令'; ci.value = socCust ? socCur : '';
+	ci.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit;margin-top:6px;display:'+(socCust?'block':'none');
+	function syncSoc() {
+		var v = ss.value==='__custom__' ? ci.value : ss.value;
+		socHi.value = v; togPVE();
+	}
+	ss.addEventListener('change', function() {
+		if (this.value==='__custom__') { ci.style.display='block'; ci.focus(); syncSoc(); }
+		else { ci.style.display='none'; ci.value=''; syncSoc(); }
+	});
+	ci.addEventListener('change', syncSoc);
+	var socDesc = '请尽量避免使用特殊符号，如双引号、$、!等，执行结果需为数字，用于温度对比';
+	var sd = document.createElement('div'); sd.className='pushbot-inline-description'; sd.innerHTML=socDesc; sb.appendChild(sd);
+	sb.appendChild(ss); sb.appendChild(ci); sf.appendChild(sb); b2.appendChild(sf);
+
+	/* PVE fields */
+	var pveDescHost = '请确认已经设置好密钥登陆，否则会引起脚本无法正常运行等错误！<br/>PVE 安装 sensors 命令自行百度<br/>密钥登陆例：<br/>opkg update #更新列表<br/>opkg install openssh-client openssh-keygen #安装openssh客户端<br/>ssh-keygen -t rsa # 生成密钥文件（自行设定密码等信息）<br/>ssh root@10.0.0.2 \"tee -a ~/.ssh/id_rsa.pub\" < ~/.ssh/id_rsa.pub # 传送公钥到 PVE<br/>ssh -i ~/.ssh/id_rsa root@10.0.0.2 sensors # 测试温度命令';
+	var pveDescPort = '默认为22，如有自定义，请填写自定义SSH端口';
+	var pc = document.createElement('div'); pc.id='mon_pve_fields'; pc.style.cssText='margin-top:6px';
+	var pvg = document.createElement('div'); pvg.style.cssText='display:flex;gap:12px';
+	pvg.appendChild(mkText('pve_host', '宿主机地址', ADV_PVE_HOST, pveDescHost));
+	pvg.appendChild(mkText('pve_port', 'SSH端口', ADV_PVE_PORT, pveDescPort));
+	pc.appendChild(pvg); b2.appendChild(pc);
+	function togPVE() { pc.style.display = ((socHi && socHi.value) === 'pve') ? 'block' : 'none'; }
+	togPVE();
+
+	/* Test button */
+	var tr = document.createElement('div'); tr.style.cssText='display:flex;align-items:center;gap:12px;margin-top:10px';
+	var tb = document.createElement('a'); tb.className='cbi-button cbi-input-apply';
+	tb.href='<%=url([[admin]],[[services]],[[pushbot]],[[soc_test]])%>'; tb.textContent='测试温度';
+	tb.style.cssText='white-space:nowrap;padding:6px 16px;text-decoration:none';
+	tr.appendChild(tb);
+	var rl = document.createElement('span'); rl.style.cssText='font-size:13px;font-weight:600'; rl.textContent='温度结果:';
+	tr.appendChild(rl);
+	var ro = document.createElement('span'); ro.style.cssText='padding:4px 10px;background:rgba(148,163,184,0.08);border-radius:6px;font-family:Menlo,Consolas,monospace;font-size:12px';
+	ro.textContent = '加载中...';
+	(function(){
+		var x = new XMLHttpRequest();
+		x.open('GET', '<%=url([[admin]], [[services]], [[pushbot]], [[soc_result]])%>?_=' + Date.now(), true);
+		x.onload = function() { ro.textContent = x.responseText || '无输出'; };
+		x.onerror = function() { ro.textContent = '无输出'; };
+		x.send();
+	})();
+	tr.appendChild(ro);
+	b2.appendChild(tr);
+	c2.appendChild(b2); container.appendChild(c2);
+
+	/* ═══ CARD 3: 无人值守 ═══ */
+	var c3 = document.createElement('div'); c3.className = 'pushbot-mode-card';
+
+	/* Use hidden input for err_enable Flag form submission */
+	var errHi = document.querySelector('[name="cbid.pushbot.pushbot.err_enable"]');
+	var errOn = PB_bool('err_enable');
+	var errDesc = '请确认脚本可以正常运行，否则可能造成频繁重启等错误！';
+	var errToggle = mkToggle('无人值守任务', errOn, function(on) {
+		updateFlagInput('err_enable', on);
+		var ec = document.getElementById('mon_err_content');
+		if (ec) ec.style.display = on ? 'block' : 'none';
+	});
+	c3.appendChild(errToggle);
+	var dDesc = document.createElement('div'); dDesc.className = 'pushbot-inline-description'; dDesc.innerHTML = errDesc;
+	c3.appendChild(dDesc);
+
+	var ec = document.createElement('div'); ec.id = 'mon_err_content'; ec.style.cssText = 'margin-top:10px';
+	ec.style.display = errOn ? 'block' : 'none';
+	c3.appendChild(ec);
+
+	/* err_sheep_enable */
+	(function(){
+		var d = document.createElement('div'); d.className = 'pushbot-inline-description';
+		d.innerHTML = '避免白天重拨 ddns 域名等待解析，此功能不影响断网检测<br/>因夜间跑流量问题，该功能可能不稳定';
+		ec.appendChild(d);
+		/* use hidden input for err_sheep_enable */
+		var shHi = document.querySelector('[name="cbid.pushbot.pushbot.err_sheep_enable"]');
+		var shOn = PB_bool('err_sheep_enable');
+		var shTog = mkToggle('仅在免打扰时段重拨', shOn, function(on) {
+			updateFlagInput('err_sheep_enable', on);
+		});
+		ec.appendChild(shTog);
+	})();
+	ec.appendChild(document.createElement('hr')).style.cssText = 'border:none;border-top:1px solid rgba(148,163,184,0.2);margin:10px 0';
+
+	/* network_err_event */
+	(function(){
+		var nl = document.createElement('div'); nl.className = 'pushbot-inline-title';
+		nl.style.cssText = 'margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+		nl.textContent = '网络断开时'; ec.appendChild(nl);
+		var ADV_NET_ERR = PB_val('network_err_event', '');
+		var netHi = mkHidden('network_err_event', ADV_NET_ERR);
+		var netL = [
+			{v:'',l:'无操作'},
+			{v:'1',l:'重启路由器'},
+			{v:'2',l:'重新拨号'},
+			{v:'3',l:'修改相关设置项，尝试自动修复网络'}
+		];
+		ec.appendChild(mkChoiceList(netL, ADV_NET_ERR, function(v) { netHi.value = v; }));
+		var netDesc = '选项 1 选项 2 不会修改设置，并最多尝试 2 次。<br/>选项 3 会将设置项备份于 /usr/bin/pushbot/configbak 目录，并在失败后还原。<br/>【！！无法保证兼容性！！】不熟悉系统设置项，不会救砖请勿使用';
+		var nd = document.createElement('div'); nd.className = 'pushbot-inline-description'; nd.innerHTML = netDesc; ec.appendChild(nd);
+	})();
+	ec.appendChild(document.createElement('hr')).style.cssText = 'border:none;border-top:1px solid rgba(148,163,184,0.2);margin:10px 0';
+
+	/* err_device_aliases */
+	(function(){
+		var dl = document.createElement('div'); dl.className = 'pushbot-inline-title';
+		dl.style.cssText = 'margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+		dl.textContent = '关注列表'; ec.appendChild(dl);
+		var dc = document.createElement('div'); dc.style.cssText = 'margin:4px 0';
+		var tl = document.createElement('div'); tl.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px';
+		var ir = document.createElement('div'); ir.style.cssText = 'display:flex;gap:4px';
+		var inp = document.createElement('input'); inp.type='text'; inp.className='cbi-input-text';
+		inp.placeholder = 'XX:XX:XX:XX:XX:XX';
+		inp.style.cssText = 'flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+		/* datalist for MAC hints - same style as 免打扰 MAC filter */
+		var listId = 'mh_err_device';
+		inp.setAttribute('list', listId);
+		var dlist = document.createElement('datalist');
+		dlist.id = listId;
+		PB_sys('mac_hints').forEach(function(h) {
+			var o = document.createElement('option');
+			o.value = h.m;
+			o.textContent = h.n ? h.m + ' (' + h.n + ')' : h.m;
+			dlist.appendChild(o);
+		});
+		var addB = document.createElement('button'); addB.type='button'; addB.className='pushbot-choice-button is-on';
+		addB.textContent = '添加';
+		ir.appendChild(inp); ir.appendChild(dlist); ir.appendChild(addB);
+		dc.appendChild(tl); dc.appendChild(ir); ec.appendChild(dc);
+
+		var curVals = PB_list('err_device_aliases').slice();
+		function renderTags(){
+			tl.innerHTML='';
+			curVals.forEach(function(v){if(!v)return;
+				var t=document.createElement('span');
+				t.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(148,163,184,0.12);border-radius:4px;font-size:12px';
+				t.textContent=v;
+				var x=document.createElement('span');x.textContent='\u00d7';
+				x.style.cssText='cursor:pointer;font-weight:bold;margin-left:2px;opacity:0.6';
+				x.addEventListener('click',function(){var idx=curVals.indexOf(v);if(idx>=0){curVals.splice(idx,1);renderTags();syncH();}});
+				t.appendChild(x);tl.appendChild(t);
+			});
+		}
+		function syncH(){
+			/* remove old hidden inputs */
+			var ex=hb.querySelectorAll('input[name$=".err_device_aliases"]');
+			ex.forEach(function(el){el.remove();});
+			curVals.forEach(function(v){if(!v)return;
+				var i2=document.createElement('input');i2.type='hidden';i2.name='cbid.pushbot.pushbot.err_device_aliases';i2.value=v;
+				hb.appendChild(i2);
+			});
+		}
+		function addTag(v){v=v.trim().toUpperCase();if(!v||curVals.indexOf(v)>=0)return;curVals.push(v);renderTags();syncH();}
+		addB.addEventListener('click',function(){addTag(inp.value);inp.value='';inp.focus();});
+		inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();addTag(inp.value);inp.value='';}});
+		renderTags();
+		syncH();
+
+		var devDesc = '只会在列表中设备都不在线时才会执行<br/>免打扰时段一小时后，关注设备五分钟低流量（约100kb/m）将视为离线';
+		var d2 = document.createElement('div'); d2.className = 'pushbot-inline-description'; d2.innerHTML = devDesc; ec.appendChild(d2);
+	})();
+	ec.appendChild(document.createElement('hr')).style.cssText = 'border:none;border-top:1px solid rgba(148,163,184,0.2);margin:10px 0';
+
+	/* system_time_event */
+	(function(){
+		var sl = document.createElement('div'); sl.className = 'pushbot-inline-title';
+		sl.style.cssText = 'margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+		sl.textContent = '定时重启'; ec.appendChild(sl);
+		var ADV_SYS_TIME = PB_val('system_time_event', '');
+		var sysHi = mkHidden('system_time_event', ADV_SYS_TIME);
+		var sysL = [{v:'',l:'无操作'},{v:'1',l:'重启路由器'},{v:'2',l:'重新拨号'}];
+		ec.appendChild(mkChoiceList(sysL, ADV_SYS_TIME, function(v) {
+			sysHi.value = v;
+			var rf=document.getElementById('mon_autoreboot');
+			var nrf=document.getElementById('mon_netrestart');
+			if(rf)rf.style.display=(v==='1')?'block':'none';
+			if(nrf)nrf.style.display=(v==='2')?'block':'none';
+		}));
+		var stc = document.createElement('div'); stc.style.cssText = 'margin-top:6px';
+		var ADV_AUTOREBOOT = PB_val('autoreboot_time', '24');
+		var ADV_NETRESTART = PB_val('network_restart_time', '24');
+		var ar = document.createElement('div'); ar.id = 'mon_autoreboot';
+		ar.style.display = (ADV_SYS_TIME === '1') ? 'block' : 'none';
+		ar.appendChild(mkText('autoreboot_time', '系统运行时间大于', ADV_AUTOREBOOT, '单位为小时'));
+		stc.appendChild(ar);
+		var nr = document.createElement('div'); nr.id = 'mon_netrestart';
+		nr.style.display = (ADV_SYS_TIME === '2') ? 'block' : 'none';
+		nr.appendChild(mkText('network_restart_time', '网络在线时间大于', ADV_NETRESTART, '单位为小时'));
+		stc.appendChild(nr);
+		ec.appendChild(stc);
+	})();
+	ec.appendChild(document.createElement('hr')).style.cssText = 'border:none;border-top:1px solid rgba(148,163,184,0.2);margin:10px 0';
+
+	/* public_ip_event */
+	(function(){
+		var pubDesc = '重拨时不会推送 ip 变动通知，并会导致你的域名无法及时更新 ip 地址<br/>请确认你可以通过重拨获取公网 ip，否则这不仅徒劳无功还会引起频繁断网<br/>移动等大内网你就别挣扎了！！';
+		var pd = document.createElement('div'); pd.className = 'pushbot-inline-description'; pd.innerHTML = pubDesc; ec.appendChild(pd);
+		/* use hidden input for public_ip_event */
+		var pubHi = document.querySelector('[name="cbid.pushbot.pushbot.public_ip_event"]');
+		var pubOn = PB_bool('public_ip_event');
+		var pubRow = document.createElement('div'); pubRow.style.cssText = 'display:flex;align-items:center;gap:12px;margin-top:6px';
+		var pubToggle = mkToggle('重拨尝试获取公网 ip', pubOn, function(on) {
+			updateFlagInput('public_ip_event', on);
+			var prc = document.getElementById('mon_pubretry');
+			if (prc) prc.style.display = on ? 'flex' : 'none';
+		});
+		pubRow.appendChild(pubToggle);
+		var prc = document.createElement('div'); prc.id = 'mon_pubretry';
+		prc.style.cssText = 'display:'+(pubOn?'flex':'none')+';align-items:center;gap:12px;flex:1';
+		prc.appendChild(mkText('public_ip_retry_count', '当天最大重试次数', PB_val('public_ip_retry_count', '10')));
+		pubRow.appendChild(prc);
+		ec.appendChild(pubRow);
+	})();
+
+	container.appendChild(c3);
+	pane.innerHTML = '';
+	pane.appendChild(container);
+	}
+
+/* pre-load monitor card content (1 retry if pane not ready) */
+function tryMonOnce(){
+	var p = document.getElementById('pushbot_pane_monitor');
+	if (!p) { setTimeout(tryMonOnce, 300); return; }
+	try{initMonitorCard();}catch(e){console.error('monitor card:',e);}
+}
+PB_onReady(function(){ tryMonOnce(); });
+
+
+/* ═══════════════════════════════════════════ */
+/* ── Tab 导航系统 ── */
 function initModernTabs() {
 	if (document.getElementById('pushbot_modern_tabs')) return;
 
@@ -2107,7 +2143,6 @@ function initModernTabs() {
 		if (name === 'client') loadClients();
 		});
 	});
-
 	/* ── responsive tab resize handler ── */
 	function _updateTabLayout() {
 		var bw = tabBar.clientWidth;
@@ -2216,6 +2251,11 @@ function initModernTabs() {
 		if (pane && pane.classList.contains('is-visible')) loadClients();
 	}, 5000);
 }
+
+
+/* ═══════════════════════════════════════════ */
+/* 提交 + 预览 + 辅助 */
+/* ═══════════════════════════════════════════ */
 /* ── Collect hidden input data from all containers ── */
 window.__pbCollectData = function() {
 	var ids = ['pushbot_hidden_fields','con_hidden_fields','mon_hidden_fields','term_hidden_fields','disturb_hidden_fields'];
@@ -2378,6 +2418,10 @@ function submitAll() {
 	x.onerror = function() { btn.disabled = false; btn.textContent = '保存并应用'; pbShowToast(false); };
 	x.send(JSON.stringify(data));
 }
+
+/* ═══════════════════════════════════════════ */
+/* DOMContentLoaded 启动 */
+/* ═══════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', function() {
 	var btn = document.getElementById('pushbot_save_btn');
 	if (btn) btn.addEventListener('click', submitAll);

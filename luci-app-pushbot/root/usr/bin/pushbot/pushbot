@@ -779,6 +779,8 @@ function up(){
 	getping ${1} ${up_timeout} "1";local ping_online=$?
 	if [ "$ping_online" -eq "0" ]; then
 		LockFile lock
+		blackwhitelist ${ip_mac};local bw=$?
+		[ "$bw" -ne "0" ] && LockFile unlock && return
 		[ ! -z "$pushbot_blacklist" ] && local tmp_mac=`echo "${pushbot_blacklist}"|grep -w -i ${ip_mac}`
 		[ ! -z "$pushbot_whitelist" ] && local tmp_mac=`echo "${pushbot_whitelist}"|grep -w -i ${ip_mac}`
 		if [ ! -z "$tmp_mac" ] && ( cat ${dir}ipAddress|grep -q -w -i ${tmp_mac} ); then
