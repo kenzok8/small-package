@@ -7,13 +7,27 @@ local ltn12 = require "luci.ltn12"
 local table = require "table"
 local util = require "luci.util"
 
-module("luci.controller.linkease_backend", package.seeall)
+module("luci.controller.linkease_file", package.seeall)
 
 local BLOCKSIZE = 2048
 local LINKEASE_UNIX = "/var/run/linkease.sock"
 
 function index()
     entry({"linkease"}, call("linkease_backend")).leaf=true
+    local e = entry({"admin", "services", "linkease", "file"}, call("linkease_file_template"))
+    e.leaf = true
+    e.dependent = false
+end
+
+function get_params(name)
+    local data = {
+        prefix=luci.dispatcher.build_url(unpack({"admin", "services", "linkease", name})),
+    }
+    return data
+end
+
+function linkease_file_template()
+    luci.template.render("linkease/file", get_params("file"))
 end
 
 local function sink_socket(sock, io_err) 

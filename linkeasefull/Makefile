@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linkeasefull
 PKG_SOURCE_DATE:=3.0.4
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 ifeq ($(ARCH),x86_64)
 LINKEASE_RUNTIME_ARCH:=amd64
@@ -33,7 +33,7 @@ define Package/$(PKG_NAME)
 	CATEGORY:=Network
 	SUBMENU:=Web Servers/Proxies
 	TITLE:=LinkEase Full - the local web desktop
-	DEPENDS:=@(x86_64||aarch64) +linkease +luci-app-linkease +ca-bundle
+	DEPENDS:=@(x86_64||aarch64) +linkease +ca-bundle
 	URL:=https://www.linkease.com/
 endef
 
