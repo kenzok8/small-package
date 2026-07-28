@@ -9,6 +9,7 @@ function index()
 
 	entry({"admin", "services", "linkease_status"}, call("linkease_status"))
 
+	entry({"admin", "services", "linkease", "file"}, call("linkease_file_template")).leaf = true
 
 end
 
@@ -26,3 +27,13 @@ function linkease_status()
 	luci.http.write_json(status)
 end
 
+function get_params(name)
+    local data = {
+        prefix=luci.dispatcher.build_url(unpack({"admin", "services", "linkease", name})),
+    }
+    return data
+end
+
+function linkease_file_template()
+    luci.template.render("linkease/file", get_params("file"))
+end

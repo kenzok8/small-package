@@ -5,10 +5,7 @@ m = Map("kaiplus", translate("KaiPlus"), translate("KaiPlus is an AI workspace a
 m:section(SimpleSection).template = "kaiplus/kaiplus_status"
 
 m.on_after_commit = function(self)
-	sys.call("/etc/init.d/kaiplus restart >/dev/null 2>&1")
-	if sys.call("[ -x /etc/init.d/linkease ]") == 0 then
-		sys.call("/etc/init.d/linkease restart >/dev/null 2>&1 &")
-	end
+	sys.call("/etc/init.d/kaiplus restart >/dev/null 2>&1 &")
 end
 
 s = m:section(TypedSection, "kaiplus", translate("Global settings"))
@@ -32,7 +29,7 @@ end
 data_dir.default = default_path
 
 local port = s:option(Value, "port", translate("Web port"))
-port.default = "8189"
+port.default = "8198"
 port.rmempty = false
 port.datatype = "port"
 port.description = translate("Port for the KaiPlus web service.")
