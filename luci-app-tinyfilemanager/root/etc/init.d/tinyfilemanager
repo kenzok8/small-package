@@ -32,6 +32,7 @@ validate_section() {
 		'use_auth:bool:0' \
 		'auth_users:list(string)' \
 		'readonly_users:list(string)' \
+		'autologin_user:string' \
 		'global_readonly:bool:0' \
 		'root_path:directory' \
 		'date_format:or("d.m.o", "d-m-o", "d/m/o", "j.n.o", "j-n-o", "j/n/o", "o.m.d", "o-m-d", "o/m/d", "o.n.j", "o-n-j", "o/n/j"):d.m.o' \
@@ -50,6 +51,7 @@ init_config() {
 		s|// --- EDIT BELOW CONFIGURATION CAREFULLY ---|\<?php\n$defconf|; \
 		s|// --- EDIT BELOW CAREFULLY OR DO NOT EDIT AT ALL ---|?\>|; \
 		/\/\/ if User has the external config file, try to use it to override the default config above/,/^}/d; \
+		/^define(/d; \
 		p \
 	}" "$WORKDIR/index.php" > "$1"
 
@@ -72,6 +74,7 @@ apply_config() {
 
 [ -n "$defconf" ] && sed -Ei "s|^\\\$CONFIG\s*=.*|\$CONFIG = '$defconf'\;|" "$_conf"
 [ "$use_auth" -eq "1" ] && sed -Ei "s|(^\\\$use_auth =)(.+)|\1 true;|" "$_conf" || sed -Ei "s|(^\\\$use_auth =)(.+)|\1 false;|" "$_conf"
+[ -n "$autologin_user" ] && sed -Ei "s|\?>|\$luci_autologin_user = '$autologin_user';\ninclude '/usr/share/tinyfilemanager/auto-login-base-luci.php';\n\n?>|" "$_conf"
 [ "$global_readonly" -eq "1" ] && sed -Ei "s|(^\\\$global_readonly =)(.+)|\1 true;|" "$_conf" || sed -Ei "s|(^\\\$global_readonly =)(.+)|\1 false;|" "$_conf"
 sed -Ei "/^\\\$auth_users /,/\);/{/^ /d}" "$_conf" && sed -Ei "/^\\\$auth_users /a\ $auth_users" "$_conf"
 sed -Ei "/^\\\$readonly_users /,/\);/{/^ /d}" "$_conf" && sed -Ei "/^\\\$readonly_users /a\ $readonly_users" "$_conf"

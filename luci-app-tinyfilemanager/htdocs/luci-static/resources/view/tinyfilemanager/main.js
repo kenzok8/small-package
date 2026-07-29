@@ -10,8 +10,10 @@ return view.extend({
 	},
 
 	render() {
+		const sid = L.env.sessionid || '';
+		const url = window.location.protocol + '//' + window.location.hostname + '/tinyfilemanager/' + `?luci_sid=${sid}`;
 		return E('iframe', {
-			src: window.location.protocol + '//' + window.location.hostname + '/tinyfilemanager/',
+			src: url,
 			style: 'width: 100%; min-height: 100vh; border: none; border-radius: 3px;'
 		});
 	}

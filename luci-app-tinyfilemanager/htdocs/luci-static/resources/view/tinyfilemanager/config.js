@@ -60,6 +60,21 @@ return view.extend({
 		o.retain = true;
 		o.depends('use_auth', '1');
 
+		o = s.option(form.ListValue, 'autologin_user', _('Auto login user'),
+			_('Automatically login/logout of the specified user based on LuCI credentials.'));
+		o.load = function(section_id) {
+			delete this.keylist;
+			delete this.vallist;
+
+			const users = uci.get(this.config, section_id, 'auth_users');
+			this.value('', _('none'));
+			for (const userpw of users)
+				this.value(userpw.split(':')[0]);
+
+			return this.super('load', section_id);
+		}
+		o.depends('use_auth', '1');
+
 		o = s.option(form.Flag, 'global_readonly', _('Global Readonly'));
 		o.default = o.disabled;
 		o.rmempty = false;
