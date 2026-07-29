@@ -1580,7 +1580,6 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			end
 			result.port = port
 			result.tls_allowInsecure = params.allowinsecure or params.insecure
-			result.anytls_disable_reuse = params.disable_reuse
 		end
 	elseif szType == 'naive+https' or szType == 'naive+quic' then
 		if has_singbox then
