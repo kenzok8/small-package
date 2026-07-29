@@ -181,9 +181,11 @@ check_config() {
 				LOG_SIZE=\$(ls -l /tmp/easytier.log | awk '{print int(\$5/1024)}')
 				if [ \$LOG_SIZE -gt 5120 ]; then
 					tail -n 500 /tmp/easytier.log > /tmp/easytier.log.tmp
-					mv /tmp/easytier.log.tmp /tmp/easytier.log
+					: > /tmp/easytier.log
+					cat /tmp/easytier.log.tmp >> /tmp/easytier.log
+					rm -f /tmp/easytier.log.tmp
 				fi
-				sleep 300
+				sleep 60
 			done
 			} &
 			LOG_MANAGEMENT_PID=\$!
@@ -604,9 +606,11 @@ EOF
 				LOG_SIZE=\$(ls -l /tmp/easytier.log | awk '{print int(\$5/1024)}')
 				if [ \$LOG_SIZE -gt 5120 ]; then
 					tail -n 500 /tmp/easytier.log > /tmp/easytier.log.tmp
-					mv /tmp/easytier.log.tmp /tmp/easytier.log
+					: > /tmp/easytier.log
+					cat /tmp/easytier.log.tmp >> /tmp/easytier.log
+					rm -f /tmp/easytier.log.tmp
 				fi
-				sleep 300
+				sleep 60
 			done
 			} &
 			LOG_MANAGEMENT_PID=\$!
@@ -753,9 +757,11 @@ start_web() {
 				LOG_SIZE=\$(ls -l /tmp/easytierweb.log | awk '{print int(\$5/1024)}')
 				if [ \$LOG_SIZE -gt 5120 ]; then
 					tail -n 500 /tmp/easytierweb.log > /tmp/easytierweb.log.tmp
-					mv /tmp/easytierweb.log.tmp /tmp/easytierweb.log
+					: > /tmp/easytierweb.log
+					cat /tmp/easytierweb.log.tmp >> /tmp/easytierweb.log
+					rm -f /tmp/easytierweb.log.tmp
 				fi
-				sleep 300
+				sleep 60
 			done
 		} &
 		LOG_MANAGEMENT_PID=\$!
