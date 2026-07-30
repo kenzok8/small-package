@@ -381,6 +381,10 @@ function add_rule(var)
 				uci:foreach(appname, "nodes", function(t)
 					process_address(t.address)
 					process_address(t.download_address)
+					local dns, _ = api.get_domain_port_from_url(t.domain_resolver_dns or t.domain_resolver_dns_https or "")
+					if dns and dns ~= "" then
+						process_address(dns)
+					end
 				end)
 				uci:foreach(appname, "subscribe_list", function(t)  --订阅链接
 					local url, _ = api.get_domain_port_from_url(t.url or "")
