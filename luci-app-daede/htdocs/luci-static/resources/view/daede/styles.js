@@ -116,6 +116,7 @@ const CSS = [
 	/* keep selected text transparent too — else the browser force-colors it and
 	   it ghosts over the highlight pre underneath */
 	'.dd-edit-wrap .dd-editor-hl::selection{background:rgba(56,134,161,.25);color:transparent}',
+	'@media screen and (max-device-width:600px){.dd-edit-wrap .dd-editor,.dd-edit-wrap .dd-hl,.dd-edit-wrap .dd-hl code{font-size:16px}}',
 	'.dh-c{color:#8a919a;font-style:italic}',
 	'.dh-s{color:#2a8a4a}',
 	'.dh-k{color:#9a3fb5;font-weight:600}',

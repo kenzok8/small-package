@@ -1529,107 +1529,107 @@ get_name() {
 gen_config_file() { #server1 type2 code3 local_port4 socks_port5 chain6 threads5
 	local server="$1"
 	local type="$2"
-	local mode="$3"
+	local code="$3"
 	local local_port="$4"
 	local socks_port="$5"
 	local chain="$6"
 	local tmp_port
 	local ss_protocol
 
-	case "$mode" in
+	case "$code" in
 	1)
-		config_file=$tcp_config_file
+		config_file="$tcp_config_file"
 		chain_config_file=$(echo "${config_file}" | sed 's/ssrplus\//ssrplus\/chain-/')
 		;;
 	2)
-		config_file=$udp_config_file
+		config_file="$udp_config_file"
 		chain_config_file=$(echo "${config_file}" | sed 's/ssrplus\//ssrplus\/chain-/')
 		;;
 	3)
 		if [ -n "$tmp_local_port" ]; then
-			tmp_port=$tmp_local_port
+			tmp_port="$tmp_local_port"
 		else
-			tmp_port=$tmp_shunt_local_port
+			tmp_port="$tmp_shunt_local_port"
 		fi
-		config_file=$shunt_config_file
+		config_file="$shunt_config_file"
 		chain_config_file=$(echo "${config_file}" | sed 's/ssrplus\//ssrplus\/chain-/')
 		;;
 	4)
 		ss_protocol="socks"
-		config_file=$local_config_file
+		config_file="$local_config_file"
 		chain_config_file=$(echo "${config_file}" | sed 's/ssrplus\//ssrplus\/chain-/')
 		;;
 	esac
 	case "$type" in
 	ss | ssr)
-		lua /usr/share/shadowsocksr/gen_config.lua "$server" "$mode" "$local_port" "${ss_protocol:-redir}" >"$config_file"
-		if [ "$mode" = "3" ]; then
-			lua /usr/share/shadowsocksr/gen_config.lua "$server" "$mode" "$tmp_port" socks >"$shunt_dns_config_file"
+		lua /usr/share/shadowsocksr/gen_config.lua $server $mode $local_port ${ss_protocol:-redir} >"$config_file"
+		if [ "$code" = "3" ]; then
+			lua /usr/share/shadowsocksr/gen_config.lua $server $mode $tmp_port socks >"$shunt_dns_config_file"
 		fi
 		;;
 	v2ray)
-		lua /usr/share/shadowsocksr/gen_config.lua "$server" "$mode" "$local_port" "$socks_port" >"$config_file"
+		lua /usr/share/shadowsocksr/gen_config.lua $server $mode $local_port $socks_port >"$config_file"
 		;;
 	trojan)
-		case "$mode" in
+		case "$code" in
 		1)
-			lua /usr/share/shadowsocksr/gen_config.lua "$server" nat "$local_port" >"$config_file"
+			lua /usr/share/shadowsocksr/gen_config.lua $server nat $local_port >"$config_file"
 			;;
 		2)
-			lua /usr/share/shadowsocksr/gen_config.lua "$server" client "$local_port" >"$config_file"
+			lua /usr/share/shadowsocksr/gen_config.lua $server client $local_port >"$config_file"
 			;;
 		3)
-			lua /usr/share/shadowsocksr/gen_config.lua "$server" nat "$local_port" >"$config_file"
-			lua /usr/share/shadowsocksr/gen_config.lua "$server" client "$tmp_port" >"$shunt_dns_config_file"
+			lua /usr/share/shadowsocksr/gen_config.lua $server nat $local_port >"$config_file"
+			lua /usr/share/shadowsocksr/gen_config.lua $server client $tmp_port >"$shunt_dns_config_file"
 			;;
 		4)
-			lua /usr/share/shadowsocksr/gen_config.lua "$server" client "$local_port" >"$config_file"
+			lua /usr/share/shadowsocksr/gen_config.lua $server client $local_port >"$config_file"
 			;;
 		esac
 		;;
 	naiveproxy)
-		case "$mode" in
+		case "$code" in
 		1)
-			lua /usr/share/shadowsocksr/gen_config.lua "$server" redir "$local_port" >"$config_file"
+			lua /usr/share/shadowsocksr/gen_config.lua $server redir $local_port >"$config_file"
 			;;
 		3)
-			lua /usr/share/shadowsocksr/gen_config.lua "$server" redir "$local_port" >"$config_file"
-			lua /usr/share/shadowsocksr/gen_config.lua "$server" socks "$tmp_port" >"$shunt_dns_config_file"
+			lua /usr/share/shadowsocksr/gen_config.lua $server redir $local_port >"$config_file"
+			lua /usr/share/shadowsocksr/gen_config.lua $server socks $tmp_port >"$shunt_dns_config_file"
 			;;
 		4)
-			lua /usr/share/shadowsocksr/gen_config.lua "$server" socks "$local_port" >"$config_file"
+			lua /usr/share/shadowsocksr/gen_config.lua $server socks $local_port >"$config_file"
 			;;
 		esac
 		;;
 	hysteria2)
-		lua /usr/share/shadowsocksr/gen_config.lua "$server" "$mode" "$local_port" "$socks_port" >"$config_file"
+		lua /usr/share/shadowsocksr/gen_config.lua $server $mode $local_port $socks_port >"$config_file"
 		;;
 	tuic)
-		case "$mode" in
+		case "$code" in
 		1|2|4)
-			lua /usr/share/shadowsocksr/gen_config.lua "$server" "$mode" "$local_port" >"$config_file"
+			lua /usr/share/shadowsocksr/gen_config.lua $server $mode $local_port >"$config_file"
 			;;
 		3)
 			if [ -z "$chain" ]; then
-				lua /usr/share/shadowsocksr/gen_config.lua "$server" "$mode" "$local_port" >"$shunt_dns_config_file"
+				lua /usr/share/shadowsocksr/gen_config.lua $server $mode $local_port >"$shunt_dns_config_file"
 			else
-				lua /usr/share/shadowsocksr/gen_config.lua "$server" "$mode" "$local_port" >"$config_file"
+				lua /usr/share/shadowsocksr/gen_config.lua $server $mode $local_port >"$config_file"
 			fi
 			;;
 		esac
 		;;
 	shadowtls)
-		case "$mode" in
+		case "$code" in
 		1|2|4)
 			if [ -z "$chain" ]; then
-				lua /usr/share/shadowsocksr/gen_config.lua "$server" "$type" "$local_port" >"$chain_config_file"
+				lua /usr/share/shadowsocksr/gen_config.lua $server $type $local_port >"$chain_config_file"
 			else
-				lua /usr/share/shadowsocksr/gen_config.lua "$server" "$mode" "$local_port" "$socks_port" "$chain" >"$config_file"
+				lua /usr/share/shadowsocksr/gen_config.lua $server $mode $local_port $socks_port $chain >"$config_file"
 			fi
 			;;
 		3)
-			lua /usr/share/shadowsocksr/gen_config.lua "$server" "$type" "$local_port" >"$chain_config_file"
-			lua /usr/share/shadowsocksr/gen_config.lua "$server" "$mode" "$local_port" "$socks_port" "$chain" >"$config_file"
+			lua /usr/share/shadowsocksr/gen_config.lua $server $type $local_port >"$chain_config_file"
+			lua /usr/share/shadowsocksr/gen_config.lua $server $mode $local_port $socks_port $chain >"$config_file"
 			;;
 		esac
 		;;

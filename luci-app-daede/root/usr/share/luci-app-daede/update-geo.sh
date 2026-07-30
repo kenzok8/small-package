@@ -28,6 +28,34 @@ esac
 
 LOCK="/tmp/luci-app-daede.${TYPE}.lock"
 LOG="/tmp/luci-app-daede.${TYPE}.log"
+RLOCK="/tmp/luci-app-daede.geo-reload.lock"
+
+schedule_backend_reload() {
+	if [ -d "$RLOCK" ]; then
+		rmt=$(date -r "$RLOCK" +%s 2>/dev/null || echo 0)
+		[ $(( $(date +%s) - rmt )) -gt 300 ] && rmdir "$RLOCK" 2>/dev/null
+	fi
+	mkdir "$RLOCK" 2>/dev/null || return 0
+	(
+		sleep 25
+		ab="$(uci -q get daede.config.active_backend 2>/dev/null || echo daed)"
+		if [ "$ab" = dae ]; then
+			bin=dae; act=hot_reload
+		else
+			bin=daed; act=reload
+		fi
+		if /bin/pidof "$bin" >/dev/null 2>&1; then
+			if "/etc/init.d/$bin" "$act" >/dev/null 2>&1; then
+				echo "$(date '+%F %T') reloaded $bin"
+			else
+				echo "$(date '+%F %T') $bin reload failed"
+			fi
+		else
+			echo "$(date '+%F %T') $bin not running; skip reload"
+		fi
+		rmdir "$RLOCK" 2>/dev/null
+	) </dev/null >>"$LOG" 2>&1 &
+}
 
 if [ -f "$LOCK" ]; then
 	# Lock is fresh (< 5 min)? Refuse. Stale? Remove and proceed.
@@ -73,6 +101,7 @@ fi
 		else
 			mv "$TMP" "$DEST"
 			echo "$(date '+%F %T') updated $DEST ($size bytes)"
+			schedule_backend_reload
 		fi
 	fi
 	if [ "$rc" = 0 ]; then echo "$(date '+%F %T') ✓ 完成"; else echo "$(date '+%F %T') ✗ 失败 (rc=$rc)"; fi
