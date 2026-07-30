@@ -1745,16 +1745,21 @@ function fetch_cert_sha256(host, port, sni, timeout, http3)
 end
 
 function vps_domain_exclude(domain)
-	if trim(domain) == "" then return true end
+	domain = trim(domain)
+	if domain == "" then return true end
 	local map = {
-		["engage.cloudflareclient.com"] = 1,
-		["google.com"] = 1, ["www.google.com"] = 1,
-		["youtube.com"] = 1, ["www.youtube.com"] = 1,
-		["github.com"] = 1, ["telegram.org"] = 1,
-		["cloudflare.com"] = 1, ["www.cloudflare.com"] = 1,
-		["bing.com"] = 1, ["www.bing.com"] = 1, ["x.com"] = 1
+		["engage.cloudflareclient.com"] = 1, ["google.com"] = 1, ["youtube.com"] = 1,
+		["github.com"] = 1, ["telegram.org"] = 1, ["cloudflare.com"] = 1,
+		["bing.com"] = 1, ["x.com"] = 1, ["dns.google"] = 1, ["opendns.com"] = 1,
+		["cloudflare-dns.com"] = 1, ["one.one.one.one"] = 1, ["quad9.net"] = 1,
+		["adguard-dns.com"] = 1, ["nextdns.io"] = 1, ["libredns.gr"] = 1
 	}
-	if map[domain] then return true end
+	while true do
+		if map[domain] then return true end
+		local p = domain:find("%.")
+		if not p then break end
+		domain = domain:sub(p + 1)
+	end
 	return false
 end
 
