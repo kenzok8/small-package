@@ -581,16 +581,30 @@ return view.extend({
     if (targetCore === 'smart') {
       rpcCore = 'mihomo'; nextDcore = '1'; targetLabel = 'Smart';
     } else if (targetCore === 'singbox') {
-      rpcCore = 'singbox'; nextDcore = currentDcore === '5' ? '5' : '4'; targetLabel = 'sing-box';
+      rpcCore = 'singbox';
+      if (currentDcore === '5' && self._lastSt.has_singbox_alpha)
+        nextDcore = '5';
+      else if (currentDcore === '4' && self._lastSt.has_singbox_stable)
+        nextDcore = '4';
+      else
+        nextDcore = self._lastSt.has_singbox_stable ? '4' : '5';
+      targetLabel = 'sing-box';
     } else {
-      rpcCore = 'mihomo'; nextDcore = currentDcore === '3' ? '3' : '2'; targetLabel = 'mihomo';
+      rpcCore = 'mihomo';
+      if (currentDcore === '3' && self._lastSt.has_mihomo_alpha)
+        nextDcore = '3';
+      else if (currentDcore === '2' && self._lastSt.has_mihomo_stable)
+        nextDcore = '2';
+      else
+        nextDcore = self._lastSt.has_mihomo_stable ? '2' : '3';
+      targetLabel = 'mihomo';
     }
 
     self._coreSwitchBusy = true;
     self._coreSwitchMsg = _("Switching to ") + targetLabel + '...';
     self._refreshCoreSwitch();
 
-    return clashoo.setCore(rpcCore, nextDcore)
+    return clashoo.setCore(rpcCore, nextDcore, 'apply')
       .then(function (r) {
         if (r && r.success === false && r.error === 'smart_core_missing') {
           self._showCoreSwitchHint(_("Smart core not detected; updating the model will not install the core. Download the Smart build from the System page."));
@@ -605,13 +619,17 @@ return view.extend({
         self._lastSt = self._lastSt || {};
         self._lastSt.core_type = rpcCore;
         self._lastSt.dcore = nextDcore;          /* 乐观更新，避免重绘前 uci 缓存滞后 */
-        self._lastSt.running = false;
-        self._lastSt.health_status = 'stopped';
+        if (!r || !r.restarting) {
+          self._lastSt.running = false;
+          self._lastSt.health_status = 'stopped';
+        }
+        return r;
       })
-      .then(function () {
+      .then(function (r) {
         /* set_core auto-enables smart_auto_switch; init.d at boot
          * smart_inject 会把 url-test/load-balance 转成 Smart 策略，无需手动操作。 */
-        self._coreSwitchMsg = _("Switched to ") + targetLabel + _(", click Start to take effect");
+        if (!r || !r.restarting)
+          self._coreSwitchMsg = _("Switched to ") + targetLabel + _(", click Start to take effect");
         self._refreshCoreSwitch();
         return new Promise(function (resolve) { setTimeout(resolve, 500); });
       })

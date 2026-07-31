@@ -2504,12 +2504,17 @@ let api = get_clash_api_auth();
 	if (configured_core == 'singbox' && config) conf_name = config;
 	let dcore = c.get('clashoo', 'config', 'dcore') || '2';
 
-let status_payload = { running, dash_port, dash_pass, proxy_mode, conf_path: conf_name, config,
-                       panel_type, tcp_mode, udp_mode, stack,
-                       effective_tcp_mode, effective_udp_mode,
+	let status_payload = { running, dash_port, dash_pass, proxy_mode, conf_path: conf_name, config,
+	                       panel_type, tcp_mode, udp_mode, stack,
+	                       effective_tcp_mode, effective_udp_mode,
 	                       runtime_degraded, runtime_degrade_reason,
 	                       health_status, health_detail, has_tun_device,
-	                       core_type: configured_core, dcore, local_ip };
+	                       core_type: configured_core, dcore, local_ip,
+	                       has_mihomo_stable: has_mihomo_stable(),
+	                       has_mihomo_alpha: !!access('/usr/bin/mihomo', 'x'),
+	                       has_singbox_stable: !!access('/usr/bin/sing-box-stable', 'x'),
+	                       has_singbox_alpha: !!access('/usr/bin/sing-box-alpha', 'x'),
+	                       has_smart: !!find_smart_binary() };
 
 	let stats_payload = { ok: false, running: running };
 	if (running) {
