@@ -574,6 +574,7 @@ function renderDaeEditor() {
 	const textarea = E('textarea', {
 		'class': 'dd-editor dd-editor-hl',
 		'spellcheck': 'false',
+		'wrap': 'off',
 		'placeholder': _('dae config file is empty. Click "Load default config" to start, or paste your config here.')
 	}, '');
 	const hlCode = E('code', {});

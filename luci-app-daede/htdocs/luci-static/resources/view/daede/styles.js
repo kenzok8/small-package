@@ -104,7 +104,7 @@ const CSS = [
 	   both share identical box metrics so glyphs line up; the textarea stays the
 	   real editor (caret, selection, insert-at-cursor, jump-to-line all native) */
 	'.dd-edit-wrap{position:relative}',
-	'.dd-edit-wrap .dd-editor,.dd-edit-wrap .dd-hl{margin:0;padding:10px 12px;border-width:1px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-size:12px;line-height:1.5;letter-spacing:0;tab-size:4;white-space:pre-wrap;word-break:break-word;box-sizing:border-box}',
+	'.dd-edit-wrap .dd-editor,.dd-edit-wrap .dd-hl{margin:0;padding:10px 12px;border-width:1px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;font-size:12px;line-height:1.5;letter-spacing:0;tab-size:4;white-space:pre;word-break:normal;overflow-x:auto;box-sizing:border-box}',
 	'.dd-edit-wrap .dd-hl{position:absolute;inset:0;margin:0;overflow:hidden;border:1px solid transparent;border-radius:6px 6px 0 0;pointer-events:none;background:#f6f8fa;color:#3b4252;z-index:1}',
 	/* reset Argon's code{background:var(--lighter)} so the overlay inherits the
 	   pre background uniformly — otherwise a dark pre shows as side bars.
@@ -117,9 +117,9 @@ const CSS = [
 	   it ghosts over the highlight pre underneath */
 	'.dd-edit-wrap .dd-editor-hl::selection{background:rgba(56,134,161,.25);color:transparent}',
 	'@media screen and (max-device-width:600px){.dd-edit-wrap .dd-editor,.dd-edit-wrap .dd-hl,.dd-edit-wrap .dd-hl code{font-size:16px}}',
-	'.dh-c{color:#8a919a;font-style:italic}',
+	'.dh-c{color:#8a919a}',
 	'.dh-s{color:#2a8a4a}',
-	'.dh-k{color:#9a3fb5;font-weight:600}',
+	'.dh-k{color:#9a3fb5}',
 	'.dh-f{color:#2f7288}',
 	'.dh-o{color:#c2772a}',
 	'.dh-g{color:#b0226a}',
