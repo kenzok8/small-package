@@ -626,17 +626,20 @@ EOF
 		procd_set_param respawn
 		procd_close_instance
 		
-                if [ ! -z "$socks_port" ] ; then
-		    echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_socks5 放行端口 ${socks_port} " >>/tmp/easytier.log
-		    uci -q delete firewall.easytier_socks5
-		    uci set firewall.easytier_socks5=rule
-		    uci set firewall.easytier_socks5.name="easytier_socks5"
-		    uci set firewall.easytier_socks5.target="ACCEPT"
-		    uci set firewall.easytier_socks5.src="wan"
-		    uci set firewall.easytier_socks5.proto="tcp"
-		    uci set firewall.easytier_socks5.dest_port="$socks_port"
-		    uci set firewall.easytier_socks5.enabled="1"
-                fi
+                # 不再自动放行 SOCKS5 端口到 WAN —— 无认证 SOCKS5 代理暴露给公网有严重安全风险
+                # 如需公网访问，请手动在 LuCI 防火墙页面添加规则
+                # 如需恢复自动放行，去掉下面各行行首的 # 即可
+                # if [ ! -z "$socks_port" ] ; then
+		    # echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_socks5 放行端口 ${socks_port} " >>/tmp/easytier.log
+		    # uci -q delete firewall.easytier_socks5
+		    # uci set firewall.easytier_socks5=rule
+		    # uci set firewall.easytier_socks5.name="easytier_socks5"
+		    # uci set firewall.easytier_socks5.target="ACCEPT"
+		    # uci set firewall.easytier_socks5.src="wan"
+		    # uci set firewall.easytier_socks5.proto="tcp"
+		    # uci set firewall.easytier_socks5.dest_port="$socks_port"
+		    # uci set firewall.easytier_socks5.enabled="1"
+                # fi
                 if [ "$listenermode" = "ON" ] || [ "$etcmd" = "web" ] ; then
                   	if [ -z "$tcp_port" ] && [ -z "$ws_port" ] && [ -z "$wss_port" ] && [ -z "$wg_port" ] ; then
                      		tcp_port="11010"
