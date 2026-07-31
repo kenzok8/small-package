@@ -1,0 +1,13 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@ghttpd[-1]
+	add ucitrack ghttpd
+	set ucitrack.@ghttpd[-1].init=ghttpd
+	commit ucitrack
+EOF
+
+/etc/init.d/ghttpd enable
+/etc/init.d/ghttpd start
+
+exit 0

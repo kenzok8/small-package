@@ -3,7 +3,7 @@ local util  = require "luci.util"
 local sys   = require "luci.sys"
 local uci   = require "luci.model.uci".cursor()
 local running = (sys.call("pidof ghttpd >/dev/null") == 0)
-local port = uci:get("ghttpd", "config", "port") or "8333"
+local port = uci:get_first("ghttpd", "ghttpd", "port") or "80"
 -%>
 <div class="cbi-value">
     <label class="cbi-value-title"><%:Status%></label>

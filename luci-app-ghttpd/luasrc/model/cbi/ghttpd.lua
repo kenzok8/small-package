@@ -9,13 +9,12 @@ s.anonymous=true
 
 e = s:option(Flag, "enabled", translate("Enable"))
 e.rmempty=false
+e.default="1"
 
 
 o = s:option(Value, "port", translate("HTTP Port").."<b>*</b>")
 o.rmempty = false
-o.default = "8990"
+o.default = "80"
 o.datatype = "port"
 
 return m
-
-

@@ -7,14 +7,14 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_ARCH_aihelper:=$(ARCH)
+PKG_ARCH_ghttpd:=$(ARCH)
 
-PKG_NAME:=aihelper
+PKG_NAME:=ghttpd
 PKG_VERSION:=0.0.1
-PKG_RELEASE:=3
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/Carseason/openwrt-packages/releases/download/prebuilt/
-PKG_HASH:=ac0f198049f3a9c0483c88d5bd48531b3ca0d85a7320291e94d7054afd4ea412
+PKG_HASH:=9e3cce93a7e65e87c89eeb1bbf5190f8935126f060843419b4ec1aeeb00b5f83
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-binary-$(PKG_VERSION)
 
 PKG_BUILD_PARALLEL:=1
@@ -24,26 +24,27 @@ include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
 	SECTION:=net
-	CATEGORY:=System
-	SUBMENU:=
-	TITLE:=AiHelper
+	CATEGORY:=Network
+	SUBMENU:=Web Servers/Proxies
+	TITLE:=ghttpd
+	DEPENDS:=@(x86_64||aarch64||arm) +docker
 	URL:=https://github.com/Carseason/openwrt-packages
 endef
 
 define Package/$(PKG_NAME)/description
-  AiHelper is a dashboard & user guide
+  ghttpd is a dashboard & user guide
 endef
 
 define Package/$(PKG_NAME)/conffiles
-/etc/config/aihelper
+/etc/config/ghttpd
 endef
 
 define Package/$(PKG_NAME)/postinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	if [ -f /etc/uci-defaults/09-aihelper ]; then
-		chmod 755 /etc/uci-defaults/09-aihelper
-		/etc/uci-defaults/09-aihelper && rm -f /etc/uci-defaults/09-aihelper
+	if [ -f /etc/uci-defaults/09-ghttpd ]; then
+		chmod 755 /etc/uci-defaults/09-ghttpd
+		/etc/uci-defaults/09-ghttpd && rm -f /etc/uci-defaults/09-ghttpd
 	fi
 fi
 endef
@@ -56,10 +57,10 @@ endef
 
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d $(1)/etc/uci-defaults $(1)/etc/config
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/aihelper.$(PKG_ARCH_aihelper) $(1)/usr/sbin/aihelper
-	$(INSTALL_BIN) ./files/aihelper.init $(1)/etc/init.d/aihelper
-	$(INSTALL_BIN) ./files/aihelper.uci-default $(1)/etc/uci-defaults/09-aihelper
-	$(INSTALL_CONF) ./files/aihelper.config $(1)/etc/config/aihelper
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ghttpd.$(PKG_ARCH_ghttpd) $(1)/usr/sbin/ghttpd
+	$(INSTALL_BIN) ./files/ghttpd.init $(1)/etc/init.d/ghttpd
+	$(INSTALL_BIN) ./files/ghttpd.uci-default $(1)/etc/uci-defaults/09-ghttpd
+	$(INSTALL_CONF) ./files/ghttpd.config $(1)/etc/config/ghttpd
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
