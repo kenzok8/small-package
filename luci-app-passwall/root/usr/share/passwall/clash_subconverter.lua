@@ -7,6 +7,8 @@ local urlencode = api.UrlEncode
 local base64 = api.base64Encode
 local json = api.jsonc
 
+local domain_redir = {}
+
 local function host_format(host)
 	if not host then return "" end
 	local str = host:match("%[(.-)%]") or host
@@ -162,7 +164,7 @@ local function build_common(node)
 				local d = opts["download-settings"]
 				local ds = {}
 
-				if d.server then ds.address = d.server end
+				if d.server then ds.address = domain_redir[d.server] or d.server end
 				if d.port then ds.port = d.port end
 
 				ds.network = "xhttp"
@@ -507,6 +509,8 @@ local function encode_node(node)
 
 	local t = node.type
 
+	node.server = domain_redir[node.server] or node.server
+
 	if t == "vless" then return encode_vless(node)
 	elseif t == "trojan" then return encode_trojan(node)
 	elseif t == "vmess" then return encode_vmess(node)
@@ -530,6 +534,15 @@ function parseClashNode(raw, remark)
 	if not data.proxies then return "" end
 
 	api.log('检测到 Clash 订阅，正在进行转换 ...')
+
+	-- Some airports use hosts domain redirect to disguise the real node domain name.
+	for k, v in pairs(data.hosts or {}) do
+		if type(k) == "string" and type(v) == "string" then
+			if api.datatypes.hostname(k) and api.datatypes.hostname(v) then
+				domain_redir[k] = v
+			end
+		end
+	end
 
 	local links = {}
 	for _, node in ipairs(data.proxies) do
