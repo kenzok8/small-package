@@ -1,40 +1,114 @@
+diff --git a/cmd/reload_manager.go b/cmd/reload_manager.go
+index c78910c..bcc1a37 100644
 --- a/cmd/reload_manager.go
 +++ b/cmd/reload_manager.go
-@@ -411,0 +412,3 @@ func dnsConfigFingerprint(dns config.Dns
+@@ -423,5 +423,8 @@ func dnsConfigFingerprint(dns config.Dns) string {
+ 	b.WriteString("max_cache_size=")
+ 	b.WriteString(strconv.Itoa(dns.MaxCacheSize))
+ 	b.WriteByte(';')
 +	b.WriteString("response_ttl=")
 +	b.WriteString(strconv.Itoa(dns.ResponseTtl))
 +	b.WriteByte(';')
+ 	return b.String()
+ }
+diff --git a/cmd/run_shutdown_test.go b/cmd/run_shutdown_test.go
+index f8f731f..4dcdcff 100644
 --- a/cmd/run_shutdown_test.go
 +++ b/cmd/run_shutdown_test.go
-@@ -605,0 +606 @@ func TestDNSConfigFingerprintCoversAllDn
+@@ -609,6 +609,7 @@ func TestDNSConfigFingerprintCoversAllDnsFields(t *testing.T) {
+ 		"OptimisticCache":    {},
+ 		"OptimisticCacheTtl": {},
+ 		"MaxCacheSize":       {},
 +		"ResponseTtl":        {},
+ 	}
+ 
+ 	dnsType := reflect.TypeOf(config.Dns{})
+diff --git a/config/config.go b/config/config.go
+index e688e88..af28da5 100644
 --- a/config/config.go
 +++ b/config/config.go
-@@ -156,0 +157 @@ type Dns struct {
+@@ -160,6 +160,7 @@ type Dns struct {
+ 	OptimisticCache    bool            `mapstructure:"optimistic_cache" default:"true"`
+ 	OptimisticCacheTtl int             `mapstructure:"optimistic_cache_ttl" default:"60"`
+ 	MaxCacheSize       int             `mapstructure:"max_cache_size" default:"0"`
 +	ResponseTtl        int             `mapstructure:"response_ttl" default:"0"`
+ }
+ 
+ type Routing struct {
+diff --git a/config/desc.go b/config/desc.go
+index 513cf7e..9b3c1a2 100644
 --- a/config/desc.go
 +++ b/config/desc.go
-@@ -68,0 +69 @@ var DnsDesc = Desc{
+@@ -66,6 +66,7 @@ var GlobalDesc = Desc{
+ var DnsDesc = Desc{
+ 	"ipversion_prefer": "For example, if ipversion_prefer is 4 and the domain name has both type A and type AAAA records, the dae will only respond to type A queries and response empty answer to type AAAA queries.",
+ 	"fixed_domain_ttl": "Give a fixed ttl for domains. Zero means that dae will request to upstream every time and not cache DNS results for these domains.",
 +	"response_ttl":     "Override the TTL returned to downstream DNS clients. Zero keeps dae's default behavior.",
+ 	"upstream":         "Value can be scheme://host:port, where the scheme can be tcp/udp/tcp+udp.\nIf host is a domain and has both IPv4 and IPv6 record, dae will automatically choose IPv4 or IPv6 to use according to group policy (such as min latency policy).\nPlease make sure DNS traffic will go through and be forwarded by dae, which is REQUIRED for domain routing.\nIf dial_mode is \"ip\", the upstream DNS answer SHOULD NOT be polluted, so domestic public DNS is not recommended.",
+ 	"request": `DNS request routing for ordinary client traffic uses qname and qtype.
+ Built-in outbounds for ordinary DNS requests: asis, reject.
+diff --git a/control/control_plane.go b/control/control_plane.go
+index 5df98db..a543f3b 100644
 --- a/control/control_plane.go
 +++ b/control/control_plane.go
-@@ -774,0 +775 @@ func NewControlPlane(
+@@ -771,6 +771,7 @@ func newControlPlaneWithContextOptions(
+ 	}
+ 	plane.dnsRouting = dnsUpstream
+ 	plane.dnsFixedDomainTtl = fixedDomainTtl
 +	plane.dnsResponseTtl = dnsConfig.ResponseTtl
-@@ -1273,0 +1275 @@ func (c *ControlPlane) dnsControllerOption() *DnsControllerOption {
-+		ResponseTtl:    c.dnsResponseTtl,
+ 	dnsControllerOption := plane.dnsControllerOption()
+ 	dnsControllerOption.OptimisticCache = dnsConfig.OptimisticCache
+ 	dnsControllerOption.OptimisticCacheTtl = dnsConfig.OptimisticCacheTtl
+@@ -1256,6 +1257,7 @@ func (c *ControlPlane) dnsControllerOption() *DnsControllerOption {
+ 		Log:              c.log,
+ 		LifecycleContext: c.ctx,
+ 		ConcurrencyLimit: 0,
++		ResponseTtl:      c.dnsResponseTtl,
+ 		CacheAccessCallback: func(cache *DnsCache) (err error) {
+ 			if err = c.core.BatchUpdateDomainRouting(cache); err != nil {
+ 				return fmt.Errorf("BatchUpdateDomainRouting: %w", err)
+diff --git a/control/dns_control.go b/control/dns_control.go
+index d5bf872..b52132d 100644
 --- a/control/dns_control.go
 +++ b/control/dns_control.go
-@@ -80,0 +81 @@ type DnsControllerOption struct {
+@@ -82,6 +82,7 @@ type DnsControllerOption struct {
+ 	OptimisticCache       bool
+ 	OptimisticCacheTtl    int // 0 means never expire (rely on LRU eviction)
+ 	MaxCacheSize          int // maximum number of cache entries (0 = unlimited)
 +	ResponseTtl           int
-@@ -96,0 +98 @@ type dnsControllerRuntimeState struct {
+ }
+ 
+ type dnsControllerRuntimeState struct {
+@@ -94,6 +95,7 @@ type dnsControllerRuntimeState struct {
+ 	bestDialerChooser     func(ctx context.Context, req *udpRequest, upstream *dns.Upstream) (*dialArgument, error)
+ 	timeoutExceedCallback func(dialArgument *dialArgument, err error)
+ 	fixedDomainTtl        map[string]int
 +	responseTtl           int
-@@ -174,0 +177,3 @@ func normalizeDnsRuntimeBehavior(option *DnsControllerOption) (qtypePrefer uint
+ }
+ 
+ type dnsControllerStore struct {
+@@ -170,6 +172,9 @@ func normalizeDnsRuntimeBehavior(option *DnsControllerOption) (qtypePrefer uint1
+ 	if err != nil {
+ 		return 0, false, 0, 0, err
+ 	}
 +	if option.ResponseTtl < 0 {
 +		return 0, false, 0, 0, fmt.Errorf("response_ttl must be greater than or equal to 0")
 +	}
-@@ -424,0 +430 @@ func (c *DnsController) TryUpdateRuntime(routing *dns.Dns, option *DnsControlle
+ 	optimisticCacheTtl = option.OptimisticCacheTtl
+ 	maxCacheSize = option.MaxCacheSize
+ 	if optimisticCacheTtl == 0 && maxCacheSize == 0 {
+@@ -422,6 +427,7 @@ func (c *DnsController) updateRuntime(option *DnsControllerOption, routing *dns.
+ 		bestDialerChooser:     option.BestDialerChooser,
+ 		timeoutExceedCallback: option.TimeoutExceedCallback,
+ 		fixedDomainTtl:        option.FixedDomainTtl,
 +		responseTtl:           option.ResponseTtl,
-@@ -1550 +1556,7 @@ func (c *DnsController) NormalizeAndCacheDnsResp_(msg *dnsmessage.Msg, response
+ 	})
+ 	return nil
+ }
+@@ -1547,10 +1553,16 @@ func (c *DnsController) NormalizeAndCacheDnsResp_(msg *dnsmessage.Msg, responseC
+ 		ttl = 31536000
+ 	}
+ 
 -	// For A/AAAA records, we set TTL to 0 to prevent downstream caching while we manage it.
 +	responseTtl := 0
 +	if rt := c.runtime(); rt != nil {
@@ -43,9 +117,16 @@
 +
 +	// For A/AAAA records, we set TTL to 0 by default to prevent downstream caching while we manage it.
 +	// When response_ttl is set, use it as the downstream-visible TTL.
-@@ -1553 +1565 @@ func (c *DnsController) NormalizeAndCacheDnsResp_(msg *dnsmessage.Msg, response
+ 	if q.Qtype == dnsmessage.TypeA || q.Qtype == dnsmessage.TypeAAAA {
+ 		for i := range msg.Answer {
 -			msg.Answer[i].Header().Ttl = 0
 +			msg.Answer[i].Header().Ttl = uint32(responseTtl)
+ 		}
+ 	}
+ 
+diff --git a/control/dns_response_ttl_test.go b/control/dns_response_ttl_test.go
+new file mode 100644
+index 0000000..0e5406e
 --- /dev/null
 +++ b/control/dns_response_ttl_test.go
 @@ -0,0 +1,64 @@
@@ -113,9 +194,23 @@
 +		})
 +	}
 +}
+diff --git a/control/dns_runtime.go b/control/dns_runtime.go
+index b871cc3..0c1d9c6 100644
 --- a/control/dns_runtime.go
 +++ b/control/dns_runtime.go
-@@ -22,0 +23 @@ type controlPlaneDNSRuntime struct {
+@@ -20,6 +20,7 @@ type controlPlaneDNSRuntime struct {
+ 	dnsController             *DnsController
+ 	dnsRouting                *dns.Dns
+ 	dnsFixedDomainTtl         map[string]int
 +	dnsResponseTtl            int
-@@ -264,0 +266 @@ func (r *controlPlaneDNSRuntime) release() {
+ 	dnsListener               *DNSListener
+ 	dnsListenerStopRegistered bool
+ 	delayDNSListenerStart     bool
+@@ -262,6 +263,7 @@ func (r *controlPlaneDNSRuntime) releaseRetainedState() {
+ 	r.dnsController = nil
+ 	r.dnsRouting = nil
+ 	r.dnsFixedDomainTtl = nil
 +	r.dnsResponseTtl = 0
+ 	r.dnsListener = nil
+ 	r.dnsListenerStopRegistered = false
+ 	r.delayDNSListenerStart = false

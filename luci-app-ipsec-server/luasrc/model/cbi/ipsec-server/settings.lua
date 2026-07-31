@@ -13,9 +13,13 @@ o.cfgvalue = function(t, n)
 end
 
 enabled = s:option(Flag, "enabled", translate("Enable"))
-enabled.description = translate("Use a client that supports IPSec Xauth PSK (iOS or Android) to connect to this server.")
 enabled.default = 0
 enabled.rmempty = false
+
+type = s:option(ListValue, "type", translate("Type"))
+type:value("IKEv1", "IPSec Xauth PSK")
+type:value("IKEv2", "IKEv2/IPSec PSK")
+type.default = "IKEv2"
 
 clientip = s:option(Value, "clientip", translate("VPN Client IP"))
 clientip.description = translate("VPN Client reserved started IP addresses with the same subnet mask, such as: 192.168.100.10/24")
@@ -23,8 +27,9 @@ clientip.datatype = "ip4addr"
 clientip.optional = false
 clientip.rmempty = false
 
-secret = s:option(Value, "secret", translate("Secret Pre-Shared Key"))
+secret = s:option(Value, "secret", translate("Preshared Key"))
 secret.password = true
+secret:depends("type", "IKEv1")
 
 if sys.call("command -v xl2tpd > /dev/null") == 0 then
 	o = s:option(DummyValue, "l2tp_status", "L2TP " .. translate("Current Condition"))
@@ -32,11 +37,13 @@ if sys.call("command -v xl2tpd > /dev/null") == 0 then
 	o.cfgvalue = function(t, n)
 		return '<font class="l2tp_status"></font>'
 	end
+	o:depends("type", "IKEv1")
 
 	o = s:option(Flag, "l2tp_enable", "L2TP " .. translate("Enable"))
 	o.description = translate("Use a client that supports L2TP over IPSec PSK to connect to this server.")
 	o.default = 0
 	o.rmempty = false
+	o:depends("type", "IKEv1")
 
 	o = s:option(Value, "l2tp_localip", "L2TP " .. translate("Server IP"))
 	o.description = translate("VPN Server IP address, such as: 192.168.101.1")
@@ -44,12 +51,14 @@ if sys.call("command -v xl2tpd > /dev/null") == 0 then
 	o.rmempty = true
 	o.default = "192.168.101.1"
 	o.placeholder = o.default
+	o:depends("type", "IKEv1")
 
 	o = s:option(Value, "l2tp_remoteip", "L2TP " .. translate("Client IP"))
 	o.description = translate("VPN Client IP address range, such as: 192.168.101.10-20")
 	o.rmempty = true
 	o.default = "192.168.101.10-20"
 	o.placeholder = o.default
+	o:depends("type", "IKEv1")
 
 	if sys.call("ls -L /usr/lib/ipsec/libipsec* 2>/dev/null >/dev/null") == 0 then 
 		o = s:option(DummyValue, "_o", " ")
