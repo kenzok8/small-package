@@ -5,21 +5,35 @@ set -eu
 CACHE_DIR="/tmp/clashoo"
 CACHE_FILE="/tmp/clashoo_check_cache"
 LOCK_DIR="${CACHE_DIR}/access_check.lock"
+LOCK_PID_FILE="${LOCK_DIR}/pid"
 UPDATING_FLAG="${CACHE_DIR}/access_check_updating"
 TMP_FILE="${CACHE_FILE}.tmp.$$"
 
+take_lock() {
+	mkdir "$LOCK_DIR" 2>/dev/null || return 1
+	printf '%s\n' "$$" > "$LOCK_PID_FILE" 2>/dev/null
+	return 0
+}
+
+lock_is_dead() {
+	_pid="$(cat "$LOCK_PID_FILE" 2>/dev/null)"
+	case "$_pid" in
+		''|*[!0-9]*)
+			[ -n "$(find "$LOCK_DIR" -maxdepth 0 -mmin +3 2>/dev/null)" ]
+			return $?
+			;;
+	esac
+	[ ! -d "/proc/$_pid" ]
+}
+
 mkdir -p "$CACHE_DIR"
-if ! mkdir "$LOCK_DIR" 2>/dev/null; then
-	old_pid="$(cat "$UPDATING_FLAG" 2>/dev/null)"
-	if [ -n "$old_pid" ] && [ ! -d "/proc/$old_pid" ]; then
-		rm -rf "$LOCK_DIR" "$UPDATING_FLAG" >/dev/null 2>&1
-		mkdir "$LOCK_DIR" 2>/dev/null || exit 0
-	else
-		exit 0
-	fi
+if ! take_lock; then
+	lock_is_dead || exit 0
+	rm -rf "$LOCK_DIR" >/dev/null 2>&1
+	take_lock || exit 0
 fi
 trap 'rm -rf "$LOCK_DIR" "$UPDATING_FLAG" "$TMP_FILE"' EXIT INT TERM
-printf '%s\n' "$$" > "$UPDATING_FLAG"
+: > "$UPDATING_FLAG"
 
 safe_int() {
 	case "${1:-}" in

@@ -15,8 +15,8 @@ L2TP_LOG_FILE=${L2TP_PATH}/xl2tpd.log
 ipt_comment="IPSec VPN Server"
 
 init_config() {
+	vt_type=$(uci -q get ${CONFIG}.@service[0].type)
 	vt_clientip=$(uci -q get ${CONFIG}.@service[0].clientip)
-	l2tp_enabled=$(uci -q get ${CONFIG}.@service[0].l2tp_enable)
 	l2tp_localip=$(uci -q get ${CONFIG}.@service[0].l2tp_localip)
 }
 
@@ -26,35 +26,53 @@ get_enabled_anonymous_secs() {
 
 ipt_rule() {
 	if [ "$1" = "add" ]; then
-		iptables -w -I input_rule -p udp -m multiport --dports 500,4500 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
 		iptables -w -t mangle -I OUTPUT -p udp -m multiport --sports 500,4500 -m comment --comment "${ipt_comment}" -j RETURN 2>/dev/null
-		iptables -w -I forwarding_rule -s ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-		iptables -w -I forwarding_rule -d ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+		iptables -w -I input_rule -p udp -m multiport --dports 500,4500 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
 		iptables -w -I forwarding_rule -m policy --dir in --pol ipsec --proto esp -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
 		iptables -w -I forwarding_rule -m policy --dir out --pol ipsec --proto esp -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-		iptables -w -t nat -I postrouting_rule -s ${vt_clientip} -m comment --comment "${ipt_comment}" -j FULLCONENAT 2>/dev/null
-		[ "$?" != "0" ] && iptables -w -t nat -I postrouting_rule -s ${vt_clientip} -m comment --comment "${ipt_comment}" -j MASQUERADE 2>/dev/null
-		iptables -w -t nat -I postrouting_rule -d ${vt_clientip} -m comment --comment "${ipt_comment}" -j FULLCONENAT 2>/dev/null
-		[ "$?" != "0" ] && iptables -w -t nat -I postrouting_rule -d ${vt_clientip} -m comment --comment "${ipt_comment}" -j MASQUERADE 2>/dev/null
 
-		ip6tables -w -I input_rule -p udp -m multiport --dports 500,4500 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
 		ip6tables -w -t mangle -I OUTPUT -p udp -m multiport --sports 500,4500 -m comment --comment "${ipt_comment}" -j RETURN 2>/dev/null
+		ip6tables -w -I input_rule -p udp -m multiport --dports 500,4500 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
 		ip6tables -w -I forwarding_rule -m policy --dir in --pol ipsec --proto esp -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
 		ip6tables -w -I forwarding_rule -m policy --dir out --pol ipsec --proto esp -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
 
-		[ "${l2tp_enabled}" = 1 ] && {
-			iptables -w -I input_rule -p udp --dport 1701 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+		if [ "${vt_type}" = "L2TP" ]; then
 			iptables -w -t mangle -I OUTPUT -p udp --sport 1701 -m comment --comment "${ipt_comment}" -j RETURN 2>/dev/null
+			iptables -w -I input_rule -p udp --dport 1701 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I input_rule -s ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I input_rule -d ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
 			iptables -w -I forwarding_rule -s ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
 			iptables -w -I forwarding_rule -d ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I output_rule -s ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I output_rule -d ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
 			iptables -w -t nat -I postrouting_rule -s ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j FULLCONENAT 2>/dev/null
 			[ "$?" != "0" ] && iptables -w -t nat -I postrouting_rule -s ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j MASQUERADE 2>/dev/null
 			iptables -w -t nat -I postrouting_rule -d ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j FULLCONENAT 2>/dev/null
 			[ "$?" != "0" ] && iptables -w -t nat -I postrouting_rule -d ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j MASQUERADE 2>/dev/null
+		else
+			iptables -w -I input_rule -s ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I input_rule -d ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I forwarding_rule -s ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I forwarding_rule -d ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I output_rule -s ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I output_rule -d ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -t nat -I postrouting_rule -s ${vt_clientip} -m comment --comment "${ipt_comment}" -j FULLCONENAT 2>/dev/null
+			[ "$?" != "0" ] && iptables -w -t nat -I postrouting_rule -s ${vt_clientip} -m comment --comment "${ipt_comment}" -j MASQUERADE 2>/dev/null
+			iptables -w -t nat -I postrouting_rule -d ${vt_clientip} -m comment --comment "${ipt_comment}" -j FULLCONENAT 2>/dev/null
+			[ "$?" != "0" ] && iptables -w -t nat -I postrouting_rule -d ${vt_clientip} -m comment --comment "${ipt_comment}" -j MASQUERADE 2>/dev/null
+			
 
-			ip6tables -w -I input_rule -p udp --dport 1701 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-			ip6tables -w -t mangle -I OUTPUT -p udp --sport 1701 -m comment --comment "${ipt_comment}" -j RETURN 2>/dev/null
-		}
+			uci -q batch <<-EOF >/dev/null
+				delete network.ipsec_server
+				set network.ipsec_server=interface
+				set network.ipsec_server.ifname="ipsec0"
+				set network.ipsec_server.device="ipsec0"
+				set network.ipsec_server.proto="static"
+				set network.ipsec_server.ipaddr="${vt_clientip%.*}.1"
+				set network.ipsec_server.netmask="255.255.255.0"
+				commit network
+			EOF
+		fi
 	else
 		ipt_del() {
 			for i in $(seq 1 $($1 -nL $2 | grep -c "${ipt_comment}")); do
@@ -62,13 +80,19 @@ ipt_rule() {
 				$1 -w -D $2 $index 2>/dev/null
 			done
 		}
-		ipt_del "iptables -w" "forwarding_rule"
 		ipt_del "iptables -w" "input_rule"
+		ipt_del "iptables -w" "forwarding_rule"
+		ipt_del "iptables -w" "output_rule"
 		ipt_del "iptables -w -t nat" "postrouting_rule"
 		ipt_del "iptables -w -t mangle" "OUTPUT"
-		ipt_del "ip6tables -w" "forwarding_rule"
 		ipt_del "ip6tables -w" "input_rule"
+		ipt_del "ip6tables -w" "forwarding_rule"
 		ipt_del "ip6tables -w -t mangle" "OUTPUT"
+		uci -q batch <<-EOF >/dev/null
+			delete network.ipsec_server
+			commit network
+		EOF
+		ifup ipsec_server > /dev/null 2>&1
 	fi
 }
 
@@ -108,25 +132,121 @@ start() {
 	local vt_enabled=$(uci -q get ${CONFIG}.@service[0].enabled)
 	[ "$vt_enabled" = 0 ] && return 1
 
-	local vt_type=$(uci -q get ${CONFIG}.@service[0].type)
-	local vt_gateway="${vt_clientip%.*}.1"
+	cat > ${IPSEC_CONN_FILE} <<-EOF
+		# ipsec.conf - strongSwan IPsec configuration file
 
-	local l2tp_enabled=$(uci -q get ${CONFIG}.@service[0].l2tp_enable)
-	[ "${vt_type}" = "IKEv1" ] && [ "${l2tp_enabled}" = 1 ] && {
-		touch ${CHAP_SECRETS}
-		local vt_remoteip=$(uci -q get ${CONFIG}.@service[0].l2tp_remoteip)
-		local ipsec_l2tp_config=$(cat <<-EOF
-		conn L2TP-IKEv1-PSK
-		  type=transport
-		  keyexchange=ikev1
-		  authby=secret
-		  leftprotoport=udp/l2tp
-		  left=%any
-		  right=%any
+		config setup
+		  uniqueids=no
+		  charondebug="cfg 2, dmn 2, ike 2, net 0"
+
+		conn %default
+		  dpdaction=clear
+		  dpddelay=300s
 		  rekey=no
-		  forceencaps=yes
+		  left=%any
+		  leftfirewall=yes
+		  right=%any
+		  ikelifetime=60m
+		  keylife=20m
+		  rekeymargin=3m
+		  keyingtries=1
+		  auto=add
+		  ike=aes128-sha1-modp2048,aes128-sha1-modp1024,3des-sha1-modp1024,3des-sha1-modp1536
+		  esp=aes128-sha1,aes256-sha256,3des-sha1
+
+	EOF
+	
+	cat > ${IPSEC_SECRETS_FILE} <<-EOF
+		# /etc/ipsec.secrets - strongSwan IPsec secrets file
+	EOF
+
+	([ "${vt_type}" = "IKEv1" ] || [ "${vt_type}" = "IKEv2" ]) && {
+		local vt_gateway="${vt_clientip%.*}.1"
+		cat >> ${IPSEC_CONN_FILE} <<-EOF
+			conn conn-ipsec
+			  leftsubnet=0.0.0.0/0
+			  rightsubnet=${vt_clientip}
+			  rightsourceip=${vt_clientip}
+			  rightdns=${vt_gateway}
+
 		EOF
-		)
+	}
+
+	[ "${vt_type}" = "IKEv2" ] && {
+		cat >> ${IPSEC_CONN_FILE} <<-EOF
+			conn IKEv2-PSK-XAuth
+			  also=conn-ipsec
+			  keyexchange=ikev2
+			  leftauth=psk
+			  rightauth=psk
+
+		EOF
+		local ikev2_users=$(get_enabled_anonymous_secs "@ikev2_users")
+		[ -n "${ikev2_users}" ] && {
+			for _user in ${ikev2_users}; do
+				local u_enabled=$(uci -q get ${CONFIG}.${_user}.enabled)
+				[ "${u_enabled}" -eq 1 ] || continue
+
+				local u_identifier=$(uci -q get ${CONFIG}.${_user}.identifier)
+				[ -n "${u_identifier}" ] || continue
+
+				local u_secret=$(uci -q get ${CONFIG}.${_user}.secret)
+				[ -n "${u_secret}" ] || continue
+
+				echo "${u_identifier} : PSK '${u_secret}'" >> ${IPSEC_SECRETS_FILE}
+			done
+		}
+	}
+
+	([ "${vt_type}" = "IKEv1" ] || [ "${vt_type}" = "L2TP" ]) && {
+		cat >> ${IPSEC_CONN_FILE} <<-EOF
+			conn IKEv1-PSK-XAuth
+			  keyexchange=ikev1
+		EOF
+		local vt_secret=$(uci -q get ${CONFIG}.@service[0].secret)
+		cat >> ${IPSEC_SECRETS_FILE} <<-EOF
+			: PSK "$vt_secret"
+		EOF
+	}
+
+	[ "${vt_type}" = "IKEv1" ] && {
+		cat >> ${IPSEC_CONN_FILE} <<-EOF
+			  also=conn-ipsec
+			  leftauth=psk
+			  rightauth=psk
+			  rightauth2=xauth
+		EOF
+		local ipsec_users=$(get_enabled_anonymous_secs "@ipsec_users")
+		[ -n "${ipsec_users}" ] && {
+			for _user in ${ipsec_users}; do
+				local u_enabled=$(uci -q get ${CONFIG}.${_user}.enabled)
+				[ "${u_enabled}" -eq 1 ] || continue
+
+				local u_username=$(uci -q get ${CONFIG}.${_user}.username)
+				[ -n "${u_username}" ] || continue
+
+				local u_password=$(uci -q get ${CONFIG}.${_user}.password)
+				[ -n "${u_password}" ] || continue
+
+				echo "${u_username} : XAUTH '${u_password}'" >> ${IPSEC_SECRETS_FILE}
+			done
+		}
+	}
+
+	[ "${vt_type}" = "L2TP" ] && {
+		cat >> ${IPSEC_CONN_FILE} <<-EOF
+
+			conn L2TP-IKEv1-PSK
+			  type=transport
+			  keyexchange=ikev1
+			  authby=secret
+			  leftprotoport=udp/1701
+			  left=%any
+			  right=%any
+			  rekey=no
+			  forceencaps=yes
+
+		EOF
 
 		mkdir -p ${L2TP_PATH}
 		cat > ${L2TP_OPTIONS_FILE} <<-EOF
@@ -143,6 +263,7 @@ start() {
 			lcp-echo-interval 60
 			connect-delay 5000
 		EOF
+		local l2tp_remoteip=$(uci -q get ${CONFIG}.@service[0].l2tp_remoteip)
 		cat > ${L2TP_CONFIG_FILE} <<-EOF
 			[global]
 			port = 1701
@@ -151,7 +272,7 @@ start() {
 			;debug state = yes
 			;debug tunnel = yes
 			[lns default]
-			ip range = ${vt_remoteip}
+			ip range = ${l2tp_remoteip}
 			local ip = ${l2tp_localip}
 			require chap = yes
 			refuse pap = yes
@@ -162,6 +283,7 @@ start() {
 			length bit = yes
 		EOF
 
+		touch ${CHAP_SECRETS}
 		local l2tp_users=$(get_enabled_anonymous_secs "@l2tp_users")
 		[ -n "${l2tp_users}" ] && {
 			for _user in ${l2tp_users}; do
@@ -188,106 +310,10 @@ start() {
 		rm -f "/usr/lib/ipsec/libipsec.so.0"
 	}
 
-	cat > ${IPSEC_CONN_FILE} <<-EOF
-		# ipsec.conf - strongSwan IPsec configuration file
-
-		config setup
-		  uniqueids=no
-		  charondebug="cfg 2, dmn 2, ike 2, net 0"
-
-		conn %default
-		  dpdaction=clear
-		  dpddelay=300s
-		  rekey=no
-		  left=%defaultroute
-		  leftfirewall=yes
-		  right=%any
-		  ikelifetime=60m
-		  keylife=20m
-		  rekeymargin=3m
-		  keyingtries=1
-		  auto=add
-		  ike=aes128-sha1-modp2048,aes128-sha1-modp1024,3des-sha1-modp1024,3des-sha1-modp1536
-		  esp=aes256-sha256,aes128-sha1,3des-sha1
-
-		conn conn-ipsec
-		  leftsubnet=0.0.0.0/0
-		  rightsubnet=${vt_clientip}
-		  rightsourceip=${vt_clientip}
-		  rightdns=${vt_gateway}
-
-	EOF
-	
-	[ "${vt_type}" = "IKEv1" ] && {
-		cat >> ${IPSEC_CONN_FILE} <<-EOF
-			conn IKEv1-PSK-XAuth
-			  also=conn-ipsec
-			  keyexchange=ikev1
-			  leftauth=psk
-			  rightauth=psk
-			  rightauth2=xauth
-
-			$ipsec_l2tp_config
-		EOF
-		local vt_secret=$(uci -q get ${CONFIG}.@service[0].secret)
-		cat > /etc/ipsec.secrets <<-EOF
-			# /etc/ipsec.secrets - strongSwan IPsec secrets file
-			: PSK "$vt_secret"
-		EOF
-		local ipsec_users=$(get_enabled_anonymous_secs "@ipsec_users")
-		[ -n "${ipsec_users}" ] && {
-			for _user in ${ipsec_users}; do
-				local u_enabled=$(uci -q get ${CONFIG}.${_user}.enabled)
-				[ "${u_enabled}" -eq 1 ] || continue
-
-				local u_username=$(uci -q get ${CONFIG}.${_user}.username)
-				[ -n "${u_username}" ] || continue
-
-				local u_password=$(uci -q get ${CONFIG}.${_user}.password)
-				[ -n "${u_password}" ] || continue
-
-				echo "${u_username} : XAUTH '${u_password}'" >> ${IPSEC_SECRETS_FILE}
-			done
-		}
-	}
-	
-	[ "${vt_type}" = "IKEv2" ] && {
-		cat >> ${IPSEC_CONN_FILE} <<-EOF
-			conn IKEv2-PSK-XAuth
-			  also=conn-ipsec
-			  keyexchange=ikev2
-			  leftauth=psk
-			  rightauth=psk
-		EOF
-		cat > /etc/ipsec.secrets <<-EOF
-			# /etc/ipsec.secrets - strongSwan IPsec secrets file
-		EOF
-		local ikev2_users=$(get_enabled_anonymous_secs "@ikev2_users")
-		[ -n "${ikev2_users}" ] && {
-			for _user in ${ikev2_users}; do
-				local u_enabled=$(uci -q get ${CONFIG}.${_user}.enabled)
-				[ "${u_enabled}" -eq 1 ] || continue
-
-				local u_username=$(uci -q get ${CONFIG}.${_user}.username)
-				[ -n "${u_username}" ] || continue
-
-				local u_secret=$(uci -q get ${CONFIG}.${_user}.secret)
-				[ -n "${u_secret}" ] || continue
-
-				echo "${u_username} : PSK '${u_secret}'" >> ${IPSEC_SECRETS_FILE}
-			done
-		}
-	}
-
 	ipt_rule add
 
 	/usr/lib/ipsec/starter --daemon charon --nofork > /dev/null 2>&1 &
 	gen_include
-
-	uci -q batch <<-EOF >/dev/null
-		set network.ipsec_server.ipaddr="${vt_clientip%.*}.1"
-		commit network
-	EOF
 	ifup ipsec_server > /dev/null 2>&1
 }
 
@@ -302,29 +328,3 @@ stop() {
 	rm -rf /var/etc/ipsecvpn.include
 	ln -s "libipsec.so.0.0.0" "/usr/lib/ipsec/libipsec.so.0" >/dev/null 2>&1
 }
-
-gen_iface_and_firewall() {
-	uci -q batch <<-EOF >/dev/null
-		delete network.ipsec_server
-		set network.ipsec_server=interface
-		set network.ipsec_server.ifname="ipsec0"
-		set network.ipsec_server.device="ipsec0"
-		set network.ipsec_server.proto="static"
-		set network.ipsec_server.ipaddr="${vt_clientip%.*}.1"
-		set network.ipsec_server.netmask="255.255.255.0"
-		commit network
-		
-		delete firewall.ipsecserver
-		set firewall.ipsecserver=zone
-		set firewall.ipsecserver.name="ipsecserver"
-		set firewall.ipsecserver.input="ACCEPT"
-		set firewall.ipsecserver.forward="ACCEPT"
-		set firewall.ipsecserver.output="ACCEPT"
-		set firewall.ipsecserver.network="ipsec_server"
-		commit firewall
-	EOF
-}
-
-if [ -z "$(uci -q get network.ipsec_server)" ] || [ -z "$(uci -q get firewall.ipsecserver)" ]; then
-	gen_iface_and_firewall
-fi

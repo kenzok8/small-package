@@ -632,8 +632,6 @@ return updated <= 0 || (updated + ACCESS_CACHE_TTL) < now;
 }
 
 function trigger_access_cache_refresh() {
-// Touch updating flag (empty) before spawning so concurrent polls skip; empty content
-// keeps cache.sh's pid-based lock recovery intact (a timestamp would look like a dead pid).
 system('mkdir -p /tmp/clashoo 2>/dev/null; : > ' + ACCESS_UPDATING_FLAG + ' 2>/dev/null; nice -n 19 sh /usr/share/clashoo/net/access_check_cache.sh >/dev/null 2>&1 &');
 }
 

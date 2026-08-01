@@ -12,7 +12,7 @@ function index()
 	entry({"admin", "vpn", "ipsec-server", "users"}, cbi("ipsec-server/users"), _("Users Manager"), 20).leaf = true
 	entry({"admin", "vpn", "ipsec-server", "l2tp_user"}, cbi("ipsec-server/l2tp_user")).leaf = true
 	local uci = require "luci.model.uci".cursor()
-	if uci:get("luci-app-ipsec-server", "ipsec", "type") == "IKEv1" then
+	if uci:get("luci-app-ipsec-server", "ipsec", "type") == "L2TP" then
 		entry({"admin", "vpn", "ipsec-server", "online"}, cbi("ipsec-server/online"), _("L2TP Online Users"), 30).leaf = true
 	end
 	entry({"admin", "vpn", "ipsec-server", "status"}, call("act_status")).leaf = true
