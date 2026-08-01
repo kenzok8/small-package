@@ -1,20 +1,25 @@
-From: kenzok8 <kenzok8@noreply>
-Date: 2026-07-08
-Subject: [PATCH] daed: restart process when dashboard reload hangs
-
-Dashboard "Apply" can leave dae's runtime half-reloaded on some OpenWrt
-netns/veth setups. Bound the GraphQL reload request and let procd respawn daed
-so daed-guard can clean stale runtime state before starting again.
-
-Reported: https://github.com/kenzok8/openwrt-daede/issues/31
----
+diff --git a/graphql/service/config/mutation_utils.go b/graphql/service/config/mutation_utils.go
+index 7a3c33f..fd61554 100644
 --- a/graphql/service/config/mutation_utils.go
 +++ b/graphql/service/config/mutation_utils.go
-@@ -11,0 +12 @@
+@@ -9,11 +9,13 @@ import (
+ 	"context"
+ 	"errors"
+ 	"fmt"
 +	"os"
-@@ -16,0 +18 @@
+ 	"reflect"
+ 	"regexp"
+ 	"sort"
+ 	"strings"
+ 	"sync"
 +	"time"
-@@ -260,0 +263,9 @@
+ 
+ 	"github.com/daeuniverse/dae-wing/common"
+ 	"github.com/daeuniverse/dae-wing/dae"
+@@ -258,6 +260,15 @@ func Rename(ctx context.Context, _id graphql.ID, name string) (n int32, err erro
+ 
+ var runLock sync.Mutex
+ 
 +const reloadWaitTimeout = 75 * time.Second
 +
 +func restartAfterReloadTimeout() {
@@ -24,10 +29,18 @@ Reported: https://github.com/kenzok8/openwrt-daede/issues/31
 +	}()
 +}
 +
-@@ -458 +469 @@
+ func Run(d *gorm.DB, noLoad bool) (n int32, err error) {
+ 	if ok := runLock.TryLock(); !ok {
+ 		return 0, fmt.Errorf("the last request didn't complete; make a cup of tea and take a break")
+@@ -455,13 +466,24 @@ func Run(d *gorm.DB, noLoad bool) (n int32, err error) {
+ 
+ 	/// Reload with current config.
+ 	chReloadCallback := make(chan error)
 -	dae.ChReloadConfigs <- &dae.ReloadMessage{
 +	reloadMsg := &dae.ReloadMessage{
-@@ -462,3 +473,5 @@
+ 		Config:   c,
+ 		Callback: chReloadCallback,
+ 	}
 -	errReload := <-chReloadCallback
 -	if errReload != nil {
 -		return 0, fmt.Errorf("failed to load new config: %w; see more in log", errReload)
@@ -36,7 +49,7 @@ Reported: https://github.com/kenzok8/openwrt-daede/issues/31
 +	case <-time.After(reloadWaitTimeout):
 +		restartAfterReloadTimeout()
 +		return 0, fmt.Errorf("failed to submit reload within %s; restarting daed to recover runtime", reloadWaitTimeout)
-@@ -465,0 +479,9 @@
++	}
 +	select {
 +	case errReload := <-chReloadCallback:
 +		if errReload != nil {
@@ -45,4 +58,6 @@ Reported: https://github.com/kenzok8/openwrt-daede/issues/31
 +	case <-time.After(reloadWaitTimeout):
 +		restartAfterReloadTimeout()
 +		return 0, fmt.Errorf("reload timed out after %s; restarting daed to recover runtime", reloadWaitTimeout)
-+	}
+ 	}
+ 
+ 	// Save running status
