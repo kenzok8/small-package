@@ -4,7 +4,7 @@ local DEV_USERINFO = "/dev/natflow_userinfo_ctl"
 local DEV_EVENT = "/dev/natflow_userinfo_queue"
 local EVENT_FIFO = "/tmp/userinfo_event_fifo"
 local EVENT_CACHE_LIMIT = 256
-local USERINFO_EVENT_SIZE = 86
+local USERINFO_EVENT_SIZE = 102
 local USERINFO_EVENT_READ_SIZE = USERINFO_EVENT_SIZE * 32
 local AF_INET = 2
 local AF_INET6 = 10
@@ -132,9 +132,9 @@ end
 local function parse_userinfo_event(record)
 	local b1, b2 = record:byte(1, 2)
 	local le
-	if b1 == 2 and b2 == 0 then
+	if b1 == 3 and b2 == 0 then
 		le = true
-	elseif b1 == 0 and b2 == 2 then
+	elseif b1 == 0 and b2 == 3 then
 		le = false
 	else
 		return nil
@@ -143,7 +143,7 @@ local function parse_userinfo_event(record)
 	local version = read_u16(record, 1, le)
 	local header_len = read_u16(record, 3, le)
 	local record_len = read_u16(record, 5, le)
-	if version ~= 2 or header_len ~= USERINFO_EVENT_SIZE or record_len ~= USERINFO_EVENT_SIZE then
+	if version ~= 3 or header_len ~= USERINFO_EVENT_SIZE or record_len ~= USERINFO_EVENT_SIZE then
 		return nil
 	end
 
@@ -175,11 +175,12 @@ local function parse_userinfo_event(record)
 	local rx_speed_bytes = read_u32(record, 75, le) or 0
 	local tx_speed_packets = read_u32(record, 79, le) or 0
 	local tx_speed_bytes = read_u32(record, 83, le) or 0
+	local ifname = record:sub(87, 102):match("^[^%z]*") or ""
 
-	local line = string.format("%s,%s,0x%x,0x%x,%u,%u,%s:%s,%s:%s,%u:%u,%u:%u",
+	local line = string.format("%s,%s,0x%x,0x%x,%u,%u,%s:%s,%s:%s,%u:%u,%u:%u,%s",
 		ip, mac, auth_type, auth_status, auth_rule_id, idle_time,
 		rx_packets, rx_bytes, tx_packets, tx_bytes,
-		rx_speed_packets, rx_speed_bytes, tx_speed_packets, tx_speed_bytes)
+		rx_speed_packets, rx_speed_bytes, tx_speed_packets, tx_speed_bytes, ifname)
 	return line, ip
 end
 
