@@ -823,7 +823,7 @@ return view.extend({
 			_('As the TOP upstream of dnsmasq.'));
 		so.default = so.disabled;
 		so.validate = function(section_id, value) {
-			let desc = this.getUIElement(section_id).node.nextSibling;
+			const desc = this.getUIElement(section_id).node.nextSibling;
 			value = this.formvalue(section_id);
 
 			if (value == 1)

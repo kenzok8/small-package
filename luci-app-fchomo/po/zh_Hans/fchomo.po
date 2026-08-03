@@ -984,7 +984,7 @@ msgid "Encryption method"
 msgstr "加密方法"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:866
-msgid "Endpoint pubkic key"
+msgid "Endpoint public key"
 msgstr "端点公钥"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:540
@@ -1841,13 +1841,13 @@ msgstr "本地"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:794
 #: htdocs/luci-static/resources/view/fchomo/node.js:881
-msgid "Local IPv6 address"
-msgstr "本地 IPv6 地址"
+msgid "Virtual IPv6 address"
+msgstr "虚拟 IPv6 地址"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:786
 #: htdocs/luci-static/resources/view/fchomo/node.js:873
-msgid "Local address"
-msgstr "本地地址"
+msgid "Virtual address"
+msgstr "虚拟地址"
 
 #: root/usr/share/luci/menu.d/luci-app-fchomo.json:70
 msgid "Log"
@@ -2365,7 +2365,7 @@ msgid "Payload"
 msgstr "Payload"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:808
-msgid "Peer pubkic key"
+msgid "Peer public key"
 msgstr "对端公钥"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:541
@@ -3266,7 +3266,7 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo/listeners.js:123
 #: htdocs/luci-static/resources/view/fchomo/node.js:240
 msgid "TLS fields"
-msgstr "TLS字段"
+msgstr "TLS 字段"
 
 #: htdocs/luci-static/resources/fchomo.js:165
 #: htdocs/luci-static/resources/fchomo.js:202
@@ -3293,8 +3293,8 @@ msgstr "Cloudflare WARP 网络中使用的本机 %s 地址。"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:787
 #: htdocs/luci-static/resources/view/fchomo/node.js:795
-msgid "The %s address used by local machine in the Wireguard network."
-msgstr "WireGuard 网络中使用的本机 %s 地址。"
+msgid "The %s address used by local machine in the %s network."
+msgstr "本机 %s 地址，用于在 %s 网络中使用。"
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1152
 #: htdocs/luci-static/resources/view/fchomo/node.js:1302
@@ -3681,6 +3681,10 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo.js:198
 msgid "VMess"
 msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/node.js:241
+msgid "VPN fields"
+msgstr "VPN 字段"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:1835
 #: htdocs/luci-static/resources/view/fchomo/node.js:2206

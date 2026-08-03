@@ -151,11 +151,11 @@ function renderListeners(s, uciconfig, isClient) {
 	o.placeholder = '::';
 	o.modalonly = true;
 
-	o = s.taboption('field_general', form.Value, 'port', _('Listen port') + ' / ' + _('Ports pool'));
-	o.datatype = 'or(port, portrange)';
-	//o.placeholder = '1080,2079-2080,3080'; // @fw4 does not support port lists with commas
+	o = s.taboption('field_general', form.Value, 'listen_port', _('Listen port') + ' / ' + _('Ports pool'));
+	//o.datatype = 'or(port, portrange)'; // ⬇️ migrated to validate
+	o.placeholder = '1080,2079-2080,3080';
 	o.rmempty = false;
-	//o.validate = hm.validateCommonPort; // @fw4 does not support port lists with commas
+	o.validate = hm.validateCommonPort;
 
 	/* HTTP / SOCKS fields */
 	/* hm.validateAuth */

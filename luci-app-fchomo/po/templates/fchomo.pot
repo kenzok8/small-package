@@ -964,7 +964,7 @@ msgid "Encryption method"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:866
-msgid "Endpoint pubkic key"
+msgid "Endpoint public key"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:540
@@ -1811,12 +1811,12 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:794
 #: htdocs/luci-static/resources/view/fchomo/node.js:881
-msgid "Local IPv6 address"
+msgid "Virtual IPv6 address"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:786
 #: htdocs/luci-static/resources/view/fchomo/node.js:873
-msgid "Local address"
+msgid "Virtual address"
 msgstr ""
 
 #: root/usr/share/luci/menu.d/luci-app-fchomo.json:70
@@ -2333,7 +2333,7 @@ msgid "Payload"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:808
-msgid "Peer pubkic key"
+msgid "Peer public key"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:541
@@ -3256,7 +3256,7 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:787
 #: htdocs/luci-static/resources/view/fchomo/node.js:795
-msgid "The %s address used by local machine in the Wireguard network."
+msgid "The %s address used by local machine in the %s network."
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1152
@@ -3639,6 +3639,10 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo.js:161
 #: htdocs/luci-static/resources/fchomo.js:198
 msgid "VMess"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/node.js:241
+msgid "VPN fields"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:1835

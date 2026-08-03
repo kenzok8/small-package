@@ -238,6 +238,7 @@ return view.extend({
 		ss.tab('field_vless_encryption', _('Vless Encryption fields'));
 		ss.tab('field_hysteria2_realm', _('Hysteria2 Realm fields'));
 		ss.tab('field_tls', _('TLS fields'));
+		ss.tab('field_vpn', _('VPN fields'));
 		ss.tab('field_transport', _('Transport fields'));
 		ss.tab('field_multiplex', _('Multiplex fields'));
 		ss.tab('field_dial', _('Dial fields'));
@@ -782,20 +783,6 @@ return view.extend({
 		so.modalonly = true;
 
 		/* WireGuard fields */
-		so = ss.taboption('field_general', form.Value, 'wireguard_ip', _('Local address'),
-			_('The %s address used by local machine in the Wireguard network.').format('IPv4'));
-		so.datatype = 'ip4addr(1)';
-		so.placeholder = '172.16.0.2';
-		so.rmempty = false;
-		so.depends('type', 'wireguard');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Value, 'wireguard_ipv6', _('Local IPv6 address'),
-			_('The %s address used by local machine in the Wireguard network.').format('IPv6'));
-		so.datatype = 'ip6addr(1)';
-		so.depends('type', 'wireguard');
-		so.modalonly = true;
-
 		so = ss.taboption('field_general', form.Value, 'wireguard_private_key', _('Private key'),
 			_('WireGuard requires base64-encoded private keys.'));
 		so.password = true;
@@ -804,7 +791,7 @@ return view.extend({
 		so.depends('type', 'wireguard');
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.Value, 'wireguard_peer_public_key', _('Peer pubkic key'),
+		so = ss.taboption('field_general', form.Value, 'wireguard_peer_public_key', _('Peer public key'),
 			_('WireGuard peer public key.'));
 		so.validate = L.bind(hm.validateBase64Key, so, 44);
 		so.rmempty = false;
@@ -836,23 +823,6 @@ return view.extend({
 		so.depends('type', 'wireguard');
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.Value, 'wireguard_mtu', _('MTU'));
-		so.datatype = 'range(0,9000)';
-		so.placeholder = '1408';
-		so.depends('type', 'wireguard');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Flag, 'wireguard_remote_dns_resolve', _('Remote DNS resolve'),
-			_('Force DNS remote resolution.'));
-		so.default = so.disabled;
-		so.depends('type', 'wireguard');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.DynamicList, 'wireguard_dns', _('DNS server'));
-		so.datatype = 'or(host, hostport)';
-		so.depends('wireguard_remote_dns_resolve', '1');
-		so.modalonly = true;
-
 		/* Masque fields */
 		so = ss.taboption('field_general', form.Value, 'masque_private_key', _('Private key'),
 			_('Base64 encoded ECDSA private key on the NIST P-256 curve.'));
@@ -862,31 +832,11 @@ return view.extend({
 		so.depends('type', 'masque');
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.Value, 'masque_endpoint_public_key', _('Endpoint pubkic key'),
+		so = ss.taboption('field_general', form.Value, 'masque_endpoint_public_key', _('Endpoint public key'),
 			_('Base64 encoded ECDSA public key on the NIST P-256 curve.'));
 		so.validate = L.bind(hm.validateBase64Key, so, 124);
 		so.rmempty = false;
 		so.depends('type', 'masque');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Value, 'masque_ip', _('Local address'),
-			_('The %s address used by local machine in the Cloudflare WARP network.').format('IPv4'));
-		so.datatype = 'ip4addr(1)';
-		so.placeholder = '172.16.0.2';
-		so.rmempty = false;
-		so.depends({type: 'masque', masque_network: /^(|h2)$/});
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Value, 'masque_ipv6', _('Local IPv6 address'),
-			_('The %s address used by local machine in the Cloudflare WARP network.').format('IPv6'));
-		so.datatype = 'ip6addr(1)';
-		so.depends({type: 'masque', masque_network: /^(|h2)$/});
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Value, 'masque_mtu', _('MTU'));
-		so.datatype = 'range(0,9000)';
-		so.placeholder = '1280';
-		so.depends({type: 'masque', masque_network: /^(|h2)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.ListValue, 'masque_network', _('Network'));
@@ -907,17 +857,6 @@ return view.extend({
 			return true;
 		}
 		so.depends('type', 'masque');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.Flag, 'masque_remote_dns_resolve', _('Remote DNS resolve'),
-			_('Force DNS remote resolution.'));
-		so.default = so.disabled;
-		so.depends('type', 'masque');
-		so.modalonly = true;
-
-		so = ss.taboption('field_general', form.DynamicList, 'masque_dns', _('DNS server'));
-		so.datatype = 'or(host, hostport)';
-		so.depends('masque_remote_dns_resolve', '1');
 		so.modalonly = true;
 
 		/* SSH fields */
@@ -1374,6 +1313,92 @@ return view.extend({
 		so.modalonly = true;
 
 		// @VMess-TLSmirror fields
+
+		/* VPN fields */
+		so = ss.taboption('field_vpn', form.Value, 'endpoint_ip', _('Virtual address'),
+			_('The %s address used by local machine in the %s network.').format(_('IPv4'), _('VPN')));
+		so.datatype = 'or(ip4addr(1), cidr4)';
+		so.placeholder = '172.16.0.2';
+		so.validate = function(section_id, value) {
+			const type = this.section.getOption('type').formvalue(section_id);
+			const desc = this.getUIElement(section_id).node.nextSibling;
+
+			switch (type) {
+				case 'wireguard':
+					desc.innerHTML = _('The %s address used by local machine in the %s network.')
+						.format(_('IPv4'), _('Wireguard'));
+					break;
+				case 'masque':
+					desc.innerHTML = _('The %s address used by local machine in the %s network.')
+						.format(_('IPv4'), _('Cloudflare WARP'));
+					break;
+			}
+
+			return true;
+		}
+		so.rmempty = false;
+		so.depends('type', 'wireguard');
+		so.depends({type: 'masque', masque_network: /^(|h2)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_vpn', form.Value, 'endpoint_ipv6', _('Virtual IPv6 address'),
+			_('The %s address used by local machine in the %s network.').format(_('IPv6'), _('VPN')));
+		so.datatype = 'or(ip6addr(1), cidr6)';
+		so.validate = function(section_id, value) {
+			const type = this.section.getOption('type').formvalue(section_id);
+			const desc = this.getUIElement(section_id).node.nextSibling;
+
+			switch (type) {
+				case 'wireguard':
+					desc.innerHTML = _('The %s address used by local machine in the %s network.')
+						.format(_('IPv6'), _('Wireguard'));
+					break;
+				case 'masque':
+					desc.innerHTML = _('The %s address used by local machine in the %s network.')
+						.format(_('IPv6'), _('Cloudflare WARP'));
+					break;
+			}
+
+			return true;
+		}
+		so.depends('type', 'wireguard');
+		so.depends({type: 'masque', masque_network: /^(|h2)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_vpn', form.Value, 'endpoint_mtu', _('MTU'));
+		so.datatype = 'range(0,9000)';
+		so.placeholder = '1400';
+		so.validate = function(section_id, value) {
+			const type = this.section.getOption('type').formvalue(section_id);
+			const UIEl = this.getUIElement(section_id);
+
+			let def_mtu;
+			switch (type) {
+				case 'wireguard':
+					def_mtu = '1408';
+					break;
+				case 'masque':
+					def_mtu = '1280';
+					break;
+			}
+			UIEl.node.querySelector('input').placeholder = def_mtu;
+
+			return true;
+		}
+		so.depends('type', 'wireguard');
+		so.depends({type: 'masque', masque_network: /^(|h2)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_vpn', form.Flag, 'endpoint_remote_dns_resolve', _('Remote DNS resolve'),
+			_('Force DNS remote resolution.'));
+		so.default = so.disabled;
+		so.depends({type: /^(wireguard|masque)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_vpn', form.DynamicList, 'endpoint_dns', _('DNS server'));
+		so.datatype = 'or(host, hostport)';
+		so.depends('endpoint_remote_dns_resolve', '1');
+		so.modalonly = true;
 
 		/* Transport fields */
 		so = ss.taboption('field_general', form.Flag, 'transport_enabled', _('Transport'));

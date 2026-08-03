@@ -16,6 +16,11 @@ isDefined() {
 	eval "[ -n \"\${$opt+x}\" ] && return 0 || return 1"
 }
 
+# add_list <value> <config> <section> <option>
+add_list() {
+	uci_add_list "$2" "$3" "$4" "$1"
+}
+
 migrate() {
 	# mieru_port_range -> mieru_ports
 	if isDefined "$1" mieru_port_range; then
@@ -81,6 +86,82 @@ migrate() {
 		config_get plugin "$1" plugin ""
 		uci_set "$CONF" "$1" plugin "1"
 		uci_set "$CONF" "$1" plugin_type "$plugin"
+	fi
+
+	# wireguard_ip -> endpoint_ip
+	if isDefined "$1" wireguard_ip; then
+		local wireguard_ip
+		config_get wireguard_ip "$1" wireguard_ip ""
+		uci_remove "$CONF" "$1" wireguard_ip
+		uci_set "$CONF" "$1" endpoint_ip "$wireguard_ip"
+	fi
+
+	# masque_ip -> endpoint_ip
+	if isDefined "$1" masque_ip; then
+		local masque_ip
+		config_get masque_ip "$1" masque_ip ""
+		uci_remove "$CONF" "$1" masque_ip
+		uci_set "$CONF" "$1" endpoint_ip "$masque_ip"
+	fi
+
+	# wireguard_ipv6 -> endpoint_ipv6
+	if isDefined "$1" wireguard_ipv6; then
+		local wireguard_ipv6
+		config_get wireguard_ipv6 "$1" wireguard_ipv6 ""
+		uci_remove "$CONF" "$1" wireguard_ipv6
+		uci_set "$CONF" "$1" endpoint_ipv6 "$wireguard_ipv6"
+	fi
+
+	# masque_ipv6 -> endpoint_ipv6
+	if isDefined "$1" masque_ipv6; then
+		local masque_ipv6
+		config_get masque_ipv6 "$1" masque_ipv6 ""
+		uci_remove "$CONF" "$1" masque_ipv6
+		uci_set "$CONF" "$1" endpoint_ipv6 "$masque_ipv6"
+	fi
+
+	# wireguard_mtu -> endpoint_mtu
+	if isDefined "$1" wireguard_mtu; then
+		local wireguard_mtu
+		config_get wireguard_mtu "$1" wireguard_mtu ""
+		uci_remove "$CONF" "$1" wireguard_mtu
+		uci_set "$CONF" "$1" endpoint_mtu "$wireguard_mtu"
+	fi
+
+	# masque_mtu -> endpoint_mtu
+	if isDefined "$1" masque_mtu; then
+		local masque_mtu
+		config_get masque_mtu "$1" masque_mtu ""
+		uci_remove "$CONF" "$1" masque_mtu
+		uci_set "$CONF" "$1" endpoint_mtu "$masque_mtu"
+	fi
+
+	# wireguard_remote_dns_resolve -> endpoint_remote_dns_resolve
+	if isDefined "$1" wireguard_remote_dns_resolve; then
+		local wireguard_remote_dns_resolve
+		config_get wireguard_remote_dns_resolve "$1" wireguard_remote_dns_resolve ""
+		uci_remove "$CONF" "$1" wireguard_remote_dns_resolve
+		uci_set "$CONF" "$1" endpoint_remote_dns_resolve "$wireguard_remote_dns_resolve"
+	fi
+
+	# masque_remote_dns_resolve -> endpoint_remote_dns_resolve
+	if isDefined "$1" masque_remote_dns_resolve; then
+		local masque_remote_dns_resolve
+		config_get masque_remote_dns_resolve "$1" masque_remote_dns_resolve ""
+		uci_remove "$CONF" "$1" masque_remote_dns_resolve
+		uci_set "$CONF" "$1" endpoint_remote_dns_resolve "$masque_remote_dns_resolve"
+	fi
+
+	# wireguard_dns -> endpoint_dns
+	if isDefined "$1" wireguard_dns; then
+		config_list_foreach "$1" wireguard_dns add_list "$CONF" "$1" endpoint_dns
+		uci_remove "$CONF" "$1" wireguard_dns
+	fi
+
+	# masque_dns -> endpoint_dns
+	if isDefined "$1" masque_dns; then
+		config_list_foreach "$1" masque_dns add_list "$CONF" "$1" endpoint_dns
+		uci_remove "$CONF" "$1" masque_dns
 	fi
 }
 

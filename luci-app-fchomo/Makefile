@@ -64,6 +64,7 @@ endef
 
 define Package/luci-app-fchomo/prerm
 #!/bin/sh
+/etc/init.d/fchomo stop 2>/dev/null
 uci delete firewall.fchomo_pre
 uci delete firewall.fchomo_post
 uci commit firewall

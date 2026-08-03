@@ -595,11 +595,23 @@ function renderPayload(s, total, uciconfig) {
 		initPayload(o, n, 'factor', uciconfig);
 
 		o = s.option(form.Value, prefix + 'port', _('Factor') + ` ${n+1}`);
-		o.datatype = 'or(port, portrange)';
+		//o.datatype = 'or(port, portrange)'; // ⬇️ migrated to validate
+		o.placeholder = '1080/2079-2080/3080';
 		if (n === 0)
 			o.depends({type: /\bPORT\b/});
 		o.depends(Object.fromEntries([[prefix + 'type', /\bPORT\b/]]));
 		initPayload(o, n, 'factor', uciconfig);
+		// if validate is already defined in initPayload
+		const port_old_validate = o.validate;
+		o.validate = function(section_id, value) {
+			const result = port_old_validate.apply(this, arguments);
+
+			if (result === true) {
+				this.hm_separator = '/';
+				return hm.validateCommonPort.apply(this, arguments);
+			}
+			return result;
+		}
 
 		o = s.option(form.ListValue, prefix + 'l4', _('Factor') + ` ${n+1}`);
 		o.value('udp', _('UDP'));
@@ -1919,7 +1931,7 @@ return view.extend({
 			_('Lazy query.'));
 		so.default = so.disabled;
 		so.validate = function(section_id, value) {
-			let desc = this.getUIElement(section_id).node.nextSibling;
+			const desc = this.getUIElement(section_id).node.nextSibling;
 			value = this.formvalue(section_id);
 
 			if (value == 1)

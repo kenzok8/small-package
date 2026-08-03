@@ -56,12 +56,16 @@ const methods = {
 			let result = {};
 
 			let cmd = `generate ${type}`;
-			if (type === 'age-x25519') {
-				cmd = 'age keygen';
-			} else if (type === 'age-mlkem768-x25519') {
-				cmd = 'age keygen-pq';
-			} else if (type === 'age-convert') {
-				cmd = 'age convert';
+			switch (type) {
+				case 'age-x25519':
+					cmd = 'age keygen';
+					break;
+				case 'age-mlkem768-x25519':
+					cmd = 'age keygen-pq';
+					break;
+				case 'age-convert':
+					cmd = 'age convert';
+					break;
 			}
 
 			const fd = popen(`/usr/bin/mihomo ${cmd} ${shellQuote(req.args.params ?? '')}`);

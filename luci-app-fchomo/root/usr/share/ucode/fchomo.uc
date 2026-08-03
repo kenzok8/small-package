@@ -116,14 +116,20 @@ export function bytesizeToByte(str) {
 	let bytes = 0;
 	let arr = match(str, /^(\d+)(k|m|g)?b?$/);
 	if (arr) {
-		if (arr[2] === 'k') {
-			bytes = strToInt(arr[1]) * 1024;
-		} else if (arr[2] === 'm') {
-			bytes = strToInt(arr[1]) * 1048576;
-		} else if (arr[2] === 'g') {
-			bytes = strToInt(arr[1]) * 1073741824;
-		} else
-			bytes = strToInt(arr[1]);
+		switch (arr[2]) {
+			case 'k':
+				bytes = strToInt(arr[1]) * 1024;
+				break;
+			case 'm':
+				bytes = strToInt(arr[1]) * 1048576;
+				break;
+			case 'g':
+				bytes = strToInt(arr[1]) * 1073741824;
+				break;
+			default:
+				bytes = strToInt(arr[1]);
+				break;
+		}
 	}
 
 	return bytes;
@@ -135,16 +141,23 @@ export function durationToSecond(str) {
 	let seconds = 0;
 	let arr = match(str, /^(\d+)(s|m|h|d)?$/);
 	if (arr) {
-		if (arr[2] === 's') {
-			seconds = strToInt(arr[1]);
-		} else if (arr[2] === 'm') {
-			seconds = strToInt(arr[1]) * 60;
-		} else if (arr[2] === 'h') {
-			seconds = strToInt(arr[1]) * 3600;
-		} else if (arr[2] === 'd') {
-			seconds = strToInt(arr[1]) * 86400;
-		} else
-			seconds = strToInt(arr[1]);
+		switch (arr[2]) {
+			case 's':
+				seconds = strToInt(arr[1]);
+				break;
+			case 'm':
+				seconds = strToInt(arr[1]) * 60;
+				break;
+			case 'h':
+				seconds = strToInt(arr[1]) * 3600;
+				break;
+			case 'd':
+				seconds = strToInt(arr[1]) * 86400;
+				break;
+			default:
+				seconds = strToInt(arr[1]);
+				break;
+		}
 	}
 
 	return seconds;
@@ -217,7 +230,7 @@ export function parseListener(cfg) {
 		type: cfg.type,
 
 		listen: cfg.listen || '::',
-		port: strToInt(cfg.port),
+		port: strToInt(cfg.listen_port),
 		"routing-mark": strToInt(cfg.routing_mark) || null,
 		rule: cfg.rule,
 		proxy: cfg.proxy, // raw data need post-processing

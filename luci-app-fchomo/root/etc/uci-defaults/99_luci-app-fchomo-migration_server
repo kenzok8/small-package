@@ -64,6 +64,14 @@ migrate() {
 		uci_set "$CONF" "$1" plugin "1"
 		uci_set "$CONF" "$1" plugin_type "$plugin"
 	fi
+
+	# port -> listen_port
+	if isDefined "$1" port; then
+		local port
+		config_get port "$1" port ""
+		uci_remove "$CONF" "$1" port
+		uci_set "$CONF" "$1" listen_port "$port"
+	fi
 }
 
 config_foreach migrate server
