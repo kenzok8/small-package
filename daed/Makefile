@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=daed
 PKG_VERSION:=2026.08.03
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=daed-src-2026.08.03-5f7939adc12a.tar.gz
 PKG_SOURCE_URL:=https://github.com/kenzok8/openwrt-daede/releases/download/daed-src

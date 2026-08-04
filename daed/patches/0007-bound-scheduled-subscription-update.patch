@@ -1,0 +1,24 @@
+diff --git a/graphql/service/subscription/mutation_utils.go b/graphql/service/subscription/mutation_utils.go
+index e01a342..c6bc3e1 100644
+--- a/graphql/service/subscription/mutation_utils.go
++++ b/graphql/service/subscription/mutation_utils.go
+@@ -171,6 +171,8 @@ func AutoUpdateVersionByIds(d *gorm.DB, ids []uint) (err error) {
+ 	return nil
+ }
+ 
++const scheduledUpdateTimeout = 3 * time.Minute
++
+ var (
+ 	schedulerCache       = make(map[uint]*gocron.Scheduler)
+ 	schedulerMu          sync.RWMutex
+@@ -224,7 +226,9 @@ func AddUpdateScheduler(ctx context.Context, id uint) {
+ 	}
+ 	logrus.Info("Subscription " + tag + " update task enabled, with exp " + sub.CronExp)
+ 	_, err := s.Cron(sub.CronExp).Do(func() {
+-		if _, err := UpdateById(context.Background(), sub.ID); err != nil {
++		ctx, cancel := context.WithTimeout(context.Background(), scheduledUpdateTimeout)
++		defer cancel()
++		if _, err := UpdateById(ctx, sub.ID); err != nil {
+ 			logrus.Error(err)
+ 		}
+ 	})
