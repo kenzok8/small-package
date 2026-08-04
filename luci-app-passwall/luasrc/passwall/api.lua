@@ -1185,7 +1185,7 @@ function to_extract(app_name, file, subfix)
 				exec("/bin/rm", {"-f", file})
 				return {
 					code = 1,
-					error = i18n.translate("Not installed %s, Can't unzip!" % { tools_name })
+					error = i18n.translatef("Not installed %s, Can't unzip!", tools_name)
 				}
 			end
 		end

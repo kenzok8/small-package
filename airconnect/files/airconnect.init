@@ -10,6 +10,7 @@ get_config() {
 	config_get interface $1 interface "br-lan"
 	config_get aircast $1 aircast "1"
 	config_get airupnp $1 airupnp "1"
+	config_get stream_type $1 stream_type "broadcast"
 }
 
 start_service() {
@@ -24,6 +25,7 @@ start_service() {
 		procd_append_param command -l 1000:2000
 		procd_append_param command -Z
 		procd_append_param command -b $interface
+		procd_append_param command -S $stream_type
 		procd_set_param stdout 0
 		procd_set_param stderr 0
 		procd_set_param respawn

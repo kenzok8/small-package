@@ -1832,6 +1832,149 @@ function initMonitorCard() {
 	b2.appendChild(tr);
 	c2.appendChild(b2); container.appendChild(c2);
 
+	/* ═══ CARD 2.5: 色彩定义 ═══ */
+	(function(){
+		var FONT_KEYS = ['font_title','font_success','font_fail','font_client','font_module'];
+		var FONT_DEFAULTS = {font_title:'#6A65FF', font_success:'#92D050', font_fail:'#FF6666', font_client:'#92D050', font_module:'#76CCFF'};
+		var FONT_LABELS = {font_title:'主标题颜色', font_success:'成功消息颜色', font_fail:'失败消息颜色', font_client:'客户端名颜色', font_module:'模块标题颜色'};
+		var card = document.createElement('div'); card.className = 'pushbot-mode-card';
+		card.innerHTML = '<div class="pushbot-card-top"><span class="pushbot-card-title">色彩定义</span></div>';
+		var body = document.createElement('div'); body.style.cssText = 'margin-top:6px';
+		var row = document.createElement('div'); row.style.cssText = 'display:flex;gap:12px;flex-wrap:wrap';
+		var left = document.createElement('div'); left.style.cssText = 'flex:4;min-width:220px';
+		var mid = document.createElement('div'); mid.style.cssText = 'flex:3;min-width:280px;display:flex;flex-direction:column';
+		var right = document.createElement('div'); right.style.cssText = 'flex:3;min-width:280px;display:flex;flex-direction:column';
+		var inputs = {};
+
+		function normColor(v) { v = String(v || '').trim(); return /^#[0-9a-fA-F]{6}$/.test(v) ? v.toUpperCase() : ''; }
+		function curColors() {
+			var c = {};
+			FONT_KEYS.forEach(function(k) {
+				var v = normColor(inputs[k] ? inputs[k].value : '');
+				c[k] = v || FONT_DEFAULTS[k];
+			});
+			return c;
+		}
+
+		FONT_KEYS.forEach(function(k) {
+			var cur = PB_val(k) || '';
+			if (cur && !normColor(cur)) cur = '';   // 历史非法值加载时归一化
+			var w = mkText(k, FONT_LABELS[k], cur, '填写 #RRGGBB 十六进制颜色代码，留空使用预设色 ' + FONT_DEFAULTS[k]);
+			var inp = w.querySelector('input[type=text]');
+			inputs[k] = inp;
+			if (!cur) { inp.value = ''; inp.placeholder = FONT_DEFAULTS[k]; }
+			inp.addEventListener('input', refreshPreviews);
+			inp.addEventListener('change', function() {
+				var v = normColor(this.value);
+				var hi = document.querySelector('[name="cbid.pushbot.pushbot.' + k + '"]');
+				if (this.value.trim() !== '' && !v) {
+					// 非法颜色值不保存:清空输入并将 hidden 置空,回退预设色
+					this.value = '';
+					if (hi) hi.value = '';
+				} else if (v) {
+					// 合法值规范化(去首尾空格、统一大写)后写回,保证保存与预览一致
+					this.value = v;
+					if (hi) hi.value = v;
+				}
+				refreshPreviews();
+			});
+			left.appendChild(w);
+		});
+		var tip = document.createElement('div'); tip.className = 'pushbot-inline-description';
+		tip.innerHTML = '对应推送消息字段：主标题（紫）、成功（新设备连接/登录成功，绿）、失败（断开连接/登录失败，红）、客户端名（绿）、模块标题（系统运行状态/设备温度/WAN 口信息/在线设备数，淡蓝）。主标题颜色仅在推送模板引用 ${font_title} 时生效；颜色填写非法时自动忽略并回退预设。';
+		left.appendChild(tip);
+
+		function previewBox(title) {
+			var box = document.createElement('div');
+			box.style.cssText = 'flex:1;display:flex;flex-direction:column;min-width:0';
+			var t = document.createElement('div'); t.className = 'pushbot-inline-title';
+			t.style.cssText = 'margin:0 0 6px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+			t.textContent = title;
+			var pre = document.createElement('div');
+			pre.className = 'pushbot-preview-box';
+			pre.style.cssText = 'flex:1;border-radius:8px;padding:10px 12px;font-family:Menlo,Consolas,monospace;font-size:12px;line-height:1.7;white-space:pre-wrap;word-break:break-all;overflow:auto';
+			box.appendChild(t); box.appendChild(pre);
+			return {box: box, pre: pre};
+		}
+		var im = previewBox('即时通知 预览（示例，随左侧颜色实时变化）');
+		var sch = previewBox('定时任务 预览（示例，随左侧颜色实时变化）');
+
+		// 等宽字体下的显示宽度(中文按 2 格)与右补空格对齐
+		function dispW(s) { var w = 0; for (var i = 0; i < s.length; i++) w += s.charCodeAt(i) > 255 ? 2 : 1; return w; }
+		function padR(s, n) { s = String(s); return s + ' '.repeat(Math.max(0, n - dispW(s))); }
+
+		function renderImmediate(c) {
+			var L = [];
+			L.push('<span style="color:' + c.font_title + ';font-weight:bold;font-size:14px">【Zed-OP】设备状态变化</span>');
+			L.push('2026-09-28 17:17:17');
+			L.push('<div class="pushbot-preview-divider"></div>');
+			L.push('<span style="color:' + c.font_success + ';font-weight:bold">新设备连接</span>');
+			L.push('客户端名： Zed-PC');
+			L.push('客户端IP：192.168.1.2');
+			L.push('客户端MAC：a1:b2:c3:d4:e5:f6');
+			L.push('网络接口：br-lan');
+			L.push('<div class="pushbot-preview-divider"></div>');
+			L.push('客户端名： Zed-Mi17PM');
+			L.push('客户端IP：192.168.1.7');
+			L.push('客户端MAC：f1:e2:d3:c4:b5:a6');
+			L.push('网络接口：br-lan');
+			L.push('<div class="pushbot-preview-divider"></div>');
+			L.push('<span style="color:' + c.font_fail + ';font-weight:bold">设备断开连接</span>');
+			L.push('客户端名： Zed-iPhone17PM');
+			L.push('客户端IP：192.168.1.5');
+			L.push('客户端MAC：a6:b5:c4:d3:e2:f1');
+			L.push('网络接口：br-lan');
+			L.push('<div class="pushbot-preview-divider"></div>');
+			L.push('<span style="color:' + c.font_module + ';font-weight:bold">现有在线设备3台，具体如下</span>');
+			L.push(padR('IP地址', 28) + '客户端名');
+			L.push(padR('192.168.1.2', 16) + padR('928bytes', 12) + 'Zed-PC');
+			L.push(padR('192.168.1.7', 16) + padR('9.28G', 12) + 'Zed-Mi17PM');
+			L.push(padR('192.168.1.9', 16) + padR('9.28M', 12) + 'Zed-MacBook');
+			L.push('<div class="pushbot-preview-divider"></div>');
+			L.push('<span style="color:' + c.font_success + ';font-weight:bold">登录成功来源</span>');
+			L.push('时间：            09:28:00');
+			L.push('设备IP：        192.168.1.28');
+			L.push('登录方式：    Pubkey');
+			L.push('<span style="color:' + c.font_title + '">【Zed-OP】设备状态变化</span>');
+			return L.join('\n');
+		}
+		function renderScheduled(c) {
+			var L = [];
+			L.push('<span style="color:' + c.font_title + ';font-weight:bold;font-size:14px">【Zed-OP】Test-OpenWRT状态：</span>');
+			L.push('2026-09-28 17:17:17');
+			L.push('<div class="pushbot-preview-divider"></div>');
+			L.push('<span style="color:' + c.font_module + ';font-weight:bold">系统运行状态</span>');
+			L.push('平均负载： 0.09 0.28 0.16');
+			L.push('CPU占用：92.8%');
+			L.push('内存占用：9.28%');
+			L.push('运行时间：1天9时28分0秒');
+			L.push('<div class="pushbot-preview-divider"></div>');
+			L.push('<span style="color:' + c.font_fail + ';font-weight:bold">设备温度</span>');
+			L.push('无法获取设备温度');
+			L.push('<div class="pushbot-preview-divider"></div>');
+			L.push('<span style="color:' + c.font_module + ';font-weight:bold">现有在线设备3台</span>');
+			L.push('<span style="color:' + c.font_client + '">' + padR('【Zed-PC】', 20) + '</span>192.168.1.2');
+			L.push('总计流量： ' + padR('928bytes', 12) + '在线 9天28小时');
+			L.push('<span style="color:' + c.font_client + '">' + padR('【Zed-iPhone17PM】', 20) + '</span>192.168.1.5');
+			L.push('总计流量： ' + padR('9.28M', 12) + '在线 1天9小时');
+			L.push('<span style="color:' + c.font_client + '">' + padR('【Zed-Mi17PM】', 20) + '</span>192.168.1.7');
+			L.push('总计流量： ' + padR('9.28G', 12) + '在线 92天8小时');
+			L.push('<span style="color:' + c.font_title + '">【Zed-OP】Test-OpenWRT状态：</span>');
+			return L.join('\n');
+		}
+		function refreshPreviews() {
+			var c = curColors();
+			im.pre.innerHTML = renderImmediate(c);
+			sch.pre.innerHTML = renderScheduled(c);
+		}
+
+		row.appendChild(left); row.appendChild(mid); row.appendChild(right);
+		body.appendChild(row); card.appendChild(body);
+		mid.appendChild(im.box); right.appendChild(sch.box);
+		container.appendChild(card);
+		refreshPreviews();
+	})();
+
 	/* ═══ CARD 3: 无人值守 ═══ */
 	var c3 = document.createElement('div'); c3.className = 'pushbot-mode-card';
 
@@ -2678,6 +2821,23 @@ window.addEventListener('DOMContentLoaded', function() {
 	}
 
 	/* ── log viewer ── */
+.pushbot-preview-box {
+	background: #F8FAFC;
+	color: #334155;
+	border: 1px solid rgba(148,163,184,0.3);
+}
+.pushbot-dk .pushbot-preview-box {
+	background: rgba(17,24,39,0.72);
+	color: #e2e8f0;
+	border-color: rgba(255,255,255,0.08);
+}
+.pushbot-preview-divider {
+	border-top: 1px dashed rgba(148,163,184,0.55);
+	margin: 3px 0;
+}
+.pushbot-dk .pushbot-preview-divider {
+	border-top-color: rgba(255,255,255,0.15);
+}
 .pushbot-log-container {
 	display: flex;
 	flex-direction: column;
