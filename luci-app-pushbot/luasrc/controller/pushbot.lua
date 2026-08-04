@@ -42,6 +42,15 @@ end
 
 function act_client_list()
 	local clients = {}
+	-- 通过 pushbot usage list 获取 "mac total_bytes"(wrtbwmon 失败时自动回落 nlbwmon)
+	local usage_map = {}
+	local u = luci.sys.exec("/usr/bin/pushbot/pushbot usage list 2>/dev/null")
+	if u then
+		for line in u:gmatch("[^\r\n]+") do
+			local mac, bytes = line:match("^(%S+)%s+(%S+)")
+			if mac and bytes then usage_map[mac:upper()] = tonumber(bytes) or 0 end
+		end
+	end
 	local f = io.open("/tmp/pushbot/ipAddress", "r")
 	if f then
 		for l in f:lines() do
@@ -50,13 +59,21 @@ function act_client_list()
 				local ip, mac, hn, up = l:match("^(%S+)%s+(%S+)%s+(%S+)%s+(%S+)")
 				if mac then
 					local n = os.time()
-					clients[#clients+1] = {ip=ip or "", mac=mac:upper(), hostname=hn or "", uptime=((tonumber(up) and n - tonumber(up)) or 0)}
+					clients[#clients+1] = {ip=ip or "", mac=mac:upper(), hostname=hn or "", uptime=((tonumber(up) and n - tonumber(up)) or 0), usage=format_bytes(usage_map[mac:upper()] or 0)}
 				end
 			end
 		end
 		f:close()
 	end
 	luci.http.prepare_content("application/json"); luci.http.write_json(clients)
+end
+
+function format_bytes(n)
+	n = tonumber(n) or 0
+	if n > 1073741824 then return string.format("%.2f G", n / 1073741824) end
+	if n > 1048576 then return string.format("%.2f M", n / 1048576) end
+	if n > 1024 then return string.format("%.2f K", n / 1024) end
+	return tostring(n) .. " B"
 end
 
 function get_log()

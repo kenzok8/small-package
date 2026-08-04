@@ -5,7 +5,11 @@
 			var tb = document.getElementById('linkease_status');
 			if (st && tb)
 			{
-				if (st.running)
+				if (st.conflict)
+				{
+					tb.innerHTML = '<br/><em style=\"color:red\"><%:LinkEase Full is enabled. Please disable LinkEase Full before starting LinkEase.%></em>';
+				}
+				else if (st.running)
 				{
 					tb.innerHTML = '<br/><em style=\"color:green\"><%:The LinkEase service is running.%></em>'
 						+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open LinkEase%> \" onclick=\"window.open('http://" + window.location.hostname + ":" + st.port + "/')\"/>"

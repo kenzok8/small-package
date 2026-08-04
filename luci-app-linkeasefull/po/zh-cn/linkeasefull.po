@@ -1,0 +1,35 @@
+msgid "LinkEase Full"
+msgstr "易有云完整版"
+
+msgid "LinkEase Full provides the local web desktop entry for LinkEase."
+msgstr "易有云完整版提供本地 Web 桌面入口。"
+
+msgid "Global settings"
+msgstr "全局设置"
+
+msgid "Enable"
+msgstr "启用"
+
+msgid "Port"
+msgstr "端口"
+
+msgid "Base Path"
+msgstr "基础路径"
+
+msgid "Data Root Parent"
+msgstr "数据根目录父路径"
+
+msgid "The LinkEase Full service is running."
+msgstr "易有云完整版服务已启动"
+
+msgid "The LinkEase Full service is not running."
+msgstr "易有云完整版服务未启动"
+
+msgid "Click to open LinkEase Full"
+msgstr "点击打开易有云完整版"
+
+msgid "LinkEase Full Status"
+msgstr "易有云完整版服务状态"
+
+msgid "Collecting data..."
+msgstr "收集数据..."

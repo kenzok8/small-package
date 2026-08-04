@@ -281,23 +281,87 @@ function soc_temp(){
 }
 
 # 流量数据
+# 数据源优先级:wrtbwmon(usage.db) → nlbwmon(回落)
 function usage(){
-	[ ! -f "/usr/sbin/wrtbwmon" ] || [ ! "$1" ] && return
+	[ ! "$1" ] && return
 	if [ $1 == "update" ] ;then
-		function version_le() { test "$(echo "$@"|tr " " "\n"|sort -n|head -n 1)" == "$1"; }
-		function version_ge() { test "$(echo "$@"|tr " " "\n"|sort -r|head -n 1)" == "$1"; }
-		[ ! -z "$wr_version" ] && ( version_ge "${wr_version}" "1.2.0" ) && wrtbwmon -f ${dir}usage.db 2>/dev/null && return
-		[ ! -z "$wr_version" ] && ( version_le "${wr_version}" "1.0.0" ) || [ -z "$wr_version" ] && wrtbwmon update ${dir}usage.db 2>/dev/null && return
+		[ ! -f "/usr/sbin/wrtbwmon" ] && return
+		# 语义版本比较(忽略 apk 的 -rN 后缀、非数字字符)
+		function version_ge() {
+			local a=$(echo "$1"|sed 's/-r[0-9]*$//;s/[^0-9.]//g') b=$(echo "$2"|sed 's/-r[0-9]*$//;s/[^0-9.]//g')
+			local a1=$(echo "$a"|cut -d. -f1) a2=$(echo "$a"|cut -d. -f2) a3=$(echo "$a"|cut -d. -f3)
+			local b1=$(echo "$b"|cut -d. -f1) b2=$(echo "$b"|cut -d. -f2) b3=$(echo "$b"|cut -d. -f3)
+			[ "${a1:-0}" -gt "${b1:-0}" ] 2>/dev/null && return 0
+			[ "${a1:-0}" -lt "${b1:-0}" ] 2>/dev/null && return 1
+			[ "${a2:-0}" -gt "${b2:-0}" ] 2>/dev/null && return 0
+			[ "${a2:-0}" -lt "${b2:-0}" ] 2>/dev/null && return 1
+			[ "${a3:-0}" -ge "${b3:-0}" ] 2>/dev/null
+		}
+		local wrv=$(echo "$wr_version"|sed 's/-r[0-9]*$//')
+		# 新版(>=1.2.0)语法为 `wrtbwmon -f <db>`,老版为 `wrtbwmon update <db>`
+		if [ ! -z "$wrv" ] && version_ge "$wrv" "1.2.0"; then
+			wrtbwmon -f ${dir}usage.db >/dev/null 2>&1
+		else
+			wrtbwmon update ${dir}usage.db >/dev/null 2>&1
+		fi
+		# 库已含表头+设备数据即视为成功(不依赖退出码:部分 wrtbwmon 写库成功也返回非 0)
+		local dbrows_after=$(grep -c "," ${dir}usage.db 2>/dev/null)
+		[ -z "$dbrows_after" ] && dbrows_after="0"
+		[ "$dbrows_after" -gt "1" ] && return
+		# 主语法未产生数据 → 尝试另一语法(兼容不同 wrtbwmon fork)
+		if [ ! -z "$wrv" ] && version_ge "$wrv" "1.2.0"; then
+			wrtbwmon update ${dir}usage.db >/dev/null 2>&1
+		else
+			wrtbwmon -f ${dir}usage.db >/dev/null 2>&1
+		fi
+		local dbrows_after2=$(grep -c "," ${dir}usage.db 2>/dev/null)
+		[ -z "$dbrows_after2" ] && dbrows_after2="0"
+		[ "$dbrows_after2" -gt "1" ] && return
+		# 最后手段:老版 wrtbwmon 需要先 setup 建 iptables 链
+		wrtbwmon setup ${dir}usage.db >/dev/null 2>&1
+		wrtbwmon update ${dir}usage.db >/dev/null 2>&1
+		return
 	elif [ $1 == "get" ] ;then
-		[ ! -f "${dir}usage.db" ] && [ ! "$3" ] && echo `bytes_for_humans 0` && return
-		[ ! -f "${dir}usage.db" ] && [ "$3" ] && echo 0 && return
-		[ -z "$total_n" ] && total_n=`cat ${dir}usage.db|head -n1|grep "total"|sed 's/,/\n/g'|awk '/total/{print NR}'` 2>/dev/null
-		[ -z "$total_n" ] && total_n="6"
-		[ "$2" ] && local tmptotal=`cat ${dir}usage.db|sed 's/,,,/,0,0,/g'|sed 's/,,/,0,/g'|sed 's/,/ /g'|grep -i -w ${2}|awk "{print "'$'$total_n"}"|grep -v "^$"|sort -u|head -n1` 2>/dev/null
+		local tmptotal=""
+		local dbrows=$(grep -c "," ${dir}usage.db 2>/dev/null)
+		[ -z "$dbrows" ] && dbrows="0"
+		if [ "$dbrows" -gt "1" ]; then
+			[ -z "$total_n" ] && total_n=`cat ${dir}usage.db|head -n1|grep "total"|sed 's/,/\n/g'|awk '/total/{print NR}'` 2>/dev/null
+			[ -z "$total_n" ] && total_n="6"
+			[ "$2" ] && local tmptotal=`cat ${dir}usage.db|sed 's/,,,/,0,0,/g'|sed 's/,,/,0,/g'|sed 's/,/ /g'|grep -i -w ${2}|awk "{print "'$'$total_n"}"|grep -v "^$"|sort -u|head -n1` 2>/dev/null
+		fi
+		# wrtbwmon 无有效数据时回落 nlbwmon(新设备未入库也会回落)
+		if [ -z "$tmptotal" ] && [ ! -z "$2" ]; then
+			local tmptotal=`nlbw_usage "$2"`
+		fi
 		[ -z "$tmptotal" ] && local tmptotal="0"
 		[ ! "$3" ] && echo `bytes_for_humans ${tmptotal}` || echo "$tmptotal"
+	elif [ $1 == "list" ] ;then
+		# 输出 "mac total_bytes" 列表(供 LuCI 在线设备表格)
+		local dbrows=$(grep -c "," ${dir}usage.db 2>/dev/null)
+		[ -z "$dbrows" ] && dbrows="0"
+		if [ "$dbrows" -gt "1" ]; then
+			[ -z "$total_n" ] && total_n=`cat ${dir}usage.db|head -n1|grep "total"|sed 's/,/\n/g'|awk '/total/{print NR}'` 2>/dev/null
+			[ -z "$total_n" ] && total_n="6"
+			cat ${dir}usage.db|sed 's/,,,/,0,0,/g'|sed 's/,,/,0,/g'|sed 's/,/ /g'|grep -v "^#"|grep -v "^$"|awk -v n="$total_n" 'NR>1 && $1!="mac" {print tolower($1)" "$n}'
+		else
+			nlbw_usage
+		fi
 	elif [ $1 == "down" ] ;then
 		[ "$2" ] && sed -i "/,${2},/d" ${dir}usage.db 2>/dev/null
+	fi
+}
+
+# nlbwmon 数据源(wrtbwmon 不可用时的回落,经 /usr/sbin/nlbw 客户端查询)
+function nlbw_usage(){
+	command -v nlbw >/dev/null 2>&1 || return 1
+	[ -S /var/run/nlbwmon.sock ] || return 1
+	if [ ! -z "$1" ]; then
+		local mac=$(echo "$1"|tr 'A-Z' 'a-z')
+		# -q 去引号、-n 纯数字输出、-s, 逗号分隔,列序为 mac,conns,rx_bytes,rx_pkts,tx_bytes,tx_pkts
+		nlbw -c csv -s, -q -n -g mac 2>/dev/null | awk -F',' -v m="$mac" 'NR>1 && $1==m {print $3+$5; exit}'
+	else
+		nlbw -c csv -s, -q -n -g mac 2>/dev/null | awk -F',' 'NR>1 {print $1" "$3+$5}'
 	fi
 }
 
@@ -1293,6 +1357,12 @@ function send(){
 
 # 初始化
 read_config
+# 供外部查询流量(LuCI 在线设备表格):pushbot usage list / pushbot usage get <mac> [bytes]
+# 注意:必须放在 deltemp 之前,避免查询时误删主循环的 pushbot.lock
+if [ "$1" = "usage" ]; then
+	usage ${2} ${3} ${4}
+	exit
+fi
 deltemp
 pushbot_cron
 

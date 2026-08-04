@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source /lib/functions.sh
+. /lib/functions.sh
 
 case "$1" in
   save)
@@ -40,7 +40,6 @@ case "$1" in
         config_get PUB_DIR main pub_dir ""
         config_get DL_DIR main dl_dir ""
         config_get TMP_DIR main tmp_dir ""
-        # echo "$MAIN_DIR $CONF_DIR $PUB_DIR $DL_DIR $TMP_DIR"
         if [ "$ROOT_DIR" = "$MAIN_DIR" ]; then
           exit 0
         fi
@@ -83,7 +82,6 @@ case "$1" in
     ;;
 
   *)
-    echo "Usage: $0 {save|load|status}"
+    echo "Usage: $0 {save|load|local_save|local_load|status}"
     exit 1
 esac
-

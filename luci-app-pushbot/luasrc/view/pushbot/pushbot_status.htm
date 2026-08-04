@@ -2230,12 +2230,12 @@ function initModernTabs() {
 					container.innerHTML = '<p style="padding:12px;margin:0;color:#94a3b8;text-align:center">暂无在线设备</p>';
 					return;
 				}
-				var html = '<div style="overflow-x:auto"><table class="pushbot-client-table"><thead><tr><th>主机名</th><th>MAC 地址</th><th>IP 地址</th><th>在线时间</th></tr></thead><tbody>';
+				var html = '<div style="overflow-x:auto"><table class="pushbot-client-table"><thead><tr><th>主机名</th><th>MAC 地址</th><th>IP 地址</th><th>设备流量</th><th>在线时间</th></tr></thead><tbody>';
 				data.forEach(function(c) {
 					var h = c.hostname || '-';
 					if (h.indexOf('?') === 0) h = h.substring(1);
 					if (!h || h === '?') h = '-';
-					html += '<tr><td>' + escHtml(h) + '</td><td class="pushbot-cell-mac">' + escHtml(c.mac) + '</td><td>' + escHtml(c.ip) + '</td><td>' + timeForHumans(Math.max(0, c.uptime)) + '</td></tr>';
+					html += '<tr><td>' + escHtml(h) + '</td><td class="pushbot-cell-mac">' + escHtml(c.mac) + '</td><td>' + escHtml(c.ip) + '</td><td>' + escHtml(c.usage) + '</td><td>' + timeForHumans(Math.max(0, c.uptime)) + '</td></tr>';
 				});
 				html += '</tbody></table></div>';
 				container.innerHTML = html;
