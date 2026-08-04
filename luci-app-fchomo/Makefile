@@ -20,6 +20,7 @@ PKG_NAME:=luci-app-fchomo
 define Package/luci-app-fchomo/conffiles
 /etc/config/fchomo
 /etc/fchomo/certs/
+/etc/fchomo/node/
 /etc/fchomo/provider/
 /etc/fchomo/ruleset/
 /etc/fchomo/resources/

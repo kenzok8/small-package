@@ -236,7 +236,9 @@ gen_nftset() {
 			nft "add set $NFTABLE_NAME $nftset_name { type $ip_type; flags interval, timeout; timeout $timeout_argument_set; gc-interval $gc_interval_time; auto-merge; }"
 		fi
 	fi
-	[ $# -gt 0 ] || [ ! -t 0 ] && insert_nftset "$nftset_name" "$@"
+	if [ $# -gt 0 ]; then
+		insert_nftset "$nftset_name" "$@"
+	fi
 }
 
 get_jump_nft() {

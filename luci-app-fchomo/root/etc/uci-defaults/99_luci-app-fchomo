@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Initialize necessary directories
-for d in certs provider ruleset resources templates; do
+for d in certs node provider ruleset resources templates; do
 	mkdir -p "/etc/fchomo/$d/" 2>/dev/null
 done
 

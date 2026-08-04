@@ -47,11 +47,16 @@ opmc() {  # @less_25_12
 
 # add_firewall
 add_firewall() {
-	local enabled auto_firewall listen listen_port
+	local enabled auto_firewall listen listen_port type
 	config_get_bool enabled "$1" "enabled" "1"
 	config_get_bool auto_firewall "$1" "auto_firewall" "1"
 	config_get listen "$1" "listen" "::"
 	config_get listen_port "$1" "listen_port"
+	config_get type "$1" "type"
+
+	local "${type}_listen_port"
+	config_get "${type}_listen_port" "$1" "${type}_listen_port"
+	eval "listen_port=\"$listen_port,\$${type}_listen_port\""
 
 	[ "$enabled" = "0" ] && return 0
 	[ "$auto_firewall" = "0" ] && return 0
@@ -366,6 +371,7 @@ start_service() {
 		json_add_array firewall
 			# meta l4proto %s th dport %s counter accept comment "!%s: accept server instance [%s]"
 			config_foreach add_firewall "inbound"
+			config_foreach add_firewall "node"
 		json_close_array
 		procd_close_data
 
@@ -454,6 +460,10 @@ stop_service() {
 	[ -z "$1" -o "$1" = "mihomo-c" ] && stop_client
 	# Server
 	[ -z "$1" -o "$1" = "mihomo-s" ] && stop_server
+	# Directory
+	#find "$RUN_DIR"/* -maxdepth 0 -type d -exec rm -rf "{}" \;
+	# Resources
+	rm -rf "$RUN_DIR"/*.lock
 	# Setup firewall
 	echo 2>"/dev/null" > "$RUN_DIR/fchomo_pre.nft"
 	return 0

@@ -37,7 +37,7 @@ function wGET(url, header, filepath) {
 	return exitcode;
 }
 
-const RES_TYPE = ['certs', 'provider', 'ruleset', 'resources', 'templates'];
+const RES_TYPE = ['certs', 'node', 'provider', 'ruleset', 'resources', 'templates'];
 
 const methods = {
 	mihomo_generator: {
@@ -330,7 +330,7 @@ const methods = {
 	},
 
 	file_read: {
-		args: { type: 'type', filename: 'filename' },
+		args: { type: 'type', filename: 'filename', isbinary: 'isbinary' },
 		call: function(req) {
 			if (!(req.args?.type in RES_TYPE))
 				return { content: null, error: 'illegal type' };
@@ -338,13 +338,17 @@ const methods = {
 			if ((!req.args?.filename) || match(req.args?.filename, /\.\.\//))
 				return { content: null, error: 'illegal filename' };
 
-			const filecontent = readfile(`${HM_DIR}/${req.args?.type}/${req.args?.filename}`);
+			let filecontent = readfile(`${HM_DIR}/${req.args?.type}/${req.args?.filename}`);
+
+			if (req.args?.isbinary == 1)
+				filecontent = b64enc(filecontent);
+
 			return { content: filecontent };
 		}
 	},
 
 	file_write: {
-		args: { type: 'type', filename: 'filename', content: 'content' },
+		args: { type: 'type', filename: 'filename', content: 'content', isbinary: 'isbinary' },
 		call: function(req) {
 			if (!(req.args?.type in RES_TYPE))
 				return { result: false, error: 'illegal type' };
@@ -362,6 +366,9 @@ const methods = {
 				if (!match(content, /\n$/))
 					content += '\n';
 			}
+
+			if (req.args?.isbinary == 1)
+				content = b64dec(content);
 
 			//system(`mkdir -p ${HM_DIR}/${req.args?.type}`);
 			writefile(file, content);
@@ -403,7 +410,7 @@ const methods = {
 			if ((!req.args?.filename) || match(req.args?.filename, /\.\.\//))
 				return { result: false, error: 'illegal filename' };
 
-			system(`rm -f ${HM_DIR}/${req.args?.type}/${shellQuote(req.args?.filename)}`);
+			system(`rm -rf ${HM_DIR}/${req.args?.type}/${shellQuote(req.args?.filename)}`);
 
 			return { result: true };
 		}
