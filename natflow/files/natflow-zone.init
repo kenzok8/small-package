@@ -28,6 +28,81 @@ natflow_zone_setup()
 	done
 }
 
+natflow_bridge_zone_auto_setup()
+{
+	local cleaned=0
+
+	for br_sys in /sys/class/net/br*; do
+		[ -e "$br_sys" ] || continue
+		[ -d "$br_sys/bridge" ] || [ -d "$br_sys/brif" ] || continue
+		local br="$(basename "$br_sys")"
+
+		# Check if bridge IP is obtained via DHCP
+		local is_dhcp=0
+		if ubus call network.interface dump 2>/dev/null | jsonfilter -e '@.interface[@.l3_device="'$br'" or @.device="'$br'"].proto' 2>/dev/null | grep -q "dhcp"; then
+			is_dhcp=1
+		elif ps w 2>/dev/null | grep -v grep | grep udhcpc | grep -q -E " -i +$br([ 	]|\$)"; then
+			is_dhcp=1
+		elif [ -f "/tmp/dhcpc-$br.info" ] || [ -f "/var/run/udhcpc-$br.pid" ]; then
+			is_dhcp=1
+		fi
+
+		[ "$is_dhcp" -eq 1 ] || continue
+
+		# Get gateway IP for this bridge
+		local gw=$(ip route show dev "$br" default 2>/dev/null | awk '{print $3}' | head -n1)
+		[ -z "$gw" ] && gw=$(ip route show dev "$br" 2>/dev/null | awk '/default/ {print $3}' | head -n1)
+		[ -z "$gw" ] && gw=$(route -n 2>/dev/null | awk -v br="$br" '$1=="0.0.0.0" && $8==br {print $2}' | head -n1)
+		[ -z "$gw" ] && gw=$(ubus call network.interface dump 2>/dev/null | jsonfilter -e '@.interface[@.l3_device="'$br'" or @.device="'$br'"].route[@.target="0.0.0.0"].nexthop' 2>/dev/null | head -n1)
+
+		[ -n "$gw" ] || continue
+
+		# Ping gateway once to ensure ARP entry exists
+		ping -c 1 -W 1 "$gw" >/dev/null 2>&1
+
+		# Find MAC address of gateway
+		local mac=$(ip neigh show dev "$br" "$gw" 2>/dev/null | awk '/lladdr/ {print $5}' | head -n1)
+		[ -z "$mac" ] && mac=$(awk -v ip="$gw" '$1==ip {print $4}' /proc/net/arp 2>/dev/null | head -n1)
+
+		[ -n "$mac" ] && [ "$mac" != "00:00:00:00:00:00" ] || continue
+
+		# Find which port of bridge has this MAC in FDB
+		local wan_port=$(bridge fdb show dev "$br" 2>/dev/null | grep -i "$mac" | awk '{print $3}' | head -n1)
+		[ "$wan_port" = "$br" ] && wan_port=""
+
+		if [ -z "$wan_port" ] && command -v brctl >/dev/null 2>&1; then
+			local port_no=$(brctl showmacs "$br" 2>/dev/null | grep -i "$mac" | awk '{print $1}' | head -n1)
+			if [ -n "$port_no" ]; then
+				for p_path in "$br_sys/brif/"*; do
+					[ -d "$p_path" ] || continue
+					local p="$(basename "$p_path")"
+					local p_num=$(cat "$p_path/port_no" 2>/dev/null)
+					if [ "$((p_num))" -eq "$((port_no))" ] 2>/dev/null; then
+						wan_port="$p"
+						break
+					fi
+				done
+			fi
+		fi
+
+		if [ -n "$wan_port" ]; then
+			if [ "$cleaned" -eq 0 ]; then
+				echo clean >"$DEVCTL"
+				cleaned=1
+			fi
+			logger -t natflow "Auto set wan_zone 1=$wan_port for bridge $br"
+			echo "wan_zone 1=$wan_port" >"$DEVCTL"
+			for p_path in "$br_sys/brif/"*; do
+				[ -d "$p_path" ] || continue
+				local p="$(basename "$p_path")"
+				[ "$p" = "$wan_port" ] && continue
+				logger -t natflow "Auto set lan_zone 0=$p for bridge $br"
+				echo "lan_zone 0=$p" >"$DEVCTL"
+			done
+		fi
+	done
+}
+
 start() {
 	test -c $DEVCTL || return 0
 
@@ -35,6 +110,8 @@ start() {
 
 	config_load natflow
 	config_foreach natflow_zone_setup zone
+
+	natflow_bridge_zone_auto_setup
 
 	echo update_match >$DEVCTL
 }
