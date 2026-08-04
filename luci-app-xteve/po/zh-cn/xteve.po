@@ -10,6 +10,9 @@ msgstr "Xteve 是一个在线电视源的代理工具。"
 msgid "Config path"
 msgstr "配置文件路径"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "Port"
 msgstr "端口"
 

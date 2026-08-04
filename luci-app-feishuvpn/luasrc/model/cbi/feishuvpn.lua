@@ -35,7 +35,7 @@ o = s:option(Value, "port", translate("Port").."<b>*</b>")
 o.default = "9091"
 o.datatype = "port"
 
-o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
+o = s:option(Value, "image_name", translate("Docker Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 o.default = "registry.cn-qingdao.aliyuncs.com/feishuwg/p2p:latest"

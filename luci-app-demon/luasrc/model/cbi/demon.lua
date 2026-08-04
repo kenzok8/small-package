@@ -21,7 +21,7 @@ o = s:option(Value, "port", translate("Port").."<b>*</b>")
 o.default = "18888"
 o.datatype = "port"
 
-o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
+o = s:option(Value, "image_name", translate("Docker Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 o:value("images-cluster.xycloud.com/wxedge/amd64-wxedge:3.5.1-CTWXKS1748570956", "images-cluster.xycloud.com/wxedge/amd64-wxedge:3.5.1-CTWXKS1748570956")

@@ -1,6 +1,9 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "ITTools"
 msgid "开发工具集"
 

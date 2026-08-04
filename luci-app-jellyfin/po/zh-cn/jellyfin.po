@@ -22,7 +22,7 @@ msgstr "x86 系列"
 msgid "Raspberry Pi series"
 msgstr "树莓派系列"
 
-msgid "Image"
+msgid "Docker Image"
 msgstr "镜像"
 
 msgid "Default"

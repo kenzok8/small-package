@@ -10,6 +10,9 @@ msgstr "PhotoPrism® PhotoPrism 是一个 AI 驱动的相册管理应用。"
 msgid "Config path"
 msgstr "配置文件路径"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "HTTP Port"
 msgstr "HTTP 端口"
 

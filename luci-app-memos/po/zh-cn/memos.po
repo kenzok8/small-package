@@ -13,6 +13,9 @@ msgstr "Memos 是一个开源的极简的碎片化知识管理工具。"
 msgid "Config path"
 msgstr "配置文件路径"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "HTTP Port"
 msgstr "HTTP 端口"
 

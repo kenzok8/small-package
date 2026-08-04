@@ -27,7 +27,7 @@ o = s:option(Value, "port", translate("Port").."<b>*</b>")
 o.default = "32400"
 o.datatype = "port"
 
-o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
+o = s:option(Value, "image_name", translate("Docker Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 if "x86_64" == docker_info.Architecture or "aarch64" == docker_info.Architecture then

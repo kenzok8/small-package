@@ -10,6 +10,9 @@ msgstr "CodeServer 就一个在线版本的 VSCode，可以在线开发。"
 msgid "Config path"
 msgstr "配置文件路径"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "HTTP Port"
 msgstr "HTTP 端口"
 

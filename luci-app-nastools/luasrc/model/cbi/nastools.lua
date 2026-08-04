@@ -23,7 +23,7 @@ o.rmempty = false
 o.default = "3003"
 o.datatype = "port"
 
-o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
+o = s:option(Value, "image_name", translate("Docker Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 o:value("jxxghp/nas-tools", "jxxghp/nas-tools")

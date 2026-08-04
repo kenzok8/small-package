@@ -13,6 +13,9 @@ msgstr "iStoreOS 上面的 KVM 虚拟机，基于 WebVirtCloud 实现。"
 msgid "Config path"
 msgstr "配置文件路径"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "Service Status"
 msgstr "服务状态"
 

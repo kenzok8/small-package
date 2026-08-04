@@ -10,6 +10,9 @@ msgstr "Vaultwarden 是另一个 Bitwarden server API 的服务器端实现。"
 msgid "Config path"
 msgstr "配置文件路径"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "HTTP Port"
 msgstr "HTTP 端口"
 

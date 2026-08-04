@@ -37,6 +37,11 @@ natflow_bridge_zone_auto_setup()
 		[ -d "$br_sys/bridge" ] || [ -d "$br_sys/brif" ] || continue
 		local br="$(basename "$br_sys")"
 
+		# Ensure bridge itself is not in firewall wan zone
+		if (fw3 -q zone wan 2>/dev/null; fw4 -q zone wan 2>/dev/null) | grep -q -w "$br"; then
+			continue
+		fi
+
 		# Check if bridge IP is obtained via DHCP
 		local is_dhcp=0
 		if ubus call network.interface dump 2>/dev/null | jsonfilter -e '@.interface[@.l3_device="'$br'" or @.device="'$br'"].proto' 2>/dev/null | grep -q "dhcp"; then

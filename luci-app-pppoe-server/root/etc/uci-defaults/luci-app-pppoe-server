@@ -8,12 +8,5 @@ uci -q batch <<-EOF >/dev/null
 	set firewall.luci_app_pppoe_server.reload=1
 EOF
 
-uci -q batch <<-EOF >/dev/null
-	delete ucitrack.@luci-app-pppoe-server[-1]
-	add ucitrack luci-app-pppoe-server
-	set ucitrack.@luci-app-pppoe-server[-1].init=luci-app-pppoe-server
-	commit ucitrack
-EOF
-
 rm -rf /tmp/luci-*cache
 exit 0

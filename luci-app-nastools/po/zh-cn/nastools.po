@@ -10,6 +10,9 @@ msgstr "NasTools 是汇聚了电影搜索，下载，订阅，观看等等 NAS �
 msgid "Config path"
 msgstr "配置文件路径"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "Port"
 msgstr "端口"
 

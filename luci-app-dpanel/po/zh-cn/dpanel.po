@@ -10,7 +10,7 @@ msgstr "DPanel — 轻量级仪表盘服务。"
 msgid "DPanel"
 msgstr "DPanel"
 
-msgid "Image"
+msgid "Docker Image"
 msgstr "镜像"
 
 msgid "Config path"

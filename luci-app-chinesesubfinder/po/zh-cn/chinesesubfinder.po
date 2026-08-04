@@ -10,6 +10,9 @@ msgstr "ChineseSubFinder是一个自动化中文字幕下载工具。"
 msgid "Config path"
 msgstr "配置文件路径"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "HTTP Port"
 msgstr "HTTP 端口"
 

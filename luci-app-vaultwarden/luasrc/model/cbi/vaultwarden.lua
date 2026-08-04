@@ -32,7 +32,7 @@ o = s:option(Value, "admin_token", "ADMIN_TOKEN")
 o.default = ""
 o.password = true
 
-o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
+o = s:option(Value, "image_name", translate("Docker Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 o:value("vaultwarden/server:latest", "vaultwarden/server:latest")

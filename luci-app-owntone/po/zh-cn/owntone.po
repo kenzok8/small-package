@@ -10,6 +10,9 @@ msgstr "Owntone 是一个支持 iTunes, AirPlay, Chromecast 等的音乐串流�
 msgid "Config path"
 msgstr "配置文件路径"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "Service Status"
 msgstr "服务状态"
 

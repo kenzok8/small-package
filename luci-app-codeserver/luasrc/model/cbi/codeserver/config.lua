@@ -22,7 +22,7 @@ o = s:option(Value, "http_port", translate("HTTP Port").."<b>*</b>")
 o.default = "8085"
 o.datatype = "string"
 
-o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
+o = s:option(Value, "image_name", translate("Docker Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 o:value("lscr.io/linuxserver/code-server:latest", "lscr.io/linuxserver/code-server:latest")

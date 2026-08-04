@@ -13,6 +13,9 @@ msgstr "运行在 iStoreOS 上面的 Proxmox(PVE) 虚拟机平台。"
 msgid "Config path"
 msgstr "配置文件路径"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "Service Status"
 msgstr "服务状态"
 

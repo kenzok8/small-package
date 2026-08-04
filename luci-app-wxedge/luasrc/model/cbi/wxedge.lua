@@ -17,7 +17,7 @@ s = m:section(TypedSection, "wxedge", translate("Setup"), translate("The followi
 s.addremove=false
 s.anonymous=true
 
-o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
+o = s:option(Value, "image_name", translate("Docker Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 o:value("onething1/wxedge", "onething1/wxedge")

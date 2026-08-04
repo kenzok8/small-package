@@ -28,7 +28,7 @@ o.rmempty = false
 o.default = "19037"
 o.datatype = "string"
 
-o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
+o = s:option(Value, "image_name", translate("Docker Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 o:value("allanpk716/chinesesubfinder:latest-lite", "allanpk716/chinesesubfinder:latest-lite")

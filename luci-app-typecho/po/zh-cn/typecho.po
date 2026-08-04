@@ -10,6 +10,9 @@ msgstr "TypeCho 是一个轻量级博客。"
 msgid "Config path"
 msgstr "配置文件路径"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "Port"
 msgstr "端口"
 

@@ -16,7 +16,7 @@ msgstr "项目基于 TypeScript 全栈开发，采用了众多前沿技术，前
 msgid "The initial username and password are 'useradmin' and 'passwd' respectively."
 msgstr "初始的用户名和密码分别是'useradmin'和'passwd'。"
 
-msgid "Image"
+msgid "Docker Image"
 msgstr "镜像"
 
 msgid "Default"

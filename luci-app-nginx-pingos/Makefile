@@ -74,9 +74,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./root/etc/init.d/pingos $(1)/etc/init.d/pingos
 	
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_CONF) ./root/etc/uci-defaults/* $(1)/etc/uci-defaults
-	
 	$(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
 	cp -pR ./root/usr/share/rpcd/acl.d/* $(1)/usr/share/rpcd/acl.d
 

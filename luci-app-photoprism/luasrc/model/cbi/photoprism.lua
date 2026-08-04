@@ -24,7 +24,7 @@ o.rmempty = false
 o.default = "2342"
 o.datatype = "string"
 
-o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
+o = s:option(Value, "image_name", translate("Docker Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 o:value("photoprism/photoprism:latest", "photoprism/photoprism:latest")

@@ -8,13 +8,6 @@ uci -q batch <<-EOF >/dev/null
 	set firewall.luci_app_softethervpn.reload=1
 EOF
 
-uci -q batch <<-EOF >/dev/null
-	delete ucitrack.@luci-app-softethervpn[-1]
-	add ucitrack luci-app-softethervpn
-	set ucitrack.@luci-app-softethervpn[-1].init=luci-app-softethervpn
-	commit ucitrack
-EOF
-
 /etc/init.d/softethervpnserver stop 2>/dev/null
 /etc/init.d/softethervpnserver disable 2>/dev/null
 

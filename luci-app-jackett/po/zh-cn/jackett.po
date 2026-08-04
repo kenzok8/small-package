@@ -10,6 +10,9 @@ msgstr "Jackett 是维护索引器抓取和翻译逻辑的单一存储库 - 消�
 msgid "Config path"
 msgstr "配置文件路径"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "Torrent save path"
 msgstr "种子保存路径"
 

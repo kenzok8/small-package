@@ -13,6 +13,9 @@ msgstr "配置文件路径"
 msgid "Content path"
 msgstr "资源路径"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "HTTP Port"
 msgstr "HTTP 端口"
 

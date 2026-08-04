@@ -28,7 +28,7 @@ o.default = "3022"
 o.datatype = "string"
 o.rmempty = false
 
-o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
+o = s:option(Value, "image_name", translate("Docker Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 o:value("gogs/gogs:latest", "gogs/gogs:latest")

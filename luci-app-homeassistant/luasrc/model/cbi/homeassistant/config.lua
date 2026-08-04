@@ -18,7 +18,7 @@ s = m:section(TypedSection, "homeassistant", translate("Setup"), translate("The 
 s.addremove=false
 s.anonymous=true
 
-o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
+o = s:option(Value, "image_name", translate("Docker Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 o:value("homeassistant/home-assistant:latest", "homeassistant/home-assistant:latest")

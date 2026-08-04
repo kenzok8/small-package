@@ -10,6 +10,9 @@ msgstr "Navidrome 是一个开源的在线音乐播放软件。"
 msgid "Config path"
 msgstr "配置文件路径"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "Music path"
 msgstr "音乐路径"
 

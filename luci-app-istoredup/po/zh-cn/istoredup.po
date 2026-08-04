@@ -7,6 +7,9 @@ msgstr "官方网站："
 msgid "A duplica of iStoreOS."
 msgstr "iStoreOS 的分身，可以把风险高的软件安装到分身里面，出问题不影响到主系统。"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "Service Status"
 msgstr "服务状态"
 

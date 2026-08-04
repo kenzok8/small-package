@@ -10,6 +10,9 @@ msgstr "Ubuntu2 是带浏览器桌面的高性能 Ubuntu. [用户名: abc, 密�
 msgid "Config path"
 msgstr "配置文件路径"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "HTTPS Port"
 msgstr "HTTPS 端口"
 

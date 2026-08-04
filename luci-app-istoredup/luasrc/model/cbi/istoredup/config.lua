@@ -31,7 +31,7 @@ s = m:section(TypedSection, "istoredup", translate("Setup"),
 s.addremove=false
 s.anonymous=true
 
-o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
+o = s:option(Value, "image_name", translate("Docker Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 o:value("linkease/istoreduprk35xx:latest", "linkease/istoreduprk35xx:latest")

@@ -8,13 +8,6 @@ uci -q batch <<-EOF >/dev/null
 	set firewall.luci_app_ipsec_server.reload=1
 EOF
 
-uci -q batch <<-EOF >/dev/null
-	delete ucitrack.@luci-app-ipsec-server[-1]
-	add ucitrack luci-app-ipsec-server
-	set ucitrack.@luci-app-ipsec-server[-1].init=luci-app-ipsec-server
-	commit ucitrack
-EOF
-
 /etc/init.d/ipsec disable 2>/dev/null
 /etc/init.d/ipsec stop 2>/dev/null
 /etc/init.d/xl2tpd disable 2>/dev/null

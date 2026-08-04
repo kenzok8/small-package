@@ -13,6 +13,9 @@ msgstr "Excalidraw 是支持多人协同的私有化在线画板工具。"
 msgid "Config path"
 msgstr "配置文件路径"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "Port"
 msgstr "端口"
 

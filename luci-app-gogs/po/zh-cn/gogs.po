@@ -10,6 +10,9 @@ msgstr "Gogs 是一个轻松易用的 Git 服务。"
 msgid "Config path"
 msgstr "配置文件路径"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "HTTP Port"
 msgstr "HTTP 端口"
 

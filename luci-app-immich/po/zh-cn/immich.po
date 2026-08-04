@@ -13,6 +13,9 @@ msgstr "Immich 是私有化的相册视频管理工具。很占资源，网络�
 msgid "Config path"
 msgstr "配置文件路径"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "Port"
 msgstr "端口"
 

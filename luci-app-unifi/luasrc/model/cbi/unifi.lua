@@ -27,7 +27,7 @@ o.default = "8083"
 o.datatype = "string"
 o:depends("hostnet", 0)
 
-o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
+o = s:option(Value, "image_name", translate("Docker Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 o:value("lscr.io/linuxserver/unifi-controller:latest", "lscr.io/linuxserver/unifi-controller:latest")

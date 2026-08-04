@@ -7,6 +7,9 @@ msgstr "网心云-容器魔方"
 msgid "Cache path"
 msgstr "缓存文件路径"
 
+msgid "Docker Image"
+msgstr "镜像"
+
 msgid "Service Status"
 msgstr "服务状态"
 

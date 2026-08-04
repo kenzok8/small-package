@@ -47,7 +47,7 @@ o = s:option(Value, "active_code", translate("Active code"))
 o.datatype = "string"
 o:depends("multiuser", 1)
 
-o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
+o = s:option(Value, "image_name", translate("Docker Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 o.default = "hectorqin/reader"

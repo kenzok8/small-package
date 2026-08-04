@@ -24,7 +24,7 @@ s = m:section(TypedSection, "arcadia", translate("Setup"),
 s.addremove=false
 s.anonymous=true
 
-o = s:option(Value, "image", translate("Image"))
+o = s:option(Value, "image", translate("Docker Image"))
 o.datatype = "string"
 o:value("", translate("Default"))
 o:value("supermanito/arcadia:beta", "supermanito/arcadia:beta")

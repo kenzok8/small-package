@@ -35,7 +35,7 @@ o = s:option(Value, "port", translate("Port").."<b>*</b>")
 o.default = "3000"
 o.datatype = "port"
 
-o = s:option(Value, "image_name", translate("Image").."<b>*</b>")
+o = s:option(Value, "image_name", translate("Docker Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 o:value("ghcr.io/open-webui/open-webui:main", "ghcr.io/open-webui/open-webui:main")

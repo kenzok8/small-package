@@ -35,7 +35,7 @@ o = s:option(Value, "port", translate("Port").."<b>*</b>")
 o.default = "2283"
 o.datatype = "port"
 
-o = s:option(Value, "image_ver", translate("Image").."<b>*</b>")
+o = s:option(Value, "image_ver", translate("Docker Image").."<b>*</b>")
 o.rmempty = false
 o.datatype = "string"
 o.default = "release"

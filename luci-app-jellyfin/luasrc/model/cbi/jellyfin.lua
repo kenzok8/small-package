@@ -27,7 +27,7 @@ s = m:section(TypedSection, "jellyfin", translate("Setup"),
 s.addremove=false
 s.anonymous=true
 
-o = s:option(Value, "image", translate("Image"))
+o = s:option(Value, "image", translate("Docker Image"))
 o.datatype = "string"
 o:value("", translate("Default"))
 if luci.sys.call("grep -q 'rockchip,' /proc/device-tree/compatible 2>/dev/null") == 0 then
