@@ -163,6 +163,14 @@ migrate() {
 		config_list_foreach "$1" masque_dns add_list "$CONF" "$1" endpoint_dns
 		uci_remove "$CONF" "$1" masque_dns
 	fi
+
+	# zerotier_ipstack -> ipstack
+	if isDefined "$1" zerotier_ipstack; then
+		local zerotier_ipstack
+		config_get zerotier_ipstack "$1" zerotier_ipstack ""
+		uci_remove "$CONF" "$1" zerotier_ipstack
+		uci_set "$CONF" "$1" ipstack "$zerotier_ipstack"
+	fi
 }
 
 config_foreach migrate node
