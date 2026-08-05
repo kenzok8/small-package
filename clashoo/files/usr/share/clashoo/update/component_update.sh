@@ -10,7 +10,6 @@ GITHUB_API_URL="https://api.github.com/repos/kenzok8/openwrt-clashoo/releases/la
 GITHUB_PROXY_PREFIX="${GITHUB_PROXY_PREFIX:-https://ghfast.top/}"
 CONNECT_TIMEOUT="${CONNECT_TIMEOUT:-8}"
 REQUEST_TIMEOUT="${REQUEST_TIMEOUT:-20}"
-DOWNLOAD_TIMEOUT="${DOWNLOAD_TIMEOUT:-90}"
 LOW_SPEED_TIME="${LOW_SPEED_TIME:-30}"
 LOW_SPEED_LIMIT="${LOW_SPEED_LIMIT:-1024}"
 
@@ -65,7 +64,7 @@ download_file() {
   out="$2"
   proxy="$(detect_proxy)"
   if command -v curl >/dev/null 2>&1; then
-    curl -fL --connect-timeout "$CONNECT_TIMEOUT" --max-time "$DOWNLOAD_TIMEOUT" --speed-time "$LOW_SPEED_TIME" --speed-limit "$LOW_SPEED_LIMIT" ${proxy:+--proxy "$proxy"} "$url" -o "$out"
+    curl -fL --connect-timeout "$CONNECT_TIMEOUT" --speed-time "$LOW_SPEED_TIME" --speed-limit "$LOW_SPEED_LIMIT" ${proxy:+--proxy "$proxy"} "$url" -o "$out"
     return $?
   fi
   if [ -n "$proxy" ]; then
@@ -132,6 +131,50 @@ installed_package_version() {
   if command -v apk >/dev/null 2>&1; then
     apk list -I "$pkg" 2>/dev/null | awk '{print $1; exit}' | sed -n "s/^${pkg}-//p"
   fi
+}
+
+package_installed() {
+  pkg="$1"
+  if command -v opkg >/dev/null 2>&1; then
+    opkg status "$pkg" 2>/dev/null | grep -q '^Status: install ok installed$'
+    return
+  fi
+  apk info -e "$pkg" >/dev/null 2>&1
+}
+
+apk_install() {
+  proxy="$(detect_proxy)"
+  if [ -n "$proxy" ]; then
+    http_proxy="$proxy" https_proxy="$proxy" apk add --allow-untrusted --timeout 30 "$@"
+  else
+    apk add --allow-untrusted --timeout 30 "$@"
+  fi
+}
+
+apk_bundle_install() {
+  printf '%s\n' "$$" >"$APK_UPGRADE_FLAG"
+  apk_install "$@"
+  rc=$?
+  rm -f "$APK_UPGRADE_FLAG"
+  return "$rc"
+}
+
+verify_downloaded_package() {
+  file="$1"
+  [ -s "$file" ] || return 1
+  if [ "$PM" = "apk" ]; then
+    apk verify --allow-untrusted "$file" >/dev/null 2>&1
+    return
+  fi
+  gzip -t "$file" >/dev/null 2>&1
+}
+
+download_package_file() {
+  url="$1"
+  out="$2"
+  name="$3"
+  download_file "$(download_url "$url")" "$out" || finish 1 "下载 ${name} 失败"
+  verify_downloaded_package "$out" || finish 1 "${name} 文件校验失败"
 }
 
 detect_arch() {
@@ -254,7 +297,10 @@ package_version_from_url() {
     clashoo_*.ipk) printf '%s\n' "$file" | sed -n 's/^clashoo_\(.*\)_[^_][^_]*\.ipk$/\1/p' ;;
     luci-app-clashoo_*.ipk) printf '%s\n' "$file" | sed -n 's/^luci-app-clashoo_\(.*\)_all\.ipk$/\1/p' ;;
     luci-i18n-clashoo-zh-cn_*.ipk) printf '%s\n' "$file" | sed -n 's/^luci-i18n-clashoo-zh-cn_\(.*\)_all\.ipk$/\1/p' ;;
-    clashoo-*.apk) printf '%s\n' "$file" | sed -n -e 's/^clashoo-\(.*-r[0-9][0-9]*\)-.*\.apk$/\1/p' -e 's/^clashoo-\(.*-r[0-9][0-9]*\)\.apk$/\1/p' | head -n 1 ;;
+    clashoo-*.apk)
+      v="$(printf '%s\n' "$file" | sed -n -e 's/^clashoo-\(.*-r[0-9][0-9]*\)-.*\.apk$/\1/p' -e 's/^clashoo-\(.*-r[0-9][0-9]*\)\.apk$/\1/p' | head -n 1)"
+      printf '%s\n' "$v" | sed 's/^\([0-9][0-9][0-9][0-9]\.[0-9][0-9]*\.[0-9][0-9]*\)\./\1~/'
+      ;;
     luci-app-clashoo-*.apk) printf '%s\n' "$file" | sed -n -e 's/^luci-app-clashoo-\(.*-r[0-9][0-9]*\)-.*\.apk$/\1/p' -e 's/^luci-app-clashoo-\(.*-r[0-9][0-9]*\)\.apk$/\1/p' | head -n 1 ;;
     luci-i18n-clashoo-zh-cn-*.apk) printf '%s\n' "$file" | sed -n -e 's/^luci-i18n-clashoo-zh-cn-\(.*-r[0-9][0-9]*\)-.*\.apk$/\1/p' -e 's/^luci-i18n-clashoo-zh-cn-\(.*-r[0-9][0-9]*\)\.apk$/\1/p' | head -n 1 ;;
     *) printf '%s\n' "$file" ;;
@@ -343,18 +389,51 @@ run_pkg_update() {
   fi
   log "更新来源：${SOURCE_LABEL}"
 
+  core_ver="$(package_version_from_url "$CORE_URL")"
+  luci_ver="$(package_version_from_url "$LUCI_URL")"
+  i18n_ver=""
+  [ -z "$I18N_URL" ] || i18n_ver="$(package_version_from_url "$I18N_URL")"
+  core_ver_before="$(installed_package_version clashoo)"
+
+  apk_core_ready() {
+    package_installed clashoo && [ "$(installed_package_version clashoo)" = "$core_ver" ] \
+      && [ -x /etc/init.d/clashoo ] && [ -x /usr/share/clashoo/update/component_update.sh ]
+  }
+
+  apk_luci_ready() {
+    package_installed luci-app-clashoo && [ "$(installed_package_version luci-app-clashoo)" = "$luci_ver" ] \
+      && { [ -z "$I18N_URL" ] || { package_installed luci-i18n-clashoo-zh-cn \
+        && [ "$(installed_package_version luci-i18n-clashoo-zh-cn)" = "$i18n_ver" ]; }; } \
+      && [ -r /usr/share/luci/menu.d/luci-app-clashoo.json ] \
+      && [ -r /usr/share/rpcd/ucode/luci.clashoo ]
+  }
+
+  apk_bundle_ready() {
+    apk_core_ready && apk_luci_ready
+  }
+
+  apk_update_ready() {
+    if [ "$which" = "clashoo" ]; then
+      apk_bundle_ready
+    else
+      package_installed clashoo && apk_luci_ready
+    fi
+  }
+
   if [ "$which" = "clashoo" ]; then
-    core_ver="$(package_version_from_url "$CORE_URL")"
     log "目标版本：Clashoo 核心 ${core_ver}"
     cur_ver="$(installed_package_version clashoo)"
-    if [ -n "$core_ver" ] && [ "$cur_ver" = "$core_ver" ]; then
+    if [ "$PM" = "apk" ] && apk_update_ready; then
+      finish 0 "Clashoo 核心已是最新版本"
+    elif [ "$PM" != "apk" ] && [ -n "$core_ver" ] && [ "$cur_ver" = "$core_ver" ]; then
       finish 0 "Clashoo 核心已是最新版本"
     fi
   else
-    luci_ver="$(package_version_from_url "$LUCI_URL")"
     log "目标版本：客户端 ${luci_ver}"
     cur_ver="$(installed_package_version luci-app-clashoo)"
-    if [ -n "$luci_ver" ] && [ "$cur_ver" = "$luci_ver" ]; then
+    if [ "$PM" = "apk" ] && apk_update_ready; then
+      finish 0 "客户端已是最新版本"
+    elif [ "$PM" != "apk" ] && [ -n "$luci_ver" ] && [ "$cur_ver" = "$luci_ver" ]; then
       finish 0 "客户端已是最新版本"
     fi
   fi
@@ -365,65 +444,104 @@ run_pkg_update() {
   was_running=0
   clashoo_was_running && was_running=1
   backup_config || finish 1 "备份配置失败"
+  apk_core_file=""
 
-  # apk 默认会对 world 做一致性求解，若系统上别的包（如 daed 缺 kmod-sched-bpf）
-  # 处于 broken 状态，会让 apk add 整个失败，连本次升级都装不上。这里通过
-  # --force-broken-world 让 apk 忽略不相关的 world 失败，只完成本次升级。
-  APK_FLAGS="--allow-untrusted --force-broken-world --force-missing-repositories --no-network --timeout 8"
+  if [ "$PM" = "apk" ]; then
+    log "正在下载组件包"
+    if [ "$which" = "clashoo" ] || ! package_installed clashoo; then
+      ensure_root_space 98304
+      download_package_file "$CORE_URL" "$TMP_DIR/core.${EXT}" "clashoo"
+      apk_core_file="$TMP_DIR/core.${EXT}"
+    fi
+    download_package_file "$LUCI_URL" "$TMP_DIR/luci.${EXT}" "luci-app-clashoo"
+    if [ -n "$I18N_URL" ]; then
+      download_package_file "$I18N_URL" "$TMP_DIR/i18n.${EXT}" "语言包"
+    fi
+  elif [ "$which" = "clashoo" ]; then
+    log "正在下载 Clashoo 核心"
+    download_package_file "$CORE_URL" "$TMP_DIR/core.${EXT}" "clashoo"
+  else
+    log "正在下载客户端（LuCI + 语言包）"
+    download_package_file "$LUCI_URL" "$TMP_DIR/luci.${EXT}" "luci-app-clashoo"
+    if [ -n "$I18N_URL" ]; then
+      download_package_file "$I18N_URL" "$TMP_DIR/i18n.${EXT}" "语言包"
+    fi
+  fi
+
+  if [ "$PM" != "apk" ] && [ "$which" = "clashoo" ]; then
+    ensure_root_space 98304
+  fi
 
   if [ "$which" = "clashoo" ]; then
-    log "正在下载 Clashoo 核心"
-    download_file "$(download_url "$CORE_URL")" "$TMP_DIR/core.${EXT}" || finish 1 "下载 clashoo 失败"
-    ensure_root_space 98304
     log "正在安装 Clashoo 核心"
     if [ "$PM" = "opkg" ]; then
       opkg install --force-downgrade "$TMP_DIR/core.${EXT}" >"$TMP_DIR/install.log" 2>&1; rc=$?
     else
-      printf '%s\n' "$$" >"$APK_UPGRADE_FLAG"
-      apk add $APK_FLAGS "$TMP_DIR/core.${EXT}" >"$TMP_DIR/install.log" 2>&1; rc=$?
-      rm -f "$APK_UPGRADE_FLAG"
+      apk_bundle_install ${apk_core_file:+"$apk_core_file"} "$TMP_DIR/luci.${EXT}" ${I18N_URL:+"$TMP_DIR/i18n.${EXT}"} >"$TMP_DIR/install.log" 2>&1; rc=$?
     fi
   else
-    log "正在下载客户端（LuCI + 语言包）"
-    download_file "$(download_url "$LUCI_URL")" "$TMP_DIR/luci.${EXT}" || finish 1 "下载 luci-app-clashoo 失败"
-    if [ -n "$I18N_URL" ]; then
-      download_file "$(download_url "$I18N_URL")" "$TMP_DIR/i18n.${EXT}" || finish 1 "下载语言包失败"
-    fi
     log "正在安装客户端"
     if [ "$PM" = "opkg" ]; then
       opkg install --force-downgrade "$TMP_DIR/luci.${EXT}" ${I18N_URL:+"$TMP_DIR/i18n.${EXT}"} >"$TMP_DIR/install.log" 2>&1; rc=$?
     else
-      apk add $APK_FLAGS "$TMP_DIR/luci.${EXT}" ${I18N_URL:+"$TMP_DIR/i18n.${EXT}"} >"$TMP_DIR/install.log" 2>&1; rc=$?
+      apk_bundle_install ${apk_core_file:+"$apk_core_file"} "$TMP_DIR/luci.${EXT}" ${I18N_URL:+"$TMP_DIR/i18n.${EXT}"} >"$TMP_DIR/install.log" 2>&1; rc=$?
     fi
   fi
 
   if [ "$rc" -ne 0 ]; then
-    # apk exits non-zero when ANY package in the world is broken — e.g. file
-    # conflicts between unrelated apps (argon-config, momo, ...) — even though
-    # our package installed fine. Only treat it as a real failure when an apk
-    # ERROR line actually names a clashoo package; otherwise it is unrelated
-    # broken-world noise and we continue (--force-broken-world already applied).
-    if grep -E '^ERROR:' "$TMP_DIR/install.log" 2>/dev/null | grep -qi 'clashoo'; then
-      log_install_error "$TMP_DIR/install.log"
-      log "安装失败，正在恢复配置备份"
-      restore_config_backup
-      finish "$rc" "组件更新失败"
-    fi
-    log "apk 报告了无关软件包的错误（broken world），clashoo 自身已安装成功，继续"
+    log_install_error "$TMP_DIR/install.log"
+    log "安装失败，正在恢复配置备份"
+    restore_config_backup
+    finish "$rc" "组件更新失败，已停止操作，请查看组件更新日志"
   fi
 
-  # Only a luci-app update touches /www and the rpcd backend, so only then
-  # refresh the web stack. The clashoo core package ships no web files — a
-  # web-stack refresh there is pointless churn that just disturbs the UI.
-  if [ "$which" = "luci" ]; then
+  validation_failed() {
+    log "安装校验失败，正在恢复配置备份"
+    restore_config_backup
+    finish 1 "组件安装校验失败，已停止操作，请查看组件更新日志"
+  }
+
+  if [ "$PM" = "apk" ]; then
+    if ! apk_update_ready; then
+      log "安装校验失败，正在安全重装组件包"
+      if [ -z "$apk_core_file" ] && ! package_installed clashoo; then
+        ensure_root_space 98304
+        download_package_file "$CORE_URL" "$TMP_DIR/core.${EXT}" "clashoo"
+        apk_core_file="$TMP_DIR/core.${EXT}"
+      fi
+      apk_bundle_install --force-reinstall ${apk_core_file:+"$apk_core_file"} "$TMP_DIR/luci.${EXT}" \
+        ${I18N_URL:+"$TMP_DIR/i18n.${EXT}"} >>"$TMP_DIR/install.log" 2>&1; repair_rc=$?
+      if [ "$repair_rc" -ne 0 ]; then
+        log_install_error "$TMP_DIR/install.log"
+        validation_failed
+      fi
+      apk_update_ready || validation_failed
+    fi
+  elif [ "$which" = "clashoo" ]; then
+    package_installed clashoo && [ "$(installed_package_version clashoo)" = "$core_ver" ] \
+      && [ -x /etc/init.d/clashoo ] && [ -x /usr/share/clashoo/update/component_update.sh ] \
+      || validation_failed
+  else
+    package_installed luci-app-clashoo && [ "$(installed_package_version luci-app-clashoo)" = "$luci_ver" ] \
+      && [ -r /usr/share/luci/menu.d/luci-app-clashoo.json ] \
+      && [ -r /usr/share/rpcd/ucode/luci.clashoo ] \
+      || validation_failed
+    [ -z "$I18N_URL" ] || package_installed luci-i18n-clashoo-zh-cn || validation_failed
+  fi
+
+  # APK component updates install the LuCI bundle in the same transaction.
+  if [ "$which" = "luci" ] || [ "$PM" = "apk" ]; then
     log "正在刷新 LuCI 服务"
     restart_web_stack
   fi
-  # 仅核心更新且原本运行中才重启 Clashoo；纯客户端更新不动服务
-  if [ "$which" = "clashoo" ] && [ "$was_running" -eq 1 ] && [ "$(uci -q get clashoo.config.enable 2>/dev/null)" = "1" ]; then
+  core_ver_after="$(installed_package_version clashoo)"
+  restart_clashoo=0
+  [ "$which" = "clashoo" ] && restart_clashoo=1
+  [ "$PM" = "apk" ] && [ "$core_ver_before" != "$core_ver_after" ] && restart_clashoo=1
+  if [ "$restart_clashoo" -eq 1 ] && [ "$was_running" -eq 1 ] && [ "$(uci -q get clashoo.config.enable 2>/dev/null)" = "1" ]; then
     log "Clashoo 原本运行中，正在重启服务"
     sh /usr/share/clashoo/rpc/rpc_async.sh restart >/dev/null 2>&1 || /etc/init.d/clashoo restart >/dev/null 2>&1 || true
-  elif [ "$which" = "clashoo" ]; then
+  elif [ "$restart_clashoo" -eq 1 ]; then
     log "Clashoo 原本未运行，保持停止状态"
   fi
 
