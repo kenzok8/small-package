@@ -1,4 +1,4 @@
-<%+header%>
+{% include('header') %}
 <script type="text/javascript">//<![CDATA[
 if (typeof XHR === 'undefined') {
 	var XHR = {};
@@ -24,16 +24,16 @@ try{if(typeof L!=='undefined'&&L.dom){var _hw=function(fn){return function(){try
 	var badge = document.getElementById('pushbot_status_badge');
 	var text = document.getElementById('pushbot_status_text');
 	if (!badge || !text) { setTimeout(arguments.callee, 200); return; }
-	XHR.poll(3, '<%=url([[admin]], [[services]], [[pushbot]], [[status]])%>', null,
+	XHR.poll(3, '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'status') }}', null,
 	function(x, data) {
 		if (data && data.running) {
 			badge.classList.remove('is-stopped');
 			badge.classList.add('is-running');
-			text.textContent = '<%:RUNNING%>';
+			text.textContent = '{{ _('RUNNING') }}';
 		} else {
 			badge.classList.remove('is-running');
 			badge.classList.add('is-stopped');
-			text.textContent = '<%:NOT RUNNING%>';
+			text.textContent = '{{ _('NOT RUNNING') }}';
 		}
 	}
 	);
@@ -50,7 +50,7 @@ function PB_file(name) { var v = PB_CONFIG && PB_CONFIG.files && PB_CONFIG.files
 function PB_sys(name) { var v = PB_CONFIG && PB_CONFIG.system && PB_CONFIG.system[name]; return Array.isArray(v) ? v : []; }
 function PB_bool(opt) { return PB_val(opt) === '1'; }
 
-XHR.get('<%=url([[admin]], [[services]], [[pushbot]], [[get_config]])%>', null, function(x, data) {
+XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'get_config') }}', null, function(x, data) {
 	PB_CONFIG = data;
 	PB_READY.forEach(function(fn) { try { fn(); } catch(e) { console.warn('PB_onReady:', e); } });
 	PB_READY = [];
@@ -559,7 +559,7 @@ XHR.get('<%=url([[admin]], [[services]], [[pushbot]], [[get_config]])%>', null, 
 			e.preventDefault();
 			tc.disabled = true;
 			tc.textContent = '发送中...';
-			XHR.get('<%=url([[admin]], [[services]], [[pushbot]], [[send_test]])%>', null,
+			XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'send_test') }}', null,
 				function() { tc.disabled = false; tc.textContent = '发送测试'; });
 		});
 		document.getElementById('pm_col_test').appendChild(tc);
@@ -1618,11 +1618,11 @@ PB_onReady(function(){ tryContentOnce(); });
 			e.preventDefault(); sb.disabled = true; sb.textContent = '发送中...';
 			var data = window.__pbCollectData ? __pbCollectData() : {};
 			var x = new XMLHttpRequest();
-			x.open('POST', '<%=url([[admin]],[[services]],[[pushbot]],[[save_config]])%>', true);
+			x.open('POST', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'save_config') }}', true);
 			x.setRequestHeader('Content-Type', 'application/json');
 			x.onload = function() {
 				var y = new XMLHttpRequest();
-				y.open('GET', '<%=url([[admin]],[[services]],[[pushbot]],[[send_manual]])%>', true);
+				y.open('GET', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'send_manual') }}', true);
 				y.onload = function() { sb.disabled = false; sb.textContent = '手动发送'; };
 				y.onerror = function() { sb.disabled = false; sb.textContent = '手动发送'; };
 				y.send();
@@ -1814,7 +1814,7 @@ function initMonitorCard() {
 	/* Test button */
 	var tr = document.createElement('div'); tr.style.cssText='display:flex;align-items:center;gap:12px;margin-top:10px';
 	var tb = document.createElement('a'); tb.className='cbi-button cbi-input-apply';
-	tb.href='<%=url([[admin]],[[services]],[[pushbot]],[[soc_test]])%>'; tb.textContent='测试温度';
+	tb.href='{{ dispatcher.build_url('admin', 'services', 'pushbot', 'soc_test') }}'; tb.textContent='测试温度';
 	tb.style.cssText='white-space:nowrap;padding:6px 16px;text-decoration:none';
 	tr.appendChild(tb);
 	var rl = document.createElement('span'); rl.style.cssText='font-size:13px;font-weight:600'; rl.textContent='温度结果:';
@@ -1823,7 +1823,7 @@ function initMonitorCard() {
 	ro.textContent = '加载中...';
 	(function(){
 		var x = new XMLHttpRequest();
-		x.open('GET', '<%=url([[admin]], [[services]], [[pushbot]], [[soc_result]])%>?_=' + Date.now(), true);
+		x.open('GET', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'soc_result') }}?_=' + Date.now(), true);
 		x.onload = function() { ro.textContent = x.responseText || '无输出'; };
 		x.onerror = function() { ro.textContent = '无输出'; };
 		x.send();
@@ -2324,7 +2324,7 @@ function initModernTabs() {
 		if (clearBtn) {
 			clearBtn.addEventListener('click', function(e) {
 				e.preventDefault();
-				XHR.get('<%=url([[admin]], [[services]], [[pushbot]], [[clear_log]])%>', null,
+				XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'clear_log') }}', null,
 					function() {
 						var pre = document.querySelector('#pushbot_log_content pre');
 						if (pre) pre.textContent = '(空)';
@@ -2336,7 +2336,7 @@ function initModernTabs() {
 	function loadLog() {
 		var pre = document.querySelector('#pushbot_log_content pre');
 		if (!pre) return;
-		XHR.get('<%=url([[admin]], [[services]], [[pushbot]], [[get_log]])%>', null,
+		XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'get_log') }}', null,
 			function(x) {
 				if (x && x.status == 200) {
 					var txt = x.responseText || '(空)';
@@ -2364,7 +2364,7 @@ function initModernTabs() {
 	function loadClients() {
 		var container = document.getElementById('pushbot_client_content');
 		if (!container) return;
-		XHR.get('<%=url([[admin]], [[services]], [[pushbot]], [[client_list]])%>', null,
+		XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'client_list') }}', null,
 			function(x) {
 				if (!x || x.status != 200) { container.innerHTML = '<p style="padding:12px;margin:0;color:#ef4444;text-align:center">加载失败</p>'; return; }
 				var data;
@@ -2555,7 +2555,7 @@ function submitAll() {
 	btn.disabled = true; btn.textContent = '保存中...';
 	var data = window.__pbCollectData();
 	var x = new XMLHttpRequest();
-	x.open('POST', '<%=url([[admin]],[[services]],[[pushbot]],[[save_config]])%>', true);
+	x.open('POST', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'save_config') }}', true);
 	x.setRequestHeader('Content-Type', 'application/json');
 	x.onload = function() { btn.disabled = false; btn.textContent = '保存并应用'; pbShowToast(x.status == 200); };
 	x.onerror = function() { btn.disabled = false; btn.textContent = '保存并应用'; pbShowToast(false); };
@@ -2574,7 +2574,8 @@ window.addEventListener('DOMContentLoaded', function() {
 //]]&gt;
 </script>
 <style>
-/* Old CBI elements are hidden by CSS at top of page */
+/* CBI elements — hidden: pushbot uses custom JS UI, not CBI forms */
+.cbi-tabmenu { display: none !important; }
 .mar-10 {margin-left: 50px; margin-right: 10px;}
 
 .pushbot-mode-card {
@@ -3434,7 +3435,7 @@ if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches){
 			</div>
 			<div id="pushbot_status_badge" class="pushbot-status-badge is-stopped" role="status" aria-live="polite">
 				<span class="pushbot-status-dot"></span>
-				<span id="pushbot_status_text"><%:NOT RUNNING%></span>
+				<span id="pushbot_status_text">{{ _('NOT RUNNING') }}</span>
 			</div>
 		</div>
 	</div>
@@ -3443,4 +3444,4 @@ if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches){
 		<button type="button" class="pushbot-save-btn" id="pushbot_save_btn">保存并应用</button>
 	</div>
 </div>
-<%+footer%>
+{% include('footer') %}

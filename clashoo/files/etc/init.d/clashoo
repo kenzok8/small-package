@@ -792,20 +792,10 @@ revert_dns() {
 
 add_cron(){
 #===========================================================================================================================
-	clear=$(uci get clashoo.config.auto_clear_log 2>/dev/null)
-	if [ "${clear:-0}" -eq 1 ]; then
-		clear_time=$(uci get clashoo.config.clear_time 2>/dev/null)
-		echo "$clear_time" | grep -Eq '^[0-9]+$' || clear_time=12
-		[ "$clear_time" -lt 1 ] && clear_time=12
-		[ -z "$(grep -w "/usr/share/clashoo/clashoo.txt" "$CRON_FILE")" ] && echo "0 */$clear_time * * * echo '' >/usr/share/clashoo/clashoo.txt" >> "$CRON_FILE"
-	fi
-	
 	auto=$(uci get clashoo.config.auto_update 2>/dev/null)
-	if [ "${auto:-0}" -eq 1 ]; then
-		auto_update_time=$(uci get clashoo.config.auto_update_time 2>/dev/null)
-		echo "$auto_update_time" | grep -Eq '^[0-9]+$' || auto_update_time=12
-		[ "$auto_update_time" -lt 1 ] && auto_update_time=12
-		[ -z "$(grep -w "/usr/share/clashoo/update/update_all.sh" "$CRON_FILE")" ] && echo "0 */$auto_update_time * * * sh /usr/share/clashoo/update/update_all.sh >/dev/null 2>&1 &" >> "$CRON_FILE"
+	clear=$(uci get clashoo.config.auto_clear_log 2>/dev/null)
+	if [ "${auto:-0}" -eq 1 ] || [ "${clear:-0}" -eq 1 ]; then
+		[ -z "$(grep -w "/usr/share/clashoo/update/maintenance_cron.sh" "$CRON_FILE")" ] && echo "23 * * * * sh /usr/share/clashoo/update/maintenance_cron.sh >/dev/null 2>&1" >> "$CRON_FILE"
 	fi
 
 	sub_auto=$(uci get clashoo.config.auto_subscription_update 2>/dev/null)
@@ -833,6 +823,7 @@ del_cron(){
 	sed -i '/\/usr\/share\/clash\/geoip.sh/d' "$CRON_FILE"
 	sed -i '/update\/update_all.sh/d' "$CRON_FILE"
 	sed -i '/\/usr\/share\/clash\/update_all.sh/d' "$CRON_FILE"
+	sed -i '/update\/maintenance_cron.sh/d' "$CRON_FILE"
 	sed -i '/clashoo.txt/d' "$CRON_FILE"
 	sed -i '/update\/lgbm_update.sh/d' "$CRON_FILE"
 	sed -i '/\/usr\/share\/clash\/lgbm_update.sh/d' "$CRON_FILE"

@@ -197,7 +197,10 @@ msgstr ""
 msgid "Blocklist/allowlist mode: enter domains or shorthand like <code>geosite:cn</code>. Rule mode: enter items with the same syntax as rules, such as <code>GEOSITE,cn,real-ip</code> / <code>RULE-SET,xxx,real-ip</code>; usually add <code>MATCH,fake-ip</code> at the end as fallback. <code>geosite:cn</code> automatically uses built-in cn.mrs acceleration and avoids loading the 10MB geosite.dat."
 msgstr ""
 
-msgid "Bypass China IP"
+msgid "Bypass China IPv4"
+msgstr ""
+
+msgid "Bypass China IPv6"
 msgstr ""
 
 msgid "Bypass Ports"

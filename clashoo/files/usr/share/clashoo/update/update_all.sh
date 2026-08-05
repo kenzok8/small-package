@@ -1,6 +1,7 @@
 #!/bin/sh
 
 UPDATE_LOG="/tmp/clash_update.txt"
+STATE_DIR="${CLASHOO_STATE_DIR:-/usr/share/clashbackup}"
 
 log_update() {
 	printf '  %s - %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1" >>"$UPDATE_LOG"
@@ -11,5 +12,9 @@ sh /usr/share/clashoo/update/update_china_ip.sh >> "$UPDATE_LOG" 2>&1
 
 log_update "更新 GeoIP / GeoSite"
 sh /usr/share/clashoo/update/geoip.sh >/dev/null 2>&1
+
+mkdir -p "$STATE_DIR"
+tmp="$STATE_DIR/rule_update.status.tmp.$$"
+printf 'last_run=%s\n' "$(date +%s)" >"$tmp" && mv -f "$tmp" "$STATE_DIR/rule_update.status"
 
 exit 0

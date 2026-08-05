@@ -204,8 +204,11 @@ msgstr "黑名单（列入走真 IP，默认）"
 msgid "Blocklist/allowlist mode: enter domains or shorthand like <code>geosite:cn</code>. Rule mode: enter items with the same syntax as rules, such as <code>GEOSITE,cn,real-ip</code> / <code>RULE-SET,xxx,real-ip</code>; usually add <code>MATCH,fake-ip</code> at the end as fallback. <code>geosite:cn</code> automatically uses built-in cn.mrs acceleration and avoids loading the 10MB geosite.dat."
 msgstr "黑名单/白名单模式：填域名或 <code>geosite:cn</code> 简写。规则模式：填 <code>GEOSITE,cn,real-ip</code> / <code>RULE-SET,xxx,real-ip</code> 这种与 rules 同语法的条目，末尾通常加一条 <code>MATCH,fake-ip</code> 兜底。填 <code>geosite:cn</code> 会自动改用内置 cn.mrs 加速，免加载 10MB geosite.dat。"
 
-msgid "Bypass China IP"
-msgstr "大陆 IP 绕过"
+msgid "Bypass China IPv4"
+msgstr "大陆 IPv4 绕过"
+
+msgid "Bypass China IPv6"
+msgstr "大陆 IPv6 绕过"
 
 msgid "Bypass Ports"
 msgstr "绕过端口"

@@ -15,6 +15,13 @@ log() {
 	printf '  %s - %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1" >> "$LOG_FILE"
 }
 
+bool_enabled() {
+	case "$1" in
+		1|true|TRUE|yes|on) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
 download_with_fallback() {
 	local url="$1"
 	local output="$2"
@@ -80,6 +87,8 @@ render_nft_set() {
 url4="$(uci -q get clashoo.config.china_ip_url 2>/dev/null || true)"
 url6="$(uci -q get clashoo.config.china_ipv6_url 2>/dev/null || true)"
 bypass_china="$(uci -q get clashoo.config.bypass_china 2>/dev/null || true)"
+bypass_china_ipv6="$(uci -q get clashoo.config.bypass_china_ipv6 2>/dev/null || true)"
+[ -n "$bypass_china_ipv6" ] || bypass_china_ipv6="$bypass_china"
 
 [ -n "$url4" ] || url4='https://ispip.clang.cn/all_cn.txt'
 [ -n "$url6" ] || url6='https://ispip.clang.cn/all_cn_ipv6.txt'
@@ -111,18 +120,15 @@ else
 	log '大陆 IPv6 白名单下载失败，保留原文件'
 fi
 
-case "$bypass_china" in
-	1|true|TRUE|yes|on)
-		if /usr/share/clashoo/net/fw4.sh apply >/dev/null 2>&1; then
-			log '大陆白名单规则已重载'
-		else
-			log '大陆白名单规则重载失败'
-			exit 1
-		fi
-		;;
-	*)
-		log 'bypass_china 未启用，仅更新白名单文件'
-		;;
-esac
+if bool_enabled "$bypass_china" || bool_enabled "$bypass_china_ipv6"; then
+	if /usr/share/clashoo/net/fw4.sh apply >/dev/null 2>&1; then
+		log "大陆白名单规则已重载（IPv4=${bypass_china:-0}，IPv6=${bypass_china_ipv6:-0}）"
+	else
+		log '大陆白名单规则重载失败'
+		exit 1
+	fi
+else
+	log '大陆 IPv4/IPv6 绕过均未启用，仅更新白名单文件'
+fi
 
 log '大陆白名单更新流程完成'

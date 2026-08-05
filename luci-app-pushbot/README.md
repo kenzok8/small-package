@@ -2,9 +2,10 @@
 - 本插件由[tty228/luci-app-serverchan](https://github.com/tty228/luci-app-serverchan)原创.
 - 由  然后七年  @zzsj0928 重新修改为本插件，为钉钉机器人API使用。
 - 本插件工作在：OpenWRT
+- 自**v5.10**（20260805）之后的版本，彻底去 Lua、去 CBI，**纯 ucode 架构**（menu.d JSON + ucode controller + ucode template）。<br>**仅支持 LuCI ≥23.05（含 openwrt-24.10/25.x/master）** 及已同步 ucode dispatcher 的分支。<br>OpenWrt ≤22.03、LEDE 17.01 等旧环境请使用 **v5.09 及之前版本**（lua 架构）。<br>**已实测通过的平台**：<br>　• openwrt/luci master ✅<br>　• coolsnowwolf/lede (openwrt-25.12 branch) ✅<br>　• padavanonly/immortalwrt-mt798x-6.6 (openwrt-24.10) ✅<br>　• immortalwrt/luci master（未实测，理论上兼容）<br>
 - 自20260804之后的版本，允许自定义消息字段颜色，且增加在线实时预览，无需再测试发送看预览；
 - 自20260727之后的版本，修改**免打扰**逻辑，原：免打扰只影响**上线/下线**提示；现：免打扰从源头处理，被过滤的设备在**上线/下线**、**在线设备**列表、**定时推送**的设备列表，都会被受到过滤。介意的朋友建议停留在 20260726 或之前版本，即 ***v5.07*** 或以前（放心，这些已经完成新架构化）；
-- 自20260726之后的版本，彻底清理Lua, CBI架构，全面转向JS+XHR。（不再支持OpenWrt21.x或之前）；
+- 自20260726之后的版本，清理Lua CBI表单，全面转向JS+XHR Tab 卡片式 UI。
 - 自20260725之后的版本，全面重构 Lua CBI，移除旧版界面，全新的 Tab 卡片式 UI；
   初始配置加载优化（去除所有阻塞性系统调用），
   IP 拉黑支持 nftables / iptables 双模式，

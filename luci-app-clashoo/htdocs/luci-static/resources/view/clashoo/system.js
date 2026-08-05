@@ -1007,7 +1007,18 @@ return view.extend({
 
     s = m.section(form.NamedSection, 'config', 'clashoo', _("Bypass Rules"));
     s.addremove = false;
-    o = s.option(form.Flag, 'bypass_china',  _("Bypass China IP"));
+    o = s.option(form.Flag, 'bypass_china', _("Bypass China IPv4"));
+    o.default = '0';
+    o.rmempty = false;
+
+    o = s.option(form.Flag, 'bypass_china_ipv6', _("Bypass China IPv6"));
+    o.default = '0';
+    o.rmempty = false;
+    o.cfgvalue = function (section_id) {
+      var value = uci.get('clashoo', section_id, 'bypass_china_ipv6');
+      return (value != null) ? value : uci.get('clashoo', section_id, 'bypass_china');
+    };
+
     o = s.option(form.ListValue, 'bypass_port_mode', _("Bypass Ports"));
     o.value('all', _("All Ports"));
     o.value('common', _("Common Ports"));

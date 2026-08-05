@@ -11,7 +11,8 @@ INTERVAL_FIXED="${ACCESS_CHECK_INTERVAL:-}"
 mkdir -p "$RUNDIR"
 if ! mkdir "$LOCK_DIR" 2>/dev/null; then
 	old_pid="$(cat "$PID_FILE" 2>/dev/null)"
-	if [ -n "$old_pid" ] && [ -d "/proc/$old_pid" ]; then
+	if [ -n "$old_pid" ] && [ -d "/proc/$old_pid" ] && \
+		tr '\0' ' ' <"/proc/$old_pid/cmdline" 2>/dev/null | grep -q 'access_check_daemon\.sh'; then
 		exit 0
 	fi
 	rm -rf "$LOCK_DIR" "$PID_FILE" >/dev/null 2>&1

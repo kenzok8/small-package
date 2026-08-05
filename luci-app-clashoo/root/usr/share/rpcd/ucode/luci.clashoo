@@ -650,7 +650,9 @@ function access_check_daemon_running() {
 if (!access(ACCESS_DAEMON_PID_FILE, 'r')) return false;
 let pid = trim(readfile(ACCESS_DAEMON_PID_FILE) || '');
 if (!pid) return false;
-return !!access('/proc/' + pid, 'r');
+if (!access('/proc/' + pid, 'r')) return false;
+let cmd = readfile('/proc/' + pid + '/cmdline') || '';
+return index(cmd, 'access_check_daemon.sh') >= 0;
 }
 
 function ensure_access_check_daemon() {

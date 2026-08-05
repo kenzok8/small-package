@@ -1,0 +1,85 @@
+{
+	"admin/services/pushbot": {
+		"title": "全能推送",
+		"order": 30,
+		"action": {
+			"type": "template",
+			"path": "pushbot/pushbot_status"
+		},
+		"depends": {
+			"fs": {
+				"/etc/config/pushbot": "file"
+			}
+		}
+	},
+	"admin/services/pushbot/status": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "act_status"
+		}
+	},
+	"admin/services/pushbot/client_list": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "act_client_list"
+		}
+	},
+	"admin/services/pushbot/send_test": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "act_send_test"
+		}
+	},
+	"admin/services/pushbot/send_manual": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "act_send_manual"
+		}
+	},
+	"admin/services/pushbot/soc_test": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "act_soc_test"
+		}
+	},
+	"admin/services/pushbot/soc_result": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "act_soc_result"
+		}
+	},
+	"admin/services/pushbot/get_log": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "get_log"
+		}
+	},
+	"admin/services/pushbot/clear_log": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "clear_log"
+		}
+	},
+	"admin/services/pushbot/get_config": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "act_get_config"
+		}
+	},
+	"admin/services/pushbot/save_config": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "act_save_config"
+		}
+	}
+}
