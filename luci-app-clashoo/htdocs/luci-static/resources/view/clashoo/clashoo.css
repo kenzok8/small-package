@@ -169,6 +169,11 @@
   cursor: not-allowed;
 }
 
+.cl-wrap .cbi-checkbox input:disabled + label {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .cl-wrap .cl-status-kernel.is-busy {
   opacity: 0.6;
 }

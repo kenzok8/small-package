@@ -35,6 +35,11 @@ bool_enabled() {
 	esac
 }
 
+acl_bool() {
+	[ -n "$1" ] || return 0
+	bool_enabled "$1"
+}
+
 tun_available() {
 	ip tuntap add mode tun name cotuntest >/dev/null 2>&1 || return 1
 	ip link del cotuntest >/dev/null 2>&1 || true
@@ -362,7 +367,7 @@ render_acl_dns_rules() {
 	local redirect_port="$1" section ipv4 ipv6 mac ipv4_elements ipv6_elements mac_elements action
 	for section in $(acl_sections); do
 		[ "$(uci_get "clashoo.${section}.enabled")" != "0" ] || continue
-		if bool_enabled "$(uci_get "clashoo.${section}.dns")"; then
+		if acl_bool "$(uci_get "clashoo.${section}.dns")"; then
 			action="counter redirect to :${redirect_port}"
 		elif singbox_tun_active; then
 			action="meta mark set ${SINGBOX_BYPASS_FWMARK} ct mark set meta mark counter return"
@@ -403,7 +408,7 @@ render_acl_proxy_rules() {
 		enabled="$(uci_get "clashoo.${section}.proxy")"
 		case "$mode" in
 			redirect)
-				if bool_enabled "$enabled"; then
+				if acl_bool "$enabled"; then
 					if singbox_tun_active; then
 						action4="${port_match} ct mark set ${SINGBOX_BYPASS_FWMARK} counter redirect to :${target_port}"
 					else
@@ -419,7 +424,7 @@ render_acl_proxy_rules() {
 				fi
 				;;
 			tproxy)
-				if bool_enabled "$enabled"; then
+				if acl_bool "$enabled"; then
 					if singbox_tun_active; then
 						action4="${port_match} ct mark set ${SINGBOX_BYPASS_FWMARK} tproxy ip to :${target_port} meta mark set ${PROXY_FWMARK} counter accept"
 						action6="${port_match} ct mark set ${SINGBOX_BYPASS_FWMARK} tproxy ip6 to :${target_port} meta mark set ${PROXY_FWMARK} counter accept"
@@ -436,7 +441,7 @@ render_acl_proxy_rules() {
 				fi
 				;;
 			tun)
-				if bool_enabled "$enabled"; then
+				if acl_bool "$enabled"; then
 					action4="meta l4proto ${proto} counter return"
 				elif singbox_tun_active; then
 					action4="meta l4proto ${proto} meta mark set ${SINGBOX_BYPASS_FWMARK} ct mark set meta mark counter accept"

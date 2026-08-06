@@ -84,17 +84,17 @@ msgstr "<em>（空）</em>"
 msgid "China traffic bypasses the core at firewall level; DNS behavior is slightly weaker. Choose as needed."
 msgstr "大陆流量在防火墙层直接绕过核心，DNS 体验略弱。按需选择。"
 
+msgid "Forced off while Prevent DNS Leaks is enabled."
+msgstr "「防 DNS 泄漏」开启期间强制关闭。"
+
 msgid "Fast resolution and accurate routing; China routing is handled by the core."
 msgstr "解析快、分流准，大陆分流由内核完成。"
 
-msgid "<strong>Note:</strong> Proxy node domains still use direct DNS for startup resolution, not for normal client domain queries.<br>"
-msgstr "<strong>说明：</strong>代理节点域名仍使用直连 DNS 启动解析，不用于客户端普通域名查询。<br>"
+msgid "<strong>Prerequisite:</strong> The configuration must include transparent proxying (TUN auto-route or TProxy inbound). Takes effect after restart."
+msgstr "<strong>前提：</strong>配置自带透明代理（TUN auto-route 或 TProxy 入站），重启生效。"
 
-msgid "<strong>Prerequisite:</strong> The configuration must include transparent proxying (TUN auto-route or TProxy inbound). Restart after switching."
-msgstr "<strong>前提：</strong>配置自带透明代理（TUN auto-route 或 TProxy 入站），切换后需重启生效。"
-
-msgid "<strong>Warning:</strong> After enabling, IPv6 sites can only be accessed over IPv4; pure IPv6 networks may lose connectivity."
-msgstr "<strong>注意：</strong>开启后 IPv6 网站只能通过 IPv4 访问，纯 IPv6 网络下可能无法上网。"
+msgid "<strong>Warning:</strong> Overrides the IPv6 DNS switch in DNS settings; pure IPv6 networks may lose connectivity."
+msgstr "<strong>注意：</strong>会覆盖 DNS 设置里的「IPv6 DNS」开关，纯 IPv6 网络下可能无法上网。"
 
 msgid "Access Check"
 msgstr "访问检查"
@@ -801,9 +801,6 @@ msgstr "内存使用 %s"
 msgid "mihomo restarted successfully, please wait for servers to come online."
 msgstr "mihomo 重启成功，请等待服务器上线！"
 
-msgid "mihomo runs as-is for nikki/OpenClash compatibility; sing-box automatically upgrades old formats for momo/homeproxy compatibility.<br>"
-msgstr "mihomo 原样运行，适配 nikki、OpenClash；sing-box 自动升级老格式，兼容 momo、homeproxy。<br>"
-
 msgid "mihomo Stable"
 msgstr "mihomo 稳定版"
 
@@ -996,8 +993,8 @@ msgstr "IPv6"
 msgid "MAC"
 msgstr "MAC"
 
-msgid "Rules are matched from top to bottom. Unmatched devices use DNS takeover and proxy by default."
-msgstr "规则按从上到下的顺序匹配；未命中的设备默认接管 DNS 并走代理。"
+msgid "Rules are matched from top to bottom. Unmatched devices use DNS takeover and proxy by default. A rule with IPv4, IPv6 and MAC all empty matches every device."
+msgstr "规则按从上到下的顺序匹配；未命中的设备默认接管 DNS 并走代理。IPv4、IPv6、MAC 全部留空的规则匹配所有设备。"
 
 msgid "Proxy Authentication"
 msgstr "代理认证"
@@ -1047,8 +1044,8 @@ msgstr "刷新"
 msgid "Refresh Access Check"
 msgstr "刷新访问检查"
 
-msgid "Regular domains only use overseas DNS and DNS connections follow proxy rules; DoT/DoQ (port 853) is blocked and IPv6 resolution is disabled. Takes effect after restart.<br>"
-msgstr "普通域名仅使用境外 DNS 并让 DNS 连接遵守代理规则，同时阻断 DoT/DoQ（853 端口）并关闭 IPv6 解析。重启生效。<br>"
+msgid "Regular domains use overseas DNS only and follow proxy rules; DoT/DoQ is blocked and IPv6 resolution is disabled. Takes effect after restart.<br>"
+msgstr "普通域名只走境外 DNS 并遵守代理规则，阻断 DoT/DoQ 并关闭 IPv6 解析。重启生效。<br>"
 
 msgid "Regularly update rule data"
 msgstr "定时更新规则数据"
@@ -1110,8 +1107,8 @@ msgstr "运行模式"
 msgid "Run mode setting failed: "
 msgstr "运行模式设置失败: "
 
-msgid "Run only the core with your imported configuration, without taking over firewall / DNS / routing.<br>"
-msgstr "只用你导入的配置跑内核，不接管防火墙 / DNS / 路由。<br>"
+msgid "Run only the core with your imported configuration, without taking over firewall / DNS / routing. Compatible with nikki, OpenClash, momo and homeproxy configurations.<br>"
+msgstr "只用你导入的配置跑内核，不接管防火墙 / DNS / 路由，兼容 nikki、OpenClash、momo、homeproxy 配置。<br>"
 
 msgid "Running degraded"
 msgstr "已降级运行"

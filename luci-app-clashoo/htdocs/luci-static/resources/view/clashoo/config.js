@@ -6,6 +6,12 @@
 'require rpc';
 'require tools.clashoo as clashoo';
 
+function lockIpv6Dns(locked) {
+  var box = document.getElementById('cbid.clashoo.config.enable_ipv6');
+  var el = box ? box.querySelector('input[type="checkbox"]') : null;
+  if (el) el.disabled = locked;
+}
+
 function getThemeClass() {
   var h = document.documentElement;
   // Bootstrap: explicit data-bs-theme attribute wins first
@@ -658,10 +664,10 @@ return view.extend({
       var link = document.createElement('link');
       link.id = 'cl-css-ext';
       link.rel = 'stylesheet';
-      link.href = L.resource('view/clashoo/clashoo.css') + '?v=20260609b1';
+      link.href = L.resource('view/clashoo/clashoo.css') + '?v=20260806a1';
       document.head.appendChild(link);
     } else {
-      document.getElementById('cl-css-ext').href = L.resource('view/clashoo/clashoo.css') + '?v=20260609b1';
+      document.getElementById('cl-css-ext').href = L.resource('view/clashoo/clashoo.css') + '?v=20260806a1';
     }
 
     if (coreType === 'singbox') return this._renderSingbox(sbData, uiData, subscriptionUpdateStatus);
@@ -1132,13 +1138,12 @@ return view.extend({
     o = s.option(form.Flag, 'ipv6_proxy',      _("IPv6 Proxy"));
     o = s.option(form.Flag, 'fake_ip_ping_hijack', _("Virtual IP Ping Hijacking"));
     o = s.option(form.Flag, 'dns_leak_protect', _("Prevent DNS Leaks"));
-    o.description = _("Regular domains only use overseas DNS and DNS connections follow proxy rules; DoT/DoQ (port 853) is blocked and IPv6 resolution is disabled. Takes effect after restart.<br>") +
-                    _("<strong>Note:</strong> Proxy node domains still use direct DNS for startup resolution, not for normal client domain queries.<br>") +
-                    _("<strong>Warning:</strong> After enabling, IPv6 sites can only be accessed over IPv4; pure IPv6 networks may lose connectivity.");
+    o.description = _("Regular domains use overseas DNS only and follow proxy rules; DoT/DoQ is blocked and IPv6 resolution is disabled. Takes effect after restart.<br>") +
+                    _("<strong>Warning:</strong> Overrides the IPv6 DNS switch in DNS settings; pure IPv6 networks may lose connectivity.");
+    o.onchange = function (ev, section_id, value) { lockIpv6Dns(value == '1'); };
     o = s.option(form.Flag, 'core_only', _("Core Only (advanced)"));
-    o.description = _("Run only the core with your imported configuration, without taking over firewall / DNS / routing.<br>") +
-                    _("mihomo runs as-is for nikki/OpenClash compatibility; sing-box automatically upgrades old formats for momo/homeproxy compatibility.<br>") +
-                    _("<strong>Prerequisite:</strong> The configuration must include transparent proxying (TUN auto-route or TProxy inbound). Restart after switching.");
+    o.description = _("Run only the core with your imported configuration, without taking over firewall / DNS / routing. Compatible with nikki, OpenClash, momo and homeproxy configurations.<br>") +
+                    _("<strong>Prerequisite:</strong> The configuration must include transparent proxying (TUN auto-route or TProxy inbound). Takes effect after restart.");
 
     s = m.section(form.NamedSection, 'config', 'clashoo', _("Port Settings"));
     s.addremove = false;
@@ -1336,6 +1341,10 @@ return view.extend({
     o.depends('enhanced_mode', 'fake-ip');
     o.remove = function () {};
     o = s.option(form.Flag,        'enable_ipv6',       'IPv6 DNS');
+    if (uci.get('clashoo', 'config', 'dns_leak_protect') == '1') {
+      o.readonly = true;
+      o.description = _("Forced off while Prevent DNS Leaks is enabled.");
+    }
 
     s = m.section(form.NamedSection, 'config', 'clashoo', _("Advanced DNS"));
     s.addremove = false;
