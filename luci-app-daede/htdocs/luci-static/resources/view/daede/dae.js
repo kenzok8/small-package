@@ -429,6 +429,7 @@ function renderDaeForms(ctx) {
 			.finally(function() {
 				restoreLiveAccordions();
 				btns.forEach(function(b) { b.disabled = false; });
+				window.setTimeout(function() { ui.changes.init(); }, 1800);
 			});
 	}
 
