@@ -1,0 +1,16 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete firewall.linkease
+	set firewall.linkease=rule
+	set firewall.linkease.name="linkease"
+	set firewall.linkease.target="ACCEPT"
+	set firewall.linkease.src="wan"
+	set firewall.linkease.proto="tcp"
+	set firewall.linkease.dest_port="8897"
+	commit firewall
+EOF
+
+/etc/init.d/firewall reload 2>/dev/null
+
+exit 0

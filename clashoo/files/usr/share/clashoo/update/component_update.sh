@@ -489,10 +489,15 @@ run_pkg_update() {
   fi
 
   if [ "$rc" -ne 0 ]; then
-    log_install_error "$TMP_DIR/install.log"
-    log "安装失败，正在恢复配置备份"
-    restore_config_backup
-    finish "$rc" "组件更新失败，已停止操作，请查看组件更新日志"
+    if [ "$PM" = "apk" ] && apk_update_ready; then
+      log "apk 报告了其它软件包的错误，本次组件已升级到目标版本"
+      rc=0
+    else
+      log_install_error "$TMP_DIR/install.log"
+      log "安装失败，正在恢复配置备份"
+      restore_config_backup
+      finish "$rc" "组件更新失败，已停止操作，请查看组件更新日志"
+    fi
   fi
 
   validation_failed() {
