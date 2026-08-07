@@ -346,14 +346,16 @@ function add_rule(var)
 		fs.mkdir(CACHE_DNS_PATH)
 
 		--屏蔽列表
-		if USE_CHINADNS_NG == "0" then
-			if USE_BLOCK_LIST == "1" then
-				for line in io.lines("/usr/share/passwall/rules/block_host") do
+		if USE_CHINADNS_NG == "0" and USE_BLOCK_LIST == "1" then
+			local f = io.open("/usr/share/passwall/rules/block_host")
+			if f then
+				for line in f:lines() do
 					line = api.get_std_domain(line)
 					if line ~= "" and not line:find("#") and not line:find(":") then
 						set_domain_address(line, "")
 					end
 				end
+				f:close()
 			end
 		end
 
