@@ -12,10 +12,10 @@ config_name_raw="$(uci -q get clashoo.config.config_name 2>/dev/null)"
 lang="$(uci -q get luci.main.lang 2>/dev/null)"
 
 log_text() {
-	if [ "$lang" = "zh_cn" ]; then
-		echo "$2" >"$REAL_LOG"
-	else
+	if [ "$lang" = "en" ]; then
 		echo "$1" >"$REAL_LOG"
+	else
+		echo "$2" >"$REAL_LOG"
 	fi
 }
 

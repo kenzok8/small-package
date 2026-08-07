@@ -46,12 +46,12 @@ update_log() {
 }
 
 log_msg() {
-	if [ "$lang" = "zh_cn" ]; then
-		echo "$2" >"$REAL_LOG"
-		[ "$3" = "1" ] || update_log "$2"
-	else
+	if [ "$lang" = "en" ]; then
 		echo "$1" >"$REAL_LOG"
 		[ "$3" = "1" ] || update_log "$1"
+	else
+		echo "$2" >"$REAL_LOG"
+		[ "$3" = "1" ] || update_log "$2"
 	fi
 }
 

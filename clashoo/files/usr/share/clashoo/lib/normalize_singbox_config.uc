@@ -482,7 +482,8 @@ function apply_dns_from_uci() {
 	/* Keep bootstrap direct; proxy unmatched queries in strict mode. */
 	if (opt_bool(uci_opt('dns_leak_protect', '0'), false)) {
 		cfg.dns.final = 'dns_proxy';
-		unshift(cfg.dns.rules, { query_type: ['AAAA'], action: 'reject', method: 'drop' });
+		if (!opt_bool(uci_opt('ipv6_proxy', '0'), false))
+			unshift(cfg.dns.rules, { query_type: ['AAAA'], action: 'reject', method: 'drop' });
 	} else
 		cfg.dns.final = 'dns_direct';
 

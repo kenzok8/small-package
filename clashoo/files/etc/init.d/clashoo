@@ -405,10 +405,8 @@ log_msg() {
 	local en_msg="$1" zh_msg="$2"
 	local out_msg now
 	now="$(date "+%Y-%m-%d %H:%M:%S")"
-	if [ "${lang}" = "en" ] || [ "${lang}" = "auto" ]; then
+	if [ "${lang}" = "en" ]; then
 		out_msg="$en_msg"
-	elif [ "${lang}" = "zh_cn" ]; then
-		out_msg="$zh_msg"
 	else
 		out_msg="$zh_msg"
 	fi
@@ -1050,7 +1048,7 @@ _uci_fake_ip_filter_extras() {
 	set -f
 	for item in $list; do
 		case "$item" in
-			'*.lan'|'localhost.ptlogin2.qq.com'|'rule-set:cn_domain')
+			'*.lan'|'localhost.ptlogin2.qq.com')
 				continue ;;
 			geosite:cn)
 				printf '%s\n' 'rule-set:cn_domain' ;;
@@ -1748,8 +1746,11 @@ _start_prepare_config() {
 	append_luci_fake_ip_filter_extras >/dev/null 2>&1
 	dns_leak_protect=$(uci -q get clashoo.config.dns_leak_protect 2>/dev/null)
 	if command -v dns_mihomo_apply_leak_protect >/dev/null 2>&1; then
-		# dns_leak_protect=1 forces ipv6:false; otherwise follow UCI enable_ipv6 (omit when unset)
-		if [ "${dns_leak_protect:-0}" = "1" ]; then
+		case "$(uci -q get clashoo.config.ipv6_proxy 2>/dev/null)" in
+			1|true) _ipv6_proxied=1 ;;
+			*) _ipv6_proxied=0 ;;
+		esac
+		if [ "${dns_leak_protect:-0}" = "1" ] && [ "$_ipv6_proxied" = "0" ]; then
 			_ipv6_value="false"
 		else
 			case "$(uci -q get clashoo.config.enable_ipv6 2>/dev/null)" in
@@ -1758,6 +1759,7 @@ _start_prepare_config() {
 				*) _ipv6_value="" ;;
 			esac
 		fi
+		unset _ipv6_proxied
 		dns_mihomo_apply_leak_protect "$CONFIG_YAML" "${dns_leak_protect:-0}" "$_ipv6_value" >/dev/null 2>&1
 		unset _ipv6_value
 	fi

@@ -88,6 +88,8 @@ cfg['dns'] = {
 	'fake-ip-filter': [],
 	ipv6:           ab('enable_ipv6'),
 };
+if (cfg['dns']['enhanced-mode'] == 'fake-ip' && ab('enable_ipv6'))
+	cfg['dns']['fake-ip-range6'] = s(a('fake_ip_range6'), 'fc00::/18');
 /* fake-ip-filter-mode: blacklist (default) | whitelist | rule */
 let filter_mode = s(a('fake_ip_filter_mode'), 'blacklist');
 if (filter_mode != 'blacklist') cfg['dns']['fake-ip-filter-mode'] = filter_mode;

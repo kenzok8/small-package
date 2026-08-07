@@ -245,6 +245,15 @@ config_bypass_fwmark() {
 	uci_list clashoo.config.bypass_fwmark
 }
 
+config_fake_ip_range6() {
+	local value
+	value="$(uci_get clashoo.config.fake_ip_range6)"
+	[ -n "$value" ] || value="fc00::/18"
+	[ "$(uci_get clashoo.config.enhanced_mode)" = "redir-host" ] && return 0
+	bool_enabled "$(uci_get clashoo.config.enable_ipv6)" || return 0
+	printf '%s\n' "$value"
+}
+
 config_fake_ip_range() {
 	local value
 	value="$(uci_get clashoo.config.fake_ip_range)"
@@ -282,10 +291,14 @@ remove_firewall_include() {
 }
 
 render_common_returns() {
-	cat <<'EOF'
-meta nfproto ipv4 ip daddr { 0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.168.0.0/16, 224.0.0.0/4, 240.0.0.0/4 } return
-meta nfproto ipv6 ip6 daddr { ::1/128, fc00::/7, fe80::/10, ff00::/8 } return
-EOF
+	local fake6
+	fake6="$(config_fake_ip_range6)"
+	printf '%s\n' 'meta nfproto ipv4 ip daddr { 0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.168.0.0/16, 224.0.0.0/4, 240.0.0.0/4 } return'
+	if [ -n "$fake6" ]; then
+		printf 'meta nfproto ipv6 ip6 daddr { ::1/128, fc00::/7, fe80::/10, ff00::/8 } ip6 daddr != %s return\n' "$fake6"
+	else
+		printf '%s\n' 'meta nfproto ipv6 ip6 daddr { ::1/128, fc00::/7, fe80::/10, ff00::/8 } return'
+	fi
 }
 
 render_ip_elements() {

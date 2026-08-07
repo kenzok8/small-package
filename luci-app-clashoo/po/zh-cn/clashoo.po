@@ -84,17 +84,14 @@ msgstr "<em>（空）</em>"
 msgid "China traffic bypasses the core at firewall level; DNS behavior is slightly weaker. Choose as needed."
 msgstr "大陆流量在防火墙层直接绕过核心，DNS 体验略弱。按需选择。"
 
-msgid "Forced off while Prevent DNS Leaks is enabled."
-msgstr "「防 DNS 泄漏」开启期间强制关闭。"
-
 msgid "Fast resolution and accurate routing; China routing is handled by the core."
 msgstr "解析快、分流准，大陆分流由内核完成。"
 
 msgid "<strong>Prerequisite:</strong> The configuration must include transparent proxying (TUN auto-route or TProxy inbound). Takes effect after restart."
 msgstr "<strong>前提：</strong>配置自带透明代理（TUN auto-route 或 TProxy 入站），重启生效。"
 
-msgid "<strong>Warning:</strong> Overrides the IPv6 DNS switch in DNS settings; pure IPv6 networks may lose connectivity."
-msgstr "<strong>注意：</strong>会覆盖 DNS 设置里的「IPv6 DNS」开关，纯 IPv6 网络下可能无法上网。"
+msgid "<strong>Warning:</strong> IPv6 resolution is also disabled when IPv6 Proxy is off, to keep the real address from leaking."
+msgstr "<strong>注意：</strong>「IPv6 代理」关闭时会一并停用 IPv6 解析，避免真实地址泄漏。"
 
 msgid "Access Check"
 msgstr "访问检查"
@@ -1044,8 +1041,8 @@ msgstr "刷新"
 msgid "Refresh Access Check"
 msgstr "刷新访问检查"
 
-msgid "Regular domains use overseas DNS only and follow proxy rules; DoT/DoQ is blocked and IPv6 resolution is disabled. Takes effect after restart.<br>"
-msgstr "普通域名只走境外 DNS 并遵守代理规则，阻断 DoT/DoQ 并关闭 IPv6 解析。重启生效。<br>"
+msgid "Regular domains use overseas DNS only and follow proxy rules; DoT/DoQ is blocked. Takes effect after restart.<br>"
+msgstr "普通域名只走境外 DNS 并遵守代理规则，阻断 DoT/DoQ。重启生效。<br>"
 
 msgid "Regularly update rule data"
 msgstr "定时更新规则数据"
@@ -1492,7 +1489,7 @@ msgid "Username"
 msgstr "用户名"
 
 msgid "Virtual IP Ping Hijacking"
-msgstr "虚拟 IP Ping 劫持"
+msgstr "Fake-IP Ping 劫持"
 
 msgid "Wait for the current task to complete"
 msgstr "等待当前任务完成"
