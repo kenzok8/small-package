@@ -457,10 +457,12 @@ if singbox_tags:find("with_quic") then
 	o = s:option(Value, _n("hysteria2_down_mbps"), translate("Max download Mbps"))
 	o:depends({ [_n("protocol")] = "hysteria2" })
 
-	o = s:option(Value, _n("hysteria2_idle_timeout"), translate("Idle Timeout"), translate("Example:") .. "30s (4s~120s)")
+	o = s:option(Value, _n("hysteria2_idle_timeout"), translate("Idle Timeout"), translate("Units:seconds") .. " (4~120)")
+	o.datatype = "range(4,120)"
 	o:depends({ [_n("protocol")] = "hysteria2"})
 
-	o = s:option(Value, _n("hysteria2_keep_alive_period"), translate("QUIC KeepAlive interval"), translate("Example:") .. "10s (2s~60s)")
+	o = s:option(Value, _n("hysteria2_keep_alive_period"), translate("QUIC KeepAlive interval"), translate("Units:seconds") .. " (2~60)")
+	o.datatype = "range(2,60)"
 	o:depends({ [_n("protocol")] = "hysteria2"})
 
 	o = s:option(Flag, _n("hysteria2_disable_mtu_discovery"), translate("Disable MTU detection"))
@@ -628,6 +630,10 @@ if singbox_tags:find("with_utls") then
 	o = s:option(Value, _n("reality_shortId"), translate("Short Id"))
 	o:depends({ [_n("reality")] = true })
 end
+
+o = s:option(Flag, _n("anytls_disable_reuse"), translate("Disable TLS Reuse"))
+o.default = 0
+o:depends({ [_n("protocol")] = "anytls" })
 
 o = s:option(ListValue, _n("transport"), translate("Transport"))
 o:value("tcp", "TCP")

@@ -1751,6 +1751,12 @@ msgstr "Разрешение DNS-запросов для домена"
 msgid "If the node address is a domain name, this DNS will be used for resolution."
 msgstr "Если адрес узла является доменным именем, для разрешения будет использоваться этот DNS-сервер."
 
+msgid "Enable Happy Eyeballs"
+msgstr "Включить счастливые глаза"
+
+msgid "Attempts IPv4 and IPv6 simultaneously; automatically uses the faster connection."
+msgstr "Одновременно пытается использовать IPv4 и IPv6; автоматически выбирает более быстрое соединение."
+
 msgid "Supports only Xray or Sing-box node types."
 msgstr "Поддерживаются только узлы типа Xray или Sing-box."
 
@@ -2411,3 +2417,9 @@ msgstr "Размер упаковки Gecko (макс)"
 
 msgid "valid time (hh:mm)"
 msgstr "Время действия (чч:мм)"
+
+msgid "Disable TLS Reuse"
+msgstr "Отключить повторное использование TLS"
+
+msgid "Not Set"
+msgstr "Не задано"

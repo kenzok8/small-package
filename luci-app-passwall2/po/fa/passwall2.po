@@ -1750,6 +1750,12 @@ msgstr "حل مشکل DNS دامنه"
 msgid "If the node address is a domain name, this DNS will be used for resolution."
 msgstr "اگر آدرس گره یک نام دامنه باشد، از این DNS برای حل مسئله استفاده خواهد شد."
 
+msgid "Enable Happy Eyeballs"
+msgstr "فعال کردن چشم‌های خوشحال"
+
+msgid "Attempts IPv4 and IPv6 simultaneously; automatically uses the faster connection."
+msgstr "IPv4 و IPv6 را همزمان امتحان می‌کند؛ به‌طور خودکار از اتصال سریع‌تر استفاده می‌کند."
+
 msgid "Supports only Xray or Sing-box node types."
 msgstr "فقط گره‌های نوع Xray یا Sing-box پشتیبانی می‌شوند."
 
@@ -2413,3 +2419,9 @@ msgstr "اندازه بسته Gecko (حداکثر)"
 
 msgid "valid time (hh:mm)"
 msgstr "زمان معتبر (ساعت:میلی‌متر)"
+
+msgid "Disable TLS Reuse"
+msgstr "غیرفعال کردن استفاده مجدد از TLS"
+
+msgid "Not Set"
+msgstr "تنظیم نشده"

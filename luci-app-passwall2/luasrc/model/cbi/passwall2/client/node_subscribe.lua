@@ -135,6 +135,9 @@ s.template = "cbi/tblsection"
 s.extedit = api.url("node_subscribe_config", "%s")
 function s.create(e, t)
 	local id = TypedSection.create(e, t)
+	uci:set(appname, id, "hysteria_up_mbps", "100")
+	uci:set(appname, id, "hysteria_down_mbps", "100")
+	api.uci_save(uci, appname)
 	luci.http.redirect(e.extedit:format(id))
 end
 
