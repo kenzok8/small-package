@@ -10,11 +10,11 @@ include $(TOPDIR)/rules.mk
 PKG_ARCH_ghttpd:=$(ARCH)
 
 PKG_NAME:=ghttpd
-PKG_VERSION:=0.0.1
+PKG_VERSION:=0.0.2
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/Carseason/openwrt-packages/releases/download/prebuilt/
-PKG_HASH:=9e3cce93a7e65e87c89eeb1bbf5190f8935126f060843419b4ec1aeeb00b5f83
+PKG_HASH:=81c8196ed892c3255bb4c95a57be255712ed9c436aebf8668098dd6fba155720
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-binary-$(PKG_VERSION)
 
 PKG_BUILD_PARALLEL:=1

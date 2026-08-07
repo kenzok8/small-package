@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2021 Lienol <lawlienol@gmail.com>
+# Copyright (C) 2018-2026 Lienol <lawlienol@gmail.com>
 #
 # This is free software, licensed under the Apache License, Version 2.0 .
 #
@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-ipsec-server
-PKG_VERSION:=20260801
+PKG_VERSION:=20260807
 PKG_RELEASE:=2
 
 PKG_MAINTAINER:=Lienol <lawlienol@gmail.com>

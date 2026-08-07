@@ -97,7 +97,6 @@ probe_json() {
 }
 
 log_diag() {
-	[ "$(uci -q get clashoo.config.access_check_debug)" = "1" ] || return 0
 	_line="$(date '+%Y-%m-%d %H:%M:%S') $1"
 	printf '%s\n' "$_line" >>"$DIAG_LOG" 2>/dev/null
 	_n="$(wc -l <"$DIAG_LOG" 2>/dev/null || echo 0)"
@@ -146,8 +145,8 @@ if proxy_listening; then
 else
 	# 代理端口未监听（clashoo 已停止），跳过探测，直接标 down
 	proxy_skipped=1
-	echo "ok=0 attempts=1 loss=1 avg_ms=0 code=000" >"$f_pb"
-	echo "ok=0 attempts=1 loss=1 avg_ms=0 code=000" >"$f_py"
+	echo "ok=0 attempts=1 loss=1 avg_ms=0 code=skip" >"$f_pb"
+	echo "ok=0 attempts=1 loss=1 avg_ms=0 code=skip" >"$f_py"
 fi
 wait
 direct_bytedance="$(cat "$f_db" 2>/dev/null)"
@@ -158,7 +157,19 @@ rm -f "$f_db" "$f_dy" "$f_pb" "$f_py"
 
 updated_at="$(date +%s)"
 
-log_diag "port=${proxy_port} proxy_skipped=${proxy_skipped} direct_bd=[${direct_bytedance}] direct_yt=[${direct_youtube}] proxy_bd=[${proxy_bytedance}] proxy_yt=[${proxy_youtube}]"
+probe_all_down() {
+	for _p in "$direct_bytedance" "$direct_youtube" "$proxy_bytedance" "$proxy_youtube"; do
+		case "$_p" in
+			''|*"ok=0 "*) ;;
+			*) return 1 ;;
+		esac
+	done
+	return 0
+}
+
+if [ "$(uci -q get clashoo.config.access_check_debug)" = "1" ] || probe_all_down; then
+	log_diag "port=${proxy_port} proxy_skipped=${proxy_skipped} direct_bd=[${direct_bytedance}] direct_yt=[${direct_youtube}] proxy_bd=[${proxy_bytedance}] proxy_yt=[${proxy_youtube}]"
+fi
 
 cat >"$TMP_FILE" <<EOF
 {
@@ -166,6 +177,7 @@ cat >"$TMP_FILE" <<EOF
   "tcp_mode": "${tcp_mode}",
   "udp_mode": "${udp_mode}",
   "updated_at": ${updated_at},
+  "proxy_skipped": ${proxy_skipped},
   "stale": false,
   "updating": false,
   "direct": {

@@ -8,7 +8,7 @@ start() {
 	if [ ! -z "$state" ]; then
 		restart
 	else
-		/usr/bin/pushbot/pushbot &
+		/usr/bin/pushbot/pushbot </dev/null >/dev/null 2>&1 &
 	fi
 	echo "pushbot is starting now ..."
 }

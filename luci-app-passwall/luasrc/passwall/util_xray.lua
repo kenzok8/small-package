@@ -868,6 +868,9 @@ function gen_config(var)
 	local dns_socks_port = var["dns_socks_port"]
 	local loglevel = var["loglevel"] or "warning"
 	local no_run = var["no_run"]
+	local use_proxy_list = var["use_proxy_list"]
+	local use_gfw_list = var["use_gfw_list"]
+	local chn_list = var["chn_list"]
 
 	local dns_domain_rules = {}
 	local dns = nil
@@ -1363,7 +1366,50 @@ function gen_config(var)
 			end
 
 			--shunt rule
-			uci:foreach(appname, "shunt_rules", function(e)
+			local function foreach_shunt_rule(callback)
+				uci:foreach(appname, "shunt_rules", callback)
+
+				if use_gfw_list ~= "1" or chn_list ~= "0" then return end
+
+				-- GFW 模式下使用分流节点时添加特定规则
+				local function read_proxy_list(path)
+					if use_proxy_list ~= "1" then return "" end
+					local map, list = {}, {}
+					local f = io.open(path)
+					if f then
+						for line in f:lines() do
+							if line ~= "" and not line:find("#", 1, true) and not map[line] then
+								map[line] = 1
+								list[#list + 1] = line
+							end
+						end
+						f:close()
+					end
+					return table.concat(list, "\n")
+				end
+
+				local domain_list = read_proxy_list("/usr/share/passwall/rules/proxy_host")
+				local ip_list = read_proxy_list("/usr/share/passwall/rules/proxy_ip")
+
+				local bin = api.finded_com("geoview")
+				if bin then
+					local geo_file = (uci:get(appname, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/") .. "/geosite.dat"
+					if luci.sys.call('"' .. bin .. '" -type geosite -input "' .. geo_file .. '" | grep -q "^GFW$"') == 0 then
+						domain_list = (domain_list == "") and "geosite:gfw" or domain_list .. "\ngeosite:gfw"
+					end
+				end
+
+				if domain_list ~= "" or ip_list ~= "" then
+					node["GFW_Mode_List"] = "_default"
+					callback({
+						[".name"] = "GFW_Mode_List",
+						remarks = "GFW_Mode_List",
+						domain_list = (domain_list ~= "") and domain_list or nil,
+						ip_list = (ip_list ~= "") and ip_list or nil
+					})
+				end
+			end
+			foreach_shunt_rule(function(e)
 				local outbound_tag = gen_shunt_node(e[".name"])
 				if outbound_tag and e.remarks then
 					if outbound_tag == "default" then
@@ -1462,6 +1508,15 @@ function gen_config(var)
 					end
 				end
 			end)
+
+			if use_gfw_list == "1" and chn_list == "0" then  -- GFW 模式下使用分流节点时添加兜底规则
+				table.insert(rules, {
+					ruleTag = "GFW_Mode_Default",
+					outboundTag = "direct",
+					port = (node.domainStrategy == "IPIfNonMatch") and "1-65535" or nil,
+					network = (node.domainStrategy ~= "IPIfNonMatch") and "tcp,udp" or nil
+				})
+			end
 
 			table.insert(rules, {
 				outboundTag = "direct",

@@ -1398,8 +1398,8 @@ del_firewall_rule() {
 	done
 	for ipt in "$ipt_f" "$ip6t_f"; do
 		for chain in "FORWARD" "INPUT" "OUTPUT"; do
-			for i in $(seq 1 $($ipt -nL $chain | grep -c PSW)); do
-				local index=$($ipt --line-number -nL $chain | grep PSW | head -1 | awk '{print $1}')
+			for i in $(seq 1 $($ipt -nL $chain | grep -c PSW_REJECT)); do
+				local index=$($ipt --line-number -nL $chain | grep PSW_REJECT | head -1 | awk '{print $1}')
 				$ipt -D $chain $index 2>/dev/null
 			done
 		done

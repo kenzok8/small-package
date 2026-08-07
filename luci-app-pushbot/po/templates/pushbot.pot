@@ -1,0 +1,946 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: luci-app-pushbot\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid " d "
+msgstr ""
+
+msgid " h"
+msgstr ""
+
+msgid " h "
+msgstr ""
+
+msgid " min"
+msgstr ""
+
+msgid " min "
+msgstr ""
+
+msgid " sec"
+msgstr ""
+
+msgid "(empty)"
+msgstr ""
+
+msgid "-- Select interface --"
+msgstr ""
+
+msgid "0 means permanently blacklisted, use with caution<br>If misconfigured, change the device IP and clear the rules in LuCI"
+msgstr ""
+
+msgid "3 devices online"
+msgstr ""
+
+msgid "3 devices online:"
+msgstr ""
+
+msgid "A shorter interval responds faster but consumes more system resources"
+msgstr ""
+
+msgid "Abnormal device traffic"
+msgstr ""
+
+msgid "Abnormal device traffic alert (bytes); you can append K or M"
+msgstr ""
+
+msgid "Abnormal traffic"
+msgstr ""
+
+msgid "Add"
+msgstr ""
+
+msgid "Advanced"
+msgstr ""
+
+msgid "Advanced settings"
+msgstr ""
+
+msgid "Alerts are only pushed when the threshold is exceeded for 5 consecutive minutes<br/>and will not repeat within an hour"
+msgstr ""
+
+msgid "Apply changes"
+msgstr ""
+
+msgid "Auto blacklist"
+msgstr ""
+
+msgid "Auto refresh"
+msgstr ""
+
+msgid "Average load: 0.09 0.28 0.16"
+msgstr ""
+
+msgid "Avoid redialing during the day when the DDNS domain waits for resolution; this does not affect outage detection<br/>May be unstable due to night traffic"
+msgstr ""
+
+msgid "Avoid special characters such as double quotes, $, ! etc. The result must be a number for temperature comparison"
+msgstr ""
+
+msgid "Bark icon"
+msgstr ""
+
+msgid "Bark notification icon"
+msgstr ""
+
+msgid "Bark notification icon (iOS 15 or above)<br>e.g. http://day.app/assets/images/avatar.jpg<br>See <a href=\"https://github.com/Finb/Bark#%E5%85%B6%E4%BB%96%E5%8F%82%E6%95%B0\" target=\"_blank\">here</a> for details<br><br>"
+msgstr ""
+
+msgid "Bark notification sound<br>e.g. silence.caf<br>See <a href=\"https://github.com/Finb/Bark/tree/master/Sounds\" target=\"_blank\">here</a> for details<br><br>"
+msgstr ""
+
+msgid "Bark self-hosted server address<br>e.g. https://your.domain:port<br>See <a href=\"http://www.pushdeer.com/selfhosted.html\" target=\"_blank\">here</a> for the self-hosting guide<br><br>"
+msgstr ""
+
+msgid "Bark time-sensitive notification<br>Optional values:<br/>active: default, the system shows the notification immediately on the lock screen.<br/>timeSensitive: time-sensitive, can be shown in Focus mode.<br/>passive: only added to the notification list, no screen wake."
+msgstr ""
+
+msgid "Basic"
+msgstr ""
+
+msgid "Basic settings"
+msgstr ""
+
+msgid "Blacklist duration (s)"
+msgstr ""
+
+msgid "Blacklist time"
+msgstr ""
+
+msgid "CPU load"
+msgstr ""
+
+msgid "CPU load alert"
+msgstr ""
+
+msgid "CPU temperature alert"
+msgstr ""
+
+msgid "CPU threshold"
+msgstr ""
+
+msgid "CPU usage: 92.8%"
+msgstr ""
+
+msgid "Clear log"
+msgstr ""
+
+msgid "Client IP: 192.168.1.2"
+msgstr ""
+
+msgid "Client IP: 192.168.1.5"
+msgstr ""
+
+msgid "Client IP: 192.168.1.7"
+msgstr ""
+
+msgid "Client MAC: a1:b2:c3:d4:e5:f6"
+msgstr ""
+
+msgid "Client MAC: a6:b5:c4:d3:e2:f1"
+msgstr ""
+
+msgid "Client MAC: f1:e2:d3:c4:b5:a6"
+msgstr ""
+
+msgid "Client list"
+msgstr ""
+
+msgid "Client name"
+msgstr ""
+
+msgid "Client name color"
+msgstr ""
+
+msgid "Client name: Zed-Mi17PM"
+msgstr ""
+
+msgid "Client name: Zed-PC"
+msgstr ""
+
+msgid "Client name: Zed-iPhone17PM"
+msgstr ""
+
+msgid "Color Settings"
+msgstr ""
+
+msgid "Compact"
+msgstr ""
+
+msgid "Compact Mode"
+msgstr ""
+
+msgid "Compact current time"
+msgstr ""
+
+msgid "Compact device list"
+msgstr ""
+
+msgid "Content"
+msgstr ""
+
+msgid "Current Settings"
+msgstr ""
+
+msgid "Custom push"
+msgstr ""
+
+msgid "Custom temperature command"
+msgstr ""
+
+msgid "DND"
+msgstr ""
+
+msgid "DND Time (daily)"
+msgstr ""
+
+msgid "DND end"
+msgstr ""
+
+msgid "DND start"
+msgstr ""
+
+msgid "DND when all devices in list are offline"
+msgstr ""
+
+msgid "DND while any device in list is online"
+msgstr ""
+
+msgid "Debug"
+msgstr ""
+
+msgid "Default is 22; enter a custom SSH port if changed"
+msgstr ""
+
+msgid "Detection interval"
+msgstr ""
+
+msgid "Device Aliases"
+msgstr ""
+
+msgid "Device IP:        192.168.1.28"
+msgstr ""
+
+msgid "Device Monitor"
+msgstr ""
+
+msgid "Device disconnected"
+msgstr ""
+
+msgid "Device list"
+msgstr ""
+
+msgid "Device name"
+msgstr ""
+
+msgid "Device offline notification"
+msgstr ""
+
+msgid "Device offline timeout (s)"
+msgstr ""
+
+msgid "Device online notification"
+msgstr ""
+
+msgid "Device online timeout (s)"
+msgstr ""
+
+msgid "Device temperature"
+msgstr ""
+
+msgid "Devices"
+msgstr ""
+
+msgid "DingTalk"
+msgstr ""
+
+msgid "DingTalk Webhook"
+msgstr ""
+
+msgid "DingTalk bot Webhook, enter only the part after access_token=<br><a href=\"https://developers.dingtalk.com/document/robots/custom-robot-access\" target=\"_blank\">Get the code</a><br><br>"
+msgstr ""
+
+msgid "Disabled"
+msgstr ""
+
+msgid "Discard changes"
+msgstr ""
+
+msgid "Do Not Disturb"
+msgstr ""
+
+msgid "Download to RAM"
+msgstr ""
+
+msgid "Enable logging"
+msgstr ""
+
+msgid "Enabled"
+msgstr ""
+
+msgid "Enter MAC-alias, e.g. XX:XX:XX:XX:XX:XX-MyPhone"
+msgstr ""
+
+msgid "Enter a #RRGGBB hex color code, leave empty to use the default"
+msgstr ""
+
+msgid "Enter custom temperature command"
+msgstr ""
+
+msgid "Every day at"
+msgstr ""
+
+msgid "Failed attempt threshold"
+msgstr ""
+
+msgid "Failed attempts"
+msgstr ""
+
+msgid "Failure message color"
+msgstr ""
+
+msgid "Feishu"
+msgstr ""
+
+msgid "Feishu WebHook<br><a href=\"https://www.feishu.cn/hc/zh-CN/articles/360024984973\" target=\"_blank\">Get the code</a><br><br>"
+msgstr ""
+
+msgid "Feishu Webhook"
+msgstr ""
+
+msgid "Full"
+msgstr ""
+
+msgid "Get the code "
+msgstr ""
+
+msgid "Global connectivity timeout"
+msgstr ""
+
+msgid "Host address"
+msgstr ""
+
+msgid "Hostname"
+msgstr ""
+
+msgid "IP address"
+msgstr ""
+
+msgid "IP blacklist"
+msgstr ""
+
+msgid "IP whitelist"
+msgstr ""
+
+msgid "IPv4 API list"
+msgstr ""
+
+msgid "IPv4 change"
+msgstr ""
+
+msgid "IPv4 change notification"
+msgstr ""
+
+msgid "IPv4 interface"
+msgstr ""
+
+msgid "IPv6 API list"
+msgstr ""
+
+msgid "IPv6 change"
+msgstr ""
+
+msgid "IPv6 change notification"
+msgstr ""
+
+msgid "IPv6 interface"
+msgstr ""
+
+msgid "Identifies this device in push message titles, to distinguish the source device"
+msgstr ""
+
+msgid "Ignore devices in list"
+msgstr ""
+
+msgid "Ignore list"
+msgstr ""
+
+msgid "Instant notification preview (example, updates with colors)"
+msgstr ""
+
+msgid "Interface"
+msgstr ""
+
+msgid "Interface name"
+msgstr ""
+
+msgid "Interval send"
+msgstr ""
+
+msgid "Load alert threshold"
+msgstr ""
+
+msgid "Load failed"
+msgstr ""
+
+msgid "Loading..."
+msgstr ""
+
+msgid "Log"
+msgstr ""
+
+msgid "Login method:    Pubkey"
+msgstr ""
+
+msgid "Login source"
+msgstr ""
+
+msgid "MAC Filter"
+msgstr ""
+
+msgid "MAC Filter 2"
+msgstr ""
+
+msgid "MAC address"
+msgstr ""
+
+msgid "MAC device database"
+msgstr ""
+
+msgid "MAC filter"
+msgstr ""
+
+msgid "MAC filter 2"
+msgstr ""
+
+msgid "Make sure SSH key login is configured, otherwise the script may fail to run!<br/>Install the sensors command on PVE yourself<br/>SSH key login example:<br/>opkg update #update package list<br/>opkg install openssh-client openssh-keygen #install openssh client<br/>ssh-keygen -t rsa #generate a key pair (set a password etc.)<br/>ssh root@10.0.0.2 \"tee -a ~/.ssh/id_rsa.pub\" < ~/.ssh/id_rsa.pub #transfer the public key to PVE<br/>ssh -i ~/.ssh/id_rsa root@10.0.0.2 sensors #test the temperature command"
+msgstr ""
+
+msgid "Make sure the script runs normally, otherwise it may cause frequent reboots!"
+msgstr ""
+
+msgid "Max concurrent processes"
+msgstr ""
+
+msgid "Max retries per day"
+msgstr ""
+
+msgid "Memory usage: 9.28%"
+msgstr ""
+
+msgid "Mode 1: Pause script"
+msgstr ""
+
+msgid "Mode 2: Silent mode"
+msgstr ""
+
+msgid "Modify settings and try to auto-repair the network"
+msgstr ""
+
+msgid "Module title color"
+msgstr ""
+
+msgid "NOT RUNNING"
+msgstr ""
+
+msgid "Network Down Action"
+msgstr ""
+
+msgid "Network Monitor"
+msgstr ""
+
+msgid "Network check timeout"
+msgstr ""
+
+msgid "Network error"
+msgstr ""
+
+msgid "Network interface: br-lan"
+msgstr ""
+
+msgid "Network lookup"
+msgstr ""
+
+msgid "Network uptime greater than"
+msgstr ""
+
+msgid "New device connected"
+msgstr ""
+
+msgid "No IP change notification is pushed on redial, and your domain may fail to update its IP in time<br/>Make sure you can obtain a public IP by redialing, otherwise this is futile and may cause frequent disconnects<br/>Do not struggle on large carrier-grade NAT networks!"
+msgstr ""
+
+msgid "No action"
+msgstr ""
+
+msgid "No additional configuration needed for the current mode."
+msgstr ""
+
+msgid "No changes yet"
+msgstr ""
+
+msgid "No online devices"
+msgstr ""
+
+msgid "No output"
+msgstr ""
+
+msgid "No second-level router, good signal strength: you can reduce the above values<br/>As WiFi sleep at night is unpredictable, please adjust parameters yourself if devices frequently disconnect<br/>..(╰_╯).."
+msgstr ""
+
+msgid "Notify only devices in list"
+msgstr ""
+
+msgid "Notify only devices on this interface"
+msgstr ""
+
+msgid "OUI data"
+msgstr ""
+
+msgid "OUI directory"
+msgstr ""
+
+msgid "Offline DND list"
+msgstr ""
+
+msgid "Offline detection count"
+msgstr ""
+
+msgid "Offline timeout"
+msgstr ""
+
+msgid "Online"
+msgstr ""
+
+msgid "Online DND list"
+msgstr ""
+
+msgid "Online devices"
+msgstr ""
+
+msgid "Online time"
+msgstr ""
+
+msgid "Only runs when all devices in the list are offline<br/>After DND hours, watched devices with low traffic for 5 minutes (~100kb/m) are considered offline"
+msgstr ""
+
+msgid "Options 1 and 2 do not modify settings and try at most 2 times.<br/>Option 3 backs up settings to /usr/bin/pushbot/configbak and restores them on failure.<br/>Compatibility is not guaranteed! Do not use if you are unfamiliar with system settings"
+msgstr ""
+
+msgid "PVE VM"
+msgstr ""
+
+msgid "PVE host"
+msgstr ""
+
+msgid "PVE port"
+msgstr ""
+
+msgid "Performance Monitor"
+msgstr ""
+
+msgid "Preview changes"
+msgstr ""
+
+msgid "Public IP event"
+msgstr ""
+
+msgid "Public IP retry"
+msgstr ""
+
+msgid "Push"
+msgstr ""
+
+msgid "Push Mode"
+msgstr ""
+
+msgid "Push alert after exceeding the threshold"
+msgstr ""
+
+msgid "Push content"
+msgstr ""
+
+msgid "Push message fields: title (purple), success (device connected/login, green), failure (disconnected/login failed, red), client name (green), module title (system status/device temp/WAN info/online devices, light blue). Title color only applies when the push template references ${font_title}; invalid colors are ignored and fall back to defaults."
+msgstr ""
+
+msgid "Push title"
+msgstr ""
+
+msgid "Push title only"
+msgstr ""
+
+
+msgid "PushDeer self-hosted server address<br>e.g. https://your.domain:port<br>See <a href=\"http://www.pushdeer.com/selfhosted.html\" target=\"_blank\">here</a> for details<br><br>"
+msgstr ""
+
+msgid "PushPlus custom Webhook<br>For third-party webhook or WeCom calls<br>See <a href=\"http://pushplus.plus/doc/extend/webhook.html\" target=\"_blank\">here</a> for details<br><br>"
+msgstr ""
+
+msgid "PushPlus group code<br>The group code used for group push<br>See <a href=\"http://www.pushplus.plus/push2.html\" target=\"_blank\">here</a> for details<br><br>"
+msgstr ""
+
+msgid "PushPlus group push"
+msgstr ""
+
+msgid "RUNNING"
+msgstr ""
+
+msgid "Reboot router"
+msgstr ""
+
+msgid "Reboot time"
+msgstr ""
+
+msgid "Redial"
+msgstr ""
+
+msgid "Redial only during DND hours"
+msgstr ""
+
+msgid "Redial time"
+msgstr ""
+
+msgid "Redial timeout"
+msgstr ""
+
+msgid "Redial to obtain public IP"
+msgstr ""
+
+msgid "Remove"
+msgstr ""
+
+msgid "Reset traffic at midnight"
+msgstr ""
+
+msgid "Retry count"
+msgstr ""
+
+msgid "Router status"
+msgstr ""
+
+msgid "Router temperature"
+msgstr ""
+
+msgid "Run Control"
+msgstr ""
+
+msgid "SOC code"
+msgstr ""
+
+msgid "SSH failed attempt"
+msgstr ""
+
+msgid "SSH failed attempt alert"
+msgstr ""
+
+msgid "SSH login"
+msgstr ""
+
+msgid "SSH login alert"
+msgstr ""
+
+msgid "SSH port"
+msgstr ""
+
+msgid "Save & Apply"
+msgstr ""
+
+msgid "Save failed"
+msgstr ""
+
+msgid "Saved"
+msgstr ""
+
+msgid "Saving..."
+msgstr ""
+
+msgid "Schedule Settings"
+msgstr ""
+
+msgid "Scheduled"
+msgstr ""
+
+msgid "Scheduled Push"
+msgstr ""
+
+msgid "Scheduled Reboot"
+msgstr ""
+
+msgid "Scheduled push preview (example, updates with colors)"
+msgstr ""
+
+msgid "Scheduled reset"
+msgstr ""
+
+msgid "Scheduled send"
+msgstr ""
+
+msgid "Scheduled tasks"
+msgstr ""
+
+msgid "Scheduled time"
+msgstr ""
+
+msgid "Scheduled time 2"
+msgstr ""
+
+msgid "Scheduled time 3"
+msgstr ""
+
+msgid "Security Monitor"
+msgstr ""
+
+msgid "Self-hosted Bark"
+msgstr ""
+
+msgid "Self-hosted Bark server"
+msgstr ""
+
+msgid "Self-hosted PushDeer"
+msgstr ""
+
+msgid "Self-hosted PushDeer server"
+msgstr ""
+
+msgid "Send interval"
+msgstr ""
+
+msgid "Send now"
+msgstr ""
+
+msgid "Send test"
+msgstr ""
+
+msgid "Send time"
+msgstr ""
+
+msgid "Sending..."
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "Starting from 00:00, send once every * hours"
+msgstr ""
+
+msgid "Success message color"
+msgstr ""
+
+msgid "System status"
+msgstr ""
+
+msgid "System uptime greater than"
+msgstr ""
+
+msgid "Temperature Monitor"
+msgstr ""
+
+msgid "Temperature alert threshold"
+msgstr ""
+
+msgid "Temperature monitor"
+msgstr ""
+
+msgid "Temperature result:"
+msgstr ""
+
+msgid "Temperature threshold"
+msgstr ""
+
+msgid "Terminal Info"
+msgstr ""
+
+msgid "Test temperature"
+msgstr ""
+
+msgid "Third-party webhook: WeCom, DingTalk, Feishu, ServerChan<br>sms/mail: not yet available on PushPlus<br>See <a href=\"http://pushplus.plus/doc/extend/webhook.html\" target=\"_blank\">here</a> for channel settings<br><br>"
+msgstr ""
+
+msgid "Threads"
+msgstr ""
+
+msgid "Time 1"
+msgstr ""
+
+msgid "Time 2"
+msgstr ""
+
+msgid "Time 3"
+msgstr ""
+
+msgid "Time:            09:28:00"
+msgstr ""
+
+msgid "Title color"
+msgstr ""
+
+msgid "Total traffic: "
+msgstr ""
+
+msgid "Traffic"
+msgstr ""
+
+msgid "Traffic DND"
+msgstr ""
+
+msgid "Traffic limit"
+msgstr ""
+
+msgid "Traffic limit per minute"
+msgstr ""
+
+msgid "Traffic watchlist"
+msgstr ""
+
+msgid "Unable to obtain device temperature"
+msgstr ""
+
+msgid "Unattended"
+msgstr ""
+
+msgid "Unattended DND"
+msgstr ""
+
+msgid "Unattended task"
+msgstr ""
+
+msgid "Uptime: 1d 9h 28m 0s"
+msgstr ""
+
+msgid "Usually select the wan interface; choose yourself in multi-WAN environments"
+msgstr ""
+
+msgid "Via URL"
+msgstr ""
+
+msgid "Via interface"
+msgstr ""
+
+msgid "WAN info"
+msgstr ""
+
+msgid "WAN offline"
+msgstr ""
+
+msgid "WAN redial"
+msgstr ""
+
+msgid "WAN status"
+msgstr ""
+
+msgid "Watchlist"
+msgstr ""
+
+msgid "WeCom"
+msgstr ""
+
+msgid "WeCom Webhook"
+msgstr ""
+
+msgid "WeCom bot Webhook, enter only the part after key=<br><a href=\"https://work.weixin.qq.com/api/doc/90000/90136/91770\" target=\"_blank\">Get the code</a><br><br>"
+msgstr ""
+
+msgid "Web failed attempt"
+msgstr ""
+
+msgid "Web failed attempt alert"
+msgstr ""
+
+msgid "Web login"
+msgstr ""
+
+msgid "Web login alert"
+msgstr ""
+
+msgid "XX:XX:XX:XX:XX:XX-MyPhone"
+msgstr ""
+
+msgid "[Zed-OP] Device status changed"
+msgstr ""
+
+msgid "[Zed-OP] Test-OpenWRT status:"
+msgstr ""
+
+msgid "active: Default"
+msgstr ""
+
+msgid "cp: WeCom app"
+msgstr ""
+
+msgid "h"
+msgstr ""
+
+msgid "here"
+msgstr ""
+
+msgid "hr"
+msgstr ""
+
+msgid "in hours"
+msgstr ""
+
+msgid "in seconds"
+msgstr ""
+
+msgid "mail: Email"
+msgstr ""
+
+msgid "online 1d 9h"
+msgstr ""
+
+msgid "online 92d 8h"
+msgstr ""
+
+msgid "online 9d 28h"
+msgstr ""
+
+msgid "passive: Add to list only"
+msgstr ""
+
+msgid "sms: SMS"
+msgstr ""
+
+msgid "timeSensitive: Time-sensitive"
+msgstr ""
+
+msgid "webhook: Third-party webhook"
+msgstr ""
+
+msgid "wechat: PushPlus WeChat Official Account"
+msgstr ""
+
+msgid "PushBot"
+msgstr ""
+
+
+msgid "Logging disabled"
+msgstr ""
+
+
+msgid "Default"
+msgstr ""
+
+
+msgid "Custom command"
+msgstr ""
+
+
+msgid "Click to restart the pushbot service"
+msgstr ""
+
+msgid "Restarting..."
+msgstr ""
+
+
+
+msgid "PushBot - push router alerts and logs to DingTalk, WeCom and PushPlus."
+msgstr ""
+
+msgid "Forked from tty228/luci-app-serverchan, maintained by Zed-7nian."
+msgstr ""
+
+msgid "For issues, visit the <a href=\"https://github.com/zzsj0928/luci-app-pushbot\" target=\"_blank\">GitHub page</a>"
+msgstr ""

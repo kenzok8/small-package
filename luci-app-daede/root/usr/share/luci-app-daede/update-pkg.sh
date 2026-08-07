@@ -56,17 +56,17 @@ fi
 			if [ -n "$ver" ]; then
 				constraint="$PKG=$ver"
 			else
-				constraint="$PKG"
+				echo "result: 软件源中没有找到 $PKG，请检查网络或软件源配置"
+				exit 1
 			fi
 
 			echo "--- apk add -s $constraint ---"
-			if apk add -s "$constraint" 2>&1; then
-				echo "--- apk add $constraint ---"
-				apk add "$constraint" 2>&1
-			else
-				echo "result: apk cannot resolve $constraint; no packages were changed"
-				exit 1
+			if ! apk add -s "$constraint" 2>&1; then
+				echo "note: apk 预检失败，通常是系统上其它软件包的问题，继续尝试升级"
 			fi
+			echo "--- apk add $constraint ---"
+			apk add "$constraint" 2>&1
+			exit 0
 		) 9>/tmp/luci-app-daede.apk.lock
 		rc=$?
 		if [ "$rc" != 0 ]; then

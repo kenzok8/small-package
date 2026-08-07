@@ -3,6 +3,7 @@
 
 import { popen, open, readfile } from 'fs';
 import { cursor } from 'uci';
+import { translate } from 'luci.core';
 
 /* ── helper: bytes formatting ── */
 function format_bytes(n) {
@@ -90,7 +91,8 @@ return {
 	},
 
 	act_soc_result: function() {
-		let f = popen("cat /tmp/pushbot/soc_tmp 2>/dev/null || echo '无输出'", "r");
+		let fallback = translate('No output') ?? 'No output';
+		let f = popen("cat /tmp/pushbot/soc_tmp 2>/dev/null || echo '" + fallback + "'", "r");
 		if (f) {
 			http.write(f.read("all"));
 			f.close();
@@ -100,7 +102,7 @@ return {
 	get_log: function() {
 		let u = cursor();
 		if (u.get("pushbot", "pushbot", "debuglevel") != "1") {
-			http.write("日志已关闭");
+			http.write(translate('Logging disabled') ?? 'Logging disabled');
 			return;
 		}
 		let f = open("/tmp/pushbot/pushbot.log", "r");
@@ -110,6 +112,12 @@ return {
 	clear_log: function() {
 		let f = open("/tmp/pushbot/pushbot.log", "w");
 		if (f) { f.write(""); f.close(); }
+	},
+
+	act_restart: function() {
+		system("/etc/init.d/pushbot restart");
+		http.prepare_content("application/json");
+		http.write_json({ ok: true });
 	},
 
 	act_get_config: function() {

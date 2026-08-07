@@ -1,6 +1,6 @@
 {
 	"admin/services/pushbot": {
-		"title": "全能推送",
+		"title": "PushBot",
 		"order": 30,
 		"action": {
 			"type": "template",
@@ -66,6 +66,13 @@
 			"type": "function",
 			"module": "luci.controller.pushbot",
 			"function": "clear_log"
+		}
+	},
+	"admin/services/pushbot/restart": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "act_restart"
 		}
 	},
 	"admin/services/pushbot/get_config": {
