@@ -1,0 +1,73 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+Subject: [PATCH] daed: open sqlite database in WAL mode
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+订阅自动更新写库时，WebUI 登录查询被锁 5 秒后报 database is locked。
+
+开 WAL 并把 busy_timeout 提到 30 秒，读不再被写事务阻塞；WAL 附带的两个文件跟主库一样收紧到 0640。
+---
+ db/db.go                      | 17 ++++++++++++-----
+ pkg/sqlite/sqlite_mipsarch.go |  4 +++-
+ pkg/sqlite/sqlite_others.go   |  4 +++-
+ 3 files changed, 18 insertions(+), 7 deletions(-)
+
+diff --git a/db/db.go b/db/db.go
+index a79022b..6145443 100644
+--- a/db/db.go
++++ b/db/db.go
+@@ -50,13 +50,20 @@ func InitDatabase(configDir string) (err error) {
+ 	); err != nil {
+ 		return err
+ 	}
+-	if fi, err := os.Stat(path); err != nil {
+-		return err
+-	} else if fi.Mode()&0037 > 0 {
+-		// Too open, chmod it to 0640.
+-		if err = os.Chmod(path, 0640); err != nil {
++	for _, p := range []string{path, path + "-wal", path + "-shm"} {
++		fi, err := os.Stat(p)
++		if os.IsNotExist(err) {
++			continue
++		}
++		if err != nil {
+ 			return err
+ 		}
++		if fi.Mode()&0037 > 0 {
++			// Too open, chmod it to 0640.
++			if err = os.Chmod(p, 0640); err != nil {
++				return err
++			}
++		}
+ 	}
+ 
+ 	return nil
+diff --git a/pkg/sqlite/sqlite_mipsarch.go b/pkg/sqlite/sqlite_mipsarch.go
+index 7b8c1b4..8c275e5 100644
+--- a/pkg/sqlite/sqlite_mipsarch.go
++++ b/pkg/sqlite/sqlite_mipsarch.go
+@@ -10,6 +10,8 @@ import (
+ 	"gorm.io/gorm"
+ )
+ 
++const pragmas = "?_journal_mode=WAL&_busy_timeout=30000&_synchronous=FULL"
++
+ func Open(dsn string) gorm.Dialector {
+-	return sqlite.Open(dsn)
++	return sqlite.Open(dsn + pragmas)
+ }
+diff --git a/pkg/sqlite/sqlite_others.go b/pkg/sqlite/sqlite_others.go
+index 4598651..83d8b80 100644
+--- a/pkg/sqlite/sqlite_others.go
++++ b/pkg/sqlite/sqlite_others.go
+@@ -7,6 +7,8 @@ import (
+ 	"gorm.io/gorm"
+ )
+ 
++const pragmas = "?_pragma=journal_mode(WAL)&_pragma=busy_timeout(30000)&_pragma=synchronous(FULL)"
++
+ func Open(dsn string) gorm.Dialector {
+-	return sqlite.Open(dsn)
++	return sqlite.Open(dsn + pragmas)
+ }

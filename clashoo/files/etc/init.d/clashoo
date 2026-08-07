@@ -778,11 +778,30 @@ ensure_dns_when_core_stopped() {
 #===========================================================================================================================
 }
 
+_dnsmasq_state_digest() {
+	local _nr _cs
+	_nr="$(uci -q get dhcp.@dnsmasq[0].noresolv 2>/dev/null)"
+	_cs="$(uci -q get dhcp.@dnsmasq[0].cachesize 2>/dev/null)"
+	case "$_nr" in ''|0|false) _nr=0 ;; *) _nr=1 ;; esac
+	[ -n "$_cs" ] || _cs=default
+	printf '%s|%s|%s|%s' \
+		"$(uci -q get dhcp.@dnsmasq[0].server 2>/dev/null)" \
+		"$_nr" "$_cs" \
+		"$(uci -q get dhcp.@dnsmasq[0].resolvfile 2>/dev/null)"
+}
+
 revert_dns() {
 #===========================================================================================================================  
+	local _before _after
+	_before="$(_dnsmasq_state_digest)"
 	restore_dnsmasq_state
 	ensure_dns_when_core_stopped "${1:-0}"
 	rm -rf "$CUSLIST" "$CUSLITT" "$CUSLISTV" "$CUSLITTV" 2>/dev/null
+	_after="$(_dnsmasq_state_digest)"
+	if [ "$_before" = "$_after" ]; then
+		uci -q revert dhcp
+		return 0
+	fi
 	uci commit dhcp
 	/etc/init.d/dnsmasq restart >/dev/null 2>&1
 #=========================================================================================================================== 	 
@@ -1409,6 +1428,7 @@ singbox_dns_change() {
 	[ -z "$dns_port" ] && dns_port=1053
 
 	backup_dnsmasq_state
+	_sb_dns_before="$(_dnsmasq_state_digest)"
 	uci -q delete dhcp.@dnsmasq[0].server
 	add_clash_dns_server "$dns_port"
 	uci -q delete dhcp.@dnsmasq[0].resolvfile
@@ -1416,9 +1436,14 @@ singbox_dns_change() {
 	if [ "${dnscache:-0}" -eq 0 ]; then
 		uci set dhcp.@dnsmasq[0].cachesize='0'
 	fi
-	uci commit dhcp >/dev/null 2>&1
-	/etc/init.d/dnsmasq stop >/dev/null 2>&1
-	/etc/init.d/dnsmasq start >/dev/null 2>&1
+	if [ "$(_dnsmasq_state_digest)" != "$_sb_dns_before" ]; then
+		uci commit dhcp >/dev/null 2>&1
+		/etc/init.d/dnsmasq stop >/dev/null 2>&1
+		/etc/init.d/dnsmasq start >/dev/null 2>&1
+	else
+		uci -q revert dhcp >/dev/null 2>&1
+	fi
+	unset _sb_dns_before
 #===========================================================================================================================
 }
 
@@ -1636,11 +1661,6 @@ _start_validate_core() {
 	core="$(uci -q get clashoo.config.core 2>/dev/null)"
 	if is_singbox_selected; then
 		if [ ! -x /usr/bin/sing-box ]; then
-			if [ "${lang}" = "en" ] || [ "${lang}" = "auto" ]; then
-				echo "  $(date "+%Y-%m-%d %H:%M:%S") - sing-box core not found, please install the local sing-box binary first" >> /usr/share/clashoo/clashoo.txt
-			elif [ "${lang}" = "zh_cn" ]; then
-				echo "  $(date "+%Y-%m-%d %H:%M:%S")  - 找不到本地 sing-box 内核，请先安装 sing-box 二进制" >> /usr/share/clashoo/clashoo.txt
-			fi
 			log_msg "sing-box core not found, please install the local sing-box binary first" "找不到本地 sing-box 内核，请先安装 sing-box 二进制"
 			echo "Clashoo" > "$REAL_LOG"
 			return 1
@@ -1649,40 +1669,20 @@ _start_validate_core() {
 	fi
 
 	if [ "${core:-0}" -eq 1 ] && [ ! -x "$CLASH" ]; then
-		if [ "${lang}" = "en" ] || [ "${lang}" = "auto" ]; then
-			echo "  $(date "+%Y-%m-%d %H:%M:%S") - Smart core not found, please install the local Smart binary first" >> /usr/share/clashoo/clashoo.txt
-		elif [ "${lang}" = "zh_cn" ]; then
-			echo "  $(date "+%Y-%m-%d %H:%M:%S")  - 找不到本地 Smart 内核，请先安装 Smart 二进制" >> /usr/share/clashoo/clashoo.txt
-		fi
 		log_msg "Smart core not found, please install the local Smart binary first" "找不到本地 Smart 内核，请先安装 Smart 二进制"
 		echo "Clashoo" > "$REAL_LOG"
 		return 1
 	elif [ "${core:-0}" -eq 2 ] && [ ! -x "$CLASH" ]; then
-		if [ "${lang}" = "en" ] || [ "${lang}" = "auto" ]; then
-			echo "  $(date "+%Y-%m-%d %H:%M:%S") - mihomo core not found, detected binary is unavailable: $CLASH" >> /usr/share/clashoo/clashoo.txt
-		elif [ "${lang}" = "zh_cn" ]; then
-			echo "  $(date "+%Y-%m-%d %H:%M:%S")  - 找不到可用的 mihomo 内核: $CLASH" >> /usr/share/clashoo/clashoo.txt
-		fi
 		log_msg "mihomo core not found, detected binary is unavailable: $CLASH" "找不到可用的 mihomo 内核: $CLASH"
 		sleep 1
 		echo "Clashoo" > "$REAL_LOG"
 		return 1
 	elif [ "${core:-0}" -eq 3 ] && [ ! -x "$CLASH" ]; then
-		if [ "${lang}" = "en" ] || [ "${lang}" = "auto" ]; then
-			echo "  $(date "+%Y-%m-%d %H:%M:%S") - mihomo core not found, detected binary is unavailable: $CLASH" >> /usr/share/clashoo/clashoo.txt
-		elif [ "${lang}" = "zh_cn" ]; then
-			echo "  $(date "+%Y-%m-%d %H:%M:%S")  - 找不到可用的 mihomo 内核: $CLASH" >> /usr/share/clashoo/clashoo.txt
-		fi
 		log_msg "mihomo core not found, detected binary is unavailable: $CLASH" "找不到可用的 mihomo 内核: $CLASH"
 		sleep 1
 		echo "Clashoo" > "$REAL_LOG"
 		return 1
 	elif [ "${core:-0}" -ne 1 ] && [ "${core:-0}" -ne 2 ] && [ "${core:-0}" -ne 3 ] && [ ! -x "$CLASH" ]; then
-		if [ "${lang}" = "en" ] || [ "${lang}" = "auto" ]; then
-			echo "  $(date "+%Y-%m-%d %H:%M:%S") - invalid core setting (${core}), detected binary is unavailable: $CLASH" >> /usr/share/clashoo/clashoo.txt
-		elif [ "${lang}" = "zh_cn" ]; then
-			echo "  $(date "+%Y-%m-%d %H:%M:%S")  - 内核配置异常 (${core})，且找不到可用内核: $CLASH" >> /usr/share/clashoo/clashoo.txt
-		fi
 		log_msg "invalid core setting (${core}), detected binary is unavailable: $CLASH" "内核配置异常 (${core})，且找不到可用内核: $CLASH"
 		echo "Clashoo" > "$REAL_LOG"
 		return 1
@@ -1844,9 +1844,11 @@ _start_launch_core() {
 		log_msg "Configuring firewall rules" "配置防火墙规则"
 		backend_apply_rules >/dev/null 2>&1
 
-		log_msg "Reloading DNS resolver" "重启 DNS 解析"
-		/etc/init.d/dnsmasq stop >/dev/null 2>&1
-		/etc/init.d/dnsmasq start >/dev/null 2>&1
+		if [ "$(_dnsmasq_state_digest)" != "$_dnsmasq_digest_before" ]; then
+			log_msg "Reloading DNS resolver" "重启 DNS 解析"
+			/etc/init.d/dnsmasq stop >/dev/null 2>&1
+			/etc/init.d/dnsmasq start >/dev/null 2>&1
+		fi
 
 		restore >/dev/null 2>&1
 		add_cron
@@ -1998,12 +2000,13 @@ fi
 
 if [ -f "$CONFIG_YAML" ] && [ -s "$CONFIG_YAML" ] ; then
 
+	_dnsmasq_digest_before="$(_dnsmasq_state_digest)"
 	_start_prepare_config
 
 	_start_launch_core
 
 else
-	if [ "${lang}" = "en" ] || [ "${lang}" = "auto" ]; then
+	if [ "${lang}" = "en" ]; then
 		echo "  $(date "+%Y-%m-%d %H:%M:%S") -  problem with config.yaml,  config.yaml is either empty or not found " >> /usr/share/clashoo/clashoo.txt
 	elif [ "${lang}" = "zh_cn" ]; then
 		echo "  $(date "+%Y-%m-%d %H:%M:%S")  - 你的config.yaml有问题还是为了空 0kb " >> /usr/share/clashoo/clashoo.txt
@@ -2017,7 +2020,7 @@ else
 	runtime_state_set "health_status" "stopped"
 	runtime_state_set "health_detail" "service_disabled"
 	runtime_state_set "updated_at" "$(date +%s)"
-	if [ "${lang}" = "en" ] || [ "${lang}" = "auto" ]; then
+	if [ "${lang}" = "en" ]; then
 		echo "  $(date "+%Y-%m-%d %H:%M:%S") - Enable Client and Start Client Again" >> /usr/share/clashoo/clashoo.txt
 	elif [ "${lang}" = "zh_cn" ]; then
 		echo "  $(date "+%Y-%m-%d %H:%M:%S") - 启用客户端并重新启动客户端" >> /usr/share/clashoo/clashoo.txt
@@ -2081,7 +2084,7 @@ stop_service(){
 
 		echo "0" > /usr/share/clashoo/logstatus_check >/dev/null 2>&1
 
-		if [ "${lang}" = "en" ] || [ "${lang}" = "auto" ]; then
+		if [ "${lang}" = "en" ]; then
 			echo "  $(date "+%Y-%m-%d %H:%M:%S") - CLIENT IS DISABLED " >> /usr/share/clashoo/clashoo.txt
 		elif [ "${lang}" = "zh_cn" ]; then
 			echo "  $(date "+%Y-%m-%d %H:%M:%S")  - 客户端被禁用 " >> /usr/share/clashoo/clashoo.txt

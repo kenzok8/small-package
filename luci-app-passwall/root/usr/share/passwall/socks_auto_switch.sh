@@ -12,21 +12,31 @@ check_process() {
 }
 
 test_url() {
-	local url=$1
-	local try=1
-	[ -n "$2" ] && try=$2
-	local timeout=2
-	[ -n "$3" ] && timeout=$3
-	local extra_params=$4
-	if /usr/bin/curl --help all | grep -q "\-\-retry-all-errors"; then
-		extra_params="--retry-all-errors ${extra_params}"
+	local url="$1"
+	local try="${2:-1}"
+	local timeout="${3:-2}"
+	local extra_params="$4"
+	local repeat="$5"
+
+	if [ -z "$curl_retry_all_errors" ]; then
+		if /usr/bin/curl --help all | grep -q "\-\-retry-all-errors"; then
+			curl_retry_all_errors=1
+		fi
 	fi
-	local status=$(/usr/bin/curl -I -o /dev/null -skL ${extra_params} --connect-timeout ${timeout} --retry ${try} -w %{http_code} "$url")
-	case "$status" in
-		204)
-			status=200
-		;;
-	esac
+	[ "$curl_retry_all_errors" = "1" ] && extra_params="--retry-all-errors ${extra_params}"
+
+	local max_time=$((timeout * (try + 1) + try + 3))
+	curl_test() {
+		/usr/bin/curl -skIL -o /dev/null ${extra_params} --max-time ${max_time} --connect-timeout ${timeout} --retry ${try} --retry-delay 1 -w "%{http_code}" "$url"
+	}
+
+	local status=$(curl_test)
+	[ "$status" = "204" ] && status=200
+	if [ "$status" = "200" ] && [ "$repeat" = "1" ]; then
+		sleep 3s
+		status=$(curl_test)
+		[ "$status" = "204" ] && status=200
+	fi
 	echo $status
 }
 
@@ -59,7 +69,7 @@ test_node() {
 		NO_REC_PROCESS=1 $APP_FILE run_socks flag="test_node_${node_id}" node=${node_id} bind=127.0.0.1 socks_port=${_tmp_port} config_file=test_node_${node_id}.json
 		sleep 2s
 		local curlx="socks5h://127.0.0.1:${_tmp_port}"
-		local _proxy_status=$(test_url "${probe_url}" ${retry_num} ${connect_timeout} "-x $curlx")
+		local _proxy_status=$(test_url "${probe_url}" ${retry_num} ${connect_timeout} "-x $curlx" 1)
 		# 结束 SS 插件进程
 		local pid_file="/tmp/etc/${CONFIG}/test_node_${node_id}_plugin.pid"
 		[ -s "$pid_file" ] && kill -9 "$(head -n 1 "$pid_file")" >/dev/null 2>&1
@@ -69,6 +79,61 @@ test_node() {
 			return 0
 		fi
 	}
+	return 1
+}
+
+try_switch_backup() {
+	local b_nodes="$1"
+	local now_node="$2"
+	local total tried
+	local new_node msg
+	local first_node found node
+
+	# 只有一个后备节点时，与主节点轮询
+	if [ "$backup_node_num" -eq 1 ]; then
+		b_nodes="$b_nodes $main_node"
+	fi
+
+	total=$(printf "%s\n" "$b_nodes" | wc -w)
+	tried=0
+
+	while [ "$tried" -lt "$total" ]; do
+		new_node=""
+		first_node=""
+		found=""
+		for node in $b_nodes; do
+			[ -z "$first_node" ] && first_node="$node"         # 记录第一个节点
+			[ "$found" = "1" ] && { new_node="$node"; break; } # 找到当前节点后取下一个
+			[ "$node" = "$now_node" ] && found=1               # 标记找到当前节点
+		done
+		# 如果没找到当前节点，或者当前节点是最后一个，就取第一个节点
+		[ -z "$new_node" ] && new_node="$first_node"
+
+		local node_role node_type node_remarks
+		if [ "$new_node" = "$main_node" ]; then
+			node_role="主节点"
+		else
+			node_role="后备节点"
+		fi
+		node_type=$(config_n_get $new_node type)
+		node_remarks=$(config_n_get $new_node remarks)
+		echolog "Socks切换检测：端口[${socks_port}] 尝试${node_role}【${node_type}：[$node_remarks]】"
+
+		if test_node ${new_node}; then
+			check_process
+			echolog "Socks切换检测：端口[${socks_port}]【${node_type}：[$node_remarks]】正常，切换到此节点！"
+			NO_REC_PROCESS=1 $APP_FILE socks_node_switch flag=${id} new_node=${new_node}
+			[ $? -eq 0 ] && {
+				echolog "Socks切换检测：端口[${socks_port}] 节点切换完毕！"
+			}
+			return 0
+		fi
+		echolog "Socks切换检测：端口[${socks_port}]【${node_type}：[$node_remarks]】异常。"
+		now_node="$new_node"
+		tried=$((tried + 1))
+	done
+
+	echolog "Socks切换检测：端口[${socks_port}] 所有节点均不可用！"
 	return 1
 }
 
@@ -85,9 +150,7 @@ test_auto_switch() {
 		fi
 	}
 
-	[ $flag -le 1 ] && {
-		main_node=$now_node
-	}
+	[ $flag -le 1 ] && main_node=$now_node
 
 	local status=$(test_proxy)
 	if [ "$status" = "2" ]; then
@@ -100,55 +163,21 @@ test_auto_switch() {
 		test_node ${main_node}
 		[ $? -eq 0 ] && {
 			check_process
-			#主节点正常，切换到主节点
 			echolog "Socks切换检测：端口[${socks_port}] 主节点【$(config_n_get $main_node type)：[$(config_n_get $main_node remarks)]】正常，切换到主节点！"
 			NO_REC_PROCESS=1 $APP_FILE socks_node_switch flag=${id} new_node=${main_node}
-			[ $? -eq 0 ] && {
-				echolog "Socks切换检测：端口[${socks_port}] 节点切换完毕！"
-			}
+			[ $? -eq 0 ] && echolog "Socks切换检测：端口[${socks_port}] 节点切换完毕！"
 			return 0
 		}
 	fi
 
-	if [ "$status" = "0" ]; then
+	[ "$status" = "0" ] && {
 		#echolog "Socks切换检测：${id}【$(config_n_get $now_node type)：[$(config_n_get $now_node remarks)]】正常。"
 		return 0
-	elif [ "$status" = "1" ]; then
-		local new_node msg
-		if [ "$backup_node_num" -gt 1 ]; then
-			# 有多个后备节点时
-			local first_node found node
-			for node in $b_nodes; do
-				[ -z "$first_node" ] && first_node="$node"       # 记录第一个节点
-				[ "$found" = "1" ] && { new_node="$node"; break; } # 找到当前节点后取下一个
-				[ "$node" = "$now_node" ] && found=1             # 标记找到当前节点
-			done
-			# 如果没找到当前节点，或者当前节点是最后一个，就取第一个节点
-			[ -z "$new_node" ] && new_node="$first_node"
-			if [ "$new_node" = "$main_node" ]; then
-				msg="切换到主节点检测！"
-			else
-				msg="切换到$([ "$now_node" = "$main_node" ] && echo 备用节点 || echo 下一个备用节点)检测！"
-			fi
-		else
-			# 只有一个后备节点时，与主节点轮询
-			new_node=$([ "$now_node" = "$main_node" ] && echo "$b_nodes" || echo "$main_node")
-			msg="切换到$([ "$now_node" = "$main_node" ] && echo 备用节点 || echo 主节点)检测！"
-		fi
-		echolog "Socks切换检测：端口[${socks_port}]【$(config_n_get $now_node type)：[$(config_n_get $now_node remarks)]】异常，$msg"
-		test_node ${new_node}
-		if [ $? -eq 0 ]; then
-			check_process
-			echolog "Socks切换检测：端口[${socks_port}]【$(config_n_get $new_node type)：[$(config_n_get $new_node remarks)]】正常，切换到此节点！"
-			NO_REC_PROCESS=1 $APP_FILE socks_node_switch flag=${id} new_node=${new_node}
-			[ $? -eq 0 ] && {
-				echolog "Socks切换检测：端口[${socks_port}] 节点切换完毕！"
-			}
-			return 0
-		else
-			test_auto_switch "${b_nodes}" ${new_node}
-		fi
-	fi
+	}
+
+	echolog "Socks切换检测：端口[${socks_port}]【$(config_n_get $now_node type)：[$(config_n_get $now_node remarks)]】异常。"
+	try_switch_backup "$b_nodes" "$now_node"
+	return $?
 }
 
 start() {

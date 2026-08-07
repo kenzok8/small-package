@@ -1,6 +1,4 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: kenzok8 <kenzok8@gmail.com>
-Date: Tue, 21 Jul 2026 02:53:42 +0800
 Subject: [PATCH] daed: strictly reconcile subscription updates
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

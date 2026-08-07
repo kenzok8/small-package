@@ -1,0 +1,166 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+Subject: [PATCH] daed: reload dae outside the database transaction
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+配置生效前先提交读事务，reload 完再用短事务写运行状态。
+
+原来整个 reload 都在事务里，最长可占着数据库锁一百多秒；写状态时按 ID 重查仍存在的分组，避免把 reload 期间被删的分组重新插回去。
+---
+ graphql/service/config/mutation_utils.go | 77 ++++++++++++++++--------
+ 1 file changed, 53 insertions(+), 24 deletions(-)
+
+diff --git a/graphql/service/config/mutation_utils.go b/graphql/service/config/mutation_utils.go
+index feb94d3..59f0ebd 100644
+--- a/graphql/service/config/mutation_utils.go
++++ b/graphql/service/config/mutation_utils.go
+@@ -270,28 +270,12 @@ func restartAfterReloadTimeout() {
+ 	}()
+ }
+ 
+-func runTransaction(ctx context.Context, noLoad bool) (n int32, err error) {
+-	tx := db.BeginTx(ctx)
+-	if tx.Error != nil {
+-		return 0, tx.Error
+-	}
+-	n, err = runLocked(tx, noLoad)
+-	if err != nil {
+-		tx.Rollback()
+-		return 0, err
+-	}
+-	if err = tx.Commit().Error; err != nil {
+-		return 0, err
+-	}
+-	return n, nil
+-}
+-
+ func Run(ctx context.Context, noLoad bool) (n int32, err error) {
+ 	if ok := runLock.TryLock(); !ok {
+ 		return 0, fmt.Errorf("the last request didn't complete; make a cup of tea and take a break")
+ 	}
+ 	defer runLock.Unlock()
+-	return runTransaction(ctx, noLoad)
++	return runLocked(ctx, noLoad)
+ }
+ 
+ func ApplyIfRunning(ctx context.Context) error {
+@@ -307,11 +291,11 @@ func ApplyIfRunning(ctx context.Context) error {
+ 	if err != nil || !modified {
+ 		return err
+ 	}
+-	_, err = runTransaction(ctx, false)
++	_, err = runLocked(ctx, false)
+ 	return err
+ }
+ 
+-func runLocked(d *gorm.DB, noLoad bool) (n int32, err error) {
++func runLocked(ctx context.Context, noLoad bool) (n int32, err error) {
+ 	//// Dry run.
+ 	if noLoad {
+ 		ch := make(chan error)
+@@ -336,18 +320,38 @@ func runLocked(d *gorm.DB, noLoad bool) (n int32, err error) {
+ 		}
+ 
+ 		// Running -> false
++		tx := db.BeginTx(ctx)
++		if tx.Error != nil {
++			return 0, tx.Error
++		}
+ 		var sys db.System
+-		if err = d.Model(&db.System{}).FirstOrCreate(&sys).Error; err != nil {
++		if err = tx.Model(&db.System{}).FirstOrCreate(&sys).Error; err != nil {
++			tx.Rollback()
+ 			return 0, err
+ 		}
+-		if err = d.Model(&sys).Updates(map[string]interface{}{
++		if err = tx.Model(&sys).Updates(map[string]interface{}{
+ 			"running": false,
+ 		}).Error; err != nil {
++			tx.Rollback()
++			return 0, err
++		}
++		if err = tx.Commit().Error; err != nil {
+ 			return 0, err
+ 		}
+ 		return 1, nil
+ 	}
+ 
++	d := db.BeginTx(ctx)
++	if d.Error != nil {
++		return 0, d.Error
++	}
++	readTx := d
++	defer func() {
++		if readTx != nil {
++			readTx.Rollback()
++		}
++	}()
++
+ 	//// Run selected global+dns+routing.
+ 	/// Get them from database and parse them to daeConfig.
+ 	var mConfig db.Config
+@@ -513,6 +517,11 @@ func runLocked(d *gorm.DB, noLoad bool) (n int32, err error) {
+ 		c.Node = append(c.Node, daeConfig.KeyableString(fmt.Sprintf("%v:%v", node.uniqueName, node.dbNode.Link)))
+ 	}
+ 
++	if err = readTx.Commit().Error; err != nil {
++		return 0, err
++	}
++	readTx = nil
++
+ 	/// Reload with current config.
+ 	chReloadCallback := make(chan error)
+ 	reloadMsg := &dae.ReloadMessage{
+@@ -536,20 +545,37 @@ func runLocked(d *gorm.DB, noLoad bool) (n int32, err error) {
+ 	}
+ 
+ 	// Save running status
++	tx := db.BeginTx(context.WithoutCancel(ctx))
++	if tx.Error != nil {
++		return 0, tx.Error
++	}
++	defer func() {
++		if err != nil {
++			tx.Rollback()
++		}
++	}()
+ 	var sys db.System
+-	if err = d.Model(&db.System{}).FirstOrCreate(&sys).Error; err != nil {
++	if err = tx.Model(&db.System{}).FirstOrCreate(&sys).Error; err != nil {
+ 		return 0, err
+ 	}
+ 	var gvs uint
+ 	var gids []string
++	groupIds := make([]uint, 0, len(groups))
+ 	for _, g := range groups {
+ 		gvs += g.Version
+ 		gids = append(gids, fmt.Sprintf("%x", g.ID))
++		groupIds = append(groupIds, g.ID)
++	}
++	liveGroups := make([]db.Group, 0, len(groupIds))
++	if len(groupIds) > 0 {
++		if err = tx.Where("id IN ?", groupIds).Find(&liveGroups).Error; err != nil {
++			return 0, err
++		}
+ 	}
+ 	sort.Slice(gids, func(i, j int) bool {
+ 		return gids[i] < gids[j]
+ 	})
+-	if err = d.Model(&sys).Updates(map[string]interface{}{
++	if err = tx.Model(&sys).Updates(map[string]interface{}{
+ 		"running":                   true,
+ 		"running_config_id":         mConfig.ID,
+ 		"running_config_version":    mConfig.Version,
+@@ -562,7 +588,10 @@ func runLocked(d *gorm.DB, noLoad bool) (n int32, err error) {
+ 	}).Error; err != nil {
+ 		return 0, err
+ 	}
+-	if err = d.Model(&sys).Association("RunningGroups").Replace(groups); err != nil {
++	if err = tx.Model(&sys).Association("RunningGroups").Replace(liveGroups); err != nil {
++		return 0, err
++	}
++	if err = tx.Commit().Error; err != nil {
+ 		return 0, err
+ 	}
+ 

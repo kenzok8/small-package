@@ -1,0 +1,68 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+Subject: [PATCH] daed: serialize scheduled subscription updates
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+订阅更新的入口读也纳入同一把锁，整轮更新串行，排到才开始计时。
+
+多个订阅定时任务撞在同一分钟时会互相锁死。
+---
+ .../service/subscription/mutation_utils.go    | 29 +++++++++++++------
+ 1 file changed, 20 insertions(+), 9 deletions(-)
+
+diff --git a/graphql/service/subscription/mutation_utils.go b/graphql/service/subscription/mutation_utils.go
+index c6bc3e1..e2aec32 100644
+--- a/graphql/service/subscription/mutation_utils.go
++++ b/graphql/service/subscription/mutation_utils.go
+@@ -225,12 +225,8 @@ func AddUpdateScheduler(ctx context.Context, id uint) {
+ 		tag = *sub.Tag
+ 	}
+ 	logrus.Info("Subscription " + tag + " update task enabled, with exp " + sub.CronExp)
+-	_, err := s.Cron(sub.CronExp).Do(func() {
+-		ctx, cancel := context.WithTimeout(context.Background(), scheduledUpdateTimeout)
+-		defer cancel()
+-		if _, err := UpdateById(ctx, sub.ID); err != nil {
+-			logrus.Error(err)
+-		}
++	_, err := s.Cron(sub.CronExp).SingletonMode().Do(func() {
++		runScheduledUpdate(sub.ID)
+ 	})
+ 	if err != nil {
+ 		logrus.Errorf("Failed to schedule subscription %d update: invalid cron expression '%s': %v", sub.ID, sub.CronExp, err)
+@@ -364,9 +360,6 @@ func reconcileSubscriptionNodes(tx *gorm.DB, subId uint, links []string) error {
+ }
+ 
+ func updateSubscriptionTx(ctx context.Context, m *db.Subscription, subId uint, links []string) (err error) {
+-	subscriptionUpdateMu.Lock()
+-	defer subscriptionUpdateMu.Unlock()
+-
+ 	tx := db.BeginTx(ctx)
+ 	if tx.Error != nil {
+ 		return tx.Error
+@@ -404,7 +397,25 @@ func updateSubscriptionTx(ctx context.Context, m *db.Subscription, subId uint, l
+ 	return tx.Commit().Error
+ }
+ 
++func runScheduledUpdate(subId uint) {
++	subscriptionUpdateMu.Lock()
++	defer subscriptionUpdateMu.Unlock()
++
++	ctx, cancel := context.WithTimeout(context.Background(), scheduledUpdateTimeout)
++	defer cancel()
++	if _, err := updateByIdLocked(ctx, subId); err != nil {
++		logrus.Error(err)
++	}
++}
++
+ func UpdateById(ctx context.Context, subId uint) (sub *db.Subscription, err error) {
++	subscriptionUpdateMu.Lock()
++	defer subscriptionUpdateMu.Unlock()
++
++	return updateByIdLocked(ctx, subId)
++}
++
++func updateByIdLocked(ctx context.Context, subId uint) (sub *db.Subscription, err error) {
+ 	var m db.Subscription
+ 	if err = db.DB(ctx).Where(&db.Subscription{ID: subId}).First(&m).Error; err != nil {
+ 		return nil, err
