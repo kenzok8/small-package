@@ -1733,7 +1733,7 @@ function gen_config(var)
 			elseif remote_dns_query_strategy == "UseIPv6" then
 				table.insert(fakedns, fakedns6)
 			end
-			if remote_dns_fake and inner_fakedns ~= "1" then
+			if remote_dns_fake then
 				table.insert(dns.servers, 1, _remote_fakedns)
 			end
 		end

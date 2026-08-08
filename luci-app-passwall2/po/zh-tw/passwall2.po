@@ -2420,3 +2420,9 @@ msgstr "禁用 TLS 連接復用"
 
 msgid "Not Set"
 msgstr "未設置"
+
+msgid "Cipher Suites"
+msgstr "密碼套件"
+
+msgid "Configures the list of supported cipher suites, separated by :"
+msgstr "配置支援的密碼套件列表，以冒號 (:) 分隔。"

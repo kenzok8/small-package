@@ -2426,3 +2426,9 @@ msgstr "Отключить повторное использование TLS"
 
 msgid "Not Set"
 msgstr "Не задано"
+
+msgid "Cipher Suites"
+msgstr "Наборы шифров"
+
+msgid "Configures the list of supported cipher suites, separated by :"
+msgstr "Задает список поддерживаемых наборов шифров, разделенных двоеточием (:)."

@@ -23,8 +23,10 @@ s.anonymous = true
 s.addremove = true
 s.extedit = api.url("acl_config", "%s")
 function s.create(e, t)
-	t = TypedSection.create(e, t)
-	luci.http.redirect(e.extedit:format(t))
+	local uuid = api.gen_short_uuid(5)
+	uuid = "acl_" .. uuid
+	TypedSection.create(e, uuid)
+	luci.http.redirect(e.extedit:format(uuid))
 end
 
 ---- Enable

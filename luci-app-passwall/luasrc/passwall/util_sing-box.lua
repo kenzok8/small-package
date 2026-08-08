@@ -1997,17 +1997,6 @@ function gen_config(var)
 			else default_dns_flag = "direct"
 			end
 		end
-		if default_dns_flag == "remote" then
-			if remote_dns_fake then
-				table.insert(dns.rules, {
-					query_type = { "A", "AAAA" },
-					server = fakedns_tag,
-					disable_cache = true,
-					rewrite_ttl = 30,
-					strategy = remote_strategy
-				})
-			end
-		end
 		dns.final = default_dns_flag
 
 		--按分流顺序DNS
@@ -2060,6 +2049,28 @@ function gen_config(var)
 					end
 					table.insert(dns.rules, dns_rule)
 				end
+			end
+		end
+		if default_dns_flag == "remote" then
+			if remote_dns_fake then
+				-- When default is not direct and enable fakedns, default DNS use FakeDNS.
+				local fakedns_dns_rule = {
+					query_type = {
+						"A", "AAAA"
+					},
+					server = fakedns_tag,
+					disable_cache = true,
+					rewrite_ttl = 30,
+					strategy = remote_strategy,
+				}
+				table.insert(dns.rules, fakedns_dns_rule)
+			else
+				local remote_dns_rule = {
+					server = "remote",
+					disable_cache = true,
+					strategy = remote_strategy,
+				}
+				table.insert(dns.rules, remote_dns_rule)
 			end
 		end
 		local dns_in_inbound = {

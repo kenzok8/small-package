@@ -157,12 +157,15 @@ function deltemp(){
 	fi
 }
 
-# 检测程序开关
+# 检测程序开关：仅当明确关闭（=0）时停止服务；读取失败/未设置（空）不自杀，交由主循环条件自然退出
 function enable_detection(){
 	[ ! "$1" ] && local time_n=1
 	for i in `seq 1 $time_n`; do
-		get_config pushbot_enable;[ -z "$pushbot_enable" ] || [ "$pushbot_enable" -eq "0" ] && `/etc/init.d/pushbot stop` || sleep 1
+		get_config pushbot_enable
+		[ "$pushbot_enable" = "0" ] && `/etc/init.d/pushbot stop` && return 0
+		sleep 1
 	done
+	return 0
 }
 
 # 获取 ip
@@ -1402,8 +1405,8 @@ echo "`date "+%Y-%m-%d %H:%M:%S"` 【初始化】载入在线设备" >> ${logfil
 > ${dir}send_enable.lock && pushbot_first && deltemp
 echo "`date "+%Y-%m-%d %H:%M:%S"` 【初始化】初始化完成" >> ${logfile}
 
-# 循环
-while [ "$pushbot_enable" -eq "1" ]; do
+# 循环（仅当明确启用 =1 时运行；0/空/读取失败均不进入，脚本自然退出，不空转）
+while [ "$pushbot_enable" = "1" ]; do
 	deltemp
 	usage update
 	pushbot_disturb;disturb=$?

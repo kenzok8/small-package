@@ -113,7 +113,9 @@ s.anonymous = true
 s.addremove = true
 
 s.create = function(e, t)
-	TypedSection.create(e, api.gen_short_uuid())
+	local uuid = api.gen_short_uuid(5)
+	uuid = "haproxy_" .. uuid
+	TypedSection.create(e, uuid)
 end
 
 s.remove = function(self, section)

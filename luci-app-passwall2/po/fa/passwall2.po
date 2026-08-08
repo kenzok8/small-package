@@ -2428,3 +2428,9 @@ msgstr "غیرفعال کردن استفاده مجدد از TLS"
 
 msgid "Not Set"
 msgstr "تنظیم نشده"
+
+msgid "Cipher Suites"
+msgstr "سوئیت‌های رمزدار"
+
+msgid "Configures the list of supported cipher suites, separated by :"
+msgstr "فهرست مجموعه‌های رمز پشتیبانی‌شده را که با موارد زیر از هم جدا شده‌اند، پیکربندی می‌کند:"

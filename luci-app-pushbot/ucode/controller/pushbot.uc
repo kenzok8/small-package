@@ -362,6 +362,18 @@ return {
 			}
 		}
 		uci_commit("pushbot");
+
+		/* 保存后联动服务状态（避免"config 启用但服务未启动"）：
+		 *   enable=1 → 服务未跑则启动，已在跑则重启使新配置生效
+		 *   enable=0 → 停止服务（配合主脚本 enable_detection 双保险）
+		 *   后台(&)执行，避免阻塞 HTTP 请求导致前端"保存失败" */
+		let u = cursor();
+		let en = u.get("pushbot", "pushbot", "pushbot_enable");
+		if (en == "1" || en == 1 || en == true)
+			system("/etc/init.d/pushbot start >/dev/null 2>&1 &");
+		else if (en == "0" || en == 0 || en == false)
+			system("/etc/init.d/pushbot stop >/dev/null 2>&1 &");
+
 		http.write_json({ ok: true });
 	},
 

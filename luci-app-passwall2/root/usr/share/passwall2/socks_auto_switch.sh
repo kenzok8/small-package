@@ -77,8 +77,8 @@ test_auto_switch() {
 	local b_nodes=$1
 	local now_node=$2
 	[ -z "$now_node" ] && {
-		if [ -n "$(get_cache_var "socks_${id}")" ]; then
-			now_node=$(get_cache_var "socks_${id}")
+		if [ -n "$(get_cache_var "${id}")" ]; then
+			now_node=$(get_cache_var "${id}")
 		else
 			#log_i18n 0 "Socks switch detection: Unknown error."
 			return 1
