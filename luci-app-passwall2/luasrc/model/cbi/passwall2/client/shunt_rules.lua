@@ -76,7 +76,7 @@ remarks.validate = function(self, value, section)
 	return value
 end
 
-o = s:option(Value, "group", translate("Group Name"))
+o = s:option(Value, "group", translate("Shunt Rule Group"))
 o.default = ""
 o:value("", translate("default"))
 for k, v in pairs(groups) do

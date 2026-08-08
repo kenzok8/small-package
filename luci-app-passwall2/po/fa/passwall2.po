@@ -337,8 +337,8 @@ msgstr "آیا از حذف گره‌های انتخاب شده اطمینان د
 msgid "You no select nodes !"
 msgstr "شما هیچ گره‌ای انتخاب نکرده‌اید!"
 
-msgid "Are you sure set to"
-msgstr "آیا مطمئن هستید که تنظیم شود به"
+msgid "Are you sure set this node?"
+msgstr "مطمئنی این گره رو تنظیم کردی؟"
 
 msgid "the server?"
 msgstr "سرور؟"
@@ -969,6 +969,9 @@ msgstr "توجه: مصرف منابع را افزایش می‌دهد."
 
 msgid "Shunt Rule"
 msgstr "قانون شنت"
+
+msgid "Shunt Rule Group"
+msgstr "گروه قوانین شنت"
 
 msgid "Please note attention to the priority, the higher the order, the higher the priority."
 msgstr "لطفاً به اولویت توجه کنید، هرچه ترتیب بالاتر باشد، اولویت بیشتر است."

@@ -334,8 +334,8 @@ msgstr "Вы действительно хотите удалить выбран
 msgid "You no select nodes !"
 msgstr "Вы не выбрали ни одного узла!"
 
-msgid "Are you sure set to"
-msgstr "Вы действительно хотите назначить"
+msgid "Are you sure set this node?"
+msgstr "Вы уверены, что задали этот узел?"
 
 msgid "the server?"
 msgstr "активным сервером?"
@@ -970,6 +970,9 @@ msgstr "Примечание: увеличивает нагрузку на си�
 
 msgid "Shunt Rule"
 msgstr "Правила разделения трафика"
+
+msgid "Shunt Rule Group"
+msgstr "Группа правил шунтирования"
 
 msgid "Please note attention to the priority, the higher the order, the higher the priority."
 msgstr "Обратите внимание: правила выше в списке имеют более высокий приоритет."

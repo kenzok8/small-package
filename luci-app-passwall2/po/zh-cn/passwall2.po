@@ -334,8 +334,8 @@ msgstr "你确定要删除选择的节点吗？"
 msgid "You no select nodes !"
 msgstr "你没有选择任何节点！"
 
-msgid "Are you sure set to"
-msgstr "你确定要设为"
+msgid "Are you sure set this node?"
+msgstr "你确定要设置这个节点吗？"
 
 msgid "the server?"
 msgstr "服务器吗？"
@@ -961,6 +961,9 @@ msgstr "注：会增加一些系统资源的开销。"
 
 msgid "Shunt Rule"
 msgstr "分流规则"
+
+msgid "Shunt Rule Group"
+msgstr "分流规则组"
 
 msgid "Please note attention to the priority, the higher the order, the higher the priority."
 msgstr "请注意优先级问题，排序越上面优先级越高。"

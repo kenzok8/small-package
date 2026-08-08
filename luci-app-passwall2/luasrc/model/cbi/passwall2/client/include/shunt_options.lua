@@ -114,7 +114,7 @@ if api.is_finded("geoview") then
 		.. "</ul>"
 end
 
-shunt_group = add_option(ListValue, "shunt_group", translate("Group Name"))
+shunt_group = add_option(ListValue, "shunt_group", translate("Shunt Rule Group"))
 shunt_group:value("", translate("default"))
 for k, v in pairs(groups) do
 	shunt_group:value(k)

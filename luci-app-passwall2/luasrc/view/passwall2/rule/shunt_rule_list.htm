@@ -254,16 +254,6 @@ table td, .table .td {
 		);
 	}
 
-	function arraysEqual(a, b) {
-		if (a === b) return true;
-		if (a == null || b == null) return false;
-		if (a.length !== b.length) return false;
-		for (let i = 0; i < a.length; i++) {
-			if (a[i] !== b[i]) return false;
-		}
-		return true;
-	}
-
 	// List drag and rearrange
 	function initSortableForTable(table) {
 		if (!table) return null;
@@ -355,7 +345,7 @@ table td, .table .td {
 
 <script type="text/template" id="shunt_rule-tr-template">
 	<tr class="tr cbi-section-table-row" id="cbi-<%=appname%>-{{id}}">
-		<td class="td cbi-value-field"><h3>{{id}}</h3></td>
+		<td class="td cbi-value-field"><b>{{id}}</b></td>
 		<td class="td cbi-value-field">{{remarks}}</td>
 		<td class="td cbi-section-table-cell nowrap cbi-section-actions td-actions">
 			<div class="shunt_rule-wrapper">
@@ -368,11 +358,11 @@ table td, .table .td {
 	</tr>
 </script>
 
-<fieldset class="cbi-section">
-	<legend>Sing-Box/Xray <%:Shunt Rule%></legend>
-	<div class="cbi-section-descr"><a style="color: red"><%:Please note attention to the priority, the higher the order, the higher the priority.%></a></div>
+<div class="cbi-section">
+	<h3>Sing-Box/Xray <%:Shunt Rule%></h3>
+	<div class="cbi-section-descr"><a style="color: red;text-decoration: none"><%:Please note attention to the priority, the higher the order, the higher the priority.%></a></div>
 	<div id="shunt_rule_list"></div>
-</fieldset>
+</div>
 
 <script type="text/javascript">
 	function loadNodeList() {

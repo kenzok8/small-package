@@ -88,6 +88,6 @@ end
 
 s:append(Template(appname .. "/rule/rule_version"))
 
-s:append(Template(appname .. "/rule/shunt_rule_list"))
+m:append(Template(appname .. "/rule/shunt_rule_list"))
 
 return api.return_map(m)
