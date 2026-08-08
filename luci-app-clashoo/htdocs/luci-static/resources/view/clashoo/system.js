@@ -413,7 +413,7 @@ return view.extend({
 
   load: function () {
     return Promise.all([
-      fastResolve(clashoo.getCpuArch(), 1200, ''),
+      fastResolve(clashoo.getCpuArch(), 5000, ''),
       fastResolve(clashoo.getLogStatus(), 1200, {}),
       fastResolve(clashoo.readLog(), 1200, ''),
       uci.load('clashoo'),
@@ -737,12 +737,14 @@ return view.extend({
     arch = arch || {};
     var sys = arch.system || _("Unknown");
     var detected = this._detectMihomoArch(this._compCpuArch || sys) || '';
-    var cur = arch.download_core || detected || 'amd64-compatible';
+    var cur = arch.download_core || detected || '';
     var archList = ['amd64-compatible', 'amd64-v1', 'amd64-v2', 'amd64-v3', 'arm64', 'armv7', 'armv6', 'armv5', '386', 'mips', 'mipsle', 'mips64', 'mips64le'];
-    var sel = E('select', { 'class': 'cl-component-arch-sel' },
-      archList.map(function (a) {
-        return E('option', { value: a, selected: a === cur ? '' : null }, a);
-      }));
+    var opts = archList.map(function (a) {
+      return E('option', { value: a, selected: a === cur ? '' : null }, a);
+    });
+    if (!cur)
+      opts.unshift(E('option', { value: '', selected: '' }, _("Not detected, please select")));
+    var sel = E('select', { 'class': 'cl-component-arch-sel' }, opts);
     sel.addEventListener('change', function () {
       uci.set('clashoo', 'config', 'download_core', sel.value);
       uci.save()
@@ -763,6 +765,8 @@ return view.extend({
     /* no hint when auto-detected matches; only show when manual choice differs */
     if (detected && cur !== detected)
       row.push(E('span', { 'class': 'cl-component-arch-hint' }, _("Recommended ") + detected + _(" (auto-detected by device)")));
+    else if (!detected && !cur)
+      row.push(E('span', { 'class': 'cl-component-arch-hint' }, _("Could not detect the device architecture; select it manually before updating the core.")));
     return E('div', { 'class': 'cl-component-arch-row' }, row);
   },
 

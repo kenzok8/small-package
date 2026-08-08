@@ -93,6 +93,12 @@ msgstr "<strong>前提：</strong>配置自带透明代理（TUN auto-route 或 
 msgid "<strong>Warning:</strong> IPv6 resolution is also disabled when IPv6 Proxy is off, to keep the real address from leaking."
 msgstr "<strong>注意：</strong>「IPv6 代理」关闭时会一并停用 IPv6 解析，避免真实地址泄漏。"
 
+msgid "Not detected, please select"
+msgstr "未检测到，请手动选择"
+
+msgid "Could not detect the device architecture; select it manually before updating the core."
+msgstr "未能识别设备架构，更新内核前请先手动选择。"
+
 msgid "Access Check"
 msgstr "访问检查"
 

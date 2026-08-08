@@ -944,3 +944,23 @@ msgstr ""
 
 msgid "For issues, visit the <a href=\"https://github.com/zzsj0928/luci-app-pushbot\" target=\"_blank\">GitHub page</a>"
 msgstr ""
+
+msgid "Global connectivity retries"
+msgstr ""
+
+
+msgid "times"
+msgstr ""
+
+
+msgid "Network check retries"
+msgstr ""
+
+
+msgid "Table format"
+msgstr ""
+
+
+msgid "Format notifications as tables"
+msgstr ""
+

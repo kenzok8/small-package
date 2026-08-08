@@ -8,6 +8,22 @@ function arraysEqual(a, b) {
 	return true;
 }
 
+function decodeIfBase64(str) {
+	try {
+		let s = str.replace(/-/g, '+').replace(/_/g, '/');
+		while (s.length % 4) s += '=';
+		const decoded = decodeURIComponent(
+			atob(s).split('').map(c =>
+				'%' + c.charCodeAt(0).toString(16).padStart(2, '0')
+			).join('')
+		);
+		if (btoa(unescape(encodeURIComponent(decoded))).replace(/=+$/, '') === s.replace(/=+$/, '')) {
+			return decoded;
+		}
+	} catch (e) {}
+	return str;
+}
+
 function waitForElement(selector, callback) {
 	const el = document.querySelector(selector);
 	if (el) return callback(el);

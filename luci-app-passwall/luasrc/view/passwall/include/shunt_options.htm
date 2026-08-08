@@ -30,7 +30,7 @@
 			const selectNode = document.getElementById(dom_id + "_node");
 			val = selectNode.value;
 		}
-		if (val == "" || val.startsWith("_") || val.startsWith("Socks_") || !normal_list.find(element => element.id == val)) {
+		if (val == "" || val.startsWith("_") || val.startsWith("socks_") || !normal_list.find(element => element.id == val)) {
 			const hiddenSelect = document.getElementById(cbid);
 			const panel = document.getElementById(cbid + ".panel");
 			const display = document.getElementById(cbid + ".display");

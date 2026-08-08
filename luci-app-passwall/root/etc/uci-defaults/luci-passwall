@@ -47,6 +47,15 @@ chmod +x /usr/share/passwall/*.sh
 [ "$(uci -q get passwall.@global_xray[0].sniffing)" == "1" ] && [ "$(uci -q get passwall.@global_xray[0].route_only)" != "1" ] && uci -q set passwall.@global_xray[0].sniffing_override_dest=1
 uci -q delete passwall.@global_xray[0].sniffing
 uci -q delete passwall.@global_xray[0].route_only
+
+for sid in $(uci show passwall | grep "=socks" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}'); do
+	if [ -z "$(echo ${sid} | grep '^socks_')" ]; then
+		new_id="socks_$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 5)"
+		uci -q rename passwall.${sid}="${new_id}"
+		unset sid new_id
+	fi
+done
+
 uci -q commit passwall
 
 sed -i "s#add_from#group#g" /etc/config/passwall 2>/dev/null

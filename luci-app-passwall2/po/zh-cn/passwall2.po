@@ -1499,6 +1499,12 @@ msgstr "启用节点日志"
 msgid "Log Level"
 msgstr "日志等级"
 
+msgid "Log File"
+msgstr "日志文件"
+
+msgid "View Log"
+msgstr "查看日志"
+
 msgid "Not enabled log"
 msgstr "未启用日志"
 
@@ -2366,6 +2372,9 @@ msgstr "成功解析【%s】节点，数量：%s"
 
 msgid "Get subscription content for [%s] is empty. This may be due to an invalid subscription address or a network problem. Please diagnose the issue!"
 msgstr "获取到的【%s】订阅内容为空，可能是订阅地址无效，或是网络问题，请诊断！"
+
+msgid "No Proxy"
+msgstr "不代理"
 
 msgid "Proxy"
 msgstr "代理"

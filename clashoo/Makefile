@@ -5,7 +5,7 @@ PKG_SHORT_SHA:=1af24e9
 PKG_COMMIT_DATE:=2026.08.07
 
 PKG_VERSION:=$(PKG_COMMIT_DATE)~$(PKG_SHORT_SHA)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA)
@@ -71,6 +71,7 @@ define Package/clashoo/install
 	$(INSTALL_DATA) $(CURDIR)/files/etc/config/clashoo $(1)/usr/share/clashoo/clashoo.default
 	$(CP) $(CURDIR)/files/usr/share/clashoo/* $(1)/usr/share/clashoo/
 	$(INSTALL_BIN) $(CURDIR)/files/usr/share/clashoo/migrate_lan_acl.sh $(1)/usr/share/clashoo/migrate_lan_acl.sh
+	$(INSTALL_BIN) $(CURDIR)/files/usr/share/clashoo/detect_core_arch.sh $(1)/usr/share/clashoo/detect_core_arch.sh
 
 	$(RM) $(1)/usr/share/clashoo/dashboard
 	$(RM) $(1)/usr/share/clashoo/yacd
@@ -88,6 +89,7 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 	rm -f /usr/share/clashoo/rmlist.sh /usr/share/clashoo/uplist.sh /usr/share/clashoo/rpc_restart_async.sh /usr/share/clashoo/rpc_update_china_ip_async.sh
 	rm -rf /usr/share/clashoo/create
 	/usr/share/clashoo/migrate_lan_acl.sh >/dev/null 2>&1 || true
+	/usr/share/clashoo/detect_core_arch.sh >/dev/null 2>&1 || true
 	if [ "$$(uci -q get clashoo.config.enable 2>/dev/null)" = "1" ]; then
 		/etc/init.d/clashoo enable 2>/dev/null || true
 	else

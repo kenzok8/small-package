@@ -508,13 +508,6 @@ ln_run() {
 	echo "${file_func:-echolog "  - ${ln_name}"} $@ >${output}" > $TMP_SCRIPT_FUNC_PATH/$process_count
 }
 
-is_socks_wrap() {
-	case "$1" in
-		Socks_*) return 0 ;;
-		*)       return 1 ;;
-	esac
-}
-
 kill_all() {
 	kill -9 $(pidof "$@") >/dev/null 2>&1
 }

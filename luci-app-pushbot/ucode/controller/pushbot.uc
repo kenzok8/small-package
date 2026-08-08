@@ -74,13 +74,13 @@ return {
 	},
 
 	act_send_test: function() {
-		system("/usr/bin/pushbot/pushbot test &");
+		system("/usr/bin/pushbot/pushbot test >/dev/null 2>&1 &");
 		http.prepare_content("application/json");
 		http.write_json({ ok: true });
 	},
 
 	act_send_manual: function() {
-		system("/usr/bin/pushbot/pushbot send &");
+		system("/usr/bin/pushbot/pushbot send >/dev/null 2>&1 &");
 		http.prepare_content("application/json");
 		http.write_json({ ok: true });
 	},
@@ -139,7 +139,7 @@ return {
 			"pushbot_interface","macmechanism2","crontab","regular_time",
 			"regular_time_2","regular_time_3","interval_time","send_title",
 			"router_status","router_temp","router_wan","client_list",
-			"google_check_timeout","pushbot_up","pushbot_down",
+			"google_check_count","pushbot_up","pushbot_down","table_format",
 			"cpuload_enable","cpuload","temperature_enable","temperature",
 			"client_usage","client_usage_max","client_usage_disturb",
 			"pushbot_ipv4","ipv4_interface","pushbot_ipv6","ipv6_interface",

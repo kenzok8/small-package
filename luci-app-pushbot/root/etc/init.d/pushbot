@@ -4,12 +4,10 @@ START=99
 STOP=10
 
 start() {
-	state=`pgrep -f "/usr/bin/pushbot/pushbot"`
-	if [ ! -z "$state" ]; then
-		restart
-	else
-		/usr/bin/pushbot/pushbot </dev/null >/dev/null 2>&1 &
-	fi
+	# 确保单实例: 先清理所有旧进程(防止并发重启累积多个主进程, 导致 send 等竞争卡死)
+	kill -9 `pgrep -f "/usr/bin/pushbot/pushbot"` 2>/dev/null
+	sleep 1
+	/usr/bin/pushbot/pushbot </dev/null >/dev/null 2>&1 &
 	echo "pushbot is starting now ..."
 }
 

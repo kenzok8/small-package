@@ -825,6 +825,7 @@ const GH_CLASHOO_REPO = 'kenzok8/openwrt-clashoo';
 
 // 上游 amd64 默认是 AMD64-v3（要 AVX2），LXC/KVM 跑不起来；老值统一兜底 compatible
 function normalize_mihomo_arch(a) {
+if (!a) a = get_cpu_arch();
 if (!a) return 'amd64-compatible';
 if (a == 'amd64-compatible' || a == 'amd64-v1' || a == 'amd64-v2' || a == 'amd64-v3') return a;
 if (a == 'amd64' || a == 'x86_64')                 return 'amd64-compatible';
@@ -2215,7 +2216,9 @@ components: comps,
 	arch: {
 	system: trim(shell_read('uname -m 2>/dev/null') || ''),
 	// 老 arch 值归一化后再给前端
-	download_core: normalize_mihomo_arch(uci_get('clashoo', 'config', 'download_core') || '')
+	download_core: uci_get('clashoo', 'config', 'download_core')
+		? normalize_mihomo_arch(uci_get('clashoo', 'config', 'download_core'))
+		: ''
 	},
 last_log: component_last_log(),
 log: component_log_tail(40)

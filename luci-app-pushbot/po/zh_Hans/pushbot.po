@@ -945,3 +945,23 @@ msgstr "基于 tty228/luci-app-serverchan 二次开发，由 然后七年 维护
 
 msgid "For issues, visit the <a href=\"https://github.com/zzsj0928/luci-app-pushbot\" target=\"_blank\">GitHub page</a>"
 msgstr "使用问题请到 <a href=\"https://github.com/zzsj0928/luci-app-pushbot\" target=\"_blank\">GitHub 反馈</a>"
+
+msgid "Global connectivity retries"
+msgstr "全球互联检测次数"
+
+
+msgid "times"
+msgstr "次"
+
+
+msgid "Network check retries"
+msgstr "网络检测次数"
+
+
+msgid "Table format"
+msgstr "表格化"
+
+
+msgid "Format notifications as tables"
+msgstr "通知以表格形式输出"
+

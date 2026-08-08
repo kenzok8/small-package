@@ -273,7 +273,7 @@ end
 
 function get_acl_log()
 	local id = http.formvalue("id")
-	local path = "/tmp/log/passwall2_acl_" .. id .. ".log"
+	local path = api.TMP_PATH .. "/acl/" .. id .. "/node.log"
 	if nixio.fs.access(path) then
 		local content = luci.sys.exec("tail -n 5000 '" .. path .. "'")
 		content = content:gsub("\n", "<br />")

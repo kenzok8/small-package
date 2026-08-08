@@ -12,6 +12,7 @@
     "str_space": " ",
     "str_tab": " ",
     "table_tab": "<font color=#76CCFF>┋</font>",
+    "table_enable": "1",
     "font_success": "<font color=#92D050>",
     "font_client": "<font color=#92D050>",
     "font_fail": "<font color=#FF6666>",
@@ -26,7 +27,7 @@
 	      "msgtype": "\"markdown\"",
 	      "markdown": {
 		      	"title": "\"${1}\"",
-			"text": "\"${str_title_start}${font_title}${1}${font_end}${str_title_end}${str_linefeed}${nowtime}${str_linefeed}${2}${str_linefeed}${font_title}${1}${font_end}\""
+			"text": "\"${str_title_start}${font_title}${1}${font_end}${str_title_end}${str_linefeed}${nowtime}${str_linefeed}${2}\\n\\n${font_title}${1}${font_end}\""
 	      }
       }
 }

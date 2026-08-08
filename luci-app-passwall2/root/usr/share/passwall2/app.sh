@@ -209,7 +209,6 @@ run_singbox() {
 	node_protocol=$(config_n_get $node protocol)
 	[ -n "$log_file" ] || local log_file="/dev/null"
 	[ -z "$loglevel" ] && local loglevel=$(config_t_get global loglevel "warn")
-	[ "$loglevel" = "warning" ] && loglevel="warn"
 	local singbox_tag=$($SINGBOX_BIN version | grep 'Tags:' | awk '{print $2}')
 
 	json_init
@@ -413,7 +412,6 @@ run_socks() {
 		}
 		[ "${log_file}" != "/dev/null" ] && {
 			local loglevel=$(config_t_get global loglevel "warn")
-			[ "$loglevel" = "warning" ] && loglevel="warn"
 			json_add_string "log" "1"
 			json_add_string "loglevel" "${loglevel}"
 			json_add_string "logfile" "${log_file}"
@@ -439,6 +437,11 @@ run_socks() {
 		[ -z "$relay_port" ] && {
 			json_add_null "server_host"
 			json_add_null "server_port"
+		}
+		[ "${log_file}" != "/dev/null" ] && {
+			local loglevel=$(config_t_get global loglevel "warn")
+			json_add_string "log" "1"
+			json_add_string "loglevel" "${loglevel}"
 		}
 		[ -n "$no_run" ] && json_add_string "no_run" "1"
 		json_add_string "flag" "${flag}"
@@ -1029,10 +1032,6 @@ acl_app() {
 			[ "$(config_n_get $sid enabled)" = "1" ] || continue
 			has_enabled=1
 			eval $(uci -q show "${CONFIG}.${sid}" | cut -d'.' -sf 3-)
-			log=${log:-0}
-			loglevel=${loglevel:-warn}
-			log_file="/dev/null"
-			[ "${log}" = "1" ] && log_file="/tmp/log/passwall2_acl_${sid}.log"
 
 			if [ -n "${sources}" ]; then
 				for s in $sources; do
@@ -1060,6 +1059,11 @@ acl_app() {
 			local acl_path=${TMP_ACL_PATH}/$sid
 			mkdir -p ${acl_path}
 			[ -n "${source_list}" ] && echo -e "${source_list}" | sed '/^$/d' > ${acl_path}/source_list
+
+			log=${log:-0}
+			loglevel=${loglevel:-warn}
+			log_file="/dev/null"
+			[ "${log}" = "1" ] && log_file="${acl_path}/node.log"
 
 			node=${node:-default}
 			tcp_no_redir_ports=${tcp_no_redir_ports:-default}

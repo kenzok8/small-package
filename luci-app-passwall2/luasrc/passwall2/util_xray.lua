@@ -31,6 +31,11 @@ local function get_domain_excluded()
 	return hosts
 end
 
+local function get_log_level(s)
+	if s == "warn" then s = "warning" end
+	return s
+end
+
 function parseDNS(str)
 	local result_dns_server
 	-- [proto]://[ip]
@@ -657,7 +662,7 @@ function gen_config_server(node)
 
 	local config = {
 		log = {
-			loglevel = ("1" == node.log) and node.loglevel or "none"
+			loglevel = ("1" == node.log) and get_log_level(node.loglevel) or "none"
 		},
 		inbounds = {
 			{
@@ -1981,7 +1986,7 @@ function gen_config(var)
 				--access = string.format("/tmp/etc/%s/%s_access.log", appname, "global"),
 				--error = string.format("/tmp/etc/%s/%s_error.log", appname, "global"),
 				--dnsLog = true,
-				loglevel = loglevel
+				loglevel = get_log_level(loglevel)
 			},
 			dns = dns,
 			fakedns = fakedns,

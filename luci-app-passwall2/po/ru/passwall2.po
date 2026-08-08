@@ -1508,6 +1508,12 @@ msgstr "Запись журнала"
 msgid "Log Level"
 msgstr "Уровень записи журнала"
 
+msgid "Log File"
+msgstr "Файл журнала"
+
+msgid "View Log"
+msgstr "Просмотреть журнал"
+
 msgid "Not enabled log"
 msgstr "Запись журнала отключена"
 
@@ -2378,6 +2384,9 @@ msgstr "Успешно разобран [%s], количество узлов: %
 
 msgid "Get subscription content for [%s] is empty. This may be due to an invalid subscription address or a network problem. Please diagnose the issue!"
 msgstr "Содержимое подписки [%s] пусто. Возможно, адрес подписки неверен или есть проблема с сетью. Пожалуйста, проведите диагностику!"
+
+msgid "No Proxy"
+msgstr "Без прокси"
 
 msgid "Proxy"
 msgstr "Прокси"
