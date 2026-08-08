@@ -79,8 +79,8 @@ function index()
 	entry({"admin", "services", appname, "connect_status"}, call("connect_status")).leaf = true
 	entry({"admin", "services", appname, "ping_node"}, call("ping_node")).leaf = true
 	entry({"admin", "services", appname, "urltest_node"}, call("urltest_node")).leaf = true
+	entry({"admin", "services", appname, "update_config"}, call("update_config")).leaf = true
 	entry({"admin", "services", appname, "add_node"}, call("add_node")).leaf = true
-	entry({"admin", "services", appname, "update_node"}, call("update_node")).leaf = true
 	entry({"admin", "services", appname, "set_node"}, call("set_node")).leaf = true
 	entry({"admin", "services", appname, "copy_node"}, call("copy_node")).leaf = true
 	entry({"admin", "services", appname, "clear_all_nodes"}, call("clear_all_nodes")).leaf = true
@@ -96,6 +96,10 @@ function index()
 	entry({"admin", "services", appname, "subscribe_manual"}, call("subscribe_manual")).leaf = true
 	entry({"admin", "services", appname, "subscribe_manual_all"}, call("subscribe_manual_all")).leaf = true
 	entry({"admin", "services", appname, "flush_set"}, call("flush_set")).leaf = true
+	entry({"admin", "services", appname, "get_shunt_rules"}, call("get_shunt_rules")).leaf = true
+	entry({"admin", "services", appname, "add_shunt_rule"}, call("add_shunt_rule")).leaf = true
+	entry({"admin", "services", appname, "delete_select_shunt_rules"}, call("delete_select_shunt_rules")).leaf = true
+	entry({"admin", "services", appname, "save_shunt_rule_order"}, call("save_shunt_rule_order")).leaf = true
 
 	--[[rule_list]]
 	entry({"admin", "services", appname, "read_rulelist"}, call("read_rulelist")).leaf = true
@@ -471,6 +475,23 @@ function urltest_node()
 	http_write_json(e)
 end
 
+function update_config()
+	local id = http.formvalue("id") -- Node id
+	local data = http.formvalue("data") -- json new Data
+	if id and data then
+		local data_t = jsonParse(data) or {}
+		if next(data_t) then
+			for k, v in pairs(data_t) do
+				uci:set(appname, id, k, v)
+			end
+			api.uci_save(uci, appname)
+			http_write_json_ok()
+			return
+		end
+	end
+	http_write_json_error()
+end
+
 function add_node()
 	local redirect = http.formvalue("redirect")
 
@@ -491,23 +512,6 @@ function add_node()
 		api.uci_save(uci, appname, true, true)
 		http_write_json({result = uuid})
 	end
-end
-
-function update_node()
-	local id = http.formvalue("id") -- Node id
-	local data = http.formvalue("data") -- json new Data
-	if id and data then
-		local data_t = jsonParse(data) or {}
-		if next(data_t) then
-			for k, v in pairs(data_t) do
-				uci:set(appname, id, k, v)
-			end
-			api.uci_save(uci, appname)
-			http_write_json_ok()
-			return
-		end
-	end
-	http_write_json_error()
 end
 
 function set_node()
@@ -1133,4 +1137,88 @@ function fetch_certsha256()
 	end
 	local data = api.fetch_cert_sha256(address, port, sni, timeout, h3)
 	http_write_json(data ~= "" and { code = 1, data = data } or { code = 0 })
+end
+
+function get_shunt_rules()
+	local id = http.formvalue("id")
+	local result = {}
+
+	if id then
+		result = uci:get_all(appname, id)
+	else
+		local default_items = {}
+		local other_items = {}
+		uci:foreach(appname, "shunt_rules", function(t)
+			if not t.group or t.group == "" then
+				default_items[#default_items + 1] = t
+			else
+				other_items[#other_items + 1] = t
+			end
+		end)
+		for i = 1, #default_items do result[#result + 1] = default_items[i] end
+		for i = 1, #other_items do result[#result + 1] = other_items[i] end
+	end
+	http_write_json(result)
+end
+
+function add_shunt_rule()
+	local add_name = http.formvalue("add_name")
+	local redirect = http.formvalue("redirect")
+
+	local uuid = add_name
+	if add_name then
+		local has = uci:get(appname, uuid)
+		if has then
+			http_write_json_error({ message = "This ID already exists." })
+			return
+		end
+	else
+		uuid = api.gen_short_uuid()
+	end
+	uci:section(appname, "shunt_rules", uuid)
+
+	local group = http.formvalue("group")
+	if group and group ~= "default" then
+		uci:set(appname, uuid, "group", group)
+	end
+
+	if redirect == "1" then
+		api.uci_save(uci, appname)
+		http.redirect(api.url("shunt_rules", uuid))
+	else
+		api.uci_save(uci, appname)
+		http_write_json_ok({uuid = uuid, redirect_url = api.url("shunt_rules", uuid)})
+	end
+end
+
+function delete_select_shunt_rules()
+	local ids = http.formvalue("ids")
+	local redirect = http.formvalue("redirect")
+	string.gsub(ids, '[^' .. "," .. ']+', function(w)
+		uci:foreach(appname, "nodes", function(s)
+			if s["protocol"] and s["protocol"] == "_shunt" then
+				uci:delete(appname, s[".name"], w)
+			end
+		end)
+		uci:delete(appname, w)
+	end)
+	if redirect == "1" then
+		api.uci_save(uci, appname)
+		http.redirect(api.url("rule"))
+	else
+		api.uci_save(uci, appname, true, true)
+	end
+end
+
+function save_shunt_rule_order()
+	local ids = http.formvalue("ids") or ""
+	local new_order = {}
+	for id in ids:gmatch("([^,]+)") do
+		new_order[#new_order + 1] = id
+	end
+	for idx, name in ipairs(new_order) do
+		luci.sys.call(string.format("uci -q reorder %s.%s=%d", appname, name, idx - 1))
+	end
+	api.sh_uci_commit(appname)
+	http_write_json({ status = "ok" })
 end

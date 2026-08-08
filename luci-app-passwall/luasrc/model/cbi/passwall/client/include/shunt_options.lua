@@ -4,8 +4,16 @@ if not data.node_id or not data.node then
 	return
 end
 
+local s_cfgid = data.s_cfgid
 local current_node_id = data.node_id
 local node_list = data.node_list or api.get_node_list()
+
+local groups = {}
+m.uci:foreach(appname, "shunt_rules", function(s)
+	if s.group and s.group ~= "" then
+		groups[s.group] = true
+	end
+end)
 
 local function get_cfgvalue()
 	return function(self, section)
@@ -92,15 +100,27 @@ o = add_option(Flag, "fakedns", '<a style="color:#FF8C00">FakeDNS</a>' .. " " ..
 	translate("Suitable scenarios for let the node servers get the target domain names.") .. "<br>" ..
 	translate("Such as: DNS unlocking of streaming media, reducing DNS query latency, etc."))
 
+shunt_group = add_option(ListValue, "shunt_group", translate("Shunt Rule Group"))
+shunt_group:value("", translate("default"))
+for k, v in pairs(groups) do
+	shunt_group:value(k)
+end
+
+local shunt_group_val = m:get(current_node_id, "shunt_group") or ""
+shunt_group_val = shunt_group_val:lower()
 local shunt_rules = {}
 m.uci:foreach(appname, "shunt_rules", function(e)
-	e.id = e[".name"]
-	e.remarks = e.remarks or e[".name"]
-	e["_node_option"] = e[".name"]
-	e["_node_default"] = ""
-	e["_fakedns_option"] = e[".name"] .. "_fakedns"
-	e["_proxy_tag_option"] = e[".name"] .. "_proxy_tag"
-	table.insert(shunt_rules, e)
+	local group = e.group or ""
+	group = group:lower()
+	if group == shunt_group_val then
+		e.id = e[".name"]
+		e.remarks = e.remarks or e[".name"]
+		e["_node_option"] = e[".name"]
+		e["_node_default"] = ""
+		e["_fakedns_option"] = e[".name"] .. "_fakedns"
+		e["_proxy_tag_option"] = e[".name"] .. "_proxy_tag"
+		table.insert(shunt_rules, e)
+	end
 end)
 table.insert(shunt_rules, {
 	id = ".default",
@@ -185,6 +205,8 @@ end
 
 local footer = Template(appname .. "/include/shunt_options")
 footer.api = api
+footer.config = m.config
 footer.id = current_node_id
+footer.s_cfgid = s_cfgid or current_node_id
 footer.normal_list = api.jsonc.stringify(node_list.normal_list)
 m:append(footer)

@@ -1,0 +1,44 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+Subject: [PATCH] daed: apply subscription cron changes without restart
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+改 cron 后先提交事务再重建调度器。
+
+原来在事务里就去重建，调度器另开连接读到的还是旧表达式，必须重启 daed 才生效。
+---
+ graphql/service/subscription/mutation_utils.go | 12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
+
+diff --git a/graphql/service/subscription/mutation_utils.go b/graphql/service/subscription/mutation_utils.go
+index e2aec32..4f6bcfc 100644
+--- a/graphql/service/subscription/mutation_utils.go
++++ b/graphql/service/subscription/mutation_utils.go
+@@ -561,10 +561,12 @@ func UpdateCron(ctx context.Context, _id graphql.ID, cronExp string, cronEnable
+ 	}
+ 
+ 	tx := db.BeginTx(ctx)
++	if tx.Error != nil {
++		return nil, tx.Error
++	}
++	committed := false
+ 	defer func() {
+-		if err == nil {
+-			tx.Commit()
+-		} else {
++		if !committed {
+ 			tx.Rollback()
+ 		}
+ 	}()
+@@ -583,6 +585,10 @@ func UpdateCron(ctx context.Context, _id graphql.ID, cronExp string, cronEnable
+ 		}).Error; err != nil {
+ 		return nil, err
+ 	}
++	if err = tx.Commit().Error; err != nil {
++		return nil, err
++	}
++	committed = true
+ 
+ 	// Update scheduler
+ 	RemoveUpdateScheduler(id)

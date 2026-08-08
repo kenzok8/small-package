@@ -256,7 +256,7 @@ local appname = api.appname
 			let new_val = el.target.value
 			const new_hasItem = shunt_list.find(element => element.id == new_val);
 			if (new_hasItem) {
-				XHR.get('<%=api.url("update_node")%>', {
+				XHR.get('<%=api.url("update_config")%>', {
 					id: "<%=self.global_cfgid%>",
 					data: JSON.stringify({
 						tcp_node: new_val

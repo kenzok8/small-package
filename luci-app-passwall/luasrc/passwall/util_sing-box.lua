@@ -1594,11 +1594,15 @@ function gen_config(var)
 						[".name"] = "GFW_Mode_List",
 						remarks = "GFW_Mode_List",
 						domain_list = (domain_list ~= "") and domain_list or nil,
-						ip_list = (ip_list ~= "") and ip_list or nil
+						ip_list = (ip_list ~= "") and ip_list or nil,
+						group = node["shunt_group"]
 					})
 				end
 			end
 			foreach_shunt_rule(function(e)
+				if node["shunt_group"] ~= e.group then
+					return
+				end
 				local outboundTag = gen_shunt_node(e[".name"])
 				if outboundTag and e.remarks then
 					if outboundTag == "default" then

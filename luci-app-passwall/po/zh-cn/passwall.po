@@ -1094,6 +1094,9 @@ msgstr "启用后，规则列表可以支持 GeoIP/Geosite 规则。"
 msgid "Shunt Rule"
 msgstr "分流规则"
 
+msgid "Shunt Rule Group"
+msgstr "分流规则组"
+
 msgid "Please note attention to the priority, the higher the order, the higher the priority."
 msgstr "请注意优先级问题，排序越上面优先级越高。"
 

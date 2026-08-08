@@ -154,6 +154,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 		if current_node.protocol == "_shunt" then
 			local shunt_lua = loadfile("/usr/lib/lua/luci/model/cbi/passwall/client/include/shunt_options.lua")
 			setfenv(shunt_lua, getfenv(1))(m, s, {
+				s_cfgid = s:cfgsections()[1],
 				node_id = current_node_id,
 				node = current_node,
 				socks_list = socks_list,
