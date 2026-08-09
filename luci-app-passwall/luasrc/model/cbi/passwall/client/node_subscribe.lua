@@ -138,12 +138,11 @@ s.template = "cbi/tblsection"
 s.extedit = api.url("node_subscribe_config", "%s")
 function s.create(e, t)
 	m.no_commit = true
-	local uuid = api.gen_short_uuid(5)
-	uuid = "sub_" .. uuid
-	TypedSection.create(e, uuid)
-	m:set(uuid, "hysteria_up_mbps", "100")
-	m:set(uuid, "hysteria_down_mbps", "100")
-	luci.http.redirect(e.extedit:format(uuid))
+	local uid = "sub_" .. api.gen_random_char(5)
+	TypedSection.create(e, uid)
+	m:set(uid, "hysteria_up_mbps", "100")
+	m:set(uid, "hysteria_down_mbps", "100")
+	luci.http.redirect(e.extedit:format(uid))
 end
 
 o = s:option(Value, "remark", translate("Remarks"))

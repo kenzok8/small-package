@@ -23,10 +23,9 @@ s.anonymous = true
 s.addremove = true
 s.extedit = api.url("acl_config", "%s")
 function s.create(e, t)
-	local uuid = api.gen_short_uuid(5)
-	uuid = "acl_" .. uuid
-	TypedSection.create(e, uuid)
-	luci.http.redirect(e.extedit:format(uuid))
+	local uid = "acl_" .. api.gen_random_char(5)
+	TypedSection.create(e, uid)
+	luci.http.redirect(e.extedit:format(uid))
 end
 function s.remove(e, t)
 	sys.call("rm -rf /tmp/etc/passwall_tmp/dns_" .. t .. "*")
@@ -50,6 +49,15 @@ sys.net.mac_hints(function(e, t)
 	}
 end)
 
+i = s:option(DummyValue, "interface", translate("Source Interface"))
+i.cfgvalue = function(t, n)
+	local v = Value.cfgvalue(t, n) or ''
+	if v == "" then
+		return translate("All")
+	end
+	return v
+end
+
 o = s:option(DummyValue, "sources", translate("Source"))
 o.rawhtml = true
 o.cfgvalue = function(t, n)
@@ -68,10 +76,13 @@ o.cfgvalue = function(t, n)
 	return e
 end
 
-o = s:option(DummyValue, "interface", translate("Source Interface"))
-o.cfgvalue = function(t, n)
-	local v = Value.cfgvalue(t, n) or '-'
-	return v
+i = s:option(DummyValue, "mode", translate("Mode"))
+i.cfgvalue = function(t, n)
+	local v = Value.cfgvalue(t, n) or '0'
+	if v == "1" then
+		return translate("Proxy")
+	end
+	return translate("No Proxy")
 end
 
 --[[

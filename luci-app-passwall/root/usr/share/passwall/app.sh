@@ -115,7 +115,6 @@ run_singbox() {
 		json_add_string "logfile" "${log_file}"
 	fi
 	[ -z "$loglevel" ] && local loglevel=$(config_t_get global loglevel "warn")
-	[ "$loglevel" = "warning" ] && loglevel="warn"
 	json_add_string "loglevel" "$loglevel"
 
 	[ -n "$flag" ] && json_add_string "flag" "$flag"
@@ -1527,7 +1526,7 @@ acl_app() {
 			eval $(uci -q show "${CONFIG}.${sid}" | cut -d'.' -sf 3-)
 
 			log=${log:-0}
-			loglevel=${loglevel:-warning}
+			loglevel=${loglevel:-warn}
 
 			if [ -n "${sources}" ]; then
 				for s in $sources; do

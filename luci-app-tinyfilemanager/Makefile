@@ -22,7 +22,7 @@ define Package/$(LUCI_NAME)/conffiles
 /etc/config/tinyfilemanager
 endef
 
-define Package/$(LUCI_NAME)/preinst
+define Package/$(LUCI_NAME)/postinst
 #!/bin/sh
 mkdir -p "$${IPKG_INSTROOT}/www/tinyfilemanager" 2>/dev/null
 [ ! -d "$${IPKG_INSTROOT}/www/tinyfilemanager/rootfs" ] && ln -s / "$${IPKG_INSTROOT}/www/tinyfilemanager/rootfs"

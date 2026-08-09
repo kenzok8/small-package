@@ -222,9 +222,8 @@ if has_xray then
 	s_xray_noise.addremove = true
 
 	s_xray_noise.create = function(e, t)
-		local uuid = api.gen_short_uuid(5)
-		uuid = "xray_noise_" .. uuid
-		TypedSection.create(e, uuid)
+		local uid = "xray_noise_" .. api.gen_random_char(5)
+		TypedSection.create(e, uid)
 	end
 
 	s_xray_noise.remove = function(self, section)

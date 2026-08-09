@@ -84,19 +84,6 @@ o = s:option(Value, "remarks", translate("Remarks"))
 o.default = cfgid
 o.rmempty = false
 
----- Log
-o = s:option(Flag, "log", translate("Log"))
-o.default = 0
-o.rmempty = false
-
-o = s:option(ListValue, "loglevel", "Sing-Box/Xray " .. translate("Log Level"))
-o.default = "warning"
-o:value("debug")
-o:value("info")
-o:value("warning")
-o:value("error")
-o:depends("log", "1")
-
 o = s:option(Value, "interface", translate("Source Interface"))
 o:value("", translate("All"))
 local iface = api.get_network_devices()
@@ -196,12 +183,17 @@ sources.validate = function(self, value, t)
 end
 sources.write = dynamicList_write
 
+o = s:option(ListValue, "mode", translate("Mode"))
+o:value("0", translate("No Proxy"))
+o:value("1", translate("Proxy"))
+
 ---- TCP No Redir Ports
 local TCP_NO_REDIR_PORTS = m:get("@global_forwarding[0]", "tcp_no_redir_ports")
 o = s:option(Value, "tcp_no_redir_ports", translate("TCP No Redir Ports"))
 o:value("", translate("Use global config") .. "(" .. TCP_NO_REDIR_PORTS .. ")")
 o:value("disable", translate("No patterns are used"))
 o:value("1:65535", translate("All"))
+o:depends("mode", "1")
 o.validate = port_validate
 
 ---- UDP No Redir Ports
@@ -213,11 +205,13 @@ o = s:option(Value, "udp_no_redir_ports", translate("UDP No Redir Ports"),
 o:value("", translate("Use global config") .. "(" .. UDP_NO_REDIR_PORTS .. ")")
 o:value("disable", translate("No patterns are used"))
 o:value("1:65535", translate("All"))
+o:depends("mode", "1")
 o.validate = port_validate
 
 o = s:option(DummyValue, "_hide_node_option", "")
 o.template = "passwall/cbi/hidevalue"
 o.value = "1"
+o:depends("mode", "0")
 o:depends({ tcp_no_redir_ports = "1:65535", udp_no_redir_ports = "1:65535" })
 if TCP_NO_REDIR_PORTS == "1:65535" and UDP_NO_REDIR_PORTS == "1:65535" then
 	o:depends({ tcp_no_redir_ports = "", udp_no_redir_ports = "" })
@@ -279,6 +273,20 @@ o.template = "passwall/cbi/hidevalue"
 o.value = "1"
 o:depends({ udp_node = "",  ['!reverse'] = true })
 o:depends({ shunt_udp_node = "tcp" })
+
+---- Log
+o = s:option(Flag, "log", translate("Enable Node Log"))
+o.default = 0
+o.rmempty = false
+o:depends({ _hide_node_option = false, use_global_config = false })
+
+o = s:option(ListValue, "loglevel", "Sing-Box/Xray " .. translate("Log Level"))
+o.default = "warn"
+o:value("debug", "Debug")
+o:value("info", "Info")
+o:value("warn", "Warning")
+o:value("error", "Error")
+o:depends("log", "1")
 
 ---- TCP Proxy Drop Ports
 local TCP_PROXY_DROP_PORTS = m:get("@global_forwarding[0]", "tcp_proxy_drop_ports")

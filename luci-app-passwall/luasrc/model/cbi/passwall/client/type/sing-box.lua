@@ -536,6 +536,9 @@ o.validate = function(self, value)
 	return value
 end
 
+o = s:option(Value, _n("cipherSuites"), translate("Cipher Suites"), '<a href="https://go.dev/src/crypto/tls/cipher_suites.go#L44" target="_blank">***</a>' .. " " .. translate("Configures the list of supported cipher suites, separated by :"))
+o:depends({ [_n("tls")] = true })
+
 o = s:option(Flag, _n("ech"), translate("ECH"))
 o.default = "0"
 o:depends({ [_n("tls")] = true, [_n("flow")] = "", [_n("reality")] = false })

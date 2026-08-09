@@ -5,7 +5,6 @@ local sys = api.sys
 local jsonc = api.jsonc
 local appname = "passwall"
 local fs = api.fs
-local split = api.split
 local ech_domain = {}
 
 local local_version = api.get_app_version("sing-box"):match("[^v]+")
@@ -86,6 +85,11 @@ local function convert_geofile()
 	--api.log("Sing-Box 规则集转换：")
 	convert(GEO_VAR.SITE_PATH, "geosite", GEO_VAR.SITE_TAGS)
 	convert(GEO_VAR.IP_PATH, "geoip", GEO_VAR.IP_TAGS)
+end
+
+local function get_log_level(s)
+	if s == "warning" then s = "warn" end
+	return s
 end
 
 function gen_outbound(flag, node, tag, proxy_table)
@@ -190,7 +194,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 			if not GLOBAL.DNS_SERVER[dns_key] then
 				GLOBAL.DNS_SERVER[dns_key] = {
 					server = {
-						tag = "dns-node-" .. api.gen_short_uuid(),
+						tag = "dns-node-" .. api.gen_random_char(),
 						type = dns_proto,
 						server = server_address,
 						server_port = server_port,
@@ -232,7 +236,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 				--max_version = "1.3",
 				fragment = fragment,
 				record_fragment = record_fragment,
-				certificate = (node.tls_certificate == "1" and node.tls_certificate_pem ~= "") and split(node.tls_certificate_pem, "\n") or nil,
+				certificate = (node.tls_certificate == "1" and node.tls_certificate_pem ~= "") and api.split(node.tls_certificate_pem, "\n") or nil,
+				cipher_suites = (node.cipherSuites and node.cipherSuites ~= "") and api.split(node.cipherSuites, ":") or nil,
 				ech = (node.ech == "1") and (function()
 					local function get_ech_domain(s) --兼容xray "域名+DNS" 格式ech
 						local domain, dns = s:match("^([^+]+)%+(.+)$")
@@ -1042,7 +1047,7 @@ function gen_config_server(node)
 	local config = {
 		log = {
 			disabled = (not node or node.log == "0") and true or false,
-			level = node.loglevel or "info",
+			level = get_log_level(node.loglevel) or "info",
 			timestamp = true,
 			--output = logfile,
 		},
@@ -2169,7 +2174,7 @@ function gen_config(var)
 		local config = {
 			log = {
 				disabled = log == "0" and true or false,
-				level = loglevel,
+				level = get_log_level(loglevel),
 				timestamp = true,
 				output = logfile,
 			},

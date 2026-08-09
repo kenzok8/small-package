@@ -513,6 +513,9 @@ o.default = "chrome"
 o:depends({ [_n("tls")] = true, [_n("utls")] = true })
 o:depends({ [_n("tls")] = true, [_n("reality")] = true })
 
+o = s:option(Value, _n("cipherSuites"), translate("Cipher Suites"), '<a href="https://go.dev/src/crypto/tls/cipher_suites.go#L44" target="_blank">***</a>' .. " " .. translate("Configures the list of supported cipher suites, separated by :"))
+o:depends({ [_n("tls")] = true, [_n("reality")] = false })
+
 o = s:option(Flag, _n("use_mldsa65Verify"), translate("ML-DSA-65"))
 o.default = "0"
 o:depends({ [_n("tls")] = true, [_n("reality")] = true })
