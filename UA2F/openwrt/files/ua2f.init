@@ -272,8 +272,8 @@ setup_firewall_tproxy() {
 						tcp dport $listen_port counter return comment "!ua2f: bypass proxy listener";
 						$([ "$handle_tls" -eq "1" ] || echo 'tcp dport 443 counter return comment "!ua2f: bypass HTTPS";')
 						meta mark $PROXY_MARK counter return comment "!ua2f: bypass ua2f outbound";
-						meta nfproto ipv4 meta mark set $TPROXY_MARK tproxy ip to 127.0.0.1:$listen_port counter accept;
-						meta nfproto ipv6 meta mark set $TPROXY_MARK tproxy ip6 to [::1]:$listen_port counter accept;
+						meta nfproto ipv4 meta l4proto tcp meta mark set $TPROXY_MARK tproxy ip to 127.0.0.1:$listen_port counter accept;
+						meta nfproto ipv6 meta l4proto tcp meta mark set $TPROXY_MARK tproxy ip6 to [::1]:$listen_port counter accept;
 					}
 				}
 			EOF
@@ -508,6 +508,12 @@ start_service() {
 
 	procd_open_instance "$NAME"
 	procd_set_param command "$PROG"
+
+	local gcov_prefix
+	config_get gcov_prefix "main" "gcov_prefix"
+	if [ -n "$gcov_prefix" ]; then
+		procd_set_param env "GCOV_PREFIX=$gcov_prefix" "GCOV_PREFIX_STRIP=0"
+	fi
 
 	local handle_fw
 	config_get_bool handle_fw "firewall" "handle_fw" "0"

@@ -2427,5 +2427,5 @@ msgstr "未设置"
 msgid "Cipher Suites"
 msgstr "密码套件"
 
-msgid "Configures the list of supported cipher suites, separated by :"
-msgstr "配置支持的密码套件列表，以冒号 (:) 分隔。"
+msgid "Configures the list of supported cipher suites."
+msgstr "配置支持的密码套件列表。"

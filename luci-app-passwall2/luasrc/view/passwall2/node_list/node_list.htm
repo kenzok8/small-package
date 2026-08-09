@@ -1257,16 +1257,16 @@ table td, .table .td {
 			this.section = cbi_id;
 			document.getElementById("set_node_div").style.display="block";
 			const node_name = document.getElementById("cbid.<%=appname%>." + cbi_id + ".remarks").value;
-			document.getElementById("set_node_name").innerHTML = node_name;
+			document.getElementById("set_node_name").textContent = node_name;
 		},
 		close() {
 			document.getElementById("set_node_div").style.display="none";
-			document.getElementById("set_node_name").innerHTML = "";
+			document.getElementById("set_node_name").textContent = "";
 		},
 		set(type, config) {
 			if (confirm('<%:Are you sure set this node?%>') == true){
 				ajax.abortAll();
-				window.location.href = '<%=api.url("set_node")%>?type=' + type + '&config=' + config + '&section=' + section;
+				window.location.href = '<%=api.url("set_node")%>?type=' + type + '&config=' + config + '&section=' + this.section;
 			}
 		}
 	}

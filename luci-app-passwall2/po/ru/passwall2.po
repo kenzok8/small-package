@@ -2439,5 +2439,5 @@ msgstr "Не задано"
 msgid "Cipher Suites"
 msgstr "Наборы шифров"
 
-msgid "Configures the list of supported cipher suites, separated by :"
-msgstr "Задает список поддерживаемых наборов шифров, разделенных двоеточием (:)."
+msgid "Configures the list of supported cipher suites."
+msgstr "Задает список поддерживаемых наборов шифров."

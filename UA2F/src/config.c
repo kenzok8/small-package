@@ -21,6 +21,21 @@ struct ua2f_config config = {
     .proxy_workers = 0,
 };
 
+static void reset_config(void) {
+    free(config.custom_ua);
+    config = (struct ua2f_config){
+        .use_custom_ua = false,
+        .custom_ua = NULL,
+        .disable_connmark = false,
+        .max_http_sessions = 0,
+        .session_ttl = 300,
+        .mode = UA2F_MODE_NFQUEUE,
+        .listen_port = UA2F_DEFAULT_PROXY_PORT,
+        .nfqueue_workers = 1,
+        .proxy_workers = 0,
+    };
+}
+
 static void load_int_option(struct uci_context *ctx, struct uci_section *section, const char *name, int min_value,
                             int max_value, int *target) {
     const __auto_type value = uci_lookup_option_string(ctx, section, name);
@@ -38,17 +53,27 @@ static void load_int_option(struct uci_context *ctx, struct uci_section *section
     syslog(LOG_WARNING, "Invalid %s value: %s, using default %d", name, value, *target);
 }
 
-void load_config() {
+bool load_config_from_dir(const char *config_dir) {
+    reset_config();
+
     const __auto_type ctx = uci_alloc_context();
     if (ctx == NULL) {
         syslog(LOG_ERR, "Failed to allocate uci context");
-        return;
+        return false;
     }
 
+    if (config_dir != NULL && uci_set_confdir(ctx, config_dir) != UCI_OK) {
+        syslog(LOG_ERR, "Failed to use UCI config directory: %s", config_dir);
+        uci_free_context(ctx);
+        return false;
+    }
+
+    bool loaded = false;
     struct uci_package *package;
     if (uci_load(ctx, "ua2f", &package) != UCI_OK) {
         goto cleanup;
     }
+    loaded = true;
 
     // find ua2f.main.custom_ua
     const __auto_type section = uci_lookup_section(ctx, package, "main");
@@ -58,8 +83,8 @@ void load_config() {
 
     const __auto_type custom_ua = uci_lookup_option_string(ctx, section, "custom_ua");
     if (custom_ua != NULL && strlen(custom_ua) > 0) {
-        config.use_custom_ua = true;
         config.custom_ua = strdup(custom_ua);
+        config.use_custom_ua = config.custom_ua != NULL;
     }
 
     const __auto_type disable_connmark = uci_lookup_option_string(ctx, section, "disable_connmark");
@@ -97,6 +122,15 @@ void load_config() {
 
 cleanup:
     uci_free_context(ctx);
+    return loaded;
+}
+
+void load_config(void) {
+    (void)load_config_from_dir(NULL);
+}
+
+void free_config(void) {
+    reset_config();
 }
 #undef UA2F_MAX_CONFIG_WORKERS
 #endif

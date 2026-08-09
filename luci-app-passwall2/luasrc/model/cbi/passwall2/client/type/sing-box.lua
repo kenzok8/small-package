@@ -574,8 +574,39 @@ o.validate = function(self, value)
 	return value
 end
 
-o = s:option(Value, _n("cipherSuites"), translate("Cipher Suites"), '<a href="https://go.dev/src/crypto/tls/cipher_suites.go#L44" target="_blank">***</a>' .. " " .. translate("Configures the list of supported cipher suites, separated by :"))
+o = s:option(DynamicList, _n("cipherSuites"), translate("Cipher Suites"), '<a href="https://go.dev/src/crypto/tls/cipher_suites.go#L44" target="_blank">***</a>' .. " " .. translate("Configures the list of supported cipher suites."))
+o:value("TLS_AES_128_GCM_SHA256")
+o:value("TLS_AES_256_GCM_SHA384")
+o:value("TLS_CHACHA20_POLY1305_SHA256")
+o:value("TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA")
+o:value("TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA")
+o:value("TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA")
+o:value("TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA")
+o:value("TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256")
+o:value("TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384")
+o:value("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256")
+o:value("TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384")
+o:value("TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256")
+o:value("TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256")
 o:depends({ [_n("tls")] = true })
+function o.custom_write(self, section, value)
+	local t = {}
+	local t2 = {}
+	if type(value) == "table" then
+		local x
+		for _, x in ipairs(value) do
+			if x and #x > 0 then
+				if not t2[x] then
+					t2[x] = x
+					t[#t+1] = x
+				end
+			end
+		end
+	else
+		t = { value }
+	end
+	m:set(section, self.option:sub(1 + #option_prefix), t)
+end
 
 o = s:option(Flag, _n("ech"), translate("ECH"))
 o.default = "0"

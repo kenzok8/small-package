@@ -36,6 +36,21 @@ local function get_log_level(s)
 	return s
 end
 
+--[[
+local cipherSuites = {
+	"TLS_AES_128_GCM_SHA256", "TLS_AES_256_GCM_SHA384", "TLS_CHACHA20_POLY1305_SHA256",
+	"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",
+	"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA", "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",
+	"TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+	"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+	"TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256", "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256"
+}
+local cipherSuites_lookup = {}
+for i, v in ipairs(cipherSuites) do
+	cipherSuites_lookup[v] = true
+end
+]]--
+
 function parseDNS(str)
 	local result_dns_server
 	-- [proto]://[ip]
@@ -195,7 +210,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 						certificate = api.split(node.tls_certificate_pem, "\n"),
 						usage = "verify"
 					} or nil,
-					cipherSuites = node.cipherSuites or nil
+					cipherSuites = (node.cipherSuites and #node.cipherSuites > 0) and table.concat(node.cipherSuites, ":") or nil,
 				} or nil,
 				realitySettings = (node.stream_security == "reality") and {
 					serverName = node.tls_serverName,

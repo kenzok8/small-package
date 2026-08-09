@@ -21,7 +21,9 @@ struct ua2f_config {
     int proxy_workers; // 0 = auto, otherwise 1-16
 };
 
-void load_config();
+void load_config(void);
+bool load_config_from_dir(const char *config_dir);
+void free_config(void);
 
 extern struct ua2f_config config;
 

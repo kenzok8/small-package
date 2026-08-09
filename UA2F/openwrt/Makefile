@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=UA2F
-PKG_VERSION:=4.10.2
+PKG_VERSION:=5.2.0
 PKG_RELEASE:=1
 
 PKG_LICENSE:=GPL-3.0-only
@@ -67,6 +67,17 @@ CMAKE_OPTIONS += \
 	-DUA2F_ENABLE_BACKTRACE=$(if $(CONFIG_UA2F_ENABLE_LIBBACKTRACE),ON,OFF) \
 	-DCMAKE_BUILD_TYPE=RelWithDebInfo
 
+# The QEMU workflow creates this marker inside the mounted feed. Keep coverage
+# instrumentation out of release packages while allowing the SDK build to
+# retain matching .gcno files and its cross-gcov executable on the host.
+ifneq ($(wildcard $(PKG_BUILD_DIR)/openwrt/.ua2f-coverage-build),)
+CMAKE_OPTIONS += -DUA2F_ENABLE_COVERAGE=ON
+UA2F_COVERAGE_BUILD:=1
+UA2F_COVERAGE_DIR:=$(PKG_BUILD_DIR)/.pkgdir/openwrt-coverage
+UA2F_GCOV_WRAPPER:=$(TOOLCHAIN_DIR)/bin/$(TARGET_CROSS)gcov
+UA2F_GCOV_BINARY:=$(dir $(UA2F_GCOV_WRAPPER)).$(notdir $(UA2F_GCOV_WRAPPER)).bin
+endif
+
 STRIP:=true
 
 define Package/ua2f/description
@@ -80,6 +91,17 @@ define Package/ua2f/install
 	$(INSTALL_DIR) $(1)/etc/config $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/ua2f.config $(1)/etc/config/ua2f
 	$(INSTALL_BIN) ./files/ua2f.init $(1)/etc/init.d/ua2f
+
+	$(if $(UA2F_COVERAGE_BUILD),rm -rf $(UA2F_COVERAGE_DIR))
+	$(if $(UA2F_COVERAGE_BUILD),$(INSTALL_DIR) $(UA2F_COVERAGE_DIR)/objects/CMakeFiles/ua2f.dir)
+	$(if $(UA2F_COVERAGE_BUILD),cd $(PKG_BUILD_DIR)/build/CMakeFiles/ua2f.dir && find . -name '*.gcno' -exec cp -fp --parents '{}' $(UA2F_COVERAGE_DIR)/objects/CMakeFiles/ua2f.dir/ \;)
+	$(if $(UA2F_COVERAGE_BUILD),$(INSTALL_DIR) $(UA2F_COVERAGE_DIR)/toolchain/bin)
+	$(if $(UA2F_COVERAGE_BUILD),$(INSTALL_DIR) $(UA2F_COVERAGE_DIR)/host/lib)
+	$(if $(UA2F_COVERAGE_BUILD),$(INSTALL_BIN) $(UA2F_GCOV_WRAPPER) $(UA2F_COVERAGE_DIR)/toolchain/bin/$(notdir $(UA2F_GCOV_WRAPPER)))
+	$(if $(UA2F_COVERAGE_BUILD),$(INSTALL_BIN) $(UA2F_GCOV_BINARY) $(UA2F_COVERAGE_DIR)/toolchain/bin/$(notdir $(UA2F_GCOV_BINARY)))
+	$(if $(UA2F_COVERAGE_BUILD),$(INSTALL_BIN) $(STAGING_DIR_HOST)/lib/ld-linux-x86-64.so.2 $(UA2F_COVERAGE_DIR)/host/lib/)
+	$(if $(UA2F_COVERAGE_BUILD),$(INSTALL_BIN) $(STAGING_DIR_HOST)/lib/libc.so.6 $(UA2F_COVERAGE_DIR)/host/lib/)
+	$(if $(UA2F_COVERAGE_BUILD),$(INSTALL_BIN) $(STAGING_DIR_HOST)/lib/runas.so $(UA2F_COVERAGE_DIR)/host/lib/)
 endef
 
 define Package/ua2f/postinst

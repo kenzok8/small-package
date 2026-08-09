@@ -3,13 +3,13 @@ coverage:
     project:
       default:
         target: auto
-        threshold: 30%
-        informational: true
+        threshold: 1%
+        informational: false
     patch:
       default:
-        target: auto
-        threshold: 30%
-        informational: true
+        target: 80%
+        threshold: 0%
+        informational: false
 
 ignore:
   - "src/third/"
@@ -22,18 +22,29 @@ flags:
   unittests-standalone:
     paths:
       - src/
-  integration:
+  integration-cache:
+    paths:
+      - src/
+  integration-no-cache:
+    paths:
+      - src/
+  proxy-lifecycle:
+    paths:
+      - src/
+  openwrt-qemu:
     paths:
       - src/
 
 flag_management:
   default_rules:
-    carryforward: true
+    carryforward: false
     statuses:
       - type: project
         target: auto
+        threshold: 1%
       - type: patch
-        target: auto
+        target: 80%
+        threshold: 0%
 
 comment:
   layout: "reach,diff,flags,files,footer"

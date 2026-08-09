@@ -2441,5 +2441,5 @@ msgstr "تنظیم نشده"
 msgid "Cipher Suites"
 msgstr "سوئیت‌های رمزدار"
 
-msgid "Configures the list of supported cipher suites, separated by :"
-msgstr "فهرست مجموعه‌های رمز پشتیبانی‌شده را که با موارد زیر از هم جدا شده‌اند، پیکربندی می‌کند:"
+msgid "Configures the list of supported cipher suites."
+msgstr "فهرست مجموعه‌های رمز پشتیبانی‌شده را پیکربندی می‌کند."
