@@ -168,9 +168,9 @@ do
 				local flag = i18n.translatef("Socks node list [%s]", i) .. " " .. i18n.translatef("Backup node list")
 				local currentNodes = {}
 				local newNodes = {}
-				for k, asb_node in ipairs(t.autoswitch_backup_node) do
-					if asb_node then
-						local currentNode = uci:get_all(appname, asb_node) or {}
+				for k, asb_node_id in ipairs(t.autoswitch_backup_node) do
+					if asb_node_id then
+						local currentNode = uci:get_all(appname, asb_node_id) or {}
 						if currentNode[".type"] == "nodes" then
 							currentNodes[#currentNodes + 1] = {
 								log = true,
@@ -277,7 +277,7 @@ do
 			for k, e in pairs(rules) do
 				local _node_id = node[e[".name"]] or nil
 				if _node_id then
-					local section = uci:get_all(appname, node_id) or {}
+					local section = uci:get_all(appname, _node_id) or {}
 					if section[".type"] == "nodes" then
 						CONFIG[#CONFIG + 1] = {
 							log = false,
@@ -2274,7 +2274,7 @@ local function update_node(manual)
 			chain_node_type = (outbound_iface_group ~= "") and "iface" or chain_node_type
 		end
 		for _, vv in ipairs(list) do
-			local cfgid = uci:section(appname, "nodes", api.gen_short_uuid())
+			local cfgid = uci:section(appname, "nodes", api.gen_random_char())
 			for kkk, vvv in pairs(vv) do
 				if type(vvv) == "table" and next(vvv) ~= nil then
 					uci:set_list(appname, cfgid, kkk, vvv)

@@ -326,10 +326,9 @@ s2.anonymous = true
 s2.addremove = true
 s2.extedit = api.url("socks_config", "%s")
 function s2.create(e, t)
-	local uuid = api.gen_short_uuid(5)
-	uuid = "socks_" .. uuid
-	TypedSection.create(e, uuid)
-	luci.http.redirect(e.extedit:format(uuid))
+	local uid = "socks_" .. api.gen_random_char(5)
+	TypedSection.create(e, uid)
+	luci.http.redirect(e.extedit:format(uid))
 end
 
 o = s2:option(DummyValue, "status", translate("Status"))

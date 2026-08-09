@@ -393,22 +393,22 @@ end
 function add_node()
 	local redirect = http.formvalue("redirect")
 
-	local uuid = api.gen_short_uuid()
-	uci:section(appname, "nodes", uuid)
+	local uid = api.gen_random_char()
+	uci:section(appname, "nodes", uid)
 
 	local group = http.formvalue("group")
 	if group and group ~= "default" then
-		uci:set(appname, uuid, "group", group)
+		uci:set(appname, uid, "group", group)
 	end
 
-	uci:set(appname, uuid, "type", "Xray")
+	uci:set(appname, uid, "type", "Xray")
 
 	if redirect == "1" then
 		api.uci_save(uci, appname)
-		http.redirect(api.url("node_config", uuid))
+		http.redirect(api.url("node_config", uid))
 	else
 		api.uci_save(uci, appname, true, true)
-		http_write_json({result = uuid})
+		http_write_json({result = uid})
 	end
 end
 
@@ -423,17 +423,17 @@ end
 
 function copy_node()
 	local section = http.formvalue("section")
-	local uuid = api.gen_short_uuid()
-	uci:section(appname, "nodes", uuid)
+	local uid = api.gen_random_char()
+	uci:section(appname, "nodes", uid)
 	for k, v in pairs(uci:get_all(appname, section)) do
 		if not k:match("^%.") and k ~= "group" then
 			if k == "remarks" then v = (v or "") .. "(1)" end
-			uci:set(appname, uuid, k, v)
+			uci:set(appname, uid, k, v)
 		end
 	end
-	uci:set(appname, uuid, "add_mode", 1)
+	uci:set(appname, uid, "add_mode", 1)
 	api.uci_save(uci, appname)
-	http.redirect(api.url("node_config", uuid))
+	http.redirect(api.url("node_config", uid))
 end
 
 function clear_all_nodes()
@@ -999,29 +999,29 @@ function add_shunt_rule()
 	local add_name = http.formvalue("add_name")
 	local redirect = http.formvalue("redirect")
 
-	local uuid = add_name
+	local uid = add_name
 	if add_name then
-		local has = uci:get(appname, uuid)
+		local has = uci:get(appname, uid)
 		if has then
 			http_write_json_error({ message = "This ID already exists." })
 			return
 		end
 	else
-		uuid = api.gen_short_uuid()
+		uid = api.gen_random_char()
 	end
-	uci:section(appname, "shunt_rules", uuid)
+	uci:section(appname, "shunt_rules", uid)
 
 	local group = http.formvalue("group")
 	if group and group ~= "default" then
-		uci:set(appname, uuid, "group", group)
+		uci:set(appname, uid, "group", group)
 	end
 
 	if redirect == "1" then
 		api.uci_save(uci, appname)
-		http.redirect(api.url("shunt_rules", uuid))
+		http.redirect(api.url("shunt_rules", uid))
 	else
 		api.uci_save(uci, appname)
-		http_write_json_ok({uuid = uuid, redirect_url = api.url("shunt_rules", uuid)})
+		http_write_json_ok({uid = uid, redirect_url = api.url("shunt_rules", uid)})
 	end
 end
 
