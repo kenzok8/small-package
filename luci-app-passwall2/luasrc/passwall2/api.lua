@@ -5,6 +5,7 @@ nixio = require "nixio"
 fs = require "nixio.fs"
 sys = require "luci.sys"
 uci = require"luci.model.uci".cursor()
+cbi = require "luci.cbi"
 util = require "luci.util"
 datatypes = require "luci.cbi.datatypes"
 jsonc = require "luci.jsonc"
@@ -1386,7 +1387,6 @@ function set_apply_on_parse(map)
 end
 
 function set_default_cbi()
-	local cbi = require "luci.cbi"
 	if true then
 		--TextValue
 		local TextValue = cbi.TextValue
@@ -1396,10 +1396,28 @@ function set_default_cbi()
 			self.template  = appname .. "/cbi/tvalue"
 		end
 	end
+	if true then
+		--DynamicList
+		local DynamicList = cbi.DynamicList
+		function DynamicList.write(self, section, value)
+			local new_t = {}
+			if type(value) == "table" then
+				new_t = table_remove_duplicates(value)
+			else
+				new_t = { value }
+			end
+			local new_val
+			if self.cast == "string" then
+				new_val = table.concat(new_t, " ")
+			else
+				new_val = new_t
+			end
+			return cbi.AbstractValue.write(self, section, new_val)
+		end
+	end
 end
 
 function return_map(map)
-	local cbi = require "luci.cbi"
 	local api = require "luci.passwall2.api"
 	if true then
 		-- header
@@ -1457,11 +1475,25 @@ function luci_types(id, m, s, type_name, option_prefix)
 						if self.custom_write then
 							self:custom_write(section, value)
 						else
+							local new_val = value
+							if util.instanceof(self, cbi.DynamicList) then
+								local new_t = {}
+								if type(value) == "table" then
+									new_t = table_remove_duplicates(value)
+								else
+									new_t = { value }
+								end
+								if self.cast == "string" then
+									new_val = table.concat(new_t, " ")
+								else
+									new_val = new_t
+								end
+							end
 							if self.rewrite_option then
-								m:set(section, self.rewrite_option, value)
+								m:set(section, self.rewrite_option, new_val)
 							else
 								if self.option:find(option_prefix) == 1 then
-									m:set(section, self.option:sub(1 + #option_prefix), value)
+									m:set(section, self.option:sub(1 + #option_prefix), new_val)
 								end
 							end
 						end

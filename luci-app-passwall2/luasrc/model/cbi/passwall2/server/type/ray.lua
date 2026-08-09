@@ -218,15 +218,6 @@ o:depends({ [_n("reality")] = true })
 
 o = s:option(DynamicList, _n("reality_serverNames"), translate("serverNames"))
 o:depends({ [_n("reality")] = true })
-function o.custom_write(self, section, value)
-	local new_t = {}
-	if type(value) == "table" then
-		new_t = api.table_remove_duplicates(value)
-	else
-		new_t = { value }
-	end
-	m:set(section, self.option:sub(1 + #option_prefix), new_t)
-end
 
 o = s:option(ListValue, _n("alpn"), translate("alpn"))
 o.default = "default"

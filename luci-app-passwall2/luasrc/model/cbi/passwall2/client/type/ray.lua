@@ -116,12 +116,12 @@ if load_balancing_options then -- [[ Load balancing Start ]]
 		end
 	end
 	-- Reading the old DynamicList
-	function o.cfgvalue(self, section)
-		return m.uci:get_list(appname, section, "balancing_node") or {}
+	function o.custom_cfgvalue(self, section)
+		return table.concat(m:get(section, "balancing_node") or {}, " ")
 	end
 	-- Write-and-hold DynamicList
 	function o.custom_write(self, section, value)
-		local old = m.uci:get_list(appname, section, "balancing_node") or {}
+		local old = m:get(section, "balancing_node") or {}
 		local new, set = {}, {}
 		for v in value:gmatch("%S+") do
 			new[#new + 1] = v
@@ -129,13 +129,13 @@ if load_balancing_options then -- [[ Load balancing Start ]]
 		end
 		for _, v in ipairs(old) do
 			if not set[v] then
-				m.uci:set_list(appname, section, "balancing_node", new)
+				m:set(section, "balancing_node", new)
 				return
 			end
 			set[v] = nil
 		end
 		for _ in pairs(set) do
-			m.uci:set_list(appname, section, "balancing_node", new)
+			m:set(section, "balancing_node", new)
 			return
 		end
 	end
@@ -533,15 +533,6 @@ o:value("TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384")
 o:value("TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256")
 o:value("TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256")
 o:depends({ [_n("tls")] = true, [_n("reality")] = false })
-function o.custom_write(self, section, value)
-	local new_t
-	if type(value) == "table" then
-		new_t = api.table_remove_duplicates(value)
-	else
-		new_t = { value }
-	end
-	m:set(section, self.option:sub(1 + #option_prefix), new_t)
-end
 
 o = s:option(TextValue, _n("reality_mldsa65Verify"), "ML-DSA-65 " .. translate("Public key"))
 o.default = ""

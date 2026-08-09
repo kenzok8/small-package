@@ -19,7 +19,7 @@ stop_default_httpd_services() {
 start_default_httpd_services() {
 	for service in uhttpd nginx; do
 		[ -x "/etc/init.d/$service" ] || continue
-		"/etc/init.d/$service" enabled && "/etc/init.d/$service" start
+		"/etc/init.d/$service" enabled && "/etc/init.d/$service" restart
 	done
 }
 

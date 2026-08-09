@@ -103,30 +103,7 @@ config nodes 'myshunt'
 config shunt_rules 'DirectGame'
 	option remarks 'DirectGame'
 	option network 'tcp,udp'
-	option domain_list '# steam直连域名获取国内CDN走国内线路下载
-cm.steampowered.com
-steamserver.net
-
-# steam国内CDN华为云
-steampipe.steamcontent.tnkjmec.com
-# steam国内CDN白山云
-st.dl.eccdnx.com
-st.dl.bscstorage.net
-st.dl.pinyuncloud.com
-# steam国内CDN新流云(原金山云)(支持ipv6)
-dl.steam.clngaa.com
-# steam国内CDN网宿
-cdn.mileweb.cs.steampowered.com.8686c.com
-cdn-ws.content.steamchina.com
-# steam国内CDN腾讯云 (蒸汽中国独占)
-cdn-qc.content.steamchina.com
-# steam国内CDN阿里云(支持ipv6)
-cdn-ali.content.steamchina.com
-xz.pphimalayanrt.com
-lv.queniujq.cn
-alibaba.cdn.steampipe.steamcontent.com
-
-# 国内游戏geosite域名
+	option domain_list '# 国内游戏geosite域名
 geosite:category-games@cn'
 	option ip_list '# steam直连IP
 45.121.184.0/24
@@ -196,6 +173,9 @@ steamcloud-sydney.storage.googleapis.com
 steamcloud-taiwan.storage.googleapis.com
 steamcloud-eu.storage.googleapis.com
 domain:blizzard.com
+#Steam支付
+domain:checkout.steampowered.com
+domain:globalapi.smart2pay.com
 geosite:category-games'
 
 config shunt_rules 'AIGC'
