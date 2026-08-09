@@ -55,6 +55,16 @@ for sid in $(uci show passwall | grep "=socks" | awk -F '.' '{print $2}' | awk -
 		unset sid new_id
 	fi
 done
+for sid in $(uci show passwall | grep "@acl_rule" | cut -d '.' -sf 2 | cut -d '=' -sf 1); do
+	new_id="acl_$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 5)"
+	uci -q rename passwall.${sid}="${new_id}"
+	unset sid new_id
+done
+for sid in $(uci show passwall | grep "@subscribe_list" | cut -d '.' -sf 2 | cut -d '=' -sf 1); do
+	new_id="sub_$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 5)"
+	uci -q rename passwall.${sid}="${new_id}"
+	unset sid new_id
+done
 
 uci -q commit passwall
 
