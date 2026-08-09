@@ -300,8 +300,10 @@ if (UA2F_BUILD_TESTS)
             COMMAND ${CMAKE_CURRENT_BINARY_DIR}/ua2f_test
             COMMAND ${CMAKE_CURRENT_BINARY_DIR}/ua2f_handler_test
             COMMAND ${CMAKE_CURRENT_BINARY_DIR}/ua2f_proxy_test
+            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/ua2f_listener_test
+            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/ua2f_runtime_test
             COMMENT "Generating code coverage data"
-            DEPENDS ua2f_test ua2f_handler_test ua2f_proxy_test
+            DEPENDS ua2f_test ua2f_handler_test ua2f_proxy_test ua2f_listener_test ua2f_runtime_test
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )
 
@@ -315,6 +317,8 @@ if (UA2F_BUILD_TESTS)
             COMMAND find ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/ua2f_proxy_test.dir -name "*.gcda" -delete
             COMMAND ${CMAKE_CURRENT_BINARY_DIR}/ua2f_test
             COMMAND ${CMAKE_CURRENT_BINARY_DIR}/ua2f_handler_test
+            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/ua2f_listener_test
+            COMMAND ${CMAKE_CURRENT_BINARY_DIR}/ua2f_runtime_test
             COMMAND lcov --capture --directory . --output-file coverage.info --ignore-errors mismatch,inconsistent
             COMMAND lcov --remove coverage.info '*/test/*' '*/build*/_deps/*' '/usr/*' '*/googletest/*' '*_deps/*' '*/third/*' --output-file coverage.info --ignore-errors unused,inconsistent
             COMMAND lcov --list coverage.info
@@ -322,7 +326,7 @@ if (UA2F_BUILD_TESTS)
             COMMAND lcov --remove coverage-branches.info '*/test/*' '*/build*/_deps/*' '/usr/*' '*/googletest/*' '*_deps/*' '*/third/*' --output-file coverage-branches.info --ignore-errors unused,inconsistent --branch-coverage
             COMMAND lcov --list coverage-branches.info --branch-coverage
             COMMENT "Generating lcov coverage report"
-            DEPENDS ua2f_test ua2f_handler_test ua2f_proxy_test
+            DEPENDS ua2f_test ua2f_handler_test ua2f_proxy_test ua2f_listener_test ua2f_runtime_test
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )
     endif()
@@ -401,6 +405,71 @@ if (UA2F_BUILD_TESTS)
         target_link_libraries(ua2f_proxy_test uci)
     endif ()
 
+    # Listener tests run thread entry points synchronously and replace kernel,
+    # sleep, and pthread creation calls with deterministic in-process fakes.
+    add_executable(
+            ua2f_listener_test
+            test/listener_test.cc
+            src/conntrack_listener.c
+            src/session_cleaner.c
+            src/http_session.c
+    )
+    target_link_libraries(
+            ua2f_listener_test
+            GTest::gtest_main
+            pthread
+    )
+    target_compile_options(ua2f_listener_test PRIVATE
+            $<$<COMPILE_LANGUAGE:C>:-iquote${CMAKE_CURRENT_SOURCE_DIR}/src>
+            $<$<COMPILE_LANGUAGE:CXX>:-iquote${CMAKE_CURRENT_SOURCE_DIR}/src>
+    )
+    target_compile_definitions(ua2f_listener_test PRIVATE
+            pthread_create=ua2f_test_pthread_create
+            pthread_detach=ua2f_test_pthread_detach
+            sleep=ua2f_test_sleep
+            nfct_open=ua2f_test_nfct_open
+            nfct_close=ua2f_test_nfct_close
+            nfct_callback_register=ua2f_test_nfct_callback_register
+            nfct_catch=ua2f_test_nfct_catch
+            nfct_get_attr_u32=ua2f_test_nfct_get_attr_u32
+    )
+
+    # Runtime tests cover main-loop orchestration and error recovery without
+    # opening real netlink queues or transparent proxy listeners.
+    add_executable(
+            ua2f_runtime_test
+            test/runtime_test.cc
+            src/ua2f.c
+    )
+    target_link_libraries(
+            ua2f_runtime_test
+            GTest::gtest_main
+            pthread
+    )
+    target_compile_options(ua2f_runtime_test PRIVATE
+            $<$<COMPILE_LANGUAGE:C>:-iquote${CMAKE_CURRENT_SOURCE_DIR}/src>
+            $<$<COMPILE_LANGUAGE:CXX>:-iquote${CMAKE_CURRENT_SOURCE_DIR}/src>
+            $<$<COMPILE_LANGUAGE:C>:-UUA2F_ENABLE_BACKTRACE>
+    )
+    target_compile_definitions(ua2f_runtime_test PRIVATE
+            main=ua2f_entrypoint
+            nfqueue_open=ua2f_test_nfqueue_open
+            nfqueue_close=ua2f_test_nfqueue_close
+            nfqueue_receive=ua2f_test_nfqueue_receive
+            nfqueue_next=ua2f_test_nfqueue_next
+            handle_packet=ua2f_test_handle_packet
+            pthread_create=ua2f_test_pthread_create
+            pthread_join=ua2f_test_pthread_join
+            try_print_info=ua2f_test_try_print_info
+            require_root=ua2f_test_require_root
+            init_statistics=ua2f_test_init_statistics
+            init_handler=ua2f_test_init_handler
+            init_http_sessions=ua2f_test_init_http_sessions
+            init_session_cleaner=ua2f_test_init_session_cleaner
+            run_proxy=ua2f_test_run_proxy
+            load_config=ua2f_test_load_config
+    )
+
     if (UA2F_ENABLE_COVERAGE)
         # Keep this report in a separate Codecov flag. Adding proxy.c to the
         # established unit-test flag would create an artificial flag-level
@@ -434,6 +503,8 @@ if (UA2F_BUILD_TESTS)
     gtest_discover_tests(ua2f_test)
     gtest_discover_tests(ua2f_handler_test)
     gtest_discover_tests(ua2f_proxy_test)
+    gtest_discover_tests(ua2f_listener_test)
+    gtest_discover_tests(ua2f_runtime_test)
 else ()
     message(STATUS "Tests are disabled.")
 endif ()

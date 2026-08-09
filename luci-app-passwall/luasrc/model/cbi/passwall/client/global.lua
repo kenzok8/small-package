@@ -373,22 +373,13 @@ if api.is_finded("smartdns") then
 		return m:get(section, self.option) or {"tcp://1.1.1.1"}
 	end
 	function o.write(self, section, value)
-		local t = {}
-		local t2 = {}
+		local new_t = {}
 		if type(value) == "table" then
-			local x
-			for _, x in ipairs(value) do
-				if x and #x > 0 then
-					if not t2[x] then
-						t2[x] = x
-						t[#t+1] = x
-					end
-				end
-			end
+			new_t = api.table_remove_duplicates(value)
 		else
-			t = { value }
+			new_t = { value }
 		end
-		return DynamicList.write(self, section, t)
+		return DynamicList.write(self, section, new_t)
 	end
 end
 

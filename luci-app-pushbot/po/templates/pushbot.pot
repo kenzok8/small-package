@@ -5,22 +5,18 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-msgid " d "
+msgid "day"
 msgstr ""
 
-msgid " h"
+msgid "hour"
 msgstr ""
 
-msgid " h "
+
+msgid "minute"
 msgstr ""
 
-msgid " min"
-msgstr ""
 
-msgid " min "
-msgstr ""
-
-msgid " sec"
+msgid "sec"
 msgstr ""
 
 msgid "(empty)"
@@ -314,7 +310,7 @@ msgstr ""
 msgid "Full"
 msgstr ""
 
-msgid "Get the code "
+msgid "Get the code"
 msgstr ""
 
 msgid "Global connectivity timeout"
@@ -576,7 +572,10 @@ msgstr ""
 msgid "PushDeer self-hosted server address<br>e.g. https://your.domain:port<br>See <a href=\"http://www.pushdeer.com/selfhosted.html\" target=\"_blank\">here</a> for details<br><br>"
 msgstr ""
 
-msgid "PushPlus custom Webhook<br>For third-party webhook or WeCom calls<br>See <a href=\"http://pushplus.plus/doc/extend/webhook.html\" target=\"_blank\">here</a> for details<br><br>"
+msgid "PushPlus Channel Code"
+msgstr ""
+
+msgid "Channel code configured in PushPlus console<br>webhook: third-party webhook code (WeCom/DingTalk/Feishu...)<br>cp: WeCom app code<br>mail: optional, email sender code (leave empty for official email)<br>See <a href=\"http://www.pushplus.plus/doc/guide/api.html\" target=\"_blank\">here</a> for details<br><br>"
 msgstr ""
 
 msgid "PushPlus group code<br>The group code used for group push<br>See <a href=\"http://www.pushplus.plus/push2.html\" target=\"_blank\">here</a> for details<br><br>"
@@ -705,13 +704,16 @@ msgstr ""
 msgid "Self-hosted PushDeer server"
 msgstr ""
 
+msgid "Self-hosted ntfy server"
+msgstr ""
+
 msgid "Send interval"
 msgstr ""
 
-msgid "Send now"
+msgid "Test Schedule"
 msgstr ""
 
-msgid "Send test"
+msgid "Test Channel"
 msgstr ""
 
 msgid "Send time"
@@ -756,7 +758,7 @@ msgstr ""
 msgid "Test temperature"
 msgstr ""
 
-msgid "Third-party webhook: WeCom, DingTalk, Feishu, ServerChan<br>sms/mail: not yet available on PushPlus<br>See <a href=\"http://pushplus.plus/doc/extend/webhook.html\" target=\"_blank\">here</a> for channel settings<br><br>"
+msgid "wechat/app/extension/clawbot: only token required<br>webhook/cp: also need Channel Code below<br>mail: Channel Code optional (default official email)<br>sms/voice: paid channels (deduct credits)<br>See <a href=\"http://www.pushplus.plus/doc/channel.html\" target=\"_blank\">here</a> for all channels<br><br>"
 msgstr ""
 
 msgid "Threads"
@@ -777,7 +779,7 @@ msgstr ""
 msgid "Title color"
 msgstr ""
 
-msgid "Total traffic: "
+msgid "Total traffic:"
 msgstr ""
 
 msgid "Traffic"
@@ -867,7 +869,16 @@ msgstr ""
 msgid "active: Default"
 msgstr ""
 
+msgid "app: PushPlus App"
+msgstr ""
+
 msgid "cp: WeCom app"
+msgstr ""
+
+msgid "clawbot: WeChat ClawBot"
+msgstr ""
+
+msgid "extension: Browser extension / desktop"
 msgstr ""
 
 msgid "h"
@@ -900,16 +911,19 @@ msgstr ""
 msgid "passive: Add to list only"
 msgstr ""
 
-msgid "sms: SMS"
+msgid "sms: SMS (paid)"
 msgstr ""
 
 msgid "timeSensitive: Time-sensitive"
 msgstr ""
 
+msgid "voice: Voice call (paid)"
+msgstr ""
+
 msgid "webhook: Third-party webhook"
 msgstr ""
 
-msgid "wechat: PushPlus WeChat Official Account"
+msgid "wechat: WeChat Official Account"
 msgstr ""
 
 msgid "PushBot"
@@ -962,5 +976,146 @@ msgstr ""
 
 
 msgid "Format notifications as tables"
+msgstr ""
+
+
+msgid "ntfy"
+msgstr ""
+
+
+msgid "ntfy topic name<br>e.g. myserver_alerts"
+msgstr ""
+
+
+msgid "ntfy server address<br>default https://ntfy.sh, or your self-hosted server"
+msgstr ""
+
+
+msgid "ntfy access token (optional, for protected topics)"
+msgstr ""
+
+
+msgid "default"
+msgstr ""
+
+
+msgid "min"
+msgstr ""
+
+
+msgid "low"
+msgstr ""
+
+
+msgid "high"
+msgstr ""
+
+
+msgid "max"
+msgstr ""
+
+
+msgid "ntfy notification priority"
+msgstr ""
+
+
+msgid "ntfy topic name<br>Leave empty to use the device name as the topic<br>e.g. myserver_alerts"
+msgstr ""
+
+
+msgid "ntfy access token (optional, for protected topics)<br>Note: when Topic is left empty, the device name is used as the topic"
+msgstr ""
+
+
+msgid "ntfy access token (optional, for protected topics)<br>The topic is fixed to the device name"
+msgstr ""
+
+
+msgid "Bark Icon"
+msgstr ""
+
+msgid "Bark Level"
+msgstr ""
+
+msgid "Bark Server"
+msgstr ""
+
+msgid "Bark Sound"
+msgstr ""
+
+msgid "Bark Token"
+msgstr ""
+
+msgid "Priority"
+msgstr ""
+
+msgid "PushDeer Key"
+msgstr ""
+
+msgid "PushDeer Server"
+msgstr ""
+
+msgid "Bark"
+msgstr ""
+
+msgid "PushDeer"
+msgstr ""
+
+msgid "PushPlus"
+msgstr ""
+
+msgid "PushPlus Channel"
+msgstr ""
+
+msgid "PushPlus Token"
+msgstr ""
+
+msgid "PushPlus Topic"
+msgstr ""
+
+msgid "Server"
+msgstr ""
+
+msgid "Token"
+msgstr ""
+
+msgid "WebHook"
+msgstr ""
+
+msgid "Webhook"
+msgstr ""
+
+
+msgid "Advanced Settings"
+msgstr ""
+
+msgid "Basic Settings"
+msgstr ""
+
+msgid "Online Devices"
+msgstr ""
+
+msgid "Push Content"
+msgstr ""
+
+
+msgid "Gotify (debug)"
+msgstr ""
+
+msgid "Gotify app token (debug)"
+msgstr ""
+
+msgid "Gotify message priority 0-10 (debug)"
+msgstr ""
+
+msgid "Gotify self-hosted server address (debug)<br>e.g. https://gotify.example.com"
+msgstr ""
+
+
+msgid "Clicking the test button will save the current settings first"
+msgstr ""
+
+
+msgid "Access token"
 msgstr ""
 

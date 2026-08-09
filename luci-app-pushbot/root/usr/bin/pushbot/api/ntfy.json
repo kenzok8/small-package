@@ -1,0 +1,23 @@
+{
+    "_api": "这是 Pushbot:ntfy 推送 api 文件(纯文本消息)",
+    "url": "${ntfy_server}/${ntfy_topic}",
+    "data": "@${tempjsonpath}",
+    "content_type": "text/plain",
+    "str_title_start": "**",
+    "str_title_end": "**",
+    "str_linefeed": "\n",
+    "str_splitline": "\n\n",
+    "str_space": " ",
+    "str_tab": " ",
+    "table_tab": "",
+    "font_success": "",
+    "font_client": "",
+    "font_fail": "",
+    "font_module": "",
+    "font_title": "",
+    "font_end": "",
+    "font_end2": "",
+    "percentsym": "",
+    "boldstar": "**",
+    "type": {}
+}

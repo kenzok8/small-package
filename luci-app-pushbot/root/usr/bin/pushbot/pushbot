@@ -20,7 +20,7 @@ function read_config(){
 	"pushbot_sheep" "starttime" "endtime" "pushbot_whitelist" "pushbot_blacklist" "pushbot_interface" "MAC_online_list" "MAC_offline_list" \
 	"up_timeout" "down_timeout" "timeout_retry_count" "thread_num" "soc_code" "pve_host" "pve_port"\
 	"err_enable" "err_sheep_enable" "err_device_aliases" "network_err_event" "system_time_event" "autoreboot_time" "network_restart_time" "public_ip_event" "public_ip_retry_count" \
-	"jsonpath" "dd_webhook" "we_webhook" "pp_token" "pp_channel" "pp_webhook" "pp_topic_enable" "pp_topic" "fs_webhook" "pushdeer_key" "pushdeer_srv_enable" "pushdeer_srv" "bark_srv_enable" "bark_srv" "bark_token" "bark_sound" "bark_icon" "bark_icon_enable" "bark_level" \
+	"jsonpath" "dd_webhook" "we_webhook" "pp_token" "pp_channel" "pp_webhook" "pp_topic_enable" "pp_topic" "fs_webhook" "pushdeer_key" "pushdeer_srv_enable" "pushdeer_srv" "bark_srv_enable" "bark_srv" "bark_token" "bark_sound" "bark_icon" "bark_icon_enable" "bark_level" "ntfy_srv_enable" "ntfy_server" "ntfy_topic" "ntfy_token_enable" "ntfy_token" "ntfy_priority" "gotify_server" "gotify_token" "gotify_priority" \
 	"font_title" "font_success" "font_fail" "font_client" "font_module"
 	
 	for str_version in "wrtbwmon" "iputils-arping" "curl" "iw"; do
@@ -54,8 +54,11 @@ function read_config(){
 # 字符串读取
 	str_title_start=`/usr/bin/jq -r '.str_title_start' ${jsonpath}`
 	str_title_end=`/usr/bin/jq -r '.str_title_end' ${jsonpath}`
-	str_linefeed=`/usr/bin/jq -r '.str_linefeed' ${jsonpath}`
-	str_splitline=`/usr/bin/jq -r '.str_splitline' ${jsonpath}`
+	# 命令替换会剥离尾随换行; json 值为纯换行(如 ntfy 的 "\n")时会被剥成空, 加哨兵 X 保护
+	str_linefeed=`/usr/bin/jq -r '.str_linefeed' ${jsonpath}; printf X`
+	str_splitline=`/usr/bin/jq -r '.str_splitline' ${jsonpath}; printf X`
+	str_linefeed="${str_linefeed%X}"
+	str_splitline="${str_splitline%X}"
 	str_space=`/usr/bin/jq -r '.str_space' ${jsonpath}`
 	str_tab=`/usr/bin/jq -r '.str_tab' ${jsonpath}`
 	# 颜色:预设取自 json 中的完整 <font color=...> 标签(缺失/空则保持无色);
@@ -73,6 +76,8 @@ function read_config(){
 	unset _f
 	# 兼容旧模板变量名:用户自定义 diy.json 的 data 模板若引用 font_green/font_red 等旧名仍可用
 	font_green="$font_success"; font_green2="$font_client"; font_red="$font_fail"; font_blue="$font_module"; font_purple="$font_title"
+	# pushplus 渠道(微信端 markdown)不支持表格内 <font> 颜色, 设备名颜色禁用(分段标题颜色保留)
+	[ "$jsonpath" = "/usr/bin/pushbot/api/pushplus.json" ] && font_client=""
 	font_end=`/usr/bin/jq -r '.font_end' ${jsonpath}`
 	font_end2=`/usr/bin/jq -r '.font_end2' ${jsonpath}`
 	percentsym=`/usr/bin/jq -r '.percentsym' ${jsonpath}`
@@ -80,6 +85,8 @@ function read_config(){
 	table_tab=`/usr/bin/jq -r '.tabletab' ${jsonpath}`
 	table_enable=`/usr/bin/jq -r '.table_enable' ${jsonpath}` 2>/dev/null; [ "$table_enable" = "null" ] && table_enable=""
 	get_config "table_format"; [ "$table_format" = "0" ] && table_enable=""
+	# ntfy 纯文本: 不支持表格/markdown, 强制非表格
+	( echo "${jsonpath}"|grep -q "ntfy" ) && table_enable=""
 	( echo "$lite_enable"|grep -q "content" ) && str_title_start="" && str_title_end="" && str_splitline="" && str_linefeed="" && str_tab=""
 }
 	
@@ -109,6 +116,32 @@ function pushbot_init(){
 
 # 推送
 function diy_send(){
+	# ntfy: 纯文本消息(body=内容) + Title/Priority/Token headers(移动端不渲染 markdown, 用纯文本)
+	if ( echo "${3}"|grep -q "ntfy" ); then
+		# topic 固定使用设备名称(device_name)
+		[ "$ntfy_srv_enable" != "1" ] && ntfy_server="https://ntfy.sh"
+		[ "$ntfy_token_enable" != "1" ] && ntfy_token=""
+		local ntfy_topic="$device_name"
+		local ntfy_url=`/usr/bin/jq -r '.url' ${3}` && local ntfy_url=`eval echo ${ntfy_url} 2>/dev/null`
+		[ -z "$ntfy_url" ] && return 1
+		local ntfy_msg=`echo "$2"|sed 's/\*\*//g; s/<font[^>]*>//g; s/<\/font>//g'`
+		local ntfy_ct=`/usr/bin/jq -r '.content_type' ${3}` 2>/dev/null; [ -z "$ntfy_ct" ] && local ntfy_ct="text/plain"
+		local ntfy_extra=""
+		[ ! -z "$ntfy_token" ] && local ntfy_extra="-H \"Authorization: Bearer ${ntfy_token}\""
+		[ ! -z "$ntfy_priority" ] && [ "$ntfy_priority" != "default" ] && local ntfy_extra="${ntfy_extra} -H \"Priority: ${ntfy_priority}\""
+		curl -s -m 15 --fail -H "Title: ${1}" -H "Content-Type: ${ntfy_ct}" ${ntfy_extra} -d "${ntfy_msg}" "${ntfy_url}"
+		return $?
+	fi
+	# gotify: 自建服务器推送(调试中), X-Gotify-Key 认证 + JSON body
+	if ( echo "${3}"|grep -q "gotify" ); then
+		local gotify_url=`/usr/bin/jq -r '.url' ${3}` && local gotify_url=`eval echo ${gotify_url} 2>/dev/null`
+		[ -z "$gotify_url" ] && return 1
+		local gotify_msg=`echo "$2"|sed 's/\*\*//g; s/<font[^>]*>//g; s/<\/font>//g'`
+		local gotify_title=`echo "$1"|sed 's/\*\*//g; s/<font[^>]*>//g; s/<\/font>//g'`
+		[ -z "$gotify_priority" ] && local gotify_priority="5"
+		curl -s -m 15 --fail -H "X-Gotify-Key: ${gotify_token}" -H "Content-Type: application/json" -d "{\"title\":\"${gotify_title}\",\"message\":\"${gotify_msg}\",\"priority\":${gotify_priority}}" "${gotify_url}"
+		return $?
+	fi
 	( ! echo "$lite_enable"|grep -q "content" ) && ( ! echo "$lite_enable"|grep -q "nowtime" ) && local nowtime=`date "+%Y-%m-%d %H:%M:%S"`
 	local diyurl=`/usr/bin/jq -r .url ${3}` && local diyurl=`eval echo ${diyurl} 2>/dev/null`
 	local type=`/usr/bin/jq -r '.type' ${3}` && local type=`eval echo ${type} 2>/dev/null`
@@ -1440,7 +1473,7 @@ function add_ip_black(){
 
 # 发送定时数据
 function send(){
-	echo "`date "+%Y-%m-%d %H:%M:%S"` 【定时数据】创建定时任务" >> ${logfile}
+	[ ! -z "$1" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【测试】开始测试渠道" >> ${logfile} || echo "`date "+%Y-%m-%d %H:%M:%S"` 【定时数据】创建定时任务" >> ${logfile}
 	pushbot_disturb;local send_disturb=$?
 	get_config "send_title" "router_status" "router_temp" "router_wan" "client_list" "google_check_count"
 
@@ -1563,7 +1596,12 @@ function send(){
 	send_content=`echo "$send_content"|tr '"' "'"`
 	device_name=`echo "$device_name"|tr '"' "'"`
 	[ "$send_disturb" -eq "0" ] && diy_send "${send_title}" "${send_content}" "${jsonpath}" >/dev/null 2>&1
-	[ $? -ne 0 ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】定时推送失败，请检查网络或设置信息" >> ${logfile} || echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}定时推送任务完成" >> ${logfile}
+	local send_rc=$?
+	if [ ! -z "$1" ]; then
+		[ $send_rc -ne 0 ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】渠道测试失败，请检查网络或设置信息" >> ${logfile} || echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}渠道测试完成" >> ${logfile}
+	else
+		[ $send_rc -ne 0 ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】定时推送失败，请检查网络或设置信息" >> ${logfile} || echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}定时推送任务完成" >> ${logfile}
+	fi
 	deltemp
 }
 

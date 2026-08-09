@@ -2,6 +2,9 @@
 local api = require "luci.passwall.api"
 local appname = api.appname
 local uci = api.uci
+local is_js_luci = api.is_js_luci()
+local section_tag = is_js_luci and "div" or "fieldset"
+local title_tag = is_js_luci and "h3" or "legend"
 -%>
 <script src="<%=resource%>/view/<%=appname%>/Sortable.min.js"></script>
 
@@ -326,7 +329,7 @@ table td, .table .td {
 
 
 <script type="text/template" id="shunt_rules-table-template">
-	<fieldset class="cbi-section cbi-tblsection" id="cbi-<%=appname%>-shunt_rules-{{group}}-fieldset">
+	<<%=section_tag%> class="cbi-section cbi-tblsection" id="cbi-<%=appname%>-shunt_rules-{{group}}-fieldset">
 		<table class="table cbi-section-table" id="cbi-<%=appname%>-shunt_rules-{{group}}-table" style="">
 			<tr class="tr cbi-section-table-titles anonymous">
 				<th class="th cbi-section-table-cell" style="width:30%">ID</th>
@@ -340,7 +343,7 @@ table td, .table .td {
 			<input class="cbi-button cbi-button-add" type="button" value="<%:Add%>" onclick="toPage('add')">
 			<input class="cbi-button cbi-button-apply" style="display: none" type="button" id="save_order_btn_{{group}}" value="<%:Save Order%>" onclick="save_current_page_order('{{group}}')">
 		</div>
-	</fieldset>
+	</<%=section_tag%>>
 </script>
 
 <script type="text/template" id="shunt_rule-tr-template">
@@ -358,11 +361,11 @@ table td, .table .td {
 	</tr>
 </script>
 
-<div class="cbi-section">
-	<h3>Sing-Box/Xray <%:Shunt Rule%></h3>
+<<%=section_tag%> class="cbi-section">
+	<<%=title_tag%>>Sing-Box/Xray <%:Shunt Rule%></<%=title_tag%>>
 	<div class="cbi-section-descr"><a style="color: red"><%:Please note attention to the priority, the higher the order, the higher the priority.%></a></div>
 	<div id="shunt_rule_list"></div>
-</div>
+</<%=section_tag%>>
 
 <script type="text/javascript">
 	function loadNodeList() {
@@ -428,7 +431,7 @@ table td, .table .td {
 			
 			function addTabDOM(li, content) {
 				let tab_ul_html = '<ul class="cbi-tabmenu">';
-				let tab_content_html = '<fieldset class="cbi-section-shunt_rule cbi-section-shunt_rule-tabbed" id="cbi-<%=appname%>-shunt_rules">';
+				let tab_content_html = '<<%=section_tag%> class="cbi-section-shunt_rule cbi-section-shunt_rule-tabbed" id="cbi-<%=appname%>-shunt_rules">';
 				if (li) {
 					tab_ul_html += li;
 				}
@@ -436,7 +439,7 @@ table td, .table .td {
 					tab_content_html += content;
 				}
 				tab_ul_html += '</ul>';
-				tab_content_html += '</fieldset>';
+				tab_content_html += '</<%=section_tag%>>';
 				return tab_ul_html + tab_content_html;
 			}
 

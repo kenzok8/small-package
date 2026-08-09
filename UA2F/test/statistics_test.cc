@@ -71,6 +71,20 @@ TEST_F(StatisticsTest, TryPrintStatistics) {
     EXPECT_NO_THROW(try_print_statistics());
 }
 
+TEST_F(StatisticsTest, PrintsAfterLargePacketDelta) {
+    for (int i = 0; i < 8192; i++) {
+        count_user_agent_packet();
+        count_http_packet();
+        count_tcp_packet();
+        count_ipv4_packet();
+        count_ipv6_packet();
+    }
+
+    for (int i = 0; i < 1024; i++) {
+        EXPECT_NO_THROW(try_print_statistics());
+    }
+}
+
 // Test time string formatting function if accessible
 extern "C" char *fill_time_string(const double sec);
 

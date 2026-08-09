@@ -6,22 +6,18 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-msgid " d "
+msgid "day"
 msgstr " 天 "
 
-msgid " h"
+msgid "hour"
 msgstr " 小时"
 
-msgid " h "
-msgstr " 小时 "
 
-msgid " min"
+msgid "minute"
 msgstr " 分"
 
-msgid " min "
-msgstr " 分 "
 
-msgid " sec"
+msgid "sec"
 msgstr " 秒"
 
 msgid "(empty)"
@@ -315,8 +311,8 @@ msgstr "飞书Webhook"
 msgid "Full"
 msgstr "完整版"
 
-msgid "Get the code "
-msgstr "调用代码获取"
+msgid "Get the code"
+msgstr "获取代码 "
 
 msgid "Global connectivity timeout"
 msgstr "全球互联检测超时时间"
@@ -577,8 +573,11 @@ msgstr "只推送标题"
 msgid "PushDeer self-hosted server address<br>e.g. https://your.domain:port<br>See <a href=\"http://www.pushdeer.com/selfhosted.html\" target=\"_blank\">here</a> for details<br><br>"
 msgstr "PushDeer 自建服务器地址<br>如https://your.domain:port<br>具体自建服务器设定参见：<a href=\"http://www.pushdeer.com/selfhosted.html\" target=\"_blank\">点击这里</a><br><br>"
 
-msgid "PushPlus custom Webhook<br>For third-party webhook or WeCom calls<br>See <a href=\"http://pushplus.plus/doc/extend/webhook.html\" target=\"_blank\">here</a> for details<br><br>"
-msgstr "PushPlus 自定义Webhook<br>第三方webhook或企业微信调用<br>具体自定义Webhook设定参见：<a href=\"http://pushplus.plus/doc/extend/webhook.html\" target=\"_blank\">点击这里</a><br><br>"
+msgid "PushPlus Channel Code"
+msgstr "PushPlus 渠道编码"
+
+msgid "Channel code configured in PushPlus console<br>webhook: third-party webhook code (WeCom/DingTalk/Feishu...)<br>cp: WeCom app code<br>mail: optional, email sender code (leave empty for official email)<br>See <a href=\"http://www.pushplus.plus/doc/guide/api.html\" target=\"_blank\">here</a> for details<br><br>"
+msgstr "在PushPlus个人中心渠道设置中新增的渠道编码<br>webhook：第三方webhook编码（企业微信/钉钉/飞书...）<br>cp：企业微信应用编码<br>mail：可选，自定义发件邮箱编码（留空使用官方邮箱）<br>具体参见：<a href=\"http://www.pushplus.plus/doc/guide/api.html\" target=\"_blank\">点击这里</a><br><br>"
 
 msgid "PushPlus group code<br>The group code used for group push<br>See <a href=\"http://www.pushplus.plus/push2.html\" target=\"_blank\">here</a> for details<br><br>"
 msgstr "PushPlus 群组编码<br>一对多推送时指定的群组编码<br>具体群组编码Topic设定参见：<a href=\"http://www.pushplus.plus/push2.html\" target=\"_blank\">点击这里</a><br><br>"
@@ -706,14 +705,17 @@ msgstr "自建PushDeer"
 msgid "Self-hosted PushDeer server"
 msgstr "自建 PushDeer 服务器"
 
+msgid "Self-hosted ntfy server"
+msgstr "自建 ntfy 服务器"
+
 msgid "Send interval"
 msgstr "发送间隔"
 
-msgid "Send now"
-msgstr "手动发送"
+msgid "Test Schedule"
+msgstr "测试定时"
 
-msgid "Send test"
-msgstr "发送测试"
+msgid "Test Channel"
+msgstr "测试渠道"
 
 msgid "Send time"
 msgstr "发送时间"
@@ -757,8 +759,8 @@ msgstr "终端信息"
 msgid "Test temperature"
 msgstr "测试温度"
 
-msgid "Third-party webhook: WeCom, DingTalk, Feishu, ServerChan<br>sms/mail: not yet available on PushPlus<br>See <a href=\"http://pushplus.plus/doc/extend/webhook.html\" target=\"_blank\">here</a> for channel settings<br><br>"
-msgstr "第三方webhook：企业微信、钉钉、飞书、server酱<br>sms短信/mail邮箱：PushPlus暂未开放<br>具体channel设定参见：<a href=\"http://pushplus.plus/doc/extend/webhook.html\" target=\"_blank\">点击这里</a><br><br>"
+msgid "wechat/app/extension/clawbot: only token required<br>webhook/cp: also need Channel Code below<br>mail: Channel Code optional (default official email)<br>sms/voice: paid channels (deduct credits)<br>See <a href=\"http://www.pushplus.plus/doc/channel.html\" target=\"_blank\">here</a> for all channels<br><br>"
+msgstr "wechat/app/extension/clawbot：仅需token<br>webhook/cp：还需填写下方渠道编码<br>mail：渠道编码可选（默认使用官方邮箱）<br>sms/voice：收费渠道（扣减积分）<br>全部渠道说明参见：<a href=\"http://www.pushplus.plus/doc/channel.html\" target=\"_blank\">点击这里</a><br><br>"
 
 msgid "Threads"
 msgstr "线程数"
@@ -778,7 +780,7 @@ msgstr "时间：            09:28:00"
 msgid "Title color"
 msgstr "主标题颜色"
 
-msgid "Total traffic: "
+msgid "Total traffic:"
 msgstr "总计流量："
 
 msgid "Traffic"
@@ -868,8 +870,17 @@ msgstr "【Zed-OP】Test-OpenWRT状态："
 msgid "active: Default"
 msgstr "active：默认"
 
+msgid "app: PushPlus App"
+msgstr "app：PushPlus APP"
+
 msgid "cp: WeCom app"
 msgstr "cp：企业微信应用"
+
+msgid "clawbot: WeChat ClawBot"
+msgstr "clawbot：微信ClawBot"
+
+msgid "extension: Browser extension / desktop"
+msgstr "extension：浏览器插件/桌面应用"
 
 msgid "h"
 msgstr "点"
@@ -901,17 +912,20 @@ msgstr "在线 9天28小时"
 msgid "passive: Add to list only"
 msgstr "passive：仅添加到通知列表"
 
-msgid "sms: SMS"
-msgstr "sms：短信"
+msgid "sms: SMS (paid)"
+msgstr "sms：短信（收费）"
 
 msgid "timeSensitive: Time-sensitive"
 msgstr "timeSensitive：时效性通知"
 
+msgid "voice: Voice call (paid)"
+msgstr "voice：语音电话（收费）"
+
 msgid "webhook: Third-party webhook"
 msgstr "webhook：第三方webhook"
 
-msgid "wechat: PushPlus WeChat Official Account"
-msgstr "wechat：PushPlus微信公众号"
+msgid "wechat: WeChat Official Account"
+msgstr "wechat：微信公众号"
 
 msgid "PushBot"
 msgstr "全能推送"
@@ -964,4 +978,145 @@ msgstr "表格化"
 
 msgid "Format notifications as tables"
 msgstr "通知以表格形式输出"
+
+
+msgid "ntfy"
+msgstr "ntfy"
+
+
+msgid "ntfy topic name<br>e.g. myserver_alerts"
+msgstr "ntfy 主题名称<br>例如 myserver_alerts"
+
+
+msgid "ntfy server address<br>default https://ntfy.sh, or your self-hosted server"
+msgstr "ntfy 服务器地址<br>默认 https://ntfy.sh，或自建服务器"
+
+
+msgid "ntfy access token (optional, for protected topics)"
+msgstr "ntfy 访问令牌（可选，用于受保护主题）"
+
+
+msgid "default"
+msgstr "默认"
+
+
+msgid "min"
+msgstr "最低"
+
+
+msgid "low"
+msgstr "低"
+
+
+msgid "high"
+msgstr "高"
+
+
+msgid "max"
+msgstr "最高"
+
+
+msgid "ntfy notification priority"
+msgstr "ntfy 通知优先级"
+
+
+msgid "ntfy topic name<br>Leave empty to use the device name as the topic<br>e.g. myserver_alerts"
+msgstr "ntfy 主题名称<br>留空则使用本设备名称作为主题<br>例如 myserver_alerts"
+
+
+msgid "ntfy access token (optional, for protected topics)<br>Note: when Topic is left empty, the device name is used as the topic"
+msgstr "ntfy 访问令牌（可选，用于受保护主题）<br>提示：Topic 留空时，默认使用“本设备名称”作为主题"
+
+
+msgid "ntfy access token (optional, for protected topics)<br>The topic is fixed to the device name"
+msgstr "ntfy 访问令牌（可选，用于受保护主题）<br>主题固定使用本设备名称"
+
+
+msgid "Bark"
+msgstr "Bark"
+
+msgid "Bark Icon"
+msgstr "Bark 图标"
+
+msgid "PushDeer"
+msgstr "PushDeer"
+
+msgid "PushPlus"
+msgstr "PushPlus"
+
+msgid "Bark Level"
+msgstr "Bark 级别"
+
+msgid "Bark Server"
+msgstr "Bark 服务器"
+
+msgid "Bark Sound"
+msgstr "Bark 提示音"
+
+msgid "Bark Token"
+msgstr "Bark 令牌"
+
+msgid "Priority"
+msgstr "优先级"
+
+msgid "PushDeer Key"
+msgstr "PushDeer 密钥"
+
+msgid "PushDeer Server"
+msgstr "PushDeer 服务器"
+
+msgid "PushPlus Channel"
+msgstr "PushPlus 渠道"
+
+msgid "PushPlus Token"
+msgstr "PushPlus 令牌"
+
+msgid "PushPlus Topic"
+msgstr "PushPlus 群组"
+
+msgid "Server"
+msgstr "服务器"
+
+msgid "Token"
+msgstr "令牌"
+
+msgid "WebHook"
+msgstr "Webhook 地址"
+
+msgid "Webhook"
+msgstr "Webhook 地址"
+
+
+msgid "Advanced Settings"
+msgstr "高级设置"
+
+msgid "Basic Settings"
+msgstr "基本设置"
+
+msgid "Online Devices"
+msgstr "在线设备"
+
+msgid "Push Content"
+msgstr "推送内容"
+
+
+msgid "Gotify (debug)"
+msgstr "Gotify（调试中）"
+
+msgid "Gotify app token (debug)"
+msgstr "Gotify 应用令牌（调试中）"
+
+msgid "Gotify message priority 0-10 (debug)"
+msgstr "Gotify 消息优先级 0-10（调试中）"
+
+msgid "Gotify self-hosted server address (debug)<br>e.g. https://gotify.example.com"
+msgstr "Gotify 自建服务器地址（调试中）<br>例如 https://gotify.example.com"
+
+
+msgid "Clicking the test button will save the current settings first"
+msgstr "点击测试按钮将执行保存"
+
+
+msgid "Access token"
+msgstr "访问令牌"
 

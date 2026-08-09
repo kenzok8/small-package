@@ -1,6 +1,8 @@
 <%
 local api = require "luci.passwall.api"
 local appname = api.appname
+local is_js_luci = api.is_js_luci()
+local section_tag = is_js_luci and "div" or "fieldset"
 -%>
 <script src="<%=resource%>/view/<%=appname%>/Sortable.min.js?v=1.15.7"></script>
 
@@ -364,7 +366,7 @@ table td, .table .td {
 </style>
 
 <script type="text/javascript">
-<% if api.is_js_luci() then -%>
+<% if is_js_luci then -%>
 	var cbi_t = [];
 	function cbi_t_add(section, tab) {
 		var t = document.getElementById('tab.' + section + '.' + tab);
@@ -1286,7 +1288,7 @@ table td, .table .td {
 </div>
 
 <script type="text/template" id="nodes-table-template">
-	<fieldset class="cbi-section cbi-tblsection" id="cbi-<%=appname%>-nodes-{{group}}-fieldset">
+	<<%=section_tag%> class="cbi-section cbi-tblsection" id="cbi-<%=appname%>-nodes-{{group}}-fieldset">
 		<table class="table cbi-section-table" id="cbi-<%=appname%>-nodes-{{group}}-table" style="">
 			<tr class="tr cbi-section-table-titles anonymous">
 				<th class="th cbi-section-table-cell" style="width:20px">
@@ -1304,7 +1306,7 @@ table td, .table .td {
 			<input class="cbi-button cbi-button-add" type="button" value="<%:Add%>" onclick="node_action('add')">
 			<input class="cbi-button cbi-button-apply" style="display: none" type="button" id="save_order_btn_{{group}}" value="<%:Save Order%>" onclick="save_current_page_order('{{group}}')">
 		</div>
-	</fieldset>
+	</<%=section_tag%>>
 </script>
 
 <script type="text/template" id="node-tr-template">
@@ -1332,8 +1334,8 @@ table td, .table .td {
 	</tr>
 </script>
 
-<fieldset class="cbi-section" id="node_list">
-</fieldset>
+<<%=section_tag%> class="cbi-section" id="node_list">
+</<%=section_tag%>>
 
 <script type="text/javascript">
 	//init logic
@@ -1492,7 +1494,7 @@ table td, .table .td {
 
 			function addTabDOM(li, content) {
 				let tab_ul_html = '<ul class="cbi-tabmenu">';
-				let tab_content_html = '<fieldset class="cbi-section-shunt_rule cbi-section-shunt_rule-tabbed" id="cbi-<%=appname%>-nodes">';
+				let tab_content_html = '<<%=section_tag%> class="cbi-section-shunt_rule cbi-section-shunt_rule-tabbed" id="cbi-<%=appname%>-nodes">';
 				if (li) {
 					tab_ul_html += li;
 				}
@@ -1500,7 +1502,7 @@ table td, .table .td {
 					tab_content_html += content;
 				}
 				tab_ul_html += '</ul>';
-				tab_content_html += '</fieldset>';
+				tab_content_html += '</<%=section_tag%>>';
 				return tab_ul_html + tab_content_html;
 			}
 

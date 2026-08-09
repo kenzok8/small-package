@@ -24,24 +24,16 @@ for k, e in ipairs(api.get_valid_nodes()) do
 end
 
 local dynamicList_write = function(self, section, value)
-	local t = {}
-	local t2 = {}
+	local new_t = {}
 	if type(value) == "table" then
-		local x
-		for _, x in ipairs(value) do
-			if x and #x > 0 then
-				if not t2[x] then
-					t2[x] = x
-					t[#t+1] = x
-				end
-			end
-		end
+		new_t = api.table_remove_duplicates(value)
 	else
-		t = { value }
+		new_t = { value }
 	end
-	t = table.concat(t, " ")
-	return DynamicList.write(self, section, t)
+	local new_val = table.concat(new_t, " ")
+	return DynamicList.write(self, section, new_val)
 end
+
 local doh_validate = function(self, value, t)
 	if value ~= "" then
 		local flag = 0

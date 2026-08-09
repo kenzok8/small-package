@@ -2,7 +2,7 @@
 
 # 🚀 luci-app-pushbot 全能推送
 
-**路由器报警与日志推送工具** — 支持钉钉 · 企业微信 · 飞书 · Bark · PushPlus · PushDeer 多渠道
+**路由器报警与日志推送工具** — 支持钉钉 · 企业微信 · 飞书 · Bark · PushPlus · PushDeer · ntfy · Gotify（调试中）多渠道
 
 [![GitHub release](https://img.shields.io/github/v/release/zzsj0928/luci-app-pushbot?style=flat-square&color=blue)](https://github.com/zzsj0928/luci-app-pushbot/releases)
 [![GitHub issues](https://img.shields.io/github/issues/zzsj0928/luci-app-pushbot?style=flat-square&color=orange)](https://github.com/zzsj0928/luci-app-pushbot/issues)
@@ -24,6 +24,13 @@
 
 # 📝 更新日志
 
+- **2026-08-09**（v5.12）：新增 Gotify 渠道支持（调试中），主版本 5.11 → 5.12
+- **2026-08-09**（v5.11）：多项修复与增强
+  - 主题联动：自动适配 argon / zargon / liquid / 系统的明暗模式（跟随当前启用主题）
+  - ntfy：修复换行显示，Token 与自建服务器改为开关控制
+  - PushPlus：支持全部渠道（APP/插件/ClawBot/语音等）与渠道编码
+  - 界面全面中文化，测试按钮更名为"测试渠道 / 测试定时"
+  - 修复多处翻译失效与页面 JS 报错
 - **2026-08-06**：全面国际化与多项优化
   - 全面国际化：界面以英文为源语言，安装 `luci-i18n-pushbot-zh-cn` 翻译包后自动显示中文
   - 汉化包版本与主包同步跟进
@@ -54,7 +61,7 @@
 | 模块 | 功能 |
 |------|------|
 | 运行控制 | 插件启用/禁用开关、精简模式（精简设备列表 / 当前时间 / 只推送标题） |
-| 推送模式 | 支持 钉钉、企业微信、飞书、Bark、PushPlus、PushDeer、自定义推送 等多种推送渠道 |
+| 推送模式 | 支持 钉钉、企业微信、飞书、Bark、PushPlus（全渠道）、PushDeer、ntfy、Gotify（调试中）、自定义推送 等多种推送渠道 |
 | 终端信息 | MAC 设备信息数据库（简化版 / 完整版 / 网络查询）、设备别名管理 |
 | 免打扰 | 免打扰时段设置（脚本挂起 / 静默模式）、MAC 过滤（白名单 / 黑名单 / 接口过滤、在线 / 离线免打扰） |
 

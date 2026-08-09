@@ -1,3 +1,6 @@
+{% import { cursor } from 'uci' %}
+{% let pushbot_argon_mode = cursor().get_first('argon', 'global', 'mode') ?? '' %}
+{% let pushbot_liquid_mode = cursor().get_first('liquid', 'theme', 'mode') ?? '' %}
 {% include('header') %}
 <script type="text/javascript">//<![CDATA[
 if (typeof XHR === 'undefined') {
@@ -427,6 +430,8 @@ XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'get_config') }
 			'{{ _('WeCom') }}': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM8.5 6.5h7c.83 0 1.5.67 1.5 1.5v2c0 .83-.67 1.5-1.5 1.5h-7A1.5 1.5 0 0 1 7 10V8c0-.83.67-1.5 1.5-1.5zm0 6h4c.83 0 1.5.67 1.5 1.5v2c0 .83-.67 1.5-1.5 1.5h-4A1.5 1.5 0 0 1 7 16v-2c0-.83.67-1.5 1.5-1.5z"/></svg>',
 			'{{ _('Feishu') }}': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1.5 6h3c.83 0 1.5.67 1.5 1.5v1c0 .83-.67 1.5-1.5 1.5h-3A1.5 1.5 0 0 1 9 10.5v-1c0-.83.67-1.5 1.5-1.5zm0 4h5c.83 0 1.5.67 1.5 1.5v1c0 .83-.67 1.5-1.5 1.5h-5A1.5 1.5 0 0 1 9 13v-1c0-.83.67-1.5 1.5-1.5z"/></svg>',
 			'Bark': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
+			'ntfy': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>',
+			'{{ _('Gotify (debug)') }}': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>',
 			'PushPlus': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 5h-2v5l4 2.4 1-1.6-3-1.8V7z"/></svg>',
 			'PushDeer': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 16a6 6 0 1 1 0-12 6 6 0 0 1 0 12z"/></svg>',
 			'{{ _('Custom push') }}': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1 14H9v-2h2v2zm0-4H9V8h2v4z"/></svg>'
@@ -434,10 +439,12 @@ XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'get_config') }
 		var modeOpts = [
 			{ v: '/usr/bin/pushbot/api/dingding.json', l: '{{ _('DingTalk') }}' },
 			{ v: '/usr/bin/pushbot/api/ent_wechat.json', l: '{{ _('WeCom') }}' },
+			{ v: '/usr/bin/pushbot/api/pushplus.json', l: '{{ _('PushPlus') }}' },
 			{ v: '/usr/bin/pushbot/api/feishu.json', l: '{{ _('Feishu') }}' },
-			{ v: '/usr/bin/pushbot/api/bark.json', l: 'Bark' },
-			{ v: '/usr/bin/pushbot/api/pushplus.json', l: 'PushPlus' },
-			{ v: '/usr/bin/pushbot/api/pushdeer.json', l: 'PushDeer' },
+			{ v: '/usr/bin/pushbot/api/gotify.json', l: '{{ _('Gotify (debug)') }}' },
+			{ v: '/usr/bin/pushbot/api/ntfy.json', l: '{{ _('ntfy') }}' },
+			{ v: '/usr/bin/pushbot/api/bark.json', l: '{{ _('Bark') }}' },
+			{ v: '/usr/bin/pushbot/api/pushdeer.json', l: '{{ _('PushDeer') }}' },
 			{ v: '/usr/bin/pushbot/api/diy.json', l: '{{ _('Custom push') }}' }
 		];
 		var modeBtns = [];
@@ -469,34 +476,46 @@ XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'get_config') }
 		/* ── mode-field map with full field configs ── */
 		var MODE_FIELD_CFG = {
 			'/usr/bin/pushbot/api/dingding.json': [
-				{ name: 'dd_webhook', type: 'text', label: 'Webhook', desc: '{{ _('DingTalk bot Webhook, enter only the part after access_token=<br><a href="https://developers.dingtalk.com/document/robots/custom-robot-access" target="_blank">Get the code</a><br><br>') }}' },
+				{ name: 'dd_webhook', type: 'text', label: '{{ _('Webhook') }}', desc: '{{ _('DingTalk bot Webhook, enter only the part after access_token=<br><a href="https://developers.dingtalk.com/document/robots/custom-robot-access" target="_blank">Get the code</a><br><br>') }}'},
 			],
 			'/usr/bin/pushbot/api/ent_wechat.json': [
-				{ name: 'we_webhook', type: 'text', label: 'Webhook', desc: '{{ _('WeCom bot Webhook, enter only the part after key=<br><a href="https://work.weixin.qq.com/api/doc/90000/90136/91770" target="_blank">Get the code</a><br><br>') }}' },
+				{ name: 'we_webhook', type: 'text', label: '{{ _('Webhook') }}', desc: '{{ _('WeCom bot Webhook, enter only the part after key=<br><a href="https://work.weixin.qq.com/api/doc/90000/90136/91770" target="_blank">Get the code</a><br><br>') }}'},
 			],
 			'/usr/bin/pushbot/api/feishu.json': [
-				{ name: 'fs_webhook', type: 'text', label: 'WebHook', desc: '{{ _('Feishu WebHook<br><a href="https://www.feishu.cn/hc/zh-CN/articles/360024984973" target="_blank">Get the code</a><br><br>') }}' },
+				{ name: 'fs_webhook', type: 'text', label: '{{ _('WebHook') }}', desc: '{{ _('Feishu WebHook<br><a href="https://www.feishu.cn/hc/zh-CN/articles/360024984973" target="_blank">Get the code</a><br><br>') }}'},
 			],
 			'/usr/bin/pushbot/api/bark.json': [
-				{ name: 'bark_token', type: 'text', label: 'Bark Token', desc: 'Bark Token<br>{{ _('Get the code ') }}<a href=\'https://github.com/Finb/Bark\' target=\'_blank\'>{{ _('here') }}</a><br><br>' },
+				{ name: 'bark_token', type: 'text', label: '{{ _('Bark Token') }}', desc: '{{ _('Get the code') }} <a href=\'https://github.com/Finb/Bark\' target=\'_blank\'>{{ _('here') }}</a><br><br>'},
 				{ name: 'bark_srv_enable', type: 'toggle', label: '{{ _('Self-hosted Bark server') }}' },
-				{ name: 'bark_srv', type: 'text', label: 'Bark Server', desc: '{{ _('Bark self-hosted server address<br>e.g. https://your.domain:port<br>See <a href="http://www.pushdeer.com/selfhosted.html" target="_blank">here</a> for the self-hosting guide<br><br>') }}' },
-				{ name: 'bark_sound', type: 'text', label: 'Bark Sound', desc: '{{ _('Bark notification sound<br>e.g. silence.caf<br>See <a href="https://github.com/Finb/Bark/tree/master/Sounds" target="_blank">here</a> for details<br><br>') }}' },
+				{ name: 'bark_srv', type: 'text', label: '{{ _('Bark Server') }}', depends: 'bark_srv_enable', desc: '{{ _('Bark self-hosted server address<br>e.g. https://your.domain:port<br>See <a href="http://www.pushdeer.com/selfhosted.html" target="_blank">here</a> for the self-hosting guide<br><br>') }}'},
+				{ name: 'bark_sound', type: 'text', label: '{{ _('Bark Sound') }}', desc: '{{ _('Bark notification sound<br>e.g. silence.caf<br>See <a href="https://github.com/Finb/Bark/tree/master/Sounds" target="_blank">here</a> for details<br><br>') }}'},
 				{ name: 'bark_icon_enable', type: 'toggle', label: '{{ _('Bark notification icon') }}' },
-				{ name: 'bark_icon', type: 'text', label: 'Bark Icon', desc: '{{ _('Bark notification icon (iOS 15 or above)<br>e.g. http://day.app/assets/images/avatar.jpg<br>See <a href="https://github.com/Finb/Bark#%E5%85%B6%E4%BB%96%E5%8F%82%E6%95%B0" target="_blank">here</a> for details<br><br>') }}' },
-				{ name: 'bark_level', type: 'select', label: 'Bark Level', choices: [{v:'active',l:'{{ _('active: Default') }}'},{v:'timeSensitive',l:'{{ _('timeSensitive: Time-sensitive') }}'},{v:'passive',l:'{{ _('passive: Add to list only') }}'}], desc: '{{ _('Bark time-sensitive notification<br>Optional values:<br/>active: default, the system shows the notification immediately on the lock screen.<br/>timeSensitive: time-sensitive, can be shown in Focus mode.<br/>passive: only added to the notification list, no screen wake.') }}' },
+				{ name: 'bark_icon', type: 'text', label: '{{ _('Bark Icon') }}', depends: 'bark_icon_enable', desc: '{{ _('Bark notification icon (iOS 15 or above)<br>e.g. http://day.app/assets/images/avatar.jpg<br>See <a href="https://github.com/Finb/Bark#%E5%85%B6%E4%BB%96%E5%8F%82%E6%95%B0" target="_blank">here</a> for details<br><br>') }}'},
+				{ name: 'bark_level', type: 'select', label: '{{ _('Bark Level') }}', choices: [{v:'active',l:'{{ _('active: Default') }}'},{v:'timeSensitive',l:'{{ _('timeSensitive: Time-sensitive') }}'},{v:'passive',l:'{{ _('passive: Add to list only') }}'}], desc: '{{ _('Bark time-sensitive notification<br>Optional values:<br/>active: default, the system shows the notification immediately on the lock screen.<br/>timeSensitive: time-sensitive, can be shown in Focus mode.<br/>passive: only added to the notification list, no screen wake.') }}'},
+			],
+			'/usr/bin/pushbot/api/ntfy.json': [
+				{ name: 'ntfy_srv_enable', type: 'toggle', label: '{{ _('Self-hosted ntfy server') }}' },
+				{ name: 'ntfy_server', type: 'text', label: '{{ _('Server') }}', depends: 'ntfy_srv_enable', desc: '{{ _('ntfy server address<br>default https://ntfy.sh, or your self-hosted server') }}'},
+				{ name: 'ntfy_token_enable', type: 'toggle', label: '{{ _('Access token') }}' },
+				{ name: 'ntfy_token', type: 'text', label: '{{ _('Token') }}', depends: 'ntfy_token_enable', desc: '{{ _('ntfy access token (optional, for protected topics)<br>The topic is fixed to the device name') }}'},
+				{ name: 'ntfy_priority', type: 'select', label: '{{ _('Priority') }}', choices: [{v:'default',l:'{{ _('default') }}'},{v:'min',l:'{{ _('min') }}'},{v:'low',l:'{{ _('low') }}'},{v:'high',l:'{{ _('high') }}'},{v:'max',l:'{{ _('max') }}'}], desc: '{{ _('ntfy notification priority') }}'},
+			],
+			'/usr/bin/pushbot/api/gotify.json': [
+				{ name: 'gotify_server', type: 'text', label: '{{ _('Server') }}', desc: '{{ _('Gotify self-hosted server address (debug)<br>e.g. https://gotify.example.com') }}'},
+				{ name: 'gotify_token', type: 'text', label: '{{ _('Token') }}', desc: '{{ _('Gotify app token (debug)') }}'},
+				{ name: 'gotify_priority', type: 'select', label: '{{ _('Priority') }}', choices: [{v:'0',l:'0'},{v:'1',l:'1'},{v:'2',l:'2'},{v:'3',l:'3'},{v:'4',l:'4'},{v:'5',l:'5 ({{ _('default') }})'},{v:'6',l:'6'},{v:'7',l:'7'},{v:'8',l:'8'},{v:'9',l:'9'},{v:'10',l:'10'}], desc: '{{ _('Gotify message priority 0-10 (debug)') }}'},
 			],
 			'/usr/bin/pushbot/api/pushplus.json': [
-				{ name: 'pp_token', type: 'text', label: 'PushPlus Token', desc: 'PushPlus Token<br>{{ _('Get the code ') }}<a href=\'http://pushplus.plus/doc/\' target=\'_blank\'>{{ _('here') }}</a><br><br>' },
-				{ name: 'pp_channel', type: 'select', label: 'PushPlus Channel', choices: [{v:'wechat',l:'{{ _('wechat: PushPlus WeChat Official Account') }}'},{v:'cp',l:'{{ _('cp: WeCom app') }}'},{v:'webhook',l:'{{ _('webhook: Third-party webhook') }}'},{v:'sms',l:'{{ _('sms: SMS') }}'},{v:'mail',l:'{{ _('mail: Email') }}'}], desc: '{{ _('Third-party webhook: WeCom, DingTalk, Feishu, ServerChan<br>sms/mail: not yet available on PushPlus<br>See <a href="http://pushplus.plus/doc/extend/webhook.html" target="_blank">here</a> for channel settings<br><br>') }}' },
-				{ name: 'pp_webhook', type: 'text', label: 'PushPlus Custom Webhook', desc: '{{ _('PushPlus custom Webhook<br>For third-party webhook or WeCom calls<br>See <a href="http://pushplus.plus/doc/extend/webhook.html" target="_blank">here</a> for details<br><br>') }}' },
+				{ name: 'pp_token', type: 'text', label: '{{ _('PushPlus Token') }}', desc: '{{ _('Get the code') }} <a href=\'http://pushplus.plus/doc/\' target=\'_blank\'>{{ _('here') }}</a><br><br>'},
+				{ name: 'pp_channel', type: 'select', label: '{{ _('PushPlus Channel') }}', choices: [{v:'wechat',l:'{{ _('wechat: WeChat Official Account') }}'},{v:'app',l:'{{ _('app: PushPlus App') }}'},{v:'extension',l:'{{ _('extension: Browser extension / desktop') }}'},{v:'webhook',l:'{{ _('webhook: Third-party webhook') }}'},{v:'clawbot',l:'{{ _('clawbot: WeChat ClawBot') }}'},{v:'cp',l:'{{ _('cp: WeCom app') }}'},{v:'mail',l:'{{ _('mail: Email') }}'},{v:'sms',l:'{{ _('sms: SMS (paid)') }}'},{v:'voice',l:'{{ _('voice: Voice call (paid)') }}'}], desc: '{{ _('wechat/app/extension/clawbot: only token required<br>webhook/cp: also need Channel Code below<br>mail: Channel Code optional (default official email)<br>sms/voice: paid channels (deduct credits)<br>See <a href="http://www.pushplus.plus/doc/channel.html" target="_blank">here</a> for all channels<br><br>') }}'},
+				{ name: 'pp_webhook', type: 'text', label: '{{ _('PushPlus Channel Code') }}', showWhen: { field: 'pp_channel', values: ['webhook', 'cp', 'mail'] }, desc: '{{ _('Channel code configured in PushPlus console<br>webhook: third-party webhook code (WeCom/DingTalk/Feishu...)<br>cp: WeCom app code<br>mail: optional, email sender code (leave empty for official email)<br>See <a href="http://www.pushplus.plus/doc/guide/api.html" target="_blank">here</a> for details<br><br>') }}' },
 				{ name: 'pp_topic_enable', type: 'toggle', label: '{{ _('PushPlus group push') }}' },
-				{ name: 'pp_topic', type: 'text', label: 'PushPlus Topic', desc: '{{ _('PushPlus group code<br>The group code used for group push<br>See <a href="http://www.pushplus.plus/push2.html" target="_blank">here</a> for details<br><br>') }}' },
+				{ name: 'pp_topic', type: 'text', label: '{{ _('PushPlus Topic') }}', depends: 'pp_topic_enable', desc: '{{ _('PushPlus group code<br>The group code used for group push<br>See <a href="http://www.pushplus.plus/push2.html" target="_blank">here</a> for details<br><br>') }}'},
 			],
 			'/usr/bin/pushbot/api/pushdeer.json': [
-				{ name: 'pushdeer_key', type: 'text', label: 'PushDeer Key', desc: 'PushDeer Key<br>{{ _('Get the code ') }}<a href=\'http://www.pushdeer.com/\' target=\'_blank\'>{{ _('here') }}</a><br><br>' },
+				{ name: 'pushdeer_key', type: 'text', label: '{{ _('PushDeer Key') }}', desc: '{{ _('Get the code') }} <a href=\'http://www.pushdeer.com/\' target=\'_blank\'>{{ _('here') }}</a><br><br>'},
 				{ name: 'pushdeer_srv_enable', type: 'toggle', label: '{{ _('Self-hosted PushDeer server') }}' },
-				{ name: 'pushdeer_srv', type: 'text', label: 'PushDeer Server', desc: '{{ _('PushDeer self-hosted server address<br>e.g. https://your.domain:port<br>See <a href="http://www.pushdeer.com/selfhosted.html" target="_blank">here</a> for details<br><br>') }}' },
+				{ name: 'pushdeer_srv', type: 'text', label: '{{ _('PushDeer Server') }}', depends: 'pushdeer_srv_enable', desc: '{{ _('PushDeer self-hosted server address<br>e.g. https://your.domain:port<br>See <a href="http://www.pushdeer.com/selfhosted.html" target="_blank">here</a> for details<br><br>') }}'},
 			],
 			'/usr/bin/pushbot/api/diy.json': [
 				{ name: 'diy_json', type: 'textarea', label: '{{ _('Custom push') }}', desc: '', rows: 28, file: true }
@@ -558,7 +577,8 @@ XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'get_config') }
 					body.appendChild(showWrap);
 					var toggleSw = function() {
 						if (selHidden) {
-							showWrap.style.display = cfg.showWhen.values.indexOf(selHidden.value) >= 0 ? '' : 'none';
+							var vals = cfg.showWhen.values || (cfg.showWhen.value != null ? [cfg.showWhen.value] : []);
+							showWrap.style.display = vals.indexOf(selHidden.value) >= 0 ? '' : 'none';
 						}
 					};
 					if (selHidden) {
@@ -589,19 +609,35 @@ XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'get_config') }
 			});
 		}
 
-		/* ── test button ── */
+		/* ── test button (保存并执行原动作) ── */
 		var tc = document.createElement('button');
 		tc.type = 'button';
-		tc.textContent = '{{ _('Send test') }}';
+		tc.textContent = '{{ _('Test Channel') }}';
 		tc.className = 'pushbot-sendtest-btn';
 		tc.addEventListener('click', function(e) {
 			e.preventDefault();
 			tc.disabled = true;
-			tc.textContent = '{{ _('Sending...') }}';
-			XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'send_test') }}', null,
-				function() { tc.disabled = false; tc.textContent = '{{ _('Send test') }}'; });
+			tc.textContent = '{{ _('Saving...') }}';
+			var data = window.__pbCollectData ? __pbCollectData() : {};
+			var x = new XMLHttpRequest();
+			x.open('POST', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'save_config') }}', true);
+			x.setRequestHeader('Content-Type', 'application/json');
+			x.onload = function() {
+				tc.textContent = '{{ _('Sending...') }}';
+				var y = new XMLHttpRequest();
+				y.open('GET', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'send_test') }}', true);
+				y.onload = function() { tc.disabled = false; tc.textContent = '{{ _('Test Channel') }}'; };
+				y.onerror = function() { tc.disabled = false; tc.textContent = '{{ _('Test Channel') }}'; };
+				y.send();
+			};
+			x.onerror = function() { tc.disabled = false; tc.textContent = '{{ _('Test Channel') }}'; };
+			x.send(JSON.stringify(data));
 		});
+		var tcDesc = document.createElement('div');
+		tcDesc.className = 'pushbot-inline-description';
+		tcDesc.textContent = '{{ _('Clicking the test button will save the current settings first') }}';
 		document.getElementById('pm_col_test').appendChild(tc);
+		document.getElementById('pm_col_test').appendChild(tcDesc);
 
 		syncModeBtns();
 		renderModeSettings();
@@ -1651,7 +1687,7 @@ PB_onReady(function(){ tryContentOnce(); });
 		var sr = document.createElement('div');
 		sr.style.cssText = 'display:flex;justify-content:flex-end;margin-top:16px';
 		var sb = document.createElement('button');
-		sb.type = 'button'; sb.textContent = '{{ _('Send now') }}';
+		sb.type = 'button'; sb.textContent = '{{ _('Test Schedule') }}';
 		sb.className = 'pushbot-sendtest-btn';
 		sb.addEventListener('click', function(e) {
 			e.preventDefault(); sb.disabled = true; sb.textContent = '{{ _('Sending...') }}';
@@ -1662,11 +1698,11 @@ PB_onReady(function(){ tryContentOnce(); });
 			x.onload = function() {
 				var y = new XMLHttpRequest();
 				y.open('GET', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'send_manual') }}', true);
-				y.onload = function() { sb.disabled = false; sb.textContent = '{{ _('Send now') }}'; };
-				y.onerror = function() { sb.disabled = false; sb.textContent = '{{ _('Send now') }}'; };
+				y.onload = function() { sb.disabled = false; sb.textContent = '{{ _('Test Schedule') }}'; };
+				y.onerror = function() { sb.disabled = false; sb.textContent = '{{ _('Test Schedule') }}'; };
 				y.send();
 			};
-			x.onerror = function() { sb.disabled = false; sb.textContent = '{{ _('Send now') }}'; };
+			x.onerror = function() { sb.disabled = false; sb.textContent = '{{ _('Test Schedule') }}'; };
 			x.send(JSON.stringify(data));
 		});
 		sr.appendChild(sb);
@@ -1786,22 +1822,15 @@ function initMonitorCard() {
 	c1.innerHTML = '<div class="pushbot-card-top"><span class="pushbot-card-title">{{ _('Device Monitor') }}</span></div>';
 	var b1 = document.createElement('div'); b1.style.cssText = 'margin-top:6px';
 	var r1 = document.createElement('div'); r1.style.cssText = 'display:flex;gap:12px';
-	var c1a = document.createElement('div'); c1a.style.cssText = 'flex:1;min-width:0';
-	c1a.appendChild(mkText('up_timeout', '{{ _('Device online timeout (s)') }}', ADV_UP_TIMEOUT));
-	r1.appendChild(c1a);
-	var c1b = document.createElement('div'); c1b.style.cssText = 'flex:1;min-width:0';
-	c1b.appendChild(mkText('thread_num', '{{ _('Max concurrent processes') }}', ADV_THREAD_NUM));
-	r1.appendChild(c1b);
-	b1.appendChild(r1);
-	var r2 = document.createElement('div'); r2.style.cssText = 'display:flex;gap:12px';
-	var c2a = document.createElement('div'); c2a.style.cssText = 'flex:1;min-width:0';
-	c2a.appendChild(mkText('down_timeout', '{{ _('Device offline timeout (s)') }}', ADV_DOWN_TIMEOUT));
-	r2.appendChild(c2a);
-	var c2b = document.createElement('div'); c2b.style.cssText = 'flex:1;min-width:0';
-	c2b.appendChild(mkText('timeout_retry_count', '{{ _('Offline detection count') }}', ADV_TIMEOUT_RETRY,
-		'{{ _('No second-level router, good signal strength: you can reduce the above values<br/>As WiFi sleep at night is unpredictable, please adjust parameters yourself if devices frequently disconnect<br/>..(╰_╯)..') }}'));
-	r2.appendChild(c2b);
-	b1.appendChild(r2); c1.appendChild(b1); container.appendChild(c1);
+	[['up_timeout', '{{ _('Device online timeout (s)') }}', ADV_UP_TIMEOUT, null],
+	 ['thread_num', '{{ _('Max concurrent processes') }}', ADV_THREAD_NUM, null],
+	 ['down_timeout', '{{ _('Device offline timeout (s)') }}', ADV_DOWN_TIMEOUT, null],
+	 ['timeout_retry_count', '{{ _('Offline detection count') }}', ADV_TIMEOUT_RETRY, '{{ _('No second-level router, good signal strength: you can reduce the above values<br/>As WiFi sleep at night is unpredictable, please adjust parameters yourself if devices frequently disconnect<br/>..(╰_╯)..') }}']].forEach(function(f) {
+		var cc = document.createElement('div'); cc.style.cssText = 'flex:1;min-width:0';
+		cc.appendChild(mkText(f[0], f[1], f[2], f[3]));
+		r1.appendChild(cc);
+	});
+	b1.appendChild(r1); c1.appendChild(b1); container.appendChild(c1);
 
 	/* CARD 2: Temperature Monitor */
 	var c2 = document.createElement('div'); c2.className = 'pushbot-mode-card';
@@ -1993,11 +2022,11 @@ function initMonitorCard() {
 			L.push('<div class="pushbot-preview-divider"></div>');
 			L.push('<span style="color:' + c.font_module + ';font-weight:bold">{{ _('3 devices online') }}</span>');
 			L.push('<span style="color:' + c.font_client + '">' + padR('【Zed-PC】', 20) + '</span>192.168.1.2');
-			L.push('{{ _('Total traffic: ') }}' + padR('928bytes', 12) + '{{ _('online 9d 28h') }}');
+			L.push('{{ _('Total traffic:') }} ' + padR('928bytes', 12) + '{{ _('online 9d 28h') }}');
 			L.push('<span style="color:' + c.font_client + '">' + padR('【Zed-iPhone17PM】', 20) + '</span>192.168.1.5');
-			L.push('{{ _('Total traffic: ') }}' + padR('9.28M', 12) + '{{ _('online 1d 9h') }}');
+			L.push('{{ _('Total traffic:') }} ' + padR('9.28M', 12) + '{{ _('online 1d 9h') }}');
 			L.push('<span style="color:' + c.font_client + '">' + padR('【Zed-Mi17PM】', 20) + '</span>192.168.1.7');
-			L.push('{{ _('Total traffic: ') }}' + padR('9.28G', 12) + '{{ _('online 92d 8h') }}');
+			L.push('{{ _('Total traffic:') }} ' + padR('9.28G', 12) + '{{ _('online 92d 8h') }}');
 			L.push('<span style="color:' + c.font_title + '">{{ _('[Zed-OP] Test-OpenWRT status:') }}</span>');
 			return L.join('\n');
 		}
@@ -2212,12 +2241,12 @@ function initModernTabs() {
 	tabBar.id = 'pushbot_modern_tabs';
 	tabBar.className = 'pushbot-tab-bar';
 	tabBar.innerHTML =
-		'<button type="button" class="pushbot-tab is-active" data-tab="basic"><span class="pb-txt"><span>{{ _('Basic') }}</span><span>{{ _('Settings') }}</span></span></button>' +
-		'<button type="button" class="pushbot-tab" data-tab="content"><span class="pb-txt"><span>{{ _('Push') }}</span><span>{{ _('Content') }}</span></span></button>' +
-		'<button type="button" class="pushbot-tab" data-tab="scheduled"><span class="pb-txt"><span>{{ _('Scheduled') }}</span><span>{{ _('Push') }}</span></span></button>' +
-		'<button type="button" class="pushbot-tab" data-tab="monitor"><span class="pb-txt"><span>{{ _('Advanced') }}</span><span>{{ _('Settings') }}</span></span></button>' +
-		'<button type="button" class="pushbot-tab" data-tab="client"><span class="pb-txt"><span>{{ _('Online') }}</span><span>{{ _('Devices') }}</span></span></button>' +
-		'<button type="button" class="pushbot-tab" data-tab="log"><span class="pb-txt"><span>{{ _('Log') }}</span></span></button>';
+		'<button type="button" class="pushbot-tab is-active" data-tab="basic" title="{{ _('Basic Settings') }}"><span class="pb-txt"><span>{{ _('Basic') }}</span><span>{{ _('Settings') }}</span></span></button>' +
+		'<button type="button" class="pushbot-tab" data-tab="content" title="{{ _('Push Content') }}"><span class="pb-txt"><span>{{ _('Push') }}</span><span>{{ _('Content') }}</span></span></button>' +
+		'<button type="button" class="pushbot-tab" data-tab="scheduled" title="{{ _('Scheduled Push') }}"><span class="pb-txt"><span>{{ _('Scheduled') }}</span><span>{{ _('Push') }}</span></span></button>' +
+		'<button type="button" class="pushbot-tab" data-tab="monitor" title="{{ _('Advanced Settings') }}"><span class="pb-txt"><span>{{ _('Advanced') }}</span><span>{{ _('Settings') }}</span></span></button>' +
+		'<button type="button" class="pushbot-tab" data-tab="client" title="{{ _('Online Devices') }}"><span class="pb-txt"><span>{{ _('Online') }}</span><span>{{ _('Devices') }}</span></span></button>' +
+		'<button type="button" class="pushbot-tab" data-tab="log" title="{{ _('Log') }}"><span class="pb-txt"><span>{{ _('Log') }}</span></span></button>';
 
 	headerCard.parentNode.insertBefore(tabBar, headerCard.nextSibling);
 
@@ -2325,6 +2354,29 @@ function initModernTabs() {
 		if (name === 'client') loadClients();
 		});
 	});
+
+	/* tab 追踪滑块: 跟随 hover/选中项平滑滑动(liquid 同款) */
+	var tabInd = document.createElement('span');
+	tabInd.className = 'pushbot-tab-indicator';
+	tabBar.appendChild(tabInd);
+	function moveTabInd(el) {
+		if (!el || !tabBar.contains(el)) { tabInd.style.opacity = '0'; return; }
+		var r = el.getBoundingClientRect();
+		var ur = tabBar.getBoundingClientRect();
+		tabInd.style.width = r.width + 'px';
+		tabInd.style.height = r.height + 'px';
+		tabInd.style.transform = 'translate(' + (r.left - ur.left) + 'px, ' + (r.top - ur.top) + 'px)';
+		tabInd.style.opacity = '1';
+	}
+	moveTabInd(tabBar.querySelector('.pushbot-tab.is-active'));
+	tabBar.addEventListener('mouseover', function(e) {
+		var t = e.target.closest ? e.target.closest('.pushbot-tab') : null;
+		if (t && tabBar.contains(t)) moveTabInd(t);
+	});
+	tabBar.addEventListener('mouseleave', function() {
+		moveTabInd(tabBar.querySelector('.pushbot-tab.is-active'));
+	});
+
 	/* ── responsive tab resize handler ── */
 	function _updateTabLayout() {
 		var bw = tabBar.clientWidth;
@@ -2395,10 +2447,10 @@ function initModernTabs() {
 	/* client (online devices) viewer */
 	var clientTimer = null;
 	function timeForHumans(seconds) {
-		if (seconds < 60) return seconds + '{{ _(' sec') }}';
-		if (seconds < 3600) return Math.floor(seconds / 60) + '{{ _(' min ') }}' + (seconds % 60) + '{{ _(' sec') }}';
-		if (seconds < 86400) return Math.floor(seconds / 3600) + '{{ _(' h ') }}' + Math.floor((seconds % 3600) / 60) + '{{ _(' min') }}';
-		return Math.floor(seconds / 86400) + '{{ _(' d ') }}' + Math.floor((seconds % 86400) / 3600) + '{{ _(' h') }}';
+		if (seconds < 60) return seconds + '{{ _('sec') }}';
+		if (seconds < 3600) return Math.floor(seconds / 60) + '{{ _('minute') }}' + (seconds % 60) + '{{ _('sec') }}';
+		if (seconds < 86400) return Math.floor(seconds / 3600) + '{{ _('hour') }}' + Math.floor((seconds % 3600) / 60) + '{{ _('minute') }}';
+		return Math.floor(seconds / 86400) + '{{ _('day') }}' + Math.floor((seconds % 86400) / 3600) + '{{ _('hour') }}';
 	}
 	function loadClients() {
 		var container = document.getElementById('pushbot_client_content');
@@ -2651,9 +2703,14 @@ window.addEventListener('DOMContentLoaded', function() {
 .pushbot-pushmode-action-column {
 	flex: 0 1 180px;
 	display: flex;
-	align-items: flex-end;
+	flex-direction: column;
+	align-items: center;
 	justify-content: flex-end;
 	padding-bottom: 4px;
+}
+.pushbot-pushmode-action-column .pushbot-inline-description {
+	text-align: center;
+	margin-top: 6px;
 }
 
 .pushbot-inline-field {
@@ -3112,6 +3169,21 @@ window.addEventListener('DOMContentLoaded', function() {
 	border-radius: 14px;
 	background: rgba(226, 232, 240, 0.66);
 	border: 1px solid rgba(148, 163, 184, 0.18);
+	position: relative;
+}
+/* tab 追踪滑块: 跟随 hover/选中项平滑滑动(liquid 同款) */
+.pushbot-tab-indicator {
+	position: absolute;
+	top: 0;
+	left: 0;
+	background: rgba(59, 130, 246, 0.14);
+	border-radius: 11px;
+	transition: transform 0.28s cubic-bezier(.22, .9, .3, 1), width 0.28s cubic-bezier(.22, .9, .3, 1), height 0.28s cubic-bezier(.22, .9, .3, 1);
+	pointer-events: none;
+	z-index: 0;
+}
+.pushbot-dk .pushbot-tab-indicator {
+	background: rgba(96, 165, 250, 0.22);
 }
 
 .pushbot-tab {
@@ -3127,6 +3199,8 @@ window.addEventListener('DOMContentLoaded', function() {
 	transition: all 0.2s ease;
 	flex: 0 1 auto;
 	white-space: nowrap;
+	position: relative;
+	z-index: 1;
 }
 .pushbot-tab .pb-txt {
 	display: inline-flex;
@@ -3143,7 +3217,9 @@ window.addEventListener('DOMContentLoaded', function() {
 }
 .pushbot-tab:hover:not(.is-active) {
 	color: #1e293b;
-	background: rgba(255, 255, 255, 0.40);
+	background: rgba(255, 255, 255, 0.65);
+	box-shadow: 0 3px 10px rgba(15, 23, 42, 0.10);
+	transform: translateY(-1px);
 }
 
 .pushbot-tab-pane {
@@ -3293,6 +3369,7 @@ window.addEventListener('DOMContentLoaded', function() {
 	align-items: center;
 	justify-content: center;
 	padding: 9px 22px;
+	white-space: nowrap;
 	border: 1px solid transparent;
 	border-radius: 999px;
 	font-size: 13px;
@@ -3501,33 +3578,90 @@ window.addEventListener('DOMContentLoaded', function() {
 	}
 </style>
 <script>
+var PB_THEME_CFG={argon_mode:'{{ pushbot_argon_mode }}',liquid_mode:'{{ pushbot_liquid_mode }}'};
+/* ═══ 主题模式检测（liquid/argon/zargon/系统）═══
+ * 1. body[data-liquid-mode](liquid) / html[data-theme-mode](统一标准) / html[data-darkmode]
+ * 2. argon/zargon: 服务端内联 <style> 的 body{background:暗色}(#1e1e1e 等), 色值 < #888888 判暗黑(用户约定)
+ * 3. fallback: 服务端 uci config(argon/liquid mode) + getComputedStyle 背景亮度 + prefers-color-scheme
+ * 监听: 系统模式变化 + MutationObserver(html/body 属性) + load 兜底(不轮询) */
 (function(){
 var b=document.body;if(!b)return;
 var d=document.documentElement;
-/* Check explicit dark indicators on body OR html */
-var explicitDark = b.matches('body.dark, body[data-theme="dark"], body[data-theme="black"]')
-	|| b.classList.contains('dark')
-	|| d.classList.contains('dark')
-	|| d.matches('html[data-theme="dark"], html[data-theme="black"]')
-	|| d.getAttribute('data-bs-theme') === 'dark';
-if (explicitDark) {
-	d.classList.add('pushbot-dk');
-	return;
+var mq=(typeof window.matchMedia=='function')?window.matchMedia('(prefers-color-scheme: dark)'):null;
+function apply(dark){ d.classList.toggle('pushbot-dk', !!dark); }
+function themeMode(){
+	var blm=b&&b.getAttribute('data-liquid-mode');
+	if(blm==='dark'||blm==='light'||blm==='auto')return blm;
+	var tm=d.getAttribute('data-theme-mode');
+	if(tm==='dark'||tm==='light'||tm==='auto')return tm;
+	var v=d.getAttribute('data-darkmode');
+	if(v==='true')return 'dark';
+	if(v==='false')return 'light';
+	var hlm=d.getAttribute('data-liquid-mode');
+	if(hlm==='dark'||hlm==='light'||hlm==='auto')return hlm;
+	return null;
 }
-/* Check actual rendered background to detect theme's effective mode */
-var bg=getComputedStyle(b).backgroundColor||'';
-var rgb=bg.match(/\d+/g);
-if(rgb&&rgb.length>=3){
-	var avg=(+rgb[0]+ +rgb[1]+ +rgb[2])/3;
-	if(avg<128){document.documentElement.classList.add('pushbot-dk');return;}
-	if(avg>=180){document.documentElement.classList.remove('pushbot-dk');return;}
+/* argon/zargon: 服务端内联 style 判定(无正则, indexOf 定位)
+ * 强制暗黑: body{background:#1e1e1e} 顶层 → 色值 < #888888 判暗黑
+ * 自动: 暗黑背景在 @media (prefers-color-scheme: dark) 内 → 跟随系统(auto) */
+function styleBodyBg(){
+	var isHex=function(c){return (c>='0'&&c<='9')||(c>='a'&&c<='f')||(c>='A'&&c<='F');};
+	var styles=document.querySelectorAll('style');
+	for(var i=0;i<styles.length;i++){
+		var t=styles[i].textContent||'';
+		var bi=t.indexOf('background: #');
+		if(bi<0){bi=t.indexOf('background:#');}
+		if(bi<0){continue;}
+		var hs=t.indexOf('#',bi);
+		if(hs<0){continue;}
+		var hx='';var p=hs+1;
+		while(p<t.length&&isHex(t.charAt(p))){hx+=t.charAt(p);p++;}
+		if(hx.length<3){continue;}
+		var mi=t.indexOf('@media (prefers-color-scheme: dark)');
+		if(mi>=0&&bi>mi){return 'auto';}
+		var h=hx;
+		if(h.length===3){h=h.charAt(0)+h.charAt(0)+h.charAt(1)+h.charAt(1)+h.charAt(2)+h.charAt(2);}
+		return parseInt(h,16) < 0x888888 ? 'dark' : 'light';
+	}
+	return null;
 }
-/* Fallback: follow OS */
-if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches){
-	document.documentElement.classList.add('pushbot-dk');
-} else {
-	document.documentElement.classList.remove('pushbot-dk');
+function compute(){
+	var m=themeMode();
+	if(m==='dark')return true;
+	if(m==='light')return false;
+	if(m==='auto')return !!(mq&&mq.matches);
+	var sbg=styleBodyBg();
+	if(sbg==='dark')return true;
+	if(sbg==='light')return false;
+	if(sbg==='auto')return !!(mq&&mq.matches);
+	var lm=PB_THEME_CFG.liquid_mode;
+	if(lm==='dark')return true;
+	if(lm==='light')return false;
+	if(lm==='auto')return !!(mq&&mq.matches);
+	var am=PB_THEME_CFG.argon_mode;
+	if(am==='dark')return true;
+	if(am==='light')return false;
+	var bg=getComputedStyle(b).backgroundColor||'';
+	var rgb=bg.match(/\d+/g);
+	if(rgb&&rgb.length>=3){
+		var avg=(+rgb[0]+ +rgb[1]+ +rgb[2])/3;
+		if(avg<128)return true;
+		if(avg>=180)return false;
+	}
+	if(b.matches('body.dark, body[data-theme="dark"], body[data-theme="black"]')
+		||b.classList.contains('dark')||d.classList.contains('dark')
+		||d.matches('html[data-theme="dark"], html[data-theme="black"]')
+		||d.getAttribute('data-bs-theme')==='dark')return true;
+	return !!(mq&&mq.matches);
 }
+apply(compute());
+if(mq&&mq.addEventListener){mq.addEventListener('change',function(){apply(compute());});}
+try{
+	var obs=new MutationObserver(function(){apply(compute());});
+	obs.observe(d,{attributes:true,attributeFilter:['data-theme-mode','data-darkmode','data-liquid-mode','class']});
+	if(b){obs.observe(b,{attributes:true});}
+}catch(e){}
+window.addEventListener('load',function(){apply(compute());});
 })();
 </script>
 <div class="pushbot-body">
@@ -3542,7 +3676,7 @@ if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches){
 				</div>
 			</div>
 		</div>
-		<span class="pushbot-version-badge">v5.10-r20</span>
+		<span class="pushbot-version-badge">v5.12-r8</span>
 		<div id="pushbot_status_badge" class="pushbot-status-badge is-stopped" role="status" aria-live="polite">
 			<span class="pushbot-status-dot"></span>
 			<span id="pushbot_status_text">{{ _('NOT RUNNING') }}</span>

@@ -8,17 +8,22 @@
 static int cleaner_ttl;
 static int cleaner_interval;
 
+int session_cleaner_run_once(const int ttl_seconds) {
+    session_wrlock();
+    const int deleted = session_cleanup_expired(ttl_seconds);
+    session_wrunlock();
+
+    if (deleted > 0) {
+        syslog(LOG_INFO, "Session cleaner: removed %d expired sessions", deleted);
+    }
+
+    return deleted;
+}
+
 _Noreturn static void *cleaner_thread(void *arg __attribute__((unused))) {
     while (1) {
         sleep(cleaner_interval);
-
-        session_wrlock();
-        const int deleted = session_cleanup_expired(cleaner_ttl);
-        session_wrunlock();
-
-        if (deleted > 0) {
-            syslog(LOG_INFO, "Session cleaner: removed %d expired sessions", deleted);
-        }
+        session_cleaner_run_once(cleaner_ttl);
     }
 }
 

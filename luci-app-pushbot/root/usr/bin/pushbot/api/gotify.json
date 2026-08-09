@@ -1,0 +1,22 @@
+{
+    "_api": "这是 Pushbot:Gotify api 文件(Gotify 自建服务器推送, 调试中)",
+    "url": "${gotify_server}/message",
+    "content_type": "application/json",
+    "str_title_start": "**",
+    "str_title_end": "**",
+    "str_linefeed": "\\n",
+    "str_splitline": "\\n\\n",
+    "str_space": " ",
+    "str_tab": " ",
+    "table_tab": "",
+    "font_success": "",
+    "font_client": "",
+    "font_fail": "",
+    "font_module": "",
+    "font_title": "",
+    "font_end": "",
+    "font_end2": "",
+    "percentsym": "",
+    "boldstar": "**",
+    "type": {}
+}

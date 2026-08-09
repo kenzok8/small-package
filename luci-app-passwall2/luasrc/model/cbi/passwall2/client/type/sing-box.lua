@@ -590,22 +590,13 @@ o:value("TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256")
 o:value("TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256")
 o:depends({ [_n("tls")] = true })
 function o.custom_write(self, section, value)
-	local t = {}
-	local t2 = {}
+	local new_t
 	if type(value) == "table" then
-		local x
-		for _, x in ipairs(value) do
-			if x and #x > 0 then
-				if not t2[x] then
-					t2[x] = x
-					t[#t+1] = x
-				end
-			end
-		end
+		new_t = api.table_remove_duplicates(value)
 	else
-		t = { value }
+		new_t = { value }
 	end
-	m:set(section, self.option:sub(1 + #option_prefix), t)
+	m:set(section, self.option:sub(1 + #option_prefix), new_t)
 end
 
 o = s:option(Flag, _n("ech"), translate("ECH"))

@@ -56,6 +56,30 @@ TEST_F(CLIDeathTest, TryPrintInfoUnknownOption) {
     EXPECT_EXIT(try_print_info(argc, argv), ::testing::ExitedWithCode(EXIT_FAILURE), ".*");
 }
 
+TEST_F(CLIDeathTest, RejectsMissingModeValue) {
+    char *argv[] = {(char *)"ua2f", (char *)"--mode"};
+
+    EXPECT_EXIT(try_print_info(2, argv), ::testing::ExitedWithCode(EXIT_FAILURE), ".*");
+}
+
+TEST_F(CLIDeathTest, RejectsMissingPortValue) {
+    char *argv[] = {(char *)"ua2f", (char *)"--listen-port"};
+
+    EXPECT_EXIT(try_print_info(2, argv), ::testing::ExitedWithCode(EXIT_FAILURE), ".*");
+}
+
+TEST_F(CLIDeathTest, RejectsInvalidMode) {
+    char *argv[] = {(char *)"ua2f", (char *)"--mode=invalid"};
+
+    EXPECT_EXIT(try_print_info(2, argv), ::testing::ExitedWithCode(EXIT_FAILURE), ".*");
+}
+
+TEST_F(CLIDeathTest, RejectsInvalidPort) {
+    char *argv[] = {(char *)"ua2f", (char *)"--listen-port=70000"};
+
+    EXPECT_EXIT(try_print_info(2, argv), ::testing::ExitedWithCode(EXIT_FAILURE), ".*");
+}
+
 TEST_F(CLIDeathTest, RequireRootWhenRoot) {
     if (geteuid() == 0) {
         // If we're actually root, this should not exit
@@ -80,4 +104,28 @@ TEST(CLIOptionsTest, ModeAndListenPortAreAvailableWithoutUci) {
     EXPECT_EQ(cli_mode, UA2F_MODE_TPROXY);
     EXPECT_TRUE(cli_listen_port_set);
     EXPECT_EQ(cli_listen_port, 12345);
+}
+
+TEST(CLIOptionsTest, ParsesInlineAndAliasOptions) {
+    cli_mode_set = false;
+    cli_listen_port_set = false;
+    char *argv[] = {(char *)"ua2f", (char *)"--mode=redirect", (char *)"--port=23456"};
+
+    EXPECT_NO_THROW(try_print_info(3, argv));
+    EXPECT_TRUE(cli_mode_set);
+    EXPECT_EQ(cli_mode, UA2F_MODE_REDIRECT);
+    EXPECT_TRUE(cli_listen_port_set);
+    EXPECT_EQ(cli_listen_port, 23456);
+}
+
+TEST(CLIOptionsTest, ParsesShortOptions) {
+    cli_mode_set = false;
+    cli_listen_port_set = false;
+    char *argv[] = {(char *)"ua2f", (char *)"-m", (char *)"NFQUEUE", (char *)"-p", (char *)"80"};
+
+    EXPECT_NO_THROW(try_print_info(5, argv));
+    EXPECT_TRUE(cli_mode_set);
+    EXPECT_EQ(cli_mode, UA2F_MODE_NFQUEUE);
+    EXPECT_TRUE(cli_listen_port_set);
+    EXPECT_EQ(cli_listen_port, 80);
 }

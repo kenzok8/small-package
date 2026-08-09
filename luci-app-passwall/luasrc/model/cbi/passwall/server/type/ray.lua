@@ -216,23 +216,14 @@ o:depends({ [_n("reality")] = true })
 
 o = s:option(DynamicList, _n("reality_serverNames"), translate("serverNames"))
 o:depends({ [_n("reality")] = true })
-function o.write(self, section, value)
-	local t = {}
-	local t2 = {}
+function o.custom_write(self, section, value)
+	local new_t = {}
 	if type(value) == "table" then
-		local x
-		for _, x in ipairs(value) do
-			if x and #x > 0 then
-				if not t2[x] then
-					t2[x] = x
-					t[#t+1] = x
-				end
-			end
-		end
+		new_t = api.table_remove_duplicates(value)
 	else
-		t = { value }
+		new_t = { value }
 	end
-	return DynamicList.write(self, section, t)
+	m:set(section, self.option:sub(1 + #option_prefix), new_t)
 end
 
 o = s:option(ListValue, _n("alpn"), translate("alpn"))

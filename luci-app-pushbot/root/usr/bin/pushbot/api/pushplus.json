@@ -25,7 +25,7 @@
       {
 	      	"token": "\"${pp_token}\"",
 	      	"channel": "\"${pp_channel}\"",
-	      	"webhook": "\"${pp_webhook}\"",
+	      	"option": "\"${pp_webhook}\"",
 	      	"topic": "\"${pp_topic}\"",
 		"title": "\"${1}\"",
 		"content": "\"${2}\"",

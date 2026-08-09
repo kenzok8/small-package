@@ -1874,3 +1874,20 @@ function get_network_devices()
 	table.sort(_devices, function(a, b) return a.sort < b.sort end)
 	return _devices
 end
+
+
+function table_remove_duplicates(t)
+	if not t or #t == 0 then return nil end
+	local t_lookup = {}
+	local new_t = {}
+	local x
+	for _, x in ipairs(t) do
+		if x and #x > 0 then
+			if not t_lookup[x] then
+				t_lookup[x] = x
+				new_t[#new_t+1] = x
+			end
+		end
+	end
+	return new_t
+end
