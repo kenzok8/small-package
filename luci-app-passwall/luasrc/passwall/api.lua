@@ -4,7 +4,6 @@ nixio = require "nixio"
 fs = require "nixio.fs"
 sys = require "luci.sys"
 uci = require "luci.model.uci".cursor()
-cbi = require "luci.cbi"
 util = require "luci.util"
 datatypes = require "luci.cbi.datatypes"
 jsonc = require "luci.jsonc"
@@ -1336,6 +1335,7 @@ function to_check_self()
 end
 
 function set_default_cbi()
+	local cbi = require "luci.cbi"
 	if true then
 		--TextValue
 		local TextValue = cbi.TextValue
@@ -1367,6 +1367,7 @@ function set_default_cbi()
 end
 
 function return_map(map)
+	local cbi = require "luci.cbi"
 	local api = require "luci.passwall.api"
 	if true then
 		-- header
