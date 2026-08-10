@@ -5,7 +5,7 @@ PKG_SHORT_SHA:=cf98d2d
 PKG_COMMIT_DATE:=2026.08.10
 
 PKG_VERSION:=$(PKG_COMMIT_DATE)~$(PKG_SHORT_SHA)
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA)
@@ -72,6 +72,7 @@ define Package/clashoo/install
 	$(CP) $(CURDIR)/files/usr/share/clashoo/* $(1)/usr/share/clashoo/
 	$(INSTALL_BIN) $(CURDIR)/files/usr/share/clashoo/migrate_lan_acl.sh $(1)/usr/share/clashoo/migrate_lan_acl.sh
 	$(INSTALL_BIN) $(CURDIR)/files/usr/share/clashoo/detect_core_arch.sh $(1)/usr/share/clashoo/detect_core_arch.sh
+	$(INSTALL_BIN) $(CURDIR)/files/usr/share/clashoo/diagnose_bypass.sh $(1)/usr/share/clashoo/diagnose_bypass.sh
 
 	$(RM) $(1)/usr/share/clashoo/dashboard
 	$(RM) $(1)/usr/share/clashoo/yacd

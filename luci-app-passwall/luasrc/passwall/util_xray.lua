@@ -355,11 +355,11 @@ function gen_outbound(flag, node, tag, proxy_table)
 					end
 					if fragment and fragment_table and ({raw=1, ws=1, httpupgrade=1, grpc=1, xhttp=1})[TP] then
 						finalmask.tcp = finalmask.tcp or {}
-						finalmask.tcp[#finalmask.tcp+1] = api.clone(fragment_table)
+						table.insert(finalmask.tcp, 1, api.clone(fragment_table))
 					end
 					if noise and noise_table and (TP == "mkcp" or (TP == "xhttp" and node.alpn == "h3")) then
 						finalmask.udp = finalmask.udp or {}
-						finalmask.udp[#finalmask.udp+1] = api.clone(noise_table)
+						table.insert(finalmask.udp, 1, api.clone(noise_table))
 					end
 					if node.finalmask and node.finalmask ~= "" then
 						local ok, fm = pcall(jsonc.parse, api.base64Decode(node.finalmask))

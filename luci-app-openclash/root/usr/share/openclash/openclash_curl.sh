@@ -54,7 +54,7 @@ EOF
     if [ "$SHOW_DOWNLOAD_PROGRESS" = "1" ] || [ "$SHOW_DOWNLOAD_PROGRESS" = "true" ]; then
         TEMP_LOG="/tmp/curl_log_$$"
 
-        LOG_OUT "Downloading:【$(basename "$DOWNLOAD_PATH") - 0%】"
+        LOG_OUT "Downloading:【$(basename "$DOWNLOAD_PATH") - 0%】..."
 
         (
             if [ -n "$SECRET_KEY" ] && [ -n "$ETAG_HEADER" ]; then
@@ -101,7 +101,7 @@ EOF
 
                 if [ -n "$PROGRESS" ] && [ "$PROGRESS" -ne "$LAST_PROGRESS" ]; then
                     if [ "$PROGRESS" -gt "$LAST_PROGRESS" ]; then
-                        LOG_OUT "Downloading:【$(basename "$DOWNLOAD_PATH") - ${PROGRESS}%】"
+                        LOG_OUT "Downloading:【$(basename "$DOWNLOAD_PATH") - ${PROGRESS}%】..."
                         LAST_PROGRESS="$PROGRESS"
                     fi
                 fi
@@ -114,7 +114,7 @@ EOF
         HTTP_CODE=$(grep -i "^HTTP" "$HEADER_TMP" 2>/dev/null | tail -1 | cut -d' ' -f2)
 
         if [ "$EXIR_CODE" -eq 0 ] && [ "$LAST_PROGRESS" -ne 100 ]; then
-            LOG_OUT "Downloading:【$(basename "$DOWNLOAD_PATH") - 100%】"
+            LOG_OUT "Downloading:【$(basename "$DOWNLOAD_PATH") - 100%】..."
         fi
 
         if [ "$EXIR_CODE" -ne 0 ]; then
@@ -132,7 +132,6 @@ EOF
             OUTPUT=$(DOWNLOAD_FAILURE_OUTPUT "$EXIR_CODE" "$HTTP_CODE" "${OUTPUT:-}")
             LOG_OUT "【${DOWNLOAD_PATH}】Download Failed:【${OUTPUT}】"
             rm -f "$HEADER_TMP" "$DOWNLOAD_TMP"
-            SLOG_CLEAN
             return 1
         fi
     else
@@ -188,7 +187,6 @@ EOF
             OUTPUT=$(DOWNLOAD_FAILURE_OUTPUT "$EXIR_CODE" "$HTTP_CODE" "$OUTPUT")
             LOG_OUT "【${DOWNLOAD_PATH}】Download Failed:【${OUTPUT}】"
             rm -f "$HEADER_TMP" "$DOWNLOAD_TMP"
-            SLOG_CLEAN
             return 1
         fi
     fi
@@ -196,7 +194,6 @@ EOF
     if ! mv -f "$DOWNLOAD_TMP" "$DOWNLOAD_PATH"; then
         LOG_OUT "【${DOWNLOAD_PATH}】Download Failed:【Unable to save download file】"
         rm -f "$HEADER_TMP" "$DOWNLOAD_TMP"
-        SLOG_CLEAN
         return 1
     fi
     NEW_ETAG=$(grep -i "^etag:" "$HEADER_TMP" 2>/dev/null | tail -1 | cut -d' ' -f2- | tr -d '\r\n' | sed 's/^"//;s/"$//')

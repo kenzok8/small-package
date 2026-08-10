@@ -1852,12 +1852,33 @@ rm -rf $servers_name
 
 
 LOG_OUT "Proxies, Proxy-providers, Groups Edited Successful, Updating Config File【$CONFIG_NAME】..."
-config_hash=$(ruby -ryaml -rYAML -I "/usr/share/openclash" -E UTF-8 -e "Value = YAML.load_file('$CONFIG_FILE'); puts Value" 2>/dev/null)
-if [ "$config_hash" != "false" ] && [ -n "$config_hash" ]; then
-    ruby_cover "$CONFIG_FILE" "['proxies']" "$SERVER_FILE" "proxies"
-    ruby_cover "$CONFIG_FILE" "['proxy-providers']" "$PROXY_PROVIDER_FILE" "proxy-providers"
-    ruby_cover "$CONFIG_FILE" "['proxy-groups']" "/tmp/yaml_groups.yaml" "proxy-groups"
-else
+config_hash=$(ruby -ryaml -rYAML -I "/usr/share/openclash" -E UTF-8 -e "
+begin
+  Value = YAML.load_file('$CONFIG_FILE')
+  {
+    'proxies' => '$SERVER_FILE',
+    'proxy-providers' => '$PROXY_PROVIDER_FILE',
+    'proxy-groups' => '/tmp/yaml_groups.yaml'
+  }.each do |key, src_file|
+    begin
+      if File.exist?(src_file)
+        src = YAML.load_file(src_file)
+        Value[key] = src[key]
+      else
+        Value.delete(key)
+      end
+    rescue Exception => e
+      YAML.LOG_ERROR('Merge [' + key + '] Failed: ' + e.message)
+    end
+  end
+  YAML.dump(Value, '$CONFIG_FILE')
+  puts 'OK'
+rescue Exception => e
+  YAML.LOG_ERROR('Update Config File Failed: ' + e.message)
+end
+" 2>/dev/null)
+
+if [ "$config_hash" != "OK" ]; then
     cat "$SERVER_FILE" "$PROXY_PROVIDER_FILE" "/tmp/yaml_groups.yaml" > "$CONFIG_FILE" 2>/dev/null
 fi
 
@@ -1868,5 +1889,4 @@ rm -rf /tmp/Proxy_Server 2>/dev/null
 rm -rf /tmp/Proxy_Provider 2>/dev/null
 
 LOG_OUT "Config File【$CONFIG_NAME】Write Successful!"
-SLOG_CLEAN
 del_lock

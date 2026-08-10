@@ -102,17 +102,29 @@ download_with_fallback "$url4" "$TMP_V4"
 	log '大陆 IPv4 白名单下载失败：返回为空'
 	exit 1
 }
+changed=0
+
 render_nft_set "$TMP_V4" "$OUT_V4" clashoo_china ipv4_addr
-mv "$OUT_V4" "$TARGET_V4"
-chmod 644 "$TARGET_V4" >/dev/null 2>&1 || true
-log '大陆 IPv4 白名单更新完成'
+if cmp -s "$OUT_V4" "$TARGET_V4"; then
+	log '大陆 IPv4 白名单内容无变化'
+else
+	mv "$OUT_V4" "$TARGET_V4"
+	chmod 644 "$TARGET_V4" >/dev/null 2>&1 || true
+	changed=1
+	log '大陆 IPv4 白名单更新完成'
+fi
 
 if download_with_fallback "$url6" "$TMP_V6"; then
 	if [ -s "$TMP_V6" ]; then
 		render_nft_set "$TMP_V6" "$OUT_V6" clashoo_china6 ipv6_addr
-		mv "$OUT_V6" "$TARGET_V6"
-		chmod 600 "$TARGET_V6" >/dev/null 2>&1 || true
-		log '大陆 IPv6 白名单更新完成'
+		if cmp -s "$OUT_V6" "$TARGET_V6"; then
+			log '大陆 IPv6 白名单内容无变化'
+		else
+			mv "$OUT_V6" "$TARGET_V6"
+			chmod 600 "$TARGET_V6" >/dev/null 2>&1 || true
+			changed=1
+			log '大陆 IPv6 白名单更新完成'
+		fi
 	else
 		log '大陆 IPv6 白名单下载为空，保留原文件'
 	fi
@@ -120,7 +132,9 @@ else
 	log '大陆 IPv6 白名单下载失败，保留原文件'
 fi
 
-if bool_enabled "$bypass_china" || bool_enabled "$bypass_china_ipv6"; then
+if [ "$changed" -eq 0 ]; then
+	log '白名单内容未变，跳过防火墙重载'
+elif bool_enabled "$bypass_china" || bool_enabled "$bypass_china_ipv6"; then
 	if /usr/share/clashoo/net/fw4.sh apply >/dev/null 2>&1; then
 		log "大陆白名单规则已重载（IPv4=${bypass_china:-0}，IPv6=${bypass_china_ipv6:-0}）"
 	else

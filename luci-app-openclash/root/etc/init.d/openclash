@@ -567,7 +567,7 @@ do_run_file()
 
    ln -s "$meta_core_path" /etc/openclash/clash
 
-   if [ -n "$OIX_TOKEN" ] || [ "$core_type" == "Oix" ]; then
+   if [ -n "$OIX_TOKEN" ]; then
       core_type="Oix"
    elif [ "$smart_enable" -eq 1 ] || [ "$core_type" == "Smart" ]; then
       core_type="Smart"
@@ -582,7 +582,6 @@ do_run_file()
 
    [ ! -f "$CLASH" ] || { [ "$core_type" = "Smart" ] && [ -z "$($CLASH -v | grep 'smart')" ] && [ -z "$($CLASH -v | grep 'oix')" ]; } || { [ "$core_type" = "Oix" ] && [ -z "$($CLASH -v | grep 'oix')" ]; } && {
       LOG_TIP "【$core_type】Core is not Detected installed, Ready to Download..."
-      rm -rf "/tmp/clash_last_version"
       /usr/share/openclash/openclash_core.sh "$core_type"
       if [ ! -f "$meta_core_path" ]; then
          start_fail
@@ -799,7 +798,6 @@ check_core_status()
    fi
 
    write_run_quick
-   SLOG_CLEAN
 } >/dev/null 2>&1
 
 start_run_core()
@@ -818,7 +816,7 @@ start_run_core()
    procd_append_param env CLASH_AGE_SECRET_KEY="$SECRET_KEY"
    procd_append_param env OIX_TOKEN="$OIX_TOKEN"
    procd_append_param env OIX_PARAMS="$OIX_PARAMS"
-   procd_set_param command /bin/sh -c "$CLASH -d $CLASH_CONFIG -f \"$CONFIG_FILE\" >> $LOG_FILE 2>&1"
+   procd_set_param command /bin/sh -c "exec $CLASH -d $CLASH_CONFIG -f \"$CONFIG_FILE\" >> $LOG_FILE 2>&1"
    procd_set_param user "root"
    procd_set_param group "nogroup"
    procd_set_param limits nproc="unlimited" as="unlimited" memlock="unlimited" nofile="1000000 1000000"
@@ -1719,7 +1717,7 @@ if [ -n "$FW4" ]; then
             fi
             if [ "$router_self_proxy" = 1 ]; then
                nft 'add chain inet fw4 nat_output { type nat hook output priority -1; }'
-               nft insert rule inet fw4 nat_output position 0 skgid != 65534 meta nfproto {ipv6} ip6 nexthdr {tcp,udp} th dport 53 ip6 daddr {::/0} counter redirect to "$DNSPORT" comment \"OpenClash DNS Hijack\"
+               nft insert rule inet fw4 nat_output position 0 skgid != 65534 meta nfproto {ipv6} ip6 nexthdr {tcp,udp} th dport 53 ip6 daddr {::1} counter redirect to "$DNSPORT" comment \"OpenClash DNS Hijack\"
             fi
          elif [ "$enable_redirect_dns" -eq 2 ]; then
             if [ "$lan_ac_mode" != "1" ]; then
@@ -1740,7 +1738,7 @@ if [ -n "$FW4" ]; then
             nft 'insert rule inet fw4 dstnat position 0 meta nfproto {ipv6} ip6 nexthdr {tcp,udp} th dport 53 counter jump openclash_dns_redirect'
             if [ "$router_self_proxy" = 1 ]; then
                nft 'add chain inet fw4 nat_output { type nat hook output priority -1; }'
-               nft insert rule inet fw4 nat_output position 0 meta nfproto {ipv6} ip6 nexthdr {tcp,udp} th dport 53 ip6 daddr {::/0} meta skgid != 65534 counter redirect to "$dns_port" comment \"OpenClash DNS Hijack\"
+               nft insert rule inet fw4 nat_output position 0 meta nfproto {ipv6} ip6 nexthdr {tcp,udp} th dport 53 ip6 daddr {::1} meta skgid != 65534 counter redirect to "$dns_port" comment \"OpenClash DNS Hijack\"
             fi
          fi
       fi
@@ -2555,8 +2553,8 @@ if [ -z "$FW4" ]; then
                ip6tables -t nat -I PREROUTING -p tcp --dport 53 -m set --match-set lan_ac_white_macs src -j REDIRECT --to-ports "$DNSPORT" -m comment --comment "OpenClash DNS Hijack"
             fi
             if [ "$router_self_proxy" = 1 ]; then
-               ip6tables -t nat -I OUTPUT -p tcp --dport 53 -d ::/0 $noowner -j REDIRECT --to-ports "$DNSPORT" -m comment --comment "OpenClash DNS Hijack"
-               ip6tables -t nat -I OUTPUT -p udp --dport 53 -d ::/0 $noowner -j REDIRECT --to-ports "$DNSPORT" -m comment --comment "OpenClash DNS Hijack"
+               ip6tables -t nat -I OUTPUT -p tcp --dport 53 -d ::1 $noowner -j REDIRECT --to-ports "$DNSPORT" -m comment --comment "OpenClash DNS Hijack"
+               ip6tables -t nat -I OUTPUT -p udp --dport 53 -d ::1 $noowner -j REDIRECT --to-ports "$DNSPORT" -m comment --comment "OpenClash DNS Hijack"
             fi
          elif [ "$enable_redirect_dns" -eq 2 ]; then
             ip6tables -t nat -N openclash_dns_redirect
@@ -2582,8 +2580,8 @@ if [ -z "$FW4" ]; then
             ip6tables -t nat -I PREROUTING -p udp --dport 53 -j openclash_dns_redirect
             ip6tables -t nat -I PREROUTING -p tcp --dport 53 -j openclash_dns_redirect
             if [ "$router_self_proxy" = 1 ]; then
-               ip6tables -t nat -I OUTPUT -p udp --dport 53 -d ::/0 $noowner -j REDIRECT --to-ports "$dns_port" -m comment --comment "OpenClash DNS Hijack"
-               ip6tables -t nat -I OUTPUT -p tcp --dport 53 -d ::/0 $noowner -j REDIRECT --to-ports "$dns_port" -m comment --comment "OpenClash DNS Hijack"
+               ip6tables -t nat -I OUTPUT -p udp --dport 53 -d ::1 $noowner -j REDIRECT --to-ports "$dns_port" -m comment --comment "OpenClash DNS Hijack"
+               ip6tables -t nat -I OUTPUT -p tcp --dport 53 -d ::1 $noowner -j REDIRECT --to-ports "$dns_port" -m comment --comment "OpenClash DNS Hijack"
             fi
          fi
       fi
@@ -3151,6 +3149,7 @@ EOF
       SMART_ENABLE_LGBM:int_bool \
       SMART_POLICY_PRIORITY:string \
       SMART_PREFER_ASN:int_bool \
+      SMART_TOLERANCE:int \
       SKIP_PROXY_ADDRESS:int_bool \
       SMALL_FLASH_MEMORY:int_bool \
       SOCKS_PORT:int \
@@ -3413,11 +3412,14 @@ EOF
          yaml_data = YAML.load(yaml_override_content)
          
          if yaml_data.is_a?(Hash)
-            Value = YAML.load_file('$CONFIG_FILE')
-            Overwrite_Value = YAML.overwrite(Value, yaml_data)
-            File.open('$CONFIG_FILE', 'w') do |f|
-               YAML.dump(Overwrite_Value, f)
+            if File.exist?('/tmp/yaml_overwrite_marshal')
+               Value = Marshal.load(File.open('/tmp/yaml_overwrite_marshal', 'rb') { |f| f.read })
+            else
+               Value = YAML.load_file('$CONFIG_FILE')
             end
+            Overwrite_Value = YAML.overwrite(Value, yaml_data)
+            YAML.dump(Overwrite_Value, '$CONFIG_FILE')
+            File.open('/tmp/yaml_overwrite_marshal', 'wb') { |f| Marshal.dump(Overwrite_Value, f) }
          else
             YAML.LOG_WARN('Invalid YAML Override format, skipped...')
          end
@@ -3436,13 +3438,15 @@ if [ -f "/tmp/yaml_openclash_ruby_parts/$OPENCLASH_OVERWRITE_SID" ]; then
    ruby_code=$(cat "/tmp/yaml_openclash_ruby_parts/$OPENCLASH_OVERWRITE_SID")
    ruby -ryaml -rYAML -I "/usr/share/openclash" -E UTF-8 -e "
       begin
-         Value = YAML.load_file('$CONFIG_FILE')
+         if File.exist?('/tmp/yaml_overwrite_marshal')
+            Value = Marshal.load(File.open('/tmp/yaml_overwrite_marshal', 'rb') { |f| f.read })
+         else
+            Value = YAML.load_file('$CONFIG_FILE')
+         end
          threads = []
          $ruby_code
          threads.each(&:join)
-         File.open('$CONFIG_FILE', 'w') do |f|
-            YAML.dump(Value, f)
-         end
+         YAML.dump(Value, '$CONFIG_FILE')
       rescue Exception => e
          YAML.LOG_ERROR('Set Custom Overwrite Script Failed,【%s】' % [e.message])
       end
@@ -3579,6 +3583,7 @@ get_config()
    smart_policy_priority=$(uci_get_config "smart_policy_priority" || echo 0)
    smart_enable_lgbm=$(uci_get_config "smart_enable_lgbm" || echo 0)
    smart_prefer_asn=$(uci_get_config "smart_prefer_asn" || echo 0)
+   smart_tolerance=$(uci_get_config "smart_tolerance" || echo 0)
 
    [ -z "$dns_port" ] && dns_port=7874 && uci -q set openclash.config.dns_port=7874
    uci -q commit openclash
@@ -3587,7 +3592,7 @@ get_config()
 start_service()
 {
    enable=$(uci_get_config "enable")
-   [ "$enable" != "1" ] && LOG_WARN "OpenClash Now Disabled, Need Start From Luci Page, Exit..." && SLOG_CLEAN && exit 0
+   [ "$enable" != "1" ] && LOG_WARN "OpenClash Now Disabled, Need Start From Luci Page, Exit..." && exit 0
 
    if procd_running "openclash" >/dev/null; then
       LOG_TIP "OpenClash Already Running, Exit..."
@@ -3625,7 +3630,7 @@ start_service()
          /usr/share/openclash/yml_rules_change.sh \
          "$enable_custom_clash_rules" "$TMP_CONFIG_FILE"\
          "$enable_rule_proxy" "$router_self_proxy" "$lan_ip" "$enable_redirect_dns" "$en_mode"\
-         "$auto_smart_switch" "$smart_collect" "$smart_collect_rate" "$smart_policy_priority" "$smart_enable_lgbm" "$smart_prefer_asn"
+         "$auto_smart_switch" "$smart_collect" "$smart_collect_rate" "$smart_policy_priority" "$smart_enable_lgbm" "$smart_prefer_asn" "$smart_tolerance"
 
          #Custom overwrite
          if [ -f "/tmp/yaml_overwrite.sh" ]; then
@@ -3650,9 +3655,7 @@ start_service()
                            threads = []
                            $ruby_code
                            threads.each(&:join)
-                           File.open('$yaml_file', 'w') do |f|
-                              YAML.dump(Value, f)
-                           end
+                           YAML.dump(Value, '$yaml_file')
                         rescue Exception => e
                            YAML.LOG_ERROR('Set Custom Overwrite Script Failed,【%s】' % [e.message])
                         end
@@ -3688,7 +3691,7 @@ start_service()
                   end
                end
                threads.each(&:join)
-               File.open('$TMP_CONFIG_FILE', 'w') { |f| YAML.dump(Value, f) }
+               YAML.dump(Value, '$TMP_CONFIG_FILE')
             rescue Exception => e
                YAML.LOG_ERROR('Edit Provider Path Failed,【%s】' % [e.message])
             end
@@ -3743,11 +3746,6 @@ stop_service()
       for i in $(seq 1 10); do
          procd_running "openclash" >/dev/null && sleep 1 || break
       done
-      if procd_running "openclash" >/dev/null; then
-         for pid in $(pidof clash 2>/dev/null); do
-            kill -9 "$pid" 2>/dev/null || true
-         done
-      fi
 
       LOG_OUT "Step 4: Restart Dnsmasq..."
       revert_dnsmasq
@@ -3756,14 +3754,13 @@ stop_service()
       LOG_TIP "OpenClash Already Stop!"
 
       if [ "$enable" != "1" ]; then
-         rm -rf /tmp/clash_last_version \
-                /tmp/openclash_last_version \
+         rm -rf /tmp/openclash_version_history.json \
+                /tmp/openclash_cdn_info.json \
                 /tmp/openclash.change \
                 /tmp/openclash_announcement \
                 ${DNSMASQ_CONF_DIR}/dnsmasq_openclash_chnroute_pass.conf \
                 ${DNSMASQ_CONF_DIR}/dnsmasq_openclash_chnroute6_pass.conf \
                 ${DNSMASQ_CONF_DIR}/dnsmasq_openclash_custom_domain.conf
-         SLOG_CLEAN
       fi
 
       del_cron
@@ -3831,7 +3828,6 @@ reload_service()
    if pidof clash >/dev/null && [ "$enable" == "1" ] && [ "$1" == "revert" ]; then
       revert_firewall
       revert_dnsmasq
-      SLOG_CLEAN
    fi
    if pidof clash >/dev/null && [ "$enable" == "1" ] && [ "$1" == "restore" ]; then
       do_run_mode

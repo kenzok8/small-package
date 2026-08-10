@@ -12,7 +12,6 @@ local path_info = os.getenv("PATH_INFO") or ""
 local sid = path_info:match("(cfg[0-9a-f]+)") or ""
 -%>
 
-<%+openclash/common%>
 <script type="text/javascript">//<![CDATA[
 
 ocRegisterEditorHotkeys();
@@ -47,7 +46,6 @@ function editor(id, readOnly, wid, height) {
 	});
 	id.parentNode.insertBefore(view.dom, id.nextSibling);
 	ocHideLoading(id.parentNode);
-	ocUpdateTheme();
 	if (wid && height) {
 		view.dom.style.width = wid;
 		view.dom.style.height = height;
@@ -75,7 +73,6 @@ function shell_editor(id, readOnly, wid, height) {
 	});
 	id.parentNode.insertBefore(view.dom, id.nextSibling);
 	ocHideLoading(id.parentNode);
-	ocUpdateTheme();
 	if (wid && height) {
 		view.dom.style.width = wid;
 		view.dom.style.height = height;
@@ -103,7 +100,6 @@ function other_editor(id, readOnly, wid, height) {
 	});
 	id.parentNode.insertBefore(view.dom, id.nextSibling);
 	ocHideLoading(id.parentNode);
-	ocUpdateTheme();
 	if (wid && height) {
 		view.dom.style.width = wid;
 		view.dom.style.height = height;
@@ -131,8 +127,16 @@ function log_editor(id, name, readOnly, wid, height) {
 	});
 	id.parentNode.insertBefore(view.dom, id.nextSibling);
 	ocHideLoading(id.parentNode);
-	ocUpdateTheme();
+	if (CM6.dispatchTheme) CM6.dispatchTheme(view, isDark);
 	window['editor_' + name] = view;
+	if (id.value && id.value.length > 0) {
+		requestAnimationFrame(function() {
+			if (view.state && view.state.doc) {
+				var txt = view.state.doc.toString();
+				if (txt) view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: txt } });
+			}
+		});
+	}
 	if (wid && height) {
 		view.dom.style.width = wid;
 		view.dom.style.height = height;
@@ -176,8 +180,16 @@ function markdown_editor(id, name, readOnly, wid, height) {
 	});
 	id.parentNode.insertBefore(view.dom, id.nextSibling);
 	ocHideLoading(id.parentNode);
-	ocUpdateTheme();
+	if (CM6.dispatchTheme) CM6.dispatchTheme(view, isDark);
 	window['editor_' + name] = view;
+	if (id.value && id.value.length > 0) {
+		requestAnimationFrame(function() {
+			if (view.state && view.state.doc) {
+				var txt = view.state.doc.toString();
+				if (txt) view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: txt } });
+			}
+		});
+	}
 	if (wid && height) {
 		view.dom.style.width = wid;
 		view.dom.style.height = height;

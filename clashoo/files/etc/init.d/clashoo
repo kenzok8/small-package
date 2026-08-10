@@ -1135,6 +1135,77 @@ _remap_dns_system_nameserver() {
 	yq -M e -i '(.dns | .. | select(. == "system")) |= "223.5.5.5"' "$CONFIG_YAML" 2>/dev/null || true
 }
 
+_stage_cn_ip_ruleset() {
+	local dst="/etc/clashoo/ruleset/cn-ip.txt"
+	local src4="/usr/share/clashoo/nftables/geoip_cn.nft"
+	local src6="/usr/share/clashoo/nftables/geoip6_cn.nft"
+	local newest src
+
+	[ -s "$src4" ] || return 1
+
+	newest="$src4"
+	[ -s "$src6" ] && [ "$src6" -nt "$newest" ] && newest="$src6"
+	[ -f "$dst" ] && [ ! "$newest" -nt "$dst" ] && return 0
+
+	mkdir -p /etc/clashoo/ruleset 2>/dev/null
+	: > "${dst}.tmp"
+	for src in "$src4" "$src6"; do
+		[ -s "$src" ] || continue
+		awk '
+			/elements[[:space:]]*=/ { inset = 1; next }
+			inset && /^[[:space:]]*}/ { exit }
+			inset {
+				gsub(/[[:space:],]/, "", $0)
+				if ($0 != "")
+					print
+			}
+		' "$src" >> "${dst}.tmp" 2>/dev/null
+	done
+
+	if [ ! -s "${dst}.tmp" ]; then
+		rm -f "${dst}.tmp" 2>/dev/null
+		return 1
+	fi
+	mv -f "${dst}.tmp" "$dst" 2>/dev/null
+}
+
+_config_has_cn_direct_rule() {
+	grep -qiE '^[[:space:]]*-[[:space:]]*["'"'"']?(GEOIP,[[:space:]]*CN,|RULE-SET,[[:space:]]*[A-Za-z0-9_.-]*(cn|china)[A-Za-z0-9_.-]*,)' "$CONFIG_YAML" 2>/dev/null
+}
+
+ensure_cn_ip_fallback_rule() {
+	command -v yq >/dev/null 2>&1 || return 0
+	[ -s "$CONFIG_YAML" ] || return 0
+	grep -qE '^[[:space:]]*-[[:space:]]*["'"'"']?MATCH,' "$CONFIG_YAML" 2>/dev/null || return 0
+	_config_has_cn_direct_rule && return 0
+	_stage_cn_ip_ruleset || return 0
+
+	yq -M e -i '
+		.["rule-providers"].clashoo_cn_ip = {
+			"type": "file",
+			"path": "./ruleset/cn-ip.txt",
+			"format": "text",
+			"behavior": "ipcidr"
+		}
+	' "$CONFIG_YAML" 2>/dev/null || return 0
+
+	awk '
+		!inserted && /^[[:space:]]*-[[:space:]]*["'"'"']?MATCH,/ {
+			match($0, /^[[:space:]]*/)
+			print substr($0, 1, RLENGTH) "- \"RULE-SET,clashoo_cn_ip,DIRECT\""
+			inserted = 1
+		}
+		{ print }
+	' "$CONFIG_YAML" > "${CONFIG_YAML}.cnfb" 2>/dev/null
+
+	if [ -s "${CONFIG_YAML}.cnfb" ]; then
+		mv -f "${CONFIG_YAML}.cnfb" "$CONFIG_YAML" 2>/dev/null
+		log_msg "No China direct rule in config, injected RULE-SET fallback before MATCH" "配置缺少国内直连规则，已在 MATCH 前注入兜底规则"
+	else
+		rm -f "${CONFIG_YAML}.cnfb" 2>/dev/null
+	fi
+}
+
 ip_rules() {
 #===========================================================================================================================
 	sh /usr/share/clashoo/runtime/iprules.sh 2>/dev/null
@@ -1772,6 +1843,7 @@ _start_prepare_config() {
 	_prepare_geo_bootstrap_mode
 	_remap_dns_system_nameserver >/dev/null 2>&1
 	ensure_dns_cn_policy_fallback >/dev/null 2>&1
+	ensure_cn_ip_fallback_rule >/dev/null 2>&1
 
 
 	if [ ! -f /etc/clashoo/config.yaml ];then

@@ -1,11 +1,38 @@
 // OpenClash shared utilities
+_ocGuard: { if (window._ocCommonLoaded) break _ocGuard; window._ocCommonLoaded = true; }
+
+// ═══ Remove LuCI's global @media (prefers-reduced-motion: reduce) ═══
+(function() {
+    var sheets = document.styleSheets;
+    for (var i = sheets.length - 1; i >= 0; i--) {
+        try {
+            var rules = sheets[i].cssRules || sheets[i].rules;
+            if (!rules) continue;
+            for (var j = rules.length - 1; j >= 0; j--) {
+                var rule = rules[j];
+                if (rule.type === CSSRule.MEDIA_RULE &&
+                    /prefers-reduced-motion.*reduce/.test(rule.conditionText)) {
+                    sheets[i].deleteRule(j);
+                }
+            }
+        } catch(e) {}
+    }
+})();
 
 // ═══ Internal helpers ═══
 
-// Parse a CSS color string and return relative luminance (0-255).
-// Returns 128 for unparseable colors (sentinel: neither dark nor light).
-function _luminanceFromColor(color) {
+function luminanceFromColor(color) {
     var r, g, b;
+
+    if (color.indexOf('lab(') === 0) {
+        var labM = color.match(/[\d.]+%?/g);
+        if (labM && labM.length >= 1) {
+            var L = parseFloat(labM[0]);
+            return L * 2.55;
+        }
+        return 128;
+    }
+
     if (color[0] === '#') {
         if (color.length === 4) {
             r = parseInt(color[1] + color[1], 16);
@@ -24,15 +51,14 @@ function _luminanceFromColor(color) {
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
-// Multi-signal dark-mode detection for initial load (runs in <head>,
-// before <body> exists). Covers Bootstrap 5.3, Argon, Material, and
-// generic LuCI themes. Defaults to light when no signal detected —
-// after DOM ready isDarkBackground(document.body) corrects if needed.
-function _detectInitialAutoDark() {
+function detectInitialAutoDark() {
     var html = document.documentElement,
         v, cls, lum;
     // 1. HTML data-* attributes (Bootstrap 5.3, Material, OpenClash, and generic)
-    v = html.getAttribute('data-bs-theme') || html.getAttribute('data-theme') || html.getAttribute('data-darkmode');
+    var bs = html.getAttribute('data-bs-theme'),
+        th = html.getAttribute('data-theme'),
+        dm = html.getAttribute('data-darkmode');
+    v = bs || th || dm;
     if (v === 'dark' || v === 'dim' || v === 'true') return true;
     if (v === 'light' || v === 'false') return false;
     // 2. HTML class name (Argon dark-mode, generic theme-dark, etc.)
@@ -52,42 +78,30 @@ function _detectInitialAutoDark() {
         checkBg = style.getPropertyValue('--bs-body-bg').trim()
                || style.getPropertyValue('--body-bg').trim()
                || style.getPropertyValue('--theme-bg').trim();
-    if (checkBg && checkBg !== 'transparent' && checkBg !== 'rgba(0, 0, 0, 0)') return _luminanceFromColor(checkBg) < 128;
+    if (checkBg && checkBg !== 'transparent' && checkBg !== 'rgba(0, 0, 0, 0)')
+        return luminanceFromColor(checkBg) < 128;
 
     // 5. System preference (ultimate fallback)
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return true;
-
-    return false;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
-// Detect whether the given element sits on a dark background.
-// Explicit oc-theme → immediate. Auto → computed background-color
-// (fallback to <html> if element background is transparent).
 function isDarkBackground(element) {
 	var cachedTheme = localStorage.getItem('oc-theme');
-	if (cachedTheme === 'dark') {
-		return true;
-	} else if (cachedTheme === 'light') {
-		return false;
-	}
+	if (cachedTheme === 'dark') return true;
+	if (cachedTheme === 'light') return false;
 
 	var style = window.getComputedStyle(element);
 	var bgColor = style.backgroundColor;
 	if (!bgColor || bgColor === 'transparent' || bgColor === 'rgba(0, 0, 0, 0)') {
 		bgColor = window.getComputedStyle(document.documentElement).backgroundColor;
 	}
-	var lum = _luminanceFromColor(bgColor);
-	if (lum > 100 && lum < 156 && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-		return true;
-	}
+	var lum = luminanceFromColor(bgColor);
+	if (lum > 100 && lum < 156 && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return true;
 	return lum < 128;
 }
 
 // ═══ Theme system ═══
 
-// Sets html[data-darkmode] and <meta name="color-scheme">.
-// Explicit dark/light → immediate. Auto → background detection
-// (isDarkBackground after DOM ready; _detectInitialAutoDark initially).
 function ocApplyRootTheme() {
     var t = localStorage.getItem('oc-theme') || 'auto',
         d;
@@ -96,11 +110,7 @@ function ocApplyRootTheme() {
     } else if (t === 'light') {
         d = false;
     } else {
-        if (document.body && document.readyState !== 'loading') {
-            d = isDarkBackground(document.body);
-        } else {
-            d = _detectInitialAutoDark();
-        }
+        d = document.body ? isDarkBackground(document.body) : detectInitialAutoDark();
     }
     document.documentElement.setAttribute('data-darkmode', d ? 'true' : 'false');
     var m = document.querySelector('meta[name="color-scheme"]');
@@ -112,8 +122,6 @@ function ocApplyRootTheme() {
     m.content = d ? 'dark' : 'light';
 }
 
-// Idempotent theme initializer. First call registers DOMContentLoaded
-// listener (if page still loading); subsequent calls just re-apply.
 function ocInitTheme() {
 	if (window._ocThemeInited) {
 		ocUpdateTheme();
@@ -121,25 +129,34 @@ function ocInitTheme() {
 	}
 	window._ocThemeInited = true;
 
-	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', function() {
-			ocUpdateTheme();
-			ocHideEmptyCbiElements();
-			ocCenterCbiActions();
-		});
-	} else {
-		ocUpdateTheme();
+	ocApplyRootTheme();
+
+	var needsCorrection = (localStorage.getItem('oc-theme') || 'auto') === 'auto';
+
+	function _ocDomReady() {
+		if (needsCorrection) ocApplyRootTheme();
+		ocApplyEditorTheme();
 		ocHideEmptyCbiElements();
 		ocCenterCbiActions();
 	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', _ocDomReady);
+	} else {
+		_ocDomReady();
+	}
 }
 
-// Respond to OS-level theme changes when oc-theme is 'auto'.
-if (window.matchMedia) {
+function ocUpdateTheme() {
+	ocApplyRootTheme();
+	ocApplyEditorTheme();
+}
+
+if (window.matchMedia && !window._ocCommonLoaded) {
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
         if ((localStorage.getItem('oc-theme') || 'auto') === 'auto') {
             ocApplyRootTheme();
-            if (document.readyState !== 'loading') ocUpdateTheme();
+            if (document.body) ocUpdateTheme();
         }
     });
 }
@@ -152,6 +169,49 @@ function winOpen(url) {
 		window.location.href = url;
 	}
 	return false;
+}
+
+function ocGetLogColor(log) {
+	for (var levelKey in window.levelTranslations) {
+		var translatedText = '[' + window.levelTranslations[levelKey] + ']';
+		if (log.indexOf(translatedText) >= 0) return "var(--" + levelKey + "-color)";
+	}
+	return "var(--info-color)";
+}
+
+function imgerrorfuns(imgobj, imgSrc) {
+	setTimeout(function() {
+		imgobj.src = imgSrc;
+		imgobj.loading = "lazy";
+	}, 1000 * 10);
+}
+
+function ocAnimateScroll(element) {
+	if (!element) return;
+	if (element._ocScrollAnimId) cancelAnimationFrame(element._ocScrollAnimId);
+	var start = element.scrollTop;
+	var duration = 500;
+	var startTime = null;
+	function step(timestamp) {
+		if (!startTime) startTime = timestamp;
+		var elapsed = timestamp - startTime;
+		var progress = Math.min(elapsed / duration, 1);
+		var eased = 1 - (1 - progress) * (1 - progress);
+		var lastChild = element.lastElementChild || element.lastChild;
+		var lastLineH = (lastChild && lastChild.offsetHeight) ? lastChild.offsetHeight : 0;
+		var maxScroll = Math.max(0, element.scrollHeight - element.clientHeight);
+		var target = Math.max(0, element.scrollHeight - (element.clientHeight + lastLineH) / 2);
+		if (target > maxScroll) target = maxScroll;
+		var distance = target - start;
+		element.scrollTop = Math.round(start + distance * eased);
+		if (progress < 1) {
+			element._ocScrollAnimId = requestAnimationFrame(step);
+		} else {
+			element._ocScrollAnimId = null;
+			element.style.willChange = '';
+		}
+	}
+	element._ocScrollAnimId = requestAnimationFrame(step);
 }
 
 function ocFormatUnixTime(unixTimestamp) {
@@ -383,10 +443,9 @@ window._cmWhenReady = function(cb) { cb(); };
 
 // ═══ Theme — CM6 & CBI helpers ═══
 
-// Apply theme to CodeMirror editors + highlight.js.
-function ocUpdateTheme() {
-	ocApplyRootTheme();
-	var isDark = isDarkBackground(document.body);
+// Apply CM6 editor themes + highlight.js theme based on current data-darkmode.
+function ocApplyEditorTheme() {
+	var isDark = document.documentElement.getAttribute('data-darkmode') === 'true';
 	if (typeof CM6 !== 'undefined' && CM6.dispatchTheme) {
 		var editors = document.querySelectorAll('.cm-editor');
 		for (var j = 0; j < editors.length; j++) {
@@ -482,7 +541,7 @@ function ocRegisterEditorHotkeys() {
 					}
 				}
 			}
-			ocUpdateTheme();
+			ocApplyEditorTheme();
 			return;
 		}
 
@@ -509,7 +568,7 @@ function ocRegisterEditorHotkeys() {
 			_ocExitFullscreen();
 			window._ocFullscreenActive = false;
 			if (window.ConfigEditor) window.ConfigEditor.isFullscreen = false;
-			ocUpdateTheme();
+			ocApplyEditorTheme();
 		}
 	}, true);
 
@@ -604,6 +663,35 @@ function ocFallbackCopy(text, btnElement, successMessage, failMessage) {
 	}
 }
 
+function ocSetBtnLoading(btn, loading) {
+	var svg = btn.querySelector('svg');
+	if (loading) {
+		if (svg && !btn.dataset.ocSvgHtml) {
+			btn.dataset.ocSvgHtml = svg.outerHTML;
+			var spinner = document.createElement('span');
+			spinner.className = 'loading-spinner oc-btn-spinner';
+			spinner.style.verticalAlign = 'middle';
+			var svgW = parseInt(svg.getAttribute('width'), 10);
+			var size = (!isNaN(svgW) && svgW > 0) ? svgW : 14;
+			spinner.style.width = size + 'px';
+			spinner.style.height = size + 'px';
+			btn.replaceChild(spinner, svg);
+		}
+		btn.disabled = true;
+	} else {
+		btn.disabled = false;
+		if (btn.dataset.ocSvgHtml) {
+			var holder = document.createElement('span');
+			holder.innerHTML = btn.dataset.ocSvgHtml;
+			var newSvg = holder.firstChild;
+			var cur = btn.querySelector('.loading-spinner');
+			if (cur && newSvg) {
+				btn.replaceChild(newSvg, cur);
+			}
+			delete btn.dataset.ocSvgHtml;
+		}
+	}
+}
 
-ocApplyRootTheme();
+
 ocInitTheme();
