@@ -220,7 +220,7 @@ local function encode_vless(node)
 	local link = "vless://" .. node.uuid .. "@" .. o.server .. ":" .. o.port
 	local p = {}
 
-	if node.flow then table.insert(p, "flow=" .. urlencode(node.flow)) end
+	if type(node.flow) == "string" and node.flow:sub(1, 5) == "xtls-" then table.insert(p, "flow=" .. urlencode(node.flow)) end
 	if node.encryption then table.insert(p, "encryption=" .. urlencode(node.encryption)) end
 
 	-- TLS

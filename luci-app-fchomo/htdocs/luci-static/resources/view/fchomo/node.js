@@ -1048,6 +1048,15 @@ return view.extend({
 		so.depends({type: /^(zerotier|wireguard|masque|openvpn)$/});
 		so.modalonly = true;
 
+		so = ss.taboption('field_general', form.ListValue, 'ipstack_congestion_controller', _('IP stack') + ': ' + _('Congestion controller'));
+		so.value('', _('Keep default'));
+		so.value('cubic', _('cubic'));
+		so.value('reno', _('reno'));
+		so.value('bbr', _('bbr'));
+		so.value('bbr3', _('bbr3'));
+		so.depends({ipstack: /^(auto|mips)$/}); // not empty not gvisor
+		so.modalonly = true;
+
 		so = ss.taboption('field_general', form.ListValue, 'congestion_controller', _('Congestion controller'));
 		so.default = hm.congestion_controller[0][0];
 		hm.congestion_controller.forEach((res) => {
@@ -1055,7 +1064,6 @@ return view.extend({
 		})
 		so.depends({type: /^(tuic|shadowquic|trusttunnel)$/});
 		so.depends({type: 'masque', masque_network: /^(|h3-l4proxy)$/});
-		so.depends({ipstack: /^(auto|mips)$/}); // not empty not gvisor
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.ListValue, 'bbr_profile', _('BBR profile'));

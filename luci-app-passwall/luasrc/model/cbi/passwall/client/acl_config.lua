@@ -49,18 +49,6 @@ m.uci:foreach(appname, "socks", function(s)
 	end
 end)
 
-
-local dynamicList_write = function(self, section, value)
-	local new_t = {}
-	if type(value) == "table" then
-		new_t = api.table_remove_duplicates(value)
-	else
-		new_t = { value }
-	end
-	local new_val = table.concat(new_t, " ")
-	return DynamicList.write(self, section, new_val)
-end
-
 -- [[ ACLs Settings ]]--
 s = m:section(NamedSection, cfgid, translate("ACLs"), translate("ACLs"))
 s.addremove = false
@@ -173,7 +161,6 @@ sources.validate = function(self, value, t)
 
 	return value
 end
-sources.write = dynamicList_write
 
 o = s:option(ListValue, "mode", translate("Mode"))
 o:value("0", translate("No Proxy"))

@@ -372,15 +372,6 @@ if api.is_finded("smartdns") then
 	o.cfgvalue = function(self, section)
 		return m:get(section, self.option) or {"tcp://1.1.1.1"}
 	end
-	function o.write(self, section, value)
-		local new_t = {}
-		if type(value) == "table" then
-			new_t = api.table_remove_duplicates(value)
-		else
-			new_t = { value }
-		end
-		return DynamicList.write(self, section, new_t)
-	end
 end
 
 o = s:taboption("DNS", ListValue, "xray_dns_mode", translate("Remote DNS") .. " " .. translate("Request protocol"))

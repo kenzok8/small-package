@@ -164,19 +164,6 @@ source.validate = function(self, value, t)
 	return value
 end
 
-local dynamicList_write = function(self, section, value)
-	local new_t = {}
-	if type(value) == "table" then
-		new_t = api.table_remove_duplicates(value)
-	else
-		new_t = { value }
-	end
-	local new_val = table.concat(new_t, " ")
-	return DynamicList.write(self, section, new_val)
-end
-
-source.write = dynamicList_write
-
 --[[
 -- Too low usage rate, hidden
 sourcePort = s:option(Value, "sourcePort", translate("Source port"))

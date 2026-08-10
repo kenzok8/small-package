@@ -678,12 +678,12 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		/* Extra fields */
 		"ip-stack": cfg.ipstack ? {
 			mode: cfg.ipstack,
-			"congestion-controller": replace(cfg.congestion_controller, 'new_reno', 'reno')
+			"congestion-controller": cfg.ipstack_congestion_controller
 		} : null,
 		"udp-over-stream": strToBool(cfg.shadowquic_udp_over_stream || cfg.tuic_udp_over_stream),
 		"heartbeat-interval": strToInt(cfg.tuic_heartbeat) || null,
 		"keep-alive-interval": strToInt(cfg.shadowquic_heartbeat) || null,
-		"congestion-controller": cfg.type in ['zerotier', 'wireguard', 'masque', 'openvpn'] ? null : cfg.congestion_controller,
+		"congestion-controller": cfg.congestion_controller,
 		"bbr-profile": cfg.bbr_profile,
 		"max-open-streams": strToInt(cfg.max_open_streams) || null,
 

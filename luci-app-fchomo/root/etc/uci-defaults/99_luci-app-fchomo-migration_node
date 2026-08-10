@@ -171,6 +171,14 @@ migrate() {
 		uci_remove "$CONF" "$1" zerotier_ipstack
 		uci_set "$CONF" "$1" ipstack "$zerotier_ipstack"
 	fi
+
+	# congestion_controller -> ipstack_congestion_controller
+	if isDefined "$1" congestion_controller && (isDefined "$1" zerotier_ipstack || isDefined "$1" ipstack); then
+		local congestion_controller
+		config_get congestion_controller "$1" congestion_controller ""
+		uci_remove "$CONF" "$1" congestion_controller
+		uci_set "$CONF" "$1" ipstack_congestion_controller "$congestion_controller"
+	fi
 }
 
 config_foreach migrate node

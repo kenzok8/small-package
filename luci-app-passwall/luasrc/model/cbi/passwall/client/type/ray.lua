@@ -116,12 +116,12 @@ if load_balancing_options then -- [[ Load balancing Start ]]
 		end
 	end
 	-- 读取旧 DynamicList
-	function o.cfgvalue(self, section)
-		return m.uci:get_list(appname, section, "balancing_node") or {}
+	function o.custom_cfgvalue(self, section)
+		return table.concat(m:get(section, "balancing_node") or {}, " ")
 	end
 	-- 写入保持 DynamicList
 	function o.custom_write(self, section, value)
-		local old = m.uci:get_list(appname, section, "balancing_node") or {}
+		local old = m:get(section, "balancing_node") or {}
 		local new, set = {}, {}
 		for v in value:gmatch("%S+") do
 			new[#new + 1] = v
@@ -129,13 +129,13 @@ if load_balancing_options then -- [[ Load balancing Start ]]
 		end
 		for _, v in ipairs(old) do
 			if not set[v] then
-				m.uci:set_list(appname, section, "balancing_node", new)
+				m:set(section, "balancing_node", new)
 				return
 			end
 			set[v] = nil
 		end
 		for _ in pairs(set) do
-			m.uci:set_list(appname, section, "balancing_node", new)
+			m:set(section, "balancing_node", new)
 			return
 		end
 	end
