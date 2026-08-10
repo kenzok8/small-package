@@ -1014,7 +1014,6 @@ local default_file_tree = {
 }
 
 local function get_api_json(url)
-	local jsonc = require "luci.jsonc"
 	local gh_proxy = uci_get_type("global_app", "github_proxy", "0")
 	local return_code, content
 	if gh_proxy == "1" then
@@ -1388,6 +1387,7 @@ function return_map(map)
 end
 
 function luci_types(id, m, s, type_name, option_prefix)
+	local cbi = require "luci.cbi"
 	local fv_type
 	local field_type = s.fields["type"]
 	if field_type then

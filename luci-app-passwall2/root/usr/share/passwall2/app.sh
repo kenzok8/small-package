@@ -655,58 +655,13 @@ run_global() {
 	set_cache_var "ACL_GLOBAL_redir_port" "$REDIR_PORT"
 }
 
-run_front_dns() {
-	local switch=0
-	direct_dns_shunt=$(config_t_get global direct_dns_shunt)
-	direct_dns_shunt=$(echo "${direct_dns_shunt}" | grep -v "^#")
-	[ -n "${direct_dns_shunt}" ] && switch=1
-	[ "${switch}" == "1" ] && {
-		local config_file="${TMP_PATH}/direct_dns.json"
-		local log_file="${TMP_PATH}/direct_dns.log"
-		log_file="/dev/null"
-		local listen_port=$(get_new_port 10553)
-		json_init
-		json_add_string "dns_listen_port" "${listen_port}"
-		json_add_string "direct_dns_udp_server" "${DIRECT_DNS_UDP_SERVER}"
-		json_add_string "direct_dns_udp_port" "${DIRECT_DNS_UDP_PORT}"
-		json_add_string "direct_dns_query_strategy" "${DIRECT_DNS_QUERY_STRATEGY}"
-		[ -n "${ACL_GLOBAL_node}" ] && [ -n "${TUN_DNS_PORT}" ] && {
-			json_add_string "default_dns_udp_server" "127.0.0.1"
-			json_add_string "default_dns_udp_port" "${TUN_DNS_PORT}"
-		}
-		local _json_arg="$(json_dump)"
-
-		local prefer_core=""
-		[ -n "${XRAY_BIN}" ] && prefer_core="xray"
-		[ -n "${SINGBOX_BIN}" ] && prefer_core="sing-box"
-
-		if [ "${prefer_core}" = "xray" ]; then
-			lua $UTIL_XRAY gen_front_dns_config "${_json_arg}" > $config_file
-			ln_run 0 "$XRAY_BIN" "xray" "${log_file}" run -c "$config_file"
-		elif [ "${prefer_core}" = "sing-box" ]; then
-			lua $UTIL_SINGBOX gen_front_dns_config "${_json_arg}" > $config_file
-			ln_run 0 "$SINGBOX_BIN" "sing-box" "${log_file}" run -c "$config_file"
-		else
-			return 1
-		fi
-
-		FRONT_DNS_SERVER="127.0.0.1"
-		FRONT_DNS_PORT="${listen_port}"
-	}
-}
-
 run_global_dnsmasq() {
-	[ -z "${ACL_GLOBAL_node}" ] && [ -z "${FRONT_DNS_PORT}" ] && return
+	[ -z "${ACL_GLOBAL_node}" ] && return
 	local RUN_NEW_DNSMASQ=1
 	RUN_NEW_DNSMASQ=${DNS_REDIRECT}
 	DNSMASQ_DEFAULT_DNS="${AUTO_DNS}"
 	DNSMASQ_LOCAL_DNS="${LOCAL_DNS:-${AUTO_DNS}}"
 	DNSMASQ_TUN_DNS="${TUN_DNS}"
-	[ -n "${FRONT_DNS_PORT}" ] && {
-		DNSMASQ_DEFAULT_DNS="${FRONT_DNS_SERVER}#${FRONT_DNS_PORT}"
-		DNSMASQ_LOCAL_DNS="${DNSMASQ_DEFAULT_DNS}"
-		DNSMASQ_TUN_DNS="${DNSMASQ_DEFAULT_DNS}"
-	}
 	if [ "${RUN_NEW_DNSMASQ}" == "0" ]; then
 		#The old logic will be removed in the future.
 		#Run a copy dnsmasq instance, DNS hijack that don't need a proxy devices.
@@ -1194,7 +1149,6 @@ start() {
 	fi
 	mkdir -p ${GLOBAL_ACL_PATH}
 	[ "$ENABLED_DEFAULT_ACL" == 1 ] && run_global
-	run_front_dns
 	run_global_dnsmasq
 	[ -n "$USE_TABLES" ] && source $APP_PATH/${USE_TABLES}.sh start
 	set_cache_var "USE_TABLES" "$USE_TABLES"

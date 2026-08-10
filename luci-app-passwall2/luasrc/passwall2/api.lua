@@ -5,7 +5,6 @@ nixio = require "nixio"
 fs = require "nixio.fs"
 sys = require "luci.sys"
 uci = require"luci.model.uci".cursor()
-cbi = require "luci.cbi"
 util = require "luci.util"
 datatypes = require "luci.cbi.datatypes"
 jsonc = require "luci.jsonc"
@@ -1014,7 +1013,6 @@ local default_file_tree = {
 }
 
 function get_api_json(url)
-	local jsonc = require "luci.jsonc"
 	local return_code, content = curl_logic(url, nil, curl_args)
 	if return_code ~= 0 or content == "" then return {} end
 	return jsonc.parse(content) or {}
@@ -1387,6 +1385,7 @@ function set_apply_on_parse(map)
 end
 
 function set_default_cbi()
+	local cbi = require "luci.cbi"
 	if true then
 		--TextValue
 		local TextValue = cbi.TextValue
@@ -1418,6 +1417,7 @@ function set_default_cbi()
 end
 
 function return_map(map)
+	local cbi = require "luci.cbi"
 	local api = require "luci.passwall2.api"
 	if true then
 		-- header
@@ -1438,6 +1438,7 @@ function return_map(map)
 end
 
 function luci_types(id, m, s, type_name, option_prefix)
+	local cbi = require "luci.cbi"
 	local fv_type
 	local field_type = s.fields["type"]
 	if field_type then

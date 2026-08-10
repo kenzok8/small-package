@@ -118,12 +118,6 @@ msgstr "0为不使用"
 msgid "Current node: %s"
 msgstr "当前节点：%s"
 
-msgid "Direct domain DNS routing"
-msgstr "直连域名 DNS 分流"
-
-msgid "Please note that the program will not start if the format is incorrect!"
-msgstr "请注意，格式不正确将无法启动！"
-
 msgid "IP:Port mode acceptable, multi value split with english comma."
 msgstr "接受 IP:Port 形式的输入，多个以英文逗号分隔。"
 
