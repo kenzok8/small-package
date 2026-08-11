@@ -519,7 +519,7 @@ local function anytls_to_mihomo_node(entry)
 		return nil
 	end
 
-	return {
+	local result = {
 		type = "anytls",
 		alias = entry.name,
 		raw_alias = entry.name,
@@ -530,6 +530,12 @@ local function anytls_to_mihomo_node(entry)
 		insecure = entry.allow_insecure and "1" or "0",
 		fingerprint = entry.client_fingerprint
 	}
+
+	local saved_alias = result.alias
+	result.alias = nil
+	result.hashkey = md5(jsonStringify(result) .. "_" .. (saved_alias or ""))
+	result.alias = saved_alias
+	return result
 end
 
 local function split_csv_values(value)
