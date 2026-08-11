@@ -51,8 +51,12 @@ uci -q delete passwall.@global_xray[0].route_only
 for sid in $(uci show passwall | grep "=socks" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}'); do
 	if [ -z "$(echo ${sid} | grep '^socks_')" ]; then
 		new_id="socks_$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 5)"
+		old_ref="Socks_${sid}"
 		uci -q rename passwall.${sid}="${new_id}"
-		unset sid new_id
+		for item in $(uci show passwall | grep "='${old_ref}'\$" | cut -d '=' -sf 1); do
+			uci -q set ${item}="${new_id}"
+		done
+		unset sid new_id old_ref item
 	fi
 done
 for sid in $(uci show passwall | grep "@acl_rule" | cut -d '.' -sf 2 | cut -d '=' -sf 1); do

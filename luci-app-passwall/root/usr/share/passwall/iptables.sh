@@ -236,15 +236,15 @@ load_acl() {
 			[ -n "$(get_cache_var "ACL_${sid}_dns_port")" ] && dns_redirect_port=$(get_cache_var "ACL_${sid}_dns_port")
 			[ -n "$(get_cache_var "ACL_${sid}_fakedns")" ] && use_fakedns=$(get_cache_var "ACL_${sid}_fakedns")
 			[ -n "$tcp_node" ] && {
-				if is_socks_wrap "$tcp_node"; then
-					tcp_node_remark="Socks 配置($(config_n_get ${tcp_node#Socks_} port) 端口)"
+				if [ "$(config_get_type $tcp_node)" = "socks" ]; then
+					tcp_node_remark="Socks 配置($(config_n_get $tcp_node port) 端口)"
 				else
 					tcp_node_remark=$(config_n_get $tcp_node remarks)
 				fi
 			}
 			[ -n "$udp_node" ] && {
-				if is_socks_wrap "$udp_node"; then
-					udp_node_remark="Socks 配置($(config_n_get ${udp_node#Socks_} port) 端口)"
+				if [ "$(config_get_type $udp_node)" = "socks" ]; then
+					udp_node_remark="Socks 配置($(config_n_get $udp_node port) 端口)"
 				else
 					udp_node_remark=$(config_n_get $udp_node remarks)
 				fi
@@ -256,13 +256,13 @@ load_acl() {
 			[ -n "$udp_node" ] && [ "$(config_n_get $udp_node protocol)" = "_shunt" ] && use_shunt_udp=1
 
 			[ "${use_global_config}" = "1" ] && {
-				if is_socks_wrap "$TCP_NODE"; then
-					tcp_node_remark="Socks 配置($(config_n_get ${TCP_NODE#Socks_} port) 端口)"
+				if [ "$(config_get_type $TCP_NODE)" = "socks" ]; then
+					tcp_node_remark="Socks 配置($(config_n_get $TCP_NODE} port) 端口)"
 				else
 					tcp_node_remark=$(config_n_get $TCP_NODE remarks)
 				fi
-				if is_socks_wrap "$UDP_NODE"; then
-					udp_node_remark="Socks 配置($(config_n_get ${UDP_NODE#Socks_} port) 端口)"
+				if [ "$(config_get_type $UDP_NODE)" = "socks" ]; then
+					udp_node_remark="Socks 配置($(config_n_get $UDP_NODE port) 端口)"
 				else
 					udp_node_remark=$(config_n_get $UDP_NODE remarks)
 				fi
@@ -651,8 +651,8 @@ load_acl() {
 		#  加载TCP默认代理模式
 		if [ -n "${TCP_PROXY_MODE}" ]; then
 			[ -n "$TCP_NODE" ] && {
-				if is_socks_wrap "$TCP_NODE"; then
-					msg2="${msg}使用 TCP 节点[Socks 配置($(config_n_get ${TCP_NODE#Socks_} port) 端口)]"
+				if [ "$(config_get_type $TCP_NODE)" = "socks" ]; then
+					msg2="${msg}使用 TCP 节点[Socks 配置($(config_n_get $TCP_NODE port) 端口)]"
 				else
 					msg2="${msg}使用 TCP 节点[$(config_n_get $TCP_NODE remarks)]"
 				fi
@@ -710,8 +710,8 @@ load_acl() {
 		#  加载UDP默认代理模式
 		if [ -n "${UDP_PROXY_MODE}" ]; then
 			[ -n "$UDP_NODE" ] || [ "$TCP_UDP" = "1" ] && {
-				if is_socks_wrap "$UDP_NODE"; then
-					msg2="${msg}使用 UDP 节点[Socks 配置($(config_n_get ${UDP_NODE#Socks_} port) 端口)](TPROXY:${UDP_REDIR_PORT})"
+				if [ "$(config_get_type $UDP_NODE)" = "socks" ]; then
+					msg2="${msg}使用 UDP 节点[Socks 配置($(config_n_get $UDP_NODE port) 端口)](TPROXY:${UDP_REDIR_PORT})"
 				else
 					msg2="${msg}使用 UDP 节点[$(config_n_get $UDP_NODE remarks)](TPROXY:${UDP_REDIR_PORT})"
 				fi
