@@ -394,7 +394,7 @@ function socks_status()
 	e.use_http = 0
 	if tonumber(use_http) > 0 then
 		e.use_http = 1
-		e.http_status = luci.sys.call(string.format("/bin/busybox top -bn1 | grep -v 'grep' | grep '/tmp/etc/passwall/bin/' | grep -v '_acl_' | grep '%s' | grep -E 'HTTP_|HTTP2SOCKS' > /dev/null", id)) == 0
+		e.http_status = luci.sys.call(string.format("/bin/busybox top -bn1 | grep -v -E 'grep|acl/|acl_' | grep '%s/bin/' | grep '%s' | grep -E '\\+http|_http' > /dev/null", appname, id)) == 0
 	end
 	http_write_json(e)
 end
