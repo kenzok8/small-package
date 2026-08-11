@@ -402,7 +402,7 @@ run_socks() {
 	sing-box)
 		[ "$http_port" != "0" ] && {
 			http_flag=1
-			config_file="${config_file//SOCKS/HTTP_SOCKS}"
+			config_file="${config_file%%.*}+http${config_file#${config_file%%.*}}"
 			json_add_string "local_http_address" "${bind}"
 			json_add_string "local_http_port" "${http_port}"
 		}
@@ -430,7 +430,7 @@ run_socks() {
 	xray)
 		[ "$http_port" != "0" ] && {
 			http_flag=1
-			config_file="${config_file//SOCKS/HTTP_SOCKS}"
+			config_file="${config_file%%.*}+http${config_file#${config_file%%.*}}"
 			json_add_string "local_http_address" "${bind}"
 			json_add_string "local_http_port" "${http_port}"
 		}
@@ -474,7 +474,7 @@ run_socks() {
 		json_add_string "local_socks_port" "${socks_port}"
 		[ "$http_port" != "0" ] && {
 			http_flag=1
-			config_file="${config_file//SOCKS/HTTP_SOCKS}"
+			config_file="${config_file%%.*}+http${config_file#${config_file%%.*}}"
 			json_add_string "local_http_address" "${bind}"
 			json_add_string "local_http_port" "${http_port}"
 		}
@@ -491,7 +491,7 @@ run_socks() {
 		json_add_string "local_socks_port" "${socks_port}"
 		[ "$http_port" != "0" ] && {
 			http_flag=1
-			config_file="${config_file//SOCKS/HTTP_SOCKS}"
+			config_file="${config_file%%.*}+http${config_file#${config_file%%.*}}"
 			json_add_string "local_http_address" "${bind}"
 			json_add_string "local_http_port" "${http_port}"
 		}
@@ -535,16 +535,16 @@ socks_node_switch() {
 	local flag new_node
 	eval_set_val $@
 	[ -n "$flag" ] && [ -n "$new_node" ] && {
-		local prefix pf filename
+		local suffix pf filename
 		# Kill the SS plugin process
-		for prefix in "" "HTTP_"; do
-			pf="$TMP_PATH/${prefix}${flag}_plugin.pid"
+		for suffix in "" "+http"; do
+			pf="$TMP_PATH/${flag}${suffix}_plugin.pid"
 			[ -s "$pf" ] && kill -9 "$(head -n1 "$pf")" >/dev/null 2>&1
 		done
 
 		busybox pgrep -af "$TMP_BIN_PATH" | awk -v P1="${flag}" 'BEGIN{IGNORECASE=1}$0~P1 && !/acl\/|acl_/{print $1}' | xargs kill -9 >/dev/null 2>&1
-		for prefix in "" "HTTP_" "HTTP2"; do
-			rm -rf "$TMP_PATH/${prefix}${flag}"*
+		for suffix in "" "+http" "_http"; do
+			rm -rf "$TMP_PATH/${flag}${suffix}"*
 		done
 
 		for filename in $(ls ${TMP_SCRIPT_FUNC_PATH}); do
@@ -560,7 +560,7 @@ socks_node_switch() {
 		local log=$(config_n_get $flag log 1)
 		[ "$log" == "0" ] && log_file=""
 		local http_port=$(config_n_get $flag http_port 0)
-		local http_config_file="HTTP2SOCKS_${flag}.json"
+		local http_config_file="${flag}_http.json"
 		LOG_FILE="/dev/null"
 		run_socks flag=$flag node=$new_node bind=$bind socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file log_file=$log_file
 		set_cache_var "${flag}" "$new_node"
@@ -727,7 +727,7 @@ start_socks() {
 				local log=$(config_n_get $id log 1)
 				[ "$log" == "0" ] && log_file=""
 				local http_port=$(config_n_get $id http_port 0)
-				local http_config_file="HTTP2SOCKS_${id}.json"
+				local http_config_file="${id}_http.json"
 				run_socks flag=$id node=$node bind=$bind socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file log_file=$log_file
 				set_cache_var "${id}" "$node"
 

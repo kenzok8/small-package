@@ -116,7 +116,7 @@ function parseShareLink(uri, features) {
 		case 'socks':
 		case 'socks4':
 		case 'socks4a':
-		case 'socsk5':
+		case 'socks5':
 		case 'socks5h':
 			url = new URL('http://' + uri[1]);
 

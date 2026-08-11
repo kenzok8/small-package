@@ -13,6 +13,7 @@
 173ng.com
 18board.com
 18comic.org
+18comic.vip
 18mh.net
 1984bbs.com
 1991way.com
@@ -127,6 +128,7 @@ agoogleaday.com
 agro.hk
 ai.dev
 ai.studio
+aihub.top
 aiosearch.com
 aiph.net
 airconsole.com
@@ -294,7 +296,6 @@ atlanta168.com
 atnext.com
 auctions.yahoo.co.jp
 audacy.com
-auntology.fandom.com
 autodraw.com
 av.movie
 av01.tv
@@ -342,6 +343,7 @@ baramangaonline.com
 barnabu.co.uk
 bartender.dowjones.com
 barton.de
+basemaps.arcgis.com
 bastillepost.com
 bayvoice.net
 bb-chat.tv
@@ -686,6 +688,7 @@ centauro.com.br
 centerforhumanreprod.com
 centralnation.com
 centurys.net
+cerebras.ai
 certificate-transparency.org
 certificate.revocationcheck.com
 cfr.org
@@ -766,10 +769,12 @@ chrome.com
 chromecast.com
 chromeexperiments.com
 chromestatus.com
+cht.com.tw
 ci-en.jp
 cia.gov
 cici.com
 ciciai.com
+circle19.org
 cirosantilli.com
 citizencn.com
 citizenlab.ca
@@ -782,6 +787,7 @@ civilmedia.tw
 civitai.com
 cixiaoya.club
 ck101.com
+clashyun.com
 classicalguitarblog.net
 claude.ai
 claude.com
@@ -991,6 +997,7 @@ disneyplus.com
 disp.cc
 disqus.com
 dit-inc.us
+divdyn.com
 diyin.org
 dizhuzhishang.com
 dl-laby.jp
@@ -1140,6 +1147,7 @@ eromanga-kingdom.com
 eromangadouzin.com
 eromon.net
 esg.t91y.com
+esim.redteago.com
 eslite.com
 esurance.com
 etherdelta.com
@@ -1162,6 +1170,7 @@ exmormon.org
 expatshield.com
 expecthim.com
 expekt.com
+experience.arcgis.com
 exploader.net
 expressnews.com
 expressvpn.com
@@ -1201,6 +1210,7 @@ falundafaindia.org
 falunhr.org
 famunion.com
 fanbox.cc
+fandom.com
 fangeqiang.com
 fanglizhi.info
 fangong.org
@@ -1892,7 +1902,6 @@ holyspiritspeaks.org
 home.saxo
 homedepot.com
 homeservershow.com
-hongkong.fandom.com
 hongkongfp.com
 hongzhi.li
 honven.xyz
@@ -2171,6 +2180,7 @@ kanshifang.com
 kantie.org
 kaotic.com
 karayou.com
+kards.com
 kathmandupost.com
 kawaiikawaii.jp
 kawase.com
@@ -2255,6 +2265,7 @@ lenwhite.com
 leonardo.ai
 lesoir.be
 letscorp.net
+level-plus.net
 lexica.art
 lhakar.org
 li.taipei
@@ -2518,7 +2529,6 @@ mosavi.io
 motherless.com
 movements.org
 moviefap.com
-mozilla.ai
 mpettis.com
 mpfinance.com
 mpinews.com
@@ -2673,6 +2683,7 @@ ntd.tv
 ntdtv.com
 ntdtv.com.tw
 ntdtv.cz
+nthlink.com
 nuexpo.com
 nurgo-software.com
 nusatrip.com
@@ -2987,7 +2998,6 @@ puffinbrowser.com
 pullfolio.co
 pure18.com
 pureconcepts.net
-puredns.org
 pureinsight.org
 purepdf.com
 purevpn.com
@@ -3032,7 +3042,6 @@ radio.co
 radio.garden
 radioaustralia.net.au
 radiohilight.net
-radiojar.com
 radioline.co
 radiovaticana.org
 radiovncr.com
@@ -3145,7 +3154,6 @@ sadpanda.us
 safechat.com
 safeguarddefenders.com
 safervpn.com
-sagernet.org
 saintyculture.com
 sakuralive.com
 salvation.org.hk
@@ -3435,6 +3443,7 @@ synapse.org
 syncback.com
 synergyse.com
 syosetu.com
+sysub.com
 t-g.com
 t.co
 t.me
@@ -3648,6 +3657,7 @@ to-porno.com
 togetter.com
 token.im
 tokenlon.im
+tokenplus.app
 tokyo-porn-tube.com
 tokyocn.com
 tomp3.cc
@@ -3689,6 +3699,7 @@ trtworld.com
 truebuddha-md.org
 trustwallet.com
 truthsocial.com
+tryai.dev
 tryheart.jp
 tsdr.uspto.gov
 tt1069.com
@@ -3870,6 +3881,7 @@ uyghurstudies.org
 uyghurtribunal.com
 uygur.fc2web.com
 uymaarip.com
+v.recipes
 v2.help
 v2.hysteria.network
 v2ex.com
@@ -4135,7 +4147,6 @@ www.ajsands.com
 www.antd.org
 www.aolnews.com
 www.bing.com
-www.clashverge.dev
 www.cmoinc.org
 www.dmm.com
 www.eastturkistan.net
@@ -4313,6 +4324,7 @@ zdnet.com.tw
 zello.com
 zenmate.com
 zenmate.com.ru
+zenmux.ai
 zerohedge.com
 zeronet.io
 zh-hans.cfsh99.com
