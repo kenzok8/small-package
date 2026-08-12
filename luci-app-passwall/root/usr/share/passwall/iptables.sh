@@ -46,6 +46,8 @@ FWI=$(uci -q get firewall.passwall.path 2>/dev/null)
 FAKE_IP="198.18.0.0/15"
 FAKE_IP_6="fc00::/18"
 
+USE_GEOVIEW=0
+
 factor() {
 	if [ -z "$1" ] || [ -z "$2" ]; then
 		echo ""
@@ -392,6 +394,28 @@ load_acl() {
 							shunt6_set_name="psw_${sid}_shunt6"
 							ipset -! create $shunt_set_name nethash maxelem 1048576 timeout 172800
 							ipset -! create $shunt6_set_name nethash family inet6 maxelem 1048576 timeout 172800
+							# 预加载分流规则 ip 到 ipset
+							local GEOIP_CODE=""
+							local shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
+							local shunt_group shunt_id
+							if [ "${use_shunt_tcp}" = "1" ]; then
+								shunt_group=$(config_n_get $tcp_node shunt_group)
+							elif [ "${use_shunt_udp}" = "1" ]; then
+								shunt_group=$(config_n_get $udp_node shunt_group)
+							fi
+							for shunt_id in $shunt_ids; do
+								[ "${shunt_group}" != "$(config_n_get ${shunt_id} group)" ] && continue
+								config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | grep -v "^#" | sed -e "/^$/d" | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $shunt_set_name &/g" -e "s/$/ timeout 0/g" | ipset -! -R
+								config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | grep -v "^#" | sed -e "/^$/d" | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $shunt6_set_name &/g" -e "s/$/ timeout 0/g" | ipset -! -R
+								[ "$USE_GEOVIEW" = "1" ] && {
+									local geoip_code=$(config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "^geoip:" | grep -v "^geoip:private" | sed -E 's/^geoip:(.*)/\1/' | sed ':a;N;$!ba;s/\n/,/g')
+									[ -n "$geoip_code" ] && GEOIP_CODE="${GEOIP_CODE:+$GEOIP_CODE,}$geoip_code"
+								}
+							done
+							if [ -n "$GEOIP_CODE" ]; then
+								get_geoip $GEOIP_CODE ipv4 | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | sed -e "s/^/add $shunt_set_name &/g" -e "s/$/ timeout 0/g" | ipset -! -R
+								get_geoip $GEOIP_CODE ipv6 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | sed -e "s/^/add $shunt6_set_name &/g" -e "s/$/ timeout 0/g" | ipset -! -R
+							fi
 						}
 					}
 					[ -n "${dns_redirect_port}" ] && dns_redirect=${dns_redirect_port}
@@ -891,7 +915,7 @@ add_firewall_rule() {
 	local USE_BLOCK_LIST_ALL=${USE_BLOCK_LIST}
 	local _TCP_NODE=$(config_t_get global tcp_node)
 	local _UDP_NODE=$(config_t_get global udp_node)
-	local USE_GEOVIEW=$(config_t_get global_rules enable_geoview)
+	USE_GEOVIEW=$(config_t_get global_rules enable_geoview)
 	[ -z "$(first_type $(config_t_get global_app geoview_file) geoview)" ] && USE_GEOVIEW=0
 
 	[ -n "$_TCP_NODE" ] && [ "$(config_n_get $_TCP_NODE protocol)" = "_shunt" ] && USE_SHUNT_TCP=1 && USE_SHUNT_NODE=1
@@ -957,7 +981,7 @@ add_firewall_rule() {
 	[ "$USE_SHUNT_NODE" = "1" ] && {
 		local GEOIP_CODE=""
 		local shunt_ids=$(uci show $CONFIG | grep "=shunt_rules" | awk -F '.' '{print $2}' | awk -F '=' '{print $1}')
-		local shunt_group
+		local shunt_group shunt_id
 		if [ "${USE_SHUNT_TCP}" = "1" ]; then
 			shunt_group=$(config_n_get $_TCP_NODE shunt_group)
 		elif [ "${USE_SHUNT_UDP}" = "1" ]; then
