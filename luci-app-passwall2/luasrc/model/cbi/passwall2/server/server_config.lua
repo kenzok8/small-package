@@ -20,7 +20,12 @@ m:append(header)
 
 m:append(Template(appname .. "/cbi/nodes_listvalue_com"))
 
-s = m:section(NamedSection, arg[1], "user", "")
+user_list = {}
+m.uci:foreach(m.config, "user", function(s)
+	user_list[#user_list + 1] = s
+end)
+
+s = m:section(NamedSection, arg[1], "server", "")
 s.addremove = false
 s.dynamic = false
 

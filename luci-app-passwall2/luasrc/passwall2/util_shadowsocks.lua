@@ -4,9 +4,14 @@ local uci = api.uci
 local jsonc = api.jsonc
 
 function gen_config_server(node)
+	local user = nil
+	if node.user then
+		user = uci:get_all("passwall2_server", node.user)
+	end
+
 	local config = {}
 	config.server_port = tonumber(node.port)
-	config.password = node.password
+	config.password = user and user.password or ""
 	config.timeout = tonumber(node.timeout)
 	config.fast_open = (node.tcp_fast_open and node.tcp_fast_open == "1") and true or false
 	config.method = node.method

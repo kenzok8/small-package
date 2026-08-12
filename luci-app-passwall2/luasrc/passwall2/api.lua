@@ -388,6 +388,12 @@ function is_timehhmm(str)
 end
 datatypes.timehhmm = is_timehhmm
 
+function is_uuid(str)
+	local pattern = "^%x%x%x%x%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%x%x%x%x%x%x%x%x$"
+	return string.match(str, pattern) ~= nil
+end
+datatypes.uuid = is_uuid
+
 function is_normal_node(e)
 	if e and e.type and e.protocol and (e.protocol == "_balancing" or e.protocol == "_shunt" or e.protocol == "_iface" or e.protocol == "_urltest") then
 		return false

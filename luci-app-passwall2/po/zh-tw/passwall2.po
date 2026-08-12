@@ -962,6 +962,9 @@ msgstr "分流規則組"
 msgid "Please note attention to the priority, the higher the order, the higher the priority."
 msgstr "請注意優先級問題，排序越上面優先級越高。"
 
+msgid "This ID already exists."
+msgstr "此 ID 已存在。"
+
 msgid "Update..."
 msgstr "更新中"
 
@@ -1478,8 +1481,14 @@ msgstr "服務器端"
 msgid "Server Config"
 msgstr "服務器配置"
 
+msgid "Servers Manager"
+msgstr "服務器管理"
+
 msgid "Users Manager"
 msgstr "用戶管理"
+
+msgid "User Config"
+msgstr "用戶配置"
 
 msgid "Logs"
 msgstr "日誌"
@@ -1908,8 +1917,14 @@ msgstr "使用自定义配置"
 msgid "Custom Config"
 msgstr "自定义配置"
 
+msgid "Must be Base64 text!"
+msgstr "必須是 Base64 内容！"
+
 msgid "Must be JSON text!"
 msgstr "必須是 JSON 文本內容！"
+
+msgid "Must be UUID format!"
+msgstr "必須是 UUID 格式！"
 
 msgid "Geo View"
 msgstr "Geo 查詢"

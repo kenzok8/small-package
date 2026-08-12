@@ -45,8 +45,10 @@ o = s:option(Value, _n("port"), translate("Listen Port"))
 o.datatype = "port"
 o:depends({ [_n("custom")] = false })
 
-o = s:option(Value, _n("password"), translate("Password"))
-o.password = true
+o = s:option(ListValue, _n("user"), translate("User"))
+for i, v in ipairs(user_list) do
+	o:value(v[".name"], v.username)
+end
 o:depends({ [_n("custom")] = false })
 
 o = s:option(ListValue, _n("method"), translate("Encrypt Method"))

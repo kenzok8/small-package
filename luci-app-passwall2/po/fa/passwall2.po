@@ -970,6 +970,9 @@ msgstr "گروه قوانین شنت"
 msgid "Please note attention to the priority, the higher the order, the higher the priority."
 msgstr "لطفاً به اولویت توجه کنید، هرچه ترتیب بالاتر باشد، اولویت بیشتر است."
 
+msgid "This ID already exists."
+msgstr "این شناسه از قبل وجود دارد."
+
 msgid "Update..."
 msgstr "به‌روزرسانی..."
 
@@ -1486,8 +1489,14 @@ msgstr "سمت سرور"
 msgid "Server Config"
 msgstr "پیکربندی سرور"
 
+msgid "Servers Manager"
+msgstr "مدیر سرورها"
+
 msgid "Users Manager"
 msgstr "مدیریت کاربران"
+
+msgid "User Config"
+msgstr "پیکربندی کاربر"
 
 msgid "Logs"
 msgstr "گزارش‌ها (Logs)"
@@ -1916,8 +1925,14 @@ msgstr "استفاده از پیکربندی سفارشی"
 msgid "Custom Config"
 msgstr "پیکربندی سفارشی"
 
+msgid "Must be Base64 text!"
+msgstr "متن باید Base64 باشد!"
+
 msgid "Must be JSON text!"
 msgstr "باید متن JSON باشد!"
+
+msgid "Must be UUID format!"
+msgstr "باید فرمت UUID باشه!"
 
 msgid "Geo View"
 msgstr "نمای Geo"

@@ -13,38 +13,38 @@ t.addremove = false
 e = t:option(Flag, "enable", translate("Enable"))
 e.rmempty = false
 
-local cfgname = "user"
-t = m:section(TypedSection, cfgname, translate("Users Manager"))
-t.anonymous = true
-t.addremove = true
-t.sortable = true
-t.template = "cbi/tblsection"
-t.extedit = api.url("server_user", "%s")
-function t.create(e, t)
+s_server = m:section(TypedSection, "server", translate("Servers Manager"))
+s_server.anonymous = true
+s_server.addremove = true
+s_server.sortable = true
+s_server.template = "cbi/tblsection"
+s_server.extedit = api.url("server_config", "%s")
+function s_server.create(self, section)
 	local uid = api.gen_random_char()
-	TypedSection.create(e, uid)
-	luci.http.redirect(e.extedit:format(uid))
+	TypedSection.create(self, uid)
+	luci.http.redirect(self.extedit:format(uid))
 end
-function t.remove(e, t)
-	e.map.proceed = true
-	e.map:del(t)
-	luci.http.redirect(api.url("server"))
+function s_server.remove(self, section)
+	local o = m:get(section) or {}
+	if o[".type"] == self.sectiontype then
+		m:del(section)
+	end
 end
 
-e = t:option(Flag, "enable", translate("Enable"))
+e = s_server:option(Flag, "enable", translate("Enable"))
 e.width = "5%"
 e.rmempty = false
 
-e = t:option(DummyValue, "status", translate("Status"))
+e = s_server:option(DummyValue, "status", translate("Status"))
 e.rawhtml = true
 e.cfgvalue = function(t, n)
-	return string.format('<font class="_users_status">%s</font>', translate("Collecting data..."))
+	return string.format('<font class="_servers_status">%s</font>', translate("Collecting data..."))
 end
 
-e = t:option(DummyValue, "remarks", translate("Remarks"))
+e = s_server:option(DummyValue, "remarks", translate("Remarks"))
 e.width = "15%"
 
-e = t:option(DummyValue, "type", translate("Type"))
+e = s_server:option(DummyValue, "type", translate("Type"))
 e.width = "20%"
 e.rawhtml = true
 e.cfgvalue = function(t, n)
@@ -82,20 +82,74 @@ e.cfgvalue = function(t, n)
 	return str
 end
 
-e = t:option(DummyValue, "port", translate("Port"))
+e = s_server:option(DummyValue, "port", translate("Port"))
 
-e = t:option(Flag, "log", translate("Log"))
+e = s_server:option(Flag, "log", translate("Log"))
 e.default = "1"
 e.rmempty = false
 
 local sortable = Template(appname .. "/cbi/sortable")
 sortable.api = api
 sortable.appname = m.config
-sortable.target_cfgname = cfgname
+sortable.target_cfgname = s_server.sectiontype
+m:append(sortable)
+
+local server_list_status = Template(appname .. "/server/server_list_status")
+server_list_status.api = api
+server_list_status.appname = m.config
+server_list_status.sectiontype = s_server.sectiontype
+m:append(server_list_status)
+
+s_user = m:section(TypedSection, "user", translate("Users Manager"))
+s_user.anonymous = true
+s_user.addremove = true
+s_user.sortable = true
+s_user.template = "cbi/tblsection"
+s_user.extedit = api.url("server_user_config", "%s")
+s_user.create = function(e, section)
+	local uid = api.gen_random_char()
+	TypedSection.create(e, uid)
+	luci.http.redirect(e.extedit:format(uid))
+end
+s_user.remove = function(self, section)
+	local o = m:get(section) or {}
+	if o[".type"] == self.sectiontype then
+		m.uci:foreach(m.config, "server", function(o)
+			if o.user and section == o.user then
+				m:set(o[".name"], "user", "")
+			end
+			local changed = false
+			local users = o.users or {}
+			for i = #users, 1, -1 do
+				if section == users[i] then
+					table.remove(users, i)
+					changed = true
+				end
+			end
+			if changed then
+				m:set(o[".name"], "users", users)
+			end
+		end)
+		m:del(section)
+		luci.http.redirect(api.url("server"))
+	end
+end
+
+e = s_user:option(DummyValue, "username", translate("Username"))
+e.width = "25%"
+
+e = s_user:option(DummyValue, "password", translate("Password"))
+e.width = "25%"
+
+e = s_user:option(DummyValue, "uuid", "UUID")
+e.width = "25%"
+
+local sortable = Template(appname .. "/cbi/sortable")
+sortable.api = api
+sortable.appname = m.config
+sortable.target_cfgname = s_user.sectiontype
 m:append(sortable)
 
 m:append(Template(appname .. "/server/log"))
-
-m:append(Template(appname .. "/server/users_list_status"))
 
 return api.return_map(m)

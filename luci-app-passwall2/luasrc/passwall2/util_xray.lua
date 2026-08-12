@@ -496,17 +496,46 @@ function gen_config_server(node)
 		{ protocol = "freedom", tag = "direct", settings = { finalRules = {{ action = "allow" }}}}, { protocol = "blackhole", tag = "blocked" }
 	}
 
-	if node.protocol == "vmess" or node.protocol == "vless" then
-		if node.uuid then
-			local users = {}
-			for i = 1, #node.uuid do
-				users[i] = {
-					id = node.uuid[i],
-					flow = (node.protocol == "vless"
-					and (node.tls == "1" or (node.decryption and node.decryption ~= "" and node.decryption ~= "none")) 
-					and node.flow and node.flow ~= "") and node.flow or nil
-				}
+	local users = node.users or {}
+	local users = nil
+	if node.users and #node.users > 0 then
+		users = {}
+		for i, v in ipairs(node.users) do
+			local user = uci:get_all("passwall2_server", v) or {}
+			if user[".type"] == "user" then
+				local u = {}
+				if node.protocol == "socks" or node.protocol == "http" then
+					u.user = user.username
+					u.pass = user.password
+				end
+				if node.protocol == "shadowsocks" or node.protocol == "trojan" then
+					u.email = user.username
+					u.password = user.password
+				end
+				if node.protocol == "vmess" then
+					u.email = user.username
+					u.id = user.uuid
+					u.alterId = 0
+				end
+				if node.protocol == "vless" then
+					u.email = user.username
+					u.id = user.uuid
+					u.flow = node.flow
+				end
+				if node.protocol == "hysteria2" then
+					u.email = user.username
+					u.auth = user.password
+				end
+				users[#users + 1] = u
 			end
+		end
+		if #users == 0 then
+			users = nil
+		end
+	end
+
+	if node.protocol == "vmess" or node.protocol == "vless" then
+		if users then
 			settings = {
 				users = users,
 				decryption = (node.protocol == "vless") and ((node.decryption and node.decryption ~= "") and node.decryption or "none") or nil
@@ -515,40 +544,25 @@ function gen_config_server(node)
 	elseif node.protocol == "socks" then
 		settings = {
 			udp = ("1" == node.udp_forward) and true or false,
-			auth = ("1" == node.auth) and "password" or "noauth",
-			users = ("1" == node.auth) and {
-				{
-					user = node.username,
-					pass = node.password
-				}
-			} or nil
+			auth = users and "password" or "noauth",
+			users = users
 		}
 	elseif node.protocol == "http" then
 		settings = {
 			allowTransparent = false,
-			users = ("1" == node.auth) and {
-				{
-					user = node.username,
-					pass = node.password
-				}
-			} or nil
+			users = users
 		}
 		node.transport = "tcp"
 		node.tcp_guise = "none"
 	elseif node.protocol == "shadowsocks" then
 		settings = {
 			method = node.method,
-			password = node.password,
-			network = node.ss_network or "TCP,UDP"
+			password = node.ss_password,
+			users = users,
+			network = node.ss_network or "tcp,udp"
 		}
 	elseif node.protocol == "trojan" then
-		if node.uuid then
-			local users = {}
-			for i = 1, #node.uuid do
-				users[i] = {
-					password = node.uuid[i],
-				}
-			end
+		if users then
 			settings = {
 				users = users
 			}
@@ -556,9 +570,7 @@ function gen_config_server(node)
 	elseif node.protocol == "hysteria2" then
 		settings = {
 			version = 2,
-			users = node.hysteria2_auth_password and {
-				{ auth = node.hysteria2_auth_password }
-			}
+			users = users
 		}
 	elseif node.protocol == "dokodemo-door" then
 		settings = {

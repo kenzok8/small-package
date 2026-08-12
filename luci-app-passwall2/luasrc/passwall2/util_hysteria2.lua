@@ -4,6 +4,20 @@ local uci = api.uci
 local jsonc = api.jsonc
 
 function gen_config_server(node)
+	local users = node.users or {}
+	local users = nil
+	if node.users and #node.users > 0 then
+		users = {}
+		for i, v in ipairs(node.users) do
+			local user = uci:get_all("passwall2_server", v) or {}
+			if user[".type"] == "user" then
+				users[user.username] = user.password
+			end
+		end
+		if not next(users) then
+			users = nil
+		end
+	end
 	local config = {
 		listen = (function()
 			if node.hysteria2_realms and node.hysteria2_realm_url then
@@ -25,10 +39,10 @@ function gen_config_server(node)
 				password = node.hysteria2_obfs_password
 			}
 		} or nil,
-		auth = {
-			type = "password",
-			password = node.hysteria2_auth_password
-		},
+		auth = users and {
+			type = "userpass",
+			userpass = users
+		} or nil,
 		bandwidth = (node.hysteria2_up_mbps or node.hysteria2_down_mbps) and {
 			up = node.hysteria2_up_mbps and node.hysteria2_up_mbps .. " mbps" or nil,
 			down = node.hysteria2_down_mbps and node.hysteria2_down_mbps .. " mbps" or nil
