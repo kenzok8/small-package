@@ -485,8 +485,8 @@ msgstr "暂无在线设备"
 msgid "No output"
 msgstr "无输出"
 
-msgid "No second-level router, good signal strength: you can reduce the above values<br/>As WiFi sleep at night is unpredictable, please adjust parameters yourself if devices frequently disconnect<br/>..(╰_╯).."
-msgstr "若无二级路由设备，信号强度良好，可以减少以上数值<br/>因夜间 wifi 休眠较为玄学，遇到设备频繁推送断开，烦请自行调整参数<br/>..╮(╰_╯)－.."
+msgid "No second-level router, good signal strength: you can reduce the above values"
+msgstr "若无二级路由设备，信号强度良好，可以减少以上数值"
 
 msgid "Notify only devices in list"
 msgstr "仅通知列表内设备"
@@ -716,6 +716,27 @@ msgstr "测试定时"
 
 msgid "Test Channel"
 msgstr "测试渠道"
+
+msgid "Test Color"
+msgstr "测试色彩"
+
+msgid "Click to check for updates"
+msgstr "点击检查更新"
+
+msgid "Network problem, failed to access the author repository! ☹️"
+msgstr "网络问题，访问作者仓库失败！☹️"
+
+msgid "You already have the first-hand beta version!"
+msgstr "你已经拿到一手内测版本啦！"
+
+msgid "The author repository has a new version!"
+msgstr "作者仓库有更新啦！"
+
+msgid "You are on the latest version!"
+msgstr "当前是最新版本哦！"
+
+msgid "Version check failed"
+msgstr "版本检查失败"
 
 msgid "Send time"
 msgstr "发送时间"

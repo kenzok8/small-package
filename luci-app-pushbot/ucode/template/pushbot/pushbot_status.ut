@@ -85,6 +85,98 @@ XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'get_config') }
 	PB_READY.forEach(function(fn) { try { fn(); } catch(e) { console.warn('PB_onReady:', e); } });
 	PB_READY = [];
 });
+
+/* auto-fill version badge from package database (apk/opkg) */
+XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'version') }}', null, function(x, d) {
+	var b = document.getElementById('pushbot_version_badge');
+	if (b && d && d.version) b.textContent = 'v' + d.version;
+});
+
+/* click version badge → fetch upstream GitHub Makefile from browser (8s timeout), frosted toast */
+(function() {
+	function bindVersionCheck() {
+		var badge = document.getElementById('pushbot_version_badge');
+		if (!badge) { setTimeout(bindVersionCheck, 200); return; }
+		if (badge._pbBound) return;
+		badge._pbBound = true;
+		badge.title = '{{ _('Click to check for updates') }}';
+
+	function cmpVer(a, b) {
+		a = String(a || '').replace(/^v/, '').replace(/-r/, '.');
+		b = String(b || '').replace(/^v/, '').replace(/-r/, '.');
+		var pa = a.split(/[.-]/), pb = b.split(/[.-]/), i, x, y;
+		for (i = 0; i < Math.max(pa.length, pb.length); i++) {
+			x = parseInt(pa[i], 10) || 0;
+			y = parseInt(pb[i], 10) || 0;
+			if (x > y) return 1;
+			if (x < y) return -1;
+		}
+		return 0;
+	}
+
+	function showToast(msg, sub, cls) {
+		var card = document.querySelector('.pushbot-header-card') || document.body;
+		var ov = document.createElement('div');
+		ov.className = 'pushbot-ver-overlay';
+		var toast = document.createElement('div');
+		toast.className = 'pushbot-ver-toast ' + cls;
+		var tm = document.createElement('div');
+		tm.className = 'pushbot-ver-toast-msg'; tm.textContent = msg; toast.appendChild(tm);
+		if (sub) {
+			var ts = document.createElement('div');
+			ts.className = 'pushbot-ver-toast-sub'; ts.textContent = sub; toast.appendChild(ts);
+		}
+		ov.appendChild(toast);
+		card.appendChild(ov);
+		/* 0.5s frosted fade-in */
+		setTimeout(function() { ov.classList.add('show'); }, 20);
+		/* hold 4s, then fade back and remove */
+		setTimeout(function() {
+			ov.classList.remove('show');
+			setTimeout(function() { ov.remove(); }, 550);
+		}, 4000);
+	}
+
+	badge.addEventListener('click', function() {
+		if (badge.classList.contains('is-checking')) return;
+		badge.classList.add('is-checking');
+		var local = (badge.textContent || '').replace(/^v/, '');
+		var ctl = new AbortController();
+		var timer = setTimeout(function() { ctl.abort(); }, 8000);
+		fetch('https://raw.githubusercontent.com/zzsj0928/luci-app-pushbot/master/Makefile', { signal: ctl.signal })
+			.then(function(r) {
+				if (!r.ok) throw new Error('HTTP ' + r.status);
+				return r.text();
+			})
+			.then(function(txt) {
+				clearTimeout(timer);
+				var mv = txt.match(/PKG_VERSION:=([0-9.]+)/);
+				var mr = txt.match(/PKG_RELEASE:=([0-9]+)/);
+				var remote = (mv && mr) ? mv[1] + '-r' + mr[1] : '';
+				if (!remote) throw new Error('parse');
+				var c = cmpVer(local, remote), msg = '', cls = 'is-update';
+				if (c > 0) {
+					msg = '{{ _('You already have the first-hand beta version!') }}';
+					cls = 'is-ahead';
+				} else if (c < 0) {
+					msg = '{{ _('The author repository has a new version!') }}';
+					cls = 'is-update';
+				} else {
+					msg = '{{ _('You are on the latest version!') }}';
+					cls = 'is-latest';
+				}
+				showToast(msg, '📦 v' + local + '　☁️ v' + remote, cls);
+			})
+			.catch(function(e) {
+				clearTimeout(timer);
+				showToast('{{ _('Network problem, failed to access the author repository! ☹️') }}', '📦 v' + local, 'is-err');
+			})
+			.finally(function() { badge.classList.remove('is-checking'); });
+	});
+	}
+	window.addEventListener('load', bindVersionCheck);
+	setTimeout(bindVersionCheck, 200);
+})();
 //]]></script>
 
 <script type="text/javascript">//<![CDATA[
@@ -1825,7 +1917,7 @@ function initMonitorCard() {
 	[['up_timeout', '{{ _('Device online timeout (s)') }}', ADV_UP_TIMEOUT, null],
 	 ['thread_num', '{{ _('Max concurrent processes') }}', ADV_THREAD_NUM, null],
 	 ['down_timeout', '{{ _('Device offline timeout (s)') }}', ADV_DOWN_TIMEOUT, null],
-	 ['timeout_retry_count', '{{ _('Offline detection count') }}', ADV_TIMEOUT_RETRY, '{{ _('No second-level router, good signal strength: you can reduce the above values<br/>As WiFi sleep at night is unpredictable, please adjust parameters yourself if devices frequently disconnect<br/>..(╰_╯)..') }}']].forEach(function(f) {
+	 	 ['timeout_retry_count', '{{ _('Offline detection count') }}', ADV_TIMEOUT_RETRY, '{{ _('No second-level router, good signal strength: you can reduce the above values') }}']].forEach(function(f) {
 		var cc = document.createElement('div'); cc.style.cssText = 'flex:1;min-width:0';
 		cc.appendChild(mkText(f[0], f[1], f[2], f[3]));
 		r1.appendChild(cc);
@@ -2037,7 +2129,34 @@ function initMonitorCard() {
 		}
 
 		row.appendChild(left); row.appendChild(mid); row.appendChild(right);
-		body.appendChild(row); card.appendChild(body);
+		body.appendChild(row);
+
+		/* bottom-left: test color button (same action as Test Schedule) */
+		var foot = document.createElement('div');
+		foot.style.cssText = 'display:flex;justify-content:flex-start;margin-top:14px';
+		var tb = document.createElement('button');
+		tb.type = 'button'; tb.textContent = '{{ _('Test Color') }}';
+		tb.className = 'pushbot-sendtest-btn';
+		tb.addEventListener('click', function(e) {
+			e.preventDefault(); tb.disabled = true; tb.textContent = '{{ _('Sending...') }}';
+			var data = window.__pbCollectData ? __pbCollectData() : {};
+			var x = new XMLHttpRequest();
+			x.open('POST', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'save_config') }}', true);
+			x.setRequestHeader('Content-Type', 'application/json');
+			x.onload = function() {
+				var y = new XMLHttpRequest();
+				y.open('GET', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'send_manual') }}', true);
+				y.onload = function() { tb.disabled = false; tb.textContent = '{{ _('Test Color') }}'; };
+				y.onerror = function() { tb.disabled = false; tb.textContent = '{{ _('Test Color') }}'; };
+				y.send();
+			};
+			x.onerror = function() { tb.disabled = false; tb.textContent = '{{ _('Test Color') }}'; };
+			x.send(JSON.stringify(data));
+		});
+		foot.appendChild(tb);
+		body.appendChild(foot);
+
+		card.appendChild(body);
 		mid.appendChild(im.box); right.appendChild(sch.box);
 		container.appendChild(card);
 		refreshPreviews();
@@ -2841,6 +2960,74 @@ window.addEventListener('DOMContentLoaded', function() {
 	box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
 	white-space: nowrap;
 	user-select: none;
+	cursor: pointer;
+	transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.pushbot-version-badge:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+}
+.pushbot-version-badge.is-checking {
+	opacity: 0.6;
+	animation: pushbot-blink 0.8s ease-in-out infinite;
+}
+
+/* version-check frosted overlay + toast (0.5s in, hold 4s, fade back) */
+.pushbot-ver-overlay {
+	position: absolute;
+	inset: 0;
+	z-index: 9999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(15, 23, 42, 0.35);
+	backdrop-filter: blur(6px) saturate(1.2);
+	-webkit-backdrop-filter: blur(6px) saturate(1.2);
+	opacity: 0;
+	transition: opacity 0.5s ease;
+	border-radius: inherit;
+}
+.pushbot-ver-overlay.show { opacity: 1; }
+.pushbot-ver-toast {
+	min-width: 200px;
+	max-width: 360px;
+	padding: 14px 22px;
+	border-radius: 12px;
+	text-align: center;
+	color: #ffffff;
+	box-shadow: 0 14px 34px rgba(15, 23, 42, 0.35);
+	transform: scale(0.92) translateY(6px);
+	transition: transform 0.5s ease;
+}
+.pushbot-ver-overlay.show .pushbot-ver-toast { transform: scale(1) translateY(0); }
+/* status colors: beta=violet, latest=green, update=orange, error=red */
+.pushbot-ver-toast.is-ahead {
+	background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+	border: 1px solid rgba(167, 139, 250, 0.45);
+}
+.pushbot-ver-toast.is-latest {
+	background: linear-gradient(135deg, #10b981, #059669);
+	border: 1px solid rgba(52, 211, 153, 0.45);
+}
+.pushbot-ver-toast.is-update {
+	background: linear-gradient(135deg, #f59e0b, #ea580c);
+	border: 1px solid rgba(251, 146, 60, 0.5);
+}
+.pushbot-ver-toast.is-err {
+	background: linear-gradient(135deg, #ef4444, #dc2626);
+	border: 1px solid rgba(248, 113, 113, 0.45);
+}
+.pushbot-ver-toast-msg {
+	font-size: 14px;
+	font-weight: 700;
+	line-height: 1.5;
+}
+.pushbot-ver-toast-sub {
+	margin-top: 7px;
+	font-size: 12px;
+	font-weight: 500;
+	opacity: 0.9;
+	font-family: Menlo, Consolas, monospace;
 }
 
 .pushbot-status-dot {
@@ -3676,7 +3863,7 @@ window.addEventListener('load',function(){apply(compute());});
 				</div>
 			</div>
 		</div>
-		<span class="pushbot-version-badge">v5.12-r10</span>
+		<span class="pushbot-version-badge" id="pushbot_version_badge">v5.12-r17</span>
 		<div id="pushbot_status_badge" class="pushbot-status-badge is-stopped" role="status" aria-live="polite">
 			<span class="pushbot-status-dot"></span>
 			<span id="pushbot_status_text">{{ _('NOT RUNNING') }}</span>

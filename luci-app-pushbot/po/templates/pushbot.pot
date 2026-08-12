@@ -484,7 +484,7 @@ msgstr ""
 msgid "No output"
 msgstr ""
 
-msgid "No second-level router, good signal strength: you can reduce the above values<br/>As WiFi sleep at night is unpredictable, please adjust parameters yourself if devices frequently disconnect<br/>..(╰_╯).."
+msgid "No second-level router, good signal strength: you can reduce the above values"
 msgstr ""
 
 msgid "Notify only devices in list"
@@ -714,6 +714,27 @@ msgid "Test Schedule"
 msgstr ""
 
 msgid "Test Channel"
+msgstr ""
+
+msgid "Test Color"
+msgstr ""
+
+msgid "Click to check for updates"
+msgstr ""
+
+msgid "Network problem, failed to access the author repository! ☹️"
+msgstr ""
+
+msgid "You already have the first-hand beta version!"
+msgstr ""
+
+msgid "The author repository has a new version!"
+msgstr ""
+
+msgid "You are on the latest version!"
+msgstr ""
+
+msgid "Version check failed"
 msgstr ""
 
 msgid "Send time"

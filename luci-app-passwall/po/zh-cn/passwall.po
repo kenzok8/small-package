@@ -1100,6 +1100,9 @@ msgstr "分流规则组"
 msgid "Please note attention to the priority, the higher the order, the higher the priority."
 msgstr "请注意优先级问题，排序越上面优先级越高。"
 
+msgid "This ID already exists."
+msgstr "该 ID 已存在。"
+
 msgid "Update..."
 msgstr "更新中"
 

@@ -1169,7 +1169,7 @@ function add_shunt_rule()
 	if add_name then
 		local has = uci:get(appname, uid)
 		if has then
-			http_write_json_error({ message = "This ID already exists." })
+			http_write_json_error({ message = i18n.translate("This ID already exists.") })
 			return
 		end
 	else

@@ -85,6 +85,20 @@ return {
 		http.write_json({ ok: true });
 	},
 
+	act_version: function() {
+		let ver = "";
+		/* apk (OpenWrt 24.10+): /lib/apk/db/installed */
+		let f = popen("awk '/^P:luci-app-pushbot$/{f=1;next} f&&/^V:/{print substr($0,3);exit}' /lib/apk/db/installed 2>/dev/null", "r");
+		if (f) { ver = replace(f.read("all"), /\s+/, ""); f.close(); }
+		/* opkg (legacy): /usr/lib/opkg/status */
+		if (ver == "") {
+			f = popen("awk '/^Package: luci-app-pushbot$/{f=1;next} f&&/^Version:/{print $2;exit}' /usr/lib/opkg/status 2>/dev/null", "r");
+			if (f) { ver = replace(f.read("all"), /\s+/, ""); f.close(); }
+		}
+		http.prepare_content("application/json");
+		http.write_json({ version: ver });
+	},
+
 	act_soc_test: function() {
 		system("/usr/bin/pushbot/pushbot soc");
 		http.redirect(dispatcher.build_url("admin", "services", "pushbot"));

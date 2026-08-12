@@ -24,6 +24,11 @@
 
 # 📝 Changelog
 
+- **2026-08-12** (v5.12-r15):
+  - Added: Gotify push channel (debug)
+  - Added: "Test Color" button on the Color Settings card (saves config & sends a test push immediately)
+  - Added: version badge auto-reads the installed version; click the badge to check GitHub updates from the browser (8s timeout, frosted toast, 0.5s fade-in / 4s hold)
+  - Fixed: MT798x interface dropdown empty (busybox lacks timeout command); OpenWrt 23.05 ipk missing r minor version
 - **2026-08-09** (v5.12): Added Gotify channel support (debug), main version 5.11 → 5.12
 - **2026-08-09** (v5.11): Multiple fixes & enhancements
   - Theme adaptation: auto-follow argon / zargon / liquid / system light/dark mode
