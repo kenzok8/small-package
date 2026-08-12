@@ -1348,7 +1348,7 @@ return view.extend({
 
     o = s.option(form.DynamicList, 'fake_ip_filter',    _("Fake-IP Filter Domains"));
     o.placeholder = '*.lan / geosite:cn / RULE-SET,cn_domain,real-ip';
-    o.description = _("Blocklist/allowlist mode: enter domains or shorthand like <code>geosite:cn</code>. Rule mode: enter items with the same syntax as rules, such as <code>GEOSITE,cn,real-ip</code> / <code>RULE-SET,xxx,real-ip</code>; usually add <code>MATCH,fake-ip</code> at the end as fallback. <code>geosite:cn</code> automatically uses built-in cn.mrs acceleration and avoids loading the 10MB geosite.dat.");
+    o.description = _("Blocklist mode: enter domains or shorthand like <code>geosite:cn</code>. Rule mode: entries are converted to rule syntax automatically, such as <code>GEOSITE,cn,real-ip</code> / <code>RULE-SET,xxx,real-ip</code>; usually add <code>MATCH,fake-ip</code> at the end as fallback. <code>geosite:cn</code> automatically uses built-in cn.mrs acceleration and avoids loading the 10MB geosite.dat. Allowlist mode drops the three shipped defaults (they mean the opposite there), so enter your own domains.");
     o.depends('enhanced_mode', 'fake-ip');
     o.remove = function () {};
     o = s.option(form.DynamicList, 'default_nameserver', 'Bootstrap DNS');

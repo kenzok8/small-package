@@ -1078,6 +1078,130 @@ _uci_fake_ip_filter_extras() {
 	set +f
 }
 
+drop_legacy_cn_ip_injection() {
+	command -v yq >/dev/null 2>&1 || return 0
+	[ -s "$CONFIG_YAML" ] || return 0
+
+	if ! yq -M e -i '
+		. as $doc |
+		(select(
+			(.["rule-providers"].clashoo_cn_ip | length) == 4 and
+			.["rule-providers"].clashoo_cn_ip.type == "file" and
+			.["rule-providers"].clashoo_cn_ip.path == "./ruleset/cn-ip.txt" and
+			.["rule-providers"].clashoo_cn_ip.format == "text" and
+			.["rule-providers"].clashoo_cn_ip.behavior == "ipcidr" and
+			([$doc | .. | select(tag == "!!str" and contains("clashoo_cn_ip")) |
+				select(. != "RULE-SET,clashoo_cn_ip,DIRECT")] | length) == 0
+		)) |= (
+			del(.["rule-providers"].clashoo_cn_ip) |
+			(select(has("rules")) | .rules) |= [.[] | select(. != "RULE-SET,clashoo_cn_ip,DIRECT")]
+		)
+	' "$CONFIG_YAML" 2>/dev/null; then
+		log_msg "Failed to remove legacy CN fallback injection" "清理旧版国内直连注入失败，请检查配置"
+	fi
+}
+
+_effective_fake_ip_filter_mode() {
+	local mode
+	mode="$(uci -q get clashoo.config.fake_ip_filter_mode 2>/dev/null)"
+	if [ -z "$mode" ] && command -v yq >/dev/null 2>&1 && [ -s "$CONFIG_YAML" ]; then
+		mode="$(yq -M e '(.dns."fake-ip-filter-mode" // "") | tostring' "$CONFIG_YAML" 2>/dev/null)"
+		[ "$mode" = "null" ] && mode=""
+	fi
+	[ -n "$mode" ] || mode="blacklist"
+	printf '%s\n' "$mode"
+}
+
+_shipped_fake_ip_filter_defaults() {
+	local f="/usr/share/clashoo/clashoo.default"
+	[ -s "$f" ] || return 0
+	sed -n "s/^[[:space:]]*list[[:space:]]\{1,\}fake_ip_filter[[:space:]]\{1,\}'\{0,1\}\([^']*\)'\{0,1\}[[:space:]]*$/\1/p" "$f"
+}
+
+_fake_ip_filter_as_rule() {
+	local f="$1"
+	case "$f" in
+		*,fake-ip|*,real-ip) printf '%s\n' "$f"; return ;;
+	esac
+	case "$f" in
+		*,*)          printf '%s,real-ip\n' "$f" ;;
+		geosite:*)    printf 'GEOSITE,%s,real-ip\n' "${f#geosite:}" ;;
+		rule-set:*)   printf 'RULE-SET,%s,real-ip\n' "${f#rule-set:}" ;;
+		'+.'*)        printf 'DOMAIN-SUFFIX,%s,real-ip\n' "${f#+.}" ;;
+		*'*'*)        printf 'DOMAIN-WILDCARD,%s,real-ip\n' "$f" ;;
+		*)            printf 'DOMAIN,%s,real-ip\n' "$f" ;;
+	esac
+}
+
+_yq_apply_atomic() {
+	local expr="$1" cand
+	cand="${CONFIG_YAML}.cand.$$"
+	cp "$CONFIG_YAML" "$cand" 2>/dev/null || return 1
+	if ! yq -M e -i "$expr" "$cand" 2>/dev/null; then
+		rm -f "$cand" 2>/dev/null
+		return 1
+	fi
+	if ! yq -M e '.' "$cand" >/dev/null 2>&1; then
+		rm -f "$cand" 2>/dev/null
+		return 1
+	fi
+	mv -f "$cand" "$CONFIG_YAML" 2>/dev/null || { rm -f "$cand" 2>/dev/null; return 1; }
+	return 0
+}
+
+normalize_fake_ip_filter() {
+	command -v yq >/dev/null 2>&1 || return 0
+	[ -s "$CONFIG_YAML" ] || return 0
+
+	local mode dir work out item skip d
+	mode="$(_effective_fake_ip_filter_mode)"
+
+	if [ "$mode" = "blacklist" ] ||
+		[ "$(yq -M e '(.dns // {}) | has("fake-ip-filter")' "$CONFIG_YAML" 2>/dev/null)" != "true" ]; then
+		CLASHOO_FIF_MODE="$mode" _yq_apply_atomic '.dns."fake-ip-filter-mode" = strenv(CLASHOO_FIF_MODE)' ||
+			log_msg "Failed to write fake-ip-filter-mode, subscription value kept" \
+				"写入 fake-ip 过滤模式失败，已保留订阅自带的设置"
+		return 0
+	fi
+
+	dir="$(mktemp -d /tmp/.clashoo_fif.XXXXXX 2>/dev/null)" || return 0
+	work="$dir/in"
+	out="$dir/out"
+	yq -M e '.dns."fake-ip-filter"[]' "$CONFIG_YAML" 2>/dev/null > "$work" || { rm -rf "$dir"; return 0; }
+	[ -s "$work" ] || { rm -rf "$dir"; return 0; }
+
+	while IFS= read -r item; do
+		[ -n "$item" ] || continue
+		if [ "$mode" = "whitelist" ]; then
+			skip=0
+			set -f
+			for d in $(_shipped_fake_ip_filter_defaults); do
+				[ "$item" = "$d" ] && skip=1 && break
+			done
+			set +f
+			[ "$skip" = "1" ] && continue
+			printf '%s\n' "$item" >> "$out"
+		else
+			_fake_ip_filter_as_rule "$item" >> "$out"
+		fi
+	done < "$work"
+
+	if [ -s "$out" ]; then
+		CLASHOO_FIF_MODE="$mode" CLASHOO_FIF="$(cat "$out")" _yq_apply_atomic \
+			'.dns."fake-ip-filter-mode" = strenv(CLASHOO_FIF_MODE) | .dns."fake-ip-filter" = (strenv(CLASHOO_FIF) | split("\n"))' ||
+			log_msg "Failed to normalize fake-ip filter, subscription settings kept" \
+				"规范化 fake-ip 过滤失败，已保留订阅自带的模式与列表"
+	else
+		CLASHOO_FIF_MODE="$mode" _yq_apply_atomic \
+			'.dns."fake-ip-filter-mode" = strenv(CLASHOO_FIF_MODE) | del(.dns."fake-ip-filter")' ||
+			log_msg "Failed to normalize fake-ip filter, subscription settings kept" \
+				"规范化 fake-ip 过滤失败，已保留订阅自带的模式与列表"
+		log_msg "Fake-IP allowlist is empty after dropping shipped defaults, add your own entries" \
+			"白名单模式下过滤列表已空（随包默认项在此模式下语义相反已跳过），请自行填写需要 Fake-IP 的域名"
+	fi
+	rm -rf "$dir" 2>/dev/null
+}
+
 _ensure_cn_domain_rule_provider() {
 	command -v yq >/dev/null 2>&1 || return 0
 	[ -s "$CONFIG_YAML" ] || return 0
@@ -1133,77 +1257,6 @@ _remap_dns_system_nameserver() {
 	command -v yq >/dev/null 2>&1 || return 0
 	[ -s "$CONFIG_YAML" ] || return 0
 	yq -M e -i '(.dns | .. | select(. == "system")) |= "223.5.5.5"' "$CONFIG_YAML" 2>/dev/null || true
-}
-
-_stage_cn_ip_ruleset() {
-	local dst="/etc/clashoo/ruleset/cn-ip.txt"
-	local src4="/usr/share/clashoo/nftables/geoip_cn.nft"
-	local src6="/usr/share/clashoo/nftables/geoip6_cn.nft"
-	local newest src
-
-	[ -s "$src4" ] || return 1
-
-	newest="$src4"
-	[ -s "$src6" ] && [ "$src6" -nt "$newest" ] && newest="$src6"
-	[ -f "$dst" ] && [ ! "$newest" -nt "$dst" ] && return 0
-
-	mkdir -p /etc/clashoo/ruleset 2>/dev/null
-	: > "${dst}.tmp"
-	for src in "$src4" "$src6"; do
-		[ -s "$src" ] || continue
-		awk '
-			/elements[[:space:]]*=/ { inset = 1; next }
-			inset && /^[[:space:]]*}/ { exit }
-			inset {
-				gsub(/[[:space:],]/, "", $0)
-				if ($0 != "")
-					print
-			}
-		' "$src" >> "${dst}.tmp" 2>/dev/null
-	done
-
-	if [ ! -s "${dst}.tmp" ]; then
-		rm -f "${dst}.tmp" 2>/dev/null
-		return 1
-	fi
-	mv -f "${dst}.tmp" "$dst" 2>/dev/null
-}
-
-_config_has_cn_direct_rule() {
-	grep -qiE '^[[:space:]]*-[[:space:]]*["'"'"']?(GEOIP,[[:space:]]*CN,|RULE-SET,[[:space:]]*[A-Za-z0-9_.-]*(cn|china)[A-Za-z0-9_.-]*,)' "$CONFIG_YAML" 2>/dev/null
-}
-
-ensure_cn_ip_fallback_rule() {
-	command -v yq >/dev/null 2>&1 || return 0
-	[ -s "$CONFIG_YAML" ] || return 0
-	grep -qE '^[[:space:]]*-[[:space:]]*["'"'"']?MATCH,' "$CONFIG_YAML" 2>/dev/null || return 0
-	_config_has_cn_direct_rule && return 0
-	_stage_cn_ip_ruleset || return 0
-
-	yq -M e -i '
-		.["rule-providers"].clashoo_cn_ip = {
-			"type": "file",
-			"path": "./ruleset/cn-ip.txt",
-			"format": "text",
-			"behavior": "ipcidr"
-		}
-	' "$CONFIG_YAML" 2>/dev/null || return 0
-
-	awk '
-		!inserted && /^[[:space:]]*-[[:space:]]*["'"'"']?MATCH,/ {
-			match($0, /^[[:space:]]*/)
-			print substr($0, 1, RLENGTH) "- \"RULE-SET,clashoo_cn_ip,DIRECT\""
-			inserted = 1
-		}
-		{ print }
-	' "$CONFIG_YAML" > "${CONFIG_YAML}.cnfb" 2>/dev/null
-
-	if [ -s "${CONFIG_YAML}.cnfb" ]; then
-		mv -f "${CONFIG_YAML}.cnfb" "$CONFIG_YAML" 2>/dev/null
-		log_msg "No China direct rule in config, injected RULE-SET fallback before MATCH" "配置缺少国内直连规则，已在 MATCH 前注入兜底规则"
-	else
-		rm -f "${CONFIG_YAML}.cnfb" 2>/dev/null
-	fi
 }
 
 ip_rules() {
@@ -1815,6 +1868,8 @@ _start_prepare_config() {
 	fi
 	yml_change >/dev/null 2>&1
 	append_luci_fake_ip_filter_extras >/dev/null 2>&1
+	normalize_fake_ip_filter >/dev/null 2>&1
+	drop_legacy_cn_ip_injection >/dev/null 2>&1
 	dns_leak_protect=$(uci -q get clashoo.config.dns_leak_protect 2>/dev/null)
 	if command -v dns_mihomo_apply_leak_protect >/dev/null 2>&1; then
 		case "$(uci -q get clashoo.config.ipv6_proxy 2>/dev/null)" in
@@ -1843,7 +1898,6 @@ _start_prepare_config() {
 	_prepare_geo_bootstrap_mode
 	_remap_dns_system_nameserver >/dev/null 2>&1
 	ensure_dns_cn_policy_fallback >/dev/null 2>&1
-	ensure_cn_ip_fallback_rule >/dev/null 2>&1
 
 
 	if [ ! -f /etc/clashoo/config.yaml ];then

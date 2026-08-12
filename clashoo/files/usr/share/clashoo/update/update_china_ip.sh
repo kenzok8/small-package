@@ -2,10 +2,13 @@
 
 set -eu
 
-LOG_FILE="/tmp/clash_update.txt"
-NFT_DIR="/usr/share/clashoo/nftables"
+LOG_FILE="${LOG_FILE:-/tmp/clash_update.txt}"
+NFT_DIR="${NFT_DIR:-/usr/share/clashoo/nftables}"
 TARGET_V4="${NFT_DIR}/geoip_cn.nft"
 TARGET_V6="${NFT_DIR}/geoip6_cn.nft"
+FW4_SCRIPT="${FW4_SCRIPT:-/usr/share/clashoo/net/fw4.sh}"
+RUNTIME_STATE_FILE="${RUNTIME_STATE_FILE:-/tmp/clashoo/runtime_state}"
+PROC_ROOT="${PROC_ROOT:-/proc}"
 TMP_V4="/tmp/china_ip.txt.$$"
 TMP_V6="/tmp/china_ipv6.txt.$$"
 OUT_V4="/tmp/geoip_cn.nft.$$"
@@ -132,10 +135,49 @@ else
 	log '大陆 IPv6 白名单下载失败，保留原文件'
 fi
 
+instance_pid() {
+	ubus call service list "{\"name\":\"$1\",\"verbose\":true}" 2>/dev/null |
+		jsonfilter -e "@[\"$1\"].instances.*.pid" 2>/dev/null | head -n1
+}
+
+pid_running() {
+	[ -n "$1" ] && [ -d "$PROC_ROOT/$1" ]
+}
+
+clashoo_manages_singbox() {
+	[ -r "$RUNTIME_STATE_FILE" ] || return 1
+	grep -qx 'configured_core=singbox' "$RUNTIME_STATE_FILE" 2>/dev/null || return 1
+	case "$(sed -n 's/^health_detail=//p' "$RUNTIME_STATE_FILE" 2>/dev/null | head -n1)" in
+		service_stopped|service_disabled|boot_disabled|preflight:*|start:*) return 1 ;;
+	esac
+	return 0
+}
+
+selected_core_running() {
+	local name pid
+	if [ "$(uci -q get clashoo.config.core_type 2>/dev/null)" = "singbox" ]; then
+		bool_enabled "$(uci -q get sing-box.main.enabled 2>/dev/null)" || return 1
+		clashoo_manages_singbox || return 1
+		name="sing-box"
+	else
+		name="clashoo"
+	fi
+	pid="$(instance_pid "$name")"
+	pid_running "$pid"
+}
+
+firewall_managed() {
+	bool_enabled "$(uci -q get clashoo.config.enable 2>/dev/null)" || return 1
+	[ "$(uci -q get clashoo.config.core_only 2>/dev/null)" = "1" ] && return 1
+	selected_core_running
+}
+
 if [ "$changed" -eq 0 ]; then
 	log '白名单内容未变，跳过防火墙重载'
+elif ! firewall_managed; then
+	log '未接管防火墙（服务未运行或仅内核模式），仅更新白名单文件'
 elif bool_enabled "$bypass_china" || bool_enabled "$bypass_china_ipv6"; then
-	if /usr/share/clashoo/net/fw4.sh apply >/dev/null 2>&1; then
+	if "$FW4_SCRIPT" apply >/dev/null 2>&1; then
 		log "大陆白名单规则已重载（IPv4=${bypass_china:-0}，IPv6=${bypass_china_ipv6:-0}）"
 	else
 		log '大陆白名单规则重载失败'
