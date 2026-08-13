@@ -1378,24 +1378,6 @@ msgstr "<br />none: پیش‌فرض، بدون استتار، داده‌های 
 msgid "Use it together with the DNS disguised type. You can fill in any domain."
 msgstr "از آن همراه با نوع استتار DNS استفاده کنید. می‌توانید هر دامنه‌ای را وارد کنید."
 
-msgid "Auth"
-msgstr "احراز هویت"
-
-msgid "Socks for authentication"
-msgstr "Socks برای احراز هویت"
-
-msgid "Socks protocol authentication, support anonymous and password."
-msgstr "احراز هویت پروتکل Socks، پشتیبانی از ناشناس و رمز عبور."
-
-msgid "anonymous"
-msgstr "ناشناس"
-
-msgid "User Password"
-msgstr "رمز عبور کاربر"
-
-msgid "Username and Password must be used together!"
-msgstr "نام کاربری و رمز عبور باید با هم استفاده شوند!"
-
 msgid "Prefer firewall tools"
 msgstr "ترجیح ابزارهای فایروال"
 
@@ -1404,18 +1386,6 @@ msgstr "IPv6 TProxy"
 
 msgid "Experimental feature. Make sure that your node supports IPv6."
 msgstr "ویژگی آزمایشی. مطمئن شوید که گره شما از IPv6 پشتیبانی می‌کند."
-
-msgid "Status info"
-msgstr "اطلاعات وضعیت"
-
-msgid "Big icon"
-msgstr "آیکون بزرگ"
-
-msgid "Show node check"
-msgstr "نمایش بررسی گره"
-
-msgid "Show Show IP111"
-msgstr "نمایش نمایش IP111"
 
 msgid "Destination protocol"
 msgstr "پروتکل مقصد"
@@ -2452,3 +2422,6 @@ msgstr "سوئیت‌های رمزدار"
 
 msgid "Configures the list of supported cipher suites."
 msgstr "فهرست مجموعه‌های رمز پشتیبانی‌شده را پیکربندی می‌کند."
+
+msgid "This username already exists."
+msgstr "این نام کاربری از قبل وجود دارد."

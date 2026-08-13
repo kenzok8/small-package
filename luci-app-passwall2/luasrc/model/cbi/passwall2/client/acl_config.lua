@@ -1,18 +1,13 @@
 local api = require "luci.passwall2.api"
-local appname = api.appname
-
 api.set_default_cbi()
 
-m = Map(appname)
-api.set_apply_on_parse(m)
+m = Map()
 
 if not arg[1] or not m:get(arg[1]) then
 	luci.http.redirect(api.url("acl"))
 end
 
-m:append(Template(appname .. "/cbi/nodes_listvalue_com"))
-
-local sys = api.sys
+m:appendTemplate("/cbi/nodes_listvalue_com")
 
 local port_validate = function(self, value, t)
 	return value:gsub("-", ":")
@@ -44,6 +39,7 @@ local doh_validate = function(self, value, t)
 	end
 	return nil, translate("DoH request address") .. " " .. translate("Format must be:") .. " URL,IP"
 end
+
 -- [[ ACLs Settings ]]--
 s = m:section(NamedSection, arg[1], translate("ACLs"), translate("ACLs"))
 s.addremove = false
@@ -73,7 +69,7 @@ o.validate = function(self, value, section)
 end
 
 local mac_t = {}
-sys.net.mac_hints(function(e, t)
+api.sys.net.mac_hints(function(e, t)
 	mac_t[#mac_t + 1] = {
 		ip = t,
 		mac = e
@@ -181,7 +177,7 @@ o:depends("mode", "1")
 o.validate = port_validate
 
 o = s:option(DummyValue, "_hide_node_option", "")
-o.template = "passwall2/cbi/hidevalue"
+o.template = m:template_path("/cbi/hidevalue")
 o.value = "1"
 o:depends("mode", "0")
 o:depends({ tcp_no_redir_ports = "1:65535", udp_no_redir_ports = "1:65535" })
@@ -199,13 +195,13 @@ else
 	o.group = {}
 end
 o:depends({ _hide_node_option = "1",  ['!reverse'] = true })
-o.template = appname .. "/cbi/nodes_listvalue"
+o.template = m:template_path("/cbi/nodes_listvalue")
 
 current_node_id = o:formvalue(arg[1])
 if not current_node_id then
-	current_node_id = m.uci:get(appname, arg[1], "node")
+	current_node_id = m:get(arg[1], "node")
 end
-current_node = current_node_id and m.uci:get_all(appname, current_node_id) or {}
+current_node = current_node_id and m:get(current_node_id) or {}
 
 o = s:option(Flag, "log", translate("Enable Node Log"))
 o:depends({ _hide_node_option = "1",  ['!reverse'] = true })
@@ -259,7 +255,7 @@ end
 o:depends({ _hide_node_option = "1",  ['!reverse'] = true })
 
 o = s:option(DummyValue, "_hide_dns_option", "")
-o.template = "passwall2/cbi/hidevalue"
+o.template = m:template_path("/cbi/hidevalue")
 o.value = "1"
 o:depends({ node = "" })
 if GLOBAL_ENABLED == "1" and NODE then

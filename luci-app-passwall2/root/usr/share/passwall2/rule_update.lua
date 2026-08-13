@@ -2,11 +2,11 @@
 
 local api = require "luci.passwall2.api"
 local name = api.appname
+local c_config = api.c_config
 local fs = api.fs
 local log = api.log
 local sys = api.sys
 local uci = api.uci
-local jsonc = api.jsonc
 
 local arg1 = arg[1]
 local arg2 = arg[2]
@@ -16,9 +16,9 @@ local reboot = 0
 local geoip_update = "0"
 local geosite_update = "0"
 
-local geoip_url = uci:get(name, "@global_rules[0]", "geoip_url") or "https://github.com/Loyalsoldier/geoip/releases/latest/download/geoip.dat"
-local geosite_url = uci:get(name, "@global_rules[0]", "geosite_url") or "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
-local asset_location = uci:get(name, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
+local geoip_url = uci:get(c_config, "@global_rules[0]", "geoip_url") or "https://github.com/Loyalsoldier/geoip/releases/latest/download/geoip.dat"
+local geosite_url = uci:get(c_config, "@global_rules[0]", "geosite_url") or "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
+local asset_location = uci:get(c_config, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
 asset_location = asset_location:match("/$") and asset_location or (asset_location .. "/")
 local backup_path = "/tmp/bak_v2ray/"
 
@@ -134,7 +134,7 @@ local function fetch_geofile(geo_name, geo_type, url)
 				reboot = 1
 				log(1, api.i18n.translatef("%s update success.", geo_type))
 			else
-				log(1, api.i18n.translatef("%s update failed, please try again later.", geo_type))
+				log(1, api.i18n.translatef("%s update failed, please try again later or change URL.", geo_type))
 				return 1
 			end
 		else
@@ -148,7 +148,7 @@ local function fetch_geofile(geo_name, geo_type, url)
 			log(1, api.i18n.translatef("%s update success.", geo_type))
 		end
 	else
-		log(1, api.i18n.translatef("%s update failed, please try again later.", geo_type))
+		log(1, api.i18n.translatef("%s update failed, please try again later or change URL.", geo_type))
 		return 1
 	end
 	return 0
@@ -177,8 +177,8 @@ if arg2 then
 		end
 	end)
 else
-	geoip_update = uci:get(name, "@global_rules[0]", "geoip_update") or "1"
-	geosite_update = uci:get(name, "@global_rules[0]", "geosite_update") or "1"
+	geoip_update = uci:get(c_config, "@global_rules[0]", "geoip_update") or "1"
+	geosite_update = uci:get(c_config, "@global_rules[0]", "geosite_update") or "1"
 end
 if geoip_update == "0" and geosite_update == "0" then
 	os.exit(0)
@@ -233,9 +233,9 @@ if geosite_update == "1" then
 	remove_tmp_geofile("geosite")
 end
 
-uci:set(name, "@global_rules[0]", "geoip_update", geoip_update)
-uci:set(name, "@global_rules[0]", "geosite_update", geosite_update)
-api.uci_save(uci, name, true)
+uci:set(c_config, "@global_rules[0]", "geoip_update", geoip_update)
+uci:set(c_config, "@global_rules[0]", "geosite_update", geosite_update)
+api.uci_save(uci, c_config, true)
 
 if reboot == 1 then
 	if arg3 == "cron" then
@@ -245,8 +245,8 @@ if reboot == 1 then
 	end
 
 	log(1, api.i18n.translate("Restart the service and apply the new rules."))
-	uci:set(name, "@global[0]", "flush_set", "1")
-	api.uci_save(uci, name, true, true)
+	uci:set(c_config, "@global[0]", "flush_set", "1")
+	api.uci_save(uci, c_config, true, true)
 end
 log(0, api.i18n.translate("The rules have been updated..."))
 

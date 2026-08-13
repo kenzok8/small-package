@@ -6,8 +6,9 @@
 require 'luci.util'
 require 'luci.jsonc'
 require 'luci.sys'
-local appname = 'passwall2'
-local api = require ("luci.passwall2.api")
+local api = require "luci.passwall2.api"
+local appname = api.appname
+local c_config = api.c_config
 local datatypes = require "luci.cbi.datatypes"
 
 -- these global functions are accessed all the time by the event handler
@@ -31,9 +32,9 @@ local has_singbox = api.finded_com("sing-box")
 local has_xray = api.finded_com("xray")
 local has_hysteria2 = api.finded_com("hysteria")
 local DEFAULT_ALLOWINSECURE = true
-local DEFAULT_FILTER_KEYWORD_MODE = uci:get(appname, "@global_subscribe[0]", "filter_keyword_mode") or "0"
-local DEFAULT_FILTER_KEYWORD_DISCARD_LIST = uci:get(appname, "@global_subscribe[0]", "filter_discard_list") or {}
-local DEFAULT_FILTER_KEYWORD_KEEP_LIST = uci:get(appname, "@global_subscribe[0]", "filter_keep_list") or {}
+local DEFAULT_FILTER_KEYWORD_MODE = uci:get(c_config, "@global_subscribe[0]", "filter_keyword_mode") or "0"
+local DEFAULT_FILTER_KEYWORD_DISCARD_LIST = uci:get(c_config, "@global_subscribe[0]", "filter_discard_list") or {}
+local DEFAULT_FILTER_KEYWORD_KEEP_LIST = uci:get(c_config, "@global_subscribe[0]", "filter_keep_list") or {}
 -- Nodes should be retrieved using the core type (if not set on the node subscription page, the default type will be used automatically).
 local DEFAULT_SS_TYPE = api.get_core("ss_type", {{has_ss_rust,"shadowsocks-rust"},{has_singbox,"sing-box"},{has_xray,"xray"}})
 local DEFAULT_TROJAN_TYPE = api.get_core("trojan_type", {{has_singbox,"sing-box"},{has_xray,"xray"}})
@@ -130,13 +131,13 @@ do
 		local szType = "@global[0]"
 		local option = "node"
 		
-		local node_id = uci:get(appname, szType, option)
+		local node_id = uci:get(c_config, szType, option)
 		CONFIG[#CONFIG + 1] = {
 			log = true,
 			remarks = i18n.translatef("Node"),
-			currentNode = node_id and uci:get_all(appname, node_id) or nil,
+			currentNode = node_id and uci:get_all(c_config, node_id) or nil,
 			set = function(o, server)
-				uci:set(appname, szType, option, server)
+				uci:set(c_config, szType, option, server)
 				o.newNodeId = server
 			end
 		}
@@ -145,7 +146,7 @@ do
 	if true then
 		local i = 0
 		local option = "node"
-		uci:foreach(appname, "socks", function(t)
+		uci:foreach(c_config, "socks", function(t)
 			i = i + 1
 			local id = t[".name"]
 			local node_id = t[option]
@@ -153,14 +154,14 @@ do
 				log = true,
 				id = id,
 				remarks = i18n.translatef("Socks node list [%s]", i),
-				currentNode = node_id and uci:get_all(appname, node_id) or nil,
+				currentNode = node_id and uci:get_all(c_config, node_id) or nil,
 				set = function(o, server)
 					if not server or server == "" then
 						if #nodes_table > 0 then
 							server = nodes_table[1][".name"]
 						end
 					end
-					uci:set(appname, t[".name"], option, server)
+					uci:set(c_config, t[".name"], option, server)
 					o.newNodeId = server
 				end
 			}
@@ -170,7 +171,7 @@ do
 				local newNodes = {}
 				for k, asb_node_id in ipairs(t.autoswitch_backup_node) do
 					if asb_node_id then
-						local currentNode = uci:get_all(appname, asb_node_id) or {}
+						local currentNode = uci:get_all(c_config, asb_node_id) or {}
 						if currentNode[".type"] == "nodes" then
 							currentNodes[#currentNodes + 1] = {
 								log = true,
@@ -192,7 +193,7 @@ do
 					set = function(o, newNodes)
 						if o then
 							if not newNodes then newNodes = o.newNodes end
-							uci:set_list(appname, id, "autoswitch_backup_node", newNodes or {})
+							uci:set_list(c_config, id, "autoswitch_backup_node", newNodes or {})
 						end
 					end
 				}
@@ -208,25 +209,25 @@ do
 			local ip, port = str:match("^([%d%.]+):(%d+)$")
 			return ip and datatypes.ipaddr(ip) and tonumber(port) and tonumber(port) <= 65535
 		end
-		uci:foreach(appname, "haproxy_config", function(t)
+		uci:foreach(c_config, "haproxy_config", function(t)
 			i = i + 1
 			local node_id = t[option]
 			CONFIG[#CONFIG + 1] = {
 				log = true,
 				id = t[".name"],
 				remarks = i18n.translatef("HAProxy node list [%s]", i),
-				currentNode = node_id and uci:get_all(appname, node_id) or nil,
+				currentNode = node_id and uci:get_all(c_config, node_id) or nil,
 				set = function(o, server)
 					-- Modify the LBS value only if it is not in IP:Port format.
 					if not is_ip_port(t[option]) then
-						uci:set(appname, t[".name"], option, server)
+						uci:set(c_config, t[".name"], option, server)
 						o.newNodeId = server
 					end
 				end,
 				delete = function(o)
 					-- Deletion is only performed if the current LBS value is not in IP:port format.
 					if not is_ip_port(t[option]) then
-						uci:delete(appname, t[".name"])
+						uci:delete(c_config, t[".name"])
 					end
 				end
 			}
@@ -235,7 +236,7 @@ do
 
 	if true then
 		local i = 0
-		uci:foreach(appname, "acl_rule", function(t)
+		uci:foreach(c_config, "acl_rule", function(t)
 			i = i + 1
 			local option = "node"
 			local node_id = t[option]
@@ -243,20 +244,20 @@ do
 				log = true,
 				id = t[".name"],
 				remarks = i18n.translatef("ACL list [%s]", i),
-				currentNode = node_id and uci:get_all(appname, node_id) or nil,
+				currentNode = node_id and uci:get_all(c_config, node_id) or nil,
 				set = function(o, server)
-					uci:set(appname, t[".name"], option, server)
+					uci:set(c_config, t[".name"], option, server)
 					o.newNodeId = server
 				end
 			}
 		end)
 	end
 
-	uci:foreach(appname, "nodes", function(node)
+	uci:foreach(c_config, "nodes", function(node)
 		local node_id = node[".name"]
 		if node.protocol and node.protocol == '_shunt' then
 			local rules = {}
-			uci:foreach(appname, "shunt_rules", function(e)
+			uci:foreach(c_config, "shunt_rules", function(e)
 				if e[".name"] and e.remarks then
 					table.insert(rules, e)
 					table.insert(rules, {
@@ -277,7 +278,7 @@ do
 			for k, e in pairs(rules) do
 				local _node_id = node[e[".name"]] or nil
 				if _node_id then
-					local section = uci:get_all(appname, _node_id) or {}
+					local section = uci:get_all(c_config, _node_id) or {}
 					if section[".type"] == "nodes" then
 						CONFIG[#CONFIG + 1] = {
 							log = false,
@@ -285,7 +286,7 @@ do
 							remarks = i18n.translatef("Shunt [%s] node", e.remarks),
 							set = function(o, server)
 								if not server then server = "" end
-								uci:set(appname, node_id, e[".name"], server)
+								uci:set(c_config, node_id, e[".name"], server)
 								o.newNodeId = server
 							end
 						}
@@ -302,7 +303,7 @@ do
 						log = true,
 						node = b_node_id,
 						currentNode = (function()
-							local section = uci:get_all(appname, b_node_id) or {}
+							local section = uci:get_all(c_config, b_node_id) or {}
 							if section[".type"] == "socks" then
 								return { Socks = b_node_id }
 							end
@@ -324,15 +325,15 @@ do
 				set = function(o, newNodes)
 					if o then
 						if not newNodes then newNodes = o.newNodes end
-						uci:set_list(appname, node_id, "balancing_node", newNodes or {})
+						uci:set_list(c_config, node_id, "balancing_node", newNodes or {})
 					end
 				end
 			}
 
 			-- Backup Node
-			local currentNode = uci:get_all(appname, node_id) or nil
+			local currentNode = uci:get_all(c_config, node_id) or nil
 			if currentNode and currentNode.fallback_node then
-				local section = uci:get_all(appname, currentNode.fallback_node) or {}
+				local section = uci:get_all(c_config, currentNode.fallback_node) or {}
 				if section[".type"] == "nodes" then
 					CONFIG[#CONFIG + 1] = {
 						log = true,
@@ -340,11 +341,11 @@ do
 						remarks = i18n.translatef("Xray Load Balancing node [%s] backup node", node_id),
 						currentNode = section,
 						set = function(o, server)
-							uci:set(appname, node_id, "fallback_node", server)
+							uci:set(c_config, node_id, "fallback_node", server)
 							o.newNodeId = server
 						end,
 						delete = function(o)
-							uci:delete(appname, node_id, "fallback_node")
+							uci:delete(c_config, node_id, "fallback_node")
 						end
 					}
 				end
@@ -359,7 +360,7 @@ do
 						log = true,
 						node = u_node_id,
 						currentNode = (function()
-							local section = uci:get_all(appname, u_node_id) or {}
+							local section = uci:get_all(c_config, u_node_id) or {}
 							if section[".type"] == "socks" then
 								return { Socks = u_node_id }
 							end
@@ -381,47 +382,47 @@ do
 				set = function(o, newNodes)
 					if o then
 						if not newNodes then newNodes = o.newNodes end
-						uci:set_list(appname, node_id, "urltest_node", newNodes or {})
+						uci:set_list(c_config, node_id, "urltest_node", newNodes or {})
 					end
 				end
 			}
 		else
 			-- Preproxy Node
-			local currentNode = uci:get_all(appname, node_id) or nil
+			local currentNode = uci:get_all(c_config, node_id) or nil
 			if currentNode and currentNode.preproxy_node then
-				local section = uci:get_all(appname, currentNode.preproxy_node) or {}
+				local section = uci:get_all(c_config, currentNode.preproxy_node) or {}
 				if section[".type"] == "nodes" then
 					CONFIG[#CONFIG + 1] = {
 						log = true,
 						id = node_id,
 						remarks = i18n.translatef("Node [%s] preproxy node", node_id),
-						currentNode = uci:get_all(appname, currentNode.preproxy_node) or nil,
+						currentNode = uci:get_all(c_config, currentNode.preproxy_node) or nil,
 						set = function(o, server)
-							uci:set(appname, node_id, "preproxy_node", server)
+							uci:set(c_config, node_id, "preproxy_node", server)
 							o.newNodeId = server
 						end,
 						delete = function(o)
-							uci:delete(appname, node_id, "preproxy_node")
+							uci:delete(c_config, node_id, "preproxy_node")
 						end
 					}
 				end
 			end
 			-- Landing node
-			local currentNode = uci:get_all(appname, node_id) or nil
+			local currentNode = uci:get_all(c_config, node_id) or nil
 			if currentNode and currentNode.to_node then
-				local section = uci:get_all(appname, currentNode.to_node) or {}
+				local section = uci:get_all(c_config, currentNode.to_node) or {}
 				if section[".type"] == "nodes" then
 					CONFIG[#CONFIG + 1] = {
 						log = true,
 						id = node_id,
 						remarks = i18n.translatef("Node [%s] landing node", node_id),
-						currentNode = uci:get_all(appname, currentNode.to_node) or nil,
+						currentNode = uci:get_all(c_config, currentNode.to_node) or nil,
 						set = function(o, server)
-							uci:set(appname, node_id, "to_node", server)
+							uci:set(c_config, node_id, "to_node", server)
 							o.newNodeId = server
 						end,
 						delete = function(o)
-							uci:delete(appname, node_id, "to_node")
+							uci:delete(c_config, node_id, "to_node")
 						end
 					}
 				end
@@ -2083,19 +2084,19 @@ local function truncate_nodes(group)
 			end
 		end
 	end
-	uci:foreach(appname, "nodes", function(node)
+	uci:foreach(c_config, "nodes", function(node)
 		if node.add_mode == "2" then
 			if (not group) or (group:lower() == (node.group or ""):lower()) then
-				uci:delete(appname, node['.name'])
+				uci:delete(c_config, node['.name'])
 			end
 		end
 	end)
-	uci:foreach(appname, "subscribe_list", function(o)
+	uci:foreach(c_config, "subscribe_list", function(o)
 		if (not group) or (group:lower() == (o.remark or ""):lower()) then
-			uci:delete(appname, o['.name'], "md5")
+			uci:delete(c_config, o['.name'], "md5")
 		end
 	end)
-	api.uci_save(uci, appname, true)
+	api.uci_save(uci, c_config, true)
 end
 
 local function select_node(nodes, config, parentConfig)
@@ -2238,10 +2239,10 @@ local function update_node(manual)
 	end
 
 	if manual == 0 and next(group) then
-		uci:foreach(appname, "nodes", function(node)
+		uci:foreach(c_config, "nodes", function(node)
 			-- Do not delete nodes if no new nodes are found or nodes were manually imported...
 			if node.add_mode == "2" and (node.group and group[node.group:lower()] == true) then
-				uci:delete(appname, node['.name'])
+				uci:delete(c_config, node['.name'])
 			end
 		end)
 	end
@@ -2254,9 +2255,9 @@ local function update_node(manual)
 		-- Subscription Group Chain Agent
 		local function valid_chain_node(node)
 			if not node then return "" end
-			local cp = uci:get(appname, node, "chain_proxy") or ""
-			local am = uci:get(appname, node, "add_mode") or "0"
-			chain_node_type = (cp == "" and am ~= "2") and (uci:get(appname, node, "type") or "") or ""
+			local cp = uci:get(c_config, node, "chain_proxy") or ""
+			local am = uci:get(c_config, node, "add_mode") or "0"
+			chain_node_type = (cp == "" and am ~= "2") and (uci:get(c_config, node, "type") or "") or ""
 			if chain_node_type ~= "Xray" and chain_node_type ~= "sing-box" then
 				chain_node_type = ""
 				return ""
@@ -2274,42 +2275,42 @@ local function update_node(manual)
 			chain_node_type = (outbound_iface_group ~= "") and "iface" or chain_node_type
 		end
 		for _, vv in ipairs(list) do
-			local cfgid = uci:section(appname, "nodes", api.gen_random_char())
+			local cfgid = uci:section(c_config, "nodes", api.gen_random_char())
 			for kkk, vvv in pairs(vv) do
 				if type(vvv) == "table" and next(vvv) ~= nil then
-					uci:set_list(appname, cfgid, kkk, vvv)
+					uci:set_list(c_config, cfgid, kkk, vvv)
 				else
 					if kkk ~= "group" or vvv ~= "default" then
-						uci:set(appname, cfgid, kkk, vvv)
+						uci:set(c_config, cfgid, kkk, vvv)
 					end
 					-- Sing-Box Node Domain resolver
 					if kkk == "type" and (vvv == "Xray" or vvv == "sing-box") then
 						if domain_resolver then
-							uci:set(appname, cfgid, "domain_resolver", domain_resolver)
+							uci:set(c_config, cfgid, "domain_resolver", domain_resolver)
 							if domain_resolver_dns then
-								uci:set(appname, cfgid, "domain_resolver_dns", domain_resolver_dns)
+								uci:set(c_config, cfgid, "domain_resolver_dns", domain_resolver_dns)
 							elseif domain_resolver_dns_https then
-								uci:set(appname, cfgid, "domain_resolver_dns_https", domain_resolver_dns_https)
+								uci:set(c_config, cfgid, "domain_resolver_dns_https", domain_resolver_dns_https)
 							end
 						end
 						if domain_strategy then
 							if vvv == "sing-box" then
 								domain_strategy = (domain_strategy == "UseIPv4" and "ipv4_only") or (domain_strategy == "UseIPv6" and "ipv6_only") or domain_strategy
 							end
-							uci:set(appname, cfgid, "domain_strategy", domain_strategy)
+							uci:set(c_config, cfgid, "domain_strategy", domain_strategy)
 						end
 					end
 					-- Subscription Group Chain Agent
 					if chain_node_type ~= "" and kkk == "type" and (vvv == "Xray" or vvv == "sing-box") then
 						if preproxy_node_group ~="" then
-							uci:set(appname, cfgid, "chain_proxy", "1")
-							uci:set(appname, cfgid, "preproxy_node", preproxy_node_group)
+							uci:set(c_config, cfgid, "chain_proxy", "1")
+							uci:set(c_config, cfgid, "preproxy_node", preproxy_node_group)
 						elseif to_node_group ~= "" then
-							uci:set(appname, cfgid, "chain_proxy", "2")
-							uci:set(appname, cfgid, "to_node", to_node_group)
+							uci:set(c_config, cfgid, "chain_proxy", "2")
+							uci:set(c_config, cfgid, "to_node", to_node_group)
 						elseif outbound_iface_group ~= "" then
-							uci:set(appname, cfgid, "chain_proxy", "3")
-							uci:set(appname, cfgid, "outbound_iface", outbound_iface_group)
+							uci:set(c_config, cfgid, "chain_proxy", "3")
+							uci:set(c_config, cfgid, "outbound_iface", outbound_iface_group)
 						end
 					end		
 				end
@@ -2320,16 +2321,16 @@ local function update_node(manual)
 	for cfgid, info in pairs(subscribe_info) do
 		for key, value in pairs(info) do
 			if value ~= "" then
-				uci:set(appname, cfgid, key, value)
+				uci:set(c_config, cfgid, key, value)
 			else
-				uci:delete(appname, cfgid, key)
+				uci:delete(c_config, cfgid, key)
 			end
 		end
 	end
 
 	if next(CONFIG) then
 		local nodes = {}
-		uci:foreach(appname, "nodes", function(node)
+		uci:foreach(c_config, "nodes", function(node)
 			nodes[#nodes + 1] = node
 		end)
 
@@ -2351,7 +2352,7 @@ local function update_node(manual)
 		end
 	end
 
-	api.uci_save(uci, appname, true)
+	api.uci_save(uci, c_config, true)
 
 	if arg[3] == "cron" then
 		if not fs.access("/var/lock/" .. appname .. ".lock") then
@@ -2484,10 +2485,10 @@ local execute = function()
 		local fail_list = {}
 		if arg[2] ~= "all" then
 			string.gsub(arg[2], '[^' .. "," .. ']+', function(w)
-				subscribe_list[#subscribe_list + 1] = uci:get_all(appname, w) or {}
+				subscribe_list[#subscribe_list + 1] = uci:get_all(c_config, w) or {}
 			end)
 		else
-			uci:foreach(appname, "subscribe_list", function(o)
+			uci:foreach(c_config, "subscribe_list", function(o)
 				subscribe_list[#subscribe_list + 1] = o
 			end)
 		end
@@ -2530,7 +2531,7 @@ local execute = function()
 						log(1, i18n.translatef("Subscription: [%s] No changes, no update required.", remark))
 					else
 						parse_link(raw_data, "2", remark, value)
-						uci:set(appname, cfgid, "md5", new_md5)
+						uci:set(c_config, cfgid, "md5", new_md5)
 					end
 				else
 					fail_list[#fail_list + 1] = value
@@ -2564,7 +2565,7 @@ local function check_instance(action)
 			os.exit(0)
 		else
 			luci.sys.call("touch " .. sub_lock)
-			uci:revert(appname)
+			uci:revert(c_config)
 		end
 	elseif action == "end" then
 		luci.sys.call("rm -f " .. sub_lock)

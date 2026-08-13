@@ -501,7 +501,7 @@ function gen_config_server(node)
 	if node.users and #node.users > 0 then
 		users = {}
 		for i, v in ipairs(node.users) do
-			local user = uci:get_all("passwall2_server", v) or {}
+			local user = uci:get_all(api.s_config, v) or {}
 			if user[".type"] == "user" then
 				local u = {}
 				if node.protocol == "socks" or node.protocol == "http" then
@@ -633,7 +633,7 @@ function gen_config_server(node)
 			}
 			sys.call(string.format("mkdir -p %s && touch %s/%s", api.TMP_IFACE_PATH, api.TMP_IFACE_PATH, node.outbound_node_iface))
 		else
-			local outbound_node_t = uci:get_all("passwall2", node.outbound_node)
+			local outbound_node_t = uci:get_all(api.c_config, node.outbound_node)
 			if node.outbound_node == "_socks" or node.outbound_node == "_http" then
 				outbound_node_t = {
 					type = node.type,
@@ -906,7 +906,7 @@ function gen_config(var)
 
 	local CACHE_TEXT_FILE = CACHE_PATH .. "/cache_" .. flag .. ".txt"
 
-	local xray_settings = uci:get_all(appname, "@global_xray[0]") or {}
+	local xray_settings = uci:get_all(api.c_config, "@global_xray[0]") or {}
 
 	if xray_settings.fragment == "1" then
 		local lengths, delays = {}, {}
@@ -931,7 +931,7 @@ function gen_config(var)
 
 	if xray_settings.noise == "1" then
 		local noises = {}
-		uci:foreach(appname, "xray_noise_packets", function(n)
+		uci:foreach(api.c_config, "xray_noise_packets", function(n)
 			if n.enabled == "1" then
 				local noise = {
 					rand = (n.type == "rand" and n.packet) and (n.packet:find("-", 1, true) and n.packet or tonumber(n.packet)) or nil,
@@ -948,7 +948,7 @@ function gen_config(var)
 		} or nil
 	end
 
-	local node = node_id and uci:get_all(appname, node_id) or nil
+	local node = node_id and uci:get_all(api.c_config, node_id) or nil
 	local balancers = {}
 	local rules = {}
 
@@ -1000,7 +1000,7 @@ function gen_config(var)
 
 	function get_node_by_id(node_id)
 		if not node_id or node_id == "" or node_id == "nil" then return nil end
-		local section = uci:get_all(appname, node_id) or {}
+		local section = uci:get_all(api.c_config, node_id) or {}
 		if section[".type"] == "socks" then
 			local result = {
 				[".name"] = node_id,
@@ -1394,7 +1394,7 @@ function gen_config(var)
 			end
 
 			--shunt rule
-			uci:foreach(appname, "shunt_rules", function(e)
+			uci:foreach(api.c_config, "shunt_rules", function(e)
 				if node["shunt_group"] ~= e.group then
 					return
 				end
@@ -1590,16 +1590,16 @@ function gen_config(var)
 	
 		local dns_host = ""
 		if flag == "global" then
-			dns_host = uci:get(appname, "@global[0]", "dns_hosts") or ""
+			dns_host = uci:get(api.c_config, "@global[0]", "dns_hosts") or ""
 		else
 			flag = flag:gsub("acl_", "")
-			local dns_hosts_mode = uci:get(appname, flag, "dns_hosts_mode") or "default"
+			local dns_hosts_mode = uci:get(api.c_config, flag, "dns_hosts_mode") or "default"
 			if dns_hosts_mode == "default" then
-				dns_host = uci:get(appname, "@global[0]", "dns_hosts") or ""
+				dns_host = uci:get(api.c_config, "@global[0]", "dns_hosts") or ""
 			elseif dns_hosts_mode == "disable" then
 				dns_host = ""
 			elseif dns_hosts_mode == "custom" then
-				dns_host = uci:get(appname, flag, "dns_hosts") or ""
+				dns_host = uci:get(api.c_config, flag, "dns_hosts") or ""
 			end
 		end
 		if #dns_host > 0 then
@@ -1977,7 +1977,7 @@ function gen_config(var)
 	if inbounds or outbounds then
 		local config = {
 			env = (function()
-				local asset_location = uci:get(appname, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
+				local asset_location = uci:get(api.c_config, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
 				return { XRAY_LOCATION_ASSET = asset_location }
 			end)(),
 			log = {

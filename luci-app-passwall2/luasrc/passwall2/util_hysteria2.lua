@@ -9,7 +9,7 @@ function gen_config_server(node)
 	if node.users and #node.users > 0 then
 		users = {}
 		for i, v in ipairs(node.users) do
-			local user = uci:get_all("passwall2_server", v) or {}
+			local user = uci:get_all(api.s_config, v) or {}
 			if user[".type"] == "user" then
 				users[user.username] = user.password
 			end
@@ -74,7 +74,7 @@ function gen_config(var)
 		print("node Cannot be empty!")
 		return
 	end
-	local node = uci:get_all("passwall2", node_id)
+	local node = uci:get_all(api.c_config, node_id)
 	local local_socks_address = var["local_socks_address"] or "0.0.0.0"
 	local local_socks_port = var["local_socks_port"]
 	local local_socks_username = var["local_socks_username"]

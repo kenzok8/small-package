@@ -1,15 +1,12 @@
 api = require "luci.passwall2.api"
-appname = api.appname
 datatypes = api.datatypes
 has_singbox = api.finded_com("sing-box")
 has_xray = api.finded_com("xray")
-
 api.set_default_cbi()
 
-m = Map(appname)
-api.set_apply_on_parse(m)
+m = Map()
 
-m:append(Template(appname .. "/cbi/nodes_listvalue_com"))
+m:appendTemplate("/cbi/nodes_listvalue_com")
 
 nodes_table = {}
 for k, e in ipairs(api.get_valid_nodes()) do
@@ -40,7 +37,7 @@ for k, v in pairs(nodes_table) do
 end
 
 local socks_list = {}
-m.uci:foreach(appname, "socks", function(s)
+m:foreach("socks", function(s)
 	if s.enabled == "1" and s.node then
 		socks_list[#socks_list + 1] = {
 			id = s[".name"],
@@ -72,13 +69,9 @@ local doh_validate = function(self, value, t)
 	return nil, translate("DoH request address") .. " " .. translate("Format must be:") .. " URL,IP"
 end
 
-m:append(Template(appname .. "/global/status"))
+m:appendTemplate("/global/status")
 
-global_cfgid = (m:get("@global[0]") or {})[".name"] or ""
-
-s = m:section(TypedSection, "global")
-s.anonymous = true
-s.addremove = false
+s = m:section(NamedSection, "@global[0]", "global")
 
 s:tab("Main", translate("Main"))
 
@@ -88,12 +81,12 @@ o.rmempty = false
 
 ---- Node
 o = s:taboption("Main", ListValue, "node", "<a style='color: red'>" .. translate("Node") .. "</a>")
-o.template = appname .. "/cbi/nodes_listvalue"
+o.template = m:template_path("/cbi/nodes_listvalue")
 o:value("", translate("Close"))
 o.group = {""}
 
-current_node_id = m.uci:get(appname, global_cfgid, "node")
-current_node = current_node_id and m.uci:get_all(appname, current_node_id) or {}
+current_node_id = m:get(s.section, "node")
+current_node = current_node_id and m:get(current_node_id) or {}
 
 -- Shunt Start
 if (has_singbox or has_xray) and #nodes_table > 0 then
@@ -101,7 +94,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 		if current_node.protocol == "_shunt" then
 			local shunt_lua = loadfile("/usr/lib/lua/luci/model/cbi/passwall2/client/include/shunt_options.lua")
 			setfenv(shunt_lua, getfenv(1))(m, s, {
-				s_cfgid = s:cfgsections()[1],
+				s_cfgid = s.section,
 				node_id = current_node_id,
 				node = current_node,
 				socks_list = socks_list,
@@ -245,7 +238,7 @@ o = s:taboption("DNS", TextValue, "dns_hosts", translate("Domain Override"))
 o.rows = 5
 o.wrap = "off"
 o.remove = function(self, section)
-	local node_value = s.fields["node"]:formvalue(global_cfgid)
+	local node_value = s.fields["node"]:formvalue(section)
 	if node_value then
 		local node_t = m:get(node_value) or {}
 		if node_t.type == "Xray" or node_t.type == "sing-box" then
@@ -297,11 +290,11 @@ o:depends("log_node", "1")
 s:tab("faq", "FAQ")
 
 o = s:taboption("faq", DummyValue, "")
-o.template = appname .. "/global/faq"
+o.template = m:template_path("/global/faq")
 
 s:tab("maintain", translate("Maintain"))
 o = s:taboption("maintain", DummyValue, "")
-o.template = appname .. "/global/backup"
+o.template = m:template_path("/global/backup")
 
 -- [[ Socks Server ]]--
 o = s:taboption("Main", Flag, "socks_enabled", "Socks " .. translate("Main switch"))
@@ -330,7 +323,7 @@ o.default = 1
 o.rmempty = false
 
 o = s2:option(ListValue, "node", translate("Socks Node"))
-o.template = appname .. "/cbi/nodes_listvalue"
+o.template = m:template_path("/cbi/nodes_listvalue")
 o.group = {}
 
 o = s2:option(DummyValue, "now_node", translate("Current Node"))
@@ -346,7 +339,7 @@ o.cfgvalue = function(_, n)
 end
 
 local n = 1
-m.uci:foreach(appname, "socks", function(s)
+m:foreach("socks", function(s)
 	if s[".name"] == section then
 		return false
 	end
@@ -382,11 +375,6 @@ for k, v in pairs(nodes_table) do
 	end
 end
 
-local footer = Template(appname .. "/global/footer")
-footer.api = api
-footer.global_cfgid = global_cfgid
-footer.shunt_list = api.jsonc.stringify(shunt_list)
-
-m:append(footer)
+m:appendTemplate("/global/footer", {shunt_list = api.jsonc.stringify(shunt_list)})
 
 return api.return_map(m)

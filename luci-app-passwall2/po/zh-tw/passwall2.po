@@ -1370,24 +1370,6 @@ msgstr "<br />none：默認值，不进行伪装，發送的數据是沒有特�
 msgid "Use it together with the DNS disguised type. You can fill in any domain."
 msgstr "配合伪装類型 DNS 使用，可随便填一個域名。"
 
-msgid "Auth"
-msgstr "身份認證"
-
-msgid "Socks for authentication"
-msgstr "Socks認證方式"
-
-msgid "Socks protocol authentication, support anonymous and password."
-msgstr "Socks 協議的認證方式，支持匿名方式和账号密碼方式。"
-
-msgid "anonymous"
-msgstr "匿名"
-
-msgid "User Password"
-msgstr "账号密碼"
-
-msgid "Username and Password must be used together!"
-msgstr "账号和密碼必須同時使用！"
-
 msgid "Prefer firewall tools"
 msgstr "首選防火牆工具"
 
@@ -1396,18 +1378,6 @@ msgstr "IPv6透明代理(TProxy)"
 
 msgid "Experimental feature. Make sure that your node supports IPv6."
 msgstr "實驗特性，請確保你的節點支持IPv6"
-
-msgid "Status info"
-msgstr "状態信息"
-
-msgid "Big icon"
-msgstr "大图標"
-
-msgid "Show node check"
-msgstr "顯示節點檢測"
-
-msgid "Show Show IP111"
-msgstr "顯示IP111"
 
 msgid "Destination protocol"
 msgstr "目標協議"
@@ -2444,3 +2414,6 @@ msgstr "密碼套件"
 
 msgid "Configures the list of supported cipher suites."
 msgstr "配置支援的密碼套件列表。"
+
+msgid "This username already exists."
+msgstr "該用戶名已存在。"

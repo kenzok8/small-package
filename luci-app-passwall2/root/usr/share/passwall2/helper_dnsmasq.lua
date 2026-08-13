@@ -25,7 +25,7 @@ end
 local function backup_servers()
 	local DNSMASQ_DNS = uci:get("dhcp", "@dnsmasq[0]", "server")
 	if DNSMASQ_DNS and #DNSMASQ_DNS > 0 then
-		uci:set(appname, "@global[0]", "dnsmasq_servers", DNSMASQ_DNS)
+		uci:set(api.c_config, "@global[0]", "dnsmasq_servers", DNSMASQ_DNS)
 		api.uci_save(uci, appname, true)
 	end
 end
@@ -38,12 +38,12 @@ local function restore_servers()
 			tinsert(dns_table, v)
 		end
 	end
-	local OLD_SERVER = uci:get(appname, "@global[0]", "dnsmasq_servers")
+	local OLD_SERVER = uci:get(api.c_config, "@global[0]", "dnsmasq_servers")
 	if OLD_SERVER and #OLD_SERVER > 0 then
 		for k, v in ipairs(OLD_SERVER) do
 			tinsert(dns_table, v)
 		end
-		uci:delete(appname, "@global[0]", "dnsmasq_servers")
+		uci:delete(api.c_config, "@global[0]", "dnsmasq_servers")
 		api.uci_save(uci, appname, true)
 	end
 	if dns_table and #dns_table > 0 then
@@ -268,7 +268,7 @@ function add_rule(var)
 		-- Always use domestic DNS to resolve node domain names
 		if true then
 			fwd_dns = LOCAL_DNS
-			uci:foreach(appname, "nodes", function(t)
+			uci:foreach(api.c_config, "nodes", function(t)
 				local function process_address(address)
 					address = (address or ""):lower()
 					if address == "engage.cloudflareclient.com" then return end

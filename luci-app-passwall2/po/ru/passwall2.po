@@ -1379,24 +1379,6 @@ msgstr "<br />none: по умолчанию, без маскировки, дан
 msgid "Use it together with the DNS disguised type. You can fill in any domain."
 msgstr "Используется вместе с типом маскировки DNS. Можно указать любой домен."
 
-msgid "Auth"
-msgstr "Аутентификация"
-
-msgid "Socks for authentication"
-msgstr "Аутентификация SOCKS"
-
-msgid "Socks protocol authentication, support anonymous and password."
-msgstr "Метод аутентификации SOCKS: анонимный или по логину/паролю."
-
-msgid "anonymous"
-msgstr "анонимно"
-
-msgid "User Password"
-msgstr "Логин и пароль"
-
-msgid "Username and Password must be used together!"
-msgstr "Логин и пароль должны быть указаны вместе!"
-
 msgid "Prefer firewall tools"
 msgstr "Предпочтительный инструмент фаервола"
 
@@ -1405,18 +1387,6 @@ msgstr "IPv6 TProxy"
 
 msgid "Experimental feature. Make sure that your node supports IPv6."
 msgstr "Экспериментальная функция. Убедитесь, что ваш сервер поддерживает IPv6."
-
-msgid "Status info"
-msgstr "Информация о статусе"
-
-msgid "Big icon"
-msgstr "Крупный значок"
-
-msgid "Show node check"
-msgstr "Показывать проверку серверов"
-
-msgid "Show Show IP111"
-msgstr "Показывать IP111"
 
 msgid "Destination protocol"
 msgstr "Целевой протокол"
@@ -2450,3 +2420,6 @@ msgstr "Наборы шифров"
 
 msgid "Configures the list of supported cipher suites."
 msgstr "Задает список поддерживаемых наборов шифров."
+
+msgid "This username already exists."
+msgstr "Это имя пользователя уже существует."
