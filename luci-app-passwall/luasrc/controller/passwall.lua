@@ -87,7 +87,6 @@ function index()
 	entry({"admin", "services", appname, "delete_select_nodes"}, call("delete_select_nodes")).leaf = true
 	entry({"admin", "services", appname, "reassign_group"}, call("reassign_group")).leaf = true
 	entry({"admin", "services", appname, "get_node"}, call("get_node")).leaf = true
-	entry({"admin", "services", appname, "save_node_order"}, call("save_node_order")).leaf = true
 	entry({"admin", "services", appname, "save_node_list_opt"}, call("save_node_list_opt")).leaf = true
 	entry({"admin", "services", appname, "update_rules"}, call("update_rules")).leaf = true
 	entry({"admin", "services", appname, "rollback_rules"}, call("rollback_rules")).leaf = true
@@ -99,7 +98,6 @@ function index()
 	entry({"admin", "services", appname, "get_shunt_rules"}, call("get_shunt_rules")).leaf = true
 	entry({"admin", "services", appname, "add_shunt_rule"}, call("add_shunt_rule")).leaf = true
 	entry({"admin", "services", appname, "delete_select_shunt_rules"}, call("delete_select_shunt_rules")).leaf = true
-	entry({"admin", "services", appname, "save_shunt_rule_order"}, call("save_shunt_rule_order")).leaf = true
 
 	--[[rule_list]]
 	entry({"admin", "services", appname, "read_rulelist"}, call("read_rulelist")).leaf = true
@@ -720,19 +718,6 @@ function get_node()
 	http_write_json(result)
 end
 
-function save_node_order()
-	local ids = http.formvalue("ids") or ""
-	local new_order = {}
-	for id in ids:gmatch("([^,]+)") do
-		new_order[#new_order + 1] = id
-	end
-	for idx, name in ipairs(new_order) do
-		luci.sys.call(string.format("uci -q reorder %s.%s=%d", appname, name, idx - 1))
-	end
-	api.sh_uci_commit(appname)
-	http_write_json({ status = "ok" })
-end
-
 function reassign_group()
 	local ids = http.formvalue("ids") or ""
 	local group = http.formvalue("group") or "default"
@@ -1208,17 +1193,4 @@ function delete_select_shunt_rules()
 	else
 		api.uci_save(uci, appname, true, true)
 	end
-end
-
-function save_shunt_rule_order()
-	local ids = http.formvalue("ids") or ""
-	local new_order = {}
-	for id in ids:gmatch("([^,]+)") do
-		new_order[#new_order + 1] = id
-	end
-	for idx, name in ipairs(new_order) do
-		luci.sys.call(string.format("uci -q reorder %s.%s=%d", appname, name, idx - 1))
-	end
-	api.sh_uci_commit(appname)
-	http_write_json({ status = "ok" })
 end

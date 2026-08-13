@@ -1,6 +1,7 @@
 <%
-local api = require "luci.passwall.api"
+local api = self.api
 local appname = api.appname
+local map = self.map
 local is_js_luci = api.is_js_luci()
 local section_tag = is_js_luci and "div" or "fieldset"
 -%>
@@ -500,15 +501,7 @@ table td, .table .td {
 				let firstDataRow = parent.querySelector("tr:not(.cbi-section-table-titles)");
 				if (firstDataRow && firstDataRow !== row) {
 					parent.insertBefore(row, firstDataRow);
-					let save_order_btn = document.getElementById("save_order_btn_" + group);
-					if (save_order_btn) {
-						const new_order = get_node_order(group);
-						if (!arraysEqual(new_order, origin_group_node_order[group])) {
-							save_order_btn.style.display = null;
-						} else {
-							save_order_btn.style.display = "none";
-						}
-					}
+					set_order(group);
 				}
 				break;
 			case "del_all":
@@ -652,48 +645,24 @@ table td, .table .td {
 		return ids;
 	}
 
-	function save_current_page_order(group) {
-		var table = document.getElementById("cbi-<%=appname%>-nodes-" + group + "-table");
+	function set_order(group) {
+		let table = document.getElementById("cbi-<%=appname%>-nodes-" + group + "-table");
 		if (!table) {
 			alert("<%:No table!%>");
 			return;
 		}
-		var rows = table.querySelectorAll("tr.cbi-section-table-row");
+		let rows = table.querySelectorAll("tr.cbi-section-table-row");
 		if (!rows || rows.length === 0) {
 			alert("<%:No nodes!%>");
 			return;
 		}
-		var btn = document.getElementById("save_order_btn_" + group);
-		if (btn) {
-			btn.style.display = "none";
-			btn.disabled = true;
-		}
-		var ids = [];
+		let ids = [];
 		rows.forEach(function(row) {
-			var id = row.id.replace("cbi-<%=appname%>-", "");
+			let id = row.id.replace("cbi-<%=appname%>-", "");
 			ids.push(id);
 		});
-		ajax.abortAll();
-		XHR.get('<%=api.url("save_node_order")%>', {
-				group: group,
-				ids: ids.join(",")
-			},
-			function(x, result) {
-				if (btn) {
-					btn.style.display = null;
-					btn.disabled = false;
-				}
-				if (x && x.status === 200) {
-					origin_group_node_order[group] = get_node_order(group);
-					alert("<%:Saved current page order successfully.%>");
-					if (btn) {
-						btn.style.display = "none";
-					}
-				} else {
-					alert("<%:Save failed!%>");
-				}
-			}
-		);
+		const input_order = document.getElementsByName(`group.order.${group}`)[0];
+		input_order.value = ids.join(" ");
 	}
 
 	//获取当前使用的节点
@@ -947,16 +916,7 @@ table td, .table .td {
 			forceFallback: false,
 			swapThreshold: 0.65,
 			onEnd: function (evt) {
-				//save_current_page_order(group); // 自动提交保存
-				let save_order_btn = document.getElementById("save_order_btn_" + group);
-				if (save_order_btn) {
-					const new_order = get_node_order(group);
-					if (!arraysEqual(new_order, origin_group_node_order[group])) {
-						save_order_btn.style.display = null;
-					} else {
-						save_order_btn.style.display = "none";
-					}
-				}
+				set_order(group);
 			}
 		};
 		try {
@@ -1302,9 +1262,9 @@ table td, .table .td {
 			</tr>
 			{{node-tr}}
 		</table>
+		<input type="hidden" name="group.order.{{group}}">
 		<div class="cbi-section-create cbi-tblsection-create">
 			<input class="cbi-button cbi-button-add" type="button" value="<%:Add%>" onclick="node_action('add')">
-			<input class="cbi-button cbi-button-apply" style="display: none" type="button" id="save_order_btn_{{group}}" value="<%:Save Order%>" onclick="save_current_page_order('{{group}}')">
 		</div>
 	</<%=section_tag%>>
 </script>

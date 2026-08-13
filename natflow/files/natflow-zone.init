@@ -92,6 +92,7 @@ natflow_bridge_zone_auto_setup()
 
 		if [ -n "$wan_port" ]; then
 			if [ "$cleaned" -eq 0 ]; then
+				# Note: Clearing DEVCTL here is intentional so bridge WAN auto-detection takes precedence
 				echo clean >"$DEVCTL"
 				cleaned=1
 			fi

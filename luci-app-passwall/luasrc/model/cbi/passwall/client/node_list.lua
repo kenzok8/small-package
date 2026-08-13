@@ -1,7 +1,5 @@
 local api = require "luci.passwall.api"
 local appname = "passwall"
-local sys = api.sys
-local datatypes = api.datatypes
 
 api.set_default_cbi()
 
@@ -30,6 +28,29 @@ o:value("https://connectivitycheck.platform.hicloud.com/generate_204", "HiCloud 
 o:value("https://wifi.vivo.com.cn/generate_204", "VIVO (CN)")
 o.default = o.keylist[3]
 
-m:append(Template(appname .. "/node_list/node_list"))
+if true then
+    local o = Template(appname .. "/node_list/node_list")
+    o.map = m
+    o.api = api
+    m:append(o)
+
+    if luci.http.formvalue("cbi.submit") == "1" then
+        local group_order = {}
+        group_order = luci.http.formvaluetable("group.order")
+        if group_order then
+            for k, v in pairs(group_order) do
+                if v and v~= "" then
+                    local new_order = {}
+                    string.gsub(v, "[^" .. " " .. "]+", function(w)
+                        new_order[#new_order + 1] = w
+                    end)
+                    for idx, name in ipairs(new_order) do
+                        m.uci:reorder(appname, name, idx - 1)
+                    end
+                end
+            end
+        end
+    end
+end
 
 return api.return_map(m)

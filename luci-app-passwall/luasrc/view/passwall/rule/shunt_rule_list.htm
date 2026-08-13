@@ -1,7 +1,6 @@
 <%
-local api = require "luci.passwall.api"
+local api = self.api
 local appname = api.appname
-local uci = api.uci
 local is_js_luci = api.is_js_luci()
 local section_tag = is_js_luci and "div" or "fieldset"
 local title_tag = is_js_luci and "h3" or "legend"
@@ -185,15 +184,7 @@ table td, .table .td {
 		let firstDataRow = parent.querySelector("tr:not(.cbi-section-table-titles)");
 		if (firstDataRow && firstDataRow !== row) {
 			parent.insertBefore(row, firstDataRow);
-			let save_order_btn = document.getElementById("save_order_btn_" + group);
-			if (save_order_btn) {
-				const new_order = get_shunt_rule_order(group);
-				if (!arraysEqual(new_order, origin_group_shunt_rule_order[group])) {
-					save_order_btn.style.display = null;
-				} else {
-					save_order_btn.style.display = "none";
-				}
-			}
+			set_order(group);
 		}
 	}
 
@@ -214,48 +205,24 @@ table td, .table .td {
 		return ids;
 	}
 
-	function save_current_page_order(group) {
-		var table = document.getElementById("cbi-<%=appname%>-shunt_rules-" + group + "-table");
+	function set_order(group) {
+		let table = document.getElementById("cbi-<%=appname%>-shunt_rules-" + group + "-table");
 		if (!table) {
 			alert("<%:No table!%>");
 			return;
 		}
-		var rows = table.querySelectorAll("tr.cbi-section-table-row");
+		let rows = table.querySelectorAll("tr.cbi-section-table-row");
 		if (!rows || rows.length === 0) {
 			alert("<%:No shunt_rules!%>");
 			return;
 		}
-		var btn = document.getElementById("save_order_btn_" + group);
-		if (btn) {
-			btn.style.display = "none";
-			btn.disabled = true;
-		}
-		var ids = [];
+		let ids = [];
 		rows.forEach(function(row) {
-			var id = row.id.replace("cbi-<%=appname%>-", "");
+			let id = row.id.replace("cbi-<%=appname%>-", "");
 			ids.push(id);
 		});
-		XHR.get('<%=api.url("save_shunt_rule_order")%>', {
-				group: group,
-				ids: ids.join(",")
-			},
-			function(x, result) {
-				if (btn) {
-					btn.style.display = null;
-					btn.disabled = false;
-				}
-				if (x && x.status === 200) {
-//					origin_group_shunt_rule_order[group] = get_shunt_rule_order(group);
-					alert("<%:Saved current page order successfully.%>");
-//					if (btn) {
-//						btn.style.display = "none";
-//					}
-					window.location.reload();
-				} else {
-					alert("<%:Save failed!%>");
-				}
-			}
-		);
+		const input_order = document.getElementsByName(`group.order.${group}`)[0];
+		input_order.value = ids.join(" ");
 	}
 
 	// List drag and rearrange
@@ -274,16 +241,7 @@ table td, .table .td {
 			forceFallback: false,
 			swapThreshold: 0.65,
 			onEnd: function (evt) {
-				//save_current_page_order(group); // Auto save
-				let save_order_btn = document.getElementById("save_order_btn_" + group);
-				if (save_order_btn) {
-					const new_order = get_shunt_rule_order(group);
-					if (!arraysEqual(new_order, origin_group_shunt_rule_order[group])) {
-						save_order_btn.style.display = null;
-					} else {
-						save_order_btn.style.display = "none";
-					}
-				}
+				set_order(group);
 			}
 		};
 		try {
@@ -339,10 +297,10 @@ table td, .table .td {
 			</tr>
 			{{shunt_rule-tr}}
 		</table>
+		<input type="hidden" name="group.order.{{group}}">
 		<div class="cbi-section-create cbi-tblsection-create">
 			<input type="text" id="add_name_{{group}}">
 			<input class="cbi-button cbi-button-add" type="button" value="<%:Add%>" onclick="toPage('add')">
-			<input class="cbi-button cbi-button-apply" style="display: none" type="button" id="save_order_btn_{{group}}" value="<%:Save Order%>" onclick="save_current_page_order('{{group}}')">
 		</div>
 	</<%=section_tag%>>
 </script>
