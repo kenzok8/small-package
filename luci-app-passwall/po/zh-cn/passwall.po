@@ -1628,6 +1628,9 @@ msgstr "服务器管理"
 msgid "Users Manager"
 msgstr "用户管理"
 
+msgid "User Config"
+msgstr "用户配置"
+
 msgid "Logs"
 msgstr "日志"
 
@@ -2064,8 +2067,14 @@ msgstr "使用自定义配置"
 msgid "Custom Config"
 msgstr "自定义配置"
 
+msgid "Must be Base64 text!"
+msgstr "必须是 Base64 内容！"
+
 msgid "Must be JSON text!"
 msgstr "必须是 JSON 文本内容！"
+
+msgid "Must be UUID format!"
+msgstr "必须是 UUID 格式！"
 
 msgid "Geo View"
 msgstr "Geo 查询"

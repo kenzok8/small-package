@@ -332,6 +332,9 @@ msgstr "IP黑名单"
 msgid "IP whitelist"
 msgstr "IP白名单"
 
+msgid "Support single IP or CIDR range, multiple entries separated by space: 192.168.1.5 10.1.1.0/24 2001:db8::1 fd00::/32"
+msgstr "支持单个 IP 或标准 IP 段（CIDR），多个条目用空格分隔：192.168.1.5 10.1.1.0/24 2001:db8::1 fd00::/32"
+
 msgid "IPv4 API list"
 msgstr "IPv4 API列表"
 

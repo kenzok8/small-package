@@ -1539,10 +1539,13 @@ cuSub.appendChild(mkBtn('{{ _('Traffic DND') }}',cdOn,function(on){updateFlagInp
 	var ipLbl=document.createElement('div');ipLbl.className='pushbot-inline-title';
 	ipLbl.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
 	ipLbl.textContent='{{ _('IP whitelist') }}';ipCtr.appendChild(ipLbl);
+	var ipHint=document.createElement('div');ipHint.style.cssText='margin:0 0 4px 2px;font-size:11.5px;color:var(--text-color-low,#64748b)';
+	ipHint.textContent='{{ _('Support single IP or CIDR range, multiple entries separated by space: 192.168.1.5 10.1.1.0/24 2001:db8::1 fd00::/32') }}';
+	ipCtr.appendChild(ipHint);
 	var ipTags=document.createElement('div');ipTags.style.cssText='display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px';
 	var ipIR=document.createElement('div');ipIR.style.cssText='display:flex;gap:4px';
 	var ipInp=document.createElement('input');ipInp.type='text';ipInp.className='cbi-input-text';
-	ipInp.placeholder='192.168.x.x';ipInp.style.cssText='flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+	ipInp.placeholder='192.168.1.5 / 10.1.1.0/24 / 2001:db8::1 / fd00::/32';ipInp.style.cssText='flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
 	ipInp.setAttribute('list','mh_ip_white');
 	var ipDl=document.createElement('datalist');ipDl.id='mh_ip_white';
 	(CT_IP_HINTS||[]).forEach(function(h){var o=document.createElement('option');o.value=h;ipDl.appendChild(o);});
@@ -3863,7 +3866,7 @@ window.addEventListener('load',function(){apply(compute());});
 				</div>
 			</div>
 		</div>
-		<span class="pushbot-version-badge" id="pushbot_version_badge">v5.12-r17</span>
+		<span class="pushbot-version-badge" id="pushbot_version_badge">v5.13-r2</span>
 		<div id="pushbot_status_badge" class="pushbot-status-badge is-stopped" role="status" aria-live="polite">
 			<span class="pushbot-status-dot"></span>
 			<span id="pushbot_status_text">{{ _('NOT RUNNING') }}</span>

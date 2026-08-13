@@ -766,39 +766,71 @@ function gen_config_server(node)
 		listen_port = tonumber(node.port),
 	}
 
+	local users = node.users or {}
+	local users = nil
+	if node.users and #node.users > 0 then
+		users = {}
+		for i, v in ipairs(node.users) do
+			local user = uci:get_all("passwall2_server", v) or {}
+			if user[".type"] == "user" then
+				local u = {}
+				if node.protocol == "mixed" or node.protocol == "socks" or node.protocol == "http" or node.protocol == "naive" then
+					u.username = user.username
+					u.password = user.password
+				end
+				if node.protocol == "shadowsocks" or node.protocol == "trojan" then
+					u.name = user.username
+					u.password = user.password
+				end
+				if node.protocol == "vmess" then
+					u.name = user.username
+					u.uuid = user.uuid
+					u.alterId = 0
+				end
+				if node.protocol == "vless" then
+					u.name = user.username
+					u.uuid = user.uuid
+					u.flow = node.flow
+				end
+				if node.protocol == "hysteria" then
+					u.name = user.username
+					u.auth_str = user.password
+				end
+				if node.protocol == "tuic" then
+					u.name = user.username
+					u.password = user.password
+					u.uuid = user.uuid
+				end
+				if node.protocol == "hysteria2" then
+					u.name = user.username
+					u.password = user.password
+				end
+				users[#users + 1] = u
+			end
+		end
+		if #users == 0 then
+			users = nil
+		end
+	end
+
 	local protocol_table = nil
 
 	if node.protocol == "mixed" then
 		protocol_table = {
-			users = (node.auth == "1") and {
-				{
-					username = node.username,
-					password = node.password
-				}
-			} or nil,
+			users = users,
 			set_system_proxy = false
 		}
 	end
 
 	if node.protocol == "socks" then
 		protocol_table = {
-			users = (node.auth == "1") and {
-				{
-					username = node.username,
-					password = node.password
-				}
-			} or nil
+			users = users
 		}
 	end
 
 	if node.protocol == "http" then
 		protocol_table = {
-			users = (node.auth == "1") and {
-				{
-					username = node.username,
-					password = node.password
-				}
-			} or nil,
+			users = users,
 			tls = (node.tls == "1") and tls or nil,
 		}
 	end
@@ -806,21 +838,14 @@ function gen_config_server(node)
 	if node.protocol == "shadowsocks" then
 		protocol_table = {
 			method = node.method,
-			password = node.password,
+			password = node.ss_password,
+			users = users,
 			multiplex = mux,
 		}
 	end
 
 	if node.protocol == "vmess" then
-		if node.uuid then
-			local users = {}
-			for i = 1, #node.uuid do
-				users[i] = {
-					name = node.uuid[i],
-					uuid = node.uuid[i],
-					alterId = 0,
-				}
-			end
+		if users then
 			protocol_table = {
 				users = users,
 				tls = (node.tls == "1") and tls or nil,
@@ -831,15 +856,7 @@ function gen_config_server(node)
 	end
 
 	if node.protocol == "vless" then
-		if node.uuid then
-			local users = {}
-			for i = 1, #node.uuid do
-				users[i] = {
-					name = node.uuid[i],
-					uuid = node.uuid[i],
-					flow = node.flow,
-				}
-			end
+		if users then
 			protocol_table = {
 				users = users,
 				tls = (node.tls == "1") and tls or nil,
@@ -850,14 +867,7 @@ function gen_config_server(node)
 	end
 
 	if node.protocol == "trojan" then
-		if node.uuid then
-			local users = {}
-			for i = 1, #node.uuid do
-				users[i] = {
-					name = node.uuid[i],
-					password = node.uuid[i],
-				}
-			end
+		if users then
 			protocol_table = {
 				users = users,
 				tls = (node.tls == "1") and tls or nil,
@@ -870,15 +880,12 @@ function gen_config_server(node)
 	end
 
 	if node.protocol == "naive" then
-		protocol_table = {
-			users = {
-				{
-					username = node.username,
-					password = node.password
-				}
-			},
-			tls = tls,
-		}
+		if users then
+			protocol_table = {
+				users = users,
+				tls = tls
+			}
+		end
 	end
 
 	if node.protocol == "hysteria" then
@@ -888,13 +895,7 @@ function gen_config_server(node)
 			up_mbps = tonumber(node.hysteria_up_mbps),
 			down_mbps = tonumber(node.hysteria_down_mbps),
 			obfs = node.hysteria_obfs,
-			users = {
-				{
-					name = "user1",
-					auth = (node.hysteria_auth_type == "base64") and node.hysteria_auth_password or nil,
-					auth_str = (node.hysteria_auth_type == "string") and node.hysteria_auth_password or nil,
-				}
-			},
+			users = users,
 			recv_window_conn = node.hysteria_recv_window_conn and tonumber(node.hysteria_recv_window_conn) or nil, --1.14 to stream_receive_window
 			recv_window_client = node.hysteria_recv_window_client and tonumber(node.hysteria_recv_window_client) or nil, --1.14 to connection_receive_window
 			max_conn_client = node.hysteria_max_conn_client and tonumber(node.hysteria_max_conn_client) or nil,  --1.14 to max_concurrent_streams
@@ -904,31 +905,21 @@ function gen_config_server(node)
 	end
 
 	if node.protocol == "tuic" then
-		if node.uuid then
-			local users = {}
-			for i = 1, #node.uuid do
-				users[i] = {
-					name = node.uuid[i],
-					uuid = node.uuid[i],
-					password = node.password
-				}
-			end
-			tls.alpn = (node.tuic_alpn and node.tuic_alpn ~= "default") and (function()
-				local alpn = {}
-				string.gsub(node.tuic_alpn, '[^,]+', function(w)
-					table.insert(alpn, w)
-				end)
-				if #alpn > 0 then return alpn end
-				return nil
-			end)() or nil
-			protocol_table = {
-				users = users,
-				congestion_control = node.tuic_congestion_control or "cubic",
-				zero_rtt_handshake = (node.tuic_zero_rtt_handshake == "1") and true or false,
-				heartbeat = (tonumber(node.tuic_heartbeat) or 3) .. "s",
-				tls = tls
-			}
-		end
+		tls.alpn = (node.tuic_alpn and node.tuic_alpn ~= "default") and (function()
+			local alpn = {}
+			string.gsub(node.tuic_alpn, '[^,]+', function(w)
+				table.insert(alpn, w)
+			end)
+			if #alpn > 0 then return alpn end
+			return nil
+		end)() or nil
+		protocol_table = {
+			users = users,
+			congestion_control = node.tuic_congestion_control or "cubic",
+			zero_rtt_handshake = (node.tuic_zero_rtt_handshake == "1") and true or false,
+			heartbeat = (tonumber(node.tuic_heartbeat) or 3) .. "s",
+			tls = tls
+		}
 	end
 
 	if node.protocol == "hysteria2" then
@@ -953,12 +944,7 @@ function gen_config_server(node)
 				end
 				return o
 			end)(node.hysteria2_obfs_type),
-			users = {
-				{
-					name = "user1",
-					password = node.hysteria2_auth_password or nil,
-				}
-			},
+			users = users,
 			ignore_client_bandwidth = (node.hysteria2_ignore_client_bandwidth == "1") and true or false,
 			tls = tls,
 			realm = node.hysteria2_realms and (function()
@@ -978,15 +964,12 @@ function gen_config_server(node)
 	end
 
 	if node.protocol == "anytls" then
-		protocol_table = {
-			users = {
-				{
-					name = (node.username and node.username ~= "") and node.username or "sekai",
-					password = node.password
-				}
-			},
-			tls = tls,
-		}
+		if users then
+			protocol_table = {
+				users = users,
+				tls = tls,
+			}
+		end
 	end
 
 	if node.protocol == "direct" then

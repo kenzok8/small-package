@@ -27,22 +27,11 @@ o = s:option(Value, _n("port"), translate("Listen Port"))
 o.datatype = "port"
 
 o = s:option(Flag, _n("auth"), translate("Auth"))
-o.validate = function(self, value, t)
-	if value and value == "1" then
-		local user_v = s.fields[_n("username")] and s.fields[_n("username")]:formvalue(t) or ""
-		local pass_v = s.fields[_n("password")] and s.fields[_n("password")]:formvalue(t) or ""
-		if user_v == "" or pass_v == "" then
-			return nil, translate("Username and Password must be used together!")
-		end
-	end
-	return value
+
+o = s:option(ListValue, _n("user"), translate("User"))
+for i, v in ipairs(user_list) do
+	o:value(v[".name"], v.username)
 end
-
-o = s:option(Value, _n("username"), translate("Username"))
-o:depends({ [_n("auth")] = true })
-
-o = s:option(Value, _n("password"), translate("Password"))
-o.password = true
 o:depends({ [_n("auth")] = true })
 
 o = s:option(Flag, _n("log"), translate("Log"))

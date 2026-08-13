@@ -123,8 +123,12 @@ local function start()
 			if type == "Socks" then
 				local auth = ""
 				if server.auth and server.auth == "1" then
-					local username = server.username or ""
-					local password = server.password or ""
+					local user = nil
+					if server.user then
+						user = uci:get_all("passwall_server", server.user)
+					end
+					local username = user and user.username or ""
+					local password = user and user.password or ""
 					if username ~= "" and password ~= "" then
 						username = "-u " .. username
 						password = "-P " .. password

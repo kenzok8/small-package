@@ -88,5 +88,12 @@
 			"module": "luci.controller.pushbot",
 			"function": "act_save_config"
 		}
+	},
+	"admin/services/pushbot/version": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "act_version"
+		}
 	}
 }

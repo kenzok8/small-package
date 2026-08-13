@@ -56,6 +56,7 @@ function index()
 	--[[ Server ]]
 	entry({"admin", "services", appname, "server"}, cbi(appname .. "/server/index"), _("Server-Side"), 99).leaf = true
 	entry({"admin", "services", appname, "server_config"}, cbi(appname .. "/server/server_config")).leaf = true
+	entry({"admin", "services", appname, "server_user_config"}, cbi(appname .. "/server/user_config")).leaf = true
 
 	--[[ API ]]
 	entry({"admin", "services", appname, "server_update_config"}, call("server_update_config")).leaf = true

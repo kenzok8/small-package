@@ -28,6 +28,12 @@ o = s:option(Value, _n("port"), translate("Listen Port"))
 o.datatype = "port"
 o:depends({ [_n("custom")] = false })
 
+o = s:option(DynamicList, _n("users"), translate("User"))
+for i, v in ipairs(user_list) do
+	o:value(v[".name"], v.username)
+end
+o:depends({ [_n("custom")] = false })
+
 o = s:option(Flag, _n("realms"), translate("Realms"))
 o.default = "0"
 o.rewrite_option = o.option
@@ -47,11 +53,6 @@ o = s:option(DynamicList, _n("realm_stun"), translate("Realm STUN"))
 o.default = { "stun.sip.us:3478", "stun.nextcloud.com:3478", "global.stun.twilio.com:3478" }
 o.rewrite_option = o.option
 o:depends({ [_n("realms")] = "1" })
-
-o = s:option(Value, _n("auth_password"), translate("Auth Password"))
-o.password = true
-o.rewrite_option = o.option
-o:depends({ [_n("custom")] = false })
 
 o = s:option(ListValue, _n("obfs_type"), translate("Obfs Type"))
 o:value("", translate("Disable"))
