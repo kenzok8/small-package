@@ -493,7 +493,7 @@ function gen_config_server(node)
 	if node.users and #node.users > 0 then
 		users = {}
 		for i, v in ipairs(node.users) do
-			local user = uci:get_all("passwall2_server", v) or {}
+			local user = uci:get_all("passwall_server", v) or {}
 			if user[".type"] == "user" then
 				local u = {}
 				if node.protocol == "socks" or node.protocol == "http" then

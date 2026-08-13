@@ -6,7 +6,7 @@ local jsonc = api.jsonc
 function gen_config_server(node)
 	local user = nil
 	if node.user then
-		user = uci:get_all("passwall2_server", node.user)
+		user = uci:get_all("passwall_server", node.user)
 	end
 	local config = {}
 	config.server_port = tonumber(node.port)

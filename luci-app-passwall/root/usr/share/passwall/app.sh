@@ -332,7 +332,7 @@ run_socks() {
 	[ -n "$config_file" ] && [ -z "$(echo ${config_file} | grep $TMP_PATH)" ] && config_file=$TMP_PATH/$config_file
 	[ -n "$http_port" ] || http_port=0
 	[ -n "$http_config_file" ] && [ -z "$(echo ${http_config_file} | grep $TMP_PATH)" ] && http_config_file=$TMP_PATH/$http_config_file
-	if [ -n "$log_file" ] && [ -z "$(echo ${log_file} | grep $TMP_PATH)" ]; then
+	if [ -n "$log_file" ] && [ "$log_file" != "/dev/null" ] && [ -z "$(echo ${log_file} | grep $TMP_PATH)" ]; then
 		log_file=$TMP_PATH/$log_file
 	else
 		log_file="/dev/null"
@@ -535,7 +535,7 @@ run_redir() {
 	eval_set_val "$@"
 	local tcp_node_socks_flag tcp_node_http_flag
 	[ -n "$config_file" ] && [ -z "$(echo ${config_file} | grep $TMP_PATH)" ] && config_file=${GLOBAL_ACL_PATH}/${config_file}
-	if [ -n "$log_file" ] && [ -z "$(echo ${log_file} | grep $TMP_PATH)" ]; then
+	if [ -n "$log_file" ] && [ "$log_file" != "/dev/null" ] && [ -z "$(echo ${log_file} | grep $TMP_PATH)" ]; then
 		log_file=${GLOBAL_ACL_PATH}/${log_file}
 	else
 		log_file="/dev/null"
@@ -2055,6 +2055,7 @@ get_config() {
 			DNSMASQ_CONF_DIR="/tmp/dnsmasq.d"
 		fi
 	fi
+	[ -d "$DNSMASQ_CONF_DIR" ] || mkdir -p "$DNSMASQ_CONF_DIR"
 	set_cache_var GLOBAL_DNSMASQ_CONF ${DNSMASQ_CONF_DIR}/dnsmasq-${CONFIG}.conf
 	set_cache_var GLOBAL_DNSMASQ_CONF_PATH ${GLOBAL_ACL_PATH}/dnsmasq.d
 

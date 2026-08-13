@@ -1520,8 +1520,8 @@ msgstr "匿名"
 msgid "User Password"
 msgstr "账号密码"
 
-msgid "Username and Password must be used together!"
-msgstr "账号和密码必须同时使用！"
+msgid "This username already exists."
+msgstr "该用户名已存在。"
 
 msgid "Node Number"
 msgstr "节点数量"

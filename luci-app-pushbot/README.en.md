@@ -24,6 +24,11 @@
 
 # 📝 Changelog
 
+- **2026-08-13** (v5.13): Blacklist enhancements (whitelist / IPv6 / instant apply), main version 5.12 → 5.13
+  - Added: **Whitelist** — supports single IPs and standard CIDR ranges such as `192.168.1.5` / `10.1.1.0/24` / `2001:db8::1` / `fd00::/32`, space-separated; whitelisted IPs are never blacklisted even after failed logins
+  - Added: **IPv6 blacklist** — IPv6 addresses and ranges are now supported (previously IPv4 only)
+  - Improved: **Instant apply** — adding / editing / deleting / clearing the blacklist takes effect immediately, no polling or firewall restart needed
+  - Fixed: clearing the blacklist now fully removes the rules (previously stale rules could remain until a manual firewall restart)
 - **2026-08-12** (v5.12-r15):
   - Added: Gotify push channel (debug)
   - Added: "Test Color" button on the Color Settings card (saves config & sends a test push immediately)
