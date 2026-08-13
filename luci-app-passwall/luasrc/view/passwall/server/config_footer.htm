@@ -4,7 +4,7 @@ local api = self.api
 <script type="text/javascript">
 	//<![CDATA[
 	let node_id = "<%=self.section%>";
-	let node_config_url = '<%=api.url("server_user")%>/' + node_id;
+	let node_config_url = '<%=api.url("server_config")%>/' + node_id;
 
 	document.addEventListener("DOMContentLoaded", function () {
 		waitForElement('select[name*="<%=self.config%>"][name*="type"]', function(el) {

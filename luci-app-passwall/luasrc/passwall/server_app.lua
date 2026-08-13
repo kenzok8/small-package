@@ -102,29 +102,29 @@ local function start()
 		nft_file:write('flush chain inet fw4 PSW-SERVER\n')
 		nft_file:write('insert rule inet fw4 input position 0 jump PSW-SERVER comment "PSW-SERVER"\n')
 	end
-	uci:foreach(CONFIG, "user", function(user)
-		local id = user[".name"]
-		local enable = user.enable
+	uci:foreach(CONFIG, "server", function(server)
+		local id = server[".name"]
+		local enable = server.enable
 		if enable and tonumber(enable) == 1 then
-			local enable_log = user.log
+			local enable_log = server.log
 			local log_path = nil
 			if enable_log and enable_log == "1" then
 				log_path = CONFIG_PATH .. "/" .. id .. ".log"
 			else
 				log_path = nil
 			end
-			local remarks = user.remarks
-			local port = tonumber(user.port)
+			local remarks = server.remarks
+			local port = tonumber(server.port)
 			local bin
 			local config = {}
 			local config_file = CONFIG_PATH .. "/" .. id .. ".json"
 			local udp_forward = 1
-			local type = user.type or ""
+			local type = server.type or ""
 			if type == "Socks" then
 				local auth = ""
-				if user.auth and user.auth == "1" then
-					local username = user.username or ""
-					local password = user.password or ""
+				if server.auth and server.auth == "1" then
+					local username = server.username or ""
+					local password = server.password or ""
 					if username ~= "" and password ~= "" then
 						username = "-u " .. username
 						password = "-P " .. password
@@ -133,59 +133,59 @@ local function start()
 				end
 				bin = ln_run("/usr/bin/microsocks", "microsocks_" .. id, string.format("-i :: -p %s %s", port, auth), log_path)
 			elseif type == "SSR" then
-				if user.custom == "1" and user.config_str then
-					config = jsonc.parse(api.base64Decode(user.config_str))
+				if server.custom == "1" and server.config_str then
+					config = jsonc.parse(api.base64Decode(server.config_str))
 				else
-					config = require(require_dir .. "util_shadowsocks").gen_config_server(user)
+					config = require(require_dir .. "util_shadowsocks").gen_config_server(server)
 				end
 				local udp_param = ""
-				udp_forward = tonumber(user.udp_forward) or 1
+				udp_forward = tonumber(server.udp_forward) or 1
 				if udp_forward == 1 then
 					udp_param = "-u"
 				end
 				type = type:lower()
 				bin = ln_run("/usr/bin/" .. type .. "-server", type .. "-server", "-c " .. config_file .. " " .. udp_param, log_path)
 			elseif type == "SS-Rust" then
-				if user.custom == "1" and user.config_str then
-					config = jsonc.parse(api.base64Decode(user.config_str))
+				if server.custom == "1" and server.config_str then
+					config = jsonc.parse(api.base64Decode(server.config_str))
 				else
-					config = require(require_dir .. "util_shadowsocks").gen_config_server(user)
+					config = require(require_dir .. "util_shadowsocks").gen_config_server(server)
 				end
 				bin = ln_run("/usr/bin/ssserver", "ssserver", "-c " .. config_file, log_path)
 			elseif type == "Xray" then
-				if user.custom == "1" and user.config_str then
-					config = jsonc.parse(api.base64Decode(user.config_str))
+				if server.custom == "1" and server.config_str then
+					config = jsonc.parse(api.base64Decode(server.config_str))
 					if log_path then
 						if not config.log then
 							config.log = {}
 						end
-						config.log.loglevel = user.loglevel
+						config.log.loglevel = server.loglevel
 					end
 				else
-					config = require(require_dir .. "util_xray").gen_config_server(user)
+					config = require(require_dir .. "util_xray").gen_config_server(server)
 				end
 				bin = ln_run(api.get_app_path("xray"), "xray", "run -c " .. config_file, log_path)
 			elseif type == "sing-box" then
-				if user.custom == "1" and user.config_str then
-					config = jsonc.parse(api.base64Decode(user.config_str))
+				if server.custom == "1" and server.config_str then
+					config = jsonc.parse(api.base64Decode(server.config_str))
 					if log_path then
 						if not config.log then
 							config.log = {}
 						end
 						config.log.timestamp = true
 						config.log.disabled = false
-						config.log.level = user.loglevel
+						config.log.level = server.loglevel
 						config.log.output = log_path
 					end
 				else
-					config = require(require_dir .. "util_sing-box").gen_config_server(user)
+					config = require(require_dir .. "util_sing-box").gen_config_server(server)
 				end
 				bin = ln_run(api.get_app_path("sing-box"), "sing-box", "run -c " .. config_file, log_path)
 			elseif type == "Hysteria2" then
-				if user.custom == "1" and user.config_str then
-					config = jsonc.parse(api.base64Decode(user.config_str))
+				if server.custom == "1" and server.config_str then
+					config = jsonc.parse(api.base64Decode(server.config_str))
 				else
-					config = require(require_dir .. "util_hysteria2").gen_config_server(user)
+					config = require(require_dir .. "util_hysteria2").gen_config_server(server)
 				end
 				bin = ln_run(api.get_app_path("hysteria"), "hysteria", "-c " .. config_file .. " server", log_path)
 			end
@@ -203,7 +203,7 @@ local function start()
 				cmd(bin)
 			end
 
-			local bind_local = user.bind_local or 0
+			local bind_local = server.bind_local or 0
 			if bind_local and tonumber(bind_local) ~= 1 and port then
 				if nft_flag == "0" then
 					ipt(string.format('-A PSW-SERVER -p tcp --dport %s -m comment --comment "%s" -j ACCEPT', port, remarks))

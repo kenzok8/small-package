@@ -18,13 +18,12 @@ e.default = "90"
 e.datatype = "range(0,600)"
 e.rmempty = false
 
-local cfgname = "user"
-t = m:section(TypedSection, cfgname, translate("Users Manager"))
+t = m:section(TypedSection, "server", translate("Servers Manager"))
 t.anonymous = true
 t.addremove = true
 t.sortable = true
 t.template = "cbi/tblsection"
-t.extedit = api.url("server_user", "%s")
+t.extedit = api.url("server_config", "%s")
 function t.create(e, t)
 	local uid = api.gen_random_char()
 	TypedSection.create(e, uid)
@@ -43,7 +42,7 @@ e.rmempty = false
 e = t:option(DummyValue, "status", translate("Status"))
 e.rawhtml = true
 e.cfgvalue = function(t, n)
-	return string.format('<font class="_users_status">%s</font>', translate("Collecting data..."))
+	return string.format('<font class="_servers_status">%s</font>', translate("Collecting data..."))
 end
 
 e = t:option(DummyValue, "remarks", translate("Remarks"))
@@ -96,11 +95,15 @@ e.rmempty = false
 local sortable = Template(appname .. "/cbi/sortable")
 sortable.api = api
 sortable.appname = m.config
-sortable.target_cfgname = cfgname
+sortable.target_cfgname = t.sectiontype
 m:append(sortable)
 
-m:append(Template(appname .. "/server/log"))
+local server_list_status = Template(appname .. "/server/server_list_status")
+server_list_status.api = api
+server_list_status.appname = m.config
+server_list_status.sectiontype = t.sectiontype
+m:append(server_list_status)
 
-m:append(Template(appname .. "/server/users_list_status"))
+m:append(Template(appname .. "/server/log"))
 
 return api.return_map(m)

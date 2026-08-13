@@ -55,12 +55,12 @@ function index()
 
 	--[[ Server ]]
 	entry({"admin", "services", appname, "server"}, cbi(appname .. "/server/index"), _("Server-Side"), 99).leaf = true
-	entry({"admin", "services", appname, "server_user"}, cbi(appname .. "/server/user")).leaf = true
+	entry({"admin", "services", appname, "server_config"}, cbi(appname .. "/server/server_config")).leaf = true
 
 	--[[ API ]]
 	entry({"admin", "services", appname, "server_update_config"}, call("server_update_config")).leaf = true
-	entry({"admin", "services", appname, "server_user_status"}, call("server_user_status")).leaf = true
-	entry({"admin", "services", appname, "server_user_log"}, call("server_user_log")).leaf = true
+	entry({"admin", "services", appname, "server_status"}, call("server_status")).leaf = true
+	entry({"admin", "services", appname, "server_log"}, call("server_log")).leaf = true
 	entry({"admin", "services", appname, "server_get_log"}, call("server_get_log")).leaf = true
 	entry({"admin", "services", appname, "server_clear_log"}, call("server_clear_log")).leaf = true
 	entry({"admin", "services", appname, "link_add_node"}, call("link_add_node")).leaf = true
@@ -786,14 +786,14 @@ function server_update_config()
 	http_write_json_error()
 end
 
-function server_user_status()
+function server_status()
 	local e = {}
 	e.index = http.formvalue("index")
 	e.status = luci.sys.call(string.format("/bin/busybox top -bn1 | grep -v 'grep' | grep '%s/bin/' | grep -i '%s' >/dev/null", appname .. "_server", http.formvalue("id"))) == 0
 	http_write_json(e)
 end
 
-function server_user_log()
+function server_log()
 	local id = http.formvalue("id")
 	if fs.access("/tmp/etc/passwall_server/" .. id .. ".log") then
 		local content = luci.sys.exec("cat /tmp/etc/passwall_server/" .. id .. ".log")
