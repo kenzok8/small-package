@@ -2,6 +2,7 @@
 
 local api = require ("luci.passwall.api")
 local name = api.appname
+local c_config = api.c_config
 local uci = api.uci
 local sys = api.sys
 local jsonc = api.jsonc
@@ -23,14 +24,14 @@ local geosite_update = "0"
 
 local excluded_domain = {"apple.com","sina.cn","sina.com.cn","baidu.com","byr.cn","jlike.com","weibo.com","zhongsou.com","youdao.com","sogou.com","so.com","soso.com","aliyun.com","taobao.com","jd.com","qq.com","bing.com"}
 
-local gfwlist_url = uci:get(name, "@global_rules[0]", "gfwlist_url") or {"https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/gfw.txt"}
-local chnroute_url = uci:get(name, "@global_rules[0]", "chnroute_url") or {"https://ispip.clang.cn/all_cn.txt"}
-local chnroute6_url = uci:get(name, "@global_rules[0]", "chnroute6_url") or {"https://ispip.clang.cn/all_cn_ipv6.txt"}
-local chnlist_url = uci:get(name, "@global_rules[0]", "chnlist_url") or {"https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/accelerated-domains.china.conf","https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/apple.china.conf","https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/google.china.conf"}
-local geoip_url = uci:get(name, "@global_rules[0]", "geoip_url") or "https://github.com/Loyalsoldier/geoip/releases/latest/download/geoip.dat"
-local geosite_url = uci:get(name, "@global_rules[0]", "geosite_url") or "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
-local asset_location = uci:get(name, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
-local geo2rule = uci:get(name, "@global_rules[0]", "geo2rule") or "0"
+local gfwlist_url = uci:get(c_config, "@global_rules[0]", "gfwlist_url") or {"https://fastly.jsdelivr.net/gh/Loyalsoldier/v2ray-rules-dat@release/gfw.txt"}
+local chnroute_url = uci:get(c_config, "@global_rules[0]", "chnroute_url") or {"https://ispip.clang.cn/all_cn.txt"}
+local chnroute6_url = uci:get(c_config, "@global_rules[0]", "chnroute6_url") or {"https://ispip.clang.cn/all_cn_ipv6.txt"}
+local chnlist_url = uci:get(c_config, "@global_rules[0]", "chnlist_url") or {"https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/accelerated-domains.china.conf","https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/apple.china.conf","https://fastly.jsdelivr.net/gh/felixonmars/dnsmasq-china-list/google.china.conf"}
+local geoip_url = uci:get(c_config, "@global_rules[0]", "geoip_url") or "https://github.com/Loyalsoldier/geoip/releases/latest/download/geoip.dat"
+local geosite_url = uci:get(c_config, "@global_rules[0]", "geosite_url") or "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
+local asset_location = uci:get(c_config, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
+local geo2rule = uci:get(c_config, "@global_rules[0]", "geo2rule") or "0"
 local geoip_update_ok, geosite_update_ok = false, false
 asset_location = asset_location:match("/$") and asset_location or (asset_location .. "/")
 local backup_path = "/tmp/bak_v2ray/"
@@ -659,12 +660,12 @@ if arg2 then
 	end)
 	if rollback then arg2 = nil end
 else
-	gfwlist_update = uci:get(name, "@global_rules[0]", "gfwlist_update") or "1"
-	chnroute_update = uci:get(name, "@global_rules[0]", "chnroute_update") or "1"
-	chnroute6_update = uci:get(name, "@global_rules[0]", "chnroute6_update") or "1"
-	chnlist_update = uci:get(name, "@global_rules[0]", "chnlist_update") or "1"
-	geoip_update = uci:get(name, "@global_rules[0]", "geoip_update") or "1"
-	geosite_update = uci:get(name, "@global_rules[0]", "geosite_update") or "1"
+	gfwlist_update = uci:get(c_config, "@global_rules[0]", "gfwlist_update") or "1"
+	chnroute_update = uci:get(c_config, "@global_rules[0]", "chnroute_update") or "1"
+	chnroute6_update = uci:get(c_config, "@global_rules[0]", "chnroute6_update") or "1"
+	chnlist_update = uci:get(c_config, "@global_rules[0]", "chnlist_update") or "1"
+	geoip_update = uci:get(c_config, "@global_rules[0]", "geoip_update") or "1"
+	geosite_update = uci:get(c_config, "@global_rules[0]", "geosite_update") or "1"
 end
 if geo2rule ~= "1" and gfwlist_update == "0" and chnroute_update == "0" and chnroute6_update == "0" and chnlist_update == "0" and geoip_update == "0" and geosite_update == "0" then
 	os.exit(0)
@@ -777,13 +778,13 @@ else
 end
 
 if not rollback then
-	uci:set(name, "@global_rules[0]", "gfwlist_update", gfwlist_update)
-	uci:set(name, "@global_rules[0]", "chnroute_update", chnroute_update)
-	uci:set(name, "@global_rules[0]", "chnroute6_update", chnroute6_update)
-	uci:set(name, "@global_rules[0]", "chnlist_update", chnlist_update)
-	uci:set(name, "@global_rules[0]", "geoip_update", geoip_update)
-	uci:set(name, "@global_rules[0]", "geosite_update", geosite_update)
-	api.uci_save(uci, name, true)
+	uci:set(c_config, "@global_rules[0]", "gfwlist_update", gfwlist_update)
+	uci:set(c_config, "@global_rules[0]", "chnroute_update", chnroute_update)
+	uci:set(c_config, "@global_rules[0]", "chnroute6_update", chnroute6_update)
+	uci:set(c_config, "@global_rules[0]", "chnlist_update", chnlist_update)
+	uci:set(c_config, "@global_rules[0]", "geoip_update", geoip_update)
+	uci:set(c_config, "@global_rules[0]", "geosite_update", geosite_update)
+	api.uci_save(uci, c_config, true)
 end
 
 if reboot == 1 then
@@ -794,8 +795,8 @@ if reboot == 1 then
 	end
 
 	log("重启服务，应用新的规则。")
-	uci:set(name, "@global[0]", "flush_set", "1")
-	api.uci_save(uci, name, true, true)
+	uci:set(c_config, "@global[0]", "flush_set", "1")
+	api.uci_save(uci, c_config, true, true)
 end
 log("规则更新完毕...\n")
 

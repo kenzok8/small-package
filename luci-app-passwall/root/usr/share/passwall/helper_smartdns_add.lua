@@ -37,8 +37,8 @@ local FLAG_PATH = TMP_ACL_PATH .. "/" .. FLAG
 local TMP_CONF_FILE = FLAG_PATH .. "/smartdns.conf"
 local config_lines = {}
 local tmp_lines = {}
-local USE_GEOVIEW = uci:get(appname, "@global_rules[0]", "enable_geoview")
-local IS_SHUNT_NODE = uci:get(appname, TCP_NODE, "protocol") == "_shunt"
+local USE_GEOVIEW = uci:get(api.c_config, "@global_rules[0]", "enable_geoview")
+local IS_SHUNT_NODE = uci:get(api.c_config, TCP_NODE, "protocol") == "_shunt"
 
 if not api.is_finded("geoview") then
 	USE_GEOVIEW = "0"
@@ -98,7 +98,7 @@ local function insert_array_after(array1, array2, target) --将array2插入到ar
 end
 
 local function get_geosite(list_arg, out_path)
-	local geosite_path = uci:get(appname, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
+	local geosite_path = uci:get(api.c_config, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
 	geosite_path = geosite_path:match("^(.*)/") .. "/geosite.dat"
 	if not is_file_nonzero(geosite_path) then return 1 end
 	local bin = api.finded_com("geoview")
@@ -187,7 +187,7 @@ if not REMOTE_GROUP or REMOTE_GROUP == "nil" then
 	sys.call('sed -i "/passwall/d" /etc/smartdns/custom.conf >/dev/null 2>&1')
 end
 
-local force_https_soa = uci:get(appname, "@global[0]", "force_https_soa") or 0
+local force_https_soa = uci:get(api.c_config, "@global[0]", "force_https_soa") or 0
 local proxy_server_name = "passwall-proxy-server"
 config_lines = {
 	tonumber(LISTEN_PORT) ~= 0 and "bind [::]:" .. LISTEN_PORT .. "@lo" or "",
@@ -342,7 +342,7 @@ if not is_file_nonzero(file_vpslist) then
 			written_domains[address] = true
 		end
 	end
-	uci:foreach(appname, "nodes", function(t)
+	uci:foreach(api.c_config, "nodes", function(t)
 		process_address(t.address)
 		process_address(t.download_address)
 		local dns, _ = api.get_domain_port_from_url(t.domain_resolver_dns or t.domain_resolver_dns_https or "")
@@ -350,7 +350,7 @@ if not is_file_nonzero(file_vpslist) then
 			process_address(dns)
 		end
 	end)
-	uci:foreach(appname, "subscribe_list", function(t)  --订阅链接
+	uci:foreach(api.c_config, "subscribe_list", function(t)  --订阅链接
 		local url, _ = api.get_domain_port_from_url(t.url or "")
 		if url and url ~= "" then
 			process_address(url)
@@ -555,9 +555,9 @@ if IS_SHUNT_NODE then
 	local file_shunt_host = FLAG_PATH .. "/shunt_proxy_host"
 	local geosite_white_arg, geosite_shunt_arg = "", ""
 
-	local t = uci:get_all(appname, TCP_NODE)
+	local t = uci:get_all(api.c_config, TCP_NODE)
 	local default_node_id = t["default_node"] or "_direct"
-	uci:foreach(appname, "shunt_rules", function(s)
+	uci:foreach(api.c_config, "shunt_rules", function(s)
 		local _node_id = t[s[".name"]]
 		if _node_id and _node_id ~= "_blackhole" and t["shunt_group"] == s.group then
 			if _node_id == "_default" then

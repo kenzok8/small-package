@@ -24,8 +24,8 @@ end
 local function backup_servers()
 	local DNSMASQ_DNS = uci:get("dhcp", "@dnsmasq[0]", "server")
 	if DNSMASQ_DNS and #DNSMASQ_DNS > 0 then
-		uci:set(appname, "@global[0]", "dnsmasq_servers", DNSMASQ_DNS)
-		api.uci_save(uci, appname, true)
+		uci:set(api.c_config, "@global[0]", "dnsmasq_servers", DNSMASQ_DNS)
+		api.uci_save(uci, api.c_config, true)
 	end
 end
 
@@ -37,13 +37,13 @@ local function restore_servers()
 			tinsert(dns_table, v)
 		end
 	end
-	local OLD_SERVER = uci:get(appname, "@global[0]", "dnsmasq_servers")
+	local OLD_SERVER = uci:get(api.c_config, "@global[0]", "dnsmasq_servers")
 	if OLD_SERVER and #OLD_SERVER > 0 then
 		for k, v in ipairs(OLD_SERVER) do
 			tinsert(dns_table, v)
 		end
-		uci:delete(appname, "@global[0]", "dnsmasq_servers")
-		api.uci_save(uci, appname, true)
+		uci:delete(api.c_config, "@global[0]", "dnsmasq_servers")
+		api.uci_save(uci, api.c_config, true)
 	end
 	if dns_table and #dns_table > 0 then
 		uci:set_list("dhcp", "@dnsmasq[0]", "server", dns_table)
@@ -180,8 +180,8 @@ function add_rule(var)
 	local CACHE_DNS_PATH = CACHE_PATH .. "/" .. CACHE_FLAG
 	local CACHE_TEXT_FILE = CACHE_DNS_PATH .. ".txt"
 	local USE_CHINADNS_NG = "0"
-	local IS_SHUNT_NODE = uci:get(appname, TCP_NODE, "protocol") == "_shunt"
-	local USE_GEOVIEW = uci:get(appname, "@global_rules[0]", "enable_geoview")
+	local IS_SHUNT_NODE = uci:get(api.c_config, TCP_NODE, "protocol") == "_shunt"
+	local USE_GEOVIEW = uci:get(api.c_config, "@global_rules[0]", "enable_geoview")
 
 	local list1 = {}
 	local excluded_domain = {}
@@ -307,7 +307,7 @@ function add_rule(var)
 	end
 
 	local function foreach_geosite(list_arg, callback)
-		local geosite_path = uci:get(appname, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
+		local geosite_path = uci:get(api.c_config, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
 		geosite_path = geosite_path:match("^(.*)/") .. "/geosite.dat"
 		if not fs.access(geosite_path) then return end
 		local bin = api.finded_com("geoview")
@@ -412,7 +412,7 @@ function add_rule(var)
 						set_domain_ipset(address, table.concat(sets, ","))
 					end
 				end
-				uci:foreach(appname, "nodes", function(t)
+				uci:foreach(api.c_config, "nodes", function(t)
 					process_address(t.address)
 					process_address(t.download_address)
 					local dns, _ = api.get_domain_port_from_url(t.domain_resolver_dns or t.domain_resolver_dns_https or "")
@@ -420,7 +420,7 @@ function add_rule(var)
 						process_address(dns)
 					end
 				end)
-				uci:foreach(appname, "subscribe_list", function(t)  --订阅链接
+				uci:foreach(api.c_config, "subscribe_list", function(t)  --订阅链接
 					local url, _ = api.get_domain_port_from_url(t.url or "")
 					if url and url ~= "" then
 						process_address(url)
@@ -615,9 +615,9 @@ function add_rule(var)
 
 		--分流规则
 		if IS_SHUNT_NODE and USE_CHINADNS_NG == "0" then
-			local t = uci:get_all(appname, TCP_NODE)
+			local t = uci:get_all(api.c_config, TCP_NODE)
 			local default_node_id = t["default_node"] or "_direct"
-			uci:foreach(appname, "shunt_rules", function(s)
+			uci:foreach(api.c_config, "shunt_rules", function(s)
 				local _node_id = t[s[".name"]]
 				if _node_id and _node_id ~= "_blackhole" and t["shunt_group"] == s.group then
 					if _node_id == "_default" then

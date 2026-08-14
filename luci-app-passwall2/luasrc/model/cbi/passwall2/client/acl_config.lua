@@ -204,7 +204,7 @@ end
 current_node = current_node_id and m:get(current_node_id) or {}
 
 o = s:option(Flag, "log", translate("Enable Node Log"))
-o:depends({ _hide_node_option = "1",  ['!reverse'] = true })
+o:depends({ node = "",  ['!reverse'] = true })
 
 o = s:option(ListValue, "loglevel", translate("Log Level"))
 o.default = "warn"
@@ -352,6 +352,10 @@ o:depends("remote_dns_protocol", "http3")
 o:depends("remote_dns_protocol", "quic")
 o:depends("remote_dns_protocol", "tls")
 
+o = s:option(Value, "remote_rewrite_ttl", translate("Remote DNS") .. " TTL")
+o.datatype = "min(1)"
+o.default = "30"
+
 o = s:option(ListValue, "dns_hosts_mode", translate("Domain Override"))
 o:value("default", translate("Use global config"))
 o:value("disable", translate("No patterns are used"))
@@ -377,6 +381,9 @@ local o_node = s.fields["node"]
 for k, v in pairs(nodes_table) do
 	o_node:value(v.id, v["remark"])
 	o_node.group[#o_node.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
+	if v.type == "sing-box" then
+		s.fields["remote_rewrite_ttl"]:depends({ node = v.id })
+	end
 	if v.node_type == "normal" or v.protocol == "_balancing" or v.protocol == "_urltest" then
 		--Shunt node has its own separate options.
 		s.fields["remote_fakedns"]:depends({ node = v.id, remote_dns_protocol = "tcp" })

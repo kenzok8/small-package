@@ -6,7 +6,7 @@ local sys = api.sys
 local uci = api.uci
 local jsonc = api.jsonc
 
-local CONFIG = "passwall_server"
+local CONFIG = api.s_config
 local CONFIG_PATH = "/tmp/etc/" .. CONFIG
 local NFT_INCLUDE_FILE = CONFIG_PATH .. "/" .. CONFIG .. ".nft"
 local LOG_APP_FILE = "/tmp/log/" .. CONFIG .. ".log"

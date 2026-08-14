@@ -6,7 +6,7 @@ local jsonc = api.jsonc
 function gen_config_server(node)
 	local user = nil
 	if node.user then
-		user = uci:get_all("passwall_server", node.user)
+		user = uci:get_all(api.s_config, node.user)
 	end
 	local config = {}
 	config.server_port = tonumber(node.port)
@@ -40,7 +40,7 @@ function gen_config(var)
 		print("node 不能为空")
 		return
 	end
-	local node = uci:get_all("passwall", node_id)
+	local node = uci:get_all(api.c_config, node_id)
 	local server_host = var["server_host"] or (node.address or ""):lower()
 	local server_port = var["server_port"] or node.port
 	local local_addr = var["local_addr"]

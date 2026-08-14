@@ -9,7 +9,7 @@ function gen_config(var)
 		print("node 不能为空")
 		return
 	end
-	local node = uci:get_all("passwall", node_id)
+	local node = uci:get_all(api.c_config, node_id)
 	local run_type = var["run_type"]
 	local local_addr = var["local_addr"]
 	local local_port = var["local_port"]
