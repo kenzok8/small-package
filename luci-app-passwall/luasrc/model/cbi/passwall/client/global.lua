@@ -700,7 +700,7 @@ function s2.remove(e, t)
 	m:foreach("nodes", function(s)
 		local list_name = s["urltest_node"] and "urltest_node" or (s["balancing_node"] and "balancing_node")
 		if list_name then
-			local nodes = m.uci:get_list(appname, s[".name"], list_name)
+			local nodes = m.uci:get_list(api.c_config, s[".name"], list_name)
 			if nodes then
 				local changed = false
 				local new_nodes = {}
@@ -712,7 +712,7 @@ function s2.remove(e, t)
 					end
 				end
 				if changed then
-					m.uci:set_list(appname, s[".name"], list_name, new_nodes)
+					api.uci_set_c(s[".name"], list_name, new_nodes)
 				end
 			end
 		end

@@ -1306,6 +1306,12 @@ msgstr "کلید خصوصی"
 msgid "Pre shared key"
 msgstr "کلید از پیش به اشتراک گذاشته شده"
 
+msgid "Allowed IPs"
+msgstr "آی‌پی‌های مجاز"
+
+msgid "Generate key"
+msgstr "کلید تولید کنید"
+
 msgid "Local Address"
 msgstr "آدرس محلی"
 

@@ -1298,6 +1298,12 @@ msgstr "私鑰"
 msgid "Pre shared key"
 msgstr "额外的對称加密密鑰"
 
+msgid "Allowed IPs"
+msgstr "允許的 IP"
+
+msgid "Generate key"
+msgstr "生成密鑰"
+
 msgid "Local Address"
 msgstr "本地地址"
 

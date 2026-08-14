@@ -119,6 +119,7 @@ function index()
 	entry({"admin", "services", appname, "geo_view"}, call("geo_view")).leaf = true
 
 	entry({"admin", "services", appname, "fetch_certsha256"}, call("fetch_certsha256")).leaf = true
+	entry({"admin", "services", appname, "gen_wireguard_key"}, call("gen_wireguard_key")).leaf = true
 end
 
 local function http_write_json(content)
@@ -1027,5 +1028,14 @@ function delete_select_shunt_rules()
 		http.redirect(api.url("rule"))
 	else
 		uci_save(true, true)
+	end
+end
+
+function gen_wireguard_key()
+	local key = api.gen_wireguard_key()
+	if key then
+		http_write_json_ok(key)
+	else
+		http_write_json_error()
 	end
 end

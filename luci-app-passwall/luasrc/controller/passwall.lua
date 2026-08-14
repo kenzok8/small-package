@@ -6,8 +6,7 @@ module("luci.controller.passwall", package.seeall)
 local api = require "luci.passwall.api"
 local appname = api.appname		-- not available
 local c_config = api.c_config	-- not available
-local s_config = api.s_config	-- not available
-local uci = api.uci				-- in funtion index()
+local uci, uci_get, uci_set, uci_del, uci_foreach, uci_save = api.uci, api.uci_get_c, api.uci_set_c, api.uci_del_c, api.uci_foreach_c, api.uci_save_c
 local fs = api.fs
 local http = require "luci.http"
 local util = require "luci.util"
@@ -23,15 +22,12 @@ function index()
 	end
 	local api = require "luci.passwall.api"
 	local appname = api.appname		-- global definitions not available
-	local c_config = api.c_config	-- not available
-	local s_config = api.s_config	-- not available
-	local uci = api.uci				-- in function index()
 	local fs = api.fs
 	entry({"admin", "services", appname}).dependent = true
 	entry({"admin", "services", appname, "show"}, call("show_menu")).leaf = true
 	entry({"admin", "services", appname, "hide"}, call("hide_menu")).leaf = true
 	local e
-	if uci:get(c_config, "@global[0]", "hide_from_luci") ~= "1" then
+	if api.uci_get_c("@global[0]", "hide_from_luci") ~= "1" then
 		e = entry({"admin", "services", appname}, alias("admin", "services", appname, "settings"), _("Pass Wall"), -1)
 	else
 		e = entry({"admin", "services", appname}, alias("admin", "services", appname, "settings"), nil, -1)
@@ -199,10 +195,10 @@ function socks_autoswitch_add_node()
 	local id = http.formvalue("id")
 	local key = http.formvalue("key")
 	if id and id ~= "" and key and key ~= "" then
-		uci:set(c_config, id, "enable_autoswitch", "1")
-		local new_list = uci:get(c_config, id, "autoswitch_backup_node") or {}
+		uci_set(id, "enable_autoswitch", "1")
+		local new_list = uci_get(id, "autoswitch_backup_node") or {}
 		for i = #new_list, 1, -1 do
-			if (uci:get(c_config, new_list[i], "remarks") or ""):find(key) then
+			if (uci_get(new_list[i], "remarks") or ""):find(key) then
 				table.remove(new_list, i)
 			end
 		end
@@ -211,8 +207,8 @@ function socks_autoswitch_add_node()
 				table.insert(new_list, e.id)
 			end
 		end
-		uci:set_list(c_config, id, "autoswitch_backup_node", new_list)
-		api.uci_save(uci, c_config)
+		uci_set(id, "autoswitch_backup_node", new_list)
+		uci_save()
 	end
 	http.redirect(api.url("socks_config", id))
 end
@@ -221,15 +217,15 @@ function socks_autoswitch_remove_node()
 	local id = http.formvalue("id")
 	local key = http.formvalue("key")
 	if id and id ~= "" and key and key ~= "" then
-		uci:set(c_config, id, "enable_autoswitch", "1")
-		local new_list = uci:get(c_config, id, "autoswitch_backup_node") or {}
+		uci_set(id, "enable_autoswitch", "1")
+		local new_list = uci_get(id, "autoswitch_backup_node") or {}
 		for i = #new_list, 1, -1 do
-			if (uci:get(c_config, new_list[i], "remarks") or ""):find(key) then
+			if (uci_get(new_list[i], "remarks") or ""):find(key) then
 				table.remove(new_list, i)
 			end
 		end
-		uci:set_list(c_config, id, "autoswitch_backup_node", new_list)
-		api.uci_save(uci, c_config)
+		uci_set(id, "autoswitch_backup_node", new_list)
+		uci_save()
 	end
 	http.redirect(api.url("socks_config", id))
 end
@@ -272,25 +268,25 @@ function get_redir_log()
 	end
 
 	if name == "default" then
-		if proto == "UDP" and (uci:get(appname, "@global[0]", "udp_node") or "nil") == "tcp" and not fs.access(path .. "/" .. proto .. ".log") then
+		if proto == "UDP" and (uci_get("@global[0]", "udp_node") or "nil") == "tcp" and not fs.access(path .. "/" .. proto .. ".log") then
 			proto = "TCP"
 		end
 	else
-		local global_tcp = uci:get(appname, "@global[0]", "tcp_node") or "nil"
-		local global_udp = uci:get(appname, "@global[0]", "udp_node") or "nil"
-		local acl_tcp = uci:get(appname, name, "tcp_node") or "nil"
-		local acl_udp = uci:get(appname, name, "udp_node") or "nil"
-		local global_enabled = uci:get(appname, "@global[0]", "enabled") == "1"
+		local global_tcp = uci_get("@global[0]", "tcp_node") or "nil"
+		local global_udp = uci_get("@global[0]", "udp_node") or "nil"
+		local acl_tcp = uci_get(name, "tcp_node") or "nil"
+		local acl_udp = uci_get(name, "udp_node") or "nil"
+		local global_enabled = uci_get("@global[0]", "enabled") == "1"
 		if proto == "TCP" and acl_tcp == global_tcp and global_enabled then
 			path = "/tmp/etc/passwall/acl/default"
-			if uci:get(appname, "@global[0]", "log_tcp") ~= "1" then
+			if uci_get("@global[0]", "log_tcp") ~= "1" then
 				alert("The access control node is the same as the global node. Please enable global logging.")
 				return
 			end
 		end
 		if proto == "UDP" and acl_udp == global_udp and global_enabled then
 			path = "/tmp/etc/passwall/acl/default"
-			if uci:get(appname, "@global[0]", "log_udp") ~= "1" then
+			if uci_get("@global[0]", "log_udp") ~= "1" then
 				alert("The access control node is the same as the global node. Please enable global logging.")
 				return
 			end
@@ -325,11 +321,11 @@ function get_chinadns_log()
 	local flag = http.formvalue("flag")
 	local path = "/tmp/etc/passwall/acl/" .. flag .. "/chinadns_ng.log"
 	if flag ~= "default" then
-		local global_tcp = uci:get(appname, "@global[0]", "tcp_node") or "nil"
-		local acl_tcp = uci:get(appname, flag, "tcp_node") or "nil"
-		if acl_tcp == global_tcp and uci:get(appname, "@global[0]", "enabled") == "1" then
+		local global_tcp = uci_get("@global[0]", "tcp_node") or "nil"
+		local acl_tcp = uci_get(flag, "tcp_node") or "nil"
+		if acl_tcp == global_tcp and uci_get("@global[0]", "enabled") == "1" then
 			path = "/tmp/etc/passwall/acl/default/chinadns_ng.log"
-			if uci:get(appname, "@global[0]", "log_chinadns_ng") ~= "1" then
+			if uci_get("@global[0]", "log_chinadns_ng") ~= "1" then
 				http.write(string.format("<script>alert('%s');window.close();</script>", i18n.translate("The access control node is the same as the global node. Please enable global logging.")))
 				return
 			end
@@ -356,7 +352,7 @@ end
 
 function index_status()
 	local e = {}
-	local dns_shunt = uci:get(appname, "@global[0]", "dns_shunt") or "dnsmasq"
+	local dns_shunt = uci_get("@global[0]", "dns_shunt") or "dnsmasq"
 	if dns_shunt == "smartdns" then
 		local port = api.get_cache_var("SMARTDNS_LOCAL_PORT") or 0
 		e.dns_mode_status = (port ~= 0) and luci.sys.call(string.format("netstat -apn | grep ':%s ' >/dev/null", port)) == 0 or false
@@ -373,7 +369,7 @@ function index_status()
 
 	e["tcp_node_status"] = luci.sys.call("/bin/busybox top -bn1 | grep -v 'grep' | grep '/tmp/etc/passwall/bin/' | grep 'default' | grep 'TCP' >/dev/null") == 0
 
-	if (uci:get(appname, "@global[0]", "udp_node") or "nil") == "tcp" then
+	if (uci_get("@global[0]", "udp_node") or "nil") == "tcp" then
 		e["udp_node_status"] = e["tcp_node_status"]
 	else
 		e["udp_node_status"] = luci.sys.call("/bin/busybox top -bn1 | grep -v 'grep' | grep '/tmp/etc/passwall/bin/' | grep 'default' | grep 'UDP' >/dev/null") == 0
@@ -393,7 +389,7 @@ function socks_status()
 	local id = http.formvalue("id")
 	e.index = index
 	e.socks_status = luci.sys.call(string.format("/bin/busybox top -bn1 | grep -v -E 'grep|acl/|acl_' | grep '%s/bin/' | grep '%s' > /dev/null", appname, id)) == 0
-	local use_http = uci:get(c_config, id, "http_port") or 0
+	local use_http = uci_get(id, "http_port") or 0
 	e.use_http = 0
 	if tonumber(use_http) > 0 then
 		e.use_http = 1
@@ -407,10 +403,10 @@ function connect_status()
 	e.use_time = ""
 	local url = http.formvalue("url")
 	local aliyun = string.find(url, "aliyun")
-	local chn_list = uci:get(appname, "@global[0]", "chn_list") or "direct"
-	local gfw_list = uci:get(appname, "@global[0]", "use_gfw_list") or "1"
-	local proxy_mode = uci:get(appname, "@global[0]", "tcp_proxy_mode") or "proxy"
-	local localhost_proxy = uci:get(appname, "@global[0]", "localhost_proxy") or "1"
+	local chn_list = uci_get("@global[0]", "chn_list") or "direct"
+	local gfw_list = uci_get("@global[0]", "use_gfw_list") or "1"
+	local proxy_mode = uci_get("@global[0]", "tcp_proxy_mode") or "proxy"
+	local localhost_proxy = uci_get("@global[0]", "localhost_proxy") or "1"
 	local socks_server = (localhost_proxy == "0") and api.get_cache_var("GLOBAL_TCP_SOCKS_server") or ""
 	url = "-w %{http_code}:%{time_pretransfer} " .. url
 	if socks_server and socks_server ~= "" then
@@ -485,9 +481,9 @@ function update_config()
 		local data_t = jsonParse(data) or {}
 		if next(data_t) then
 			for k, v in pairs(data_t) do
-				uci:set(c_config, id, k, v)
+				uci_set(id, k, v)
 			end
-			api.uci_save(uci, c_config)
+			uci_save()
 			http_write_json_ok()
 			return
 		end
@@ -503,16 +499,16 @@ function add_node()
 
 	local group = http.formvalue("group")
 	if group and group ~= "default" then
-		uci:set(c_config, uid, "group", group)
+		uci_set(uid, "group", group)
 	end
 
-	uci:set(c_config, uid, "type", "Socks")
+	uci_set(uid, "type", "Socks")
 
 	if redirect == "1" then
-		api.uci_save(uci, c_config)
+		uci_save()
 		http.redirect(api.url("node_config", uid))
 	else
-		api.uci_save(uci, c_config, true, true)
+		uci_save(true, true)
 		http_write_json({result = uid})
 	end
 end
@@ -520,22 +516,22 @@ end
 function set_node()
 	local protocol = http.formvalue("protocol")
 	local section = http.formvalue("section")
-	uci:set(c_config, "@global[0]", protocol .. "_node", section)
+	uci_set("@global[0]", protocol .. "_node", section)
 	if protocol == "tcp" then
-		local node_protocol = uci:get(c_config, section, "protocol")
+		local node_protocol = uci_get(section, "protocol")
 		if node_protocol == "_shunt" then
-			local type = uci:get(c_config, section, "type")
-			local dns_shunt = uci:get(c_config, "@global[0]", "dns_shunt")
+			local type = uci_get(section, "type")
+			local dns_shunt = uci_get("@global[0]", "dns_shunt")
 			local dns_key = (dns_shunt == "smartdns") and "smartdns_dns_mode" or "dns_mode"
-			local dns_mode = uci:get(c_config, "@global[0]", dns_key)
+			local dns_mode = uci_get("@global[0]", dns_key)
 			local new_dns_mode = (type == "Xray") and "xray" or "sing-box"
 			if dns_mode ~= new_dns_mode then
-				uci:set(c_config, "@global[0]", dns_key, new_dns_mode)
-				uci:set(c_config, "@global[0]", "v2ray_dns_mode", "tcp")
+				uci_set("@global[0]", dns_key, new_dns_mode)
+				uci_set("@global[0]", "v2ray_dns_mode", "tcp")
 			end
 		end
 	end
-	api.uci_save(uci, c_config, true, true)
+	uci_save(true, true)
 	http.redirect(api.url("log"))
 end
 
@@ -543,57 +539,57 @@ function copy_node()
 	local section = http.formvalue("section")
 	local uid = api.gen_random_char()
 	uci:section(c_config, "nodes", uid)
-	for k, v in pairs(uci:get_all(c_config, section)) do
+	for k, v in pairs(uci_get(section)) do
 		if not k:match("^%.") and k ~= "group" then
 			if k == "remarks" then v = (v or "") .. "(1)" end
-			uci:set(c_config, uid, k, v)
+			uci_set(uid, k, v)
 		end
 	end
-	uci:set(c_config, uid, "add_mode", 1)
-	api.uci_save(uci, c_config)
+	uci_set(uid, "add_mode", 1)
+	uci_save()
 	http.redirect(api.url("node_config", uid))
 end
 
 function clear_all_nodes()
-	uci:set(c_config, '@global[0]', "enabled", "0")
-	uci:set(c_config, '@global[0]', "socks_enabled", "0")
-	uci:set(c_config, '@global_haproxy[0]', "balancing_enable", "0")
-	uci:delete(c_config, '@global[0]', "tcp_node")
-	uci:delete(c_config, '@global[0]', "udp_node")
-	uci:foreach(c_config, "socks", function(t)
-		uci:delete(c_config, t[".name"])
-		uci:set_list(c_config, t[".name"], "autoswitch_backup_node", {})
+	uci_set('@global[0]', "enabled", "0")
+	uci_set('@global[0]', "socks_enabled", "0")
+	uci_set('@global_haproxy[0]', "balancing_enable", "0")
+	uci_del('@global[0]', "tcp_node")
+	uci_del('@global[0]', "udp_node")
+	uci_foreach("socks", function(t)
+		uci_del(t[".name"])
+		uci_set(t[".name"], "autoswitch_backup_node", {})
 	end)
-	uci:foreach(c_config, "haproxy_config", function(t)
-		uci:delete(c_config, t[".name"])
+	uci_foreach("haproxy_config", function(t)
+		uci_del(t[".name"])
 	end)
-	uci:foreach(appname, "acl_rule", function(t)
-		uci:delete(c_config, t[".name"], "tcp_node")
-		uci:delete(c_config, t[".name"], "udp_node")
+	uci_foreach("acl_rule", function(t)
+		uci_del(t[".name"], "tcp_node")
+		uci_del(t[".name"], "udp_node")
 	end)
-	uci:foreach(c_config, "nodes", function(node)
-		uci:delete(c_config, node['.name'])
+	uci_foreach("nodes", function(node)
+		uci_del(node['.name'])
 	end)
-	uci:foreach(c_config, "subscribe_list", function(t)
-		uci:delete(c_config, t[".name"], "md5")
-		uci:delete(c_config, t[".name"], "chain_proxy")
-		uci:delete(c_config, t[".name"], "preproxy_node")
-		uci:delete(c_config, t[".name"], "to_node")
+	uci_foreach("subscribe_list", function(t)
+		uci_del(t[".name"], "md5")
+		uci_del(t[".name"], "chain_proxy")
+		uci_del(t[".name"], "preproxy_node")
+		uci_del(t[".name"], "to_node")
 	end)
 
-	api.uci_save(uci, c_config, true, true)
+	uci_save(true, true)
 end
 
 function delete_select_nodes()
 	local ids = http.formvalue("ids")
 	local redirect = http.formvalue("redirect")
 	string.gsub(ids, '[^' .. "," .. ']+', function(w)
-		uci:foreach(c_config, "socks", function(t)
+		uci_foreach("socks", function(t)
 			if t["node"] == w then
-				uci:delete(c_config, t[".name"])
+				uci_del(t[".name"])
 			end
 			local changed = false
-			local auto_switch_node_list = uci:get(c_config, t[".name"], "autoswitch_backup_node") or {}
+			local auto_switch_node_list = uci_get(t[".name"], "autoswitch_backup_node") or {}
 			for i = #auto_switch_node_list, 1, -1 do
 				if w == auto_switch_node_list[i] then
 					table.remove(auto_switch_node_list, i)
@@ -601,36 +597,36 @@ function delete_select_nodes()
 				end
 			end
 			if changed then
-				uci:set_list(c_config, t[".name"], "autoswitch_backup_node", auto_switch_node_list)
+				uci_set(t[".name"], "autoswitch_backup_node", auto_switch_node_list)
 			end
 		end)
-		if (uci:get(c_config, "@global[0]", "tcp_node") or "") == w then
-			uci:delete(c_config, '@global[0]', "tcp_node")
+		if (uci_get("@global[0]", "tcp_node") or "") == w then
+			uci_del('@global[0]', "tcp_node")
 		end
-		if (uci:get(c_config, "@global[0]", "udp_node") or "") == w then
-			uci:delete(c_config, '@global[0]', "udp_node")
+		if (uci_get("@global[0]", "udp_node") or "") == w then
+			uci_del('@global[0]', "udp_node")
 		end
-		uci:foreach(c_config, "haproxy_config", function(t)
+		uci_foreach("haproxy_config", function(t)
 			if t["lbss"] == w then
-				uci:delete(c_config, t[".name"])
+				uci_del(t[".name"])
 			end
 		end)
-		uci:foreach(c_config, "acl_rule", function(t)
+		uci_foreach("acl_rule", function(t)
 			if t["tcp_node"] == w then
-				uci:delete(c_config, t[".name"], "tcp_node")
+				uci_del(t[".name"], "tcp_node")
 			end
 			if t["udp_node"] == w then
-				uci:delete(c_config, t[".name"], "udp_node")
+				uci_del(t[".name"], "udp_node")
 			end
 		end)
-		uci:foreach(c_config, "nodes", function(t)
+		uci_foreach("nodes", function(t)
 			if t["preproxy_node"] == w then
-				uci:delete(c_config, t[".name"], "preproxy_node")
-				uci:delete(c_config, t[".name"], "chain_proxy")
+				uci_del(t[".name"], "preproxy_node")
+				uci_del(t[".name"], "chain_proxy")
 			end
 			if t["to_node"] == w then
-				uci:delete(c_config, t[".name"], "to_node")
-				uci:delete(c_config, t[".name"], "chain_proxy")
+				uci_del(t[".name"], "to_node")
+				uci_del(t[".name"], "chain_proxy")
 			end
 			local list_name = t["urltest_node"] and "urltest_node" or (t["balancing_node"] and "balancing_node")
 			if list_name then
@@ -646,48 +642,48 @@ function delete_select_nodes()
 						end
 					end
 					if changed then
-						uci:set_list(c_config, t[".name"], list_name, new_nodes)
+						uci_set(t[".name"], list_name, new_nodes)
 					end
 				end
 			end
 			if t["fallback_node"] == w then
-				uci:delete(c_config, t[".name"], "fallback_node")
+				uci_del(t[".name"], "fallback_node")
 			end
 		end)
-		uci:foreach(c_config, "subscribe_list", function(t)
+		uci_foreach("subscribe_list", function(t)
 			if t["preproxy_node"] == w then
-				uci:delete(c_config, t[".name"], "preproxy_node")
-				uci:delete(c_config, t[".name"], "chain_proxy")
+				uci_del(t[".name"], "preproxy_node")
+				uci_del(t[".name"], "chain_proxy")
 			end
 			if t["to_node"] == w then
-				uci:delete(c_config, t[".name"], "to_node")
-				uci:delete(c_config, t[".name"], "chain_proxy")
+				uci_del(t[".name"], "to_node")
+				uci_del(t[".name"], "chain_proxy")
 			end
 		end)
-		if (uci:get(c_config, w, "add_mode") or "0") == "2" then
-			local group = uci:get(c_config, w, "group") or ""
+		if (uci_get(w, "add_mode") or "0") == "2" then
+			local group = uci_get(w, "group") or ""
 			if group ~= "" then
-				uci:foreach(c_config, "subscribe_list", function(t)
+				uci_foreach("subscribe_list", function(t)
 					if t["remark"] == group then
-						uci:delete(c_config, t[".name"], "md5")
+						uci_del(t[".name"], "md5")
 					end
 				end)
 			end
 		end
-		uci:delete(c_config, w)
+		uci_del(w)
 	end)
 	if redirect == "1" then
-		api.uci_save(uci, c_config)
+		uci_save()
 		http.redirect(api.url("node_list"))
 	else
-		api.uci_save(uci, c_config, true, true)
+		uci_save(true, true)
 	end
 end
 
 function get_node()
 	local id = http.formvalue("id")
 	local result = {}
-	local show_node_info = uci:get(c_config, "@global_other[0]", "show_node_info") or "0"
+	local show_node_info = uci_get("@global_other[0]", "show_node_info") or "0"
 
 	local function add_is_ipv6_key(o)
 		if o and o.address and show_node_info == "1" then
@@ -700,12 +696,12 @@ function get_node()
 	end
 
 	if id then
-		result = uci:get_all(c_config, id)
+		result = uci_get(id)
 		add_is_ipv6_key(result)
 	else
 		local default_nodes = {}
 		local other_nodes = {}
-		uci:foreach(c_config, "nodes", function(t)
+		uci_foreach("nodes", function(t)
 			add_is_ipv6_key(t)
 			if not t.group or t.group == "" then
 				default_nodes[#default_nodes + 1] = t
@@ -760,8 +756,8 @@ function rollback_rules()
 		return
 	end
 	local bak_dir = "/tmp/bak_v2ray/"
-	local geo_dir = (uci:get(c_config, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/")
-	local geo2rule = uci:get(c_config, "@global_rules[0]", "geo2rule") or "0"
+	local geo_dir = (uci_get("@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/")
+	local geo2rule = uci_get("@global_rules[0]", "geo2rule") or "0"
 	fs.move(bak_dir .. arg_type .. ".dat", geo_dir .. arg_type .. ".dat")
 	fs.rmdir(bak_dir)
 	if geo2rule == "1" and rules ~= "" then
@@ -777,9 +773,9 @@ function server_update_config()
 		local data_t = jsonParse(data) or {}
 		if next(data_t) then
 			for k, v in pairs(data_t) do
-				uci:set(c_config .. "_server", id, k, v)
+				api.uci_set_s(id, k, v)
 			end
-			api.uci_save(uci, c_config .. "_server")
+			api.uci_save_s()
 			http_write_json_ok()
 			return
 		end
@@ -957,7 +953,7 @@ function geo_view()
 	end
 	local function get_rules(str, type)
 		local rules_id = {}
-		uci:foreach(c_config, "shunt_rules", function(s)
+		uci_foreach("shunt_rules", function(s)
 			local list
 			if type == "geoip" then list = s.ip_list else list = s.domain_list end
 			for line in string.gmatch((list or ""), "[^\r\n]+") do
@@ -974,7 +970,7 @@ function geo_view()
 		end)
 		return rules_id
 	end
-	local geo_dir = (uci:get(c_config, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
+	local geo_dir = (uci_get("@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
 	local geosite_path = geo_dir .. "/geosite.dat"
 	local geoip_path = geo_dir .. "/geoip.dat"
 	local geo_type, file_path, cmd
@@ -1091,8 +1087,8 @@ function flush_set()
 	local redirect = http.formvalue("redirect") or "0"
 	local reload = http.formvalue("reload") or "0"
 	if reload == "1" then
-		uci:set(c_config, '@global[0]', "flush_set", "1")
-		api.uci_save(uci, c_config, true, true)
+		uci_set('@global[0]', "flush_set", "1")
+		uci_save(true, true)
 	else
 		api.sh_uci_set(c_config, "@global[0]", "flush_set", "1", true)
 	end
@@ -1103,17 +1099,17 @@ end
 
 function fetch_certsha256()
 	local id = http.formvalue("id") or ""
-	local address = (id ~= "") and uci:get(c_config, id, "address") or ""
-	local port = (id ~= "") and uci:get(c_config, id, "port") or 0
-	local sni = (id ~= "") and uci:get(c_config, id, "tls_serverName") or ""
+	local address = (id ~= "") and uci_get(id, "address") or ""
+	local port = (id ~= "") and uci_get(id, "port") or 0
+	local sni = (id ~= "") and uci_get(id, "tls_serverName") or ""
 	sni = (sni ~= "") and sni or address
-	local protocol = uci:get(appname, id, "protocol")
+	local protocol = uci_get(id, "protocol")
 	local h3, timeout = false, 10
 	if protocol == "hysteria2" then
 		h3 = true
 		timeout = 60
 		if port == 0 then
-			local hop = uci:get(appname, id, "hysteria2_hop") or "0"
+			local hop = uci_get(id, "hysteria2_hop") or "0"
 			port = tonumber(hop:match("^%s*(%d+)"))
 		end
 	end
@@ -1130,11 +1126,11 @@ function get_shunt_rules()
 	local result = {}
 
 	if id then
-		result = uci:get_all(c_config, id)
+		result = uci_get(id)
 	else
 		local default_items = {}
 		local other_items = {}
-		uci:foreach(c_config, "shunt_rules", function(t)
+		uci_foreach("shunt_rules", function(t)
 			if not t.group or t.group == "" then
 				default_items[#default_items + 1] = t
 			else
@@ -1153,7 +1149,7 @@ function add_shunt_rule()
 
 	local uid = add_name
 	if add_name then
-		local has = uci:get(c_config, uid)
+		local has = uci_get(uid)
 		if has then
 			http_write_json_error({ message = i18n.translate("This ID already exists.") })
 			return
@@ -1165,14 +1161,14 @@ function add_shunt_rule()
 
 	local group = http.formvalue("group")
 	if group and group ~= "default" then
-		uci:set(c_config, uid, "group", group)
+		uci_set(uid, "group", group)
 	end
 
 	if redirect == "1" then
-		api.uci_save(uci, c_config)
+		uci_save()
 		http.redirect(api.url("shunt_rules", uid))
 	else
-		api.uci_save(uci, c_config)
+		uci_save()
 		http_write_json_ok({uid = uid, redirect_url = api.url("shunt_rules", uid)})
 	end
 end
@@ -1181,17 +1177,17 @@ function delete_select_shunt_rules()
 	local ids = http.formvalue("ids")
 	local redirect = http.formvalue("redirect")
 	string.gsub(ids, '[^' .. "," .. ']+', function(w)
-		uci:foreach(c_config, "nodes", function(s)
+		uci_foreach("nodes", function(s)
 			if s["protocol"] and s["protocol"] == "_shunt" then
-				uci:delete(c_config, s[".name"], w)
+				uci_del(s[".name"], w)
 			end
 		end)
-		uci:delete(c_config, w)
+		uci_del(w)
 	end)
 	if redirect == "1" then
-		api.uci_save(uci, c_config)
+		uci_save()
 		http.redirect(api.url("rule"))
 	else
-		api.uci_save(uci, c_config, true, true)
+		uci_save(true, true)
 	end
 end

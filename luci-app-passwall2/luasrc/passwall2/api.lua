@@ -2018,3 +2018,36 @@ function table_remove_duplicates(t)
 	end
 	return new_t
 end
+
+function gen_wireguard_key()
+	if sys.call("command -v wg >/dev/null") == 0 then
+		local private_key = sys.exec('echo -n $(wg genkey)')
+		local public_key = sys.exec('echo -n $(echo "%s" | wg pubkey)' % private_key)
+		return {
+			private_key = private_key,
+			public_key = public_key
+		}
+	end
+	local xray = finded_com("xray")
+	if xray then
+		local result = sys.exec(xray .. " wg | awk -F ': ' '{print $2}'")
+		local s = split(result, "\n")
+		local private_key = s[1]
+		local public_key = s[2]
+		return {
+			private_key = private_key,
+			public_key = public_key
+		}
+	end
+	local sb = finded_com("sing-box")
+	if sb then
+		local result = sys.exec(sb .. " generate wg-keypair | awk '{print $2}'")
+		local s = split(result, "\n")
+		local private_key = s[1]
+		local public_key = s[2]
+		return {
+			private_key = private_key,
+			public_key = public_key
+		}
+	end
+end

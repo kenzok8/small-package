@@ -1307,6 +1307,12 @@ msgstr "Приватный ключ"
 msgid "Pre shared key"
 msgstr "Дополнительный симметричный ключ"
 
+msgid "Allowed IPs"
+msgstr "Разрешенные IP-адреса"
+
+msgid "Generate key"
+msgstr "Сгенерировать ключ"
+
 msgid "Local Address"
 msgstr "Локальный адрес"
 

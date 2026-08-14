@@ -319,7 +319,7 @@ end
 
 m:appendTemplate("/rule_list/js")
 
-local geo_dir = (uci:get(api.c_config, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
+local geo_dir = (api.uci_get_c("@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
 local geosite_path = geo_dir .. "/geosite.dat"
 local geoip_path = geo_dir .. "/geoip.dat"
 if api.finded_com("geoview") and fs.access(geosite_path) and fs.access(geoip_path) then
