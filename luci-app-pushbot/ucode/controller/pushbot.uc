@@ -336,8 +336,36 @@ return {
 			else if (opt in file_paths) {
 				let path = file_paths[opt];
 				if (type(val) == 'string' && val != "") {
+					/* 黑名单文件：支持换行/空格/tab 混合分隔（与脚本端
+					   IFS 空白分割一致），保存时统一规范为每行一个 IP */
+					if (opt == "ip_black_list") {
+						let keep = [];
+						let seen = {};
+						let loc = { "::1": true, "127.0.0.1": true };
+						let pf = popen("ip -o addr show 2>/dev/null | awk '{print $4}' | cut -d/ -f1", "r");
+						if (pf) {
+							for (let line = pf.read("line"); line; line = pf.read("line")) {
+								let a = replace(line, /[\r\n\s]+/, "");
+								if (a != "")
+									loc[a] = true;
+							}
+							pf.close();
+						}
+						/* 按任意空白分割（换行/空格/tab 混用均可） */
+						let parts = split(replace(val, /\r\n/g, "\n"), /\s+/);
+						for (let p in parts) {
+							let l = replace(p, /[\r\n\s]+/, "");
+							if (l == "" || (l in loc) || (l in seen))
+								continue;
+							seen[l] = true;
+							push(keep, l);
+						}
+						content = join("\n", keep);
+						if (length(content) > 0)
+							content += "\n";
+					}
 					let f = open(path, "w");
-					if (f) { f.write(replace(val, /\r\n/g, "\n")); f.close(); }
+					if (f) { f.write(content); f.close(); }
 				}
 				else {
 					let f = open(path, "w");
@@ -347,9 +375,29 @@ return {
 			/* list options */
 			else if (opt in list_opt_set) {
 				uci_cmd("delete", "pushbot.pushbot." + sq(opt));
+				/* 黑名单保存校验：剔除本机接口地址与 ::1 / 127.0.0.1
+				   （防止误拉黑自己断掉 Web/SSH 访问；脚本侧还有
+				   is_local_address 硬保护，这里保存端提前过滤） */
+				let localset = {};
+				if (opt == "pushbot_blacklist") {
+					localset["::1"] = true;
+					localset["127.0.0.1"] = true;
+					let pf = popen("ip -o addr show 2>/dev/null | awk '{print $4}' | cut -d/ -f1", "r");
+					if (pf) {
+						for (let line = pf.read("line"); line; line = pf.read("line")) {
+							let a = replace(line, /[\r\n\s]+/, "");
+							if (a != "")
+								localset[a] = true;
+						}
+						pf.close();
+					}
+				}
 				function add(v) {
-					if (v != "")
-						uci_cmd("add_list", "pushbot.pushbot." + sq(opt) + "=" + sq(v));
+					if (v == "")
+						return;
+					if (opt == "pushbot_blacklist" && v in localset)
+						return;   /* 本机地址：剔除，不写入配置 */
+					uci_cmd("add_list", "pushbot.pushbot." + sq(opt) + "=" + sq(v));
 				}
 				if (type(val) == 'array')
 					for (let v in val) add(v);

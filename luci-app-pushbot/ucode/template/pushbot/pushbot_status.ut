@@ -1540,7 +1540,7 @@ cuSub.appendChild(mkBtn('{{ _('Traffic DND') }}',cdOn,function(on){updateFlagInp
 	ipLbl.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
 	ipLbl.textContent='{{ _('IP whitelist') }}';ipCtr.appendChild(ipLbl);
 	var ipHint=document.createElement('div');ipHint.style.cssText='margin:0 0 4px 2px;font-size:11.5px;color:var(--text-color-low,#64748b)';
-	ipHint.textContent='{{ _('Support single IP or CIDR range, multiple entries separated by space: 192.168.1.5 10.1.1.0/24 2001:db8::1 fd00::/32') }}';
+	ipHint.textContent='{{ _('Add one entry at a time; supports single IP or CIDR range, e.g. [192.168.1.5] [10.1.1.0/24] [2001:db8::1] [fd00::/32]') }}';
 	ipCtr.appendChild(ipHint);
 	var ipTags=document.createElement('div');ipTags.style.cssText='display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px';
 	var ipIR=document.createElement('div');ipIR.style.cssText='display:flex;gap:4px';
@@ -1558,10 +1558,20 @@ cuSub.appendChild(mkBtn('{{ _('Traffic DND') }}',cdOn,function(on){updateFlagInp
 	var blLbl=document.createElement('div');blLbl.className='pushbot-inline-title';
 	blLbl.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
 	blLbl.textContent='{{ _('IP blacklist') }}';blTxt.appendChild(blLbl);
+	var blHint=document.createElement('div');blHint.className='pushbot-inline-description';
+	blHint.style.cssText='margin:0 0 4px 2px;font-size:12px;opacity:0.7';
+	blHint.textContent='{{ _('One IP per line, or space-separated; IPv4 and IPv6 supported') }}';
+	blTxt.appendChild(blHint);
 	var blTa=document.createElement('textarea');blTa.className='cbi-input-textarea';blTa.rows=4;
 	blTa.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit;resize:vertical';
-	blTa.textContent=CT_IP_BLACK;
-	blTa.addEventListener('input',function(){blHi.value=this.value;});
+	blTa.value = CT_IP_BLACK;
+	/* 同步 textarea → hidden input：input + change 双事件 + 初始立即同步
+	   （单 input 事件在部分浏览器/粘贴场景不触发，导致保存值丢失/null） */
+	function blSync(){ blHi.value=blTa.value; }
+	blTa.addEventListener('input',blSync);
+	blTa.addEventListener('change',blSync);
+	blTa.addEventListener('keyup',blSync);
+	blSync();
 	blTxt.appendChild(blTa);banSub.appendChild(blTxt);
 	/* IP white list tag logic */
 	var ipVals=CT_IP_WHITE.slice();
@@ -2614,6 +2624,14 @@ function initModernTabs() {
 /* ═══════════════════════════════════════════ */
 /* ── Collect hidden input data from all containers ── */
 window.__pbCollectData = function() {
+	/* 收集前强制同步 textarea → hidden（防 input 事件缺失导致保存值丢失/null） */
+	document.querySelectorAll('textarea').forEach(function(ta) {
+		var hid = null;
+		document.querySelectorAll('input[type="hidden"]').forEach(function(inp) {
+			if (inp.name && inp.name.indexOf('ip_black_list') >= 0) hid = inp;
+		});
+		if (hid) hid.value = ta.value;
+	});
 	var ids = ['pushbot_hidden_fields','con_hidden_fields','mon_hidden_fields','term_hidden_fields','disturb_hidden_fields'];
 	var data = {};
 	ids.forEach(function(id) {
@@ -3866,7 +3884,7 @@ window.addEventListener('load',function(){apply(compute());});
 				</div>
 			</div>
 		</div>
-		<span class="pushbot-version-badge" id="pushbot_version_badge">v5.13-r2</span>
+		<span class="pushbot-version-badge" id="pushbot_version_badge">v5.13-r3</span>
 		<div id="pushbot_status_badge" class="pushbot-status-badge is-stopped" role="status" aria-live="polite">
 			<span class="pushbot-status-dot"></span>
 			<span id="pushbot_status_text">{{ _('NOT RUNNING') }}</span>

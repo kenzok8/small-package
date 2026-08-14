@@ -30,6 +30,11 @@ function read_config(){
 	dir="/tmp/pushbot/" && mkdir -p ${dir}
 	tempjsonpath="/tmp/pushbot/temp.json"
 	ip_blacklist_path="/usr/bin/pushbot/api/ip_blacklist"
+	# 收集本机所有接口地址（v4+v6）用于黑名单自我保护：本机地址与
+	# 127.0.0.1/::1 永不进入黑名单（登录监控可能把本机探测/回环误判为
+	# 失败来源，拉黑自己会断掉 Web/SSH 访问）。收集含回环与全部接口。
+	local_addrs="127.0.0.1 ::1"
+	local_addrs="$local_addrs $(ip -o addr show 2>/dev/null | awk '{print $4}' | cut -d'/' -f1 | grep -vE '^$' | tr '\n' ' ')"
 	[ ! -z "$oui_dir" ] && [ "$oui_dir" -eq "1" ] && oui_base="${dir}oui_base.txt" || oui_base="/usr/bin/pushbot/oui_base.txt"
 	debuglevel=`echo "$debuglevel"` && [ -z "$debuglevel" ] && logfile="/dev/null" || logfile="${dir}pushbot.log"
 	pushbot_blacklist=`echo "$pushbot_blacklist"|sed 's/ /\n/g'` 2>/dev/null
@@ -1278,6 +1283,8 @@ function login_send(){
 	local login_ip_list=`cat ${dir}web_failed|awk '{print $1}'|grep -v "^$"|sort -u|head -n1`
 	for login_ip in $login_ip_list; do
 		[ -z "$login_ip" ] && continue
+		# 本机地址硬保护：本机探测/回环即使失败也不拉黑
+		is_local_address "$login_ip" && continue
 		ip_in_whitelist "$login_ip" && continue
 		local web_login_sum=`cat ${dir}web_failed|grep -w "${login_ip}"|wc -l`
 		if [ -z "$login_max_num" ]; then
@@ -1321,6 +1328,8 @@ function login_send(){
 	local login_ip_list=`cat ${dir}ssh_failed|awk '{print $1}'|grep -v "^$"|sort -u|head -n1`
 	for login_ip in $login_ip_list; do
 		[ -z "$login_ip" ] && continue
+		# 本机地址硬保护：本机探测/回环即使失败也不拉黑
+		is_local_address "$login_ip" && continue
 		ip_in_whitelist "$login_ip" && continue
 		local ssh_login_sum=`cat ${dir}ssh_failed|grep -w "${login_ip}"|wc -l`
 		if [ -z "$login_max_num" ]; then
@@ -1365,6 +1374,20 @@ function login_send(){
 
 # 白名单匹配：支持单个 IP 或标准 IP 段（CIDR，如 10.1.1.0/24、2001:db8::/32）
 # 命中白名单返回 0，否则返回 1。任何拉黑动作前必须调用此函数。
+# 本机地址保护：target 是否为本机任一接口地址或回环地址。
+# 与白名单不同 —— 这是硬保护，任何情况下本机地址都禁止进入黑名单
+# （误拉黑自己会断掉 Web/SSH 访问）。匹配 local_addrs 精确条目。
+function is_local_address(){
+	local target="$1"
+	[ -z "$target" ] && return 1
+	local a
+	for a in $local_addrs; do
+		[ -z "$a" ] && continue
+		[ "$a" = "$target" ] && return 0
+	done
+	return 1
+}
+
 function ip_in_whitelist(){
 	local target="$1"
 	[ -z "$target" ] && return 1
@@ -1454,6 +1477,11 @@ function ipv6_in_network(){
 
 # 添加黑名单 — 支持 nftables / iptables 双模式
 function add_ip_black(){
+	# 本机地址硬保护：本机接口地址/回环永不拉黑（误拉黑自己会断访问）
+	if [ -n "$1" ] && is_local_address "$1"; then
+		echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】IP $1 是本机地址，跳过拉黑" >> ${logfile}
+		return 0
+	fi
 	# 白名单优先：命中白名单（含网段）的 IP 永不拉黑
 	if [ -n "$1" ] && ip_in_whitelist "$1"; then
 		echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】IP $1 命中白名单，跳过拉黑" >> ${logfile}
@@ -1513,6 +1541,13 @@ function add_ip_black(){
 		echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】自动拉黑功能已关闭，将清空防火墙拉黑策略" >> ${logfile}
 	else
 		for ip_black in `cat ${ip_blacklist_path} 2>/dev/null`; do
+			# 本机地址硬保护：本机接口地址/回环不加入防火墙拉黑，
+			# 且从黑名单文件中剔除（历史遗留的本机地址一并清理）
+			if is_local_address "$ip_black"; then
+				sed -i "/^${ip_black}$/d" ${ip_blacklist_path} 2>/dev/null
+				echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】IP $ip_black 是本机地址，已从黑名单剔除" >> ${logfile}
+				continue
+			fi
 			# 白名单优先：命中白名单（含网段）的 IP 不加入防火墙
 			ip_in_whitelist "$ip_black" && continue
 			# 逐行判断 v4 / v6，避免 v6 被 v4 正则误匹配出残片

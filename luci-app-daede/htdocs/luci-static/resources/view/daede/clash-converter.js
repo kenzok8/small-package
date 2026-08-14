@@ -213,7 +213,7 @@ function convertAnytls(node) {
 	setIf(params, 'alpn', arrayValue(node.alpn));
 	setIf(params, 'client-fingerprint', node['client-fingerprint'] || node.fingerprint);
 	if (node['skip-cert-verify'])
-		params.set('allowInsecure', '1');
+		params.set('insecure', '1');
 	if (node.udp)
 		params.set('udp', '1');
 	return 'anytls://' + encodeURIComponent(node.password) + '@' + endpoint(node.server, node.port) +

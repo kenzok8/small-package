@@ -328,9 +328,12 @@ msgstr ""
 msgid "IP blacklist"
 msgstr ""
 
+msgid "One IP per line, or space-separated; IPv4 and IPv6 supported"
+msgstr ""
+
 msgid "IP whitelist"
 
-msgid "Support single IP or CIDR range, multiple entries separated by space: 192.168.1.5 10.1.1.0/24 2001:db8::1 fd00::/32"
+msgid "Add one entry at a time; supports single IP or CIDR range, e.g. [192.168.1.5] [10.1.1.0/24] [2001:db8::1] [fd00::/32]"
 msgstr ""
 
 msgid "IPv4 API list"
