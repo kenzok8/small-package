@@ -597,6 +597,11 @@ return view.extend({
 		so.modalonly = true;
 
 		/* AnyTLS fields */
+		so = ss.taboption('field_general', form.Value, 'anytls_client_metadata', _('Client metadata'),
+			_('The client metadata sent to the server.'));
+		so.depends('type', 'anytls');
+		so.modalonly = true;
+
 		so = ss.taboption('field_general', form.Value, 'anytls_idle_session_check_interval', _('Idle session check interval'),
 			_('In seconds.'));
 		so.placeholder = '30';

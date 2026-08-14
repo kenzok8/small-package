@@ -84,7 +84,7 @@ local function gen_include()
 end
 
 local function start()
-	local enabled = tonumber(uci:get(CONFIG, "@global[0]", "enable") or 0)
+	local enabled = tonumber(api.uci_get_s("@global[0]", "enable") or 0)
 	if enabled == nil or enabled == 0 then
 		return
 	end
@@ -102,7 +102,7 @@ local function start()
 		nft_file:write('flush chain inet fw4 PSW2-SERVER\n')
 		nft_file:write('insert rule inet fw4 input position 0 jump PSW2-SERVER comment "PSW2-SERVER"\n')
 	end
-	uci:foreach(CONFIG, "server", function(server)
+	api.uci_foreach_s("server", function(server)
 		local id = server[".name"]
 		local enable = server.enable
 		if enable and tonumber(enable) == 1 then

@@ -572,6 +572,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		} : null,
 
 		/* AnyTLS */
+		"client-metadata": cfg.anytls_client_metadata,
 		"idle-session-check-interval": durationToSecond(cfg.anytls_idle_session_check_interval),
 		"idle-session-timeout": durationToSecond(cfg.anytls_idle_session_timeout),
 		"min-idle-session": strToInt(cfg.anytls_min_idle_session),

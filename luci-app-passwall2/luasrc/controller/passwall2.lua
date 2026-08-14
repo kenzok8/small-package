@@ -5,8 +5,7 @@ module("luci.controller.passwall2", package.seeall)
 local api = require "luci.passwall2.api"
 local appname = api.appname		-- not available
 local c_config = api.c_config	-- not available
-local s_config = api.s_config	-- not available
-local uci = api.uci				-- in funtion index()
+local uci, uci_get, uci_set, uci_del, uci_foreach, uci_save = api.uci, api.uci_get_c, api.uci_set_c, api.uci_del_c, api.uci_foreach_c, api.uci_save_c
 local http = require "luci.http"
 local util = require "luci.util"
 local i18n = require "luci.i18n"
@@ -22,14 +21,11 @@ function index()
 	end
 	local api = require "luci.passwall2.api"
 	local appname = api.appname		-- global definitions not available
-	local c_config = api.c_config	-- not available
-	local s_config = api.s_config	-- not available
-	local uci = api.uci				-- in function index()
 	entry({"admin", "services", appname}).dependent = true
 	entry({"admin", "services", appname, "show"}, call("show_menu")).leaf = true
 	entry({"admin", "services", appname, "hide"}, call("hide_menu")).leaf = true
 	local e
-	if uci:get(c_config, "@global[0]", "hide_from_luci") ~= "1" then
+	if api.uci_get_c("@global[0]", "hide_from_luci") ~= "1" then
 		e = entry({"admin", "services", appname}, alias("admin", "services", appname, "settings"), _("PassWall 2"), 0)
 	else
 		e = entry({"admin", "services", appname}, alias("admin", "services", appname, "settings"), nil, 0)
@@ -192,10 +188,10 @@ function socks_autoswitch_add_node()
 	local id = http.formvalue("id")
 	local key = http.formvalue("key")
 	if id and id ~= "" and key and key ~= "" then
-		uci:set(c_config, id, "enable_autoswitch", "1")
-		local new_list = uci:get(c_config, id, "autoswitch_backup_node") or {}
+		uci_set(id, "enable_autoswitch", "1")
+		local new_list = uci_get(id, "autoswitch_backup_node") or {}
 		for i = #new_list, 1, -1 do
-			if (uci:get(c_config, new_list[i], "remarks") or ""):find(key) then
+			if (uci_get(new_list[i], "remarks") or ""):find(key) then
 				table.remove(new_list, i)
 			end
 		end
@@ -204,8 +200,8 @@ function socks_autoswitch_add_node()
 				table.insert(new_list, e.id)
 			end
 		end
-		uci:set_list(c_config, id, "autoswitch_backup_node", new_list)
-		api.uci_save(uci, c_config)
+		uci_set(id, "autoswitch_backup_node", new_list)
+		uci_save()
 	end
 	http.redirect(api.url("socks_config", id))
 end
@@ -214,15 +210,15 @@ function socks_autoswitch_remove_node()
 	local id = http.formvalue("id")
 	local key = http.formvalue("key")
 	if id and id ~= "" and key and key ~= "" then
-		uci:set(c_config, id, "enable_autoswitch", "1")
-		local new_list = uci:get(c_config, id, "autoswitch_backup_node") or {}
+		uci_set(id, "enable_autoswitch", "1")
+		local new_list = uci_get(id, "autoswitch_backup_node") or {}
 		for i = #new_list, 1, -1 do
-			if (uci:get(c_config, new_list[i], "remarks") or ""):find(key) then
+			if (uci_get(new_list[i], "remarks") or ""):find(key) then
 				table.remove(new_list, i)
 			end
 		end
-		uci:set_list(c_config, id, "autoswitch_backup_node", new_list)
-		api.uci_save(uci, c_config)
+		uci_set(id, "autoswitch_backup_node", new_list)
+		uci_save()
 	end
 	http.redirect(api.url("socks_config", id))
 end
@@ -313,7 +309,7 @@ function socks_status()
 	local id = http.formvalue("id")
 	e.index = index
 	e.socks_status = luci.sys.call(string.format("/bin/busybox top -bn1 | grep -v -E 'grep|acl/|acl_' | grep '%s/bin/' | grep '%s' > /dev/null", appname, id)) == 0
-	local use_http = uci:get(c_config, id, "http_port") or 0
+	local use_http = uci_get(id, "http_port") or 0
 	e.use_http = 0
 	if tonumber(use_http) > 0 then
 		e.use_http = 1
@@ -383,9 +379,9 @@ function update_config()
 		local data_t = jsonParse(data) or {}
 		if next(data_t) then
 			for k, v in pairs(data_t) do
-				uci:set(c_config, id, k, v)
+				uci_set(id, k, v)
 			end
-			api.uci_save(uci, c_config)
+			uci_save()
 			http_write_json_ok()
 			return
 		end
@@ -401,16 +397,16 @@ function add_node()
 
 	local group = http.formvalue("group")
 	if group and group ~= "default" then
-		uci:set(c_config, uid, "group", group)
+		uci_set(uid, "group", group)
 	end
 
-	uci:set(c_config, uid, "type", "Xray")
+	uci_set(uid, "type", "Xray")
 
 	if redirect == "1" then
-		api.uci_save(uci, c_config)
+		uci_save()
 		http.redirect(api.url("node_config", uid))
 	else
-		api.uci_save(uci, c_config, true, true)
+		uci_save(true, true)
 		http_write_json({result = uid})
 	end
 end
@@ -419,8 +415,8 @@ function set_node()
 	local type = http.formvalue("type")
 	local config = http.formvalue("config")
 	local section = http.formvalue("section")
-	uci:set(c_config, type, config, section)
-	api.uci_save(uci, c_config, true, true)
+	uci_set(type, config, section)
+	uci_save(true, true)
 	http.redirect(api.url("log"))
 end
 
@@ -428,58 +424,58 @@ function copy_node()
 	local section = http.formvalue("section")
 	local uid = api.gen_random_char()
 	uci:section(c_config, "nodes", uid)
-	for k, v in pairs(uci:get_all(c_config, section)) do
+	for k, v in pairs(uci_get(section)) do
 		if not k:match("^%.") and k ~= "group" then
 			if k == "remarks" then v = (v or "") .. "(1)" end
-			uci:set(c_config, uid, k, v)
+			uci_set(uid, k, v)
 		end
 	end
-	uci:set(c_config, uid, "add_mode", 1)
-	api.uci_save(uci, c_config)
+	uci_set(uid, "add_mode", 1)
+	uci_save()
 	http.redirect(api.url("node_config", uid))
 end
 
 function clear_all_nodes()
-	uci:set(c_config, '@global[0]', "enabled", "0")
-	uci:set(c_config, '@global[0]', "socks_enabled", "0")
-	uci:set(c_config, '@global_haproxy[0]', "balancing_enable", "0")
-	uci:delete(c_config, '@global[0]', "node")
-	uci:foreach(c_config, "socks", function(t)
-		uci:delete(c_config, t[".name"])
-		uci:set_list(c_config, t[".name"], "autoswitch_backup_node", {})
+	uci_set('@global[0]', "enabled", "0")
+	uci_set('@global[0]', "socks_enabled", "0")
+	uci_set('@global_haproxy[0]', "balancing_enable", "0")
+	uci_del('@global[0]', "node")
+	uci_foreach("socks", function(t)
+		uci_del(t[".name"])
+		uci_set(t[".name"], "autoswitch_backup_node", {})
 	end)
-	uci:foreach(c_config, "haproxy_config", function(t)
-		uci:delete(c_config, t[".name"])
+	uci_foreach("haproxy_config", function(t)
+		uci_del(t[".name"])
 	end)
-	uci:foreach(c_config, "acl_rule", function(t)
-		uci:delete(c_config, t[".name"], "node")
+	uci_foreach("acl_rule", function(t)
+		uci_del(t[".name"], "node")
 	end)
-	uci:foreach(c_config, "nodes", function(node)
-		uci:delete(c_config, node['.name'])
+	uci_foreach("nodes", function(node)
+		uci_del(node['.name'])
 	end)
-	uci:foreach(c_config, "subscribe_list", function(t)
-		uci:delete(c_config, t[".name"], "md5")
-		uci:delete(c_config, t[".name"], "chain_proxy")
-		uci:delete(c_config, t[".name"], "preproxy_node")
-		uci:delete(c_config, t[".name"], "to_node")
+	uci_foreach("subscribe_list", function(t)
+		uci_del(t[".name"], "md5")
+		uci_del(t[".name"], "chain_proxy")
+		uci_del(t[".name"], "preproxy_node")
+		uci_del(t[".name"], "to_node")
 	end)
 
-	api.uci_save(uci, c_config, true, true)
+	uci_save(true, true)
 end
 
 function delete_select_nodes()
 	local ids = http.formvalue("ids")
 	local redirect = http.formvalue("redirect")
 	string.gsub(ids, '[^' .. "," .. ']+', function(w)
-		if (uci:get(c_config, "@global[0]", "node") or "") == w then
-			uci:delete(c_config, '@global[0]', "node")
+		if (uci_get("@global[0]", "node") or "") == w then
+			uci_del('@global[0]', "node")
 		end
-		uci:foreach(c_config, "socks", function(t)
+		uci_foreach("socks", function(t)
 			if t["node"] == w then
-				uci:delete(c_config, t[".name"])
+				uci_del(t[".name"])
 			end
 			local changed = false
-			local auto_switch_node_list = uci:get(c_config, t[".name"], "autoswitch_backup_node") or {}
+			local auto_switch_node_list = uci_get(t[".name"], "autoswitch_backup_node") or {}
 			for i = #auto_switch_node_list, 1, -1 do
 				if w == auto_switch_node_list[i] then
 					table.remove(auto_switch_node_list, i)
@@ -487,31 +483,31 @@ function delete_select_nodes()
 				end
 			end
 			if changed then
-				uci:set_list(c_config, t[".name"], "autoswitch_backup_node", auto_switch_node_list)
+				uci_set(t[".name"], "autoswitch_backup_node", auto_switch_node_list)
 			end
 		end)
-		uci:foreach(c_config, "haproxy_config", function(t)
+		uci_foreach("haproxy_config", function(t)
 			if t["lbss"] == w then
-				uci:delete(c_config, t[".name"])
+				uci_del(t[".name"])
 			end
 		end)
-		uci:foreach(c_config, "acl_rule", function(t)
+		uci_foreach("acl_rule", function(t)
 			if t["node"] == w then
-				uci:delete(c_config, t[".name"], "node")
+				uci_del(t[".name"], "node")
 			end
 		end)
-		uci:foreach(c_config, "nodes", function(t)
+		uci_foreach("nodes", function(t)
 			if t["preproxy_node"] == w then
-				uci:delete(c_config, t[".name"], "preproxy_node")
-				uci:delete(c_config, t[".name"], "chain_proxy")
+				uci_del(t[".name"], "preproxy_node")
+				uci_del(t[".name"], "chain_proxy")
 			end
 			if t["to_node"] == w then
-				uci:delete(c_config, t[".name"], "to_node")
-				uci:delete(c_config, t[".name"], "chain_proxy")
+				uci_del(t[".name"], "to_node")
+				uci_del(t[".name"], "chain_proxy")
 			end
 			local list_name = t["urltest_node"] and "urltest_node" or (t["balancing_node"] and "balancing_node")
 			if list_name then
-				local nodes = uci:get_list(c_config, t[".name"], list_name)
+				local nodes = uci_get(t[".name"], list_name)
 				if nodes then
 					local changed = false
 					local new_nodes = {}
@@ -523,48 +519,48 @@ function delete_select_nodes()
 						end
 					end
 					if changed then
-						uci:set_list(c_config, t[".name"], list_name, new_nodes)
+						uci_set(t[".name"], list_name, new_nodes)
 					end
 				end
 			end
 			if t["fallback_node"] == w then
-				uci:delete(c_config, t[".name"], "fallback_node")
+				uci_del(t[".name"], "fallback_node")
 			end
 		end)
-		uci:foreach(c_config, "subscribe_list", function(t)
+		uci_foreach("subscribe_list", function(t)
 			if t["preproxy_node"] == w then
-				uci:delete(c_config, t[".name"], "preproxy_node")
-				uci:delete(c_config, t[".name"], "chain_proxy")
+				uci_del(t[".name"], "preproxy_node")
+				uci_del(t[".name"], "chain_proxy")
 			end
 			if t["to_node"] == w then
-				uci:delete(c_config, t[".name"], "to_node")
-				uci:delete(c_config, t[".name"], "chain_proxy")
+				uci_del(t[".name"], "to_node")
+				uci_del(t[".name"], "chain_proxy")
 			end
 		end)
-		if (uci:get(c_config, w, "add_mode") or "0") == "2" then
-			local group = uci:get(c_config, w, "group") or ""
+		if (uci_get(w, "add_mode") or "0") == "2" then
+			local group = uci_get(w, "group") or ""
 			if group ~= "" then
-				uci:foreach(c_config, "subscribe_list", function(t)
+				uci_foreach("subscribe_list", function(t)
 					if t["remark"] == group then
-						uci:delete(c_config, t[".name"], "md5")
+						uci_del(t[".name"], "md5")
 					end
 				end)
 			end
 		end
-		uci:delete(c_config, w)
+		uci_del(w)
 	end)
 	if redirect == "1" then
-		api.uci_save(uci, c_config)
+		uci_save()
 		http.redirect(api.url("node_list"))
 	else
-		api.uci_save(uci, c_config, true, true)
+		uci_save(true, true)
 	end
 end
 
 function get_node()
 	local id = http.formvalue("id")
 	local result = {}
-	local show_node_info = uci:get(c_config, "@global_other[0]", "show_node_info") or "0"
+	local show_node_info = uci_get("@global_other[0]", "show_node_info") or "0"
 
 	local function add_is_ipv6_key(o)
 		if o and o.address and show_node_info == "1" then
@@ -577,12 +573,12 @@ function get_node()
 	end
 
 	if id then
-		result = uci:get_all(c_config, id)
+		result = uci_get(id)
 		add_is_ipv6_key(result)
 	else
 		local default_nodes = {}
 		local other_nodes = {}
-		uci:foreach(c_config, "nodes", function(t)
+		uci_foreach("nodes", function(t)
 			add_is_ipv6_key(t)
 			if not t.group or t.group == "" then
 				default_nodes[#default_nodes + 1] = t
@@ -636,7 +632,7 @@ function rollback_rules()
 		return
 	end
 	local bak_dir = "/tmp/bak_v2ray/"
-	local geo_dir = (uci:get(c_config, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/")
+	local geo_dir = (uci_get("@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/")
 	fs.move(bak_dir .. arg_type .. ".dat", geo_dir .. arg_type .. ".dat")
 	fs.rmdir(bak_dir)
 	http_write_json_ok()
@@ -649,9 +645,9 @@ function server_update_config()
 		local data_t = jsonParse(data) or {}
 		if next(data_t) then
 			for k, v in pairs(data_t) do
-				uci:set(c_config .. "_server", id, k, v)
+				api.uci_set_s(id, k, v)
 			end
-			api.uci_save(uci, c_config .. "_server")
+			api.uci_save_s()
 			http_write_json_ok()
 			return
 		end
@@ -805,7 +801,7 @@ function geo_view()
 	end
 	local function get_rules(str, type)
 		local rules_id = {}
-		uci:foreach(c_config, "shunt_rules", function(s)
+		uci_foreach("shunt_rules", function(s)
 			local list
 			if type == "geoip" then list = s.ip_list else list = s.domain_list end
 			for line in string.gmatch((list or ""), "[^\r\n]+") do
@@ -822,7 +818,7 @@ function geo_view()
 		end)
 		return rules_id
 	end
-	local geo_dir = (uci:get(c_config, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
+	local geo_dir = (uci_get("@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
 	local geosite_path = geo_dir .. "/geosite.dat"
 	local geoip_path = geo_dir .. "/geoip.dat"
 	local geo_type, file_path, cmd
@@ -939,8 +935,8 @@ function flush_set()
 	local redirect = http.formvalue("redirect") or "0"
 	local reload = http.formvalue("reload") or "0"
 	if reload == "1" then
-		uci:set(c_config, '@global[0]', "flush_set", "1")
-		api.uci_save(uci, c_config, true, true)
+		uci_set('@global[0]', "flush_set", "1")
+		uci_save(true, true)
 	else
 		api.sh_uci_set(c_config, "@global[0]", "flush_set", "1", true)
 	end
@@ -951,9 +947,9 @@ end
 
 function fetch_certsha256()
 	local id = http.formvalue("id") or ""
-	local address = (id ~= "") and uci:get(c_config, id, "address") or ""
-	local port = (id ~= "") and uci:get(c_config, id, "port") or 0
-	local sni = (id ~= "") and uci:get(c_config, id, "tls_serverName") or ""
+	local address = (id ~= "") and uci_get(id, "address") or ""
+	local port = (id ~= "") and uci_get(id, "port") or 0
+	local sni = (id ~= "") and uci_get(id, "tls_serverName") or ""
 	sni = (sni ~= "") and sni or address
 	if address == "" or port == 0 then
 		http_write_json_error()
@@ -968,11 +964,11 @@ function get_shunt_rules()
 	local result = {}
 
 	if id then
-		result = uci:get_all(c_config, id)
+		result = uci_get(id)
 	else
 		local default_items = {}
 		local other_items = {}
-		uci:foreach(c_config, "shunt_rules", function(t)
+		uci_foreach("shunt_rules", function(t)
 			if not t.group or t.group == "" then
 				default_items[#default_items + 1] = t
 			else
@@ -991,7 +987,7 @@ function add_shunt_rule()
 
 	local uid = add_name
 	if add_name then
-		local has = uci:get(c_config, uid)
+		local has = uci_get(uid)
 		if has then
 			http_write_json_error({ message = i18n.translate("This ID already exists.") })
 			return
@@ -1003,14 +999,14 @@ function add_shunt_rule()
 
 	local group = http.formvalue("group")
 	if group and group ~= "default" then
-		uci:set(c_config, uid, "group", group)
+		uci_set(uid, "group", group)
 	end
 
 	if redirect == "1" then
-		api.uci_save(uci, c_config)
+		uci_save()
 		http.redirect(api.url("shunt_rules", uid))
 	else
-		api.uci_save(uci, c_config)
+		uci_save()
 		http_write_json_ok({uid = uid, redirect_url = api.url("shunt_rules", uid)})
 	end
 end
@@ -1019,17 +1015,17 @@ function delete_select_shunt_rules()
 	local ids = http.formvalue("ids")
 	local redirect = http.formvalue("redirect")
 	string.gsub(ids, '[^' .. "," .. ']+', function(w)
-		uci:foreach(c_config, "nodes", function(s)
+		uci_foreach("nodes", function(s)
 			if s["protocol"] and s["protocol"] == "_shunt" then
-				uci:delete(c_config, s[".name"], w)
+				uci_del(s[".name"], w)
 			end
 		end)
-		uci:delete(c_config, w)
+		uci_del(w)
 	end)
 	if redirect == "1" then
-		api.uci_save(uci, c_config)
+		uci_save()
 		http.redirect(api.url("rule"))
 	else
-		api.uci_save(uci, c_config, true, true)
+		uci_save(true, true)
 	end
 end

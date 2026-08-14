@@ -3,7 +3,6 @@
 local api = require ("luci.passwall2.api")
 local appname = api.appname
 local fs = api.fs
-local jsonc = api.jsonc
 local uci = api.uci
 local sys = api.sys
 
@@ -21,11 +20,11 @@ local haproxy_conf = var["-conf"]
 local haproxy_dns = "127.0.0.1"
 
 local cpu_thread = sys.exec('echo -n $(cat /proc/cpuinfo | grep "processor" | wc -l)') or "1"
-local health_check_type = uci:get(api.c_config, "@global_haproxy[0]", "health_check_type") or "tcp"
-local health_check_inter = uci:get(api.c_config, "@global_haproxy[0]", "health_check_inter") or "20"
-local balancingStrategy = uci:get(api.c_config, "@global_haproxy[0]", "balancingStrategy") or "roundrobin"
-local console_port = uci:get(api.c_config, "@global_haproxy[0]", "console_port")
-local bind_local = uci:get(api.c_config, "@global_haproxy[0]", "bind_local") or "0"
+local health_check_type = api.uci_get_c("@global_haproxy[0]", "health_check_type") or "tcp"
+local health_check_inter = api.uci_get_c("@global_haproxy[0]", "health_check_inter") or "20"
+local balancingStrategy = api.uci_get_c("@global_haproxy[0]", "balancingStrategy") or "roundrobin"
+local console_port = api.uci_get_c("@global_haproxy[0]", "console_port")
+local bind_local = api.uci_get_c("@global_haproxy[0]", "bind_local") or "0"
 local bind_address = "0.0.0.0"
 if bind_local == "1" then bind_address = "127.0.0.1" end
 
@@ -92,14 +91,14 @@ f_out:write(haproxy_config)
 
 local listens = {}
 
-uci:foreach(api.c_config, "haproxy_config", function(t)
+api.uci_foreach_c("haproxy_config", function(t)
 	if t.enabled == "1" then
 		local server_remark
 		local server_address
 		local server_port
 		local lbss = t.lbss
 		local listen_port = tonumber(t.haproxy_port) or 0
-		local server_node = uci:get_all(api.c_config, lbss)
+		local server_node = api.uci_get_c(lbss)
 		local hop = (health_check_type == "script_logic") and (server_node.hysteria_hop or server_node.hysteria2_hop) or nil
 		hop = hop and hop:gsub(":", "-") or nil
 		if server_node and server_node.address and (server_node.port or hop) then
@@ -212,8 +211,8 @@ listen %s
 end
 
 -- Console config
-local console_user = uci:get(api.c_config, "@global_haproxy[0]", "console_user")
-local console_password = uci:get(api.c_config, "@global_haproxy[0]", "console_password")
+local console_user = api.uci_get_c("@global_haproxy[0]", "console_user")
+local console_password = api.uci_get_c("@global_haproxy[0]", "console_password")
 local str = [[
 listen console
 	bind 0.0.0.0:%s
@@ -229,7 +228,7 @@ f_out:close()
 
 -- Built-in health check URL
 if health_check_type == "script_logic" then
-	local probeUrl = uci:get(api.c_config, "@global_haproxy[0]", "health_probe_url") or "https://www.google.com/generate_204"
+	local probeUrl = api.uci_get_c("@global_haproxy[0]", "health_probe_url") or "https://www.google.com/generate_204"
 	local f_url = io.open(haproxy_path .. "/Probe_URL", "w")
 	f_url:write(probeUrl)
 	f_url:close()

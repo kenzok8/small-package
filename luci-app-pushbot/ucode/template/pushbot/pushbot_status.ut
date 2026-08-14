@@ -1036,6 +1036,7 @@ XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'version') }}',
 				row.style.cssText = 'display:flex;gap:8px;align-items:center';
 				var inp = document.createElement('input');
 				inp.type = 'text'; inp.placeholder = 'XX:XX:XX:XX:XX:XX';
+				inp.className = 'pushbot-mac-input';
 				inp.style.cssText = 'flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
 				var dlId = 'mh_' + opt;
 				inp.setAttribute('list', dlId);
@@ -1158,6 +1159,7 @@ XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'version') }}',
 				row.style.cssText = 'display:flex;gap:8px;align-items:center';
 				var inp = document.createElement('input');
 				inp.type = 'text'; inp.placeholder = 'XX:XX:XX:XX:XX:XX';
+				inp.className = 'pushbot-mac-input';
 				inp.style.cssText = 'flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
 				var dlId = 'mh_' + opt;
 				inp.setAttribute('list', dlId);
@@ -1467,7 +1469,7 @@ cuSub.appendChild(mkBtn('{{ _('Traffic DND') }}',cdOn,function(on){updateFlagInp
 	var wlTags=document.createElement('div');wlTags.style.cssText='display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px';
 	var wlIR=document.createElement('div');wlIR.style.cssText='display:flex;gap:4px';
 	var wlInp=document.createElement('input');wlInp.type='text';wlInp.className='cbi-input-text';
-	wlInp.placeholder='XX:XX:XX:XX:XX:XX';wlInp.style.cssText='flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+	wlInp.placeholder='XX:XX:XX:XX:XX:XX';wlInp.className='cbi-input-text pushbot-mac-input';wlInp.style.cssText='flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
 	wlInp.setAttribute('list','mh_client_white');
 	var wlDl=document.createElement('datalist');wlDl.id='mh_client_white';
 	PB_sys('mac_hints').forEach(function(h){var o=document.createElement('option');o.value=h.m;o.textContent=h.n?h.m+' ('+h.n+')':h.m;wlDl.appendChild(o);});
@@ -3180,6 +3182,16 @@ window.addEventListener('DOMContentLoaded', function() {
 		border-color: rgba(255, 255, 255, 0.10) !important;
 		color: #e2e8f0 !important;
 	}
+
+	/* ── MAC 输入框（watchlist / ignore / DND 列表）暗色适配 ── */
+	.pushbot-dk .pushbot-mac-input {
+		background: rgba(30, 41, 59, 0.72) !important;
+		border-color: rgba(255, 255, 255, 0.10) !important;
+		color: #e2e8f0 !important;
+	}
+	.pushbot-dk .pushbot-mac-input::placeholder {
+		color: #64748b !important;
+	}
 			.pushbot-dk .pushbot-alias-tag {
 		background: rgba(59, 130, 246, 0.20) !important;
 		border-color: rgba(59, 130, 246, 0.35) !important;
@@ -3884,7 +3896,7 @@ window.addEventListener('load',function(){apply(compute());});
 				</div>
 			</div>
 		</div>
-		<span class="pushbot-version-badge" id="pushbot_version_badge">v5.13-r3</span>
+		<span class="pushbot-version-badge" id="pushbot_version_badge">v5.13-r4</span>
 		<div id="pushbot_status_badge" class="pushbot-status-badge is-stopped" role="status" aria-live="polite">
 			<span class="pushbot-status-dot"></span>
 			<span id="pushbot_status_text">{{ _('NOT RUNNING') }}</span>

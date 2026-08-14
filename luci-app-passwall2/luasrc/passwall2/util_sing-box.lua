@@ -1,16 +1,14 @@
 module("luci.passwall2.util_sing-box", package.seeall)
 local api = require "luci.passwall2.api"
-local uci = api.uci
 local sys = api.sys
 local jsonc = api.jsonc
-local appname = api.appname
 local fs = api.fs
 local CACHE_PATH = api.CACHE_PATH
 local split = api.split
 local ech_domain = {}
 
 local local_version = api.get_app_version("sing-box"):match("[^v]+")
-local version_ge_1_13_0 = api.compare_versions(local_version, ">=", "1.13.0")
+local version_ge_1_14_0 = api.compare_versions(local_version, ">=", "1.14.0")
 
 local GLOBAL = {
 	DNS_SERVER = {}
@@ -23,7 +21,7 @@ local GEO_VAR = {
 	IP_PATH = nil,
 	SITE_TAGS = {},
 	IP_TAGS = {},
-	TO_SRS_PATH = "/tmp/etc/" .. appname .."_tmp/singbox_srss/"
+	TO_SRS_PATH = CACHE_PATH .. "/singbox_srss/"
 }
 
 function check_geoview()
@@ -34,7 +32,7 @@ function check_geoview()
 	if GEO_VAR.OK == 0 then
 		api.log(0, "!!! Note: Geo rules cannot be used if the Geoview component is missing or the version is too low.")
 	else
-		GEO_VAR.DIR = GEO_VAR.DIR or (uci:get(api.c_config, "@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
+		GEO_VAR.DIR = GEO_VAR.DIR or (api.uci_get_c("@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
 		GEO_VAR.SITE_PATH = GEO_VAR.SITE_PATH or (GEO_VAR.DIR .. "/geosite.dat")
 		GEO_VAR.IP_PATH = GEO_VAR.IP_PATH or (GEO_VAR.DIR .. "/geoip.dat")
 		if not fs.access(GEO_VAR.TO_SRS_PATH) then
@@ -139,8 +137,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 				config_file = string.format("%s_%s_%s_%s.json", flag, tag, node_id, new_port)
 			end
 			if run_socks_instance then
-				sys.call(string.format('/usr/share/%s/app.sh run_socks "%s"> /dev/null',
-					appname,
+				sys.call(string.format('/usr/share/passwall2/app.sh run_socks "%s"> /dev/null',
 					string.format("flag=%s node=%s bind=%s socks_port=%s config_file=%s relay_port=%s",
 						new_port, --flag
 						node_id, --node
@@ -794,7 +791,7 @@ function gen_config_server(node)
 	if node.users and #node.users > 0 then
 		users = {}
 		for i, v in ipairs(node.users) do
-			local user = uci:get_all(api.s_config, v) or {}
+			local user = api.uci_get_s(v) or {}
 			if user[".type"] == "user" then
 				local u = {}
 				if node.protocol == "mixed" or node.protocol == "socks" or node.protocol == "http" or node.protocol == "naive" then
@@ -1030,7 +1027,7 @@ function gen_config_server(node)
 			}
 			sys.call(string.format("mkdir -p %s && touch %s/%s", api.TMP_IFACE_PATH, api.TMP_IFACE_PATH, node.outbound_node_iface))
 		else
-			local outbound_node_t = uci:get_all(api.c_config, node.outbound_node)
+			local outbound_node_t = api.uci_get_c(node.outbound_node)
 			if node.outbound_node == "_socks" or node.outbound_node == "_http" then
 				outbound_node_t = {
 					type = node.type,
@@ -1132,7 +1129,7 @@ function gen_config(var)
 
 	local CACHE_TEXT_FILE = CACHE_PATH .. "/cache_" .. flag .. ".txt"
 
-	local singbox_settings = uci:get_all(api.c_config, "@global_singbox[0]") or {}
+	local singbox_settings = api.uci_get_c("@global_singbox[0]") or {}
 
 	local route = {
 		rules = {}
@@ -1195,7 +1192,7 @@ function gen_config(var)
 
 	local node = nil
 	if node_id then
-		node = uci:get_all(api.c_config, node_id)
+		node = api.uci_get_c(node_id)
 	end
 
 	if local_socks_port then
@@ -1290,7 +1287,7 @@ function gen_config(var)
 
 		function get_node_by_id(node_id)
 			if not node_id or node_id == "" or node_id == "nil" then return nil end
-			local section = uci:get_all(api.c_config, node_id) or {}
+			local section = api.uci_get_c(node_id) or {}
 			if section[".type"] == "socks" then
 				local result = {
 					[".name"] = node_id,
@@ -1569,7 +1566,7 @@ function gen_config(var)
 			end
 
 			--shunt rule
-			uci:foreach(api.c_config, "shunt_rules", function(e)
+			api.uci_foreach_c("shunt_rules", function(e)
 				if node["shunt_group"] ~= e.group then
 					return
 				end
@@ -1835,16 +1832,16 @@ function gen_config(var)
 	if dns_listen_port then
 		local dns_host = ""
 		if flag == "global" then
-			dns_host = uci:get(api.c_config, "@global[0]", "dns_hosts") or ""
+			dns_host = api.uci_get_c("@global[0]", "dns_hosts") or ""
 		else
 			flag = flag:gsub("acl_", "")
-			local dns_hosts_mode = uci:get(api.c_config, flag, "dns_hosts_mode") or "default"
+			local dns_hosts_mode = api.uci_get_c(flag, "dns_hosts_mode") or "default"
 			if dns_hosts_mode == "default" then
-				dns_host = uci:get(api.c_config, "@global[0]", "dns_hosts") or ""
+				dns_host = api.uci_get_c("@global[0]", "dns_hosts") or ""
 			elseif dns_hosts_mode == "disable" then
 				dns_host = ""
 			elseif dns_hosts_mode == "custom" then
-				dns_host = uci:get(api.c_config, flag, "dns_hosts") or ""
+				dns_host = api.uci_get_c(flag, "dns_hosts") or ""
 			end
 		end
 		if #dns_host > 0 then
@@ -1982,7 +1979,12 @@ function gen_config(var)
 		else default_dns_flag = "direct"
 		end
 		dns.final = default_dns_flag
-		dns.strategy = default_dns_flag == "remote" and remote_strategy or direct_strategy
+		-- Single-stack (ipv4_only / ipv6_only) is enforced per-domain via the
+		-- query_type / reject rules generated below. The global dns.strategy applies
+		-- to every DNS server that does not set its own query_strategy, so keep it
+		-- dual-stack; otherwise a single-stack choice on one path would also force the
+		-- other path (e.g. direct / CN domains) into single-stack. See issue #1220.
+		dns.strategy = "prefer_ipv6"
 
 		-- DNS in order of shunt
 		if dns_domain_rules and #dns_domain_rules > 0 then
