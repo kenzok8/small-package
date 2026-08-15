@@ -1554,6 +1554,7 @@ function luci_types(s, s2)
 	for i, v in ipairs(s2.children) do
 		local o = s2.children[i]
 		o.config_option = o.option
+		o.option_prefix = option_prefix
 		o.option = option_prefix .. o.option
 		if not o.not_rewrite then
 			o.cfgvalue = function(self, section)

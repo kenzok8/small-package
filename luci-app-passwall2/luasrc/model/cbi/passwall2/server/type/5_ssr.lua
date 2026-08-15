@@ -8,6 +8,10 @@ local type_name = "SSR"
 
 s1.fields["type"]:value(type_name, translate("ShadowsocksR"))
 
+if not s1.val["type"] then
+	s1.val["type"] = type_name
+end
+
 if s1.val["type"] and s1.val["type"] ~= type_name then
 	return
 end

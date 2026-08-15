@@ -1,7 +1,7 @@
 <%
 local map = self.map
 local api = map.api
-local prefix = self.prefix
+local prefix = self.option_prefix or ""
 -%>
 <div class="cbi-value" id="cbi-<%=self.config.."-"..section.."-"..self.option%>" data-index="<%=self.index%>" data-depends="<%=pcdata(self:deplist2json(section))%>">
 	<label class="cbi-value-title"><%:Generate key%></label>

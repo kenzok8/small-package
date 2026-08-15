@@ -535,6 +535,7 @@ local function parseClashNode(node, add_mode, group, sub_cfg)
 		result = set_ss_implementation(sub_ss_type, result)
 		if not result then return nil end
 		result.method = node.cipher
+		result.ss_method = node.cipher
 		result.password = node.password
 		if node.plugin == "obfs" then
 			result.plugin = "obfs-local"
@@ -1114,6 +1115,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 				(_method == "xchacha20-poly1305" and "xchacha20-ietf-poly1305") or _method
 
 			result.method = method
+			result.ss_method = method
 			result.password = password
 			result.tcp_fast_open = params.tfo
 			result.use_finalmask = (params.fm and params.fm ~= "") and "1" or nil
@@ -1482,6 +1484,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 		result.port = content.port
 		result.password = content.password
 		result.method = content.encryption
+		result.ss_method = content.encryption
 		result.plugin = content.plugin
 		result.plugin_opts = content.plugin_options
 		result.group = content.airport
@@ -1770,6 +1773,13 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			result.finalmask = (params.fm and params.fm ~= "") and api.base64Encode(params.fm) or nil
 		elseif has_hysteria2 then
 			result.type = "Hysteria2"
+			for k1, v1 in pairs(result) do
+				if k1:find("hysteria2_") == 1 then
+					local s = split(k1, "hysteria2_")
+					result[s[2]] = v1
+					result[k1] = nil
+				end
+			end
 		else
 			log(2, i18n.translatef("Skipping the %s node is due to incompatibility with the %s core program or incorrect node usage type settings.", "Hysteria2", "Hysteria2"))
 			return nil

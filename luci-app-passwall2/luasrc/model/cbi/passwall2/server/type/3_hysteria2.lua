@@ -8,6 +8,10 @@ local type_name = "Hysteria2"
 
 s1.fields["type"]:value(type_name, "Hysteria2")
 
+if not s1.val["type"] then
+	s1.val["type"] = type_name
+end
+
 if s1.val["type"] and s1.val["type"] ~= type_name then
 	return
 end

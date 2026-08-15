@@ -11,6 +11,10 @@ if not s1.fields["type"].default then
 	s1.fields["type"].default = type_name
 end
 
+if not s1.val["type"] then
+	s1.val["type"] = type_name
+end
+
 if s1.val["type"] and s1.val["type"] ~= type_name then
 	return
 end
@@ -29,6 +33,27 @@ local header_type_list = {
 
 o = s:option(Flag, "custom", translate("Use Custom Config"))
 
+o = s:option(TextValue, "custom_config", translate("Custom Config") .. " (JSON)")
+o.rows = 10
+o.wrap = "off"
+o:depends({ custom = true })
+o.datatype = "json"
+local o_validate = o.validate
+o.validate = function(self, value)
+	local v = o_validate(self, value)
+	if v then return v end
+	return nil, translate("Custom Config") .. " " .. translate("Must be JSON text!")
+end
+o.custom_cfgvalue = function(self, section, value)
+	local config_str = m:get(section, "config_str")
+	if config_str then
+		return api.base64Decode(config_str)
+	end
+end
+o.custom_write = function(self, section, value)
+	m:set(section, "config_str", api.base64Encode(value) or "")
+end
+
 o = s:option(ListValue, "protocol", translate("Protocol"))
 o:value("vmess", "Vmess")
 o:value("vless", "VLESS")
@@ -40,6 +65,12 @@ o:value("hysteria2", "Hysteria2")
 o:value("wireguard", "WireGuard")
 o:value("dokodemo-door", "dokodemo-door")
 o:depends({ custom = false })
+
+o = s:option(DummyValue, "is_endpoint", "")
+o.not_rewrite = true
+o.template = m:template_path("/cbi/hidevalue")
+o.value = "1"
+o:depends({ custom = false, protocol = "wireguard" })
 
 o = s:option(Value, "port", translate("Listen Port"))
 o.datatype = "port"
@@ -385,7 +416,7 @@ end
 --[[acceptProxyProtocol]]
 o = s:option(Flag, "acceptProxyProtocol", translate("acceptProxyProtocol"), translate("Whether to receive PROXY protocol, when this node want to be fallback or forwarded by proxy, it must be enable, otherwise it cannot be used."))
 o.default = "0"
-o:depends({ custom = false })
+o:depends({ custom = false, is_endpoint = "" })
 
 --[[Fast Open]]
 o = s:option(Flag, "tcp_fast_open", "TCP " .. translate("Fast Open"))
@@ -444,8 +475,7 @@ o.datatype = "base64"
 o:depends({ protocol = "wireguard" })
 
 o = s:option(DummyValue, "gen_wireguard_key")
-o.prefix = option_prefix
-o.template = m:template_path("/server/server_wireguard")
+o.template = m:template_path("/server/gen_wireguard_key")
 o:depends({ protocol = "wireguard" })
 
 o = s:option(Flag, "bind_local", translate("Bind Local"), translate("When selected, it can only be accessed localhost."))
@@ -503,27 +533,6 @@ o:depends({ outbound_node = "_iface"})
 local netdev_list = api.get_network_devices()
 for _, d in ipairs(netdev_list) do
 	o:value(d.name, d.label)
-end
-
-o = s:option(TextValue, "custom_config", translate("Custom Config") .. " (JSON)")
-o.rows = 10
-o.wrap = "off"
-o:depends({ custom = true })
-o.datatype = "json"
-local o_validate = o.validate
-o.validate = function(self, value)
-	local v = o_validate(self, value)
-	if v then return v end
-	return nil, translate("Custom Config") .. " " .. translate("Must be JSON text!")
-end
-o.custom_cfgvalue = function(self, section, value)
-	local config_str = m:get(section, "config_str")
-	if config_str then
-		return api.base64Decode(config_str)
-	end
-end
-o.custom_write = function(self, section, value)
-	m:set(section, "config_str", api.base64Encode(value) or "")
 end
 
 o = s:option(Flag, "log", translate("Log"))
