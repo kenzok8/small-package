@@ -1120,7 +1120,7 @@ acl_app() {
 }
 
 start() {
-	busybox pgrep -f /tmp/etc/passwall2/bin > /dev/null 2>&1 && {
+	busybox pgrep -f ${TMP_PATH}/bin > /dev/null 2>&1 && {
 		logger -t PW2-RESTART "Upgrade or overload residue is detected, and the subprocess is being called to perform complete cleaning..."
 		(stop)
 		sleep 2

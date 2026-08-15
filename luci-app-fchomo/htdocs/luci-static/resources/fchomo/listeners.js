@@ -313,16 +313,24 @@ function renderListeners(s, uciconfig, isClient) {
 	o.depends({sudoku_table_type: /^(prefer_entropy|up_ascii_down_entropy|up_entropy_down_ascii)$/});
 	o.modalonly = true;
 
-	o = s.taboption('field_general', form.Value, 'sudoku_padding_min', _('Minimum padding rate'));
+	o = s.taboption('field_general', form.RangeSliderValue, 'sudoku_padding_min', _('Minimum padding rate'));
 	o.datatype = 'and(uinteger, range(0, 100))';
 	o.default = 1;
+	o.min = 0;
+	o.max = 100;
+	o.step = 1;
+	o.calcunits = '%';
 	o.rmempty = false;
 	o.depends('type', 'sudoku');
 	o.modalonly = true;
 
-	o = s.taboption('field_general', form.Value, 'sudoku_padding_max', _('Maximum padding rate'));
+	o = s.taboption('field_general', form.RangeSliderValue, 'sudoku_padding_max', _('Maximum padding rate'));
 	o.datatype = 'and(uinteger, range(0, 100))';
 	o.default = 15;
+	o.min = 0;
+	o.max = 100;
+	o.step = 1;
+	o.calcunits = '%';
 	o.rmempty = false;
 	o.validate = function(section_id, value) {
 		const padding_min = this.section.getOption('sudoku_padding_min').formvalue(section_id);

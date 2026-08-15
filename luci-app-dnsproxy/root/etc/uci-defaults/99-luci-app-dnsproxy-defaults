@@ -1,0 +1,58 @@
+#!/bin/sh
+
+add_cloudflare_profile() {
+	uci set      dnsproxy.preset_cloudflare='profile'
+	uci set      dnsproxy.preset_cloudflare.label='Preset: Cloudflare DoH'
+	uci add_list dnsproxy.preset_cloudflare.bootstrap='1.1.1.1:53'
+	uci add_list dnsproxy.preset_cloudflare.bootstrap='1.0.0.1:53'
+	uci add_list dnsproxy.preset_cloudflare.upstream='https://cloudflare-dns.com/dns-query'
+	uci add_list dnsproxy.preset_cloudflare.fallback='https://dns.quad9.net/dns-query'
+	uci set      dnsproxy.preset_cloudflare.upstream_mode='load_balance'
+}
+
+add_quad9_profile() {
+	uci set      dnsproxy.preset_quad9='profile'
+	uci set      dnsproxy.preset_quad9.label='Preset: Quad9 DoH'
+	uci add_list dnsproxy.preset_quad9.bootstrap='9.9.9.9:53'
+	uci add_list dnsproxy.preset_quad9.bootstrap='149.112.112.112:53'
+	uci add_list dnsproxy.preset_quad9.upstream='https://dns.quad9.net/dns-query'
+	uci add_list dnsproxy.preset_quad9.fallback='https://cloudflare-dns.com/dns-query'
+	uci set      dnsproxy.preset_quad9.upstream_mode='load_balance'
+}
+
+add_google_profile() {
+	uci set      dnsproxy.preset_google='profile'
+	uci set      dnsproxy.preset_google.label='Preset: Google DoH'
+	uci add_list dnsproxy.preset_google.bootstrap='8.8.8.8:53'
+	uci add_list dnsproxy.preset_google.bootstrap='8.8.4.4:53'
+	uci add_list dnsproxy.preset_google.upstream='https://dns.google/dns-query'
+	uci add_list dnsproxy.preset_google.fallback='https://cloudflare-dns.com/dns-query'
+	uci set      dnsproxy.preset_google.upstream_mode='load_balance'
+}
+
+add_fast_mixed_profile() {
+	uci set      dnsproxy.preset_fast_mixed='profile'
+	uci set      dnsproxy.preset_fast_mixed.label='Preset: Fast mixed DoH'
+	uci add_list dnsproxy.preset_fast_mixed.bootstrap='1.1.1.1:53'
+	uci add_list dnsproxy.preset_fast_mixed.bootstrap='9.9.9.9:53'
+	uci add_list dnsproxy.preset_fast_mixed.bootstrap='8.8.8.8:53'
+	uci add_list dnsproxy.preset_fast_mixed.upstream='https://cloudflare-dns.com/dns-query'
+	uci add_list dnsproxy.preset_fast_mixed.upstream='https://dns.quad9.net/dns-query'
+	uci add_list dnsproxy.preset_fast_mixed.fallback='https://dns.google/dns-query'
+	uci set      dnsproxy.preset_fast_mixed.upstream_mode='parallel'
+}
+
+# preset
+if [ -z "$(uci -q get dnsproxy.default)" ]; then
+	uci -q get dnsproxy.preset_cloudflare >/dev/null || add_cloudflare_profile
+	uci -q get dnsproxy.preset_quad9 >/dev/null || add_quad9_profile
+	uci -q get dnsproxy.preset_google >/dev/null || add_google_profile
+	uci -q get dnsproxy.preset_fast_mixed >/dev/null || add_fast_mixed_profile
+	uci commit dnsproxy
+	# default
+	echo "config profile 'default'" >> /etc/config/dnsproxy
+	echo "	option label 'Default'" >> /etc/config/dnsproxy
+	sed -n "/config dnsproxy 'servers'/,/^[^\t]/{/^\t/p}" /etc/config/dnsproxy >> /etc/config/dnsproxy
+fi
+
+exit 0

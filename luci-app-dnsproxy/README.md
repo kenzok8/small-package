@@ -4,6 +4,15 @@
 `DNS-over-TLS`, `DNS-over-HTTPS`, `DNSCrypt`, and `DNS-over-QUIC`. Moreover,
 it can work as a `DNS-over-HTTPS`, `DNS-over-TLS` or `DNS-over-QUIC` server.
 
+The LuCI interface also supports reusable DNS profiles.  Each profile stores
+its own bootstrap, upstream, and fallback server lists and can apply all three
+lists at once.  Editable example profiles for Cloudflare, Quad9, Google, and a
+mixed parallel setup are included to demonstrate the feature.
+
+## Requirements
+
+- OpenWrt >= 24.10
+
 ## How to install
 
 1. Go to [here](https://fantastic-packages.github.io/releases/)

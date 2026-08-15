@@ -388,8 +388,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 				user = (node.protocol == "socks" or node.protocol == "http") and node.username or nil,
 				pass = (node.protocol == "socks" or node.protocol == "http") and node.password or nil,
 				password = (node.protocol == "shadowsocks" or node.protocol == "trojan") and node.password or nil,
-				method = (node.protocol == "shadowsocks") and ((node.method == "chacha20-ietf-poly1305" and "chacha20-poly1305") or
-					(node.method == "xchacha20-ietf-poly1305" and "xchacha20-poly1305") or (node.method ~= "" and node.method) or nil) or nil,
+				method = (node.protocol == "shadowsocks") and ((node.ss_method == "chacha20-ietf-poly1305" and "chacha20-poly1305") or
+					(node.ss_method == "xchacha20-ietf-poly1305" and "xchacha20-poly1305") or (node.ss_method ~= "" and node.ss_method) or nil) or nil,
 				secretKey = (node.protocol == "wireguard") and node.wireguard_secret_key or nil,
 				peers = (node.protocol == "wireguard") and {
 					{
@@ -523,6 +523,12 @@ function gen_config_server(node)
 					u.email = user.username
 					u.auth = user.password
 				end
+				if node.protocol == "wireguard" then
+					u.publicKey = user.wireguard_public_key
+					u.preSharedKey = user.wireguard_pre_shared_key
+					u.keepAlive = 0
+					u.allowedIPs = user.allowed_ips
+				end
 				users[#users + 1] = u
 			end
 		end
@@ -553,7 +559,7 @@ function gen_config_server(node)
 		node.tcp_guise = "none"
 	elseif node.protocol == "shadowsocks" then
 		settings = {
-			method = node.method,
+			method = node.ss_method,
 			password = node.ss_password,
 			users = users,
 			network = node.ss_network or "tcp,udp"
@@ -574,6 +580,14 @@ function gen_config_server(node)
 			network = node.d_protocol,
 			address = node.d_address,
 			port = tonumber(node.d_port)
+		}
+	elseif node.protocol == "wireguard" then
+		settings = {
+			secretKey = node.wireguard_private_key,
+			--address = node.wireguard_local_address,
+			--noKernelTun = node.wireguard_system_interface ~= "1" and true or false,
+			mtu = tonumber(node.wireguard_mtu or 1420),
+			peers = users
 		}
 	end
 
