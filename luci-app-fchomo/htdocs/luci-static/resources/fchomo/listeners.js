@@ -769,6 +769,7 @@ function renderListeners(s, uciconfig, isClient) {
 				...hm.loadLabelValues(this.config, 'proxy_group')
 			], section_id);
 		}
+		o.depends('tls_reality', '1');
 		o.depends({plugin_type: /^(shadow-tls|restls|jls)$/});
 		o.depends({type: 'shadowquic'});
 		o.modalonly = true;
@@ -1286,6 +1287,12 @@ function renderListeners(s, uciconfig, isClient) {
 	o.datatype = 'list(hostname)';
 	o.placeholder = 'cloud.tencent.com';
 	o.rmempty = false;
+	o.depends('tls_reality', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_tls', form.DynamicList, 'tls_reality_max_time_difference', _('REALITY max time difference'),
+		_('In millisecond.'));
+	o.datatype = 'uinteger';
 	o.depends('tls_reality', '1');
 	o.modalonly = true;
 

@@ -354,6 +354,8 @@ uci.foreach(uciconf, uciinbd, (cfg) => {
 
 	const listener = parseListener(cfg);
 	listener.proxy = get_proxy(listener.proxy);
+	if (listener["reality-config"])
+		listener["reality-config"].proxy = get_proxy(listener["reality-config"].proxy);
 	if (listener["shadow-tls"])
 		listener["shadow-tls"].handshake.proxy = get_proxy(listener["shadow-tls"].handshake.proxy);
 	if (listener["res-tls"])

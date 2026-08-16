@@ -1087,6 +1087,7 @@ function gen_config(var)
 	local remote_dns_client_ip = var["remote_dns_client_ip"]
 	local remote_dns_query_strategy = var["remote_dns_query_strategy"]
 	local remote_dns_fake = var["remote_dns_fake"]
+	local remote_rewrite_ttl = var["remote_rewrite_ttl"] or "30"
 	local dns_cache = var["dns_cache"]
 	local dns_socks_address = var["dns_socks_address"]
 	local dns_socks_port = var["dns_socks_port"]
@@ -2015,7 +2016,7 @@ function gen_config(var)
 					end
 					if value.outboundTag ~= "block" and value.outboundTag ~= "direct" then
 						dns_rule.server = "remote"
-						dns_rule.rewrite_ttl = 30
+						dns_rule.rewrite_ttl = tonumber(remote_rewrite_ttl)
 						if true then
 							local block_rule
 							if remote_strategy == "ipv4_only" then
@@ -2063,11 +2064,25 @@ function gen_config(var)
 			end
 		end
 		if default_dns_flag == "remote" then
+			local block_rule
 			local dns_rule_query_type = { "A", "AAAA" }
 			if remote_strategy == "ipv4_only" then
+				block_rule = {
+					query_type = { "AAAA" },
+					action = "predefined",
+					rcode = "NOERROR"
+				}
 				dns_rule_query_type = { "A" }
 			elseif remote_strategy == "ipv6_only" then
+				block_rule = {
+					query_type = { "A" },
+					action = "predefined",
+					rcode = "NOERROR"
+				}
 				dns_rule_query_type = { "AAAA" }
+			end
+			if block_rule then
+				table.insert(dns.rules, block_rule)
 			end
 			if remote_dns_fake then
 				-- When default is not direct and enable fakedns, default DNS use FakeDNS.
@@ -2075,17 +2090,16 @@ function gen_config(var)
 					query_type = dns_rule_query_type,
 					server = fakedns_tag,
 					disable_cache = true,
-					rewrite_ttl = 30
+					rewrite_ttl = tonumber(remote_rewrite_ttl)
 				}
 				table.insert(dns.rules, fakedns_dns_rule)
-			else
-				local remote_dns_rule = {
-					query_type = dns_rule_query_type,
-					server = "remote",
-					disable_cache = true,
-				}
-				table.insert(dns.rules, remote_dns_rule)
 			end
+			local remote_dns_rule = {
+				server = "remote",
+				disable_cache = true,
+				rewrite_ttl = tonumber(remote_rewrite_ttl)
+			}
+			table.insert(dns.rules, remote_dns_rule)
 		end
 		local dns_in_inbound = {
 			type = "direct",

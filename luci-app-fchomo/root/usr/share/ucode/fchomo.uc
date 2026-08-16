@@ -447,7 +447,9 @@ export function parseListener(cfg) {
 					dest: cfg.tls_reality_dest,
 					"private-key": cfg.tls_reality_private_key,
 					"short-id": cfg.tls_reality_short_id,
-					"server-names": cfg.tls_reality_server_names
+					"server-names": cfg.tls_reality_server_names,
+					"max-time-difference": strToInt(cfg.tls_reality_max_time_difference),
+					proxy: cfg.plugin_opts_dest_proxy, // raw data need post-processing
 				}
 			} : {
 				certificate: cfg.tls_cert_path,

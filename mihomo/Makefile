@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mihomo
-PKG_VERSION:=1.19.29
+PKG_VERSION:=1.19.30
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/metacubex/mihomo/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=1db1cd49c233b67701b596fbd8a963f418ebeca4cb497f38a0e7cd706ea4c630
+PKG_HASH:=ee8a7107707e4bd485460139b1944e7be30016393783f2b4e928c14880c8ca8b
 
 PKG_MAINTAINER:=Anya Lin <hukk1996@gmail.com>
 PKG_LICENSE:=GPL-2.0
