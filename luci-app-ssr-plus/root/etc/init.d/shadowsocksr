@@ -965,20 +965,27 @@ start_socks5_udp_with_ipt2socks() {
 	local local_port="$2"
 	local threads="$3"
 	local ipt2socks_bin
-	local auth_opts=""
+	local server_ip
 	local _i
 
 	ipt2socks_bin="$(first_type ipt2socks)"
+	server_ip="$(get_host_ip "$sid")"
 
 	[ -x "$ipt2socks_bin" ] || return 1
+	[ -n "$server_ip" ] || {
+		echolog "UDP TPROXY Relay:Socks5 无法解析服务器地址。"
+		return 1
+	}
+	set --
 	if [ "$(uci_get_by_name "$sid" auth_enable 0)" = "1" ]; then
-		auth_opts="-a $(uci_get_by_name "$sid" username) -k $(uci_get_by_name "$sid" password)"
+		set -- -a "$(uci_get_by_name "$sid" username)" \
+			-k "$(uci_get_by_name "$sid" password)"
 	fi
 	for _i in $(seq 1 "$threads"); do
 		ln_start_bin "$ipt2socks_bin" ipt2socks -U -r -b 0.0.0.0 -4 \
-			-s "$(uci_get_by_name "$sid" server)" \
+			-s "$server_ip" \
 			-p "$(uci_get_by_name "$sid" server_port)" \
-			-l "$local_port" "$auth_opts"
+			-l "$local_port" "$@"
 	done
 	echolog "UDP TPROXY Relay:Socks5 via IPT2Socks $threads Threads Started!"
 	return 0
@@ -989,21 +996,28 @@ start_socks5_redir_with_ipt2socks() {
 	local local_port="$2"
 	local threads="$3"
 	local ipt2socks_bin
-	local auth_opts=""
+	local server_ip
 	local _i
 
 	ipt2socks_bin="$(first_type ipt2socks)"
+	server_ip="$(get_host_ip "$sid")"
 
 	[ -x "$ipt2socks_bin" ] || return 1
+	[ -n "$server_ip" ] || {
+		echolog "Main node:Socks5 无法解析服务器地址。"
+		return 1
+	}
+	set --
 	if [ "$(uci_get_by_name "$sid" auth_enable 0)" = "1" ]; then
-		auth_opts="-a $(uci_get_by_name "$sid" username) -k $(uci_get_by_name "$sid" password)"
+		set -- -a "$(uci_get_by_name "$sid" username)" \
+			-k "$(uci_get_by_name "$sid" password)"
 	fi
 	for _i in $(seq 1 "$threads"); do
 		ln_start_bin "$ipt2socks_bin" ipt2socks \
 			-T -R -r -b 0.0.0.0 -4 \
-			-s "$(uci_get_by_name "$sid" server)" \
+			-s "$server_ip" \
 			-p "$(uci_get_by_name "$sid" server_port)" \
-			-l "$local_port" "$auth_opts"
+			-l "$local_port" "$@"
 	done
 	echolog "Main node:Socks5 via IPT2Socks $threads Threads Started!"
 	return 0

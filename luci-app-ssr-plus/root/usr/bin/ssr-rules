@@ -1262,6 +1262,13 @@ compare_rules() {
 	return 0  # No update needed
 }
 
+append_nftables_comment() {
+	local name="$1"
+	local value
+	value=$(printf '%s' "$2" | tr '\r\n' '  ')
+	printf '# %s: %s\n' "$name" "$value" >> "$NFTABLES_RULES_FILE"
+}
+
 # Auto-update persistence rules
 persist_nftables_rules() {
 	if [ "$USE_NFT" != "1" ]; then
@@ -1296,12 +1303,12 @@ persist_nftables_rules() {
 	echo "# Auto-updated: $(date)" >> "$NFTABLES_RULES_FILE"
 	echo "# Runmode: ${RUNMODE:-router}" >> "$NFTABLES_RULES_FILE"
 	echo "# Server: $server, Port: $local_port" >> "$NFTABLES_RULES_FILE"
-	echo "# WAN_BP_IP: $WAN_BP_IP" >> "$NFTABLES_RULES_FILE"
-	echo "# LAN_AC_IP: $LAN_AC_IP" >> "$NFTABLES_RULES_FILE"
-	echo "# LAN_BP_IP: $LAN_BP_IP" >> "$NFTABLES_RULES_FILE"
-	echo "# WAN_FW_IP: $WAN_FW_IP" >> "$NFTABLES_RULES_FILE"
-	echo "# LAN_FP_IP: $LAN_FP_IP" >> "$NFTABLES_RULES_FILE"
-	echo "# LAN_GM_IP: $LAN_GM_IP" >> "$NFTABLES_RULES_FILE"
+	append_nftables_comment "WAN_BP_IP" "$WAN_BP_IP"
+	append_nftables_comment "LAN_AC_IP" "$LAN_AC_IP"
+	append_nftables_comment "LAN_BP_IP" "$LAN_BP_IP"
+	append_nftables_comment "WAN_FW_IP" "$WAN_FW_IP"
+	append_nftables_comment "LAN_FP_IP" "$LAN_FP_IP"
+	append_nftables_comment "LAN_GM_IP" "$LAN_GM_IP"
 	echo "" >> "$NFTABLES_RULES_FILE"
 
 	local HAS_RULES=0

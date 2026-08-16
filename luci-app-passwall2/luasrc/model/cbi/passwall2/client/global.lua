@@ -308,6 +308,7 @@ o.rmempty = false
 
 s2 = m:section(TypedSection, "socks", translate("Socks Config"))
 s2.template = "cbi/tblsection"
+s2.sortable = true
 s2.anonymous = true
 s2.addremove = true
 s2.extedit = api.url("socks_config", "%s")
@@ -382,5 +383,7 @@ for k, v in pairs(nodes_table) do
 end
 
 m:appendTemplate("/global/footer", {shunt_list = api.jsonc.stringify(shunt_list)})
+
+m:appendTemplate("/cbi/sortable", {sectiontype = s2.sectiontype})
 
 return api.return_map(m)
