@@ -44,7 +44,7 @@ o = s:option(Value, "wireguard_private_key", "Wireguard " .. translate("Private 
 o.datatype = "base64"
 
 o = s:option(DummyValue, "gen_wireguard_key")
-o.template = m:template_path("/server/server_wireguard")
+o.template = m:template_path("/server/gen_wireguard_key")
 
 o = s:option(Value, "wireguard_pre_shared_key", "Wireguard " .. translate("Pre shared key"))
 o.datatype = "base64"

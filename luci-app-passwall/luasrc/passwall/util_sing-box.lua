@@ -661,6 +661,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 end
 
 function gen_config_server(node)
+	local endpoints = {}
+	local inbounds = {}
 	local outbounds = {
 		{ type = "direct", tag = "direct" }
 	}
@@ -802,6 +804,12 @@ function gen_config_server(node)
 				if node.protocol == "hysteria2" then
 					u.name = user.username
 					u.password = user.password
+				end
+				if node.protocol == "wireguard" then
+					u.public_key = user.wireguard_public_key
+					u.pre_shared_key = user.wireguard_pre_shared_key
+					u.allowed_ips = user.allowed_ips or {}
+					u.persistent_keepalive_interval = 0
 				end
 				users[#users + 1] = u
 			end
@@ -970,6 +978,18 @@ function gen_config_server(node)
 		end
 	end
 
+	if node.protocol == "wireguard" then
+		inbound.listen = nil
+		inbound.system = node.wireguard_system_interface == "1" and true or false
+		inbound.name = "sbwg_" .. node[".name"]
+		inbound.mtu = tonumber(node.wireguard_mtu or 1408)
+		inbound.address = node.wireguard_local_address
+		inbound.private_key = node.wireguard_private_key
+		if users then
+			inbound.peers = users
+		end
+	end
+
 	if node.protocol == "direct" then
 		protocol_table = {
 			network = (node.d_protocol ~= "TCP,UDP") and node.d_protocol or nil,
@@ -982,6 +1002,13 @@ function gen_config_server(node)
 		for key, value in pairs(protocol_table) do
 			inbound[key] = value
 		end
+	end
+
+	if node.protocol == "wireguard" then
+		inbound.listen = nil
+		table.insert(endpoints, inbound)
+	else
+		table.insert(inbounds, inbound)
 	end
 
 	local route = {
@@ -1038,7 +1065,8 @@ function gen_config_server(node)
 				tag = "direct"
 			}}
 		},
-		inbounds = { inbound },
+		endpoints = endpoints,
+		inbounds = inbounds,
 		outbounds = outbounds,
 		route = route
 	}
