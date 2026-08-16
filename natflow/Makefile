@@ -9,10 +9,10 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=natflow
-PKG_VERSION:=20260812
+PKG_VERSION:=20260816
 
 PKG_SOURCE_URL:=https://codeload.github.com/ptpt52/natflow/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=b50f74484b1ae50a7bb2657be18643245dda215ee2243e65e16c66715369acfe
+PKG_HASH:=3bd46c26323bd1c9f0a31533809af7ff15eb4c2ac01c43bc202d59ae7b141b60
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 PKG_MAINTAINER:=Chen Minqiang <ptpt52@gmail.com>
@@ -58,6 +58,8 @@ endef
 
 define Build/Compile
 	$(call Build/Compile/natflow)
+	$(TARGET_CC) $(TARGET_CFLAGS) -I$(PKG_BUILD_DIR) $(TARGET_LDFLAGS) \
+		$(PKG_BUILD_DIR)/tools/natflow-dpi-reader.c -o $(PKG_BUILD_DIR)/natflow-dpi-reader
 endef
 
 define Package/natflow-boot
@@ -119,7 +121,24 @@ define Package/natflow-hostacl/install
 	$(INSTALL_DATA) ./files/hostacl.config $(1)/etc/config/hostacl
 endef
 
+define Package/natflow-dpi-reader
+  CATEGORY:=X
+  SUBMENU:=Fast Forward Stacks
+  TITLE:=natflow dpi reader
+  DEPENDS:= +kmod-natflow
+endef
+
+define Package/natflow-dpi-reader/description
+  A userspace tool to read DPI queue events from natflow
+endef
+
+define Package/natflow-dpi-reader/install
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/natflow-dpi-reader $(1)/usr/sbin/
+endef
+
 $(eval $(call KernelPackage,natflow))
 $(eval $(call BuildPackage,natflow-boot))
 $(eval $(call BuildPackage,natflow-auth))
 $(eval $(call BuildPackage,natflow-hostacl))
+$(eval $(call BuildPackage,natflow-dpi-reader))
