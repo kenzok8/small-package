@@ -8,7 +8,6 @@ if not arg[1] or not m:get(arg[1]) then
 	luci.http.redirect(m.redirect)
 end
 
-fs = require "nixio.fs"
 formvalue_key = "cbid." .. m.config .. "." .. arg[1] .. "."
 
 m:appendTemplate("/node_config/header", {section = arg[1]})
@@ -24,7 +23,7 @@ m:foreach("nodes", function(s)
 	end
 end)
 
-s = m:section(NamedSection, arg[1], "nodes", translate("Node Config"))
+local s = m:section(NamedSection, arg[1], "nodes", translate("Node Config"))
 s.addremove = false
 s.dynamic = false
 
@@ -74,33 +73,35 @@ end
 o = s:option(ListValue, "type", translate("Type"))
 
 if api.is_finded("ipt2socks") then
-	s.fields["type"]:value("Socks", translate("Socks"))
+	local type_name = "Socks"
 
-	if s.val["type"] == "Socks" then
-		local function _n(name)
-			return "socks_" .. name
-		end
-		o = s:option(ListValue, _n("del_protocol"), "　") --始终隐藏，用于删除 protocol
-		o:depends({ [_n("__hide")] = "1" })
+	s.fields["type"]:value(type_name, "Socks")
+
+	if s.val["type"] == type_name then
+		local s2 = NamedSection(m, arg[1], "server")
+		s2.type_name = type_name
+		s2.option_prefix = "socks_"
+
+		o = s2:option(ListValue, "del_protocol", "　") --始终隐藏，用于删除 protocol
+		o:depends({ __hide = "1" })
 		o.rewrite_option = "protocol"
 
-		o = s:option(Value, _n("address"), translate("Address (Support Domain Name)"))
+		o = s2:option(Value, "address", translate("Address (Support Domain Name)"))
 
-		o = s:option(Value, _n("port"), translate("Port"))
+		o = s2:option(Value, "port", translate("Port"))
 		o.datatype = "port"
 
-		o = s:option(Value, _n("username"), translate("Username"))
+		o = s2:option(Value, "username", translate("Username"))
 
-		o = s:option(Value, _n("password"), translate("Password"))
+		o = s2:option(Value, "password", translate("Password"))
 		o.password = true
 
-		api.luci_types(arg[1], m, s, "Socks", "socks_")
+		api.luci_types(s, s2)
 	end
-
 end
 
 local type_table = {}
-for filename in fs.dir(types_dir) do
+for filename in api.fs.dir(types_dir) do
 	table.insert(type_table, filename)
 end
 table.sort(type_table)

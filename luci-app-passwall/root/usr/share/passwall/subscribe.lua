@@ -821,6 +821,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 				(_method == "xchacha20-poly1305" and "xchacha20-ietf-poly1305") or _method
 
 			result.method = method
+			result.ss_method = method
 			result.password = password
 			result.tcp_fast_open = params.tfo
 			result.use_finalmask = (params.fm and params.fm ~= "") and "1" or nil
@@ -1189,6 +1190,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 		result.port = content.port
 		result.password = content.password
 		result.method = content.encryption
+		result.ss_method = content.encryption
 		result.plugin = content.plugin
 		result.plugin_opts = content.plugin_options
 		result.group = content.airport

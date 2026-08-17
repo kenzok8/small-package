@@ -17,7 +17,7 @@ m:foreach("user", function(s)
 	user_list[#user_list + 1] = s
 end)
 
-s = m:section(NamedSection, arg[1], "server", translate("Server Config"))
+local s = m:section(NamedSection, arg[1], "server", translate("Server Config"))
 s.addremove = false
 s.dynamic = false
 
@@ -39,8 +39,6 @@ for filename in api.fs.dir(types_dir) do
 	table.insert(type_table, filename)
 end
 table.sort(type_table, function(a, b)
-	if a == "socks.lua" then return true end
-	if b == "socks.lua" then return false end
 	return a < b
 end)
 
