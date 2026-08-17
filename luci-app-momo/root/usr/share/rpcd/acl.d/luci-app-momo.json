@@ -11,7 +11,8 @@
                 "/etc/momo/profiles/*.json": ["read"],
                 "/etc/momo/subscriptions/*.json": ["read"],
                 "/etc/momo/run/config.json": ["read"],
-                "/var/log/momo/*.log": ["read"]
+                "/var/log/momo/*.log": ["read"],
+                "/tmp/log/momo/*.log": ["read"]
             }
         },
         "write": {
@@ -20,7 +21,8 @@
                 "/etc/momo/profiles/*.json": ["write"],
                 "/etc/momo/subscriptions/*.json": ["write"],
                 "/etc/momo/run/config.json": ["write"],
-                "/var/log/momo/*.log": ["write"]
+                "/var/log/momo/*.log": ["write"],
+                "/tmp/log/momo/*.log": ["write"]
             }
         }
     }
