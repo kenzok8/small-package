@@ -676,6 +676,7 @@ o.rmempty = false
 
 s2 = m:section(TypedSection, "socks", translate("Socks Config"))
 s2.template = "cbi/tblsection"
+s2.sortable = true
 s2.anonymous = true
 s2.addremove = true
 s2.extedit = api.url("socks_config", "%s")
@@ -770,11 +771,13 @@ o.default = n + 1080
 o.datatype = "port"
 o.rmempty = false
 
+--[[
 if has_singbox or has_xray then
 	o = s2:option(Value, "http_port", "HTTP " .. translate("Listen Port"))
 	o.default = 0
 	o.datatype = "port"
 end
+]]--
 
 local tcp = s.fields["tcp_node"]
 local udp = s.fields["udp_node"]
@@ -822,5 +825,7 @@ for k, v in pairs(nodes_table) do
 end
 
 m:appendTemplate("/global/footer", {shunt_list = api.jsonc.stringify(shunt_list)})
+
+m:appendTemplate("/cbi/sortable", {sectiontype = s2.sectiontype})
 
 return api.return_map(m)
