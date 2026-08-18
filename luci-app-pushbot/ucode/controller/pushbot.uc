@@ -113,6 +113,99 @@ return {
 		}
 	},
 
+	/* 即时获取 IPv4/IPv6（用于 IPv4/IPv6 变更通知的实时预览输出）：
+	 *   type = 4|6, mode = iface|url
+	 *   iface 模式：读指定接口地址；仅私网时输出地址并标注"非公网IP"
+	 *   url 模式：随机起点换列表内其他 URL 最多 3 次，带 --interface 适配多 WAN
+	 * 返回纯文本（获取失败时返回翻译后的失败文案） */
+	act_get_ip: function() {
+		let type = http.formvalue("type") ?? "4";
+		let mode = http.formvalue("mode") ?? "iface";
+		let iface = http.formvalue("iface") ?? "";
+		let urls  = http.formvalue("url")  ?? "";
+
+		http.prepare_content("text/plain; charset=UTF-8");
+
+		/* 接口名只允许安全字符 */
+		iface = replace(iface, /[^A-Za-z0-9_.\-]/g, "");
+
+		/* 私网/链路本地判断 */
+		function is_private(ip) {
+			if (type == "4") {
+				let m = match(ip, /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+				if (!m) return true;
+				let a = +m[1], b = +m[2];
+				if (a == 10) return true;
+				if (a == 172 && b >= 16 && b <= 31) return true;
+				if (a == 192 && b == 168) return true;
+				if (a == 169 && b == 254) return true;  /* link-local */
+				if (a == 127) return true;              /* loopback */
+				if (a == 100 && b >= 64 && b <= 127) return true;  /* CGNAT */
+				return false;
+			}
+			if (match(ip, /^fe80:/i)) return true;       /* link-local */
+			if (match(ip, /^fc/i) || match(ip, /^fd/i)) return true;  /* ULA */
+			if (ip == "::1") return true;
+			return false;
+		}
+
+		function run(cmd) {
+			let f = popen(cmd + " 2>/dev/null", "r");
+			if (f) {
+				let out = f.read("all");
+				f.close();
+				return replace(out, /[\r\n]+$/, "");
+			}
+			return "";
+		}
+
+		let ip = "";
+		if (mode == "iface" && iface != "") {
+			if (type == "4") {
+				ip = run("/sbin/ifconfig " + sq(iface) +
+					" | awk '/inet addr/ {print $2}' | awk -F: '{print $2}'" +
+					" | grep -oE '[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}' | head -n1");
+			}
+			else {
+				ip = run("ip addr show " + sq(iface) +
+					" | grep -v deprecated | grep -A1 'inet6 [^f:]'" +
+					" | sed -nr ':a;N;s#^ +inet6 ([a-f0-9:]+)/.+? scope global .*? valid_lft ([0-9]+sec) .*#\\2 \\1#p;ta'" +
+					" | sort -nr | head -n1 | awk '{print $2}'");
+			}
+		}
+		else if (mode == "url") {
+			/* 与脚本 get_hostipv4/get_hostipv6 一致：随机起点，失败换列表内另一个，最多 3 次 */
+			let lines = [];
+			for (let l in split(urls, /\r?\n/)) {
+				let t = replace(l, /\s+/, "");
+				if (length(t) > 0) push(lines, t);
+			}
+			if (length(lines) > 0) {
+				let start = time() % length(lines);
+				for (let i = 0; i < 3 && i < length(lines); i++) {
+					let pick = lines[(start + i) % length(lines)];
+					let bind = iface != "" ? " --interface " + sq(iface) : "";
+					let out = run("curl -k -s -" + (type == "4" ? "4" : "6") + bind + " -m 8 " + sq(pick) +
+						(type == "4"
+							? " | grep -oE '[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}' | head -n1"
+							: " | grep -oE '([\\da-fA-F0-9]{1,4}(:{1,2})){1,15}[\\da-fA-F0-9]{1,4}' | head -n1"));
+					if (out != "") { ip = out; break; }
+				}
+			}
+		}
+
+		if (ip == "") {
+			http.write(translate('Failed to obtain IP') ?? 'Failed to obtain IP');
+			return;
+		}
+		if (is_private(ip)) {
+			let note = translate('Not a public IP') ?? 'Not a public IP';
+			http.write(ip + " (" + note + ")");
+			return;
+		}
+		http.write(ip);
+	},
+
 	get_log: function() {
 		let u = cursor();
 		if (u.get("pushbot", "pushbot", "debuglevel") != "1") {
@@ -364,8 +457,10 @@ return {
 						if (length(content) > 0)
 							content += "\n";
 					}
+					/* 非黑名单文件（diy.json / ipv4.list / ipv6.list）直接写原始值；
+					   黑名单分支已构造规范化 content，两者共用此行 */
 					let f = open(path, "w");
-					if (f) { f.write(content); f.close(); }
+					if (f) { f.write(content ?? val); f.close(); }
 				}
 				else {
 					let f = open(path, "w");

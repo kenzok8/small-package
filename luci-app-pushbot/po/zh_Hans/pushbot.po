@@ -35,6 +35,9 @@ msgstr "现有在线设备3台"
 msgid "3 devices online:"
 msgstr "现有在线设备3台，具体如下"
 
+msgid "Select an interface first"
+msgstr "请先选择接口"
+
 msgid "A shorter interval responds faster but consumes more system resources"
 msgstr "越短的时间时间响应越及时，但会占用更多的系统资源"
 
@@ -296,6 +299,9 @@ msgstr "错误尝试次数"
 msgid "Failed attempts"
 msgstr "错误次数"
 
+msgid "Failed to obtain IP"
+msgstr "获取失败"
+
 msgid "Failure message color"
 msgstr "失败消息颜色"
 
@@ -350,6 +356,9 @@ msgstr "IPv4 变更通知"
 msgid "IPv4 interface"
 msgstr "IPv4接口"
 
+msgid "IPv4 result:"
+msgstr "IPv4 结果:"
+
 msgid "IPv6 API list"
 msgstr "IPv6 API列表"
 
@@ -361,6 +370,9 @@ msgstr "IPv6 变更通知"
 
 msgid "IPv6 interface"
 msgstr "IPv6接口"
+
+msgid "IPv6 result:"
+msgstr "IPv6 结果:"
 
 msgid "Identifies this device in push message titles, to distinguish the source device"
 msgstr "在推送信息标题中会标识本设备名称，用于区分推送信息的来源设备"
@@ -499,6 +511,9 @@ msgstr "仅通知列表内设备"
 
 msgid "Notify only devices on this interface"
 msgstr "仅通知此接口设备"
+
+msgid "Not a public IP"
+msgstr "非公网IP"
 
 msgid "OUI data"
 msgstr "OUI数据"
@@ -894,6 +909,9 @@ msgstr "【Zed-OP】设备状态变化"
 msgid "[Zed-OP] Test-OpenWRT status:"
 msgstr "【Zed-OP】Test-OpenWRT状态："
 
+msgid "[ Note: If you use a \"Global Interconnect\" style plugin, please add the following APIs to the whitelist to avoid being identified as an overseas IP. ]"
+msgstr "[ 注意：若使用“全球互联”类插件，请把下列 API 加入白名单，避免识别为境外 IP。 ]"
+
 msgid "active: Default"
 msgstr "active：默认"
 
@@ -975,6 +993,9 @@ msgstr "点击重启 pushbot 服务"
 
 msgid "Restarting..."
 msgstr "重启中..."
+
+msgid "Restore plugin default"
+msgstr "恢复插件默认"
 
 
 

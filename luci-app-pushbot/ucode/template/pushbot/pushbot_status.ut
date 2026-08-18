@@ -1,6 +1,9 @@
 {% import { cursor } from 'uci' %}
+{% import { readfile } from 'fs' %}
 {% let pushbot_argon_mode = cursor().get_first('argon', 'global', 'mode') ?? '' %}
 {% let pushbot_liquid_mode = cursor().get_first('liquid', 'theme', 'mode') ?? '' %}
+{% let pushbot_def_ipv4 = readfile('/usr/bin/pushbot/api/ipv4.list') ?? '' %}
+{% let pushbot_def_ipv6 = readfile('/usr/bin/pushbot/api/ipv6.list') ?? '' %}
 {% include('header') %}
 <script type="text/javascript">//<![CDATA[
 if (typeof XHR === 'undefined') {
@@ -1303,7 +1306,24 @@ function initContentCard() {
 		sel.style.cssText='width:100%;padding:6px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
 		opts.forEach(function(o){var op=document.createElement('option');op.value=o.v;op.textContent=o.l;if(o.v===val)op.selected=true;sel.appendChild(op);});
 		var hi=mkH(name,val);
-		sel.addEventListener('change',function(){hi.value=this.value;if(onChange)onChange(this.value);});
+		/* LuCI 会把 select 替换为 .cbi-dropdown 并派发 cbi-dropdown-change（bubbles）。
+		   原生 select 被移除后 change 不再触发，故同时监听 dropdown 事件；
+		   两者可能同帧触发，用时间戳去重避免重复回调。 */
+		var lastFire=0;
+		function fireChange(){
+			if(!onChange)return;
+			var now=Date.now();
+			if(now-lastFire<100)return;
+			lastFire=now;
+			var dd=w.querySelector('.cbi-dropdown');
+			onChange(dd?dd.value:sel.value);
+		}
+		sel.addEventListener('change',function(){hi.value=this.value;fireChange();});
+		w.addEventListener('cbi-dropdown-change',function(e){
+			var v=e.detail&&e.detail.value!=null?e.detail.value:(e.target&&e.target.value!=null?e.target.value:null);
+			if(v!=null)hi.value=v;
+			fireChange();
+		});
 		b.appendChild(sel);
 		if(desc){var d=document.createElement('div');d.className='pushbot-inline-description';d.innerHTML=desc;b.appendChild(d);}
 		w.appendChild(b);return w;
@@ -1347,68 +1367,188 @@ function initContentCard() {
 	/* IPv4 row */
 	var iv4Hi = mkH('pushbot_ipv4', CT_IPV4);
 	var iv4Opts=[{v:'',l:'{{ _('Disabled') }}'},{v:'1',l:'{{ _('Via interface') }}'},{v:'2',l:'{{ _('Via URL') }}'}];
-	var iv4Choices = mkChoice(iv4Opts, CT_IPV4, function(v){iv4Hi.value=v; toggleIPv4(v);});
+	var iv4Choices = mkChoice(iv4Opts, CT_IPV4, function(v){iv4Hi.value=v; toggleIPv4(v); iv4Fetch(v);});
 	var iv4Lbl = document.createElement('div'); iv4Lbl.className='pushbot-inline-title';
 	iv4Lbl.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
-	iv4Lbl.textContent='{{ _('IPv4 change notification') }}'; b1.appendChild(iv4Lbl); b1.appendChild(iv4Choices);
+	iv4Lbl.textContent='{{ _('IPv4 change notification') }}'; b1.appendChild(iv4Lbl);
+	/* 三按钮右侧输出位：即时显示获取到的地址 */
+	var iv4Row=document.createElement('div');iv4Row.style.cssText='display:flex;align-items:center;gap:12px;flex-wrap:wrap';
+	iv4Row.appendChild(iv4Choices);
+	var iv4Rl=document.createElement('span');iv4Rl.style.cssText='font-size:13px;font-weight:600';iv4Rl.textContent='{{ _('IPv4 result:') }}';iv4Row.appendChild(iv4Rl);
+	var iv4Ro=document.createElement('span');iv4Ro.className='pushbot-ip-result';iv4Ro.style.cssText='padding:4px 10px;background:rgba(148,163,184,0.08);border-radius:6px;font-family:Menlo,Consolas,monospace;font-size:12px';iv4Ro.textContent='--';iv4Row.appendChild(iv4Ro);
+	b1.appendChild(iv4Row);
 	var iv4Sub = document.createElement('div'); iv4Sub.id='ct_ipv4_extra'; iv4Sub.style.cssText='margin-top:6px;display:none';
 	/* interface selector */
 	var iv4Sub1 = document.createElement('div'); iv4Sub1.id='ct_ipv4_iface'; iv4Sub1.style.cssText='display:none';
 	var iv4IfOpts=[{v:'',l:'{{ _('-- Select interface --') }}'}];
 	CT_IFACES.forEach(function(f){iv4IfOpts.push({v:f,l:f});});
-	iv4Sub1.appendChild(mkSel('ipv4_interface','{{ _('Interface name') }}',CT_IPV4_IFACE,iv4IfOpts,'{{ _('Usually select the wan interface; choose yourself in multi-WAN environments') }}'));
+	iv4Sub1.appendChild(mkSel('ipv4_interface','{{ _('Interface name') }}',CT_IPV4_IFACE,iv4IfOpts,'{{ _('Usually select the wan interface; choose yourself in multi-WAN environments') }}',function(){iv4Fetch('1');}));
 	iv4Sub.appendChild(iv4Sub1);
 	/* URL list textarea */
 	var iv4Sub2 = document.createElement('div'); iv4Sub2.id='ct_ipv4_url'; iv4Sub2.style.cssText='display:none';
 	var iv4UrlLbl = document.createElement('div'); iv4UrlLbl.className='pushbot-inline-title';
 	iv4UrlLbl.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
 	iv4UrlLbl.textContent='{{ _('IPv4 API list') }}'; iv4Sub2.appendChild(iv4UrlLbl);
+	/* 标题下方提示 */
+	var iv4UrlNote=document.createElement('div');iv4UrlNote.className='pushbot-inline-description';
+	iv4UrlNote.style.cssText='margin:0 0 6px 2px;font-size:12px;color:inherit;opacity:0.75';
+	iv4UrlNote.textContent='{{ _('[ Note: If you use a "Global Interconnect" style plugin, please add the following APIs to the whitelist to avoid being identified as an overseas IP. ]') }}';
+	iv4Sub2.appendChild(iv4UrlNote);
 	var iv4Ta=document.createElement('textarea');iv4Ta.className='cbi-input-textarea';iv4Ta.rows=4;
 	iv4Ta.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit;resize:vertical';
 	iv4Ta.textContent=CT_IPV4_LIST;
 	var iv4UrlHi=mkH('ipv4_list',CT_IPV4_LIST);
 	iv4Ta.addEventListener('input',function(){iv4UrlHi.value=this.value;});
+	iv4Ta.addEventListener('blur',function(){if(iv4Sub2.style.display!=='none')iv4Fetch('2');});
 	iv4Sub2.appendChild(iv4Ta);
+	/* 恢复插件默认按钮 */
+	var iv4Rst=document.createElement('div');iv4Rst.style.cssText='display:flex;justify-content:flex-end;margin-top:6px';
+	var iv4RstBtn=document.createElement('button');iv4RstBtn.type='button';iv4RstBtn.className='cbi-button cbi-input-action';
+	iv4RstBtn.style.cssText='padding:4px 12px;font-size:12px;border-radius:6px';
+	iv4RstBtn.textContent='{{ _('Restore plugin default') }}';
+	iv4RstBtn.addEventListener('click',function(){
+		iv4Ta.value=iv4DefList;iv4UrlHi.value=iv4DefList;
+		if(iv4Sub2.style.display!=='none')iv4Fetch('2');
+	});
+	iv4Rst.appendChild(iv4RstBtn);iv4Sub2.appendChild(iv4Rst);
 	iv4Sub.appendChild(iv4Sub2);
 	b1.appendChild(iv4Sub);
+	/* 插件默认预置列表（与包内 api/ipv4.list 一致），供恢复默认按钮使用 */
+	var iv4DefList={{ sprintf("%J", pushbot_def_ipv4) }};
 	function toggleIPv4(v){
 		iv4Sub.style.display=(v==='1'||v==='2')?'block':'none';
 		iv4Sub1.style.display=(v==='1')?'block':'none';
 		iv4Sub2.style.display=(v==='2')?'block':'none';
 	}
+	function ipResultStyle(ro, text, isErr) {
+		/* 与检查更新一致的配色：公网=绿 / 非公网=橙 / 失败=红 */
+		ro.classList.remove('is-ok','is-warn','is-err');
+		if (isErr) { ro.classList.add('is-err'); return; }
+		var t = text || '';
+		if (t.indexOf('(') >= 0 || t.indexOf('Not a public') >= 0 || t.indexOf('非公网') >= 0) {
+			ro.classList.add('is-warn');
+		}
+		else if (t.indexOf('Failed to obtain') >= 0 || t.indexOf('获取失败') >= 0 ||
+		         t.indexOf('No output') >= 0 || t.indexOf('无输出') >= 0 || t == '') {
+			ro.classList.add('is-err');
+		}
+		else {
+			ro.classList.add('is-ok');
+		}
+	}
+	function iv4Fetch(v){
+		if(v!=='1'&&v!=='2'){iv4Ro.textContent='--';return;}
+		var base='{{ dispatcher.build_url('admin','services','pushbot','get_ip') }}';
+		var q='type=4&mode='+(v==='1'?'iface':'url');
+		if(v==='1'){
+			/* LuCI 将 select 替换为 .cbi-dropdown：优先读 dropdown 值 */
+			var dd=iv4Sub1.querySelector('.cbi-dropdown');
+			var iface=dd?dd.value:(iv4Sub1.querySelector('select')||{}).value;
+			if(iface==null)iface=CT_IPV4_IFACE;
+			if(!iface){iv4Ro.textContent='{{ _('Select an interface first') }}';iv4Ro.classList.remove('is-ok','is-warn');iv4Ro.classList.add('is-err');return;}
+			q+='&iface='+encodeURIComponent(iface);
+		}else{
+			/* URL 模式：带配置的接口出口，适配多 WAN */
+			q+='&url='+encodeURIComponent(iv4Ta.value||'');
+			if(CT_IPV4_IFACE)q+='&iface='+encodeURIComponent(CT_IPV4_IFACE);
+		}
+		/* 打断：每次新触发使旧请求 token 失效（含重试中的请求） */
+		var myTok=++iv4Tok;
+		iv4Ro.textContent='{{ _('Loading...') }}';
+		iv4Ro.classList.remove('is-ok','is-warn','is-err');
+		var x=new XMLHttpRequest();
+		x.open('GET',base+'?_='+Date.now()+'&'+q,true);
+		x.onload=function(){if(myTok!==iv4Tok)return;iv4Ro.textContent=x.responseText||'{{ _('No output') }}';ipResultStyle(iv4Ro,x.responseText,false);};
+		x.onerror=function(){if(myTok!==iv4Tok)return;iv4Ro.textContent='{{ _('No output') }}';ipResultStyle(iv4Ro,'',true);};
+		x.send();
+	}
+	var iv4Tok=0;
 	toggleIPv4(CT_IPV4);
+	if(CT_IPV4==='1'||CT_IPV4==='2')iv4Fetch(CT_IPV4);
 
 	/* IPv6 row */
 	var iv6Hi = mkH('pushbot_ipv6', CT_IPV6);
 	var iv6Opts=[{v:'0',l:'{{ _('Disabled') }}'},{v:'1',l:'{{ _('Via interface') }}'},{v:'2',l:'{{ _('Via URL') }}'}];
-	var iv6Choices = mkChoice(iv6Opts, CT_IPV6, function(v){iv6Hi.value=v; toggleIPv6(v);});
+	var iv6Choices = mkChoice(iv6Opts, CT_IPV6, function(v){iv6Hi.value=v; toggleIPv6(v); iv6Fetch(v);});
 	var iv6Lbl = document.createElement('div'); iv6Lbl.className='pushbot-inline-title';
 	iv6Lbl.style.cssText='margin:8px 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
-	iv6Lbl.textContent='{{ _('IPv6 change notification') }}'; b1.appendChild(iv6Lbl); b1.appendChild(iv6Choices);
+	iv6Lbl.textContent='{{ _('IPv6 change notification') }}'; b1.appendChild(iv6Lbl);
+	/* 三按钮右侧输出位：即时显示获取到的地址 */
+	var iv6Row=document.createElement('div');iv6Row.style.cssText='display:flex;align-items:center;gap:12px;flex-wrap:wrap';
+	iv6Row.appendChild(iv6Choices);
+	var iv6Rl=document.createElement('span');iv6Rl.style.cssText='font-size:13px;font-weight:600';iv6Rl.textContent='{{ _('IPv6 result:') }}';iv6Row.appendChild(iv6Rl);
+	var iv6Ro=document.createElement('span');iv6Ro.className='pushbot-ip-result';iv6Ro.style.cssText='padding:4px 10px;background:rgba(148,163,184,0.08);border-radius:6px;font-family:Menlo,Consolas,monospace;font-size:12px';iv6Ro.textContent='--';iv6Row.appendChild(iv6Ro);
+	b1.appendChild(iv6Row);
 	var iv6Sub = document.createElement('div'); iv6Sub.id='ct_ipv6_extra'; iv6Sub.style.cssText='margin-top:6px;display:none';
 	var iv6Sub1 = document.createElement('div'); iv6Sub1.style.cssText='display:none';
 	var iv6IfOpts=[{v:'',l:'{{ _('-- Select interface --') }}'}];
 	CT_IFACES.forEach(function(f){iv6IfOpts.push({v:f,l:f});});
-	iv6Sub1.appendChild(mkSel('ipv6_interface','{{ _('Interface name') }}',CT_IPV6_IFACE,iv6IfOpts,'{{ _('Usually select the wan interface; choose yourself in multi-WAN environments') }}'));
+	iv6Sub1.appendChild(mkSel('ipv6_interface','{{ _('Interface name') }}',CT_IPV6_IFACE,iv6IfOpts,'{{ _('Usually select the wan interface; choose yourself in multi-WAN environments') }}',function(){iv6Fetch('1');}));
 	iv6Sub.appendChild(iv6Sub1);
 	var iv6Sub2 = document.createElement('div'); iv6Sub2.id='ct_ipv6_url'; iv6Sub2.style.cssText='display:none';
 	var iv6UrlLbl = document.createElement('div'); iv6UrlLbl.className='pushbot-inline-title';
 	iv6UrlLbl.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
 	iv6UrlLbl.textContent='{{ _('IPv6 API list') }}'; iv6Sub2.appendChild(iv6UrlLbl);
+	/* 标题下方提示 */
+	var iv6UrlNote=document.createElement('div');iv6UrlNote.className='pushbot-inline-description';
+	iv6UrlNote.style.cssText='margin:0 0 6px 2px;font-size:12px;color:inherit;opacity:0.75';
+	iv6UrlNote.textContent='{{ _('[ Note: If you use a "Global Interconnect" style plugin, please add the following APIs to the whitelist to avoid being identified as an overseas IP. ]') }}';
+	iv6Sub2.appendChild(iv6UrlNote);
 	var iv6Ta=document.createElement('textarea');iv6Ta.className='cbi-input-textarea';iv6Ta.rows=4;
 	iv6Ta.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit;resize:vertical';
 	iv6Ta.textContent=CT_IPV6_LIST;
 	var iv6UrlHi=mkH('ipv6_list',CT_IPV6_LIST);
 	iv6Ta.addEventListener('input',function(){iv6UrlHi.value=this.value;});
+	iv6Ta.addEventListener('blur',function(){if(iv6Sub2.style.display!=='none')iv6Fetch('2');});
 	iv6Sub2.appendChild(iv6Ta);
+	/* 恢复插件默认按钮 */
+	var iv6Rst=document.createElement('div');iv6Rst.style.cssText='display:flex;justify-content:flex-end;margin-top:6px';
+	var iv6RstBtn=document.createElement('button');iv6RstBtn.type='button';iv6RstBtn.className='cbi-button cbi-input-action';
+	iv6RstBtn.style.cssText='padding:4px 12px;font-size:12px;border-radius:6px';
+	iv6RstBtn.textContent='{{ _('Restore plugin default') }}';
+	iv6RstBtn.addEventListener('click',function(){
+		iv6Ta.value=iv6DefList;iv6UrlHi.value=iv6DefList;
+		if(iv6Sub2.style.display!=='none')iv6Fetch('2');
+	});
+	iv6Rst.appendChild(iv6RstBtn);iv6Sub2.appendChild(iv6Rst);
 	iv6Sub.appendChild(iv6Sub2);
 	b1.appendChild(iv6Sub);
+	/* 插件默认预置列表（与包内 api/ipv6.list 一致），供恢复默认按钮使用 */
+	var iv6DefList={{ sprintf("%J", pushbot_def_ipv6) }};
 	function toggleIPv6(v){
 		iv6Sub.style.display=(v==='1'||v==='2')?'block':'none';
 		iv6Sub1.style.display=(v==='1')?'block':'none';
 		iv6Sub2.style.display=(v==='2')?'block':'none';
 	}
+	function iv6Fetch(v){
+		if(v!=='1'&&v!=='2'){iv6Ro.textContent='--';return;}
+		var base='{{ dispatcher.build_url('admin','services','pushbot','get_ip') }}';
+		var q='type=6&mode='+(v==='1'?'iface':'url');
+		if(v==='1'){
+			/* LuCI 将 select 替换为 .cbi-dropdown：优先读 dropdown 值 */
+			var dd=iv6Sub1.querySelector('.cbi-dropdown');
+			var iface=dd?dd.value:(iv6Sub1.querySelector('select')||{}).value;
+			if(iface==null)iface=CT_IPV6_IFACE;
+			if(!iface){iv6Ro.textContent='{{ _('Select an interface first') }}';iv6Ro.classList.remove('is-ok','is-warn');iv6Ro.classList.add('is-err');return;}
+			q+='&iface='+encodeURIComponent(iface);
+		}else{
+			/* URL 模式：带配置的接口出口，适配多 WAN */
+			q+='&url='+encodeURIComponent(iv6Ta.value||'');
+			if(CT_IPV6_IFACE)q+='&iface='+encodeURIComponent(CT_IPV6_IFACE);
+		}
+		/* 打断：每次新触发使旧请求 token 失效（含重试中的请求） */
+		var myTok=++iv6Tok;
+		iv6Ro.textContent='{{ _('Loading...') }}';
+		iv6Ro.classList.remove('is-ok','is-warn','is-err');
+		var x=new XMLHttpRequest();
+		x.open('GET',base+'?_='+Date.now()+'&'+q,true);
+		x.onload=function(){if(myTok!==iv6Tok)return;iv6Ro.textContent=x.responseText||'{{ _('No output') }}';ipResultStyle(iv6Ro,x.responseText,false);};
+		x.onerror=function(){if(myTok!==iv6Tok)return;iv6Ro.textContent='{{ _('No output') }}';ipResultStyle(iv6Ro,'',true);};
+		x.send();
+	}
+	var iv6Tok=0;
 	toggleIPv6(CT_IPV6);
+	if(CT_IPV6==='1'||CT_IPV6==='2')iv6Fetch(CT_IPV6);
 
 	/* device up/down toggles - use pre-created global hidden inputs */
 	var upHi = document.querySelector('[name="cbid.pushbot.pushbot.pushbot_up"]');
@@ -3039,6 +3179,19 @@ window.addEventListener('DOMContentLoaded', function() {
 .pushbot-ver-toast.is-err {
 	background: linear-gradient(135deg, #ef4444, #dc2626);
 	border: 1px solid rgba(248, 113, 113, 0.45);
+}
+/* IP 预览输出位配色：与检查更新一致（公网=绿 / 非公网=橙 / 失败=红） */
+.pushbot-ip-result.is-ok {
+	background: linear-gradient(135deg, #10b981, #059669) !important;
+	color: #fff;
+}
+.pushbot-ip-result.is-warn {
+	background: linear-gradient(135deg, #f59e0b, #ea580c) !important;
+	color: #fff;
+}
+.pushbot-ip-result.is-err {
+	background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+	color: #fff;
 }
 .pushbot-ver-toast-msg {
 	font-size: 14px;

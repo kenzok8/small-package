@@ -209,40 +209,83 @@ function enable_detection(){
 }
 
 # 获取 ip
+# 判断 IP 是否为私网/链路本地地址（与 LuCI 预览逻辑一致）
+# 返回 0=私网 1=公网
+function is_private_ip(){
+	local ip="$1" fam="$2"
+	[ -z "$ip" ] && return 0
+	if [ "$fam" = "6" ] ;then
+		case "$ip" in
+			fe80:*|fe8[0-9a-f]:*|fe9[0-9a-f]:*|fea[0-9a-f]:*|feb[0-9a-f]:*) return 0 ;;  # link-local
+			fc*|fd*) return 0 ;;  # ULA
+			::1) return 0 ;;
+		esac
+		return 1
+	else
+		case "$ip" in
+			10.*) return 0 ;;
+			172.1[6-9].*|172.2[0-9].*|172.3[0-1].*) return 0 ;;
+			192.168.*) return 0 ;;
+			169.254.*) return 0 ;;  # link-local
+			127.*) return 0 ;;     # loopback
+			100.6[4-9].*|100.[7-9][0-9].*|100.1[0-2][0-7].*) return 0 ;;  # CGNAT
+		esac
+		return 1
+	fi
+}
+
 function getip(){
 	[ ! "$1" ] && return
 	if [ $1 == "wanipv4" ] ;then
 		[ ! -z "$ipv4_interface" ] && local wanIP=$(/sbin/ifconfig ${ipv4_interface}|awk '/inet addr/ {print $2}'|awk -F: '{print $2}'|grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
 		[ -z "$ipv4_interface" ] && local wanIP=$(getinterfacelist|grep '\"address\"'|grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
+		[ -z "$wanIP" ] && echo "获取失败" && return
 		echo "$wanIP"
 	elif [ $1 == "hostipv4" ] ;then
 		function get_hostipv4()
 		{
 			local url_number=`echo "$ipv4_urllist"|wc -l`
-			local ipv4_URL=`echo "$ipv4_urllist"| sed -n "$(rand 1 $url_number)p"|sed -e 's/\r//g'`
-			[ ! -z "$ipv4_interface" ] && local hostIP=$(curl -k -s -4 --interface ${ipv4_interface} -m 5 ${ipv4_URL}) || local hostIP=$(curl -k -s -4 -m 5 ${ipv4_URL})
-			echo $hostIP|grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'|head -n1
+			[ "$url_number" -le 0 ] && echo "获取失败" && return
+			# 随机起点，失败换列表内另一个，最多 3 次
+			local start=$(rand 1 $url_number)
+			for i in 1 2 3; do
+				local line=$(( (start + i - 1) % url_number + 1 ))
+				local ipv4_URL=`echo "$ipv4_urllist"| sed -n "${line}p"|sed -e 's/\r//g'`
+				[ -z "$ipv4_URL" ] && continue
+				local hostIP=""
+				[ ! -z "$ipv4_interface" ] && local hostIP=$(curl -k -s -4 --interface ${ipv4_interface} -m 8 ${ipv4_URL}) || local hostIP=$(curl -k -s -4 -m 8 ${ipv4_URL})
+				local out=`echo $hostIP|grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'|head -n1`
+				[ ! -z "$out" ] && echo "$out" && return
+			done
+			echo "获取失败"
 		}
 		local hostIP=`get_hostipv4`
-		[ -z "$hostIP" ] && local hostIP=`get_hostipv4`
-		[ -z "$hostIP" ] && local hostIP=`get_hostipv4`
-		echo $hostIP # 重试，偷懒，有空再优化
+		echo $hostIP
 	elif [ $1 == "wanipv6" ] ;then
 		[ ! -z "$ipv6_interface" ] && local wanIPv6=$(ip addr show ${ipv6_interface}|grep -v deprecated|grep -A1 'inet6 [^f:]'|sed -nr ':a;N;s#^ +inet6 ([a-f0-9:]+)/.+? scope global .*? valid_lft ([0-9]+sec) .*#\2 \1#p;ta'|sort -nr|head -n1|awk '{print $2}')
 		[ -z "$ipv6_interface" ] && local wanIPv6=$(ip addr show|grep -v deprecated|grep -A1 'inet6 [^f:]'|sed -nr ':a;N;s#^ +inet6 ([a-f0-9:]+)/.+? scope global .*? valid_lft ([0-9]+sec) .*#\2 \1#p;ta'|sort -nr|head -n1|awk '{print $2}')
+		[ -z "$wanIPv6" ] && echo "获取失败" && return
 		echo "$wanIPv6"
 	elif [ $1 == "hostipv6" ] ;then
 		function get_hostipv6()
 		{
 			local urlv6_number=`echo "$ipv6_urllist"|wc -l`
-			local ipv6_URL=`echo "$ipv6_urllist"| sed -n "$(rand 1 $urlv6_number)p"|sed -e 's/\r//g'`
-			[ ! -z "$ipv6_interface" ] && local hostIPv6=$(curl -k -s -6 --interface ${ipv6_interface} -m 5 ${ipv6_URL}) || local hostIPv6=$(curl -k -s -6 -m 5 ${ipv6_URL})
-			echo $hostIPv6|grep -oE '([\da-fA-F0-9]{1,4}(:{1,2})){1,15}[\da-fA-F0-9]{1,4}'|head -n1
+			[ "$urlv6_number" -le 0 ] && echo "获取失败" && return
+			# 随机起点，失败换列表内另一个，最多 3 次
+			local start=$(rand 1 $urlv6_number)
+			for i in 1 2 3; do
+				local line=$(( (start + i - 1) % urlv6_number + 1 ))
+				local ipv6_URL=`echo "$ipv6_urllist"| sed -n "${line}p"|sed -e 's/\r//g'`
+				[ -z "$ipv6_URL" ] && continue
+				local hostIPv6=""
+				[ ! -z "$ipv6_interface" ] && local hostIPv6=$(curl -k -s -6 --interface ${ipv6_interface} -m 8 ${ipv6_URL}) || local hostIPv6=$(curl -k -s -6 -m 8 ${ipv6_URL})
+				local out=`echo $hostIPv6|grep -oE '([\da-fA-F0-9]{1,4}(:{1,2})){1,15}[\da-fA-F0-9]{1,4}'|head -n1`
+				[ ! -z "$out" ] && echo "$out" && return
+			done
+			echo "获取失败"
 		}
 		local hostIPv6=`get_hostipv6`
-		[ -z "$hostIPv6" ] && local hostIPv6=`get_hostipv6`
-		[ -z "$hostIPv6" ] && local hostIPv6=`get_hostipv6`
-		echo $hostIPv6 # 重试，偷懒，有空再优化
+		echo $hostIPv6
 	fi
 }
 
@@ -735,7 +778,7 @@ function unattended(){
 		public_ip_count=`expr $public_ip_count + 1`
 		local wanIP=`getip wanipv4`
 		local hostIP=`getip hostipv4`
-		if [ ! -z "$wanIP" ] && [ ! -z "$hostIP" ] && ( ! echo "$wanIP"|grep -q -w ${hostIP} );then
+		if [ ! -z "$wanIP" ] && [ "$wanIP" != "获取失败" ] && [ ! -z "$hostIP" ] && [ "$hostIP" != "获取失败" ] && ( ! echo "$wanIP"|grep -q -w ${hostIP} );then
 			echo "`date "+%Y-%m-%d %H:%M:%S"` 【无人值守任务】重拨尝试获取公网 ip，当前第 $public_ip_count 次 " >> ${logfile}
 			ifup wan >/dev/null 2>&1
 			sleep 60
@@ -744,7 +787,7 @@ function unattended(){
 			[ ! -z "$pushbot_ipv4" ] && [ "$pushbot_ipv4" -eq "2" ] && local IPv4=${hostIP}
 			[ ! -z "$pushbot_ipv6" ] && [ "$pushbot_ipv6" -eq "1" ] && local IPv6=`getip wanipv6`
 			[ ! -z "$pushbot_ipv6" ] && [ "$pushbot_ipv6" -eq "2" ] && local IPv6=`getip hostipv6`
-			[ ! -z "$wanIP" ] && [ ! -z "$hostIP" ] && ( ! echo "$wanIP"|grep -q -w ${hostIP} ) && echo IPv4 $IPv4 > ${dir}ip && echo -e IPv6 $last_IPv6 >> ${dir}ip
+			[ ! -z "$wanIP" ] && [ "$wanIP" != "获取失败" ] && [ ! -z "$hostIP" ] && [ "$hostIP" != "获取失败" ] && ( ! echo "$wanIP"|grep -q -w ${hostIP} ) && echo IPv4 $IPv4 > ${dir}ip && echo -e IPv6 $last_IPv6 >> ${dir}ip
 		fi
 	fi
 }
@@ -861,32 +904,37 @@ function ip_changes(){
 	if [ -f ${dir}ip ]; then
 		local last_IPv4=$(cat "${dir}ip"|grep IPv4|awk '{print $2}'|grep -v "^$"|sort -u|head -n1)
 		local last_IPv6=$(cat "${dir}ip"|grep IPv6|awk '{print $2}'|grep -v "^$"|sort -u|head -n1)
-		if [ ! -z "$pushbot_ipv4" ] && [ "$pushbot_ipv4" -ne "0" ] && [ ! -z "$IPv4" ] && ( ! echo ${IPv4}|grep -w -q ${last_IPv4} ); then
+		if [ ! -z "$pushbot_ipv4" ] && [ "$pushbot_ipv4" -ne "0" ] && [ ! -z "$IPv4" ] && [ "$IPv4" != "获取失败" ] && ( ! echo ${IPv4}|grep -w -q ${last_IPv4} ); then
 			echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}当前IP：${IPv4}" >> ${logfile}
 			echo IPv4 $IPv4 > ${dir}ip && echo -e IPv6 $last_IPv6 >> ${dir}ip
 			title="IP 地址变化"
+			# 接口模式取到私网地址：标注非公网
+			local IPv4_note=""
+			[ ! -z "$IPv4" ] && [ "$IPv4" != "获取失败" ] && is_private_ip "$IPv4" 4 && IPv4_note=" (非公网IP)"
 			if [ "$table_enable" = "1" ]; then
 				local LF='\n'
-				content="${content}${str_splitline}${str_title_start}${font_success} IP 地址变化${font_end}${str_title_end}${LF}| **当前 IP** | ${IPv4} |${LF}| --- | --- |"
+				content="${content}${str_splitline}${str_title_start}${font_success} IP 地址变化${font_end}${str_title_end}${LF}| **当前 IP** | ${IPv4}${IPv4_note} |${LF}| --- | --- |"
 			else
-				content="${content}${str_splitline}${str_title_start}${font_success} IP 地址变化${font_end}${str_title_end}${str_linefeed}${str_tab}当前 IP：${IPv4}"
+				content="${content}${str_splitline}${str_title_start}${font_success} IP 地址变化${font_end}${str_title_end}${str_linefeed}${str_tab}当前 IP：${IPv4}${IPv4_note}"
 			fi
-		elif [ ! -z "$pushbot_ipv4" ] && [ "$pushbot_ipv4" -ne "0" ] && [ -z "$IPv4" ]; then
+		elif [ ! -z "$pushbot_ipv4" ] && [ "$pushbot_ipv4" -ne "0" ] && { [ -z "$IPv4" ] || [ "$IPv4" = "获取失败" ]; }; then
 			echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】获取 IPv4 地址失败" >> ${logfile}
 		fi
 
-		if [ ! -z "$pushbot_ipv6" ] && [ "$pushbot_ipv6" -ne "0" ] && [ ! -z "$IPv6" ] && ( ! echo "$IPv6"|grep -w -q ${last_IPv6} ); then
+		if [ ! -z "$pushbot_ipv6" ] && [ "$pushbot_ipv6" -ne "0" ] && [ ! -z "$IPv6" ] && [ "$IPv6" != "获取失败" ] && ( ! echo "$IPv6"|grep -w -q ${last_IPv6} ); then
 			echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}当前IPv6：${IPv6}" >> ${logfile}
 			echo IPv4 $IPv4 > ${dir}ip && echo -e IPv6 $IPv6 >> ${dir}ip
 			[ -z "$title" ] && title="IPv6 地址变化"
 			[ ! -z "$title" ] && title="IP 地址变化"
+			local IPv6_note=""
+			[ ! -z "$IPv6" ] && [ "$IPv6" != "获取失败" ] && is_private_ip "$IPv6" 6 && IPv6_note=" (非公网IP)"
 			if [ "$table_enable" = "1" ]; then
 				local LF='\n'
-				content="${content}${str_splitline}${str_title_start}${font_success} IPv6 地址变化${font_end}${str_title_end}${LF}| **当前 IPv6** | ${IPv6} |${LF}| --- | --- |"
+				content="${content}${str_splitline}${str_title_start}${font_success} IPv6 地址变化${font_end}${str_title_end}${LF}| **当前 IPv6** | ${IPv6}${IPv6_note} |${LF}| --- | --- |"
 			else
-				content="${content}${str_splitline}${str_title_start}${font_success} IPv6 地址变化${font_end}${str_title_end}${str_linefeed}${str_tab}当前 IPv6：${IPv6}"
+				content="${content}${str_splitline}${str_title_start}${font_success} IPv6 地址变化${font_end}${str_title_end}${str_linefeed}${str_tab}当前 IPv6：${IPv6}${IPv6_note}"
 			fi
-		elif [ ! -z "$pushbot_ipv6" ] && [ "$pushbot_ipv6" -ne "0" ] && [ -z "$IPv6" ]; then
+		elif [ ! -z "$pushbot_ipv6" ] && [ "$pushbot_ipv6" -ne "0" ] && { [ -z "$IPv6" ] || [ "$IPv6" = "获取失败" ]; }; then
 			echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】获取 IPv6 地址失败" >> ${logfile}
 		fi
 
@@ -897,13 +945,16 @@ function ip_changes(){
 		echo IPv4 $IPv4 > ${dir}ip && echo -e IPv6 $IPv6 >> ${dir}ip	
 		title="路由器重新启动"
 		content="${content}${str_splitline}${str_title_start}${font_success} 路由器重新启动${font_end}${str_title_end}"
+		local r4_note="" r6_note=""
+		[ ! -z "$IPv4" ] && [ "$IPv4" != "获取失败" ] && is_private_ip "$IPv4" 4 && r4_note=" (非公网IP)"
+		[ ! -z "$IPv6" ] && [ "$IPv6" != "获取失败" ] && is_private_ip "$IPv6" 6 && r6_note=" (非公网IP)"
 		if [ "$table_enable" = "1" ]; then
 			local LF='\n'
-			[ ! -z "$pushbot_ipv4" ] && [ "$pushbot_ipv4" -ne "0" ] && content="${content}${LF}| **当前IP** | ${IPv4} |${LF}| --- | --- |"
-			[ ! -z "$pushbot_ipv6" ] && [ "$pushbot_ipv6" -ne "0" ] && content="${content}${LF}| **当前IPv6** | ${IPv6} |${LF}| --- | --- |"
+			[ ! -z "$pushbot_ipv4" ] && [ "$pushbot_ipv4" -ne "0" ] && content="${content}${LF}| **当前IP** | ${IPv4}${r4_note} |${LF}| --- | --- |"
+			[ ! -z "$pushbot_ipv6" ] && [ "$pushbot_ipv6" -ne "0" ] && content="${content}${LF}| **当前IPv6** | ${IPv6}${r6_note} |${LF}| --- | --- |"
 		else
-			[ ! -z "$pushbot_ipv4" ] && [ "$pushbot_ipv4" -ne "0" ] && content="${content}${str_linefeed}${str_tab}当前IP：${IPv4}"
-			[ ! -z "$pushbot_ipv6" ] && [ "$pushbot_ipv6" -ne "0" ] && content="${content}${str_linefeed}${str_tab}当前IPv6：${IPv6}"
+			[ ! -z "$pushbot_ipv4" ] && [ "$pushbot_ipv4" -ne "0" ] && content="${content}${str_linefeed}${str_tab}当前IP：${IPv4}${r4_note}"
+			[ ! -z "$pushbot_ipv6" ] && [ "$pushbot_ipv6" -ne "0" ] && content="${content}${str_linefeed}${str_tab}当前IPv6：${IPv6}${r6_note}"
 		fi
 	fi
 
@@ -1722,26 +1773,32 @@ function send(){
 
 	if [ -z "$1" ] && [ ! -z "$router_wan" ] && [ "$router_wan" -eq "1" ]; then
 		local send_wanIP=`getip wanipv4`;local send_hostIP=`getip hostipv4`
+		# 接口 IP 为私网时标注非公网
+		local wanIP_note=""
+		[ ! -z "$send_wanIP" ] && [ "$send_wanIP" != "获取失败" ] && is_private_ip "$send_wanIP" 4 && wanIP_note=" (非公网IP)"
+		local wanIP6_note=""
 		if [ "$table_enable" = "1" ]; then
 			local LF='\n'
-			local send_content="${send_content}${str_splitline}${str_title_start}${font_module} WAN 口信息${font_end}${str_title_end}${LF}| **接口IP** | ${send_wanIP} |${LF}| --- | --- |${LF}| **外网IP** | ${send_hostIP} |"
+			local send_content="${send_content}${str_splitline}${str_title_start}${font_module} WAN 口信息${font_end}${str_title_end}${LF}| **接口IP** | ${send_wanIP}${wanIP_note} |${LF}| --- | --- |${LF}| **外网IP** | ${send_hostIP} |"
 			if [ ! -z "$pushbot_ipv6" ] && [ "$pushbot_ipv6" -ne "0" ]; then
 				local send_wanIPv6=`getip wanipv6`;local send_hostIPv6=`getip hostipv6`
-				local send_content="${send_content}${LF}| **IPv6** | ${send_wanIPv6} |${LF}| **外网v6** | ${send_hostIPv6} |"
+				[ ! -z "$send_wanIPv6" ] && [ "$send_wanIPv6" != "获取失败" ] && is_private_ip "$send_wanIPv6" 6 && wanIP6_note=" (非公网IP)"
+				local send_content="${send_content}${LF}| **IPv6** | ${send_wanIPv6}${wanIP6_note} |${LF}| **外网v6** | ${send_hostIPv6} |"
 			fi
-			( ! echo "$send_wanIP"|grep -q -w ${send_hostIP} ) && local send_content="${send_content}${LF}| **提示** | 外网 ip 与接口 ip 不一致，不是公网 ip |"
+			[ ! -z "$send_wanIP" ] && [ ! -z "$send_hostIP" ] && [ "$send_hostIP" != "获取失败" ] && ( ! echo "$send_wanIP"|grep -q -w ${send_hostIP} ) && local send_content="${send_content}${LF}| **提示** | 外网 ip 与接口 ip 不一致，不是公网 ip |"
 			local interfaceuptime=`getinterfaceuptime`
 			[ ! -z "$interfaceuptime" ] && local wanstatustime=`getinterfaceuptime|awk -F. '{run_days=$1 / 86400;run_hour=($1 % 86400)/3600;run_minute=($1 % 3600)/60;run_second=$1 % 60;printf("在线时间：%d天%d时%d分%d秒",run_days,run_hour,run_minute,run_second)}'` && unset run_days run_hour run_minute run_second
 			[ ! -z "$wanstatustime" ] && local send_content="${send_content}${LF}| **在线时间** | ${wanstatustime#在线时间：} |"
 		else
-			local send_content="${send_content}${str_splitline}${str_title_start}${font_module} WAN 口信息${font_end}${str_title_end}${str_linefeed}${str_tab}接口ip:${send_wanIP}"
+			local send_content="${send_content}${str_splitline}${str_title_start}${font_module} WAN 口信息${font_end}${str_title_end}${str_linefeed}${str_tab}接口ip:${send_wanIP}${wanIP_note}"
 			local send_content="${send_content}${str_linefeed}${str_tab}外网ip:${send_hostIP}"
 			if [ ! -z "$pushbot_ipv6" ] && [ "$pushbot_ipv6" -ne "0" ]; then
 				local send_wanIPv6=`getip wanipv6`;local send_hostIPv6=`getip hostipv6`
-				local send_content="${send_content}${str_linefeed}${str_tab}ipv6 :${send_wanIPv6}"
+				[ ! -z "$send_wanIPv6" ] && [ "$send_wanIPv6" != "获取失败" ] && is_private_ip "$send_wanIPv6" 6 && wanIP6_note=" (非公网IP)"
+				local send_content="${send_content}${str_linefeed}${str_tab}ipv6 :${send_wanIPv6}${wanIP6_note}"
 				local send_content="${send_content}${str_linefeed}${str_tab}外网v6:${send_hostIPv6}"
 			fi
-			( ! echo "$send_wanIP"|grep -q -w ${send_hostIP} ) && local send_content="${send_content}${str_linefeed}${str_tab}外网 ip 与接口 ip 不一致，你的 ip 不是公网 ip"
+			[ ! -z "$send_wanIP" ] && [ ! -z "$send_hostIP" ] && [ "$send_hostIP" != "获取失败" ] && ( ! echo "$send_wanIP"|grep -q -w ${send_hostIP} ) && local send_content="${send_content}${str_linefeed}${str_tab}外网 ip 与接口 ip 不一致，你的 ip 不是公网 ip"
 			local interfaceuptime=`getinterfaceuptime`
 			[ ! -z "$interfaceuptime" ] && local wanstatustime=`getinterfaceuptime|awk -F. '{run_days=$1 / 86400;run_hour=($1 % 86400)/3600;run_minute=($1 % 3600)/60;run_second=$1 % 60;printf("在线时间：%d天%d时%d分%d秒",run_days,run_hour,run_minute,run_second)}'` && unset run_days run_hour run_minute run_second
 			local send_content="${send_content}${str_linefeed}${str_tab}${wanstatustime}"

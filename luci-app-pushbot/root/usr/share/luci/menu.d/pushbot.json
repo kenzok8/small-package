@@ -54,6 +54,13 @@
 			"function": "act_soc_result"
 		}
 	},
+	"admin/services/pushbot/get_ip": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "act_get_ip"
+		}
+	},
 	"admin/services/pushbot/get_log": {
 		"action": {
 			"type": "function",
