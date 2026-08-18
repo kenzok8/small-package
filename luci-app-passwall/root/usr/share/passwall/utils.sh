@@ -479,7 +479,7 @@ ln_run() {
 		echolog "  - 找不到 ${ln_name}，无法启动..."
 		return 1
 	}
-	[ "${output}" != "/dev/null" ] && [ -n "$(echo "${output}" | grep -E "default|SOCKS_")" ] && [ "${ln_name}" != "chinadns-ng" ] && {
+	[ "${output}" != "/dev/null" ] && [ -n "$(echo "${output}" | grep -E "default|socks_")" ] && [ "${ln_name}" != "chinadns-ng" ] && {
 		local persist_log_path=$(config_t_get global persist_log_path)
 		local sys_log=$(config_t_get global sys_log "0")
 	}

@@ -11,6 +11,10 @@ if not s1.fields["type"].default then
 	s1.fields["type"].default = type_name
 end
 
+if not s1.val["type"] then
+	s1.val["type"] = type_name
+end
+
 if s1.val["type"] and s1.val["type"] ~= type_name then
 	return
 end
@@ -62,10 +66,15 @@ o:value("wireguard", "WireGuard")
 o:value("dokodemo-door", "dokodemo-door")
 o:depends({ custom = false })
 
+o = s:option(DummyValue, "is_endpoint", "")
+o.not_rewrite = true
+o.template = m:template_path("/cbi/hidevalue")
+o.value = "1"
+o:depends({ custom = false, protocol = "wireguard" })
+
 o = s:option(Value, "port", translate("Listen Port"))
 o.datatype = "port"
 o:depends({ custom = false })
-
 
 o = s:option(DynamicList, "users", translate("User"))
 for i, v in ipairs(user_list) do
@@ -402,7 +411,7 @@ end
 --[[acceptProxyProtocol]]
 o = s:option(Flag, "acceptProxyProtocol", translate("acceptProxyProtocol"), translate("Whether to receive PROXY protocol, when this node want to be fallback or forwarded by proxy, it must be enable, otherwise it cannot be used."))
 o.default = "0"
-o:depends({ custom = false })
+o:depends({ custom = false, is_endpoint = "" })
 
 --[[Fast Open]]
 o = s:option(Flag, "tcp_fast_open", "TCP " .. translate("Fast Open"))

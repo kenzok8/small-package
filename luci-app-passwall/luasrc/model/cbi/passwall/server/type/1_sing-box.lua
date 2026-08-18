@@ -80,6 +80,12 @@ end
 o:value("direct", "Direct")
 o:depends({ custom = false })
 
+o = s:option(DummyValue, "is_endpoint", "")
+o.not_rewrite = true
+o.template = m:template_path("/cbi/hidevalue")
+o.value = "1"
+o:depends({ custom = false, protocol = "wireguard" })
+
 o = s:option(Value, "port", translate("Listen Port"))
 o.datatype = "port"
 o:depends({ custom = false })
@@ -452,7 +458,7 @@ end
 
 o = s:option(Flag, "bind_local", translate("Bind Local"), translate("When selected, it can only be accessed localhost."))
 o.default = "0"
-o:depends({ custom = false })
+o:depends({ custom = false, is_endpoint = "" })
 
 o = s:option(Flag, "accept_lan", translate("Accept LAN Access"), translate("When selected, it can accessed lan , this will not be safe!"))
 o.default = "0"
