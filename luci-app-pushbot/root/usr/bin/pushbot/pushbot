@@ -1555,10 +1555,65 @@ function add_ip_black(){
 	local cur_onoff="${web_login_black:-0}"
 	[ "$prev_onoff" != "$cur_onoff" ] && need_update=true
 	echo "$cur_onoff" > ${bl_state}.onoff
+	# 带参调用 = 新拉黑事件（登录失败/手动拉黑）：即使文件已有该 IP（上次超时残留），
+	# 也必须重建 set 使其重新生效，否则超时移除后的"再次拉黑"会因 need_update=false 被跳过
+	if [ -n "$1" ]; then
+		need_update=true
+	fi
 	
+	# ── 反向同步判定：防火墙是否发生了"主动变化"（到期移除）──
+	# 设计（乐观并发控制）：
+	#   · 新增/删除/清空/失败拉黑 = 文件→防火墙方向，文件是变更源
+	#   · set 条目到期 = 防火墙→文件方向，set 是变更源
+	# 用 prev_set 快照（上次同步的 set 元素）判定：
+	#   · 当前 set ≠ prev_set → 期间防火墙主动变了（有到期）→ 以 set 为准清文件残留
+	#   · 当前 set == prev_set → 防火墙未主动变 → 文件是权威，用户增删清直接生效
+	# 两者方向相反，故不能无条件以 set 覆盖文件（否则用户删除会被 set 复活）。
+	local prev_set_file="${bl_state}.prevset"
+	local fw_changed=false
+	if [ -f "$prev_set_file" ] && [ -n "$cur_onoff" ] && [ "$cur_onoff" != "0" ]; then
+		if command -v nft >/dev/null 2>&1; then
+			if nft list set inet fw4 pushbot_blacklist >/dev/null 2>&1; then
+				nft list set inet fw4 pushbot_blacklist 2>/dev/null | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" > ${ip_blacklist_path}.setcur
+				nft list set inet fw4 pushbot_blacklist6 2>/dev/null | grep -oE "elements = \{ [^}]*\}" | grep -oE "[0-9a-fA-F:]{2,}" >> ${ip_blacklist_path}.setcur
+				cmp -s "$prev_set_file" "${ip_blacklist_path}.setcur" || fw_changed=true
+			fi
+		elif command -v ipset >/dev/null 2>&1; then
+			if ipset list ip_blacklist >/dev/null 2>&1; then
+				ipset list ip_blacklist 2>/dev/null | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" > ${ip_blacklist_path}.setcur
+				cmp -s "$prev_set_file" "${ip_blacklist_path}.setcur" || fw_changed=true
+			fi
+		fi
+	fi
+	# 防火墙主动变了（有到期）：以 set 为准重写文件，清掉已到期残留；
+	# 并合并"用户本次新增"的 IP（当前文件有、prev_file 无 = 用户主动加的，
+	# 如编辑界面追加新 IP；反向同步用 set 覆盖会误抹掉它）。
+	# 注意：用户若明知某 IP 已到期仍想重新拉黑，需通过带参调用（界面"拉黑"按钮），
+	# 或等残留被清后再次添加；纯文本编辑无法区分"残留"与"主动重拉"，以 prev_file 快照判定。
 	local prev_file="${bl_state}.prev"
+	if $fw_changed; then
+		# 记录用户本次新增（当前文件 - prev_file）
+		local user_added=""
+		if [ -f "$prev_file" ]; then
+			for ip_new in `cat ${ip_blacklist_path} 2>/dev/null`; do
+				grep -qx "$ip_new" "$prev_file" 2>/dev/null || user_added="${user_added} $ip_new"
+			done
+		fi
+		[ -f "${ip_blacklist_path}.setcur" ] && sort -u ${ip_blacklist_path}.setcur > ${ip_blacklist_path} || > ${ip_blacklist_path}
+		# 合并用户新增（含带参 $1）
+		if [ -n "$1" ] && ! grep -q -x "$1" "${ip_blacklist_path}" 2>/dev/null; then
+			echo "$1" >> ${ip_blacklist_path}
+		fi
+		for ip_new in $user_added; do
+			if ! grep -q -x "$ip_new" "${ip_blacklist_path}" 2>/dev/null; then
+				echo "$ip_new" >> ${ip_blacklist_path}
+			fi
+		done
+	fi
+	rm -f ${ip_blacklist_path}.setcur
+	
 	if ! $need_update && [ -f "$prev_file" ]; then
-		diff -q "$prev_file" "${ip_blacklist_path}" >/dev/null 2>&1 || need_update=true
+		cmp -s "$prev_file" "${ip_blacklist_path}" || need_update=true
 	fi
 	cp "${ip_blacklist_path}" "$prev_file" 2>/dev/null || true
 	
@@ -1577,6 +1632,30 @@ function add_ip_black(){
 	fi
 	
 	if ! $need_update; then
+		# 无变化：仍做"set→文件"反向同步，把内核超时已移除的元素从文件清掉。
+		# （文件是待拉黑登记，set 是生效中权威含 timeout；两者必须一致）
+		if [ -n "$cur_onoff" ] && [ "$cur_onoff" != "0" ]; then
+			if command -v nft >/dev/null 2>&1; then
+				if nft list set inet fw4 pushbot_blacklist >/dev/null 2>&1; then
+					nft list set inet fw4 pushbot_blacklist 2>/dev/null | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" > ${ip_blacklist_path}.tmp
+					nft list set inet fw4 pushbot_blacklist6 2>/dev/null | grep -oE "elements = \{ [^}]*\}" | grep -oE "[0-9a-fA-F:]{2,}" >> ${ip_blacklist_path}.tmp
+					if [ -s "${ip_blacklist_path}.tmp" ]; then
+						sort -u ${ip_blacklist_path}.tmp > ${ip_blacklist_path}
+					else
+						rm -f ${ip_blacklist_path}.tmp
+						> ${ip_blacklist_path}
+					fi
+				fi
+			elif command -v ipset >/dev/null 2>&1; then
+				ipset list ip_blacklist 2>/dev/null | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" > ${ip_blacklist_path}.tmp
+				if [ -s "${ip_blacklist_path}.tmp" ]; then
+					mv ${ip_blacklist_path}.tmp ${ip_blacklist_path}
+				else
+					rm -f ${ip_blacklist_path}.tmp
+					> ${ip_blacklist_path}
+				fi
+			fi
+		fi
 		return  # 无变化，跳过防火墙操作
 	fi
 	
@@ -1633,6 +1712,7 @@ function add_ip_black(){
 			nft delete set inet fw4 pushbot_blacklist6 2>/dev/null || true
 			echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】黑名单列表为空，清空 nftables 防火墙拉黑策略" >> ${logfile}
 			> ${ip_blacklist_path}
+			rm -f "${bl_state}.prevset"
 			return
 		fi
 		# IPv4 set（支持超时）
@@ -1654,29 +1734,43 @@ function add_ip_black(){
 		if ! nft list chain inet fw4 input 2>/dev/null | grep -q "@pushbot_blacklist6"; then
 			nft insert rule inet fw4 input ip6 saddr @pushbot_blacklist6 drop 2>/dev/null || true
 		fi
-		# 刷新并填充元素（保留超时元素的剩余时间，用 -f 批量提交更稳）
+		# 增量同步：不 flush 重建（会抹掉内核超时状态），只补齐 set 缺失元素。
+		# 文件是"待拉黑"登记，set 是"生效中"权威（含 timeout，到期自动移除）。
+		# 双向对账：
+		#   · 文件有、set 没有 → add（新拉黑 / 重启恢复）
+		#   · set 有、文件没有 → delete（用户删除；到期移除由内核处理，此处分不出、也无需删）
+		#     注意：此处删除的是"set 存在但文件已移除"的 IP——即用户主动删除场景。
 		{
-			echo "flush set inet fw4 pushbot_blacklist"
 			for ip_black in `echo "$black_ips"|tr ',' ' '`; do
 				echo "add element inet fw4 pushbot_blacklist { $ip_black }"
 			done
-			echo "flush set inet fw4 pushbot_blacklist6"
 			for ip_black6 in `echo "$black_ips6"|tr ',' ' '`; do
 				echo "add element inet fw4 pushbot_blacklist6 { $ip_black6 }"
 			done
+			# 删除 set 中文件里已不存在的元素（用户删除的 IP）
+			for ip_del in `nft list set inet fw4 pushbot_blacklist 2>/dev/null | grep -oE "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"`; do
+				grep -qx "$ip_del" "${ip_blacklist_path}" || echo "delete element inet fw4 pushbot_blacklist { $ip_del }"
+			done
+			for ip_del6 in `nft list set inet fw4 pushbot_blacklist6 2>/dev/null | grep -oE "elements = \{ [^}]*\}" | grep -oE "[0-9a-fA-F:]{2,}"`; do
+				grep -qx "$ip_del6" "${ip_blacklist_path}" || echo "delete element inet fw4 pushbot_blacklist6 { $ip_del6 }"
+			done
 		} | nft -f - 2>/dev/null || {
 			# 老版本 nft 不支持 stdin -f 时退化为逐条
-			nft flush set inet fw4 pushbot_blacklist 2>/dev/null || true
 			for ip_black in `echo "$black_ips"|tr ',' ' '`; do
 				nft add element inet fw4 pushbot_blacklist { $ip_black } 2>/dev/null || true
 			done
-			nft flush set inet fw4 pushbot_blacklist6 2>/dev/null || true
 			for ip_black6 in `echo "$black_ips6"|tr ',' ' '`; do
 				nft add element inet fw4 pushbot_blacklist6 { $ip_black6 } 2>/dev/null || true
 			done
+			for ip_del in `nft list set inet fw4 pushbot_blacklist 2>/dev/null | grep -oE "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"`; do
+				grep -qx "$ip_del" "${ip_blacklist_path}" || nft delete element inet fw4 pushbot_blacklist { $ip_del } 2>/dev/null || true
+			done
+			for ip_del6 in `nft list set inet fw4 pushbot_blacklist6 2>/dev/null | grep -oE "elements = \{ [^}]*\}" | grep -oE "[0-9a-fA-F:]{2,}"`; do
+				grep -qx "$ip_del6" "${ip_blacklist_path}" || nft delete element inet fw4 pushbot_blacklist6 { $ip_del6 } 2>/dev/null || true
+			done
 		}
 		echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】已 nftables 拉黑 ${black_ips}${black_ips6:+,$black_ips6}" >> ${logfile}
-		# 回写黑名单文件（v4+v6），保持与内核一致
+		# 回写黑名单文件（v4+v6）以内核 set 为准：超时移除的元素不在此列，自然从文件清除
 		nft list set inet fw4 pushbot_blacklist 2>/dev/null | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" > ${ip_blacklist_path}.tmp
 		# v6 只抓 elements 行内的地址（跳过 set 头注释/flags 等单词）
 		nft list set inet fw4 pushbot_blacklist6 2>/dev/null | grep -oE "elements = \{ [^}]*\}" | grep -oE "[0-9a-fA-F:]{2,}" >> ${ip_blacklist_path}.tmp
@@ -1693,6 +1787,7 @@ function add_ip_black(){
 			ipset destroy ip_blacklist >/dev/null 2>&1
 			echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】黑名单列表为空，清空 iptables 防火墙拉黑策略" >> ${logfile}
 			> ${ip_blacklist_path}
+			rm -f "${bl_state}.prevset"
 			return
 		fi
 		local log_enable="拉黑"
@@ -1712,6 +1807,22 @@ function add_ip_black(){
 			rm -f ${ip_blacklist_path}.tmp
 		fi
 		echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】已 iptables 拉黑 ${black_ips}" >> ${logfile}
+	fi
+
+	# 记录当前 set 元素快照（供下次判定防火墙是否主动变化——到期移除 vs 用户删除）
+	# 必须在 set 更新完成后记录；若 set 不存在（关闭/首次）则清空快照。
+	local prev_set_file="${bl_state}.prevset"
+	if [ -n "$cur_onoff" ] && [ "$cur_onoff" != "0" ]; then
+		if command -v nft >/dev/null 2>&1; then
+			if nft list set inet fw4 pushbot_blacklist >/dev/null 2>&1; then
+				nft list set inet fw4 pushbot_blacklist 2>/dev/null | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" > "$prev_set_file" 2>/dev/null || true
+				nft list set inet fw4 pushbot_blacklist6 2>/dev/null | grep -oE "elements = \{ [^}]*\}" | grep -oE "[0-9a-fA-F:]{2,}" >> "$prev_set_file" 2>/dev/null || true
+			fi
+		elif command -v ipset >/dev/null 2>&1; then
+			ipset list ip_blacklist 2>/dev/null | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" > "$prev_set_file" 2>/dev/null || true
+		fi
+	else
+		rm -f "$prev_set_file"
 	fi
 }
 
@@ -1939,6 +2050,10 @@ while [ "$pushbot_enable" = "1" ]; do
 
 	# 登录提醒通知
 	[ ! -f "${dir}send_enable.lock" ] && login_send
+
+	# 黑名单周期同步：内核 set 超时移除的元素同步回文件
+	# （避免"超时已解除拉黑但文件仍保留"的文件/内核不一致）
+	[ -f "${dir}send_enable.lock" ] || add_ip_black
 
 	# 通知
 	if [ ! -f "${dir}send_enable.lock" ] && [ ! -z "$title" ] && [ ! -z "$content" ]; then

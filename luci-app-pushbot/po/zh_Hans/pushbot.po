@@ -335,8 +335,8 @@ msgstr "IP地址"
 msgid "IP blacklist"
 msgstr "IP黑名单"
 
-msgid "One IP per line, or space-separated; IPv4 and IPv6 supported"
-msgstr "每行一个 IP，或空格分隔；支持 IPv4 与 IPv6"
+msgid "One IP per line; IPv4 and IPv6 supported"
+msgstr "每行一个 IP；支持 IPv4 与 IPv6"
 
 msgid "IP whitelist"
 msgstr "IP白名单"

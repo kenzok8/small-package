@@ -1702,7 +1702,7 @@ cuSub.appendChild(mkBtn('{{ _('Traffic DND') }}',cdOn,function(on){updateFlagInp
 	blLbl.textContent='{{ _('IP blacklist') }}';blTxt.appendChild(blLbl);
 	var blHint=document.createElement('div');blHint.className='pushbot-inline-description';
 	blHint.style.cssText='margin:0 0 4px 2px;font-size:12px;opacity:0.7';
-	blHint.textContent='{{ _('One IP per line, or space-separated; IPv4 and IPv6 supported') }}';
+	blHint.textContent='{{ _('One IP per line; IPv4 and IPv6 supported') }}';
 	blTxt.appendChild(blHint);
 	var blTa=document.createElement('textarea');blTa.className='cbi-input-textarea';blTa.rows=4;
 	blTa.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit;resize:vertical';

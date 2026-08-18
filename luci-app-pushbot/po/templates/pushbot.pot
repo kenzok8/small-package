@@ -334,7 +334,7 @@ msgstr ""
 msgid "IP blacklist"
 msgstr ""
 
-msgid "One IP per line, or space-separated; IPv4 and IPv6 supported"
+msgid "One IP per line; IPv4 and IPv6 supported"
 msgstr ""
 
 msgid "IP whitelist"

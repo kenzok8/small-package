@@ -24,6 +24,10 @@
 
 ## 📝 Changelog
 
+- **2026-08-18** (v5.14): Main version 5.13 → 5.14
+  - Added: **Real-time IPv4 / IPv6 address preview** — switching between "Via interface" or "Via URL" instantly shows the fetched public address, auto-refreshing on interface or API list changes; results are color-coded for at-a-glance clarity
+  - Improved: **Enhanced URL fetching** — automatically rotates through working APIs, clearly reports "failed to obtain" on total failure, supports specifying the egress interface for multi-WAN setups, presets tested & expanded (9 each for v4 / v6), one-click "restore defaults"
+  - Improved: **Blacklist fully synced with firewall** — manual add / delete, automatic blacklist on failed logins, and timeout-based unblock all keep the list and firewall consistent; the page auto-aligns on entry, and expired IPs can be re-blacklisted on new attacks
 - **2026-08-13** (v5.13): Blacklist enhancements (whitelist / IPv6 / instant apply), main version 5.12 → 5.13
   - Added: **Whitelist** — supports single IPs and standard CIDR ranges such as `192.168.1.5` / `10.1.1.0/24` / `2001:db8::1` / `fd00::/32`, space-separated; whitelisted IPs are never blacklisted even after failed logins
   - Added: **IPv6 blacklist** — IPv6 addresses and ranges are now supported (previously IPv4 only)
