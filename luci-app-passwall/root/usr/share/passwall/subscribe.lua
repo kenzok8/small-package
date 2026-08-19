@@ -145,13 +145,14 @@ do
 		CONFIG[#CONFIG + 1] = {
 			log = true,
 			remarks = name .. "节点",
-			currentNode = node_id and (function()
-				local section = uci_get(node_id) or {}
+			currentNode = (function(id)
+				local section = id and uci_get(id) or nil
+				if not section then return nil end
 				if section[".type"] == "socks" then
-					return { Socks = node_id }
+					return { Socks = id }
 				end
 				return section
-			end)() or nil,
+			end)(node_id),
 			set = function(o, server)
 				uci_set(szType, option, server)
 				o.newNodeId = server
@@ -264,13 +265,14 @@ do
 					log = true,
 					id = t[".name"],
 					remarks = "访问控制列表[" .. i .. "]",
-					currentNode = node_id and (function()
-						local section = uci_get(node_id) or {}
+					currentNode = (function(id)
+						local section = id and uci_get(id) or nil
+						if not section then return nil end
 						if section[".type"] == "socks" then
-							return { Socks = node_id }
+							return { Socks = id }
 						end
 						return section
-					end)() or nil,
+					end)(node_id),
 					set = function(o, server)
 						uci_set(t[".name"], option, server)
 						o.newNodeId = server
