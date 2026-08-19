@@ -1723,6 +1723,7 @@ function apply_redirect(m)
 			end
 		end
 	else
+		uci:revert(c_config .. "_redirect")
 		sys.call("/bin/rm -f " .. tmp_uci_file)
 	end
 end
