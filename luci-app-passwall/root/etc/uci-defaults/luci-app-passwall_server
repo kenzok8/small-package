@@ -31,6 +31,10 @@ for sid in $(uci -q show passwall_server | sed -n 's/^passwall_server\.\([^.=]*\
 		uci -q set "passwall_server.${sid}=server"
 	fi
 done
+for sid in $(uci -q show passwall_server | sed -n 's/^passwall_server\.\([^.=]*\)\.protocol=dokodemo-door$/\1/p'); do
+	uci -q set "passwall_server.${sid}.protocol=tunnel"
+done
+
 uci -q commit passwall_server
 
 rm -f /tmp/luci-indexcache /tmp/luci-indexcache.*

@@ -63,14 +63,8 @@ o:value("shadowsocks", "Shadowsocks")
 o:value("trojan", "Trojan")
 o:value("hysteria2", "Hysteria2")
 o:value("wireguard", "WireGuard")
-o:value("dokodemo-door", "dokodemo-door")
+o:value("tunnel", "Tunnel")
 o:depends({ custom = false })
-
-o = s:option(DummyValue, "is_endpoint", "")
-o.not_rewrite = true
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
-o:depends({ custom = false, protocol = "wireguard" })
 
 o = s:option(Value, "port", translate("Listen Port"))
 o.datatype = "port"
@@ -93,14 +87,14 @@ o = s:option(ListValue, "d_protocol", translate("Destination protocol"))
 o:value("tcp", "TCP")
 o:value("udp", "UDP")
 o:value("tcp,udp", "TCP,UDP")
-o:depends({ protocol = "dokodemo-door" })
+o:depends({ protocol = "tunnel" })
 
 o = s:option(Value, "d_address", translate("Destination address"))
-o:depends({ protocol = "dokodemo-door" })
+o:depends({ protocol = "tunnel" })
 
 o = s:option(Value, "d_port", translate("Destination port"))
 o.datatype = "port"
-o:depends({ protocol = "dokodemo-door" })
+o:depends({ protocol = "tunnel" })
 
 o = s:option(Value, "decryption", translate("Encrypt Method") .. " (decryption)")
 o.default = "none"
@@ -411,7 +405,8 @@ end
 --[[acceptProxyProtocol]]
 o = s:option(Flag, "acceptProxyProtocol", translate("acceptProxyProtocol"), translate("Whether to receive PROXY protocol, when this node want to be fallback or forwarded by proxy, it must be enable, otherwise it cannot be used."))
 o.default = "0"
-o:depends({ custom = false, is_endpoint = "" })
+o:depends({ transport = "raw" })
+o:depends({ transport = "ws" })
 
 --[[Fast Open]]
 o = s:option(Flag, "tcp_fast_open", "TCP " .. translate("Fast Open"))

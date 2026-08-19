@@ -389,12 +389,12 @@ function socks_status()
 	local index = http.formvalue("index")
 	local id = http.formvalue("id")
 	e.index = index
-	e.socks_status = luci.sys.call(string.format("/bin/busybox top -bn1 | grep -v -E 'grep|acl/|acl_' | grep '%s/bin/' | grep '%s' > /dev/null", appname, id)) == 0
+	e.socks_status = luci.sys.call(string.format("/bin/busybox top -bn1 | grep -v -E 'grep|acl/|acl_' | grep '%s/bin/' | grep '/%s' > /dev/null", appname, id)) == 0
 	local use_http = uci_get(id, "http_port") or 0
 	e.use_http = 0
 	if tonumber(use_http) > 0 then
 		e.use_http = 1
-		e.http_status = luci.sys.call(string.format("/bin/busybox top -bn1 | grep -v -E 'grep|acl/|acl_' | grep '%s/bin/' | grep '%s' | grep -E '\\+http|_http' > /dev/null", appname, id)) == 0
+		e.http_status = luci.sys.call(string.format("/bin/busybox top -bn1 | grep -v -E 'grep|acl/|acl_' | grep '%s/bin/' | grep '/%s' | grep -E '\\+http|_http' > /dev/null", appname, id)) == 0
 	end
 	http_write_json(e)
 end
