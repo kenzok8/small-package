@@ -96,7 +96,7 @@ window.lv_dropdown_data["<%=cbid%>"] = <%=json.stringify(dropdown_data)%>;
 	<!-- 模拟 ListValue 控件外观 -->
 	<div class="cbi-input-value cbi-input-select lv-dropdown-display" id="<%=cbid%>.display" tabindex="0">
 		<span id="<%=cbid%>.label" class="lv-dropdown-label" title="<%=pcdata(current_label)%>">
-			<%=pcdata("("..translate("Not set")..")")%>
+			<%=pcdata("( "..translate("Not Set").." )")%>
 		</span>
 		<span class="lv-arrow-down"></span>
 	</div>
@@ -139,7 +139,7 @@ window.lv_dropdown_data["<%=cbid%>"] = <%=json.stringify(dropdown_data)%>;
 	});
 	lv_registerAdaptive(cbid);
 	setTimeout(() => {
-		labelSpan.textContent = lv_ellipsisByWidth(cbid, '<%=pcdata(current_label ~= "" and current_label or ("("..translate("Not set")..")"))%>');
+		labelSpan.textContent = lv_ellipsisByWidth(cbid, '<%=pcdata(current_label ~= "" and current_label or ("( "..translate("Not Set").." )"))%>');
 	}, 100);
 })();
 //]]>
