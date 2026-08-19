@@ -25,7 +25,25 @@ msgstr ""
 msgid "-- Select interface --"
 msgstr ""
 
-msgid "0 means permanently blacklisted, use with caution<br>If misconfigured, change the device IP and clear the rules in LuCI"
+msgid "Permanently"
+msgstr ""
+
+msgid "Seconds"
+msgstr ""
+
+msgid "Minutes"
+msgstr ""
+
+msgid "Hours"
+msgstr ""
+
+msgid "Days"
+msgstr ""
+
+msgid "Weeks"
+msgstr ""
+
+msgid "Months"
 msgstr ""
 
 msgid "3 devices online"
@@ -103,7 +121,7 @@ msgstr ""
 msgid "Basic settings"
 msgstr ""
 
-msgid "Blacklist duration (s)"
+msgid "Blacklist duration"
 msgstr ""
 
 msgid "Blacklist time"
@@ -343,6 +361,15 @@ msgid "Add one entry at a time; supports single IP or CIDR range, e.g. [192.168.
 msgstr ""
 
 msgid "IPv4 API list"
+msgstr ""
+
+msgid "URL probing egress: LAN interface uses the default route; WAN interface is bound as the egress."
+msgstr ""
+
+msgid "This API list is used for WAN info probing in scheduled push."
+msgstr ""
+
+msgid "The selected interface is used as interface info for scheduled push."
 msgstr ""
 
 msgid "IPv4 change"
@@ -863,6 +890,9 @@ msgid "Via interface"
 msgstr ""
 
 msgid "WAN info"
+msgstr ""
+
+msgid "WAN info uses the interface selected in the push content section."
 msgstr ""
 
 msgid "WAN offline"

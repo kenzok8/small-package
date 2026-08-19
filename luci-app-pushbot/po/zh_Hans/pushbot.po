@@ -26,8 +26,26 @@ msgstr "(空)"
 msgid "-- Select interface --"
 msgstr "-- 选择接口 --"
 
-msgid "0 means permanently blacklisted, use with caution<br>If misconfigured, change the device IP and clear the rules in LuCI"
-msgstr "0 为永久拉黑，慎用<br>如不幸误操作，请更改设备 IP 进入 LUCI 界面清空规则"
+msgid "Permanently"
+msgstr "永久"
+
+msgid "Seconds"
+msgstr "秒"
+
+msgid "Minutes"
+msgstr "分"
+
+msgid "Hours"
+msgstr "时"
+
+msgid "Days"
+msgstr "天"
+
+msgid "Weeks"
+msgstr "周"
+
+msgid "Months"
+msgstr "月"
 
 msgid "3 devices online"
 msgstr "现有在线设备3台"
@@ -104,8 +122,8 @@ msgstr "基本"
 msgid "Basic settings"
 msgstr "基本设置"
 
-msgid "Blacklist duration (s)"
-msgstr "拉黑时间(秒)"
+msgid "Blacklist duration"
+msgstr "拉黑时长"
 
 msgid "Blacklist time"
 msgstr "拉黑时间"
@@ -346,6 +364,15 @@ msgstr "逐个添加；支持单个 IP 或 CIDR 网段，如【192.168.1.5】【
 
 msgid "IPv4 API list"
 msgstr "IPv4 API列表"
+
+msgid "URL probing egress: LAN interface uses the default route; WAN interface is bound as the egress."
+msgstr "URL探测出口：LAN接口走默认路由；WAN接口绑定该接口为出口"
+
+msgid "This API list is used for WAN info probing in scheduled push."
+msgstr "此处API将用于定时推送时WAN信息探测"
+
+msgid "The selected interface is used as interface info for scheduled push."
+msgstr "此处将调用所选接口作为定时推送时的接口信息"
 
 msgid "IPv4 change"
 msgstr "IPv4变更"
@@ -866,6 +893,9 @@ msgstr "通过接口获取"
 
 msgid "WAN info"
 msgstr "WAN信息"
+
+msgid "WAN info uses the interface selected in the push content section."
+msgstr "此处将调用推送内容处选定的接口"
 
 msgid "WAN offline"
 msgstr "宽带掉线"

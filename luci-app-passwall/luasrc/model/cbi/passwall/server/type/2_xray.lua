@@ -259,7 +259,7 @@ o:depends({ tls = true, reality = false })
 o:depends({ protocol = "hysteria2"})
 o.validate = function(self, value, t)
 	if value and value ~= "" then
-		if not fs.access(value) then
+		if not api.fs.access(value) then
 			return nil, translate("Can't find this file!")
 		else
 			return value
@@ -275,7 +275,7 @@ o:depends({ tls = true, reality = false })
 o:depends({ protocol = "hysteria2"})
 o.validate = function(self, value, t)
 	if value and value ~= "" then
-		if not fs.access(value) then
+		if not api.fs.access(value) then
 			return nil, translate("Can't find this file!")
 		else
 			return value

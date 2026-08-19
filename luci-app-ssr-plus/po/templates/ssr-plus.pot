@@ -87,6 +87,7 @@ msgstr ""
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1667
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1680
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:186
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:213
 msgid "<ul><li>"
 msgstr ""
 
@@ -588,7 +589,7 @@ msgstr ""
 msgid "Custom DNS Server format as IP:PORT (default: 8.8.4.4:53)"
 msgstr ""
 
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:212
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:214
 msgid "Custom DNS Server format as IP:PORT (default: disabled)"
 msgstr ""
 
@@ -981,7 +982,9 @@ msgstr ""
 msgid "Example:"
 msgstr ""
 
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:223
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:229
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:234
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:243
 msgid "Expecting: %s"
 msgstr ""
 
@@ -1650,6 +1653,7 @@ msgid "Move up"
 msgstr ""
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:188
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:215
 msgid "Muitiple DNS server can saperate with ','"
 msgstr ""
 
@@ -3339,8 +3343,13 @@ msgstr ""
 msgid "v2ray-plugin"
 msgstr ""
 
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:223
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:234
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:243
 msgid "valid address:port"
+msgstr ""
+
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:229
+msgid "valid address:port (comma separated)"
 msgstr ""
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/server-config.lua:82

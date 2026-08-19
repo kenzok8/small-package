@@ -1332,6 +1332,92 @@ function initContentCard() {
 		if(desc){var d=document.createElement('div');d.className='pushbot-inline-description';d.innerHTML=desc;b.appendChild(d);}
 		w.appendChild(b);return w;
 	}
+	/* 拉黑时长组合控件：单位下拉（永久/秒/分/时/天/周/月）+ 数值输入框。
+	   选择"永久"时隐藏数值框，保存 0（永久拉黑）；选其他单位显示数值框，
+	   保存为 纯数字(秒) 或 数字+单位(30m/2h/3D/1W/2M)。兼容旧配置纯数字秒。 */
+	/* 拉黑时长两级自绘下拉：先选单位（永久/秒/分/时/天/周/月），数值下拉随单位
+	   限定范围（秒1-59、分1-59、时1-23、天1-29、周1-4、月1-12），最大约 1 年。
+	   自绘（仿 mkSelS）绕开 LuCI select→dropdown 转换对选中项显示的错误；
+	   保存值即所选档位原样（0 / 30 / 5m / 12h / 15D / 2W / 6M），不做换算。 */
+	function mkTimeoutSel(name, label, val, desc) {
+		var w=document.createElement('div');w.className='pushbot-inline-field';w.style.cssText='margin:4px 0';
+		var t=document.createElement('div');t.className='pushbot-inline-title';
+		t.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
+		t.textContent=label;w.appendChild(t);
+		var b=document.createElement('div');b.className='pushbot-inline-body';
+		b.style.cssText='position:relative;display:flex;flex-direction:row;gap:6px;align-items:center;flex-wrap:nowrap';
+		var raw=''+(val==null?'':val);
+		/* 单位定义：值=保存后缀, 范围上限 */
+		var unitDefs=[['permanently','{{ _('Permanently') }}',0],['s','{{ _('Seconds') }}',59],['m','{{ _('Minutes') }}',59],['h','{{ _('Hours') }}',23],['D','{{ _('Days') }}',29],['W','{{ _('Weeks') }}',3],['M','{{ _('Months') }}',12]];
+		/* 解析现有配置 → [单位, 数值]：0/空=永久；纯数字=秒；数字+单位 */
+		function parse(raw){
+			var m=/^(\d+)\s*([a-zA-Z]*)$/.exec(raw);
+			if(raw==='0'||raw===''||!m) return ['permanently',1];
+			var u=m[2]||'s';
+			if(u==='H')u='h'; if(u==='d')u='D'; if(u==='w')u='W';
+			return [u,parseInt(m[1],10)];
+		}
+		function maxFor(u){ for(var k=0;k<unitDefs.length;k++) if(unitDefs[k][0]===u) return unitDefs[k][2]; return 59; }
+		function labelOf(u){ for(var k=0;k<unitDefs.length;k++) if(unitDefs[k][0]===u) return unitDefs[k][1]; return u; }
+		var init=parse(raw);
+		var hi=makeHidden(name, raw===''?'0':raw);
+		var curUnit=''+(init[0]||'permanently');
+		var curNum=init[1]>=1?init[1]:1;
+		/* 单位自绘下拉 */
+		var unitBtn=document.createElement('button');unitBtn.type='button';
+		unitBtn.className='pushbot-choice-button pushbot-sel-btn';
+		unitBtn.style.cssText='width:120px;flex:0 0 auto;padding:5px 10px;text-align:left;justify-content:space-between;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+		var unitLst=document.createElement('div');
+		unitLst.className='pushbot-sel-list';
+		unitLst.setAttribute('data-pb', 'unit');
+		unitLst.style.cssText='display:none;position:absolute;z-index:1000;left:0;right:0;top:calc(100% + 4px);border-radius:10px;max-height:196px;overflow-y:auto;box-shadow:0 12px 32px rgba(0,0,0,0.25)';
+		/* 数值自绘下拉 */
+		var numBtn=document.createElement('button');numBtn.type='button';
+		numBtn.className='pushbot-choice-button pushbot-sel-btn';
+		numBtn.style.cssText='flex:0 1 auto;min-width:70px;padding:5px 10px;text-align:left;justify-content:space-between;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+		var numLst=document.createElement('div');
+		numLst.className='pushbot-sel-list';
+		numLst.setAttribute('data-pb', 'num');
+		numLst.style.cssText='display:none;position:absolute;z-index:1000;left:0;right:0;top:calc(100% + 4px);border-radius:10px;max-height:196px;overflow-y:auto;box-shadow:0 12px 32px rgba(0,0,0,0.25)';
+		function numOpts(){ var a=[]; var mx=maxFor(curUnit); for(var i=1;i<=mx;i++) a.push({v:''+i,l:''+i}); return a; }
+		function renderUnit(){
+			unitBtn.textContent=labelOf(curUnit);
+			unitLst.innerHTML='';
+			unitDefs.forEach(function(u){
+				var item=document.createElement('div');
+				item.className='pushbot-sel-item'+(u[0]===curUnit?' is-on':'');
+				item.textContent=u[1];
+				item.addEventListener('click',function(){curUnit=u[0];renderUnit();renderNum();compose();unitLst.style.display='none';});
+				unitLst.appendChild(item);
+			});
+		}
+		function renderNum(){
+			var mx=maxFor(curUnit);
+			var show=(curUnit!=='permanently');
+			numBtn.style.display=show?'':'none';
+			numBtn.textContent=show?''+curNum:'';
+			numLst.innerHTML='';
+			if(!show)return;
+			numOpts().forEach(function(o){
+				var item=document.createElement('div');
+				item.className='pushbot-sel-item'+(String(o.v)===String(curNum)?' is-on':'');
+				item.textContent=o.l;
+				item.addEventListener('click',function(){curNum=parseInt(o.v,10);renderNum();compose();numLst.style.display='none';});
+				numLst.appendChild(item);
+			});
+		}
+		function compose(){
+			if(curUnit==='permanently'){hi.value='0';return;}
+			hi.value=(curUnit==='s')?''+curNum:''+curNum+curUnit;
+		}
+		unitBtn.addEventListener('click',function(e){e.preventDefault();var o=numLst.style.display;numLst.style.display='none';unitLst.style.display=(unitLst.style.display==='none')?'block':'none';});
+		numBtn.addEventListener('click',function(e){e.preventDefault();var o=unitLst.style.display;unitLst.style.display='none';numLst.style.display=(numLst.style.display==='none')?'block':'none';});
+		document.addEventListener('click',function(e){ if(!w.contains(e.target)){unitLst.style.display='none';numLst.style.display='none';} });
+		renderUnit();renderNum();compose();
+		b.appendChild(numBtn);b.appendChild(numLst);b.appendChild(unitBtn);b.appendChild(unitLst);
+		if(desc){var d=document.createElement('div');d.className='pushbot-inline-description';d.innerHTML=desc;b.appendChild(d);}
+		w.appendChild(b);return w;
+	}
 
 	var CT_IFACES = PB_sys('ifaces');
 	var CT_IP_HINTS = PB_sys('ip_hints');
@@ -1354,7 +1440,7 @@ function initContentCard() {
 	var CT_SSH_FAIL = PB_bool('ssh_login_failed');
 	var CT_LOGIN_MAX = PB_val('login_max_num', '3');
 	var CT_AUTO_BAN = PB_bool('web_login_black');
-	var CT_BAN_TIMEOUT = PB_val('ip_black_timeout', '86400');
+	var CT_BAN_TIMEOUT = PB_val('ip_black_timeout', '1D');
 	var CT_IP_WHITE = PB_list('ip_white_list');
 	var CT_CLIENT_WHITE = PB_list('client_usage_whitelist');
 	var CT_IPV4_LIST = PB_file('ipv4_list');
@@ -1386,7 +1472,7 @@ function initContentCard() {
 	var iv4Sub1 = document.createElement('div'); iv4Sub1.id='ct_ipv4_iface'; iv4Sub1.style.cssText='display:none';
 	var iv4IfOpts=[{v:'',l:'{{ _('-- Select interface --') }}'}];
 	CT_IFACES.forEach(function(f){iv4IfOpts.push({v:f,l:f});});
-	iv4Sub1.appendChild(mkSel('ipv4_interface','{{ _('Interface name') }}',CT_IPV4_IFACE,iv4IfOpts,'{{ _('Usually select the wan interface; choose yourself in multi-WAN environments') }}',function(){iv4Fetch('1');}));
+	iv4Sub1.appendChild(mkSel('ipv4_interface','{{ _('Interface name') }}',CT_IPV4_IFACE,iv4IfOpts,'{{ _('Usually select the wan interface; choose yourself in multi-WAN environments') }}<br>{{ _('URL probing egress: LAN interface uses the default route; WAN interface is bound as the egress.') }}<br>{{ _('The selected interface is used as interface info for scheduled push.') }}',function(){iv4Fetch('1');}));
 	iv4Sub.appendChild(iv4Sub1);
 	/* URL list textarea */
 	var iv4Sub2 = document.createElement('div'); iv4Sub2.id='ct_ipv4_url'; iv4Sub2.style.cssText='display:none';
@@ -1396,7 +1482,7 @@ function initContentCard() {
 	/* 标题下方提示 */
 	var iv4UrlNote=document.createElement('div');iv4UrlNote.className='pushbot-inline-description';
 	iv4UrlNote.style.cssText='margin:0 0 6px 2px;font-size:12px;color:inherit;opacity:0.75';
-	iv4UrlNote.textContent='{{ _('[ Note: If you use a "Global Interconnect" style plugin, please add the following APIs to the whitelist to avoid being identified as an overseas IP. ]') }}';
+	iv4UrlNote.innerHTML='{{ _('[ Note: If you use a "Global Interconnect" style plugin, please add the following APIs to the whitelist to avoid being identified as an overseas IP. ]') }}';
 	iv4Sub2.appendChild(iv4UrlNote);
 	var iv4Ta=document.createElement('textarea');iv4Ta.className='cbi-input-textarea';iv4Ta.rows=4;
 	iv4Ta.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit;resize:vertical';
@@ -1405,6 +1491,11 @@ function initContentCard() {
 	iv4Ta.addEventListener('input',function(){iv4UrlHi.value=this.value;});
 	iv4Ta.addEventListener('blur',function(){if(iv4Sub2.style.display!=='none')iv4Fetch('2');});
 	iv4Sub2.appendChild(iv4Ta);
+	/* URL 模式说明：定时推送时 WAN 信息探测 */
+	var iv4UrlEgress=document.createElement('div');iv4UrlEgress.className='pushbot-inline-description';
+	iv4UrlEgress.style.cssText='margin:2px 0 6px 2px;font-size:12px;color:inherit;opacity:0.75';
+	iv4UrlEgress.textContent='{{ _('This API list is used for WAN info probing in scheduled push.') }}';
+	iv4Sub2.appendChild(iv4UrlEgress);
 	/* 恢复插件默认按钮 */
 	var iv4Rst=document.createElement('div');iv4Rst.style.cssText='display:flex;justify-content:flex-end;margin-top:6px';
 	var iv4RstBtn=document.createElement('button');iv4RstBtn.type='button';iv4RstBtn.className='cbi-button cbi-input-action';
@@ -1487,7 +1578,7 @@ function initContentCard() {
 	var iv6Sub1 = document.createElement('div'); iv6Sub1.style.cssText='display:none';
 	var iv6IfOpts=[{v:'',l:'{{ _('-- Select interface --') }}'}];
 	CT_IFACES.forEach(function(f){iv6IfOpts.push({v:f,l:f});});
-	iv6Sub1.appendChild(mkSel('ipv6_interface','{{ _('Interface name') }}',CT_IPV6_IFACE,iv6IfOpts,'{{ _('Usually select the wan interface; choose yourself in multi-WAN environments') }}',function(){iv6Fetch('1');}));
+	iv6Sub1.appendChild(mkSel('ipv6_interface','{{ _('Interface name') }}',CT_IPV6_IFACE,iv6IfOpts,'{{ _('Usually select the wan interface; choose yourself in multi-WAN environments') }}<br>{{ _('URL probing egress: LAN interface uses the default route; WAN interface is bound as the egress.') }}<br>{{ _('The selected interface is used as interface info for scheduled push.') }}',function(){iv6Fetch('1');}));
 	iv6Sub.appendChild(iv6Sub1);
 	var iv6Sub2 = document.createElement('div'); iv6Sub2.id='ct_ipv6_url'; iv6Sub2.style.cssText='display:none';
 	var iv6UrlLbl = document.createElement('div'); iv6UrlLbl.className='pushbot-inline-title';
@@ -1496,7 +1587,7 @@ function initContentCard() {
 	/* 标题下方提示 */
 	var iv6UrlNote=document.createElement('div');iv6UrlNote.className='pushbot-inline-description';
 	iv6UrlNote.style.cssText='margin:0 0 6px 2px;font-size:12px;color:inherit;opacity:0.75';
-	iv6UrlNote.textContent='{{ _('[ Note: If you use a "Global Interconnect" style plugin, please add the following APIs to the whitelist to avoid being identified as an overseas IP. ]') }}';
+	iv6UrlNote.innerHTML='{{ _('[ Note: If you use a "Global Interconnect" style plugin, please add the following APIs to the whitelist to avoid being identified as an overseas IP. ]') }}';
 	iv6Sub2.appendChild(iv6UrlNote);
 	var iv6Ta=document.createElement('textarea');iv6Ta.className='cbi-input-textarea';iv6Ta.rows=4;
 	iv6Ta.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit;resize:vertical';
@@ -1505,6 +1596,11 @@ function initContentCard() {
 	iv6Ta.addEventListener('input',function(){iv6UrlHi.value=this.value;});
 	iv6Ta.addEventListener('blur',function(){if(iv6Sub2.style.display!=='none')iv6Fetch('2');});
 	iv6Sub2.appendChild(iv6Ta);
+	/* URL 模式说明：调用左侧接口设置作为出口 */
+	var iv6UrlEgress=document.createElement('div');iv6UrlEgress.className='pushbot-inline-description';
+	iv6UrlEgress.style.cssText='margin:2px 0 6px 2px;font-size:12px;color:inherit;opacity:0.75';
+	iv6UrlEgress.textContent='{{ _('This API list is used for WAN info probing in scheduled push.') }}';
+	iv6Sub2.appendChild(iv6UrlEgress);
 	/* 恢复插件默认按钮 */
 	var iv6Rst=document.createElement('div');iv6Rst.style.cssText='display:flex;justify-content:flex-end;margin-top:6px';
 	var iv6RstBtn=document.createElement('button');iv6RstBtn.type='button';iv6RstBtn.className='cbi-button cbi-input-action';
@@ -1679,7 +1775,7 @@ cuSub.appendChild(mkBtn('{{ _('Traffic DND') }}',cdOn,function(on){updateFlagInp
 	var banOn = CT_AUTO_BAN;
 	failSub.appendChild(mkBtn('{{ _('Auto blacklist') }}',banOn,function(on){updateFlagInput('web_login_black',on);toggleBan(on);}));
 	var banSub=document.createElement('div');banSub.id='ct_ban_sub';banSub.style.cssText='margin-top:4px;display:'+(CT_AUTO_BAN?'block':'none');
-	banSub.appendChild(mkTxt('ip_black_timeout','{{ _('Blacklist duration (s)') }}',CT_BAN_TIMEOUT,'{{ _('0 means permanently blacklisted, use with caution<br>If misconfigured, change the device IP and clear the rules in LuCI') }}'));
+	banSub.appendChild(mkTimeoutSel('ip_black_timeout','{{ _('Blacklist duration') }}',CT_BAN_TIMEOUT,''));
 	/* IP white list */
 	var ipCtr=document.createElement('div');ipCtr.style.cssText='margin:4px 0';
 	var ipLbl=document.createElement('div');ipLbl.className='pushbot-inline-title';
@@ -1957,6 +2053,12 @@ PB_onReady(function(){ tryContentOnce(); });
 
 		var fc = document.createElement('div');
 		fc.className = 'pushbot-choice-list';
+		/* WAN 信息说明：调用推送内容处选定的接口——仅 WAN 信息启用时显示 */
+		var wanNote=document.createElement('div');
+		wanNote.className='pushbot-inline-description';
+		wanNote.style.cssText='margin:2px 0 0 2px;font-size:12px;color:inherit;opacity:0.75';
+		wanNote.textContent='{{ _('WAN info uses the interface selected in the push content section.') }}';
+		wanNote.style.display = router_wan ? '' : 'none';
 		[
 			{opt:'router_status',label:'{{ _('System status') }}',on:router_status},
 			{opt:'router_temp',label:'{{ _('Device temperature') }}',on:router_temp},
@@ -1969,10 +2071,12 @@ PB_onReady(function(){ tryContentOnce(); });
 			b.addEventListener('click',function(e){
 				e.preventDefault();on=!on;updateFlagInput(f.opt, on);
 				b.className='pushbot-choice-button '+(on?'is-on':'is-off');
+				if(f.opt==='router_wan') wanNote.style.display = on ? '' : 'none';
 			});
 			fc.appendChild(b);
 		});
 		contentBody.appendChild(fc);
+		contentBody.appendChild(wanNote);
 
 		/* bottom row: push title + global connectivity timeout */
 		var br = document.createElement('div');

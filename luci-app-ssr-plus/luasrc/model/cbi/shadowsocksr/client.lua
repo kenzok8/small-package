@@ -183,10 +183,10 @@ if is_finded("chinadns-ng") then
 	o:depends("pdnsd_enable", "6")
 	o.default = "8.8.4.4:53"
 	o.description = translate(
-    	"<ul>" ..
-    	"<li>" .. translate("Custom DNS Server format as IP:PORT (default: 8.8.4.4:53)") .. "</li>" .. 
-    	"<li>" .. translate("Muitiple DNS server can saperate with ','") .. "</li>" ..
-    	"</ul>"
+		"<ul>" ..
+		"<li>" .. translate("Custom DNS Server format as IP:PORT (default: 8.8.4.4:53)") .. "</li>" .. 
+		"<li>" .. translate("Muitiple DNS server can saperate with ','") .. "</li>" ..
+		"</ul>"
 	)
 
 	o = s:option(ListValue, "chinadns_ng_proto", translate("ChinaDNS-NG query protocol"))
@@ -209,11 +209,31 @@ if is_finded("chinadns-ng") then
 	o:value("1.2.4.8:53", translate("CNNIC SDNS (1.2.4.8)"))
 	o:depends({pdnsd_enable = "6", run_mode = "router"})
 	o.default = "wan"
-	o.description = translate("Custom DNS Server format as IP:PORT (default: disabled)")
+	o.description = translate(
+		"<ul>" ..
+		"<li>" .. translate("Custom DNS Server format as IP:PORT (default: disabled)") .. "</li>" .. 
+		"<li>" .. translate("Muitiple DNS server can saperate with ','") .. "</li>" ..
+		"</ul>"
+	)
 	o.validate = function(self, value, section)
 		if (section and value) then
 			if value == "none" or value == "wan" or value == "wan_114" then
 				return value
+			end
+
+			if string.find(value, ",") then
+				local parts = {}
+				for part in string.gmatch(value, "[^,]+") do
+					part = part:gsub("^%s*", ""):gsub("%s*$", "")
+					if not validation.ip4addrport(part) then
+						return nil, translate("Expecting: %s"):format(translate("valid address:port (comma separated)"))
+					end
+					table.insert(parts, part)
+				end
+				if #parts == 0 then
+					return nil, translate("Expecting: %s"):format(translate("valid address:port"))
+				end
+				return table.concat(parts, ",")
 			end
 
 			if validation.ip4addrport(value) then

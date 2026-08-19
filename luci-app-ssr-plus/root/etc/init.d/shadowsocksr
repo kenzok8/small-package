@@ -1257,7 +1257,7 @@ start_dns() {
 	if [ "$builtin_dns_enabled" = "1" ]; then
 		pdnsd_enable_flag=7
 	elif [ "$ssrplus_dns" != "0" ]; then
-		if [ "$HAS_IPSET" -eq 1 ]; then
+		if [ "$USE_TABLES" = "iptables" ]; then
 			if [ -n "$dnsserver" ]; then
 				add_dns_into_ipset "$run_mode" "$dnsserver"
 			fi
@@ -1273,7 +1273,7 @@ start_dns() {
 			output=$(for i in $(echo "$mosdns_dnsserver" | sed "s/,/ /g"); do
 				dnsserver="${i%:*}"
 				dnsserver="${i##*/}"
-				if [ "$HAS_IPSET" -eq 1 ]; then
+				if [ "$USE_TABLES" = "iptables" ]; then
 					add_dns_into_ipset "$run_mode" "$dnsserver"
 				fi
 				echo "            - addr: $i"
@@ -1295,29 +1295,39 @@ start_dns() {
 			# 遍历每个 DNS 服务器
 			IFS=','  # 设置分隔符为逗号
 			for chinadns_ng_server in $dnsserver; do
+				chinadns_ng_server="$(echo "$chinadns_ng_server" | sed 's/[[:space:]]//g')"
+				[ -z "$chinadns_ng_server" ] && continue
 				# 处理单个服务器地址
 				chinadns_ng_ip="${chinadns_ng_server%%:*}"
 				chinadns_ng_port="${chinadns_ng_server##*:}"
+
+				# 如果没有显式指定端口，根据协议填入默认端口
 				[ "$chinadns_ng_ip" = "$chinadns_ng_port" ] && chinadns_ng_port="53"
-				chinadns_ng_tls_port="853"
+				# TLS 协议强制使用 853 端口（DoT 标准端口），忽略用户指定的端口
+				[ "$chinadns_ng_proto" = "tls" ] && chinadns_ng_port="853"
 				# 根据协议类型格式化服务器地址
 				case "$chinadns_ng_proto" in
 					"none")
-            					chinadns_ng_server="${chinadns_ng_ip}#${chinadns_ng_port}"
-            					;;
+						chinadns_ng_server="${chinadns_ng_ip}#${chinadns_ng_port}"
+						;;
 					"tls")
-            					chinadns_ng_server="${chinadns_ng_proto}://${chinadns_ng_ip}#${chinadns_ng_tls_port}"
-            					;;
+						chinadns_ng_server="${chinadns_ng_proto}://${chinadns_ng_ip}#${chinadns_ng_port}"
+						;;
 					*)
-            					chinadns_ng_server="${chinadns_ng_proto}://${chinadns_ng_ip}#${chinadns_ng_port}"
-            					;;
+						chinadns_ng_server="${chinadns_ng_proto}://${chinadns_ng_ip}#${chinadns_ng_port}"
+						;;
 				esac
 				# 添加到参数列表
 				chinadns_ng_dns="${chinadns_ng_dns} -t ${chinadns_ng_server}"
 			done
 			unset IFS  # 恢复默认分隔符
+
 			dnsserver="$chinadns_ng_dns"
-			ln_start_bin "$(first_type chinadns-ng)" chinadns-ng -b 127.0.0.1 -l "$tmp_dns_port" -l "$dns_port" -p 3 -d gfw "$dnsserver" -N --filter-qtype 64,65 -f -r --cache 4096 --cache-stale 86400 --cache-refresh 20
+			# $dnsserver holds a list of "-t <server>" arguments built above, so it
+			# has to stay unquoted and word-split into separate arguments
+			# shellcheck disable=SC2086
+			ln_start_bin "$(first_type chinadns-ng)" chinadns-ng -b 127.0.0.1 -l "$dns_port" -p 3 -d gfw $dnsserver -N --filter-qtype 64,65 -f -r --cache 4096 --cache-stale 86400 --cache-refresh 20 --verdict-cache 4096
+			ln_start_bin "$(first_type chinadns-ng)" chinadns-ng -b 127.0.0.1 -l "$tmp_dns_port" -p 3 -d gfw $dnsserver -N --filter-qtype 64,65 -f -r --cache 4096 --cache-stale 86400 --cache-refresh 20 --verdict-cache 4096
 			echolog "ChinaDNS-NG query and cache Started!"
 			pdnsd_enable_flag=6
 			;;
@@ -1332,8 +1342,30 @@ start_dns() {
 				"wan_114") chinadns="$wandns,114.114.114.114" ;;
 				esac
 
-				filtered_chinadns=$(echo "$chinadns" | sed 's/:/#/')
-				ln_start_bin "$(first_type chinadns-ng)" chinadns-ng -l "$china_dns_port" -4 china -p 3 -c "$filtered_chinadns" -t "127.0.0.1#$dns_port" -N -f -r
+				filtered_chinadns=""
+				IFS=','
+				for chinadns_ip in $chinadns; do
+					# 过滤可能的前后空白字符
+					chinadns_ip="$(echo "$chinadns_ip" | sed 's/[[:space:]]//g')"
+					[ -z "$chinadns_ip" ] && continue
+
+					# 将 IP:PORT 格式转换为 IP#PORT（若无端口默认使用 53）
+					if echo "$chinadns_ip" | grep -q "#"; then
+						: # 已是 IP#PORT 格式，无需更改
+					elif echo "$chinadns_ip" | grep -qE ':[0-9]+$'; then
+						chinadns_ip="$(echo "$chinadns_ip" | sed -E 's/:([0-9]+)$/#\1/')"
+					else
+						chinadns_ip="${chinadns_ip}#53"
+					fi
+					filtered_chinadns="${filtered_chinadns} -c ${chinadns_ip}"
+				done
+				unset IFS
+
+				if [ "$USE_TABLES" = "iptables" ]; then
+					ln_start_bin "$(first_type chinadns-ng)" chinadns-ng -l "$china_dns_port" -4 china -p 3 $filtered_chinadns -t "127.0.0.1#$dns_port" -N -f -r --cache 4096 --cache-stale 86400 --cache-refresh 20 --verdict-cache 4096
+				elif [ "$USE_TABLES" = "nftables" ]; then
+					ln_start_bin "$(first_type chinadns-ng)" chinadns-ng -l "$china_dns_port" -4 inet@ss_spec@china -p 3 $filtered_chinadns -t "127.0.0.1#$dns_port" -N -f -r --cache 4096 --cache-stale 86400 --cache-refresh 20 --verdict-cache 4096
+				fi
 
 				cat <<-EOF >> "$TMP_DNSMASQ_PATH/chinadns_fixed_server.conf"
 					no-poll
@@ -1466,21 +1498,21 @@ generate_xray_config() {
 			fi
 			;;
 	esac
-	
-	cat > "$config_file" << EOF
-{
-	"log": {
-		"loglevel": "warning"
-	},
-	"inbounds": [$inbound_json],
-	"outbounds": [
+
+	cat <<-EOF >"$config_file"
 		{
-			"protocol": "freedom",
-			"settings": {}
-		}
-	]
-}
-EOF
+			"log": {
+				"loglevel": "warning"
+		},
+		"inbounds": [$inbound_json],
+		"outbounds": [
+			{
+				"protocol": "freedom",
+				"settings": {}
+			}
+		]
+	}
+	EOF
 	return 0
 }
 
@@ -2944,7 +2976,7 @@ start() {
 		start_rules
 		start_dns
 		# Restore ipsets after rules creation
-		if [ "$HAS_IPSET" -eq 1 ]; then
+		if [ "$USE_TABLES" = "iptables" ]; then
 			for setname in gfwlist china blacklist whitelist; do
 				[ "$setname" = "gfwlist" ] && [ "$run_mode" != "gfw" ] && continue
 				if [ -f "/tmp/ssrplus_save/${setname}.save" ]; then
@@ -3037,7 +3069,7 @@ stop() {
 	set_lock
 	check_run_environment
 	# Save ipsets before stopping to persist transparent proxy state
-	if [ "$HAS_IPSET" -eq 1 ]; then
+	if [ "$USE_TABLES" = "iptables" ]; then
 		mkdir -p /tmp/ssrplus_save
 		run_mode="$(uci_get_by_type global run_mode)"
 		if [ "$run_mode" = "gfw" ]; then

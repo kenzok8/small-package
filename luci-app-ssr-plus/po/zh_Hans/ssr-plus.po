@@ -91,6 +91,7 @@ msgstr ""
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1667
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client-config.lua:1680
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:186
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:213
 msgid "<ul><li>"
 msgstr ""
 
@@ -592,7 +593,7 @@ msgstr "自定义客户端代理规则"
 msgid "Custom DNS Server format as IP:PORT (default: 8.8.4.4:53)"
 msgstr "格式为 IP:Port（默认：8.8.4.4:53）"
 
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:212
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:214
 msgid "Custom DNS Server format as IP:PORT (default: disabled)"
 msgstr "格式为 IP:PORT（默认：禁用）"
 
@@ -990,7 +991,9 @@ msgstr "每周三"
 msgid "Example:"
 msgstr "示例："
 
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:223
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:229
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:234
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:243
 msgid "Expecting: %s"
 msgstr "应为：%s"
 
@@ -1664,6 +1667,7 @@ msgid "Move up"
 msgstr "上移"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:188
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:215
 msgid "Muitiple DNS server can saperate with ','"
 msgstr "多个上游 DNS 服务器请用 ',' 分隔（注意用英文逗号)"
 
@@ -3370,9 +3374,14 @@ msgstr ""
 msgid "v2ray-plugin"
 msgstr ""
 
-#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:223
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:234
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:243
 msgid "valid address:port"
 msgstr "有效的地址:端口"
+
+#: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/client.lua:229
+msgid "valid address:port (comma separated)"
+msgstr "有效地址：端口（用逗号分隔）"
 
 #: applications/luci-app-ssr-plus/luasrc/model/cbi/shadowsocksr/server-config.lua:82
 msgid "warning! Please do not reuse the port!"
