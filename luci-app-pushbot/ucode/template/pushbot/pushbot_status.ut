@@ -1320,8 +1320,12 @@ function initContentCard() {
 		}
 		sel.addEventListener('change',function(){hi.value=this.value;fireChange();});
 		w.addEventListener('cbi-dropdown-change',function(e){
-			var v=e.detail&&e.detail.value!=null?e.detail.value:(e.target&&e.target.value!=null?e.target.value:null);
-			if(v!=null)hi.value=v;
+			/* detail.value 为对象 {text,value,element}；空值（未选）为 null。
+			   取 .value 属性写 hidden，空值则清空。 */
+			var v='';
+			if (e.detail && e.detail.value && e.detail.value.value !== undefined)
+				v = '' + e.detail.value.value;
+			hi.value=v;
 			fireChange();
 		});
 		b.appendChild(sel);
@@ -1842,27 +1846,71 @@ PB_onReady(function(){ tryContentOnce(); });
 		w.appendChild(b);return w;
 	}
 	function mkSelS(opt, label, val, opts, desc) {
-		var w=document.createElement('div');w.className='pushbot-inline-field';w.style.cssText='margin:4px 0';
+		/* 自绘下拉（不依赖 LuCI select→dropdown 转换）：
+		   LuCI 转换会丢弃空值 option、且空值(禁用)时误显示第一项。
+		   自绘完全控制显示（禁用显示"禁用"）、互斥（选项可动态过滤）。 */
+		var w=document.createElement('div');w.className='pushbot-inline-field';w.style.cssText='margin:4px 0;flex:1;min-width:160px';
 		var t=document.createElement('div');t.className='pushbot-inline-title';
 		t.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
 		t.textContent=label;w.appendChild(t);
 		var b=document.createElement('div');b.className='pushbot-inline-body';
-		var sel=document.createElement('select');sel.className='cbi-input-select';
-		sel.style.cssText='width:100%;padding:6px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
-		opts.forEach(function(o){var op=document.createElement('option');op.value=o.v;op.textContent=o.l;if(o.v===val)op.selected=true;sel.appendChild(op);});
-		var hi=makeHidden(opt,val);
-		sel.addEventListener('change',function(){hi.value=this.value;});
-		b.appendChild(sel);
+		var cur = String(val==null?'':val);
+		var hi=makeHidden(opt,cur);
+		var currentOpts = opts;
+		/* 主按钮：复用插件 choice-button 样式（明暗自动适配） */
+		var btn=document.createElement('button');btn.type='button';
+		btn.className='pushbot-choice-button pushbot-sel-btn';
+		btn.style.cssText='width:100%;text-align:left;justify-content:space-between;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+		/* 选项列表（绝对定位覆盖，样式走主题） */
+		var lst=document.createElement('div');
+		lst.className='pushbot-sel-list';
+		lst.style.cssText='display:none;position:absolute;z-index:1000;left:0;right:0;margin-top:4px;border-radius:10px;max-height:240px;overflow-y:auto;box-shadow:0 12px 32px rgba(0,0,0,0.25)';
+		b.style.cssText='position:relative';
+		var onChange=null;
+		function labelOf(v){for(var i=0;i<currentOpts.length;i++)if(String(currentOpts[i].v)===String(v))return currentOpts[i].l;return v;}
+		function render(){
+			btn.textContent = (cur==='') ? '{{ _('Disabled') }}' : labelOf(cur);
+			lst.innerHTML='';
+			currentOpts.forEach(function(o){
+				var item=document.createElement('div');
+				item.className='pushbot-sel-item'+(String(o.v)===cur?' is-on':'');
+				item.textContent=o.l;
+				item.addEventListener('click',function(){
+					cur=String(o.v);hi.value=cur;render();lst.style.display='none';
+					if(onChange)onChange(cur);
+				});
+				lst.appendChild(item);
+			});
+		}
+		btn.addEventListener('click',function(e){e.preventDefault();lst.style.display=(lst.style.display==='none')?'block':'none';});
+		/* 点击外部关闭 */
+		document.addEventListener('click',function(e){ if(!w.contains(e.target)) lst.style.display='none'; });
+		render();
+		b.appendChild(btn);b.appendChild(lst);
 		if(desc){var d=document.createElement('div');d.className='pushbot-inline-description';d.innerHTML=desc;b.appendChild(d);}
-		w.appendChild(b);return w;
+		w.appendChild(b);
+		/* 供外部更新选项（互斥过滤）与取值 */
+		w._pbSetOpts=function(o){currentOpts=o;render();};
+		w._pbGetVal=function(){return cur;};
+		w._pbSetVal=function(v){cur=String(v==null?'':v);hi.value=cur;render();};
+		w._pbOnChange=function(fn){onChange=fn;};
+		return w;
 	}
 
 	function renderScheduledContent() {
 		contentBody.innerHTML = '';
 		var mode = crCur;
+		/* 模式互斥：切换/关闭时清空另一模式的 hidden 字段，避免残留值
+		   让脚本 pushbot_cron 误判分支（定时 vs 间隔） */
+		function clearHidden(name) {
+			var el = document.querySelector('[name="cbid.pushbot.pushbot.' + name + '"]');
+			if (el) el.value = '';
+		}
+		if (mode !== '1') { clearHidden('regular_time'); clearHidden('regular_time_2'); clearHidden('regular_time_3'); }
+		if (mode !== '2') { clearHidden('interval_time'); }
 		if (mode === '' || mode === null) return;
 
-		/* ── time selectors ── */
+		/* ── time selectors（互斥：一个时段选定后，其他时段不出现该时段）── */
 		if (mode === '1') {
 			var ttl = document.createElement('div');
 			ttl.className = 'pushbot-inline-title';
@@ -1871,10 +1919,22 @@ PB_onReady(function(){ tryContentOnce(); });
 			contentBody.appendChild(ttl);
 			var tr = document.createElement('div');
 			tr.style.cssText = 'display:flex;gap:12px;flex-wrap:wrap';
-			tr.appendChild(mkSelS('regular_time','{{ _('Time 1') }}', regular_time, hourOpts(false)));
-			tr.appendChild(mkSelS('regular_time_2','{{ _('Time 2') }}', regular_time_2, hourOpts(true)));
-			tr.appendChild(mkSelS('regular_time_3','{{ _('Time 3') }}', regular_time_3, hourOpts(true)));
+			var s1 = mkSelS('regular_time','{{ _('Time 1') }}', regular_time, hourOpts(false));
+			var s2 = mkSelS('regular_time_2','{{ _('Time 2') }}', regular_time_2, hourOpts(true));
+			var s3 = mkSelS('regular_time_3','{{ _('Time 3') }}', regular_time_3, hourOpts(true));
+			tr.appendChild(s1);tr.appendChild(s2);tr.appendChild(s3);
 			contentBody.appendChild(tr);
+			/* 互斥刷新：每个下拉的选项 = 全部时段 - 其他下拉已选的值（禁用 '' 除外） */
+			function refreshMutex() {
+				var v1=s1._pbGetVal(), v2=s2._pbGetVal(), v3=s3._pbGetVal();
+				var base1=hourOpts(false), base2=hourOpts(true), base3=hourOpts(true);
+				var f1=base1.filter(function(o){return o.v===''||o.v!==v2&&o.v!==v3;});
+				var f2=base2.filter(function(o){return o.v===''||o.v!==v1&&o.v!==v3;});
+				var f3=base3.filter(function(o){return o.v===''||o.v!==v1&&o.v!==v2;});
+				s1._pbSetOpts(f1);s2._pbSetOpts(f2);s3._pbSetOpts(f3);
+			}
+			s1._pbOnChange(refreshMutex);s2._pbOnChange(refreshMutex);s3._pbOnChange(refreshMutex);
+			refreshMutex();
 		}
 
 		if (mode === '2') {
@@ -3737,13 +3797,64 @@ window.addEventListener('DOMContentLoaded', function() {
 	transform: translateY(-1px);
 }
 
+/* 自绘下拉（定时发送时段选择）：明暗模式自适应 */
+.pushbot-sel-btn {
+	background: #f1f5f9;
+	border-color: #e2e8f0;
+	color: #334155;
+}
+.pushbot-sel-btn::after {
+	content: '▾';
+	margin-left: 8px;
+	font-size: 11px;
+	opacity: 0.6;
+}
+.pushbot-sel-list {
+	background: #ffffff;
+	border: 1px solid #e2e8f0;
+}
+.pushbot-sel-item {
+	padding: 8px 12px;
+	font-size: 13px;
+	cursor: pointer;
+	white-space: nowrap;
+	color: #334155;
+	transition: background 0.15s ease;
+}
+.pushbot-sel-item:hover {
+	background: #f1f5f9;
+}
+.pushbot-sel-item.is-on {
+	background: linear-gradient(135deg, #dbeafe, #bae6fd);
+	color: #1e40af;
+	font-weight: 600;
+}
+.pushbot-dk .pushbot-sel-btn {
+	background: #1f2023 !important;
+	color: #c8c8c8 !important;
+	border-color: #33363b !important;
+}
+.pushbot-dk .pushbot-sel-list {
+	background: #1f2023 !important;
+	border-color: #33363b !important;
+}
+.pushbot-dk .pushbot-sel-item {
+	color: #c8c8c8 !important;
+}
+.pushbot-dk .pushbot-sel-item:hover {
+	background: #2a2d31 !important;
+}
+.pushbot-dk .pushbot-sel-item.is-on {
+	background: linear-gradient(135deg, rgba(56, 139, 253, 0.55), rgba(34, 211, 238, 0.36)) !important;
+	color: #f8fafc !important;
+}
+
 .pushbot-sendtest-btn {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	padding: 9px 22px;
-	white-space: nowrap;
-	border: 1px solid transparent;
+	white-space: nowrap;	border: 1px solid transparent;
 	border-radius: 999px;
 	font-size: 13px;
 	font-weight: 700;

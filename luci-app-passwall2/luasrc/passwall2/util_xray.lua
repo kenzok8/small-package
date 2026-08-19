@@ -575,11 +575,11 @@ function gen_config_server(node)
 			version = 2,
 			users = users
 		}
-	elseif node.protocol == "dokodemo-door" then
+	elseif node.protocol == "tunnel" then
 		settings = {
-			network = node.d_protocol,
-			address = node.d_address,
-			port = tonumber(node.d_port)
+			allowedNetwork = node.d_protocol,
+			rewriteAddress = node.d_address,
+			rewritePort = tonumber(node.d_port)
 		}
 	elseif node.protocol == "wireguard" then
 		settings = {
@@ -1227,8 +1227,8 @@ function gen_config(var)
 						tag = in_tag,
 						listen = "127.0.0.1",
 						port = new_port,
-						protocol = "dokodemo-door",
-						settings = {network = "tcp,udp", address = to_node.address, port = tonumber(to_node.port)}
+						protocol = "tunnel",
+						settings = {allowedNetwork = "tcp,udp", rewriteAddress = to_node.address, rewritePort = tonumber(to_node.port)}
 					})
 					if to_node.tls_serverName == nil then
 						to_node.tls_serverName = to_node.address
@@ -1712,11 +1712,10 @@ function gen_config(var)
 			table.insert(inbounds, {
 				listen = "127.0.0.1",
 				port = tonumber(dns_listen_port),
-				protocol = "dokodemo-door",
+				protocol = "tunnel",
 				tag = "dns-in",
 				settings = {
-					address = "0.0.0.0",
-					network = "tcp,udp"
+					allowedNetwork = "tcp,udp"
 				}
 			})
 			local direct_type_dns = {
@@ -1949,8 +1948,8 @@ function gen_config(var)
 	if redir_port then
 		local inbound = {
 			port = tonumber(redir_port),
-			protocol = "dokodemo-door",
-			settings = {network = "tcp,udp", followRedirect = true},
+			protocol = "tunnel",
+			settings = {allowedNetwork = "tcp,udp", followRedirect = true},
 			streamSettings = {sockopt = {tproxy = "tproxy"}},
 			sniffing = {
 				enabled = xray_settings.sniffing_override_dest == "1" or node.protocol == "_shunt"
@@ -1975,13 +1974,13 @@ function gen_config(var)
 
 		local tcp_inbound = api.clone(inbound)
 		tcp_inbound.tag = "tcp_redir"
-		tcp_inbound.settings.network = "tcp"
+		tcp_inbound.settings.allowedNetwork = "tcp"
 		tcp_inbound.streamSettings.sockopt.tproxy = tcp_proxy_way
 		table.insert(inbounds, tcp_inbound)
 
 		local udp_inbound = api.clone(inbound)
 		udp_inbound.tag = "udp_redir"
-		udp_inbound.settings.network = "udp"
+		udp_inbound.settings.allowedNetwork = "udp"
 		table.insert(inbounds, udp_inbound)
 	end
 	

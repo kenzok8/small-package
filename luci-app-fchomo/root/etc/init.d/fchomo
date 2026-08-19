@@ -451,7 +451,7 @@ start_service() {
 }
 
 service_started() {
-	procd_set_config_changed dnsmasq
+	procd_set_config_changed dhcp
 	procd_set_config_changed firewall
 }
 
@@ -528,7 +528,7 @@ service_stopped() {
 	[ -n "$(/etc/init.d/$CONF info | jsonfilter -q -e '@.'"$CONF"'.instances["mihomo-c"]')" ] || client_stopped
 	# Server
 
-	procd_set_config_changed dnsmasq
+	procd_set_config_changed dhcp
 	procd_set_config_changed firewall
 }
 

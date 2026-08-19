@@ -14,7 +14,7 @@ function get_config(){
 function read_config(){
 	get_config "pushbot_enable" "lite_enable" "device_name" "sleeptime" "oui_dir" "oui_data" "reset_regularly" "debuglevel" "device_aliases" \
 	"pushbot_ipv4" "ipv4_interface" "pushbot_ipv6" "ipv6_interface" "pushbot_up" "pushbot_down" "cpuload_enable" "cpuload" "temperature_enable" "temperature" \
-	"regular_time" "regular_time_2" "regular_time_3" "interval_time" \
+	"regular_time" "regular_time_2" "regular_time_3" "interval_time" "crontab" \
 	"client_usage" "client_usage_max" "client_usage_disturb" "client_usage_whitelist" \
 	"web_logged" "ssh_logged" "web_login_failed" "ssh_login_failed" "login_max_num" "web_login_black" "ip_white_list" "ip_black_timeout" \
 	"pushbot_sheep" "starttime" "endtime" "pushbot_whitelist" "pushbot_blacklist" "pushbot_interface" "MAC_online_list" "MAC_offline_list" \
@@ -632,14 +632,27 @@ function pushbot_cron(){
 		crontab -l 2>/dev/null > conf && echo -e "0 0 * * * rm /tmp/pushbot/usage.db >/dev/null 2>&1" >> conf && crontab conf && rm -f conf >/dev/null 2>&1
 		crontab -l 2>/dev/null > conf && echo -e "0 0 * * * rm /tmp/pushbot/usage6.db >/dev/null 2>&1" >> conf && crontab conf && rm -f conf >/dev/null 2>&1
 	fi
-	[ ! -z "$regular_time_2" ] && local regular_time_2=",${regular_time_2}"
-	[ ! -z "$regular_time_3" ] && local regular_time_3=",${regular_time_3}"
-	# 定时发送
-	if [ ! -z "$regular_time" ] || [ ! -z "$regular_time_2" ] || [ ! -z "$regular_time_3" ]; then
-		crontab -l 2>/dev/null > conf && echo -e "0 $regular_time$regular_time_2$regular_time_3 * * * /usr/bin/pushbot/pushbot send &" >> conf && crontab conf && rm -f conf >/dev/null 2>&1
-	# 间隔发送
-	elif [ ! -z "$interval_time" ]; then
+	# 定时/间隔严格互斥，以 crontab 开关为准（1=定时发送，2=间隔发送）
+	# 避免切换模式后残留字段（regular_time* / interval_time）误触发错误分支
+	if [ "$crontab" = "2" ] && [ ! -z "$interval_time" ]; then
+		# 间隔发送
 		crontab -l 2>/dev/null > conf && echo -e "0 */$interval_time * * * /usr/bin/pushbot/pushbot send &" >> conf && crontab conf && rm -f conf >/dev/null 2>&1
+	elif [ "$crontab" = "1" ] && { [ ! -z "$regular_time" ] || [ ! -z "$regular_time_2" ] || [ ! -z "$regular_time_3" ]; }; then
+		# 定时发送（兼容旧配置：crontab 未设置但 regular_time* 有值）
+		# 第二、三时段值为 0 时视为"禁用"残留（旧版把 Disabled 存成 0），过滤掉；
+		# 主时段 regular_time=0 是合法的"0 点发送"，保留。
+		[ ! -z "$regular_time_2" ] && [ "$regular_time_2" != "0" ] && local regular_time_2=",${regular_time_2}" || local regular_time_2=""
+		[ ! -z "$regular_time_3" ] && [ "$regular_time_3" != "0" ] && local regular_time_3=",${regular_time_3}" || local regular_time_3=""
+		crontab -l 2>/dev/null > conf && echo -e "0 $regular_time$regular_time_2$regular_time_3 * * * /usr/bin/pushbot/pushbot send &" >> conf && crontab conf && rm -f conf >/dev/null 2>&1
+	elif [ -z "$crontab" ] && { [ ! -z "$regular_time" ] || [ ! -z "$regular_time_2" ] || [ ! -z "$regular_time_3" ] || [ ! -z "$interval_time" ]; }; then
+		# 旧版兼容：crontab 未设置时，按 legacy 逻辑（定时优先，其次间隔）
+		if [ ! -z "$regular_time" ] || [ ! -z "$regular_time_2" ] || [ ! -z "$regular_time_3" ]; then
+			[ ! -z "$regular_time_2" ] && [ "$regular_time_2" != "0" ] && local regular_time_2=",${regular_time_2}" || local regular_time_2=""
+			[ ! -z "$regular_time_3" ] && [ "$regular_time_3" != "0" ] && local regular_time_3=",${regular_time_3}" || local regular_time_3=""
+			crontab -l 2>/dev/null > conf && echo -e "0 $regular_time$regular_time_2$regular_time_3 * * * /usr/bin/pushbot/pushbot send &" >> conf && crontab conf && rm -f conf >/dev/null 2>&1
+		elif [ ! -z "$interval_time" ]; then
+			crontab -l 2>/dev/null > conf && echo -e "0 */$interval_time * * * /usr/bin/pushbot/pushbot send &" >> conf && crontab conf && rm -f conf >/dev/null 2>&1
+		fi
 	fi
 	re_cron
 }
