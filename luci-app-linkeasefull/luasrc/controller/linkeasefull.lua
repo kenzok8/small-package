@@ -1,13 +1,14 @@
 module("luci.controller.linkeasefull", package.seeall)
 
 function index()
+	entry({"admin", "services", "linkeasefull_status"}, call("linkeasefull_status"))
+	entry({"admin", "services", "linkeasefull", "auth"}, call("linkeasefull_auth")).leaf = true
+
 	if not nixio.fs.access("/etc/config/linkeasefull") then
 		return
 	end
 
 	entry({"admin", "services", "linkeasefull"}, cbi("linkeasefull"), _("LinkEase Full"), 21).dependent = true
-	entry({"admin", "services", "linkeasefull_status"}, call("linkeasefull_status"))
-	entry({"admin", "services", "linkeasefull", "auth"}, call("linkeasefull_auth")).leaf = true
 end
 
 local function uhttpd_has_apps_proxy_prefix()
@@ -62,11 +63,39 @@ local function valid_apps_return(value)
 	if not value or value == "" then
 		return false
 	end
-	if value == "/apps" then
-		return true
+	local function valid_path(path)
+		if path == "/apps" then
+			return true
+		end
+		local prefix = path:sub(1, 6)
+		return prefix == "/apps/" or prefix == "/apps?" or prefix == "/apps#"
 	end
-	local prefix = value:sub(1, 6)
-	return prefix == "/apps/" or prefix == "/apps?" or prefix == "/apps#"
+	if value:sub(1, 1) == "/" then
+		return valid_path(value)
+	end
+
+	local scheme, authority, path = value:match("^(https?://)([^/]+)(/.*)$")
+	if not scheme or not authority or not valid_path(path) then
+		return false
+	end
+
+	local http = require "luci.http"
+	local uci = require "luci.model.uci".cursor()
+	local request_host = http.getenv("HTTP_HOST") or ""
+	local lan_host = uci:get("network", "lan", "ipaddr") or ""
+	local allowed_authorities = {
+		request_host,
+		request_host .. ":19290",
+		lan_host,
+		lan_host .. ":19290"
+	}
+
+	for _, host in ipairs(allowed_authorities) do
+		if host ~= "" and authority == host then
+			return true
+		end
+	end
+	return false
 end
 
 local function valid_cookie_value(value)

@@ -3,25 +3,21 @@
 . /lib/functions.sh
 
 ensure_linkease_config() {
-	if ! uci -q get linkease.@linkease[0] >/dev/null; then
-		uci -q add linkease linkease >/dev/null
-		uci -q set linkease.@linkease[0].enabled='0'
-		uci -q set linkease.@linkease[0].port='8897'
-		uci -q set linkease.@linkease[0].allowPublic='0'
-		uci -q commit linkease
+	if [ ! -f /etc/config/linkease ]; then
+		touch /etc/config/linkease || return 1
 	fi
-}
-
-sync_linkeasefull_local_home() {
-	if uci -q get linkeasefull.@linkeasefull[0] >/dev/null; then
-		uci -q set "linkeasefull.@linkeasefull[0].data_root_parent=$1"
-		uci -q commit linkeasefull
+	if ! uci -q get linkease.@linkease[0] >/dev/null; then
+		uci -q add linkease linkease >/dev/null || return 1
+		uci -q set linkease.@linkease[0].enabled='0' || return 1
+		uci -q set linkease.@linkease[0].port='8897' || return 1
+		uci -q set linkease.@linkease[0].allowPublic='0' || return 1
+		uci -q commit linkease || return 1
 	fi
 }
 
 case "$1" in
   save)
-	ensure_linkease_config
+	ensure_linkease_config || exit 1
 	if [ ! -z "$2" ]; then
 	  uci set "linkease.@linkease[0].preconfig=$2"
 	  uci commit linkease
@@ -29,7 +25,7 @@ case "$1" in
 	;;
 
   load)
-	ensure_linkease_config
+	ensure_linkease_config || exit 1
 	if [ -f "/usr/sbin/preconfig.data" ]; then
 	  data="`cat /usr/sbin/preconfig.data`"
 	  uci set "linkease.@linkease[0].preconfig=${data}"
@@ -48,13 +44,15 @@ case "$1" in
 	;;
 
   local_save)
-	ensure_linkease_config
 	if [ ! -z "$2" ]; then
+	  ensure_linkease_config || exit 1
 	  uci set "linkease.@linkease[0].local_home=$2"
 	  uci commit linkease
-	  sync_linkeasefull_local_home "$2"
 	  ROOT_DIR="$2"
 	  if [ -f "/etc/config/quickstart" ]; then
+		if ! uci -q get quickstart.main >/dev/null; then
+		  uci -q set quickstart.main=main
+		fi
 		config_load quickstart
 		config_get MAIN_DIR main main_dir ""
 		config_get CONF_DIR main conf_dir ""
@@ -83,16 +81,8 @@ case "$1" in
 	;;
 
   local_load)
-	ensure_linkease_config
-	if [ -f "/etc/config/quickstart" ]; then
-	  data="`uci -q get quickstart.main.main_dir`"
-	fi
-	if [ -z "$data" ]; then
-	  data="`uci -q get linkease.@linkease[0].local_home`"
-	fi
-	if [ -z "$data" ]; then
-	  data="`uci -q get linkeasefull.@linkeasefull[0].data_root_parent`"
-	fi
+	ensure_linkease_config || exit 1
+	data="`uci -q get linkease.@linkease[0].local_home`"
 
 	if [ -z "${data}" ]; then
 	  echo "nil"

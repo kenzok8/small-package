@@ -45,6 +45,22 @@ local function storage_mounts()
 	return mounts
 end
 
+local function ensure_linkease_config(uci)
+	if not fs.access("/etc/config/linkease") then
+		fs.writefile("/etc/config/linkease", "")
+	end
+	uci:load("linkease")
+	local section = uci:get_first("linkease", "linkease")
+	if not section then
+		section = uci:add("linkease", "linkease")
+		uci:set("linkease", section, "enabled", "0")
+		uci:set("linkease", section, "port", "8897")
+		uci:set("linkease", section, "allowPublic", "0")
+		uci:commit("linkease")
+	end
+	return section
+end
+
 m = Map("linkeasefull", translate("LinkEase Full"), translate("LinkEase Full uses fixed entries at port 19290 /apps/ and legacy port 8897."))
 
 m:section(SimpleSection).template = "linkeasefull_status"
@@ -55,10 +71,11 @@ s.anonymous = true
 
 s:option(Flag, "enabled", translate("Enable")).rmempty = false
 
-local data = s:option(ListValue, "data_root_parent", translate("Storage path"), translate("Choose a mounted persistent disk. /tmp is not allowed."))
+local data = s:option(ListValue, "_local_home", translate("Storage path"), translate("Choose a mounted persistent disk. /tmp is not allowed."))
 data.rmempty = false
 
-local current = m.uci:get_first("linkeasefull", "linkeasefull", "data_root_parent") or ""
+ensure_linkease_config(m.uci)
+local current = m.uci:get_first("linkease", "linkease", "local_home") or ""
 local has_current = false
 for _, mount in ipairs(storage_mounts()) do
 	data:value(mount.path, mount.label)
@@ -81,6 +98,17 @@ function data.validate(self, value)
 		return nil, translate("The selected storage path does not exist.")
 	end
 	return value
+end
+
+function data.cfgvalue(self, section)
+	m.uci:load("linkease")
+	return m.uci:get_first("linkease", "linkease", "local_home") or ""
+end
+
+function data.write(self, section, value)
+	local linkease_section = ensure_linkease_config(m.uci)
+	m.uci:set("linkease", linkease_section, "local_home", value)
+	m.uci:commit("linkease")
 end
 
 return m

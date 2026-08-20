@@ -23,6 +23,5 @@ uci -q batch <<-EOF >/dev/null
 EOF
 
 /etc/init.d/linkeasefull enable
-/etc/init.d/linkeasefull restart
 
 exit 0
