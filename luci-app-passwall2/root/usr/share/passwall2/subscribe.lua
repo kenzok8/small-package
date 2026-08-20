@@ -2011,7 +2011,7 @@ local function curl(url, file, ua, mode, hwid)
 end
 
 function get_headers()
-	local cache_file = CACHE_PATH .. "/sub_curl_headers"
+	local cache_file = api.CACHE_PATH .. "/sub_curl_headers"
 	if fs.access(cache_file) then
 		return luci.sys.exec("cat " .. cache_file)
 	end

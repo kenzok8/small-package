@@ -800,7 +800,7 @@ function gen_config_server(node)
 					u.username = user.username
 					u.password = user.password
 				end
-				if node.protocol == "shadowsocks" or node.protocol == "trojan" then
+				if node.protocol == "shadowsocks" or node.protocol == "trojan" or node.protocol == "hysteria2" or node.protocol == "anytls" then
 					u.name = user.username
 					u.password = user.password
 				end
@@ -822,10 +822,6 @@ function gen_config_server(node)
 					u.name = user.username
 					u.password = user.password
 					u.uuid = user.uuid
-				end
-				if node.protocol == "hysteria2" then
-					u.name = user.username
-					u.password = user.password
 				end
 				if node.protocol == "wireguard" then
 					u.public_key = user.wireguard_public_key
