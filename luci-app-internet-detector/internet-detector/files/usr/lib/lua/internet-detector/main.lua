@@ -12,8 +12,8 @@ local uci    = require("uci")
 -- Default settings
 
 local InternetDetector = {
-	appName        = "internet-detector",
-	libDir         = "/usr/lib/lua",
+	appName         = "internet-detector",
+	libDir          = "/usr/lib/lua",
 	logLevels = {
 		emerg   = { level = syslog.LOG_EMERG,   num = 0 },
 		alert   = { level = syslog.LOG_ALERT,   num = 1 },
@@ -24,18 +24,32 @@ local InternetDetector = {
 		info    = { level = syslog.LOG_INFO,    num = 6 },
 		debug   = { level = syslog.LOG_DEBUG,   num = 7 },
 	},
-	pingCmd        = "/bin/ping",
-	pingParams     = "-c 1",
-	curlExec       = "/usr/bin/curl",
-	curlParams     = '-s -g --no-keepalive --head --user-agent "Mozilla/5.0 (X11; Linux x86_64; rv:142.0) Gecko/20100101 Firefox/142.0"',
-	mode           = 0,		-- 0: disabled, 1: Service, 2: UI detector
-	loggingLevel   = 6,
-	hostname       = "OpenWrt",
-	uiRunTime      = 30,
-	noModules      = false,
-	uiAvailModules = { mod_public_ip = true },
-	debug          = false,
-	serviceConfig  = {
+	pingCmd         = "/bin/ping",
+	pingParams      = "-c 1",
+	curlExec        = "/usr/bin/curl",
+	curlParams      = '-s -g --no-keepalive --head --user-agent "Mozilla/5.0 (X11; Linux x86_64; rv:153.0) Gecko/20100101 Firefox/153.0"',
+	curlHttpOkCodes = {
+		[200] = true,
+		[202] = true,
+		[203] = true,
+		[204] = true,
+		[206] = true,
+		[300] = true,
+		[301] = true,
+		[302] = true,
+		[303] = true,
+		[304] = true,
+		[307] = true,
+		[308] = true,
+	},
+	mode            = 0,		-- 0: disabled, 1: Service, 2: UI detector
+	loggingLevel    = 6,
+	hostname        = "OpenWrt",
+	uiRunTime       = 30,
+	noModules       = false,
+	uiAvailModules  = { mod_public_ip = true },
+	debug           = false,
+	serviceConfig   = {
 		hosts = {
 			[1] = "8.8.8.8",
 			[2] = "1.1.1.1",
@@ -43,7 +57,7 @@ local InternetDetector = {
 		urls = {
 			[1] = "https://www.google.com",
 		},
-		check_type          = 0,	-- 0: TCP, 1: ICMP
+		check_type          = 0,	-- 0: TCP, 1: ICMP, 2: URL test
 		tcp_port            = 53,
 		icmp_packet_size    = 56,
 		interval_up         = 30,
@@ -58,13 +72,13 @@ local InternetDetector = {
 		iface               = nil,
 		instance            = nil,
 	},
-	modules         = {},
-	parsedHosts     = {},
-	proxyAuthString = "",
-	proxyString     = "",
-	uiCounter       = 0,
-	pidFile         = nil,
-	statusFile      = nil,
+	modules          = {},
+	parsedHosts      = {},
+	proxyAuthString  = "",
+	proxyString      = "",
+	uiCounter        = 0,
+	pidFile          = nil,
+	statusFile       = nil,
 }
 InternetDetector.configDir      = string.format("/etc/%s", InternetDetector.appName)
 InternetDetector.modulesDir     = string.format(
@@ -280,7 +294,6 @@ function InternetDetector:TCPConnectionToHost(host, port)
 				if not ok then
 					self:debugOutput(string.format(
 						"SOCKET ERROR: %s, %s", errMsg, errNum))
-
 					unistd.close(sock)
 					return retCode
 				end
@@ -380,7 +393,7 @@ function InternetDetector:checkURL(url)
 	if retCode == 0 and data then
 		httpCode = self:getHTTPCode(data)
 	end
-	return (httpCode ~= 200) and 1 or 0
+	return (not self.curlHttpOkCodes[httpCode]) and 1 or 0
 end
 
 function InternetDetector:exit()
