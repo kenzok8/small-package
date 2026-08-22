@@ -61,7 +61,7 @@ msgstr ""
 msgid "Abnormal device traffic"
 msgstr ""
 
-msgid "Abnormal device traffic alert (bytes); you can append K or M"
+msgid "Abnormal device traffic alert (bytes); you can append K, M or G"
 msgstr ""
 
 msgid "Abnormal traffic"
@@ -859,7 +859,7 @@ msgstr ""
 msgid "Traffic limit"
 msgstr ""
 
-msgid "Traffic limit per minute"
+msgid "Traffic limit per interval"
 msgstr ""
 
 msgid "Traffic watchlist"

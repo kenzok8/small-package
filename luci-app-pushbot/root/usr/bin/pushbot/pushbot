@@ -111,7 +111,7 @@ function pushbot_init(){
 	add_ip_black
 	
 	rm -f ${dir}fd1 ${dir}sheep_usage ${dir}old_sheep_usage ${dir}client_usage_aliases ${dir}old_client_usage_aliases /usr/bin/pushbot/errlog >/dev/null 2>&1
-	[ ! -f "/usr/sbin/wrtbwmon" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】未安装 wrtbwmon ，流量统计不可用" >> ${logfile}
+	[ -f "/usr/sbin/wrtbwmon" ] || command -v nlbw >/dev/null 2>&1 || echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】未安装 wrtbwmon 且 nlbwmon 不可用，流量统计不可用" >> ${logfile}
 	[ -z "$ip_version" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】无法获取依赖项 iputils-arping 版本号，请确认插件是否正常运行" >> ${logfile}
 	[ -z "$cu_version" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】无法获取依赖项 curl 版本号，请确认插件是否正常运行" >> ${logfile}
 	[ -z "${dd_webhook}${pp_token}${we_webhook}${fs_webhook}${bark_token}${pushdeer_key}" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】请填写正确的Token/Webhook " >> ${logfile} && return 1
@@ -454,12 +454,16 @@ function soc_temp(){
 }
 
 # 流量数据
-# 数据源优先级:wrtbwmon(usage.db) → nlbwmon(回落)
+# 数据源优先级:nlbwmon(实时socket查询) → wrtbwmon(回落使用usage.db)
 function usage(){
 	[ ! "$1" ] && return
 	if [ $1 == "update" ] ;then
+		# nlbwmon 为实时 daemon（socket 查询），无需手动"刷新"；仅当 nlbwmon 不可用时回落 wrtbwmon
+		if command -v nlbw >/dev/null 2>&1 && [ -S /var/run/nlbwmon.sock ]; then
+			return
+		fi
+		# ---- 以下为 wrtbwmon 备用路径 ----
 		[ ! -f "/usr/sbin/wrtbwmon" ] && return
-		# 语义版本比较(忽略 apk 的 -rN 后缀、非数字字符)
 		function version_ge() {
 			local a=$(echo "$1"|sed 's/-r[0-9]*$//;s/[^0-9.]//g') b=$(echo "$2"|sed 's/-r[0-9]*$//;s/[^0-9.]//g')
 			local a1=$(echo "$a"|cut -d. -f1) a2=$(echo "$a"|cut -d. -f2) a3=$(echo "$a"|cut -d. -f3)
@@ -471,17 +475,14 @@ function usage(){
 			[ "${a3:-0}" -ge "${b3:-0}" ] 2>/dev/null
 		}
 		local wrv=$(echo "$wr_version"|sed 's/-r[0-9]*$//')
-		# 新版(>=1.2.0)语法为 `wrtbwmon -f <db>`,老版为 `wrtbwmon update <db>`
 		if [ ! -z "$wrv" ] && version_ge "$wrv" "1.2.0"; then
 			wrtbwmon -f ${dir}usage.db >/dev/null 2>&1
 		else
 			wrtbwmon update ${dir}usage.db >/dev/null 2>&1
 		fi
-		# 库已含表头+设备数据即视为成功(不依赖退出码:部分 wrtbwmon 写库成功也返回非 0)
 		local dbrows_after=$(grep -c "," ${dir}usage.db 2>/dev/null)
 		[ -z "$dbrows_after" ] && dbrows_after="0"
 		[ "$dbrows_after" -gt "1" ] && return
-		# 主语法未产生数据 → 尝试另一语法(兼容不同 wrtbwmon fork)
 		if [ ! -z "$wrv" ] && version_ge "$wrv" "1.2.0"; then
 			wrtbwmon update ${dir}usage.db >/dev/null 2>&1
 		else
@@ -490,35 +491,39 @@ function usage(){
 		local dbrows_after2=$(grep -c "," ${dir}usage.db 2>/dev/null)
 		[ -z "$dbrows_after2" ] && dbrows_after2="0"
 		[ "$dbrows_after2" -gt "1" ] && return
-		# 最后手段:老版 wrtbwmon 需要先 setup 建 iptables 链
 		wrtbwmon setup ${dir}usage.db >/dev/null 2>&1
 		wrtbwmon update ${dir}usage.db >/dev/null 2>&1
 		return
 	elif [ $1 == "get" ] ;then
 		local tmptotal=""
-		local dbrows=$(grep -c "," ${dir}usage.db 2>/dev/null)
-		[ -z "$dbrows" ] && dbrows="0"
-		if [ "$dbrows" -gt "1" ]; then
-			[ -z "$total_n" ] && total_n=`cat ${dir}usage.db|head -n1|grep "total"|sed 's/,/\n/g'|awk '/total/{print NR}'` 2>/dev/null
-			[ -z "$total_n" ] && total_n="6"
-			[ "$2" ] && local tmptotal=`cat ${dir}usage.db|sed 's/,,,/,0,0,/g'|sed 's/,,/,0,/g'|sed 's/,/ /g'|grep -i -w ${2}|awk "{print "'$'$total_n"}"|grep -v "^$"|sort -u|head -n1` 2>/dev/null
+		# nlbw 优先（实时 daemon 查询，不受 pushbot 轮询节奏影响）
+		if [ ! -z "$2" ]; then
+			tmptotal=`nlbw_usage "$2"`
 		fi
-		# wrtbwmon 无有效数据时回落 nlbwmon(新设备未入库也会回落)
-		if [ -z "$tmptotal" ] && [ ! -z "$2" ]; then
-			local tmptotal=`nlbw_usage "$2"`
+		# nlbw 回落 wrtbwmon
+		if [ -z "$tmptotal" ] || [ "$tmptotal" = "0" ]; then
+			local dbrows=$(grep -c "," ${dir}usage.db 2>/dev/null)
+			[ -z "$dbrows" ] && dbrows="0"
+			if [ "$dbrows" -gt "1" ]; then
+				[ -z "$total_n" ] && total_n=`cat ${dir}usage.db|head -n1|grep "total"|sed 's/,/\n/g'|awk '/total/{print NR}'` 2>/dev/null
+				[ -z "$total_n" ] && total_n="6"
+				[ "$2" ] && local tmptotal2=`cat ${dir}usage.db|sed 's/,,,/,0,0,/g'|sed 's/,,/,0,/g'|sed 's/,/ /g'|grep -i -w ${2}|awk "{print "'$'$total_n"}"|grep -v "^$"|sort -u|head -n1` 2>/dev/null
+			fi
+			[ ! -z "$tmptotal2" ] && tmptotal="$tmptotal2"
 		fi
 		[ -z "$tmptotal" ] && local tmptotal="0"
 		[ ! "$3" ] && echo `bytes_for_humans ${tmptotal}` || echo "$tmptotal"
 	elif [ $1 == "list" ] ;then
 		# 输出 "mac total_bytes" 列表(供 LuCI 在线设备表格)
+		# nlbw 优先（实时 daemon）
+		nlbw_usage "$2"
+		# nlbw 无数据时回落 wrtbwmon
 		local dbrows=$(grep -c "," ${dir}usage.db 2>/dev/null)
 		[ -z "$dbrows" ] && dbrows="0"
 		if [ "$dbrows" -gt "1" ]; then
 			[ -z "$total_n" ] && total_n=`cat ${dir}usage.db|head -n1|grep "total"|sed 's/,/\n/g'|awk '/total/{print NR}'` 2>/dev/null
 			[ -z "$total_n" ] && total_n="6"
 			cat ${dir}usage.db|sed 's/,,,/,0,0,/g'|sed 's/,,/,0,/g'|sed 's/,/ /g'|grep -v "^#"|grep -v "^$"|awk -v n="$total_n" 'NR>1 && $1!="mac" {print tolower($1)" "$n}'
-		else
-			nlbw_usage
 		fi
 	elif [ $1 == "down" ] ;then
 		[ "$2" ] && sed -i "/,${2},/d" ${dir}usage.db 2>/dev/null
@@ -561,7 +566,7 @@ function get_client_usage(){
 	[ "$client_usage_disturb" -eq "1" ] && [ ! -z "$client_usage_whitelist" ] && local MACLIST=`echo "$client_usage_whitelist"`
 	[ -z "$MACLIST" ] && return
 
-	if [ "$((`date +%s`-$get_client_usage_time))" -ge "60" ]; then
+	if [ "$((`date +%s`-$get_client_usage_time))" -ge "$sleeptime" ] && [ "$sleeptime" -ge "10" ]; then
 		> ${dir}client_usage_aliases
 		for mac in $MACLIST; do
 			( ! cat ${dir}ipAddress|grep -q -i -w $mac|grep -v "^$"|sort -u|head -n1 ) && continue
@@ -579,7 +584,7 @@ function get_client_usage(){
 				if [ "$table_enable" = "1" ]; then
 					local LF='\n'
 					[ ! -z "$ip_total" ] && local ip_total_v="$ip_total" || local ip_total_v=""
-					local info="${LF}| **客户端名** | ${ip_name} |${LF}| --- | --- |${LF}| **客户端IP** | ${ip} |${LF}| **客户端MAC** | ${mac} |${LF}| **总计流量** | ${ip_total_v} |${LF}| **一分钟内流量** | ${tmp_usage} |${LF}| **在线时间** | ${time1} |"
+					local info="${LF}| **客户端名** | ${ip_name} |${LF}| --- | --- |${LF}| **客户端IP** | ${ip} |${LF}| **客户端MAC** | ${mac} |${LF}| **总计流量** | ${ip_total_v} |${LF}| **检测间隔内流量** | ${tmp_usage} |${LF}| **在线时间** | ${time1} |"
 					if [ -z "$title" ]; then
 						title="${ip_name} 流量异常"
 						content="${content}${str_splitline}${str_title_start}${font_fail} 设备流量异常${font_end}${str_title_end}${info}"
@@ -594,13 +599,13 @@ function get_client_usage(){
 					[ ! -z "$ip_total" ] && local ip_total="${str_linefeed}${str_tab}总计流量： ${str_space}${str_space}${str_space}${str_space}${ip_total}"
 					if [ -z "$title" ]; then
 						title="${ip_name} 流量异常"
-						content="${content}${str_splitline}${str_title_start}${font_fail} 设备流量异常${font_end}${str_title_end}${str_linefeed}${str_tab}客户端名：${str_space}${str_space}${str_space}${str_space}${str_space}${ip_name}${str_linefeed}${str_tab}客户端IP： ${str_space}${str_space}${str_space}${str_space}${ip}${str_linefeed}${str_tab}客户端MAC：${str_space}${str_space}${str_space}${str_space}${mac}$ip_total${str_linefeed}${str_tab}一分钟内流量： ${str_space}${str_space}${tmp_usage}${str_linefeed}${str_tab}在线时间： ${str_space}${str_space}${str_space}${str_space}${time1}"
+						content="${content}${str_splitline}${str_title_start}${font_fail} 设备流量异常${font_end}${str_title_end}${str_linefeed}${str_tab}客户端名：${str_space}${str_space}${str_space}${str_space}${str_space}${ip_name}${str_linefeed}${str_tab}客户端IP： ${str_space}${str_space}${str_space}${str_space}${ip}${str_linefeed}${str_tab}客户端MAC：${str_space}${str_space}${str_space}${str_space}${mac}$ip_total${str_linefeed}${str_tab}检测间隔内流量： ${str_space}${str_space}${tmp_usage}${str_linefeed}${str_tab}在线时间： ${str_space}${str_space}${str_space}${str_space}${time1}"
 					elif ( echo "$title"|grep -q "流量异常" ); then
 						title="${ip_name} ${title}"
-						content="${content}${str_splitline}${str_tab}客户端名：${str_space}${str_space}${str_space}${str_space}${str_space}${ip_name}${str_linefeed}${str_tab}客户端IP： ${str_space}${str_space}${str_space}${str_space}${ip}${str_linefeed}${str_tab}客户端MAC：${str_space}${str_space}${str_space}${str_space}${mac}$ip_total${str_linefeed}${str_tab}一分钟内流量： ${str_space}${str_space}${str_space}${tmp_usage}${str_linefeed}${str_tab}在线时间： ${str_space}${str_space}${str_space}${str_space}${time1}"
+						content="${content}${str_splitline}${str_tab}客户端名：${str_space}${str_space}${str_space}${str_space}${str_space}${ip_name}${str_linefeed}${str_tab}客户端IP： ${str_space}${str_space}${str_space}${str_space}${ip}${str_linefeed}${str_tab}客户端MAC：${str_space}${str_space}${str_space}${str_space}${mac}$ip_total${str_linefeed}${str_tab}检测间隔内流量： ${str_space}${str_space}${str_space}${tmp_usage}${str_linefeed}${str_tab}在线时间： ${str_space}${str_space}${str_space}${str_space}${time1}"
 					else
 						title="设备状态变化"
-						content="${content}${str_splitline}${str_title_start}${font_fail} 设备流量异常${font_end}${str_title_end}${str_linefeed}${str_tab}客户端名：${str_space}${str_space}${str_space}${str_space}${str_space}${ip_name}${str_linefeed}${str_tab}客户端IP： ${str_space}${str_space}${str_space}${str_space}${ip}${str_linefeed}${str_tab}客户端MAC：${str_space}${str_space}${str_space}${str_space}${mac}$ip_total${str_linefeed}${str_tab}一分钟内流量： ${str_space}${str_space}${str_space}${tmp_usage}${str_linefeed}${str_tab}在线时间： ${str_space}${str_space}${str_space}${str_space}${time1}"
+						content="${content}${str_splitline}${str_title_start}${font_fail} 设备流量异常${font_end}${str_title_end}${str_linefeed}${str_tab}客户端名：${str_space}${str_space}${str_space}${str_space}${str_space}${ip_name}${str_linefeed}${str_tab}客户端IP： ${str_space}${str_space}${str_space}${str_space}${ip}${str_linefeed}${str_tab}客户端MAC：${str_space}${str_space}${str_space}${str_space}${mac}$ip_total${str_linefeed}${str_tab}检测间隔内流量： ${str_space}${str_space}${str_space}${tmp_usage}${str_linefeed}${str_tab}在线时间： ${str_space}${str_space}${str_space}${str_space}${time1}"
 					fi
 				fi
 			fi

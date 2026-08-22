@@ -1694,7 +1694,7 @@ b2.appendChild(tmRow);
 	cuRow.appendChild(mkBtn('{{ _('Abnormal device traffic') }}',cuOn,function(on){updateFlagInput('client_usage',on);toggleCu(on);}));
 	b2.appendChild(cuRow);
 	var cuSub=document.createElement('div');cuSub.id='ct_usage_sub';cuSub.style.cssText='margin-top:4px;display:'+(CT_USAGE?'block':'none');
-	cuSub.appendChild(mkTxt('client_usage_max','{{ _('Traffic limit per minute') }}',CT_USAGE_MAX,'{{ _('Abnormal device traffic alert (bytes); you can append K or M') }}'));
+	cuSub.appendChild(mkTxt('client_usage_max','{{ _('Traffic limit per minute') }}',CT_USAGE_MAX,'{{ _('Abnormal device traffic alert (bytes); you can append K, M or G') }}'));
 	/* disturb toggle */
 /* client usage disturb - use hidden input */
 var cdHi = document.querySelector('[name="cbid.pushbot.pushbot.client_usage_disturb"]');
@@ -2711,7 +2711,7 @@ function initModernTabs() {
 	var clientPane = document.createElement('div');
 	clientPane.id = 'pushbot_pane_client';
 	clientPane.className = 'pushbot-tab-pane';
-	clientPane.innerHTML = '<div class="pushbot-mode-card" style="padding:0;overflow:hidden"><div class="pushbot-log-container"><div class="pushbot-log-content" id="pushbot_client_content"><p style="padding:12px;margin:0;color:#94a3b8;text-align:center">{{ _('Loading...') }}</p></div></div></div>';
+	clientPane.innerHTML = '<div class="pushbot-mode-card" style="padding:0;overflow:hidden"><div class="pushbot-log-container"><div class="pushbot-log-header"><div class="pushbot-log-controls"><label class="pushbot-log-switch" id="client_auto_switch"><span class="pushbot-log-switch-text">{{ _('Auto refresh') }}</span><input type="checkbox" id="client_auto_toggle" checked><span class="pushbot-log-switch-track"></span></label><button class="pushbot-log-btn" id="client_refresh_btn">{{ _('Refresh') }}</button></div></div><div class="pushbot-log-content" id="pushbot_client_content"><p style="padding:12px;margin:0;color:#94a3b8;text-align:center">{{ _('Loading...') }}</p></div></div></div>';
 
 	var logPane = document.createElement('div');
 	logPane.id = 'pushbot_pane_log';
@@ -2890,38 +2890,106 @@ function initModernTabs() {
 		if (seconds < 86400) return Math.floor(seconds / 3600) + '{{ _('hour') }}' + Math.floor((seconds % 3600) / 60) + '{{ _('minute') }}';
 		return Math.floor(seconds / 86400) + '{{ _('day') }}' + Math.floor((seconds % 86400) / 3600) + '{{ _('hour') }}';
 	}
+	/* ── Online devices ── */
+	var _clientData = [];
+	var _clientSortKey = 'uptime';
+	var _clientSortAsc = false;
+	function renderClientTable() {
+		var container = document.getElementById('pushbot_client_content');
+		if (!container) return;
+		var data = _clientData;
+		if (!data || !data.length) {
+			container.innerHTML = '<p style="padding:12px;margin:0;color:#94a3b8;text-align:center">{{ _('No online devices') }}</p>';
+			return;
+		}
+		var sorted = data.slice();
+		/* 解析格式化流量字符串为字节数用于排序（"500.00 M" → 524288000） */
+		function parseBytes(s) {
+			if (typeof s === 'number') return s;
+			s = String(s || '0');
+			var m = s.match(/([\d.]+)\s*([KMG]?)/i);
+			if (!m) return 0;
+			var n = parseFloat(m[1]) || 0;
+			var u = (m[2] || '').toUpperCase();
+			if (u === 'K') return n * 1024;
+			if (u === 'M') return n * 1048576;
+			if (u === 'G') return n * 1073741824;
+			return n;
+		}
+		sorted.sort(function(a, b) {
+			var va = a[_clientSortKey], vb = b[_clientSortKey];
+			if (_clientSortKey === 'usage') { va = parseBytes(va); vb = parseBytes(vb); }
+			if (typeof va === 'number' && typeof vb === 'number') return _clientSortAsc ? va - vb : vb - va;
+			va = String(va || ''); vb = String(vb || '');
+			return _clientSortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+		});
+		/* 只在当前排序列显示方向箭头，其他列不显示 */
+		function arrow(key) { return key === _clientSortKey ? (_clientSortAsc ? ' ↑' : ' ↓') : ''; }
+		var html = '<div style="overflow-x:auto"><table class="pushbot-client-table"><thead><tr>' +
+			'<th class="pushbot-sortable" data-key="hostname">{{ _('Hostname') }}' + arrow('hostname') + '</th>' +
+			'<th class="pushbot-sortable" data-key="mac">{{ _('MAC address') }}' + arrow('mac') + '</th>' +
+			'<th class="pushbot-sortable" data-key="ip">{{ _('IP address') }}' + arrow('ip') + '</th>' +
+			'<th class="pushbot-sortable" data-key="usage">{{ _('Traffic') }}' + arrow('usage') + '</th>' +
+			'<th class="pushbot-sortable" data-key="uptime">{{ _('Online time') }}' + arrow('uptime') + '</th>' +
+			'</tr></thead><tbody>';
+		sorted.forEach(function(c) {
+			var h = c.hostname || '-';
+			if (h.indexOf('?') === 0) h = h.substring(1);
+			if (!h || h === '?') h = '-';
+			html += '<tr><td>' + escHtml(h) + '</td><td class="pushbot-cell-mac">' + escHtml(c.mac) + '</td><td>' + escHtml(c.ip) + '</td><td>' + escHtml(c.usage) + '</td><td>' + timeForHumans(Math.max(0, c.uptime)) + '</td></tr>';
+		});
+		html += '</tbody></table></div>';
+		container.innerHTML = html;
+		container.querySelectorAll('.pushbot-sortable').forEach(function(th) {
+			th.style.cssText = 'cursor:pointer;user-select:none';
+			th.addEventListener('click', function() {
+				var key = th.getAttribute('data-key');
+				if (key === _clientSortKey) { _clientSortAsc = !_clientSortAsc; } else { _clientSortKey = key; _clientSortAsc = (key === 'usage' || key === 'uptime' || key === 'ip') ? false : true; }
+				renderClientTable();
+			});
+		});
+	}
 	function loadClients() {
 		var container = document.getElementById('pushbot_client_content');
 		if (!container) return;
 		XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'client_list') }}', null,
 			function(x) {
 				if (!x || x.status != 200) { container.innerHTML = '<p style="padding:12px;margin:0;color:#ef4444;text-align:center">{{ _('Load failed') }}</p>'; return; }
-				var data;
-				try { data = JSON.parse(x.responseText); } catch(e) { data = []; }
-				if (!data || !data.length) {
-					container.innerHTML = '<p style="padding:12px;margin:0;color:#94a3b8;text-align:center">{{ _('No online devices') }}</p>';
-					return;
-				}
-				var html = '<div style="overflow-x:auto"><table class="pushbot-client-table"><thead><tr><th>{{ _('Hostname') }}</th><th>{{ _('MAC address') }}</th><th>{{ _('IP address') }}</th><th>{{ _('Traffic') }}</th><th>{{ _('Online time') }}</th></tr></thead><tbody>';
-				data.forEach(function(c) {
-					var h = c.hostname || '-';
-					if (h.indexOf('?') === 0) h = h.substring(1);
-					if (!h || h === '?') h = '-';
-					html += '<tr><td>' + escHtml(h) + '</td><td class="pushbot-cell-mac">' + escHtml(c.mac) + '</td><td>' + escHtml(c.ip) + '</td><td>' + escHtml(c.usage) + '</td><td>' + timeForHumans(Math.max(0, c.uptime)) + '</td></tr>';
-				});
-				html += '</tbody></table></div>';
-				container.innerHTML = html;
+				try { _clientData = JSON.parse(x.responseText); } catch(e) { _clientData = []; }
+				renderClientTable();
 			}
 		);
 	}
 	function escHtml(s) {
 		return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 	}
-	/* start auto-refresh for client list */
-	clientTimer = setInterval(function() {
-		var pane = document.getElementById('pushbot_pane_client');
-		if (pane && pane.classList.contains('is-visible')) loadClients();
-	}, 5000);
+	/* auto-refresh */
+	function startClientTimer() {
+		if (clientTimer) clearInterval(clientTimer);
+		clientTimer = setInterval(function() {
+			var pane = document.getElementById('pushbot_pane_client');
+			if (pane && pane.classList.contains('is-visible')) loadClients();
+		}, 5000);
+	}
+	function stopClientTimer() {
+		if (clientTimer) { clearInterval(clientTimer); clientTimer = null; }
+	}
+	startClientTimer();
+	/* 刷新按钮事件 */
+	var autoToggle = document.getElementById('client_auto_toggle');
+	var refreshBtn = document.getElementById('client_refresh_btn');
+	if (autoToggle) {
+		autoToggle.addEventListener('change', function() {
+			if (autoToggle.checked) { startClientTimer(); } else { stopClientTimer(); }
+		});
+	}
+	if (refreshBtn) {
+		refreshBtn.addEventListener('click', function() {
+			refreshBtn.textContent = '{{ _('Loading...') }}';
+			loadClients();
+			setTimeout(function() { refreshBtn.textContent = '{{ _('Refresh') }}'; }, 1000);
+		});
+	}
 }
 
 
