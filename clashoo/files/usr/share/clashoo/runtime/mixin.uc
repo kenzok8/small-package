@@ -250,6 +250,10 @@ if (ab('sniffer_streaming') && !length(s(getenv('CLASHOO_KEEP_SNIFFER'), ''))) {
 			'+.hulu.com',
 			'+.hbomax.com',
 		],
+		'skip-domain': [
+			'+.lan',
+			'+.local',
+		],
 	};
 }
 
