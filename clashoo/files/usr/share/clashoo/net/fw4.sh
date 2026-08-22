@@ -84,6 +84,16 @@ acl_list() {
 	uci_get "$1"
 }
 
+acl_sections_catchall_last() {
+	local section
+	for section in $(acl_sections); do
+		[ -z "$(acl_list "clashoo.${section}.ip")$(acl_list "clashoo.${section}.ip6")$(acl_list "clashoo.${section}.mac")" ] || printf '%s\n' "$section"
+	done
+	for section in $(acl_sections); do
+		[ -n "$(acl_list "clashoo.${section}.ip")$(acl_list "clashoo.${section}.ip6")$(acl_list "clashoo.${section}.mac")" ] || printf '%s\n' "$section"
+	done
+}
+
 grouped_acl_enabled() {
 	local section
 	[ "$(uci_get clashoo.config.acl_migrated)" = "1" ] || return 1
@@ -378,7 +388,7 @@ render_port_match() {
 
 render_acl_dns_rules() {
 	local redirect_port="$1" section ipv4 ipv6 mac ipv4_elements ipv6_elements mac_elements action
-	for section in $(acl_sections); do
+	for section in $(acl_sections_catchall_last); do
 		[ "$(uci_get "clashoo.${section}.enabled")" != "0" ] || continue
 		if acl_bool "$(uci_get "clashoo.${section}.dns")"; then
 			action="counter redirect to :${redirect_port}"
@@ -416,7 +426,7 @@ render_acl_proxy_rules() {
 	local mode="$1" proto="$2" port_match="$3" target_port="$4"
 	local section ipv4 ipv6 mac ipv4_elements ipv6_elements mac_elements enabled action4 action6
 
-	for section in $(acl_sections); do
+	for section in $(acl_sections_catchall_last); do
 		[ "$(uci_get "clashoo.${section}.enabled")" != "0" ] || continue
 		enabled="$(uci_get "clashoo.${section}.proxy")"
 		case "$mode" in

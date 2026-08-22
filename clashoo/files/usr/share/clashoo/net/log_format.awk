@@ -4,7 +4,7 @@
 # mihomo 原生行: time="YYYY-MM-DDTHH:MM:SS..." level=... msg="..."
 /^time="[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/ {
 	# extract YYYY-MM-DD and HH:MM:SS
-	ts_date = substr($0, 7, 5)      # MM-DD
+	ts_date = substr($0, 12, 5)     # MM-DD
 	ts_time = substr($0, 18, 8)     # HH:MM:SS
 	utc_h = substr(ts_time, 1, 2) + 0
 	cst_h = (utc_h + 8) % 24

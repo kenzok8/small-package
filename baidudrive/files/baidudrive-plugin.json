@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "baidudrive",
+  "name": "BaiduDrive",
+  "icon": "baidu-drive.png",
+  "staticRoot": "/usr/share/baidudrive/www",
+  "desktop": {
+    "mode": "module",
+    "entry": "desktop-entry.js",
+    "isolation": "shadow-dom"
+  },
+  "standalone": {
+    "entry": "index.html",
+    "basePath": "/apps/baidudrive/"
+  },
+  "backend": {
+    "type": "http",
+    "scheme": "http",
+    "host": "127.0.0.1",
+    "portFromUci": "baidudrive.@baidudrive[0].port",
+    "defaultPort": 10780,
+    "upstreamBasePath": "/apps/baidudrive/",
+    "apiPath": "api/",
+    "pathMode": "preserve"
+  },
+  "window": {
+    "width": 1180,
+    "height": 760,
+    "singleton": true
+  },
+  "capabilities": ["cloud-drive", "sync", "transfer"],
+  "categories": ["other"]
+}
