@@ -1,41 +1,52 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=frp
-PKG_VERSION:=0.51.3
+PKG_VERSION:=0.70.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://codeload.github.com/fatedier/frp/tar.gz/v${PKG_VERSION}?
-PKG_HASH:=83032399773901348c660d41c967530e794ab58172ccd070db89d5e50d915fef
+PKG_SOURCE_URL:=https://codeload.github.com/fatedier/frp/tar.gz/v$(PKG_VERSION)?
+PKG_HASH:=67246606f504cb15df72193f1a83911259e92b6a87838cff8850031efd406dc8
 
-PKG_MAINTAINER:=Richard Yu <yurichard3839@gmail.com>
+PKG_MAINTAINER:=Alexandru Ardelean <ardeleanalex@gmail.com>
 PKG_LICENSE:=Apache-2.0
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=golang/host
+PKG_BUILD_DEPENDS:=golang/host node/host
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
 PKG_BUILD_FLAGS:=no-mips16
 
 GO_PKG:=github.com/fatedier/frp
-GO_PKG_BUILD_PKG:=github.com/fatedier/frp/cmd/...
+GO_PKG_BUILD_PKG:=$(GO_PKG)/cmd/...
+GO_PKG_LDFLAGS:=-s -w
+GO_PKG_LDFLAGS_X:=$(GO_PKG)/pkg/util/version.version=$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
 
+define Build/Compile
+	( \
+		$(MAKE) -C $(PKG_BUILD_DIR)/web/frpc install ; \
+		$(MAKE) -C $(PKG_BUILD_DIR)/web/frps install ; \
+		$(MAKE) -C $(PKG_BUILD_DIR) web ; \
+		$(call GoPackage/Build/Compile) ; \
+	)
+endef
+
 define Package/frp/install
 	$(INSTALL_DIR) $(1)/usr/bin/
 	$(INSTALL_BIN) $(GO_PKG_BUILD_BIN_DIR)/$(2) $(1)/usr/bin/
-	$(INSTALL_DIR) $(1)/etc/frp/$(2).d/
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/conf/$(2)_full.ini $(1)/etc/frp/$(2).d/
-	$(INSTALL_DIR) $(1)/etc/config/
-	$(INSTALL_CONF) ./files/$(2).config $(1)/etc/config/$(2)
-	$(INSTALL_DIR) $(1)/etc/init.d/
-	$(INSTALL_BIN) ./files/$(2).init $(1)/etc/init.d/$(2)
 
-	if [ -r ./files/$(2).uci-defaults ]; then \
+	$(INSTALL_DIR) $(1)/etc/config/
+	$(INSTALL_CONF) $(CURDIR)/files/$(2).config $(1)/etc/config/$(2)
+
+	$(INSTALL_DIR) $(1)/etc/init.d/
+	$(INSTALL_BIN)  $(CURDIR)/files/$(2).init $(1)/etc/init.d/$(2)
+
+	if [ -r $(CURDIR)/files/$(2).uci-defaults ]; then \
 		$(INSTALL_DIR) $(1)/etc/uci-defaults; \
-		$(INSTALL_DATA) ./files/$(2).uci-defaults $(1)/etc/uci-defaults/$(2); \
+		$(INSTALL_DATA) $(CURDIR)/files/$(2).uci-defaults $(1)/etc/uci-defaults/$(2); \
 	fi
 endef
 
@@ -50,8 +61,8 @@ define Package/frp/template
   endef
 
   define Package/$(1)/description
-    $(1) is a fast reverse proxy $(2) to help you expose a local server behind
-    a NAT or firewall to the internet.
+    $(1) is a fast reverse proxy $(2) that helps you expose a local server
+    behind a NAT or firewall to the internet.
   endef
 
   define Package/$(1)/conffiles
