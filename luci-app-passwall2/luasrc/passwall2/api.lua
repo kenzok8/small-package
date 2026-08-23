@@ -26,6 +26,7 @@ TMP_PATH = "/tmp/etc/" .. c_config
 CACHE_PATH = TMP_PATH .. "_tmp"
 S_TMP_PATH = "/tmp/etc/" .. s_config
 TMP_IFACE_PATH = TMP_PATH .. "/iface"
+TMP_ACL_PATH = TMP_PATH .. "/acl"
 
 local lang = uci:get("luci", "main", "lang") or "auto"
 if lang == "auto" then
@@ -201,9 +202,10 @@ function get_cache_var(key)
 	return val
 end
 
-function get_new_port()
+function get_new_port(p)
+	if not p then p = "auto" end
 	local cmd_format = ". /usr/share/passwall2/utils.sh ; echo -n $(get_new_port %s tcp,udp)"
-	return tonumber(sys.exec(string.format(cmd_format, "auto")))
+	return tonumber(sys.exec(string.format(cmd_format, p)))
 end
 
 function exec_call(cmd)
@@ -613,7 +615,7 @@ function get_valid_nodes()
 				end
 			end
 			local port = e.port or e.hysteria_hop or e.hysteria2_hop
-			local is_realm = (e.type == "Hysteria2" or e.protocol == 'hysteria2') and e.hysteria2_realms or nil
+			local is_realm = e.protocol == 'hysteria2' and e.hysteria2_realms or nil
 			if (port and e.address) or is_realm then
 				local address = e.address
 				if is_ip(address) or datatypes.hostname(address) or is_realm then
@@ -739,7 +741,7 @@ function get_node_remarks(n)
 				end
 				type_name = type_name .. " " .. protocol
 			end
-			if (n.type == "Hysteria2" or n.protocol == 'hysteria2') and n.hysteria2_realms then
+			if n.protocol == "hysteria2" and n.hysteria2_realms then
 				type_name = type_name .. " Realm"
 			end
 			remarks = trim("%s：[%s]" % {type_name, n.remarks})

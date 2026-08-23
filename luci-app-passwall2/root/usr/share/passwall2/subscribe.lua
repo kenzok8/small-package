@@ -29,7 +29,6 @@ local has_ss_rust = api.is_finded("sslocal")
 local has_ssr = api.is_finded("ssr-local") and api.is_finded("ssr-redir")
 local has_singbox = api.finded_com("sing-box")
 local has_xray = api.finded_com("xray")
-local has_hysteria2 = api.finded_com("hysteria")
 local DEFAULT_ALLOWINSECURE = true
 local DEFAULT_FILTER_KEYWORD_MODE = uci_get("@global_subscribe[0]", "filter_keyword_mode") or "0"
 local DEFAULT_FILTER_KEYWORD_DISCARD_LIST = uci_get("@global_subscribe[0]", "filter_discard_list") or {}
@@ -39,12 +38,11 @@ local DEFAULT_SS_TYPE = api.get_core("ss_type", {{has_ss_rust,"shadowsocks-rust"
 local DEFAULT_TROJAN_TYPE = api.get_core("trojan_type", {{has_singbox,"sing-box"},{has_xray,"xray"}})
 local DEFAULT_VMESS_TYPE = api.get_core("vmess_type", {{has_xray,"xray"},{has_singbox,"sing-box"}})
 local DEFAULT_VLESS_TYPE = api.get_core("vless_type", {{has_xray,"xray"},{has_singbox,"sing-box"}})
-local DEFAULT_HYSTERIA2_TYPE = api.get_core("hysteria2_type", {{has_hysteria2,"hysteria2"},{has_singbox,"sing-box"},{has_xray,"xray"}})
+local DEFAULT_HYSTERIA2_TYPE = api.get_core("hysteria2_type", {{has_singbox,"sing-box"},{has_xray,"xray"}})
 local core_has = {
 	["xray"] = has_xray,
 	["sing-box"] = has_singbox,
 	["shadowsocks-rust"] = has_ss_rust,
-	["hysteria2"] = has_hysteria2
 }
 -- Determine whether to filter node keywords
 local function is_filter_keyword(sub_cfg, value)
@@ -1771,15 +1769,6 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			result.protocol = "hysteria2"
 			result.use_finalmask = (params.fm and params.fm ~= "") and "1" or nil
 			result.finalmask = (params.fm and params.fm ~= "") and api.base64Encode(params.fm) or nil
-		elseif has_hysteria2 then
-			result.type = "Hysteria2"
-			for k1, v1 in pairs(result) do
-				if k1:find("hysteria2_") == 1 then
-					local s = split(k1, "hysteria2_")
-					result[s[2]] = v1
-					result[k1] = nil
-				end
-			end
 		else
 			log(2, i18n.translatef("Skipping the %s node is due to incompatibility with the %s core program or incorrect node usage type settings.", "Hysteria2", "Hysteria2"))
 			return nil

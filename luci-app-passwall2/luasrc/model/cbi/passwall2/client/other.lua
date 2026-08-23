@@ -72,8 +72,7 @@ s = m:section(NamedSection, "@global_forwarding[0]", "global_forwarding", transl
 
 ---- TCP No Redir Ports
 o = s:option(Value, "tcp_no_redir_ports", translate("TCP No Redir Ports"))
-o.default = "disable"
-o:value("disable", translate("No patterns are used"))
+o:value("", translate("No patterns are used"))
 o:value("1:65535", translate("All"))
 o.validate = port_validate
 
@@ -82,23 +81,22 @@ o = s:option(Value, "udp_no_redir_ports", translate("UDP No Redir Ports"),
 	"<font color='red'>" ..
 	translate("Fill in the ports you don't want to be forwarded by the agent, with the highest priority.") ..
 	"</font>")
-o.default = "disable"
-o:value("disable", translate("No patterns are used"))
+o:value("", translate("No patterns are used"))
 o:value("1:65535", translate("All"))
 o.validate = port_validate
 
 ---- TCP Redir Ports
 o = s:option(Value, "tcp_redir_ports", translate("TCP Redir Ports"))
-o.default = "22,25,53,80,143,443,465,587,853,873,993,995,5222,8080,8443,9418"
 o:value("1:65535", translate("All"))
 o:value("22,25,53,80,143,443,465,587,853,873,993,995,5222,8080,8443,9418", translate("Common Use"))
 o:value("80,443", translate("Only Web"))
+o.default = o.keylist[1]
 o.validate = port_validate
 
 ---- UDP Redir Ports
 o = s:option(Value, "udp_redir_ports", translate("UDP Redir Ports"))
-o.default = "1:65535"
 o:value("1:65535", translate("All"))
+o.default = o.keylist[1]
 o.validate = port_validate
 
 o = s:option(DummyValue, "tips", " ")

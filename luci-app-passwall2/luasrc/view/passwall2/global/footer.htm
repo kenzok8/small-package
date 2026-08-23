@@ -133,7 +133,7 @@ local sid = "@global[0]"
 
 				const m = cbid.match(/\.node$/);
 				if (m) {
-					html += '<a href="#" onclick="window.open(\'' + '<%=api.url("get_redir_log")%>?id=default&name=' + 'global' + '\', \'_blank\')"><%:Log%></a>';
+					html += '<a href="#" onclick="window.open(\'' + '<%=api.url("get_redir_log")%>?id=default' + '\', \'_blank\')"><%:Log%></a>';
 				}
 
 				html = '<div class="node-actions" style="display:inline-flex; align-items:center; gap:4px; flex-wrap:wrap; margin-left:4px;">' + html + '</div>'

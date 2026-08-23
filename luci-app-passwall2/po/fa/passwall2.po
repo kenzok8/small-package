@@ -2147,8 +2147,8 @@ msgstr "پروکسی نکردن همه %s"
 msgid "Use the %s node [%s]"
 msgstr "استفاده از گره %s [%s]"
 
-msgid "Using a node that is different from the global configuration, DNS has been forcibly redirected to a dedicated DNS server."
-msgstr "استفاده از گره‌ای متفاوت از پیکربندی سراسری، DNS به اجبار به سرور DNS اختصاصی هدایت شده است."
+msgid "DNS will redirected to the dedicated DNS server [%s]."
+msgstr "DNS به سرور DNS اختصاصی [%s] هدایت خواهد شد."
 
 msgid "Add direct DNS to %s: %s"
 msgstr "افزودن DNS مستقیم به %s: %s"

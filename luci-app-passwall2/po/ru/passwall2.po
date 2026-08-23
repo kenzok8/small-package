@@ -2148,8 +2148,8 @@ msgstr "не прокси все %s"
 msgid "Use the %s node [%s]"
 msgstr "Использовать %s сервер [%s]"
 
-msgid "Using a node that is different from the global configuration, DNS has been forcibly redirected to a dedicated DNS server."
-msgstr "Используется сервер, отличный от глобальной настройки: DNS принудительно перенаправлен на выделенный DNS-сервер."
+msgid "DNS will redirected to the dedicated DNS server [%s]."
+msgstr "DNS будет перенаправлен на выделенный DNS-сервер [%s]."
 
 msgid "Add direct DNS to %s: %s"
 msgstr "Добавление прямого DNS в %s: %s"

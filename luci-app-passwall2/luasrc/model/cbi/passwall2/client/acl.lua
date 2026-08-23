@@ -50,20 +50,11 @@ end
 
 o = s:option(DummyValue, "sources", translate("Source"))
 o.rawhtml = true
-o.cfgvalue = function(t, n)
-	local e = ''
-	local v = Value.cfgvalue(t, n) or '-'
-	string.gsub(v, '[^' .. " " .. ']+', function(w)
-		local a = w
-		if mac_t[w] then
-			a = a .. ' (' .. mac_t[w].ip .. ')'
-		end
-		if #e > 0 then
-			e = e .. "<br />"
-		end
-		e = e .. a
-	end)
-	return e
+o.cfgvalue = function(self, section)
+	local v = self.map:get(section, self.option) or {}
+	if type(v) == "table" then
+		return table.concat(v, "<br/>")
+	end
 end
 
 i = s:option(DummyValue, "mode", translate("Mode"))
@@ -71,6 +62,8 @@ i.cfgvalue = function(t, n)
 	local v = Value.cfgvalue(t, n) or '0'
 	if v == "1" then
 		return translate("Proxy")
+	elseif v == "2" then
+		return translate("Proxy") .. " " .. translate("Use global config")
 	end
 	return translate("No Proxy")
 end

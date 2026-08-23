@@ -63,7 +63,7 @@ end)
 
 o = s:option(Value, "port", "Socks " .. translate("Listen Port"))
 o.default = n + 1080
-o.datatype = "port"
+o.datatype = "range(1,65535)"
 o.rmempty = false
 
 if has_singbox or has_xray then

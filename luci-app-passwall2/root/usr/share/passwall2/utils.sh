@@ -33,11 +33,6 @@ config_t_get() {
 	echo "${ret:=${3}}"
 }
 
-config_t_set() {
-	local index=${4:-0}
-	local ret=$(uci -q set "${CONFIG}.@${1}[${index}].${2}=${3}" 2>/dev/null)
-}
-
 eval_set_val() {
 	for i in $@; do
 		for j in $i; do
@@ -157,9 +152,9 @@ get_geoip() {
 	local geoip_type_flag=""
 	local output_path="${geo_output_path}/geoip-${geoip_code}-$2"
 	[ ! -s "${output_path}" ] && {
-		local geoip_path="$(config_t_get global_rules v2ray_location_asset)"
+		local geoip_path="$(config_n_get @global_rules[0] v2ray_location_asset)"
 		geoip_path="${geoip_path%*/}/geoip.dat"
-		local bin="$(first_type $(config_t_get global_app geoview_file) geoview)"
+		local bin="$(first_type $(config_n_get @global_app[0] geoview_file) geoview)"
 		[ -n "$bin" ] && [ -s "$geoip_path" ] || { echo ""; return; }
 		case "$2" in
 			"ipv4") geoip_type_flag="-ipv6=false" ;;
@@ -299,7 +294,7 @@ get_new_port() {
 	local default_start_port=2001
 	local min_port=1025
 	local max_port=49151
-	local port=$1
+	local port=$1 #Required parameter; please pass "auto" if you want it to be automatic.
 	local last_get_new_port_auto
 	if [ "$1" == "auto" ]; then
 		last_get_new_port_auto=$(get_cache_var "last_get_new_port_auto")
@@ -313,17 +308,28 @@ get_new_port() {
 	[ "$port" -lt $min_port -o "$port" -gt $max_port ] && port=$default_start_port
 	local protocol=$(echo $2 | tr 'A-Z' 'a-z')
 	local result=$(check_port_exists $port $protocol)
+	[ -n "$(get_cache_var "get_port_${port}")" ] && {
+		# exist, continue get.
+		# Make the following result logic true.
+		result=1
+	}
 	if [ "$result" != 0 ]; then
 		local temp=
 		if [ "$port" -lt $max_port ]; then
+			# If the port is smaller than the maximum port, then increment by 1 and continue.
 			temp=$(expr $port + 1)
 		elif [ "$port" -gt $min_port ]; then
+			# If the port is greater than the minimum port, then decrement by 1 and continue.
 			temp=$(expr $port - 1)
 		else
+			# Otherwise, reassign the default starting port.
 			temp=$default_start_port
 		fi
+		# Recursion, until it obtains an unused port.
 		get_new_port $temp $protocol
 	else
+		# Set cache, mark this port as already obtained, so it should not be obtained again.
+		set_cache_var "get_port_${port}" "1"
 		[ "$1" == "auto" ] && set_cache_var "last_get_new_port_auto" "$port"
 		echo $port
 	fi

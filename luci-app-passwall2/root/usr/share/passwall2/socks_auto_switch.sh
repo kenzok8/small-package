@@ -75,7 +75,7 @@ test_node() {
 	local _type=$(echo $(config_n_get ${node_id} type) | tr 'A-Z' 'a-z')
 	[ -n "${_type}" ] && {
 		check_process
-		local _tmp_port=$(get_new_port 48800 tcp,udp)
+		local _tmp_port=$(get_new_port 48800)
 		NO_REC_PROCESS=1 $APP_FILE run_socks flag="test_node_${node_id}" node=${node_id} bind=127.0.0.1 socks_port=${_tmp_port} config_file=test_node_${node_id}.json
 		sleep 2s
 		local curlx="socks5h://127.0.0.1:${_tmp_port}"

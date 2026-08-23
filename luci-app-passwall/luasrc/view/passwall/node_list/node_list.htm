@@ -1215,11 +1215,15 @@ table td, .table .td {
 	
 	const set_node_div = {
 		section: '',
-		open(cbi_id) {
+		open(cbi_id, protocol) {
 			this.section = cbi_id;
 			document.getElementById("set_node_div").style.display="block";
 			const node_name = document.getElementById("cbid.<%=appname%>." + cbi_id + ".remarks").value;
 			document.getElementById("set_node_name").textContent = node_name;
+			const shunt_div = document.getElementById("set_node_shunt_div");
+			if (shunt_div) {
+				shunt_div.style.display = protocol === "_shunt" ? "none" : "";
+			}
 		},
 		close() {
 			document.getElementById("set_node_div").style.display="none";
@@ -1286,7 +1290,7 @@ table td, .table .td {
 		<td class="td cbi-section-table-cell nowrap cbi-section-actions pw-actions">
 			<div class="node-wrapper">
 				<input class="btn cbi-button cbi-button-edit" type="button" value="<%:To Top%>" onclick="node_action('row_top', null, {btn:this, group:'{{group}}'})" title="<%:To Top%>"/>
-				<input class="btn cbi-button cbi-button-apply" type="button" value="<%:Use%>" id="apply_{{id}}" onclick="set_node_div.open('{{id}}')"/>
+				<input class="btn cbi-button cbi-button-apply" type="button" value="<%:Use%>" id="apply_{{id}}" onclick="set_node_div.open('{{id}}','{{protocol}}')"/>
 				<input class="btn cbi-button cbi-button-add" type="button" value="<%:Copy%>" onclick="node_action('copy', '{{id}}')"/>
 				<input class="btn cbi-button cbi-button-edit" type="button" value="<%:Edit%>" onclick="node_action('edit', '{{id}}')" alt="<%:Edit%>" title="<%:Edit%>">
 				<input class="btn cbi-button cbi-button-remove" type="button" value="<%:Delete%>" onclick="node_action('del', '{{id}}')" alt="<%:Delete%>" title="<%:Delete%>">
@@ -1432,6 +1436,7 @@ table td, .table .td {
 						innerHTML = innerHTML.split("{{remarks_val}}").join(o["remarks"]);
 						innerHTML = innerHTML.split("{{address_val}}").join(o["address"] || "");
 						innerHTML = innerHTML.split("{{port_val}}").join(o["port"] || "");
+						innerHTML = innerHTML.split("{{protocol}}").join(o["protocol"] || "");
 
 						node_tr_html += innerHTML
 					}
@@ -1620,20 +1625,27 @@ table td, .table .td {
 
 <div style="display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center;">
 	<div id="set_node_div">
-		<div class="cbi-value" style="display: flex; justify-content: center; align-items: center; margin: 1em 0; height: 2em;">
+		<div class="cbi-value" style="display: flex; justify-content: center; align-items: center; margin: 0.2em 0; height: 2em;">
 			<font color=#666><%:You choose node is:%></font><a style="color: red" id="set_node_name"></a>
 			<div style="position:absolute; right:0.5em; top: 0.5em;"><input class="btn cbi-button" type="button" onclick="set_node_div.close()" value="X" /></div>
 		</div>
-		<div class="cbi-value" style="justify-content: center; gap: 8px; margin: 1em 0;">
-			<%- if default_node_type == "_shunt" then
-				for i, v in ipairs(shunt_rule_list) do
-			-%>
-				<input class="btn cbi-button" type="button" onclick="set_node_div.set('<%=node%>', '<%=v[".name"]%>')" value="<%=v.remarks%>" />
-			<%-
-				end
-			-%>
-			<% else %>
-				<input class="btn cbi-button" type="button" onclick="set_node_div.set('@global[0]', 'node')" value="<%:Node%>" />
+		<div class="cbi-value" style="justify-content: center; gap: 8px; margin: 0.2em 0;">
+			<div style="margin: 0.5em 0; padding: 0.5em; background: #f7f7f7; border-radius: 4px;">
+				<div class="cbi-section-descr" style="text-align: left;"><a style="color:#FF8C00"><%:Set as the main proxy node:%></a></div>
+				<div>
+					<input class="btn cbi-button" type="button" onclick="set_node_div.set('@global[0]', 'node')" value="<%:OK%>" />
+				</div>
+			</div>
+			<% if default_node_type == "_shunt" then %>
+			<div id="set_node_shunt_div" style="margin: 0.5em 0; padding: 0.5em; background: #f7f7f7; border-radius: 4px;">
+				<div class="cbi-section-descr" style="text-align: left;"><a style="color:#FF8C00"><%:Set as the routing rule node:%></a></div>
+				<div>
+				<% for i, v in ipairs(shunt_rule_list) do %>
+					<input class="btn cbi-button" type="button" onclick="set_node_div.set('<%=node%>', '<%=v[".name"]%>')" value="<%=v.remarks%>" />
+				<% end %>
+					<input class="btn cbi-button" type="button" onclick="set_node_div.set('<%=node%>', 'default_node')" value="<%:Default%>" />
+				</div>
+			</div>
 			<% end %>
 		</div>
 	</div>

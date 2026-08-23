@@ -169,13 +169,6 @@ local function start()
 					config = require(require_dir .. "util_sing-box").gen_config_server(server)
 				end
 				bin = ln_run(api.get_app_path("sing-box"), "sing-box", "run -c " .. config_file, log_path)
-			elseif type == "Hysteria2" then
-				if server.custom == "1" and server.config_str then
-					config = jsonc.parse(api.base64Decode(server.config_str))
-				else
-					config = require(require_dir .. "util_hysteria2").gen_config_server(server)
-				end
-				bin = ln_run(api.get_app_path("hysteria"), "hysteria", "-c " .. config_file .. " server", log_path)
 			end
 
 			if next(config) then

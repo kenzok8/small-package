@@ -427,6 +427,12 @@ msgstr "你确定要删除选择的节点吗？"
 msgid "You no select nodes !"
 msgstr "你没有选择任何节点！"
 
+msgid "Set as the main proxy node:"
+msgstr "应用为主代理节点："
+
+msgid "Set as the routing rule node:"
+msgstr "应用为分流规则节点："
+
 msgid "Are you sure set this node?"
 msgstr "你确定要设置这个节点吗？"
 

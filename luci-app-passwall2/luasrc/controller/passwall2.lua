@@ -71,7 +71,6 @@ function index()
 	entry({"admin", "services", appname, "get_now_use_node"}, call("get_now_use_node")).leaf = true
 	entry({"admin", "services", appname, "get_redir_log"}, call("get_redir_log")).leaf = true
 	entry({"admin", "services", appname, "get_socks_log"}, call("get_socks_log")).leaf = true
-	entry({"admin", "services", appname, "get_acl_log"}, call("get_acl_log")).leaf = true
 	entry({"admin", "services", appname, "get_log"}, call("get_log")).leaf = true
 	entry({"admin", "services", appname, "clear_log"}, call("clear_log")).leaf = true
 	entry({"admin", "services", appname, "index_status"}, call("index_status")).leaf = true
@@ -248,10 +247,9 @@ end
 
 function get_redir_log()
 	local id = http.formvalue("id")
-	local name = http.formvalue("name")
-	local file_path = api.TMP_PATH .. "/acl/" .. id .. "/" .. name .. ".log"
+	local file_path = api.TMP_PATH .. "/acl/" .. id .. ".log"
 	if nixio.fs.access(file_path) then
-		local content = luci.sys.exec("tail -n 19999 '" .. file_path .. "'")
+		local content = luci.sys.exec("tail -n 5000 '" .. file_path .. "'")
 		content = content:gsub("\n", "<br />")
 		http.write(content)
 	else
@@ -271,18 +269,6 @@ function get_socks_log()
 	end
 end
 
-function get_acl_log()
-	local id = http.formvalue("id")
-	local path = api.TMP_PATH .. "/acl/" .. id .. "/node.log"
-	if nixio.fs.access(path) then
-		local content = luci.sys.exec("tail -n 5000 '" .. path .. "'")
-		content = content:gsub("\n", "<br />")
-		http.write(content)
-	else
-		http.write(string.format("<script>alert('%s');window.close();</script>", i18n.translate("Not enabled log")))
-	end
-end
-
 function get_log()
 	-- luci.sys.exec("[ -f /tmp/log/passwall2.log ] && sed '1!G;h;$!d' /tmp/log/passwall2.log > /tmp/log/passwall2_show.log")
 	http.write(luci.sys.exec("[ -f '/tmp/log/passwall2.log' ] && cat /tmp/log/passwall2.log"))
@@ -294,7 +280,7 @@ end
 
 function index_status()
 	local e = {}
-	e["global_status"] = luci.sys.call("/bin/busybox top -bn1 | grep -v 'grep' | grep '%s/bin/' | grep 'default' | grep 'global' >/dev/null" % api.TMP_PATH) == 0
+	e["global_status"] = luci.sys.call("/bin/busybox top -bn1 | grep -v 'grep' | grep '%s/bin/' | grep '/acl/default' >/dev/null" % api.TMP_PATH) == 0
 	http_write_json(e)
 end
 

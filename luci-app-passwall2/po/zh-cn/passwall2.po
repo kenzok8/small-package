@@ -2133,8 +2133,8 @@ msgstr "不代理所有 %s"
 msgid "Use the %s node [%s]"
 msgstr "使用 %s 节点[%s]"
 
-msgid "Using a node that is different from the global configuration, DNS has been forcibly redirected to a dedicated DNS server."
-msgstr "使用与全局配置不相同节点，已将DNS强制重定向到专用 DNS 服务器。"
+msgid "DNS will redirected to the dedicated DNS server [%s]."
+msgstr "DNS 将重定向到专用 DNS 服务器 [%s]。"
 
 msgid "Add direct DNS to %s: %s"
 msgstr "追加直连 DNS 到 %s： %s"
