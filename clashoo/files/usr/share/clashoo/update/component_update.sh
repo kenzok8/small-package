@@ -136,7 +136,10 @@ installed_package_version() {
 package_installed() {
   pkg="$1"
   if command -v opkg >/dev/null 2>&1; then
-    opkg status "$pkg" 2>/dev/null | grep -q '^Status: install ok installed$'
+    opkg status "$pkg" 2>/dev/null | awk '
+      $1 == "Status:" && $2 == "install" && $NF == "installed" { found = 1 }
+      END { exit !found }
+    '
     return
   fi
   apk info -e "$pkg" >/dev/null 2>&1
