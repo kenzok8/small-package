@@ -452,6 +452,9 @@ msgstr "MAC 过滤 2"
 msgid "MAC address"
 msgstr "MAC 地址"
 
+msgid "MAC Disabled"
+msgstr "MAC禁用"
+
 msgid "MAC device database"
 msgstr "MAC设备信息数据库"
 
@@ -536,11 +539,26 @@ msgstr "无输出"
 msgid "No second-level router, good signal strength: you can reduce the above values"
 msgstr "若无二级路由设备，信号强度良好，可以减少以上数值"
 
+msgid "Normal notifications, no filtering"
+msgstr "正常通知，无过滤"
+
 msgid "Notify only devices in list"
 msgstr "仅通知列表内设备"
 
 msgid "Notify only devices on this interface"
 msgstr "仅通知此接口设备"
+
+msgid "Notify only interface"
+msgstr "仅通知接口"
+
+msgid "Notify only interface:"
+msgstr "仅通知接口："
+
+msgid "Notify only list"
+msgstr "仅通知列表"
+
+msgid "Notify only on this interface"
+msgstr "仅通知此接口"
 
 msgid "Not a public IP"
 msgstr "非公网IP"
@@ -731,6 +749,9 @@ msgstr "定时发送"
 
 msgid "Scheduled tasks"
 msgstr "定时任务"
+
+msgid "Traffic source"
+msgstr "流量数据来源"
 
 msgid "Scheduled time"
 msgstr "定时发送时间"

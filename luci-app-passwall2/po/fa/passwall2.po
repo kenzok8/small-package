@@ -1426,6 +1426,12 @@ msgstr "اتصال محلی (Bind Local)"
 msgid "When selected, it can only be accessed localhost."
 msgstr "در صورت انتخاب، فقط از طریق localhost قابل دسترسی است."
 
+msgid "Firewall Allow"
+msgstr "فایروال مجاز است"
+
+msgid "Source zone"
+msgstr "منطقه منبع"
+
 msgid "Accept LAN Access"
 msgstr "پذیرش دسترسی شبکه داخلی (LAN)"
 

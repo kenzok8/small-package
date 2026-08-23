@@ -8,9 +8,13 @@ MAX_RESTART_COUNT=10
 RESTART_STATS_DIR="${TMP_PATH}/script_rstats"
 mkdir -p "$RESTART_STATS_DIR"
 
+ENABLED=$(config_n_get @global[0] enabled 0)
+[ "$ENABLED" != 1 ] && return 1
+ENABLED=$(config_n_get @global_delay[0] start_daemon 0)
+[ "$ENABLED" != 1 ] && return 1
 sleep 58s
 last_cleanup_date=$(date +%Y%m%d)
-while [ 1 -eq 1 ]; do
+while [ "$ENABLED" -eq 1 ]; do
 	[ -f "$LOCK_FILE" ] && {
 		sleep 6s
 		continue

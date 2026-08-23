@@ -61,7 +61,7 @@ url_test_node() {
 			local curlx="socks5h://127.0.0.1:${_tmp_port}"
 		fi
 		sleep 2s
-		local probeUrl=$(config_t_get global_other url_test_url https://www.google.com/generate_204)
+		local probeUrl=$(config_n_get @global_other[0] url_test_url https://www.google.com/generate_204)
 		result=$(curl --connect-timeout 3 --max-time 5 -o /dev/null -I -skL -w "%{http_code}:%{time_pretransfer}" -x ${curlx} "${probeUrl}")
 		# 结束 SS 插件进程
 		local pid_file="${TMP_PATH}/url_test_${node_id}_plugin.pid"

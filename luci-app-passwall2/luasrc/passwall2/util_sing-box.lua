@@ -784,7 +784,7 @@ function gen_config_server(node)
 	local inbound = {
 		type = node.protocol,
 		tag = "inbound",
-		listen = (node.bind_local == "1") and "127.0.0.1" or "::",
+		listen = "::",
 		listen_port = tonumber(node.port),
 	}
 

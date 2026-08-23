@@ -9,21 +9,6 @@ if [ -e "/etc/config/ucitrack" ]; then
 EOF
 fi
 
-uci -q batch <<-EOF
-	delete firewall.passwall2_server
-	set firewall.passwall2_server=include
-	set firewall.passwall2_server.type='script'
-	set firewall.passwall2_server.path='/var/etc/passwall2_server.include'
-EOF
-
-if [ -x "/sbin/fw3" ]; then
-	uci -q set firewall.passwall2_server.reload='1'
-else
-	uci -q delete firewall.passwall2_server.reload
-	uci -q delete firewall.passwall2_server.fw4_compatible
-fi
-uci commit firewall
-
 rm -f /tmp/luci-indexcache /tmp/luci-indexcache.*
 rm -rf /tmp/luci-modulecache/
 killall -HUP rpcd 2>/dev/null

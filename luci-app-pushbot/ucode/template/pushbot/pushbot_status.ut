@@ -808,7 +808,7 @@ XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'version') }}',
 		var aliasInp = document.createElement('input');
 		aliasInp.type = 'text';
 		aliasInp.placeholder = '{{ _('XX:XX:XX:XX:XX:XX-MyPhone') }}';
-		aliasInp.style.cssText = 'flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+		aliasInp.style.cssText = 'flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:var(--pb-input-bg);color:inherit';
 		aliasInp.className = 'pushbot-alias-input';
 		var addBtn = document.createElement('button');
 		addBtn.type = 'button';
@@ -994,7 +994,7 @@ XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'version') }}',
 			var enHi = makeHidden('endtime', endCur);
 			var stInp = document.createElement('input');
 			stInp.type = 'number'; stInp.min = 0; stInp.max = 23;
-			stInp.style.cssText = 'width:72px;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;text-align:center;background:rgba(255,255,255,0.7);color:inherit';
+			stInp.style.cssText = 'width:72px;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;text-align:center;background:var(--pb-input-bg);color:inherit';
 			stInp.value = startCur;
 			stInp.addEventListener('change', function() { stHi.value = this.value; });
 			var dash = document.createElement('span');
@@ -1002,7 +1002,7 @@ XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'version') }}',
 			dash.style.cssText = 'font-size:16px;font-weight:700;color:#94a3b8';
 			var enInp = document.createElement('input');
 			enInp.type = 'number'; enInp.min = 0; enInp.max = 23;
-			enInp.style.cssText = 'width:72px;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;text-align:center;background:rgba(255,255,255,0.7);color:inherit';
+			enInp.style.cssText = 'width:72px;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;text-align:center;background:var(--pb-input-bg);color:inherit';
 			enInp.value = endCur;
 			enInp.addEventListener('change', function() { enHi.value = this.value; });
 			tr.appendChild(stInp); tr.appendChild(dash); tr.appendChild(enInp);
@@ -1010,21 +1010,116 @@ XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'version') }}',
 			card.appendChild(timeWrap);
 		})();
 
-		/* MAC Filter 1 */
+		/* MAC Filter 1 — multi-toggle with mutex + coexist rules
+		 *
+		 * 3 toggle buttons (all off = Normal / no filtering):
+		 *   whitelist — Ignore devices in list
+		 *   blacklist — Notify only devices in list
+		 *   iface     — Notify only on this interface
+		 *
+		 * Rules:
+		 *   - whitelist ↔ blacklist: mutually exclusive
+		 *   - interface is independent, can coexist with whitelist or blacklist
+		 *   - all off = Normal (no filtering), no explicit disable button
+		 */
 		(function() {
 			var title = document.createElement('div');
 			title.className = 'pushbot-inline-title';
 			title.style.cssText = 'margin:14px 0 6px 2px;text-transform:none;font-size:13px';
 			title.textContent = '{{ _('MAC Filter') }}';
 			card.appendChild(title);
-			card.appendChild(mkChoice('macmechanism', ['', 'allow', 'block', 'interface'],
-				{'':'{{ _('Disabled') }}','allow':'{{ _('Ignore devices in list') }}','block':'{{ _('Notify only devices in list') }}','interface':'{{ _('Notify only devices on this interface') }}'},
-				function(v) { renderMac1(v); }
-			));
 
+			/* derive initial states from existing UCI config */
+			var hasWhitelist = PB_list('pushbot_whitelist').length > 0;
+			var hasBlacklist = PB_list('pushbot_blacklist').length > 0;
+			var hasIface     = (PB_val('pushbot_interface', '') !== '');
+
+			/* if macmechanism was set (legacy), map to new states */
+			if (!hasWhitelist && !hasBlacklist && !hasIface) {
+				if (mac1Cur === 'allow')     hasWhitelist = true;
+				if (mac1Cur === 'block')      hasBlacklist = true;
+				if (mac1Cur === 'interface')  hasIface = true;
+			}
+
+			var states = {
+				whitelist:   hasWhitelist,
+				blacklist:   hasBlacklist,
+				iface:       hasIface
+			};
+
+			/* hidden input for macmechanism (kept for compat) */
+			var macHi = makeHidden('macmechanism', '');
+
+			/* status line */
+			var statusEl = document.createElement('div');
+			statusEl.style.cssText = 'margin:6px 0 8px 2px;font-size:12px;color:#64748b';
+			card.appendChild(statusEl);
+
+			/* build toggle buttons */
+			var toggleWrap = document.createElement('div');
+			toggleWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px';
+
+			var toggleDefs = [
+				{ key: 'whitelist', label: '{{ _('Ignore list') }}' },
+				{ key: 'blacklist', label: '{{ _('Notify only list') }}' },
+				{ key: 'iface', label: '{{ _('Notify only interface') }}' }
+			];
+
+			var toggleBtns = {};
+			toggleDefs.forEach(function(def) {
+				var b = document.createElement('button');
+				b.type = 'button';
+				b.className = 'pushbot-choice-button ' + (states[def.key] ? 'is-on' : 'is-off');
+				b.textContent = def.label;
+				toggleBtns[def.key] = b;
+				toggleWrap.appendChild(b);
+			});
+			card.appendChild(toggleWrap);
+
+			/* status summary */
+			function updateStatus() {
+				var parts = [];
+				if (states.whitelist)   parts.push('{{ _('Ignore devices in list') }}');
+				if (states.blacklist)   parts.push('{{ _('Notify only devices in list') }}');
+				if (states.iface)       parts.push('{{ _('Notify only on this interface') }}');
+				if (parts.length === 0) parts.push('{{ _('Normal notifications, no filtering') }}');
+				statusEl.textContent = '→ ' + parts.join(' + ');
+			}
+
+			/* update hidden inputs + re-render body */
 			var mac1Body = document.createElement('div');
 			mac1Body.id = 'pm_mac1_body';
 			card.appendChild(mac1Body);
+
+			function syncHidden() {
+				/* macmechanism compat value */
+				if (states.whitelist && !states.blacklist) macHi.value = 'allow';
+				else if (states.blacklist && !states.whitelist) macHi.value = 'block';
+				else if (states.iface && !states.whitelist && !states.blacklist) macHi.value = 'interface';
+				else macHi.value = '';
+				/* clean up hidden inputs for options no longer active */
+				if (!states.iface) {
+					var old = macHiddenBox.querySelector('[name="cbid.pushbot.pushbot.pushbot_interface"]');
+					if (old) old.remove();
+				}
+				if (!states.whitelist) {
+					var sel2 = '[name="cbid.pushbot.pushbot.pushbot_whitelist"]';
+					macHiddenBox.querySelectorAll(sel2).forEach(function(el) { el.remove(); });
+				}
+				if (!states.blacklist) {
+					var sel3 = '[name="cbid.pushbot.pushbot.pushbot_blacklist"]';
+					macHiddenBox.querySelectorAll(sel3).forEach(function(el) { el.remove(); });
+				}
+				updateStatus();
+				renderBody();
+			}
+
+			function renderBody() {
+				mac1Body.innerHTML = '';
+				if (states.whitelist) makeTagField('pushbot_whitelist', '{{ _('Ignore list') }}');
+				if (states.blacklist) makeTagField('pushbot_blacklist', '{{ _('Watchlist') }}');
+				if (states.iface)     renderInterfaceSelector();
+			}
 
 			function makeTagField(opt, tag) {
 				var t = document.createElement('div');
@@ -1040,7 +1135,7 @@ XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'version') }}',
 				var inp = document.createElement('input');
 				inp.type = 'text'; inp.placeholder = 'XX:XX:XX:XX:XX:XX';
 				inp.className = 'pushbot-mac-input';
-				inp.style.cssText = 'flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+				inp.style.cssText = 'flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:var(--pb-input-bg);color:inherit';
 				var dlId = 'mh_' + opt;
 				inp.setAttribute('list', dlId);
 				var dlist = document.createElement('datalist');
@@ -1097,40 +1192,65 @@ XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'version') }}',
 				mac1Body.appendChild(box);
 			}
 
-			function renderMac1(v) {
-				mac1Body.innerHTML = '';
-				if (v === 'allow') makeTagField('pushbot_whitelist', '{{ _('Ignore list') }}');
-				if (v === 'block') makeTagField('pushbot_blacklist', '{{ _('Watchlist') }}');
-				if (v === 'interface') {
-					var t = document.createElement('div');
-					t.className = 'pushbot-inline-title';
-					t.style.cssText = 'margin:10px 0 4px 2px;text-transform:none;font-size:12px;color:#64748b';
-					t.textContent = '{{ _('Interface name') }}';
-					mac1Body.appendChild(t);
-					var ifaces = PB_sys('ifaces');
-					var hi = makeHidden('pushbot_interface', ifaceCur);
-					if (ifaces.length > 0) {
-						var sel = document.createElement('select');
-						sel.style.cssText = 'width:100%;padding:7px;border-radius:8px;border:1px solid rgba(148,163,184,0.3)';
-						ifaces.forEach(function(f) {
-							var opt = document.createElement('option');
-							opt.value = f; opt.textContent = f;
-							if (f === ifaceCur) { opt.selected = true; hi.value = f; }
-							sel.appendChild(opt);
-						});
-						sel.addEventListener('change', function() { hi.value = this.value; });
-						mac1Body.appendChild(sel);
-					} else {
-						var inp = document.createElement('input');
-						inp.type = 'text'; inp.placeholder = 'br-lan';
-						inp.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit';
-						inp.value = ifaceCur;
-						inp.addEventListener('change', function() { hi.value = this.value; });
-						mac1Body.appendChild(inp);
-					}
+			function renderInterfaceSelector() {
+				var t = document.createElement('div');
+				t.className = 'pushbot-inline-title';
+				t.style.cssText = 'margin:10px 0 4px 2px;text-transform:none;font-size:12px;color:#64748b';
+				t.textContent = '{{ _('Notify only interface:') }}';
+				mac1Body.appendChild(t);
+				var ifaces = PB_sys('ifaces');
+				var hi = makeHidden('pushbot_interface', ifaceCur);
+				if (ifaces.length > 0) {
+					var sel = document.createElement('select');
+					sel.style.cssText = 'width:100%;padding:7px;border-radius:8px;border:1px solid rgba(148,163,184,0.3)';
+					ifaces.forEach(function(f) {
+						var opt = document.createElement('option');
+						opt.value = f; opt.textContent = f;
+						if (f === ifaceCur) { opt.selected = true; hi.value = f; }
+						sel.appendChild(opt);
+					});
+					sel.addEventListener('change', function() { hi.value = this.value; });
+					mac1Body.appendChild(sel);
+				} else {
+					var inp = document.createElement('input');
+					inp.type = 'text'; inp.placeholder = 'br-lan';
+					inp.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:var(--pb-input-bg);color:inherit';
+					inp.value = ifaceCur;
+					inp.addEventListener('change', function() { hi.value = this.value; });
+					mac1Body.appendChild(inp);
 				}
 			}
-			renderMac1(mac1Cur);
+
+			/* apply mutual-exclusion rules and refresh UI */
+			function applyToggles() {
+				for (var k in toggleBtns) {
+					toggleBtns[k].className = 'pushbot-choice-button ' + (states[k] ? 'is-on' : 'is-off');
+				}
+				syncHidden();
+			}
+
+			/* whitelist ↔ blacklist mutex; interface independent */
+			function modeClick(key) {
+				return function(e) {
+					e.preventDefault();
+					if (states[key]) {
+						/* toggling off */
+						states[key] = false;
+					} else {
+						/* toggling on: enforce whitelist/blacklist mutex */
+						if (key === 'whitelist') states.blacklist = false;
+						if (key === 'blacklist') states.whitelist = false;
+						states[key] = true;
+					}
+					applyToggles();
+				};
+			}
+			toggleBtns.whitelist.addEventListener('click', modeClick('whitelist'));
+			toggleBtns.blacklist.addEventListener('click', modeClick('blacklist'));
+			toggleBtns.iface.addEventListener('click', modeClick('iface'));
+
+			/* initial render */
+			syncHidden();
 		})();
 
 		/* MAC Filter 2 */
@@ -1163,7 +1283,7 @@ XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'version') }}',
 				var inp = document.createElement('input');
 				inp.type = 'text'; inp.placeholder = 'XX:XX:XX:XX:XX:XX';
 				inp.className = 'pushbot-mac-input';
-				inp.style.cssText = 'flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+				inp.style.cssText = 'flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:var(--pb-input-bg);color:inherit';
 				var dlId = 'mh_' + opt;
 				inp.setAttribute('list', dlId);
 				var dlist = document.createElement('datalist');
@@ -1289,7 +1409,7 @@ function initContentCard() {
 		var b=document.createElement('div');b.className='pushbot-inline-body';
 		var inp=document.createElement('input');inp.type='text';inp.className='cbi-input-text';
 		inp.value=val;
-		inp.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit';
+		inp.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:var(--pb-input-bg);color:inherit';
 		var hi=mkH(name,val);
 		inp.addEventListener('change',function(){hi.value=this.value;});
 		b.appendChild(inp);
@@ -1303,7 +1423,7 @@ function initContentCard() {
 		t.textContent=label;w.appendChild(t);
 		var b=document.createElement('div');b.className='pushbot-inline-body';
 		var sel=document.createElement('select');sel.className='cbi-input-select';
-		sel.style.cssText='width:100%;padding:6px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+		sel.style.cssText='width:100%;padding:6px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:var(--pb-input-bg);color:inherit';
 		opts.forEach(function(o){var op=document.createElement('option');op.value=o.v;op.textContent=o.l;if(o.v===val)op.selected=true;sel.appendChild(op);});
 		var hi=mkH(name,val);
 		/* LuCI 会把 select 替换为 .cbi-dropdown 并派发 cbi-dropdown-change（bubbles）。
@@ -1485,7 +1605,7 @@ function initContentCard() {
 	iv4UrlNote.innerHTML='{{ _('[ Note: If you use a "Global Interconnect" style plugin, please add the following APIs to the whitelist to avoid being identified as an overseas IP. ]') }}';
 	iv4Sub2.appendChild(iv4UrlNote);
 	var iv4Ta=document.createElement('textarea');iv4Ta.className='cbi-input-textarea';iv4Ta.rows=4;
-	iv4Ta.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit;resize:vertical';
+	iv4Ta.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:var(--pb-input-bg);color:inherit;resize:vertical';
 	iv4Ta.textContent=CT_IPV4_LIST;
 	var iv4UrlHi=mkH('ipv4_list',CT_IPV4_LIST);
 	iv4Ta.addEventListener('input',function(){iv4UrlHi.value=this.value;});
@@ -1590,7 +1710,7 @@ function initContentCard() {
 	iv6UrlNote.innerHTML='{{ _('[ Note: If you use a "Global Interconnect" style plugin, please add the following APIs to the whitelist to avoid being identified as an overseas IP. ]') }}';
 	iv6Sub2.appendChild(iv6UrlNote);
 	var iv6Ta=document.createElement('textarea');iv6Ta.className='cbi-input-textarea';iv6Ta.rows=4;
-	iv6Ta.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit;resize:vertical';
+	iv6Ta.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:var(--pb-input-bg);color:inherit;resize:vertical';
 	iv6Ta.textContent=CT_IPV6_LIST;
 	var iv6UrlHi=mkH('ipv6_list',CT_IPV6_LIST);
 	iv6Ta.addEventListener('input',function(){iv6UrlHi.value=this.value;});
@@ -1694,7 +1814,7 @@ b2.appendChild(tmRow);
 	cuRow.appendChild(mkBtn('{{ _('Abnormal device traffic') }}',cuOn,function(on){updateFlagInput('client_usage',on);toggleCu(on);}));
 	b2.appendChild(cuRow);
 	var cuSub=document.createElement('div');cuSub.id='ct_usage_sub';cuSub.style.cssText='margin-top:4px;display:'+(CT_USAGE?'block':'none');
-	cuSub.appendChild(mkTxt('client_usage_max','{{ _('Traffic limit per minute') }}',CT_USAGE_MAX,'{{ _('Abnormal device traffic alert (bytes); you can append K, M or G') }}'));
+	cuSub.appendChild(mkTxt('client_usage_max','{{ _('Traffic limit per interval') }}',CT_USAGE_MAX,'{{ _('Abnormal device traffic alert (bytes); you can append K, M or G') }}'));
 	/* disturb toggle */
 /* client usage disturb - use hidden input */
 var cdHi = document.querySelector('[name="cbid.pushbot.pushbot.client_usage_disturb"]');
@@ -1709,7 +1829,7 @@ cuSub.appendChild(mkBtn('{{ _('Traffic DND') }}',cdOn,function(on){updateFlagInp
 	var wlTags=document.createElement('div');wlTags.style.cssText='display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px';
 	var wlIR=document.createElement('div');wlIR.style.cssText='display:flex;gap:4px';
 	var wlInp=document.createElement('input');wlInp.type='text';wlInp.className='cbi-input-text';
-	wlInp.placeholder='XX:XX:XX:XX:XX:XX';wlInp.className='cbi-input-text pushbot-mac-input';wlInp.style.cssText='flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+	wlInp.placeholder='XX:XX:XX:XX:XX:XX';wlInp.className='cbi-input-text pushbot-mac-input';wlInp.style.cssText='flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:var(--pb-input-bg);color:inherit';
 	wlInp.setAttribute('list','mh_client_white');
 	var wlDl=document.createElement('datalist');wlDl.id='mh_client_white';
 	PB_sys('mac_hints').forEach(function(h){var o=document.createElement('option');o.value=h.m;o.textContent=h.n?h.m+' ('+h.n+')':h.m;wlDl.appendChild(o);});
@@ -1787,7 +1907,7 @@ cuSub.appendChild(mkBtn('{{ _('Traffic DND') }}',cdOn,function(on){updateFlagInp
 	var ipTags=document.createElement('div');ipTags.style.cssText='display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px';
 	var ipIR=document.createElement('div');ipIR.style.cssText='display:flex;gap:4px';
 	var ipInp=document.createElement('input');ipInp.type='text';ipInp.className='cbi-input-text';
-	ipInp.placeholder='192.168.1.5 / 10.1.1.0/24 / 2001:db8::1 / fd00::/32';ipInp.style.cssText='flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+	ipInp.placeholder='192.168.1.5 / 10.1.1.0/24 / 2001:db8::1 / fd00::/32';ipInp.style.cssText='flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:var(--pb-input-bg);color:inherit';
 	ipInp.setAttribute('list','mh_ip_white');
 	var ipDl=document.createElement('datalist');ipDl.id='mh_ip_white';
 	(CT_IP_HINTS||[]).forEach(function(h){var o=document.createElement('option');o.value=h;ipDl.appendChild(o);});
@@ -1805,7 +1925,7 @@ cuSub.appendChild(mkBtn('{{ _('Traffic DND') }}',cdOn,function(on){updateFlagInp
 	blHint.textContent='{{ _('One IP per line; IPv4 and IPv6 supported') }}';
 	blTxt.appendChild(blHint);
 	var blTa=document.createElement('textarea');blTa.className='cbi-input-textarea';blTa.rows=4;
-	blTa.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit;resize:vertical';
+	blTa.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:var(--pb-input-bg);color:inherit;resize:vertical';
 	blTa.value = CT_IP_BLACK;
 	/* 同步 textarea → hidden input：input + change 双事件 + 初始立即同步
 	   （单 input 事件在部分浏览器/粘贴场景不触发，导致保存值丢失/null） */
@@ -1934,7 +2054,7 @@ PB_onReady(function(){ tryContentOnce(); });
 		t.textContent=label;w.appendChild(t);
 		var b=document.createElement('div');b.className='pushbot-inline-body';
 		var inp=document.createElement('input');inp.type='text';inp.className='cbi-input-text';inp.value=val;
-		inp.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit';
+		inp.style.cssText='width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:var(--pb-input-bg);color:inherit';
 		var hi=makeHidden(opt,val);
 		inp.addEventListener('change',function(){hi.value=this.value;});
 		b.appendChild(inp);
@@ -2182,7 +2302,7 @@ function initMonitorCard() {
 		var b = document.createElement('div'); b.className = 'pushbot-inline-body';
 		var inp = document.createElement('input'); inp.type = 'text'; inp.className = 'cbi-input-text';
 		inp.value = val;
-		inp.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit';
+		inp.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:var(--pb-input-bg);color:inherit';
 		var hi = mkHidden(name, val);
 		inp.addEventListener('change', function() { hi.value = this.value; });
 		b.appendChild(inp);
@@ -2257,7 +2377,7 @@ function initMonitorCard() {
 	st.textContent = '{{ _('Custom temperature command') }}'; sf.appendChild(st);
 	var sb = document.createElement('div'); sb.className = 'pushbot-inline-body';
 	var ss = document.createElement('select'); ss.className = 'cbi-input-select';
-	ss.style.cssText = 'width:100%;padding:6px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+	ss.style.cssText = 'width:100%;padding:6px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:var(--pb-input-bg);color:inherit';
 	[{v:'',l:'{{ _('Default') }}'},{v:'pve',l:'{{ _('PVE VM') }}'},{v:'__custom__',l:'{{ _('Custom command') }}'}].forEach(function(o) {
 		var op = document.createElement('option'); op.value = o.v; op.textContent = o.l;
 		if (o.v === socCur || (socCust && o.v === '__custom__')) op.selected = true;
@@ -2265,7 +2385,7 @@ function initMonitorCard() {
 	});
 	var ci = document.createElement('input'); ci.type='text'; ci.className='cbi-input-text';
 	ci.placeholder = '{{ _('Enter custom temperature command') }}'; ci.value = socCust ? socCur : '';
-	ci.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:rgba(255,255,255,0.7);color:inherit;margin-top:6px;display:'+(socCust?'block':'none');
+	ci.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;box-sizing:border-box;background:var(--pb-input-bg);color:inherit;margin-top:6px;display:'+(socCust?'block':'none');
 	function syncSoc() {
 		var v = ss.value==='__custom__' ? ci.value : ss.value;
 		socHi.value = v; togPVE();
@@ -2545,7 +2665,7 @@ function initMonitorCard() {
 		var ir = document.createElement('div'); ir.style.cssText = 'display:flex;gap:4px';
 		var inp = document.createElement('input'); inp.type='text'; inp.className='cbi-input-text';
 		inp.placeholder = 'XX:XX:XX:XX:XX:XX';
-		inp.style.cssText = 'flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:rgba(255,255,255,0.7);color:inherit';
+		inp.style.cssText = 'flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:var(--pb-input-bg);color:inherit';
 		/* datalist for MAC hints */
 		var listId = 'mh_err_device';
 		inp.setAttribute('list', listId);
@@ -2711,7 +2831,7 @@ function initModernTabs() {
 	var clientPane = document.createElement('div');
 	clientPane.id = 'pushbot_pane_client';
 	clientPane.className = 'pushbot-tab-pane';
-	clientPane.innerHTML = '<div class="pushbot-mode-card" style="padding:0;overflow:hidden"><div class="pushbot-log-container"><div class="pushbot-log-header"><div class="pushbot-log-controls"><label class="pushbot-log-switch" id="client_auto_switch"><span class="pushbot-log-switch-text">{{ _('Auto refresh') }}</span><input type="checkbox" id="client_auto_toggle" checked><span class="pushbot-log-switch-track"></span></label><button class="pushbot-log-btn" id="client_refresh_btn">{{ _('Refresh') }}</button></div></div><div class="pushbot-log-content" id="pushbot_client_content"><p style="padding:12px;margin:0;color:#94a3b8;text-align:center">{{ _('Loading...') }}</p></div></div></div>';
+	clientPane.innerHTML = '<div class="pushbot-mode-card" style="padding:0;overflow:hidden"><div class="pushbot-log-container"><div class="pushbot-log-header"><div class="pushbot-log-controls"><label class="pushbot-log-switch" id="client_auto_switch"><span class="pushbot-log-switch-text">{{ _('Auto refresh') }}</span><input type="checkbox" id="client_auto_toggle" checked><span class="pushbot-log-switch-track"></span></label><span id="client_traffic_src" style="display:none"></span><button class="pushbot-log-btn" id="client_refresh_btn" style="margin-left:auto">{{ _('Refresh') }}</button></div></div><div class="pushbot-log-content" id="pushbot_client_content"><p style="padding:12px;margin:0;color:#94a3b8;text-align:center">{{ _('Loading...') }}</p></div></div></div>';
 
 	var logPane = document.createElement('div');
 	logPane.id = 'pushbot_pane_log';
@@ -2894,6 +3014,15 @@ function initModernTabs() {
 	var _clientData = [];
 	var _clientSortKey = 'uptime';
 	var _clientSortAsc = false;
+	var _clientTrafficSrc = 'wrtbw';
+	function renderClientSrc() {
+		var el = document.getElementById('client_traffic_src');
+		if (!el) return;
+		var isNlbw = _clientTrafficSrc === 'nlbw';
+		var pillColor = isNlbw ? 'background:rgba(34,197,94,0.15);color:#16a34a;border:1px solid rgba(34,197,94,0.3)' : 'background:rgba(249,115,22,0.15);color:#ea580c;border:1px solid rgba(249,115,22,0.3)';
+		el.style.display = '';
+		el.innerHTML = '{{ _('Traffic source') }}: <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap;vertical-align:middle;margin-left:4px;' + pillColor + '">' + (isNlbw ? 'nlbwmon' : 'wrtbwmon') + '</span>';
+	}
 	function renderClientTable() {
 		var container = document.getElementById('pushbot_client_content');
 		if (!container) return;
@@ -2955,7 +3084,12 @@ function initModernTabs() {
 		XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'client_list') }}', null,
 			function(x) {
 				if (!x || x.status != 200) { container.innerHTML = '<p style="padding:12px;margin:0;color:#ef4444;text-align:center">{{ _('Load failed') }}</p>'; return; }
-				try { _clientData = JSON.parse(x.responseText); } catch(e) { _clientData = []; }
+				try {
+					var raw = JSON.parse(x.responseText);
+					if (raw && raw.list) { _clientData = raw.list; _clientTrafficSrc = raw.src || 'wrtbw'; }
+					else { _clientData = raw || []; _clientTrafficSrc = 'wrtbw'; }
+				} catch(e) { _clientData = []; _clientTrafficSrc = 'wrtbw'; }
+				renderClientSrc();
 				renderClientTable();
 			}
 		);
@@ -3182,6 +3316,10 @@ window.addEventListener('DOMContentLoaded', function() {
 /* CBI elements — hidden: pushbot uses custom JS UI, not CBI forms */
 .cbi-tabmenu { display: none !important; }
 .mar-10 {margin-left: 50px; margin-right: 10px;}
+
+:root {
+	--pb-input-bg: rgba(255, 255, 255, 0.7);
+}
 
 .pushbot-mode-card {
 	margin: 10px 0 16px 0;
@@ -3484,6 +3622,10 @@ window.addEventListener('DOMContentLoaded', function() {
 .pushbot-toast-banner.is-err { background: linear-gradient(135deg, #ef4444, #dc2626); }
 .pushbot-dk .pushbot-toast-overlay { background: rgba(0,0,0,0.35); }
 
+.pushbot-dk {
+	--pb-input-bg: rgba(17, 24, 39, 0.72);
+}
+
 .pushbot-dk .pushbot-mode-card {
 			background: rgba(10, 10, 18, 0.75) !important;
 			border-color: rgba(255, 255, 255, 0.08) !important;
@@ -3698,7 +3840,7 @@ window.addEventListener('DOMContentLoaded', function() {
 	padding: 7px 16px;
 	border: 1px solid rgba(148, 163, 184, 0.25);
 	border-radius: 8px;
-	background: rgba(255, 255, 255, 0.7);
+	background: var(--pb-input-bg);
 	color: #475569;
 	font-size: 13px;
 	font-weight: 600;

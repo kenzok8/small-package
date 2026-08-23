@@ -495,7 +495,8 @@ table td, .table .td {
 		ajax.abortAll();
 		switch (action) {
 			case "add":
-				const dom = document.getElementsByClassName("cbi-tab")[0];
+				const master = document.getElementById("node_list");
+				const dom = master.getElementsByClassName("cbi-tab")[0];
 				const current_group = dom ? (dom.getAttribute("group_name") || "default") : "default";
 				window.location.href='<%=api.url("add_node")%>?redirect=1&group=' + current_group;
 				break;

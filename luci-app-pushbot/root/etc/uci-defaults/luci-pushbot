@@ -7,5 +7,6 @@ uci -q batch <<-EOF >/dev/null
 	commit ucitrack
 EOF
 
-rm -rf /tmp/luci-*
+rm -rf /tmp/luci-app-pushbot*
+rm -rf /tmp/luci-i18n-pushbot*
 exit 0

@@ -38,6 +38,7 @@ return {
 		let clients = [];
 		let usage_map = {};
 
+		/* 流量数据源由 shell 脚本统一探测，直接调 usage list 获取数据 */
 		let pf = popen("/usr/bin/pushbot/pushbot usage list 2>/dev/null", "r");
 		if (pf) {
 			for (let line = pf.read("line"); line; line = pf.read("line")) {
@@ -46,6 +47,10 @@ return {
 			}
 			pf.close();
 		}
+
+		/* 读取脚本探测的数据源类型 */
+		let traffic_src = "wrtbw";
+		try { let v = readfile("/tmp/pushbot/traffic_source"); if (v && trim(v) === "nlbw") traffic_src = "nlbw"; } catch(e) {}
 
 		let f = open("/tmp/pushbot/ipAddress", "r");
 		if (f) {
@@ -56,12 +61,13 @@ return {
 					if (m) {
 						let now = time();
 						let up = +m[4] || 0;
+						let mac = uc(m[2]);
 						push(clients, {
 							ip:       m[1] ?? "",
-							mac:      uc(m[2]),
+							mac:      mac,
 							hostname: m[3] ?? "",
 							uptime:   up ? now - up : 0,
-							usage:    format_bytes(usage_map[uc(m[2])] ?? 0)
+							usage:    format_bytes(usage_map[mac] ?? 0)
 						});
 					}
 				}
@@ -70,7 +76,7 @@ return {
 		}
 
 		http.prepare_content("application/json");
-		http.write_json(clients);
+		http.write_json({ src: traffic_src, list: clients });
 	},
 
 	act_send_test: function() {

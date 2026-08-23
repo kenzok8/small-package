@@ -1418,6 +1418,12 @@ msgstr "本機監聽"
 msgid "When selected, it can only be accessed localhost."
 msgstr "當勾選時，只能本機訪問。"
 
+msgid "Firewall Allow"
+msgstr "允許通過防火墻"
+
+msgid "Source zone"
+msgstr "源區域"
+
 msgid "Accept LAN Access"
 msgstr "接受局域網訪問"
 

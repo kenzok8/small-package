@@ -1427,6 +1427,12 @@ msgstr "Только для localhost"
 msgid "When selected, it can only be accessed localhost."
 msgstr "Если включено, доступ возможен только с самого роутера."
 
+msgid "Firewall Allow"
+msgstr "Брандмауэр разрешить"
+
+msgid "Source zone"
+msgstr "Зона источника"
+
 msgid "Accept LAN Access"
 msgstr "Разрешить доступ из LAN"
 

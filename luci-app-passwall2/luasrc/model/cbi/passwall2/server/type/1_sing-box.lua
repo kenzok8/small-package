@@ -455,9 +455,16 @@ if singbox_tags:find("with_wireguard") then
 	o:depends({ protocol = "wireguard" })
 end
 
-o = s:option(Flag, "bind_local", translate("Bind Local"), translate("When selected, it can only be accessed localhost."))
+o = s:option(Flag, "firewall_allow", translate("Firewall Allow"))
 o.default = "0"
-o:depends({ custom = false, is_endpoint = "" })
+o:depends({ custom = false })
+
+o = s:option(Value, "firewall_allow_src", translate("Source zone"))
+o.nocreate = true
+o.allowany = true
+o.default = "wan"
+o.template = "cbi/firewall_zonelist"
+o:depends({ custom = false, firewall_allow = true })
 
 o = s:option(Flag, "accept_lan", translate("Accept LAN Access"), translate("When selected, it can accessed lan , this will not be safe!"))
 o.default = "0"

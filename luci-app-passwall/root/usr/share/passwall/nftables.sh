@@ -406,7 +406,7 @@ load_acl() {
 				}
 
 				local dns_redirect
-				[ $(config_t_get global dns_redirect "1") = "1" ] && dns_redirect=53
+				[ $(config_n_get @global[0] dns_redirect "1") = "1" ] && dns_redirect=53
 				if ([ -n "$tcp_port" ] && [ -n "${tcp_proxy_mode}" ]) || ([ -n "$udp_port" ] && [ -n "${udp_proxy_mode}" ]); then
 					[ "${use_proxy_list}" = "1" ] && {
 						[ "${use_global_config}" = "0" ] && {
@@ -643,7 +643,7 @@ load_acl() {
 		}
 
 		local DNS_REDIRECT
-		[ $(config_t_get global dns_redirect "1") = "1" ] && DNS_REDIRECT=53
+		[ $(config_n_get @global[0] dns_redirect "1") = "1" ] && DNS_REDIRECT=53
 		if [ -n "$NODE" ] && ([ -n "${TCP_PROXY_MODE}" ] || [ -n "${UDP_PROXY_MODE}" ]); then
 			[ -n "${DNS_REDIRECT_PORT}" ] && DNS_REDIRECT=${DNS_REDIRECT_PORT}
 		else
@@ -842,7 +842,7 @@ filter_server_port() {
 	local stream=$(echo "$3" | tr 'A-Z' 'a-z')
 	local _ip_type _port_expr _ver _is_tproxy
 	local _nft_output_chain="PSW_OUTPUT_NAT"
-	[ "$(config_t_get global_forwarding tcp_proxy_way redirect)" = "tproxy" ] && _is_tproxy="TPROXY"
+	[ "$(config_n_get @global_forwarding[0] tcp_proxy_way redirect)" = "tproxy" ] && _is_tproxy="TPROXY"
 	[ "$stream" = "udp" ] && _is_tproxy="TPROXY"
 	[ -n "$_is_tproxy" ] && _nft_output_chain="PSW_OUTPUT_MANGLE"
 	case "$port" in
@@ -996,8 +996,8 @@ add_firewall_rule() {
 	local USE_DIRECT_LIST_ALL=${USE_DIRECT_LIST}
 	local USE_BLOCK_LIST_ALL=${USE_BLOCK_LIST}
 	USE_SHUNT_NODE=0
-	USE_GEOVIEW=$(config_t_get global_rules enable_geoview)
-	[ -z "$(first_type $(config_t_get global_app geoview_file) geoview)" ] && USE_GEOVIEW=0
+	USE_GEOVIEW=$(config_n_get @global_rules[0] enable_geoview)
+	[ -z "$(first_type $(config_n_get @global_app[0] geoview_file) geoview)" ] && USE_GEOVIEW=0
 
 	[ -n "$NODE" ] && [ "$(config_n_get $NODE protocol)" = "_shunt" ] && USE_SHUNT_NODE=1
 
@@ -1114,8 +1114,8 @@ add_firewall_rule() {
 	# Prevent some conditions
 	filter_vps_addr $(config_n_get $NODE address) $(config_n_get $NODE download_address) > /dev/null 2>&1 &
 
-	accept_icmp=$(config_t_get global_forwarding accept_icmp 0)
-	accept_icmpv6=$(config_t_get global_forwarding accept_icmpv6 0)
+	accept_icmp=$(config_n_get @global_forwarding[0] accept_icmp 0)
+	accept_icmpv6=$(config_n_get @global_forwarding[0] accept_icmpv6 0)
 
 	if [ "${TCP_PROXY_WAY}" = "redirect" ]; then
 		unset is_tproxy
@@ -1134,7 +1134,7 @@ add_firewall_rule() {
 
 	nft "add chain $NFTABLE_NAME PSW_DNS"
 	nft "flush chain $NFTABLE_NAME PSW_DNS"
-	if [ $(config_t_get global dns_redirect "1") = "0" ]; then
+	if [ $(config_n_get @global[0] dns_redirect "1") = "0" ]; then
 		#Only hijack when dest address is local IP
 		nft "insert rule $NFTABLE_NAME dstnat ip saddr @${NFTSET_LAN} ip daddr @${NFTSET_LOCAL} jump PSW_DNS"
 		nft "insert rule $NFTABLE_NAME dstnat ip6 saddr @${NFTSET_LAN6} ip6 daddr @${NFTSET_LOCAL6} jump PSW_DNS"
@@ -1570,7 +1570,7 @@ start() {
 stop() {
 	[ -z "$(command -v echolog)" ] && . "$UTILS_PATH"
 	del_firewall_rule
-	[ $(config_t_get global flush_set_on_reboot "0") = "1" ] || [ $(config_t_get global flush_set "0") = "1" ] && {
+	[ $(config_n_get @global[0] flush_set_on_reboot "0") = "1" ] || [ $(config_n_get @global[0] flush_set "0") = "1" ] && {
 		uci -q delete ${CONFIG}.@global[0].flush_set
 		uci -q commit ${CONFIG}
 		#flush_table

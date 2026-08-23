@@ -93,6 +93,33 @@ function read_config(){
 	# ntfy 纯文本: 不支持表格/markdown, 强制非表格
 	( echo "${jsonpath}"|grep -q "ntfy" ) && table_enable=""
 	( echo "$lite_enable"|grep -q "content" ) && str_title_start="" && str_title_end="" && str_splitline="" && str_linefeed="" && str_tab=""
+
+	# ── 流量数据源探测（启动时判断一次，后续统一使用） ──
+	traffic_source="none"
+	# 外部调用（usage list/get）跳过探测，直接读缓存文件
+	if [ "$1" = "usage" ] && [ -f "${dir}traffic_source" ]; then
+		traffic_source=$(cat ${dir}traffic_source 2>/dev/null)
+		[ -z "$traffic_source" ] && traffic_source="none"
+	fi
+	if [ "$traffic_source" = "none" ]; then
+		if command -v nlbw >/dev/null 2>&1 && [ -S /var/run/nlbwmon.sock ]; then
+			# 尝试 3 次查询 nlbw，任意一次能正常输出就算成功（全 0 也正常）
+			local _try
+			for _try in 1 2 3; do
+				local _nlbw_rows=$(nlbw -c csv -s, -q -n -g mac 2>/dev/null | awk -F',' 'NR>1 && $1!="mac" {n++} END{print n+0}')
+				[ "${_nlbw_rows:-0}" -gt "0" ] && traffic_source="nlbw" && break
+				sleep 1
+			done
+		fi
+		if [ "$traffic_source" = "none" ]; then
+			# nlbw 不可用或无数据，回落 wrtbwmon
+			if [ -f "/usr/sbin/wrtbwmon" ]; then
+				traffic_source="wrtbw"
+			fi
+		fi
+		echo "`date "+%Y-%m-%d %H:%M:%S"` 【初始化】流量数据源: ${traffic_source}" >> ${logfile}
+		echo "$traffic_source" > ${dir}traffic_source
+	fi
 }
 	
 	
@@ -116,6 +143,8 @@ function pushbot_init(){
 	[ -z "$cu_version" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】无法获取依赖项 curl 版本号，请确认插件是否正常运行" >> ${logfile}
 	[ -z "${dd_webhook}${pp_token}${we_webhook}${fs_webhook}${bark_token}${pushdeer_key}" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】请填写正确的Token/Webhook " >> ${logfile} && return 1
 	local interfacelist=`getinterfacelist` && [ -z "$interfacelist" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】无法正确获取接口信息，请确认插件是否正常运行" >> ${logfile}
+	return 0
+
 	return 0
 }
 
@@ -453,16 +482,15 @@ function soc_temp(){
 	[ ! -z "$soc_code" ] && eval `echo "$soc_code"` 2>/dev/null
 }
 
-# 流量数据
-# 数据源优先级:nlbwmon(实时socket查询) → wrtbwmon(回落使用usage.db)
+# 流量数据查询（数据源由全局变量 traffic_source 决定，启动时一次性探测）
 function usage(){
 	[ ! "$1" ] && return
 	if [ $1 == "update" ] ;then
-		# nlbwmon 为实时 daemon（socket 查询），无需手动"刷新"；仅当 nlbwmon 不可用时回落 wrtbwmon
-		if command -v nlbw >/dev/null 2>&1 && [ -S /var/run/nlbwmon.sock ]; then
+		# nlbwmon 为实时 daemon（socket 查询），无需手动刷新；仅 wrtbwmon 时需要
+		if [ "$traffic_source" = "nlbw" ]; then
 			return
 		fi
-		# ---- 以下为 wrtbwmon 备用路径 ----
+		# ---- wrtbwmon 路径 ----
 		[ ! -f "/usr/sbin/wrtbwmon" ] && return
 		function version_ge() {
 			local a=$(echo "$1"|sed 's/-r[0-9]*$//;s/[^0-9.]//g') b=$(echo "$2"|sed 's/-r[0-9]*$//;s/[^0-9.]//g')
@@ -496,12 +524,11 @@ function usage(){
 		return
 	elif [ $1 == "get" ] ;then
 		local tmptotal=""
-		# nlbw 优先（实时 daemon 查询，不受 pushbot 轮询节奏影响）
-		if [ ! -z "$2" ]; then
-			tmptotal=`nlbw_usage "$2"`
+		if [ "$traffic_source" = "nlbw" ] && [ ! -z "$2" ]; then
+			tmptotal=$(nlbw -c csv -s, -q -n -g mac 2>/dev/null | awk -F',' -v m="$(echo "$2"|tr 'A-Z' 'a-z')" 'NR>1 && $1==m {print $3+$5; exit}')
 		fi
-		# nlbw 回落 wrtbwmon
-		if [ -z "$tmptotal" ] || [ "$tmptotal" = "0" ]; then
+		# wrtbw 回落（nlbw 模式下 MAC 不在 nlbw 中时回落，wrtbw 模式下直接走这里）
+		if [ "$traffic_source" = "wrtbw" ] || [ -z "$tmptotal" ]; then
 			local dbrows=$(grep -c "," ${dir}usage.db 2>/dev/null)
 			[ -z "$dbrows" ] && dbrows="0"
 			if [ "$dbrows" -gt "1" ]; then
@@ -515,9 +542,11 @@ function usage(){
 		[ ! "$3" ] && echo `bytes_for_humans ${tmptotal}` || echo "$tmptotal"
 	elif [ $1 == "list" ] ;then
 		# 输出 "mac total_bytes" 列表(供 LuCI 在线设备表格)
-		# nlbw 优先（实时 daemon）
-		nlbw_usage "$2"
-		# nlbw 无数据时回落 wrtbwmon
+		if [ "$traffic_source" = "nlbw" ]; then
+			nlbw -c csv -s, -q -n -g mac 2>/dev/null | awk -F',' 'NR>1 && $1!="mac" {print tolower($1)" "$3+$5}'
+			return
+		fi
+		# wrtbw 模式
 		local dbrows=$(grep -c "," ${dir}usage.db 2>/dev/null)
 		[ -z "$dbrows" ] && dbrows="0"
 		if [ "$dbrows" -gt "1" ]; then
@@ -527,19 +556,6 @@ function usage(){
 		fi
 	elif [ $1 == "down" ] ;then
 		[ "$2" ] && sed -i "/,${2},/d" ${dir}usage.db 2>/dev/null
-	fi
-}
-
-# nlbwmon 数据源(wrtbwmon 不可用时的回落,经 /usr/sbin/nlbw 客户端查询)
-function nlbw_usage(){
-	command -v nlbw >/dev/null 2>&1 || return 1
-	[ -S /var/run/nlbwmon.sock ] || return 1
-	if [ ! -z "$1" ]; then
-		local mac=$(echo "$1"|tr 'A-Z' 'a-z')
-		# -q 去引号、-n 纯数字输出、-s, 逗号分隔,列序为 mac,conns,rx_bytes,rx_pkts,tx_bytes,tx_pkts
-		nlbw -c csv -s, -q -n -g mac 2>/dev/null | awk -F',' -v m="$mac" 'NR>1 && $1==m {print $3+$5; exit}'
-	else
-		nlbw -c csv -s, -q -n -g mac 2>/dev/null | awk -F',' 'NR>1 {print $1" "$3+$5}'
 	fi
 }
 
