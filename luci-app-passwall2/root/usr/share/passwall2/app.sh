@@ -1010,8 +1010,8 @@ get_config() {
 	[ "$ENABLED" == 1 ] && [ -n "$NODE" ] && [ "$(config_get_type $NODE)" == "nodes" ] && ENABLED_DEFAULT_ACL=1
 	ENABLED_ACLS=$(config_n_get @global[0] acl_enable 0)
 	SOCKS_ENABLED=$(config_n_get @global[0] socks_enabled 0)
-	TCP_PROXY_WAY=$(config_n_get @global[0]_forwarding tcp_proxy_way redirect)
-	PROXY_IPV6=$(config_n_get @global[0]_forwarding ipv6_tproxy 0)
+	TCP_PROXY_WAY=$(config_n_get @global_forwarding[0] tcp_proxy_way redirect)
+	PROXY_IPV6=$(config_n_get @global_forwarding[0] ipv6_tproxy 0)
 	DIRECT_DNS_QUERY_STRATEGY=$(config_n_get @global[0] direct_dns_query_strategy UseIP)
 
 	get_direct_dns

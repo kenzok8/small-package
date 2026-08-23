@@ -329,15 +329,19 @@ table td, .table .td {
 			var shunt_rule_list = result
 
 			var group_shunt_rules = {}
-			for (let i = 0; i < shunt_rule_list.length; i++) {
-				let _shunt_rule = shunt_rule_list[i]
-				if (!_shunt_rule.group || _shunt_rule.group === "") {
-					_shunt_rule.group = "default"
+			if (shunt_rule_list.length > 0) {
+				for (let i = 0; i < shunt_rule_list.length; i++) {
+					let _shunt_rule = shunt_rule_list[i]
+					if (!_shunt_rule.group || _shunt_rule.group === "") {
+						_shunt_rule.group = "default"
+					}
+					if (!group_shunt_rules[_shunt_rule.group]) {
+						group_shunt_rules[_shunt_rule.group] = []
+					}
+					group_shunt_rules[_shunt_rule.group].push(_shunt_rule)
 				}
-				if (!group_shunt_rules[_shunt_rule.group]) {
-					group_shunt_rules[_shunt_rule.group] = []
-				}
-				group_shunt_rules[_shunt_rule.group].push(_shunt_rule)
+			} else {
+				group_shunt_rules["default"] = [];
 			}
 
 			var tab_ul_li_html = '';
