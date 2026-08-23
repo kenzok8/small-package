@@ -648,7 +648,16 @@ s2.addremove = true
 s2.extedit = api.url("socks_config", "%s")
 function s2.create(e, t)
 	local uid = "socks_" .. api.gen_random_char(5)
+	local n = 1
+	m:foreach("socks", function(s)
+		if s[".name"] == section then
+			return false
+		end
+		n = n + 1
+	end)
 	TypedSection.create(e, uid)
+	m:set(uid, "port", 1080 + n)
+	m:set(uid, "http_port", 0)
 	luci.http.redirect(e.extedit:format(uid))
 end
 function s2.remove(e, t)
@@ -691,12 +700,6 @@ function s2.remove(e, t)
 	TypedSection.remove(e, t)
 end
 
-o = s2:option(DummyValue, "status", translate("Status"))
-o.rawhtml = true
-o.cfgvalue = function(t, n)
-	return string.format('<div class="_status" socks_id="%s"></div>', n)
-end
-
 ---- Enable
 o = s2:option(Flag, "enabled", translate("Enable"))
 o.default = 1
@@ -718,26 +721,19 @@ o.cfgvalue = function(_, n)
 	end
 end
 
-local n = 1
-m:foreach("socks", function(s)
-	if s[".name"] == section then
-		return false
-	end
-	n = n + 1
-end)
-
-o = s2:option(Value, "port", "Socks " .. translate("Listen Port"))
-o.default = n + 1080
-o.datatype = "range(1,65535)"
-o.rmempty = false
-
---[[
-if has_singbox or has_xray then
-	o = s2:option(Value, "http_port", "HTTP " .. translate("Listen Port"))
-	o.default = 0
-	o.datatype = "port"
+o = s2:option(DummyValue, "port_status", translate("Port Status"))
+o.rawhtml = true
+o.cfgvalue = function(t, n)
+	local socks = m:get(n, "port") or "0"
+	local http = m:get(n, "http_port") or "0"
+	return string.format([[
+	<div class="_socks_status" socks_id="%s">
+		<span class="_socks"></span> SOCKS: %s
+		<br>
+		<span class="_http"></span> HTTP: %s
+	</div>
+	]], n, socks, http)
 end
-]]--
 
 local o_node = s.fields["node"]
 local o_socks = s2.fields["node"]

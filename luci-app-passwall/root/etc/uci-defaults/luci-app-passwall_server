@@ -9,21 +9,6 @@ if [ -e "/etc/config/ucitrack" ]; then
 EOF
 fi
 
-uci -q batch <<-EOF
-	delete firewall.passwall_server
-	set firewall.passwall_server=include
-	set firewall.passwall_server.type='script'
-	set firewall.passwall_server.path='/var/etc/passwall_server.include'
-EOF
-
-if [ -x "/sbin/fw3" ]; then
-	uci -q set firewall.passwall_server.reload='1'
-else
-	uci -q delete firewall.passwall_server.reload
-	uci -q delete firewall.passwall_server.fw4_compatible
-fi
-uci commit firewall
-
 # Migrate server sections from the old `user` section type. New user entries
 # also use `user`, so only sections with a server `type` option are renamed.
 for sid in $(uci -q show passwall_server | sed -n 's/^passwall_server\.\([^.=]*\)=user$/\1/p'); do

@@ -172,6 +172,7 @@ o = s:option(Value, "udp_no_redir_ports", translate("UDP No Redir Ports"),
 o:value("", translate("Use global config") .. "(" .. UDP_NO_REDIR_PORTS .. ")")
 o:value("disable", translate("No patterns are used"))
 o:value("1:65535", translate("All"))
+o:value("1:52,54:442,444:65535", translatef("Forward only %s", "53, 443"))
 o:depends("mode", "1")
 o.validate = port_validate
 

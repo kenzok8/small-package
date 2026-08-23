@@ -148,7 +148,8 @@ table td, .table .td {
 	//<![CDATA[
 	function toPage(action, cbi_id) {
 		if (action == "add") {
-			const dom = document.getElementsByClassName("cbi-tab")[0];
+			const master = document.getElementById("shunt_rule_list");
+			const dom = master.getElementsByClassName("cbi-tab")[0];
 			const current_group = dom ? (dom.getAttribute("group_name") || "default") : "default";
 			const add_name_val = document.getElementById("add_name_" + current_group).value;
 			if (add_name_val.length > 1) {

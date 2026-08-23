@@ -112,11 +112,11 @@ msgstr "当前节点"
 msgid "Listen Port"
 msgstr "监听端口"
 
+msgid "Port Status"
+msgstr "端口状态"
+
 msgid "0 is not use"
 msgstr "0 为不使用"
-
-msgid "Same as the tcp node"
-msgstr "与 TCP 节点相同"
 
 msgid "Current node: %s"
 msgstr "当前节点：%s"
@@ -845,6 +845,9 @@ msgstr "常用的"
 msgid "Only Web"
 msgstr "仅网页"
 
+msgid "Forward only %s"
+msgstr "仅转发 %s 端口"
+
 msgid "default"
 msgstr "默认"
 
@@ -1570,6 +1573,12 @@ msgstr "本机监听"
 
 msgid "When selected, it can only be accessed localhost."
 msgstr "当勾选时，只能本机访问。"
+
+msgid "Firewall Allow"
+msgstr "允许通过防火墙"
+
+msgid "Source zone"
+msgstr "源区域"
 
 msgid "Accept LAN Access"
 msgstr "接受局域网访问"

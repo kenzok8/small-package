@@ -147,6 +147,17 @@ o.validate = function(self, value, t)
 end
 o:depends({ custom = false })
 
+o = s:option(Flag, "firewall_allow", translate("Firewall Allow"))
+o.default = "0"
+o:depends({ custom = false })
+
+o = s:option(Value, "firewall_allow_src", translate("Source zone"))
+o.nocreate = true
+o.allowany = true
+o.default = "wan"
+o.template = "cbi/firewall_zonelist"
+o:depends({ custom = false, firewall_allow = true })
+
 o = s:option(Flag, "log", translate("Log"))
 o.default = "1"
 o.rmempty = false

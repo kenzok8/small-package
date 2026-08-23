@@ -30,6 +30,16 @@ for i, v in ipairs(user_list) do
 end
 o:depends({ auth = true })
 
+o = s:option(Flag, "firewall_allow", translate("Firewall Allow"))
+o.default = "0"
+
+o = s:option(Value, "firewall_allow_src", translate("Source zone"))
+o.nocreate = true
+o.allowany = true
+o.default = "wan"
+o.template = "cbi/firewall_zonelist"
+o:depends({ firewall_allow = true })
+
 o = s:option(Flag, "log", translate("Log"))
 o.default = "1"
 

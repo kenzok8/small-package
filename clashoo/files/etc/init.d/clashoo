@@ -2057,6 +2057,7 @@ start_service(){
 	cleanup_legacy_startup_backups
 	migrate_legacy_clash_dir
 	/usr/share/clashoo/migrate_lan_acl.sh >/dev/null 2>&1 || true
+	/usr/share/clashoo/migrate_fake_ip_filter.sh >/dev/null 2>&1 || true
 	runtime_state_reset
 
 	if [ "${enable:-0}" -eq 1 ]; then
