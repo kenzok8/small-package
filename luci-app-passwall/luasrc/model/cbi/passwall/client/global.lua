@@ -62,11 +62,13 @@ m:foreach("socks", function(s)
 			id = id,
 			remark = id .. " - " .. (remark or translate("Misconfigured"))
 		}
-		socks_list[#socks_list + 1] = {
-			id = s[".name"],
-			remark = translate("Socks Config") .. " " .. string.format("[%s %s]", s.port, translate("Port")),
-			group = "Socks"
-		}
+		if has_singbox or has_xray then
+			socks_list[#socks_list + 1] = {
+				id = s[".name"],
+				remark = translate("Socks Config") .. " " .. string.format("[%s %s]", s.port, translate("Port")),
+				group = "Socks"
+			}
+		end
 	end
 end)
 

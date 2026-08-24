@@ -325,20 +325,14 @@ run_socks() {
 		log_file="/dev/null"
 	fi
 
-	local node2socks_port=0
-	local type remarks server_host server_port
+	local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
+	local remarks=$(config_n_get $node remarks)
+	local server_host=$(config_n_get $node address)
+	local server_port=$(config_n_get $node port)
+
 	if [ "$(config_get_type $node)" = "socks" ]; then
-		node2socks_port=$(config_n_get $node port 0)
-	fi
-	if [ "$node2socks_port" = "0" ]; then
-		type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
-		remarks=$(config_n_get $node remarks)
-		server_host=$(config_n_get $node address)
-		server_port=$(config_n_get $node port)
-	else
 		type="socks"
 		server_host="127.0.0.1"
-		server_port=$node2socks_port
 		remarks="Socks 配置($server_port 端口)"
 	fi
 
@@ -382,16 +376,8 @@ run_socks() {
 	json_add_string "server_port" "${server_port}"
 	case "$type" in
 	socks)
-		local _socks_address _socks_port _socks_username _socks_password
-		if [ "$node2socks_port" = "0" ]; then
-			_socks_address=$(config_n_get $node address)
-			_socks_port=$(config_n_get $node port)
-			_socks_username=$(config_n_get $node username)
-			_socks_password=$(config_n_get $node password)
-		else
-			_socks_address="127.0.0.1"
-			_socks_port=$node2socks_port
-		fi
+		local socks_username=$(config_n_get $node username)
+		local socks_password=$(config_n_get $node password)
 		[ "$http_port" != "0" ] && {
 			http_flag=1
 			config_file="${config_file%%.*}+http${config_file#${config_file%%.*}}"
@@ -403,10 +389,10 @@ run_socks() {
 		json_add_string "local_socks_address" "$bind"
 		json_add_string "local_socks_port" "$socks_port"
 		json_add_string "server_proto" "socks"
-		json_add_string "server_address" "${_socks_address}"
-		json_add_string "server_port" "${_socks_port}"
-		json_add_string "server_username" "${_socks_username}"
-		json_add_string "server_password" "${_socks_password}"
+		json_add_string "server_address" "${server_host}"
+		json_add_string "server_port" "${server_port}"
+		json_add_string "server_username" "${socks_username}"
+		json_add_string "server_password" "${socks_password}"
 		if [ -n "${SINGBOX_BIN}" ]; then
 			type="sing-box"
 			local bin="${SINGBOX_BIN}"
@@ -519,32 +505,35 @@ run_socks() {
 
 start_global() {
 	[ -z "$NODE" ] && return 1
-
-	local type=$(echo $(config_n_get $NODE type) | tr 'A-Z' 'a-z')
-
 	local config_file=${GLOBAL_ACL_PATH}/global.json
 	local log_file=${GLOBAL_ACL_PATH}/global.log
-	local node2socks_port=0
-	local remarks server_host port
-	if [ "$(config_get_type $NODE)" = "socks" ]; then
-		node2socks_port=$(config_n_get $NODE port 0)
-	fi
-	if [ "$node2socks_port" = "0" ]; then
-		remarks=$(config_n_get $NODE remarks)
-		server_host=$(config_n_get $NODE address)
-		port=$(config_n_get $NODE port)
-	else
+
+	local remarks=$(config_n_get $NODE remarks)
+	local server_host=$(config_n_get $NODE address)
+	local port=$(config_n_get $NODE port)
+	local type=$(echo $(config_n_get $NODE type) | tr 'A-Z' 'a-z')
+
+	local is_socks_cfg=0
+	[ "$(config_get_type $NODE)" = "socks" ] && is_socks_cfg=1
+
+	if [ "$type" = "socks" ] || [ "$is_socks_cfg" = "1" ] ; then
 		if [ "${DNS_MODE}" = "xray" ]; then
 			type="xray"
 		elif [ "${DNS_MODE}" = "sing-box" ]; then
 			type="sing-box"
+		elif [ -n "${SINGBOX_BIN}" ]; then
+			type="sing-box"
+		elif [ -n "${XRAY_BIN}" ]; then
+			type="xray"
 		else
 			type="socks"
 		fi
-		server_host="127.0.0.1"
-		port=$node2socks_port
-		remarks="Socks 配置($port 端口)"
+		if [ "$is_socks_cfg" = "1" ] ; then
+			server_host="127.0.0.1"
+			remarks="Socks 配置($port 端口)"
+		fi
 	fi
+
 	local enable_log=$(config_n_get @global[0] log_node 1)
 	[ "$enable_log" != "1" ] && log_file="/dev/null"
 	[ -n "$server_host" ] && [ -n "$port" ] && {
@@ -583,22 +572,15 @@ start_global() {
 	case "$type" in
 	socks)
 		_socks_flag=1
-		if [ "$node2socks_port" = "0" ]; then
-			_socks_address=$(config_n_get $NODE address)
-			_socks_port=$(config_n_get $NODE port)
-			_socks_username=$(config_n_get $NODE username)
-			_socks_password=$(config_n_get $NODE password)
-		else
-			_socks_address="127.0.0.1"
-			_socks_port=$node2socks_port
-		fi
+		_socks_address=$server_host
+		_socks_port=$port
+		_socks_username=$(config_n_get $NODE username)
+		_socks_password=$(config_n_get $NODE password)
 		[ -z "$can_ipt" ] && {
-			local _config_file=$config_file
-			_config_file="Global_SOCKS_${NODE}.json"
-			local _port=$(get_new_port 3001)
-			run_socks flag="global" node=$NODE bind=127.0.0.1 socks_port=${_port} config_file=${_config_file}
+			local _config_file="global_${NODE}_socks.json"
 			_socks_address="127.0.0.1"
-			_socks_port=${_port}
+			_socks_port=$GLOBAL_SOCKS_port
+			run_socks flag="global" node=$NODE bind=${node_socks_bind} socks_port=${_socks_port} config_file=${_config_file}
 			unset _socks_username
 			unset _socks_password
 		}
@@ -1455,6 +1437,10 @@ acl_app() {
 									type="xray"
 								elif [ "${dns_mode}" = "sing-box" ]; then
 									type="sing-box"
+								elif [ -n "${SINGBOX_BIN}" ]; then
+									type="sing-box"
+								elif [ -n "${XRAY_BIN}" ]; then
+									type="xray"
 								fi
 							else
 								type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')

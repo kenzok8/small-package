@@ -33,15 +33,17 @@ for _, v in pairs(nodes_table) do
 end
 
 local socks_list = {}
-m:foreach("socks", function(s)
-	if s.enabled == "1" and s.node then
-		socks_list[#socks_list + 1] = {
-			id = s[".name"],
-			remark = translate("Socks Config") .. " " .. string.format("[%s %s]", s.port, translate("Port")),
-			group = "Socks"
-		}
-	end
-end)
+if has_singbox or has_xray then
+	m:foreach("socks", function(s)
+		if s.enabled == "1" and s.node then
+			socks_list[#socks_list + 1] = {
+				id = s[".name"],
+				remark = translate("Socks Config") .. " " .. string.format("[%s %s]", s.port, translate("Port")),
+				group = "Socks"
+			}
+		end
+	end)
+end
 
 -- [[ ACLs Settings ]]--
 s = m:section(NamedSection, arg[1], translate("ACLs"), translate("ACLs"))
