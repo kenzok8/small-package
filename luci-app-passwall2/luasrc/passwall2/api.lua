@@ -464,14 +464,14 @@ datatypes.json = is_json
 
 function is_timehhmm(str)
 	local hour, minute = string.match(str, "^(%d?%d):(%d%d)$")
-    if hour and minute then
-        hour = tonumber(hour)
-        minute = tonumber(minute)
-        if hour >= 0 and hour <= 23 and minute >= 0 and minute <= 59 then
-            return true
-        end
-    end
-    return false
+	if hour and minute then
+		hour = tonumber(hour)
+		minute = tonumber(minute)
+		if hour >= 0 and hour <= 23 and minute >= 0 and minute <= 59 then
+			return true
+		end
+	end
+	return false
 end
 datatypes.timehhmm = is_timehhmm
 

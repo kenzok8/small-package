@@ -112,8 +112,8 @@ end
 o = s:option(DummyValue, "_update", translate("Manual subscription All"))
 o.rawhtml = true
 o.cfgvalue = function(self, section)
-    return string.format([[
-        <input type="button" class="btn cbi-button cbi-button-apply" onclick="ManualSubscribeAll()" value="%s" />]],
+	return string.format([[
+		<input type="button" class="btn cbi-button cbi-button-apply" onclick="ManualSubscribeAll()" value="%s" />]],
 	 translate("Manual subscription All"))
 end
 
@@ -210,8 +210,8 @@ end
 o = s:option(DummyValue, "_update", translate("Manual subscription"))
 o.rawhtml = true
 o.cfgvalue = function(self, section)
-    return string.format([[
-        <input type="button" class="btn cbi-button cbi-button-apply" onclick="ManualSubscribe('%s')" value="%s" />]],
+	return string.format([[
+		<input type="button" class="btn cbi-button cbi-button-apply" onclick="ManualSubscribe('%s')" value="%s" />]],
 	section, translate("Manual subscription"))
 end
 

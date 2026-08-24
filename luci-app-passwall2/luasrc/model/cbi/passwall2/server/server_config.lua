@@ -39,7 +39,7 @@ for filename in api.fs.dir(types_dir) do
 	table.insert(type_table, filename)
 end
 table.sort(type_table, function(a, b)
-    return a < b
+	return a < b
 end)
 
 for index, value in ipairs(type_table) do

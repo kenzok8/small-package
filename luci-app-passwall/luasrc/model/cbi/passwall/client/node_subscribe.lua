@@ -117,9 +117,9 @@ end
 o = s:option(DummyValue, "_update", translate("Manual subscription All"))
 o.rawhtml = true
 o.cfgvalue = function(self, section)
-    return string.format([[
-        <input type="button" class="btn cbi-button cbi-button-apply" onclick="ManualSubscribeAll()" value="%s" />]],
-	 translate("Manual subscription All"))
+	return string.format([[
+		<input type="button" class="btn cbi-button cbi-button-apply" onclick="ManualSubscribeAll()" value="%s" />]],
+		 translate("Manual subscription All"))
 end
 
 s = m:section(TypedSection, "subscribe_list", "", "<font color='red'>" .. translate("When adding a new subscription, please save and apply before manually subscribing. If you only change the subscription URL, you can subscribe manually, and the system will save it automatically.") .. "</font>")
@@ -215,9 +215,9 @@ end
 o = s:option(DummyValue, "_update", translate("Manual subscription"))
 o.rawhtml = true
 o.cfgvalue = function(self, section)
-    return string.format([[
-        <input type="button" class="btn cbi-button cbi-button-apply" onclick="ManualSubscribe('%s')" value="%s" />]],
-	section, translate("Manual subscription"))
+	return string.format([[
+		<input type="button" class="btn cbi-button cbi-button-apply" onclick="ManualSubscribe('%s')" value="%s" />]],
+		section, translate("Manual subscription"))
 end
 
 m:appendTemplate("/cbi/sortable", {sectiontype = s.sectiontype})

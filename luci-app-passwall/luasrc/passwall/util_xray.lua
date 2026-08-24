@@ -916,12 +916,12 @@ function gen_config(var)
 	if xray_settings.fragment == "1" then
 		local lengths, delays = {}, {}
 		api.trim(xray_settings.fragment_lengths):gsub("[^,]+", function(w)
-		    w = w:gsub("%s+", "")
-		    if w ~= "" then lengths[#lengths+1] = w end
+			w = w:gsub("%s+", "")
+			if w ~= "" then lengths[#lengths+1] = w end
 		end)
 		api.trim(xray_settings.fragment_delays):gsub("[^,]+", function(w)
-		    w = w:gsub("%s+", "")
-		    if w ~= "" then delays[#delays+1] = w end
+			w = w:gsub("%s+", "")
+			if w ~= "" then delays[#delays+1] = w end
 		end)
 		fragment_table = {
 			type = "fragment",

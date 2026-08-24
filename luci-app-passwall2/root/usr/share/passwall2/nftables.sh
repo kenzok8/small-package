@@ -891,7 +891,7 @@ add_firewall_rule() {
 
 del_firewall_rule() {
 	for nft in "dstnat" "srcnat" "nat_output" "mangle_prerouting" "mangle_output"; do
-        local handles=$(nft -a list chain $NFTABLE_NAME ${nft} 2>/dev/null | grep -E "PSW2_" | awk -F '# handle ' '{print$2}')
+		local handles=$(nft -a list chain $NFTABLE_NAME ${nft} 2>/dev/null | grep -E "PSW2_" | awk -F '# handle ' '{print$2}')
 		for handle in $handles; do
 			nft delete rule $NFTABLE_NAME ${nft} handle ${handle} 2>/dev/null
 		done

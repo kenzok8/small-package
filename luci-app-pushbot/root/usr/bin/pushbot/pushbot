@@ -97,7 +97,7 @@ function read_config(){
 	# ── 流量数据源探测（启动时判断一次，后续统一使用） ──
 	traffic_source="none"
 	# 外部调用（usage list/get）跳过探测，直接读缓存文件
-	if [ "$1" = "usage" ] && [ -f "${dir}traffic_source" ]; then
+	if [ "$SCRIPT_ARG" = "usage" ] && [ -f "${dir}traffic_source" ]; then
 		traffic_source=$(cat ${dir}traffic_source 2>/dev/null)
 		[ -z "$traffic_source" ] && traffic_source="none"
 	fi
@@ -584,11 +584,15 @@ function get_client_usage(){
 
 	if [ "$((`date +%s`-$get_client_usage_time))" -ge "$sleeptime" ] && [ "$sleeptime" -ge "10" ]; then
 		> ${dir}client_usage_aliases
+		local _now=$(date +%s)
 		for mac in $MACLIST; do
 			( ! cat ${dir}ipAddress|grep -q -i -w $mac|grep -v "^$"|sort -u|head -n1 ) && continue
 			echo "$mac" `usage get ${mac} bytes` >> ${dir}client_usage_aliases
 			[ -f "${dir}old_client_usage_aliases" ] && get_client_usage_bytes=`cat ${dir}old_client_usage_aliases|grep -i -w $mac|awk '{print $2}'|grep -v "^$"|sort -u|head -n1` || continue
 			[ -z "$get_client_usage_bytes" ] && get_client_usage_bytes="0"
+			# 上线首屏静默：设备在线时间不足 2 个检测周期，记录快照但不触发告警
+			local _up_ts=$(cat ${dir}ipAddress|grep -i -w ${mac}|awk '{print $4}'|grep -v "^$"|sort -u|head -n1)
+			[ ! -z "$_up_ts" ] && [ "$((_now - _up_ts))" -lt "$((sleeptime * 2))" ] && continue
 			if [ "$((`usage get ${mac} bytes`-$get_client_usage_bytes))" -ge "$client_usage_max" ]; then
 				local ip=`cat ${dir}ipAddress|grep -i -w $mac|awk '{print $1}'|grep -v "^$"|sort -u|head -n1`
 				local ip_name=`getname ${ip} ${mac}`
@@ -1444,9 +1448,9 @@ function login_send(){
 	local login_ip_list=`cat ${dir}web_failed|awk '{print $1}'|grep -v "^$"|sort -u|head -n1`
 	for login_ip in $login_ip_list; do
 		[ -z "$login_ip" ] && continue
-		# 本机地址硬保护：本机探测/回环即使失败也不拉黑
-		is_local_address "$login_ip" && continue
-		ip_in_whitelist "$login_ip" && continue
+			# 本机地址硬保护：本机探测/回环即使失败也不拉黑，清除记录避免阻塞队列
+		is_local_address "$login_ip" && { sed -i "/^${login_ip}$/d" ${dir}web_failed 2>/dev/null; continue; }
+		ip_in_whitelist "$login_ip" && { sed -i "/^${login_ip}$/d" ${dir}web_failed 2>/dev/null; continue; }
 		local web_login_sum=`cat ${dir}web_failed|grep -w "${login_ip}"|wc -l`
 		if [ -z "$login_max_num" ]; then
 			local login_max_num=5   # 未配置时默认 5 次失败触发拉黑，避免空值比较异常
@@ -1494,9 +1498,9 @@ function login_send(){
 	local login_ip_list=`cat ${dir}ssh_failed|awk '{print $1}'|grep -v "^$"|sort -u|head -n1`
 	for login_ip in $login_ip_list; do
 		[ -z "$login_ip" ] && continue
-		# 本机地址硬保护：本机探测/回环即使失败也不拉黑
-		is_local_address "$login_ip" && continue
-		ip_in_whitelist "$login_ip" && continue
+		# 本机地址硬保护：本机探测/回环即使失败也不拉黑，清除记录避免阻塞队列
+		is_local_address "$login_ip" && { sed -i "/^${login_ip}$/d" ${dir}ssh_failed 2>/dev/null; continue; }
+		ip_in_whitelist "$login_ip" && { sed -i "/^${login_ip}$/d" ${dir}ssh_failed 2>/dev/null; continue; }
 		local ssh_login_sum=`cat ${dir}ssh_failed|grep -w "${login_ip}"|wc -l`
 		if [ -z "$login_max_num" ]; then
 			local login_max_num=5   # 未配置时默认 5 次失败触发拉黑，避免空值比较异常
@@ -2183,6 +2187,9 @@ function send(){
 	fi
 	deltemp
 }
+
+# 保存脚本参数（函数内 $1 不继承调用者，需全局变量传递）
+SCRIPT_ARG="$1"
 
 # 初始化
 read_config

@@ -161,6 +161,7 @@ local function start()
 	end)
 	if firewall_num > 0 then
 		api.uci_save(uci, "firewall", true, true)
+		cmd("/etc/init.d/firewall reload >/dev/null 2>&1")
 	end
 end
 
@@ -176,6 +177,7 @@ local function stop()
 		end)
 		if num > 0 then
 			api.uci_save(uci, "firewall", true, true)
+			cmd("/etc/init.d/firewall reload >/dev/null 2>&1")
 		end
 	end
 	cmd(string.format("rm -rf %s %s", CONFIG_PATH, LOG_APP_FILE))
