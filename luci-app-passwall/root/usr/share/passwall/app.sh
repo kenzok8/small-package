@@ -519,8 +519,8 @@ run_socks() {
 
 start_global() {
 	[ -z "$NODE" ] && return 1
+
 	local type=$(echo $(config_n_get $NODE type) | tr 'A-Z' 'a-z')
-	[ -z "$type" ] && return 1
 
 	local config_file=${GLOBAL_ACL_PATH}/global.json
 	local log_file=${GLOBAL_ACL_PATH}/global.log
