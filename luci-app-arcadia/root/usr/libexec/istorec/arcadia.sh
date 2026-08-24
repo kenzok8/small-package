@@ -11,7 +11,7 @@ IMAGE_NAME='default'
 get_image() {
   IMAGE_NAME=`uci get arcadia.@arcadia[0].image 2>/dev/null`
   if [ -z "$IMAGE_NAME" -o "$IMAGE_NAME" == "default" ]; then
-      IMAGE_NAME="supermanito/arcadia:beta"
+      IMAGE_NAME="supermanito/arcadia"
   fi
 }
 
@@ -37,7 +37,7 @@ do_install_detail() {
 
   [ -z "$port" ] && port=5678
 
-  local cmd="docker run --restart=unless-stopped -d -v \"$config/config:/arcadia/config\" -v \"$config/log:/arcadia/log\" -v \"$config/scripts:/arcadia/scripts\" -v \"$config/repo:/arcadia/repo\" -v \"$config/raw:/arcadia/raw\" -v \"$config/tgbot:/arcadia/tgbot\" "
+  local cmd="docker run --restart=unless-stopped -d --cap-add SYS_PTRACE -v \"$config/config:/arcadia/config\" -v \"$config/log:/arcadia/log\" -v \"$config/scripts:/arcadia/scripts\" -v \"$config/repo:/arcadia/repo\" -v \"$config/raw:/arcadia/raw\" -v \"$config/tgbot:/arcadia/tgbot\" "
   if [ "$hostnet" = 1 ]; then
     cmd="$cmd\
     --dns=127.0.0.1 \

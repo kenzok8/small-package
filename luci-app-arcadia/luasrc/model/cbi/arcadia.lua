@@ -8,10 +8,9 @@ local m, s, o
 
 m = taskd.docker_map("arcadia", "arcadia", "/usr/libexec/istorec/arcadia.sh",
 	translate("Arcadia"),
-	translate("Arcadia one-stop code operation and maintenance platform.")
+	translate("Arcadia · One-Stop Code Automation & DevOps Platform.")
 		.. translate("Official website:") .. ' <a href=\"https://arcadia.cool\" target=\"_blank\">https://arcadia.cool</a>'
-		.. "<dl><dt>" .. translate("Arcadia is mainly aimed at scripting language programming and operation and maintenance, supports scheduled task scheduling, has a complete file system and underlying CLI command design, and is suitable for the development and operation and maintenance environment of small and medium-sized teams and individuals.") .. "</dt>"
-		.. "<dt>" .. translate("The project is based on TypeScript full-stack development and adopts many cutting-edge technologies. Vue + Vite is used on the front end, and Node.js + Express + Prisma ORM is used on the back end.") .. "</dt>"
+		.. "<dl><dt>" .. translate("Arcadia is designed for script-based programming and operations scenarios. It provides capabilities including scheduled task scheduling, multi-language code execution, a comprehensive file system, and well-designed underlying CLI commands. It is suitable for individual developers and small to medium-sized teams who seek to improve development and operations efficiency through automated scripting.") .. "</dt>"
 		.. "<dt>" .. translate("The initial username and password are 'useradmin' and 'passwd' respectively.") .. "</dt>"
 		.. "</dl>")
 
@@ -27,11 +26,11 @@ s.anonymous=true
 o = s:option(Value, "image", translate("Docker Image"))
 o.datatype = "string"
 o:value("", translate("Default"))
-o:value("supermanito/arcadia:beta", "supermanito/arcadia:beta")
-o:value("registry.cn-hangzhou.aliyuncs.com/supermanito/arcadia:beta", "registry.cn-hangzhou.aliyuncs.com/supermanito/arcadia:beta")
-o:value("docker.m.daocloud.io/supermanito/arcadia:beta", "docker.m.daocloud.io/supermanito/arcadia:beta")
-o:value("docker.1ms.run/supermanito/arcadia:beta", "docker.1ms.run/supermanito/arcadia:beta")
-o:value("docker.xuanyuan.me/supermanito/arcadia:beta", "docker.xuanyuan.me/supermanito/arcadia:beta")
+o:value("supermanito/arcadia", "supermanito/arcadia")
+o:value("registry.cn-hangzhou.aliyuncs.com/supermanito/arcadia", "registry.cn-hangzhou.aliyuncs.com/supermanito/arcadia")
+o:value("docker.m.daocloud.io/supermanito/arcadia", "docker.m.daocloud.io/supermanito/arcadia")
+o:value("docker.1ms.run/supermanito/arcadia", "docker.1ms.run/supermanito/arcadia")
+o:value("docker.xuanyuan.me/supermanito/arcadia", "docker.xuanyuan.me/supermanito/arcadia")
 
 o = s:option(Flag, "hostnet", translate("Host network"), translate("Arcadia running in host network, port is always 5678 if enabled"))
 o.default = 0

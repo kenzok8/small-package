@@ -4,17 +4,14 @@ msgstr "Content-Type: text/plain; charset=UTF-8"
 msgid "Official website:"
 msgstr "官方网站："
 
-msgid "Arcadia one-stop code operation and maintenance platform."
-msgstr "Arcadia 一站式代码运维平台。"
+msgid "Arcadia · One-Stop Code Automation & DevOps Platform."
+msgstr "Arcadia 一站式代码自动化运维平台。"
 
-msgid "Arcadia is mainly aimed at scripting language programming and operation and maintenance, supports scheduled task scheduling, has a complete file system and underlying CLI command design, and is suitable for the development and operation and maintenance environment of small and medium-sized teams and individuals."
-msgstr "Arcadia 主要面向于脚本语言编程与运维，支持定时任务调度，有着完善的文件系统和底层CLI命令设计，适用于中小型团队与个人的开发与运维环境。"
-
-msgid "The project is based on TypeScript full-stack development and adopts many cutting-edge technologies. Vue + Vite is used on the front end, and Node.js + Express + Prisma ORM is used on the back end."
-msgstr "项目基于 TypeScript 全栈开发，采用了众多前沿技术，前端使用 Vue + Vite，后端使用 Node.js + Express + Prisma ORM。"
+msgid "Arcadia is designed for script-based programming and operations scenarios. It provides capabilities including scheduled task scheduling, multi-language code execution, a comprehensive file system, and well-designed underlying CLI commands. It is suitable for individual developers and small to medium-sized teams who seek to improve development and operations efficiency through automated scripting."
+msgstr "Arcadia 平台面向脚本语言编程与运维场景，提供定时任务调度、多语言代码执行、完善的文件系统与底层 CLI 命令设计等能力，适用于希望借助自动化脚本提升开发运维效率的个人开发者与中小型团队。"
 
 msgid "The initial username and password are 'useradmin' and 'passwd' respectively."
-msgstr "初始的用户名和密码分别是'useradmin'和'passwd'。"
+msgstr "初始的用户名和密码分别是 'useradmin' 和 'passwd'。"
 
 msgid "Docker Image"
 msgstr "镜像"
