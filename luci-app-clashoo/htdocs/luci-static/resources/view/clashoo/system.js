@@ -5,6 +5,7 @@
 'require ui';
 'require poll';
 'require rpc';
+'require fs';
 'require tools.clashoo as clashoo';
 
 function getThemeClass() {
@@ -36,9 +37,13 @@ var callHostHints = rpc.declare({
   expect: { '': {} }
 });
 
-var callBackupExport = rpc.declare({ object: 'luci.clashoo', method: 'backup_export', expect: {} });
-var callBackupImport = rpc.declare({ object: 'luci.clashoo', method: 'backup_import', params: ['data'], expect: {} });
-var callBackupReset  = rpc.declare({ object: 'luci.clashoo', method: 'backup_reset',  expect: {} });
+var callBackupExportPrepare = rpc.declare({ object: 'luci.clashoo', method: 'backup_export_prepare', expect: {} });
+var callBackupExportCleanup = rpc.declare({ object: 'luci.clashoo', method: 'backup_export_cleanup', params: ['path'], expect: {} });
+var callBackupImportPrepare = rpc.declare({ object: 'luci.clashoo', method: 'backup_import_prepare', expect: {} });
+var callBackupImportChunk = rpc.declare({ object: 'luci.clashoo', method: 'backup_import_chunk', params: ['path', 'offset', 'data'], expect: {} });
+var callBackupImportCleanup = rpc.declare({ object: 'luci.clashoo', method: 'backup_import_cleanup', params: ['path'], expect: {} });
+var callBackupImportFile = rpc.declare({ object: 'luci.clashoo', method: 'backup_import_file', params: ['name', 'path'], expect: {} });
+var callBackupReset = rpc.declare({ object: 'luci.clashoo', method: 'backup_reset', expect: {} });
 
 var CSS = [
   '.cl-wrap{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}',
@@ -407,6 +412,48 @@ function rememberTab(key, id) {
     window.location.hash = id;
 }
 
+function readBackupSliceBase64(file, start, end) {
+  return new Promise(function (resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var result = String(reader.result || '');
+      var comma = result.indexOf(',');
+      if (comma < 0)
+        reject(new Error(_("Unable to read backup file")));
+      else
+        resolve(result.substring(comma + 1));
+    };
+    reader.onerror = function () {
+      reject(reader.error || new Error(_("Unable to read backup file")));
+    };
+    reader.readAsDataURL(file.slice(start, end));
+  });
+}
+
+function uploadBackupChunks(file, path) {
+  var offset = 0;
+  var chunkSize = 32 * 1024;
+
+  function next() {
+    if (offset >= file.size)
+      return Promise.resolve();
+    var end = Math.min(offset + chunkSize, file.size);
+    var expected = end;
+    return readBackupSliceBase64(file, offset, end)
+      .then(function (data) { return callBackupImportChunk(path, offset, data); })
+      .then(function (r) {
+        if (!r || !r.success)
+          throw new Error((r && r.message) || _("Upload failed"));
+        if (parseInt(r.offset, 10) !== expected)
+          throw new Error(_("Upload offset mismatch"));
+        offset = expected;
+        return next();
+      });
+  }
+
+  return next();
+}
+
 return view.extend({
   _tab:    'kernel',
   _logTab: 'plugin',
@@ -566,16 +613,9 @@ return view.extend({
     this._refreshComponentUpdatePanel(listEl, logEl, false);
   },
 
-  /* 备份与还原：折腾内核/配置前的兜底。导出当前配置为 JSON 文件随时可导入还原；
+  /* 备份与还原：折腾内核/配置前的兜底。导出当前配置为压缩包，避免 RPC 大包限制；
      还原默认配置则把 UCI 设置重置为出厂值（订阅/配置文件保留）。仅含配置，不含内核。 */
   _buildBackupPanel: function (container) {
-    function stamp() {
-      var d = new Date();
-      function p(n) { return (n < 10 ? '0' : '') + n; }
-      return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) +
-             '-' + p(d.getHours()) + p(d.getMinutes());
-    }
-
     var exportBtn = E('button', { 'class': 'btn cbi-button cbi-button-neutral' }, _("Export Backup"));
     exportBtn.addEventListener('click', function (ev) {
       ev.preventDefault();
@@ -583,56 +623,82 @@ return view.extend({
       var orig = exportBtn.textContent;
       exportBtn.textContent = _("Exporting…");
       var done = function () { exportBtn.disabled = false; exportBtn.textContent = orig; };
-      callBackupExport().then(function (r) {
-        done();
+      var exportPath = '';
+      callBackupExportPrepare().then(function (r) {
         if (!r || !r.success) {
-          clashoo.toast(_("Export failed: ") + ((r && r.message) || _("Unknown error")), { kind: 'err' });
-          return;
+          throw new Error((r && r.message) || _("Unknown error"));
         }
-        var text = JSON.stringify({ manifest: r.manifest, files: r.files || {} }, null, 2);
-        var url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
-        var a = E('a', { href: url, download: 'clashoo-backup-' + stamp() + '.json' });
+        exportPath = r.path;
+        return fs.read_direct(r.path, 'blob').then(function (blob) {
+          return { blob: blob, filename: r.filename || 'clashoo-backup.tar.gz' };
+        });
+      }).then(function (download) {
+        var url = URL.createObjectURL(download.blob);
+        var a = E('a', { href: url, download: download.filename });
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-        var n = 0; if (r.files) for (var k in r.files) n++;
-        clashoo.toast(_("Backup exported (") + n + _(" files)"), { kind: 'ok' });
+        clashoo.toast(_("Backup exported"), { kind: 'ok' });
       }).catch(function (e) {
-        done();
         clashoo.toast(_("Export failed: ") + (e.message || e), { kind: 'err' });
+      }).finally(function () {
+        done();
+        if (exportPath)
+          callBackupExportCleanup(exportPath).catch(function () {});
       });
     });
 
-    var fileInput = E('input', {
-      type: 'file', accept: '.json,application/json', style: 'display:none'
-    });
-    fileInput.addEventListener('change', function (ev) {
-      var file = ev.target.files && ev.target.files[0];
-      if (!file) return;
-      if (!confirm(_("Importing will overwrite all current configuration and settings with the backup. Existing subscriptions/configuration files will be replaced. Continue?"))) {
-        fileInput.value = '';
-        return;
-      }
-      var reader = new FileReader();
-      reader.onload = function (e) {
-        callBackupImport(e.target.result).then(function (r) {
-          fileInput.value = '';
-          if (r && r.success)
-            clashoo.toast(r.message || _("Backup restored, restarting service"), { kind: 'ok' });
-          else
-            clashoo.toast(_("Import failed: ") + ((r && r.message) || _("Unknown error")), { kind: 'err' });
-        }).catch(function (err) {
-          fileInput.value = '';
-          clashoo.toast(_("Import failed: ") + (err.message || err), { kind: 'err' });
-        });
-      };
-      reader.readAsText(file);
-    });
+    var importInput = E('input', { type: 'file', accept: '.tar.gz,.json', style: 'display:none' });
     var importBtn = E('button', { 'class': 'btn cbi-button cbi-button-neutral' }, _("Import Restore"));
     importBtn.addEventListener('click', function (ev) {
       ev.preventDefault();
-      fileInput.click();
+      importInput.value = '';
+      importInput.click();
+    });
+    importInput.addEventListener('change', function () {
+      var file = importInput.files && importInput.files[0];
+      if (!file)
+        return;
+      var lower = String(file.name || '').toLowerCase();
+      var maxSize = /\.json$/.test(lower) ? 8 * 1024 * 1024
+        : /\.tar\.gz$/.test(lower) ? 32 * 1024 * 1024 : 0;
+      if (!maxSize) {
+        clashoo.toast(_("Import failed: ") + _("Only .tar.gz and legacy .json backup files are supported"), { kind: 'err' });
+        importInput.value = '';
+        return;
+      }
+      if (file.size > maxSize) {
+        clashoo.toast(_("Import failed: ") + _("Backup file is too large"), { kind: 'err' });
+        importInput.value = '';
+        return;
+      }
+      if (!confirm(_("Importing will overwrite all current configuration and settings with the backup. Existing subscriptions/configuration files will be replaced. Continue?"))) {
+        importInput.value = '';
+        return;
+      }
+      importBtn.disabled = true;
+      var uploadPath = '';
+      callBackupImportPrepare().then(function (r) {
+        if (!r || !r.success)
+          throw new Error((r && r.message) || _("Unknown error"));
+        uploadPath = r.path;
+        return uploadBackupChunks(file, uploadPath);
+      }).then(function () {
+        return callBackupImportFile(file.name, uploadPath);
+      }).then(function (r) {
+        if (r && r.success)
+          clashoo.toast(r.message || _("Backup restored, restarting service"), { kind: 'ok' });
+        else
+          throw new Error((r && r.message) || _("Unknown error"));
+      }).catch(function (err) {
+        clashoo.toast(_("Import failed: ") + (err.message || err), { kind: 'err' });
+      }).finally(function () {
+        if (uploadPath)
+          callBackupImportCleanup(uploadPath).catch(function () {});
+        importBtn.disabled = false;
+        importInput.value = '';
+      });
     });
 
     var resetBtn = E('button', { 'class': 'btn cbi-button cbi-button-negative' }, _("Restore Defaults"));
@@ -661,11 +727,15 @@ return view.extend({
         E('div', { 'class': 'cl-component-head' }, [
           E('div', {}, [
             E('h4', {}, _("Backup and Restore")),
-            E('div', { 'class': 'cl-component-sub' },
-              _("Export a backup before changing cores or configuration, so it can be restored if needed. Includes configuration and settings only, not cores."))
+            E('div', { 'class': 'cl-component-sub' }, [
+              _("Export a backup before changing cores or configuration, so it can be restored if needed. Includes configuration and settings only, not cores."),
+              E('br'),
+              E('strong', {}, _("Backup files contain subscription and node credentials. Store them securely."))
+            ])
           ])
         ]),
-        E('div', { 'class': 'cl-backup-actions' }, [exportBtn, importBtn, resetBtn, fileInput])
+        importInput,
+        E('div', { 'class': 'cl-backup-actions' }, [exportBtn, importBtn, resetBtn])
       ])
     ]));
   },

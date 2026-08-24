@@ -74,7 +74,6 @@ o = s:option(Value, "udp_no_redir_ports", translate("UDP No Redir Ports"),
 o.default = "disable"
 o:value("disable", translate("No patterns are used"))
 o:value("1:65535", translate("All"))
-o:value("1:52,54:442,444:65535", translatef("Forward only %s", "53, 443"))
 o.validate = port_validate
 
 ---- TCP Proxy Drop Ports

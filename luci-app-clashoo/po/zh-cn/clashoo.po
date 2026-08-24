@@ -186,8 +186,17 @@ msgstr "后端核心"
 msgid "Backup and Restore"
 msgstr "备份与还原"
 
+msgid "Backup file is too large"
+msgstr "备份文件过大"
+
+msgid "Backup exported"
+msgstr "备份已导出"
+
 msgid "Backup exported ("
 msgstr "备份已导出（"
+
+msgid "Backup files contain subscription and node credentials. Store them securely."
+msgstr "备份文件包含订阅和节点凭据，请妥善保管。"
 
 msgid "Backup restored, restarting service"
 msgstr "已还原备份，正在重启服务"
@@ -888,6 +897,9 @@ msgstr "关闭"
 msgid "Only subscriptions with recorded source URLs are overwritten; no duplicate files are created."
 msgstr "仅覆盖已记录来源链接的订阅，不会生成重复文件。"
 
+msgid "Only .tar.gz and legacy .json backup files are supported"
+msgstr "仅支持 .tar.gz 和旧版 .json 备份文件"
+
 msgid "Open Dashboard"
 msgstr "打开面板"
 
@@ -1452,6 +1464,9 @@ msgstr "正在更新全部订阅…"
 msgid "Updating…"
 msgstr "更新中…"
 
+msgid "Unable to read backup file"
+msgstr "无法读取备份文件"
+
 msgid "Upload"
 msgstr "上传"
 
@@ -1463,6 +1478,9 @@ msgstr "上传失败"
 
 msgid "Upload failed: "
 msgstr "上传失败: "
+
+msgid "Upload offset mismatch"
+msgstr "上传偏移不匹配"
 
 msgid "Upload JSON Configuration"
 msgstr "上传 JSON 配置"

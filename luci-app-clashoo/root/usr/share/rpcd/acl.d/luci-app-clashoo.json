@@ -1,7 +1,11 @@
 {
 	"luci-app-clashoo": {
-		"description": "Grant UCI access for luci-app-clashoo",
+		"description": "Grant access for luci-app-clashoo",
 		"read": {
+			"cgi-io": [ "download" ],
+			"file": {
+				"/tmp/clashoo-backup/export.*": [ "read" ]
+			},
 			"uci": [ "clashoo" ],
 			"ubus": {
 				"luci.clashoo": [ "*" ]

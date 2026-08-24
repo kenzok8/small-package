@@ -845,9 +845,6 @@ msgstr "常用的"
 msgid "Only Web"
 msgstr "仅网页"
 
-msgid "Forward only %s"
-msgstr "仅转发 %s 端口"
-
 msgid "default"
 msgstr "默认"
 

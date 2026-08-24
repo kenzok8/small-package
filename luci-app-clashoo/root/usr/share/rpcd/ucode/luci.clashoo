@@ -58,6 +58,16 @@ const COMPONENT_UPDATE_STATE_FILE = '/tmp/clashoo_component_update_state';
 const SUBSCRIPTION_UPDATE_SCRIPT = '/usr/share/clashoo/update/subscription_update.sh';
 const SUBSCRIPTION_UPDATE_STATUS_FILE = '/usr/share/clashbackup/subscription_update.status';
 const SUBSCRIPTION_UPDATE_LOCK_DIR = '/tmp/clashoo_subscription_update.lock';
+const BACKUP_TMP_DIR = '/tmp/clashoo-backup';
+const BACKUP_IMPORT_LOCK_DIR = BACKUP_TMP_DIR + '/import.lock';
+const BACKUP_IMPORT_OWNER_FILE = BACKUP_IMPORT_LOCK_DIR + '/path';
+const BACKUP_JSON_ROLLBACK_FILE = BACKUP_TMP_DIR + '/json-rollback.tar.gz';
+const BACKUP_ARCHIVE_SCRIPT = '/usr/share/clashoo/rpc/backup_archive.sh';
+const BACKUP_MAX_ARCHIVE_SIZE = 32 * 1024 * 1024;
+const BACKUP_MAX_JSON_SIZE = 8 * 1024 * 1024;
+const BACKUP_MAX_CHUNK_SIZE = 40 * 1024;
+const BACKUP_MAX_CHUNK_BASE64_SIZE = 55000;
+const BACKUP_MAX_ENTRIES = 2048;
 
 function uci_get(pkg, sec, opt) {
 let c = cursor();
@@ -67,6 +77,57 @@ return c.get(pkg, sec, opt) || '';
 
 function shell_quote(s) {
 return "'" + replace(s || '', /'/g, "'\\''") + "'";
+}
+
+function backup_tmp_ready() {
+return system('sh ' + shell_quote(BACKUP_ARCHIVE_SCRIPT) +
+	' prepare >/dev/null 2>&1') == 0;
+}
+
+function safe_backup_temp_path(path, kind) {
+if (kind != 'import' && kind != 'export') return '';
+let prefix = BACKUP_TMP_DIR + '/' + kind + '.';
+if (substr(path || '', 0, length(prefix)) != prefix) return '';
+let suffix = substr(path, length(prefix));
+if (length(suffix) != 6 || match(suffix, /[^A-Za-z0-9]/)) return '';
+return path;
+}
+
+function safe_backup_upload_path(path) {
+return safe_backup_temp_path(path, 'import');
+}
+
+function safe_backup_export_path(path) {
+return safe_backup_temp_path(path, 'export');
+}
+
+function new_backup_temp_path(kind) {
+if (kind != 'import' && kind != 'export') return '';
+let command = kind == 'import' ? 'new-upload' : 'new-export';
+let pp = popen('sh ' + shell_quote(BACKUP_ARCHIVE_SCRIPT) + ' ' + command + ' 2>/dev/null');
+if (!pp) return '';
+let path = trim(pp.read('all'));
+pp.close();
+return safe_backup_temp_path(path, kind);
+}
+
+function active_backup_upload(path) {
+return !!path && trim(readfile(BACKUP_IMPORT_OWNER_FILE) || '') == path;
+}
+
+function refresh_backup_upload(path) {
+return active_backup_upload(path) &&
+	writefile(BACKUP_IMPORT_OWNER_FILE, path + '\n') !== null;
+}
+
+function release_backup_upload(path) {
+if (!path) return;
+unlink(path);
+unlink(path + '.result');
+if (active_backup_upload(path)) {
+	unlink(BACKUP_IMPORT_OWNER_FILE);
+	system('rmdir ' + shell_quote(BACKUP_IMPORT_LOCK_DIR) + ' >/dev/null 2>&1');
+}
 }
 
 function subscription_update_status_data() {
@@ -1801,6 +1862,134 @@ function migrate_singbox(cfg) {
   }
 
   return cfg;
+}
+
+function restore_backup_json_locked(raw) {
+let rollback_ready = false;
+try {
+if (!raw) return { success: false, message: '备份内容为空' };
+if (length(raw) > BACKUP_MAX_JSON_SIZE)
+	return { success: false, message: '旧版 JSON 备份超过 8MB' };
+let obj = null;
+try { obj = json(raw); } catch (e) { obj = null; }
+if (type(obj) != 'object')
+	return { success: false, message: '备份文件格式错误，无法解析' };
+let manifest = obj.manifest;
+if (type(manifest) != 'object' || manifest.marker != 'clashoo-backup-v1')
+	return { success: false, message: '这不是有效的 clashoo 备份文件' };
+let files = obj.files;
+if (type(files) != 'object')
+	return { success: false, message: '备份文件缺少配置数据' };
+
+let BACKUP_DIR_MAP = {
+	'config/sub':     '/usr/share/clashoo/config/sub',
+	'config/upload':  '/usr/share/clashoo/config/upload',
+	'config/custom':  '/usr/share/clashoo/config/custom',
+	'config/singbox': SINGBOX_DIR,
+	'templates':      TEMPLATE_USER_DIR
+};
+let BACKUP_FIXED_MAP = {
+	'uci':                         '/etc/config/clashoo',
+	'meta/confit_list.conf':       LIST_FILE,
+	'meta/template_bindings.conf': TEMPLATE_BIND_FILE
+};
+
+let plan = [];
+let entry_count = 0;
+for (let rel in files) {
+	entry_count++;
+	if (entry_count > BACKUP_MAX_ENTRIES)
+		return { success: false, message: '备份文件条目超过 2048 个' };
+	let content = files[rel];
+	if (type(content) != 'string')
+		return { success: false, message: '备份文件含非法数据项: ' + rel };
+	if (BACKUP_FIXED_MAP[rel]) {
+		push(plan, { path: BACKUP_FIXED_MAP[rel], content: content });
+		continue;
+	}
+	let slash = rindex(rel, '/');
+	if (slash < 0)
+		return { success: false, message: '备份文件含未知数据项: ' + rel };
+	let prefix = substr(rel, 0, slash);
+	let fname  = substr(rel, slash + 1);
+	let dir = BACKUP_DIR_MAP[prefix];
+	if (!dir)
+		return { success: false, message: '备份文件含未知数据项: ' + rel };
+	if (!fname || safe_name(fname) != fname)
+		return { success: false, message: '备份文件含非法文件名: ' + rel };
+	push(plan, { path: dir + '/' + fname, content: content });
+}
+
+unlink(BACKUP_JSON_ROLLBACK_FILE);
+if (system('sh ' + shell_quote(BACKUP_ARCHIVE_SCRIPT) + ' export ' +
+	shell_quote(BACKUP_JSON_ROLLBACK_FILE) + ' >/dev/null 2>&1') != 0) {
+	unlink(BACKUP_JSON_ROLLBACK_FILE);
+	return { success: false, message: '无法创建还原前安全快照，未修改当前配置' };
+}
+rollback_ready = true;
+
+let apply_error = '';
+for (let prefix in BACKUP_DIR_MAP) {
+	let d = BACKUP_DIR_MAP[prefix];
+	if (system('mkdir -p ' + shell_quote(d)) != 0 ||
+	    system('rm -f ' + shell_quote(d) + '/* >/dev/null 2>&1') != 0) {
+		apply_error = '无法清空配置目录: ' + d;
+		break;
+	}
+}
+let written = 0;
+for (let item in plan) {
+	if (apply_error) break;
+	let p = item.path;
+	let ps = rindex(p, '/');
+	if (ps > 0 && system('mkdir -p ' + shell_quote(substr(p, 0, ps))) != 0) {
+		apply_error = '无法创建配置目录: ' + p;
+		break;
+	}
+	if (writefile(p, item.content) === null) {
+		apply_error = '写入失败: ' + p;
+		break;
+	}
+	written++;
+}
+
+if (apply_error) {
+	let rollback_rc = system('sh ' + shell_quote(BACKUP_ARCHIVE_SCRIPT) + ' restore-held ' +
+		shell_quote(BACKUP_JSON_ROLLBACK_FILE) + ' >/dev/null 2>&1');
+	unlink(BACKUP_JSON_ROLLBACK_FILE);
+	rollback_ready = false;
+	return { success: false, message: apply_error +
+		(rollback_rc == 0 ? '；已回滚原配置' : '；自动回滚失败，请检查存储空间') };
+}
+
+unlink(BACKUP_JSON_ROLLBACK_FILE);
+rollback_ready = false;
+system('sh /usr/share/clashoo/rpc/rpc_async.sh restart >/dev/null 2>&1');
+return { success: true, restored: written,
+	message: '已还原 ' + written + ' 个文件，正在重启服务' };
+} catch (e) {
+if (rollback_ready) {
+	system('sh ' + shell_quote(BACKUP_ARCHIVE_SCRIPT) + ' restore-held ' +
+		shell_quote(BACKUP_JSON_ROLLBACK_FILE) + ' >/dev/null 2>&1');
+	unlink(BACKUP_JSON_ROLLBACK_FILE);
+}
+return { success: false, message: '导入失败: ' + e };
+}
+}
+
+function restore_backup_json(raw) {
+if (!backup_tmp_ready())
+	return { success: false, message: '备份临时目录不安全或无法创建' };
+if (system('sh ' + shell_quote(BACKUP_ARCHIVE_SCRIPT) + ' lock >/dev/null 2>&1') != 0)
+	return { success: false, message: '已有备份正在还原，请稍后重试' };
+let result = null;
+try {
+	result = restore_backup_json_locked(raw);
+} catch (e) {
+	result = { success: false, message: '导入失败: ' + e };
+}
+system('sh ' + shell_quote(BACKUP_ARCHIVE_SCRIPT) + ' unlock >/dev/null 2>&1');
+return result;
 }
 
 const methods = {
@@ -4100,81 +4289,214 @@ return { success: false, message: '导出失败: ' + e };
 }
 },
 
+/* 大文件备份走 cgi-download：每次导出使用独立的随机路径。 */
+backup_export_prepare: {
+call: function() {
+let export_path = '';
+let result_path = '';
+try {
+	if (!backup_tmp_ready())
+		return { success: false, message: '备份临时目录不安全或无法创建' };
+	export_path = new_backup_temp_path('export');
+	if (!export_path)
+		return { success: false, message: '无法创建导出临时文件' };
+	result_path = export_path + '.result';
+	let cmd = 'sh ' + shell_quote(BACKUP_ARCHIVE_SCRIPT) +
+		' export ' + shell_quote(export_path) +
+		' >' + shell_quote(result_path) + ' 2>&1';
+	if (system(cmd) != 0) {
+		let detail = trim(readfile(result_path) || '');
+		unlink(export_path);
+		unlink(result_path);
+		return { success: false, message: detail || '生成备份文件失败' };
+	}
+	let info = stat(export_path);
+	if (!info || info.type != 'file' || info.size <= 0) {
+		unlink(export_path);
+		unlink(result_path);
+		return { success: false, message: '生成的备份文件无效' };
+	}
+	let stamp = '';
+	let dp = popen('date +%Y%m%d-%H%M 2>/dev/null');
+	if (dp) { stamp = trim(dp.read('all')); dp.close(); }
+	unlink(result_path);
+	return {
+		success: true,
+		path: export_path,
+		filename: 'clashoo-backup-' + (stamp || now_epoch_sec()) + '.tar.gz',
+		size: info.size
+	};
+} catch (e) {
+	if (export_path) unlink(export_path);
+	if (result_path) unlink(result_path);
+	return { success: false, message: '导出失败: ' + e };
+}
+}
+},
+
+backup_export_cleanup: {
+args: { path: 'path' },
+call: function(req) {
+	if (!backup_tmp_ready())
+		return { success: false };
+	let export_path = safe_backup_export_path(req.args?.path || '');
+	if (!export_path)
+		return { success: false };
+	unlink(export_path);
+	unlink(export_path + '.result');
+	return { success: true };
+}
+},
+
+backup_import_prepare: {
+call: function() {
+	if (!backup_tmp_ready())
+		return { success: false, message: '备份临时目录不安全或无法创建' };
+	let path = new_backup_temp_path('import');
+	return path
+		? { success: true, path: path }
+		: { success: false, message: '无法创建上传临时文件' };
+}
+},
+
+/* 分块写入在 RPC 后端逐次校验偏移和总大小，超限时立即删除。 */
+backup_import_chunk: {
+args: { path: 'path', offset: 0, data: 'data' },
+call: function(req) {
+try {
+	let upload_path = safe_backup_upload_path(req.args?.path || '');
+	let offset = int(req.args?.offset || 0);
+	let encoded = req.args?.data || '';
+	if (!upload_path || offset < 0)
+		return { success: false, message: '上传参数无效' };
+	if (!backup_tmp_ready())
+		return { success: false, message: '备份临时目录不安全或无法访问' };
+	if (!active_backup_upload(upload_path)) {
+		release_backup_upload(upload_path);
+		return { success: false, message: '上传会话已失效，请重新选择备份文件' };
+	}
+	let info = stat(upload_path);
+	if (!info || info.type != 'file' || info.size != offset)
+		return { success: false, message: '上传偏移不匹配，请重新选择备份文件' };
+	if (!encoded || length(encoded) > BACKUP_MAX_CHUNK_BASE64_SIZE) {
+		release_backup_upload(upload_path);
+		return { success: false, message: '上传分块过大' };
+	}
+	let chunk = null;
+	try { chunk = b64dec(encoded); } catch (e) { chunk = null; }
+	if (chunk === null || length(chunk) <= 0 || length(chunk) > BACKUP_MAX_CHUNK_SIZE) {
+		release_backup_upload(upload_path);
+		return { success: false, message: '上传分块无效' };
+	}
+	let next_offset = offset + length(chunk);
+	if (next_offset > BACKUP_MAX_ARCHIVE_SIZE) {
+		release_backup_upload(upload_path);
+		return { success: false, message: '备份文件超过 32MB' };
+	}
+	let fp = open(upload_path, 'a');
+	if (!fp) {
+		release_backup_upload(upload_path);
+		return { success: false, message: '无法写入上传临时文件' };
+	}
+	let written = fp.write(chunk);
+	fp.close();
+	if (written != length(chunk)) {
+		release_backup_upload(upload_path);
+		return { success: false, message: '上传分块写入不完整' };
+	}
+	if (!refresh_backup_upload(upload_path)) {
+		release_backup_upload(upload_path);
+		return { success: false, message: '无法刷新上传会话' };
+	}
+	return { success: true, offset: next_offset };
+} catch (e) {
+	let upload_path = safe_backup_upload_path(req.args?.path || '');
+	if (upload_path && backup_tmp_ready()) release_backup_upload(upload_path);
+	return { success: false, message: '上传失败: ' + e };
+}
+}
+},
+
+backup_import_cleanup: {
+args: { path: 'path' },
+call: function(req) {
+	if (!backup_tmp_ready())
+		return { success: false };
+	let upload_path = safe_backup_upload_path(req.args?.path || '');
+	if (!upload_path)
+		return { success: false };
+	release_backup_upload(upload_path);
+	return { success: true };
+}
+},
+
 /* 备份导入：用备份快照覆盖当前配置。先全量校验路径白名单（拒绝目录遍历），
    通过后才清空目标目录并重写，最后异步重启服务。 */
 backup_import: {
 args: { data: 'data' },
 call: function(req) {
+	return restore_backup_json(req.args?.data || '');
+}
+},
+
+/* 上传内容落到后端生成的随机临时路径，前端不能指定其他位置。 */
+backup_import_file: {
+args: { name: 'name', path: 'path' },
+call: function(req) {
 try {
-let raw = req.args?.data || '';
-if (!raw) return { success: false, message: '备份内容为空' };
-let obj = null;
-try { obj = json(raw); } catch (e) { obj = null; }
-if (type(obj) != 'object')
-	return { success: false, message: '备份文件格式错误，无法解析' };
-let manifest = obj.manifest;
-if (type(manifest) != 'object' || manifest.marker != 'clashoo-backup-v1')
-	return { success: false, message: '这不是有效的 clashoo 备份文件' };
-let files = obj.files;
-if (type(files) != 'object')
-	return { success: false, message: '备份文件缺少配置数据' };
-
-let BACKUP_DIR_MAP = {
-	'config/sub':     '/usr/share/clashoo/config/sub',
-	'config/upload':  '/usr/share/clashoo/config/upload',
-	'config/custom':  '/usr/share/clashoo/config/custom',
-	'config/singbox': SINGBOX_DIR,
-	'templates':      TEMPLATE_USER_DIR
-};
-let BACKUP_FIXED_MAP = {
-	'uci':                         '/etc/config/clashoo',
-	'meta/confit_list.conf':       LIST_FILE,
-	'meta/template_bindings.conf': TEMPLATE_BIND_FILE
-};
-
-let plan = [];
-for (let rel in files) {
-	let content = files[rel];
-	if (type(content) != 'string')
-		return { success: false, message: '备份文件含非法数据项: ' + rel };
-	if (BACKUP_FIXED_MAP[rel]) {
-		push(plan, { path: BACKUP_FIXED_MAP[rel], content: content });
-		continue;
+	let name = req.args?.name || '';
+	let upload_path = safe_backup_upload_path(req.args?.path || '');
+	if (!upload_path)
+		return { success: false, message: '上传临时路径无效' };
+	if (!backup_tmp_ready())
+		return { success: false, message: '备份临时目录不安全或无法访问' };
+	if (!active_backup_upload(upload_path)) {
+		release_backup_upload(upload_path);
+		return { success: false, message: '上传会话已失效，请重新选择备份文件' };
 	}
-	let slash = rindex(rel, '/');
-	if (slash < 0)
-		return { success: false, message: '备份文件含未知数据项: ' + rel };
-	let prefix = substr(rel, 0, slash);
-	let fname  = substr(rel, slash + 1);
-	let dir = BACKUP_DIR_MAP[prefix];
-	if (!dir)
-		return { success: false, message: '备份文件含未知数据项: ' + rel };
-	if (!fname || safe_name(fname) != fname)
-		return { success: false, message: '备份文件含非法文件名: ' + rel };
-	push(plan, { path: dir + '/' + fname, content: content });
-}
+	let info = stat(upload_path);
+	if (!info || info.type != 'file') {
+		release_backup_upload(upload_path);
+		return { success: false, message: '没有找到已上传的备份文件' };
+	}
+	if (info.size <= 0) {
+		release_backup_upload(upload_path);
+		return { success: false, message: '备份文件为空' };
+	}
 
-/* 校验全部通过后才动手：清空目录类目标，再按计划重写（快照覆盖语义） */
-for (let prefix in BACKUP_DIR_MAP) {
-	let d = BACKUP_DIR_MAP[prefix];
-	system('mkdir -p ' + shell_quote(d));
-	system('rm -f ' + shell_quote(d) + '/* >/dev/null 2>&1');
-}
-let written = 0;
-for (let item in plan) {
-	let p = item.path;
-	let ps = rindex(p, '/');
-	if (ps > 0) system('mkdir -p ' + shell_quote(substr(p, 0, ps)));
-	if (writefile(p, item.content) === null)
-		return { success: false, message: '写入失败: ' + p };
-	written++;
-}
+	if (match(lc(name), /\.json$/)) {
+		if (info.size > BACKUP_MAX_JSON_SIZE) {
+			release_backup_upload(upload_path);
+			return { success: false, message: '旧版 JSON 备份超过 8MB' };
+		}
+		let raw = readfile(upload_path);
+		release_backup_upload(upload_path);
+		if (raw === null)
+			return { success: false, message: '读取备份文件失败' };
+		return restore_backup_json(raw);
+	}
 
-system('sh /usr/share/clashoo/rpc/rpc_async.sh restart >/dev/null 2>&1');
-return { success: true, restored: written,
-         message: '已还原 ' + written + ' 个文件，正在重启服务' };
+	if (!match(lc(name), /\.tar\.gz$/)) {
+		release_backup_upload(upload_path);
+		return { success: false, message: '仅支持 .tar.gz 和旧版 .json 备份文件' };
+	}
+
+	let result_path = upload_path + '.result';
+	unlink(result_path);
+	let cmd = 'sh ' + shell_quote(BACKUP_ARCHIVE_SCRIPT) +
+		' restore ' + shell_quote(upload_path) +
+		' >' + shell_quote(result_path) + ' 2>&1';
+	let rc = system(cmd);
+	let detail = trim(readfile(result_path) || '');
+	release_backup_upload(upload_path);
+	if (rc != 0)
+		return { success: false, message: detail || '还原备份失败' };
+	system('sh /usr/share/clashoo/rpc/rpc_async.sh restart >/dev/null 2>&1');
+	return { success: true, message: '备份已还原，正在重启服务' };
 } catch (e) {
-return { success: false, message: '导入失败: ' + e };
+	let upload_path = safe_backup_upload_path(req.args?.path || '');
+	if (upload_path && backup_tmp_ready()) release_backup_upload(upload_path);
+	return { success: false, message: '导入失败: ' + e };
 }
 }
 },

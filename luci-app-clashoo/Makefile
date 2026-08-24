@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-clashoo
 PKG_VERSION:=1.30.0
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 PKG_MAINTAINER:=kenzok8
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
@@ -36,6 +36,7 @@ endef
 define Package/luci-app-clashoo/install
 	$(INSTALL_DIR) $(1)/usr/share/rpcd/ucode
 	$(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
+	$(INSTALL_DIR) $(1)/usr/share/clashoo/rpc
 	$(INSTALL_DIR) $(1)/usr/share/luci/menu.d
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/tools
 	$(INSTALL_DIR) $(1)/www/luci-static/resources/view/clashoo
@@ -44,6 +45,7 @@ define Package/luci-app-clashoo/install
 	$(INSTALL_DIR) $(1)/www/luci-static/clashoo
 
 	$(INSTALL_BIN) ./root/usr/share/rpcd/ucode/luci.clashoo $(1)/usr/share/rpcd/ucode/luci.clashoo
+	$(INSTALL_BIN) ./root/usr/share/clashoo/rpc/backup_archive.sh $(1)/usr/share/clashoo/rpc/backup_archive.sh
 	$(INSTALL_DATA) ./root/usr/share/rpcd/acl.d/luci-app-clashoo.json $(1)/usr/share/rpcd/acl.d/luci-app-clashoo.json
 	$(INSTALL_DATA) ./root/usr/share/luci/menu.d/luci-app-clashoo.json $(1)/usr/share/luci/menu.d/luci-app-clashoo.json
 
