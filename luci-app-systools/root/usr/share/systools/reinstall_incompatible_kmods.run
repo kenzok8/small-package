@@ -1,18 +1,33 @@
 #!/bin/sh
 # Copyright (C) 2025 jjm2473@gmail.com
 
-(
-	cd /usr/lib/opkg/info
-	grep -lm1 '^Version: 0.0.0-r1$' kmod-*.control 2>/dev/null | sed 's/.control$//'
-) > /tmp/incompat_kmods.txt
+APK=false
+[ -f /etc/apk/arch ] && APK=true
+
+if $APK; then
+	apk list --installed --manifest 'kmod-*' | grep ' 0.0.0-r1$' | cut -d' ' -f1 > /tmp/incompat_kmods.txt
+else
+	(
+		cd /usr/lib/opkg/info
+		grep -lm1 '^Version: 0.0.0-r1$' kmod-*.control 2>/dev/null | sed 's/.control$//'
+	) > /tmp/incompat_kmods.txt
+fi
 
 if [ -s /tmp/incompat_kmods.txt ]; then
 	echo "The following incompatible kernel modules were found:"
 	cat /tmp/incompat_kmods.txt
 	echo "=====END====="
-	echo "Try installing from opkg"
-	opkg update
-	opkg install $(cat /tmp/incompat_kmods.txt)
+	if $APK; then
+		echo "Try installing from apk"
+		# doing `apk fix` twice, because the first time install the version 0.0.0-r1, which is always not exist, but it's side effect mark the package uninstalled, the second time will install the latest version.
+		# `apk add --force-reinstall` works too, but it will change world file, which may not be desired.
+		apk fix -r $(cat /tmp/incompat_kmods.txt) >/dev/null 2>&1
+		apk fix -r $(cat /tmp/incompat_kmods.txt)
+	else
+		echo "Try installing from opkg"
+		opkg update
+		opkg install $(cat /tmp/incompat_kmods.txt)
+	fi
 	rm -f /tmp/incompat_kmods.txt
 	echo "If you encounter network problems, please try again"
 	echo "If it says some packages are unknown, it may be because they have been removed. Just ignore it."

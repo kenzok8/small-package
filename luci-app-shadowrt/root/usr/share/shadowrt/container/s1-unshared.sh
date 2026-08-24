@@ -117,6 +117,7 @@ sh -c 'mount --bind /tmp/proconly.txt /proc/$$/mounts && exec mount -o rw,remoun
 rm -f /tmp/proconly.txt
 
 
+# Apk system means that openwrt version is newer than 24.10, there is not such issue on newer openwrt version, so we just check opkg system.
 PROCD_VER=`grep -o '^Version: [0-9]*' /rom/usr/lib/opkg/info/procd.control | cut -d' ' -f2`
 if [ -n "$PROCD_VER" -a "$PROCD_VER" -lt 2024 ]; then
 	# workaround procd < 2024 infite loop on resolving rootfs type, e.g. `ubus call system board`

@@ -23,6 +23,7 @@ for file in \
 	/lib/board \
 	/sbin/ujail \
 	/usr/lib/opkg/info/luci-app-oaf.control \
+	/lib/apk/packages/luci-app-oaf.list \
 	/usr/libexec/fan-control \
 	/usr/sbin/sandbox
 do
