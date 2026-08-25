@@ -88,6 +88,9 @@ end
 o = s:option(Flag, "mnt", translate("Share /mnt"), translate("Share host's /mnt directory"))
 o.default = 0
 
+o = s:option(Flag, "dind", translate("Enable Docker-in-Docker"), translate("Enable Docker in this instance"))
+o.default = 0
+
 o = s:option(ListValue, "proto", translate("IP Protocol"), translate("Select how this instance gets its IP address"))
 o:value("static", translate("Static address"))
 o:value("dhcp", translate("DHCP client"))

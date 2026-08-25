@@ -8,6 +8,7 @@ do_install() {
 	local id="`uci get shadowrt.@instance[0].id 2>/dev/null`"
 	local data="`uci get shadowrt.@instance[0].data 2>/dev/null`"
 	local mnt="`uci get shadowrt.@instance[0].mnt 2>/dev/null`"
+	local dind="`uci get shadowrt.@instance[0].dind 2>/dev/null`"
 	local proto=`uci get shadowrt.@instance[0].proto 2>/dev/null`
 	local address=`uci get shadowrt.@instance[0].address 2>/dev/null`
 	local gateway=`uci get shadowrt.@instance[0].gateway 2>/dev/null`
@@ -47,7 +48,7 @@ do_install() {
 		echo "WARNING: $data/$id already exists, may use old data." >&2
 	fi
 
-	local config="{\"id\":\"$id\",\"data\":\"$data\",\"mnt\":\"$mnt\",\"proto\":\"$proto\",\"address\":\"$address\",\"gateway\":\"$gateway\",\"dns\":\"$dns\",\"dhcp_server\":\"$dhcp_server\",\"ports\":\"$ports\"}"
+	local config="{\"id\":\"$id\",\"data\":\"$data\",\"mnt\":\"$mnt\",\"dind\":\"$dind\",\"proto\":\"$proto\",\"address\":\"$address\",\"gateway\":\"$gateway\",\"dns\":\"$dns\",\"dhcp_server\":\"$dhcp_server\",\"ports\":\"$ports\"}"
 
 	local cmd="docker run --restart=unless-stopped -d \
 		--stop-signal SIGINT \
@@ -56,7 +57,6 @@ do_install() {
 		--security-opt apparmor=unconfined \
 		--cap-add=SYS_ADMIN \
 		--cap-add=SYS_CHROOT \
-		--cap-drop=MKNOD \
 		--cap-add=LEASE \
 		--cap-add=SETGID \
 		--cap-add=SETUID \
@@ -74,6 +74,12 @@ do_install() {
 		--hostname '$id' \
 		--label 'com.shadowrt.config=$config' \
 		-v '$data/$id/overlay:/overlay:rw' "
+
+	if [ "$dind" = "1" -o "$dind" = "on" ]; then
+		cmd="$cmd -e DIND=on"
+	else
+		cmd="$cmd --cap-drop=MKNOD"
+	fi
 
 	[ -n "$proto" ] && cmd="$cmd -e IP_PROTO=$proto"
 	if [ "$proto" = "static" ]; then
@@ -143,6 +149,7 @@ do_clone() {
 		echo "$config_json" | jsonfilter -e 'id=$.id' \
 			-e 'data=$.data' \
 			-e 'mnt=$.mnt' \
+			-e 'dind=$.dind' \
 			-e 'proto=$.proto' \
 			-e 'address=$.address' \
 			-e 'gateway=$.gateway' \
@@ -182,11 +189,12 @@ do_reset_network() {
 				/bin/config_generate
 				/bin/sh -c ". /rom/etc/uci-defaults/zzz-dockerenv"
 				/bin/sh -c '. /rom/etc/uci-defaults/12_network-generate-ula'
+				/bin/sh -c '. /rom/etc/uci-defaults/14_network-generate-duid'
 				/etc/init.d/network restart
 				sleep 2
 			EOF
 		else
-			echo 'rm -f etc/uci-defaults/zzz-dockerenv etc/uci-defaults/12_network-generate-ula'
+			echo 'rm -f etc/uci-defaults/zzz-dockerenv etc/uci-defaults/12_network-generate-ula etc/uci-defaults/14_network-generate-duid'
 		fi
 	} | sh -c "$shell"
 }

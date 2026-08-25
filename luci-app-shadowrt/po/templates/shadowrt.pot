@@ -29,15 +29,15 @@ msgstr ""
 msgid "Copy/Edit"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:109
+#: luasrc/model/cbi/shadowrt/config.lua:112
 msgid "DHCP Server"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:93
+#: luasrc/model/cbi/shadowrt/config.lua:96
 msgid "DHCP client"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:105
+#: luasrc/model/cbi/shadowrt/config.lua:108
 msgid "DNS Servers"
 msgstr ""
 
@@ -55,8 +55,16 @@ msgid ""
 "ID in the same data directory will use this data)"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:109
+#: luasrc/model/cbi/shadowrt/config.lua:112
 msgid "Enable DHCP server on this instance"
+msgstr ""
+
+#: luasrc/model/cbi/shadowrt/config.lua:91
+msgid "Enable Docker in this instance"
+msgstr ""
+
+#: luasrc/model/cbi/shadowrt/config.lua:91
+msgid "Enable Docker-in-Docker"
 msgstr ""
 
 #: luasrc/view/shadowrt/status.htm:7
@@ -65,19 +73,19 @@ msgid ""
 "use the \"Stop\" button below."
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:96
+#: luasrc/model/cbi/shadowrt/config.lua:99
 msgid "Format: xxx.xxx.xxx.xxx/xx"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:101
+#: luasrc/model/cbi/shadowrt/config.lua:104
 msgid "Gateway"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:96
+#: luasrc/model/cbi/shadowrt/config.lua:99
 msgid "IP Address"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:91
+#: luasrc/model/cbi/shadowrt/config.lua:94
 msgid "IP Protocol"
 msgstr ""
 
@@ -97,7 +105,7 @@ msgstr ""
 msgid "Loading view…"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:105
+#: luasrc/model/cbi/shadowrt/config.lua:108
 msgid ""
 "Multiple DNS servers can be separated by spaces, e.g., '8.8.8.8 8.8.4.4'"
 msgstr ""
@@ -136,7 +144,7 @@ msgstr ""
 msgid "Running"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:91
+#: luasrc/model/cbi/shadowrt/config.lua:94
 msgid "Select how this instance gets its IP address"
 msgstr ""
 
@@ -181,7 +189,7 @@ msgstr ""
 msgid "Starting"
 msgstr ""
 
-#: luasrc/model/cbi/shadowrt/config.lua:92
+#: luasrc/model/cbi/shadowrt/config.lua:95
 msgid "Static address"
 msgstr ""
 

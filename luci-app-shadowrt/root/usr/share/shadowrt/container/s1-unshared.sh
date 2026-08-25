@@ -15,6 +15,8 @@ mount --make-private /overlay
 mount -t tmpfs -o ro,relatime tmpfs /sys/block
 mount -t tmpfs -o size=1M tmpfs /tmp
 
+[ "on" = "$DIND" ] && mount -o rw,remount /sys/fs/cgroup
+
 # make all private except /mnt
 mkdir -p $PATCHROM
 mount --bind / $PATCHROM
@@ -65,6 +67,9 @@ chroot $PATCHROM /tmp/shadowrt/s1-chroot-patchrom.sh
 umount $PATCHROM/tmp/shadowrt
 umount $PATCHROM/tmp
 rm -rf /tmp/tmp
+
+export -n DIND
+unset DIND
 
 set_default_ip()
 {
