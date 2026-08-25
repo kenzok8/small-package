@@ -1010,11 +1010,18 @@ function gen_config(var)
 	end
 
 	function get_node_by_id(node_id)
-		if not node_id or node_id == "" or node_id == "nil" then return nil end
-		local section = api.uci_get_c(node_id) or {}
+		local section
+		if type(node_id) == "table" then
+			section = node_id
+		elseif type(node_id) == "string" then
+			if node_id == "" or node_id == "nil" then return nil end
+			section = api.uci_get_c(node_id) or {}
+		else
+			return nil
+		end
 		if section[".type"] == "socks" then
-			local result = {
-				[".name"] = node_id,
+			return {
+				[".name"] = section[".name"],
 				remarks = "socks[%s]" % section.port,
 				type = "Xray",
 				protocol = "socks",
@@ -1023,7 +1030,6 @@ function gen_config(var)
 				transport = "tcp",
 				stream_security = "none"
 			}
-			return result
 		end
 		if section[".type"] == "nodes" then
 			return section
@@ -1269,12 +1275,7 @@ function gen_config(var)
 
 	function gen_outbound_get_tag(flag, node_id, tag, proxy_table)
 		if not node_id or node_id == "" or node_id == "nil" then return nil end
-		local node
-		if type(node_id) == "string" then
-			node = get_node_by_id(node_id)
-		elseif type(node_id) == "table" then
-			node = node_id
-		end
+		local node = get_node_by_id(node_id)
 		if not tag then tag = node[".name"] end
 		if node then
 			if proxy_table.chain_proxy == "1" or proxy_table.chain_proxy == "2" then

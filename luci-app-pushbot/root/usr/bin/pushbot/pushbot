@@ -93,33 +93,6 @@ function read_config(){
 	# ntfy 纯文本: 不支持表格/markdown, 强制非表格
 	( echo "${jsonpath}"|grep -q "ntfy" ) && table_enable=""
 	( echo "$lite_enable"|grep -q "content" ) && str_title_start="" && str_title_end="" && str_splitline="" && str_linefeed="" && str_tab=""
-
-	# ── 流量数据源探测（启动时判断一次，后续统一使用） ──
-	traffic_source="none"
-	# 外部调用（usage list/get）跳过探测，直接读缓存文件
-	if [ "$SCRIPT_ARG" = "usage" ] && [ -f "${dir}traffic_source" ]; then
-		traffic_source=$(cat ${dir}traffic_source 2>/dev/null)
-		[ -z "$traffic_source" ] && traffic_source="none"
-	fi
-	if [ "$traffic_source" = "none" ]; then
-		if command -v nlbw >/dev/null 2>&1 && [ -S /var/run/nlbwmon.sock ]; then
-			# 尝试 3 次查询 nlbw，任意一次能正常输出就算成功（全 0 也正常）
-			local _try
-			for _try in 1 2 3; do
-				local _nlbw_rows=$(nlbw -c csv -s, -q -n -g mac 2>/dev/null | awk -F',' 'NR>1 && $1!="mac" {n++} END{print n+0}')
-				[ "${_nlbw_rows:-0}" -gt "0" ] && traffic_source="nlbw" && break
-				sleep 1
-			done
-		fi
-		if [ "$traffic_source" = "none" ]; then
-			# nlbw 不可用或无数据，回落 wrtbwmon
-			if [ -f "/usr/sbin/wrtbwmon" ]; then
-				traffic_source="wrtbw"
-			fi
-		fi
-		echo "`date "+%Y-%m-%d %H:%M:%S"` 【初始化】流量数据源: ${traffic_source}" >> ${logfile}
-		echo "$traffic_source" > ${dir}traffic_source
-	fi
 }
 	
 	
@@ -2193,12 +2166,35 @@ SCRIPT_ARG="$1"
 
 # 初始化
 read_config
+
+# ── 流量数据源探测（主进程每次启动重新探测，外部调用读缓存） ──
+traffic_source="none"
+if [ "$1" = "usage" ]; then
+	# 外部调用：读缓存文件，不重新探测（避免启动延迟）
+	if [ -f "${dir}traffic_source" ]; then
+		traffic_source=$(cat ${dir}traffic_source 2>/dev/null)
+	fi
+else
+	# 主进程：重新探测（不 sleep，nlbw 立刻能返回数据就是 nlbw）
+	if command -v nlbw >/dev/null 2>&1 && [ -S /var/run/nlbwmon.sock ]; then
+		_nlbw_rows=$(nlbw -c csv -s, -q -n -g mac 2>/dev/null | awk -F',' 'NR>1 && $1!="mac" {n++} END{print n+0}')
+		[ "${_nlbw_rows:-0}" -gt "0" ] && traffic_source="nlbw"
+	fi
+	if [ "$traffic_source" = "none" ] && [ -f "/usr/sbin/wrtbwmon" ]; then
+		traffic_source="wrtbw"
+	fi
+	echo "$traffic_source" > ${dir}traffic_source
+fi
+# 仅主进程输出日志（外部调用 usage list/get 不输出，避免频繁刷屏）
+[ "$1" != "usage" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【初始化】流量数据源: ${traffic_source}" >> ${logfile}
+
 # 供外部查询流量(LuCI 在线设备表格):pushbot usage list / pushbot usage get <mac> [bytes]
 # 注意:必须放在 deltemp 之前,避免查询时误删主循环的 pushbot.lock
 if [ "$1" = "usage" ]; then
 	usage ${2} ${3} ${4}
 	exit
 fi
+
 deltemp
 pushbot_cron
 
