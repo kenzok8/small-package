@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Docker Manager">
+  <rect width="96" height="96" rx="18" fill="#111827"/>
+  <path fill="#60a5fa" d="M20 53h56c-1 13-11 23-26 23H38c-11 0-18-7-18-18v-5Z"/>
+  <rect x="25" y="36" width="10" height="10" rx="2" fill="#dbeafe"/>
+  <rect x="38" y="36" width="10" height="10" rx="2" fill="#dbeafe"/>
+  <rect x="51" y="36" width="10" height="10" rx="2" fill="#dbeafe"/>
+  <rect x="38" y="23" width="10" height="10" rx="2" fill="#dbeafe"/>
+  <rect x="51" y="23" width="10" height="10" rx="2" fill="#dbeafe"/>
+  <path fill="#93c5fd" d="M70 44c5-1 9-4 11-8 2 6-1 12-7 15l-4-7Z"/>
+</svg>
