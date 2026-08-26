@@ -1,0 +1,177 @@
+<%
+	local util = require "luci.util"
+	local http = require "luci.http"
+	local disp = require "luci.dispatcher"
+	local fs = require "nixio.fs"
+	local uci = require 'luci.model.uci'.cursor()
+
+	local boardinfo = util.ubus("system", "board")
+
+	local node = disp.context.dispatched
+
+	http.prepare_content('text/html; charset=UTF-8');
+
+	local change_action
+	local path = luci.http.getenv("REQUEST_URI")
+	if (path == "/cgi-bin/luci" or path == "/cgi-bin/luci/") and fs.access('/etc/config/istorenas') then
+		change_action = uci:get_first('istorenas', 'login', 'landing_page')
+	end
+-%>
+<!DOCTYPE html>
+<html lang="<%=luci.i18n.context.lang%>">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>
+		<%=striptags( (boardinfo.hostname or "?") .. ( (node and node.title) and ' - ' .. translate(node.title) or '')) %>
+		- 登录</title>
+	<link rel="shortcut icon" href="/luci-static/istorenas-login/favicon.ico">
+	<style>
+		body {
+
+			margin: 0;
+			font-size: 14px;
+			font-family: v-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+			line-height: 1.6;
+			-webkit-text-size-adjust: 100%;
+			-webkit-tap-highlight-color: transparent;
+
+		}
+
+		body input {
+
+			font-family: inherit;
+			font-size: inherit;
+
+		}
+	</style>
+	<style>
+		.n-loading-bar-container {
+
+			z-index: 5999;
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			height: 2px;
+
+		}
+
+		.n-loading-bar-container.fade-in-transition-enter-active {
+			transition: all 0.3s cubic-bezier(.4, 0, .2, 1) !important;
+		}
+
+		.n-loading-bar-container.fade-in-transition-leave-active {
+			transition: all 0.8s cubic-bezier(.4, 0, .2, 1) !important;
+		}
+
+		.n-loading-bar-container.fade-in-transition-enter-from,
+		.n-loading-bar-container.fade-in-transition-leave-to {
+			opacity: 0;
+		}
+
+		.n-loading-bar-container.fade-in-transition-leave-from,
+		.n-loading-bar-container.fade-in-transition-enter-to {
+			opacity: 1;
+		}
+
+		.n-loading-bar-container .n-loading-bar {
+
+			width: 100%;
+			transition:
+				max-width 4s linear,
+				background .2s linear;
+			height: var(--n-height);
+
+		}
+
+		.n-loading-bar-container .n-loading-bar.n-loading-bar--starting {
+
+			background: var(--n-color-loading);
+
+		}
+
+		.n-loading-bar-container .n-loading-bar.n-loading-bar--finishing {
+
+			background: var(--n-color-loading);
+			transition:
+				max-width .2s linear,
+				background .2s linear;
+
+		}
+
+		.n-loading-bar-container .n-loading-bar.n-loading-bar--error {
+
+			background: var(--n-color-error);
+			transition:
+				max-width .2s linear,
+				background .2s linear;
+
+		}
+	</style>
+	<style>
+		.errorbox {
+			color: red;
+			margin-bottom: 10px;
+		}
+	</style>
+	<link rel="stylesheet" crossorigin="" href="/luci-static/istorenas-login/style.css<%# ?v=PKG_VERSION %>">
+</head>
+
+<body>
+<!-- header | sysauth -->
+
+	<div id="app">
+		<div class="n-config-provider" id="main">
+			<div></div>
+			<div class="bg" style="background-image: url(&quot;/luci-static/istorenas-login/background.png<%# ?v=PKG_VERSION %>&quot;);"></div>
+			<div class="section_login">
+				<div class="section_body">
+					<div class="title">
+						<div class="logo">
+							<div class="logopath_1"><svg width="16" height="64" viewBox="0 0 16 64" fill="none"
+									xmlns="http://www.w3.org/2000/svg">
+									<path
+										d="M7.99984 0C3.5818 0 0 3.5818 0 7.99984C0 12.4186 3.58145 16 8.00018 16C12.4182 16 16 12.4182 16 8.00018C16 3.58145 12.4186 0 7.99984 0Z"
+										fill="#0060FF"></path>
+									<path
+										d="M7.99984 19.9999C3.5818 19.9999 0 23.5817 0 27.9998V47.9997C0 56.8365 7.1636 64.0001 16 63.9997V28.0001C16 23.5814 12.4186 19.9999 7.99984 19.9999Z"
+										fill="#0060FF"></path>
+								</svg></div>
+							<div class="logopath_2"><svg width="16" height="64" viewBox="0 0 16 64" fill="none"
+									xmlns="http://www.w3.org/2000/svg">
+									<path
+										d="M15.9997 0C7.1636 0 0 7.1636 0 15.9997V64.0001C8.83676 64.0001 16 56.8368 16 48L15.9997 0Z"
+										fill="#0060FF"></path>
+								</svg></div>
+							<div class="logopath_3"><svg width="16" height="64" viewBox="0 0 16 64" fill="none"
+									xmlns="http://www.w3.org/2000/svg">
+									<path
+										d="M0 0C8.83676 0 16 7.16325 16 16V35.0001C16 39.4181 12.4182 42.9999 8.00018 42.9999C3.5818 43.0002 0 39.4184 0 34.9997V0Z"
+										fill="#0060FF"></path>
+								</svg></div>
+						</div><span class="text">iStoreOS&nbsp;登录</span>
+					</div>
+					<form class="form_login" method="post" 
+					<%- if change_action then %> action="<%=pcdata(change_action)%>" <% end -%>
+					>
+						<div class="errorbox"
+							<%- if fuser then %> style="opacity:1;"
+							<% else %> style="opacity:0;" <% end -%>
+							><%:Invalid username and/or password! Please try again.%></div>
+
+						<label class="label">账号</label>
+						<input class="input accout" name="luci_username" placeholder="请输入您的账号" required value="root">
+						<label class="label">密码</label>
+						<input class="input password" name="luci_password" type="password" placeholder="请输入您的密码" autofocus>
+						<button class="btn_login" type="submit">登&nbsp;录</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+<!-- sysauth | footer -->
+
+</body>
+</html>

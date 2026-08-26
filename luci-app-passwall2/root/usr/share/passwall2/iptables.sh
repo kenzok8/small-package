@@ -399,7 +399,7 @@ load_acl() {
 				$ipt_tmp -A PSW2 $(comment "$remarks") ${_ipt_source} -p tcp -j RETURN
 				[ "$_ipv4" != "1" ] && $ip6t_m -A PSW2 $(comment "$remarks") ${_ipt_source} -p tcp -j RETURN 2>/dev/null
 
-				[ -z "$no_tcp_proxy" ] && [ -n "$redir_port" ] && {
+				[ -z "$no_udp_proxy" ] && [ -n "$redir_port" ] && {
 					msg2="${msg}$(i18n "Use the %s node [%s]" "UDP" "${node_remarks}")(TPROXY:${redir_port})"
 
 					$ipt_m -A PSW2 $(comment "$remarks") -p udp ${_ipt_source} -d $FAKE_IP -j PSW2_RULE
@@ -544,10 +544,10 @@ load_acl() {
 			$ip6t_m -I OUTPUT $(comment "mangle-OUTPUT-PSW2") -o lo -j RETURN
 			insert_rule_before "$ip6t_m" "OUTPUT" "mwan3" "$(comment mangle-OUTPUT-PSW2) -m mark --mark ${FWMARK} -j RETURN"
 
-			$ipt_m -A PSW2 -p tcp --dport 53 -j ACCEPT
-			$ipt_m -A PSW2 -p udp --dport 53 -j ACCEPT
-			$ip6t_m -A PSW2 -p tcp --dport 53 -j ACCEPT
-			$ip6t_m -A PSW2 -p udp --dport 53 -j ACCEPT
+			$ipt_m -I PSW2 -p tcp --dport 53 -j ACCEPT
+			$ipt_m -I PSW2 -p udp --dport 53 -j ACCEPT
+			$ip6t_m -I PSW2 -p tcp --dport 53 -j ACCEPT
+			$ip6t_m -I PSW2 -p udp --dport 53 -j ACCEPT
 
 			unset msg msg2 comment_l
 		}

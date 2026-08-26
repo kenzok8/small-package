@@ -24,6 +24,14 @@
 
 ## 📝 Changelog
 
+- **2026-08-26** (v5.16): WiFi monitoring upgrade, main version 5.15 → 5.16
+  - Added: **WiFi connect/offline alerts** — push notification when a device connects or stays offline for >2 minutes; suppresses false alerts from roaming and brief signal drops
+  - Added: **WiFi auth failure alerts** — push notification when failed connection attempts reach a threshold, showing failure count and MAC (MTK closed-source drivers show count only)
+  - Added: **Traffic source display on online devices page** — shows whether nlbwmon or wrtbwmon is active
+  - Improved: **Default traffic source changed to nlbwmon** — auto-detects available sources, prioritizes nlbwmon (better performance, more accurate data)
+  - Improved: **MAC filter rework** — changed from single-select to multi-toggle mode; ignore/notify-only lists are mutually exclusive, interface filter independent
+  - Improved: **Abnormal traffic detection** — suppresses alerts when device has been online for less than 2 detection cycles (prevents false alarms on first boot)
+  - Tested platforms: open-source mac80211 driver (x86), MTK closed-source driver (MT798x)
 - **2026-08-18** (v5.14): Main version 5.13 → 5.14
   - Added: **Real-time IPv4 / IPv6 address preview** — switching between "Via interface" or "Via URL" instantly shows the fetched public address, auto-refreshing on interface or API list changes; results are color-coded for at-a-glance clarity
   - Improved: **Enhanced URL fetching** — automatically rotates through working APIs, clearly reports "failed to obtain" on total failure, supports specifying the egress interface for multi-WAN setups, presets tested & expanded (9 each for v4 / v6), one-click "restore defaults"

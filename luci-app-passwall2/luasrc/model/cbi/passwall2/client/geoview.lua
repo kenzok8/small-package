@@ -1,6 +1,5 @@
 local api = require "luci.passwall2.api"
 local fs = api.fs
-local uci = api.uci
 
 local geo_dir = (api.uci_get_c("@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
 local geosite_path = geo_dir .. "/geosite.dat"

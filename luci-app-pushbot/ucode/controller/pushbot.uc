@@ -125,7 +125,7 @@ return {
 	 *   url 模式：随机起点换列表内其他 URL 最多 3 次，带 --interface 适配多 WAN
 	 * 返回纯文本（获取失败时返回翻译后的失败文案） */
 	act_get_ip: function() {
-		let type = http.formvalue("type") ?? "4";
+		let ip_type = http.formvalue("type") ?? "4";
 		let mode = http.formvalue("mode") ?? "iface";
 		let iface = http.formvalue("iface") ?? "";
 		let urls  = http.formvalue("url")  ?? "";
@@ -137,7 +137,7 @@ return {
 
 		/* 私网/链路本地判断 */
 		function is_private(ip) {
-			if (type == "4") {
+			if (ip_type == "4") {
 				let m = match(ip, /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
 				if (!m) return true;
 				let a = +m[1], b = +m[2];
@@ -167,7 +167,7 @@ return {
 
 		let ip = "";
 		if (mode == "iface" && iface != "") {
-			if (type == "4") {
+			if (ip_type == "4") {
 				ip = run("/sbin/ifconfig " + sq(iface) +
 					" | awk '/inet addr/ {print $2}' | awk -F: '{print $2}'" +
 					" | grep -oE '[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}' | head -n1");
@@ -266,7 +266,7 @@ return {
 			"cpuload_enable","cpuload","temperature_enable","temperature",
 			"client_usage","client_usage_max","client_usage_disturb",
 			"pushbot_ipv4","ipv4_interface","pushbot_ipv6","ipv6_interface",
-			"web_logged","ssh_logged","web_login_failed","ssh_login_failed",
+			"web_logged","ssh_logged","web_login_failed","ssh_login_failed","wifi_connected","wifi_auth_failed",
 			"login_max_num","web_login_black","ip_black_timeout",
 			"up_timeout","down_timeout","timeout_retry_count","thread_num",
 			"soc_code","pve_host","pve_port","err_enable","err_sheep_enable",
@@ -345,6 +345,29 @@ return {
 			pf.close();
 		}
 		sysinfo.ifaces = ifaces;
+
+		/* wireless interfaces detection */
+		let wifi_ifs = [];
+		let wifi_seen = {};
+		/* 方式1: iw dev（开源驱动 mac80211） */
+		let wf = popen("iw dev 2>/dev/null | grep Interface | awk '{print $2}'", "r");
+		if (wf) {
+			for (let line = wf.read("line"); line; line = wf.read("line")) {
+				let n = replace(line, /\s+/, "");
+				if (length(n) > 0 && !wifi_seen[n]) { wifi_seen[n] = true; push(wifi_ifs, n); }
+			}
+			wf.close();
+		}
+		/* 方式2: 遍历 /sys/class/net 下带 wireless 的接口（MTK 闭源等 iw 无输出的平台） */
+		let wf2 = popen("ls /sys/class/net/*/wireless 2>/dev/null | sed 's|/sys/class/net/||;s|/wireless||;s/:$//'", "r");
+		if (wf2) {
+			for (let line = wf2.read("line"); line; line = wf2.read("line")) {
+				let n = replace(line, /\s+/, "");
+				if (length(n) > 0 && !wifi_seen[n]) { wifi_seen[n] = true; push(wifi_ifs, n); }
+			}
+			wf2.close();
+		}
+		sysinfo.wifi_ifs = wifi_ifs;
 
 		/* IP hints from arp */
 		let ip_hints = [];

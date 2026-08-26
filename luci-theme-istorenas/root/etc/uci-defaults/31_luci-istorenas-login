@@ -1,0 +1,12 @@
+#!/bin/sh
+
+if [ "$PKG_UPGRADE" != 1 ]; then
+	uci get luci.themes.iStoreNAS >/dev/null 2>&1 || \
+	uci batch <<-EOF
+		set luci.themes.iStoreNAS=/luci-static/istorenas
+		set luci.main.mediaurlbase=/luci-static/istorenas
+		commit luci
+	EOF
+fi
+
+exit 0

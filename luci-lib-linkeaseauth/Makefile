@@ -1,17 +1,12 @@
-#
-# Copyright (C) 2026 iStoreOS
-#
 # This is free software, licensed under the Apache License, Version 2.0 .
-#
 
 include $(TOPDIR)/rules.mk
 
-LUCI_TITLE:=LuCI support for linkeasefull
-LUCI_DEPENDS:=+linkeasefull +luci-lib-linkeaseauth +luci-lib-linkeasefile
+LUCI_TITLE:=LuCI shared OpenWrt auth bridge for LinkEase apps
 LUCI_PKGARCH:=all
 
 PKG_VERSION:=1.0.0
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 include $(TOPDIR)/feeds/luci/luci.mk
 

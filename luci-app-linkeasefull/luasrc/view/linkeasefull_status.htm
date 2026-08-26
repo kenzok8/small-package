@@ -10,9 +10,7 @@
 					? window.location.protocol + "//" + window.location.host + "/apps/"
 					: "http://" + lanHost + ":" + (st.full_port || 19290) + "/apps/";
 				var legacyUrl = "http://" + window.location.hostname + ":" + (st.legacy_port || 8897) + "/";
-				var overallStatus = st.conflict
-					? '<br/><em style=\"color:red\"><%:LinkEase is enabled. Please disable LinkEase before starting LinkEase Full.%></em>'
-					: st.running
+				var overallStatus = st.running
 					? '<br/><em style=\"color:green\"><%:The LinkEase Full service is running.%></em>'
 					: '<br/><em style=\"color:red\"><%:The LinkEase Full service is not running.%></em>';
 				tb.innerHTML = overallStatus;

@@ -1449,17 +1449,9 @@ function set_default_cbi()
 			if not config then config = c_config end
 			default_init(self, config, ...)
 			self.api = require "luci.passwall2.api"
-		end
-		if is_js_luci() == true then
-			local default_parse = Map.parse
-			function Map.parse(self, ...)
-				apply_redirect(self)
-				local old = self.on_after_save
-				self.on_after_save = function(self)
-					if old then old(self) end
-					self:set("@global[0]", "timestamp", os.time())
-				end
-				return default_parse(self, ...)
+			if is_js_luci() == true then
+				self.apply_on_parse = false
+				self.is_js_luci = true
 			end
 		end
 		function Map.foreach(self, stype, func)
@@ -1700,34 +1692,6 @@ function format_go_time(input, default)
 	if m > 0 then result = result .. m .. "m" end
 	if s > 0 or result == "" then result = result .. s .. "s" end
 	return result
-end
-
-function apply_redirect(m)
-	local tmp_uci_file = "/etc/config/" .. c_config .. "_redirect"
-	if m.redirect and m.redirect ~= "" then
-		if fs.access(tmp_uci_file) then
-			local redirect
-			for line in io.lines(tmp_uci_file) do
-				redirect = line:match("option%s+url%s+['\"]([^'\"]+)['\"]")
-				if redirect and redirect ~= "" then break end
-			end
-			if redirect and redirect ~= "" then
-				sys.call("/bin/rm -f " .. tmp_uci_file)
-				luci.http.redirect(redirect)
-			end
-		else
-			fs.writefile(tmp_uci_file, "config redirect\n")
-		end
-		m.on_after_save = function(self)
-			local redirect = self.redirect
-			if redirect and redirect ~= "" then
-				uci:set(c_config .. "_redirect", "@redirect[0]", "url", redirect)
-			end
-		end
-	else
-		uci:revert(c_config .. "_redirect")
-		sys.call("/bin/rm -f " .. tmp_uci_file)
-	end
 end
 
 function match_node_rule(name, rule)

@@ -930,6 +930,12 @@ msgstr "宽带重拨"
 msgid "WAN status"
 msgstr "WAN状态"
 
+msgid "WiFi auth failure alert"
+msgstr "WiFi认证失败提醒"
+
+msgid "WiFi connect alert"
+msgstr "WiFi连接提醒"
+
 msgid "Watchlist"
 msgstr "关注列表"
 
