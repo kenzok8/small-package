@@ -34,6 +34,7 @@ o = s:option(Flag, "firewall_allow", translate("Firewall Allow"))
 o.default = "0"
 
 o = s:option(Value, "firewall_allow_src", translate("Source zone"))
+o.rmempty = false
 o.nocreate = true
 o.allowany = true
 o.default = "wan"

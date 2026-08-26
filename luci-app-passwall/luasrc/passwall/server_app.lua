@@ -44,11 +44,10 @@ local function remove_firewall_rules(defer_commit)
 	end)
 	if #to_delete > 0 then
 		for _, name in ipairs(to_delete) do
-			cmd("uci delete firewall." .. name)
+			uci:delete("firewall", name)
 		end
 		if not defer_commit then
-			api.sh_uci_commit("firewall")
-			cmd("/etc/init.d/firewall reload >/dev/null 2>&1")
+			api.uci_save(uci, "firewall", true, true)
 		end
 		return true
 	end
@@ -176,17 +175,16 @@ local function start()
 			if firewall_allow == "1" then
 				firewall_num = firewall_num + 1
 				local uid = CONFIG .. "_" .. id
-				cmd("uci set firewall." .. uid .. "=rule")
-				api.sh_uci_set("firewall", uid, "name", uid)
-				api.sh_uci_set("firewall", uid, "src", server.firewall_allow_src or "wan")
-				api.sh_uci_set("firewall", uid, "dest_port", port)
-				api.sh_uci_set("firewall", uid, "target", "ACCEPT")
+				uci:section("firewall", "rule", uid)
+				uci:set("firewall", uid, "name", uid)
+				uci:set("firewall", uid, "src", server.firewall_allow_src or "wan")
+				uci:set("firewall", uid, "dest_port", port)
+				uci:set("firewall", uid, "target", "ACCEPT")
 			end
 		end
 	end)
 	if firewall_num > 0 or fw_changed then
-		api.sh_uci_commit("firewall")
-		cmd("/etc/init.d/firewall reload >/dev/null 2>&1")
+		api.uci_save(uci, "firewall", true, true)
 	end
 end
 

@@ -473,6 +473,7 @@ o.default = "0"
 o:depends({ custom = false })
 
 o = s:option(Value, "firewall_allow_src", translate("Source zone"))
+o.rmempty = false
 o.nocreate = true
 o.allowany = true
 o.default = "wan"
