@@ -52,10 +52,6 @@ is_persistent_data_root_parent() {
 	return 0
 }
 
-linkease_enabled() {
-	[ "$(uci -q get linkease.@linkease[0].enabled 2>/dev/null)" = "1" ]
-}
-
 read_config() {
 	section="$1"
 	config_get_bool enabled "$section" enabled 1
@@ -80,10 +76,6 @@ start_service() {
 	config_foreach read_config linkeasefull
 	[ "$enabled" = "1" ] || return 1
 	[ -x "$PROG" ] || return 1
-	if linkease_enabled; then
-		echo "linkeasefull: linkease is enabled; please disable linkease before starting linkeasefull" >&2
-		return 1
-	fi
 
 	rm -f "$LOCAL_API"
 	if [ -n "$data_root_parent" ]; then

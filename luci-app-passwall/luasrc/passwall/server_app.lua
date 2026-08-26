@@ -39,6 +39,24 @@ local function start()
 	if enabled == nil or enabled == 0 then
 		return
 	end
+
+	-- ==================== 启动前：清理所有旧防火墙规则 ====================
+    local fw_changed = false
+    local to_delete = {}
+    uci:foreach("firewall", "rule", function(rule)
+        if rule[".name"]:find(CONFIG) == 1 then
+            table.insert(to_delete, rule[".name"])
+        end
+    end)
+    for _, name in ipairs(to_delete) do
+        cmd("uci delete firewall." .. name)
+        fw_changed = true
+    end
+    if fw_changed then
+        cmd("uci commit firewall")
+    end
+    -- =========================================================================
+
 	cmd(string.format("mkdir -p %s %s", CONFIG_PATH, TMP_BIN_PATH))
 	cmd(string.format("touch %s", LOG_APP_FILE))
 	local firewall_num = 0
@@ -151,16 +169,23 @@ local function start()
 			if firewall_allow == "1" then
 				firewall_num = firewall_num + 1
 				local uid = CONFIG .. "_" .. id
-				uci:section("firewall", "rule", uid)
-				uci:set("firewall", uid, "name", uid)
-				uci:set("firewall", uid, "src", server.firewall_allow_src or "wan")
-				uci:set("firewall", uid, "dest_port", port)
-				uci:set("firewall", uid, "target", "ACCEPT")
+				cmd("uci set firewall." .. uid .. "=rule")
+				cmd("uci set firewall." .. uid .. ".name='".. uid .."'")
+				cmd("uci set firewall." .. uid .. ".src='" .. (server.firewall_allow_src or "wan") .. "'")
+				cmd("uci set firewall." .. uid .. ".dest_port='" .. port .. "'")
+				cmd("uci set firewall." .. uid .. ".target='ACCEPT'")
+				-- uci:section("firewall", "rule", uid)
+				-- uci:set("firewall", uid, "name", uid)
+				-- uci:set("firewall", uid, "src", server.firewall_allow_src or "wan")
+				-- uci:set("firewall", uid, "dest_port", port)
+				-- uci:set("firewall", uid, "target", "ACCEPT")
+				
 			end
 		end
 	end)
-	if firewall_num > 0 then
-		api.uci_save(uci, "firewall", true, true)
+	if firewall_num > 0 or fw_changed then
+		-- api.uci_save(uci, "firewall", true, true)
+		cmd("uci commit firewall")
 		cmd("/etc/init.d/firewall reload >/dev/null 2>&1")
 	end
 end
@@ -168,17 +193,19 @@ end
 local function stop()
 	cmd(string.format("/bin/busybox top -bn1 | grep -v 'grep' | grep '%s/' | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1", CONFIG_PATH))
 	if true then
-		local num = 0
-		uci:foreach("firewall", "rule", function(rule)
-			if rule[".name"]:find(CONFIG) == 1 then
-				num = num + 1
-				uci:delete("firewall", rule[".name"])
-			end
-		end)
-		if num > 0 then
-			api.uci_save(uci, "firewall", true, true)
-			cmd("/etc/init.d/firewall reload >/dev/null 2>&1")
-		end
+		local to_delete = {}
+        uci:foreach("firewall", "rule", function(rule)
+            if rule[".name"]:find(CONFIG) == 1 then
+                table.insert(to_delete, rule[".name"])
+            end
+        end)
+        if #to_delete > 0 then
+            for _, name in ipairs(to_delete) do
+                cmd("uci delete firewall." .. name)
+            end
+            cmd("uci commit firewall")
+            cmd("/etc/init.d/firewall reload >/dev/null 2>&1")
+        end
 	end
 	cmd(string.format("rm -rf %s %s", CONFIG_PATH, LOG_APP_FILE))
 end

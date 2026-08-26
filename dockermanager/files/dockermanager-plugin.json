@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "dockermanager",
+  "name": "Docker Manager",
+  "icon": "logo.svg",
+  "staticRoot": "/usr/share/dockermanager/www",
+  "desktop": {
+    "mode": "module",
+    "entry": "desktop-entry.js",
+    "isolation": "shadow-dom"
+  },
+  "standalone": {
+    "entry": "index.html",
+    "basePath": "/apps/dockermanager/"
+  },
+  "backend": {
+    "type": "http",
+    "scheme": "http",
+    "host": "127.0.0.1",
+    "portFromUci": "dockermanager.@dockermanager[0].port",
+    "defaultPort": 8192,
+    "upstreamBasePath": "/apps/dockermanager/",
+    "apiPath": "api/",
+    "pathMode": "preserve"
+  },
+  "window": {
+    "width": 1180,
+    "height": 760,
+    "singleton": true
+  },
+  "capabilities": ["docker"],
+  "categories": ["system"]
+}

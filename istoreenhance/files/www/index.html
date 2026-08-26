@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KSpeeder</title>
+    <style>
+      html, body, #root {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      import { mount } from "./desktop-entry.js";
+
+      mount({
+        domElement: document.getElementById("root"),
+        context: {
+          basePath: "/apps/kspeeder/",
+          apiBase: "/apps/kspeeder/api/",
+          app: { id: "kspeeder", name: "KSpeeder", entry: "desktop-entry.js" },
+          window: { id: "standalone", title: "KSpeeder" },
+          theme: { mode: "light", variant: "" }
+        }
+      });
+    </script>
+  </body>
+</html>

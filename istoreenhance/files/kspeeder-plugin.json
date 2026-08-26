@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "kspeeder",
+  "name": "KSpeeder",
+  "icon": "logo.png",
+  "staticRoot": "/usr/share/kspeeder/www",
+  "desktop": {
+    "mode": "module",
+    "entry": "desktop-entry.js",
+    "isolation": "shadow-dom"
+  },
+  "standalone": {
+    "entry": "index.html",
+    "basePath": "/apps/kspeeder/",
+    "externalOpen": {
+      "enabled": true,
+      "label": "打开 KSpeeder 独立页面",
+      "scheme": "http",
+      "hostMode": "request-host",
+      "defaultPort": 5003,
+      "path": "/"
+    }
+  },
+  "backend": {
+    "type": "http",
+    "scheme": "http",
+    "host": "127.0.0.1",
+    "portFromUci": "istoreenhance.@istoreenhance[0].adminport",
+    "defaultPort": 5003,
+    "upstreamBasePath": "/apps/kspeeder/",
+    "apiPath": "api/",
+    "pathMode": "preserve"
+  },
+  "window": {
+    "width": 1040,
+    "height": 700,
+    "singleton": true
+  },
+  "capabilities": ["docker-acceleration", "registry-mirror", "cache"],
+  "categories": ["network", "docker"]
+}
