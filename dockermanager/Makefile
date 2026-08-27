@@ -26,7 +26,7 @@ define Package/$(PKG_NAME)
 	CATEGORY:=System
 	TITLE:=Docker Manager
 	URL:=https://github.com/linkease/linkease-docker-manager
-	DEPENDS:=+docker +dockerd +dockerd +ca-bundle +luci-lib-linkeaseauth
+	DEPENDS:=+docker +dockerd +dockerd +ca-bundle
 endef
 
 define Package/$(PKG_NAME)/description

@@ -1,0 +1,28 @@
+<script type="text/javascript">//<![CDATA[
+	XHR.poll(5, '<%=url("admin/services/dockermanager_status")%>', null,
+		function(x, st)
+		{
+			var tb = document.getElementById('dockermanager_status');
+			if (st && tb)
+			{
+				var status = st.running
+					? '<br/><em style=\"color:green\"><%:The Docker Manager service is running.%></em>'
+					: '<br/><em style=\"color:red\"><%:The Docker Manager service is not running.%></em>';
+				tb.innerHTML = status;
+
+				if (st.running)
+				{
+					tb.innerHTML = tb.innerHTML
+						+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Open Docker Manager%> \" onclick=\"window.open('<%=url("admin/services/dockermanager/open")%>')\"/>";
+				}
+			}
+		}
+	);
+//]]></script>
+
+<fieldset class="cbi-section">
+	<legend><%:Docker Manager Status%></legend>
+	<p id="dockermanager_status">
+		<em><%:Collecting data...%></em>
+	</p>
+</fieldset>

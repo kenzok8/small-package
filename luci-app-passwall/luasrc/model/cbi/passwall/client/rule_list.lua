@@ -1,16 +1,13 @@
 local api = require "luci.passwall.api"
 local fs = api.fs
 local sys = api.sys
-local uci = api.uci
 local datatypes = api.datatypes
-local path = string.format("/usr/share/%s/rules/", api.c_config)
-local gfwlist_path = "/usr/share/passwall/rules/gfwlist"
-local chnlist_path = "/usr/share/passwall/rules/chnlist"
-local chnroute_path = "/usr/share/passwall/rules/chnroute"
+local path = string.format("/usr/share/%s/rules/", api.appname)
+local gfwlist_path = path .. "gfwlist"
+local chnlist_path = path .. "chnlist"
+local chnroute_path = path .. "chnroute"
 
-api.set_default_cbi()
-
-m = Map()
+m = Map(api.appname)
 
 function clean_text(text)
 	local nbsp = string.char(0xC2, 0xA0) -- 不间断空格（U+00A0）
@@ -317,7 +314,7 @@ if fs.access(chnroute_path) then
 	]], translate("Read List"))
 end
 
-m:appendTemplate("/rule_list/js")
+m:append(Template(api.appname .. "/rule_list/js"))
 
 local geo_dir = (api.uci_get_c("@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
 local geosite_path = geo_dir .. "/geosite.dat"
@@ -327,7 +324,7 @@ if api.finded_com("geoview") and fs.access(geosite_path) and fs.access(geoip_pat
 		s:tab("geoview", translate("Geo View"))
 		o = s:taboption("geoview", DummyValue, "_geoview_fieldset")
 		o.rawhtml = true
-		o.template = m:template_path("/rule_list/geoview")
+		o.template = api.appname .. "/rule_list/geoview"
 	end
 end
 
@@ -335,4 +332,4 @@ m.on_before_save = function(self)
 	m:set("@global[0]", "flush_set", "1")
 end
 
-return api.return_map(m)
+return m
