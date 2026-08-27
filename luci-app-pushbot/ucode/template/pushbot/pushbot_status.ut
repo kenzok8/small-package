@@ -1875,14 +1875,14 @@ cuSub.appendChild(mkBtn('{{ _('Traffic DND') }}',cdOn,function(on){updateFlagInp
 	var wfOn = CT_WEB_FAIL;
 	var sfOn = CT_SSH_FAIL;
 
-	/* row1: web log + ssh log */
+	/* row1: web log + web fail */
 	var r1=document.createElement('div');r1.style.cssText='display:flex;gap:12px';
 	r1.appendChild(mkBtn('{{ _('Web login alert') }}',wlOn,function(on){updateFlagInput('web_logged',on);}));
-	r1.appendChild(mkBtn('{{ _('SSH login alert') }}',slOn,function(on){updateFlagInput('ssh_logged',on);}));
+	r1.appendChild(mkBtn('{{ _('Web failed attempt alert') }}',wfOn,function(on){updateFlagInput('web_login_failed',on);toggleFail();}));
 	b3.appendChild(r1);
-	/* row2: web fail + ssh fail */
+	/* row2: ssh log + ssh fail */
 	var r2=document.createElement('div');r2.style.cssText='display:flex;gap:12px;margin-top:4px';
-	r2.appendChild(mkBtn('{{ _('Web failed attempt alert') }}',wfOn,function(on){updateFlagInput('web_login_failed',on);toggleFail();}));
+	r2.appendChild(mkBtn('{{ _('SSH login alert') }}',slOn,function(on){updateFlagInput('ssh_logged',on);}));
 	r2.appendChild(mkBtn('{{ _('SSH failed attempt alert') }}',sfOn,function(on){updateFlagInput('ssh_login_failed',on);toggleFail();}));
 	b3.appendChild(r2);
 

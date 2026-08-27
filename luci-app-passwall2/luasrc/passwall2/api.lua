@@ -2049,3 +2049,27 @@ function gen_wireguard_key()
 		}
 	end
 end
+
+function parseDNS(dns)
+	if not dns then return nil end
+	if true then
+		-- IPv6
+		-- [::1]:5053
+		local address, port = dns:match("%[(.-)%]:([0-9]+)$")
+		if address and datatypes.ip6addr(address) and datatypes.port(port) then
+			return address, port
+		end
+		-- [::1]
+		if is_ipv6(dns) then
+			return get_ipv6_only(dns), 53
+		end
+	end
+	if true then
+		-- 1.1.1.1:5053
+		local h, p = dns:match("^([^:]+):([^:]+)$")
+		if (h and p and datatypes.ip4addr(h) and datatypes.port(p)) then
+			return h, p
+		end
+	end
+	return dns, 53
+end

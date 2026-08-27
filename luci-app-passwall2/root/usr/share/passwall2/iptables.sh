@@ -256,9 +256,9 @@ add_shunt_t_rule() {
 }
 
 load_acl() {
+	log_i18n 1 "Access Control:"
 	acl_json=$(lua $APP_PATH/app_acl.lua)
 	acl_node
-	log_i18n 1 "Access Control:"
 	for sid in $(jsonfilter -s "${acl_json}" -e '$.acl[*].flag'); do
 		eval local $(cat "${TMP_ACL_PATH}/${sid}/var")
 

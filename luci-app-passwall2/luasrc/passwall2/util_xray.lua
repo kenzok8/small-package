@@ -1623,8 +1623,6 @@ function gen_config(var)
 				end
 			end)
 		end
-
-		local _remote_dns_ip = nil
 	
 		local _remote_dns = {
 			tag = remote_dns_tag,
@@ -1635,14 +1633,15 @@ function gen_config(var)
 			_remote_dns.address = remote_dns_udp_server
 			_remote_dns.port = tonumber(remote_dns_udp_port) or 53
 			_remote_dns_proto = "udp"
-			_remote_dns_ip = remote_dns_udp_server
 		end
 
 		if remote_dns_tcp_server then
+			if api.is_ipv6(remote_dns_tcp_server) then
+				remote_dns_tcp_server = api.get_ipv6_full(remote_dns_tcp_server)
+			end
 			_remote_dns.address = "tcp://" .. remote_dns_tcp_server .. ":" .. tonumber(remote_dns_tcp_port) or 53
 			_remote_dns.port = tonumber(remote_dns_tcp_port) or 53
 			_remote_dns_proto = "tcp"
-			_remote_dns_ip = remote_dns_tcp_server
 		end
 
 		if remote_dns_doh_url and remote_dns_doh_host then
@@ -1651,7 +1650,6 @@ function gen_config(var)
 			end
 			_remote_dns.address = remote_dns_doh_url
 			_remote_dns.port = tonumber(remote_dns_doh_port) or 443
-			_remote_dns_ip = remote_dns_doh_ip
 		end
 
 		if _remote_dns.address then

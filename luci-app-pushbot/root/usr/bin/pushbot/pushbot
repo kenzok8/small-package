@@ -1525,7 +1525,7 @@ function login_send(){
 
 	# ── WiFi 连接/认证失败检测 ──
 	# MT798x 等内核级 WiFi 日志不被 logread -f 捕获，改用 logread 读取最近日志
-	if [ ! -z "$wifi_connected" ] || [ ! -z "$wifi_auth_failed" ]; then
+	if [ "$wifi_connected" = "1" ] || [ "$wifi_auth_failed" = "1" ]; then
 		if [ ! -z "$wlan_interface" ]; then
 			# 获取当前在线 WiFi 设备 MAC 列表（iwinfo 兼容 MTK 闭源和标准开源驱动）
 			# 两套驱动统一精准判断：
@@ -1567,7 +1567,7 @@ function login_send(){
 
 			# WiFi 连接通知：当前有、上次没有 = 新连接
 			# 两套驱动已在采集阶段统一过滤，进到这里的都是 authorized=yes 的真连接
-			if [ ! -z "$wifi_connected" ]; then
+			if [ "$wifi_connected" = "1" ]; then
 				local _new_macs="" _new_ssids="" _new_count=0 _idx=0
 				for wifi_mac in $wifi_cur_macs; do
 					[ -z "$wifi_mac" ] && continue
@@ -1638,7 +1638,7 @@ function login_send(){
 			fi
 
 			# WiFi 离线通知：上次有、当前没有 + 离线时长 > sleeptime*2
-			if [ ! -z "$wifi_connected" ]; then
+			if [ "$wifi_connected" = "1" ]; then
 				local _now=$(date +%s)
 				for wifi_mac in $wifi_prev_macs; do
 					[ -z "$wifi_mac" ] && continue
@@ -1696,7 +1696,7 @@ function login_send(){
 	# MTK 闭源: verify confirm fail（kern.err）
 	# 标准 hostapd: PSK-MISMATCH / deauthenticated due to local auth failure / EAPOL-Key MIC invalid（daemon.notice）
 	# 增量检测：记录总行数，只有新增或首次达阈值才通知
-	if [ ! -z "$wifi_auth_failed" ]; then
+	if [ "$wifi_auth_failed" = "1" ]; then
 		local _wifi_cur_log=$(logread 2>/dev/null | tail -200)
 		local _wifi_cur_count=$(echo "$_wifi_cur_log" | grep -i "PSK-MISMATCH\|deauthenticated due to local auth failure\|verify confirm fail\|EAPOL-Key MIC invalid" | wc -l)
 		local _wifi_prev_count=0

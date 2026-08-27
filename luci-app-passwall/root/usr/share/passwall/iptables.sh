@@ -44,6 +44,7 @@ FAKE_IP="198.18.0.0/15"
 FAKE_IP_6="fc00::/18"
 
 USE_GEOVIEW=0
+EXCLUDE_VPSIP="^(0\.0\.0\.0|127\.0\.0\.1|1\.1\.1\.1|1\.1\.1\.2|8\.8\.8\.8|8\.8\.4\.4|9\.9\.9\.9)$"
 
 factor() {
 	if [ -z "$1" ] || [ -z "$2" ]; then
@@ -746,15 +747,14 @@ load_acl() {
 }
 
 filter_haproxy() {
-	for item in ${haproxy_items}; do
-		local ip=$(get_host_ip ipv4 $(echo $item | awk -F ":" '{print $1}') 1)
-		ipset -q add $IPSET_VPS $ip
+	for item in $(uci show $CONFIG | grep ".lbss=" | cut -d "'" -f 2); do
+		local ip=$(get_host_ip "ipv4" "$(echo $item | awk -F ":" '{print $1}')" 1)
+		[ -n "$ip" ] && ! echo "$ip" | grep -Eq "$EXCLUDE_VPSIP" && ipset -q add $IPSET_VPS $ip
 	done
 	echolog "  - [$?]加入负载均衡的节点到ipset[$IPSET_VPS]直连完成"
 }
 
 filter_vpsip() {
-	local EXCLUDE_VPSIP="^(0\.0\.0\.0|127\.0\.0\.1|1\.1\.1\.1|1\.1\.1\.2|8\.8\.8\.8|8\.8\.4\.4|9\.9\.9\.9)$"
 	uci show $CONFIG | grep -E "(\.address=|\.download_address=|\.domain_resolver_dns=|\.domain_resolver_dns_https=)" | cut -d "'" -f 2 | grep -Eo "([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -Ev "$EXCLUDE_VPSIP" | sed "s/^/add $IPSET_VPS /" | awk '1; END{print "COMMIT"}' | ipset -! -R
 	echolog "  - [$?]加入所有IPv4节点到ipset[$IPSET_VPS]直连完成"
 	uci show $CONFIG | grep -E "(\.address=|\.download_address=|\.domain_resolver_dns=|\.domain_resolver_dns_https=)" | cut -d "'" -f 2 | grep -Eo "\[?[A-Fa-f0-9:]*:[A-Fa-f0-9:]+\]?" | sed "s/^/add $IPSET_VPS6 /" | awk '1; END{print "COMMIT"}' | ipset -! -R
@@ -802,7 +802,9 @@ filter_node() {
 	local port=$(config_n_get "$node" port)
 	local hop=$(config_n_get "$node" hysteria2_hop)
 	[ -n "$hop" ] && port="${port:+$port,}$hop" 
-	[ -z "$address" ] || [ -z "$port" ] && return 1
+	[ -z "$address" ] && return 1
+	echo "$address" | grep -Eq "$EXCLUDE_VPSIP" && return 1
+	[ -z "$port" ] && return 1
 	filter_server_port "$address" "$port" "$stream"
 }
 

@@ -366,6 +366,6 @@ if arg[1] then
 		if arg[2] then
 			var = jsonc.parse(arg[2])
 		end
-		func(var)
+		func(var or {})
 	end
 end

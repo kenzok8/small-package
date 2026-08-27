@@ -271,7 +271,7 @@ o:depends("_show_dns_option", "1")
 
 ---- DNS over TCP or UDP or TLS (DoT) or QUIC (DoQ)
 o = s:option(Value, "remote_dns", translate("Remote DNS"))
-o.datatype = "or(ipaddr,ipaddrport)"
+o.datatype = "or(ipaddr,ipaddrport(1))"
 o.default = "1.1.1.1"
 o:value("1.1.1.1", "1.1.1.1 (CloudFlare)")
 o:value("1.1.1.2", "1.1.1.2 (CloudFlare-Security)")

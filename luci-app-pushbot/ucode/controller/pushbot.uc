@@ -194,14 +194,14 @@ return {
 					/* 以 OpenWrt 防火墙区域判定 WAN：接口（或所属逻辑接口）出现在
 					   masq=1 的 zone 的 network 列表即视为 WAN。不依赖接口命名
 					   （用户可改名）与 IP 私网/公网。 */
-					let iswan = run("local li i d l3; if uci get network." + sq(iface) + " >/dev/null 2>&1; then li=" + sq(iface) + "; else li=''; for i in $(uci show network 2>/dev/null | grep -oE '^network\\.[^.]+\\\\.(device|ifname)=' | sed 's/^network\\\\.//; s/\\\\.\\(device\\\\|ifname\\)=$//' | sort -u); do d=$(uci get network.$i.device 2>/dev/null); [ \"$d\" = " + sq(iface) + " ] && li=\"$li $i\"; [ -z \"$d\" ] && d=$(uci get network.$i.ifname 2>/dev/null); [ \"$d\" = " + sq(iface) + " ] && li=\"$li $i\"; l3=$(ubus call network.interface.$i status 2>/dev/null | grep -oE '\\\"l3_device\\\": \\\"[^\\\"]*\\\"' | head -1 | cut -d'\\\"' -f4); [ \"$l3\" = " + sq(iface) + " ] && li=\"$li $i\"; done; fi; for i in $li; do for z in $(seq 0 20); do m=$(uci get firewall.@zone[$z].masq 2>/dev/null); [ -z \"$m\" ] && break; [ \"$m\" = \"1\" ] && echo \" $(uci get firewall.@zone[$z].network 2>/dev/null) \" | grep -q \" $i \" && exit 0; done; done; exit 1");
-					if (iswan == "0") bind = " --interface " + sq(iface);
+					let iswan = run("li=''; if uci -q get network." + sq(iface) + " >/dev/null; then li=" + sq(iface) + "; else for i in $(ubus list 'network.interface.*' 2>/dev/null | sed 's/^network[.]interface[.]//'); do d=$(uci -q get network.$i.device); [ \"$d\" = " + sq(iface) + " ] && li=\"$li $i\"; [ -z \"$d\" ] && d=$(uci -q get network.$i.ifname); [ \"$d\" = " + sq(iface) + " ] && li=\"$li $i\"; l3=$(ubus call network.interface.$i status 2>/dev/null | grep -oE '\"l3_device\": \"[^\"]*\"' | head -1 | cut -d'\"' -f4); [ \"$l3\" = " + sq(iface) + " ] && li=\"$li $i\"; done; fi; found=0; for i in $li; do for z in $(seq 0 20); do n=$(uci -q get firewall.@zone[$z].name); [ -z \"$n\" ] && break; m=$(uci -q get firewall.@zone[$z].masq); zn=$(uci -q get firewall.@zone[$z].network); if [ \"$m\" = \"1\" ]; then case \" $zn \" in *\" $i \"*) found=1; break 2;; esac; fi; done; done; echo \"$found\"");
+					if (iswan == "1") bind = " --interface " + sq(iface);
 				}
 				let start = time() % length(lines);
 				for (let i = 0; i < 3 && i < length(lines); i++) {
 					let pick = lines[(start + i) % length(lines)];
-					let out = run("curl -k -s -" + (type == "4" ? "4" : "6") + bind + " -m 8 " + sq(pick) +
-						(type == "4"
+					let out = run("curl -k -s -" + (ip_type == "4" ? "4" : "6") + bind + " -m 8 " + sq(pick) +
+						(ip_type == "4"
 							? " | grep -oE '[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}' | head -n1"
 							: " | grep -oE '([\\da-fA-F0-9]{1,4}(:{1,2})){1,15}[\\da-fA-F0-9]{1,4}' | head -n1"));
 					if (out != "") { ip = out; break; }

@@ -1664,8 +1664,12 @@ function gen_config(var)
 				_direct_dns.port = port
 				_direct_dns.address = direct_dns_udp_server
 			elseif direct_dns_tcp_server then
+				if api.is_ipv6(direct_dns_tcp_server) then
+					direct_dns_tcp_server = api.get_ipv6_full(direct_dns_tcp_server)
+				end
 				local port = tonumber(direct_dns_port) or 53
 				_direct_dns.address = "tcp://" .. direct_dns_tcp_server .. ":" .. port
+				_direct_dns.port = port
 			end
 
 			if COMMON.default_outbound_tag == "direct" then
@@ -1697,7 +1701,11 @@ function gen_config(var)
 			_remote_dns.port = tonumber(remote_dns_udp_port) or 53
 
 		elseif remote_dns_tcp_server then
+			if api.is_ipv6(remote_dns_tcp_server) then
+				remote_dns_tcp_server = api.get_ipv6_full(remote_dns_tcp_server)
+			end
 			_remote_dns.address = "tcp://" .. remote_dns_tcp_server .. ":" .. tonumber(remote_dns_tcp_port) or 53
+			_remote_dns.port = tonumber(remote_dns_tcp_port) or 53
 
 		elseif remote_dns_doh then
 			local _a = api.parseDoH(remote_dns_doh)
