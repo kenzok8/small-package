@@ -53,6 +53,7 @@ DAE_INIT="/etc/init.d/dae"
 if [ -f "$DAE_INIT" ]; then
 	sed -i 's/--disable-timestamp//' "$DAE_INIT"
 	sed -i '/procd_append_param command *$/d' "$DAE_INIT"
+	sed -i 's|procd_set_param env DAE_LOCATION_ASSET="/usr/share/v2ray".*|procd_set_param env DAE_LOCATION_ASSET="/usr/share/v2ray" TZ="$(uci -q get system.@system[0].zonename)"|' "$DAE_INIT"
 fi
 
 # dae expects geoip.dat / geosite.dat under /usr/share/dae/;

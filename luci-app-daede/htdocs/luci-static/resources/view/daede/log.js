@@ -39,7 +39,7 @@ const CSS = [
 	'.dd-log-pane .dd-line.dd-hidden{display:none}',
 	'.dd-log-pane .dd-empty{opacity:.5;font-style:italic}',
 	/* 简化后的字段视觉 */
-	'.dd-log-pane .dd-ts{color:#6b7480;margin-right:8px}',
+	'.dd-log-pane .dd-ts{color:#6b7480;margin-right:8px;white-space:nowrap}',
 	'.dd-log-pane .dd-lvl{display:inline-block;min-width:38px;padding:0 5px;margin-right:8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.4px;text-align:center;vertical-align:1px}',
 	'.dd-log-pane .dd-lvl-info{color:#7fc7a8;background:rgba(127,199,168,.08)}',
 	'.dd-log-pane .dd-lvl-warn{color:#e8b95a;background:rgba(232,185,90,.10)}',
@@ -53,6 +53,7 @@ const CSS = [
 
 /* 拆字段：time="May 25 07:04:59" level=info msg="..." key=val key="val with space" ... */
 const RE_LINE = /^time="([^"]*)"\s+level=(\w+)\s+msg=(?:"((?:[^"\\]|\\.)*)"|(\S+))\s*(.*)$/;
+const RE_PREFIXED_LINE = /^\[([^\]]+)\]\s+(DEBUG|INFO|WARN(?:ING)?|ERROR|FATAL|PANIC)\s*(.*)$/i;
 
 function detectLevel(line) {
 	// daed/dae logs use lvl=info / [INFO] / level=warning style
@@ -65,22 +66,29 @@ function detectLevel(line) {
 	return 'dd-error';
 }
 
-/* 简化时间戳并按北京时间显示：
+/* 格式化时间戳并按北京时间显示：
  * - daed 默认输出 UTC ISO 8601 (e.g. "2026-05-28T19:07:54Z")，转成北京时间
- * - 旧 logrus 短格式 (e.g. "May 25 07:04:59") 无时区信息，原样提取
+ * - 新格式和旧 logrus 短格式无时区信息，保留原始完整日期时间
  */
-function shortTs(raw) {
+function formatTs(raw) {
 	if (!raw) return raw;
 	if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})$/.test(raw)) {
 		const d = new Date(raw);
 		if (!isNaN(d.getTime())) {
 			const beijing = new Date(d.getTime() + 8 * 60 * 60 * 1000);
 			const pad = n => String(n).padStart(2, '0');
-			return pad(beijing.getUTCHours()) + ':' + pad(beijing.getUTCMinutes()) + ':' + pad(beijing.getUTCSeconds());
+			return [
+				beijing.getUTCFullYear(),
+				pad(beijing.getUTCMonth() + 1),
+				pad(beijing.getUTCDate())
+			].join('-') + ' ' + [
+				pad(beijing.getUTCHours()),
+				pad(beijing.getUTCMinutes()),
+				pad(beijing.getUTCSeconds())
+			].join(':');
 		}
 	}
-	const m = raw.match(/(\d{2}:\d{2}:\d{2})/);
-	return m ? m[1] : raw;
+	return raw;
 }
 
 function lvlShort(level) {
@@ -97,22 +105,42 @@ function lvlClass(level) {
 	return 'dd-lvl-error';
 }
 
+function parseLine(line) {
+	let m = line.match(RE_LINE);
+	if (m) {
+		return {
+			ts: formatTs(m[1]),
+			lvl: m[2],
+			msg: m[3] !== undefined ? m[3] : (m[4] || ''),
+			kv: (m[5] || '').trim()
+		};
+	}
+
+	m = line.match(RE_PREFIXED_LINE);
+	if (!m) return null;
+
+	const body = m[3] || '';
+	const kvStart = body.search(/(?:^|\s)(?=[A-Za-z_][\w.-]*=)/);
+	return {
+		ts: formatTs(m[1]),
+		lvl: m[2],
+		msg: kvStart === -1 ? body : body.slice(0, kvStart).trimEnd(),
+		kv: kvStart === -1 ? '' : body.slice(kvStart).trim()
+	};
+}
+
 function buildLine(ln) {
 	const cls = detectLevel(ln);
-	const m = ln.match(RE_LINE);
-	if (!m) {
+	const parsed = parseLine(ln);
+	if (!parsed) {
 		return E('div', { 'class': 'dd-line ' + cls }, ln);
 	}
-	const ts = shortTs(m[1]);
-	const lvl = m[2];
-	const msg = m[3] !== undefined ? m[3] : (m[4] || '');
-	const kv  = (m[5] || '').trim();
 	const parts = [
-		E('span', { 'class': 'dd-ts' }, ts),
-		E('span', { 'class': 'dd-lvl ' + lvlClass(lvl) }, lvlShort(lvl)),
-		E('span', { 'class': 'dd-msg' }, msg)
+		E('span', { 'class': 'dd-ts' }, parsed.ts),
+		E('span', { 'class': 'dd-lvl ' + lvlClass(parsed.lvl) }, lvlShort(parsed.lvl)),
+		E('span', { 'class': 'dd-msg' }, parsed.msg)
 	];
-	if (kv) parts.push(E('span', { 'class': 'dd-kv' }, kv));
+	if (parsed.kv) parts.push(E('span', { 'class': 'dd-kv' }, parsed.kv));
 	return E('div', { 'class': 'dd-line ' + cls }, parts);
 }
 
