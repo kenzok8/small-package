@@ -752,6 +752,8 @@ function rollback_rules()
 	if geo2rule == "1" and rules ~= "" then
 		luci.sys.call("lua /usr/share/passwall/rule_update.lua log '" .. rules .. "' rollback > /dev/null")
 	end
+	uci_set("@global[0]", "flush_set", "1")
+	uci_save(true)
 	http_write_json_ok()
 end
 
