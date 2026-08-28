@@ -857,7 +857,8 @@ local backup_files = {
     "/usr/share/passwall/rules/direct_host",
     "/usr/share/passwall/rules/direct_ip",
     "/usr/share/passwall/rules/proxy_host",
-    "/usr/share/passwall/rules/proxy_ip"
+    "/usr/share/passwall/rules/proxy_ip",
+    "/usr/share/passwall/rules/domains_excluded"
 }
 
 function create_backup()

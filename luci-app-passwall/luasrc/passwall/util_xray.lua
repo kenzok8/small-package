@@ -15,7 +15,7 @@ local xray_version = api.get_app_version("xray")
 local xray_min_version = "26.3.27"
 
 local function get_domain_excluded()
-	local path = "/usr/share/passwall/domains_excluded"
+	local path = string.format("/usr/share/%s/rules/domains_excluded", api.c_config)
 	local content = fs.readfile(path)
 	if not content then return nil end
 	local hosts = {}

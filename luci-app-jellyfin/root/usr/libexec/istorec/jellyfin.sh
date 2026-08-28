@@ -130,7 +130,7 @@ do_install_detail() {
   local tz="`uci get system.@system[0].zonename | sed 's/ /_/g'`"
   [ -z "$tz" ] || cmd="$cmd -e TZ=$tz"
 
-  [ -z "$cache" ] || cmd="$cmd -v \"$cache:/config/transcodes\""
+  [ -z "$cache" ] || cmd="$cmd -v \"$cache:/config/transcodes\" -v \"$cache:/cache/transcodes\""
   [ -z "$media" ] || cmd="$cmd -v \"$media:/media\""
 
   cmd="$cmd -v /mnt:/mnt"

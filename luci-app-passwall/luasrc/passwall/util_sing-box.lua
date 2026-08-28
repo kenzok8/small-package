@@ -2098,7 +2098,7 @@ function gen_config(var)
 					query_type = dns_rule_query_type,
 					server = fakedns_tag,
 					disable_cache = true,
-					rewrite_ttl = tonumber(remote_rewrite_ttl)
+					rewrite_ttl = 30
 				}
 				table.insert(dns.rules, fakedns_dns_rule)
 			end
