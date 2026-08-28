@@ -1,0 +1,21 @@
+#!/bin/sh
+# shellcheck disable=SC2154
+
+PROG=/usr/libexec/natflow-simple-qos
+
+[ -x "$PROG" ] || exit 0
+
+case "$ACTION" in
+	start|reload)
+		exec "$PROG" apply-all
+		;;
+	update)
+		[ -n "$IPADDR" ] || exit 0
+		exec "$PROG" apply "$IPADDR" "$MACADDR"
+		;;
+	stop)
+		exec "$PROG" cleanup
+		;;
+esac
+
+exit 0
