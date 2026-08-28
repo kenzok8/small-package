@@ -308,7 +308,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 								type = "realm",
 								settings = {
 									url = url,
-									stunServers = stun
+									stunServers = stun,
+									portMapping = (node.hysteria2_realm_upnp == "1") and { enabled = true } or nil
 								}
 							}
 							udp[#udp+1] = r
@@ -782,7 +783,8 @@ function gen_config_server(node)
 									type = "realm",
 									settings = {
 										url = url,
-										stunServers = stun
+										stunServers = stun,
+										portMapping = (node.hysteria2_realm_upnp == "1") and { enabled = true } or nil
 									}
 								}
 								udp[#udp+1] = r

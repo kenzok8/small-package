@@ -29,7 +29,7 @@ define KernelPackage/natflow
 	    CONFIG_NETFILTER_INGRESS=y
   FILES:=$(PKG_BUILD_DIR)/natflow.ko
   AUTOLOAD:=$(call AutoLoad,96,natflow)
-  DEPENDS:= +kmod-ipt-conntrack +kmod-ipt-nat +kmod-ipt-ipset +kmod-br-netfilter +LINUX_5_4:kmod-nf-flow
+  DEPENDS:= +kmod-ipt-conntrack +kmod-ipt-nat +kmod-ipt-ipset +kmod-br-netfilter
 endef
 
 define KernelPackage/natflow/description
@@ -82,7 +82,7 @@ define Package/natflow-auth
   CATEGORY:=X
   SUBMENU:=Fast Forward Stacks
   TITLE:=natflow auth init script
-  DEPENDS:= +kmod-natflow +ipset +lua-ipops +luci-lua-runtime +luci-lib-nixio
+  DEPENDS:= +kmod-natflow +ipset +lua-ipops +luci-base +luci-lib-nixio
 endef
 
 define Package/natflow-auth/conffiles
@@ -92,8 +92,12 @@ endef
 define Package/natflow-auth/install
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/usr/libexec
+	$(INSTALL_BIN) ./files/natflow-userinfo-eventd.init $(1)/etc/init.d/natflow-userinfo-eventd
 	$(INSTALL_BIN) ./files/natflow-simple-qos.init $(1)/etc/init.d/natflow-simple-qos
+	$(INSTALL_BIN) ./files/natflow-userinfo-eventd.lua $(1)/usr/libexec/natflow-userinfo-eventd
 	$(INSTALL_BIN) ./files/natflow-simple-qos.lua $(1)/usr/libexec/natflow-simple-qos
+	$(INSTALL_DIR) $(1)/usr/lib/lua/natflow
+	$(INSTALL_DATA) ./files/natflow-userinfo.lua $(1)/usr/lib/lua/natflow/userinfo.lua
 	$(INSTALL_BIN) ./files/natflow-qos.init $(1)/etc/init.d/natflow-qos
 	$(INSTALL_BIN) ./files/natflow-user.init $(1)/etc/init.d/natflow-user
 	$(INSTALL_BIN) ./files/natflow-zone.init $(1)/etc/init.d/natflow-zone
@@ -101,6 +105,8 @@ define Package/natflow-auth/install
 	$(INSTALL_DATA) ./files/natflow.config $(1)/etc/config/natflow
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_DATA) ./files/20-natflow-zone.hotplug $(1)/etc/hotplug.d/iface/20-natflow-zone
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/userinfo
+	$(INSTALL_DATA) ./files/10-natflow-simple-qos.hotplug $(1)/etc/hotplug.d/userinfo/10-natflow-simple-qos
 endef
 
 define Package/natflow-hostacl

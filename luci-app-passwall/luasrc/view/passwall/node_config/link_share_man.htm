@@ -594,6 +594,7 @@ local current_node = map:get(section)
 			params += opt.query("pinSHA256", dom_prefix + "tls_pinSHA256");
 			params += opt.query("pcs", dom_prefix + "tls_pinSHA256");
 			params += opt.query("vcn", dom_prefix + "tls_CertByName");
+			params += opt.query("ech", dom_prefix + "ech_config");
 			
 			var v_password = null;
 			
@@ -628,7 +629,7 @@ local current_node = map:get(section)
 			params = params.replace(/^&/, "");
 			url =
 				_address + ":" +
-				v_port.value + "?" +
+				(v_port.value || "443") + "?" +
 				params +
 				"#" + encodeURI(v_alias.value);
 			if (v_password) {
@@ -1664,6 +1665,8 @@ local current_node = map:get(section)
 			);
 			opt.set(dom_prefix + 'tls_pinSHA256', queryParam.pcs || queryParam.pinSHA256 || '');
 			opt.set(dom_prefix + 'tls_CertByName', queryParam.vcn || '');
+			opt.set(dom_prefix + 'ech', !!queryParam.ech);
+			opt.set(dom_prefix + 'ech_config', queryParam.ech || '');
 			if (m.hash) {
 				opt.set('remarks', decodeURIComponent(m.hash.substr(1)));
 			}

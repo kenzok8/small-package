@@ -24,6 +24,11 @@
 
 ## 📝 Changelog
 
+- **2026-08-28** (v5.17): Security monitor improvements, main version 5.16 → 5.17
+  - Added: **Blacklist persistence** — persist blacklist for permanent duration to survive OP reboots
+  - Added: **Firewall version label** — shows nftables/iptables with refresh button
+  - Improved: **Startup log dedup, blacklist sync dedup, cache cleanup on upgrade**
+  - Tested platforms: open-source mac80211 driver (x86), MTK closed-source driver (MT798x)
 - **2026-08-26** (v5.16): WiFi monitoring upgrade, main version 5.15 → 5.16
   - Added: **WiFi connect/offline alerts** — push notification when a device connects or stays offline for >2 minutes; suppresses false alerts from roaming and brief signal drops
   - Added: **WiFi auth failure alerts** — push notification when failed connection attempts reach a threshold, showing failure count and MAC (MTK closed-source drivers show count only)

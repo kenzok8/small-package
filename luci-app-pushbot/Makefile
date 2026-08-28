@@ -1,8 +1,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-pushbot
-PKG_VERSION:=5.16
-PKG_RELEASE:=4
+PKG_VERSION:=5.17
+PKG_RELEASE:=0
 
 PKG_MAINTAINER:=tty228 <tty228@yeah.net>  zzsj0928
 
@@ -29,6 +29,17 @@ define Package/$(PKG_NAME)/conffiles
 /usr/bin/pushbot/api/diy.json
 /usr/bin/pushbot/api/ipv4.list
 /usr/bin/pushbot/api/ipv6.list
+endef
+
+define Package/$(PKG_NAME)/postinst
+#!/bin/sh
+[ -n "$${IPKG_INSTROOT}" ] || {
+	[ -f /tmp/pushbot/traffic_source ] && rm -f /tmp/pushbot/traffic_source
+	[ -f /tmp/pushbot/firewall_mode ] && rm -f /tmp/pushbot/firewall_mode
+	[ -f /tmp/pushbot/wlan_interface ] && rm -f /tmp/pushbot/wlan_interface
+	[ -f /tmp/pushbot/wireless_ifs ] && rm -f /tmp/pushbot/wireless_ifs
+}
+exit 0
 endef
 
 include $(TOPDIR)/feeds/luci/luci.mk

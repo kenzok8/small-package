@@ -61,6 +61,11 @@ o.default = { "stun.sip.us:3478", "stun.nextcloud.com:3478", "global.stun.twilio
 o.rewrite_option = _n(o.option)
 o:depends({ realms = "1" })
 
+o = s:option(Flag, "realm_upnp", translate("Enable") .. " UPnP/NAT-PMP", translate("Enable UPnP/NAT-PMP port mapping on your gateway to improve hole punching success."))
+o.default = "0"
+o.rewrite_option = _n(o.option)
+o:depends({ realms = "1" })
+
 o = s:option(Value, "auth_password", translate("Auth Password"))
 o.password = true
 o.rewrite_option = _n(o.option)
@@ -123,6 +128,20 @@ o.rewrite_option = _n(o.option)
 o = s:option(Flag, "disable_mtu_discovery", translate("Disable MTU detection"))
 o.default = "0"
 o.rewrite_option = _n(o.option)
+
+
+o = s:option(Flag, "ech", translate("ECH"))
+o.default = "0"
+o:depends({ realms = false })
+
+o = s:option(TextValue, "ech_config", translate("ECH Config"))
+o.default = ""
+o.rows = 5
+o.wrap = "soft"
+o:depends({ ech = "1" })
+o.validate = function(self, value)
+	return api.trim(value:gsub("[\r\n]", ""))
+end
 
 o = s:option(Flag, "lazy_start", translate("Lazy Start"))
 o.default = "0"

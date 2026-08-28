@@ -81,6 +81,7 @@ function PB_val(opt, def) { return (PB_CONFIG && PB_CONFIG.config && PB_CONFIG.c
 function PB_list(opt) { var v = PB_CONFIG && PB_CONFIG.lists && PB_CONFIG.lists[opt]; return Array.isArray(v) ? v : []; }
 function PB_file(name) { var v = PB_CONFIG && PB_CONFIG.files && PB_CONFIG.files[name]; return (v && typeof v === 'string') ? v : ''; }
 function PB_sys(name) { var v = PB_CONFIG && PB_CONFIG.system && PB_CONFIG.system[name]; return Array.isArray(v) ? v : []; }
+function PB_sysVal(name, def) { var v = PB_CONFIG && PB_CONFIG.system && PB_CONFIG.system[name]; return (v !== undefined && v !== null) ? v : (def !== undefined ? def : null); }
 function PB_bool(opt) { return PB_val(opt) === '1'; }
 
 XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'get_config') }}', null, function(x, data) {
@@ -1910,6 +1911,37 @@ cuSub.appendChild(mkBtn('{{ _('Traffic DND') }}',cdOn,function(on){updateFlagInp
 	failSub.appendChild(mkBtn('{{ _('Auto blacklist') }}',banOn,function(on){updateFlagInput('web_login_black',on);toggleBan(on);}));
 	var banSub=document.createElement('div');banSub.id='ct_ban_sub';banSub.style.cssText='margin-top:4px;display:'+(CT_AUTO_BAN?'block':'none');
 	banSub.appendChild(mkTimeoutSel('ip_black_timeout','{{ _('Blacklist duration') }}',CT_BAN_TIMEOUT,''));
+	
+	/* 黑名单持久化按钮（仅在拉黑时间=永久时显示） */
+	var banPersistDiv = document.createElement('div'); banPersistDiv.style.cssText = 'margin:4px 0';
+	var banPersistHi = mkH('ip_black_persist', CT_BAN_PERSIST);
+	var CT_BAN_PERSIST = PB_val('ip_black_persist', '1') !== '0';
+	var banPersistBtn = mkBtn('{{ _('Blacklist persist') }}', CT_BAN_PERSIST, function(on) {
+		banPersistHi.value = on ? '1' : '0';
+	});
+	banPersistDiv.appendChild(banPersistBtn);
+	banSub.appendChild(banPersistDiv);
+	
+	/* 监听拉黑时长变化，控制持久化按钮显示（仅永久时显示） */
+	function toggleBanPersist() {
+		var raw = document.querySelector('[name="cbid.pushbot.pushbot.ip_black_timeout"]');
+		if (!raw) return;
+		var v = raw.value || '1D';
+		/* 0 或空 = 永久 */
+		var isPermanent = (v === '0' || v === '');
+		banPersistDiv.style.display = isPermanent ? 'block' : 'none';
+	}
+	/* 初始显示状态 */
+	toggleBanPersist();
+	/* 监听所有可能的值变化（轮询检查） */
+	var lastTimeoutVal = document.querySelector('[name="cbid.pushbot.pushbot.ip_black_timeout"]')?.value;
+	setInterval(function() {
+		var cur = document.querySelector('[name="cbid.pushbot.pushbot.ip_black_timeout"]')?.value;
+		if (cur !== lastTimeoutVal) {
+			lastTimeoutVal = cur;
+			toggleBanPersist();
+		}
+	}, 500);
 	/* IP white list */
 	var ipCtr=document.createElement('div');ipCtr.style.cssText='margin:4px 0';
 	var ipLbl=document.createElement('div');ipLbl.className='pushbot-inline-title';
@@ -1978,6 +2010,46 @@ cuSub.appendChild(mkBtn('{{ _('Traffic DND') }}',cdOn,function(on){updateFlagInp
 		failSub.style.display=on?'block':'none';
 	}
 	function toggleBan(on){banSub.style.display=on?'block':'none';}
+	
+	/* 重检防火墙按钮（仅在黑名单功能启用时显示） */
+	if (CT_AUTO_BAN) {
+		var fwRow = document.createElement('div'); fwRow.style.cssText = 'display:flex;gap:8px;align-items:center;margin-top:4px';
+		/* 防火墙版本标签 */
+		var CT_FW_MODE = PB_sysVal('firewall_mode', 'unknown');
+		var fwPill = document.createElement('span');
+		var fwColor = (CT_FW_MODE === 'nft') ? 'background:rgba(34,197,94,0.15);color:#16a34a;border:1px solid rgba(34,197,94,0.3)' : (CT_FW_MODE === 'iptables') ? 'background:rgba(249,115,22,0.15);color:#ea580c;border:1px solid rgba(249,115,22,0.3)' : 'background:rgba(148,163,184,0.15);color:#64748b;border:1px solid rgba(148,163,184,0.3)';
+		fwPill.style.cssText = 'display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap;vertical-align:middle;' + fwColor;
+		fwPill.textContent = CT_FW_MODE === 'nft' ? 'nftables' : CT_FW_MODE === 'iptables' ? 'iptables' : CT_FW_MODE;
+		fwRow.appendChild(fwPill);
+		/* 重检按钮 */
+		var fwBtn = document.createElement('button');
+		fwBtn.type = 'button';
+		fwBtn.className = 'pushbot-choice-button is-on';
+		fwBtn.style.cssText = 'font-size:11px;padding:3px 8px';
+		fwBtn.textContent = '{{ _('Refresh firewall check') }}';
+		fwBtn.addEventListener('click', function() {
+			fwBtn.disabled = true;
+			fwBtn.textContent = '...';
+			XHR.get('{{ dispatcher.build_url("admin", "services", "pushbot", "check_firewall") }}', null, function(x) {
+				fwBtn.disabled = false;
+				fwBtn.textContent = '{{ _('Refresh firewall check') }}';
+				if (x && x.status == 200) {
+					fwBtn.style.background = 'rgba(34,197,94,0.2)';
+					setTimeout(function(){ fwBtn.style.background = ''; }, 2000);
+				}
+				/* 更新标签显示 */
+				XHR.get('{{ dispatcher.build_url("admin", "services", "pushbot", "get_config") }}', null, function(x2, data) {
+					if (data && data.system && data.system.firewall_mode) {
+						var mode = data.system.firewall_mode;
+						fwPill.textContent = mode === 'nft' ? 'nftables' : mode === 'iptables' ? 'iptables' : mode;
+						fwPill.style.cssText = 'display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap;vertical-align:middle;' + (mode === 'nft' ? 'background:rgba(34,197,94,0.15);color:#16a34a;border:1px solid rgba(34,197,94,0.3)' : mode === 'iptables' ? 'background:rgba(249,115,22,0.15);color:#ea580c;border:1px solid rgba(249,115,22,0.3)' : 'background:rgba(148,163,184,0.15);color:#64748b;border:1px solid rgba(148,163,184,0.3)');
+					}
+				});
+			});
+		});
+		fwRow.appendChild(fwBtn);
+		banSub.appendChild(fwRow);
+	}
 
 	c3.appendChild(b3); container.appendChild(c3);
 
@@ -2846,7 +2918,7 @@ function initModernTabs() {
 	var clientPane = document.createElement('div');
 	clientPane.id = 'pushbot_pane_client';
 	clientPane.className = 'pushbot-tab-pane';
-	clientPane.innerHTML = '<div class="pushbot-mode-card" style="padding:0;overflow:hidden"><div class="pushbot-log-container"><div class="pushbot-log-header"><div class="pushbot-log-controls"><label class="pushbot-log-switch" id="client_auto_switch"><span class="pushbot-log-switch-text">{{ _('Auto refresh') }}</span><input type="checkbox" id="client_auto_toggle" checked><span class="pushbot-log-switch-track"></span></label><span id="client_traffic_src" style="display:none"></span><button class="pushbot-log-btn" id="client_refresh_btn" style="margin-left:auto">{{ _('Refresh') }}</button></div></div><div class="pushbot-log-content" id="pushbot_client_content"><p style="padding:12px;margin:0;color:#94a3b8;text-align:center">{{ _('Loading...') }}</p></div></div></div>';
+	clientPane.innerHTML = '<div class="pushbot-mode-card" style="padding:0;overflow:hidden"><div class="pushbot-log-container"><div class="pushbot-log-header"><div class="pushbot-log-controls"><label class="pushbot-log-switch" id="client_auto_switch"><span class="pushbot-log-switch-text">{{ _('Auto refresh') }}</span><input type="checkbox" id="client_auto_toggle" checked><span class="pushbot-log-switch-track"></span></label><span id="client_traffic_src" style="display:none"></span><button class="pushbot-log-btn" id="client_check_traffic" style="margin-left:4px;font-size:11px;padding:3px 8px">{{ _("Refresh traffic source check") }}</button><button class="pushbot-log-btn" id="client_refresh_btn" style="margin-left:auto">{{ _('Refresh') }}</button></div></div><div class="pushbot-log-content" id="pushbot_client_content"><p style="padding:12px;margin:0;color:#94a3b8;text-align:center">{{ _('Loading...') }}</p></div></div></div>';
 
 	var logPane = document.createElement('div');
 	logPane.id = 'pushbot_pane_log';
@@ -3127,6 +3199,7 @@ function initModernTabs() {
 	/* 刷新按钮事件 */
 	var autoToggle = document.getElementById('client_auto_toggle');
 	var refreshBtn = document.getElementById('client_refresh_btn');
+	var checkTrafficBtn = document.getElementById('client_check_traffic');
 	if (autoToggle) {
 		autoToggle.addEventListener('change', function() {
 			if (autoToggle.checked) { startClientTimer(); } else { stopClientTimer(); }
@@ -3137,6 +3210,21 @@ function initModernTabs() {
 			refreshBtn.textContent = '{{ _('Loading...') }}';
 			loadClients();
 			setTimeout(function() { refreshBtn.textContent = '{{ _('Refresh') }}'; }, 1000);
+		});
+	}
+	if (checkTrafficBtn) {
+		checkTrafficBtn.addEventListener('click', function() {
+			checkTrafficBtn.disabled = true;
+			checkTrafficBtn.textContent = '...';
+			XHR.get('{{ dispatcher.build_url("admin", "services", "pushbot", "check_traffic") }}', null, function(x) {
+				checkTrafficBtn.disabled = false;
+				checkTrafficBtn.textContent = '{{ _('Refresh traffic source check') }}';
+				if (x && x.status == 200) {
+					checkTrafficBtn.style.background = 'rgba(34,197,94,0.2)';
+					setTimeout(function(){ checkTrafficBtn.style.background = ''; }, 2000);
+					loadClients();
+				}
+			});
 		});
 	}
 }

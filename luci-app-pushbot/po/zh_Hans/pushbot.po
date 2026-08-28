@@ -92,6 +92,15 @@ msgstr "自动刷新"
 msgid "Refresh"
 msgstr "刷新"
 
+msgid "Refresh firewall check"
+msgstr "重检防火墙"
+
+msgid "Refresh traffic source check"
+msgstr "重检流量源"
+
+msgid "Blacklist persist"
+msgstr "黑名单持久化"
+
 msgid "Average load: 0.09 0.28 0.16"
 msgstr "平均负载： 0.09 0.28 0.16"
 

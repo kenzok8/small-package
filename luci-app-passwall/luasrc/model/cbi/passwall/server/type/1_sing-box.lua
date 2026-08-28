@@ -183,6 +183,10 @@ if singbox_tags:find("with_quic") then
 	o.default = { "stun.sip.us:3478", "stun.nextcloud.com:3478", "global.stun.twilio.com:3478" }
 	o:depends({ hysteria2_realms = "1" })
 
+	o = s:option(Flag, "hysteria2_realm_upnp", translate("Enable") .. " UPnP/NAT-PMP", translate("Enable UPnP/NAT-PMP port mapping on your gateway to improve hole punching success."))
+	o.default = "0"
+	o:depends({ hysteria2_realms = "1" })
+
 	o = s:option(ListValue, "hysteria2_obfs_type", translate("Obfs Type"))
 	o:value("", translate("Disable"))
 	o:value("salamander")

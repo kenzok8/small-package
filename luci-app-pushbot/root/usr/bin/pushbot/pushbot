@@ -29,7 +29,17 @@ function read_config(){
 	done
 	dir="/tmp/pushbot/" && mkdir -p ${dir}
 	tempjsonpath="/tmp/pushbot/temp.json"
-	ip_blacklist_path="/usr/bin/pushbot/api/ip_blacklist"
+	# 黑名单文件路径：根据拉黑时长动态化
+	# 永久拉黑（ip_black_timeout=0）且持久化开启：使用持久目录
+	# 非永久拉黑 或 持久化关闭：使用 /tmp（OpenWrt 重启后清空）
+	local ip_black_persist="${ip_black_persist:-1}"
+	[ "$ip_black_persist" = "undefined" ] && ip_black_persist="1"
+	[ "$ip_black_persist" = "null" ] && ip_black_persist="1"
+	if [ "$ip_black_timeout" = "0" ] && [ "$ip_black_persist" = "1" ]; then
+		ip_blacklist_path="/usr/bin/pushbot/api/ip_blacklist"
+	else
+		ip_blacklist_path="${dir}ip_blacklist"
+	fi
 	# 收集本机所有接口地址（v4+v6）用于黑名单自我保护：本机地址与
 	# 127.0.0.1/::1 永不进入黑名单（登录监控可能把本机探测/回环误判为
 	# 失败来源，拉黑自己会断掉 Web/SSH 访问）。收集含回环与全部接口。
@@ -49,12 +59,26 @@ function read_config(){
 	ipv6_urllist=`cat /usr/bin/pushbot/api/ipv6.list` 2>/dev/null
 	[ -z "$pushbot_ipv4" ] && pushbot_ipv4=0
 	[ -z "$pushbot_ipv6" ] && pushbot_ipv6=0
-	[ "$iw_version" ] && wlan_interface=`iw dev|grep Interface|awk '{print $2}'` >/dev/null 2>&1
-	# 补充检测：/sys/class/net/*/wireless 覆盖 MTK 闭源等 iw 无输出的平台
-	local _wifi_sys=$(ls /sys/class/net/*/wireless 2>/dev/null | sed 's|/sys/class/net/||;s|/wireless||;s/:$//')
-	for _w in $_wifi_sys; do
-		echo "$wlan_interface" | grep -q -w "$_w" || wlan_interface="${wlan_interface} ${_w}"
-	done
+	# 无线接口检测（缓存到 /tmp，与防火墙/流量源探测一致）
+	wlan_interface=""
+	if [ -f "${dir}wlan_interface" ]; then
+		# 读取缓存（启动后不再输出日志）
+		wlan_interface=$(cat ${dir}wlan_interface 2>/dev/null)
+	else
+		# 缓存不存在，执行探测并输出日志
+		[ "$iw_version" ] && wlan_interface=`iw dev|grep Interface|awk '{print $2}'` >/dev/null 2>&1
+		# 补充检测：/sys/class/net/*/wireless 覆盖 MTK 闭源等 iw 无输出的平台
+		local _wifi_sys=$(ls /sys/class/net/*/wireless 2>/dev/null | sed 's|/sys/class/net/||;s|/wireless||;s/:$//')
+		for _w in $_wifi_sys; do
+			echo "$wlan_interface" | grep -q -w "$_w" || wlan_interface="${wlan_interface} ${_w}"
+		done
+		echo "$wlan_interface" > ${dir}wlan_interface
+		if [ ! -z "$wlan_interface" ]; then
+			echo "`date "+%Y-%m-%d %H:%M:%S"` 【检测到无线接口：${wlan_interface}】" >> ${logfile}
+		else
+			echo "`date "+%Y-%m-%d %H:%M:%S"` 【未检测到无线接口】" >> ${logfile}
+		fi
+	fi
 	[ -z "$up_timeout" ] || [ "$up_timeout" -eq "0" ] && up_timeout="2"
 	[ -z "$down_timeout" ] || [ "$down_timeout" -eq "0" ] && down_timeout="20";down_timeout=`expr ${down_timeout} / 2 + 1`
 	[ -z "$timeout_retry_count" ] && timeout_retry_count="2";[ "$timeout_retry_count" -eq "0" ] && timeout_retry_count="1"
@@ -113,7 +137,14 @@ function pushbot_init(){
 	down_oui &
 	deltemp
 	get_syslog
-	add_ip_black
+	# 只有拉黑功能启用时才执行黑名单初始化（含防火墙模式探测）
+	if [ "$web_login_black" = "1" ]; then
+		init_firewall_mode
+		# 检查是否有变化需要同步（避免每次启动都重复执行）
+		if need_blacklist_sync; then
+			add_ip_black
+		fi
+	fi
 	
 	rm -f ${dir}fd1 ${dir}sheep_usage ${dir}old_sheep_usage ${dir}client_usage_aliases ${dir}old_client_usage_aliases /usr/bin/pushbot/errlog >/dev/null 2>&1
 	[ -f "/usr/sbin/wrtbwmon" ] || command -v nlbw >/dev/null 2>&1 || echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】未安装 wrtbwmon 且 nlbwmon 不可用，流量统计不可用" >> ${logfile}
@@ -1345,7 +1376,12 @@ function login_send(){
 	cat ${dir}login_monitor|grep -i "failed login"|grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" >> ${dir}web_failed
 	cat ${dir}login_monitor|grep -i "Bad password attempt\|Login attempt for nonexistent user from"|grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" >> ${dir}ssh_failed
 	echo "" > ${dir}login_monitor
-	add_ip_black
+	# 黑名单同步（检测变化，避免重复执行）
+	if [ "$web_login_black" = "1" ]; then
+		if need_blacklist_sync; then
+			add_ip_black
+		fi
+	fi
 	
 	local login_ip_list=`cat ${dir}web_login|awk '{print $2}'|grep -v "^$"|sort -u|head -n1`
 	for login_ip in $login_ip_list; do
@@ -1462,13 +1498,16 @@ function login_send(){
 					fi
 				fi
 			fi
-			# 先尝试拉黑（add_ip_black 内部会做本机/白名单保护），
-			# 成功(未被拦截)才清除失败记录；被拦截则保留记录供后续重试。
-			if add_ip_black $login_ip; then
-				sed -i "/^${login_ip}$/d" ${dir}web_failed
-				echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】设备 ${login_ip} 通过 Web 频繁尝试登录" >> ${logfile}
-			else
-				echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】设备 ${login_ip} 触发拉黑但被本机/白名单保护拦截，保留记录待后续确认" >> ${logfile}
+			# 只有拉黑功能启用时才执行拉黑操作
+			if [ "$web_login_black" = "1" ]; then
+				# 先尝试拉黑（add_ip_black 内部会做本机/白名单保护），
+				# 成功(未被拦截)才清除失败记录；被拦截则保留记录供后续重试。
+				if add_ip_black $login_ip; then
+					sed -i "/^${login_ip}$/d" ${dir}web_failed
+					echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】设备 ${login_ip} 通过 Web 频繁尝试登录" >> ${logfile}
+				else
+					echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】设备 ${login_ip} 触发拉黑但被本机/白名单保护拦截，保留记录待后续确认" >> ${logfile}
+				fi
 			fi
 		fi
 	done
@@ -1512,12 +1551,15 @@ function login_send(){
 					fi
 				fi
 			fi
-			# 先尝试拉黑，成功(未被保护拦截)才清除失败记录
-			if add_ip_black $login_ip; then
-				sed -i "/^${login_ip}$/d" ${dir}ssh_failed
-				echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】设备 ${login_ip} 通过 SSH 频繁尝试登录" >> ${logfile}
-			else
-				echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】设备 ${login_ip} 触发拉黑但被本机/白名单保护拦截，保留记录待后续确认" >> ${logfile}
+			# 只有拉黑功能启用时才执行拉黑操作
+			if [ "$web_login_black" = "1" ]; then
+				# 先尝试拉黑，成功(未被保护拦截)才清除失败记录
+				if add_ip_black $login_ip; then
+					sed -i "/^${login_ip}$/d" ${dir}ssh_failed
+					echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】设备 ${login_ip} 通过 SSH 频繁尝试登录" >> ${logfile}
+				else
+					echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】设备 ${login_ip} 触发拉黑但被本机/白名单保护拦截，保留记录待后续确认" >> ${logfile}
+				fi
 			fi
 		fi
 	done
@@ -1906,6 +1948,56 @@ function parse_timeout(){
 	echo $((num * mult))
 }
 
+# 检查是否需要同步黑名单（文件/配置/内核是否有变化）
+function need_blacklist_sync(){
+	local bl_state="/usr/bin/pushbot/api/.ip_blacklist.state"
+	local prev_file="${bl_state}.prev"
+	local prev_onoff_file="${bl_state}.onoff"
+	local prev_timeout_file="${bl_state}.timeout"
+	local cur_onoff="${web_login_black:-0}"
+	local cur_timeout=$(parse_timeout "${ip_black_timeout:-0}")
+
+	# 如果是首次运行（prev_file 不存在），需要同步
+	if [ ! -f "$prev_file" ]; then
+		return 0
+	fi
+
+	# 检查 1：黑名单开关变化
+	local prev_onoff=""
+	[ -f "$prev_onoff_file" ] && prev_onoff=$(cat "$prev_onoff_file" 2>/dev/null)
+	[ "$prev_onoff" != "$cur_onoff" ] && return 0
+
+	# 检查 2：拉黑时长变化
+	local prev_timeout=""
+	[ -f "$prev_timeout_file" ] && prev_timeout=$(cat "$prev_timeout_file" 2>/dev/null)
+	[ "$prev_timeout" != "$cur_timeout" ] && return 0
+
+	# 检查 3：黑名单文件变化（用户手动增删）
+	# 仅当文件存在时比较（不存在说明首次或路径变更，需同步）
+	if [ -f "${ip_blacklist_path}" ] && [ -f "$prev_file" ]; then
+		if ! cmp -s "$prev_file" "${ip_blacklist_path}" 2>/dev/null; then
+			return 0
+		fi
+	else
+		# 文件缺失：需同步（首次或 UCI 路径变更）
+		[ ! -f "${ip_blacklist_path}" ] && return 0
+	fi
+
+	# 检查 4：内核 set 缺失（fw4 重启/路由重启清空了 nft set）
+	# 只在 set 为空时才需要同步（set 非空说明规则已生效，不需要重复执行）
+	if [ "$cur_onoff" = "1" ] && [ -s "${ip_blacklist_path}" ]; then
+		if command -v nft >/dev/null 2>&1; then
+			local set_count=$(nft list set inet fw4 pushbot_blacklist 2>/dev/null | grep -c "elements = {" || echo "0")
+			if [ "$set_count" -eq "0" ]; then
+				return 0
+			fi
+		fi
+	fi
+
+	# 无变化
+	return 1
+}
+
 # 添加黑名单 — 支持 nftables / iptables 双模式
 function add_ip_black(){
 	# 本机地址硬保护：本机接口地址/回环永不拉黑（误拉黑自己会断访问）
@@ -2077,17 +2169,20 @@ function add_ip_black(){
 		done
 	fi
 	
-	# 判断防火墙工具
+	# 使用缓存的防火墙模式（init_firewall_mode 已探测）
 	local use_nft=false
-	if command -v nft >/dev/null 2>&1; then
+	if [ "$firewall_mode" = "nft" ]; then
 		use_nft=true
-		echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】检测到 nftables，将采用 nftables 防火墙策略" >> ${logfile}
-	else
-		echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】检测到只有 iptables，将采用 iptables 防火墙策略" >> ${logfile}
 	fi
 	
 	if $use_nft; then
 		if [ $ip_count -le "0" ]; then
+			# 如果没有变化且 set 不存在，跳过清空（避免重复执行）
+			if ! $need_update && ! nft list set inet fw4 pushbot_blacklist >/dev/null 2>&1 && ! nft list set inet fw4 pushbot_blacklist6 >/dev/null 2>&1; then
+				# 检查规则是否残留
+				local rule_exists=$(nft list chain inet fw4 input 2>/dev/null | grep -c "@pushbot_blacklist" || echo "0")
+				[ "$rule_exists" -eq "0" ] && return
+			fi
 			# 删除所有引用黑名单 set 的规则（v4/v6 各一条，必须全部删除，
 			# 否则残留规则引用 set → nft delete set 报 in-use 失败 → 拉黑不解除）
 			local del_rule_handles=$(nft -a list chain inet fw4 input 2>/dev/null | grep "@pushbot_blacklist" | grep -o "handle [0-9]*" | cut -d' ' -f2)
@@ -2096,8 +2191,11 @@ function add_ip_black(){
 			done
 			nft delete set inet fw4 pushbot_blacklist 2>/dev/null || true
 			nft delete set inet fw4 pushbot_blacklist6 2>/dev/null || true
-			echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】黑名单列表为空，清空 nftables 防火墙拉黑策略" >> ${logfile}
+			if $need_update; then
+				echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】黑名单列表为空，清空 nftables 防火墙拉黑策略" >> ${logfile}
+			fi
 			> ${ip_blacklist_path}
+			cp "${ip_blacklist_path}" "$prev_file" 2>/dev/null
 			rm -f "${bl_state}.prevset"
 			return
 		fi
@@ -2173,7 +2271,10 @@ function add_ip_black(){
 				grep -qx "$ip_del6" "${ip_blacklist_path}" || nft delete element inet fw4 pushbot_blacklist6 { $ip_del6 } 2>/dev/null || true
 			done
 		}
-		echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】已 nftables 拉黑 ${black_ips}${black_ips6:+,$black_ips6}" >> ${logfile}
+		# 只有实际变化时才输出日志
+		if $need_update; then
+			echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】已 nftables 拉黑 ${black_ips}${black_ips6:+,$black_ips6}" >> ${logfile}
+		fi
 		# 回写黑名单文件（v4+v6）以内核 set 为准：超时移除的元素不在此列，自然从文件清除
 		nft list set inet fw4 pushbot_blacklist 2>/dev/null | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" > ${ip_blacklist_path}.tmp
 		# v6 只抓 elements 行内的地址（跳过 set 头注释/flags 等单词）
@@ -2189,8 +2290,11 @@ function add_ip_black(){
 		if [ $ip_count -le "0" ]; then
 			iptables -D INPUT -m set --match-set ip_blacklist src -j DROP >/dev/null 2>&1
 			ipset destroy ip_blacklist >/dev/null 2>&1
-			echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】黑名单列表为空，清空 iptables 防火墙拉黑策略" >> ${logfile}
+			if $need_update; then
+				echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】黑名单列表为空，清空 iptables 防火墙拉黑策略" >> ${logfile}
+			fi
 			> ${ip_blacklist_path}
+			cp "${ip_blacklist_path}" "$prev_file" 2>/dev/null
 			rm -f "${bl_state}.prevset"
 			return
 		fi
@@ -2210,7 +2314,10 @@ function add_ip_black(){
 		else
 			rm -f ${ip_blacklist_path}.tmp
 		fi
-		echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】已 iptables 拉黑 ${black_ips}" >> ${logfile}
+		# 只有实际变化时才输出日志
+		if $need_update; then
+			echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】已 iptables 拉黑 ${black_ips}" >> ${logfile}
+		fi
 	fi
 
 	# 记录当前 set 元素快照（供下次判定防火墙是否主动变化——到期移除 vs 用户删除）
@@ -2386,15 +2493,16 @@ SCRIPT_ARG="$1"
 # 初始化
 read_config
 
-# ── 流量数据源探测（主进程每次启动重新探测，外部调用读缓存） ──
-traffic_source="none"
-if [ "$1" = "usage" ]; then
-	# 外部调用：读缓存文件，不重新探测（避免启动延迟）
+# ── 流量数据源探测（缓存到 /tmp，OpenWrt 重启后重新探测） ──
+function init_traffic_source() {
+	# 读取缓存
+	traffic_source="none"
 	if [ -f "${dir}traffic_source" ]; then
 		traffic_source=$(cat ${dir}traffic_source 2>/dev/null)
+		return
 	fi
-else
-	# 主进程：重新探测（不 sleep，nlbw 立刻能返回数据就是 nlbw）
+
+	# 缓存为空，重新探测
 	if command -v nlbw >/dev/null 2>&1 && [ -S /var/run/nlbwmon.sock ]; then
 		_nlbw_rows=$(nlbw -c csv -s, -q -n -g mac 2>/dev/null | awk -F',' 'NR>1 && $1!="mac" {n++} END{print n+0}')
 		[ "${_nlbw_rows:-0}" -gt "0" ] && traffic_source="nlbw"
@@ -2403,9 +2511,41 @@ else
 		traffic_source="wrtbw"
 	fi
 	echo "$traffic_source" > ${dir}traffic_source
+	echo "`date "+%Y-%m-%d %H:%M:%S"` 【检测到流量工具：${traffic_source}】" >> ${logfile}
+}
+
+# ── 防火墙模式探测（缓存到 /tmp，OpenWrt 重启后重新探测） ──
+function init_firewall_mode() {
+	# 读取缓存
+	firewall_mode=""
+	if [ -f "${dir}firewall_mode" ]; then
+		firewall_mode=$(cat ${dir}firewall_mode 2>/dev/null)
+		return
+	fi
+
+	# 缓存为空，重新探测
+	if command -v nft >/dev/null 2>&1; then
+		firewall_mode="nft"
+	else
+		firewall_mode="iptables"
+	fi
+	echo "$firewall_mode" > ${dir}firewall_mode
+	echo "`date "+%Y-%m-%d %H:%M:%S"` 【检测到防火墙：${firewall_mode}】" >> ${logfile}
+}
+
+# 主进程启动或 blacklist 命令时探测
+if [ "$1" != "usage" ] && [ "$1" != "soc" ] && [ "$1" != "client" ] && [ "$1" != "test" ]; then
+	init_traffic_source
+	init_firewall_mode
 fi
-# 仅主进程输出日志（外部调用 usage list/get 不输出，避免频繁刷屏）
-[ "$1" != "usage" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【初始化】流量数据源: ${traffic_source}" >> ${logfile}
+
+# usage 命令：只读取流量源缓存（不探测）
+if [ "$1" = "usage" ]; then
+	traffic_source="none"
+	if [ -f "${dir}traffic_source" ]; then
+		traffic_source=$(cat ${dir}traffic_source 2>/dev/null)
+	fi
+fi
 
 # 供外部查询流量(LuCI 在线设备表格):pushbot usage list / pushbot usage get <mac> [bytes]
 # 注意:必须放在 deltemp 之前,避免查询时误删主循环的 pushbot.lock
@@ -2429,12 +2569,51 @@ unset i
 
 # 启动参数
 if [ "$1" ] ;then
+	# blacklist 只需读取黑名单配置，不需要流量源探测
+	if [ "$1" = "blacklist" ]; then
+		get_config "pushbot_enable" "web_login_black" "pushbot_whitelist" "pushbot_blacklist" "pushbot_interface" "MAC_online_list" "MAC_offline_list" "ip_white_list" "ip_black_timeout" "ip_black_persist"
+		# 只有拉黑功能启用时才执行
+		if [ "$web_login_black" = "1" ]; then
+			init_firewall_mode
+			add_ip_black
+		fi
+		exit
+	fi
+	# 重检防火墙：清除缓存并重新探测
+	if [ "$1" = "check_firewall" ]; then
+		get_config "web_login_black"
+		if [ "$web_login_black" = "1" ]; then
+			rm -f ${dir}firewall_mode
+			init_firewall_mode
+		fi
+		exit
+	fi
+	# 重检流量源：清除缓存并重新探测
+	if [ "$1" = "check_traffic" ]; then
+		rm -f ${dir}traffic_source
+		init_traffic_source
+		exit
+	fi
+	# 重检无线接口：清除缓存并重新探测
+	if [ "$1" = "check_wireless" ]; then
+		rm -f ${dir}wlan_interface
+		[ "$iw_version" ] && wlan_interface=`iw dev|grep Interface|awk '{print $2}'` >/dev/null 2>&1
+		local _wifi_sys=$(ls /sys/class/net/*/wireless 2>/dev/null | sed 's|/sys/class/net/||;s|/wireless||;s/:$//')
+		for _w in $_wifi_sys; do
+			echo "$wlan_interface" | grep -q -w "$_w" || wlan_interface="${wlan_interface} ${_w}"
+		done
+		echo "$wlan_interface" > ${dir}wlan_interface
+		if [ ! -z "$wlan_interface" ]; then
+			echo "`date "+%Y-%m-%d %H:%M:%S"` 【检测到无线接口：${wlan_interface}】" >> ${logfile}
+		else
+			echo "`date "+%Y-%m-%d %H:%M:%S"` 【未检测到无线接口】" >> ${logfile}
+		fi
+		exit
+	fi
 	[ $1 == "send" ] && send
 	[ $1 == "soc" ] && echo `soc_temp` > ${dir}soc_tmp
 	[ $1 == "client" ] && get_client
 	[ $1 == "test" ] && send test
-	# 立即应用/修改/清空拉黑规则（Web 保存后触发，不等 sleeptime 轮询）
-	[ $1 == "blacklist" ] && add_ip_black
 	exit
 fi
 
@@ -2493,7 +2672,11 @@ while [ "$pushbot_enable" = "1" ]; do
 
 	# 黑名单周期同步：内核 set 超时移除的元素同步回文件
 	# （避免"超时已解除拉黑但文件仍保留"的文件/内核不一致）
-	[ -f "${dir}send_enable.lock" ] || add_ip_black
+	if [ "$web_login_black" = "1" ] && [ ! -f "${dir}send_enable.lock" ]; then
+		if need_blacklist_sync; then
+			add_ip_black
+		fi
+	fi
 
 	# 通知
 	if [ ! -f "${dir}send_enable.lock" ] && [ ! -z "$title" ] && [ ! -z "$content" ]; then

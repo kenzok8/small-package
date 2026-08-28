@@ -73,6 +73,11 @@ o.default = { "stun.sip.us:3478", "stun.nextcloud.com:3478", "global.stun.twilio
 o.rewrite_option = _n(o.option)
 o:depends({ realms = "1" })
 
+o = s:option(Flag, "realm_upnp", translate("Enable") .. " UPnP/NAT-PMP", translate("Enable UPnP/NAT-PMP port mapping on your gateway to improve hole punching success."))
+o.default = "0"
+o.rewrite_option = _n(o.option)
+o:depends({ realms = "1" })
+
 o = s:option(ListValue, "obfs_type", translate("Obfs Type"))
 o:value("", translate("Disable"))
 o:value("salamander")
@@ -138,6 +143,19 @@ if o and o:formvalue(arg[1]) then o.default = o:formvalue(arg[1]) end
 o.validate = function(self, value, t)
 	if value and value ~= "" then
 		if not api.fs.access(value) then
+			return nil, translate("Can't find this file!")
+		else
+			return value
+		end
+	end
+	return nil
+end
+o:depends({ custom = false })
+
+o = s:option(FileUpload, "ech_keyFile", translate("ECH key absolute path"), translate("as:") .. "/etc/ssl/ech.pem")
+o.validate = function(self, value, t)
+	if value and value ~= "" then
+		if not fs.access(value) then
 			return nil, translate("Can't find this file!")
 		else
 			return value

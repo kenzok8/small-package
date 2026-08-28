@@ -1,32 +1,15 @@
 #!/bin/sh /etc/rc.common
-# Copyright (C) 2006-2011 OpenWrt.org
+# shellcheck disable=SC2034
 
 START=95
-USE_PROCD=1
+EVENTD=/etc/init.d/natflow-userinfo-eventd
 
-PROG=/usr/libexec/natflow-simple-qos
-NAME=natflow-simple-qos
-
-start_service() {
-	[ -c /dev/natflow_userinfo_ctl ] || return 0
-	[ -c /dev/natflow_userinfo_queue ] || return 0
-	[ -x "$PROG" ] || return 0
-
-	procd_open_instance
-	procd_set_param command "$PROG" run
-	procd_set_param respawn 3600 5 5
-	procd_close_instance
+# Compatibility entry for existing LuCI ucitrack consumers. Startup is owned
+# by natflow-userinfo-eventd so package installation does not reconcile twice.
+reload() {
+	"$EVENTD" reload
 }
 
-stop_service() {
-	"$PROG" cleanup
-}
-
-reload_service() {
-	stop
-	start
-}
-
-service_triggers() {
-	procd_add_reload_trigger natflow
+restart() {
+	reload
 }

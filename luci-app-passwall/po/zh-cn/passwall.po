@@ -1604,6 +1604,9 @@ msgstr "公钥文件绝对路径"
 msgid "Private key absolute path"
 msgstr "私钥文件绝对路径"
 
+msgid "ECH key absolute path"
+msgstr "ECH 密钥绝对路径"
+
 msgid "Can't find this file!"
 msgstr "找不到这个文件！"
 
@@ -2159,6 +2162,9 @@ msgstr "Gecko 包大小（最小）"
 
 msgid "Gecko Packet Size (max)"
 msgstr "Gecko 包大小（最大）"
+
+msgid "Enable UPnP/NAT-PMP port mapping on your gateway to improve hole punching success."
+msgstr "在网关上启用 UPnP/NAT-PMP 端口映射以提升打洞成功率。"
 
 msgid "valid time (hh:mm)"
 msgstr "有效时间（hh:mm）"
