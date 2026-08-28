@@ -18,6 +18,7 @@ function read_config(){
 	"client_usage" "client_usage_max" "client_usage_disturb" "client_usage_whitelist" \
 	"web_logged" "ssh_logged" "web_login_failed" "ssh_login_failed" "wifi_connected" "wifi_auth_failed" "login_max_num" "web_login_black" "ip_white_list" "ip_black_timeout" \
 	"pushbot_sheep" "starttime" "endtime" "pushbot_whitelist" "pushbot_blacklist" "pushbot_interface" "MAC_online_list" "MAC_offline_list" \
+	"dnd_low_range" \
 	"up_timeout" "down_timeout" "timeout_retry_count" "thread_num" "soc_code" "pve_host" "pve_port"\
 	"err_enable" "err_sheep_enable" "err_device_aliases" "network_err_event" "system_time_event" "autoreboot_time" "network_restart_time" "public_ip_event" "public_ip_retry_count" \
 	"jsonpath" "dd_webhook" "we_webhook" "pp_token" "pp_channel" "pp_webhook" "pp_topic_enable" "pp_topic" "fs_webhook" "pushdeer_key" "pushdeer_srv_enable" "pushdeer_srv" "bark_srv_enable" "bark_srv" "bark_token" "bark_sound" "bark_icon" "bark_icon_enable" "bark_level" "ntfy_srv_enable" "ntfy_server" "ntfy_topic" "ntfy_token_enable" "ntfy_token" "ntfy_priority" "gotify_server" "gotify_token" "gotify_priority" \
@@ -769,6 +770,8 @@ function pushbot_cron(){
 
 # 免打扰检测
 function pushbot_disturb(){
+	# 模式3：低频通知，全天候生效，由 check_dnd_limit 控制去重，不受时间段限制
+	[ "$pushbot_sheep" = "3" ] && return 0
 	[ -z "$pushbot_sheep" ] || [ -z "$starttime" ] || [ -z "$endtime" ] && return 0
 	if [ `date +%H` -ge $endtime -a $starttime -lt $endtime ] || [ `date +%H` -lt $starttime -a $starttime -lt $endtime ] || [ `date +%H` -lt $starttime -a `date +%H` -ge $endtime -a $starttime -gt $endtime ]; then
 		unset sheep_starttime
@@ -787,6 +790,36 @@ function pushbot_disturb(){
 			return 1
 		fi
 	fi
+}
+
+# 低频通知去重（仅模式3启用时生效）
+# category: 类别（如 device, wifi_conn, wifi_disc, web_login, ssh_login）
+# value: 标识值（MAC 或 IP）
+# window: 时间窗口（支持秒/分/时/天，如 "1800" "30m" "1h" "8h" "1d"）
+# 返回：0=可以发送，1=跳过（已在低频窗口内发送过）
+function check_dnd_limit(){
+	local category="$1"
+	local value="$2"
+	local window_raw="${3:-1800}"
+	
+	# 模式3才启用低频检查
+	[ "$pushbot_sheep" != "3" ] && return 0
+	
+	local window_sec=$(parse_timeout "$window_raw")
+	[ "$window_sec" -le 0 ] && window_sec=1800  # 默认30分钟
+	
+	local now=$(date +%s)
+	local state_file="${dir}dnd_${category}_${value}"
+	
+	# 检查状态文件
+	if [ -f "$state_file" ]; then
+		local last=$(cat "$state_file" 2>/dev/null)
+		[ $((now - last)) -lt "$window_sec" ] && return 1  # 在窗口内，跳过
+	fi
+	
+	# 记录本次时间戳
+	echo "$now" > "$state_file"
+	return 0  # 可以发送
 }
 
 # 文件锁
@@ -1128,6 +1161,11 @@ function up(){
 			[ -f "${dir}send_enable.lock" ] || [ -z "$pushbot_up" ] || [ -z "$ip_blackwhite" ] && LockFile unlock && return
 			[ ! -z "$pushbot_up" ] && [ "$pushbot_up" -ne "1" ] && LockFile unlock && return
 			[ -z "$ip_blackwhite" ] || [ "$ip_blackwhite" -ne "0" ] && LockFile unlock && return
+			# 低频通知检查（模式3）：同一设备上线通知，在时间窗口内只通知一次
+			if ! check_dnd_limit "device" "$ip_mac" "$dnd_low_range"; then
+				echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}${ip_name} ${1} 上线（低频跳过）" >> ${logfile}
+				LockFile unlock && return
+			fi
 			[ -f "${dir}title" ] && local title=`cat ${dir}title`
 			[ -f "${dir}content" ] && local content=`cat ${dir}content`
 			if [ "$table_enable" = "1" ]; then
@@ -1197,6 +1235,11 @@ function down_send(){
 		[ -z "$pushbot_down" ] || [ -z "$ip_blackwhite" ] && continue
 		[ ! -z "$pushbot_down" ] && [ "$pushbot_down" -ne "1" ] && continue
 		[ -z "$ip_blackwhite" ] || [ "$ip_blackwhite" -ne "0" ] && continue
+		# 低频通知检查（模式3）：同一设备离线通知，在时间窗口内只通知一次
+		if ! check_dnd_limit "device" "$ip_mac" "$dnd_low_range"; then
+			echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}${ip_name} ${ip} 离线（低频跳过）" >> ${logfile}
+			continue
+		fi
 		[ ! -z "$pushbot_blacklist" ] && local tmp_mac=`echo "${pushbot_blacklist}"|grep -w -i ${ip_mac}`
 		[ ! -z "$pushbot_whitelist" ] && local tmp_mac=`echo "${pushbot_whitelist}"|grep -w -i ${ip_mac}`
 		[ ! -z "$tmp_mac" ] && ( cat ${dir}ipAddress|grep -q -w -i ${tmp_mac} ) && continue
@@ -1390,6 +1433,11 @@ function login_send(){
 		local web_login_time=`cat ${dir}web_login|grep -w ${login_ip}|awk '{print $1}'|grep -v "^$"|sort -u|head -n1`
 		local web_login_mode=`cat ${dir}web_login|grep -w ${login_ip}|awk '{print $3}'|grep -v "^$"|sort -u|head -n1`
 		if [ ! -z "$web_logged" ] && [ "$web_logged" -eq "1" ]; then
+			# 低频通知检查（模式3）：同一来源Web登录，在时间窗口内只通知一次
+			if ! check_dnd_limit "web_login" "$login_ip" "$dnd_low_range"; then
+				echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}设备 ${login_ip} 通过 Web 登录（低频跳过）" >> ${logfile}
+				continue
+			fi
 			if [ "$table_enable" = "1" ]; then
 				local LF='\n'
 				local info="${LF}| **时间** | ${web_login_time} |${LF}| --- | --- |${LF}| **设备 IP** | ${login_ip} |${LF}| **登录方式** | ${web_login_mode} |"
@@ -1429,6 +1477,11 @@ function login_send(){
 		local ssh_login_mode=`cat ${dir}ssh_login|grep -w ${login_ip}|awk '{print $3}'|grep -v "^$"|sort -u|head -n1`
 		[ ! -z "$ssh_login_mode" ] && local content_mode="${str_linefeed}${str_tab}登录方式： ${str_space}${str_space}${str_space}${str_space}${ssh_login_mode}"
 		if [ ! -z "$ssh_logged" ] && [ "$ssh_logged" -eq "1" ]; then
+			# 低频通知检查（模式3）：同一来源SSH登录，在时间窗口内只通知一次
+			if ! check_dnd_limit "ssh_login" "$login_ip" "$dnd_low_range"; then
+				echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}设备 ${login_ip} 通过 SSH 登录（低频跳过）" >> ${logfile}
+				continue
+			fi
 			if [ "$table_enable" = "1" ]; then
 				local LF='\n'
 				local info="${LF}| **时间** | ${ssh_login_time} |${LF}| --- | --- |${LF}| **设备 IP** | ${login_ip} |${LF}| **登录方式** | ${ssh_login_mode} |"
@@ -1615,6 +1668,12 @@ function login_send(){
 					[ -z "$wifi_mac" ] && continue
 					[ -f "${dir}wifi_notified" ] && grep -q -i -w "${wifi_mac}" ${dir}wifi_notified 2>/dev/null && continue
 					echo "$wifi_prev_macs" | grep -q -i -w "${wifi_mac}" && continue
+					# 低频通知检查（模式3）：同一设备WiFi连接通知，在时间窗口内只通知一次
+					if ! check_dnd_limit "wifi_conn" "$wifi_mac" "$dnd_low_range"; then
+						echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}WiFi 设备 ${wifi_mac} 已连接（低频跳过）" >> ${logfile}
+						echo "$wifi_mac" >> ${dir}wifi_notified
+						continue
+					fi
 					echo "$wifi_mac" >> ${dir}wifi_notified
 					_new_count=$((_new_count + 1))
 					local _ssid=$(echo "$wifi_cur_ssids" | awk -v n=$((_idx+1)) '{print $n}')
@@ -1697,6 +1756,11 @@ function login_send(){
 							rm -f "$_offline_file"
 							# 离线后清除连接通知记录，设备重新连接时可再次通知
 							sed -i "/${wifi_mac}/Id" ${dir}wifi_notified 2>/dev/null
+							# 低频通知检查（模式3）：同一设备WiFi离线通知，在时间窗口内只通知一次
+							if ! check_dnd_limit "wifi_disc" "$wifi_mac" "$dnd_low_range"; then
+								echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}WiFi 设备 ${wifi_mac} 已离线（低频跳过）" >> ${logfile}
+								continue
+							fi
 							echo "`date "+%Y-%m-%d %H:%M:%S"` WiFi 设备 ${wifi_mac} 已离线" >> ${logfile}
 							local wifi_time=$(date "+%Y-%m-%d %H:%M:%S")
 							local wifi_offline_dur=$(time_for_humans $_duration)
@@ -1734,49 +1798,107 @@ function login_send(){
 		fi
 	fi
 
-	# WiFi 认证失败检测（基于 logread，兼容 MTK 闭源和开源驱动）
-	# MTK 闭源: verify confirm fail（kern.err）
-	# 标准 hostapd: PSK-MISMATCH / deauthenticated due to local auth failure / EAPOL-Key MIC invalid（daemon.notice）
-	# 增量检测：记录总行数，只有新增或首次达阈值才通知
+	# WiFi 认证失败检测
+	# MTK 闭源驱动（mt_wifi 模块）：内核时间戳增量 + 按 MAC 分组（只统计新事件，按设备分组，不重复累计）
+	# 开源驱动（hostapd/wpa_supplicant）：原有增量计数方案（保持不变）
 	if [ "$wifi_auth_failed" = "1" ]; then
-		local _wifi_cur_log=$(logread 2>/dev/null | tail -200)
-		local _wifi_cur_count=$(echo "$_wifi_cur_log" | grep -i "PSK-MISMATCH\|deauthenticated due to local auth failure\|verify confirm fail\|EAPOL-Key MIC invalid" | wc -l)
-		local _wifi_prev_count=0
-		[ -f "${dir}wifi_fail_count" ] && _wifi_prev_count=$(cat ${dir}wifi_fail_count 2>/dev/null)
-		echo "$_wifi_cur_count" > ${dir}wifi_fail_count
-		local _new_fails=$((_wifi_cur_count - _wifi_prev_count))
-		[ "$_new_fails" -lt "0" ] && _new_fails=0
-		local _threshold=${login_max_num:-5}
-		if [ "$_wifi_cur_count" -ge "$_threshold" ] && { [ "$_wifi_prev_count" -lt "$_threshold" ] || [ "$_new_fails" -gt "0" ]; }; then
-			local _wifi_fail_mac=$(echo "$_wifi_cur_log" | grep -i "PSK-MISMATCH\|deauthenticated due to local auth failure\|verify confirm fail\|EAPOL-Key MIC invalid" | grep -ioE "([0-9a-f]{2}:){5}[0-9a-f]{2}" | tail -1)
-			echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}WiFi 认证失败 ${_wifi_cur_count} 次${_wifi_fail_mac:+（MAC: ${_wifi_fail_mac}）}" >> ${logfile}
-			if [ "$table_enable" = "1" ]; then
-				local LF='\n'
-				local _wifi_fail_info="${LF}| **失败次数** | ${_wifi_cur_count} |"
-				[ ! -z "$_wifi_fail_mac" ] && _wifi_fail_info="${_wifi_fail_info}${LF}| **MAC** | ${_wifi_fail_mac} |"
-				if [ -z "$title" ]; then
-					title="WiFi 认证失败警告"
-					content="${content}${str_splitline}${str_title_start}${font_fail} WiFi 认证失败${font_end}${str_title_end}${_wifi_fail_info}"
-				elif ( echo "$title"|grep -q "WiFi" ); then
-					content="${content}${str_splitline}${_wifi_fail_info}"
+		if lsmod 2>/dev/null | grep -q "^mt_wifi"; then
+			# ── MTK 闭源驱动：内核时间戳增量 + 按 MAC 分组 ──
+			# 失败事件格式：[6513950.363098] ... Rcv AUTH seq#1, Alg=3, Status=126 from [wcid=1023]86:1f:35:0c:19:bb
+			# 提取 (内核时间 MAC) 对，用内核时间戳过滤"上次报告时间"之后的新事件，
+			# 避免重复累计报告；成功事件（SETKEYS DONE / Status=0）不在统计范围
+			local _fail_events=$(logread 2>/dev/null | tail -1000 | grep "Rcv AUTH seq#1, Alg=3, Status=126" | sed -n 's/.*\[\([0-9.]*\)\].*from \[wcid=[0-9]*\]\([0-9a-fA-F:]*\).*/\1 \2/p')
+			local _last_time=0
+			[ -f "${dir}wifi_fail_last_time" ] && _last_time=$(cat ${dir}wifi_fail_last_time 2>/dev/null)
+			[ -z "$_last_time" ] && _last_time=0
+			local _new_events=$(echo "$_fail_events" | awk -v t="$_last_time" '$1+0 > t+0')
+			local _new_count=0
+			[ ! -z "$_new_events" ] && _new_count=$(echo "$_new_events" | wc -l)
+			local _threshold=${login_max_num:-5}
+			if [ "$_new_count" -ge "$_threshold" ]; then
+				# 按 MAC 分组统计：每行 "MAC 次数"（不去重——多频段/多接口的真实失败都应计入，攻击提醒需反映真实强度）
+				local _mac_stats=$(echo "$_new_events" | awk '{count[$2]++} END {for (mac in count) print mac, count[mac]}' | sort)
+				# 更新状态文件为最新事件时间（避免下次重复报告本批事件）
+				local _max_time=$(echo "$_fail_events" | awk '{print $1}' | sort -n | tail -1)
+				[ ! -z "$_max_time" ] && echo "$_max_time" > ${dir}wifi_fail_last_time
+				# 日志中补充 MAC 分组信息
+				local _mac_summary=$(echo "$_mac_stats" | awk '{printf "%s: %d次, ", $1, $2}' | sed 's/, $//')
+				echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}WiFi 认证失败 ${_new_count} 次（${_mac_summary}）" >> ${logfile}
+				if [ "$table_enable" = "1" ]; then
+					local LF='\n'
+					local _mac_rows=$(echo "$_mac_stats" | awk '{printf "\\n| %s | %s 次 |", $1, $2}')
+					local _wifi_fail_info="${LF}| **失败MAC** | **次数** |${LF}| --- | --- |${_mac_rows}"
+					if [ -z "$title" ]; then
+						title="WiFi 认证失败警告"
+						content="${content}${str_splitline}${str_title_start}${font_fail} WiFi 认证失败${font_end}${str_title_end}${_wifi_fail_info}"
+					elif ( echo "$title"|grep -q "WiFi" ); then
+						content="${content}${str_splitline}${_wifi_fail_info}"
+					else
+						title="设备状态变化"
+						content="${content}${str_splitline}${str_title_start}${font_fail} WiFi 认证失败${font_end}${str_title_end}${_wifi_fail_info}"
+					fi
 				else
-					title="设备状态变化"
-					content="${content}${str_splitline}${str_title_start}${font_fail} WiFi 认证失败${font_end}${str_title_end}${_wifi_fail_info}"
-				fi
-			else
-				local _wifi_fail_detail="失败次数：${_wifi_cur_count}"
-				[ ! -z "$_wifi_fail_mac" ] && _wifi_fail_detail="MAC：${_wifi_fail_mac}${str_linefeed}${str_tab}${_wifi_fail_detail}"
-				if [ -z "$title" ]; then
-					title="WiFi 认证失败警告"
-					content="${content}${str_splitline}${str_title_start}${font_fail} WiFi 认证失败${font_end}${str_title_end}${str_linefeed}${str_tab}${_wifi_fail_detail}"
-				elif ( echo "$title"|grep -q "WiFi" ); then
-					content="${content}${str_splitline}${str_linefeed}${str_tab}${_wifi_fail_detail}"
-				else
-					title="设备状态变化"
-					content="${content}${str_splitline}${str_title_start}${font_fail} WiFi 认证失败${font_end}${str_title_end}${str_linefeed}${str_tab}${_wifi_fail_detail}"
+					local _mac_detail=$(echo "$_mac_stats" | awk -v lf="${str_linefeed}" -v tab="${str_tab}" 'NR>1{printf "%s", lf} {printf "%s%s：%s 次", tab, $1, $2}')
+					local _wifi_fail_detail="失败 MAC：${str_linefeed}${_mac_detail}"
+					if [ -z "$title" ]; then
+						title="WiFi 认证失败警告"
+						content="${content}${str_splitline}${str_title_start}${font_fail} WiFi 认证失败${font_end}${str_title_end}${str_linefeed}${_wifi_fail_detail}"
+					elif ( echo "$title"|grep -q "WiFi" ); then
+						content="${content}${str_splitline}${str_linefeed}${_wifi_fail_detail}"
+					else
+						title="设备状态变化"
+						content="${content}${str_splitline}${str_title_start}${font_fail} WiFi 认证失败${font_end}${str_title_end}${str_linefeed}${_wifi_fail_detail}"
+					fi
 				fi
 			fi
-	fi
+		else
+			# ── 开源驱动：原有增量计数逻辑 ──
+			local _wifi_cur_log=$(logread 2>/dev/null | tail -200)
+			local _wifi_cur_count=$(echo "$_wifi_cur_log" | grep -i "PSK-MISMATCH\|deauthenticated due to local auth failure\|verify confirm fail\|EAPOL-Key MIC invalid" | wc -l)
+			local _wifi_prev_count=0
+			[ -f "${dir}wifi_fail_count" ] && _wifi_prev_count=$(cat ${dir}wifi_fail_count 2>/dev/null)
+			echo "$_wifi_cur_count" > ${dir}wifi_fail_count
+			local _new_fails=$((_wifi_cur_count - _wifi_prev_count))
+			[ "$_new_fails" -lt "0" ] && _new_fails=0
+			local _threshold=${login_max_num:-5}
+			if [ "$_wifi_cur_count" -ge "$_threshold" ] && { [ "$_wifi_prev_count" -lt "$_threshold" ] || [ "$_new_fails" -gt "0" ]; }; then
+				# 提取失败 MAC（开源驱动优先从 logread 提取，MTK 闭源驱动从 dmesg 提取）
+				local _wifi_fail_mac=""
+				# 开源驱动：从 logread 提取（格式包含 MAC）
+				_wifi_fail_mac=$(echo "$_wifi_cur_log" | grep -i "PSK-MISMATCH\|deauthenticated due to local auth failure\|verify confirm fail\|EAPOL-Key MIC invalid" | grep -ioE "([0-9a-f]{2}:){5}[0-9a-f]{2}" | tail -1)
+				# MTK 闭源驱动：从 logread 提取所有不同的认证失败 MAC（Alg=3, Status=126）
+				if [ -z "$_wifi_fail_mac" ]; then
+					_wifi_fail_mac=$(logread 2>/dev/null | tail -500 | grep "Rcv AUTH seq#1, Alg=3, Status=126" | grep -ioE "([0-9a-f]{2}:){5}[0-9a-f]{2}" | sort -u | tr '\n' ',' | sed 's/,$//')
+				fi
+				echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}WiFi 认证失败 ${_wifi_cur_count} 次${_wifi_fail_mac:+（MAC: ${_wifi_fail_mac}）}" >> ${logfile}
+				if [ "$table_enable" = "1" ]; then
+					local LF='\n'
+					local _wifi_fail_info="${LF}| **失败次数** | ${_wifi_cur_count} |"
+					[ ! -z "$_wifi_fail_mac" ] && _wifi_fail_info="${_wifi_fail_info}${LF}| **MAC** | ${_wifi_fail_mac} |"
+					if [ -z "$title" ]; then
+						title="WiFi 认证失败警告"
+						content="${content}${str_splitline}${str_title_start}${font_fail} WiFi 认证失败${font_end}${str_title_end}${_wifi_fail_info}"
+					elif ( echo "$title"|grep -q "WiFi" ); then
+						content="${content}${str_splitline}${_wifi_fail_info}"
+					else
+						title="设备状态变化"
+						content="${content}${str_splitline}${str_title_start}${font_fail} WiFi 认证失败${font_end}${str_title_end}${_wifi_fail_info}"
+					fi
+				else
+					local _wifi_fail_detail="失败次数：${_wifi_cur_count}"
+					[ ! -z "$_wifi_fail_mac" ] && _wifi_fail_detail="MAC：${_wifi_fail_mac}${str_linefeed}${str_tab}${_wifi_fail_detail}"
+					if [ -z "$title" ]; then
+						title="WiFi 认证失败警告"
+						content="${content}${str_splitline}${str_title_start}${font_fail} WiFi 认证失败${font_end}${str_title_end}${str_linefeed}${str_tab}${_wifi_fail_detail}"
+					elif ( echo "$title"|grep -q "WiFi" ); then
+						content="${content}${str_splitline}${str_linefeed}${str_tab}${_wifi_fail_detail}"
+					else
+						title="设备状态变化"
+						content="${content}${str_splitline}${str_title_start}${font_fail} WiFi 认证失败${font_end}${str_title_end}${str_linefeed}${str_tab}${_wifi_fail_detail}"
+					fi
+				fi
+		fi
+		fi
 	fi
 }
 

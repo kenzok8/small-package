@@ -278,7 +278,7 @@ return {
 			"bark_token","bark_srv_enable","bark_srv","bark_sound",
 			"bark_icon_enable","bark_icon","bark_level","device_name",
 			"sleeptime","oui_data","oui_dir","reset_regularly","debuglevel",
-			"pushbot_sheep","starttime","endtime","macmechanism",
+			"pushbot_sheep","starttime","endtime","dnd_low_range","macmechanism",
 			"pushbot_interface","macmechanism2","crontab","regular_time",
 			"regular_time_2","regular_time_3","interval_time","send_title",
 			"router_status","router_temp","router_wan","client_list",

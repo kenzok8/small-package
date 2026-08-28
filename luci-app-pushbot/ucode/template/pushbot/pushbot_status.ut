@@ -970,11 +970,13 @@ XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'version') }}',
 			title.style.cssText = 'margin:8px 0 6px 2px;text-transform:none;font-size:13px';
 			title.textContent = '{{ _('Do Not Disturb') }}';
 			card.appendChild(title);
-			card.appendChild(mkChoice('pushbot_sheep', ['', '1', '2'],
-				{'':'{{ _('Disabled') }}','1':'{{ _('Mode 1: Pause script') }}','2':'{{ _('Mode 2: Silent mode') }}'},
+			card.appendChild(mkChoice('pushbot_sheep', ['', '1', '2', '3'],
+				{'':'{{ _('Disabled') }}','1':'{{ _('Mode 1: Pause script') }}','2':'{{ _('Mode 2: Silent mode') }}','3':'{{ _('Mode 3: Low frequency') }}'},
 				function(v) {
 					var tw = document.getElementById('pm_dnd_time');
 					if (tw) tw.style.display = (v === '1' || v === '2') ? '' : 'none';
+					var lw = document.getElementById('pm_dnd_lowfreq');
+					if (lw) lw.style.display = (v === '3') ? '' : 'none';
 				}
 			));
 		})();
@@ -1009,6 +1011,48 @@ XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'version') }}',
 			tr.appendChild(stInp); tr.appendChild(dash); tr.appendChild(enInp);
 			timeWrap.appendChild(tr);
 			card.appendChild(timeWrap);
+		})();
+
+		/* Low-frequency time range (only for mode 3) */
+		(function() {
+			var lowWrap = document.createElement('div');
+			lowWrap.id = 'pm_dnd_lowfreq';
+			lowWrap.style.display = (sheepCur === '3') ? '' : 'none';
+			var lt = document.createElement('div');
+			lt.className = 'pushbot-inline-title';
+			lt.style.cssText = 'margin:12px 0 6px 2px;text-transform:none;font-size:13px';
+			lt.textContent = '{{ _('Low frequency time range') }}';
+			lowWrap.appendChild(lt);
+			var desc = document.createElement('div');
+			desc.style.cssText = 'margin:0 0 8px 2px;font-size:11.5px;color:var(--text-color-low,#64748b)';
+			desc.textContent = '{{ _('In low frequency mode, same source same category actions only notify once within this time range') }}';
+			lowWrap.appendChild(desc);
+			var dndLowVal = PB_val('dnd_low_range', '1800');
+			var lowHi = makeHidden('dnd_low_range', dndLowVal);
+			var lowOpts = [
+				{v:'1800', l:'{{ _("30 min") }}'},
+				{v:'3600', l:'{{ _("1 hour") }}'},
+				{v:'28800', l:'{{ _("8 hours") }}'},
+				{v:'86400', l:'{{ _("1 day") }}'}
+			];
+			var lowRow = document.createElement('div');
+			lowRow.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap';
+			lowOpts.forEach(function(o) {
+				var b = document.createElement('button');
+				b.type = 'button';
+				b.className = 'pushbot-choice-button ' + (dndLowVal === o.v ? 'is-on' : 'is-off');
+				b.textContent = o.l;
+				b.addEventListener('click', function() {
+					lowHi.value = o.v;
+					lowRow.querySelectorAll('.pushbot-choice-button').forEach(function(btn) {
+						btn.className = 'pushbot-choice-button is-off';
+					});
+					b.className = 'pushbot-choice-button is-on';
+				});
+				lowRow.appendChild(b);
+			});
+			lowWrap.appendChild(lowRow);
+			card.appendChild(lowWrap);
 		})();
 
 		/* MAC Filter 1 — multi-toggle with mutex + coexist rules

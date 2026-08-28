@@ -494,6 +494,27 @@ msgstr "模式一：脚本挂起"
 msgid "Mode 2: Silent mode"
 msgstr "模式二：静默模式"
 
+msgid "Mode 3: Low frequency"
+msgstr "模式三：低频通知"
+
+msgid "Low frequency time range"
+msgstr "低频时间范围"
+
+msgid "In low frequency mode, same source same category actions only notify once within this time range"
+msgstr "启用后，在低频时间范围内，同一来源的同一类别动作只通知一次"
+
+msgid "30 min"
+msgstr "30 分钟"
+
+msgid "1 hour"
+msgstr "1 小时"
+
+msgid "8 hours"
+msgstr "8 小时"
+
+msgid "1 day"
+msgstr "1 天"
+
 msgid "Modify settings and try to auto-repair the network"
 msgstr "修改相关设置项，尝试自动修复网络"
 
