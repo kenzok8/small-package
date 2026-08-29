@@ -747,21 +747,32 @@ load_acl() {
 }
 
 filter_haproxy() {
+	[ "$(config_n_get @global_haproxy[0] balancing_enable 0)" != "1" ] && return
 	for item in $(uci show $CONFIG | grep ".lbss=" | cut -d "'" -f 2); do
 		local ip=$(get_host_ip "ipv4" "$(echo $item | awk -F ":" '{print $1}')" 1)
 		[ -n "$ip" ] && ! echo "$ip" | grep -Eq "$EXCLUDE_VPSIP" && ipset -q add $IPSET_VPS $ip
 	done
-	echolog "  - [$?]加入负载均衡的节点到ipset[$IPSET_VPS]直连完成"
+	echolog "  - [$?]加入负载均衡节点IP到ipset[$IPSET_VPS]直连完成"
 }
 
 filter_vpsip() {
-	uci show $CONFIG | grep -E "(\.address=|\.download_address=|\.domain_resolver_dns=|\.domain_resolver_dns_https=)" | cut -d "'" -f 2 | grep -Eo "([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -Ev "$EXCLUDE_VPSIP" | sed "s/^/add $IPSET_VPS /" | awk '1; END{print "COMMIT"}' | ipset -! -R
-	echolog "  - [$?]加入所有IPv4节点到ipset[$IPSET_VPS]直连完成"
-	uci show $CONFIG | grep -E "(\.address=|\.download_address=|\.domain_resolver_dns=|\.domain_resolver_dns_https=)" | cut -d "'" -f 2 | grep -Eo "\[?[A-Fa-f0-9:]*:[A-Fa-f0-9:]+\]?" | sed "s/^/add $IPSET_VPS6 /" | awk '1; END{print "COMMIT"}' | ipset -! -R
-	echolog "  - [$?]加入所有IPv6节点到ipset[$IPSET_VPS6]直连完成"
+	local vps_addrs=$(uci show $CONFIG | grep -E "(\.address=|\.download_address=|\.domain_resolver_dns=|\.domain_resolver_dns_https=)" | cut -d "'" -f 2 | grep -Ev "$EXCLUDE_VPSIP")
+	local ipv4_addrs=$(echo "$vps_addrs" | grep -Eo "([0-9]{1,3}\.){3}[0-9]{1,3}")
+	[ -n "$ipv4_addrs" ] && {
+		echo "$ipv4_addrs" | sed "s/^/add $IPSET_VPS /" | awk '1; END{print "COMMIT"}' | ipset -! -R
+		echolog "  - [$?]加入所有IPv4节点服务器IP到ipset[$IPSET_VPS]直连完成"
+	}
+	local ipv6_addrs=$(echo "$vps_addrs" | grep -Eo "\[?[A-Fa-f0-9:]*:[A-Fa-f0-9:]+\]?")
+	[ -n "$ipv6_addrs" ] && {
+		echo "$ipv6_addrs" | sed "s/^/add $IPSET_VPS6 /" | awk '1; END{print "COMMIT"}' | ipset -! -R
+		echolog "  - [$?]加入所有IPv6节点服务器IP到ipset[$IPSET_VPS6]直连完成"
+	}
 	#订阅方式为直连时
-	get_subscribe_host | grep -Eo "([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -Ev "$EXCLUDE_VPSIP" | sed "s/^/add $IPSET_VPS /" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-	get_subscribe_host | grep -Eo "\[?[A-Fa-f0-9:]*:[A-Fa-f0-9:]+\]?" | sed "s/^/add $IPSET_VPS6 /" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+	local subscribe_host=$(get_subscribe_host | grep -Ev "$EXCLUDE_VPSIP")
+	[ -n "$subscribe_host" ] && {
+		echo "$subscribe_host" | grep -Eo "([0-9]{1,3}\.){3}[0-9]{1,3}" | sed "s/^/add $IPSET_VPS /" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+		echo "$subscribe_host" | grep -Eo "\[?[A-Fa-f0-9:]*:[A-Fa-f0-9:]+\]?" | sed "s/^/add $IPSET_VPS6 /" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
+	}
 }
 
 filter_server_port() {
@@ -1022,7 +1033,7 @@ add_firewall_rule() {
 
 	#  过滤所有节点IP
 	filter_vpsip > /dev/null 2>&1 &
-	# filter_haproxy > /dev/null 2>&1 &
+	filter_haproxy > /dev/null 2>&1 &
 
 	accept_icmp=$(config_n_get @global_forwarding[0] accept_icmp 0)
 	accept_icmpv6=$(config_n_get @global_forwarding[0] accept_icmpv6 0)

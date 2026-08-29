@@ -810,10 +810,11 @@ load_acl() {
 }
 
 filter_haproxy() {
+	[ "$(config_n_get @global_haproxy[0] balancing_enable 0)" != "1" ] && return
 	for item in $(uci show $CONFIG | grep ".lbss=" | cut -d "'" -f 2); do
 		get_host_ip "ipv4" "$(echo $item | awk -F ":" '{print $1}')" 1
 	done | grep -Ev "$EXCLUDE_VPSIP" | insert_nftset $NFTSET_VPS
-	echolog "  - [$?]加入负载均衡的节点到nftset[$NFTSET_VPS]直连完成"
+	echolog "  - [$?]加入负载均衡节点IP到nftset[$NFTSET_VPS]直连完成"
 }
 
 filter_vps_addr() {
@@ -827,13 +828,23 @@ filter_vps_addr() {
 }
 
 filter_vpsip() {
-	uci show $CONFIG | grep -E "(\.address=|\.download_address=|\.domain_resolver_dns=|\.domain_resolver_dns_https=)" | cut -d "'" -f 2 | grep -Eo "([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -Ev "$EXCLUDE_VPSIP" | insert_nftset $NFTSET_VPS
-	echolog "  - [$?]加入所有IPv4节点到nftset[$NFTSET_VPS]直连完成"
-	uci show $CONFIG | grep -E "(\.address=|\.download_address=|\.domain_resolver_dns=|\.domain_resolver_dns_https=)" | cut -d "'" -f 2 | grep -Eo "\[?[A-Fa-f0-9:]*:[A-Fa-f0-9:]+\]?" | insert_nftset $NFTSET_VPS6
-	echolog "  - [$?]加入所有IPv6节点到nftset[$NFTSET_VPS6]直连完成"
+	local vps_addrs=$(uci show $CONFIG | grep -E "(\.address=|\.download_address=|\.domain_resolver_dns=|\.domain_resolver_dns_https=)" | cut -d "'" -f 2 | grep -Ev "$EXCLUDE_VPSIP")
+	local ipv4_addrs=$(echo "$vps_addrs" | grep -Eo "([0-9]{1,3}\.){3}[0-9]{1,3}")
+	[ -n "$ipv4_addrs" ] && {
+		echo "$ipv4_addrs" | insert_nftset $NFTSET_VPS
+		echolog "  - [$?]加入所有IPv4节点服务器IP到nftset[$NFTSET_VPS]直连完成"
+	}
+	local ipv6_addrs=$(echo "$vps_addrs" | grep -Eo "\[?[A-Fa-f0-9:]*:[A-Fa-f0-9:]+\]?")
+	[ -n "$ipv6_addrs" ] && {
+		echo "$ipv6_addrs" | insert_nftset $NFTSET_VPS6
+		echolog "  - [$?]加入所有IPv6节点服务器IP到nftset[$NFTSET_VPS6]直连完成"
+	}
 	#订阅方式为直连时
-	get_subscribe_host | grep -Eo "([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -Ev "$EXCLUDE_VPSIP" | insert_nftset $NFTSET_VPS
-	get_subscribe_host | grep -Eo "\[?[A-Fa-f0-9:]*:[A-Fa-f0-9:]+\]?" | insert_nftset $NFTSET_VPS6
+	local subscribe_host=$(get_subscribe_host | grep -Ev "$EXCLUDE_VPSIP")
+	[ -n "$subscribe_host" ] && {
+		echo "$subscribe_host" | grep -Eo "([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -Ev "$EXCLUDE_VPSIP" | insert_nftset $NFTSET_VPS
+		echo "$subscribe_host" | grep -Eo "\[?[A-Fa-f0-9:]*:[A-Fa-f0-9:]+\]?" | insert_nftset $NFTSET_VPS6
+	}
 }
 
 filter_server_port() {
@@ -1111,7 +1122,7 @@ add_firewall_rule() {
 
 	#  过滤所有节点IP
 	filter_vpsip > /dev/null 2>&1 &
-	# filter_haproxy > /dev/null 2>&1 &
+	filter_haproxy > /dev/null 2>&1 &
 	# Prevent some conditions
 	filter_vps_addr $(config_n_get $NODE address) $(config_n_get $NODE download_address) > /dev/null 2>&1 &
 
