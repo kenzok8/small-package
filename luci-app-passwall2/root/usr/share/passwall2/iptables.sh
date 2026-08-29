@@ -809,15 +809,17 @@ add_firewall_rule() {
 	$ip6t_m -A PSW2_OUTPUT $(dst $IPSET_VPS6) -j RETURN
 	$ip6t_m -A PSW2_OUTPUT -m conntrack --ctdir REPLY -j RETURN
 
-	[ -n "$AUTO_DNS" ] && {
-		for auto_dns in $(echo $AUTO_DNS | tr ',' ' '); do
-			local dns_address=$(echo $auto_dns | awk -F '#' '{print $1}')
-			local dns_port=$(echo $auto_dns | awk -F '#' '{print $2}')
+	[ -n "$RETURN_DNS" ] && {
+		for _dns in $(echo $RETURN_DNS | tr ',' ' '); do
+			local dns_address=$(echo $_dns | awk -F '#' '{print $1}')
+			local dns_port=$(echo $_dns | awk -F '#' '{print $2}')
+			local dns_proto=$(echo $_dns | awk -F '#' '{print $3}')
+			dns_proto=${dns_proto:-udp}
 			if [[ "$dns_address" == *::* ]]; then
-				$ip6t_m -I PSW2_OUTPUT -p udp -d ${dns_address} --dport ${dns_port:-53} -j RETURN
+				$ip6t_m -I PSW2_OUTPUT -p ${dns_proto} -d ${dns_address} --dport ${dns_port:-53} -j RETURN
 				log_i18n 1 "$(i18n "Add direct DNS to %s: %s" "ip6tables" "[${dns_address}]:${dns_port:-53}")"
 			else
-				$ipt_m -I PSW2_OUTPUT -p udp -d ${dns_address} --dport ${dns_port:-53} -j RETURN
+				$ipt_m -I PSW2_OUTPUT -p ${dns_proto} -d ${dns_address} --dport ${dns_port:-53} -j RETURN
 				log_i18n 1 "$(i18n "Add direct DNS to %s: %s" "iptables" "${dns_address}:${dns_port:-53}")"
 			fi
 		done

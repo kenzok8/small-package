@@ -99,8 +99,11 @@ run_xray() {
 			json_add_string "local_http_password" "${http_password}"
 		}
 	}
+	local direct_dns_proto=${DIRECT_DNS_PROTO}
+	local direct_dns_server=${DIRECT_DNS_SERVER}
+	local direct_dns_port=${DIRECT_DNS_PORT}
 	[ -n "$dns_listen_port" ] && {
-		local dns_msg="DNS[${dns_listen_port}]:($(i18n "Direct DNS: %s" "${AUTO_DNS}")"
+		local dns_msg="DNS[${dns_listen_port}]:($(i18n "Direct DNS: %s" "${direct_dns_proto}://${direct_dns_server}:${direct_dns_port}")"
 		json_add_string "dns_listen_port" "${dns_listen_port}"
 		[ -n "$dns_cache" ] && json_add_string "dns_cache" "${dns_cache}"
 		[ "${node_protocol}" = "_shunt" ] && local write_ipset_direct=$(config_n_get $node write_ipset_direct 0)
@@ -116,9 +119,10 @@ run_xray() {
 				local direct_ipset6="psw2_${node}_white6"
 				local direct_ipset="${direct_ipset4},${direct_ipset6}"
 			fi
-			run_ipset_dns_server listen_port=${direct_dnsmasq_listen_port} server_dns=${AUTO_DNS} ipset="${direct_ipset}" nftset="${direct_nftset}" config_file=${direct_ipset_conf}
-			DIRECT_DNS_UDP_PORT=${direct_dnsmasq_listen_port}
-			DIRECT_DNS_UDP_SERVER="127.0.0.1"
+			run_ipset_dns_server listen_port=${direct_dnsmasq_listen_port} proto=${direct_dns_proto} server_dns="${direct_dns_server}#${direct_dns_port}" ipset="${direct_ipset}" nftset="${direct_nftset}" config_file=${direct_ipset_conf}
+			direct_dns_proto="udp"
+			direct_dns_server="127.0.0.1"
+			direct_dns_port=${direct_dnsmasq_listen_port}
 			[ -n "${direct_ipset}" ] && {
 				json_add_string "direct_ipset" "${direct_ipset}"
 				set_cache_var "node_${node}_direct_ipset4" "${direct_ipset4}"
@@ -168,8 +172,8 @@ run_xray() {
 		[ -n "$remote_dns_client_ip" ] && json_add_string "remote_dns_client_ip" "${remote_dns_client_ip}"
 		log_out="${dns_msg})"
 	}
-	json_add_string "direct_dns_udp_port" "${DIRECT_DNS_UDP_PORT}"
-	json_add_string "direct_dns_udp_server" "${DIRECT_DNS_UDP_SERVER}"
+	json_add_string "direct_dns_${direct_dns_proto}_server" "${direct_dns_server}"
+	json_add_string "direct_dns_${direct_dns_proto}_port" "${direct_dns_port}"
 	json_add_string "direct_dns_query_strategy" "${direct_dns_query_strategy}"
 
 	[ -n "${redir_port}" ] && {
@@ -241,8 +245,11 @@ run_singbox() {
 			json_add_string "local_http_password" "${http_password}"
 		}
 	}
+	local direct_dns_proto=${DIRECT_DNS_PROTO}
+	local direct_dns_server=${DIRECT_DNS_SERVER}
+	local direct_dns_port=${DIRECT_DNS_PORT}
 	[ -n "$dns_listen_port" ] && {
-		local dns_msg="DNS[${dns_listen_port}]:($(i18n "Direct DNS: %s" "${AUTO_DNS}")"
+		local dns_msg="DNS[${dns_listen_port}]:($(i18n "Direct DNS: %s" "${direct_dns_proto}://${direct_dns_server}:${direct_dns_port}")"
 		json_add_string "dns_listen_port" "${dns_listen_port}"
 		[ -n "$dns_cache" ] && json_add_string "dns_cache" "${dns_cache}"
 		[ "${node_protocol}" = "_shunt" ] && local write_ipset_direct=$(config_n_get $node write_ipset_direct 0)
@@ -258,9 +265,10 @@ run_singbox() {
 				local direct_ipset6="psw2_${node}_white6"
 				local direct_ipset="${direct_ipset4},${direct_ipset6}"
 			fi
-			run_ipset_dns_server listen_port=${direct_dnsmasq_listen_port} server_dns=${AUTO_DNS} ipset="${direct_ipset}" nftset="${direct_nftset}" config_file=${direct_ipset_conf}
-			DIRECT_DNS_UDP_PORT=${direct_dnsmasq_listen_port}
-			DIRECT_DNS_UDP_SERVER="127.0.0.1"
+			run_ipset_dns_server listen_port=${direct_dnsmasq_listen_port} proto=${direct_dns_proto} server_dns="${direct_dns_server}#${direct_dns_port}" ipset="${direct_ipset}" nftset="${direct_nftset}" config_file=${direct_ipset_conf}
+			direct_dns_proto="udp"
+			direct_dns_server="127.0.0.1"
+			direct_dns_port=${direct_dnsmasq_listen_port}
 			[ -n "${direct_ipset}" ] && {
 				json_add_string "direct_ipset" "${direct_ipset}"
 				set_cache_var "node_${node}_direct_ipset4" "${direct_ipset4}"
@@ -318,8 +326,8 @@ run_singbox() {
 		[ -n "$remote_rewrite_ttl" ] && json_add_string "remote_rewrite_ttl" "${remote_rewrite_ttl}"
 		log_out="${dns_msg})"
 	}
-	json_add_string "direct_dns_udp_port" "${DIRECT_DNS_UDP_PORT}"
-	json_add_string "direct_dns_udp_server" "${DIRECT_DNS_UDP_SERVER}"
+	json_add_string "direct_dns_${direct_dns_proto}_server" "${direct_dns_server}"
+	json_add_string "direct_dns_${direct_dns_proto}_port" "${direct_dns_port}"
 	json_add_string "direct_dns_query_strategy" "${direct_dns_query_strategy}"
 
 	[ -n "${redir_port}" ] && {
@@ -423,8 +431,8 @@ run_socks() {
 		json_add_string "flag" "${flag}"
 		json_add_string "local_socks_address" "${bind}"
 		json_add_string "local_socks_port" "${socks_port}"
-		json_add_string "direct_dns_udp_port" "${DIRECT_DNS_UDP_PORT}"
-		json_add_string "direct_dns_udp_server" "${DIRECT_DNS_UDP_SERVER}"
+		json_add_string "direct_dns_${DIRECT_DNS_PROTO}_server" "${DIRECT_DNS_SERVER}"
+		json_add_string "direct_dns_${DIRECT_DNS_PROTO}_port" "${DIRECT_DNS_PORT}"
 		json_add_string "direct_dns_query_strategy" "${DIRECT_DNS_QUERY_STRATEGY}"
 		local _json_arg="$(json_dump)"
 		lua $UTIL_SINGBOX gen_config "${_json_arg}" > $config_file
@@ -450,8 +458,8 @@ run_socks() {
 		json_add_string "flag" "${flag}"
 		json_add_string "local_socks_address" "${bind}"
 		json_add_string "local_socks_port" "${socks_port}"
-		json_add_string "direct_dns_udp_port" "${DIRECT_DNS_UDP_PORT}"
-		json_add_string "direct_dns_udp_server" "${DIRECT_DNS_UDP_SERVER}"
+		json_add_string "direct_dns_${DIRECT_DNS_PROTO}_server" "${DIRECT_DNS_SERVER}"
+		json_add_string "direct_dns_${DIRECT_DNS_PROTO}_port" "${DIRECT_DNS_PORT}"
 		json_add_string "direct_dns_query_strategy" "${DIRECT_DNS_QUERY_STRATEGY}"
 		local _json_arg="$(json_dump)"
 		lua $UTIL_XRAY gen_config "${_json_arg}" > $config_file
@@ -759,7 +767,7 @@ run_ipset_dns_server() {
 }
 
 run_ipset_chinadns_ng() {
-	local listen_port server_dns ipset nftset config_file
+	local listen_port proto server_dns ipset nftset config_file
 	eval_set_val $@
 	[ ! -s "$TMP_ACL_PATH/vpslist" ] && {
 		node_servers=$(uci show "${CONFIG}" | grep -E "(.address=|.download_address=)" | cut -d "'" -f 2)
@@ -777,14 +785,14 @@ run_ipset_chinadns_ng() {
 	cat <<-EOF > $config_file
 		bind-addr 127.0.0.1
 		bind-port ${listen_port}
-		china-dns ${server_dns}
-		trust-dns ${server_dns}
+		china-dns ${proto}://${server_dns}
+		trust-dns ${proto}://${server_dns}
 		filter-qtype 65
 		add-tagchn-ip ${set_names}
 		default-tag chn
 		group vpslist
 		group-dnl $TMP_ACL_PATH/vpslist
-		group-upstream ${server_dns}
+		group-upstream ${proto}://${server_dns}
 		group-ipset ${vps_set_names}
 	EOF
 	ln_run 0 "$(first_type chinadns-ng)" "chinadns-ng" "/dev/null" -C $config_file -v
@@ -1004,13 +1012,27 @@ get_direct_dns() {
 	DEFAULT_DNS="${DNSMASQ_UPSTREAM_DNS}"
 	[ -z "${DEFAULT_DNS}" ] && DEFAULT_DNS=$(echo -n $ISP_DNS | tr ' ' '\n' | head -2 | tr '\n' ',' | sed 's/,$//')
 	AUTO_DNS=${DEFAULT_DNS:-119.29.29.29}
+	RETURN_DNS=${AUTO_DNS}
 
 	local AUTO_DNS_1=$(echo ${AUTO_DNS} | awk -F ',' '{print $1}')
 	local AUTO_DNS_2=$(echo ${AUTO_DNS} | awk -F ',' '{print $2}')
-	local AUTO_DNS_ADDRESS=$(echo ${AUTO_DNS_1} | awk -F '#' '{print $1}')
-	local AUTO_DNS_PORT=$(echo ${AUTO_DNS_1} | awk -F '#' '{print $2}')
-	DIRECT_DNS_UDP_SERVER=${AUTO_DNS_ADDRESS}
-	DIRECT_DNS_UDP_PORT=${AUTO_DNS_PORT}
+
+	DIRECT_DNS_PROTO="udp"
+	DIRECT_DNS_SERVER=$(echo ${AUTO_DNS_1} | awk -F '#' '{print $1}')
+	DIRECT_DNS_PORT=$(echo ${AUTO_DNS_1} | awk -F '#' '{print $2}')
+	DIRECT_DNS_PORT=${DIRECT_DNS_PORT:-53}
+
+	local direct_dns_protocol=$(config_n_get @global[0] direct_dns_protocol)
+	if [ "${direct_dns_protocol}" = "tcp" ] || [ "${direct_dns_protocol}" = "udp" ]; then
+		local DIRECT_DNS=$(config_n_get @global[0] direct_dns)
+		local result=$(lua_api "parseDNS(\"${DIRECT_DNS}\")")
+		[ "${result}" != "nil" ] && {
+			DIRECT_DNS_PROTO="${direct_dns_protocol}"
+			DIRECT_DNS_SERVER=$(echo ${result} | awk '{print $1}')
+			DIRECT_DNS_PORT=$(echo ${result} | awk '{print $2}')
+			RETURN_DNS="${RETURN_DNS},${DIRECT_DNS_SERVER}#${DIRECT_DNS_PORT}#${DIRECT_DNS_PROTO}"
+		}
+	fi
 }
 
 get_config() {

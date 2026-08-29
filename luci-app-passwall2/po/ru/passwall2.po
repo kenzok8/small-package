@@ -2418,6 +2418,9 @@ msgstr "Размер упаковки Gecko (мин)"
 msgid "Gecko Packet Size (max)"
 msgstr "Размер упаковки Gecko (макс)"
 
+msgid "Enable UPnP/NAT-PMP port mapping on your gateway to improve hole punching success."
+msgstr "Включите сопоставление портов UPnP/NAT-PMP на вашем шлюзе, чтобы повысить вероятность успешного выполнения операций "пробивания дыр"."
+
 msgid "valid time (hh:mm)"
 msgstr "Время действия (чч:мм)"
 

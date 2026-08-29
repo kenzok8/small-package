@@ -862,15 +862,17 @@ add_firewall_rule() {
 	nft "add rule $NFTABLE_NAME PSW2_OUTPUT_MANGLE_V6 ct direction reply counter return"
 	nft "add rule $NFTABLE_NAME PSW2_OUTPUT_MANGLE_V6 meta mark 255 counter return"
 
-	[ -n "$AUTO_DNS" ] && {
-		for auto_dns in $(echo $AUTO_DNS | tr ',' ' '); do
-			local dns_address=$(echo $auto_dns | awk -F '#' '{print $1}')
-			local dns_port=$(echo $auto_dns | awk -F '#' '{print $2}')
+	[ -n "$RETURN_DNS" ] && {
+		for _dns in $(echo $RETURN_DNS | tr ',' ' '); do
+			local dns_address=$(echo $_dns | awk -F '#' '{print $1}')
+			local dns_port=$(echo $_dns | awk -F '#' '{print $2}')
+			local dns_proto=$(echo $_dns | awk -F '#' '{print $3}')
+			dns_proto=${dns_proto:-udp}
 			if [[ "$dns_address" == *::* ]]; then
-				nft "insert rule $NFTABLE_NAME PSW2_OUTPUT_MANGLE_V6 meta l4proto udp ip6 daddr ${dns_address} $(factor ${dns_port:-53} "udp dport") counter return"
+				nft "insert rule $NFTABLE_NAME PSW2_OUTPUT_MANGLE_V6 meta l4proto ${dns_proto} ip6 daddr ${dns_address} $(factor ${dns_port:-53} "${dns_proto} dport") counter return"
 				log_i18n 1 "$(i18n "Add direct DNS to %s: %s" "nftables" "[${dns_address}]:${dns_port:-53}")"
 			else
-				nft "insert rule $NFTABLE_NAME PSW2_OUTPUT_MANGLE ip protocol udp ip daddr ${dns_address} $(factor ${dns_port:-53} "udp dport") counter return"
+				nft "insert rule $NFTABLE_NAME PSW2_OUTPUT_MANGLE ip protocol ${dns_proto} ip daddr ${dns_address} $(factor ${dns_port:-53} "${dns_proto} dport") counter return"
 				log_i18n 1 "$(i18n "Add direct DNS to %s: %s" "nftables" "${dns_address}:${dns_port:-53}")"
 			fi
 		done

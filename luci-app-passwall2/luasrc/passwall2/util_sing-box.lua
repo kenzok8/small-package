@@ -68,13 +68,6 @@ local function convert_geofile()
 	end
 	local function convert(file_path, prefix, tags)
 		if next(tags) and fs.access(file_path) then
-			local md5_file = GEO_VAR.TO_SRS_PATH .. prefix .. ".dat.md5"
-			local new_md5 = sys.exec("md5sum " .. file_path .. " 2>/dev/null | awk '{print $1}'"):gsub("\n", "")
-			local old_md5 = sys.exec("[ -f " .. md5_file .. " ] && head -n 1 " .. md5_file .. " | tr -d ' \t\n' || echo ''")
-			if new_md5 ~= "" and new_md5 ~= old_md5 then
-				sys.call("printf '%s' " .. new_md5 .. " > " .. md5_file)
-				sys.call("rm -rf " .. GEO_VAR.TO_SRS_PATH .. prefix .. "-*.srs" )
-			end
 			for k in pairs(tags) do
 				geo_convert_srs({
 					["geo_path"] = file_path,
@@ -624,6 +617,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 						realm.scheme = nil
 						realm.address = nil
 						realm.port = nil
+						realm.port_mapping = (node.hysteria2_realm_upnp == "1") and { enabled = true } or nil
 						return realm
 					end
 					return nil
@@ -980,6 +974,7 @@ function gen_config_server(node)
 					realm.address = nil
 					realm.port = nil
 					realm.stun_domain_resolver = "direct"
+					realm.port_mapping = (node.hysteria2_realm_upnp == "1") and { enabled = true } or nil
 					return realm
 				end
 				return nil
@@ -1122,6 +1117,8 @@ function gen_config(var)
 	local dns_listen_port = var["dns_listen_port"]
 	local direct_dns_udp_server = var["direct_dns_udp_server"]
 	local direct_dns_udp_port = var["direct_dns_udp_port"]
+	local direct_dns_tcp_server = var["direct_dns_tcp_server"]
+	local direct_dns_tcp_port = var["direct_dns_tcp_port"]
 	local direct_dns_query_strategy = var["direct_dns_query_strategy"]
 	local direct_ipset = var["direct_ipset"]
 	local direct_nftset = var["direct_nftset"]
@@ -1834,10 +1831,18 @@ function gen_config(var)
 			server_port = tonumber(direct_dns_udp_port) or 53,
 			detour = "direct",
 		})
+	elseif direct_dns_tcp_server then
+		table.insert(dns.servers, {
+			tag = "direct",
+			type = "tcp",
+			server = direct_dns_tcp_server,
+			server_port = tonumber(direct_dns_tcp_port) or 53,
+			detour = "direct",
+		})
 	end
 
 	for i, v in pairs(GLOBAL.DNS_SERVER) do
-		if direct_dns_udp_server then
+		if direct_dns_udp_server or direct_dns_tcp_server then
 			v.server.domain_resolver = "direct"
 		end
 		table.insert(dns.servers, v.server)
@@ -1902,7 +1907,7 @@ function gen_config(var)
 			end
 		end
 
-		if direct_dns_udp_server then
+		if direct_dns_udp_server or direct_dns_tcp_server then
 			local nodes_domain = {}
 			local nodes_domain_text = sys.exec('uci show passwall2 | grep ".address=" | cut -d "\'" -f 2 | grep "[a-zA-Z]$" | sort -u')
 			string.gsub(nodes_domain_text, '[^' .. "\r\n" .. ']+', function(w)
@@ -2089,6 +2094,7 @@ function gen_config(var)
 								fakedns_dns_rule.query_type = { "A", "AAAA" }
 							end
 							fakedns_dns_rule.server = fakedns_tag
+							fakedns_dns_rule.rewrite_ttl = 1
 							fakedns_dns_rule.disable_cache = true
 							fakedns_dns_rule.client_subnet = nil
 							table.insert(dns.rules, fakedns_dns_rule)
@@ -2125,7 +2131,7 @@ function gen_config(var)
 					query_type = dns_rule_query_type,
 					server = fakedns_tag,
 					disable_cache = true,
-					rewrite_ttl = tonumber(remote_rewrite_ttl)
+					rewrite_ttl = 1
 				}
 				table.insert(dns.rules, fakedns_dns_rule)
 			end

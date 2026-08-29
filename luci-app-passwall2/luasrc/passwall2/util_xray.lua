@@ -318,7 +318,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 								type = "realm",
 								settings = {
 									url = url,
-									stunServers = stun
+									stunServers = stun,
+									portMapping = (node.hysteria2_realm_upnp == "1") and { enabled = true } or nil
 								}
 							}
 							udp[#udp+1] = r
@@ -788,7 +789,8 @@ function gen_config_server(node)
 									type = "realm",
 									settings = {
 										url = url,
-										stunServers = stun
+										stunServers = stun,
+										portMapping = (node.hysteria2_realm_upnp == "1") and { enabled = true } or nil
 									}
 								}
 								udp[#udp+1] = r
@@ -887,6 +889,8 @@ function gen_config(var)
 	local dns_listen_port = var["dns_listen_port"]
 	local direct_dns_udp_server = var["direct_dns_udp_server"]
 	local direct_dns_udp_port = var["direct_dns_udp_port"]
+	local direct_dns_tcp_server = var["direct_dns_tcp_server"]
+	local direct_dns_tcp_port = var["direct_dns_tcp_port"]
 	local direct_dns_query_strategy = var["direct_dns_query_strategy"]
 	local direct_ipset = var["direct_ipset"]
 	local direct_nftset = var["direct_nftset"]
@@ -1560,13 +1564,24 @@ function gen_config(var)
 			port = tonumber(direct_dns_udp_port) or 53,
 			queryStrategy = (direct_dns_query_strategy and direct_dns_query_strategy ~= "") and direct_dns_query_strategy or "UseIP"
 		}
-
-		if _direct_dns.address then
-			table.insert(dns_servers, {
-				outboundTag = "direct",
-				server = _direct_dns
-			})
+		table.insert(dns_servers, {
+			outboundTag = "direct",
+			server = _direct_dns
+		})
+	elseif direct_dns_tcp_server then
+		if api.is_ipv6(direct_dns_tcp_server) then
+			direct_dns_tcp_server = api.get_ipv6_full(direct_dns_tcp_server)
 		end
+		_direct_dns = {
+			tag = direct_dns_tag,
+			address = "tcp://" .. direct_dns_tcp_server .. ":" .. tonumber(direct_dns_tcp_port) or 53,
+			port = tonumber(direct_dns_tcp_port) or 53,
+			queryStrategy = (direct_dns_query_strategy and direct_dns_query_strategy ~= "") and direct_dns_query_strategy or "UseIP"
+		}
+		table.insert(dns_servers, {
+			outboundTag = "direct",
+			server = _direct_dns
+		})
 	end
 
 	if next(GLOBAL.DNS_HOSTNAME) then
@@ -1687,7 +1702,7 @@ function gen_config(var)
 			})
 		end
 
-		if direct_dns_udp_server then
+		if direct_dns_udp_server or direct_dns_tcp_server then
 			local domain = {}
 			local nodes_domain_text = sys.exec('uci show passwall2 | grep ".address=" | cut -d "\'" -f 2 | grep "[a-zA-Z]$" | sort -u')
 			string.gsub(nodes_domain_text, '[^' .. "\r\n" .. ']+', function(w)

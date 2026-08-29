@@ -2412,6 +2412,9 @@ msgstr "Gecko 包大小（最小）"
 msgid "Gecko Packet Size (max)"
 msgstr "Gecko 包大小（最大）"
 
+msgid "Enable UPnP/NAT-PMP port mapping on your gateway to improve hole punching success."
+msgstr "在網關上啟用 UPnP/NAT-PMP 連接埠對映以提升打洞成功率。"
+
 msgid "valid time (hh:mm)"
 msgstr "有效時間（hh:mm）"
 

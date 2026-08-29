@@ -164,6 +164,22 @@ node_socks_bind_local:depends({ node = "", ["!reverse"] = true })
 
 s:tab("DNS", translate("DNS"))
 
+o = s:taboption("DNS", ListValue, "direct_dns_protocol", translate("Direct DNS Protocol"))
+o:value("", translate("Auto"))
+--o:value("tcp", "TCP")
+o:value("udp", "UDP")
+
+o = s:taboption("DNS", Value, "direct_dns", translate("Direct DNS"))
+o.datatype = "or(ipaddr,ipaddrport(1))"
+o.default = "223.5.5.5"
+o:value("223.5.5.5")
+o:value("223.6.6.6")
+o:value("114.114.114.114")
+o:value("119.29.29.29")
+o:value("180.76.76.76")
+o:depends("direct_dns_protocol", "tcp")
+o:depends("direct_dns_protocol", "udp")
+
 o = s:taboption("DNS", ListValue, "direct_dns_query_strategy", translate("Direct Query Strategy"))
 o.default = "UseIP"
 o:value("UseIP")

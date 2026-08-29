@@ -2420,6 +2420,9 @@ msgstr "اندازه بسته Gecko (دقیقه)"
 msgid "Gecko Packet Size (max)"
 msgstr "اندازه بسته Gecko (حداکثر)"
 
+msgid "Enable UPnP/NAT-PMP port mapping on your gateway to improve hole punching success."
+msgstr "برای بهبود موفقیت در پانچ کردن حفره، نگاشت پورت UPnP/NAT-PMP را روی گیت‌وی خود فعال کنید."
+
 msgid "valid time (hh:mm)"
 msgstr "زمان معتبر (ساعت:میلی‌متر)"
 

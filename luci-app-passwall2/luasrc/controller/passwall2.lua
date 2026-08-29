@@ -629,6 +629,8 @@ function rollback_rules()
 	local geo_dir = (uci_get("@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/")
 	fs.move(bak_dir .. arg_type .. ".dat", geo_dir .. arg_type .. ".dat")
 	fs.rmdir(bak_dir)
+	uci_set("@global[0]", "flush_set", "1")
+	uci_save(true)
 	http_write_json_ok()
 end
 
