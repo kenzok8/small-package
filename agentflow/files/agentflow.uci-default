@@ -1,0 +1,13 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@agentflow[-1]
+	add ucitrack agentflow
+	set ucitrack.@agentflow[-1].init=agentflow
+	commit ucitrack
+EOF
+
+/etc/init.d/agentflow enable
+/etc/init.d/agentflow start
+
+exit 0
