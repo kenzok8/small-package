@@ -26,20 +26,35 @@ local api = map.api
 	</div>
 </div>
 
-<div class="cbi-value" id="_reset_div">
-	<label class="cbi-value-title"><%:Restore to default configuration%></label>
+<div class="cbi-value">
+	<label class="cbi-value-title"><%=translatef("Reset %s Configuration", translate("Client"))%></label>
 	<div class="cbi-value-field">
-		<input class="btn cbi-button cbi-button-reset" type="button" onclick="do_reset()" value="<%:Do Reset%>" />
+		<input class="btn cbi-button cbi-button-reset" type="button" onclick="do_reset('client')" value="<%:Do Reset%>" />
 	</div>
 </div>
 
-<div class="cbi-value"></div>
+<div class="cbi-value">
+	<label class="cbi-value-title"><%=translatef("Reset %s Configuration", translate("Server"))%></label>
+	<div class="cbi-value-field">
+		<input class="btn cbi-button cbi-button-reset" type="button" onclick="do_reset('server')" value="<%:Do Reset%>" />
+	</div>
+</div>
 
 <div id="upload-modal" class="up-modal" style="display:none;">
 	<div class="up-modal-content">
 		<h3><%:Restore Backup File%></h3>
 		<div class="up-cbi-value-field">
 			<input class="cbi-input-file" type="file" id="ulfile" accept=".tar.gz" />
+		</div>
+		<div class="up-cbi-checkbox">
+			<label>
+				<input class="cbi-input-checkbox" type="checkbox" name="client" value="1" checked />
+				<%:Client%>
+			</label>
+			<label>
+				<input class="cbi-input-checkbox" type="checkbox" name="server" value="1" />
+				<%:Server%>
+			</label>
 		</div>
 		<div class="up-button-container">
 			<input class="btn cbi-button cbi-button-apply" type="button" id="upload-btn" onclick="do_upload()" value="<%:UL Restore%>" />
@@ -92,6 +107,21 @@ local api = map.api
 
 	.up-modal h3 {
 		background: inherit;
+	}
+
+	.up-cbi-checkbox {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		width: 100%;
+		max-width: 250px;
+		margin: 0 0 30px;
+	}
+
+	.up-cbi-checkbox label {
+		display: flex;
+		align-items: center;
+		gap: 5px;
 	}
 </style>
 
@@ -147,20 +177,32 @@ local api = map.api
 		.catch(error => alert(error.message));
 	}
 
-	function do_reset(btn) {
-		if (confirm("<%: Do you want to restore the client to default settings?%>")) {
+	function do_reset(type) {
+		if (type !== "client" && type !== "server") return;
+		const name = type === "client" ? "<%:Client%>".toLowerCase() : "<%:Server%>".toLowerCase();
+		const redirect = type === "client" ? '<%=api.url("log")%>' : '<%=api.url("server")%>';
+		const message = "<%=translatef("Do you want to restore the %s to default settings?", "%s")%>".replace("%s", name);
+		const confirm_message = "<%=translatef("Are you sure you want to restore the %s to default settings?", "%s")%>".replace("%s", name);
+
+		if (confirm(message)) {
 			setTimeout(function () {
-				if (confirm("<%: Are you sure you want to restore the client to default settings?%>")) {
+				if (confirm(confirm_message)) {
 					const xhr = new XMLHttpRequest();
-					xhr.open("GET",'<%= api.url("reset_config") %>', false);
-					xhr.send(); 
-					window.location.href = '<%= api.url("log") %>'
+					xhr.open("GET", '<%=api.url("reset_config")%>?type=' + type, false);
+					xhr.send();
+					window.location.href = redirect;
 				}
 			}, 1000);
 		}
 	}
 
 	function do_upload(btn) {
+		const client = document.querySelector('input[name="client"]').checked;
+		const server = document.querySelector('input[name="server"]').checked;
+		if (!client && !server) return;
+
+		const type = client === server ? "all" : client ? "client" : "server";
+
 		const fileInput = document.getElementById("ulfile");
 		const file = fileInput.files[0];
 		if (!file) {
@@ -200,7 +242,7 @@ local api = map.api
 				if (currentChunk < totalChunks) {
 					const chunk = base64Data.substring(currentChunk * chunkSize, (currentChunk + 1) * chunkSize);
 					const xhr = new XMLHttpRequest();
-					xhr.open("POST", '<%= api.url("restore_backup") %>', true);
+					xhr.open("POST", '<%=api.url("restore_backup")%>?type=' + type, true);
 					xhr.onreadystatechange = function () {
 						if (xhr.readyState === 4) {
 							if (xhr.status === 200) {
@@ -228,7 +270,11 @@ local api = map.api
 				} else {
 					//alert("Upload completed.");
 					document.getElementById("upload-btn").value = "<%:UL Restore%>";
-					window.location.href = '<%= api.url("log") %>'
+					if (type === "server") {
+						window.location.href = '<%=api.url("server")%>';
+					} else {
+						window.location.href = '<%=api.url("log")%>';
+					}
 				}
 			}
 			sendNextChunk();
