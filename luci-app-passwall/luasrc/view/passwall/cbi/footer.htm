@@ -23,8 +23,8 @@ local map = self.map
 <% if luci.http.formvalue("cbi.apply") == "1" and map.is_js_luci then -%>
 <script type="text/javascript">
 	document.addEventListener("luci-loaded", function() {
-		L.env.apply_display = 2; //Write whatever you want, it's all just a fake progress bar anyway.
-		L.env.apply_holdoff = 1;
+		//L.env.apply_display = 2; //Write whatever you want, it's all just a fake progress bar anyway.
+		//L.env.apply_holdoff = 1;
 
 		let tt;
 		let flag = 2;
@@ -50,10 +50,12 @@ local map = self.map
 		}
 
 		window.setTimeout(() => {
-			<% if not map.redirect then -%>
+			if (tt)
 				window.clearTimeout(tt);
-				L.ui.changes.displayStatus(false);
-				window.location = window.location.href.split('#')[0];
+			L.ui.changes.displayStatus(false);
+			<% if not map.redirect then -%>
+				//window.location = window.location.href.split('#')[0];
+				window.location = "<%=map.api.url("log")%>";
 			<%- else %>
 				window.location.href = "<%=map.redirect%>";
 			<%- end %>

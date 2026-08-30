@@ -7,7 +7,10 @@ local gfwlist_path = path .. "gfwlist"
 local chnlist_path = path .. "chnlist"
 local chnroute_path = path .. "chnroute"
 
-m = Map(api.appname)
+api.set_default_cbi()
+
+m = Map()
+m.apply_on_parse = true
 
 function clean_text(text)
 	local nbsp = string.char(0xC2, 0xA0) -- 不间断空格（U+00A0）
@@ -314,7 +317,7 @@ if fs.access(chnroute_path) then
 	]], translate("Read List"))
 end
 
-m:append(Template(api.appname .. "/rule_list/js"))
+m:appendTemplate("/rule_list/js")
 
 local geo_dir = (api.uci_get_c("@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
 local geosite_path = geo_dir .. "/geosite.dat"
@@ -324,7 +327,7 @@ if api.finded_com("geoview") and fs.access(geosite_path) and fs.access(geoip_pat
 		s:tab("geoview", translate("Geo View"))
 		o = s:taboption("geoview", DummyValue, "_geoview_fieldset")
 		o.rawhtml = true
-		o.template = api.appname .. "/rule_list/geoview"
+		o.template = m:template_path("/rule_list/geoview")
 	end
 end
 
@@ -332,4 +335,4 @@ m.on_before_save = function(self)
 	m:set("@global[0]", "flush_set", "1")
 end
 
-return m
+return api.return_map(m)
