@@ -2480,7 +2480,7 @@ function send(){
 		local Qwai_count=${google_check_count:-3}
 		[ "$Qwai_count" -lt "1" ] && local Qwai_count="3"
 		for i in `seq 1 ${Qwai_count}`; do
-			Qwai=`curl -o /dev/null --connect-timeout 3 -m 3 -s -w %{http_code} www.google.com`
+			Qwai=`curl -o /dev/null --connect-timeout 3 -m 3 -s -w %{http_code} https://www.google.com`
 			[ "$Qwai" = "200" ] || [ "$Qwai" = "301" ] || [ "$Qwai" = "302" ] && break
 			[ "$i" -lt "$Qwai_count" ] && sleep 1
 		done
