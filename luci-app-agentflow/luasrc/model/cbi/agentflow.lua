@@ -17,6 +17,17 @@ local data_dir = s:option(Value, "data_dir", translate("Data directory"))
 data_dir.rmempty = false
 data_dir.description = translate("Required. AgentFlow stores its configuration, database and workspace data under this directory.")
 
+function data_dir.validate(self, value, section)
+	value = (value or ""):match("^%s*(.-)%s*$")
+	if value == "" or value == "/" then
+		return nil, translate("Data directory cannot be empty.")
+	end
+	if not value:match("^/mnt/[^/]+/") then
+		return nil, translate("Please select a disk as the data directory.")
+	end
+	return value
+end
+
 local paths, default_path = agentflow_model.find_paths(blocks, home)
 for _, val in pairs(paths) do
 	data_dir:value(val, val)

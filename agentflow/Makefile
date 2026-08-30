@@ -62,8 +62,8 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/bin $(1)/etc/init.d $(1)/etc/uci-defaults $(1)/etc/config
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/agentflow $(1)/usr/bin/agentflow
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d $(1)/etc/uci-defaults $(1)/etc/config
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/agentflow $(1)/usr/sbin/agentflow
 	$(INSTALL_BIN) ./files/agentflow.init $(1)/etc/init.d/agentflow
 	$(INSTALL_BIN) ./files/agentflow.uci-default $(1)/etc/uci-defaults/09-agentflow
 	$(INSTALL_CONF) ./files/agentflow.config $(1)/etc/config/agentflow

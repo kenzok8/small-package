@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=headscale
-PKG_VERSION:=0.21.0
+PKG_VERSION:=0.29.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/juanfont/headscale/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=2afbdc038508cb694be496db9ba6b63bbc611b7038e8299e60eef0f1b227f12f
+PKG_HASH:=9c2b6020b51a1d53641fe8e282fd849b4d00eca8945fef93d63454655a90ba0d
 
 PKG_LICENSE:=BSD-3-clause
 PKG_LICENSE_FILES:=LICENSE
@@ -24,7 +24,7 @@ GO_PKG:=github.com/juanfont/headscale
 GO_PKG_BUILD_PKG:=$(GO_PKG)/cmd/headscale
 GO_PKG_LDFLAGS:=-s -w
 GO_PKG_LDFLAGS+= \
-	-X '$(GO_PKG_BUILD_PKG)/cli.Version=v$(PKG_VERSION)'
+	-X '$(GO_PKG)/hscontrol/types.version=v$(PKG_VERSION)'
 
 include $(INCLUDE_DIR)/package.mk
 include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
@@ -47,7 +47,7 @@ define Package/headscale/conffiles
 /etc/headscale/db.sqlite
 /etc/headscale/derp.yaml
 /etc/headscale/noise_private.key
-/etc/headscale/private.key
+/etc/headscale/derp_server_private.key
 endef
 
 define Package/headscale/install
@@ -56,6 +56,7 @@ define Package/headscale/install
 	$(INSTALL_DIR) $(1)/etc/headscale
 	touch $(1)/etc/headscale/db.sqlite
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/config-example.yaml $(1)/etc/headscale/config.yaml
+	$(SED) 's#/var/lib/headscale#/etc/headscale#g' $(1)/etc/headscale/config.yaml
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/derp-example.yaml $(1)/etc/headscale/derp.yaml
 endef
 

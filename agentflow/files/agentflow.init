@@ -14,6 +14,7 @@ set_mise_env() {
 	procd_set_param env \
 		"$@" \
 		MISE_INSTALLS_DIR="$data_dir/globalmise/mise-installs" \
+		MISE_GLOBAL_CONFIG_FILE="$data_dir/globalmise/mise-config/config.toml" \
 		MISE_DATA_DIR="$data_dir/globalmise/mise-data" \
 		MISE_CACHE_DIR="$data_dir/globalmise/mise-cache" \
 		MISE_STATE_DIR="$data_dir/globalmise/mise-state" \
@@ -27,15 +28,15 @@ start_service() {
 	config_foreach get_config agentflow
 	[ "$enabled" = 1 ] || return 1
 
-	[ -x /usr/bin/agentflow ] || {
-		logger -t agentflow "missing executable: /usr/bin/agentflow"
+	[ -x /usr/sbin/agentflow ] || {
+		logger -t agentflow "missing executable: /usr/sbin/agentflow"
 		return 1
 	}
 	mkdir -p "$data_dir" || return 1
 
 	logger -t agentflow "starting AgentFlow on $host:$port"
 	procd_open_instance
-	procd_set_param command /usr/bin/agentflow
+	procd_set_param command /usr/sbin/agentflow
 	set_mise_env \
 		"AGENT_FLOW_DATA=$data_dir/data" \
 		"AGENT_FLOW_HOST=$host" \

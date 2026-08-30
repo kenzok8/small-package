@@ -16,6 +16,9 @@ msgstr "正在获取数据……"
 msgid "Data directory"
 msgstr "数据目录"
 
+msgid "Data directory cannot be empty."
+msgstr "数据目录不能为空"
+
 msgid "Enable"
 msgstr "启用"
 
@@ -27,6 +30,9 @@ msgstr "监听端口"
 
 msgid "Port for the AgentFlow HTTP server."
 msgstr "AgentFlow HTTP 服务的端口号。"
+
+msgid "Please select a disk as the data directory."
+msgstr "请选择硬盘作为数据目录"
 
 msgid "Required. AgentFlow stores its configuration, database and workspace data under this directory."
 msgstr "必需。AgentFlow 在此目录中保存配置、数据库和工作区数据。"

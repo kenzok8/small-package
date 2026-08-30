@@ -1,0 +1,14 @@
+Allow package builds from release tarballs to provide the version because Go
+records the main module version as "(devel)" outside the module proxy. This
+keeps Headscale's database upgrade checks enabled for packaged releases.
+
+Signed-off-by: coolsnowwolf <coolsnowwolf@gmail.com>
+---
+--- a/hscontrol/types/version.go
++++ b/hscontrol/types/version.go
+@@ -24,0 +25,2 @@
++var version = "dev"
++
+@@ -45 +47 @@
+-		Version:   "dev",
++		Version:   version,
