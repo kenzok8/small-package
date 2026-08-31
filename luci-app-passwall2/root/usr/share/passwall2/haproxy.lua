@@ -52,7 +52,7 @@ defaults
 	log global
 	option tcplog
 	option dontlognull
-	option http-server-close
+	option abortonclose
 	#option forwardfor except 127.0.0.0/8
 	option redispatch
 	retries 2

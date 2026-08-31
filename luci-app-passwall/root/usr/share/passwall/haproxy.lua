@@ -6,9 +6,7 @@ local fs = api.fs
 local uci = api.uci
 local sys = api.sys
 
-local log = function(...)
-	api.log(...)
-end
+local log = api.log
 
 function get_ip_port_from(str)
 	local result_port = sys.exec("echo -n " .. str .. " | sed -n 's/^.*[:#]\\([0-9]*\\)$/\\1/p'")
@@ -19,7 +17,7 @@ end
 local var = api.get_args(arg)
 local haproxy_path = var["-path"]
 local haproxy_conf = var["-conf"]
-local haproxy_dns = var["-dns"] or "119.29.29.29:53,223.5.5.5:53"
+local haproxy_dns = "127.0.0.1"
 
 local cpu_thread = sys.exec('echo -n $(cat /proc/cpuinfo | grep "processor" | wc -l)') or "1"
 local health_check_type = api.uci_get_c("@global_haproxy[0]", "health_check_type") or "tcp"
@@ -54,7 +52,7 @@ defaults
 	log global
 	option tcplog
 	option dontlognull
-	option http-server-close
+	option abortonclose
 	#option forwardfor except 127.0.0.0/8
 	option redispatch
 	retries 2
