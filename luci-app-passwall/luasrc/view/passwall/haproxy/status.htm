@@ -2,7 +2,7 @@
 local map = self.map
 local api = map.api
 local haproxy_enable = map:get("@global_haproxy[0]", "balancing_enable") or "0"
-local console_port = map:get("@global_haproxy[0]", "console_port") or ""
+local console_port = map:get("@global_haproxy[0]", "console_port") or "1188"
 -%>
 <p id="_status"></p>
 

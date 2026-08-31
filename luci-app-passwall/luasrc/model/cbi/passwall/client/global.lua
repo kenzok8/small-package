@@ -151,8 +151,8 @@ end
 
 o = s:taboption("Main", Value, "node_socks_port", translate("Node") .. " Socks " .. translate("Listen Port"))
 o.default = 1070
+o.placeholder = 1070
 o.datatype = "range(1,65535)"
-o.rmempty = false
 o:depends({ node = "", ["!reverse"] = true })
 --[[
 if has_singbox or has_xray then

@@ -25,7 +25,7 @@ local cpu_thread = sys.exec('echo -n $(cat /proc/cpuinfo | grep "processor" | wc
 local health_check_type = api.uci_get_c("@global_haproxy[0]", "health_check_type") or "tcp"
 local health_check_inter = api.uci_get_c("@global_haproxy[0]", "health_check_inter") or "20"
 local balancingStrategy = api.uci_get_c("@global_haproxy[0]", "balancingStrategy") or "roundrobin"
-local console_port = api.uci_get_c("@global_haproxy[0]", "console_port")
+local console_port = api.uci_get_c("@global_haproxy[0]", "console_port") or "1188"
 local bind_local = api.uci_get_c("@global_haproxy[0]", "bind_local") or "0"
 local bind_address = "0.0.0.0"
 if bind_local == "1" then bind_address = "127.0.0.1" end
