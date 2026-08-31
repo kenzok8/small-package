@@ -1540,11 +1540,6 @@ function gen_config(var)
 				})
 			end
 
-			table.insert(rules, {
-				outboundTag = "direct",
-				ip = { "geoip:private" }
-			})
-
 			if default_outboundTag then
 				local rule = {
 					_flag = "default",
