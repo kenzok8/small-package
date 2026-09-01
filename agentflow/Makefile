@@ -40,7 +40,7 @@ define Package/$(PKG_NAME)
 	CATEGORY:=Network
 	SUBMENU:=Web Servers/Proxies
 	TITLE:=AgentFlow
-	DEPENDS:=@(x86_64||aarch64) +git +mise
+	DEPENDS:=@(x86_64||aarch64) +git +git-http +mise
 	URL:=https://agentflow.geili.ai/
 endef
 
