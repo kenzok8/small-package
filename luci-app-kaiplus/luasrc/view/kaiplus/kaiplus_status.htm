@@ -2,19 +2,22 @@
 XHR.poll(5, '<%=url("admin/services/kaiplus_status")%>', null, function(x, st) {
 	var el = document.getElementById('kaiplus_status');
 	if (st && el) {
-		if (!st.running) {
-			el.innerHTML = '<br/><em style=\"color:red\"><%:The KaiPlus service is not running.%></em>';
+		var status = st.running
+			? '<br/><em style=\"color:green\"><%:The KaiPlus service is running.%></em>'
+			: '<br/><em style=\"color:red\"><%:The KaiPlus service is not running.%></em>';
+		if (st.proxy_prefix_enabled && st.linkeasefull_running) {
+			status = status + '<br/><em><%:Access mode: LinkEase Desktop proxy.%></em>';
 		}
+		else if (st.external_port_enabled) {
+			status = status + '<br/><em><%:Access mode: external port.%></em>';
+		}
+		else {
+			status = status + '<br/><em><%:External port access is disabled.%></em>';
+		}
+		el.innerHTML = status;
 		if (st.running) {
-			var basePath = st.base_path || "/apps/kaiplus/";
-			if (basePath.charAt(0) !== "/") {
-				basePath = "/" + basePath;
-			}
-			if (basePath.charAt(basePath.length - 1) !== "/") {
-				basePath = basePath + "/";
-			}
-			el.innerHTML = '<br/><em style=\"color:green\"><%:The KaiPlus service is running.%></em>'
-				+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open KaiPlus%> \" onclick=\"window.open('http://' + window.location.hostname + ':' + st.port + basePath)\"/>";
+			el.innerHTML = el.innerHTML
+				+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open KaiPlus%> \" onclick=\"window.open('<%=url("admin/services/kaiplus/open")%>')\"/>";
 		}
 	}
 });

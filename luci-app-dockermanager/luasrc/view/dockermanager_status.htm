@@ -5,10 +5,22 @@
 			var tb = document.getElementById('dockermanager_status');
 			if (st && tb)
 			{
-				var status = st.running
-					? '<br/><em style=\"color:green\"><%:The Docker Manager service is running.%></em>'
-					: '<br/><em style=\"color:red\"><%:The Docker Manager service is not running.%></em>';
-				tb.innerHTML = status;
+					var status = st.running
+						? '<br/><em style=\"color:green\"><%:The Docker Manager service is running.%></em>'
+						: '<br/><em style=\"color:red\"><%:The Docker Manager service is not running.%></em>';
+					if (st.proxy_prefix_enabled && st.linkeasefull_running)
+					{
+						status = status + '<br/><em><%:Access mode: LinkEase Desktop proxy.%></em>';
+					}
+					else if (st.external_port_enabled)
+					{
+						status = status + '<br/><em><%:Access mode: external port.%></em>';
+					}
+					else
+					{
+						status = status + '<br/><em><%:External port access is disabled.%></em>';
+					}
+					tb.innerHTML = status;
 
 				if (st.running)
 				{

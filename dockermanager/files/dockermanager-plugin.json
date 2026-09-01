@@ -13,15 +13,52 @@
     "entry": "index.html",
     "basePath": "/apps/dockermanager/"
   },
+  "config": {
+    "providerOrder": ["uci"],
+    "providers": {
+      "uci": {
+        "type": "uci"
+      }
+    }
+  },
   "backend": {
     "type": "http",
+    "transport": "unix",
     "scheme": "http",
-    "host": "127.0.0.1",
-    "portFromUci": "dockermanager.@dockermanager[0].port",
-    "defaultPort": 8192,
+    "values": {
+      "socketPath": {
+        "default": "/var/run/dockermanager.sock",
+        "keys": {
+          "uci": "dockermanager.@dockermanager[0].socket_path"
+        }
+      },
+      "listenMode": {
+        "default": "auto",
+        "keys": {
+          "uci": "dockermanager.@dockermanager[0].listen_mode"
+        }
+      },
+      "externalPortEnabled": {
+        "default": false,
+        "keys": {
+          "uci": "dockermanager.@dockermanager[0].external_port_enabled"
+        }
+      },
+      "port": {
+        "default": 8192,
+        "keys": {
+          "uci": "dockermanager.@dockermanager[0].port"
+        }
+      }
+    },
     "upstreamBasePath": "/apps/dockermanager/",
     "apiPath": "api/",
-    "pathMode": "preserve"
+    "pathMode": "preserve",
+    "fallback": {
+      "transport": "tcp",
+      "scheme": "http",
+      "host": "127.0.0.1"
+    }
   },
   "window": {
     "width": 1180,

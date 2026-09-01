@@ -27,9 +27,9 @@
     "host": "127.0.0.1",
     "portFromUci": "istoreenhance.@istoreenhance[0].adminport",
     "defaultPort": 5003,
-    "upstreamBasePath": "/apps/kspeeder/",
+    "upstreamBasePath": "/",
     "apiPath": "api/",
-    "pathMode": "preserve"
+    "pathMode": "strip-public-base"
   },
   "window": {
     "width": 1040,
