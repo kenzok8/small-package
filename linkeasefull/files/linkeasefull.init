@@ -110,6 +110,7 @@ start_service() {
 		--localApi "$LOCAL_API" \
 		--supplierCode "linkease"
 	procd_set_param env \
+		"LINKEASE_AUTH_PROVIDER=openwrt" \
 		"KAIPLUS_ENABLED=0"
 	procd_set_param respawn
 	procd_set_param stdout 1
