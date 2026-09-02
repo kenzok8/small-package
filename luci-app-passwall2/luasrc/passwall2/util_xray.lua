@@ -1838,7 +1838,7 @@ function gen_config(var)
 								end
 							end
 						end
-						if dns_outboundTag == "blackhole" then
+						if value.outboundTag == "blackhole" then
 							table.insert(dns_out_rules, {
 								action = "return",
 								rCode = 0,
