@@ -346,8 +346,12 @@ function index_status()
 			has_tproxy = (mods:find("TPROXY") or mods:find("nft_tproxy")) and "1" or "0"
 			api.set_cache_var("HAS_TPROXY", has_tproxy)
 		end
-		e["tcp_status"] = luci.sys.call("/bin/busybox top -bn1 | grep -v 'grep' | grep '%s/bin/' | grep 'default' | grep 'global' >/dev/null" % api.TMP_PATH) == 0
-		if has_tproxy == "1" then
+		local tcp_redir = api.get_cache_var("DEFAULT_TCP_REDIR")
+		local udp_redir = api.get_cache_var("DEFAULT_UDP_REDIR")
+		if tcp_redir == "1" then
+			e["tcp_status"] = luci.sys.call("/bin/busybox top -bn1 | grep -v 'grep' | grep '%s/bin/' | grep 'default' | grep 'global' >/dev/null" % api.TMP_PATH) == 0
+		end
+		if has_tproxy == "1" and udp_redir == "1" then
 			e["udp_status"] = luci.sys.call("/bin/busybox top -bn1 | grep -v -E 'grep|naive' | grep '%s/bin/' | grep 'default' | grep 'global' >/dev/null" % api.TMP_PATH) == 0
 		end
 	end
@@ -962,7 +966,7 @@ function geo_view()
 		return
 	end
 	local function get_rules(str, type)
-		local rules_id = {}
+		local rules = {}
 		uci_foreach("shunt_rules", function(s)
 			local list
 			if type == "geoip" then list = s.ip_list else list = s.domain_list end
@@ -971,14 +975,18 @@ function geo_view()
 					local prefix, main = line:match("^(.-):(.*)")
 					if not main then main = line end
 					if type == "geoip" and (api.datatypes.ipaddr(str) or api.datatypes.ip6addr(str)) then
-						if main:find(str, 1, true) then rules_id[#rules_id + 1] = s[".name"] end
+						if main:find(str, 1, true) then
+							table.insert(rules, {id = s[".name"], group = s.group or i18n.translate("default")})
+						end
 					else
-						if main == str then rules_id[#rules_id + 1] = s[".name"] end
+						if main == str then
+							table.insert(rules, {id = s[".name"], group = s.group or i18n.translate("default")})
+						end
 					end
 				end
 			end
 		end)
-		return rules_id
+		return rules
 	end
 	local geo_dir = (uci_get("@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/")
 	local geosite_path = geo_dir .. "/geosite.dat"
@@ -999,11 +1007,17 @@ function geo_view()
 			for line in geo_string:gmatch("([^\n]+)") do
 				lines[#lines + 1] = geo_type .. ":" .. line
 				for _, r in ipairs(get_rules(line, geo_type) or {}) do
-					if not seen[r] then seen[r] = true; rules[#rules + 1] = r end
+					if not seen[r.id] then
+						seen[r.id] = true
+						rules[#rules + 1] = string.format("[%s]%s", r.group, r.id)
+					end
 				end
 			end
 			for _, r in ipairs(get_rules(value, geo_type) or {}) do
-				if not seen[r] then seen[r] = true; rules[#rules + 1] = r end
+				if not seen[r.id] then
+					seen[r.id] = true
+					rules[#rules + 1] = string.format("[%s]%s", r.group, r.id)
+				end
 			end
 			geo_string = table.concat(lines, "\n")
 			if #rules > 0 then
