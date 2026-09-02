@@ -491,7 +491,6 @@ if IS_SHUNT_NODE then
 			}
 			insert_array_after(config_lines, tmp_lines, "#--4")
 		end
-		
 	end
 
 	if is_file_nonzero(file_shunt_host) then

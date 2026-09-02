@@ -50,13 +50,13 @@ local api = map.api
 	var origin = window.location.origin;
 	var hide_url = origin + "<%=api.url("hide")%>";
 	var show_url = origin + "<%=api.url("show")%>";
-	
+
 	function hide(url) {
 		if (confirm('<%:Are you sure to hide?%>') == true) {
 			window.location.href = hide_url;
 		}
 	}
-	
+
 	var dom = document.getElementById("faq_reset");
 	if (dom) {
 		var li = "";

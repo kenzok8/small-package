@@ -346,12 +346,8 @@ function index_status()
 			has_tproxy = (mods:find("TPROXY") or mods:find("nft_tproxy")) and "1" or "0"
 			api.set_cache_var("HAS_TPROXY", has_tproxy)
 		end
-		local tcp_redir = api.get_cache_var("DEFAULT_TCP_REDIR")
-		local udp_redir = api.get_cache_var("DEFAULT_UDP_REDIR")
-		if tcp_redir == "1" then
-			e["tcp_status"] = luci.sys.call("/bin/busybox top -bn1 | grep -v 'grep' | grep '%s/bin/' | grep 'default' | grep 'global' >/dev/null" % api.TMP_PATH) == 0
-		end
-		if has_tproxy == "1" and udp_redir == "1" then
+		e["tcp_status"] = luci.sys.call("/bin/busybox top -bn1 | grep -v 'grep' | grep '%s/bin/' | grep 'default' | grep 'global' >/dev/null" % api.TMP_PATH) == 0
+		if has_tproxy == "1" then
 			e["udp_status"] = luci.sys.call("/bin/busybox top -bn1 | grep -v -E 'grep|naive' | grep '%s/bin/' | grep 'default' | grep 'global' >/dev/null" % api.TMP_PATH) == 0
 		end
 	end

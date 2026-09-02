@@ -1110,7 +1110,7 @@ table td, .table .td {
 			const dom = document.getElementById('modal-mask');
 			dom.style.display = 'block';
 			dom.innerHTML = '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;"><%:Processing, please wait…%></div>';
-			
+
 			const chunkSize = 1000;  // Fragmented sending to overcome uhttpd's limitations, with each fragment containing 1000 characters.
 			const totalChunks = Math.ceil(link.length / chunkSize);
 			let currentChunk = 0;
@@ -1213,7 +1213,7 @@ table td, .table .td {
 			}
 		}
 	}
-	
+
 	const set_node_div = {
 		section: '',
 		open(cbi_id, protocol) {
@@ -1546,7 +1546,7 @@ table td, .table .td {
 				onChange("auto_detection_time", auto_detection_time);
 			});
 		});
-		
+
 		const links = document.querySelectorAll('a');
 		links.forEach(link => {
 			link.addEventListener('click', (e) => {

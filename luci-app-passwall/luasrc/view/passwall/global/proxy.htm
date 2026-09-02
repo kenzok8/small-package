@@ -79,28 +79,28 @@
 			}
 		}
 	}
-	
+
 	function switch_gfw_mode() {
 		opt.set("use_gfw_list", true);
 		opt.set("chn_list", "0");
 		opt.set("tcp_proxy_mode", "disable");
 		opt.set("udp_proxy_mode", "disable");
 	}
-	
+
 	function switch_chnroute_mode() {
 		opt.set("use_gfw_list", true);
 		opt.set("chn_list", "direct");
 		opt.set("tcp_proxy_mode", "proxy");
 		opt.set("udp_proxy_mode", "proxy");
 	}
-	
+
 	function switch_returnhome_mode() {
 		opt.set("use_gfw_list", false);
 		opt.set("chn_list", "proxy");
 		opt.set("tcp_proxy_mode", "disable");
 		opt.set("udp_proxy_mode", "disable");
 	}
-	
+
 	function switch_global_mode() {
 		opt.set("use_gfw_list", false);
 		opt.set("chn_list", "0");

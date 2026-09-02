@@ -620,8 +620,6 @@ load_acl() {
 	}
 
 	[ "$ENABLED_DEFAULT_ACL" = 1 ] && [ "$CLIENT_PROXY" = 1 ] && {
-		local DEFAULT_TCP_REDIR=1
-		local DEFAULT_UDP_REDIR=1
 		msg="【默认】，"
 		[ "$TCP_NO_REDIR_PORTS" != "disable" ] && {
 			nft "add rule $NFTABLE_NAME $nft_prerouting_chain ip protocol tcp $(factor $TCP_NO_REDIR_PORTS "tcp dport") counter return comment \"默认\""
@@ -630,7 +628,6 @@ load_acl() {
 				echolog "     - ${msg}不代理 TCP 端口[${TCP_NO_REDIR_PORTS}]"
 			else
 				unset TCP_PROXY_MODE
-				DEFAULT_TCP_REDIR=0
 				echolog "     - ${msg}不代理所有 TCP 端口"
 			fi
 		}
@@ -642,7 +639,6 @@ load_acl() {
 				echolog "     - ${msg}不代理 UDP 端口[${UDP_NO_REDIR_PORTS}]"
 			else
 				unset UDP_PROXY_MODE
-				DEFAULT_UDP_REDIR=0
 				echolog "     - ${msg}不代理所有 UDP 端口"
 			fi
 		}
@@ -693,9 +689,6 @@ load_acl() {
 				[ "${USE_SHUNT_NODE}" = "1" ] && nft_rule_dual "$nft_prerouting_chain" "ip protocol tcp $(factor $TCP_PROXY_DROP_PORTS "tcp dport") ip daddr" "$NFTSET_SHUNT" "counter reject comment \"默认\""
 				[ "${TCP_PROXY_MODE}" != "disable" ] && nft "add rule $NFTABLE_NAME $nft_prerouting_chain ip protocol tcp $(factor $TCP_PROXY_DROP_PORTS "tcp dport") counter reject comment \"默认\""
 				echolog "     - ${msg}屏蔽代理 TCP 端口[${TCP_PROXY_DROP_PORTS}]"
-				if has_1_65535 "$TCP_PROXY_DROP_PORTS"; then
-					DEFAULT_TCP_REDIR=0
-				fi
 			}
 
 			[ "$UDP_PROXY_DROP_PORTS" != "disable" ] && {
@@ -714,14 +707,8 @@ load_acl() {
 				[ "${USE_SHUNT_NODE}" = "1" ] && nft_rule_dual "PSW_MANGLE" "ip protocol udp $(factor $UDP_PROXY_DROP_PORTS "udp dport") ip daddr" "$NFTSET_SHUNT" "counter reject comment \"默认\""
 				[ "${UDP_PROXY_MODE}" != "disable" ] && nft "add rule $NFTABLE_NAME PSW_MANGLE ip protocol udp $(factor $UDP_PROXY_DROP_PORTS "udp dport") counter reject comment \"默认\""
 				echolog "     - ${msg}屏蔽代理 UDP 端口[${UDP_PROXY_DROP_PORTS}]"
-				if has_1_65535 "$UDP_PROXY_DROP_PORTS"; then
-					DEFAULT_UDP_REDIR=0
-				fi
 			}
 		}
-
-		set_cache_var "DEFAULT_TCP_REDIR" "$DEFAULT_TCP_REDIR"
-		set_cache_var "DEFAULT_UDP_REDIR" "$DEFAULT_UDP_REDIR"
 
 		#  加载TCP默认代理模式
 		if [ -n "${TCP_PROXY_MODE}" ]; then
@@ -1284,7 +1271,7 @@ add_firewall_rule() {
 
 	[ "$ENABLED_DEFAULT_ACL" = 1 ] && {
 		msg="【路由器本机】，"
-		
+
 		[ "$TCP_NO_REDIR_PORTS" != "disable" ] && {
 			nft "add rule $NFTABLE_NAME $nft_output_chain ip protocol tcp $(factor $TCP_NO_REDIR_PORTS "tcp dport") counter return"
 			nft "add rule $NFTABLE_NAME PSW_OUTPUT_MANGLE_V6 meta l4proto tcp $(factor $TCP_NO_REDIR_PORTS "tcp dport") counter return"
@@ -1295,7 +1282,7 @@ add_firewall_rule() {
 				echolog "  - ${msg}不代理所有 TCP 端口"
 			fi
 		}
-		
+
 		[ "$UDP_NO_REDIR_PORTS" != "disable" ] && {
 			nft "add rule $NFTABLE_NAME PSW_OUTPUT_MANGLE ip protocol udp $(factor $UDP_NO_REDIR_PORTS "udp dport") counter return"
 			nft "add rule $NFTABLE_NAME PSW_OUTPUT_MANGLE_V6 meta l4proto udp $(factor $UDP_NO_REDIR_PORTS "udp dport") counter return"
@@ -1326,7 +1313,7 @@ add_firewall_rule() {
 				[ "${LOCALHOST_TCP_PROXY_MODE}" != "disable" ] && nft add rule $NFTABLE_NAME $nft_output_chain ip protocol tcp $(factor $TCP_PROXY_DROP_PORTS "tcp dport") counter reject
 				echolog "  - ${msg}屏蔽代理 TCP 端口[${TCP_PROXY_DROP_PORTS}]"
 			}
-			
+
 			[ "$UDP_PROXY_DROP_PORTS" != "disable" ] && {
 				[ "${USE_FAKEDNS}" = "1" ] && nft add rule $NFTABLE_NAME PSW_OUTPUT_MANGLE ip protocol udp ip daddr $FAKE_IP $(factor $UDP_PROXY_DROP_PORTS "udp dport") counter reject
 				[ "${USE_PROXY_LIST}" = "1" ] && nft_rule_dual "PSW_OUTPUT_MANGLE" "ip protocol udp ip daddr" "$NFTSET_BLACK" "$(factor $UDP_PROXY_DROP_PORTS "udp dport") counter reject"

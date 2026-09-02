@@ -95,7 +95,7 @@ local current_node = map:get(section)
 		};
 		return r;
 	}
-	
+
 	function genQrcode(btn, urlname, sid) {
 		var qrcode_div = document.getElementById("qrcode_div");
 		qrcode_div.style.display = null;
@@ -201,7 +201,7 @@ local current_node = map:get(section)
 			url = b64encsafe(v_method.value + ":" + v_password.value) + "@" +
 				_address + ":" +
 				v_port.value + "/?";
-			
+
 			var shadow_tls;
 			//生成SS Shadow-TLS 插件参数
 			const generateShadowTLSBase64 = function(paramStr) {
@@ -595,9 +595,9 @@ local current_node = map:get(section)
 			params += opt.query("pcs", dom_prefix + "tls_pinSHA256");
 			params += opt.query("vcn", dom_prefix + "tls_CertByName");
 			params += opt.query("ech", dom_prefix + "ech_config");
-			
+
 			var v_password = null;
-			
+
 			if (v_type === "Hysteria2") {
 				v_password = opt.get("hysteria2_auth_password");
 				var dom_obfs_type = opt.get("hysteria2_obfs_type");
@@ -1127,7 +1127,7 @@ local current_node = map:get(section)
 							var kv = ws_path_params_array[i].split('=');
 							ws_path_params[decodeURIComponent(kv[0]).toLowerCase()] = decodeURIComponent(kv[1] || '');
 						}
-						
+
 						if (ws_path_params.ed) {
 							opt.set(dom_prefix + 'ws_path', ws_path);
 							opt.set(dom_prefix + 'ws_enableEarlyData', true);
@@ -1165,7 +1165,7 @@ local current_node = map:get(section)
 				opt.set(dom_prefix + 'uot', queryParam.udp);
 				opt.set(dom_prefix + 'use_finalmask', !!queryParam.fm);
 				opt.set(dom_prefix + 'finalmask', queryParam.fm || "");
-			
+
 				if (queryParam["shadow-tls"]) {
 					//解析SS Shadow-TLS 插件参数
 					const parseShadowTLSParams = function(base64Str, outObj) {
@@ -1274,7 +1274,7 @@ local current_node = map:get(section)
 						var kv = ws_path_params_array[i].split('=');
 						ws_path_params[decodeURIComponent(kv[0]).toLowerCase()] = decodeURIComponent(kv[1] || '');
 					}
-					
+
 					if (ws_path_params.ed) {
 						opt.set(dom_prefix + 'ws_path', ws_path);
 						opt.set(dom_prefix + 'ws_enableEarlyData', true);
@@ -1416,7 +1416,7 @@ local current_node = map:get(section)
 						var kv = ws_path_params_array[i].split('=');
 						ws_path_params[decodeURIComponent(kv[0]).toLowerCase()] = decodeURIComponent(kv[1] || '');
 					}
-					
+
 					if (ws_path_params.ed) {
 						opt.set(dom_prefix + 'ws_path', ws_path);
 						opt.set(dom_prefix + 'ws_enableEarlyData', true);
@@ -1452,7 +1452,7 @@ local current_node = map:get(section)
 			} else if (has_xray) {
 				dom_prefix = "xray_";
 			}
-			
+
 			var m = parseNodeUrl(ssrurl);
 			var password = m.passwd;
 			if (password === "") {
@@ -1559,7 +1559,7 @@ local current_node = map:get(section)
 						var kv = ws_path_params_array[i].split('=');
 						ws_path_params[decodeURIComponent(kv[0]).toLowerCase()] = decodeURIComponent(kv[1] || '');
 					}
-					
+
 					if (ws_path_params.ed) {
 						opt.set(dom_prefix + 'ws_path', ws_path);
 						opt.set(dom_prefix + 'ws_enableEarlyData', true);

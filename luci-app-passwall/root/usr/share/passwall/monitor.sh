@@ -26,7 +26,7 @@ while [ "$ENABLED" -eq 1 ]; do
 		IFS= read -r cmd < "$file"
 		[ -z "$cmd" ] && continue
 		cmd_check=$(printf '%s' "$cmd" | sed 's/>.*$//;s/[[:space:]]*$//')
-		
+
 		case "$cmd_check" in
 			*dns2socks*) cmd_check=${cmd_check//:/ } ;;
 		esac

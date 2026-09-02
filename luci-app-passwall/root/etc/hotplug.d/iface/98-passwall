@@ -26,10 +26,10 @@
 			cat /dev/null > ${LOCK_FILE}
 		fi
 		echo $$ > ${LOCK_FILE}
-		
+
 		/etc/init.d/${CONFIG} restart >/dev/null 2>&1 &
 		logger -p notice -t network -s "${CONFIG}: restart when $INTERFACE ifup"
-		
+
 		rm -rf ${LOCK_FILE}
 	}
 }
