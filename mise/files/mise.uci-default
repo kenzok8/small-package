@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if [ -r /lib/functions/istore_runtime.sh ]; then
+	. /lib/functions/istore_runtime.sh
+	istore_runtime_init >/dev/null 2>&1 || true
+fi
+
+exit 0

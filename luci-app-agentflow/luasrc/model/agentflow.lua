@@ -45,4 +45,37 @@ agentflow.find_paths = function(blocks, home_dirs)
 	return paths, default_path
 end
 
+local dirname = function(path)
+	path = (path or ""):match("^%s*(.-)%s*$")
+	path = path:gsub("/+$", "")
+	return path:match("^(.*)/[^/]+$") or ""
+end
+
+agentflow.runtime_dir = function(data_dir, home_dirs)
+	local uci = require "luci.model.uci".cursor()
+	local configured = uci:get_first("mise", "mise", "runtime_dir", "")
+	if configured ~= nil and configured ~= "" then
+		return configured
+	end
+
+	local conf_dir = dirname(data_dir)
+	if conf_dir == "" then
+		conf_dir = home_dirs["Configs"]
+	end
+	if conf_dir == nil or conf_dir == "" then
+		return ""
+	end
+
+	return conf_dir .. "/Runtime"
+end
+
+agentflow.runtime_home = function(data_dir, home_dirs)
+	local runtime_dir = agentflow.runtime_dir(data_dir, home_dirs)
+	if runtime_dir == nil or runtime_dir == "" then
+		return ""
+	end
+
+	return runtime_dir .. "/home"
+end
+
 return agentflow

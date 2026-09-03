@@ -38,6 +38,18 @@ define Package/$(PKG_NAME)/description
   mise manages development tool versions, environment variables, and tasks.
 endef
 
+define Package/$(PKG_NAME)/conffiles
+/etc/config/mise
+endef
+
+define Package/$(PKG_NAME)/postinst
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	[ -f /etc/uci-defaults/mise ] && /etc/uci-defaults/mise && rm -f /etc/uci-defaults/mise
+	exit 0
+fi
+endef
+
 define Build/Configure
 endef
 
@@ -45,8 +57,11 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/etc/config $(1)/etc/uci-defaults $(1)/lib/functions
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/mise $(1)/usr/bin/mise
+	$(INSTALL_CONF) ./files/mise.config $(1)/etc/config/mise
+	$(INSTALL_BIN) ./files/mise.uci-default $(1)/etc/uci-defaults/mise
+	$(INSTALL_BIN) ./files/istore_runtime.sh $(1)/lib/functions/istore_runtime.sh
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

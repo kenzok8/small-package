@@ -1,0 +1,20 @@
+# Preserve every explicit user choice while restoring missing per-protocol defaults.
+with(
+  .sniffer |
+    select((has("enable") | not) or (.enable == true)) |
+    select((has("override-destination") | not) or (."override-destination" == true));
+  with(
+    .sniff | select(has("TLS"));
+    with(
+      .TLS | select(type == "!!map" and (has("override-destination") | not));
+      ."override-destination" = true
+    )
+  ) |
+  with(
+    .sniff | select(has("QUIC"));
+    with(
+      .QUIC | select(type == "!!map" and (has("override-destination") | not));
+      ."override-destination" = true
+    )
+  )
+)

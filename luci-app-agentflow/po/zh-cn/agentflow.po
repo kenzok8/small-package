@@ -37,6 +37,15 @@ msgstr "请选择硬盘作为数据目录"
 msgid "Required. AgentFlow stores its configuration, database and workspace data under this directory."
 msgstr "必需。AgentFlow 在此目录中保存配置、数据库和工作区数据。"
 
+msgid "Shared runtime home"
+msgstr "共享运行时 HOME"
+
+msgid "AgentFlow and other runtime-aware applications share this HOME. It is derived from the selected Configs directory unless mise has an explicit runtime directory."
+msgstr "AgentFlow 和其他运行时感知应用共用此 HOME。除非 mise 显式设置了运行时目录，否则它会从所选 Configs 目录推导。"
+
+msgid "Not configured"
+msgstr "未配置"
+
 msgid "Status"
 msgstr "状态"
 
