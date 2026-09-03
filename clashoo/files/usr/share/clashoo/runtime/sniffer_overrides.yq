@@ -4,6 +4,14 @@ with(
     select((has("enable") | not) or (.enable == true)) |
     select((has("override-destination") | not) or (."override-destination" == true));
   with(
+    select(has("force-dns-mapping") | not);
+    ."force-dns-mapping" = true
+  ) |
+  with(
+    select(has("parse-pure-ip") | not);
+    ."parse-pure-ip" = true
+  ) |
+  with(
     .sniff | select(has("TLS"));
     with(
       .TLS | select(type == "!!map" and (has("override-destination") | not));

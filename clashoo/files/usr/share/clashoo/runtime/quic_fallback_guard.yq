@@ -1,0 +1,9 @@
+# If every configured rule points to a proxy without UDP support, mihomo falls
+# through to DIRECT. Reject only that otherwise-unmatched QUIC traffic so the
+# client can retry over TCP; rules with a usable UDP target still win first.
+with(
+  select(has("rules")) |
+    select((.rules | type) == "!!seq") |
+    select(([.rules[] | select(. == "AND,((NETWORK,UDP),(DST-PORT,443)),REJECT")] | length) == 0);
+  .rules += ["AND,((NETWORK,UDP),(DST-PORT,443)),REJECT"]
+)

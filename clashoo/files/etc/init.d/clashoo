@@ -1049,6 +1049,16 @@ backfill_custom_sniffer_overrides() {
 	yq -M e -i --from-file /usr/share/clashoo/runtime/sniffer_overrides.yq "$CONFIG_YAML" 2>/dev/null || true
 }
 
+ensure_quic_fallback_guard() {
+	[ "$(uci -q get clashoo.config.sniffer_streaming 2>/dev/null)" = "1" ] || return 0
+	[ "${EFFECTIVE_UDP_MODE:-off}" != "off" ] || return 0
+	[ "$(uci -q get clashoo.config.block_quic 2>/dev/null)" != "1" ] || return 0
+	command -v yq >/dev/null 2>&1 || return 0
+	[ -s "$CONFIG_YAML" ] || return 0
+	[ -r /usr/share/clashoo/runtime/quic_fallback_guard.yq ] || return 0
+	yq -M e -i --from-file /usr/share/clashoo/runtime/quic_fallback_guard.yq "$CONFIG_YAML" 2>/dev/null || true
+}
+
 yml_change() {
 	CLASHOO_DNS_FORCE="$(_clashoo_dns_force_fields)"
 	CLASHOO_DNS_PRESENT="$(_user_dns_fields "$CLASHOO_DNS_FORCE")"
@@ -1069,6 +1079,7 @@ yml_change() {
 		mv -f "${CONFIG_YAML}.mixin" "$CONFIG_YAML" 2>/dev/null && 
 		rm -f /tmp/_clashoo_mixin.yaml 2>/dev/null
 	backfill_custom_sniffer_overrides
+	ensure_quic_fallback_guard
 }
 
 _uci_fake_ip_filter_extras() {
