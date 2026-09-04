@@ -7,7 +7,13 @@ TMP_DIR="/tmp/clashoo-component-update"
 APK_UPGRADE_FLAG="/var/run/clashoo_package_upgrade"
 FEED_BASE_URL="https://down.dllkids.xyz/openwrt-feed/clashoo"
 GITHUB_API_URL="https://api.github.com/repos/kenzok8/openwrt-clashoo/releases/latest"
-GITHUB_PROXY_PREFIX="${GITHUB_PROXY_PREFIX:-https://ghfast.top/}"
+ENV_GITHUB_PROXY_PREFIX="${GITHUB_PROXY_PREFIX:-}"
+UCI_GITHUB_PROXY_PREFIX="$(uci -q get clashoo.config.core_mirror_prefix 2>/dev/null)"
+GITHUB_PROXY_PREFIX="${UCI_GITHUB_PROXY_PREFIX:-${ENV_GITHUB_PROXY_PREFIX:-https://ghfast.top/}}"
+case "$GITHUB_PROXY_PREFIX" in
+  */) ;;
+  *) GITHUB_PROXY_PREFIX="${GITHUB_PROXY_PREFIX}/" ;;
+esac
 CONNECT_TIMEOUT="${CONNECT_TIMEOUT:-8}"
 REQUEST_TIMEOUT="${REQUEST_TIMEOUT:-20}"
 LOW_SPEED_TIME="${LOW_SPEED_TIME:-30}"

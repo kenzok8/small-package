@@ -3030,10 +3030,17 @@ let target = dir + '/' + name;
 let file_exists = !!access(target, 'r');
 let alt_name = name;
 let alt_target = target;
+let mirrored_template = null;
 
 if (type == '1' && match(name, /_new\.(yaml|yml)$/)) {
 alt_name = replace(name, /_new\.(yaml|yml)$/, '.yaml');
 alt_target = dir + '/' + alt_name;
+}
+
+if (type == '3' && file_exists) {
+let user_template = TEMPLATE_USER_DIR + '/' + name;
+if (access(user_template, 'r') && readfile(user_template) == readfile(target))
+mirrored_template = user_template;
 }
 
 if (file_exists) {
@@ -3047,6 +3054,9 @@ unlink(target + '.ua');
 else if (type != '1') {
 return { error: 'not found' };
 }
+
+if (mirrored_template)
+unlink(mirrored_template);
 
 if (type == '1' && alt_target != target && access(alt_target, 'r')) {
 unlink(alt_target);
@@ -3353,7 +3363,7 @@ return { success: false, error: 'missing_yq', message: '缺少 yq，无法注入
 	}
 	/* proxy-providers 和 rule-providers 两处都注入（兼容不同模板格式） */
 	let inject_cmd = "URL=" + shell_quote(sub_url)
-		+ " yq e '.\\\"proxy-providers\\\"[].url = env(URL) | .\\\"rule-providers\\\"[].url = env(URL)' "
+		+ " yq e '.[\"proxy-providers\"][].url = env(URL) | .[\"rule-providers\"][].url = env(URL)' "
 		+ shell_quote(exploded) + " > " + shell_quote(tmp_out);
 	if (system(inject_cmd) != 0 || !access(tmp_out, "r")) {
 		system("rm -f " + shell_quote(exploded));

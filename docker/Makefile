@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=docker
-PKG_VERSION:=29.8.0-rc.1
+PKG_VERSION:=29.8.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/docker/cli/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=f69b0101485be9eba4cf8bcc3014f46aee9cc1ef89034e354e222e0ee57de781
+PKG_HASH:=c5fadbc00c02dbecb1b7c9936e188baf9c80421a9107e7e9ad36a0923a0fc764
 PKG_BUILD_DIR:=$(BUILD_DIR)/cli-$(PKG_VERSION)
 PKG_GIT_SHORT_COMMIT:=$(shell $(CURDIR)/git-short-commit.sh 'github.com/docker/cli' 'v$(PKG_VERSION)' '$(TMP_DIR)/git-short-commit/$(PKG_NAME)-$(PKG_VERSION)')
 
