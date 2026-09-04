@@ -33,7 +33,9 @@ start_service() {
 
 	procd_set_param limits core="unlimited"
 	procd_set_param limits nofile="1000000 1000000"
-	procd_set_param respawn
+	# Avoid an endless crash/respawn loop which can repeatedly reattach dae's
+	# data-plane hooks and make the router management plane unreachable.
+	procd_set_param respawn 3600 5 5
 	# procd_set_param stdout 1
 	procd_set_param stderr 1
 

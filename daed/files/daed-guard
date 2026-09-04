@@ -6,4 +6,24 @@ if ! daed_cleanup_runtime; then
 	echo "daed: stale network state could not be removed" >&2
 	exit 1
 fi
-exec /usr/bin/daed "$@"
+
+# Keep daed as a child so a panic or unexpected exit is followed by an
+# immediate teardown of all kernel/runtime state before procd can respawn us.
+child_pid=
+cleanup_child() {
+	[ -n "$child_pid" ] && kill "$child_pid" 2>/dev/null
+}
+trap cleanup_child TERM INT
+
+/usr/bin/daed "$@" &
+child_pid=$!
+wait "$child_pid"
+status=$?
+child_pid=
+trap - TERM INT
+
+if ! daed_cleanup_runtime; then
+	echo "daed: runtime cleanup after exit failed" >&2
+	status=1
+fi
+exit "$status"
