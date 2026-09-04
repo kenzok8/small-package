@@ -140,6 +140,10 @@ function copy_instance(var)
 		end
 	end
 	tinsert(conf_lines, "port=" .. LISTEN_PORT)
+	--dhcp.leases to hostsMore actions
+	local hosts = api.CACHE_PATH .. "/dhcp-hosts"
+	sys.call("touch " .. hosts)
+	tinsert(conf_lines, "addn-hosts=" .. hosts)
 	if TMP_DNSMASQ_PATH then
 		sys.call("rm -rf " .. TMP_DNSMASQ_PATH .. "/*passwall2*")
 	end
@@ -159,7 +163,6 @@ function add_rule(var)
 	local FLAG = var["FLAG"]
 	local TMP_DNSMASQ_PATH = var["TMP_DNSMASQ_PATH"]
 	local DNSMASQ_CONF_FILE = var["DNSMASQ_CONF_FILE"]
-	local LISTEN_PORT = var["LISTEN_PORT"]
 	local DEFAULT_DNS = var["DEFAULT_DNS"]
 	local LOCAL_DNS = var["LOCAL_DNS"]
 	local TUN_DNS = var["TUN_DNS"]
@@ -317,20 +320,6 @@ function add_rule(var)
 
 	if DNSMASQ_CONF_FILE ~= "nil" then
 		local conf_lines = {}
-		if LISTEN_PORT then
-			--Copy dnsmasq instance
-			conf_lines = copy_instance({
-				["LISTEN_PORT"] = LISTEN_PORT,
-				["TMP_DNSMASQ_PATH"] = TMP_DNSMASQ_PATH,
-				["return"] = "1"
-			})
-			--dhcp.leases to hostsMore actions
-			local hosts = api.CACHE_PATH .. "/dhcp-hosts"
-			sys.call("touch " .. hosts)
-			tinsert(conf_lines, "addn-hosts=" .. hosts)
-		else
-			--Modify the default dnsmasq service
-		end
 		tinsert(conf_lines, string.format("conf-dir=%s", TMP_DNSMASQ_PATH))
 		if dnsmasq_default_dns then
 			for s in string.gmatch(dnsmasq_default_dns, '[^' .. "," .. ']+') do

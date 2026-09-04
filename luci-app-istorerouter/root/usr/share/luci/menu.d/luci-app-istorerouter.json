@@ -1,0 +1,9 @@
+{
+    "admin/istorerouter": {
+        "order": 0,
+        "action": {
+            "type": "template",
+            "path": "istorerouter/index"
+        }
+    }
+}

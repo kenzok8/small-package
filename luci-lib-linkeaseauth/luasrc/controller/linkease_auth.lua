@@ -40,6 +40,50 @@ local function authority_host(authority)
 	return authority:match("^([^:]+)") or authority
 end
 
+local function valid_authority(authority)
+	return authority and authority ~= "" and authority:match("^[A-Za-z0-9%._%-%[%]:]+$") ~= nil
+end
+
+local function request_authority()
+	local http = require "luci.http"
+	local forwarded_host = http.getenv("HTTP_X_FORWARDED_HOST") or ""
+	local request_host = http.getenv("HTTP_HOST") or ""
+
+	if valid_authority(forwarded_host) then
+		return forwarded_host
+	end
+	if valid_authority(request_host) then
+		return request_host
+	end
+	return ""
+end
+
+local function request_scheme()
+	local http = require "luci.http"
+	local forwarded_proto = http.getenv("HTTP_X_FORWARDED_PROTO") or ""
+
+	if forwarded_proto == "https" then
+		return "https"
+	end
+	if http.getenv("HTTPS") == "on" then
+		return "https"
+	end
+	return "http"
+end
+
+local function absolute_luci_url(path)
+	if not path or path == "" or path:match("^https?://") then
+		return path
+	end
+
+	local authority = request_authority()
+	if authority == "" then
+		return path
+	end
+
+	return request_scheme() .. "://" .. authority .. path
+end
+
 local function valid_apps_return(value)
 	if not value or value == "" then
 		return false
@@ -62,7 +106,7 @@ local function valid_apps_return(value)
 
 	local http = require "luci.http"
 	local uci = require "luci.model.uci".cursor()
-	local request_host = http.getenv("HTTP_HOST") or ""
+	local request_host = request_authority()
 	local lan_host = uci:get("network", "lan", "ipaddr") or ""
 	local authority_host_value = authority_host(authority)
 
@@ -135,7 +179,7 @@ end
 
 local function auth_finish_url()
 	local dispatcher = require "luci.dispatcher"
-	return dispatcher.build_url("admin", "services", "linkease_auth", "auth_finish")
+	return absolute_luci_url(dispatcher.build_url("admin", "services", "linkease_auth", "auth_finish"))
 end
 
 function linkease_auth()

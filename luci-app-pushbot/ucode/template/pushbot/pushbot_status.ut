@@ -19,18 +19,18 @@ if (typeof XHR === 'undefined') {
 		x.onerror = function() { if (cb) cb(x, null); };
 		x.send();
 	};
-	XHR.poll = function(interval, url, data, cb) {
-		XHR.get(url, null, cb);
-		return setInterval(function() { XHR.get(url, null, cb); }, interval * 1000);
-	};
+
 }
 /* suppress LuCI UI framework errors for missing CBI tabs */
 try{if(typeof L!=='undefined'&&L.dom){var _hw=function(fn){return function(){try{return fn.apply(this,arguments)}catch(e){}}};if(L.dom.initTabGroup)L.dom.initTabGroup=_hw(L.dom.initTabGroup);if(L.dom.init)L.dom.init=_hw(L.dom.init);}}catch(e){}
-(function() {
+function PB_startStatus() {
 	var badge = document.getElementById('pushbot_status_badge');
 	var text = document.getElementById('pushbot_status_text');
-	if (!badge || !text) { setTimeout(arguments.callee, 200); return; }
-	XHR.poll(3, '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'status') }}', null,
+	if (!badge || !text || badge._pbStatusStarted) return;
+badge._pbStatusStarted = true;
+
+function pollStatus() {
+	XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'status') }}', null,
 	function(x, data) {
 		if (data && data.running) {
 			badge.classList.remove('is-stopped');
@@ -41,8 +41,13 @@ try{if(typeof L!=='undefined'&&L.dom){var _hw=function(fn){return function(){try
 			badge.classList.add('is-stopped');
 			text.textContent = '{{ _('NOT RUNNING') }}';
 		}
-	}
-	);
+
+		/* 上一次返回后再等待3秒，禁止请求重叠 */
+		setTimeout(pollStatus, 3000);
+	});
+}
+
+pollStatus();
 	/* 点击运行状态徽章 → 重启 pushbot 服务 */
 	badge.style.cursor = 'pointer';
 	badge.title = '{{ _('Click to restart the pushbot service') }}';
@@ -70,7 +75,7 @@ try{if(typeof L!=='undefined'&&L.dom){var _hw=function(fn){return function(){try
 			}
 		});
 	});
-})();
+}
 //]]></script>
 
 <script type="text/javascript">//<![CDATA[
@@ -84,17 +89,49 @@ function PB_sys(name) { var v = PB_CONFIG && PB_CONFIG.system && PB_CONFIG.syste
 function PB_sysVal(name, def) { var v = PB_CONFIG && PB_CONFIG.system && PB_CONFIG.system[name]; return (v !== undefined && v !== null) ? v : (def !== undefined ? def : null); }
 function PB_bool(opt) { return PB_val(opt) === '1'; }
 
-XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'get_config') }}', null, function(x, data) {
+function PB_applyConfig(data) {
 	PB_CONFIG = data;
-	PB_READY.forEach(function(fn) { try { fn(); } catch(e) { console.warn('PB_onReady:', e); } });
-	PB_READY = [];
-});
 
-/* auto-fill version badge from package database (apk/opkg) */
-XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'version') }}', null, function(x, d) {
-	var b = document.getElementById('pushbot_version_badge');
-	if (b && d && d.version) b.textContent = 'v' + d.version;
-});
+	var ready = PB_READY;
+	PB_READY = [];
+
+	ready.forEach(function(fn) {
+		try {
+			fn();
+		} catch(e) {
+			console.warn('PB_onReady:', e);
+		}
+	});
+}
+
+function PB_bootstrap() {
+	XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'get_config') }}', null,
+	function(x, data) {
+		/* 配置失败时有界降频重试，不能继续初始化空配置 */
+		if (!x || x.status !== 200 || !data || typeof data !== 'object') {
+			setTimeout(PB_bootstrap, 3000);
+			return;
+		}
+
+		/* get_config 完成后才读取版本 */
+		XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'version') }}', null,
+		function(x2, d) {
+			var b = document.getElementById('pushbot_version_badge');
+			if (b && d && d.version)
+				b.textContent = 'v' + d.version;
+
+			/* 前两个请求完成后才初始化页面并启动状态轮询 */
+			PB_applyConfig(data);
+			PB_startStatus();
+		});
+	});
+}
+
+/* 主文档完全结束后才允许发起第一个已认证请求 */
+if (document.readyState === 'complete')
+	PB_bootstrap();
+else
+	window.addEventListener('load', PB_bootstrap);
 
 /* click version badge → fetch upstream GitHub Makefile from browser (8s timeout), frosted toast */
 (function() {
@@ -2101,13 +2138,6 @@ cuSub.appendChild(mkBtn('{{ _('Traffic DND') }}',cdOn,function(on){updateFlagInp
 	pane.appendChild(container);
 }
 
-/* pre-load content card (1 retry if pane not ready) */
-function tryContentOnce(){
-	var p = document.getElementById('pushbot_pane_content');
-	if (!p) { setTimeout(tryContentOnce, 300); return; }
-	try{initContentCard();}catch(e){console.error('content card:',e);}
-}
-PB_onReady(function(){ tryContentOnce(); });
 
 
 /* ═══════════════════════════════════════════ */
@@ -3039,7 +3069,7 @@ function initModernTabs() {
 		document.getElementById('pushbot_pane_log').classList.toggle('is-visible', name === 'log');
 		if (name === 'content') { try { initContentCard(); } catch(e) { console.error('content tab:',e); } }
 		if (name === 'monitor') { try { initMonitorCard(); } catch(e) { console.error('monitor tab:',e); } }
-		if (name === 'log') { _logInit(); }
+		if (name === 'log') {_logInit(); } else if (_logInitialized) {_logStop();}
 		if (name === 'client') loadClients();
 		});
 	});
@@ -3081,57 +3111,150 @@ function initModernTabs() {
 	_updateTabLayout();
 
 	/* ── log viewer ── */
-	var logTimer = null;
-	var _logInitialized = false;
-	function _logInit() {
-		if (_logInitialized) return;
+/* ── log viewer ── */
+var logTimer = null;
+var logLoading = false;
+var logRunId = 0;
+var _logInitialized = false;
+
+function _logEnabled() {
+	var pane = document.getElementById('pushbot_pane_log');
+	var toggle = document.getElementById('log_auto_toggle');
+
+	return !!(
+		pane &&
+		pane.classList.contains('is-visible') &&
+		toggle &&
+		toggle.checked
+	);
+}
+
+function _logStop() {
+	if (logTimer) {
+		clearTimeout(logTimer);
+		logTimer = null;
+	}
+
+	/* 使已经发出的旧请求回调失效 */
+	logRunId++;
+}
+
+function _logSchedule(delay) {
+	if (logTimer) {
+		clearTimeout(logTimer);
+		logTimer = null;
+	}
+
+	if (!_logEnabled())
+		return;
+
+	var id = logRunId;
+
+	logTimer = setTimeout(function() {
+		logTimer = null;
+
+		if (id === logRunId && _logEnabled())
+			loadLog();
+	}, delay);
+}
+
+function _logStart() {
+	_logStop();
+
+	if (_logEnabled() && !logLoading)
+		loadLog();
+}
+
+function _logInit() {
+	if (!_logInitialized) {
 		_logInitialized = true;
+
 		var toggle = document.getElementById('log_auto_toggle');
 		var clearBtn = document.getElementById('log_clear_btn');
+
 		if (toggle) {
 			toggle.addEventListener('change', function() {
-				if (this.checked) {
-					logTimer = setInterval(loadLog, 3000);
-					loadLog();
-				} else {
-					if (logTimer) { clearInterval(logTimer); logTimer = null; }
-				}
+				if (this.checked)
+					_logStart();
+				else
+					_logStop();
 			});
-			toggle.checked = true;
-			logTimer = setInterval(loadLog, 3000);
-			loadLog();
 		}
+
 		if (clearBtn) {
 			clearBtn.addEventListener('click', function(e) {
 				e.preventDefault();
-				XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'clear_log') }}', null,
+
+				XHR.get(
+					'{{ dispatcher.build_url('admin', 'services', 'pushbot', 'clear_log') }}',
+					null,
 					function() {
 						var pre = document.querySelector('#pushbot_log_content pre');
-						if (pre) pre.textContent = '{{ _('(empty)') }}';
+
+						if (pre)
+							pre.textContent = '{{ _('(empty)') }}';
 					}
 				);
 			});
 		}
 	}
-	function loadLog() {
-		var pre = document.querySelector('#pushbot_log_content pre');
-		if (!pre) return;
-		XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'get_log') }}', null,
+
+	/* 每次重新进入日志页时，根据开关状态恢复轮询 */
+	_logStart();
+}
+
+function loadLog() {
+	var pre = document.querySelector('#pushbot_log_content pre');
+
+	if (!pre || !_logEnabled() || logLoading)
+		return;
+
+	var id = logRunId;
+	logLoading = true;
+
+	try {
+		XHR.get(
+			'{{ dispatcher.build_url('admin', 'services', 'pushbot', 'get_log') }}',
+			null,
 			function(x) {
+				logLoading = false;
+
+				/*
+				 * 离开日志页、关闭自动刷新或重新进入后，
+				 * 旧请求不能更新页面，也不能恢复旧轮询。
+				 */
+				if (id !== logRunId || !_logEnabled()) {
+					if (_logEnabled())
+						_logSchedule(0);
+
+					return;
+				}
+
 				if (x && x.status == 200) {
 					var txt = x.responseText || '{{ _('(empty)') }}';
 					var lines = txt.split('\n');
+
 					if (lines.length > 2) {
 						lines.pop();
 						lines.reverse();
 						txt = lines.join('\n');
 					}
+
 					pre.textContent = txt;
 					pre.scrollTop = 0;
 				}
+
+				/* 本次响应完成3秒后，才发送下一次请求 */
+				_logSchedule(3000);
 			}
 		);
+	} catch (e) {
+		logLoading = false;
+
+		if (id === logRunId && _logEnabled())
+			_logSchedule(3000);
 	}
+}
 
 	/* client (online devices) viewer */
 	var clientTimer = null;

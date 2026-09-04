@@ -1,0 +1,1 @@
+import{_ as o,E as r,o as n,c as t,G as s}from"./index.js";const a={},c={id:"page",class:"page-container"};function _(i,p){const e=r("router-loading");return n(),t("div",c,[s(e)])}var l=o(a,[["render",_]]);export{l as default};
