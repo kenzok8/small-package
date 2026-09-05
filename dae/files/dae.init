@@ -30,7 +30,6 @@ start_service() {
 	procd_set_param env DAE_LOCATION_ASSET="/usr/share/v2ray" TZ="$(uci -q get system.@system[0].zonename)"
 	procd_set_param command "$PROG" run
 	procd_append_param command --config "$config_file"
-	procd_append_param command --disable-timestamp
 	procd_append_param command --logfile "$LOG_DIR/dae.log"
 	procd_append_param command --logfile-maxbackups "$log_maxbackups"
 	procd_append_param command --logfile-maxsize "$log_maxsize"

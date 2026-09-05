@@ -1025,6 +1025,12 @@ msgstr "导出"
 msgid "Import"
 msgstr "导入"
 
+msgid "Restore Defaults"
+msgstr "恢复默认"
+
+msgid "Backups contain account and subscription credentials. Store them securely."
+msgstr "备份中包含账号和订阅凭据，请妥善保管。"
+
 msgid "Back up / restore the whole daede config (kernels excluded)"
 msgstr "备份 / 还原整个 daede 配置（不含内核）"
 
@@ -1086,3 +1092,75 @@ msgid ""
 "Uplink. auto = detect by default route; on legacy swconfig or multi-WAN set "
 "it, e.g. eth0.2."
 msgstr "上行 WAN 接口。auto 按默认路由自动检测；老式 swconfig 交换机或多 WAN 时手动指定，例如 eth0.2。"
+
+msgid "Export Backup"
+msgstr "导出备份"
+
+msgid "Import Backup"
+msgstr "导入还原"
+
+msgid "Restore All Defaults"
+msgstr "恢复全部默认配置"
+
+msgid "Working…"
+msgstr "正在处理…"
+
+msgid "Apply or discard pending daede changes first."
+msgstr "请先应用或放弃尚未保存的 daede 修改。"
+
+msgid "Configuration operation failed."
+msgstr "配置操作失败。"
+
+msgid "Configuration operation failed. See the log below."
+msgstr "配置操作失败，请查看下方日志。"
+
+msgid "Operation is still running. Check the log before retrying."
+msgstr "操作仍在进行，请检查日志后再重试。"
+
+msgid "Configuration restored"
+msgstr "配置已恢复"
+
+msgid "Reload Page"
+msgstr "刷新页面"
+
+msgid "Export briefly stops running dae/daed services to back up the database safely, then resumes them. Continue?"
+msgstr "导出时会短暂停止正在运行的 dae／daed，以保证数据库备份完整，完成后恢复运行。是否继续？"
+
+msgid "Backup exceeds the 180 KiB limit. Use System Backup for larger files."
+msgstr "备份文件超过 180 KiB 限制，请使用系统备份功能处理较大的文件。"
+
+msgid "Import replaces daede settings, nodes, subscriptions and dashboard data. Services stop first; the saved active backend starts only if enabled in the backup. Continue?"
+msgstr "导入将覆盖 daede 设置、节点、订阅和面板数据。服务会先停止，仅在备份中为启用状态时启动对应后端。是否继续？"
+
+msgid "Unable to read backup file."
+msgstr "无法读取备份文件。"
+
+msgid "Backup restored. The active backend follows the saved enabled setting."
+msgstr "备份已还原，当前后端按备份中的启用状态运行。"
+
+msgid "Restore ALL daede defaults? This clears dae/daed settings, nodes, subscriptions and daed dashboard accounts/data. Export a backup first if needed. Both backends will remain disabled. Installed programs and GeoData are kept."
+msgstr "确定恢复 daede 全部默认配置？此操作会清空 dae／daed 设置、节点、订阅以及 daed 面板账号和数据。需要保留时请先导出备份。完成后两个后端均保持关闭，已安装程序和 GeoData 数据文件保留。"
+
+msgid "All defaults restored. Both backends are disabled. Configure your nodes and routing before starting manually."
+msgstr "已恢复全部默认配置，两个后端均已关闭。请重新配置节点和路由后手动开启。"
+
+msgid "Back up settings, nodes, subscriptions and dashboard data. Backups contain credentials; store them securely. Kernels and GeoData are excluded."
+msgstr "备份包括设置、节点、订阅和面板数据，不包括内核和 GeoData。备份中含有账号和订阅凭据，请妥善保管。"
+
+msgid "Auto-scroll: On"
+msgstr "自动滚动：开启"
+
+msgid "Auto-scroll: Off"
+msgstr "自动滚动：关闭"
+
+msgid "Resume"
+msgstr "继续"
+
+msgid "Paused"
+msgstr "已暂停"
+
+msgid "Confirm configuration operation"
+msgstr "确认配置操作"
+
+msgid "Continue"
+msgstr "继续"

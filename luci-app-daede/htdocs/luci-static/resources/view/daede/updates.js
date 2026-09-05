@@ -7,6 +7,7 @@
 'require ui';
 'require view';
 'require view.daede.backend as backend';
+'require view.daede.daed-session as daedSession';
 
 const DATA_PATHS = {
 	geoip:   '/usr/share/v2ray/geoip.dat',
@@ -53,6 +54,9 @@ const CSS = [
 	'.dd-up-btn:hover{background:rgba(128,128,128,.12)}',
 	'.dd-up-btn:disabled{opacity:.45;cursor:not-allowed}',
 	'.dd-up-btn-primary{border-color:#4aa065;color:#4aa065}',
+	'.dd-backup-buttons{display:flex;align-items:center;gap:8px}',
+	'.dd-backup-reset{border-color:rgba(217,109,109,.55);color:#d96d6d}',
+	'@media(max-width:640px){.dd-backup-row{grid-template-columns:24px minmax(0,1fr)}.dd-backup-row .dd-up-meta{grid-column:2;white-space:normal}.dd-backup-row>span:nth-child(4){display:none}.dd-backup-buttons{grid-column:2;flex-wrap:wrap}}',
 	'.dd-geo-row{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:center;font-size:12px;padding:6px 0}',
 	'.dd-geo-row label{opacity:.75;font-weight:600}',
 	'.dd-geo-row input[type=text],.dd-geo-row select{font-size:12px;padding:4px 8px;border:1px solid rgba(128,128,128,.35);border-radius:5px;background:transparent;color:inherit;width:100%}',
@@ -202,65 +206,126 @@ return view.extend({
 			return runJob('update-pkg.sh', pkg, btn, '/tmp/luci-app-daede.pkg-' + pkg + '.log');
 		};
 
-		// === Config backup (export / import the whole daede config) ===
-		const exportBtn = E('button', { 'class': 'dd-up-btn' }, _('Export'));
-		const importBtn = E('button', { 'class': 'dd-up-btn' }, _('Import'));
+		// Configuration operations share a backend lock and one UI busy state.
+		const backupScript = '/usr/share/luci-app-daede/config-backup.sh';
+		const exportBtn = E('button', { 'class': 'dd-up-btn', 'type': 'button' }, _('Export'));
+		const importBtn = E('button', { 'class': 'dd-up-btn', 'type': 'button' }, _('Import'));
+		const resetBtn = E('button', { 'class': 'dd-up-btn dd-backup-reset', 'type': 'button' }, _('Restore Defaults'));
 		const fileInput = E('input', { 'type': 'file', 'accept': '.tar.gz,.gz,application/gzip', 'style': 'display:none' });
-
-		exportBtn.addEventListener('click', function() {
-			const orig = exportBtn.textContent;
-			exportBtn.disabled = true; exportBtn.textContent = '...';
-			fs.exec('/usr/share/luci-app-daede/config-backup.sh', ['export']).then(function(res) {
-				if (res.code !== 0 || !res.stdout) {
-					logPane.textContent = String(res.stderr || res.stdout || 'export failed').trim();
+		let backupBusy = false;
+		const showBackupError = function(e) {
+			ui.addNotification(null, E('p', {}, e.message || String(e)), 'error');
+		};
+		const configOperation = function(button, operation) {
+			if (backupBusy) return Promise.resolve();
+			backupBusy = true;
+			const label = button.textContent;
+			[exportBtn, importBtn, resetBtn].forEach(function(b) { b.disabled = true; });
+			button.textContent = _('Working…');
+			return uci.changes().then(function(changes) {
+				if (['dae', 'daed', 'daede'].some(function(name) { return changes && changes[name] && changes[name].length; }))
+					throw new Error(_('Apply or discard pending daede changes first.'));
+				return operation();
+			}).catch(showBackupError).finally(function() {
+				backupBusy = false;
+				[exportBtn, importBtn, resetBtn].forEach(function(b) { b.disabled = false; });
+				button.textContent = label;
+				fileInput.value = '';
+			});
+		};
+		const confirmBackup = function(message) {
+			return new Promise(function(resolve) {
+				const answer = function(value) { ui.hideModal(); resolve(value); };
+				ui.showModal(_('Confirm configuration operation'), [
+					E('p', {}, message),
+					E('div', { 'class': 'right' }, [
+						E('button', { 'class': 'cbi-button', 'click': function() { answer(false); } }, _('Cancel')),
+						' ',
+						E('button', { 'class': 'cbi-button cbi-button-negative', 'click': function() { answer(true); } }, _('Continue'))
+					])
+				]);
+			});
+		};
+		const execBackup = function(args) {
+			return fs.exec(backupScript, args).then(function(res) {
+				if (!res || res.code !== 0)
+					throw new Error(String(res && (res.stderr || res.stdout) || _('Configuration operation failed.')).trim());
+				return res;
+			});
+		};
+		const waitBackup = function() {
+			let tries = 0;
+			const check = function() {
+				return fs.read_direct('/tmp/luci-app-daede.backup.log', 'text').then(function(content) {
+					logPane.textContent = content;
 					logPane.classList.add('show');
-					return;
-				}
-				let bin;
-				try {
-					bin = atob(res.stdout.trim());
-				} catch (e) {
-					logPane.textContent = _('Export failed: invalid base64 data from server');
-					logPane.classList.add('show');
-					return;
-				}
-				if (!bin || bin.length === 0) {
-					logPane.textContent = _('Export failed: empty archive');
-					logPane.classList.add('show');
-					return;
-				}
-				const arr = new Uint8Array(bin.length);
-				for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-				const url = URL.createObjectURL(new Blob([arr], { 'type': 'application/gzip' }));
-				const a = E('a', { 'href': url, 'download': 'daede-config-' + stamp() + '.tar.gz' });
-				document.body.appendChild(a); a.click(); document.body.removeChild(a);
-				setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
-			}).catch(function(e) {
-				logPane.textContent = _('Export failed') + ': ' + (e ? (e.message || String(e)) : _('script not found'));
-				logPane.classList.add('show');
-			}).finally(function() {
-				exportBtn.disabled = false; exportBtn.textContent = orig;
+					if (/^✗/m.test(content)) throw new Error(_('Configuration operation failed. See the log below.'));
+					if (/^✓/m.test(content)) return;
+					if (++tries > 90) throw new Error(_('Operation is still running. Check the log before retrying.'));
+					return new Promise(function(resolve) { setTimeout(resolve, 2000); }).then(check);
+				});
+			};
+			return check();
+		};
+		const reloadConfig = function(message) {
+			daedSession.clear(window.localStorage);
+			['dae', 'daed', 'daede'].forEach(function(name) { uci.unload(name); });
+			ui.showModal(_('Configuration restored'), [
+				E('p', {}, message),
+				E('div', { 'class': 'right' }, E('button', {
+					'class': 'cbi-button cbi-button-positive', 'click': function() { window.location.reload(); }
+				}, _('Reload Page')))
+			]);
+		};
+		exportBtn.addEventListener('click', async function() {
+			if (!await confirmBackup(_('Export briefly stops running dae/daed services to back up the database safely, then resumes them. Continue?'))) return;
+			configOperation(exportBtn, function() {
+				return execBackup(['export']).then(function(res) {
+					const bin = atob((res.stdout || '').trim());
+					if (!bin) throw new Error(_('Export failed: empty archive'));
+					const bytes = Uint8Array.from(bin, function(c) { return c.charCodeAt(0); });
+					const url = URL.createObjectURL(new Blob([bytes], { 'type': 'application/gzip' }));
+					const a = E('a', { 'href': url, 'download': 'daede-config-' + stamp() + '.tar.gz' });
+					document.body.appendChild(a); a.click(); a.remove();
+					setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+				});
 			});
 		});
-
 		importBtn.addEventListener('click', function() { fileInput.click(); });
-		fileInput.addEventListener('change', function(ev) {
+		fileInput.addEventListener('change', async function(ev) {
 			const file = ev.target.files && ev.target.files[0];
 			if (!file) return;
-			if (!confirm(_('Import overwrites the current daede config and restarts the backend. Continue?'))) {
+			if (file.size > 184320) {
+				showBackupError(new Error(_('Backup exceeds the 180 KiB limit. Use System Backup for larger files.')));
 				fileInput.value = ''; return;
 			}
-			const reader = new FileReader();
-			reader.onload = function(e) {
-				const b64 = String(e.target.result).split(',')[1] || '';
-				fs.write('/tmp/daede-import.b64', b64).then(function() {
-					return runJob('config-backup.sh', 'import', importBtn, '/tmp/luci-app-daede.backup.log');
-				}).catch(function(e) {
-					logPane.textContent = _('Import failed') + ': ' + (e ? (e.message || String(e)) : _('unknown error'));
-					logPane.classList.add('show');
-				}).finally(function() { fileInput.value = ''; });
-			};
-			reader.readAsDataURL(file);
+			if (!await confirmBackup(_('Import replaces daede settings, nodes, subscriptions and dashboard data. Services stop first; the saved active backend starts only if enabled in the backup. Continue?'))) {
+				fileInput.value = ''; return;
+			}
+			configOperation(importBtn, function() {
+				return new Promise(function(resolve, reject) {
+					const reader = new FileReader();
+					reader.onerror = function() { reject(new Error(_('Unable to read backup file.'))); };
+					reader.onload = function() { resolve(String(reader.result).split(',')[1] || ''); };
+					reader.readAsDataURL(file);
+				}).then(function(b64) {
+					// Per-tab uploads cannot overwrite each other before the backend locks.
+					const token = Array.from(window.crypto.getRandomValues(new Uint8Array(16)), function(n) { return n.toString(16).padStart(2, '0'); }).join('');
+					const upload = '/tmp/daede-import.' + token + '.b64';
+					return fs.write(upload, b64).then(function() { return execBackup(['import', upload]); })
+						.finally(function() { return fs.remove(upload).catch(function() {}); });
+				}).then(waitBackup).then(function() {
+					reloadConfig(_('Backup restored. The active backend follows the saved enabled setting.'));
+				});
+			});
+		});
+		resetBtn.addEventListener('click', async function() {
+			if (!await confirmBackup(_('Restore ALL daede defaults? This clears dae/daed settings, nodes, subscriptions and daed dashboard accounts/data. Export a backup first if needed. Both backends will remain disabled. Installed programs and GeoData are kept.'))) return;
+			configOperation(resetBtn, function() {
+				return execBackup(['reset']).then(waitBackup).then(function() {
+					reloadConfig(_('All defaults restored. Both backends are disabled. Configure your nodes and routing before starting manually.'));
+				});
+			});
 		});
 
 		const refresh = function() {
@@ -508,12 +573,15 @@ return view.extend({
 			]),
 			E('div', { 'class': 'dd-card' }, [
 				E('h4', { 'class': 'dd-card-title' }, _('Config Backup')),
-				E('div', { 'class': 'dd-up-row' }, [
-					E('span', { 'class': 'dd-up-icon dd-up-new' }, '⤓'),
+				E('div', { 'class': 'dd-up-row dd-backup-row' }, [
+					E('span', { 'class': 'dd-up-icon dd-up-new' }, '⇩'),
 					E('span', { 'class': 'dd-up-name' }, _('dae + daed')),
-					E('span', { 'class': 'dd-up-meta' }, _('Back up / restore the whole daede config (kernels excluded)')),
-					exportBtn,
-					importBtn
+					E('span', {
+						'class': 'dd-up-meta',
+						'title': _('Backups contain account and subscription credentials. Store them securely.')
+					}, _('Back up / restore the whole daede config (kernels excluded)')),
+					E('span', {}, ''),
+					E('div', { 'class': 'dd-backup-buttons' }, [exportBtn, importBtn, resetBtn])
 				]),
 				fileInput
 			]),

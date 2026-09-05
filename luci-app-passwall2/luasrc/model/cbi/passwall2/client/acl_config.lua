@@ -221,6 +221,16 @@ o.template = m:template_path("/cbi/hidevalue")
 o.value = "1"
 o:depends({ node = "",  ['!reverse'] = true })
 
+o = s:option(DummyValue, "_is_singbox", "")
+o.template = m:template_path("/cbi/hidevalue")
+o.value = "1"
+o:depends("_hide", "1")
+
+o = s:option(DummyValue, "_is_xray", "")
+o.template = m:template_path("/cbi/hidevalue")
+o.value = "1"
+o:depends("_hide", "1")
+
 o = s:option(Flag, "log", translate("Enable Node Log"))
 o:depends("_node", "1")
 
@@ -249,7 +259,7 @@ o:depends("log", "1")
 o = s:option(DummyValue, "_show_dns_option", "")
 o.template = m:template_path("/cbi/hidevalue")
 o.value = "1"
-o:depends("_hide", "1")
+o:depends({ mode = "1", _node = "1" })
 
 o = s:option(ListValue, "direct_dns_query_strategy", translate("Direct Query Strategy"))
 o.default = "UseIP"
@@ -262,11 +272,9 @@ o = s:option(ListValue, "remote_dns_protocol", translate("Remote DNS Protocol"))
 o:value("tcp", "TCP")
 o:value("doh", "DoH")
 o:value("udp", "UDP")
-if current_node.type == "sing-box" then
-	o:value("tls", "TLS(DoT)")
-	o:value("quic", "QUIC(DoQ)")
-	o:value("http3", "HTTP3(DoH3)")
-end
+o:value("tls", "TLS(DoT)", { _is_singbox = "1" })
+o:value("quic", "QUIC(DoQ)", { _is_singbox = "1" })
+o:value("http3", "HTTP3(DoH3)", { _is_singbox = "1" })
 o:depends("_show_dns_option", "1")
 
 ---- DNS over TCP or UDP or TLS (DoT) or QUIC (DoQ)
@@ -307,44 +315,30 @@ o = s:option(Value, "remote_dns_client_ip", translate("Remote DNS EDNS Client Su
 o.description = translate("Notify the DNS server when the DNS query is notified, the location of the client (cannot be a private IP address).") .. "<br />" ..
 				translate("This feature requires the DNS server to support the Edns Client Subnet (RFC7871).")
 o.datatype = "ipaddr"
-o:depends("remote_dns_protocol", "tcp")
-o:depends("remote_dns_protocol", "doh")
-o:depends("remote_dns_protocol", "udp")
-o:depends("remote_dns_protocol", "http3")
-o:depends("remote_dns_protocol", "quic")
-o:depends("remote_dns_protocol", "tls")
+o:depends("_show_dns_option", "1")
 
 o = s:option(ListValue, "remote_dns_detour", translate("Remote DNS Outbound"))
 o.default = "remote"
 o:value("remote", translate("Remote"))
 o:value("direct", translate("Direct"))
-o:depends("remote_dns_protocol", "tcp")
-o:depends("remote_dns_protocol", "doh")
-o:depends("remote_dns_protocol", "udp")
-o:depends("remote_dns_protocol", "http3")
-o:depends("remote_dns_protocol", "quic")
-o:depends("remote_dns_protocol", "tls")
+o:depends("_show_dns_option", "1")
 
 o = s:option(Flag, "remote_fakedns", "FakeDNS", translate("Use FakeDNS work in the domain that proxy."))
 o.default = "0"
 o.rmempty = false
+o:depends("_hide", "1")
 
 o = s:option(ListValue, "remote_dns_query_strategy", translate("Remote Query Strategy"))
 o.default = "UseIPv4"
 o:value("UseIP")
 o:value("UseIPv4")
 o:value("UseIPv6")
-o:depends("remote_dns_protocol", "tcp")
-o:depends("remote_dns_protocol", "doh")
-o:depends("remote_dns_protocol", "udp")
-o:depends("remote_dns_protocol", "http3")
-o:depends("remote_dns_protocol", "quic")
-o:depends("remote_dns_protocol", "tls")
+o:depends("_show_dns_option", "1")
 
 o = s:option(Value, "remote_rewrite_ttl", translate("Remote DNS") .. " TTL")
 o.datatype = "min(1)"
 o.default = "30"
-o:depends("_hide", "1")
+o:depends({ _show_dns_option = "1", _is_singbox = "1" })
 
 o = s:option(ListValue, "dns_hosts_mode", translate("Domain Override"))
 o:value("default", translate("Use global config"))
@@ -368,22 +362,39 @@ end
 
 local o_node = s.fields["node"]
 
+local shunt_list = {}
+
 for k, v in pairs(nodes_table) do
 	o_node:value(v.id, v["remark"])
 	o_node.group[#o_node.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
-	if v.type == "sing-box" then
-		s.fields["remote_rewrite_ttl"]:depends({ node = v.id })
+	if v.type == "Xray" then
+		--s.fields["_is_xray"]:depends({ node = v.id })
 	end
-	s.fields["_show_dns_option"]:depends({ mode = "1", node = v.id })
+	if v.type == "sing-box" then
+		s.fields["_is_singbox"]:depends({ node = v.id })
+	end
 	if v.node_type == "normal" or v.protocol == "_balancing" or v.protocol == "_urltest" then
 		--Shunt node has its own separate options.
-		s.fields["remote_fakedns"]:depends({ node = v.id, remote_dns_protocol = "tcp" })
-		s.fields["remote_fakedns"]:depends({ node = v.id, remote_dns_protocol = "doh" })
-		s.fields["remote_fakedns"]:depends({ node = v.id, remote_dns_protocol = "udp" })
-		s.fields["remote_fakedns"]:depends({ node = v.id, remote_dns_protocol = "http3" })
-		s.fields["remote_fakedns"]:depends({ node = v.id, remote_dns_protocol = "quic" })
-		s.fields["remote_fakedns"]:depends({ node = v.id, remote_dns_protocol = "tls" })
+		s.fields["remote_fakedns"]:depends({ node = v.id, _show_dns_option = "1" })
+	end
+	if v.protocol and v.protocol == "_shunt" then
+		shunt_list[#shunt_list + 1] = v
 	end
 end
+
+--m:appendTemplate("/acl/options", {section = arg[1]})
+
+-- Shunt Start
+if current_node.protocol == "_shunt" then
+	local shunt_lua = loadfile("/usr/lib/lua/luci/model/cbi/passwall2/client/include/shunt_options.lua")
+	setfenv(shunt_lua, getfenv(1))(m, s, {
+		s_cfgid = s.section,
+		node_id = current_node_id,
+		node = current_node,
+		verify_option = s.fields["node"]
+	})
+end
+
+m:appendTemplate("/acl/shunt", { shunt_list = api.jsonc.stringify(shunt_list), section = s.section })
 
 return api.return_map(m)

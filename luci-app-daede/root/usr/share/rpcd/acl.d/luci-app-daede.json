@@ -30,8 +30,7 @@
 				"/usr/share/luci-app-daede/pkg-info.sh daed": [ "exec" ],
 				"/usr/share/luci-app-daede/pkg-info.sh luci-app-daede": [ "exec" ],
 				"/usr/share/luci-app-daede/refresh-index.sh": [ "exec" ],
-				"/usr/share/luci-app-daede/proxy-check.sh": [ "exec" ],
-				"/usr/share/luci-app-daede/config-backup.sh export": [ "exec" ]
+				"/usr/share/luci-app-daede/proxy-check.sh": [ "exec" ]
 			},
 			"ubus": {
 				"service": [ "list" ]
@@ -83,7 +82,11 @@
 				"/usr/share/luci-app-daede/gen-dae-config.sh import": [ "exec" ],
 				"/usr/share/luci-app-daede/daed-sub-update.sh": [ "exec" ],
 				"/usr/share/luci-app-daede/daed-sub-cron.sh enable": [ "exec" ],
-				"/usr/share/luci-app-daede/daed-sub-cron.sh disable": [ "exec" ]
+				"/usr/share/luci-app-daede/daed-sub-cron.sh disable": [ "exec" ],
+				"/usr/share/luci-app-daede/config-backup.sh export": [ "exec" ],
+				"/usr/share/luci-app-daede/config-backup.sh reset": [ "exec" ],
+				"/usr/share/luci-app-daede/config-backup.sh import /tmp/daede-import.*.b64": [ "exec" ],
+				"/tmp/daede-import.*.b64": [ "write" ]
 			},
 			"uci": [ "dae", "daed", "daede" ]
 		}

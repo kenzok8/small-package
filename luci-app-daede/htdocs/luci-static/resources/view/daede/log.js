@@ -6,6 +6,7 @@
 'require ui';
 'require view';
 'require view.daede.backend as backend';
+'require view.daede.styles as styles';
 
 const MAX_LINES = 5000;
 
@@ -54,6 +55,7 @@ const CSS = [
 /* 拆字段：time="May 25 07:04:59" level=info msg="..." key=val key="val with space" ... */
 const RE_LINE = /^time="([^"]*)"\s+level=(\w+)\s+msg=(?:"((?:[^"\\]|\\.)*)"|(\S+))\s*(.*)$/;
 const RE_PREFIXED_LINE = /^\[([^\]]+)\]\s+(DEBUG|INFO|WARN(?:ING)?|ERROR|FATAL|PANIC)\s*(.*)$/i;
+const RE_PLAIN_LEVEL_LINE = /^\s*(DEBUG|INFO|WARN(?:ING)?|ERROR|FATAL|PANIC)\s+(.*)$/i;
 
 function detectLevel(line) {
 	// daed/dae logs use lvl=info / [INFO] / level=warning style
@@ -117,13 +119,21 @@ function parseLine(line) {
 	}
 
 	m = line.match(RE_PREFIXED_LINE);
-	if (!m) return null;
-
-	const body = m[3] || '';
+	let ts = '', lvl = '', body = '';
+	if (m) {
+		ts = formatTs(m[1]);
+		lvl = m[2];
+		body = m[3] || '';
+	} else {
+		m = line.match(RE_PLAIN_LEVEL_LINE);
+		if (!m) return null;
+		lvl = m[1];
+		body = m[2] || '';
+	}
 	const kvStart = body.search(/(?:^|\s)(?=[A-Za-z_][\w.-]*=)/);
 	return {
-		ts: formatTs(m[1]),
-		lvl: m[2],
+		ts: ts,
+		lvl: lvl,
 		msg: kvStart === -1 ? body : body.slice(0, kvStart).trimEnd(),
 		kv: kvStart === -1 ? '' : body.slice(kvStart).trim()
 	};
@@ -135,11 +145,10 @@ function buildLine(ln) {
 	if (!parsed) {
 		return E('div', { 'class': 'dd-line ' + cls }, ln);
 	}
-	const parts = [
-		E('span', { 'class': 'dd-ts' }, parsed.ts),
-		E('span', { 'class': 'dd-lvl ' + lvlClass(parsed.lvl) }, lvlShort(parsed.lvl)),
-		E('span', { 'class': 'dd-msg' }, parsed.msg)
-	];
+	const parts = [];
+	if (parsed.ts) parts.push(E('span', { 'class': 'dd-ts' }, parsed.ts));
+	parts.push(E('span', { 'class': 'dd-lvl ' + lvlClass(parsed.lvl) }, lvlShort(parsed.lvl)));
+	parts.push(E('span', { 'class': 'dd-msg' }, parsed.msg));
 	if (parsed.kv) parts.push(E('span', { 'class': 'dd-kv' }, parsed.kv));
 	return E('div', { 'class': 'dd-line ' + cls }, parts);
 }
@@ -158,7 +167,8 @@ return view.extend({
 			paused: false,
 			autoScroll: true,
 			filter: '',
-			userScrolled: false
+			userScrolled: false,
+			reading: false
 		};
 
 		const pane = E('div', { 'class': 'dd-log-pane', 'id': 'dd-log-pane' }, [
@@ -173,19 +183,29 @@ return view.extend({
 
 		const meta = E('span', { 'class': 'dd-log-meta' }, '');
 
-		const cbAuto = E('input', { 'type': 'checkbox', 'checked': 'checked' });
-		cbAuto.addEventListener('change', function() {
-			state.autoScroll = cbAuto.checked;
+		const btnAuto = E('button', { 'type': 'button', 'class': 'dd-log-btn dd-log-toggle', 'id': 'dd-log-auto' });
+		const btnPause = E('button', { 'type': 'button', 'class': 'dd-log-btn dd-log-toggle', 'id': 'dd-log-pause' });
+		const syncControls = function() {
+			btnAuto.textContent = state.autoScroll ? '✓ ' + _('Auto-scroll: On') : '○ ' + _('Auto-scroll: Off');
+			btnAuto.setAttribute('aria-pressed', String(state.autoScroll));
+			btnPause.textContent = state.paused ? '▶ ' + _('Resume') : 'Ⅱ ' + _('Pause');
+			btnPause.setAttribute('aria-pressed', String(state.paused));
+			meta.textContent = state.paused ? _('Paused') : '';
+		};
+		btnAuto.addEventListener('click', function() {
+			state.autoScroll = !state.autoScroll;
 			if (state.autoScroll) {
 				pane.scrollTop = pane.scrollHeight;
 				state.userScrolled = false;
 			}
+			syncControls();
 		});
-
-		const cbPause = E('input', { 'type': 'checkbox' });
-		cbPause.addEventListener('change', function() {
-			state.paused = cbPause.checked;
+		btnPause.addEventListener('click', function() {
+			state.paused = !state.paused;
+			syncControls();
+			if (!state.paused) tick();
 		});
+		syncControls();
 
 		const selFilter = E('select', { 'class': 'dd-log-btn' }, [
 			E('option', { 'value': '' }, _('All')),
@@ -287,9 +307,11 @@ return view.extend({
 		}
 
 		function tick() {
-			if (state.paused) return Promise.resolve();
+			if (state.paused || state.reading) return Promise.resolve();
+			state.reading = true;
 
 			return fs.stat(LOG_PATH).then(function(st) {
+				if (state.paused) return;
 				const size = st.size || 0;
 				if (size === state.lastSize) {
 					meta.textContent = '%d bytes · live'.format(size);
@@ -299,6 +321,7 @@ return view.extend({
 				// File rotated/truncated → full reload
 				const rotated = size < state.lastSize;
 				return fs.read_direct(LOG_PATH, 'text').then(function(content) {
+					if (state.paused) return;
 					content = content || '';
 					let delta;
 					if (rotated || state.lastContent === '') {
@@ -323,6 +346,7 @@ return view.extend({
 						pane.scrollTop = pane.scrollHeight;
 				});
 			}).catch(function(e) {
+				if (state.paused) return;
 				const msg = String(e);
 				if (msg.indexOf('NotFoundError') !== -1 || msg.indexOf('No such') !== -1)
 					renderEmpty(_('Log file does not exist yet.'));
@@ -331,15 +355,15 @@ return view.extend({
 				state.lastSize = -1;
 				state.lastContent = '';
 				meta.textContent = '';
-			});
+			}).finally(function() { state.reading = false; });
 		}
 
 		poll.add(tick);
 		tick();
 
 		const toolbarItems = [
-			E('label', {}, [ cbAuto, _('Auto-scroll') ]),
-			E('label', {}, [ cbPause, _('Pause') ]),
+			btnAuto,
+			btnPause,
 			selFilter,
 			btnClear,
 			btnDownload,
@@ -350,7 +374,7 @@ return view.extend({
 		const toolbar = E('div', { 'class': 'dd-log-toolbar' }, toolbarItems);
 
 		return E('div', { 'class': 'dd-log-wrap' }, [
-			E('style', {}, CSS),
+			E('style', {}, CSS + styles.CSS),
 			E('div', { 'class': 'dd-log-card' }, [
 				E('h4', { 'class': 'dd-log-card-title' }, _('%s Realtime Log').format(ctx.name)),
 				toolbar,

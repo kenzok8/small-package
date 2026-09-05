@@ -419,10 +419,10 @@ table td, .table .td {
 <%- else %>
 	(function() {
 		if (typeof(cbi_t_switch) === "function") {
-			var old_switch = cbi_t_switch;
+			const ori_cbi_t_switch = cbi_t_switch;
 			cbi_t_switch = function(section, tab) {
 				dechecked_all_node();
-				return old_switch(section, tab);
+				return ori_cbi_t_switch(section, tab);
 			};
 		}
 	})();
@@ -1521,22 +1521,47 @@ table td, .table .td {
 				}
 			});
 		}
-
-		waitForElement('input[type="checkbox"][name*="<%=appname%>"][name*="show_node_info"]', function(el) {
-			el.addEventListener("change", () => {
-				el.blur();
-				show_node_info = el.checked ? "1" : "0";
-				onChange("show_node_info", show_node_info);
+		
+		function dom_event() {
+			waitForElement('input[type="checkbox"][name*="<%=appname%>"][name*="show_node_info"]', function(el) {
+				el.addEventListener("change", () => {
+					el.blur();
+					show_node_info = el.checked ? "1" : "0";
+					onChange("show_node_info", show_node_info);
+				});
 			});
-		});
 
-		waitForElement('select[name*="<%=appname%>"][name*="auto_detection_time"]', function(el) {
-			el.addEventListener("change", () => {
-				el.blur();
-				auto_detection_time = el.value;
-				onChange("auto_detection_time", auto_detection_time);
+			waitForElement('select[name*="<%=appname%>"][name*="auto_detection_time"]', function(el) {
+				el.addEventListener("change", () => {
+					el.blur();
+					auto_detection_time = el.value;
+					onChange("auto_detection_time", auto_detection_time);
+				});
 			});
-		});
+
+			waitForElement('select[id*="<%=appname%>"][id*="url_test_url"]', function(el) {
+				el.addEventListener("change", () => {
+					if (el.value) {
+						onChange("url_test_url", el.value);
+					}
+				});
+			});
+
+			waitForElement('input[id*="<%=appname%>"][id*="url_test_url"]', function(el) {
+				el.addEventListener("change", () => {
+					if (el.value) {
+						onChange("url_test_url", el.value);
+					}
+				});
+			});
+		}
+
+		const ori_cbi_d_update = cbi_d_update;
+		cbi_d_update = function() {
+			ori_cbi_d_update();
+			dom_event();
+		};
+		dom_event();
 		
 		const links = document.querySelectorAll('a');
 		links.forEach(link => {

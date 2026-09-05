@@ -4,6 +4,9 @@
 'require baseclass';
 
 const CSS = [
+	'.dd-log-toolbar .dd-log-toggle[aria-pressed="true"]{background:rgba(74,160,101,.16);border-color:#4aa065;box-shadow:inset 0 0 0 1px rgba(74,160,101,.2)}',
+	'.dd-log-toolbar .dd-log-toggle:focus-visible{outline:2px solid #4aa065;outline-offset:2px}',
+
 	'.dd-wrap{padding:4px 0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}',
 	'.dd-card{border:1px solid rgba(0,0,0,.06);border-radius:10px;padding:9px 14px;margin-bottom:7px;box-shadow:0 2px 8px rgba(0,0,0,.03);background:rgba(255,255,255,.02)}',
 	/* padding:0 neutralizes Argon's h4{padding:.75rem 1.25rem}, which otherwise

@@ -1,0 +1,56 @@
+<%
+local map = self.map
+local api = map.api
+local config = map.config
+local section = self.section
+-%>
+<script type="text/javascript">
+	//<![CDATA[
+	function setOption(option, val) {
+		const dom = document.getElementById('cbid.<%=config%>.<%=section%>.' + option);
+		if (dom) {
+			dom.value = val;
+		}
+		const combobox_dom = document.getElementById('cbi.combobox.cbid.<%=config%>.<%=section%>.' + option);
+		if (combobox_dom) {
+			combobox_dom.value = val;
+			//combobox_dom.selectedIndex = val;
+			//combobox_dom.dispatchEvent(new Event("change", { bubbles: true }));
+		}
+	}
+	document.addEventListener("DOMContentLoaded", function () {
+		function dom_event() {
+			waitForElementId('cbi.combobox.cbid.<%=config%>.<%=section%>.tcp_no_redir_ports', function(el) {
+				const o_val = el.value;
+				el.addEventListener("change", () => {
+					const udp_no_redir_ports = getOption("<%=config%>", "<%=section%>", "udp_no_redir_ports");
+					if (el.value == "1:65535" && udp_no_redir_ports && udp_no_redir_ports.value == "1:65535") {
+						setOption("tcp_no_redir_ports", "");
+						setOption("udp_no_redir_ports", "");
+						setOption("mode", 0);
+						cbi_d_update();
+					}
+				});
+			});
+			waitForElementId('cbi.combobox.cbid.<%=config%>.<%=section%>.udp_no_redir_ports', function(el) {
+				const o_val = el.value;
+				el.addEventListener("change", () => {
+					const tcp_no_redir_ports = getOption("<%=config%>", "<%=section%>", "tcp_no_redir_ports");
+					if (el.value == "1:65535" && tcp_no_redir_ports && tcp_no_redir_ports.value == "1:65535") {
+						setOption("tcp_no_redir_ports", "");
+						setOption("udp_no_redir_ports", "");
+						setOption("mode", 0);
+						cbi_d_update();
+					}
+				});
+			});
+		}
+		const ori_cbi_d_update = cbi_d_update;
+		cbi_d_update = function() {
+			ori_cbi_d_update();
+			dom_event();
+		};
+		dom_event();
+	});
+	//]]>
+</script>
