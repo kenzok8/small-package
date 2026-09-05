@@ -28,6 +28,7 @@ define Package/mwan3
      +IPV6:ip6tables \
      +iptables-mod-conntrack-extra \
      +iptables-mod-ipopt \
+     +rpcd \
      +rpcd-mod-ucode \
      +jshn
    TITLE:=Multiwan hotplug script with connection tracking support
