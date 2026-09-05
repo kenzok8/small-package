@@ -1,12 +1,20 @@
 <script type="text/javascript">//<![CDATA[
+var agentflowOpenUrl = '<%=url("admin/services/agentflow/open")%>';
 XHR.poll(5, '<%=url("admin/services/agentflow_status")%>', null, function(x, st) {
 	var el = document.getElementById('agentflow_status');
 	if (st && el) {
 		if (!st.running) {
 			el.innerHTML = '<br/><em style="color:red"><%:The AgentFlow service is not running.%></em>';
 		} else {
+			var accessMode = '';
+			if (st.proxy_prefix_enabled && st.linkeasefull_running) {
+				accessMode = '<br/><em><%:Access mode: LinkEase Desktop /apps proxy.%></em>';
+			} else {
+				accessMode = '<br/><em><%:Access mode: external port.%></em>';
+			}
 			el.innerHTML = '<br/><em style="color:green"><%:The AgentFlow service is running.%></em>'
-				+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open AgentFlow%> \" onclick=\"window.open('http://" + window.location.hostname + ":" + st.port + "/')\"/>";
+				+ accessMode
+				+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open AgentFlow%> \" onclick=\"window.open('" + agentflowOpenUrl + "')\"/>";
 		}
 	}
 });

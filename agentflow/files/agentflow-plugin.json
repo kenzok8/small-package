@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "agentflow",
+  "name": "AgentFlow",
+  "icon": "logo.svg",
+  "staticRoot": "/usr/share/agentflow/www",
+  "desktop": {
+    "mode": "module",
+    "entry": "desktop-entry.js",
+    "isolation": "shadow-dom"
+  },
+  "standalone": {
+    "entry": "index.html",
+    "basePath": "/apps/agentflow/",
+    "url": "/cgi-bin/luci/admin/services/agentflow/open",
+    "externalOpen": {
+      "enabled": true,
+      "label": "Open AgentFlow"
+    }
+  },
+  "auth": {
+    "mode": "passthrough"
+  },
+  "backend": {
+    "type": "http",
+    "scheme": "http",
+    "host": "127.0.0.1",
+    "portFromUci": "agentflow.@agentflow[0].port",
+    "defaultPort": 9000,
+    "upstreamBasePath": "/apps/agentflow/",
+    "pathMode": "preserve",
+    "proxyMode": "app-base"
+  },
+  "window": {
+    "width": 1180,
+    "height": 760,
+    "singleton": true
+  },
+  "capabilities": ["agent", "coding", "workflow"],
+  "categories": ["development", "ai"]
+}

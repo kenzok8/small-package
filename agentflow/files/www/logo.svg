@@ -1,0 +1,21 @@
+<svg
+  width="150"
+  height="150"
+  viewBox="0 0 150 150"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <rect width="150" height="150" rx="30" fill="#f5f1e8" />
+  <text
+    x="50%"
+    y="54%"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    font-size="68"
+    font-weight="700"
+    font-family="Georgia, 'Times New Roman', serif"
+    letter-spacing="-4"
+    fill="#111111"
+  >
+    AF
+  </text>
+</svg>

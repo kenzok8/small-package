@@ -2,12 +2,27 @@ from pathlib import Path
 import unittest
 
 
-ROOT = Path(__file__).resolve().parents[3]
-APPLICATIONS = ROOT / "applications"
+THIS_FILE = Path(__file__).resolve()
 
 
 def read(relative):
-    return (APPLICATIONS / relative).read_text()
+    relative_path = Path(relative)
+    package = relative_path.parts[0]
+    app = package[9:] if package.startswith("luci-app-") else package
+    remainder = Path(*relative_path.parts[1:])
+
+    candidates = [
+        THIS_FILE.parents[index] / relative_path
+        for index in range(2, min(len(THIS_FILE.parents), 6))
+    ]
+    candidates.append(THIS_FILE.parents[3] / app / package / remainder)
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate.read_text()
+
+    searched = "\n".join(str(candidate) for candidate in candidates)
+    raise FileNotFoundError(f"{relative} not found; searched:\n{searched}")
 
 
 class MiseRuntimeContractTest(unittest.TestCase):
