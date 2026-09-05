@@ -142,6 +142,9 @@ msgstr ""
 msgid "CPU usage: 92.8%"
 msgstr ""
 
+msgid "Cancel"
+msgstr ""
+
 msgid "Clear log"
 msgstr ""
 
@@ -179,6 +182,9 @@ msgid "Client name: Zed-PC"
 msgstr ""
 
 msgid "Client name: Zed-iPhone17PM"
+msgstr ""
+
+msgid "Confirm"
 msgstr ""
 
 msgid "Color Settings"
@@ -538,6 +544,9 @@ msgid "Notify only devices on this interface"
 msgstr ""
 
 msgid "Not a public IP"
+msgstr ""
+
+msgid "Not recommended when the traffic source is nlbwmon"
 msgstr ""
 
 msgid "OUI data"
@@ -902,6 +911,12 @@ msgid "WAN redial"
 msgstr ""
 
 msgid "WAN status"
+msgstr ""
+
+msgid "Warning"
+msgstr ""
+
+msgid "When the traffic source is nlbwmon, resetting the traffic database at midnight has no effect. Are you sure you want to enable it?"
 msgstr ""
 
 msgid "Watchlist"

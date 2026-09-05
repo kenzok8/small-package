@@ -89,8 +89,10 @@ function PB_sys(name) { var v = PB_CONFIG && PB_CONFIG.system && PB_CONFIG.syste
 function PB_sysVal(name, def) { var v = PB_CONFIG && PB_CONFIG.system && PB_CONFIG.system[name]; return (v !== undefined && v !== null) ? v : (def !== undefined ? def : null); }
 function PB_bool(opt) { return PB_val(opt) === '1'; }
 
-function PB_applyConfig(data) {
+function PB_applyConfig(data, silent) {
 	PB_CONFIG = data;
+
+	if (silent) return;
 
 	var ready = PB_READY;
 	PB_READY = [];
@@ -410,10 +412,6 @@ else
 				'<button type="button" class="pushbot-choice-button is-off" data-flag="oui_dir">',
 					'<span class="pushbot-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:16px;height:16px"><path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg></span>',
 					'<span class="pushbot-choice-label">{{ _('Download to RAM') }}</span>',
-				'</button>',
-				'<button type="button" class="pushbot-choice-button is-off" data-flag="reset_regularly">',
-					'<span class="pushbot-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:16px;height:16px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 14h-2v-6h2v6zm0-8h-2V6h2v2z"/></svg></span>',
-					'<span class="pushbot-choice-label">{{ _('Reset traffic at midnight') }}</span>',
 				'</button>',
 				'<button type="button" class="pushbot-choice-button is-off" data-flag="debuglevel">',
 					'<span class="pushbot-choice-icon"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:16px;height:16px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 14h-2v-2h2v2zm0-4h-2V8h2v4z"/></svg></span>',
@@ -2992,7 +2990,7 @@ function initModernTabs() {
 	var clientPane = document.createElement('div');
 	clientPane.id = 'pushbot_pane_client';
 	clientPane.className = 'pushbot-tab-pane';
-	clientPane.innerHTML = '<div class="pushbot-mode-card" style="padding:0;overflow:hidden"><div class="pushbot-log-container"><div class="pushbot-log-header"><div class="pushbot-log-controls"><label class="pushbot-log-switch" id="client_auto_switch"><span class="pushbot-log-switch-text">{{ _('Auto refresh') }}</span><input type="checkbox" id="client_auto_toggle" checked><span class="pushbot-log-switch-track"></span></label><span id="client_traffic_src" style="display:none"></span><button class="pushbot-log-btn" id="client_check_traffic" style="margin-left:4px;font-size:11px;padding:3px 8px">{{ _("Refresh traffic source check") }}</button><button class="pushbot-log-btn" id="client_refresh_btn" style="margin-left:auto">{{ _('Refresh') }}</button></div></div><div class="pushbot-log-content" id="pushbot_client_content"><p style="padding:12px;margin:0;color:#94a3b8;text-align:center">{{ _('Loading...') }}</p></div></div></div>';
+	clientPane.innerHTML = '<div class="pushbot-mode-card" style="padding:0;overflow:hidden"><div class="pushbot-log-container"><div class="pushbot-log-header"><div class="pushbot-log-controls"><label class="pushbot-log-switch" id="client_auto_switch"><span class="pushbot-log-switch-text">{{ _('Auto refresh') }}</span><input type="checkbox" id="client_auto_toggle" checked><span class="pushbot-log-switch-track"></span></label><span id="client_traffic_src" style="display:none"></span><button class="pushbot-log-btn" id="client_check_traffic" style="margin-left:4px;font-size:11px;padding:3px 8px">{{ _("Refresh traffic source check") }}</button><button type="button" class="pushbot-log-btn" id="client_reset_traffic" style="margin-left:4px;font-size:11px;padding:3px 8px">{{ _('Reset traffic at midnight') }}</button><button class="pushbot-log-btn" id="client_refresh_btn" style="margin-left:auto">{{ _('Refresh') }}</button></div></div><div class="pushbot-log-content" id="pushbot_client_content"><p style="padding:12px;margin:0;color:#94a3b8;text-align:center">{{ _('Loading...') }}</p></div></div></div>';
 
 	var logPane = document.createElement('div');
 	logPane.id = 'pushbot_pane_log';
@@ -3276,6 +3274,8 @@ function loadLog() {
 		var pillColor = isNlbw ? 'background:rgba(34,197,94,0.15);color:#16a34a;border:1px solid rgba(34,197,94,0.3)' : 'background:rgba(249,115,22,0.15);color:#ea580c;border:1px solid rgba(249,115,22,0.3)';
 		el.style.display = '';
 		el.innerHTML = '{{ _('Traffic source') }}: <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap;vertical-align:middle;margin-left:4px;' + pillColor + '">' + (isNlbw ? 'nlbwmon' : 'wrtbwmon') + '</span>';
+		var rtb = document.getElementById('client_reset_traffic');
+		if (rtb) rtb.title = isNlbw ? '{{ _('Not recommended when the traffic source is nlbwmon') }}' : '{{ _('Reset traffic at midnight') }}';
 	}
 	function renderClientTable() {
 		var container = document.getElementById('pushbot_client_content');
@@ -3394,6 +3394,69 @@ function loadLog() {
 			});
 		});
 	}
+	/* 每天零点重置流量（迁移至在线设备头部）：共用 reset_regularly hidden 字段，保存走同一 __pbCollectData */
+	var resetTrafficBtn = document.getElementById('client_reset_traffic');
+	var resetTrafficHidden = document.querySelector('input[name="cbid.pushbot.pushbot.reset_regularly"]');
+	function syncResetTrafficBtn() {
+		if (!resetTrafficBtn || !resetTrafficHidden) return;
+		var on = resetTrafficHidden.value === '1';
+		resetTrafficBtn.classList.toggle('is-on', on);
+	}
+	function updateResetTrafficTip() {
+		if (!resetTrafficBtn) return;
+		resetTrafficBtn.title = (_clientTrafficSrc === 'nlbw') ? '{{ _('Not recommended when the traffic source is nlbwmon') }}' : '{{ _('Reset traffic at midnight') }}';
+	}
+	if (resetTrafficBtn && resetTrafficHidden) {
+		updateResetTrafficTip();
+		syncResetTrafficBtn();
+		resetTrafficBtn.addEventListener('click', function(e) {
+			e.preventDefault();
+			var turningOn = resetTrafficHidden.value !== '1';
+			if (turningOn && _clientTrafficSrc === 'nlbw') {
+				/* nlbwmon 下启用重置 → 弹出二次确认 */
+				var oldOv = document.querySelector('.pb-preview-overlay');
+				if (oldOv) oldOv.remove();
+				var ov = document.createElement('div');
+				ov.className = 'pb-preview-overlay';
+				var box = document.createElement('div');
+				box.className = 'pb-preview-box';
+				var tit = document.createElement('div');
+				tit.className = 'pb-preview-title';
+				tit.textContent = '{{ _('Warning') }}';
+				box.appendChild(tit);
+				var msg = document.createElement('div');
+				msg.className = 'pb-preview-empty';
+				msg.style.cssText = 'color:#dc2626;font-weight:600;line-height:1.6';
+				msg.textContent = '{{ _('nlbwmon不建议启用') }}';
+				box.appendChild(msg);
+				var desc = document.createElement('div');
+				desc.style.cssText = 'font-size:12px;color:#64748b;margin-top:6px;line-height:1.5';
+				desc.textContent = '{{ _('When the traffic source is nlbwmon, resetting the traffic database at midnight has no effect. Are you sure you want to enable it?') }}';
+				box.appendChild(desc);
+				var btns = document.createElement('div');
+				btns.className = 'pb-preview-btns';
+				var disc = document.createElement('button');
+				disc.type = 'button'; disc.className = 'pb-preview-btn pb-preview-btn-disc'; disc.textContent = '{{ _('Cancel') }}';
+				disc.addEventListener('click', function() { ov.remove(); });
+				btns.appendChild(disc);
+				var conf = document.createElement('button');
+				conf.type = 'button'; conf.className = 'pb-preview-btn pb-preview-btn-conf'; conf.textContent = '{{ _('Confirm') }}';
+				conf.addEventListener('click', function() {
+					ov.remove();
+					resetTrafficHidden.value = '1';
+					syncResetTrafficBtn();
+				});
+				btns.appendChild(conf);
+				box.appendChild(btns);
+				ov.appendChild(box);
+				document.body.appendChild(ov);
+				setTimeout(function() { ov.classList.add('show'); }, 10);
+			} else {
+				resetTrafficHidden.value = turningOn ? '1' : '0';
+				syncResetTrafficBtn();
+			}
+		});
+	}
 }
 
 
@@ -3435,6 +3498,10 @@ window.__pbCollectData = function() {
 			data[k].forEach(function(v) { if (u.indexOf(v) < 0) u.push(v); });
 			data[k] = u.length === 1 ? u[0] : u;
 		}
+	}
+	/* lite_enable 全关时没有 hidden input，补空值使 preview 能检测变更 & 保存能清除 */
+	if (!('lite_enable' in data) && PB_CONFIG && PB_CONFIG.config && PB_CONFIG.config.lite_enable !== undefined) {
+		data['lite_enable'] = '';
 	}
 	return data;
 };
@@ -3566,7 +3633,21 @@ function submitAll() {
 	var x = new XMLHttpRequest();
 	x.open('POST', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'save_config') }}', true);
 	x.setRequestHeader('Content-Type', 'application/json');
-	x.onload = function() { btn.disabled = false; btn.textContent = '{{ _('Save & Apply') }}'; pbShowToast(x.status == 200); };
+	x.onload = function() {
+		btn.disabled = false; btn.textContent = '{{ _('Save & Apply') }}';
+		if (x.status == 200) {
+			pbShowToast(true);
+			/* 静默刷新配置：只更新 PB_CONFIG，不重新执行 UI 初始化回调 */
+			XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'get_config') }}', null,
+			function(x2, data2) {
+				if (x2 && x2.status === 200 && data2 && typeof data2 === 'object') {
+					PB_applyConfig(data2, true);
+				}
+			});
+		} else {
+			pbShowToast(false);
+		}
+	};
 	x.onerror = function() { btn.disabled = false; btn.textContent = '{{ _('Save & Apply') }}'; pbShowToast(false); };
 	x.send(JSON.stringify(data));
 }
@@ -4123,6 +4204,16 @@ window.addEventListener('DOMContentLoaded', function() {
 	border-color: rgba(239, 68, 68, 0.25);
 	color: #dc2626;
 }
+.pushbot-log-btn.is-on {
+	background: rgba(34, 197, 94, 0.2);
+	color: #16a34a;
+	border-color: rgba(34, 197, 94, 0.4);
+}
+.pushbot-log-btn.is-on:hover {
+	background: rgba(34, 197, 94, 0.15);
+	color: #16a34a;
+	border-color: rgba(34, 197, 94, 0.3);
+}
 .pushbot-log-content {
 	flex: 1;
 	max-height: 480px;
@@ -4159,6 +4250,15 @@ window.addEventListener('DOMContentLoaded', function() {
 			.pushbot-dk .pushbot-log-btn:hover {
 				background: rgba(239, 68, 68, 0.15) !important;
 				color: #fca5a5 !important;
+			}
+			.pushbot-dk .pushbot-log-btn.is-on {
+				background: rgba(34, 197, 94, 0.2) !important;
+				border-color: rgba(34, 197, 94, 0.4) !important;
+				color: #4ade80 !important;
+			}
+			.pushbot-dk .pushbot-log-btn.is-on:hover {
+				background: rgba(34, 197, 94, 0.15) !important;
+				color: #4ade80 !important;
 			}
 			.pushbot-dk .pushbot-log-header {
 				border-color: rgba(255, 255, 255, 0.06) !important;

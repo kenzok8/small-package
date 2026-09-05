@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-pushbot
 PKG_VERSION:=5.17
-PKG_RELEASE:=10
+PKG_RELEASE:=20
 
 PKG_MAINTAINER:=tty228 <tty228@yeah.net>  zzsj0928
 
@@ -23,6 +23,8 @@ LUCI_DEPENDS:=+luci-base +iputils-arping +curl +jq
 
 # 汉化包（luci-i18n-*) 版本与主包保持同步
 PKG_PO_VERSION:=$(PKG_VERSION)-r$(PKG_RELEASE)
+# 兼容部分 luci.mk（如 immortalwrt）缺少 zh_Hans 语言定义的情况
+LUCI_LANG.zh_Hans?=简体中文 (Simplified Chinese)
 
 define Package/$(PKG_NAME)/conffiles
 /etc/config/pushbot

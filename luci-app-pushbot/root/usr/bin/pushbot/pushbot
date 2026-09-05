@@ -738,10 +738,9 @@ function pushbot_cron(){
 		return
 	fi
 
-	# 重置流量
+	# 重置流量（零点执行，由 reset_traffic 按流量源分别清除）
 	if [ ! -z "$reset_regularly" ] && [ "$reset_regularly" -eq "1" ]; then
-		crontab -l 2>/dev/null > conf && echo -e "0 0 * * * rm /tmp/pushbot/usage.db >/dev/null 2>&1" >> conf && crontab conf && rm -f conf >/dev/null 2>&1
-		crontab -l 2>/dev/null > conf && echo -e "0 0 * * * rm /tmp/pushbot/usage6.db >/dev/null 2>&1" >> conf && crontab conf && rm -f conf >/dev/null 2>&1
+		crontab -l 2>/dev/null > conf && echo -e "0 0 * * * /usr/bin/pushbot/pushbot reset_traffic >/dev/null 2>&1" >> conf && crontab conf && rm -f conf >/dev/null 2>&1
 	fi
 	# 定时/间隔严格互斥，以 crontab 开关为准（1=定时发送，2=间隔发送）
 	# 避免切换模式后残留字段（regular_time* / interval_time）误触发错误分支
@@ -2714,6 +2713,21 @@ if [ "$1" ] ;then
 	if [ "$1" = "check_traffic" ]; then
 		rm -f ${dir}traffic_source
 		init_traffic_source
+		exit
+	fi
+	# 重置流量：按流量源分别清除（reset_regularly 的零点任务调用）
+	if [ "$1" = "reset_traffic" ]; then
+		init_traffic_source
+		if [ "$traffic_source" = "nlbw" ]; then
+			# nlbwmon：删除当前会计区间数据库（-I 1 = 每月1号开始 → 文件名 YYYYMM01）
+			# 必须重启 nlbwmon，否则内存中的统计会在下次 commit(4h) 时重建文件
+			/etc/init.d/nlbwmon stop >/dev/null 2>&1
+			rm -f /var/lib/nlbwmon/$(date +%Y%m)01.db /var/lib/nlbwmon/$(date +%Y%m)01.db.gz >/dev/null 2>&1
+			/etc/init.d/nlbwmon start >/dev/null 2>&1
+		else
+			# wrtbwmon：删除 usage 数据库
+			rm -f /tmp/pushbot/usage.db /tmp/pushbot/usage6.db >/dev/null 2>&1
+		fi
 		exit
 	fi
 	# 重检无线接口：清除缓存并重新探测

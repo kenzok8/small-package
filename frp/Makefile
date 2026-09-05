@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=frp
 PKG_VERSION:=0.70.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/fatedier/frp/tar.gz/v$(PKG_VERSION)?
@@ -27,9 +27,10 @@ include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
 
 define Build/Compile
 	( \
-		$(MAKE) -C $(PKG_BUILD_DIR)/web/frpc install ; \
-		$(MAKE) -C $(PKG_BUILD_DIR)/web/frps install ; \
-		$(MAKE) -C $(PKG_BUILD_DIR) web ; \
+		( cd $(PKG_BUILD_DIR)/web && \
+			npm install && \
+			npm --workspace=frpc run build && \
+			npm --workspace=frps run build ) && \
 		$(call GoPackage/Build/Compile) ; \
 	)
 endef
