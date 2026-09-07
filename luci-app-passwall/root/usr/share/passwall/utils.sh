@@ -208,31 +208,9 @@ check_host() {
 	return 0
 }
 
-get_first_dns() {
-	local __hosts_val=${1}; shift 1
-	__first() {
-		[ -z "${2}" ] && return 0
-		echo "${2}#${3}"
-		return 1
-	}
-	hosts_foreach "${__hosts_val}" __first "$@"
-}
-
-get_last_dns() {
-	local __hosts_val=${1}; shift 1
-	local __first __last
-	__every() {
-		[ -z "${2}" ] && return 0
-		__last="${2}#${3}"
-		__first=${__first:-${__last}}
-	}
-	hosts_foreach "${__hosts_val}" __first "$@"
-	[ "${__first}" =  "${__last}" ] || echo "${__last}"
-}
-
 normalize_dns() {
 	local s="$1"
-	local addr port
+	local addr port="${2-}"
 	case "$s" in
 		\[*\]:*)
 			# [ip6]:port
@@ -254,18 +232,22 @@ normalize_dns() {
 			# [ip6]
 			addr="${s#\[}"
 			addr="${addr%\]}"
-			port=""
 		;;
 		*)
 			addr="$s"
-			port=""
 		;;
 	esac
-	if [ -n "$port" ]; then
-		echo "${addr}#${port}"
-	else
-		echo "$addr"
-	fi
+	[ -n "$port" ] && echo "${addr}#${port}" || echo "$addr"
+}
+
+format_dns() {
+	local dns="${1%%#*}"
+	local port="${1#*#}"
+	[ "$port" = "$1" ] && port="${2-53}"
+	case "$dns" in
+		*:*) echo "[$dns]:$port" ;;
+		*)   echo "$dns:$port" ;;
+	esac
 }
 
 check_port_exists() {

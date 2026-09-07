@@ -385,9 +385,11 @@ return view.extend({
 		so.validate = validateServerValue;
 		so.modalonly = true;
 
-		so = ss.option(form.DynamicList, 'upstream', _('Upstream DNS'));
+		so = ss.option(form.DynamicList, 'upstream', _('Upstream DNS'),
+			_('Allows the use of a specified upstream for specific domain. <a href="%s" target="_blank">Syntax reference</a>.')
+			.format('https://github.com/AdguardTeam/dnsproxy#specifying-upstreams-for-domains'));
 		so.rmempty = false;
-		so.validate = validateServerValue;
+		//so.validate = validateServerValue; // See #11
 		so.modalonly = true;
 
 		so = ss.option(form.DynamicList, 'fallback', _('Fallback DNS'));

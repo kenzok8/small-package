@@ -11,6 +11,12 @@ msgstr ""
 msgid "Add DNS profile"
 msgstr ""
 
+#: htdocs/luci-static/resources/view/dnsproxy.js:389
+msgid ""
+"Allows the use of a specified upstream for specific domain. <a href=\"%s\" "
+"target=\"_blank\">Syntax reference</a>."
+msgstr ""
+
 #: htdocs/luci-static/resources/view/dnsproxy.js:285
 msgid "Bogus-NXDOMAIN"
 msgstr ""
@@ -122,7 +128,7 @@ msgstr ""
 msgid "Failed to apply DNS profile: %s"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/dnsproxy.js:393
+#: htdocs/luci-static/resources/view/dnsproxy.js:395
 msgid "Fallback DNS"
 msgstr ""
 
