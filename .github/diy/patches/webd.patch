@@ -1,11 +1,23 @@
 --- a/webd/Makefile
 +++ b/webd/Makefile
-@@ -78,7 +78,7 @@ ifeq ($(ARCH),aarch64)
+@@ -96,17 +96,15 @@
+   endif
  endif
  
+-ifeq ($(strip $(TARGET_ARCH)$(TARGET_BOARD)),)
+-  $(error Unsupported ARCH/BOARD combo: ARCH=$(ARCH) BOARD=$(BOARD) SUBTARGET=$(SUBTARGET))
+-endif
+-
  PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(TARGET_ARCH)-openwrt-linux-$(TARGET_BOARD).tar.gz
 -PKG_SOURCE_URL:=https://webd.cf/webd/$(PKG_VERSION)/
 +PKG_SOURCE_URL:=https://webd.cf/webd/webd_dl/$(PKG_VERSION)/
  PKG_HASH:=skip
  
  UNTAR_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+ 
+ define Build/Prepare
++	$(if $(strip $(TARGET_ARCH)$(TARGET_BOARD)),,\
++	  $(error Unsupported ARCH/BOARD combo: ARCH=$(ARCH) BOARD=$(BOARD) SUBTARGET=$(SUBTARGET)))
+ 	$(INSTALL_DIR) $(UNTAR_DIR)
+ 	$(TAR) -C $(UNTAR_DIR) -xzf $(DL_DIR)/$(PKG_SOURCE)
+ endef
