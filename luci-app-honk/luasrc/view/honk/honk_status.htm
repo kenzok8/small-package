@@ -1,0 +1,31 @@
+<script type="text/javascript">//<![CDATA[
+	XHR.poll(3, '<%=url("admin/services/honk/status")%>', null,
+		function(x, data)
+		{
+			var tb = document.getElementById('honk_status');
+			if (data && tb)
+			{
+				if (data.running)
+				{
+					if (data.memory) {
+						tb.innerHTML = '<em style="color:green"><b><%:HONK%> <%:RUNNING%></b></em> <span style="color:#666; font-size:0.9em;">(<%:Memory Usage%>: ' + data.memory + ')</span>';
+					} else {
+						tb.innerHTML = '<em style="color:green"><b><%:HONK%> <%:RUNNING%></b></em>';
+					}
+				}
+				else
+				{
+					tb.innerHTML = '<em style=\"color:red\"><b><%:HONK%> <%:NOT RUNNING%></b></em>';
+				}
+			}
+		}
+	);
+//]]></script>
+
+<style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
+<fieldset class="cbi-section">
+	<p id="honk_status">
+		<em><b><%:Collecting data...%></b></em>
+	</p>
+</fieldset>
+

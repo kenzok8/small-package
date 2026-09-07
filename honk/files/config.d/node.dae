@@ -1,0 +1,35 @@
+# node.dae
+node {
+    node1: 'xxx'
+    node2: 'xxx'
+}
+
+subscription {
+    # 短形式：默认 86400s 刷新一次
+    sub: 'http://sub'
+
+    # 短形式 + UA：仍然只能默认 86400s
+    sub_ua: 'http://sub'(honk/1.0 like)
+
+    # 块形式：可以自定义定时刷新周期
+    sub2: {
+        url: 'http://sub'
+        ua: 'honk/1.0'
+        interval: '10000s'   # 每 10000 秒刷新一次
+    }
+
+    # 禁用定期刷新
+    sub3: {
+        url: 'http://sub'
+        interval: 0
+    }
+}
+
+group {
+    proxy {
+        filter: subtag(sub) && !name(keyword: 'ExpireAt:')
+        filter: name(node1, node2)
+        policy: score
+    }
+}
+

@@ -1,0 +1,26 @@
+# route.dae
+routing {
+    pname(dnsmasq, zerotier-one) -> direct(must)
+    dip(224.0.0.0/3, 'ff00::/8', geoip:private) -> direct
+    domain(geosite:category-bank-cn, geosite:boc@!cn, geosite:synology) -> direct
+
+    # block quic, if u node has poor quic support, enable this line
+    # l4proto(udp) && dport(443) -> block
+
+    domain(geosite:spotify) -> proxy
+    domain(geosite:category-doh) -> proxy
+    domain(geosite:tiktok) -> proxy
+    domain(geosite:category-ai-!cn, geosite:github) -> proxy
+    domain(geosite:gfw) -> proxy
+
+    dip(geoip:telegram) -> proxy
+	
+    dip(geoip:cn) -> direct
+    # geoip:cn always using chiness asn, can use domain rule to override
+    domain(geosite: cn) -> direct
+
+    # using proxy for ssh, http, https, and common ports, avoid (bt, or other p2p)
+    dport(22, 80, 443, 8080, 6443, 9090) -> proxy
+
+    fallback: direct
+}

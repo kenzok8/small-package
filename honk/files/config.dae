@@ -1,0 +1,41 @@
+# config.dae
+# Load all honk files placed in ./config.d/.
+include {
+    config.d/*.dae
+}
+
+global {
+    log_level: warn
+    check_interval: 600s
+    check_tolerance: 30ms
+    lan_interface: br-lan
+    wan_interface: auto
+    auto_config_kernel_parameter: true
+    data_dir: '/etc/honk'
+	log_file: '/var/log/honk/honk.log'
+    store_subscribe: true
+    # if u not using dns bind, set dial_mode to domain++ prefer
+    dial_mode: domain
+    bootstrap_resolver: '223.5.5.5:53'
+    tcp_check_url: 'https://www.gstatic.com/generate_204'
+    tcp_check_http_method: HEAD
+    udp_check_dns: 'dns.google.com:53,8.8.8.8,2001:4860:4860::8888'
+}
+
+# using for enable experimental features
+# clash-api, cache-file
+#experimental {
+#    clash_api {
+#        external_controller: '0.0.0.0:9090'
+#        external_ui: '/etc/honk/zashboard'
+#        secret: ''
+#        default_mode: 'Rule'
+#    }
+#    cache_file {
+#        enabled: true
+#        path: '/etc/honk/cache.db'
+#        cache_id: ''
+#        store_fakeip: false #in this time, this field will be ignored
+#    }
+#}
+

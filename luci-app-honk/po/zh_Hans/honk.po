@@ -1,0 +1,78 @@
+msgid "HONK"
+msgstr "HONK"
+
+msgid "RUNNING"
+msgstr "运行中"
+
+msgid "NOT RUNNING"
+msgstr "未运行"
+
+msgid "Collecting data..."
+msgstr "收集数据..."
+
+msgid "Enabled"
+msgstr "启用"
+
+msgid "Reload Service"
+msgstr "重载服务"
+
+msgid "Reload service to apply configuration."
+msgstr "重载服务以使配置生效。"
+
+msgid "Global Settings"
+msgstr "全局设置"
+
+msgid "DNS Settings"
+msgstr "DNS 设置"
+
+msgid "Node Settings"
+msgstr "节点设置"
+
+msgid "Routing Settings"
+msgstr "路由设置"
+
+msgid "Global Configuration"
+msgstr "全局配置"
+
+msgid "DNS Configuration"
+msgstr "DNS 配置"
+
+msgid "Node Configuration"
+msgstr "节点配置"
+
+msgid "Route Configuration"
+msgstr "路由配置"
+
+msgid "Configure global settings for HONK."
+msgstr "调整 HONK 的全局设置。"
+
+msgid "Configure DNS settings for HONK."
+msgstr "调整 HONK 的 DNS 设置。"
+
+msgid "Configure nodes and groups for HONK."
+msgstr "调整 HONK 的节点与分组设置。"
+
+msgid "Configure routing rules for HONK."
+msgstr "调整 HONK 的路由规则。"
+
+msgid "Correctly configure the include field for separate-config to work, or enter complete configuration here."
+msgstr "请正确配置 include 字段以启用拆分配置，或在此处填写完整配置。"
+
+msgid "Logs"
+msgstr "日志"
+
+msgid "Memory Usage"
+msgstr "内存占用"
+
+msgid "Enable Auto Subscribe Update"
+msgstr "启用订阅自动更新"
+
+msgid "Update Cycle"
+msgstr "更新周期"
+
+msgid "Update Time (Every Day)"
+msgstr "更新时间（每天）"
+
+msgid "Format Code"
+msgstr "格式化代码"
+

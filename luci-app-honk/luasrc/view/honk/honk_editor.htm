@@ -1,0 +1,127 @@
+<%+cbi/valueheader%>
+	<script src="/luci-static/resources/honk/lib/codemirror.js"></script>
+	<script src="/luci-static/resources/honk/addon/edit/matchbrackets.js"></script>
+	<script src="/luci-static/resources/honk/addon/fold/foldcode.js"></script>
+	<script src="/luci-static/resources/honk/addon/fold/foldgutter.js"></script>
+	<script src="/luci-static/resources/honk/addon/fold/indent-fold.js"></script>
+	<script src="/luci-static/resources/honk/mode/dae/dae.js"></script>
+	<link rel="stylesheet" href="/luci-static/resources/honk/addon/fold/foldgutter.css" />
+	<link rel="stylesheet" href="/luci-static/resources/honk/lib/codemirror.css" />
+	<link rel="stylesheet" href="/luci-static/resources/honk/theme/dracula.css" />
+
+	<style>
+		.cm-format-btn {
+			margin-bottom: 5px;
+			display: inline-block;
+		}
+		.CodeMirror {
+			border: 1px solid #6272a4;
+			border-radius: 6px;
+			height: auto;
+			min-height: 400px;
+			font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+			font-size: 13px;
+			box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+		}
+		.cm-s-dracula .cm-keyword { color: #ff79c6 !important; font-weight: bold; }
+		.cm-s-dracula .cm-variable-3 { color: #ffb86c !important; }
+		.cm-s-dracula .cm-def { color: #50fa7b !important; }
+		.cm-s-dracula .cm-operator.marker { color: #ff79c6 !important; font-weight: bold; }
+		.cm-s-dracula .cm-operator { color: #ff79c6 !important; }
+		.cm-s-dracula .cm-number { color: #bd93f9 !important; }
+		.cm-s-dracula .cm-string { color: #f1fa8c !important; }
+		.cm-s-dracula .cm-comment { color: #6272a4 !important; font-style: italic; }
+		.cm-s-dracula.CodeMirror {
+			background-color: #282a36 !important;
+			color: #f8f8f2 !important;
+		}
+		.cm-s-dracula .CodeMirror-gutters { border-right: none !important; background-color: #282a36 !important; }
+		.cm-s-dracula .CodeMirror-linenumber { color: #6272a4 !important; }
+		.cm-s-dracula .CodeMirror-selected { background: #44475a !important; }
+		.cm-s-dracula .CodeMirror-activeline-background { background: #343746 !important; }
+		.cm-s-dracula .CodeMirror-matchingbracket { text-decoration: underline; color: #ffb86c !important; font-weight: bold; }
+	</style>
+
+	<script type="text/javascript">//<![CDATA[
+		document.addEventListener('DOMContentLoaded', function() {
+			var textareas = document.querySelectorAll('textarea');
+			var editors = [];
+
+			textareas.forEach(function(textarea) {
+				var editor = CodeMirror.fromTextArea(textarea, {
+					mode: "dae",
+					indentUnit: 4,
+					tabSize: 4,
+					styleActiveLine: true,
+					lineNumbers: true,
+					theme: "dracula",
+					lineWrapping: true,
+					matchBrackets: true,
+					autoCloseBrackets: true,
+					foldGutter: true,
+					gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+				});
+
+				editor.on("inputRead", function(cm, change) {
+					if (change.origin !== "+input") return;
+					var val = change.text[0];
+					var pairs = { '{': '}', '[': ']', '(': ')', '"': '"', "'": "'" };
+					if (pairs[val]) {
+						var cur = cm.getCursor();
+						cm.replaceRange(pairs[val], cur);
+						cm.setCursor(cur);
+					}
+				});
+
+				editors.push(editor);
+
+				var formatBtn = document.createElement('button');
+				formatBtn.type = 'button';
+				formatBtn.className = 'cbi-button cbi-button-apply cm-format-btn';
+				formatBtn.innerText = '<%:Format Code%>';
+				formatBtn.onclick = function() {
+					editor.operation(function() {
+						var cursor = editor.getCursor();
+						var content = editor.getValue();
+
+						var lines = content.split('\n');
+						var formattedLines = lines.map(function(line) {
+							if (line.trim().startsWith('#') || line.trim().startsWith('//')) return line;
+							line = line.replace(/\s*->\s*/g, ' -> ');
+							line = line.replace(/\s*&&\s*/g, ' && ');
+							line = line.replace(/(['"])([a-zA-Z0-9_-]+)\1/g, function(match, quote, word) {
+								return word;
+							});
+							return line.trimEnd();
+						});
+
+						editor.setValue(formattedLines.join('\n'));
+
+						for (var i = 0; i < editor.lineCount(); i++) {
+							editor.indentLine(i, "smart");
+						}
+						editor.setCursor(cursor);
+					});
+				};
+
+				textarea.parentNode.insertBefore(formatBtn, textarea.nextSibling);
+
+				var form = textarea.closest('form');
+				if (form && !form.dataset.cmHooked) {
+					form.addEventListener('submit', function() {
+						editors.forEach(function(e) {
+							e.operation(function() {
+								for (var i = 0; i < e.lineCount(); i++) {
+									e.indentLine(i, "smart");
+								}
+							});
+							e.save();
+						});
+					});
+					form.dataset.cmHooked = "true";
+				}
+			});
+		});
+	//]]></script>
+<%+cbi/valuefooter%>
+

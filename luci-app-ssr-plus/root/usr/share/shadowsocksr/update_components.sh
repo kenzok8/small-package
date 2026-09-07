@@ -4,7 +4,6 @@ set -u
 
 XRAY_RELEASE_PAGE="https://github.com/fw876/helloworld/releases/latest"
 MIHOMO_RELEASE_PAGE="https://github.com/MetaCubeX/mihomo/releases/latest"
-HELLOWORLD_RELEASE_API="https://api.github.com/repos/fw876/helloworld/releases/latest"
 XRAY_BINARY="/usr/bin/xray"
 MIHOMO_BINARY="/usr/bin/mihomo"
 
@@ -990,7 +989,7 @@ v2ray_geosite_upgrade() {
 	return 0
 }
 
-get_xray_latest_tag() {
+get_helloworld_latest_tag() {
 	local location tag
 
 	location="$(effective_url "$XRAY_RELEASE_PAGE")" || return 1
@@ -1050,7 +1049,7 @@ get_xray_latest_info() {
 
 	pm="$(detect_package_manager)" || return 2
 	arch="$(get_openwrt_arch)"
-	tag="$(get_xray_latest_tag)" || return 3
+	tag="$(get_helloworld_latest_tag)" || return 3
 	release_html="$(fetch_text "https://github.com/fw876/helloworld/releases/expanded_assets/$tag")" || return 3
 	asset_list="$(printf '%s\n' "$release_html" | sed -n 's#.*href="/fw876/helloworld/releases/download/[^/]*/\([^"]*\)".*#\1#p')"
 	asset="$(select_xray_asset "$asset_list" "$pm" "$arch")" || return 4
@@ -1195,7 +1194,7 @@ get_naiveproxy_latest_info() {
 
 	pm="$(detect_package_manager)" || return 2
 	arch="$(get_openwrt_arch)"
-	tag="$(get_xray_latest_tag)" || return 3
+	tag="$(get_helloworld_latest_tag)" || return 3
 	release_html="$(fetch_text "https://github.com/fw876/helloworld/releases/expanded_assets/$tag")" || return 3
 	asset_list="$(printf '%s\n' "$release_html" | sed -n 's#.*href="/fw876/helloworld/releases/download/[^/]*/\([^"]*\)".*#\1#p')"
 	asset="$(select_naiveproxy_asset "$asset_list" "$pm" "$arch")" || return 4
@@ -1264,13 +1263,12 @@ mainprogram_asset_version() {
 }
 
 get_mainprogram_latest_info() {
-	local pm release_json tag version asset asset_list url
+	local pm release_html tag version asset asset_list url
 
 	pm="$(detect_package_manager)" || return 2
-	release_json="$(fetch_text "$HELLOWORLD_RELEASE_API")" || return 3
-	tag="$(printf '%s\n' "$release_json" | sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | sed -n '1p')"
-	[ -n "$tag" ] || return 3
-	asset_list="$(printf '%s\n' "$release_json" | sed -n 's/.*"name":[[:space:]]*"\([^"]*\.\(ipk\|apk\)\)".*/\1/p')"
+	tag="$(get_helloworld_latest_tag)" || return 3
+	release_html="$(fetch_text "https://github.com/fw876/helloworld/releases/expanded_assets/$tag")" || return 3
+	asset_list="$(printf '%s\n' "$release_html" | sed -n 's#.*href="/fw876/helloworld/releases/download/[^/]*/\([^"]*\)".*#\1#p')"
 	asset="$(select_mainprogram_asset "$asset_list" "$pm")" || return 4
 	version="$(mainprogram_asset_version "$asset" 2>/dev/null || trim_version "$tag")"
 	url="$(mirror_wrap_url "https://github.com/fw876/helloworld/releases/download/$tag/$asset")"
