@@ -1993,8 +1993,8 @@ cuSub.appendChild(mkBtn('{{ _('Traffic DND') }}',cdOn,function(on){updateFlagInp
 	
 	/* 黑名单持久化按钮（仅在拉黑时间=永久时显示） */
 	var banPersistDiv = document.createElement('div'); banPersistDiv.style.cssText = 'margin:4px 0';
-	var banPersistHi = mkH('ip_black_persist', CT_BAN_PERSIST);
 	var CT_BAN_PERSIST = PB_val('ip_black_persist', '1') !== '0';
+	var banPersistHi = mkH('ip_black_persist', CT_BAN_PERSIST ? '1' : '0');
 	var banPersistBtn = mkBtn('{{ _('Blacklist persist') }}', CT_BAN_PERSIST, function(on) {
 		banPersistHi.value = on ? '1' : '0';
 	});
@@ -3465,14 +3465,10 @@ function loadLog() {
 /* ═══════════════════════════════════════════ */
 /* ── Collect hidden input data from all containers ── */
 window.__pbCollectData = function() {
-	/* 收集前强制同步 textarea → hidden（防 input 事件缺失导致保存值丢失/null） */
-	document.querySelectorAll('textarea').forEach(function(ta) {
-		var hid = null;
-		document.querySelectorAll('input[type="hidden"]').forEach(function(inp) {
-			if (inp.name && inp.name.indexOf('ip_black_list') >= 0) hid = inp;
-		});
-		if (hid) hid.value = ta.value;
-	});
+	/* 收集前只同步 IP 黑名单，避免被其他 textarea 覆盖 */
+	var banTa = document.querySelector('#ct_ban_sub textarea');
+	var banHi = document.querySelector('[name="cbid.pushbot.pushbot.ip_black_list"]');
+	if (banTa && banHi) banHi.value = banTa.value;
 	var ids = ['pushbot_hidden_fields','con_hidden_fields','mon_hidden_fields','term_hidden_fields','disturb_hidden_fields'];
 	var data = {};
 	ids.forEach(function(id) {

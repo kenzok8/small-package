@@ -74,11 +74,11 @@ export function direct_outbound(tag, redirect, enable_dynamic_direct) {
         protocol: "freedom",
         tag: tag,
         settings: {
-            domainStrategy: "UseIPv4",
             redirect: redirect || ""
         },
         streamSettings: {
             sockopt: {
+                domainStrategy: "UseIPv4v6",
                 mark: enable_dynamic_direct ? direct_mark : outbound_mark,
             }
         }

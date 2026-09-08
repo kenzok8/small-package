@@ -1,7 +1,7 @@
 // Copyright 2022-2025 tty228 <tty228@yeah.net> zzsj0928
 // Licensed to the public under the Apache License 2.0.
 
-import { popen, open, readfile } from 'fs';
+import { popen, open, readfile, access, mkdir } from 'fs';
 import { cursor } from 'uci';
 import { translate } from 'luci.core';
 
@@ -21,7 +21,15 @@ function sq(s) {
 
 /* ── helper: uci commit ── */
 function uci_commit(conf) {
-	system("/sbin/uci -q commit " + conf);
+	return system("/sbin/uci -q commit " + conf);
+}
+
+/* 与主程序一致：永久且开启持久化才使用持久文件。 */
+function ip_blacklist_path(timeout, persist) {
+	if (persist == null || persist == "" || persist == "undefined" || persist == "null")
+		persist = "1";
+	return "" + (timeout ?? "") == "0" && "" + persist == "1"
+		? "/usr/bin/pushbot/api/ip_blacklist" : "/tmp/pushbot/ip_blacklist";
 }
 
 return {
@@ -334,7 +342,7 @@ return {
 			diy_json:    "/usr/bin/pushbot/api/diy.json",
 			ipv4_list:   "/usr/bin/pushbot/api/ipv4.list",
 			ipv6_list:   "/usr/bin/pushbot/api/ipv6.list",
-			ip_black_list: "/usr/bin/pushbot/api/ip_blacklist"
+			ip_black_list: ip_blacklist_path(section.ip_black_timeout, section.ip_black_persist)
 		};
 
 		/* 黑名单对账由主进程定时同步（login_send + 主循环），页面加载时不触发
@@ -478,12 +486,85 @@ return {
 			return;
 		}
 
+		/* 先合并本次设置再选路径，不依赖 JSON 字段遍历顺序。 */
+		let previous = cursor().get_all("pushbot", "pushbot") ?? {};
+		if ("ip_black_persist" in data) {
+			let p = data.ip_black_persist;
+			if (p == null || p == "" || p == "undefined" || p == "null") p = "1";
+			if (p != "0" && p != "1") {
+				http.write_json({ ok: false, error: "invalid ip_black_persist" });
+				return;
+			}
+			data.ip_black_persist = "" + p;
+		}
+		if ("ip_black_timeout" in data && data.ip_black_timeout != null && type(data.ip_black_timeout) != "string") {
+			http.write_json({ ok: false, error: "invalid ip_black_timeout" });
+			return;
+		}
+		let old_path = ip_blacklist_path(previous.ip_black_timeout, previous.ip_black_persist);
+		let new_path = ip_blacklist_path(
+			"ip_black_timeout" in data ? data.ip_black_timeout : previous.ip_black_timeout,
+			"ip_black_persist" in data ? data.ip_black_persist : previous.ip_black_persist);
+		/* 未提交名单而切换路径时，只迁移旧活动名单；空名单也覆盖目标。 */
+		if (!("ip_black_list" in data) && old_path != new_path) {
+			let old_list = readfile(old_path);
+			if (old_list == null) {
+				http.write_json({ ok: false, error: "cannot read active IP blacklist" });
+				return;
+			}
+			data.ip_black_list = old_list;
+		}
+		if ("ip_black_list" in data && type(data.ip_black_list) != "string") {
+			http.write_json({ ok: false, error: "invalid ip_black_list" });
+			return;
+		}
+
 		let file_paths = {
 			diy_json: "/usr/bin/pushbot/api/diy.json",
 			ipv4_list: "/usr/bin/pushbot/api/ipv4.list",
 			ipv6_list: "/usr/bin/pushbot/api/ipv6.list",
-			ip_black_list: "/usr/bin/pushbot/api/ip_blacklist"
+			ip_black_list: new_path
 		};
+
+		/* 先写文件并检查结果；失败时不继续提交配置或启动服务。 */
+		for (let opt, path in file_paths) {
+			if (!(opt in data)) continue;
+			let content = type(data[opt]) == "string" ? data[opt] : "";
+			if (opt == "ip_black_list") {
+				let keep = [];
+				let seen = {};
+				let loc = { "::1": true, "127.0.0.1": true };
+				let pf = popen("ip -o addr show 2>/dev/null | awk '{print $4}' | cut -d/ -f1", "r");
+				if (pf) {
+					for (let line = pf.read("line"); line; line = pf.read("line")) {
+						let a = replace(line, /[\r\n\s]+/, "");
+						if (a != "") loc[a] = true;
+					}
+					pf.close();
+				}
+				for (let p in split(content, /\s+/)) {
+					if (p == "" || (p in loc) || (p in seen)) continue;
+					seen[p] = true;
+					push(keep, p);
+				}
+				content = length(keep) ? join("\n", keep) + "\n" : "";
+				if (path == "/tmp/pushbot/ip_blacklist" && !access("/tmp/pushbot") && !mkdir("/tmp/pushbot")) {
+					http.write_json({ ok: false, error: "cannot create /tmp/pushbot" });
+					return;
+				}
+			}
+			let f = open(path, "w");
+			if (!f) {
+				http.write_json({ ok: false, error: "cannot open " + path });
+				return;
+			}
+			let written = f.write(content);
+			let closed = f.close();
+			if (written !== length(content) || !closed) {
+				http.write_json({ ok: false, error: "cannot write " + path });
+				return;
+			}
+		}
 
 		let list_opt_set = {
 			device_aliases: true,
@@ -509,6 +590,7 @@ return {
 		}
 
 		for (let opt, val in data) {
+			if (opt in file_paths) continue;
 			/* color options: only #RRGGBB */
 			if (opt in font_opts) {
 				if (type(val) != 'string' || val == "" || !match(val, /^#[0-9a-fA-F]{6}$/))
@@ -516,48 +598,6 @@ return {
 				else {
 					uci_cmd("delete", "pushbot.pushbot." + sq(opt));
 					uci_cmd("set", "pushbot.pushbot." + sq(opt) + "=" + sq(val));
-				}
-			}
-			/* file paths */
-			else if (opt in file_paths) {
-				let path = file_paths[opt];
-				if (type(val) == 'string' && val != "") {
-					/* 黑名单文件：支持换行/空格/tab 混合分隔（与脚本端
-					   IFS 空白分割一致），保存时统一规范为每行一个 IP */
-					if (opt == "ip_black_list") {
-						let keep = [];
-						let seen = {};
-						let loc = { "::1": true, "127.0.0.1": true };
-						let pf = popen("ip -o addr show 2>/dev/null | awk '{print $4}' | cut -d/ -f1", "r");
-						if (pf) {
-							for (let line = pf.read("line"); line; line = pf.read("line")) {
-								let a = replace(line, /[\r\n\s]+/, "");
-								if (a != "")
-									loc[a] = true;
-							}
-							pf.close();
-						}
-						/* 按任意空白分割（换行/空格/tab 混用均可） */
-						let parts = split(replace(val, /\r\n/g, "\n"), /\s+/);
-						for (let p in parts) {
-							let l = replace(p, /[\r\n\s]+/, "");
-							if (l == "" || (l in loc) || (l in seen))
-								continue;
-							seen[l] = true;
-							push(keep, l);
-						}
-						content = join("\n", keep);
-						if (length(content) > 0)
-							content += "\n";
-					}
-					/* 非黑名单文件（diy.json / ipv4.list / ipv6.list）直接写原始值；
-					   黑名单分支已构造规范化 content，两者共用此行 */
-					let f = open(path, "w");
-					if (f) { f.write(content ?? val); f.close(); }
-				}
-				else {
-					let f = open(path, "w");
-					if (f) { f.write(""); f.close(); }
 				}
 			}
 			/* list options */
@@ -612,7 +652,10 @@ return {
 				}
 			}
 		}
-		uci_commit("pushbot");
+		if (uci_commit("pushbot") != 0) {
+			http.write_json({ ok: false, error: "cannot commit pushbot configuration" });
+			return;
+		}
 
 		/* 保存后联动服务状态（避免"config 启用但服务未启动"）：
 		 *   enable=1 → 服务未跑则启动，已在跑则重启使新配置生效

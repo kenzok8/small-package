@@ -20,8 +20,10 @@ export function manual_tproxy_outbounds(config, manual_tproxy) {
                 redirect: sprintf("%s:%d", v["dest_addr"] || "", v["dest_port"] || 0),
                 domainStrategy: "AsIs"
             },
-            proxySettings: {
-                tag: tcp_tag
+            streamSettings: {
+                sockOpt: {
+                    dialerProxy: tcp_tag
+                }
             }
         });
 
@@ -40,8 +42,10 @@ export function manual_tproxy_outbounds(config, manual_tproxy) {
                 redirect: sprintf("%s:%d", v["dest_addr"] || "", v["dest_port"] || 0),
                 domainStrategy: "AsIs"
             },
-            proxySettings: {
-                tag: udp_tag
+            streamSettings: {
+                sockOpt: {
+                    dialerProxy: udp_tag
+                }
             }
         });
     }

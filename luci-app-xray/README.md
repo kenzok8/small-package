@@ -51,7 +51,14 @@ Some features are deprecated / unstable so they are placed in preview app. To en
 ## Changelog since 3.7.0
 
 * 2026-01-14 chore: bump version
-* 2026-01-26 fix: typos and hysteria version check
+* 2026-01-26 fix: typos and hysteria version check; bump version to 3.7.1
+* 2026-04-28 feat: enhance build workflow with multiple SDK versions and improved file handling
+* 2026-05-18 chore: adapt for legacy reverse deprecation
+* 2026-05-19 feat: Ping response for FakeDNS pools
+* 2026-05-25 feat: add Cloudflare Origin RSA CA
+* 2026-06-13 chore: change default FakeDNS IPv6 pool for Dnsmasq 2.93; fix typos
+* 2026-07-14 fix: bypass replies to inbound connections
+* 2026-09-08 fix: adapt for Xray 26.9.8; bump version to 3.7.2
 
 ## Changelog since 3.6.0
 

@@ -16,7 +16,7 @@ function read_config(){
 	"pushbot_ipv4" "ipv4_interface" "pushbot_ipv6" "ipv6_interface" "pushbot_up" "pushbot_down" "cpuload_enable" "cpuload" "temperature_enable" "temperature" \
 	"regular_time" "regular_time_2" "regular_time_3" "interval_time" "crontab" \
 	"client_usage" "client_usage_max" "client_usage_disturb" "client_usage_whitelist" \
-	"web_logged" "ssh_logged" "web_login_failed" "ssh_login_failed" "wifi_connected" "wifi_auth_failed" "login_max_num" "web_login_black" "ip_white_list" "ip_black_timeout" \
+	"web_logged" "ssh_logged" "web_login_failed" "ssh_login_failed" "wifi_connected" "wifi_auth_failed" "login_max_num" "web_login_black" "ip_white_list" "ip_black_timeout" "ip_black_persist" \
 	"pushbot_sheep" "starttime" "endtime" "pushbot_whitelist" "pushbot_blacklist" "pushbot_interface" "MAC_online_list" "MAC_offline_list" \
 	"dnd_low_range" \
 	"up_timeout" "down_timeout" "timeout_retry_count" "thread_num" "soc_code" "pve_host" "pve_port"\
@@ -1558,8 +1558,7 @@ function login_send(){
 					sed -i "/^${login_ip}$/d" ${dir}web_failed
 					echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】设备 ${login_ip} 通过 Web 频繁尝试登录" >> ${logfile}
 				else
-					echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】设备 ${login_ip} 触发拉黑但被本机/白名单保护拦截，保留记录待后续确认" >> ${logfile}
-				fi
+					echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】设备 ${login_ip} 触发拉黑但未成功，保留记录待后续确认" >> ${logfile}				fi
 			fi
 		fi
 	done
@@ -2104,14 +2103,20 @@ function need_blacklist_sync(){
 		[ ! -f "${ip_blacklist_path}" ] && return 0
 	fi
 
-	# 检查 4：内核 set 缺失（fw4 重启/路由重启清空了 nft set）
-	# 只在 set 为空时才需要同步（set 非空说明规则已生效，不需要重复执行）
+	# 检查 4：集合或 DROP 规则缺失；保留空集合触发到期对账
 	if [ "$cur_onoff" = "1" ] && [ -s "${ip_blacklist_path}" ]; then
 		if command -v nft >/dev/null 2>&1; then
-			local set_count=$(nft list set inet fw4 pushbot_blacklist 2>/dev/null | grep -c "elements = {" || echo "0")
-			if [ "$set_count" -eq "0" ]; then
-				return 0
-			fi
+			local set4 input_rules
+			set4=$(nft list set inet fw4 pushbot_blacklist 2>/dev/null) || return 0
+			nft list set inet fw4 pushbot_blacklist6 >/dev/null 2>&1 || return 0
+			input_rules=$(nft list chain inet fw4 input 2>/dev/null) || return 0
+
+			printf '%s\n' "$input_rules" |
+				grep -qE '^[[:space:]]*ip saddr @pushbot_blacklist[[:space:]]+drop([[:space:]]|$)' || return 0
+			printf '%s\n' "$input_rules" |
+				grep -qE '^[[:space:]]*ip6 saddr @pushbot_blacklist6[[:space:]]+drop([[:space:]]|$)' || return 0
+
+			printf '%s\n' "$set4" | grep -qF 'elements = {' || return 0
 		fi
 	fi
 
@@ -2221,9 +2226,15 @@ function add_ip_black(){
 	# 直接查内核：拉黑开启且有 IP 时，set 或 rule 缺失即强制重建。
 	if ! $need_update && [ -n "$cur_onoff" ] && [ "$cur_onoff" != "0" ] && [ -s "${ip_blacklist_path}" ]; then
 		if command -v nft >/dev/null 2>&1; then
+			local input_rules
 			nft list set inet fw4 pushbot_blacklist >/dev/null 2>&1 || need_update=true
 			nft list set inet fw4 pushbot_blacklist6 >/dev/null 2>&1 || need_update=true
-			grep "@pushbot_blacklist" | grep -v "@pushbot_blacklist6" | grep -q . || need_update=true
+			input_rules=$(nft list chain inet fw4 input 2>/dev/null) || need_update=true
+
+			printf '%s\n' "$input_rules" |
+				grep -qE '^[[:space:]]*ip saddr @pushbot_blacklist[[:space:]]+drop([[:space:]]|$)' || need_update=true
+			printf '%s\n' "$input_rules" |
+				grep -qE '^[[:space:]]*ip6 saddr @pushbot_blacklist6[[:space:]]+drop([[:space:]]|$)' || need_update=true
 		else
 			ipset list ip_blacklist >/dev/null 2>&1 || need_update=true
 			iptables -C INPUT -m set --match-set ip_blacklist src -j DROP >/dev/null 2>&1 || need_update=true
@@ -2351,11 +2362,23 @@ function add_ip_black(){
 			nft add set inet fw4 pushbot_blacklist6 { type ipv6_addr\; timeout ${bl_timeout_sec}s\; } 2>/dev/null || true
 		fi
 		# 规则用 insert（链首优先，不被 accept 抢先），且只在缺失时插入
-		if ! nft list chain inet fw4 input 2>/dev/null | grep "@pushbot_blacklist" | grep -v "@pushbot_blacklist6" | grep -q .; then
-			nft insert rule inet fw4 input ip saddr @pushbot_blacklist drop 2>/dev/null || true
+		local input_rules
+		input_rules=$(nft list chain inet fw4 input 2>/dev/null) || input_rules=""
+
+		if ! printf '%s\n' "$input_rules" |
+			grep -qE '^[[:space:]]*ip saddr @pushbot_blacklist[[:space:]]+drop([[:space:]]|$)'; then
+			if ! nft insert rule inet fw4 input ip saddr @pushbot_blacklist drop 2>>"$logfile"; then
+				echo "$(date '+%Y-%m-%d %H:%M:%S') 【防火墙】【失败】IPv4 黑名单 DROP 规则插入失败" >> "$logfile"
+				return 1
+			fi
 		fi
-		if ! nft list chain inet fw4 input 2>/dev/null | grep -q "@pushbot_blacklist6"; then
-			nft insert rule inet fw4 input ip6 saddr @pushbot_blacklist6 drop 2>/dev/null || true
+
+		if ! printf '%s\n' "$input_rules" |
+			grep -qE '^[[:space:]]*ip6 saddr @pushbot_blacklist6[[:space:]]+drop([[:space:]]|$)'; then
+			if ! nft insert rule inet fw4 input ip6 saddr @pushbot_blacklist6 drop 2>>"$logfile"; then
+				echo "$(date '+%Y-%m-%d %H:%M:%S') 【防火墙】【失败】IPv6 黑名单 DROP 规则插入失败" >> "$logfile"
+				return 1
+			fi
 		fi
 		# 增量同步：不 flush 重建（会抹掉内核超时状态），只补齐 set 缺失元素。
 		# 文件是"待拉黑"登记，set 是"生效中"权威（含 timeout，到期自动移除）。
