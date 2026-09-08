@@ -1,18 +1,167 @@
 #!/bin/sh
 
+# Background commands must not inherit the setup lock from their parent.
+[ -z "$1" ] || exec 9>&-
+
 . /lib/functions.sh
 . /lib/functions/network.sh
+
+worker_current()
+{
+	local current_generation
+	read -r current_generation < /tmp/fakemesh.generation 2>/dev/null || return 1
+	[ "$FAKEMESH_GENERATION" = "$current_generation" ]
+}
+
+worker_unlock()
+{
+	[ -n "$worker_dir" ] || return 0
+	rm -f "$worker_dir/$$"
+	rmdir "$worker_dir" 2>/dev/null
+	worker_dir=
+}
+
+worker_cleanup()
+{
+	worker_unlock
+	[ -z "$sync_tmp" ] || rm -f "$sync_tmp"
+}
+
+worker_lock()
+{
+	worker_current || return 1
+	mkdir -m 700 "$1" 2>/dev/null || return 1
+	worker_dir="$1"
+	touch "$worker_dir/$$"
+	trap 'worker_cleanup' EXIT
+	trap 'exit 0' HUP INT TERM
+	worker_current || { worker_cleanup; return 1; }
+}
+
+is_worker()
+{
+	local command_line
+	[ "$1" != "$$" ] && [ -r "/proc/$1/cmdline" ] || return 1
+	command_line=$(tr '\000' ' ' < "/proc/$1/cmdline")
+	case " $command_line " in
+		*" /usr/sbin/fakemesh "*) return 0 ;;
+	esac
+	return 1
+}
+
+stop_workers()
+{
+	local marker worker_pid pending= waited=0
+	for marker in /tmp/fakemesh_lck[1-7]/*; do
+		[ -f "$marker" ] || continue
+		worker_pid=${marker##*/}
+		case "$worker_pid" in ''|*[!0-9]*) continue ;; esac
+		is_worker "$worker_pid" || continue
+		kill -TERM "$worker_pid" 2>/dev/null
+		pending="$pending $worker_pid"
+	done
+	while [ -n "$pending" ]; do
+		local alive=
+		for worker_pid in $pending; do
+			is_worker "$worker_pid" || continue
+			if [ "$waited" -ge 15 ]; then
+				kill -KILL "$worker_pid" 2>/dev/null
+			fi
+			alive="$alive $worker_pid"
+		done
+		pending=$alive
+		[ -z "$pending" ] && break
+		sleep 1
+		waited=$((waited+1))
+	done
+	rm -rf /tmp/fakemesh_lck[1-7]
+}
+
+setup_lock()
+{
+	exec 9>/var/lock/fakemesh.lock
+	flock -x 9 || return 1
+	trap 'flock -u 9' EXIT
+	trap 'exit 1' HUP INT TERM
+}
+
+case "$1" in
+	setup) exit 0 ;;
+	'')
+		setup_lock || exit 1
+		FAKEMESH_GENERATION="$$.$(date +%s)"
+		printf '%s\n' "$FAKEMESH_GENERATION" > /tmp/fakemesh.generation
+		export FAKEMESH_GENERATION
+		stop_workers
+		;;
+	*)
+		if [ -z "$FAKEMESH_GENERATION" ]; then
+			read -r FAKEMESH_GENERATION < /tmp/fakemesh.generation 2>/dev/null || exit 0
+		fi
+		export FAKEMESH_GENERATION
+		worker_current || exit 0
+		;;
+esac
 
 band_steer_helper=${band_steer_helper:-$(uci -q get fakemesh.default.band_steer_helper 2>/dev/null)}
 band_steer_helper=${band_steer_helper:-none}
 
+unified_ssid_exists()
+{
+	local s2 s5 ssid2 ssid5
+	for s2 in $1; do
+		config_get ssid2 "$s2" ssid
+		[ -n "$ssid2" ] || continue
+		for s5 in $2; do
+			config_get ssid5 "$s5" ssid
+			[ "$ssid2" = "$ssid5" ] && return 0
+		done
+	done
+	return 1
+}
+
+collect_band_ifaces()
+{
+	local mode dev radio_band ssid
+	config_get mode "$1" mode
+	[ "$mode" = ap ] || return 0
+	config_get dev "$1" device
+	config_get radio_band "$dev" band
+	config_get ssid "$1" ssid
+	[ -n "$ssid" ] || return 0
+	case "$radio_band" in
+		2g|2.4g|2.4G) ssid_2g="$ssid_2g $1" ;;
+		5g|5G|6g|6G) ssid_5g="$ssid_5g $1" ;;
+	esac
+}
+
+wireless_has_unified_ssid()
+(
+	config_load wireless || exit 1
+	ssid_2g=
+	ssid_5g=
+	config_foreach collect_band_ifaces wifi-iface
+	unified_ssid_exists "$ssid_2g" "$ssid_5g"
+)
+
 band_steer_helper_switch()
 {
 	[ "$(uci -q get fakemesh.default.enabled 2>/dev/null)" = "1" ] || return 0
+	worker_lock /tmp/fakemesh_lck6 || return 0
 
 	if [ "$band_steer_helper" = "usteer" ]; then
 		uci delete usteer.@usteer[0].event_log_types 2>/dev/null
 		uci delete usteer.@usteer[0].ssid_list 2>/dev/null
+
+		# Auto-detect dual-band SSID topology
+		if wireless_has_unified_ssid; then
+			uci -q set usteer.@usteer[0].band_steering_min_snr='-72'
+			uci -q set usteer.@usteer[0].band_steering_interval='30000'
+		else
+			uci -q set usteer.@usteer[0].band_steering_min_snr='0'
+			uci -q set usteer.@usteer[0].band_steering_interval='0'
+		fi
+
 		uci commit usteer
 		test -x /etc/init.d/dawn && {
 			/etc/init.d/dawn enabled && /etc/init.d/dawn disable
@@ -57,8 +206,8 @@ config_load fakemesh
 config_get_bool enabled default 'enabled' '0'
 
 test $enabled -eq 0 && {
+	[ -z "$1" ] || exit 0
 	rm -f /www/fakemesh.*
-	rm -rf /tmp/fakemesh_lck*
 	rm -f /tmp/fakemesh.firewall.include
 
 	test -e /etc/init.d/umdns && {
@@ -145,12 +294,13 @@ LOST_AC_CNT=3
 agent_lost_ac()
 {
 	[ "$role" = "agent" ] || [ "$role" = "wap" ] || return 0
+	worker_lock /tmp/fakemesh_lck4 || return 0
 
 	pid=$$
 	logger -t fakemesh "agent_lost_ac($pid): started! lost_ac=$lost_ac"
 
 	if test $lost_ac -gt $LOST_AC_CNT; then
-		rm -rf /tmp/fakemesh_lck3
+		worker_unlock
 		lost_ac=$lost_ac exec /usr/sbin/fakemesh agent_sync_config &
 		return 0
 	fi
@@ -239,26 +389,129 @@ agent_lost_ac()
 
 	logger -t fakemesh "agent_lost_ac($pid): done!"
 
-	#make sure agent_sync_config stopped
-	rm -rf /tmp/fakemesh_lck3
+	worker_unlock
 	lost_ac=$lost_ac exec /usr/sbin/fakemesh agent_sync_config &
 }
+
+controller_addresses()
+(
+	. /usr/share/libubox/jshn.sh
+	json_load "$(ubus call umdns browse)" || exit 1
+	json_select "_fakemesh_${Xid}._tcp" || exit 1
+	json_get_keys services
+	for service in $services; do
+		json_select "$service" || continue
+		json_get_var address ipv4
+		[ -z "$address" ] || printf '%s\n' "$address"
+		json_select ..
+	done
+)
+
+controller_announcement()
+(
+	. /usr/share/libubox/jshn.sh
+	json_init
+	json_add_object fakemesh
+	json_add_string service "_fakemesh_${Xid}._tcp.local"
+	json_add_int port 65535
+	json_add_array txt
+	json_add_string '' "id=${Xid}"
+	json_close_array
+	json_close_object
+	json_dump
+)
+
+wireless_config_md5()
+{
+	local digest
+	digest=$({
+		printf 'role=%s\n' "$1"
+		uci show fakemeshac | grep '^fakemeshac.@wifim'
+	} | md5sum)
+	printf '%s' "${digest%% *}"
+}
+
+collect_radios()
+{
+	local radio_band radio_path
+	config_get radio_band "$1" band
+	case "$radio_band" in
+		2g) radios_2g="$radios_2g $1" ;;
+		5g) radios_5g="$radios_5g $1" ;;
+		6g) radios_6g="$radios_6g $1" ;;
+		*) return 0 ;;
+	esac
+	config_get radio_path "$1" path
+	case "$radio_path" in
+		*bcma*) legacy_radios="$legacy_radios $1" ;;
+		*)
+			if iwinfo "wlan${1#radio}" info 2>/dev/null | grep -qi Cypress; then
+				legacy_radios="$legacy_radios $1"
+			fi
+			;;
+	esac
+}
+
+validate_ac_config()
+(
+	validate_dir="/tmp/fakemesh-validate.$$"
+	mkdir -m 700 "$validate_dir" || exit 1
+	trap 'rm -rf "$validate_dir"' EXIT
+	cp "$1" "$validate_dir/fakemeshac" || exit 1
+
+	# Parse independently of the live config and any pending UCI changes.
+	config_dump=$(uci -q -c "$validate_dir" -P "$validate_dir" show fakemeshac) || exit 1
+	ac_get() {
+		uci -q -c "$validate_dir" -P "$validate_dir" get "$1"
+	}
+	[ "$(ac_get fakemeshac.default)" = "fakemesh" ] || exit 1
+	[ "$(ac_get fakemeshac.default.role)" = "controller" ] || exit 1
+	[ "$(ac_get fakemeshac.default.enabled)" = "1" ] || exit 1
+	mesh_id=$(ac_get fakemeshac.default.id)
+	[ -n "$mesh_id" ] && [ "${#mesh_id}" -le 32 ] || exit 1
+	case "$(ac_get fakemeshac.default.band)" in
+		2g|5g|6g) ;;
+		*) exit 1 ;;
+	esac
+
+	# An explicitly empty wireless catalog is valid, but malformed entries are not.
+	sections=$(printf '%s\n' "$config_dump" | sed -n 's/^\(fakemeshac\.[^.]*\)=wifim$/\1/p')
+	for section in $sections; do
+		ssid=$(ac_get "$section.ssid")
+		[ -n "$ssid" ] && [ "${#ssid}" -le 32 ] || exit 1
+		case "$(ac_get "$section.band")" in
+			2g|5g|6g|2g5g|2g6g|5g6g|2g5g6g) ;;
+			*) exit 1 ;;
+		esac
+		case "$(ac_get "$section.enabled" || printf 1)" in
+			0|1) ;;
+			*) exit 1 ;;
+		esac
+		case "$(ac_get "$section.encryption")" in
+			none|owe) ;;
+			psk|psk2|psk-mixed|sae|sae-mixed)
+				key=$(ac_get "$section.key")
+				[ -n "$key" ] || exit 1
+				;;
+			*) exit 1 ;;
+		esac
+	done
+	exit 0
+)
 
 agent_sync_config()
 {
 	[ "$sync_ac" = "1" ] || {
 		return 0
 	}
-	[ "$role" = "wap" ] && {
-		#make sure agent_keep_alive stopped
-		rm -rf /tmp/fakemesh_lck2*
-	}
-
-	mkdir /tmp/fakemesh_lck3 || return 0
+	worker_lock /tmp/fakemesh_lck3 || return 0
 	pid=$$
-	touch /tmp/fakemesh_lck3/$pid
+	sync_tmp="/tmp/fakemesh.ac.config.tmp.$pid"
 
 	logger -t fakemesh "agent_sync_config($pid): started!"
+	hash=$(echo -n ${Xid}${Xkey} | md5sum)
+	hash=${hash%% *}
+	validated_config=0
 
 	touch /tmp/fakemesh.ac.config
 	ln -s /tmp/fakemesh.ac.config /etc/config/fakemeshac 2>/dev/null
@@ -280,7 +533,7 @@ agent_sync_config()
 				/etc/init.d/umdns reload
 				sleep 5
 			fi
-			achost="$(ubus call umdns browse | jsonfilter -e "@['_fakemesh_${Xid}._tcp'][*]['ipv4']")"
+			achost=$(controller_addresses)
 			if ! test -n "$achost"; then
 				logger -t fakemesh "agent_sync_config($pid): umdns: achost not found(lost_ac=$lost_ac)!"
 				achost=controller.fakemesh
@@ -295,10 +548,9 @@ agent_sync_config()
 			fi
 		fi
 
-		hash=$(echo -n ${Xid}${Xkey} | md5sum | head -c32)
 		if ( \
-		[ "$role" = "controller" ] && cp /etc/config/fakemesh /tmp/fakemesh.ac.config.tmp || \
-		wget -4 -q -T 10 -t 1 -O /tmp/fakemesh.ac.config.tmp http://$achost/fakemesh.$hash 2>/dev/null ); then
+		[ "$role" = "controller" ] && cp /etc/config/fakemesh "$sync_tmp" || \
+		wget -4 -q -T 10 -t 1 -O "$sync_tmp" http://$achost/fakemesh.$hash 2>/dev/null ); then
 			:
 		else
 			lost_ac=$((lost_ac+1))
@@ -310,30 +562,72 @@ agent_sync_config()
 				/etc/init.d/network reload
 				sleep 5
 			fi
-			if test -n "$acip" && [ "$role" != "controller" ] && wget -4 -q -T 5 -t 1 -O /tmp/fakemesh.ac.config.tmp http://$acip/fakemesh.$hash 2>/dev/null; then
+			if test -n "$acip" && [ "$role" != "controller" ] && wget -4 -q -T 5 -t 1 -O "$sync_tmp" http://$acip/fakemesh.$hash 2>/dev/null; then
 				logger -t fakemesh "agent_sync_config($pid): fetch config from gateway($acip) ok(lost_ac=$lost_ac)"
-			elif test -n "$achost" && [ "$role" != "controller" ] && wget -4 -q -T 5 -t 1 -O /tmp/fakemesh.ac.config.tmp http://$achost/fakemesh.$hash 2>/dev/null; then
+			elif test -n "$achost" && [ "$role" != "controller" ] && wget -4 -q -T 5 -t 1 -O "$sync_tmp" http://$achost/fakemesh.$hash 2>/dev/null; then
 				logger -t fakemesh "agent_sync_config($pid): fetch config from achost($achost) ok(lost_ac=$lost_ac)"
 			else
 				if test $lost_ac -ge $LOST_AC_CNT; then
+					worker_unlock
 					lost_ac=$lost_ac exec /usr/sbin/fakemesh agent_lost_ac &
 					return 0
 				fi
 				logger -t fakemesh "agent_sync_config($pid): fetch config from achost($achost)/gateway($acip) failed($lost_ac), wait 30s"
 				sleep 30
-				rm -f /tmp/fakemesh.ac.config.tmp
+				rm -f "$sync_tmp"
 				test -f /tmp/fakemesh_lck3/$pid || return 0
 				continue
 			fi
 		fi
 
-		if ! grep -q fakemesh /tmp/fakemesh.ac.config.tmp; then
-			rm -f /tmp/fakemesh.ac.config.tmp
+		worker_current || return 0
+		if { [ "$validated_config" != 1 ] || ! cmp -s "$sync_tmp" /tmp/fakemesh.ac.config; } && ! validate_ac_config "$sync_tmp"; then
+			lost_ac=$((lost_ac+1))
+			logger -t fakemesh "agent_sync_config($pid): invalid controller config ($lost_ac), keeping current config"
+			rm -f "$sync_tmp"
+			if [ "$role" != "controller" ] && test "$lost_ac" -ge "$LOST_AC_CNT"; then
+				worker_unlock
+				lost_ac=$lost_ac exec /usr/sbin/fakemesh agent_lost_ac &
+				return 0
+			fi
+			sleep 30
 			test -f /tmp/fakemesh_lck3/$pid || return 0
 			continue
 		fi
 
-		mv /tmp/fakemesh.ac.config.tmp /tmp/fakemesh.ac.config
+		worker_current || return 0
+		mv "$sync_tmp" /tmp/fakemesh.ac.config || return 1
+		validated_config=1
+
+		# Dynamic usteer parameters synchronization & hitless reload
+		new_min_snr=$(uci -q get fakemeshac.default.min_snr)
+		new_roam_trigger=$(uci -q get fakemeshac.default.roam_trigger_snr)
+		new_roam_scan=$(uci -q get fakemeshac.default.roam_scan_snr)
+		new_min_connect=$(uci -q get fakemeshac.default.min_connect_snr)
+		new_signal_diff=$(uci -q get fakemeshac.default.signal_diff_threshold)
+		new_load_kick=$(uci -q get fakemeshac.default.load_kick_enabled)
+		if [ -n "$new_min_snr" ]; then
+			old_min_snr=$(uci -q get usteer.@usteer[0].min_snr)
+			old_roam_trigger=$(uci -q get usteer.@usteer[0].roam_trigger_snr)
+			old_roam_scan=$(uci -q get usteer.@usteer[0].roam_scan_snr)
+			old_min_connect=$(uci -q get usteer.@usteer[0].min_connect_snr)
+			old_signal_diff=$(uci -q get usteer.@usteer[0].signal_diff_threshold)
+			old_load_kick=$(uci -q get usteer.@usteer[0].load_kick_enabled)
+			if [ "$old_min_snr" != "$new_min_snr" ] || [ "$old_roam_trigger" != "$new_roam_trigger" ] || \
+			   [ "$old_roam_scan" != "$new_roam_scan" ] || [ "$old_min_connect" != "$new_min_connect" ] || \
+			   [ "$old_signal_diff" != "$new_signal_diff" ] || [ "$old_load_kick" != "$new_load_kick" ]; then
+				[ -n "$new_min_snr" ] && uci -q set usteer.@usteer[0].min_snr="$new_min_snr"
+				[ -n "$new_roam_trigger" ] && uci -q set usteer.@usteer[0].roam_trigger_snr="$new_roam_trigger"
+				[ -n "$new_roam_scan" ] && uci -q set usteer.@usteer[0].roam_scan_snr="$new_roam_scan"
+				[ -n "$new_min_connect" ] && uci -q set usteer.@usteer[0].min_connect_snr="$new_min_connect"
+				[ -n "$new_signal_diff" ] && uci -q set usteer.@usteer[0].signal_diff_threshold="$new_signal_diff"
+				[ -n "$new_load_kick" ] && uci -q set usteer.@usteer[0].load_kick_enabled="$new_load_kick"
+				uci commit usteer
+				if ubus -S list usteer >/dev/null 2>&1; then
+					ubus call usteer reload 2>/dev/null || /etc/init.d/usteer reload 2>/dev/null
+				fi
+			fi
+		fi
 
 		test $lost_ac -gt 0 && logger -t fakemesh "agent_sync_config($pid): fetch config ok!"
 
@@ -346,9 +640,17 @@ agent_sync_config()
 		}
 
 		oldcfgmd5=$(uci get fakemesh.default.wifim_md5 2>/dev/null)
-		newcfgmd5=$(uci show fakemeshac | grep "^fakemeshac.@wifim" | md5sum | head -c 32)
+		newcfgmd5=$(wireless_config_md5 "$role")
 		[ "${oldcfgmd5}" = "${newcfgmd5}" ] || {
 			logger -t fakemesh "agent_sync_config($pid): config change!"
+			# Radio metadata and driver/package capabilities do not vary per SSID.
+			config_load wireless
+			radios_2g= radios_5g= radios_6g= legacy_radios=
+			config_foreach collect_radios wifi-device
+			basic_wpad=0
+			if opkg list-installed 2>/dev/null | grep -q wpad-basic || apk list 2>/dev/null | grep wpad-basic | grep -q installed; then
+				basic_wpad=1
+			fi
 			#delete old wifi config
 			I=0
 			while uci get wireless.@wifi-iface[$I] >/dev/null 2>&1; do
@@ -369,12 +671,19 @@ agent_sync_config()
 				enabled=$(uci get fakemeshac.@wifim[$J].enabled || echo 1)
 
 				[ "$bands" = "2g5g" ] && bands="2g 5g"
+				[ "$bands" = "2g5g6g" ] && bands="2g 5g 6g"
+				[ "$bands" = "5g6g" ] && bands="5g 6g"
+				[ "$bands" = "2g6g" ] && bands="2g 6g" 
 
 				[ "$enabled" = "1" ] && {
 					for band in $bands; do
-						for wbandstr in $(uci show wireless | grep .band=\'${band}\'$); do
-						if test -n "$wbandstr"; then
-							radio=$(echo "$wbandstr" | cut -d. -f2)
+						case "$band" in
+							2g) radios=$radios_2g ;;
+							5g) radios=$radios_5g ;;
+							6g) radios=$radios_6g ;;
+							*) radios= ;;
+						esac
+						for radio in $radios; do
 
 							uci set wireless.wifinet$K=wifi-iface
 							uci set wireless.wifinet$K.device="${radio}"
@@ -388,22 +697,48 @@ agent_sync_config()
 							uci set wireless.wifinet$K.wpa_group_rekey='601'
 							uci set wireless.wifinet$K.max_inactivity='301'
 							if [ "${encryption}" != "none" ]; then
-								uci set wireless.wifinet$K.encryption="${encryption}"
+								if [ "$band" = "6g" ]; then
+									case "${encryption}" in
+										sae|sae-mixed|owe)
+											uci set wireless.wifinet$K.encryption="${encryption}"
+											;;
+										*)
+											uci set wireless.wifinet$K.encryption="sae"
+											;;
+									esac
+									uci set wireless.wifinet$K.ieee80211w='2'
+								else
+									uci set wireless.wifinet$K.encryption="${encryption}"
+									case "${encryption}" in
+										sae)
+											uci set wireless.wifinet$K.ieee80211w='2'
+											;;
+										sae-mixed)
+											uci set wireless.wifinet$K.ieee80211w='1'
+											;;
+									esac
+								fi
 								uci set wireless.wifinet$K.key="${key}"
 							else
-								uci set wireless.wifinet$K.encryption='none'
+								if [ "$band" = "6g" ]; then
+									uci set wireless.wifinet$K.encryption='owe'
+									uci set wireless.wifinet$K.ieee80211w='2'
+								else
+									uci set wireless.wifinet$K.encryption='none'
+								fi
 							fi
-							if uci get wireless.${radio}.path | grep -q bcma || iwinfo wlan${radio:5} info | grep -qi Cypress; then
+							case " $legacy_radios " in
+							*" $radio "*)
 								WLAN_IDX=${radio:5}
 								uci set wireless.wifinet$K.ifname="wlan${WLAN_IDX}"
-							else
+								;;
+							*)
 								uci set wireless.wifinet$K.ieee80211r='1'
 								uci set wireless.wifinet$K.ft_over_ds='1'
 								uci set wireless.wifinet$K.ft_psk_generate_local='1'
-							fi
-							if opkg list-installed 2>/dev/null | grep -q wpad-basic || apk list 2>/dev/null | grep wpad-basic | grep -q installed; then
-								:
-							else
+								;;
+							esac
+							if [ "$basic_wpad" = 0 ]; then
 								uci set wireless.wifinet$K.bss_transition='1'
 								uci set wireless.wifinet$K.wnm_sleep_mode='1'
 								uci set wireless.wifinet$K.time_advertisement='2'
@@ -414,7 +749,6 @@ agent_sync_config()
 							fi
 
 							K=$((K+1))
-						fi
 						done
 					done
 				}
@@ -463,9 +797,8 @@ agent_keep_alive()
 	channel=$(uci get wireless.${radio}.channel)
 	test -n "$channel" || return 1
 
-	mkdir /tmp/fakemesh_lck2 || return 0
+	worker_lock /tmp/fakemesh_lck2 || return 0
 	pid=$$
-	touch /tmp/fakemesh_lck2/$pid
 
 	logger -t fakemesh "agent_keep_alive($pid): started!"
 	while :; do
@@ -482,7 +815,7 @@ agent_keep_alive()
 				fi
 			elif [ "$(iwinfo meshx1 info | head -n3 | tail -n1 | awk '{print $4}')" != "$channel" ]; then
 				logger -t fakemesh "agent_keep_alive($pid): Agent channel changed!"
-				rm -f /tmp/fakemesh_lck2/$pid; rmdir /tmp/fakemesh_lck2
+				worker_unlock
 				exec /usr/sbin/fakemesh agent_fix_channel &
 				return 0
 			fi
@@ -491,7 +824,7 @@ agent_keep_alive()
 		test -f /tmp/fakemesh_lck2/$pid || return 0
 	done
 
-	rm -f /tmp/fakemesh_lck2/$pid; rmdir /tmp/fakemesh_lck2
+				worker_unlock
 }
 
 agent_fix_channel()
@@ -505,16 +838,15 @@ agent_fix_channel()
 	channel=$(uci get wireless.${radio}.channel)
 	test -n "$channel" || return 1
 
-	mkdir /tmp/fakemesh_lck1 || return 0
+	worker_lock /tmp/fakemesh_lck1 || return 0
 	pid=$$
-	touch /tmp/fakemesh_lck1/$pid
 
 	logger -t fakemesh "agent_fix_channel($pid): started!"
 	while :; do
 		sleep 10
 		sta="$(ubus -S list wpa_supplicant.meshx1)"
 		if test -n "$sta"; then
-			chan=$(iwinfo meshx1 scan | grep -A1 -B1 "ESSID: \"${Xid}\"" | head -n3 | tail -n1 | grep -io "Channel:.*"| awk '{print $2}')
+			chan=$(iwinfo meshx1 scan | grep -F -A1 -B1 "ESSID: \"${Xid}\"" | head -n3 | tail -n1 | grep -io "Channel:.*"| awk '{print $2}')
 			if test -n "$chan"; then
 				if [ "$chan" != "$channel" ]; then
 					logger -t fakemesh "agent_fix_channel($pid): Setting up channel ($chan) for ${radio}"
@@ -538,7 +870,7 @@ agent_fix_channel()
 		test -f /tmp/fakemesh_lck1/$pid || return 0
 	done
 
-	rm -f /tmp/fakemesh_lck1/$pid; rmdir /tmp/fakemesh_lck1
+	worker_unlock
 
 	exec /usr/sbin/fakemesh agent_keep_alive &
 }
@@ -563,9 +895,40 @@ agent_fix_channel()
 	exit 0
 }
 
+agent_reload()
+{
+	worker_lock /tmp/fakemesh_lck5 || return 0
+	sleep 15
+	worker_current || return 0
+	/etc/init.d/network reload
+	/etc/init.d/dnsmasq reload
+	worker_current || return 0
+	/usr/sbin/fakemesh agent_fix_channel &
+}
+
+[ "x$1" = "xagent_reload" ] && {
+	agent_reload
+	exit 0
+}
+
 [ "x$1" = "xgen_config" ] && {
+	worker_lock /tmp/fakemesh_lck7 || exit 0
 	# http://controller.fakemesh/fakemesh.435ca8a686ae9f07eb4eb67d2216b154
 	[ "$role" = "controller" ] && {
+		min_snr=$(uci -q get usteer.@usteer[0].min_snr || echo -75)
+		roam_trigger=$(uci -q get usteer.@usteer[0].roam_trigger_snr || echo -60)
+		roam_scan=$(uci -q get usteer.@usteer[0].roam_scan_snr || echo -65)
+		min_connect=$(uci -q get usteer.@usteer[0].min_connect_snr || echo -71)
+		signal_diff=$(uci -q get usteer.@usteer[0].signal_diff_threshold || echo 5)
+		load_kick=$(uci -q get usteer.@usteer[0].load_kick_enabled || echo 1)
+		uci -q set fakemesh.default.min_snr="$min_snr"
+		uci -q set fakemesh.default.roam_trigger_snr="$roam_trigger"
+		uci -q set fakemesh.default.roam_scan_snr="$roam_scan"
+		uci -q set fakemesh.default.min_connect_snr="$min_connect"
+		uci -q set fakemesh.default.signal_diff_threshold="$signal_diff"
+		uci -q set fakemesh.default.load_kick_enabled="$load_kick"
+		uci commit fakemesh
+
 		hash=$(echo -n ${Xid}${Xkey} | md5sum | head -c32)
 		ln -s /etc/config/fakemesh /www/fakemesh.$hash 2>/dev/null
 		for f in /www/fakemesh.*; do
@@ -579,8 +942,6 @@ test -n "${Xid}" || {
 	exit 0
 }
 
-rm -rf /tmp/fakemesh_lck*
-
 MACADDR=""
 test -e /usr/share/natcapd/board_mac.lua && MACADDR=$(lua /usr/share/natcapd/board_mac.lua)
 test -n "$MACADDR" || MACADDR=$(. /lib/functions/system.sh; get_mac_label | tr a-f A-F)
@@ -593,20 +954,12 @@ test -n "$MACADDR" || MACADDR=$(head -c6 /dev/random | hexdump -e '/1 "%02X:"' |
 
 if [ "$role" = "controller" ]; then
 
-	rm -rf /tmp/fakemesh_lck*
-
 	test -e /etc/init.d/umdns && {
 	mkdir -p /etc/umdns
 	ln -s /tmp/fakemesh.umdns.json /etc/umdns 2>/dev/null
-	umdns_json="{
-	\"fakemesh\": {
-		\"service\": \"_fakemesh_${Xid}._tcp.local\",
-		\"port\": 65535,
-		\"txt\": [ \"id=${Xid}\" ]
-	}
-}"
+	umdns_json=$(controller_announcement) || exit 1
 	[ "$(md5sum /tmp/fakemesh.umdns.json 2>/dev/null | head -c32)" = "$(echo "$umdns_json" | md5sum | head -c32)" ] || {
-	echo "$umdns_json" >/tmp/fakemesh.umdns.json
+	printf '%s\n' "$umdns_json" >/tmp/fakemesh.umdns.json
 	/etc/init.d/umdns restart
 	}
 	}
@@ -628,10 +981,20 @@ if [ "$role" = "controller" ]; then
 		uci set wireless.meshx0.wpa_group_rekey='601'
 		uci set wireless.meshx0.max_inactivity='301'
 		if test -n "${Xkey}"; then
-			uci set wireless.meshx0.encryption='psk2'
+			if [ "$band" = "6g" ]; then
+				uci set wireless.meshx0.encryption='sae'
+				uci set wireless.meshx0.ieee80211w='2'
+			else
+				uci set wireless.meshx0.encryption='psk2'
+			fi
 			uci set wireless.meshx0.key="${Xkey}"
 		else
-			uci set wireless.meshx0.encryption='none'
+			if [ "$band" = "6g" ]; then
+				uci set wireless.meshx0.encryption='owe'
+				uci set wireless.meshx0.ieee80211w='2'
+			else
+				uci set wireless.meshx0.encryption='none'
+			fi
 		fi
 		if [ "$fronthaul_disabled" = "1" ]; then
 			uci set wireless.meshx0.disabled='1'
@@ -717,7 +1080,7 @@ EOT
 
 	/etc/init.d/firewall reload >/dev/null 2>&1
 
-	exec /usr/sbin/fakemesh gen_config &
+	/usr/sbin/fakemesh gen_config
 
 	uci changes
 
@@ -734,10 +1097,7 @@ EOT
 	uci commit dhcp
 	uci commit network
 
-	(sleep 15
-	 /etc/init.d/network reload
-	 /etc/init.d/dnsmasq reload
-	 exec /usr/sbin/fakemesh agent_sync_config & )&
+	/usr/sbin/fakemesh agent_reload &
 else
 	rm -f /www/fakemesh.*
 	/etc/init.d/sta_disable enabled 2>/dev/null && /etc/init.d/sta_disable disable
@@ -764,10 +1124,20 @@ else
 		uci set wireless.meshx0.wpa_group_rekey='601'
 		uci set wireless.meshx0.max_inactivity='301'
 		if test -n "${Xkey}"; then
-			uci set wireless.meshx0.encryption='psk2'
+			if [ "$band" = "6g" ]; then
+				uci set wireless.meshx0.encryption='sae'
+				uci set wireless.meshx0.ieee80211w='2'
+			else
+				uci set wireless.meshx0.encryption='psk2'
+			fi
 			uci set wireless.meshx0.key="${Xkey}"
 		else
-			uci set wireless.meshx0.encryption='none'
+			if [ "$band" = "6g" ]; then
+				uci set wireless.meshx0.encryption='owe'
+				uci set wireless.meshx0.ieee80211w='2'
+			else
+				uci set wireless.meshx0.encryption='none'
+			fi
 		fi
 		if [ "$fronthaul_disabled" = "1" ]; then
 			uci set wireless.meshx0.disabled='1'
@@ -784,10 +1154,20 @@ else
 		uci set wireless.meshx1.wds='1'
 		uci set wireless.meshx1.ssid="${Xid}"
 		if test -n "${Xkey}"; then
-			uci set wireless.meshx1.encryption='psk2'
+			if [ "$band" = "6g" ]; then
+				uci set wireless.meshx1.encryption='sae'
+				uci set wireless.meshx1.ieee80211w='2'
+			else
+				uci set wireless.meshx1.encryption='psk2'
+			fi
 			uci set wireless.meshx1.key="${Xkey}"
 		else
-			uci set wireless.meshx1.encryption='none'
+			if [ "$band" = "6g" ]; then
+				uci set wireless.meshx1.encryption='owe'
+				uci set wireless.meshx1.ieee80211w='2'
+			else
+				uci set wireless.meshx1.encryption='none'
+			fi
 		fi
 		if [ "$role" = "wap" ]; then
 			uci set wireless.meshx1.disabled='1'
@@ -902,8 +1282,5 @@ EOT
 	uci commit network
 	sed -i "/.* controller.fakemesh/d" /etc/hosts
 
-	(sleep 15
-	 /etc/init.d/network reload
-	 /etc/init.d/dnsmasq reload
-	 exec /usr/sbin/fakemesh agent_fix_channel & )&
+	/usr/sbin/fakemesh agent_reload &
 fi

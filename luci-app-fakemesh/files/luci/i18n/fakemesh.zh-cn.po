@@ -119,3 +119,12 @@ msgstr "WPA2-PSK/WPA3-SAE 混合模式"
 
 msgid "2G+5G"
 msgstr "2G+5G"
+
+msgid "2G+5G+6G"
+msgstr "2G+5G+6G"
+
+msgid "5G+6G"
+msgstr "5G+6G"
+
+msgid "6G"
+msgstr "6G"

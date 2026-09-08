@@ -16,9 +16,11 @@ if s1.val["type"] and s1.val["type"] ~= type_name then
 	return
 end
 
-local s = NamedSection(m, arg[1], "server")
+local s = NamedSection(m, arg[1], "tmp_" .. s1.sectiontype)
+s.parent = s1
 s.type_name = type_name
 s.option_prefix = "ssrust_"
+api.set_type_cbi(s)
 
 local ssrust_encrypt_method_list = {
 	"plain", "none",
@@ -39,13 +41,13 @@ o.validate = function(self, value)
 	if v then return v end
 	return nil, translate("Custom Config") .. " " .. translate("Must be JSON text!")
 end
-o.custom_cfgvalue = function(self, section, value)
+o.cfgvalue = function(self, section, value)
 	local config_str = m:get(section, "config_str")
 	if config_str then
 		return api.base64Decode(config_str)
 	end
 end
-o.custom_write = function(self, section, value)
+o.write = function(self, section, value)
 	m:set(section, "config_str", api.base64Encode(value) or "")
 end
 
@@ -88,4 +90,4 @@ o = s:option(Flag, "log", translate("Log"))
 o.default = "1"
 o.rmempty = false
 
-api.luci_types(s1, s)
+api.type_cbi_section(s1, s)

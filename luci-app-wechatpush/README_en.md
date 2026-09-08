@@ -22,6 +22,7 @@ Supported services:
 | :-------- | :----- | :----- |
 | WeChat | Server Chan | https://sct.ftqq.com/
 | WeChat | PushPlus | http://www.pushplus.plus/
+| WeChat etc. | WPUSH | https://wpush.cn/
 | WeChat | WxPusher | https://wxpusher.zjiecode.com/docs
 | WeChat for Enterprise | Application Push | https://work.weixin.qq.com/api/doc/90000/90135/90248
 | Telegram | bot | https://t.me/BotFather

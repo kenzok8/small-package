@@ -44,7 +44,7 @@ wait_and_cat() {
 read_config() {
 	get_config \
 		"enable" "lite_enable" "device_name" "proxy_address" "sleeptime" "oui_data" "reset_regularly" "debuglevel" "lang" \
-		"jsonpath" "sckey" "sc3key" "sc3uid" "sc3tags" "corpid" "userid" "agentid" "corpsecret" "mediapath" "wxpusher_apptoken" "wxpusher_uids" "wxpusher_topicIds" "pushplus_token" "tg_api_server" "tg_token" "tg_chat_id" "tg_thread_id" "recipient_email" "smtp_host" "smtp_port" "smtp_tls" "smtp_starttls" "smtp_user" "smtp_passwordeval" "smtp_from" "smtp_from_full_name" \
+		"jsonpath" "sckey" "sc3key" "sc3uid" "sc3tags" "corpid" "userid" "agentid" "corpsecret" "mediapath" "wxpusher_apptoken" "wxpusher_uids" "wxpusher_topicIds" "pushplus_token" "wpush_apikey" "tg_api_server" "tg_token" "tg_chat_id" "tg_thread_id" "recipient_email" "smtp_host" "smtp_port" "smtp_tls" "smtp_starttls" "smtp_user" "smtp_passwordeval" "smtp_from" "smtp_from_full_name" \
 		"get_ipv4_mode" "ipv4_interface" "get_ipv6_mode" "ipv6_interface" \
 		"device_notification" "cpu_notification" "cpu_load_threshold" "temperature_threshold" \
 		"client_usage" "client_usage_max" "client_usage_disturb" "client_usage_whitelist" \
@@ -174,7 +174,7 @@ init() {
 	[ -z "$ip_version" ] && log_change "[ERROR] $(translate "Cannot get iputils-arping version, please confirm if plugin is running properly")"
 	[ -z "$cu_version" ] && log_change "[ERROR] $(translate "Cannot get curl version, please confirm if plugin is running properly")"
 
-	[ -n "$jsonpath" ] && [ -z "${sckey}${sc3key}${sc3uid}${sc3tags}${tg_token}${pushplus_token}${corpid}${wxpusher_apptoken}${wxpusher_uids}${wxpusher_topicIds}${recipient_email}" -a "${jsonpath}" != "/usr/share/wechatpush/api/diy.json" ] && log_change "[ERROR] $(translate "Please fill in the correct API key")" && return 1
+	[ -n "$jsonpath" ] && [ -z "${sckey}${sc3key}${sc3uid}${sc3tags}${tg_token}${pushplus_token}${wpush_apikey}${corpid}${wxpusher_apptoken}${wxpusher_uids}${wxpusher_topicIds}${recipient_email}" -a "${jsonpath}" != "/usr/share/wechatpush/api/diy.json" ] && log_change "[ERROR] $(translate "Please fill in the correct API key")" && return 1
 
 	local interfacelist=$(getinterfacelist) && [ -z "$interfacelist" ] && log_change "[WARN] $(translate "Multiple interfaces detected or configuration error, may not get interface uptime information, please confirm if plugin is running properly")"
 
@@ -2509,7 +2509,7 @@ send() {
 	if [ -z "$1" ] && (echo "$send_notification" | grep -q "router_status"); then
 		cat /proc/loadavg | awk '{print $1" "$2" "$3}' >"$output_dir/systemload" &
 		free -m | sed -n '2p' | awk '{printf "%.2f%%\n",($3/$2)*100}' >"$output_dir/mem_usage" &
-		curl -o /dev/null --connect-timeout 5 -s -w %{http_code} www.google.com >"$output_dir/Qwai" &
+		curl -o /dev/null --connect-timeout 5 -s -w %{http_code} https://www.google.com >"$output_dir/Qwai" &
 
 		system_uptime=$(cat /proc/uptime | awk '{print int($1)}')
 		[ -n "$system_uptime" ] && system_status_time=$(translate "Uptime: %dd %dh %dm %ds" "$((system_uptime / 86400))" "$(((system_uptime % 86400) / 3600))" "$(((system_uptime % 3600) / 60))" "$((system_uptime % 60))")

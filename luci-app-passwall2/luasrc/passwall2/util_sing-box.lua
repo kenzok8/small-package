@@ -1773,7 +1773,12 @@ function gen_config(var)
 							domain_table.fakedns = true
 						end
 
-						if outboundTag then
+						local b_add = true
+						if not rule.domain and not rule.domain_suffix and not rule.domain_keyword and not rule.domain_regex and not rule.rule_set then
+							-- No domain
+							b_add = nil
+						end
+						if outboundTag and b_add then
 							table.insert(dns_domain_rules, api.clone(domain_table))
 						end
 					end

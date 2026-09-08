@@ -1,0 +1,21 @@
+{
+	"_api": "这是 wpush api 文件",
+	"_api": "【wpush】",
+	"_readme": "成功判定：响应 JSON 的 application code===0（pushplus 为 code===200；本插件与 pushplus 相同，diy_send 仅检查 curl 退出码）",
+	
+	"url": "https://api.wpush.cn/api/v1/send",
+	"data": "@${tempjsonpath}",
+	"content_type": "Content-Type: application/json",
+	"str_title_start": "##### ",
+	"str_title_end": "",
+	"str_linefeed": "\\n",
+	"str_splitline": "\\n----\\n",
+	"str_space": " ",
+	"str_tab": "    ",
+	"type":
+	{
+		"title": "\"${1}\"",
+		"content": "\"${2}\"",
+		"apikey": "\"${wpush_apikey}\""
+	}
+}

@@ -12,9 +12,11 @@ if s1.val["type"] ~= type_name then
 	return
 end
 
-local s = NamedSection(m, arg[1], "server")
+local s = NamedSection(m, arg[1], "tmp_" .. s1.sectiontype)
+s.parent = s1
 s.type_name = type_name
 s.option_prefix = "ssr_"
+api.set_type_cbi(s)
 
 local ssr_encrypt_method_list = {
 	"none", "table", "rc2-cfb", "rc4", "rc4-md5", "rc4-md5-6", "aes-128-cfb",
@@ -63,4 +65,4 @@ o.default = 300
 o = s:option(Flag, "tcp_fast_open", "TCP " .. translate("Fast Open"), translate("Need node support required"))
 o.default = 0
 
-api.luci_types(s1, s)
+api.type_cbi_section(s1, s)

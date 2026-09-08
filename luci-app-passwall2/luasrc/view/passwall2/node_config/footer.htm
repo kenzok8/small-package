@@ -35,27 +35,30 @@ local config = map.config
 		});
 		waitForElement('select[name*="<%=config%>"][name*="protocol"]', function(el) {
 			let o_val = el.value;
+			const name_split = el.name.split(".");
+			const name = name_split[name_split.length - 1];
 			el.addEventListener("change", () => {
 				el.blur();
 				if (el.value.startsWith("_") || (o_val.startsWith("_") && !el.value.startsWith("_"))) {
-					let name_split = el.name.split(".");
-					let name = name_split[name_split.length - 1];
-					let save = true;
-					if (save) {
-						/*
-						const saveBtn = document.getElementsByClassName('cbi-button-save');
-						if (saveBtn && saveBtn.length > 0) {
-							saveBtn[saveBtn.length - 1].click();
-						}
-						*/
-						update_config(node_id, {
-							remarks: getOption("<%=config%>", "<%=sid%>", "remarks").value,
-							group: getOption("<%=config%>", "<%=sid%>", "group").value,
-							protocol: getOption("<%=config%>", "<%=sid%>", name).value,
-						}, node_config_url);
-					} else {
-						window.location.href = node_config_url + "?select_proto=" + encodeURIComponent(el.value);
+					if (el.value.startsWith("_")) {
+						const map = document.getElementById("cbi-<%=config%>");
+						const hiddenInput = document.createElement('input');
+						hiddenInput.type = 'hidden';
+						hiddenInput.name = 'load' + el.value;
+						hiddenInput.value = '1';
+						map.appendChild(hiddenInput);
 					}
+					const saveBtn = document.getElementsByClassName('cbi-button-save');
+					if (saveBtn && saveBtn.length > 0) {
+						saveBtn[saveBtn.length - 1].click();
+					}
+					/*
+					update_config(node_id, {
+						remarks: getOption("<%=config%>", "<%=sid%>", "remarks").value,
+						group: getOption("<%=config%>", "<%=sid%>", "group").value,
+						protocol: getOption("<%=config%>", "<%=sid%>", name).value,
+					}, node_config_url);
+					*/
 				}
 			});
 		});

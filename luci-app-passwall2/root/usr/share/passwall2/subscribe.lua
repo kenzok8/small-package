@@ -1979,7 +1979,7 @@ end
 local function curl(url, file, ua, mode, hwid)
 	if not url or url == "" then return 22, 404 end
 	local curl_args = {
-		"-fskL", "-w %{http_code}", "--retry 3", "--connect-timeout 3", "-H 'Accept-Encoding: identity'"
+		"-fskL", "-w %{http_code}", "--retry 3", "--connect-timeout 3", "-H 'Accept: */*'", "-H 'Accept-Encoding: identity'"
 	}
 	if ua and ua ~= "" and ua ~= "curl" then
 		ua = (ua == "passwall2") and ("passwall2/" .. api.get_version()) or ua

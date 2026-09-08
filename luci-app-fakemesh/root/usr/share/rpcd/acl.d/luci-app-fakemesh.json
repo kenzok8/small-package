@@ -2,7 +2,7 @@
 	"luci-app-fakemesh": {
 		"description": "Grant UCI access for luci-app-fakemesh",
 		"read": {
-			"uci": [ "fakemesh", "network", "wireless", "dhcp" ]
+			"uci": [ "fakemesh", "fakemeshac", "network", "wireless", "dhcp" ]
 		},
 		"write": {
 			"uci": [ "fakemesh", "network", "wireless", "dhcp" ]

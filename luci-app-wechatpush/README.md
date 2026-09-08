@@ -21,6 +21,7 @@
 | :-------- | :----- | :----- |
 | 微信 | Server酱 | https://sct.ftqq.com/
 | 微信 | 推送加 | http://www.pushplus.plus/
+| 微信等 | WPUSH | https://wpush.cn/
 | 微信 | WxPusher | https://wxpusher.zjiecode.com/docs
 | 企业微信 | 应用推送 | https://work.weixin.qq.com/api/doc/90000/90135/90248
 | Telegram | bot | https://t.me/BotFather

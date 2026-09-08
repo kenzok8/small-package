@@ -1459,11 +1459,14 @@ function gen_config(var)
 						if inner_fakedns == "1" and node[e[".name"] .. "_fakedns"] == "1" and #domains > 0 then
 							domain_table.fakedns = true
 						end
-						if outboundTag then
-							table.insert(dns_domain_rules, api.clone(domain_table))
-						end
+						local b_add = true
 						if #domains == 0 then
+							-- No domain
+							b_add = nil
 							domains = nil
+						end
+						if outboundTag and b_add then
+							table.insert(dns_domain_rules, api.clone(domain_table))
 						end
 					end
 					local ip = nil
@@ -1754,8 +1757,8 @@ function gen_config(var)
 						}
 					} or nil
 				},
-				proxySettings = {
-					tag = "direct"
+				streamSettings = {
+					sockopt = { dialerProxy = "direct" }
 				}
 			}
 			local remote_type_dns = {
@@ -1780,7 +1783,7 @@ function gen_config(var)
 			dns_outbound = {
 				tag = "dns-out",
 				protocol = "dns",
-				proxySettings = type_dns.proxySettings,
+				streamSettings = type_dns.streamSettings,
 				settings = type_dns.settings
 			}
 			table.insert(outbounds, dns_outbound)
@@ -2042,13 +2045,13 @@ function gen_config(var)
 		local direct_outbound = {
 			protocol = "freedom",
 			tag = "direct",
-			settings = {
-				domainStrategy = (direct_dns_query_strategy and direct_dns_query_strategy ~= "") and direct_dns_query_strategy or "UseIP",
+			settings = (api.compare_versions(xray_version, ">", "26.4.25")) and {  -- Todo: Remove version check
 				finalRules = {{ action = "allow" }}
-			},
+			} or nil,
 			streamSettings = {
 				sockopt = {
-					mark = 255
+					mark = 255,
+					domainStrategy = (direct_dns_query_strategy and direct_dns_query_strategy ~= "") and direct_dns_query_strategy or "UseIP"
 				}
 			}
 		}

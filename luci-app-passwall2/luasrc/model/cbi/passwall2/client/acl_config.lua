@@ -43,20 +43,21 @@ end
 
 -- [[ ACLs Settings ]]--
 s = m:section(NamedSection, arg[1], translate("ACLs"), translate("ACLs"))
-s.addremove = false
-s.dynamic = false
 
----- Enable
-o = s:option(Flag, "enabled", translate("Enable"))
+s:tab("Main", translate("Main"))
+s:tab("Proxy", translate("Proxy"))
+s:tab("DNS", translate("DNS"))
+s:tab("Log", translate("Log"))
+
+o = s:taboption("Main", Flag, "enabled", translate("Enable"))
 o.default = 1
 o.rmempty = false
 
----- Remarks
-o = s:option(Value, "remarks", translate("Remarks"))
+o = s:taboption("Main", Value, "remarks", translate("Remarks"))
 o.default = arg[1]
 o.rmempty = false
 
-o = s:option(Value, "interface", translate("Source Interface"))
+o = s:taboption("Main", Value, "interface", translate("Source Interface"))
 o:value("", translate("All"))
 local iface = api.get_network_devices()
 for _, d in ipairs(iface) do
@@ -90,7 +91,7 @@ table.sort(mac_t, function(a,b)
 end)
 
 ---- Source
-sources = s:option(DynamicList, "sources", translate("Source"))
+sources = s:taboption("Main", DynamicList, "sources", translate("Source"))
 sources.description = "<ul><li>" .. translate("Example:")
 .. "</li><li>" .. translate("MAC") .. ": 00:00:00:FF:FF:FF"
 .. "</li><li>" .. translate("IP") .. ": 192.168.1.100"
@@ -140,36 +141,36 @@ sources.validate = function(self, value, t)
 end
 
 local NODE = m:get("@global[0]", "node")
-o = s:option(ListValue, "mode", translate("Mode"))
+o = s:taboption("Main", ListValue, "mode", translate("Mode"))
 o:value("0", translate("No Proxy"))
 o:value("1", translate("Proxy"))
 o:value("2", translate("Proxy") .. " " .. translate("Use global config") .. "(" .. api.get_node_name(NODE) .. ")")
 
-o = s:option(Value, "tcp_no_redir_ports", translate("TCP No Redir Ports"))
+o = s:taboption("Proxy", Value, "tcp_no_redir_ports", translate("TCP No Redir Ports"))
 o:value("", translate("No patterns are used"))
 o:value("1:65535", translate("All"))
 o:depends("mode", "1")
 o:depends("mode", "2")
 o.validate = port_validate
 
-o = s:option(Value, "udp_no_redir_ports", translate("UDP No Redir Ports"))
+o = s:taboption("Proxy", Value, "udp_no_redir_ports", translate("UDP No Redir Ports"))
 o:value("", translate("No patterns are used"))
 o:value("1:65535", translate("All"))
 o:depends("mode", "1")
 o:depends("mode", "2")
 o.validate = port_validate
 
-o = s:option(DummyValue, "_show_tcp_redir", "")
+o = s:taboption("Main", DummyValue, "_show_tcp_redir", "")
 o.template = m:template_path("/cbi/hidevalue")
 o.value = "1"
 o:depends({ tcp_no_redir_ports = "1:65535",  ['!reverse'] = true })
 
-o = s:option(DummyValue, "_show_udp_redir", "")
+o = s:taboption("Main", DummyValue, "_show_udp_redir", "")
 o.template = m:template_path("/cbi/hidevalue")
 o.value = "1"
 o:depends({ udp_no_redir_ports = "1:65535",  ['!reverse'] = true })
 
-o = s:option(Value, "tcp_redir_ports", translate("TCP Redir Ports"))
+o = s:taboption("Proxy", Value, "tcp_redir_ports", translate("TCP Redir Ports"))
 o:value("1:65535", translate("All"))
 o:value("22,25,53,80,143,443,465,587,853,873,993,995,5222,8080,8443,9418", translate("Common Use"))
 o:value("80,443", "80,443")
@@ -178,14 +179,14 @@ o.validate = port_validate
 o:depends({ _node = "1",  _show_tcp_redir = "1" })
 o:depends({ mode = "2",  _show_tcp_redir = "1" })
 
-o = s:option(Value, "udp_redir_ports", translate("UDP Redir Ports"))
+o = s:taboption("Proxy", Value, "udp_redir_ports", translate("UDP Redir Ports"))
 o:value("1:65535", translate("All"))
 o.default = o.keylist[1]
 o.validate = port_validate
 o:depends({ _node = "1",  _show_udp_redir = "1" })
 o:depends({ mode = "2",  _show_udp_redir = "1" })
 
-o = s:option(DummyValue, "tips", "　")
+o = s:taboption("Proxy", DummyValue, "tips", "　")
 o.rawhtml = true
 o.cfgvalue = function(t, n)
 	return string.format('<font color="red">%s</font>',
@@ -194,47 +195,53 @@ end
 o:depends("mode", "1")
 o:depends("mode", "2")
 
-o = s:option(DummyValue, "_no_proxy", "")
+o = s:taboption("Main", DummyValue, "_no_proxy", "")
 o.template = m:template_path("/cbi/hidevalue")
 o.value = "1"
 o:depends("mode", "0")
 o:depends({ tcp_no_redir_ports = "1:65535", udp_no_redir_ports = "1:65535" })
 
-o = s:option(DummyValue, "_show_node_option", "")
+o = s:taboption("Main", DummyValue, "_show_node_option", "")
 o.template = m:template_path("/cbi/hidevalue")
 o.value = "1"
 o:depends({ mode = "1", _no_proxy = "" })
 
-o = s:option(ListValue, "node", "<a style='color: red'>" .. translate("Node") .. "</a>")
+o = s:taboption("Main", ListValue, "node", "<a style='color: red'>" .. translate("Node") .. "</a>")
 o.group = {}
 o:depends("_show_node_option", "1")
 o.template = m:template_path("/cbi/nodes_listvalue")
 
-current_node_id = o:formvalue(arg[1])
-if not current_node_id then
-	current_node_id = m:get(arg[1], "node")
+current_node_id = m:get(arg[1], "node")
+local node_value = s.fields["node"]:formvalue(s.section)
+if node_value then
+	current_node_id = node_value
 end
 current_node = current_node_id and m:get(current_node_id) or {}
 
-o = s:option(DummyValue, "_node", "")
+o = s:taboption("Main", DummyValue, "node_save_before", "")
+o.template = m:template_path("/cbi/hidevalue")
+o.value = current_node[".name"]
+o.cbid = function(self, section) return "node_save_before" end
+
+o = s:taboption("Main", DummyValue, "_node", "")
 o.template = m:template_path("/cbi/hidevalue")
 o.value = "1"
 o:depends({ node = "",  ['!reverse'] = true })
 
-o = s:option(DummyValue, "_is_singbox", "")
+o = s:taboption("Main", DummyValue, "_is_singbox", "")
 o.template = m:template_path("/cbi/hidevalue")
 o.value = "1"
 o:depends("_hide", "1")
 
-o = s:option(DummyValue, "_is_xray", "")
+o = s:taboption("Main", DummyValue, "_is_xray", "")
 o.template = m:template_path("/cbi/hidevalue")
 o.value = "1"
 o:depends("_hide", "1")
 
-o = s:option(Flag, "log", translate("Enable Node Log"))
+o = s:taboption("Log", Flag, "log", translate("Enable Node Log"))
 o:depends("_node", "1")
 
-o = s:option(ListValue, "loglevel", translate("Log Level"))
+o = s:taboption("Log", ListValue, "loglevel", translate("Log Level"))
 o.default = "warn"
 o:value("debug", "Debug")
 o:value("info", "Info")
@@ -242,33 +249,37 @@ o:value("warn", "Warning")
 o:value("error", "Error")
 o:depends("log", "1")
 
-o = s:option(DummyValue, "_acl_log", translate("Log File"))
+o = s:taboption("Log", DummyValue, "_acl_log", translate("Log File"))
 o.rawhtml = true
 o.cfgvalue = function(t, n)
-	local log_path = api.TMP_PATH .. "/acl/" .. arg[1] .. ".log"
+	local log_file = api.TMP_PATH .. "/acl/" .. arg[1] .. ".log"
 	local log_url = api.url("get_redir_log") .. "?id=" .. arg[1]
-	return string.format(
-		'<code>%s</code>&nbsp;&nbsp;<input class="btn cbi-button cbi-button-apply" type="button" value="%s" onclick="window.open(\'%s\', \'_blank\')" />',
-		log_path,
-		translate("View Log"),
-		log_url
-	)
+	local s = "<code>%s</code>&nbsp;&nbsp;" % log_file
+	if api.fs.access(log_file) then
+		local btn = string.format(
+			'<input class="btn cbi-button cbi-button-apply" type="button" value="%s" onclick="window.open(\'%s\', \'_blank\')" />',
+			translate("View Log"),
+			log_url
+		)
+		s = s .. btn
+	end
+	return s
 end
 o:depends("log", "1")
 
-o = s:option(DummyValue, "_show_dns_option", "")
+o = s:taboption("DNS", DummyValue, "_show_dns_option", "")
 o.template = m:template_path("/cbi/hidevalue")
 o.value = "1"
 o:depends({ mode = "1", _node = "1" })
 
-o = s:option(ListValue, "direct_dns_query_strategy", translate("Direct Query Strategy"))
+o = s:taboption("DNS", ListValue, "direct_dns_query_strategy", translate("Direct Query Strategy"))
 o.default = "UseIP"
 o:value("UseIP")
 o:value("UseIPv4")
 o:value("UseIPv6")
 o:depends("_show_dns_option", "1")
 
-o = s:option(ListValue, "remote_dns_protocol", translate("Remote DNS Protocol"))
+o = s:taboption("DNS", ListValue, "remote_dns_protocol", translate("Remote DNS Protocol"))
 o:value("tcp", "TCP")
 o:value("doh", "DoH")
 o:value("udp", "UDP")
@@ -286,7 +297,7 @@ end
 o:depends("_show_dns_option", "1")
 
 ---- DNS over TCP or UDP or TLS (DoT) or QUIC (DoQ)
-o = s:option(Value, "remote_dns", translate("Remote DNS"))
+o = s:taboption("DNS", Value, "remote_dns", translate("Remote DNS"))
 o.datatype = "or(ipaddr,ipaddrport(1))"
 o.default = "1.1.1.1"
 o:value("1.1.1.1", "1.1.1.1 (CloudFlare)")
@@ -303,7 +314,7 @@ o:depends("remote_dns_protocol", "quic")
 o:depends("remote_dns_protocol", "tls")
 
 ---- DNS over HTTP (DoH) or DNS over HTTP3(DoH3)
-o = s:option(Value, "remote_dns_doh", translate("Remote DNS DoH"))
+o = s:taboption("DNS", Value, "remote_dns_doh", translate("Remote DNS DoH"))
 o:value("https://1.1.1.1/dns-query", "CloudFlare")
 o:value("https://1.1.1.2/dns-query", "CloudFlare-Security")
 o:value("https://8.8.4.4/dns-query", "Google 8844")
@@ -319,42 +330,42 @@ o.validate = doh_validate
 o:depends("remote_dns_protocol", "doh")
 o:depends("remote_dns_protocol", "http3")
 
-o = s:option(Value, "remote_dns_client_ip", translate("Remote DNS EDNS Client Subnet"))
+o = s:taboption("DNS", Value, "remote_dns_client_ip", translate("Remote DNS EDNS Client Subnet"))
 o.description = translate("Notify the DNS server when the DNS query is notified, the location of the client (cannot be a private IP address).") .. "<br />" ..
 				translate("This feature requires the DNS server to support the Edns Client Subnet (RFC7871).")
 o.datatype = "ipaddr"
 o:depends("_show_dns_option", "1")
 
-o = s:option(ListValue, "remote_dns_detour", translate("Remote DNS Outbound"))
+o = s:taboption("DNS", ListValue, "remote_dns_detour", translate("Remote DNS Outbound"))
 o.default = "remote"
 o:value("remote", translate("Remote"))
 o:value("direct", translate("Direct"))
 o:depends("_show_dns_option", "1")
 
-o = s:option(Flag, "remote_fakedns", "FakeDNS", translate("Use FakeDNS work in the domain that proxy."))
+o = s:taboption("DNS", Flag, "remote_fakedns", "FakeDNS", translate("Use FakeDNS work in the domain that proxy."))
 o.default = "0"
 o.rmempty = false
 o:depends("_hide", "1")
 
-o = s:option(ListValue, "remote_dns_query_strategy", translate("Remote Query Strategy"))
+o = s:taboption("DNS", ListValue, "remote_dns_query_strategy", translate("Remote Query Strategy"))
 o.default = "UseIPv4"
 o:value("UseIP")
 o:value("UseIPv4")
 o:value("UseIPv6")
 o:depends("_show_dns_option", "1")
 
-o = s:option(Value, "remote_rewrite_ttl", translate("Remote DNS") .. " TTL")
+o = s:taboption("DNS", Value, "remote_rewrite_ttl", translate("Remote DNS") .. " TTL")
 o.datatype = "min(1)"
 o.default = "30"
 o:depends({ _show_dns_option = "1", _is_singbox = "1" })
 
-o = s:option(ListValue, "dns_hosts_mode", translate("Domain Override"))
+o = s:taboption("DNS", ListValue, "dns_hosts_mode", translate("Domain Override"))
 o:value("default", translate("Use global config"))
 o:value("disable", translate("No patterns are used"))
 o:value("custom", translate("-- custom --"))
 o:depends("_show_dns_option", "1")
 
-o = s:option(TextValue, "dns_hosts", translate("Domain Override"))
+o = s:taboption("DNS", TextValue, "dns_hosts", translate("Domain Override"))
 o.rows = 5
 o.wrap = "off"
 o:depends("dns_hosts_mode", "custom")
@@ -390,19 +401,16 @@ for k, v in pairs(nodes_table) do
 	end
 end
 
---[[
--- Shunt
 if current_node.protocol == "_shunt" then
 	local shunt_lua = loadfile("/usr/lib/lua/luci/model/cbi/passwall2/client/include/shunt_options.lua")
 	setfenv(shunt_lua, getfenv(1))(m, s, {
-		s_cfgid = s.section,
-		node_id = current_node_id,
 		node = current_node,
-		verify_option = s.fields["node"]
+		verify_option = s.fields["node"],
+		tab = "Shunt",
+		tab_desc = translate("Shunt Rule"),
 	})
 end
 
-m:appendTemplate("/acl/shunt", { shunt_list = api.jsonc.stringify(shunt_list), section = s.section })
-]]--
+m:appendTemplate("/include/node_change", { verify_option = s.fields["node"], shunt_list = api.jsonc.stringify(shunt_list) })
 
 return api.return_map(m)

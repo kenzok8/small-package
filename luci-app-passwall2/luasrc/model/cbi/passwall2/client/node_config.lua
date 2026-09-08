@@ -61,7 +61,6 @@ end
 local types_dir = "/usr/lib/lua/luci/model/cbi/" .. api.appname .. "/client/type/"
 s.val = {}
 s.val["type"] = m:get(arg[1], "type")
-s.val["protocol"] = m:get(arg[1], "protocol")
 
 if luci.http.formvalue("cbi.submit") == "1" then
 	local formvalue_type = luci.http.formvalue(formvalue_key .. "type")

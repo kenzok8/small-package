@@ -818,13 +818,6 @@ run_ipset_dnsmasq() {
 }
 
 acl_node() {
-	[ ! -f ${TMP_ACL_PATH}/acl_node_default ] && ENABLED_DEFAULT_ACL=0
-	local acl_node_num=$(jsonfilter -s "${acl_json}" -e '$.node_order[*]' | wc -l)
-	[ "${acl_node_num}" == 0 ] && {
-		ENABLED_DEFAULT_ACL=0
-		ENABLED_ACLS=0
-		return
-	}
 	[ "$(uci -q get dhcp.@dnsmasq[0].dns_redirect)" == "1" ] && {
 		uci -q set ${CONFIG}.@global[0].dnsmasq_dns_redirect='1'
 		uci -q commit ${CONFIG}
@@ -838,7 +831,7 @@ acl_node() {
 	local run_func
 	[ -n "${XRAY_BIN}" ] && run_func="run_xray"
 	[ -n "${SINGBOX_BIN}" ] && run_func="run_singbox"
-	for nid in $(jsonfilter -s "${acl_json}" -e '$.node_order[*]'); do
+	for nid in $(jsonfilter -s "${ACL_JSON}" -e '$.node_order[*]'); do
 		[ ! -f ${TMP_ACL_PATH}/acl_node_${nid} ] && continue
 		local _var=$(cat ${TMP_ACL_PATH}/acl_node_${nid} 2>/dev/null)
 		eval local ${_var}
@@ -917,8 +910,19 @@ start() {
 	nftflag=0
 	USE_TABLES=""
 	check_run_environment
-	[ -n "$USE_TABLES" ] && source $APP_PATH/${USE_TABLES}.sh start
-	set_cache_var "USE_TABLES" "$USE_TABLES"
+	[ -n "$USE_TABLES" ] && {
+		ACL_JSON=$(lua $APP_PATH/app_acl.lua)
+		[ ! -f ${TMP_ACL_PATH}/acl_node_default ] && ENABLED_DEFAULT_ACL=0
+		local acl_node_num=$(jsonfilter -s "${ACL_JSON}" -e '$.node_order[*]' | wc -l)
+
+		if [ "${acl_node_num}" == 0 ]; then
+			ENABLED_DEFAULT_ACL=0
+			ENABLED_ACLS=0
+		else
+			source $APP_PATH/${USE_TABLES}.sh start
+			set_cache_var "USE_TABLES" "$USE_TABLES"
+		fi
+	}
 	if [ "$ENABLED_DEFAULT_ACL" == 1 ] || [ "$ENABLED_ACLS" == 1 ]; then
 		bridge_nf_ipt=$(sysctl -e -n net.bridge.bridge-nf-call-iptables)
 		set_cache_var "bak_bridge_nf_ipt" "$bridge_nf_ipt"

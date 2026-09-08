@@ -100,6 +100,22 @@ msgstr "微信推送的另一个通道，配置较简单，只支持公众号"
 msgid "Another channel for WeChat push, the configuration is relatively simple, and it supports multiple push methods"
 msgstr "微信推送的另一个通道，配置较简单，支持多项推送方式"
 
+#: applications/luci-app-wechatpush/htdocs/luci-static/resources/view/wechatpush/config.js
+msgid "WPUSH"
+msgstr "WPUSH"
+
+#: applications/luci-app-wechatpush/htdocs/luci-static/resources/view/wechatpush/config.js
+msgid "Multi-channel push via WPUSH (WeChat, App, Feishu, DingTalk, and more). Success when response code===0"
+msgstr "通过 WPUSH 多通道推送（微信、App、飞书、钉钉等）。成功判定为响应 code===0"
+
+#: applications/luci-app-wechatpush/htdocs/luci-static/resources/view/wechatpush/config.js
+msgid "WPUSH apikey"
+msgstr "WPUSH apikey"
+
+#: applications/luci-app-wechatpush/htdocs/luci-static/resources/view/wechatpush/config.js
+msgid "<br />API docs: https://docs.wpush.cn/docs/api/message.html — success when code===0"
+msgstr "<br />接口文档：https://docs.wpush.cn/docs/api/message.html — 成功时 code===0"
+
 #: applications/luci-app-wechatpush/htdocs/luci-static/resources/view/wechatpush/config.js:146
 msgid "Telegram Bot Push"
 msgstr "Telegram bot 推送，若无梯子，请勿使用"
