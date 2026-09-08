@@ -2216,13 +2216,9 @@ function gen_config(var)
 		})
 	else
 		table.insert(dns.rules, 1, {
-			action = "evaluate",
+			preferred_by = "hosts",
+			action = "route",
 			server = "hosts"
-		})
-		table.insert(dns.rules, 2, {
-			match_response = true,
-			ip_accept_any = true,
-			action = "respond"
 		})
 	end
 

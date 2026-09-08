@@ -1800,8 +1800,8 @@ function gen_config(var)
 			remote_dns_outbound = {
 				tag = "dns-out",
 				protocol = "dns",
-				proxySettings = dns_outbound_tag and {
-					tag = (dns_outbound_tag ~= "blackhole") and dns_outbound_tag or "direct"
+				streamSettings = dns_outbound_tag and {
+					sockopt = { dialerProxy = (dns_outbound_tag ~= "blackhole") and dns_outbound_tag or "direct" }
 				} or nil,
 				settings = {
 					address = (chn_list ~= "proxy") and "8.8.8.8" or "223.5.5.5",
