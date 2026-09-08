@@ -24,7 +24,7 @@ define Package/luci-app-fakemesh
 	SUBMENU:=Configuration Fake Mesh Support
 	TITLE:=LuCI Support for fakemesh
 	PKGARCH:=all
-	DEPENDS:=+jsonfilter +umdns +firewall4 +flock
+	DEPENDS:=+jsonfilter +umdns +firewall4 +@BUSYBOX_CONFIG_FLOCK
 endef
 
 define Package/luci-app-fakemesh/description
