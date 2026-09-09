@@ -12,10 +12,13 @@ trap 'rm -f "$CUSTOM_RULE_FILE" "$RULE" "$CLASH" "$CLASH_CONFIG"' EXIT
 
 [ -f "$CONFIG_YAML" ] || exit 0
 
+. /usr/share/clashoo/runtime/primary_group.sh
+
 
 # __PROXY__ placeholder -> primary proxy group (cached by RPC);
 # fallback to GLOBAL (built-in mihomo group)
-PRIMARY_GROUP="$(uci -q get clashoo.config.primary_proxy_group)"
+CACHED_PRIMARY_GROUP="$(uci -q get clashoo.config.primary_proxy_group)"
+PRIMARY_GROUP="$(clashoo_resolve_primary_group "$CONFIG_YAML" "$CACHED_PRIMARY_GROUP")"
 [ -n "$PRIMARY_GROUP" ] || PRIMARY_GROUP="GLOBAL"
 
 append=$(uci get clashoo.config.append_rules 2>/dev/null)
