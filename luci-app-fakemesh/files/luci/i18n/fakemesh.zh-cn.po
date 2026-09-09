@@ -30,6 +30,9 @@ msgstr "Mesh ID"
 msgid "Key"
 msgstr "密钥"
 
+msgid "No configured radio supports this backhaul band."
+msgstr "没有已配置的无线电支持此回程频段。"
+
 msgid "Leave empty if encryption is not required."
 msgstr "不需要加密时请留空。"
 

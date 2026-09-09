@@ -1,0 +1,73 @@
+<%
+local map = self.map
+local api = map.api
+local config = map.config
+local verify_option = self.verify_option
+local section_id = verify_option.section.section
+-%>
+<% if verify_option then -%>
+<script type="text/javascript">
+	//<![CDATA[
+	document.addEventListener("DOMContentLoaded", () => {
+		const shunt_list = JSON.parse('<%=self.shunt_list%>');
+		const dom_node_id = "<%=verify_option:cbid(section_id)%>";
+		let uci_node_val = "";
+		const onChange = (e) => {
+			const new_val = e.target.value;
+			const to_shunt = shunt_list.some(element => element.id == new_val);
+			if (to_shunt) {
+				const map = document.getElementById("cbi-<%=config%>");
+				const hiddenInput = document.createElement('input');
+				hiddenInput.type = 'hidden';
+				hiddenInput.name = 'node_save_before';
+				hiddenInput.value = uci_node_val;
+				map.appendChild(hiddenInput);
+				const saveBtn = document.getElementsByClassName('cbi-button-save');
+				if (saveBtn && saveBtn.length > 0) {
+					saveBtn[saveBtn.length - 1].click();
+				}
+				/*
+				XHR.get('<%=api.url("update_config")%>', {
+					id: "<%=section_id%>",
+					data: JSON.stringify({
+						node: new_val,
+						mode: "1"
+					})
+				}, function(x, data) {
+					if (x && x.status == 200 && data.code == 1) {
+						window.location.reload();
+					} else {
+						alert("<%:Error%>");
+					}
+				});
+				*/
+			} else {
+				try { shunt.hide(); } catch (error) {}
+			}
+		};
+		const check = () => {
+			const el = document.getElementById(dom_node_id);
+			if (!el) {
+				try { shunt.hide(); } catch (error) {}
+				return;
+			}
+			let is_shunt = shunt_list.some(element => element.id == el.value);
+			if (is_shunt) {
+				try { shunt.show(); } catch (error) {}
+			}
+			if (!el.hasEventListener) {
+				uci_node_val = el.value;
+				el.addEventListener("change", onChange);
+				el.hasEventListener = true;
+			}
+		};
+		const observer = new MutationObserver(check);
+		observer.observe(document.body, {
+			childList: true,
+			subtree: true
+		});
+		check();
+	});
+	//]]>
+</script>
+<%- end %>

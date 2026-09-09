@@ -112,6 +112,10 @@ o:value("", translate("Close"))
 o.group = {""}
 
 current_node_id = m:get(s.section, "node")
+local node_value = s.fields["node"]:formvalue(s.section)
+if node_value then
+	current_node_id = node_value
+end
 current_node = current_node_id and m:get(current_node_id) or {}
 
 -- Shunt Start
@@ -120,17 +124,10 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 		if current_node.protocol == "_shunt" then
 			local shunt_lua = loadfile("/usr/lib/lua/luci/model/cbi/passwall/client/include/shunt_options.lua")
 			setfenv(shunt_lua, getfenv(1))(m, s, {
-				s_cfgid = s.section,
-				node_id = current_node_id,
 				node = current_node,
-				socks_list = socks_list,
-				urltest_list = urltest_list,
-				balancing_list = balancing_list,
-				iface_list = iface_list,
-				normal_list = normal_list,
 				verify_option = s.fields["node"],
 				tab = "Shunt",
-				tab_desc = translate("Shunt Rule")
+				tab_desc = translate("Shunt Rule"),
 			})
 		end
 	else
@@ -164,6 +161,11 @@ end
 o = s:taboption("Main", Flag, "node_socks_bind_local", translate("Node") .. " Socks " .. translate("Bind Local"), translate("When selected, it can only be accessed localhost."))
 o.default = "1"
 o:depends("_node", "1")
+
+o = s:taboption("Main", DummyValue, "node_save_before", "")
+o.template = m:template_path("/cbi/hidevalue")
+o.value = current_node[".name"]
+o.cbid = function(self, section) return "node_save_before" end
 
 o = s:taboption("Main", DummyValue, "_node", "")
 o.template = m:template_path("/cbi/hidevalue")
@@ -647,6 +649,8 @@ s:tab("maintain", translate("Maintain"))
 o = s:taboption("maintain", DummyValue, "")
 o.template = m:template_path("/global/backup")
 
+m:appendTemplate("/include/node_change", { verify_option = s.fields["node"], shunt_list = api.jsonc.stringify(shunt_list) })
+
 -- [[ Socks Server ]]--
 o = s:taboption("Main", Flag, "socks_enabled", "Socks " .. translate("Main switch"))
 o.rmempty = false
@@ -784,7 +788,7 @@ for k, v in pairs(nodes_table) do
 	end
 end
 
-m:appendTemplate("/global/footer", {shunt_list = api.jsonc.stringify(shunt_list)})
+m:appendTemplate("/global/footer")
 
 m:appendTemplate("/cbi/sortable", {sectiontype = s2.sectiontype})
 

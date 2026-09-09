@@ -1,26 +1,26 @@
-if not api.is_finded("naive") then
+if not api.is_finded("ipt2socks") then
 	return
 end
 
--- [[ Naive ]]
+-- [[ Socks ]]
 local m, s1 = ...
-local type_name = "Naiveproxy"
+local type_name = "Socks"
 
-s1.fields["type"]:value(type_name, "Na√ØveProxy")
+s1.fields["type"]:value(type_name, "Socks")
 
-if s1.val["type"] ~= type_name then
+if s1.val["type"] and s1.val["type"] ~= type_name then
 	return
 end
 
 local s = NamedSection(m, arg[1], "tmp_" .. s1.sectiontype)
 s.parent = s1
 s.type_name = type_name
-s.option_prefix = "naive_"
+s.option_prefix = "socks_"
 api.set_type_cbi(s)
 
-o = s:option(ListValue, "protocol", translate("Protocol"))
-o:value("https", translate("HTTPS"))
-o:value("quic", translate("QUIC"))
+o = s:option(ListValue, "del_protocol", "°°") -- º÷’“˛≤ÿ£¨”√”⁄…æ≥˝ protocol
+o:depends({ __hide = "1" })
+o.rewrite_option = "protocol"
 
 o = s:option(Value, "address", translate("Address (Support Domain Name)"))
 

@@ -1537,110 +1537,88 @@ function return_map(map)
 	return map
 end
 
-function luci_types(s, s2)
+function set_type_cbi(s)
 	local cbi = require "luci.cbi"
-	local m = s.map
-	local id = s2.section
-	local type_name = s2.type_name
-	local option_prefix = s2.option_prefix
-	local fv_type
-	local field_type = s.fields["type"]
-	if field_type then
-		fv_type = field_type:formvalue(id)
+	local s1 = s.parent
+	function s.option(self, class, option, ...)
+		local obj  = class(self.map, self, option, ...)
+		obj.config_option = option
+		obj.option_prefix = self.option_prefix
+		obj.option = self.option_prefix .. option
+		obj.cfgvalue = function(o_self, section)
+			if o_self.rewrite_option then
+				return o_self.map:get(section, o_self.rewrite_option)
+			else
+				return o_self.map:get(section, o_self.config_option)
+			end
+		end
+		obj.write = function(o_self, section, value)
+			if s1.fields["type"]:formvalue(self.section) == self.type_name then
+				local new_val = value
+				if util.instanceof(o_self, cbi.DynamicList) then
+					local new_t = {}
+					if type(value) == "table" then
+						new_t = table_remove_duplicates(value)
+					else
+						new_t = { value }
+					end
+					if o_self.cast == "string" then
+						new_val = table.concat(new_t, " ")
+					else
+						new_val = new_t
+					end
+				end
+				if o_self.rewrite_option then
+					o_self.map:set(section, o_self.rewrite_option, new_val)
+				else
+					o_self.map:set(section, o_self.config_option, new_val)
+				end
+			end
+		end
+		obj.remove = function(o_self, section)
+			if s1.fields["type"]:formvalue(self.section) == self.type_name then
+				if o_self.rewrite_option then
+					o_self.map:del(section, o_self.rewrite_option)
+				else
+					o_self.map:del(section, o_self.config_option)
+				end
+			end
+		end
+		obj.depends = function(o_self, field, value)
+			local deps
+			if type(field) == "string" then
+				deps = {}
+				deps[field] = value
+			else
+				deps = field
+			end
+			local new_deps = {}
+			for k, v in pairs(deps) do
+				local n_k = k
+				if self.fields[k] then
+					n_k = self.fields[k].option
+				end
+				new_deps[n_k] = v
+			end
+			new_deps["type"] = self.type_name
+			if next(new_deps) then
+				table.insert(o_self.deps, new_deps)
+			end
+		end
+		self:append(obj)
+		self.fields[option] = obj
+		return obj
 	end
+end
+
+function type_cbi_section(s, s2)
 	for i, v in ipairs(s2.children) do
 		local o = s2.children[i]
-		o.config_option = o.option
-		o.option_prefix = option_prefix
-		o.option = option_prefix .. o.option
-		if not o.not_rewrite then
-			o.cfgvalue = function(self, section)
-				-- Add a custom `custom_cfgvalue` attribute. If a custom `custom_cfgvalue` function exists, the custom `cfgvalue` logic will be used.
-				if self.custom_cfgvalue then
-					return self:custom_cfgvalue(section)
-				else
-					if self.rewrite_option then
-						return m:get(section, self.rewrite_option)
-					else
-						return m:get(section, self.config_option)
-					end
-				end
-			end
-			o.write = function(self, section, value)
-				if s.fields["type"]:formvalue(id) == type_name then
-					-- Add a custom `custom_write` attribute; if a custom `custom_write` function exists, then use the custom write logic.
-					if self.custom_write then
-						self:custom_write(section, value)
-					else
-						local new_val = value
-						if util.instanceof(self, cbi.DynamicList) then
-							local new_t = {}
-							if type(value) == "table" then
-								new_t = table_remove_duplicates(value)
-							else
-								new_t = { value }
-							end
-							if self.cast == "string" then
-								new_val = table.concat(new_t, " ")
-							else
-								new_val = new_t
-							end
-						end
-						if self.rewrite_option then
-							m:set(section, self.rewrite_option, new_val)
-						else
-							m:set(section, self.config_option, new_val)
-						end
-					end
-				end
-			end
-			o.remove = function(self, section)
-				if s.fields["type"]:formvalue(id) == type_name then
-					-- Add a custom `custom_remove` attribute; if a custom `custom_remove` function exists, use the custom remove logic.
-					if self.custom_remove then
-						self:custom_remove(section)
-					else
-						if self.rewrite_option then
-							m:del(section, self.rewrite_option)
-						else
-							m:del(section, self.config_option)
-						end
-					end
-				end
-			end
+		if #o.deps == 0 then
+			o:depends({ type = s2.type_name })
 		end
-
-		local deps = o.deps
-		if #deps > 0 then
-			local function process_deps(dep)
-				local rewrite_deps = {}
-				for k, v in pairs(dep) do
-					if k:find("!") then
-						rewrite_deps[k] = v
-					else
-						rewrite_deps[option_prefix .. k] = v
-					end
-				end
-				if not rewrite_deps['!reverse'] then
-					rewrite_deps["type"] = type_name
-				end
-				return rewrite_deps
-			end
-			for index, value in ipairs(deps) do
-				local rewrite_deps = process_deps(value)
-				if rewrite_deps then
-					deps[index] = rewrite_deps
-				end
-			end
-		else
-			o:depends({ type = type_name })
-		end
-
-		if fv_type and fv_type ~= type_name then
-			o.rmempty = true
-		end
-
 		s:append(o)
+		s.fields[o.option] = o
 	end
 end
 

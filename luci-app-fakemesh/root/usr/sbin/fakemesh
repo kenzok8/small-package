@@ -85,14 +85,115 @@ setup_lock()
 	trap 'exit 1' HUP INT TERM
 }
 
+start_generation()
+{
+	FAKEMESH_GENERATION="$$.$(date +%s)"
+	printf '%s\n' "$FAKEMESH_GENERATION" > /tmp/fakemesh.generation
+	export FAKEMESH_GENERATION
+	stop_workers
+}
+
+configuration_error()
+{
+	logger -t fakemesh "invalid configuration: $*"
+	printf 'fakemesh: invalid configuration: %s\n' "$*" >&2
+	return 1
+}
+
+valid_ipv4()
+(
+	local ip octet
+	ip=$1
+	case "$ip" in
+		''|*[!0-9.]*|.*|*.|*..*) exit 1 ;;
+	esac
+	IFS=.
+	set -- $ip
+	[ "$#" -eq 4 ] || exit 1
+	for octet in "$@"; do
+		case "$octet" in
+			0|[1-9]|[1-9][0-9]|[1-9][0-9][0-9]) ;;
+			*) exit 1 ;;
+		esac
+		[ "$octet" -le 255 ] || exit 1
+	done
+)
+
+select_backhaul_radio()
+{
+	local radio_band
+	[ -z "$backhaul_radio" ] || return 0
+	config_get radio_band "$1" band
+	[ "$radio_band" = "$band" ] && backhaul_radio=$1
+}
+
+find_backhaul_radio()
+{
+	backhaul_radio=
+	config_load wireless || return 1
+	config_foreach select_backhaul_radio wifi-device
+	[ -n "$backhaul_radio" ]
+}
+
+validate_enabled_config()
+{
+	[ -n "$Xid" ] || configuration_error 'Mesh ID is required' || return 1
+	[ "${#Xid}" -le 32 ] || configuration_error 'Mesh ID exceeds 32 bytes' || return 1
+	case "$role" in
+		controller|agent|wap) ;;
+		*) configuration_error "unsupported role: $role"; return 1 ;;
+	esac
+	case "$band" in
+		2g|5g|6g) ;;
+		*) configuration_error "unsupported backhaul band: $band"; return 1 ;;
+	esac
+	case "$sync_ac" in
+		0|1) ;;
+		*) configuration_error 'Sync Configuration must be 0 or 1'; return 1 ;;
+	esac
+	case "$fronthaul_disabled" in
+		0|1) ;;
+		*) configuration_error 'Disable Fronthaul must be 0 or 1'; return 1 ;;
+	esac
+	case "$band_steer_helper" in
+		none|usteer|dawn) ;;
+		*) configuration_error "unsupported band steering helper: $band_steer_helper"; return 1 ;;
+	esac
+	if [ "$role" = controller ] && ! valid_ipv4 "$access_ip"; then
+		configuration_error 'Controller Access IP must be an IPv4 address'
+		return 1
+	fi
+	find_backhaul_radio || {
+		configuration_error "no configured radio supports the $band backhaul band"
+		return 1
+	}
+}
+
+configure_mesh_security()
+{
+	local section=$1
+	uci -q delete "wireless.$section.key"
+	uci -q delete "wireless.$section.ieee80211w"
+	if [ -n "$Xkey" ]; then
+		if [ "$band" = 6g ]; then
+			uci set "wireless.$section.encryption=sae"
+			uci set "wireless.$section.ieee80211w=2"
+		else
+			uci set "wireless.$section.encryption=psk2"
+		fi
+		uci set "wireless.$section.key=$Xkey"
+	elif [ "$band" = 6g ]; then
+		uci set "wireless.$section.encryption=owe"
+		uci set "wireless.$section.ieee80211w=2"
+	else
+		uci set "wireless.$section.encryption=none"
+	fi
+}
+
 case "$1" in
 	setup) exit 0 ;;
 	'')
 		setup_lock || exit 1
-		FAKEMESH_GENERATION="$$.$(date +%s)"
-		printf '%s\n' "$FAKEMESH_GENERATION" > /tmp/fakemesh.generation
-		export FAKEMESH_GENERATION
-		stop_workers
 		;;
 	*)
 		if [ -z "$FAKEMESH_GENERATION" ]; then
@@ -207,6 +308,7 @@ config_get_bool enabled default 'enabled' '0'
 
 test $enabled -eq 0 && {
 	[ -z "$1" ] || exit 0
+	start_generation
 	rm -f /www/fakemesh.*
 	rm -f /tmp/fakemesh.firewall.include
 
@@ -287,6 +389,9 @@ config_get Xkey default 'key'
 config_get access_ip default 'access_ip' '10.10.10.1'
 config_get sync_ac default 'sync_ac' '1'
 config_get fronthaul_disabled default 'fronthaul_disabled' '0'
+
+validate_enabled_config || exit 1
+[ -n "$1" ] || start_generation
 
 lost_ac=${lost_ac:-0}
 LOST_AC_CNT=3
@@ -938,10 +1043,6 @@ agent_reload()
 	exit 0
 }
 
-test -n "${Xid}" || {
-	exit 0
-}
-
 MACADDR=""
 test -e /usr/share/natcapd/board_mac.lua && MACADDR=$(lua /usr/share/natcapd/board_mac.lua)
 test -n "$MACADDR" || MACADDR=$(. /lib/functions/system.sh; get_mac_label | tr a-f A-F)
@@ -965,9 +1066,8 @@ if [ "$role" = "controller" ]; then
 	}
 
 	# wireless.radio0.band='2g'
-	wbandstr=$(uci show wireless | grep ".band='${band}'$" -m1)
-	if test -n "$wbandstr"; then
-		radio=$(echo "$wbandstr" | cut -d. -f2) # radio0
+	radio=$backhaul_radio
+	if test -n "$radio"; then
 
 		#meshx0
 		uci set wireless.meshx0=wifi-iface
@@ -980,22 +1080,7 @@ if [ "$role" = "controller" ]; then
 		uci set wireless.meshx0.hidden='1'
 		uci set wireless.meshx0.wpa_group_rekey='601'
 		uci set wireless.meshx0.max_inactivity='301'
-		if test -n "${Xkey}"; then
-			if [ "$band" = "6g" ]; then
-				uci set wireless.meshx0.encryption='sae'
-				uci set wireless.meshx0.ieee80211w='2'
-			else
-				uci set wireless.meshx0.encryption='psk2'
-			fi
-			uci set wireless.meshx0.key="${Xkey}"
-		else
-			if [ "$band" = "6g" ]; then
-				uci set wireless.meshx0.encryption='owe'
-				uci set wireless.meshx0.ieee80211w='2'
-			else
-				uci set wireless.meshx0.encryption='none'
-			fi
-		fi
+		configure_mesh_security meshx0
 		if [ "$fronthaul_disabled" = "1" ]; then
 			uci set wireless.meshx0.disabled='1'
 		else
@@ -1108,9 +1193,8 @@ else
 	}
 
 	# wireless.radio0.band='2g'
-	wbandstr=$(uci show wireless | grep ".band='${band}'$" -m1)
-	if test -n "$wbandstr"; then
-		radio=$(echo "$wbandstr" | cut -d. -f2) # radio0
+	radio=$backhaul_radio
+	if test -n "$radio"; then
 
 		#meshx0
 		uci set wireless.meshx0=wifi-iface
@@ -1123,22 +1207,7 @@ else
 		uci set wireless.meshx0.hidden='1'
 		uci set wireless.meshx0.wpa_group_rekey='601'
 		uci set wireless.meshx0.max_inactivity='301'
-		if test -n "${Xkey}"; then
-			if [ "$band" = "6g" ]; then
-				uci set wireless.meshx0.encryption='sae'
-				uci set wireless.meshx0.ieee80211w='2'
-			else
-				uci set wireless.meshx0.encryption='psk2'
-			fi
-			uci set wireless.meshx0.key="${Xkey}"
-		else
-			if [ "$band" = "6g" ]; then
-				uci set wireless.meshx0.encryption='owe'
-				uci set wireless.meshx0.ieee80211w='2'
-			else
-				uci set wireless.meshx0.encryption='none'
-			fi
-		fi
+		configure_mesh_security meshx0
 		if [ "$fronthaul_disabled" = "1" ]; then
 			uci set wireless.meshx0.disabled='1'
 		else
@@ -1153,22 +1222,7 @@ else
 		uci set wireless.meshx1.mode='sta'
 		uci set wireless.meshx1.wds='1'
 		uci set wireless.meshx1.ssid="${Xid}"
-		if test -n "${Xkey}"; then
-			if [ "$band" = "6g" ]; then
-				uci set wireless.meshx1.encryption='sae'
-				uci set wireless.meshx1.ieee80211w='2'
-			else
-				uci set wireless.meshx1.encryption='psk2'
-			fi
-			uci set wireless.meshx1.key="${Xkey}"
-		else
-			if [ "$band" = "6g" ]; then
-				uci set wireless.meshx1.encryption='owe'
-				uci set wireless.meshx1.ieee80211w='2'
-			else
-				uci set wireless.meshx1.encryption='none'
-			fi
-		fi
+		configure_mesh_security meshx1
 		if [ "$role" = "wap" ]; then
 			uci set wireless.meshx1.disabled='1'
 		else

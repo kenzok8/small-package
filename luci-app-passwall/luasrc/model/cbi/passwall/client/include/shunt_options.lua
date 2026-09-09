@@ -1,13 +1,28 @@
 local m, s, data = ...
 
-if not data.node_id or not data.node then
+if not data.node or not data.node[".name"] then
 	return
 end
 
 local api = m.api
-local s_cfgid = data.s_cfgid
-local current_node_id = data.node_id
+local section_id = s.section
+local current_node = data.node
+local current_node_id = current_node[".name"]
+local verify_option = data.verify_option
 local node_list = data.node_list or api.get_node_list()
+local shunt_section_type = "shunt_option_list"
+
+if data.tab then
+	if #s.tab_names > 0 then
+		table.insert(s.tab_names, 2, data.tab)
+		s.tabs[data.tab] = {
+			title       = data.tab_desc,
+			childs      = { }
+		}
+	else
+		s:tab(data.tab, data.tab_desc)
+	end
+end
 
 local groups = {}
 m:foreach("shunt_rules", function(s)
@@ -16,6 +31,9 @@ m:foreach("shunt_rules", function(s)
 	end
 end)
 
+local node_save_before = luci.http.formvalue("node_save_before")
+local load_shunt = luci.http.formvalue("load_shunt")
+
 local function get_cfgvalue()
 	return function(self, section)
 		return m:get(current_node_id, self.option)
@@ -23,8 +41,10 @@ local function get_cfgvalue()
 end
 local function get_write()
 	return function(self, section, value)
-		if data.verify_option then
-			if data.verify_option:formvalue(section) == current_node_id then
+		if node_save_before and node_save_before ~= current_node_id then return end
+		if load_shunt == "1" then return end
+		if verify_option then
+			if verify_option:formvalue(section) == current_node_id then
 				m:set(current_node_id, self.option, value)
 			end
 		else
@@ -34,18 +54,16 @@ local function get_write()
 end
 local function get_remove()
 	return function(self, section)
-		if data.verify_option then
-			if data.verify_option:formvalue(section) == current_node_id then
+		if node_save_before and node_save_before ~= current_node_id then return end
+		if load_shunt == "1" then return end
+		if verify_option then
+			if verify_option:formvalue(section) == current_node_id then
 				m:del(current_node_id, self.option)
 			end
 		else
 			m:del(current_node_id, self.option)
 		end
 	end
-end
-
-if data.tab then
-	s:tab(data.tab, data.tab_desc)
 end
 
 local function add_option(class, option_name, option_title, option_desc)
@@ -63,8 +81,8 @@ local function add_option(class, option_name, option_title, option_desc)
 		a.write = get_write()
 		a.remove = get_remove()
 	end
-	if data.verify_option then
-		a:depends(data.verify_option.option, current_node_id)
+	if verify_option then
+		a:depends(verify_option.option, current_node_id)
 	end
 	return a
 end
@@ -81,7 +99,7 @@ local function add_depends(o, deps)
 	end
 end
 
-if data.node.type == "Xray" then
+if current_node.type == "Xray" then
 	o = add_option(ListValue, "domainStrategy", translate("Domain Strategy"))
 	o:value("AsIs")
 	o:value("IPIfNonMatch")
@@ -134,7 +152,7 @@ table.insert(shunt_rules, {
 
 s2 = m:section(Table, shunt_rules, " ")
 s2.config = m.config
-s2.sectiontype = "shunt_option_list"
+s2.sectiontype = shunt_section_type
 
 o = s2:option(DummyValue, "remarks", translate("Rule"))
 o.rawhtml = true
@@ -157,9 +175,13 @@ _node.cfgvalue = function(self, section)
 	return m:get(current_node_id, shunt_rules[section]["_node_option"]) or shunt_rules[section]["_node_default"]
 end
 _node.write = function(self, section, value)
+	if node_save_before and node_save_before ~= current_node_id then return end
+	if load_shunt == "1" then return end
 	return m:set(current_node_id, shunt_rules[section]["_node_option"], value)
 end
 _node.remove = function(self, section)
+	if node_save_before and node_save_before ~= current_node_id then return end
+	if load_shunt == "1" then return end
 	return m:del(current_node_id, shunt_rules[section]["_node_option"])
 end
 
@@ -170,9 +192,13 @@ o.cfgvalue = function(self, section)
 	return m:get(current_node_id, shunt_rules[section]["_fakedns_option"])
 end
 o.write = function(self, section, value)
+	if node_save_before and node_save_before ~= current_node_id then return end
+	if load_shunt == "1" then return end
 	return m:set(current_node_id, shunt_rules[section]["_fakedns_option"], value)
 end
 o.remove = function(self, section)
+	if node_save_before and node_save_before ~= current_node_id then return end
+	if load_shunt == "1" then return end
 	return m:del(current_node_id, shunt_rules[section]["_fakedns_option"])
 end
 
@@ -186,9 +212,13 @@ proxy_tag_node.cfgvalue = function(self, section)
 	return m:get(current_node_id, shunt_rules[section]["_proxy_tag_option"])
 end
 proxy_tag_node.write = function(self, section, value)
+	if node_save_before and node_save_before ~= current_node_id then return end
+	if load_shunt == "1" then return end
 	return m:set(current_node_id, shunt_rules[section]["_proxy_tag_option"], value)
 end
 proxy_tag_node.remove = function(self, section)
+	if node_save_before and node_save_before ~= current_node_id then return end
+	if load_shunt == "1" then return end
 	return m:del(current_node_id, shunt_rules[section]["_proxy_tag_option"])
 end
 
@@ -204,4 +234,11 @@ for k1, v1 in pairs(node_list) do
 	end
 end
 
-m:appendTemplate("/include/shunt_options", {id = current_node_id, s_cfgid = s_cfgid or current_node_id, normal_list = api.jsonc.stringify(node_list.normal_list)})
+m:appendTemplate("/include/shunt_options", {
+	node_id = current_node_id,
+	section_id = section_id or current_node_id,
+	section_type = shunt_section_type,
+	tab_name = data.tab,
+	normal_list = api.jsonc.stringify(node_list.normal_list),
+	shunt_list = api.jsonc.stringify(node_list.shunt_list)
+})

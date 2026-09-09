@@ -12,13 +12,11 @@ if s1.val["type"] and s1.val["type"] ~= type_name then
 	return
 end
 
-local s = NamedSection(m, arg[1], "server")
+local s = NamedSection(m, arg[1], "tmp_" .. s1.sectiontype)
+s.parent = s1
 s.type_name = type_name
 s.option_prefix = "hysteria2_"
-
-local function _n(name)
-	return s.option_prefix .. name
-end
+api.set_type_cbi(s)
 
 o = s:option(Flag, "custom", translate("Use Custom Config"))
 
@@ -33,13 +31,13 @@ o.validate = function(self, value)
 	if v then return v end
 	return nil, translate("Custom Config") .. " " .. translate("Must be JSON text!")
 end
-o.custom_cfgvalue = function(self, section, value)
+o.cfgvalue = function(self, section, value)
 	local config_str = m:get(section, "config_str")
 	if config_str then
 		return api.base64Decode(config_str)
 	end
 end
-o.custom_write = function(self, section, value)
+o.write = function(self, section, value)
 	m:set(section, "config_str", api.base64Encode(value) or "")
 end
 
@@ -55,11 +53,11 @@ o:depends({ custom = false })
 
 o = s:option(Flag, "realms", translate("Realms"))
 o.default = "0"
-o.rewrite_option = _n(o.option)
+o.rewrite_option = o.option
 o:depends({ custom = false })
 
 o = s:option(Value, "realm_url", translate("Realm URL"), translate("Example:") .. "realm://public@realm.hy2.io/your-realm-name")
-o.rewrite_option = _n(o.option)
+o.rewrite_option = o.option
 o:depends({ realms = "1" })
 o.validate = function(self, value)
 	value = api.trim(value)
@@ -70,23 +68,23 @@ end
 
 o = s:option(DynamicList, "realm_stun", translate("Realm STUN"))
 o.default = { "stun.sip.us:3478", "stun.nextcloud.com:3478", "global.stun.twilio.com:3478" }
-o.rewrite_option = _n(o.option)
+o.rewrite_option = o.option
 o:depends({ realms = "1" })
 
 o = s:option(Flag, "realm_upnp", translate("Enable") .. " UPnP/NAT-PMP", translate("Enable UPnP/NAT-PMP port mapping on your gateway to improve hole punching success."))
 o.default = "0"
-o.rewrite_option = _n(o.option)
+o.rewrite_option = o.option
 o:depends({ realms = "1" })
 
 o = s:option(ListValue, "obfs_type", translate("Obfs Type"))
 o:value("", translate("Disable"))
 o:value("salamander")
 o:value("gecko")
-o.rewrite_option = _n(o.option)
+o.rewrite_option = o.option
 o:depends({ custom = false })
 
 o = s:option(Value, "obfs_password", translate("Obfs Password"))
-o.rewrite_option = _n(o.option)
+o.rewrite_option = o.option
 o:depends({ obfs_type = "salamander" })
 o:depends({ obfs_type = "gecko" })
 
@@ -95,31 +93,31 @@ o.datatype = "uinteger"
 o.placeholder = "512"
 o.default = "512"
 o:depends({ obfs_type = "gecko" })
-o.rewrite_option = _n(o.option)
+o.rewrite_option = o.option
 
 o = s:option(Value, "obfs_MaxPacketSize", translate("Gecko Packet Size (max)"))
 o.datatype = "uinteger"
 o.placeholder = "1200"
 o.default = "1200"
 o:depends({ obfs_type = "gecko" })
-o.rewrite_option = _n(o.option)
+o.rewrite_option = o.option
 
 o = s:option(Flag, "udp", translate("UDP"))
 o.default = "1"
-o.rewrite_option = _n(o.option)
+o.rewrite_option = o.option
 o:depends({ custom = false })
 
 o = s:option(Value, "up_mbps", translate("Max upload Mbps"))
-o.rewrite_option = _n(o.option)
+o.rewrite_option = o.option
 o:depends({ custom = false })
 
 o = s:option(Value, "down_mbps", translate("Max download Mbps"))
-o.rewrite_option = _n(o.option)
+o.rewrite_option = o.option
 o:depends({ custom = false })
 
 o = s:option(Flag, "ignoreClientBandwidth", translate("ignoreClientBandwidth"))
 o.default = "0"
-o.rewrite_option = _n(o.option)
+o.rewrite_option = o.option
 o:depends({ custom = false })
 
 o = s:option(FileUpload, "tls_certificateFile", translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
@@ -181,4 +179,4 @@ o = s:option(Flag, "log", translate("Log"))
 o.default = "1"
 o.rmempty = false
 
-api.luci_types(s1, s)
+api.type_cbi_section(s1, s)

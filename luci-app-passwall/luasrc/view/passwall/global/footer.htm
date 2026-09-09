@@ -14,11 +14,6 @@ local sid = "@global[0]"
 	}
 }
 
-.shunt-tab-hidden {
-	display: none !important;
-	visibility: hidden !important;
-}
-
 @media screen and (max-width: 1152px) {
 	#cbi-<%=appname%>-socks .cbi-section-table-titles {
 		display: none !important;
@@ -28,7 +23,6 @@ local sid = "@global[0]"
 <script type="text/javascript">
 	//<![CDATA[
 	let global_id = "<%=sid%>";
-	const shunt_list = JSON.parse('<%=self.shunt_list%>');
 
 	function to_edit_node(btn, stype) {
 		if (!btn) return;
@@ -235,47 +229,5 @@ local sid = "@global[0]"
 			select.insertAdjacentElement("afterend", logLink);
 		};
 	})();
-
-	document.addEventListener("DOMContentLoaded", () => setTimeout(() => {
-		const hiddenSelect = document.getElementById("cbid.<%=appname%>.<%=sid%>.node");
-		let o_val = hiddenSelect.value
-		const o_hasItem = shunt_list.find(element => element.id == o_val);
-		hiddenSelect.addEventListener("change", function(el){
-			let new_val = el.target.value
-			const new_hasItem = shunt_list.find(element => element.id == new_val);
-			if (new_hasItem) {
-				XHR.get('<%=api.url("update_config")%>', {
-					id: "<%=sid%>",
-					data: JSON.stringify({
-						node: new_val
-					})
-				},
-				function(x, data) {
-					if (x && x.status == 200 && data.code == 1) {
-						window.location.reload();
-					}
-					else {
-						alert("<%:Error%>");
-					}
-				});
-			} else {
-				try {
-					document.getElementById("tab.<%=appname%>.<%=sid%>.Shunt").classList.add('shunt-tab-hidden');
-					document.getElementById("tab.<%=appname%>.<%=sid%>.Shunt").style.display = "none";
-				} catch (error) {}
-				try {
-					document.querySelector('li[data-tab*="Shunt"]').classList.add('shunt-tab-hidden');
-					document.querySelector('li[data-tab*="Shunt"]').style.display = "none";
-				} catch (error) {}
-			}
-		});
-		let shunt_taboption = document.getElementById("container.<%=appname%>.<%=sid%>.Shunt");
-		if (shunt_taboption) {
-			let shunt_option_list = document.getElementById("cbi-<%=appname%>-shunt_option_list");
-			if (shunt_option_list) {
-				shunt_taboption.appendChild(shunt_option_list);
-			}
-		}
-	}, 100));
 	//]]>
 </script>

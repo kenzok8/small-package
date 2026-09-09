@@ -17,15 +17,11 @@ if s1.val["type"] ~= type_name then
 	return
 end
 
-local s = NamedSection(m, arg[1], "server")
+local s = NamedSection(m, arg[1], "tmp_" .. s1.sectiontype)
+s.parent = s1
 s.type_name = type_name
 s.option_prefix = "singbox_"
-
-local formvalue_proto = luci.http.formvalue(formvalue_key .. "protocol")
-
-if formvalue_proto then s1.val["protocol"] = formvalue_proto end
-
-local arg_select_proto = luci.http.formvalue("select_proto") or ""
+api.set_type_cbi(s)
 
 local ss_method_new_list = {
 	"none", "aes-128-gcm", "aes-192-gcm", "aes-256-gcm", "chacha20-ietf-poly1305", "xchacha20-ietf-poly1305", "2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305"
@@ -72,23 +68,19 @@ end
 o:value("_urltest", translate("URLTest"))
 o:value("_shunt", translate("Shunt"))
 o:value("_iface", translate("Custom Interface"))
-function o.custom_cfgvalue(self, section)
-	if arg_select_proto ~= "" then
-		return arg_select_proto
-	else
-		return m:get(section, self.config_option)
-	end
+
+local protocol_val = m:get(s.section, "protocol")
+local formvalue_proto = s.fields["protocol"]:formvalue(s.section)
+if formvalue_proto then
+	protocol_val = formvalue_proto
 end
 
-local load_urltest_options = s1.val["protocol"] == "_urltest" or arg_select_proto == "_urltest"
-local load_shunt_options = s1.val["protocol"] == "_shunt" or arg_select_proto == "_shunt"
-local load_iface_options = s1.val["protocol"] == "_iface" or arg_select_proto == "_iface"
+local load_urltest_options = protocol_val == "_urltest"
+local load_shunt_options = protocol_val == "_shunt"
+local load_iface_options = protocol_val == "_iface"
 local load_normal_options = true
 if load_urltest_options or load_shunt_options or load_iface_options then
 	load_normal_options = nil
-end
-if not arg_select_proto:find("_") then
-	load_normal_options = true
 end
 
 local netdev_list = api.get_network_devices()
@@ -115,11 +107,11 @@ if load_urltest_options then -- [[ URLTest Start ]]
 		end
 	end
 	-- 读取旧 DynamicList
-	function o.custom_cfgvalue(self, section)
+	function o.cfgvalue(self, section)
 		return table.concat(m:get(section, "urltest_node") or {}, " ")
 	end
 	-- 写入保持 DynamicList
-	function o.custom_write(self, section, value)
+	function o.write(self, section, value)
 		local old = m:get(section, "urltest_node") or {}
 		local new, set = {}, {}
 		for v in value:gmatch("%S+") do
@@ -935,7 +927,7 @@ if not load_shunt_options then
 	for k1, v1 in pairs(node_list) do
 		if k1 ~= "shunt_list" and k1 ~= "iface_list" then
 			for i, v in ipairs(v1) do
-				if v.id ~= arg[1] then
+				if v.id ~= s.section then
 					o1:value(v.id, v.remark)
 					o1.group[#o1.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 					if k1 == "normal_list" then
@@ -949,14 +941,15 @@ if not load_shunt_options then
 	end
 end
 
-api.luci_types(s1, s)
+api.type_cbi_section(s1, s)
 
 if load_shunt_options then
-	local current_node = m:get(arg[1]) or {}
 	local shunt_lua = loadfile("/usr/lib/lua/luci/model/cbi/passwall/client/include/shunt_options.lua")
 	setfenv(shunt_lua, getfenv(1))(m, s1, {
-		node_id = arg[1],
-		node = current_node,
+		node = {
+			[".name"] = s.section,
+			type = type_name,
+		},
 		node_list = node_list,
 	})
 end

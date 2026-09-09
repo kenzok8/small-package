@@ -2,18 +2,22 @@
 local map = self.map
 local api = map.api
 local config = map.config
-local id = self.id
-local s_cfgid = self.s_cfgid
+local node_id = self.node_id
+local verify_option = self.verify_option
+local section_id = self.section_id
+local section_type = self.section_type
+local tab_name = self.tab_name
 -%>
 <style>
-.hidden {
+.shunt_hidden {
 	display: none !important;
 	visibility: hidden !important;
 }
 </style>
 <script type="text/javascript">
 	//<![CDATA[
-	const normal_list = JSON.parse('<%=self.normal_list%>');
+	var normal_list = JSON.parse('<%=self.normal_list%>');
+
 	function check_fakedns(id, val) {
 		const dom_id = "cbid.table." + id + ".";
 		const fakedns_dom = document.getElementById(dom_id + "_fakedns");
@@ -21,12 +25,14 @@ local s_cfgid = self.s_cfgid
 			const selectNode = document.getElementById(dom_id + "_node");
 			val = selectNode.value;
 		}
-		if (val == "" || val == "_direct") {
-			fakedns_dom.value = 0;
-			fakedns_dom.checked = false;
-			fakedns_dom.classList.add('hidden');
-		} else {
-			fakedns_dom.classList.remove('hidden');
+		if (fakedns_dom) {
+			if (val == "" || val == "_direct") {
+				fakedns_dom.value = 0;
+				fakedns_dom.checked = false;
+				fakedns_dom.classList.add('shunt_hidden');
+			} else {
+				fakedns_dom.classList.remove('shunt_hidden');
+			}
 		}
 	}
 	function check_proxy_tag(id, val) {
@@ -45,13 +51,13 @@ local s_cfgid = self.s_cfgid
 			const searchInput = document.getElementById(cbid + ".search");
 			const listContainer = document.getElementById(cbid + ".list");
 			lv_change(cbid, listContainer, hiddenSelect, labelSpan, searchInput, "", "<%:Close (Not use)%>");
-			proxy_tag_dom.classList.add('hidden');
+			proxy_tag_dom?.classList.add('shunt_hidden');
 		} else {
-			proxy_tag_dom.classList.remove('hidden');
+			proxy_tag_dom?.classList.remove('shunt_hidden');
 		}
 	}
 	function refresh_depends() {
-		const table_dom = document.getElementById("cbi-passwall-shunt_option_list");
+		const table_dom = document.getElementById("cbi-<%=config%>-<%=section_type%>");
 		if (table_dom) {
 			const trs = table_dom.getElementsByTagName("tr");
 			for (let i = 1; i < trs.length;i++) {
@@ -60,40 +66,82 @@ local s_cfgid = self.s_cfgid
 			}
 		}
 	}
+	const shunt = {
+		tab() {
+			// Move the shunt options to Tab
+			<% if tab_name then -%>
+			const shunt_taboption = document.getElementById("container.<%=config%>.<%=section_id%>.<%=tab_name%>");
+			if (shunt_taboption) {
+				const shunt_option_list = document.getElementById("cbi-<%=config%>-<%=section_type%>");
+				if (shunt_option_list) {
+					shunt_taboption.appendChild(shunt_option_list);
+				}
+			}
+			<%- end %>
+		},
+		hide() {
+			document.getElementById("cbi-<%=config%>-<%=section_type%>")?.classList.add('shunt_hidden');
+			<% if tab_name then -%>
+			try { document.getElementById("tab.<%=config%>.<%=section_id%>.<%=tab_name%>")?.classList.add('shunt_hidden'); } catch (error) {}
+			try { document.querySelector('li[data-tab*="<%=tab_name%>"]')?.classList.add('shunt_hidden'); } catch (error) {}
+			const shunt_taboption = document.getElementById("container.<%=config%>.<%=section_id%>.<%=tab_name%>");
+			if (shunt_taboption) {
+				[...shunt_taboption.querySelectorAll('[name]')].forEach(el => {
+					const nameValue = el.getAttribute('name');
+					el.setAttribute('o-name', nameValue);
+					el.removeAttribute('name');
+				});
+			}
+			<%- end %>
+		},
+		show() {
+			document.getElementById("cbi-<%=config%>-<%=section_type%>")?.classList.remove('shunt_hidden');
+			<% if tab_name then -%>
+			try { document.getElementById("tab.<%=config%>.<%=section_id%>.<%=tab_name%>")?.classList.remove('shunt_hidden'); } catch (error) {}
+			try { document.querySelector('li[data-tab*="<%=tab_name%>"]')?.classList.remove('shunt_hidden'); } catch (error) {}
+			const shunt_taboption = document.getElementById("container.<%=config%>.<%=section_id%>.<%=tab_name%>");
+			if (shunt_taboption) {
+				[...shunt_taboption.querySelectorAll('[o-name]')].forEach(el => {
+					const nameValue = el.getAttribute('o-name');
+					el.setAttribute('name', nameValue);
+					el.removeAttribute('o-name');
+				});
+			}
+			<%- end %>
+		}
+	}
 	document.addEventListener("DOMContentLoaded", function () {
+		shunt.tab();
 		waitForElement('select[name*="<%=config%>"][name*="shunt_group"]', function(el) {
 			let o_val = el.value;
 			el.addEventListener("change", () => {
 				el.blur();
 				if (o_val != el.value) {
-					let save = true;
-					if (save) {
-						update_config("<%=id%>", {
-							shunt_group: getOption("<%=config%>", "<%=s_cfgid%>", "shunt_group").value,
-						}, get_current_url());
-					}
+					update_config("<%=node_id%>", {
+						shunt_group: getOption("<%=config%>", "<%=section_id%>", "shunt_group").value,
+					}, get_current_url());
 				}
 			});
 		});
-	});
-	document.addEventListener("DOMContentLoaded", () => setTimeout(() => {
-		refresh_depends();
-		const table_dom = document.getElementById("cbi-passwall-shunt_option_list");
-		if (table_dom) {
-			const trs = table_dom.getElementsByTagName("tr");
-			for (let i = 1; i < trs.length;i++) {
-				const selectNode = document.getElementById("cbid.table." + i + "._node.main");
-				selectNode.addEventListener("change", function(el){
-					let new_val = el.target.value
-					check_fakedns(i, new_val);
-					check_proxy_tag(i, new_val);
-				});
-				if (i == trs.length - 1) {
-					const newArray = window.lv_dropdown_data["cbid.table." + i + "._node"].ungrouped.filter(item => item.key !== "_default");
-					window.lv_dropdown_data["cbid.table." + i + "._node"].ungrouped = newArray
+		setTimeout(() => {
+			refresh_depends();
+			const table_dom = document.getElementById("cbi-<%=config%>-<%=section_type%>");
+			if (table_dom) {
+				const trs = table_dom.getElementsByTagName("tr");
+				for (let i = 1; i < trs.length;i++) {
+					const selectNode = document.getElementById("cbid.table." + i + "._node.main");
+					selectNode.addEventListener("change", function(el){
+						let new_val = el.target.value
+						check_fakedns(i, new_val);
+						check_proxy_tag(i, new_val);
+					});
+					if (i == trs.length - 1) {
+						const newArray = window.lv_dropdown_data["cbid.table." + i + "._node"].ungrouped.filter(item => item.key !== "_default");
+						window.lv_dropdown_data["cbid.table." + i + "._node"].ungrouped = newArray
+					}
 				}
 			}
-		}
-	}, 100));
+		}, 200)
+	});
 	//]]>
 </script>

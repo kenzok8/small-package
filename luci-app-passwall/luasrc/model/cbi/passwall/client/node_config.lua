@@ -61,7 +61,6 @@ end
 local types_dir = "/usr/lib/lua/luci/model/cbi/" .. api.appname .. "/client/type/"
 s.val = {}
 s.val["type"] = m:get(arg[1], "type")
-s.val["protocol"] = m:get(arg[1], "protocol")
 
 if luci.http.formvalue("cbi.submit") == "1" then
 	local formvalue_type = luci.http.formvalue(formvalue_key .. "type")
@@ -71,34 +70,6 @@ if luci.http.formvalue("cbi.submit") == "1" then
 end
 
 o = s:option(ListValue, "type", translate("Type"))
-
-if api.is_finded("ipt2socks") then
-	local type_name = "Socks"
-
-	s.fields["type"]:value(type_name, "Socks")
-
-	if s.val["type"] == type_name then
-		local s2 = NamedSection(m, arg[1], "server")
-		s2.type_name = type_name
-		s2.option_prefix = "socks_"
-
-		o = s2:option(ListValue, "del_protocol", "　") --始终隐藏，用于删除 protocol
-		o:depends({ __hide = "1" })
-		o.rewrite_option = "protocol"
-
-		o = s2:option(Value, "address", translate("Address (Support Domain Name)"))
-
-		o = s2:option(Value, "port", translate("Port"))
-		o.datatype = "port"
-
-		o = s2:option(Value, "username", translate("Username"))
-
-		o = s2:option(Value, "password", translate("Password"))
-		o.password = true
-
-		api.luci_types(s, s2)
-	end
-end
 
 local type_table = {}
 for filename in api.fs.dir(types_dir) do
