@@ -1,14 +1,14 @@
-<div class="cbi-value" id="cbi-<%=self.config.."-"..section.."-"..self.option%>" data-index="<%=self.index%>" data-depends="<%=pcdata(self:deplist2json(section))%>">
-	<label class="cbi-value-title">
-		<%:Switch Mode%>
-	</label>
-	<div class="cbi-value-field">
-		<div>
-			<input class="btn cbi-button cbi-button-apply" type="button" onclick="switch_gfw_mode()" value="<%:GFW List%>" />
-			<input class="btn cbi-button cbi-button-apply" type="button" onclick="switch_chnroute_mode()" value="<%:Not China List%>" />
-			<input class="btn cbi-button cbi-button-apply" type="button" onclick="switch_returnhome_mode()" value="<%:China List%>" />
-			<input class="btn cbi-button cbi-button-apply" type="button" onclick="switch_global_mode()" value="<%:Global Proxy%>" />
-		</div>
+<%+cbi/valueheader%>
+
+<label class="cbi-value-title">
+	<%:Switch Mode%>
+</label>
+<div class="cbi-value-field">
+	<div>
+		<input class="btn cbi-button cbi-button-apply" type="button" onclick="switch_gfw_mode()" value="<%:GFW List%>" />
+		<input class="btn cbi-button cbi-button-apply" type="button" onclick="switch_chnroute_mode()" value="<%:Not China List%>" />
+		<input class="btn cbi-button cbi-button-apply" type="button" onclick="switch_returnhome_mode()" value="<%:China List%>" />
+		<input class="btn cbi-button cbi-button-apply" type="button" onclick="switch_global_mode()" value="<%:Global Proxy%>" />
 	</div>
 </div>
 
@@ -108,3 +108,4 @@
 		opt.set("udp_proxy_mode", "proxy");
 	}
 </script>
+<%+cbi/valuefooter%>

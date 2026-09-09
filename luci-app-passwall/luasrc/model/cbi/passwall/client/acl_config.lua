@@ -47,20 +47,23 @@ end
 
 -- [[ ACLs Settings ]]--
 s = m:section(NamedSection, arg[1], translate("ACLs"), translate("ACLs"))
-s.addremove = false
-s.dynamic = false
+
+s:tab("Main", translate("Main"))
+s:tab("Proxy", translate("Proxy"))
+s:tab("DNS", translate("DNS"))
+s:tab("Log", translate("Log"))
 
 ---- Enable
-o = s:option(Flag, "enabled", translate("Enable"))
+o = s:taboption("Main", Flag, "enabled", translate("Enable"))
 o.default = 1
 o.rmempty = false
 
 ---- Remarks
-o = s:option(Value, "remarks", translate("Remarks"))
+o = s:taboption("Main", Value, "remarks", translate("Remarks"))
 o.default = arg[1]
 o.rmempty = false
 
-o = s:option(Value, "interface", translate("Source Interface"))
+o = s:taboption("Main", Value, "interface", translate("Source Interface"))
 o:value("", translate("All"))
 local iface = api.get_network_devices()
 for _, d in ipairs(iface) do
@@ -94,7 +97,7 @@ table.sort(mac_t, function(a,b)
 end)
 
 ---- Source
-sources = s:option(DynamicList, "sources", translate("Source"))
+sources = s:taboption("Main", DynamicList, "sources", translate("Source"))
 sources.description = "<ul><li>" .. translate("Example:")
 .. "</li><li>" .. translate("MAC") .. ": 00:00:00:FF:FF:FF"
 .. "</li><li>" .. translate("IP") .. ": 192.168.1.100"
@@ -152,13 +155,14 @@ sources.validate = function(self, value, t)
 	return value
 end
 
-o = s:option(ListValue, "mode", translate("Mode"))
+local NODE = m:get("@global[0]", "node") or ""
+o = s:taboption("Main", ListValue, "mode", translate("Mode"))
 o:value("0", translate("No Proxy"))
 o:value("1", translate("Proxy"))
 
 ---- TCP No Redir Ports
 local TCP_NO_REDIR_PORTS = m:get("@global_forwarding[0]", "tcp_no_redir_ports")
-o = s:option(Value, "tcp_no_redir_ports", translate("TCP No Redir Ports"))
+o = s:taboption("Proxy", Value, "tcp_no_redir_ports", translate("TCP No Redir Ports"))
 o:value("", translate("Use global config") .. "(" .. TCP_NO_REDIR_PORTS .. ")")
 o:value("disable", translate("No patterns are used"))
 o:value("1:65535", translate("All"))
@@ -167,7 +171,7 @@ o.validate = port_validate
 
 ---- UDP No Redir Ports
 local UDP_NO_REDIR_PORTS = m:get("@global_forwarding[0]", "udp_no_redir_ports")
-o = s:option(Value, "udp_no_redir_ports", translate("UDP No Redir Ports"),
+o = s:taboption("Proxy", Value, "udp_no_redir_ports", translate("UDP No Redir Ports"),
 	"<font color='red'>" .. 
 		translate("Fill in the ports you don't want to be forwarded by the agent, with the highest priority.") ..
 	"</font>")
@@ -177,7 +181,7 @@ o:value("1:65535", translate("All"))
 o:depends("mode", "1")
 o.validate = port_validate
 
-o = s:option(DummyValue, "_hide_node_option", "")
+o = s:taboption("Main", DummyValue, "_hide_node_option", "")
 o.template = m:template_path("/cbi/hidevalue")
 o.value = "1"
 o:depends("mode", "0")
@@ -186,44 +190,46 @@ if TCP_NO_REDIR_PORTS == "1:65535" and UDP_NO_REDIR_PORTS == "1:65535" then
 	o:depends({ tcp_no_redir_ports = "", udp_no_redir_ports = "" })
 end
 
-o = s:option(Flag, "use_global_config", translatef("Use global config"))
+o = s:taboption("Main", Flag, "use_global_config", translatef("Use global config"))
 o.default = "0"
 o.rmempty = false
-o:depends({ _hide_node_option = "1",  ['!reverse'] = true })
+o:depends({ _hide_node_option = "1", ['!reverse'] = true })
 
-o = s:option(ListValue, "node", "<a style='color: red'>" .. translate("Proxy Node") .. "</a>")
+o = s:taboption("Main", ListValue, "node", "<a style='color: red'>" .. translate("Proxy Node") .. "</a>")
 o.group = {}
 o:depends({ _hide_node_option = false, use_global_config = false })
 o.template = m:template_path("/cbi/nodes_listvalue")
+o.description = translate("Use global configuration when using the global node.")
 
-current_node_id = o:formvalue(arg[1])
-if not current_node_id then
-	current_node_id = m:get(arg[1], "node")
+current_node_id = m:get(arg[1], "node")
+local node_value = s.fields["node"]:formvalue(s.section)
+if node_value then
+	current_node_id = node_value
 end
 current_node = current_node_id and m:get(current_node_id) or {}
 
-o = s:option(DummyValue, "_acl_node_bool", "")
+o = s:taboption("Main", DummyValue, "node_save_before", "")
+o.template = m:template_path("/cbi/hidevalue")
+o.value = current_node[".name"]
+o.cbid = function(self, section) return "node_save_before" end
+
+o = s:taboption("Main", DummyValue, "_acl_node_bool", "")
 o.template = m:template_path("/cbi/hidevalue")
 o.value = "1"
-o:depends({ node = "",  ['!reverse'] = true })
+o:depends({ node = "", ['!reverse'] = true })
 
----- Log
-o = s:option(Flag, "log", translate("Enable Node Log"))
-o.default = 0
-o.rmempty = false
-o:depends({ _hide_node_option = false, use_global_config = false })
-
-o = s:option(ListValue, "loglevel", "Sing-Box/Xray " .. translate("Log Level"))
-o.default = "warn"
-o:value("debug", "Debug")
-o:value("info", "Info")
-o:value("warn", "Warning")
-o:value("error", "Error")
-o:depends("log", "1")
+o = s:taboption("Main", DummyValue, "_diff_global_node", "")
+o.template = m:template_path("/cbi/hidevalue")
+o.value = "1"
+if NODE ~= "" then
+	o:depends({ node = NODE, ['!reverse'] = true })
+else
+	o:depends({ _acl_node_bool = "1" })
+end
 
 ---- TCP Proxy Drop Ports
 local TCP_PROXY_DROP_PORTS = m:get("@global_forwarding[0]", "tcp_proxy_drop_ports")
-o = s:option(Value, "tcp_proxy_drop_ports", translate("TCP Proxy Drop Ports"))
+o = s:taboption("Proxy", Value, "tcp_proxy_drop_ports", translate("TCP Proxy Drop Ports"))
 o:value("", translate("Use global config") .. "(" .. TCP_PROXY_DROP_PORTS .. ")")
 o:value("disable", translate("No patterns are used"))
 o.validate = port_validate
@@ -232,7 +238,7 @@ o:depends({ _acl_node_bool = "1" })
 
 ---- UDP Proxy Drop Ports
 local UDP_PROXY_DROP_PORTS = m:get("@global_forwarding[0]", "udp_proxy_drop_ports")
-o = s:option(Value, "udp_proxy_drop_ports", translate("UDP Proxy Drop Ports"))
+o = s:taboption("Proxy", Value, "udp_proxy_drop_ports", translate("UDP Proxy Drop Ports"))
 o:value("", translate("Use global config") .. "(" .. UDP_PROXY_DROP_PORTS .. ")")
 o:value("disable", translate("No patterns are used"))
 o:value("443", translate("QUIC"))
@@ -242,7 +248,7 @@ o:depends({ _acl_node_bool = "1" })
 
 ---- TCP Redir Ports
 local TCP_REDIR_PORTS = m:get("@global_forwarding[0]", "tcp_redir_ports")
-o = s:option(Value, "tcp_redir_ports", translate("TCP Redir Ports"), translatef("Only work with using the %s node.", "TCP"))
+o = s:taboption("Proxy", Value, "tcp_redir_ports", translate("TCP Redir Ports"), translatef("Only work with using the %s node.", "TCP"))
 o:value("", translate("Use global config") .. "(" .. TCP_REDIR_PORTS .. ")")
 o:value("1:65535", translate("All"))
 o:value("80,443", "80,443")
@@ -254,7 +260,7 @@ o:depends({ _acl_node_bool = "1" })
 
 ---- UDP Redir Ports
 local UDP_REDIR_PORTS = m:get("@global_forwarding[0]", "udp_redir_ports")
-o = s:option(Value, "udp_redir_ports", translate("UDP Redir Ports"), translatef("Only work with using the %s node.", "UDP"))
+o = s:taboption("Proxy", Value, "udp_redir_ports", translate("UDP Redir Ports"), translatef("Only work with using the %s node.", "UDP"))
 o:value("", translate("Use global config") .. "(" .. UDP_REDIR_PORTS .. ")")
 o:value("1:65535", translate("All"))
 o:value("53", "53")
@@ -262,7 +268,7 @@ o.validate = port_validate
 o:depends({ use_global_config = true })
 o:depends({ _acl_node_bool = "1" })
 
-o = s:option(DummyValue, "tips", "　")
+o = s:taboption("Proxy", DummyValue, "tips", "　")
 o.rawhtml = true
 o.cfgvalue = function(t, n)
 	return string.format('<font color="red">%s</font>',
@@ -271,71 +277,71 @@ end
 o:depends({ use_global_config = true })
 o:depends({ _acl_node_bool = "1" })
 
-o = s:option(Flag, "use_direct_list", translatef("Use %s", translate("Direct List")))
+o = s:taboption("Proxy", Flag, "use_direct_list", translatef("Use %s", translate("Direct List")))
 o.default = "1"
-o:depends({ _acl_node_bool = "1" })
+o:depends({ _acl_node_bool = "1", _diff_global_node = "1" })
 
-o = s:option(Flag, "use_proxy_list", translatef("Use %s", translate("Proxy List")))
+o = s:taboption("Proxy", Flag, "use_proxy_list", translatef("Use %s", translate("Proxy List")))
 o.default = "1"
-o:depends({ _acl_node_bool = "1" })
+o:depends({ _acl_node_bool = "1", _diff_global_node = "1" })
 
-o = s:option(Flag, "use_block_list", translatef("Use %s", translate("Block List")))
+o = s:taboption("Proxy", Flag, "use_block_list", translatef("Use %s", translate("Block List")))
 o.default = "1"
-o:depends({ _acl_node_bool = "1" })
+o:depends({ _acl_node_bool = "1", _diff_global_node = "1" })
 
 if has_gfwlist then
-	o = s:option(Flag, "use_gfw_list", translatef("Use %s", translate("GFW List")))
+	o = s:taboption("Proxy", Flag, "use_gfw_list", translatef("Use %s", translate("GFW List")))
 	o.default = "1"
-	o:depends({ _acl_node_bool = "1" })
+	o:depends({ _acl_node_bool = "1", _diff_global_node = "1" })
 end
 
 if has_chnlist or has_chnroute then
-	o = s:option(ListValue, "chn_list", translate("China List"))
+	o = s:taboption("Proxy", ListValue, "chn_list", translate("China List"))
 	o:value("0", translate("Close(Not use)"))
 	o:value("direct", translate("Direct Connection"))
 	o:value("proxy", translate("Proxy"))
 	o.default = "direct"
-	o:depends({ _acl_node_bool = "1" })
+	o:depends({ _acl_node_bool = "1", _diff_global_node = "1" })
 end
 
-o = s:option(ListValue, "tcp_proxy_mode", "TCP " .. translate("Proxy Mode"))
+o = s:taboption("Proxy", ListValue, "tcp_proxy_mode", "TCP " .. translate("Proxy Mode"))
 o:value("disable", translate("No Proxy"))
 o:value("proxy", translate("Proxy"))
-o:depends({ _acl_node_bool = "1" })
+o:depends({ _acl_node_bool = "1", _diff_global_node = "1" })
 
-o = s:option(ListValue, "udp_proxy_mode", "UDP " .. translate("Proxy Mode"))
+o = s:taboption("Proxy", ListValue, "udp_proxy_mode", "UDP " .. translate("Proxy Mode"))
 o:value("disable", translate("No Proxy"))
 o:value("proxy", translate("Proxy"))
-o:depends({ _acl_node_bool = "1" })
+o:depends({ _acl_node_bool = "1", _diff_global_node = "1" })
 
-o = s:option(DummyValue, "switch_mode", " ")
+o = s:taboption("Proxy", DummyValue, "switch_mode", "")
 o.template = m:template_path("/global/proxy")
-o:depends({ _acl_node_bool = "1" })
+o:depends({ _acl_node_bool = "1", _diff_global_node = "1" })
 
 -- Node → DNS Depends Settings
-o = s:option(DummyValue, "_node_sel_shunt", "")
+o = s:taboption("Main", DummyValue, "_node_sel_shunt", "")
 o.template = m:template_path("/cbi/hidevalue")
 o.value = "1"
 o:depends({ node = "__always__" })
 
-o = s:option(DummyValue, "_node_sel_other", "")
+o = s:taboption("Main", DummyValue, "_node_sel_other", "")
 o.template = m:template_path("/cbi/hidevalue")
 o.value = "1"
-o:depends({ _node_sel_shunt = "1",  ['!reverse'] = true })
+o:depends({ _node_sel_shunt = "1", ['!reverse'] = true })
 
 ---- DNS
-o = s:option(ListValue, "dns_shunt", "DNS " .. translate("Shunt"))
+o = s:taboption("DNS", ListValue, "dns_shunt", "DNS " .. translate("Shunt"))
 o.default = "chinadns-ng"
 o:value("dnsmasq", "Dnsmasq")
 o:value("chinadns-ng", translate("ChinaDNS-NG (recommended)"))
-o:depends({ _acl_node_bool = "1" })
+o:depends({ _acl_node_bool = "1", _diff_global_node = "1" })
 
-o = s:option(Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"), translate("Experimental feature."))
+o = s:taboption("DNS", Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"), translate("Experimental feature."))
 o.default = "0"
-o:depends({ _acl_node_bool = "1" })
+o:depends({ _acl_node_bool = "1", _diff_global_node = "1" })
 
 ---- DNS Forward Mode
-o = s:option(ListValue, "dns_mode", translate("Filter Mode"))
+o = s:taboption("DNS", ListValue, "dns_mode", translate("Filter Mode"))
 if api.is_finded("dns2socks") then
 	o:value("dns2socks", "dns2socks")
 end
@@ -345,7 +351,7 @@ end
 if has_xray then
 	o:value("xray", "Xray")
 end
-o:depends({ _acl_node_bool = "1", _node_sel_other = "1" })
+o:depends({ _acl_node_bool = "1", _node_sel_other = "1", _diff_global_node = "1" })
 o.write = function(self, section, value)
 	if value == "dns2socks" then
 		m:del(section, "v2ray_dns_mode")
@@ -374,7 +380,7 @@ o.remove = function(self, section)
 	end
 end
 
-o = s:option(ListValue, "xray_dns_mode", translate("Request protocol"))
+o = s:taboption("DNS", ListValue, "xray_dns_mode", translate("Request protocol"))
 o.default = "tcp"
 o:value("tcp", "TCP")
 o:value("udp", "UDP")
@@ -389,7 +395,7 @@ o.write = function(self, section, value)
 	end
 end
 
-o = s:option(ListValue, "singbox_dns_mode", translate("Request protocol"))
+o = s:taboption("DNS", ListValue, "singbox_dns_mode", translate("Request protocol"))
 o.default = "tcp"
 o:value("tcp", "TCP")
 o:value("udp", "UDP")
@@ -408,7 +414,7 @@ o.write = function(self, section, value)
 end
 
 ---- DNS Forward
-o = s:option(Value, "remote_dns", translate("Remote DNS"))
+o = s:taboption("DNS", Value, "remote_dns", translate("Remote DNS"))
 o.datatype = "or(ipaddr,ipaddrport(1))"
 o.default = "1.1.1.1"
 o:value("1.1.1.1", "1.1.1.1 (CloudFlare)")
@@ -427,7 +433,7 @@ o:depends({singbox_dns_mode = "tcp"})
 o:depends({singbox_dns_mode = "tls"})
 o:depends({singbox_dns_mode = "quic"})
 
-o = s:option(Value, "remote_dns_doh", translate("Remote DNS DoH"))
+o = s:taboption("DNS", Value, "remote_dns_doh", translate("Remote DNS DoH"))
 o.description = translate("Format: URL[,IP] (optional IP to map the domain in the URL)")
 o:value("https://1.1.1.1/dns-query", "1.1.1.1 (CloudFlare)")
 o:value("https://1.1.1.2/dns-query", "1.1.1.2 (CloudFlare-Security)")
@@ -466,15 +472,15 @@ o:depends({xray_dns_mode = "doh"})
 o:depends({singbox_dns_mode = "doh"})
 o:depends({singbox_dns_mode = "http3"})
 
-o = s:option(Value, "remote_dns_client_ip", translate("EDNS Client Subnet"))
+o = s:taboption("DNS", Value, "remote_dns_client_ip", translate("EDNS Client Subnet"))
 o.description = translate("Notify the DNS server when the DNS query is notified, the location of the client (cannot be a private IP address).") .. "<br />" ..
 		translate("This feature requires the DNS server to support the Edns Client Subnet (RFC7871).")
 o.datatype = "ipaddr"
 o:depends({dns_mode = "sing-box"})
 o:depends({dns_mode = "xray"})
-o:depends({_node_sel_shunt = "1"})
+o:depends({_node_sel_shunt = "1", _diff_global_node = "1"})
 
-o = s:option(Flag, "remote_fakedns", "FakeDNS", translate("Use FakeDNS work in the domain that proxy."))
+o = s:taboption("DNS", Flag, "remote_fakedns", "FakeDNS", translate("Use FakeDNS work in the domain that proxy."))
 o.default = "0"
 o.rmempty = false
 o:depends({dns_mode = "sing-box"})
@@ -492,12 +498,12 @@ o.validate = function(self, value, t)
 	return value
 end
 
-o = s:option(Value, "remote_rewrite_ttl", translate("Remote DNS") .. " TTL")
+o = s:taboption("DNS", Value, "remote_rewrite_ttl", translate("Remote DNS") .. " TTL")
 o.datatype = "min(1)"
 o.default = "30"
 o:depends({dns_mode = "sing-box"})
 
-o = s:option(ListValue, "chinadns_ng_default_tag", translate("Default DNS"))
+o = s:taboption("DNS", ListValue, "chinadns_ng_default_tag", translate("Default DNS"))
 o.default = "none"
 o:value("gfw", translate("Remote DNS"))
 o:value("chn", translate("Direct DNS"))
@@ -515,17 +521,72 @@ o.description = desc
 		.. "</ul>"
 o:depends({dns_shunt = "chinadns-ng", tcp_proxy_mode = "proxy", chn_list = "direct"})
 
-o = s:option(Flag, "force_https_soa", translate("Force HTTPS SOA"), translate("Force queries with qtype 65 to respond with an SOA record."))
+o = s:taboption("DNS", Flag, "force_https_soa", translate("Force HTTPS SOA"), translate("Force queries with qtype 65 to respond with an SOA record."))
 o.default = "0"
 o.rmempty = false
 o:depends({dns_shunt = "chinadns-ng"})
 
-o = s:option(ListValue, "use_default_dns", translate("Default DNS"))
+o = s:taboption("DNS", ListValue, "use_default_dns", translate("Default DNS"))
 o.default = "direct"
 o:value("remote", translate("Remote DNS"))
 o:value("direct", translate("Direct DNS"))
 o.description = desc .. "</ul>"
 o:depends({dns_shunt = "dnsmasq", tcp_proxy_mode = "proxy", chn_list = "direct"})
+
+---- Log
+o = s:taboption("Log", Flag, "log", translate("Enable Node Log"))
+o.default = 0
+o.rmempty = false
+o:depends({ _acl_node_bool = "1", _diff_global_node = "1" })
+
+o = s:taboption("Log", ListValue, "loglevel", "Sing-Box/Xray " .. translate("Log Level"))
+o.default = "warn"
+o:value("debug", "Debug")
+o:value("info", "Info")
+o:value("warn", "Warning")
+o:value("error", "Error")
+o:depends("log", "1")
+
+o = s:taboption("Log", DummyValue, "_node_log", translate("Log File"))
+o.rawhtml = true
+o.cfgvalue = function(t, n)
+	local log_file = api.TMP_PATH .. "/acl/" .. arg[1] .. "/node.log"
+	local log_url = api.url("get_redir_log") .. "?id=" .. arg[1]
+	local s = "<code>%s</code>&nbsp;&nbsp;" % log_file
+	if api.fs.access(log_file) then
+		local btn = string.format(
+			'<input class="btn cbi-button cbi-button-apply" type="button" value="%s" onclick="window.open(\'%s\', \'_blank\')" />',
+			translate("View Log"),
+			log_url
+		)
+		s = s .. btn
+	end
+	return s
+end
+o:depends("log", "1")
+
+o = s:taboption("Log", Flag, "log_chinadns_ng", translate("Enable") .. " ChinaDNS-NG " .. translate("Log"))
+o.default = "0"
+o.rmempty = false
+o:depends("dns_shunt", "chinadns-ng")
+
+o = s:taboption("Log", DummyValue, "_chinadns_ng_log", translate("Log File"))
+o.rawhtml = true
+o.cfgvalue = function(t, n)
+	local log_file = api.TMP_PATH .. "/acl/" .. arg[1] .. "/chinadns_ng.log"
+	local log_url = api.url("get_chinadns_log") .. "?flag=" .. arg[1]
+	local s = "<code>%s</code>&nbsp;&nbsp;" % log_file
+	if api.fs.access(log_file) then
+		local btn = string.format(
+			'<input class="btn cbi-button cbi-button-apply" type="button" value="%s" onclick="window.open(\'%s\', \'_blank\')" />',
+			translate("View Log"),
+			log_url
+		)
+		s = s .. btn
+	end
+	return s
+end
+o:depends("log_chinadns_ng", "1")
 
 local o_node = s.fields["node"]
 local shunt_list = {}
@@ -536,7 +597,7 @@ for k, v in pairs(socks_list) do
 end
 for k, v in pairs(nodes_table) do
 	if #normal_list == 0 then
-		s.fields["dns_mode"]:depends({ _acl_node_bool = "1" })
+		s.fields["dns_mode"]:depends({ _acl_node_bool = "1", _diff_global_node = "1" })
 		break
 	end
 	if v.protocol and v.protocol == "_shunt" then
@@ -544,16 +605,16 @@ for k, v in pairs(nodes_table) do
 			o_node:value(v.id, v["remark"])
 			o_node.group[#o_node.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 
-			s.fields["xray_dns_mode"]:depends({ _acl_node_bool = "1", node = v.id })
+			s.fields["xray_dns_mode"]:depends({ _acl_node_bool = "1", _diff_global_node = "1", node = v.id })
 			s.fields["_node_sel_shunt"]:depends({ node = v.id })
 		end
 		if v.type == "sing-box" and has_singbox then
 			o_node:value(v.id, v["remark"])
 			o_node.group[#o_node.group+1] = (v.group and v.group ~= "") and v.group or translate("default")
 
-			s.fields["singbox_dns_mode"]:depends({ _acl_node_bool = "1", node = v.id })
+			s.fields["singbox_dns_mode"]:depends({ _acl_node_bool = "1", _diff_global_node = "1", node = v.id })
 			s.fields["_node_sel_shunt"]:depends({ node = v.id })
-			s.fields["remote_rewrite_ttl"]:depends({ _acl_node_bool = "1", node = v.id })
+			s.fields["remote_rewrite_ttl"]:depends({ _acl_node_bool = "1", _diff_global_node = "1", node = v.id })
 		end
 		shunt_list[#shunt_list + 1] = v
 	else
@@ -562,21 +623,17 @@ for k, v in pairs(nodes_table) do
 	end
 end
 
-m:appendTemplate("/acl/config_footer", {section = arg[1]})
-
---[[
 -- Shunt
-if current_node.protocol == "_shunt" then
+if current_node.protocol == "_shunt" and current_node[".name"] ~= NODE then
 	local shunt_lua = loadfile("/usr/lib/lua/luci/model/cbi/passwall/client/include/shunt_options.lua")
 	setfenv(shunt_lua, getfenv(1))(m, s, {
-		s_cfgid = s.section,
-		node_id = current_node_id,
 		node = current_node,
-		verify_option = s.fields["node"]
+		verify_option = s.fields["node"],
+		tab = "Shunt",
+		tab_desc = translate("Shunt Rule"),
 	})
 end
 
-m:appendTemplate("/acl/shunt", { shunt_list = api.jsonc.stringify(shunt_list), section = s.section })
-]]--
+m:appendTemplate("/include/node_change", { verify_option = s.fields["node"], shunt_list = api.jsonc.stringify(shunt_list) })
 
 return api.return_map(m)

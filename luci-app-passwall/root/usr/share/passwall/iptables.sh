@@ -236,6 +236,12 @@ load_acl() {
 			}
 			[ -n "$(get_cache_var "ACL_${sid}_dns_port")" ] && dns_redirect_port=$(get_cache_var "ACL_${sid}_dns_port")
 			[ -n "$(get_cache_var "ACL_${sid}_fakedns")" ] && use_fakedns=$(get_cache_var "ACL_${sid}_fakedns")
+
+			([ -n "$node" ] && ([ "$node" = "default" ] || [ "$node" = "$NODE" ])) && {
+				use_global_config=1
+				unset node
+			}
+
 			[ -n "$node" ] && {
 				if [ "$(config_get_type $node)" = "socks" ]; then
 					node_remark="Socks 配置($(config_n_get $node port) 端口)"
