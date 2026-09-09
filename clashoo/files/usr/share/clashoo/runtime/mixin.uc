@@ -119,6 +119,14 @@ for (let f in split(s(getenv('CLASHOO_DNS_PRESENT'), ''), ','))
 let dns_force = {};
 for (let f in split(s(getenv('CLASHOO_DNS_FORCE'), ''), ','))
 	if (length(trim(f))) dns_force[trim(f)] = true;
+let dns_inherit_mode = s(getenv('CLASHOO_DNS_INHERIT_MODE'), '');
+let inherited_nameserver = json(s(getenv('CLASHOO_DNS_INHERIT_NAMESERVER'), '[]'));
+if (type(inherited_nameserver) != 'array') {
+	if (inherited_nameserver != null && inherited_nameserver != '')
+		inherited_nameserver = [inherited_nameserver];
+	else
+		inherited_nameserver = [];
+}
 let dns_role_fields = ['nameserver', 'proxy-server-nameserver', 'direct-nameserver',
 	'default-nameserver', 'nameserver-policy', 'respect-rules'];
 let had_user_dns_roles = false;
@@ -158,8 +166,15 @@ uci.foreach('clashoo', 'dnsservers', function(sec) {
 	if (!dns_roles[role]) dns_roles[role] = [];
 	push(dns_roles[role], srv);
 });
-for (let role in keys(dns_roles))
+for (let role in keys(dns_roles)) {
+	if (role == 'proxy-server-nameserver' && (dns_inherit_mode == 'inherit' || dns_inherit_mode == 'skip') &&
+		!dns_present[role] && !dns_force[role]) continue;
 	if (!dns_present[role] || dns_force[role]) cfg['dns'][role] = dns_roles[role];
+}
+
+if (dns_inherit_mode == 'inherit' && length(inherited_nameserver) &&
+	!dns_present['proxy-server-nameserver'] && !dns_force['proxy-server-nameserver'])
+	cfg['dns']['proxy-server-nameserver'] = inherited_nameserver;
 
 let bootstrap = a('default_nameserver');
 if (bootstrap == null) bootstrap = a('defaul_nameserver');
@@ -182,8 +197,10 @@ if (length(keys(policies)) && (!dns_present['nameserver-policy'] || dns_force['n
 	cfg['dns']['nameserver-policy'] = policies;
 
 let respect_rules = a('dns_respect_rules') == null ? true : ab('dns_respect_rules');
-if (respect_rules && length(cfg['dns']['proxy-server-nameserver'] || [])
-    && (!dns_present['respect-rules'] || dns_force['respect-rules']) && !dns_present['prefer-h3'])
+if (dns_force['respect-rules'])
+	cfg['dns']['respect-rules'] = respect_rules;
+else if (respect_rules && length(cfg['dns']['proxy-server-nameserver'] || [])
+    && !dns_present['respect-rules'] && !dns_present['prefer-h3'])
 	cfg['dns']['respect-rules'] = true;
 
 /* profile */

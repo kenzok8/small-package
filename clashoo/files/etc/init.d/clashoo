@@ -790,6 +790,11 @@ _dnsmasq_state_digest() {
 		"$(uci -q get dhcp.@dnsmasq[0].resolvfile 2>/dev/null)"
 }
 
+_reload_dnsmasq() {
+	/etc/init.d/dnsmasq reload >/dev/null 2>&1 && return 0
+	/etc/init.d/dnsmasq restart >/dev/null 2>&1
+}
+
 revert_dns() {
 #===========================================================================================================================  
 	local _before _after
@@ -803,7 +808,7 @@ revert_dns() {
 		return 0
 	fi
 	uci commit dhcp
-	/etc/init.d/dnsmasq restart >/dev/null 2>&1
+	_reload_dnsmasq >/dev/null 2>&1
 #=========================================================================================================================== 	 
 }
 
@@ -1040,6 +1045,50 @@ _clashoo_dns_force_fields() {
 	return 0
 }
 
+_dns_nameserver_inherit_mode() {
+	local has_nameserver marker prefer_h3 respect_false has_proxy force_respect
+	command -v yq >/dev/null 2>&1 || return 0
+	[ -s "$CONFIG_YAML" ] || return 0
+
+	has_nameserver="$(yq -M e '(.dns.nameserver // null) | (tag != "!!null" and length > 0)' "$CONFIG_YAML" 2>/dev/null)"
+	[ "$has_nameserver" = "true" ] || return 0
+
+	marker=0
+	if yq -M e -r '(.dns.nameserver // null) | .. | select(tag == "!!str")' "$CONFIG_YAML" 2>/dev/null |
+		awk '
+		{
+			hash = index($0, "#")
+			if (!hash) next
+			fragment = substr($0, hash + 1)
+			split(fragment, parts, "&")
+			if (parts[1] !~ /=/) { found = 1; exit }
+		}
+		END { exit(found ? 0 : 1) }'; then
+		marker=1
+	fi
+	prefer_h3="$(yq -M e '(.dns."prefer-h3" // false) == true' "$CONFIG_YAML" 2>/dev/null)"
+	respect_false="$(yq -M e '((.dns // {}) | has("respect-rules")) and ((.dns."respect-rules") == false or (.dns."respect-rules") == "false")' "$CONFIG_YAML" 2>/dev/null)"
+	has_proxy="$(yq -M e '(.dns // {}) | has("proxy-server-nameserver")' "$CONFIG_YAML" 2>/dev/null)"
+	force_respect=0
+	case ",${CLASHOO_DNS_FORCE:-}," in
+		*,respect-rules,*) force_respect=1 ;;
+	esac
+
+	# skip suppresses both the generated proxy role and automatic respect-rules.
+	if [ "$marker" = "1" ] ||
+		{ [ "$prefer_h3" = "true" ] && [ "$force_respect" != "1" ]; } ||
+		{ [ "$respect_false" = "true" ] && [ "$force_respect" != "1" ]; } ||
+		[ "$(uci -q get clashoo.config.dns_respect_rules 2>/dev/null)" = "0" ]; then
+		printf '%s' skip
+		return 0
+	fi
+	case ",${CLASHOO_DNS_FORCE:-}," in
+		*,proxy-server-nameserver,*) return 0 ;;
+	esac
+	[ "$has_proxy" = "true" ] && return 0
+	printf '%s' inherit
+}
+
 backfill_custom_sniffer_overrides() {
 	[ "$CLASHOO_KEEP_SNIFFER" = "1" ] || return 0
 	[ "$(uci -q get clashoo.config.sniffer_streaming 2>/dev/null)" = "1" ] || return 0
@@ -1062,8 +1111,15 @@ ensure_quic_fallback_guard() {
 yml_change() {
 	CLASHOO_DNS_FORCE="$(_clashoo_dns_force_fields)"
 	CLASHOO_DNS_PRESENT="$(_user_dns_fields "$CLASHOO_DNS_FORCE")"
+	CLASHOO_DNS_INHERIT_MODE="$(_dns_nameserver_inherit_mode)"
+	CLASHOO_DNS_INHERIT_NAMESERVER=""
+	if [ "$CLASHOO_DNS_INHERIT_MODE" = "inherit" ]; then
+		CLASHOO_DNS_INHERIT_NAMESERVER="$(yq -M e -o=json '(.dns.nameserver // [])' "$CONFIG_YAML" 2>/dev/null)"
+	fi
 	export CLASHOO_DNS_FORCE
 	export CLASHOO_DNS_PRESENT
+	export CLASHOO_DNS_INHERIT_MODE
+	export CLASHOO_DNS_INHERIT_NAMESERVER
 	CLASHOO_KEEP_FAKEIP_FILTER=""
 	CLASHOO_KEEP_SNIFFER=""
 	if command -v yq >/dev/null 2>&1 && [ -s "$CONFIG_YAML" ]; then
@@ -1583,8 +1639,7 @@ singbox_dns_change() {
 	fi
 	if [ "$(_dnsmasq_state_digest)" != "$_sb_dns_before" ]; then
 		uci commit dhcp >/dev/null 2>&1
-		/etc/init.d/dnsmasq stop >/dev/null 2>&1
-		/etc/init.d/dnsmasq start >/dev/null 2>&1
+		_reload_dnsmasq >/dev/null 2>&1
 	else
 		uci -q revert dhcp >/dev/null 2>&1
 	fi
@@ -1993,8 +2048,7 @@ _start_launch_core() {
 
 		if [ "$(_dnsmasq_state_digest)" != "$_dnsmasq_digest_before" ]; then
 			log_msg "Reloading DNS resolver" "重启 DNS 解析"
-			/etc/init.d/dnsmasq stop >/dev/null 2>&1
-			/etc/init.d/dnsmasq start >/dev/null 2>&1
+			_reload_dnsmasq >/dev/null 2>&1
 		fi
 
 		restore >/dev/null 2>&1
@@ -2041,7 +2095,7 @@ boot(){
 		runtime_state_set "health_status" "starting"
 		runtime_state_set "health_detail" "boot_starting"
 		runtime_state_set "updated_at" "$(date +%s)"
-		# start_service does mihomo -t dry-run + firewall restart + dnsmasq restart
+		# start_service does mihomo -t dry-run + firewall restart + dnsmasq reload/fallback
 		# (~20-30s on LXC). Doing this synchronously in boot() blocks rcS S99 stage
 		# and during that window sshd/uhttpd refuse connections (kex reset). Detach
 		# to background with a small settle delay so the rcS pipeline finishes and
