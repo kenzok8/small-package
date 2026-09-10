@@ -8,8 +8,8 @@ include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=KaiPlus
 PKG_VERSION:=1.0.7
-PKG_RELEASE:=1
-LUCI_DEPENDS:=+kaiplus +luci-compat +luci-lib-openwrtauth
+PKG_RELEASE:=2
+LUCI_DEPENDS:=+kaiplus +luci-compat +luci-lib-linkeaseauth
 LUCI_MINIFY_CSS:=0
 LUCI_MINIFY_JS:=0
 
