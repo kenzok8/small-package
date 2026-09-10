@@ -11,7 +11,8 @@
   },
   "standalone": {
     "entry": "index.html",
-    "basePath": "/apps/kaiplus/"
+    "basePath": "/apps/kaiplus/",
+    "url": "/apps/kaiplus/"
   },
   "config": {
     "providerOrder": ["uci"],

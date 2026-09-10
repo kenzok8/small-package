@@ -38,6 +38,15 @@ local function is_ipv6(value)
 	return tostring(value or ""):find(":", 1, true) ~= nil
 end
 
+local function normalize_mac(value)
+	if type(value) ~= "string" then return "" end
+	value = value:upper():gsub("%s+", ""):gsub("-", ":")
+	if value:match("^%x%x:%x%x:%x%x:%x%x:%x%x:%x%x$") then
+		return value
+	end
+	return ""
+end
+
 local function split_list(value)
 	local out = {}
 	for item in tostring(value or ""):gsub(",", " "):gmatch("%S+") do
@@ -298,6 +307,7 @@ local function uci_qos_simple_rules()
 			name = section[".name"],
 			disabled = section.disabled or "0",
 			user = section.user or "",
+			mac = normalize_mac(section.mac),
 			rx_rate = section.rx_rate or "0",
 			tx_rate = section.tx_rate or "0",
 		}
@@ -314,7 +324,10 @@ local function uci_qos_simple_rules()
 end
 
 -- Match the first enabled rule that covers this user IP.
-local function user_matches(rule, ip)
+local function user_matches(rule, ip, mac)
+	if rule.mac ~= "" and normalize_mac(mac) ~= rule.mac then
+		return false
+	end
 	if rule.user == "" then
 		return true
 	end
@@ -348,11 +361,11 @@ local function write_userinfo(command)
 end
 
 -- Apply the first matching rule and clear stale limits when none match.
-local function apply_ip(rules, ip, verbose)
+local function apply_ip(rules, ip, mac, verbose)
 	local rx_bytes = 0
 	local tx_bytes = 0
 	for _, rule in ipairs(rules) do
-		if rule.disabled == "0" and user_matches(rule, ip) then
+		if rule.disabled == "0" and user_matches(rule, ip, mac) then
 			rx_bytes = rule.rx_bytes
 			tx_bytes = rule.tx_bytes
 			break
@@ -455,7 +468,7 @@ local function apply_event(ip, mac)
 	end
 
 	local rules = uci_qos_simple_rules()
-	local ok = apply_ip(rules, ip, false)
+	local ok = apply_ip(rules, ip, mac, false)
 	refresh_ipv6_neighbor(mac, ip)
 	return ok
 end
@@ -463,7 +476,7 @@ end
 local function apply_all()
 	local rules = uci_qos_simple_rules()
 	return foreach_userinfo(function(event)
-		local ok = apply_ip(rules, event.ipaddr, false)
+		local ok = apply_ip(rules, event.ipaddr, event.macaddr, false)
 		refresh_ipv6_neighbor(event.macaddr, event.ipaddr)
 		return ok
 	end)

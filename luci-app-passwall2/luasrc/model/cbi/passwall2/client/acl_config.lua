@@ -160,14 +160,10 @@ o:depends("mode", "1")
 o:depends("mode", "2")
 o.validate = port_validate
 
-o = s:taboption("Main", DummyValue, "_show_tcp_redir", "")
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
+o = s:taboption("Main", HideValue, "_show_tcp_redir")
 o:depends({ tcp_no_redir_ports = "1:65535",  ['!reverse'] = true })
 
-o = s:taboption("Main", DummyValue, "_show_udp_redir", "")
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
+o = s:taboption("Main", HideValue, "_show_udp_redir")
 o:depends({ udp_no_redir_ports = "1:65535",  ['!reverse'] = true })
 
 o = s:taboption("Proxy", Value, "tcp_redir_ports", translate("TCP Redir Ports"))
@@ -195,15 +191,11 @@ end
 o:depends("mode", "1")
 o:depends("mode", "2")
 
-o = s:taboption("Main", DummyValue, "_no_proxy", "")
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
+o = s:taboption("Main", HideValue, "_no_proxy")
 o:depends("mode", "0")
 o:depends({ tcp_no_redir_ports = "1:65535", udp_no_redir_ports = "1:65535" })
 
-o = s:taboption("Main", DummyValue, "_show_node_option", "")
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
+o = s:taboption("Main", HideValue, "_show_node_option")
 o:depends({ mode = "1", _no_proxy = "" })
 
 o = s:taboption("Main", ListValue, "node", "<a style='color: red'>" .. translate("Node") .. "</a>")
@@ -218,24 +210,17 @@ if node_value then
 end
 current_node = current_node_id and m:get(current_node_id) or {}
 
-o = s:taboption("Main", DummyValue, "node_save_before", "")
-o.template = m:template_path("/cbi/hidevalue")
+o = s:taboption("Main", HideValue, "node_save_before")
 o.value = current_node[".name"]
 o.cbid = function(self, section) return "node_save_before" end
 
-o = s:taboption("Main", DummyValue, "_node", "")
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
+o = s:taboption("Main", HideValue, "_node")
 o:depends({ node = "",  ['!reverse'] = true })
 
-o = s:taboption("Main", DummyValue, "_is_singbox", "")
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
+o = s:taboption("Main", HideValue, "_is_singbox")
 o:depends("_hide", "1")
 
-o = s:taboption("Main", DummyValue, "_is_xray", "")
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
+o = s:taboption("Main", HideValue, "_is_xray")
 o:depends("_hide", "1")
 
 o = s:taboption("Log", Flag, "log", translate("Enable Node Log"))
@@ -267,9 +252,7 @@ o.cfgvalue = function(t, n)
 end
 o:depends("log", "1")
 
-o = s:taboption("DNS", DummyValue, "_show_dns_option", "")
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
+o = s:taboption("DNS", HideValue, "_show_dns_option")
 o:depends({ mode = "1", _node = "1" })
 
 o = s:taboption("DNS", ListValue, "direct_dns_query_strategy", translate("Direct Query Strategy"))

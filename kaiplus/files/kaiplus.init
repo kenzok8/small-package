@@ -13,6 +13,7 @@ get_config() {
 	config_get bind_addr "$1" bind_addr "0.0.0.0"
 	config_get base_path "$1" base_path "/apps/kaiplus/"
 	config_get system_role "$1" system_role "istoreos"
+	config_get auth_mode "$1" auth_mode "disabled"
 }
 
 mkdir_p() {
@@ -58,6 +59,8 @@ start_service() {
 		procd_set_param env \
 			KAIPLUS_HOME="$data_dir" \
 			KAIPLUS_SYSTEM_ROLE="$system_role" \
+			KAIPLUS_AUTH_MODE="$auth_mode" \
+			LINKEASE_AUTH_PROVIDER="$auth_mode" \
 			KAIPLUS_LISTEN_MODE="tcp" \
 			KAIPLUS_WORKSPACE_HELPER_DIR="/usr/share/kaiplus/helpers" \
 			KAIPLUS_WORKSPACE_TOOL_INSTALL_DIR="/tmp/kaiplus_workspace_tool" \
@@ -68,6 +71,8 @@ start_service() {
 		procd_set_param env \
 			KAIPLUS_HOME="$data_dir" \
 			KAIPLUS_SYSTEM_ROLE="$system_role" \
+			KAIPLUS_AUTH_MODE="$auth_mode" \
+			LINKEASE_AUTH_PROVIDER="$auth_mode" \
 			KAIPLUS_LISTEN_MODE="unix" \
 			KAIPLUS_SOCKET_PATH="$socket_path" \
 			KAIPLUS_WORKSPACE_HELPER_DIR="/usr/share/kaiplus/helpers" \

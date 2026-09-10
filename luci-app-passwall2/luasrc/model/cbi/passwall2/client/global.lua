@@ -85,14 +85,10 @@ o.template = m:template_path("/cbi/nodes_listvalue")
 o:value("", translate("Close"))
 o.group = {""}
 
-o = s:taboption("Main", DummyValue, "_node", "")
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
+o = s:taboption("Main", HideValue, "_node")
 o:depends({ node = "",  ['!reverse'] = true })
 
-o = s:taboption("Main", DummyValue, "_is_singbox", "")
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
+o = s:taboption("Main", HideValue, "_is_singbox")
 o:depends("_hide", "1")
 
 current_node_id = m:get(s.section, "node")
@@ -102,8 +98,7 @@ if node_value then
 end
 current_node = current_node_id and m:get(current_node_id) or {}
 
-o = s:taboption("Main", DummyValue, "node_save_before", "")
-o.template = m:template_path("/cbi/hidevalue")
+o = s:taboption("Main", HideValue, "node_save_before")
 o.value = current_node[".name"]
 o.cbid = function(self, section) return "node_save_before" end
 
