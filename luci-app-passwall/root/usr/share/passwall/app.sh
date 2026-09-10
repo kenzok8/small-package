@@ -337,10 +337,10 @@ run_socks() {
 	[ -n "$config_file" ] && [ -z "$(echo ${config_file} | grep $TMP_PATH)" ] && config_file=$TMP_PATH/$config_file
 	[ -n "$http_port" ] || http_port=0
 	[ -n "$http_config_file" ] && [ -z "$(echo ${http_config_file} | grep $TMP_PATH)" ] && http_config_file=$TMP_PATH/$http_config_file
-	if [ -n "$log_file" ] && [ "$log_file" != "/dev/null" ] && [ -z "$(echo ${log_file} | grep $TMP_PATH)" ]; then
-		log_file=$TMP_PATH/$log_file
-	else
+	if [ -z "$log_file" ] || [ "$log_file" = "/dev/null" ]; then
 		log_file="/dev/null"
+	elif [ "${log_file#"$TMP_PATH/"}" = "$log_file" ]; then
+		log_file=$TMP_PATH/$log_file
 	fi
 
 	local type=$(echo $(config_n_get $node type) | tr 'A-Z' 'a-z')
@@ -1572,8 +1572,9 @@ acl_app() {
 						}
 						local _redir_port=$(get_cache_var "node_${node}_redir_port")
 						local _socks_port=$(get_cache_var "node_${node}_socks_port")
+						local _enable_log=$(get_cache_var "node_${node}_enable_log")
 						local _dns_port
-						if [ -n "${_socks_port}" ] && [ -n "${_redir_port}" ]; then
+						if [ -n "${_socks_port}" ] && [ -n "${_redir_port}" ] && [ "${_enable_log}" != "1" ] && [ "${log}" != "1" ]; then
 							socks_port=${_socks_port}
 							node_port=${_redir_port}
 							_dns_port=$(get_cache_var "node_${node}_${dns_cache_key}")
@@ -1585,7 +1586,10 @@ acl_app() {
 							set_cache_var "node_${node}_redir_port" "${redir_port}"
 							node_port=$redir_port
 							local log_file="/dev/null"
-							[ "${log}" = "1" ] && log_file="${TMP_ACL_PATH}/${sid}/node.log"
+							[ "${log}" = "1" ] && {
+								log_file="${TMP_ACL_PATH}/${sid}/node.log"
+								set_cache_var "node_${node}_enable_log" "1"
+							}
 
 							if [ "${type}" = "sing-box" ] || [ "${type}" = "xray" ]; then
 								config_file="acl/${node}_${redir_port}.json"

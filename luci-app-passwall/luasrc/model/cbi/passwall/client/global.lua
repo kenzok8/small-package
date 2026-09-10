@@ -162,25 +162,18 @@ o = s:taboption("Main", Flag, "node_socks_bind_local", translate("Node") .. " So
 o.default = "1"
 o:depends("_node", "1")
 
-o = s:taboption("Main", DummyValue, "node_save_before", "")
-o.template = m:template_path("/cbi/hidevalue")
+o = s:taboption("Main", HideValue, "node_save_before", "")
 o.value = current_node[".name"]
 o.cbid = function(self, section) return "node_save_before" end
 
-o = s:taboption("Main", DummyValue, "_node", "")
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
+o = s:taboption("Main", HideValue, "_node", "")
 o:depends({ node = "",  ['!reverse'] = true })
 
 -- Node → DNS Depends Settings
-o = s:taboption("Main", DummyValue, "_node_sel_shunt", "")
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
+o = s:taboption("Main", HideValue, "_node_sel_shunt", "")
 o:depends({ node = "__always__" })
 
-o = s:taboption("Main", DummyValue, "_node_sel_other", "")
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
+o = s:taboption("Main", HideValue, "_node_sel_other", "")
 o:depends({ _node_sel_shunt = "1",  ['!reverse'] = true })
 
 -- [[ DNS Settings ]]--

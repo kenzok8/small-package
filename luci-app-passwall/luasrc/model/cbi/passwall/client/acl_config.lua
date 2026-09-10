@@ -181,9 +181,7 @@ o:value("1:65535", translate("All"))
 o:depends("mode", "1")
 o.validate = port_validate
 
-o = s:taboption("Main", DummyValue, "_hide_node_option", "")
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
+o = s:taboption("Main", HideValue, "_hide_node_option", "")
 o:depends("mode", "0")
 o:depends({ tcp_no_redir_ports = "1:65535", udp_no_redir_ports = "1:65535" })
 if TCP_NO_REDIR_PORTS == "1:65535" and UDP_NO_REDIR_PORTS == "1:65535" then
@@ -208,19 +206,14 @@ if node_value then
 end
 current_node = current_node_id and m:get(current_node_id) or {}
 
-o = s:taboption("Main", DummyValue, "node_save_before", "")
-o.template = m:template_path("/cbi/hidevalue")
+o = s:taboption("Main", HideValue, "node_save_before", "")
 o.value = current_node[".name"]
 o.cbid = function(self, section) return "node_save_before" end
 
-o = s:taboption("Main", DummyValue, "_acl_node_bool", "")
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
+o = s:taboption("Main", HideValue, "_acl_node_bool", "")
 o:depends({ node = "", ['!reverse'] = true })
 
-o = s:taboption("Main", DummyValue, "_diff_global_node", "")
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
+o = s:taboption("Main", HideValue, "_diff_global_node", "")
 if NODE ~= "" then
 	o:depends({ node = NODE, ['!reverse'] = true })
 else
@@ -319,14 +312,10 @@ o.template = m:template_path("/global/proxy")
 o:depends({ _acl_node_bool = "1", _diff_global_node = "1" })
 
 -- Node → DNS Depends Settings
-o = s:taboption("Main", DummyValue, "_node_sel_shunt", "")
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
+o = s:taboption("Main", HideValue, "_node_sel_shunt", "")
 o:depends({ node = "__always__" })
 
-o = s:taboption("Main", DummyValue, "_node_sel_other", "")
-o.template = m:template_path("/cbi/hidevalue")
-o.value = "1"
+o = s:taboption("Main", HideValue, "_node_sel_other", "")
 o:depends({ _node_sel_shunt = "1", ['!reverse'] = true })
 
 ---- DNS

@@ -902,7 +902,16 @@ msgstr ""
 msgid "OpenClash is enabled; disable it first to avoid rule conflicts"
 msgstr ""
 
+msgid "OpenClash/Nikki Loopback DNS Compatibility"
+msgstr ""
+
 msgid "Operation failed: "
+msgstr ""
+
+msgid "Loopback DNS Replacement"
+msgstr ""
+
+msgid "Optional compatibility for normal managed mode. At runtime, replace only proxy node resolvers that point back to the imported configuration's own DNS listener. Core Only mode stays verbatim; the source configuration and unrelated local DNS services remain unchanged."
 msgstr ""
 
 msgid "Other Configuration Files (upload / overwrite output)"
@@ -1500,6 +1509,9 @@ msgid "Used to resolve DoH/DoT/DoQ server domains; plain IP DNS is recommended."
 msgstr ""
 
 msgid "User-Agent (UA)"
+msgstr ""
+
+msgid "Used only when the compatibility switch detects a stale self-reference. When empty, udp://223.5.5.5:53 and udp://119.29.29.29:53 are used. Plain IP DNS is recommended to avoid bootstrap loops."
 msgstr ""
 
 msgid "Username"

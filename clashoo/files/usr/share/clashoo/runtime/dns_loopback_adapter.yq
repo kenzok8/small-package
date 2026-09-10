@@ -1,0 +1,17 @@
+. as $document |
+strenv(CLASHOO_DNS_OLD_PORT) as $old_port |
+strenv(CLASHOO_DNS_HOST_PATTERN) as $host_pattern |
+(strenv(CLASHOO_DNS_REPLACEMENT) | split(" ") | map(select(length > 0))) as $replacement |
+("(?i)^(?:[a-z][a-z0-9+.-]*://)?(?:" + $host_pattern + "):" + $old_port + "(?:$|[/#?])") as $old_loopback |
+(
+  $document |
+  select((.dns."proxy-server-nameserver" | type) == "!!seq") |
+  ([.dns."proxy-server-nameserver"[] | select(type == "!!str" and test($old_loopback))] | length) as $match_count |
+  select($match_count > 0) |
+  .dns."proxy-server-nameserver" =
+    ([
+      .dns."proxy-server-nameserver"[] |
+      select((type == "!!str" and test($old_loopback)) | not) |
+      select(. as $server | ($replacement | contains([$server])) | not)
+    ] + $replacement)
+) // $document

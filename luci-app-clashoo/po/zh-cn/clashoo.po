@@ -909,6 +909,18 @@ msgstr "TCP 或 UDP 任意一个选择 TUN 时，该栈设置才会生效。"
 msgid "OpenClash is enabled; disable it first to avoid rule conflicts"
 msgstr "OpenClash 已启用，请先停用以避免规则冲突"
 
+msgid "OpenClash/Nikki Loopback DNS Compatibility"
+msgstr "OpenClash/Nikki 回环 DNS 兼容"
+
+msgid "Loopback DNS Replacement"
+msgstr "回环 DNS 替换地址"
+
+msgid "Optional compatibility for normal managed mode. At runtime, replace only proxy node resolvers that point back to the imported configuration's own DNS listener. Core Only mode stays verbatim; the source configuration and unrelated local DNS services remain unchanged."
+msgstr "用于普通接管模式的可选兼容功能。运行时仅替换指回导入配置自身 DNS 监听的节点解析器；仅内核模式保持原样，源配置和其他本地 DNS 服务不受影响。"
+
+msgid "Used only when the compatibility switch detects a stale self-reference. When empty, udp://223.5.5.5:53 and udp://119.29.29.29:53 are used. Plain IP DNS is recommended to avoid bootstrap loops."
+msgstr "仅在兼容开关检测到失效自引用时使用。留空则使用 udp://223.5.5.5:53 和 udp://119.29.29.29:53。建议使用纯 IP DNS，避免启动解析死循环。"
+
 msgid "Operation failed: "
 msgstr "操作失败: "
 
