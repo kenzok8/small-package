@@ -2337,6 +2337,9 @@ reload_service()
 			-X PUT -d '{"path":"'"$CONFIG_YAML"'"}' \
 			"http://${_lip}:${_dp}/configs?force=true" >/dev/null 2>&1
 		backend_apply_rules 2>/dev/null
+		if [ "$(uci -q get clashoo.config.core_only 2>/dev/null)" != "1" ]; then
+			_reload_dnsmasq >/dev/null 2>&1
+		fi
 		runtime_run_health_check_settle >/dev/null 2>&1
 	fi
 }
