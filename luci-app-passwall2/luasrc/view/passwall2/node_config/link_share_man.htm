@@ -858,6 +858,7 @@ local current_node = map:get(section)
 				ssrurl: ssrurl
 			}));
 		}
+		ssrurl = ssrurl.split(/\r\n|\r|\n/, 1)[0];
 		ssrurl = ssrurl.replace(/&amp;/gi, '&').replace(/\s*#\s*/, '#').trim();  // Some odd links use "&" as "&", and include spaces before and after "#".
 		s.innerHTML = "";
 		var ssu = ssrurl.split('://');
@@ -1793,9 +1794,13 @@ local current_node = map:get(section)
 			}
 		}
 		if (dom_prefix && dom_prefix != null) {
-			if (opt.get(dom_prefix + 'port').value) {
-				opt.get(dom_prefix + 'port').focus();
-				opt.get(dom_prefix + 'port').blur();
+			const port = opt.get(dom_prefix + 'port');
+			if (!port) {
+				return false;
+			}
+			if (port.value) {
+				port.focus();
+				port.blur();
 			}
 		} else {
 			s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
