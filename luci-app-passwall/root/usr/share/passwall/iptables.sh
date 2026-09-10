@@ -417,7 +417,7 @@ load_acl() {
 					[ "$_ipv4" != "1" ] && $ip6t_n -A PSW_DNS $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j REDIRECT --to-ports ${dns_redirect} 2>/dev/null
 					$ipt_n -A PSW_DNS $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j REDIRECT --to-ports ${dns_redirect}
 					[ "$_ipv4" != "1" ] && $ip6t_n -A PSW_DNS $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j REDIRECT --to-ports ${dns_redirect} 2>/dev/null
-					[ -z "$(get_cache_var "ACL_${sid}_default")" ] && echolog "     - ${msg}使用与全局配置不相同节点，已将DNS强制重定向到专用 DNS 服务器。"
+					[ -z "$(get_cache_var "ACL_${sid}_default")" ] && echolog "     - ${msg}与全局配置不同节点，DNS 重定向到专用 DNS 服务器 [${dns_redirect}]。"
 				fi
 
 				[ -n "$tcp_port" ] || [ -n "$udp_port" ] && {
