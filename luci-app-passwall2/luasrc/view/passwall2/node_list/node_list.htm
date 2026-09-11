@@ -3,20 +3,21 @@ local map = self.map
 local api = map.api
 local appname = map.config
 
-local default_node_type = ""
 local shunt_rule_list = {}
 local node = map:get("@global[0]", "node")
 if node then
-	local node_type = map:get(node, "type")
 	local node_protocol = map:get(node, "protocol")
-	if (node_type == "Xray" or node_type == "sing-box") and node_protocol == "_shunt" then
-		default_node_type = node_protocol
+	if node_protocol == "_shunt" then
 		local node_shunt_group = map:get(node, "shunt_group")
 		map:foreach("shunt_rules", function(e)
 			if e[".name"] and e.remarks and e.group == node_shunt_group then
 				shunt_rule_list[#shunt_rule_list + 1] = e
 			end
 		end)
+		shunt_rule_list[#shunt_rule_list + 1] = {
+			[".name"] = "default_node",
+			remarks = translate("Default")
+		}
 	end
 end
 -%>
@@ -1664,7 +1665,7 @@ table td, .table .td {
 			<div style="position:absolute; right:0.5em; top: 0.5em;"><input class="btn cbi-button" type="button" onclick="set_node_div.close()" value="X" /></div>
 		</div>
 		<div class="cbi-value" style="justify-content: center; gap: 8px; margin: 1em 0;">
-			<%- if default_node_type == "_shunt" then
+			<%- if #shunt_rule_list > 0 then
 				for i, v in ipairs(shunt_rule_list) do
 			-%>
 				<input class="btn cbi-button" type="button" onclick="set_node_div.set('<%=node%>', '<%=v[".name"]%>')" value="<%=v.remarks%>" />

@@ -452,16 +452,16 @@ load_acl() {
 							local shunt_id
 							for shunt_id in $shunt_ids; do
 								[ "${shunt_group}" != "$(config_n_get ${shunt_id} group)" ] && continue
-								config_n_get $shunt_id ip_list | sed 's/#.*//' | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | insert_nftset $shunt_set_name_static
-								config_n_get $shunt_id ip_list | sed 's/#.*//' | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | insert_nftset $shunt6_set_name_static
+								config_n_get $shunt_id ip_list | sed 's/#.*//' | grep -E "$IPv4_REGEX" | insert_nftset $shunt_set_name_static
+								config_n_get $shunt_id ip_list | sed 's/#.*//' | grep -E "$IPv6_REGEX" | insert_nftset $shunt6_set_name_static
 								[ "$USE_GEOVIEW" = "1" ] && {
 									local geoip_code=$(config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "^geoip:" | grep -v "^geoip:private" | sed -E 's/^geoip:(.*)/\1/' | sed ':a;N;$!ba;s/\n/,/g')
 									[ -n "$geoip_code" ] && GEOIP_CODE="${GEOIP_CODE:+$GEOIP_CODE,}$geoip_code"
 								}
 							done
 							if [ -n "$GEOIP_CODE" ]; then
-								get_geoip $GEOIP_CODE ipv4 | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | insert_nftset $shunt_set_name_static
-								get_geoip $GEOIP_CODE ipv6 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | insert_nftset $shunt6_set_name_static
+								get_geoip $GEOIP_CODE ipv4 | insert_nftset $shunt_set_name_static
+								get_geoip $GEOIP_CODE ipv6 | insert_nftset $shunt6_set_name_static
 							fi
 						}
 					}
@@ -835,12 +835,12 @@ filter_vps_addr() {
 
 filter_vpsip() {
 	local vps_addrs=$(uci show $CONFIG | grep -E "(\.address=|\.download_address=|\.domain_resolver_dns=|\.domain_resolver_dns_https=)" | cut -d "'" -f 2 | grep -Ev "$EXCLUDE_VPSIP")
-	local ipv4_addrs=$(echo "$vps_addrs" | grep -Eo "([0-9]{1,3}\.){3}[0-9]{1,3}")
+	local ipv4_addrs=$(echo "$vps_addrs" | grep -Eo "$IPv4_REGEX")
 	[ -n "$ipv4_addrs" ] && {
 		echo "$ipv4_addrs" | insert_nftset $NFTSET_VPS
 		echolog "  - [$?]加入所有IPv4节点服务器IP到nftset[$NFTSET_VPS]直连完成"
 	}
-	local ipv6_addrs=$(echo "$vps_addrs" | grep -Eo "\[?[A-Fa-f0-9:]*:[A-Fa-f0-9:]+\]?")
+	local ipv6_addrs=$(echo "$vps_addrs" | grep -Eo "$IPv6_REGEX")
 	[ -n "$ipv6_addrs" ] && {
 		echo "$ipv6_addrs" | insert_nftset $NFTSET_VPS6
 		echolog "  - [$?]加入所有IPv6节点服务器IP到nftset[$NFTSET_VPS6]直连完成"
@@ -848,8 +848,8 @@ filter_vpsip() {
 	#订阅方式为直连时
 	local subscribe_host=$(get_subscribe_host | grep -Ev "$EXCLUDE_VPSIP")
 	[ -n "$subscribe_host" ] && {
-		echo "$subscribe_host" | grep -Eo "([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -Ev "$EXCLUDE_VPSIP" | insert_nftset $NFTSET_VPS
-		echo "$subscribe_host" | grep -Eo "\[?[A-Fa-f0-9:]*:[A-Fa-f0-9:]+\]?" | insert_nftset $NFTSET_VPS6
+		echo "$subscribe_host" | grep -Eo "$IPv4_REGEX" | grep -Ev "$EXCLUDE_VPSIP" | insert_nftset $NFTSET_VPS
+		echo "$subscribe_host" | grep -Eo "$IPv6_REGEX" | insert_nftset $NFTSET_VPS6
 	}
 }
 
@@ -1038,13 +1038,13 @@ add_firewall_rule() {
 
 	#直连列表
 	[ "$USE_DIRECT_LIST_ALL" = "1" ] && {
-		cat $RULES_PATH/direct_ip | sed 's/#.*//' | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | insert_nftset $NFTSET_WHITE_STATIC
-		cat $RULES_PATH/direct_ip | sed 's/#.*//' | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | insert_nftset $NFTSET_WHITE6_STATIC
+		cat $RULES_PATH/direct_ip | sed 's/#.*//' | grep -E "$IPv4_REGEX" | insert_nftset $NFTSET_WHITE_STATIC
+		cat $RULES_PATH/direct_ip | sed 's/#.*//' | grep -E "$IPv6_REGEX" | insert_nftset $NFTSET_WHITE6_STATIC
 		[ "$USE_GEOVIEW" = "1" ] && {
 			local GEOIP_CODE=$(cat $RULES_PATH/direct_ip | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "^geoip:" | grep -v "^geoip:private" | sed -E 's/^geoip:(.*)/\1/' | sed ':a;N;$!ba;s/\n/,/g')
 			if [ -n "$GEOIP_CODE" ]; then
-				get_geoip $GEOIP_CODE ipv4 | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | insert_nftset $NFTSET_WHITE_STATIC
-				get_geoip $GEOIP_CODE ipv6 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | insert_nftset $NFTSET_WHITE6_STATIC
+				get_geoip $GEOIP_CODE ipv4 | insert_nftset $NFTSET_WHITE_STATIC
+				get_geoip $GEOIP_CODE ipv6 | insert_nftset $NFTSET_WHITE6_STATIC
 				echolog "  - [$?]解析并加入[直连列表] GeoIP 到 NFTSET 完成"
 			fi
 		}
@@ -1052,13 +1052,13 @@ add_firewall_rule() {
 
 	#代理列表
 	[ "$USE_PROXY_LIST_ALL" = "1" ] && {
-		cat $RULES_PATH/proxy_ip | sed 's/#.*//' | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | insert_nftset $NFTSET_BLACK_STATIC
-		cat $RULES_PATH/proxy_ip | sed 's/#.*//' | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | insert_nftset $NFTSET_BLACK6_STATIC
+		cat $RULES_PATH/proxy_ip | sed 's/#.*//' | grep -E "$IPv4_REGEX" | insert_nftset $NFTSET_BLACK_STATIC
+		cat $RULES_PATH/proxy_ip | sed 's/#.*//' | grep -E "$IPv6_REGEX" | insert_nftset $NFTSET_BLACK6_STATIC
 		[ "$USE_GEOVIEW" = "1" ] && {
 			local GEOIP_CODE=$(cat $RULES_PATH/proxy_ip | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "^geoip:" | grep -v "^geoip:private" | sed -E 's/^geoip:(.*)/\1/' | sed ':a;N;$!ba;s/\n/,/g')
 			if [ -n "$GEOIP_CODE" ]; then
-				get_geoip $GEOIP_CODE ipv4 | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | insert_nftset $NFTSET_BLACK_STATIC
-				get_geoip $GEOIP_CODE ipv6 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | insert_nftset $NFTSET_BLACK6_STATIC
+				get_geoip $GEOIP_CODE ipv4 | insert_nftset $NFTSET_BLACK_STATIC
+				get_geoip $GEOIP_CODE ipv6 | insert_nftset $NFTSET_BLACK6_STATIC
 				echolog "  - [$?]解析并加入[代理列表] GeoIP 到 NFTSET 完成"
 			fi
 		}
@@ -1066,13 +1066,13 @@ add_firewall_rule() {
 
 	#屏蔽列表
 	[ "$USE_BLOCK_LIST_ALL" = "1" ] && {
-		cat $RULES_PATH/block_ip | sed 's/#.*//' | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | insert_nftset $NFTSET_BLOCK_STATIC
-		cat $RULES_PATH/block_ip | sed 's/#.*//' | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | insert_nftset $NFTSET_BLOCK6_STATIC
+		cat $RULES_PATH/block_ip | sed 's/#.*//' | grep -E "$IPv4_REGEX" | insert_nftset $NFTSET_BLOCK_STATIC
+		cat $RULES_PATH/block_ip | sed 's/#.*//' | grep -E "$IPv6_REGEX" | insert_nftset $NFTSET_BLOCK6_STATIC
 		[ "$USE_GEOVIEW" = "1" ] && {
 			local GEOIP_CODE=$(cat $RULES_PATH/block_ip | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "^geoip:" | grep -v "^geoip:private" | sed -E 's/^geoip:(.*)/\1/' | sed ':a;N;$!ba;s/\n/,/g')
 			if [ -n "$GEOIP_CODE" ]; then
-				get_geoip $GEOIP_CODE ipv4 | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | insert_nftset $NFTSET_BLOCK_STATIC
-				get_geoip $GEOIP_CODE ipv6 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | insert_nftset $NFTSET_BLOCK6_STATIC
+				get_geoip $GEOIP_CODE ipv4 | insert_nftset $NFTSET_BLOCK_STATIC
+				get_geoip $GEOIP_CODE ipv6 | insert_nftset $NFTSET_BLOCK6_STATIC
 				echolog "  - [$?]解析并加入[屏蔽列表] GeoIP 到 NFTSET 完成"
 			fi
 		}
@@ -1086,16 +1086,16 @@ add_firewall_rule() {
 		local shunt_id
 		for shunt_id in $shunt_ids; do
 			[ "${shunt_group}" != "$(config_n_get ${shunt_id} group)" ] && continue
-			config_n_get $shunt_id ip_list | sed 's/#.*//' | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | insert_nftset $NFTSET_SHUNT_STATIC
-			config_n_get $shunt_id ip_list | sed 's/#.*//' | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | insert_nftset $NFTSET_SHUNT6_STATIC
+			config_n_get $shunt_id ip_list | sed 's/#.*//' | grep -E "$IPv4_REGEX" | insert_nftset $NFTSET_SHUNT_STATIC
+			config_n_get $shunt_id ip_list | sed 's/#.*//' | grep -E "$IPv6_REGEX" | insert_nftset $NFTSET_SHUNT6_STATIC
 			[ "$USE_GEOVIEW" = "1" ] && {
 				local geoip_code=$(config_n_get $shunt_id ip_list | tr -s "\r\n" "\n" | sed -e "/^$/d" | grep -E "^geoip:" | grep -v "^geoip:private" | sed -E 's/^geoip:(.*)/\1/' | sed ':a;N;$!ba;s/\n/,/g')
 				[ -n "$geoip_code" ] && GEOIP_CODE="${GEOIP_CODE:+$GEOIP_CODE,}$geoip_code"
 			}
 		done
 		if [ -n "$GEOIP_CODE" ]; then
-			get_geoip $GEOIP_CODE ipv4 | grep -E "(\.((2(5[0-5]|[0-4][0-9]))|[0-1]?[0-9]{1,2})){3}" | insert_nftset $NFTSET_SHUNT_STATIC
-			get_geoip $GEOIP_CODE ipv6 | grep -E "([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}" | insert_nftset $NFTSET_SHUNT6_STATIC
+			get_geoip $GEOIP_CODE ipv4 | insert_nftset $NFTSET_SHUNT_STATIC
+			get_geoip $GEOIP_CODE ipv6 | insert_nftset $NFTSET_SHUNT6_STATIC
 			echolog "  - [$?]解析并加入[分流节点] GeoIP 到 NFTSET 完成"
 		fi
 	}
