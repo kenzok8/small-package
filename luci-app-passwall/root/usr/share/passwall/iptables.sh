@@ -417,7 +417,7 @@ load_acl() {
 					[ "$_ipv4" != "1" ] && $ip6t_n -A PSW_DNS $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j REDIRECT --to-ports ${dns_redirect} 2>/dev/null
 					$ipt_n -A PSW_DNS $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j REDIRECT --to-ports ${dns_redirect}
 					[ "$_ipv4" != "1" ] && $ip6t_n -A PSW_DNS $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j REDIRECT --to-ports ${dns_redirect} 2>/dev/null
-					[ -z "$(get_cache_var "ACL_${sid}_default")" ] && echolog "     - ${msg}与全局配置不同节点，DNS 重定向到专用 DNS 服务器 [${dns_redirect}]。"
+					[ -z "$(get_cache_var "ACL_${sid}_default")" ] && echolog "     - ${msg}节点不同于全局配置，DNS 重定向到专用服务器[${dns_redirect}]。"
 				fi
 
 				[ -n "$tcp_port" ] || [ -n "$udp_port" ] && {
@@ -785,8 +785,8 @@ filter_server_port() {
 	local address="$1"
 	local port=$(echo "$2" | tr '-' ':' | tr -d ' ')
 	local stream=$(echo "$3" | tr 'A-Z' 'a-z')
-	local ipt_tmp="$ipt_n" _is_tproxy _ipt_cmd _ver multi_ports p ports
-	[ "$(config_n_get @global_forwarding[0] tcp_proxy_way redirect)" = "tproxy" ] && _is_tproxy="TPROXY"
+	local _is_tproxy="$4"
+	local ipt_tmp="$ipt_n" _ipt_cmd _ver multi_ports p ports
 	[ "$stream" = "udp" ] && _is_tproxy="TPROXY"
 	[ -n "$_is_tproxy" ] && ipt_tmp="$ipt_m"
 	for _ver in 4 6; do
@@ -813,7 +813,7 @@ filter_server_port() {
 }
 
 filter_node() {
-	local node="$1" stream="$2"
+	local node="$1" stream="$2" _is_tproxy="$3"
 	[ -z "$node" ] && return 1
 	local address=$(config_n_get "$node" address)
 	local port=$(config_n_get "$node" port)
@@ -822,13 +822,15 @@ filter_node() {
 	[ -z "$address" ] && return 1
 	echo "$address" | grep -Eq "$EXCLUDE_VPSIP" && return 1
 	[ -z "$port" ] && return 1
-	filter_server_port "$address" "$port" "$stream"
+	filter_server_port "$address" "$port" "$stream" "$_is_tproxy"
 }
 
 filter_direct_node_list() {
 	[ ! -s "$TMP_PATH/direct_node_list" ] && return
+	local _is_tproxy
+	[ "$(config_n_get @global_forwarding[0] tcp_proxy_way redirect)" = "tproxy" ] && _is_tproxy="TPROXY"
 	awk '!seen[$0]++' "$TMP_PATH/direct_node_list" | while read -r _node_id; do
-		filter_node "$_node_id" TCP
+		filter_node "$_node_id" TCP "$_is_tproxy"
 		filter_node "$_node_id" UDP
 		unset _node_id
 	done
