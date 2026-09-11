@@ -90,9 +90,11 @@ window.lv_dropdown_data["<%=cbid%>"] = <%=json.stringify(dropdown_data)%>;
 
 <div id="<%=cbid%>.main" class="lv-dropdown-container">
 	<!-- 隐藏 select（保存实际配置值） -->
-	<select id="<%=cbid%>" name="<%=cbid%>" class="cbi-input-select" data-update="change" style="display:none !important;">
-		<option value="<%=current_key%>" selected="selected">placeholder</option>
-	</select>
+	<div style="display:none !important;">
+		<select id="<%=cbid%>" name="<%=cbid%>" class="cbi-input-select" data-update="change" style="display:none !important;">
+			<option value="<%=current_key%>" selected="selected">placeholder</option>
+		</select>
+	</div>
 	<!-- 模拟 ListValue 控件外观 -->
 	<div class="cbi-input-value cbi-input-select lv-dropdown-display" id="<%=cbid%>.display" tabindex="0">
 		<span id="<%=cbid%>.label" class="lv-dropdown-label" title="<%=pcdata(current_label)%>">

@@ -62,4 +62,10 @@ base_path.default = "/apps/kaiplus/"
 base_path.rmempty = false
 base_path.readonly = true
 
+local release_channel = s:option(ListValue, "release_channel", translate("Release channel"))
+release_channel:value("stable", translate("Stable"))
+release_channel:value("canary", translate("Canary"))
+release_channel.default = "stable"
+release_channel.rmempty = false
+
 return m

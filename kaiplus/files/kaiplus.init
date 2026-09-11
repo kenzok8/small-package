@@ -13,6 +13,7 @@ get_config() {
 	config_get bind_addr "$1" bind_addr "0.0.0.0"
 	config_get base_path "$1" base_path "/apps/kaiplus/"
 	config_get system_role "$1" system_role "istoreos"
+	config_get release_channel "$1" release_channel "stable"
 	config_get auth_mode "$1" auth_mode "disabled"
 }
 
@@ -33,10 +34,12 @@ start_service() {
 	fi
 
 	mkdir_p "$data_dir"
+	umask 077
 	mkdir_p "$data_dir/workspace"
 	mkdir_p "$data_dir/cache"
 	mkdir_p "$data_dir/config"
 	mkdir_p "$data_dir/state"
+	chmod 0700 "$data_dir/config" "$data_dir/state"
 
 	helper_token_file="$data_dir/state/ssh-helper.token"
 	if [ ! -s "$helper_token_file" ]; then
@@ -59,6 +62,7 @@ start_service() {
 		procd_set_param env \
 			KAIPLUS_HOME="$data_dir" \
 			KAIPLUS_SYSTEM_ROLE="$system_role" \
+			KAIPLUS_RELEASE_CHANNEL="$release_channel" \
 			KAIPLUS_AUTH_MODE="$auth_mode" \
 			LINKEASE_AUTH_PROVIDER="$auth_mode" \
 			KAIPLUS_LISTEN_MODE="tcp" \
@@ -71,6 +75,7 @@ start_service() {
 		procd_set_param env \
 			KAIPLUS_HOME="$data_dir" \
 			KAIPLUS_SYSTEM_ROLE="$system_role" \
+			KAIPLUS_RELEASE_CHANNEL="$release_channel" \
 			KAIPLUS_AUTH_MODE="$auth_mode" \
 			LINKEASE_AUTH_PROVIDER="$auth_mode" \
 			KAIPLUS_LISTEN_MODE="unix" \
@@ -93,6 +98,7 @@ start_service() {
 	procd_append_param command --defaults-dir /usr/share/kaiplus/defaults
 	procd_append_param command --base-path "$base_path"
 	procd_append_param command --system-role "$system_role"
+	procd_append_param command --release-channel "$release_channel"
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 	procd_set_param respawn
