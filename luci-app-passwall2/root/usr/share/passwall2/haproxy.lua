@@ -109,26 +109,20 @@ api.uci_foreach_c("haproxy_config", function(t)
 			t.origin_port = server_port
 			if health_check_type == "script_logic" then
 				if server_node.type ~= "Socks" then
-					local new_port
-					local cache = api.get_socks_port_by_cache(server_node[".name"])
-					if cache then
-						new_port = cache
-					else
-						new_port = api.get_new_port()
-						local config_file = string.format("%s_%s.json", t[".name"], new_port)
-						sys.call(string.format('/usr/share/%s/app.sh run_socks "%s"> /dev/null',
-							appname,
-							string.format("flag=%s node=%s bind=%s socks_port=%s config_file=%s",
-								new_port, --flag
-								server_node[".name"], --node
-								"127.0.0.1", --bind
-								new_port, --socks port
-								config_file --config file
-								)
+					local relay_port = server_node.port
+					local new_port = api.get_new_port()
+					local config_file = string.format("%s_%s.json", t[".name"], new_port)
+					sys.call(string.format('/usr/share/%s/app.sh run_socks "%s"> /dev/null',
+						appname,
+						string.format("flag=%s node=%s bind=%s socks_port=%s config_file=%s",
+							new_port, --flag
+							server_node[".name"], --node
+							"127.0.0.1", --bind
+							new_port, --socks port
+							config_file --config file
 							)
 						)
-						api.set_socks_port_to_cache(server_node[".name"], new_port)
-					end
+					)
 					server_address = "127.0.0.1"
 					server_port = new_port
 				end

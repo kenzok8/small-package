@@ -2054,11 +2054,3 @@ function parseDNS(dns)
 	end
 	return dns, 53
 end
-
-function get_socks_port_by_cache(node_id)
-	return get_cache_var("node_%s_socks_port" % { node_id })
-end
-
-function set_socks_port_to_cache(node_id, v)
-	set_cache_var("node_%s_socks_port" % { node_id }, v)
-end

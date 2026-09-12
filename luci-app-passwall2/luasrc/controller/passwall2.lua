@@ -280,7 +280,7 @@ end
 
 function index_status()
 	local e = {}
-	e["global_status"] = luci.sys.call("/bin/busybox top -bn1 | grep -v 'grep' | grep '%s/bin/' | grep '/acl_default\\.json' >/dev/null" % api.TMP_PATH) == 0
+	e["global_status"] = luci.sys.call("/bin/busybox top -bn1 | grep -v 'grep' | grep '%s/bin/' | grep '/acl/default' >/dev/null" % api.TMP_PATH) == 0
 	http_write_json(e)
 end
 

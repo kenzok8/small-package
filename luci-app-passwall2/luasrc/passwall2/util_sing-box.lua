@@ -123,46 +123,31 @@ function gen_outbound(flag, node, tag, proxy_table)
 		end
 
 		if node.type ~= "sing-box" then
-			local new_port
+			local relay_port = node.port
+			local new_port = api.get_new_port()
+			local config_file = string.format("%s_%s_%s.json", flag, tag, new_port)
+			if tag and node_id and not tag:find(node_id) then
+				config_file = string.format("%s_%s_%s_%s.json", flag, tag, node_id, new_port)
+			end
 			if run_socks_instance then
-				local relay_port = (proxy_tag and node.port) and tostring(node.port) or ""
-				if relay_port == "" then
-					local cache = api.get_socks_port_by_cache(node_id)
-					if cache then
-						new_port = cache
-						run_socks_instance = nil
-					end
-				end
-				if run_socks_instance then
-					new_port = api.get_new_port()
-					local config_file = string.format("nodesocks_%s_%s.json", node_id, new_port)
-					if tag and node_id and not tag:find(node_id) then
-						config_file = string.format("nodesocks_%s_%s_%s.json", tag, node_id, new_port)
-					end
-					sys.call(string.format('/usr/share/passwall2/app.sh run_socks "%s"> /dev/null',
-						string.format("flag=%s node=%s bind=%s socks_port=%s config_file=%s relay_port=%s",
-							new_port, --flag
-							node_id, --node
-							"127.0.0.1", --bind
-							new_port, --socks port
-							config_file, --config file
-							relay_port --relay port
-							)
+				sys.call(string.format('/usr/share/passwall2/app.sh run_socks "%s"> /dev/null',
+					string.format("flag=%s node=%s bind=%s socks_port=%s config_file=%s relay_port=%s",
+						new_port, --flag
+						node_id, --node
+						"127.0.0.1", --bind
+						new_port, --socks port
+						config_file, --config file
+						(proxy_tag and relay_port) and tostring(relay_port) or "" --relay port
 						)
 					)
-					if relay_port == "" then
-						api.set_socks_port_to_cache(node_id, new_port)
-					end
-				end
+				)
 			end
-			if new_port then
-				node = {
-					protocol = "socks",
-					address = "127.0.0.1",
-					port = new_port
-				}
-				proxy_tag = "socks <- " .. node_id
-			end
+			node = {
+				protocol = "socks",
+				address = "127.0.0.1",
+				port = new_port
+			}
+			proxy_tag = "socks <- " .. node_id
 		else
 			if proxy_tag then
 				node.detour = proxy_tag
