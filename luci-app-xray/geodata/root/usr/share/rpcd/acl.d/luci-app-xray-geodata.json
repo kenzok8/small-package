@@ -2,6 +2,14 @@
     "luci-app-xray-geodata": {
         "description": "Grant access to xray configurations",
         "read": {
+            "file": {
+                "/usr/share/xray/geoip.dat": [
+                    "read"
+                ],
+                "/usr/share/xray/geosite.dat": [
+                    "read"
+                ]
+            },
             "uci": [
                 "xray_core"
             ]

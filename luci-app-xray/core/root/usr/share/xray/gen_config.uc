@@ -205,12 +205,14 @@ function rules(proxy, bridge, manual_tproxy, extra_inbound, fakedns) {
                 domain: blocked_domain_rules(proxy),
             });
         }
-        splice(result, 0, 0, {
-            type: "field",
-            inboundTag: [...tproxy_tcp_inbound_v4_tags, ...tproxy_udp_inbound_v4_tags, ...tproxy_tcp_inbound_v6_tags, ...tproxy_udp_inbound_v6_tags, ...extra_inbound_global_tcp_tags, ...extra_inbound_global_udp_tags],
-            outboundTag: "direct",
-            domain: fast_domain_rules(proxy)
-        });
+        if (length(fast_domain_rules(proxy)) > 0) {
+            splice(result, 0, 0, {
+                type: "field",
+                inboundTag: [...tproxy_tcp_inbound_v4_tags, ...tproxy_udp_inbound_v4_tags, ...tproxy_tcp_inbound_v6_tags, ...tproxy_udp_inbound_v6_tags, ...extra_inbound_global_tcp_tags, ...extra_inbound_global_udp_tags],
+                outboundTag: "direct",
+                domain: fast_domain_rules(proxy)
+            });
+        }
         if (proxy["direct_bittorrent"] == "1") {
             splice(result, 0, 0, {
                 type: "field",

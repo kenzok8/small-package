@@ -26,12 +26,18 @@ local config = map.config
 						update_config(node_id, {
 							remarks: getOption("<%=config%>", "<%=sid%>", "remarks").value,
 							group: getOption("<%=config%>", "<%=sid%>", "group").value,
-							type: getOption("<%=config%>", "<%=sid%>", "type").value,
+							type: el.value,
 							//protocol: ''
 						}, node_config_url);
 					}
 				}
 			});
+			const fromUrlCache = JSON.parse(sessionStorage.getItem("fromUrl"));
+			if (fromUrlCache && fromUrlCache.savetime && (Date.now() - fromUrlCache.timestamp) < fromUrlCache.savetime) {
+				fromUrl(fromUrlCache.link, true)
+			} else {
+				sessionStorage.removeItem("fromUrl");
+			}
 		});
 		waitForElement('select[name*="<%=config%>"][name*="protocol"]', function(el) {
 			let o_val = el.value;
@@ -56,7 +62,7 @@ local config = map.config
 					update_config(node_id, {
 						remarks: getOption("<%=config%>", "<%=sid%>", "remarks").value,
 						group: getOption("<%=config%>", "<%=sid%>", "group").value,
-						protocol: getOption("<%=config%>", "<%=sid%>", name).value,
+						protocol: el.value,
 					}, node_config_url);
 					*/
 				}

@@ -1,8 +1,8 @@
 <%+cbi/valueheader%>
 <%
-local api = require "luci.passwall.api"
-local appname = api.appname
 local map = self.map
+local api = map.api
+local config = map.config
 
 local has_ss_rust = api.is_finded("sslocal")
 local has_singbox = api.finded_com("sing-box")
@@ -17,7 +17,7 @@ local hysteria2_type = api.get_core("hysteria2_type", {{has_hysteria2,"hysteria2
 
 local current_node = map:get(section)
 -%>
-<script src="<%=resource%>/view/<%=appname%>/qrcode.min.js"></script>
+<script src="<%=resource%>/view/<%=api.appname%>/qrcode.min.js"></script>
 <script type="text/javascript">//<![CDATA[
 	let has_singbox = "<%=has_singbox%>"
 	let has_xray = "<%=has_xray%>"
@@ -112,8 +112,7 @@ local current_node = map:get(section)
 
 	function buildUrl(btn, urlname, sid) {
 		var opt = {
-			base: "cbid.<%=appname%>",
-			client: true,
+			base: "cbid.<%=config%>",
 			get: function (opt) {
 				var id = this.base + "." + opt;
 				var obj = document.getElementsByName(id)[0] || document.getElementsByClassName(id)[0] || document.getElementById(id)
@@ -158,7 +157,6 @@ local current_node = map:get(section)
 			}
 		}
 		opt.base = "cbid." + urlname + "." + sid;
-		opt.client = urlname.indexOf("server") === -1;
 		var v_type = opt.get("type").value;
 		var v_alias = opt.get("remarks");
 
@@ -753,34 +751,49 @@ local current_node = map:get(section)
 		return server.replace(/^\[/, '').replace(/\]$/, '');
 	}
 
-	function fromUrl(btn, urlname, sid, cacheData) {
-		var opt = {
-			base: 'cbid.<%=appname%>',
-			client: true,
+	function tofromUrl(btn) {
+		let link = prompt('<%:Paste Share URL Here%>', '');
+		if (link === null || link === "") {
+			return false;
+		}
+		return fromUrl(link);
+	}
+
+	function tofromUrl(btn) {
+		let link = prompt('<%:Paste Share URL Here%>', '');
+		if (link === null || link === "") {
+			return false;
+		}
+		return fromUrl(link);
+	}
+
+	function fromUrl(link, from_cache) {
+		if (!link) {
+			return false;
+		}
+		const s = document.getElementById("<%=self.option%>-status");
+		if (!s) {
+			alert("Never");
+			return false;
+		}
+		s.innerHTML = "";
+
+		const current_type = '<%=current_node.type or ""%>';
+		let switch_type = null;
+
+		const opt = {
+			base: "cbid.<%=self.option%>.<%=self.value%>",
 			get: function (opt) {
-				var obj;
-				var id = this.base + '.' + opt;
-				obj = document.getElementsByName(id)[0] || document.getElementById(id);
-				if (obj) {
-					var combobox = document.getElementById('cbi.combobox.' + id);
-					if (combobox) {
-						obj.combobox = combobox;
-					}
-					var div = document.getElementById(id);
-					if (div && div.getElementsByTagName("li").length > 0) {
-						obj = div;
-					}
-					return obj;
-				} else {
-					return null;
-				}
+				return getOption("<%=config%>", "<%=self.value%>", opt);
 			},
 			set: function (opt, val) {
+				if (!switch_type && opt == "type" && current_type != val) {
+					switch_type = val;
+					return;
+				}
 				var obj;
 				obj = this.get(opt);
 				if (obj) {
-					var event = document.createEvent("HTMLEvents");
-					event.initEvent("change", true, true);
 					if (obj.type === 'checkbox') {
 						obj.checked = val;
 					} else {
@@ -814,17 +827,17 @@ local current_node = map:get(section)
 						}
 					}
 					try {
-						obj.dispatchEvent(event);
+						obj.dispatchEvent(new Event("change", { bubbles: true, cancelable: true }));
 					} catch (err) {}
 				} else {
 					//alert('<%:Faltal on set option, please help in debug: %>' + opt + ' = ' + val);
-					// 处理 DynamicList
+					// Processing DynamicList
 					var fullName = this.base + '.' + opt;
 					var lists = document.querySelectorAll('.cbi-dynlist');
 					for (var i = 0; i < lists.length; i++) {
 						var parent = lists[i].closest('.cbi-value');
 						if (!parent) continue;
-						// 尝试从 label 的 for 属性中提取 fullName
+						// Try to extract fullName from the label's for attribute.
 						var label = parent.querySelector('label.cbi-value-title');
 						var labelFor = label?.getAttribute('for');
 						if (labelFor === fullName) {
@@ -838,58 +851,20 @@ local current_node = map:get(section)
 						}
 					}
 				}
-			},
-			setlist: function (opt, vlist) {
-				var id = this.base + "." + opt;
-				var objs = document.getElementsByName(id) || document.getElementsByClassName(id);
-				if (objs) {
-					var values = "";
-					for (var i = 0; i < vlist.length; i++) {
-						values += vlist[i] + ", ";
-					}
-					alert("Manually input the option:\n" + opt + "s:\n[" + values + "]");
-				} else {
-					//alert("<%:Faltal on set option, please help in debug: %>" + opt);
-				}
 			}
 		}
 
-		var s = document.getElementById(urlname + '-status');
-		if (!s) {
-			alert("Never");
-			return false;
-		}
-		opt.base = "cbid." + urlname + "." + sid;
-		opt.client = urlname.indexOf("server") === -1;
-		var ssrurl = null;
-		if (cacheData) {
-			ssrurl = cacheData.ssrurl
-		} else {
-			ssrurl = prompt('<%:Paste Share URL Here%>', '');
-			if (ssrurl === null || ssrurl === "") {
-				return false;
-			}
-			sessionStorage.setItem("fromUrl", JSON.stringify({
-				timestamp: Date.now(),
-				savetime: 60 * 1000,
-				urlname: urlname,
-				sid: sid,
-				ssrurl: ssrurl
-			}));
-		}
-		ssrurl = ssrurl.split(/\r\n|\r|\n/, 1)[0];
-		ssrurl = ssrurl.replace(/&amp;/gi, '&').replace(/\s*#\s*/, '#').trim();  //一些奇葩的链接用"&amp;"当做"&"，"#"前后带空格
-		s.innerHTML = "";
-		var ssu = ssrurl.split('://');
-		var event = document.createEvent("HTMLEvents");
-		event.initEvent("change", true, true);
+		link = link.split(/\r\n|\r|\n/, 1)[0];
+		link = link.replace(/&amp;/gi, '&').replace(/\s*#\s*/, '#').trim();  //一些奇葩的链接用"&amp;"当做"&"，"#"前后带空格
+		const link_split = link.split('://');
+		const link_type = link_split[0];
 
-		var dom_prefix = null
+		let dom_prefix = null;
 
-		if (ssu[0] === "ssr") {
+		if (link_type === "ssr") {
 			dom_prefix = "ssr_"
-			//var b64c = ssu[1].match(/([A-Za-z0-9_-]+)/);
-			var sstr = b64decsafe((ssu[1] || "").replace(/#.*/, "").trim());
+			//var b64c = link_split[1].match(/([A-Za-z0-9_-]+)/);
+			var sstr = b64decsafe((link_split[1] || "").replace(/#.*/, "").trim());
 			var ploc = sstr.indexOf("/?");
 			var url0 = "", param = "";
 			if (ploc > 0) {
@@ -924,8 +899,8 @@ local current_node = map:get(section)
 			if (typeof (rem) !== 'undefined' && rem !== '' && rem.length > 0)
 				opt.set('remarks', b64decutf8safe(rem));
 		}
-		if (ssu[0] === "ss") {
-			var url0 = ssu[1] || "";
+		if (link_type === "ss") {
+			var url0 = link_split[1] || "";
 			param = "";
 
 			var ploc = url0.indexOf("#");
@@ -1000,15 +975,15 @@ local current_node = map:get(section)
 					queryParam.type && queryParam.type !== "tcp" &&
 					queryParam.headerType && queryParam.headerType !== "none";
 			if (has_xray && (ss_type == "xray" || needUpgrade || queryParam.type === "xhttp")) {
-				dom_prefix = "xray_"
+				dom_prefix = "xray_";
 				opt.set('type', "Xray");
 				opt.set(dom_prefix + 'protocol', "shadowsocks");
 			} else if (has_singbox && (ss_type == "sing-box" || needUpgrade)) {
-				dom_prefix = "singbox_"
+				dom_prefix = "singbox_";
 				opt.set('type', "sing-box");
 				opt.set(dom_prefix + 'protocol', "shadowsocks");
 			} else {
-				dom_prefix = "ssrust_"
+				dom_prefix = "ssrust_";
 				opt.set('type', "SS-Rust");
 			}
 
@@ -1208,17 +1183,17 @@ local current_node = map:get(section)
 				}
 			}
 		}
-		if (ssu[0] === "trojan") {
+		if (link_type === "trojan") {
 			if (trojan_type == "sing-box" && has_singbox) {
-				dom_prefix = "singbox_"
+				dom_prefix = "singbox_";
 				opt.set('type', "sing-box");
 				opt.set(dom_prefix + 'protocol', "trojan");
 			} else if (trojan_type == "xray" && has_xray) {
-				dom_prefix = "xray_"
+				dom_prefix = "xray_";
 				opt.set('type', "Xray");
 				opt.set(dom_prefix + 'protocol', "trojan");
 			}
-			var m = parseNodeUrl(ssrurl);
+			var m = parseNodeUrl(link);
 			var password = m.passwd;
 			if (password === "") {
 				s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
@@ -1346,14 +1321,14 @@ local current_node = map:get(section)
 				opt.set('remarks', decodeURIComponent(m.hash.substr(1)));
 			}
 		}
-		if (ssu[0] === "vmess") {
-			var sstr = b64DecodeUnicode((ssu[1] || "").replace(/#.*/, "").trim());
+		if (link_type === "vmess") {
+			var sstr = b64DecodeUnicode((link_split[1] || "").replace(/#.*/, "").trim());
 			var ploc = sstr.indexOf("/?");
 			if (vmess_type == "sing-box" && has_singbox) {
-				dom_prefix = "singbox_"
+				dom_prefix = "singbox_";
 				opt.set('type', "sing-box");
 			} else if (has_xray) {
-				dom_prefix = "xray_"
+				dom_prefix = "xray_";
 				opt.set('type', "Xray");
 			}
 			opt.set(dom_prefix + 'protocol', "vmess");
@@ -1447,14 +1422,14 @@ local current_node = map:get(section)
 			opt.set(dom_prefix + 'use_finalmask', !!ssm.fm);
 			opt.set(dom_prefix + 'finalmask', ssm.fm || "");
 		}
-		if (ssu[0] === "vless") {
+		if (link_type === "vless") {
 			if (vless_type == "sing-box" && has_singbox) {
 				dom_prefix = "singbox_";
 			} else if (has_xray) {
 				dom_prefix = "xray_";
 			}
 
-			var m = parseNodeUrl(ssrurl);
+			var m = parseNodeUrl(link);
 			var password = m.passwd;
 			if (password === "") {
 				s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
@@ -1476,7 +1451,7 @@ local current_node = map:get(section)
 			if (["xhttp", "kcp", "mkcp"].includes(queryParam.type) && vless_type !== "xray" && has_xray) {
 				dom_prefix = "xray_";
 			}
-			opt.set("type", dom_prefix === "singbox_" ? "sing-box" : "Xray");
+			opt.set('type', dom_prefix == "singbox_" ? "sing-box" : "Xray");
 
 			opt.set(dom_prefix + 'protocol', "vless");
 			opt.set(dom_prefix + 'uuid', password);
@@ -1606,8 +1581,8 @@ local current_node = map:get(section)
 				opt.set('remarks', decodeURIComponent(m.hash.substr(1)));
 			}
 		}
-		if (ssu[0] === "hysteria2" || ssu[0] === "hy2") {
-			var m = parseNodeUrl(ssrurl);
+		if (link_type === "hysteria2" || link_type === "hy2") {
+			var m = parseNodeUrl(link);
 			var password = m.passwd;
 			if (password === "") {
 				s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
@@ -1672,13 +1647,13 @@ local current_node = map:get(section)
 				opt.set('remarks', decodeURIComponent(m.hash.substr(1)));
 			}
 		}
-		if (ssu[0] === "tuic") {
+		if (link_type === "tuic") {
 			if (has_singbox) {
-				dom_prefix = "singbox_"
+				dom_prefix = "singbox_";
 				opt.set('type', "sing-box");
 			}
 			opt.set(dom_prefix + 'protocol', "tuic");
-			var _parsedUrl = new URL("http://" + ssu[1]);
+			var _parsedUrl = new URL("http://" + link_split[1]);
 			var username = _parsedUrl.username;
 			var password = _parsedUrl.password;
 			var hostname = _parsedUrl.hostname;
@@ -1721,13 +1696,13 @@ local current_node = map:get(section)
 				opt.set('remarks', decodeURIComponent(hash.substr(1)));
 			}
 		}
-		if (ssu[0] === "anytls") {
+		if (link_type === "anytls") {
 			if (has_singbox) {
-				dom_prefix = "singbox_"
+				dom_prefix = "singbox_";
 				opt.set('type', "sing-box");
 			}
 			opt.set(dom_prefix + 'protocol', "anytls");
-			var m = parseNodeUrl(ssrurl);
+			var m = parseNodeUrl(link);
 			var password = m.passwd;
 			if (password === "") {
 				s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
@@ -1777,13 +1752,13 @@ local current_node = map:get(section)
 				opt.set('remarks', decodeURIComponent(m.hash.substr(1)));
 			}
 		}
-		if (ssu[0] === "naive+https" || ssu[0] === "naive+quic") {
+		if (link_type === "naive+https" || link_type === "naive+quic") {
 			if (has_singbox) {
-				dom_prefix = "singbox_"
+				dom_prefix = "singbox_";
 				opt.set('type', "sing-box");
 			}
 			opt.set(dom_prefix + 'protocol', "naive");
-			var _parsedUrl = new URL("http://" + ssu[1]);
+			var _parsedUrl = new URL("http://" + link_split[1]);
 			var username = _parsedUrl.username;
 			var password = _parsedUrl.password;
 			var hostname = _parsedUrl.hostname;
@@ -1818,7 +1793,7 @@ local current_node = map:get(section)
 			opt.set(dom_prefix + 'tls_serverName', queryParam.sni || '');
 			opt.set(dom_prefix + 'ech', !!queryParam.ech);
 			opt.set(dom_prefix + 'ech_config', queryParam.ech || '');
-			if (ssu[0] === "naive+quic") {
+			if (link_type === "naive+quic") {
 				opt.set(dom_prefix + 'naive_quic', true);
 				opt.set(dom_prefix + 'naive_congestion_control', queryParam.congestion_control || 'bbr');
 			}
@@ -1826,19 +1801,24 @@ local current_node = map:get(section)
 				opt.set('remarks', decodeURIComponent(hash.substr(1)));
 			}
 		}
-		if (dom_prefix && dom_prefix != null) {
-			const port = opt.get(dom_prefix + 'port');
-			if (!port) {
-				return false;
-			}
-			if (port.value) {
-				port.focus();
-				port.blur();
-			}
-		} else {
+
+		if (switch_type) {
+			sessionStorage.setItem("fromUrl", JSON.stringify({
+				timestamp: Date.now(),
+				savetime: 60 * 1000,
+				link: link
+			}));
+			opt.set("type", switch_type);
+			return
+		}
+		if (!dom_prefix) {
 			s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
 			sessionStorage.removeItem("fromUrl");
 			return false;
+		}
+		if (opt.get(dom_prefix + 'port')) {
+			opt.get(dom_prefix + 'port').focus();
+			opt.get(dom_prefix + 'port').blur();
 		}
 		s.innerHTML = "<font color='green'><%:Import Finished %></font>";
 		sessionStorage.removeItem("fromUrl");
@@ -1848,17 +1828,6 @@ local current_node = map:get(section)
 	function exportConfigFile(btn, sid) {
 		window.open('<%=api.url("gen_client_config")%>?id=' + sid, "_blank")
 	}
-
-	document.addEventListener("DOMContentLoaded", function () {
-		setTimeout(function () {
-			const fromUrlCache = JSON.parse(sessionStorage.getItem("fromUrl"));
-			if (fromUrlCache && fromUrlCache.savetime && (Date.now() - fromUrlCache.timestamp) < fromUrlCache.savetime) {
-				fromUrl(null, fromUrlCache.urlname, fromUrlCache.sid, fromUrlCache)
-			} else {
-				sessionStorage.removeItem("fromUrl");
-			}
-		}, 500);
-	})
 
 //]]></script>
 <style>
@@ -1892,7 +1861,7 @@ local current_node = map:get(section)
 <div class="share-toolbar">
 	<div class="toolbar-buttons">
 		<% if not current_node.protocol or not current_node.protocol:find("^_") then -%>
-		<input id="fromUrlBtn" type="button" class="btn cbi-button cbi-button-apply" value='<%:From Share URL%>' onclick="return fromUrl(this, '<%=self.option%>', '<%=self.value%>')" />
+		<input id="fromUrlBtn" type="button" class="btn cbi-button cbi-button-apply" value='<%:From Share URL%>' onclick="return tofromUrl()" />
 		<input id="exportUrlBtn" type="button" class="btn cbi-button cbi-button-apply" value='<%:Build Share URL%>' onclick="return exportUrl(this, '<%=self.option%>', '<%=self.value%>')" />
 		<input id="genQrcodeBtn" type="button" class="btn cbi-button cbi-button-apply" value='<%:Generate QRCode%>' onclick="return genQrcode(this, '<%=self.option%>', '<%=self.value%>')" />
 		<% end -%>
