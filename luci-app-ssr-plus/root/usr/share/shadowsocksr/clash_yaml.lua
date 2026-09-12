@@ -56,7 +56,7 @@ local function load_yaml(path)
 end
 
 local function quote_nameserver_policy_keys(rendered)
-	rendered = rendered:gsub("[^\n]*", function(line)
+	rendered = rendered:gsub("[^\n]+", function(line)
 		local indent = line:match("^(%s*)geosite:geolocation%-!cn:%s*$")
 		if indent then
 			return indent .. '"geosite:geolocation-!cn":'
