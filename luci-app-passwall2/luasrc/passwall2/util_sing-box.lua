@@ -123,31 +123,46 @@ function gen_outbound(flag, node, tag, proxy_table)
 		end
 
 		if node.type ~= "sing-box" then
-			local relay_port = node.port
-			local new_port = api.get_new_port()
-			local config_file = string.format("%s_%s_%s.json", flag, tag, new_port)
-			if tag and node_id and not tag:find(node_id) then
-				config_file = string.format("%s_%s_%s_%s.json", flag, tag, node_id, new_port)
-			end
+			local new_port
 			if run_socks_instance then
-				sys.call(string.format('/usr/share/passwall2/app.sh run_socks "%s"> /dev/null',
-					string.format("flag=%s node=%s bind=%s socks_port=%s config_file=%s relay_port=%s",
-						new_port, --flag
-						node_id, --node
-						"127.0.0.1", --bind
-						new_port, --socks port
-						config_file, --config file
-						(proxy_tag and relay_port) and tostring(relay_port) or "" --relay port
+				local relay_port = (proxy_tag and node.port) and tostring(node.port) or ""
+				if relay_port == "" then
+					local cache = api.get_socks_port_by_cache(node_id)
+					if cache then
+						new_port = cache
+						run_socks_instance = nil
+					end
+				end
+				if run_socks_instance then
+					new_port = api.get_new_port()
+					local config_file = string.format("nodesocks_%s_%s.json", node_id, new_port)
+					if tag and node_id and not tag:find(node_id) then
+						config_file = string.format("nodesocks_%s_%s_%s.json", tag, node_id, new_port)
+					end
+					sys.call(string.format('/usr/share/passwall2/app.sh run_socks "%s"> /dev/null',
+						string.format("flag=%s node=%s bind=%s socks_port=%s config_file=%s relay_port=%s",
+							new_port, --flag
+							node_id, --node
+							"127.0.0.1", --bind
+							new_port, --socks port
+							config_file, --config file
+							relay_port --relay port
+							)
 						)
 					)
-				)
+					if relay_port == "" then
+						api.set_socks_port_to_cache(node_id, new_port)
+					end
+				end
 			end
-			node = {
-				protocol = "socks",
-				address = "127.0.0.1",
-				port = new_port
-			}
-			proxy_tag = "socks <- " .. node_id
+			if new_port then
+				node = {
+					protocol = "socks",
+					address = "127.0.0.1",
+					port = new_port
+				}
+				proxy_tag = "socks <- " .. node_id
+			end
 		else
 			if proxy_tag then
 				node.detour = proxy_tag
@@ -502,9 +517,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 				obfs = node.hysteria_obfs,
 				auth = (node.hysteria_auth_type == "base64") and node.hysteria_auth_password or nil,
 				auth_str = (node.hysteria_auth_type == "string") and node.hysteria_auth_password or nil,
-				recv_window_conn = tonumber(node.hysteria_recv_window_conn),  --1.14 将变更为 stream_receive_window
-				recv_window = tonumber(node.hysteria_recv_window),  --1.14 将变更为 connection_receive_window
-				disable_mtu_discovery = (node.hysteria_disable_mtu_discovery == "1") and true or false,  --1.14 将变更为 disable_path_mtu_discovery
+				stream_receive_window = tonumber(node.hysteria_recv_window_conn),
+				connection_receive_window = tonumber(node.hysteria_recv_window),
+				disable_path_mtu_discovery = (node.hysteria_disable_mtu_discovery == "1") and true or false,
 				tls = tls
 			}
 		end
@@ -931,10 +946,10 @@ function gen_config_server(node)
 			down_mbps = tonumber(node.hysteria_down_mbps),
 			obfs = node.hysteria_obfs,
 			users = users,
-			recv_window_conn = node.hysteria_recv_window_conn and tonumber(node.hysteria_recv_window_conn) or nil, --1.14 to stream_receive_window
-			recv_window_client = node.hysteria_recv_window_client and tonumber(node.hysteria_recv_window_client) or nil, --1.14 to connection_receive_window
-			max_conn_client = node.hysteria_max_conn_client and tonumber(node.hysteria_max_conn_client) or nil,  --1.14 to max_concurrent_streams
-			disable_mtu_discovery = (node.hysteria_disable_mtu_discovery == "1") and true or false,  --1.14 to disable_path_mtu_discover
+			stream_receive_window = node.hysteria_recv_window_conn and tonumber(node.hysteria_recv_window_conn) or nil,
+			connection_receive_window = node.hysteria_recv_window_client and tonumber(node.hysteria_recv_window_client) or nil,
+			max_concurrent_streams = node.hysteria_max_conn_client and tonumber(node.hysteria_max_conn_client) or nil,
+			disable_path_mtu_discover = (node.hysteria_disable_mtu_discovery == "1") and true or false,
 			tls = tls
 		}
 	end

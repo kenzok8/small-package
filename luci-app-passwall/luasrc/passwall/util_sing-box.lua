@@ -481,9 +481,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 				obfs = node.hysteria_obfs,
 				auth = (node.hysteria_auth_type == "base64") and node.hysteria_auth_password or nil,
 				auth_str = (node.hysteria_auth_type == "string") and node.hysteria_auth_password or nil,
-				recv_window_conn = tonumber(node.hysteria_recv_window_conn),  --1.14 将变更为 stream_receive_window
-				recv_window = tonumber(node.hysteria_recv_window),  --1.14 将变更为 connection_receive_window
-				disable_mtu_discovery = (node.hysteria_disable_mtu_discovery == "1") and true or false,  --1.14 将变更为 disable_path_mtu_discovery
+				stream_receive_window = tonumber(node.hysteria_recv_window_conn),
+				connection_receive_window = tonumber(node.hysteria_recv_window),
+				disable_path_mtu_discovery = (node.hysteria_disable_mtu_discovery == "1") and true or false,
 				tls = tls
 			}
 		end
@@ -910,10 +910,10 @@ function gen_config_server(node)
 			down_mbps = tonumber(node.hysteria_down_mbps),
 			obfs = node.hysteria_obfs,
 			users = users,
-			recv_window_conn = node.hysteria_recv_window_conn and tonumber(node.hysteria_recv_window_conn) or nil, --1.14 to stream_receive_window
-			recv_window_client = node.hysteria_recv_window_client and tonumber(node.hysteria_recv_window_client) or nil, --1.14 to connection_receive_window
-			max_conn_client = node.hysteria_max_conn_client and tonumber(node.hysteria_max_conn_client) or nil,  --1.14 to max_concurrent_streams
-			disable_mtu_discovery = (node.hysteria_disable_mtu_discovery == "1") and true or false,  --1.14 to disable_path_mtu_discover
+			stream_receive_window = node.hysteria_recv_window_conn and tonumber(node.hysteria_recv_window_conn) or nil,
+			connection_receive_window = node.hysteria_recv_window_client and tonumber(node.hysteria_recv_window_client) or nil,
+			max_concurrent_streams = node.hysteria_max_conn_client and tonumber(node.hysteria_max_conn_client) or nil,
+			disable_path_mtu_discover = (node.hysteria_disable_mtu_discovery == "1") and true or false,
 			tls = tls
 		}
 	end

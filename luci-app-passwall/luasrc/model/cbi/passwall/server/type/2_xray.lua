@@ -206,13 +206,18 @@ o.validate = function(self, value, t)
 end
 o:depends({ protocol = "vmess" })
 o:depends({ protocol = "vless" })
+o:depends({ protocol = "http" })
 o:depends({ protocol = "shadowsocks" })
 o:depends({ protocol = "trojan" })
 
 -- [[ REALITY部分 ]] --
 o = s:option(Flag, "reality", translate("REALITY"))
 o.default = 0
-o:depends({ tls = true })
+o:depends({ tls = true, transport = "raw" })
+o:depends({ tls = true, transport = "ws" })
+o:depends({ tls = true, transport = "grpc" })
+o:depends({ tls = true, transport = "httpupgrade" })
+o:depends({ tls = true, transport = "xhttp" })
 
 o = s:option(Value, "reality_private_key", translate("Private Key"))
 o:depends({ reality = true })

@@ -120,6 +120,10 @@ function gen_outbound(flag, node, tag, proxy_table)
 			node.stream_security = "tls"
 		end
 
+		if node.protocol == "http" and node.stream_security == "tls" then
+			node.transport = "raw"
+		end
+
 		if remarks then
 			tag = tag .. ":" .. remarks
 		end
@@ -138,7 +142,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 				xudpConcurrency = (node.mux == "1" and ((node.xudp_concurrency) and tonumber(node.xudp_concurrency) or 8)) or nil
 			} or nil,
 			-- 底层传输配置
-			streamSettings = (node.streamSettings or dialer_proxy_tag or node.protocol == "vmess" or node.protocol == "vless" or node.protocol == "socks" or node.protocol == "shadowsocks" or node.protocol == "trojan" or node.protocol == "hysteria") and {
+			streamSettings = (node.streamSettings or dialer_proxy_tag or node.protocol == "vmess" or node.protocol == "vless" or node.protocol == "socks" or node.protocol == "shadowsocks" or node.protocol == "trojan" or node.protocol == "hysteria" or node.protocol == "http") and {
 				sockopt = {
 					mark = 255,
 					domainStrategy = node.domain_strategy or "UseIP",
@@ -544,7 +548,7 @@ function gen_config_server(node)
 			allowTransparent = false,
 			users = users
 		}
-		node.transport = "tcp"
+		node.transport = "raw"
 		node.tcp_guise = "none"
 	elseif node.protocol == "shadowsocks" then
 		settings = {

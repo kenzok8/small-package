@@ -401,6 +401,7 @@ o = s:option(Flag, "tls", translate("TLS"))
 o.default = 0
 o:depends({ protocol = "vmess" })
 o:depends({ protocol = "vless" })
+o:depends({ protocol = "http" })
 o:depends({ protocol = "trojan" })
 o:depends({ protocol = "shadowsocks" })
 
@@ -719,6 +720,8 @@ o:depends({ protocol = "vless", transport = "raw" })
 o:depends({ protocol = "vless", transport = "ws" })
 o:depends({ protocol = "vless", transport = "grpc" })
 o:depends({ protocol = "vless", transport = "httpupgrade" })
+o:depends({ protocol = "http" })
+o:depends({ protocol = "socks" })
 o:depends({ protocol = "shadowsocks" })
 o:depends({ protocol = "trojan" })
 

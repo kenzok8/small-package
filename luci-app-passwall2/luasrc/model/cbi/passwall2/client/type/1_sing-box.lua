@@ -668,7 +668,8 @@ if singbox_tags:find("with_utls") then
 	o:depends({ protocol = "socks", tls = true })
 	o:depends({ protocol = "trojan", tls = true })
 	o:depends({ protocol = "anytls", tls = true })
-	
+	o:depends({ protocol = "http", tls = true })
+
 	o = s:option(Value, "reality_publicKey", translate("Public Key"))
 	o:depends({ reality = true })
 	

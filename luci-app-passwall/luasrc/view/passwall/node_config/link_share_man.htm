@@ -759,14 +759,6 @@ local current_node = map:get(section)
 		return fromUrl(link);
 	}
 
-	function tofromUrl(btn) {
-		let link = prompt('<%:Paste Share URL Here%>', '');
-		if (link === null || link === "") {
-			return false;
-		}
-		return fromUrl(link);
-	}
-
 	function fromUrl(link, from_cache) {
 		if (!link) {
 			return false;

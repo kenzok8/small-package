@@ -554,6 +554,7 @@ socks_node_switch() {
 		LOG_FILE="/dev/null"
 		run_socks flag=$flag node=$new_node bind=$bind socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file log_file=$log_file
 		set_cache_var "${flag}" "$new_node"
+		set_cache_var "node_${new_node}_socks_port" "$port"
 		local USE_TABLES=$(get_cache_var "USE_TABLES")
 		[ -n "$USE_TABLES" ] && source $APP_PATH/${USE_TABLES}.sh filter_direct_node_list
 	}
@@ -581,6 +582,7 @@ start_socks() {
 				local http_config_file="${id}_http.json"
 				run_socks flag=$id node=$node bind=$bind socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file log_file=$log_file
 				set_cache_var "${id}" "$node"
+				set_cache_var "node_${node}_socks_port" "$port"
 
 				# Auto switch logic
 				local enable_autoswitch=$(config_n_get $id enable_autoswitch 0)
