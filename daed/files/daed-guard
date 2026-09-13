@@ -1,29 +1,131 @@
 #!/bin/sh
+# Keep daed as a child so signals can be forwarded and stale netns/veth
+# state can be cleaned before start and after exit. daed owns TC detach;
+# /sys/fs/bpf/daed is normal persistent state and is never removed here.
 
 . /usr/share/daed/cleanup.sh
 
+# Pre-start cleanup refuses to remove runtime state while another
+# daed instance is active, and fails closed if that probe is broken.
+DAED_GUARD_CLEANUP=start
 if ! daed_cleanup_runtime; then
-	echo "daed: stale network state could not be removed" >&2
+	echo "daed: stale /usr/bin/daed or netns state could not be verified or removed; refusing to start. Check process and netns state." >&2
+	logger -t daed-init "pre-start cleanup failed: refusing to start daed"
 	exit 1
 fi
 
-# Keep daed as a child so a panic or unexpected exit is followed by an
-# immediate teardown of all kernel/runtime state before procd can respawn us.
+# Keep daed as a child so post-exit cleanup runs before procd can
+# respawn it.
 child_pid=
-cleanup_child() {
-	[ -n "$child_pid" ] && kill "$child_pid" 2>/dev/null
+pending_signal=
+shutdown_signal=
+shutdown_elapsed=0
+forced_kill=0
+child_term_timeout=20
+
+forward_signal() {
+	local sig="$1"
+	if [ -z "$child_pid" ]; then
+		pending_signal="$sig"
+		logger -t daed-init "signal $sig received before daed child started; launch cancelled"
+		return 0
+	fi
+	case "$sig" in
+		TERM|INT|QUIT)
+			if [ -z "$shutdown_signal" ]; then
+				shutdown_signal="$sig"
+				shutdown_elapsed=0
+			fi
+			;;
+	esac
+	kill -"$sig" "$child_pid" 2>/dev/null
 }
-trap cleanup_child TERM INT
 
-/usr/bin/daed "$@" &
-child_pid=$!
-wait "$child_pid"
-status=$?
-child_pid=
-trap - TERM INT
+exit_with_signal() {
+	local sig="$1"
+	trap - TERM INT HUP QUIT
+	kill -"$sig" "$$" 2>/dev/null
+	exit 1
+}
 
-if ! daed_cleanup_runtime; then
-	echo "daed: runtime cleanup after exit failed" >&2
-	status=1
+child_is_running() {
+	local state
+	kill -0 "$child_pid" 2>/dev/null || return 1
+	state=$(awk '{ print $3 }' "/proc/$child_pid/stat" 2>/dev/null)
+	[ "$state" != "Z" ]
+}
+trap 'forward_signal TERM' TERM
+trap 'forward_signal INT' INT
+trap 'forward_signal HUP' HUP
+trap 'forward_signal QUIT' QUIT
+
+start_child() {
+	local sig
+	# Keep this check inside the function as well as at the call site:
+	# it closes the ordinary pre-start window, while the pending-signal
+	# path below handles a signal arriving during the background fork.
+	[ -z "$pending_signal" ] || return 125
+	/usr/bin/daed "$@" &
+	child_pid=$!
+	if [ -n "$pending_signal" ]; then
+		sig="$pending_signal"
+		pending_signal=
+		forward_signal "$sig"
+	fi
+}
+
+if [ -n "$pending_signal" ]; then
+	logger -t daed-init "refusing to start daed after pending signal $pending_signal"
+	exit_with_signal "$pending_signal"
 fi
-exit "$status"
+
+# Best-effort OOM preference; failure must not block startup.
+if ! echo -16 > /proc/self/oom_score_adj 2>/dev/null; then
+	logger -t daed-init "warn: failed to set /proc/self/oom_score_adj; continuing without OOM preference"
+fi
+if ! start_child "$@"; then
+	logger -t daed-init "refusing to start daed after pending signal $pending_signal"
+	if [ -n "$pending_signal" ]; then
+		exit_with_signal "$pending_signal"
+	fi
+	exit 1
+fi
+status=0
+reaped=0
+while [ "$reaped" -eq 0 ]; do
+	if [ -n "$shutdown_signal" ] && child_is_running; then
+		if [ "$shutdown_elapsed" -ge "$child_term_timeout" ]; then
+			if [ "$forced_kill" -eq 0 ]; then
+				logger -t daed-init "daed did not exit within ${child_term_timeout}s after $shutdown_signal; sending KILL"
+				kill -KILL "$child_pid" 2>/dev/null
+				forced_kill=1
+			fi
+		else
+			sleep 1
+			shutdown_elapsed=$((shutdown_elapsed + 1))
+			continue
+		fi
+		sleep 1
+		continue
+	fi
+	wait "$child_pid" 2>/dev/null
+	status=$?
+	if ! child_is_running; then
+		reaped=1
+	fi
+done
+child_pid=
+trap - TERM INT HUP QUIT
+
+# Post-exit cleanup runs after the child is reaped.
+DAED_GUARD_CLEANUP=post-exit
+cleanup_status=0
+daed_cleanup_runtime || cleanup_status=$?
+if [ "$cleanup_status" -ne 0 ]; then
+	echo "daed: runtime cleanup after exit failed" >&2
+	logger -t daed-init "post-exit cleanup failed; check ip netns / ip link show"
+fi
+if [ "$status" -ne 0 ]; then
+	exit "$status"
+fi
+exit "$cleanup_status"
