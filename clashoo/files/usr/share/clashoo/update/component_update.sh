@@ -301,9 +301,10 @@ package_version_from_url() {
   case "$file" in
     clashoo_*_"$ARCH".ipk)
       v="${file#clashoo_}"
-      printf '%s\n' "${v%_${ARCH}.ipk}"
+      v="${v%_${ARCH}.ipk}"
+      printf '%s\n' "$v" | sed 's/^\([0-9][0-9][0-9][0-9]\.[0-9][0-9]*\.[0-9][0-9]*\)\./\1~/'
       ;;
-    clashoo_*.ipk) printf '%s\n' "$file" | sed -n 's/^clashoo_\(.*\)_[^_][^_]*\.ipk$/\1/p' ;;
+    clashoo_*.ipk) printf '%s\n' "$file" | sed -n 's/^clashoo_\(.*\)_[^_][^_]*\.ipk$/\1/p' | sed 's/^\([0-9][0-9][0-9][0-9]\.[0-9][0-9]*\.[0-9][0-9]*\)\./\1~/' ;;
     luci-app-clashoo_*.ipk) printf '%s\n' "$file" | sed -n 's/^luci-app-clashoo_\(.*\)_all\.ipk$/\1/p' ;;
     luci-i18n-clashoo-zh-cn_*.ipk) printf '%s\n' "$file" | sed -n 's/^luci-i18n-clashoo-zh-cn_\(.*\)_all\.ipk$/\1/p' ;;
     clashoo-*.apk)

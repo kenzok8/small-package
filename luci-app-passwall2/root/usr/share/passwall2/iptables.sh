@@ -755,8 +755,8 @@ add_firewall_rule() {
 
 	$ipt_m -N PSW2
 	# Socket Only TCP, UDP Invalid.
-	$ipt_m -A PSW2 -p tcp -m socket -j MARK --set-mark ${FWMARK}
-	$ipt_m -A PSW2 -p tcp -m socket -j ACCEPT
+	$ipt_m -A PSW2 -p tcp -m socket --transparent -j MARK --set-mark ${FWMARK}
+	$ipt_m -A PSW2 -p tcp -m socket --transparent -j ACCEPT
 	$ipt_m -A PSW2 $(dst $IPSET_VPS) -j RETURN
 	$ipt_m -A PSW2 $(comment "WAN_IP_RETURN") $(dst $IPSET_WAN) -j RETURN
 	$ipt_m -A PSW2 -m conntrack --ctdir REPLY -j RETURN
@@ -798,8 +798,8 @@ add_firewall_rule() {
 
 	$ip6t_m -N PSW2
 	# Socket Only TCP, UDP Invalid.
-	$ip6t_m -A PSW2 -p tcp -m socket -j MARK --set-mark ${FWMARK}
-	$ip6t_m -A PSW2 -p tcp -m socket -j ACCEPT
+	$ip6t_m -A PSW2 -p tcp -m socket --transparent -j MARK --set-mark ${FWMARK}
+	$ip6t_m -A PSW2 -p tcp -m socket --transparent -j ACCEPT
 	$ip6t_m -A PSW2 $(dst $IPSET_VPS6) -j RETURN
 	$ip6t_m -A PSW2 $(comment "WAN6_IP_RETURN") $(dst $IPSET_WAN6) -j RETURN
 	$ip6t_m -A PSW2 -m conntrack --ctdir REPLY -j RETURN

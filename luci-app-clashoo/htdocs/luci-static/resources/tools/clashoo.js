@@ -143,7 +143,7 @@ const callOverview          = rpc.declare({ object: 'luci.clashoo', method: 'ove
 const callSmartFlushCache       = rpc.declare({ object: 'luci.clashoo', method: 'smart_flush_cache',       expect: {} });
 const callListSingboxProfiles   = rpc.declare({ object: 'luci.clashoo', method: 'list_singbox_profiles',   expect: {} });
 const callGetSingboxProfile     = rpc.declare({ object: 'luci.clashoo', method: 'get_singbox_profile',     params: ['name'],                   expect: {} });
-const callSaveSingboxProfile    = rpc.declare({ object: 'luci.clashoo', method: 'save_singbox_profile',    params: ['name', 'content'],         expect: {} });
+const callSaveSingboxProfileChunk = rpc.declare({ object: 'luci.clashoo', method: 'save_singbox_profile_chunk', params: ['name', 'content', 'index', 'total'], expect: {} });
 const callSetSingboxProfile     = rpc.declare({ object: 'luci.clashoo', method: 'set_singbox_profile',     params: ['name'],                   expect: {} });
 const callDeleteSingboxProfile  = rpc.declare({ object: 'luci.clashoo', method: 'delete_singbox_profile',  params: ['name'],                   expect: {} });
 const callCreateSingboxConfig   = rpc.declare({ object: 'luci.clashoo', method: 'create_singbox_config',   params: ['sub_url', 'name'], expect: {} });
@@ -235,7 +235,23 @@ return baseclass.extend({
 
     listSingboxProfiles:  function ()           { return L.resolveDefault(callListSingboxProfiles(),          { profiles: [], active: '' }); },
     getSingboxProfile:    function (name)        { return L.resolveDefault(callGetSingboxProfile(name),        {}); },
-    saveSingboxProfile:   function (name, content){ return L.resolveDefault(callSaveSingboxProfile(name, content), {}); },
+    saveSingboxProfile: function (name, content) {
+        var chunkSize = 24576;
+        var total = Math.max(1, Math.ceil((content || '').length / chunkSize));
+        var index = 0;
+
+        function sendNext() {
+            var chunk = (content || '').slice(index * chunkSize, (index + 1) * chunkSize);
+            return L.resolveDefault(callSaveSingboxProfileChunk(name, chunk, String(index), String(total)), {}).then(function (r) {
+                if (!r || !r.success)
+                    return { success: false, error: (r && r.error) || 'upload_failed', message: (r && (r.message || r.error)) || _('Upload failed') };
+                index++;
+                return index < total ? sendNext() : r;
+            });
+        }
+
+        return sendNext();
+    },
     setSingboxProfile:    function (name)        { return L.resolveDefault(callSetSingboxProfile(name),        {}); },
     deleteSingboxProfile: function (name)        { return L.resolveDefault(callDeleteSingboxProfile(name),     {}); },
     createSingboxConfig:  function (url, name) { return L.resolveDefault(callCreateSingboxConfig(url, name), {}); },

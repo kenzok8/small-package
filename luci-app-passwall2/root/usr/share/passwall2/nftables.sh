@@ -331,12 +331,15 @@ load_acl() {
 				[ -n "$dns_redirect_port" ] && {
 					#nft "add rule $NFTABLE_NAME PSW2_OUTPUT_MANGLE ip protocol udp udp dport 53 counter accept"
 					#nft "add rule $NFTABLE_NAME PSW2_OUTPUT_MANGLE ip protocol tcp tcp dport 53 counter accept"
-					#nft "add rule $NFTABLE_NAME PSW2_OUTPUT_MANGLE_V6 meta l4proto udp udp dport 53 counter accept"
-					#nft "add rule $NFTABLE_NAME PSW2_OUTPUT_MANGLE_V6 meta l4proto tcp tcp dport 53 counter accept"
-					nft "add rule $NFTABLE_NAME nat_output ip protocol udp oif lo udp dport 53 counter redirect to :$dns_redirect_port comment \"PSW2_DNS\""
-					nft "add rule $NFTABLE_NAME nat_output ip protocol tcp oif lo tcp dport 53 counter redirect to :$dns_redirect_port comment \"PSW2_DNS\""
-					nft "add rule $NFTABLE_NAME nat_output meta l4proto udp oif lo udp dport 53 counter redirect to :$dns_redirect_port comment \"PSW2_DNS\""
-					nft "add rule $NFTABLE_NAME nat_output meta l4proto tcp oif lo tcp dport 53 counter redirect to :$dns_redirect_port comment \"PSW2_DNS\""
+					if [ "$PROXY_IPV6" == "1" ]; then
+						#nft "add rule $NFTABLE_NAME PSW2_OUTPUT_MANGLE_V6 meta l4proto udp udp dport 53 counter accept"
+						#nft "add rule $NFTABLE_NAME PSW2_OUTPUT_MANGLE_V6 meta l4proto tcp tcp dport 53 counter accept"
+						nft "add rule $NFTABLE_NAME nat_output oif lo meta l4proto udp udp dport 53 counter redirect to :$dns_redirect_port comment \"PSW2_DNS\""
+						nft "add rule $NFTABLE_NAME nat_output oif lo meta l4proto tcp tcp dport 53 counter redirect to :$dns_redirect_port comment \"PSW2_DNS\""
+					else
+						nft "add rule $NFTABLE_NAME nat_output oif lo ip protocol udp udp dport 53 counter redirect to :$dns_redirect_port comment \"PSW2_DNS\""
+						nft "add rule $NFTABLE_NAME nat_output oif lo ip protocol tcp tcp dport 53 counter redirect to :$dns_redirect_port comment \"PSW2_DNS\""
+					fi
 					log 2 "${msg}$(i18n "DNS will redirected to the dedicated DNS server [%s]." "${dns_redirect_port}")"
 				}
 			fi
@@ -501,20 +504,26 @@ load_acl() {
 				}
 
 				if ([ -z "$no_tcp_proxy" ] || [ -z "$no_udp_proxy" ]) && [ -n "$dns_redirect_port" ]; then
-					nft "add rule $NFTABLE_NAME PSW2_MANGLE ip protocol udp ${_ipt_source} udp dport 53 counter accept"
-					nft "add rule $NFTABLE_NAME PSW2_MANGLE ip protocol tcp ${_ipt_source} tcp dport 53 counter accept"
-					nft "add rule $NFTABLE_NAME PSW2_MANGLE_V6 meta l4proto udp ${_ipt_source} udp dport 53 counter accept"
-					nft "add rule $NFTABLE_NAME PSW2_MANGLE_V6 meta l4proto tcp ${_ipt_source} tcp dport 53 counter accept"
-					nft "add rule $NFTABLE_NAME PSW2_DNS ip protocol udp ${_ipt_source} udp dport 53 counter redirect to :$dns_redirect_port comment \"$remarks\""
-					nft "add rule $NFTABLE_NAME PSW2_DNS ip protocol tcp ${_ipt_source} tcp dport 53 counter redirect to :$dns_redirect_port comment \"$remarks\""
-					nft "add rule $NFTABLE_NAME PSW2_DNS meta l4proto udp ${_ipt_source} udp dport 53 counter redirect to :$dns_redirect_port comment \"$remarks\""
-					nft "add rule $NFTABLE_NAME PSW2_DNS meta l4proto tcp ${_ipt_source} tcp dport 53 counter redirect to :$dns_redirect_port comment \"$remarks\""
+					if [ "$PROXY_IPV6" == "1" ]; then
+						nft "add rule $NFTABLE_NAME PSW2_MANGLE_V6 meta l4proto udp ${_ipt_source} udp dport 53 counter accept"
+						nft "add rule $NFTABLE_NAME PSW2_MANGLE_V6 meta l4proto tcp ${_ipt_source} tcp dport 53 counter accept"
+						nft "add rule $NFTABLE_NAME PSW2_DNS meta l4proto udp ${_ipt_source} udp dport 53 counter redirect to :$dns_redirect_port comment \"$remarks\""
+						nft "add rule $NFTABLE_NAME PSW2_DNS meta l4proto tcp ${_ipt_source} tcp dport 53 counter redirect to :$dns_redirect_port comment \"$remarks\""
+					else
+						nft "add rule $NFTABLE_NAME PSW2_MANGLE ip protocol udp ${_ipt_source} udp dport 53 counter accept"
+						nft "add rule $NFTABLE_NAME PSW2_MANGLE ip protocol tcp ${_ipt_source} tcp dport 53 counter accept"
+						nft "add rule $NFTABLE_NAME PSW2_DNS ip protocol udp ${_ipt_source} udp dport 53 counter redirect to :$dns_redirect_port comment \"$remarks\""
+						nft "add rule $NFTABLE_NAME PSW2_DNS ip protocol tcp ${_ipt_source} tcp dport 53 counter redirect to :$dns_redirect_port comment \"$remarks\""
+					fi
 					log 2 "${msg}$(i18n "DNS will redirected to the dedicated DNS server [%s]." "${dns_redirect_port}")"
 				else
-					nft "add rule $NFTABLE_NAME PSW2_DNS ip protocol udp ${_ipt_source} udp dport 53 counter return comment \"$remarks\""
-					nft "add rule $NFTABLE_NAME PSW2_DNS ip protocol tcp ${_ipt_source} tcp dport 53 counter return comment \"$remarks\""
-					nft "add rule $NFTABLE_NAME PSW2_DNS meta l4proto udp ${_ipt_source} udp dport 53 counter return comment \"$remarks\""
-					nft "add rule $NFTABLE_NAME PSW2_DNS meta l4proto tcp ${_ipt_source} tcp dport 53 counter return comment \"$remarks\""
+					if [ "$PROXY_IPV6" == "1" ]; then
+						nft "add rule $NFTABLE_NAME PSW2_DNS meta l4proto udp ${_ipt_source} udp dport 53 counter return comment \"$remarks\""
+						nft "add rule $NFTABLE_NAME PSW2_DNS meta l4proto tcp ${_ipt_source} tcp dport 53 counter return comment \"$remarks\""
+					else
+						nft "add rule $NFTABLE_NAME PSW2_DNS ip protocol udp ${_ipt_source} udp dport 53 counter return comment \"$remarks\""
+						nft "add rule $NFTABLE_NAME PSW2_DNS ip protocol tcp ${_ipt_source} tcp dport 53 counter return comment \"$remarks\""
+					fi
 				fi
 
 				[ -z "$no_tcp_proxy" ] && [ -n "$redir_port" ] && {

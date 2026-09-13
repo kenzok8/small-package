@@ -329,7 +329,7 @@ function add_rule(var)
 			tinsert(conf_lines, "no-poll")
 			tinsert(conf_lines, "no-resolv")
 
-			if FLAG == "default" then
+			if FLAG == "acl_default" then
 				api.set_cache_var("DEFAULT_DNS", DEFAULT_DNS)
 			end
 		end

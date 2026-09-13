@@ -855,7 +855,7 @@ acl_node() {
 		local DNSMASQ_DEFAULT_DNS="${AUTO_DNS}"
 		local DNSMASQ_LOCAL_DNS="${LOCAL_DNS:-${AUTO_DNS}}"
 		[ -n "${DIRECT_DNS_DNSMASQ_SERVER}" ] && DNSMASQ_LOCAL_DNS="${DIRECT_DNS_DNSMASQ_SERVER}"
-		if [ "${flag}" = "default" ]; then
+		if [ "${flag}" = "acl_default" ]; then
 			set_cache_var "GLOBAL_SOCKS_server" "127.0.0.1:$socks_port"
 			set_cache_var "ACL_GLOBAL_node" "$node"
 			run_new_dnsmasq=$(config_n_get @global[0] dns_redirect 1)
@@ -864,7 +864,7 @@ acl_node() {
 				#Modify the default dnsmasq service
 				lua $APP_PATH/helper_dnsmasq.lua stretch
 				json_init
-				json_add_string "FLAG" "default"
+				json_add_string "FLAG" "${flag}"
 				json_add_string "TMP_DNSMASQ_PATH" "${GLOBAL_DNSMASQ_CONF_PATH}"
 				json_add_string "DNSMASQ_CONF_FILE" "${GLOBAL_DNSMASQ_CONF}"
 				json_add_string "DEFAULT_DNS" "${DNSMASQ_DEFAULT_DNS}"
@@ -912,7 +912,7 @@ start() {
 	check_run_environment
 	[ -n "$USE_TABLES" ] && {
 		ACL_JSON=$(lua $APP_PATH/app_acl.lua)
-		[ ! -f ${TMP_ACL_PATH}/acl_node_default ] && ENABLED_DEFAULT_ACL=0
+		[ ! -f ${TMP_ACL_PATH}/acl_node_acl_default ] && ENABLED_DEFAULT_ACL=0
 		local acl_node_num=$(jsonfilter -s "${ACL_JSON}" -e '$.node_order[*]' | wc -l)
 
 		if [ "${acl_node_num}" == 0 ]; then
@@ -1062,7 +1062,7 @@ get_config() {
 		fi
 	fi
 	set_cache_var GLOBAL_DNSMASQ_CONF ${DNSMASQ_CONF_DIR}/dnsmasq-${CONFIG}.conf
-	set_cache_var GLOBAL_DNSMASQ_CONF_PATH ${TMP_ACL_PATH}/default_dnsmasq.d
+	set_cache_var GLOBAL_DNSMASQ_CONF_PATH ${TMP_ACL_PATH}/acl_default_dnsmasq.d
 
 	QUEUE_RUN=1
 }

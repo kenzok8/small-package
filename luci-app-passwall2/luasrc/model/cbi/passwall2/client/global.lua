@@ -311,8 +311,8 @@ loglevel:value("error")
 o = s:taboption("log", DummyValue, "_log", translate("Log File"))
 o.rawhtml = true
 o.cfgvalue = function(t, n)
-	local log_path = api.TMP_PATH .. "/acl/default.log"
-	local log_url = api.url("get_redir_log") .. "?id=default"
+	local log_path = api.TMP_PATH .. "/acl/acl_default.log"
+	local log_url = api.url("get_redir_log") .. "?id=acl_default"
 	return string.format(
 		'<code>%s</code>&nbsp;&nbsp;<input class="btn cbi-button cbi-button-apply" type="button" value="%s" onclick="window.open(\'%s\', \'_blank\')" />',
 		log_path,

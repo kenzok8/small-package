@@ -24,7 +24,7 @@ end
 function init_acl()
 	if true then
 		-- Get Default AC
-		D.flag = "default"
+		D.flag = "acl_default"
 		D.remarks = api.i18n.translatef("Default")
 		D.tcp_no_redir_ports = uci_get("@global_forwarding[0]", "tcp_no_redir_ports")
 		D.udp_no_redir_ports = uci_get("@global_forwarding[0]", "udp_no_redir_ports")

@@ -60,15 +60,24 @@ get_cache_var() {
 	}
 }
 
+del_cache_var() {
+	local key="${1}"
+	[ -n "${key}" ] && [ -f "${TMP_PATH}/var" ] && {
+		sed -i "/${key}=/d" $TMP_PATH/var >/dev/null 2>&1
+	}
+}
+
 set_cache_var() {
 	local key="${1}"
 	shift 1
-	local val="$@"
-	[ -n "${key}" ] && [ -n "${val}" ] && {
-		[ ! -d $TMP_PATH ] && mkdir -p $TMP_PATH
-		sed -i "/${key}=/d" $TMP_PATH/var >/dev/null 2>&1
-		echo "${key}=\"${val}\"" >> $TMP_PATH/var
-		eval ${key}=\"${val}\"
+	[ -n "${key}" ] && {
+		del_cache_var ${key}
+		local val="$@"
+		[ -n "${val}" ] && {
+			[ ! -d $TMP_PATH ] && mkdir -p $TMP_PATH
+			echo "${key}=\"${val}\"" >> $TMP_PATH/var
+			eval ${key}=\"${val}\"
+		}
 	}
 }
 

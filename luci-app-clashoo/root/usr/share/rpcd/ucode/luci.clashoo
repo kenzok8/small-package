@@ -3812,6 +3812,50 @@ return { success: true, name };
 }
 },
 
+save_singbox_profile_chunk: {
+args: { name: 'name', content: 'content', index: 'index', total: 'total' },
+call: function(req) {
+let name    = req.args?.name    || '';
+let content = req.args?.content;
+let idx     = int(req.args?.index || 0);
+let total   = int(req.args?.total || 0);
+if (!name || index(name, '/') >= 0 || index(name, '..') >= 0)
+  return { success: false, error: 'invalid name' };
+if (!match(name, /\.json$/)) name = name + '.json';
+if (type(content) != 'string') return { success: false, error: 'invalid content' };
+if (total < 1 || idx < 0 || idx >= total) return { success: false, error: 'invalid chunk' };
+if (total == 1 && !content) return { success: false, error: 'empty content' };
+let dir = '/usr/share/clashoo/config/singbox';
+system('mkdir -p ' + shell_quote(dir) + ' >/dev/null 2>&1');
+let tmp = '/tmp/clashoo_sb_upload_' + name;
+if (idx == 0) {
+  if (writefile(tmp, content) === null)
+    return { success: false, error: 'write_failed', message: '写入文件失败' };
+} else {
+  let fp = open(tmp, 'a');
+  if (!fp) return { success: false, error: 'write_failed', message: '打开文件失败' };
+  let ok = fp.write(content);
+  fp.close();
+  if (ok === null) return { success: false, error: 'write_failed', message: '写入文件失败' };
+}
+if (idx + 1 < total)
+  return { success: true, name, index: idx, total, complete: false };
+let binary = find_binary();
+if (binary && match(binary, /sing-box/)) {
+  if (system(shell_quote(binary) + ' check -c ' + shell_quote(tmp) + ' >/dev/null 2>&1') != 0) {
+    system('rm -f ' + shell_quote(tmp));
+    return { success: false, error: 'invalid_config', message: 'sing-box 配置验证失败，请检查 JSON 格式' };
+  }
+}
+if (system('cp -f ' + shell_quote(tmp) + ' ' + shell_quote(dir + '/' + name) + ' >/dev/null 2>&1') != 0) {
+  system('rm -f ' + shell_quote(tmp));
+  return { success: false, error: 'write_failed', message: '写入文件失败' };
+}
+system('rm -f ' + shell_quote(tmp));
+return { success: true, name, index: idx, total, complete: true };
+}
+},
+
 set_singbox_profile: {
 args: { name: 'name' },
 call: function(req) {
