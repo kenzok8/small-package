@@ -163,12 +163,16 @@ function sh_uci_commit(config)
 	exec_call(string.format("uci -q commit %s", config))
 end
 
+function del_cache_var(key)
+	sys.call(string.format('. /usr/share/passwall2/utils.sh ; del_cache_var "%s"', key))
+end
+
 function set_cache_var(key, val)
-	sys.call(string.format('. /usr/share/passwall/utils.sh ; set_cache_var %s "%s"', key, val))
+	sys.call(string.format('. /usr/share/passwall/utils.sh ; set_cache_var "%s" "%s"', key, val))
 end
 
 function get_cache_var(key)
-	local val = sys.exec(string.format('. /usr/share/passwall/utils.sh ; echo -n $(get_cache_var %s)', key))
+	local val = sys.exec(string.format('. /usr/share/passwall/utils.sh ; echo -n $(get_cache_var "%s")', key))
 	if val == "" then val = nil end
 	return val
 end
@@ -2071,4 +2075,12 @@ function gen_wireguard_key()
 			public_key = public_key
 		}
 	end
+end
+
+function get_socks_port_by_cache(node_id)
+	return get_cache_var("node_%s_socks_port" % { node_id })
+end
+
+function set_socks_port_to_cache(node_id, v)
+	set_cache_var("node_%s_socks_port" % { node_id }, v)
 end
