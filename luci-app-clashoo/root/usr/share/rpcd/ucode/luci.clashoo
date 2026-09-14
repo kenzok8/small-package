@@ -1135,7 +1135,7 @@ return '_merged_' + s + '__' + t + '.yaml';
 }
 
 function template_search_dirs() {
-return [TEMPLATE_USER_DIR, TEMPLATE_DIR, '/usr/share/clashoo/config/template'];
+return [TEMPLATE_DIR, '/usr/share/clashoo/config/template'];
 }
 
 function find_template_path(name) {
@@ -3318,6 +3318,8 @@ call: function(req) {
 let tpl_src  = trim(req.args?.template_source || '');
 let sub_url  = trim(req.args?.sub_url || '');
 let output_name = ensure_yaml_name(req.args?.output_name || '');
+if (!output_name) output_name = 'tpl-rewrite.yaml';
+let uniq_name = replace(output_name, /\.(yaml|yml)$/, '');
 let set_active  = (req.args?.set_active || '') == '1';
 
 if (!tpl_src)
@@ -3361,19 +3363,15 @@ return { success: false, error: 'missing_yq', message: '缺少 yq，无法注入
 	if (!access(exploded, "r")) {
 		system("cp -f " + shell_quote(tmp_tpl) + " " + shell_quote(exploded));
 	}
-	/* 只替换 proxy-providers.url，rule-providers 指向规则集保持原样 */
-	let inject_cmd = "URL=" + shell_quote(sub_url)
-		+ " yq e '.[\"proxy-providers\"][].url = env(URL)' "
-		+ shell_quote(exploded) + " > " + shell_quote(tmp_out);
+	/* 替换 proxy-providers.url 并把 provider 名改成唯一名（同步 proxy-groups 的 use）*/
+        let inject_cmd = "URL=" + shell_quote(sub_url) + " NAME=" + shell_quote(uniq_name)
+                + " yq e '.[\"proxy-providers\"][].url = env(URL) | (.[\"proxy-providers\"] | keys | map({\"key\": ., \"value\": strenv(NAME) + \"-\" + .}) | from_entries) as $rename | .[\"proxy-providers\"] |= with_entries(.key = $rename[.key]) | (.[\"proxy-groups\"][] | select(has(\"use\")) | .use) |= map($rename[.] // .)' "
+                + shell_quote(exploded) + " > " + shell_quote(tmp_out);
 	if (system(inject_cmd) != 0 || !access(tmp_out, "r")) {
 		system("rm -f " + shell_quote(exploded));
 		return { success: false, error: "inject_failed", message: "订阅 URL 注入失败" };
 	}
 	system("rm -f " + shell_quote(exploded));
-
-if (!output_name) {
-output_name = 'tpl-rewrite.yaml';
-}
 
 let out_path = out_dir + '/' + output_name;
 if (system('mv -f ' + shell_quote(tmp_out) + ' ' + shell_quote(out_path)) != 0)
@@ -3382,16 +3380,16 @@ return { success: false, error: 'write_failed', message: '写入结果文件失�
 /* 删除 respect-rules（模板可能设了但没提供 proxy-server-nameserver） */
 system("sed -i '/respect-rules/d' " + shell_quote(out_path) + " 2>/dev/null");
 system('rm -f ' + shell_quote(tmp_tpl));
-	/* 替换 直连→DIRECT（兼容不同模板的命名差异） */
-	system("sed -i 's/直连/DIRECT/g' " + shell_quote(out_path) + " 2>/dev/null");
-	system("yq e '(.proxy-groups[].proxies) |= sub(\"直连\", \"DIRECT\")' " + shell_quote(out_path) + " -i 2>/dev/null");
+	/* 只把独立引用项"直连"转成 DIRECT，组名里的"直连"不动 */
+	system("sed -i 's/^\\( *- *\\)直连$/\\1DIRECT/' " + shell_quote(out_path) + " 2>/dev/null");
+	system("yq e '(.proxy-groups[] | select(has(\"proxies\")) | .proxies) |= map(sub(\"^直连$\", \"DIRECT\"))' " + shell_quote(out_path) + " -i 2>/dev/null");
 	/* 用 mixin.uc + yq merge 叠加 UCI 覆盖（端口、routing-mark、dns 等） */
 	let mixin_script = "/usr/share/clashoo/runtime/mixin.uc";
 	if (access(mixin_script, "r") && system("command -v yq >/dev/null 2>&1") == 0) {
 		let mixin_yaml = "/tmp/_clashoo_mixin.yaml";
 		let merged_out = out_path + ".merged";
 		system("ucode " + shell_quote(mixin_script) + " 2>/dev/null | yq -M -p json -o yaml > " + shell_quote(mixin_yaml) + " 2>/dev/null");
-		system("yq -M eval-all '. as $item ireduce ({}; . * $item)' " + shell_quote(out_path) + " " + shell_quote(mixin_yaml) + " > " + shell_quote(merged_out) + " 2>/dev/null");
+		system("yq -M eval-all '(. as $item ireduce ({}; . * $item)) as $m | [\"port\",\"socks-port\",\"redir-port\",\"tproxy-port\",\"mixed-port\",\"allow-lan\",\"bind-address\",\"mode\",\"log-level\",\"ipv6\",\"interface-name\",\"routing-mark\",\"external-controller\",\"external-ui\",\"secret\",\"tun\",\"listeners\",\"tunnels\",\"dns\",\"hosts\",\"profile\",\"geodata-mode\",\"geodata-loader\",\"geox-url\",\"proxy-providers\",\"proxies\",\"proxy-groups\",\"rule-providers\",\"rules\",\"sub-rules\",\"ntp\",\"authentication\",\"sniffer\",\"experimental\"] as $order | ($order | to_entries | map({\"key\": .value, \"value\": .key}) | from_entries) as $rank | $m | to_entries | sort_by(.key as $k | $rank[$k] // 999) | from_entries' " + shell_quote(out_path) + " " + shell_quote(mixin_yaml) + " > " + shell_quote(merged_out) + " 2>/dev/null");
 		if (access(merged_out, "r")) {
 			system("mv -f " + shell_quote(merged_out) + " " + shell_quote(out_path));
 		}

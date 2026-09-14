@@ -91,6 +91,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 							api.set_socks_port_to_cache(node_id, new_port)
 						end
 					end
+				else
+					TMP_PORT = TMP_PORT and TMP_PORT + 1 or 3001  -- 导出配置时作为演示
+					new_port = TMP_PORT
 				end
 				if new_port then
 					node = {}
@@ -499,7 +502,7 @@ function gen_config_server(node)
 	local settings = nil
 	local routing = nil
 	local outbounds = {
-		{ protocol = "freedom", tag = "direct", finalRules = {{ action = "allow" }}}, { protocol = "blackhole", tag = "blocked" }
+		{ protocol = "freedom", tag = "direct", settings = { finalRules = {{ action = "allow" }}}}, { protocol = "blackhole", tag = "blocked" }
 	}
 
 	local users = node.users or {}
@@ -647,7 +650,9 @@ function gen_config_server(node)
 						interface = node.outbound_node_iface
 					}
 				},
-				finalRules = {{ action = "allow" }}
+				settings = {
+					finalRules = {{ action = "allow" }}
+				}
 			}
 			sys.call(string.format("mkdir -p %s && touch %s/%s", api.TMP_IFACE_PATH, api.TMP_IFACE_PATH, node.outbound_node_iface))
 		else
@@ -1327,7 +1332,9 @@ function gen_config(var)
 									interface = node.iface
 								}
 							},
-							finalRules = {{ action = "allow" }}
+							settings = {
+								finalRules = {{ action = "allow" }}
+							}
 						}
 						sys.call(string.format("mkdir -p %s && touch %s/%s", api.TMP_IFACE_PATH, api.TMP_IFACE_PATH, node.iface))
 					end
@@ -2038,7 +2045,9 @@ function gen_config(var)
 		local direct_outbound = {
 			protocol = "freedom",
 			tag = "direct",
-			finalRules = {{ action = "allow" }},
+			settings = {
+				finalRules = {{ action = "allow" }}
+			},
 			streamSettings = {
 				sockopt = {
 					mark = 255,
@@ -2167,7 +2176,9 @@ function gen_proto_config(var)
 	table.insert(outbounds, {
 		protocol = "freedom",
 		tag = "direct",
-		finalRules = {{ action = "allow" }},
+		settings = {
+			finalRules = {{ action = "allow" }}
+		},
 		streamSettings = {
 			sockopt = {mark = 255}
 		}

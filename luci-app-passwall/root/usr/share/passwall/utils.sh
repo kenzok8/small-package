@@ -60,6 +60,63 @@ config_t_get() {
 	echo "${ret:=${3}}"
 }
 
+eval_set_val() {
+	for i in $@; do
+		for j in $i; do
+			eval $j
+		done
+	done
+}
+
+eval_unset_val() {
+	for i in $@; do
+		for j in $i; do
+			eval unset $j
+		done
+	done
+}
+
+lua_api() {
+	local func=${1}
+	[ -z "${func}" ] && {
+		echo "nil"
+		return
+	}
+	echo $(lua -e "local api = require 'luci.passwall.api' print(api.${func})")
+}
+
+eval_cache_var() {
+	[ -s "$TMP_PATH/var" ] && eval $(cat "$TMP_PATH/var")
+}
+
+del_cache_var() {
+	local key="${1}"
+	[ -n "${key}" ] && [ -f "${TMP_PATH}/var" ] && {
+		sed -i "/${key}=/d" $TMP_PATH/var >/dev/null 2>&1
+	}
+}
+
+set_cache_var() {
+	local key="${1}"
+	shift 1
+	[ -n "${key}" ] && {
+		del_cache_var ${key}
+		local val="$@"
+		[ -n "${val}" ] && {
+			[ ! -d $TMP_PATH ] && mkdir -p $TMP_PATH
+			echo "${key}=\"${val}\"" >> $TMP_PATH/var
+			eval ${key}=\"${val}\"
+		}
+	}
+}
+
+get_cache_var() {
+	local key="${1}"
+	[ -n "${key}" ] && [ -s "$TMP_PATH/var" ] && {
+		echo $(cat $TMP_PATH/var | grep "^${key}=" | awk -F '=' '{print $2}' | tail -n 1 | awk -F'"' '{print $2}')
+	}
+}
+
 first_type() {
 	[ "${1#/}" != "$1" ] && [ -x "$1" ] && echo "$1" && return
 	for p in "/bin/$1" "/usr/bin/$1" "${TMP_BIN_PATH:-/tmp}/$1"; do
@@ -283,53 +340,42 @@ get_new_port() {
 	local default_start_port=2001
 	local min_port=1025
 	local max_port=49151
-	local port="$1"
+	local port="$1" # Required parameter; please pass "auto" if you want it to be automatic.
 	local protocol=$(echo "$2" | tr 'A-Z' 'a-z')
-	local LOCK_FILE="${LOCK_PATH}/${CONFIG}_get_prot.lock"
-	while ! mkdir "$LOCK_FILE" 2>/dev/null; do
-		sleep 0.05
-	done
+	local is_auto
 	if [ "$port" = "auto" ]; then
-		local now last_time diff last_port
-		now=$(date +%s 2>/dev/null)
-		last_time=$(get_cache_var "last_get_new_port_time")
-		if [ -n "$now" ] && [ -n "$last_time" ]; then
-			diff=$(expr "$now" - "$last_time")
-			[ "$diff" -lt 0 ] && diff=$(expr 0 - "$diff")
+		is_auto=1
+		local last_get_new_port_auto=$(get_cache_var "last_get_new_port_auto")
+		if [ -n "$last_get_new_port_auto" ]; then
+			port=$(expr "$last_get_new_port_auto" + 1)
 		else
-			diff=999
-		fi
-		if [ "$diff" -gt 10 ]; then
 			port=$default_start_port
-		else
-			last_port=$(get_cache_var "last_get_new_port_auto")
-			if [ -n "$last_port" ]; then
-				port=$(expr "$last_port" + 1)
-			else
-				port=$default_start_port
-			fi
 		fi
 	fi
-	[ "$port" -lt $min_port ] || [ "$port" -gt $max_port ] && port=$default_start_port
-	local start_port="$port"
+	([ "$port" -lt "$min_port" ] || [ "$port" -gt "$max_port" ]) && port=$default_start_port
 	while :; do
-		if [ "$(check_port_exists "$port" "$protocol")" = 0 ]; then
-			break
+		local result=$(check_port_exists "$port" "$protocol")
+		if [ "$is_auto" = "1" ] && [ -n "$(get_cache_var "get_port_${port}")" ]; then
+			# The port has already been allocated, continue to the next port.
+			result=1
 		fi
-		port=$(expr "$port" + 1)
-		if [ "$port" -gt $max_port ]; then
-			port=$min_port
+		[ "$result" = "0" ] && break
+		if [ "$port" -lt "$max_port" ]; then
+			# If the port is smaller than the maximum port, increment by 1 and continue.
+			port=$(expr "$port" + 1)
+		elif [ "$port" -gt "$min_port" ]; then
+			# If the port is greater than the minimum port, decrement by 1 and continue.
+			port=$(expr "$port" - 1)
+		else
+			# Otherwise, reassign the default starting port.
+			port=$default_start_port
 		fi
-		[ "$port" = "$start_port" ] && {
-			rmdir "$LOCK_FILE" 2>/dev/null
-			return 1
-		}
 	done
-	if [ "$1" = "auto" ]; then
+	if [ "$is_auto" = "1" ]; then
+		# Set cache to prevent the port from being allocated again.
+		set_cache_var "get_port_${port}" "1"
 		set_cache_var "last_get_new_port_auto" "$port"
-		[ -n "$now" ] && set_cache_var "last_get_new_port_time" "$now"
 	fi
-	rmdir "$LOCK_FILE" 2>/dev/null
 	echo "$port"
 }
 
@@ -357,64 +403,6 @@ check_ver() {
 	done
 	# $1 等于 $2
 	echo 255
-}
-
-eval_set_val() {
-	for i in $@; do
-		for j in $i; do
-			eval $j
-		done
-	done
-}
-
-eval_unset_val() {
-	for i in $@; do
-		for j in $i; do
-			eval unset $j
-		done
-	done
-}
-
-lua_api() {
-	local func=${1}
-	[ -z "${func}" ] && {
-		echo "nil"
-		return
-	}
-	echo $(lua -e "local api = require 'luci.passwall.api' print(api.${func})")
-}
-
-
-del_cache_var() {
-	local key="${1}"
-	[ -n "${key}" ] && [ -f "${TMP_PATH}/var" ] && {
-		sed -i "/${key}=/d" $TMP_PATH/var >/dev/null 2>&1
-	}
-}
-
-set_cache_var() {
-	local key="${1}"
-	shift 1
-	[ -n "${key}" ] && {
-		del_cache_var ${key}
-		local val="$@"
-		[ -n "${val}" ] && {
-			[ ! -d $TMP_PATH ] && mkdir -p $TMP_PATH
-			echo "${key}=\"${val}\"" >> $TMP_PATH/var
-			eval ${key}=\"${val}\"
-		}
-	}
-}
-
-get_cache_var() {
-	local key="${1}"
-	[ -n "${key}" ] && [ -s "$TMP_PATH/var" ] && {
-		echo $(cat $TMP_PATH/var | grep "^${key}=" | awk -F '=' '{print $2}' | tail -n 1 | awk -F'"' '{print $2}')
-	}
-}
-
-eval_cache_var() {
-	[ -s "$TMP_PATH/var" ] && eval $(cat "$TMP_PATH/var")
 }
 
 has_1_65535() {

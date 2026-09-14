@@ -140,6 +140,9 @@ function gen_outbound(flag, node, tag, proxy_table)
 							api.set_socks_port_to_cache(node_id, new_port)
 						end
 					end
+				else
+					TMP_PORT = TMP_PORT and TMP_PORT + 1 or 3001  -- 导出配置时作为演示
+					new_port = TMP_PORT
 				end
 				if new_port then
 					node = {

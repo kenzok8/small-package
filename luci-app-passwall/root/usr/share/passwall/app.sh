@@ -489,8 +489,6 @@ run_socks() {
 	;;
 	esac
 
-	set_cache_var "node_${node}_socks_port" "${socks_port}"
-
 	# http to socks
 	[ -z "$http_flag" ] && [ "$http_port" != "0" ] && [ -n "$http_config_file" ] && [ "$type" != "sing-box" ] && [ "$type" != "xray" ] && [ "$type" != "socks" ] && {
 		json_init
@@ -829,7 +827,6 @@ start_global() {
 		set_cache_var "GLOBAL_SOCKS_server" "${GLOBAL_SOCKS_server}"
 	}
 	[ "$type" != "sing-box" ] && [ "$type" != "xray" ] && echo "${NODE}" >> $TMP_PATH/direct_node_list
-	set_cache_var "node_${NODE}_redir_port" "$REDIR_PORT"
 	set_cache_var "ACL_GLOBAL_node" "$NODE"
 	set_cache_var "ACL_GLOBAL_redir_port" "$REDIR_PORT"
 }
@@ -1570,9 +1567,9 @@ acl_app() {
 							#dhcp.leases to hosts
 							$APP_PATH/lease2hosts.sh > /dev/null 2>&1 &
 						}
-						local _redir_port=$(get_cache_var "node_${node}_redir_port")
-						local _socks_port=$(get_cache_var "node_${node}_socks_port")
-						local _enable_log=$(get_cache_var "node_${node}_enable_log")
+						local _redir_port=$(get_cache_var "acl_node_${node}_redir_port")
+						local _socks_port=$(get_cache_var "acl_node_${node}_socks_port")
+						local _enable_log=$(get_cache_var "acl_node_${node}_enable_log")
 						local _dns_port
 						if [ -n "${_socks_port}" ] && [ -n "${_redir_port}" ] && [ "${_enable_log}" != "1" ] && [ "${log}" != "1" ]; then
 							socks_port=${_socks_port}
@@ -1581,14 +1578,14 @@ acl_app() {
 							run_dns ${_dns_port}
 						else
 							socks_port=$(get_new_port $(expr $socks_port + 1))
-							set_cache_var "node_${node}_socks_port" "${socks_port}"
+							set_cache_var "acl_node_${node}_socks_port" "${socks_port}"
 							redir_port=$(get_new_port $(expr $redir_port + 1))
-							set_cache_var "node_${node}_redir_port" "${redir_port}"
+							set_cache_var "acl_node_${node}_redir_port" "${redir_port}"
 							node_port=$redir_port
 							local log_file="/dev/null"
 							[ "${log}" = "1" ] && {
 								log_file="${TMP_ACL_PATH}/${sid}/node.log"
-								set_cache_var "node_${node}_enable_log" "1"
+								set_cache_var "acl_node_${node}_enable_log" "1"
 							}
 
 							if [ "${type}" = "sing-box" ] || [ "${type}" = "xray" ]; then
