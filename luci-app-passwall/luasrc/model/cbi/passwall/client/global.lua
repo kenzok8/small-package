@@ -612,21 +612,46 @@ o:value("info", "Info")
 o:value("warn", "Warning")
 o:value("error", "Error")
 
-o = s:taboption("log", Flag, "advanced_log_feature", translate("Advanced log feature"), translate("For professionals only."))
-o.default = "0"
-o = s:taboption("log", Flag, "sys_log", translate("Logging to system log"), translate("Logging to the system log for more advanced functions. For example, send logs to a dedicated log server."))
-o:depends("advanced_log_feature", "1")
-o.default = "0"
-o = s:taboption("log", Value, "persist_log_path", translate("Persist log file directory"), translate("The path to the directory used to store persist log files, the \"/\" at the end can be omitted. Leave it blank to disable this feature."))
-o:depends({ ["advanced_log_feature"] = 1, ["sys_log"] = 0 })
-o = s:taboption("log", Value, "log_event_filter", translate("Log Event Filter"), translate("Support regular expression."))
-o:depends("advanced_log_feature", "1")
-o = s:taboption("log", Value, "log_event_cmd", translate("Shell Command"), translate("Shell command to execute, replace log content with %s."))
-o:depends("advanced_log_feature", "1")
+o = s:taboption("log", DummyValue, "_node_log", translate("Log File"))
+o.rawhtml = true
+o.cfgvalue = function(t, n)
+	local log_file = api.TMP_PATH .. "/acl/default/global.log"
+	local log_url = api.url("get_redir_log") .. "?id=default"
+	local s = "<code>%s</code>&nbsp;&nbsp;" % log_file
+	if api.fs.access(log_file) then
+		local btn = string.format(
+			'<input class="btn cbi-button cbi-button-apply" type="button" value="%s" onclick="window.open(\'%s\', \'_blank\')" />',
+			translate("View Log"),
+			log_url
+		)
+		s = s .. btn
+	end
+	return s
+end
+o:depends("log_node", "1")
 
 o = s:taboption("log", Flag, "log_chinadns_ng", translate("Enable") .. " ChinaDNS-NG " .. translate("Log"))
 o.default = "0"
 o.rmempty = false
+o:depends("dns_shunt", "chinadns-ng")
+
+o = s:taboption("log", DummyValue, "_chinadns_ng_log", translate("Log File"))
+o.rawhtml = true
+o.cfgvalue = function(t, n)
+	local log_file = api.TMP_PATH .. "/acl/default/chinadns_ng.log"
+	local log_url = api.url("get_chinadns_log") .. "?flag=default"
+	local s = "<code>%s</code>&nbsp;&nbsp;" % log_file
+	if api.fs.access(log_file) then
+		local btn = string.format(
+			'<input class="btn cbi-button cbi-button-apply" type="button" value="%s" onclick="window.open(\'%s\', \'_blank\')" />',
+			translate("View Log"),
+			log_url
+		)
+		s = s .. btn
+	end
+	return s
+end
+o:depends("log_chinadns_ng", "1")
 
 o = s:taboption("log", DummyValue, "_log_tips", "　")
 o.rawhtml = true

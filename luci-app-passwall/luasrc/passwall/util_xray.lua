@@ -12,7 +12,7 @@ local GLOBAL = {
 
 local xray_version = api.get_app_version("xray")
 
-local xray_min_version = "26.3.27"
+local xray_min_version = "26.7.11"
 
 local function get_domain_excluded()
 	local path = string.format("/usr/share/%s/rules/domains_excluded", api.c_config)
@@ -58,7 +58,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 		if node.type ~= "Xray" then
 			if node.type == "Socks" then
 				node.protocol = "socks"
-				node.transport = "tcp"
+				node.transport = "raw"
 			else
 				local new_port
 				if run_socks_instance then
@@ -95,7 +95,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 				if new_port then
 					node = {}
 					node.protocol = "socks"
-					node.transport = "tcp"
+					node.transport = "raw"
 					node.address = "127.0.0.1"
 					node.port = new_port
 				end
@@ -172,7 +172,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 					} or nil,
 					dialerProxy = dialer_proxy_tag,
 				},
-				[(api.compare_versions(xray_version, "<", "26.7.11")) and "network" or "method"] = node.transport, -- Todo: Remove version check and "network"
+				method = node.transport,
 				security = node.stream_security,
 				tlsSettings = (node.stream_security == "tls") and {
 					serverName = node.tls_serverName,
@@ -499,7 +499,7 @@ function gen_config_server(node)
 	local settings = nil
 	local routing = nil
 	local outbounds = {
-		{ protocol = "freedom", tag = "direct", settings = { finalRules = {{ action = "allow" }}}}, { protocol = "blackhole", tag = "blocked" }
+		{ protocol = "freedom", tag = "direct", finalRules = {{ action = "allow" }}}, { protocol = "blackhole", tag = "blocked" }
 	}
 
 	local users = node.users or {}
@@ -647,9 +647,7 @@ function gen_config_server(node)
 						interface = node.outbound_node_iface
 					}
 				},
-				settings = {
-					finalRules = {{ action = "allow" }}
-				}
+				finalRules = {{ action = "allow" }}
 			}
 			sys.call(string.format("mkdir -p %s && touch %s/%s", api.TMP_IFACE_PATH, api.TMP_IFACE_PATH, node.outbound_node_iface))
 		else
@@ -691,7 +689,7 @@ function gen_config_server(node)
 				protocol = node.protocol,
 				settings = settings,
 				streamSettings = {
-					[(api.compare_versions(xray_version, "<", "26.7.11")) and "network" or "method"] = node.transport, -- Todo: Remove version check and "network"
+					method = node.transport,
 					security = "none",
 					tlsSettings = ("1" == node.tls) and {
 						disableSystemRoot = false,
@@ -872,9 +870,6 @@ function gen_config_server(node)
 			if k and k:find("_") == 1 then
 				config.outbounds[index][k] = nil
 			end
-		end
-		if value.protocol == "freedom" and api.compare_versions(xray_version, "<", "26.5.3") then -- Todo is to remove it
-			value.settings = nil
 		end
 	end
 
@@ -1332,9 +1327,7 @@ function gen_config(var)
 									interface = node.iface
 								}
 							},
-							settings = (api.compare_versions(xray_version, ">", "26.4.25")) and {  -- Todo: Remove version check
-								finalRules = {{ action = "allow" }}
-							} or nil
+							finalRules = {{ action = "allow" }}
 						}
 						sys.call(string.format("mkdir -p %s && touch %s/%s", api.TMP_IFACE_PATH, api.TMP_IFACE_PATH, node.iface))
 					end
@@ -1818,11 +1811,10 @@ function gen_config(var)
 					sockopt = { dialerProxy = (dns_outbound_tag ~= "blackhole") and dns_outbound_tag or "direct" }
 				} or nil,
 				settings = {
-					address = (chn_list ~= "proxy") and "8.8.8.8" or "223.5.5.5",
-					port = 53,
-					network = "tcp",
-					nonIPQuery = (api.compare_versions(xray_version, "<", "26.4.25")) and "reject" or nil, -- Todo is to remove it
-					rules = (api.compare_versions(xray_version, ">", "26.4.17")) and {} or nil
+					rewriteAddress = (chn_list ~= "proxy") and "8.8.8.8" or "223.5.5.5",
+					rewritePort = 53,
+					rewriteNetwork = "tcp",
+					rules = {}
 				}
 			}
 
@@ -2046,9 +2038,7 @@ function gen_config(var)
 		local direct_outbound = {
 			protocol = "freedom",
 			tag = "direct",
-			settings = (api.compare_versions(xray_version, ">", "26.4.25")) and {  -- Todo: Remove version check
-				finalRules = {{ action = "allow" }}
-			} or nil,
+			finalRules = {{ action = "allow" }},
 			streamSettings = {
 				sockopt = {
 					mark = 255,
@@ -2152,7 +2142,7 @@ function gen_proto_config(var)
 		local outbound = {
 			protocol = server_proto,
 			streamSettings = {
-				network = "tcp",
+				method = "raw",
 				security = "none"
 			},
 			settings = {
@@ -2177,10 +2167,10 @@ function gen_proto_config(var)
 	table.insert(outbounds, {
 		protocol = "freedom",
 		tag = "direct",
-		settings = (api.compare_versions(xray_version, ">", "26.4.25")) and { -- Todo: Remove version check
-			finalRules = {{ action = "allow" }}
-		} or nil,
-		sockopt = {mark = 255}
+		finalRules = {{ action = "allow" }},
+		streamSettings = {
+			sockopt = {mark = 255}
+		}
 	})
 
 	local config = {
@@ -2192,7 +2182,10 @@ function gen_proto_config(var)
 		-- 传出连接
 		outbounds = outbounds,
 		-- 路由
-		routing = routing
+		routing = routing,
+		version = {
+			min = xray_min_version
+		}
 	}
 	return jsonc.stringify(config, 1)
 end

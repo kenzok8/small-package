@@ -1,5 +1,10 @@
 #!/bin/sh
 
+[ -d "/overlay/upper/etc" ] || {
+    echo "Only squashfs rom supported, and /overlay must be mounted." >&2
+    exit 1
+}
+
 APK=false
 PKG_BASE=usr/lib/opkg/info
 PKG_EXT=control
@@ -35,7 +40,26 @@ reset_pkg() {
         if [ -f /rom/$PKG_BASE/${pkgname}.list ]; then
             nonconf_files_of_pkg "${pkgname}" | while read; do
                 line="$REPLY"
-                rm -f "/overlay/upper/${line}" "/ext_overlay/upper/${line}"
+                if [ -e "${line}" -o -e "/overlay/upper/${line}" -o -e "/ext_overlay/upper/${line}" ]; then
+                    rm -f "/overlay/upper/${line}" "/ext_overlay/upper/${line}"
+                else
+                    local dir="$(dirname ${line})"
+                    [ -z "$dir" -o "$dir" = "/" -o "$dir" = "." -o "$line" = "$dir" ] || echo "$dir" >> /tmp/.reset_dirs
+                fi
+            done
+            if [ -s /rom/$PKG_BASE/${pkgname}.conffiles ]; then
+                # restore config files from rom, if they are not exist in working rootfs
+                while read; do
+                    line="$REPLY"
+                    [ -e "${line}" ] && continue
+                    rm -rf "/overlay/upper/${line}" "/ext_overlay/upper/${line}"
+                done < /rom/$PKG_BASE/${pkgname}.conffiles
+            fi
+            # restore auto start
+            grep '^/etc/init\.d/' /rom/$PKG_BASE/${pkgname}.list | while read; do
+                line="$REPLY"
+                line="$(basename ${line})"
+                rm -f "/overlay/upper/etc/rc.d/"*"${line}" "/ext_overlay/upper/etc/rc.d/"*"${line}"
             done
             rm -f /overlay/upper/$PKG_BASE/${pkgname}.list /ext_overlay/upper/$PKG_BASE/${pkgname}.list
         fi
@@ -48,10 +72,32 @@ ls_all_rom_pkgs() {
 
 reset_all_rom() {
     local line
+    rm -f /tmp/.reset_dirs
     ls_all_rom_pkgs | while read; do
         line="$REPLY"
         reset_pkg "$line"
     done
+    if [ -s /tmp/.reset_dirs ]; then
+        echo "reset overlayfs opaque flags..."
+        sort -u /tmp/.reset_dirs | while read; do
+            local line="$REPLY"
+            echo "reset dir $line and its parents"
+            while :; do
+                dir="$line"
+                line="$(dirname ${dir})"
+                [ -z "$dir" -o "$dir" = "/" -o "$dir" = "." ] && break
+                if [ -e "/overlay/upper/${dir}" -o -e "/ext_overlay/upper/${dir}" ]; then
+                    if [ -d "/overlay/upper/${dir}" -o -d "/ext_overlay/upper/${dir}" ]; then
+                        setfattr -x "trusted.overlay.opaque" -h "/overlay/upper/${dir}" "/ext_overlay/upper/${dir}" 2>/dev/null
+                    else
+                        rm -f "/overlay/upper/${dir}" "/ext_overlay/upper/${dir}"
+                    fi
+                fi
+                [ "$line" = "$dir" ] && break
+            done
+        done
+    fi
+    rm -f /tmp/.reset_dirs
 }
 
 reset_all_rom
