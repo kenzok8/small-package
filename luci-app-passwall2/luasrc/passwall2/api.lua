@@ -292,12 +292,15 @@ end
 
 function curl_proxy(url, file, args)
 	-- Use the proxy
-	local socks_server = get_cache_var("GLOBAL_SOCKS_server")
-	if socks_server and socks_server ~= "" then
-		if not args then args = {} end
-		local tmp_args = clone(args)
-		tmp_args[#tmp_args + 1] = "-x socks5h://" .. socks_server
-		return curl_base(url, file, tmp_args)
+	local socks_port = get_cache_var(("ACL_${flag}_node_socks_port"):gsub("${flag}", "acl_default"))
+	if socks_port then
+		local socks_server = "127.0.0.1:%s" % socks_port
+		if socks_server and socks_server ~= "" then
+			if not args then args = {} end
+			local tmp_args = clone(args)
+			tmp_args[#tmp_args + 1] = "-x socks5h://" .. socks_server
+			return curl_base(url, file, tmp_args)
+		end
 	end
 	return nil, nil
 end

@@ -230,7 +230,7 @@ gen_shunt_list() {
 	}
 	[ -n "${_SHUNT_LIST4}" ] && eval ${shunt_list4_var_name}=\"${_SHUNT_LIST4}\"
 	[ -n "${_SHUNT_LIST6}" ] && eval ${shunt_list6_var_name}=\"${_SHUNT_LIST6}\"
-	set_cache_var "gen_shunt_list_${node}" "1"
+	set_cache_var "node_${node}_gen_shunt_list" "1"
 }
 
 add_shunt_t_rule() {
@@ -261,7 +261,7 @@ load_acl() {
 	for sid in $(jsonfilter -s "${ACL_JSON}" -e '$.acl[*].flag'); do
 		eval local $(cat "${TMP_ACL_PATH}/${sid}/var")
 
-		[ -z "$(get_cache_var "gen_shunt_list_${node}")" ] && [ -n "${node}" ] && gen_shunt_list "${node}" shunt_list4 shunt_list6
+		[ -z "$(get_cache_var "node_${node}_gen_shunt_list")" ] && [ -n "${node}" ] && gen_shunt_list "${node}" shunt_list4 shunt_list6
 		[ -n "${use}" ] && local dns_redirect_port=$(get_cache_var "ACL_${use}_dns_port")
 
 		local ipt_tmp=$ipt_n

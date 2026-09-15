@@ -75,33 +75,78 @@
 
 				editors.push(editor);
 
+				var formatEditor = function(ed) {
+					ed.operation(function() {
+						var cursor = ed.getCursor();
+						var content = ed.getValue();
+
+						var formatCodePart = function(part) {
+							part = part.replace(/\s*->\s*/g, ' -> ');
+							part = part.replace(/\s*&&\s*/g, ' && ');
+							part = part.replace(/([^\s])\s*\{/g, '$1 {');
+							part = part.replace(/,([^\s])/g, ', $1');
+							
+							var exprPrefixes = ['geosite', 'geoip', 'keyword', 'full', 'suffix', 'regex', 'domain'];
+							var regex = new RegExp('\\b(' + exprPrefixes.join('|') + '):([^\\s\'"])', 'g');
+							part = part.replace(regex, '$1: $2');
+							return part;
+						};
+
+						var lines = content.split('\n');
+						var formattedLines = lines.map(function(line) {
+							var trimmed = line.trim();
+							if (trimmed.startsWith('#') || trimmed.startsWith('//')) {
+								return line.trimEnd();
+							}
+
+							line = line.replace(/^(\s*[a-zA-Z0-9_-]+):([^\s])/, '$1: $2');
+
+							var quoteParts = line.split(/(['"])/);
+							var inQuote = false;
+							var currentQuote = '';
+							for (var j = 0; j < quoteParts.length; j++) {
+								var part = quoteParts[j];
+								if (part === "'" || part === '"') {
+									if (!inQuote) {
+										inQuote = true;
+										currentQuote = part;
+									} else if (part === currentQuote) {
+										inQuote = false;
+										currentQuote = '';
+									}
+								} else if (!inQuote) {
+									var hashIdx = part.indexOf('#');
+									if (hashIdx !== -1) {
+										var codeSub = part.slice(0, hashIdx);
+										var commentSub = part.slice(hashIdx);
+										codeSub = formatCodePart(codeSub);
+										quoteParts[j] = codeSub + commentSub;
+										break;
+									} else {
+										quoteParts[j] = formatCodePart(part);
+									}
+								}
+							}
+							line = quoteParts.join('');
+
+							return line.trimEnd();
+						});
+
+						ed.setValue(formattedLines.join('\n'));
+
+						for (var i = 0; i < ed.lineCount(); i++) {
+							ed.indentLine(i, "smart");
+						}
+						ed.setCursor(cursor);
+					});
+				};
+
 				var formatBtn = document.createElement('button');
 				formatBtn.type = 'button';
 				formatBtn.className = 'cbi-button cbi-button-apply cm-format-btn';
 				formatBtn.innerText = '<%:Format Code%>';
 				formatBtn.onclick = function() {
-					editor.operation(function() {
-						var cursor = editor.getCursor();
-						var content = editor.getValue();
-
-						var lines = content.split('\n');
-						var formattedLines = lines.map(function(line) {
-							if (line.trim().startsWith('#') || line.trim().startsWith('//')) return line;
-							line = line.replace(/\s*->\s*/g, ' -> ');
-							line = line.replace(/\s*&&\s*/g, ' && ');
-							line = line.replace(/(['"])([a-zA-Z0-9_-]+)\1/g, function(match, quote, word) {
-								return word;
-							});
-							return line.trimEnd();
-						});
-
-						editor.setValue(formattedLines.join('\n'));
-
-						for (var i = 0; i < editor.lineCount(); i++) {
-							editor.indentLine(i, "smart");
-						}
-						editor.setCursor(cursor);
-					});
+					formatEditor(editor);
 				};
 
 				textarea.parentNode.insertBefore(formatBtn, textarea.nextSibling);
@@ -110,11 +155,7 @@
 				if (form && !form.dataset.cmHooked) {
 					form.addEventListener('submit', function() {
 						editors.forEach(function(e) {
-							e.operation(function() {
-								for (var i = 0; i < e.lineCount(); i++) {
-									e.indentLine(i, "smart");
-								}
-							});
+							formatEditor(e);
 							e.save();
 						});
 					});

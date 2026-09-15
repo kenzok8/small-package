@@ -856,8 +856,8 @@ acl_node() {
 		local DNSMASQ_LOCAL_DNS="${LOCAL_DNS:-${AUTO_DNS}}"
 		[ -n "${DIRECT_DNS_DNSMASQ_SERVER}" ] && DNSMASQ_LOCAL_DNS="${DIRECT_DNS_DNSMASQ_SERVER}"
 		if [ "${flag}" = "acl_default" ]; then
-			set_cache_var "GLOBAL_SOCKS_server" "127.0.0.1:$socks_port"
-			set_cache_var "ACL_GLOBAL_node" "$node"
+			set_cache_var "ACL_${flag}_node" "$node"
+			set_cache_var "ACL_${flag}_node_socks_port" "$socks_port"
 			run_new_dnsmasq=$(config_n_get @global[0] dns_redirect 1)
 			if [ "${run_new_dnsmasq}" != "1" ]; then
 				#Rewrite the default DNS service configuration
@@ -865,15 +865,15 @@ acl_node() {
 				lua $APP_PATH/helper_dnsmasq.lua stretch
 				json_init
 				json_add_string "FLAG" "${flag}"
-				json_add_string "TMP_DNSMASQ_PATH" "${GLOBAL_DNSMASQ_CONF_PATH}"
-				json_add_string "DNSMASQ_CONF_FILE" "${GLOBAL_DNSMASQ_CONF}"
+				json_add_string "TMP_DNSMASQ_PATH" "${DEFAULT_DNSMASQ_CONF_PATH}"
+				json_add_string "DNSMASQ_CONF_FILE" "${DEFAULT_DNSMASQ_CONF}"
 				json_add_string "DEFAULT_DNS" "${DNSMASQ_DEFAULT_DNS}"
 				json_add_string "LOCAL_DNS" "${DNSMASQ_LOCAL_DNS}"
 				json_add_string "TUN_DNS" "${DNSMASQ_TUN_DNS}"
 				json_add_string "NFTFLAG" "${nftflag:-0}"
 				json_add_string "NO_LOGIC_LOG" "${NO_LOGIC_LOG:-0}"
 				lua $APP_PATH/helper_dnsmasq.lua add_rule "$(json_dump)"
-				uci -q add_list dhcp.@dnsmasq[0].addnmount=${GLOBAL_DNSMASQ_CONF_PATH}
+				uci -q add_list dhcp.@dnsmasq[0].addnmount=${DEFAULT_DNSMASQ_CONF_PATH}
 				uci -q commit dhcp
 
 				lua $APP_PATH/helper_dnsmasq.lua logic_restart
@@ -973,8 +973,8 @@ stop() {
 	unset XRAY_LOCATION_ASSET
 	unset SS_SYSTEM_DNS_RESOLVER_FORCE_BUILTIN
 	stop_crontab
-	rm -rf $GLOBAL_DNSMASQ_CONF
-	rm -rf $GLOBAL_DNSMASQ_CONF_PATH
+	rm -rf $DEFAULT_DNSMASQ_CONF
+	rm -rf $DEFAULT_DNSMASQ_CONF_PATH
 	[ "1" = "1" ] && {
 		#restore logic
 		bak_dnsmasq_dns_redirect=$(config_n_get @global[0] dnsmasq_dns_redirect)
@@ -985,7 +985,7 @@ stop() {
 			uci -q commit ${CONFIG}
 		}
 		if [ -z "${ACL_default_dns_port}" ] || [ -n "${bak_dnsmasq_dns_redirect}" ]; then
-			uci -q del_list dhcp.@dnsmasq[0].addnmount="${GLOBAL_DNSMASQ_CONF_PATH}"
+			uci -q del_list dhcp.@dnsmasq[0].addnmount="${DEFAULT_DNSMASQ_CONF_PATH}"
 			uci -q commit dhcp
 
 			json_init
@@ -1061,8 +1061,8 @@ get_config() {
 			DNSMASQ_CONF_DIR=${DEFAULT_DNSMASQ_CONF_DIR}
 		fi
 	fi
-	set_cache_var GLOBAL_DNSMASQ_CONF ${DNSMASQ_CONF_DIR}/dnsmasq-${CONFIG}.conf
-	set_cache_var GLOBAL_DNSMASQ_CONF_PATH ${TMP_ACL_PATH}/acl_default_dnsmasq.d
+	set_cache_var DEFAULT_DNSMASQ_CONF ${DNSMASQ_CONF_DIR}/dnsmasq-${CONFIG}.conf
+	set_cache_var DEFAULT_DNSMASQ_CONF_PATH ${TMP_ACL_PATH}/acl_default_dnsmasq.d
 
 	QUEUE_RUN=1
 }

@@ -12,7 +12,7 @@ local GLOBAL = {
 
 local xray_version = api.get_app_version("xray")
 
-local xray_min_version = "26.3.27"
+local xray_min_version = "26.7.11"
 
 local function get_domain_excluded()
 	local path = "/usr/share/passwall2/domains_excluded"
@@ -58,21 +58,21 @@ function gen_outbound(flag, node, tag, proxy_table)
 		end
 		local remarks = node.remarks
 
-		local proxy_tag = nil
-		local dialer_proxy_tag = nil
-		local fragment = nil
-		local noise = nil
-		local run_socks_instance = true
+		local proxy_tag, dialer_proxy_tag, fragment, noise
 		if proxy_table ~= nil and type(proxy_table) == "table" then
 			proxy_tag = proxy_table.tag or nil
 			fragment = (proxy_table.fragment and not node.hysteria2_realms) and true or nil
 			noise = (proxy_table.noise and not node.hysteria2_realms) and true or nil
-			run_socks_instance = proxy_table.run_socks_instance
 		end
 
 		if node.type ~= "Xray" then
 			local new_port
-			if run_socks_instance then
+			local run_socks_instance = true
+			if NO_RUN then
+				TMP_PORT = TMP_PORT and TMP_PORT + 1 or 3001
+				new_port = TMP_PORT
+				run_socks_instance = nil
+			else
 				local relay_port = (proxy_tag and node.port) and tostring(node.port) or ""
 				if relay_port == "" then
 					local cache = api.get_socks_port_by_cache(node_id)
@@ -106,7 +106,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 			if new_port then
 				node = {}
 				node.protocol = "socks"
-				node.transport = "tcp"
+				node.transport = "raw"
 				node.address = "127.0.0.1"
 				node.port = new_port
 				node.stream_security = "none"
@@ -181,7 +181,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 					} or nil,
 					dialerProxy = dialer_proxy_tag,
 				},
-				[(api.compare_versions(xray_version, "<", "26.7.11")) and "network" or "method"] = node.transport, -- Todo: Remove version check and "network"
+				method = node.transport,
 				security = node.stream_security,
 				tlsSettings = (node.stream_security == "tls") and {
 					serverName = node.tls_serverName,
@@ -665,7 +665,7 @@ function gen_config_server(node)
 				outbound_node_t = {
 					type = node.type,
 					protocol = node.outbound_node:gsub("_", ""),
-					transport = "tcp",
+					transport = "raw",
 					address = node.outbound_node_address,
 					port = node.outbound_node_port,
 					username = (node.outbound_node_username and node.outbound_node_username ~= "") and node.outbound_node_username or nil,
@@ -696,7 +696,7 @@ function gen_config_server(node)
 				protocol = node.protocol,
 				settings = settings,
 				streamSettings = {
-					[(api.compare_versions(xray_version, "<", "26.7.11")) and "network" or "method"] = node.transport, -- Todo: Remove version check and "network"
+					method = node.transport,
 					security = "none",
 					tlsSettings = ("1" == node.tls) and {
 						disableSystemRoot = false,
@@ -877,9 +877,6 @@ function gen_config_server(node)
 				config.outbounds[index][k] = nil
 			end
 		end
-		if value.protocol == "freedom" and api.compare_versions(xray_version, "<", "26.5.3") then -- Todo is to remove it
-			value.settings = nil
-		end
 	end
 
 	return config
@@ -921,7 +918,7 @@ function gen_config(var)
 	local remote_dns_query_strategy = var["remote_dns_query_strategy"]
 	local remote_dns_detour = var["remote_dns_detour"]
 	local dns_cache = var["dns_cache"]
-	local no_run = var["no_run"]
+	NO_RUN = var["no_run"]
 
 	local dns_domain_rules = {}
 	local dns = {}
@@ -1046,7 +1043,7 @@ function gen_config(var)
 				protocol = "socks",
 				address = "127.0.0.1",
 				port = section.port,
-				transport = "tcp",
+				transport = "raw",
 				stream_security = "none"
 			}
 		end
@@ -1104,7 +1101,7 @@ function gen_config(var)
 				end
 			end
 			if is_new_blc_node then
-				local outboundTag = gen_outbound_get_tag(flag, blc_node_id, blc_node_tag, { fragment = xray_settings.fragment == "1" or nil, noise = xray_settings.noise == "1" or nil, run_socks_instance = not no_run })
+				local outboundTag = gen_outbound_get_tag(flag, blc_node_id, blc_node_tag, { fragment = xray_settings.fragment == "1" or nil, noise = xray_settings.noise == "1" or nil })
 				if outboundTag then
 					valid_nodes[#valid_nodes + 1] = outboundTag
 				end
@@ -1133,7 +1130,7 @@ function gen_config(var)
 				local fallback_node = get_node_by_id(fallback_node_id)
 				if fallback_node then
 					if fallback_node.protocol ~= "_balancing" then
-						local outboundTag = gen_outbound_get_tag(flag, fallback_node, fallback_node_id, { fragment = xray_settings.fragment == "1" or nil, noise = xray_settings.noise == "1" or nil, run_socks_instance = not no_run })
+						local outboundTag = gen_outbound_get_tag(flag, fallback_node, fallback_node_id, { fragment = xray_settings.fragment == "1" or nil, noise = xray_settings.noise == "1" or nil })
 						if outboundTag then
 							fallback_node_tag = outboundTag
 						end
@@ -1265,7 +1262,6 @@ function gen_config(var)
 					})
 					to_outbound = gen_outbound(node[".name"], to_node, to_node[".name"], {
 						tag = to_node[".name"],
-						run_socks_instance = not no_run
 					})
 				else
 					to_outbound = gen_outbound(node[".name"], to_node)
@@ -1336,9 +1332,9 @@ function gen_config(var)
 								interface = node.iface
 							}
 						},
-						settings = (api.compare_versions(xray_version, ">", "26.4.25")) and {  -- Todo: Remove version check
+						settings = {
 							finalRules = {{ action = "allow" }}
-						} or nil
+						}
 					}
 					sys.call(string.format("mkdir -p %s && touch %s/%s", api.TMP_IFACE_PATH, api.TMP_IFACE_PATH, node.iface))
 				end
@@ -1398,7 +1394,6 @@ function gen_config(var)
 					local proxy_table = {
 						fragment = xray_settings.fragment == "1",
 						noise = xray_settings.noise == "1",
-						run_socks_instance = not no_run,
 					}
 					local preproxy_node_id = node[rule_name .. "_proxy_tag"]
 					if preproxy_node_id == _node_id then preproxy_node_id = nil end
@@ -1750,12 +1745,10 @@ function gen_config(var)
 			})
 			local direct_type_dns = {
 				settings = {
-					address = direct_dns_udp_server,
-					port = tonumber(direct_dns_udp_port) or 53,
-					network = "udp",
-					nonIPQuery = (api.compare_versions(xray_version, "<", "26.4.25")) and "skip" or nil, -- Todo is to remove it
-					blockTypes = (api.compare_versions(xray_version, "<", "26.4.25")) and { 65 } or nil,  -- Todo is to remove it
-					rules = (api.compare_versions(xray_version, ">", "26.4.17")) and {
+					rewriteAddress = direct_dns_udp_server,
+					rewritePort = tonumber(direct_dns_udp_port) or 53,
+					rewriteNetwork = "udp",
+					rules = {
 						{
 							qType = "1,28",
 							action = "hijack"
@@ -1776,11 +1769,10 @@ function gen_config(var)
 			}
 			local remote_type_dns = {
 				settings = {
-					address = remote_dns_udp_server,
-					port = tonumber(remote_dns_udp_port) or 53,
-					network = _remote_dns_proto or "tcp",
-					nonIPQuery = (api.compare_versions(xray_version, "<", "26.4.25")) and "reject" or nil, -- Todo is to remove it
-					rules = (api.compare_versions(xray_version, ">", "26.4.17")) and {
+					rewriteAddress = remote_dns_udp_server,
+					rewritePort = tonumber(remote_dns_udp_port) or 53,
+					rewriteNetwork = _remote_dns_proto or "tcp",
+					rules = {
 						{
 							qType = "1,28",
 							action = "hijack"
@@ -2058,7 +2050,7 @@ function gen_config(var)
 		local direct_outbound = {
 			protocol = "freedom",
 			tag = "direct",
-			settings = (api.compare_versions(xray_version, ">", "26.4.25")) and {  -- Todo: Remove version check
+			settings = {
 				finalRules = {{ action = "allow" }}
 			} or nil,
 			streamSettings = {
@@ -2086,7 +2078,7 @@ function gen_config(var)
 
 		for index, value in ipairs(config.outbounds) do
 			local s = value.settings
-			if not value["_flag_proxy_tag"] and value["_id"] and s and not no_run and
+			if not value["_flag_proxy_tag"] and value["_id"] and s and not NO_RUN and
 			((s.vnext and s.vnext[1] and s.vnext[1].address and s.vnext[1].port) or 
 			(s.servers and s.servers[1] and s.servers[1].address and s.servers[1].port) or
 			(s.peers and s.peers[1] and s.peers[1].endpoint) or
@@ -2168,7 +2160,7 @@ function gen_proto_config(var)
 		local outbound = {
 			protocol = server_proto,
 			streamSettings = {
-				network = "tcp",
+				method = "raw",
 				security = "none"
 			},
 			settings = {
@@ -2192,10 +2184,12 @@ function gen_proto_config(var)
 	table.insert(outbounds, {
 		protocol = "freedom",
 		tag = "direct",
-		settings = (api.compare_versions(xray_version, ">", "26.4.25")) and { -- Todo: Remove version check
+		settings = {
 			finalRules = {{ action = "allow" }}
 		} or nil,
-		sockopt = {mark = 255}
+		streamSettings = {
+			sockopt = {mark = 255}
+		}
 	})
 	
 	local config = {
@@ -2204,7 +2198,10 @@ function gen_proto_config(var)
 		},
 		inbounds = inbounds,
 		outbounds = outbounds,
-		routing = routing
+		routing = routing,
+		version = {
+			min = xray_min_version
+		}
 	}
 	return jsonc.stringify(config, 1)
 end

@@ -111,20 +111,21 @@ function gen_outbound(flag, node, tag, proxy_table)
 		end
 		local remarks = node.remarks
 
-		local proxy_tag = nil
-		local fragment = nil
-		local record_fragment = nil
-		local run_socks_instance = true
+		local proxy_tag, fragment, record_fragment
 		if proxy_table ~= nil and type(proxy_table) == "table" then
 			proxy_tag = proxy_table.tag or nil
 			fragment = (proxy_table.fragment and node.protocol ~= "naive" and not node.hysteria2_realms) and true or nil
 			record_fragment = (proxy_table.record_fragment and node.protocol ~= "naive" and not node.hysteria2_realms) and true or nil
-			run_socks_instance = proxy_table.run_socks_instance
 		end
 
 		if node.type ~= "sing-box" then
 			local new_port
-			if run_socks_instance then
+			local run_socks_instance = true
+			if NO_RUN then
+				TMP_PORT = TMP_PORT and TMP_PORT + 1 or 3001
+				new_port = TMP_PORT
+				run_socks_instance = nil
+			else
 				local relay_port = (proxy_tag and node.port) and tostring(node.port) or ""
 				if relay_port == "" then
 					local cache = api.get_socks_port_by_cache(node_id)
@@ -1181,8 +1182,7 @@ function gen_config(var)
 	local remote_dns_client_ip = var["remote_dns_client_ip"]
 	local remote_rewrite_ttl = var["remote_rewrite_ttl"] or "30"
 	local dns_cache = var["dns_cache"]
-	local tags = var["tags"]
-	local no_run = var["no_run"]
+	NO_RUN = var["no_run"]
 
 	local dns_domain_rules = {}
 	local dns = {}
@@ -1405,7 +1405,7 @@ function gen_config(var)
 					end
 				end
 				if is_new_ut_node then
-					local outboundTag = gen_outbound_get_tag(flag, ut_node_id, ut_node_tag, { fragment = singbox_settings.fragment == "1" or nil, record_fragment = singbox_settings.record_fragment == "1" or nil, run_socks_instance = not no_run })
+					local outboundTag = gen_outbound_get_tag(flag, ut_node_id, ut_node_tag, { fragment = singbox_settings.fragment == "1" or nil, record_fragment = singbox_settings.record_fragment == "1" or nil })
 					if outboundTag then
 						valid_nodes[#valid_nodes + 1] = outboundTag
 					end
@@ -1508,7 +1508,6 @@ function gen_config(var)
 						to_node.port = new_port
 						to_outbound = gen_outbound(node[".name"], to_node, tag, {
 							tag = tag,
-							run_socks_instance = not no_run
 						})
 					else
 						to_outbound = gen_outbound(node[".name"], to_node)
@@ -1607,7 +1606,6 @@ function gen_config(var)
 					local proxy_table = {
 						fragment = singbox_settings.fragment == "1",
 						record_fragment = singbox_settings.record_fragment == "1",
-						run_socks_instance = not no_run,
 					}
 					local preproxy_node_id = node[rule_name .. "_proxy_tag"]
 					if preproxy_node_id == _node_id then preproxy_node_id = nil end
@@ -2284,7 +2282,7 @@ function gen_config(var)
 			routing_mark = 255,
 		})
 		for index, value in ipairs(config.outbounds) do
-			if not value["_flag_proxy_tag"] and not value.detour and value["_id"] and value.server and value.server_port and not no_run then
+			if not value["_flag_proxy_tag"] and not value.detour and value["_id"] and value.server and value.server_port and not NO_RUN then
 				sys.call(string.format("echo '%s' >> %s", value["_id"], api.TMP_PATH .. "/direct_node_list"))
 			end
 			if not value.detour and not value.bind_interface and value.server then
@@ -2427,7 +2425,7 @@ if arg[1] then
 			var = jsonc.parse(arg[2])
 		end
 		print(func(var))
-		if (next(GEO_VAR.SITE_TAGS) or next(GEO_VAR.IP_TAGS)) and not no_run then
+		if (next(GEO_VAR.SITE_TAGS) or next(GEO_VAR.IP_TAGS)) and not NO_RUN then
 			convert_geofile()
 		end
 	end
