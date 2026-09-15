@@ -12,13 +12,11 @@ check_process() {
 }
 
 test_url() {
-	local url=$1
-	local try=1
-	[ -n "$2" ] && try=$2
-	local timeout=2
-	[ -n "$3" ] && timeout=$3
-	local extra_params=$4
-	local repeat=$5
+	local url="$1"
+	local try="${2:-1}"
+	local timeout="${3:-2}"
+	local extra_params="$4"
+	local repeat="$5"
 
 	if [ -z "$curl_retry_all_errors" ]; then
 		if /usr/bin/curl --help all | grep -q "\-\-retry-all-errors"; then
@@ -29,23 +27,15 @@ test_url() {
 
 	local max_time=$((timeout * (try + 1) + try + 3))
 	curl_test() {
-		/usr/bin/curl -I -o /dev/null -skL ${extra_params} --max-time ${max_time} --connect-timeout ${timeout} --retry ${try} --retry-delay 1 -w "%{http_code}" "$url"
+		/usr/bin/curl -skIL -o /dev/null ${extra_params} --max-time ${max_time} --connect-timeout ${timeout} --retry ${try} --retry-delay 1 -w "%{http_code}" "$url"
 	}
 
 	local status=$(curl_test)
-	case "$status" in
-		204)
-			status=200
-		;;
-	esac
+	[ "$status" = "204" ] && status=200
 	if [ "$status" = "200" ] && [ "$repeat" = "1" ]; then
 		sleep 3s
 		status=$(curl_test)
-		case "$status" in
-			204)
-				status=200
-			;;
-		esac
+		[ "$status" = "204" ] && status=200
 	fi
 	echo $status
 }
@@ -75,7 +65,7 @@ test_node() {
 	local _type=$(echo $(config_n_get ${node_id} type) | tr 'A-Z' 'a-z')
 	[ -n "${_type}" ] && {
 		check_process
-		local _tmp_port=$(get_new_port 48800)
+		local _tmp_port=$(get_new_port 48800 tcp,udp)
 		NO_REC_PROCESS=1 $APP_FILE run_socks flag="test_node_${node_id}" node=${node_id} bind=127.0.0.1 socks_port=${_tmp_port} config_file=test_node_${node_id}.json
 		sleep 2s
 		local curlx="socks5h://127.0.0.1:${_tmp_port}"
@@ -92,6 +82,61 @@ test_node() {
 	return 1
 }
 
+try_switch_backup() {
+	local b_nodes="$1"
+	local now_node="$2"
+	local total tried
+	local new_node msg
+	local first_node found node
+
+	# Only one backup node, alternate with the primary node.
+	if [ "$backup_node_num" -eq 1 ]; then
+		b_nodes="$b_nodes $main_node"
+	fi
+
+	total=$(printf "%s\n" "$b_nodes" | wc -w)
+	tried=0
+
+	while [ "$tried" -lt "$total" ]; do
+		new_node=""
+		first_node=""
+		found=""
+		for node in $b_nodes; do
+			[ -z "$first_node" ] && first_node="$node"         # Record first node.
+			[ "$found" = "1" ] && { new_node="$node"; break; } # Find the current node and then get the next one.
+			[ "$node" = "$now_node" ] && found=1               # flag the found current node.
+		done
+		# If the current node is not found, or if it is the last node, select the first node.
+		[ -z "$new_node" ] && new_node="$first_node"
+
+		local node_role node_type node_remarks
+		if [ "$new_node" = "$main_node" ]; then
+			node_role="$(i18n "main node")"
+		else
+			node_role="$(i18n "next backup node")"
+		fi
+		node_type=$(config_n_get $new_node type)
+		node_remarks=$(config_n_get $new_node remarks)
+		log_i18n 0 "Socks switch detection: Port [%s] try %s [%s:%s]." "${socks_port}" "${node_role}" "${node_type}" "${node_remarks}"
+
+		if test_node ${new_node}; then
+			check_process
+			log_i18n 0 "Socks switch detection: Port [%s] [%s:[%s]] normal, switch to this node!" "${socks_port}" "${node_type}" "${node_remarks}"
+			NO_REC_PROCESS=1 $APP_FILE socks_node_switch flag=${id} new_node=${new_node}
+			[ $? -eq 0 ] && {
+				log_i18n 0 "Socks switch detection: Port [%s] node switch complete!" "${socks_port}"
+			}
+			return 0
+		fi
+		log_i18n 0 "Socks switch detection: Port [%s] [%s:[%s]] abnormal." "${socks_port}" "${node_type}" "${node_remarks}"
+		now_node="$new_node"
+		tried=$((tried + 1))
+	done
+
+	log_i18n 0 "Socks switch detection: Port [%s] all nodes are unavailable!" "${socks_port}"
+	return 1
+}
+
 test_auto_switch() {
 	flag=$((flag + 1))
 	local b_nodes=$1
@@ -100,18 +145,16 @@ test_auto_switch() {
 		if [ -n "$(get_cache_var "${id}")" ]; then
 			now_node=$(get_cache_var "${id}")
 		else
-			#log_i18n 0 "Socks switch detection: Unknown error."
+			#log_i18n 0 "Socks switch detection: Port [%s] Unknown error." "${socks_port}"
 			return 1
 		fi
 	}
-	
-	[ $flag -le 1 ] && {
-		main_node=$now_node
-	}
+
+	[ $flag -le 1 ] && main_node=$now_node
 
 	local status=$(test_proxy)
 	if [ "$status" = "2" ]; then
-		log_i18n 0 "Socks switch detection: Unable to connect to the network. Please check if the network is working properly!"
+		log_i18n 0 "Socks switch detection: Port [%s] Unable to connect to the network. Please check if the network is working properly!" "${socks_port}"
 		return 2
 	fi
 
@@ -121,58 +164,23 @@ test_auto_switch() {
 		[ $? -eq 0 ] && {
 			check_process
 			# The main node is working properly; switch to the main node.
-			log_i18n 0 "Socks switch detection: Primary node 【%s: [%s]】 is normal. Switch to the primary node!" "${id}" "$(config_n_get $main_node type)" "$(config_n_get $main_node remarks)"
-			$APP_FILE socks_node_switch flag=${id} new_node=${main_node}
+			log_i18n 0 "Socks switch detection: Port [%s] Primary node [%s: [%s]] is normal. Switch to the primary node!" "${socks_port}" "$(config_n_get $main_node type)" "$(config_n_get $main_node remarks)"
+			NO_REC_PROCESS=1 $APP_FILE socks_node_switch flag=${id} new_node=${main_node}
 			[ $? -eq 0 ] && {
-				log_i18n 0 "Socks switch detection: %s node switch complete!" "${id}"
+				log_i18n 0 "Socks switch detection: Port [%s] node switch complete!" "${socks_port}"
 			}
 			return 0
 		}
 	fi
 
-	if [ "$status" = "0" ]; then
-		#log_i18n 0 "Socks switch detection: %s 【%s:[%s]】 normal." "${id}" "$(config_n_get $now_node type)" "$(config_n_get $now_node remarks)"
+	[ "$status" = "0" ] && {
+		#log_i18n 0 "Socks switch detection: Port [%s] [%s:[%s]] normal." "${socks_port}" "$(config_n_get $now_node type)" "$(config_n_get $now_node remarks)"
 		return 0
-	elif [ "$status" = "1" ]; then
-		local new_node msg
-		if [ "$backup_node_num" -gt 1 ]; then
-			# When there are multiple backup nodes
-			local first_node found node
-			for node in $b_nodes; do
-				[ -z "$first_node" ] && first_node="$node"       # Record the first node.
-				[ "$found" = "1" ] && { new_node="$node"; break; } # Find the current node and then retrieve the next one.
-				[ "$node" = "$now_node" ] && found=1             # Mark the current node found.
-			done
-			# If the current node is not found, or if the current node is the last node, then take the first node.
-			[ -z "$new_node" ] && new_node="$first_node"
-			local msg2="$(i18n "next backup node")"
-			if [ "$new_node" = "$main_node" ]; then
-				msg2="$(i18n "main node")"
-			else
-				[ "$now_node" = "$main_node" ] && msg2="$(i18n "backup node")"
-			fi
-			msg="$(i18n "switch to %s test detect!" "${msg2}")"
-		else
-			# When there is only one backup node, poll with the primary node.
-			new_node=$([ "$now_node" = "$main_node" ] && echo "$b_nodes" || echo "$main_node")
-			local msg2="$(i18n "main node")"
-			[ "$now_node" = "$main_node" ] && msg2="$(i18n "backup node")"
-			msg="$(i18n "switch to %s test detect!" "${msg2}")"
-		fi
-		log_i18n 0 "Socks switch detection: %s 【%s:[%s]】 abnormal, %s" "${id}" "$(config_n_get $now_node type)" "$(config_n_get $now_node remarks)" "${msg}"
-		test_node ${new_node}
-		if [ $? -eq 0 ]; then
-			check_process
-			log_i18n 0 "Socks switch detection: %s 【%s:[%s]】 normal, switch to this node!" "${id}" "$(config_n_get $new_node type)" "$(config_n_get $new_node remarks)"
-			$APP_FILE socks_node_switch flag=${id} new_node=${new_node}
-			[ $? -eq 0 ] && {
-				log_i18n 0 "Socks switch detection: %s node switch complete!" "${id}"
-			}
-			return 0
-		else
-			test_auto_switch "${b_nodes}" ${new_node}
-		fi
-	fi
+	}
+
+	log_i18n 0 "Socks switch detection: Port [%s] [%s:[%s]] abnormal." "${socks_port}" "$(config_n_get $now_node type)" "$(config_n_get $now_node remarks)"
+	try_switch_backup "$b_nodes" "$now_node"
+	return $?
 }
 
 start() {
@@ -188,6 +196,7 @@ start() {
 	backup_node=$(lua_api "get_socks_backup_nodes(\"${id}\")")
 	if [ -n "$backup_node" ]; then
 		backup_node_num=$(printf "%s\n" "$backup_node" | wc -w)
+		log_i18n 0 "Socks switch detection: Port [%s] Number of backup nodes: %s" "${socks_port}" "${backup_node_num}"
 		if [ "$backup_node_num" -eq 1 ]; then
 			[ "$main_node" = "$backup_node" ] && return
 		elif [ "$backup_node_num" -gt 1 ]; then
@@ -196,6 +205,7 @@ start() {
 			}
 		fi
 	else
+		log_i18n 0 "Socks switch detection: Port [%s] Number of backup nodes: %s" "${socks_port}" "0"
 		return
 	fi
 	while [ -n "$backup_node" ]; do

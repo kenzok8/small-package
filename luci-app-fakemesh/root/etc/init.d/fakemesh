@@ -18,3 +18,7 @@ start() {
 restart() {
 	XRELOAD=1 start
 }
+
+stop() {
+	/usr/sbin/fakemesh stop
+}

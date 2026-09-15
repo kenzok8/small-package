@@ -2166,23 +2166,8 @@ msgstr "刪除 %s 規則完成。"
 msgid "%s firewall rules load complete!"
 msgstr "%s 防火墙規則加载完成！"
 
-msgid "Socks switch detection: Unknown error."
-msgstr "Socks切換檢測：未知錯誤。"
-
-msgid "Socks switch detection: Unable to connect to the network. Please check if the network is working properly!"
-msgstr "Socks切換檢測：無法連接到網絡，請檢查網絡是否正常！"
-
-msgid "Socks switch detection: Primary node 【%s: [%s]】 is normal. Switch to the primary node!"
-msgstr "Socks切換檢測：%s 主節點【%s：[%s]】正常，切換到主節點！"
-
-msgid "Socks switch detection: %s node switch complete!"
-msgstr "Socks切換檢測：%s 節點切換完毕！"
-
-msgid "Socks switch detection: %s 【%s:[%s]】 normal."
-msgstr "Socks切換檢測：%s 【%s:[%s]】 正常。"
-
-msgid "switch to %s test detect!"
-msgstr "切換到 %s 檢測！"
+msgid "main node"
+msgstr "主節點"
 
 msgid "backup node"
 msgstr "備用節點"
@@ -2190,17 +2175,35 @@ msgstr "備用節點"
 msgid "next backup node"
 msgstr "下一個備用節點"
 
-msgid "main node"
-msgstr "主節點"
+msgid "Socks switch detection: Port [%s] try %s [%s:%s]."
+msgstr "Socks切換檢測：連接埠 [%s] 嘗試 %s 【%s：%s】。"
 
-msgid "Socks switch detection: Unknown error."
-msgstr "Socks切換檢測：未知錯誤。"
+msgid "Socks switch detection: Port [%s] [%s:[%s]] normal, switch to this node!"
+msgstr "Socks切換偵測：連接埠 [%s] 【%s:[%s]】 正常，切換到此節點！"
 
-msgid "Socks switch detection: %s 【%s:[%s]】 abnormal, %s"
-msgstr "Socks切換檢測：%s 【%s:[%s]】 异常，%s"
+msgid "Socks switch detection: Port [%s] node switch complete!"
+msgstr "Socks切換偵測：連接埠 [%s] 節點切換完畢！"
 
-msgid "Socks switch detection: %s 【%s:[%s]】 normal, switch to this node!"
-msgstr "Socks切換檢測：%s 【%s:[%s]】 正常，切換到此節點！"
+msgid "Socks switch detection: Port [%s] [%s:[%s]] abnormal."
+msgstr "Socks切換偵測：連接埠 [%s] 異常。"
+
+msgid "Socks switch detection: Port [%s] all nodes are unavailable!"
+msgstr "Socks切換偵測：連接埠 [%s] 所有節點均不可用！"
+
+msgid "Socks switch detection: Port [%s] Unknown error."
+msgstr "Socks切換偵測：連接埠 [%s] 未知錯誤。"
+
+msgid "Socks switch detection: Port [%s] Unable to connect to the network. Please check if the network is working properly!"
+msgstr "Socks切換偵測：連接埠 [%s] 無法連接到網絡，請檢查網路是否正常！"
+
+msgid "Socks switch detection: Port [%s] Primary node [%s: [%s]] is normal. Switch to the primary node!"
+msgstr "Socks切換偵測：連接埠 [%s] 主節點【%s：[%s]】正常，切換到主節點！"
+
+msgid "Socks switch detection: Port [%s] [%s:[%s]] normal."
+msgstr "Socks切換檢測：連接埠 [%s] 【%s:[%s]】 正常。"
+
+msgid "Socks switch detection: Port [%s] Number of backup nodes: %s"
+msgstr "Socks切換偵測：連接埠 [%s] 後備節點數量：%s"
 
 msgid "Restart dnsmasq service."
 msgstr "重啟 dnsmasq 服務。"

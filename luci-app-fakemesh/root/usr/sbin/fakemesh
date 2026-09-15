@@ -9,7 +9,7 @@
 worker_current()
 {
 	local current_generation
-	read -r current_generation < /tmp/fakemesh.generation 2>/dev/null || return 1
+	read -r current_generation 2>/dev/null < /tmp/fakemesh.generation || return 1
 	[ "$FAKEMESH_GENERATION" = "$current_generation" ]
 }
 
@@ -119,6 +119,21 @@ valid_ipv4()
 	done
 )
 
+valid_wireless_key()
+{
+	# hostapd's UCI key accepts a passphrase, or a raw PSK for WPA/WPA2.
+	case "$1" in
+		*'
+'*|*"$(printf '\r')"*) return 1 ;;
+	esac
+	if [ "${#1}" -eq 64 ]; then
+		case "$2" in psk|psk2|psk-mixed) ;; *) return 1 ;; esac
+		case "$1" in *[!0-9a-fA-F]*) return 1 ;; esac
+		return 0
+	fi
+	[ "${#1}" -ge 8 ] && [ "${#1}" -le 63 ]
+}
+
 select_backhaul_radio()
 {
 	local radio_band
@@ -137,6 +152,7 @@ find_backhaul_radio()
 
 validate_enabled_config()
 {
+	local key_mode=psk2
 	[ -n "$Xid" ] || configuration_error 'Mesh ID is required' || return 1
 	[ "${#Xid}" -le 32 ] || configuration_error 'Mesh ID exceeds 32 bytes' || return 1
 	case "$role" in
@@ -147,6 +163,11 @@ validate_enabled_config()
 		2g|5g|6g) ;;
 		*) configuration_error "unsupported backhaul band: $band"; return 1 ;;
 	esac
+	[ "$band" != 6g ] || key_mode=sae
+	if [ -n "$Xkey" ] && ! valid_wireless_key "$Xkey" "$key_mode"; then
+		configuration_error 'invalid backhaul key for the selected band'
+		return 1
+	fi
 	case "$sync_ac" in
 		0|1) ;;
 		*) configuration_error 'Sync Configuration must be 0 or 1'; return 1 ;;
@@ -192,12 +213,18 @@ configure_mesh_security()
 
 case "$1" in
 	setup) exit 0 ;;
+	stop)
+		setup_lock || exit 1
+		rm -f /tmp/fakemesh.generation || exit 1
+		stop_workers
+		exit 0
+		;;
 	'')
 		setup_lock || exit 1
 		;;
 	*)
 		if [ -z "$FAKEMESH_GENERATION" ]; then
-			read -r FAKEMESH_GENERATION < /tmp/fakemesh.generation 2>/dev/null || exit 0
+			read -r FAKEMESH_GENERATION 2>/dev/null < /tmp/fakemesh.generation || exit 0
 		fi
 		export FAKEMESH_GENERATION
 		worker_current || exit 0
@@ -369,8 +396,6 @@ test $enabled -eq 0 && {
 		uci commit firewall
 	}
 
-	uci changes
-
 	uci commit fakemesh
 	uci commit wireless
 	uci commit dhcp
@@ -531,7 +556,14 @@ wireless_config_md5()
 	local digest
 	digest=$({
 		printf 'role=%s\n' "$1"
-		uci show fakemeshac | grep '^fakemeshac.@wifim'
+		uci show fakemeshac | awk '
+			/^fakemeshac\.[^.]+=/ {
+				section = $0
+				sub(/=.*/, "", section)
+				wireless = ($0 == section "=wifim")
+			}
+			wireless { print }
+		'
 	} | md5sum)
 	printf '%s' "${digest%% *}"
 }
@@ -584,7 +616,8 @@ validate_ac_config()
 	for section in $sections; do
 		ssid=$(ac_get "$section.ssid")
 		[ -n "$ssid" ] && [ "${#ssid}" -le 32 ] || exit 1
-		case "$(ac_get "$section.band")" in
+		bands=$(ac_get "$section.band")
+		case "$bands" in
 			2g|5g|6g|2g5g|2g6g|5g6g|2g5g6g) ;;
 			*) exit 1 ;;
 		esac
@@ -592,11 +625,14 @@ validate_ac_config()
 			0|1) ;;
 			*) exit 1 ;;
 		esac
-		case "$(ac_get "$section.encryption")" in
+		encryption=$(ac_get "$section.encryption")
+		case "$encryption" in
 			none|owe) ;;
 			psk|psk2|psk-mixed|sae|sae-mixed)
 				key=$(ac_get "$section.key")
-				[ -n "$key" ] || exit 1
+				# WPA/WPA2 settings are converted to SAE on 6 GHz.
+				case "$bands" in *6g*) encryption=sae ;; esac
+				valid_wireless_key "$key" "$encryption" || exit 1
 				;;
 			*) exit 1 ;;
 		esac
@@ -614,7 +650,7 @@ agent_sync_config()
 	sync_tmp="/tmp/fakemesh.ac.config.tmp.$pid"
 
 	logger -t fakemesh "agent_sync_config($pid): started!"
-	hash=$(echo -n ${Xid}${Xkey} | md5sum)
+	hash=$(printf '%s' "$Xid$Xkey" | md5sum)
 	hash=${hash%% *}
 	validated_config=0
 
@@ -655,7 +691,7 @@ agent_sync_config()
 
 		if ( \
 		[ "$role" = "controller" ] && cp /etc/config/fakemesh "$sync_tmp" || \
-		wget -4 -q -T 10 -t 1 -O "$sync_tmp" http://$achost/fakemesh.$hash 2>/dev/null ); then
+		wget -4 -q -T 10 -O "$sync_tmp" http://$achost/fakemesh.$hash 2>/dev/null ); then
 			:
 		else
 			lost_ac=$((lost_ac+1))
@@ -667,9 +703,9 @@ agent_sync_config()
 				/etc/init.d/network reload
 				sleep 5
 			fi
-			if test -n "$acip" && [ "$role" != "controller" ] && wget -4 -q -T 5 -t 1 -O "$sync_tmp" http://$acip/fakemesh.$hash 2>/dev/null; then
+			if test -n "$acip" && [ "$role" != "controller" ] && wget -4 -q -T 5 -O "$sync_tmp" http://$acip/fakemesh.$hash 2>/dev/null; then
 				logger -t fakemesh "agent_sync_config($pid): fetch config from gateway($acip) ok(lost_ac=$lost_ac)"
-			elif test -n "$achost" && [ "$role" != "controller" ] && wget -4 -q -T 5 -t 1 -O "$sync_tmp" http://$achost/fakemesh.$hash 2>/dev/null; then
+			elif test -n "$achost" && [ "$role" != "controller" ] && wget -4 -q -T 5 -O "$sync_tmp" http://$achost/fakemesh.$hash 2>/dev/null; then
 				logger -t fakemesh "agent_sync_config($pid): fetch config from achost($achost) ok(lost_ac=$lost_ac)"
 			else
 				if test $lost_ac -ge $LOST_AC_CNT; then
@@ -687,14 +723,9 @@ agent_sync_config()
 
 		worker_current || return 0
 		if { [ "$validated_config" != 1 ] || ! cmp -s "$sync_tmp" /tmp/fakemesh.ac.config; } && ! validate_ac_config "$sync_tmp"; then
-			lost_ac=$((lost_ac+1))
-			logger -t fakemesh "agent_sync_config($pid): invalid controller config ($lost_ac), keeping current config"
+			logger -t fakemesh "agent_sync_config($pid): invalid controller config, keeping current config"
 			rm -f "$sync_tmp"
-			if [ "$role" != "controller" ] && test "$lost_ac" -ge "$LOST_AC_CNT"; then
-				worker_unlock
-				lost_ac=$lost_ac exec /usr/sbin/fakemesh agent_lost_ac &
-				return 0
-			fi
+			# A reachable controller with bad settings is not a lost controller.
 			sleep 30
 			test -f /tmp/fakemesh_lck3/$pid || return 0
 			continue
@@ -923,6 +954,8 @@ agent_keep_alive()
 				worker_unlock
 				exec /usr/sbin/fakemesh agent_fix_channel &
 				return 0
+			else
+				sta_lost=0
 			fi
 		fi
 		sleep 30
@@ -1034,7 +1067,7 @@ agent_reload()
 		uci -q set fakemesh.default.load_kick_enabled="$load_kick"
 		uci commit fakemesh
 
-		hash=$(echo -n ${Xid}${Xkey} | md5sum | head -c32)
+		hash=$(printf '%s' "$Xid$Xkey" | md5sum | head -c32)
 		ln -s /etc/config/fakemesh /www/fakemesh.$hash 2>/dev/null
 		for f in /www/fakemesh.*; do
 			[ "$f" != "/www/fakemesh.$hash" ] && rm -f "$f"
@@ -1166,8 +1199,6 @@ EOT
 	/etc/init.d/firewall reload >/dev/null 2>&1
 
 	/usr/sbin/fakemesh gen_config
-
-	uci changes
 
 	test "$(uci changes 2>/dev/null | grep -c -v "='dhcp'\|='interface'\|='wifi-iface'")" -le 0 && {
 		uci revert wireless
@@ -1319,8 +1350,6 @@ EOT
 	grep -q "^sh /usr/share/fakemesh/firewall.include" /etc/firewall.include || echo "sh /usr/share/fakemesh/firewall.include" >>/etc/firewall.include
 
 	/etc/init.d/firewall reload >/dev/null 2>&1
-
-	uci changes
 
 	test "$(uci changes 2>/dev/null | grep -c -v "='dhcp'\|='interface'\|='wifi-iface'")" -le 0 && {
 		uci revert wireless

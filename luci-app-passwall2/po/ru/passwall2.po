@@ -2175,23 +2175,8 @@ msgstr "Удаление правил %s завершено."
 msgid "%s firewall rules load complete!"
 msgstr "Загрузка правил фаервола %s завершена!"
 
-msgid "Socks switch detection: Unknown error."
-msgstr "Проверка переключения SOCKS: неизвестная ошибка."
-
-msgid "Socks switch detection: Unable to connect to the network. Please check if the network is working properly!"
-msgstr "Проверка переключения SOCKS: не удалось подключиться к сети. Пожалуйста, проверьте работоспособность сети!"
-
-msgid "Socks switch detection: Primary node 【%s: [%s]】 is normal. Switch to the primary node!"
-msgstr "Проверка переключения SOCKS: основной сервер 【%s: [%s]】 работает нормально. Переключение на основной сервер!"
-
-msgid "Socks switch detection: %s node switch complete!"
-msgstr "Проверка переключения SOCKS: переключение сервера %s завершено!"
-
-msgid "Socks switch detection: %s 【%s:[%s]】 normal."
-msgstr "Проверка переключения SOCKS: %s 【%s:[%s]】 работает нормально."
-
-msgid "switch to %s test detect!"
-msgstr "Переключение на %s для проверки!"
+msgid "main node"
+msgstr "основной сервер"
 
 msgid "backup node"
 msgstr "резервный сервер"
@@ -2199,14 +2184,35 @@ msgstr "резервный сервер"
 msgid "next backup node"
 msgstr "следующий резервный сервер"
 
-msgid "main node"
-msgstr "основной сервер"
+msgid "Socks switch detection: Port [%s] try %s [%s:%s]."
+msgstr "Обнаружение переключения кабеля: порт [%s], попытка %s [%s:%s]."
 
-msgid "Socks switch detection: %s 【%s:[%s]】 abnormal, %s"
-msgstr "Проверка переключения SOCKS: %s 【%s:[%s]】 не работает, %s"
+msgid "Socks switch detection: Port [%s] [%s:[%s]] normal, switch to this node!"
+msgstr "Обнаружение переключения Socks: порт [%s] [%s:[%s]] в норме, переключение на этот узел!"
 
-msgid "Socks switch detection: %s 【%s:[%s]】 normal, switch to this node!"
-msgstr "Проверка переключения SOCKS: %s 【%s:[%s]】 работает нормально, переключение на этот сервер!"
+msgid "Socks switch detection: Port [%s] node switch complete!"
+msgstr "Обнаружение переключения соединений: переключение узла на порту [%s] завершено!"
+
+msgid "Socks switch detection: Port [%s] [%s:[%s]] abnormal."
+msgstr "Обнаружено переключение Socks: порт [%s] [%s:[%s]] работает некорректно."
+
+msgid "Socks switch detection: Port [%s] all nodes are unavailable!"
+msgstr "Обнаружено переключение коммутатора: порт [%s], все узлы недоступны!"
+
+msgid "Socks switch detection: Port [%s] Unknown error."
+msgstr "Обнаружение переключения разъема: порт [%s], неизвестная ошибка."
+
+msgid "Socks switch detection: Port [%s] Unable to connect to the network. Please check if the network is working properly!"
+msgstr "Обнаружено переключение Socks: порт [%s] — не удалось подключиться к сети. Пожалуйста, проверьте исправность сети!"
+
+msgid "Socks switch detection: Port [%s] Primary node [%s: [%s]] is normal. Switch to the primary node!"
+msgstr "Обнаружено переключение: порт [%s], основной узел [%s: [%s]] — состояние нормальное. Переключение на основной узел!"
+
+msgid "Socks switch detection: Port [%s] [%s:[%s]] normal."
+msgstr "Обнаружение переключения Socks: порт [%s] [%s:[%s]] — норма."
+
+msgid "Socks switch detection: Port [%s] Number of backup nodes: %s"
+msgstr "Обнаружение переключения коммутатора: порт [%s], количество резервных узлов: %s"
 
 msgid "Restart dnsmasq service."
 msgstr "Перезапуск службы dnsmasq."
