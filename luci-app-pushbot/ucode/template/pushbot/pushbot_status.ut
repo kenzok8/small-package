@@ -81,6 +81,7 @@ pollStatus();
 <script type="text/javascript">//<![CDATA[
 var PB_CONFIG = null;
 var PB_READY = [];
+var PB_BLACK_BASE = null, PB_BLACK_SHOWN = null;
 function PB_onReady(fn) { if (PB_CONFIG) { fn(); } else { PB_READY.push(fn); } }
 function PB_val(opt, def) { return (PB_CONFIG && PB_CONFIG.config && PB_CONFIG.config[opt] !== undefined) ? PB_CONFIG.config[opt] : (def !== undefined ? def : null); }
 function PB_list(opt) { var v = PB_CONFIG && PB_CONFIG.lists && PB_CONFIG.lists[opt]; return Array.isArray(v) ? v : []; }
@@ -749,20 +750,15 @@ else
 			e.preventDefault();
 			tc.disabled = true;
 			tc.textContent = '{{ _('Saving...') }}';
-			var data = window.__pbCollectData ? __pbCollectData() : {};
-			var x = new XMLHttpRequest();
-			x.open('POST', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'save_config') }}', true);
-			x.setRequestHeader('Content-Type', 'application/json');
-			x.onload = function() {
+			PB_saveConfig(function(ok) {
+				if (!ok) { tc.disabled = false; tc.textContent = '{{ _('Test Channel') }}'; return; }
 				tc.textContent = '{{ _('Sending...') }}';
 				var y = new XMLHttpRequest();
 				y.open('GET', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'send_test') }}', true);
 				y.onload = function() { tc.disabled = false; tc.textContent = '{{ _('Test Channel') }}'; };
 				y.onerror = function() { tc.disabled = false; tc.textContent = '{{ _('Test Channel') }}'; };
 				y.send();
-			};
-			x.onerror = function() { tc.disabled = false; tc.textContent = '{{ _('Test Channel') }}'; };
-			x.send(JSON.stringify(data));
+			});
 		});
 		var tcDesc = document.createElement('div');
 		tcDesc.className = 'pushbot-inline-description';
@@ -2134,6 +2130,8 @@ cuSub.appendChild(mkBtn('{{ _('Traffic DND') }}',cdOn,function(on){updateFlagInp
 
 	pane.innerHTML = '';
 	pane.appendChild(container);
+	PB_BLACK_BASE = { list: CT_IP_BLACK, timeout: PB_val('ip_black_timeout'), persist: PB_val('ip_black_persist') };
+	PB_BLACK_SHOWN = PB_blacklistValues();
 }
 
 
@@ -2381,19 +2379,14 @@ cuSub.appendChild(mkBtn('{{ _('Traffic DND') }}',cdOn,function(on){updateFlagInp
 		sb.className = 'pushbot-sendtest-btn';
 		sb.addEventListener('click', function(e) {
 			e.preventDefault(); sb.disabled = true; sb.textContent = '{{ _('Sending...') }}';
-			var data = window.__pbCollectData ? __pbCollectData() : {};
-			var x = new XMLHttpRequest();
-			x.open('POST', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'save_config') }}', true);
-			x.setRequestHeader('Content-Type', 'application/json');
-			x.onload = function() {
+			PB_saveConfig(function(ok) {
+				if (!ok) { sb.disabled = false; sb.textContent = '{{ _('Test Schedule') }}'; return; }
 				var y = new XMLHttpRequest();
 				y.open('GET', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'send_manual') }}', true);
 				y.onload = function() { sb.disabled = false; sb.textContent = '{{ _('Test Schedule') }}'; };
 				y.onerror = function() { sb.disabled = false; sb.textContent = '{{ _('Test Schedule') }}'; };
 				y.send();
-			};
-			x.onerror = function() { sb.disabled = false; sb.textContent = '{{ _('Test Schedule') }}'; };
-			x.send(JSON.stringify(data));
+			});
 		});
 		sr.appendChild(sb);
 		contentBody.appendChild(sr);
@@ -2737,19 +2730,14 @@ function initMonitorCard() {
 		tb.className = 'pushbot-sendtest-btn';
 		tb.addEventListener('click', function(e) {
 			e.preventDefault(); tb.disabled = true; tb.textContent = '{{ _('Sending...') }}';
-			var data = window.__pbCollectData ? __pbCollectData() : {};
-			var x = new XMLHttpRequest();
-			x.open('POST', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'save_config') }}', true);
-			x.setRequestHeader('Content-Type', 'application/json');
-			x.onload = function() {
+			PB_saveConfig(function(ok) {
+				if (!ok) { tb.disabled = false; tb.textContent = '{{ _('Test Color') }}'; return; }
 				var y = new XMLHttpRequest();
 				y.open('GET', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'send_manual') }}', true);
 				y.onload = function() { tb.disabled = false; tb.textContent = '{{ _('Test Color') }}'; };
 				y.onerror = function() { tb.disabled = false; tb.textContent = '{{ _('Test Color') }}'; };
 				y.send();
-			};
-			x.onerror = function() { tb.disabled = false; tb.textContent = '{{ _('Test Color') }}'; };
-			x.send(JSON.stringify(data));
+			});
 		});
 		foot.appendChild(tb);
 		body.appendChild(foot);
@@ -3499,8 +3487,70 @@ window.__pbCollectData = function() {
 	if (!('lite_enable' in data) && PB_CONFIG && PB_CONFIG.config && PB_CONFIG.config.lite_enable !== undefined) {
 		data['lite_enable'] = '';
 	}
+	/* 比较页面实际显示的基线，不跟随 PB_CONFIG 的静默刷新。 */
+	['list', 'timeout', 'persist'].forEach(function(k) {
+		var opt = k === 'list' ? 'ip_black_list' : 'ip_black_' + k;
+		if (!PB_BLACK_SHOWN || data[opt] === PB_BLACK_SHOWN[k]) delete data[opt];
+	});
+	if (PB_BLACK_BASE && ['ip_black_list', 'ip_black_timeout', 'ip_black_persist'].some(function(k) { return k in data; }))
+		data.ip_black_list_base = PB_BLACK_BASE;
 	return data;
 };
+function PB_blacklistValues() {
+	var ta = document.querySelector('#ct_ban_sub textarea');
+	var timeout = document.querySelector('[name="cbid.pushbot.pushbot.ip_black_timeout"]');
+	var persist = document.querySelector('[name="cbid.pushbot.pushbot.ip_black_persist"]');
+	return { list: ta ? ta.value : '', timeout: timeout ? timeout.value : '', persist: persist ? persist.value : '' };
+}
+var PB_SAVING = false;
+function PB_saveConfig(done) {
+	if (PB_SAVING) { done(false); return; }
+	PB_SAVING = true;
+	var data = window.__pbCollectData(), shown = PB_blacklistValues(), base = PB_BLACK_BASE;
+	var x = new XMLHttpRequest();
+	function finish(ok) {
+		PB_SAVING = false;
+		if (!ok) pbShowToast(false);
+		done(ok);
+	}
+	x.open('POST', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'save_config') }}', true);
+	x.setRequestHeader('Content-Type', 'application/json');
+	x.timeout = 30000;
+	x.onerror = x.ontimeout = x.onabort = function() { finish(false); };
+	x.onload = function() {
+		var result;
+		try { result = JSON.parse(x.responseText); } catch(e) {}
+		if (x.status !== 200 || !result || result.ok !== true) {
+			if (x.status === 409) alert('{{ _('IP blacklist changed. Reload the page and try again.') }}');
+			finish(false); return;
+		}
+		/* 保存成功后复用配置刷新；用户继续编辑时不覆盖输入和基线。 */
+		var y = new XMLHttpRequest();
+		y.open('GET', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'get_config') }}', true);
+		y.timeout = 30000;
+		y.onerror = y.ontimeout = y.onabort = function() { finish(true); };
+		y.onload = function() {
+			var fresh;
+			try { fresh = JSON.parse(y.responseText); } catch(e) {}
+			if (y.status === 200 && fresh && fresh.config && fresh.files) {
+				if (base && JSON.stringify(shown) === JSON.stringify(PB_blacklistValues()) &&
+				    ['timeout', 'persist'].every(function(k) {
+					var opt = 'ip_black_' + k;
+					return (fresh.config[opt] ?? null) === (opt in data ? data[opt] : base[k]);
+				    }) && typeof fresh.files.ip_black_list === 'string') {
+					document.querySelector('#ct_ban_sub textarea').value = fresh.files.ip_black_list;
+					document.querySelector('[name="cbid.pushbot.pushbot.ip_black_list"]').value = fresh.files.ip_black_list;
+					PB_BLACK_BASE = { list: fresh.files.ip_black_list, timeout: fresh.config.ip_black_timeout ?? null, persist: fresh.config.ip_black_persist ?? null };
+					PB_BLACK_SHOWN = PB_blacklistValues();
+				}
+				PB_applyConfig(fresh, true);
+			}
+			finish(true);
+		};
+		y.send();
+	};
+	x.send(JSON.stringify(data));
+}
 /* ── Toast notification ── */
 var pbToast = null;
 function pbShowToast(ok) {
@@ -3565,6 +3615,7 @@ function pbShowPreview() {
 	var pend = window.__pbCollectData();
 	var changes = [];
 	for (var k in pend) {
+		if (k === 'ip_black_list_base') continue;
 		var oldV = (PB_CONFIG && PB_CONFIG.lists && PB_CONFIG.lists[k] !== undefined) ? PB_CONFIG.lists[k]
 			: (PB_CONFIG && PB_CONFIG.config && PB_CONFIG.config[k] !== undefined) ? PB_CONFIG.config[k]
 			: (PB_CONFIG && PB_CONFIG.files && PB_CONFIG.files[k] !== undefined) ? PB_CONFIG.files[k] : undefined;
@@ -3625,27 +3676,10 @@ function submitAll() {
 	var btn = document.getElementById('pushbot_save_btn');
 	if (!btn) return;
 	btn.disabled = true; btn.textContent = '{{ _('Saving...') }}';
-	var data = window.__pbCollectData();
-	var x = new XMLHttpRequest();
-	x.open('POST', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'save_config') }}', true);
-	x.setRequestHeader('Content-Type', 'application/json');
-	x.onload = function() {
+	PB_saveConfig(function(ok) {
 		btn.disabled = false; btn.textContent = '{{ _('Save & Apply') }}';
-		if (x.status == 200) {
-			pbShowToast(true);
-			/* 静默刷新配置：只更新 PB_CONFIG，不重新执行 UI 初始化回调 */
-			XHR.get('{{ dispatcher.build_url('admin', 'services', 'pushbot', 'get_config') }}', null,
-			function(x2, data2) {
-				if (x2 && x2.status === 200 && data2 && typeof data2 === 'object') {
-					PB_applyConfig(data2, true);
-				}
-			});
-		} else {
-			pbShowToast(false);
-		}
-	};
-	x.onerror = function() { btn.disabled = false; btn.textContent = '{{ _('Save & Apply') }}'; pbShowToast(false); };
-	x.send(JSON.stringify(data));
+		if (ok) pbShowToast(true);
+	});
 }
 
 /* ═══════════════════════════════════════════ */

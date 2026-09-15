@@ -14,7 +14,10 @@ local k, v
 for k, v in pairs(com) do
 	o = s:option(Value, k:gsub("%-","_") .. "_file", translatef("%s App Path", v.name))
 	o.default = v.default_path or ("/usr/bin/" .. k)
-	o.rmempty = false
+	o.placeholder = o.default
+	function o:remove(section)
+		self:write(section, self.default)
+	end
 end
 
 o = s:option(DummyValue, "tips", " ")

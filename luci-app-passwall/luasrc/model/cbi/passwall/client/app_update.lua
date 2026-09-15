@@ -20,7 +20,10 @@ for _, k in ipairs(com.order) do
 	if k ~= "chinadns-ng" then
 		o = s:option(Value, k:gsub("%-","_") .. "_file", translatef("%s App Path", v.name))
 		o.default = v.default_path or ("/usr/bin/" .. k)
-		o.rmempty = false
+		o.placeholder = o.default
+		function o:remove(section)
+			self:write(section, self.default)
+		end
 	end
 end
 

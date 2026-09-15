@@ -1,7 +1,7 @@
 // Copyright 2022-2025 tty228 <tty228@yeah.net> zzsj0928
 // Licensed to the public under the Apache License 2.0.
 
-import { popen, open, readfile, access, mkdir } from 'fs';
+import { popen, open, readfile, access, mkdir, error } from 'fs';
 import { cursor } from 'uci';
 import { translate } from 'luci.core';
 
@@ -502,6 +502,38 @@ return {
 			return;
 		}
 		let old_path = ip_blacklist_path(previous.ip_black_timeout, previous.ip_black_persist);
+		/* 只校验编辑过的名单；旧页面不能把到期名单重新写回来。 */
+		if ("ip_black_list_base" in data) {
+			let base = data.ip_black_list_base;
+			delete data.ip_black_list_base;
+			if (type(base) != "object" || type(base.list) != "string" ||
+			    (base.timeout != null && type(base.timeout) != "string") ||
+			    (base.persist != null && type(base.persist) != "string")) {
+				http.write_json({ ok: false, error: "invalid ip_black_list_base" });
+				return;
+			}
+			let current = readfile(old_path);
+			if (current == null) {
+				if (error() == "No such file or directory") current = "";
+				else {
+					http.write_json({ ok: false, error: "cannot read active IP blacklist" });
+					return;
+				}
+			}
+			function members(s) {
+				let seen = {};
+				for (let ip in split(s, /\s+/)) if (ip != "") seen[arrtoip(iptoarr(ip)) ?? ip] = true;
+				return join("\n", sort(keys(seen)));
+			}
+			/* ponytail: 校验与写入之间仍有竞态；严格互斥需统一所有写入入口。 */
+			if (members(current) != members(base.list) ||
+			    (previous.ip_black_timeout ?? null) !== (base.timeout ?? null) ||
+			    (previous.ip_black_persist ?? null) !== (base.persist ?? null)) {
+				http.status(409, "Conflict");
+				http.write_json({ ok: false, error: "IP blacklist changed. Reload the page and try again." });
+				return;
+			}
+		}
 		let new_path = ip_blacklist_path(
 			"ip_black_timeout" in data ? data.ip_black_timeout : previous.ip_black_timeout,
 			"ip_black_persist" in data ? data.ip_black_persist : previous.ip_black_persist);

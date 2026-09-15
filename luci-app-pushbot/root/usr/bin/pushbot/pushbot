@@ -1418,12 +1418,7 @@ function login_send(){
 	cat ${dir}login_monitor|grep -i "failed login"|grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" >> ${dir}web_failed
 	cat ${dir}login_monitor|grep -i "Bad password attempt\|Login attempt for nonexistent user from"|grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" >> ${dir}ssh_failed
 	echo "" > ${dir}login_monitor
-	# 黑名单同步（检测变化，避免重复执行）
-	if [ "$web_login_black" = "1" ]; then
-		if need_blacklist_sync; then
-			add_ip_black
-		fi
-	fi
+	# 无参对账由主循环统一执行，带参封禁仍在登录失败分支即时处理。
 	
 	local login_ip_list=`cat ${dir}web_login|awk '{print $2}'|grep -v "^$"|sort -u|head -n1`
 	for login_ip in $login_ip_list; do
@@ -1558,7 +1553,8 @@ function login_send(){
 					sed -i "/^${login_ip}$/d" ${dir}web_failed
 					echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】设备 ${login_ip} 通过 Web 频繁尝试登录" >> ${logfile}
 				else
-					echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】设备 ${login_ip} 触发拉黑但未成功，保留记录待后续确认" >> ${logfile}				fi
+					echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】设备 ${login_ip} 触发拉黑但未成功，保留记录待后续确认" >> ${logfile}
+				fi
 			fi
 		fi
 	done
@@ -1906,28 +1902,13 @@ function login_send(){
 # 与白名单不同 —— 这是硬保护，任何情况下本机地址都禁止进入黑名单
 # （误拉黑自己会断掉 Web/SSH 访问）。匹配 local_addrs 精确条目。
 function is_local_address(){
-	local target="$1"
-	[ -z "$target" ] && return 1
-	# v6 归一化：展开为完整 8 段并转小写，避免压缩/完整形式、大小写差异导致
-	# 本机地址漏判被拉黑（ip 命令输出压缩形式，登录日志可能是完整形式）。
-	# v4 无此问题，保持原样精确比较。
-	local target_norm="$target" a a_norm
-	if echo "$target" | grep -q ":"; then
-		target_norm=$(expand_v6 "$target" 2>/dev/null | tr 'A-F' 'a-f')
-	fi
-	for a in $local_addrs; do
-		[ -z "$a" ] && continue
-		a_norm="$a"
-		if echo "$a" | grep -q ":"; then
-			a_norm=$(expand_v6 "$a" 2>/dev/null | tr 'A-F' 'a-f')
-		fi
-		[ "$a_norm" = "$target_norm" ] && return 0
-	done
-	return 1
+	local target=$(printf '%s\n' "$1" | blacklist_members)
+	[ -n "$target" ] || return 1
+	printf '%s\n' "$local_addrs" | blacklist_members | grep -qxF "$target"
 }
 
 function ip_in_whitelist(){
-	local target="$1"
+	local target=$(printf '%s\n' "$1" | blacklist_members)
 	[ -z "$target" ] && return 1
 	[ -z "$ip_white_list" ] && return 1
 	local entry
@@ -1949,7 +1930,7 @@ function ip_in_whitelist(){
 					return 0
 				fi
 			fi
-		elif [ "$entry" = "$target" ]; then
+		elif [ "$(printf '%s\n' "$entry" | blacklist_members)" = "$target" ]; then
 			# 精确匹配
 			return 0
 		fi
@@ -2068,417 +2049,299 @@ function parse_timeout(){
 	echo $((num * mult))
 }
 
-# 检查是否需要同步黑名单（文件/配置/内核是否有变化）
-function need_blacklist_sync(){
-	local bl_state="/usr/bin/pushbot/api/.ip_blacklist.state"
-	local prev_file="${bl_state}.prev"
-	local prev_onoff_file="${bl_state}.onoff"
-	local prev_timeout_file="${bl_state}.timeout"
-	local cur_onoff="${web_login_black:-0}"
-	local cur_timeout=$(parse_timeout "${ip_black_timeout:-0}")
+# 地址统一排序；IPv6 展开后比较，忽略大小写和前导零。
+function blacklist_members(){
+	awk '
+	function emit(s, a,b,c,n,m,i,j,out) {
+		if (s ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/) {
+			n=split(s,a,"."); for(i=1;i<=n;i++) if(a[i]+0>255) return
+			printf "%d.%d.%d.%d\n",a[1],a[2],a[3],a[4]; return
+		}
+		if (s !~ /:/ || s ~ /[^0-9a-fA-F:]/) return
+		s=tolower(s); n=split(s,a,"::"); if(n>2) return
+		m=split(a[1],b,":"); if(a[1]=="") m=0
+		j=n==2?split(a[2],c,":"):0; if(a[2]=="") j=0
+		if((n==1 && m!=8) || (n==2 && m+j>=8)) return
+		out=""; for(i=1;i<=8;i++) {
+			if(i<=m) s=b[i]; else if(i>8-j) s=c[i-(8-j)]; else s="0"
+			if(length(s)>4 || s=="") return
+			sub(/^0+/,"",s); if(s=="") s="0"
+			out=out sprintf("%s%s",i==1?"":":",s)
+		}
+		print out
+	}
+	{ for(k=1;k<=NF;k++) emit($k) }' | LC_ALL=C sort -u
+}
 
-	# 如果是首次运行（prev_file 不存在），需要同步
-	if [ ! -f "$prev_file" ]; then
-		return 0
-	fi
-
-	# 检查 1：黑名单开关变化
-	local prev_onoff=""
-	[ -f "$prev_onoff_file" ] && prev_onoff=$(cat "$prev_onoff_file" 2>/dev/null)
-	[ "$prev_onoff" != "$cur_onoff" ] && return 0
-
-	# 检查 2：拉黑时长变化
-	local prev_timeout=""
-	[ -f "$prev_timeout_file" ] && prev_timeout=$(cat "$prev_timeout_file" 2>/dev/null)
-	[ "$prev_timeout" != "$cur_timeout" ] && return 0
-
-	# 检查 3：黑名单文件变化（用户手动增删）
-	# 仅当文件存在时比较（不存在说明首次或路径变更，需同步）
-	if [ -f "${ip_blacklist_path}" ] && [ -f "$prev_file" ]; then
-		if ! cmp -s "$prev_file" "${ip_blacklist_path}" 2>/dev/null; then
-			return 0
-		fi
-	else
-		# 文件缺失：需同步（首次或 UCI 路径变更）
-		[ ! -f "${ip_blacklist_path}" ] && return 0
-	fi
-
-	# 检查 4：集合或 DROP 规则缺失；保留空集合触发到期对账
-	if [ "$cur_onoff" = "1" ] && [ -s "${ip_blacklist_path}" ]; then
-		if command -v nft >/dev/null 2>&1; then
-			local set4 input_rules
-			set4=$(nft list set inet fw4 pushbot_blacklist 2>/dev/null) || return 0
-			nft list set inet fw4 pushbot_blacklist6 >/dev/null 2>&1 || return 0
-			input_rules=$(nft list chain inet fw4 input 2>/dev/null) || return 0
-
-			printf '%s\n' "$input_rules" |
-				grep -qE '^[[:space:]]*ip saddr @pushbot_blacklist[[:space:]]+drop([[:space:]]|$)' || return 0
-			printf '%s\n' "$input_rules" |
-				grep -qE '^[[:space:]]*ip6 saddr @pushbot_blacklist6[[:space:]]+drop([[:space:]]|$)' || return 0
-
-			printf '%s\n' "$set4" | grep -qF 'elements = {' || return 0
-		fi
-	fi
-
-	# 无变化
+function blacklist_error(){
+	echo "$(date '+%Y-%m-%d %H:%M:%S') 【防火墙】【失败】$1，保留同步状态，下轮重试" >> "$logfile"
 	return 1
 }
 
-# 添加黑名单 — 支持 nftables / iptables 双模式
-function add_ip_black(){
-	# 本机地址硬保护：本机接口地址/回环永不拉黑（误拉黑自己会断访问）
-	# 返回 1 表示"被保护拦截未拉黑"，调用方可据此保留失败记录供后续重试
-	if [ -n "$1" ] && is_local_address "$1"; then
-		echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】IP $1 是本机地址，跳过拉黑" >> ${logfile}
-		return 1
-	fi
-	# 白名单优先：命中白名单（含网段）的 IP 永不拉黑
-	if [ -n "$1" ] && ip_in_whitelist "$1"; then
-		echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】IP $1 命中白名单，跳过拉黑" >> ${logfile}
-		return 1
-	fi
-	# 只添加不存在的 IP，避免重复行（精确匹配整行）
-	if [ -n "$1" ]; then
-		if ! grep -q -x "$1" "${ip_blacklist_path}" 2>/dev/null; then
-			echo "$1" >> ${ip_blacklist_path}
-		fi
-	fi
-	
-	# 判断是否需要更新防火墙：黑名单文件变化 或 开关状态变化 或 内核规则丢失
-	# prev/onoff 存持久目录（/usr/bin/pushbot/api/），避免 /tmp 清理后
-	# 内核检测只查 set 存在性而漏掉内容变化
-	local need_update=false
-	local prev_onoff=""
-	local bl_state="/usr/bin/pushbot/api/.ip_blacklist.state"
-	# 拉黑时长统一解析为秒（支持 3600 / 1h / 2D / 1W / 1M，0=永久）
-	local bl_timeout_sec=$(parse_timeout "${ip_black_timeout:-0}")
-	# timeout 配置变化必须触发重建（set 的 timeout 属性只能在创建时设定，
-	# 否则 nft add set 对已存在 set 报错、直接加元素不会更新超时）
-	[ -f "${bl_state}.timeout" ] && [ "$(cat ${bl_state}.timeout)" != "$bl_timeout_sec" ] && need_update=true
-	[ -f "${bl_state}.onoff" ] && prev_onoff=$(cat ${bl_state}.onoff)
-	local cur_onoff="${web_login_black:-0}"
-	[ "$prev_onoff" != "$cur_onoff" ] && need_update=true
-	echo "$cur_onoff" > ${bl_state}.onoff
-	# 带参调用 = 新拉黑事件（登录失败/手动拉黑）：即使文件已有该 IP（上次超时残留），
-	# 也必须重建 set 使其重新生效，否则超时移除后的"再次拉黑"会因 need_update=false 被跳过
-	if [ -n "$1" ]; then
-		need_update=true
-	fi
-	
-	# ── 反向同步判定：防火墙是否发生了"主动变化"（到期移除）──
-	# 设计（乐观并发控制）：
-	#   · 新增/删除/清空/失败拉黑 = 文件→防火墙方向，文件是变更源
-	#   · set 条目到期 = 防火墙→文件方向，set 是变更源
-	# 用 prev_set 快照（上次同步的 set 元素）判定：
-	#   · 当前 set ≠ prev_set → 期间防火墙主动变了（有到期）→ 以 set 为准清文件残留
-	#   · 当前 set == prev_set → 防火墙未主动变 → 文件是权威，用户增删清直接生效
-	# 两者方向相反，故不能无条件以 set 覆盖文件（否则用户删除会被 set 复活）。
-	local prev_set_file="${bl_state}.prevset"
-	local fw_changed=false
-	if [ -f "$prev_set_file" ] && [ -n "$cur_onoff" ] && [ "$cur_onoff" != "0" ]; then
-		if command -v nft >/dev/null 2>&1; then
-			if nft list set inet fw4 pushbot_blacklist >/dev/null 2>&1; then
-				nft list set inet fw4 pushbot_blacklist 2>/dev/null | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" > ${ip_blacklist_path}.setcur
-				nft list set inet fw4 pushbot_blacklist6 2>/dev/null | grep -oE "elements = \{ [^}]*\}" | grep -oE "[0-9a-fA-F:]+:[0-9a-fA-F:]+" >> ${ip_blacklist_path}.setcur
-				cmp -s "$prev_set_file" "${ip_blacklist_path}.setcur" || fw_changed=true
-			fi
-		elif command -v ipset >/dev/null 2>&1; then
-			if ipset list ip_blacklist >/dev/null 2>&1; then
-				ipset list ip_blacklist 2>/dev/null | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" > ${ip_blacklist_path}.setcur
-				cmp -s "$prev_set_file" "${ip_blacklist_path}.setcur" || fw_changed=true
-			fi
-		fi
-	fi
-	# 防火墙主动变了（有到期）：以 set 为准重写文件，清掉已到期残留；
-	# 并合并"用户本次新增"的 IP（当前文件有、prev_file 无 = 用户主动加的，
-	# 如编辑界面追加新 IP；反向同步用 set 覆盖会误抹掉它）。
-	# 注意：用户若明知某 IP 已到期仍想重新拉黑，需通过带参调用（界面"拉黑"按钮），
-	# 或等残留被清后再次添加；纯文本编辑无法区分"残留"与"主动重拉"，以 prev_file 快照判定。
-	local prev_file="${bl_state}.prev"
-	if $fw_changed; then
-		# 记录用户本次新增（当前文件 - prev_file）
-		local user_added=""
-		if [ -f "$prev_file" ]; then
-			for ip_new in `cat ${ip_blacklist_path} 2>/dev/null`; do
-				grep -qx "$ip_new" "$prev_file" 2>/dev/null || user_added="${user_added} $ip_new"
-			done
-		fi
-		[ -f "${ip_blacklist_path}.setcur" ] && sort -u ${ip_blacklist_path}.setcur > ${ip_blacklist_path} || > ${ip_blacklist_path}
-		# 合并用户新增（含带参 $1）
-		if [ -n "$1" ] && ! grep -q -x "$1" "${ip_blacklist_path}" 2>/dev/null; then
-			echo "$1" >> ${ip_blacklist_path}
-		fi
-		for ip_new in $user_added; do
-			if ! grep -q -x "$ip_new" "${ip_blacklist_path}" 2>/dev/null; then
-				echo "$ip_new" >> ${ip_blacklist_path}
-			fi
-		done
-	fi
-	rm -f ${ip_blacklist_path}.setcur
-	
-	if ! $need_update && [ -f "$prev_file" ]; then
-		cmp -s "$prev_file" "${ip_blacklist_path}" || need_update=true
-	fi
-	cp "${ip_blacklist_path}" "$prev_file" 2>/dev/null || true
-	
-	# 内核状态检测：fw4 重启/路由重启会清空 nft set 与规则，
-	# 但文件未变时上面的 diff 判断会跳过重建 → 拉黑静默失效。
-	# 直接查内核：拉黑开启且有 IP 时，set 或 rule 缺失即强制重建。
-	if ! $need_update && [ -n "$cur_onoff" ] && [ "$cur_onoff" != "0" ] && [ -s "${ip_blacklist_path}" ]; then
-		if command -v nft >/dev/null 2>&1; then
-			local input_rules
-			nft list set inet fw4 pushbot_blacklist >/dev/null 2>&1 || need_update=true
-			nft list set inet fw4 pushbot_blacklist6 >/dev/null 2>&1 || need_update=true
-			input_rules=$(nft list chain inet fw4 input 2>/dev/null) || need_update=true
-
-			printf '%s\n' "$input_rules" |
-				grep -qE '^[[:space:]]*ip saddr @pushbot_blacklist[[:space:]]+drop([[:space:]]|$)' || need_update=true
-			printf '%s\n' "$input_rules" |
-				grep -qE '^[[:space:]]*ip6 saddr @pushbot_blacklist6[[:space:]]+drop([[:space:]]|$)' || need_update=true
-		else
-			ipset list ip_blacklist >/dev/null 2>&1 || need_update=true
-			iptables -C INPUT -m set --match-set ip_blacklist src -j DROP >/dev/null 2>&1 || need_update=true
-		fi
-	fi
-	
-	if ! $need_update; then
-		# 无变化：仍做"set→文件"反向同步，把内核超时已移除的元素从文件清掉。
-		# （文件是待拉黑登记，set 是生效中权威含 timeout；两者必须一致）
-		if [ -n "$cur_onoff" ] && [ "$cur_onoff" != "0" ]; then
-			if command -v nft >/dev/null 2>&1; then
-				if nft list set inet fw4 pushbot_blacklist >/dev/null 2>&1; then
-					nft list set inet fw4 pushbot_blacklist 2>/dev/null | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" > ${ip_blacklist_path}.tmp
-					nft list set inet fw4 pushbot_blacklist6 2>/dev/null | grep -oE "elements = \{ [^}]*\}" | grep -oE "[0-9a-fA-F:]+:[0-9a-fA-F:]+" >> ${ip_blacklist_path}.tmp
-					if [ -s "${ip_blacklist_path}.tmp" ]; then
-						sort -u ${ip_blacklist_path}.tmp > ${ip_blacklist_path}
-					else
-						rm -f ${ip_blacklist_path}.tmp
-						> ${ip_blacklist_path}
-					fi
-				fi
-			elif command -v ipset >/dev/null 2>&1; then
-				ipset list ip_blacklist 2>/dev/null | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" > ${ip_blacklist_path}.tmp
-				if [ -s "${ip_blacklist_path}.tmp" ]; then
-					mv ${ip_blacklist_path}.tmp ${ip_blacklist_path}
-				else
-					rm -f ${ip_blacklist_path}.tmp
-					> ${ip_blacklist_path}
-				fi
-			fi
-		fi
-		return  # 无变化，跳过防火墙操作
-	fi
-	
-	[ -f "${ip_blacklist_path}" ] && local logrow=$(grep -c "" ${ip_blacklist_path}) || local logrow="0"
-	[ ! -f "${ip_blacklist_path}" ] && local logrow="0"
-	
-	# 收集有效 IP（IPv4 + IPv6 分离，防止混合进同一 set）
-	local black_ips=""
-	local black_ips6=""
-	local ip_count=0
-	# 如果自动拉黑功能已关闭，直接跳过 IP 收集以清空防火墙规则
-	if [ -z "$web_login_black" ] || [ "$web_login_black" = "0" ]; then
-		echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】自动拉黑功能已关闭，将清空防火墙拉黑策略" >> ${logfile}
-	else
-		for ip_black in `cat ${ip_blacklist_path} 2>/dev/null`; do
-			# 本机地址硬保护：本机接口地址/回环不加入防火墙拉黑，
-			# 且从黑名单文件中剔除（历史遗留的本机地址一并清理）
-			if is_local_address "$ip_black"; then
-				sed -i "/^${ip_black}$/d" ${ip_blacklist_path} 2>/dev/null
-				echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】IP $ip_black 是本机地址，已从黑名单剔除" >> ${logfile}
-				continue
-			fi
-			# 白名单优先：命中白名单（含网段）的 IP 不加入防火墙
-			ip_in_whitelist "$ip_black" && continue
-			# 逐行判断 v4 / v6，避免 v6 被 v4 正则误匹配出残片
-			if echo "$ip_black" | grep -qE "^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$"; then
-				ip_count=$((ip_count+1))
-				[ -z "$black_ips" ] && black_ips="$ip_black" || black_ips="${black_ips},$ip_black"
-			elif echo "$ip_black" | grep -qE "^[0-9a-fA-F:]+$"; then
-				ip_count=$((ip_count+1))
-				[ -z "$black_ips6" ] && black_ips6="$ip_black" || black_ips6="${black_ips6},$ip_black"
-			fi
-		done
-	fi
-	
-	# 使用缓存的防火墙模式（init_firewall_mode 已探测）
-	local use_nft=false
+# 同轮复用快照。查询失败不能当作空集；缺失集合单独标记，供恢复使用。
+function blacklist_snapshot(){
+	local raw names set family
+	bl_snapshot_ready=0
+	bl_members=""; bl_exists4=0; bl_exists6=0
 	if [ "$firewall_mode" = "nft" ]; then
-		use_nft=true
-	fi
-	
-	if $use_nft; then
-		if [ $ip_count -le "0" ]; then
-			# 如果没有变化且 set 不存在，跳过清空（避免重复执行）
-			if ! $need_update && ! nft list set inet fw4 pushbot_blacklist >/dev/null 2>&1 && ! nft list set inet fw4 pushbot_blacklist6 >/dev/null 2>&1; then
-				# 检查规则是否残留
-				local rule_exists=$(nft list chain inet fw4 input 2>/dev/null | grep -c "@pushbot_blacklist" || echo "0")
-				[ "$rule_exists" -eq "0" ] && return
+		bl_rules=$(nft -a list chain inet fw4 input 2>/dev/null) || { blacklist_error "读取 nft INPUT 规则失败"; return 1; }
+		for family in 4 6; do
+			set=pushbot_blacklist; [ "$family" = 6 ] && set=pushbot_blacklist6
+			if raw=$(nft list set inet fw4 "$set" 2>/dev/null); then
+				[ "$family" = 4 ] && bl_exists4=1 || bl_exists6=1
+				raw=$(printf '%s\n' "$raw" | sed -n '/elements = {/,/}/p' |
+					sed 's/.*elements = {//;s/}.*//' | tr ',' '\n' | awk '{print $1}')
+				bl_members="$bl_members $raw"
+			else
+				names=$(nft list sets 2>/dev/null) || { blacklist_error "读取 nft 集合失败"; return 1; }
+				if printf '%s\n' "$names" | grep -qE "^[[:space:]]*set $set[[:space:]]*\\{"; then
+					blacklist_error "读取 $set 成员失败"; return 1
+				fi
 			fi
-			# 删除所有引用黑名单 set 的规则（v4/v6 各一条，必须全部删除，
-			# 否则残留规则引用 set → nft delete set 报 in-use 失败 → 拉黑不解除）
-			local del_rule_handles=$(nft -a list chain inet fw4 input 2>/dev/null | grep "@pushbot_blacklist" | grep -o "handle [0-9]*" | cut -d' ' -f2)
-			for del_h in $del_rule_handles; do
-				nft delete rule inet fw4 input handle $del_h 2>/dev/null || true
-			done
-			nft delete set inet fw4 pushbot_blacklist 2>/dev/null || true
-			nft delete set inet fw4 pushbot_blacklist6 2>/dev/null || true
-			if $need_update; then
-				echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】黑名单列表为空，清空 nftables 防火墙拉黑策略" >> ${logfile}
-			fi
-			> ${ip_blacklist_path}
-			cp "${ip_blacklist_path}" "$prev_file" 2>/dev/null
-			rm -f "${bl_state}.prevset"
-			return
-		fi
-		# IPv4 set（支持超时）
-		# 仅当 timeout 配置变化时重建 set（nft add set 对已存在 set 报错，
-		# 直接 add 不会更新 timeout；重建会让元素采用新 timeout 重新计时）。
-		# timeout 未变时保持增量同步（保留未到期元素剩余时间）。
-		local prev_timeout_file="${bl_state}.timeout"
-		local prev_timeout=""
-		[ -f "$prev_timeout_file" ] && prev_timeout=$(cat "$prev_timeout_file")
-		local cur_timeout="$bl_timeout_sec"
-		if [ "$prev_timeout" != "$cur_timeout" ]; then
-			# set 被规则引用时 nft delete set 报 Resource busy，必须先删引用规则
-			# （v4/v6 各一条，必须全部删除），重建后由下方"缺失时插入"逻辑恢复。
-			local del_rule_handles=$(nft -a list chain inet fw4 input 2>/dev/null | grep "@pushbot_blacklist" | grep -o "handle [0-9]*" | cut -d' ' -f2)
-			for del_h in $del_rule_handles; do
-				nft delete rule inet fw4 input handle $del_h 2>/dev/null || true
-			done
-			nft delete set inet fw4 pushbot_blacklist 2>/dev/null || true
-			nft delete set inet fw4 pushbot_blacklist6 2>/dev/null || true
-			echo "$cur_timeout" > "$prev_timeout_file"
-		fi
-		if [ "$bl_timeout_sec" = "0" ]; then
-			nft add set inet fw4 pushbot_blacklist { type ipv4_addr\; } 2>/dev/null || true
-		else
-			nft add set inet fw4 pushbot_blacklist { type ipv4_addr\; timeout ${bl_timeout_sec}s\; } 2>/dev/null || true
-		fi
-		# IPv6 set（支持超时）
-		if [ "$bl_timeout_sec" = "0" ]; then
-			nft add set inet fw4 pushbot_blacklist6 { type ipv6_addr\; } 2>/dev/null || true
-		else
-			nft add set inet fw4 pushbot_blacklist6 { type ipv6_addr\; timeout ${bl_timeout_sec}s\; } 2>/dev/null || true
-		fi
-		# 规则用 insert（链首优先，不被 accept 抢先），且只在缺失时插入
-		local input_rules
-		input_rules=$(nft list chain inet fw4 input 2>/dev/null) || input_rules=""
-
-		if ! printf '%s\n' "$input_rules" |
-			grep -qE '^[[:space:]]*ip saddr @pushbot_blacklist[[:space:]]+drop([[:space:]]|$)'; then
-			if ! nft insert rule inet fw4 input ip saddr @pushbot_blacklist drop 2>>"$logfile"; then
-				echo "$(date '+%Y-%m-%d %H:%M:%S') 【防火墙】【失败】IPv4 黑名单 DROP 规则插入失败" >> "$logfile"
-				return 1
-			fi
-		fi
-
-		if ! printf '%s\n' "$input_rules" |
-			grep -qE '^[[:space:]]*ip6 saddr @pushbot_blacklist6[[:space:]]+drop([[:space:]]|$)'; then
-			if ! nft insert rule inet fw4 input ip6 saddr @pushbot_blacklist6 drop 2>>"$logfile"; then
-				echo "$(date '+%Y-%m-%d %H:%M:%S') 【防火墙】【失败】IPv6 黑名单 DROP 规则插入失败" >> "$logfile"
-				return 1
-			fi
-		fi
-		# 增量同步：不 flush 重建（会抹掉内核超时状态），只补齐 set 缺失元素。
-		# 文件是"待拉黑"登记，set 是"生效中"权威（含 timeout，到期自动移除）。
-		# 双向对账：
-		#   · 文件有、set 没有 → add（新拉黑 / 重启恢复）
-		#   · set 有、文件没有 → delete（用户删除；到期移除由内核处理，此处分不出、也无需删）
-		#     注意：此处删除的是"set 存在但文件已移除"的 IP——即用户主动删除场景。
-		{
-			for ip_black in `echo "$black_ips"|tr ',' ' '`; do
-				echo "add element inet fw4 pushbot_blacklist { $ip_black }"
-			done
-			for ip_black6 in `echo "$black_ips6"|tr ',' ' '`; do
-				echo "add element inet fw4 pushbot_blacklist6 { $ip_black6 }"
-			done
-			# 删除 set 中文件里已不存在的元素（用户删除的 IP）
-			for ip_del in `nft list set inet fw4 pushbot_blacklist 2>/dev/null | grep -oE "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"`; do
-				grep -qx "$ip_del" "${ip_blacklist_path}" || echo "delete element inet fw4 pushbot_blacklist { $ip_del }"
-			done
-			for ip_del6 in `nft list set inet fw4 pushbot_blacklist6 2>/dev/null | grep -oE "elements = \{ [^}]*\}" | grep -oE "[0-9a-fA-F:]+:[0-9a-fA-F:]+"`; do
-				grep -qx "$ip_del6" "${ip_blacklist_path}" || echo "delete element inet fw4 pushbot_blacklist6 { $ip_del6 }"
-			done
-		} | nft -f - 2>/dev/null || {
-			# 老版本 nft 不支持 stdin -f 时退化为逐条
-			for ip_black in `echo "$black_ips"|tr ',' ' '`; do
-				nft add element inet fw4 pushbot_blacklist { $ip_black } 2>/dev/null || true
-			done
-			for ip_black6 in `echo "$black_ips6"|tr ',' ' '`; do
-				nft add element inet fw4 pushbot_blacklist6 { $ip_black6 } 2>/dev/null || true
-			done
-			for ip_del in `nft list set inet fw4 pushbot_blacklist 2>/dev/null | grep -oE "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"`; do
-				grep -qx "$ip_del" "${ip_blacklist_path}" || nft delete element inet fw4 pushbot_blacklist { $ip_del } 2>/dev/null || true
-			done
-			for ip_del6 in `nft list set inet fw4 pushbot_blacklist6 2>/dev/null | grep -oE "elements = \{ [^}]*\}" | grep -oE "[0-9a-fA-F:]+:[0-9a-fA-F:]+"`; do
-				grep -qx "$ip_del6" "${ip_blacklist_path}" || nft delete element inet fw4 pushbot_blacklist6 { $ip_del6 } 2>/dev/null || true
-			done
-		}
-		# 只有实际变化时才输出日志
-		if $need_update; then
-			echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】已 nftables 拉黑 ${black_ips}${black_ips6:+,$black_ips6}" >> ${logfile}
-		fi
-		# 回写黑名单文件（v4+v6）以内核 set 为准：超时移除的元素不在此列，自然从文件清除
-		nft list set inet fw4 pushbot_blacklist 2>/dev/null | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" > ${ip_blacklist_path}.tmp
-		# v6 只抓 elements 行内的地址（跳过 set 头注释/flags 等单词）
-		nft list set inet fw4 pushbot_blacklist6 2>/dev/null | grep -oE "elements = \{ [^}]*\}" | grep -oE "[0-9a-fA-F:]+:[0-9a-fA-F:]+" >> ${ip_blacklist_path}.tmp
-		if [ -s "${ip_blacklist_path}.tmp" ]; then
-			# 去重 + 过滤掉 set 头注释行可能的残留
-			sort -u ${ip_blacklist_path}.tmp > ${ip_blacklist_path}
-		else
-			rm -f ${ip_blacklist_path}.tmp
-		fi
-	else
-		ipset flush ip_blacklist >/dev/null 2>&1
-		if [ $ip_count -le "0" ]; then
-			iptables -D INPUT -m set --match-set ip_blacklist src -j DROP >/dev/null 2>&1
-			ipset destroy ip_blacklist >/dev/null 2>&1
-			if $need_update; then
-				echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】黑名单列表为空，清空 iptables 防火墙拉黑策略" >> ${logfile}
-			fi
-			> ${ip_blacklist_path}
-			cp "${ip_blacklist_path}" "$prev_file" 2>/dev/null
-			rm -f "${bl_state}.prevset"
-			return
-		fi
-		local log_enable="拉黑"
-		[ -z "$debuglevel" ] && log_enable=""
-		if [ -n "$log_enable" ]; then
-			echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】拉黑功能已启用，且读取到黑名单列表，将生成防火墙策略" >> ${logfile}
-		fi
-		ipset list ip_blacklist >/dev/null 2>&1 || ipset create ip_blacklist hash:ip timeout ${bl_timeout_sec} >/dev/null 2>&1
-		iptables -C INPUT -m set --match-set ip_blacklist src -j DROP >/dev/null 2>&1 || iptables -I INPUT -m set --match-set ip_blacklist src -j DROP >/dev/null 2>&1
-		for ip_black in `echo "$black_ips"|tr ',' ' '`; do
-			ipset -! add ip_blacklist $ip_black >/dev/null 2>&1
 		done
-		ipset list ip_blacklist 2>/dev/null | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" > ${ip_blacklist_path}.tmp
-		if [ -s "${ip_blacklist_path}.tmp" ]; then
-			mv ${ip_blacklist_path}.tmp ${ip_blacklist_path}
+	else
+		bl_rules=$(iptables -S INPUT 2>/dev/null) || { blacklist_error "读取 iptables INPUT 规则失败"; return 1; }
+		if raw=$(ipset save ip_blacklist 2>/dev/null); then
+			bl_exists4=1
+			bl_members=$(printf '%s\n' "$raw" | awk '$1=="add" && $2=="ip_blacklist" {print $3}')
 		else
-			rm -f ${ip_blacklist_path}.tmp
-		fi
-		# 只有实际变化时才输出日志
-		if $need_update; then
-			echo "`date \"+%Y-%m-%d %H:%M:%S\"` 【防火墙】已 iptables 拉黑 ${black_ips}" >> ${logfile}
+			names=$(ipset list -n 2>/dev/null) || { blacklist_error "读取 ipset 集合失败"; return 1; }
+			if printf '%s\n' "$names" | grep -qxF ip_blacklist; then
+				blacklist_error "读取 ipset 成员失败"; return 1
+			fi
 		fi
 	fi
+	bl_members=$(printf '%s\n' "$bl_members" | blacklist_members)
+	bl_snapshot_ready=1
+}
 
-	# 记录当前 set 元素快照（供下次判定防火墙是否主动变化——到期移除 vs 用户删除）
-	# 必须在 set 更新完成后记录；若 set 不存在（关闭/首次）则清空快照。
-	local prev_set_file="${bl_state}.prevset"
-	if [ -n "$cur_onoff" ] && [ "$cur_onoff" != "0" ]; then
-		if command -v nft >/dev/null 2>&1; then
-			if nft list set inet fw4 pushbot_blacklist >/dev/null 2>&1; then
-				nft list set inet fw4 pushbot_blacklist 2>/dev/null | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" > "$prev_set_file" 2>/dev/null || true
-				nft list set inet fw4 pushbot_blacklist6 2>/dev/null | grep -oE "elements = \{ [^}]*\}" | grep -oE "[0-9a-fA-F:]+:[0-9a-fA-F:]+" >> "$prev_set_file" 2>/dev/null || true
+function need_blacklist_sync(){
+	local state="/usr/bin/pushbot/api/.ip_blacklist.state" old
+	bl_snapshot_ready=0
+	blacklist_snapshot || return 1
+	[ ! -f "$state.prev" ] || [ ! -f "$ip_blacklist_path" ] && return 0
+	cmp -s "$state.prev" "$ip_blacklist_path" || return 0
+	[ "$(cat "$state.onoff" 2>/dev/null)" != "${web_login_black:-0}" ] && return 0
+	[ "$(cat "$state.timeout" 2>/dev/null)" != "$(parse_timeout "${ip_black_timeout:-0}")" ] && return 0
+	old=$(blacklist_members < "$state.prevset" 2>/dev/null)
+	[ "$old" != "$bl_members" ] && return 0
+	# ── 内核规则完整性检查（仅首次启动 / fw4 重启后执行一次）──
+	# 上面的检查覆盖了配置/文件/set 内容变化，变化时立即同步。
+	# 下面检查的是内核 set 和 DROP 规则是否完整，用于 fw4 重启后自动恢复。
+	# 此类检查涉及多次 nft/iptables 查询，若在主循环每轮都执行代价较高，
+	# 且系统短暂不稳定时可能误判（规则还没恢复就触发无意义重建）。
+	# 方案：用 boot_marker 控制，每次 pushbot 重启后仅首次进入时执行一次。
+	# ── 内核规则完整性检查（仅首次启动 / fw4 重启后执行一次）──
+	# boot_marker 在 pushbot 启动时创建，首次检查后删除，下次重启再创建。
+	# 不检查黑名单文件是否非空——反向同步可能已清空文件，但 set/规则仍需验证。
+	if [ "$web_login_black" = 1 ]; then
+		local boot_marker="${state}.boot"
+		if [ -f "$boot_marker" ]; then
+			rm -f "$boot_marker"
+			[ "$bl_exists4" = 0 ] && return 0
+			if [ "$firewall_mode" = nft ]; then
+				[ "$bl_exists6" = 0 ] && return 0
+				printf '%s\n' "$bl_rules" | grep -qE '^[[:space:]]*ip saddr @pushbot_blacklist[[:space:]]+drop([[:space:]]|$)' || return 0
+				printf '%s\n' "$bl_rules" | grep -qE '^[[:space:]]*ip6 saddr @pushbot_blacklist6[[:space:]]+drop([[:space:]]|$)' || return 0
+			else
+				printf '%s\n' "$bl_rules" | grep -qxF -- '-A INPUT -m set --match-set ip_blacklist src -j DROP' || return 0
 			fi
-		elif command -v ipset >/dev/null 2>&1; then
-			ipset list ip_blacklist 2>/dev/null | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" > "$prev_set_file" 2>/dev/null || true
+		fi
+	fi
+	bl_snapshot_ready=0
+	return 1
+}
+
+# 仅写发生变化的文件，复用原有 .tmp。
+function blacklist_store(){
+	{ [ -z "$2" ] || printf '%s\n' "$2"; } > "$ip_blacklist_path.tmp" || return 1
+	cmp -s "$ip_blacklist_path.tmp" "$1" || cp "$ip_blacklist_path.tmp" "$1"
+}
+
+# 文件保留用户增删，只剔除上轮内核有、这轮确认消失的旧成员。
+# ponytail: 本轮快照不是跨进程事务；若并发写入成为常态，再共用短临界区。
+function add_ip_black(){
+	local state="/usr/bin/pushbot/api/.ip_blacklist.state"
+	local timeout=$(parse_timeout "${ip_black_timeout:-0}") onoff="${web_login_black:-0}"
+	local requested previous prevset desired="" expired="" user_deleted="" ip family set exists members
+	local old_timeout=$(cat "$state.timeout" 2>/dev/null) reset=false cleanup=false
+	local added="" restored="" before changed=false rules_restored=false
+	if [ -n "$1" ] && { is_local_address "$1" || ip_in_whitelist "$1"; }; then
+		echo "$(date '+%Y-%m-%d %H:%M:%S') 【防火墙】IP $1 是本机或白名单地址，跳过拉黑" >> "$logfile"
+		return 1
+	fi
+	if [ -n "$1" ] || [ "$bl_snapshot_ready" != 1 ]; then
+		blacklist_snapshot || return 1
+	fi
+	bl_snapshot_ready=0
+	before="$bl_members"
+	requested=""
+	if [ -f "$ip_blacklist_path" ]; then
+		requested=$(cat "$ip_blacklist_path") || { blacklist_error "读取黑名单失败"; return 1; }
+	fi
+	requested=$(printf '%s\n%s\n' "$requested" "$1" | blacklist_members)
+	previous=$(blacklist_members < "$state.prev" 2>/dev/null)
+	prevset=$(blacklist_members < "$state.prevset" 2>/dev/null)
+	local explicit=$(printf '%s\n' "$1" | blacklist_members)
+	[ -z "$1" ] || [ -n "$explicit" ] || { blacklist_error "IP 地址无效"; return 1; }
+	if [ "$firewall_mode" != nft ] && [ -n "$explicit" ] && [ "${explicit#*:}" != "$explicit" ]; then
+		blacklist_error "当前 ipset 后端不支持 IPv6"; return 1
+	fi
+	for ip in $previous; do
+		printf '%s\n' "$requested" | grep -qxF "$ip" || user_deleted="$user_deleted $ip"
+	done
+	if [ "$onoff" = 1 ]; then
+		# set_changed: 当前 set 与上次快照不一致 → 内核重启/超时移除等非预期变化
+		# 此时 set 中"丢失"的 IP 不应标记为 expired（到期移除），而是重新添加。
+		local set_changed=false
+		[ "$before" != "$prevset" ] && set_changed=true
+		for ip in $requested; do
+			is_local_address "$ip" && continue
+			ip_in_whitelist "$ip" && continue
+			exists="$bl_exists4"; case "$ip" in *:*) exists="$bl_exists6";; esac
+			# 判断 IP 是否在当前 set 中
+			local in_before=false
+			printf '%s\n' "$before" | grep -qxF "$ip" && in_before=true
+			# 判断 IP 是否在上次快照中
+			local in_prevset=false
+			printf '%s\n' "$prevset" | grep -qxF "$ip" && in_prevset=true
+			# 判断 IP 是否在上次文件中
+			local in_previous=false
+			printf '%s\n' "$previous" | grep -qxF "$ip" && in_previous=true
+			
+			# 超时过期检测：set 存在，IP 在上次快照和文件中，但不在当前 set 中
+			# 这说明 IP 因为超时被 nftables 自动移除，应该标记为 expired 并从文件中删除
+			if [ "$exists" = 1 ] && [ "$timeout" -gt 0 ] && $in_prevset && $in_previous && ! $in_before; then
+				expired="$expired $ip"
+			else
+				# 其他情况：新增 IP、已在 set 中的 IP、或 set 不存在需要重建
+				desired="$desired $ip"
+			fi
+		done
+	fi
+	desired=$(printf '%s\n' "$desired" | blacklist_members)
+	[ "$old_timeout" != "$timeout" ] && reset=true
+	[ -z "$desired" ] && cleanup=true
+	if [ "$firewall_mode" = nft ]; then
+		# 一个事务处理规则、集合及元素；不重复添加已有成员，不刷新其倒计时。
+		{
+			if $cleanup || $reset; then
+				printf '%s\n' "$bl_rules" | awk '/@pushbot_blacklist(6)?[[:space:]]/ && /# handle / {print "delete rule inet fw4 input handle " $NF}'
+				[ "$bl_exists4" = 1 ] && echo 'delete set inet fw4 pushbot_blacklist'
+				[ "$bl_exists6" = 1 ] && echo 'delete set inet fw4 pushbot_blacklist6'
+			fi
+			if ! $cleanup; then
+				for family in 4 6; do
+					set=pushbot_blacklist; exists="$bl_exists4"
+					[ "$family" = 6 ] && { set=pushbot_blacklist6; exists="$bl_exists6"; }
+					if $reset || [ "$exists" = 0 ]; then
+						[ "$timeout" = 0 ] &&
+							echo "add set inet fw4 $set { type ipv${family}_addr; }" ||
+							echo "add set inet fw4 $set { type ipv${family}_addr; timeout ${timeout}s; }"
+					fi
+					local proto=ip; [ "$family" = 6 ] && proto=ip6
+					if $reset || ! printf '%s\n' "$bl_rules" | grep -qE "^[[:space:]]*$proto saddr @$set[[:space:]]+drop([[:space:]]|$)"; then
+						echo "insert rule inet fw4 input $proto saddr @$set drop"
+						rules_restored=true
+					fi
+				done
+				for ip in $desired; do
+					if $reset || ! printf '%s\n' "$before" | grep -qxF "$ip"; then
+						set=pushbot_blacklist; case "$ip" in *:*) set=pushbot_blacklist6;; esac
+						echo "add element inet fw4 $set { $ip }"
+					fi
+				done
+				if ! $reset; then
+					for ip in $before; do
+						if ! printf '%s\n' "$desired" | grep -qxF "$ip"; then
+							set=pushbot_blacklist; case "$ip" in *:*) set=pushbot_blacklist6;; esac
+							echo "delete element inet fw4 $set { $ip }"
+						fi
+					done
+				fi
+			fi
+			:
+		} > "$ip_blacklist_path.tmp" || { blacklist_error "写入 nft 事务失败"; return 1; }
+		if [ -s "$ip_blacklist_path.tmp" ]; then
+			nft -f "$ip_blacklist_path.tmp" 2>> "$logfile" || { blacklist_error "更新 nft 黑名单失败"; return 1; }
+			changed=true
 		fi
 	else
-		rm -f "$prev_set_file"
+		# ipset 同样增量更新；只有时长变化才重建。
+		if $cleanup || $reset; then
+			local rule
+			for rule in $(printf '%s\n' "$bl_rules" | grep -xF -- '-A INPUT -m set --match-set ip_blacklist src -j DROP' | awk '{print NR}'); do
+				iptables -D INPUT -m set --match-set ip_blacklist src -j DROP 2>> "$logfile" || { blacklist_error "删除 iptables 规则失败"; return 1; }
+			done
+			if [ "$bl_exists4" = 1 ]; then
+				ipset destroy ip_blacklist 2>> "$logfile" || { blacklist_error "删除 ipset 集合失败"; return 1; }
+			fi
+			bl_exists4=0; bl_rules=""; changed=true
+		fi
+		if ! $cleanup; then
+			if [ "$bl_exists4" = 0 ]; then
+				ipset create ip_blacklist hash:ip timeout "$timeout" 2>> "$logfile" || { blacklist_error "创建 ipset 集合失败"; return 1; }
+				changed=true
+			fi
+			if ! printf '%s\n' "$bl_rules" | grep -qxF -- '-A INPUT -m set --match-set ip_blacklist src -j DROP'; then
+				iptables -I INPUT -m set --match-set ip_blacklist src -j DROP 2>> "$logfile" || { blacklist_error "插入 iptables 规则失败"; return 1; }
+				rules_restored=true
+				changed=true
+			fi
+			for ip in $desired; do
+				case "$ip" in *:*) continue;; esac
+				if $reset || ! printf '%s\n' "$before" | grep -qxF "$ip"; then
+					ipset add ip_blacklist "$ip" 2>> "$logfile" || { blacklist_error "添加 ipset 成员失败"; return 1; }
+					changed=true
+				fi
+			done
+			if ! $reset; then
+				for ip in $before; do
+					if ! printf '%s\n' "$desired" | grep -qxF "$ip"; then
+						ipset del ip_blacklist "$ip" 2>> "$logfile" || { blacklist_error "删除 ipset 成员失败"; return 1; }
+						changed=true
+					fi
+				done
+			fi
+		fi
 	fi
+	if $changed; then
+		blacklist_snapshot || return 1
+		bl_snapshot_ready=0
+	fi
+	members="$desired"
+	[ "$firewall_mode" != nft ] && members=$(printf '%s\n' "$desired" | grep -v :)
+	if [ "$bl_members" != "$members" ]; then
+		blacklist_error "黑名单复核不一致"; return 1
+	fi
+	# 防火墙确认成功后再回写文件和快照；失败不提交成功状态。
+	blacklist_store "$ip_blacklist_path" "$desired" &&
+		blacklist_store "$state.prev" "$desired" &&
+		blacklist_store "$state.prevset" "$bl_members" &&
+		blacklist_store "$state.onoff" "$onoff" &&
+		blacklist_store "$state.timeout" "$timeout" || { blacklist_error "保存黑名单同步状态失败"; return 1; }
+	rm -f "$ip_blacklist_path.tmp"
+	for ip in $bl_members; do
+		if ! printf '%s\n' "$before" | grep -qxF "$ip"; then
+			if [ "$ip" != "$explicit" ] && printf '%s\n' "$previous" | grep -qxF "$ip"; then
+				restored="$restored $ip"
+			else
+				added="$added $ip"
+			fi
+		fi
+	done
+	[ -z "$added" ] || echo "$(date '+%Y-%m-%d %H:%M:%S') 【防火墙】【新增封禁】${added# }" >> "$logfile"
+	[ -z "$restored" ] || echo "$(date '+%Y-%m-%d %H:%M:%S') 【防火墙】【恢复封禁】${restored# }" >> "$logfile"
+	[ -z "$user_deleted" ] || echo "$(date '+%Y-%m-%d %H:%M:%S') 【防火墙】【手动解封】${user_deleted# }" >> "$logfile"
+	[ -z "$expired" ] || echo "$(date '+%Y-%m-%d %H:%M:%S') 【防火墙】【到期或内核移除】${expired# }" >> "$logfile"
+	if $cleanup && $changed; then
+		echo "$(date '+%Y-%m-%d %H:%M:%S') 【防火墙】已清空黑名单规则和集合" >> "$logfile"
+	elif $reset; then
+		echo "$(date '+%Y-%m-%d %H:%M:%S') 【防火墙】封禁时长已更新为 $timeout 秒" >> "$logfile"
+	elif $rules_restored && [ -z "$added$restored" ]; then
+		echo "$(date '+%Y-%m-%d %H:%M:%S') 【防火墙】已恢复黑名单 DROP 规则" >> "$logfile"
+	fi
+	return 0
 }
 
 # 发送定时数据
@@ -2781,6 +2644,10 @@ pushbot_init;[ $? -eq 1 ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】�
 echo "`date "+%Y-%m-%d %H:%M:%S"` 【初始化】载入在线设备" >> ${logfile}
 > ${dir}send_enable.lock && pushbot_first && deltemp
 echo "`date "+%Y-%m-%d %H:%M:%S"` 【初始化】初始化完成" >> ${logfile}
+
+# 首次启动标记：供 need_blacklist_sync 的内核规则检查只执行一次
+# 启动时创建 → 首次检查时删除 → 下次重启再创建
+touch /usr/bin/pushbot/api/.ip_blacklist.state.boot 2>/dev/null
 
 # 循环（仅当明确启用 =1 时运行；0/空/读取失败均不进入，脚本自然退出，不空转）
 while [ "$pushbot_enable" = "1" ]; do
