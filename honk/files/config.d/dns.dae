@@ -1,8 +1,8 @@
 # dns.dae
 dns {
-    bind:'tcp+udp://[::]:53530'
-    client_subnet:auto
-    #ipversion_prefer:4
+    bind: 'tcp+udp://[::]:53530'
+    client_subnet: auto
+    #ipversion_prefer: 4
     upstream {
         local: 'udp://127.0.0.1:53' -> direct
         remote: 'tcp+udp://dns.google:53'
