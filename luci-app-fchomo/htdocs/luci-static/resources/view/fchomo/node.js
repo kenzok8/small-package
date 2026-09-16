@@ -207,11 +207,14 @@ class VlessEncryptionClient {
 return view.extend({
 	load() {
 		return Promise.all([
-			uci.load('fchomo')
+			uci.load('fchomo'),
+			hm.getFeatures()
 		]);
 	},
 
 	render(data) {
+		const features = data[1];
+
 		let m, s, o, ss, so;
 
 		m = new form.Map('fchomo', _('Edit outbound'));
@@ -2699,6 +2702,12 @@ return view.extend({
 
 		so = ss.option(form.DummyValue, '_update');
 		so.cfgvalue = hm.renderResDownload;
+		so.editable = true;
+		so.modalonly = false;
+
+		so = ss.option(form.DummyValue, '_link');
+		so.cfgvalue = hm.renderResLink;
+		so.readonly = features.has_luci_app_tinyfilemanager ? false : _('luci-app-tinyfilemanager is not installed, please install it first.');
 		so.editable = true;
 		so.modalonly = false;
 		/* Provider END */

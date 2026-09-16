@@ -1635,6 +1635,28 @@ function renderResDownload(section_id) {
 	return El;
 }
 
+function renderResLink(section_id) {
+	const section_type = this.section.sectiontype;
+	const type = uci.get(this.config, section_id, 'type');
+
+	let El = E([
+		E('span', {
+			title: this.readonly ? this.readonly : null
+		}, [
+			E('button', {
+				class: 'cbi-button cbi-button-apply',
+				disabled: (this.readonly !== false || type === 'inline') || null,
+				click: ui.createHandlerFn(this, (section_type, section_id) => {
+					let path = encodeURIComponent(`${HM_DIR.replace(/^\//, '')}/${section_type}`);
+					return window.open(`${window.location.origin}/tinyfilemanager/index.php?p=${path}&view=${section_id}`, '_blank', 'noopener');
+				}, section_type, section_id)
+			}, [ _('🔗') ])
+		])
+	]);
+
+	return El;
+}
+
 function handleGenKey(option) {
 	const section_id = this.section.section;
 	const type = this.section.getOption('type')?.formvalue(section_id);
@@ -2182,6 +2204,7 @@ return baseclass.extend({
 	updateStatus,
 	getDashURL,
 	renderResDownload,
+	renderResLink,
 	handleGenKey,
 	handleReload,
 	handleRemoveIdles,

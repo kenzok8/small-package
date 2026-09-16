@@ -126,12 +126,14 @@ return view.extend({
 	load() {
 		return Promise.all([
 			uci.load('fchomo'),
+			hm.getFeatures(),
 			hm.decompressGzip(hm.rulesetdoc[1], true).then((res) => { return hm.rulesetdoc[0] + hm.encodeBase64(res); })
 		]);
 	},
 
 	render(data) {
-		const rulesetdoc = data[1];
+		const features = data[1];
+		const rulesetdoc = data[2];
 
 		let m, s, o;
 
@@ -425,6 +427,12 @@ return view.extend({
 
 		o = s.option(form.DummyValue, '_update');
 		o.cfgvalue = hm.renderResDownload;
+		o.editable = true;
+		o.modalonly = false;
+
+		o = s.option(form.DummyValue, '_link');
+		o.cfgvalue = hm.renderResLink;
+		o.readonly = features.has_luci_app_tinyfilemanager ? false : _('luci-app-tinyfilemanager is not installed, please install it first.');
 		o.editable = true;
 		o.modalonly = false;
 		/* Rule set END */
