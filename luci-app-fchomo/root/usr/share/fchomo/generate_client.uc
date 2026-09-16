@@ -516,14 +516,15 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"target-rematch-name": cfg.target_rematch_name,
 		"target-sub-rule": cfg.target_sub_rule,
 
-		/* HTTP / SOCKS / Shadowsocks / VMess / VLESS / Trojan / TUIC / hysteria2 / ZeroTier / Tailscale / Masque */
+		/* HTTP / SOCKS / Shadowsocks / VMess / VLESS / Trojan / TUIC / hysteria2 / ZeroTier / Tailscale / Masque / EasyTier */
 		username: cfg.username,
 		uuid: cfg.vmess_uuid || cfg.uuid,
 		cipher: cfg.vmess_chipher || cfg.shadowsocks_chipher,
 		password: cfg.shadowsocks_password || cfg.password,
+		hostname: cfg.tailscale_hostname || cfg.easytier_hostname,
 		headers: cfg.headers ? json(cfg.headers) : null,
 		network: cfg.zerotier_network_id || cfg.masque_network || null,
-		"state-dir": `${HM_DIR}/${ucinode}/${cfg['.name']}`,
+		"state-dir": (cfg.type in ['zerotier', 'tailscale', 'easytier']) ? `${HM_DIR}/${ucinode}/${cfg['.name']}` : null,
 
 		/* Shadowsocks */
 
@@ -642,6 +643,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"remote-trace-level": strToInt(cfg.zerotier_trace_level),
 		"low-bandwidth": strToBool(cfg.zerotier_low_bandwidth),
 		"encrypted-hello": strToBool(cfg.zerotier_encrypted_hello),
+		"identity-secret": cfg.zerotier_identity_secret,
 		//planet: `${HM_DIR}/${ucinode}/${cfg['.name']}/planet`,
 		...(isEmpty(cfg.zerotier_orbit) ? {} : {
 			orbit: map([0], () => {
@@ -663,7 +665,6 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"persistent-keepalive": strToInt(cfg.wireguard_persistent_keepalive),
 
 		/* Tailscale */
-		hostname: cfg.tailscale_hostname,
 		"auth-key": cfg.tailscale_auth_key,
 		"control-url": cfg.tailscale_control_url,
 		ephemeral: strToBool(cfg.tailscale_ephemeral),
@@ -672,6 +673,25 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		"exit-node-allow-lan-access": strToBool(cfg.tailscale_exit_node_allow_lan_access),
 
 		/* Masque */
+
+		/* EasyTier */
+		"instance-name": cfg.type === 'easytier' ? cfg['.name'] : null,
+		"network-name": cfg.easytier_network_name,
+		"network-secret": cfg.easytier_network_secret,
+		"private-mode": strToBool(cfg.easytier_private_mode),
+		peers: cfg.easytier_peers, // Array
+		"secure-mode": strToBool(cfg.easytier_secure_mode),
+		"local-private-key": cfg.easytier_local_private_key,
+		"local-public-key": cfg.easytier_local_public_key,
+		"exit-nodes": cfg.easytier_exit_nodes, // Array
+		"proxy-networks": cfg.easytier_proxy_networks, // Array
+		"enable-encryption": cfg.easytier_enable_encryption === '0' ? false : null,
+		"encryption-algorithm": cfg.easytier_encryption_algorithm,
+		"enable-exit-node": strToBool(cfg.easytier_enable_exit_node),
+		"latency-first": strToBool(cfg.easytier_latency_first),
+		"disable-p2p": strToBool(cfg.easytier_disable_p2p),
+		"accept-dns": strToBool(cfg.easytier_accept_dns),
+		"tld-dns-zone": cfg.easytier_tld_dns_zone,
 
 		/* SSH */
 		"private-key-passphrase": cfg.ssh_priv_key_passphrase,
@@ -759,8 +779,13 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		} : null,
 
 		/* VPN fields */
+		listeners: cfg.endpoint_listeners, // Array
+		//"mapped-listeners": cfg.endpoint_mapped_listeners, // Array
+		"no-listener": cfg.endpoint_no_listener === '0' ? false : cfg.type === 'easytier' ? true : null,
 		ip: cfg.endpoint_ip,
+		ipv4: cfg.endpoint_ipv4,
 		ipv6: cfg.endpoint_ipv6,
+		dhcp: strToBool(cfg.endpoint_dhcp),
 		mtu: strToInt(cfg.endpoint_mtu) || null,
 		"remote-dns-resolve": strToBool(cfg.endpoint_remote_dns_resolve),
 		dns: cfg.endpoint_dns, // Array

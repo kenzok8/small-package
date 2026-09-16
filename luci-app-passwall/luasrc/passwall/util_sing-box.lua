@@ -347,9 +347,20 @@ function gen_outbound(flag, node, tag, proxy_table)
 					Host = node.ws_host,
 					["User-Agent"] = node.user_agent
 				} or nil,
-				max_early_data = tonumber(node.ws_maxEarlyData) or nil,
-				early_data_header_name = (node.ws_earlyDataHeaderName) and node.ws_earlyDataHeaderName or nil --要与 Xray-core 兼容，请将其设置为 Sec-WebSocket-Protocol。它需要与服务器保持一致。
 			}
+			local path = api.UrlDecode(node.ws_path)
+			local path_dat = api.split(path, "?")
+			local params = {}
+			for _, v in pairs(api.split(path_dat[2], '&')) do
+				local t = api.split(v, '=')
+				params[t[1]] = t[2]
+			end
+			local ed = tonumber(params.ed)
+			if ed then
+				v2ray_transport.path = path_dat[1]
+				v2ray_transport.max_early_data = ed
+			end
+			v2ray_transport.early_data_header_name = params.eh or "Sec-WebSocket-Protocol"
 		end
 
 		if node.transport == "httpupgrade" then
@@ -762,7 +773,7 @@ function gen_config_server(node)
 			type = "ws",
 			path = node.ws_path or "/",
 			headers = (node.ws_host ~= nil) and { Host = node.ws_host } or nil,
-			early_data_header_name = (node.ws_earlyDataHeaderName) and node.ws_earlyDataHeaderName or nil --要与 Xray-core 兼容，请将其设置为 Sec-WebSocket-Protocol。它需要与服务器保持一致。
+			early_data_header_name = (node.ws_earlyDataHeaderName) and node.ws_earlyDataHeaderName or "Sec-WebSocket-Protocol"
 		}
 	end
 

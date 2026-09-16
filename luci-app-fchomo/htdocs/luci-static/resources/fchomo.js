@@ -208,6 +208,7 @@ const outbound_type = [
 	['wireguard', _('WireGuard') + ' - ' + _('UDP')], // Endpoint
 	['tailscale', _('Tailscale') + ' - ' + _('UDP')], // Endpoint
 	['masque', _('Masque') + ' - ' + _('UDP')], // Endpoint // https://blog.cloudflare.com/post-quantum-warp/
+	['easytier', _('EasyTier') + ' - ' + _('TCP/UDP')], // Endpoint
 	['ssh', _('SSH') + ' - ' + _('TCP')]
 ];
 

@@ -88,7 +88,16 @@ local function build_common(node)
 	if net == "ws" then
 		local opts = node["ws-opts"]
 		if opts then
-			o.transport.path = opts.path
+			local path = opts.path or "/"
+			local ed = opts["max-early-data"]
+			local eh = opts["early-data-header-name"]
+			if ed then
+				path = path .. "?ed=" .. ed
+			end
+			if eh then
+				path = path .. (path:find("?", 1, true) and "&eh=" or "?eh=") .. eh
+			end
+			o.transport.path = path
 			o.transport.host = opts.headers and opts.headers.Host
 		end
 

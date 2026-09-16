@@ -274,12 +274,12 @@ return view.extend({
 		so = ss.taboption('field_general', form.Value, 'server', _('Server address'));
 		so.datatype = 'host';
 		so.rmempty = false;
-		so.depends({type: /^(rematch|direct|zerotier|tailscale)$/, '!reverse': true});
+		so.depends({type: /^(rematch|direct|zerotier|tailscale|easytier)$/, '!reverse': true});
 
 		so = ss.taboption('field_general', form.Value, 'port', _('Port'));
 		so.datatype = 'port';
 		so.rmempty = false;
-		so.depends({type: /^(rematch|direct|mieru|zerotier|tailscale)$/, '!reverse': true});
+		so.depends({type: /^(rematch|direct|mieru|zerotier|tailscale|easytier)$/, '!reverse': true});
 
 		/* Rematch fields */
 		// https://github.com/MetaCubeX/mihomo/pull/2862
@@ -856,6 +856,12 @@ return view.extend({
 		so.depends('type', 'zerotier');
 		so.modalonly = true;
 
+		so = ss.taboption('field_general', form.TextValue, 'zerotier_identity_secret', 'identity.secret',
+			_('Used to replace the contents of default %s.').format('<code>identity.secret</code> file'));
+		so.placeholder = '0123456789:0:public-key:private-key';
+		so.depends('type', 'zerotier');
+		so.modalonly = true;
+
 		so = ss.taboption('field_general', form.TextValue, 'zerotier_planet_file', 'Planet file',
 			_('Used to replace the built-in official %s.').format('<code>Earth</code> Planet file'));
 		so.placeholder = _('Add the base64 text of the planet file here.');
@@ -1024,6 +1030,149 @@ return view.extend({
 		so.depends('type', 'masque');
 		so.modalonly = true;
 
+		/* EasyTier fields */
+		so = ss.taboption('field_general', form.DummyValue, '_easytier_doc', null);
+		so.load = function() {
+			return '<a target="_blank" href="%s" rel="noreferrer noopener">%s</a>'
+				.format('https://easytier.cn/guide/introduction.html', _('Configuration Document'));
+		}
+		so.rawhtml = true;
+		so.depends('type', 'easytier');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'easytier_network_name', _('Network name'));
+		so.rmempty = false;
+		so.depends('type', 'easytier');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'easytier_network_secret', _('Network secret'));
+		so.depends('type', 'easytier');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'easytier_private_mode', _('Private network'),
+			_('Only nodes using the same %s and %s as this network are permitted to perform a handshake or relay traffic through this node.')
+			.format(_('Network name'), _('Network secret')));
+		so.default = so.disabled;
+		so.depends('type', 'easytier');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'easytier_hostname', _('Hostname'));
+		so.datatype = 'hostname';
+		so.placeholder = 'mihomo';
+		so.depends('type', 'easytier');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.DynamicList, 'easytier_peers', _('Peers'));
+		so.placeholder = 'tcp://192.0.2.10:11010';
+		so.validate = hm.validateUrl;
+		so.depends('type', 'easytier');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'easytier_secure_mode', _('Secure Mode'));
+		so.default = so.disabled;
+		so.validate = function(section_id, value) {
+			const secure_mode = this.getUIElement(section_id).node.querySelector('input');
+			const peers = this.section.getOption('easytier_peers').formvalue(section_id);
+			const local_private_key = this.section.getOption('easytier_local_private_key').formvalue(section_id);
+			const local_public_key = this.section.getOption('easytier_local_public_key').formvalue(section_id);
+
+			// Force enabled
+			if ((local_private_key && local_public_key) || peers.filter(e => new URL(e).searchParams.get('peer-public-key')).length > 0) {
+				secure_mode.checked = true;
+				secure_mode.disabled = true;
+			} else
+				secure_mode.removeAttribute('disabled');
+
+			return true;
+		}
+		so.depends('type', 'easytier');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', hm.GenValue, 'easytier_local_private_key', _('Client private key'),
+			_('Base64 encoded X25519 private key.'));
+		so.hm_options = {
+			type: 'wg-keypair',
+			callback: function(result) {
+				return [
+					[this.option, result.private_key],
+					['easytier_local_public_key', result.public_key]
+				]
+			}
+		}
+		so.password = true;
+		so.validate = L.bind(hm.validateBase64Key, so, 44);
+		so.depends('type', 'easytier');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', hm.CopyValue, 'easytier_local_public_key', _('Client public key'),
+			_('Base64 encoded X25519 public key.'));
+		so.depends('type', 'easytier');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.DynamicList, 'easytier_exit_nodes', _('Exit nodes'),
+			_('List of exit nodes to use (%s of peer nodes).').format(_('Virtual IPv4 address')) + '</br>' +
+			_('Used to forward traffic to the specified nodes for external access.'));
+		so.datatype = 'ip4addr(1)';
+		so.placeholder = '10.144.0.1';
+		so.depends('type', 'easytier');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.DynamicList, 'easytier_proxy_networks', _('Subnet proxy'),
+			_('List of local subnets (CIDR) to be open to other peers in the EasyTier network.'));
+		so.datatype = 'cidr4';
+		so.placeholder = '10.0.0.0/24';
+		so.depends('type', 'easytier');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'easytier_enable_encryption', _('Enable encryption'));
+		so.default = so.enabled;
+		so.depends('type', 'easytier');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'easytier_encryption_algorithm', _('Encryption algorithm'));
+		so.value('', _('Keep default'));
+		so.value('xor', _('xor'));
+		so.value('chacha20', _('chacha20'));
+		so.value('aes-gcm', _('aes-gcm'));
+		so.value('aes-gcm-256', _('aes-gcm-256'));
+		so.value('openssl-aes128-gcm', _('openssl-aes128-gcm'));
+		so.value('openssl-aes256-gcm', _('openssl-aes256-gcm'));
+		so.value('openssl-chacha20', _('openssl-chacha20'));
+		so.depends('easytier_enable_encryption', '1');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'easytier_enable_exit_node', _('As exit node'),
+			_('Allow this node to be an exit node.'));
+		so.default = so.disabled;
+		so.depends('type', 'easytier');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'easytier_latency_first', _('Latency first'),
+			_('Ignore the number of intermediate hops and select the path with the lowest total latency.'));
+		so.default = so.disabled;
+		so.depends('type', 'easytier');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'easytier_disable_p2p', _('Disable P2P'),
+			_('After disabling, communication will only be possible via relay.'));
+		so.default = so.disabled;
+		so.depends('type', 'easytier');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Flag, 'easytier_accept_dns', _('Enable MagicDNS'),
+			_('Whether to accept DNS configurations distributed by the network.'));
+		so.default = so.disabled;
+		so.depends('type', 'easytier');
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.Value, 'easytier_tld_dns_zone', _('TLD DNS zone'),
+			_('TLD DNS zone used by MagicDNS, default is %s.').format('<code>et.net.</code>') + '</br>' +
+			_('You can add %s in the %s to resolve A/PTR records within the virtual network.').format('<code>et://proxy-name</code>', _('DNS server')) + '</br>' +
+			_('Using this in conjunction with %s is recommended.').format(_('DNS policy')));
+		so.placeholder = 'et.net.';
+		so.depends('easytier_accept_dns', '1');
+		so.modalonly = true;
+
 		/* SSH fields */
 		so = ss.taboption('field_general', form.TextValue, 'ssh_priv_key', _('Priv-key'));
 		so.depends('type', 'ssh');
@@ -1094,9 +1243,9 @@ return view.extend({
 		so.depends({type: /^(hysteria2|openvpn|masque)$/});
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.Flag, 'udp', _('UDP'));
+		so = ss.taboption('field_general', form.Flag, 'udp', _('Force UDP'));
 		so.default = so.disabled;
-		so.depends({type: /^(rematch|direct|socks5|ss|mieru|vmess|vless|trojan|anytls|trusttunnel|zerotier|wireguard|tailscale|masque)$/});
+		so.depends({type: /^(rematch|direct|socks5|ss|mieru|vmess|vless|trojan|anytls|trusttunnel|zerotier|wireguard|tailscale|masque|easytier)$/});
 		so.depends({type: 'snell', snell_version: /^(3|4|5)$/});
 		so.modalonly = true;
 
@@ -1501,49 +1650,77 @@ return view.extend({
 			_('Auto configure firewall'));
 		so.default = so.enabled;
 		so.validate = function(section_id, value) {
-			const primary_port = this.section.getOption('zerotier_primary_port').formvalue(section_id);
-			const secondary_port = this.section.getOption('zerotier_secondary_port').formvalue(section_id);
+			const type = this.section.getOption('type').formvalue(section_id);
 			const auto_firewall = this.getUIElement(section_id).node.querySelector('input');
 
-			// Force disabled
-			if ((!primary_port || primary_port <= 0) && (!secondary_port || secondary_port <= 0)) {
-				auto_firewall.checked = false;
-				auto_firewall.disabled = true;
-			} else
-				auto_firewall.removeAttribute('disabled');
+			switch (type) {
+				case 'zerotier':
+					const primary_port = this.section.getOption('zerotier_primary_port').formvalue(section_id);
+					const secondary_port = this.section.getOption('zerotier_secondary_port').formvalue(section_id);
+
+					// Force disabled
+					if ((!primary_port || primary_port <= 0) && (!secondary_port || secondary_port <= 0)) {
+						auto_firewall.checked = false;
+						auto_firewall.disabled = true;
+					} else
+						auto_firewall.removeAttribute('disabled');
+					break;
+				case 'easytier':
+					const no_listeners = this.section.getOption('endpoint_no_listener').formvalue(section_id);
+					const listeners = this.section.getOption('endpoint_listeners').formvalue(section_id);
+
+					// Force disabled
+					if (no_listeners === '1' || listeners.filter(Boolean).length == 0) {
+						auto_firewall.checked = false;
+						auto_firewall.disabled = true;
+					} else
+						auto_firewall.removeAttribute('disabled');
+					break;
+			}
 
 			return true;
 		}
-		so.depends('type', 'zerotier');
+		so.depends({type: /^(zerotier|easytier)$/});
 		so.modalonly = true;
+
+		const zerotier_listen_port = {
+			load(section_id) {
+				const listen_port = this.map.data.get(this.section.config, section_id, 'zerotier_listen_port') || '';
+				const value = [
+					this.map.data.get(this.section.config, section_id, 'zerotier_primary_port'),
+					this.map.data.get(this.section.config, section_id, 'zerotier_secondary_port')
+				].filter(Boolean).join(',');
+
+				if (listen_port != value) {
+					uci.set(this.section.config, section_id, 'zerotier_listen_port', value);
+					return uci.save()
+						.then(L.bind(this.map.load, this.map))
+						.then(L.bind(this.map.reset, this.map))
+						.catch(() => {});
+				}
+
+				return form.Value.prototype.load.apply(this, arguments);
+			},
+
+			write(section_id, formvalue) {
+				const value = [
+					this.section.getOption('zerotier_primary_port').formvalue(section_id),
+					this.section.getOption('zerotier_secondary_port').formvalue(section_id)
+				].filter(Boolean).join(',');
+
+				uci.set(this.section.config, section_id, 'zerotier_listen_port', value);
+
+				return form.Value.prototype[formvalue ? 'write' : 'remove'].apply(this, arguments);
+			}
+		};
 
 		so = ss.taboption('field_vpn', form.Value, 'zerotier_primary_port', _('Listen port') + ' (%s)'.format(_('Primary')),
 			_('%s UDP port. <code>0</code> selects an available port.').format(_('Primary')));
 		so.datatype = 'port';
 		so.placeholder = '9993';
-		so.load = function(section_id) {
-			const listen_port = this.map.data.get(this.section.config, section_id, 'zerotier_listen_port');
-			const value = [
-				this.map.data.get(this.section.config, section_id, 'zerotier_primary_port'),
-				this.map.data.get(this.section.config, section_id, 'zerotier_secondary_port')
-			].filter(Boolean).join(',');
-
-			if (listen_port !== value) {
-				uci.set(this.section.config, section_id, 'zerotier_listen_port', value);
-				uci.save();
-			}
-
-			return form.Value.prototype.load.apply(this, arguments);
-		}
-		so.write = function(section_id, formvalue) {
-			uci.set(this.section.config, section_id, 'zerotier_listen_port', [
-				this.section.getOption('zerotier_primary_port').formvalue(section_id),
-				this.section.getOption('zerotier_secondary_port').formvalue(section_id)
-			].filter(Boolean).join(','));
-
-			return form.Value.prototype[formvalue ? 'write' : 'remove'].apply(this, arguments);
-		}
-		so.remove = so.write;
+		so.load = zerotier_listen_port.load;
+		so.write = zerotier_listen_port.write;
+		so.remove = zerotier_listen_port.write;
 		so.depends('type', 'zerotier');
 		so.modalonly = true;
 
@@ -1552,30 +1729,60 @@ return view.extend({
 			_('<code>-1</code> disables it.'));
 		so.datatype = 'or(port, -1)';
 		so.placeholder = '0';
-		so.load = function(section_id) {
-			const listen_port = this.map.data.get(this.section.config, section_id, 'zerotier_listen_port');
-			const value = [
-				this.map.data.get(this.section.config, section_id, 'zerotier_primary_port'),
-				this.map.data.get(this.section.config, section_id, 'zerotier_secondary_port')
-			].filter(Boolean).join(',');
-
-			if (listen_port !== value) {
-				uci.set(this.section.config, section_id, 'zerotier_listen_port', value);
-				uci.save();
-			}
-
-			return form.Value.prototype.load.apply(this, arguments);
-		}
-		so.write = function(section_id, formvalue) {
-			uci.set(this.section.config, section_id, 'zerotier_listen_port', [
-				this.section.getOption('zerotier_primary_port').formvalue(section_id),
-				this.section.getOption('zerotier_secondary_port').formvalue(section_id)
-			].filter(Boolean).join(','));
-
-			return form.Value.prototype[formvalue ? 'write' : 'remove'].apply(this, arguments);
-		}
-		so.remove = so.write;
+		so.load = zerotier_listen_port.load;
+		so.write = zerotier_listen_port.write;
+		so.remove = zerotier_listen_port.write;
 		so.depends('type', 'zerotier');
+		so.modalonly = true;
+
+		const easytier_listen_port = {
+			load(section_id) {
+				const listen_port = this.map.data.get(this.section.config, section_id, 'easytier_listen_port') || '';
+				const value = [...new Set(this.map.data.get(this.section.config, section_id, 'endpoint_listeners')?.map(uri => new URL(uri).port) || [])]
+					.filter(Boolean).join(',');
+
+				if (listen_port != value) {
+					uci.set(this.section.config, section_id, 'easytier_listen_port', value);
+					return uci.save()
+						.then(L.bind(this.map.load, this.map))
+						.then(L.bind(this.map.reset, this.map))
+						.catch(() => {});
+				}
+
+				return form.Value.prototype.load.apply(this, arguments);
+			},
+
+			write(section_id, formvalue) {
+				const value = [...new Set(formvalue?.map(uri => new URL(uri).port) || [])]
+					.filter(Boolean).join(',');
+
+				uci.set(this.section.config, section_id, 'easytier_listen_port', value);
+
+				return form.Value.prototype[formvalue ? 'write' : 'remove'].apply(this, arguments);
+			}
+		};
+
+		so = ss.taboption('field_vpn', form.DynamicList, 'endpoint_listeners', _('Listeners'),
+			_('Only the address %s is valid.').format('0.0.0.0'));
+		so.placeholder = 'tcp://0.0.0.0:11010';
+		so.default = ['tcp://0.0.0.0:11010', 'udp://0.0.0.0:11010'];
+		so.load = easytier_listen_port.load;
+		so.write = easytier_listen_port.write;
+		so.remove = easytier_listen_port.write;
+		so.validate = hm.validateUrl;
+		so.depends({type: 'easytier', endpoint_no_listener: '0'});
+		so.modalonly = true;
+
+		//so = ss.taboption('field_vpn', form.DynamicList, 'endpoint_mapped_listeners', _('Mapped listeners'),
+		//	_('list of public IP address of the listeners.'));
+		//so.placeholder = 'tcp://203.0.113.10:11010';
+		//so.validate = hm.validateUrl;
+		//so.depends({type: 'easytier', endpoint_no_listener: '0'});
+		//so.modalonly = true;
+
+		so = ss.taboption('field_vpn', form.Flag, 'endpoint_no_listener', _('NO Listener'));
+		so.default = so.enabled;
+		so.depends('type', 'easytier');
 		so.modalonly = true;
 
 		so = ss.taboption('field_vpn', form.Value, 'endpoint_ip', _('Virtual address'),
@@ -1604,6 +1811,13 @@ return view.extend({
 		so.depends({type: 'masque', masque_network: /^(|h2)$/});
 		so.modalonly = true;
 
+		so = ss.taboption('field_vpn', form.Value, 'endpoint_ipv4', _('Virtual IPv4 address'),
+			_('The %s address used by local machine in the %s network.').format(_('IPv4'), _('VPN')));
+		so.datatype = 'or(ip4addr(1), cidr4)';
+		so.placeholder = '10.144.0.1/24';
+		so.depends('type', 'easytier');
+		so.modalonly = true;
+
 		so = ss.taboption('field_vpn', form.Value, 'endpoint_ipv6', _('Virtual IPv6 address'),
 			_('The %s address used by local machine in the %s network.').format(_('IPv6'), _('VPN')));
 		so.datatype = 'or(ip6addr(1), cidr6)';
@@ -1628,6 +1842,26 @@ return view.extend({
 		so.depends({type: 'masque', masque_network: /^(|h2)$/});
 		so.modalonly = true;
 
+		so = ss.taboption('field_vpn', form.Flag, 'endpoint_dhcp', _('Use DHCP'),
+			_('Use DHCP to obtain IP address.') + '</br>' +
+			_('Auto Enable when %s is empty.').format(_('Virtual IPv4 address')));
+		so.default = so.disabled;
+		so.validate = function(section_id, value) {
+			const ipv4 = this.section.getOption('endpoint_ipv4').formvalue(section_id);
+			const dhcp = this.getUIElement(section_id).node.querySelector('input');
+
+			// Force enabled
+			if (!ipv4) {
+				dhcp.checked = true;
+				dhcp.disabled = true;
+			} else
+				dhcp.removeAttribute('disabled');
+
+			return true;
+		}
+		so.depends('type', 'easytier');
+		so.modalonly = true;
+
 		so = ss.taboption('field_vpn', form.Value, 'endpoint_mtu', _('MTU'));
 		so.datatype = 'range(0,9000)';
 		so.placeholder = '1400';
@@ -1646,12 +1880,15 @@ return view.extend({
 				case 'masque':
 					def_mtu = '1280';
 					break;
+				case 'easytier':
+					def_mtu = '1380';
+					break;
 			}
 			UIEl.node.querySelector('input').placeholder = def_mtu;
 
 			return true;
 		}
-		so.depends({type: /^(zerotier|wireguard)$/});
+		so.depends({type: /^(zerotier|wireguard|easytier)$/});
 		so.depends({type: 'masque', masque_network: /^(|h2)$/});
 		so.modalonly = true;
 

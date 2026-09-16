@@ -517,6 +517,7 @@ return view.extend({
 			so.value('gvisor', _('gVisor'), _('Based on google/gvisor.'));
 			so.value('mixed', _('Mixed'), _('Mixed <code>system</code> TCP stack and <code>gVisor</code> UDP stack.'));
 		}
+		so.value('mips', _('mihomo IP stack (MIPS)'));
 		so.default = 'system';
 		so.rmempty = false;
 
