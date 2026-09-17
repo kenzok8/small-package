@@ -1402,6 +1402,16 @@ function yaml2json(content, command) {
 
 	return callYaml2Json(content, command).then(res => res.result);
 }
+function yamlfile2json(type, filename, command) {
+	const callYamlfile2Json = rpc.declare({
+		object: 'luci.fchomo',
+		method: 'yamlfile2json',
+		params: ['type', 'filename', 'command'],
+		expect: { '': {} }
+	});
+
+	return callYamlfile2Json(type, filename, command).then(res => res.result);
+}
 
 function isEmpty(res) {
 	if (res == null) return true;                                                // null, undefined
@@ -1623,6 +1633,8 @@ function renderResDownload(section_id) {
 				if (type === 'http') {
 					return downloadFile(section_type, section_id, url, header).then((res) => {
 						ui.addNotification(null, E('p', _('Download successful.')), 'info');
+						if (this.callback)
+							this.callback(section_type, section_id);
 					}).catch((e) => {
 						ui.addNotification(null, E('p', _('Download failed: %s').format(e)), 'error');
 					});
@@ -2188,6 +2200,7 @@ return baseclass.extend({
 	shuffle,
 	json2yaml,
 	yaml2json,
+	yamlfile2json,
 	isEmpty,
 	removeBlankAttrs,
 	toUciname,

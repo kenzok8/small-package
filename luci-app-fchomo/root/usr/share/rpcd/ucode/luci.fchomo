@@ -319,6 +319,20 @@ const methods = {
 		}
 	},
 
+	yamlfile2json: {
+		args: { type: 'type', filename: 'filename', command: 'command' },
+		call: function(req) {
+			if (!(req.args?.type in RES_TYPE))
+				return { content: null, error: 'illegal type' };
+
+			if ((!req.args?.filename) || match(req.args?.filename, /\.\.\//))
+				return { content: null, error: 'illegal filename' };
+
+			const filepath = `${HM_DIR}/${req.args?.type}/${req.args?.filename}`;
+			return { result: json(trim(yqReadFile('-oj', req.args?.command || '.', filepath)) || '{}') };
+		}
+	},
+
 	dir_ls: {
 		args: { type: 'type' },
 		call: function(req) {

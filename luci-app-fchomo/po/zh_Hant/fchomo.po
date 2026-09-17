@@ -75,10 +75,10 @@ msgstr ""
 #: htdocs/luci-static/resources/view/fchomo/client.js:1117
 #: htdocs/luci-static/resources/view/fchomo/client.js:1373
 #: htdocs/luci-static/resources/view/fchomo/node.js:305
-#: htdocs/luci-static/resources/view/fchomo/node.js:2751
-#: htdocs/luci-static/resources/view/fchomo/node.js:2762
+#: htdocs/luci-static/resources/view/fchomo/node.js:2770
 #: htdocs/luci-static/resources/view/fchomo/node.js:2781
-#: htdocs/luci-static/resources/view/fchomo/node.js:2792
+#: htdocs/luci-static/resources/view/fchomo/node.js:2800
+#: htdocs/luci-static/resources/view/fchomo/node.js:2811
 msgid "-- Please choose --"
 msgstr "-- 請選擇 --"
 
@@ -239,7 +239,7 @@ msgstr "新增 入站"
 msgid "Add a provider"
 msgstr "新增 供應商"
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2725
+#: htdocs/luci-static/resources/view/fchomo/node.js:2744
 msgid "Add a proxy chain"
 msgstr "新增 代理鏈"
 
@@ -817,11 +817,11 @@ msgstr "從私鑰派生"
 msgid "Destination addresses allowed to be forwarded via Wireguard."
 msgstr "允許通過 WireGuard 轉發的目的位址"
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2748
+#: htdocs/luci-static/resources/view/fchomo/node.js:2767
 msgid "Destination provider"
 msgstr "落地供應商"
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2759
+#: htdocs/luci-static/resources/view/fchomo/node.js:2778
 msgid "Destination proxy node"
 msgstr "落地代理節點"
 
@@ -829,8 +829,8 @@ msgstr "落地代理節點"
 msgid "Dial fields"
 msgstr "撥號欄位"
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2771
-#: htdocs/luci-static/resources/view/fchomo/node.js:2801
+#: htdocs/luci-static/resources/view/fchomo/node.js:2790
+#: htdocs/luci-static/resources/view/fchomo/node.js:2820
 msgid "Different chain head/tail"
 msgstr "不同的鏈頭/鏈尾"
 
@@ -921,11 +921,11 @@ msgstr "下載頻寬"
 msgid "Download bandwidth in Mbps."
 msgstr "下載頻寬（單位：Mbps）。"
 
-#: htdocs/luci-static/resources/fchomo.js:1627
+#: htdocs/luci-static/resources/fchomo.js:1639
 msgid "Download failed: %s"
 msgstr "下載失敗: %s"
 
-#: htdocs/luci-static/resources/fchomo.js:1625
+#: htdocs/luci-static/resources/fchomo.js:1635
 msgid "Download successful."
 msgstr "下載成功。"
 
@@ -1008,7 +1008,7 @@ msgstr "為空時回退"
 #: htdocs/luci-static/resources/view/fchomo/node.js:267
 #: htdocs/luci-static/resources/view/fchomo/node.js:2358
 #: htdocs/luci-static/resources/view/fchomo/node.js:2640
-#: htdocs/luci-static/resources/view/fchomo/node.js:2735
+#: htdocs/luci-static/resources/view/fchomo/node.js:2754
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:274
 #: htdocs/luci-static/resources/view/fchomo/server.js:49
 msgid "Enable"
@@ -1181,8 +1181,8 @@ msgstr "預期狀態"
 #: htdocs/luci-static/resources/view/fchomo/node.js:900
 #: htdocs/luci-static/resources/view/fchomo/node.js:1414
 #: htdocs/luci-static/resources/view/fchomo/node.js:1541
-#: htdocs/luci-static/resources/view/fchomo/node.js:2771
-#: htdocs/luci-static/resources/view/fchomo/node.js:2801
+#: htdocs/luci-static/resources/view/fchomo/node.js:2790
+#: htdocs/luci-static/resources/view/fchomo/node.js:2820
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:302
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:316
 msgid "Expecting: %s"
@@ -1913,7 +1913,7 @@ msgstr "L2"
 #: htdocs/luci-static/resources/view/fchomo/client.js:1878
 #: htdocs/luci-static/resources/view/fchomo/node.js:262
 #: htdocs/luci-static/resources/view/fchomo/node.js:2353
-#: htdocs/luci-static/resources/view/fchomo/node.js:2730
+#: htdocs/luci-static/resources/view/fchomo/node.js:2749
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:269
 msgid "Label"
 msgstr "標籤"
@@ -2368,9 +2368,13 @@ msgstr "正常"
 msgid "Not Installed"
 msgstr "未安裝"
 
-#: htdocs/luci-static/resources/fchomo.js:1585
+#: htdocs/luci-static/resources/fchomo.js:1595
 msgid "Not Running"
 msgstr "未在運作"
+
+#: htdocs/luci-static/resources/view/fchomo/node.js:2715
+msgid "Note: The subscription of provider %s is includes %s."
+msgstr "注意：供應商 %s 的訂閱包含 %s。"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:490
 msgid "OFF"
@@ -2441,7 +2445,7 @@ msgstr "只處理來自指定介面的流量。留空表示全部。"
 msgid "Only the address %s is valid."
 msgstr "只有位址 %s 是有效的。"
 
-#: htdocs/luci-static/resources/fchomo.js:1579
+#: htdocs/luci-static/resources/fchomo.js:1589
 msgid "Open Dashboard"
 msgstr "打開面板"
 
@@ -2737,7 +2741,7 @@ msgstr "協議參數。 如啟用會隨機浪費流量（在 v2ray 中預設為�
 #: htdocs/luci-static/resources/view/fchomo/client.js:1112
 #: htdocs/luci-static/resources/view/fchomo/node.js:2222
 #: htdocs/luci-static/resources/view/fchomo/node.js:2231
-#: htdocs/luci-static/resources/view/fchomo/node.js:2741
+#: htdocs/luci-static/resources/view/fchomo/node.js:2760
 msgid "Provider"
 msgstr "供應商"
 
@@ -2764,12 +2768,12 @@ msgid "Proxy MAC-s"
 msgstr "代理 MAC 位址"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:225
-#: htdocs/luci-static/resources/view/fchomo/node.js:2740
+#: htdocs/luci-static/resources/view/fchomo/node.js:2759
 msgid "Proxy Node"
 msgstr "代理節點"
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2716
-#: htdocs/luci-static/resources/view/fchomo/node.js:2725
+#: htdocs/luci-static/resources/view/fchomo/node.js:2735
+#: htdocs/luci-static/resources/view/fchomo/node.js:2744
 msgid "Proxy chain"
 msgstr "代理鏈"
 
@@ -2891,6 +2895,11 @@ msgstr "Realm ID"
 msgid "Realm name pattern"
 msgstr "Realm 名稱模式"
 
+#: htdocs/luci-static/resources/view/fchomo/node.js:2716
+msgid ""
+"Recommended to adjust Client DNS configuration based on actual conditions."
+msgstr "建議根據實際情況調整客戶端 DNS 配置。"
+
 #: htdocs/luci-static/resources/view/fchomo/global.js:481
 msgid "Redir port"
 msgstr "Redir 連接埠"
@@ -2915,7 +2924,7 @@ msgstr "降低後台流量和網路配置刷新頻率。"
 msgid "Refresh every %s seconds."
 msgstr "每 %s 秒刷新。"
 
-#: htdocs/luci-static/resources/fchomo.js:1572
+#: htdocs/luci-static/resources/fchomo.js:1582
 #: htdocs/luci-static/resources/view/fchomo/client.js:970
 #: htdocs/luci-static/resources/view/fchomo/global.js:193
 #: htdocs/luci-static/resources/view/fchomo/server.js:45
@@ -3120,7 +3129,7 @@ msgstr "規則集"
 msgid "Ruleset-URI-Scheme"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:1585
+#: htdocs/luci-static/resources/fchomo.js:1595
 msgid "Running"
 msgstr "正在運作"
 
@@ -3651,11 +3660,11 @@ msgstr "Tproxy 連接埠"
 msgid "Traffic pattern"
 msgstr "流量模式"
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2778
+#: htdocs/luci-static/resources/view/fchomo/node.js:2797
 msgid "Transit proxy group"
 msgstr "中轉代理組"
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2789
+#: htdocs/luci-static/resources/view/fchomo/node.js:2808
 msgid "Transit proxy node"
 msgstr "中轉代理節點"
 
@@ -3726,7 +3735,7 @@ msgstr "關閉 TCP 中繼。"
 #: htdocs/luci-static/resources/view/fchomo/client.js:1073
 #: htdocs/luci-static/resources/view/fchomo/node.js:271
 #: htdocs/luci-static/resources/view/fchomo/node.js:2362
-#: htdocs/luci-static/resources/view/fchomo/node.js:2739
+#: htdocs/luci-static/resources/view/fchomo/node.js:2758
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:287
 msgid "Type"
 msgstr "類型"
@@ -3789,7 +3798,7 @@ msgstr "自動選擇"
 msgid "UUID"
 msgstr "UUID"
 
-#: htdocs/luci-static/resources/fchomo.js:1630
+#: htdocs/luci-static/resources/fchomo.js:1642
 msgid "Unable to download unsupported type: %s"
 msgstr "無法下載不支援的類型: %s"
 
@@ -3981,7 +3990,7 @@ msgid "Valid 16-digit Moon World ID and 10-digit Node ID of Moon Root server."
 msgstr "有效的 16-位數 Moon World ID 和 10-位數 Moon Root 伺服器 Node ID。"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:2368
-#: htdocs/luci-static/resources/view/fchomo/node.js:2745
+#: htdocs/luci-static/resources/view/fchomo/node.js:2764
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:330
 msgid "Value"
 msgstr "可視化值"
@@ -4290,7 +4299,7 @@ msgstr ""
 msgid "least one keypair required"
 msgstr "至少需要一對密鑰"
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2710
+#: htdocs/luci-static/resources/view/fchomo/node.js:2729
 #: htdocs/luci-static/resources/view/fchomo/ruleset.js:435
 msgid "luci-app-tinyfilemanager is not installed, please install it first."
 msgstr "luci-app-tinyfilemanager 未安裝，請先安裝它。"
@@ -4555,7 +4564,7 @@ msgstr ""
 msgid "zero"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:1632
+#: htdocs/luci-static/resources/fchomo.js:1644
 msgid "🡇"
 msgstr ""
 

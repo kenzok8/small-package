@@ -1,9 +1,9 @@
+#
 msgid ""
 msgstr ""
 "PO-Revision-Date: 2020-08-14 08:04+0000\n"
 "Last-Translator: Andreas Dorfer <adorferen@gmail.com>\n"
-"Language-Team: German <http://weblate.openmptcprouter.com/projects/omr/"
-"luciapplicationsmail/de/>\n"
+"Language-Team: German <http://weblate.openmptcprouter.com/projects/omr/luciapplicationsmail/de/>\n"
 "Language: de\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -12,7 +12,7 @@ msgstr ""
 
 #: luci-app-mail/root/usr/share/luci/menu.d/luci-app-mail.json:3
 msgid "E-Mail"
-msgstr ""
+msgstr "E-Mail"
 
 #: luci-app-mail/luasrc/model/cbi/mail.lua:34
 msgid "From"
@@ -20,7 +20,7 @@ msgstr "Von"
 
 #: luci-app-mail/root/usr/share/rpcd/acl.d/luci-app-mail.json:3
 msgid "Grant UCI access for luci-app-mail"
-msgstr ""
+msgstr "UCI-Zugriff für luci-app-mail gewähren"
 
 #: luci-app-mail/luasrc/controller/mail.lua:4
 #: luci-app-mail/luasrc/model/cbi/mail.lua:4
