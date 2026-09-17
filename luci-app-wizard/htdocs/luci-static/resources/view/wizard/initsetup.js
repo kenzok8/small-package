@@ -56,13 +56,6 @@ return view.extend({
 		o = s.taboption('netsetup', form.Value, 'lan_ipaddr', _('IPv4 address'));
 		o.datatype = 'ip4addr';
 
-		o = s.taboption('netsetup', form.Value, 'lan_netmask', _('IPv4 netmask'));
-		o.datatype = 'ip4addr';
-		o.value('255.255.255.0');
-		o.value('255.255.0.0');
-		o.value('255.0.0.0');
-		o.default = '255.255.255.0';
-
 		o = s.taboption('netsetup', form.DynamicList, 'lan_dns', _('Use custom DNS servers'), _('Leave empty to use ISP DNS'));
 		o.datatype = 'ip4addr';
 		o.cast = 'string';
