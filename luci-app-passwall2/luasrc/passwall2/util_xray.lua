@@ -1461,6 +1461,7 @@ function gen_config(var)
 						string.gsub(e.domain_list, '[^' .. "\r\n" .. ']+', function(w)
 							if w:find("#") == 1 then return end
 							if w:find("rule-set:", 1, true) == 1 or w:find("rs:") == 1 then return end
+							if w:find("ext:", 1, true) == 1 then return end  -- Rule currently not support ext:
 							table.insert(domains, w)
 							table.insert(domain_table.domain, w)
 						end)
@@ -1483,6 +1484,7 @@ function gen_config(var)
 						string.gsub(e.ip_list, '[^' .. "\r\n" .. ']+', function(w)
 							if w:find("#") == 1 then return end
 							if w:find("rule-set:", 1, true) == 1 or w:find("rs:") == 1 then return end
+							if w:find("ext:", 1, true) == 1 then return end  -- Rule currently not support ext:
 							table.insert(ip, w)
 						end)
 						if #ip == 0 then ip = nil end
