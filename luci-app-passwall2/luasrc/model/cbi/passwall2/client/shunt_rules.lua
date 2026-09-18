@@ -191,8 +191,8 @@ domain_list.validate = function(self, value)
 			tmp_host = host:gsub("full:", "")
 		elseif host:find("geosite:") and host:find("geosite:") == 1 then
 			flag = 0
-		elseif host:find("ext:") and host:find("ext:") == 1 then
-			flag = 0
+--		elseif host:find("ext:") and host:find("ext:") == 1 then
+--			flag = 0
 		elseif host:find("rule-set:", 1, true) == 1 or host:find("rs:") == 1 then
 			local w = host:sub(host:find(":") + 1, #host)
 			if w:find("local:") == 1 or w:find("remote:") == 1 then
@@ -233,7 +233,7 @@ ip_list.validate = function(self, value)
 	string.gsub(value, "[^\r\n]+", function(w) table.insert(ipmasks, w) end)
 	for index, ipmask in ipairs(ipmasks) do
 		if ipmask:find("geoip:") and ipmask:find("geoip:") == 1 and not ipmask:find("%s") then
-		elseif ipmask:find("ext:") and ipmask:find("ext:") == 1 and not ipmask:find("%s") then
+--		elseif ipmask:find("ext:") and ipmask:find("ext:") == 1 and not ipmask:find("%s") then
 		elseif ipmask:find("rule-set:", 1, true) == 1 or ipmask:find("rs:") == 1 then
 			local w = ipmask:sub(ipmask:find(":") + 1, #ipmask)
 			if w:find("local:") == 1 or w:find("remote:") == 1 then

@@ -1452,7 +1452,7 @@ msgid "Private Key"
 msgstr "私钥"
 
 msgid "Pre shared key"
-msgstr "额外的对称加密密钥"
+msgstr "预共享密钥"
 
 msgid "Allowed IPs"
 msgstr "允许的 IP"
