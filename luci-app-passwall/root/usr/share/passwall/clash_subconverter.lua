@@ -513,6 +513,42 @@ local function encode_ssr(node)
 	return 0, "ssr://" .. base64(link)
 end
 
+-- snell
+local function encode_snell(node)
+	local err_msg
+	local obfs = node["obfs-opts"]
+	if obfs and obfs.mode ~= "http" and obfs.mode ~= "none" then
+		err_msg = obfs.mode
+	end
+	if err_msg then
+		err_msg = "订阅转换 → 丢弃 Snell 节点：" .. (node.name or "") .. "，因 Sing-Box 不支持 Snell + " .. err_msg
+		return 1, err_msg
+	end
+	local version = node.version and tonumber(node.version) or 4
+	version = (version == 5) and 4 or version
+	if version < 4 then
+		err_msg = "订阅转换 → 丢弃 Snell 节点：" .. (node.name or "") .. "，因 Sing-Box 不支持 Snell 版本小于 4"
+		return 1, err_msg
+	end
+
+	local link = "snell://" .. host_format(node.server) .. ":" .. node.port
+	local p = {}
+
+	if node.psk then table.insert(p, "psk=" .. urlencode(node.psk)) end
+	table.insert(p, "version=" .. version)
+	if obfs.mode == "http" then
+		table.insert(p, "obfs=http")
+		if obfs.host then table.insert(p, "obfs-host=" .. urlencode(obfs.host)) end
+	end
+	table.insert(p, "reuse=" .. (node.reuse and "1" or "0"))
+
+	if #p > 0 then
+		link = link .. "?" .. table.concat(p, "&")
+	end
+
+	return 0, link .. "#" .. urlencode(node.name or "")
+end
+
 local function encode_node(node)
 	if (not node.type) or (not node.name) then return nil end
 
@@ -529,6 +565,7 @@ local function encode_node(node)
 	elseif t == "tuic" then return encode_tuic(node)
 	elseif t == "anytls" then return encode_anytls(node)
 	elseif t == "ssr" then return encode_ssr(node)
+	elseif t == "snell" then return encode_snell(node)
 	else api.log("订阅转换 → 丢弃不支持的节点：" .. node.name .. "，节点类型：" .. t)
 	end
 end
