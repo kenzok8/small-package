@@ -1601,20 +1601,20 @@ msgstr "远程端口"
 msgid "as:"
 msgstr "如："
 
-msgid "Public key absolute path"
-msgstr "公钥文件绝对路径"
+msgid "Path to the certificate file"
+msgstr "证书文件路径"
 
-msgid "Private key absolute path"
-msgstr "私钥文件绝对路径"
+msgid "Path to the private key file"
+msgstr "私钥文件路径"
 
-msgid "ECH key absolute path"
-msgstr "ECH 密钥绝对路径"
+msgid "Path to the ECH key file"
+msgstr "ECH 密钥路径"
 
 msgid "Can't find this file!"
 msgstr "找不到这个文件！"
 
-msgid "Public key and Private key path can not be empty!"
-msgstr "公钥和私钥文件路径不能为空！"
+msgid "Certificate or Private key path can not be empty!"
+msgstr "证书或私钥文件路径不能为空！"
 
 msgid "Server-Side"
 msgstr "服务器端"

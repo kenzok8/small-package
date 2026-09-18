@@ -120,8 +120,8 @@ o.default = "0"
 o.rewrite_option = o.option
 o:depends({ custom = false })
 
-o = s:option(FileUpload, "tls_certificateFile", translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
-o.default = m:get(s.section, "tls_certificateFile") or "/etc/config/ssl/" .. arg[1] .. ".pem"
+o = s:option(FileUpload, "tls_certificateFile", translate("Path to the certificate file"), translate("as:") .. "/etc/ssl/fullchain.crt")
+o.default = m:get(s.section, "tls_certificateFile") or "/etc/config/ssl/" .. arg[1] .. ".crt"
 if o and o:formvalue(arg[1]) then o.default = o:formvalue(arg[1]) end
 o.validate = function(self, value, t)
 	if value and value ~= "" then
@@ -135,7 +135,7 @@ o.validate = function(self, value, t)
 end
 o:depends({ custom = false })
 
-o = s:option(FileUpload, "tls_keyFile", translate("Private key absolute path"), translate("as:") .. "/etc/ssl/private.key")
+o = s:option(FileUpload, "tls_keyFile", translate("Path to the private key file"), translate("as:") .. "/etc/ssl/private.key")
 o.default = m:get(s.section, "tls_keyFile") or "/etc/config/ssl/" .. arg[1] .. ".key"
 if o and o:formvalue(arg[1]) then o.default = o:formvalue(arg[1]) end
 o.validate = function(self, value, t)
@@ -150,7 +150,7 @@ o.validate = function(self, value, t)
 end
 o:depends({ custom = false })
 
-o = s:option(FileUpload, "ech_keyFile", translate("ECH key absolute path"), translate("as:") .. "/etc/ssl/ech.pem")
+o = s:option(FileUpload, "ech_keyFile", translate("Path to the ECH key file"), translate("as:") .. "/etc/ssl/ech.pem")
 o.validate = function(self, value, t)
 	if value and value ~= "" then
 		if not fs.access(value) then

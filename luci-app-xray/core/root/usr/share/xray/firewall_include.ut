@@ -318,7 +318,7 @@
     set tp_spec_dv4_dd {
         type ipv4_addr
         size 65536
-        flags timeout
+        flags dynamic,timeout
     }
 {% endif %}
 
@@ -326,7 +326,7 @@
     set tp_spec_dv6_dd {
         type ipv6_addr
         size 65536
-        flags timeout
+        flags dynamic,timeout
     }
 {% endif %}
 
@@ -334,7 +334,7 @@
     set tp_spec_ctt_dd {
         typeof meta nfproto . tcp sport
         size 65536
-        flags timeout
+        flags dynamic,timeout
     }
 {% endif %}
 
@@ -342,7 +342,7 @@
     set tp_spec_ctu_dd {
         typeof meta nfproto . udp sport
         size 65536
-        flags timeout
+        flags dynamic,timeout
     }
 {% endif %}
 

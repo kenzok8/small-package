@@ -258,7 +258,7 @@ o.validate = function(self, value, t)
 			local ca = s.fields["tls_certificateFile"] and s.fields["tls_certificateFile"]:formvalue(t) or ""
 			local key = s.fields["tls_keyFile"] and s.fields["tls_keyFile"]:formvalue(t) or ""
 			if ca == "" or key == "" then
-				return nil, translate("Public key and Private key path can not be empty!")
+				return nil, translate("Certificate or Private key path can not be empty!")
 			end
 		end
 		return value
@@ -311,8 +311,8 @@ o:depends({ protocol = "hysteria" })
 
 -- [[ TLS部分 ]] --
 
-o = s:option(FileUpload, "tls_certificateFile", translate("Public key absolute path"), translate("as:") .. "/etc/ssl/fullchain.pem")
-o.default = m:get(s.section, "tls_certificateFile") or "/etc/config/ssl/" .. arg[1] .. ".pem"
+o = s:option(FileUpload, "tls_certificateFile", translate("Path to the certificate file"), translate("as:") .. "/etc/ssl/fullchain.crt")
+o.default = m:get(s.section, "tls_certificateFile") or "/etc/config/ssl/" .. arg[1] .. ".crt"
 if o and o:formvalue(arg[1]) then o.default = o:formvalue(arg[1]) end
 o:depends({ tls = true, reality = false })
 o:depends({ protocol = "naive" })
@@ -330,7 +330,7 @@ o.validate = function(self, value, t)
 	return nil
 end
 
-o = s:option(FileUpload, "tls_keyFile", translate("Private key absolute path"), translate("as:") .. "/etc/ssl/private.key")
+o = s:option(FileUpload, "tls_keyFile", translate("Path to the private key file"), translate("as:") .. "/etc/ssl/private.key")
 o.default = m:get(s.section, "tls_keyFile") or "/etc/config/ssl/" .. arg[1] .. ".key"
 if o and o:formvalue(arg[1]) then o.default = o:formvalue(arg[1]) end
 o:depends({ tls = true, reality = false })

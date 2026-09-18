@@ -741,7 +741,7 @@ function gen_config_server(node)
 	if node.tls == "1" and node.ech == "1" then
 		tls.ech = {
 			enabled = true,
-			key = node.ech_key and { node.ech_key } or nil
+			key = node.ech_key and api.split(node.ech_key:gsub("\\n", "\n"), "\n") or nil
 		}
 	end
 
