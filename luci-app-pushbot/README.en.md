@@ -24,6 +24,13 @@
 
 ## 📝 Changelog
 
+- **2026-09-19** (v5.17-r4 → r24): Blacklist & traffic source improvements
+  - Added: **nlbw startup health check** — auto-detects and fixes nlbw service issues after reboot
+  - Added: **WiFi auth failure monitoring** (MTK closed-source driver) — extracts failed MACs with group stats
+  - Improved: **Blacklist sync mechanism** — resolves file/kernel set inconsistency
+  - Improved: **Traffic source detection** — uses nlbw if installed, auto-checks availability at startup
+  - Improved: **Online device list** — whitelist devices display normally, shows traffic source
+  - Fixed: **Whitelist devices not showing**, **blacklist timeout unblock failure**, **lite mode preview issues**
 - **2026-08-28** (v5.17): Security monitor improvements, main version 5.16 → 5.17
   - Added: **Blacklist persistence** — persist blacklist for permanent duration to survive OP reboots
   - Added: **Firewall version label** — shows nftables/iptables with refresh button

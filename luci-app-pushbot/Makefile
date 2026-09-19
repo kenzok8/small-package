@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-pushbot
 PKG_VERSION:=5.17
-PKG_RELEASE:=23
+PKG_RELEASE:=24
 
 PKG_MAINTAINER:=tty228 <tty228@yeah.net>  zzsj0928
 
@@ -37,6 +37,7 @@ define Package/$(PKG_NAME)/postinst
 #!/bin/sh
 [ -n "$${IPKG_INSTROOT}" ] || {
 	[ -f /tmp/pushbot/traffic_source ] && rm -f /tmp/pushbot/traffic_source
+	[ -f /tmp/pushbot/nlbw_check_round ] && rm -f /tmp/pushbot/nlbw_check_round
 	[ -f /tmp/pushbot/firewall_mode ] && rm -f /tmp/pushbot/firewall_mode
 	[ -f /tmp/pushbot/wlan_interface ] && rm -f /tmp/pushbot/wlan_interface
 	[ -f /tmp/pushbot/wireless_ifs ] && rm -f /tmp/pushbot/wireless_ifs

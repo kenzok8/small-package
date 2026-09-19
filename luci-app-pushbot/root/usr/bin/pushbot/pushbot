@@ -2495,16 +2495,40 @@ function init_traffic_source() {
 		return
 	fi
 
-	# 缓存为空，重新探测
-	if command -v nlbw >/dev/null 2>&1 && [ -S /var/run/nlbwmon.sock ]; then
-		_nlbw_rows=$(nlbw -c csv -s, -q -n -g mac 2>/dev/null | awk -F',' 'NR>1 && $1!="mac" {n++} END{print n+0}')
-		[ "${_nlbw_rows:-0}" -gt "0" ] && traffic_source="nlbw"
-	fi
-	if [ "$traffic_source" = "none" ] && [ -f "/usr/sbin/wrtbwmon" ]; then
+	# 缓存为空：检测到 nlbw 就优先使用，否则用 wrtbw
+	if command -v nlbw >/dev/null 2>&1; then
+		traffic_source="nlbw"
+	elif [ -f "/usr/sbin/wrtbwmon" ]; then
 		traffic_source="wrtbw"
 	fi
 	echo "$traffic_source" > ${dir}traffic_source
 	echo "`date "+%Y-%m-%d %H:%M:%S"` 【检测到流量工具：${traffic_source}】" >> ${logfile}
+}
+
+# ── nlbw 启动健康检查（仅前两轮轮询执行）──
+# 场景：系统重启后 nlbwmon 未就绪，缓存却已写入 nlbw
+# 策略：第1轮若无效则重启 nlbwmon；第2轮仍无效则降级 wrtbw
+function check_nlbw_health() {
+	[ "$traffic_source" != "nlbw" ] && return
+	local check_file="${dir}nlbw_check_round"
+	local round=0
+	[ -f "$check_file" ] && round=$(cat "$check_file" 2>/dev/null)
+	[ "$round" -ge 2 ] && return
+	round=$((round + 1))
+	echo "$round" > "$check_file"
+
+	local rows=$(nlbw -c csv -s, -q -n -g mac 2>/dev/null | awk -F',' 'NR>1 && $1!="mac" {n++} END{print n+0}')
+	[ "${rows:-0}" -gt 0 ] && return
+
+	# nlbw 不可用
+	if [ "$round" -eq 1 ]; then
+		echo "`date "+%Y-%m-%d %H:%M:%S"` 【流量工具】nlbw 不可用，尝试重启 nlbwmon..." >> ${logfile}
+		/etc/init.d/nlbwmon restart >/dev/null 2>&1
+	else
+		echo "`date "+%Y-%m-%d %H:%M:%S"` 【流量工具】nlbw 仍不可用，降级到 wrtbw" >> ${logfile}
+		traffic_source="wrtbw"
+		echo "wrtbw" > ${dir}traffic_source
+	fi
 }
 
 # ── 防火墙模式探测（缓存到 /tmp，OpenWrt 重启后重新探测） ──
@@ -2583,7 +2607,7 @@ if [ "$1" ] ;then
 	fi
 	# 重检流量源：清除缓存并重新探测
 	if [ "$1" = "check_traffic" ]; then
-		rm -f ${dir}traffic_source
+		rm -f ${dir}traffic_source ${dir}nlbw_check_round
 		init_traffic_source
 		exit
 	fi
@@ -2639,6 +2663,7 @@ touch /usr/bin/pushbot/api/.ip_blacklist.state.boot 2>/dev/null
 while [ "$pushbot_enable" = "1" ]; do
 	deltemp
 	usage update
+	check_nlbw_health
 	pushbot_disturb;disturb=$?
 
 	# 外网IP变化检测
