@@ -1616,6 +1616,15 @@ msgstr "找不到这个文件！"
 msgid "Certificate and Private key path can not be empty!"
 msgstr "证书和私钥文件路径不能为空！"
 
+msgid "Certificate and Private key PEM can not be empty!"
+msgstr "证书和私钥 PEM 不能为空！"
+
+msgid "Use PEM"
+msgstr "使用 PEM"
+
+msgid "Use certificate and private key PEM content."
+msgstr "使用证书和私钥的 PEM 内容。"
+
 msgid "Server-Side"
 msgstr "服务器端"
 
@@ -1807,6 +1816,12 @@ msgstr "TLS 证书（PEM）"
 
 msgid "Full certificate (chain), PEM format."
 msgstr "完整证书（链），PEM 格式。"
+
+msgid "TLS Private Key (PEM)"
+msgstr "TLS 私钥（PEM）"
+
+msgid "Private key in PEM format."
+msgstr "PEM 格式的私钥。"
 
 msgid "ECH Config"
 msgstr "ECH 配置"

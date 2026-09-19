@@ -181,7 +181,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 					verifyPeerCertByName = node.tls_CertByName or "",
 					echConfigList = (node.ech == "1") and node.ech_config or nil,
 					certificates = (node.tls_certificate == "1" and node.tls_certificate_pem ~= "") and {
-						certificate = api.split(node.tls_certificate_pem, "\n"),
+						certificate = api.split(node.tls_certificate_pem:gsub("\\n", "\n"), "\n"),
 						usage = "verify"
 					} or nil,
 					cipherSuites = node.cipherSuites or nil
@@ -697,8 +697,10 @@ function gen_config_server(node)
 						disableSystemRoot = false,
 						certificates = {
 							{
-								certificateFile = node.tls_certificateFile,
-								keyFile = node.tls_keyFile
+								certificateFile = (node.tls_use_pem ~= "1") and node.tls_certificateFile or nil,
+								keyFile = (node.tls_use_pem ~= "1") and node.tls_keyFile or nil,
+								certificate = (node.tls_use_pem == "1" and node.tls_certificate) and api.split(node.tls_certificate:gsub("\\n", "\n"), "\n") or nil,
+								key = (node.tls_use_pem == "1" and node.tls_key) and api.split(node.tls_key:gsub("\\n", "\n"), "\n") or nil
 							}
 						},
 						echServerKeys = (node.ech == "1") and node.ech_key or nil

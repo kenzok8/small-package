@@ -23,7 +23,7 @@ msgid "Set the router's wireless name and password. For more advanced settings, 
 msgstr "设置路由器的无线名字和密码，更多高级设置请进入 网络-无线 页面。"
 
 msgid "Leave empty to use ISP DNS"
-msgstr "留空则使用阿里DNS"
+msgstr "留空则使用运营商DNS"
 
 msgid "Enter the main router IP"
 msgstr "请输入主路由IP"

@@ -248,7 +248,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 				--max_version = "1.3",
 				fragment = fragment,
 				record_fragment = record_fragment,
-				certificate = (node.tls_certificate == "1" and node.tls_certificate_pem ~= "") and api.split(node.tls_certificate_pem, "\n") or nil,
+				certificate = (node.tls_certificate == "1" and node.tls_certificate_pem ~= "") and api.split(node.tls_certificate_pem:gsub("\\n", "\n"), "\n") or nil,
 				cipher_suites = (node.cipherSuites and node.cipherSuites ~= "") and api.split(node.cipherSuites, ":") or nil,
 				ech = (node.ech == "1") and (function()
 					local function get_ech_domain(s) --兼容xray "域名+DNS" 格式ech
@@ -273,7 +273,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 						ech.query_server_name = qname
 						ech_domain[qname] = true
 					elseif config then
-						ech.config = { config }
+						ech.config = api.split(config:gsub("\\n", "\n"), "\n")
 					elseif node.tls_serverName and node.tls_serverName ~= "" then
 						ech_domain[node.tls_serverName] = true
 					end
@@ -709,8 +709,10 @@ function gen_config_server(node)
 
 	local tls = {
 		enabled = true,
-		certificate_path = node.tls_certificateFile,
-		key_path = node.tls_keyFile,
+		certificate_path = (node.tls_use_pem ~= "1") and node.tls_certificateFile or nil,
+		key_path = (node.tls_use_pem ~= "1") and node.tls_keyFile or nil,
+		certificate = (node.tls_use_pem == "1" and node.tls_certificate) and api.split(node.tls_certificate:gsub("\\n", "\n"), "\n") or nil,
+		key = (node.tls_use_pem == "1" and node.tls_key) and api.split(node.tls_key:gsub("\\n", "\n"), "\n") or nil,
 		alpn = (node.alpn and node.alpn ~= "default") and (function()
 			local alpn = {}
 			string.gsub(node.alpn, '[^,]+', function(w)
@@ -724,6 +726,8 @@ function gen_config_server(node)
 	if node.tls == "1" and node.reality == "1" then
 		tls.certificate_path = nil
 		tls.key_path = nil
+		tls.certificate = nil
+		tls.key = nil
 		tls.server_name = node.reality_handshake_server
 		tls.reality = {
 			enabled = true,
@@ -741,7 +745,7 @@ function gen_config_server(node)
 	if node.tls == "1" and node.ech == "1" then
 		tls.ech = {
 			enabled = true,
-			key = node.ech_key and { node.ech_key } or nil
+			key = node.ech_key and api.split(node.ech_key:gsub("\\n", "\n"), "\n") or nil
 		}
 	end
 
