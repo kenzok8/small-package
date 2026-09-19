@@ -198,7 +198,7 @@ o.validate = function(self, value, t)
 			local ca = s.fields["tls_certificateFile"] and s.fields["tls_certificateFile"]:formvalue(t) or ""
 			local key = s.fields["tls_keyFile"] and s.fields["tls_keyFile"]:formvalue(t) or ""
 			if ca == "" or key == "" then
-				return nil, translate("Certificate or Private key path can not be empty!")
+				return nil, translate("Certificate and Private key path can not be empty!")
 			end
 		end
 		return value

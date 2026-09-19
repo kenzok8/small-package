@@ -1613,8 +1613,8 @@ msgstr "ECH 密钥路径"
 msgid "Can't find this file!"
 msgstr "找不到这个文件！"
 
-msgid "Certificate or Private key path can not be empty!"
-msgstr "证书或私钥文件路径不能为空！"
+msgid "Certificate and Private key path can not be empty!"
+msgstr "证书和私钥文件路径不能为空！"
 
 msgid "Server-Side"
 msgstr "服务器端"
