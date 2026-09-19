@@ -45,6 +45,7 @@ return view.extend({
 		o.rmempty = false;
 		o.value('dhcp', _('DHCP client'));
 		o.value('pppoe', _('PPPoE'));
+		o.value('siderouter', _('Siderouter'));
 
 		o = s.taboption('netsetup', form.Value, 'wan_pppoe_user', _('PAP/CHAP username'));
 		o.depends('wan_proto', 'pppoe');
@@ -60,19 +61,15 @@ return view.extend({
 		o.datatype = 'ip4addr';
 		o.cast = 'string';
 
-		o = s.taboption('netsetup', form.Flag, 'siderouter', _('Siderouter'),
-			_('Use as downstream router i.e. it will work like a switch'));
-		o.rmempty = false;
-
 		o = s.taboption('netsetup', form.Value, 'lan_gateway', _('IPv4 gateway'));
-		o.depends('siderouter', '1');
+		o.depends('wan_proto', 'siderouter');
 		o.datatype = 'ip4addr';
 		o.placeholder = _('Enter the main router IP');
 		o.rmempty = false;
 
 		o = s.taboption('netsetup', form.Flag, 'dhcp', _('DHCP Server'),
 			_('To turn on this DHCP, you need to turn off the DHCP of the main router, and to turn off this DHCP, you need to manually change the gateway and DNS of all Internet devices to the IP of this bypass router'));
-		o.depends('siderouter', '1');
+		o.depends('wan_proto', 'siderouter');
 		o.default = o.enabled;
 
 		o = s.taboption('netsetup', form.Flag, 'ipv6', _('Enable IPv6'), _('Enable/Disable IPv6'));
