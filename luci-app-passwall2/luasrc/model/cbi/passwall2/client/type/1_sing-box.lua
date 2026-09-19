@@ -598,9 +598,12 @@ o.default = ""
 o.rows = 5
 o.wrap = "off"
 o:depends({ tls_certificate = true })
+o.cfgvalue = function(self, section)
+	return (m:get(section, "tls_certificate_pem") or ""):gsub("\\n", "\n")
+end
 o.validate = function(self, value)
-	value = api.trim(value):gsub("\r\n", "\n"):gsub("[ \t]*\n[ \t]*", "\n"):gsub("\n+", "\n")
-	return value
+	value = api.trim(value):gsub("\r\n", "\n"):gsub("\r", "\n"):gsub("[ \t]*\n[ \t]*", "\n"):gsub("\n+", "\n")
+	return value:gsub("\n", "\\n")
 end
 
 o = s:option(DynamicList, "cipherSuites", translate("Cipher Suites"), '<a href="https://go.dev/src/crypto/tls/cipher_suites.go#L44" target="_blank">***</a>' .. " " .. translate("Configures the list of supported cipher suites."))
@@ -632,9 +635,12 @@ o.default = ""
 o.rows = 5
 o.wrap = "off"
 o:depends({ ech = true })
+o.cfgvalue = function(self, section)
+	return (m:get(section, "ech_config") or ""):gsub("\\n", "\n")
+end
 o.validate = function(self, value)
-	value = api.trim(value):gsub("\r\n", "\n"):gsub("[ \t]*\n[ \t]*", "\n"):gsub("\n+", "\n")
-	return value
+	value = api.trim(value):gsub("\r\n", "\n"):gsub("\r", "\n"):gsub("[ \t]*\n[ \t]*", "\n"):gsub("\n+", "\n")
+	return value:gsub("\n", "\\n")
 end
 
 o = s:option(Value, "ech_query_server_name", translate("ECH Query Domain"), translate("Overrides the domain name used for ECH HTTPS record queries."))

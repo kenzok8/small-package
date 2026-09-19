@@ -1454,17 +1454,26 @@ msgstr "Удалённый порт"
 msgid "as:"
 msgstr "например:"
 
-msgid "Public key absolute path"
-msgstr "Полный путь к публичному ключу"
+msgid "Path to the certificate file"
+msgstr "Путь к файлу сертификата"
 
-msgid "Private key absolute path"
-msgstr "Полный путь к приватному ключу"
+msgid "Path to the private key file"
+msgstr "Путь к файлу закрытого ключа"
 
 msgid "Can't find this file!"
 msgstr "Файл не найден!"
 
-msgid "Public key and Private key path can not be empty!"
-msgstr "Пути к публичному и приватному ключам не могут быть пустыми!"
+msgid "Certificate and Private key path can not be empty!"
+msgstr "Пути к сертификату и закрытому ключу не могут быть пустыми!"
+
+msgid "Certificate and Private key PEM can not be empty!"
+msgstr "Сертификат и закрытый ключ в формате PEM не могут быть пустыми!"
+
+msgid "Use PEM"
+msgstr "Используйте PEM"
+
+msgid "Use certificate and private key PEM content."
+msgstr "Используйте содержимое сертификата и закрытого ключа в формате PEM."
 
 msgid "Server-Side"
 msgstr "Серверная часть"
@@ -1648,6 +1657,12 @@ msgstr "Сертификат TLS (PEM)"
 
 msgid "Full certificate (chain), PEM format."
 msgstr "Полный сертификат (цепочка), формат PEM."
+
+msgid "TLS Private Key (PEM)"
+msgstr "Закрытый ключ TLS (PEM)"
+
+msgid "Private key in PEM format."
+msgstr "Закрытый ключ в формате PEM."
 
 msgid "Fetch Manually"
 msgstr "Получить вручную"

@@ -693,7 +693,35 @@ local current_node = map:get(section)
 				params = params.substring(1);
 			}
 			url += params;
+		} else if (v_type === "sing-box" && opt.get(dom_prefix + "protocol").value === "snell") {
+			protocol = "snell";
+			var v_userkey = opt.get(dom_prefix + "password");
+			var v_psk = opt.get(dom_prefix + "snell_psk");
+			var v_port = opt.get(dom_prefix + "port");
+			url = encodeURIComponent(v_psk.value) +
+				"@" + _address +
+				":" + v_port.value + "?";
+
+			var params = "psk=" + encodeURIComponent(v_psk.value);
+			if (v_userkey.value !== "") {
+				params += "&userkey=" + encodeURIComponent(v_userkey.value);
+			}
+			params += opt.query("version", dom_prefix + "snell_version");
+			if (opt.get(dom_prefix + "snell_version").value === '4') {
+				params += opt.query("obfs", dom_prefix + "snell_obfs_mode");
+				params += opt.query("obfs-host", dom_prefix + "snell_obfs_host");
+			} else {
+				params += opt.query("mode", dom_prefix + "snell_mode");
+			}
+			params += opt.query("reuse", dom_prefix + "snell_reuse");
+
+			params += "#" + encodeURI(v_alias.value);
+			if (params[0] == "&") {
+				params = params.substring(1);
+			}
+			url += params;
 		}
+
 		if (url) {
 			url = protocol.toLowerCase() + "://" + url;
 			return url;
@@ -1758,6 +1786,37 @@ local current_node = map:get(section)
 			}
 			if (hash) {
 				opt.set('remarks', decodeURIComponent(hash.substr(1)));
+			}
+		}
+		if (link_type === "snell") {
+			if (has_singbox) {
+				dom_prefix = "singbox_";
+				opt.set('type', "sing-box");
+			}
+			opt.set(dom_prefix + 'protocol', "snell");
+			var m = parseNodeUrl(link);
+			opt.set(dom_prefix + 'address', unbracketIP(m.hostname));
+			opt.set(dom_prefix + 'port', m.port || "443");
+			var queryParam = {};
+			if (m.search.length > 1) {
+				var query = m.search.replace('/?', '?').split('?')
+				var queryParams = query[1];
+				var queryArray = queryParams.split('&');
+				var params;
+				for (i = 0; i < queryArray.length; i++) {
+					params = queryArray[i].split('=');
+					queryParam[decodeURIComponent(params[0]).toLowerCase()] = decodeURIComponent(params[1] || '');
+				}
+			}
+			opt.set(dom_prefix + 'password', queryParam.userkey || '');
+			opt.set(dom_prefix + 'snell_psk', queryParam.psk || m.passwd || '');
+			opt.set(dom_prefix + 'snell_version', queryParam.version || '4');
+			opt.set(dom_prefix + 'snell_reuse', queryParam.reuse === '1');
+			opt.set(dom_prefix + 'snell_obfs_mode', queryParam.obfs || 'none');
+			opt.set(dom_prefix + 'snell_obfs_host', queryParam['obfs-host'] || queryParam.obfs_host || '');
+			opt.set(dom_prefix + 'snell_mode', queryParam.mode || 'default');
+			if (m.hash) {
+				opt.set('remarks', decodeURIComponent(m.hash.substr(1)));
 			}
 		}
 

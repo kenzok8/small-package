@@ -1453,17 +1453,26 @@ msgstr "پورت راه دور"
 msgid "as:"
 msgstr "به عنوان:"
 
-msgid "Public key absolute path"
-msgstr "مسیر مطلق کلید عمومی"
+msgid "Path to the certificate file"
+msgstr "مسیر فایل گواهی‌نامه"
 
-msgid "Private key absolute path"
-msgstr "مسیر مطلق کلید خصوصی"
+msgid "Path to the private key file"
+msgstr "مسیر فایل کلید خصوصی"
 
 msgid "Can't find this file!"
 msgstr "این فایل پیدا نشد!"
 
-msgid "Public key and Private key path can not be empty!"
-msgstr "مسیر کلید عمومی و کلید خصوصی نمی‌تواند خالی باشد!"
+msgid "Certificate and Private key path can not be empty!"
+msgstr "مسیر گواهی و کلید خصوصی نمی‌تواند خالی باشد!"
+
+msgid "Certificate and Private key PEM can not be empty!"
+msgstr "گواهی و کلید خصوصی PEM نمی‌توانند خالی باشند!"
+
+msgid "Use PEM"
+msgstr "از PEM استفاده کنید"
+
+msgid "Use certificate and private key PEM content."
+msgstr "از محتوای PEM گواهی و کلید خصوصی استفاده کنید."
 
 msgid "Server-Side"
 msgstr "سمت سرور"
@@ -1647,6 +1656,12 @@ msgstr "گواهی TLS (PEM)"
 
 msgid "Full certificate (chain), PEM format."
 msgstr "گواهی کامل (زنجیره‌ای)، فرمت PEM."
+
+msgid "TLS Private Key (PEM)"
+msgstr "کلید خصوصی TLS (PEM)"
+
+msgid "Private key in PEM format."
+msgstr "کلید خصوصی با فرمت PEM."
 
 msgid "Fetch Manually"
 msgstr "دریافت دستی"

@@ -1565,7 +1565,13 @@ function set_type_cbi(s)
 		obj.option_prefix = s_self.option_prefix
 		obj.option = s_self.option_prefix .. option
 		obj.cfgvalue = function(self, section)
-			return self.map:get(section, self.config_option)
+			local v = self.map:get(section, self.config_option)
+			if util.instanceof(self, cbi.MultiValue) then
+				if v and self.cast == "table" then
+					return table.concat(v, " ")
+				end
+			end
+			return v
 		end
 		obj.write = function(self, section, value)
 			if s1.fields["type"]:formvalue(s_self.section) == s_self.type_name then
@@ -1576,6 +1582,21 @@ function set_type_cbi(s)
 						new_t = table_remove_duplicates(value)
 					else
 						new_t = { value }
+					end
+					if self.cast == "string" then
+						new_val = table.concat(new_t, " ")
+					else
+						new_val = new_t
+					end
+				end
+				if util.instanceof(self, cbi.MultiValue) then
+					local new_t = {}
+					if type(value) == "table" then
+						new_t = table_remove_duplicates(value)
+					else
+						string.gsub(value, '[^' .. " " .. ']+', function(v)
+							new_t[#new_t + 1] = v
+						end)
 					end
 					if self.cast == "string" then
 						new_val = table.concat(new_t, " ")
@@ -1630,6 +1651,7 @@ end
 function type_cbi_section(s, s2)
 	for i, v in ipairs(s2.children) do
 		local o = s2.children[i]
+		o.section = s
 		s:append(o)
 		s.fields[o.option] = o
 	end

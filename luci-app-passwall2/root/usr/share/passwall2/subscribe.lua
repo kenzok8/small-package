@@ -760,7 +760,7 @@ local function parseClashNode(node, add_mode, group, sub_cfg)
 			result.type = 'sing-box'
 			result.protocol = "anytls"
 		else
-			log(2, i18n.translatef("Skip the %s node because the %s core program is not installed.", "AnyTLS", "AnyTLS", "Sing-Box 1.12"))
+			log(2, i18n.translatef("Skip the %s node because the %s core program is not installed.", "AnyTLS", "Sing-Box 1.12"))
 			return nil
 		end
 		result.password = node.password
@@ -783,6 +783,25 @@ local function parseClashNode(node, add_mode, group, sub_cfg)
 		if node["disable-reuse"] then
 			result.anytls_disable_reuse = "1"
 		end
+	elseif node.type == 'snell' then
+		if has_singbox then
+			result.type = 'sing-box'
+			result.protocol = "snell"
+		else
+			log(2, i18n.translatef("Skip the %s node because the %s core program is not installed.", "Snell", "Sing-Box 1.14"))
+			return nil
+		end
+		result.password = node.password
+		result.snell_psk = node.psk
+		result.snell_version = node.version or "4"
+		if result.snell_version == "4" then
+			local obfs_opts = node["obfs-opts"] or {}
+			result.snell_obfs_mode = obfs_opts.mode or "none"
+			result.snell_obfs_host = obfs_opts.host
+		else
+			result.snell_mode = "default"
+		end
+		result.snell_reuse = node.reuse and "1" or "0"
 	end
 	if not result.remarks or result.remarks == "" then
 		if result.address and result.port then
@@ -1665,7 +1684,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			result.type = 'sing-box'
 			result.protocol = "hysteria"
 		else
-			log(2, i18n.translatef("Skip the %s node because the %s core program is not installed.", "Hysteria", "Hysteria", "Sing-Box"))
+			log(2, i18n.translatef("Skip the %s node because the %s core program is not installed.", "Hysteria", "Sing-Box"))
 			return nil
 		end
 
@@ -1778,7 +1797,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			result.type = 'sing-box'
 			result.protocol = "tuic"
 		else
-			log(2, i18n.translatef("Skip the %s node because the %s core program is not installed.", "Tuic", "Tuic", "Sing-Box"))
+			log(2, i18n.translatef("Skip the %s node because the %s core program is not installed.", "Tuic", "Sing-Box"))
 			return nil
 		end
 
@@ -1836,7 +1855,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			result.type = 'sing-box'
 			result.protocol = "anytls"
 		else
-			log(2, i18n.translatef("Skip the %s node because the %s core program is not installed.", "AnyTLS", "AnyTLS", "Sing-Box 1.12"))
+			log(2, i18n.translatef("Skip the %s node because the %s core program is not installed.", "AnyTLS", "Sing-Box 1.12"))
 			return nil
 		end
 
@@ -1962,6 +1981,62 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			result.naive_quic = "1"
 			result.naive_congestion_control = params.congestion_control or "bbr"
 		end
+	elseif szType == "snell" then
+		if has_singbox then
+			result.type = 'sing-box'
+			result.protocol = "snell"
+		else
+			log(2, i18n.translatef("Skip the %s node because the %s core program is not installed.", "Snell", "Sing-Box 1.14"))
+			return nil
+		end
+
+		local alias = ""
+		if content:find("#") then
+			local idx_sp = content:find("#")
+			alias = content:sub(idx_sp + 1, -1)
+			content = content:sub(0, idx_sp - 1)
+		end
+		result.remarks = UrlDecode(alias)
+		local Info = content
+		if content:find("@") then
+			local info = split(content, "@")
+			result.snell_psk = UrlDecode(info[1])
+			Info = info[2]
+		end
+		Info = (Info or ""):gsub("/%?", "?")
+		local query = split(Info, "%?")
+		local host_port = query[1]
+		local params = {}
+		for _, v in pairs(split(query[2], '&')) do
+			local s = v:find("=", 1, true)
+			if s and s > 1 then
+				params[UrlDecode(v:sub(1, s - 1)):lower()] = UrlDecode(v:sub(s + 1))
+			end
+		end
+		-- [2001:4860:4860::8888]:443
+		-- 8.8.8.8:443
+		result.port = "443"
+		if host_port:find(":") then
+			local sp = split(host_port, ":")
+			result.port = sp[#sp]
+			if api.is_ipv6addrport(host_port) then
+				result.address = api.get_ipv6_only(host_port)
+			else
+				result.address = sp[1]
+			end
+		else
+			result.address = host_port
+		end
+		result.snell_psk = params.psk or result.snell_psk
+		result.password = params.userkey
+		result.snell_version = params.version or "4"
+		if result.snell_version == "4" then
+			result.snell_obfs_mode = params.obfs or "none"
+			result.snell_obfs_host = params['obfs-host'] or params.obfs_host
+		else
+			result.snell_mode = params.mode or "default"
+		end
+		result.snell_reuse = (params.reuse == "1") and "1" or "0"
 	else
 		log(2, i18n.translatef("%s type node subscriptions are not currently supported, skip this node.", szType))
 		return nil

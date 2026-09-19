@@ -451,9 +451,12 @@ o.default = ""
 o.rows = 5
 o.wrap = "off"
 o:depends({ tls_certificate = true })
+o.cfgvalue = function(self, section)
+	return (m:get(section, "tls_certificate_pem") or ""):gsub("\\n", "\n")
+end
 o.validate = function(self, value)
-	value = api.trim(value):gsub("\r\n", "\n"):gsub("[ \t]*\n[ \t]*", "\n"):gsub("\n+", "\n")
-	return value
+	value = api.trim(value):gsub("\r\n", "\n"):gsub("\r", "\n"):gsub("[ \t]*\n[ \t]*", "\n"):gsub("\n+", "\n")
+	return value:gsub("\n", "\\n")
 end
 
 o = s:option(Flag, "ech", translate("ECH"))
