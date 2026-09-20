@@ -19,7 +19,7 @@ OPENWRT_ARCH = nil
 DISTRIB_ARCH = nil
 OPENWRT_BOARD = nil
 
-LOCK_PREFIX = "/tmp/lock/" .. c_config
+LOCK_PREFIX = "/var/lock/" .. c_config
 LOG_FILE = "/tmp/log/" .. c_config .. ".log"
 TMP_PATH = "/tmp/etc/" .. c_config
 CACHE_PATH = TMP_PATH .. "_tmp"

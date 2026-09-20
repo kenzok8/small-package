@@ -1,0 +1,837 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: kenzok8 <kenzok8@gmail.com>
+Date: Sun, 20 Sep 2026 16:59:23 +0800
+Subject: [PATCH] Adapt wing to new dae core
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+改动：适配新核心生命周期，并修复空配置停止和重载回滚。
+
+原因：旧接口删除且新控制面交接流程已改变。
+---
+ dae-core/config/marshal.go                    |   5 +
+ dae/run.go                                    | 402 +++++++++++++-----
+ dae/run_handoff_test.go                       |  33 ++
+ dae/runtime.go                                |   6 +-
+ dae/utils.go                                  |   9 +-
+ db/node_utils.go                              |   3 +-
+ graphql/service/config/mutation_utils.go      |   9 +-
+ graphql/service/node/latency_cache.go         |   2 +-
+ .../service/node/latency_mutation_utils.go    |  59 ++-
+ graphql/service/routing/resolver.go           |   2 +-
+ 10 files changed, 415 insertions(+), 115 deletions(-)
+ create mode 100644 dae/run_handoff_test.go
+
+diff --git a/dae-core/config/marshal.go b/dae-core/config/marshal.go
+index f68006a..69a5325 100644
+--- a/dae-core/config/marshal.go
++++ b/dae-core/config/marshal.go
+@@ -42,6 +42,11 @@ type Marshaller struct {
+ 	buf         bytes.Buffer
+ }
+ 
++// Bytes returns the serialized section buffer without exposing mutable state.
++func (m *Marshaller) Bytes() []byte {
++	return m.buf.Bytes()
++}
++
+ func (m *Marshaller) writeLine(depth int, line string) {
+ 	if depth < 0 {
+ 		depth = 0
+diff --git a/dae/run.go b/dae/run.go
+index a0a665d..96b579c 100644
+--- a/dae/run.go
++++ b/dae/run.go
+@@ -6,6 +6,8 @@
+ package dae
+ 
+ import (
++	"context"
++	"errors"
+ 	"fmt"
+ 	"net/netip"
+ 	"runtime"
+@@ -28,6 +30,22 @@ type ReloadMessage struct {
+ 	Callback chan<- error
+ }
+ 
++func closeReloadResources(closers ...func() error) error {
++	var errs error
++	for _, closeResource := range closers {
++		if closeResource != nil {
++			errs = errors.Join(errs, closeResource())
++		}
++	}
++	return errs
++}
++
++func notifyReloadCallback(callback chan<- error, err error) {
++	if callback != nil {
++		callback <- err
++	}
++}
++
+ var ChReloadConfigs = make(chan *ReloadMessage)
+ var GracefullyExit = make(chan struct{})
+ var EmptyConfig *daeConfig.Config
+@@ -77,88 +95,115 @@ func Run(log *logrus.Logger, conf *daeConfig.Config, externGeoDataDirs []string,
+ 			case nil:
+ 				break dryLoop
+ 			default:
+-				newConf.Callback <- nil
++				notifyReloadCallback(newConf.Callback, nil)
+ 			}
+ 		}
+ 		return nil
+ 	}
+ 
+ 	// New c.
+-	c, err = newControlPlane(log, nil, nil, conf, externGeoDataDirs)
++	processSessions := control.NewSessionManager(context.Background())
++	defer func() { _ = processSessions.Close() }()
++	c, err = newControlPlane(context.Background(), log, nil, nil, conf, externGeoDataDirs, false)
+ 	if err != nil {
+ 		return err
+ 	}
++	if err = c.AttachSessionManager(processSessions); err != nil {
++		_ = c.Close()
++		return err
++	}
++	datapathDetached := false
++	if conf == EmptyConfig {
++		if err = c.DetachBpfHooks(); err != nil {
++			_ = c.Close()
++			return fmt.Errorf("detach initial empty datapath: %w", err)
++		}
++		datapathDetached = true
++	}
+ 
+-	// Serve tproxy TCP/UDP server util signals.
+ 	var listener *control.Listener
++	if err = control.GetDaeNetns().With(func() error {
++		var listenErr error
++		listener, listenErr = c.Listen(conf.Global.TproxyPort)
++		if listenErr != nil {
++			return listenErr
++		}
++		return listener.ValidateCurrentNetns()
++	}); err != nil {
++		if listener != nil {
++			_ = listener.Close()
++		}
++		_ = c.Close()
++		return fmt.Errorf("listen in dae netns: %w", err)
++	}
++	readyChan := make(chan bool, 1)
++	serveDone := make(chan error, 1)
++	go func() { serveDone <- c.Serve(readyChan, listener) }()
++	if !<-readyChan {
++		serveErr := <-serveDone
++		_ = closeReloadResources(listener.Close, c.Close)
++		if serveErr == nil {
++			serveErr = fmt.Errorf("initial control plane was not ready")
++		}
++		return serveErr
++	}
++	log.Infoln("Ready")
+ 	go func() {
+-		readyChan := make(chan bool, 1)
+-		go func() {
+-			<-readyChan
+-			log.Infoln("Ready")
+-		}()
+-		control.GetDaeNetns().With(func() error {
+-			if listener, err = c.ListenAndServe(readyChan, conf.Global.TproxyPort); err != nil {
+-				log.Errorln("ListenAndServe:", err)
+-			}
+-			return err
+-		})
+-		// Exit
++		if serveErr := <-serveDone; serveErr != nil {
++			log.WithError(serveErr).Errorln("control plane serve stopped")
++		}
+ 		ChReloadConfigs <- nil
+ 	}()
+ 	reloading := false
+-	/* dae-wing start */
+-	var errReload error
+-	var chCallback chan<- error
+-	/* dae-wing end */
+ loop:
+ 	for newReloadMsg := range ChReloadConfigs {
+ 		switch newReloadMsg {
+ 		case nil:
+-			/* dae-wing start */
+-			// We will receive nil after control plane being Closed.
+-			// We'll judge if we are in a reloading.
+-			/* dae-wing end */
+-
+ 			if reloading {
+-				if listener == nil {
+-					// Failed to listen. Exit.
+-					break loop
+-				}
+-				// Serve.
++				// The old generation's Serve loop reports its shutdown after the
++				// candidate has already taken over the cloned listener.
+ 				reloading = false
+-				log.Warnln("[Reload] Serve")
+-				readyChan := make(chan bool, 1)
+-				go func() {
+-					if err := c.Serve(readyChan, listener); err != nil {
+-						log.Errorln("ListenAndServe:", err)
+-					}
+-					// Exit
+-					ChReloadConfigs <- nil
+-				}()
+-				<-readyChan
+-				log.Warnln("[Reload] Finished")
+-				/* dae-wing start */
+-				chCallback <- errReload
+-				/* dae-wing end */
++				continue
+ 			} else {
+-				// Listening error.
+ 				break loop
+ 			}
+ 		default:
+ 			// Reload signal.
+ 			log.Warnln("[Reload] Received reload signal; prepare to reload")
+ 
+-			/* dae-wing start */
+ 			newConf := newReloadMsg.Config
+-			/* dae-wing end */
+-
+-			// openwrt-daede: dashboard stop reloads to EmptyConfig; detach hooks.
+-			if newConf == EmptyConfig {
+-				if e := c.DetachBpfHooks(); e != nil {
+-					log.Errorln("[Stop] DetachBpfHooks:", e)
++			if datapathDetached && newConf == EmptyConfig {
++				notifyReloadCallback(newReloadMsg.Callback, nil)
++				continue
++			}
++			oldC := c
++			wasStopped := datapathDetached
++			failReload := func(cause, cleanupErr error) error {
++				cause = errors.Join(cause, cleanupErr)
++				if cleanupErr == nil && wasStopped {
++					if detachErr := oldC.DetachBpfHooks(); detachErr != nil {
++						cause = errors.Join(cause, fmt.Errorf("restore stopped datapath: %w", detachErr))
++						cleanupErr = detachErr
++					} else {
++						datapathDetached = true
++					}
+ 				}
++				notifyReloadCallback(newReloadMsg.Callback, cause)
++				if cleanupErr != nil {
++					return cause
++				}
++				return nil
+ 			}
++			if wasStopped {
++				if restoreErr := oldC.RestoreDatapathForReloadRollback(); restoreErr != nil {
++					if fatalErr := failReload(fmt.Errorf("prepare stopped datapath: %w", restoreErr), nil); fatalErr != nil {
++						return fatalErr
++					}
++					continue
++				}
++				datapathDetached = false
++			}
++
+ 			// New logger.
+ 			oldLogOutput := log.Out
+ 			log = logrus.New()
+@@ -167,65 +212,223 @@ loop:
+ 			log.SetOutput(oldLogOutput) // FIXME: THIS IS A HACK.
+ 			logrus.SetOutput(oldLogOutput)
+ 
+-			// New control plane.
+-			obj := c.EjectBpf()
+ 			var dnsCache map[string]*control.DnsCache
+ 			if conf.Dns.IpVersionPrefer == newConf.Dns.IpVersionPrefer {
+ 				// Only keep dns cache when ip version preference not change.
+ 				dnsCache = c.CloneDnsCache()
+ 			}
+-			log.Warnln("[Reload] Load new control plane")
+-			newC, err := newControlPlane(log, obj, dnsCache, newConf, externGeoDataDirs)
++			log.Warnln("[Reload] Prepare new control plane")
++			freshState, err := c.SnapshotFreshDatapathState()
+ 			if err != nil {
+-				/* dae-wing start */
+-				errReload = err
+-				/* dae-wing end */
+-
+-				log.WithFields(logrus.Fields{
+-					"err": err,
+-				}).Errorln("[Reload] Failed to reload; try to roll back configuration")
+-				// Load last config back.
+-				newC, err = newControlPlane(log, obj, dnsCache, conf, externGeoDataDirs)
+-				if err != nil {
+-					obj.Close()
+-					c.Close()
+-					log.WithFields(logrus.Fields{
+-						"err": err,
+-					}).Fatalln("[Reload] Failed to roll back configuration")
++				if fatalErr := failReload(err, nil); fatalErr != nil {
++					return fatalErr
+ 				}
+-				newConf = conf
+-				log.Errorln("[Reload] Last reload failed; rolled back configuration")
+-			} else {
+-				log.Warnln("[Reload] Stopped old control plane")
+-
+-				/* dae-wing start */
+-				errReload = nil
+-				/* dae-wing end */
++				continue
+ 			}
++			newC, err := newControlPlane(context.Background(), log, freshState, dnsCache, newConf, externGeoDataDirs, true)
++			if err == nil {
++				err = newC.AttachSessionManager(processSessions)
++			}
++			if err != nil {
++				var cleanupErr error
++				if newC != nil {
++					cleanupErr = newC.Close()
++				}
++				if fatalErr := failReload(err, cleanupErr); fatalErr != nil {
++					return fatalErr
++				}
++				continue
++			}
++			stagedListener, err := listener.Clone()
++			if err != nil {
++				if fatalErr := failReload(fmt.Errorf("clone listener: %w", err), newC.Close()); fatalErr != nil {
++					return fatalErr
++				}
++				continue
++			}
++			if err = oldC.StopDNSListener(); err != nil {
++				cleanupErr := closeReloadResources(stagedListener.Close, newC.Close, oldC.RestartDNSListener)
++				if fatalErr := failReload(fmt.Errorf("stop old DNS listener: %w", err), cleanupErr); fatalErr != nil {
++					return fatalErr
++				}
++				continue
++			}
++			dnsStopped := true
++			readyChan := make(chan bool, 1)
++			serveDone := make(chan error, 1)
++			go func() { serveDone <- newC.Serve(readyChan, stagedListener) }()
++			ready := <-readyChan
++			if !ready {
++				serveErr := <-serveDone
++				if serveErr == nil {
++					serveErr = fmt.Errorf("prepared control plane was not ready")
++				}
++				cleanupErr := closeReloadResources(
++					stagedListener.Close,
++					newC.Close,
++					oldC.RestartDNSListener,
++				)
++				dnsStopped = false
++				if fatalErr := failReload(serveErr, cleanupErr); fatalErr != nil {
++					return fatalErr
++				}
++				continue
++			}
++			hookPrepared := false
++			provisionalOwner := false
++			hookFlipCommitted := false
++			hookSetAdopted := false
++			flowDatapathAdopted := false
++			rollbackCleanupFailed := false
++			rollbackCandidate := func(cause error) error {
++				var rollbackErr error
++				addRollbackErr := func(err error) {
++					if err != nil {
++						rollbackCleanupFailed = true
++						rollbackErr = errors.Join(rollbackErr, err)
++					}
++				}
++				if flowDatapathAdopted {
++					addRollbackErr(oldC.AdoptProcessFlowDatapath(newC))
++				}
++				if hookSetAdopted {
++					if ownerErr := newC.RestorePreparedTCHookSet(oldC); ownerErr != nil {
++						rollbackCleanupFailed = true
++						return errors.Join(cause, rollbackErr, fmt.Errorf("restore TC HookSet owner: %w", ownerErr))
++					}
++				}
++				if hookFlipCommitted {
++					addRollbackErr(newC.RollbackPreparedBpfHookFlip())
++				}
++				if hookPrepared && !hookSetAdopted && !hookFlipCommitted {
++					addRollbackErr(newC.ClearPreparedTCHookHandoff())
++				}
++				if provisionalOwner {
++					newC.UnregisterProvisionalRoutingEpochExecutionOwner()
++				}
++				addRollbackErr(newC.DetachBpfHooks())
++				addRollbackErr(stagedListener.Close())
++				addRollbackErr(newC.Close())
++				if dnsStopped {
++					addRollbackErr(oldC.RestartDNSListener())
++					dnsStopped = false
++				}
++				return errors.Join(cause, rollbackErr)
++			}
++			if err = newC.PrepareTCHookHandoff(oldC); err != nil {
++				rollbackErr := rollbackCandidate(err)
++				if rollbackCleanupFailed {
++					notifyReloadCallback(newReloadMsg.Callback, rollbackErr)
++					return rollbackErr
++				}
++				if fatalErr := failReload(rollbackErr, nil); fatalErr != nil {
++					return fatalErr
++				}
++				continue
++			}
++			hookPrepared = true
++			if err = newC.RegisterProvisionalRoutingEpochExecutionOwner(); err != nil {
++				rollbackErr := rollbackCandidate(err)
++				if rollbackCleanupFailed {
++					notifyReloadCallback(newReloadMsg.Callback, rollbackErr)
++					return rollbackErr
++				}
++				if fatalErr := failReload(rollbackErr, nil); fatalErr != nil {
++					return fatalErr
++				}
++				continue
++			}
++			provisionalOwner = true
++			if err = newC.CommitPreparedBpfHookFlip(); err != nil {
++				rollbackErr := rollbackCandidate(err)
++				if rollbackCleanupFailed {
++					notifyReloadCallback(newReloadMsg.Callback, rollbackErr)
++					return rollbackErr
++				}
++				if fatalErr := failReload(rollbackErr, nil); fatalErr != nil {
++					return fatalErr
++				}
++				continue
++			}
++			hookFlipCommitted = true
++			if err = newC.AdoptPreparedTCHookSet(oldC); err != nil {
++				rollbackErr := rollbackCandidate(err)
++				if rollbackCleanupFailed {
++					notifyReloadCallback(newReloadMsg.Callback, rollbackErr)
++					return rollbackErr
++				}
++				if fatalErr := failReload(rollbackErr, nil); fatalErr != nil {
++					return fatalErr
++				}
++				continue
++			}
++			hookSetAdopted = true
++			if err = newC.AdoptProcessFlowDatapath(oldC); err != nil {
++				rollbackErr := rollbackCandidate(err)
++				if rollbackCleanupFailed {
++					notifyReloadCallback(newReloadMsg.Callback, rollbackErr)
++					return rollbackErr
++				}
++				if fatalErr := failReload(rollbackErr, nil); fatalErr != nil {
++					return fatalErr
++				}
++				continue
++			}
++			flowDatapathAdopted = true
++			newC.UnregisterProvisionalRoutingEpochExecutionOwner()
++			provisionalOwner = false
++			if err = newC.FinalizePreparedTCHooks(); err != nil {
++				fatalErr := errors.Join(fmt.Errorf("finalize prepared TC hooks: %w", err), closeReloadResources(
++					listener.Close,
++					stagedListener.Close,
++					newC.Close,
++					oldC.Close,
++				))
++				notifyReloadCallback(newReloadMsg.Callback, fatalErr)
++				return fatalErr
++			}
++			hookPrepared = false
++			hookFlipCommitted = false
++			hookSetAdopted = false
+ 
+-			// Inject bpf objects into the new control plane life-cycle.
+-			newC.InjectBpf(obj)
+-
+-			// Prepare new context.
+-			oldC := c
++			oldListener := listener
+ 			c = newC
+ 			conf = newConf
++			listener = stagedListener
++			datapathDetached = false
++			retireErr := closeReloadResources(oldListener.Close, oldC.Close)
++			if newConf == EmptyConfig {
++				if retireErr != nil {
++					fatalErr := errors.Join(fmt.Errorf("retire previous control plane: %w", retireErr), closeReloadResources(stagedListener.Close, newC.Close))
++					notifyReloadCallback(newReloadMsg.Callback, fatalErr)
++					return fatalErr
++				}
++				if detachErr := newC.DetachBpfHooks(); detachErr != nil {
++					fatalErr := errors.Join(fmt.Errorf("detach stopped datapath: %w", detachErr), closeReloadResources(stagedListener.Close, newC.Close))
++					notifyReloadCallback(newReloadMsg.Callback, fatalErr)
++					return fatalErr
++				}
++				datapathDetached = true
++			} else if retireErr != nil {
++				log.WithError(retireErr).Warnln("[Reload] Failed to close old control plane")
++			}
+ 			reloading = true
+-			/* dae-wing start */
+-			chCallback = newReloadMsg.Callback
+-			/* dae-wing end */
+-
+-			// Ready to close.
+-			oldC.Close()
++			notifyReloadCallback(newReloadMsg.Callback, nil)
++			go func(done <-chan error) {
++				if serveErr := <-done; serveErr != nil {
++					log.WithError(serveErr).Errorln("control plane serve stopped")
++				}
++				ChReloadConfigs <- nil
++			}(serveDone)
+ 		}
+ 	}
+-	if e := c.Close(); e != nil {
++	if e := closeReloadResources(listener.Close, c.Close); e != nil {
+ 		return fmt.Errorf("close control plane: %w", e)
+ 	}
+ 	return nil
+ }
+ 
+-func newControlPlane(log *logrus.Logger, bpf interface{}, dnsCache map[string]*control.DnsCache, conf *daeConfig.Config, externGeoDataDirs []string) (c *control.ControlPlane, err error) {
++func newControlPlane(ctx context.Context, log *logrus.Logger, bpf interface{}, dnsCache map[string]*control.DnsCache, conf *daeConfig.Config, externGeoDataDirs []string, prepared bool) (c *control.ControlPlane, err error) {
+ 
+ 	// Print configuration.
+ 	if log.IsLevelEnabled(logrus.DebugLevel) {
+@@ -239,10 +442,6 @@ func newControlPlane(log *logrus.Logger, bpf interface{}, dnsCache map[string]*c
+ 		control.PurgeStaleTCFilters(log)
+ 	}
+ 
+-	// Init Direct Dialers.
+-	direct.InitDirectDialers(conf.Global.FallbackResolver)
+-	netutils.FallbackDns = netip.MustParseAddrPort(conf.Global.FallbackResolver)
+-
+ 	if !conf.Global.DisableWaitingNetwork && len(conf.Global.WanInterface) > 0 {
+ 		// Wait for network for WAN ready.
+ 		if err = waitForNetwork(log); err != nil {
+@@ -266,7 +465,10 @@ func newControlPlane(log *logrus.Logger, bpf interface{}, dnsCache map[string]*c
+ 	}
+ 
+ 	// New dae control plane.
+-	c, err = control.NewControlPlane(
++	directDialers := direct.NewDirectDialers(conf.Global.FallbackResolver)
++	systemDNSResolver := netutils.NewSystemDNSResolver(netip.MustParseAddrPort(conf.Global.FallbackResolver))
++	c, err = control.NewControlPlaneWithContextOptions(
++		ctx,
+ 		log,
+ 		bpf,
+ 		dnsCache,
+@@ -276,6 +478,14 @@ func newControlPlane(log *logrus.Logger, bpf interface{}, dnsCache map[string]*c
+ 		&conf.Global,
+ 		&conf.Dns,
+ 		externGeoDataDirs,
++		control.ControlPlaneBuildOptions{
++			DelayDatapathCommit:   prepared,
++			DelayDNSListenerStart: prepared,
++			IsReload:              prepared || bpf != nil,
++			DirectDialer:          directDialers.Symmetric,
++			FullconeDirectDialer:  directDialers.Fullcone,
++			SystemDNSResolver:     systemDNSResolver,
++		},
+ 	)
+ 	if err != nil {
+ 		return nil, err
+diff --git a/dae/run_handoff_test.go b/dae/run_handoff_test.go
+new file mode 100644
+index 0000000..0ffb2ec
+--- /dev/null
++++ b/dae/run_handoff_test.go
+@@ -0,0 +1,33 @@
++package dae
++
++import (
++	"errors"
++	"reflect"
++	"testing"
++)
++
++func TestCloseReloadResourcesOrder(t *testing.T) {
++	var got []string
++	err := closeReloadResources(
++		func() error { got = append(got, "old-listener"); return nil },
++		func() error { got = append(got, "staged-listener"); return nil },
++		func() error { got = append(got, "new-control-plane"); return nil },
++		func() error { got = append(got, "old-control-plane"); return nil },
++	)
++	if err != nil {
++		t.Fatalf("closeReloadResources() error = %v", err)
++	}
++	want := []string{"old-listener", "staged-listener", "new-control-plane", "old-control-plane"}
++	if !reflect.DeepEqual(got, want) {
++		t.Fatalf("close order = %v, want %v", got, want)
++	}
++}
++
++func TestCloseReloadResourcesJoinsErrors(t *testing.T) {
++	one := errors.New("old listener")
++	two := errors.New("old control plane")
++	err := closeReloadResources(func() error { return one }, func() error { return two })
++	if !errors.Is(err, one) || !errors.Is(err, two) {
++		t.Fatalf("joined error = %v, want both close errors", err)
++	}
++}
+diff --git a/dae/runtime.go b/dae/runtime.go
+index 2ab0d68..af46089 100644
+--- a/dae/runtime.go
++++ b/dae/runtime.go
+@@ -30,18 +30,16 @@ type RuntimeOverview struct {
+ }
+ 
+ func GetRuntimeOverview(windowSec int, maxPoints int) (*RuntimeOverview, error) {
+-	activeTCPConnections := 0
+ 	ctl, err := ControlPlane()
++	var snapshot control.RuntimeStatsSnapshot
+ 	if err != nil {
+ 		if !errors.Is(err, ErrControlPlaneNotInit) {
+ 			return nil, err
+ 		}
+ 	} else {
+-		activeTCPConnections = ctl.ActiveTCPConnections()
++		snapshot = ctl.SnapshotRuntimeStats(windowSec, maxPoints)
+ 	}
+ 
+-	snapshot := control.SnapshotRuntimeStats(activeTCPConnections, control.DefaultUdpEndpointPool.Count(), windowSec, maxPoints)
+-
+ 	samples := make([]RuntimeTrafficSample, 0, len(snapshot.Samples))
+ 	for _, sample := range snapshot.Samples {
+ 		samples = append(samples, RuntimeTrafficSample{
+diff --git a/dae/utils.go b/dae/utils.go
+index dc43cbc..ca61c85 100644
+--- a/dae/utils.go
++++ b/dae/utils.go
+@@ -32,8 +32,11 @@ var (
+ 	EmptyGlobalSection       = `global {}`
+ )
+ 
+-func NecessaryOutbounds(routing *daeConfig.Routing) (outbounds []string) {
+-	f := daeConfig.FunctionOrStringToFunction(routing.Fallback)
++func NecessaryOutbounds(routing *daeConfig.Routing) (outbounds []string, err error) {
++	f, err := daeConfig.ParseFunctionOrString(routing.Fallback)
++	if err != nil {
++		return nil, err
++	}
+ 	outbounds = append(outbounds, f.Name)
+ 	for _, r := range routing.Rules {
+ 		outbound := r.Outbound.Name
+@@ -42,7 +45,7 @@ func NecessaryOutbounds(routing *daeConfig.Routing) (outbounds []string) {
+ 		}
+ 		outbounds = append(outbounds, outbound)
+ 	}
+-	return daeCommon.Deduplicate(outbounds)
++	return daeCommon.Deduplicate(outbounds), nil
+ }
+ 
+ func ParseConfig(globalSection *string, dnsSection *string, routingSection *string) (*daeConfig.Config, error) {
+diff --git a/db/node_utils.go b/db/node_utils.go
+index b7b43b8..7ca8fc3 100644
+--- a/db/node_utils.go
++++ b/db/node_utils.go
+@@ -6,6 +6,7 @@
+ package db
+ 
+ import (
++	"context"
+ 	"strings"
+ 
+ 	"github.com/daeuniverse/dae-wing/common"
+@@ -25,7 +26,7 @@ func NewNodeModel(link string, tag *string, subscriptionId *uint) (*Node, error)
+ 		}
+ 		_tag = *tag
+ 	}
+-	d, err := dialer.NewFromLink(&dialer.GlobalOption{
++	d, err := dialer.NewFromLinkContext(context.Background(), &dialer.GlobalOption{
+ 		Log: logrus.StandardLogger(),
+ 	}, dialer.InstanceOption{DisableCheck: false}, link, _tag)
+ 	if err != nil {
+diff --git a/graphql/service/config/mutation_utils.go b/graphql/service/config/mutation_utils.go
+index 59f0ebd..c7d6b78 100644
+--- a/graphql/service/config/mutation_utils.go
++++ b/graphql/service/config/mutation_utils.go
+@@ -298,7 +298,7 @@ func ApplyIfRunning(ctx context.Context) error {
+ func runLocked(ctx context.Context, noLoad bool) (n int32, err error) {
+ 	//// Dry run.
+ 	if noLoad {
+-		ch := make(chan error)
++		ch := make(chan error, 1)
+ 		reloadMsg := &dae.ReloadMessage{
+ 			Config:   dae.EmptyConfig,
+ 			Callback: ch,
+@@ -384,7 +384,10 @@ func runLocked(ctx context.Context, noLoad bool) (n int32, err error) {
+ 	}
+ 	/// Fill in necessary groups and nodes.
+ 	// Find groups needed by routing.
+-	outbounds := dae.NecessaryOutbounds(&c.Routing)
++	outbounds, err := dae.NecessaryOutbounds(&c.Routing)
++	if err != nil {
++		return 0, err
++	}
+ 	var groups []db.Group
+ 	q = d.Model(&db.Group{}).
+ 		Where("name in ?", outbounds).
+@@ -523,7 +526,7 @@ func runLocked(ctx context.Context, noLoad bool) (n int32, err error) {
+ 	readTx = nil
+ 
+ 	/// Reload with current config.
+-	chReloadCallback := make(chan error)
++	chReloadCallback := make(chan error, 1)
+ 	reloadMsg := &dae.ReloadMessage{
+ 		Config:   c,
+ 		Callback: chReloadCallback,
+diff --git a/graphql/service/node/latency_cache.go b/graphql/service/node/latency_cache.go
+index ba66794..e0ec91e 100644
+--- a/graphql/service/node/latency_cache.go
++++ b/graphql/service/node/latency_cache.go
+@@ -162,7 +162,7 @@ func refreshLatencyCache(ctx context.Context) error {
+ 		return err
+ 	}
+ 
+-	results := testLatencyResultsForNodes(option, nodes)
++	results := testLatencyResultsForNodes(ctx, option, nodes)
+ 	storeLatencyResults(results)
+ 
+ 	if ctl, err := dae.ControlPlane(); err == nil {
+diff --git a/graphql/service/node/latency_mutation_utils.go b/graphql/service/node/latency_mutation_utils.go
+index 056f9fa..5026b33 100644
+--- a/graphql/service/node/latency_mutation_utils.go
++++ b/graphql/service/node/latency_mutation_utils.go
+@@ -8,6 +8,8 @@ package node
+ import (
+ 	"context"
+ 	"io"
++	"net/netip"
++	"strings"
+ 	"sync"
+ 	"time"
+ 
+@@ -15,6 +17,7 @@ import (
+ 	"github.com/daeuniverse/dae-wing/dae"
+ 	"github.com/daeuniverse/dae-wing/db"
+ 	dialer "github.com/daeuniverse/dae/component/outbound/dialer"
++	"github.com/daeuniverse/outbound/netproxy"
+ 	"github.com/graph-gophers/graphql-go"
+ 	"github.com/sirupsen/logrus"
+ )
+@@ -32,12 +35,12 @@ func TestLatencies(ctx context.Context, ids *[]graphql.ID) ([]*LatencyResolver,
+ 		return nil, err
+ 	}
+ 
+-	results := testLatencyResultsForNodes(option, nodes)
++	results := testLatencyResultsForNodes(ctx, option, nodes)
+ 	storeLatencyResults(results)
+ 	return results, nil
+ }
+ 
+-func testLatencyResultsForNodes(option *dialer.GlobalOption, nodes []db.Node) []*LatencyResolver {
++func testLatencyResultsForNodes(ctx context.Context, option *dialer.GlobalOption, nodes []db.Node) []*LatencyResolver {
+ 	results := make([]*LatencyResolver, len(nodes))
+ 	sem := make(chan struct{}, latencyProbeConcurrency)
+ 	var wg sync.WaitGroup
+@@ -51,7 +54,7 @@ func testLatencyResultsForNodes(option *dialer.GlobalOption, nodes []db.Node) []
+ 			defer func() { <-sem }()
+ 
+ 			node := nodes[index]
+-			results[index] = testSingleNodeLatency(option, &node)
++			results[index] = testSingleNodeLatency(ctx, option, &node)
+ 		}()
+ 	}
+ 
+@@ -93,14 +96,14 @@ func latencyProbeNodes(ctx context.Context, ids *[]graphql.ID) ([]db.Node, error
+ 	return nodes, nil
+ }
+ 
+-func testSingleNodeLatency(option *dialer.GlobalOption, node *db.Node) *LatencyResolver {
++func testSingleNodeLatency(ctx context.Context, option *dialer.GlobalOption, node *db.Node) *LatencyResolver {
+ 	resolver := &LatencyResolver{
+ 		NodeID:    node.ID,
+ 		AliveVal:  false,
+ 		TestedAtV: time.Now(),
+ 	}
+ 
+-	d, err := dialer.NewFromLink(option, dialer.InstanceOption{DisableCheck: false}, node.Link, "")
++	d, err := dialer.NewFromLinkContext(ctx, option, dialer.InstanceOption{DisableCheck: false}, node.Link, "")
+ 	if err != nil {
+ 		msg := err.Error()
+ 		resolver.MessageV = &msg
+@@ -108,7 +111,7 @@ func testSingleNodeLatency(option *dialer.GlobalOption, node *db.Node) *LatencyR
+ 	}
+ 	defer d.Close()
+ 
+-	result, err := d.ProbeLatencyFast()
++	result, err := probeLatencyFast(ctx, d)
+ 	if err != nil {
+ 		msg := err.Error()
+ 		resolver.MessageV = &msg
+@@ -128,3 +131,47 @@ func testSingleNodeLatency(option *dialer.GlobalOption, node *db.Node) *LatencyR
+ 	}
+ 	return resolver
+ }
++
++func probeLatencyFast(ctx context.Context, d *dialer.Dialer) (*dialer.LatencyProbeResult, error) {
++	opt, err := d.TcpCheckOptionRaw.Option()
++	if err != nil {
++		return nil, err
++	}
++	network, err := netproxy.ParseMagicNetwork(d.TcpCheckOptionRaw.ResolverNetwork)
++	if err != nil {
++		return nil, err
++	}
++	result := &dialer.LatencyProbeResult{CheckedAt: time.Now()}
++	var messages []string
++	for _, probe := range []struct {
++		index int
++		ip    netip.Addr
++	}{
++		{index: dialer.IdxTcp4, ip: opt.Ip4},
++		{index: dialer.IdxTcp6, ip: opt.Ip6},
++	} {
++		if !probe.ip.IsValid() {
++			continue
++		}
++		probeCtx, cancel := context.WithTimeout(ctx, 1500*time.Millisecond)
++		started := time.Now()
++		ok, probeErr := d.HttpCheck(probeCtx, probe.index, opt.Url, probe.ip, opt.Method, network.Mark, network.Mptcp)
++		cancel()
++		if ok {
++			latency := time.Since(started)
++			if !result.Alive || latency < result.Latency {
++				result.Latency = latency
++			}
++			result.Alive = true
++		} else if probeErr != nil {
++			messages = append(messages, probeErr.Error())
++		}
++	}
++	if !result.Alive {
++		result.Message = strings.Join(messages, "; ")
++		if result.Message == "" {
++			result.Message = "no latency result"
++		}
++	}
++	return result, nil
++}
+diff --git a/graphql/service/routing/resolver.go b/graphql/service/routing/resolver.go
+index 7822d64..3ed61aa 100644
+--- a/graphql/service/routing/resolver.go
++++ b/graphql/service/routing/resolver.go
+@@ -41,7 +41,7 @@ func (r *Resolver) Selected() bool {
+ 	return r.Model.Selected
+ }
+ 
+-func (r *Resolver) ReferenceGroups() (outbounds []string) {
++func (r *Resolver) ReferenceGroups() (outbounds []string, err error) {
+ 	return dae.NecessaryOutbounds(r.DaeRouting)
+ }
+ 

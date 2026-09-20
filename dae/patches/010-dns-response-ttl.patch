@@ -1,135 +1,539 @@
-diff --git a/cmd/reload_manager.go b/cmd/reload_manager.go
-index c78910c..bcc1a37 100644
---- a/cmd/reload_manager.go
-+++ b/cmd/reload_manager.go
-@@ -423,5 +423,8 @@ func dnsConfigFingerprint(dns config.Dns) string {
- 	b.WriteString("max_cache_size=")
- 	b.WriteString(strconv.Itoa(dns.MaxCacheSize))
- 	b.WriteByte(';')
-+	b.WriteString("response_ttl=")
-+	b.WriteString(strconv.Itoa(dns.ResponseTtl))
-+	b.WriteByte(';')
- 	return b.String()
- }
 diff --git a/cmd/run_shutdown_test.go b/cmd/run_shutdown_test.go
-index f8f731f..4dcdcff 100644
+index 66c99238fdd4cfb552ae7b515bde2e7f0ec6098e..31719b3f64df5ba93d79b67d30e0293a16c613fb 100644
 --- a/cmd/run_shutdown_test.go
 +++ b/cmd/run_shutdown_test.go
-@@ -609,6 +609,7 @@ func TestDNSConfigFingerprintCoversAllDnsFields(t *testing.T) {
- 		"OptimisticCache":    {},
- 		"OptimisticCacheTtl": {},
- 		"MaxCacheSize":       {},
-+		"ResponseTtl":        {},
+@@ -857,6 +857,7 @@ func TestDNSConfigFingerprintCoversAllDnsFields(t *testing.T) {
+ 		"OptimisticCacheTtl":      {},
+ 		"OptimisticStaleReplyTtl": {},
+ 		"MaxCacheSize":            {},
++		"ResponseTtl":             {},
  	}
  
- 	dnsType := reflect.TypeOf(config.Dns{})
+ 	dnsType := reflect.TypeFor[config.Dns]()
 diff --git a/config/config.go b/config/config.go
-index e688e88..af28da5 100644
+index cc2f7f0e02b63ca49cc59c0eceb2c2b0ce55c257..b1b13f12fe2ceb6f54163304a4a7c8ca7fd1bcea 100644
 --- a/config/config.go
 +++ b/config/config.go
-@@ -160,6 +160,7 @@ type Dns struct {
- 	OptimisticCache    bool            `mapstructure:"optimistic_cache" default:"true"`
- 	OptimisticCacheTtl int             `mapstructure:"optimistic_cache_ttl" default:"60"`
- 	MaxCacheSize       int             `mapstructure:"max_cache_size" default:"0"`
-+	ResponseTtl        int             `mapstructure:"response_ttl" default:"0"`
+@@ -130,7 +130,7 @@ type KeyableString string
+ // Dns is intentionally mirrored by cmd.dnsConfigFingerprint for staged reload
+ // DNS reuse decisions. Only routing-affecting fields are covered by the
+ // fingerprint; runtime-tunable parameters (OptimisticCache, OptimisticCacheTtl,
+-// MaxCacheSize) are excluded because they are hot-updated via
++// MaxCacheSize, ResponseTtl) are excluded because they are hot-updated via
+ // DnsController.UpdateRuntime. Keep the fingerprint in sync with any new
+ // routing-affecting top-level fields; TestDNSConfigFingerprintCoversAllDnsFields
+ // guards the contract.
+@@ -146,6 +146,7 @@ type Dns struct {
+ 	// 8767) response is served. 0 keeps the previously packed TTL.
+ 	OptimisticStaleReplyTtl int `mapstructure:"optimistic_stale_reply_ttl" default:"30"`
+ 	MaxCacheSize            int `mapstructure:"max_cache_size" default:"65536"`
++	ResponseTtl             int `mapstructure:"response_ttl" default:"0"`
  }
  
  type Routing struct {
 diff --git a/config/desc.go b/config/desc.go
-index 513cf7e..9b3c1a2 100644
+index b61f4ca30286619ea34b47dfc592d50f8c549c28..61a5d1ea65a75e46f580c09faec02e26b73adf74 100644
 --- a/config/desc.go
 +++ b/config/desc.go
 @@ -66,6 +66,7 @@ var GlobalDesc = Desc{
  var DnsDesc = Desc{
  	"ipversion_prefer": "For example, if ipversion_prefer is 4 and the domain name has both type A and type AAAA records, the dae will only respond to type A queries and response empty answer to type AAAA queries.",
  	"fixed_domain_ttl": "Give a fixed ttl for domains. Zero means that dae will request to upstream every time and not cache DNS results for these domains.",
-+	"response_ttl":     "Override the TTL returned to downstream DNS clients. Zero keeps dae's default behavior.",
++	"response_ttl":     "Override the TTL of A and AAAA answers returned to downstream DNS clients. Zero keeps dae's default behavior.",
  	"upstream":         "Value can be scheme://host:port, where the scheme can be tcp/udp/tcp+udp.\nIf host is a domain and has both IPv4 and IPv6 record, dae will automatically choose IPv4 or IPv6 to use according to group policy (such as min latency policy).\nPlease make sure DNS traffic will go through and be forwarded by dae, which is REQUIRED for domain routing.\nIf dial_mode is \"ip\", the upstream DNS answer SHOULD NOT be polluted, so domestic public DNS is not recommended.",
  	"request": `DNS request routing for ordinary client traffic uses qname and qtype.
  Built-in outbounds for ordinary DNS requests: asis, reject.
 diff --git a/control/control_plane.go b/control/control_plane.go
-index 5df98db..a543f3b 100644
+index e420286bbcab1832bc4f0dc8e1e5b05a03badfeb..eb41072ec7af5171ef356ae5160b9f279fd9f88a 100644
 --- a/control/control_plane.go
 +++ b/control/control_plane.go
-@@ -771,6 +771,7 @@ func newControlPlaneWithContextOptions(
- 	}
- 	plane.dnsRouting = dnsUpstream
- 	plane.dnsFixedDomainTtl = fixedDomainTtl
+@@ -918,6 +918,7 @@ func NewControlPlaneWithContextOptions(
+ 	plane.dnsOptimisticStaleReplyTtl = dnsConfig.OptimisticStaleReplyTtl
+ 	plane.dnsMaxCacheSize = dnsConfig.MaxCacheSize
+ 	plane.dnsIpVersionPrefer = dnsConfig.IpVersionPrefer
 +	plane.dnsResponseTtl = dnsConfig.ResponseTtl
- 	dnsControllerOption := plane.dnsControllerOption()
- 	dnsControllerOption.OptimisticCache = dnsConfig.OptimisticCache
- 	dnsControllerOption.OptimisticCacheTtl = dnsConfig.OptimisticCacheTtl
-@@ -1256,6 +1257,7 @@ func (c *ControlPlane) dnsControllerOption() *DnsControllerOption {
- 		Log:              c.log,
- 		LifecycleContext: c.ctx,
- 		ConcurrencyLimit: 0,
-+		ResponseTtl:      c.dnsResponseTtl,
- 		CacheAccessCallback: func(cache *DnsCache) (err error) {
- 			if err = c.core.BatchUpdateDomainRouting(cache); err != nil {
- 				return fmt.Errorf("BatchUpdateDomainRouting: %w", err)
-diff --git a/control/dns_control.go b/control/dns_control.go
-index d5bf872..b52132d 100644
---- a/control/dns_control.go
-+++ b/control/dns_control.go
-@@ -82,6 +82,7 @@ type DnsControllerOption struct {
- 	OptimisticCache       bool
- 	OptimisticCacheTtl    int // 0 means never expire (rely on LRU eviction)
- 	MaxCacheSize          int // maximum number of cache entries (0 = unlimited)
-+	ResponseTtl           int
+ 	plane.dnsController, err = NewDnsController(dnsUpstream, plane.dnsControllerOption())
+ 	if err != nil {
+ 		return nil, err
+@@ -1293,6 +1294,7 @@ func (c *ControlPlane) dnsControllerOption() *DnsControllerOption {
+ 		OptimisticStaleReplyTtl: c.dnsOptimisticStaleReplyTtl,
+ 		MaxCacheSize:            c.dnsMaxCacheSize,
+ 		IpVersionPrefer:         c.dnsIpVersionPrefer,
++		ResponseTtl:             c.dnsResponseTtl,
+ 	}
  }
  
- type dnsControllerRuntimeState struct {
-@@ -94,6 +95,7 @@ type dnsControllerRuntimeState struct {
- 	bestDialerChooser     func(ctx context.Context, req *udpRequest, upstream *dns.Upstream) (*dialArgument, error)
- 	timeoutExceedCallback func(dialArgument *dialArgument, err error)
- 	fixedDomainTtl        map[string]int
-+	responseTtl           int
+diff --git a/control/dns_cache.go b/control/dns_cache.go
+index 5375997a257fc7106aa61419f2a35764a87da574..a2c564f6900a62b5fb5e240ec544ab305554035b 100644
+--- a/control/dns_cache.go
++++ b/control/dns_cache.go
+@@ -35,6 +35,7 @@ const (
+ type dnsPackedResponse struct {
+ 	wire              []byte
+ 	ttl               uint32
++	responseTtl       int
+ 	createdAtUnixNano int64
+ }
+ 
+@@ -266,10 +267,27 @@ func setSectionTTL(rrs []dnsmessage.RR, ttl uint32, scratch []uint32) {
+ 	}
+ }
+ 
+-// copySectionWithTTL deep-copies a record section and stamps the remaining
+-// lifetime onto every record. This is the single place where the "materialize a
+-// stored section onto the wire at a given remaining TTL" policy lives, so the
+-// pre-packed path and the in-place fallback cannot drift apart.
++func addressAnswerTTL(rr dnsmessage.RR, ttl uint32, responseTtl int) uint32 {
++	if responseTtl > 0 {
++		switch rr.Header().Rrtype {
++		case dnsmessage.TypeA, dnsmessage.TypeAAAA:
++			return uint32(responseTtl)
++		}
++	}
++	return ttl
++}
++
++func setAnswerSectionTTL(rrs []dnsmessage.RR, ttl uint32, responseTtl int, scratch []uint32) {
++	for i, rr := range rrs {
++		scratch[i] = rr.Header().Ttl
++		setRecordTTL(rr, addressAnswerTTL(rr, ttl, responseTtl))
++	}
++}
++
++// copySectionWithTTL deep-copies a non-answer record section and stamps the
++// remaining lifetime onto every record. Answer sections use
++// copyAnswerSectionWithTTL so an optional downstream A/AAAA override can be
++// applied without changing CNAMEs, authority/additional records, or OPT flags.
+ //
+ // Answers carry a real TTL: the first answer carries the TTL the upstream
+ // returned, a cache hit the remaining lifetime of the entry. dae tracks
+@@ -278,13 +296,17 @@ func setSectionTTL(rrs []dnsmessage.RR, ttl uint32, scratch []uint32) {
+ // rewrite a lifetime to zero. The EDNS OPT pseudo-record is never treated as a
+ // TTL (see setRecordTTL).
+ func copySectionWithTTL(rrs []dnsmessage.RR, ttl uint32) []dnsmessage.RR {
++	return copyAnswerSectionWithTTL(rrs, ttl, 0)
++}
++
++func copyAnswerSectionWithTTL(rrs []dnsmessage.RR, ttl uint32, responseTtl int) []dnsmessage.RR {
+ 	if rrs == nil {
+ 		return nil
+ 	}
+ 	copied := make([]dnsmessage.RR, len(rrs))
+ 	for i, rr := range rrs {
+ 		record := dnsmessage.Copy(rr)
+-		setRecordTTL(record, ttl)
++		setRecordTTL(record, addressAnswerTTL(record, ttl, responseTtl))
+ 		copied[i] = record
+ 	}
+ 	return copied
+@@ -302,6 +324,10 @@ func restoreSectionTTL(rrs []dnsmessage.RR, scratch []uint32) {
+ // returning. This preserves the stored RR values while avoiding deep copies on
+ // the cold cache-insert path.
+ func (c *DnsCache) prepackResponseBeforeStore(qname string, qtype uint16, ttl uint32, now time.Time) error {
++	return c.prepackResponseBeforeStoreWithResponseTtl(qname, qtype, ttl, 0, now)
++}
++
++func (c *DnsCache) prepackResponseBeforeStoreWithResponseTtl(qname string, qtype uint16, ttl uint32, responseTtl int, now time.Time) error {
+ 	var question [1]dnsmessage.Question
+ 	question[0] = dnsmessage.Question{Name: qname, Qtype: qtype, Qclass: dnsmessage.ClassINET}
+ 
+@@ -329,7 +355,7 @@ func (c *DnsCache) prepackResponseBeforeStore(qname string, qtype uint16, ttl ui
+ 	nsTTLs := ttlScratchSlice(len(c.NS), &nsStack)
+ 	extraTTLs := ttlScratchSlice(len(c.Extra), &extraStack)
+ 
+-	setSectionTTL(c.Answer, ttl, answerTTLs)
++	setAnswerSectionTTL(c.Answer, ttl, responseTtl, answerTTLs)
+ 	setSectionTTL(c.NS, ttl, nsTTLs)
+ 	setSectionTTL(c.Extra, ttl, extraTTLs)
+ 	defer func() {
+@@ -346,6 +372,7 @@ func (c *DnsCache) prepackResponseBeforeStore(qname string, qtype uint16, ttl ui
+ 	c.packedResponse.Store(&dnsPackedResponse{
+ 		wire:              packed,
+ 		ttl:               ttl,
++		responseTtl:       responseTtl,
+ 		createdAtUnixNano: now.UnixNano(),
+ 	})
+ 	// deadlineNano gates the packed fast path and stale-while-revalidate
+@@ -360,6 +387,10 @@ func (c *DnsCache) prepackResponseBeforeStore(qname string, qtype uint16, ttl ui
+ // OPTIMIZED: Uses Copy-on-Write with atomic pointer swap for thread-safe updates.
+ // Creates a new []byte slice and atomically swaps the pointer - no blocking readers.
+ func (c *DnsCache) prepackResponseWithTTL(qname string, qtype uint16, ttl uint32, now time.Time) error {
++	return c.prepackResponseWithTTLAndResponseTtl(qname, qtype, ttl, 0, now)
++}
++
++func (c *DnsCache) prepackResponseWithTTLAndResponseTtl(qname string, qtype uint16, ttl uint32, responseTtl int, now time.Time) error {
+ 	msg := &dnsmessage.Msg{
+ 		MsgHdr: dnsmessage.MsgHdr{
+ 			Rcode:              dnsmessage.RcodeSuccess,
+@@ -374,7 +405,7 @@ func (c *DnsCache) prepackResponseWithTTL(qname string, qtype uint16, ttl uint32
+ 		Compress: true,
+ 	}
+ 
+-	msg.Answer = copySectionWithTTL(c.Answer, ttl)
++	msg.Answer = copyAnswerSectionWithTTL(c.Answer, ttl, responseTtl)
+ 	msg.Ns = copySectionWithTTL(c.NS, ttl)
+ 	msg.Extra = copySectionWithTTL(c.Extra, ttl)
+ 
+@@ -386,6 +417,7 @@ func (c *DnsCache) prepackResponseWithTTL(qname string, qtype uint16, ttl uint32
+ 	c.packedResponse.Store(&dnsPackedResponse{
+ 		wire:              packed,
+ 		ttl:               ttl,
++		responseTtl:       responseTtl,
+ 		createdAtUnixNano: now.UnixNano(),
+ 	})
+ 	return nil
+@@ -399,6 +431,10 @@ func (c *DnsCache) prepackResponseWithTTL(qname string, qtype uint16, ttl uint32
+ // PERFORMANCE: Eliminates deep copy + Pack() bottleneck. 10-100x faster for cache hits.
+ // NOTE: Only returns fresh (unexpired) responses. For stale responses, use GetStaleResponse.
+ func (c *DnsCache) GetPackedResponseWithApproximateTTL(qname string, qtype uint16, now time.Time) []byte {
++	return c.getPackedResponseWithApproximateTTL(qname, qtype, 0, now)
++}
++
++func (c *DnsCache) getPackedResponseWithApproximateTTL(qname string, qtype uint16, responseTtl int, now time.Time) []byte {
+ 	nowNano := now.UnixNano()
+ 	deadlineNano := c.deadlineNano.Load()
+ 
+@@ -416,7 +452,7 @@ func (c *DnsCache) GetPackedResponseWithApproximateTTL(qname string, qtype uint1
+ 	// Lock-free read: one load observes wire bytes and TTL metadata from the
+ 	// same immutable publication.
+ 	packed := c.packedResponse.Load()
+-	if packed != nil && packed.wire != nil {
++	if packed != nil && packed.wire != nil && packed.responseTtl == responseTtl {
+ 		if packed.ttl >= currentTTL {
+ 			if packed.ttl-currentTTL <= ttlRefreshThresholdSeconds {
+ 				return packed.wire
+@@ -429,17 +465,18 @@ func (c *DnsCache) GetPackedResponseWithApproximateTTL(qname string, qtype uint1
+ 	// The separate flag is only a best-effort refresh admission gate; it does
+ 	// not describe the published response and therefore cannot create a mixed
+ 	// response generation.
+-	if (packed == nil || nowNano-packed.createdAtUnixNano > 1e9) && c.packedResponseRefreshing.CompareAndSwap(false, true) {
++	policyChanged := packed != nil && packed.responseTtl != responseTtl
++	if (packed == nil || policyChanged || nowNano-packed.createdAtUnixNano > 1e9) && c.packedResponseRefreshing.CompareAndSwap(false, true) {
+ 		current := c.packedResponse.Load()
+-		if current == nil || nowNano-current.createdAtUnixNano > 1e9 {
+-			_ = c.prepackResponseWithTTL(qname, qtype, currentTTL, now)
++		if current == nil || current.responseTtl != responseTtl || nowNano-current.createdAtUnixNano > 1e9 {
++			_ = c.prepackResponseWithTTLAndResponseTtl(qname, qtype, currentTTL, responseTtl, now)
+ 		}
+ 		c.packedResponseRefreshing.Store(false)
+ 	}
+ 
+ 	// Return the latest complete response (it may have a slightly stale TTL).
+ 	packed = c.packedResponse.Load()
+-	if packed == nil {
++	if packed == nil || packed.responseTtl != responseTtl {
+ 		return nil
+ 	}
+ 	return packed.wire
+@@ -451,6 +488,10 @@ func (c *DnsCache) GetPackedResponseWithApproximateTTL(qname string, qtype uint1
+ // Returns nil if cache is too stale (beyond staleTtl seconds).
+ // Caller should check refreshing flag and trigger background refresh if needed.
+ func (c *DnsCache) GetStaleResponse(now time.Time, staleTtl int) []byte {
++	return c.getStaleResponseWithResponseTtl("", 0, now, staleTtl, 0)
++}
++
++func (c *DnsCache) getStaleResponseWithResponseTtl(qname string, qtype uint16, now time.Time, staleTtl int, responseTtl int) []byte {
+ 	nowNano := now.UnixNano()
+ 	deadlineNano := c.deadlineNano.Load()
+ 
+@@ -474,6 +515,18 @@ func (c *DnsCache) GetStaleResponse(now time.Time, staleTtl int) []byte {
+ 	if packed == nil {
+ 		return nil
+ 	}
++	if packed.responseTtl != responseTtl {
++		// Keep the published stale snapshot's record TTLs for non-address
++		// records. Only the runtime-tunable A/AAAA policy changes here; the
++		// caller applies the independent optimistic stale reply cap below.
++		if err := c.prepackResponseWithTTLAndResponseTtl(qname, qtype, packed.ttl, responseTtl, now); err != nil {
++			return nil
++		}
++		packed = c.packedResponse.Load()
++		if packed == nil || packed.responseTtl != responseTtl {
++			return nil
++		}
++	}
+ 	return packed.wire
+ }
+ 
+@@ -495,6 +548,10 @@ func (c *DnsCache) MarkRefreshed() {
+ // of degrading into a silent cache miss: the caller turns it into an operator
+ // visible warning and then resolves the name upstream.
+ func (c *DnsCache) fillIntoWithTTLInPlace(req *dnsmessage.Msg, now time.Time) ([]byte, error) {
++	return c.fillIntoWithTTLAndResponseTtlInPlace(req, now, 0)
++}
++
++func (c *DnsCache) fillIntoWithTTLAndResponseTtlInPlace(req *dnsmessage.Msg, now time.Time, responseTtl int) ([]byte, error) {
+ 	if req == nil {
+ 		return nil, nil
+ 	}
+@@ -504,21 +561,14 @@ func (c *DnsCache) fillIntoWithTTLInPlace(req *dnsmessage.Msg, now time.Time) ([
+ 	req.RecursionAvailable = true
+ 	req.Truncated = false
+ 
+-	if c.Answer == nil {
+-		req.Compress = true
+-		resp, err := req.Pack()
+-		if err != nil {
+-			return nil, fmt.Errorf("pack cached DNS response without answer: %w", err)
+-		}
+-		return resp, nil
+-	}
+-
+ 	// Calculate remaining TTL based on the provided time
+ 	remainingTTL := ttlFromDeadline(c.Deadline, now)
+ 
+ 	// Copy answers with updated TTL. Shared with the pre-packed path so both
+ 	// materializations apply the same record-level TTL policy.
+-	req.Answer = copySectionWithTTL(c.Answer, remainingTTL)
++	req.Answer = copyAnswerSectionWithTTL(c.Answer, remainingTTL, responseTtl)
++	req.Ns = copySectionWithTTL(c.NS, remainingTTL)
++	req.Extra = copySectionWithTTL(c.Extra, remainingTTL)
+ 
+ 	req.Compress = true
+ 	resp, err := req.Pack()
+diff --git a/control/dns_control.go b/control/dns_control.go
+index 80ef962dd74735ede69d5aa852afb5f38d899745..77a9ec0e582b3845b39c00b71077c0603a9c15a2 100644
+--- a/control/dns_control.go
++++ b/control/dns_control.go
+@@ -92,6 +92,7 @@ type DnsControllerOption struct {
+ 	// answers (RFC 8767); 0 keeps the previously packed TTL.
+ 	OptimisticStaleReplyTtl int
+ 	MaxCacheSize            int // maximum number of cache entries (0 = unlimited)
++	ResponseTtl             int // downstream A/AAAA answer TTL override (0 = unchanged)
  }
  
  type dnsControllerStore struct {
-@@ -170,6 +172,9 @@ func normalizeDnsRuntimeBehavior(option *DnsControllerOption) (qtypePrefer uint1
- 	if err != nil {
- 		return 0, false, 0, 0, err
- 	}
-+	if option.ResponseTtl < 0 {
-+		return 0, false, 0, 0, fmt.Errorf("response_ttl must be greater than or equal to 0")
+diff --git a/control/dns_controller_cache.go b/control/dns_controller_cache.go
+index b2a0d1d2279060957c82bac28c69e51793c7083a..a70b50650e7f9bd1ad69186236f821898fa5df66 100644
+--- a/control/dns_controller_cache.go
++++ b/control/dns_controller_cache.go
+@@ -984,6 +984,26 @@ func (c *DnsController) startDnsCacheJanitor() {
+ // TTL is refreshed when difference exceeds ttlRefreshThresholdSeconds (15 seconds by default).
+ // OPTIMISTIC CACHE (RFC 8767): Returns stale response while background refresh is in progress.
+ // Falls back to an owned in-place TTL-aware pack if pre-packed response is not available.
++func applyResponseTtlOverride(msg *dnsmessage.Msg, responseTtl int) {
++	if msg == nil || responseTtl <= 0 {
++		return
 +	}
- 	optimisticCacheTtl = option.OptimisticCacheTtl
- 	maxCacheSize = option.MaxCacheSize
- 	if optimisticCacheTtl == 0 && maxCacheSize == 0 {
-@@ -422,6 +427,7 @@ func (c *DnsController) updateRuntime(option *DnsControllerOption, routing *dns.
- 		bestDialerChooser:     option.BestDialerChooser,
- 		timeoutExceedCallback: option.TimeoutExceedCallback,
- 		fixedDomainTtl:        option.FixedDomainTtl,
-+		responseTtl:           option.ResponseTtl,
- 	})
- 	return nil
- }
-@@ -1547,10 +1553,16 @@ func (c *DnsController) NormalizeAndCacheDnsResp_(msg *dnsmessage.Msg, responseC
- 		ttl = 31536000
- 	}
- 
--	// For A/AAAA records, we set TTL to 0 to prevent downstream caching while we manage it.
-+	responseTtl := 0
-+	if rt := c.runtime(); rt != nil {
-+		responseTtl = rt.responseTtl
++	answer := append([]dnsmessage.RR(nil), msg.Answer...)
++	changed := false
++	for i, rr := range answer {
++		switch rr.Header().Rrtype {
++		case dnsmessage.TypeA, dnsmessage.TypeAAAA:
++			record := dnsmessage.Copy(rr)
++			record.Header().Ttl = uint32(responseTtl)
++			answer[i] = record
++			changed = true
++		}
 +	}
++	if changed {
++		msg.Answer = answer
++	}
++}
 +
-+	// For A/AAAA records, we set TTL to 0 by default to prevent downstream caching while we manage it.
-+	// When response_ttl is set, use it as the downstream-visible TTL.
- 	if q.Qtype == dnsmessage.TypeA || q.Qtype == dnsmessage.TypeAAAA {
- 		for i := range msg.Answer {
--			msg.Answer[i].Header().Ttl = 0
-+			msg.Answer[i].Header().Ttl = uint32(responseTtl)
+ func (c *DnsController) LookupDnsRespCache_(msg *dnsmessage.Msg, cacheKey string, ignoreFixedTtl bool) (resp []byte, needRefresh bool) {
+ 	c.requireStore()
+ 	// Load cache directly without expiry check (to support optimistic cache)
+@@ -994,6 +1014,7 @@ func (c *DnsController) LookupDnsRespCache_(msg *dnsmessage.Msg, cacheKey string
+ 	cache := val.(*DnsCache)
+ 
+ 	now := time.Now()
++	responseTtl := c.currentResponseTtl()
+ 
+ 	// Update last access time for LRU eviction (atomic operation)
+ 	cache.lastAccessNano.Store(now.UnixNano())
+@@ -1016,7 +1037,7 @@ func (c *DnsController) LookupDnsRespCache_(msg *dnsmessage.Msg, cacheKey string
+ 			qtype = msg.Question[0].Qtype
  		}
+ 
+-		if resp := cache.GetPackedResponseWithApproximateTTL(qname, qtype, now); resp != nil {
++		if resp := cache.getPackedResponseWithApproximateTTL(qname, qtype, responseTtl, now); resp != nil {
+ 			// Fresh cache hit - return immediately
+ 			// Trigger async BPF update if needed
+ 			c.triggerBpfUpdateIfNeeded(cache, now)
+@@ -1028,7 +1049,7 @@ func (c *DnsController) LookupDnsRespCache_(msg *dnsmessage.Msg, cacheKey string
+ 		// to mutate it in place, so this avoids the extra request copy on the
+ 		// remaining TTL-aware cache-hit fallback. A pack failure degrades into an
+ 		// upstream lookup, so it must be visible instead of silent.
+-		resp, packErr := cache.fillIntoWithTTLInPlace(msg, now)
++		resp, packErr := cache.fillIntoWithTTLAndResponseTtlInPlace(msg, now, responseTtl)
+ 		if packErr != nil {
+ 			if c.log != nil {
+ 				c.log.Warnf("failed to pack cached DNS response for %q, falling back to an upstream lookup: %v", cacheKey, packErr)
+@@ -1046,7 +1067,13 @@ func (c *DnsController) LookupDnsRespCache_(msg *dnsmessage.Msg, cacheKey string
+ 	if optimisticCacheEnabled {
+ 		// Try stale response (RFC 8767)
+ 		// Use optimisticCacheTtl (0 means never expire)
+-		if resp = cache.GetStaleResponse(now, optimisticCacheTtl); resp != nil {
++		var qname string
++		var qtype uint16
++		if len(msg.Question) > 0 {
++			qname = msg.Question[0].Name
++			qtype = msg.Question[0].Qtype
++		}
++		if resp = cache.getStaleResponseWithResponseTtl(qname, qtype, now, optimisticCacheTtl, responseTtl); resp != nil {
+ 			// Within stale window - return stale response and trigger background refresh
+ 			// Use CAS to ensure only one goroutine triggers refresh
+ 			if cache.refreshing.CompareAndSwap(false, true) {
+@@ -1225,7 +1252,9 @@ func (c *DnsController) NormalizeAndCacheDnsResp_(msg *dnsmessage.Msg, responseC
+ 	// and the stale window, not by suppressing downstream caching.
+ 
+ 	// Update DnsCache.
+-	return c.updateDnsCache(msg, responseCacheKey, ttl, &q)
++	err = c.updateDnsCache(msg, responseCacheKey, ttl, &q)
++	applyResponseTtlOverride(msg, c.currentResponseTtl())
++	return err
+ }
+ 
+ // dnsCacheStoreFailureLogInterval paces the failed-cache-store warning. A
+@@ -1309,7 +1338,7 @@ func (c *DnsController) updateDnsCacheDeadline(cacheKey string, host string, dns
+ 		// Pre-pack before publication so cache readers only observe a complete
+ 		// entry. The cache/runtime locks below make the entry, its projection,
+ 		// and reload epoch one atomic publication unit.
+-		if err = newCache.prepackResponseBeforeStore(fqdn, dnsTyp, ttlFromDeadline(deadline, now), now); err != nil {
++		if err = newCache.prepackResponseBeforeStoreWithResponseTtl(fqdn, dnsTyp, ttlFromDeadline(deadline, now), rt.responseTtl, now); err != nil {
+ 			if c.log != nil {
+ 				c.log.Warnf("failed to prepack DNS response: %v", err)
+ 			}
+diff --git a/control/dns_controller_forwarder.go b/control/dns_controller_forwarder.go
+index ce74a8493e5185d3e2570b8b84f7122a1b119341..d506cd87d2af82dedf3e52a18ab08cd2ce0b9b40 100644
+--- a/control/dns_controller_forwarder.go
++++ b/control/dns_controller_forwarder.go
+@@ -557,7 +557,12 @@ func (c *DnsController) dialSend(
+ 	// Pack into a pooled DNS response buffer; data is consumed synchronously by the send.
+ 	bufPtr := dnsResponseBufPool.Get().(*[]byte)
+ 	defer dnsResponseBufPool.Put(bufPtr)
+-	data, err = respMsg.PackBuffer((*bufPtr)[:cap(*bufPtr)])
++	wireMsg := respMsg
++	if responseTtl := c.currentResponseTtl(); responseTtl > 0 {
++		wireMsg = respMsg.Copy()
++		applyResponseTtlOverride(wireMsg, responseTtl)
++	}
++	data, err = wireMsg.PackBuffer((*bufPtr)[:cap(*bufPtr)])
+ 	if err != nil {
+ 		return err
+ 	}
+diff --git a/control/dns_controller_option_test.go b/control/dns_controller_option_test.go
+index 00aca1f2df19c15619d91af8cc6a3d3095a15ce9..e910dff03bd3ef6de0c8ece26f9738f1421d602e 100644
+--- a/control/dns_controller_option_test.go
++++ b/control/dns_controller_option_test.go
+@@ -21,6 +21,7 @@ func TestDnsControllerOptionCarriesRuntimeTunables(t *testing.T) {
+ 			dnsOptimisticCacheTtl: 600,
+ 			dnsMaxCacheSize:       65536,
+ 			dnsIpVersionPrefer:    4,
++			dnsResponseTtl:        45,
+ 		},
  	}
  
+@@ -39,6 +40,7 @@ func TestDnsControllerOptionCarriesRuntimeTunables(t *testing.T) {
+ 		{field: "OptimisticCacheTtl", got: option.OptimisticCacheTtl, want: 600},
+ 		{field: "MaxCacheSize", got: option.MaxCacheSize, want: 65536},
+ 		{field: "IpVersionPrefer", got: option.IpVersionPrefer, want: 4},
++		{field: "ResponseTtl", got: option.ResponseTtl, want: 45},
+ 	} {
+ 		t.Run(tc.field, func(t *testing.T) {
+ 			if tc.got != tc.want {
+diff --git a/control/dns_controller_runtime.go b/control/dns_controller_runtime.go
+index e11505dcd6c11644313a87432d9eefee5f787916..69f90fc54ad298bc6d3ddd58aa60237525ab211f 100644
+--- a/control/dns_controller_runtime.go
++++ b/control/dns_controller_runtime.go
+@@ -31,15 +31,22 @@ type dnsControllerRuntimeState struct {
+ 	optimisticCacheTtl      int
+ 	optimisticStaleReplyTtl int
+ 	maxCacheSize            int
++	responseTtl             int
+ }
+ 
+-func normalizeDnsRuntimeBehavior(option *DnsControllerOption) (qtypePrefer uint16, optimisticCacheEnabled bool, optimisticCacheTtl int, optimisticStaleReplyTtl int, maxCacheSize int, err error) {
++func normalizeDnsRuntimeBehavior(option *DnsControllerOption) (qtypePrefer uint16, optimisticCacheEnabled bool, optimisticCacheTtl int, optimisticStaleReplyTtl int, maxCacheSize int, responseTtl int, err error) {
+ 	if option == nil {
+ 		option = &DnsControllerOption{}
+ 	}
+ 	qtypePrefer, err = parseIpVersionPreference(option.IpVersionPrefer)
+ 	if err != nil {
+-		return 0, false, 0, 0, 0, err
++		return 0, false, 0, 0, 0, 0, err
++	}
++	if option.ResponseTtl < 0 {
++		return 0, false, 0, 0, 0, 0, fmt.Errorf("response_ttl must be greater than or equal to 0")
++	}
++	if uint64(option.ResponseTtl) > uint64(^uint32(0)) {
++		return 0, false, 0, 0, 0, 0, fmt.Errorf("response_ttl must be less than or equal to %d", ^uint32(0))
+ 	}
+ 	optimisticCacheTtl = option.OptimisticCacheTtl
+ 	optimisticStaleReplyTtl = option.OptimisticStaleReplyTtl
+@@ -47,7 +54,7 @@ func normalizeDnsRuntimeBehavior(option *DnsControllerOption) (qtypePrefer uint1
+ 	if optimisticCacheTtl == 0 && maxCacheSize == 0 {
+ 		optimisticCacheTtl = 60
+ 	}
+-	return qtypePrefer, option.OptimisticCache, optimisticCacheTtl, optimisticStaleReplyTtl, maxCacheSize, nil
++	return qtypePrefer, option.OptimisticCache, optimisticCacheTtl, optimisticStaleReplyTtl, maxCacheSize, option.ResponseTtl, nil
+ }
+ 
+ func (c *DnsController) currentQtypePrefer() uint16 {
+@@ -66,6 +73,14 @@ func (c *DnsController) currentOptimisticCacheConfig() (enabled bool, ttl int, s
+ 	return rt.optimisticCacheEnabled, rt.optimisticCacheTtl, rt.optimisticStaleReplyTtl, rt.maxCacheSize
+ }
+ 
++func (c *DnsController) currentResponseTtl() int {
++	rt := c.runtime()
++	if rt == nil {
++		return 0
++	}
++	return rt.responseTtl
++}
++
+ // ReuseForReload updates the current facade to the replacement generation's
+ // runtime and returns a fresh facade that shares the same long-lived store.
+ // The shared store carries DNS cache, forwarders, janitors, async BPF workers,
+@@ -122,7 +137,7 @@ func (c *DnsController) updateRuntime(option *DnsControllerOption, routing *dns.
+ 	if option == nil {
+ 		option = &DnsControllerOption{}
+ 	}
+-	qtypePrefer, optimisticCacheEnabled, optimisticCacheTtl, optimisticStaleReplyTtl, maxCacheSize, err := normalizeDnsRuntimeBehavior(option)
++	qtypePrefer, optimisticCacheEnabled, optimisticCacheTtl, optimisticStaleReplyTtl, maxCacheSize, responseTtl, err := normalizeDnsRuntimeBehavior(option)
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -153,6 +168,7 @@ func (c *DnsController) updateRuntime(option *DnsControllerOption, routing *dns.
+ 		optimisticCacheTtl:      optimisticCacheTtl,
+ 		optimisticStaleReplyTtl: optimisticStaleReplyTtl,
+ 		maxCacheSize:            maxCacheSize,
++		responseTtl:             responseTtl,
+ 	}
+ 	c.runtimeMu.Lock()
+ 	c.runtimeState.Store(runtimeState)
+diff --git a/control/dns_corpus_support_test.go b/control/dns_corpus_support_test.go
+index 37255bd1249751c6932c961c5f9aae681351d356..6efcdb1bec004671e44976a3df290a7602e8edd9 100644
+--- a/control/dns_corpus_support_test.go
++++ b/control/dns_corpus_support_test.go
+@@ -182,6 +182,7 @@ func newCorpusDnsController(t testing.TB, cfg *config.Dns) *DnsController {
+ 		LifecycleContext:   context.Background(),
+ 		OptimisticCache:    true,
+ 		OptimisticCacheTtl: 60,
++		ResponseTtl:        cfg.ResponseTtl,
+ 		CacheAccessCallback: func(*DnsCache) error {
+ 			return nil
+ 		},
+diff --git a/control/dns_runtime.go b/control/dns_runtime.go
+index 8f15b714209ab7fd7171745efcc0a6f88ee6fc45..009677fd1bc308c9fdeee54dc892119b75033dad 100644
+--- a/control/dns_runtime.go
++++ b/control/dns_runtime.go
+@@ -30,6 +30,7 @@ type controlPlaneDNSRuntime struct {
+ 	dnsOptimisticStaleReplyTtl int
+ 	dnsMaxCacheSize            int
+ 	dnsIpVersionPrefer         int
++	dnsResponseTtl             int
+ 
+ 	dnsListener               *DNSListener
+ 	dnsListenerStopRegistered bool
+
 diff --git a/control/dns_response_ttl_test.go b/control/dns_response_ttl_test.go
 new file mode 100644
-index 0000000..0e5406e
+index 0000000000000000000000000000000000000000..a33d75a18bc1cbae73d778336ee6c405f8e1a6da
 --- /dev/null
 +++ b/control/dns_response_ttl_test.go
-@@ -0,0 +1,64 @@
+@@ -0,0 +1,389 @@
 +/*
 + * SPDX-License-Identifier: AGPL-3.0-only
 + * Copyright (c) 2022-2026, daeuniverse Organization <dae@v2raya.org>
@@ -138,79 +542,384 @@ index 0000000..0e5406e
 +package control
 +
 +import (
++	"context"
 +	"net"
++	"strconv"
++	"sync/atomic"
 +	"testing"
 +	"time"
 +
++	"github.com/daeuniverse/dae/common/consts"
++	componentdns "github.com/daeuniverse/dae/component/dns"
 +	dnsmessage "github.com/miekg/dns"
-+	"github.com/stretchr/testify/require"
++	"github.com/sirupsen/logrus"
 +)
 +
-+func TestDnsController_ResponseTtlOverride(t *testing.T) {
-+	for _, tt := range []struct {
-+		name        string
-+		responseTtl int
-+		wantTtl     uint32
-+	}{
-+		{name: "default_zero", responseTtl: 0, wantTtl: 0},
-+		{name: "override", responseTtl: 60, wantTtl: 60},
-+	} {
-+		t.Run(tt.name, func(t *testing.T) {
-+			ctrl := setTestDnsControllerRuntime(newTestDnsController(), func(rt *dnsControllerRuntimeState) {
-+				rt.responseTtl = tt.responseTtl
-+				rt.newCache = func(fqdn string, answers, ns, extra []dnsmessage.RR, deadline time.Time, originalDeadline time.Time) (*DnsCache, error) {
-+					return &DnsCache{
-+						Answer:           answers,
-+						NS:               ns,
-+						Extra:            extra,
-+						Deadline:         deadline,
-+						OriginalDeadline: originalDeadline,
-+					}, nil
-+				}
-+			})
++func responseTtlTestCache(now time.Time) *DnsCache {
++	return &DnsCache{
++		Deadline:         now.Add(30 * time.Second),
++		OriginalDeadline: now.Add(30 * time.Second),
++		Answer: []dnsmessage.RR{
++			&dnsmessage.CNAME{Hdr: dnsmessage.RR_Header{Name: "alias.test.", Rrtype: dnsmessage.TypeCNAME, Class: dnsmessage.ClassINET, Ttl: 300}, Target: "address.test."},
++			&dnsmessage.A{Hdr: dnsmessage.RR_Header{Name: "address.test.", Rrtype: dnsmessage.TypeA, Class: dnsmessage.ClassINET, Ttl: 300}, A: net.ParseIP("192.0.2.1").To4()},
++			&dnsmessage.AAAA{Hdr: dnsmessage.RR_Header{Name: "address.test.", Rrtype: dnsmessage.TypeAAAA, Class: dnsmessage.ClassINET, Ttl: 300}, AAAA: net.ParseIP("2001:db8::1")},
++		},
++		NS: []dnsmessage.RR{
++			&dnsmessage.TXT{Hdr: dnsmessage.RR_Header{Name: "authority.test.", Rrtype: dnsmessage.TypeTXT, Class: dnsmessage.ClassINET, Ttl: 300}, Txt: []string{"authority"}},
++		},
++		Extra: []dnsmessage.RR{
++			&dnsmessage.A{Hdr: dnsmessage.RR_Header{Name: "additional.test.", Rrtype: dnsmessage.TypeA, Class: dnsmessage.ClassINET, Ttl: 300}, A: net.ParseIP("192.0.2.2").To4()},
++			&dnsmessage.OPT{Hdr: dnsmessage.RR_Header{Name: ".", Rrtype: dnsmessage.TypeOPT, Class: 1232, Ttl: 0x00008000}},
++		},
++	}
++}
 +
-+			msg := new(dnsmessage.Msg)
-+			msg.SetReply(&dnsmessage.Msg{
-+				Question: []dnsmessage.Question{{
-+					Name:   "example.com.",
-+					Qtype:  dnsmessage.TypeA,
-+					Qclass: dnsmessage.ClassINET,
-+				}},
++func assertResponseTtlPolicy(t *testing.T, wire []byte, responseTtl, remainingTtl uint32) {
++	t.Helper()
++	var msg dnsmessage.Msg
++	if err := msg.Unpack(wire); err != nil {
++		t.Fatalf("unpack response: %v", err)
++	}
++	if got := msg.Answer[0].Header().Ttl; got != remainingTtl {
++		t.Fatalf("CNAME TTL = %d, want remaining TTL %d", got, remainingTtl)
++	}
++	for _, i := range []int{1, 2} {
++		if got := msg.Answer[i].Header().Ttl; got != responseTtl {
++			t.Fatalf("address answer %d TTL = %d, want %d", i, got, responseTtl)
++		}
++	}
++	if len(msg.Ns) != 1 || msg.Ns[0].Header().Ttl != remainingTtl {
++		t.Fatalf("authority section = %#v, want one record with TTL %d", msg.Ns, remainingTtl)
++	}
++	if len(msg.Extra) != 2 {
++		t.Fatalf("additional section length = %d, want 2", len(msg.Extra))
++	}
++	if got := msg.Extra[0].Header().Ttl; got != remainingTtl {
++		t.Fatalf("additional A TTL = %d, want remaining TTL %d", got, remainingTtl)
++	}
++	if got := msg.Extra[1].Header().Ttl; got != 0x00008000 {
++		t.Fatalf("OPT flags = %#x, want unchanged", got)
++	}
++}
++
++func TestResponseTtlMaterializationPolicy(t *testing.T) {
++	now := time.Now()
++	for _, responseTtl := range []int{0, 45} {
++		cache := responseTtlTestCache(now)
++		if err := cache.prepackResponseWithTTLAndResponseTtl("alias.test.", dnsmessage.TypeA, 30, responseTtl, now); err != nil {
++			t.Fatalf("response_ttl=%d prepack: %v", responseTtl, err)
++		}
++		wantAddressTtl := uint32(30)
++		if responseTtl > 0 {
++			wantAddressTtl = uint32(responseTtl)
++		}
++		assertResponseTtlPolicy(t, cache.packedResponse.Load().wire, wantAddressTtl, 30)
++
++		req := new(dnsmessage.Msg)
++		req.SetQuestion("alias.test.", dnsmessage.TypeA)
++		wire, err := cache.fillIntoWithTTLAndResponseTtlInPlace(req, now, responseTtl)
++		if err != nil {
++			t.Fatalf("response_ttl=%d in-place: %v", responseTtl, err)
++		}
++		assertResponseTtlPolicy(t, wire, wantAddressTtl, 30)
++	}
++}
++
++func TestResponseTtlInPlacePreservesNodataSections(t *testing.T) {
++	now := time.Now()
++	cache := &DnsCache{
++		Deadline:         now.Add(30 * time.Second),
++		OriginalDeadline: now.Add(30 * time.Second),
++		NS: []dnsmessage.RR{
++			&dnsmessage.SOA{
++				Hdr:     dnsmessage.RR_Header{Name: "nodata.test.", Rrtype: dnsmessage.TypeSOA, Class: dnsmessage.ClassINET, Ttl: 300},
++				Ns:      "ns.nodata.test.",
++				Mbox:    "hostmaster.nodata.test.",
++				Serial:  1,
++				Refresh: 3600,
++				Retry:   600,
++				Expire:  86400,
++				Minttl:  300,
++			},
++		},
++		Extra: []dnsmessage.RR{
++			&dnsmessage.A{Hdr: dnsmessage.RR_Header{Name: "ns.nodata.test.", Rrtype: dnsmessage.TypeA, Class: dnsmessage.ClassINET, Ttl: 300}, A: net.ParseIP("192.0.2.53").To4()},
++			&dnsmessage.OPT{Hdr: dnsmessage.RR_Header{Name: ".", Rrtype: dnsmessage.TypeOPT, Class: 1232, Ttl: 0x00008000}},
++		},
++	}
++	req := new(dnsmessage.Msg)
++	req.SetQuestion("nodata.test.", dnsmessage.TypeA)
++	req.Answer = []dnsmessage.RR{&dnsmessage.A{Hdr: dnsmessage.RR_Header{Name: "old.test.", Rrtype: dnsmessage.TypeA, Class: dnsmessage.ClassINET, Ttl: 1}, A: net.ParseIP("192.0.2.1").To4()}}
++	req.Ns = []dnsmessage.RR{&dnsmessage.TXT{Hdr: dnsmessage.RR_Header{Name: "old.test.", Rrtype: dnsmessage.TypeTXT, Class: dnsmessage.ClassINET, Ttl: 1}, Txt: []string{"old"}}}
++	req.Extra = []dnsmessage.RR{&dnsmessage.OPT{Hdr: dnsmessage.RR_Header{Name: ".", Rrtype: dnsmessage.TypeOPT, Class: 512, Ttl: 0}}}
++
++	wire, err := cache.fillIntoWithTTLAndResponseTtlInPlace(req, now, 45)
++	if err != nil {
++		t.Fatal(err)
++	}
++	var got dnsmessage.Msg
++	if err := got.Unpack(wire); err != nil {
++		t.Fatal(err)
++	}
++	if len(got.Answer) != 0 {
++		t.Fatalf("NODATA answer count = %d, want 0", len(got.Answer))
++	}
++	if len(got.Ns) != 1 {
++		t.Fatalf("authority count = %d, want 1", len(got.Ns))
++	}
++	soa, ok := got.Ns[0].(*dnsmessage.SOA)
++	if !ok || soa.Ns != "ns.nodata.test." || soa.Hdr.Ttl != 30 {
++		t.Fatalf("authority SOA = %#v, want ns.nodata.test. with TTL 30", got.Ns[0])
++	}
++	if len(got.Extra) != 2 {
++		t.Fatalf("additional count = %d, want 2", len(got.Extra))
++	}
++	additional, ok := got.Extra[0].(*dnsmessage.A)
++	if !ok || !additional.A.Equal(net.ParseIP("192.0.2.53")) || additional.Hdr.Ttl != 30 {
++		t.Fatalf("additional A = %#v, want 192.0.2.53 with TTL 30", got.Extra[0])
++	}
++	opt, ok := got.Extra[1].(*dnsmessage.OPT)
++	if !ok || opt.Hdr.Class != 1232 || opt.Hdr.Ttl != 0x00008000 {
++		t.Fatalf("OPT = %#v, want class 1232 and flags %#x", got.Extra[1], uint32(0x00008000))
++	}
++}
++
++func TestResponseTtlRefreshesPackedPolicy(t *testing.T) {
++	now := time.Now()
++	cache := responseTtlTestCache(now)
++	cache.deadlineNano.Store(cache.Deadline.UnixNano())
++	if err := cache.prepackResponseWithTTLAndResponseTtl("alias.test.", dnsmessage.TypeA, 30, 0, now); err != nil {
++		t.Fatal(err)
++	}
++	clone := cache.CloneForReload()
++	wire := clone.getPackedResponseWithApproximateTTL("alias.test.", dnsmessage.TypeA, 45, now)
++	assertResponseTtlPolicy(t, wire, 45, 30)
++}
++
++func TestResponseTtlRefreshesStalePackedPolicy(t *testing.T) {
++	now := time.Now()
++	cache := responseTtlTestCache(now)
++	cache.Deadline = now.Add(-time.Second)
++	cache.deadlineNano.Store(cache.Deadline.UnixNano())
++	if err := cache.prepackResponseWithTTLAndResponseTtl("alias.test.", dnsmessage.TypeA, 30, 0, now.Add(-time.Minute)); err != nil {
++		t.Fatal(err)
++	}
++	wire := cache.getStaleResponseWithResponseTtl("alias.test.", dnsmessage.TypeA, now, 60, 45)
++	assertResponseTtlPolicy(t, wire, 45, 30)
++	bounded := clampWireRecordTtls(wire, 30)
++	var stale dnsmessage.Msg
++	if err := stale.Unpack(bounded); err != nil {
++		t.Fatal(err)
++	}
++	if got := stale.Answer[1].Header().Ttl; got != 30 {
++		t.Fatalf("stale address TTL = %d, want min(response_ttl=45, stale_reply_ttl=30)", got)
++	}
++}
++
++func TestResponseTtlRejectsNegativeRuntimeValue(t *testing.T) {
++	ctrl := newTestDnsController()
++	if err := ctrl.TryUpdateRuntime(&DnsControllerOption{ResponseTtl: -1}, nil); err == nil {
++		t.Fatal("negative response_ttl was accepted")
++	}
++}
++
++func TestResponseTtlRejectsValuesAboveWireRange(t *testing.T) {
++	if strconv.IntSize <= 32 {
++		t.Skip("int cannot represent a value above uint32 on 32-bit hosts")
++	}
++	ctrl := newTestDnsController()
++	maxUint32 := uint64(^uint32(0))
++	tooLarge := int(maxUint32) + 1
++	if err := ctrl.TryUpdateRuntime(&DnsControllerOption{ResponseTtl: tooLarge}, nil); err == nil {
++		t.Fatal("response_ttl above uint32 wire range was accepted")
++	}
++}
++
++func TestResponseTtlCachePublicationUsesCopyOnWrite(t *testing.T) {
++	now := time.Now()
++	ctrl := newTestDnsController()
++	ctrl.log = logrus.New()
++	setTestDnsControllerRuntime(ctrl, func(rt *dnsControllerRuntimeState) {
++		rt.responseTtl = 45
++		rt.newCache = func(_ string, answers, ns, extra []dnsmessage.RR, deadline, originalDeadline time.Time) (*DnsCache, error) {
++			return &DnsCache{Answer: answers, NS: ns, Extra: extra, Deadline: deadline, OriginalDeadline: originalDeadline}, nil
++		}
++	})
++	msg := new(dnsmessage.Msg)
++	msg.SetReply(&dnsmessage.Msg{Question: []dnsmessage.Question{{Name: "copy-on-write.test.", Qtype: dnsmessage.TypeA, Qclass: dnsmessage.ClassINET}}})
++	msg.Answer = responseTtlTestCache(now).Answer
++	msg.Ns = responseTtlTestCache(now).NS
++	msg.Extra = responseTtlTestCache(now).Extra
++	if err := ctrl.NormalizeAndCacheDnsResp_(msg, "copy-on-write"); err != nil {
++		t.Fatal(err)
++	}
++	if got := msg.Answer[1].Header().Ttl; got != 45 {
++		t.Fatalf("outgoing A TTL = %d, want 45", got)
++	}
++	if got := msg.Answer[0].Header().Ttl; got != 300 {
++		t.Fatalf("outgoing CNAME TTL = %d, want upstream 300", got)
++	}
++	if got := msg.Ns[0].Header().Ttl; got != 300 {
++		t.Fatalf("outgoing authority TTL = %d, want upstream 300", got)
++	}
++	if got := msg.Extra[0].Header().Ttl; got != 300 {
++		t.Fatalf("outgoing additional A TTL = %d, want upstream 300", got)
++	}
++	if got := msg.Extra[1].Header().Ttl; got != 0x00008000 {
++		t.Fatalf("outgoing OPT flags = %#x, want unchanged", got)
++	}
++	value, ok := ctrl.dnsCache.Load("copy-on-write")
++	if !ok {
++		t.Fatal("cache entry was not published")
++	}
++	cache := value.(*DnsCache)
++	if got := cache.Answer[1].Header().Ttl; got != 300 {
++		t.Fatalf("published cache A TTL = %d, want upstream 300", got)
++	}
++	for name, deadline := range map[string]time.Time{"deadline": cache.Deadline, "original deadline": cache.OriginalDeadline} {
++		remaining := deadline.Sub(now)
++		if remaining < 299*time.Second || remaining > 301*time.Second {
++			t.Fatalf("%s remaining = %v, want upstream TTL 300s", name, remaining)
++		}
++	}
++}
++
++func TestResponseTtlRawUdpMissAndCachedHit(t *testing.T) {
++	for _, responseTtl := range []int{0, 45} {
++		t.Run(dnsmessage.TypeToString[dnsmessage.TypeA]+"/ttl="+time.Duration(responseTtl).String(), func(t *testing.T) {
++			req, client := newDNSResponseUDPTestPair(t)
++			logger := newDNSListenerTestLogger()
++			routing := newPhase0NamedUpstreamRouting(t, logger, "u", "192.0.2.11:53")
++			response := dnsAResponseMsg(phase0NamedUpstreamScopeQName, "198.51.100.11")
++			response.Answer = append([]dnsmessage.RR{
++				&dnsmessage.CNAME{Hdr: dnsmessage.RR_Header{Name: phase0NamedUpstreamScopeQName, Rrtype: dnsmessage.TypeCNAME, Class: dnsmessage.ClassINET, Ttl: 60}, Target: "address.test."},
++			}, response.Answer...)
++			response.Ns = []dnsmessage.RR{&dnsmessage.TXT{Hdr: dnsmessage.RR_Header{Name: "authority.test.", Rrtype: dnsmessage.TypeTXT, Class: dnsmessage.ClassINET, Ttl: 60}, Txt: []string{"authority"}}}
++			response.Extra = []dnsmessage.RR{&dnsmessage.A{Hdr: dnsmessage.RR_Header{Name: "additional.test.", Rrtype: dnsmessage.TypeA, Class: dnsmessage.ClassINET, Ttl: 60}, A: net.ParseIP("192.0.2.2").To4()}}
++			response.SetEdns0(1232, true)
++			response.IsEdns0().SetZ(0x0040)
++			optTtl := response.IsEdns0().Hdr.Ttl
++
++			var forwards atomic.Int32
++			installCorpusDnsForwarderFactory(t, func(*componentdns.Upstream, dialArgument, *logrus.Logger) (DnsForwarder, error) {
++				return &stubDnsForwarder{forward: func(context.Context, []byte) (*dnsmessage.Msg, error) {
++					forwards.Add(1)
++					return response.Copy(), nil
++				}}, nil
 +			})
-+			msg.Answer = []dnsmessage.RR{
-+				&dnsmessage.A{
-+					Hdr: dnsmessage.RR_Header{
-+						Name:   "example.com.",
-+						Rrtype: dnsmessage.TypeA,
-+						Class:  dnsmessage.ClassINET,
-+						Ttl:    300,
-+					},
-+					A: net.IPv4(93, 184, 216, 34),
-+				},
++			stored := make(chan struct{}, 1)
++			option := phase0NamedUpstreamControllerOption(logger)
++			option.ResponseTtl = responseTtl
++			option.CacheAccessCallback = func(*DnsCache) error {
++				select {
++				case stored <- struct{}{}:
++				default:
++				}
++				return nil
++			}
++			controller, err := NewDnsController(routing, option)
++			if err != nil {
++				t.Fatal(err)
++			}
++			t.Cleanup(func() { _ = controller.Close() })
++
++			query := new(dnsmessage.Msg)
++			query.SetQuestion(phase0NamedUpstreamScopeQName, dnsmessage.TypeA)
++			queryWire, err := query.Pack()
++			if err != nil {
++				t.Fatal(err)
++			}
++			index, upstream, err := routing.RequestSelect(context.Background(), phase0NamedUpstreamScopeQName, dnsmessage.TypeA)
++			if err != nil {
++				t.Fatal(err)
++			}
++			cacheKey := controller.responseCacheKey(controller.cacheKey(phase0NamedUpstreamScopeQName, dnsmessage.TypeA), req, index, upstream)
++			if err := client.SetReadDeadline(time.Now().Add(time.Second)); err != nil {
++				t.Fatal(err)
++			}
++			if err := controller.dialSend(context.Background(), req, queryWire, query.Id, upstream, nil, cacheKey); err != nil {
++				t.Fatal(err)
++			}
++			buf := make([]byte, dnsmessage.MaxMsgSize)
++			n, _, err := client.ReadFromUDPAddrPort(buf)
++			if err != nil {
++				t.Fatal(err)
++			}
++			var miss dnsmessage.Msg
++			if err := miss.Unpack(buf[:n]); err != nil {
++				t.Fatal(err)
++			}
++			wantAddressTtl := uint32(60)
++			if responseTtl > 0 {
++				wantAddressTtl = uint32(responseTtl)
++			}
++			if miss.Answer[0].Header().Ttl != 60 || miss.Answer[1].Header().Ttl != wantAddressTtl || miss.Ns[0].Header().Ttl != 60 || miss.Extra[0].Header().Ttl != 60 || miss.Extra[1].Header().Ttl != optTtl {
++				t.Fatalf("raw miss changed non-address data or returned wrong address TTL: answer=%v ns=%v extra=%v", miss.Answer, miss.Ns, miss.Extra)
++			}
++			select {
++			case <-stored:
++			case <-time.After(time.Second):
++				t.Fatal("asynchronous cache was not populated")
 +			}
 +
-+			require.NoError(t, ctrl.NormalizeAndCacheDnsResp_(msg, "example.com.:1"))
-+			require.Equal(t, tt.wantTtl, msg.Answer[0].Header().Ttl)
++			writer := &dnsCorpusCaptureWriter{}
++			if err := controller.HandleWithResponseWriter_(context.Background(), query.Copy(), req, writer); err != nil {
++				t.Fatal(err)
++			}
++			hit := writer.Message()
++			if hit == nil || len(hit.Answer) != 2 {
++				t.Fatalf("cached hit = %#v, want two answers", hit)
++			}
++			if responseTtl > 0 {
++				if got := hit.Answer[1].Header().Ttl; got != uint32(responseTtl) {
++					t.Fatalf("cached hit A TTL = %d, want %d", got, responseTtl)
++				}
++			} else if got := hit.Answer[1].Header().Ttl; got == 0 || got > 60 {
++				t.Fatalf("cached hit A TTL = %d, want real remaining TTL in [1,60]", got)
++			}
++			if got := forwards.Load(); got != 1 {
++				t.Fatalf("forwarder calls = %d, want 1 (second request must hit cache)", got)
++			}
 +		})
 +	}
 +}
-diff --git a/control/dns_runtime.go b/control/dns_runtime.go
-index b871cc3..0c1d9c6 100644
---- a/control/dns_runtime.go
-+++ b/control/dns_runtime.go
-@@ -20,6 +20,7 @@ type controlPlaneDNSRuntime struct {
- 	dnsController             *DnsController
- 	dnsRouting                *dns.Dns
- 	dnsFixedDomainTtl         map[string]int
-+	dnsResponseTtl            int
- 	dnsListener               *DNSListener
- 	dnsListenerStopRegistered bool
- 	delayDNSListenerStart     bool
-@@ -262,6 +263,7 @@ func (r *controlPlaneDNSRuntime) releaseRetainedState() {
- 	r.dnsController = nil
- 	r.dnsRouting = nil
- 	r.dnsFixedDomainTtl = nil
-+	r.dnsResponseTtl = 0
- 	r.dnsListener = nil
- 	r.dnsListenerStopRegistered = false
- 	r.delayDNSListenerStart = false
++
++type responseTtlDomainMatcher struct{}
++
++func (responseTtlDomainMatcher) AddSet(int, []string, consts.RoutingDomainKey) {}
++func (responseTtlDomainMatcher) Build() error                                  { return nil }
++func (responseTtlDomainMatcher) MatchDomainBitmap(string) []uint32             { return nil }
++
++func TestResponseTtlSurvivesReuseAndRollback(t *testing.T) {
++	controller := newTestDnsController()
++	controller.log = logrus.New()
++	oldHash := [32]byte{1}
++	if err := controller.TryUpdateRuntime(&DnsControllerOption{ResponseTtl: 15, RouteProjectionHash: oldHash}, nil); err != nil {
++		t.Fatal(err)
++	}
++	reused, err := controller.ReuseForReload(&DnsControllerOption{ResponseTtl: 45, RouteProjectionHash: oldHash}, nil)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if got := reused.currentResponseTtl(); got != 45 {
++		t.Fatalf("reused response_ttl = %d, want 45", got)
++	}
++
++	candidate := &ControlPlane{controlPlaneDNSRuntime: controlPlaneDNSRuntime{dnsController: reused}}
++	previous := &ControlPlane{
++		ctx: context.Background(),
++		controlPlaneGenerationState: controlPlaneGenerationState{
++			routingMatcher: &RoutingMatcher{domainMatcher: responseTtlDomainMatcher{}},
++		},
++		controlPlaneDNSRuntime: controlPlaneDNSRuntime{dnsResponseTtl: 15},
++	}
++	if _, err := candidate.RestorePreparedDNSRuntimeForRollback(previous, true, false); err != nil {
++		t.Fatal(err)
++	}
++	if candidate.dnsController != nil || previous.dnsController == nil {
++		t.Fatal("rollback did not transfer the DNS controller to the previous generation")
++	}
++	if got := previous.dnsController.currentResponseTtl(); got != 15 {
++		t.Fatalf("rollback response_ttl = %d, want previous value 15", got)
++	}
++}

@@ -7,94 +7,54 @@
 <link rel="stylesheet" href="/luci-static/resources/honk/addon/fold/foldgutter.css" />
 <link rel="stylesheet" href="/luci-static/resources/honk/lib/codemirror.css" />
 <style>
-	/* CodeMirror editor full-width layout for Footstrap, Aurora, and Bootstrap */
-	.honk-editor-row,
-	.cbi-value:has(.CodeMirror),
-	.cbi-value:has(textarea),
-	div[id^="cbi-honk-"][id$="conf"] {
-		display: block !important;
-		width: 100% !important;
-		max-width: 100% !important;
-		flex: 1 1 100% !important;
-		clear: both !important;
-		padding-top: 14px !important;
-		padding-bottom: 14px !important;
-		margin-bottom: 8px !important;
+	/* 1. 修复重载按钮被 Footstrap 强行推到屏幕最右侧的问题，让其在内容列起始处紧凑排列 */
+	div[id^="cbi-honk-"][id$="-_reload"] .cbi-value-field,
+	#cbi-honk-config-_reload .cbi-value-field {
+		display: inline-flex !important;
+		align-items: center !important;
+		justify-content: flex-start !important;
+		gap: 10px !important;
 	}
-
-	.honk-editor-row > .cbi-value-title,
-	.cbi-value:has(.CodeMirror) > .cbi-value-title,
-	.cbi-value:has(textarea) > .cbi-value-title,
-	div[id^="cbi-honk-"][id$="conf"] > .cbi-value-title {
-		display: block !important;
-		width: 100% !important;
-		max-width: 100% !important;
-		flex: 1 1 100% !important;
-		text-align: start !important;
-		text-align: left !important;
-		float: none !important;
-		padding: 0 0 6px 0 !important;
+	div[id^="cbi-honk-"][id$="-_reload"] .cbi-value-description,
+	#cbi-honk-config-_reload .cbi-value-description {
 		margin: 0 !important;
-		font-weight: 600 !important;
-		font-size: 15px !important;
-		color: var(--text, var(--text-color-highest, inherit)) !important;
+		display: inline-block !important;
 	}
 
-	.honk-editor-row .cbi-value-description,
-	.cbi-value:has(.CodeMirror) .cbi-value-description,
-	div[id^="cbi-honk-"][id$="conf"] .cbi-value-description {
-		display: block !important;
-		width: 100% !important;
-		max-width: 100% !important;
-		margin: 2px 0 10px 0 !important;
-		padding: 0 !important;
-		color: var(--text-muted, var(--text-color-medium, #888)) !important;
-		font-size: 13px !important;
-	}
-
-	.honk-editor-row > .cbi-value-field,
-	.cbi-value:has(.CodeMirror) > .cbi-value-field,
-	.cbi-value:has(textarea) > .cbi-value-field,
-	div[id^="cbi-honk-"][id$="conf"] > .cbi-value-field {
-		display: block !important;
-		width: 100% !important;
-		max-width: 100% !important;
-		flex: 1 1 100% !important;
-		margin: 0 !important;
-		margin-inline-start: 0 !important;
-		padding: 0 !important;
-		float: none !important;
-	}
-
+	/* 2. 格式化代码按钮工具栏：靠左与内容区域对齐 */
 	.honk-editor-toolbar {
 		display: flex !important;
 		align-items: center !important;
-		margin-bottom: 8px !important;
-		margin-top: 4px !important;
-		width: 100% !important;
+		justify-content: flex-start !important;
+		margin-bottom: 6px !important;
+		margin-top: 2px !important;
 	}
-
 	.cm-format-btn {
 		margin: 0 !important;
-		display: inline-flex !important;
-		align-items: center !important;
-		justify-content: center !important;
 		cursor: pointer !important;
 	}
 
+	/* 3. 确保编辑器所在字段列占满右侧空间且不换行错位 */
+	.honk-editor-row .cbi-value-field,
+	.cbi-value:has(.CodeMirror) .cbi-value-field {
+		flex: 1 1 0% !important;
+		min-width: 0 !important;
+		width: auto !important;
+	}
+
+	/* 4. CodeMirror 容器基础尺寸与主题自适应 */
 	.CodeMirror {
 		display: block !important;
 		width: 100% !important;
-		max-width: 100% !important;
 		box-sizing: border-box !important;
+		min-height: 480px;
+		height: auto;
 		border: 1px solid var(--hairline, var(--border-color-medium, #ccc)) !important;
 		border-radius: var(--radius-base, 4px);
-		height: auto;
-		min-height: 480px;
 		font-family: var(--font-mono, monospace);
 		font-size: 13px;
-		background: var(--control-bg, var(--surface, var(--background-color-high, #ffffff))) !important;
-		color: var(--text, var(--text-color-highest, inherit)) !important;
+		background: var(--control-bg, var(--surface, #ffffff)) !important;
+		color: var(--text, inherit) !important;
 		box-shadow: none;
 	}
 	.CodeMirror-gutters {
@@ -104,124 +64,20 @@
 	.CodeMirror-linenumber {
 		color: var(--text-muted, var(--text-color-low, #888888)) !important;
 	}
-	.CodeMirror-cursor {
-		border-left: 1px solid var(--text, var(--text-color-highest, currentColor)) !important;
-	}
-	.CodeMirror-selected {
-		background: var(--hover-faint, var(--background-color-medium, rgba(128, 128, 128, 0.2))) !important;
-	}
-	.CodeMirror-focused .CodeMirror-selected {
-		background: var(--brand-subtle, var(--background-color-medium, rgba(0, 133, 183, 0.25))) !important;
-	}
-	.CodeMirror-activeline-background {
-		background: var(--hover-faint, var(--background-color-low, rgba(128, 128, 128, 0.08))) !important;
-	}
-	.CodeMirror-matchingbracket {
-		text-decoration: underline;
-		font-weight: bold;
-		color: var(--brand, var(--primary-color-high, inherit)) !important;
-	}
 
-	/* Dark mode container & gutter overrides across all themes */
+	/* 5. 暗色模式自适应 */
 	[data-darkmode="true"] .CodeMirror,
 	[data-theme="dark"] .CodeMirror,
-	.dark .CodeMirror,
-	html[data-darkmode=true] .CodeMirror {
-		background: var(--control-bg, var(--surface, #141822)) !important;
+	.dark .CodeMirror {
+		background: var(--control-bg, #141822) !important;
 		color: var(--text, #f9fafb) !important;
 		border-color: var(--hairline, #334155) !important;
 	}
 	[data-darkmode="true"] .CodeMirror-gutters,
 	[data-theme="dark"] .CodeMirror-gutters,
-	.dark .CodeMirror-gutters,
-	html[data-darkmode=true] .CodeMirror-gutters {
+	.dark .CodeMirror-gutters {
 		background: var(--surface-sunken, #0a0e17) !important;
 		border-right-color: var(--hairline, #334155) !important;
-	}
-	[data-darkmode="true"] .CodeMirror-linenumber,
-	[data-theme="dark"] .CodeMirror-linenumber,
-	.dark .CodeMirror-linenumber,
-	html[data-darkmode=true] .CodeMirror-linenumber {
-		color: var(--text-muted, #909297) !important;
-	}
-
-	/* DAE syntax highlighting - Light Mode */
-	.cm-s-default .cm-keyword { color: #85007a; font-weight: bold; }
-	.cm-s-default .cm-variable-3 { color: #b45309; }
-	.cm-s-default .cm-variable-2 { color: #0369a1; }
-	.cm-s-default .cm-def { color: #0284c7; }
-	.cm-s-default .cm-operator.marker { color: #d946ef; font-weight: bold; }
-	.cm-s-default .cm-operator { color: #0284c7; }
-	.cm-s-default .cm-number { color: #0d9488; }
-	.cm-s-default .cm-string { color: #15803d; }
-	.cm-s-default .cm-comment { color: var(--text-muted, var(--text-color-low, #6b7280)); font-style: italic; }
-
-	/* DAE syntax highlighting - Dark Mode */
-	[data-darkmode="true"] .cm-s-default .cm-keyword,
-	[data-theme="dark"] .cm-s-default .cm-keyword,
-	.dark .cm-s-default .cm-keyword,
-	html[data-darkmode=true] .cm-s-default .cm-keyword { color: #c678dd !important; font-weight: bold; }
-
-	[data-darkmode="true"] .cm-s-default .cm-variable-3,
-	[data-theme="dark"] .cm-s-default .cm-variable-3,
-	.dark .cm-s-default .cm-variable-3,
-	html[data-darkmode=true] .cm-s-default .cm-variable-3 { color: #e5c07b !important; }
-
-	[data-darkmode="true"] .cm-s-default .cm-variable-2,
-	[data-theme="dark"] .cm-s-default .cm-variable-2,
-	.dark .cm-s-default .cm-variable-2,
-	html[data-darkmode=true] .cm-s-default .cm-variable-2 { color: #61afef !important; }
-
-	[data-darkmode="true"] .cm-s-default .cm-def,
-	[data-theme="dark"] .cm-s-default .cm-def,
-	.dark .cm-s-default .cm-def,
-	html[data-darkmode=true] .cm-s-default .cm-def { color: #56b6c2 !important; }
-
-	[data-darkmode="true"] .cm-s-default .cm-operator.marker,
-	[data-theme="dark"] .cm-s-default .cm-operator.marker,
-	.dark .cm-s-default .cm-operator.marker,
-	html[data-darkmode=true] .cm-s-default .cm-operator.marker { color: #e06c75 !important; font-weight: bold; }
-
-	[data-darkmode="true"] .cm-s-default .cm-operator,
-	[data-theme="dark"] .cm-s-default .cm-operator,
-	.dark .cm-s-default .cm-operator,
-	html[data-darkmode=true] .cm-s-default .cm-operator { color: #56b6c2 !important; }
-
-	[data-darkmode="true"] .cm-s-default .cm-number,
-	[data-theme="dark"] .cm-s-default .cm-number,
-	.dark .cm-s-default .cm-number,
-	html[data-darkmode=true] .cm-s-default .cm-number { color: #d19a66 !important; }
-
-	[data-darkmode="true"] .cm-s-default .cm-string,
-	[data-theme="dark"] .cm-s-default .cm-string,
-	.dark .cm-s-default .cm-string,
-	html[data-darkmode=true] .cm-s-default .cm-string { color: #98c379 !important; }
-
-	[data-darkmode="true"] .cm-s-default .cm-comment,
-	[data-theme="dark"] .cm-s-default .cm-comment,
-	.dark .cm-s-default .cm-comment,
-	html[data-darkmode=true] .cm-s-default .cm-comment { color: var(--text-muted, #909297) !important; }
-
-	/* OS dark-preference fallback when theme does not explicitly declare */
-	@media (prefers-color-scheme: dark) {
-		:root:not([data-darkmode="false"]):not([data-theme="light"]) .CodeMirror {
-			background: var(--control-bg, var(--surface, #141822)) !important;
-			color: var(--text, #f9fafb) !important;
-			border-color: var(--hairline, #334155) !important;
-		}
-		:root:not([data-darkmode="false"]):not([data-theme="light"]) .CodeMirror-gutters {
-			background: var(--surface-sunken, #0a0e17) !important;
-			border-right-color: var(--hairline, #334155) !important;
-		}
-		:root:not([data-darkmode="false"]):not([data-theme="light"]) .cm-s-default .cm-keyword { color: #c678dd; }
-		:root:not([data-darkmode="false"]):not([data-theme="light"]) .cm-s-default .cm-variable-3 { color: #e5c07b; }
-		:root:not([data-darkmode="false"]):not([data-theme="light"]) .cm-s-default .cm-variable-2 { color: #61afef; }
-		:root:not([data-darkmode="false"]):not([data-theme="light"]) .cm-s-default .cm-def { color: #56b6c2; }
-		:root:not([data-darkmode="false"]):not([data-theme="light"]) .cm-s-default .cm-operator.marker { color: #e06c75; }
-		:root:not([data-darkmode="false"]):not([data-theme="light"]) .cm-s-default .cm-operator { color: #56b6c2; }
-		:root:not([data-darkmode="false"]):not([data-theme="light"]) .cm-s-default .cm-number { color: #d19a66; }
-		:root:not([data-darkmode="false"]):not([data-theme="light"]) .cm-s-default .cm-string { color: #98c379; }
-		:root:not([data-darkmode="false"]):not([data-theme="light"]) .cm-s-default .cm-comment { color: var(--text-muted, #909297); }
 	}
 </style>
 
@@ -339,7 +195,7 @@
 
 			var formatBtn = document.createElement('button');
 			formatBtn.type = 'button';
-			formatBtn.className = 'cbi-button cm-format-btn';
+			formatBtn.className = 'btn cbi-button cm-format-btn';
 			formatBtn.innerText = '<%:Format Code%>';
 			formatBtn.onclick = function() {
 				formatEditor(editor);
