@@ -41,7 +41,7 @@ o.validate = function(self, value)
 	if v then return v end
 	return nil, translate("Custom Config") .. " " .. translate("Must be JSON text!")
 end
-o.cfgvalue = function(self, section, value)
+o.cfgvalue = function(self, section)
 	local config_str = m:get(section, "config_str")
 	if config_str then
 		return api.base64Decode(config_str)
@@ -79,7 +79,7 @@ o.default = "0"
 o:depends({ custom = false })
 
 o = s:option(Value, "firewall_allow_src", translate("Source zone"))
-o.rmempty = false
+o.rmempty = not m.is_js_luci
 o.nocreate = true
 o.allowany = true
 o.default = "wan"

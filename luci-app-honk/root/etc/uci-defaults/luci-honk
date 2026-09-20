@@ -1,5 +1,7 @@
 #!/bin/sh
 
+[ -f /usr/share/honk/download_zashboard.sh ] && chmod +x /usr/share/honk/download_zashboard.sh
+
 rm -rf /tmp/luci-*
 
 exit 0

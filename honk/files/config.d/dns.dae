@@ -10,13 +10,13 @@ dns {
     routing {
         request {
             qtype(https) -> reject
-            qname(geosite:gfw) -> remote
+            qname(geosite: gfw) -> remote
             fallback: local
         }
         response {
             upstream(remote) -> accept
-            qname(geosite:private) -> accept
-            ip(geoip:cn) -> accept
+            qname(geosite: private) -> accept
+            ip(geoip: cn) -> accept
             fallback: remote
         }
     }

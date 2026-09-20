@@ -175,6 +175,7 @@ end
 function action_events()
 	local logs = ""
 	local query ={}
+	local json_parse = luci.jsonc.parse
 
 	local dk = docker.new()
 	-- Get events from last 24 hours
@@ -187,7 +188,32 @@ function action_events()
 			local date = "unknown"
 			if v and v.time then
 				date = os.date("%Y-%m-%d %H:%M:%S", v.time)
+	-- 安全检查：确保events对象和body存在
+	if not events then
+		logs = "[ERROR] Failed to connect to Docker daemon. Please ensure Docker is running.\n"
+	elseif not events.body then
+		local error_msg = events.message or events.body and events.body.message or tostring(events.body) or "Unknown error"
+		logs = string.format("[ERROR] Docker API error (code: %d): %s\n", events.code or 0, error_msg)
+	elseif events.code ~= 200 then
+		local error_msg = events.body.message or events.body or "Unknown error"
+		logs = string.format("[ERROR] Docker API error (code: %d): %s\n", events.code or 0, error_msg)
+	elseif type(events.body) ~= "table" and type(events.body) ~= "string" then
+		logs = "[INFO] No events received in the last 24 hours.\n"
+	else
+		-- 统一处理：如果是字符串，转换为table；如果是table，直接使用
+		local event_list = {}
+		if type(events.body) == "string" and events.body ~= "" then
+			-- 尝试解析JSON数组格式
+			local parsed = json_parse(events.body)
+			if type(parsed) == "table" then
+				event_list = parsed
+			else
+				-- 解析失败，当作单条事件处理
+				event_list = {events.body}
 			end
+		elseif type(events.body) == "table" then
+			event_list = events.body
+		end
 
 			local name = v.Actor and v.Actor.Attributes and v.Actor.Attributes.name or "unknown"
 			local action = v.Action or "unknown"
@@ -202,8 +228,123 @@ function action_events()
 			elseif v.Type == "image" then
 				local id = v.Actor and v.Actor.ID or "unknown"
 				logs = logs .. string.format("[%s] %s %s Image: %s Image name: %s\n", date, v.Type, action, id, name)
+		-- 检查事件列表是否为空
+		if #event_list == 0 then
+			logs = "[INFO] No events received in the last 24 hours.\n"
+		else
+			-- 遍历事件列表
+			for _, item in ipairs(event_list) do
+				local v = item
+				-- 如果是字符串，尝试解析JSON
+				if type(v) == "string" and v ~= "" then
+					v = json_parse(v)
+				end
+
+				-- 确保v是有效的table
+				if type(v) ~= "table" then
+					logs = logs .. string.format("[PARSE ERROR] Invalid event data\n")
+				else
+					-- 解析时间戳：可读时间格式
+					local ts = tonumber(v.time) or 0
+					local readable_time = os.date("%Y-%m-%d %H:%M:%S", ts)
+
+					-- 获取事件类型和动作
+					local event_type = v.Type or v.type or "unknown"
+					local action = v.Action or v.action or "unknown"
+
+					-- 根据事件类型格式化输出：时间戳单独一行，其他信息分行列出
+					if event_type == "container" then
+						local container_id = v.Actor and v.Actor.ID or "unknown"
+						-- 预计算显示值，避免在string.format参数中使用连接操作符
+						local short_id = #container_id > 12 and container_id:sub(1, 12) or container_id
+						local container_name = v.Actor and v.Actor.Attributes and v.Actor.Attributes.name or "unknown"
+						local image = v.Actor and v.Actor.Attributes and v.Actor.Attributes.image or ""
+						local display_name = container_name .. " (" .. short_id .. ")"
+
+						logs = logs .. string.format(
+							"%s\n" ..
+							"%-24s %-10s %-15s\n" ..
+							"%-24s %-10s %-15s\n" ..
+							"%-24s %-10s %-15s\n" ..
+							"%-24s %-10s %-15s\n\n",
+							readable_time,
+							"", "[TYPE]", event_type,
+							"", "[ACTION]", action,
+							"", "[CONTAINER]", display_name,
+							"", "[IMAGE]", image
+						)
+
+					elseif event_type == "network" then
+						local network_name = v.Actor and v.Actor.Attributes and v.Actor.Attributes.name or "unknown"
+						local container_id = v.Actor and v.Actor.Attributes and v.Actor.Attributes.container or ""
+						-- 预计算显示值
+						local short_container = #container_id > 12 and container_id:sub(1, 12) or container_id
+
+						logs = logs .. string.format(
+							"%s\n" ..
+							"%-24s %-10s %-15s\n" ..
+							"%-24s %-10s %-15s\n" ..
+							"%-24s %-10s %-15s\n" ..
+							"%-24s %-10s %-15s\n\n",
+							readable_time,
+							"", "[TYPE]", event_type,
+							"", "[ACTION]", action,
+							"", "[NETWORK]", network_name,
+							"", "[CONTAINER]", short_container
+						)
+
+					elseif event_type == "image" then
+						local image_name = v.Actor and v.Actor.Attributes and v.Actor.Attributes.name or "unknown"
+
+						logs = logs .. string.format(
+							"%s\n" ..
+							"%-24s %-10s %-15s\n" ..
+							"%-24s %-10s %-15s\n" ..
+							"%-24s %-10s %-15s\n\n",
+							readable_time,
+							"", "[TYPE]", event_type,
+							"", "[ACTION]", action,
+							"", "[IMAGE]", image_name
+						)
+
+					elseif event_type == "volume" then
+						local volume_name = v.Actor and v.Actor.Attributes and v.Actor.Attributes.name or "unknown"
+
+						logs = logs .. string.format(
+							"%s\n" ..
+							"%-24s %-10s %-15s\n" ..
+							"%-24s %-10s %-15s\n" ..
+							"%-24s %-10s %-15s\n\n",
+							readable_time,
+							"", "[TYPE]", event_type,
+							"", "[ACTION]", action,
+							"", "[VOLUME]", volume_name
+						)
+
+					else
+						-- 未知类型
+						local actor_id = v.Actor and v.Actor.ID or "unknown"
+						local short_id = #actor_id > 12 and actor_id:sub(1, 12) or actor_id
+
+						logs = logs .. string.format(
+							"%s\n" ..
+							"%-24s %-10s %-15s\n" ..
+							"%-24s %-10s %-15s\n" ..
+							"%-24s %-10s %-15s\n\n",
+							readable_time,
+							"", "[TYPE]", event_type,
+							"", "[ACTION]", action,
+							"", "[ID]", short_id
+						)
+					end
+				end
 			end
 		end
+	end
+
+	-- 如果最终logs仍为空
+	if logs == "" then
+		logs = "[INFO] No events received in the last 24 hours.\n"
 	end
 
 	luci.template.render("dockerman/logs", {self={syslog = logs, title="Events"}})

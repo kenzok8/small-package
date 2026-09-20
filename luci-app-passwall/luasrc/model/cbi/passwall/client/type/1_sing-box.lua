@@ -96,6 +96,7 @@ if load_urltest_options then -- [[ URLTest Start ]]
 	o = s:option(MultiValue, "urltest_node", translate("URLTest node list"), translate("List of nodes to test, <a target='_blank' href='https://sing-box.sagernet.org/configuration/outbound/urltest'>document</a>"))
 	o:depends({ node_add_mode = "manual" })
 	o.widget = "checkbox"
+	o.cast = "table"
 	o.template = m:template_path("/cbi/nodes_multivalue")
 	o.group = {}
 	for k1, v1 in pairs(node_list) do
@@ -104,30 +105,6 @@ if load_urltest_options then -- [[ URLTest Start ]]
 				o:value(v.id, v.remark)
 				o.group[#o.group+1] = v.group or ""
 			end
-		end
-	end
-	-- 读取旧 DynamicList
-	function o.cfgvalue(self, section)
-		return table.concat(m:get(section, "urltest_node") or {}, " ")
-	end
-	-- 写入保持 DynamicList
-	function o.write(self, section, value)
-		local old = m:get(section, "urltest_node") or {}
-		local new, set = {}, {}
-		for v in value:gmatch("%S+") do
-			new[#new + 1] = v
-			set[v] = 1
-		end
-		for _, v in ipairs(old) do
-			if not set[v] then
-				m:set(section, "urltest_node", new)
-				return
-			end
-			set[v] = nil
-		end
-		for _ in pairs(set) do
-			m:set(section, "urltest_node", new)
-			return
 		end
 	end
 

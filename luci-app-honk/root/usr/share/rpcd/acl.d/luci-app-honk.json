@@ -12,7 +12,9 @@
 				"/etc/honk/config.dae",
 				"/etc/honk/config.d/dns.dae",
 				"/etc/honk/config.d/node.dae",
-				"/etc/honk/config.d/route.dae"
+				"/etc/honk/config.d/route.dae",
+				"/etc/honk/zashboard/*",
+				"/tmp/honk_zashboard_download.*"
 			]
 		},
 		"write": {
@@ -24,7 +26,9 @@
 				"/etc/honk/config.dae",
 				"/etc/honk/config.d/dns.dae",
 				"/etc/honk/config.d/node.dae",
-				"/etc/honk/config.d/route.dae"
+				"/etc/honk/config.d/route.dae",
+				"/etc/honk/zashboard/*",
+				"/tmp/honk_zashboard_download.*"
 			]
 		}
 	}

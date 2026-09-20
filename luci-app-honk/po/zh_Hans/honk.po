@@ -76,3 +76,10 @@ msgstr "更新时间（每天）"
 msgid "Format Code"
 msgstr "格式化代码"
 
+msgid "Zashboard"
+msgstr "控制面板"
+
+msgid "Dashboard"
+msgstr "控制面板"
+
+

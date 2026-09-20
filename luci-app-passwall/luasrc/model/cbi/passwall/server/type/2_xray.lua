@@ -46,7 +46,7 @@ o.validate = function(self, value)
 	if v then return v end
 	return nil, translate("Custom Config") .. " " .. translate("Must be JSON text!")
 end
-o.cfgvalue = function(self, section, value)
+o.cfgvalue = function(self, section)
 	local config_str = m:get(section, "config_str")
 	if config_str then
 		return api.base64Decode(config_str)
@@ -72,24 +72,10 @@ o = s:option(Value, "port", translate("Listen Port"))
 o.datatype = "port"
 o:depends({ custom = false })
 
-o = s:option(DynamicList, "users", translate("User"))
+o = s:option(MultiValue, "users", translate("User"))
+o.cast = "table"
 for i, v in ipairs(user_list) do
 	o:value(v[".name"], v.username)
-end
-o.validate = function(self, value, t)
-	if type(value) == "string" then value = {value} end
-	if type(value) == "table" then
-		for _, u in ipairs(value) do
-			local found = false
-			for _, v in ipairs(user_list) do
-				if u == v[".name"] then found = true; break end
-			end
-			if not found then
-				return nil, translate("Please configure user info on the User Management page.")
-			end
-		end
-	end
-	return value
 end
 o:depends({ protocol = "http" })
 o:depends({ protocol = "socks" })
@@ -536,7 +522,7 @@ o.default = "0"
 o:depends({ custom = false })
 
 o = s:option(Value, "firewall_allow_src", translate("Source zone"))
-o.rmempty = false
+o.rmempty = not m.is_js_luci
 o.nocreate = true
 o.allowany = true
 o.default = "wan"

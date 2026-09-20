@@ -12,7 +12,7 @@ global {
     wan_interface: auto
     auto_config_kernel_parameter: true
     data_dir: '/etc/honk'
-	log_file: '/var/log/honk/honk.log'
+    log_file: '/var/log/honk/honk.log'
     store_subscribe: true
     # if u not using dns bind, set dial_mode to domain++ prefer
     dial_mode: domain

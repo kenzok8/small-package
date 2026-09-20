@@ -4,9 +4,50 @@
 <div class="cbi-section">
 <h3><%:Events%></h3>
 <% end %>
+
+<%
+-- 安全处理：确保syslog存在且为字符串
+local log_content = self.syslog or ""
+local row_count = 2
+
+-- 安全检查：只有当log_content非空时才计算行数
+if log_content and log_content ~= "" then
+    local newline_count = 0
+    for _ in string.gmatch(log_content, "\n") do
+        newline_count = newline_count + 1
+    end
+    row_count = newline_count + 2
+    if row_count < 5 then
+        row_count = 5
+    end
+    if row_count > 50 then
+        row_count = 50
+    end
+end
+%>
+
 <div id="content_syslog">
-<textarea readonly="readonly" wrap="off" rows="<%=self.syslog:cmatch('\n')+2%>" id="syslog"><%=self.syslog:pcdata()%></textarea>
+<% if log_content == "" then %>
+    <!-- 当没有事件日志时显示提示信息 -->
+    <p style="color: #888; padding: 10px;"><%:No events found in the last 24 hours.%></p>
+<% elseif string.find(log_content, "^%[ERROR%]") then %>
+    <!-- Docker连接错误：显示红色错误信息 -->
+    <div style="color: #c00; padding: 10px; background: #fee; border: 1px solid #c00; border-radius: 4px;">
+        <%:Docker Error:%> <%=log_content:pcdata()%>
+    </div>
+<% elseif string.find(log_content, "^%[DEBUG%]") then %>
+    <!-- 调试信息：显示原始响应数据 -->
+    <p style="color: #f90; padding: 10px;"><%:Debug Info - Raw Response:%></p>
+    <textarea readonly="readonly" wrap="off" rows="<%=row_count%>" id="syslog"><%=log_content:pcdata()%></textarea>
+<% elseif string.find(log_content, "^%[INFO%]") then %>
+    <!-- 信息提示：显示友好提示 -->
+    <p style="color: #888; padding: 10px;"><%:No events found in the last 24 hours.%></p>
+<% else %>
+    <!-- 正常显示事件日志 -->
+    <textarea readonly="readonly" wrap="off" rows="<%=row_count%>" id="syslog"><%=log_content:pcdata()%></textarea>
+<% end %>
 </div>
+
 <% if self.title == "Events" then %>
 </div>
 <%+footer%>
