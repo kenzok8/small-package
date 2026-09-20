@@ -3145,7 +3145,19 @@ let proxies = data.proxies;
 let switchable = { 'Selector': 1 };
 let readonly  = { 'URLTest': 1, 'Fallback': 1, 'LoadBalance': 1, 'Relay': 1 };
 let groups = [];
-for (let gname in proxies) {
+let order = [];
+let global = proxies['GLOBAL'];
+if (global && global.all && length(global.all)) {
+	for (let i = 0; i < length(global.all); i++) {
+		if (global.all[i] != 'GLOBAL') push(order, global.all[i]);
+	}
+} else {
+	for (let gname in proxies) {
+		if (gname != 'GLOBAL') push(order, gname);
+	}
+}
+for (let i = 0; i < length(order); i++) {
+	let gname = order[i];
 	let g = proxies[gname];
 	if (!g || type(g) != 'object') continue;
 	let gt = g.type || '';

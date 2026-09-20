@@ -231,6 +231,17 @@ var MSGS = {
   }
 };
 
+// 全局锁：内核操作互斥（切换配置 / 更新订阅 / 删除）
+function clKernelBusy() { return !!document.body.getAttribute('data-cl-kernel-busy'); }
+function clKernelLock() {
+  document.body.setAttribute('data-cl-kernel-busy', '1');
+  document.querySelectorAll('.cl-btn-switch, .cl-btn-update-sub, .cl-btn-delete, .cl-kernel-sel').forEach(function (b) { b.disabled = true; });
+}
+function clKernelUnlock() {
+  document.body.removeAttribute('data-cl-kernel-busy');
+  document.querySelectorAll('.cl-btn-switch, .cl-btn-update-sub, .cl-btn-delete, .cl-kernel-sel').forEach(function (b) { b.disabled = false; });
+}
+
 return view.extend({
   _busy:      false,
   _op:        null,   /* 'start' | 'stop' | 'restart' | null */
@@ -1561,8 +1572,8 @@ return view.extend({
     var panelUrl  = this._dashboardUrl(st);
     var panels    = ['metacubexd', 'yacd', 'zashboard', 'razord'];
 
-    var mkSel = function (opts, val, fn) {
-      return E('select', { 'class': 'cbi-input-select', change: fn },
+    var mkSel = function (opts, val, fn, extraCls) {
+      return E('select', { 'class': 'cbi-input-select' + (extraCls ? ' ' + extraCls : ''), change: fn },
         opts.map(function (o) {
           return E('option', { value: o[0], selected: o[0] === val ? '' : null, disabled: o[2] ? '' : null }, o[1]);
         }));
@@ -1598,7 +1609,18 @@ return view.extend({
       E('div', { 'class': 'cl-ctrl' }, [
         E('label', {}, _("Proxy Mode")),
         mkSel([['rule',_("Rule")],['global',_("Global")],['direct',_("Direct")]], proxyMode,
-          function (ev) { clashoo.setProxyMode(ev.target.value); })
+          function (ev) {
+            var sel = ev.target;
+            if (sel.disabled || clKernelBusy()) return;
+            clKernelLock();
+            sel.disabled = true;
+            Promise.resolve(clashoo.setProxyMode(sel.value)).then(function () {
+              return self._pollOverview(true);
+            }).catch(function () {}).then(function () {
+              sel.disabled = false;
+              clKernelUnlock();
+            });
+          }, 'cl-kernel-sel')
       ]),
       E('div', { 'class': 'cl-ctrl' }, [
         E('label', {}, _("Run Mode")),
@@ -1607,7 +1629,10 @@ return view.extend({
             var mode = ev.target.value;
             if (mode === 'custom')
               return;
-            ev.target.disabled = true;
+            var sel = ev.target;
+            if (sel.disabled || clKernelBusy()) return;
+            clKernelLock();
+            sel.disabled = true;
             self._op = 'mode';
             self._lastSt = self._lastSt || {};
             if (mode === 'tun-mixed') {
@@ -1634,9 +1659,10 @@ return view.extend({
               ui.addNotification(null, E('p', _("Run mode setting failed: ") + (e.message || e)));
             }).then(function () {
               self._op = null;
-              ev.target.disabled = false;
+              sel.disabled = false;
+              clKernelUnlock();
             });
-          })
+          }, 'cl-kernel-sel')
       ]),
       E('div', { 'class': 'cl-ctrl' }, [
         E('label', {}, _("Configuration Files")),
@@ -1644,8 +1670,10 @@ return view.extend({
           mkSel(configs.length ? configs.map(function(c){return[c,c];}) : [['',_("(empty)")]], current,
             function (ev) {
               var sel = ev.target;
+              if (sel.disabled || clKernelBusy()) return;
               var name = sel.value;
               var prev = sel.getAttribute('data-cl-prev') || current;
+              clKernelLock();
               sel.disabled = true;
               var setter = (st.core_type === 'singbox')
                 ? clashoo.setSingboxProfile(name)
@@ -1665,13 +1693,14 @@ return view.extend({
                 })
                 .then(function () {
                   sel.disabled = false;
+                  clKernelUnlock();
                   /* force immediate state refresh so cards get new current */
                   return self._pollOverview(true);
                 });
-            }),
+            }, 'cl-kernel-sel'),
           E('button', {
             'class': 'btn cbi-button-action cl-btn-update-sub',
-            click: L.bind(this._updSubs, this)
+            click: L.bind(function (ev) { this._updSubs(ev); }, this)
           }, _("Update Subscription"))
         ])
       ]),
@@ -1971,7 +2000,13 @@ return view.extend({
   _stop:    function () { return this._svc(function () { return clashoo.stop();  },   'stop'); },
   _restart: function () { return this._svc(function () { return clashoo.restart(); }, 'restart'); },
 
-  _updSubs: function () {
+  _updSubs: function (ev) {
+    var btn = ev && ev.target;
+    if (btn && btn.disabled) return Promise.resolve();
+    if (clKernelBusy()) return Promise.resolve();
+    clKernelLock();
+    var origText = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = _("Updating…"); }
     return L.resolveDefault(callUpdateCurrentSubscription(), {}).then(function (r) {
       if (r && r.reason === 'not_subscription') {
         ui.addNotification(null, E('p', _("Current configuration is a custom file; no subscription update needed")), 'info');
@@ -1979,6 +2014,9 @@ return view.extend({
       }
       ui.addNotification(null, E('p', r.success ? (r.message || _("Subscription updated successfully"))
         : (_("Update failed: ") + (r.message || _("Current configuration has no recorded subscription URL")))));
+    }).catch(function () {}).then(function () {
+      if (btn) { btn.disabled = false; btn.textContent = origText; }
+      clKernelUnlock();
     });
   },
 
