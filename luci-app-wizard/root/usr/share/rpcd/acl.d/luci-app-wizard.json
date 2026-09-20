@@ -1,14 +1,30 @@
 {
 	"luci-app-wizard": {
-		"description": "Grant UCI access for luci-app-wizard",
+		"description": "Grant UCI and filesystem access for LuCI Setup Wizard",
 		"read": {
+			"uci": [
+				"network",
+				"wireless",
+				"dhcp",
+				"uhttpd",
+				"firewall",
+				"luci",
+				"wizard"
+			],
 			"file": {
-				"/etc/init.d/wizard reconfig": [ "exec" ]
-			},
-			"uci": [ "wizard", "wireless" ]
+				"/etc/nginx/uci.conf": [ "stat" ]
+			}
 		},
 		"write": {
-			"uci": [ "wizard" ]
+			"uci": [
+				"network",
+				"wireless",
+				"dhcp",
+				"uhttpd",
+				"firewall",
+				"luci",
+				"wizard"
+			]
 		}
 	}
 }

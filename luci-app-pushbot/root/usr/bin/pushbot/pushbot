@@ -21,8 +21,22 @@ function read_config(){
 	"dnd_low_range" \
 	"up_timeout" "down_timeout" "timeout_retry_count" "thread_num" "soc_code" "pve_host" "pve_port"\
 	"err_enable" "err_sheep_enable" "err_device_aliases" "network_err_event" "system_time_event" "autoreboot_time" "network_restart_time" "public_ip_event" "public_ip_retry_count" \
-	"jsonpath" "dd_webhook" "we_webhook" "pp_token" "pp_channel" "pp_webhook" "pp_topic_enable" "pp_topic" "fs_webhook" "pushdeer_key" "pushdeer_srv_enable" "pushdeer_srv" "bark_srv_enable" "bark_srv" "bark_token" "bark_sound" "bark_icon" "bark_icon_enable" "bark_level" "ntfy_srv_enable" "ntfy_server" "ntfy_topic" "ntfy_token_enable" "ntfy_token" "ntfy_priority" "gotify_server" "gotify_token" "gotify_priority" \
+	"jsonpath" "dd_webhook" "we_webhook" "pp_token" "pp_channel" "pp_webhook" "pp_topic_enable" "pp_topic" "fs_webhook" "pushdeer_key" "pushdeer_srv_enable" "pushdeer_srv" "bark_srv_enable" "bark_srv" "bark_token" "bark_sound" "bark_icon" "bark_icon_enable" "bark_level" "ntfy_srv_enable" "ntfy_server" "ntfy_topic" "ntfy_token_enable" "ntfy_token" "ntfy_priority" "gotify_server" "gotify_token" "gotify_priority" "wxpusher_app_token" "wxpusher_uids_enable" "wxpusher_uids" "wxpusher_topics_enable" "wxpusher_topics" \
 	"font_title" "font_success" "font_fail" "font_client" "font_module"
+	
+	# WxPusher: 根据 enable 状态处理数组，未 enable 的直接设为空数组
+	if [ "$wxpusher_uids_enable" = "1" ] && [ ! -z "$wxpusher_uids" ]; then
+		wxpusher_uids_json=$(echo "$wxpusher_uids" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$' | awk '{printf "\"%s\",", $0}' | sed 's/,$//')
+		wxpusher_uids="[${wxpusher_uids_json}]"
+	else
+		wxpusher_uids="[]"
+	fi
+	if [ "$wxpusher_topics_enable" = "1" ] && [ ! -z "$wxpusher_topics" ]; then
+		wxpusher_topics_json=$(echo "$wxpusher_topics" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$' | awk '{printf "%s,", $0}' | sed 's/,$//')
+		wxpusher_topics="[${wxpusher_topics_json}]"
+	else
+		wxpusher_topics="[]"
+	fi
 	
 	for str_version in "wrtbwmon" "iputils-arping" "curl" "iw"; do
 		pkg_var="${str_version:0:2}_version"
@@ -116,10 +130,16 @@ function read_config(){
 	font_end=`/usr/bin/jq -r '.font_end' ${jsonpath}`
 	font_end2=`/usr/bin/jq -r '.font_end2' ${jsonpath}`
 	percentsym=`/usr/bin/jq -r '.percentsym' ${jsonpath}`
-	boldstar=`/usr/bin/jq -r '.boldstar' ${jsonpath}`
-	table_tab=`/usr/bin/jq -r '.tabletab' ${jsonpath}`
+	boldstar=`/usr/bin/jq -r '.boldstar' ${jsonpath}` 2>/dev/null; [ "$boldstar" = "null" ] && boldstar=""
+	# 加粗结束标记：Markdown 渠道与 boldstar 相同（对称 **），HTML 渠道为 </b>
+	boldend=`/usr/bin/jq -r '.boldend' ${jsonpath}` 2>/dev/null; [ "$boldend" = "null" ] && boldend="$boldstar"
 	table_enable=`/usr/bin/jq -r '.table_enable' ${jsonpath}` 2>/dev/null; [ "$table_enable" = "null" ] && table_enable=""
 	get_config "table_format"; [ "$table_format" = "0" ] && table_enable=""
+	# 表格化实现方式：钉钉用 Markdown 表格，WxPusher 用 HTML 表格（无边框、无表头，卡片式）
+	case "$jsonpath" in
+		*wxpusher.json) table_mode="html" ;;
+		*) table_mode="md" ;;
+	esac
 	# ntfy 纯文本: 不支持表格/markdown, 强制非表格
 	( echo "${jsonpath}"|grep -q "ntfy" ) && table_enable=""
 	( echo "$lite_enable"|grep -q "content" ) && str_title_start="" && str_title_end="" && str_splitline="" && str_linefeed="" && str_tab=""
@@ -154,8 +174,183 @@ function pushbot_init(){
 	[ -z "${dd_webhook}${pp_token}${we_webhook}${fs_webhook}${bark_token}${pushdeer_key}" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】请填写正确的Token/Webhook " >> ${logfile} && return 1
 	local interfacelist=`getinterfacelist` && [ -z "$interfacelist" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】无法正确获取接口信息，请确认插件是否正常运行" >> ${logfile}
 	return 0
+}
 
-	return 0
+# ── 表格化辅助函数 ──
+# 生成表格分隔线
+md_table_sep() {
+	echo "| --- | --- |"
+}
+
+# 生成表格数据行
+# 用法: md_table_row "标签" "值"
+md_table_row() {
+	echo "| **${1}** | ${2} |"
+}
+
+# 生成表格体（首行 + 分隔线 + 其余数据行），输出以 \n 开头，供 content 直接拼接
+# 用法: md_table_body "标签1" "值1" "标签2" "值2" ...
+# 输出: \n| **标签1** | 值1 |\n| --- | --- |\n| **标签2** | 值2 |
+md_table_body() {
+	local LF='\n'
+	local result=""
+	if [ $# -ge 2 ]; then
+		result="${LF}$(md_table_row "$1" "$2")"
+		shift 2
+		result="${result}${LF}$(md_table_sep)"
+	fi
+	while [ $# -ge 2 ]; do
+		result="${result}${LF}$(md_table_row "$1" "$2")"
+		shift 2
+	done
+	printf '%s' "$result"
+}
+
+# 生成多列表格分隔线
+# 用法: md_table_sep_n 3
+md_table_sep_n() {
+	local n="${1:-2}"
+	local result='|'
+	local i=1
+	while [ $i -le $n ]; do
+		result="${result} --- |"
+		i=$((i + 1))
+	done
+	echo "$result"
+}
+
+# 生成多列表格数据行（列内容原样输出，加粗由调用方控制）
+# 用法: md_table_row_n "列1" "列2" "列3"
+md_table_row_n() {
+	local result='|'
+	for v in "$@"; do
+		result="${result} ${v} |"
+	done
+	echo "$result"
+}
+
+# 生成表格续行（仅数据行，不含分隔线），输出以 \n 开头
+# 用法: md_table_rows "标签1" "值1" "标签2" "值2" ...
+md_table_rows() {
+	local LF='\n'
+	local result=""
+	while [ $# -ge 2 ]; do
+		result="${result}${LF}$(md_table_row "$1" "$2")"
+		shift 2
+	done
+	printf '%s' "$result"
+}
+
+# ── HTML 表格实现（无边框、无表头、卡片式，供 WxPusher 等 HTML 渠道使用）──
+# 单元格内联样式：左列为浅色标签，右列为右对齐值
+_html_td_l='padding:6px 10px;color:#888888;font-size:14px;white-space:nowrap'
+_html_td_m='padding:6px 10px;font-size:14px'
+_html_td_r='padding:6px 10px;text-align:right;font-size:14px;word-break:break-all'
+
+# Markdown 粗体语法 **x** 转 HTML <b>x</b>（HTML 渠道不渲染 markdown 语法）
+_md_bold2html() {
+	printf '%s' "$1" | sed 's/\*\*\([^*][^*]*\)\*\*/<b>\1<\/b>/g; s/\*\*//g'
+}
+
+# 生成 HTML 表格数据行（左标签自动加粗，已有粗体则不重复包裹）
+# 用法: html_table_row "标签" "值"
+html_table_row() {
+	local label value
+	label=$(_md_bold2html "$1")
+	value=$(_md_bold2html "$2")
+	case "$label" in
+		*'<b>'*) : ;;
+		*) label="<b>${label}</b>" ;;
+	esac
+	printf '<tr><td style="%s">%s</td><td style="%s">%s</td></tr>' "$_html_td_l" "$label" "$_html_td_r" "$value"
+}
+
+# 把 <tr> 行包裹为无边框表格（所有参数为已生成的 tr 串）
+html_table_wrap() {
+	[ -z "$1" ] && return
+	printf '<table border="0" cellspacing="0" cellpadding="0" style="width:100%%;border-collapse:collapse">%s</table>' "$1"
+}
+
+# 生成 HTML 表格体（无表头，全部作为数据行）
+# 用法: html_table_body "标签1" "值1" "标签2" "值2" ...
+html_table_body() {
+	local rows=""
+	while [ $# -ge 2 ]; do
+		rows="${rows}$(html_table_row "$1" "$2")"
+		shift 2
+	done
+	html_table_wrap "$rows"
+}
+
+# 生成 HTML 表格续行（独立无边框表格，视觉上与主表连续）
+# 用法: html_table_rows "标签1" "值1" ...
+html_table_rows() {
+	html_table_body "$@"
+}
+
+# 生成 HTML 多列数据行（首列浅色标签，末列右对齐，中间列常规）
+# 用法: html_table_row_n "列1" "列2" "列3"
+html_table_row_n() {
+	local result='<tr>'
+	local total=$#
+	local i=0
+	local cv
+	for v in "$@"; do
+		i=$((i + 1))
+		cv=$(_md_bold2html "$v")
+		if [ $i -eq 1 ]; then
+			# 首列：确保加粗；若已带 font 颜色则用常规样式（避免浅灰标签色覆盖）
+			case "$cv" in
+				*'<b>'*) : ;;
+				*) cv="<b>${cv}</b>" ;;
+			esac
+			case "$cv" in
+				*'<font'*) result="${result}<td style=\"${_html_td_m}\">${cv}</td>" ;;
+				*) result="${result}<td style=\"${_html_td_l}\">${cv}</td>" ;;
+			esac
+		elif [ $i -eq $total ]; then
+			result="${result}<td style=\"${_html_td_r}\">${cv}</td>"
+		else
+			result="${result}<td style=\"${_html_td_m}\">${cv}</td>"
+		fi
+	done
+	printf '%s</tr>' "$result"
+}
+
+# ── 表格化分发层 ──
+# 业务代码统一调用 table_*，由 table_mode 决定走 Markdown 还是 HTML 实现
+table_sep()   { [ "$table_mode" = "html" ] && return 0; md_table_sep; }
+table_row()   { if [ "$table_mode" = "html" ]; then html_table_row "$@"; else md_table_row "$@"; fi; }
+table_body()  { if [ "$table_mode" = "html" ]; then html_table_body "$@"; else md_table_body "$@"; fi; }
+table_rows()  { if [ "$table_mode" = "html" ]; then html_table_rows "$@"; else md_table_rows "$@"; fi; }
+# 多列行/分隔线：Markdown 需补换行前缀，HTML 依靠标签结构不需换行
+table_sep_n() { [ "$table_mode" = "html" ] && return 0; printf '\n%s' "$(md_table_sep_n "$@")"; }
+table_row_n() { if [ "$table_mode" = "html" ]; then html_table_row_n "$@"; else printf '\n%s' "$(md_table_row_n "$@")"; fi; }
+
+# 表格表头行 + 分隔线：仅 Markdown 需要（HTML 无表头概念，直接返回空）
+# 用法: table_header "标签1" "值1" ...
+table_header() {
+	[ "$table_mode" = "html" ] && return 0
+	printf '\n%s\n%s' "$(md_table_row "$@")" "$(md_table_sep)"
+}
+
+# 多列表格表头行 + 分隔线：仅 Markdown 需要
+# 用法: table_header_n "列1" "列2" "列3"
+table_header_n() {
+	[ "$table_mode" = "html" ] && return 0
+	printf '\n%s\n%s' "$(md_table_row_n "$@")" "$(md_table_sep_n "$#")"
+}
+
+# 多列表格收尾：把逐段累积的行串包装成完整表格
+# HTML 包裹无边框 table；Markdown 各行已自带 \n 前缀，直接输出
+# 用法: table_grid_wrap "<行串>"
+table_grid_wrap() {
+	[ -z "$1" ] && return
+	if [ "$table_mode" = "html" ]; then
+		html_table_wrap "$1"
+	else
+		printf '%s' "$1"
+	fi
 }
 
 # 推送
@@ -185,6 +380,25 @@ function diy_send(){
 		[ -z "$gotify_priority" ] && local gotify_priority="5"
 		curl -s -m 15 --fail -H "X-Gotify-Key: ${gotify_token}" -H "Content-Type: application/json" -d "{\"title\":\"${gotify_title}\",\"message\":\"${gotify_msg}\",\"priority\":${gotify_priority}}" "${gotify_url}"
 		return $?
+	fi
+	# WxPusher: 每个模块用卡片包裹，提升观感（与是否表格化无关）
+	# 模块间的 <hr/> 分隔符转为卡片边界，首尾补上卡片标签
+	# 注意：样式必须用单引号——content 已由 send() 统一把双引号转为单引号，
+	# 此处若引入双引号会破坏 eval 展开后的 JSON 结构
+	if ( echo "${3}"|grep -q "wxpusher" ); then
+		# 卡片样式：不设背景色（透明跟随宿主主题，兼容明暗模式），
+		# 边框用半透明中性灰，明暗环境下均可见
+		local _card_open="<div style='border:1px solid rgba(128,128,128,0.35);border-radius:10px;padding:10px 14px;margin:10px 0'>"
+		# 先去换行：HTML 中换行会被折叠，且 <hr/> 常位于行尾，
+		# 逐行 sed 会把它误当成"末尾分隔"删掉，导致模块无法拆分为独立卡片
+		local _card_src=$(printf '%s' "$2" | tr -d '\n')
+		# 去掉首尾多余的模块分隔（首段前、末段后）
+		_card_src=$(printf '%s' "$_card_src" | sed 's|^<hr/>||; s|<hr/>$||')
+		# 其余分隔符转为卡片边界，整体首尾补卡片标签
+		local _card_body=$(printf '%s' "$_card_src" | sed "s|<hr/>|</div>${_card_open}|g")
+		# 标题后紧邻的 <br/> 在卡片布局中会形成多余空行，去掉
+		_card_body=$(printf '%s' "$_card_body" | sed "s|</div><br/>|</div>|g")
+		set -- "$1" "${_card_open}${_card_body}</div>" "${3}"
 	fi
 	( ! echo "$lite_enable"|grep -q "content" ) && ( ! echo "$lite_enable"|grep -q "nowtime" ) && local nowtime=`date "+%Y-%m-%d %H:%M:%S"`
 	local diyurl=`/usr/bin/jq -r .url ${3}` && local diyurl=`eval echo ${diyurl} 2>/dev/null`
@@ -612,9 +826,8 @@ function get_client_usage(){
 				local time1=`date +%s`
 				local time1=$(time_for_humans `expr ${time1} - ${time_up}`)
 				if [ "$table_enable" = "1" ]; then
-					local LF='\n'
 					[ ! -z "$ip_total" ] && local ip_total_v="$ip_total" || local ip_total_v=""
-					local info="${LF}| **客户端名** | ${ip_name} |${LF}| --- | --- |${LF}| **客户端IP** | ${ip} |${LF}| **客户端MAC** | ${mac} |${LF}| **总计流量** | ${ip_total_v} |${LF}| **检测间隔内流量** | ${tmp_usage} |${LF}| **在线时间** | ${time1} |"
+					local info="$(table_body "客户端名" "${ip_name}" "客户端IP" "${ip}" "客户端MAC" "${mac}" "总计流量" "${ip_total_v}" "检测间隔内流量" "${tmp_usage}" "在线时间" "${time1}")"
 					if [ -z "$title" ]; then
 						title="${ip_name} 流量异常"
 						content="${content}${str_splitline}${str_title_start}${font_fail} 设备流量异常${font_end}${str_title_end}${info}"
@@ -1067,8 +1280,7 @@ function ip_changes(){
 			local IPv4_note=""
 			[ ! -z "$IPv4" ] && [ "$IPv4" != "获取失败" ] && is_private_ip "$IPv4" 4 && IPv4_note=" (非公网IP)"
 			if [ "$table_enable" = "1" ]; then
-				local LF='\n'
-				content="${content}${str_splitline}${str_title_start}${font_success} IP 地址变化${font_end}${str_title_end}${LF}| **当前 IP** | ${IPv4}${IPv4_note} |${LF}| --- | --- |"
+				content="${content}${str_splitline}${str_title_start}${font_success} IP 地址变化${font_end}${str_title_end}$(table_body "当前 IP" "${IPv4}${IPv4_note}")"
 			else
 				content="${content}${str_splitline}${str_title_start}${font_success} IP 地址变化${font_end}${str_title_end}${str_linefeed}${str_tab}当前 IP：${IPv4}${IPv4_note}"
 			fi
@@ -1084,8 +1296,7 @@ function ip_changes(){
 			local IPv6_note=""
 			[ ! -z "$IPv6" ] && [ "$IPv6" != "获取失败" ] && is_private_ip "$IPv6" 6 && IPv6_note=" (非公网IP)"
 			if [ "$table_enable" = "1" ]; then
-				local LF='\n'
-				content="${content}${str_splitline}${str_title_start}${font_success} IPv6 地址变化${font_end}${str_title_end}${LF}| **当前 IPv6** | ${IPv6}${IPv6_note} |${LF}| --- | --- |"
+				content="${content}${str_splitline}${str_title_start}${font_success} IPv6 地址变化${font_end}${str_title_end}$(table_body "当前 IPv6" "${IPv6}${IPv6_note}")"
 			else
 				content="${content}${str_splitline}${str_title_start}${font_success} IPv6 地址变化${font_end}${str_title_end}${str_linefeed}${str_tab}当前 IPv6：${IPv6}${IPv6_note}"
 			fi
@@ -1104,9 +1315,8 @@ function ip_changes(){
 		[ ! -z "$IPv4" ] && [ "$IPv4" != "获取失败" ] && is_private_ip "$IPv4" 4 && r4_note=" (非公网IP)"
 		[ ! -z "$IPv6" ] && [ "$IPv6" != "获取失败" ] && is_private_ip "$IPv6" 6 && r6_note=" (非公网IP)"
 		if [ "$table_enable" = "1" ]; then
-			local LF='\n'
-			[ ! -z "$pushbot_ipv4" ] && [ "$pushbot_ipv4" -ne "0" ] && content="${content}${LF}| **当前IP** | ${IPv4}${r4_note} |${LF}| --- | --- |"
-			[ ! -z "$pushbot_ipv6" ] && [ "$pushbot_ipv6" -ne "0" ] && content="${content}${LF}| **当前IPv6** | ${IPv6}${r6_note} |${LF}| --- | --- |"
+			[ ! -z "$pushbot_ipv4" ] && [ "$pushbot_ipv4" -ne "0" ] && content="${content}$(table_body "当前IP" "${IPv4}${r4_note}")"
+			[ ! -z "$pushbot_ipv6" ] && [ "$pushbot_ipv6" -ne "0" ] && content="${content}$(table_body "当前IPv6" "${IPv6}${r6_note}")"
 		else
 			[ ! -z "$pushbot_ipv4" ] && [ "$pushbot_ipv4" -ne "0" ] && content="${content}${str_linefeed}${str_tab}当前IP：${IPv4}${r4_note}"
 			[ ! -z "$pushbot_ipv6" ] && [ "$pushbot_ipv6" -ne "0" ] && content="${content}${str_linefeed}${str_tab}当前IPv6：${IPv6}${r6_note}"
@@ -1154,8 +1364,7 @@ function up(){
 			[ -f "${dir}title" ] && local title=`cat ${dir}title`
 			[ -f "${dir}content" ] && local content=`cat ${dir}content`
 			if [ "$table_enable" = "1" ]; then
-				local LF='\n'
-				local info="${LF}| **客户端名** | ${ip_name} |${LF}| --- | --- |${LF}| **客户端IP** | ${1} |${LF}| **客户端MAC** | ${ip_mac} |${LF}| **网络接口** | ${ip_interface} |"
+				local info="$(table_body "客户端名" "${ip_name}" "客户端IP" "${1}" "客户端MAC" "${ip_mac}" "网络接口" "${ip_interface}")"
 				if [ -z "$title" ]; then
 					local title="$ip_name 连接了你的路由器"
 					local content="${str_splitline}${str_title_start}${font_success} 新设备连接${font_end}${str_title_end}${info}"
@@ -1234,9 +1443,8 @@ function down_send(){
 		local time1=`date +%s`
 		local time1=$(time_for_humans `expr ${time1} - ${time_up}`)
 		if [ "$table_enable" = "1" ]; then
-			local LF='\n'
 			[ ! -z "$ip_total" ] && local ip_total_v="$ip_total" || local ip_total_v=""
-			local device_info="${LF}| **客户端名** | ${ip_name} |${LF}| --- | --- |${LF}| **客户端IP** | ${ip} |${LF}| **客户端MAC** | ${ip_mac} |${LF}| **总计流量** | ${ip_total_v} |${LF}| **在线时间** | ${time1} |"
+			local device_info="$(table_body "客户端名" "${ip_name}" "客户端IP" "${ip}" "客户端MAC" "${ip_mac}" "总计流量" "${ip_total_v}" "在线时间" "${time1}")"
 			if [ -z "$title" ]; then
 				title="${ip_name} 断开连接"
 				content="${content}${str_splitline}${str_title_start}${font_fail} 设备断开连接${font_end}${str_title_end}${device_info}"
@@ -1269,12 +1477,12 @@ function down_send(){
 function current_device(){
 	( echo "$lite_enable"|grep -q "content" ) || ( echo "$lite_enable"|grep -q "device" ) && return
 	[ -f ${dir}ipAddress ] && local logrow=$(grep -c "" ${dir}ipAddress) || local logrow="0";[ $logrow -eq "0" ] && return
+	local _tbl_rows=""
 	if [ "$table_enable" = "1" ]; then
-		local LF='\n'
-		content="${content}${str_splitline}${str_title_start}${font_module} 现有在线设备 ${logrow} 台，具体如下${font_end}${str_title_end}${LF}| **设备名** | **IP** | **总计流量** |${LF}| --- | --- | --- |"
+		_tbl_rows="$(table_header_n "**设备名**" "**IP**" "**总计流量**")"
 	else
 		[ -f ${dir}usage.db ] && local ip_total_db="总计流量${str_space}${str_space}${str_space}${str_space}"
-		content="${content}${str_splitline}${str_title_start}${font_module} 现有在线设备 ${logrow} 台，具体如下${font_end}${str_title_end}${str_linefeed}${str_tab}IP 地址${str_space}${str_space}${str_space}${str_space}${str_space}${str_space}${str_space}${str_space}${str_space}${ip_total_db}${boldstar}客户端名${boldstar}"
+		content="${content}${str_splitline}${str_title_start}${font_module} 现有在线设备 ${logrow} 台，具体如下${font_end}${str_title_end}${str_linefeed}${str_tab}IP 地址${str_space}${str_space}${str_space}${str_space}${str_space}${str_space}${str_space}${str_space}${str_space}${ip_total_db}${boldstar}客户端名${boldend}"
 	fi
 	local IPLIST=`cat ${dir}ipAddress|awk '{print $1}'`
 	for ip in $IPLIST; do
@@ -1283,7 +1491,7 @@ function current_device(){
 		local ip_name=`getname ${ip} ${ip_mac}`
 		local ip_name=`cut_str $ip_name 15`
 		if [ "$table_enable" = "1" ]; then
-			content="${content}${LF}| ${font_client}**${ip_name}**${font_end} | ${ip} | ${ip_total} |"
+			_tbl_rows="${_tbl_rows}$(table_row_n "${font_client}**${ip_name}**${font_end}" "${ip}" "${ip_total}")"
 		else
 			if [ "${#ip}" -lt "15" ]; then
 				local n=`expr 15 - ${#ip}`
@@ -1298,10 +1506,13 @@ function current_device(){
 					local ip_total="${ip_total}${str_space}"
 				done
 			fi
-			content="${content}${str_linefeed}${str_tab}${ip}${ip_total}${boldstar}${font_client}${ip_name}${font_end2}${boldstar}"
+			content="${content}${str_linefeed}${str_tab}${ip}${ip_total}${boldstar}${font_client}${ip_name}${font_end2}${boldend}"
 		fi
 		unset i n ip_total ip_mac ip_name
 	done
+	if [ "$table_enable" = "1" ]; then
+		content="${content}${str_splitline}${str_title_start}${font_module} 现有在线设备 ${logrow} 台，具体如下${font_end}${str_title_end}$(table_grid_wrap "$_tbl_rows")"
+	fi
 }
 
 # 检测 cpu 状态
@@ -1322,8 +1533,7 @@ function cpu_load(){
 			temperaturecd_time=`date +%s`
 			echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text} CPU 温度过高: ${cpu_wendu}" >> ${logfile}
 			if [ "$table_enable" = "1" ]; then
-				local LF='\n'
-				content="${content}${str_splitline}${str_title_start}${font_fail} CPU 温度过高${font_end}${str_title_end}${LF}| **当前温度** | ${cpu_wendu}℃ |${LF}| --- | --- |${LF}| **状态** | 已连续五分钟超过预设 |${LF}| **提示** | 接下来一小时不再提示 |"
+				content="${content}${str_splitline}${str_title_start}${font_fail} CPU 温度过高${font_end}${str_title_end}$(table_body "当前温度" "${cpu_wendu}℃" "状态" "已连续五分钟超过预设" "提示" "接下来一小时不再提示")"
 			else
 				content="${content}${str_splitline}${str_title_start}${font_fail} CPU 温度过高${font_end}${str_title_end}${str_linefeed}${str_tab}CPU 温度已连续五分钟超过预设${str_linefeed}${str_tab}接下来一小时不再提示${str_linefeed}${str_tab}当前温度：${cpu_wendu}℃"
 			fi
@@ -1354,8 +1564,7 @@ function cpu_load(){
 			cpucd_time=`date +%s`
 			echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text} CPU 负 载过高: ${cpu_fuzai}" >> ${logfile}
 			if [ "$table_enable" = "1" ]; then
-				local LF='\n'
-				content="${content}${str_splitline}${font_fail}CPU 负载过高${font_end}${LF}| **当前负载** | ${cpu_fuzai} |${LF}| --- | --- |${LF}| **状态** | 已连续五分钟超过预设 |${LF}| **提示** | 接下来一小时不再提示 |"
+				content="${content}${str_splitline}${font_fail}CPU 负载过高${font_end}$(table_body "当前负载" "${cpu_fuzai}" "状态" "已连续五分钟超过预设" "提示" "接下来一小时不再提示")"
 			else
 				content="${content}${str_splitline}${font_fail}CPU 负载过高${font_end}${str_linefeed}${str_tab}CPU 负载已连续五分钟超过预设${str_linefeed}${str_tab}接下来一小时不再提示${str_linefeed}${str_tab}当前负载：${cpu_fuzai}"
 			fi
@@ -1419,8 +1628,7 @@ function login_send(){
 				continue
 			fi
 			if [ "$table_enable" = "1" ]; then
-				local LF='\n'
-				local info="${LF}| **时间** | ${web_login_time} |${LF}| --- | --- |${LF}| **设备 IP** | ${login_ip} |${LF}| **登录方式** | ${web_login_mode} |"
+				local info="$(table_body "时间" "${web_login_time}" "设备 IP" "${login_ip}" "登录方式" "${web_login_mode}")"
 				if [ -z "$title" ]; then
 					title="${login_ip} 通过 Web 登录了路由器"
 					content="${content}${str_splitline}${str_title_start}${font_success} 登录信息${font_end}${str_title_end}${info}"
@@ -1463,8 +1671,7 @@ function login_send(){
 				continue
 			fi
 			if [ "$table_enable" = "1" ]; then
-				local LF='\n'
-				local info="${LF}| **时间** | ${ssh_login_time} |${LF}| --- | --- |${LF}| **设备 IP** | ${login_ip} |${LF}| **登录方式** | ${ssh_login_mode} |"
+				local info="$(table_body "时间" "${ssh_login_time}" "设备 IP" "${login_ip}" "登录方式" "${ssh_login_mode}")"
 				if [ -z "$title" ]; then
 					title="${login_ip} 通过 SSH 登录了路由器"
 					content="${content}${str_splitline}${str_title_start}${font_success} 登录成功来源${font_end}${str_title_end}${info}"
@@ -1506,8 +1713,7 @@ function login_send(){
 		if [ "$web_login_sum" -ge "$login_max_num" ] ;then
 			if [ ! -z "$web_login_failed" ] && [ "$web_login_failed" -eq "1" ]; then
 				if [ "$table_enable" = "1" ]; then
-					local LF='\n'
-					local info="${LF}| **设备 IP** | ${login_ip} |${LF}| --- | --- |"
+					local info="$(table_body "设备 IP" "${login_ip}")"
 					if [ -z "$title" ]; then
 						title="${login_ip} 通过 Web 频繁尝试登录"
 						content="${content}${str_splitline}${str_title_start}${font_fail} 登录失败来源${font_end}${str_title_end}${info}"
@@ -1559,8 +1765,7 @@ function login_send(){
 		if [ "$ssh_login_sum" -ge "$login_max_num" ] ;then
 			if [ ! -z "$ssh_login_failed" ] && [ "$ssh_login_failed" -eq "1" ]; then
 				if [ "$table_enable" = "1" ]; then
-					local LF='\n'
-					local info="${LF}| **设备 IP** | ${login_ip} |${LF}| --- | --- |"
+					local info="$(table_body "设备 IP" "${login_ip}")"
 					if [ -z "$title" ]; then
 						title="${login_ip} 通过 SSH 频繁尝试登录"
 						content="${content}${str_splitline}${str_title_start}${font_fail} 登录失败来源${font_end}${str_title_end}${info}"
@@ -1686,17 +1891,16 @@ function login_send(){
 					local wifi_time=$(date "+%Y-%m-%d %H:%M:%S")
 					echo "`date "+%Y-%m-%d %H:%M:%S"` WiFi 设备 ${_mac_text} 已连接" >> ${logfile}
 					if [ "$table_enable" = "1" ]; then
-						local LF='\n'
 						local wifi_detail_rows=""
 						local _didx=0
 						for _dm in $_new_macs; do
 							local _dn=$(echo "$_new_ssids" | awk -v n=$((_didx+1)) '{print $n}')
 							local _dname=$(getname "" "${_dm}")
 							[ "$_dname" = "unknown" ] && _dname="${_dm}"
-							wifi_detail_rows="${wifi_detail_rows}${LF}| **${_dname}** | ${_dn} |"
+							wifi_detail_rows="${wifi_detail_rows}$(table_rows "${_dname}" "${_dn}")"
 							_didx=$((_didx + 1))
 						done
-						local wifi_info="${LF}| **设备** | **SSID** |${LF}| --- | --- |${wifi_detail_rows}"
+						local wifi_info="$(table_header "设备" "**SSID**")${wifi_detail_rows}"
 						if [ -z "$title" ]; then
 							title="${_mac_text} WiFi 设备已连接"
 						fi
@@ -1745,8 +1949,7 @@ function login_send(){
 							local wifi_time=$(date "+%Y-%m-%d %H:%M:%S")
 							local wifi_offline_dur=$(time_for_humans $_duration)
 							if [ "$table_enable" = "1" ]; then
-								local LF='\n'
-								local wifi_info="${LF}| **时间** | ${wifi_time} |${LF}| --- | --- |${LF}| **MAC** | ${wifi_mac} |${LF}| **离线时长** | ${wifi_offline_dur} |"
+								local wifi_info="$(table_body "时间" "${wifi_time}" "MAC" "${wifi_mac}" "离线时长" "${wifi_offline_dur}")"
 								if [ -z "$title" ]; then
 									title="WiFi 设备已离线"
 									content="${content}${str_splitline}${str_title_start}${font_fail} WiFi 离线${font_end}${str_title_end}${wifi_info}"
@@ -1805,9 +2008,15 @@ function login_send(){
 				local _mac_summary=$(echo "$_mac_stats" | awk '{printf "%s: %d次, ", $1, $2}' | sed 's/, $//')
 				echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}WiFi 认证失败 ${_new_count} 次（${_mac_summary}）" >> ${logfile}
 				if [ "$table_enable" = "1" ]; then
-					local LF='\n'
-					local _mac_rows=$(echo "$_mac_stats" | awk '{printf "\\n| %s | %s 次 |", $1, $2}')
-					local _wifi_fail_info="${LF}| **失败MAC** | **次数** |${LF}| --- | --- |${_mac_rows}"
+					local _mac_rows=""
+					local _mm _mc
+					while read -r _mm _mc; do
+						[ -z "$_mm" ] && continue
+						_mac_rows="${_mac_rows}$(table_rows "${_mm}" "${_mc} 次")"
+					done <<MACROWS
+$_mac_stats
+MACROWS
+					local _wifi_fail_info="$(table_header "失败MAC" "**次数**")${_mac_rows}"
 					if [ -z "$title" ]; then
 						title="WiFi 认证失败警告"
 						content="${content}${str_splitline}${str_title_start}${font_fail} WiFi 认证失败${font_end}${str_title_end}${_wifi_fail_info}"
@@ -1852,9 +2061,8 @@ function login_send(){
 				fi
 				echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}WiFi 认证失败 ${_wifi_cur_count} 次${_wifi_fail_mac:+（MAC: ${_wifi_fail_mac}）}" >> ${logfile}
 				if [ "$table_enable" = "1" ]; then
-					local LF='\n'
-					local _wifi_fail_info="${LF}| **失败次数** | ${_wifi_cur_count} |"
-					[ ! -z "$_wifi_fail_mac" ] && _wifi_fail_info="${_wifi_fail_info}${LF}| **MAC** | ${_wifi_fail_mac} |"
+					local _wifi_fail_info="$(table_body "失败次数" "${_wifi_cur_count}")"
+					[ ! -z "$_wifi_fail_mac" ] && _wifi_fail_info="${_wifi_fail_info}$(table_rows "MAC" "${_wifi_fail_mac}")"
 					if [ -z "$title" ]; then
 						title="WiFi 认证失败警告"
 						content="${content}${str_splitline}${str_title_start}${font_fail} WiFi 认证失败${font_end}${str_title_end}${_wifi_fail_info}"
@@ -2362,8 +2570,7 @@ function send(){
 		fi
 		local systemstatustime=`cat /proc/uptime|awk -F. '{run_days=$1 / 86400;run_hour=($1 % 86400)/3600;run_minute=($1 % 3600)/60;run_second=$1 % 60;printf("运行时间：%d天%d时%d分%d秒",run_days,run_hour,run_minute,run_second)}'`;unset run_days run_hour run_minute run_second
 		if [ "$table_enable" = "1" ]; then
-			local LF='\n'
-			local send_content="${send_content}${str_splitline}${str_title_start}${font_module} 系统运行状态${font_end}${str_title_end}${LF}| **平均负载** | ${systemload} |${LF}| --- | --- |${LF}| **CPU占用** | ${cpuload}${percentsym} |${LF}| **内存占用** | ${ramload}${percentsym} |${LF}| **全球互联** | ${Qwai_status} |${LF}| **运行时间** | ${systemstatustime#运行时间：} |"
+			local send_content="${send_content}${str_splitline}${str_title_start}${font_module} 系统运行状态${font_end}${str_title_end}$(table_body "平均负载" "${systemload}" "CPU占用" "${cpuload}${percentsym}" "内存占用" "${ramload}${percentsym}" "全球互联" "${Qwai_status}" "运行时间" "${systemstatustime#运行时间：}")"
 		else
 			local send_content="${send_content}${str_splitline}${str_title_start}${font_module} 系统运行状态${font_end}${str_title_end}"
 			local send_content="${send_content}${str_linefeed}${str_tab}平均负载：${systemload}"
@@ -2377,9 +2584,8 @@ function send(){
 	if [ -z "$1" ] && [ ! -z "$router_temp" ] && [ "$router_temp" -eq "1" ]; then
 		local cputemp=`soc_temp`
 		if [ "$table_enable" = "1" ]; then
-			local LF='\n'
-			[ ! -z "$cputemp" ] && local send_content="${send_content}${str_splitline}${str_title_start}${font_module} 设备温度${font_end}${str_title_end}${LF}| **CPU** | ${cputemp}℃ |${LF}| --- | --- |"
-			[ -z "$cputemp" ] && local send_content="${send_content}${str_splitline}${str_title_start}${font_fail} 设备温度${font_end}${str_title_end}${LF}| **CPU** | 无法获取 |${LF}| --- | --- |"
+			[ ! -z "$cputemp" ] && local send_content="${send_content}${str_splitline}${str_title_start}${font_module} 设备温度${font_end}${str_title_end}$(table_body "CPU" "${cputemp}℃")"
+			[ -z "$cputemp" ] && local send_content="${send_content}${str_splitline}${str_title_start}${font_fail} 设备温度${font_end}${str_title_end}$(table_body "CPU" "无法获取")"
 		else
 			[ ! -z "$cputemp" ] && local send_content="${send_content}${str_splitline}${str_title_start}${font_module} 设备温度${font_end}${str_title_end}${str_linefeed}${str_tab}CPU：${cputemp}℃"
 			[ -z "$cputemp" ] && local send_content="${send_content}${str_splitline}${str_title_start}${font_fail} 设备温度${font_end}${str_title_end}${str_linefeed}${str_tab}无法获取设备温度"
@@ -2402,19 +2608,18 @@ function send(){
 		[ "$wan_lan_mode" -eq "0" ] && [ ! -z "$send_wanIP" ] && [ "$send_wanIP" != "获取失败" ] && is_private_ip "$send_wanIP" 4 && wanIP_note=" (非公网IP)"
 		local wanIP6_note=""
 		if [ "$table_enable" = "1" ]; then
-			local LF='\n'
-			local send_content="${send_content}${str_splitline}${str_title_start}${font_module} WAN 口信息${font_end}${str_title_end}${LF}| --- | --- |${LF}| **接口IP** | ${send_wanIP}${wanIP_note} |${LF}| **外网IP** | ${send_hostIP} |"
+			local send_content="${send_content}${str_splitline}${str_title_start}${font_module} WAN 口信息${font_end}${str_title_end}$(table_body "接口IP" "${send_wanIP}${wanIP_note}" "外网IP" "${send_hostIP}")"
 			if [ ! -z "$pushbot_ipv6" ] && [ "$pushbot_ipv6" -ne "0" ]; then
 				local send_wanIPv6=`getip wanipv6`
 				local send_hostIPv6=`getip hostipv6`
 				[ "$wan_lan_mode" -eq "0" ] && [ ! -z "$send_wanIPv6" ] && [ "$send_wanIPv6" != "获取失败" ] && is_private_ip "$send_wanIPv6" 6 && wanIP6_note=" (非公网IP)"
-				local send_content="${send_content}${LF}| **IPv6** | ${send_wanIPv6}${wanIP6_note} |${LF}| **外网v6** | ${send_hostIPv6} |"
+				local send_content="${send_content}$(table_rows "IPv6" "${send_wanIPv6}${wanIP6_note}" "外网v6" "${send_hostIPv6}")"
 			fi
 			# 外网 IP 与接口 IP 不一致提示（仅 WAN 模式；LAN 模式接口 IP 私网、外网 IP 公网必然不一致，提示无意义）
-			[ "$wan_lan_mode" -eq "0" ] && [ ! -z "$send_wanIP" ] && [ ! -z "$send_hostIP" ] && [ "$send_hostIP" != "获取失败" ] && ( ! echo "$send_wanIP"|grep -q -w ${send_hostIP} ) && local send_content="${send_content}${LF}| **提示** | 外网 ip 与接口 ip 不一致，不是公网 ip |"
+			[ "$wan_lan_mode" -eq "0" ] && [ ! -z "$send_wanIP" ] && [ ! -z "$send_hostIP" ] && [ "$send_hostIP" != "获取失败" ] && ( ! echo "$send_wanIP"|grep -q -w ${send_hostIP} ) && local send_content="${send_content}$(table_rows "提示" "外网 ip 与接口 ip 不一致，不是公网 ip")"
 			local interfaceuptime=`getinterfaceuptime`
 			[ ! -z "$interfaceuptime" ] && local wanstatustime=`getinterfaceuptime|awk -F. '{run_days=$1 / 86400;run_hour=($1 % 86400)/3600;run_minute=($1 % 3600)/60;run_second=$1 % 60;printf("在线时间：%d天%d时%d分%d秒",run_days,run_hour,run_minute,run_second)}'` && unset run_days run_hour run_minute run_second
-			[ ! -z "$wanstatustime" ] && local send_content="${send_content}${LF}| **在线时间** | ${wanstatustime#在线时间：} |"
+			[ ! -z "$wanstatustime" ] && local send_content="${send_content}$(table_rows "在线时间" "${wanstatustime#在线时间：}")"
 		else
 			local send_content="${send_content}${str_splitline}${str_title_start}${font_module} WAN 口信息${font_end}${str_title_end}${str_linefeed}${str_tab}接口ip:${send_wanIP}${wanIP_note}${str_linefeed}${str_tab}外网ip:${send_hostIP}"
 			if [ ! -z "$pushbot_ipv6" ] && [ "$pushbot_ipv6" -ne "0" ]; then
@@ -2436,8 +2641,7 @@ function send(){
 		[ -f ${dir}ipAddress ] && local logrow=$(grep -c "" ${dir}ipAddress) || local logrow="0"
 		[ "$logrow" -eq "0" ] && local send_content="${send_content}${str_splitline}${str_title_start}${font_fail} 当前无在线设备${font_end}${str_title_end}" || local send_content="${send_content}${str_splitline}${str_title_start}${font_module} 现有在线设备 ${logrow} 台${font_end}${str_title_end}"
 		if [ "$table_enable" = "1" ]; then
-			local LF='\n'
-			local send_content="${send_content}${LF}| **设备** | **在线信息** |${LF}| --- | --- |"
+			local send_content="${send_content}$(table_header "设备" "**在线信息**")"
 		fi
 		for ip in $IPLIST; do
 			local time_up=`cat ${dir}ipAddress|grep -w ${ip}|awk '{print $4}'|grep -v "^$"|sort -u|head -n1`
@@ -2453,8 +2657,8 @@ function send(){
 			fi
 			local ip_name=`cut_str $ip_name 27`
 			if [ "$table_enable" = "1" ]; then
-				# 每个设备 2 行 2 列: 第一行 设备名+IP, 第二行 流量+时长
-				local send_content="${send_content}${LF}| **${font_client}${ip_name}${font_end}** | ${ip_total} |${LF}| **${ip}** | ${time1} |"
+				# 每个设备 2 行 2 列: 第一行 设备名+流量, 第二行 IP+时长
+				local send_content="${send_content}$(table_rows "${font_client}${ip_name}${font_end}" "${ip_total}" "${ip}" "${time1}")"
 			else
 				local send_content="${send_content}${str_linefeed}${str_tab}${font_client}【${ip_name}】${font_end2}  ${ip}${str_linefeed}${str_tab}${ip_total}在线 ${time1}"
 			fi
@@ -2470,6 +2674,11 @@ function send(){
 	send_title=`echo "$send_title"|tr '"' "'"`
 	send_content=`echo "$send_content"|tr '"' "'"`
 	device_name=`echo "$device_name"|tr '"' "'"`
+	# WxPusher: 检查 uid 和 topics 是否至少有一个
+	if ( echo "${jsonpath}"|grep -q "wxpusher" ) && [ "$wxpusher_uids" = "[]" ] && [ "$wxpusher_topics" = "[]" ]; then
+		echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】WxPusher：User IDs 或 Topic IDs 至少填写一个" >> ${logfile}
+		return 1
+	fi
 	[ "$send_disturb" -eq "0" ] && diy_send "${send_title}" "${send_content}" "${jsonpath}" >/dev/null 2>&1
 	local send_rc=$?
 	if [ ! -z "$1" ]; then
@@ -2719,8 +2928,13 @@ while [ "$pushbot_enable" = "1" ]; do
 	if [ ! -f "${dir}send_enable.lock" ] && [ ! -z "$title" ] && [ ! -z "$content" ]; then
 		[ ! -z "$device_name" ] && title="【$device_name】$title"
 		( echo "$lite_enable"|grep -q "content" ) && content="$title"
-		[ "$disturb" -eq "0" ] && diy_send "${title}" "${content}" "${jsonpath}" >/dev/null 2>&1
-		[ $? -eq 1 ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】推送失败，请检查网络或设置信息 " >> ${logfile}
+		# WxPusher: 检查 uid 和 topics 是否至少有一个
+		if ( echo "${jsonpath}"|grep -q "wxpusher" ) && [ "$wxpusher_uids" = "[]" ] && [ "$wxpusher_topics" = "[]" ]; then
+			echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】WxPusher：User IDs 或 Topic IDs 至少填写一个" >> ${logfile}
+		else
+			[ "$disturb" -eq "0" ] && diy_send "${title}" "${content}" "${jsonpath}" >/dev/null 2>&1
+			[ $? -eq 1 ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】推送失败，请检查网络或设置信息 " >> ${logfile}
+		fi
 	fi
 	
 	while [ -f "${dir}send_enable.lock" ]; do

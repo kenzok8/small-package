@@ -1,261 +1,154 @@
 #!/bin/sh /etc/rc.common
 
-START=19
+START=99
+USE_PROCD=1
 
-extra_command "reconfig" ""
+# 清理历史已生成的快捷方式（防止改名或删除后遗留失效条目）
+clean_shortcuts() {
+	local sec
+	# 清理 nginx 中由 wizard 生成的 _sc_* server 节
+	for sec in $(uci -q show nginx 2>/dev/null | sed -n 's/^nginx\.\(_sc_[^=.]*\)=server$/\1/p'); do
+		uci -q delete nginx."$sec"
+	done
 
-boot() {
-	exit 0;
+	# 清理 dhcp (dnsmasq) 中由 wizard 生成的 _sc_* domain 节
+	for sec in $(uci -q show dhcp 2>/dev/null | sed -n 's/^dhcp\.\(_sc_[^=.]*\)=domain$/\1/p'); do
+		uci -q delete dhcp."$sec"
+	done
 }
 
-add_wizard() {
-	local cfg="$1"
-	local wan_proto wan_pppoe_user wan_pppoe_pass
-	local lan_ipaddr lan_dns lan_gateway dhcp
-	local device ipv6 old_ipv6 wifi_ssid wifi_key old_wifi_ssid old_wifi_key
-
-	config_get wan_proto "$cfg" wan_proto
-	config_get lan_gateway "$cfg" lan_gateway
-	config_get dhcp "$cfg" dhcp
-	config_get lan_dns "$cfg" lan_dns
-	config_get ipv6 "$cfg" ipv6
-	config_get old_ipv6 "$cfg" old_ipv6
-	config_get lan_ipaddr "$cfg" lan_ipaddr
-	config_get autoupgrade_pkg "$cfg" autoupgrade_pkg
-
-	test -n "${lan_ipaddr}" && {
-		uci set network.lan.ipaddr="${lan_ipaddr}"
-	}
-
-	device=$(uci -q get network.wan.device || uci -q get wizard.default.old_network_device)
-	case "${wan_proto}" in
-		dhcp)
-			uci -q del_list network.@device[0].ports="$device"
-			uci -q del network.lan.gateway
-			uci -q del dhcp.lan.ignore
-			uci -q del network.lan.dns
-			uci -q del firewall.@zone[0].masq
-			uci delete network.wan
-			uci set network.wan=interface
-			uci set network.wan.device="$device"
-			uci set network.wan.proto='dhcp'
-		;;
-		pppoe)
-			config_get wan_pppoe_user "$cfg" wan_pppoe_user
-			config_get wan_pppoe_pass "$cfg" wan_pppoe_pass
-			[[ "${wan_pppoe_user} != $(uci -q get network.wan.username)" || "${wan_pppoe_pass} != $(uci -q get network.wan.password)" ]] && {
-				uci -q del_list network.@device[0].ports="$device"
-				uci -q del network.lan.gateway
-				uci -q del dhcp.lan.ignore
-				uci -q del network.lan.dns
-				uci -q del firewall.@zone[0].masq
-				uci delete network.wan
-				uci set network.wan=interface
-				uci set network.wan.proto='pppoe'
-				uci set network.wan.device="$device"
-				uci set network.wan.username="${wan_pppoe_user}"
-				uci set network.wan.password="${wan_pppoe_pass}"
-				[ -n "${ipv6}" ] && {
-					uci -q set network.wan.ipv6='0'
-					uci -q set network.wan.delegate='0'
-				}
-			}
-		;;
-		siderouter)
-			[ "$dhcp" == "0" ] && dhcp="1"
-			if [[ "${lan_gateway}" != "$(uci -q get network.lan.gateway)" || "${dhcp}" != "$(uci -q get dhcp.lan.ignore)" ]]; then
-			uci -q set network.lan.gateway="${lan_gateway}"
-			[ -n "$lan_dns" ] || lan_dns='223.5.5.5'
-			[ -n "$dhcp" ] && uci -q set dhcp.lan.ignore="1" || uci -q del dhcp.lan.ignore
-			uci -q set firewall.@zone[0].masq='1'
-			WAN=$(uci -q get network.wan.device)
-			uci -q add_list network.@device[0].ports="$WAN"
-			uci -q add_list network.@device[0].ports="$WAN"
-			uci -q set wizard.default.old_network_device="$WAN"
-		;;
-	esac
-	
-	[ -n "$lan_dns" ] && {
-		[ "$(uci -q get dhcp.@dnsmasq[0].noresolv)" == 1 ] && {
-		uci -q del dhcp.@dnsmasq[0].noresolv
-		}
-		uci -q set network.wan.peerdns='0'
-		uci -q set network.lan.dns="${lan_dns}"
-		} || {
-		uci -q del network.wan.peerdns
-		uci -q del network.lan.dns
-		}
-	
-	if [ "${ipv6}" != "${old_ipv6}" ]; then
-	if [ -n "${ipv6}" ]; then
-		uci -q delete dhcp.lan.ra
-		uci -q delete dhcp.lan.dhcpv6
-		uci -q set network.lan.delegate='0'
-		uci -q set network.wan.ipv6='0'
-		uci -q set network.wan.delegate='0'
-		uci -q delete network.globals.ula_prefix
-	else
-		uci -q set dhcp.lan.ra='hybrid'
-		uci -q set dhcp.lan.dhcpv6='hybrid'
-		uci -q del network.lan.delegate
-		uci -q set network.wan.ipv6='auto'
-		uci -q del network.wan.delegate
-	fi
-	uci -q set wizard.default.old_ipv6="${ipv6}"
-	fi
-	
-	wifi_setup_radio(){
-	local radio=$1
-	uci -q get wireless.${radio} >/dev/null 2>&1 && {
-		if [ "$(uci -q get wireless.${radio}.band)" = "5g" ]; then
-			uci -q set wireless.default_${radio}.ssid="${wifi_ssid}_5G"
-		elif [ "$(uci -q get wireless.${radio}.band)" = "2g" ]; then
-			uci -q set wireless.default_${radio}.ssid="${wifi_ssid}_2.4G"
-		fi
-			uci -q set wireless.default_${radio}.device="${radio}"
-			if [ "${wifi_key}" ]; then
-				uci -q set wireless.default_${radio}.encryption='psk2'
-				uci -q set wireless.default_${radio}.key="${wifi_key}"
-			else
-				uci -q set wireless.default_${radio}.encryption='none'
-			fi
-		}
-	}
-	
-	config_get wifi_ssid "$cfg" wifi_ssid
-	config_get wifi_key "$cfg" wifi_key
-	config_get old_wifi_ssid "$cfg" old_wifi_ssid
-	config_get old_wifi_key "$cfg" old_wifi_key
-
-	if [[ "${wifi_ssid}" != "${old_wifi_ssid}" || "${wifi_key}" != "${old_wifi_key}" ]]; then
-	test -n "${wifi_ssid}" && {
-		for radio in radio0 radio1 radio2 radio3; do
-			wifi_setup_radio ${radio}
-		done
-		uci commit wireless
-		uci -q set wizard.default.old_wifi_ssid="${wifi_ssid}"
-		uci -q set wizard.default.old_wifi_key="${wifi_key}"
-	}
-	fi
-
-	sethttps
-
-	uci commit wizard
-	uci commit dhcp
-	uci commit firewall
-	uci commit network
-	
-	if [ "${autoupgrade_pkg}" != "1" ]; then
-		sed -i '/opkg-upgrade/d' /etc/crontabs/root
-	else
-		grep -q "opkg-upgrade" /etc/crontabs/root || {
-			hour="$(grep -m1 -ao '[4-6]' /dev/urandom | head -n1)"
-			min="$(grep -m1 -ao '[0-5][0-9]' /dev/urandom | head -n1)"
-			echo "$min $hour * * * . /etc/hotplug.d/online/51-opkg-upgrade >/dev/null 2>&1" >> /etc/crontabs/root
-		}
-	fi
-}
-
-reconfig() {
-uci -q set wizard.default.wan_proto="$(uci -q get network.wan.proto)"
-uci -q set wizard.default.wan_pppoe_user="$(uci -q get network.wan.username)"
-uci -q set wizard.default.wan_pppoe_pass="$(uci -q get network.wan.password)"
-uci -q set wizard.default.lan_ipaddr="$(uci -q get network.lan.ipaddr)"
-uci -q set wizard.default.lan_gateway="$(uci -q get network.lan.gateway)"
-uci -q set wizard.default.lan_dns="$(uci -q get network.lan.dns)"
-[ "$(uci -q get dhcp.lan.ignore)" ] && uci -q set wizard.default.dhcp="0" || uci -q del wizard.default.dhcp
-uci commit wizard
-}
-
-sethttps() {
-	config_get https "$cfg" https
-	if [ -n "$(command -v nginx)" ]; then
-		if [ -z "`uci -q get nginx._redirect2ssl`" ]; then
-			uci -q set nginx._redirect2ssl=server
-			uci -q set nginx._redirect2ssl.server_name='_redirect2ssl'
-			uci -q set nginx._redirect2ssl.return='302 https://$host$request_uri'
-			uci -q set nginx._redirect2ssl.access_log='off; # logd openwrt'
-		fi
-    	if [ "x${https}" = "x1" ] ; then
-    		uci -q del nginx.default_server.listen
-    		uci -q add_list nginx.default_server.listen='80'
-    		uci -q add_list nginx.default_server.listen='[::]:80'
-    		uci -q del nginx._redirect2ssl.listen
-    		uci -q add_list nginx._redirect2ssl.listen='80 default_server'
-    		uci -q add_list nginx._redirect2ssl.listen='[::]:80 default_server'
-    	else
-	         uci -q del nginx._redirect2ssl.listen
-	         uci -q add_list nginx._redirect2ssl.listen='80'
-	         uci -q add_list nginx._redirect2ssl.listen='[::]:80'
-	         uci -q del nginx.default_server.listen
-	         uci -q add_list nginx.default_server.listen='80 default_server'
-	         uci -q add_list nginx.default_server.listen='[::]:80 default_server'
-    	fi
-		uci commit nginx
-    	/etc/init.d/nginx reload
-	elif [ -n "$(command -v lighttpd)" ]; then
-        if [ "x${https}" = "x1" ] ; then
-	         sed -i "s/	# url.redirect =/	url.redirect =/" /etc/lighttpd/conf.d/82-https.conf
-		else
-	         sed -i "s/	url.redirect =/	# url.redirect =/" /etc/lighttpd/conf.d/82-https.conf
-        fi
-	    /etc/init.d/lighttpd reload
-    else
-        if [ "x${https}" = "x1" ] ; then
-	         uci -q set uhttpd.main.redirect_https='1'
-		else
-	         uci -q set uhttpd.main.redirect_https='0'
-        fi
-		uci commit uhttpd
-	    /etc/init.d/uhttpd reload
-    fi
-}
-
+# 处理单条 shortcut 节
 process_shortcut() {
 	local shortcut to_url comments lanaddr
 	local cfg="$1"
-	lanaddr="$(uci get network.lan.ipaddr)"
-	[ -n $lanaddr ] && lanaddr="$(echo "$lanaddr"| cut -d/ -f1)"
 
-    config_get shortcut "$cfg" shortcut
-    config_get to_url "$cfg" to_url
-    config_get comments "$cfg" comments
+	# 获取当前 LAN 口 IP，支持 DSA 列表与 CIDR 掩码剔除
+	lanaddr="$(uci -q get network.lan.ipaddr | tr ' ' '\n' | head -n1)"
+	lanaddr="${lanaddr%%/*}"
+	[ -z "$lanaddr" ] && lanaddr="10.0.0.1"
 
-	uci -q set nginx._sc_$shortcut=server
-	uci -q set nginx._sc_$shortcut.server_name="$shortcut"
-	uci -q add_list nginx._sc_$shortcut.listen="80"
-	uci -q add_list nginx._sc_$shortcut.listen="443"
-	uci -q set nginx._sc_$shortcut.return="302 $to_url"
+	config_get shortcut "$cfg" shortcut
+	config_get to_url "$cfg" to_url
+	config_get comments "$cfg" comments
 
-	uci -q set dhcp._sc_$shortcut=domain
-	uci -q set dhcp._sc_$shortcut.name="$shortcut"
-	uci -q set dhcp._sc_$shortcut.ip="$lanaddr"
-	uci -q set dhcp._sc_$shortcut.comments="$comments"
+	# 校验必要参数
+	if [ -z "$shortcut" ] || [ -z "$to_url" ]; then
+		return 0
+	fi
+
+	# 1. 配置 Nginx 302 重定向 (仅在存在 /etc/nginx/uci.conf 时配置，仅监听80，禁止未配证书监听443)
+	if [ -f /etc/nginx/uci.conf ]; then
+		uci -q set nginx._sc_$shortcut=server
+		uci -q set nginx._sc_$shortcut.server_name="$shortcut"
+		uci -q add_list nginx._sc_$shortcut.listen="80"
+		uci -q set nginx._sc_$shortcut.return="302 $to_url"
+
+		# 2. 配置 Dnsmasq (DHCP) 本地域名劫持
+		uci -q set dhcp._sc_$shortcut=domain
+		uci -q set dhcp._sc_$shortcut.name="$shortcut"
+		uci -q set dhcp._sc_$shortcut.ip="$lanaddr"
+		[ -n "$comments" ] && uci -q set dhcp._sc_$shortcut.comments="$comments"
+	fi
 }
 
-start() {
-	config_load wizard
-	config_foreach add_wizard wizard
-		if [ -n "$(command -v nginx)" ]; then
-		for server in $(uci show nginx | grep '_sc_' | grep '=server' | cut -d. -f2 | cut -d= -f1); do
-			uci delete nginx.$server
-		done
-		for server in $(uci show dhcp | grep '_sc_' | grep '=domain' | cut -d. -f2 | cut -d= -f1); do
-			uci delete dhcp.$server
-		done
-		config_foreach process_shortcut shortcuts
-		uci commit nginx
-		uci commit dhcp
-		/etc/init.d/nginx reload
+# 配置 HTTPS 访问重定向 (适配 Nginx / Lighttpd / uHTTPd)
+sethttps() {
+	local cfg="${1:-default}"
+	local https
+	config_get https "$cfg" https 0
+
+	if [ -x /etc/init.d/nginx ] && [ -f /etc/nginx/uci.conf ]; then
+		if [ "x${https}" = "x1" ]; then
+			if [ -z "$(uci -q get nginx._redirect2ssl)" ]; then
+				uci -q set nginx._redirect2ssl=server
+				uci -q set nginx._redirect2ssl.server_name='_redirect2ssl'
+				uci -q set nginx._redirect2ssl.return='302 https://$host$request_uri'
+				uci -q set nginx._redirect2ssl.access_log='off; # logd openwrt'
+			fi
+			uci -q del nginx.default_server.listen
+			uci -q add_list nginx.default_server.listen='80'
+			uci -q add_list nginx.default_server.listen='[::]:80'
+			uci -q del nginx._redirect2ssl.listen
+			uci -q add_list nginx._redirect2ssl.listen='80 default_server'
+			uci -q add_list nginx._redirect2ssl.listen='[::]:80 default_server'
+		else
+			uci -q delete nginx._redirect2ssl
+			uci -q del nginx.default_server.listen
+			uci -q add_list nginx.default_server.listen='80 default_server'
+			uci -q add_list nginx.default_server.listen='[::]:80 default_server'
 		fi
-	(
-		/etc/init.d/network restart
-		/etc/init.d/firewall reload
-	 /etc/init.d/dnsmasq reload
-	 
-	 )&
+		uci -q commit nginx
+		/etc/init.d/nginx reload >/dev/null 2>&1
+	elif [ -x /etc/init.d/lighttpd ] && [ -f /etc/lighttpd/conf.d/82-https.conf ]; then
+		if [ "x${https}" = "x1" ]; then
+			sed -i "s/^[ \t]*#*[ \t]*url\.redirect[ \t]*=.*/\turl.redirect =/" /etc/lighttpd/conf.d/82-https.conf 2>/dev/null
+		else
+			sed -i "s/^[ \t]*url\.redirect[ \t]*=.*/\t# url.redirect =/" /etc/lighttpd/conf.d/82-https.conf 2>/dev/null
+		fi
+		/etc/init.d/lighttpd reload >/dev/null 2>&1
+	elif [ -x /etc/init.d/uhttpd ]; then
+		if [ "x${https}" = "x1" ]; then
+			uci -q set uhttpd.main.redirect_https='1'
+		else
+			uci -q set uhttpd.main.redirect_https='0'
+		fi
+		uci -q commit uhttpd
+		/etc/init.d/uhttpd reload >/dev/null 2>&1
+	fi
 }
 
-restart() {
-	start
+# 提交配置并平滑重载底层服务
+reload_services() {
+	uci -q commit dhcp
+	if [ -x /etc/init.d/dnsmasq ]; then
+		/etc/init.d/dnsmasq reload >/dev/null 2>&1
+	fi
+
+	if [ -f /etc/nginx/uci.conf ] && [ -x /etc/init.d/nginx ]; then
+		uci -q commit nginx
+		/etc/init.d/nginx reload >/dev/null 2>&1
+	fi
+}
+
+start_service() {
+	config_load wizard
+
+	# 1. 开机 CoreMark 跑分处理 (后台异步执行，杜绝阻塞系统启动与前端保存卡死)
+	local coremark
+	config_get coremark default coremark 0
+	if [ "$coremark" = "1" ] && [ ! -f /etc/bench.log ] && [ ! -f /var/lock/opkg.lock ]; then
+		if [ -x /sbin/cpumark ]; then
+			(/sbin/cpumark >/dev/null 2>&1) &
+		elif [ -x /bin/coremark ]; then
+			(/bin/coremark >/etc/bench.log 2>&1) &
+		fi
+	fi
+
+	# 2. 持久 Cookie 会话配置同步到 LuCI 底层系统
+	local cookie_p
+	config_get cookie_p default persistent_cookies 1
+	if [ -n "$cookie_p" ]; then
+		[ -z "$(uci -q get luci.sgi)" ] && uci -q set luci.sgi=sgi
+		uci -q set luci.sgi.persistent_cookies="$cookie_p"
+		uci -q commit luci
+	fi
+
+	# 3. 清理并重新配置所有 Shortcuts
+	clean_shortcuts
+	config_foreach process_shortcut shortcuts
+
+	# 4. 设置 HTTPS 重定向
+	sethttps default
+
+	# 5. 提交并重载生效服务
+	reload_services
+}
+
+stop_service() {
+	clean_shortcuts
+	reload_services
+}
+
+service_triggers() {
+	procd_add_reload_trigger "wizard"
 }

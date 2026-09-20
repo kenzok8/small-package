@@ -317,8 +317,8 @@ msgstr "开启日志"
 msgid "Enabled"
 msgstr "已启用"
 
-msgid "Enter MAC-alias, e.g. XX:XX:XX:XX:XX:XX-MyPhone"
-msgstr "输入 MAC-别名，如 XX:XX:XX:XX:XX:XX-我的手机"
+msgid "Enter MAC-alias, e.g. XX:XX:XX:XX:XX:XX-MyPhone. Multiple aliases supported, separated by comma or space"
+msgstr "输入 MAC-别名，如 XX:XX:XX:XX:XX:XX-我的手机（支持多个，逗号或空格分隔）"
 
 msgid "Enter a #RRGGBB hex color code, leave empty to use the default"
 msgstr "填写 #RRGGBB 十六进制颜色代码，留空使用预设色"
@@ -1273,3 +1273,109 @@ msgstr "点击测试按钮将执行保存"
 msgid "Access token"
 msgstr "访问令牌"
 
+
+msgid "App Token"
+msgstr "应用 Token"
+
+
+msgid "Send to Users"
+msgstr "发送给用户"
+
+
+msgid "User IDs"
+msgstr "用户 UID"
+
+
+msgid "Send to Topics"
+msgstr "发送给主题"
+
+
+msgid "Topic IDs"
+msgstr "主题 ID"
+
+
+msgid "WxPusher"
+msgstr "WxPusher"
+
+
+msgid "XX:XX:XX:XX:XX:XX-MyPhone (comma or space separated for multiple)"
+msgstr "XX:XX:XX:XX:XX:XX-我的手机（多个用逗号或空格分隔）"
+
+
+msgid "IP blacklist changed. Reload the page and try again."
+msgstr "黑名单已变更，请刷新页面后重试。"
+
+
+msgid "For issues, visit the <a href=\"https://github.com/zzsj0928/luci-app-pushbot\" target=\"_blank\">GitHub page</a>"
+msgstr "问题反馈请访问 <a href=\"https://github.com/zzsj0928/luci-app-pushbot\" target=\"_blank\">GitHub 页面</a>"
+
+
+msgid "nlbwmon不建议启用"
+msgstr "nlbwmon 不建议启用"
+
+
+msgid "WxPusher app token<br><a href=\"https://wxpusher.zjiecode.com/docs/\" target=\"_blank\">Get the code</a><br>Must enable at least one of User IDs or Topics below (both can be enabled simultaneously)<br>Each supports one or multiple values<br><br>"
+msgstr "WxPusher 应用 Token<br><a href=\"https://wxpusher.zjiecode.com/docs/\" target=\"_blank\">获取方式</a><br>下方「用户 UID」与「主题 ID」至少启用一项（可同时启用）<br>两者均支持填写一个或多个<br><br>"
+
+
+msgid "User UIDs (max 20)<br>Multiple values supported, separated by comma or space<br>e.g. UID_xxxx,UID_yyyy<br><br>"
+msgstr "用户 UID（最多 20 个）<br>支持多个值，用逗号或空格分隔<br>例如 UID_xxxx,UID_yyyy<br><br>"
+
+
+msgid "Topic IDs (max 20)<br>Multiple values supported, separated by comma or space<br>e.g. 123,456<br><br>"
+msgstr "主题 ID（最多 20 个）<br>支持多个值，用逗号或空格分隔<br>例如 123,456<br><br>"
+
+
+msgid "Only runs when all devices in the list are offline<br/>After DND hours, watched devices with low traffic for 5 minutes (~100kb/m) are considered offline<br/>Multiple MACs supported, separated by comma or space"
+msgstr "仅当列表内所有设备离线时才执行<br/>免打扰时段后，关注的设备 5 分钟（约 100kb/m）低流量视为离线<br/>支持多个 MAC，用逗号或空格分隔"
+
+
+msgid "DingTalk bot Webhook, enter only the part after access_token=<br><a href=\"https://developers.dingtalk.com/document/robots/custom-robot-access\" target=\"_blank\">Get the code</a><br><br>"
+msgstr "钉钉机器人 Webhook，只填写 access_token= 之后的部分<br><a href=\"https://developers.dingtalk.com/document/robots/custom-robot-access\" target=\"_blank\">获取方式</a><br><br>"
+
+
+msgid "WeCom bot Webhook, enter only the part after key=<br><a href=\"https://work.weixin.qq.com/api/doc/90000/90136/91770\" target=\"_blank\">Get the code</a><br><br>"
+msgstr "企业微信机器人 Webhook，只填写 key= 之后的部分<br><a href=\"https://work.weixin.qq.com/api/doc/90000/90136/91770\" target=\"_blank\">获取方式</a><br><br>"
+
+
+msgid "Feishu WebHook<br><a href=\"https://www.feishu.cn/hc/zh-CN/articles/360024984973\" target=\"_blank\">Get the code</a><br><br>"
+msgstr "飞书 WebHook<br><a href=\"https://www.feishu.cn/hc/zh-CN/articles/360024984973\" target=\"_blank\">获取方式</a><br><br>"
+
+
+msgid "PushPlus group code<br>The group code used for group push<br>See <a href=\"http://www.pushplus.plus/push2.html\" target=\"_blank\">here</a> for details<br><br>"
+msgstr "PushPlus 群组编码<br>用于群组推送的群组编码<br>详见<a href=\"http://www.pushplus.plus/push2.html\" target=\"_blank\">此处</a><br><br>"
+
+
+msgid "Channel code configured in PushPlus console<br>webhook: third-party webhook code (WeCom/DingTalk/Feishu...)<br>cp: WeCom app code<br>mail: optional, email sender code (leave empty for official email)<br>See <a href=\"http://www.pushplus.plus/doc/guide/api.html\" target=\"_blank\">here</a> for details<br><br>"
+msgstr "PushPlus 控制台配置的渠道编码<br>webhook：第三方 webhook 编码（企业微信/钉钉/飞书...）<br>cp：企业微信应用编码<br>mail：可选，邮件发件人编码（留空使用官方邮箱）<br>详见<a href=\"http://www.pushplus.plus/doc/guide/api.html\" target=\"_blank\">此处</a><br><br>"
+
+
+msgid "wechat/app/extension/clawbot: only token required<br>webhook/cp: also need Channel Code below<br>mail: Channel Code optional (default official email)<br>sms/voice: paid channels (deduct credits)<br>See <a href=\"http://www.pushplus.plus/doc/channel.html\" target=\"_blank\">here</a> for all channels<br><br>"
+msgstr "wechat/app/extension/clawbot：只需填写 Token<br>webhook/cp：还需填写下方渠道编码<br>mail：渠道编码可选（默认官方邮箱）<br>sms/voice：付费渠道（扣减额度）<br>全部渠道详见<a href=\"http://www.pushplus.plus/doc/channel.html\" target=\"_blank\">此处</a><br><br>"
+
+
+msgid "PushDeer self-hosted server address<br>e.g. https://your.domain:port<br>See <a href=\"http://www.pushdeer.com/selfhosted.html\" target=\"_blank\">here</a> for details<br><br>"
+msgstr "PushDeer 自建服务器地址<br>例如 https://your.domain:port<br>详见<a href=\"http://www.pushdeer.com/selfhosted.html\" target=\"_blank\">此处</a><br><br>"
+
+
+msgid "Bark self-hosted server address<br>e.g. https://your.domain:port<br>See <a href=\"http://www.pushdeer.com/selfhosted.html\" target=\"_blank\">here</a> for the self-hosting guide<br><br>"
+msgstr "Bark 自建服务器地址<br>例如 https://your.domain:port<br>自建指南详见<a href=\"http://www.pushdeer.com/selfhosted.html\" target=\"_blank\">此处</a><br><br>"
+
+
+msgid "Bark notification sound<br>e.g. silence.caf<br>See <a href=\"https://github.com/Finb/Bark/tree/master/Sounds\" target=\"_blank\">here</a> for details<br><br>"
+msgstr "Bark 通知铃声<br>例如 silence.caf<br>详见<a href=\"https://github.com/Finb/Bark/tree/master/Sounds\" target=\"_blank\">此处</a><br><br>"
+
+
+msgid "Bark notification icon (iOS 15 or above)<br>e.g. http://day.app/assets/images/avatar.jpg<br>See <a href=\"https://github.com/Finb/Bark#%E5%85%B6%E4%BB%96%E5%8F%82%E6%95%B0\" target=\"_blank\">here</a> for details<br><br>"
+msgstr "Bark 通知图标（iOS 15 及以上）<br>例如 http://day.app/assets/images/avatar.jpg<br>详见<a href=\"https://github.com/Finb/Bark#%E5%85%B6%E4%BB%96%E5%8F%82%E6%95%B0\" target=\"_blank\">此处</a><br><br>"
+
+
+msgid "[ Note: If you use a \"Global Interconnect\" style plugin, please add the following APIs to the whitelist to avoid being identified as an overseas IP. ]"
+msgstr "[ 注意：如使用「全球互联」类插件，请将以下 API 加入白名单，避免被识别为海外 IP。]"
+
+
+msgid "Make sure SSH key login is configured, otherwise the script may fail to run!<br/>Install the sensors command on PVE yourself<br/>SSH key login example:<br/>opkg update #update package list<br/>opkg install openssh-client openssh-keygen #install openssh client<br/>ssh-keygen -t rsa #generate a key pair (set a password etc.)<br/>ssh root@10.0.0.2 \"tee -a ~/.ssh/id_rsa.pub\" < ~/.ssh/id_rsa.pub #transfer the public key to PVE<br/>ssh -i ~/.ssh/id_rsa root@10.0.0.2 sensors #test the temperature command"
+msgstr "请确认已配置 SSH 密钥登录，否则脚本可能无法运行！<br/>请自行在 PVE 上安装 sensors 命令<br/>SSH 密钥登录示例：<br/>opkg update #更新软件包列表<br/>opkg install openssh-client openssh-keygen #安装 openssh 客户端<br/>ssh-keygen -t rsa #生成密钥对（可设置密码等）<br/>ssh root@10.0.0.2 \"tee -a ~/.ssh/id_rsa.pub\" < ~/.ssh/id_rsa.pub #将公钥传到 PVE<br/>ssh -i ~/.ssh/id_rsa root@10.0.0.2 sensors #测试温度命令"
+
+msgid "Gotify"
+msgstr "Gotify"

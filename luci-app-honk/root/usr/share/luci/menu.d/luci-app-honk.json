@@ -1,0 +1,61 @@
+{
+	"admin/services/honk": {
+		"title": "HONK",
+		"order": -1,
+		"action": {
+			"type": "firstchild"
+		},
+		"depends": {
+			"acl": [ "luci-app-honk" ],
+			"uci": { "honk": true }
+		}
+	},
+	"admin/services/honk/global": {
+		"title": "Global Settings",
+		"order": 1,
+		"action": {
+			"type": "view",
+			"path": "honk/global"
+		}
+	},
+	"admin/services/honk/dns": {
+		"title": "DNS Settings",
+		"order": 2,
+		"action": {
+			"type": "view",
+			"path": "honk/dns"
+		}
+	},
+	"admin/services/honk/node": {
+		"title": "Node Settings",
+		"order": 3,
+		"action": {
+			"type": "view",
+			"path": "honk/node"
+		}
+	},
+	"admin/services/honk/route": {
+		"title": "Routing Settings",
+		"order": 4,
+		"action": {
+			"type": "view",
+			"path": "honk/route"
+		}
+	},
+	"admin/services/honk/zashboard": {
+		"title": "Zashboard",
+		"order": 5,
+		"action": {
+			"type": "view",
+			"path": "honk/zashboard"
+		}
+	},
+	"admin/services/honk/log": {
+		"title": "Logs",
+		"order": 6,
+		"action": {
+			"type": "view",
+			"path": "honk/log"
+		}
+	}
+}

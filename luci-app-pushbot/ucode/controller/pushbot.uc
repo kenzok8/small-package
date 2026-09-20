@@ -292,6 +292,7 @@ return {
 			"router_status","router_temp","router_wan","client_list",
 			"google_check_count","pushbot_up","pushbot_down","table_format",
 			"ntfy_srv_enable","ntfy_server","ntfy_topic","ntfy_token_enable","ntfy_token","ntfy_priority","gotify_server","gotify_token","gotify_priority",
+			"wxpusher_app_token","wxpusher_uids_enable","wxpusher_uids","wxpusher_topics_enable","wxpusher_topics",
 			"cpuload_enable","cpuload","temperature_enable","temperature",
 			"client_usage","client_usage_max","client_usage_disturb",
 			"pushbot_ipv4","ipv4_interface","pushbot_ipv6","ipv6_interface",
@@ -620,6 +621,17 @@ return {
 				cmd += " " + a;
 			system(cmd);
 		}
+
+		/* 表格化仅支持的渠道可用：DingTalk(Markdown) / WxPusher(HTML)。
+		   非支持渠道强制关闭 table_format，前端虽已隐藏按钮并归零，
+		   这里再兜底一次，避免旧配置残留或直接改 UCI。 */
+		let TABLE_SUPPORTED = {
+			"/usr/bin/pushbot/api/dingding.json": true,
+			"/usr/bin/pushbot/api/wxpusher.json": true
+		};
+		let eff_jsonpath = ("jsonpath" in data) ? data.jsonpath : previous.jsonpath;
+		if (!(eff_jsonpath in TABLE_SUPPORTED))
+			data.table_format = "0";
 
 		for (let opt, val in data) {
 			if (opt in file_paths) continue;

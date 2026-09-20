@@ -1,7 +1,5 @@
 {
-    "_api": "这是 Pushbot:钉钉 api 文件",
     "_api": "【钉钉推送】",
-    
     "url": "\"https://oapi.dingtalk.com/robot/send?access_token=${dd_webhook}\"",
     "data": "@${tempjsonpath}",
     "content_type": "Content-Type:application/json",
@@ -22,12 +20,12 @@
     "font_end2": "</font>",
     "percentsym": "",
     "boldstar": "**",
-    "type":
-      {
-	      "msgtype": "\"markdown\"",
-	      "markdown": {
-		      	"title": "\"${1}\"",
-			"text": "\"${str_title_start}${font_title}${1}${font_end}${str_title_end}${str_linefeed}${nowtime}${str_linefeed}${2}\\n\\n${font_title}${1}${font_end}\""
-	      }
-      }
+    "boldend": "**",
+    "type": {
+        "msgtype": "\"markdown\"",
+        "markdown": {
+            "title": "\"${1}\"",
+            "text": "\"${str_title_start}${font_title}${1}${font_end}${str_title_end}${str_linefeed}${nowtime}${str_linefeed}${2}\\n\\n${font_title}${1}${font_end}\""
+        }
+    }
 }

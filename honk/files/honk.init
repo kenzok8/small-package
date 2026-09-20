@@ -104,5 +104,9 @@ service_triggers() {
 
 hot_reload() {
     set_chmod_640
-    /etc/init.d/honk running && "$PROG" reload
+    if /etc/init.d/honk running; then
+        "$PROG" reload
+    else
+        /etc/init.d/honk restart
+    fi
 }

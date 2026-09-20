@@ -1,150 +1,508 @@
 'use strict';
 'require view';
-'require dom';
-'require poll';
-'require uci';
-'require rpc';
 'require form';
+'require uci';
 'require fs';
+'require ui';
+
+// 辅助工具：统一纯净数组转换
+function toArray(val) {
+	if (Array.isArray(val)) return val.filter(Boolean);
+	return typeof val === 'string' ? val.trim().split(/\s+/).filter(Boolean) : [];
+}
+
+// 辅助工具：提取首个 IP 并去除可能的 CIDR 掩码（容错支持 String、Array 及 null/undefined）
+function getFirstIp(val, defaultVal) {
+	if (Array.isArray(val)) val = val[0];
+	if (typeof val === 'string') return val.split('/')[0].trim();
+	return defaultVal || '';
+}
+
+// 辅助工具：通用值深度比对（支持标量与数组）
+function isEqual(a, b) {
+	if (Array.isArray(a) || Array.isArray(b)) {
+		var arrA = toArray(a).sort(), arrB = toArray(b).sort();
+		return arrA.length === arrB.length && arrA.every(function(v, i) { return v === arrB[i]; });
+	}
+	return String(a == null ? '' : a) === String(b == null ? '' : b);
+}
+
+// 辅助工具：检查数组是否包含元素（兼容低版本环境）
+function has(arr, item) {
+	return Array.isArray(arr) && arr.indexOf(item) !== -1;
+}
+
+// 辅助工具：安全删除 UCI 选项（只有当该选项在 UCI 内存中真实存在时才调用 unset，防止 ubus 报错）
+function safeUnset(conf, sid, opt) {
+	try {
+		if (uci.get(conf, sid, opt) != null) {
+			uci.unset(conf, sid, opt);
+			return true;
+		}
+	} catch(e) {}
+	return false;
+}
+
+// 辅助工具：智能判断无线物理网卡的频段 (2.4G / 5G / 6G)
+function getRadioBand(devName) {
+	if (!devName) return '2.4G';
+	var b = uci.get('wireless', devName, 'band');
+	if (b === '6g') return '6G';
+	if (b === '5g') return '5G';
+	if (b === '2g') return '2.4G';
+
+	var ch = parseInt(uci.get('wireless', devName, 'channel'), 10);
+	if (!isNaN(ch)) {
+		if (ch >= 1 && ch <= 14) return '2.4G';
+		if (ch >= 32 && ch <= 196) return '5G';
+		if (ch > 196) return '6G';
+	}
+
+	var hw = (uci.get('wireless', devName, 'hwmode') || '').toLowerCase();
+	if (hw.indexOf('a') !== -1) return '5G';
+	if (hw.indexOf('b') !== -1 || hw.indexOf('g') !== -1) return '2.4G';
+
+	var dl = devName.toLowerCase();
+	if (dl.indexOf('6g') !== -1) return '6G';
+	if (dl.indexOf('5g') !== -1) return '5G';
+	return '2.4G';
+}
 
 return view.extend({
-	load: async function () {
-		const promises = await Promise.all([
-			fs.exec('/etc/init.d/wizard', ['reconfig']),
-			uci.changes(),
-			L.resolveDefault(uci.load('wireless')),
-			uci.load('wizard'),
-			L.resolveDefault(fs.stat('/www/luci-static/istorex/style.css'), null),
-			L.resolveDefault(fs.stat('/www/luci-static/routerdog/style.css'), null),
-			L.resolveDefault(fs.stat('/usr/sbin/nginx'), null)
-		]);
-	const data = {
-			istorex: promises[4],
-			routerdog: promises[5],
-			nginx: promises[6]
+	initialValues: {},
+	initialShortcuts: [],
+	hasWireless: false,
+	hasNginx: false,
+	map: null,
+	fields: null,
+	optMap: null,
+
+	// 1. 直连加载系统真实配置包，无需任何中间文件
+	load: function() {
+		var pkgs = ['network', 'wireless', 'dhcp', 'uhttpd', 'firewall', 'luci', 'wizard'];
+		var tasks = pkgs.map(function(p) {
+			return uci.load(p).catch(function() { return null; });
+		});
+		tasks.push(fs.stat('/etc/nginx/uci.conf').then(function() { return true; }).catch(function() { return false; }));
+
+		return Promise.all(tasks).then(function(res) {
+			var wifiSecs = (res && res) ? (uci.sections('wireless', 'wifi-device') || []) : [];
+			return {
+				hasWireless: wifiSecs.length > 0,
+				hasNginx: !!res[7]
+			};
+		});
+	},
+
+	// 2. 统一聚合读取系统当前各子模块的实时配置
+	getSystemConfig: function() {
+		var isSideRouter = !!uci.get('network', 'lan', 'gateway') && uci.get('network', 'wan', 'auto') === '0';
+
+		var ap = null;
+		if (this.hasWireless) {
+			var ifaces = uci.sections('wireless', 'wifi-iface') || [];
+			for (var i = 0; i < ifaces.length; i++) {
+				if (ifaces[i].mode === 'ap' || !ifaces[i].mode) {
+					ap = ifaces[i];
+					break;
+				}
+			}
+		}
+
+		// 剥离现有频段后缀，确保输入框展示纯净的基准名称
+		var rawSsid = (ap && ap.ssid) || (this.hasWireless ? 'Kwrt' : '');
+		var baseSsid = rawSsid.replace(/_(2\.4G|5G|6G)$/i, '').trim();
+
+		return {
+			wan_proto: isSideRouter ? 'siderouter' : (uci.get('network', 'wan', 'proto') || 'dhcp'),
+			wan_pppoe_user: uci.get('network', 'wan', 'username') || '',
+			wan_pppoe_pass: uci.get('network', 'wan', 'password') || '',
+			lan_ipaddr: getFirstIp(uci.get('network', 'lan', 'ipaddr'), '10.0.0.1'),
+			lan_gateway: getFirstIp(uci.get('network', 'lan', 'gateway'), ''),
+			lan_dns: toArray(uci.get('network', 'lan', 'dns')),
+			dhcp: uci.get('dhcp', 'lan', 'ignore') === '1' ? '0' : '1',
+			ipv6: uci.get('network', 'wan6', 'auto') === '0' ? '0' : '1',
+			https: uci.get('wizard', 'default', 'https') || '0',
+			cookie_p: uci.get('wizard', 'default', 'persistent_cookies') || '1',
+			landing_page: uci.get('wizard', 'default', 'landing_page') || 'default',
+			autoupgrade_fm: uci.get('wizard', 'default', 'autoupgrade_fm') || '1',
+			coremark: uci.get('wizard', 'default', 'coremark') || '0',
+			wifi_ssid: baseSsid || (this.hasWireless ? 'Kwrt' : ''),
+			wifi_key: (ap && ap.key) || ''
 		};
-	return data;
 	},
 
 	render: function(data) {
-		var m, s, o;
-		var has_wifi = false;
+		this.hasWireless = !!data.hasWireless;
+		this.hasNginx = !!data.hasNginx;
 
-		if (uci.sections('wireless', 'wifi-device').length > 0) {
-			has_wifi = true;
-		}
+		var sys = this.getSystemConfig();
+		this.initialValues = Object.assign({}, sys);
 
-		m = new form.Map('wizard', [_('Initial Router Setup')],
-			_('If you are using this router for the first time, please configure it here.'));
+		// 缓存初始 shortcuts 配置快照，用于保存时比对差异
+		var shortcuts = uci.sections('wizard', 'shortcuts') || [];
+		this.initialShortcuts = shortcuts.map(function(sec) {
+			return {
+				shortcut: sec.shortcut || '',
+				to_url: sec.to_url || '',
+				comments: sec.comments || ''
+			};
+		});
 
-		s = m.section(form.NamedSection, 'default', 'wizard');
-		s.addremove = false;
-		s.tab('netsetup', _('Net Settings'), _('Three different ways to access the Internet, please choose according to your own situation.'));
+		var m = new form.Map('wizard', _('Setup Wizard'),
+			_('Quickly configure common network, wireless, and system settings.'));
 
-		o = s.taboption('netsetup', form.ListValue, 'wan_proto', _('Protocol'));
-		o.rmempty = false;
-		o.value('dhcp', _('DHCP client'));
-		o.value('pppoe', _('PPPoE'));
-		o.value('siderouter', _('Siderouter'));
-
-		o = s.taboption('netsetup', form.Value, 'wan_pppoe_user', _('PAP/CHAP username'));
-		o.depends('wan_proto', 'pppoe');
-
-		o = s.taboption('netsetup', form.Value, 'wan_pppoe_pass', _('PAP/CHAP password'));
-		o.depends('wan_proto', 'pppoe');
-		o.password = true;
-
-		o = s.taboption('netsetup', form.Value, 'lan_ipaddr', _('IPv4 address'));
-		o.datatype = 'ip4addr';
-
-		o = s.taboption('netsetup', form.DynamicList, 'lan_dns', _('Use custom DNS servers'), _('Leave empty to use ISP DNS'));
-		o.datatype = 'ip4addr';
-		o.cast = 'string';
-
-		o = s.taboption('netsetup', form.Value, 'lan_gateway', _('IPv4 gateway'));
-		o.depends('wan_proto', 'siderouter');
-		o.datatype = 'ip4addr';
-		o.placeholder = _('Enter the main router IP');
-		o.rmempty = false;
-
-		o = s.taboption('netsetup', form.Flag, 'dhcp', _('DHCP Server'),
-			_('To turn on this DHCP, you need to turn off the DHCP of the main router, and to turn off this DHCP, you need to manually change the gateway and DNS of all Internet devices to the IP of this bypass router'));
-		o.depends('wan_proto', 'siderouter');
-		o.default = o.enabled;
-
-		o = s.taboption('netsetup', form.Flag, 'ipv6', _('Enable IPv6'), _('Enable/Disable IPv6'));
-		o.default = o.enabled;
-
-		s.tab('firmware', _('Firmware Settings'));
-
-		// o = s.taboption('firmware', form.Flag, 'autoupgrade_pkg', _('Packages Auto Upgrade'),_('谨慎开启'));
-		// o.rmempty = false;
-
-		o = s.taboption('firmware', form.Flag, 'autoupgrade_fm', _('Firmware Upgrade Notice'));
-		o.rmempty = false;
-
-		o = s.taboption('firmware', form.Flag, 'coremark', _('CoreMark'), _('第一次开机后是否运行CPU跑分测试'));
-		o.rmempty = false;
-
-		o = s.taboption('firmware', form.Flag, 'cookie_p', _('Persistent cookies'),
-			_('Keep the background login state to avoid the need to log in again every time the browser is closed'));
-		o.default = o.enabled;
-
-		o = s.taboption('firmware', form.Flag, 'https', _('Force the use of HTTPS in the backend.'));
-
-		if (data.istorex || data.routerdog){
-		o = s.taboption('firmware', form.ListValue, 'landing_page', _('主题模式'));
-		o.value('default', _('默认'));
-		if (data.routerdog){
-		o.value('routerdog', _('路由狗(专业NAS模式)'));
-		}
-		if (data.istorex){
-		o.value('nas', _('NAS模式'));
-		o.value('next-nas', _('NEXT-NAS模式'));
-		o.value('router', _('路由模式'));
-		}
-		o.default = 'default';
-		}
-
-		if (has_wifi) {
-			s.tab('wifisetup', _('Wireless Settings'), _('Set the router\'s wireless name and password. For more advanced settings, please go to the Network-Wireless page.'));
-			o = s.taboption('wifisetup', form.Value, 'wifi_ssid', _('<abbr title=\"Extended Service Set Identifier\">ESSID</abbr>'));
-			o.datatype = 'maxlength(32)';
-
-			o = s.taboption("wifisetup", form.Value, "wifi_key", _("Key"));
-			o.datatype = 'wpakey';
-			o.password = true;
-		}
-
-		if (data.nginx) {
-		s.tab('shortcuts', _('Shortcuts'), _('比如设置google.com的快捷方式为字母g,则在此路由器网络的任何浏览器中输入g/即可访问google.com'));
-
-		o = s.taboption('shortcuts', form.SectionValue, 'shortcuts', form.GridSection, 'shortcuts', null,
-			_('Shortcuts'));
-
-		s = o.subsection;
-		s.addremove = true;
+		var s = m.section(form.NamedSection, 'default', 'wizard');
 		s.anonymous = true;
+		s.addremove = false;
 
-		o = s.option(form.Value, 'shortcut', _('Shortcut'));
-		o.rmempty = false;
+		s.tab('netsetup', _('Net Settings'));
+		s.tab('firmware', _('Firmware Settings'));
+		if (this.hasWireless) s.tab('wifisetup', _('Wireless Settings'));
 
-		o = s.option(form.Value, 'to_url', _('Target URL'));
-		o.rmempty = false;
-		o.placeholder = 'https://example.com';
-		o.validate = function(section_id, value) {
-		if (value.match(/^https?:\/\/.+/i)) {
-			return true;
-		}
-    return _('Please enter a valid URL starting with http:// or https://');
-};
-
-		o = s.option(form.Value, 'comments', _('Comments'));
-		o.optional  = true;
+		if (this.hasNginx) {
+			s.tab('shortcuts', _('Shortcuts'), _('比如设置google.com的快捷方式为字母g,则在此路由器网络的任何浏览器中输入g/即可访问google.com'));
 		}
 
-		setTimeout("document.getElementsByClassName('cbi-button-apply')[0].children[3].children[0].value='1'", 1000)
+		// 3. 声明式配置项驱动表
+		var opt, fields = [
+			// 网络设置
+			{ tab: 'netsetup', type: form.ListValue, id: 'wan_proto', title: _('WAN Protocol / Mode'),
+			  choices: { dhcp: _('DHCP Client (Default Router)'), pppoe: _('PPPoE Dial-up'), siderouter: _('Side-Router Mode (Bypass Gateway)') } },
+			{ tab: 'netsetup', type: form.Value, id: 'wan_pppoe_user', title: _('PPPoE Username'), depends: { wan_proto: 'pppoe' } },
+			{ tab: 'netsetup', type: form.Value, id: 'wan_pppoe_pass', title: _('PPPoE Password'), depends: { wan_proto: 'pppoe' }, password: true },
+			{ tab: 'netsetup', type: form.Value, id: 'lan_ipaddr', title: _('LAN IPv4 Address'), datatype: 'ip4addr', placeholder: '10.0.0.1' },
+			{ tab: 'netsetup', type: form.DynamicList, id: 'lan_dns', title: _('Custom DNS Server(s)'), datatype: 'ipaddr', placeholder: '223.5.5.5' },
+			{ tab: 'netsetup', type: form.Value, id: 'lan_gateway', title: _('Gateway Address'), datatype: 'ip4addr', placeholder: '', depends: { wan_proto: 'siderouter' }, desc: _('Primary router IP address used when operating in side-router mode.') },
+			{ tab: 'netsetup', type: form.Flag, id: 'dhcp', title: _('Enable DHCP Server'), desc: _('Enable or disable LAN DHCP server (usually disabled in side-router mode to avoid IP address conflicts).') },
+			{ tab: 'netsetup', type: form.Flag, id: 'ipv6', title: _('IPv6 Support'), desc: _('Enable or disable IPv6 router advertisements and DHCPv6.') },
+
+			// 固件与系统设置
+			{ tab: 'firmware', type: form.Flag, id: 'autoupgrade_fm', title: _('Firmware Upgrade Notice'), desc: _('Check and display notices for newer firmware versions.') },
+			{ tab: 'firmware', type: form.Flag, id: 'coremark', title: _('Run CoreMark on Boot'), desc: _('Run CPU benchmark asynchronously upon router initialization.') },
+			{ tab: 'firmware', type: form.Flag, id: 'cookie_p', title: _('Persistent Cookie Session'), desc: _('Maintain persistent login sessions in the web browser.') },
+			{ tab: 'firmware', type: form.Flag, id: 'https', title: _('Enforce HTTPS Access'), desc: _('Automatically redirect HTTP requests to secure HTTPS.') },
+			{ tab: 'firmware', type: form.ListValue, id: 'landing_page', title: _('Landing Dashboard Mode'),
+			  choices: { 'default': _('Default'), routerdog: _('RouterDog'), nas: _('NAS'), 'next-nas': _('Next-NAS'), router: _('Router') } }
+		];
+
+		// 无线配置根据设备硬件动态追加
+		if (this.hasWireless) {
+			fields.push(
+				{ tab: 'wifisetup', type: form.Value, id: 'wifi_ssid', title: _('Wireless Network Name (SSID)'), placeholder: 'Kwrt', desc: _('无线名称基准前缀，系统将自动识别并为 2.4G 追加 _2.4G、5G 追加 _5G、6G 追加 _6G。') },
+				{ tab: 'wifisetup', type: form.Value, id: 'wifi_key', title: _('Wireless Password (Key)'), password: true, placeholder: _('Leave empty for open network or 8+ characters') }
+			);
+		}
+
+		var optMap = {};
+		fields.forEach(function(f) {
+			opt = s.taboption(f.tab, f.type, f.id, f.title, f.desc);
+			opt.cfgvalue = function() { return sys[f.id]; };
+			opt.default = sys[f.id];
+
+			opt.write = function() {};
+			opt.remove = function() {};
+
+			if (f.password) opt.password = true;
+			if (f.datatype) opt.datatype = f.datatype;
+			if (f.placeholder) opt.placeholder = f.placeholder;
+			if (f.choices) Object.keys(f.choices).forEach(function(k) { opt.value(k, f.choices[k]); });
+			if (f.depends) Object.keys(f.depends).forEach(function(k) { opt.depends(k, f.depends[k]); });
+
+			// 为无线密码增加 8~64 位安全校验，防止 hostapd 崩溃
+			if (f.id === 'wifi_key') {
+				opt.validate = function(section_id, value) {
+					if (!value) return true;
+					if (value.length < 8 || value.length > 64) {
+						return _('Wireless key must be between 8 and 64 characters long');
+					}
+					return true;
+				};
+			}
+
+			optMap[f.id] = opt;
+		});
+
+		// Shortcuts GridSection 渲染
+		if (this.hasNginx) {
+			var so = s.taboption('shortcuts', form.SectionValue, '_shortcuts', form.GridSection, 'shortcuts', null, _('Shortcuts'));
+			var ss = so.subsection;
+			ss.addremove = true;
+			ss.anonymous = true;
+			ss.sortable  = true;
+
+			var o_sc = ss.option(form.Value, 'shortcut', _('Shortcut'));
+			o_sc.rmempty = false;
+			o_sc.placeholder = 'g';
+			o_sc.validate = function(section_id, value) {
+				if (!value)
+					return _('Shortcut phrase cannot be empty');
+				if (!value.match(/^[a-zA-Z0-9_-]+$/))
+					return _('Only alphanumeric characters, dashes and underscores are allowed');
+				return true;
+			};
+
+			var o_url = ss.option(form.Value, 'to_url', _('Target URL'));
+			o_url.rmempty = false;
+			o_url.placeholder = 'https://example.com';
+			o_url.validate = function(section_id, value) {
+				if (value && value.match(/^https?:\/\/.+/i)) {
+					return true;
+				}
+				return _('Please enter a valid URL starting with http:// or https://');
+			};
+
+			var o_comm = ss.option(form.Value, 'comments', _('Comments'));
+			o_comm.optional = true;
+			o_comm.placeholder = _('Optional');
+		}
+
+		this.map = m;
+		this.fields = fields;
+		this.optMap = optMap;
 
 		return m.render();
-	}
+	},
+
+	// 4. 重写 View 级别的 handleSave：精准写入发生变化的配置到 UCI 暂存区
+	handleSave: function(ev) {
+		var self = this;
+		if (!this.map) return Promise.resolve(false);
+
+		return this.map.parse().then(function() {
+			var cur = {};
+			self.fields.forEach(function(f) {
+				var v = self.optMap[f.id].formvalue('default');
+				// 对 Flag 进行布尔归一化，彻底消除 null 与 '0' 比对产生的假变动
+				if (f.type === form.Flag) {
+					cur[f.id] = (v == '1') ? '1' : '0';
+				} else {
+					cur[f.id] = (v != null) ? v : '';
+				}
+			});
+			cur.lan_dns = toArray(cur.lan_dns);
+
+			// 精准筛选出发生变化的常规字段
+			var changed = self.fields.map(function(f) { return f.id; }).filter(function(id) {
+				return !isEqual(cur[id], self.initialValues[id]);
+			});
+
+			// 检测 shortcuts 是否有增删改
+			var curShortcuts = (uci.sections('wizard', 'shortcuts') || []).map(function(sec) {
+				return {
+					shortcut: sec.shortcut || '',
+					to_url: sec.to_url || '',
+					comments: sec.comments || ''
+				};
+			});
+			var shortcutsChanged = JSON.stringify(curShortcuts) !== JSON.stringify(self.initialShortcuts);
+
+			// 未做任何改动直接提示并退出
+			if (changed.length === 0 && !shortcutsChanged) {
+				ui.addNotification(null, E('p', _('There are no changes to apply')), 'info');
+				return false;
+			}
+
+			// A. 无线配置直接写回 wireless（全频段适配：2.4G加_2.4G，5G加_5G，6G加_6G）
+			if (self.hasWireless && (has(changed, 'wifi_ssid') || has(changed, 'wifi_key'))) {
+				var rawInputSsid = (cur.wifi_ssid || '').trim();
+				var baseSsid = rawInputSsid.replace(/_(2\.4G|5G|6G)$/i, '').trim();
+				if (!baseSsid) baseSsid = rawInputSsid;
+
+				var ifaces = uci.sections('wireless', 'wifi-iface') || [];
+				ifaces.forEach(function(ifc) {
+					if (ifc.mode === 'ap' || !ifc.mode) {
+						var band = getRadioBand(ifc.device);
+						var autoSsid = baseSsid ? (baseSsid + '_' + band) : '';
+
+						if (has(changed, 'wifi_ssid') && autoSsid) {
+							uci.set('wireless', ifc['.name'], 'ssid', autoSsid);
+						}
+
+						if (has(changed, 'wifi_key')) {
+							if (cur.wifi_key) {
+								uci.set('wireless', ifc['.name'], 'key', cur.wifi_key);
+								var enc = ifc.encryption || uci.get('wireless', ifc['.name'], 'encryption') || '';
+								if (enc.indexOf('psk') === -1 && enc.indexOf('sae') === -1) {
+									uci.set('wireless', ifc['.name'], 'encryption', 'psk2');
+								}
+							} else {
+								safeUnset('wireless', ifc['.name'], 'key');
+								uci.set('wireless', ifc['.name'], 'encryption', 'none');
+							}
+						}
+
+						// 解除物理无线与接口禁用状态
+						if (ifc.device) {
+							safeUnset('wireless', ifc.device, 'disabled');
+						}
+						safeUnset('wireless', ifc['.name'], 'disabled');
+					}
+				});
+			}
+
+			// B. WAN 模式与 PPPoE（单网卡判空保护 + LAN 防火墙动态伪装清理）
+			if (has(changed, 'wan_proto') || has(changed, 'wan_pppoe_user') || has(changed, 'wan_pppoe_pass')) {
+				var zones = uci.sections('firewall', 'zone') || [];
+				var lanZone = null;
+				for (var zi = 0; zi < zones.length; zi++) {
+					if (zones[zi].name === 'lan') {
+						lanZone = zones[zi];
+						break;
+					}
+				}
+
+				var hasWanSec = !!uci.get('network', 'wan');
+
+				if (cur.wan_proto === 'siderouter') {
+					if (hasWanSec) uci.set('network', 'wan', 'auto', '0');
+					// 旁路由模式：开启 LAN 区域动态伪装 (masq)
+					if (lanZone) uci.set('firewall', lanZone['.name'], 'masq', '1');
+				} else {
+					if (hasWanSec) {
+						uci.set('network', 'wan', 'auto', '1');
+						uci.set('network', 'wan', 'proto', cur.wan_proto);
+						if (cur.wan_proto === 'pppoe') {
+							uci.set('network', 'wan', 'username', cur.wan_pppoe_user);
+							uci.set('network', 'wan', 'password', cur.wan_pppoe_pass);
+						} else {
+							safeUnset('network', 'wan', 'username');
+							safeUnset('network', 'wan', 'password');
+						}
+					}
+					// 切换回主路由模式：恢复清除 LAN 区域的动态伪装 (masq)
+					if (lanZone) safeUnset('firewall', lanZone['.name'], 'masq');
+				}
+			}
+
+			// C. LAN IP（兼容 list ipaddr / option ipaddr / CIDR 掩码）
+			if (has(changed, 'lan_ipaddr') && cur.lan_ipaddr) {
+				var origIpRaw = uci.get('network', 'lan', 'ipaddr');
+				var firstIp = Array.isArray(origIpRaw) ? origIpRaw[0] : origIpRaw;
+				var mask = '';
+
+				if (typeof firstIp === 'string') {
+					var slashIdx = firstIp.indexOf('/');
+					if (slashIdx !== -1) {
+						mask = '/' + firstIp.substring(slashIdx + 1).trim();
+					}
+				}
+
+				var cleanIp = (typeof cur.lan_ipaddr === 'string') ? cur.lan_ipaddr.split('/')[0].trim() : String(cur.lan_ipaddr);
+				var targetVal = cleanIp + mask;
+
+				if (Array.isArray(origIpRaw)) {
+					var newArr = origIpRaw.slice();
+					newArr[0] = targetVal;
+					uci.set('network', 'lan', 'ipaddr', newArr);
+				} else {
+					uci.set('network', 'lan', 'ipaddr', targetVal);
+					if (!mask && !uci.get('network', 'lan', 'netmask')) {
+						uci.set('network', 'lan', 'netmask', '255.255.255.0');
+					}
+				}
+			}
+
+			// D. 自定义 LAN DNS
+			if (has(changed, 'lan_dns')) {
+				if (cur.lan_dns && cur.lan_dns.length > 0) {
+					uci.set('network', 'lan', 'dns', cur.lan_dns);
+				} else {
+					safeUnset('network', 'lan', 'dns');
+				}
+			}
+
+			// E. LAN 网关（独立变更或切换至旁路由模式时更新）
+			if (has(changed, 'lan_gateway') || has(changed, 'wan_proto')) {
+				if (cur.wan_proto === 'siderouter') {
+					if (cur.lan_gateway) {
+						uci.set('network', 'lan', 'gateway', cur.lan_gateway);
+					} else {
+						safeUnset('network', 'lan', 'gateway');
+					}
+				} else {
+					safeUnset('network', 'lan', 'gateway');
+				}
+			}
+
+			// F. DHCP 开关（根据勾选状态精准配置，解除模式死锁冲突）
+			if (has(changed, 'dhcp') || has(changed, 'wan_proto')) {
+				if (cur.dhcp === '0') {
+					uci.set('dhcp', 'lan', 'ignore', '1');
+				} else {
+					safeUnset('dhcp', 'lan', 'ignore');
+				}
+			}
+
+			// G. IPv6
+			if (has(changed, 'ipv6')) {
+				var enabled = (cur.ipv6 === '1');
+				if (uci.get('network', 'wan6')) {
+					uci.set('network', 'wan6', 'auto', enabled ? '1' : '0');
+				}
+				uci.set('dhcp', 'lan', 'ra', enabled ? 'server' : 'disabled');
+				uci.set('dhcp', 'lan', 'dhcpv6', enabled ? 'server' : 'disabled');
+				uci.set('dhcp', 'lan', 'ndp', enabled ? 'server' : 'disabled');
+			}
+
+			// H. HTTPS 访问重定向（由 wizard.init 调度底层生效）
+			if (has(changed, 'https')) {
+				uci.set('wizard', 'default', 'https', cur.https);
+			}
+
+			// I. 页面与会话设置（持久Cookie双向同步至luci系统底层与向导配置包）
+			if (has(changed, 'cookie_p')) {
+				uci.set('wizard', 'default', 'persistent_cookies', cur.cookie_p);
+			}
+			if (has(changed, 'landing_page')) {
+				uci.set('wizard', 'default', 'landing_page', cur.landing_page);
+			}
+
+			// J. 向导专属项（完整保留 autoupgrade_fm 与 coremark）
+			if (has(changed, 'autoupgrade_fm')) {
+				uci.set('wizard', 'default', 'autoupgrade_fm', cur.autoupgrade_fm);
+			}
+			if (has(changed, 'coremark')) {
+				uci.set('wizard', 'default', 'coremark', cur.coremark);
+			}
+
+			self.initialValues = Object.assign({}, cur);
+			self.initialShortcuts = curShortcuts;
+
+			return uci.save().then(function() {
+				return true;
+			});
+		});
+	},
+
+	// 5. 重写 View 级别的 handleSaveApply：应用生效并实现 LAN IP 变更平滑迁移与自动跳转
+	handleSaveApply: function(ev, mode) {
+		var self = this;
+		return this.handleSave(ev).then(function(hasChanges) {
+			if (!hasChanges) return false;
+
+			var oldIp = self.initialValues.lan_ipaddr;
+			var newIp = (self.optMap['lan_ipaddr'].formvalue('default') || '').split('/')[0].trim();
+			var ipChanged = newIp && (newIp !== oldIp);
+
+			return ui.changes.apply(mode == '0').then(function() {
+				if (ipChanged) {
+					var sec = 15;
+					ui.showModal(_('LAN IP Address Changed'), [
+						E('p', _('LAN IP changed to %s. Redirecting in %d seconds...').format(newIp, sec)),
+						E('div', { 'class': 'spinning', 'style': 'margin: 1em auto;' })
+					]);
+					var timer = window.setInterval(function() {
+						sec--;
+						if (sec <= 0) {
+							window.clearInterval(timer);
+							window.location.href = window.location.protocol + '//' + newIp + window.location.pathname;
+						}
+					}, 1000);
+				}
+			});
+		});
+	},
+
+	handleReset: null
 });

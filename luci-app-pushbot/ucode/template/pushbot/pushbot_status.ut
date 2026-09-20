@@ -563,17 +563,19 @@ else
 			'{{ _('Feishu') }}': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1.5 6h3c.83 0 1.5.67 1.5 1.5v1c0 .83-.67 1.5-1.5 1.5h-3A1.5 1.5 0 0 1 9 10.5v-1c0-.83.67-1.5 1.5-1.5zm0 4h5c.83 0 1.5.67 1.5 1.5v1c0 .83-.67 1.5-1.5 1.5h-5A1.5 1.5 0 0 1 9 13v-1c0-.83.67-1.5 1.5-1.5z"/></svg>',
 			'Bark': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
 			'ntfy': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>',
-			'{{ _('Gotify (debug)') }}': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>',
+			'{{ _('Gotify') }}': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>',
 			'PushPlus': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 5h-2v5l4 2.4 1-1.6-3-1.8V7z"/></svg>',
 			'PushDeer': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 16a6 6 0 1 1 0-12 6 6 0 0 1 0 12z"/></svg>',
+			'{{ _('WxPusher') }}': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M18 16v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/><line x1="8" y1="20" x2="16" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
 			'{{ _('Custom push') }}': '<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width:24px;height:24px"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1 14H9v-2h2v2zm0-4H9V8h2v4z"/></svg>'
 		};
 		var modeOpts = [
 			{ v: '/usr/bin/pushbot/api/dingding.json', l: '{{ _('DingTalk') }}' },
 			{ v: '/usr/bin/pushbot/api/ent_wechat.json', l: '{{ _('WeCom') }}' },
 			{ v: '/usr/bin/pushbot/api/pushplus.json', l: '{{ _('PushPlus') }}' },
+			{ v: '/usr/bin/pushbot/api/wxpusher.json', l: '{{ _('WxPusher') }}' },
 			{ v: '/usr/bin/pushbot/api/feishu.json', l: '{{ _('Feishu') }}' },
-			{ v: '/usr/bin/pushbot/api/gotify.json', l: '{{ _('Gotify (debug)') }}' },
+			{ v: '/usr/bin/pushbot/api/gotify.json', l: '{{ _('Gotify') }}' },
 			{ v: '/usr/bin/pushbot/api/ntfy.json', l: '{{ _('ntfy') }}' },
 			{ v: '/usr/bin/pushbot/api/bark.json', l: '{{ _('Bark') }}' },
 			{ v: '/usr/bin/pushbot/api/pushdeer.json', l: '{{ _('PushDeer') }}' },
@@ -612,6 +614,20 @@ else
 			],
 			'/usr/bin/pushbot/api/ent_wechat.json': [
 				{ name: 'we_webhook', type: 'text', label: '{{ _('Webhook') }}', desc: '{{ _('WeCom bot Webhook, enter only the part after key=<br><a href="https://work.weixin.qq.com/api/doc/90000/90136/91770" target="_blank">Get the code</a><br><br>') }}'},
+			],
+			'/usr/bin/pushbot/api/pushplus.json': [
+				{ name: 'pp_token', type: 'text', label: '{{ _('PushPlus Token') }}', desc: '{{ _('Get the code') }} <a href=\'http://pushplus.plus/doc/\' target=\'_blank\'>{{ _('here') }}</a><br><br>'},
+				{ name: 'pp_channel', type: 'select', label: '{{ _('PushPlus Channel') }}', choices: [{v:'wechat',l:'{{ _('wechat: WeChat Official Account') }}'},{v:'app',l:'{{ _('app: PushPlus App') }}'},{v:'extension',l:'{{ _('extension: Browser extension / desktop') }}'},{v:'webhook',l:'{{ _('webhook: Third-party webhook') }}'},{v:'clawbot',l:'{{ _('clawbot: WeChat ClawBot') }}'},{v:'cp',l:'{{ _('cp: WeCom app') }}'},{v:'mail',l:'{{ _('mail: Email') }}'},{v:'sms',l:'{{ _('sms: SMS (paid)') }}'},{v:'voice',l:'{{ _('voice: Voice call (paid)') }}'}], desc: '{{ _('wechat/app/extension/clawbot: only token required<br>webhook/cp: also need Channel Code below<br>mail: Channel Code optional (default official email)<br>sms/voice: paid channels (deduct credits)<br>See <a href="http://www.pushplus.plus/doc/channel.html" target="_blank">here</a> for all channels<br><br>') }}'},
+				{ name: 'pp_webhook', type: 'text', label: '{{ _('PushPlus Channel Code') }}', showWhen: { field: 'pp_channel', values: ['webhook', 'cp', 'mail'] }, desc: '{{ _('Channel code configured in PushPlus console<br>webhook: third-party webhook code (WeCom/DingTalk/Feishu...)<br>cp: WeCom app code<br>mail: optional, email sender code (leave empty for official email)<br>See <a href="http://www.pushplus.plus/doc/guide/api.html" target="_blank">here</a> for details<br><br>') }}' },
+				{ name: 'pp_topic_enable', type: 'toggle', label: '{{ _('PushPlus group push') }}' },
+				{ name: 'pp_topic', type: 'text', label: '{{ _('PushPlus Topic') }}', depends: 'pp_topic_enable', desc: '{{ _('PushPlus group code<br>The group code used for group push<br>See <a href="http://www.pushplus.plus/push2.html" target="_blank">here</a> for details<br><br>') }}'},
+			],
+			'/usr/bin/pushbot/api/wxpusher.json': [
+				{ name: 'wxpusher_app_token', type: 'text', label: '{{ _('App Token') }}', desc: '{{ _('WxPusher app token<br><a href="https://wxpusher.zjiecode.com/docs/" target="_blank">Get the code</a><br>Must enable at least one of User IDs or Topics below (both can be enabled simultaneously)<br>Each supports one or multiple values<br><br>') }}'},
+				{ name: 'wxpusher_uids_enable', type: 'toggle', label: '{{ _('Send to Users') }}' },
+				{ name: 'wxpusher_uids', type: 'text', label: '{{ _('User IDs') }}', depends: 'wxpusher_uids_enable', desc: '{{ _('User UIDs (max 20)<br>Multiple values supported, separated by comma or space<br>e.g. UID_xxxx,UID_yyyy<br><br>') }}'},
+				{ name: 'wxpusher_topics_enable', type: 'toggle', label: '{{ _('Send to Topics') }}' },
+				{ name: 'wxpusher_topics', type: 'text', label: '{{ _('Topic IDs') }}', depends: 'wxpusher_topics_enable', desc: '{{ _('Topic IDs (max 20)<br>Multiple values supported, separated by comma or space<br>e.g. 123,456<br><br>') }}'},
 			],
 			'/usr/bin/pushbot/api/feishu.json': [
 				{ name: 'fs_webhook', type: 'text', label: '{{ _('WebHook') }}', desc: '{{ _('Feishu WebHook<br><a href="https://www.feishu.cn/hc/zh-CN/articles/360024984973" target="_blank">Get the code</a><br><br>') }}'},
@@ -655,13 +671,17 @@ else
 		};
 
 		function renderModeSettings() {
-			/* 渠道不支持表格化时自动关闭 table_format(目前仅钉钉支持) */
+			/* 渠道不支持表格化时自动关闭 table_format 并隐藏按钮 */
 			var tfh = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.table_format"]');
 			var tfBtn = document.getElementById('table_format_btn');
-			var supported = ['/usr/bin/pushbot/api/dingding.json'];
-			if (tfh && supported.indexOf(modeHidden.value) < 0) {
-				tfh.value = '0';
-				if (tfBtn) tfBtn.className = 'pushbot-choice-button is-off';
+			var supported = ['/usr/bin/pushbot/api/dingding.json', '/usr/bin/pushbot/api/wxpusher.json'];
+			if (supported.indexOf(modeHidden.value) < 0) {
+				/* 不支持表格化的渠道：关闭并隐藏 */
+				if (tfh) tfh.value = '0';
+				if (tfBtn) tfBtn.style.display = 'none';
+			} else {
+				/* 支持表格化的渠道：显示按钮 */
+				if (tfBtn) tfBtn.style.display = '';
 			}
 			var body = document.getElementById('pm_settings_body');
 			body.innerHTML = '';
@@ -839,7 +859,7 @@ else
 		aliasRow2.style.cssText = 'display:flex;gap:8px;align-items:center';
 		var aliasInp = document.createElement('input');
 		aliasInp.type = 'text';
-		aliasInp.placeholder = '{{ _('XX:XX:XX:XX:XX:XX-MyPhone') }}';
+		aliasInp.placeholder = '{{ _('XX:XX:XX:XX:XX:XX-MyPhone (comma or space separated for multiple)') }}';
 		aliasInp.style.cssText = 'flex:1;padding:7px 10px;border-radius:8px;border:1px solid rgba(148,163,184,0.3);font-size:13px;background:var(--pb-input-bg);color:inherit';
 		aliasInp.className = 'pushbot-alias-input';
 		var addBtn = document.createElement('button');
@@ -903,10 +923,32 @@ else
 		addBtn.addEventListener('click', function(e) {
 			e.preventDefault();
 			var val = aliasInp.value.trim();
-			if (val) { addTag(val); aliasInp.value = ''; }
+			if (val) {
+				// 支持逗号或空格分隔的多个别名
+				var aliases = val.split(/[,，\s]+/).filter(function(item) {
+					return item && item.indexOf('-') >= 0;
+				});
+				aliases.forEach(function(alias) {
+					addTag(alias.trim());
+				});
+				aliasInp.value = '';
+			}
 		});
 		aliasInp.addEventListener('keydown', function(e) {
-			if (e.key === 'Enter') { e.preventDefault(); var val = aliasInp.value.trim(); if (val) { addTag(val); aliasInp.value = ''; } }
+			if (e.key === 'Enter') {
+				e.preventDefault();
+				var val = aliasInp.value.trim();
+				if (val) {
+					// 支持逗号或空格分隔的多个别名
+					var aliases = val.split(/[,，\s]+/).filter(function(item) {
+						return item && item.indexOf('-') >= 0;
+					});
+					aliases.forEach(function(alias) {
+						addTag(alias.trim());
+					});
+					aliasInp.value = '';
+				}
+			}
 		});
 
 		aliasBox.appendChild(tagContainer);
@@ -916,7 +958,7 @@ else
 		var desc = document.createElement('div');
 		desc.className = 'pushbot-inline-description';
 		desc.style.cssText = 'margin:6px 0 0 2px';
-		desc.textContent = '{{ _('Enter MAC-alias, e.g. XX:XX:XX:XX:XX:XX-MyPhone') }}';
+		desc.textContent = '{{ _('Enter MAC-alias, e.g. XX:XX:XX:XX:XX:XX-MyPhone. Multiple aliases supported, separated by comma or space') }}';
 		card.appendChild(desc);
 
 		var pushCard = document.getElementById('pushbot_pushmode_card');
@@ -1541,7 +1583,7 @@ function initContentCard() {
 		t.style.cssText='margin:0 0 4px 2px;text-transform:none;font-size:13px;font-weight:600;color:inherit';
 		t.textContent=label;w.appendChild(t);
 		var b=document.createElement('div');b.className='pushbot-inline-body';
-		b.style.cssText='position:relative;display:flex;flex-direction:row;gap:6px;align-items:center;flex-wrap:nowrap';
+		b.style.cssText='position:relative;display:flex;flex-direction:row;gap:6px;align-items:center;flex-wrap:wrap';
 		var raw=''+(val==null?'':val);
 		/* 单位定义：值=保存后缀, 范围上限 */
 		var unitDefs=[['permanently','{{ _('Permanently') }}',0],['s','{{ _('Seconds') }}',59],['m','{{ _('Minutes') }}',59],['h','{{ _('Hours') }}',23],['D','{{ _('Days') }}',29],['W','{{ _('Weeks') }}',3],['M','{{ _('Months') }}',12]];
@@ -1562,7 +1604,8 @@ function initContentCard() {
 		/* 单位自绘下拉 */
 		var unitBtn=document.createElement('button');unitBtn.type='button';
 		unitBtn.className='pushbot-choice-button pushbot-sel-btn';
-		unitBtn.style.cssText='width:120px;flex:0 0 auto;padding:5px 10px;text-align:left;justify-content:space-between;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+		/* 宽度由内容决定（不裁切文字），超过卡片宽度时换行 */
+		unitBtn.style.cssText='flex:0 0 auto;width:auto;min-width:0;max-width:100%;box-sizing:border-box;padding:5px 10px;text-align:left;justify-content:space-between';
 		var unitLst=document.createElement('div');
 		unitLst.className='pushbot-sel-list';
 		unitLst.setAttribute('data-pb', 'unit');
@@ -1570,7 +1613,7 @@ function initContentCard() {
 		/* 数值自绘下拉 */
 		var numBtn=document.createElement('button');numBtn.type='button';
 		numBtn.className='pushbot-choice-button pushbot-sel-btn';
-		numBtn.style.cssText='flex:0 1 auto;min-width:70px;padding:5px 10px;text-align:left;justify-content:space-between;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+		numBtn.style.cssText='flex:0 0 auto;min-width:0;max-width:100%;box-sizing:border-box;padding:5px 10px;text-align:left;justify-content:space-between';
 		var numLst=document.createElement('div');
 		numLst.className='pushbot-sel-list';
 		numLst.setAttribute('data-pb', 'num');
@@ -2233,7 +2276,7 @@ cuSub.appendChild(mkBtn('{{ _('Traffic DND') }}',cdOn,function(on){updateFlagInp
 		/* 主按钮：复用插件 choice-button 样式（明暗自动适配） */
 		var btn=document.createElement('button');btn.type='button';
 		btn.className='pushbot-choice-button pushbot-sel-btn';
-		btn.style.cssText='width:100%;text-align:left;justify-content:space-between;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+		btn.style.cssText='width:100%;max-width:100%;box-sizing:border-box;text-align:left;justify-content:space-between';
 		/* 选项列表（绝对定位覆盖，样式走主题） */
 		var lst=document.createElement('div');
 		lst.className='pushbot-sel-list';
@@ -2851,13 +2894,25 @@ function initMonitorCard() {
 				hb.appendChild(i2);
 			});
 		}
-		function addTag(v){v=v.trim().toUpperCase();if(!v||curVals.indexOf(v)>=0)return;curVals.push(v);renderTags();syncH();}
+		function addTag(v){
+			// 支持逗号或空格分隔的多个别名
+			var aliases = v.split(/[,，\s]+/).filter(function(item) {
+				return item && item.trim();
+			});
+			aliases.forEach(function(alias) {
+				alias = alias.trim().toUpperCase();
+				if(!alias || curVals.indexOf(alias) >= 0) return;
+				curVals.push(alias);
+			});
+			renderTags();
+			syncH();
+		}
 		addB.addEventListener('click',function(){addTag(inp.value);inp.value='';inp.focus();});
 		inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();addTag(inp.value);inp.value='';}});
 		renderTags();
 		syncH();
 
-		var devDesc = '{{ _('Only runs when all devices in the list are offline<br/>After DND hours, watched devices with low traffic for 5 minutes (~100kb/m) are considered offline') }}';
+		var devDesc = '{{ _('Only runs when all devices in the list are offline<br/>After DND hours, watched devices with low traffic for 5 minutes (~100kb/m) are considered offline<br/>Multiple MACs supported, separated by comma or space') }}';
 		var d2 = document.createElement('div'); d2.className = 'pushbot-inline-description'; d2.innerHTML = devDesc; ec.appendChild(d2);
 	})();
 	ec.appendChild(document.createElement('hr')).style.cssText = 'border:none;border-top:1px solid rgba(148,163,184,0.2);margin:10px 0';
@@ -4174,6 +4229,7 @@ window.addEventListener('DOMContentLoaded', function() {
 }
 .pushbot-log-controls {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
 	gap: 12px;
@@ -4432,6 +4488,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
 .pushbot-card-top {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
 	gap: 12px;
@@ -4489,6 +4546,38 @@ window.addEventListener('DOMContentLoaded', function() {
 	gap: 10px;
 }
 
+/* 移动端渠道按钮：按钮宽度只由自身内容决定（短名不占多余宽度、不等宽），
+   按钮的字号/图标/内边距整体随卡片宽度等比缩放，卡片越窄整体越小，
+   10 个渠道在手机宽度下正好排成两行、每行 5 个，不留空档也不孤行。
+   文字始终完整显示，不省略、不裁切、不溢出卡片。 */
+@media (max-width: 768px) {
+	/* 参照物放在外层整行上：该行是普通块级元素，宽度由卡片决定，
+	   加 inline-size containment 不会像 flex item 那样按内容塌缩为 0。 */
+	.pushbot-pushmode-row {
+		container-type: inline-size;
+	}
+	.pushbot-choice-list.pushbot-pushmode-list {
+		display: flex;
+		flex-wrap: wrap;
+		flex: 1 1 100%;   /* 独占整行，宽度由父级决定而非内容 */
+		min-width: 0;
+		gap: 3px;
+	}
+	.pushbot-choice-list.pushbot-pushmode-list .pushbot-choice-button {
+		flex: 0 0 auto;   /* 宽度贴合内容：不拉伸、不与其他按钮强行等宽 */
+		min-width: 0;
+		font-size: 11px;                          /* 回退值（不支持容器查询时） */
+		font-size: clamp(8.5px, 3.05cqw, 13px);   /* 随卡片宽度等比缩放 */
+		padding: 0.5em 0.36em;
+		gap: 0.24em;
+	}
+	.pushbot-choice-list.pushbot-pushmode-list .pushbot-choice-button svg {
+		width: 1.15em;
+		height: 1.15em;
+		flex-shrink: 0;
+	}
+}
+
 .pushbot-choice-button {
 	display: inline-flex;
 	align-items: center;
@@ -4527,11 +4616,39 @@ window.addEventListener('DOMContentLoaded', function() {
 	background: #ffffff;
 	border: 1px solid #e2e8f0;
 }
+
+/* ── 按钮文字完整显示：不省略、不裁切、不溢出卡片 ──
+   面板内所有按钮一律按需换行显示完整文字（覆盖内联的 nowrap/ellipsis），
+   宽度以卡片为上限；按钮所在横向 flex 行放不下时自动换行，
+   避免把按钮或内容顶出卡片（卡片 overflow:hidden 时会表现为"被省略"）。 */
+.pushbot-body button,
+.pushbot-body .cbi-button {
+	max-width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+	white-space: normal !important;
+	overflow: visible !important;
+	text-overflow: clip !important;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+/* 按钮内部的分段文字（如 tab 的"基础/设置"）同样允许折行，保持居中 */
+.pushbot-body .pushbot-tab .pb-txt {
+	flex-wrap: wrap;
+	justify-content: center;
+}
+/* 横向 flex 行容器：空间不足时换行而不是溢出 */
+.pushbot-body [style*="display:flex"],
+.pushbot-body [style*="display: flex"] {
+	flex-wrap: wrap;
+}
 .pushbot-sel-item {
 	padding: 8px 12px;
 	font-size: 13px;
 	cursor: pointer;
-	white-space: nowrap;
+	/* 选项文字完整显示：过长时折行，不撑破下拉列表 */
+	white-space: normal;
+	overflow-wrap: anywhere;
 	color: #334155;
 	transition: background 0.15s ease;
 }

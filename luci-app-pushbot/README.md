@@ -2,7 +2,7 @@
 
 # 🚀 luci-app-pushbot 全能推送
 
-**路由器报警与日志推送工具** — 支持钉钉 · 企业微信 · 飞书 · Bark · PushPlus · PushDeer · ntfy · Gotify（调试中）多渠道
+**路由器报警与日志推送工具** — 支持钉钉 · 企业微信 · 飞书 · Bark · PushPlus · PushDeer · ntfy · Gotify · WxPusher 多渠道
 
 [![GitHub release](https://img.shields.io/github/v/release/zzsj0928/luci-app-pushbot?style=flat-square&color=blue)](https://github.com/zzsj0928/luci-app-pushbot/releases)
 [![GitHub issues](https://img.shields.io/github/issues/zzsj0928/luci-app-pushbot?style=flat-square&color=orange)](https://github.com/zzsj0928/luci-app-pushbot/issues)
@@ -24,6 +24,15 @@
 
 ## 📝 更新日志
 
+- **2026-09-20**（v5.18）：新增 WxPusher 渠道与内容卡片化，主版本 5.17 → 5.18
+  - 新增：**WxPusher 渠道**——填 App Token 即可推送，用户 UID 与主题 TopicID 各支持最多 20 个，两者至少启用其一；内容自动转 HTML，微信内直接可读
+  - 新增：**推送内容分模块卡片化**——表格改用无边框 HTML 表格，不再受 Markdown 表格在部分渠道不渲染的影响，各模块独立成卡片
+  - 新增：**设备别名批量录入**——多个 `MAC-别名` 用逗号或空格一次粘贴，自动拆分为独立条目
+  - 优化：**手机端渠道按钮**——每行排满 5 个，按钮、图标与文字随卡片宽度等比缩放，文字不再被省略或挤压
+  - 优化：**流量源健康检查**——检测到 nlbw 即优先使用，异常时自动重启一次，仍不可用则回退 wrtbw
+  - 优化：**白名单设备保持显示**，仅不再发送上下线通知
+  - 优化：**补全界面说明文案的汉化**
+  - 测试平台：x86_64（官方 APK）、MT798x（IPK）
 - **2026-09-19**（v5.17-r4 → r24）：黑名单与流量源优化
   - 新增：**nlbw 启动健康检查**——系统重启后自动检测并修复 nlbw 服务异常
   - 新增：**WiFi 认证失败监控**（MTK 闭源驱动）——提取失败 MAC 地址并分组统计
@@ -95,7 +104,7 @@
 | 模块 | 功能 |
 |------|------|
 | 运行控制 | 插件启用/禁用开关、精简模式（精简设备列表 / 当前时间 / 只推送标题） |
-| 推送模式 | 支持 钉钉、企业微信、飞书、Bark、PushPlus（全渠道）、PushDeer、ntfy、Gotify（调试中）、自定义推送 等多种推送渠道 |
+| 推送模式 | 支持 钉钉、企业微信、飞书、Bark、PushPlus（全渠道）、PushDeer、ntfy、Gotify、WxPusher、自定义推送 等多种推送渠道 |
 | 终端信息 | MAC 设备信息数据库（简化版 / 完整版 / 网络查询）、设备别名管理 |
 | 免打扰 | 免打扰时段设置（脚本挂起 / 静默模式）、MAC 过滤（白名单 / 黑名单 / 接口过滤、在线 / 离线免打扰） |
 

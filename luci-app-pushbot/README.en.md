@@ -2,7 +2,7 @@
 
 # 🚀 luci-app-pushbot PushBot
 
-**Router alert & log push tool** — DingTalk · WeCom · Feishu · Bark · PushPlus · PushDeer · ntfy · Gotify (debug)
+**Router alert & log push tool** — DingTalk · WeCom · Feishu · Bark · PushPlus · PushDeer · ntfy · Gotify · WxPusher
 
 [![GitHub release](https://img.shields.io/github/v/release/zzsj0928/luci-app-pushbot?style=flat-square&color=blue)](https://github.com/zzsj0928/luci-app-pushbot/releases)
 [![GitHub issues](https://img.shields.io/github/issues/zzsj0928/luci-app-pushbot?style=flat-square&color=orange)](https://github.com/zzsj0928/luci-app-pushbot/issues)
@@ -24,6 +24,15 @@
 
 ## 📝 Changelog
 
+- **2026-09-20** (v5.18): WxPusher channel & card-based content, main version 5.17 → 5.18
+  - Added: **WxPusher channel** — one App Token is enough; up to 20 user UIDs and 20 topic IDs each, at least one of the two enabled; content is converted to HTML and reads directly inside WeChat
+  - Added: **Per-module card rendering** — tables now use borderless HTML tables instead of Markdown tables, so each module renders as its own card on every channel
+  - Added: **Bulk device alias input** — paste multiple `MAC-alias` pairs separated by commas or spaces, split into individual entries automatically
+  - Improved: **Mobile channel buttons** — 5 per row, buttons/icons/text scale proportionally with card width, labels are never truncated
+  - Improved: **Traffic source health check** — prefers nlbw when present, restarts it once on failure, falls back to wrtbw if still unusable
+  - Improved: **Whitelisted devices stay visible** while no longer receiving online/offline notifications
+  - Improved: **Completed Simplified Chinese translations for UI descriptions**
+  - Tested on: x86_64 (official APK), MT798x (IPK)
 - **2026-09-19** (v5.17-r4 → r24): Blacklist & traffic source improvements
   - Added: **nlbw startup health check** — auto-detects and fixes nlbw service issues after reboot
   - Added: **WiFi auth failure monitoring** (MTK closed-source driver) — extracts failed MACs with group stats
@@ -88,7 +97,7 @@
 | Module | Description |
 |--------|-------------|
 | Run Control | Enable/disable switch, compact mode (compact device list / current time / push title only) |
-| Push Mode | DingTalk, WeCom, Feishu, Bark, PushPlus (all channels), PushDeer, ntfy, Gotify (debug), custom push |
+| Push Mode | DingTalk, WeCom, Feishu, Bark, PushPlus (all channels), PushDeer, ntfy, Gotify, WxPusher, custom push |
 | Terminal Info | MAC device database (compact / full / network lookup), device aliases |
 | Do Not Disturb | DND hours (pause script / silent mode), MAC filter (whitelist / blacklist / interface filter, online / offline DND) |
 

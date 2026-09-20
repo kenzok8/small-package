@@ -1,75 +1,140 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8\n"
 
-msgid "Wizard"
+msgid "Setup Wizard"
 msgstr "设置向导"
 
-msgid "Initial Router Setup"
-msgstr "路由器设置向导"
+msgid "Quickly configure common network, wireless, and system settings."
+msgstr "快速配置常用网络、无线与系统设置。"
 
 msgid "Net Settings"
 msgstr "网络设置"
 
+msgid "Firmware Settings"
+msgstr "固件与系统"
+
 msgid "Wireless Settings"
 msgstr "无线设置"
 
-msgid "If you are using this router for the first time, please configure it here."
-msgstr "如果你首次使用这个路由器，请在这里简单设置。"
-
-msgid "Three different ways to access the Internet, please choose according to your own situation."
-msgstr "二种不同的上网方式，请您根据自身情况进行选择。"
-
-msgid "Set the router's wireless name and password. For more advanced settings, please go to the Network-Wireless page."
-msgstr "设置路由器的无线名字和密码，更多高级设置请进入 网络-无线 页面。"
-
-msgid "Leave empty to use ISP DNS"
-msgstr "留空则使用运营商DNS"
-
-msgid "Enter the main router IP"
-msgstr "请输入主路由IP"
-
-msgid "Siderouter"
-msgstr "旁路由模式"
-
-msgid "To turn on this DHCP, you need to turn off the DHCP of the main router, and to turn off this DHCP, you need to manually change the gateway and DNS of all Internet devices to the IP of this bypass router"
-msgstr "开启此DHCP则需要关闭主路由的DHCP, 关闭此DHCP则需要手动将所有上网设备的网关和DNS改为此旁路由的IP"
-
-msgid "Enable IPv6"
-msgstr "启用IPv6"
-
-msgid "Enable/Disable IPv6"
-msgstr "一键开启/关闭 IPv6"
-
-msgid "Firmware Settings"
-msgstr "固件设置"
-
-msgid "Packages Auto Upgrade"
-msgstr "软件包自动更新"
-
-msgid "Firmware Upgrade Notice"
-msgstr "固件更新提醒"
-
-msgid "Persistent cookies"
-msgstr "持久化登录"
-
-msgid "Keep the background login state to avoid the need to log in again every time the browser is closed"
-msgstr "保持后台登录状态,避免每次关闭浏览器后都需要重新登录"
-
-msgid "Home"
-msgstr "首页"
-
 msgid "Shortcuts"
-msgstr "快捷访问"
-
-msgid "Shortcut"
 msgstr "快捷方式"
 
-msgid "Target URL"
-msgstr "目标URL"
+msgid "WAN Protocol / Mode"
+msgstr "WAN 协议 / 工作模式"
 
-msgid "Please enter a valid URL starting with http:// or https://"
-msgstr "URL需以http:// 或 https://开头"
+msgid "DHCP Client (Default Router)"
+msgstr "DHCP 客户端 (标准主路由模式)"
 
-msgid "Force the use of HTTPS in the backend."
-msgstr "后台强制使用https"
+msgid "PPPoE Dial-up"
+msgstr "PPPoE 拨号上网"
 
+msgid "Side-Router Mode (Bypass Gateway)"
+msgstr "旁路由模式 (网关旁路)"
+
+msgid "PPPoE Username"
+msgstr "宽带拨号账号"
+
+msgid "PPPoE Password"
+msgstr "宽带拨号密码"
+
+msgid "LAN IPv4 Address"
+msgstr "LAN 口 IPv4 地址"
+
+msgid "Custom DNS Server(s)"
+msgstr "自定义 DNS 服务器，留空默认运营商DNS"
+
+msgid "Gateway Address"
+msgstr "网关地址"
+
+msgid "Primary router IP address used when operating in side-router mode."
+msgstr "处于旁路由模式时的主路由 IP 地址。"
+
+msgid "Enable DHCP Server"
+msgstr "启用 DHCP 服务"
+
+msgid "Usually disabled in side-router mode to avoid IP address assignment conflicts with the main router."
+msgstr "在旁路由模式下通常关闭此项，避免与主路由的 IP 分配冲突。"
+
+msgid "IPv6 Support"
+msgstr "IPv6 支持"
+
+msgid "Enable or disable IPv6 router advertisements and DHCPv6."
+msgstr "启用或关闭 IPv6 路由通告与 DHCPv6 服务。"
+
+msgid "Firmware Upgrade Notice"
+msgstr "固件升级提示"
+
+msgid "Check and display notices for newer firmware versions."
+msgstr "检查并显示新版本固件更新提示。"
+
+msgid "Run CoreMark on Boot"
+msgstr "开机 CoreMark 跑分"
+
+msgid "Run CPU benchmark upon initial router initialization."
+msgstr "在路由器初始化启动时运行 CPU 基准测试。"
+
+msgid "Persistent Cookie Session"
+msgstr "持久 Cookie 登录"
+
+msgid "Maintain persistent login sessions in the web browser."
+msgstr "在浏览器中保持登录会话状态，避免频繁重复登录。"
+
+msgid "Enforce HTTPS Access"
+msgstr "强制 HTTPS 访问"
+
+msgid "Automatically redirect HTTP requests to secure HTTPS."
+msgstr "将所有 HTTP 请求自动重定向至安全加密的 HTTPS。"
+
+msgid "Landing Dashboard Mode"
+msgstr "主页展示模式"
+
+msgid "Default"
+msgstr "默认"
+
+msgid "RouterDog"
+msgstr "路由狗"
+
+msgid "NAS"
+msgstr "NAS 模式"
+
+msgid "Next-NAS"
+msgstr "Next-NAS 模式"
+
+msgid "Router"
+msgstr "路由器模式"
+
+msgid "Wireless Network Name (SSID)"
+msgstr "无线网络名称 (SSID)"
+
+msgid "Wireless Password (Key)"
+msgstr "无线网络密码"
+
+msgid "Leave empty for open network or 8+ characters"
+msgstr "留空为开放无密码网络，或输入 8 位以上密码"
+
+msgid "URL Shortcuts"
+msgstr "快捷方式列表"
+
+msgid "Applying Changes"
+msgstr "正在应用修改"
+
+msgid "Applying modified settings: %s..."
+msgstr "正在应用已修改的设置项: %s..."
+
+msgid "No settings were modified. Services remain uninterrupted."
+msgstr "未检测到任何修改，无需保存或重启服务。"
+
+msgid "Settings successfully applied: %s"
+msgstr "已成功应用并重载修改项: %s"
+
+msgid "Failed to apply settings: %s"
+msgstr "应用设置失败: %s"
+
+msgid "LAN IP Address Changed"
+msgstr "LAN 口 IP 地址已变更"
+
+msgid "LAN IP changed to %s. Redirecting to the new address in %d seconds..."
+msgstr "LAN 口 IP 已变更为 %s。将在 %d 秒后自动跳转至新地址..."
+
+msgid "Redirect Now"
+msgstr "立即跳转"

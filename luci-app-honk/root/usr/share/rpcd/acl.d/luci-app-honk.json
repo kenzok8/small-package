@@ -5,7 +5,8 @@
 			"ubus": {
 				"system": [ "board", "info" ],
 				"service": [ "list" ],
-				"rc": [ "list" ]
+				"rc": [ "list" ],
+				"luci.honk": [ "*" ]
 			},
 			"uci": [ "honk" ],
 			"file": [
@@ -19,7 +20,8 @@
 		},
 		"write": {
 			"ubus": {
-				"rc": [ "init" ]
+				"rc": [ "init" ],
+				"luci.honk": [ "*" ]
 			},
 			"uci": [ "honk" ],
 			"file": [
@@ -33,4 +35,3 @@
 		}
 	}
 }
-

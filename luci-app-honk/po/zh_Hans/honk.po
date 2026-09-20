@@ -76,10 +76,207 @@ msgstr "更新时间（每天）"
 msgid "Format Code"
 msgstr "格式化代码"
 
-msgid "Zashboard"
-msgstr "控制面板"
-
 msgid "Dashboard"
 msgstr "控制面板"
+
+msgid "Clear logs"
+msgstr "清空日志"
+
+msgid "Logs cleared successfully."
+msgstr "日志已清空。"
+
+msgid "Failed to clear logs: "
+msgstr "清空日志失败："
+
+msgid "Configuration applied and service reloaded."
+msgstr "配置已生效并重载服务。"
+
+msgid "Status"
+msgstr "状态"
+
+msgid "Running Status"
+msgstr "运行状态"
+
+msgid "Formatted"
+msgstr "已格式化"
+
+msgid "Failed to format code: "
+msgstr "格式化代码失败："
+
+msgid "Running"
+msgstr "运行中"
+
+msgid "Not Running"
+msgstr "未运行"
+
+msgid "Checking Zashboard and Clash API configuration..."
+msgstr "正在检测 Zashboard 与 Clash API 配置..."
+
+msgid "Enabling and restarting HONK..."
+msgstr "正在开启并重启 HONK..."
+
+msgid "One-click Enable Default Clash API"
+msgstr "一键启用默认 Clash API 配置"
+
+msgid "Successfully enabled! Restarting service and initializing dashboard..."
+msgstr "已成功启用！正在重启服务并初始化面板..."
+
+msgid "Failed to enable: "
+msgstr "启用失败："
+
+msgid "Unknown error"
+msgstr "未知错误"
+
+msgid "Zashboard / Clash API Unconfigured"
+msgstr "Zashboard / Clash API 未配置"
+
+msgid "HONK has not enabled Clash API in its configuration file. Zashboard requires external controller port and dashboard UI path."
+msgstr "HONK 尚未在配置文件中启用 Clash API。Zashboard 控制面板需要依赖 Clash API 提供的外部控制器端口与面板静态文件路径。"
+
+msgid "Please add or uncomment experimental.clash_api block in Global Settings, and ensure external_controller and external_ui are configured."
+msgstr "请在【全局设置】的配置文件中添加或取消注释 experimental.clash_api 语法块，并确保配置了 external_controller 和 external_ui。"
+
+msgid "Example Configuration (/etc/honk/config.dae):"
+msgstr "参考配置示例（/etc/honk/config.dae）："
+
+msgid "Configure in Global Settings"
+msgstr "前往【全局设置】手动配置"
+
+msgid "(Not set)"
+msgstr "（未设置）"
+
+msgid "Preparing download..."
+msgstr "准备下载..."
+
+msgid "Please enter a valid download URL"
+msgstr "请输入有效的下载 URL"
+
+msgid "Processing..."
+msgstr "正在处理..."
+
+msgid "Start Download & Install Zashboard"
+msgstr "开始下载并安装 Zashboard"
+
+msgid "Zashboard UI Files Not Found"
+msgstr "未检测到 Zashboard 面板文件"
+
+msgid "Clash API is configured, but dashboard files are missing in the external UI directory. You can download and deploy it directly."
+msgstr "Clash API 配置已就绪，但设定的外部控制面板目录中缺少面板文件。您可以点击下方按钮，使用 OpenWrt 原生轻量解压直接在线下载部署。"
+
+msgid "Target Directory (external_ui)"
+msgstr "目标安装目录 (external_ui)"
+
+msgid "Listen Address & Port"
+msgstr "监听地址与端口"
+
+msgid "API Secret"
+msgstr "API 认证密钥"
+
+msgid "Download Source (Optimized fontless dist for OpenWrt, ~1MB):"
+msgstr "下载版本与源（专为 OpenWrt 优化的无字体极简版，仅约 1MB）："
+
+msgid "Custom URL"
+msgstr "自定义 URL"
+
+msgid "HTTPS access detected: "
+msgstr "检测到当前通过 HTTPS 访问 LuCI："
+
+msgid "Modern browsers may block HTTP iframe resources under HTTPS. If the dashboard fails to display, open it in a new tab."
+msgstr "现代浏览器可能会阻止直接加载 HTTP 协议的 Clash API 面板。如无法正常显示，请点击右侧按钮在新标签页打开。"
+
+msgid "Open in New Tab"
+msgstr "在新标签页打开"
+
+msgid "HONK service is currently not running: "
+msgstr "HONK 服务当前未运行："
+
+msgid "Clash API port ("
+msgstr "Clash API 端口（"
+
+msgid ") is not listening. Start the service to display data."
+msgstr "）尚未监听。启动服务后即可正常显示数据。"
+
+msgid "Start HONK"
+msgstr "前往启动 HONK"
+
+msgid "New Tab"
+msgstr "新标签页"
+
+msgid "Open independently in a new tab"
+msgstr "在新标签页中独立打开"
+
+msgid "Update Dashboard"
+msgstr "更新面板"
+
+msgid "Update to latest Zashboard"
+msgstr "更新至最新版 Zashboard"
+
+msgid "Update Zashboard Dashboard"
+msgstr "更新 Zashboard 面板"
+
+msgid "The latest fontless version (dist-no-fonts.zip) will be downloaded and deployed to: "
+msgstr "系统将下载最新的无字体极简版（dist-no-fonts.zip）并重新部署至目标目录："
+
+msgid "Select download source"
+msgstr "选择下载源"
+
+msgid "Cancel"
+msgstr "取消"
+
+msgid "Start Update"
+msgstr "开始更新"
+
+msgid "Refresh"
+msgstr "刷新"
+
+msgid "Refresh dashboard content"
+msgstr "刷新面板内容"
+
+msgid "Fullscreen"
+msgstr "全屏"
+
+msgid "Toggle fullscreen display"
+msgstr "切换全屏显示"
+
+msgid "Initializing download task...\n"
+msgstr "正在初始化下载任务...\n"
+
+msgid "Failed to trigger download: "
+msgstr "触发下载失败："
+
+msgid "Installation complete! Loading dashboard..."
+msgstr "安装完成！正在加载面板..."
+
+msgid "Installation failed. Please check logs."
+msgstr "安装失败，请检查日志。"
+
+msgid "Download error: "
+msgstr "触发下载异常："
+
+msgid "Configured (Hidden)"
+msgstr "已设置 (隐藏)"
+
+msgid "Not configured (Empty)"
+msgstr "未设置（留空）"
+
+msgid "Reloading..."
+msgstr "正在重载..."
+
+msgid "HONK service reload triggered successfully."
+msgstr "已成功触发 HONK 服务重载。"
+
+msgid "Failed to reload HONK: "
+msgstr "重载 HONK 失败："
+
+msgid "DNS configuration saved and service reloaded."
+msgstr "DNS 配置已保存并重载服务。"
+
+msgid "Node configuration saved and service reloaded."
+msgstr "节点配置已保存并重载服务。"
+
+msgid "Routing configuration saved and service reloaded."
+msgstr "路由配置已保存并重载服务。"
+
+
 
 
