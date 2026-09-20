@@ -1,0 +1,120 @@
+#!/bin/sh /etc/rc.common
+# Cloudreve init script - binary lives on selected disk under Configs/cloudreve/
+#
+# 实测修正（Cloudreve V4.19.1，aarch64）：
+#   1) 必须用子命令启动：cloudreve server -c <conf>
+#      裸跑 `cloudreve -c conf` 只会打印 usage 然后退出
+#   2) V4 不认 [Database] 段，数据库固定在「可执行文件所在目录/data/cloudreve.db」
+#      所以不写 DBFile，也不设 workingdir，让它自己定位
+#   3) conf.ini 只在缺失/残缺时生成，避免每次启动都换 SessionSecret 导致掉登录
+
+USE_PROCD=1
+START=99
+STOP=15
+
+CONF="cloudreve"
+LOG_PATH="/var/log/cloudreve.log"
+CONFIGS_DIR="Configs"
+APP_SUBDIR="cloudreve"
+
+uci_get() {
+	local ret=$(uci -q get ${CONF}.@cloudreve[0].${1} 2>/dev/null)
+	echo ${ret:=$2}
+}
+
+log_msg() {
+	mkdir -p /var/log 2>/dev/null
+	echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> $LOG_PATH
+}
+
+resolve_app_dir() {
+	local storage=$(uci_get storage_path "/root/.istore")
+	echo "${storage}/${CONFIGS_DIR}/${APP_SUBDIR}"
+}
+
+rand_str() {
+	local s=$(head -c 32 /dev/urandom 2>/dev/null | md5sum 2>/dev/null | head -c 32)
+	[ -z "$s" ] && s=$(head -c 32 /dev/urandom 2>/dev/null | tr -dc 'a-f0-9' | head -c 32)
+	[ -z "$s" ] && s="0123456789abcdef0123456789abcdef"
+	echo "$s"
+}
+
+write_conf() {
+	local conf_path="$1"
+	local listen="$2"
+	cat > "$conf_path" <<EOF
+[System]
+Debug = false
+Mode = master
+Listen = ${listen}
+SessionSecret = $(rand_str)
+HashIDSalt = $(rand_str)
+LogLevel = info
+EOF
+}
+
+start_service() {
+	config_load "$CONF"
+
+	local enabled=$(uci_get enabled 0)
+	if [ "$enabled" != "1" ]; then
+		log_msg "未启动：LuCI 页面里「启用服务」没有勾选"
+		return 1
+	fi
+
+	local app_dir=$(resolve_app_dir)
+	local bin="${app_dir}/cloudreve"
+	local conf_path="${app_dir}/cloudreve.ini"
+	local data_dir="${app_dir}/data"
+
+	mkdir -p "$app_dir" 2>/dev/null
+	mkdir -p "$data_dir" 2>/dev/null
+	chmod 700 "$data_dir" 2>/dev/null
+
+	if [ ! -f "$bin" ]; then
+		log_msg "启动失败：在 $bin 找不到程序本体，请先在 LuCI 页面点「下载最新二进制」"
+		return 1
+	fi
+
+	chmod 755 "$bin" 2>/dev/null
+	chown root:root "$bin" 2>/dev/null
+
+	local listen_addr=$(uci_get listen_address "0.0.0.0")
+	local listen_port=$(uci_get listen_port "5212")
+	local listen="${listen_addr}:${listen_port}"
+
+	# conf.ini 只在不存在、为空、或缺少 HashIDSalt（旧 v3 格式）时重建
+	if [ ! -s "$conf_path" ] || ! grep -q "HashIDSalt" "$conf_path" 2>/dev/null; then
+		write_conf "$conf_path" "$listen"
+		log_msg "已生成配置文件：$conf_path"
+	else
+		sed -i "s|^Listen[ \t]*=.*|Listen = ${listen}|" "$conf_path" 2>/dev/null
+	fi
+
+	log_msg "正在启动 Cloudreve：程序=$bin，配置=$conf_path，监听=$listen，数据目录=$data_dir"
+
+	procd_open_instance
+	procd_set_param command "$bin"
+	procd_append_param command server
+	procd_append_param command -c "$conf_path"
+	procd_set_param limits core="unlimited"
+	procd_set_param limits nofile="1000000 1000000"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param respawn
+	procd_close_instance
+
+	return 0
+}
+
+stop_service() {
+	log_msg "正在停止 Cloudreve"
+}
+
+reload_service() {
+	restart
+}
+
+service_triggers() {
+	procd_add_reload_trigger "$CONF"
+}

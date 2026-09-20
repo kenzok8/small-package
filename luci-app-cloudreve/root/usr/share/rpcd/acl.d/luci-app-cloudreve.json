@@ -1,0 +1,17 @@
+{
+	"luci-app-cloudreve": {
+		"description": "Grant UCI access for luci-app-cloudreve",
+		"read": {
+			"uci": [ "cloudreve" ],
+			"file": {
+				"/proc/mounts": [ "read" ]
+			}
+		},
+		"write": {
+			"uci": [ "cloudreve" ]
+		},
+		"execute": {
+			"file": [ "*" ]
+		}
+	}
+}

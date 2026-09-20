@@ -1,0 +1,59 @@
+<%
+local fs = require "nixio.fs"
+local sys = require "luci.sys"
+
+-- 全部在一个 Lua 块里拼好 HTML，最后一次性输出。
+-- 实测踩坑：本机 luci 模板解析器是 C 写的（parser.so），
+-- 对「多个 <% %> 块 + 含百分号/尖号的 HTML 混排」会误判配对，
+-- 报 '%>' expected before end of file。单块写法最稳。
+
+local function esc(s)
+	return pcdata(s or "")
+end
+
+local mine = fs.readfile("/var/log/cloudreve.log") or ""
+
+-- Cloudreve 自己的输出走 procd -> syslog，只能从 logread 拿
+local raw = sys.exec("logread") or ""
+local buf = {}
+for line in raw:gmatch("[^\r\n]+") do
+	if line:lower():find("cloudreve", 1, true) then
+		buf[#buf + 1] = line
+	end
+end
+local total = #buf
+local start = total - 119
+if start < 1 then start = 1 end
+local sysout = {}
+for i = start, total do
+	sysout[#sysout + 1] = buf[i]
+end
+sysout = table.concat(sysout, "\n")
+
+local h = {}
+local function add(x) h[#h + 1] = x end
+
+add('<fieldset class="cbi-section">')
+add('<legend><%=translate('运行日志')%></legend>')
+add('<p style="color:#888;font-size:12px;"><%=translate('每次刷新本页都会重新读取。')%>' ..
+    '<%=translate('上框是 Cloudreve 自己的输出（真正的报错看这里），下框是本插件的启停记录。')%></p>')
+
+add('<p style="font-size:12px;margin-top:10px;"><%=translate('Cloudreve 程序输出（最近 120 行）')%></p>')
+if sysout == "" then
+	add('<p style="color:#c80;font-size:12px;"><%=translate('暂时没有捕获到 Cloudreve 的输出。')%>' ..
+	    '<%=translate('如果服务没起来，请先在上方点一次「启动服务」，再回来刷新本页。')%></p>')
+else
+	add('<textarea readonly="readonly" style="width:100%;min-height:220px;' ..
+	    'font-family:monospace;font-size:12px;">' .. esc(sysout) .. '</textarea>')
+end
+
+add('<p style="font-size:12px;margin-top:12px;"><%=translate('插件启停记录（/var/log/cloudreve.log）')%></p>')
+if mine == "" then
+	add('<p style="color:#888;font-size:12px;"><%=translate('暂无记录。')%></p>')
+else
+	add('<textarea readonly="readonly" style="width:100%;min-height:140px;' ..
+	    'font-family:monospace;font-size:12px;">' .. esc(mine) .. '</textarea>')
+end
+add('</fieldset>')
+-%>
+<%=table.concat(h, "\n")%>

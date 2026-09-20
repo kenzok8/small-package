@@ -1,0 +1,53 @@
+<%
+local dsp = require "luci.dispatcher"
+-%>
+
+<script type="text/javascript">//<![CDATA[
+var tokenStr = '<%=token%>';
+
+function initDirClick(btn) {
+	btn.disabled = true;
+	btn.value = '<%=translate('正在创建…')%>';
+
+	var detailElm = document.getElementById(btn.id + '-detail');
+	if (detailElm) {
+		detailElm.innerHTML = '<em style="color:gray;"><%=translate('正在在所选磁盘上创建 Configs/cloudreve/ 目录…')%></em>';
+	}
+
+	new XHR().get('<%=dsp.build_url("admin/nas/cloudreve/initdir")%>', { token: tokenStr },
+	function(_, json) {
+		var resultJson = json || { 'code': 1, 'error': '<%=translate('发生未知错误，请查看页面底部的运行日志。')%>' };
+		btn.disabled = false;
+		btn.value = btn.placeholder;
+
+		if (detailElm) {
+			if (resultJson.code) {
+				detailElm.innerHTML = '<em style="color:red;"><%=translate('创建失败：')%>' + resultJson.error + '</em>' +
+					'<br/><em style="color:gray;font-size:12px;">' +
+					'<%=translate('请确认硬盘已经插好并成功挂载、且目录可写。也可以先到「系统 → 挂载点」检查。')%></em>';
+			} else {
+				detailElm.innerHTML = '<em style="color:green;"><%=translate('目录已就绪：')%>' + resultJson.app_dir +
+					'</em><br/><em style="color:gray;font-size:12px;"><%=translate('接下来就可以点「下载最新二进制」了。')%></em>';
+			}
+		}
+	});
+}
+//]]>
+</script>
+
+<%+cbi/valueheader%>
+	<% if self:cfgvalue(section) ~= false then %>
+		<input class="cbi-button cbi-input-<%=self.inputstyle or "button" %>" type="button"<%=
+			attr("name", cbid) ..
+			attr("id", self.id or cbid) ..
+			attr("value", self.inputtitle or self.title) ..
+			ifattr(self.btnclick, "onclick", self.btnclick) ..
+			ifattr(self.placeholder, "placeholder")
+		%> />
+		<span id="<%=self.id or cbid%>-detail" style="display:block;margin-top:8px;">
+			<em style="color:gray;font-size:12px;"><%=translate('点击后会在所选磁盘下建立 Configs/cloudreve/ 目录。')%></em>
+		</span>
+	<% else %>
+		-
+	<% end %>
+<%+cbi/valuefooter%>

@@ -1,0 +1,40 @@
+<%
+local dsp = require "luci.dispatcher"
+-%>
+
+<script type="text/javascript">//<![CDATA[
+var svcToken = '<%=token%>';
+
+function svcCtl(btn, act) {
+	btn.disabled = true;
+	var d = document.getElementById('cloudreve_svc_detail');
+	if (d) d.innerHTML = '<em style="color:gray;"><%=translate('正在执行「')%>' + act + '<%=translate('」，请稍候…')%></em>';
+
+	new XHR().get('<%=dsp.build_url("admin/nas/cloudreve/svc")%>', { token: svcToken, action: act },
+	function(_, json) {
+		var r = json || { code: 1 };
+		btn.disabled = false;
+		if (d) {
+			if (r.code) {
+				d.innerHTML = '<em style="color:red;"><%=translate('操作失败：')%>' + (r.error || '<%=translate('未知错误')%>') + '</em>';
+			} else {
+				d.innerHTML = '<em style="color:green;"><%=translate('指令已执行，几秒后看上方「运行状态」是否变化。')%></em>' +
+					'<br/><em style="color:gray;font-size:12px;"><%=translate('如果还是没起来，请看本页最下方的运行日志。')%></em>';
+			}
+		}
+		setTimeout(function() { window.location.reload(); }, 3000);
+	});
+}
+//]]>
+</script>
+
+<%+cbi/valueheader%>
+	<div style="display:flex; gap:8px; flex-wrap:wrap;">
+		<input class="cbi-button cbi-input-apply" type="button" value="<%=translate('启动服务')%>" onclick="svcCtl(this,'start');" />
+		<input class="cbi-button cbi-input-apply" type="button" value="<%=translate('停止服务')%>" onclick="svcCtl(this,'stop');" />
+		<input class="cbi-button cbi-input-apply" type="button" value="<%=translate('重启服务')%>" onclick="svcCtl(this,'restart');" />
+	</div>
+	<span id="cloudreve_svc_detail" style="display:block;margin-top:8px;">
+		<em style="color:gray;font-size:12px;"><%=translate('这三个按钮不改配置、直接生效。点完等 3 秒页面会自动刷新。')%></em>
+	</span>
+<%+cbi/valuefooter%>

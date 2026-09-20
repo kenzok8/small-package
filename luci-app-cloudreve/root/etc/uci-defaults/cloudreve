@@ -1,0 +1,19 @@
+#!/bin/sh
+# Post-install setup for luci-app-cloudreve
+
+chmod +x /etc/init.d/cloudreve >/dev/null 2>&1
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@cloudreve[-1]
+	add ucitrack cloudreve
+	set ucitrack.@cloudreve[-1].init=cloudreve
+	commit ucitrack
+EOF
+
+# Create system config dir
+mkdir -p /etc/cloudreve >/dev/null 2>&1
+
+rm -f /tmp/luci-indexcache
+rm -f /tmp/luci-modulecache/*
+
+exit 0

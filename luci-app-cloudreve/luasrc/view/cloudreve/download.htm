@@ -1,0 +1,147 @@
+<%
+local dsp = require "luci.dispatcher"
+-%>
+
+<script type="text/javascript">//<![CDATA[
+var checkInfo;
+var tokenStr = '<%=token%>';
+
+function addPageNotice() {
+	window.onbeforeunload = function(e) {
+		e.returnValue = '<%=translate('正在下载，此时关闭页面会导致安装中断，确定要离开吗？')%>';
+		return e.returnValue;
+	};
+}
+
+function removePageNotice() { window.onbeforeunload = undefined; }
+
+function doAjaxGet(url, data, onResult) {
+	new XHR().get(url, data, function(_, json) {
+		var resultJson = json || { 'code': 1, 'error': '<%=translate('发生未知错误，请查看页面底部的运行日志。')%>' };
+		if (typeof onResult === 'function') onResult(resultJson);
+	})
+}
+
+function downloadClick(btn) {
+	if (checkInfo === undefined) {
+		checkUpdate(btn);
+	} else {
+		doDownload(btn);
+	}
+}
+
+function checkUpdate(btn) {
+	btn.disabled = true;
+	btn.value = '<%=translate('正在检测…')%>';
+	addPageNotice();
+
+	var detailElm = document.getElementById(btn.id + '-detail');
+	if (detailElm) {
+		detailElm.innerHTML = '<em style="color:gray;"><%=translate('正在向 GitHub 查询最新版本，请稍候…')%></em>';
+	}
+
+	doAjaxGet('<%=dsp.build_url("admin/nas/cloudreve/check")%>', { token: tokenStr },
+	function(json) {
+		removePageNotice();
+
+		if (json.code) {
+			eval('checkInfo = undefined');
+			btn.disabled = false;
+			btn.value = btn.placeholder;
+			if (json.error) alert('<%=translate('检测失败：')%>' + json.error);
+		} else {
+			eval('checkInfo = json');
+			btn.disabled = false;
+			btn.value = '<%=translate('开始下载并安装')%>';
+			btn.placeholder = '<%=translate('开始下载并安装')%>';
+		}
+
+		if (detailElm) {
+			var html = '';
+			if (json.arch) {
+				html += '<em><%=translate('本机架构：')%>' + json.arch + '<%=translate('　→　匹配安装包：')%>' + json.target + '</em><br/>';
+			}
+			if (json.app_dir) {
+				html += '<em><%=translate('安装目录：')%>' + json.app_dir + '</em><br/>';
+			}
+			if (json.localver && json.localver !== '') {
+				html += '<em style="color:green;"><%=translate('当前版本：')%>' + json.localver + '</em>&nbsp;&nbsp;';
+			} else {
+				html += '<em style="color:orange;"><%=translate('当前状态：未安装')%></em>&nbsp;&nbsp;';
+			}
+			if (json.remotever) {
+				html += '<em style="color:red;"><%=translate('最新版本：')%>' + json.remotever + '</em>';
+			}
+
+			if (json.code) {
+				html += '<br/><em style="color:gray;font-size:12px;">' +
+						'<%=translate('如果提示连不上 GitHub，多半是路由器访问外网不畅，可以换个网络或稍后再试。')%></em>';
+			} else if (json.localver && json.localver !== '' && json.localver === json.remotever) {
+				html += '<br/><em style="color:gray;font-size:12px;"><%=translate('已经是最新版了，如需重装可以再点一次按钮。')%></em>';
+			} else {
+				html += '<br/><em style="color:gray;font-size:12px;"><%=translate('检测完成，再点一次按钮即可开始下载。')%></em>';
+			}
+
+			if (json.available && json.available.length > 0) {
+				html += '<br/><em style="color:gray;font-size:11px;"><%=translate('官方发布的全部安装包：')%>' +
+					json.available.join('、') + '</em>';
+			}
+			detailElm.innerHTML = html;
+		}
+		checkInfo = json;
+	});
+}
+
+function doDownload(btn) {
+	btn.disabled = true;
+	btn.value = '<%=translate('正在下载，请勿关闭页面…')%>';
+	addPageNotice();
+
+	var detailElm = document.getElementById(btn.id + '-detail');
+	if (detailElm) {
+		detailElm.innerHTML = '<em style="color:gray;"><%=translate('正在从 GitHub 下载并解压安装，')%>' +
+			'<%=translate('根据网速不同大约需要几十秒到几分钟，请耐心等待…')%></em>';
+	}
+
+	doAjaxGet('<%=dsp.build_url("admin/nas/cloudreve/download")%>', {
+		token: tokenStr,
+		url: checkInfo ? checkInfo.download_url : ''
+	}, function(json) {
+		removePageNotice();
+		if (json.code) {
+			btn.disabled = false;
+			btn.value = btn.placeholder;
+			if (json.error) alert('<%=translate('下载/安装失败：')%>' + json.error);
+			if (detailElm) {
+				detailElm.innerHTML = '<em style="color:red;">' + (json.error || '<%=translate('安装失败')%>') +
+					'</em><br/><em style="color:gray;font-size:12px;">' +
+					'<%=translate('常见原因：路由器访问 GitHub 超时、磁盘不可写、或者磁盘剩余空间不足。')%></em>';
+			}
+		} else {
+			alert('<%=translate('安装成功！程序已放到：')%>' + (json.app_dir || ''));
+			if (detailElm) {
+				detailElm.innerHTML = '<em style="color:green;"><%=translate('安装成功，正在刷新页面…')%></em>';
+			}
+			setTimeout(function() { window.location.reload(); }, 1200);
+		}
+	});
+}
+//]]>
+</script>
+
+<%+cbi/valueheader%>
+	<% if self:cfgvalue(section) ~= false then %>
+		<input class="cbi-button cbi-input-<%=self.inputstyle or "button" %>" type="button"<%=
+			attr("name", cbid) ..
+			attr("id", self.id or cbid) ..
+			attr("value", self.inputtitle or self.title) ..
+			ifattr(self.btnclick, "onclick", self.btnclick) ..
+			ifattr(self.placeholder, "placeholder")
+		%> />
+		<span id="<%=self.id or cbid%>-detail" style="display:block;margin-top:8px;">
+			<em style="color:gray;font-size:12px;"><%=translate('第一次点击＝检测架构与版本；检测完成后再点一次＝正式下载安装。')%></em>
+		</span>
+	<% else %>
+		-
+	<% end %>
+<%+cbi/valuefooter%>

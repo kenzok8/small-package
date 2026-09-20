@@ -1,0 +1,14 @@
+{
+	"cloudreve": {
+		"name": "cloudreve",
+		"title": "Cloudreve 私有云盘",
+		"description": "支持多家存储驱动的自建网盘系统，Web 界面管理文件、分享、WebDAV。二进制存放于所选磁盘的 Configs/cloudreve/ 目录。",
+		"type": "native",
+		"homepage": "https://github.com/cloudreve/cloudreve",
+		"tags": ["nas", "storage", "cloud"],
+		"arch": ["amd64", "arm64", "mipsel", "arm"],
+		"depends": ["luci-base", "luci-compat", "wget", "ca-bundle", "tar", "lsblk"],
+		"maintainer": "RtrBug",
+		"version": "0.0.1"
+	}
+}
