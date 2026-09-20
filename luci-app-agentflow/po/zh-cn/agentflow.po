@@ -51,3 +51,24 @@ msgstr "AgentFlow 服务未运行。"
 
 msgid "The AgentFlow service is running."
 msgstr "AgentFlow 服务运行中。"
+
+msgid "Install agent"
+msgstr "安装智能体"
+
+msgid "Agent"
+msgstr "智能体"
+
+msgid "Select a coding agent to install into the shared AgentFlow runtime."
+msgstr "选择要安装到 AgentFlow 共享运行环境中的编码智能体。"
+
+msgid "Cancel"
+msgstr "取消"
+
+msgid "Install now"
+msgstr "立即安装"
+
+msgid "Task log window is not available."
+msgstr "任务日志窗口不可用。"
+
+msgid "Failed to start agent installation."
+msgstr "启动智能体安装失败。"

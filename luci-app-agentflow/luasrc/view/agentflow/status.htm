@@ -1,11 +1,80 @@
+<%+tasks/embed%>
+
+<style type="text/css">
+.agentflow-actions { display:flex; gap:10px; flex-wrap:wrap; margin:12px; }
+.agentflow-actions .btn, .agentflow-agent-dialog-actions .btn { min-height:40px; }
+.agentflow-agent-modal { position:fixed; inset:0; z-index:10000; display:none; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; background:rgba(15,23,42,.45); }
+.agentflow-agent-modal.open { display:flex; }
+.agentflow-agent-dialog, body[theme="light"] .agentflow-agent-dialog { width:min(520px, 100%); padding:20px; box-sizing:border-box; border:1px solid #d0d7de; border-radius:12px; background:#fff; color:inherit; box-shadow:0 18px 48px rgba(15,23,42,.24); }
+.agentflow-agent-dialog h3 { margin:0 0 8px; text-wrap:balance; }
+.agentflow-agent-dialog > p, body[theme="light"] .agentflow-agent-dialog > p { margin:0 0 16px; color:#666; text-wrap:pretty; }
+.agentflow-agent-field label { display:block; margin-bottom:6px; font-weight:600; }
+.agentflow-agent-field select { width:100%; min-height:40px; box-sizing:border-box; }
+.agentflow-agent-dialog-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:18px; }
+body[theme="dark"] .agentflow-agent-dialog { border-color:#465166; background:#1f2937; color:#e5e7eb; }
+body[theme="dark"] .agentflow-agent-dialog > p { color:#aeb8c7; }
+@media (prefers-color-scheme: dark) {
+	body:not([theme]) .agentflow-agent-dialog { border-color:#465166; background:#1f2937; color:#e5e7eb; }
+	body:not([theme]) .agentflow-agent-dialog > p { color:#aeb8c7; }
+}
+</style>
+
 <script type="text/javascript">//<![CDATA[
 var agentflowOpenUrl = '<%=url("admin/services/agentflow/open")%>';
+var agentflowAgentInstallUrl = '<%=url("admin/services/agentflow/agent_install")%>';
+var agentflowCsrfToken = (window.taskd && window.taskd.csrfToken) || '';
+
+function agentflowAgentDialog(open) {
+	var modal = document.getElementById('agentflow-agent-modal');
+	var select = document.getElementById('agentflow-agent-select');
+	var trigger = document.getElementById('agentflow-agent-open');
+	if (!modal) return;
+	if (open) {
+		modal.classList.add('open');
+		if (select) select.focus();
+	} else {
+		modal.classList.remove('open');
+		if (trigger) trigger.focus();
+	}
+}
+
+function agentflowInstallAgent() {
+	var selected = document.getElementById('agentflow-agent-select');
+	var button = document.getElementById('agentflow-agent-install-now');
+	if (!selected || !button) return;
+	if (!window.taskd || !window.taskd.show_log) {
+		alert('<%:Task log window is not available.%>');
+		return;
+	}
+
+	button.disabled = true;
+	(new XHR()).post(agentflowAgentInstallUrl, {
+		agent: selected.value,
+		token: agentflowCsrfToken
+	}, function(x, data) {
+		button.disabled = false;
+		if (!data) {
+			try { data = JSON.parse(x.responseText || '{}'); }
+			catch (e) { data = {}; }
+		}
+		if (!data.ok) {
+			alert(data.error || '<%:Failed to start agent installation.%>');
+			return;
+		}
+		agentflowAgentDialog(false);
+		window.taskd.show_log(data.task_id || 'agentflow-agent-install');
+	});
+}
+
 XHR.poll(5, '<%=url("admin/services/agentflow_status")%>', null, function(x, st) {
 	var el = document.getElementById('agentflow_status');
+	var openButton = document.getElementById('agentflow-open');
 	if (st && el) {
 		if (!st.running) {
+			if (openButton) openButton.style.display = 'none';
 			el.innerHTML = '<br/><em style="color:red"><%:The AgentFlow service is not running.%></em>';
 		} else {
+			if (openButton) openButton.style.display = '';
 			var accessMode = '';
 			if (st.proxy_prefix_enabled && st.linkeasefull_running) {
 				accessMode = '<br/><em><%:Access mode: LinkEase Desktop /apps proxy.%></em>';
@@ -13,10 +82,13 @@ XHR.poll(5, '<%=url("admin/services/agentflow_status")%>', null, function(x, st)
 				accessMode = '<br/><em><%:Access mode: external port.%></em>';
 			}
 			el.innerHTML = '<br/><em style="color:green"><%:The AgentFlow service is running.%></em>'
-				+ accessMode
-				+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open AgentFlow%> \" onclick=\"window.open('" + agentflowOpenUrl + "')\"/>";
+				+ accessMode;
 		}
 	}
+});
+
+document.addEventListener('keydown', function(ev) {
+	if (ev.key === 'Escape') agentflowAgentDialog(false);
 });
 //]]></script>
 
@@ -25,4 +97,29 @@ XHR.poll(5, '<%=url("admin/services/agentflow_status")%>', null, function(x, st)
 	<p id="agentflow_status">
 		<em><%:Collecting data...%></em>
 	</p>
+	<div class="agentflow-actions">
+		<input id="agentflow-open" class="btn cbi-button cbi-button-apply" type="button" value="<%:Click to open AgentFlow%>" onclick="window.open(agentflowOpenUrl)" style="display:none">
+		<input id="agentflow-agent-open" class="btn cbi-button cbi-button-apply" type="button" value="<%:Install agent%>" onclick="agentflowAgentDialog(true)">
+	</div>
 </fieldset>
+
+<div id="agentflow-agent-modal" class="agentflow-agent-modal" role="dialog" aria-modal="true" aria-labelledby="agentflow-agent-title" onclick="if (event.target === this) agentflowAgentDialog(false)">
+	<div class="agentflow-agent-dialog">
+		<h3 id="agentflow-agent-title"><%:Install agent%></h3>
+		<p><%:Select a coding agent to install into the shared AgentFlow runtime.%></p>
+		<div class="agentflow-agent-field">
+			<label for="agentflow-agent-select"><%:Agent%></label>
+			<select id="agentflow-agent-select" class="cbi-input-select">
+				<option value="codexcli">Codex</option>
+				<option value="claude-code">Claude Code</option>
+				<option value="opencode">OpenCode</option>
+				<option value="kimi">Kimi</option>
+				<option value="reasonix">Reasonix</option>
+			</select>
+		</div>
+		<div class="agentflow-agent-dialog-actions">
+			<input class="btn cbi-button" type="button" value="<%:Cancel%>" onclick="agentflowAgentDialog(false)">
+			<input id="agentflow-agent-install-now" class="btn cbi-button cbi-button-apply" type="button" value="<%:Install now%>" onclick="agentflowInstallAgent()">
+		</div>
+	</div>
+</div>

@@ -1,92 +1,106 @@
 msgid ""
-msgstr "Content-Type: text/plain; charset=UTF-8\n"
+msgstr ""
+"Project-Id-Version: luci-app-wizard\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-20 20:00+0800\n"
+"PO-Revision-Date: 2026-09-20 20:00+0800\n"
+"Last-Translator: Eric\n"
+"Language-Team: Chinese (Simplified) <zh_Hans>\n"
+"Language: zh_Hans\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 msgid "Setup Wizard"
-msgstr "设置向导"
+msgstr "快速设置向导"
 
 msgid "Quickly configure common network, wireless, and system settings."
-msgstr "快速配置常用网络、无线与系统设置。"
+msgstr "快速配置常用网络、无线与系统运行设置。"
 
 msgid "Net Settings"
 msgstr "网络设置"
 
 msgid "Firmware Settings"
-msgstr "固件与系统"
+msgstr "固件设置"
 
 msgid "Wireless Settings"
 msgstr "无线设置"
 
 msgid "Shortcuts"
-msgstr "快捷方式"
+msgstr "域名快捷跳转"
+
+msgid "比如设置google.com的快捷方式为字母g,则在此路由器网络的任何浏览器中输入g/即可访问google.com"
+msgstr "比如设置 google.com 的快捷方式为字母 g，则在此路由器网络的任何浏览器中输入 g/ 即可访问 google.com"
 
 msgid "WAN Protocol / Mode"
 msgstr "WAN 协议 / 工作模式"
 
 msgid "DHCP Client (Default Router)"
-msgstr "DHCP 客户端 (标准主路由模式)"
+msgstr "DHCP 客户端（标准主路由模式）"
 
 msgid "PPPoE Dial-up"
-msgstr "PPPoE 拨号上网"
+msgstr "PPPoE 拨号"
 
 msgid "Side-Router Mode (Bypass Gateway)"
-msgstr "旁路由模式 (网关旁路)"
+msgstr "旁路由模式（网关旁路）"
 
 msgid "PPPoE Username"
-msgstr "宽带拨号账号"
+msgstr "PPPoE 用户名"
 
 msgid "PPPoE Password"
-msgstr "宽带拨号密码"
+msgstr "PPPoE 密码"
 
 msgid "LAN IPv4 Address"
-msgstr "LAN 口 IPv4 地址"
+msgstr "LAN IPv4 地址"
 
 msgid "Custom DNS Server(s)"
-msgstr "自定义 DNS 服务器，留空默认运营商DNS"
+msgstr "自定义 DNS 服务器"
 
 msgid "Gateway Address"
 msgstr "网关地址"
 
 msgid "Primary router IP address used when operating in side-router mode."
-msgstr "处于旁路由模式时的主路由 IP 地址。"
+msgstr "在旁路由模式下工作时填写的上级主路由 IP 地址。"
 
 msgid "Enable DHCP Server"
-msgstr "启用 DHCP 服务"
+msgstr "启用 DHCP 服务器"
 
-msgid "Usually disabled in side-router mode to avoid IP address assignment conflicts with the main router."
-msgstr "在旁路由模式下通常关闭此项，避免与主路由的 IP 分配冲突。"
+msgid "Enable or disable LAN DHCP server (usually disabled in side-router mode to avoid IP address conflicts)."
+msgstr "开启或关闭局域网 DHCP 服务（旁路由模式下通常建议关闭，避免局域网 IP 分配冲突）。"
 
 msgid "IPv6 Support"
 msgstr "IPv6 支持"
 
 msgid "Enable or disable IPv6 router advertisements and DHCPv6."
-msgstr "启用或关闭 IPv6 路由通告与 DHCPv6 服务。"
+msgstr "开启或关闭 IPv6 路由通告 (RA) 与 DHCPv6 服务。"
 
 msgid "Firmware Upgrade Notice"
-msgstr "固件升级提示"
+msgstr "固件更新检测提示"
 
 msgid "Check and display notices for newer firmware versions."
-msgstr "检查并显示新版本固件更新提示。"
+msgstr "开机或访问时检测并提示可用的新版本固件。"
 
 msgid "Run CoreMark on Boot"
-msgstr "开机 CoreMark 跑分"
+msgstr "开机自动运行 CoreMark 跑分"
 
 msgid "Run CPU benchmark asynchronously upon router initialization."
-msgstr "在路由器初始化启动时运行 CPU 基准测试。"
+msgstr "路由器启动完成后在后台异步运行 CPU 性能基准测试。"
 
 msgid "Persistent Cookie Session"
-msgstr "持久 Cookie 登录"
+msgstr "保持登录会话 (Persistent Cookie)"
 
 msgid "Maintain persistent login sessions in the web browser."
-msgstr "在浏览器中保持登录会话状态，避免频繁重复登录。"
+msgstr "关闭浏览器后仍保持管理后台登录状态。"
 
 msgid "Enforce HTTPS Access"
 msgstr "强制 HTTPS 访问"
 
 msgid "Automatically redirect HTTP requests to secure HTTPS."
-msgstr "将所有 HTTP 请求自动重定向至安全加密的 HTTPS。"
+msgstr "自动将普通 HTTP 请求重定向到加密的 HTTPS 连接。"
 
 msgid "Landing Dashboard Mode"
-msgstr "主页展示模式"
+msgstr "管理首页展示模式"
 
 msgid "Default"
 msgstr "默认"
@@ -95,46 +109,67 @@ msgid "RouterDog"
 msgstr "路由狗"
 
 msgid "NAS"
-msgstr "NAS 模式"
+msgstr "NAS"
 
 msgid "Next-NAS"
-msgstr "Next-NAS 模式"
+msgstr "Next-NAS"
 
 msgid "Router"
-msgstr "路由器模式"
+msgstr "Router"
 
 msgid "Wireless Network Name (SSID)"
 msgstr "无线网络名称 (SSID)"
 
+msgid "无线名称基准前缀，系统将自动识别并为 2.4G 追加 _2.4G、5G 追加 _5G、6G 追加 _6G。"
+msgstr "无线名称基准前缀，系统将自动识别并为 2.4G 追加 _2.4G、5G 追加 _5G、6G 追加 _6G。"
+
 msgid "Wireless Password (Key)"
-msgstr "无线网络密码"
+msgstr "无线密码"
 
 msgid "Leave empty for open network or 8+ characters"
-msgstr "留空为开放无密码网络，或输入 8 位以上密码"
+msgstr "留空表示无密码开放网络，或输入至少 8 位密码"
 
-msgid "URL Shortcuts"
-msgstr "快捷方式列表"
+msgid "Wireless key must be between 8 and 64 characters long"
+msgstr "无线密码长度必须在 8 到 64 个字符之间"
 
-msgid "Applying Changes"
-msgstr "正在应用修改"
+msgid "Shortcut"
+msgstr "快捷短语"
 
-msgid "Applying modified settings: %s..."
-msgstr "正在应用已修改的设置项: %s..."
+msgid "Shortcut phrase cannot be empty"
+msgstr "快捷短语不能为空"
 
-msgid "No settings were modified. Services remain uninterrupted."
-msgstr "未检测到任何修改，无需保存或重启服务。"
+msgid "Only alphanumeric characters, dashes and underscores are allowed"
+msgstr "仅允许输入字母、数字、破折号 (-) 和下划线 (_)"
 
-msgid "Settings successfully applied: %s"
-msgstr "已成功应用并重载修改项: %s"
+msgid "Target URL"
+msgstr "目标网址 (URL)"
 
-msgid "Failed to apply settings: %s"
-msgstr "应用设置失败: %s"
+msgid "Please enter a valid URL starting with http:// or https://"
+msgstr "请输入以 http:// 或 https:// 开头的有效网址"
+
+msgid "Comments"
+msgstr "备注说明"
+
+msgid "Optional"
+msgstr "可选"
+
+msgid "There are no changes to apply"
+msgstr "没有需要应用的更改"
 
 msgid "LAN IP Address Changed"
 msgstr "LAN 口 IP 地址已变更"
 
-msgid "LAN IP changed to %s. Redirecting to the new address in %d seconds..."
-msgstr "LAN 口 IP 已变更为 %s。将在 %d 秒后自动跳转至新地址..."
+msgid "LAN IP has been changed to "
+msgstr "LAN 口 IP 地址已更改为 "
+
+msgid "Applying changes without rollback. Redirecting to the new address in "
+msgstr "正在永久应用更改（已禁用回滚保护）。将在 "
+
+msgid " seconds..."
+msgstr " 秒后自动跳转至新地址..."
+
+msgid "提示：更改网段后，若未能自动加载新页面，请尝试重新插拔网线或断开重连 Wi-Fi，以获取新网段的 IP 地址。"
+msgstr "提示：更改网段后，若未能自动加载新页面，请尝试重新插拔网线或断开重连 Wi-Fi，以获取新网段的 IP 地址。"
 
 msgid "Redirect Now"
 msgstr "立即跳转"
