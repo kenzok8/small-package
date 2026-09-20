@@ -70,7 +70,7 @@ msgstr "检查并显示新版本固件更新提示。"
 msgid "Run CoreMark on Boot"
 msgstr "开机 CoreMark 跑分"
 
-msgid "Run CPU benchmark upon initial router initialization."
+msgid "Run CPU benchmark asynchronously upon router initialization."
 msgstr "在路由器初始化启动时运行 CPU 基准测试。"
 
 msgid "Persistent Cookie Session"

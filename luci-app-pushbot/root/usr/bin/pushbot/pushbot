@@ -25,14 +25,17 @@ function read_config(){
 	"font_title" "font_success" "font_fail" "font_client" "font_module"
 	
 	# WxPusher: 根据 enable 状态处理数组，未 enable 的直接设为空数组
+	# 分隔符兼容中英文逗号、空格与制表符（与界面提示"逗号或空格分隔"一致）
+	# UID 数量上限 20（插件自身限制，官方虽支持 2000，OpenWrt 场景无需那么多）
 	if [ "$wxpusher_uids_enable" = "1" ] && [ ! -z "$wxpusher_uids" ]; then
-		wxpusher_uids_json=$(echo "$wxpusher_uids" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$' | awk '{printf "\"%s\",", $0}' | sed 's/,$//')
+		wxpusher_uids_json=$(printf '%s' "$wxpusher_uids" | sed 's/[,，]/\n/g' | tr ' \t' '\n\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$' | head -20 | awk '{printf "\"%s\",", $0}' | sed 's/,$//')
 		wxpusher_uids="[${wxpusher_uids_json}]"
 	else
 		wxpusher_uids="[]"
 	fi
 	if [ "$wxpusher_topics_enable" = "1" ] && [ ! -z "$wxpusher_topics" ]; then
-		wxpusher_topics_json=$(echo "$wxpusher_topics" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$' | awk '{printf "%s,", $0}' | sed 's/,$//')
+		# 官方限制：单条消息最多 5 个 TopicID，超出部分忽略（只取前 5 个）
+		wxpusher_topics_json=$(printf '%s' "$wxpusher_topics" | sed 's/[,，]/\n/g' | tr ' \t' '\n\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -v '^$' | head -5 | awk '{printf "%s,", $0}' | sed 's/,$//')
 		wxpusher_topics="[${wxpusher_topics_json}]"
 	else
 		wxpusher_topics="[]"

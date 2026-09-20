@@ -1318,12 +1318,12 @@ msgid "WxPusher app token<br><a href=\"https://wxpusher.zjiecode.com/docs/\" tar
 msgstr "WxPusher 应用 Token<br><a href=\"https://wxpusher.zjiecode.com/docs/\" target=\"_blank\">获取方式</a><br>下方「用户 UID」与「主题 ID」至少启用一项（可同时启用）<br>两者均支持填写一个或多个<br><br>"
 
 
-msgid "User UIDs (max 20)<br>Multiple values supported, separated by comma or space<br>e.g. UID_xxxx,UID_yyyy<br><br>"
-msgstr "用户 UID（最多 20 个）<br>支持多个值，用逗号或空格分隔<br>例如 UID_xxxx,UID_yyyy<br><br>"
+msgid "User UIDs (max 20, extras ignored)<br>Multiple values supported, separated by comma or space<br>e.g. UID_xxxx,UID_yyyy<br><br>"
+msgstr "用户 UID（最多 20 个，超出部分忽略）<br>支持多个值，用逗号或空格分隔<br>例如 UID_xxxx,UID_yyyy<br><br>"
 
 
-msgid "Topic IDs (max 20)<br>Multiple values supported, separated by comma or space<br>e.g. 123,456<br><br>"
-msgstr "主题 ID（最多 20 个）<br>支持多个值，用逗号或空格分隔<br>例如 123,456<br><br>"
+msgid "Topic IDs (max 5, extras ignored)<br>Multiple values supported, separated by comma or space<br>e.g. 123,456<br><br>"
+msgstr "主题 ID（最多 5 个，超出部分忽略）<br>支持多个值，用逗号或空格分隔<br>例如 123,456<br><br>"
 
 
 msgid "Only runs when all devices in the list are offline<br/>After DND hours, watched devices with low traffic for 5 minutes (~100kb/m) are considered offline<br/>Multiple MACs supported, separated by comma or space"

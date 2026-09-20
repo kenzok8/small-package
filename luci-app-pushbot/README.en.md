@@ -25,7 +25,7 @@
 ## 📝 Changelog
 
 - **2026-09-20** (v5.18): WxPusher channel & card-based content, main version 5.17 → 5.18
-  - Added: **WxPusher channel** — one App Token is enough; up to 20 user UIDs and 20 topic IDs each, at least one of the two enabled; content is converted to HTML and reads directly inside WeChat
+  - Added: **WxPusher channel** — one App Token is enough; multiple user UIDs and topic IDs, at least one of the two enabled (WxPusher allows at most 5 topics per message; extras are ignored); content is converted to HTML and reads directly inside WeChat
   - Added: **Per-module card rendering** — tables now use borderless HTML tables instead of Markdown tables, so each module renders as its own card on every channel
   - Added: **Bulk device alias input** — paste multiple `MAC-alias` pairs separated by commas or spaces, split into individual entries automatically
   - Improved: **Mobile channel buttons** — 5 per row, buttons/icons/text scale proportionally with card width, labels are never truncated

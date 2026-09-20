@@ -116,12 +116,8 @@ start_service() {
 	# 1. 开机 CoreMark 跑分处理 (后台异步执行，杜绝阻塞系统启动与前端保存卡死)
 	local coremark
 	config_get coremark default coremark 0
-	if [ "$coremark" = "1" ] && [ ! -f /etc/bench.log ] && [ ! -f /var/lock/opkg.lock ]; then
-		if [ -x /sbin/cpumark ]; then
-			(/sbin/cpumark >/dev/null 2>&1) &
-		elif [ -x /bin/coremark ]; then
-			(/bin/coremark >/etc/bench.log 2>&1) &
-		fi
+	if [ "$coremark" = "1" ]  && [ -x /bin/coremark ] && [ -x /sbin/coremark ] && [ ! -f /etc/bench.log ] && [ ! -f /var/lock/opkg.lock ]; then
+			(sleep 5;/sbin/coremark >/dev/null 2>&1) &
 	fi
 
 	# 2. 持久 Cookie 会话配置同步到 LuCI 底层系统

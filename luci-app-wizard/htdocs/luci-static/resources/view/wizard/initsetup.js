@@ -96,7 +96,17 @@ return view.extend({
 
 	// 2. 统一聚合读取系统当前各子模块的实时配置
 	getSystemConfig: function() {
-		var isSideRouter = !!uci.get('network', 'lan', 'gateway') && uci.get('network', 'wan', 'auto') === '0';
+		var lanGw = getFirstIp(uci.get('network', 'lan', 'gateway'), '');
+		var wanSec = uci.get('network', 'wan');
+
+		// 判定 WAN 接口是否不存在或处于停用状态
+		var isWanDisabled = !wanSec ||
+			uci.get('network', 'wan', 'auto') === '0' ||
+			uci.get('network', 'wan', 'disabled') === '1' ||
+			uci.get('network', 'wan', 'proto') === 'none';
+
+		// 核心判定：配置了局域网网关，且 WAN 口被停用或不存在，即确认处于旁路由模式
+		var isSideRouter = !!lanGw && isWanDisabled;
 
 		var ap = null;
 		if (this.hasWireless) {
@@ -109,7 +119,6 @@ return view.extend({
 			}
 		}
 
-		// 剥离现有频段后缀，确保输入框展示纯净的基准名称
 		var rawSsid = (ap && ap.ssid) || (this.hasWireless ? 'Kwrt' : '');
 		var baseSsid = rawSsid.replace(/_(2\.4G|5G|6G)$/i, '').trim();
 
@@ -118,12 +127,12 @@ return view.extend({
 			wan_pppoe_user: uci.get('network', 'wan', 'username') || '',
 			wan_pppoe_pass: uci.get('network', 'wan', 'password') || '',
 			lan_ipaddr: getFirstIp(uci.get('network', 'lan', 'ipaddr'), '10.0.0.1'),
-			lan_gateway: getFirstIp(uci.get('network', 'lan', 'gateway'), ''),
+			lan_gateway: lanGw,
 			lan_dns: toArray(uci.get('network', 'lan', 'dns')),
 			dhcp: uci.get('dhcp', 'lan', 'ignore') === '1' ? '0' : '1',
 			ipv6: uci.get('network', 'wan6', 'auto') === '0' ? '0' : '1',
 			https: uci.get('wizard', 'default', 'https') || '0',
-			cookie_p: uci.get('wizard', 'default', 'persistent_cookies') || '1',
+			cookie_p: uci.get('wizard', 'default', 'persistent_cookies') '1',
 			landing_page: uci.get('wizard', 'default', 'landing_page') || 'default',
 			autoupgrade_fm: uci.get('wizard', 'default', 'autoupgrade_fm') || '1',
 			coremark: uci.get('wizard', 'default', 'coremark') || '0',
@@ -189,7 +198,7 @@ return view.extend({
 		// 无线配置根据设备硬件动态追加
 		if (this.hasWireless) {
 			fields.push(
-				{ tab: 'wifisetup', type: form.Value, id: 'wifi_ssid', title: _('Wireless Network Name (SSID)'), placeholder: 'Kwrt', desc: _('无线名称基准前缀，系统将自动识别并为 2.4G 追加 _2.4G、5G 追加 _5G、6G 追加 _6G。') },
+				{ tab: 'wifisetup', type: form.Value, id: 'wifi_ssid', title: _('Wireless Network Name (SSID)'), placeholder: 'Kwrt' },
 				{ tab: 'wifisetup', type: form.Value, id: 'wifi_key', title: _('Wireless Password (Key)'), password: true, placeholder: _('Leave empty for open network or 8+ characters') }
 			);
 		}
@@ -403,16 +412,34 @@ return view.extend({
 				}
 			}
 
-			// D. 自定义 LAN DNS
-			if (has(changed, 'lan_dns')) {
-				if (cur.lan_dns && cur.lan_dns.length > 0) {
-					uci.set('network', 'lan', 'dns', cur.lan_dns);
+			// D. 自定义 LAN DNS（支持旁路由模式自动回落至网关或公网兜底 DNS）
+			if (has(changed, 'lan_dns') || has(changed, 'wan_proto') || has(changed, 'lan_gateway')) {
+				if (cur.wan_proto === 'siderouter') {
+					var effectiveDns = toArray(cur.lan_dns);
+
+					// 若 DNS 列表为空，按优先级进行智能兜底
+					if (effectiveDns.length === 0) {
+						var cleanGw = getFirstIp(cur.lan_gateway, '');
+						if (cleanGw) {
+							// 优先级 1：回落至主路由网关 IP
+							effectiveDns.push(cleanGw);
+						} else {
+							// 优先级 2：若网关也未填写，使用常用可靠公网 DNS 兜底
+							effectiveDns.push('223.5.5.5', '119.29.29.29');
+						}
+					}
+					uci.set('network', 'lan', 'dns', effectiveDns);
 				} else {
-					safeUnset('network', 'lan', 'dns');
+					// 常规主路由模式：用户未配则清除，让系统通过 WAN 动态获取
+					if (cur.lan_dns && cur.lan_dns.length > 0) {
+						uci.set('network', 'lan', 'dns', cur.lan_dns);
+					} else {
+						safeUnset('network', 'lan', 'dns');
+					}
 				}
 			}
 
-			// E. LAN 网关（独立变更或切换至旁路由模式时更新）
+			// E. LAN 网关
 			if (has(changed, 'lan_gateway') || has(changed, 'wan_proto')) {
 				if (cur.wan_proto === 'siderouter') {
 					if (cur.lan_gateway) {
