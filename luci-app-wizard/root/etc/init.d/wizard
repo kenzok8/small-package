@@ -15,6 +15,17 @@ add_wizard() {
 	local device ipv6 old_ipv6 wifi_ssid wifi_key old_wifi_ssid old_wifi_key
 
 	config_get wan_proto "$cfg" wan_proto
+	config_get lan_gateway "$cfg" lan_gateway
+	config_get dhcp "$cfg" dhcp
+	config_get lan_dns "$cfg" lan_dns
+	config_get ipv6 "$cfg" ipv6
+	config_get old_ipv6 "$cfg" old_ipv6
+	config_get lan_ipaddr "$cfg" lan_ipaddr
+	config_get autoupgrade_pkg "$cfg" autoupgrade_pkg
+
+	test -n "${lan_ipaddr}" && {
+		uci set network.lan.ipaddr="${lan_ipaddr}"
+	}
 
 	device=$(uci -q get network.wan.device || uci -q get wizard.default.old_network_device)
 	case "${wan_proto}" in
@@ -63,18 +74,6 @@ add_wizard() {
 			uci -q set wizard.default.old_network_device="$WAN"
 		;;
 	esac
-
-	config_get lan_ipaddr "$cfg" lan_ipaddr
-	test -n "${lan_ipaddr}" && {
-		uci set network.lan.ipaddr="${lan_ipaddr}"
-	}
-
-	config_get lan_gateway "$cfg" lan_gateway
-	config_get dhcp "$cfg" dhcp
-	config_get lan_dns "$cfg" lan_dns
-	config_get ipv6 "$cfg" ipv6
-	config_get old_ipv6 "$cfg" old_ipv6
-	config_get autoupgrade_pkg "$cfg" autoupgrade_pkg
 	
 	[ -n "$lan_dns" ] && {
 		[ "$(uci -q get dhcp.@dnsmasq[0].noresolv)" == 1 ] && {
