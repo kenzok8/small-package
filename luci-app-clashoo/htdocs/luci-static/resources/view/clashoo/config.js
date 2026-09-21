@@ -1425,12 +1425,8 @@ return view.extend({
     o.description = _("DNS queries follow the routing rules, so overseas domains resolve through the proxy instead of a polluted result. Requires proxy-server-nameserver.");
     o = s.option(form.Flag, 'dns_loopback_compat', _("OpenClash/Nikki Loopback DNS Compatibility"));
     o.default = '0';
-    o.description = _("Optional compatibility for normal managed mode. At runtime, replace only proxy node resolvers that point back to the imported configuration's own DNS listener. Core Only mode stays verbatim; the source configuration and unrelated local DNS services remain unchanged.");
+    o.description = _("Optional compatibility for normal managed mode. At runtime, replace only proxy node resolvers that point back to the imported configuration's own DNS listener with the proxy-server-nameserver setting. Core Only mode stays verbatim; the source configuration and unrelated local DNS services remain unchanged.");
     o.depends('enable_dns', '1');
-    o = s.option(form.DynamicList, 'dns_loopback_compat_resolver', _("Loopback DNS Replacement"));
-    o.placeholder = 'udp://223.5.5.5:53';
-    o.description = _("Used only when the compatibility switch detects a stale self-reference. When empty, udp://223.5.5.5:53 and udp://119.29.29.29:53 are used. Plain IP DNS is recommended to avoid bootstrap loops.");
-    o.depends('dns_loopback_compat', '1');
     o = s.option(form.Value, 'dns_ecs', _("ECS Client Subnet"));
     o.placeholder = _("Recommended blank");
     o.description = _("mihomo writes the ecs parameter to DNS URLs; sing-box writes dns.client_subnet. Leave empty to skip.");

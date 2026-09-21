@@ -1089,6 +1089,38 @@ _dns_nameserver_inherit_mode() {
 	printf '%s' inherit
 }
 
+_dns_proxy_nameservers() {
+	local i=0 t en a p port s out="" prefix
+	while :; do
+		t="$(uci -q get clashoo.@dnsservers[$i].ser_type 2>/dev/null)"
+		[ -n "$t" ] || break
+		en="$(uci -q get clashoo.@dnsservers[$i].enabled 2>/dev/null)"
+		a="$(uci -q get clashoo.@dnsservers[$i].ser_address 2>/dev/null)"
+		p="$(uci -q get clashoo.@dnsservers[$i].protocol 2>/dev/null)"
+		port="$(uci -q get clashoo.@dnsservers[$i].ser_port 2>/dev/null)"
+		i=$((i + 1))
+		[ "$t" = "proxy-server-nameserver" ] || continue
+		[ "$en" = "0" ] && continue
+		if printf '%s' "$a" | grep -Eq '^[A-Za-z][A-Za-z0-9+.-]*://'; then
+			s="$a"
+		else
+			case "$p" in
+				''|none) prefix='' ;;
+				udp|udp://) prefix='udp://' ;;
+				tcp|tcp://) prefix='tcp://' ;;
+				dot|tls|tls://) prefix='tls://' ;;
+				doh|https|https://) prefix='https://' ;;
+				doq|quic|quic://) prefix='quic://' ;;
+				*) prefix="$p" ;;
+			esac
+			s="${prefix}${a}"
+			[ -n "$port" ] && s="${s}:${port}"
+		fi
+		[ -n "$s" ] && out="${out}${out:+ }${s}"
+	done
+	printf '%s' "$out"
+}
+
 _adapt_dns_loopback_resolver() {
 	local filter listen host host_pattern old_port servers replacement tmp
 	[ "$(uci -q get clashoo.config.dns_loopback_compat 2>/dev/null)" = "1" ] || return 0
@@ -1121,8 +1153,8 @@ _adapt_dns_loopback_resolver() {
 	servers="$(yq -M e -r '.dns."proxy-server-nameserver"[]' "$CONFIG_YAML" 2>/dev/null)"
 	printf '%s\n' "$servers" | grep -Eiq "^([A-Za-z][A-Za-z0-9+.-]*://)?(${host_pattern}):${old_port}($|[/#?])" || return 0
 
-	replacement="$(uci -q get clashoo.config.dns_loopback_compat_resolver 2>/dev/null)"
-	[ -n "$replacement" ] || replacement='udp://223.5.5.5:53 udp://119.29.29.29:53'
+	replacement="$(_dns_proxy_nameservers)"
+	[ -n "$replacement" ] || replacement='tls://1.1.1.1:853'
 	tmp="$(mktemp "${CONFIG_YAML}.dns-loopback.XXXXXX" 2>/dev/null)" || return 0
 	export CLASHOO_DNS_OLD_PORT="$old_port"
 	export CLASHOO_DNS_HOST_PATTERN="$host_pattern"
