@@ -1,58 +1,378 @@
 <%+tasks/embed%>
 
 <style type="text/css">
-.agentflow-actions { display:flex; gap:10px; flex-wrap:wrap; margin:12px; }
-.agentflow-actions .btn, .agentflow-agent-dialog-actions .btn { min-height:40px; }
-.agentflow-agent-modal { position:fixed; inset:0; z-index:10000; display:none; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; background:rgba(15,23,42,.45); }
+.agentflow-shell {
+	--af-panel:#fff;
+	--af-panel-soft:#f6f8fc;
+	--af-border:#dfe5ef;
+	--af-text:#17213d;
+	--af-muted:#667397;
+	--af-primary:#356cf6;
+	--af-primary-hover:#2559d8;
+	--af-success:#159447;
+	--af-success-soft:#e9f8ef;
+	--af-shadow:0 8px 24px rgba(46, 67, 112, .08);
+	color:var(--af-text);
+	margin:12px 0 20px;
+}
+.agentflow-panel {
+	background:var(--af-panel);
+	border:1px solid var(--af-border);
+	border-radius:10px;
+	box-shadow:var(--af-shadow);
+	box-sizing:border-box;
+}
+.agentflow-overview {
+	display:grid;
+	grid-template-columns:minmax(260px, .9fr) minmax(320px, 1.1fr);
+	gap:28px;
+	padding:24px;
+}
+.agentflow-service {
+	display:flex;
+	align-items:flex-start;
+	gap:16px;
+}
+.agentflow-service-icon {
+	display:flex;
+	align-items:center;
+	justify-content:center;
+	width:54px;
+	height:54px;
+	flex:0 0 54px;
+	border-radius:50%;
+	background:#eef1f6;
+	color:var(--af-muted);
+	font-size:28px;
+	font-weight:700;
+}
+.agentflow-service-icon.running {
+	background:var(--af-success-soft);
+	color:var(--af-success);
+}
+.agentflow-service-copy { min-width:0; }
+.agentflow-service-copy h3 {
+	margin:2px 0 6px;
+	color:var(--af-text);
+	font-size:20px;
+	line-height:1.3;
+}
+.agentflow-service-copy p {
+	margin:0 0 16px;
+	color:var(--af-muted);
+	line-height:1.6;
+}
+.agentflow-access {
+	padding-left:28px;
+	border-left:1px solid var(--af-border);
+}
+.agentflow-access label {
+	display:block;
+	margin:0 0 9px;
+	font-weight:700;
+}
+.agentflow-address-row {
+	display:flex;
+	gap:8px;
+}
+.agentflow-address-row input[type="text"] {
+	min-width:0;
+	flex:1 1 auto;
+	height:40px;
+	box-sizing:border-box;
+	border:1px solid var(--af-border);
+	border-radius:7px;
+	background:var(--af-panel-soft);
+	color:var(--af-text);
+	font-variant-numeric:tabular-nums;
+}
+.agentflow-access-note {
+	min-height:20px;
+	margin:10px 0 0;
+	color:var(--af-muted);
+	font-size:13px;
+}
+.agentflow-button {
+	min-height:40px;
+	box-sizing:border-box;
+	border-radius:7px !important;
+	white-space:nowrap;
+}
+.agentflow-primary {
+	border-color:var(--af-primary) !important;
+	background:var(--af-primary) !important;
+	color:#fff !important;
+}
+.agentflow-primary:hover { background:var(--af-primary-hover) !important; }
+.agentflow-button:disabled { cursor:not-allowed; opacity:.55; }
+.agentflow-agents { margin-top:16px; padding:22px 20px 20px; }
+.agentflow-section-heading {
+	display:flex;
+	align-items:flex-start;
+	gap:12px;
+	margin-bottom:18px;
+}
+.agentflow-section-mark {
+	display:flex;
+	align-items:center;
+	justify-content:center;
+	width:38px;
+	height:38px;
+	flex:0 0 38px;
+	border-radius:9px;
+	background:#edf3ff;
+	color:var(--af-primary);
+	font-size:17px;
+	font-weight:800;
+}
+.agentflow-section-heading h3 { margin:0 0 4px; color:var(--af-text); font-size:20px; }
+.agentflow-section-heading p { margin:0; color:var(--af-muted); line-height:1.55; }
+.agentflow-agent-grid {
+	display:grid;
+	grid-template-columns:repeat(3, minmax(0, 1fr));
+	gap:14px;
+}
+.agentflow-agent-card {
+	display:flex;
+	min-width:0;
+	min-height:190px;
+	padding:16px;
+	box-sizing:border-box;
+	flex-direction:column;
+	border:1px solid var(--af-border);
+	border-radius:9px;
+	background:var(--af-panel);
+}
+.agentflow-agent-card[data-state="installed"] { border-color:#b8dfc6; }
+.agentflow-agent-top { display:flex; align-items:flex-start; gap:12px; }
+.agentflow-agent-logo {
+	display:flex;
+	align-items:center;
+	justify-content:center;
+	width:48px;
+	height:48px;
+	flex:0 0 48px;
+	border-radius:9px;
+	background:var(--agent-color, var(--af-primary));
+	color:#fff;
+	font-size:21px;
+	font-weight:800;
+}
+.agentflow-agent-copy { min-width:0; }
+.agentflow-agent-title { margin:2px 0 4px; color:var(--af-text); font-size:17px; font-weight:700; line-height:1.4; }
+.agentflow-agent-copy p { margin:0; color:var(--af-muted); font-size:13px; line-height:1.45; }
+.agentflow-agent-meta {
+	display:flex;
+	align-items:center;
+	gap:10px;
+	margin:17px 0 12px;
+	color:var(--af-muted);
+	font-size:13px;
+}
+.agentflow-agent-state { display:inline-flex; align-items:center; gap:7px; font-weight:700; }
+.agentflow-agent-dot { width:8px; height:8px; border-radius:50%; background:#8a95af; }
+.agentflow-agent-card[data-state="installed"] .agentflow-agent-state { color:var(--af-success); }
+.agentflow-agent-card[data-state="installed"] .agentflow-agent-dot { background:var(--af-success); box-shadow:0 0 0 4px var(--af-success-soft); }
+.agentflow-agent-divider { color:#b4bdd0; }
+.agentflow-install-button { width:100%; margin-top:auto; }
+.agentflow-agent-card[data-state="installed"] .agentflow-install-button {
+	border-color:var(--af-success) !important;
+	background:var(--af-success-soft) !important;
+	color:var(--af-success) !important;
+}
+.agentflow-agent-modal {
+	position:fixed;
+	inset:0;
+	z-index:10000;
+	display:none;
+	align-items:center;
+	justify-content:center;
+	padding:20px;
+	box-sizing:border-box;
+	background:rgba(15, 23, 42, .48);
+}
 .agentflow-agent-modal.open { display:flex; }
-.agentflow-agent-dialog, body[theme="light"] .agentflow-agent-dialog { width:min(520px, 100%); padding:20px; box-sizing:border-box; border:1px solid #d0d7de; border-radius:12px; background:#fff; color:inherit; box-shadow:0 18px 48px rgba(15,23,42,.24); }
-.agentflow-agent-dialog h3 { margin:0 0 8px; text-wrap:balance; }
-.agentflow-agent-dialog > p, body[theme="light"] .agentflow-agent-dialog > p { margin:0 0 16px; color:#666; text-wrap:pretty; }
-.agentflow-agent-field label { display:block; margin-bottom:6px; font-weight:600; }
-.agentflow-agent-field select { width:100%; min-height:40px; box-sizing:border-box; }
-.agentflow-agent-dialog-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:18px; }
-body[theme="dark"] .agentflow-agent-dialog { border-color:#465166; background:#1f2937; color:#e5e7eb; }
-body[theme="dark"] .agentflow-agent-dialog > p { color:#aeb8c7; }
+.agentflow-agent-dialog {
+	width:100%;
+	max-width:460px;
+	padding:22px;
+	box-sizing:border-box;
+	border:1px solid var(--af-border);
+	border-radius:10px;
+	background:var(--af-panel);
+	color:var(--af-text);
+	box-shadow:0 18px 48px rgba(15, 23, 42, .24);
+}
+.agentflow-agent-dialog h3 { margin:0 0 8px; color:var(--af-text); }
+.agentflow-agent-dialog p { margin:0; color:var(--af-muted); line-height:1.6; }
+.agentflow-agent-dialog strong { color:var(--af-text); }
+.agentflow-dialog-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+body[theme="dark"] .agentflow-shell {
+	--af-panel:#202733;
+	--af-panel-soft:#171d27;
+	--af-border:#3b4658;
+	--af-text:#edf2fb;
+	--af-muted:#adb8cb;
+	--af-primary:#5d88ff;
+	--af-primary-hover:#7197ff;
+	--af-success:#50c878;
+	--af-success-soft:rgba(80, 200, 120, .14);
+	--af-shadow:0 8px 24px rgba(0, 0, 0, .18);
+}
+body[theme="dark"] .agentflow-section-mark { background:rgba(93, 136, 255, .14); }
 @media (prefers-color-scheme: dark) {
-	body:not([theme]) .agentflow-agent-dialog { border-color:#465166; background:#1f2937; color:#e5e7eb; }
-	body:not([theme]) .agentflow-agent-dialog > p { color:#aeb8c7; }
+	body:not([theme]) .agentflow-shell {
+		--af-panel:#202733;
+		--af-panel-soft:#171d27;
+		--af-border:#3b4658;
+		--af-text:#edf2fb;
+		--af-muted:#adb8cb;
+		--af-primary:#5d88ff;
+		--af-primary-hover:#7197ff;
+		--af-success:#50c878;
+		--af-success-soft:rgba(80, 200, 120, .14);
+		--af-shadow:0 8px 24px rgba(0, 0, 0, .18);
+	}
+	body:not([theme]) .agentflow-section-mark { background:rgba(93, 136, 255, .14); }
+}
+@media (max-width:1000px) {
+	.agentflow-agent-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width:760px) {
+	.agentflow-overview { grid-template-columns:1fr; gap:20px; padding:18px; }
+	.agentflow-access { padding:18px 0 0; border-top:1px solid var(--af-border); border-left:0; }
+	.agentflow-agent-grid { grid-template-columns:1fr; }
+	.agentflow-agents { padding:18px 14px 14px; }
+	.agentflow-address-row { flex-wrap:wrap; }
+	.agentflow-address-row input[type="text"] { flex-basis:100%; }
+	.agentflow-address-row .agentflow-button { flex:1 1 auto; }
 }
 </style>
 
 <script type="text/javascript">//<![CDATA[
 var agentflowOpenUrl = '<%=url("admin/services/agentflow/open")%>';
+var agentflowStatusUrl = '<%=url("admin/services/agentflow_status")%>';
 var agentflowAgentInstallUrl = '<%=url("admin/services/agentflow/agent_install")%>';
 var agentflowCsrfToken = (window.taskd && window.taskd.csrfToken) || '';
+var agentflowSelectedAgent = '';
+var agentflowAgentNames = {
+	codexcli: 'Codex',
+	'claude-code': 'Claude Code',
+	opencode: 'OpenCode',
+	kimi: 'Kimi',
+	reasonix: 'Reasonix'
+};
+var agentflowLabels = {
+	installed: '<%:Installed%>',
+	notInstalled: '<%:Not installed%>',
+	unknown: '<%:Status unavailable%>',
+	install: '<%:Install%>',
+	starting: '<%:Starting...%>',
+	copied: '<%:Copied%>'
+};
 
-function agentflowAgentDialog(open) {
+function agentflowAbsoluteUrl(value) {
+	try { return new URL(value, window.location.href).href; }
+	catch (e) { return value || ''; }
+}
+
+function agentflowRenderStatus(st) {
+	var icon = document.getElementById('agentflow-service-icon');
+	var title = document.getElementById('agentflow-service-title');
+	var description = document.getElementById('agentflow-service-description');
+	var openButton = document.getElementById('agentflow-open');
+	var address = document.getElementById('agentflow-address');
+	var statuses = {};
+	var agents = st && st.agents || [];
+	var i;
+
+	if (!st) return;
+	if (icon) {
+		icon.className = 'agentflow-service-icon' + (st.running ? ' running' : '');
+		icon.textContent = st.running ? '\u2713' : '!';
+	}
+	if (title) title.textContent = st.running ? '<%:AgentFlow service is running%>' : '<%:AgentFlow service is not running%>';
+	if (description) description.textContent = st.running
+		? '<%:The service is ready. You can open AgentFlow or install coding agents.%>'
+		: '<%:Start the service to use AgentFlow. Agent installation remains available.%>';
+	if (openButton) openButton.disabled = !st.running;
+	if (address) address.value = agentflowAbsoluteUrl(st.entry_url || '');
+
+	for (i = 0; i < agents.length; i++) statuses[agents[i].id] = agents[i];
+	for (i in agentflowAgentNames) {
+		if (!agentflowAgentNames.hasOwnProperty(i)) continue;
+		var card = document.getElementById('agentflow-agent-' + i);
+		var state = document.getElementById('agentflow-agent-state-' + i);
+		var version = document.getElementById('agentflow-agent-version-' + i);
+		var installButton = document.getElementById('agentflow-agent-install-' + i);
+		var item = statuses[i];
+		var available = st.agents_available !== false && !!item;
+		var installed = available && item.installed === true;
+		if (card) card.setAttribute('data-state', installed ? 'installed' : (available ? 'available' : 'unknown'));
+		if (state) state.textContent = installed ? agentflowLabels.installed : (available ? agentflowLabels.notInstalled : agentflowLabels.unknown);
+		if (version) version.textContent = installed && item.version ? item.version : '-';
+		if (installButton) {
+			installButton.disabled = !available || installed;
+			installButton.value = installed ? agentflowLabels.installed : agentflowLabels.install;
+		}
+	}
+}
+
+function agentflowCopyAddress() {
+	var address = document.getElementById('agentflow-address');
+	var feedback = document.getElementById('agentflow-copy-feedback');
+	if (!address || !address.value) return;
+	function done() {
+		if (!feedback) return;
+		feedback.textContent = agentflowLabels.copied;
+		window.setTimeout(function() { feedback.textContent = ''; }, 1800);
+	}
+	if (navigator.clipboard && navigator.clipboard.writeText) {
+		navigator.clipboard.writeText(address.value).then(done, function() {
+			address.select();
+			document.execCommand('copy');
+			done();
+		});
+	} else {
+		address.select();
+		document.execCommand('copy');
+		done();
+	}
+}
+
+function agentflowAgentDialog(open, agent) {
 	var modal = document.getElementById('agentflow-agent-modal');
-	var select = document.getElementById('agentflow-agent-select');
-	var trigger = document.getElementById('agentflow-agent-open');
+	var name = document.getElementById('agentflow-selected-agent-name');
+	var confirmButton = document.getElementById('agentflow-agent-install-now');
 	if (!modal) return;
 	if (open) {
+		agentflowSelectedAgent = agent || '';
+		if (name) name.textContent = agentflowAgentNames[agentflowSelectedAgent] || agentflowSelectedAgent;
 		modal.classList.add('open');
-		if (select) select.focus();
+		if (confirmButton) confirmButton.focus();
 	} else {
 		modal.classList.remove('open');
+		var trigger = document.getElementById('agentflow-agent-install-' + agentflowSelectedAgent);
 		if (trigger) trigger.focus();
 	}
 }
 
 function agentflowInstallAgent() {
-	var selected = document.getElementById('agentflow-agent-select');
 	var button = document.getElementById('agentflow-agent-install-now');
-	if (!selected || !button) return;
+	if (!agentflowSelectedAgent || !button) return;
 	if (!window.taskd || !window.taskd.show_log) {
 		alert('<%:Task log window is not available.%>');
 		return;
 	}
 
 	button.disabled = true;
+	button.value = agentflowLabels.starting;
 	(new XHR()).post(agentflowAgentInstallUrl, {
-		agent: selected.value,
+		agent: agentflowSelectedAgent,
 		token: agentflowCsrfToken
 	}, function(x, data) {
 		button.disabled = false;
+		button.value = '<%:Install now%>';
 		if (!data) {
 			try { data = JSON.parse(x.responseText || '{}'); }
 			catch (e) { data = {}; }
@@ -66,25 +386,8 @@ function agentflowInstallAgent() {
 	});
 }
 
-XHR.poll(5, '<%=url("admin/services/agentflow_status")%>', null, function(x, st) {
-	var el = document.getElementById('agentflow_status');
-	var openButton = document.getElementById('agentflow-open');
-	if (st && el) {
-		if (!st.running) {
-			if (openButton) openButton.style.display = 'none';
-			el.innerHTML = '<br/><em style="color:red"><%:The AgentFlow service is not running.%></em>';
-		} else {
-			if (openButton) openButton.style.display = '';
-			var accessMode = '';
-			if (st.proxy_prefix_enabled && st.linkeasefull_running) {
-				accessMode = '<br/><em><%:Access mode: LinkEase Desktop /apps proxy.%></em>';
-			} else {
-				accessMode = '<br/><em><%:Access mode: external port.%></em>';
-			}
-			el.innerHTML = '<br/><em style="color:green"><%:The AgentFlow service is running.%></em>'
-				+ accessMode;
-		}
-	}
+XHR.poll(5, agentflowStatusUrl, null, function(x, st) {
+	agentflowRenderStatus(st);
 });
 
 document.addEventListener('keydown', function(ev) {
@@ -92,34 +395,71 @@ document.addEventListener('keydown', function(ev) {
 });
 //]]></script>
 
-<fieldset class="cbi-section">
-	<legend><%:Status%></legend>
-	<p id="agentflow_status">
-		<em><%:Collecting data...%></em>
-	</p>
-	<div class="agentflow-actions">
-		<input id="agentflow-open" class="btn cbi-button cbi-button-apply" type="button" value="<%:Click to open AgentFlow%>" onclick="window.open(agentflowOpenUrl)" style="display:none">
-		<input id="agentflow-agent-open" class="btn cbi-button cbi-button-apply" type="button" value="<%:Install agent%>" onclick="agentflowAgentDialog(true)">
-	</div>
-</fieldset>
-
-<div id="agentflow-agent-modal" class="agentflow-agent-modal" role="dialog" aria-modal="true" aria-labelledby="agentflow-agent-title" onclick="if (event.target === this) agentflowAgentDialog(false)">
-	<div class="agentflow-agent-dialog">
-		<h3 id="agentflow-agent-title"><%:Install agent%></h3>
-		<p><%:Select a coding agent to install into the shared AgentFlow runtime.%></p>
-		<div class="agentflow-agent-field">
-			<label for="agentflow-agent-select"><%:Agent%></label>
-			<select id="agentflow-agent-select" class="cbi-input-select">
-				<option value="codexcli">Codex</option>
-				<option value="claude-code">Claude Code</option>
-				<option value="opencode">OpenCode</option>
-				<option value="kimi">Kimi</option>
-				<option value="reasonix">Reasonix</option>
-			</select>
+<div class="agentflow-shell">
+	<section class="agentflow-panel agentflow-overview" aria-labelledby="agentflow-service-title">
+		<div class="agentflow-service">
+			<div id="agentflow-service-icon" class="agentflow-service-icon" aria-hidden="true">...</div>
+			<div class="agentflow-service-copy">
+				<h3 id="agentflow-service-title"><%:Checking AgentFlow service%></h3>
+				<p id="agentflow-service-description"><%:Collecting data...%></p>
+				<input id="agentflow-open" class="btn cbi-button agentflow-button agentflow-primary" type="button" value="<%:Open AgentFlow%>" onclick="window.open(agentflowOpenUrl)" disabled>
+			</div>
 		</div>
-		<div class="agentflow-agent-dialog-actions">
-			<input class="btn cbi-button" type="button" value="<%:Cancel%>" onclick="agentflowAgentDialog(false)">
-			<input id="agentflow-agent-install-now" class="btn cbi-button cbi-button-apply" type="button" value="<%:Install now%>" onclick="agentflowInstallAgent()">
+		<div class="agentflow-access">
+			<label for="agentflow-address"><%:Local network access%></label>
+			<div class="agentflow-address-row">
+				<input id="agentflow-address" type="text" readonly value="">
+				<input class="btn cbi-button agentflow-button" type="button" value="<%:Copy%>" onclick="agentflowCopyAddress()">
+			</div>
+			<p class="agentflow-access-note"><%:Open this address in a browser to access the AgentFlow Web interface.%> <span id="agentflow-copy-feedback" role="status" aria-live="polite"></span></p>
+		</div>
+	</section>
+
+	<section class="agentflow-panel agentflow-agents" aria-labelledby="agentflow-agents-title">
+		<div class="agentflow-section-heading">
+			<div class="agentflow-section-mark" aria-hidden="true">A</div>
+			<div>
+				<h3 id="agentflow-agents-title"><%:Agent installation%></h3>
+				<p><%:Install coding agents into the shared AgentFlow runtime. Installed agents show their current version.%></p>
+			</div>
+		</div>
+		<div class="agentflow-agent-grid">
+			<div id="agentflow-agent-codexcli" class="agentflow-agent-card" data-state="unknown" style="--agent-color:#356cf6">
+				<div class="agentflow-agent-top"><div class="agentflow-agent-logo" aria-hidden="true">C</div><div class="agentflow-agent-copy"><div class="agentflow-agent-title">Codex</div><p><%:OpenAI coding agent for software development tasks.%></p></div></div>
+				<div class="agentflow-agent-meta"><span class="agentflow-agent-state"><span class="agentflow-agent-dot"></span><span id="agentflow-agent-state-codexcli"><%:Checking...%></span></span><span class="agentflow-agent-divider">|</span><span><%:Version%>: <span id="agentflow-agent-version-codexcli">-</span></span></div>
+				<input id="agentflow-agent-install-codexcli" class="btn cbi-button agentflow-button agentflow-primary agentflow-install-button" type="button" value="<%:Install%>" onclick="agentflowAgentDialog(true, 'codexcli')" disabled>
+			</div>
+			<div id="agentflow-agent-claude-code" class="agentflow-agent-card" data-state="unknown" style="--agent-color:#dc633d">
+				<div class="agentflow-agent-top"><div class="agentflow-agent-logo" aria-hidden="true">C</div><div class="agentflow-agent-copy"><div class="agentflow-agent-title">Claude Code</div><p><%:Anthropic coding agent for code analysis and development.%></p></div></div>
+				<div class="agentflow-agent-meta"><span class="agentflow-agent-state"><span class="agentflow-agent-dot"></span><span id="agentflow-agent-state-claude-code"><%:Checking...%></span></span><span class="agentflow-agent-divider">|</span><span><%:Version%>: <span id="agentflow-agent-version-claude-code">-</span></span></div>
+				<input id="agentflow-agent-install-claude-code" class="btn cbi-button agentflow-button agentflow-primary agentflow-install-button" type="button" value="<%:Install%>" onclick="agentflowAgentDialog(true, 'claude-code')" disabled>
+			</div>
+			<div id="agentflow-agent-opencode" class="agentflow-agent-card" data-state="unknown" style="--agent-color:#6a3ee8">
+				<div class="agentflow-agent-top"><div class="agentflow-agent-logo" aria-hidden="true">O</div><div class="agentflow-agent-copy"><div class="agentflow-agent-title">OpenCode</div><p><%:Open source coding agent with a flexible terminal workflow.%></p></div></div>
+				<div class="agentflow-agent-meta"><span class="agentflow-agent-state"><span class="agentflow-agent-dot"></span><span id="agentflow-agent-state-opencode"><%:Checking...%></span></span><span class="agentflow-agent-divider">|</span><span><%:Version%>: <span id="agentflow-agent-version-opencode">-</span></span></div>
+				<input id="agentflow-agent-install-opencode" class="btn cbi-button agentflow-button agentflow-primary agentflow-install-button" type="button" value="<%:Install%>" onclick="agentflowAgentDialog(true, 'opencode')" disabled>
+			</div>
+			<div id="agentflow-agent-kimi" class="agentflow-agent-card" data-state="unknown" style="--agent-color:#1677d2">
+				<div class="agentflow-agent-top"><div class="agentflow-agent-logo" aria-hidden="true">K</div><div class="agentflow-agent-copy"><div class="agentflow-agent-title">Kimi</div><p><%:Moonshot AI coding agent for terminal-based development.%></p></div></div>
+				<div class="agentflow-agent-meta"><span class="agentflow-agent-state"><span class="agentflow-agent-dot"></span><span id="agentflow-agent-state-kimi"><%:Checking...%></span></span><span class="agentflow-agent-divider">|</span><span><%:Version%>: <span id="agentflow-agent-version-kimi">-</span></span></div>
+				<input id="agentflow-agent-install-kimi" class="btn cbi-button agentflow-button agentflow-primary agentflow-install-button" type="button" value="<%:Install%>" onclick="agentflowAgentDialog(true, 'kimi')" disabled>
+			</div>
+			<div id="agentflow-agent-reasonix" class="agentflow-agent-card" data-state="unknown" style="--agent-color:#3f526f">
+				<div class="agentflow-agent-top"><div class="agentflow-agent-logo" aria-hidden="true">R</div><div class="agentflow-agent-copy"><div class="agentflow-agent-title">Reasonix</div><p><%:AI coding agent for software engineering workflows.%></p></div></div>
+				<div class="agentflow-agent-meta"><span class="agentflow-agent-state"><span class="agentflow-agent-dot"></span><span id="agentflow-agent-state-reasonix"><%:Checking...%></span></span><span class="agentflow-agent-divider">|</span><span><%:Version%>: <span id="agentflow-agent-version-reasonix">-</span></span></div>
+				<input id="agentflow-agent-install-reasonix" class="btn cbi-button agentflow-button agentflow-primary agentflow-install-button" type="button" value="<%:Install%>" onclick="agentflowAgentDialog(true, 'reasonix')" disabled>
+			</div>
+		</div>
+	</section>
+
+	<div id="agentflow-agent-modal" class="agentflow-agent-modal" role="dialog" aria-modal="true" aria-labelledby="agentflow-agent-dialog-title" onclick="if (event.target === this) agentflowAgentDialog(false)">
+		<div class="agentflow-agent-dialog">
+			<h3 id="agentflow-agent-dialog-title"><%:Confirm agent installation%></h3>
+			<p><%:The installer will download and install%> <strong id="agentflow-selected-agent-name"></strong> <%:into the shared AgentFlow runtime.%></p>
+			<div class="agentflow-dialog-actions">
+				<input class="btn cbi-button agentflow-button" type="button" value="<%:Cancel%>" onclick="agentflowAgentDialog(false)">
+				<input id="agentflow-agent-install-now" class="btn cbi-button agentflow-button agentflow-primary" type="button" value="<%:Install now%>" onclick="agentflowInstallAgent()">
+			</div>
 		</div>
 	</div>
 </div>

@@ -16,37 +16,57 @@ class AgentInstallContractTest(unittest.TestCase):
 
         self.assertIn("+luci-lib-taskd", makefile)
         self.assertIn('<%+tasks/embed%>', status)
-        self.assertIn('<select id="agentflow-agent-select"', status)
         for agent in ("codexcli", "claude-code", "opencode", "kimi", "reasonix"):
-            self.assertIn(f'<option value="{agent}">', status)
-        self.assertNotIn('type="radio"', status)
+            self.assertIn(f'id="agentflow-agent-{agent}"', status)
+            self.assertIn(f"agentflowAgentDialog(true, '{agent}')", status)
+        self.assertNotIn('<select id="agentflow-agent-select"', status)
+        self.assertNotIn("<h4>", status)
+        self.assertEqual(status.count('class="agentflow-agent-title"'), 5)
+        self.assertNotIn("Update", status)
+        self.assertNotIn("Uninstall", status)
         self.assertIn('id="agentflow-open"', status)
-        self.assertIn('id="agentflow-agent-open"', status)
-        self.assertGreater(status.index('id="agentflow-agent-open"'), status.index('id="agentflow_status"'))
-        self.assertIn('margin:12px;', status)
-        self.assertIn("var selected = document.getElementById('agentflow-agent-select')", status)
+        self.assertIn('id="agentflow-agent-install-now"', status)
+        self.assertIn("agentflowSelectedAgent", status)
         self.assertIn("window.taskd.show_log(data.task_id", status)
         self.assertNotIn('local token =', status)
         self.assertIn("window.taskd.csrfToken", status)
         self.assertIn("token: agentflowCsrfToken", status)
         self.assertIn('http.formvalue("agent")', controller)
-        self.assertIn('codexcli = true', controller)
-        self.assertIn('["claude-code"] = true', controller)
-        self.assertIn('opencode = true', controller)
-        self.assertIn('kimi = true', controller)
-        self.assertIn('reasonix = true', controller)
+        for agent in ("codexcli", "claude-code", "opencode", "kimi", "reasonix"):
+            self.assertIn(f'id = "{agent}"', controller)
+        self.assertIn('supported_agents[supported_agent.id] = true', controller)
         self.assertIn('context.authtoken or context.token', controller)
         self.assertIn('http.formvalue("token") ~= expected', controller)
         self.assertIn('/etc/init.d/tasks task_add ', controller)
         self.assertIn('task_id = "agentflow-agent-install"', controller)
 
+    def test_status_reports_installed_agents_from_shared_mise_runtime(self):
+        controller = self.read("luasrc/controller/agentflow.lua")
+        status = self.read("luasrc/view/agentflow/status.htm")
+
+        self.assertIn("istore_runtime_env", controller)
+        self.assertIn('where node@lts', controller)
+        for package in (
+            "@openai/codex",
+            "@anthropic-ai/claude-code",
+            "opencode-ai",
+            "@moonshot-ai/kimi-code",
+            "reasonix",
+        ):
+            self.assertIn(f'package = "{package}"', controller)
+        self.assertIn('status.version = package_json.version', controller)
+        self.assertIn('agents_available = agents_available', controller)
+        self.assertIn('st.agents_available', status)
+        self.assertIn('item.installed === true', status)
+        self.assertIn('installButton.disabled = !available || installed', status)
+        self.assertIn('installed ? agentflowLabels.installed : agentflowLabels.install', status)
+
     def test_modal_theme_prefers_body_attribute_then_system_theme(self):
         status = self.read("luasrc/view/agentflow/status.htm")
 
-        self.assertIn('body[theme="light"] .agentflow-agent-dialog', status)
-        self.assertIn('body[theme="dark"] .agentflow-agent-dialog', status)
+        self.assertIn('body[theme="dark"] .agentflow-shell', status)
         self.assertIn('@media (prefers-color-scheme: dark)', status)
-        self.assertIn('body:not([theme]) .agentflow-agent-dialog', status)
+        self.assertIn('body:not([theme]) .agentflow-shell', status)
 
     def test_controller_runs_remote_installer_inside_taskd(self):
         controller = self.read("luasrc/controller/agentflow.lua")

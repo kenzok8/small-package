@@ -184,7 +184,7 @@ return view.extend({
 			{ tab: 'netsetup', type: form.Value, id: 'wan_pppoe_user', title: _('PPPoE Username'), depends: { wan_proto: 'pppoe' } },
 			{ tab: 'netsetup', type: form.Value, id: 'wan_pppoe_pass', title: _('PPPoE Password'), depends: { wan_proto: 'pppoe' }, password: true },
 			{ tab: 'netsetup', type: form.Value, id: 'lan_ipaddr', title: _('LAN IPv4 Address'), datatype: 'ip4addr', placeholder: '10.0.0.1' },
-			{ tab: 'netsetup', type: form.DynamicList, id: 'lan_dns', title: _('Custom DNS Server(s)'), datatype: 'ipaddr', placeholder: '223.5.5.5' },
+			{ tab: 'netsetup', type: form.DynamicList, id: 'lan_dns', title: _('Custom DNS Server(s)'), datatype: 'ipaddr', placeholder: '223.5.5.5', desc: _('Leave empty for ISP DNS.') },
 			{ tab: 'netsetup', type: form.Value, id: 'lan_gateway', title: _('Gateway Address'), datatype: 'ip4addr', placeholder: '', depends: { wan_proto: 'siderouter' }, desc: _('Primary router IP address used when operating in side-router mode.') },
 			{ tab: 'netsetup', type: form.Flag, id: 'dhcp', title: _('Enable DHCP Server'), desc: _('Enable or disable LAN DHCP server (usually disabled in side-router mode to avoid IP address conflicts).') },
 			{ tab: 'netsetup', type: form.Flag, id: 'ipv6', title: _('IPv6 Support'), desc: _('Enable or disable IPv6 router advertisements and DHCPv6.') },

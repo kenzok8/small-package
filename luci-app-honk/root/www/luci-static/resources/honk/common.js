@@ -355,7 +355,7 @@ function initCodeMirror(textarea, onSaveCallback) {
 					}, 1500);
 				} catch (e) {
 					console.error('Format failed:', e);
-					ui.addNotification(null, E('p', _('Failed to format code: ') + (e.message || e)), 'error');
+					ui.addNotification(null, E('p', _('Failed to format code:') + ' ' + (e.message || e)), 'error');
 				}
 			}
 		}, _('Format Code'));
@@ -398,7 +398,7 @@ function renderStatusHeader() {
 			}).catch(function(err) {
 				btn.disabled = false;
 				btn.innerText = _('Reload Service');
-				ui.addNotification(null, E('p', _('Failed to reload HONK: ') + (err.message || err)), 'error');
+				ui.addNotification(null, E('p', _('Failed to reload HONK:') + ' ' + (err.message || err)), 'error');
 			});
 		}
 	}, _('Reload Service'));

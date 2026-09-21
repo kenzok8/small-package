@@ -16,9 +16,6 @@ msgstr "启用"
 msgid "Reload Service"
 msgstr "重载服务"
 
-msgid "Reload service to apply configuration."
-msgstr "重载服务以使配置生效。"
-
 msgid "Global Settings"
 msgstr "全局设置"
 
@@ -64,20 +61,8 @@ msgstr "日志"
 msgid "Memory Usage"
 msgstr "内存占用"
 
-msgid "Enable Auto Subscribe Update"
-msgstr "启用订阅自动更新"
-
-msgid "Update Cycle"
-msgstr "更新周期"
-
-msgid "Update Time (Every Day)"
-msgstr "更新时间（每天）"
-
 msgid "Format Code"
 msgstr "格式化代码"
-
-msgid "Dashboard"
-msgstr "控制面板"
 
 msgid "Clear logs"
 msgstr "清空日志"
@@ -85,7 +70,7 @@ msgstr "清空日志"
 msgid "Logs cleared successfully."
 msgstr "日志已清空。"
 
-msgid "Failed to clear logs: "
+msgid "Failed to clear logs:"
 msgstr "清空日志失败："
 
 msgid "Configuration applied and service reloaded."
@@ -100,7 +85,7 @@ msgstr "运行状态"
 msgid "Formatted"
 msgstr "已格式化"
 
-msgid "Failed to format code: "
+msgid "Failed to format code:"
 msgstr "格式化代码失败："
 
 msgid "Running"
@@ -121,7 +106,7 @@ msgstr "一键启用默认 Clash API 配置"
 msgid "Successfully enabled! Restarting service and initializing dashboard..."
 msgstr "已成功启用！正在重启服务并初始化面板..."
 
-msgid "Failed to enable: "
+msgid "Failed to enable:"
 msgstr "启用失败："
 
 msgid "Unknown error"
@@ -178,7 +163,7 @@ msgstr "下载版本与源（专为 OpenWrt 优化的无字体极简版，仅约
 msgid "Custom URL"
 msgstr "自定义 URL"
 
-msgid "HTTPS access detected: "
+msgid "HTTPS access detected:"
 msgstr "检测到当前通过 HTTPS 访问 LuCI："
 
 msgid "Modern browsers may block HTTP iframe resources under HTTPS. If the dashboard fails to display, open it in a new tab."
@@ -187,7 +172,7 @@ msgstr "现代浏览器可能会阻止直接加载 HTTP 协议的 Clash API 面�
 msgid "Open in New Tab"
 msgstr "在新标签页打开"
 
-msgid "HONK service is currently not running: "
+msgid "HONK service is currently not running:"
 msgstr "HONK 服务当前未运行："
 
 msgid "Clash API port ("
@@ -214,7 +199,7 @@ msgstr "更新至最新版 Zashboard"
 msgid "Update Zashboard Dashboard"
 msgstr "更新 Zashboard 面板"
 
-msgid "The latest fontless version (dist-no-fonts.zip) will be downloaded and deployed to: "
+msgid "The latest fontless version (dist-no-fonts.zip) will be downloaded and deployed to:"
 msgstr "系统将下载最新的无字体极简版（dist-no-fonts.zip）并重新部署至目标目录："
 
 msgid "Select download source"
@@ -241,7 +226,7 @@ msgstr "切换全屏显示"
 msgid "Initializing download task...\n"
 msgstr "正在初始化下载任务...\n"
 
-msgid "Failed to trigger download: "
+msgid "Failed to trigger download:"
 msgstr "触发下载失败："
 
 msgid "Installation complete! Loading dashboard..."
@@ -250,7 +235,7 @@ msgstr "安装完成！正在加载面板..."
 msgid "Installation failed. Please check logs."
 msgstr "安装失败，请检查日志。"
 
-msgid "Download error: "
+msgid "Download error:"
 msgstr "触发下载异常："
 
 msgid "Configured (Hidden)"
@@ -265,7 +250,7 @@ msgstr "正在重载..."
 msgid "HONK service reload triggered successfully."
 msgstr "已成功触发 HONK 服务重载。"
 
-msgid "Failed to reload HONK: "
+msgid "Failed to reload HONK:"
 msgstr "重载 HONK 失败："
 
 msgid "DNS configuration saved and service reloaded."
@@ -277,6 +262,14 @@ msgstr "节点配置已保存并重载服务。"
 msgid "Routing configuration saved and service reloaded."
 msgstr "路由配置已保存并重载服务。"
 
+msgid "Zashboard"
+msgstr "Zashboard"
 
+msgid "Mirror"
+msgstr "镜像源"
 
+msgid "Mirror 1"
+msgstr "镜像源 1"
 
+msgid "Mirror 2"
+msgstr "镜像源 2"

@@ -72,3 +72,84 @@ msgstr "任务日志窗口不可用。"
 
 msgid "Failed to start agent installation."
 msgstr "启动智能体安装失败。"
+
+msgid "Installed"
+msgstr "已安装"
+
+msgid "Not installed"
+msgstr "未安装"
+
+msgid "Status unavailable"
+msgstr "状态不可用"
+
+msgid "Install"
+msgstr "安装"
+
+msgid "Starting..."
+msgstr "正在启动……"
+
+msgid "Copied"
+msgstr "已复制"
+
+msgid "Copy"
+msgstr "复制"
+
+msgid "AgentFlow service is running"
+msgstr "AgentFlow 服务运行中"
+
+msgid "AgentFlow service is not running"
+msgstr "AgentFlow 服务未运行"
+
+msgid "The service is ready. You can open AgentFlow or install coding agents."
+msgstr "服务已就绪，可以打开 AgentFlow 或安装编码智能体。"
+
+msgid "Start the service to use AgentFlow. Agent installation remains available."
+msgstr "请启动服务后使用 AgentFlow；智能体安装仍然可用。"
+
+msgid "Checking AgentFlow service"
+msgstr "正在检查 AgentFlow 服务"
+
+msgid "Open AgentFlow"
+msgstr "打开 AgentFlow"
+
+msgid "Local network access"
+msgstr "局域网访问"
+
+msgid "Open this address in a browser to access the AgentFlow Web interface."
+msgstr "在浏览器中打开此地址即可访问 AgentFlow Web 界面。"
+
+msgid "Agent installation"
+msgstr "智能体安装"
+
+msgid "Install coding agents into the shared AgentFlow runtime. Installed agents show their current version."
+msgstr "将编码智能体安装到 AgentFlow 共享运行环境中；已安装的智能体会显示当前版本。"
+
+msgid "OpenAI coding agent for software development tasks."
+msgstr "OpenAI 提供的代码智能体，适用于软件开发任务。"
+
+msgid "Anthropic coding agent for code analysis and development."
+msgstr "Anthropic 提供的代码智能体，适用于代码分析与开发。"
+
+msgid "Open source coding agent with a flexible terminal workflow."
+msgstr "开源代码智能体，提供灵活的终端开发工作流。"
+
+msgid "Moonshot AI coding agent for terminal-based development."
+msgstr "Moonshot AI 提供的代码智能体，适用于终端开发。"
+
+msgid "AI coding agent for software engineering workflows."
+msgstr "面向软件工程工作流的 AI 代码智能体。"
+
+msgid "Checking..."
+msgstr "正在检查……"
+
+msgid "Version"
+msgstr "版本"
+
+msgid "Confirm agent installation"
+msgstr "确认安装智能体"
+
+msgid "The installer will download and install"
+msgstr "安装程序将下载并安装"
+
+msgid "into the shared AgentFlow runtime."
+msgstr "到 AgentFlow 共享运行环境。"

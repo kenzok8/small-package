@@ -72,6 +72,9 @@ msgstr "启用 DHCP 服务器"
 msgid "Enable or disable LAN DHCP server (usually disabled in side-router mode to avoid IP address conflicts)."
 msgstr "开启或关闭局域网 DHCP 服务（旁路由模式下通常建议关闭，避免局域网 IP 分配冲突）。"
 
+msgid "Leave empty for ISP DNS."
+msgstr "留空则使用 ISP 运营商DNS"
+
 msgid "IPv6 Support"
 msgstr "IPv6 支持"
 

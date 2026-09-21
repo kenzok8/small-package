@@ -5,6 +5,13 @@ module("luci.controller.agentflow", package.seeall)
 local APPS_PROXY_PREFIX = "/apps=http://127.0.0.1:19290"
 local DEFAULT_BASE_PATH = "/apps/agentflow/"
 local DEFAULT_PORT = 9000
+local AGENTS = {
+	{ id = "codexcli", package = "@openai/codex" },
+	{ id = "claude-code", package = "@anthropic-ai/claude-code" },
+	{ id = "opencode", package = "opencode-ai" },
+	{ id = "kimi", package = "@moonshot-ai/kimi-code" },
+	{ id = "reasonix", package = "reasonix" }
+}
 
 function index()
 	entry({"admin", "services", "agentflow_status"}, call("agentflow_status"))
@@ -133,10 +140,54 @@ local function agentflow_entry_url()
 	return "http://" .. url_authority(request_or_lan_host(), port) .. base_path
 end
 
+local function node_modules_root()
+	local sys = require "luci.sys"
+	local util = require "luci.util"
+	local script = table.concat({
+		'. /lib/functions/mise.sh 2>/dev/null || exit 1',
+		'istore_runtime_env >/dev/null 2>&1 || exit 1',
+		'mise_bin="$(command -v mise-istore || command -v mise)"',
+		'[ -n "$mise_bin" ] || exit 1',
+		'node_dir="$("$mise_bin" where node@lts 2>/dev/null)"',
+		'[ -n "$node_dir" ] || exit 1',
+		'printf "%s/lib/node_modules" "$node_dir"'
+	}, "; ")
+	local root = sys.exec("/bin/sh -c " .. util.shellquote(script)) or ""
+	root = root:match("^%s*(.-)%s*$")
+	if root == "" or root:sub(1, 1) ~= "/" then
+		return nil
+	end
+	return root
+end
+
+local function agent_statuses()
+	local fs = require "nixio.fs"
+	local jsonc = require "luci.jsonc"
+	local root = node_modules_root()
+	local statuses = {}
+
+	for _, agent in ipairs(AGENTS) do
+		local status = { id = agent.id, installed = false }
+		if root then
+			local package_file = root .. "/" .. agent.package .. "/package.json"
+			local package_data = fs.readfile(package_file)
+			local package_json = package_data and jsonc.parse(package_data) or nil
+			if type(package_json) == "table" then
+				status.installed = true
+				status.version = package_json.version
+			end
+		end
+		statuses[#statuses + 1] = status
+	end
+
+	return statuses, root ~= nil
+end
+
 function agentflow_status()
 	local sys = require "luci.sys"
 	local port, base_path = agentflow_config()
 	local entry_url = agentflow_entry_url()
+	local agents, agents_available = agent_statuses()
 
 	local status = {
 		running = (sys.call("pidof agentflow >/dev/null") == 0),
@@ -145,7 +196,9 @@ function agentflow_status()
 		entry_url = entry_url,
 		proxy_prefix_supported = uhttpd_supports_proxy_prefix(),
 		proxy_prefix_enabled = uhttpd_apps_proxy_available(),
-		linkeasefull_running = linkeasefull_running()
+		linkeasefull_running = linkeasefull_running(),
+		agents_available = agents_available,
+		agents = agents
 	}
 	write_json(status)
 end
@@ -158,20 +211,17 @@ function agentflow_agent_install()
 	local task_id = "agentflow-agent-install"
 	local task_script = "/tmp/agentflow-agent-install.sh"
 	local installer_url = "https://fw.koolcenter.com/binary/geili/agentflow/releases/installapp/installapp-mise.sh"
-	local agents = {
-		codexcli = true,
-		["claude-code"] = true,
-		opencode = true,
-		kimi = true,
-		reasonix = true
-	}
+	local supported_agents = {}
+	for _, supported_agent in ipairs(AGENTS) do
+		supported_agents[supported_agent.id] = true
+	end
 
 	if not require_post_csrf() then
 		return
 	end
 
 	local agent = http.formvalue("agent") or ""
-	if not agents[agent] then
+	if not supported_agents[agent] then
 		write_json({ ok = false, error = "unsupported agent" })
 		return
 	end

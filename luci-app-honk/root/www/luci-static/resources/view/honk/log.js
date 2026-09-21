@@ -35,7 +35,7 @@ return view.extend({
 					ui.addNotification(null, E('p', _('Logs cleared successfully.')), 'info');
 				}).catch(function(err) {
 					btnClear.disabled = false;
-					ui.addNotification(null, E('p', _('Failed to clear logs: ') + (err.message || err)), 'error');
+					ui.addNotification(null, E('p', _('Failed to clear logs:') + ' ' + (err.message || err)), 'error');
 				});
 			}
 		}, _('Clear logs'));

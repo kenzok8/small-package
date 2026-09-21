@@ -2931,6 +2931,10 @@ while [ "$pushbot_enable" = "1" ]; do
 	if [ ! -f "${dir}send_enable.lock" ] && [ ! -z "$title" ] && [ ! -z "$content" ]; then
 		[ ! -z "$device_name" ] && title="【$device_name】$title"
 		( echo "$lite_enable"|grep -q "content" ) && content="$title"
+		# 清洗双引号为单引号，避免 eval echo 展开模板后破坏 JSON（与 send() 一致）
+		title=`echo "$title"|tr '"' "'"`
+		content=`echo "$content"|tr '"' "'"`
+		device_name=`echo "$device_name"|tr '"' "'"`
 		# WxPusher: 检查 uid 和 topics 是否至少有一个
 		if ( echo "${jsonpath}"|grep -q "wxpusher" ) && [ "$wxpusher_uids" = "[]" ] && [ "$wxpusher_topics" = "[]" ]; then
 			echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】WxPusher：User IDs 或 Topic IDs 至少填写一个" >> ${logfile}

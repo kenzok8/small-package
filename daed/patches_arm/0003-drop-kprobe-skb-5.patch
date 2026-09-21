@@ -5,15 +5,20 @@
  KPROBE_SKB_AT(3)
  KPROBE_SKB_AT(4)
 -KPROBE_SKB_AT(5)
-
+ 
  SEC("kprobe/skb_lifetime_termination")
  int kprobe_skb_lifetime_termination(struct pt_regs *ctx)
 --- a/dae-core/trace/trace.go
 +++ b/dae-core/trace/trace.go
-@@ -191,7 +191,6 @@ func attachBpfToTargets(objs *bpfObjects, targets map[string]int) (links []link.Link, err error) {
-		1: objs.KprobeSkb1,
-		2: objs.KprobeSkb2,
-		3: objs.KprobeSkb3,
-		4: objs.KprobeSkb4,
+@@ -191,11 +191,10 @@
+ 	progByPos := map[int]*ebpf.Program{
+ 		1: objs.KprobeSkb1,
+ 		2: objs.KprobeSkb2,
+ 		3: objs.KprobeSkb3,
+ 		4: objs.KprobeSkb4,
 -		5: objs.KprobeSkb5,
-	}
+ 	}
+ 	symbolsByPos := make(map[int][]string, len(progByPos))
+ 	for fn, pos := range targets {
+ 		if _, ok := progByPos[pos]; !ok {
+ 			continue
