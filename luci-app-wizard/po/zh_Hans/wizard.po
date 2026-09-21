@@ -69,8 +69,8 @@ msgstr "在旁路由模式下工作时填写的上级主路由 IP 地址。"
 msgid "Enable DHCP Server"
 msgstr "启用 DHCP 服务器"
 
-msgid "Enable or disable LAN DHCP server (usually disabled in side-router mode to avoid IP address conflicts)."
-msgstr "开启或关闭局域网 DHCP 服务（旁路由模式下通常建议关闭，避免局域网 IP 分配冲突）。"
+msgid "If this DHCP is enabled, disable the main router's DHCP. If disabled, manually set client devices' gateway and DNS to this bypass router's IP."
+msgstr "开启此DHCP则需要关闭主路由DHCP, 关闭此DHCP则需要手动将上网设备的网关和DNS改为此旁路由的IP。"
 
 msgid "Leave empty for ISP DNS."
 msgstr "留空则使用 ISP 运营商DNS"
