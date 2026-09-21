@@ -749,6 +749,11 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 				if idx_pn then
 					result.plugin = plugin_info:sub(1, idx_pn - 1)
 					result.plugin_opts = plugin_info:sub(idx_pn + 1, #plugin_info)
+					-- 部分订阅 ShadowTLS 采用 SIP003
+					result.plugin_opts = result.plugin_opts:gsub("^password=", "passwd=")
+					result.plugin_opts = result.plugin_opts:gsub(";password=", ";passwd=")
+					result.plugin_opts = result.plugin_opts:gsub("^version=([123])", "v%1=1")
+					result.plugin_opts = result.plugin_opts:gsub(";version=([123])", ";v%1=1")
 				else
 					result.plugin = plugin_info
 				end
@@ -855,10 +860,22 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 						result.plugin_opts = nil
 					end
 				elseif result.type == 'sing-box' then
-					if result.plugin ~= "obfs-local" and result.plugin ~= "v2ray-plugin" then
+					if result.plugin ~= "obfs-local" and result.plugin ~= "v2ray-plugin" and result.plugin ~= "shadow-tls" then
 						result.error_msg = "Sing-Box 不支持 SS " .. result.plugin .. " 插件。"
 					else
 						result.plugin_enabled = "1"
+						-- 部分订阅 ShadowTLS 采用 SIP003
+						if result.plugin == "shadow-tls" then
+							for item in result.plugin_opts:gmatch("[^;]+") do
+								local key, value = item:match("^([^=]+)=(.*)$")
+								if key == "host" then result.shadowtls_serverName = value end
+								if key == "passwd" then result.shadowtls_password = value end
+								if key:match("^v[123]$") then result.shadowtls_version = key:sub(2) end
+							end
+							result.shadowtls = "1"
+							result.plugin_opts = nil
+							result.plugin_enabled = nil
+						end
 					end
 				else
 					result.plugin_enabled = "1"
@@ -967,7 +984,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 				if result.type ~= "sing-box" and result.type ~= "SS-Rust" then
 					result.error_msg =  sub_ss_type .. " 不支持 shadow-tls 插件。"
 				else
-					-- 解析SS Shadow-TLS 插件参数
+					-- 解析SS Shadow-TLS 专用参数
 					local function parseShadowTLSParams(b64str, out)
 						local ok, data = pcall(jsonParse, base64Decode(b64str))
 						if not ok or type(data) ~= "table" then return "" end

@@ -718,6 +718,146 @@ return {
 		http.write_json({ ok: true });
 	},
 
+	/* ── OTA Update: detect package manager (apk vs opkg) ── */
+	act_detect_pkgmgr: function() {
+		let mgr = "opkg";
+		let f = popen("command -v apk 2>/dev/null", "r");
+		if (f) { let o = f.read("all"); f.close(); if (o && length(replace(o, /\s+/, "")) > 0) mgr = "apk"; }
+		http.prepare_content("application/json");
+		http.write_json({ pkgmgr: mgr });
+	},
+
+	/* ── OTA Update: trigger background download with retry (max 3) ── */
+	act_download: function() {
+		let ver = http.formvalue("ver") ?? "";
+		let rel = http.formvalue("rel") ?? "";
+		if (ver == "" || rel == "") {
+			http.prepare_content("application/json");
+			http.write_json({ ok: false, error: "missing ver/rel" });
+			return;
+		}
+
+		/* sanitize version/release to prevent injection */
+		ver = replace(ver, /[^0-9.]/g, "");
+		rel = replace(rel, /[^0-9]/g, "");
+		if (ver == "" || rel == "") {
+			http.prepare_content("application/json");
+			http.write_json({ ok: false, error: "invalid ver/rel" });
+			return;
+		}
+
+		/* detect package manager */
+		let mgr = "opkg";
+		let f0 = popen("command -v apk 2>/dev/null", "r");
+		if (f0) { let o = f0.read("all"); f0.close(); if (o && length(replace(o, /\s+/, "")) > 0) mgr = "apk"; }
+
+		/* build download URLs */
+		let base = "https://github.com/zzsj0928/luci-app-pushbot/releases/download/luci-app-pushbot-v" + ver + "-r" + rel + "/";
+		let files;
+		if (mgr == "apk") {
+			files = [
+				"luci-app-pushbot_" + ver + "-r" + rel + "_all.apk",
+				"luci-i18n-pushbot-zh-cn_" + ver + "-r" + rel + "_all.apk"
+			];
+		} else {
+			files = [
+				"luci-app-pushbot_" + ver + "-r" + rel + "_all.ipk",
+				"luci-i18n-pushbot-zh-cn_" + ver + "-r" + rel + "_all.ipk"
+			];
+		}
+
+		/* progress file */
+		let pfile = "/tmp/pushbot/ota_progress";
+		/* clear previous progress */
+		system("echo '0' > " + pfile + " 2>/dev/null");
+
+		/* background download script with retry */
+		let dl_script = "#!/bin/sh\n"
+			+ "PFILE='" + pfile + "'\n"
+			+ "BASE='" + base + "'\n"
+			+ "MAX_RETRY=3\n"
+			+ "TOTAL=" + length(files) + "\n"
+			+ "OK=0\n"
+			+ "for f in " + join(" ", files) + "; do\n"
+			+ "  URL=\"${BASE}${f}\"\n"
+			+ "  DEST=\"/tmp/${f}\"\n"
+			+ "  ATTEMPT=0\n"
+			+ "  while [ $ATTEMPT -lt $MAX_RETRY ]; do\n"
+			+ "    ATTEMPT=$((ATTEMPT+1))\n"
+			+ "    curl -k -L --connect-timeout 15 --max-time 120 -o \"${DEST}\" \"${URL}\" 2>/dev/null\n"
+			+ "    if [ $? -eq 0 ] && [ -s \"${DEST}\" ]; then\n"
+			+ "      OK=$((OK+1))\n"
+			+ "      echo \"$((OK * 100 / TOTAL))\" > \"${PFILE}\"\n"
+			+ "      break\n"
+			+ "    fi\n"
+			+ "    rm -f \"${DEST}\"\n"
+			+ "    sleep 2\n"
+			+ "  done\n"
+			+ "done\n"
+			+ "if [ $OK -eq $TOTAL ]; then\n"
+			+ "  echo 'done' > \"${PFILE}\"\n"
+			+ "else\n"
+			+ "  echo 'fail' > \"${PFILE}\"\n"
+			+ "fi\n";
+
+		/* write and execute background script */
+		let sf = open("/tmp/pushbot/ota_download.sh", "w");
+		if (sf) {
+			sf.write(dl_script);
+			sf.close();
+			system("chmod +x /tmp/pushbot/ota_download.sh && /tmp/pushbot/ota_download.sh &");
+		}
+
+		http.prepare_content("application/json");
+		http.write_json({ ok: true });
+	},
+
+	/* ── OTA Update: poll download progress ── */
+	act_download_progress: function() {
+		let pfile = "/tmp/pushbot/ota_progress";
+		let progress = "0";
+		let f = popen("cat " + pfile + " 2>/dev/null || echo '0'", "r");
+		if (f) { progress = replace(f.read("all"), /\s+/, ""); f.close(); }
+		if (progress == "") progress = "0";
+		http.prepare_content("application/json");
+		http.write_json({ progress: progress });
+	},
+
+	/* ── OTA Update: install downloaded packages ── */
+	act_install: function() {
+		let mgr = "opkg";
+		let f0 = popen("command -v apk 2>/dev/null", "r");
+		if (f0) { let o = f0.read("all"); f0.close(); if (o && length(replace(o, /\s+/, "")) > 0) mgr = "apk"; }
+
+		let ifile = "/tmp/pushbot/ota_install.log";
+		let cmd;
+		if (mgr == "apk") {
+			cmd = "apk add --allow-untrusted /tmp/luci-app-pushbot-*.apk /tmp/luci-i18n-pushbot-*.apk";
+		} else {
+			cmd = "opkg install /tmp/luci-app-pushbot_*.ipk /tmp/luci-i18n-pushbot_*.ipk";
+		}
+
+		/* run install in background, log output */
+		let install_cmd = "(" + cmd + ") > " + ifile + " 2>&1 && echo 'ok' >> " + ifile + " || echo 'fail' >> " + ifile + " &";
+		system(install_cmd);
+
+		http.prepare_content("application/json");
+		http.write_json({ ok: true, pkgmgr: mgr });
+	},
+
+	/* ── OTA Update: poll install result ── */
+	act_install_progress: function() {
+		let ifile = "/tmp/pushbot/ota_install.log";
+		let output = "";
+		let f = popen("cat " + ifile + " 2>/dev/null", "r");
+		if (f) { output = f.read("all"); f.close(); }
+		let done = false, success = false;
+		if (match(output, /\nok$/)) { done = true; success = true; }
+		else if (match(output, /\nfail$/)) { done = true; success = false; }
+		http.prepare_content("application/json");
+		http.write_json({ done: done, success: success, output: output });
+	},
+
 	/* compatibility: index — no-op, menu registration is handled by menu.d JSON */
 	index: function() {}
 };

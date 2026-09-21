@@ -1004,6 +1004,7 @@ local current_node = map:get(section)
 			opt.set(dom_prefix + 'method', method || "");
 			opt.set(dom_prefix + 'ss_method', method || "");
 			opt.set(dom_prefix + 'tcp_fast_open', queryParam.tfo);
+
 			if (plugin && plugin != "none") {
 				plugin = (plugin === "simple-obfs") ? "obfs-local" : plugin;
 				opt.set(dom_prefix + 'plugin_enabled', true);
@@ -1026,9 +1027,29 @@ local current_node = map:get(section)
 						opt.set(dom_prefix + 'tls_allowInsecure', true);
 					}
 				}
+				//部分订阅 ShadowTLS 采用 SIP003
+				if (plugin === "shadow-tls") {
+					pluginOpts = pluginOpts.replace(/(^|;)password=/, '$1passwd=');
+					pluginOpts = pluginOpts.replace(/(^|;)version=([123])(?=;|$)/, '$1v$2=1');
+					if (dom_prefix === "ssrust_") {
+						opt.set(dom_prefix + 'plugin_opts', pluginOpts || "");
+					} else if (dom_prefix === "singbox_") {
+						const opts = Object.fromEntries(pluginOpts.split(';').map(item => item.split('=', 2)));
+						const host = opts.host;
+						const password = opts.passwd;
+						const versionKey = Object.keys(opts).find(key => /^v[123]$/.test(key));
+						const version = versionKey ? versionKey.slice(1) : "1";
+						opt.set(dom_prefix + 'shadowtls', true);
+						opt.set(dom_prefix + 'shadowtls_version', version);
+						opt.set(dom_prefix + 'shadowtls_password', password || "");
+						opt.set(dom_prefix + 'shadowtls_serverName', host || "");
+						opt.set(dom_prefix + 'plugin_enabled', false);
+					}
+				}
 			} else {
 				opt.set(dom_prefix + 'plugin', "none");
 			}
+
 			if (param !== undefined) {
 				opt.set('remarks', decodeURIComponent(param));
 			}
@@ -1129,7 +1150,7 @@ local current_node = map:get(section)
 				opt.set(dom_prefix + 'finalmask', queryParam.fm || "");
 
 				if (queryParam["shadow-tls"]) {
-					//解析SS Shadow-TLS 插件参数
+					//解析SS Shadow-TLS 专用参数
 					const parseShadowTLSParams = function(base64Str, outObj) {
 						try {
 							let obj = JSON.parse(b64decsafe(base64Str));
