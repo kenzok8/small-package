@@ -24,6 +24,10 @@
 
 ## 📝 Changelog
 
+- **2026-09-22** (v6.00): Online update + event push fix
+  - Added: **Online update** — one-click update (auto download & install) or manual pull (download with progress ring, click to install after completion); auto-refresh page 30s after installation; also supports browser direct download of APK/IPK
+  - Fixed: **Device online/offline and login alerts were never sent** — a legacy bug silently broke all event notifications, now resolved
+  - Improved: **WxPusher TopicID** capped at 5 per message (official limit); extra values auto-ignored; delimiter now supports Chinese comma and space
 - **2026-09-20** (v5.18): WxPusher channel & card-based content, main version 5.17 → 5.18
   - Added: **WxPusher channel** — one App Token is enough; multiple user UIDs and topic IDs, at least one of the two enabled (WxPusher allows at most 5 topics per message; extras are ignored); content is converted to HTML and reads directly inside WeChat
   - Added: **Per-module card rendering** — tables now use borderless HTML tables instead of Markdown tables, so each module renders as its own card on every channel

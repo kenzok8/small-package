@@ -183,12 +183,6 @@ function action_events()
 	query["until"] = os.time()
 	local events = dk:events({query = query})
 
-	if events.code == 200 and type(events.body) == "table" then
-		for _, v in ipairs(events.body) do
-			local date = "unknown"
-			if v and v.time then
-				date = os.date("%Y-%m-%d %H:%M:%S", v.time)
-	-- 安全检查：确保events对象和body存在
 	if not events then
 		logs = "[ERROR] Failed to connect to Docker daemon. Please ensure Docker is running.\n"
 	elseif not events.body then
@@ -215,19 +209,6 @@ function action_events()
 			event_list = events.body
 		end
 
-			local name = v.Actor and v.Actor.Attributes and v.Actor.Attributes.name or "unknown"
-			local action = v.Action or "unknown"
-
-			if v and v.Type == "container" then
-				local id = v.Actor and v.Actor.ID or "unknown"
-				logs = logs .. string.format("[%s] %s %s Container ID: %s Container Name: %s\n", date, v.Type, action, id, name)
-			elseif v.Type == "network" then
-				local container = v.Actor and v.Actor.Attributes and v.Actor.Attributes.container or "unknown"
-				local network = v.Actor and v.Actor.Attributes and v.Actor.Attributes.type or "unknown"
-				logs = logs .. string.format("[%s] %s %s Container ID: %s Network Name: %s Network type: %s\n", date, v.Type, action, container, name, network)
-			elseif v.Type == "image" then
-				local id = v.Actor and v.Actor.ID or "unknown"
-				logs = logs .. string.format("[%s] %s %s Image: %s Image name: %s\n", date, v.Type, action, id, name)
 		-- 检查事件列表是否为空
 		if #event_list == 0 then
 			logs = "[INFO] No events received in the last 24 hours.\n"

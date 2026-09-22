@@ -756,8 +756,8 @@ return {
 		let files;
 		if (mgr == "apk") {
 			files = [
-				"luci-app-pushbot_" + ver + "-r" + rel + "_all.apk",
-				"luci-i18n-pushbot-zh-cn_" + ver + "-r" + rel + "_all.apk"
+				"luci-app-pushbot-" + ver + "-r" + rel + ".apk",
+				"luci-i18n-pushbot-zh-cn-" + ver + "-r" + rel + ".apk"
 			];
 		} else {
 			files = [
@@ -852,8 +852,8 @@ return {
 		let f = popen("cat " + ifile + " 2>/dev/null", "r");
 		if (f) { output = f.read("all"); f.close(); }
 		let done = false, success = false;
-		if (match(output, /\nok$/)) { done = true; success = true; }
-		else if (match(output, /\nfail$/)) { done = true; success = false; }
+		if (match(output, /(^|\n)ok\s*$/)) { done = true; success = true; }
+		else if (match(output, /(^|\n)fail\s*$/)) { done = true; success = false; }
 		http.prepare_content("application/json");
 		http.write_json({ done: done, success: success, output: output });
 	},

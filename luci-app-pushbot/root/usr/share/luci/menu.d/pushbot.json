@@ -123,5 +123,40 @@
 			"module": "luci.controller.pushbot",
 			"function": "act_version"
 		}
+	},
+	"admin/services/pushbot/detect_pkgmgr": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "act_detect_pkgmgr"
+		}
+	},
+	"admin/services/pushbot/download": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "act_download"
+		}
+	},
+	"admin/services/pushbot/download_progress": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "act_download_progress"
+		}
+	},
+	"admin/services/pushbot/install": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "act_install"
+		}
+	},
+	"admin/services/pushbot/install_progress": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "act_install_progress"
+		}
 	}
 }
