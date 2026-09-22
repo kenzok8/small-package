@@ -2,8 +2,8 @@
 {% import { readfile } from 'fs' %}
 {% let pushbot_argon_mode = cursor().get_first('argon', 'global', 'mode') ?? '' %}
 {% let pushbot_liquid_mode = cursor().get_first('liquid', 'theme', 'mode') ?? '' %}
-{% let pushbot_def_ipv4 = readfile('/usr/bin/pushbot/api/ipv4.list') ?? '' %}
-{% let pushbot_def_ipv6 = readfile('/usr/bin/pushbot/api/ipv6.list') ?? '' %}
+{% let pushbot_def_ipv4 = readfile('/usr/share/pushbot/defaults/ipv4.list') ?? readfile('/usr/bin/pushbot/api/ipv4.list') ?? '' %}
+{% let pushbot_def_ipv6 = readfile('/usr/share/pushbot/defaults/ipv6.list') ?? readfile('/usr/bin/pushbot/api/ipv6.list') ?? '' %}
 {% include('header') %}
 <script type="text/javascript">//<![CDATA[
 if (typeof XHR === 'undefined') {
@@ -79,6 +79,75 @@ pollStatus();
 //]]></script>
 
 <script type="text/javascript">//<![CDATA[
+/* ── 配置管理按钮（复用预览弹窗的 overlay + box 风格） ── */
+function pbShowConfigMgmt() {
+	var oldOv = document.querySelector('.pb-preview-overlay');
+	if (oldOv) { oldOv.remove(); return; }
+	var ov = document.createElement('div');
+	ov.className = 'pb-preview-overlay';
+	var box = document.createElement('div');
+	box.className = 'pb-preview-box';
+	var tit = document.createElement('div');
+	tit.className = 'pb-preview-title'; tit.textContent = '{{ _('Config Management') }}';
+	box.appendChild(tit);
+	/* 内容：说明 + 按钮 */
+	var body = document.createElement('div');
+	body.style.cssText = 'flex:1;overflow-y:auto;';
+	body.innerHTML = '<div style="text-align:center;color:#64748b;font-size:13px;margin-bottom:16px">{{ _('Choose a reset option. This action is irreversible.') }}</div>';
+	var btns = document.createElement('div');
+	btns.id = 'pb_cm_btns';
+	btns.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
+	var btnReset = document.createElement('button');
+	btnReset.type = 'button'; btnReset.className = 'pb-preview-btn pb-preview-btn-conf';
+	btnReset.style.cssText = 'background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-color:rgba(248,113,113,0.5);';
+	btnReset.textContent = '{{ _('Reset Config') }}';
+	btnReset.addEventListener('click', function(){ pbCmConfirm(ov, 'reset_config', '{{ _('Reset Config') }}', '{{ _('This will reset all configurations to factory defaults. This action is irreversible.') }}'); });
+	var btnKeep = document.createElement('button');
+	btnKeep.type = 'button'; btnKeep.className = 'pb-preview-btn';
+	btnKeep.style.cssText = 'background:linear-gradient(135deg,#f59e0b,#ea580c);color:#fff;border-color:rgba(251,146,60,0.5);';
+	btnKeep.textContent = '{{ _('Reset Config (Keep Token)') }}';
+	btnKeep.addEventListener('click', function(){ pbCmConfirm(ov, 'reset_config_keep_token', '{{ _('Reset Config (Keep Token)') }}', '{{ _('This will reset all configurations to factory defaults, but keep enabled channel tokens and their related settings.') }}'); });
+	btns.appendChild(btnReset); btns.appendChild(btnKeep);
+	body.appendChild(btns); box.appendChild(body);
+	var disc = document.createElement('button');
+	disc.type = 'button'; disc.className = 'pb-preview-btn pb-preview-btn-disc'; disc.textContent = '{{ _('Cancel') }}';
+	disc.addEventListener('click', function() { ov.remove(); });
+	var discWrap = document.createElement('div');
+	discWrap.style.cssText = 'margin-top:12px;display:flex;justify-content:center;';
+	discWrap.appendChild(disc);
+	box.appendChild(discWrap);
+	ov.appendChild(box);
+	document.body.appendChild(ov);
+	setTimeout(function() { ov.classList.add('show'); }, 10);
+}
+function pbCmConfirm(parentOv, apiPath, label, desc) {
+	var box = parentOv.querySelector('.pb-preview-box');
+	/* 保留 token 的按钮用橙色，全量重置用红色 */
+	var btnStyle = (apiPath === 'reset_config_keep_token')
+		? 'background:linear-gradient(135deg,#f59e0b,#ea580c);color:#fff;border-color:rgba(251,146,60,0.5);'
+		: 'background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-color:rgba(248,113,113,0.5);';
+	box.innerHTML = '<div class="pb-preview-title">{{ _('Confirm Reset') }}</div>'
+		+ '<div style="text-align:center;color:#64748b;font-size:13px;margin:16px 0;line-height:1.6">' + desc + '</div>'
+		+ '<div style="display:flex;justify-content:center;gap:10px">'
+		+ '<button id="pb_cm_yes" class="pb-preview-btn pb-preview-btn-conf" style="' + btnStyle + '">' + label + '</button>'
+		+ '<button id="pb_cm_no" class="pb-preview-btn pb-preview-btn-disc">{{ _('Cancel') }}</button>'
+		+ '</div>';
+	box.querySelector('#pb_cm_no').addEventListener('click', function() { parentOv.remove(); });
+	box.querySelector('#pb_cm_yes').addEventListener('click', function() {
+		box.innerHTML = '<div style="text-align:center;padding:24px 0">{{ _('Resetting...') }}</div>';
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET', '/cgi-bin/luci/admin/services/pushbot/' + apiPath + '?_=' + Date.now());
+		xhr.onload = function(){
+			box.innerHTML = '<div style="text-align:center;padding:24px 0"><div style="font-size:28px;margin-bottom:8px">✓</div><div style="font-size:14px;font-weight:700">{{ _('Configuration has been reset. Page will reload.') }}</div></div>';
+			setTimeout(function(){ location.reload(); }, 2000);
+		};
+		xhr.send();
+	});
+}
+window.addEventListener('DOMContentLoaded', function(){
+	var btn = document.getElementById('pushbot_config_mgmt_btn');
+	if (btn) btn.addEventListener('click', pbShowConfigMgmt);
+});
 var PB_CONFIG = null;
 var PB_READY = [];
 var PB_BLACK_BASE = null, PB_BLACK_SHOWN = null;
@@ -5003,10 +5072,15 @@ window.addEventListener('DOMContentLoaded', function() {
 .pushbot-save-row {
 	margin-top: 28px;
 	display: flex;
+	flex-wrap: wrap;
 	justify-content: flex-end;
 	align-items: center;
-	gap: 12px;
+	gap: 10px;
 	padding: 0 4px;
+}
+.pushbot-save-row .pushbot-preview-btn,
+.pushbot-save-row .pushbot-save-btn {
+	white-space: nowrap;
 }
 .pushbot-save-btn {
 	display: inline-flex;
@@ -5267,13 +5341,14 @@ window.addEventListener('load',function(){apply(compute());});
 				</div>
 			</div>
 		</div>
-		<span class="pushbot-version-badge" id="pushbot_version_badge">v5.13-r4</span>
+		<span class="pushbot-version-badge" id="pushbot_version_badge">6.00-r1</span>
 		<div id="pushbot_status_badge" class="pushbot-status-badge is-stopped" role="status" aria-live="polite">
 			<span class="pushbot-status-dot"></span>
 			<span id="pushbot_status_text">{{ _('NOT RUNNING') }}</span>
 		</div>
 	</div>
 	<div class="pushbot-save-row">
+		<button type="button" class="pushbot-preview-btn" id="pushbot_config_mgmt_btn">{{ _('Config Management') }}</button>
 		<button type="button" class="pushbot-preview-btn" id="pushbot_preview_btn">{{ _('Preview changes') }}</button>
 		<button type="button" class="pushbot-save-btn" id="pushbot_save_btn">{{ _('Save & Apply') }}</button>
 	</div>

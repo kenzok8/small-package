@@ -197,16 +197,19 @@ function exec_call(cmd)
 end
 
 function base64Decode(text)
-	if not text then return '' end
-	local encoded = text:gsub("%z", ""):gsub("%c", ""):gsub("_", "/"):gsub("-", "+")
+	if type(text) ~= "string" then return "" end
+	local encoded = text:gsub("%z", ""):gsub("%c", ""):gsub("_", "/"):gsub("-", "+"):gsub("=+$", "")
+	if encoded == "" then return text end
+	if not encoded:match("^[A-Za-z0-9+/]*$") then return text end
 	local mod4 = #encoded % 4
-	encoded = encoded .. string.sub('====', mod4 + 1)
-	local result = nixio.bin.b64decode(encoded)
-	if result then
-		return result:gsub("%z", "")
-	else
-		return text
-	end
+	if mod4 == 1 then return text end
+	local padded = encoded .. string.rep("=", (4 - mod4) % 4)
+	local result = nixio.bin.b64decode(padded)
+	if not result then return text end
+	-- Verify that the normalized input is canonical Base64.
+	local reencoded = nixio.bin.b64encode(result):gsub("=+$", "")
+	if reencoded ~= encoded then return text end
+	return (result:gsub("%z", ""))
 end
 
 function base64Encode(text)

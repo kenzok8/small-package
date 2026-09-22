@@ -874,6 +874,97 @@ return {
 		http.write_json({ ok: true });
 	},
 
+	/* ── 配置管理：全部重置（不保留 token） ── */
+	act_reset_config: function() {
+		let defaults = "/usr/share/pushbot/defaults";
+		system("echo `date '+%%Y-%%m-%%d %%H:%%M:%%S'` 【OTA】act_reset_config called >> /tmp/pushbot/pushbot.log");
+		if (!access(defaults)) {
+			http.prepare_content("application/json");
+			http.write_json({ ok: false, error: "defaults dir missing" });
+			return;
+		}
+		/* 重置 UCI 配置 */
+		system("/bin/cp -f " + defaults + "/pushbot /etc/config/pushbot 2>/dev/null");
+		system("/bin/cp -f " + defaults + "/ipv4.list /usr/bin/pushbot/api/ipv4.list 2>/dev/null");
+		system("/bin/cp -f " + defaults + "/ipv6.list /usr/bin/pushbot/api/ipv6.list 2>/dev/null");
+		system("/bin/cp -f " + defaults + "/diy.json /usr/bin/pushbot/api/diy.json 2>/dev/null");
+		http.prepare_content("application/json");
+		http.write_json({ ok: true });
+	},
+
+	/* ── 配置管理：重置并保留当前渠道的所有相关配置 ── */
+	act_reset_config_keep_token: function() {
+		let defaults = "/usr/share/pushbot/defaults";
+		system("echo `date '+%%Y-%%m-%%d %%H:%%M:%%S'` 【OTA】act_reset_config_keep_token called >> /tmp/pushbot/pushbot.log");
+		if (!access(defaults)) {
+			http.prepare_content("application/json");
+			http.write_json({ ok: false, error: "defaults dir missing" });
+			return;
+		}
+
+		let u = cursor();
+		let section = u.get_all("pushbot", "pushbot") ?? {};
+
+		/* 根据当前 jsonpath 确定渠道前缀 */
+		let jsonpath = section.jsonpath ?? "";
+		/* jsonpath → 前缀映射 */
+		let prefix_map = {
+			"dingding.json": "dd_",
+			"ent_wechat.json": "we_",
+			"pushplus.json": "pp_",
+			"feishu.json": "fs_",
+			"pushdeer.json": "pushdeer",
+			"bark.json": "bark",
+			"ntfy.json": "ntfy",
+			"gotify.json": "gotify",
+			"wxpusher.json": "wxpusher",
+		};
+		let prefix = "";
+		for (let fname, pfx in prefix_map) {
+			/* ucode 无 indexOf/match(对含点字符串)，用 substr 循环查找子串 */
+			let found = false;
+			for (let i = 0; i <= length(jsonpath) - length(fname); i++) {
+				if (substr(jsonpath, i, length(fname)) == fname) { found = true; break; }
+			}
+			if (found) { prefix = pfx; break; }
+		}
+		if (prefix == "") {
+			http.prepare_content("application/json");
+			http.write_json({ ok: false, error: "no current channel" });
+			return;
+		}
+
+		/* 保留当前渠道的所有参数（前缀匹配 + jsonpath 本身）。
+		   ucode 无 startsWith/endsWith，统一用 indexOf(prefix)==0 判断前缀 */
+		let keep = {};
+		for (let k in section) {
+			/* ucode 无 indexOf/startsWith，用 substr 判断前缀 */
+			if (k == prefix || substr(k, 0, length(prefix)) == prefix) {
+				keep[k] = section[k];
+			}
+		}
+		keep.jsonpath = jsonpath;
+		system("echo keep_keys=" + join(",", keys(keep)) + " >> /tmp/pushbot/pushbot.log");
+
+		/* 重置 UCI 配置为默认 */
+		system("/bin/cp -f " + defaults + "/pushbot /etc/config/pushbot 2>/dev/null");
+		system("/bin/cp -f " + defaults + "/ipv4.list /usr/bin/pushbot/api/ipv4.list 2>/dev/null");
+		system("/bin/cp -f " + defaults + "/ipv6.list /usr/bin/pushbot/api/ipv6.list 2>/dev/null");
+		system("/bin/cp -f " + defaults + "/diy.json /usr/bin/pushbot/api/diy.json 2>/dev/null");
+		system("echo after_cp_lines=$(wc -l < /etc/config/pushbot) >> /tmp/pushbot/pushbot.log");
+
+		/* 写回保留的参数 */
+		for (let k in keep) {
+			let v = "" + keep[k];
+			system("echo uci_set_" + k + " >> /tmp/pushbot/pushbot.log");
+			system("/sbin/uci -q set pushbot.pushbot." + k + "='" + v + "'");
+		}
+		system("/sbin/uci -q commit pushbot");
+		system("echo after_commit_lines=$(wc -l < /etc/config/pushbot) >> /tmp/pushbot/pushbot.log");
+		http.prepare_content("application/json");
+		http.write_json({ ok: true, prefix: prefix, restored_keys: Object.keys(keep) });
+	},
+
 	/* compatibility: index — no-op, menu registration is handled by menu.d JSON */
 	index: function() {}
 };

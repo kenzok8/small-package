@@ -165,5 +165,19 @@
 			"module": "luci.controller.pushbot",
 			"function": "act_clear_packages"
 		}
+	},
+	"admin/services/pushbot/reset_config": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "act_reset_config"
+		}
+	},
+	"admin/services/pushbot/reset_config_keep_token": {
+		"action": {
+			"type": "function",
+			"module": "luci.controller.pushbot",
+			"function": "act_reset_config_keep_token"
+		}
 	}
 }

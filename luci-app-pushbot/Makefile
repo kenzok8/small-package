@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-pushbot
 PKG_VERSION:=6.00
-PKG_RELEASE:=7
+PKG_RELEASE:=15
 
 PKG_MAINTAINER:=tty228 <tty228@yeah.net>  zzsj0928
 
@@ -42,6 +42,14 @@ define Package/$(PKG_NAME)/postinst
 	[ -f /tmp/pushbot/wlan_interface ] && rm -f /tmp/pushbot/wlan_interface
 	[ -f /tmp/pushbot/wireless_ifs ] && rm -f /tmp/pushbot/wireless_ifs
 }
+# 备份插件默认文件（仅首次安装时创建，供"配置管理"恢复使用）
+DESDIR="$${IPKG_INSTROOT}/usr/share/pushbot/defaults"
+if [ ! -d "$${DESDIR}" ]; then
+	mkdir -p "$${DESDIR}"
+	for f in /etc/config/pushbot /usr/bin/pushbot/api/ipv4.list /usr/bin/pushbot/api/ipv6.list /usr/bin/pushbot/api/diy.json; do
+		[ -f "$${f}" ] && /bin/cp -f "$${f}" "$${DESDIR}/"
+	done
+fi
 exit 0
 endef
 
