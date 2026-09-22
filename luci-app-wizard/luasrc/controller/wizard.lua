@@ -14,6 +14,17 @@ function index()
     end
 end
 
+local function check_wifi()
+    local has_wifi = false
+    pcall(function()
+        uci:foreach("wireless", "wifi-device", function(s)
+            has_wifi = true
+            return false -- 检测到任意 wifi-device 即终止遍历
+        end)
+    end)
+    return has_wifi
+end
+
 function landing_page()
 	local landing_page = uci:get("wizard", "default", "landing_page")
 	if (luci.sys.call("pgrep routergo >/dev/null") == 0 and landing_page == "routerdog") then
@@ -29,7 +40,13 @@ function landing_page()
 			http.redirect(luci.dispatcher.build_url("admin","quickstart"));
 		end
 	else
-        http.redirect(luci.dispatcher.build_url("admin","status","dashboard"))
+        if check_wifi() then
+            -- 具备无线功能，跳转至常用无线仪表盘界面
+            http.redirect(luci.dispatcher.build_url("admin","status","dashboard"))
+        else
+            -- 无无线设备（纯有线环境），跳转至原生状态概览
+            http.redirect(luci.dispatcher.build_url("admin", "status", "overview"))
+        end
     end
 		
 end
