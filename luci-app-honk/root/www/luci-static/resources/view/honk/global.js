@@ -38,9 +38,7 @@ return view.extend({
 
 	handleSaveApply: function(ev, mode) {
 		return this.handleSave(ev).then(function() {
-			return honk.callHonkReload();
-		}).then(function() {
-			ui.addNotification(null, E('p', _('Configuration applied and service reloaded.')), 'info');
+			return ui.changes.apply(mode);
 		});
 	}
 });
