@@ -891,3 +891,9 @@ msgstr ""
 
 msgid "TTL returned to LAN DNS clients. 0 keeps dae default behavior."
 msgstr ""
+
+msgid "Log level"
+msgstr ""
+
+msgid "Debug and trace show per-connection routing details, but increase CPU usage and log volume. Enable them only while troubleshooting."
+msgstr ""

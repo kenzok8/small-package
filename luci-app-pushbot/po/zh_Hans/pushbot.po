@@ -1379,3 +1379,51 @@ msgstr "请确认已配置 SSH 密钥登录，否则脚本可能无法运行！<
 
 msgid "Gotify"
 msgstr "Gotify"
+
+msgid "Auto-refresh in"
+msgstr "自动刷新"
+
+msgid "s"
+msgstr " 秒"
+
+msgid "One-Click Update"
+msgstr "一键更新"
+
+msgid "Pull NewPkg"
+msgstr "拉取新包"
+
+msgid "Download Link"
+msgstr "下载链接"
+
+msgid "Ignore"
+msgstr "忽略"
+
+msgid "Install Update"
+msgstr "安装更新"
+
+msgid "Installing update…"
+msgstr "正在安装更新…"
+
+msgid "Installing..."
+msgstr "安装中…"
+
+msgid "Download Failed"
+msgstr "下载失败"
+
+msgid "GitHub Release Unreachable"
+msgstr "GitHub Release 不可达"
+
+msgid "Refresh Now"
+msgstr "立即刷新"
+
+msgid "Page will auto-refresh"
+msgstr "页面将自动刷新"
+
+msgid "Updating..."
+msgstr "正在更新…"
+
+msgid "Clear Packages"
+msgstr "清除下载包"
+
+msgid "Cleared"
+msgstr "已清除"

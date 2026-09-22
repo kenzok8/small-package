@@ -156,6 +156,13 @@ function renderStatusCard(ctx, listenAddr) {
 	let busy = false;
 	let lastError = '';
 	let refreshGeneration = 0;
+	const probeState = {
+		running: false,
+		text: '',
+		kind: '',
+		visibleUntil: 0,
+		hideTimer: null
+	};
 	const body = E('div', { 'id': 'dd-status-body' }, E('em', {}, _('Collecting data…')));
 	const card = E('div', { 'class': 'dd-card dd-status-card' }, [
 		E('h4', { 'class': 'dd-card-title' }, _('Service Status')),
@@ -265,13 +272,28 @@ function renderStatusCard(ctx, listenAddr) {
 		}
 		if (state.running && be.name === 'dae') {
 			const ckBtn = E('button', { 'class': 'cbi-button cbi-button-action' }, _('Test YouTube'));
-			const ckRes = E('span', { 'class': 'dd-meta', style: 'margin-left:8px;display:none' }, '');
+			const probeVisible = probeState.running || probeState.visibleUntil > Date.now();
+			const ckRes = E('span', {
+				'class': 'dd-meta' + (probeState.kind ? ' ' + probeState.kind : ''),
+				style: 'margin-left:8px;' + (probeVisible ? '' : 'display:none')
+			}, probeState.text);
+			ckBtn.disabled = probeState.running;
 			ckBtn.addEventListener('click', function(ev) {
 				ev.preventDefault();
+				if (probeState.running)
+					return;
+				if (probeState.hideTimer) {
+					clearTimeout(probeState.hideTimer);
+					probeState.hideTimer = null;
+				}
+				probeState.running = true;
+				probeState.text = _('Testing…');
+				probeState.kind = '';
+				probeState.visibleUntil = 0;
 				ckBtn.disabled = true;
 				ckRes.style.display = 'inline';
 				ckRes.classList.remove('dd-ok', 'dd-err');
-				ckRes.textContent = _('Testing…');
+				ckRes.textContent = probeState.text;
 				/* actually probe YouTube through dae's transparent proxy */
 				fs.exec('/usr/share/luci-app-daede/proxy-check.sh', []).then(function(r) {
 					const out = (r && r.stdout) || '';
@@ -279,20 +301,28 @@ function renderStatusCard(ctx, listenAddr) {
 					const code = (out.match(/code=(\S+)/) || [])[1] || '000';
 					const ms = parseInt((out.match(/ms=(\d+)/) || [])[1] || '0');
 					if (ok) {
-						ckRes.classList.add('dd-ok');
-						ckRes.textContent = _('YouTube reachable · %d ms').format(ms);
+						probeState.kind = 'dd-ok';
+						probeState.text = _('YouTube reachable · %d ms').format(ms);
 					} else {
-						ckRes.classList.add('dd-err');
-						ckRes.textContent = (code === '000')
+						probeState.kind = 'dd-err';
+						probeState.text = (code === '000')
 							? _('YouTube unreachable (timeout)')
 							: _('YouTube unreachable (HTTP %s)').format(code);
 					}
 				}).catch(function() {
-					ckRes.classList.add('dd-err');
-					ckRes.textContent = _('YouTube unreachable (timeout)');
+					probeState.kind = 'dd-err';
+					probeState.text = _('YouTube unreachable (timeout)');
 				}).finally(function() {
-					ckBtn.disabled = false;
-					setTimeout(function() { ckRes.style.display = 'none'; }, 8000);
+					probeState.running = false;
+					probeState.visibleUntil = Date.now() + 8000;
+					refresh(true);
+					probeState.hideTimer = setTimeout(function() {
+						probeState.text = '';
+						probeState.kind = '';
+						probeState.visibleUntil = 0;
+						probeState.hideTimer = null;
+						refresh(true);
+					}, 8000);
 				});
 			});
 			actions.push(ckBtn);
@@ -314,7 +344,11 @@ function renderStatusCard(ctx, listenAddr) {
 
 	poll.add(refresh);
 	refresh();
-	card._ddCleanup = function() { poll.remove(refresh); };
+	card._ddCleanup = function() {
+		poll.remove(refresh);
+		if (probeState.hideTimer)
+			clearTimeout(probeState.hideTimer);
+	};
 	return card;
 }
 

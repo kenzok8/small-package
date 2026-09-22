@@ -663,6 +663,12 @@ msgstr "代理流量"
 msgid "Logging"
 msgstr "日志"
 
+msgid "Log level"
+msgstr "日志级别"
+
+msgid "Debug and trace show per-connection routing details, but increase CPU usage and log volume. Enable them only while troubleshooting."
+msgstr "Debug 和 Trace 会显示逐连接的分流详情，但会增加 CPU 占用和日志量，仅建议排障时启用。"
+
 msgid "Save manual config"
 msgstr "保存手动配置"
 

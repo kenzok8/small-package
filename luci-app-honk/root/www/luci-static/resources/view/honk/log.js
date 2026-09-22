@@ -29,7 +29,6 @@ return view.extend({
 				honk.callHonkClearLog().then(function() {
 					btnClear.disabled = false;
 					logTextarea.value = '';
-					logTextarea.textContent = '';
 					logTextarea.scrollTop = 0;
 					scrolled = false;
 					ui.addNotification(null, E('p', _('Logs cleared successfully.')), 'info');

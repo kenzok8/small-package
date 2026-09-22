@@ -37,6 +37,7 @@ const CSS = [
 	'.dd-log-pane .dd-line.dd-warn{color:#e8b95a}',
 	'.dd-log-pane .dd-line.dd-error{color:#ea7878;background:rgba(234,120,120,.06)}',
 	'.dd-log-pane .dd-line.dd-debug{color:#7a8290;opacity:.7}',
+	'.dd-log-pane .dd-line.dd-trace{color:#68717d;opacity:.62}',
 	'.dd-log-pane .dd-line.dd-hidden{display:none}',
 	'.dd-log-pane .dd-empty{opacity:.5;font-style:italic}',
 	/* 简化后的字段视觉 */
@@ -46,6 +47,7 @@ const CSS = [
 	'.dd-log-pane .dd-lvl-warn{color:#e8b95a;background:rgba(232,185,90,.10)}',
 	'.dd-log-pane .dd-lvl-error{color:#ea7878;background:rgba(234,120,120,.10)}',
 	'.dd-log-pane .dd-lvl-debug{color:#7a8290;background:rgba(122,130,144,.10)}',
+	'.dd-log-pane .dd-lvl-trace{color:#68717d;background:rgba(104,113,125,.10)}',
 	'.dd-log-pane .dd-msg{color:inherit}',
 	'.dd-log-pane .dd-kv{margin-left:6px;color:#6b7480;font-size:11px;opacity:.85}',
 	'body.dark .dd-log-card,html[data-theme="dark"] .dd-log-card,html[data-bs-theme="dark"] .dd-log-card{border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.02)}',
@@ -54,18 +56,37 @@ const CSS = [
 
 /* 拆字段：time="May 25 07:04:59" level=info msg="..." key=val key="val with space" ... */
 const RE_LINE = /^time="([^"]*)"\s+level=(\w+)\s+msg=(?:"((?:[^"\\]|\\.)*)"|(\S+))\s*(.*)$/;
-const RE_PREFIXED_LINE = /^\[([^\]]+)\]\s+(DEBUG|INFO|WARN(?:ING)?|ERROR|FATAL|PANIC)\s*(.*)$/i;
-const RE_PLAIN_LEVEL_LINE = /^\s*(DEBUG|INFO|WARN(?:ING)?|ERROR|FATAL|PANIC)\s+(.*)$/i;
+const RE_PREFIXED_LINE = /^\[([^\]]+)\]\s+(TRACE|DEBUG|INFO|WARN(?:ING)?|ERROR|FATAL|PANIC)\s*(.*)$/i;
+const RE_PLAIN_LEVEL_LINE = /^\s*(TRACE|DEBUG|INFO|WARN(?:ING)?|ERROR|FATAL|PANIC)\s+(.*)$/i;
 
 function detectLevel(line) {
 	// daed/dae logs use lvl=info / [INFO] / level=warning style
-	const m = line.match(/\b(DEBUG|INFO|WARN(?:ING)?|ERROR|FATAL|PANIC)\b/i);
+	const m = line.match(/\b(TRACE|DEBUG|INFO|WARN(?:ING)?|ERROR|FATAL|PANIC)\b/i);
 	if (!m) return '';
 	const lvl = m[1].toUpperCase();
+	if (lvl === 'TRACE') return 'dd-trace';
 	if (lvl === 'DEBUG') return 'dd-debug';
 	if (lvl === 'INFO') return 'dd-info';
 	if (lvl.startsWith('WARN')) return 'dd-warn';
 	return 'dd-error';
+}
+
+function matchesFilter(line, filter) {
+	if (!filter)
+		return true;
+
+	if (filter === 'trace' || filter === 'debug' || filter === 'info' || filter === 'warn' || filter === 'error')
+		return detectLevel(line) === 'dd-' + filter;
+
+	if (filter === 'node_status')
+		return /\balive\b/i.test(line)
+			|| /\bgroup\b.*\bselects dialer\b/i.test(line)
+			|| /\bgroup\s+'[^']+'\s+\[[^\]]+\]:/i.test(line);
+
+	if (filter === 'proxy_traffic')
+		return line.indexOf('<->') !== -1;
+
+	return false;
 }
 
 /* 格式化时间戳并按北京时间显示：
@@ -101,6 +122,7 @@ function lvlShort(level) {
 
 function lvlClass(level) {
 	const u = (level || '').toUpperCase();
+	if (u === 'TRACE') return 'dd-lvl-trace';
 	if (u === 'DEBUG') return 'dd-lvl-debug';
 	if (u === 'INFO') return 'dd-lvl-info';
 	if (u === 'WARN' || u === 'WARNING') return 'dd-lvl-warn';
@@ -209,11 +231,13 @@ return view.extend({
 
 		const selFilter = E('select', { 'class': 'dd-log-btn' }, [
 			E('option', { 'value': '' }, _('All')),
+			E('option', { 'value': 'trace' }, 'TRACE'),
+			E('option', { 'value': 'debug' }, 'DEBUG'),
 			E('option', { 'value': 'info' }, 'INFO'),
 			E('option', { 'value': 'warn' }, 'WARN'),
 			E('option', { 'value': 'error' }, 'ERROR'),
-			E('option', { 'value': 'alive' }, _('Node Status')),
-			E('option', { 'value': 'my_group' }, _('Proxy Traffic'))
+			E('option', { 'value': 'node_status' }, _('Node Status')),
+			E('option', { 'value': 'proxy_traffic' }, _('Proxy Traffic'))
 		]);
 		selFilter.addEventListener('change', function() {
 			state.filter = selFilter.value;
@@ -271,7 +295,7 @@ return view.extend({
 		function applyFilter() {
 			const f = state.filter;
 			pane.querySelectorAll('.dd-line').forEach(function(el) {
-				if (!f || el.textContent.toLowerCase().indexOf(f) !== -1)
+				if (matchesFilter(el.textContent, f))
 					el.classList.remove('dd-hidden');
 				else
 					el.classList.add('dd-hidden');
@@ -285,7 +309,7 @@ return view.extend({
 				const ln = lines[i];
 				if (!ln) continue;
 				const el = buildLine(ln);
-				if (state.filter && ln.toLowerCase().indexOf(state.filter) === -1)
+				if (!matchesFilter(ln, state.filter))
 					el.classList.add('dd-hidden');
 				frag.appendChild(el);
 			}

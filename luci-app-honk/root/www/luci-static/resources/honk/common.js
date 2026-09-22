@@ -5,6 +5,8 @@
 'require ui';
 'require poll';
 'require dom';
+'require view';
+'require form';
 
 var callHonkStatus = rpc.declare({
 	object: 'luci.honk',
@@ -149,6 +151,7 @@ function ensureCodeMirror() {
 		.then(function() {
 			return Promise.all([
 				loadScript(L.resource('honk/addon/edit/matchbrackets.js')),
+				loadScript(L.resource('honk/addon/edit/closebrackets.js')),
 				loadScript(L.resource('honk/addon/fold/foldcode.js')),
 				loadScript(L.resource('honk/addon/fold/foldgutter.js')),
 				loadScript(L.resource('honk/addon/fold/indent-fold.js')),
@@ -263,31 +266,17 @@ function bindCodeMirrorToMap(m, onSaveCallback) {
 	if (!m || m._cmHooked) return;
 	m._cmHooked = true;
 
-	var origSave = m.save;
-	m.save = function() {
-		var root = m.root || document.getElementById('cbi-' + m.config) || document;
-		root.querySelectorAll('textarea').forEach(function(ta) {
-			if (ta._editor) {
-				ta.value = ta._editor.getValue();
-				ta._editor.save();
-			}
-		});
-		return origSave.apply(this, arguments);
-	};
-
 	var origRenderContents = m.renderContents;
 	m.renderContents = function() {
 		return origRenderContents.apply(this, arguments).then(function(mapNode) {
-			setTimeout(function() {
-				var target = mapNode || m.root || document.getElementById('cbi-' + m.config) || document;
-				target.querySelectorAll('textarea').forEach(function(ta) {
-					initCodeMirror(ta, onSaveCallback).then(function(editor) {
-						setTimeout(function() {
-							editor.refresh();
-						}, 50);
+			var target = mapNode || m.root || document.getElementById('cbi-' + m.config) || document;
+			target.querySelectorAll('textarea').forEach(function(ta) {
+				initCodeMirror(ta, onSaveCallback).then(function(editor) {
+					requestAnimationFrame(function() {
+						editor.refresh();
 					});
 				});
-			}, 30);
+			});
 			return mapNode;
 		});
 	};
@@ -315,17 +304,6 @@ function initCodeMirror(textarea, onSaveCallback) {
 		});
 		textarea._editor = editor;
 
-		editor.on('inputRead', function(cm, change) {
-			if (change.origin !== '+input') return;
-			var val = change.text[0];
-			var pairs = { '{': '}', '[': ']', '(': ')', '"': '"', "'": "'" };
-			if (pairs[val]) {
-				var cur = cm.getCursor();
-				cm.replaceRange(pairs[val], cur);
-				cm.setCursor(cur);
-			}
-		});
-
 		var syncTextarea = function() {
 			textarea.value = editor.getValue();
 			textarea.dispatchEvent(new Event('input', { bubbles: true }));
@@ -344,9 +322,7 @@ function initCodeMirror(textarea, onSaveCallback) {
 				try {
 					formatEditor(editor);
 					syncTextarea();
-					var isZh = (window.L && window.L.env && window.L.env.lang && window.L.env.lang.indexOf('zh') !== -1);
-					var formattedText = '✓ ' + (isZh ? '已格式化' : _('Formatted'));
-					formatBtn.textContent = formattedText;
+					formatBtn.textContent = '✓ ' + _('Formatted');
 					formatBtn.classList.add('cbi-button-positive');
 					clearTimeout(formatBtn._resetTimer);
 					formatBtn._resetTimer = setTimeout(function() {
@@ -376,6 +352,44 @@ function initCodeMirror(textarea, onSaveCallback) {
 		}
 
 		return editor;
+	});
+}
+
+function createConfigFileView(filePath, mapTitle, mapDesc, fieldTitle, successMsg) {
+	return view.extend({
+		render: function() {
+			var m = new form.Map('honk', mapTitle, mapDesc);
+
+			var s = m.section(form.NamedSection, '_status');
+			s.render = function() {
+				return renderStatusHeader();
+			};
+
+			s = m.section(form.TypedSection, 'honk');
+			s.anonymous = true;
+			s.addremove = false;
+
+			var o = s.option(form.TextValue, '_content', fieldTitle);
+			o.rows = 25;
+			o.wrap = 'off';
+			o.load = function(section_id) {
+				return readFile(filePath);
+			};
+			o.write = function(section_id, formvalue) {
+				return writeFile(filePath, formvalue);
+			};
+
+			bindCodeMirrorToMap(m);
+			return m.render();
+		},
+
+		handleSaveApply: function(ev, mode) {
+			return this.handleSave(ev).then(function() {
+				return callHonkReload();
+			}).then(function() {
+				ui.addNotification(null, E('p', successMsg || _('Configuration applied and service reloaded.')), 'info');
+			});
+		}
 	});
 }
 
@@ -455,5 +469,6 @@ return baseclass.extend({
 	formatEditor: formatEditor,
 	initCodeMirror: initCodeMirror,
 	bindCodeMirrorToMap: bindCodeMirrorToMap,
-	renderStatusHeader: renderStatusHeader
+	renderStatusHeader: renderStatusHeader,
+	createConfigFileView: createConfigFileView
 });

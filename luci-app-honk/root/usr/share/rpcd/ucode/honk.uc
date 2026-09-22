@@ -2,7 +2,8 @@
 
 'use strict';
 
-import { readfile, writefile, popen, stat, open } from 'fs';
+import { readfile, writefile, popen, stat } from 'fs';
+import { cursor } from 'uci';
 
 function strip_dae_comments(content) {
 	if (!content) return "";
@@ -82,19 +83,12 @@ function parse_clash_api(clean_content) {
 }
 
 function get_config_file_path() {
-	let uci_str = readfile("/etc/config/honk");
-	if (uci_str) {
-		let m_single = match(uci_str, /option\s+config_file\s+'([^']+)'/);
-		if (m_single && m_single[1]) return m_single[1];
-		let m_double = match(uci_str, /option\s+config_file\s+"([^"]+)"/);
-		if (m_double && m_double[1]) return m_double[1];
-		let m_unquoted = match(uci_str, /option\s+config_file\s+([^ \t\r\n]+)/);
-		if (m_unquoted && m_unquoted[1]) return m_unquoted[1];
-	}
-	return "/etc/honk/config.dae";
+	let u = cursor();
+	let p = u ? u.get("honk", "config", "config_file") : null;
+	return p || "/etc/honk/config.dae";
 }
 
-function remove_clash_api_blocks(content) {
+function remove_bracket_block(content, header_regex) {
 	let lines = split(content, "\n");
 	let new_lines = [];
 	let in_block = false;
@@ -102,35 +96,7 @@ function remove_clash_api_blocks(content) {
 
 	for (let idx, line in lines) {
 		let trimmed = trim(line);
-		if (!in_block && match(trimmed, /^[#\/]*\s*clash_api\s*\{/)) {
-			in_block = true;
-			depth = 1;
-			continue;
-		}
-
-		if (in_block) {
-			if (match(trimmed, /\{/)) depth++;
-			if (match(trimmed, /\}/)) depth--;
-			if (depth <= 0) {
-				in_block = false;
-			}
-			continue;
-		}
-
-		push(new_lines, line);
-	}
-	return join("\n", new_lines);
-}
-
-function remove_commented_experimental_blocks(content) {
-	let lines = split(content, "\n");
-	let new_lines = [];
-	let in_block = false;
-	let depth = 0;
-
-	for (let idx, line in lines) {
-		let trimmed = trim(line);
-		if (!in_block && match(trimmed, /^[#\/]+\s*experimental\s*\{/)) {
+		if (!in_block && match(trimmed, header_regex)) {
 			in_block = true;
 			depth = 1;
 			continue;
@@ -299,16 +265,6 @@ return {
 					return { success: false, message: "Config file not found: " + config_file };
 				}
 
-				let default_block =
-"experimental {\n" +
-"    clash_api {\n" +
-"        external_controller: '0.0.0.0:9090'\n" +
-"        external_ui: '/etc/honk/zashboard'\n" +
-"        secret: ''\n" +
-"        default_mode: 'Rule'\n" +
-"    }\n" +
-"}\n";
-
 				let api_inner =
 "    clash_api {\n" +
 "        external_controller: '0.0.0.0:9090'\n" +
@@ -317,7 +273,9 @@ return {
 "        default_mode: 'Rule'\n" +
 "    }\n";
 
-				let cleaned = remove_clash_api_blocks(content);
+				let default_block = "experimental {\n" + api_inner + "}\n";
+
+				let cleaned = remove_bracket_block(content, /^[#\/]*\s*clash_api\s*\{/);
 				cleaned = replace(cleaned, /experimental\s*\{\s*\}/, "experimental {\n}");
 
 				let has_active_exp = match(cleaned, /(^|\n)[ \t]*experimental\s*\{/);
@@ -325,7 +283,7 @@ return {
 				if (has_active_exp) {
 					new_content = replace(cleaned, /(experimental\s*\{[^\n]*\n?)/, "$1" + api_inner);
 				} else {
-					cleaned = remove_commented_experimental_blocks(cleaned);
+					cleaned = remove_bracket_block(cleaned, /^[#\/]+\s*experimental\s*\{/);
 					new_content = rtrim(cleaned, "\r\n\t ") + "\n\n" + default_block;
 				}
 

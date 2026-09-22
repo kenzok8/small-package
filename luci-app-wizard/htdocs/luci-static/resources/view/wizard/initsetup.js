@@ -186,7 +186,7 @@ return view.extend({
 			{ tab: 'netsetup', type: form.Value, id: 'lan_ipaddr', title: _('LAN IPv4 Address'), datatype: 'ip4addr', placeholder: '10.0.0.1' },
 			{ tab: 'netsetup', type: form.DynamicList, id: 'lan_dns', title: _('Custom DNS Server(s)'), datatype: 'ipaddr', placeholder: '223.5.5.5', desc: _('Leave empty for ISP DNS.') },
 			{ tab: 'netsetup', type: form.Value, id: 'lan_gateway', title: _('Gateway Address'), datatype: 'ip4addr', placeholder: '', depends: { wan_proto: 'siderouter' }, desc: _('Primary router IP address used when operating in side-router mode.') },
-			{ tab: 'netsetup', type: form.Flag, id: 'dhcp', title: _('Enable DHCP Server'), desc: _('If this DHCP is enabled, disable the main router's DHCP. If disabled, manually set client devices' gateway and DNS to this bypass router's IP.') },
+			{ tab: 'netsetup', type: form.Flag, id: 'dhcp', title: _('Enable DHCP Server'), desc: _("If this DHCP is enabled, disable the main router's DHCP. If disabled, manually set client devices' gateway and DNS to this bypass router's IP.") },
 			{ tab: 'netsetup', type: form.Flag, id: 'ipv6', title: _('IPv6 Support'), desc: _('Enable or disable IPv6 router advertisements and DHCPv6.') },
 
 			// 固件与系统设置

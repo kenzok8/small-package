@@ -336,6 +336,15 @@ function renderDaeForms(ctx) {
 
 	s = m.section(form.NamedSection, 'config', 'dae', _('Logging'));
 	s.addremove = false;
+	o = s.option(form.ListValue, 'log_level', _('Log level'),
+		_('Debug and trace show per-connection routing details, but increase CPU usage and log volume. Enable them only while troubleshooting.'));
+	o.value('error', 'ERROR');
+	o.value('warn', 'WARN');
+	o.value('info', 'INFO');
+	o.value('debug', 'DEBUG');
+	o.value('trace', 'TRACE');
+	o.default = 'info';
+	o.rmempty = false;
 	o = s.option(form.Value, 'log_maxsize', _('Max Log Size (MB)'),
 		_('Rotate the log file once it grows past this many megabytes.'));
 	o.datatype = 'uinteger';

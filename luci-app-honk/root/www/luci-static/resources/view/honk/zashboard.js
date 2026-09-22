@@ -51,6 +51,12 @@ return view.extend({
 			'	width: 100vw !important; height: 100vh !important; z-index: 999999 !important;',
 			'	border: none !important; border-radius: 0 !important;',
 			'}',
+			'#zash_iframe_wrap { display: flex; align-items: stretch; }',
+			'#zash_scroll_handle { display: none; }',
+			'@media (max-width: 768px) {',
+			'	#zash_iframe { border-right: none; border-radius: var(--radius-base,4px) 0 0 var(--radius-base,4px); }',
+			'	#zash_scroll_handle { display: flex; align-items: center; justify-content: center; width: 14px; flex-shrink: 0; touch-action: none; user-select: none; border: 1px solid var(--hairline,var(--border-color-medium,#ccc)); border-radius: 0 var(--radius-base,4px) var(--radius-base,4px) 0; }',
+			'}',
 			'.zash-log-box {',
 			'	max-height: 150px; overflow-y: auto; font-family: var(--font-mono, monospace);',
 			'	font-size: 12px; line-height: 1.4; padding: 8px; margin: 8px 0;',
@@ -207,7 +213,7 @@ return view.extend({
 		]);
 
 		// State 3: Ready
-		var httpsAlert = E('div', { 'class': 'alert-message warning', 'style': 'display: none; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;' }, [
+		var httpsAlert = E('div', { 'class': 'alert-message warning', 'style': 'display: none; margin-bottom: 10px; justify-content: space-between; align-items: center;' }, [
 			E('div', {}, [
 				E('strong', {}, _('HTTPS access detected:') + ' '),
 				E('span', {}, _('Modern browsers may block HTTP iframe resources under HTTPS. If the dashboard fails to display, open it in a new tab.'))
@@ -216,7 +222,7 @@ return view.extend({
 		]);
 
 		var honkPortLabel = E('span', { 'class': 'honk_port_label' }, '9090');
-		var honkStopAlert = E('div', { 'class': 'alert-message warning', 'style': 'display: none; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;' }, [
+		var honkStopAlert = E('div', { 'class': 'alert-message warning', 'style': 'display: none; margin-bottom: 10px; justify-content: space-between; align-items: center;' }, [
 			E('div', {}, [
 				E('strong', {}, _('HONK service is currently not running:') + ' '),
 				E('span', {}, [ _('Clash API port ('), honkPortLabel, _(') is not listening. Start the service to display data.') ])
@@ -228,6 +234,15 @@ return view.extend({
 		var statusEndpointPill = E('span', { 'class': 'label notice', 'style': 'font-family: monospace;' });
 		var btnExternalOpen = E('a', { 'href': '#', 'target': '_blank', 'class': 'cbi-button cbi-button-action', 'title': _('Open independently in a new tab') }, _('New Tab'));
 		var iframe = E('iframe', { 'id': 'zash_iframe', 'src': 'about:blank', 'allow': 'fullscreen; clipboard-read; clipboard-write' });
+		var scrollHandle = E('div', { 'id': 'zash_scroll_handle', 'title': _('Drag to scroll page') }, ['\u22ee']);
+		var scrollLastY;
+		scrollHandle.addEventListener('touchstart', function(e) { scrollLastY = e.touches[0].clientY; }, { passive: true });
+		scrollHandle.addEventListener('touchmove', function(e) {
+			window.scrollBy(0, scrollLastY - e.touches[0].clientY);
+			scrollLastY = e.touches[0].clientY;
+			e.preventDefault();
+		}, { passive: false });
+		var iframeWrap = E('div', { 'id': 'zash_iframe_wrap' }, [iframe, scrollHandle]);
 
 		// Update Modal
 		var updateTargetLabel = E('code', {
@@ -335,7 +350,7 @@ return view.extend({
 					btnExternalOpen
 				])
 			]),
-			iframe
+			iframeWrap
 		]);
 
 		function showState(name) {
