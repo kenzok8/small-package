@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="OpenWrt">
+  <rect width="64" height="64" rx="14" fill="#0f766e"/>
+  <path fill="#ffffff" d="M18 36.5c0-7.7 6.3-14 14-14s14 6.3 14 14h-5c0-4.9-4.1-9-9-9s-9 4.1-9 9h-5z"/>
+  <path fill="#a7f3d0" d="M12 39h40v6H12z"/>
+  <circle cx="20" cy="20" r="4" fill="#ccfbf1"/>
+  <circle cx="44" cy="20" r="4" fill="#ccfbf1"/>
+</svg>

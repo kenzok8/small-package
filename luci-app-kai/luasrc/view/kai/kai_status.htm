@@ -1,4 +1,4 @@
-<script <script type="text/javascript">//<![CDATA[
+<script type="text/javascript">//<![CDATA[
 XHR.poll(5, '<%=url("admin/services/kai_status")%>', null,function(x, st){
 	var el = document.getElementById('kai_status');
 	if (st && el){
@@ -7,7 +7,7 @@ XHR.poll(5, '<%=url("admin/services/kai_status")%>', null,function(x, st){
 		}
 		if (st.running){
 			el.innerHTML = '<br/><em style=\"color:green\"><%:The KAI service is running.%></em>'
-				+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open KAI%> \" onclick=\"window.open('http://" + window.location.hostname + ":" + st.port + "/')\"/>";
+				+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open KAI%> \" onclick=\"window.open('http://" + window.location.hostname + ":" + st.port + "/apps/kai/web/')\"/>";
 		}
 	}
 });
@@ -19,4 +19,3 @@ XHR.poll(5, '<%=url("admin/services/kai_status")%>', null,function(x, st){
 		<em><%:Collecting data...%></em>
 	</p>
 </fieldset>
-

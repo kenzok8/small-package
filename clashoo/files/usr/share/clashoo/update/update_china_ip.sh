@@ -7,8 +7,8 @@ NFT_DIR="${NFT_DIR:-/usr/share/clashoo/nftables}"
 TARGET_V4="${NFT_DIR}/geoip_cn.nft"
 TARGET_V6="${NFT_DIR}/geoip6_cn.nft"
 FW4_SCRIPT="${FW4_SCRIPT:-/usr/share/clashoo/net/fw4.sh}"
-RUNTIME_STATE_FILE="${RUNTIME_STATE_FILE:-/tmp/clashoo/runtime_state}"
 PROC_ROOT="${PROC_ROOT:-/proc}"
+SINGBOX_BIN_DIR="${SINGBOX_BIN_DIR:-/usr/share/clashoo/bin}"
 TMP_V4="/tmp/china_ip.txt.$$"
 TMP_V6="/tmp/china_ipv6.txt.$$"
 OUT_V4="/tmp/geoip_cn.nft.$$"
@@ -136,29 +136,43 @@ else
 fi
 
 instance_pid() {
-	ubus call service list "{\"name\":\"$1\",\"verbose\":true}" 2>/dev/null |
-		jsonfilter -e "@[\"$1\"].instances.*.pid" 2>/dev/null | head -n1
+	local service="$1"
+	local instance="${2:-}"
+	local filter
+	if [ -n "$instance" ]; then
+		filter="@.${service}.instances.${instance}.pid"
+	else
+		filter="@[\"${service}\"].instances.*.pid"
+	fi
+	ubus call service list "{\"name\":\"$service\",\"verbose\":true}" 2>/dev/null |
+		jsonfilter -e "$filter" 2>/dev/null | head -n1
 }
 
 pid_running() {
 	[ -n "$1" ] && [ -d "$PROC_ROOT/$1" ]
 }
 
-clashoo_manages_singbox() {
-	[ -r "$RUNTIME_STATE_FILE" ] || return 1
-	grep -qx 'configured_core=singbox' "$RUNTIME_STATE_FILE" 2>/dev/null || return 1
-	case "$(sed -n 's/^health_detail=//p' "$RUNTIME_STATE_FILE" 2>/dev/null | head -n1)" in
-		service_stopped|service_disabled|boot_disabled|preflight:*|start:*) return 1 ;;
+singbox_pid_owns_private_binary() {
+	local pid="$1" exe cmdline
+	pid_running "$pid" || return 1
+	exe="$(readlink -f "$PROC_ROOT/$pid/exe" 2>/dev/null)"
+	case "$exe" in
+		"$SINGBOX_BIN_DIR/sing-box-stable"|"$SINGBOX_BIN_DIR/sing-box-alpha") return 0 ;;
 	esac
-	return 0
+	cmdline="$(tr '\000' ' ' < "$PROC_ROOT/$pid/cmdline" 2>/dev/null)"
+	case "$cmdline" in
+		"$SINGBOX_BIN_DIR/sing-box-stable"|"$SINGBOX_BIN_DIR/sing-box-stable "*|"$SINGBOX_BIN_DIR/sing-box-alpha"|"$SINGBOX_BIN_DIR/sing-box-alpha "*) return 0 ;;
+	esac
+	return 1
 }
 
 selected_core_running() {
 	local name pid
 	if [ "$(uci -q get clashoo.config.core_type 2>/dev/null)" = "singbox" ]; then
-		bool_enabled "$(uci -q get sing-box.main.enabled 2>/dev/null)" || return 1
-		clashoo_manages_singbox || return 1
-		name="sing-box"
+		name="clashoo"
+		pid="$(instance_pid "$name" singbox)"
+		singbox_pid_owns_private_binary "$pid"
+		return $?
 	else
 		name="clashoo"
 	fi

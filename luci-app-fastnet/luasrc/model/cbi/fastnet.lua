@@ -1,27 +1,12 @@
 local sys = require "luci.sys"
-local uci = require "luci.model.uci".cursor()
-local http = require "luci.http"
+local dispatcher = require "luci.dispatcher"
 
 local m = Map("fastnet", translate("FastNet"))
 m.description = translate("FastNet provides network testing tools and a Web UI.")
 
-local function get_host()
-	local host = http.getenv("HTTP_HOST") or http.getenv("SERVER_NAME") or ""
-	host = host:gsub(":%d+$", "")
-	if host == "_redirect2ssl" or host == "redirect2ssl" or host == "" then
-		host = http.getenv("SERVER_ADDR") or "localhost"
-	end
-	return host
-end
-
 local st = m:section(SimpleSection, translate("Status"))
 local running = (sys.call("pidof FastNet >/dev/null") == 0)
-local listen_port = uci:get_first("fastnet", "fastnet", "port") or "3200"
-local token = uci:get_first("fastnet", "fastnet", "token") or ""
-local url = "http://" .. get_host() .. ":" .. listen_port .. "/"
-if token ~= "" then
-  url = url .. "?token=" .. token
-end
+local url = dispatcher.build_url("admin", "services", "linkease_apps", "open") .. "?id=fastnet"
 
 st.template = "fastnet/status"
 st.running = running

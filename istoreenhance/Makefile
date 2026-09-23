@@ -12,7 +12,7 @@ PKG_ARCH_ISTOREENHANCE:=$(ARCH)
 PKG_NAME:=istoreenhance
 # use PKG_SOURCE_DATE instead of PKG_VERSION for compitable
 PKG_SOURCE_DATE:=0.8.0
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 ARCH_HEXCODE:=
 ifeq ($(ARCH),x86_64)
 ARCH_HEXCODE=8664
@@ -41,7 +41,7 @@ define Package/$(PKG_NAME)
 	CATEGORY:=Network
 	SUBMENU:=Web Servers/Proxies
 	TITLE:=iStoreEnhance - Fix some net issues for istore
-	DEPENDS:=@(arm||x86_64||aarch64)
+	DEPENDS:=@(arm||x86_64||aarch64) +linkease-app-entry
 	PKGARCH:=all
 	URL:=https://www.kspeeder.com/
 endef
@@ -68,6 +68,9 @@ if [ "$${IPKG_INSTROOT}" = "" ]; then
 	if [ "$$(readlink /usr/share/linkeasefull/desktop-apps.d/20-kspeeder.json 2>/dev/null)" = "/usr/share/kspeeder/kspeeder-plugin.json" ]; then
 		rm -f /usr/share/linkeasefull/desktop-apps.d/20-kspeeder.json
 	fi
+	if [ "$$(readlink /usr/share/linkease/apps.d/20-kspeeder.json 2>/dev/null)" = "/usr/share/kspeeder/kspeeder-plugin.json" ]; then
+		rm -f /usr/share/linkease/apps.d/20-kspeeder.json
+	fi
 fi
 exit 0
 endef
@@ -79,7 +82,7 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d $(1)/etc/uci-defaults $(1)/usr/share/kspeeder/www $(1)/usr/share/linkeasefull/desktop-apps.d
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d $(1)/etc/uci-defaults $(1)/usr/share/kspeeder/www $(1)/usr/share/linkease/apps.d $(1)/usr/share/linkeasefull/desktop-apps.d
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/iStoreEnhance.$(PKG_ARCH_ISTOREENHANCE) $(1)/usr/sbin/iStoreEnhance
 	$(INSTALL_CONF) ./files/istoreenhance.config $(1)/etc/config/istoreenhance
 	$(INSTALL_BIN) ./files/istoreenhance.init $(1)/etc/init.d/istoreenhance
@@ -93,6 +96,7 @@ define Package/$(PKG_NAME)/install
 	fi
 	$(INSTALL_DATA) ./files/logo.png $(1)/usr/share/kspeeder/www/logo.png
 	ln -sf /usr/share/kspeeder/kspeeder-plugin.json $(1)/usr/share/linkeasefull/desktop-apps.d/20-kspeeder.json
+	ln -sf /usr/share/kspeeder/kspeeder-plugin.json $(1)/usr/share/linkease/apps.d/20-kspeeder.json
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

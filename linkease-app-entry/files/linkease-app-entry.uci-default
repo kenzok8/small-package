@@ -1,0 +1,29 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+mapping='/apps=http://127.0.0.1:19290'
+found=0
+
+# During upgrade the old linkeasefull init may still own 19290. Stop that
+# legacy procd instance before starting the single-owner entry module.
+if grep -q 'procd_open_instance linkeasefull' /etc/init.d/linkeasefull 2>/dev/null; then
+	/etc/init.d/linkeasefull stop >/dev/null 2>&1 || true
+fi
+
+check_mapping() {
+	[ "$1" = "$mapping" ] && found=1
+}
+
+config_load uhttpd
+config_list_foreach main proxy_prefix check_mapping
+uci -q show uhttpd.main.proxy_prefix 2>/dev/null | grep -Fq "$mapping" && found=1
+if [ "$found" != 1 ]; then
+	uci -q add_list "uhttpd.main.proxy_prefix=$mapping"
+	uci -q commit uhttpd
+	/etc/init.d/uhttpd reload >/dev/null 2>&1 || true
+fi
+
+/etc/init.d/linkease-app-entry enable
+/etc/init.d/linkease-app-entry restart >/dev/null 2>&1 || true
+exit 0

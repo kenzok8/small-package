@@ -9,6 +9,11 @@ TARGET_DCORE="$1"
 CORETYPE=${TARGET_DCORE:-$(uci get clashoo.config.dcore 2>/dev/null)}
 MIRROR_PREFIX=$(uci get clashoo.config.core_mirror_prefix 2>/dev/null)
 CUSTOM_CORE_URL=$(uci get clashoo.config.core_download_url 2>/dev/null)
+SINGBOX_STABLE_TARGET="${CLASHOO_SINGBOX_STABLE_TARGET:-/usr/share/clashoo/bin/sing-box-stable}"
+SINGBOX_ALPHA_TARGET="${CLASHOO_SINGBOX_ALPHA_TARGET:-/usr/share/clashoo/bin/sing-box-alpha}"
+SINGBOX_TMP_TEMPLATE="${CLASHOO_SINGBOX_TMP_TEMPLATE:-/tmp/clashoo-singbox.XXXXXX}"
+CORE_DOWNLOAD_LOCK_DIR="${CLASHOO_CORE_DOWNLOAD_LOCK_DIR:-/var/lock/clashoo-core-download.lock}"
+CORE_DOWNLOAD_LOCK_HELD=0
 CORE_INSTALLED=0
 CONNECT_TIMEOUT=15
 REQUEST_TIMEOUT=30
@@ -22,6 +27,64 @@ START_TS=$(date +%s)
 
 write_log() {
 	echo "  $(date "+%Y-%m-%d %H:%M:%S") - $1" >> "$LOG_FILE"
+}
+
+core_download_pid_alive() {
+	local pid
+	pid="$1"
+	[ -d "/proc/$pid" ] && return 0
+	kill -0 "$pid" >/dev/null 2>&1
+}
+
+acquire_core_download_lock() {
+	local owner parent
+	parent="$(dirname "$CORE_DOWNLOAD_LOCK_DIR")"
+	mkdir -p "$parent" >/dev/null 2>&1 || return 1
+	while :; do
+	if mkdir "$CORE_DOWNLOAD_LOCK_DIR" 2>/dev/null; then
+			printf '%s\n' "$$" > "$CORE_DOWNLOAD_LOCK_DIR/pid" || {
+				rmdir "$CORE_DOWNLOAD_LOCK_DIR" >/dev/null 2>&1 || true
+				return 1
+			}
+			CORE_DOWNLOAD_LOCK_HELD=1
+			return 0
+		fi
+
+		if [ ! -e "$CORE_DOWNLOAD_LOCK_DIR/pid" ]; then
+			# A fresh owner creates the directory before writing its PID.  Only
+			# remove an actually empty directory; otherwise treat it as busy.
+			if rmdir "$CORE_DOWNLOAD_LOCK_DIR" >/dev/null 2>&1; then
+				continue
+			fi
+			return 1
+		fi
+		owner="$(sed -n '1p' "$CORE_DOWNLOAD_LOCK_DIR/pid" 2>/dev/null)"
+		case "$owner" in
+			'' ) return 1 ;;
+			*[!0-9]*)
+				rm -f "$CORE_DOWNLOAD_LOCK_DIR/pid" >/dev/null 2>&1 || return 1
+				rmdir "$CORE_DOWNLOAD_LOCK_DIR" >/dev/null 2>&1 || return 1
+				;;
+			*)
+				if core_download_pid_alive "$owner"; then
+					return 1
+				fi
+				rm -f "$CORE_DOWNLOAD_LOCK_DIR/pid" >/dev/null 2>&1 || return 1
+				rmdir "$CORE_DOWNLOAD_LOCK_DIR" >/dev/null 2>&1 || return 1
+				;;
+		esac
+	done
+}
+
+release_core_download_lock() {
+	local owner
+	[ "$CORE_DOWNLOAD_LOCK_HELD" = "1" ] || return 0
+	owner="$(sed -n '1p' "$CORE_DOWNLOAD_LOCK_DIR/pid" 2>/dev/null)"
+	if [ "$owner" = "$$" ]; then
+		rm -f "$CORE_DOWNLOAD_LOCK_DIR/pid" >/dev/null 2>&1
+		rmdir "$CORE_DOWNLOAD_LOCK_DIR" >/dev/null 2>&1 || true
+	fi
+	CORE_DOWNLOAD_LOCK_HELD=0
 }
 
 finalize() {
@@ -55,6 +118,7 @@ finalize() {
 		fi
 	fi
 	rm -f /var/run/core_update >/dev/null 2>&1
+	release_core_download_lock
 }
 
 timed_out() {
@@ -120,8 +184,12 @@ fetch_url_try() {
 
 # Route core downloads through the running core in kernel-only mode (shared
 # logic in proxy_lib.sh: handles smart core + sing-box's own profile port).
-. /usr/share/clashoo/update/proxy_lib.sh
-detect_proxy() { clashoo_detect_proxy; }
+if [ "${CLASHOO_CORE_DOWNLOAD_LIB_ONLY:-0}" = "1" ]; then
+	detect_proxy() { :; }
+else
+	. /usr/share/clashoo/update/proxy_lib.sh
+	detect_proxy() { clashoo_detect_proxy; }
+fi
 
 download_file_try() {
 	url="$1"
@@ -323,60 +391,163 @@ detect_openwrt_arch() {
 	map_openwrt_arch "$MODELTYPE"
 }
 
-install_singbox_openwrt_asset() {
-	local pkg work rootdir
+singbox_target_path() {
+	case "$CORETYPE" in
+		5) printf '%s\n' "$SINGBOX_ALPHA_TARGET" ;;
+		*) printf '%s\n' "$SINGBOX_STABLE_TARGET" ;;
+	esac
+}
+
+extract_tar_file() {
+	local archive dest
+	archive="$1"
+	dest="$2"
+	case "$archive" in
+		*.gz) tar -xzf "$archive" -C "$dest" >/dev/null 2>&1 ;;
+		*.xz) tar -xJf "$archive" -C "$dest" >/dev/null 2>&1 || tar -xf "$archive" -C "$dest" >/dev/null 2>&1 ;;
+		*.zst)
+			if command -v unzstd >/dev/null 2>&1; then
+				unzstd -c "$archive" 2>/dev/null | tar -xf - -C "$dest" >/dev/null 2>&1
+			elif command -v zstd >/dev/null 2>&1; then
+				zstd -dc "$archive" 2>/dev/null | tar -xf - -C "$dest" >/dev/null 2>&1
+			else
+				return 1
+			fi
+			;;
+		*) tar -xf "$archive" -C "$dest" >/dev/null 2>&1 || tar -xzf "$archive" -C "$dest" >/dev/null 2>&1 ;;
+	esac
+}
+
+extract_ar_data_tar() {
+	local archive dest offset name size member
+	archive="$1"
+	dest="$2"
+	offset=8
+	[ "$(dd if="$archive" bs=8 count=1 2>/dev/null)" = '!<arch>' ] || return 1
+	while :; do
+		# Read fixed-width ar fields directly.  Do not put the full 60-byte
+		# header in command substitution: shell command substitution strips
+		# trailing newlines/spaces and makes length checks unreliable in ash.
+		name="$(dd if="$archive" bs=1 skip="$offset" count=16 2>/dev/null | sed 's/[[:space:]].*$//')"
+		name="${name%/}"
+		size="$(dd if="$archive" bs=1 skip=$((offset + 48)) count=10 2>/dev/null | tr -d '[:space:]')"
+		case "$size" in
+			''|*[!0-9]*) return 1 ;;
+		esac
+		member="$dest/$name"
+		case "$name" in
+			data.tar.*)
+				dd if="$archive" of="$member" bs=1 skip=$((offset + 60)) count="$size" 2>/dev/null || return 1
+				printf '%s\n' "$member"
+				return 0
+				;;
+		esac
+		offset=$((offset + 60 + size))
+		[ $((offset % 2)) -eq 0 ] || offset=$((offset + 1))
+	done
+}
+
+extract_singbox_payload() {
+	local pkg rootdir outer workdir payload data_tar candidate
 	pkg="$1"
-	work="/tmp/singbox-openwrt-pkg"
-	rootdir="/tmp/singbox-openwrt-root"
-
-	rm -rf "$work" "$rootdir" 2>/dev/null
-	mkdir -p "$work" "$rootdir"
-
-	tar -xzf "$pkg" -C "$work" >/dev/null 2>&1 || return 1
-	[ -f "$work/data.tar.gz" ] || return 1
-	tar -xzf "$work/data.tar.gz" -C "$rootdir" >/dev/null 2>&1 || return 1
-	[ -f "$rootdir/usr/bin/sing-box" ] || return 1
-
-	if ! install_with_rollback "$rootdir/usr/bin/sing-box" "/usr/bin/sing-box"; then
+	rootdir="$2"
+	outer="${rootdir}.outer"
+	workdir="$(dirname "$rootdir")"
+	payload="$workdir/sing-box.payload"
+	data_tar=""
+	rm -f "$payload" 2>/dev/null
+	rm -rf "$rootdir" "$outer" 2>/dev/null
+	if ! mkdir -p "$rootdir" "$outer"; then
+		rm -rf "$rootdir" "$outer" 2>/dev/null
 		return 1
 	fi
 
-	if [ -f "$rootdir/etc/init.d/sing-box" ]; then
-		cp -f "$rootdir/etc/init.d/sing-box" /etc/init.d/sing-box >/dev/null 2>&1 || true
-		chmod 755 /etc/init.d/sing-box >/dev/null 2>&1 || true
+	# IPK assets are ar/tar containers with a compressed data.tar.* member;
+	# official fallback archives contain sing-box directly below a version dir.
+	if tar -tf "$pkg" 2>/dev/null | grep -Eq '(^|/)data\.tar\.(gz|xz|zst)$'; then
+		extract_tar_file "$pkg" "$outer" || {
+			rm -rf "$rootdir" "$outer" 2>/dev/null
+			return 1
+		}
+		for candidate in "$outer"/data.tar.*; do
+			[ -f "$candidate" ] || continue
+			data_tar="$candidate"
+			break
+		done
+		if [ -z "$data_tar" ] || ! extract_tar_file "$data_tar" "$rootdir"; then
+			rm -rf "$rootdir" "$outer" 2>/dev/null
+			return 1
+		fi
+	else
+		data_tar="$(extract_ar_data_tar "$pkg" "$outer" 2>/dev/null || true)"
+		if [ -n "$data_tar" ]; then
+			if ! extract_tar_file "$data_tar" "$rootdir"; then
+				rm -rf "$rootdir" "$outer" 2>/dev/null
+				return 1
+			fi
+		else
+			if ! extract_tar_file "$pkg" "$rootdir"; then
+				rm -rf "$rootdir" "$outer" 2>/dev/null
+				return 1
+			fi
+		fi
 	fi
 
-	if [ -f "$rootdir/etc/config/sing-box" ] && [ ! -f /etc/config/sing-box ]; then
-		cp -f "$rootdir/etc/config/sing-box" /etc/config/sing-box >/dev/null 2>&1 || true
+	candidate="$(find "$rootdir" -type f -name sing-box 2>/dev/null | head -n 1)"
+	if [ -n "$candidate" ] && [ -f "$candidate" ]; then
+		if ! cp -f "$candidate" "$payload"; then
+			rm -rf "$rootdir" "$outer" 2>/dev/null
+			return 1
+		fi
+		rm -rf "$rootdir" "$outer" 2>/dev/null
+		printf '%s\n' "$payload"
+		return 0
 	fi
-
-	if [ -f "$rootdir/etc/sing-box/config.json" ] && [ ! -f /etc/sing-box/config.json ]; then
-		mkdir -p /etc/sing-box >/dev/null 2>&1
-		cp -f "$rootdir/etc/sing-box/config.json" /etc/sing-box/config.json >/dev/null 2>&1 || true
-	fi
-
-	rm -rf "$work" "$rootdir" >/dev/null 2>&1
-	return 0
+	rm -rf "$rootdir" "$outer" 2>/dev/null
+	return 1
 }
 
-install_singbox_openwrt_apk_asset() {
-	local pkg
+cleanup_singbox_extract_workdir() {
+	local workdir rootdir
+	workdir="$1"
+	rootdir="$workdir/root"
+	rm -rf "$rootdir" "${rootdir}.outer" "$workdir" 2>/dev/null
+}
+
+install_singbox_openwrt_asset() {
+	local pkg target workdir rootdir bin extract_rc rc
 	pkg="$1"
-	command -v apk >/dev/null 2>&1 || return 1
-	apk add --allow-untrusted --force-overwrite "$pkg" >/dev/null 2>&1 || return 1
-	[ -x /usr/bin/sing-box ] || return 1
-	return 0
+	target="${2:-$(singbox_target_path)}"
+	workdir="$(mktemp -d "$SINGBOX_TMP_TEMPLATE" 2>/dev/null)" || return 1
+	rootdir="$workdir/root"
+	bin="$(extract_singbox_payload "$pkg" "$rootdir")"
+	extract_rc=$?
+	if [ "$extract_rc" -eq 0 ]; then
+		install_with_rollback "$bin" "$target" "${VER:-}"
+		rc=$?
+	else
+		rc=1
+	fi
+	cleanup_singbox_extract_workdir "$workdir"
+	return "$rc"
 }
 
 install_singbox_tar_asset() {
-	local archive bin
+	local archive target workdir rootdir bin extract_rc rc
 	archive="$1"
-	rm -rf /tmp/singbox-extract >/dev/null 2>&1
-	mkdir -p /tmp/singbox-extract
-	tar -xzf "$archive" -C /tmp/singbox-extract >/dev/null 2>&1 || return 1
-	bin="$(find /tmp/singbox-extract -name 'sing-box' -type f 2>/dev/null | head -n 1)"
-	[ -n "$bin" ] || return 1
-	install_with_rollback "$bin" "/usr/bin/sing-box"
+	target="${2:-$(singbox_target_path)}"
+	workdir="$(mktemp -d "$SINGBOX_TMP_TEMPLATE" 2>/dev/null)" || return 1
+	rootdir="$workdir/root"
+	bin="$(extract_singbox_payload "$archive" "$rootdir")"
+	extract_rc=$?
+	if [ "$extract_rc" -eq 0 ]; then
+		install_with_rollback "$bin" "$target" "${VER:-}"
+		rc=$?
+	else
+		rc=1
+	fi
+	cleanup_singbox_extract_workdir "$workdir"
+	return "$rc"
 }
 
 fetch_latest_tag() {
@@ -756,12 +927,25 @@ pick_mihomo_asset() {
 }
 
 install_binary() {
+	local src dst dir staged
 	src="$1"
 	dst="$2"
-	mkdir -p "$(dirname "$dst")"
-	rm -f "$dst"
-	mv "$src" "$dst"
-	chmod 755 "$dst"
+	dir="$(dirname "$dst")"
+	staged="$dir/.$(basename "$dst").tmp.$$"
+	mkdir -p "$dir" || return 1
+	rm -f "$staged"
+	cp -f "$src" "$staged" || {
+		rm -f "$staged"
+		return 1
+	}
+	chmod 755 "$staged" || {
+		rm -f "$staged"
+		return 1
+	}
+	mv -f "$staged" "$dst" || {
+		rm -f "$staged"
+		return 1
+	}
 }
 
 backup_binary() {
@@ -785,11 +969,24 @@ restore_binary() {
 }
 
 verify_binary() {
+	local bin
 	bin="$1"
 	[ -x "$bin" ] || return 1
 	"$bin" -v >/dev/null 2>&1 && return 0
 	"$bin" version >/dev/null 2>&1 && return 0
 	return 1
+}
+
+verify_binary_version() {
+	local bin expected output actual
+	bin="$1"
+	expected="$2"
+	[ -n "$expected" ] || return 0
+	output="$({ "$bin" version 2>/dev/null || "$bin" -v 2>/dev/null; } || true)"
+	[ -n "$output" ] || return 1
+	actual="$(printf '%s\n' "$output" | sed -n 's/^[[:space:]]*sing-box[[:space:]][[:space:]]*version[[:space:]][[:space:]]*\([^[:space:]][^[:space:]]*\).*/\1/p' | head -n 1)"
+	[ -n "$actual" ] || return 1
+	[ "$actual" = "$expected" ]
 }
 
 installed_version_matches() {
@@ -801,11 +998,13 @@ installed_version_matches() {
 }
 
 install_with_rollback() {
+	local tmpfile target expected_version
 	tmpfile="$1"
 	target="$2"
+	expected_version="${3:-}"
 
 	chmod 755 "$tmpfile" 2>/dev/null
-	if ! verify_binary "$tmpfile"; then
+	if ! verify_binary "$tmpfile" || ! verify_binary_version "$tmpfile" "$expected_version"; then
 		write_log "新内核预热校验失败，保留当前内核"
 		rm -f "$tmpfile" 2>/dev/null
 		return 1
@@ -821,6 +1020,18 @@ install_with_rollback() {
 	rm -f "${target}.bak" 2>/dev/null
 	return 0
 }
+
+# Unit tests source the extraction helpers without entering the normal UCI and
+# network download path.  This hook has no effect in production execution.
+if [ "${CLASHOO_CORE_DOWNLOAD_LIB_ONLY:-0}" = "1" ]; then
+	return 0 2>/dev/null || exit 0
+fi
+
+if ! acquire_core_download_lock; then
+	write_log "已有内核下载任务运行，拒绝并发执行"
+	exit 1
+fi
+trap finalize EXIT
 
 # UCI template defaults to amd64-compatible. Auto-detect when MODELTYPE
 # is missing, or when MODELTYPE is an amd64 variant but the device is not.
@@ -844,7 +1055,6 @@ fi
 
 rm -f /tmp/clash.gz /tmp/clash /usr/share/clashoo/core_down_complete 2>/dev/null
 touch /var/run/core_update 2>/dev/null
-trap finalize EXIT
 write_log "内核下载任务启动"
 write_log "下载架构：${MODELTYPE:-未设置}"
 
@@ -898,28 +1108,17 @@ if [ "$CORETYPE" = "4" ] || [ "$CORETYPE" = "5" ]; then
 		[ -z "$TAG" ] && write_log "获取 sing-box 预发布版版本号失败" && exit 1
 	fi
 	VER="${TAG#v}"
+	SINGBOX_TARGET="$(singbox_target_path)"
 	installed=0
 
 	if [ -n "$OPENWRT_ARCH" ]; then
-		if command -v apk >/dev/null 2>&1; then
-			ASSET="sing-box_${VER}_openwrt_${OPENWRT_ARCH}.apk"
-			URL="https://github.com/SagerNet/sing-box/releases/download/${TAG}/${ASSET}"
-			write_log "优先尝试 OpenWrt APK 包: ${ASSET}"
-			if download_with_mirrors "$URL" /tmp/singbox-openwrt.apk raw && install_singbox_openwrt_apk_asset /tmp/singbox-openwrt.apk; then
-				installed=1
-			else
-				write_log "OpenWrt APK 包安装失败，尝试 OpenWrt IPK 包"
-			fi
-		fi
-		if [ "$installed" -ne 1 ]; then
-			ASSET="sing-box_${VER}_openwrt_${OPENWRT_ARCH}.ipk"
-			URL="https://github.com/SagerNet/sing-box/releases/download/${TAG}/${ASSET}"
-			write_log "尝试 OpenWrt IPK 包: ${ASSET}"
-			if download_with_mirrors "$URL" /tmp/singbox-openwrt.ipk raw && install_singbox_openwrt_asset /tmp/singbox-openwrt.ipk; then
-				installed=1
-			else
-				write_log "OpenWrt IPK 包安装失败，尝试 tar 包兜底"
-			fi
+		ASSET="sing-box_${VER}_openwrt_${OPENWRT_ARCH}.ipk"
+		URL="https://github.com/SagerNet/sing-box/releases/download/${TAG}/${ASSET}"
+		write_log "尝试提取 OpenWrt IPK 包: ${ASSET}"
+		if download_with_mirrors "$URL" /tmp/singbox-openwrt.ipk raw && install_singbox_openwrt_asset /tmp/singbox-openwrt.ipk "$SINGBOX_TARGET"; then
+			installed=1
+		else
+			write_log "OpenWrt IPK 提取失败，尝试官方 musl tar 包"
 		fi
 	fi
 
@@ -927,7 +1126,7 @@ if [ "$CORETYPE" = "4" ] || [ "$CORETYPE" = "5" ]; then
 		for ASSET in "sing-box-${VER}-linux-${SINGBOX_ARCH}-musl.tar.gz" "sing-box-${VER}-linux-${SINGBOX_ARCH}.tar.gz"; do
 			URL="https://github.com/SagerNet/sing-box/releases/download/${TAG}/${ASSET}"
 			write_log "尝试下载 sing-box 归档包: ${ASSET}"
-			if download_with_mirrors "$URL" /tmp/singbox.tar.gz gzip && install_singbox_tar_asset /tmp/singbox.tar.gz; then
+			if download_with_mirrors "$URL" /tmp/singbox.tar.gz gzip && install_singbox_tar_asset /tmp/singbox.tar.gz "$SINGBOX_TARGET"; then
 				installed=1
 				break
 			fi
@@ -940,16 +1139,14 @@ if [ "$CORETYPE" = "4" ] || [ "$CORETYPE" = "5" ]; then
 	fi
 
 	CORE_INSTALLED=1
-	# 稳定版与 Alpha 分路径归档，避免互相覆盖；同时保留旧字段供老逻辑读
+	# 稳定版与 Alpha 分路径保存，避免互相覆盖；版本文件保持兼容。
 	if [ "$CORETYPE" = "4" ]; then
-		cp -f /usr/bin/sing-box /usr/bin/sing-box-stable 2>/dev/null
 		printf '%s\n' "$TAG" > "/usr/share/clashoo/singbox_stable_version"
 	else
-		cp -f /usr/bin/sing-box /usr/bin/sing-box-alpha 2>/dev/null
 		printf '%s\n' "$TAG" > "/usr/share/clashoo/singbox_alpha_version"
 	fi
 	printf '%s\n' "$TAG" > "/usr/share/clashoo/singbox_version"
-	rm -f /tmp/singbox.tar.gz /tmp/singbox-openwrt.ipk /tmp/singbox-openwrt.apk
+	rm -f /tmp/singbox.tar.gz /tmp/singbox-openwrt.ipk
 	rm -rf /tmp/singbox-extract /tmp/singbox-openwrt-pkg /tmp/singbox-openwrt-root
 	touch /usr/share/clashoo/core_down_complete
 	write_log "sing-box 更新完成: $TAG"

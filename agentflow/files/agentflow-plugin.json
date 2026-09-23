@@ -12,7 +12,7 @@
   "standalone": {
     "entry": "index.html",
     "basePath": "/apps/agentflow/",
-    "url": "/cgi-bin/luci/admin/services/agentflow/open",
+    "url": "/apps/agentflow/",
     "externalOpen": {
       "enabled": true,
       "label": "Open AgentFlow"

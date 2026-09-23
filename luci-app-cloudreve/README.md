@@ -88,9 +88,7 @@ luci-app-cloudreve/
 │   ├── etc/config/cloudreve
 │   ├── etc/init.d/cloudreve    # procd 托管
 │   ├── etc/uci-defaults/cloudreve
-│   ├── usr/libexec/istorec/cloudreve.sh      # iStore 生命周期接口
 │   ├── usr/libexec/cloudreve/detect_base.sh  # 硬盘探测
-│   ├── usr/lib/opkg/meta/cloudreve.json      # iStore 商店元信息
 │   └── usr/share/rpcd/acl.d/luci-app-cloudreve.json
 └── tools/                      # 本地校验脚本（Lua 配平 / 布局 / BOM）
 ```

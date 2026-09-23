@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "openwrt-luci",
+  "name": "OpenWrt",
+  "icon": "openwrt.svg",
+  "staticRoot": "/usr/share/linkeasefull/openwrt-luci",
+  "desktop": {
+    "mode": "builtin",
+    "component": "LuciContainer",
+    "props": {
+      "initialPath": "/cgi-bin/luci/admin/status/overview",
+      "isolation": "scoped-dom-css",
+      "preloadScripts": [
+        "/luci-static/linkeasefull-embed/embed-prelude.js"
+      ],
+      "preloadStyles": [
+        "/luci-static/linkeasefull-embed/embed.css"
+      ]
+    }
+  },
+  "standalone": {
+    "url": "/cgi-bin/luci/"
+  },
+  "window": {
+    "width": 1180,
+    "height": 760,
+    "singleton": true
+  },
+  "capabilities": ["openwrt", "luci", "settings"],
+  "categories": ["settings", "openwrt", "luci"]
+}

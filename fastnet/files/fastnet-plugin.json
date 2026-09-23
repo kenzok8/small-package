@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "id": "fastnet",
+  "name": "FastNet",
+  "desktop": {
+    "mode": "iframe",
+    "target": {
+      "scheme": "http",
+      "hostMode": "request-host",
+      "port": {
+        "default": 3200,
+        "keys": {
+          "uci": "fastnet.@fastnet[0].port"
+        }
+      },
+      "path": "/"
+    },
+    "access": {
+      "scope": "lan",
+      "blockedTitle": "请在局域网内打开 FastNet",
+      "blockedMessage": "浏览器需要直接连接设备才能准确测量局域网速率。请连接设备所在局域网后，使用设备的局域网地址重新打开。"
+    }
+  },
+  "standalone": {
+    "basePath": "/apps/fastnet/",
+    "externalOpen": {
+      "enabled": true,
+      "label": "在浏览器中打开 FastNet"
+    }
+  },
+  "config": {
+    "providerOrder": ["uci"],
+    "providers": {
+      "uci": {"type": "uci"}
+    }
+  },
+  "window": {
+    "width": 1180,
+    "height": 760,
+    "singleton": true
+  },
+  "capabilities": ["speed-test", "diagnostics", "network"],
+  "categories": ["network", "service"]
+}

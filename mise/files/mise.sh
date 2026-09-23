@@ -49,4 +49,49 @@ istore_runtime_env() {
 
 	export HOME="$runtime_dir"
 	export PATH="$HOME/.local/share/mise/shims${PATH:+:$PATH}"
+	istore_runtime_mise_accel_env
+}
+
+istore_runtime_url_available() {
+	local url
+
+	url="$1"
+	if command -v wget >/dev/null 2>&1; then
+		wget -q -T 3 -O /dev/null "$url" >/dev/null 2>&1
+		return $?
+	fi
+	if command -v curl >/dev/null 2>&1; then
+		curl -fsS --max-time 3 -o /dev/null "$url" >/dev/null 2>&1
+		return $?
+	fi
+	return 1
+}
+
+istore_runtime_mise_accel_env() {
+	local download_gateway_available github_release_replacements go_mirror_url node_mirror_url port
+
+	command -v iStoreEnhance >/dev/null 2>&1 || command -v kspeeder >/dev/null 2>&1 || return 0
+
+	port="${KSPEEDER_PORT:-5443}"
+	download_gateway_available=0
+	if istore_runtime_url_available "http://127.0.0.1:5003/api/download-gateway/routes"; then
+		download_gateway_available=1
+	fi
+
+	node_mirror_url="https://dl-node-unofficial.linkease.net:${port}/"
+	if [ -z "${MISE_NODE_MIRROR_URL:-}" ] && istore_runtime_url_available "${node_mirror_url}index.json"; then
+		export MISE_NODE_MIRROR_URL="$node_mirror_url"
+		: "${MISE_NODE_VERIFY:=0}"
+		export MISE_NODE_VERIFY
+	fi
+
+	go_mirror_url="https://dl-go-sdk.linkease.net:${port}"
+	if [ -z "${MISE_GO_DOWNLOAD_MIRROR:-}" ] && [ "$download_gateway_available" = "1" ]; then
+		export MISE_GO_DOWNLOAD_MIRROR="$go_mirror_url"
+	fi
+
+	github_release_replacements="{\"regex:^https://github\\\\.com/(.+/.+/releases/download/.+)$\":\"https://dl-github.linkease.net:${port}/\$1\"}"
+	if [ -z "${MISE_URL_REPLACEMENTS:-}" ] && [ "$download_gateway_available" = "1" ]; then
+		export MISE_URL_REPLACEMENTS="$github_release_replacements"
+	fi
 }

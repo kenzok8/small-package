@@ -19,7 +19,7 @@ class DesktopManifestContractTest(unittest.TestCase):
         self.assertEqual(self.manifest["standalone"]["basePath"], "/apps/agentflow/")
         self.assertEqual(
             self.manifest["standalone"]["url"],
-            "/cgi-bin/luci/admin/services/agentflow/open",
+            "/apps/agentflow/",
         )
         self.assertEqual(
             self.manifest["standalone"]["externalOpen"],

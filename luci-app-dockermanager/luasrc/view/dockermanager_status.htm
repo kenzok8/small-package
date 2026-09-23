@@ -8,7 +8,7 @@
 					var status = st.running
 						? '<br/><em style=\"color:green\"><%:The Docker Manager service is running.%></em>'
 						: '<br/><em style=\"color:red\"><%:The Docker Manager service is not running.%></em>';
-					if (st.proxy_prefix_enabled && st.linkeasefull_running)
+					if (st.proxy_prefix_enabled && st.app_entry_running)
 					{
 						status = status + '<br/><em><%:Access mode: LinkEase Desktop proxy.%></em>';
 					}

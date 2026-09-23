@@ -6,6 +6,10 @@ START=99
 STOP=15
 
 CORE_LOG_PATH="/var/log/clashoo/core.log"
+SINGBOX_BIN_DIR="/usr/share/clashoo/bin"
+SINGBOX_RUNTIME_DIR="/var/run/clashoo/sing-box"
+SINGBOX_RUNTIME_CONFIG="$SINGBOX_RUNTIME_DIR/config.json"
+SINGBOX_WORKDIR="$SINGBOX_RUNTIME_DIR/work"
 
 . /usr/share/clashoo/runtime/dns_helpers.sh 2>/dev/null || true
 
@@ -67,31 +71,82 @@ _compute_start_wait() {
 	fi
 }
 
-# Wait up to $1 seconds for $2 (mihomo|sing-box) to be alive AND stable.
-# Returns 0 if alive at end of window, 1 if dead/never-started.
+selected_singbox_binary() {
+	local dcore
+	dcore="$(uci -q get clashoo.config.dcore 2>/dev/null)"
+	case "$dcore" in
+		4) echo "$SINGBOX_BIN_DIR/sing-box-stable" ;;
+		5) echo "$SINGBOX_BIN_DIR/sing-box-alpha" ;;
+		*) return 1 ;;
+	esac
+}
+
+_migrate_legacy_singbox_binary() {
+	local dcore target legacy staged
+	dcore="$(uci -q get clashoo.config.dcore 2>/dev/null)"
+	target="$(selected_singbox_binary)" || return 1
+	[ -e "$target" ] && return 0
+	case "$dcore" in
+		4) legacy="/usr/bin/sing-box-stable" ;;
+		5) legacy="/usr/bin/sing-box-alpha" ;;
+		*) return 1 ;;
+	esac
+	[ -x "$legacy" ] || return 1
+	mkdir -p "$SINGBOX_BIN_DIR" >/dev/null 2>&1 || return 1
+	staged="${target}.$$"
+	rm -f "$staged" >/dev/null 2>&1
+	cp -f "$legacy" "$staged" >/dev/null 2>&1 || {
+		rm -f "$staged" >/dev/null 2>&1
+		return 1
+	}
+	chmod 0755 "$staged" >/dev/null 2>&1 || {
+		rm -f "$staged" >/dev/null 2>&1
+		return 1
+	}
+	mv -f "$staged" "$target" >/dev/null 2>&1 || {
+		rm -f "$staged" >/dev/null 2>&1
+		return 1
+	}
+	return 0
+}
+
+_ensure_singbox_binary() {
+	local target
+	target="$(selected_singbox_binary)" || return 1
+	[ -e "$target" ] || _migrate_legacy_singbox_binary || return 1
+	[ -x "$target" ]
+}
+
+_singbox_pid_owns_private_binary() {
+	local pid stable alpha exe cmdline
+	pid="$1"
+	stable="$SINGBOX_BIN_DIR/sing-box-stable"
+	alpha="$SINGBOX_BIN_DIR/sing-box-alpha"
+	[ -d "/proc/$pid" ] || return 1
+	if command_exists readlink; then
+		exe="$(readlink -f "/proc/$pid/exe" 2>/dev/null)"
+		if [ "$exe" = "$stable" ] || [ "$exe" = "$alpha" ]; then
+			return 0
+		fi
+	fi
+	cmdline="$(tr '\000' ' ' < "/proc/$pid/cmdline" 2>/dev/null)"
+	case "$cmdline" in
+		"$stable"|"$stable "*|"$alpha"|"$alpha "*) return 0 ;;
+	esac
+	return 1
+}
+
 _singbox_instance_pid() {
-	ubus call service list "{\"name\":\"sing-box\",\"verbose\":true}" 2>/dev/null \
-		| jsonfilter -e '@["sing-box"].instances.*.pid' 2>/dev/null | head -n1
+	local _pid
+	_pid="$(ubus call service list '{"name":"clashoo","verbose":true}' 2>/dev/null \
+		| jsonfilter -e '@.clashoo.instances.singbox.pid' 2>/dev/null | head -n1)"
+	[ -n "$_pid" ] && _singbox_pid_owns_private_binary "$_pid" && echo "$_pid"
 }
 
 _singbox_running() {
 	local _pid
 	_pid="$(_singbox_instance_pid)"
 	[ -n "$_pid" ] && [ -d "/proc/$_pid" ]
-}
-
-_wait_core_alive() {
-	local max="${1:-6}" want="${2:-mihomo}" i=0
-	while [ "$i" -lt "$max" ]; do
-		sleep 1
-		if [ "$want" = "sing-box" ] || [ "$want" = "singbox" ]; then
-			_singbox_running && return 0
-		else
-			_core_running && return 0
-		fi
-		i=$((i + 1))
-	done
-	return 1
 }
 
 # Roll back partial state when start failed after backend rules / DNS were applied.
@@ -249,35 +304,46 @@ sync_legacy_core_field() {
 }
 
 prepare_singbox_runtime() {
-	local active src redir_port tproxy_port mixed_port dns_port
+	local active src redir_port tproxy_port mixed_port dns_port tmp_config
 	active="$(uci -q get clashoo.config.singbox_active 2>/dev/null)"
 	src="/usr/share/clashoo/config/singbox/${active}"
+	tmp_config="${SINGBOX_RUNTIME_CONFIG}.tmp.$$"
 
-	mkdir -p /etc/sing-box /usr/share/sing-box "$(dirname "$CORE_LOG_PATH")" >/dev/null 2>&1
-	rm -f /usr/share/sing-box/cache.db >/dev/null 2>&1
+	mkdir -p "$SINGBOX_RUNTIME_DIR" "$SINGBOX_WORKDIR" "$(dirname "$CORE_LOG_PATH")" >/dev/null 2>&1 || return 1
+	rm -f "$tmp_config" >/dev/null 2>&1
 	if [ -n "$active" ] && [ -r "$src" ]; then
-		cp -f "$src" /etc/sing-box/config.json >/dev/null 2>&1 || return 1
-	elif [ ! -r /etc/sing-box/config.json ]; then
+		cp -f "$src" "$tmp_config" >/dev/null 2>&1 || {
+			rm -f "$tmp_config" >/dev/null 2>&1
+			return 1
+		}
+	elif [ -r "$SINGBOX_RUNTIME_CONFIG" ]; then
+		cp -f "$SINGBOX_RUNTIME_CONFIG" "$tmp_config" >/dev/null 2>&1 || {
+			rm -f "$tmp_config" >/dev/null 2>&1
+			return 1
+		}
+	else
 		_log_runtime_error "sing-box config.json is missing; please generate or select a sing-box profile first"
+		rm -f "$tmp_config" >/dev/null 2>&1
 		return 1
 	fi
 
-	# Core-only: skip clashoo normalize/takeover. Still version-migrate the
-	# imported config so an older-format config (e.g. from momo/homeproxy or a
-	# subscription) is accepted by the current sing-box core. The migrate is
-	# idempotent — a config already in the current format is left unchanged.
-	if [ "$(uci -q get clashoo.config.core_only 2>/dev/null)" = "1" ]; then
-		[ -x /usr/bin/ucode ] && ucode /usr/share/clashoo/lib/migrate_singbox.uc /etc/sing-box/config.json >/dev/null 2>&1
-		uci -q set sing-box.main.enabled='1'
-		uci -q set sing-box.main.user='root'
-		uci -q set sing-box.main.conffile='/etc/sing-box/config.json'
-		uci -q set sing-box.main.workdir='/usr/share/sing-box'
-		uci -q commit sing-box >/dev/null 2>&1
-		return 0
-	fi
+	command -v ucode >/dev/null 2>&1 || {
+		_log_runtime_error "ucode is required to prepare sing-box runtime config"
+		rm -f "$tmp_config" >/dev/null 2>&1
+		return 1
+	}
+	# Migrate every imported config, including core-only mode, before any
+	# Clashoo-specific normalization.  The temp file is in the runtime dir so
+	# a failed migration/normalization never replaces the last good config.
+	ucode /usr/share/clashoo/lib/migrate_singbox.uc "$tmp_config" >/dev/null 2>&1 || {
+		_log_runtime_error "sing-box runtime config migration failed"
+		rm -f "$tmp_config" >/dev/null 2>&1
+		return 1
+	}
 
-	if command -v ucode >/dev/null 2>&1; then
+	if [ "$(uci -q get clashoo.config.core_only 2>/dev/null)" != "1" ]; then
 		local has_tun_device dash_port dash_pass
+
 		has_tun_device=1
 		runtime_has_tun_device || has_tun_device=0
 		redir_port="$(uci -q get clashoo.config.redir_port 2>/dev/null)"
@@ -294,44 +360,31 @@ prepare_singbox_runtime() {
 		# routing_mark 6666 must match fw4.sh CORE_ROUTING_MARK (0x1a0a).
 		# Never reuse PROXY_FWMARK (0x162) — it would pull egress to lo -> unreachable.
 		ucode /usr/share/clashoo/lib/normalize_singbox_config.uc \
-			/etc/sing-box/config.json "$redir_port" "$tproxy_port" "$mixed_port" "$has_tun_device" "6666" "$dns_port" "$dash_port" "$dash_pass" >/dev/null 2>&1 || {
+			"$tmp_config" "$redir_port" "$tproxy_port" "$mixed_port" "$has_tun_device" "6666" "$dns_port" "$dash_port" "$dash_pass" >/dev/null 2>&1 || {
 			_log_runtime_error "sing-box runtime config normalization failed"
+			rm -f "$tmp_config" >/dev/null 2>&1
 			return 1
 		}
 	fi
 
-	uci -q set sing-box.main.enabled='1'
-	uci -q set sing-box.main.user='root'
-	uci -q set sing-box.main.conffile='/etc/sing-box/config.json'
-	uci -q set sing-box.main.workdir='/usr/share/sing-box'
-	uci -q commit sing-box >/dev/null 2>&1
+	mv -f "$tmp_config" "$SINGBOX_RUNTIME_CONFIG" >/dev/null 2>&1 || {
+		rm -f "$tmp_config" >/dev/null 2>&1
+		return 1
+	}
 	return 0
 }
 
-_sync_singbox_binary() {
-	# Sync /usr/bin/sing-box to the dcore-selected channel (stable/alpha), coexisting via separate paths.
-	local dcore src
-	dcore="$(uci -q get clashoo.config.dcore 2>/dev/null)"
-	case "$dcore" in
-		4) src="/usr/bin/sing-box-stable" ;;
-		5) src="/usr/bin/sing-box-alpha" ;;
-		*) return 0 ;;
-	esac
-	[ -x "$src" ] || return 0
-	[ "$src" -ef /usr/bin/sing-box ] && return 0
-	ln -sf "$src" /usr/bin/sing-box
-}
-
 start_singbox_service() {
-	_sync_singbox_binary
-	if [ ! -x /usr/bin/sing-box ]; then
+	local bin
+	bin="$(selected_singbox_binary)" || return 1
+	if ! _ensure_singbox_binary; then
 		_log_runtime_error "sing-box core not found, please install the local sing-box binary first"
 		return 1
 	fi
 	prepare_singbox_runtime || return 1
 	# preflight dry-run with watchdog: bail on bad config without touching
 	# firewall/dnsmasq, and never let a hung check freeze startup/UI.
-	_run_with_timeout 15 /usr/bin/sing-box -c /etc/sing-box/config.json check >> "$CORE_LOG_PATH" 2>&1
+	_run_with_timeout 15 "$bin" -c "$SINGBOX_RUNTIME_CONFIG" check >> "$CORE_LOG_PATH" 2>&1
 	_pf_rc=$?
 	if [ "$_pf_rc" -ne 0 ]; then
 		_pf_reason="$(_preflight_reason)"
@@ -344,20 +397,29 @@ start_singbox_service() {
 		fi
 		return 1
 	fi
-	/etc/init.d/sing-box start >/dev/null 2>&1
+	procd_open_instance "singbox"
+	procd_set_param command "$bin" run -c "$SINGBOX_RUNTIME_CONFIG" -D "$SINGBOX_WORKDIR"
+	procd_set_param user root
+	procd_set_param file "$SINGBOX_RUNTIME_CONFIG"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param limits core="unlimited"
+	procd_set_param limits nofile="1000000 1000000"
+	procd_set_param respawn 3600 5 5
+	procd_close_instance
 }
 
 stop_singbox_service() {
-	uci -q set sing-box.main.enabled='0' && uci -q commit sing-box >/dev/null 2>&1 || true
-
-	# Stop via /etc/init.d/sing-box stop (deregisters procd). Never pidof sing-box — co-installed plugins may share the binary.
-	[ -x /etc/init.d/sing-box ] && /etc/init.d/sing-box stop >/dev/null 2>&1 || true
-
 	local _wait=0 _pid
+	# procd_kill removes the named instance and disables its respawn; signaling
+	# the child through ubus would let procd recreate it behind our back.
+	procd_kill clashoo singbox >/dev/null 2>&1 || true
+	_pid="$(_singbox_instance_pid)"
+	[ -n "$_pid" ] || return 0
 	while [ "$_wait" -lt 3 ]; do
 		_pid="$(_singbox_instance_pid)"
 		[ -z "$_pid" ] && return 0
-		[ -d "/proc/$_pid" ] || return 0
+		_singbox_running || return 0
 		sleep 1
 		_wait=$((_wait + 1))
 	done
@@ -1939,9 +2001,11 @@ _finish_geo_bootstrap() {
 
 
 _start_validate_core() {
+	local core bin
 	core="$(uci -q get clashoo.config.core 2>/dev/null)"
 	if is_singbox_selected; then
-		if [ ! -x /usr/bin/sing-box ]; then
+		bin="$(selected_singbox_binary)"
+		if [ -z "$bin" ] || ! _ensure_singbox_binary; then
 			log_msg "sing-box core not found, please install the local sing-box binary first" "找不到本地 sing-box 内核，请先安装 sing-box 二进制"
 			echo "Clashoo" > "$REAL_LOG"
 			return 1
@@ -2168,10 +2232,6 @@ _start_launch_core() {
 }
 
 boot(){
-	# sing-box is managed by Clashoo when selected; keep its own init.d from
-	# starting independently before Clashoo has prepared config/firewall/DNS.
-	uci -q set sing-box.main.enabled='0' && uci -q commit sing-box >/dev/null 2>&1 || true
-
 	if [ "$(uci -q get clashoo.config.enable 2>/dev/null)" = "1" ]; then
 		runtime_state_reset
 		runtime_state_set "health_status" "starting"
@@ -2251,15 +2311,27 @@ start_service(){
 			else
 				log_msg "Core-only mode: skipping firewall/DNS takeover" "仅内核模式：跳过防火墙与 DNS 接管"
 			fi
-			# Sync-wait: if sing-box dies within window, roll back applied state.
-			# /etc/init.d/sing-box start forks immediately so we can poll here.
-			if ! _wait_core_alive "$(_compute_start_wait)" sing-box; then
+			# procd does not launch the named instance until start_service returns
+			# and rc.common submits the completed service definition.  Watch it in
+			# the background, just like the mihomo path, then roll back only if the
+			# registered private instance never becomes healthy.
+			(
+				exec 1000>&-
+				_bg_max="$(_compute_start_wait)"
+				_bg_wait=0
+				while [ "$_bg_wait" -lt "$_bg_max" ]; do
+					sleep 1
+					if _singbox_running; then
+						runtime_run_health_check_settle >/dev/null 2>&1
+						exit 0
+					fi
+					_bg_wait=$((_bg_wait + 1))
+				done
 				_rollback_failed_start
-				runtime_state_record_health "fail" "start:singbox_died_after_apply"
+				runtime_state_record_health "fail" "start:singbox_not_running"
+				echo "  $(date "+%Y-%m-%d %H:%M:%S") - clashoo sing-box not detected within ${_bg_max}s, rolled back" >> /usr/share/clashoo/clashoo.txt
 				echo "Clashoo" > "$REAL_LOG"
-				return 1
-			fi
-			(exec 1000>&-; runtime_run_health_check_settle >/dev/null 2>&1) &
+			) &
 			echo "Clashoo" > "$REAL_LOG"
 			return 0
 		fi
@@ -2397,12 +2469,12 @@ reload_service()
 {
 	if is_singbox_selected; then
 		if _singbox_running; then
-			resolve_effective_tp_modes
-			runtime_state_record_preflight "singbox"
-			prepare_singbox_runtime >/dev/null 2>&1
-			/etc/init.d/sing-box restart >/dev/null 2>&1
-			singbox_dns_change >/dev/null 2>&1
-			runtime_run_health_check_settle >/dev/null 2>&1
+			# Use rc.common's transaction wrapper so the complete Clashoo service
+			# definition is rebuilt before the named instance is registered again.
+			# This intentionally reapplies Clashoo's own firewall/DNS state; calling
+			# start_service directly would skip that wrapper and procd setup.
+			stop_singbox_service >/dev/null 2>&1
+			start
 		fi
 	elif _core_running; then
 		resolve_effective_tp_modes

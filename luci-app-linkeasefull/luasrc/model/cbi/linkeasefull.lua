@@ -69,7 +69,24 @@ s = m:section(TypedSection, "linkeasefull", translate("Storage"))
 s.addremove = false
 s.anonymous = true
 
-s:option(Flag, "enabled", translate("Enable")).rmempty = false
+local enabled = s:option(Flag, "enabled", translate("Enable"))
+enabled.rmempty = false
+
+function enabled.write(self, section, value)
+	local old_value = self.map.uci:get("linkeasefull", section, "enabled") or "0"
+	self.map.uci:set("linkeasefull", section, "enabled", value)
+	if old_value == value then
+		return
+	end
+
+	local force_gateway = "/var/run/linkease-app-entry/force-gateway"
+	fs.mkdirr("/var/run/linkease-app-entry")
+	if value == "1" then
+		fs.remove(force_gateway)
+	else
+		fs.writefile(force_gateway, "")
+	end
+end
 
 local data = s:option(ListValue, "_local_home", translate("Storage path"), translate("Choose a mounted persistent disk. /tmp is not allowed."))
 data.rmempty = false

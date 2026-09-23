@@ -1,0 +1,52 @@
+.le-luci-document {
+  background: #fff;
+}
+
+.le-luci-document,
+.le-luci-document > * {
+  box-sizing: border-box;
+}
+
+.le-luci-document #maincontainer,
+.le-luci-document #maincontent,
+.le-luci-document .main {
+  min-height: 100%;
+}
+
+.le-luci-document #mainmenu {
+  z-index: 20;
+}
+
+.le-luci-document #maincontent {
+  overflow-wrap: anywhere;
+}
+
+.le-luci-document.le-luci-content-only .main-left,
+.le-luci-document.le-luci-content-only .main-right > header,
+.le-luci-document.le-luci-content-only .main-right > footer,
+.le-luci-document.le-luci-content-only #maincontent > footer,
+.le-luci-document.le-luci-content-only footer.mobile-hide,
+.le-luci-document.le-luci-content-only .main-right > .darkMask,
+.le-luci-document.le-luci-content-only .showSide {
+  display: none !important;
+}
+
+.le-luci-document.le-luci-content-only .main,
+.le-luci-document.le-luci-content-only .main-right,
+.le-luci-document.le-luci-content-only #maincontent {
+  width: 100% !important;
+  min-height: 100% !important;
+  margin: 0 !important;
+}
+
+.le-luci-document.le-luci-content-only #maincontent > .container {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.le-luci-document .modal-overlay,
+.le-luci-document #modal_overlay {
+  position: absolute;
+}

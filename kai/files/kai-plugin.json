@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "id": "kai",
+  "name": "KAI",
+  "icon": "logo.png",
+  "staticRoot": "/usr/share/kai/www",
+  "desktop": {
+    "mode": "iframe",
+    "target": {
+      "scheme": "http",
+      "hostMode": "request-host",
+      "port": {
+        "default": 8197,
+        "keys": {
+          "uci": "kai.@kai[0].port"
+        }
+      },
+      "path": "/apps/kai/web/"
+    },
+    "access": {
+      "scope": "lan",
+      "blockedTitle": "请在局域网内打开 KAI",
+      "blockedMessage": "KAI 运行在设备的独立服务端口，请连接设备所在局域网后再打开。"
+    }
+  },
+  "standalone": {
+    "basePath": "/apps/kai/",
+    "externalOpen": {
+      "enabled": true,
+      "label": "在浏览器中打开 KAI"
+    }
+  },
+  "config": {
+    "providerOrder": ["uci"],
+    "providers": {
+      "uci": {
+        "type": "uci"
+      }
+    }
+  },
+  "window": {
+    "width": 1180,
+    "height": 760,
+    "singleton": true
+  },
+  "capabilities": ["assistant", "chat"],
+  "categories": ["other"]
+}

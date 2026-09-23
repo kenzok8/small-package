@@ -7,74 +7,12 @@ get_config() {
 	config_get_bool enabled $1 enabled 1
 	config_get data_dir $1 data_dir ""
 	config_get port $1 port "8197"
-}
-
-http_get() {
-	local url="$1"
-	if command -v uclient-fetch >/dev/null 2>&1; then
-		uclient-fetch -O /dev/stdout "$url" 2>/dev/null
-		return $?
-	fi
-	if command -v wget >/dev/null 2>&1; then
-		wget -qO- "$url" 2>/dev/null
-		return $?
-	fi
-	if command -v curl >/dev/null 2>&1; then
-		curl -fsL "$url" 2>/dev/null
-		return $?
-	fi
-	return 1
-}
-
-maybe_refresh_opencode_skills_cache() {
-	[ -n "$data_dir" ] || return 0
-	[ -n "$port" ] || return 0
-	command -v jsonfilter >/dev/null 2>&1 || return 0
-
-	local cache_root="${data_dir}/cache/opencode/skills"
-	local state_root="${data_dir}/state/opencode"
-	local version_file="${state_root}/skills.manifest.version"
-	local managed_file="${state_root}/skills.managed.list"
-	local manifest_url="http://127.0.0.1:${port}/agentconf/skills/manifest.json"
-
-	[ -d "$cache_root" ] || mkdir -p "$cache_root"
-	[ -d "$state_root" ] || mkdir -p "$state_root"
-
-	local manifest version prev_version skills
-	manifest="$(http_get "$manifest_url")" || return 0
-	version="$(printf '%s' "$manifest" | jsonfilter -e '@.version' 2>/dev/null)"
-	[ -n "$version" ] || return 0
-
-	prev_version=""
-	[ -f "$version_file" ] && prev_version="$(cat "$version_file" 2>/dev/null)"
-	[ "$version" = "$prev_version" ] && return 0
-
-	logger -t kai "opencode skills manifest changed; refreshing managed skill cache"
-
-	if [ -f "$managed_file" ]; then
-		while IFS= read -r s; do
-			[ -n "$s" ] || continue
-			rm -rf "${cache_root}/${s}"
-		done <"$managed_file"
-	fi
-
-	skills="$(printf '%s' "$manifest" | jsonfilter -e '@.skills[*]' 2>/dev/null)"
-	if [ -n "$skills" ]; then
-		printf '%s\n' "$skills" >"$managed_file"
-		printf '%s\n' "$skills" | while IFS= read -r s; do
-			[ -n "$s" ] || continue
-			rm -rf "${cache_root}/${s}"
-		done
-	else
-		: >"$managed_file"
-	fi
-
-	printf '%s\n' "$version" >"$version_file"
-	return 0
+	config_get auth_mode $1 auth_mode "openwrt_luci"
 }
 
 start_kai_bin(){
 	procd_open_instance kai_bin
+	procd_set_param env KAI_AUTH_MODE="$auth_mode"
 	procd_set_param command /usr/sbin/kai_bin -a 0.0.0.0 -p "$port"
 	procd_set_param stderr 1
 	procd_set_param respawn
@@ -87,15 +25,21 @@ start_kai_session(){
 	procd_open_instance kai_session
 	local root="${data_dir}"
 	local cwd="${data_dir}/cwd"
+	local agent_root="/usr/share/kai/agent"
+	if [ ! -f "${agent_root}/opencode.json" ] || [ ! -d "${agent_root}/skills" ]; then
+		logger -t kai "local OpenCode Agent bundle is missing under ${agent_root}"
+		return 1
+	fi
 	procd_set_param env \
-		OPENCODE_CWD="${cwd}" \
-		OPENCODE_CONFIG="http://127.0.0.1:${port}/agentconf/opencode.json" \
+		OPENCODE_CONFIG="${agent_root}/opencode.json" \
+		KAIPLUS_SKILLS_DIR="${agent_root}/skills" \
+		ISTORE_AI_HELPER_BASE="http://127.0.0.1:${port}" \
 		XDG_CACHE_HOME="${root}/cache" \
 		XDG_DATA_HOME="${root}/data" \
 		XDG_CONFIG_HOME="${root}/config" \
 		XDG_STATE_HOME="${root}/state"
-	procd_set_param command  /usr/sbin/kai_session
-	procd_append_param command serve --port "8196"  --hostname "127.0.0.1"
+	procd_set_param command /usr/libexec/kai-session-launch "${cwd}"
+	procd_set_param file "${agent_root}/opencode.json" "${agent_root}/manifest.json"
 	procd_set_param stderr 1
 	procd_set_param respawn
 	procd_close_instance
@@ -103,7 +47,7 @@ start_kai_session(){
 start_service() { 
 	config_load kai
 	config_foreach get_config kai
-	if [ $enabled != 1 ]; then 
+	if [ "$enabled" != 1 ]; then 
         return 1
     fi 
 	if [ -z "${data_dir}" ]; then
@@ -119,8 +63,7 @@ start_service() {
 	mkdir_cwd "${data_dir}/data"
 	mkdir_cwd "${data_dir}/config"
 	mkdir_cwd "${data_dir}/state"
-	maybe_refresh_opencode_skills_cache
-	start_kai_session
+	start_kai_session || return 1
 	logger -t kai "Starting KAI Service Completed"
 }
 

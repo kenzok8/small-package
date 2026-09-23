@@ -10,7 +10,7 @@ PKG_ARCH_kaiplus:=$(ARCH)
 
 PKG_NAME:=kaiplus
 PKG_VERSION:=1.0.9
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/kaiplus-runtime-v$(PKG_VERSION)/
 PKG_HASH:=2b2bd1172e2f853b235085023c6dec555ed4109d3540233c3079b3b4d681d033
@@ -27,6 +27,7 @@ define Package/$(PKG_NAME)
 	SUBMENU:=
 	TITLE:=KaiPlus
 	URL:=https://github.com/linkease/istore-packages
+	DEPENDS:=+linkease-app-entry
 endef
 
 define Package/$(PKG_NAME)/description
@@ -43,6 +44,9 @@ if [ "$${IPKG_INSTROOT}" = "" ]; then
 	if [ "$$(readlink /usr/share/linkeasefull/desktop-apps.d/00-kaiplus-plugin.json 2>/dev/null)" = "/usr/share/kaiplus/kaiplus-plugin.json" ]; then
 		rm -f /usr/share/linkeasefull/desktop-apps.d/00-kaiplus-plugin.json
 	fi
+	if [ "$$(readlink /usr/share/linkease/apps.d/00-kaiplus-plugin.json 2>/dev/null)" = "/usr/share/kaiplus/kaiplus-plugin.json" ]; then
+		rm -f /usr/share/linkease/apps.d/00-kaiplus-plugin.json
+	fi
 fi
 exit 0
 endef
@@ -54,7 +58,7 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/share/kaiplus/www $(1)/usr/share/kaiplus/defaults $(1)/usr/share/kaiplus/helpers $(1)/usr/share/linkeasefull/desktop-apps.d $(1)/etc/init.d $(1)/etc/config
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/share/kaiplus/www $(1)/usr/share/kaiplus/defaults $(1)/usr/share/kaiplus/helpers $(1)/usr/share/linkease/apps.d $(1)/usr/share/linkeasefull/desktop-apps.d $(1)/etc/init.d $(1)/etc/config
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/kaiplus_bin.$(PKG_ARCH_kaiplus) $(1)/usr/sbin/kaiplus_bin
 	$(CP) $(PKG_BUILD_DIR)/www/* $(1)/usr/share/kaiplus/www/
 	$(INSTALL_DATA) ./files/logo.png $(1)/usr/share/kaiplus/www/logo.png
@@ -62,6 +66,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/helpers/kaiplus_workspace_tool.* $(1)/usr/share/kaiplus/helpers/
 	$(INSTALL_DATA) ./files/kaiplus-plugin.json $(1)/usr/share/kaiplus/kaiplus-plugin.json
 	ln -sf /usr/share/kaiplus/kaiplus-plugin.json $(1)/usr/share/linkeasefull/desktop-apps.d/00-kaiplus-plugin.json
+	ln -sf /usr/share/kaiplus/kaiplus-plugin.json $(1)/usr/share/linkease/apps.d/00-kaiplus-plugin.json
 	$(INSTALL_BIN) ./files/kaiplus.init $(1)/etc/init.d/kaiplus
 	$(INSTALL_CONF) ./files/kaiplus.config $(1)/etc/config/kaiplus
 endef

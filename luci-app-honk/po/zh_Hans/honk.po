@@ -229,11 +229,14 @@ msgstr "正在初始化下载任务...\n"
 msgid "Failed to trigger download:"
 msgstr "触发下载失败："
 
-msgid "Installation complete! Loading dashboard..."
-msgstr "安装完成！正在加载面板..."
+msgid "Installation completed successfully!"
+msgstr "安装成功，最新版本已部署。"
 
 msgid "Installation failed. Please check logs."
 msgstr "安装失败，请检查日志。"
+
+msgid "Close"
+msgstr "关闭"
 
 msgid "Download error:"
 msgstr "触发下载异常："
@@ -273,3 +276,6 @@ msgstr "镜像源 1"
 
 msgid "Mirror 2"
 msgstr "镜像源 2"
+
+msgid "Tip: If the dashboard still shows the old version, press Ctrl+F5 or open in a new tab to bypass PWA cache."
+msgstr "提示：若更新后仍显示旧版本，请按 Ctrl+F5 强刷或在新标签页中打开以绕过 PWA 缓存。"

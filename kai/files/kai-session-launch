@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+
+if [ "$#" -ne 1 ] || [ -z "$1" ]; then
+	echo "usage: kai-session-launch WORKING_DIRECTORY" >&2
+	exit 2
+fi
+
+cd "$1"
+exec /usr/sbin/kai_session serve --port 8196 --hostname 127.0.0.1

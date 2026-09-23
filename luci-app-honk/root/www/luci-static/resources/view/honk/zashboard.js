@@ -21,7 +21,7 @@ return view.extend({
 			return configHost;
 		}
 
-		function buildZashboardUrl(info) {
+		function buildZashboardUrl(info, forceFresh) {
 			var targetHost = getTargetHost(info.host);
 			var port = info.port || '9090';
 			var secret = info.secret || '';
@@ -33,7 +33,21 @@ return view.extend({
 			if (secret) {
 				query += '&secret=' + encodeURIComponent(secret);
 			}
-			return protocol + '://' + targetHost + ':' + port + '/ui/?' + query + '#/setup?' + query;
+			var uiQuery = query;
+			if (forceFresh) {
+				uiQuery += '&_t=' + Date.now();
+			}
+			return protocol + '://' + targetHost + ':' + port + '/ui/?' + uiQuery + '#/setup?' + query;
+		}
+
+		function reloadIframe(forceFresh) {
+			if (!currentInfo) return;
+			var url = buildZashboardUrl(currentInfo, forceFresh);
+			iframe.src = 'about:blank';
+			setTimeout(function() {
+				iframe.src = url;
+				iframeLoaded = true;
+			}, 60);
 		}
 
 		// Create HTML elements
@@ -252,18 +266,49 @@ return view.extend({
 		var modalRadioGithub = E('input', { 'type': 'radio', 'class': 'cbi-input-radio', 'name': 'modal_dl_src', 'value': 'https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip', 'checked': 'checked' });
 		var modalRadioMirror = E('input', { 'type': 'radio', 'class': 'cbi-input-radio', 'name': 'modal_dl_src', 'value': 'https://ghfast.top/https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip' });
 		var modalLogBox = E('div', { 'class': 'zash-log-box' });
-		var modalProgressWrap = E('div', { 'style': 'display: none; margin-top: 12px;' }, [ modalLogBox ]);
+		var modalStatusAlert = E('div', { 'class': 'alert-message', 'style': 'display: none; margin-bottom: 8px;' });
+		var modalProgressWrap = E('div', { 'style': 'display: none; margin-top: 12px;' }, [ modalStatusAlert, modalLogBox ]);
+
+		var btnCancelModal = E('button', {
+			'type': 'button',
+			'class': 'btn cbi-button',
+			'click': ui.hideModal
+		}, _('Cancel'));
 
 		var btnConfirmUpdate = E('button', { 'type': 'button', 'class': 'btn cbi-button cbi-button-action' }, _('Start Update'));
 
-		btnConfirmUpdate.onclick = function() {
+		function startModalUpdate() {
 			var url = modalRadioMirror.checked ? modalRadioMirror.value : modalRadioGithub.value;
 			btnConfirmUpdate.disabled = true;
-			triggerDownload(url, modalLogBox, modalProgressWrap, function() {
-				ui.hideModal();
-				btnConfirmUpdate.disabled = false;
+			btnConfirmUpdate.innerText = _('Processing...');
+			btnCancelModal.disabled = true;
+			modalStatusAlert.style.display = 'none';
+
+			triggerDownload(url, modalLogBox, modalProgressWrap, function(success) {
+				if (success) {
+					modalStatusAlert.className = 'alert-message success';
+					modalStatusAlert.innerText = _('Installation completed successfully!');
+					modalStatusAlert.style.display = 'block';
+					btnConfirmUpdate.disabled = false;
+					btnConfirmUpdate.className = 'btn cbi-button cbi-button-apply';
+					btnConfirmUpdate.innerText = _('Close');
+					btnConfirmUpdate.onclick = function() { ui.hideModal(); };
+					btnCancelModal.style.display = 'none';
+				} else {
+					modalStatusAlert.className = 'alert-message warning';
+					modalStatusAlert.innerText = _('Installation failed. Please check logs.');
+					modalStatusAlert.style.display = 'block';
+					btnConfirmUpdate.disabled = false;
+					btnConfirmUpdate.className = 'btn cbi-button cbi-button-action';
+					btnConfirmUpdate.innerText = _('Start Update');
+					btnConfirmUpdate.onclick = startModalUpdate;
+					btnCancelModal.style.display = '';
+					btnCancelModal.disabled = false;
+				}
 			});
-		};
+		}
+
+		btnConfirmUpdate.onclick = startModalUpdate;
 
 		var btnUpdateDashboard = E('button', {
 			'type': 'button',
@@ -271,8 +316,14 @@ return view.extend({
 			'title': _('Update to latest Zashboard'),
 			'click': function() {
 				modalProgressWrap.style.display = 'none';
+				modalStatusAlert.style.display = 'none';
 				modalLogBox.innerText = '';
 				btnConfirmUpdate.disabled = false;
+				btnConfirmUpdate.className = 'btn cbi-button cbi-button-action';
+				btnConfirmUpdate.innerText = _('Start Update');
+				btnConfirmUpdate.onclick = startModalUpdate;
+				btnCancelModal.style.display = '';
+				btnCancelModal.disabled = false;
 
 				ui.showModal(_('Update Zashboard Dashboard'), [
 					E('p', { 'class': 'cbi-section-descr' }, [
@@ -280,6 +331,9 @@ return view.extend({
 						' ',
 						updateTargetLabel
 					]),
+					E('div', { 'class': 'alert-message info', 'style': 'margin: 8px 0;' },
+						_('Tip: If the dashboard still shows the old version, press Ctrl+F5 or open in a new tab to bypass PWA cache.')
+					),
 					E('div', { 'class': 'cbi-value' }, [
 						E('label', { 'class': 'cbi-value-title' }, _('Select download source')),
 						E('div', { 'class': 'cbi-value-field', 'style': 'display: flex; flex-direction: column; gap: 8px;' }, [
@@ -293,11 +347,7 @@ return view.extend({
 					]),
 					modalProgressWrap,
 					E('div', { 'class': 'right', 'style': 'margin-top: 16px; display: flex; justify-content: flex-end; gap: 10px;' }, [
-						E('button', {
-							'type': 'button',
-							'class': 'btn cbi-button',
-							'click': ui.hideModal
-						}, _('Cancel')),
+						btnCancelModal,
 						btnConfirmUpdate
 					])
 				]);
@@ -310,7 +360,7 @@ return view.extend({
 			'title': _('Refresh dashboard content'),
 			'click': function() {
 				if (currentInfo) {
-					iframe.src = buildZashboardUrl(currentInfo);
+					reloadIframe(true);
 				}
 			}
 		}, _('Refresh'));
@@ -367,7 +417,7 @@ return view.extend({
 			honk.callHonkDownloadZashboard(url).then(function(resp) {
 				if (!resp || !resp.success) {
 					logBox.innerText += _('Failed to trigger download:') + ' ' + (resp ? resp.message : _('Unknown error')) + '\n';
-					if (onFinish) onFinish();
+					if (onFinish) onFinish(false);
 					return;
 				}
 
@@ -386,14 +436,14 @@ return view.extend({
 						if (sResp.status === 'SUCCESS') {
 							poll.remove(downloadPollFn);
 							downloadPollFn = null;
-							logBox.innerText += '\n✨ ' + _('Installation complete! Loading dashboard...');
-							if (onFinish) onFinish();
-							setTimeout(loadInfo, 1200);
+							logBox.scrollTop = logBox.scrollHeight;
+							if (onFinish) onFinish(true);
+							loadInfo(true);
 						} else if (sResp.status === 'FAILED') {
 							poll.remove(downloadPollFn);
 							downloadPollFn = null;
-							logBox.innerText += '\n❌ ' + _('Installation failed. Please check logs.');
-							if (onFinish) onFinish();
+							logBox.scrollTop = logBox.scrollHeight;
+							if (onFinish) onFinish(false);
 						}
 					});
 				};
@@ -401,7 +451,7 @@ return view.extend({
 				poll.add(downloadPollFn, 1);
 			}).catch(function(err) {
 				logBox.innerText += _('Download error:') + ' ' + (err.message || err) + '\n';
-				if (onFinish) onFinish();
+				if (onFinish) onFinish(false);
 			});
 		}
 
@@ -418,7 +468,7 @@ return view.extend({
 			}
 		}
 
-		function loadInfo() {
+		function loadInfo(forceReload) {
 			honk.callHonkZashboardInfo().then(function(data) {
 				if (!data || !data.configured) {
 					showState('unconfigured');
@@ -454,7 +504,9 @@ return view.extend({
 					httpsAlert.style.display = 'none';
 				}
 
-				if (!iframeLoaded || iframe.src !== fullUrl) {
+				if (forceReload) {
+					reloadIframe(true);
+				} else if (!iframeLoaded || iframe.src !== fullUrl) {
 					iframe.src = fullUrl;
 					iframeLoaded = true;
 				}

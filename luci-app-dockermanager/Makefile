@@ -11,7 +11,7 @@ LUCI_DEPENDS:=+dockermanager +luci-lib-linkeaseauth
 LUCI_PKGARCH:=all
 
 PKG_VERSION:=0.1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 include $(TOPDIR)/feeds/luci/luci.mk
 

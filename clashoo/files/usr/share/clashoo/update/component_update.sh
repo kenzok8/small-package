@@ -377,7 +377,6 @@ restore_config_backup() {
 
 clashoo_was_running() {
   /etc/init.d/clashoo status >/dev/null 2>&1 && return 0
-  /etc/init.d/sing-box status >/dev/null 2>&1 && return 0
   return 1
 }
 

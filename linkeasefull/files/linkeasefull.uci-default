@@ -22,6 +22,9 @@ uci -q batch <<-EOF >/dev/null
 	commit ucitrack
 EOF
 
-/etc/init.d/linkeasefull enable
+/etc/init.d/linkeasefull disable
+/etc/init.d/linkease-app-entry enable
+rm -f /var/run/linkease-app-entry/force-gateway
+/etc/init.d/linkease-app-entry restart >/dev/null 2>&1 || true
 
 exit 0

@@ -1,123 +1,61 @@
 #!/bin/sh /etc/rc.common
 
+# Compatibility control shim. linkease-app-entry is the only owner of port
+# 19290 and the only procd instance allowed to launch linkease-full.
+
 START=100
 STOP=10
-USE_PROCD=1
 
-PROG=/usr/bin/linkease-full
-LINKEASE_FULL_PORT=19290
-LINKEASE_BASE_PATH=/apps/
-LINKEASE_LEGACY_ADDR=0.0.0.0:8897
-LOCAL_API=/var/run/linkease.sock
-DATA_ROOT_WAIT_SECONDS=${LINKEASEFULL_DATA_ROOT_WAIT_SECONDS:-60}
+ENTRY_INIT=/etc/init.d/linkease-app-entry
+FORCE_GATEWAY=/var/run/linkease-app-entry/force-gateway
+STATE_FILE=/var/run/linkease-app-entry/state.json
 
-ensure_linkease_config() {
-	if [ ! -f /etc/config/linkease ]; then
-		touch /etc/config/linkease || return 1
-	fi
-	if ! uci -q get linkease.@linkease[0] >/dev/null; then
-		uci -q add linkease linkease >/dev/null || return 1
-		uci -q set linkease.@linkease[0].enabled='0' || return 1
-		uci -q set linkease.@linkease[0].port='8897' || return 1
-		uci -q set linkease.@linkease[0].allowPublic='0' || return 1
-		uci -q commit linkease || return 1
-	fi
-}
-
-is_allowed_data_root_parent() {
-	[ -n "$1" ] || return 1
-	case "$1" in
-		/tmp|/tmp/*|/var|/var/*|/run|/run/*|/dev|/dev/*|/proc|/proc/*|/sys|/sys/*|/rom|/rom/*|/overlay|/overlay/*) return 1 ;;
-	esac
-	return 0
-}
-
-wait_for_data_root_parent() {
-	is_allowed_data_root_parent "$1" || return 1
-	wait_left="$DATA_ROOT_WAIT_SECONDS"
-	case "$wait_left" in
-		""|*[!0-9]*) wait_left=60 ;;
-	esac
-	while [ "$wait_left" -gt 0 ]; do
-		[ -d "$1" ] && return 0
-		sleep 1
-		wait_left=$((wait_left - 1))
-	done
-	[ -d "$1" ]
-}
-
-is_persistent_data_root_parent() {
-	is_allowed_data_root_parent "$1" || return 1
-	[ -d "$1" ] || return 1
-	return 0
-}
-
-read_config() {
-	section="$1"
-	config_get_bool enabled "$section" enabled 1
-	ensure_linkease_config || true
-	data_root_parent="$(uci -q get linkease.@linkease[0].local_home 2>/dev/null || true)"
-
-	if [ -n "$data_root_parent" ] && ! wait_for_data_root_parent "$data_root_parent"; then
-		data_root_parent=""
-	fi
-	if [ -n "$data_root_parent" ] && ! is_persistent_data_root_parent "$data_root_parent"; then
-		data_root_parent=""
-	fi
-	if [ -n "$data_root_parent" ]; then
-		data_root="$data_root_parent/.linkease_data"
-		recycle_root="$data_root_parent/.linkease_recycle"
-	fi
-	log_root="/tmp/linkeasefull/logs"
-}
-
-start_service() {
-	config_load linkeasefull
-	config_foreach read_config linkeasefull
-	[ "$enabled" = "1" ] || return 1
-	[ -x "$PROG" ] || return 1
-
-	rm -f "$LOCAL_API"
-	if [ -n "$data_root_parent" ]; then
-		mkdir -p "$data_root/users/admin" "$data_root/system" "$data_root/tmp" "$recycle_root"
-		mkdir -p "$data_root/config" "$data_root/apptunnel" "$data_root/mountremote"
+sync_force_gateway() {
+	mkdir -p "$(dirname "$FORCE_GATEWAY")"
+	enabled="$(uci -q get linkeasefull.@linkeasefull[0].enabled 2>/dev/null || echo 0)"
+	if [ "$enabled" = 1 ]; then
+		rm -f "$FORCE_GATEWAY"
 	else
-		echo "linkeasefull: data root is not initialized; starting for first-run setup" >&2
+		: > "$FORCE_GATEWAY"
 	fi
-	mkdir -p "$log_root"
-
-	# Do not set LINKEASE_CONFIG on OpenWrt. That variable belongs to
-	# Docker/file-backend deployments where users explicitly mount
-	# LINKEASE_CONFIG/preconfig.data. OpenWrt binding state is authoritative in
-	# UCI and must be accessed through /usr/sbin/linkease-config.sh. This is
-	# intentional: the user's data disk may be replaced, and the device must
-	# still be able to recover its binding from flash-backed OpenWrt config.
-	#
-	# Do not export LINKEASE_APPTUNNEL_PRECONFIG_SCRIPT or
-	# LINKEASE_APPTUNNEL_DEFAULT_ROOT_DIR here. Different devices have different
-	# storage roots, and hard-coded env wiring can pin apptunnel to a removed
-	# disk. The embedded clientruntime must discover linkease-config.sh and call
-	# local_load/local_save-compatible business APIs for the current root.
-
-	procd_open_instance linkeasefull
-	procd_set_param limits nofile="65535 65535"
-	procd_set_param command "$PROG" \
-		--host "0.0.0.0" \
-		--port "$LINKEASE_FULL_PORT" \
-		--mode "release" \
-		--basePath "$LINKEASE_BASE_PATH" \
-		--deviceAddr "$LINKEASE_LEGACY_ADDR" \
-		--localApi "$LOCAL_API" \
-		--supplierCode "linkease"
-	procd_set_param env \
-		"LINKEASE_AUTH_PROVIDER=openwrt" \
-		"KAIPLUS_ENABLED=0"
-	procd_set_param respawn
-	procd_set_param stdout 1
-	procd_set_param stderr 1
-	procd_close_instance
 }
 
-service_triggers() {
-	procd_add_reload_trigger "linkeasefull"
+start() {
+	mkdir -p "$(dirname "$FORCE_GATEWAY")"
+	rm -f "$FORCE_GATEWAY"
+	uci -q set linkeasefull.@linkeasefull[0].enabled='1'
+	uci -q commit linkeasefull
+	"$ENTRY_INIT" restart
+}
+
+stop() {
+	mkdir -p "$(dirname "$FORCE_GATEWAY")"
+	: > "$FORCE_GATEWAY"
+	"$ENTRY_INIT" restart
+}
+
+restart() {
+	start
+}
+
+reload() {
+	sync_force_gateway
+	"$ENTRY_INIT" restart
+}
+
+running() {
+	[ -r "$STATE_FILE" ] && grep -q '"active":"linkeasefull"' "$STATE_FILE"
+}
+
+status() {
+	if running; then
+		echo "running"
+		return 0
+	fi
+	if [ -r "$STATE_FILE" ]; then
+		cat "$STATE_FILE"
+	else
+		echo "stopped"
+	fi
+	return 1
 }

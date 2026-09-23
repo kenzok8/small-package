@@ -19,9 +19,13 @@ const SMART_BINARY_PATHS = [
 '/usr/bin/clash'
 ];
 
+const SINGBOX_BIN_DIR = '/usr/share/clashoo/bin';
+const SINGBOX_RUNTIME_DIR = '/var/run/clashoo/sing-box';
+const SINGBOX_RUNTIME_CONFIG = SINGBOX_RUNTIME_DIR + '/config.json';
+const SINGBOX_WORKDIR = SINGBOX_RUNTIME_DIR + '/work';
 const SINGBOX_BINARY_PATHS = [
-'/usr/bin/sing-box',
-'/usr/local/bin/sing-box'
+SINGBOX_BIN_DIR + '/sing-box-stable',
+SINGBOX_BIN_DIR + '/sing-box-alpha'
 ];
 
 const LOG_PATHS = [
@@ -204,16 +208,17 @@ return 'clash';
 }
 
 function get_service_name() {
-return get_core_type() === 'singbox' ? 'sing-box' : get_mihomo_service_name();
+return get_core_type() === 'singbox' ? 'clashoo' : get_mihomo_service_name();
 }
 
-// 只看 procd 自家实例 PID。pidof 会撞 openclash / nikki / passwall 的同名进程
-// （mihomo / clash / sing-box / smart），用 ubus 走 procd 真相来源 —— 学 nikki。
-function procd_instance_pid(service) {
-// outer "double" lets ucode unescape \" → ", shell then sees JSON wrapped in
-// '...' so the inner double-quotes survive. jsonfilter pattern also wrapped
-// in shell single-quotes.
-let p = popen("ubus call service list '{\"name\":\"" + service + "\",\"verbose\":true}' 2>/dev/null | jsonfilter -e '@[\"" + service + "\"].instances.*.pid' 2>/dev/null | head -n1");
+// 只看 procd 自家实例 PID。pidof 会撞 openclash / nikki / passwall 的同名进程，
+// 用 ubus 走 procd 真相来源；instance 为空时保留旧的 wildcard 行为。
+function procd_instance_pid(service, instance) {
+let filter = instance ? '@.' + service + '.instances.' + instance + '.pid' :
+  '@["' + service + '"].instances.*.pid';
+let query = '{"name":"' + service + '","verbose":true}';
+let p = popen('ubus call service list ' + shell_quote(query) +
+  ' 2>/dev/null | jsonfilter -e ' + shell_quote(filter) + ' 2>/dev/null | head -n1');
 if (!p) return 0;
 let s = trim(p.read('all'));
 p.close();
@@ -223,11 +228,33 @@ return pid;
 }
 
 function clashoo_running() { return procd_instance_pid('clashoo') > 0; }
-function singbox_running() { return procd_instance_pid('sing-box') > 0; }
+
+function singbox_binary_path(path) {
+return path == SINGBOX_BINARY_PATHS[0] || path == SINGBOX_BINARY_PATHS[1];
+}
+
+function singbox_pid_owns_private_binary(pid) {
+if (!pid || !access('/proc/' + pid, 'r')) return false;
+let p = popen('readlink -f ' + shell_quote('/proc/' + pid + '/exe') + ' 2>/dev/null');
+let exe = '';
+if (p) {
+	exe = trim(p.read('all') || '');
+	p.close();
+}
+if (singbox_binary_path(exe)) return true;
+let cmdline = replace(readfile('/proc/' + pid + '/cmdline') || '', /\x00/g, ' ');
+for (let path in SINGBOX_BINARY_PATHS)
+	if (cmdline == path || substr(cmdline, 0, length(path) + 1) == path + ' ')
+		return true;
+return false;
+}
+
+function singbox_running() {
+let pid = procd_instance_pid('clashoo', 'singbox');
+return pid > 0 && singbox_pid_owns_private_binary(pid);
+}
 
 function running_core_family() {
-// clashoo 跑 singbox 时通过 /etc/init.d/sing-box 委托给 sing-box procd 实例；
-// 跑 mihomo / smart 时 clashoo 自身 procd 实例直接持有进程。
 if (singbox_running()) return 'singbox';
 if (clashoo_running())  return 'mihomo';
 return '';
@@ -353,11 +380,11 @@ if (core == 'mihomo' && dcore == '3') {
 	return { error: 'mihomo_alpha_missing', message: '未检测到 mihomo Alpha，请先在“组件更新”中更新 Alpha' };
 }
 if (core == 'singbox' && dcore == '4') {
-	if (access('/usr/bin/sing-box-stable', 'x')) return null;
+	if (access(SINGBOX_BINARY_PATHS[0], 'x')) return null;
 	return { error: 'singbox_stable_missing', message: '未检测到 sing-box 稳定版，请先在“组件更新”中更新稳定版' };
 }
 if (core == 'singbox' && dcore == '5') {
-	if (access('/usr/bin/sing-box-alpha', 'x')) return null;
+	if (access(SINGBOX_BINARY_PATHS[1], 'x')) return null;
 	return { error: 'singbox_alpha_missing', message: '未检测到 sing-box Alpha，请先在“组件更新”中更新 Alpha' };
 }
 return { error: 'invalid_core_target', message: '无效的内核类型与版本组合' };
@@ -365,17 +392,33 @@ return { error: 'invalid_core_target', message: '无效的内核类型与版本�
 
 function prepare_singbox_runtime() {
 let active = uci_get('clashoo', 'config', 'singbox_active') || '';
-let src = active ? ('/usr/share/clashoo/config/singbox/' + active) : '/etc/sing-box/config.json';
+let src = active ? (SINGBOX_DIR + '/' + active) : SINGBOX_RUNTIME_CONFIG;
+if (!access(src, 'r')) src = SINGBOX_RUNTIME_CONFIG;
+if (!access(src, 'r'))
+	return { success: false, message: '请先生成或选择 sing-box 配置文件' };
 
-if (active && access(src, 'r')) {
-system('mkdir -p /etc/sing-box >/dev/null 2>&1');
-if (system('cp -f ' + shell_quote(src) + ' /etc/sing-box/config.json >/dev/null 2>&1') != 0)
-return { success: false, message: '无法同步 sing-box 配置文件' };
-} else if (!access('/etc/sing-box/config.json', 'r')) {
-return { success: false, message: '请先生成或选择 sing-box 配置文件' };
+system('mkdir -p ' + shell_quote(SINGBOX_RUNTIME_DIR) + ' ' + shell_quote(SINGBOX_WORKDIR) + ' >/dev/null 2>&1');
+let tmp = shell_read('mktemp ' + shell_quote(SINGBOX_RUNTIME_CONFIG + '.tmp.XXXXXX') + ' 2>/dev/null');
+if (!tmp)
+	return { success: false, message: '无法创建 sing-box 临时运行配置' };
+
+let raw = readfile(src) || '';
+let cfg = raw ? json(raw) : null;
+if (!cfg || type(cfg) != 'object') {
+	unlink(tmp);
+	return { success: false, message: 'sing-box 配置 JSON 无法解析' };
+}
+cfg = migrate_singbox(cfg);
+if (writefile(tmp, sprintf('%J\n', cfg)) === null) {
+	unlink(tmp);
+	return { success: false, message: '无法写入 sing-box 临时运行配置' };
 }
 
-if (system('command -v ucode >/dev/null 2>&1') == 0) {
+if (uci_get('clashoo', 'config', 'core_only') != '1') {
+	if (system('command -v ucode >/dev/null 2>&1') != 0) {
+		unlink(tmp);
+		return { success: false, message: 'ucode is required to normalize sing-box runtime config' };
+	}
 	let redir_port = uci_get('clashoo', 'config', 'redir_port') || '7891';
 	let tproxy_port = uci_get('clashoo', 'config', 'tproxy_port') || '7982';
 	let mixed_port = uci_get('clashoo', 'config', 'mixed_port') || '7890';
@@ -384,7 +427,7 @@ if (system('command -v ucode >/dev/null 2>&1') == 0) {
 	let dash_pass = uci_get('clashoo', 'config', 'dash_pass') || '';
 	let has_tun = system('(ip tuntap add mode tun name cotuntest >/dev/null 2>&1 && ip link del cotuntest >/dev/null 2>&1)') == 0 ? '1' : '0';
 	let normalize_cmd = 'ucode /usr/share/clashoo/lib/normalize_singbox_config.uc ' +
-		shell_quote('/etc/sing-box/config.json') + ' ' +
+		shell_quote(tmp) + ' ' +
 		shell_quote(redir_port) + ' ' +
 		shell_quote(tproxy_port) + ' ' +
 		shell_quote(mixed_port) + ' ' +
@@ -394,12 +437,17 @@ if (system('command -v ucode >/dev/null 2>&1') == 0) {
 		shell_quote(dash_port) + ' ' +
 		shell_quote(dash_pass) +
 		' >/dev/null 2>&1';
-	if (system(normalize_cmd) != 0)
+	if (system(normalize_cmd) != 0) {
+		unlink(tmp);
 		return { success: false, message: 'sing-box 运行配置规范化失败' };
+	}
 }
 
-let rc = system("uci -q set sing-box.main.enabled='1'; uci -q set sing-box.main.user='root'; uci -q set sing-box.main.conffile='/etc/sing-box/config.json'; uci -q set sing-box.main.workdir='/usr/share/sing-box'; uci commit sing-box >/dev/null 2>&1");
-return { success: rc == 0 };
+if (system('mv -f ' + shell_quote(tmp) + ' ' + shell_quote(SINGBOX_RUNTIME_CONFIG) + ' >/dev/null 2>&1') != 0) {
+	unlink(tmp);
+	return { success: false, message: '无法提交 sing-box 运行配置' };
+}
+return { success: true };
 }
 
 function detect_firewall_backend() {
@@ -609,7 +657,7 @@ if (core_family == 'singbox') {
 	let active_name = replace(active, /^.*\//, '');
 	/* 文件已被删除时不返回 stale 名 */
 	if (active_name && access(SINGBOX_DIR + '/' + active_name, 'r')) return active_name;
-	if (access('/etc/sing-box/config.json', 'r')) return 'config.json';
+	if (access(SINGBOX_RUNTIME_CONFIG, 'r')) return 'config.json';
 	return '';
 }
 
@@ -630,7 +678,7 @@ if (core_family == 'singbox') {
 			return replace(active_name, /\.singbox\.json$/, '.json');
 		return active_name;
 	}
-	if (access('/etc/sing-box/config.json', 'r'))
+	if (access(SINGBOX_RUNTIME_CONFIG, 'r'))
 		return 'config.json';
 	return 'config.json';
 }
@@ -868,10 +916,10 @@ if (id == 'mihomo') {
 }
 if (id == 'singbox') {
 	let stable = read_first_line('/usr/share/clashoo/singbox_stable_version');
-	if (!stable && access('/usr/bin/sing-box-stable', 'x')) stable = core_short_version('/usr/bin/sing-box-stable');
+	if (!stable && access(SINGBOX_BINARY_PATHS[0], 'x')) stable = core_short_version(SINGBOX_BINARY_PATHS[0]);
 	if (is_prerelease_label(stable)) stable = '';
 	let alpha = read_first_line('/usr/share/clashoo/singbox_alpha_version');
-	if (!alpha && access('/usr/bin/sing-box-alpha', 'x')) alpha = core_short_version('/usr/bin/sing-box-alpha');
+	if (!alpha && access(SINGBOX_BINARY_PATHS[1], 'x')) alpha = core_short_version(SINGBOX_BINARY_PATHS[1]);
 	out.stable = stable || '';
 	out.alpha = alpha || '';
 	return out;
@@ -1233,7 +1281,7 @@ let auth = {
 
 let family = running_core_family() || get_core_type();
 if (family == 'singbox') {
-	let sb = parse_singbox_api_auth('/etc/sing-box/config.json');
+	let sb = parse_singbox_api_auth(SINGBOX_RUNTIME_CONFIG);
 	if (sb.has_port) auth.port = sb.port || auth.port;
 	if (sb.has_secret) auth.pass = sb.secret || '';
 } else {
@@ -2290,7 +2338,7 @@ c.set('clashoo', 'config', 'singbox_active', name);
 c.commit('clashoo');
 
 if (is_running() && (running_core_family() == 'singbox' || get_core_type() == 'singbox'))
-system('sh /usr/share/clashoo/rpc/rpc_async.sh restart >/dev/null 2>&1');
+system('service ' + get_service_name() + ' restart >/dev/null 2>&1');
 
 return { success: true, family: 'singbox', current: name };
 }
@@ -2704,8 +2752,8 @@ let api = get_clash_api_auth();
 	                       core_type: configured_core, dcore, local_ip,
 	                       has_mihomo_stable: has_mihomo_stable(),
 	                       has_mihomo_alpha: !!access('/usr/bin/mihomo', 'x'),
-	                       has_singbox_stable: !!access('/usr/bin/sing-box-stable', 'x'),
-	                       has_singbox_alpha: !!access('/usr/bin/sing-box-alpha', 'x'),
+	                       has_singbox_stable: !!access(SINGBOX_BINARY_PATHS[0], 'x'),
+	                       has_singbox_alpha: !!access(SINGBOX_BINARY_PATHS[1], 'x'),
 	                       has_smart: !!find_smart_binary() };
 
 	let stats_payload = { ok: false, running: running };
@@ -3874,9 +3922,6 @@ if (!name || index(name, '/') >= 0 || index(name, '..') >= 0)
   return { success: false, error: 'invalid name' };
 let src = '/usr/share/clashoo/config/singbox/' + name;
 if (!access(src, 'r')) return { success: false, error: 'not found' };
-system('mkdir -p /etc/sing-box >/dev/null 2>&1');
-if (system('cp -f ' + shell_quote(src) + ' /etc/sing-box/config.json >/dev/null 2>&1') != 0)
-  return { success: false, error: 'copy_failed', message: '无法写入 /etc/sing-box/config.json' };
 let c = cursor(); c.load('clashoo');
 c.set('clashoo', 'config', 'core_type', 'singbox');
 c.set('clashoo', 'config', 'singbox_active', name);
@@ -3886,7 +3931,7 @@ c.commit('clashoo');
 let prepared = prepare_singbox_runtime();
 if (!prepared.success)
   return { success: false, error: 'prepare_failed', message: prepared.message || '无法准备 sing-box 运行环境' };
-if (is_running()) system('sh /usr/share/clashoo/rpc/rpc_async.sh restart >/dev/null 2>&1');
+if (is_running()) system('service ' + get_service_name() + ' restart >/dev/null 2>&1');
 return { success: true };
 }
 },
@@ -4007,16 +4052,29 @@ cfg = migrate_singbox(cfg);
 let after = sprintf('%J', cfg);
 
 /* 无变化 */
-if (before === after) return { success: true, changes: [] };
+if (before === after) {
+  let active_same = uci_get('clashoo', 'config', 'singbox_active') || '';
+  if (active_same === name) {
+    let prepared_same = prepare_singbox_runtime();
+    if (!prepared_same.success)
+      return { success: false, message: prepared_same.message || '运行配置准备失败' };
+    if (is_running()) system('service ' + get_service_name() + ' restart >/dev/null 2>&1');
+  }
+  return { success: true, changes: [] };
+}
 
 /* 写回 */
 if (writefile(path, after) === null)
   return { success: false, message: '写入文件失败' };
 
-/* 如果是激活配置，同步到运行时 */
+/* 如果是激活配置，同步到私有运行时；init 仍会在重启时再次规范化。 */
 let active = uci_get('clashoo', 'config', 'singbox_active') || '';
-if (active === name)
-  system('cp -f ' + shell_quote(path) + ' /etc/sing-box/config.json >/dev/null 2>&1');
+if (active === name) {
+  let prepared = prepare_singbox_runtime();
+  if (!prepared.success)
+    return { success: false, message: prepared.message || '运行配置准备失败' };
+  if (is_running()) system('service ' + get_service_name() + ' restart >/dev/null 2>&1');
+}
 
 return { success: true, changes: ['deprecated fields removed/updated'] };
 }
