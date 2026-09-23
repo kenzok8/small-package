@@ -42,12 +42,12 @@
 			"path": "honk/route"
 		}
 	},
-	"admin/services/honk/zashboard": {
-		"title": "Zashboard",
+	"admin/services/honk/dashboard": {
+		"title": "Dashboard",
 		"order": 5,
 		"action": {
 			"type": "view",
-			"path": "honk/zashboard"
+			"path": "honk/dashboard"
 		}
 	},
 	"admin/services/honk/log": {

@@ -116,6 +116,85 @@ function remove_bracket_block(content, header_regex) {
 	return join("\n", new_lines);
 }
 
+function get_dashboard_info(req) {
+	let config_file = get_config_file_path();
+	let content = readfile(config_file) || "";
+	let clean = strip_dae_comments(content);
+	let parsed = parse_clash_api(clean);
+
+	let p = popen("pidof honk-core 2>/dev/null");
+	let pids = p ? p.read("all") : "";
+	if (p) p.close();
+	let running = !!match(pids, /[0-9]+/);
+
+	let res = {
+		configured: false,
+		has_ui: false,
+		running: running,
+		config_file: config_file,
+		external_controller: "",
+		host: "",
+		port: "",
+		secret: "",
+		external_ui: "",
+		default_mode: "Rule"
+	};
+
+	if (!parsed) {
+		return res;
+	}
+
+	res.configured = true;
+	res.external_controller = parsed.external_controller;
+	res.host = parsed.host;
+	res.port = parsed.port;
+	res.secret = parsed.secret;
+	res.external_ui = parsed.external_ui;
+	res.default_mode = parsed.default_mode;
+
+	if (res.external_ui) {
+		let index_path = res.external_ui + "/index.html";
+		let s = stat(index_path);
+		if (s && s.type == "file") {
+			res.has_ui = true;
+		}
+	}
+
+	return res;
+}
+
+function download_dashboard(req) {
+	let url = req.args ? req.args.url : null;
+	if (!url) {
+		url = "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip";
+	}
+
+	if (!match(url, /^https?:\/\//) || match(url, /[ \t\r\n'"`]/)) {
+		return { success: false, message: "Invalid URL" };
+	}
+
+	let config_file = get_config_file_path();
+	let content = readfile(config_file) || "";
+	let clean = strip_dae_comments(content);
+	let parsed = parse_clash_api(clean);
+
+	let target_dir = (parsed && parsed.external_ui) ? parsed.external_ui : "/etc/honk/dashboard";
+	let script = "/usr/share/honk/download_dashboard.sh";
+	let s = stat(script);
+	if (!s) {
+		return { success: false, message: "Script not found: " + script };
+	}
+
+	let safe_script = replace(script, "'", "'\\''");
+	let safe_target = replace(target_dir, "'", "'\\''");
+	let safe_url = replace(url, "'", "'\\''");
+
+	let cmd = sprintf("/bin/sh '%s' '%s' '%s' >/dev/null 2>&1 &", safe_script, safe_target, safe_url);
+	system(cmd);
+
+	return { success: true, target_dir: target_dir, url: url };
+}
+
 return {
 	"luci.honk": {
 		status: {
@@ -163,94 +242,28 @@ return {
 			}
 		},
 
+		get_dashboard_info: {
+			call: get_dashboard_info
+		},
+
 		get_zashboard_info: {
-			call: function(req) {
-				let config_file = get_config_file_path();
-				let content = readfile(config_file) || "";
-				let clean = strip_dae_comments(content);
-				let parsed = parse_clash_api(clean);
+			call: get_dashboard_info
+		},
 
-				let p = popen("pidof honk-core 2>/dev/null");
-				let pids = p ? p.read("all") : "";
-				if (p) p.close();
-				let running = !!match(pids, /[0-9]+/);
-
-				let res = {
-					configured: false,
-					has_ui: false,
-					running: running,
-					config_file: config_file,
-					external_controller: "",
-					host: "",
-					port: "",
-					secret: "",
-					external_ui: "",
-					default_mode: "Rule"
-				};
-
-				if (!parsed) {
-					return res;
-				}
-
-				res.configured = true;
-				res.external_controller = parsed.external_controller;
-				res.host = parsed.host;
-				res.port = parsed.port;
-				res.secret = parsed.secret;
-				res.external_ui = parsed.external_ui;
-				res.default_mode = parsed.default_mode;
-
-				if (res.external_ui) {
-					let index_path = res.external_ui + "/index.html";
-					let s = stat(index_path);
-					if (s && s.type == "file") {
-						res.has_ui = true;
-					}
-				}
-
-				return res;
-			}
+		download_dashboard: {
+			args: { url: "string" },
+			call: download_dashboard
 		},
 
 		download_zashboard: {
 			args: { url: "string" },
-			call: function(req) {
-				let url = req.args ? req.args.url : null;
-				if (!url) {
-					url = "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip";
-				}
-
-				if (!match(url, /^https?:\/\//) || match(url, /[ \t\r\n'"`]/)) {
-					return { success: false, message: "Invalid URL" };
-				}
-
-				let config_file = get_config_file_path();
-				let content = readfile(config_file) || "";
-				let clean = strip_dae_comments(content);
-				let parsed = parse_clash_api(clean);
-
-				let target_dir = (parsed && parsed.external_ui) ? parsed.external_ui : "/etc/honk/zashboard";
-				let script = "/usr/share/honk/download_zashboard.sh";
-				let s = stat(script);
-				if (!s) {
-					return { success: false, message: "Script not found: " + script };
-				}
-
-				let safe_script = replace(script, "'", "'\\''");
-				let safe_target = replace(target_dir, "'", "'\\''");
-				let safe_url = replace(url, "'", "'\\''");
-
-				let cmd = sprintf("/bin/sh '%s' '%s' '%s' >/dev/null 2>&1 &", safe_script, safe_target, safe_url);
-				system(cmd);
-
-				return { success: true, target_dir: target_dir, url: url };
-			}
+			call: download_dashboard
 		},
 
 		download_status: {
 			call: function(req) {
-				let status_raw = readfile("/tmp/honk_zashboard_download.status") || "IDLE";
-				let log = readfile("/tmp/honk_zashboard_download.log") || "";
+				let status_raw = readfile("/tmp/honk_dashboard_download.status") || "IDLE";
+				let log = readfile("/tmp/honk_dashboard_download.log") || "";
 				let status_m = match(status_raw, /\S+/);
 				let status = status_m ? status_m[0] : "IDLE";
 				return { status: status, log: log };
@@ -268,7 +281,7 @@ return {
 				let api_inner =
 "    clash_api {\n" +
 "        external_controller: '0.0.0.0:9090'\n" +
-"        external_ui: '/etc/honk/zashboard'\n" +
+"        external_ui: '/etc/honk/dashboard'\n" +
 "        secret: ''\n" +
 "        default_mode: 'Rule'\n" +
 "    }\n";

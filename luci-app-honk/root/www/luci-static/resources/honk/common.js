@@ -32,18 +32,21 @@ var callHonkClearLog = rpc.declare({
 	expect: { success: true }
 });
 
-var callHonkZashboardInfo = rpc.declare({
+var callHonkDashboardInfo = rpc.declare({
 	object: 'luci.honk',
-	method: 'get_zashboard_info',
+	method: 'get_dashboard_info',
 	expect: { }
 });
 
-var callHonkDownloadZashboard = rpc.declare({
+var callHonkDownloadDashboard = rpc.declare({
 	object: 'luci.honk',
-	method: 'download_zashboard',
+	method: 'download_dashboard',
 	params: [ 'url' ],
 	expect: { }
 });
+
+var callHonkZashboardInfo = callHonkDashboardInfo;
+var callHonkDownloadZashboard = callHonkDownloadDashboard;
 
 var callHonkDownloadStatus = rpc.declare({
 	object: 'luci.honk',
@@ -343,6 +346,17 @@ function initCodeMirror(textarea, onSaveCallback) {
 			wrapper.parentNode.insertBefore(toolbar, wrapper);
 		}
 
+		if (window.IntersectionObserver) {
+			var observer = new IntersectionObserver(function(entries) {
+				for (var i = 0; i < entries.length; i++) {
+					if (entries[i].isIntersecting) {
+						editor.refresh();
+					}
+				}
+			});
+			observer.observe(wrapper);
+		}
+
 		var mapEl = textarea.closest('.cbi-map');
 		if (mapEl) {
 			var mapInst = (window.L && window.L.dom) ? window.L.dom.findClassInstance(mapEl) : null;
@@ -391,6 +405,61 @@ function createConfigFileView(filePath, mapTitle, mapDesc, fieldTitle, successMs
 			});
 		}
 	});
+}
+
+
+// Advanced-only tabs: these paths are hidden when advanced=0.
+// This runs on every honk page render and reads live UCI values,
+// bypassing LuCI's sessionStorage menu cache entirely.
+var ADVANCED_TAB_PATHS = ['/honk/dns', '/honk/node', '/honk/route'];
+
+function applyAdvancedTabVisibility() {
+	// Use ubus directly to read the committed UCI value (not the in-memory
+	// JS UCI module, which may have pending unsaved changes).
+	return L.resolveDefault(
+		rpc.declare({
+			object: 'uci',
+			method: 'get',
+			params: ['config', 'section', 'option'],
+			expect: { value: '' }
+		})('honk', 'config', 'advanced'),
+		''
+	).then(function(val) {
+		var isAdvanced = (val === '1');
+		applyTabCss(isAdvanced);
+		if (!isAdvanced) {
+			var isAdvPage = (window.L && L.env && Array.isArray(L.env.dispatchpath) && ['dns', 'node', 'route'].indexOf(L.env.dispatchpath[3]) !== -1) ||
+				ADVANCED_TAB_PATHS.some(function(p) { return window.location.pathname.replace(/\/+$/, '').endsWith(p); });
+			if (isAdvPage) {
+				window.location.href = L.url('admin/services/honk/global');
+			}
+		}
+	}).catch(function() {
+	});
+}
+
+function applyTabCss(isAdvanced) {
+	// Inject a style element that hides advanced-only tab items and links.
+	// This is idempotent and works seamlessly across themes (Bootstrap, Aurora, etc.).
+	var styleId = 'honk-adv-tab-style';
+	var existing = document.getElementById(styleId);
+	if (!existing) {
+		existing = document.createElement('style');
+		existing.id = styleId;
+		document.head.appendChild(existing);
+	}
+	if (isAdvanced) {
+		existing.textContent = '';
+	} else {
+		existing.textContent = [
+			'#tabmenu .tabmenu-item-dns,',
+			'#tabmenu .tabmenu-item-node,',
+			'#tabmenu .tabmenu-item-route,',
+			'#tabmenu a[href$="/honk/dns"],',
+			'#tabmenu a[href$="/honk/node"],',
+			'#tabmenu a[href$="/honk/route"] { display: none !important; }'
+		].join('\n');
+	}
 }
 
 function renderStatusHeader() {
@@ -451,16 +520,24 @@ function renderStatusHeader() {
 		return callHonkStatus().then(updateStatus);
 	}, 3);
 
+	// Apply tab visibility based on live UCI advanced value.
+	// This runs asynchronously after render; the CSS injection is fast enough
+	// that tabs flicker is imperceptible (tabs hide before user can click them).
+	applyAdvancedTabVisibility();
+
 	return section;
 }
+
 
 return baseclass.extend({
 	callHonkStatus: callHonkStatus,
 	callHonkReload: callHonkReload,
 	callHonkGetLog: callHonkGetLog,
 	callHonkClearLog: callHonkClearLog,
-	callHonkZashboardInfo: callHonkZashboardInfo,
-	callHonkDownloadZashboard: callHonkDownloadZashboard,
+	callHonkDashboardInfo: callHonkDashboardInfo,
+	callHonkZashboardInfo: callHonkDashboardInfo,
+	callHonkDownloadDashboard: callHonkDownloadDashboard,
+	callHonkDownloadZashboard: callHonkDownloadDashboard,
 	callHonkDownloadStatus: callHonkDownloadStatus,
 	callHonkEnableClashApi: callHonkEnableClashApi,
 	readFile: readFile,

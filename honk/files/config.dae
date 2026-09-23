@@ -27,7 +27,7 @@ global {
 #experimental {
 #    clash_api {
 #        external_controller: '0.0.0.0:9090'
-#        external_ui: '/etc/honk/zashboard'
+#        external_ui: '/etc/honk/dashboard'
 #        secret: ''
 #        default_mode: 'Rule'
 #    }

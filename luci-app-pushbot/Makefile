@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-pushbot
 PKG_VERSION:=6.00
-PKG_RELEASE:=19
+PKG_RELEASE:=20
 
 PKG_MAINTAINER:=tty228 <tty228@yeah.net>  zzsj0928
 
@@ -26,6 +26,17 @@ PKG_PO_VERSION:=$(PKG_VERSION)-r$(PKG_RELEASE)
 # 兼容部分 luci.mk（如 immortalwrt）缺少 zh_Hans 语言定义的情况
 LUCI_LANG.zh_Hans?=简体中文 (Simplified Chinese)
 
+# 编译时自动生成"出厂默认值"备份（供"配置管理"重置使用）。
+# 单一源：仅维护 root/etc/config/pushbot 与 root/usr/bin/pushbot/api/ 三个文件；
+# 本行在 make 解析 Makefile 时执行 cp，把源复制到 root/usr/share/pushbot/defaults/。
+# 备份目录不在 conffiles 列表 → 安装即落地、每次升级覆盖为最新默认值。
+# 不用 postinst 备份的原因：/etc/config/pushbot 等是 conffile，opkg/apk 安装时
+# 保留的是用户已改配置，postinst 复制到的"备份"实为用户配置而非出厂默认。
+PUSHBOT_DEFAULTS_SYNC := $(shell mkdir -p root/usr/share/pushbot/defaults && \
+	cp -f root/etc/config/pushbot root/usr/share/pushbot/defaults/pushbot && \
+	cp -f root/usr/bin/pushbot/api/ipv4.list root/usr/bin/pushbot/api/ipv6.list \
+	     root/usr/bin/pushbot/api/diy.json root/usr/share/pushbot/defaults/ && echo synced)
+
 define Package/$(PKG_NAME)/conffiles
 /etc/config/pushbot
 /usr/bin/pushbot/api/diy.json
@@ -42,14 +53,6 @@ define Package/$(PKG_NAME)/postinst
 	[ -f /tmp/pushbot/wlan_interface ] && rm -f /tmp/pushbot/wlan_interface
 	[ -f /tmp/pushbot/wireless_ifs ] && rm -f /tmp/pushbot/wireless_ifs
 }
-# 备份插件默认文件（仅首次安装时创建，供"配置管理"恢复使用）
-DESDIR="$${IPKG_INSTROOT}/usr/share/pushbot/defaults"
-if [ ! -d "$${DESDIR}" ]; then
-	mkdir -p "$${DESDIR}"
-	for f in /etc/config/pushbot /usr/bin/pushbot/api/ipv4.list /usr/bin/pushbot/api/ipv6.list /usr/bin/pushbot/api/diy.json; do
-		[ -f "$${f}" ] && /bin/cp -f "$${f}" "$${DESDIR}/"
-	done
-fi
 exit 0
 endef
 

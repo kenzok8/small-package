@@ -94,8 +94,8 @@ msgstr "运行中"
 msgid "Not Running"
 msgstr "未运行"
 
-msgid "Checking Zashboard and Clash API configuration..."
-msgstr "正在检测 Zashboard 与 Clash API 配置..."
+msgid "Checking Dashboard and Clash API configuration..."
+msgstr "正在检测 Dashboard 与 Clash API 配置..."
 
 msgid "Enabling and restarting HONK..."
 msgstr "正在开启并重启 HONK..."
@@ -112,11 +112,11 @@ msgstr "启用失败："
 msgid "Unknown error"
 msgstr "未知错误"
 
-msgid "Zashboard / Clash API Unconfigured"
-msgstr "Zashboard / Clash API 未配置"
+msgid "Dashboard / Clash API Unconfigured"
+msgstr "Dashboard / Clash API 未配置"
 
-msgid "HONK has not enabled Clash API in its configuration file. Zashboard requires external controller port and dashboard UI path."
-msgstr "HONK 尚未在配置文件中启用 Clash API。Zashboard 控制面板需要依赖 Clash API 提供的外部控制器端口与面板静态文件路径。"
+msgid "HONK has not enabled Clash API in its configuration file. Dashboard requires external controller port and dashboard UI path."
+msgstr "HONK 尚未在配置文件中启用 Clash API。Dashboard 控制面板需要依赖 Clash API 提供的外部控制器端口与面板静态文件路径。"
 
 msgid "Please add or uncomment experimental.clash_api block in Global Settings, and ensure external_controller and external_ui are configured."
 msgstr "请在【全局设置】的配置文件中添加或取消注释 experimental.clash_api 语法块，并确保配置了 external_controller 和 external_ui。"
@@ -139,11 +139,11 @@ msgstr "请输入有效的下载 URL"
 msgid "Processing..."
 msgstr "正在处理..."
 
-msgid "Start Download & Install Zashboard"
-msgstr "开始下载并安装 Zashboard"
+msgid "Start Download & Install Dashboard"
+msgstr "开始下载并安装 Dashboard"
 
-msgid "Zashboard UI Files Not Found"
-msgstr "未检测到 Zashboard 面板文件"
+msgid "%s UI Files Not Found"
+msgstr "未检测到 %s 面板文件"
 
 msgid "Clash API is configured, but dashboard files are missing in the external UI directory. You can download and deploy it directly."
 msgstr "Clash API 配置已就绪，但设定的外部控制面板目录中缺少面板文件。您可以点击下方按钮，使用 OpenWrt 原生轻量解压直接在线下载部署。"
@@ -157,8 +157,8 @@ msgstr "监听地址与端口"
 msgid "API Secret"
 msgstr "API 认证密钥"
 
-msgid "Download Source (Optimized fontless dist for OpenWrt, ~1MB):"
-msgstr "下载版本与源（专为 OpenWrt 优化的无字体极简版，仅约 1MB）："
+msgid "Download Source:"
+msgstr "下载源："
 
 msgid "Custom URL"
 msgstr "自定义 URL"
@@ -190,17 +190,17 @@ msgstr "新标签页"
 msgid "Open independently in a new tab"
 msgstr "在新标签页中独立打开"
 
+msgid "Drag to scroll page"
+msgstr "拖拽以滚动页面"
+
 msgid "Update Dashboard"
 msgstr "更新面板"
 
-msgid "Update to latest Zashboard"
-msgstr "更新至最新版 Zashboard"
+msgid "Update to latest"
+msgstr "更新至最新版"
 
-msgid "Update Zashboard Dashboard"
-msgstr "更新 Zashboard 面板"
-
-msgid "The latest fontless version (dist-no-fonts.zip) will be downloaded and deployed to:"
-msgstr "系统将下载最新的无字体极简版（dist-no-fonts.zip）并重新部署至目标目录："
+msgid "The latest version (%s) will be downloaded and deployed to:"
+msgstr "系统将下载最新版本（%s）并重新部署至目标目录："
 
 msgid "Select download source"
 msgstr "选择下载源"
@@ -265,8 +265,8 @@ msgstr "节点配置已保存并重载服务。"
 msgid "Routing configuration saved and service reloaded."
 msgstr "路由配置已保存并重载服务。"
 
-msgid "Zashboard"
-msgstr "Zashboard"
+msgid "Dashboard"
+msgstr "Dashboard"
 
 msgid "Mirror"
 msgstr "镜像源"
@@ -279,3 +279,22 @@ msgstr "镜像源 2"
 
 msgid "Tip: If the dashboard still shows the old version, press Ctrl+F5 or open in a new tab to bypass PWA cache."
 msgstr "提示：若更新后仍显示旧版本，请按 Ctrl+F5 强刷或在新标签页中打开以绕过 PWA 缓存。"
+
+msgid "Advanced Settings"
+msgstr "高级设置"
+
+msgid "Enable to display full configuration editor and advanced routing/DNS/node tabs."
+msgstr "启用后将显示完整的全局配置编辑器以及路由、DNS、节点的高级分页。"
+
+msgid "Target Dashboard"
+msgstr "目标面板"
+
+msgid "Dashboard Type"
+msgstr "面板类型"
+
+msgid "Select the active web dashboard."
+msgstr "选择当前生效的 Web 管理面板。"
+
+msgid "Doona (Coming Soon)"
+msgstr "Doona（即将推出）"
+

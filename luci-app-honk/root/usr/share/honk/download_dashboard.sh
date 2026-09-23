@@ -1,12 +1,12 @@
 #!/bin/sh
-# Download and install Zashboard for HONK
+# Download and install Dashboard for HONK
 
-TARGET_DIR="${1:-/etc/honk/zashboard}"
+TARGET_DIR="${1:-/etc/honk/dashboard}"
 DOWNLOAD_URL="${2:-https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip}"
 
-LOG_FILE="/tmp/honk_zashboard_download.log"
-STATUS_FILE="/tmp/honk_zashboard_download.status"
-TMP_DIR="/tmp/zashboard_dl_$$"
+LOG_FILE="/tmp/honk_dashboard_download.log"
+STATUS_FILE="/tmp/honk_dashboard_download.status"
+TMP_DIR="/tmp/dashboard_dl_$$"
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
@@ -21,7 +21,7 @@ mkdir -p /tmp
 : > "$LOG_FILE"
 set_status "DOWNLOADING"
 
-log "Starting Zashboard deployment to: $TARGET_DIR"
+log "Starting Dashboard deployment to: $TARGET_DIR"
 log "Download URL: $DOWNLOAD_URL"
 log "Downloading package..."
 
