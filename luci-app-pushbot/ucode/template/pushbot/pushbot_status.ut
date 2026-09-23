@@ -205,30 +205,49 @@ if (document.readyState === 'complete')
 else
 	window.addEventListener('load', PB_bootstrap);
 
-/* install countdown — toast-sized card, same as version check toast */
+/* install countdown - toast-sized card, same as version check toast.
+   10s countdown as fallback; poll version every 2s, reload as soon as it changes. */
 function pb_ota_showCountdown(ov) {
 	var card = document.querySelector('.pushbot-header-card');
 	if (!card) return;
+	/* remember current version to detect change */
+	var badge = document.getElementById('pushbot_version_badge');
+	var curVer = badge ? (badge.textContent || '').trim() : '';
 	var cdOv = document.createElement('div');
-	cdOv.className = 'pushbot-ver-overlay';
+	cdOv.className = 'pb-preview-overlay';
 	cdOv.style.zIndex = '99999';
 	var cdToast = document.createElement('div');
 	cdToast.className = 'pushbot-ver-toast is-latest';
 	cdToast.style.cssText = 'min-width:150px;max-width:220px;padding:12px 16px;border-radius:10px;text-align:center;transform:scale(0.85);';
-	cdToast.innerHTML = '<div style="font-size:22px;font-weight:800;font-family:Menlo,Consolas,monospace" id="pb_ota_countdown">30</div>'
+	cdToast.innerHTML = '<div style="font-size:22px;font-weight:800;font-family:Menlo,Consolas,monospace" id="pb_ota_countdown">10</div>'
 		+ '<div style="margin-top:6px"><button onclick="location.reload()" style="padding:4px 14px;border-radius:6px;border:1px solid rgba(255,255,255,0.35);background:rgba(255,255,255,0.15);color:#fff;font-size:11px;font-weight:600;cursor:pointer">{{ _('Refresh Now') }}</button></div>';
 	cdOv.appendChild(cdToast);
 	card.appendChild(cdOv);
 	setTimeout(function() { cdOv.classList.add('show'); }, 20);
-	var cdSec = 30;
+	var cdSec = 10;
 	var cdTimer = setInterval(function() {
 		cdSec--;
 		var el = document.getElementById('pb_ota_countdown');
 		if (el) el.textContent = cdSec;
-		if (cdSec <= 0) { clearInterval(cdTimer); location.reload(); }
+		if (cdSec <= 0) { clearInterval(cdTimer); clearInterval(verTimer); location.reload(); }
 	}, 1000);
+	/* poll version every 2s, reload as soon as it changes */
+	var verTimer = setInterval(function() {
+		var px = new XMLHttpRequest();
+		px.open('GET', '{{ dispatcher.build_url("admin", "services", "pushbot", "version") }}?_=' + Date.now());
+		px.onload = function() {
+			try {
+				var d = JSON.parse(px.responseText);
+				if (d && d.version && curVer && ('v' + d.version) !== curVer) {
+					clearInterval(verTimer);
+					clearInterval(cdTimer);
+					location.reload();
+				}
+			} catch(e) {}
+		};
+		px.send();
+	}, 2000);
 }
-/* OTA error toast — covers the version card with red frosted overlay, auto-dismiss after 4s */
 function pb_ota_showError(ov, msg) {
 	var card = document.querySelector('.pushbot-header-card');
 	if (!card) return;

@@ -836,7 +836,8 @@ return {
 		if (mgr == "apk") {
 			cmd = "apk add --allow-untrusted /tmp/luci-app-pushbot-*.apk /tmp/luci-i18n-pushbot-*.apk";
 		} else {
-			cmd = "opkg install /tmp/luci-app-pushbot_*.ipk /tmp/luci-i18n-pushbot_*.ipk";
+			/* opkg 同版本会 up to date 跳过，需 --force-reinstall 覆盖 */
+			cmd = "opkg install --force-reinstall /tmp/luci-app-pushbot_*.ipk /tmp/luci-i18n-pushbot-zh-cn_*.ipk";
 		}
 
 		/* run install in background, log output */
