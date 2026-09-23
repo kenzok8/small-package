@@ -931,29 +931,33 @@ update_wan_sets() {
 
 	[ -z "$(command -v get_wan_ips)" ] && . "$UTILS_PATH"
 
-	local WAN_IP=$(get_wan_ips ip4)
-	[ -n "$WAN_IP" ] && {
-		nft flush set $NFTABLE_NAME $NFTSET_WAN
-		echo "$WAN_IP" | insert_nftset $NFTSET_WAN
-		[ "$log" = "log" ] && {
-			local wan_ip
-			for wan_ip in $WAN_IP; do
-				echolog "  - [$?]加入WAN IPv4到nftset[$NFTSET_WAN]：${wan_ip}"
-			done
-		}
-	}
+	(
+		flock -x 9 || exit 1
 
-	local WAN6_IP=$(get_wan_ips ip6)
-	[ -n "${WAN6_IP}" ] && {
-		nft flush set $NFTABLE_NAME $NFTSET_WAN6
-		echo "$WAN6_IP" | insert_nftset $NFTSET_WAN6
-		[ "$log" = "log" ] && {
-			local wan6_ip
-			for wan6_ip in $WAN6_IP; do
-				echolog "  - [$?]加入WAN IPv6到nftset[$NFTSET_WAN6]：${wan6_ip}"
-			done
+		local WAN_IP=$(get_wan_ips ip4)
+		[ -n "$WAN_IP" ] && {
+			# nft flush set $NFTABLE_NAME $NFTSET_WAN
+			echo "$WAN_IP" | insert_nftset $NFTSET_WAN
+			[ "$log" = "log" ] && {
+				local wan_ip
+				for wan_ip in $WAN_IP; do
+					echolog "  - [$?]加入WAN IPv4到nftset[$NFTSET_WAN]：${wan_ip}"
+				done
+			}
 		}
-	}
+
+		local WAN6_IP=$(get_wan_ips ip6)
+		[ -n "${WAN6_IP}" ] && {
+			# nft flush set $NFTABLE_NAME $NFTSET_WAN6
+			echo "$WAN6_IP" | insert_nftset $NFTSET_WAN6
+			[ "$log" = "log" ] && {
+				local wan6_ip
+				for wan6_ip in $WAN6_IP; do
+					echolog "  - [$?]加入WAN IPv6到nftset[$NFTSET_WAN6]：${wan6_ip}"
+				done
+			}
+		}
+	) 9>"${LOCK_PATH}/${CONFIG}_update_wan_sets.lock"
 }
 
 set_tproxy_sysctl() {

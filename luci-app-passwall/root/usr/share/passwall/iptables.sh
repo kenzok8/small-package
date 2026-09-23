@@ -842,33 +842,37 @@ update_wan_sets() {
 
 	[ -z "$(command -v get_wan_ips)" ] && . "$UTILS_PATH"
 
-	local WAN_IP=$(get_wan_ips ip4)
-	[ -n "$WAN_IP" ] && {
-		ipset -F "$IPSET_WAN"
-		for wan_ip in $WAN_IP; do
-			ipset -! add "$IPSET_WAN" "$wan_ip"
-		done
-		[ "$log" = "log" ] && {
-			local wan_ip
-			for wan_ip in $WAN_IP; do
-				echolog "  - [$?]加入WAN IPv4到ipset[$IPSET_WAN]：${wan_ip}"
-			done
-		}
-	}
+	(
+		flock -x 9 || exit 1
 
-	local WAN6_IP=$(get_wan_ips ip6)
-	[ -n "$WAN6_IP" ] && {
-		ipset -F "$IPSET_WAN6"
-		for wan6_ip in $WAN6_IP; do
-			ipset -! add "$IPSET_WAN6" "$wan6_ip"
-		done
-		[ "$log" = "log" ] && {
-			local wan6_ip
-			for wan6_ip in $WAN6_IP; do
-				echolog "  - [$?]加入WAN IPv6到ipset[$IPSET_WAN6]：${wan6_ip}"
+		local WAN_IP=$(get_wan_ips ip4)
+		[ -n "$WAN_IP" ] && {
+			# ipset -F "$IPSET_WAN"
+			for wan_ip in $WAN_IP; do
+				ipset -! add "$IPSET_WAN" "$wan_ip"
 			done
+			[ "$log" = "log" ] && {
+				local wan_ip
+				for wan_ip in $WAN_IP; do
+					echolog "  - [$?]加入WAN IPv4到ipset[$IPSET_WAN]：${wan_ip}"
+				done
+			}
 		}
-	}
+
+		local WAN6_IP=$(get_wan_ips ip6)
+		[ -n "$WAN6_IP" ] && {
+			# ipset -F "$IPSET_WAN6"
+			for wan6_ip in $WAN6_IP; do
+				ipset -! add "$IPSET_WAN6" "$wan6_ip"
+			done
+			[ "$log" = "log" ] && {
+				local wan6_ip
+				for wan6_ip in $WAN6_IP; do
+					echolog "  - [$?]加入WAN IPv6到ipset[$IPSET_WAN6]：${wan6_ip}"
+				done
+			}
+		}
+	) 9>"${LOCK_PATH}/${CONFIG}_update_wan_sets.lock"
 }
 
 set_tproxy_sysctl() {
