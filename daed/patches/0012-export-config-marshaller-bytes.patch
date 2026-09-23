@@ -1,0 +1,21 @@
+From: kenzok8 <kenzok8@noreply>
+Date: 2026-09-23
+Subject: [PATCH] daed: expose config marshaller bytes
+
+The current wing generator calls Marshaller.Bytes when updating global config.
+---
+diff --git a/dae-core/config/marshal.go b/dae-core/config/marshal.go
+index f68006a..dfd6777 100644
+--- a/dae-core/config/marshal.go
++++ b/dae-core/config/marshal.go
+@@ -42,6 +42,10 @@ type Marshaller struct {
+ 	buf         bytes.Buffer
+ }
+ 
++func (m *Marshaller) Bytes() []byte {
++	return m.buf.Bytes()
++}
++
+ func (m *Marshaller) writeLine(depth int, line string) {
+ 	if depth < 0 {
+ 		depth = 0

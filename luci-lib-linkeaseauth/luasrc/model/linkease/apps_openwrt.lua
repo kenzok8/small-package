@@ -65,6 +65,15 @@ local function bool_value(value)
 	return value == true or value == 1 or value == "1" or value == "true"
 end
 
+local function standalone_external_path(app)
+	local standalone = type(app.manifest.standalone) == "table" and app.manifest.standalone or {}
+	local external = type(standalone.externalOpen) == "table" and standalone.externalOpen or {}
+	if external.enabled == true and type(external.path) == "string" then
+		return external.path
+	end
+	return nil
+end
+
 function M.new(dependencies)
 	local deps = dependencies or defaults()
 	local function lookup(id)
@@ -129,7 +138,8 @@ function M.new(dependencies)
 			end
 			local host = authority_host(deps.http.getenv("HTTP_HOST") or "")
 			if host == "" then host = deps.uci:get("network", "lan", "ipaddr") or "127.0.0.1" end
-			local external_path = type(target.path) == "string" and target.path or "/"
+			local external_path = standalone_external_path(app)
+				or (type(target.path) == "string" and target.path or "/")
 			if external_path:sub(1, 1) ~= "/" or external_path:sub(1, 2) == "//"
 				or external_path:find("[%c]") then
 				external_path = "/"
@@ -158,7 +168,7 @@ function M.new(dependencies)
 		end
 		local host = authority_host(deps.http.getenv("HTTP_HOST") or "")
 		if host == "" then host = deps.uci:get("network", "lan", "ipaddr") or "127.0.0.1" end
-		local external_path = backend.externalBasePath or app.url
+		local external_path = standalone_external_path(app) or backend.externalBasePath or app.url
 		if type(external_path) ~= "string" or external_path:sub(1, 1) ~= "/"
 			or external_path:sub(1, 2) == "//" or external_path:find("[%c]") then
 			external_path = app.url

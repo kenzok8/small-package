@@ -9,7 +9,7 @@ XHR.poll(5, '<%=url("admin/services/baidudrive_status")%>', null, function(x, st
 		}
 		if (st.running) {
 			el.innerHTML = '<br/><em style=\"color:green\"><%:The BaiduDrive service is running.%></em>'
-				+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open BaiduDrive%> \" onclick=\"window.open('http://" + window.location.hostname + ":" + st.port + "/')\"/>";
+				+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open BaiduDrive%> \" onclick=\"window.open('<%=url("admin/services/baidudrive/open")%>')\"/>";
 		}
 	}
 });

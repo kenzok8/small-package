@@ -174,7 +174,34 @@ function pushbot_init(){
 	[ -f "/usr/sbin/wrtbwmon" ] || command -v nlbw >/dev/null 2>&1 || echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】未安装 wrtbwmon 且 nlbwmon 不可用，流量统计不可用" >> ${logfile}
 	[ -z "$ip_version" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】无法获取依赖项 iputils-arping 版本号，请确认插件是否正常运行" >> ${logfile}
 	[ -z "$cu_version" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】无法获取依赖项 curl 版本号，请确认插件是否正常运行" >> ${logfile}
-	[ -z "${dd_webhook}${pp_token}${we_webhook}${fs_webhook}${bark_token}${pushdeer_key}" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】请填写正确的Token/Webhook " >> ${logfile} && return 1
+	# 按当前渠道(jsonpath)检查该渠道的必填参数，精确报出缺哪个字段。
+	# 相比旧的"全空才报"：消除漏报（选 WxPusher 没填 token 但其他渠道有残留时不报）
+	# 与误报（ntfy_server 等存量残留值让检查失效）；ntfy 公共服务器兜底、diy 凭据在
+	# diy.json 内，两者无固定必填字段，跳过。
+	local _miss="" _ch=""
+	case "$jsonpath" in
+	*dingding.json)
+		_ch="钉钉"; [ -z "$dd_webhook" ] && _miss="dd_webhook(Webhook)" ;;
+	*ent_wechat.json)
+		_ch="企业微信"; [ -z "$we_webhook" ] && _miss="we_webhook(Webhook)" ;;
+	*pushplus.json)
+		_ch="PushPlus"; [ -z "$pp_token" ] && _miss="pp_token(Token)" ;;
+	*feishu.json)
+		_ch="飞书"; [ -z "$fs_webhook" ] && _miss="fs_webhook(Webhook)" ;;
+	*pushdeer.json)
+		_ch="PushDeer"; [ -z "$pushdeer_key" ] && _miss="pushdeer_key(Key)" ;;
+	*bark.json)
+		_ch="Bark"; [ -z "$bark_token" ] && _miss="bark_token(Token)" ;;
+	*gotify.json)
+		_ch="Gotify"; { [ -z "$gotify_server" ] || [ -z "$gotify_token" ]; } && _miss="gotify_server/gotify_token" ;;
+	*wxpusher.json)
+		_ch="WxPusher"; [ -z "$wxpusher_app_token" ] && _miss="wxpusher_app_token(App Token)" ;;
+	*ntfy.json | *diy.json)
+		: ;;
+	*)
+		: ;;
+	esac
+	[ -n "$_miss" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】请填写正确的Token/Webhook（当前渠道 ${_ch} 缺少：${_miss}）" >> ${logfile} && return 1
 	local interfacelist=`getinterfacelist` && [ -z "$interfacelist" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【！！！】无法正确获取接口信息，请确认插件是否正常运行" >> ${logfile}
 	return 0
 }
@@ -949,7 +976,9 @@ function pushbot_cron(){
 		/etc/init.d/cron start
 	}
 	del_cron
-	if [ -z "$pushbot_enable" ]; then
+	# 总开关关闭(=0)/空/异常值都不注册定时任务：
+	# 旧代码只判 [ -z ]（"0" 非空→false），导致关闭后 crontab 照常注册、cron 继续 send
+	if [ -z "$pushbot_enable" ] || [ "$pushbot_enable" != "1" ]; then
 		re_cron
 		return
 	fi
@@ -2543,6 +2572,12 @@ function add_ip_black(){
 
 # 发送定时数据
 function send(){
+	# 运行时兜底：非测试模式下每次发送前再查一次总开关（uci 直读最新值）。
+	# 防御：残留 crontab、用户自写 crontab、以及未来绕过分发的新调用路径。
+	# send test（渠道测试）不拦，允许总开关关闭时主动测试。
+	if [ -z "$1" ]; then
+		[ "`uci -q get pushbot.pushbot.pushbot_enable`" = "1" ] || return 0
+	fi
 	[ ! -z "$1" ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【测试】开始测试渠道" >> ${logfile} || echo "`date "+%Y-%m-%d %H:%M:%S"` 【定时数据】创建定时任务" >> ${logfile}
 	pushbot_disturb;local send_disturb=$?
 	get_config "send_title" "router_status" "router_temp" "router_wan" "client_list" "google_check_count"
@@ -2854,7 +2889,12 @@ if [ "$1" ] ;then
 		fi
 		exit
 	fi
-	[ $1 == "send" ] && send
+	# 定时任务(crontab)入口：总开关关闭时拒绝发送（兜底残留 crontab；test 主动测试不拦）
+	if [ "$1" = "send" ]; then
+		get_config pushbot_enable
+		[ "$pushbot_enable" = "1" ] || exit 0
+		send
+	fi
 	[ $1 == "soc" ] && echo `soc_temp` > ${dir}soc_tmp
 	[ $1 == "client" ] && get_client
 	[ $1 == "test" ] && send test

@@ -11,7 +11,7 @@ PKG_ARCH_kai_session:=$(ARCH)
 
 PKG_NAME:=kai_session
 PKG_VERSION:=0.0.23
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/kai-runtime-v$(PKG_VERSION)/
 PKG_HASH:=58c4dcdddd5a93aba219edaef0fb76296078921f189809d77444fc8635101bcf

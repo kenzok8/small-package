@@ -1,76 +1,80 @@
+From: kenzok8 <kenzok8@noreply>
+Date: 2026-09-23
+Subject: [PATCH] daed: bound startup network wait on new wing
+
+Return an error after 60 seconds and retry on the next generation.
+---
 diff --git a/dae/run.go b/dae/run.go
-index d8f86c2..a0a665d 100644
+index 7c9a5cc..7f00748 100644
 --- a/dae/run.go
 +++ b/dae/run.go
-@@ -32,7 +32,8 @@ var ChReloadConfigs = make(chan *ReloadMessage)
- var GracefullyExit = make(chan struct{})
- var EmptyConfig *daeConfig.Config
- var c *control.ControlPlane
+@@ -19,6 +19,7 @@ import (
+ 	"github.com/daeuniverse/dae/control"
+ 	"github.com/daeuniverse/dae/pkg/config_parser"
+ 	"github.com/daeuniverse/dae/pkg/logger"
++	"github.com/daeuniverse/outbound/netproxy"
+ 	"github.com/daeuniverse/outbound/protocol/direct"
+ 	"github.com/mohae/deepcopy"
+ 	"github.com/sirupsen/logrus"
+@@ -43,7 +44,8 @@ var EmptyConfig *daeConfig.Config
+ // active is the generation currently serving traffic. It is nil before the
+ // first generation is ready and while a reload has retired the old one.
+ var active atomic.Pointer[control.ControlPlane]
 -var onceWaitingNetwork sync.Once
 +var waitingNetworkMu sync.Mutex
 +var networkReady bool
  
  func init() {
  	sections, err := config_parser.Parse(`global{} routing{}`)
-@@ -52,6 +53,19 @@ func ControlPlane() (*control.ControlPlane, error) {
+@@ -64,6 +66,19 @@ func ControlPlane() (*control.ControlPlane, error) {
  	return c, nil
  }
  
-+func waitForNetwork(log *logrus.Logger) error {
++func waitForNetwork(log *logrus.Logger, directDialer netproxy.Dialer) error {
 +	waitingNetworkMu.Lock()
 +	defer waitingNetworkMu.Unlock()
 +	if networkReady {
 +		return nil
 +	}
-+	if err := WaitForNetwork(log); err != nil {
++	if err := WaitForNetwork(log, directDialer); err != nil {
 +		return err
 +	}
 +	networkReady = true
 +	return nil
 +}
 +
- func Run(log *logrus.Logger, conf *daeConfig.Config, externGeoDataDirs []string, disableTimestamp bool, dry bool) (err error) {
- 	defer close(GracefullyExit)
- 	// Not really run dae.
-@@ -221,6 +235,9 @@ func newControlPlane(log *logrus.Logger, bpf interface{}, dnsCache map[string]*c
- 
- 	// Deep copy to prevent modification.
- 	conf = deepcopy.Copy(conf).(*daeConfig.Config)
-+	if bpf == nil {
-+		control.PurgeStaleTCFilters(log)
-+	}
- 
- 	// Init Direct Dialers.
- 	direct.InitDirectDialers(conf.Global.FallbackResolver)
-@@ -228,9 +245,9 @@ func newControlPlane(log *logrus.Logger, bpf interface{}, dnsCache map[string]*c
+ // generation is one control plane with its listener. retired is set before
+ // the plane is torn down so a Serve error from a plane that is being replaced
+ // is not mistaken for the active datapath dying.
+@@ -345,9 +360,9 @@ func newControlPlane(log *logrus.Logger, dnsCache map[string]*control.DnsCache,
  
  	if !conf.Global.DisableWaitingNetwork && len(conf.Global.WanInterface) > 0 {
  		// Wait for network for WAN ready.
 -		onceWaitingNetwork.Do(func() {
--			WaitForNetwork(log)
+-			WaitForNetwork(log, directDialers.Symmetric)
 -		})
-+		if err = waitForNetwork(log); err != nil {
++		if err = waitForNetwork(log, directDialers.Symmetric); err != nil {
 +			return nil, err
 +		}
  	}
  
  	/// Get subscription -> nodeList mapping.
 diff --git a/dae/utils.go b/dae/utils.go
-index 65965a2..dc43cbc 100644
+index 2b4f6bf..93efb7e 100644
 --- a/dae/utils.go
 +++ b/dae/utils.go
 @@ -94,8 +94,9 @@ func preprocessWanInterfaceAuto(params *daeConfig.Config) error {
  	return nil
  }
  
--func WaitForNetwork(log *logrus.Logger) {
-+func WaitForNetwork(log *logrus.Logger) error {
+-func WaitForNetwork(log *logrus.Logger, directDialer netproxy.Dialer) {
++func WaitForNetwork(log *logrus.Logger, directDialer netproxy.Dialer) error {
  	epo := 5 * time.Second
 +	deadline := time.Now().Add(60 * time.Second)
  	client := http.Client{
  		Transport: &http.Transport{
  			DialContext: func(ctx context.Context, network, addr string) (c net.Conn, err error) {
-@@ -115,6 +116,9 @@ func WaitForNetwork(log *logrus.Logger) {
+@@ -114,6 +115,9 @@ func WaitForNetwork(log *logrus.Logger, directDialer netproxy.Dialer) {
  	}
  	log.Infoln("Waiting for network...")
  	for i := 0; ; i++ {
@@ -80,7 +84,7 @@ index 65965a2..dc43cbc 100644
  		resp, err := client.Get(cmd.CheckNetworkLinks[i%len(cmd.CheckNetworkLinks)])
  		if err != nil {
  			log.Debugln("CheckNetwork:", err)
-@@ -134,4 +138,5 @@ func WaitForNetwork(log *logrus.Logger) {
+@@ -133,4 +137,5 @@ func WaitForNetwork(log *logrus.Logger, directDialer netproxy.Dialer) {
  		time.Sleep(epo)
  	}
  	log.Infoln("Network online.")

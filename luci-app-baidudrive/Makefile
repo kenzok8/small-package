@@ -8,8 +8,8 @@ include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=baidudrive
 PKG_VERSION:=1.0.2
-PKG_RELEASE:=2
-LUCI_DEPENDS:=+baidudrive +luci-compat +luci-lib-linkeaseauth
+PKG_RELEASE:=4
+LUCI_DEPENDS:=+baidudrive +luci-compat +luci-lib-linkeaseauth +linkease-app-entry
 LUCI_MINIFY_CSS:=0
 LUCI_MINIFY_JS:=0
 

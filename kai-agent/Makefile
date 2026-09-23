@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kai-agent
 PKG_VERSION:=0.0.23
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=kai-agent-bundle-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/kai-runtime-v$(PKG_VERSION)/
 PKG_HASH:=8c1af22149f9b3d1fa2c38bab016d2b046319ece8b1c84b8b5f5a0190aeacf52

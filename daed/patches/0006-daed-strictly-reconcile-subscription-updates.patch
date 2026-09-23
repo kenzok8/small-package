@@ -1,22 +1,9 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: kenzok8 <kenzok8@noreply>
+Date: 2026-09-23
 Subject: [PATCH] daed: strictly reconcile subscription updates
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
 
-订阅更新按节点链接精确对账，普通组里的失效节点删除，fixed 组固定节点转成独立节点保留。
-
-数据库提交后按运行状态应用配置，补齐并发地址校验、导入失败回滚和 reload 超时恢复。
+Reconcile nodes by link, preserve fixed-group nodes, and apply committed changes.
 ---
- cmd/run.go                                    |   6 +-
- graphql/mutation.go                           |   9 +-
- graphql/root_schema.go                        |   2 +-
- graphql/service/config/mutation_utils.go      |  59 ++++-
- .../service/subscription/mutation_utils.go    | 181 +++++++++++----
- .../subscription/mutation_utils_test.go       | 212 ++++++++++++++++++
- 6 files changed, 408 insertions(+), 61 deletions(-)
- create mode 100644 graphql/service/subscription/mutation_utils_test.go
-
 diff --git a/cmd/run.go b/cmd/run.go
 index 7dce577..978f46c 100644
 --- a/cmd/run.go
@@ -43,10 +30,10 @@ index 7dce577..978f46c 100644
  }
  
 diff --git a/graphql/mutation.go b/graphql/mutation.go
-index fcbf440..adb747c 100644
+index af065fd..d462ecc 100644
 --- a/graphql/mutation.go
 +++ b/graphql/mutation.go
-@@ -256,14 +256,7 @@ func (r *MutationResolver) SelectConfig(args *struct {
+@@ -256,16 +256,7 @@ func (r *MutationResolver) SelectConfig(args *struct {
  func (r *MutationResolver) Run(args *struct {
  	Dry bool
  }) (int32, error) {
@@ -56,7 +43,9 @@ index fcbf440..adb747c 100644
 -		tx.Rollback()
 -		return 0, err
 -	}
--	tx.Commit()
+-	if err = tx.Commit().Error; err != nil {
+-		return 0, fmt.Errorf("commit run: %w", err)
+-	}
 -	return ret, nil
 +	return config.Run(context.TODO(), args.Dry)
  }
@@ -76,7 +65,7 @@ index 8b82db6..a96cace 100644
  
  	# updateSubscriptionLink is to update the subscription link without re-fetching nodes.
 diff --git a/graphql/service/config/mutation_utils.go b/graphql/service/config/mutation_utils.go
-index fd61554..feb94d3 100644
+index e6bf9da..8ab756b 100644
 --- a/graphql/service/config/mutation_utils.go
 +++ b/graphql/service/config/mutation_utils.go
 @@ -21,6 +21,7 @@ import (
@@ -163,7 +152,7 @@ index fd61554..feb94d3 100644
  
  		// Running -> false
 diff --git a/graphql/service/subscription/mutation_utils.go b/graphql/service/subscription/mutation_utils.go
-index e55e65b..e01a342 100644
+index 7e6dc08..e87bf78 100644
 --- a/graphql/service/subscription/mutation_utils.go
 +++ b/graphql/service/subscription/mutation_utils.go
 @@ -18,6 +18,7 @@ import (
@@ -174,7 +163,7 @@ index e55e65b..e01a342 100644
  	"github.com/daeuniverse/dae-wing/graphql/service/node"
  	"github.com/daeuniverse/dae/common/subscription"
  	"github.com/go-co-op/gocron"
-@@ -171,8 +172,9 @@ func AutoUpdateVersionByIds(d *gorm.DB, ids []uint) (err error) {
+@@ -175,8 +176,9 @@ func AutoUpdateVersionByIds(d *gorm.DB, ids []uint) (err error) {
  }
  
  var (
@@ -186,7 +175,7 @@ index e55e65b..e01a342 100644
  )
  
  func UpdateAll(ctx context.Context) {
-@@ -258,68 +260,161 @@ func Update(ctx context.Context, _id graphql.ID) (r *Resolver, err error) {
+@@ -262,68 +264,161 @@ func Update(ctx context.Context, _id graphql.ID) (r *Resolver, err error) {
  	return &Resolver{Subscription: m}, nil
  }
  
@@ -212,7 +201,7 @@ index e55e65b..e01a342 100644
 -	tx := db.BeginTx(ctx)
 -	defer func() {
 -		if err == nil {
--			tx.Commit()
+-			err = tx.Commit().Error
 +	current := make(map[string]struct{}, len(existing))
 +	var staleIds []uint
 +	for _, n := range existing {
@@ -303,7 +292,7 @@ index e55e65b..e01a342 100644
  	}
 -	hasAnyCandidate := false
  	for _, r := range result {
--		if r.Error == nil {
+-		if r.Error == nil || *r.Error == node.DuplicatedError.Error() {
 -			hasAnyCandidate = true
 -			break
 +		if r.Error != nil {
@@ -388,7 +377,7 @@ index e55e65b..e01a342 100644
  	return &m, nil
  }
  
-@@ -399,6 +494,8 @@ func UpdateLink(ctx context.Context, _id graphql.ID, link string) (r *Resolver,
+@@ -406,6 +501,8 @@ func UpdateLink(ctx context.Context, _id graphql.ID, link string) (r *Resolver,
  	if err != nil {
  		return nil, err
  	}
@@ -397,11 +386,11 @@ index e55e65b..e01a342 100644
  
  	tx := db.BeginTx(ctx)
  	defer func() {
-diff --git a/graphql/service/subscription/mutation_utils_test.go b/graphql/service/subscription/mutation_utils_test.go
+diff --git a/graphql/service/subscription/reconcile_patch_test.go b/graphql/service/subscription/reconcile_patch_test.go
 new file mode 100644
 index 0000000..18ff9b9
 --- /dev/null
-+++ b/graphql/service/subscription/mutation_utils_test.go
++++ b/graphql/service/subscription/reconcile_patch_test.go
 @@ -0,0 +1,212 @@
 +/*
 + * SPDX-License-Identifier: AGPL-3.0-only

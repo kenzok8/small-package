@@ -43,19 +43,25 @@ local current_node = map:get(section)
 	}
 
 	function b64DecodeUnicode(str) {
-		return decodeURIComponent(Array.prototype.map.call(atob(str), function (c) {
-			return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-		}).join(''));
+		try {
+			return decodeURIComponent(Array.prototype.map.call(atob(str), function (c) {
+				return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+			}).join(''));
+		} catch (e) {}
+		return str;
 	}
 
 	function b64decutf8safe(str) {
-		var l;
+		const orig = str;
+		let l;
 		str = str.replace(/-/g, "+").replace(/_/g, "/");
 		l = str.length;
 		l = (4 - l % 4) % 4;
 		if (l)
 			str = padright(str, l, "=");
-		return b64DecodeUnicode(str);
+		const text = b64DecodeUnicode(str);
+		if (text !== str) return text;
+		return orig;
 	}
 
 	function b64encsafe(str) {
@@ -79,6 +85,15 @@ local current_node = map:get(section)
 		if (typeof (v) === 'undefined' || v === '')
 			return '';
 		return b64decsafe(v);
+	}
+
+	function is_json(str) {
+		try {
+			const result = JSON.parse(str);
+			return typeof result === 'object' && result !== null;
+		} catch (e) {
+			return false;
+		}
 	}
 
 	function parseNodeUrl(url) {
@@ -1312,7 +1327,6 @@ local current_node = map:get(section)
 		}
 		if (link_type === "vmess") {
 			var sstr = b64DecodeUnicode((link_split[1] || "").replace(/#.*/, "").trim());
-			var ploc = sstr.indexOf("/?");
 			if (vmess_type == "sing-box" && has_singbox) {
 				dom_prefix = "singbox_";
 				opt.set('type', "sing-box");
@@ -1321,19 +1335,65 @@ local current_node = map:get(section)
 				opt.set('type', "Xray");
 			}
 			opt.set(dom_prefix + 'protocol', "vmess");
-			var url0, param = "";
-			if (ploc > 0) {
-				url0 = sstr.substr(0, ploc);
-				param = sstr.substr(ploc + 2);
+
+			let ssm = {};
+			if (is_json(sstr)) {
+				// vmess://base64(json)
+				ssm = JSON.parse(sstr);
+			} else if (sstr.indexOf("?") > 0) {
+				// vmess://base64(auto:uuid@host:port)?tfo=1&remark=xxx&&alterId=0&obfs=websocket&path=%2F&obfsParam=host (obfs ~= ws obfsParam={})
+				sstr = sstr.replace("/?", "?");
+				const ploc = sstr.indexOf("?");
+				let url0 = sstr.substr(0, ploc);
+				let paramStr = sstr.substr(ploc + 2);
+
+				const m = new URL("http://" + b64decsafe(url0));
+				if (m.username !== "") {
+					ssm.security = m.username;
+					ssm.id = m.password || m.username;
+				} else {
+					ssm.security = "auto";
+					ssm.id = m.password || m.username;
+				}
+				ssm.add = unbracketIP(m.hostname);
+				ssm.port = m.port || "443";
+
+				const params = {};
+				const pairs = paramStr.split("&");
+				for (let i = 0; i < pairs.length; i++) {
+					const v = pairs[i];
+					const s = v.indexOf("=");
+					if (s > 0) {
+						params[v.substring(0, s)] = decodeURIComponent(v.substring(s + 1));
+					}
+				}
+				ssm.ps = params.remark || params.remarks;
+				ssm.net = (params.obfs === "websocket") ? "ws" : (params.obfs || "tcp");
+				ssm.path = params.path;
+				ssm.aid = params.alterId || "0";
+				ssm.tls = params.tls;
+				ssm.sni = params.peer;
+				ssm.tfo = params.tfo;
+				if (is_json(params.obfsParam)) {
+					const op_info = JSON.parse(params.obfsParam);
+					if (op_info.header) ssm.type = op_info.header;
+					if (op_info.Host) ssm.host = op_info.Host;
+				} else {
+					ssm.host = params.obfsParam;
+				}
+				ssm.allowinsecure = params.allowInsecure;
+			} else {
+				s.innerHTML = "<font color='red'><%:Invalid Share URL Format%></font>";
+				return false;
 			}
-			var ssm = JSON.parse(sstr);
+
 			opt.set('remarks', ssm.ps);
 			opt.set(dom_prefix + 'address', unbracketIP(ssm.add));
 			opt.set(dom_prefix + 'port', ssm.port);
 			opt.set(dom_prefix + 'uuid', ssm.id);
 			opt.set(dom_prefix + 'security', ssm.security || ssm.scy || "auto");
-			opt.set(dom_prefix + 'tls', ssm.tls === "tls");
-			if (ssm.tls === "tls") {
+			opt.set(dom_prefix + 'tls', ssm.tls === "tls" || ssm.tls === "1");
+			if (ssm.tls === "tls" || ssm.tls === "1") {
 				opt.set(dom_prefix + 'tls_serverName', ssm.sni || ssm.host);
 				opt.set(dom_prefix + 'alpn', ssm.alpn || "default");
 				if (ssm.fp && ssm.fp !== "") {

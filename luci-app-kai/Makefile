@@ -8,8 +8,8 @@ include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=kai
 PKG_VERSION:=1.0.2
-PKG_RELEASE:=2
-LUCI_DEPENDS:=+kai +luci-compat
+PKG_RELEASE:=5
+LUCI_DEPENDS:=+kai +luci-compat +luci-lib-linkeaseauth +linkease-app-entry
 LUCI_MINIFY_CSS:=0
 LUCI_MINIFY_JS:=0
 

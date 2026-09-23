@@ -49,7 +49,10 @@ uci.load('honk')
 },
 
 render: function() {
-var sec = (uci.sections('honk', 'honk')[0] || {});
+	if (honk && honk.applyAdvancedTabVisibility) {
+		honk.applyAdvancedTabVisibility();
+	}
+	var sec = (uci.sections('honk', 'honk')[0] || {});
 var sid = sec['.name'] || 'config';
 var dashType = uci.get('honk', sid, 'dashboard') || 'zashboard';
 

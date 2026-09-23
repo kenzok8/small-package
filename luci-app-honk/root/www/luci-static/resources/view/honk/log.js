@@ -10,6 +10,10 @@ return view.extend({
 	handleReset: null,
 
 	render: function() {
+		if (honk && honk.applyAdvancedTabVisibility) {
+			honk.applyAdvancedTabVisibility();
+		}
+
 		var scrolled = false;
 
 		var logTextarea = E('textarea', {

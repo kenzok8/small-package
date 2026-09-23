@@ -1,0 +1,28 @@
+From: kenzok8 <kenzok8@noreply>
+Date: 2026-09-23
+Subject: [PATCH] daed: keep reload callbacks nonblocking
+
+A timed-out request must not block the daemon when reload later finishes.
+---
+diff --git a/graphql/service/config/mutation_utils.go b/graphql/service/config/mutation_utils.go
+index 5996eaa..64229e8 100644
+--- a/graphql/service/config/mutation_utils.go
++++ b/graphql/service/config/mutation_utils.go
+@@ -298,7 +298,7 @@ func ApplyIfRunning(ctx context.Context) error {
+ func runLocked(ctx context.Context, noLoad bool) (n int32, err error) {
+ 	//// Dry run.
+ 	if noLoad {
+-		ch := make(chan error)
++		ch := make(chan error, 1)
+ 		reloadMsg := &dae.ReloadMessage{
+ 			Config:   dae.EmptyConfig,
+ 			Callback: ch,
+@@ -523,7 +523,7 @@ func runLocked(ctx context.Context, noLoad bool) (n int32, err error) {
+ 	readTx = nil
+ 
+ 	/// Reload with current config.
+-	chReloadCallback := make(chan error)
++	chReloadCallback := make(chan error, 1)
+ 	reloadMsg := &dae.ReloadMessage{
+ 		Config:   c,
+ 		Callback: chReloadCallback,

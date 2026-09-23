@@ -16,10 +16,14 @@ end
 function kai_status()
 	local sys  = require "luci.sys"
 	local uci  = require "luci.model.uci".cursor()
+	local port = tonumber(uci:get_first("kai", "kai", "port")) or 8197
+	if port < 1 or port > 65535 or port % 1 ~= 0 then
+		port = 8197
+	end
 	local status = {
 		running = (sys.call("pidof kai_bin >/dev/null") == 0),
-		port = 8197
+		port = port
 	}
-	luci.http.prepare_content("application/json")
-	luci.http.write_json(status)
+	http.prepare_content("application/json")
+	http.write_json(status)
 end

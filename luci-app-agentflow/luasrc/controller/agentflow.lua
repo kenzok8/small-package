@@ -12,7 +12,12 @@ function index()
 end
 
 local function compat()
-	return require("luci.model.linkease.apps_compat").new()
+	local dispatcher = require "luci.dispatcher"
+	return require("luci.model.linkease.apps_compat").new({
+		http = require "luci.http",
+		resolver = require("luci.model.linkease.apps_openwrt").new(),
+		auth_url = dispatcher.build_url("admin", "services", "linkease_auth", "auth")
+	})
 end
 
 function agentflow_status()

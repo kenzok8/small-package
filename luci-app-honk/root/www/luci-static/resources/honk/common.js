@@ -455,6 +455,9 @@ function applyTabCss(isAdvanced) {
 			'#tabmenu .tabmenu-item-dns,',
 			'#tabmenu .tabmenu-item-node,',
 			'#tabmenu .tabmenu-item-route,',
+			'.tabmenu-item-dns,',
+			'.tabmenu-item-node,',
+			'.tabmenu-item-route,',
 			'#tabmenu a[href$="/honk/dns"],',
 			'#tabmenu a[href$="/honk/node"],',
 			'#tabmenu a[href$="/honk/route"] { display: none !important; }'
@@ -530,6 +533,7 @@ function renderStatusHeader() {
 
 
 return baseclass.extend({
+	applyAdvancedTabVisibility: applyAdvancedTabVisibility,
 	callHonkStatus: callHonkStatus,
 	callHonkReload: callHonkReload,
 	callHonkGetLog: callHonkGetLog,

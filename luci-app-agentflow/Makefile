@@ -8,8 +8,8 @@ include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=AgentFlow
 PKG_VERSION:=1.0.1
-PKG_RELEASE:=3
-LUCI_DEPENDS:=+agentflow +luci-compat +luci-lib-taskd +luci-lib-linkeaseauth
+PKG_RELEASE:=5
+LUCI_DEPENDS:=+agentflow +luci-compat +luci-lib-taskd +luci-lib-linkeaseauth +linkease-app-entry
 LUCI_MINIFY_CSS:=0
 LUCI_MINIFY_JS:=0
 
