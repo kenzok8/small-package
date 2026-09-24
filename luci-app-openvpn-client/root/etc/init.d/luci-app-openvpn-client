@@ -129,11 +129,11 @@ start_instance() {
 	cat <<-EOF >> ${TMP_OVPN_PATH}/${cfgid}/iptables_add.sh
 		${TMP_OVPN_PATH}/${cfgid}/iptables_del.sh
 		#允许服务端配置静态路由表访问内网
-		iptables -w -t nat -I postrouting_rule -s \$(cat ${TMP_OVPN_PATH}/${cfgid}/network)/\$(cat ${TMP_OVPN_PATH}/${cfgid}/mask) -m comment --comment "${c_dev}" -j MASQUERADE
-		iptables -w -t nat -I postrouting_rule -o ${c_dev} -m comment --comment "${c_dev}" -j MASQUERADE
-		iptables -w -I input_rule -s \$(cat ${TMP_OVPN_PATH}/${cfgid}/network)/\$(cat ${TMP_OVPN_PATH}/${cfgid}/mask) -m comment --comment "${c_dev}" -j ${c_allow_access_action}
-		iptables -w -I forwarding_rule -i ${c_dev} -m comment --comment "${c_dev}" -j ACCEPT
-		iptables -w -I forwarding_rule -o ${c_dev} -m comment --comment "${c_dev}" -j ACCEPT
+		iptables -w -t nat -I POSTROUTING -s \$(cat ${TMP_OVPN_PATH}/${cfgid}/network)/\$(cat ${TMP_OVPN_PATH}/${cfgid}/mask) -m comment --comment "${c_dev}" -j MASQUERADE
+		iptables -w -t nat -I POSTROUTING -o ${c_dev} -m comment --comment "${c_dev}" -j MASQUERADE
+		iptables -w -I INPUT -s \$(cat ${TMP_OVPN_PATH}/${cfgid}/network)/\$(cat ${TMP_OVPN_PATH}/${cfgid}/mask) -m comment --comment "${c_dev}" -j ${c_allow_access_action}
+		iptables -w -I FORWARD -i ${c_dev} -m comment --comment "${c_dev}" -j ACCEPT
+		iptables -w -I FORWARD -o ${c_dev} -m comment --comment "${c_dev}" -j ACCEPT
 	EOF
 	
 	cat <<-EOF >> ${TMP_OVPN_PATH}/${cfgid}/iptables_del.sh
@@ -143,9 +143,9 @@ start_instance() {
 				\$1 -w -D \$2 \$index 2>/dev/null
 			done
 		}
-		ipt_del "iptables -w" "input_rule"
-		ipt_del "iptables -w" "forwarding_rule"
-		ipt_del "iptables -w -t nat" "postrouting_rule"
+		ipt_del "iptables -w" "INPUT"
+		ipt_del "iptables -w" "FORWARD"
+		ipt_del "iptables -w -t nat" "POSTROUTING"
 	EOF
 	
 	cat <<-EOF >> ${TMP_OVPN_PATH}/${cfgid}/ipchange.sh
@@ -162,6 +162,7 @@ start_instance() {
 	
 	cat <<-EOF >> /var/etc/${CONFIG}.include
 		${TMP_OVPN_PATH}/${cfgid}/iptables_add.sh
+		exit 0
 	EOF
 	
 	local c_routes=$(uci -q get ${CONFIG}.${cfgid}.routes)

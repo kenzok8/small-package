@@ -1,11 +1,6 @@
 #!/bin/sh
 
 uci -q batch <<-EOF >/dev/null
-	delete ucitrack.@vlmcsd[-1]
-	add ucitrack vlmcsd
-	set ucitrack.@vlmcsd[-1].init=kms
-	commit ucitrack
-
 	delete firewall.kms
 	add firewall rule 
 	rename firewall.@rule[-1]="kms"

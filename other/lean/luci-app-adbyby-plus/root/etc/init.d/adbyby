@@ -192,6 +192,7 @@ add_rule()
 	
 	mkdir -p /var/etc
 	echo -e "/etc/init.d/adbyby restart" > "/var/etc/adbyby.include"
+	echo -e "exit 0" >> "/var/etc/adbyby.include"
 }
 
 del_rule()

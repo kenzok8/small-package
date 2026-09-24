@@ -1,4 +1,4 @@
 {
-	"config": "adguardhome",
-	"init": "adguardhome"
+	"config": "AdGuardHome",
+	"init": "AdGuardHome"
 }

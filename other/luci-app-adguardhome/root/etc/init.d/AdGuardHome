@@ -63,13 +63,18 @@ set_iptable()
 	local ipv6_server=$1
 	local tcp_server=$2
 	uci -q batch <<-EOF >/dev/null 2>&1
-  delete firewall.AdGuardHome
+	delete firewall.AdGuardHome
 	set firewall.AdGuardHome=include
 	set firewall.AdGuardHome.type=script
 	set firewall.AdGuardHome.path=/usr/share/AdGuardHome/firewall.start
-	set firewall.AdGuardHome.reload=1
-	commit firewall
 EOF
+	if [ -x "/sbin/fw3" ] && [ ! -L "/sbin/fw3" ]; then
+		uci -q set firewall.AdGuardHome.reload='1'
+	else
+		uci -q delete firewall.AdGuardHome.reload
+		uci -q delete firewall.AdGuardHome.fw4_compatible
+	fi
+	uci commit firewall
 	
 	[ "$tcp_server" == "1" ] && iptables -t nat -I PREROUTING 1 -m comment --comment "AdGuardHome" -p tcp --dport 53 -j REDIRECT --to-ports $AdGuardHome_PORT
 	iptables -t nat -I PREROUTING 1 -m comment --comment "AdGuardHome" -p udp --dport 53 -j REDIRECT --to-ports $AdGuardHome_PORT
@@ -83,7 +88,7 @@ EOF
 clear_iptable()
 {
 	uci -q batch <<-EOF >/dev/null 2>&1
-  delete firewall.AdGuardHome
+	delete firewall.AdGuardHome
 	commit firewall
 EOF
 

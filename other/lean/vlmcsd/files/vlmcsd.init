@@ -6,10 +6,10 @@ START=90
 start(){
 	if [ ! -f "/tmp/vlmcsd.pid" ]; then
 		/usr/bin/vlmcsd -i /etc/vlmcsd/vlmcsd.ini -p /tmp/vlmcsd.pid -L 0.0.0.0:1688
-		iptables -D input_rule -p tcp --dport 1688 -j ACCEPT
-		iptables -A input_rule -p tcp --dport 1688 -j ACCEPT 
+		iptables -w -D INPUT -p tcp --dport 1688 -j ACCEPT
+		iptables -w -A INPUT -p tcp --dport 1688 -j ACCEPT 
 		sed -i '/## luci-app-vlmcsd/d' /etc/firewall.user
-		echo "iptables -A input_rule -p tcp --dport 1688 -j ACCEPT ## luci-app-vlmcsd" >> /etc/firewall.user
+		echo "iptables -w -A INPUT -p tcp --dport 1688 -j ACCEPT ## luci-app-vlmcsd" >> /etc/firewall.user
 		echo "KMS Server has started."
 	else
 		echo "KMS Server has already started."
@@ -23,7 +23,7 @@ stop(){
 		pid=`cat /tmp/vlmcsd.pid`
 		kill $pid
 		rm -f /tmp/vlmcsd.pid
-		iptables -D input_rule -p tcp --dport 1688 -j ACCEPT
+		iptables -w -D INPUT -p tcp --dport 1688 -j ACCEPT
 		sed -i '/## luci-app-vlmcsd/d' /etc/firewall.user
 		echo "KMS Server has stopped."
 	fi

@@ -61,10 +61,6 @@ define Package/luci-app-adguardhome/prerm
 if [ -z "$${IPKG_INSTROOT}" ]; then
      /etc/init.d/AdGuardHome disable
      /etc/init.d/AdGuardHome stop
-uci -q batch <<-EOF >/dev/null 2>&1
-	delete ucitrack.@AdGuardHome[-1]
-	commit ucitrack
-EOF
 fi
 exit 0
 endef

@@ -5,8 +5,15 @@ uci -q batch <<-EOF >/dev/null
 	set firewall.luci_app_pptp_server=include
 	set firewall.luci_app_pptp_server.type=script
 	set firewall.luci_app_pptp_server.path=/var/etc/pptpd.include
-	set firewall.luci_app_pptp_server.reload=1
 EOF
+
+if [ -x "/sbin/fw3" ] && [ ! -L "/sbin/fw3" ]; then
+	uci -q set firewall.luci_app_pptp_server.reload='1'
+else
+	uci -q delete firewall.luci_app_pptp_server.reload
+	uci -q delete firewall.luci_app_pptp_server.fw4_compatible
+fi
+uci commit firewall
 
 /etc/init.d/pptpd disable 2>/dev/null
 /etc/init.d/pptpd stop 2>/dev/null

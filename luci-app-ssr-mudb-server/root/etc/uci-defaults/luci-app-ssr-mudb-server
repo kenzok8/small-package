@@ -5,8 +5,15 @@ uci -q batch <<-EOF >/dev/null
 	set firewall.ssr_mudb_server=include
 	set firewall.ssr_mudb_server.type=script
 	set firewall.ssr_mudb_server.path=/var/etc/ssr_mudb_server.include
-	set firewall.ssr_mudb_server.reload=1
 EOF
+
+if [ -x "/sbin/fw3" ] && [ ! -L "/sbin/fw3" ]; then
+	uci -q set firewall.ssr_mudb_server.reload='1'
+else
+	uci -q delete firewall.ssr_mudb_server.reload
+	uci -q delete firewall.ssr_mudb_server.fw4_compatible
+fi
+uci commit firewall
 
 chmod a+x /usr/share/ssr_mudb_server/* >/dev/null 2>&1
 cp -rf /usr/bin/python3 /usr/bin/python

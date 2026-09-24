@@ -55,6 +55,7 @@ gen_include() {
 		iptables-restore -n <<-EOT
 		$(extract_rules filter)
 		EOT
+		exit 0
 	EOF
 	return 0
 }

@@ -1,25 +1,28 @@
 #!/bin/sh
 
 uci -q batch <<-EOF >/dev/null
-	delete ucitrack.@adbyby[-1]
-	add ucitrack adbyby
-	set ucitrack.@adbyby[-1].init=adbyby
-	commit ucitrack
+	delete firewall.adblock
+	add firewall rule
+	rename firewall.@rule[-1]="adblock"
+	set firewall.@rule[-1].name="adblock"
+	set firewall.@rule[-1].target="DROP"
+	set firewall.@rule[-1].src="wan"
+	set firewall.@rule[-1].proto="tcp"
+	set firewall.@rule[-1].dest_port="8118"
+
 	delete firewall.adbyby
 	set firewall.adbyby=include
 	set firewall.adbyby.type=script
 	set firewall.adbyby.path=/var/etc/adbyby.include
-	set firewall.adbyby.reload=1
-	delete firewall.adblock
-  add firewall rule
-  rename firewall.@rule[-1]="adblock"
-  set firewall.@rule[-1].name="adblock"
-  set firewall.@rule[-1].target="DROP"
-  set firewall.@rule[-1].src="wan"
-  set firewall.@rule[-1].proto="tcp"
-  set firewall.@rule[-1].dest_port="8118"
-	commit firewall
 EOF
+
+if [ -x "/sbin/fw3" ] && [ ! -L "/sbin/fw3" ]; then
+	uci -q set firewall.adbyby.reload='1'
+else
+	uci -q delete firewall.adbyby.reload
+	uci -q delete firewall.adbyby.fw4_compatible
+fi
+uci commit firewall
 
 mkdir -p /etc/dnsmasq.d
 

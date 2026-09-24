@@ -27,39 +27,39 @@ get_enabled_anonymous_secs() {
 ipt_rule() {
 	if [ "$1" = "add" ]; then
 		iptables -w -t mangle -I OUTPUT -p udp -m multiport --sports 500,4500 -m comment --comment "${ipt_comment}" -j RETURN 2>/dev/null
-		iptables -w -I input_rule -p udp -m multiport --dports 500,4500 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-		iptables -w -I forwarding_rule -m policy --dir in --pol ipsec --proto esp -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-		iptables -w -I forwarding_rule -m policy --dir out --pol ipsec --proto esp -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+		iptables -w -I INPUT -p udp -m multiport --dports 500,4500 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+		iptables -w -I FORWARD -m policy --dir in --pol ipsec --proto esp -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+		iptables -w -I FORWARD -m policy --dir out --pol ipsec --proto esp -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
 
 		ip6tables -w -t mangle -I OUTPUT -p udp -m multiport --sports 500,4500 -m comment --comment "${ipt_comment}" -j RETURN 2>/dev/null
-		ip6tables -w -I input_rule -p udp -m multiport --dports 500,4500 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-		ip6tables -w -I forwarding_rule -m policy --dir in --pol ipsec --proto esp -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-		ip6tables -w -I forwarding_rule -m policy --dir out --pol ipsec --proto esp -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+		ip6tables -w -I INPUT -p udp -m multiport --dports 500,4500 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+		ip6tables -w -I FORWARD -m policy --dir in --pol ipsec --proto esp -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+		ip6tables -w -I FORWARD -m policy --dir out --pol ipsec --proto esp -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
 
 		if [ "${vt_type}" = "L2TP" ]; then
 			iptables -w -t mangle -I OUTPUT -p udp --sport 1701 -m comment --comment "${ipt_comment}" -j RETURN 2>/dev/null
-			iptables -w -I input_rule -p udp --dport 1701 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-			iptables -w -I input_rule -s ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-			iptables -w -I input_rule -d ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-			iptables -w -I forwarding_rule -s ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-			iptables -w -I forwarding_rule -d ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-			iptables -w -I output_rule -s ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-			iptables -w -I output_rule -d ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-			iptables -w -t nat -I postrouting_rule -s ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j FULLCONENAT 2>/dev/null
-			[ "$?" != "0" ] && iptables -w -t nat -I postrouting_rule -s ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j MASQUERADE 2>/dev/null
-			iptables -w -t nat -I postrouting_rule -d ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j FULLCONENAT 2>/dev/null
-			[ "$?" != "0" ] && iptables -w -t nat -I postrouting_rule -d ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j MASQUERADE 2>/dev/null
+			iptables -w -I INPUT -p udp --dport 1701 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I INPUT -s ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I INPUT -d ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I FORWARD -s ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I FORWARD -d ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I OUTPUT -s ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I OUTPUT -d ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -t nat -I POSTROUTING -s ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j FULLCONENAT 2>/dev/null
+			[ "$?" != "0" ] && iptables -w -t nat -I POSTROUTING -s ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j MASQUERADE 2>/dev/null
+			iptables -w -t nat -I POSTROUTING -d ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j FULLCONENAT 2>/dev/null
+			[ "$?" != "0" ] && iptables -w -t nat -I POSTROUTING -d ${l2tp_localip%.*}.0/24 -m comment --comment "${ipt_comment}" -j MASQUERADE 2>/dev/null
 		else
-			iptables -w -I input_rule -s ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-			iptables -w -I input_rule -d ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-			iptables -w -I forwarding_rule -s ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-			iptables -w -I forwarding_rule -d ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-			iptables -w -I output_rule -s ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-			iptables -w -I output_rule -d ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
-			iptables -w -t nat -I postrouting_rule -s ${vt_clientip} -m comment --comment "${ipt_comment}" -j FULLCONENAT 2>/dev/null
-			[ "$?" != "0" ] && iptables -w -t nat -I postrouting_rule -s ${vt_clientip} -m comment --comment "${ipt_comment}" -j MASQUERADE 2>/dev/null
-			iptables -w -t nat -I postrouting_rule -d ${vt_clientip} -m comment --comment "${ipt_comment}" -j FULLCONENAT 2>/dev/null
-			[ "$?" != "0" ] && iptables -w -t nat -I postrouting_rule -d ${vt_clientip} -m comment --comment "${ipt_comment}" -j MASQUERADE 2>/dev/null
+			iptables -w -I INPUT -s ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I INPUT -d ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I FORWARD -s ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I FORWARD -d ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I OUTPUT -s ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -I OUTPUT -d ${vt_clientip} -m comment --comment "${ipt_comment}" -j ACCEPT 2>/dev/null
+			iptables -w -t nat -I POSTROUTING -s ${vt_clientip} -m comment --comment "${ipt_comment}" -j FULLCONENAT 2>/dev/null
+			[ "$?" != "0" ] && iptables -w -t nat -I POSTROUTING -s ${vt_clientip} -m comment --comment "${ipt_comment}" -j MASQUERADE 2>/dev/null
+			iptables -w -t nat -I POSTROUTING -d ${vt_clientip} -m comment --comment "${ipt_comment}" -j FULLCONENAT 2>/dev/null
+			[ "$?" != "0" ] && iptables -w -t nat -I POSTROUTING -d ${vt_clientip} -m comment --comment "${ipt_comment}" -j MASQUERADE 2>/dev/null
 			
 
 			uci -q batch <<-EOF >/dev/null
@@ -80,13 +80,13 @@ ipt_rule() {
 				$1 -w -D $2 $index 2>/dev/null
 			done
 		}
-		ipt_del "iptables -w" "input_rule"
-		ipt_del "iptables -w" "forwarding_rule"
-		ipt_del "iptables -w" "output_rule"
-		ipt_del "iptables -w -t nat" "postrouting_rule"
+		ipt_del "iptables -w" "INPUT"
+		ipt_del "iptables -w" "FORWARD"
+		ipt_del "iptables -w" "OUTPUT"
+		ipt_del "iptables -w -t nat" "POSTROUTING"
 		ipt_del "iptables -w -t mangle" "OUTPUT"
-		ipt_del "ip6tables -w" "input_rule"
-		ipt_del "ip6tables -w" "forwarding_rule"
+		ipt_del "ip6tables -w" "INPUT"
+		ipt_del "ip6tables -w" "FORWARD"
 		ipt_del "ip6tables -w -t mangle" "OUTPUT"
 		uci -q batch <<-EOF >/dev/null
 			delete network.ipsec_server
@@ -123,6 +123,7 @@ gen_include() {
 		$(extract_rules6 filter)
 		$(extract_rules6 mangle)
 		EOT
+		exit 0
 	EOF
 	return 0
 }
