@@ -15,13 +15,14 @@ var callHonkStatus = (honk && honk.callHonkStatus) || rpc.declare({
 var callHonkDashboardInfo = (honk && honk.callHonkDashboardInfo) || (honk && honk.callHonkZashboardInfo) || rpc.declare({
 	object: 'luci.honk',
 	method: 'get_dashboard_info',
+	params: [ 'type' ],
 	expect: { }
 });
 
 var callHonkDownloadDashboard = (honk && honk.callHonkDownloadDashboard) || (honk && honk.callHonkDownloadZashboard) || rpc.declare({
 	object: 'luci.honk',
 	method: 'download_dashboard',
-	params: [ 'url' ],
+	params: [ 'url', 'type' ],
 	expect: { }
 });
 
@@ -34,6 +35,13 @@ var callHonkDownloadStatus = (honk && honk.callHonkDownloadStatus) || rpc.declar
 var callHonkEnableClashApi = (honk && honk.callHonkEnableClashApi) || rpc.declare({
 	object: 'luci.honk',
 	method: 'enable_clash_api',
+	expect: { }
+});
+
+var callHonkSwitchDashboardApi = (honk && honk.callHonkSwitchDashboardApi) || rpc.declare({
+	object: 'luci.honk',
+	method: 'switch_dashboard_api',
+	params: [ 'type' ],
 	expect: { }
 });
 
@@ -54,13 +62,16 @@ render: function() {
 	}
 	var sec = (uci.sections('honk', 'honk')[0] || {});
 var sid = sec['.name'] || 'config';
-var dashType = uci.get('honk', sid, 'dashboard') || 'zashboard';
+var dashType = uci.get('honk', sid, 'dashboard') || 'doona';
 
 var DASHBOARD_PROFILES = {
 	zashboard: {
 		name: 'Zashboard',
 		label: 'Zashboard',
-		defaultDir: '/etc/honk/dashboard',
+		apiName: 'Clash API',
+		defaultPort: '9090',
+		defaultDir: '/etc/honk/zashboard',
+		exampleConfig: "experimental {\n    clash_api {\n        external_controller: '0.0.0.0:9090'\n        external_ui: '/etc/honk/zashboard'\n        secret: ''\n        default_mode: 'Rule'\n    }\n}",
 		buildUrl: function(info, targetHost, port, secret, protocol, forceFresh) {
 			var hostPart = (targetHost.indexOf(':') !== -1 && targetHost.charAt(0) !== '[') ? '[' + targetHost + ']' : targetHost;
 			var query = 'hostname=' + encodeURIComponent(targetHost) +
@@ -82,26 +93,24 @@ var DASHBOARD_PROFILES = {
 	},
 	doona: {
 		name: 'Doona',
-		label: _('Doona (Coming Soon)'),
+		label: _('Doona'),
+		apiName: 'Native API',
+		defaultPort: '9527',
 		defaultDir: '/etc/honk/dashboard',
+		exampleConfig: "experimental {\n    native_api {\n        enabled: true\n        listen: '0.0.0.0:9527'\n        password_auth: true\n        ui: '/etc/honk/dashboard'\n    }\n}",
 		buildUrl: function(info, targetHost, port, secret, protocol, forceFresh) {
 			var hostPart = (targetHost.indexOf(':') !== -1 && targetHost.charAt(0) !== '[') ? '[' + targetHost + ']' : targetHost;
-			var query = 'hostname=' + encodeURIComponent(targetHost) +
-				'&port=' + encodeURIComponent(port) +
-				'&protocol=' + encodeURIComponent(protocol);
+			var baseUrl = protocol + '://' + hostPart + ':' + port + '/ui/';
 			if (secret) {
-				query += '&secret=' + encodeURIComponent(secret);
+				var apiUrl = protocol + '://' + hostPart + ':' + port;
+				return baseUrl + '#/settings?api=' + encodeURIComponent(apiUrl) + '&token=' + encodeURIComponent(secret);
 			}
-			var uiQuery = query;
-			if (forceFresh) {
-				uiQuery += '&_t=' + Date.now();
-			}
-			return protocol + '://' + hostPart + ':' + port + '/ui/?' + uiQuery + '#/setup?' + query;
+			return baseUrl;
 		},
-		githubRelease: 'https://github.com/StartNetwork1/doona/releases/latest/download/dist.zip',
-		ghfastMirror: 'https://ghfast.top/https://github.com/StartNetwork1/doona/releases/latest/download/dist.zip',
-		ghproxyMirror: 'https://ghproxy.net/https://github.com/StartNetwork1/doona/releases/latest/download/dist.zip',
-		pkgName: 'dist.zip'
+		githubRelease: 'https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.3/doona-v0.1.0-beta.3.tar.gz',
+		ghfastMirror: 'https://ghfast.top/https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.3/doona-v0.1.0-beta.3.tar.gz',
+		ghproxyMirror: 'https://ghproxy.net/https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.3/doona-v0.1.0-beta.3.tar.gz',
+		pkgName: 'doona-*.tar.gz'
 	}
 };
 
@@ -119,6 +128,8 @@ function createDashboardSelect() {
 			uci.set('honk', sid, 'dashboard', newType);
 			uci.save().then(function() {
 				return uci.apply();
+			}).then(function() {
+				return callHonkSwitchDashboardApi(newType);
 			}).then(function() {
 				window.location.reload();
 			});
@@ -196,60 +207,58 @@ var style = E('style', {}, [
 
 // State 0: Loading
 var stateLoading = E('div', { 'class': 'cbi-section', 'style': 'text-align: center; padding: 30px;' }, [
-E('p', {}, E('em', {}, _('Checking Dashboard and Clash API configuration...')))
+	E('p', {}, E('em', {}, _('Checking Dashboard and API configuration...')))
 ]);
 
 // State 1: Unconfigured
 var quickEnableMsg = E('span', { 'style': 'margin-left: 8px;' });
+var enableBtnText = (dashType === 'doona') ? _('One-click Enable Default Native API') : _('One-click Enable Default Clash API');
 var btnQuickEnable = E('button', {
-'type': 'button',
-'class': 'cbi-button cbi-button-apply',
-'click': function() {
-btnQuickEnable.disabled = true;
-btnQuickEnable.innerText = _('Enabling and restarting HONK...');
-callHonkEnableClashApi().then(function(resp) {
-btnQuickEnable.disabled = false;
-btnQuickEnable.innerText = _('One-click Enable Default Clash API');
-if (resp && resp.success) {
-quickEnableMsg.innerText = _('Successfully enabled! Restarting service and initializing dashboard...');
-setTimeout(loadInfo, 2500);
-} else {
-ui.addNotification(null, E('p', _('Failed to enable:') + ' ' + (resp ? resp.message : _('Unknown error'))), 'error');
-}
-}).catch(function(err) {
-btnQuickEnable.disabled = false;
-btnQuickEnable.innerText = _('One-click Enable Default Clash API');
-ui.addNotification(null, E('p', _('Failed to enable:') + ' ' + (err.message || err)), 'error');
-});
-}
-}, _('One-click Enable Default Clash API'));
+	'type': 'button',
+	'class': 'cbi-button cbi-button-apply',
+	'click': function() {
+		btnQuickEnable.disabled = true;
+		btnQuickEnable.innerText = (dashType === 'doona') ? _('Enabling Native API and restarting HONK...') : _('Enabling Clash API and restarting HONK...');
+		callHonkSwitchDashboardApi(dashType).then(function(resp) {
+			btnQuickEnable.disabled = false;
+			btnQuickEnable.innerText = enableBtnText;
+			if (resp && resp.success) {
+				quickEnableMsg.innerText = _('Successfully enabled! Restarting service and initializing dashboard...');
+				setTimeout(loadInfo, 2500);
+			} else {
+				ui.addNotification(null, E('p', _('Failed to enable:') + ' ' + (resp ? resp.message : _('Unknown error'))), 'error');
+			}
+		}).catch(function(err) {
+			btnQuickEnable.disabled = false;
+			btnQuickEnable.innerText = enableBtnText;
+			ui.addNotification(null, E('p', _('Failed to enable:') + ' ' + (err.message || err)), 'error');
+		});
+	}
+}, enableBtnText);
+
+var unconfTitle = (dashType === 'doona') ? _('Dashboard / Native API Unconfigured') : _('Dashboard / Clash API Unconfigured');
+var unconfDescr = (dashType === 'doona') 
+	? _('HONK has not enabled Native API in its configuration file. Doona requires native API listener and dashboard UI path.')
+	: _('HONK has not enabled Clash API in its configuration file. Dashboard requires external controller port and dashboard UI path.');
+var unconfWarn = (dashType === 'doona')
+	? _('Please add or uncomment experimental.native_api block in Global Settings, and ensure listen and ui are configured.')
+	: _('Please add or uncomment experimental.clash_api block in Global Settings, and ensure external_controller and external_ui are configured.');
 
 var stateUnconfigured = E('div', { 'class': 'cbi-section', 'style': 'display: none;' }, [
-E('h3', {}, _('Dashboard / Clash API Unconfigured')),
-E('div', { 'class': 'cbi-section-descr' },
-_('HONK has not enabled Clash API in its configuration file. Dashboard requires external controller port and dashboard UI path.')
-),
-E('div', { 'class': 'alert-message warning', 'style': 'margin: 12px 0;' },
-_('Please add or uncomment experimental.clash_api block in Global Settings, and ensure external_controller and external_ui are configured.')
-),
-E('div', { 'style': 'margin-top: 10px;' }, [
-E('label', { 'class': 'cbi-value-title' }, E('strong', {}, _('Example Configuration (/etc/honk/config.dae):'))),
-E('pre', { 'style': 'padding: 10px; margin-top: 6px; border: 1px solid var(--border-color-medium, #ccc); border-radius: 4px;' },
-"experimental {\n" +
-"    clash_api {\n" +
-"        external_controller: '0.0.0.0:9090'\n" +
-"        external_ui: '" + profile.defaultDir + "'\n" +
-"        secret: ''\n" +
-"        default_mode: 'Rule'\n" +
-"    }\n" +
-"}"
-)
-]),
-E('div', { 'style': 'margin-top: 16px; display: flex; gap: 10px; align-items: center;' }, [
-E('a', { 'href': L.url('admin/services/honk/global'), 'class': 'cbi-button' }, _('Configure in Global Settings')),
-btnQuickEnable,
-quickEnableMsg
-])
+	E('h3', {}, unconfTitle),
+	E('div', { 'class': 'cbi-section-descr' }, unconfDescr),
+	E('div', { 'class': 'alert-message warning', 'style': 'margin: 12px 0;' }, unconfWarn),
+	E('div', { 'style': 'margin-top: 10px;' }, [
+		E('label', { 'class': 'cbi-value-title' }, E('strong', {}, _('Example Configuration (/etc/honk/config.dae):'))),
+		E('pre', { 'style': 'padding: 10px; margin-top: 6px; border: 1px solid var(--border-color-medium, #ccc); border-radius: 4px;' },
+			profile.exampleConfig || ''
+		)
+	]),
+	E('div', { 'style': 'margin-top: 16px; display: flex; gap: 10px; align-items: center;' }, [
+		E('a', { 'href': L.url('admin/services/honk/global'), 'class': 'cbi-button' }, _('Configure in Global Settings')),
+		btnQuickEnable,
+		quickEnableMsg
+	])
 ]);
 
 // State 2: Missing UI
@@ -310,11 +319,13 @@ var selectDashboardMissing = createDashboardSelect();
 var stateMissingUi = E('div', { 'class': 'cbi-section', 'style': 'display: none;' }, [
 E('h3', {}, _('%s UI Files Not Found').format(profile.name)),
 E('div', { 'class': 'cbi-section-descr' },
-_('Clash API is configured, but dashboard files are missing in the external UI directory. You can download and deploy it directly.')
+	(dashType === 'doona') 
+		? _('Native API is configured, but dashboard files are missing in the UI directory. You can download and deploy it directly.')
+		: _('Clash API is configured, but dashboard files are missing in the external UI directory. You can download and deploy it directly.')
 ),
 E('table', { 'class': 'table', 'style': 'margin: 14px 0;' }, [
 E('tr', {}, [ E('th', { 'style': 'width: 25%;' }, _('Target Dashboard')), selectDashboardMissing ]),
-E('tr', {}, [ E('th', {}, _('Target Directory (external_ui)')), metaUiDir ]),
+E('tr', {}, [ E('th', {}, (dashType === 'doona') ? _('Target Directory (ui)') : _('Target Directory (external_ui)')), metaUiDir ]),
 E('tr', {}, [ E('th', {}, _('Listen Address & Port')), metaController ]),
 E('tr', {}, [ E('th', {}, _('API Secret')), metaSecret ])
 ]),
@@ -351,13 +362,13 @@ E('span', {}, _('Modern browsers may block HTTP iframe resources under HTTPS. If
 E('a', { 'href': '#', 'target': '_blank', 'class': 'cbi-button cbi-button-action', 'style': 'white-space: nowrap; margin-left: 10px;' }, _('Open in New Tab'))
 ]);
 
-var honkPortLabel = E('span', { 'class': 'honk_port_label' }, '9090');
+var honkPortLabel = E('span', { 'class': 'honk_port_label' }, profile.defaultPort || '9090');
 var honkStopAlert = E('div', { 'class': 'alert-message warning', 'style': 'display: none; margin-bottom: 10px; justify-content: space-between; align-items: center;' }, [
-E('div', {}, [
-E('strong', {}, _('HONK service is currently not running:') + ' '),
-E('span', {}, [ _('Clash API port ('), honkPortLabel, _(') is not listening. Start the service to display data.') ])
-]),
-E('a', { 'href': L.url('admin/services/honk/global'), 'class': 'cbi-button cbi-button-action', 'style': 'white-space: nowrap; margin-left: 10px;' }, _('Start HONK'))
+	E('div', {}, [
+		E('strong', {}, _('HONK service is currently not running:') + ' '),
+		E('span', {}, [ _('Dashboard API port ('), honkPortLabel, _(') is not listening. Start the service to display data.') ])
+	]),
+	E('a', { 'href': L.url('admin/services/honk/global'), 'class': 'cbi-button cbi-button-action', 'style': 'white-space: nowrap; margin-left: 10px;' }, _('Start HONK'))
 ]);
 
 var statusServicePill = E('span', { 'class': 'label success' }, _('Running'));
@@ -534,7 +545,7 @@ function triggerDownload(url, logBox, progressWrap, onFinish) {
 progressWrap.style.display = 'block';
 logBox.innerText = _('Initializing download task...\n');
 
-callHonkDownloadDashboard(url).then(function(resp) {
+		callHonkDownloadDashboard(url, dashType).then(function(resp) {
 if (!resp || !resp.success) {
 logBox.innerText += _('Failed to trigger download:') + ' ' + (resp ? resp.message : _('Unknown error')) + '\n';
 if (onFinish) onFinish(false);
@@ -589,28 +600,28 @@ honkPortLabel.innerText = port || '9090';
 }
 
 function loadInfo(forceReload) {
-callHonkDashboardInfo().then(function(data) {
-if (!data || !data.configured) {
-showState('unconfigured');
-return;
-}
-currentInfo = data;
+	callHonkDashboardInfo(dashType).then(function(data) {
+		if (!data || !data.configured) {
+			showState('unconfigured');
+			return;
+		}
+		currentInfo = data;
 
-if (!data.has_ui) {
-metaUiDir.innerText = data.external_ui || profile.defaultDir;
-metaController.innerText = data.external_controller || '0.0.0.0:9090';
-metaSecret.innerText = data.secret ? _('Configured (Hidden)') : _('Not configured (Empty)');
-showState('missing_ui');
-return;
-}
+		if (!data.has_ui) {
+			metaUiDir.innerText = data.external_ui || profile.defaultDir;
+			metaController.innerText = data.external_controller || (dashType === 'doona' ? '0.0.0.0:9527' : '0.0.0.0:9090');
+			metaSecret.innerText = data.secret ? _('Configured (Hidden)') : _('Not configured (Empty)');
+			showState('missing_ui');
+			return;
+		}
 
-// Ready state
-showState('ready');
-var targetHost = getTargetHost(data.host);
-var port = data.port || '9090';
-var fullUrl = buildDashboardUrl(data);
+		// Ready state
+		showState('ready');
+		var targetHost = getTargetHost(data.host);
+		var port = data.port || profile.defaultPort || '9090';
+		var fullUrl = buildDashboardUrl(data);
 
-updateHonkRunningState(data.running, port);
+		updateHonkRunningState(data.running, port);
 
 statusEndpointPill.innerText = targetHost + ':' + port;
 btnExternalOpen.href = fullUrl;

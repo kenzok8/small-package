@@ -35,13 +35,14 @@ var callHonkClearLog = rpc.declare({
 var callHonkDashboardInfo = rpc.declare({
 	object: 'luci.honk',
 	method: 'get_dashboard_info',
+	params: [ 'type' ],
 	expect: { }
 });
 
 var callHonkDownloadDashboard = rpc.declare({
 	object: 'luci.honk',
 	method: 'download_dashboard',
-	params: [ 'url' ],
+	params: [ 'url', 'type' ],
 	expect: { }
 });
 
@@ -57,6 +58,13 @@ var callHonkDownloadStatus = rpc.declare({
 var callHonkEnableClashApi = rpc.declare({
 	object: 'luci.honk',
 	method: 'enable_clash_api',
+	expect: { }
+});
+
+var callHonkSwitchDashboardApi = rpc.declare({
+	object: 'luci.honk',
+	method: 'switch_dashboard_api',
+	params: [ 'type' ],
 	expect: { }
 });
 
@@ -544,6 +552,7 @@ return baseclass.extend({
 	callHonkDownloadZashboard: callHonkDownloadDashboard,
 	callHonkDownloadStatus: callHonkDownloadStatus,
 	callHonkEnableClashApi: callHonkEnableClashApi,
+	callHonkSwitchDashboardApi: callHonkSwitchDashboardApi,
 	readFile: readFile,
 	writeFile: writeFile,
 	ensureCodeMirror: ensureCodeMirror,

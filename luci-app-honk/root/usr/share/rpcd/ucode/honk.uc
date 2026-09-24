@@ -82,6 +82,48 @@ function parse_clash_api(clean_content) {
 	return res;
 }
 
+function parse_native_api(clean_content) {
+	let api_m = match(clean_content, /native_api\s*\{([^}]+)\}/);
+	if (!api_m) return null;
+	let block = api_m[1];
+
+	let listen_m = match(block, /listen\s*:\s*['"]?([^'" \t\r\n]+)['"]?/);
+	let ui_m = match(block, /ui\s*:\s*['"]?([^'" \t\r\n]+)['"]?/);
+	let sec_m = match(block, /secret\s*:\s*['"]?([^'" \t\r\n]*)['"]?/);
+	let en_m = match(block, /enabled\s*:\s*['"]?(true|false)['"]?/);
+
+	let res = {
+		enabled: en_m ? (en_m[1] == "true") : true,
+		listen: listen_m ? listen_m[1] : "",
+		ui: ui_m ? ui_m[1] : "",
+		secret: sec_m ? sec_m[1] : "",
+		host: "",
+		port: ""
+	};
+
+	let listen = res.listen;
+	if (listen) {
+		let m_v6 = match(listen, /^\[([^\]]+)\]:([0-9]+)$/);
+		let m_v4 = match(listen, /^([^:]+):([0-9]+)$/);
+		let m_p = match(listen, /^:([0-9]+)$/);
+		if (m_v6) {
+			res.host = m_v6[1];
+			res.port = m_v6[2];
+		} else if (m_v4) {
+			res.host = m_v4[1];
+			res.port = m_v4[2];
+		} else if (m_p) {
+			res.host = "0.0.0.0";
+			res.port = m_p[1];
+		} else if (match(listen, /^[0-9]+$/)) {
+			res.host = "0.0.0.0";
+			res.port = listen;
+		}
+	}
+
+	return res;
+}
+
 function get_config_file_path() {
 	let u = cursor();
 	let p = u ? u.get("honk", "config", "config_file") : null;
@@ -117,10 +159,24 @@ function remove_bracket_block(content, header_regex) {
 }
 
 function get_dashboard_info(req) {
+	let u = cursor();
+	let requested_type = (req && req.args) ? req.args.type : null;
+	if (!requested_type && u) {
+		requested_type = u.get("honk", "config", "dashboard");
+		if (!requested_type) {
+			u.load("honk");
+			u.foreach("honk", "honk", function(s) {
+				if (s.dashboard) requested_type = s.dashboard;
+			});
+		}
+	}
+	if (!requested_type) requested_type = "doona";
+
 	let config_file = get_config_file_path();
 	let content = readfile(config_file) || "";
 	let clean = strip_dae_comments(content);
-	let parsed = parse_clash_api(clean);
+	let parsed_clash = parse_clash_api(clean);
+	let parsed_native = parse_native_api(clean);
 
 	let p = popen("pidof honk-core 2>/dev/null");
 	let pids = p ? p.read("all") : "";
@@ -128,6 +184,7 @@ function get_dashboard_info(req) {
 	let running = !!match(pids, /[0-9]+/);
 
 	let res = {
+		dashboard_type: requested_type,
 		configured: false,
 		has_ui: false,
 		running: running,
@@ -137,20 +194,33 @@ function get_dashboard_info(req) {
 		port: "",
 		secret: "",
 		external_ui: "",
-		default_mode: "Rule"
+		default_mode: "Rule",
+		has_clash_api: !!parsed_clash,
+		has_native_api: !!(parsed_native && parsed_native.enabled)
 	};
 
-	if (!parsed) {
-		return res;
+	if (requested_type == "doona") {
+		if (!parsed_native || !parsed_native.enabled) {
+			return res;
+		}
+		res.configured = true;
+		res.external_controller = parsed_native.listen;
+		res.host = parsed_native.host;
+		res.port = parsed_native.port || "9527";
+		res.secret = parsed_native.secret;
+		res.external_ui = parsed_native.ui;
+	} else {
+		if (!parsed_clash) {
+			return res;
+		}
+		res.configured = true;
+		res.external_controller = parsed_clash.external_controller;
+		res.host = parsed_clash.host;
+		res.port = parsed_clash.port || "9090";
+		res.secret = parsed_clash.secret;
+		res.external_ui = parsed_clash.external_ui;
+		res.default_mode = parsed_clash.default_mode;
 	}
-
-	res.configured = true;
-	res.external_controller = parsed.external_controller;
-	res.host = parsed.host;
-	res.port = parsed.port;
-	res.secret = parsed.secret;
-	res.external_ui = parsed.external_ui;
-	res.default_mode = parsed.default_mode;
 
 	if (res.external_ui) {
 		let index_path = res.external_ui + "/index.html";
@@ -162,11 +232,15 @@ function get_dashboard_info(req) {
 
 	return res;
 }
-
 function download_dashboard(req) {
+	let requested_type = req.args ? req.args.type : null;
 	let url = req.args ? req.args.url : null;
 	if (!url) {
-		url = "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip";
+		if (requested_type == "doona") {
+			url = "https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.3/doona-v0.1.0-beta.3.tar.gz";
+		} else {
+			url = "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip";
+		}
 	}
 
 	if (!match(url, /^https?:\/\//) || match(url, /[ \t\r\n'"`]/)) {
@@ -176,9 +250,24 @@ function download_dashboard(req) {
 	let config_file = get_config_file_path();
 	let content = readfile(config_file) || "";
 	let clean = strip_dae_comments(content);
-	let parsed = parse_clash_api(clean);
+	let parsed_clash = parse_clash_api(clean);
+	let parsed_native = parse_native_api(clean);
 
-	let target_dir = (parsed && parsed.external_ui) ? parsed.external_ui : "/etc/honk/dashboard";
+	let target_dir;
+	if (requested_type == "doona") {
+		target_dir = (parsed_native && parsed_native.ui) ? parsed_native.ui : "/etc/honk/dashboard";
+	} else if (requested_type == "zashboard") {
+		target_dir = (parsed_clash && parsed_clash.external_ui) ? parsed_clash.external_ui : "/etc/honk/zashboard";
+	} else {
+		if (parsed_native && parsed_native.ui) {
+			target_dir = parsed_native.ui;
+		} else if (parsed_clash && parsed_clash.external_ui) {
+			target_dir = parsed_clash.external_ui;
+		} else {
+			target_dir = "/etc/honk/dashboard";
+		}
+	}
+
 	let script = "/usr/share/honk/download_dashboard.sh";
 	let s = stat(script);
 	if (!s) {
@@ -193,6 +282,69 @@ function download_dashboard(req) {
 	system(cmd);
 
 	return { success: true, target_dir: target_dir, url: url };
+}
+
+function switch_dashboard_api(target_type) {
+	let config_file = get_config_file_path();
+	let content = readfile(config_file);
+	if (!content) {
+		return { success: false, message: "Config file not found: " + config_file };
+	}
+
+	let clean = strip_dae_comments(content);
+	let parsed_clash = parse_clash_api(clean);
+	let parsed_native = parse_native_api(clean);
+
+	if (target_type == "doona") {
+		if (parsed_native && parsed_native.enabled && !parsed_clash) {
+			return { success: true, type: target_type, noop: true };
+		}
+	} else {
+		if (parsed_clash && (!parsed_native || !parsed_native.enabled)) {
+			return { success: true, type: target_type, noop: true };
+		}
+	}
+
+	// 1. Remove both blocks to guarantee mutual exclusivity
+	let cleaned = remove_bracket_block(content, /^[#\/]*\s*clash_api\s*\{/);
+	cleaned = remove_bracket_block(cleaned, /^[#\/]*\s*native_api\s*\{/);
+	cleaned = replace(cleaned, /experimental\s*\{\s*\}/, "experimental {\n}");
+
+	// 2. Select block according to target_type
+	let api_inner;
+	if (target_type == "doona") {
+		api_inner =
+"    native_api {\n" +
+"        enabled: true\n" +
+"        listen: '0.0.0.0:9527'\n" +
+"        password_auth: true\n" +
+"        ui: '/etc/honk/dashboard'\n" +
+"    }\n";
+	} else {
+		api_inner =
+"    clash_api {\n" +
+"        external_controller: '0.0.0.0:9090'\n" +
+"        external_ui: '/etc/honk/zashboard'\n" +
+"        secret: ''\n" +
+"        default_mode: 'Rule'\n" +
+"    }\n";
+	}
+
+	let default_block = "experimental {\n" + api_inner + "}\n";
+
+	let has_active_exp = match(cleaned, /(^|\n)[ \t]*experimental\s*\{/);
+	let new_content;
+	if (has_active_exp) {
+		new_content = replace(cleaned, /(experimental\s*\{[^\n]*\n?)/, "$1" + api_inner);
+	} else {
+		cleaned = remove_bracket_block(cleaned, /^[#\/]+\s*experimental\s*\{/);
+		new_content = rtrim(cleaned, "\r\n\t ") + "\n\n" + default_block;
+	}
+
+	writefile(config_file, new_content);
+	system("/etc/init.d/honk restart >/dev/null 2>&1 &");
+
+	return { success: true, type: target_type };
 }
 
 return {
@@ -243,6 +395,7 @@ return {
 		},
 
 		get_dashboard_info: {
+			args: { type: "string" },
 			call: get_dashboard_info
 		},
 
@@ -251,12 +404,12 @@ return {
 		},
 
 		download_dashboard: {
-			args: { url: "string" },
+			args: { url: "string", type: "string" },
 			call: download_dashboard
 		},
 
 		download_zashboard: {
-			args: { url: "string" },
+			args: { url: "string", type: "string" },
 			call: download_dashboard
 		},
 
@@ -272,38 +425,21 @@ return {
 
 		enable_clash_api: {
 			call: function(req) {
-				let config_file = get_config_file_path();
-				let content = readfile(config_file);
-				if (!content) {
-					return { success: false, message: "Config file not found: " + config_file };
-				}
+				return switch_dashboard_api("zashboard");
+			}
+		},
 
-				let api_inner =
-"    clash_api {\n" +
-"        external_controller: '0.0.0.0:9090'\n" +
-"        external_ui: '/etc/honk/dashboard'\n" +
-"        secret: ''\n" +
-"        default_mode: 'Rule'\n" +
-"    }\n";
+		enable_native_api: {
+			call: function(req) {
+				return switch_dashboard_api("doona");
+			}
+		},
 
-				let default_block = "experimental {\n" + api_inner + "}\n";
-
-				let cleaned = remove_bracket_block(content, /^[#\/]*\s*clash_api\s*\{/);
-				cleaned = replace(cleaned, /experimental\s*\{\s*\}/, "experimental {\n}");
-
-				let has_active_exp = match(cleaned, /(^|\n)[ \t]*experimental\s*\{/);
-				let new_content;
-				if (has_active_exp) {
-					new_content = replace(cleaned, /(experimental\s*\{[^\n]*\n?)/, "$1" + api_inner);
-				} else {
-					cleaned = remove_bracket_block(cleaned, /^[#\/]+\s*experimental\s*\{/);
-					new_content = rtrim(cleaned, "\r\n\t ") + "\n\n" + default_block;
-				}
-
-				writefile(config_file, new_content);
-				system("/etc/init.d/honk restart >/dev/null 2>&1 &");
-
-				return { success: true };
+		switch_dashboard_api: {
+			args: { type: "string" },
+			call: function(req) {
+				let t = req.args ? req.args.type : "doona";
+				return switch_dashboard_api(t);
 			}
 		}
 	}

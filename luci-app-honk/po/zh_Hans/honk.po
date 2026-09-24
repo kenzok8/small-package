@@ -94,14 +94,26 @@ msgstr "运行中"
 msgid "Not Running"
 msgstr "未运行"
 
+msgid "Checking Dashboard and API configuration..."
+msgstr "正在检测 Dashboard 与 API 配置..."
+
 msgid "Checking Dashboard and Clash API configuration..."
 msgstr "正在检测 Dashboard 与 Clash API 配置..."
 
 msgid "Enabling and restarting HONK..."
 msgstr "正在开启并重启 HONK..."
 
+msgid "Enabling Clash API and restarting HONK..."
+msgstr "正在启用 Clash API 并重启 HONK..."
+
+msgid "Enabling Native API and restarting HONK..."
+msgstr "正在启用 Native API 并重启 HONK..."
+
 msgid "One-click Enable Default Clash API"
 msgstr "一键启用默认 Clash API 配置"
+
+msgid "One-click Enable Default Native API"
+msgstr "一键启用默认 Native API 配置"
 
 msgid "Successfully enabled! Restarting service and initializing dashboard..."
 msgstr "已成功启用！正在重启服务并初始化面板..."
@@ -115,11 +127,20 @@ msgstr "未知错误"
 msgid "Dashboard / Clash API Unconfigured"
 msgstr "Dashboard / Clash API 未配置"
 
+msgid "Dashboard / Native API Unconfigured"
+msgstr "Dashboard / Native API 未配置"
+
 msgid "HONK has not enabled Clash API in its configuration file. Dashboard requires external controller port and dashboard UI path."
 msgstr "HONK 尚未在配置文件中启用 Clash API。Dashboard 控制面板需要依赖 Clash API 提供的外部控制器端口与面板静态文件路径。"
 
+msgid "HONK has not enabled Native API in its configuration file. Doona requires native API listener and dashboard UI path."
+msgstr "HONK 尚未在配置文件中启用 Native API。Doona 控制面板需要依赖 Native API 提供的监听端口与面板静态文件路径。"
+
 msgid "Please add or uncomment experimental.clash_api block in Global Settings, and ensure external_controller and external_ui are configured."
 msgstr "请在【全局设置】的配置文件中添加或取消注释 experimental.clash_api 语法块，并确保配置了 external_controller 和 external_ui。"
+
+msgid "Please add or uncomment experimental.native_api block in Global Settings, and ensure listen and ui are configured."
+msgstr "请在【全局设置】的配置文件中添加或取消注释 experimental.native_api 语法块，并确保配置了 listen 和 ui。"
 
 msgid "Example Configuration (/etc/honk/config.dae):"
 msgstr "参考配置示例（/etc/honk/config.dae）："
@@ -177,6 +198,9 @@ msgstr "HONK 服务当前未运行："
 
 msgid "Clash API port ("
 msgstr "Clash API 端口（"
+
+msgid "Dashboard API port ("
+msgstr "Dashboard API 端口（"
 
 msgid ") is not listening. Start the service to display data."
 msgstr "）尚未监听。启动服务后即可正常显示数据。"
@@ -295,6 +319,11 @@ msgstr "面板类型"
 msgid "Select the active web dashboard."
 msgstr "选择当前生效的 Web 管理面板。"
 
-msgid "Doona (Coming Soon)"
-msgstr "Doona（即将推出）"
+msgid "Doona"
+msgstr "Doona"
 
+msgid "Native API is configured, but dashboard files are missing in the UI directory. You can download and deploy it directly."
+msgstr "Native API 已配置，但 UI 目录中缺少面板文件。您可以直接下载并部署。"
+
+msgid "Target Directory (ui)"
+msgstr "目标目录 (ui)"
