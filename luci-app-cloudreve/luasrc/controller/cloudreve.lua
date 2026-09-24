@@ -1,5 +1,11 @@
 module("luci.controller.cloudreve", package.seeall)
 
+-- 同 api.lua：module() 换过环境后全局 translate 不保证存在，用本地兜底
+-- （本项目文案是中文硬编码，原样返回即可）
+local function translate(s)
+	return s
+end
+
 -- Defensive load: if the api module is missing we simply do not register
 -- the menu, instead of throwing during dispatcher pagetree build and
 -- taking down the ENTIRE LuCI web UI (seen on a half-installed pkg).
@@ -36,7 +42,7 @@ function act_status()
     e.running = (luci.sys.call("pgrep -f '" .. bin .. "' >/dev/null") == 0)
     e.installed = api.is_installed()
     e.app_dir = api.get_app_dir()
-    e.storage = api.get_storage_root()
+    e.storage = api.get_root_path()
     luci.http.prepare_content("application/json")
     luci.http.write_json(e)
 end
@@ -44,7 +50,7 @@ end
 -- List detected disks for the dropdown
 function act_disks()
     local disks = api.get_disks()
-    local current = api.get_storage_root()
+    local current = api.get_root_path()
     luci.http.prepare_content("application/json")
     luci.http.write_json({
         code = 0,

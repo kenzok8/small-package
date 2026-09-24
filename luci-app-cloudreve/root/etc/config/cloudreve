@@ -1,7 +1,4 @@
 config cloudreve
 	option enabled '0'
-	option listen_address '0.0.0.0'
 	option listen_port '5212'
-	option storage_path '/tmp'
-	option root_path ''
-	option database_path ''
+#	option root_path ''

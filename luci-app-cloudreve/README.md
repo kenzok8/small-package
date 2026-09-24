@@ -13,7 +13,7 @@
 |---|---|
 | 🪶 **极小体积** | ipk 只有约 **17KB**，里面**不含** Cloudreve 本体（那玩意儿几十 MB，塞进路由器闪存太奢侈） |
 | 🧠 **架构自动识别** | 自动判断路由器是 `aarch64 / x86_64 / armv7 / mips…`，从 GitHub 拉对应版本的二进制 |
-| 💾 **外置硬盘约定** | 遵循 iStoreOS 的 `Configs` 规范，程序与数据库落在 `<硬盘>/Configs/cloudreve/`，**不占路由器闪存** |
+| 💾 **外置硬盘约定** | 遵循 iStoreOS 的 `Configs` 规范：程序与数据库落在 `<硬盘>/Configs/cloudreve/`，**不占路由器闪存** |
 | 🇨🇳 **全中文界面** | 状态 / 初始化 / 下载 / 服务控制 / 日志，五个区块全部中文，带完整操作提示 |
 | 🔁 **procd 托管** | 开机自启、崩溃自动拉起，符合 OpenWrt 原生习惯 |
 | 🖱️ **一键运维** | 页面上直接「启动 / 停止 / 重启」，不用 SSH 敲命令 |
@@ -25,7 +25,7 @@
 ### 方式一：iStore 图形界面（推荐）
 1. 到本仓库 [Releases](../../releases) 下载 `luci-app-cloudreve_x.x.x_all.ipk`
 2. iStore → 手动安装 ipk → 选中文件
-3. 刷新页面，菜单出现在 **服务 → Cloudreve**（或 NAS 分类下）
+3. 刷新页面，菜单出现在 **NAS → Cloudreve**
 
 ### 方式二：SSH 命令行
 ```sh
@@ -44,6 +44,7 @@ opkg install luci-app-cloudreve_0.0.1_all.ipk
 
 1. **选硬盘 → 「创建 Configs 目录」**
    页面会自动列出可写的外置挂载点，选一个（建议空间最大的）。
+   留空也可以：启动时会按 iStoreOS 规则自动挑一块可写、剩余空间最大的外置盘。
 2. **点「下载最新二进制」**
    自动识别架构、从 GitHub 拉取、赋予执行权限。
 3. **勾选「启用服务」→「保存并应用」**
@@ -83,15 +84,17 @@ luci-app-cloudreve/
 │   ├── model/cloudreve.lua     # 硬盘探测 + iStoreOS 目录约定
 │   ├── model/cbi/cloudreve/    # 配置页（目录形态，避开同名冲突）
 │   └── view/cloudreve/         # status / download / initdir / svcctl / log
-├── po/zh-cn/cloudreve.po       # 中文翻译（135 条）
-├── root/                       # → 装到设备根目录 /
-│   ├── etc/config/cloudreve
-│   ├── etc/init.d/cloudreve    # procd 托管
-│   ├── etc/uci-defaults/cloudreve
-│   ├── usr/libexec/cloudreve/detect_base.sh  # 硬盘探测
-│   └── usr/share/rpcd/acl.d/luci-app-cloudreve.json
-└── tools/                      # 本地校验脚本（Lua 配平 / 布局 / BOM）
+├── po/zh-cn/cloudreve.po       # 中文翻译条目
+└── root/                       # → 装到设备根目录 /
+    ├── etc/config/cloudreve
+    ├── etc/init.d/cloudreve    # procd 托管
+    ├── etc/uci-defaults/cloudreve
+    ├── usr/libexec/cloudreve/detect_base.sh  # 硬盘探测
+    └── usr/share/rpcd/acl.d/luci-app-cloudreve.json
 ```
+
+> **运行时目录布局**：二进制与数据在 `<硬盘>/Configs/cloudreve/`（`cloudreve` 程序 + `data/cloudreve.db`），
+> 配置文件在 `/etc/cloudreve/cloudreve.ini`。配置与数据分开存放，换盘不会掉配置。
 
 > **目录映射铁律**：`luasrc/` → `/usr/lib/lua/luci/`，`root/` → `/`。
 > 由 `feeds/luci/luci.mk` 自动完成，别手写路径。
@@ -105,7 +108,8 @@ luci-app-cloudreve/
 1. fork [linkease/openwrt-app-actions](https://github.com/linkease/openwrt-app-actions)
 2. 把本仓库放到 `applications/luci-app-cloudreve/`
 3. Actions → **Build IPKs** → 输入 `luci-app-cloudreve`
-4. CI 自动编译出 **arm64 / x64 / mipsel / arm 四架构** + **ipk / apk 双格式**
+4. CI 会同时编译出 **ipk 与 apk** 两种格式；luci-app 是架构无关的 `_all` 包，target 填 `arm64 x64` 一次即可
+   （别写 `all`，那是第五个独立目标名，会去读不存在的 `all.env` 直接报错）
 
 ### 方式二：本地用 OpenWrt SDK 编译
 ```sh
@@ -116,9 +120,12 @@ make package/luci-app-cloudreve/compile V=s
 
 ### 本地自检（提交前必跑）
 ```sh
-python tools/check_lua.py luasrc     # Lua 块配平
-python tools/check_bom.py  luasrc    # 中文文件禁 BOM
+python tools/check_lua.py       luasrc   # Lua 块配平
+python tools/validate_layout.py src      # 目录映射 / 权限
+python tools/check_bom.py       luasrc   # 中文文件禁 BOM
 ```
+
+> 校验与打包脚本在开发工作区（`tools/`），不随包发布。
 
 ---
 
@@ -137,6 +144,7 @@ python tools/check_bom.py  luasrc    # 中文文件禁 BOM
 | webp 缩略图不生成 | Cloudreve 内置缩略图生成器不支持 webp（Go 标准库不解码），文件会被标 `thumb:disabled`，只显示文件图标。需要外部生成器（ffmpeg / libvips）才能支持 |
 | 头像接口 404 | 未上传头像时 `/api/v4/user/avatar/<uid>` 返回 404，纯噪音，不影响使用 |
 | 站点 URL 要手填 | 出厂默认 localhost，见上文「装机后必做」（计划后续版本自动写入 LAN IP） |
+| 数据必须落外置盘 | 没有可用外置盘时服务会拒绝启动，并把原因写进运行日志，不会把数据放进路由器闪存 |
 
 ---
 
@@ -151,6 +159,10 @@ python tools/check_bom.py  luasrc    # 中文文件禁 BOM
 - 没有 lmo 翻译文件时，中文只能**硬编码**，`translate()` / `<%: %>` 必然失效
 - `model/cbi/` 下禁止 `x.lua` 与 `x/` 同名共存，否则整个 LuCI 全站 500
 - 别在 `postinst` 里 `rpcd restart`，会把所有登录会话踢掉
+- 写进 `/etc/config` 的键、写进脚本的分支，都要能指出「谁读它、什么时候会跑到」；
+  查不到调用方的配置项和走不到的分支一律删掉（踩过：`root_path` / `database_path` 无人读、
+  `/root/.istore` 兜底被自家校验规则挡死）
+- 配置与数据一起放在用户目录：`<root>/Configs/cloudreve/cloudreve.ini`，程序、配置、数据库都跟盘走。用户通过 LuCI「程序根目录」选择存储盘，留空则启动失败。
 
 ---
 
@@ -163,5 +175,5 @@ python tools/check_bom.py  luasrc    # 中文文件禁 BOM
 ## 🙏 致谢
 
 - [Cloudreve](https://github.com/cloudreve/cloudreve) —— 优秀的国产 Go 网盘程序
-- [luci-app-filebrowser](https://github.com/…) —— ipk 打包格式的字节级参考对象
+- luci-app-filebrowser —— ipk 打包格式的字节级参考对象
 - iStoreOS 社区 —— `Configs` 目录约定

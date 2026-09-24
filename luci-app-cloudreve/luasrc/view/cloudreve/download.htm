@@ -1,5 +1,5 @@
 <%
-local dsp = require "luci.dispatcher"
+	local dsp = require "luci.dispatcher"
 -%>
 
 <script type="text/javascript">//<![CDATA[
@@ -82,6 +82,13 @@ function checkUpdate(btn) {
 				html += '<br/><em style="color:gray;font-size:12px;"><%=translate('检测完成，再点一次按钮即可开始下载。')%></em>';
 			}
 
+			// 显示下载地址（方便用户手动下载）
+			if (json.download_url) {
+				html += '<br/><em style="color:gray;font-size:12px;"><%=translate('下载地址：')%></em>';
+				html += '<input type="text" id="cloudreve_dl_url" value="' + json.download_url + '" readonly style="width:80%;font-size:11px;" />';
+				html += ' <input type="button" class="cbi-button" value="<%=translate('复制')%>" onclick="copyUrl();" />';
+			}
+
 			if (json.available && json.available.length > 0) {
 				html += '<br/><em style="color:gray;font-size:11px;"><%=translate('官方发布的全部安装包：')%>' +
 					json.available.join('、') + '</em>';
@@ -90,6 +97,14 @@ function checkUpdate(btn) {
 		}
 		checkInfo = json;
 	});
+}
+
+function copyUrl() {
+	var urlInput = document.getElementById('cloudreve_dl_url');
+	if (urlInput) {
+		urlInput.select();
+		document.execCommand('copy');
+	}
 }
 
 function doDownload(btn) {
@@ -139,7 +154,10 @@ function doDownload(btn) {
 			ifattr(self.placeholder, "placeholder")
 		%> />
 		<span id="<%=self.id or cbid%>-detail" style="display:block;margin-top:8px;">
-			<em style="color:gray;font-size:12px;"><%=translate('第一次点击＝检测架构与版本；检测完成后再点一次＝正式下载安装。')%></em>
+			<em style="color:gray;font-size:12px;">
+				<a href="https://github.com/cloudreve/cloudreve/releases" target="_blank"><%=translate('手动下载 Cloudreve 二进制')%></a>
+				<%=translate('　第一次点击＝检测架构与版本；检测完成后再点一次＝正式下载安装。')%>
+			</em>
 		</span>
 	<% else %>
 		-

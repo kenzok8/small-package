@@ -8,7 +8,7 @@ LUCI_PKGARCH:=all
 LUCI_DEPENDS:=+luci-base +luci-compat +wget +ca-bundle +tar +lsblk
 
 PKG_MAINTAINER:=RtrBug
-PKG_VERSION:=0.0.1-r20260920
+PKG_VERSION:=0.0.1-r20260924
 PKG_RELEASE:=
 
 define Package/luci-app-cloudreve/conffiles

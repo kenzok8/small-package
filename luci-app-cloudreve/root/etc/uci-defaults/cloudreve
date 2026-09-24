@@ -10,8 +10,11 @@ uci -q batch <<-EOF >/dev/null
 	commit ucitrack
 EOF
 
-# Create system config dir
-mkdir -p /etc/cloudreve >/dev/null 2>&1
+# 清理旧版本遗留的配置键（第五轮评审：storage_path → root_path，删 listen_address）
+uci -q delete cloudreve.@cloudreve[0].storage_path
+uci -q delete cloudreve.@cloudreve[0].listen_address
+uci -q delete cloudreve.@cloudreve[0].database_path
+uci commit cloudreve
 
 rm -f /tmp/luci-indexcache
 rm -f /tmp/luci-modulecache/*

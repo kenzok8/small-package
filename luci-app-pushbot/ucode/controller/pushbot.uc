@@ -844,9 +844,28 @@ return {
 			cmd = "opkg install --force-reinstall /tmp/luci-app-pushbot_*.ipk /tmp/luci-i18n-pushbot-zh-cn_*.ipk";
 		}
 
-		/* run install in background, log output */
-		let install_cmd = "(" + cmd + ") > " + ifile + " 2>&1 && echo 'ok' >> " + ifile + " || echo 'fail' >> " + ifile + " &";
-		system(install_cmd);
+		/* 后台安装 + 结果标记。world 哈希锁清理【装前+装后各一次】
+		   （学习 luci-theme-liquid v0.8-r77/r78 的 breaks-world 修复）：
+		   apk 从本地文件安装会把包写成 pkg><hash 哈希锁入 /etc/apk/world，
+		   后续安装其他本地包后锁可能失配 → breaks world 卡死【所有】后续
+		   apk 事务（Unable to lock database / Resource temporarily unavailable）。
+		   heal 把锁降级为裸包名（语义等价"保持安装"，这些包不在官方源、
+		   无被替换风险）：
+		     - 装前：安装链中途被杀（重启/OOM）也不留"中毒 world 卡死全部
+		       apk 事务"的状态
+		     - 装后：本次本地安装自己又会写一把新锁，再清一次
+		   opkg 系统无 /etc/apk/world，[ -f ] 判断自动跳过。
+		   整链必须放进单个 ( ... ) & 后台执行：否则 system() 同步等安装
+		   结束，阻塞 rpcd 处理器（全站请求卡住）。 */
+		let heal = "[ -f /etc/apk/world ] && sed -i '/></ s/>.*$//' /etc/apk/world; ";
+		let install_cmd = "( "
+			+ heal
+			+ cmd + " > " + ifile + " 2>&1; "
+			+ "RC=$?; "
+			+ heal
+			+ "if [ $RC -eq 0 ]; then echo 'ok' >> " + ifile + "; "
+			+ "else echo 'fail' >> " + ifile + "; fi ) &";
+		system("mkdir -p /tmp/pushbot && " + install_cmd);
 
 		http.prepare_content("application/json");
 		http.write_json({ ok: true, pkgmgr: mgr });

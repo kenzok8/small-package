@@ -4,32 +4,53 @@
 	local port = uci:get_first("cloudreve", "cloudreve", "listen_port") or "5212"
 -%>
 <script type="text/javascript">//<![CDATA[
+var svcToken = '<%=token%>';
+var isRunning = false;
+
+function toggleService(btn) {
+	btn.disabled = true;
+	var action = isRunning ? 'stop' : 'start';
+	new XHR().get('<%=dsp.build_url("admin/nas/cloudreve/svc")%>', { token: svcToken, action: action },
+	function(_, json) {
+		btn.disabled = false;
+		setTimeout(function() { window.location.reload(); }, 2000);
+	});
+}
+
+function restartService(btn) {
+	btn.disabled = true;
+	new XHR().get('<%=dsp.build_url("admin/nas/cloudreve/svc")%>', { token: svcToken, action: 'restart' },
+	function(_, json) {
+		btn.disabled = false;
+		setTimeout(function() { window.location.reload(); }, 2000);
+	});
+}
+
+function openwebui(){
+	window.open('http://' + window.location.hostname + ':<%=port%>', '_blank');
+}
+
 XHR.poll(3, '<%=dsp.build_url("admin/nas/cloudreve/status")%>', null,
 	function(x, data) {
 		var tb = document.getElementById('cloudreve_status');
 		if (!tb) return;
 
 		if (!data) {
-			tb.innerHTML = '<em style="color:gray;"><%=translate('正在获取运行状态…（每 3 秒自动刷新）')%></em>';
+			tb.innerHTML = '<em style="color:gray;"><%=translate('正在获取运行状态…')%></em>';
 			return;
 		}
+
+		isRunning = data.running;
 
 		var html = '';
 		if (data.installed) {
 			if (data.running) {
 				html = '<em><b style="color:green;"><%=translate('● Cloudreve 正在运行')%></b></em>';
-				html += ' <input class="cbi-button mar-10" type="button" value="<%=translate('打开网盘页面')%>" onclick="openwebui();" />';
-				html += '<br/><em style="color:gray;font-size:12px;"><%=translate('访问地址：http://')%>' +
-						window.location.hostname + ':' + '<%=port%>' + '<%=translate('　（首次打开会引导你设置管理员账号）')%>' + '</em>';
 			} else {
 				html = '<em><b style="color:red;"><%=translate('● 程序已安装，但当前没有运行')%></b></em>';
-				html += '<br/><em style="color:gray;font-size:12px;"><%=translate('请在下方勾选「启用服务」并点「保存并应用」；')%>' +
-						'<%=translate('若仍然起不来，请看本页最下方的运行日志排查。')%></em>';
 			}
 		} else {
 			html = '<em><b style="color:orange;"><%=translate('● 尚未下载程序本体')%></b></em>';
-			html += '<br/><em style="color:gray;font-size:12px;"><%=translate('请先在「存储与磁盘」里选好磁盘，')%>' +
-					'<%=translate('然后点「下载最新二进制」。')%></em>';
 		}
 
 		if (data.app_dir && data.app_dir !== '') {
@@ -37,18 +58,27 @@ XHR.poll(3, '<%=dsp.build_url("admin/nas/cloudreve/status")%>', null,
 		}
 
 		tb.innerHTML = html;
+
+		var toggleBtn = document.getElementById('svc_toggle_btn');
+		if (toggleBtn) {
+			toggleBtn.value = data.running ? '<%=translate('停止服务')%>' : '<%=translate('启动服务')%>';
+		}
 	}
 );
-
-function openwebui(){
-	window.open('http://' + window.location.hostname + ':<%=port%>', '_blank');
-};
 //]]>
 </script>
-<style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
+
 <fieldset class="cbi-section">
 	<legend><%=translate('运行状态')%></legend>
-	<p id="cloudreve_status">
-		<em style="color:gray;"><%=translate('正在获取运行状态…（每 3 秒自动刷新）')%></em>
-	</p>
+	<div style="display:flex; align-items:center; flex-wrap:wrap; gap:12px;">
+		<div id="cloudreve_status" style="flex:1; min-width:200px;">
+			<em style="color:gray;"><%=translate('正在获取运行状态…')%></em>
+		</div>
+		<div class="svc-btn-group">
+			<input type="button" id="svc_toggle_btn" class="cbi-button cbi-input-apply" value="<%=translate('启动服务')%>" onclick="toggleService(this);" style="display:inline-block;padding:5px 12px;border:1px solid #ccc;border-radius:3px;background:#f5f5f5;color:#333;cursor:pointer;font-size:13px;" />
+			<input type="button" class="cbi-button cbi-input-apply" value="<%=translate('重启服务')%>" onclick="restartService(this);" style="display:inline-block;padding:5px 12px;border:1px solid #ccc;border-radius:3px;background:#f5f5f5;color:#333;cursor:pointer;font-size:13px;" />
+			<span class="spacer"></span>
+			<input type="button" class="cbi-button cbi-input-apply" value="<%=translate('打开网盘')%>" onclick="openwebui();" style="display:inline-block;padding:5px 12px;border:1px solid #ccc;border-radius:3px;background:#f5f5f5;color:#333;cursor:pointer;font-size:13px;" />
+		</div>
+	</div>
 </fieldset>
