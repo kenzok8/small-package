@@ -10,11 +10,11 @@ include $(TOPDIR)/rules.mk
 PKG_ARCH_kai:=$(ARCH)
 
 PKG_NAME:=kai
-PKG_VERSION:=0.0.23
-PKG_RELEASE:=3
+PKG_VERSION:=0.0.25
+PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/kai-runtime-v$(PKG_VERSION)/
-PKG_HASH:=f2972ce2ac6fd1a42132d12c01e8eb4b8e9686f297efa9951b5389d0f8cdf376
+PKG_HASH:=748686f223d07b3b426db766d5954f2efc3c3f1edf753952bb5fad95da49c440
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-binary-$(PKG_VERSION)
 
 PKG_BUILD_PARALLEL:=1

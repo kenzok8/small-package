@@ -10,14 +10,11 @@ This package installs:
 - `/usr/share/linkeasefull/desktop-apps.d/15-openwrt-luci.json`
 - `/www/luci-static/linkeasefull-embed/embed-prelude.js`
 - `/www/luci-static/linkeasefull-embed/embed.css`
-- privately owned protocol fallback shims under
-  `/usr/share/linkeasefull/openwrt-luci/protocol-fallbacks/`
 
-The package post-install maintainer exposes a fallback at the corresponding
-`/www/luci-static/resources/protocol/` path only when no real LuCI protocol
-module exists. Existing modules are never replaced, and package removal only
-removes symlinks that still point to this package's private fallback directory.
-This avoids file ownership conflicts with protocol packages installed later.
+The package deliberately does not install LuCI network protocol handlers or
+modify `/www/luci-static/resources/protocol/`. Protocol support belongs to the
+firmware and its LuCI protocol packages; this package is limited to embedding
+the firmware-provided LuCI UI in LinkEaseFull.
 
 The desktop manifest uses the builtin `LuciContainer` component with
 `isolation=scoped-dom-css`. That default scopes common Vue/React mount points,

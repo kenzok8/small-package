@@ -5,10 +5,6 @@ function index()
 
 	entry({"admin", "services", "istoreenhance"}, cbi("istoreenhance"), _("KSpeeder"), 20).dependent = true
 	entry({"admin", "services", "istoreenhance_status"}, call("istoreenhance_status"))
-	local open = entry({"admin", "services", "istoreenhance", "open"}, call("istoreenhance_open"))
-	open.leaf = true
-	open.dependent = false
-	open.sysauth = false
 end
 
 local function compat()
@@ -27,8 +23,4 @@ function istoreenhance_status()
 		running = sys.call("pidof iStoreEnhance >/dev/null") == 0,
 		port = uci:get_first("istoreenhance", "istoreenhance", "adminport") or "5003"
 	})
-end
-
-function istoreenhance_open()
-	compat():open("kspeeder")
 end

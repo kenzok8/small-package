@@ -3,6 +3,7 @@ import unittest
 
 
 APP_DIR = Path(__file__).resolve().parents[1]
+META_MAKEFILE = APP_DIR.parent / "app-meta-agentflow/Makefile"
 
 
 class AgentFlowLuciOpenContractTest(unittest.TestCase):
@@ -13,9 +14,12 @@ class AgentFlowLuciOpenContractTest(unittest.TestCase):
         makefile = self.read("Makefile")
         controller = self.read("luasrc/controller/agentflow.lua")
         status = self.read("luasrc/view/agentflow/status.htm")
+        meta = META_MAKEFILE.read_text(encoding="utf-8")
 
         self.assertIn("+luci-lib-linkeaseauth", makefile)
         self.assertIn("+linkease-app-entry", makefile)
+        self.assertIn("PKG_RELEASE:=3", meta)
+        self.assertIn("META_LUCI_ENTRY:=/cgi-bin/luci/admin/services/agentflow", meta)
         self.assertIn('entry({"admin", "services", "agentflow", "open"}', controller)
         self.assertIn("open.sysauth = false", controller)
         self.assertIn("function agentflow_open()", controller)

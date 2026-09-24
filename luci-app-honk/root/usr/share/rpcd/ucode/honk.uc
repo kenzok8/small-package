@@ -296,7 +296,7 @@ function switch_dashboard_api(target_type) {
 	let parsed_native = parse_native_api(clean);
 
 	if (target_type == "doona") {
-		if (parsed_native && parsed_native.enabled && !parsed_clash) {
+		if (parsed_native && parsed_native.enabled && parsed_native.secret == "honk" && !parsed_clash) {
 			return { success: true, type: target_type, noop: true };
 		}
 	} else {
@@ -317,7 +317,7 @@ function switch_dashboard_api(target_type) {
 "    native_api {\n" +
 "        enabled: true\n" +
 "        listen: '0.0.0.0:9527'\n" +
-"        password_auth: true\n" +
+"        secret: 'honk'\n" +
 "        ui: '/etc/honk/dashboard'\n" +
 "    }\n";
 	} else {

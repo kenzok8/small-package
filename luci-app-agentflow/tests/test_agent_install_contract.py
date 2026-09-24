@@ -61,6 +61,32 @@ class AgentInstallContractTest(unittest.TestCase):
         self.assertIn('installButton.disabled = !available || installed', status)
         self.assertIn('installed ? agentflowLabels.installed : agentflowLabels.install', status)
 
+    def test_status_requires_valid_package_and_healthy_mise_shim(self):
+        controller = self.read("luasrc/controller/agentflow.lua")
+
+        for agent_id, package, command in (
+            ("codexcli", "@openai/codex", "codex"),
+            ("claude-code", "@anthropic-ai/claude-code", "claude"),
+            ("opencode", "opencode-ai", "opencode"),
+            ("kimi", "@moonshot-ai/kimi-code", "kimi"),
+            ("reasonix", "reasonix", "reasonix"),
+        ):
+            self.assertIn(
+                f'{{ id = "{agent_id}", package = "{package}", command = "{command}" }}',
+                controller,
+            )
+        self.assertIn('probe_prefix="/tmp/agentflow-agent-probe.$$"', controller)
+        self.assertIn('[ -x "$shim" ]', controller)
+        self.assertIn('"$shim" --version', controller)
+        self.assertIn('sleep 5', controller)
+        self.assertIn('kill "$child_pid"', controller)
+        self.assertIn('type(package_json.version) == "string"', controller)
+        self.assertIn('package_json.version ~= ""', controller)
+        self.assertIn('command_ready[agent.id] == true', controller)
+        self.assertIn(
+            'if package_valid and command_ready[agent.id] == true then', controller
+        )
+
     def test_modal_theme_prefers_body_attribute_then_system_theme(self):
         status = self.read("luasrc/view/agentflow/status.htm")
 

@@ -55,6 +55,7 @@ function gen_config(var)
 	local local_http_password = var["local_http_password"]
 	local local_redir_port = var["local_redir_port"]
 	local local_redir_address = var["local_redir_address"] or "0.0.0.0"
+	local loglevel = var["loglevel"]
 
 	if api.is_ipv6(server_host) then
 		server_host = api.get_ipv6_only(server_host)
@@ -100,7 +101,10 @@ function gen_config(var)
 				}
 			},
 			locals = {},
-			fast_open = (node.tcp_fast_open and node.tcp_fast_open == "1") and true or false
+			fast_open = (node.tcp_fast_open and node.tcp_fast_open == "1") and true or false,
+			log = {
+				level = (loglevel == "debug") and 1 or 0
+			}
 		}
 		if local_socks_address and local_socks_port then
 			table.insert(config.locals, {

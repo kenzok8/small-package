@@ -327,3 +327,12 @@ msgstr "Native API 已配置，但 UI 目录中缺少面板文件。您可以直
 
 msgid "Target Directory (ui)"
 msgstr "目标目录 (ui)"
+
+msgid "Click to copy API Token"
+msgstr "点击复制 API 令牌 (Token)"
+
+msgid "Token copied to clipboard: "
+msgstr "Token 已复制到剪贴板: "
+
+msgid "Token: "
+msgstr "Token: "

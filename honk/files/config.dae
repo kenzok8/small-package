@@ -23,11 +23,17 @@ global {
 }
 
 # using for enable experimental features
-# clash-api, cache-file
+# native-api, clash-api, cache-file
 #experimental {
+#    native_api {
+#        enabled: true
+#        listen: '0.0.0.0:9527'
+#        secret: 'honk'
+#        ui: '/etc/honk/dashboard'
+#    }
 #    clash_api {
 #        external_controller: '0.0.0.0:9090'
-#        external_ui: '/etc/honk/dashboard'
+#        external_ui: '/etc/honk/zashboard'
 #        secret: ''
 #        default_mode: 'Rule'
 #    }

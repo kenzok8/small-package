@@ -605,7 +605,7 @@ o = s:taboption("log", Flag, "log_node", translate("Enable Node Log"))
 o.default = "0"
 o.rmempty = false
 
-o = s:taboption("log", ListValue, "loglevel", "Sing-Box/Xray " .. translate("Log Level"))
+o = s:taboption("log", ListValue, "loglevel", translate("Log Level"))
 o.default = "warn"
 o:value("debug", "Debug")
 o:value("info", "Info")

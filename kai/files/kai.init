@@ -15,7 +15,7 @@ start_kai_bin(){
 	procd_set_param env KAI_AUTH_MODE="$auth_mode"
 	procd_set_param command /usr/sbin/kai_bin -a 0.0.0.0 -p "$port"
 	procd_set_param stderr 1
-	procd_set_param respawn
+	procd_set_param respawn 3600 5 5
 	procd_close_instance
 }
 mkdir_cwd(){
@@ -41,7 +41,7 @@ start_kai_session(){
 	procd_set_param command /usr/libexec/kai-session-launch "${cwd}"
 	procd_set_param file "${agent_root}/opencode.json" "${agent_root}/manifest.json"
 	procd_set_param stderr 1
-	procd_set_param respawn
+	procd_set_param respawn 3600 5 5
 	procd_close_instance
 }
 start_service() { 
@@ -55,8 +55,6 @@ start_service() {
 		return 1
 	fi
 	logger -t kai "Starting KAI Service"
-	start_kai_bin
-	sleep 1
 	mkdir_cwd "${data_dir}"
 	mkdir_cwd "${data_dir}/cwd"
 	mkdir_cwd "${data_dir}/cache"
@@ -64,6 +62,7 @@ start_service() {
 	mkdir_cwd "${data_dir}/config"
 	mkdir_cwd "${data_dir}/state"
 	start_kai_session || return 1
+	start_kai_bin
 	logger -t kai "Starting KAI Service Completed"
 }
 

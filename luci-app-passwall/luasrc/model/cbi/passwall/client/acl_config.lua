@@ -528,7 +528,7 @@ o.default = 0
 o.rmempty = false
 o:depends({ _acl_node_bool = "1", _diff_global_node = "1" })
 
-o = s:taboption("Log", ListValue, "loglevel", "Sing-Box/Xray " .. translate("Log Level"))
+o = s:taboption("Log", ListValue, "loglevel", translate("Log Level"))
 o.default = "warn"
 o:value("debug", "Debug")
 o:value("info", "Info")
