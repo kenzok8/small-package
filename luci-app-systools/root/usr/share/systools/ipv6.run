@@ -159,10 +159,12 @@ level=$1
 echo "Try Level $level"
 
 # Apk system means that openwrt is newer enough, so we don't need to check the odhcpd version on apk system
-odhcpd_version=$(grep -o 'Version: [0-9]*' /usr/lib/opkg/info/odhcpd-ipv6only.control | cut -d' ' -f2)
-if [ -n "$odhcpd_version" -a "$odhcpd_version" -lt 2025 ]; then
-	echo "odhcpd version $odhcpd_version detected, enabling NDP bug workaround"
-	ODHCPD_NDP_BUG=true
+if [ -s /usr/lib/opkg/info/odhcpd-ipv6only.control ]; then
+	odhcpd_version=$(grep -o 'Version: [0-9]*' /usr/lib/opkg/info/odhcpd-ipv6only.control | cut -d' ' -f2)
+	if [ -n "$odhcpd_version" ] && [ "$odhcpd_version" -lt 2025 ]; then
+		echo "odhcpd version $odhcpd_version detected, enabling NDP bug workaround"
+		ODHCPD_NDP_BUG=true
+	fi
 fi
 
 # nat
