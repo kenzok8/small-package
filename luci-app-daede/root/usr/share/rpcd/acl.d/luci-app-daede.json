@@ -23,7 +23,7 @@
 				"/tmp/luci-app-daede.backup.log": [ "read" ],
 				"/bin/pidof dae": [ "exec" ],
 				"/bin/pidof daed": [ "exec" ],
-				"/usr/bin/dae validate -c /tmp/dae-validate.dae": [ "exec" ],
+				"/usr/bin/env DAE_LOCATION_ASSET=/usr/share/v2ray /usr/bin/dae validate -c /tmp/dae-validate.dae": [ "exec" ],
 				"/usr/bin/dae --version": [ "exec" ],
 				"/bin/rm -f /tmp/dae-validate.dae": [ "exec" ],
 				"/usr/share/luci-app-daede/pkg-info.sh dae": [ "exec" ],

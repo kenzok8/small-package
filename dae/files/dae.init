@@ -20,7 +20,7 @@ start_service() {
 	local config_file
 	config_get config_file "config" "config_file" "/etc/dae/config.dae"
 
-	"$PROG" validate -c "$config_file" || return 1
+	DAE_LOCATION_ASSET="/usr/share/v2ray" "$PROG" validate -c "$config_file" || return 1
 
 	local log_maxbackups log_maxsize
 	config_get log_maxbackups "config" "log_maxbackups" "1"

@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=rblibtorrent
-PKG_VERSION:=2.0.14
+PKG_VERSION:=2.0.15
 PKG_RELEASE:=1
 
 PKG_SOURCE:=libtorrent-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/arvidn/libtorrent/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=d79fcbc98ed800259ddfc3ef7451a0317d950abdcabf17481fa4236b0cf0f4f0
+PKG_HASH:=db5c70cb51906e56caee0e0c1bf8b60fa974a689f0310d50309562f3c595d223
 PKG_BUILD_DIR:=$(BUILD_DIR)/libtorrent-$(PKG_VERSION)
 
 PKG_LICENSE:=BSD
