@@ -1,0 +1,1 @@
+import{j as r}from"./vendor-react-Ey0dazfG.js";import{u as i,cp as l,aG as n}from"./index-BKG-v5Px.js";function u({value:s,onChange:o,isDisabled:t}){const e=i(),{selected:a,items:c}=l(s,e);return r.jsx(n,{label:e("arrange.policy"),value:a,onChange:o,items:c,isDisabled:t})}export{u as P};

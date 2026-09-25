@@ -1,0 +1,8 @@
+Adobe Spectrum icons
+Copyright 2024 Adobe. All rights reserved.
+The Spectrum SVG artwork in src/ui/icons is adapted from @react-spectrum/s2.
+The SVG geometry is unchanged; fills use currentColor and React wrappers are local.
+Licensed under the Apache License, Version 2.0:
+https://www.apache.org/licenses/LICENSE-2.0
+Source: https://github.com/adobe/react-spectrum
+

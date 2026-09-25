@@ -1,0 +1,1 @@
+async function h(u,l,o,n,r){const a=Math.max(1,Math.floor(n));let t;for(let e=0;e<o.length;e+=a){r.throwIfAborted();const c=o.slice(e,e+a),s=await u(l,c,r);r.throwIfAborted(),t?t.results.push(...s.results):t={...s,results:[...s.results]}}if(!t)throw new Error("DNS query requires at least one record type");return t}export{h as q};

@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=naiveproxy
-PKG_REAL_VERSION:=154.0.8037.49-1
+PKG_REAL_VERSION:=154.0.8037.49-2
 PKG_VERSION:=$(subst -,.,$(PKG_REAL_VERSION))
 PKG_RELEASE:=1
 
@@ -21,15 +21,15 @@ else ifeq ($(ARCH_PREBUILT),riscv64_riscv64)
 endif
 
 ifeq ($(ARCH_PREBUILT),aarch64_cortex-a53)
-  PKG_HASH:=f7bbd8796679aadedf03bfaa20a36e6d47322d9047429b8653ada57009dcea60
+  PKG_HASH:=48d383edb5da670de89d500d4b7380e17977942f80db167860d7194717be3951
 else ifeq ($(ARCH_PREBUILT),aarch64_cortex-a72)
   PKG_HASH:=82606a0f241b3a6fb03aa49f6037d8649a6934f5c65c9fe6dc58f87bd0c70de0
 else ifeq ($(ARCH_PREBUILT),aarch64_generic)
-  PKG_HASH:=2de0827b5c07fc19635692b4b21172062072a6e28dcce1b948e7c3b21ffd94e1
+  PKG_HASH:=0c071e7632d6df2031661ec92956fe303d31eae9f2f7343c78b74f632b45cab3
 else ifeq ($(ARCH_PREBUILT),arm_arm1176jzf-s_vfp)
   PKG_HASH:=cfd8e90e782a6621304361198ff567badbf4faba23d179a81c39d92ee6414a62
 else ifeq ($(ARCH_PREBUILT),arm_arm926ej-s)
-  PKG_HASH:=0abbd09c29ecf9167dd4518a77fe3ed4471e9c0523ecc792bac55dea035e5f86
+  PKG_HASH:=2eb18eb5985963bcf138d1da2f6cad2c5d13744fd2716ad90b12873a56e498a2
 else ifeq ($(ARCH_PREBUILT),arm_cortex-a15_neon-vfpv4)
   PKG_HASH:=c0349e9cc22604d034c4296d3be810ffad247957668689bc4978c724c43a3aa2
 else ifeq ($(ARCH_PREBUILT),arm_cortex-a5_vfpv4)
@@ -37,11 +37,11 @@ else ifeq ($(ARCH_PREBUILT),arm_cortex-a5_vfpv4)
 else ifeq ($(ARCH_PREBUILT),arm_cortex-a7)
   PKG_HASH:=2762af1064db4247557020b4fc1acbd47ec621255f83e12aedb11bc6794df338
 else ifeq ($(ARCH_PREBUILT),arm_cortex-a7_neon-vfpv4)
-  PKG_HASH:=60902ac1e1b0761c99efa147ee22b2cf2abefe1f00c3586eef475a0e6dfe7ae8
+  PKG_HASH:=d432aa1c7ea9cc8782d62d7812a733f3ac966f04c022f92487d64ebc2c625fe7
 else ifeq ($(ARCH_PREBUILT),arm_cortex-a7_vfpv4)
   PKG_HASH:=cd4325e29650c0a4f899e1c8c8d4f07b31ad643ebd5bba42cfcfd91081735a01
 else ifeq ($(ARCH_PREBUILT),arm_cortex-a8_vfpv3)
-  PKG_HASH:=573e0ac2db8f035a21546bf9b0a86ac85aafaf83d3ab0b9fa68b9c8cddaa035c
+  PKG_HASH:=c6c6d7ae66af91b2398e32b0e839e71feade78a4175e8c97c56d5b06dd135506
 else ifeq ($(ARCH_PREBUILT),arm_cortex-a9)
   PKG_HASH:=f70d1323654678babf3c9c330489ab4f75d2be629f3b4e6beb9ba75e0910f48d
 else ifeq ($(ARCH_PREBUILT),arm_cortex-a9_neon)
@@ -59,7 +59,7 @@ else ifeq ($(ARCH_PREBUILT),mipsel_mips32)
 else ifeq ($(ARCH_PREBUILT),riscv64)
   PKG_HASH:=989b2327727a132ec67815c680999ef5fe44bd6017b2b979351cc48311cf02f8
 else ifeq ($(ARCH_PREBUILT),x86)
-  PKG_HASH:=898dd52ba02f9737aa31d891e0f9b24c2d066ee6de59d49dd52073f9333fa2da
+  PKG_HASH:=ae4e441cddf775c99ff1bd5b901c387f778e45a69774d826a797ba8f9abbbad8
 else ifeq ($(ARCH_PREBUILT),x86_64)
   PKG_HASH:=55a10e6ca08696f9b606e1b3cb1a65aba72253756c5e1769d78edd78d4a1c6ab
 else

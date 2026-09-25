@@ -81,7 +81,7 @@ run_ipt2socks() {
 	[ -n "$tcp_tproxy" ] || _extra_param="${_extra_param} -R"
 	flag="${flag}_TCP_UDP"
 	_extra_param="${_extra_param} -o 60 -n 65535 -v"
-	ln_run "$(first_type ipt2socks)" "ipt2socks_${flag}" $log_file -l $local_port -b 0.0.0.0 -s $socks_address -p $socks_port ${_extra_param}
+	ln_run "$(first_type ipt2socks)" "ipt2socks_${flag}" $log_file -l $local_port -b 0.0.0.0 -B :: -s $socks_address -p $socks_port ${_extra_param}
 }
 
 run_singbox() {
