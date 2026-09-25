@@ -154,7 +154,7 @@ o:depends({ custom = false })
 o = s:option(FileUpload, "ech_keyFile", translate("Path to the ECH key file"), translate("as:") .. "/etc/ssl/ech.pem")
 o.validate = function(self, value, t)
 	if value and value ~= "" then
-		if not fs.access(value) then
+		if not api.fs.access(value) then
 			return nil, translate("Can't find this file!")
 		else
 			return value
