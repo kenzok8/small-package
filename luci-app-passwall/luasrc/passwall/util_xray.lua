@@ -1058,6 +1058,9 @@ function gen_config(var)
 		function gen_loopback(outbound_tag, loopback_dst)
 			if not outbound_tag or outbound_tag == "" then return nil end
 			local inbound_tag = loopback_dst and "lo-to-" .. loopback_dst or outbound_tag .. "-lo"
+			for _, o in ipairs(outbounds) do
+				if o.tag == outbound_tag and o.protocol == "loopback" and o.settings.inboundTag == inbound_tag then return o end
+			end
 			local loopback_outbound = {
 				protocol = "loopback",
 				tag = outbound_tag,
@@ -1465,8 +1468,8 @@ function gen_config(var)
 						inbound_tag = {}
 						if e["inbound"]:find("tproxy") then
 							if redir_port then
-								table.insert(inboundTag, "tcp_redir")
-								table.insert(inboundTag, "udp_redir")
+								table.insert(inbound_tag, "tcp_redir")
+								table.insert(inbound_tag, "udp_redir")
 							end
 						end
 						if e["inbound"]:find("socks") then

@@ -1,1 +1,0 @@
-var e={origin:`#ffffff`,destination:`#79d8ff`,direct:`#ff9f43`};export{e as t};

@@ -15,8 +15,8 @@ switch.rmempty = false
 
 etcmd = s:taboption("general", ListValue, "etcmd", translate("Startup Method"),
         translate("Official Web Console: <a href=\"https://easytier.cn/web\" target=\"_blank\">https://easytier.cn/web</a><br>"
-                .. "Official Configuration File Generator: <a href=\"https://easytier.cn/web/index.html#/config_generator\" target=\"_blank\">"
-                .. "https://easytier.cn/web/index.html#/config_generator</a><br>Please note to set the RPC port to 15888"))
+                .. "Official Configuration File Generator: <a href=\"https://easytier.cn/assistant\" target=\"_blank\">"
+                .. "https://easytier.cn/assistant</a><br>Please note to set the RPC port to 15888"))
 etcmd.default = "etcmd"
 etcmd:value("etcmd", translate("Default"))
 etcmd:value("config", translate("Configuration File"))

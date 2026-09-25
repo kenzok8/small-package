@@ -295,7 +295,7 @@ return view.extend({
 		function applyFilter() {
 			const f = state.filter;
 			pane.querySelectorAll('.dd-line').forEach(function(el) {
-				if (matchesFilter(el.textContent, f))
+				if (matchesFilter(el._rawLine, f))
 					el.classList.remove('dd-hidden');
 				else
 					el.classList.add('dd-hidden');
@@ -309,6 +309,7 @@ return view.extend({
 				const ln = lines[i];
 				if (!ln) continue;
 				const el = buildLine(ln);
+				el._rawLine = ln;
 				if (!matchesFilter(ln, state.filter))
 					el.classList.add('dd-hidden');
 				frag.appendChild(el);

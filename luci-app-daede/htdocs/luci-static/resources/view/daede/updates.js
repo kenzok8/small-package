@@ -446,17 +446,19 @@ return view.extend({
 					healthBody.appendChild(mkRow('✓', 'dd-up-ok', _('Hot reload'), _('/etc/init.d/dae hot_reload is available')));
 				}
 
-				if (ctx.backend.useNetns && ns && ns.exists) {
+				if (ctx.backend.useNetns && ns && ns.exists && running[ctx.name]) {
+					healthBody.appendChild(mkRow('✓', 'dd-up-ok', _('netns daens'), HEALTH_PATHS.netns + ' · ' + _('in use by daed')));
+				} else if (ctx.backend.useNetns && ns && ns.exists) {
 					const btn = E('button', { 'class': 'dd-up-btn' }, _('Clean'));
 					btn.addEventListener('click', function() {
-						const daedRunning = !!(running && running[ctx.name]);
-						const msg = daedRunning
-							? _('%s is running. Deleting the daens netns now will break its networking until you restart it. Continue?').format(ctx.name)
-							: _('Delete the daens netns?');
-						if (!confirm(msg))
-							return;
 						btn.disabled = true;
-						fs.exec('/sbin/ip', ['netns', 'del', 'daens']).finally(function() { btn.disabled = false; });
+						backend.detectRunning().then(function(now) {
+							const msg = now[ctx.name]
+								? _('%s is running. Deleting the daens netns now will break its networking until you restart it. Continue?').format(ctx.name)
+								: _('Delete the daens netns?');
+							if (confirm(msg))
+								return fs.exec('/sbin/ip', ['netns', 'del', 'daens']);
+						}).finally(function() { btn.disabled = false; });
 					});
 					healthBody.appendChild(mkRow('⚠', 'dd-up-warn', _('netns daens'), HEALTH_PATHS.netns + ' · ' + _('exists, may block daed start'), btn));
 				} else if (ctx.backend.useNetns) {

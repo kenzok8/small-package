@@ -372,6 +372,9 @@ msgstr "dae 热重载可用"
 msgid "netns daens removed."
 msgstr "netns daens 已清理。"
 
+msgid "in use by daed"
+msgstr "daed 运行中，正在使用"
+
 msgid "exists, may block daed start"
 msgstr "已存在，可能阻碍 daed 启动"
 
