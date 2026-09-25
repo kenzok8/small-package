@@ -1090,11 +1090,8 @@ pb_ota_showCountdown(ov);
 		tc.className = 'pushbot-sendtest-btn';
 		tc.addEventListener('click', function(e) {
 			e.preventDefault();
-			tc.disabled = true;
-			tc.textContent = '{{ _('Saving...') }}';
-			PB_saveConfig(function(ok) {
-				if (!ok) { tc.disabled = false; tc.textContent = '{{ _('Test Channel') }}'; return; }
-				tc.textContent = '{{ _('Sending...') }}';
+			/* 无变动直接测；有变动先确认→保存→再测（pbTestFlow） */
+			pbTestFlow(tc, '{{ _('Test Channel') }}', function() {
 				var y = new XMLHttpRequest();
 				y.open('GET', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'send_test') }}', true);
 				y.onload = function() { tc.disabled = false; tc.textContent = '{{ _('Test Channel') }}'; };
@@ -2743,9 +2740,9 @@ cuSub.appendChild(mkBtn('{{ _('Traffic DND') }}',cdOn,function(on){updateFlagInp
 		sb.type = 'button'; sb.textContent = '{{ _('Test Schedule') }}';
 		sb.className = 'pushbot-sendtest-btn';
 		sb.addEventListener('click', function(e) {
-			e.preventDefault(); sb.disabled = true; sb.textContent = '{{ _('Sending...') }}';
-			PB_saveConfig(function(ok) {
-				if (!ok) { sb.disabled = false; sb.textContent = '{{ _('Test Schedule') }}'; return; }
+			e.preventDefault();
+			/* 无变动直接测；有变动先确认→保存→再测（pbTestFlow） */
+			pbTestFlow(sb, '{{ _('Test Schedule') }}', function() {
 				var y = new XMLHttpRequest();
 				y.open('GET', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'send_manual') }}', true);
 				y.onload = function() { sb.disabled = false; sb.textContent = '{{ _('Test Schedule') }}'; };
@@ -3094,9 +3091,9 @@ function initMonitorCard() {
 		tb.type = 'button'; tb.textContent = '{{ _('Test Color') }}';
 		tb.className = 'pushbot-sendtest-btn';
 		tb.addEventListener('click', function(e) {
-			e.preventDefault(); tb.disabled = true; tb.textContent = '{{ _('Sending...') }}';
-			PB_saveConfig(function(ok) {
-				if (!ok) { tb.disabled = false; tb.textContent = '{{ _('Test Color') }}'; return; }
+			e.preventDefault();
+			/* 无变动直接测；有变动先确认→保存→再测（pbTestFlow） */
+			pbTestFlow(tb, '{{ _('Test Color') }}', function() {
 				var y = new XMLHttpRequest();
 				y.open('GET', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'send_manual') }}', true);
 				y.onload = function() { tb.disabled = false; tb.textContent = '{{ _('Test Color') }}'; };
@@ -3986,9 +3983,27 @@ function pbFmtVal(v) {
 	if (v === '0' || v === false) return '<span class="pb-pv-off">{{ _('Disabled') }}</span>';
 	return '<span class="pb-pv-str">' + String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</span>';
 }
-function pbShowPreview() {
-	var oldOv = document.querySelector('.pb-preview-overlay');
-	if (oldOv) { oldOv.remove(); return; }
+/* 归一化后再比较：后端 lists（PB_CONFIG.lists.x）返回数组，表单 hidden input 是字符串
+   （空白/逗号分隔），直接 JSON.stringify 比较永不相等 —— 明明没改也误报"有变动"，
+   且预览前后显示还一样（如忽略列表）。统一：拆分(空白/逗号/换行)→去重→排序→join；
+   列表的顺序与分隔符无语义，归一化相等即视为无变动。 */
+function pbNorm(v) {
+	var arr;
+	if (Array.isArray(v)) arr = v;
+	else if (typeof v === 'string') arr = v.split(/[\s,,]+/);
+	else if (v == null) arr = [];
+	else return JSON.stringify(v);
+	var seen = {}, out = [];
+	arr.forEach(function(x) {
+		var s = String(x).trim();
+		if (s && !seen[s]) { seen[s] = 1; out.push(s); }
+	});
+	out.sort();
+	return out.join('\n');
+}
+
+/* 收集当前前端表单相对基线(PB_CONFIG)的配置变动 —— 预览与"测试前判断是否需保存"共用 */
+function pbDiffChanges() {
 	var pend = window.__pbCollectData();
 	var changes = [];
 	for (var k in pend) {
@@ -3997,10 +4012,60 @@ function pbShowPreview() {
 			: (PB_CONFIG && PB_CONFIG.config && PB_CONFIG.config[k] !== undefined) ? PB_CONFIG.config[k]
 			: (PB_CONFIG && PB_CONFIG.files && PB_CONFIG.files[k] !== undefined) ? PB_CONFIG.files[k] : undefined;
 		var newV = pend[k];
-		if (JSON.stringify(oldV) === JSON.stringify(newV)) continue;
+		if (pbNorm(oldV) === pbNorm(newV)) continue;
 		if (!oldV && (!newV || (Array.isArray(newV) && !newV.length))) continue;
 		changes.push({ opt: k, label: PB_LABELS[k] || k, old: oldV, new: newV });
 	}
+	return changes;
+}
+/* 前端是否有未保存的配置变动 */
+function pbHasChanges() { return pbDiffChanges().length > 0; }
+
+/* 通用确认弹窗（pb-preview-overlay 风格）。onYes=确认回调，onNo=取消回调(可省) */
+function pbConfirm(msg, onYes, onNo) {
+	var old = document.querySelector('.pb-preview-overlay');
+	if (old) return;
+	var ov = document.createElement('div');
+	ov.className = 'pb-preview-overlay';
+	var box = document.createElement('div');
+	box.className = 'pb-preview-box';
+	box.style.cssText = 'max-width:440px;padding:26px 30px;';
+	box.innerHTML = '<div class="pb-preview-title">{{ _('Confirm') }}</div>'
+		+ '<div style="color:#64748b;font-size:13px;line-height:1.7;margin:6px 0 18px;text-align:center">' + msg + '</div>'
+		+ '<div style="display:flex;gap:10px;justify-content:center">'
+		+ '<button class="pb-preview-btn pb-preview-btn-conf" id="pb_cf_yes">{{ _('Save & Test') }}</button>'
+		+ '<button class="pb-preview-btn pb-preview-btn-disc" id="pb_cf_no">{{ _('Cancel') }}</button></div>';
+	ov.appendChild(box);
+	document.body.appendChild(ov);
+	setTimeout(function() { ov.classList.add('show'); }, 10);
+	box.querySelector('#pb_cf_yes').addEventListener('click', function() { ov.remove(); if (onYes) onYes(); });
+	box.querySelector('#pb_cf_no').addEventListener('click', function() { ov.remove(); if (onNo) onNo(); });
+}
+
+/* 测试流程：前端配置无变动→直接测试；有变动→提示"先保存再测试"，确认后保存再测
+   （避免改动未保存就测试，测到的还是旧配置）。label=按钮原文字，run=执行测试的回调。 */
+function pbTestFlow(btn, label, run) {
+	function go() {
+		btn.disabled = true;
+		btn.textContent = '{{ _('Sending...') }}';
+		run();
+	}
+	if (!pbHasChanges()) { go(); return; }
+	pbConfirm('{{ _('Current changes are not saved. This will save the configuration first, then run the test. Continue?') }}',
+		function() {
+			btn.disabled = true;
+			btn.textContent = '{{ _('Saving...') }}';
+			PB_saveConfig(function(ok) {
+				if (!ok) { btn.disabled = false; btn.textContent = label; return; }
+				go();
+			});
+		});
+}
+
+function pbShowPreview() {
+	var oldOv = document.querySelector('.pb-preview-overlay');
+	if (oldOv) { oldOv.remove(); return; }
+	var changes = pbDiffChanges();
 	var ov = document.createElement('div');
 	ov.className = 'pb-preview-overlay';
 	var box = document.createElement('div');
