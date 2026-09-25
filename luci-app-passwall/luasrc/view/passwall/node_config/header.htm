@@ -25,7 +25,7 @@ local sid = self.section
 				);
 				return;
 			}
-			const inputs = document.querySelectorAll('input[id$=".xray_tls_pinSHA256"]');
+			const inputs = document.querySelectorAll('input[id$="_tls_pinSHA256"]');
 			inputs.forEach(function(input) {
 				input.value = res.data;
 			});

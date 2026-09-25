@@ -408,7 +408,7 @@ load_acl() {
 				else
 					[ -n "${DIRECT_DNSMASQ_PORT}" ] && dns_redirect=${DIRECT_DNSMASQ_PORT}
 				fi
-				if ([ -n "$tcp_port" ] || [ -n "$udp_port" ]) && [ -n "$dns_redirect" ]; then
+				if [ -n "$dns_redirect" ]; then
 					$ipt_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j RETURN
 					$ip6t_m -A PSW $(comment "$remarks") -p udp ${_ipt_source} --dport 53 -j RETURN 2>/dev/null
 					$ipt_m -A PSW $(comment "$remarks") -p tcp ${_ipt_source} --dport 53 -j RETURN
@@ -597,7 +597,7 @@ load_acl() {
 			[ -n "${DIRECT_DNSMASQ_PORT}" ] && DNS_REDIRECT=${DIRECT_DNSMASQ_PORT}
 		fi
 
-		if ([ -n "${TCP_PROXY_MODE}" ] || [ -n "${UDP_PROXY_MODE}" ]) && [ -n "$DNS_REDIRECT" ]; then
+		if [ -n "$DNS_REDIRECT" ]; then
 			$ipt_m -A PSW $(comment "默认") -p udp --dport 53 -j RETURN
 			$ip6t_m -A PSW $(comment "默认") -p udp --dport 53 -j RETURN 2>/dev/null
 			$ipt_m -A PSW $(comment "默认") -p tcp --dport 53 -j RETURN
@@ -606,7 +606,9 @@ load_acl() {
 			$ip6t_n -A PSW_DNS $(comment "默认") -p udp --dport 53 -j REDIRECT --to-ports ${DNS_REDIRECT} 2>/dev/null
 			$ipt_n -A PSW_DNS $(comment "默认") -p tcp --dport 53 -j REDIRECT --to-ports ${DNS_REDIRECT}
 			$ip6t_n -A PSW_DNS $(comment "默认") -p tcp --dport 53 -j REDIRECT --to-ports ${DNS_REDIRECT} 2>/dev/null
-			echolog "     - ${msg}DNS 重定向到专用服务器[${DNS_REDIRECT}]"
+			[ "$DNS_REDIRECT" = "53" ] || {
+				echolog "     - ${msg}DNS 重定向到专用服务器[${DNS_REDIRECT}]"
+			}
 		fi
 
 		[ -n "${TCP_PROXY_MODE}" ] || [ -n "${UDP_PROXY_MODE}" ] && {

@@ -524,9 +524,17 @@ o:depends({ protocol = "naive" })
 o = s:option(Flag, "tls_allowInsecure", translate("allowInsecure"), translate("Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."))
 o.default = "0"
 o:depends({ tls = true })
-o:depends({ protocol = "hysteria"})
+o:depends({ protocol = "hysteria" })
 o:depends({ protocol = "tuic" })
 o:depends({ protocol = "hysteria2" })
+
+o = s:option(Value, "tls_pinSHA256", translate("TLS Chain Fingerprint (SHA256)"))
+o:depends({ tls = true })
+o:depends({ protocol = "hysteria" })
+o:depends({ protocol = "tuic" })
+o:depends({ protocol = "hysteria2" })
+o.description = translate("Once set, connects only when the server’s chain fingerprint matches.") ..
+		string.format("<a href='javascript:void(0)' onclick='javascript:fetchCertSha256(this)'>%s</a>", "→ " .. translate("Fetch Manually"))
 
 o = s:option(Flag, "tls_certificate", translate("TLS Certificate (PEM)"))
 o.default = "0"

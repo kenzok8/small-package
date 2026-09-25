@@ -470,7 +470,7 @@ load_acl() {
 					[ -n "${DIRECT_DNSMASQ_PORT}" ] && dns_redirect=${DIRECT_DNSMASQ_PORT}
 				fi
 
-				if ([ -n "$tcp_port" ] || [ -n "$udp_port" ]) && [ -n "$dns_redirect" ]; then
+				if [ -n "$dns_redirect" ]; then
 					nft "add rule $NFTABLE_NAME PSW_MANGLE ip protocol udp ${_ipt_source} udp dport 53 counter return comment \"$remarks\""
 					nft "add rule $NFTABLE_NAME PSW_MANGLE ip protocol tcp ${_ipt_source} tcp dport 53 counter return comment \"$remarks\""
 					nft "add rule $NFTABLE_NAME PSW_MANGLE_V6 meta l4proto udp ${_ipt_source} udp dport 53 counter return comment \"$remarks\""
@@ -656,14 +656,16 @@ load_acl() {
 			[ -n "${DIRECT_DNSMASQ_PORT}" ] && DNS_REDIRECT=${DIRECT_DNSMASQ_PORT}
 		fi
 
-		if ([ -n "${TCP_PROXY_MODE}" ] || [ -n "${UDP_PROXY_MODE}" ]) && [ -n "$DNS_REDIRECT" ]; then
+		if [ -n "$DNS_REDIRECT" ]; then
 			nft "add rule $NFTABLE_NAME PSW_MANGLE ip protocol udp udp dport 53 counter return comment \"默认\""
 			nft "add rule $NFTABLE_NAME PSW_MANGLE ip protocol tcp tcp dport 53 counter return comment \"默认\""
 			nft "add rule $NFTABLE_NAME PSW_MANGLE_V6 meta l4proto udp udp dport 53 counter return comment \"默认\""
 			nft "add rule $NFTABLE_NAME PSW_MANGLE_V6 meta l4proto tcp tcp dport 53 counter return comment \"默认\""
 			nft "add rule $NFTABLE_NAME PSW_DNS meta l4proto udp udp dport 53 counter redirect to :${DNS_REDIRECT} comment \"默认\""
 			nft "add rule $NFTABLE_NAME PSW_DNS meta l4proto tcp tcp dport 53 counter redirect to :${DNS_REDIRECT} comment \"默认\""
-			echolog "     - ${msg}DNS 重定向到专用服务器[${DNS_REDIRECT}]"
+			[ "$DNS_REDIRECT" = "53" ] || {
+				echolog "     - ${msg}DNS 重定向到专用服务器[${DNS_REDIRECT}]"
+			}
 		fi
 
 		[ -n "${TCP_PROXY_MODE}" ] || [ -n "${UDP_PROXY_MODE}" ] && {
