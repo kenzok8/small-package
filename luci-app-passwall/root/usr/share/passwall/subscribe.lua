@@ -1426,6 +1426,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 		result.hysteria_auth_type = "string"
 		result.hysteria_auth_password = params.auth
 		result.tls_serverName = params.peer or params.sni or ""
+		result.tls_pinSHA256 = params.pcs or params.pinSHA256
 		local insecure = params.allowinsecure or params.allowInsecure or params.insecure
 		result.tls_allowInsecure = (insecure == "1" or insecure == "0") and insecure or (sub_allowinsecure and "1" or "0")
 		result.alpn = params.alpn
@@ -1493,14 +1494,8 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			result.protocol = "hysteria2"
 			result.use_finalmask = (params.fm and params.fm ~= "") and "1" or nil
 			result.finalmask = (params.fm and params.fm ~= "") and api.base64Encode(params.fm) or nil
-			if is_singbox and (params.pcs or params.pinsha256) then
-				params.allowinsecure = "1"
-			end
 		elseif has_hysteria2 then
 			result.type = "Hysteria2"
-			if params.pcs or params.pinsha256 then
-				params.allowinsecure = "0"
-			end
 		else
 			log("跳过 Hysteria2 节点，因未适配到 Hysteria2 核心程序，或未正确设置节点使用类型。")
 			return nil

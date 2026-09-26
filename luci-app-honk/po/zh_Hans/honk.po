@@ -95,7 +95,7 @@ msgid "Not Running"
 msgstr "未运行"
 
 msgid "Checking Dashboard and API configuration..."
-msgstr "正在检测 Dashboard 与 API 配置..."
+msgstr "正在检测控制面板与 API 配置..."
 
 msgid "Checking Dashboard and Clash API configuration..."
 msgstr "正在检测 Dashboard 与 Clash API 配置..."
@@ -125,10 +125,10 @@ msgid "Unknown error"
 msgstr "未知错误"
 
 msgid "Dashboard / Clash API Unconfigured"
-msgstr "Dashboard / Clash API 未配置"
+msgstr "控制面板 / Clash API 未配置"
 
 msgid "Dashboard / Native API Unconfigured"
-msgstr "Dashboard / Native API 未配置"
+msgstr "控制面板 / Native API 未配置"
 
 msgid "HONK has not enabled Clash API in its configuration file. Dashboard requires external controller port and dashboard UI path."
 msgstr "HONK 尚未在配置文件中启用 Clash API。Dashboard 控制面板需要依赖 Clash API 提供的外部控制器端口与面板静态文件路径。"
@@ -161,7 +161,7 @@ msgid "Processing..."
 msgstr "正在处理..."
 
 msgid "Start Download & Install Dashboard"
-msgstr "开始下载并安装 Dashboard"
+msgstr "开始下载并安装控制面板"
 
 msgid "%s UI Files Not Found"
 msgstr "未检测到 %s 面板文件"
@@ -218,7 +218,7 @@ msgid "Drag to scroll page"
 msgstr "拖拽以滚动页面"
 
 msgid "Update Dashboard"
-msgstr "更新面板"
+msgstr "更新控制面板"
 
 msgid "Update to latest"
 msgstr "更新至最新版"
@@ -290,7 +290,7 @@ msgid "Routing configuration saved and service reloaded."
 msgstr "路由配置已保存并重载服务。"
 
 msgid "Dashboard"
-msgstr "Dashboard"
+msgstr "控制面板"
 
 msgid "Mirror"
 msgstr "镜像源"
@@ -329,10 +329,13 @@ msgid "Target Directory (ui)"
 msgstr "目标目录 (ui)"
 
 msgid "Click to copy API Token"
-msgstr "点击复制 API 令牌 (Token)"
+msgstr "点击复制 API 认证密钥"
 
 msgid "Token copied to clipboard: "
-msgstr "Token 已复制到剪贴板: "
+msgstr "认证密钥已复制到剪贴板: "
 
 msgid "Token: "
-msgstr "Token: "
+msgstr "认证密钥: "
+
+msgid "Click or drag to select Token"
+msgstr "点击或拖选认证密钥"

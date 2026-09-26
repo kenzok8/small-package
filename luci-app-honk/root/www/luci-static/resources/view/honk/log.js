@@ -35,10 +35,12 @@ return view.extend({
 					logTextarea.value = '';
 					logTextarea.scrollTop = 0;
 					scrolled = false;
-					ui.addNotification(null, E('p', _('Logs cleared successfully.')), 'info');
+					var notify = (honk && honk.showNotification) ? honk.showNotification : ui.addNotification;
+					notify(null, E('p', _('Logs cleared successfully.')), 'info');
 				}).catch(function(err) {
 					btnClear.disabled = false;
-					ui.addNotification(null, E('p', _('Failed to clear logs:') + ' ' + (err.message || err)), 'error');
+					var notify = (honk && honk.showNotification) ? honk.showNotification : ui.addNotification;
+					notify(null, E('p', _('Failed to clear logs:') + ' ' + (err.message || err)), 'error');
 				});
 			}
 		}, _('Clear logs'));

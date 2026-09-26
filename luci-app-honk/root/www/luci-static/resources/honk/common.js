@@ -8,6 +8,30 @@
 'require view';
 'require form';
 
+// Scoped helper: auto-dismiss notification after specified timeout (default 3s)
+function showNotification(title, children, type, timeout) {
+	timeout = (timeout != null) ? timeout : 3000;
+	if (ui && ui.addTimeLimitedNotification) {
+		return ui.addTimeLimitedNotification(title, children, timeout, type);
+	}
+	if (!ui || !ui.addNotification) return null;
+	var node = ui.addNotification(title, children, type);
+	if (node && timeout > 0) {
+		setTimeout(function() {
+			if (node && node.parentNode) {
+				node.classList.add('fade-out');
+				node.classList.remove('fade-in');
+				setTimeout(function() {
+					if (node && node.parentNode) {
+						node.parentNode.removeChild(node);
+					}
+				}, 800);
+			}
+		}, timeout);
+	}
+	return node;
+}
+
 var callHonkStatus = rpc.declare({
 	object: 'luci.honk',
 	method: 'status',
@@ -342,7 +366,7 @@ function initCodeMirror(textarea, onSaveCallback) {
 					}, 1500);
 				} catch (e) {
 					console.error('Format failed:', e);
-					ui.addNotification(null, E('p', _('Failed to format code:') + ' ' + (e.message || e)), 'error');
+					showNotification(null, E('p', _('Failed to format code:') + ' ' + (e.message || e)), 'error');
 				}
 			}
 		}, _('Format Code'));
@@ -409,7 +433,7 @@ function createConfigFileView(filePath, mapTitle, mapDesc, fieldTitle, successMs
 			return this.handleSave(ev).then(function() {
 				return callHonkReload();
 			}).then(function() {
-				ui.addNotification(null, E('p', successMsg || _('Configuration applied and service reloaded.')), 'info');
+				showNotification(null, E('p', successMsg || _('Configuration applied and service reloaded.')), 'info');
 			});
 		}
 	});
@@ -488,11 +512,11 @@ function renderStatusHeader() {
 			callHonkReload().then(function() {
 				btn.disabled = false;
 				btn.innerText = _('Reload Service');
-				ui.addNotification(null, E('p', _('HONK service reload triggered successfully.')), 'info');
+				showNotification(null, E('p', _('HONK service reload triggered successfully.')), 'info');
 			}).catch(function(err) {
 				btn.disabled = false;
 				btn.innerText = _('Reload Service');
-				ui.addNotification(null, E('p', _('Failed to reload HONK:') + ' ' + (err.message || err)), 'error');
+				showNotification(null, E('p', _('Failed to reload HONK:') + ' ' + (err.message || err)), 'error');
 			});
 		}
 	}, _('Reload Service'));
@@ -560,5 +584,6 @@ return baseclass.extend({
 	initCodeMirror: initCodeMirror,
 	bindCodeMirrorToMap: bindCodeMirrorToMap,
 	renderStatusHeader: renderStatusHeader,
-	createConfigFileView: createConfigFileView
+	createConfigFileView: createConfigFileView,
+	showNotification: showNotification
 });
