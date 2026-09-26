@@ -1560,6 +1560,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 		end
 		result.tls_serverName = params.sni
 		result.tls_disable_sni = params.disable_sni
+		result.tls_pinSHA256 = params.pcs or params.pinsha256
 		result.tuic_alpn = params.alpn or "h3"
 		result.tuic_congestion_control = params.congestion_control or "cubic"
 		result.tuic_udp_relay_mode = params.udp_relay_mode or "native"
@@ -1615,6 +1616,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			if params.security == "tls" or params.security == "reality" then
 				result.tls = "1"
 				result.tls_serverName = params.sni or params.peer
+				result.tls_pinSHA256 = params.pcs or params.pinsha256
 				result.alpn = params.alpn
 				if params.fp and params.fp ~= "" then
 					result.utls = "1"

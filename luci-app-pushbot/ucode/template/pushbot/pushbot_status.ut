@@ -2252,7 +2252,7 @@ b2.appendChild(tmRow);
 	cuRow.appendChild(mkBtn('{{ _('Abnormal device traffic') }}',cuOn,function(on){updateFlagInput('client_usage',on);toggleCu(on);}));
 	b2.appendChild(cuRow);
 	var cuSub=document.createElement('div');cuSub.id='ct_usage_sub';cuSub.style.cssText='margin-top:4px;display:'+(CT_USAGE?'block':'none');
-	cuSub.appendChild(mkTxt('client_usage_max','{{ _('Traffic limit per interval') }}',CT_USAGE_MAX,'{{ _('Abnormal device traffic alert (bytes); you can append K, M or G') }}'));
+	cuSub.appendChild(mkTxt('client_usage_max','{{ _('Traffic alert threshold') }}',CT_USAGE_MAX,'{{ _('Triggers an alert when traffic exceeds the threshold within the set interval. Device traffic alert (byte), you can append K, M or G') }}'));
 	/* disturb toggle */
 /* client usage disturb - use hidden input */
 var cdHi = document.querySelector('[name="cbid.pushbot.pushbot.client_usage_disturb"]');
@@ -3958,7 +3958,7 @@ var PB_LABELS = {
 	google_check_count:'{{ _('Network check retries') }}',
 	pushbot_up:'{{ _('WAN redial') }}', pushbot_down:'{{ _('WAN offline') }}', cpuload_enable:'{{ _('CPU load') }}', cpuload:'{{ _('CPU threshold') }}',
 	temperature_enable:'{{ _('Temperature monitor') }}', temperature:'{{ _('Temperature threshold') }}',
-	client_usage:'{{ _('Abnormal traffic') }}', client_usage_max:'{{ _('Traffic limit') }}', client_usage_disturb:'{{ _('Traffic DND') }}',
+	client_usage:'{{ _('Abnormal traffic') }}', client_usage_max:'{{ _('Traffic alert threshold') }}', client_usage_disturb:'{{ _('Traffic DND') }}',
 	pushbot_ipv4:'{{ _('IPv4 change') }}', ipv4_interface:'{{ _('IPv4 interface') }}', pushbot_ipv6:'{{ _('IPv6 change') }}', ipv6_interface:'{{ _('IPv6 interface') }}',
 	web_logged:'{{ _('Web login') }}', ssh_logged:'{{ _('SSH login') }}', web_login_failed:'{{ _('Web failed attempt') }}', ssh_login_failed:'{{ _('SSH failed attempt') }}',
 	login_max_num:'{{ _('Failed attempts') }}', web_login_black:'{{ _('Auto blacklist') }}', ip_black_timeout:'{{ _('Blacklist time') }}',

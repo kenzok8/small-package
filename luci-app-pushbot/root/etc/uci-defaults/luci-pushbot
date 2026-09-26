@@ -7,6 +7,9 @@ uci -q batch <<-EOF >/dev/null
 	commit ucitrack
 EOF
 
-rm -rf /tmp/luci-app-pushbot*
-rm -rf /tmp/luci-i18n-pushbot*
+# 已移除原有的 "rm -rf /tmp/luci-app-pushbot* /tmp/luci-i18n-pushbot*"：
+# 该清理由本脚本执行于安装过程中时，会删掉 OTA 已下载到 /tmp 的待安装包，
+# 主包装完即把 i18n 包删了 → apk/opkg (2/2) "No such file or directory"
+# → i18n 升级失败（页面显示英文、无翻译）。
+# /tmp 安装包的清理职责已移至 controller 的 act_install：安装成功后才清理。
 exit 0

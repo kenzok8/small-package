@@ -448,6 +448,7 @@ local function encode_tuic(node)
 	if node["disable-sni"] then table.insert(p, "disable_sni=1") end
 	if node["skip-cert-verify"] then table.insert(p, "allowInsecure=1") end
 	if node["udp-relay-mode"] then table.insert(p, "udp_relay_mode=" .. node["udp-relay-mode"]) end
+	if node["fingerprint"] then table.insert(p, "pcs=" .. urlencode(node["fingerprint"])) end
 
 	if #p > 0 then
 		link = link .. "?" .. table.concat(p, "&")
@@ -483,11 +484,8 @@ local function encode_anytls(node)
 	if o.tls.alpn then table.insert(p, "alpn=" .. urlencode(o.tls.alpn)) end
 	if o.tls.fp then table.insert(p, "fp=" .. urlencode(o.tls.fp)) end
 	if o.tls.ech then table.insert(p, "ech=" .. urlencode(o.tls.ech)) end
-	if o.tls.pcs then
-		table.insert(p, "insecure=1")
-	else
-		table.insert(p, "insecure=" .. (o.tls.insecure and "1" or "0"))
-	end
+	if o.tls.pcs then table.insert(p, "pcs=" .. urlencode(o.tls.pcs)) end
+	table.insert(p, "insecure=" .. (o.tls.insecure and "1" or "0"))
 
 	if #p > 0 then
 		link = link .. "?" .. table.concat(p, "&")

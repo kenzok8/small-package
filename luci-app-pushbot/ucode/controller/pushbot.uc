@@ -782,9 +782,10 @@ return {
 			+ "MAX_RETRY=3\n"
 			+ "TOTAL=" + length(files) + "\n"
 			+ "OK=0\n"
+			+ "mkdir -p /tmp/pushbot/pkgs\n"
 			+ "for f in " + join(" ", files) + "; do\n"
 			+ "  URL=\"${BASE}${f}\"\n"
-			+ "  DEST=\"/tmp/${f}\"\n"
+			+ "  DEST=\"/tmp/pushbot/pkgs/${f}\"\n"
 			+ "  ATTEMPT=0\n"
 			+ "  while [ $ATTEMPT -lt $MAX_RETRY ]; do\n"
 			+ "    ATTEMPT=$((ATTEMPT+1))\n"
@@ -836,36 +837,45 @@ return {
 		if (f0) { let o = f0.read("all"); f0.close(); if (o && length(replace(o, /\s+/, "")) > 0) mgr = "apk"; }
 
 		let ifile = "/tmp/pushbot/ota_install.log";
-		let cmd;
+		/* 包文件统一放 /tmp/pushbot/pkgs/（OTA 下载也写入该目录）。
+		   历史 bug：etc/uci-defaults/luci-pushbot 的 "rm -rf /tmp/luci-*"
+		   在主包装机过程中被新版 OpenWrt 立即执行 → 删掉 /tmp 下待装的
+		   i18n 包 → (2/2) "No such file or directory" → i18n 升级失败
+		   （页面无翻译）。pkgs/ 不在该清理 glob 内；uci-defaults 的 rm
+		   已移除，此处为双保险。 */
+		let cmd_pb, cmd_i18n;
 		if (mgr == "apk") {
-			cmd = "apk add --allow-untrusted /tmp/luci-app-pushbot-*.apk /tmp/luci-i18n-pushbot-*.apk";
+			cmd_pb = "apk add --allow-untrusted /tmp/pushbot/pkgs/luci-app-pushbot-*.apk";
+			cmd_i18n = "apk add --allow-untrusted /tmp/pushbot/pkgs/luci-i18n-pushbot-zh-cn-*.apk";
 		} else {
 			/* opkg 同版本会 up to date 跳过，需 --force-reinstall 覆盖 */
-			cmd = "opkg install --force-reinstall /tmp/luci-app-pushbot_*.ipk /tmp/luci-i18n-pushbot-zh-cn_*.ipk";
+			cmd_pb = "opkg install --force-reinstall /tmp/pushbot/pkgs/luci-app-pushbot_*.ipk";
+			cmd_i18n = "opkg install --force-reinstall /tmp/pushbot/pkgs/luci-i18n-pushbot-zh-cn_*.ipk";
 		}
 
-		/* 后台安装 + 结果标记。world 哈希锁清理【装前+装后各一次】
-		   （学习 luci-theme-liquid v0.8-r77/r78 的 breaks-world 修复）：
-		   apk 从本地文件安装会把包写成 pkg><hash 哈希锁入 /etc/apk/world，
-		   后续安装其他本地包后锁可能失配 → breaks world 卡死【所有】后续
-		   apk 事务（Unable to lock database / Resource temporarily unavailable）。
-		   heal 把锁降级为裸包名（语义等价"保持安装"，这些包不在官方源、
-		   无被替换风险）：
-		     - 装前：安装链中途被杀（重启/OOM）也不留"中毒 world 卡死全部
-		       apk 事务"的状态
-		     - 装后：本次本地安装自己又会写一把新锁，再清一次
-		   opkg 系统无 /etc/apk/world，[ -f ] 判断自动跳过。
-		   整链必须放进单个 ( ... ) & 后台执行：否则 system() 同步等安装
-		   结束，阻塞 rpcd 处理器（全站请求卡住）。 */
+		/* 后台分步安装（主包装机期间任何 /tmp 根目录的清理都伤不到 pkgs/）。
+		   world 哈希锁【装前+装后各一次】清理（学习 luci-theme-liquid
+		   v0.8-r77/r78 breaks-world 修复）：apk 本地文件安装写 pkg><hash
+		   锁，失配会卡死后续所有 apk 事务；heal 降级为裸包名。
+		   i18n 为可选步骤：有 i18n 文件才装（国际用户/单包场景无文件则
+		   跳过视为成功），不会因缺 i18n 误报 fail 或卡住清理。
+		   全部实际执行的步骤成功才清理下载文件——原 uci-defaults 的
+		   清残留职责移到这里；失败保留文件供重试（同名覆盖不堆积）。
+		   整链放进单个 ( ... ) & 后台：否则 system() 同步等待，阻塞 rpcd。 */
 		let heal = "[ -f /etc/apk/world ] && sed -i '/></ s/>.*$//' /etc/apk/world; ";
 		let install_cmd = "( "
 			+ heal
-			+ cmd + " > " + ifile + " 2>&1; "
-			+ "RC=$?; "
+			+ cmd_pb + " > " + ifile + " 2>&1; RC1=$?; "
+			+ "sleep 2; "
+			+ "if ls /tmp/pushbot/pkgs/*i18n* >/dev/null 2>&1; then "
+			+ cmd_i18n + " >> " + ifile + " 2>&1; RC2=$?; "
+			+ "else RC2=0; fi; "
 			+ heal
-			+ "if [ $RC -eq 0 ]; then echo 'ok' >> " + ifile + "; "
+			+ "if [ $RC1 -eq 0 ] && [ $RC2 -eq 0 ]; then "
+			+ "rm -f /tmp/pushbot/pkgs/* /tmp/luci-app-pushbot* /tmp/luci-i18n-pushbot* 2>/dev/null; "
+			+ "echo 'ok' >> " + ifile + "; "
 			+ "else echo 'fail' >> " + ifile + "; fi ) &";
-		system("mkdir -p /tmp/pushbot && " + install_cmd);
+		system("mkdir -p /tmp/pushbot/pkgs && " + install_cmd);
 
 		http.prepare_content("application/json");
 		http.write_json({ ok: true, pkgmgr: mgr });
@@ -891,7 +901,8 @@ return {
 			"/tmp/luci-app-pushbot-*.apk",
 			"/tmp/luci-i18n-pushbot-zh-cn-*.apk",
 			"/tmp/luci-app-pushbot_*_all.ipk",
-			"/tmp/luci-i18n-pushbot-zh-cn_*_all.ipk"
+			"/tmp/luci-i18n-pushbot-zh-cn_*_all.ipk",
+			"/tmp/pushbot/pkgs/*"
 		];
 		system("rm -f " + join(" ", patterns) + " 2>/dev/null");
 		http.prepare_content("application/json");

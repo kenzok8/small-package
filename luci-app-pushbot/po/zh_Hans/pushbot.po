@@ -62,8 +62,8 @@ msgstr "越短的时间时间响应越及时，但会占用更多的系统资源
 msgid "Abnormal device traffic"
 msgstr "设备异常流量"
 
-msgid "Abnormal device traffic alert (bytes); you can append K, M or G"
-msgstr "设备异常流量警报（byte），你可以追加 K、M 或 G"
+msgid "Triggers an alert when traffic exceeds the threshold within the set interval. Device traffic alert (byte), you can append K, M or G"
+msgstr "在设定的时间间隔内，流量超出设定的阈值，将触发报警。设备异常流量警报（byte），你可以追加 K、M 或 G。"
 
 msgid "Abnormal traffic"
 msgstr "流量异常"
@@ -921,11 +921,8 @@ msgstr "流量"
 msgid "Traffic DND"
 msgstr "流量免打扰"
 
-msgid "Traffic limit"
-msgstr "流量上限"
-
-msgid "Traffic limit per interval"
-msgstr "时间间隔内流量限制"
+msgid "Traffic alert threshold"
+msgstr "流量报警阈值"
 
 msgid "Traffic watchlist"
 msgstr "流量关注列表"
