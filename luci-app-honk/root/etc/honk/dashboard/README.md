@@ -11,13 +11,13 @@
 
 English · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md)
 
-[Install](#install) • [First run](#first-run) • [Pages](#pages) • [Development](#development) • [Guide](docs/guide.md)
+[Install](#install) • [First run](#first-run) • [Pages](#pages) • [Page tour](#page-tour) • [On a phone](#on-a-phone) • [Development](#development) • [Guide](docs/guide.md)
 
 </div>
 
 doona is a static web UI for the native API the daeuniverse engines share: honk today, dae once it implements the same contract. The engine serves it itself or any web server does; it shows what the engine is doing and manages nodes, groups, routing rules and configuration files.
 
-[Try the demo with sample data](https://zakkaus.github.io/doona/).
+[Try the demo with sample data](https://demo.daeuniverse.org/).
 
 ![The activity page](docs/screenshots/en/activity-light.webp)
 
@@ -50,7 +50,7 @@ doona targets the native API implemented by honk's `feat/native-api` branch; tha
 Release archives (`doona-<version>.tar.gz`, the optional `doona-fonts-<version>.tar.gz` with Noto Sans TC and SC, and `SHA256SUMS`) are attached to tags on the [releases page](https://github.com/Zakkaus/doona/releases); until the first tag, build them yourself as described under [Development](#development). Verify and extract the files into the directory the engine or web server will serve:
 
 ```sh
-VERSION=v0.1.0-beta.4  # replace with the downloaded release tag
+VERSION=v0.1.0-beta.5  # replace with the downloaded release tag
 sha256sum --ignore-missing -c SHA256SUMS
 sudo mkdir -p /usr/share/doona
 sudo tar -xzf "doona-${VERSION}.tar.gz" -C /usr/share/doona
@@ -106,6 +106,56 @@ The activity page then shows the running engine. Add a subscription or paste sha
 A page is marked unavailable only when every resource it needs is unavailable. `Ctrl K` searches pages, connections, nodes, groups, rules and sources from anywhere. Which resources each page needs, and where doona keeps its own settings, are in the [guide](docs/guide.md#pages).
 
 <img src="docs/screenshots/en/rules-light.webp" alt="The rules page" width="100%">
+
+## Page tour
+
+### Arranging groups
+
+On the Arrange tab of Policies, drag a node or a subscription from the list on the right onto a group to add it. The Add menu on each row and keyboard dragging do the same.
+
+<img src="docs/screenshots/en/arrange.webp" alt="Dragging the node us-01 onto the gaming group" width="100%">
+
+### Traffic and connections
+
+The Traffic tab of Connections plots each connection's upload against its download, coloured by outbound; select a point to open that connection. The Connections tab groups live connections by device or by outbound, filters them by protocol and outbound, and exports them as CSV.
+
+<img src="docs/screenshots/en/connections-traffic.webp" alt="The Traffic tab of the connections page" width="100%">
+
+<img src="docs/screenshots/en/connections-list.webp" alt="Live connections grouped by device" width="100%">
+
+### DNS
+
+The Statistics tab shows the median and P95 resolution time, the cache hit rate and the failure rate. The charts below place each upstream's lookups on a latency scale and count how the queries ended.
+
+<img src="docs/screenshots/en/dns.webp" alt="The Statistics tab of the DNS page" width="100%">
+
+### Log activity
+
+Above the log list, a heatmap counts records per level over time. A level's row header sets the minimum level the list shows.
+
+<img src="docs/screenshots/en/logs.webp" alt="The log activity heatmap" width="100%">
+
+### Routing map
+
+The routing map on Rules follows traffic from rules, or from devices, through outbounds to nodes. Point at or select a rule, outbound or node to highlight the paths through it.
+
+<img src="docs/screenshots/en/routing.webp" alt="Selecting a rule and then a node on the routing map" width="100%">
+
+### Node latency
+
+The Latency tab of Nodes plots each node's latest latency, moving average and average of the last 10 measurements. A switch groups the nodes by policy group or by protocol; unavailable nodes appear under their group.
+
+<img src="docs/screenshots/en/latency.webp" alt="The Latency tab of the nodes page" width="100%">
+
+## On a phone
+
+Below 1024 pixels wide, the side navigation becomes a bottom bar with four hubs: Overview, Traffic, Routing and Settings. A hub opens on the page last viewed in it during the session, and its pages sit in a row above the content. Language, theme, palette and wordmark move into the top bar's overflow menu, a submenu each.
+
+Tables drop the columns that do not fit, in a set order, and toolbars wrap onto more rows. On Overview, DNS and Logs, the first page action stays a button and the rest move into a menu.
+
+Over HTTPS or on localhost, doona installs as an app. In Chrome and Edge, the About card in Settings offers Install as an app. Safari has no install prompt, so the card shows the steps instead. On iPhone and iPad, tap Share, then Add to Home Screen. In Safari 26 on macOS, choose File > Add to Dock.
+
+<img src="docs/screenshots/en/phone.webp" alt="doona on phones: the connections table, the overflow menu and its palette submenu" width="100%">
 
 ## Development
 

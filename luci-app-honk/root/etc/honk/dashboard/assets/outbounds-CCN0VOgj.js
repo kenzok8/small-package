@@ -1,0 +1,1 @@
+import{r as t}from"./vendor-react-Bf71BWbF.js";import{V as u,Z as d,X as r,Y as n}from"./index-BCoOz7L7.js";function m(){const s=u().data?.resources,e=d(r(s,"groups",{whileLoading:!1})),o=n(r(s,"nodes",{whileLoading:!1}));return t.useMemo(()=>new Map([...(e.data??[]).map(a=>[a.id,a.name]),...(o.data??[]).map(a=>[a.id,a.name])]),[e.data,o.data])}export{m as u};

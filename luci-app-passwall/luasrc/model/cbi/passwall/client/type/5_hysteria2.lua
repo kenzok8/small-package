@@ -101,7 +101,7 @@ o = s:option(Value, "tls_serverName", translate("Domain"))
 o = s:option(Flag, "tls_allowInsecure", translate("allowInsecure"), translate("Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."))
 o.default = "0"
 
-o = s:option(Value, "tls_pinSHA256", translate("PinSHA256"),translate("Certificate fingerprint"))
+o = s:option(Value, "tls_pinSHA256", translate("TLS Chain Fingerprint (SHA256)"))
 
 o = s:option(Value, "up_mbps", translate("Max upload Mbps"))
 o.rewrite_option = o.option

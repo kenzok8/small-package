@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-<script>// Normalize appearance before first paint; keep accepted palettes aligned with src/shell/view.ts.
+<script>// Normalize appearance before first paint. The build fills the palette list and default from src/shell/palettes.ts.
 (function () {
   var read = function (key) {
     try {
@@ -15,20 +15,8 @@
   var lang = read('doona-lang');
   var d = document.documentElement;
   var dark = scheme === 'dark' || (scheme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
-  var palettes = [
-    'rose-pine/main',
-    'rose-pine/moon',
-    'catppuccin/frappe',
-    'catppuccin/macchiato',
-    'catppuccin/mocha',
-    'nord/nord',
-    'kary/kary',
-    'antd/antd',
-    'arco/arco',
-    'semi/semi',
-    'glass/glass'
-  ];
-  var parts = (palettes.includes(palette) ? palette : 'rose-pine/moon').split('/');
+  var palettes = ["rose-pine/main","rose-pine/moon","catppuccin/frappe","catppuccin/macchiato","catppuccin/mocha","nord/nord","kary/kary","antd/antd","arco/arco","semi/semi","glass/glass"];
+  var parts = (palettes.includes(palette) ? palette : "rose-pine/moon").split('/');
   d.dataset.scheme = dark ? 'dark' : 'light';
   d.dataset.family = parts[0];
   d.dataset.flavour = parts[1];
@@ -38,7 +26,7 @@
 </script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-lJd6OHdbCdgNwg3xduOBrh3rWx8qJJtRPjF09Znd99A='; connect-src 'self' http: https: ws: wss:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-KVUbUqWeQLBvT8VlRVRjPoaHbO8mxYO4BJoVU+UTAJ8='; connect-src 'self' http: https: ws: wss:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self'">
 <title>doona</title>
 <link rel="icon" href="./logo.svg">
 <link rel="manifest" href="./manifest.webmanifest">
@@ -48,9 +36,9 @@
 <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="doona">
-  <script type="module" crossorigin src="./assets/index-BKG-v5Px.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/vendor-react-Ey0dazfG.js">
-  <link rel="stylesheet" crossorigin href="./assets/index-By985uBM.css">
+  <script type="module" crossorigin src="./assets/index-BCoOz7L7.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/vendor-react-Bf71BWbF.js">
+  <link rel="stylesheet" crossorigin href="./assets/index-CsgqKws4.css">
 </head>
 <body><div id="root"></div></body>
 </html>

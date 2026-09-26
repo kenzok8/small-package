@@ -2,6 +2,57 @@
 
 This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-beta.5] - 2026-09-26
+
+### Added
+
+- Settings shows geodata presets, custom source URLs, automatic updates, a download route and update status when the backend supports them.
+- The Connections Traffic tab shows node latency, including P50 and P90 across nodes and which nodes carry current connections, when health data is available.
+- When rules are writable, connection details can create a routing rule from the destination and apply it immediately or hold it for later. A matched-rule link opens the rule list.
+- The add-subscription dialog offers the refresh interval, User-Agent and cache option when the backend advertises them.
+- Navigation groups pages into Overview, Traffic, Routing and Settings hubs, with a bottom bar on phones.
+- The top bar has a separate reload action and shows the number of held rules to apply.
+- Settings shows manual installation steps for Safari on iPhone and iPad, and Safari 26 or later on macOS, when no install prompt is available.
+
+### Changed
+
+- Until a language is chosen, doona follows the browser's first language preference; a saved choice still takes precedence.
+- The Connections and flow records tables show the final node or outbound instead of the full chain. Details and CSV export retain the chain, a tooltip shows the path when a group precedes the node, and a saved hidden column stays hidden.
+- Geodata settings save as they change. Custom URLs remain editable when their initial values came from the configuration file; restarting honk can restore URLs named in that file.
+- Segmented controls that do not fit become a picker instead of scrolling or clipping.
+- On narrow Activity tiles, sparklines sit below the value and use the tile width.
+- On phones, top-bar options use submenus, and longer page action groups move extra actions into a menu.
+- Initial page loads download less shell code, and visitors using a real backend no longer download demo code for offline use.
+- Activity charts download less JavaScript. In measured large-list scenarios, node searches and probes, connection sorting and selection, and log bursts use less scripting time.
+- The README includes a page tour and phone guidance, and demo links point to https://demo.daeuniverse.org/.
+- Internal restructuring of charts, shared components, routes and styles leaves the UI and behavior unchanged.
+
+### Fixed
+
+- Restart-only configuration refusals name the affected settings, and a file written without a successful reload is reported as unapplied.
+- Repeated configuration conflicts explain when the file on disk differs from the running configuration.
+- Runtime settings refresh after activation, and retries no longer replay writes without an idempotency key.
+- DNS statistics stay usable when a log page is refused for size. Failed reads show one retryable error, and early-ended pages show how many records loaded without assuming why they ended.
+- Close all handles connection sets above the backend's bulk limit in batches and reports connections left open when a batch stops.
+- Configuration validation and writes report the advertised size limit before sending an oversized request.
+- Relative times and traffic and memory chart windows use the backend host's observed time when it is available.
+- Event and log streams reconnect after missed heartbeats. Gaps from expired cursors are marked, including in exported logs.
+- Unknown operation and probe results are shown as unknown instead of failed or unreachable; new backend enum values are shown instead of blank labels.
+- Policies, fallback groups, recorded log levels, delayed retries and degraded subscription refreshes are described according to the backend's actual behavior. Known backend error codes have translations.
+- Module diagnostics stay in place while typing and when switching sections, and code scrolled sideways no longer shows through the line-number gutter.
+- Password sign-in works with the backend's public discovery response.
+- The demo's traffic history advances with time, so Activity charts retain a full recent window after a tab has been in the background.
+- The demo keeps refused settings patches atomic, updates required geodata categories after configuration changes and redacts secret-bearing parts of geodata URLs.
+- Connection rules can be placed before the earliest writable rule. Rule creation waits for groups to load, and the matched-rule link remains available on read-only configurations.
+- Held rules cannot be discarded or applied concurrently while an apply is running. Written rules leave the pending list even if reload fails or its result is unknown, and partial results count every written rule.
+- Geodata controls follow backend capabilities, including older backends without download-route settings. Custom URLs cannot be edited while saving, so later input is not lost.
+- DNS cache usage is read again after a flush or deletion; an older cache walk cannot restore stale usage afterward.
+- Chart arrow keys keep working after the data shrinks. The Outbound downloads chart has one named keyboard stop, and its tooltip no longer sits under the centre total.
+- Keyboard focus stays on a segmented control when resizing switches it between buttons and a picker.
+- A failed node read shows an error in the Connections latency card instead of silently removing it.
+- Table columns and page width stay steady while rows load, tables change layout or pages change height.
+- Table lines, row hover and other quiet fills stay visible on cards in the Rosé Pine dark, Nord and Kary palettes, and touching a chart point no longer leaves a hover state stuck.
+
 ## [0.1.0-beta.4] - 2026-09-24
 
 ### Added
@@ -129,6 +180,7 @@ This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 - Keep table columns and action cells visible and prevent cards and controls from overflowing.
 
+[0.1.0-beta.5]: https://github.com/Zakkaus/doona/compare/v0.1.0-beta.4...v0.1.0-beta.5
 [0.1.0-beta.4]: https://github.com/Zakkaus/doona/compare/v0.1.0-beta.3...v0.1.0-beta.4
 [0.1.0-beta.3]: https://github.com/Zakkaus/doona/compare/v0.1.0-beta.2...v0.1.0-beta.3
 [0.1.0-beta.2]: https://github.com/Zakkaus/doona/compare/v0.1.0-beta.1...v0.1.0-beta.2

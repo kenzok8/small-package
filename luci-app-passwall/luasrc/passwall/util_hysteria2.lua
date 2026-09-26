@@ -140,7 +140,7 @@ function gen_config(var)
 		tls = {
 			sni = node.tls_serverName,
 			insecure = (node.tls_allowInsecure == "1") and true or false,
-			pinSHA256 = (node.tls_pinSHA256) and node.tls_pinSHA256 or nil,
+			pinSHA256 = (node.tls_pinSHA256 and node.tls_pinSHA256 ~= "") and api.sha256_sb_xray(node.tls_pinSHA256) or nil,
 			ech = (node.ech == "1") and node.ech_config or nil
 		},
 		quic = {
