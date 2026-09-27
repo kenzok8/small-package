@@ -37,7 +37,7 @@ endif
 
 PKG_NAME:=pgyvpn
 PKG_VERSION:=3.1.0
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=pgyvpnsvr
 PKG_SOURCE_URL:=https://mirrors.oray.com/orayos/packages/$(PKG_NAME)/$(PKG_ARCH_PGYYPN)/$(PKG_VERSION)/bin
@@ -133,11 +133,11 @@ define Package/pgyvpn/install
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_DIR) $(1)/usr/share/pgyvpn
-	$(INSTALL_DIR) $(1)/usr/lib
+	$(INSTALL_DIR) $(1)/usr/lib/pgyvpn
 
 	$(CP) $(PKG_BUILD_DIR)/{pgyvpn_oraysl,pgyvpnsvr} $(1)/usr/sbin
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/openssl-$(OPENSSL_COMPAT_VERSION)/libssl.so.1.1 $(1)/usr/lib
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/openssl-$(OPENSSL_COMPAT_VERSION)/libcrypto.so.1.1 $(1)/usr/lib
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/openssl-$(OPENSSL_COMPAT_VERSION)/libssl.so.1.1 $(1)/usr/lib/pgyvpn
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/openssl-$(OPENSSL_COMPAT_VERSION)/libcrypto.so.1.1 $(1)/usr/lib/pgyvpn
 	$(INSTALL_BIN) ./files/etc/init.d/* $(1)/etc/init.d
 	$(INSTALL_CONF) ./files/etc/config/* $(1)/etc/config
 	$(INSTALL_BIN) ./files/etc/hotplug.d/iface/* $(1)/etc/hotplug.d/iface

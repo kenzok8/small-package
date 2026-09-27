@@ -98,6 +98,7 @@ start_service()
 	#start app
 	procd_open_instance
 	procd_set_param command $pgyvpn_filename $cmd_arg
+	procd_set_param env LD_LIBRARY_PATH=/usr/lib/pgyvpn
 	[ -n "$username" ] && procd_append_param command --sn "$username"
 	[ -n "$password" ] && procd_append_param command --pwd "$password"
 	procd_set_param respawn

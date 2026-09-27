@@ -41,7 +41,7 @@ ip6t_m="$ip6t -t mangle -w"
 [ -z "$ip6t" ] || [ -z "$(lsmod | grep 'ip6table_mangle')" ] && ip6t_m="eval #$ip6t_m"
 FWI=$(uci -q get firewall.passwall.path 2>/dev/null)
 FAKE_IP="198.18.0.0/15"
-FAKE_IP_6="fc00::/18"
+FAKE_IP_6="2001:2::/48"
 
 USE_GEOVIEW=0
 EXCLUDE_VPSIP="^(0\.0\.0\.0|127\.0\.0\.1|1\.1\.1\.1|1\.1\.1\.2|8\.8\.8\.8|8\.8\.4\.4|9\.9\.9\.9)$"

@@ -1756,7 +1756,7 @@ function gen_config(var)
 				poolSize = 65535
 			}
 			local fakedns6 = {
-				ipPool = "fc00::/18",
+				ipPool = "2001:2::/48",
 				poolSize = 65535
 			}
 			if remote_dns_query_strategy == "UseIP" then
