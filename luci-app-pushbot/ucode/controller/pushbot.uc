@@ -843,10 +843,19 @@ return {
 		   i18n 包 → (2/2) "No such file or directory" → i18n 升级失败
 		   （页面无翻译）。pkgs/ 不在该清理 glob 内；uci-defaults 的 rm
 		   已移除，此处为双保险。 */
+		let trust = "";
 		let cmd_pb, cmd_i18n;
 		if (mgr == "apk") {
-			cmd_pb = "apk add --allow-untrusted /tmp/pushbot/pkgs/luci-app-pushbot-*.apk";
-			cmd_i18n = "apk add --allow-untrusted /tmp/pushbot/pkgs/luci-i18n-pushbot-zh-cn-*.apk";
+			/* 装前检测 Zed 自签公钥：无则写入（添加不覆盖），随后安装
+			   免 --allow-untrusted（覆盖 r31 及更早设备首次走 OTA 的场景，
+			   它们设备上还没有公钥；含公钥的包本身也靠这步建立信任）。 */
+			trust = "[ -f /etc/apk/keys/zed-openwrt-apk.pem ] || { mkdir -p /etc/apk/keys; "
+				+ "printf '%s" + "\\n" + "' '-----BEGIN PUBLIC KEY-----' "
+				+ "'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE16+nzzY9Lx5wvzZoWs/18vZxsNZD' "
+				+ "'jv+CqECJLUj+fA7J228Iu13DVUO8CK9jQyLHtqkw0f4/X2bKLlLiz281zQ==' "
+				+ "'-----END PUBLIC KEY-----' > /etc/apk/keys/zed-openwrt-apk.pem; }; ";
+			cmd_pb = "apk add /tmp/pushbot/pkgs/luci-app-pushbot-*.apk";
+			cmd_i18n = "apk add /tmp/pushbot/pkgs/luci-i18n-pushbot-zh-cn-*.apk";
 		} else {
 			/* opkg 同版本会 up to date 跳过，需 --force-reinstall 覆盖 */
 			cmd_pb = "opkg install --force-reinstall /tmp/pushbot/pkgs/luci-app-pushbot_*.ipk";
@@ -864,6 +873,7 @@ return {
 		   整链放进单个 ( ... ) & 后台：否则 system() 同步等待，阻塞 rpcd。 */
 		let heal = "[ -f /etc/apk/world ] && sed -i '/></ s/>.*$//' /etc/apk/world; ";
 		let install_cmd = "( "
+			+ trust
 			+ heal
 			+ cmd_pb + " > " + ifile + " 2>&1; RC1=$?; "
 			+ "sleep 2; "
