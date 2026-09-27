@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+# Zed 自签 APK 公钥：条件写入（已有则跳过，添加不覆盖）。
+#
+# 为什么用 uci-defaults（学习 luci-theme-liquid v0.9-r9 方案）：
+#   固件构建调用 apk 带 --no-scripts（package/Makefile / image.mk），
+#   包脚本 postinst 在构建期不会跑 —— "第三方编译固件包含本插件"时
+#   postinst 方案无法把公钥带进镜像。本脚本随包文件落在 rootfs：
+#     - 固件场景：文件随镜像保留，设备首次开机由 /etc/init.d/boot 执行
+#     - 在线装机：apk 装机的 default_postinst 会立即执行包内 uci-defaults，
+#       当次安装即建立公钥信任
+#   两个场景一个入口，postinst 不再重复写（去冗余，换 key 只改这一处 +
+#   controller 的 OTA 自举两处）。
+#
+# 为什么不是包内 /etc/apk/keys 文件：apk 严格追踪文件归属，pushbot 与
+# 主题同时携带同一路径会报 "trying to overwrite ... owned by" 冲突；
+# 本脚本创建的文件不在任何包 manifest 内，多包共存各写一次、后者跳过。
+#
+# 文件名必须带 -pushbot 后缀：uci-defaults 本身也是包内文件，若与主题
+# 同名（主题为 99-zed-apk-key-liquid）会撞同样的归属冲突。
+#
+# 设备端另有兜底：controller 的 act_install 在 OTA 安装前同样"有则跳过"
+# 自举写入（覆盖 r34 之前从未装过本脚本的老设备首次 OTA）。
+#
+# 注：uci-defaults 脚本执行成功后由系统自动消费删除（一次性），
+# 兜底靠 act_install 的幂等自举与本包每次安装重新落地。
+
+[ -f /etc/apk/keys/zed-openwrt-apk.pem ] || {
+	mkdir -p /etc/apk/keys
+	printf '%s\n' \
+		'-----BEGIN PUBLIC KEY-----' \
+		'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE16+nzzY9Lx5wvzZoWs/18vZxsNZD' \
+		'jv+CqECJLUj+fA7J228Iu13DVUO8CK9jQyLHtqkw0f4/X2bKLlLiz281zQ==' \
+		'-----END PUBLIC KEY-----' > /etc/apk/keys/zed-openwrt-apk.pem
+}
+exit 0
