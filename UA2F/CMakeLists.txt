@@ -124,7 +124,9 @@ add_compile_options(-fno-omit-frame-pointer -fno-strict-aliasing)
 # Coverage configuration
 if (UA2F_ENABLE_COVERAGE)
     if (CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
-        add_compile_options(--coverage -O0 -g -fno-lto)
+        # Proxy and NFQUEUE workers share coverage counters. Non-atomic updates
+        # can lose increments and make gcov reconstruct negative branch counts.
+        add_compile_options(--coverage -fprofile-update=atomic -O0 -g -fno-lto)
         add_link_options(--coverage -fno-lto)
         message(STATUS "Code coverage is enabled.")
     else()

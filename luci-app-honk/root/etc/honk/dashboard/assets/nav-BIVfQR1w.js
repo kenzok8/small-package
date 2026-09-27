@@ -1,0 +1,1 @@
+import{a1 as l}from"./index-zQjLFfuj.js";function a(e){const t=l(e,"flows",{whileLoading:!0}),i=l(e,"rules",{whileLoading:!1});return[...t?[{id:"map",titleKey:"rule.map"}]:[],...t||i?[{id:"list",titleKey:"rule.listTitle"}]:[],...t?[{id:"flows",titleKey:"rule.flows"}]:[],...l(e,"routing_trace",{whileLoading:!0})?[{id:"trace",titleKey:"rule.trace"}]:[]]}export{a as r};

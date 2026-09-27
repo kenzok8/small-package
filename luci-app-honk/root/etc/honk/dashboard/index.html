@@ -1,7 +1,8 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" dir="ltr">
 <head>
-<script>// Normalize appearance before first paint. The build fills the palette list and default from src/shell/palettes.ts.
+<script>// Normalize appearance before first paint. The build fills the palette list and default from src/shell/palettes.ts, and
+// the right-to-left scripts from src/i18n/direction.ts.
 (function () {
   var read = function (key) {
     try {
@@ -22,11 +23,26 @@
   d.dataset.flavour = parts[1];
   d.dataset.wordmark = read('doona-wordmark') === 'plain' ? 'plain' : 'gradient';
   d.lang = lang === 'zh-CN' ? 'zh-CN' : lang === 'en' ? 'en-US' : 'zh-TW';
+  // The direction as pageDirection in src/i18n/direction.ts decides it: right to left in the mirrored layout, else the
+  // locale's text info, else its likely script.
+  var mirrored = read('doona-mirror') === 'on';
+  var rtlScripts = ["Adlm","Arab","Hebr","Mand","Nkoo","Rohg","Samr","Syrc","Thaa","Yezi"];
+  var dir = mirrored ? 'rtl' : 'ltr';
+  if (!mirrored)
+    try {
+      var tag = new Intl.Locale(d.lang);
+      var info = tag.getTextInfo ? tag.getTextInfo() : tag.textInfo;
+      if (info && info.direction ? info.direction === 'rtl' : rtlScripts.includes(tag.maximize().script)) dir = 'rtl';
+    } catch {
+      // Left to right.
+    }
+  d.dir = dir;
+  if (mirrored) d.dataset.mirror = '';
 })();
 </script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-KVUbUqWeQLBvT8VlRVRjPoaHbO8mxYO4BJoVU+UTAJ8='; connect-src 'self' http: https: ws: wss:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-YWASLyBtVSX2dc4sQ2EIBJw0AXI/XMrMLfRLrwyt0N4='; connect-src 'self' http: https: ws: wss:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self'">
 <title>doona</title>
 <link rel="icon" href="./logo.svg">
 <link rel="manifest" href="./manifest.webmanifest">
@@ -36,9 +52,9 @@
 <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="doona">
-  <script type="module" crossorigin src="./assets/index-BCoOz7L7.js"></script>
+  <script type="module" crossorigin src="./assets/index-zQjLFfuj.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/vendor-react-Bf71BWbF.js">
-  <link rel="stylesheet" crossorigin href="./assets/index-CsgqKws4.css">
+  <link rel="stylesheet" crossorigin href="./assets/index-CszNs-yj.css">
 </head>
 <body><div id="root"></div></body>
 </html>

@@ -47,10 +47,10 @@ doona targets the native API implemented by honk's `feat/native-api` branch; tha
 
 ## Install
 
-Release archives (`doona-<version>.tar.gz`, the optional `doona-fonts-<version>.tar.gz` with Noto Sans TC and SC, and `SHA256SUMS`) are attached to tags on the [releases page](https://github.com/Zakkaus/doona/releases); until the first tag, build them yourself as described under [Development](#development). Verify and extract the files into the directory the engine or web server will serve:
+Release archives (`doona-<version>.tar.gz`, the optional `doona-fonts-<version>.tar.gz` with Noto Sans TC and SC, and `SHA256SUMS`) are attached to tags on the [releases page](https://github.com/Zakkaus/doona/releases). Build from source as described under [Development](#development). Verify and extract the files into the directory the engine or web server will serve:
 
 ```sh
-VERSION=v0.1.0-beta.5  # replace with the downloaded release tag
+VERSION=0.1.0-beta.7  # replace with the downloaded release version, without v
 sha256sum --ignore-missing -c SHA256SUMS
 sudo mkdir -p /usr/share/doona
 sudo tar -xzf "doona-${VERSION}.tar.gz" -C /usr/share/doona
@@ -93,15 +93,15 @@ The activity page then shows the running engine. Add a subscription or paste sha
 | Page          | Shows                                                                                                           |
 | ------------- | --------------------------------------------------------------------------------------------------------------- |
 | Activity      | Outbound mode, traffic and memory, active connections, node latency, outbound usage, top clients, notifications |
-| Overview      | Engine and eBPF state, traffic counters, backend capabilities, the status as JSON                               |
-| Connections   | Live connections with source, destination, rule, chain and traffic; close one or all                            |
+| Overview      | Engine and eBPF state, process CPU, traffic counters, backend capabilities, the status as JSON                  |
+| Connections   | Live connections with source, destination, rule, chain, traffic and transfer rates; close one or all            |
 | DNS           | Queries with their answers, the cache, the log; a flush                                                         |
-| Policies      | Groups, their members and health; selection, pinning, probing and editing                                       |
+| Policies      | Groups, their members and health; selection, pinning, probing, editing and health-check URLs                    |
 | Rules         | A routing tree from rules or devices through outbounds to nodes, the rule list with hits, the flow log, a trace |
 | Nodes         | Subscriptions and their refresh interval, inline nodes, add and remove, probe and join a group                  |
-| Configuration | Sources with diagnostics, an editor with validation, quick setup and export                                     |
+| Configuration | Create and edit source files, diagnostics, validation, quick setup and export                                   |
 | Events, Logs  | The backend event stream; the log stream with filters, pause and export                                         |
-| Settings      | Backends, runtime settings and backend actions, language, appearance and palette                                |
+| Settings      | Backends, runtime settings and backend actions, language, appearance, palette and notification placement        |
 
 A page is marked unavailable only when every resource it needs is unavailable. `Ctrl K` searches pages, connections, nodes, groups, rules and sources from anywhere. Which resources each page needs, and where doona keeps its own settings, are in the [guide](docs/guide.md#pages).
 
@@ -169,7 +169,7 @@ pnpm e2e                         # rebuild, then test against the mock at the ro
 pnpm package                     # release/doona-<version>.tar.gz, doona-fonts-<version>.tar.gz, SHA256SUMS
 ```
 
-`pnpm dev` serves the mock on Vite's dev server. The live-backend test run, the performance and screenshot tools, the source layout and the contract pin are described in the [guide](docs/guide.md#development); see [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+`pnpm dev` serves the mock on Vite's dev server. The live-backend test run, the performance and screenshot tools, the source layout and the contract pin are described in the [guide](docs/guide.md#development); see [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Its [Translations](CONTRIBUTING.md#translations) section covers correcting a translation and proposing a language.
 
 ## Support
 
