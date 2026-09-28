@@ -22,7 +22,7 @@ global {
     udp_check_dns: 'dns.google.com:53', '8.8.8.8', '2001:4860:4860::8888'
 }
 
-# API access (native_api / clash_api) is configured separately in config.d/api.dae
+# API access (native_api) is configured separately in config.d/api.dae
 # to allow web dashboard configuration without locking the config as read-only.
 #
 # Optional cache-file configuration:

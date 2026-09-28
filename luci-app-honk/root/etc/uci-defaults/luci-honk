@@ -14,13 +14,23 @@ experimental {
         enabled: true
         listen: '0.0.0.0:9527'
         secret: 'honk114514'
-        ui: '/etc/honk/dashboard'
+        ui: '/etc/honk/doona'
         config_write: true
         geosite_download_url: 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/release/geosite.dat'
         geoip_download_url: 'https://raw.githubusercontent.com/QiuSimons/geoip-moedove/refs/heads/main/geoip.dat'
     }
 }
 EOF
+fi
+
+# Smooth migration from legacy /etc/honk/dashboard to /etc/honk/doona
+if [ -d /etc/honk/dashboard ] && [ ! -d /etc/honk/doona ]; then
+	mv /etc/honk/dashboard /etc/honk/doona
+elif [ -d /etc/honk/dashboard ] && [ -d /etc/honk/doona ]; then
+	rm -rf /etc/honk/dashboard
+fi
+if [ -f /etc/honk/config.d/api.dae ]; then
+	sed -i "s|/etc/honk/dashboard|/etc/honk/doona|g" /etc/honk/config.d/api.dae 2>/dev/null || true
 fi
 chmod -R u=rwX,go= /etc/honk 2>/dev/null || true
 chmod 700 /etc/honk /etc/honk/config.d /etc/honk/state 2>/dev/null || true

@@ -265,23 +265,25 @@ function get_dashboard_info(req) {
 		has_native_api: !!(parsed_native && parsed_native.enabled)
 	};
 
-	if (requested_type == "doona") {
-		if (!parsed_native || !parsed_native.enabled) {
-			return res;
-		}
-		res.configured = true;
+	let target_default_ui = (requested_type == "zashboard") ? "/etc/honk/zashboard" : "/etc/honk/doona";
+	let other_default_ui = (requested_type == "zashboard") ? "/etc/honk/doona" : "/etc/honk/zashboard";
+
+	if (parsed_native && parsed_native.enabled) {
 		res.external_controller = parsed_native.listen;
 		res.host = parsed_native.host;
 		res.port = parsed_native.port || "9527";
 		res.secret = parsed_native.secret;
-		res.external_ui = parsed_native.ui;
 		res.geosite_download_url = parsed_native.geosite_download_url;
 		res.geoip_download_url = parsed_native.geoip_download_url;
-	} else {
-		if (!parsed_clash) {
-			return res;
+		res.external_ui = (parsed_native.ui && parsed_native.ui != other_default_ui) ? parsed_native.ui : target_default_ui;
+
+		if (parsed_native.listen && parsed_native.ui && parsed_native.ui != other_default_ui) {
+			res.configured = true;
+		} else {
+			res.configured = false;
 		}
-		res.configured = true;
+	} else if (parsed_clash) {
+		res.configured = false;
 		res.external_controller = parsed_clash.external_controller;
 		res.host = parsed_clash.host;
 		res.port = parsed_clash.port || "9090";
@@ -316,22 +318,11 @@ function download_dashboard(req) {
 	}
 
 	let api_cfg = get_api_config();
-	let parsed_clash = api_cfg.parsed_clash;
 	let parsed_native = api_cfg.parsed_native;
-
-	let target_dir;
-	if (requested_type == "doona") {
-		target_dir = (parsed_native && parsed_native.ui) ? parsed_native.ui : "/etc/honk/dashboard";
-	} else if (requested_type == "zashboard") {
-		target_dir = (parsed_clash && parsed_clash.external_ui) ? parsed_clash.external_ui : "/etc/honk/zashboard";
-	} else {
-		if (parsed_native && parsed_native.ui) {
-			target_dir = parsed_native.ui;
-		} else if (parsed_clash && parsed_clash.external_ui) {
-			target_dir = parsed_clash.external_ui;
-		} else {
-			target_dir = "/etc/honk/dashboard";
-		}
+	let other_default_ui = (requested_type == "zashboard") ? "/etc/honk/doona" : "/etc/honk/zashboard";
+	let target_dir = (requested_type == "zashboard") ? "/etc/honk/zashboard" : "/etc/honk/doona";
+	if (parsed_native && parsed_native.ui && parsed_native.ui != other_default_ui) {
+		target_dir = parsed_native.ui;
 	}
 
 	let script = "/usr/share/honk/download_dashboard.sh";
@@ -354,7 +345,7 @@ function switch_dashboard_api(target_type) {
 	let api_file = get_api_file_path();
 	let config_file = get_config_file_path();
 
-	// 1. Clean legacy api blocks from main config.dae to avoid read-only lock in doona
+	// 1. Clean legacy api blocks from main config.dae to avoid read-only lock in dashboard
 	clean_legacy_api_from_config(config_file);
 
 	system("mkdir -p /etc/honk/config.d");
@@ -363,18 +354,16 @@ function switch_dashboard_api(target_type) {
 	let parsed_clash = api_cfg.parsed_clash;
 	let parsed_native = api_cfg.parsed_native;
 
+	let target_ui = (target_type == "zashboard") ? "/etc/honk/zashboard" : "/etc/honk/doona";
+
 	// Check if already correctly configured in api.dae
 	if (!api_cfg.is_legacy) {
-		if (target_type == "doona") {
-			if (parsed_native && parsed_native.enabled && !parsed_clash &&
-			    parsed_native.config_write &&
-			    parsed_native.geosite_download_url && parsed_native.geoip_download_url) {
-				return { success: true, type: target_type, noop: true };
-			}
-		} else {
-			if (parsed_clash && (!parsed_native || !parsed_native.enabled)) {
-				return { success: true, type: target_type, noop: true };
-			}
+		if (parsed_native && parsed_native.enabled && !parsed_clash &&
+		    parsed_native.listen &&
+		    parsed_native.config_write &&
+		    parsed_native.geosite_download_url && parsed_native.geoip_download_url &&
+		    parsed_native.ui == target_ui) {
+			return { success: true, type: target_type, noop: true };
 		}
 	}
 
@@ -383,15 +372,13 @@ function switch_dashboard_api(target_type) {
 	cleaned_api = remove_bracket_block(cleaned_api, /^[#\/]*\s*native_api\s*\{/);
 	cleaned_api = replace(cleaned_api, /experimental\s*\{\s*\}/, "");
 
-	let api_inner;
-	if (target_type == "doona") {
-		let sec = (parsed_native && parsed_native.secret && length(parsed_native.secret) >= 8) ? parsed_native.secret : "honk114514";
-		let listen = (parsed_native && parsed_native.listen) ? parsed_native.listen : "0.0.0.0:9527";
-		let ui = (parsed_native && parsed_native.ui) ? parsed_native.ui : "/etc/honk/dashboard";
-		let geosite = (parsed_native && parsed_native.geosite_download_url) ? parsed_native.geosite_download_url : "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/release/geosite.dat";
-		let geoip = (parsed_native && parsed_native.geoip_download_url) ? parsed_native.geoip_download_url : "https://raw.githubusercontent.com/QiuSimons/geoip-moedove/refs/heads/main/geoip.dat";
+	let sec = (parsed_native && parsed_native.secret && length(parsed_native.secret) >= 8) ? parsed_native.secret : "honk114514";
+	let listen = (parsed_native && parsed_native.listen) ? parsed_native.listen : "0.0.0.0:9527";
+	let ui = target_ui;
+	let geosite = (parsed_native && parsed_native.geosite_download_url) ? parsed_native.geosite_download_url : "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/release/geosite.dat";
+	let geoip = (parsed_native && parsed_native.geoip_download_url) ? parsed_native.geoip_download_url : "https://raw.githubusercontent.com/QiuSimons/geoip-moedove/refs/heads/main/geoip.dat";
 
-		api_inner =
+	let api_inner =
 "    native_api {\n" +
 "        enabled: true\n" +
 "        listen: '" + listen + "'\n" +
@@ -401,20 +388,6 @@ function switch_dashboard_api(target_type) {
 "        geosite_download_url: '" + geosite + "'\n" +
 "        geoip_download_url: '" + geoip + "'\n" +
 "    }\n";
-	} else {
-		let ec = (parsed_clash && parsed_clash.external_controller) ? parsed_clash.external_controller : "0.0.0.0:9090";
-		let ui = (parsed_clash && parsed_clash.external_ui) ? parsed_clash.external_ui : "/etc/honk/zashboard";
-		let sec = (parsed_clash && parsed_clash.secret) ? parsed_clash.secret : "";
-		let dm = (parsed_clash && parsed_clash.default_mode) ? parsed_clash.default_mode : "Rule";
-
-		api_inner =
-"    clash_api {\n" +
-"        external_controller: '" + ec + "'\n" +
-"        external_ui: '" + ui + "'\n" +
-"        secret: '" + sec + "'\n" +
-"        default_mode: '" + dm + "'\n" +
-"    }\n";
-	}
 
 	let default_block = "experimental {\n" + api_inner + "}\n";
 	let has_active_exp = match(cleaned_api, /(^|\n)[ \t]*experimental\s*\{/);

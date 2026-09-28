@@ -1,8 +1,16 @@
 #!/bin/sh
 # Download and install Dashboard for HONK
 
-TARGET_DIR="${1:-/etc/honk/dashboard}"
-DOWNLOAD_URL="${2:-https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip}"
+TARGET_DIR="${1:-/etc/honk/doona}"
+if [ -z "${2:-}" ]; then
+    if [ "$TARGET_DIR" = "/etc/honk/zashboard" ]; then
+        DOWNLOAD_URL="https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
+    else
+        DOWNLOAD_URL="https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.8/doona-0.1.0-beta.8.tar.gz"
+    fi
+else
+    DOWNLOAD_URL="$2"
+fi
 
 LOG_FILE="/tmp/honk_dashboard_download.log"
 STATUS_FILE="/tmp/honk_dashboard_download.status"
@@ -166,6 +174,7 @@ if [ -n "$TARGET_DIR" ] && [ "$TARGET_DIR" != "/" ] && [ "$TARGET_DIR" != "/etc"
     rm -rf "${TARGET_DIR:?}"/* "${TARGET_DIR:?}"/.[!.]* 2>/dev/null || true
 fi
 cp -rf "$DEPLOY_SRC/"* "$TARGET_DIR/"
+rm -rf "$TARGET_DIR"/*.md "$TARGET_DIR"/LICENSE* "$TARGET_DIR"/NOTICE "$TARGET_DIR"/LICENSES 2>/dev/null || true
 chmod -R 755 "$TARGET_DIR"
 
 if [ -f "$TARGET_DIR/index.html" ]; then

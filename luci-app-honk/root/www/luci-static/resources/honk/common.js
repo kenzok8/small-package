@@ -85,12 +85,6 @@ var callHonkDownloadStatus = rpc.declare({
 	expect: { }
 });
 
-var callHonkEnableClashApi = rpc.declare({
-	object: 'luci.honk',
-	method: 'enable_clash_api',
-	expect: { }
-});
-
 var callHonkSwitchDashboardApi = rpc.declare({
 	object: 'luci.honk',
 	method: 'switch_dashboard_api',
@@ -436,7 +430,7 @@ function createConfigFileView(filePath, mapTitle, mapDesc, fieldTitle, successMs
 							'        enabled: true',
 							"        listen: '0.0.0.0:9527'",
 							"        secret: 'honk114514'",
-							"        ui: '/etc/honk/dashboard'",
+							"        ui: '/etc/honk/doona'",
 							"        config_write: true",
 							"        geosite_download_url: 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/release/geosite.dat'",
 							"        geoip_download_url: 'https://raw.githubusercontent.com/QiuSimons/geoip-moedove/refs/heads/main/geoip.dat'",
@@ -602,7 +596,6 @@ return baseclass.extend({
 	callHonkDownloadDashboard: callHonkDownloadDashboard,
 	callHonkDownloadZashboard: callHonkDownloadDashboard,
 	callHonkDownloadStatus: callHonkDownloadStatus,
-	callHonkEnableClashApi: callHonkEnableClashApi,
 	callHonkSwitchDashboardApi: callHonkSwitchDashboardApi,
 	readFile: readFile,
 	writeFile: writeFile,

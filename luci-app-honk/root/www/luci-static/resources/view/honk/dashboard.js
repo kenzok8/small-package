@@ -28,15 +28,16 @@ return view.extend({
 			zashboard: {
 				name: 'Zashboard',
 				label: 'Zashboard',
-				apiName: 'Clash API',
-				defaultPort: '9090',
+				apiName: 'Native API',
+				defaultPort: '9527',
 				defaultDir: '/etc/honk/zashboard',
-				exampleConfig: "experimental {\n    clash_api {\n        external_controller: '0.0.0.0:9090'\n        external_ui: '/etc/honk/zashboard'\n        secret: ''\n        default_mode: 'Rule'\n    }\n}",
+				exampleConfig: "experimental {\n    native_api {\n        enabled: true\n        listen: '0.0.0.0:9527'\n        secret: 'honk114514'\n        ui: '/etc/honk/zashboard'\n        config_write: true\n        geosite_download_url: 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/release/geosite.dat'\n        geoip_download_url: 'https://raw.githubusercontent.com/QiuSimons/geoip-moedove/refs/heads/main/geoip.dat'\n    }\n}",
 				buildUrl: function(info, targetHost, port, secret, protocol, forceFresh) {
 					var hostPart = (targetHost.indexOf(':') !== -1 && targetHost.charAt(0) !== '[') ? '[' + targetHost + ']' : targetHost;
 					var query = 'hostname=' + encodeURIComponent(targetHost) +
 						'&port=' + encodeURIComponent(port) +
-						'&protocol=' + encodeURIComponent(protocol);
+						'&protocol=' + encodeURIComponent(protocol) +
+						'&type=dae';
 					if (secret) {
 						query += '&secret=' + encodeURIComponent(secret);
 					}
@@ -56,8 +57,8 @@ return view.extend({
 				label: _('Doona'),
 				apiName: 'Native API',
 				defaultPort: '9527',
-				defaultDir: '/etc/honk/dashboard',
-				exampleConfig: "experimental {\n    native_api {\n        enabled: true\n        listen: '0.0.0.0:9527'\n        secret: 'honk114514'\n        ui: '/etc/honk/dashboard'\n        config_write: true\n        geosite_download_url: 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/release/geosite.dat'\n        geoip_download_url: 'https://raw.githubusercontent.com/QiuSimons/geoip-moedove/refs/heads/main/geoip.dat'\n    }\n}",
+				defaultDir: '/etc/honk/doona',
+				exampleConfig: "experimental {\n    native_api {\n        enabled: true\n        listen: '0.0.0.0:9527'\n        secret: 'honk114514'\n        ui: '/etc/honk/doona'\n        config_write: true\n        geosite_download_url: 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/release/geosite.dat'\n        geoip_download_url: 'https://raw.githubusercontent.com/QiuSimons/geoip-moedove/refs/heads/main/geoip.dat'\n    }\n}",
 				buildUrl: function(info, targetHost, port, secret, protocol, forceFresh) {
 					var hostPart = (targetHost.indexOf(':') !== -1 && targetHost.charAt(0) !== '[') ? '[' + targetHost + ']' : targetHost;
 					var url = protocol + '://' + hostPart + ':' + port + '/ui/';
@@ -111,7 +112,7 @@ return view.extend({
 
 		function buildDashboardUrl(info, forceFresh) {
 			var targetHost = getTargetHost(info.host);
-			var port = info.port || '9090';
+			var port = info.port || profile.defaultPort || '9527';
 			var secret = info.secret || '';
 			var protocol = 'http';
 			return profile.buildUrl(info, targetHost, port, secret, protocol, forceFresh);
@@ -171,13 +172,13 @@ return view.extend({
 
 		// State 1: Unconfigured
 		var quickEnableMsg = E('span', { 'style': 'margin-left: 8px;' });
-		var enableBtnText = (dashType === 'doona') ? _('One-click Enable Default Native API') : _('One-click Enable Default Clash API');
+		var enableBtnText = _('One-click Enable Default Native API');
 		var btnQuickEnable = E('button', {
 			'type': 'button',
 			'class': 'cbi-button cbi-button-apply',
 			'click': function() {
 				btnQuickEnable.disabled = true;
-				btnQuickEnable.innerText = (dashType === 'doona') ? _('Enabling Native API and restarting HONK...') : _('Enabling Clash API and restarting HONK...');
+				btnQuickEnable.innerText = _('Enabling Native API and restarting HONK...');
 				honk.callHonkSwitchDashboardApi(dashType).then(function(resp) {
 					btnQuickEnable.disabled = false;
 					btnQuickEnable.innerText = enableBtnText;
@@ -195,13 +196,9 @@ return view.extend({
 			}
 		}, enableBtnText);
 
-		var unconfTitle = (dashType === 'doona') ? _('Dashboard / Native API Unconfigured') : _('Dashboard / Clash API Unconfigured');
-		var unconfDescr = (dashType === 'doona') 
-			? _('HONK has not enabled Native API in its configuration file. Doona requires native API listener and dashboard UI path.')
-			: _('HONK has not enabled Clash API in its configuration file. Dashboard requires external controller port and dashboard UI path.');
-		var unconfWarn = (dashType === 'doona')
-			? _('Please configure experimental.native_api block in API Settings, and ensure listen and ui are configured.')
-			: _('Please configure experimental.clash_api block in API Settings, and ensure external_controller and external_ui are configured.');
+		var unconfTitle = _('Dashboard / Native API Unconfigured');
+		var unconfDescr = _('HONK has not enabled Native API in its configuration file. Dashboard requires native API listener and dashboard UI path.');
+		var unconfWarn = _('Please configure experimental.native_api block in API Settings, and ensure listen and ui are configured.');
 
 		var stateUnconfigured = E('div', { 'class': 'cbi-section', 'style': 'display: none;' }, [
 			E('h3', {}, unconfTitle),
@@ -222,7 +219,7 @@ return view.extend({
 
 		// State 2: Missing UI
 		var metaUiDir = E('td', {}, profile.defaultDir);
-		var metaController = E('td', {}, '0.0.0.0:9090');
+		var metaController = E('td', {}, '0.0.0.0:9527');
 		var metaSecret = E('td', {}, _('(Not set)'));
 
 		var radioGithub = E('input', { 'type': 'radio', 'class': 'cbi-input-radio', 'name': 'dash_dl_src', 'value': profile.githubRelease, 'checked': 'checked' });
@@ -278,13 +275,11 @@ return view.extend({
 		var stateMissingUi = E('div', { 'class': 'cbi-section', 'style': 'display: none;' }, [
 			E('h3', {}, _('%s UI Files Not Found').format(profile.name)),
 			E('div', { 'class': 'cbi-section-descr' },
-				(dashType === 'doona') 
-					? _('Native API is configured, but dashboard files are missing in the UI directory. You can download and deploy it directly.')
-					: _('Clash API is configured, but dashboard files are missing in the external UI directory. You can download and deploy it directly.')
+				_('Native API is configured, but dashboard files are missing in the UI directory. You can download and deploy it directly.')
 			),
 			E('table', { 'class': 'table', 'style': 'margin: 14px 0;' }, [
-				E('tr', {}, [ E('th', { 'style': 'width: 25%;' }, _('Target Dashboard')), selectDashboardMissing ]),
-				E('tr', {}, [ E('th', {}, (dashType === 'doona') ? _('Target Directory (ui)') : _('Target Directory (external_ui)')), metaUiDir ]),
+				E('tr', {}, [ E('th', { 'style': 'width: 25%;' }, _('Target Dashboard')), E('td', {}, selectDashboardMissing) ]),
+				E('tr', {}, [ E('th', {}, _('Target Directory (ui)')), metaUiDir ]),
 				E('tr', {}, [ E('th', {}, _('Listen Address & Port')), metaController ]),
 				E('tr', {}, [ E('th', {}, _('API Secret')), metaSecret ])
 			]),
@@ -321,7 +316,7 @@ return view.extend({
 			E('a', { 'href': '#', 'target': '_blank', 'class': 'cbi-button cbi-button-action', 'style': 'white-space: nowrap; margin-left: 10px;' }, _('Open in New Tab'))
 		]);
 
-		var honkPortLabel = E('span', { 'class': 'honk_port_label' }, profile.defaultPort || '9090');
+		var honkPortLabel = E('span', { 'class': 'honk_port_label' }, profile.defaultPort || '9527');
 		var honkStopAlert = E('div', { 'class': 'alert-message warning', 'style': 'display: none; margin-bottom: 10px; justify-content: space-between; align-items: center;' }, [
 			E('div', {}, [
 				E('strong', {}, _('HONK service is currently not running:') + ' '),
@@ -579,7 +574,7 @@ return view.extend({
 				statusServicePill.className = 'label warning';
 				statusServicePill.innerText = _('Not Running');
 				honkStopAlert.style.display = 'flex';
-				honkPortLabel.innerText = port || '9090';
+				honkPortLabel.innerText = port || profile.defaultPort || '9527';
 			}
 		}
 
@@ -593,7 +588,7 @@ return view.extend({
 
 				if (!data.has_ui) {
 					metaUiDir.innerText = data.external_ui || profile.defaultDir;
-					metaController.innerText = data.external_controller || (dashType === 'doona' ? '0.0.0.0:9527' : '0.0.0.0:9090');
+					metaController.innerText = data.external_controller || ('0.0.0.0:' + (profile.defaultPort || '9527'));
 					metaSecret.innerText = data.secret ? data.secret : _('Not configured (Empty)');
 					showState('missing_ui');
 					return;
@@ -602,7 +597,7 @@ return view.extend({
 				// Ready state
 				showState('ready');
 				var targetHost = getTargetHost(data.host);
-				var port = data.port || profile.defaultPort || '9090';
+				var port = data.port || profile.defaultPort || '9527';
 				var fullUrl = buildDashboardUrl(data);
 
 				updateHonkRunningState(data.running, port);

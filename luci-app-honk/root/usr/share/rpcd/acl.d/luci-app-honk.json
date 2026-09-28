@@ -14,6 +14,7 @@
 				"/etc/honk/config.d/node.dae",
 				"/etc/honk/config.d/route.dae",
 				"/etc/honk/dashboard/*",
+				"/etc/honk/doona/*",
 				"/etc/honk/zashboard/*"
 			]
 		},
@@ -30,6 +31,7 @@
 				"/etc/honk/config.d/node.dae",
 				"/etc/honk/config.d/route.dae",
 				"/etc/honk/dashboard/*",
+				"/etc/honk/doona/*",
 				"/etc/honk/zashboard/*"
 			]
 		}

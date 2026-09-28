@@ -2102,14 +2102,9 @@ local function update_node(manual)
 
 	uci_save(true)
 
-	if arg[3] == "cron" then
-		if not fs.access(api.LOCK_PREFIX .. ".lock") then
-			luci.sys.call("touch %s_cron.lock" % api.LOCK_PREFIX)
-		end
-	end
-
+	local action = (arg[3] == "cron") and " cron" or ""
 	if manual ~= 1 then
-		luci.sys.call("/etc/init.d/passwall restart > /dev/null 2>&1 &")
+		luci.sys.call("/etc/init.d/passwall restart%s > /dev/null 2>&1 &" % action)
 	end
 end
 
