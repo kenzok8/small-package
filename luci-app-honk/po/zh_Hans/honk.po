@@ -315,3 +315,15 @@ msgstr "API 配置"
 
 msgid "API configuration saved and service restarted."
 msgstr "API 配置已保存并重启服务。"
+
+msgid "None"
+msgstr "无"
+
+msgid "Dashboard Disabled"
+msgstr "面板未启用"
+
+msgid "Dashboard type is currently set to \"None\". Web dashboard and API listener are disabled."
+msgstr "当前面板类型为“无”，Web 管理面板和 Native API 监听已禁用。"
+
+msgid "Failed to switch dashboard:"
+msgstr "切换面板失败："

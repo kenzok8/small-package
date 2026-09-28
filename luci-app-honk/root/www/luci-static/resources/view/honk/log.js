@@ -10,8 +10,9 @@ return view.extend({
 	handleReset: null,
 
 	render: function() {
-		if (honk && honk.applyAdvancedTabVisibility) {
-			honk.applyAdvancedTabVisibility();
+		var applyTabs = (honk && (honk.applyTabVisibility || honk.applyAdvancedTabVisibility));
+		if (applyTabs) {
+			applyTabs();
 		}
 
 		var scrolled = false;
@@ -35,12 +36,10 @@ return view.extend({
 					logTextarea.value = '';
 					logTextarea.scrollTop = 0;
 					scrolled = false;
-					var notify = (honk && honk.showNotification) ? honk.showNotification : ui.addNotification;
-					notify(null, E('p', _('Logs cleared successfully.')), 'info');
+					honk.showNotification(null, E('p', _('Logs cleared successfully.')), 'info');
 				}).catch(function(err) {
 					btnClear.disabled = false;
-					var notify = (honk && honk.showNotification) ? honk.showNotification : ui.addNotification;
-					notify(null, E('p', _('Failed to clear logs:') + ' ' + (err.message || err)), 'error');
+					honk.showNotification(null, E('p', _('Failed to clear logs:') + ' ' + (err.message || err)), 'error');
 				});
 			}
 		}, _('Clear logs'));

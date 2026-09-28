@@ -5,6 +5,45 @@
 import { readfile, writefile, popen, stat } from 'fs';
 import { cursor } from 'uci';
 
+const DASHBOARD_DIRS = {
+	zashboard: "/etc/honk/zashboard",
+	doona: "/etc/honk/doona"
+};
+
+function get_dashboard_dir(type) {
+	return DASHBOARD_DIRS[type] || DASHBOARD_DIRS.doona;
+}
+
+function get_honk_pid() {
+	let p = popen("pidof honk-core 2>/dev/null");
+	let pids = p ? p.read("all") : "";
+	if (p) p.close();
+	let m = match(pids, /([0-9]+)/);
+	return m ? m[1] : null;
+}
+
+function parse_host_port(addr) {
+	let res = { host: "", port: "" };
+	if (!addr) return res;
+	let m_v6 = match(addr, /^\[([^\]]+)\]:([0-9]+)$/);
+	let m_v4 = match(addr, /^([^:]+):([0-9]+)$/);
+	let m_p = match(addr, /^:([0-9]+)$/);
+	if (m_v6) {
+		res.host = m_v6[1];
+		res.port = m_v6[2];
+	} else if (m_v4) {
+		res.host = m_v4[1];
+		res.port = m_v4[2];
+	} else if (m_p) {
+		res.host = "0.0.0.0";
+		res.port = m_p[1];
+	} else if (match(addr, /^[0-9]+$/)) {
+		res.host = "0.0.0.0";
+		res.port = addr;
+	}
+	return res;
+}
+
 function strip_dae_comments(content) {
 	if (!content) return "";
 	let lines = split(content, /[\r\n]+/);
@@ -40,48 +79,6 @@ function strip_dae_comments(content) {
 	return join("\n", clean_lines);
 }
 
-function parse_clash_api(clean_content) {
-	let api_m = match(clean_content, /clash_api\s*\{([^}]+)\}/);
-	if (!api_m) return null;
-	let block = api_m[1];
-
-	let ec_m = match(block, /external_controller\s*:\s*['"]?([^'" \t\r\n]+)['"]?/);
-	let ui_m = match(block, /external_ui\s*:\s*['"]?([^'" \t\r\n]+)['"]?/);
-	let sec_m = match(block, /secret\s*:\s*['"]?([^'" \t\r\n]*)['"]?/);
-	let dm_m = match(block, /default_mode\s*:\s*['"]?([^'" \t\r\n]*)['"]?/);
-
-	let res = {
-		external_controller: ec_m ? ec_m[1] : "",
-		external_ui: ui_m ? ui_m[1] : "",
-		secret: sec_m ? sec_m[1] : "",
-		default_mode: dm_m ? dm_m[1] : "Rule",
-		host: "",
-		port: ""
-	};
-
-	let ec = res.external_controller;
-	if (ec) {
-		let m_v6 = match(ec, /^\[([^\]]+)\]:([0-9]+)$/);
-		let m_v4 = match(ec, /^([^:]+):([0-9]+)$/);
-		let m_p = match(ec, /^:([0-9]+)$/);
-		if (m_v6) {
-			res.host = m_v6[1];
-			res.port = m_v6[2];
-		} else if (m_v4) {
-			res.host = m_v4[1];
-			res.port = m_v4[2];
-		} else if (m_p) {
-			res.host = "0.0.0.0";
-			res.port = m_p[1];
-		} else if (match(ec, /^[0-9]+$/)) {
-			res.host = "0.0.0.0";
-			res.port = ec;
-		}
-	}
-
-	return res;
-}
-
 function parse_native_api(clean_content) {
 	let api_m = match(clean_content, /native_api\s*\{([^}]+)\}/);
 	if (!api_m) return null;
@@ -107,32 +104,20 @@ function parse_native_api(clean_content) {
 		port: ""
 	};
 
-	let listen = res.listen;
-	if (listen) {
-		let m_v6 = match(listen, /^\[([^\]]+)\]:([0-9]+)$/);
-		let m_v4 = match(listen, /^([^:]+):([0-9]+)$/);
-		let m_p = match(listen, /^:([0-9]+)$/);
-		if (m_v6) {
-			res.host = m_v6[1];
-			res.port = m_v6[2];
-		} else if (m_v4) {
-			res.host = m_v4[1];
-			res.port = m_v4[2];
-		} else if (m_p) {
-			res.host = "0.0.0.0";
-			res.port = m_p[1];
-		} else if (match(listen, /^[0-9]+$/)) {
-			res.host = "0.0.0.0";
-			res.port = listen;
-		}
-	}
+	let hp = parse_host_port(res.listen);
+	res.host = hp.host;
+	res.port = hp.port;
 
 	return res;
 }
 
 function get_config_file_path() {
 	let u = cursor();
-	let p = u ? u.get("honk", "config", "config_file") : null;
+	let p = null;
+	if (u) {
+		u.load("honk");
+		p = u.get("honk", "config", "config_file");
+	}
 	return p || "/etc/honk/config.dae";
 }
 
@@ -144,21 +129,18 @@ function get_api_config() {
 	let api_file = get_api_file_path();
 	let content = readfile(api_file) || "";
 	let clean = strip_dae_comments(content);
-	let parsed_clash = parse_clash_api(clean);
 	let parsed_native = parse_native_api(clean);
 
-	if (!parsed_clash && !parsed_native) {
+	if (!parsed_native) {
 		let config_file = get_config_file_path();
 		let legacy_content = readfile(config_file) || "";
 		let legacy_clean = strip_dae_comments(legacy_content);
-		let leg_clash = parse_clash_api(legacy_clean);
 		let leg_native = parse_native_api(legacy_clean);
-		if (leg_clash || leg_native) {
+		if (leg_native) {
 			return {
 				file: config_file,
 				content: legacy_content,
 				clean: legacy_clean,
-				parsed_clash: leg_clash,
 				parsed_native: leg_native,
 				is_legacy: true
 			};
@@ -169,7 +151,6 @@ function get_api_config() {
 		file: api_file,
 		content: content,
 		clean: clean,
-		parsed_clash: parsed_clash,
 		parsed_native: parsed_native,
 		is_legacy: false
 	};
@@ -225,27 +206,19 @@ function get_dashboard_info(req) {
 	let u = cursor();
 	let requested_type = (req && req.args) ? req.args.type : null;
 	if (!requested_type && u) {
+		u.load("honk");
 		requested_type = u.get("honk", "config", "dashboard");
 		if (!requested_type) {
-			u.load("honk");
 			u.foreach("honk", "honk", function(s) {
 				if (s.dashboard) requested_type = s.dashboard;
 			});
 		}
 	}
-	if (!requested_type) requested_type = "doona";
+	if (!requested_type) requested_type = "none";
 
 	let api_cfg = get_api_config();
-	if (!api_cfg.is_legacy) {
-		clean_legacy_api_from_config(get_config_file_path());
-	}
-	let parsed_clash = api_cfg.parsed_clash;
 	let parsed_native = api_cfg.parsed_native;
-
-	let p = popen("pidof honk-core 2>/dev/null");
-	let pids = p ? p.read("all") : "";
-	if (p) p.close();
-	let running = !!match(pids, /[0-9]+/);
+	let running = !!get_honk_pid();
 
 	let res = {
 		dashboard_type: requested_type,
@@ -260,13 +233,16 @@ function get_dashboard_info(req) {
 		external_ui: "",
 		geosite_download_url: "",
 		geoip_download_url: "",
-		default_mode: "Rule",
-		has_clash_api: !!parsed_clash,
-		has_native_api: !!(parsed_native && parsed_native.enabled)
+		default_mode: "Rule"
 	};
 
-	let target_default_ui = (requested_type == "zashboard") ? "/etc/honk/zashboard" : "/etc/honk/doona";
-	let other_default_ui = (requested_type == "zashboard") ? "/etc/honk/doona" : "/etc/honk/zashboard";
+	if (requested_type == "none") {
+		return res;
+	}
+
+	let target_default_ui = get_dashboard_dir(requested_type);
+	let other_type = (requested_type == "zashboard") ? "doona" : "zashboard";
+	let other_default_ui = get_dashboard_dir(other_type);
 
 	if (parsed_native && parsed_native.enabled) {
 		res.external_controller = parsed_native.listen;
@@ -282,14 +258,6 @@ function get_dashboard_info(req) {
 		} else {
 			res.configured = false;
 		}
-	} else if (parsed_clash) {
-		res.configured = false;
-		res.external_controller = parsed_clash.external_controller;
-		res.host = parsed_clash.host;
-		res.port = parsed_clash.port || "9090";
-		res.secret = parsed_clash.secret;
-		res.external_ui = parsed_clash.external_ui;
-		res.default_mode = parsed_clash.default_mode;
 	}
 
 	if (res.external_ui) {
@@ -302,25 +270,35 @@ function get_dashboard_info(req) {
 
 	return res;
 }
+
 function download_dashboard(req) {
-	let requested_type = req.args ? req.args.type : null;
-	let url = req.args ? req.args.url : null;
-	if (!url) {
-		if (requested_type == "doona") {
-			url = "https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.8/doona-0.1.0-beta.8.tar.gz";
-		} else {
-			url = "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip";
+	let requested_type = (req && req.args) ? req.args.type : null;
+	if (!requested_type) {
+		let u = cursor();
+		if (u) {
+			u.load("honk");
+			requested_type = u.get("honk", "config", "dashboard");
+			if (!requested_type) {
+				u.foreach("honk", "honk", function(s) {
+					if (s.dashboard) requested_type = s.dashboard;
+				});
+			}
 		}
 	}
+	if (!requested_type || requested_type == "none") {
+		requested_type = "doona";
+	}
 
-	if (!match(url, /^https?:\/\//) || match(url, /[ \t\r\n'"`]/)) {
+	let url = (req && req.args && req.args.url) ? req.args.url : "";
+	if (url != "" && (!match(url, /^https?:\/\//) || match(url, /[ \t\r\n'"`]/))) {
 		return { success: false, message: "Invalid URL" };
 	}
 
 	let api_cfg = get_api_config();
 	let parsed_native = api_cfg.parsed_native;
-	let other_default_ui = (requested_type == "zashboard") ? "/etc/honk/doona" : "/etc/honk/zashboard";
-	let target_dir = (requested_type == "zashboard") ? "/etc/honk/zashboard" : "/etc/honk/doona";
+	let other_type = (requested_type == "zashboard") ? "doona" : "zashboard";
+	let other_default_ui = get_dashboard_dir(other_type);
+	let target_dir = get_dashboard_dir(requested_type) || "/etc/honk/doona";
 	if (parsed_native && parsed_native.ui && parsed_native.ui != other_default_ui) {
 		target_dir = parsed_native.ui;
 	}
@@ -350,15 +328,36 @@ function switch_dashboard_api(target_type) {
 
 	system("mkdir -p /etc/honk/config.d");
 
-	let api_cfg = get_api_config();
-	let parsed_clash = api_cfg.parsed_clash;
-	let parsed_native = api_cfg.parsed_native;
+	// 2. Persist UCI dashboard option to keep UCI and api.dae in sync
+	let u = cursor();
+	if (u) {
+		u.load("honk");
+		let sid = "config";
+		if (!u.get("honk", sid)) {
+			u.foreach("honk", "honk", function(s) { sid = s[".name"]; });
+		}
+		u.set("honk", sid, "dashboard", target_type || "none");
+		u.commit("honk");
+	}
 
-	let target_ui = (target_type == "zashboard") ? "/etc/honk/zashboard" : "/etc/honk/doona";
+	if (target_type == "none" || !target_type) {
+		let cur = readfile(api_file);
+		if (cur && trim(cur) != "") {
+			writefile(api_file, "");
+			system("/etc/init.d/honk restart >/dev/null 2>&1 &");
+			return { success: true, type: "none" };
+		}
+		writefile(api_file, "");
+		return { success: true, type: "none", noop: true };
+	}
+
+	let api_cfg = get_api_config();
+	let parsed_native = api_cfg.parsed_native;
+	let target_ui = get_dashboard_dir(target_type);
 
 	// Check if already correctly configured in api.dae
 	if (!api_cfg.is_legacy) {
-		if (parsed_native && parsed_native.enabled && !parsed_clash &&
+		if (parsed_native && parsed_native.enabled &&
 		    parsed_native.listen &&
 		    parsed_native.config_write &&
 		    parsed_native.geosite_download_url && parsed_native.geoip_download_url &&
@@ -414,11 +413,7 @@ return {
 	"luci.honk": {
 		status: {
 			call: function(req) {
-				let p = popen("pidof honk-core 2>/dev/null");
-				let pids = p ? p.read("all") : "";
-				if (p) p.close();
-				let m = match(pids, /([0-9]+)/);
-				let pid = m ? m[1] : null;
+				let pid = get_honk_pid();
 				let running = !!pid;
 				let memory = null;
 				if (running) {
@@ -469,16 +464,7 @@ return {
 			call: get_dashboard_info
 		},
 
-		get_zashboard_info: {
-			call: get_dashboard_info
-		},
-
 		download_dashboard: {
-			args: { url: "string", type: "string" },
-			call: download_dashboard
-		},
-
-		download_zashboard: {
 			args: { url: "string", type: "string" },
 			call: download_dashboard
 		},
@@ -493,22 +479,10 @@ return {
 			}
 		},
 
-		enable_clash_api: {
-			call: function(req) {
-				return switch_dashboard_api("zashboard");
-			}
-		},
-
-		enable_native_api: {
-			call: function(req) {
-				return switch_dashboard_api("doona");
-			}
-		},
-
 		switch_dashboard_api: {
 			args: { type: "string" },
 			call: function(req) {
-				let t = req.args ? req.args.type : "doona";
+				let t = req.args ? req.args.type : "none";
 				return switch_dashboard_api(t);
 			}
 		}

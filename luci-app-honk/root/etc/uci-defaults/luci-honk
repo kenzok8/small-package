@@ -4,23 +4,10 @@
 [ -f /usr/share/honk/download_zashboard.sh ] && rm -f /usr/share/honk/download_zashboard.sh
 
 mkdir -p /etc/honk/config.d /etc/honk/state
-if [ ! -f /etc/honk/config.d/api.dae ]; then
-	cat << 'EOF' > /etc/honk/config.d/api.dae
-# api.dae
-# Configure API access for HONK dashboards and controllers.
-
-experimental {
-    native_api {
-        enabled: true
-        listen: '0.0.0.0:9527'
-        secret: 'honk114514'
-        ui: '/etc/honk/doona'
-        config_write: true
-        geosite_download_url: 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/release/geosite.dat'
-        geoip_download_url: 'https://raw.githubusercontent.com/QiuSimons/geoip-moedove/refs/heads/main/geoip.dat'
-    }
-}
-EOF
+[ -f /etc/honk/config.d/api.dae ] || touch /etc/honk/config.d/api.dae
+dash=$(uci -q get honk.config.dashboard || uci -q get honk.@honk[0].dashboard || echo "")
+if [ "$dash" = "none" ]; then
+	: > /etc/honk/config.d/api.dae
 fi
 
 # Smooth migration from legacy /etc/honk/dashboard to /etc/honk/doona
