@@ -29,7 +29,7 @@ mkdir -p /tmp
 : > "$LOG_FILE"
 set_status "DOWNLOADING"
 
-log "Starting Dashboard deployment to: $TARGET_DIR"
+log "Deploying dashboard to: $TARGET_DIR"
 log "Download URL: $DOWNLOAD_URL"
 
 download_file() {
@@ -63,33 +63,33 @@ case "$DOWNLOAD_URL" in
         DEFAULT_TAG="v0.1.0-beta.8"
         DEFAULT_TAG_NO_V="${DEFAULT_TAG#[vV]}"
         FALLBACK_URL="${PREFIX}https://github.com/Zakkaus/doona/releases/download/${DEFAULT_TAG}/doona-${DEFAULT_TAG_NO_V}.tar.gz"
-        log "Checking for latest Doona release online..."
+        log "Checking latest release..."
 
         RESOLVED_URL=""
         RELEASES_HTML=$(fetch_text "https://github.com/Zakkaus/doona/releases")
         LATEST_TAG=$(printf "%s" "$RELEASES_HTML" | grep -o 'releases/tag/[^"/]*' | head -n 1 | sed 's|releases/tag/||')
 
         if [ -n "$LATEST_TAG" ]; then
-            log "Detected latest release tag: $LATEST_TAG"
+            log "Latest tag: $LATEST_TAG"
             ASSETS_HTML=$(fetch_text "https://github.com/Zakkaus/doona/releases/expanded_assets/$LATEST_TAG")
             ASSET_PATH=$(printf "%s" "$ASSETS_HTML" | grep -o '/Zakkaus/doona/releases/download/[^"]*/doona-[^"]*\.tar\.gz' | grep -v 'fonts' | head -n 1)
             if [ -n "$ASSET_PATH" ]; then
                 RESOLVED_URL="https://github.com${ASSET_PATH}"
-                log "Found release package: $ASSET_PATH"
+                log "Found package: $ASSET_PATH"
             else
                 TAG_NO_V="${LATEST_TAG#[vV]}"
                 RESOLVED_URL="https://github.com/Zakkaus/doona/releases/download/${LATEST_TAG}/doona-${TAG_NO_V}.tar.gz"
-                log "Standard release package URL inferred: $RESOLVED_URL"
+                log "Inferred package URL: $RESOLVED_URL"
             fi
         fi
 
         if [ -n "$RESOLVED_URL" ]; then
             DOWNLOAD_URL="${PREFIX}${RESOLVED_URL}"
-            log "Adaptive resolution succeeded: $DOWNLOAD_URL"
+            log "Resolved URL: $DOWNLOAD_URL"
         else
-            log "Warning: Online tag resolution unavailable. Falling back to verified release ($DEFAULT_TAG)."
+            log "Online tag resolution failed, fallback: $DEFAULT_TAG"
             DOWNLOAD_URL="$FALLBACK_URL"
-            log "Fallback download URL: $DOWNLOAD_URL"
+            log "Fallback URL: $DOWNLOAD_URL"
         fi
         ;;
 esac
@@ -123,7 +123,7 @@ if [ ! -s "$ARCHIVE_FILE" ]; then
     exit 1
 fi
 
-log "Download completed successfully. Extracting archive..."
+log "Extracting archive..."
 set_status "EXTRACTING"
 EXTRACT_DIR="$TMP_DIR/extracted"
 mkdir -p "$EXTRACT_DIR"
@@ -168,7 +168,7 @@ if [ ! -f "$DEPLOY_SRC/index.html" ]; then
     exit 1
 fi
 
-log "Deploying new files to $TARGET_DIR..."
+log "Deploying files to $TARGET_DIR..."
 mkdir -p "$TARGET_DIR"
 if [ -n "$TARGET_DIR" ] && [ "$TARGET_DIR" != "/" ] && [ "$TARGET_DIR" != "/etc" ] && [ "$TARGET_DIR" != "/tmp" ]; then
     rm -rf "${TARGET_DIR:?}"/* "${TARGET_DIR:?}"/.[!.]* 2>/dev/null || true
@@ -178,7 +178,7 @@ rm -rf "$TARGET_DIR"/*.md "$TARGET_DIR"/LICENSE* "$TARGET_DIR"/NOTICE "$TARGET_D
 chmod -R 755 "$TARGET_DIR"
 
 if [ -f "$TARGET_DIR/index.html" ]; then
-    log "Installation completed successfully!"
+    log "Installed successfully."
     set_status "SUCCESS"
     rm -rf "$TMP_DIR"
     exit 0

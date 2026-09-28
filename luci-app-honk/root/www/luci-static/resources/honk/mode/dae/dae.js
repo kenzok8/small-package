@@ -14,7 +14,7 @@ CodeMirror.defineMode("dae", function(config) {
   function tokenBase(stream, state) {
     if (stream.eatSpace()) return null;
 
-    // Comments (Official: comment.line, comment.block)
+    // Comments
     if (stream.match("#")) {
       stream.skipToEnd();
       return "comment";
@@ -24,12 +24,12 @@ CodeMirror.defineMode("dae", function(config) {
       return tokenBlockComment(stream, state);
     }
 
-    // Word Pattern (Official: bare_literal - ANTLR4 based)
+    // Word pattern
     // ID: [a-zA-Z_]([a-zA-Z_]|[/\\^*.+0-9-]|[=@$!#%])*
     // NON ID: [/\\^*.+0-9-]([a-zA-Z_]|[/\\^*.+0-9-]|[=@$!#%])*
     var wordPattern = /^([a-zA-Z_][a-zA-Z_0-9\/\^*.+\-=@$!#%]*|[\/\^*.+\-0-9][a-zA-Z_0-9\/\^*.+\-=@$!#%]*)/;
 
-    // Outbound detection (Anything after -> or fallback:)
+    // Outbound detection (after -> or fallback:)
     if (state.expectOutbound) {
       if (stream.match(wordPattern)) {
         state.expectOutbound = false;
@@ -37,48 +37,46 @@ CodeMirror.defineMode("dae", function(config) {
       }
     }
 
-    // Operators (Official: keyword.operator.*)
+    // Operators
     if (stream.match("->")) return "operator marker";
     if (stream.match("&&") || stream.match("!")) return "operator";
     if (stream.match(":")) return "operator";
 
-    // Quoted Strings (Official: quote_literal)
+    // Quoted strings
     if (stream.match(/^"([^"\\]|\\.)*"/ ) || stream.match(/^'([^'\\]|\\.)*'/)) return "string";
 
-    // Numbers & IPs (Official: literal - styled as constants in Dracula)
-    // Supports IPv4, IPv6 (including hex prefix), and CIDR notation
+    // Numbers & IPs (IPv4, IPv6, CIDR)
     if (stream.match(/^([0-9]+(\.[0-9]+)+(?:\/[0-9]+)?|[a-fA-F0-9:]*::[a-fA-F0-9:]*(?:\/[0-9]+)?|[a-fA-F0-9]+(:[a-fA-F0-9]+){2,}(?:\/[0-9]+)?|[0-9]+(\.[0-9]+)?(%|[a-zA-Z]+)?)/)) return "number";
 
-    // Struct/Block Header (Official: storage.type.struct)
+    // Block header
     if (stream.match(new RegExp(wordPattern.source.slice(1) + "\\s*(?={)"))) {
       return "keyword";
     }
 
-    // Tag Prefixes (Official: constant.other.id - Styled as variable-2 Cyan)
+    // Tag prefixes
     if (stream.match(/^(geosite|geoip|pname|domain|dip|sip|dport|sport|l4proto|ipversion_prefer|fixed_domain_ttl)(?=\s*:)/)) {
         return "variable-2";
     }
 
-    // Parameters (Official: variable.parameter - Styled as variable-3 Orange)
+    // Parameters
     if (stream.match(new RegExp(wordPattern.source.slice(1) + "(?=\\s*:)"))) {
         return "variable-3";
     }
 
-    // Functions/Matchers (Official: entity.name.function)
-    // Supports (!)? prefix
+    // Matcher functions
     if (stream.match(new RegExp("(!)?\\s*" + wordPattern.source.slice(1) + "\\s*(?=\\()"))) {
         return "def";
     }
 
-    // Official Keywords (Official: outbound)
+    // Keywords
     if (stream.match(/^(block|direct)\b/)) {
         return "keyword";
     }
 
-    // Brackets & Annotations
+    // Brackets
     if (stream.match(/^[{}()\[\]]/)) return "bracket";
 
-    // Fallback Word (Official: literal)
+    // Fallback identifier
     if (stream.match(wordPattern)) {
       return "variable";
     }

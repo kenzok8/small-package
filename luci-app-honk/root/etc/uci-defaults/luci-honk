@@ -10,7 +10,7 @@ if [ "$dash" = "none" ]; then
 	: > /etc/honk/config.d/api.dae
 fi
 
-# Smooth migration from legacy /etc/honk/dashboard to /etc/honk/doona
+# Migrate legacy /etc/honk/dashboard directory
 if [ -d /etc/honk/dashboard ] && [ ! -d /etc/honk/doona ]; then
 	mv /etc/honk/dashboard /etc/honk/doona
 elif [ -d /etc/honk/dashboard ] && [ -d /etc/honk/doona ]; then
@@ -23,7 +23,7 @@ chmod -R u=rwX,go= /etc/honk 2>/dev/null || true
 chmod 700 /etc/honk /etc/honk/config.d /etc/honk/state 2>/dev/null || true
 
 
-# Clean any legacy clash_api or native_api from /etc/honk/config.dae to avoid conflicts
+# Clean legacy api configuration from config.dae
 if [ -f /etc/honk/config.dae ]; then
 	ucode -e '
 	import { readfile, writefile } from "fs";

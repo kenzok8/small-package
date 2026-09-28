@@ -323,12 +323,10 @@ function switch_dashboard_api(target_type) {
 	let api_file = get_api_file_path();
 	let config_file = get_config_file_path();
 
-	// 1. Clean legacy api blocks from main config.dae to avoid read-only lock in dashboard
 	clean_legacy_api_from_config(config_file);
 
 	system("mkdir -p /etc/honk/config.d");
 
-	// 2. Persist UCI dashboard option to keep UCI and api.dae in sync
 	let u = cursor();
 	if (u) {
 		u.load("honk");

@@ -136,7 +136,7 @@ return view.extend({
 			https: uci.get('wizard', 'default', 'https') || '0',
 			cookie_p: uci.get('wizard', 'default', 'persistent_cookies') || '1',
 			landing_page: uci.get('wizard', 'default', 'landing_page') || 'default',
-			autoupgrade_fm: uci.get('wizard', 'default', 'autoupgrade_fm') || '1',
+			autoupgrade_fm: uci.get('wizard', 'default', 'autoupgrade_fm') || '0',
 			coremark: uci.get('wizard', 'default', 'coremark') || '0',
 			wifi_ssid: baseSsid || (this.hasWireless ? 'Kwrt' : ''),
 			wifi_key: (ap && ap.key) || ''

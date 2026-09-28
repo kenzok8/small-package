@@ -8,7 +8,6 @@
 'require view';
 'require form';
 
-// Scoped helper: auto-dismiss notification after specified timeout (default 3s)
 function showNotification(title, children, type, timeout) {
 	timeout = (timeout != null) ? timeout : 3000;
 	if (ui && ui.addTimeLimitedNotification) {

@@ -168,12 +168,12 @@ return view.extend({
 			'}'
 		].join('\n'));
 
-		// State 0: Loading
+		// Loading view
 		var stateLoading = E('div', { 'class': 'cbi-section', 'style': 'text-align: center; padding: 30px;' }, [
 			E('p', {}, E('em', {}, _('Checking Dashboard and API configuration...')))
 		]);
 
-		// State 1: Unconfigured
+		// Unconfigured view
 		var quickEnableMsg = E('span', { 'style': 'margin-left: 8px;' });
 		var enableBtnText = _('One-click Enable Default Native API');
 		var btnQuickEnable = E('button', {
@@ -221,7 +221,7 @@ return view.extend({
 			])
 		]);
 
-		// State: None
+		// Disabled view
 		var selectDashboardNone = createDashboardSelect();
 		var stateNone = E('div', { 'class': 'cbi-section', 'style': 'display: none;' }, [
 			E('h3', {}, _('Dashboard Disabled')),
@@ -236,7 +236,7 @@ return view.extend({
 			])
 		]);
 
-		// State 2: Missing UI
+		// Missing UI view
 		var metaUiDir = E('td', {}, profile.defaultDir);
 		var metaController = E('td', {}, '0.0.0.0:9527');
 		var metaSecret = E('td', {}, _('(Not set)'));
@@ -326,7 +326,7 @@ return view.extend({
 			E('div', { 'style': 'margin-top: 16px;' }, [ btnStartDownload ])
 		]);
 
-		// State 3: Ready
+		// Ready view
 		var httpsAlert = E('div', { 'class': 'alert-message warning', 'style': 'display: none; margin-bottom: 10px; justify-content: space-between; align-items: center;' }, [
 			E('div', {}, [
 				E('strong', {}, _('HTTPS access detected:') + ' '),
@@ -659,7 +659,6 @@ return view.extend({
 
 		loadInfo();
 
-		// Background status check every 5 seconds for service running pill
 		poll.add(function() {
 			if (currentInfo && currentInfo.configured && currentInfo.has_ui) {
 				return honk.callHonkStatus().then(function(res) {
