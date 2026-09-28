@@ -44,6 +44,12 @@ var callHonkReload = rpc.declare({
 	expect: { success: true }
 });
 
+var callHonkRestart = rpc.declare({
+	object: 'luci.honk',
+	method: 'restart',
+	expect: { success: true }
+});
+
 var callHonkGetLog = rpc.declare({
 	object: 'luci.honk',
 	method: 'get_log',
@@ -401,7 +407,7 @@ function initCodeMirror(textarea, onSaveCallback) {
 	});
 }
 
-function createConfigFileView(filePath, mapTitle, mapDesc, fieldTitle, successMsg) {
+function createConfigFileView(filePath, mapTitle, mapDesc, fieldTitle, successMsg, needRestart) {
 	return view.extend({
 		render: function() {
 			var m = new form.Map('honk', mapTitle, mapDesc);
@@ -419,7 +425,27 @@ function createConfigFileView(filePath, mapTitle, mapDesc, fieldTitle, successMs
 			o.rows = 25;
 			o.wrap = 'off';
 			o.load = function(section_id) {
-				return readFile(filePath);
+				return readFile(filePath).then(function(content) {
+					if ((!content || !content.trim()) && filePath.endsWith('/api.dae')) {
+						return [
+							'# api.dae',
+							'# Configure API access for HONK dashboards and controllers.',
+							'',
+							'experimental {',
+							'    native_api {',
+							'        enabled: true',
+							"        listen: '0.0.0.0:9527'",
+							"        secret: 'honk114514'",
+							"        ui: '/etc/honk/dashboard'",
+							"        config_write: true",
+							"        geosite_download_url: 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/release/geosite.dat'",
+							"        geoip_download_url: 'https://raw.githubusercontent.com/QiuSimons/geoip-moedove/refs/heads/main/geoip.dat'",
+							'    }',
+							'}'
+						].join('\n') + '\n';
+					}
+					return content;
+				});
 			};
 			o.write = function(section_id, formvalue) {
 				return writeFile(filePath, formvalue);
@@ -431,7 +457,7 @@ function createConfigFileView(filePath, mapTitle, mapDesc, fieldTitle, successMs
 
 		handleSaveApply: function(ev, mode) {
 			return this.handleSave(ev).then(function() {
-				return callHonkReload();
+				return needRestart ? callHonkRestart() : callHonkReload();
 			}).then(function() {
 				showNotification(null, E('p', successMsg || _('Configuration applied and service reloaded.')), 'info');
 			});
@@ -568,6 +594,7 @@ return baseclass.extend({
 	applyAdvancedTabVisibility: applyAdvancedTabVisibility,
 	callHonkStatus: callHonkStatus,
 	callHonkReload: callHonkReload,
+	callHonkRestart: callHonkRestart,
 	callHonkGetLog: callHonkGetLog,
 	callHonkClearLog: callHonkClearLog,
 	callHonkDashboardInfo: callHonkDashboardInfo,

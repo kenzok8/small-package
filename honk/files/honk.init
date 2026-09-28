@@ -17,8 +17,9 @@ HONK_NETNS_PATH="/run/netns/$HONK_NETNS_NAME"
 RESOLV_HONK="/tmp/resolv.conf.honk"
 
 set_chmod_640() {
-    mkdir -p /etc/honk/config.d
-    chmod -R 640 /etc/honk/ 2>/dev/null || true
+    mkdir -p /etc/honk/config.d /etc/honk/state
+    chmod -R u=rwX,go= /etc/honk 2>/dev/null || true
+    chmod 700 /etc/honk /etc/honk/config.d /etc/honk/state 2>/dev/null || true
 }
 
 cleanup_netns() {

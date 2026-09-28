@@ -6,3 +6,9 @@ Licensed under the Apache License, Version 2.0:
 https://www.apache.org/licenses/LICENSE-2.0
 Source: https://github.com/adobe/react-spectrum
 
+Noto Sans TC and Noto Sans SC
+Copyright 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name
+'Source'.
+The fonts in public/fonts are the Google Fonts subsets of Noto Sans TC and SC
+from https://github.com/notofonts/noto-cjk.
+Licensed under the SIL Open Font License, Version 1.1; see public/fonts/OFL.txt.

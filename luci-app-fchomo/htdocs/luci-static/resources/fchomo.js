@@ -56,6 +56,14 @@ const congestion_controller = [
 	['bbr', _('bbr')],
 ];
 
+const ipstack_congestion_controller = [
+	['', _('Keep default')],
+	['cubic', _('cubic')],
+	['reno', _('reno')],
+	['bbr', _('bbr')],
+	['bbr3', _('bbr3')],
+];
+
 const bbr_profiles = [
 	['', _('Keep default')],
 	['standard', _('Standard')],
@@ -2149,6 +2157,7 @@ return baseclass.extend({
 	monospacefonts,
 	checkurls,
 	congestion_controller,
+	ipstack_congestion_controller,
 	bbr_profiles,
 	stunserver,
 	dashrepos,

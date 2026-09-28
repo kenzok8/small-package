@@ -42,9 +42,17 @@
 			"path": "honk/route"
 		}
 	},
+	"admin/services/honk/api": {
+		"title": "API Settings",
+		"order": 5,
+		"action": {
+			"type": "view",
+			"path": "honk/api"
+		}
+	},
 	"admin/services/honk/dashboard": {
 		"title": "Dashboard",
-		"order": 5,
+		"order": 6,
 		"action": {
 			"type": "view",
 			"path": "honk/dashboard"
@@ -52,7 +60,7 @@
 	},
 	"admin/services/honk/log": {
 		"title": "Logs",
-		"order": 6,
+		"order": 7,
 		"action": {
 			"type": "view",
 			"path": "honk/log"

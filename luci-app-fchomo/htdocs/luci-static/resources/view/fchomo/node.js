@@ -1200,17 +1200,18 @@ return view.extend({
 		so = ss.taboption('field_general', form.ListValue, 'ipstack', _('IP stack'));
 		so.value('', _('Keep default'));
 		so.value('auto', _('Auto'));
-		so.value('gvisor', _('gVisor'));
 		so.value('mips', _('mihomo IP stack (MIPS)'));
+		if (features.with_gvisor) {
+			so.value('gvisor', _('gVisor'));
+		}
 		so.depends({type: /^(zerotier|wireguard|masque|openvpn)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.ListValue, 'ipstack_congestion_controller', _('IP stack') + ': ' + _('Congestion controller'));
-		so.value('', _('Keep default'));
-		so.value('cubic', _('cubic'));
-		so.value('reno', _('reno'));
-		so.value('bbr', _('bbr'));
-		so.value('bbr3', _('bbr3'));
+		so.default = hm.ipstack_congestion_controller[0][0];
+		hm.ipstack_congestion_controller.forEach((res) => {
+			so.value.apply(so, res);
+		})
 		so.depends({ipstack: /^(auto|mips)$/}); // not empty not gvisor
 		so.modalonly = true;
 

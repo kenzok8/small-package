@@ -3,6 +3,58 @@
 [ -f /usr/share/honk/download_dashboard.sh ] && chmod +x /usr/share/honk/download_dashboard.sh
 [ -f /usr/share/honk/download_zashboard.sh ] && rm -f /usr/share/honk/download_zashboard.sh
 
+mkdir -p /etc/honk/config.d /etc/honk/state
+if [ ! -f /etc/honk/config.d/api.dae ]; then
+	cat << 'EOF' > /etc/honk/config.d/api.dae
+# api.dae
+# Configure API access for HONK dashboards and controllers.
+
+experimental {
+    native_api {
+        enabled: true
+        listen: '0.0.0.0:9527'
+        secret: 'honk114514'
+        ui: '/etc/honk/dashboard'
+        config_write: true
+        geosite_download_url: 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/release/geosite.dat'
+        geoip_download_url: 'https://raw.githubusercontent.com/QiuSimons/geoip-moedove/refs/heads/main/geoip.dat'
+    }
+}
+EOF
+fi
+chmod -R u=rwX,go= /etc/honk 2>/dev/null || true
+chmod 700 /etc/honk /etc/honk/config.d /etc/honk/state 2>/dev/null || true
+
+
+# Clean any legacy clash_api or native_api from /etc/honk/config.dae to avoid conflicts
+if [ -f /etc/honk/config.dae ]; then
+	ucode -e '
+	import { readfile, writefile } from "fs";
+	let c = readfile("/etc/honk/config.dae");
+	if (c) {
+		let lines = split(c, "\n");
+		let out = [];
+		let skip = 0;
+		for (let line in lines) {
+			let trim = replace(line, /^[ \t]+|[ \t]+$/, "");
+			if (!skip && match(trim, /^[#\/]*\s*(clash_api|native_api)\s*\{/)) {
+				skip = 1;
+				continue;
+			}
+			if (skip) {
+				if (match(trim, /\{/)) skip++;
+				if (match(trim, /\}/)) skip--;
+				continue;
+			}
+			push(out, line);
+		}
+		let res = join("\n", out);
+		res = replace(res, /[ \t]*experimental\s*\{\s*\}[ \t]*\n?/, "");
+		if (res != c) writefile("/etc/honk/config.dae", res);
+	}
+	' 2>/dev/null || true
+fi
+
 rm -rf /tmp/luci-*
 /etc/init.d/rpcd reload 2>/dev/null
 

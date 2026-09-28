@@ -1,1 +1,0 @@
-import{j as c}from"./vendor-react-Bf71BWbF.js";import{u as i,aT as l}from"./index-zQjLFfuj.js";import{c as m}from"./policyText-IIH31itq.js";function f({value:o,onChange:s,isDisabled:t}){const e=i(),{selected:r,items:a}=m(o,e);return c.jsx(l,{label:e("arrange.policy"),value:r,onChange:s,items:a,isDisabled:t})}export{f as P};

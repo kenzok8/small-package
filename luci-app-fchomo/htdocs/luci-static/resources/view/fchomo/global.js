@@ -512,13 +512,13 @@ return view.extend({
 
 		so = ss.option(form.RichListValue, 'tun_stack', _('Stack'),
 			_('Tun stack.'));
-		so.value('system', _('System'), _('Less compatibility and sometimes better performance.'));
+		so.value('mips', _('mihomo IP stack (MIPS)'));
 		if (features.with_gvisor) {
 			so.value('gvisor', _('gVisor'), _('Based on google/gvisor.'));
 			so.value('mixed', _('Mixed'), _('Mixed <code>system</code> TCP stack and <code>gVisor</code> UDP stack.'));
 		}
-		so.value('mips', _('mihomo IP stack (MIPS)'));
-		so.default = 'system';
+		so.value('system', _('System'), _('Less compatibility and sometimes better performance.'));
+		so.default = 'mips';
 		so.rmempty = false;
 
 		so = ss.option(form.Value, 'tun_mtu', _('MTU'));
@@ -545,6 +545,13 @@ return view.extend({
 		so = ss.option(form.Flag, 'tun_disable_icmp_forwarding', _('Disable ICMP Forwarding'),
 			_('Prevent ICMP loopback issues in some cases. Ping will not show real delay.'));
 		so.default = so.enabled;
+
+		so = ss.option(form.ListValue, 'tun_congestion_controller', _('Congestion controller'));
+		so.default = hm.ipstack_congestion_controller[0][0];
+		hm.ipstack_congestion_controller.forEach((res) => {
+			so.value.apply(so, res);
+		})
+		so.depends('tun_stack', 'mips');
 		/* Inbound END */
 
 		/* TLS START */

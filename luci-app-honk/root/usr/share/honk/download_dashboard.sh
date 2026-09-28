@@ -52,8 +52,9 @@ fetch_text() {
 case "$DOWNLOAD_URL" in
     *github.com/Zakkaus/doona*)
         PREFIX="${DOWNLOAD_URL%%https://github.com/*}"
-        DEFAULT_TAG="v0.1.0-beta.3"
-        FALLBACK_URL="${PREFIX}https://github.com/Zakkaus/doona/releases/download/${DEFAULT_TAG}/doona-${DEFAULT_TAG}.tar.gz"
+        DEFAULT_TAG="v0.1.0-beta.8"
+        DEFAULT_TAG_NO_V="${DEFAULT_TAG#[vV]}"
+        FALLBACK_URL="${PREFIX}https://github.com/Zakkaus/doona/releases/download/${DEFAULT_TAG}/doona-${DEFAULT_TAG_NO_V}.tar.gz"
         log "Checking for latest Doona release online..."
 
         RESOLVED_URL=""
@@ -63,12 +64,13 @@ case "$DOWNLOAD_URL" in
         if [ -n "$LATEST_TAG" ]; then
             log "Detected latest release tag: $LATEST_TAG"
             ASSETS_HTML=$(fetch_text "https://github.com/Zakkaus/doona/releases/expanded_assets/$LATEST_TAG")
-            ASSET_PATH=$(printf "%s" "$ASSETS_HTML" | grep -o '/Zakkaus/doona/releases/download/[^"]*\.tar\.gz' | grep -v 'fonts' | head -n 1)
+            ASSET_PATH=$(printf "%s" "$ASSETS_HTML" | grep -o '/Zakkaus/doona/releases/download/[^"]*/doona-[^"]*\.tar\.gz' | grep -v 'fonts' | head -n 1)
             if [ -n "$ASSET_PATH" ]; then
                 RESOLVED_URL="https://github.com${ASSET_PATH}"
                 log "Found release package: $ASSET_PATH"
             else
-                RESOLVED_URL="https://github.com/Zakkaus/doona/releases/download/${LATEST_TAG}/doona-${LATEST_TAG}.tar.gz"
+                TAG_NO_V="${LATEST_TAG#[vV]}"
+                RESOLVED_URL="https://github.com/Zakkaus/doona/releases/download/${LATEST_TAG}/doona-${TAG_NO_V}.tar.gz"
                 log "Standard release package URL inferred: $RESOLVED_URL"
             fi
         fi
@@ -89,8 +91,6 @@ log "Downloading package..."
 rm -rf "$TMP_DIR"
 mkdir -p "$TMP_DIR"
 ARCHIVE_FILE="$TMP_DIR/package.tmp"
-
-
 
 if ! download_file "$DOWNLOAD_URL" "$ARCHIVE_FILE" || [ ! -s "$ARCHIVE_FILE" ]; then
     ALT_URL=""

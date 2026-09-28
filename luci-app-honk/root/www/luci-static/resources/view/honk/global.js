@@ -59,8 +59,7 @@ return view.extend({
 
 		return this.handleSave(ev).then(function() {
 			var newDash = uci.get('honk', sid, 'dashboard') || 'doona';
-			var isAdv = uci.get('honk', sid, 'advanced') === '1';
-			if (!isAdv && newDash !== oldDash) {
+			if (newDash !== oldDash) {
 				return honk.callHonkSwitchDashboardApi(newDash);
 			}
 		}).then(function() {

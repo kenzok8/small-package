@@ -136,17 +136,17 @@ msgstr "HONK 尚未在配置文件中启用 Clash API。Dashboard 控制面板�
 msgid "HONK has not enabled Native API in its configuration file. Doona requires native API listener and dashboard UI path."
 msgstr "HONK 尚未在配置文件中启用 Native API。Doona 控制面板需要依赖 Native API 提供的监听端口与面板静态文件路径。"
 
-msgid "Please add or uncomment experimental.clash_api block in Global Settings, and ensure external_controller and external_ui are configured."
-msgstr "请在【全局设置】的配置文件中添加或取消注释 experimental.clash_api 语法块，并确保配置了 external_controller 和 external_ui。"
+msgid "Please configure experimental.clash_api block in API Settings, and ensure external_controller and external_ui are configured."
+msgstr "请在【API 设置】的配置文件中配置 experimental.clash_api 语法块，并确保配置了 external_controller 和 external_ui。"
 
-msgid "Please add or uncomment experimental.native_api block in Global Settings, and ensure listen and ui are configured."
-msgstr "请在【全局设置】的配置文件中添加或取消注释 experimental.native_api 语法块，并确保配置了 listen 和 ui。"
+msgid "Please configure experimental.native_api block in API Settings, and ensure listen and ui are configured."
+msgstr "请在【API 设置】的配置文件中配置 experimental.native_api 语法块，并确保配置了 listen 和 ui。"
 
-msgid "Example Configuration (/etc/honk/config.dae):"
-msgstr "参考配置示例（/etc/honk/config.dae）："
+msgid "Example Configuration (/etc/honk/config.d/api.dae):"
+msgstr "参考配置示例（/etc/honk/config.d/api.dae）："
 
-msgid "Configure in Global Settings"
-msgstr "前往【全局设置】手动配置"
+msgid "Configure in API Settings"
+msgstr "前往【API 设置】手动配置"
 
 msgid "(Not set)"
 msgstr "（未设置）"
@@ -339,3 +339,15 @@ msgstr "认证密钥: "
 
 msgid "Click or drag to select Token"
 msgstr "点击或拖选认证密钥"
+
+msgid "API Settings"
+msgstr "API 设置"
+
+msgid "Configure API settings for HONK."
+msgstr "调整 HONK 的 API 设置。"
+
+msgid "API Configuration"
+msgstr "API 配置"
+
+msgid "API configuration saved and service restarted."
+msgstr "API 配置已保存并重启服务。"

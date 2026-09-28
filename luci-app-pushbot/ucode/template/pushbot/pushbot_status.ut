@@ -795,8 +795,62 @@ pb_ota_showCountdown(ov);
 
 		toggleButton.addEventListener('click', function(e) {
 			e.preventDefault();
-			enEl.value = enEl.value === '1' ? '0' : '1';
-			syncState();
+			if (toggleButton.disabled) return;
+			/* 点击意图：目标态（启用=应运行 / 禁用=应停止） */
+			var targetRun = enEl.value !== '1';
+			var newVal = targetRun ? '1' : '0';
+			/* UI 保持原样不做乐观翻转：提交配置（后端 uci commit +
+			   en=1 启动 / en=0 停止）后紧凑轮询真实运行状态，
+			   检测到目标态才翻转显示 —— 与页面状态驱动设计一致。 */
+			toggleButton.disabled = true;
+			var settled = false;
+			var watch = null;
+			var limit = null;
+			function finish() {
+				if (watch) clearInterval(watch);
+				if (limit) clearTimeout(limit);
+				toggleButton.disabled = false;
+			}
+			var xhr = new XMLHttpRequest();
+			xhr.open('POST', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'save_config') }}', true);
+			xhr.setRequestHeader('Content-Type', 'application/json');
+			xhr.onload = function() {
+				var r = null;
+				try { r = JSON.parse(xhr.responseText); } catch (err) {}
+				if (!(r && r.ok === true)) { finish(); pbShowToast(false); return; }
+				/* 提交成功：轮询 act_status，真实状态匹配目标态才翻转 */
+				var check = function() {
+					if (settled) return;
+					var s = new XMLHttpRequest();
+					s.open('GET', '{{ dispatcher.build_url('admin', 'services', 'pushbot', 'status') }}?_=' + Date.now(), true);
+					s.onload = function() {
+						if (settled) return;
+						var d = null;
+						try { d = JSON.parse(s.responseText); } catch (err) {}
+						if (!d) return;
+						if (!!d.running === targetRun) {
+							settled = true;
+							enEl.value = newVal;
+							syncState();
+							if (PB_CONFIG && PB_CONFIG.config) PB_CONFIG.config.pushbot_enable = newVal;
+							finish();
+							pollStatus();
+						}
+					};
+					s.send();
+				};
+				watch = setInterval(check, 1500);
+				check();
+				/* 超时未达目标态 → 视为未生效：恢复按钮 + 提示 */
+				limit = setTimeout(function() {
+					if (settled) return;
+					settled = true;
+					finish();
+					pbShowToast(false);
+				}, 15000);
+			};
+			xhr.onerror = function() { finish(); pbShowToast(false); };
+			xhr.send(JSON.stringify({ pushbot_enable: newVal }));
 		});
 
 		liteChoiceBtns.forEach(function(b) {
@@ -4136,6 +4190,7 @@ window.addEventListener('DOMContentLoaded', function() {
 //]]&gt;
 </script>
 <style>
+
 /* CBI elements — hidden: pushbot uses custom JS UI, not CBI forms */
 .cbi-tabmenu { display: none !important; }
 .mar-10 {margin-left: 50px; margin-right: 10px;}
@@ -4150,12 +4205,26 @@ window.addEventListener('DOMContentLoaded', function() {
 	border: 1px solid rgba(148, 163, 184, 0.22);
 	border-radius: 16px;
 	background: #ffffff;
-	box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+	box-shadow:
+			/* 底部主投影（最重） */
+			0 10px 28px rgba(15, 23, 42, 0.14),
+			/* 上 / 右 / 左：三向完全同参（3px 偏移、8px 模糊、0.05） */
+			0 -3px 8px rgba(15, 23, 42, 0.05),
+			3px 0 8px rgba(15, 23, 42, 0.05),
+			-3px 0 8px rgba(15, 23, 42, 0.05);
 }
 
 .pushbot-header-card {
-	margin: 0 0 16px 0;
+	/* 标题卡片及其下所有插件模块整体下移 16px */
+	margin: 16px 0 16px 0;
 	padding: 18px 20px;
+	box-shadow:
+			/* 底部主投影（最重） */
+			0 10px 28px rgba(15, 23, 42, 0.14),
+			/* 上 / 右 / 左：三向完全同参（3px 偏移、8px 模糊、0.05） */
+			0 -3px 8px rgba(15, 23, 42, 0.05),
+			3px 0 8px rgba(15, 23, 42, 0.05),
+			-3px 0 8px rgba(15, 23, 42, 0.05);
 }
 
 .pushbot-pushmode-card {
@@ -4494,7 +4563,19 @@ window.addEventListener('DOMContentLoaded', function() {
 .pushbot-dk .pushbot-mode-card {
 			background: rgba(10, 10, 18, 0.75) !important;
 			border-color: rgba(255, 255, 255, 0.08) !important;
-			box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+			box-shadow:
+				0 8px 20px rgba(46, 62, 96, 0.38),
+				0 -1px 4px rgba(58, 76, 112, 0.12),
+				1px 0 4px rgba(58, 76, 112, 0.12),
+				-1px 0 4px rgba(58, 76, 112, 0.12);
+		}
+
+		.pushbot-dk .pushbot-header-card {
+			box-shadow:
+				0 8px 20px rgba(46, 62, 96, 0.38),
+				0 -1px 4px rgba(58, 76, 112, 0.12),
+				1px 0 4px rgba(58, 76, 112, 0.12),
+				-1px 0 4px rgba(58, 76, 112, 0.12);
 		}
 
 		.pushbot-dk .pushbot-card-title {

@@ -2,6 +2,71 @@
 
 This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-beta.8] - 2026-09-28
+
+### Added
+
+- Each release attaches the eight honk-core builds of honk's `debug` pre-release, so honk does not have to be compiled: x86_64 and aarch64, glibc and musl, each with mimalloc or the system allocator. `honk-source-<commit>.tar.gz` holds the source of the honk commit they were built from and `HONK-SOURCE.txt` names that commit; `SHA256SUMS` lists every release asset except itself. The builds are attached until honk publishes a release with the native API. (#109, #117)
+- Sign-in is a full page instead of a dialog over an empty window, with its own language menu and theme toggle. From 1024 pixels wide, a panel beside the form shows a construction scene that becomes a small Flappy Duck game when pressed. The form keeps working if the scene fails to load, and the scene is a still picture when reduced motion is requested. (#107, #114, #115)
+- The public demo opens on the sign-in page with its account filled in: user name `demo`, password `demo`. (#107)
+- The setup guide is a separate documentation site in English, Simplified Chinese and Traditional Chinese, maintained in [Zakkaus/doona-docs](https://github.com/Zakkaus/doona-docs). Sign-in and Settings > About link to it; the sign-in hint for a backend without the native API and the read-only outbound mode help open its troubleshooting sections. (#100)
+- The documentation site has step-by-step installation pages for Debian or Ubuntu, Fedora or RHEL, Arch Linux, Gentoo, OpenWrt and other systems, and follows the layout of the React Spectrum docs. Its search ranks titles first and works from the keyboard, the 404 page is in the reader's language, and Chinese pages use the Spectrum CJK type scale. Colours are correct in Safari 17.0 to 17.4, and links into doona's source work when the pages are read on GitHub. The pages are shared under CC BY 4.0, and the header links to the demo. (Zakkaus/doona-docs#1, #2, #3, #6, #11, #13, #14)
+- Help buttons explain unclear states and terms on Overview, Connections, Configuration, Rules, Policies, DNS, Events, Logs and Settings. (#98)
+- Overview lists the features that are off in a full-width card, one row per cause. Where one applies, a row explains the cause, gives the configuration lines that turn the feature on, or links to the documentation or Settings. The rule list, validation and closing connections are listed when the backend lacks them. The count on Activity links to the card. (#102)
+- A disabled action says why in a line beside its buttons, visible at every width, where before the reason was only in a tooltip that touch does not open, or missing. This covers Configuration, Activity, Policies, Rules, DNS, Nodes and Settings, and the dialogs for new rules, subscriptions and nodes. Screen readers read the line as the button's description. (#97, #127, #130, #133)
+- Connections can collapse and expand each group, or all groups at once, while the list is grouped. (#93)
+- On Events and Logs, pressing a row, or Enter or Space on it, shows its full text below the table, so text cut on a phone can be read; pressing the row again hides it. (#105)
+- The demo shows its error states when opened with `?scenario=faults`; `?scenario=` returns to the healthy demo. (#103)
+
+### Changed
+
+- The demo behaves as a healthy honk: it seeds no failures, and switching the outbound mode works. (#103)
+- The Overview header and the Activity status add a degraded or failed datapath to the engine state, in the matching tone. The Overview header links to the Datapath card. (#102)
+- Backend features on Overview lists only the features that are on. (#102)
+- Configuration shows each source's path once. A read-only source has one badge naming the reason (generated, subscription, read-only, contains secrets, redacted or text not returned) and no Validate button; when configuration writes are off, help beside the badge says how to turn them on. Every source with text has one line saying what it is and what can be done with it, and all source editors start at the same height. (#101)
+- A writable source is edited in place, without an Edit button. Typing, pasting or tapping in a read-only source shows one notice with the reason. (#101)
+- When a save finds that the file changed on disk, the source card, the modules and the quick setup show an alert and wait until the draft is kept over the change or discarded; previously, the draft was applied to the changed file without warning. A module draft carries over on its own when the change is outside its section. (#118)
+- Read-only code editors show no caret or current-line highlight; the line a source was opened at keeps a marker. (#97)
+- The must switch in the new-rule dialog reads Lock this outbound, with a line explaining what a locked outbound skips. (#91)
+- The outbound mode card and the Arrange review label their button Apply and reload, as Configuration does, since all three write the configuration and reload it. (#126)
+- Below 600 pixels wide, tables keep every column at its minimum width and scroll sideways, instead of dropping columns until the rest fit. Wider screens drop columns as before. (#128)
+- On Policies, a large node group lays out its tiles like a small group: the same columns, tile width and edges, with room left for the scrollbar. (#125)
+- The busiest-host tile on Connections takes two shares of its row. A host that still does not fit keeps its end visible and shows the full name on hover, focus or tap. (#99)
+- When a subscription refresh leaves the datapath degraded, the notice says that new connections proxied through userspace are refused and points to Overview. (#98)
+- The Chinese token sign-in heading and missing-token message use formal wording. (#107)
+- README screenshots are rendered by the documentation site on each deploy and are no longer stored in the repository. (Zakkaus/doona-docs#6)
+- NOTICE, `REUSE.toml`, the READMEs and the `OFL.txt` shipped with the fonts name Adobe as the copyright holder of Noto Sans TC and SC. The documentation site credits Adobe for the Spectrum icons, fonts and design. (#122, Zakkaus/doona-docs#12)
+
+### Fixed
+
+- Errors with the reused codes `invalid_request`, `unsupported_value` and `state_conflict` keep the backend's own message beside the summary. (#94)
+- A backend that never answers no longer leaves a page loading. API reads fail when the headers, or the next part of the body, take more than 15 seconds to arrive, and writes when they take more than 30; the event and log streams keep their own limit. Sign-in and sign-out time out the same way. After a read timeout, Retry fetches the data again. A write timeout says the change may have been applied and asks for a reload before trying again. (#104, #118)
+- Apply and reload is disabled when a refetch makes the open source read-only. Undo after Cancel no longer restores the discarded edits. (#101, #106)
+- The must switch in the new-rule dialog aligns with the outbound picker. (#90)
+- A connection opened by its link unfolds its collapsed group, and so does a selected connection that moves into another folded group. Outbound groups no longer unfold when the language changes, and an outbound named like a built-in label keeps its own group. (#93, #118)
+- When an ordinary rule precedes the must rules in the routing block, doona's refusal to switch the outbound mode says to move the must rules to the top and names the rule. (#103)
+- Trace field errors wait until a field is filled. Chrome no longer reports `apple-mobile-web-app-capable` as deprecated. (#103)
+- Help buttons and status lights align with the centre of their text. (#98)
+- Logs and the flow distribution say when the configuration forbids their recorder. Test all no longer blames TCP probe support when it is unavailable for another reason. (#98)
+- The minimum password length applies only to the administrator password created at setup, not to signing in. (#107)
+- A failed suspend or resume shows its translated message again (`lifecycle_failed`). (#115)
+- Overview no longer gives honk's causes and fixes for resources an older backend leaves out of its capabilities; they are listed as not provided by the build. When another engine gives no reason, a read-only main configuration no longer claims one. (#118, #132)
+- A read-only source is labelled as containing secrets only when its text defines a `native_api` or `clash_api` block; otherwise it shows as read-only. (#118)
+- The health-check URL dialog sends only the fields that were edited and offers the check settings that the group's `mutable_config` lists. A save no longer replaces a change another client made to the same field: it fails as a conflict and the dialog stays open. (#106, #118, #132)
+- The new-source dialog warns that a path is not included only when no loaded file includes it, and resolves include patterns from the main configuration's directory, as honk does. (#118, #131)
+- A geodata update whose result cannot be confirmed is shown as unknown, not as failed. (#106)
+- A new source whose read-back fails stays created, and a late result no longer reaches a reopened new-file dialog. A selected diagnostic stays selected across polls. In the demo, a new source whose name has a space, a non-ASCII character or `?` opens once created. (#106)
+- The demo refuses source writes over honk's size limits, a second create of the same path and a create past the source limit, as honk does. Demo sign-in works over plain HTTP on a LAN address, where browsers do not provide `crypto.randomUUID`. (#118, #124, #131)
+- The DNS device filter error appears under its field and is read with it by screen readers. The DNS log's time column fits relative times. (#105, #106)
+- The note on the Arrange tab of Policies no longer mentions an Add menu on each row; it points to Add to group below the list and to Review and apply. (#111)
+
+### For contributors
+
+- CONTRIBUTING describes the architecture and the import allow-lists, and lint enforces the engine boundary. (#123)
+- `tools/honk-commit.txt` pins the honk commit a release bundles; the release workflow fails unless honk's `debug` release, its target and its source tag name that commit. (#117)
+- The API contract is pinned at api-standardize 3640713. (#116)
+- The store, the configuration page, the engine explanations, the sign-in outcomes and the connection test were split into smaller modules, and unused code and duplicate strings were removed, without changing behaviour. (#108, #119, #120, #121, #126, #129)
+
 ## [0.1.0-beta.7] - 2026-09-27
 
 ### Added
@@ -253,6 +318,7 @@ This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 - Keep table columns and action cells visible and prevent cards and controls from overflowing.
 
+[0.1.0-beta.8]: https://github.com/Zakkaus/doona/compare/v0.1.0-beta.7...v0.1.0-beta.8
 [0.1.0-beta.7]: https://github.com/Zakkaus/doona/compare/v0.1.0-beta.6...v0.1.0-beta.7
 [0.1.0-beta.6]: https://github.com/Zakkaus/doona/compare/v0.1.0-beta.5...v0.1.0-beta.6
 [0.1.0-beta.5]: https://github.com/Zakkaus/doona/compare/v0.1.0-beta.4...v0.1.0-beta.5

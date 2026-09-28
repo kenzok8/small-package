@@ -3,16 +3,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=honk
-PKG_VERSION:=0.0.1_beta81
+PKG_VERSION:=0.0.1_beta82
 PKG_RELEASE:=1
 
 # Raw upstream release tag. It keeps the dots in qualifiers (e.g. v0.0.1.beta.49)
 # because that is what the GitHub release asset name uses.
-HONK_RELEASE_TAG:=v0.0.1.beta.81
+HONK_RELEASE_TAG:=v0.0.1.beta.82
 
 # SHA256 of each release tarball, kept in sync by scripts/update_honk_version.sh.
-HONK_HASH_X86_64:=88e5c3b29200c6ad729cc89636e14a452d974108cd08852c9c1e44074d23e10e
-HONK_HASH_AARCH64:=b160a3c8674556222b2b29ce6c975bc346f7ce3cddeb049474c6ca9e0a8191a6
+HONK_HASH_X86_64:=075db4ebb3dd1b51fb59c8e4c3de5853bd837f5f5ca5fd0ef7698b574f8f9a88
+HONK_HASH_AARCH64:=6b66319bda2110d075e8f2788d728fdf75ca36dffdb3884a192803a34a529c59
 
 PKG_LICENSE:=AGPL-3.0-only
 PKG_LICENSE_FILE:=LICENSE
@@ -89,6 +89,7 @@ define Package/honk/install
 	$(INSTALL_CONF) $(CURDIR)/files/config.d/node.dae $(1)/etc/honk/config.d/node.dae
 	$(INSTALL_CONF) $(CURDIR)/files/config.d/route.dae $(1)/etc/honk/config.d/route.dae
 	$(INSTALL_CONF) $(CURDIR)/files/config.d/dns.dae $(1)/etc/honk/config.d/dns.dae
+	$(INSTALL_CONF) $(CURDIR)/files/config.d/api.dae $(1)/etc/honk/config.d/api.dae
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) $(CURDIR)/files/honk.config $(1)/etc/config/honk

@@ -91,12 +91,18 @@ function parse_native_api(clean_content) {
 	let ui_m = match(block, /ui\s*:\s*['"]?([^'" \t\r\n]+)['"]?/);
 	let sec_m = match(block, /secret\s*:\s*['"]?([^'" \t\r\n]*)['"]?/);
 	let en_m = match(block, /enabled\s*:\s*['"]?(true|false)['"]?/);
+	let cw_m = match(block, /config_write\s*:\s*['"]?(true|false)['"]?/);
+	let geosite_m = match(block, /geosite_download_url\s*:\s*['"]?([^'" \t\r\n]+)['"]?/);
+	let geoip_m = match(block, /geoip_download_url\s*:\s*['"]?([^'" \t\r\n]+)['"]?/);
 
 	let res = {
 		enabled: en_m ? (en_m[1] == "true") : true,
+		config_write: cw_m ? (cw_m[1] == "true") : true,
 		listen: listen_m ? listen_m[1] : "",
 		ui: ui_m ? ui_m[1] : "",
 		secret: sec_m ? sec_m[1] : "",
+		geosite_download_url: geosite_m ? geosite_m[1] : "",
+		geoip_download_url: geoip_m ? geoip_m[1] : "",
 		host: "",
 		port: ""
 	};
@@ -130,6 +136,45 @@ function get_config_file_path() {
 	return p || "/etc/honk/config.dae";
 }
 
+function get_api_file_path() {
+	return "/etc/honk/config.d/api.dae";
+}
+
+function get_api_config() {
+	let api_file = get_api_file_path();
+	let content = readfile(api_file) || "";
+	let clean = strip_dae_comments(content);
+	let parsed_clash = parse_clash_api(clean);
+	let parsed_native = parse_native_api(clean);
+
+	if (!parsed_clash && !parsed_native) {
+		let config_file = get_config_file_path();
+		let legacy_content = readfile(config_file) || "";
+		let legacy_clean = strip_dae_comments(legacy_content);
+		let leg_clash = parse_clash_api(legacy_clean);
+		let leg_native = parse_native_api(legacy_clean);
+		if (leg_clash || leg_native) {
+			return {
+				file: config_file,
+				content: legacy_content,
+				clean: legacy_clean,
+				parsed_clash: leg_clash,
+				parsed_native: leg_native,
+				is_legacy: true
+			};
+		}
+	}
+
+	return {
+		file: api_file,
+		content: content,
+		clean: clean,
+		parsed_clash: parsed_clash,
+		parsed_native: parsed_native,
+		is_legacy: false
+	};
+}
+
 function remove_bracket_block(content, header_regex) {
 	let lines = split(content, "\n");
 	let new_lines = [];
@@ -158,6 +203,24 @@ function remove_bracket_block(content, header_regex) {
 	return join("\n", new_lines);
 }
 
+function clean_legacy_api_from_config(config_file) {
+	let main_content = readfile(config_file);
+	if (!main_content) return;
+	let cleaned_main = remove_bracket_block(main_content, /^[#\/]*\s*clash_api\s*\{/);
+	cleaned_main = remove_bracket_block(cleaned_main, /^[#\/]*\s*native_api\s*\{/);
+	let exp_m = match(cleaned_main, /experimental\s*\{([^}]+)\}/);
+	if (exp_m) {
+		let inner_clean = strip_dae_comments(exp_m[1]);
+		if (!match(inner_clean, /\S/)) {
+			cleaned_main = remove_bracket_block(cleaned_main, /^[#\/]*\s*experimental\s*\{/);
+		}
+	}
+	cleaned_main = replace(cleaned_main, /[ \t]*experimental\s*\{\s*\}[ \t]*\n?/, "");
+	if (cleaned_main != main_content) {
+		writefile(config_file, cleaned_main);
+	}
+}
+
 function get_dashboard_info(req) {
 	let u = cursor();
 	let requested_type = (req && req.args) ? req.args.type : null;
@@ -172,11 +235,12 @@ function get_dashboard_info(req) {
 	}
 	if (!requested_type) requested_type = "doona";
 
-	let config_file = get_config_file_path();
-	let content = readfile(config_file) || "";
-	let clean = strip_dae_comments(content);
-	let parsed_clash = parse_clash_api(clean);
-	let parsed_native = parse_native_api(clean);
+	let api_cfg = get_api_config();
+	if (!api_cfg.is_legacy) {
+		clean_legacy_api_from_config(get_config_file_path());
+	}
+	let parsed_clash = api_cfg.parsed_clash;
+	let parsed_native = api_cfg.parsed_native;
 
 	let p = popen("pidof honk-core 2>/dev/null");
 	let pids = p ? p.read("all") : "";
@@ -188,12 +252,14 @@ function get_dashboard_info(req) {
 		configured: false,
 		has_ui: false,
 		running: running,
-		config_file: config_file,
+		config_file: api_cfg.file,
 		external_controller: "",
 		host: "",
 		port: "",
 		secret: "",
 		external_ui: "",
+		geosite_download_url: "",
+		geoip_download_url: "",
 		default_mode: "Rule",
 		has_clash_api: !!parsed_clash,
 		has_native_api: !!(parsed_native && parsed_native.enabled)
@@ -209,6 +275,8 @@ function get_dashboard_info(req) {
 		res.port = parsed_native.port || "9527";
 		res.secret = parsed_native.secret;
 		res.external_ui = parsed_native.ui;
+		res.geosite_download_url = parsed_native.geosite_download_url;
+		res.geoip_download_url = parsed_native.geoip_download_url;
 	} else {
 		if (!parsed_clash) {
 			return res;
@@ -237,7 +305,7 @@ function download_dashboard(req) {
 	let url = req.args ? req.args.url : null;
 	if (!url) {
 		if (requested_type == "doona") {
-			url = "https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.3/doona-v0.1.0-beta.3.tar.gz";
+			url = "https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.8/doona-0.1.0-beta.8.tar.gz";
 		} else {
 			url = "https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip";
 		}
@@ -247,11 +315,9 @@ function download_dashboard(req) {
 		return { success: false, message: "Invalid URL" };
 	}
 
-	let config_file = get_config_file_path();
-	let content = readfile(config_file) || "";
-	let clean = strip_dae_comments(content);
-	let parsed_clash = parse_clash_api(clean);
-	let parsed_native = parse_native_api(clean);
+	let api_cfg = get_api_config();
+	let parsed_clash = api_cfg.parsed_clash;
+	let parsed_native = api_cfg.parsed_native;
 
 	let target_dir;
 	if (requested_type == "doona") {
@@ -285,63 +351,87 @@ function download_dashboard(req) {
 }
 
 function switch_dashboard_api(target_type) {
+	let api_file = get_api_file_path();
 	let config_file = get_config_file_path();
-	let content = readfile(config_file);
-	if (!content) {
-		return { success: false, message: "Config file not found: " + config_file };
+
+	// 1. Clean legacy api blocks from main config.dae to avoid read-only lock in doona
+	clean_legacy_api_from_config(config_file);
+
+	system("mkdir -p /etc/honk/config.d");
+
+	let api_cfg = get_api_config();
+	let parsed_clash = api_cfg.parsed_clash;
+	let parsed_native = api_cfg.parsed_native;
+
+	// Check if already correctly configured in api.dae
+	if (!api_cfg.is_legacy) {
+		if (target_type == "doona") {
+			if (parsed_native && parsed_native.enabled && !parsed_clash &&
+			    parsed_native.config_write &&
+			    parsed_native.geosite_download_url && parsed_native.geoip_download_url) {
+				return { success: true, type: target_type, noop: true };
+			}
+		} else {
+			if (parsed_clash && (!parsed_native || !parsed_native.enabled)) {
+				return { success: true, type: target_type, noop: true };
+			}
+		}
 	}
 
-	let clean = strip_dae_comments(content);
-	let parsed_clash = parse_clash_api(clean);
-	let parsed_native = parse_native_api(clean);
+	let api_content = readfile(api_file) || "";
+	let cleaned_api = remove_bracket_block(api_content, /^[#\/]*\s*clash_api\s*\{/);
+	cleaned_api = remove_bracket_block(cleaned_api, /^[#\/]*\s*native_api\s*\{/);
+	cleaned_api = replace(cleaned_api, /experimental\s*\{\s*\}/, "");
 
-	if (target_type == "doona") {
-		if (parsed_native && parsed_native.enabled && parsed_native.secret == "honk" && !parsed_clash) {
-			return { success: true, type: target_type, noop: true };
-		}
-	} else {
-		if (parsed_clash && (!parsed_native || !parsed_native.enabled)) {
-			return { success: true, type: target_type, noop: true };
-		}
-	}
-
-	// 1. Remove both blocks to guarantee mutual exclusivity
-	let cleaned = remove_bracket_block(content, /^[#\/]*\s*clash_api\s*\{/);
-	cleaned = remove_bracket_block(cleaned, /^[#\/]*\s*native_api\s*\{/);
-	cleaned = replace(cleaned, /experimental\s*\{\s*\}/, "experimental {\n}");
-
-	// 2. Select block according to target_type
 	let api_inner;
 	if (target_type == "doona") {
+		let sec = (parsed_native && parsed_native.secret && length(parsed_native.secret) >= 8) ? parsed_native.secret : "honk114514";
+		let listen = (parsed_native && parsed_native.listen) ? parsed_native.listen : "0.0.0.0:9527";
+		let ui = (parsed_native && parsed_native.ui) ? parsed_native.ui : "/etc/honk/dashboard";
+		let geosite = (parsed_native && parsed_native.geosite_download_url) ? parsed_native.geosite_download_url : "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/release/geosite.dat";
+		let geoip = (parsed_native && parsed_native.geoip_download_url) ? parsed_native.geoip_download_url : "https://raw.githubusercontent.com/QiuSimons/geoip-moedove/refs/heads/main/geoip.dat";
+
 		api_inner =
 "    native_api {\n" +
 "        enabled: true\n" +
-"        listen: '0.0.0.0:9527'\n" +
-"        secret: 'honk'\n" +
-"        ui: '/etc/honk/dashboard'\n" +
+"        listen: '" + listen + "'\n" +
+"        secret: '" + sec + "'\n" +
+"        ui: '" + ui + "'\n" +
+"        config_write: true\n" +
+"        geosite_download_url: '" + geosite + "'\n" +
+"        geoip_download_url: '" + geoip + "'\n" +
 "    }\n";
 	} else {
+		let ec = (parsed_clash && parsed_clash.external_controller) ? parsed_clash.external_controller : "0.0.0.0:9090";
+		let ui = (parsed_clash && parsed_clash.external_ui) ? parsed_clash.external_ui : "/etc/honk/zashboard";
+		let sec = (parsed_clash && parsed_clash.secret) ? parsed_clash.secret : "";
+		let dm = (parsed_clash && parsed_clash.default_mode) ? parsed_clash.default_mode : "Rule";
+
 		api_inner =
 "    clash_api {\n" +
-"        external_controller: '0.0.0.0:9090'\n" +
-"        external_ui: '/etc/honk/zashboard'\n" +
-"        secret: ''\n" +
-"        default_mode: 'Rule'\n" +
+"        external_controller: '" + ec + "'\n" +
+"        external_ui: '" + ui + "'\n" +
+"        secret: '" + sec + "'\n" +
+"        default_mode: '" + dm + "'\n" +
 "    }\n";
 	}
 
 	let default_block = "experimental {\n" + api_inner + "}\n";
-
-	let has_active_exp = match(cleaned, /(^|\n)[ \t]*experimental\s*\{/);
-	let new_content;
+	let has_active_exp = match(cleaned_api, /(^|\n)[ \t]*experimental\s*\{/);
+	let new_api_content;
 	if (has_active_exp) {
-		new_content = replace(cleaned, /(experimental\s*\{[^\n]*\n?)/, "$1" + api_inner);
+		new_api_content = replace(cleaned_api, /(experimental\s*\{[^\n]*\n?)/, "$1" + api_inner);
 	} else {
-		cleaned = remove_bracket_block(cleaned, /^[#\/]+\s*experimental\s*\{/);
-		new_content = rtrim(cleaned, "\r\n\t ") + "\n\n" + default_block;
+		cleaned_api = remove_bracket_block(cleaned_api, /^[#\/]+\s*experimental\s*\{/);
+		let base = trim(cleaned_api);
+		if (base == "") {
+			new_api_content = "# api.dae\n# Configure API access for HONK dashboards and controllers.\n\n" + default_block;
+		} else {
+			new_api_content = base + "\n\n" + default_block;
+		}
 	}
 
-	writefile(config_file, new_content);
+	writefile(api_file, new_api_content);
 	system("/etc/init.d/honk restart >/dev/null 2>&1 &");
 
 	return { success: true, type: target_type };
@@ -374,6 +464,13 @@ return {
 		reload: {
 			call: function(req) {
 				system("/etc/init.d/honk hot_reload >/dev/null 2>&1 &");
+				return { success: true };
+			}
+		},
+
+		restart: {
+			call: function(req) {
+				system("/etc/init.d/honk restart >/dev/null 2>&1 &");
 				return { success: true };
 			}
 		},

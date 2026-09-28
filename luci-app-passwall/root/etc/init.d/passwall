@@ -6,11 +6,10 @@ STOP=15
 ROOT="${IPKG_INSTROOT:-}"
 . "$ROOT/usr/share/passwall/utils.sh"
 APP_FILE=${APP_PATH}/app.sh
-LOCK_FILE_DIR=/var/lock
-LOCK_FILE=${LOCK_FILE_DIR}/${CONFIG}.lock
+LOCK_FILE=${LOCK_PATH}/${CONFIG}.lock
 
 set_lock() {
-	[ ! -d "$LOCK_FILE_DIR" ] && mkdir -p $LOCK_FILE_DIR
+	[ ! -d "$LOCK_PATH" ] && mkdir -p $LOCK_PATH
 	exec 999>"$LOCK_FILE"
 	flock -xn 999
 }
@@ -34,13 +33,16 @@ unlock() {
 }
 
 boot_func() {
+	rm -f ${LOCK_PATH}/${CONFIG}_ready.lock
+	rm -f ${LOCK_PATH}/${CONFIG}_rule_update.lock
+	rm -f ${LOCK_PATH}/${CONFIG}_subscribe.lock
 	local delay=$(uci -q get ${CONFIG}.@global_delay[0].start_delay || echo 1)
 	if [ "$delay" -gt 0 ]; then
 		echolog "执行启动延时 $delay 秒后再启动!"
 		sleep $delay
 	fi
 	restart boot
-	touch ${LOCK_FILE_DIR}/${CONFIG}_ready.lock
+	touch ${LOCK_PATH}/${CONFIG}_ready.lock
 }
 
 boot() {
@@ -65,8 +67,8 @@ stop() {
 restart() {
 	set_lock
 	[ $? == 1 ] && echolog "脚本已经在运行，不重复运行，退出." && exit 0
-	rule_lock=${LOCK_FILE_DIR}/${CONFIG}_rule_update.lock
-	sub_lock=${LOCK_FILE_DIR}/${CONFIG}_subscribe.lock
+	rule_lock=${LOCK_PATH}/${CONFIG}_rule_update.lock
+	sub_lock=${LOCK_PATH}/${CONFIG}_subscribe.lock
 	for i in $(seq 1 300); do
 		if [ ! -f "$rule_lock" ] && [ ! -f "$sub_lock" ]; then
 			break

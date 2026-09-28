@@ -1,0 +1,80 @@
+# Changelog
+
+- **2026-09-27** (v6.01): Online update fixes & config management
+  - Fixed+Improved: **Online update** — fixed IPK update failure, lost translations (English UI) after update, and occasional hangs; wait 30s → 10s with instant refresh after install; added Clear Packages button; "untrusted" prompt no longer appears after one install (APK signature trust)
+  - Added: **Config Management** — one-click factory reset, or reset system options only while keeping the current channel's Token/UID/topics
+  - Fixed+Improved: **Master switch** — no residual pushes after turning off; the Enabled toggle now saves and starts/stops the service on click, no need to press Save & Apply
+  - Fixed: **Channel validation** — WxPusher/ntfy/Gotify-only setups no longer falsely report a missing Token; preview no longer flags unchanged lists; test buttons prompt to save first when settings changed
+  - Improved: **UI** — card elevation shadows (light/dark), extra top spacing, mobile save buttons wrap instead of squeezing; renamed "Traffic limit per interval" to **"Traffic alert threshold"**
+  - Added: **OpenWrt 25.12 manual build** — trigger from the Actions tab, artifacts published under `OpenWRT25.12-*` releases
+
+
+- **2026-09-22** (v6.00): Online update + event push fix
+  - Added: **Online update** — one-click update (auto download & install) or manual pull (download with progress ring, click to install after completion); auto-refresh page 30s after installation; also supports browser direct download of APK/IPK
+  - Fixed: **Device online/offline and login alerts were never sent** — a legacy bug silently broke all event notifications, now resolved
+  - Improved: **WxPusher TopicID** capped at 5 per message (official limit); extra values auto-ignored; delimiter now supports Chinese comma and space
+- **2026-09-20** (v5.18): WxPusher channel & card-based content, main version 5.17 → 5.18
+  - Added: **WxPusher channel** — one App Token is enough; multiple user UIDs and topic IDs, at least one of the two enabled (WxPusher allows at most 5 topics per message; extras are ignored); content is converted to HTML and reads directly inside WeChat
+  - Added: **Per-module card rendering** — tables now use borderless HTML tables instead of Markdown tables, so each module renders as its own card on every channel
+  - Added: **Bulk device alias input** — paste multiple `MAC-alias` pairs separated by commas or spaces, split into individual entries automatically
+  - Improved: **Mobile channel buttons** — 5 per row, buttons/icons/text scale proportionally with card width, labels are never truncated
+  - Improved: **Traffic source health check** — prefers nlbw when present, restarts it once on failure, falls back to wrtbw if still unusable
+  - Improved: **Whitelisted devices stay visible** while no longer receiving online/offline notifications
+  - Improved: **Completed Simplified Chinese translations for UI descriptions**
+  - Tested on: x86_64 (official APK), MT798x (IPK)
+- **2026-09-19** (v5.17-r4 → r24): Blacklist & traffic source improvements
+  - Added: **nlbw startup health check** — auto-detects and fixes nlbw service issues after reboot
+  - Added: **WiFi auth failure monitoring** (MTK closed-source driver) — extracts failed MACs with group stats
+  - Improved: **Blacklist sync mechanism** — resolves file/kernel set inconsistency
+  - Improved: **Traffic source detection** — uses nlbw if installed, auto-checks availability at startup
+  - Improved: **Online device list** — whitelist devices display normally, shows traffic source
+  - Fixed: **Whitelist devices not showing**, **blacklist timeout unblock failure**, **lite mode preview issues**
+- **2026-08-28** (v5.17): Security monitor improvements, main version 5.16 → 5.17
+  - Added: **Blacklist persistence** — persist blacklist for permanent duration to survive OP reboots
+  - Added: **Firewall version label** — shows nftables/iptables with refresh button
+  - Improved: **Startup log dedup, blacklist sync dedup, cache cleanup on upgrade**
+  - Tested platforms: open-source mac80211 driver (x86), MTK closed-source driver (MT798x)
+- **2026-08-26** (v5.16): WiFi monitoring upgrade, main version 5.15 → 5.16
+  - Added: **WiFi connect/offline alerts** — push notification when a device connects or stays offline for >2 minutes; suppresses false alerts from roaming and brief signal drops
+  - Added: **WiFi auth failure alerts** — push notification when failed connection attempts reach a threshold, showing failure count and MAC (MTK closed-source drivers show count only)
+  - Added: **Traffic source display on online devices page** — shows whether nlbwmon or wrtbwmon is active
+  - Improved: **Default traffic source changed to nlbwmon** — auto-detects available sources, prioritizes nlbwmon (better performance, more accurate data)
+  - Improved: **MAC filter rework** — changed from single-select to multi-toggle mode; ignore/notify-only lists are mutually exclusive, interface filter independent
+  - Improved: **Abnormal traffic detection** — suppresses alerts when device has been online for less than 2 detection cycles (prevents false alarms on first boot)
+  - Tested platforms: open-source mac80211 driver (x86), MTK closed-source driver (MT798x)
+- **2026-08-18** (v5.14): Main version 5.13 → 5.14
+  - Added: **Real-time IPv4 / IPv6 address preview** — switching between "Via interface" or "Via URL" instantly shows the fetched public address, auto-refreshing on interface or API list changes; results are color-coded for at-a-glance clarity
+  - Improved: **Enhanced URL fetching** — automatically rotates through working APIs, clearly reports "failed to obtain" on total failure, supports specifying the egress interface for multi-WAN setups, presets tested & expanded (9 each for v4 / v6), one-click "restore defaults"
+  - Improved: **Blacklist fully synced with firewall** — manual add / delete, automatic blacklist on failed logins, and timeout-based unblock all keep the list and firewall consistent; the page auto-aligns on entry, and expired IPs can be re-blacklisted on new attacks
+- **2026-08-13** (v5.13): Blacklist enhancements (whitelist / IPv6 / instant apply), main version 5.12 → 5.13
+  - Added: **Whitelist** — supports single IPs and standard CIDR ranges such as `192.168.1.5` / `10.1.1.0/24` / `2001:db8::1` / `fd00::/32`, space-separated; whitelisted IPs are never blacklisted even after failed logins
+  - Added: **IPv6 blacklist** — IPv6 addresses and ranges are now supported (previously IPv4 only)
+  - Improved: **Instant apply** — adding / editing / deleting / clearing the blacklist takes effect immediately, no polling or firewall restart needed
+  - Fixed: clearing the blacklist now fully removes the rules (previously stale rules could remain until a manual firewall restart)
+- **2026-08-12** (v5.12-r15):
+  - Added: Gotify push channel (debug)
+  - Added: "Test Color" button on the Color Settings card (saves config & sends a test push immediately)
+  - Added: version badge auto-reads the installed version; click the badge to check GitHub updates from the browser (8s timeout, frosted toast, 0.5s fade-in / 4s hold)
+  - Fixed: MT798x interface dropdown empty (busybox lacks timeout command); OpenWrt 23.05 ipk missing r minor version
+- **2026-08-09** (v5.12): Added Gotify channel support (debug), main version 5.11 → 5.12
+- **2026-08-09** (v5.11): Multiple fixes & enhancements
+  - Theme adaptation: auto-follow argon / zargon / liquid / system light/dark mode
+  - ntfy: fixed line-break display; Token & self-hosted server toggles
+  - PushPlus: all channels (App/extension/ClawBot/voice etc.) & channel code
+  - Full UI localization; test buttons renamed "Test Channel / Test Schedule"
+  - Fixed multiple translation failures & page JS errors
+- **2026-08-06**: Full i18n and multiple improvements
+  - Full i18n: English as the source language; install `luci-i18n-pushbot-zh-cn` to get the Chinese UI
+  - Language pack version tracks the main package
+  - GitHub Actions now uploads the language pack (x86 / MT798x × ipk / apk four builds)
+  - UI layout improvements (version badge, status badge, header card description)
+  - Click the status badge to restart the pushbot service
+  - Fixed JS structure issues caused by i18n
+- **2026-08-05**: Fully removed Lua and CBI — pure ucode architecture
+  - Requires LuCI ≥ 23.05 (openwrt-24.10 / 25.x / master) or a branch with the ucode dispatcher
+  - Tested platforms:
+    - openwrt/luci master ✅
+    - coolsnowwolf/lede (openwrt-25.12) ✅
+    - padavanonly/immortalwrt-mt798x-6.6 (openwrt-24.10) ✅
+    - immortalwrt/luci master (not tested yet, theoretically compatible)
+  - For OpenWrt ≤ 22.03 / LEDE 17.01, use v5.09 or earlier (lua architecture)

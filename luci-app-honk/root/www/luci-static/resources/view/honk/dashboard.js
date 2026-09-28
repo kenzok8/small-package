@@ -57,18 +57,18 @@ return view.extend({
 				apiName: 'Native API',
 				defaultPort: '9527',
 				defaultDir: '/etc/honk/dashboard',
-				exampleConfig: "experimental {\n    native_api {\n        enabled: true\n        listen: '0.0.0.0:9527'\n        secret: 'honk'\n        ui: '/etc/honk/dashboard'\n    }\n}",
+				exampleConfig: "experimental {\n    native_api {\n        enabled: true\n        listen: '0.0.0.0:9527'\n        secret: 'honk114514'\n        ui: '/etc/honk/dashboard'\n        config_write: true\n        geosite_download_url: 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/release/geosite.dat'\n        geoip_download_url: 'https://raw.githubusercontent.com/QiuSimons/geoip-moedove/refs/heads/main/geoip.dat'\n    }\n}",
 				buildUrl: function(info, targetHost, port, secret, protocol, forceFresh) {
 					var hostPart = (targetHost.indexOf(':') !== -1 && targetHost.charAt(0) !== '[') ? '[' + targetHost + ']' : targetHost;
 					var url = protocol + '://' + hostPart + ':' + port + '/ui/';
-					if (secret) {
-						url += '?token=' + encodeURIComponent(secret);
+					if (forceFresh) {
+						url += '?_t=' + Date.now();
 					}
 					return url;
 				},
-				githubRelease: 'https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.3/doona-v0.1.0-beta.3.tar.gz',
-				ghfastMirror: 'https://ghfast.top/https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.3/doona-v0.1.0-beta.3.tar.gz',
-				ghproxyMirror: 'https://ghproxy.net/https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.3/doona-v0.1.0-beta.3.tar.gz',
+				githubRelease: 'https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.8/doona-0.1.0-beta.8.tar.gz',
+				ghfastMirror: 'https://ghfast.top/https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.8/doona-0.1.0-beta.8.tar.gz',
+				ghproxyMirror: 'https://ghproxy.net/https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.8/doona-0.1.0-beta.8.tar.gz',
 				pkgName: 'doona-*.tar.gz'
 			}
 		};
@@ -200,21 +200,21 @@ return view.extend({
 			? _('HONK has not enabled Native API in its configuration file. Doona requires native API listener and dashboard UI path.')
 			: _('HONK has not enabled Clash API in its configuration file. Dashboard requires external controller port and dashboard UI path.');
 		var unconfWarn = (dashType === 'doona')
-			? _('Please add or uncomment experimental.native_api block in Global Settings, and ensure listen and ui are configured.')
-			: _('Please add or uncomment experimental.clash_api block in Global Settings, and ensure external_controller and external_ui are configured.');
+			? _('Please configure experimental.native_api block in API Settings, and ensure listen and ui are configured.')
+			: _('Please configure experimental.clash_api block in API Settings, and ensure external_controller and external_ui are configured.');
 
 		var stateUnconfigured = E('div', { 'class': 'cbi-section', 'style': 'display: none;' }, [
 			E('h3', {}, unconfTitle),
 			E('div', { 'class': 'cbi-section-descr' }, unconfDescr),
 			E('div', { 'class': 'alert-message warning', 'style': 'margin: 12px 0;' }, unconfWarn),
 			E('div', { 'style': 'margin-top: 10px;' }, [
-				E('label', { 'class': 'cbi-value-title' }, E('strong', {}, _('Example Configuration (/etc/honk/config.dae):'))),
+				E('label', { 'class': 'cbi-value-title' }, E('strong', {}, _('Example Configuration (/etc/honk/config.d/api.dae):'))),
 				E('pre', { 'style': 'padding: 10px; margin-top: 6px; border: 1px solid var(--border-color-medium, #ccc); border-radius: 4px;' },
 					profile.exampleConfig || ''
 				)
 			]),
 			E('div', { 'style': 'margin-top: 16px; display: flex; gap: 10px; align-items: center;' }, [
-				E('a', { 'href': L.url('admin/services/honk/global'), 'class': 'cbi-button' }, _('Configure in Global Settings')),
+				E('a', { 'href': L.url('admin/services/honk/api'), 'class': 'cbi-button' }, _('Configure in API Settings')),
 				btnQuickEnable,
 				quickEnableMsg
 			])
@@ -334,11 +334,26 @@ return view.extend({
 		var statusEndpointPill = E('span', { 'class': 'label notice', 'style': 'font-family: monospace; text-transform: none !important;' });
 		var tokenText = E('span', {
 			'style': 'user-select: all; -webkit-user-select: all; font-weight: bold; text-transform: none !important;',
-			'title': _('Click or drag to select Token')
+			'title': _('Click to copy API Token')
 		});
 		var tokenPill = E('span', {
 			'class': 'label info',
-			'style': 'font-family: monospace; display: none; padding: 2px 6px; text-transform: none !important;'
+			'style': 'font-family: monospace; display: none; padding: 2px 6px; cursor: pointer; text-transform: none !important;',
+			'title': _('Click to copy API Token'),
+			'click': function(ev) {
+				ev.stopPropagation();
+				var val = (tokenText.innerText || tokenText.textContent || '').trim();
+				if (!val) return;
+				if (navigator.clipboard && navigator.clipboard.writeText) {
+					navigator.clipboard.writeText(val).then(function() {
+						honk.showNotification(null, E('p', _('Token copied to clipboard: ') + val), 'info', 2000);
+					}).catch(function() {
+						honk.showNotification(null, E('p', _('Token: ') + val), 'info', 3000);
+					});
+				} else {
+					honk.showNotification(null, E('p', _('Token: ') + val), 'info', 3000);
+				}
+			}
 		}, [ _('Token: '), tokenText ]);
 		var btnExternalOpen = E('a', { 'href': '#', 'target': '_blank', 'class': 'cbi-button cbi-button-action', 'title': _('Open independently in a new tab') }, _('New Tab'));
 		var iframe = E('iframe', { 'id': 'dash_iframe', 'src': 'about:blank', 'allow': 'fullscreen; clipboard-read; clipboard-write' });
@@ -593,7 +608,7 @@ return view.extend({
 				updateHonkRunningState(data.running, port);
 
 				statusEndpointPill.innerText = targetHost + ':' + port;
-				if (dashType === 'doona' && data.secret) {
+				if (data.secret) {
 					tokenText.innerText = data.secret;
 					tokenPill.style.display = 'inline-block';
 				} else {

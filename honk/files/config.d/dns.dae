@@ -5,7 +5,7 @@ dns {
     #ipversion_prefer: 4
     upstream {
         local: 'udp://127.0.0.1:53' -> direct
-        remote: 'tcp+udp://dns.google:53'
+        remote: 'tcp+udp://one.one.one.one:53'
     }
     routing {
         request {

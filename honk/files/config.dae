@@ -22,21 +22,11 @@ global {
     udp_check_dns: 'dns.google.com:53', '8.8.8.8', '2001:4860:4860::8888'
 }
 
-# using for enable experimental features
-# native-api, clash-api, cache-file
+# API access (native_api / clash_api) is configured separately in config.d/api.dae
+# to allow web dashboard configuration without locking the config as read-only.
+#
+# Optional cache-file configuration:
 #experimental {
-#    native_api {
-#        enabled: true
-#        listen: '0.0.0.0:9527'
-#        secret: 'honk'
-#        ui: '/etc/honk/dashboard'
-#    }
-#    clash_api {
-#        external_controller: '0.0.0.0:9090'
-#        external_ui: '/etc/honk/zashboard'
-#        secret: ''
-#        default_mode: 'Rule'
-#    }
 #    cache_file {
 #        enabled: true
 #        path: '/etc/honk/cache.db'
