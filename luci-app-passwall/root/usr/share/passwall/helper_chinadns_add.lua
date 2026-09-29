@@ -357,7 +357,7 @@ if CHNLIST ~= "0" and is_file_nonzero(RULES_PATH .. "/chnlist") then
 			"add-tagchn-ip" .. ((NFTFLAG == "1") and (" " .. table.concat(sets, ",")) or "")
 		}
 		merge_array(config_lines, tmp_lines)
-		log(string.format("  - 中国域名表(chnroute)：%s", DNS_LOCAL or "默认"))
+		log(string.format("  - 中国域名表(chnlist)：%s", DNS_LOCAL or "默认"))
 	end
 
 	--回中国模式
@@ -374,7 +374,7 @@ if CHNLIST ~= "0" and is_file_nonzero(RULES_PATH .. "/chnlist") then
 		}
 		if NO_IPV6_TRUST == "1" then table.insert(tmp_lines, "no-ipv6 tag:chn_proxy") end
 		insert_array_after(config_lines, tmp_lines, "#--1")
-		log(string.format("  - 中国域名表(chnroute)：%s", DNS_TRUST or "默认"))
+		log(string.format("  - 中国域名表(chnlist)：%s", DNS_TRUST or "默认"))
 	end
 end
 
@@ -552,4 +552,4 @@ if #config_lines > 0 then
 	end
 end
 
-log("  - ChinaDNS-NG已作为Dnsmasq上游，如果你自行配置了错误的DNS流程，将会导致域名(直连/代理域名)分流失效！！！")
+log("  - ChinaDNS-NG已作为Dnsmasq上游，如果你自行配置了错误的DNS流程，将会导致域名(直连/代理)分流失效！！！")
