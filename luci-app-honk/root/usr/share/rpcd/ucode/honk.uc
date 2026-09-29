@@ -14,12 +14,23 @@ function get_dashboard_dir(type) {
 	return DASHBOARD_DIRS[type] || DASHBOARD_DIRS.doona;
 }
 
+let cached_pid = null;
+
 function get_honk_pid() {
+	if (cached_pid) {
+		let cmd = readfile("/proc/" + cached_pid + "/cmdline");
+		if (cmd && match(cmd, /honk-core/)) {
+			return cached_pid;
+		}
+		cached_pid = null;
+	}
+
 	let p = popen("pidof honk-core 2>/dev/null");
 	let pids = p ? p.read("all") : "";
 	if (p) p.close();
 	let m = match(pids, /([0-9]+)/);
-	return m ? m[1] : null;
+	cached_pid = m ? m[1] : null;
+	return cached_pid;
 }
 
 function parse_host_port(addr) {
@@ -166,13 +177,19 @@ function remove_bracket_block(content, header_regex) {
 		let trimmed = trim(line);
 		if (!in_block && match(trimmed, header_regex)) {
 			in_block = true;
-			depth = 1;
+			let open_cnt = length(split(trimmed, "{")) - 1;
+			let close_cnt = length(split(trimmed, "}")) - 1;
+			depth = open_cnt - close_cnt;
+			if (open_cnt > 0 && depth <= 0) {
+				in_block = false;
+			}
 			continue;
 		}
 
 		if (in_block) {
-			if (match(trimmed, /\{/)) depth++;
-			if (match(trimmed, /\}/)) depth--;
+			let open_cnt = length(split(trimmed, "{")) - 1;
+			let close_cnt = length(split(trimmed, "}")) - 1;
+			depth += (open_cnt - close_cnt);
 			if (depth <= 0) {
 				in_block = false;
 			}
@@ -182,6 +199,21 @@ function remove_bracket_block(content, header_regex) {
 		push(new_lines, line);
 	}
 	return join("\n", new_lines);
+}
+
+function get_uci_dashboard_type(u) {
+	if (!u) return null;
+	u.load("honk");
+	let requested_type = u.get("honk", "config", "dashboard");
+	if (!requested_type) {
+		u.foreach("honk", "honk", function(s) {
+			if (s.dashboard) {
+				requested_type = s.dashboard;
+				return false;
+			}
+		});
+	}
+	return requested_type;
 }
 
 function clean_legacy_api_from_config(config_file) {
@@ -206,13 +238,7 @@ function get_dashboard_info(req) {
 	let u = cursor();
 	let requested_type = (req && req.args) ? req.args.type : null;
 	if (!requested_type && u) {
-		u.load("honk");
-		requested_type = u.get("honk", "config", "dashboard");
-		if (!requested_type) {
-			u.foreach("honk", "honk", function(s) {
-				if (s.dashboard) requested_type = s.dashboard;
-			});
-		}
+		requested_type = get_uci_dashboard_type(u);
 	}
 	if (!requested_type) requested_type = "none";
 
@@ -274,16 +300,7 @@ function get_dashboard_info(req) {
 function download_dashboard(req) {
 	let requested_type = (req && req.args) ? req.args.type : null;
 	if (!requested_type) {
-		let u = cursor();
-		if (u) {
-			u.load("honk");
-			requested_type = u.get("honk", "config", "dashboard");
-			if (!requested_type) {
-				u.foreach("honk", "honk", function(s) {
-					if (s.dashboard) requested_type = s.dashboard;
-				});
-			}
-		}
+		requested_type = get_uci_dashboard_type(cursor());
 	}
 	if (!requested_type || requested_type == "none") {
 		requested_type = "doona";

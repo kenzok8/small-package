@@ -1,6 +1,7 @@
 'use strict';
 'require baseclass';
 'require rpc';
+'require uci';
 'require fs';
 'require ui';
 'require poll';
@@ -88,13 +89,6 @@ var callHonkSwitchDashboardApi = rpc.declare({
 	expect: { }
 });
 
-var callUciGet = rpc.declare({
-	object: 'uci',
-	method: 'get',
-	params: [ 'config', 'section', 'option' ],
-	expect: { value: '' }
-});
-
 function readFile(path) {
 	if (fs.read_direct) {
 		return fs.read_direct(path).catch(function() {
@@ -140,6 +134,7 @@ function ensureEditorStyles() {
 	var style = document.createElement('style');
 	style.id = 'honk-editor-custom-style';
 	style.textContent = [
+		'.cbi-value.hidden { display: none !important; }',
 		'.honk-status-field { display: inline-flex !important; align-items: center !important; justify-content: flex-start !important; gap: 16px !important; flex-wrap: wrap !important; min-height: 32px !important; }',
 		'.honk-editor-toolbar { margin-bottom: 6px !important; margin-top: 0 !important; display: flex !important; align-items: center !important; justify-content: flex-start !important; }',
 		'.cm-format-btn { margin: 0 !important; cursor: pointer !important; }',
@@ -147,31 +142,22 @@ function ensureEditorStyles() {
 		'.cbi-value:has(.CodeMirror) > .cbi-value-title { padding-top: 5px !important; }',
 		'.cbi-value:has(.CodeMirror) .cbi-value-field { flex: 1 1 0% !important; min-width: 0 !important; width: auto !important; }',
 		'.CodeMirror {',
-		'	border: 1px solid var(--hairline, var(--border-color-medium, #ccc)) !important;',
+		'	border: 1px solid var(--border, var(--hairline, var(--border-color-medium, #ccc))) !important;',
 		'	border-radius: var(--radius-base, 4px);',
 		'	height: auto;',
 		'	min-height: 480px;',
 		'	font-family: var(--font-mono, monospace);',
 		'	font-size: 13px;',
-		'	background: var(--control-bg, var(--surface, #ffffff)) !important;',
-		'	color: var(--text, inherit) !important;',
+		'	background: var(--background, var(--control-bg, var(--background-color-high, #ffffff))) !important;',
+		'	color: var(--foreground, var(--text, var(--text-color-highest, inherit))) !important;',
 		'	box-shadow: none;',
 		'}',
 		'.CodeMirror-gutters {',
-		'	border-right: 1px solid var(--hairline, var(--border-color-medium, #ccc)) !important;',
-		'	background: var(--surface-sunken, var(--background-color-low, #f7f7f7)) !important;',
+		'	border-right: 1px solid var(--border, var(--hairline, var(--border-color-medium, #ccc))) !important;',
+		'	background: var(--surface-raised, var(--surface-sunken, var(--background-color-low, #f7f7f7))) !important;',
 		'}',
-		'.CodeMirror-linenumber { color: var(--text-muted, var(--text-color-low, #888888)) !important; }',
-		'.CodeMirror-cursor { border-left: 1px solid var(--text, currentColor) !important; }',
-		'[data-darkmode="true"] .CodeMirror, [data-theme="dark"] .CodeMirror, .dark .CodeMirror {',
-		'	background: var(--control-bg, var(--surface, #141822)) !important;',
-		'	color: var(--text, #f9fafb) !important;',
-		'	border-color: var(--hairline, var(--border-color-medium, #334155)) !important;',
-		'}',
-		'[data-darkmode="true"] .CodeMirror-gutters, [data-theme="dark"] .CodeMirror-gutters, .dark .CodeMirror-gutters {',
-		'	background: var(--surface-sunken, var(--background-color-low, #0a0e17)) !important;',
-		'	border-right-color: var(--hairline, var(--border-color-medium, #334155)) !important;',
-		'}'
+		'.CodeMirror-linenumber { color: var(--muted-foreground, var(--text-muted, var(--text-color-low, #888888))) !important; }',
+		'.CodeMirror-cursor { border-left: 1px solid var(--foreground, var(--text, currentColor)) !important; }'
 	].join('\n');
 	document.head.appendChild(style);
 }
@@ -211,6 +197,18 @@ function ensureCodeMirror() {
 		});
 
 	return _cmPromise;
+}
+
+function preloadCodeMirror() {
+	if (window.requestIdleCallback) {
+		requestIdleCallback(function() {
+			ensureCodeMirror().catch(function() {});
+		}, { timeout: 2000 });
+	} else {
+		setTimeout(function() {
+			ensureCodeMirror().catch(function() {});
+		}, 300);
+	}
 }
 
 function formatEditor(ed) {
@@ -315,17 +313,35 @@ function formatEditor(ed) {
 function bindCodeMirrorToMap(m, onSaveCallback) {
 	if (!m || m._cmHooked) return;
 	m._cmHooked = true;
+	ensureEditorStyles();
 
 	var origRenderContents = m.renderContents;
 	m.renderContents = function() {
 		return origRenderContents.apply(this, arguments).then(function(mapNode) {
 			var target = mapNode || m.root || document.getElementById('cbi-' + m.config) || document;
 			target.querySelectorAll('textarea').forEach(function(ta) {
-				initCodeMirror(ta, onSaveCallback).then(function(editor) {
-					requestAnimationFrame(function() {
-						editor.refresh();
+				if (ta.dataset.cmInitialized === 'true' || ta._editor) return;
+
+				if (ta.offsetParent !== null) {
+					initCodeMirror(ta, onSaveCallback);
+				} else if (window.IntersectionObserver) {
+					var row = ta.closest('.cbi-value') || ta;
+					var io = new IntersectionObserver(function(entries) {
+						if (entries[0] && entries[0].isIntersecting) {
+							io.disconnect();
+							initCodeMirror(ta, onSaveCallback).then(function(editor) {
+								if (editor) {
+									requestAnimationFrame(function() {
+										editor.refresh();
+									});
+								}
+							});
+						}
 					});
-				});
+					io.observe(row);
+				} else {
+					initCodeMirror(ta, onSaveCallback);
+				}
 			});
 			return mapNode;
 		});
@@ -418,6 +434,10 @@ function initCodeMirror(textarea, onSaveCallback) {
 
 function createConfigFileView(filePath, mapTitle, mapDesc, fieldTitle, successMsg, needRestart) {
 	return view.extend({
+		load: function() {
+			return uci.load('honk');
+		},
+
 		render: function() {
 			var m = new form.Map('honk', mapTitle, mapDesc);
 
@@ -457,40 +477,46 @@ function createConfigFileView(filePath, mapTitle, mapDesc, fieldTitle, successMs
 }
 
 
+function updateTabVisibilityFromSections(sections) {
+	var s = (sections && sections[0]) ? sections[0] : (uci.get_first('honk', 'honk') || {});
+	var isAdvanced = (s.advanced === '1');
+	var dashType = s.dashboard || '';
+
+	var hiddenTabs = [];
+	if (!isAdvanced) {
+		hiddenTabs.push('dns', 'node', 'route');
+	}
+	if (dashType === 'none') {
+		hiddenTabs.push('api');
+	}
+
+	applyTabCss(hiddenTabs);
+
+	var currentTab = (window.L && L.env && Array.isArray(L.env.dispatchpath)) ? L.env.dispatchpath[3] : '';
+	if (!currentTab) {
+		var m = window.location.pathname.match(/\/honk\/([a-z0-9_-]+)/);
+		if (m) currentTab = m[1];
+	}
+	if (currentTab && hiddenTabs.indexOf(currentTab) !== -1) {
+		window.location.href = L.url('admin/services/honk/global');
+	}
+}
+
 // Tab visibility control:
 // - dns, node, route are hidden when advanced=0
 // - api is hidden when dashboard=none
 function applyTabVisibility() {
-	return Promise.all([
-		L.resolveDefault(callUciGet('honk', 'config', 'advanced'), '0'),
-		L.resolveDefault(callUciGet('honk', 'config', 'dashboard'), 'none')
-	]).then(function(res) {
-		var isAdvanced = (res[0] === '1');
-		var dashType = res[1] || 'none';
+	var sections = uci.sections('honk', 'honk');
+	if (sections && sections.length) {
+		updateTabVisibilityFromSections(sections);
+		return Promise.resolve();
+	}
 
-		var hiddenTabs = [];
-		if (!isAdvanced) {
-			hiddenTabs.push('dns', 'node', 'route');
-		}
-		if (dashType === 'none') {
-			hiddenTabs.push('api');
-		}
-
-		applyTabCss(hiddenTabs);
-
-		var currentTab = (window.L && L.env && Array.isArray(L.env.dispatchpath)) ? L.env.dispatchpath[3] : '';
-		if (!currentTab) {
-			var m = window.location.pathname.match(/\/honk\/([a-z0-9_-]+)/);
-			if (m) currentTab = m[1];
-		}
-		if (currentTab && hiddenTabs.indexOf(currentTab) !== -1) {
-			window.location.href = L.url('admin/services/honk/global');
-		}
+	return uci.load('honk').then(function() {
+		updateTabVisibilityFromSections(uci.sections('honk', 'honk'));
 	}).catch(function() {
 	});
 }
-
-var applyAdvancedTabVisibility = applyTabVisibility;
 
 function applyTabCss(hiddenTabs) {
 	var styleId = 'honk-tab-visibility-style';
@@ -510,6 +536,14 @@ function applyTabCss(hiddenTabs) {
 		}).join(',\n') + ' { display: none !important; }';
 	}
 }
+
+// Early synchronous check if UCI data is already loaded in memory
+try {
+	var _earlySections = uci.sections('honk', 'honk');
+	if (_earlySections && _earlySections.length) {
+		updateTabVisibilityFromSections(_earlySections);
+	}
+} catch (e) {}
 
 function renderStatusHeader() {
 	var statusEl = E('span', { 'id': 'honk_status', 'style': 'font-weight: 500;' }, [
@@ -567,17 +601,17 @@ function renderStatusHeader() {
 
 	poll.add(function() {
 		return callHonkStatus().then(updateStatus);
-	}, 3);
+	}, 5);
 
 	applyTabVisibility();
 
 	return section;
 }
 
+preloadCodeMirror();
 
 return baseclass.extend({
 	applyTabVisibility: applyTabVisibility,
-	applyAdvancedTabVisibility: applyTabVisibility,
 	callHonkStatus: callHonkStatus,
 	callHonkReload: callHonkReload,
 	callHonkRestart: callHonkRestart,
@@ -590,6 +624,7 @@ return baseclass.extend({
 	readFile: readFile,
 	writeFile: writeFile,
 	ensureCodeMirror: ensureCodeMirror,
+	preloadCodeMirror: preloadCodeMirror,
 	formatEditor: formatEditor,
 	initCodeMirror: initCodeMirror,
 	bindCodeMirrorToMap: bindCodeMirrorToMap,
