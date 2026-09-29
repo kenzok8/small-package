@@ -174,6 +174,7 @@ return {
 		}
 
 		let ip = "";
+		let api_note = "";
 		if (mode == "iface" && iface != "") {
 			if (ip_type == "4") {
 				ip = run("/sbin/ifconfig " + sq(iface) +
@@ -206,14 +207,17 @@ return {
 					if (iswan == "1") bind = " --interface " + sq(iface);
 				}
 				let start = time() % length(lines);
+				let used_api = "";
 				for (let i = 0; i < 3 && i < length(lines); i++) {
 					let pick = lines[(start + i) % length(lines)];
 					let out = run("curl -k -s -" + (ip_type == "4" ? "4" : "6") + bind + " -m 8 " + sq(pick) +
 						(ip_type == "4"
 							? " | grep -oE '[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}' | head -n1"
 							: " | grep -oE '([\\da-fA-F0-9]{1,4}(:{1,2})){1,15}[\\da-fA-F0-9]{1,4}' | head -n1"));
-					if (out != "") { ip = out; break; }
+					if (out != "") { ip = out; used_api = pick; break; }
 				}
+				/* 记录探测来源，成功结果后追加显示（全角括号，避免破坏前端半角 ( 的非公网判定） */
+				if (used_api != "") api_note = "（来自API：" + used_api + "）";
 			}
 		}
 
@@ -223,10 +227,10 @@ return {
 		}
 		if (is_private(ip)) {
 			let note = translate('Not a public IP') ?? 'Not a public IP';
-			http.write(ip + " (" + note + ")");
+			http.write(ip + " (" + note + ")" + api_note);
 			return;
 		}
-		http.write(ip);
+		http.write(ip + api_note);
 	},
 
 	get_log: function() {
