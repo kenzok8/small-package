@@ -1779,6 +1779,9 @@ local function curl(url, file, ua, mode)
 	ua = (ua == "passwall") and ("passwall/" .. api.get_version()) or ua
 	curl_args[#curl_args + 1] = '--user-agent "' .. ua .. '"'
 
+	local cookie_file = "/tmp/cookie_" .. api.gen_random_char(5)
+	curl_args[#curl_args + 1] = '-c "' .. cookie_file .. '" -b "' .. cookie_file .. '"'
+
 	local return_code, result
 	if mode == "direct" then
 		return_code, result = api.curl_base(url, file, curl_args)
@@ -1800,6 +1803,8 @@ local function curl(url, file, ua, mode)
 	if header_str ~= "" then
 		header_str = header_str:gsub("\r", "")
 	end
+
+	luci.sys.call('rm -f "%s"' % cookie_file)
 
 	return return_code, http_code, header_str
 end

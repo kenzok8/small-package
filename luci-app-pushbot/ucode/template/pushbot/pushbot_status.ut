@@ -763,8 +763,11 @@ pb_ota_showCountdown(ov);
 			'</div>'
 		].join('');
 
-		var hc = document.querySelector('.pushbot-header-card');
-		if (hc && hc.parentNode) hc.parentNode.insertBefore(card, hc.nextSibling);
+		var bp = document.getElementById('pushbot_pane_basic');
+		if (bp) bp.appendChild(card); else {
+			var hc = document.querySelector('.pushbot-header-card');
+			if (hc && hc.parentNode) hc.parentNode.insertBefore(card, hc.nextSibling);
+		}
 
 		var enEl = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.pushbot_enable"]');
 		var flagEls = extraFlags.map(function(n) { return hiddenBox.querySelector('[name="cbid.pushbot.pushbot.' + n + '"]'); });
@@ -915,10 +918,9 @@ pb_ota_showCountdown(ov);
 			'</div>'
 		].join('');
 
-		var runCard = document.getElementById('pushbot_mode_card');
-		if (runCard && runCard.parentNode) {
-			runCard.parentNode.insertBefore(card, runCard.nextSibling);
-		} else {
+		var bp = document.getElementById('pushbot_pane_basic');
+		if (bp) bp.appendChild(card);
+		else {
 			var hc = document.querySelector('.pushbot-header-card');
 			if (hc && hc.parentNode) { hc.parentNode.insertBefore(card, hc.nextSibling); }
 			else { document.querySelector('.pushbot-body').appendChild(card); }
@@ -1335,10 +1337,9 @@ pb_ota_showCountdown(ov);
 		desc.textContent = '{{ _('Enter MAC-alias, e.g. XX:XX:XX:XX:XX:XX-MyPhone. Multiple aliases supported, separated by comma or space') }}';
 		card.appendChild(desc);
 
-		var pushCard = document.getElementById('pushbot_pushmode_card');
-		if (pushCard && pushCard.parentNode) {
-			pushCard.parentNode.insertBefore(card, pushCard.nextSibling);
-		} else {
+		var bp = document.getElementById('pushbot_pane_basic');
+		if (bp) bp.appendChild(card);
+		else {
 			document.querySelector('.pushbot-mode-card') && document.querySelector('.pushbot-mode-card').parentNode.appendChild(card);
 		}
 	}
@@ -1841,9 +1842,10 @@ pb_ota_showCountdown(ov);
 		})();
 
 		/* insert after terminal card */
-		var termCard = document.getElementById('pushbot_terminal_card');
-		if (termCard && termCard.parentNode) {
-			termCard.parentNode.insertBefore(card, termCard.nextSibling);
+		var bp = document.getElementById('pushbot_pane_basic');
+		if (bp) bp.appendChild(card); else {
+			var hc = document.querySelector('.pushbot-header-card');
+			if (hc && hc.parentNode) hc.parentNode.insertBefore(card, hc.nextSibling);
 		}
 	}
 
@@ -2821,18 +2823,21 @@ cuSub.appendChild(mkBtn('{{ _('Traffic DND') }}',cdOn,function(on){updateFlagInp
 		try{initScheduledPushCard();}catch(e){console.error('scheduled card:',e);}
 	});
 
+	/* 架构：先建 tab+panes（initModernTabs），卡片创建时直接进入所属 pane，
+	   append 调用序 = tab 内从上到下视觉顺序（不再两阶段搬家） */
+	window.addEventListener('load', initModernTabs);
 	window.addEventListener('load', initCard);
 	window.addEventListener('load', initPushModeCard);
 	window.addEventListener('load', initTerminalCard);
 	window.addEventListener('load', initDisturbCard);
-	window.addEventListener('load', initModernTabs);
+	setTimeout(function(){try{initModernTabs();}catch(e){console.error('initModernTabs:',e);}}, 200);
 	setTimeout(function(){try{initCard();}catch(e){console.error('initCard:',e);}}, 200);
-	setTimeout(function(){try{initPushModeCard();}catch(e){console.error('initPushModeCard:',e);}}, 200);
-	setTimeout(function(){try{initTerminalCard();}catch(e){console.error('initTerminalCard:',e);}}, 250);
-	setTimeout(function(){try{initDisturbCard();}catch(e){console.error('initDisturbCard:',e);}}, 300);
-	setTimeout(function(){try{initModernTabs();}catch(e){console.error('initModernTabs:',e);}}, 350);
+	setTimeout(function(){try{initPushModeCard();}catch(e){console.error('initPushModeCard:',e);}}, 250);
+	setTimeout(function(){try{initTerminalCard();}catch(e){console.error('initTerminalCard:',e);}}, 300);
+	setTimeout(function(){try{initDisturbCard();}catch(e){console.error('initDisturbCard:',e);}}, 350);
 	/* also try direct call if DOM ready, but guard against errors */
 	if (document.readyState !== 'loading') {
+		try { initModernTabs(); } catch(e) {}
 		try { initCard(); } catch(e) {}
 	}
 	/* expose for initModernTabs (outside IIFE) */
@@ -3364,11 +3369,9 @@ function initModernTabs() {
 	var headerCard = document.querySelector('.pushbot-header-card');
 	if (!headerCard || !headerCard.parentNode) return;
 
-	/* wait for cards to exist before building tabs */
-	if (!document.getElementById('pushbot_mode_card') || !document.getElementById('pushbot_pushmode_card')) {
-		setTimeout(initModernTabs, 100);
-		return;
-	}
+	/* 注：此处原有"等卡片出现再建 tabs"的 guard —— 它是"先建卡再搬家"时代的遗物，
+	   与"建卡即入 pane"的新架构构成双向等待（pane等卡、卡等pane），靠定时器
+	   随机顺序碰运气，导致卡片偶发落回页面流。建 pane 不依赖卡片，直接建。 */
 
 	/* build tab bar */
 	var tabBar = document.createElement('div');
@@ -3436,16 +3439,6 @@ function initModernTabs() {
 	tabBar.parentNode.insertBefore(monitorPane, scheduledPane.nextSibling);
 	tabBar.parentNode.insertBefore(clientPane, monitorPane.nextSibling);
 	tabBar.parentNode.insertBefore(logPane, clientPane.nextSibling);
-
-	/* move cards (Run Control + Push Mode + Terminal Info) into basic pane */
-	var runCard = document.getElementById('pushbot_mode_card');
-	var pushCard = document.getElementById('pushbot_pushmode_card');
-	var termCard = document.getElementById('pushbot_terminal_card');
-	var distCard = document.getElementById('pushbot_disturb_card');
-	if (runCard) basicPane.appendChild(runCard);
-	if (pushCard) basicPane.appendChild(pushCard);
-	if (termCard) basicPane.appendChild(termCard);
-	if (distCard) basicPane.appendChild(distCard);
 
 	/* hide old LuCI tabs, switch to the custom tab bar */
 	var oldTabMenu = document.querySelector('.cbi-tabmenu');
