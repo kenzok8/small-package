@@ -185,6 +185,7 @@ git clone https://github.com/Ausaci/luci-app-nat6-helper -b main-dev
 git clone --depth 1 https://github.com/animegasan/luci-app-droidmodem
 git clone --depth 1 https://github.com/kenzok78/luci-app-guest-wifi
 git clone --depth 1 https://github.com/kenzok8/openwrt-daede openwrt-daede && cp -rf openwrt-daede/{dae,daed,luci-app-daede} ./; rm -rf openwrt-daede
+git clone --depth 1 https://github.com/kenzok8/openwrt-tower openwrt-tower && cp -rf openwrt-tower/{tower,luci-app-tower} ./; rm -rf openwrt-tower
 git clone --depth 1 https://github.com/EkkoG/openwrt-natmap
 git clone --depth 1 https://github.com/EkkoG/luci-app-natmap
 git clone --depth 1 https://github.com/EasyTier/luci-app-easytier luci-app-easytier1 && mvdir luci-app-easytier1
