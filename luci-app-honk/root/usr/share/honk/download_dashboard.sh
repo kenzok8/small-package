@@ -6,7 +6,7 @@ if [ -z "${2:-}" ]; then
     if [ "$TARGET_DIR" = "/etc/honk/zashboard" ]; then
         DOWNLOAD_URL="https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
     else
-        DOWNLOAD_URL="https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.8/doona-0.1.0-beta.8.tar.gz"
+        DOWNLOAD_URL="https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.11/doona-0.1.0-beta.11.tar.gz"
     fi
 else
     DOWNLOAD_URL="$2"
@@ -60,7 +60,7 @@ fetch_text() {
 case "$DOWNLOAD_URL" in
     *github.com/Zakkaus/doona*)
         PREFIX="${DOWNLOAD_URL%%https://github.com/*}"
-        DEFAULT_TAG="v0.1.0-beta.8"
+        DEFAULT_TAG="v0.1.0-beta.11"
         DEFAULT_TAG_NO_V="${DEFAULT_TAG#[vV]}"
         FALLBACK_URL="${PREFIX}https://github.com/Zakkaus/doona/releases/download/${DEFAULT_TAG}/doona-${DEFAULT_TAG_NO_V}.tar.gz"
         log "Checking latest release..."

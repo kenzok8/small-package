@@ -891,6 +891,10 @@ pb_ota_showCountdown(ov);
 	function initPushModeCard() {
 		if (document.getElementById('pushbot_pushmode_card')) return;
 		if (!PB_CONFIG) { setTimeout(initPushModeCard, 200); return; }
+		/* 顺序 guard：必须等运行控制卡创建（与 terminal/disturb 同模式的依赖链，
+		   run→push→term→disturb 严格串行 = 视觉顺序，消除两条 200ms 轮询
+		   相位竞争导致的"运行控制偶尔排到下面"） */
+		if (!document.getElementById('pushbot_mode_card')) { setTimeout(initPushModeCard, 200); return; }
 
 		makeHidden('jsonpath', PB_val('jsonpath', '/usr/bin/pushbot/api/dingding.json'));
 		var modeHidden = hiddenBox.querySelector('[name="cbid.pushbot.pushbot.jsonpath"]');
@@ -2038,7 +2042,9 @@ function initContentCard() {
 	var CT_IP_HINTS = PB_sys('ip_hints');
 	var CT_IPV4 = PB_val('pushbot_ipv4', '');
 	var CT_IPV4_IFACE = PB_val('ipv4_interface', '');
-	var CT_IPV6 = PB_val('pushbot_ipv6', 'disable');
+	/* 未配置默认'0'(停用)——与 iv6Opts 的停用 value 一致才可选中（原 'disable' 是无效残留值，不匹配任何选项导致未配置时无选中）；历史存量 'disable' 归一化为 '0' */
+	var CT_IPV6 = PB_val('pushbot_ipv6', '0');
+	if (CT_IPV6 === 'disable') CT_IPV6 = '0';
 	var CT_IPV6_IFACE = PB_val('ipv6_interface', '');
 	var CT_PUSH_UP = PB_bool('pushbot_up');
 	var CT_PUSH_DOWN = PB_bool('pushbot_down');
@@ -3507,8 +3513,20 @@ function initModernTabs() {
 	/* ── responsive tab resize handler ── */
 	function _updateTabLayout() {
 		var bw = tabBar.clientWidth;
+		var before = tabBar.className;
 		if (bw < 540) { tabBar.classList.add('pb-tabs-row2'); } else { tabBar.classList.remove('pb-tabs-row2'); }
 		if (bw < 360) { tabBar.classList.add('pb-tabs-narrow'); } else { tabBar.classList.remove('pb-tabs-narrow'); }
+		/* 响应式类变化会重排按钮 → 指示器必须重新跟随，否则蓝条停在
+		   旧测量位置，露出按钮顶部（视觉上"选中按钮单独偏高"） */
+		if (tabBar.className !== before) {
+			moveTabInd(tabBar.querySelector('.pushbot-tab:hover') || tabBar.querySelector('.pushbot-tab.is-active'));
+		}
+	}
+	/* 字体加载完成会改变按钮宽度/位置 → 同样重定位一次（初始测量可能在字体就绪前） */
+	if (document.fonts && document.fonts.ready && document.fonts.ready.then) {
+		document.fonts.ready.then(function() {
+			moveTabInd(tabBar.querySelector('.pushbot-tab:hover') || tabBar.querySelector('.pushbot-tab.is-active'));
+		});
 	}
 	if (window.ResizeObserver) {
 		var tabRO = new ResizeObserver(_updateTabLayout);

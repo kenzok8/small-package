@@ -1,140 +1,153 @@
 #!/bin/sh /etc/rc.common
+# HomeRedirect - CGNAT-era port forwarder (socat front-end, procd managed)
+# Copyright 2020-2026 Richard <xiaoqingfengatgm@gmail.com>
 
+USE_PROCD=1
 START=99
+STOP=10
 
 RUNLOG_DIR=/tmp/hr
+FW_PREFIX="hr_"
 
-PROCESSED_REDIRECT=0
-
-log()
-{
-	logger -t homeredirect $1
+log() {
+	logger -t homeredirect "$*"
 }
 
-setupDefaultSrcIP() {
-	if [ -z $src_ip ];then
-		if [ "$1" = "ipv4" ]; then
-			src_ip="0.0.0.0"
-		else
-			src_ip="::"
-		fi
-	fi
+# classify proto: addr_type (socat LISTEN address), transport, firewall
+# proto/family, is_v6, is_tls
+classify_proto() {
+	case "$1" in
+	tcp4) addr_type="TCP4-LISTEN";    transport="TCP"; fw_proto="tcp"; fw_family="ipv4"; is_v6=0; is_tls=0 ;;
+	udp4) addr_type="UDP4-LISTEN";    transport="UDP"; fw_proto="udp"; fw_family="ipv4"; is_v6=0; is_tls=0 ;;
+	tcp6) addr_type="TCP6-LISTEN";    transport="TCP"; fw_proto="tcp"; fw_family="ipv6"; is_v6=1; is_tls=0 ;;
+	udp6) addr_type="UDP6-LISTEN";    transport="UDP"; fw_proto="udp"; fw_family="ipv6"; is_v6=1; is_tls=0 ;;
+	tls4) addr_type="OPENSSL-LISTEN"; transport="TCP"; fw_proto="tcp"; fw_family="ipv4"; is_v6=0; is_tls=1 ;;
+	tls6) addr_type="OPENSSL-LISTEN"; transport="TCP"; fw_proto="tcp"; fw_family="ipv6"; is_v6=1; is_tls=1 ;;
+	*) return 1 ;;
+	esac
 }
 
-setup() {
+fw_add_rule() {
+	local id="$1"
+	local enabled proto src_dport
 
-	config_get enabled $1 enabled
+	config_get enabled "$id" enabled 0
+	[ "$enabled" = "1" ] || return 0
+	config_get proto "$id" proto
+	config_get src_dport "$id" src_dport
+	classify_proto "$proto" || return 0
 
-	id=$1
-	config_get proto $1 proto
-	config_get src_ip $1 src_ip
-	config_get src_dport $1 src_dport
-	config_get dest_ip $1 dest_ip
-	config_get dest_port $1 dest_port
-	config_get name $1 name
-
-	terminateRedirect $id
-	
-	[ "$enabled" != "1" ] && return 0
-
-	PROCESSED_REDIRECT=1
-
-	if [ "$proto" = "tcp4" ]; then
-		src_addresstype="TCP4-LISTEN"
-		dest_addresstype="TCP4"
-		setupDefaultSrcIP "ipv4"
-	elif [ "$proto" = "tcp6" ]; then
-		src_addresstype="TCP6-LISTEN"
-		dest_addresstype="TCP6"
-		setupDefaultSrcIP "ipv6"
-		src_ip="[$src_ip]"
-		dest_ip="[$dest_ip]"
-	elif [ "$proto" = "udp4" ]; then
-		src_addresstype="UDP4-LISTEN"
-		dest_addresstype="UDP4"
-		setupDefaultSrcIP "ipv4"
-	elif [ "$proto" = "udp6" ]; then
-		src_addresstype="UDP6-LISTEN"
-		dest_addresstype="UDP6"
-		setupDefaultSrcIP "ipv6"
-		src_ip="[$src_ip]"
-		dest_ip="[$dest_ip]"
-	fi
-
-	#echo "nohup socat -lf $RUNLOG_DIR/$id.log $src_addresstype:$src_dport,bind=$src_ip,fork $dest_addresstype:$dest_ip:$dest_port > $RUNLOG_DIR/$id.log 2>&1 &"
-	nohup socat -lf $RUNLOG_DIR/$id.log $src_addresstype:$src_dport,bind=$src_ip,fork $dest_addresstype:$dest_ip:$dest_port > $RUNLOG_DIR/$id.log 2>&1 &
-	log "[HomeRedirect] Port redirect from $proto $src_ip:$src_dport==>$dest_addresstype:$dest_ip:$dest_port started."
+	uci -q set "firewall.${FW_PREFIX}${id}=rule"
+	uci -q set "firewall.${FW_PREFIX}${id}.target=ACCEPT"
+	uci -q set "firewall.${FW_PREFIX}${id}.src=wan"
+	uci -q set "firewall.${FW_PREFIX}${id}.proto=$fw_proto"
+	uci -q set "firewall.${FW_PREFIX}${id}.dest_port=$src_dport"
+	uci -q set "firewall.${FW_PREFIX}${id}.family=$fw_family"
+	uci -q set "firewall.${FW_PREFIX}${id}.name=homeredirect: $src_dport/$fw_proto ($fw_family)"
 }
 
-# param $1 is port
-showTcpPortState() {
-	local process=$(netstat -ltnp | awk -F ' ' '{if(NR>2) print $1"/"$4"/"$7}' | grep :$1)
-	if [ -n "$process" ]; then
-		echo $process
-	else
-		echo 'TCP Port $1 is Free.'
-	fi
-}
-# param $1 is port
-showUdpPortState() {
-	local process=$(netstat -lunp | awk -F ' ' '{if(NR>2) print $1"/"$4"/"$6}'|grep :$1)
-	if [ -n "$process" ]; then
-		echo $process
-	else
-		echo 'UDP Port $1 is Free.'
-	fi
+# regenerate the UCI firewall rules owned by this service (fw3 and fw4 both
+# render "config rule" with src=wan into the wan INPUT chain); replaces the
+# old script.sh that wrote iptables rules directly
+sync_firewall() {
+	local s changed=0
+
+	for s in $(uci -q show firewall 2>/dev/null | sed -n "s/^firewall\.\(${FW_PREFIX}[A-Za-z0-9_]*\)=rule$/\1/p"); do
+		uci -q delete "firewall.$s"
+		changed=1
+	done
+
+	[ "$1" = "add" ] && {
+		config_foreach fw_add_rule redirect
+		changed=1
+	}
+
+	[ "$changed" = "1" ] && {
+		uci -q commit firewall
+		/etc/init.d/firewall reload >/dev/null 2>&1
+	}
 }
 
-isRedirectRunning() {
-	local runningPID=$(ps | grep socat | grep $RUNLOG_DIR/$1 | sed '/grep/d' | awk -F ' ' '{print $1}')
-	if [ -n "$runningPID" ]; then
-		return 1
-	else
+setup_instance() {
+	local id="$1"
+	local enabled proto src_ip src_dport dest_ip dest_port name ipv6only
+	local cert key listen_opts listen_addr
+
+	config_get enabled "$id" enabled 0
+	config_get proto "$id" proto
+	config_get src_ip "$id" src_ip
+	config_get src_dport "$id" src_dport
+	config_get dest_ip "$id" dest_ip
+	config_get dest_port "$id" dest_port
+	config_get name "$id" name
+	config_get ipv6only "$id" ipv6only 1
+
+	[ "$enabled" = "1" ] || return 0
+
+	classify_proto "$proto" || {
+		log "rule $name: unknown proto '$proto' - skipping"
 		return 0
-	fi
-}
-
-# param $1 is redirect id
-terminateRedirect() {
-	isRedirectRunning $1
-	[ "$?" = "1" ] && {
-		local runningPID=$(ps | grep socat | grep $RUNLOG_DIR/$1 | sed '/grep/d' | awk -F ' ' '{print $1}')
-		#echo "Going to kill process $runningPID"
-		kill $runningPID
 	}
-}
 
-terminateAll() {
-	local runningPIDs=$(ps | grep socat | grep $RUNLOG_DIR | sed '/grep/d' | awk -F ' ' '{print $1}')
-	[ -n "$runningPIDs" ] && {
-		kill $runningPIDs
-		log "Redirect process : $runningPIDs stopped."
-	}
-}
+	# listener bind address defaults by family
+	[ -z "$src_ip" ] && { [ "$is_v6" = "1" ] && src_ip="::" || src_ip="0.0.0.0"; }
 
-start() {
-	local vt_enabled=$(uci -q get homeredirect.@global[0].enabled)
-	if [ "$vt_enabled" = 0 ]; then
-		terminateAll
-		fw3 reload
-		return 1
+	# destination side is family neutral: bare v6 literals get bracketed,
+	# v4 literals and hostnames pass through, hostnames are re-resolved by
+	# socat on every forked connection
+	case "$dest_ip" in
+	\[*) ;; # already bracketed
+	*:*) dest_ip="[$dest_ip]" ;; # bare v6 literal
+	esac
+
+	listen_opts="fork,reuseaddr"
+	# socat >= 1.8.1 resolves bind= with AF_INET unless pf=ip6 is given
+	[ "$is_v6" = "1" ] && listen_opts="$listen_opts,pf=ip6"
+	# v6 listeners default to ipv6only: pure v6 entry in a CGNAT world,
+	# v4-mapped connections are refused unless the rule opts out
+	[ "$is_v6" = "1" ] && [ "$ipv6only" = "1" ] && listen_opts="$listen_opts,ipv6only=1"
+
+	listen_addr="$addr_type"
+	if [ "$is_tls" = "1" ]; then
+		cert=$(uci -q get homeredirect.@global[0].cert)
+		key=$(uci -q get homeredirect.@global[0].key)
+		if [ -z "$cert" ] || [ -z "$key" ] || [ ! -f "$cert" ] || [ ! -f "$key" ]; then
+			log "rule $name: TLS listener needs global cert/key - skipping"
+			return 0
+		fi
+		listen_opts="$listen_opts,cert=$cert,key=$key,verify=0"
 	fi
-	
-	rm -rf $RUNLOG_DIR
-	mkdir -p $RUNLOG_DIR
-	
+
+	log "rule $name: $proto $src_ip:$src_dport -> $transport:$dest_ip:$dest_port"
+
+	procd_open_instance "$id"
+	procd_set_param command /usr/bin/socat -lf "$RUNLOG_DIR/$id.log" \
+		"$listen_addr:$src_dport,bind=$src_ip,$listen_opts" \
+		"$transport:$dest_ip:$dest_port"
+	procd_set_param respawn 3600 5 5
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_close_instance
+}
+
+start_service() {
+	mkdir -p "$RUNLOG_DIR"
+
+	[ "$(uci -q get homeredirect.@global[0].enabled)" = "1" ] || {
+		sync_firewall
+		return 0
+	}
+
 	config_load homeredirect
-	
-	PROCESSED_REDIRECT=0
-	config_foreach setup redirect
-	[ "$PROCESSED_REDIRECT" == "1" ] && {
-		fw3 reload
-	}
-	log 'HomeRedirect started.'
+	config_foreach setup_instance redirect
+	sync_firewall add
 }
 
-stop() {
-	terminateAll
-	fw3 reload
-	log 'HomeRedirect stopped.'
+stop_service() {
+	sync_firewall
+	rm -rf "$RUNLOG_DIR"
+}
+
+service_triggers() {
+	procd_add_reload_trigger "homeredirect"
 }

@@ -1,11 +1,14 @@
 msgid "Home Redirect"
 msgstr "端口转发"
 
-msgid "HomeRedirect is a customized port forwarding utility for HomeLede. It supports TCP / UDP protocol, IPv4 and IPv6."
-msgstr "HomeRedirect是一款为HomeLede定制的端口转发工具，可以将路由上端口访问转发至任意位置，支持TCP/UDP协议，IPv4和IPv6。"
-
 msgid "Home Redirect - Port forwarding utility"
 msgstr "Home Redirect 端口转发"
+
+msgid "HomeLede port forwarding application - fills the gaps left by firewall port forwarding, mainly used for cross-family forwarding under CGNAT."
+msgstr "Homelede的端口转发应用，用于填补系统防火墙端口转发缺口，主要应用于CGNAT环境下跨协议栈转发。"
+
+msgid "Typical scenarios: 1) CGNAT, only public IPv6 - forward a public v6 port to an internal IPv4 service (cross-family). 2) Moving target - use a domain name as destination, re-resolved on every connection. 3) TLS frontend - terminate TLS on the router, backend stays plain."
+msgstr "典型场景：① CGNAT 仅有公网 IPv6——将公网 v6 端口转发至内网 IPv4 服务（跨族）；② 目标地址不固定——目标填域名，每次连接重新解析；③ TLS 前置——路由器终结 TLS，后端保持明文。"
 
 msgid "Redirect Configuration"
 msgstr "转发设置"
@@ -25,9 +28,6 @@ msgstr "转发目标端口"
 msgid "Name"
 msgstr "名称"
 
-msgid "Source IP"
-msgstr "路由器IP"
-
 msgid "Status"
 msgstr "状态"
 
@@ -42,3 +42,66 @@ msgstr "未运行"
 
 msgid "Running"
 msgstr "运行中"
+
+msgid "TLS certificate"
+msgstr "TLS证书"
+
+msgid "PEM certificate path, e.g. /etc/acme/your.domain/fullchain.cer"
+msgstr "PEM 证书路径，如 /etc/acme/你的域名/fullchain.cer"
+
+msgid "TLS private key"
+msgstr "TLS私钥"
+
+msgid "Required by TLS rules. PEM certificate path, e.g. /etc/acme/your.domain/fullchain.cer. Configure together with the private key."
+msgstr "TLS 规则必填。PEM 证书路径，如 /etc/acme/你的域名/fullchain.cer。须与私钥同时配置。"
+
+msgid "PEM private key path matching the certificate above, e.g. /etc/acme/your.domain/your.domain.key. With a combined cert+key file, set both fields to the same path."
+msgstr "与上方证书配对的 PEM 私钥路径，如 /etc/acme/你的域名/你的域名.key。若为证书私钥合一文件，两栏填同一路径即可。"
+
+msgid "TLS status"
+msgstr "TLS 状态"
+
+msgid "Private key is missing - certificate and key must be configured as a pair"
+msgstr "缺少私钥——证书与私钥必须成对配置"
+
+msgid "Certificate is missing - certificate and key must be configured as a pair"
+msgstr "缺少证书——证书与私钥必须成对配置"
+
+msgid "Certificate file not found"
+msgstr "证书文件不存在"
+
+msgid "Key file not found"
+msgstr "私钥文件不存在"
+
+msgid "Ready"
+msgstr "就绪"
+
+msgid "File missing"
+msgstr "文件缺失"
+
+msgid "Not configured"
+msgstr "未配置"
+
+msgid "IPv6 only"
+msgstr "仅IPv6"
+
+msgid "Enabled"
+msgstr "启用"
+
+msgid "TCP/IPv4"
+msgstr "TCP/IPv4"
+
+msgid "UDP/IPv4"
+msgstr "UDP/IPv4"
+
+msgid "TCP/IPv6"
+msgstr "TCP/IPv6"
+
+msgid "UDP/IPv6"
+msgstr "UDP/IPv6"
+
+msgid "TLS/IPv4"
+msgstr "TLS/IPv4"
+
+msgid "TLS/IPv6"
+msgstr "TLS/IPv6"

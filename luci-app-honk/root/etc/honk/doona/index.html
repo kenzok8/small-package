@@ -1,8 +1,9 @@
 <!doctype html>
 <html lang="zh-Hant" dir="ltr">
 <head>
+<meta name="doona-build" content="280ebfa593df4ed0">
 <script>// Normalize appearance before first paint. The build fills the palette list and default from src/shell/palettes.ts, the
-// language locales and default from src/i18n/languages.ts, and the right-to-left scripts from src/i18n/direction.ts.
+// language locales and reference locale from src/i18n/languages.ts, and the right-to-left scripts from src/i18n/direction.ts.
 (function () {
   var read = function (key) {
     try {
@@ -23,7 +24,22 @@
   d.dataset.flavour = parts[1];
   d.dataset.wordmark = read('doona-wordmark') === 'plain' ? 'plain' : 'gradient';
   var locales = {"zh-TW":"zh-TW","zh-CN":"zh-CN","en":"en-US"};
-  d.lang = Object.hasOwn(locales, lang) ? locales[lang] : "zh-TW";
+  // No saved language doona has: the browser's preferences, picked as browserLang in src/i18n/languages.ts picks them.
+  // tools/stamp.test.mjs runs both on the same cases.
+  if (!Object.hasOwn(locales, lang)) {
+    var ids = Object.keys(locales);
+    var wanted = navigator.languages?.length ? navigator.languages : [navigator.language];
+    lang = null;
+    for (var preference of wanted) {
+      var want = preference.toLowerCase();
+      var primary = want.split('-')[0];
+      lang = ids.find(id => id.toLowerCase() === want || locales[id].toLowerCase() === want);
+      if (!lang && primary === 'zh') lang = /-hans\b/.test(want) ? 'zh-CN' : /-(hant|tw|hk|mo)\b/.test(want) ? 'zh-TW' : 'zh-CN';
+      if (!lang) lang = ids.find(id => id.toLowerCase().split('-')[0] === primary);
+      if (lang) break;
+    }
+  }
+  d.lang = locales[lang] ?? "en-US";
   // The direction as pageDirection in src/i18n/direction.ts decides it: right to left in the mirrored layout, else the
   // locale's text info, else its likely script.
   var mirrored = read('doona-mirror') === 'on';
@@ -43,7 +59,7 @@
 </script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-b3z2oAR7ZGtNETQ8e4PzhTVKvJrOYejXRYx6jkdloe0='; connect-src 'self' http: https: ws: wss:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-E9IYqqd+Dnfibf/zu2R9QSXld/JM9uRHdGWeKY1q7iM='; connect-src 'self' http: https: ws: wss:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self'">
 <title>doona</title>
 <link rel="icon" href="./logo.svg">
 <link rel="manifest" href="./manifest.webmanifest">
@@ -54,9 +70,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="doona">
-  <script type="module" crossorigin src="./assets/index-BNBwb-FJ.js"></script>
+  <script type="module" crossorigin src="./assets/index-BOpK0UVB.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/vendor-react-Bf71BWbF.js">
-  <link rel="stylesheet" crossorigin href="./assets/index-C8vJM6q6.css">
+  <link rel="stylesheet" crossorigin href="./assets/index-tAbIWhIz.css">
 </head>
 <body><div id="root"></div></body>
 </html>

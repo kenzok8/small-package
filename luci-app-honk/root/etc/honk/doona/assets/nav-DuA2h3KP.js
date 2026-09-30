@@ -1,1 +1,0 @@
-import{aa as e}from"./index-BNBwb-FJ.js";function d(t){return[...e(t,"dns_log",{whileLoading:!0})?[{id:"stats",titleKey:"dns.tab.stats"}]:[],...e(t,"dns_log",{whileLoading:!0})?[{id:"log",titleKey:"dns.log"}]:[],...e(t,"dns_cache",{whileLoading:!0})?[{id:"cache",titleKey:"ui.cache"}]:[],...e(t,"dns_query",{whileLoading:!0})?[{id:"query",titleKey:"dns.query"}]:[]]}export{d};

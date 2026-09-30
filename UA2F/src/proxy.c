@@ -136,6 +136,7 @@ struct proxy_connection {
     uint32_t target_armed;
 };
 
+// Not registered in epoll, including a paused side with no useful events.
 #define PROXY_EVENTS_UNSET UINT32_MAX
 
 struct proxy_context {
@@ -373,7 +374,10 @@ static void proxy_buffer_compact(struct proxy_buffer *buf) {
 static int epoll_set(int epoll_fd, int op, int fd, struct epoll_ref *ref, uint32_t events) {
     struct epoll_event event;
     memset(&event, 0, sizeof(event));
-    event.events = events | EPOLLERR | EPOLLHUP | EPOLLRDHUP;
+    event.events = events | EPOLLERR | EPOLLHUP;
+    if (events & EPOLLIN) {
+        event.events |= EPOLLRDHUP;
+    }
     event.data.ptr = ref;
     return epoll_ctl(epoll_fd, op, fd, &event);
 }
@@ -381,10 +385,21 @@ static int epoll_set(int epoll_fd, int op, int fd, struct epoll_ref *ref, uint32
 // Re-arm an fd only when the desired interest mask differs from what is armed,
 // avoiding an EPOLL_CTL_MOD syscall on every event in steady state.
 static int epoll_rearm(int epoll_fd, int fd, struct epoll_ref *ref, uint32_t *armed, uint32_t desired) {
+    if (desired == 0) {
+        // HUP is reported even with an empty interest mask. Remove a blocked
+        // or fully drained side until the other side makes progress, rather
+        // than spinning on HUP while there is nowhere to forward its data.
+        if (*armed != PROXY_EVENTS_UNSET && epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL) != 0) {
+            return -1;
+        }
+        *armed = PROXY_EVENTS_UNSET;
+        return 0;
+    }
     if (*armed == desired) {
         return 0;
     }
-    if (epoll_set(epoll_fd, EPOLL_CTL_MOD, fd, ref, desired) != 0) {
+    const int op = *armed == PROXY_EVENTS_UNSET ? EPOLL_CTL_ADD : EPOLL_CTL_MOD;
+    if (epoll_set(epoll_fd, op, fd, ref, desired) != 0) {
         return -1;
     }
     *armed = desired;
@@ -802,7 +817,7 @@ static void handle_connection_event(struct epoll_ref *ref, uint32_t events) {
         return;
     }
 
-    if (events & EPOLLOUT) {
+    if (events & (EPOLLOUT | EPOLLHUP)) {
         if (side == PROXY_SIDE_CLIENT) {
             if (flush_buffer(conn->client_fd, &conn->target_to_client) != 0 || pump_splice_to_client(conn) != 0) {
                 connection_schedule_close(conn);
@@ -814,7 +829,10 @@ static void handle_connection_event(struct epoll_ref *ref, uint32_t events) {
         }
     }
 
-    if (events & (EPOLLIN | EPOLLRDHUP)) {
+    // HUP/RDHUP may arrive with unread bytes. Only recv/splice returning zero
+    // establishes EOF; a full buffer or pending pipe must resume after flushing.
+    const bool read_eof = side == PROXY_SIDE_CLIENT ? conn->client_eof : conn->target_eof;
+    if (!read_eof && (events & (EPOLLIN | EPOLLRDHUP | EPOLLHUP))) {
         const int read_result =
             side == PROXY_SIDE_TARGET ? transfer_target_to_client(conn) : read_into_buffer(conn, side);
         if (read_result != 0) {
@@ -835,11 +853,13 @@ static void handle_connection_event(struct epoll_ref *ref, uint32_t events) {
         }
     }
 
-    if ((events & (EPOLLERR | EPOLLHUP)) != 0) {
-        if (side == PROXY_SIDE_CLIENT) {
-            conn->client_eof = true;
-        } else {
-            conn->target_eof = true;
+    if (events & EPOLLERR) {
+        const int fd = side == PROXY_SIDE_CLIENT ? conn->client_fd : conn->target_fd;
+        int error = 0;
+        socklen_t error_len = sizeof(error);
+        if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &error_len) != 0 || error != 0) {
+            connection_schedule_close(conn);
+            return;
         }
     }
 

@@ -1,0 +1,1 @@
+import{j as s}from"./vendor-react-Bf71BWbF.js";import{a6 as t,a as r,eO as i,aL as l,eN as n,aw as m}from"./index-BOpK0UVB.js";function p({at:e}){const o=t[r()],a=i();return s.jsx(l,{text:e?m(e,o):void 0,children:n(e,o,a)})}export{p as T};
