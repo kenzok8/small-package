@@ -182,14 +182,18 @@ s:tab("DNS", translate("DNS"))
 o = s:taboption("DNS", ListValue, "dns_shunt", "DNS " .. translate("Shunt"))
 o:value("dnsmasq", "Dnsmasq")
 o:value("chinadns-ng", translate("ChinaDNS-NG (recommended)"))
+o.write = function(self, section, value)
+	local old = m:get(section, self.option)
+	if old and old ~= value then
+		m:set(section, "flush_set", "1")
+	end
+	if value ~= "smartdns" then
+		m:del(section, "group_domestic")
+	end
+	return ListValue.write(self, section, value)
+end
 if api.is_finded("smartdns") then
 	o:value("smartdns", "SmartDNS")
-	o.write = function(self, section, value)
-		if value ~= "smartdns" then
-			m:del(section, "group_domestic")
-		end
-		return ListValue.write(self, section, value)
-	end
 
 	o = s:taboption("DNS", Value, "group_domestic", translate("Domestic group name"))
 	o.placeholder = "local"

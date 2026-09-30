@@ -1567,6 +1567,7 @@ stop() {
 		rm -rf $TMP_PATH2/singbox*
 		rm -rf $TMP_PATH2/dnsmasq*
 		rm -rf $TMP_PATH2/geo_output
+		rm -rf $TMP_PATH2/user_rules
 	}
 	flush_include
 }

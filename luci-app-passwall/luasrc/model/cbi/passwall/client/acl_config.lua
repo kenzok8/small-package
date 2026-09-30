@@ -324,6 +324,13 @@ o.default = "chinadns-ng"
 o:value("dnsmasq", "Dnsmasq")
 o:value("chinadns-ng", translate("ChinaDNS-NG (recommended)"))
 o:depends({ _acl_node_bool = "1", _diff_global_node = "1" })
+o.write = function(self, section, value)
+	local old = m:get(section, self.option)
+	if old and old ~= value then
+		m:set("@global[0]", "flush_set", "1")
+	end
+	return ListValue.write(self, section, value)
+end
 
 o = s:taboption("DNS", Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"), translate("Experimental feature."))
 o.default = "0"
