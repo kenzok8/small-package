@@ -277,6 +277,8 @@ void handle_packet(const struct packet_io *io, void *io_ctx, const struct nf_pac
     assert(pkt->payload != NULL && "Packet payload cannot be NULL");
     assert(pkt->payload_len > 0 && "Packet payload length must be positive");
     struct pkt_buff *pkt_buff = NULL;
+    struct ua_mangle_entry ua_entries_inline[UA_INLINE_ENTRIES];
+    struct ua_mangle_entry *ua_entries_copy = ua_entries_inline;
     bool ct_ok = use_conntrack && pkt->has_conntrack;
     bool verdict_sent = false;
 
@@ -469,15 +471,33 @@ void handle_packet(const struct packet_io *io, void *io_ctx, const struct nf_pac
     // Level 3: feed to llhttp (session is valid, protected by its own state lock)
     session_state_lock(session);
     session_reset_per_packet(session, tcp_payload);
-    const int parse_ret = http_parser_feed(session, (const char *)tcp_payload, tcp_payload_len);
+    int parse_ret = http_parser_feed(session, (const char *)tcp_payload, tcp_payload_len);
 
     // Copy results out before releasing lock
-    const int ua_count = session->ua_entry_count;
-    struct ua_mangle_entry ua_entries_copy[UA_MAX_ENTRIES];
-    if (ua_count > 0) {
-        memcpy(ua_entries_copy, session->ua_entries, ua_count * sizeof(struct ua_mangle_entry));
+    const size_t ua_count = session->ua_entry_count;
+    if (parse_ret == 0 && ua_count > UA_INLINE_ENTRIES) {
+        ua_entries_copy = malloc(ua_count * sizeof(*ua_entries_copy));
+        if (ua_entries_copy == NULL) {
+            session->ua_allocation_failed = true;
+            parse_ret = HTTP_PARSER_NO_MEMORY;
+        }
+    }
+    if (parse_ret == 0 && ua_count > 0) {
+        for (size_t i = 0; i < ua_count; i++) {
+            ua_entries_copy[i] = *session_ua_entry_const(session, i);
+        }
     }
     session_state_unlock(session);
+
+    if (parse_ret == HTTP_PARSER_NO_MEMORY) {
+        // Keep the failed session so a retransmitted continuation cannot be
+        // mistaken for a new, non-HTTP stream and bypass rewriting.
+        session_release(session);
+        session = NULL;
+        syslog(LOG_ERR, "Failed to allocate User-Agent entries, dropping packet");
+        SEND_VERDICT(NF_DROP, MARK_NONE, NULL);
+        goto end;
+    }
 
     if (parse_ret != 0) {
         session_wrlock();
@@ -499,7 +519,7 @@ void handle_packet(const struct packet_io *io, void *io_ctx, const struct nf_pac
     session = NULL;
 
     // Mangle UA entries (using copied data, session lock released)
-    for (int i = 0; i < ua_count; i++) {
+    for (size_t i = 0; i < ua_count; i++) {
         const size_t ua_offset = ua_entries_copy[i].offset;
         const size_t ua_len = ua_entries_copy[i].len;
         const size_t replacement_offset = ua_entries_copy[i].replacement_offset;
@@ -539,6 +559,9 @@ void handle_packet(const struct packet_io *io, void *io_ctx, const struct nf_pac
     SEND_VERDICT(NF_ACCEPT, (ct_ok && new_session) ? MARK_HTTP : MARK_NONE, pkt_buff);
 
 end:
+    if (ua_entries_copy != ua_entries_inline) {
+        free(ua_entries_copy);
+    }
     if (!verdict_sent) {
         SEND_VERDICT(NF_ACCEPT, MARK_NONE, NULL);
     }

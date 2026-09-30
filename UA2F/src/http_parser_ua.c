@@ -1,6 +1,8 @@
 #include "http_parser_ua.h"
 
+#include <limits.h>
 #include <pthread.h>
+#include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <sys/syslog.h>
@@ -8,6 +10,38 @@
 
 #include "statistics.h"
 #include "third/llhttp/llhttp.h"
+
+// Override only at this expansion site: the upstream header remains unchanged.
+#undef utarray_oom
+#define utarray_oom() goto allocation_failed
+
+static bool append_ua_entry(struct http_session *session, const struct ua_mangle_entry *entry) {
+    if (session->ua_entry_count < UA_INLINE_ENTRIES) {
+        session->ua_entries_inline[session->ua_entry_count++] = *entry;
+        return true;
+    }
+
+    UT_array *overflow = &session->ua_entries_overflow;
+    const unsigned old_capacity = overflow->n;
+    // utarray uses unsigned counts and doubles capacity. Guard both its count
+    // arithmetic and byte-size multiplication, including the inline prefix.
+    const size_t max_capacity = SIZE_MAX / sizeof(*entry) - UA_INLINE_ENTRIES;
+    if (overflow->i == UINT_MAX ||
+        (overflow->i == overflow->n &&
+         (overflow->n > UINT_MAX / 2 || overflow->n > max_capacity / 2))) {
+        return false;
+    }
+    utarray_push_back(overflow, entry);
+    session->ua_entry_count++;
+    return true;
+
+allocation_failed:
+    // reserve changes n before realloc; i and d still describe the old buffer.
+    overflow->n = old_capacity;
+    return false;
+}
+
+#undef utarray_oom
 
 static int on_header_field(llhttp_t *parser, const char *data, size_t len) {
     struct http_session *session = (struct http_session *)parser->data;
@@ -82,7 +116,7 @@ static int on_header_value(llhttp_t *parser, const char *data, size_t len) {
 
     if (session->in_ua_value && session->ua_entry_count > 0) {
         // Continuation of the same UA value — extend current entry
-        size_t *entry_len = &session->ua_entries[session->ua_entry_count - 1].len;
+        size_t *entry_len = &session_ua_entry(session, session->ua_entry_count - 1)->len;
         if (SIZE_MAX - *entry_len < len) {
             *entry_len = SIZE_MAX;
         } else {
@@ -90,11 +124,11 @@ static int on_header_value(llhttp_t *parser, const char *data, size_t len) {
         }
     } else {
         // New UA entry
-        if (session->ua_entry_count < UA_MAX_ENTRIES) {
-            session->ua_entries[session->ua_entry_count].offset = offset;
-            session->ua_entries[session->ua_entry_count].len = len;
-            session->ua_entries[session->ua_entry_count].replacement_offset = session->ua_value_seen_len;
-            session->ua_entry_count++;
+        const struct ua_mangle_entry entry = {offset, len, session->ua_value_seen_len};
+        if (!append_ua_entry(session, &entry)) {
+            session->ua_allocation_failed = true;
+            llhttp_set_error_reason(parser, "Failed to allocate User-Agent entries");
+            return HPE_USER;
         }
         session->in_ua_value = true;
     }
@@ -118,7 +152,6 @@ static int on_headers_complete(llhttp_t *parser) {
 static int on_message_complete(llhttp_t *parser) {
     struct http_session *session = (struct http_session *)parser->data;
     session_reset_per_message(session);
-    session->last_active = time(NULL);
     return 0;
 }
 
@@ -138,16 +171,33 @@ void http_parser_init_session(struct http_session *session) {
 
     llhttp_init(&session->parser, HTTP_REQUEST, &shared_settings);
     session->parser.data = session;
+    session->ua_allocation_failed = false;
+
+    if (session->ua_entries_overflow.icd.sz == 0) {
+        const UT_icd entry_icd = {sizeof(struct ua_mangle_entry), NULL, NULL, NULL};
+        utarray_init(&session->ua_entries_overflow, &entry_icd);
+    }
 
     session_reset_per_message(session);
 }
 
 int http_parser_feed(struct http_session *session, const char *data, size_t len) {
+    // TTL measures idle time, including unfinished headers/bodies and retries
+    // on a session whose rewriting failed. Empty feeds are not activity.
+    if (len > 0) {
+        session->last_active = time(NULL);
+    }
+    // A failed allocation may leave llhttp partway through a payload. Keep
+    // rejecting this stream until it is idle or closed, rather than allowing
+    // later fragments to be reclassified as non-HTTP traffic.
+    if (session->ua_allocation_failed) {
+        return HTTP_PARSER_NO_MEMORY;
+    }
     llhttp_errno_t err = llhttp_execute(&session->parser, data, len);
     if (err != HPE_OK) {
         syslog(LOG_DEBUG, "llhttp parse error: %s (%s)", llhttp_errno_name(err),
                llhttp_get_error_reason(&session->parser));
-        return -1;
+        return session->ua_allocation_failed ? HTTP_PARSER_NO_MEMORY : -1;
     }
     return 0;
 }

@@ -188,11 +188,16 @@ bool session_state_init(struct http_session *session) {
 }
 
 void session_state_destroy(struct http_session *session) {
-    if (session == NULL || !session->state_lock_initialized) {
+    if (session == NULL) {
         return;
     }
-    pthread_mutex_destroy(&session->state_lock);
-    session->state_lock_initialized = false;
+    utarray_done(&session->ua_entries_overflow);
+    memset(&session->ua_entries_overflow, 0, sizeof(session->ua_entries_overflow));
+    session->ua_entry_count = 0;
+    if (session->state_lock_initialized) {
+        pthread_mutex_destroy(&session->state_lock);
+        session->state_lock_initialized = false;
+    }
 }
 
 void session_state_lock(struct http_session *session) {
@@ -209,9 +214,8 @@ void session_state_unlock(struct http_session *session) {
 
 void session_reset_per_packet(struct http_session *session, const void *tcp_payload_base) {
     session->ua_entry_count = 0;
+    utarray_clear(&session->ua_entries_overflow);
     session->tcp_payload_base = tcp_payload_base;
-    // last_active is updated in session_create and by the cleaner's TTL check.
-    // Avoid time() syscall on every packet — the TTL is coarse (300s default).
 }
 
 void session_reset_per_message(struct http_session *session) {

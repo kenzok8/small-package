@@ -416,6 +416,7 @@ static void free_closed_connections(struct proxy_context *ctx) {
         struct proxy_connection *conn = ctx->closing;
         ctx->closing = conn->close_next;
         connection_unlink(ctx, conn);
+        session_state_destroy(&conn->session);
         free(conn);
     }
 }
@@ -516,10 +517,11 @@ static void rewrite_user_agent_entries(uint8_t *buf, size_t len, const struct ht
     }
     const size_t replacement_len = UA2F_MAX_USER_AGENT_LENGTH;
 
-    for (int i = 0; i < session->ua_entry_count; i++) {
-        const size_t offset = session->ua_entries[i].offset;
-        const size_t ua_len = session->ua_entries[i].len;
-        const size_t replacement_offset = session->ua_entries[i].replacement_offset;
+    for (size_t i = 0; i < session->ua_entry_count; i++) {
+        const struct ua_mangle_entry *entry = session_ua_entry_const(session, i);
+        const size_t offset = entry->offset;
+        const size_t ua_len = entry->len;
+        const size_t replacement_offset = entry->replacement_offset;
         if (offset > len || ua_len > len - offset) {
             continue;
         }
@@ -535,14 +537,18 @@ static void rewrite_user_agent_entries(uint8_t *buf, size_t len, const struct ht
     }
 }
 
-static void process_client_payload(struct proxy_connection *conn, uint8_t *buf, size_t len) {
+static int process_client_payload(struct proxy_connection *conn, uint8_t *buf, size_t len) {
     if (conn->rewrite_disabled) {
-        return;
+        return 0;
     }
 
     count_tcp_packet();
     session_reset_per_packet(&conn->session, buf);
     const int parse_ret = http_parser_feed(&conn->session, (const char *)buf, len);
+    if (parse_ret == HTTP_PARSER_NO_MEMORY) {
+        syslog(LOG_ERR, "Failed to allocate User-Agent entries, closing connection");
+        return -1;
+    }
     if (conn->session.ua_entry_count > 0) {
         rewrite_user_agent_entries(buf, len, &conn->session);
         count_user_agent_packet();
@@ -553,6 +559,7 @@ static void process_client_payload(struct proxy_connection *conn, uint8_t *buf, 
     if (parse_ret != 0) {
         conn->rewrite_disabled = true;
     }
+    return 0;
 }
 
 static int flush_buffer(int fd, struct proxy_buffer *buf) {
@@ -607,8 +614,9 @@ static int read_into_buffer(struct proxy_connection *conn, enum proxy_side side)
             return -1;
         }
 
-        if (side == PROXY_SIDE_CLIENT) {
-            process_client_payload(conn, out->data + out->len, (size_t)n);
+        if (side == PROXY_SIDE_CLIENT &&
+            process_client_payload(conn, out->data + out->len, (size_t)n) != 0) {
+            return -1;
         }
         out->len += (size_t)n;
     }

@@ -3,6 +3,7 @@
 
 extern "C" {
 #include <http_session.h>
+#include <http_parser_ua.h>
 }
 
 class HttpSessionTest : public ::testing::Test {
@@ -209,4 +210,75 @@ TEST_F(HttpSessionTest, ResetPerMessage) {
     EXPECT_FALSE(s->field_too_long);
     EXPECT_FALSE(s->last_was_value);
     EXPECT_FALSE(s->in_ua_value);
+}
+
+class HttpSessionActivityTest : public HttpSessionTest {
+protected:
+    void expect_fragment_keeps_session(const char *start, const char *fragment) {
+        session_wrlock();
+        const auto active_key = session_key_from_connid(50);
+        const auto idle_key = session_key_from_connid(51);
+        auto *active = session_create(&active_key);
+        auto *idle = session_create(&idle_key);
+        session_wrunlock();
+        ASSERT_NE(active, nullptr);
+        ASSERT_NE(idle, nullptr);
+        http_parser_init_session(active);
+
+        session_state_lock(active);
+        session_reset_per_packet(active, start);
+        const int start_result = http_parser_feed(active, start, strlen(start));
+        session_state_unlock(active);
+        ASSERT_EQ(start_result, 0);
+
+        const auto stale_time = time(nullptr) - 301;
+        idle->last_active = stale_time;
+        session_state_lock(active);
+        active->last_active = stale_time;
+        session_reset_per_packet(active, fragment);
+        const int fragment_result = http_parser_feed(active, fragment, strlen(fragment));
+        const auto last_active = active->last_active;
+        session_state_unlock(active);
+        ASSERT_EQ(fragment_result, 0);
+        EXPECT_GT(last_active, stale_time);
+
+        session_wrlock();
+        EXPECT_EQ(session_cleanup_expired(300), 1);
+        EXPECT_EQ(session_find(&active_key), active);
+        EXPECT_EQ(session_find(&idle_key), nullptr);
+        session_wrunlock();
+    }
+};
+
+TEST_F(HttpSessionActivityTest, ContentLengthBodyProgressRefreshesIdleTtl) {
+    expect_fragment_keeps_session("POST / HTTP/1.1\r\nContent-Length: 100000\r\n\r\n", "body fragment");
+}
+
+TEST_F(HttpSessionActivityTest, ChunkedBodyProgressRefreshesIdleTtl) {
+    expect_fragment_keeps_session("POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\n10000\r\n", "body fragment");
+}
+
+TEST_F(HttpSessionActivityTest, HeaderFieldProgressRefreshesIdleTtl) {
+    expect_fragment_keeps_session("GET / HTTP/1.1\r\nUser-", "Agent");
+}
+
+TEST_F(HttpSessionActivityTest, HeaderValueProgressRefreshesIdleTtl) {
+    expect_fragment_keeps_session("GET / HTTP/1.1\r\nUser-Agent: Original", "Agent");
+}
+
+TEST_F(HttpSessionActivityTest, EmptyFeedDoesNotRefreshIdleTtl) {
+    session_wrlock();
+    const auto key = session_key_from_connid(52);
+    auto *session = session_create(&key);
+    session_wrunlock();
+    ASSERT_NE(session, nullptr);
+    http_parser_init_session(session);
+    const auto stale_time = time(nullptr) - 301;
+    session->last_active = stale_time;
+    session_reset_per_packet(session, "");
+    EXPECT_EQ(http_parser_feed(session, "", 0), 0);
+    EXPECT_EQ(session->last_active, stale_time);
+    session_wrlock();
+    EXPECT_EQ(session_cleanup_expired(300), 1);
+    session_wrunlock();
 }
