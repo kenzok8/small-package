@@ -3042,27 +3042,68 @@ if (!dir) return { files: [] };
 let active = uci_get('clashoo', 'config', 'use_config');
 let active_name = replace(active, /^.*\//, '');
 let files = [];
-for (let f in (glob(dir + '/*.yaml') || [])) {
+
+let need_check = (req.args?.type == '3');
+let collect = function(ext) {
+for (let f in (glob(dir + '/*' + ext) || [])) {
 let name = replace(f, dir + '/', '');
 let fi   = stat(f);
+let generated = false;
+if (need_check && (!fi || fi.size <= 524288)) {
+let content = readfile(f) || '';
+for (let ln in split(content, '\n')) {
+if (match(ln, /^x-clashoo:/)) { generated = true; break; }
+}
+}
 push(files, {
 name,
 mtime:  fi ? ('' + fi.mtime) : null,
 size:   fi ? (int(fi.size / 1024) + ' KB') : null,
-active: name == active_name
+active: name == active_name,
+generated: generated
 });
 }
-for (let f in (glob(dir + '/*.yml') || [])) {
-let name = replace(f, dir + '/', '');
-let fi   = stat(f);
-push(files, {
-name,
-mtime:  fi ? ('' + fi.mtime) : null,
-size:   fi ? (int(fi.size / 1024) + ' KB') : null,
-active: name == active_name
-});
-}
+};
+collect('.yaml');
+collect('.yml');
 return { files, active: active_name };
+}
+},
+
+regenerate_output: {
+args: { name: 'name' },
+call: function(req) {
+let name = ensure_yaml_name(req.args?.name || '');
+if (!name)
+return { success: false, error: 'invalid_name', message: '文件名无效' };
+let path = TEMPLATE_DIR + '/' + name;
+if (!access(path, 'r'))
+return { success: false, error: 'not_found', message: '文件不存在' };
+
+let p = popen("yq -M -o=json '{\"template\": .\"x-clashoo\".template // \"\", \"pairs\": [.[\"proxy-providers\"] | to_entries[] | {\"name\": .key, \"url\": .value.url}]}' " + shell_quote(path) + " 2>/dev/null");
+let out = '';
+if (p) { out = trim(p.read('all')); p.close(); }
+
+let template = '';
+let pairs = [];
+try {
+let data = json(out || '{}');
+template = data.template || '';
+if (type(data.pairs) == 'array') {
+for (let item in data.pairs) {
+if (item && item.name && item.url) push(pairs, item);
+}
+}
+} catch (e) {}
+
+if (!template)
+return { success: false, error: 'no_meta', message: '该文件不是模板生成的配置' };
+
+return {
+success: true,
+template_source: template,
+sub_pairs: pairs
+};
 }
 },
 
@@ -3370,25 +3411,38 @@ return { success: true, enabled: enabled, interval: interval };
 apply_template_with_url: {
 args: {
 template_source: 'template_source',
-sub_url: 'sub_url',
+sub_pairs: 'sub_pairs',
 output_name: 'output_name',
 set_active: 'set_active'
 },
 call: function(req) {
 let tpl_src  = trim(req.args?.template_source || '');
-let sub_url  = trim(req.args?.sub_url || '');
+let pairs_raw = trim(req.args?.sub_pairs || '');
 let output_name = ensure_yaml_name(req.args?.output_name || '');
 if (!output_name) output_name = 'tpl-rewrite.yaml';
-let uniq_name = replace(output_name, /\.(yaml|yml)$/, '');
 let set_active  = (req.args?.set_active || '') == '1';
 
 if (!tpl_src)
 return { success: false, error: 'invalid_template', message: '模板来源不能为空' };
-if (!sub_url || !match(sub_url, /^https?:\/\//))
-return { success: false, error: 'invalid_sub_url', message: '订阅 URL 无效' };
+
+let pairs = [];
+try {
+let parsed = json(pairs_raw || '[]');
+if (type(parsed) == 'array') {
+for (let p in parsed) {
+if (p && p.name && p.url && match(p.url, /^https?:\/\//))
+push(pairs, { name: trim(p.name), url: trim(p.url) });
+}
+}
+} catch (err) {
+return { success: false, error: 'invalid_pairs', message: '订阅参数格式错误' };
+}
+if (length(pairs) == 0)
+return { success: false, error: 'empty_pairs', message: '请至少填一行有效的 名字+URL' };
 
 let tmp_tpl  = '/tmp/clashoo_tpl_in.yaml';
 let tmp_out  = '/tmp/clashoo_tpl_out.yaml';
+let tmp_pairs = '/tmp/clashoo_tpl_pairs.json';
 let out_dir  = '/usr/share/clashoo/config/custom';
 system('mkdir -p ' + shell_quote(out_dir));
 
@@ -3413,7 +3467,6 @@ if (system('cp -f ' + shell_quote(local_path) + ' ' + shell_quote(tmp_tpl)) != 0
 return { success: false, error: 'copy_failed', message: '读取本地模板失败' };
 }
 
-/* 用 yq 把所有 proxy-providers 条目的 url 替换为订阅链接 */
 if (system('command -v yq >/dev/null 2>&1') != 0)
 return { success: false, error: 'missing_yq', message: '缺少 yq，无法注入订阅 URL' };
 
@@ -3423,15 +3476,29 @@ return { success: false, error: 'missing_yq', message: '缺少 yq，无法注入
 	if (!access(exploded, "r")) {
 		system("cp -f " + shell_quote(tmp_tpl) + " " + shell_quote(exploded));
 	}
-	/* 替换 proxy-providers.url 并把 provider 名改成唯一名（同步 proxy-groups 的 use）*/
-        let inject_cmd = "URL=" + shell_quote(sub_url) + " NAME=" + shell_quote(uniq_name)
-                + " yq e '.[\"proxy-providers\"][].url = env(URL) | (.[\"proxy-providers\"] | keys | map({\"key\": ., \"value\": strenv(NAME) + \"-\" + .}) | from_entries) as $rename | .[\"proxy-providers\"] |= with_entries(.key = $rename[.key]) | (.[\"proxy-groups\"][] | select(has(\"use\")) | .use) |= map($rename[.] // .)' "
+
+	/* pairs 写到临时 JSON 文件 */
+	writefile(tmp_pairs, sprintf('%.J', pairs));
+
+	let tpl_label = match(tpl_src, /^https?:\/\//) ? tpl_src : replace(tpl_src, /^.*\//, "");
+
+	let yq_expr = '(load("' + tmp_pairs + '")) as $pairs | '
+		+ '(.["proxy-providers"] | keys) as $oldkeys | '
+		+ '($oldkeys | to_entries | map(.key as $i | .value as $k | {"key": $k, "value": ($pairs[$i].name // $k)}) | from_entries) as $ren | '
+		+ '($oldkeys | to_entries | map(select(.key < ($pairs | length)) | .key as $i | .value as $k | {"key": $k, "value": $pairs[$i].url}) | from_entries) as $reurl | '
+		+ '.["proxy-providers"] |= with_entries(.key as $old | .key = ($ren[$old] // $old) | .value.url = ($reurl[$old] // .value.url)) | '
+		+ '(.["proxy-groups"][] | select(has("use")) | .use) |= map($ren[.] // .) | '
+		+ '."x-clashoo" = {"template": strenv(TPL_LABEL)}';
+
+	let inject_cmd = "TPL_LABEL=" + shell_quote(tpl_label)
+		+ " yq -M e '" + yq_expr + "' "
                 + shell_quote(exploded) + " > " + shell_quote(tmp_out);
+
 	if (system(inject_cmd) != 0 || !access(tmp_out, "r")) {
-		system("rm -f " + shell_quote(exploded));
+		system("rm -f " + shell_quote(exploded) + " " + shell_quote(tmp_pairs));
 		return { success: false, error: "inject_failed", message: "订阅 URL 注入失败" };
 	}
-	system("rm -f " + shell_quote(exploded));
+	system("rm -f " + shell_quote(exploded) + " " + shell_quote(tmp_pairs));
 
 let out_path = out_dir + '/' + output_name;
 if (system('mv -f ' + shell_quote(tmp_out) + ' ' + shell_quote(out_path)) != 0)
@@ -3443,19 +3510,19 @@ system('rm -f ' + shell_quote(tmp_tpl));
 	/* 只把独立引用项"直连"转成 DIRECT，组名里的"直连"不动 */
 	system("sed -i 's/^\\( *- *\\)直连$/\\1DIRECT/' " + shell_quote(out_path) + " 2>/dev/null");
 	system("yq e '(.proxy-groups[] | select(has(\"proxies\")) | .proxies) |= map(sub(\"^直连$\", \"DIRECT\"))' " + shell_quote(out_path) + " -i 2>/dev/null");
+
 	/* 用 mixin.uc + yq merge 叠加 UCI 覆盖（端口、routing-mark、dns 等） */
 	let mixin_script = "/usr/share/clashoo/runtime/mixin.uc";
 	if (access(mixin_script, "r") && system("command -v yq >/dev/null 2>&1") == 0) {
 		let mixin_yaml = "/tmp/_clashoo_mixin.yaml";
 		let merged_out = out_path + ".merged";
 		system("ucode " + shell_quote(mixin_script) + " 2>/dev/null | yq -M -p json -o yaml > " + shell_quote(mixin_yaml) + " 2>/dev/null");
-		system("yq -M eval-all '(. as $item ireduce ({}; . * $item)) as $m | [\"port\",\"socks-port\",\"redir-port\",\"tproxy-port\",\"mixed-port\",\"allow-lan\",\"bind-address\",\"mode\",\"log-level\",\"ipv6\",\"interface-name\",\"routing-mark\",\"external-controller\",\"external-ui\",\"secret\",\"tun\",\"listeners\",\"tunnels\",\"dns\",\"hosts\",\"profile\",\"geodata-mode\",\"geodata-loader\",\"geox-url\",\"proxy-providers\",\"proxies\",\"proxy-groups\",\"rule-providers\",\"rules\",\"sub-rules\",\"ntp\",\"authentication\",\"sniffer\",\"experimental\"] as $order | ($order | to_entries | map({\"key\": .value, \"value\": .key}) | from_entries) as $rank | $m | to_entries | sort_by(.key as $k | $rank[$k] // 999) | from_entries' " + shell_quote(out_path) + " " + shell_quote(mixin_yaml) + " > " + shell_quote(merged_out) + " 2>/dev/null");
+		system("yq -M eval-all '(. as $item ireduce ({}; . * $item)) as $m | [\"x-clashoo\",\"port\",\"socks-port\",\"redir-port\",\"tproxy-port\",\"mixed-port\",\"allow-lan\",\"bind-address\",\"mode\",\"log-level\",\"ipv6\",\"interface-name\",\"routing-mark\",\"external-controller\",\"external-ui\",\"secret\",\"tun\",\"listeners\",\"tunnels\",\"dns\",\"hosts\",\"profile\",\"geodata-mode\",\"geodata-loader\",\"geox-url\",\"proxy-providers\",\"proxies\",\"proxy-groups\",\"rule-providers\",\"rules\",\"sub-rules\",\"ntp\",\"authentication\",\"sniffer\",\"experimental\"] as $order | ($order | to_entries | map({\"key\": .value, \"value\": .key}) | from_entries) as $rank | $m | to_entries | sort_by(.key as $k | $rank[$k] // 999) | from_entries' " + shell_quote(out_path) + " " + shell_quote(mixin_yaml) + " > " + shell_quote(merged_out) + " 2>/dev/null");
 		if (access(merged_out, "r")) {
 			system("mv -f " + shell_quote(merged_out) + " " + shell_quote(out_path));
 		}
 		system("rm -f " + shell_quote(mixin_yaml));
 	}
-
 
 	/* ── mihomo -t 预校验（搜所有 mihomo 变体）── */
 	let _core_bin = '';
@@ -3488,7 +3555,6 @@ system('service ' + get_service_name() + ' restart >/dev/null 2>&1');
 return { success: true, output_name, output_path: out_path, message: '模板已应用: ' + output_name };
 }
 },
-
 apply_rewrite: {
 args: {
 base_type: 'base_type',

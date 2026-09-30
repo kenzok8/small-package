@@ -191,7 +191,7 @@ end
 local function stop()
 	cmd(string.format("/bin/busybox top -bn1 | grep -v 'grep' | grep '%s/' | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1", CONFIG_PATH))
 	remove_firewall_rules()
-	cmd(string.format("rm -rf %s %s", CONFIG_PATH, LOG_APP_FILE))
+	api.remove(CONFIG_PATH, LOG_APP_FILE)
 end
 
 if action then

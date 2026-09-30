@@ -231,6 +231,24 @@ function UrlDecode(szText)
 	end) or nil
 end
 
+-- 计算文件 MD5
+function md5_file(path)
+	if type(path) ~= "string" then return "" end
+	local quoted = util.shellsqescape(path)
+	local out = sys.exec("md5sum " .. quoted .. " | awk '{printf \"%s\", $1}'")
+	if not out then return "" end
+	return out
+end
+
+-- 计算字符串 MD5
+function md5_string(str)
+	if type(str) ~= "string" then return "" end
+	local quoted = util.shellsqescape(str)
+	local out = sys.exec("printf '%s' " .. quoted .. " | md5sum | awk '{printf \"%s\", $1}'")
+	if not out then return "" end
+	return out
+end
+
 --提取URL中的域名和端口(no ip)
 function get_domain_port_from_url(url)
 	local scheme, domain, port = string.match(url, "^(https?)://([%w%.%-]+):?(%d*)")
@@ -378,11 +396,13 @@ function repeat_exist(table, value)
 end
 
 function remove(...)
-	for index, value in ipairs({...}) do
-		if value and #value > 0 and value ~= "/" then
-			sys.call(string.format("rm -rf %s", value))
-		end
-	end
+    for i = 1, select("#", ...) do
+        local value = select(i, ...)
+        if type(value) == "string" and #value > 0 and value ~= "/" then
+            local quoted = util.shellsqescape(value)
+            sys.call("rm -rf " .. quoted)
+        end
+    end
 end
 
 function is_install(package)
@@ -818,7 +838,7 @@ function get_bin_version_cache(file, cmd)
 	sys.call("mkdir -p " .. CACHE_PATH)
 	if fs.access(file) then
 		chmod_755(file)
-		local md5 = sys.exec("echo -n $(md5sum " .. file .. " | awk '{print $1}')")
+		local md5 = md5_file(file)
 		if fs.access(CACHE_PATH .. "/" .. md5) then
 			return sys.exec("echo -n $(cat %s)" % { CACHE_PATH .. "/" .. md5 })
 		else
@@ -1223,9 +1243,9 @@ function to_download(app_name, url, size)
 		return {code = 1, error = i18n.translate("Download url is required.")}
 	end
 
-	sys.call("/bin/rm -f /tmp/".. app_name .."_download.*")
+	remove("/tmp/" .. app_name .. "_download.*")
 
-	local tmp_file = trim(util.exec("mktemp -u -t ".. app_name .."_download.XXXXXX"))
+	local tmp_file = trim(util.exec("mktemp -u -t " .. app_name .. "_download.XXXXXX"))
 
 	if size then
 		local kb1 = get_free_space("/tmp")
@@ -1287,7 +1307,7 @@ function to_extract(app_name, file, subfix)
 		end
 	end
 
-	sys.call("/bin/rm -rf /tmp/".. app_name .."_extract.*")
+	remove("/tmp/" .. app_name .. "_extract.*")
 
 	local new_file_size = get_file_space(file)
 	local tmp_free_size = get_free_space("/tmp")
@@ -1327,20 +1347,20 @@ function to_move(app_name,file)
 
 	local app_path = result.app_path
 	local bin_path = file
-	local cmd_rm_tmp = "/bin/rm -rf /tmp/" .. app_name .. "_download.*"
+	local rm_tmp = "/tmp/" .. app_name .. "_download.*"
 	if fs.stat(file, "type") == "dir" then
 		bin_path = file .. "/" .. com[app_name].name:lower()
-		cmd_rm_tmp = "/bin/rm -rf /tmp/" .. app_name .. "_extract.*"
+		rm_tmp = "/tmp/" .. app_name .. "_extract.*"
 	end
 
 	if not file or file == "" then
-		sys.call(cmd_rm_tmp)
+		remove(rm_tmp)
 		return {code = 1, error = i18n.translate("Client file is required.")}
 	end
 
 	local new_version = get_app_version(app_name, bin_path)
 	if new_version == "" then
-		sys.call(cmd_rm_tmp)
+		remove(rm_tmp)
 		return {
 			code = 1,
 			error = i18n.translate("The client file is not suitable for current device.") .. app_name .. "__" .. bin_path
@@ -1362,14 +1382,14 @@ function to_move(app_name,file)
 	if final_dir_free_size > 0 then
 		final_dir_free_size = final_dir_free_size + old_app_size
 		if new_app_size > final_dir_free_size then
-			sys.call(cmd_rm_tmp)
+			remove(rm_tmp)
 			return {code = 1, error = i18n.translatef("%s not enough space.", final_dir)}
 		end
 	end
 
 	result = exec("/bin/mv", { "-f", bin_path, app_path }, nil, command_timeout) == 0
 
-	sys.call(cmd_rm_tmp)
+	remove(rm_tmp)
 	if flag == 0 then
 		sys.call("/etc/init.d/passwall restart >/dev/null 2>&1 &")
 	end

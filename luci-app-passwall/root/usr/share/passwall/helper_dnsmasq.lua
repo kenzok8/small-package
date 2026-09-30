@@ -153,7 +153,7 @@ function copy_instance(var)
 
 	tinsert(conf_lines, "port=" .. LISTEN_PORT)
 	if TMP_DNSMASQ_PATH then
-		sys.call("rm -rf " .. TMP_DNSMASQ_PATH .. "/*passwall*")
+		api.remove(TMP_DNSMASQ_PATH .. "/*passwall*")
 	end
 	if var["-return"] == "1" then
 		return conf_lines
@@ -333,10 +333,8 @@ function add_rule(var)
 		pipe:close()
 	end
 
-	local function get_dns_config_hash()
-		local nodes_address_md5 = sys.exec([[uci show passwall | grep -E '\.(address|download_address|domain_resolver_dns|domain_resolver_dns_https)=' | cut -d "'" -f 2 | sort -u | md5sum | awk '{printf "%s", $1}']])
-		local sub_url_md5 = sys.exec([[uci show passwall | grep -E '^passwall\.sub_[^.]+\.url=' | cut -d "'" -f 2 | sort -u | md5sum | awk '{printf "%s", $1}']])
-		nodes_address_md5 = nodes_address_md5 .. sub_url_md5
+	local function get_dns_config_key()
+		local address_md5 = api.md5_string(sys.exec([[uci show passwall | grep -E '\.(address|download_address|domain_resolver_dns|domain_resolver_dns_https)=|^passwall\.sub_[^.]+\.url=' | cut -d "'" -f 2 | sort -u]]))
 		local new_rules = sys.exec([[
 		for f in \
 			/usr/share/passwall/rules/chnlist \
@@ -358,8 +356,8 @@ function add_rule(var)
 				end
 			end)
 		end
-		new_rules = new_rules .. sys.exec("printf '%s' " .. api.base64Encode(SHUNT_LIST) .. " | md5sum | awk '{printf \"%s\", $1}'")
-		return TMP_DNSMASQ_PATH .. DNSMASQ_CONF_FILE .. DEFAULT_DNS .. LOCAL_DNS .. TUN_DNS .. USE_DEFAULT_DNS .. CHINADNS_DNS .. USE_DIRECT_LIST .. USE_PROXY_LIST .. USE_BLOCK_LIST .. USE_GFW_LIST .. CHN_LIST .. DEFAULT_PROXY_MODE .. NO_PROXY_IPV6 .. nodes_address_md5 .. new_rules .. NFTFLAG
+		new_rules = new_rules .. api.md5_string(SHUNT_LIST)
+		return TMP_DNSMASQ_PATH .. DNSMASQ_CONF_FILE .. DEFAULT_DNS .. LOCAL_DNS .. TUN_DNS .. USE_DEFAULT_DNS .. CHINADNS_DNS .. USE_DIRECT_LIST .. USE_PROXY_LIST .. USE_BLOCK_LIST .. USE_GFW_LIST .. CHN_LIST .. DEFAULT_PROXY_MODE .. NO_PROXY_IPV6 .. address_md5 .. new_rules .. NFTFLAG
 	end
 
 	local dnsmasq_default_dns
@@ -397,8 +395,8 @@ function add_rule(var)
 				cache_text = line
 			end
 		end
-		new_text = get_dns_config_hash()
-		if cache_text ~= new_text then
+		new_text = get_dns_config_key()
+		if cache_text == "" or new_text == "" or cache_text ~= new_text then
 			api.remove(CACHE_DNS_PATH .. "*")
 		end
 	else

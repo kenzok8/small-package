@@ -1577,3 +1577,21 @@ msgstr "✗ 启动失败: "
 
 msgid "✗ Submission failed"
 msgstr "✗ 提交失败"
+
+msgid "Please fill at least one name + URL pair"
+msgstr "请至少填写一组「名称 + 订阅链接」"
+
+msgid "Provider name"
+msgstr "订阅源名称"
+
+msgid "Update failed: this config has no proxy-providers"
+msgstr "更新失败：该配置没有 proxy-providers"
+
+msgid "Viewing: "
+msgstr "查看："
+
+msgid "Read-only preview; edit the template and click Update to regenerate"
+msgstr "只读预览；修改请编辑模板后点「更新」重新生成"
+
+msgid "Active config cannot be updated; switch to another first"
+msgstr "活跃配置无法更新；请先切换到其他配置"

@@ -1804,7 +1804,7 @@ local function curl(url, file, ua, mode)
 		header_str = header_str:gsub("\r", "")
 	end
 
-	luci.sys.call('rm -f "%s"' % cookie_file)
+	api.remove(cookie_file)
 
 	return return_code, http_code, header_str
 end
@@ -2245,7 +2245,7 @@ local execute = function()
 				return_code, value.http_code, headers = curl(url, tmp_file, ua, access_mode)
 				if return_code ~= 0 then
 					fail_list[#fail_list + 1] = value
-					luci.sys.call("rm -f " .. tmp_file)
+					api.remove(tmp_file)
 				end
 			end
 			if fs.access(tmp_file) then
@@ -2255,8 +2255,8 @@ local execute = function()
 					f:close()
 					local raw_data = api.trim(stdout)
 					local old_md5 = value.md5 or ""
-					local new_md5 = luci.sys.exec("md5sum " .. tmp_file .. " 2>/dev/null | awk '{printf \"%s\", $1}'")
-					if not manual_sub and old_md5 == new_md5 then
+					local new_md5 = api.md5_file(tmp_file)
+					if not manual_sub and new_md5 ~= "" and old_md5 == new_md5 then
 						log('订阅:【' .. remark .. '】没有变化，无需更新。')
 					else
 						raw_data = parseClashNode(raw_data)
@@ -2268,7 +2268,7 @@ local execute = function()
 					fail_list[#fail_list + 1] = value
 				end
 				if not url_is_local then
-					luci.sys.call("rm -f " .. tmp_file)
+					api.remove(tmp_file)
 				end
 			end
 		end
@@ -2297,7 +2297,7 @@ local function check_instance(action)
 			uci:revert(c_config)
 		end
 	elseif action == "end" then
-		luci.sys.call("rm -f " .. sub_lock)
+		api.remove(sub_lock)
 		return
 	end
 
@@ -2328,7 +2328,7 @@ if arg[1] then
 		f:close()
 		parse_link(raw, "1", arg[2])
 		update_node(1)
-		luci.sys.call("rm -f /tmp/links.conf")
+		api.remove("/tmp/links.conf")
 	elseif arg[1] == "truncate" then
 		truncate_nodes(arg[2])
 	end

@@ -158,7 +158,8 @@ var callListTemplates = rpc.declare({ object: 'luci.clashoo', method: 'list_temp
 var callUploadTemplate= rpc.declare({ object: 'luci.clashoo', method: 'upload_template',     params: ['name', 'content'], expect: {} });
 var callApplyRewrite  = rpc.declare({ object: 'luci.clashoo', method: 'apply_rewrite',          params: ['base_type','base_name','rewrite_type','rewrite_name','output_name','set_active'], expect: {} });
 var callFetchUrl      = rpc.declare({ object: 'luci.clashoo', method: 'fetch_rewrite_url',      params: ['url','name'], expect: {} });
-var callApplyTplUrl   = rpc.declare({ object: 'luci.clashoo', method: 'apply_template_with_url', params: ['template_source','sub_url','output_name','set_active'], expect: {} });
+var callApplyTplUrl   = rpc.declare({ object: 'luci.clashoo', method: 'apply_template_with_url', params: ['template_source','sub_pairs','output_name','set_active'], expect: {} });
+var callRegenerate   = rpc.declare({ object: 'luci.clashoo', method: 'regenerate_output', params: ['name'], expect: {} });
 var callMigrateSbProfile = rpc.declare({ object: 'luci.clashoo', method: 'migrate_singbox_profile', params: ['name'], expect: {} });
 var callSmartFlushCache  = rpc.declare({ object: 'luci.clashoo', method: 'smart_flush_cache',   expect: {} });
 var callDetectPrimaryGroup = rpc.declare({ object: 'luci.clashoo', method: 'detect_primary_group', expect: {} });
@@ -596,22 +597,24 @@ function createConfigEditor(mode) {
   return {
     el: wrap,
     textarea: ta,
-    setValue: function (content) {
+    setValue: function (content, readOnly) {
       content = (content == null) ? '' : String(content);
+      ta.readOnly = !!readOnly;
       if (content.length > LARGE) { showTextarea(content); return; }
-      if (cm) { showCM(content); return; }
+      if (cm) { cm.setOption('readOnly', !!readOnly); showCM(content); return; }
       loadCodeMirror().then(function () {
         if (!cm && window.CodeMirror) {
           cm = window.CodeMirror(host, {
             value: '', mode: mode,
             lineNumbers: true, matchBrackets: true,
             lineWrapping: true, tabSize: 2, indentUnit: 2,
-            viewportMargin: 60
+            viewportMargin: 60,
+            readOnly: !!readOnly
           });
           if (getThemeClass().indexOf('dark') >= 0)
             host.classList.add('cl-cm-dark');
         }
-        if (cm) showCM(content); else showTextarea(content);
+        if (cm) { cm.setOption('readOnly', !!readOnly); showCM(content); } else showTextarea(content);
       }).catch(function () { showTextarea(content); });
     },
     getValue: function () {
@@ -945,7 +948,66 @@ return view.extend({
     });
 
     var tplUrlIn   = E('input', { type: 'text', 'class': 'cl-sub-url', placeholder: _("Enter remote template URL, e.g. https://raw.githubusercontent.com/…/Clash.yaml") });
-    var subUrlIn   = E('input', { type: 'text', 'class': 'cl-sub-url', placeholder: _("Enter subscription URL (injected into template proxy-providers)") });
+    /* ── 多 provider pairs 输入 ── */
+    var pairs = [];
+    var pairsBox = E('div', { 'class': 'cl-pairs-box' });
+
+    function renderPairs() {
+        pairsBox.innerHTML = '';
+        pairs.forEach(function (p, idx) {
+            var nameIn = E('input', {
+                type: 'text', 'class': 'cl-sub-url',
+                style: 'width:120px;flex-shrink:0',
+                placeholder: _('Provider name'), value: p.name || ''
+            });
+            nameIn.addEventListener('input', function () { pairs[idx].name = nameIn.value; });
+
+            var urlIn = E('input', {
+                type: 'text', 'class': 'cl-sub-url',
+                style: 'flex:1;min-width:0',
+                placeholder: _('Subscription URL'), value: p.url || ''
+            });
+            urlIn.addEventListener('input', function () { pairs[idx].url = urlIn.value; });
+
+            var children = [nameIn, urlIn];
+
+            if (idx === 0) {
+                var addBtn = E('button', {
+                    'class': 'btn cbi-button cl-btn-sm',
+                    style: 'flex-shrink:0'
+                }, '+');
+                if (pairs.length >= 5) {
+                    addBtn.setAttribute('disabled', 'disabled');
+                    addBtn.style.opacity = '0.5';
+                    addBtn.style.cursor = 'not-allowed';
+                }
+                addBtn.addEventListener('click', function () {
+                    if (pairs.length >= 5) return;
+                    pairs.push({ name: '', url: '' });
+                    renderPairs();
+                });
+                children.push(addBtn);
+            } else {
+                var delBtn = E('button', {
+                    'class': 'btn cbi-button cl-btn-sm',
+                    style: 'flex-shrink:0'
+                }, '−');
+                delBtn.addEventListener('click', function () {
+                    pairs.splice(idx, 1);
+                    renderPairs();
+                });
+                children.push(delBtn);
+            }
+
+            pairsBox.appendChild(E('div', {
+                'class': 'cl-pair-row',
+                style: 'display:flex;gap:6px;margin-bottom:6px;align-items:center'
+            }, children));
+        });
+    }
+
+    pairs.push({ name: '', url: '' });
+    renderPairs();
     var outNameIn  = E('input', { type: 'text', 'class': 'cl-sub-url', placeholder: _("Output file name (without extension, blank to auto-fill)") });
     var rwMode     = 'local';
 
@@ -990,12 +1052,13 @@ return view.extend({
 
     var rwApply = function (setActive) {
       var tplSrc = rwMode === 'local' ? tplSel.value : tplUrlIn.value.trim();
-      var subUrl = subUrlIn.value.trim();
       var out    = outNameIn.value.trim();
       if (!tplSrc) { ui.addNotification(null, E('p', rwMode === 'local' ? _("Please select a local template file") : _("Please enter a remote template URL"))); return; }
-      if (!subUrl) { ui.addNotification(null, E('p', _("Please enter a subscription URL"))); return; }
+      var validPairs = pairs.filter(function (p) { return p.name.trim() && p.url.trim(); });
+      if (validPairs.length === 0) { ui.addNotification(null, E('p', _("Please fill at least one name + URL pair"))); return; }
       if (!out)    { ui.addNotification(null, E('p', _("Please enter an output file name"))); return; }
-      L.resolveDefault(callApplyTplUrl(tplSrc, subUrl, out, setActive ? '1' : '0'), {}).then(function (r) {
+      var pairsJson = JSON.stringify(validPairs);
+      L.resolveDefault(callApplyTplUrl(tplSrc, pairsJson, out, setActive ? '1' : '0'), {}).then(function (r) {
         ui.addNotification(null, E('p', r && r.success ? (r.message || _("Generated: ") + r.output_name) : (_("Generate failed: ") + (r && r.message || _("Unknown error")))));
         if (r && r.success) location.reload();
       });
@@ -1019,7 +1082,7 @@ return view.extend({
       }
     }, _("Save"));
 
-    var otherEditorBox = E('div', { 'class': 'cl-section cl-card cl-sb-editor' }, [
+    var otherEditorBox = E('div', { 'class': 'cl-section cl-card cl-sb-editor cl-inline-editor' }, [
       otherEditorTitle,
       otherEd.el,
       E('div', { 'class': 'cl-actions cl-sb-row-actions cl-sb-editor-actions' }, [
@@ -1027,93 +1090,194 @@ return view.extend({
         E('span', { 'class': 'cl-hint' }, _("Click Save after editing; switching configuration automatically restarts the service"))
       ])
     ]);
+    var otherEditorHint = otherEditorBox.querySelector('.cl-hint');
 
-    function loadOtherEditor(name, type) {
-      otherEditorTitle.textContent = _("Editing: ") + name;
-      otherSaveBtn.removeAttribute('disabled');
+
+    function loadOtherEditor(name, type, readOnly) {
+      otherEditorTitle.textContent = (readOnly ? _("Viewing: ") : _("Editing: ")) + name;
+      if (readOnly) {
+        otherSaveBtn.style.display = "none";
+      } else {
+        otherSaveBtn.style.display = "";
+        otherSaveBtn.removeAttribute('disabled');
+      }
+      if (otherEditorHint) {
+        otherEditorHint.style.display = "";
+        otherEditorHint.textContent = readOnly
+          ? _("Read-only preview; edit the template and click Update to regenerate")
+          : _("Click Save after editing; switching configuration automatically restarts the service");
+      }
       otherEd.textarea.dataset.name = name;
       otherEd.textarea.dataset.type = type;
-      otherEd.setValue(_("Loading…"));
+      otherEd.setValue(_("Loading…"), readOnly);
       L.resolveDefault(callReadOtherConfig(name, type), {}).then(function (r) {
-        otherEd.setValue(r.content || '');
+        otherEd.setValue(r.content || '', readOnly);
       });
     }
 
+    var currentEditorCard = null;
+    var toggleOtherEditor = function (f, type, cardEl) {
+      if (currentEditorCard === cardEl && otherEditorBox.parentNode) {
+        otherEditorBox.parentNode.removeChild(otherEditorBox);
+        currentEditorCard = null;
+        return;
+      }
+      if (otherEditorBox.parentNode) otherEditorBox.parentNode.removeChild(otherEditorBox);
+      loadOtherEditor(f.name, type, f.generated === true);
+      cardEl.parentNode.insertBefore(otherEditorBox, cardEl.nextSibling);
+      currentEditorCard = cardEl;
+      setTimeout(function(){
+        var listWrap = cardEl.closest(".cl-file-list") || cardEl.parentNode;
+        var section  = listWrap.closest(".cl-section") || listWrap.parentNode;
+        if (listWrap && section) {
+          var cs = getComputedStyle(section);
+          var innerW = section.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+          var listW  = listWrap.clientWidth;
+          var diff   = Math.floor((innerW - listW) / 2);
+          if (diff > 0 && innerW > 0) {
+            otherEditorBox.style.width = innerW + "px";
+            otherEditorBox.style.maxWidth = "none";
+            otherEditorBox.style.marginLeft = "-" + diff + "px";
+            otherEditorBox.style.marginRight = "-" + diff + "px";
+            otherEditorBox.style.boxSizing = "border-box";
+            otherEditorBox.style.alignSelf = "stretch";
+          }
+        }
+        try { otherEditorBox.scrollIntoView({behavior:"smooth", block:"nearest"}); } catch(e) {}
+      }, 60);
+    };
+
     var makeOtherCards = function (files, type) {
       return files.map(function (f) {
+        var cardEl;
         var nameNodes = [];
         if (f.active) nameNodes.push(E('span', { 'class': 'cl-active-badge' }, _("Active")));
         nameNodes.push(E('span', { 'class': 'cl-file-name-text' }, safeText(f.name)));
 
-        return E('div', { 'class': 'cl-file-item' + (f.active ? ' is-active' : '') }, [
+        var actions = [];
+
+        if (f.generated === true) {
+          actions.push(E('button', {
+            'class': 'btn cbi-button-action cl-btn-sm cl-btn-update-output',
+            disabled: f.active ? 'disabled' : null,
+            style: f.active ? 'opacity:.5;cursor:not-allowed' : '',
+            title: f.active ? _('Active config cannot be updated; switch to another first') : '',
+            click: function (ev) {
+              var btn = ev.target;
+              if (f.active || btn.disabled || clKernelBusy()) return;
+              clKernelLock();
+              btn.disabled = true;
+              btn.textContent = _("Updating…");
+              L.resolveDefault(callRegenerate(f.name), {}).then(function (r) {
+                if (!r || !r.success) {
+                  ui.addNotification(null, E('p', _("Update failed: ") + ((r && (r.message || r.error)) || '')));
+                  btn.disabled = false;
+                  btn.textContent = _("Update");
+                  clKernelUnlock();
+                  return;
+                }
+                if (!r.sub_pairs || r.sub_pairs.length === 0) {
+                  ui.addNotification(null, E('p', _("Update failed: this config has no proxy-providers")));
+                  btn.disabled = false;
+                  btn.textContent = _("Update");
+                  clKernelUnlock();
+                  return;
+                }
+                var pairsJson = JSON.stringify(r.sub_pairs);
+                L.resolveDefault(callApplyTplUrl(r.template_source, pairsJson, f.name, f.active ? '1' : '0'), {}).then(function (r2) {
+                  ui.addNotification(null, E('p', (r2 && r2.success) ? f.name + _(" updated") : _("Update failed")));
+                  location.reload();
+                }).catch(function () {
+                  btn.disabled = false;
+                  btn.textContent = _("Update");
+                  clKernelUnlock();
+                });
+              }).catch(function () {
+                btn.disabled = false;
+                btn.textContent = _("Update");
+                clKernelUnlock();
+              });
+            }
+          }, _("Update")));
+        }
+
+        actions.push(E('button', {
+          'class': 'btn cbi-button cl-btn-sm cl-btn-edit',
+          click: function (ev) {
+            var btn = ev.target;
+            if (btn.disabled) return;
+            toggleOtherEditor(f, type, cardEl);
+          }
+        }, f.generated === true ? _("Show/Hide") : _("Edit")));
+
+        actions.push(E('button', {
+          'class': 'btn cbi-button cl-btn-sm cl-btn-switch',
+          click: function (ev) {
+            var btn = ev.target;
+            if (btn.disabled || clKernelBusy()) return;
+            clKernelLock();
+            btn.disabled = true;
+            btn.textContent = _("Loading…");
+            L.resolveDefault(callSetConfig(f.name), {}).then(function () {
+              location.reload();
+            }).catch(function () {
+              btn.disabled = false;
+              btn.textContent = _("Switch Profile");
+              clKernelUnlock();
+            });
+          }
+        }, _("Switch Profile")));
+
+        actions.push(E('button', {
+          'class': 'btn cbi-button cl-btn-sm cl-btn-delete',
+          click: function (ev) {
+            var btn = ev.target;
+            if (btn.disabled || clKernelBusy()) return;
+            if (!confirm(_("Delete ") + f.name + '?')) return;
+            clKernelLock();
+            btn.disabled = true;
+            btn.textContent = _("Loading…");
+            L.resolveDefault(callDeleteCfg(f.name, type), {}).then(function () {
+              location.reload();
+            }).catch(function () {
+              btn.disabled = false;
+              btn.textContent = _("Delete");
+              clKernelUnlock();
+            });
+          }
+        }, _("Delete")));
+
+        cardEl = E('div', { 'class': 'cl-file-item' + (f.active ? ' is-active' : '') }, [
           E('div', { 'class': 'cl-file-meta' }, [
             E('div', { 'class': 'cl-file-name' }, nameNodes),
             E('div', { 'class': 'cl-file-size' }, safeText(f.size))
           ]),
-          E('div', { 'class': 'cl-file-actions' }, [
-            E('button', {
-              'class': 'btn cbi-button cl-btn-sm cl-btn-edit',
-              click: function (ev) {
-                var btn = ev.target;
-                if (btn.disabled) return;
-                btn.disabled = true;
-                var orig = btn.textContent;
-                btn.textContent = _("Loading…");
-                Promise.resolve(loadOtherEditor(f.name, type)).then(function () {
-                  btn.disabled = false;
-                  btn.textContent = orig;
-                }).catch(function () {
-                  btn.disabled = false;
-                  btn.textContent = orig;
-                });
-              }
-            }, _("Edit")),
-            E('button', {
-              'class': 'btn cbi-button cl-btn-sm cl-btn-switch',
-              click: function (ev) {
-                var btn = ev.target;
-                if (btn.disabled || clKernelBusy()) return;
-                clKernelLock();
-                btn.disabled = true;
-                btn.textContent = _("Loading…");
-                L.resolveDefault(callSetConfig(f.name), {}).then(function () {
-                  location.reload();
-                }).catch(function () {
-                  btn.disabled = false;
-                  btn.textContent = _("Switch Profile");
-                  clKernelUnlock();
-                });
-              }
-            }, _("Switch Profile")),
-            E('button', {
-              'class': 'btn cbi-button cl-btn-sm cl-btn-delete',
-              click: function (ev) {
-                var btn = ev.target;
-                if (btn.disabled || clKernelBusy()) return;
-                if (!confirm(_("Delete ") + f.name + '?')) return;
-                clKernelLock();
-                btn.disabled = true;
-                btn.textContent = _("Loading…");
-                L.resolveDefault(callDeleteCfg(f.name, type), {}).then(function () {
-                  location.reload();
-                }).catch(function () {
-                  btn.disabled = false;
-                  btn.textContent = _("Delete");
-                  clKernelUnlock();
-                });
-              }
-            }, _("Delete"))
-          ])
+          E('div', { 'class': 'cl-file-actions' }, actions)
         ]);
+        return cardEl;
       });
     };
 
-    var otherFiles = (upFiles || []).map(function(f){ return {f:f, t:'2'}; })
-      .concat((customFiles || []).map(function(f){ return {f:f, t:'3'}; }));
+    var tplOnlyFiles = (customFiles || []).filter(function(f){ return f.generated !== true; });
+    var genCustomFiles = (customFiles || []).filter(function(f){ return f.generated === true; });
 
-    var otherCards = otherFiles.map(function(o) {
-      return makeOtherCards([o.f], o.t)[0];
-    });
+    var tplCards = tplOnlyFiles.map(function(f){ return makeOtherCards([f], '3')[0]; });
+    var genCards = (upFiles || []).map(function(f){ return makeOtherCards([f], '2')[0]; })
+      .concat(genCustomFiles.map(function(f){ return makeOtherCards([f], '3')[0]; }));
+
+    var tplListBox = tplCards.length ? E('div', { 'class': 'cl-section cl-card' }, [
+      E("h4", {}, _("Template Selection")),
+      E('div', { 'class': 'cl-fixed-600' }, [
+        E('div', { 'class': 'cl-file-list' }, tplCards)
+      ])
+    ]) : null;
+
+    var genListBox = genCards.length ? E('div', { 'class': 'cl-section cl-card' }, [
+      E('h4', {}, _("Other Configuration Files (upload / overwrite output)")),
+      E('div', { 'class': 'cl-fixed-600' }, [
+        E('div', { 'class': 'cl-file-list' }, genCards)
+      ])
+    ]) : null;
 
     var sections = [
       E('div', { 'class': 'cl-section cl-card' }, [
@@ -1138,15 +1302,8 @@ return view.extend({
       ])
     ];
 
-    if (otherFiles.length) {
-      sections.push(E('div', { 'class': 'cl-section cl-card' }, [
-        E('h4', {}, _("Other Configuration Files (upload / overwrite output)")),
-        E('div', { 'class': 'cl-fixed-600' }, [
-          E('div', { 'class': 'cl-file-list' }, otherCards)
-        ])
-      ]));
-      sections.push(otherEditorBox);
-    }
+    if (genListBox) sections.push(genListBox);
+    if (tplListBox) sections.push(tplListBox);
 
       sections.push(
       E('div', { 'class': 'cl-section cl-card' }, [
@@ -1161,8 +1318,8 @@ return view.extend({
           E('div', { 'class': 'cl-rw-divider' }),
           E('div', { 'class': 'cl-rewrite-group cl-rewrite-group-input' }, [
             E('div', { 'class': 'cl-rewrite-group-title' }, _("Information Input")),
-            subUrlIn,
             outNameIn,
+            pairsBox,
             E('div', { 'class': 'cl-actions cl-rewrite-actions' }, [
               E('button', { 'class': 'btn cbi-button cl-btn-sm', click: function(){ rwApply(false); } }, _("Generate Configuration")),
               E('button', { 'class': 'btn cbi-button-action cl-btn-sm cl-btn-generate-switch', click: function(){ rwApply(true); } }, _("Apply Configuration"))

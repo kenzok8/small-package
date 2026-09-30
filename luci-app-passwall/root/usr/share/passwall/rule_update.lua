@@ -393,7 +393,7 @@ local function GeoToRule(rule_name, rule_type, out_path)
 	sys.exec(cmd)
 	local local_file_size = tonumber(fs.stat(out_path, "size") or 0)
 	if local_file_size == 0 then
-		os.remove(out_path)
+		api.remove(out_path)
 		log(rule_name .. " 生成失败，请确保 Geo 文件正确且包含目标规则。")
 		return false
 	end
@@ -425,7 +425,7 @@ local function fetch_rule(rule_name, rule_type, url, exclude_domain, max_retries
 					success = true
 					break
 				end
-				os.remove(current_file)
+				api.remove(current_file)
 				log(string.format("%s 第%d条规则下载失败 (HTTP:%s)，正在进行第%d次尝试...", rule_name, k, tostring(http_code), i))
 			end
 		else
@@ -488,7 +488,7 @@ local function fetch_rule(rule_name, rule_type, url, exclude_domain, max_retries
 			sret = 1
 			log(string.format("%s 第%d条规则: %s 下载失败！", rule_name, k, v))
 		end
-		os.remove(current_file)
+		api.remove(current_file)
 	end
 
 	if sret == 0 then
@@ -502,8 +502,8 @@ local function fetch_rule(rule_name, rule_type, url, exclude_domain, max_retries
 			out:close()
 		end
 
-		local old_md5 = sys.exec(string.format("md5sum %s 2>/dev/null | awk '{print $1}'", rule_final_path)):gsub("\n", "")
-		local new_md5 = sys.exec(string.format("md5sum %s 2>/dev/null | awk '{print $1}'", file_tmp)):gsub("\n", "")
+		local old_md5 = api.md5_file(rule_final_path)
+		local new_md5 = api.md5_file(file_tmp)
 
 		if old_md5 ~= new_md5 then
 			if api.is_finded("fw4") and (rule_type == "ip4" or rule_type == "ip6") then
@@ -521,11 +521,11 @@ local function fetch_rule(rule_name, rule_type, url, exclude_domain, max_retries
 			log(string.format("%s 更新成功，总规则数 %d 条。", rule_name, #result_list))
 		else
 			log(rule_name .. " 版本一致，无需更新。")
-			os.remove(file_tmp)
+			api.remove(file_tmp)
 		end
 	else
 		log(rule_name .. " 更新失败（部分或全部资源无法下载）。")
-		os.remove(file_tmp)
+		api.remove(file_tmp)
 	end
 	return 0
 end
@@ -568,7 +568,7 @@ local function fetch_geofile(geo_name, geo_type, url)
 	local sret_tmp, _, header = curl(url, tmp_path)
 	if sret_tmp == 0 and non_file_check(tmp_path, header) then
 		log(geo_type .. " 下载文件过程出错，尝试重新下载。")
-		os.remove(tmp_path)
+		api.remove(tmp_path)
 		sret_tmp, _, header= curl(url, tmp_path)
 		if sret_tmp == 0 and non_file_check(tmp_path, header) then
 			sret_tmp = 1
@@ -685,7 +685,7 @@ local function check_instance(action)
 			luci.sys.call("touch " .. rule_lock)
 		end
 	elseif action == "end" then
-		luci.sys.call("rm -f " .. rule_lock)
+		api.remove(rule_lock)
 		return
 	end
 
@@ -709,8 +709,8 @@ local function safe_call(func, err_msg)
 end
 
 local function remove_tmp_geofile(name)
-	os.remove("/tmp/" .. name .. ".dat")
-	os.remove("/tmp/" .. name .. ".dat.sha256sum")
+	api.remove("/tmp/" .. name .. ".dat")
+	api.remove("/tmp/" .. name .. ".dat.sha256sum")
 end
 
 if geo2rule == "1" then

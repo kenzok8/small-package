@@ -45,11 +45,9 @@ o.cfgvalue = function(self, section)
 end
 o.write = function(self, section, value)
 	fs.writefile(direct_host, value:gsub("\r\n", "\n"))
-	sys.call("rm -rf /tmp/etc/passwall_tmp/dns_*")
 end
 o.remove = function(self, section, value)
 	fs.writefile(direct_host, "")
-	sys.call("rm -rf /tmp/etc/passwall_tmp/dns_*")
 end
 o.validate = function(self, value)
 	local hosts= {}
@@ -103,11 +101,9 @@ o.cfgvalue = function(self, section)
 end
 o.write = function(self, section, value)
 	fs.writefile(proxy_host, value:gsub("\r\n", "\n"))
-	sys.call("rm -rf /tmp/etc/passwall_tmp/dns_*")
 end
 o.remove = function(self, section, value)
 	fs.writefile(proxy_host, "")
-	sys.call("rm -rf /tmp/etc/passwall_tmp/dns_*")
 end
 o.validate = function(self, value)
 	local hosts= {}

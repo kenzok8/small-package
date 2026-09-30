@@ -23,7 +23,7 @@ function s.create(e, t)
 	luci.http.redirect(e.extedit:format(uid))
 end
 function s.remove(e, t)
-	api.sys.call("rm -rf /tmp/etc/passwall_tmp/dns_" .. t .. "*")
+	api.remove(api.CACHE_PATH .. "/dnsmasq_" .. t .. "*")
 	TypedSection.remove(e, t)
 end
 
