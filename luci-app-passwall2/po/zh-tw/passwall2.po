@@ -2337,6 +2337,9 @@ msgstr "跳過 %s 節點，因 %s 類型的節點需要 Sing-Box 1.12 以上版�
 msgid "%s type node subscriptions are not currently supported, skip this node."
 msgstr "暫時不支持 %s 類型的節點訂閱，跳過此節點。"
 
+msgid "Skipping %s node. This node URI format cannot be parsed."
+msgstr "跳過 %s 節點，該節點 URI 格式無法解析。"
+
 msgid "Update [%s]"
 msgstr "更新【%s】"
 

@@ -186,7 +186,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 				tlsSettings = (node.stream_security == "tls") and {
 					serverName = node.tls_serverName,
 					fingerprint = (node.type == "Xray" and node.utls == "1" and node.fingerprint and node.fingerprint ~= "") and node.fingerprint or nil,
-					pinnedPeerCertSha256 = node.tls_pinSHA256 or "",
+					pinnedPeerCertSha256 = (node.tls_pinSHA256 and node.tls_pinSHA256 ~= "") and api.sha256_sb_xray(node.tls_pinSHA256) or "",
 					verifyPeerCertByName = node.tls_CertByName or "",
 					echConfigList = (node.ech == "1") and node.ech_config or nil,
 					certificates = (node.tls_certificate == "1" and node.tls_certificate_pem ~= "") and {
@@ -1058,6 +1058,9 @@ function gen_config(var)
 	function gen_loopback(outbound_tag, loopback_dst)
 		if not outbound_tag or outbound_tag == "" then return nil end
 		local inbound_tag = loopback_dst and "lo-to-" .. loopback_dst or outbound_tag .. "-lo"
+		for _, o in ipairs(outbounds) do
+			if o.tag == outbound_tag and o.protocol == "loopback" and o.settings.inboundTag == inbound_tag then return o end
+		end
 		local loopback_outbound = {
 			protocol = "loopback",
 			tag = outbound_tag,
@@ -1697,7 +1700,7 @@ function gen_config(var)
 				poolSize = 65535
 			}
 			local fakedns6 = {
-				ipPool = "fc00::/18",
+				ipPool = "2001:2::/48",
 				poolSize = 65535
 			}
 			if remote_dns_query_strategy == "UseIP" then

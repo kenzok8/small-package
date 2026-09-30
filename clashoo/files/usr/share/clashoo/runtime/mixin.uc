@@ -101,8 +101,25 @@ if (keep_fakeip) {
 	delete cfg['dns']['fake-ip-filter'];
 } else {
 	let push_filter = function(f) {
-		if (f == 'geosite:cn') { f = 'rule-set:cn_domain'; need_cn_rs = true; }
-		else if (f == 'rule-set:cn_domain') need_cn_rs = true;
+		f = trim(f || '');
+		if (!length(f)) return;
+		if (filter_mode == 'rule') {
+			if (match(f, /,(fake-ip|real-ip)$/)) { push(cfg['dns']['fake-ip-filter'], f); return; }
+			if (index(f, ',') >= 0) { push(cfg['dns']['fake-ip-filter'], f + ',real-ip'); return; }
+			if (f == 'geosite:cn') { f = 'RULE-SET,cn_domain,real-ip'; need_cn_rs = true; }
+			else if (match(f, /^geosite:/)) { f = 'GEOSITE,' + substr(f, 8) + ',real-ip'; }
+			else if (match(f, /^rule-set:/)) {
+				let rs = substr(f, 9);
+				if (rs == 'cn_domain') need_cn_rs = true;
+				f = 'RULE-SET,' + rs + ',real-ip';
+			}
+			else if (match(f, /^\+\./)) { f = 'DOMAIN-SUFFIX,' + substr(f, 2) + ',real-ip'; }
+			else if (match(f, /\*/)) { f = 'DOMAIN-WILDCARD,' + f + ',real-ip'; }
+			else { f = 'DOMAIN,' + f + ',real-ip'; }
+		} else {
+			if (f == 'geosite:cn') { f = 'rule-set:cn_domain'; need_cn_rs = true; }
+			else if (f == 'rule-set:cn_domain') need_cn_rs = true;
+		}
 		push(cfg['dns']['fake-ip-filter'], f);
 	};
 	let filters = a('fake_ip_filter');

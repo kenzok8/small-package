@@ -193,7 +193,7 @@ function add_rule(var)
 	local CACHE_TEXT_FILE = CACHE_DNS_PATH .. ".txt"
 	local USE_CHINADNS_NG = "0"
 	local IS_SHUNT_NODE = api.uci_get_c(NODE, "protocol") == "_shunt"
-	local USE_GEOVIEW = api.uci_get_c("@global_rules[0]", "enable_geoview")
+	local USE_GEOVIEW = api.uci_get_c("@global_rules[0]", "enable_geoview") or "0"
 
 	local list1 = {}
 	local excluded_domain = {}
@@ -357,7 +357,7 @@ function add_rule(var)
 			end)
 		end
 		new_rules = new_rules .. api.md5_string(SHUNT_LIST)
-		return TMP_DNSMASQ_PATH .. DNSMASQ_CONF_FILE .. DEFAULT_DNS .. LOCAL_DNS .. TUN_DNS .. USE_DEFAULT_DNS .. CHINADNS_DNS .. USE_DIRECT_LIST .. USE_PROXY_LIST .. USE_BLOCK_LIST .. USE_GFW_LIST .. CHN_LIST .. DEFAULT_PROXY_MODE .. NO_PROXY_IPV6 .. address_md5 .. new_rules .. NFTFLAG
+		return TMP_DNSMASQ_PATH .. DNSMASQ_CONF_FILE .. DEFAULT_DNS .. LOCAL_DNS .. TUN_DNS .. USE_DEFAULT_DNS .. CHINADNS_DNS .. USE_DIRECT_LIST .. USE_PROXY_LIST .. USE_BLOCK_LIST .. USE_GFW_LIST .. CHN_LIST .. DEFAULT_PROXY_MODE .. NO_PROXY_IPV6 .. address_md5 .. new_rules .. NFTFLAG .. USE_GEOVIEW
 	end
 
 	local dnsmasq_default_dns

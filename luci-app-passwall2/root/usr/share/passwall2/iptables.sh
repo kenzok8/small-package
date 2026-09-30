@@ -26,7 +26,7 @@ ip6t_m="$ip6t -t mangle -w"
 [ -z "$ip6t" -o -z "$(lsmod | grep 'ip6table_mangle')" ] && ip6t_m="eval #$ip6t_m"
 FWI=$(uci -q get firewall.passwall2.path 2>/dev/null)
 FAKE_IP="198.18.0.0/16"
-FAKE_IP_6="fc00::/18"
+FAKE_IP_6="2001:2::/48"
 
 factor() {
 	if [ -z "$1" ] || [ -z "$2" ]; then
@@ -627,21 +627,25 @@ filter_direct_node_list() {
 update_wan_sets() {
 	[ -z "$(command -v get_wan_ips)" ] && . "$UTILS_PATH"
 
-	local WAN_IP=$(get_wan_ips ip4)
-	[ -n "$WAN_IP" ] && {
-		ipset -F "$IPSET_WAN"
-		for wan_ip in $WAN_IP; do
-			ipset -! add "$IPSET_WAN" "$wan_ip"
-		done
-	}
+	(
+		flock -x 9 || exit 1
 
-	local WAN6_IP=$(get_wan_ips ip6)
-	[ -n "$WAN6_IP" ] && {
-		ipset -F "$IPSET_WAN6"
-		for wan6_ip in $WAN6_IP; do
-			ipset -! add "$IPSET_WAN6" "$wan6_ip"
-		done
-	}
+		local WAN_IP=$(get_wan_ips ip4)
+		[ -n "$WAN_IP" ] && {
+			# ipset -F "$IPSET_WAN"
+			for wan_ip in $WAN_IP; do
+				ipset -! add "$IPSET_WAN" "$wan_ip"
+			done
+		}
+
+		local WAN6_IP=$(get_wan_ips ip6)
+		[ -n "$WAN6_IP" ] && {
+			# ipset -F "$IPSET_WAN6"
+			for wan6_ip in $WAN6_IP; do
+				ipset -! add "$IPSET_WAN6" "$wan6_ip"
+			done
+		}
+	) 9>"${LOCK_PATH}/${CONFIG}_update_wan_sets.lock"
 }
 
 add_firewall_rule() {

@@ -234,19 +234,19 @@ end
 -- 计算文件 MD5
 function md5_file(path)
 	if type(path) ~= "string" then return "" end
-	local quoted = util.shellsqescape(path)
-	local out = sys.exec("md5sum " .. quoted .. " | awk '{printf \"%s\", $1}'")
+	local quoted = "'" .. path:gsub("'", "'\\''") .. "'"
+	local out = sys.exec("md5sum " .. quoted)
 	if not out then return "" end
-	return out
+	return out:sub(1, 32)
 end
 
 -- 计算字符串 MD5
 function md5_string(str)
 	if type(str) ~= "string" then return "" end
-	local quoted = util.shellsqescape(str)
-	local out = sys.exec("printf '%s' " .. quoted .. " | md5sum | awk '{printf \"%s\", $1}'")
+	local quoted = "'" .. str:gsub("'", "'\\''") .. "'"
+	local out = sys.exec("printf '%s' " .. quoted .. " | md5sum")
 	if not out then return "" end
-	return out
+	return out:sub(1, 32)
 end
 
 --提取URL中的域名和端口(no ip)

@@ -22,7 +22,7 @@ local sid = self.section
 				alert(res && res.msg ? res.msg : "<%:Fetch Failed%> !");
 				return;
 			}
-			const inputs = document.querySelectorAll('input[id$=".xray_tls_pinSHA256"]');
+			const inputs = document.querySelectorAll('input[id$="_tls_pinSHA256"]');
 			inputs.forEach(function(input) {
 				input.value = res.data;
 			});

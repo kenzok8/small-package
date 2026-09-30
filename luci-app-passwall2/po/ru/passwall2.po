@@ -2346,6 +2346,9 @@ msgstr "Пропуск сервера %s: серверы типа %s требу�
 msgid "%s type node subscriptions are not currently supported, skip this node."
 msgstr "Подписки на серверы типа %s пока не поддерживаются, этот сервер пропускается."
 
+msgid "Skipping %s node. This node URI format cannot be parsed."
+msgstr "Пропуск узла %s. Формат URI этого узла не поддается разбору."
+
 msgid "Update [%s]"
 msgstr "Обновление [%s]"
 

@@ -227,16 +227,19 @@ function exec_call(cmd)
 end
 
 function base64Decode(text)
-	if not text then return '' end
-	local encoded = text:gsub("%z", ""):gsub("%c", ""):gsub("_", "/"):gsub("-", "+")
+	if type(text) ~= "string" then return "" end
+	local encoded = text:gsub("%z", ""):gsub("%c", ""):gsub("_", "/"):gsub("-", "+"):gsub("=+$", "")
+	if encoded == "" then return text end
+	if not encoded:match("^[A-Za-z0-9+/]*$") then return text end
 	local mod4 = #encoded % 4
-	encoded = encoded .. string.sub('====', mod4 + 1)
-	local result = nixio.bin.b64decode(encoded)
-	if result then
-		return result:gsub("%z", "")
-	else
-		return text
-	end
+	if mod4 == 1 then return text end
+	local padded = encoded .. string.rep("=", (4 - mod4) % 4)
+	local result = nixio.bin.b64decode(padded)
+	if not result then return text end
+	-- Verify that the normalized input is canonical Base64.
+	local reencoded = nixio.bin.b64encode(result):gsub("=+$", "")
+	if reencoded ~= encoded then return text end
+	return (result:gsub("%z", ""))
 end
 
 function base64Encode(text)
@@ -1864,6 +1867,25 @@ function fetch_cert_sha256(host, port, sni, timeout)
 		return ""
 	end
 	return fp:upper()
+end
+
+function sha256_xray_sb(str)
+	local decoded = base64Decode(str)
+	if decoded ~= str and #decoded == 32 then return str end
+	local hex = str:gsub(":", "")
+	if #hex ~= 64 or not hex:match("^[A-Fa-f0-9]+$") then return str end
+	local binary = hex:gsub("%x%x", function(byte)
+		return string.char(tonumber(byte, 16))
+	end)
+	return base64Encode(binary)
+end
+
+function sha256_sb_xray(str)
+	local binary = base64Decode(str)
+	if binary == str or #binary ~= 32 then return str end
+	return (binary:gsub(".", function(byte)
+		return string.format("%02X", string.byte(byte))
+	end))
 end
 
 function get_dnsmasq_server_domain()

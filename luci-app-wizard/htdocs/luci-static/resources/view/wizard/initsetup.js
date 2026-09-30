@@ -135,7 +135,7 @@ return view.extend({
 			ipv6: uci.get('network', 'wan6', 'auto') === '0' ? '0' : '1',
 			https: uci.get('wizard', 'default', 'https') || '0',
 			cookie_p: uci.get('wizard', 'default', 'persistent_cookies') || '1',
-			landing_page: uci.get('wizard', 'default', 'landing_page') || 'default',
+			landing_page: uci.get('wizard', 'default', 'landing_page') || 'auto',
 			autoupgrade_fm: uci.get('wizard', 'default', 'autoupgrade_fm') || '0',
 			coremark: uci.get('wizard', 'default', 'coremark') || '0',
 			wifi_ssid: baseSsid || (this.hasWireless ? 'Kwrt' : ''),
@@ -195,7 +195,7 @@ return view.extend({
 			{ tab: 'firmware', type: form.Flag, id: 'cookie_p', title: _('Persistent Cookie Session'), desc: _('Maintain persistent login sessions in the web browser.') },
 			{ tab: 'firmware', type: form.Flag, id: 'https', title: _('Enforce HTTPS Access'), desc: _('Automatically redirect HTTP requests to secure HTTPS.') },
 			{ tab: 'firmware', type: form.ListValue, id: 'landing_page', title: _('Landing Dashboard Mode'),
-			  choices: { 'default': _('Default'), routerdog: _('RouterDog'), nas: _('NAS'), 'next-nas': _('Next-NAS'), router: _('Router') } }
+			  choices: { 'auto': _('Auto'), 'overview': _('Overview'), 'istoreos': _('iStoreOS'), 'dashboard': _('Dashboard'), routerdog: _('RouterDog'), nas: _('NAS'), 'next-nas': _('Next-NAS'), router: _('Router') } }
 		];
 
 		// 无线配置根据设备硬件动态追加

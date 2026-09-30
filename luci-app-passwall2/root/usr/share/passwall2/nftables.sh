@@ -18,7 +18,7 @@ FWMARK="0x50535732"
 
 FWI=$(uci -q get firewall.passwall2.path 2>/dev/null)
 FAKE_IP="198.18.0.0/16"
-FAKE_IP_6="fc00::/18"
+FAKE_IP_6="2001:2::/48"
 
 factor() {
 	local ports="$1"
@@ -686,17 +686,21 @@ mwan3_start() {
 update_wan_sets() {
 	[ -z "$(command -v get_wan_ips)" ] && . "$UTILS_PATH"
 
-	local WAN_IP=$(get_wan_ips ip4)
-	[ -n "$WAN_IP" ] && {
-		nft flush set $NFTABLE_NAME $NFTSET_WAN
-		echo "$WAN_IP" | insert_nftset $NFTSET_WAN "-1"
-	}
+	(
+		flock -x 9 || exit 1
 
-	local WAN6_IP=$(get_wan_ips ip6)
-	[ -n "${WAN6_IP}" ] && {
-		nft flush set $NFTABLE_NAME $NFTSET_WAN6
-		echo "$WAN6_IP" | insert_nftset $NFTSET_WAN6 "-1"
-	}
+		local WAN_IP=$(get_wan_ips ip4)
+		[ -n "$WAN_IP" ] && {
+			# nft flush set $NFTABLE_NAME $NFTSET_WAN
+			echo "$WAN_IP" | insert_nftset $NFTSET_WAN
+		}
+
+		local WAN6_IP=$(get_wan_ips ip6)
+		[ -n "${WAN6_IP}" ] && {
+			# nft flush set $NFTABLE_NAME $NFTSET_WAN6
+			echo "$WAN6_IP" | insert_nftset $NFTSET_WAN6
+		}
+	) 9>"${LOCK_PATH}/${CONFIG}_update_wan_sets.lock"
 }
 
 add_firewall_rule() {

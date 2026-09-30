@@ -271,11 +271,12 @@ o:value("proxy", translate("Proxy"))
 
 o = s:option(Value, "user_agent", translate("User-Agent"))
 o.default = "v2rayN/9.99"
-o:value("curl", "Curl")
-o:value("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0", "Edge for Linux")
-o:value("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0", "Edge for Windows")
 o:value("passwall2", "PassWall2")
 o:value("v2rayN/9.99", "v2rayN")
+o:value("clash.meta/v9.99.99", "Clash.Meta")
+o:value("Shadowrocket/9999 CFNetwork/3896.100.1.2.1 Darwin/27.0.0 iPhone19,7", "Shadowrocket")
+o:value("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0", "Edge for Linux")
+o:value("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0", "Edge for Windows")
 
 o = s:option(ListValue, "chain_proxy", translate("Chain Proxy"))
 o:value("", translate("Close(Not use)"))
