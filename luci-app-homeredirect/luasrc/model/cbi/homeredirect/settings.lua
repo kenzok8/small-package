@@ -26,7 +26,7 @@ key.rmempty = true
 
 cert.validate = function(self, value, section)
 	if value and #value > 0 then
-		local kv = key:cfgvalue(section)
+		local kv = key:formvalue(section)
 		if not kv or #kv == 0 then
 			return nil, translate("Private key is missing - certificate and key must be configured as a pair")
 		end
@@ -39,7 +39,7 @@ end
 
 key.validate = function(self, value, section)
 	if value and #value > 0 then
-		local cv = cert:cfgvalue(section)
+		local cv = cert:formvalue(section)
 		if not cv or #cv == 0 then
 			return nil, translate("Certificate is missing - certificate and key must be configured as a pair")
 		end

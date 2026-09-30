@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-pushbot
 PKG_VERSION:=6.01
-PKG_RELEASE:=10
+PKG_RELEASE:=12
 
 PKG_MAINTAINER:=tty228 <tty228@yeah.net>  zzsj0928
 
@@ -42,6 +42,31 @@ define Package/$(PKG_NAME)/conffiles
 /usr/bin/pushbot/api/diy.json
 /usr/bin/pushbot/api/ipv4.list
 /usr/bin/pushbot/api/ipv6.list
+/usr/bin/pushbot/api/ip_blacklist
+endef
+
+define Package/$(PKG_NAME)/preinst
+#!/bin/sh
+# 安装/升级前保护用户 conffile（apk 系统）：
+# apk 只存 conffiles/conffiles_static 清单却不据此保留用户修改（升级即覆盖），
+# 故在覆盖【前】对比"设备当前 csum vs 上一版打包 csum"，不一致=用户改过→备份；
+# postinst 再恢复（改过保留 / 未改更新 / 首装装初始）。
+# opkg 系统原生按 conffiles 保留（10.253 已验证），此处直接跳过。
+[ -d /lib/apk/packages ] || exit 0
+BK=/tmp/pushbot/cf.bak
+STATIC=$$(ls /lib/apk/packages/luci-app-pushbot*.conffiles_static 2>/dev/null | head -n1)
+[ -n "$${STATIC}" ] || exit 0
+for f in /etc/config/pushbot /usr/bin/pushbot/api/diy.json /usr/bin/pushbot/api/ipv4.list /usr/bin/pushbot/api/ipv6.list /usr/bin/pushbot/api/ip_blacklist; do
+	[ -f "$${f}" ] || continue
+	base=$$(awk -v p="$${f}" '$$1==p {print $$2; exit}' "$${STATIC}")
+	[ -n "$${base}" ] || continue
+	cur=$$(sha256sum "$${f}" | awk '{print $$1}')
+	if [ "$${cur}" != "$${base}" ]; then
+		mkdir -p "$${BK}$$(dirname "$${f}")"
+		cp "$${f}" "$${BK}$${f}"
+	fi
+done
+exit 0
 endef
 
 define Package/$(PKG_NAME)/postinst
@@ -51,6 +76,13 @@ define Package/$(PKG_NAME)/postinst
 # 公钥统一由包内 etc/uci-defaults/99-zed-apk-key-pushbot 写入 ——
 # 固件场景随镜像首启执行、在线装机由 default_postinst 当次执行；
 # OTA 老设备由 controller act_install 装前自举兜底。
+# 恢复 preinst 备份的用户 conffile（apk 系统"改过则保留"；无备份即原生行为）
+if [ -d /tmp/pushbot/cf.bak ]; then
+	for f in /etc/config/pushbot /usr/bin/pushbot/api/diy.json /usr/bin/pushbot/api/ipv4.list /usr/bin/pushbot/api/ipv6.list /usr/bin/pushbot/api/ip_blacklist; do
+		[ -f "/tmp/pushbot/cf.bak$${f}" ] && cp "/tmp/pushbot/cf.bak$${f}" "$${f}"
+	done
+	rm -rf /tmp/pushbot/cf.bak
+fi
 [ -n "$${IPKG_INSTROOT}" ] || {
 	[ -f /tmp/pushbot/traffic_source ] && rm -f /tmp/pushbot/traffic_source
 	[ -f /tmp/pushbot/nlbw_check_round ] && rm -f /tmp/pushbot/nlbw_check_round
