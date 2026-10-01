@@ -17,13 +17,13 @@ PKG_RELEASE:=1
 ARCH_HEXCODE:=
 ifeq ($(ARCH),x86_64)
 ARCH_HEXCODE=8664
-PKG_HASH:=634d3e1a807119badf98ae58f3e6e9815dacc22a5be31080228998ee0de6addd
+PKG_HASH:=2beab45ffd519f19e7dce62bbb06a4ddf63919e2ed69b1f8b4333134efbab03c
 else ifeq ($(ARCH),aarch64)
 ARCH_HEXCODE=aa64
-PKG_HASH:=92d0c6f9d05a0ba283d03fef2b7f4675eee032c303e959b1e4198e12806510f9
+PKG_HASH:=129bd623e2eac350365d3687011221bef0d3d6ab0471f9355b050edd07f4eee8
 else ifeq ($(ARCH),arm)
 ARCH_HEXCODE=aa32
-PKG_HASH:=2a91f404c3eb190a8a828b5e41913595901de54664de518f0430c5544d71a914
+PKG_HASH:=28016a6d7d600dd98f6ca784591f1acf4cbac015bcbc8038cd75c4195f70c30a
 else ifeq ($(ARCH),mipsel)
 ARCH_HEXCODE=1b0c
 endif
@@ -44,7 +44,7 @@ define Package/$(PKG_NAME)
 	SUBMENU:=Web Servers/Proxies
 	TITLE:=LinkEase - the file cloud
 	DEPENDS:=@(arm||x86_64||aarch64) +linkease-common-bin
-	EXTRA_DEPENDS:=linkease-common-bin (>= 1.7.6~)
+	EXTRA_DEPENDS:=linkease-common-bin (>=1.7.6~0)
 	PKGARCH:=all
 	URL:=https://www.linkease.com/
 endef

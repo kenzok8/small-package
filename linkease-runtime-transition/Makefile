@@ -12,7 +12,7 @@ define Package/$(PKG_NAME)
 	SUBMENU:=Web Servers/Proxies
 	TITLE:=LinkEase split-runtime transition contract
 	DEPENDS:=@(arm||x86_64||aarch64) +linkease +luci-lib-linkeasefile
-	EXTRA_DEPENDS:=linkease (>= 1.7.6~), luci-lib-linkeasefile (>= 2.1.70-r4)
+	EXTRA_DEPENDS:=linkease (>=1.7.6~0), luci-lib-linkeasefile (>=2.1.70-r4)
 	PKGARCH:=all
 	URL:=https://www.linkease.com/
 endef
