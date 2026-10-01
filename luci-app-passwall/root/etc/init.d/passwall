@@ -14,22 +14,14 @@ set_lock() {
 	flock -xn 999
 }
 
-unset_lock() {
-	flock -u 999
-	rm -rf "$LOCK_FILE"
+set_lock_wait() {
+	[ ! -d "$LOCK_PATH" ] && mkdir -p "$LOCK_PATH"
+	exec 999>"$LOCK_FILE"
+	flock -x 999
 }
 
-unlock() {
-	failcount=1
-	while [ "$failcount" -le 10 ]; do
-		if [ -f "$LOCK_FILE" ]; then
-			let "failcount++"
-			sleep 1s
-			[ "$failcount" -ge 10 ] && unset_lock
-		else
-			break
-		fi
-	done
+unset_lock() {
+	flock -u 999
 }
 
 boot_func() {
@@ -57,9 +49,8 @@ start() {
 }
 
 stop() {
-	unlock
-	set_lock
-	[ $? == 1 ] && echolog "停止脚本等待超时，不重复运行，退出." && exit 0
+	set_lock_wait
+	[ $? != 0 ] && echolog "无法取得停止锁，退出." && exit 1
 	$APP_FILE stop $2
 	unset_lock
 }
