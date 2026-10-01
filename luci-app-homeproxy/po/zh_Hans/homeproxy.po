@@ -1616,7 +1616,7 @@ msgstr "New Reno"
 #: htdocs/luci-static/resources/view/homeproxy/server.js:400
 #: htdocs/luci-static/resources/view/homeproxy/server.js:417
 msgid "No TCP transport, plain HTTP is merged into the HTTP transport."
-msgstr "无 TCP 传输层, 纯 HTTP 已合并到 HTTP 传输层。"
+msgstr "无 TCP 传输层，纯 HTTP 已合并到 HTTP 传输层。"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:789
 #: htdocs/luci-static/resources/view/homeproxy/server.js:415
@@ -1745,7 +1745,7 @@ msgid "Path"
 msgstr "路径"
 
 #: htdocs/luci-static/resources/view/homeproxy/node.js:911
-msgid "Peer pubkic key"
+msgid "Peer public key"
 msgstr "对端公钥"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:329
@@ -1779,7 +1779,7 @@ msgid "Port"
 msgstr "端口"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:276
-msgid "Port %s alrealy exists!"
+msgid "Port %s already exists!"
 msgstr "端口 %s 已存在！"
 
 #: htdocs/luci-static/resources/view/homeproxy/client.js:582

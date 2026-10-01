@@ -273,7 +273,7 @@ return view.extend({
 					if (!stubValidator.apply('port', i) && !stubValidator.apply('portrange', i))
 						return _('Expecting: %s').format(_('valid port value'));
 					if (ports.includes(i))
-						return _('Port %s alrealy exists!').format(i);
+						return _('Port %s already exists!').format(i);
 					ports = ports.concat(i);
 				}
 			}

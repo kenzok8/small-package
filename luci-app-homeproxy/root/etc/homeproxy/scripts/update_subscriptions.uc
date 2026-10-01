@@ -198,7 +198,7 @@ function parse_uri(uri) {
 		case 'socks':
 		case 'socks4':
 		case 'socks4a':
-		case 'socsk5':
+		case 'socks5':
 		case 'socks5h':
 			url = parseURL('http://' + uri[1]) || {};
 
@@ -219,7 +219,7 @@ function parse_uri(uri) {
 			let ss_slabel = '';
 			if (length(ss_suri) <= 2) {
 				if (length(ss_suri) === 2)
-					ss_slabel = '#' + urlencode(ss_suri[1]);
+					ss_slabel = '#' + ss_suri[1];
 				if (decodeBase64Str(ss_suri[0]))
 					uri[1] = decodeBase64Str(ss_suri[0]) + ss_slabel;
 			}

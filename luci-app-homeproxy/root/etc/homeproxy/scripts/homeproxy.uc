@@ -210,7 +210,7 @@ export function parseURL(url) {
 			return '';
 		});
 
-		if (match(objurl.userinfo, /^[A-Za-z0-9\+\-\_\.]+$/)) {
+		if (match(objurl.userinfo, /^([A-Za-z0-9\+\-\_\.]|%[A-Za-z0-9]{2})+$/)) {
 			objurl.username = objurl.userinfo;
 			delete objurl.userinfo;
 		} else {
