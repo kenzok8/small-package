@@ -591,7 +591,7 @@ start_socks() {
 }
 
 clean_crontab() {
-	[ -f "/tmp/lock/${CONFIG}_cron.lock" ] && return
+	[ -f "${LOCK_PATH}/${CONFIG}_cron.lock" ] && return
 	touch /etc/crontabs/root
 	#sed -i "/${CONFIG}/d" /etc/crontabs/root >/dev/null 2>&1
 	sed -i "/$(echo "/etc/init.d/${CONFIG}" | sed 's#\/#\\\/#g')/d" /etc/crontabs/root >/dev/null 2>&1
@@ -599,7 +599,7 @@ clean_crontab() {
 	sed -i "/$(echo "lua ${APP_PATH}/subscribe.lua start" | sed 's#\/#\\\/#g')/d" /etc/crontabs/root >/dev/null 2>&1
 
 	busybox pgrep -af "${CONFIG}/" | awk '/tasks\.sh/{print $1}' | xargs kill -9 >/dev/null 2>&1
-	rm -rf /tmp/lock/${CONFIG}_tasks.lock
+	rm -f ${LOCK_PATH}/${CONFIG}_tasks.lock
 }
 
 start_crontab() {
@@ -608,8 +608,8 @@ start_crontab() {
 		[ "$start_daemon" = "1" ] && { $APP_PATH/monitor.sh > /dev/null 2>&1 & }
 	fi
 
-	[ -f "/tmp/lock/${CONFIG}_cron.lock" ] && {
-		rm -rf "/tmp/lock/${CONFIG}_cron.lock"
+	[ -f "${LOCK_PATH}/${CONFIG}_cron.lock" ] && {
+		rm -rf "${LOCK_PATH}/${CONFIG}_cron.lock"
 		log_i18n 0 "The task is currently running automatically as a scheduled task; no reconfiguration of the scheduled task is required."
 		return
 	}
@@ -716,7 +716,7 @@ start_crontab() {
 }
 
 stop_crontab() {
-	[ -f "/tmp/lock/${CONFIG}_cron.lock" ] && return
+	[ -f "${LOCK_PATH}/${CONFIG}_cron.lock" ] && return
 	clean_crontab
 	/etc/init.d/cron restart
 	#log_i18n 0 "Clear scheduled commands."
@@ -934,6 +934,9 @@ start() {
 		}
 	fi
 	run_process_queue
+	[ "$1" = "boot" ] && {
+		rm -f "${LOCK_PATH}/${CONFIG}_cron.lock"
+	}
 	start_crontab
 	log_i18n 0 "Running complete!"
 	echolog "\n"
@@ -996,8 +999,15 @@ stop() {
 		[ -n "${bak_bridge_nf_ip6t}" ] && sysctl -w net.bridge.bridge-nf-call-ip6tables=${bak_bridge_nf_ip6t} >/dev/null 2>&1
 	}
 	rm -rf $TMP_PATH
-	rm -rf /tmp/lock/${CONFIG}_socks_auto_switch*
-	rm -rf /tmp/lock/${CONFIG}_lease2hosts*
+	rm -f ${LOCK_PATH}/${CONFIG}_socks_auto_switch*
+	rm -f ${LOCK_PATH}/${CONFIG}_lease2hosts*
+	rm -f ${LOCK_PATH}/${CONFIG}_monitor*
+	if ! busybox pgrep -af "${CONFIG}/" | grep -q '/subscribe\.lua'; then
+		rm -f "${LOCK_PATH}/${CONFIG}_subscribe.lock"
+	fi
+	if ! busybox pgrep -af "${CONFIG}/" | grep -q '/rule_update\.lua'; then
+		rm -f "${LOCK_PATH}/${CONFIG}_rule_update.lock"
+	fi
 	log_i18n 0 "Clearing and closing related programs and cache complete."
 	exit 0
 }

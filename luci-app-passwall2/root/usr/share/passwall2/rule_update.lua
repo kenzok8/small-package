@@ -239,8 +239,8 @@ uci_save(true)
 
 if reboot == 1 then
 	if arg3 == "cron" then
-		if not fs.access("/var/lock/" .. appname .. ".lock") then
-			sys.call("touch /tmp/lock/" .. appname .. "_cron.lock")
+		if not fs.access(api.LOCK_PREFIX .. ".lock") then
+			sys.call("touch %s_cron.lock" % api.LOCK_PREFIX)
 		end
 	end
 
