@@ -1052,6 +1052,22 @@ stop_crontab() {
 	#echolog "清除定时执行命令。"
 }
 
+restart_smartdns() {
+	rm -rf /tmp/smartdns.cache
+	/etc/init.d/smartdns reload >/dev/null 2>&1
+}
+
+del_smartdns_conf() {
+	command -v smartdns >/dev/null 2>&1 || return
+	rm -rf "/tmp/etc/smartdns/${CONFIG}.conf"
+	local custom_conf="/etc/smartdns/custom.conf"
+	if [ -f "$custom_conf" ] && grep -q "${CONFIG}" "$custom_conf"; then
+		sed -i "/${CONFIG}/d" "$custom_conf" >/dev/null 2>&1
+		rm -rf /tmp/smartdns.cache
+		/etc/init.d/smartdns reload >/dev/null 2>&1
+	fi
+}
+
 start_dns() {
 	echolog "DNS域名解析："
 
@@ -1256,7 +1272,8 @@ start_dns() {
 				-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -CHN_LIST "${CHN_LIST}" \
 				-NODE ${NODE} -DEFAULT_PROXY_MODE "${TCP_PROXY_MODE}" -NO_PROXY_IPV6 ${FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
 				-SUBNET ${subnet_ip:-0} -NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
-			source $APP_PATH/helper_smartdns.sh restart
+
+			restart_smartdns
 
 			USE_DEFAULT_DNS="chinadns_ng"
 		else
@@ -1739,7 +1756,7 @@ stop() {
 	unset XRAY_LOCATION_ASSET
 	unset SS_SYSTEM_DNS_RESOLVER_FORCE_BUILTIN
 	stop_crontab $1
-	source $APP_PATH/helper_smartdns.sh del
+	del_smartdns_conf
 	rm -rf $GLOBAL_DNSMASQ_CONF
 	rm -rf $GLOBAL_DNSMASQ_CONF_PATH
 	[ "1" = "1" ] && {
