@@ -930,6 +930,8 @@ clean_crontab() {
 
 start_crontab() {
 	local update_loop
+	local setsid_cmd=""
+	command -v setsid >/dev/null 2>&1 && setsid_cmd="setsid "
 
 	if [ "$ENABLED_DEFAULT_ACL" = "1" ] || [ "$ENABLED_ACLS" = "1" ]; then
 		local start_daemon=$(config_n_get @global_delay[0] start_daemon 0)
@@ -976,7 +978,7 @@ start_crontab() {
 		if [ "$week" = "8" ]; then
 			update_loop=1
 		else
-			echo "$svr_t /etc/init.d/$CONFIG $action cron > /dev/null 2>&1 &" >>/etc/crontabs/root
+			echo "$svr_t ${setsid_cmd}/etc/init.d/$CONFIG $action cron > /dev/null 2>&1 &" >>/etc/crontabs/root
 		fi
 		echolog "$logmsg"
 	}
@@ -996,7 +998,7 @@ start_crontab() {
 		if [ "$rules_update_week_mode" = "8" ]; then
 			update_loop=1
 		else
-			echo "$rule_t lua $APP_PATH/rule_update.lua log all cron > /dev/null 2>&1 &" >>/etc/crontabs/root
+			echo "$rule_t ${setsid_cmd}lua $APP_PATH/rule_update.lua log all cron > /dev/null 2>&1 &" >>/etc/crontabs/root
 		fi
 		echolog "配置定时任务：自动更新规则。"
 	fi
@@ -1024,7 +1026,7 @@ start_crontab() {
 			if [ "$sub_update_week_mode" = "8" ]; then
 				update_loop=1
 			else
-				echo "$sub_t lua $APP_PATH/subscribe.lua start $cfgids cron > /dev/null 2>&1 &" >>/etc/crontabs/root
+				echo "$sub_t ${setsid_cmd}lua $APP_PATH/subscribe.lua start $cfgids cron > /dev/null 2>&1 &" >>/etc/crontabs/root
 			fi
 		done
 		rm -rf "$TMP_SUB_PATH"
