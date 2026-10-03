@@ -99,15 +99,13 @@ end
 local function get_geosite(list_arg, out_path)
 	local geosite_path = api.uci_get_c("@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"
 	geosite_path = geosite_path:match("^(.*)/") .. "/geosite.dat"
-	if not is_file_nonzero(geosite_path) then return 1 end
+	if not is_file_nonzero(geosite_path) then return 1, "File geosite.dat not found" end
+	if not list_arg or list_arg == "" then return 1, "Site list cannot be empty" end
+	if not out_path or out_path == "" then return 1, "Output path cannot be empty" end
 	local bin = api.finded_com("geoview")
-	if bin and list_arg and out_path then
-		local cmd = string.format("%q -type geosite -append=true -input %q -list %q -output %q -lowmem=true",
-			bin, geosite_path, list_arg, out_path)
-		sys.call(cmd)
-		return 0
-	end
-	return 1
+	local cmd = string.format("%q -type geosite -append=true -input %q -list %q -output %q -lowmem=true",
+		bin, geosite_path, list_arg, out_path)
+	return api.exec_call(cmd)
 end
 
 sys.call("mkdir -p %s" % FLAG_PATH)
@@ -285,6 +283,9 @@ end
 
 --屏蔽列表
 local file_block_host = CACHE_RULES_PATH .. "/block_host"
+if not fs.access(file_block_host .. "_ok") then
+	api.remove(file_block_host)
+end
 if USE_BLOCK_LIST == "1" and not fs.access(file_block_host) then
 	local block_domain, lookup_block_domain = {}, {}
 	local geosite_arg = ""
@@ -310,12 +311,18 @@ if USE_BLOCK_LIST == "1" and not fs.access(file_block_host) then
 		end
 		f_out:close()
 	end
+	local success = true
 	if USE_GEOVIEW == "1" and geosite_arg ~= "" then
-		if get_geosite(geosite_arg, file_block_host) == 0 then
+		local code, out = get_geosite(geosite_arg, file_block_host)
+		if code == 0 then
 			log("  - 解析[屏蔽列表] Geosite 到屏蔽域名表(blocklist)完成")
 		else
-			log("  - 解析[屏蔽列表] Geosite 到屏蔽域名表(blocklist)失败！")
+			log("  - 解析[屏蔽列表] Geosite 到屏蔽域名表(blocklist)失败！[" .. out .. "]")
+			success = false
 		end
+	end
+	if success and fs.access(file_block_host) then
+		sys.call("touch " .. file_block_host .. "_ok")
 	end
 end
 if USE_BLOCK_LIST == "1" and is_file_nonzero(file_block_host) then
@@ -375,6 +382,9 @@ end
 
 --直连（白名单）列表
 local file_direct_host = CACHE_RULES_PATH .. "/direct_host"
+if not fs.access(file_direct_host .. "_ok") then
+	api.remove(file_direct_host)
+end
 if USE_DIRECT_LIST == "1" and not fs.access(file_direct_host) then
 	local direct_domain, lookup_direct_domain = {}, {}
 	local geosite_arg = ""
@@ -400,12 +410,18 @@ if USE_DIRECT_LIST == "1" and not fs.access(file_direct_host) then
 		end
 		f_out:close()
 	end
+	local success = true
 	if USE_GEOVIEW == "1" and geosite_arg ~= "" then
-		if get_geosite(geosite_arg, file_direct_host) == 0 then
+		local code, out = get_geosite(geosite_arg, file_direct_host)
+		if code == 0 then
 			log("  - 解析[直连列表] Geosite 到域名白名单(whitelist)完成")
 		else
-			log("  - 解析[直连列表] Geosite 到域名白名单(whitelist)失败！")
+			log("  - 解析[直连列表] Geosite 到域名白名单(whitelist)失败！[" .. out .. "]")
+			success = false
 		end
+	end
+	if success and fs.access(file_direct_host) then
+		sys.call("touch " .. file_direct_host .. "_ok")
 	end
 end
 if USE_DIRECT_LIST == "1" and is_file_nonzero(file_direct_host) then
@@ -427,6 +443,9 @@ end
 
 --代理（黑名单）列表
 local file_proxy_host = CACHE_RULES_PATH .. "/proxy_host"
+if not fs.access(file_proxy_host .. "_ok") then
+	api.remove(file_proxy_host)
+end
 if USE_PROXY_LIST == "1" and not fs.access(file_proxy_host) then
 	local proxy_domain, lookup_proxy_domain = {}, {}
 	local geosite_arg = ""
@@ -452,12 +471,18 @@ if USE_PROXY_LIST == "1" and not fs.access(file_proxy_host) then
 		end
 		f_out:close()
 	end
+	local success = true
 	if USE_GEOVIEW == "1" and geosite_arg ~= "" then
-		if get_geosite(geosite_arg, file_proxy_host) == 0 then
+		local code, out = get_geosite(geosite_arg, file_proxy_host)
+		if code == 0 then
 			log("  - 解析[代理列表] Geosite 到代理域名表(blacklist)完成")
 		else
-			log("  - 解析[代理列表] Geosite 到代理域名表(blacklist)失败！")
+			log("  - 解析[代理列表] Geosite 到代理域名表(blacklist)失败！[" .. out .. "]")
+			success = false
 		end
+	end
+	if success and fs.access(file_proxy_host) then
+		sys.call("touch " .. file_proxy_host .. "_ok")
 	end
 end
 if USE_PROXY_LIST == "1" and is_file_nonzero(file_proxy_host) then
@@ -647,20 +672,22 @@ if IS_SHUNT_NODE and not only_global then
 	end
 
 	if not USE_CACHE and USE_GEOVIEW == "1" then
-		local return_direct, return_proxy, return_black
-		if geosite_direct_arg ~= "" then
-			return_direct = get_geosite(geosite_direct_arg, shunt_direct_host)
+		local ok = true
+		local function resolve(arg, dest)
+		if arg == "" then return end
+			local code, out = get_geosite(arg, dest)
+			if code ~= 0 then
+				ok = false
+				log("  - 解析[分流节点] Geosite 失败！[" .. out .. "]")
+			end
 		end
-		if geosite_proxy_arg ~= "" then
-			return_proxy = get_geosite(geosite_proxy_arg, shunt_proxy_host)
-		end
-		if geosite_black_arg ~= "" then
-			return_black = get_geosite(geosite_black_arg, shunt_black_host)
-		end
-		if return_direct == 0 and return_proxy == 0 and return_black == 0 then
+		resolve(geosite_direct_arg, shunt_direct_host)
+		resolve(geosite_proxy_arg,  shunt_proxy_host)
+		resolve(geosite_black_arg,  shunt_black_host)
+		if ok then
 			log("  - 解析[分流节点] Geosite 完成")
 		else
-			log("  - 解析[分流节点] Geosite 失败！")
+			api.remove(MD5_FILE)
 		end
 	end
 

@@ -185,7 +185,7 @@ end
 function exec_call(cmd)
 	math.randomseed(os.time())
 	local tag = "\x01__RC__" .. tostring(math.random(100000, 999999)) .. "\x01"
-	local f = io.popen('(' .. cmd .. '); printf "\\n' .. tag .. '%d" "$?"')
+	local f = io.popen('(' .. cmd .. ') 2>&1; printf "\\n' .. tag .. '%d" "$?"')
 	local out = f:read("*a") or ""
 	f:close()
 	local rc = out:match(tag .. "(%d+)%s*$")
