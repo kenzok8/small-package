@@ -46,7 +46,7 @@ NFTSET_SHUNT6_STATIC="${NFTSET_SHUNT6}_static"
 FWMARK="0x50535731"
 
 FWI=$(uci -q get firewall.passwall.path 2>/dev/null)
-FAKE_IP="198.18.0.0/15"
+FAKE_IP="198.18.0.0/16"
 FAKE_IP_6="2001:2::/48"
 
 USE_GEOVIEW=0

@@ -1984,7 +1984,7 @@ function gen_config(var)
 			table.insert(dns.servers, {
 				tag = fakedns_tag,
 				type = "fakeip",
-				inet4_range = "198.18.0.0/15",
+				inet4_range = "198.18.0.0/16",
 				inet6_range = "2001:2::/48",
 			})
 

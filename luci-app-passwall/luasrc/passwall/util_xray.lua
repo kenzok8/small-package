@@ -1752,7 +1752,7 @@ function gen_config(var)
 		if remote_dns_fake or inner_fakedns == "1" then
 			fakedns = {}
 			local fakedns4 = {
-				ipPool = "198.18.0.0/15",
+				ipPool = "198.18.0.0/16",
 				poolSize = 65535
 			}
 			local fakedns6 = {

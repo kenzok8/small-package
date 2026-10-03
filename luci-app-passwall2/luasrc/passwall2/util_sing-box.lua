@@ -55,10 +55,9 @@ function geo_convert_srs(var)
 	if not fs.access(output_srs_file) and bin then
 		local cmd = string.format("%q -type %q -action convert -input %q -list %q -output %q -lowmem=true",
 			bin, prefix, geo_path, rule_name, output_srs_file)
-		sys.call(cmd)
-		local status = fs.access(output_srs_file) and "success." or "failed!"
-		if status == "failed!" then
-			api.log(0, string.format("  - %s:%s convert to srs %s", prefix, rule_name, status))
+		local code, out = api.exec_call(cmd)
+		if code ~= 0 or not fs.access(output_srs_file) then
+			api.log(0, string.format("  - %s:%s convert to srs %s [%s]", prefix, rule_name, "failed!", out))
 		end
 	end
 end
