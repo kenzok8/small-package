@@ -1,1 +1,0 @@
-import{ac as l}from"./index-BOpK0UVB.js";function a(e){const t=l(e,"flows",{whileLoading:!0}),i=l(e,"rules",{whileLoading:!1});return[...t||i?[{id:"list",titleKey:"rule.listTitle"}]:[],...l(e,"dns_rules",{whileLoading:!1})?[{id:"dns",titleKey:"rule.dnsTitle"}]:[],...l(e,"routing_trace",{whileLoading:!0})?[{id:"trace",titleKey:"rule.trace"}]:[]]}export{a as r};

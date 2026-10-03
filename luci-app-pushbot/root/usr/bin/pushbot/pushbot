@@ -972,8 +972,11 @@ function pushbot_cron(){
 		( echo `crontab -l 2>/dev/null`|grep -q "pushbot" ) && crontab -l > conf && sed -i "/pushbot/d" conf && crontab conf && rm -f conf >/dev/null 2>&1
 	}
 	function re_cron(){
-		/etc/init.d/cron stop
-		/etc/init.d/cron start
+		# 不再 stop/start cron：该操作在高频执行时存在竞态（stop 后 start 失败
+		# → procd 服务对象被删除 → crond 永久死亡 → 所有定时任务静默失效，
+		# 已实测 6/14 台因此挂掉）。busybox crond 每分钟检测 crontab mtime
+		# 自动重读，改写 crontab 后无需任何重启动作。
+		:
 	}
 	del_cron
 	# 总开关关闭(=0)/空/异常值都不注册定时任务：
@@ -2916,6 +2919,12 @@ while [ "$pushbot_enable" = "1" ]; do
 	deltemp
 	usage update
 	check_nlbw_health
+	# crond 守护：意外死亡时自动拉起（历史 stop/start 竞态或外部因素兜底），
+	# 防止计划任务执行器静默失效导致定时推送不发
+	if [ -z "$(pidof crond 2>/dev/null)" ]; then
+		/etc/init.d/cron start >/dev/null 2>&1
+		[ $? -eq 0 ] && echo "`date "+%Y-%m-%d %H:%M:%S"` 【守护】crond 意外死亡，已自动拉起" >> ${logfile}
+	fi
 	pushbot_disturb;disturb=$?
 
 	# 外网IP变化检测

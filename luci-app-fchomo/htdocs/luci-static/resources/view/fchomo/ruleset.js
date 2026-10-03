@@ -59,6 +59,8 @@ async function parseRulesetLink(section_type, uri) {
 			var behavior = url.searchParams.get('behav');
 			var interval = url.searchParams.get('sec');
 			var rawquery = url.searchParams.get('rawq');
+			var header = url.searchParams.get('hdr');
+			var path_in_bundle = url.searchParams.get('bpath');
 			var name = hm.toUciname(decodeURI(url.pathname).split('/').pop());
 
 			if (filefmt.test(format) && filebehav.test(behavior)) {
@@ -69,7 +71,11 @@ async function parseRulesetLink(section_type, uri) {
 					format: format,
 					behavior: behavior,
 					url: String.format('%s://%s', uri[0], fullpath),
+					header: header?.match(/^H4sI/) // Gzip magic + Deflate
+								? await hm.decompressGzip(header, true)
+								: hm.decodeBase64(header, true),
 					interval: interval,
+					path_in_bundle: path_in_bundle ? decodeURIComponent(path_in_bundle) : null,
 					id: hm.calcStringMD5(String.format('http://%s', fullpath))
 				};
 			}
@@ -80,6 +86,7 @@ async function parseRulesetLink(section_type, uri) {
 			var format = url.searchParams.get('fmt');
 			var behavior = url.searchParams.get('behav');
 			var filler = url.searchParams.get('fill');
+			var path_in_bundle = url.searchParams.get('bpath');
 			var path = decodeURI(url.pathname);
 			var name = hm.toUciname(path.split('/').pop());
 
@@ -89,6 +96,7 @@ async function parseRulesetLink(section_type, uri) {
 					type: 'file',
 					format: format,
 					behavior: behavior,
+					path_in_bundle: path_in_bundle ? decodeURIComponent(path_in_bundle) : null,
 					id: hm.calcStringMD5(String.format('file://%s%s', url.host, url.pathname))
 				};
 				if (filler?.match(/^H4sI/)) // Gzip magic + Deflate
@@ -209,7 +217,8 @@ return view.extend({
 					.format('file, http, inline', 'text, yaml, mrs') +
 					_('Please refer to <a href="%s" target="_blank">%s</a> for link format standards.')
 						.format(rulesetdoc, _('Ruleset-URI-Scheme')));
-			o.placeholder = 'http(s)://github.com/ACL4SSR/ACL4SSR/raw/refs/heads/master/Clash/Providers/BanAD.yaml?fmt=yaml&behav=classical&rawq=good%3Djob#BanAD\n' +
+			o.placeholder = 'https://github.com/ACL4SSR/ACL4SSR/raw/refs/heads/master/Clash/Providers/BanAD.yaml?fmt=yaml&behav=classical&rawq=good%3Djob#BanAD\n' +
+							'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/cn.mrs?fmt=mrs&behav=domain&bpath=geo%2Fgeosite%2Fcn.mrs&hdr=eyJVc2VyLUFnZW50IjpbIm1paG9tby8xLjE4LjMiXX0K#CN-Site\n' +
 							'file:///example.txt?fmt=text&behav=domain&fill=LmNuCg#CN%20TLD\n' +
 							'inline://LSAnLmhrJwoK?behav=domain#HK%20TLD\n' +
 							'inline://H4sIAAAAAAACA9NVUNcrKVcHANszKpEHAAAA?behav=domain#TW%20TLD\n';
@@ -387,7 +396,7 @@ return view.extend({
 		o = s.option(form.Value, 'path_in_bundle', _('Path in bundle'),
 			_('Path in bundle: <code>%s</code>').format('BundleMRS.7z'));
 		o.placeholder = 'geo/geosite/cn.mrs';
-		o.depends({'type': /^(file|http)$/, 'format': 'mrs'});
+		o.depends('format', 'mrs');
 		o.modalonly = true;
 
 		o = s.option(form.Value, 'size_limit', _('Size limit'),

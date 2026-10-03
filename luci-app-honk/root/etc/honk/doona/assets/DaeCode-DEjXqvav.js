@@ -1,0 +1,1 @@
+import{r as e}from"./vendor-react-64fcanlc.js";import{t}from"./daeTokens-BVtuNnWZ.js";function a({text:a,as:r="span",className:s=""}){return e.createElement(r,{className:`rp-code ${s}`.trim()},t(a).map((t,a)=>t.type?e.createElement("span",{key:a,className:`rp-dae-${t.type}`},t.text):t.text))}export{a as D};

@@ -32,7 +32,9 @@ The shortest format is `/`.
 + `behav`: Required. Available values ​​refer to **behavior**.
 + `sec`: Optional. Available under **remote**. Available values ​​refer to **interval**.
 + `rawq`: Optional. Available under **remote**. Available values ​​refer to **rawQuery**.
++ `hdr`: Optional. Available under **remote**. Available values ​​refer to **header**.
 + `fill`: Optional. Available under **local**. Available values ​​refer to **filler**.
++ `bpath`: Optional. Available when **format** is `mrs`. Available values ​​refer to **bundlePath**.
 
 #### format
 
@@ -51,13 +53,23 @@ The update interval for the Rule set, in seconds or `/^(\d+)(s|m|h|d)?$/`.
 This parameter is required if the original link contains a url query.\
 Encrypt the part `key1=value1&key2=value2` after `?` in the original link with `encodeURIComponent` and use it as the payload of this parameter.
 
+#### header
+
+JSON format HTTP request headers. Example: `{"User-Agent":["mihomo/1.18.3"]}`.\
+Must be encoded as Base64edStr.
+
 #### filler
 
 Base64edStr format file content.
 
+#### bundlePath
+
+The `mrs` file path in `BundleMRS.7z`.\
+Need encrypt the original content with `encodeURIComponent`.
+
 ### Base64edStr
 
-Generation steps:
+Encoded steps:
 
   0. Payload only supports `string` format.
   1. Compress payload using `gzip`. (Optional)

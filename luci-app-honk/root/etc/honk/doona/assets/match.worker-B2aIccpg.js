@@ -1,0 +1,1 @@
+!function(){"use strict";function t(t,e){if(!e.trim())return()=>!0;{const t=function(t){try{return new RegExp(t,"iu")}catch{return null}}(e);return t&&(e=>t.test(e.trim().toLowerCase().replace(/\.$/,"")))}}self.onmessage=e=>{const s=t(0,e.data.text);self.postMessage(s?e.data.names.flatMap((t,e)=>s(t)?[e]:[]):null)},self.postMessage("ready")}();

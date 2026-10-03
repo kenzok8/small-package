@@ -2,6 +2,7 @@
   "id": "./",
   "name": "doona",
   "short_name": "doona",
+  "description": "Static web UI for the daeuniverse native API.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
