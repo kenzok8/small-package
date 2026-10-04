@@ -817,12 +817,14 @@ end
 function com_update(comname)
 	local json = nil
 	local task = http.formvalue("task")
-	if task == "extract" then
+	if task == "progress" then
+		json = api.to_download_progress(comname, http.formvalue("id"), http.formvalue("total_size"))
+	elseif task == "extract" then
 		json = api.to_extract(comname, http.formvalue("file"), http.formvalue("subfix"))
 	elseif task == "move" then
 		json = api.to_move(comname, http.formvalue("file"))
 	else
-		json = api.to_download(comname, http.formvalue("url"), http.formvalue("size"))
+		json = api.to_download(comname, http.formvalue("url"), http.formvalue("size"), http.formvalue("id"))
 	end
 
 	http_write_json(json)
@@ -870,7 +872,7 @@ function create_backup()
 	local date = os.date("%y%m%d%H%M")
 	local tar_file = "/tmp/passwall-" .. date .. "-backup.tar.gz"
 	local version_file = "/tmp/passwall-version"
-	local version = api.get_version()
+	local version = api.get_version():match("^([^-]+)")
 	api.remove(tar_file)
 	fs.writefile(version_file, version .. "\n")
 	local cmd = "tar -czf " .. tar_file .. " " .. table.concat(backup_files, " ") .. " " .. "-C /tmp passwall-version"

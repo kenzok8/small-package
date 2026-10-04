@@ -981,9 +981,16 @@ function compare_versions(ver1, comp, ver2)
 	local n2 = table.getn(av2)
 	if (max < n2) then max = n2 end
 
+	local function version_part(value)
+		local number = tonumber(value)
+		if number then return number end
+		local revision = type(value) == "string" and value:match("^[rR](%d+)$")
+		return tonumber(revision) or 0
+	end
+
 	for i = 1, max, 1 do
-		local s1 = tonumber(av1[i] or 0) or 0
-		local s2 = tonumber(av2[i] or 0) or 0
+		local s1 = version_part(av1[i] or 0)
+		local s2 = version_part(av2[i] or 0)
 
 		if comp == "~=" and (s1 ~= s2) then return true end
 		if (comp == "<" or comp == "<=") and (s1 < s2) then return true end
@@ -1132,10 +1139,10 @@ local default_file_tree = {
 }
 
 local function get_api_json(url)
-	local gh_proxy = uci_get_c("@global_app[0]", "github_proxy") or "0"
+	local gh_proxy = uci_get_c("@global_app[0]", "gh_proxy_url") or ""
 	local return_code, content
-	if gh_proxy == "1" then
-		url = "https://gh-proxy.org/" .. url
+	if gh_proxy ~= "" then
+		url = gh_proxy .. url
 		return_code, content = curl_base(url, nil, curl_args)
 	else
 		return_code, content = curl_auto(url, nil, curl_args)
@@ -1232,7 +1239,7 @@ function to_check(arch, app_name)
 	}
 end
 
-function to_download(app_name, url, size)
+function to_download(app_name, url, size, task_id)
 	local result = check_path(app_name)
 	if result.code ~= 0 then
 		return result
@@ -1244,7 +1251,13 @@ function to_download(app_name, url, size)
 
 	remove("/tmp/" .. app_name .. "_download.*")
 
-	local tmp_file = trim(util.exec("mktemp -u -t " .. app_name .. "_download.XXXXXX"))
+	local tmp_file
+	if task_id and task_id:match("^[%w_-]+$") then
+		tmp_file = "/tmp/" .. app_name .. "_download." .. task_id
+		remove(tmp_file)
+	else
+		tmp_file = trim(util.exec("mktemp -u -t " .. app_name .. "_download.XXXXXX"))
+	end
 
 	if size then
 		local kb1 = get_free_space("/tmp")
@@ -1256,10 +1269,10 @@ function to_download(app_name, url, size)
 	local _curl_args = clone(curl_args)
 	table.insert(_curl_args, "--speed-limit 51200 --speed-time 15 --max-time 300")
 
-	local gh_proxy = uci_get_c("@global_app[0]", "github_proxy") or "0"
+	local gh_proxy = uci_get_c("@global_app[0]", "gh_proxy_url") or ""
 	local return_code, result
-	if gh_proxy == "1" then
-		url = "https://gh-proxy.org/" .. url
+	if gh_proxy ~= "" then
+		url = gh_proxy .. url
 		return_code, result = curl_base(url, tmp_file, _curl_args)
 	else
 		return_code, result = curl_auto(url, tmp_file, _curl_args)
@@ -1275,6 +1288,23 @@ function to_download(app_name, url, size)
 	end
 
 	return {code = 0, file = tmp_file, zip = com[app_name].zipped }
+end
+
+function to_download_progress(app_name, task_id, total_size)
+	if not com[app_name] or type(task_id) ~= "string" or not task_id:match("^[%w_-]+$") then
+		return {code = 1, error = i18n.translate("Invalid download task.")}
+	end
+
+	total_size = tonumber(total_size) or 0
+	local tmp_file = "/tmp/" .. app_name .. "_download." .. task_id
+	local downloaded = tonumber(fs.stat(tmp_file, "size")) or 0
+	local percent
+	if total_size > 0 then
+		-- The download request has not completed yet, so leave 100% for its success callback.
+		percent = math.min(99, math.floor(downloaded * 100 / total_size))
+	end
+
+	return {code = 0, downloaded = downloaded, total = total_size, percent = percent}
 end
 
 function to_extract(app_name, file, subfix)
@@ -1419,38 +1449,33 @@ function get_version()
 			fs.writefile(version_file, version)
 		end
 	end
-	return version:match("^([^-]+)") or ""
+	version = (version or ""):match("^%s*(.-)%s*$")
+	-- Normalize APK's -rN release notation while retaining the release number.
+	return version:gsub("%-r(%d+)$", "-%1")
 end
 
 function to_check_self()
-	local url = "https://raw.githubusercontent.com/Openwrt-Passwall/openwrt-passwall/main/luci-app-passwall/Makefile"
-	local tmp_file = "/tmp/passwall_makefile"
-	local gh_proxy = uci_get_c("@global_app[0]", "github_proxy") or "0"
-	local return_code, result
-	if gh_proxy == "1" then
-		url = "https://gh-proxy.org/" .. url
-		return_code, result = curl_base(url, tmp_file, curl_args)
-	else
-		return_code, result = curl_auto(url, tmp_file, curl_args)
+	local release = get_api_json(com.passwall:get_url())
+	if type(release) == "table" and #release > 0 then
+		release = release[1]
 	end
-	result = return_code == 0
-	if not result then
-		exec("/bin/rm", {"-f", tmp_file})
+	if type(release) ~= "table" or not release.tag_name then
 		return {
 			code = 1,
-			error = i18n.translatef("Failed")
+			error = i18n.translate("Get remote version info failed.")
 		}
 	end
 	local local_version  = get_version()
-	local remote_version = sys.exec("echo -n $(grep '^PKG_VERSION' /tmp/passwall_makefile | head -n 1 | awk -F '=' '{print $2}')")
-	exec("/bin/rm", {"-f", tmp_file})
-
+	-- Keep the release suffix (-1, -2, ...) so package revisions are compared too.
+	local remote_version = release.tag_name:gsub("^v", "")
 	local has_update = compare_versions(local_version, "<", remote_version)
 	if not has_update then
 		return {
 			code = 0,
 			local_version = local_version,
-			remote_version = remote_version
+			remote_version = remote_version,
+			html_url = release.html_url,
+			data = release.assets or {}
 		}
 	end
 	return {
@@ -1458,6 +1483,8 @@ function to_check_self()
 		has_update = true,
 		local_version = local_version,
 		remote_version = remote_version,
+		html_url = release.html_url,
+		data = release.assets or {},
 		error = i18n.translatef("The latest version: %s, currently does not support automatic update, if you need to update, please compile or download the ipk and then manually install.", remote_version)
 	}
 end

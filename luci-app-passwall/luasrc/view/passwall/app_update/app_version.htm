@@ -129,12 +129,54 @@ local com = self.com
 
 		var appUpdateUrl = '<%=api.url("update_")%>' + app;
 		var appInfo = appInfoList[app];
+		var downloadId = Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+		var totalSize = appInfo && appInfo.data ? Number(appInfo.data.size) : 0;
+		if (!isFinite(totalSize) || totalSize <= 0) {
+			totalSize = 0;
+		}
+		var downloadProgressActive = true;
+		var downloadProgressPending = false;
+		var progressTimer = null;
+
+		function stopDownloadProgress() {
+			downloadProgressActive = false;
+			if (progressTimer) {
+				clearInterval(progressTimer);
+				progressTimer = null;
+			}
+		}
+
+		function updateDownloadProgress() {
+			if (!downloadProgressActive || downloadProgressPending || totalSize <= 0) {
+				return;
+			}
+			downloadProgressPending = true;
+			XHR.get(appUpdateUrl, {
+				token: tokenStr,
+				task: 'progress',
+				id: downloadId,
+				total_size: totalSize
+			}, function (x, json) {
+				downloadProgressPending = false;
+				if (downloadProgressActive && json && !json.code && typeof json.percent === 'number') {
+					btn.value = downloadingText + ' ' + json.percent + '%';
+				}
+			}, 300);
+		}
+
+		if (totalSize > 0) {
+			updateDownloadProgress();
+			progressTimer = setInterval(updateDownloadProgress, 1000);
+		}
+
 		// Download file
 		XHR.get(appUpdateUrl, {
 			token: tokenStr,
 			url: appInfo ? appInfo.data.browser_download_url : '',
-			size: appInfo ? appInfo.data.size / 1024 : null
+			size: appInfo ? appInfo.data.size / 1024 : null,
+			id: downloadId
 		}, function (x, json) {
+			stopDownloadProgress();
 			if (json.code) {
 				removePageNotice();
 				onRequestError(btn, json.error);

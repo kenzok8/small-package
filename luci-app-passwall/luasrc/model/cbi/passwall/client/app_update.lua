@@ -11,8 +11,13 @@ s = m:section(NamedSection, "@global_app[0]", "global_app", translate("App Updat
 
 s:appendTemplate("/app_update/app_version", {com = com})
 
-o = s:option(Flag, "github_proxy", translate("GitHub Proxy"), translate("Use gh-proxy instead of proxy nodes for component updates."))
-o.default = 0
+o = s:option(ListValue, "gh_proxy_url", translate("GitHub Proxy"), translate("Use GitHub instead of proxy nodes for component updates."))
+o.default = ""
+o:value("", translate("Close(Not use)"))
+o:value("https://gh-proxy.org/", "gh-proxy.org")
+o:value("https://ghproxy.cc/", "ghproxy.cc")
+o:value("https://mirror.ghproxy.com/", "ghproxy.com")
+o:value("https://ghfast.top/", "ghfast.top")
 
 local k, v
 for _, k in ipairs(com.order) do

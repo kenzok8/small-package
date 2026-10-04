@@ -1776,7 +1776,7 @@ local function curl(url, file, ua, mode)
 	}
 
 	ua = (ua and ua ~= "") and ua or "passwall"
-	ua = (ua == "passwall") and ("passwall/" .. api.get_version()) or ua
+	ua = (ua == "passwall") and ("passwall/" .. api.get_version():match("^([^-]+)")) or ua
 	curl_args[#curl_args + 1] = '--user-agent "' .. ua .. '"'
 
 	local cookie_file = "/tmp/cookie_" .. api.gen_random_char(5)
