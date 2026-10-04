@@ -1,1 +1,0 @@
-import{a0 as e}from"./index-BgFj_VXE.js";function i(i){return[...e(i,"dns_log",{whileLoading:!0})?[{id:"stats",titleKey:"dns.tab.stats"}]:[],...e(i,"dns_log",{whileLoading:!0})?[{id:"log",titleKey:"dns.log"}]:[],...e(i,"dns_cache",{whileLoading:!0})?[{id:"cache",titleKey:"ui.cache"}]:[],...e(i,"dns_query",{whileLoading:!0})?[{id:"query",titleKey:"dns.query"}]:[]]}export{i as d};

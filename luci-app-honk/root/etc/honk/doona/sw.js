@@ -1,24 +1,27 @@
 const PREFIX = `doona-shell:${self.registration.scope}:`;
 // The page reads the same build from index.html, to tell whether this worker taking it over is a new build.
-const BUILD = '17b6131b258868ec';
+const BUILD = 'aec6dddced7d4b97';
 const CACHE = PREFIX + BUILD;
-const PRECACHE = ["assets/AddCircle-prR7q573.js","assets/AreaChart-8u_BHC3w.js","assets/AreaCurve-DQSHOSpG.js","assets/ConditionRow-CmAHHzfr.js","assets/Config-kDn1yln4.js","assets/Connections-CjRavXMq.js","assets/Coverage-VYQXivNr.js","assets/DaeCode-DEjXqvav.js","assets/Delete-DA-ArqRQ.js","assets/Dns-muAKZqBa.js","assets/Donut-ICRrmfL0.js","assets/Editors-BWyc5snq.css","assets/Editors-CF-H0sca.js","assets/Events-DhkgQmOB.js","assets/FlagPicker-DvzEtm7E.js","assets/Flows-Bc5zvW8x.js","assets/Flows-Bgp2RBuw.css","assets/GridList-BUQihjaB.js","assets/Login-Dmoi1b-S.js","assets/LoginShowcase-B3T5ZpRs.js","assets/Logs-kFCPXU2U.js","assets/Nodes-3yvkRhfS.js","assets/OutboundTag-jvAhyeqj.js","assets/Overview-DwLMYJiG.js","assets/Policies-8HLSs6CT.js","assets/ProbeOptionsDialog-DbXtrnP-.js","assets/Rules-DlWozzHL.js","assets/SearchDialog-lJhZ2e4h.js","assets/SearchList-Bhc2_bS4.js","assets/SearchSelect-CO6FsBaz.js","assets/Select-CkiGmyVC.js","assets/Settings-DVKP5cdM.js","assets/Sparkline-B6w2i-1G.js","assets/Table-Dprh3Btz.js","assets/Tabs-CD2lZase.js","assets/Tag-PTwIjtR6.js","assets/TimeCell-B4WLB8Ou.js","assets/Toolbar-CIBfeuEz.js","assets/TwemojiCountryFlags-Bymva2JV.woff2","assets/Virtualizer-CZl-q5wo.js","assets/_commonjsHelpers-CXUWDbkB.js","assets/activity-6eX5ba7W.css","assets/activity-D06xJ7oH.js","assets/array-C0VuvQyb.js","assets/auth-9NIU4RkK.js","assets/auth-B7tMStu6.js","assets/daeTokens-BVtuNnWZ.js","assets/duck-night-CbKHyiul.webp","assets/files-Dt8K7QfP.js","assets/flows-xKlsDqlH.js","assets/format-s2EANuUb.js","assets/geodata-X0pHz03D.js","assets/gorges-dark-FlgXSNn1.webp","assets/gorges-light-DCWkLX37.webp","assets/index-BgFj_VXE.js","assets/index-DUM-iwa2.js","assets/index-h-bbwFHc.css","assets/labels-DPpd4zRF.js","assets/lake-dark-B_VaUlAe.webp","assets/lake-light-oWll36-V.webp","assets/logo-obi05X1B.svg","assets/logs-BxISynQ4.js","assets/match.worker-B2aIccpg.js","assets/nav-4gpXURa5.js","assets/nav-BidFSCY-.js","assets/nav-CsTMInze.js","assets/nav-Ct52fcy8.js","assets/nav-D44ro1l_.js","assets/nav-KYKfR_0p.js","assets/nav-Wiib71Wo.js","assets/outbounds-BApwKyMu.js","assets/probe-CvLYPWKB.js","assets/recorder-BHyqDNp5.js","assets/square-dark-CG0rwsS1.webp","assets/square-light-OU6dsCf9.webp","assets/taishan-dark-BI3cd4fj.webp","assets/taishan-light-Dip0HmJZ.webp","assets/useGridSelectionCheckbox-BxnCShqN.js","assets/useQuickRule-fWQicp9K.js","assets/vendor-editor-BRV-W12m.js","assets/vendor-react-64fcanlc.js","assets/wall-dark-DCO0xUUO.webp","assets/wall-light-BYfte2Bi.webp","index.html"];
+const PRECACHE = ["assets/ActionGroup-D3mQjUsw.js","assets/AddCircle-JwHCi_at.js","assets/AreaChart-BzUHpDKh.js","assets/AreaCurve-DQSHOSpG.js","assets/Checkbox-f7Je53QZ.js","assets/ConditionRow-B2vbKntf.js","assets/Config-VXcentxY.js","assets/Connections-CSIoFtNR.js","assets/Coverage-P-BXHg4t.js","assets/DaeCode-DEjXqvav.js","assets/Delete-CQeLz6oG.js","assets/Dns-Bob4nl8K.js","assets/Donut-DQsAiHCN.js","assets/Editors-B0Mv3GSe.js","assets/Editors-rPgk_VZK.css","assets/Events-DtW4Lnh_.js","assets/FlagPicker-v8i5Q7lf.js","assets/Flows-B78_vhjx.css","assets/Flows-CqGEdGAH.js","assets/GridList-ByMoT8kr.js","assets/Login-JV4gA0qA.js","assets/LoginShowcase-BdKK3a87.js","assets/Logs-qpBcXApl.js","assets/Nodes-DO1v6ZqD.js","assets/OutboundTag-DROnordp.js","assets/Overview-DApn2wLB.js","assets/Policies-tb2W73QS.js","assets/ProbeOptionsDialog-DgWCU4Y0.js","assets/Rules-Cgdd89Jz.js","assets/SearchDialog-Tt_d8nCa.js","assets/SearchList-CJ8rQxgu.js","assets/SearchSelect-CuaWhoLz.js","assets/Select-BcN72K3H.js","assets/Settings-DsKkgemk.js","assets/Sparkline-CZuc0EWA.js","assets/Table-Cfbaho6J.js","assets/Tabs-BzeNgTje.js","assets/Tag-fyQjN-Xw.js","assets/TimeCell-D0UB-mKs.js","assets/Toolbar-B9K5nAyx.js","assets/TwemojiCountryFlags-Bymva2JV.woff2","assets/Virtualizer-itu1Kg0o.js","assets/_commonjsHelpers-CXUWDbkB.js","assets/activity-CiEWAlFW.js","assets/activity-DGTe7ypp.css","assets/array-C0VuvQyb.js","assets/auth-FMvOBMnI.js","assets/auth-aj_VNWTT.js","assets/daeTokens-BVtuNnWZ.js","assets/duck-night-CbKHyiul.webp","assets/files-Dt8K7QfP.js","assets/flows-BMReQznn.js","assets/fonts-C5_wsAqZ.css","assets/geodata-X0pHz03D.js","assets/gorges-dark-FlgXSNn1.webp","assets/gorges-light-DCWkLX37.webp","assets/impact-B8feJDtJ.css","assets/index-CmbH0woS.js","assets/index-DUM-iwa2.js","assets/index-suuKbZt8.css","assets/labels-D8xxfRTQ.js","assets/lake-dark-B_VaUlAe.webp","assets/lake-light-oWll36-V.webp","assets/logo-obi05X1B.svg","assets/match.worker-B2aIccpg.js","assets/nav--g10gPaM.js","assets/nav-B4reXXdB.js","assets/nav-BO8viH9G.js","assets/nav-C4ZPdNvM.js","assets/nav-ClMHrgx_.js","assets/nav-M7R_HvZ0.js","assets/nav-Y_78QUku.js","assets/outbounds-CUyNhEhE.js","assets/probe-D0sWIaS4.js","assets/recorder-BHyqDNp5.js","assets/square-dark-CG0rwsS1.webp","assets/square-light-OU6dsCf9.webp","assets/taishan-dark-BI3cd4fj.webp","assets/taishan-light-Dip0HmJZ.webp","assets/useQuickRule-C0zoMd-O.js","assets/vendor-editor-BRV-W12m.js","assets/vendor-react-64fcanlc.js","assets/wall-dark-DCO0xUUO.webp","assets/wall-light-BYfte2Bi.webp","index.html"];
 // Each language's catalogue and stylesheets in this build, cached only for a language a reader uses. A partial
 // language's list holds the reference language's files too, since it loads them.
-const LANGUAGES = {"zh-TW":["assets/fonts-tc-D9rvq3k7.css","assets/locale-zh-TW-CgyqV-qN.js"],"zh-CN":["assets/fonts-sc-Dyn9aW84.css","assets/locale-zh-CN-DbWVhWuv.js"],"en":["assets/locale-en-Dn2JtjOh.js"]};
+const LANGUAGES = {"zh-TW":["assets/fonts-tc-D9rvq3k7.css","assets/locale-zh-TW-C-60KGtR.js"],"zh-CN":["assets/fonts-sc-Dyn9aW84.css","assets/locale-zh-CN-CEqTDAa_.js"],"en":["assets/locale-en-Bgc_DzPO.js"]};
 // The mock backend's chunk, cached only for a page that runs on it.
-const MOCK = ["assets/index-D3-KABFr.js"];
+const MOCK = ["assets/index-1QTpRTgX.js"];
 const ROOT = new URL(self.registration.scope);
 
 // A new build takes over on the next online load, including open dashboard tabs.
 // Each build records when it was installed, so activation can tell the build it replaces from older ones.
 const STAMP = new URL('__installed__', ROOT);
-// Fetched past the HTTP cache, so a caching proxy cannot hand the new build an old shell.
+// index.html keeps its name across builds, so it is fetched past the HTTP cache: a caching proxy cannot hand the new
+// build an old shell. A file under assets/ is named after its content hash, so the copy the page already loaded through
+// the HTTP cache is the same file and is not downloaded again.
+const precacheRequest = url => (url.startsWith('assets/') ? url : new Request(url, {cache: 'reload'}));
 self.addEventListener('install', event => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then(cache => Promise.all([cache.addAll(PRECACHE.map(url => new Request(url, {cache: 'reload'}))), cache.put(STAMP, new Response(String(Date.now())))]))
+      .then(cache => Promise.all([cache.addAll(PRECACHE.map(precacheRequest)), cache.put(STAMP, new Response(String(Date.now())))]))
       .then(() => self.skipWaiting())
   );
 });
@@ -78,7 +81,9 @@ self.addEventListener('fetch', event => {
       const response = (await cache.match(request, {ignoreVary: true})) ?? (await caches.match(request, {ignoreVary: true}));
       if (response) return hit(response);
       const fresh = await fetch(request);
-      if (fresh.ok && fresh.type === 'basic' && !fresh.redirected) await cache.put(request, fresh.clone());
+      // A host may answer a missing file with the page; caching that would keep the file missing once it is installed.
+      if (fresh.ok && fresh.type === 'basic' && !fresh.redirected && !fresh.headers.get('content-type')?.includes('html'))
+        await cache.put(request, fresh.clone());
       return fresh;
     })()
   );
