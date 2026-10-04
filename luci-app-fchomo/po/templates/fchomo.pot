@@ -5,8 +5,8 @@ msgstr "Content-Type: text/plain; charset=UTF-8"
 msgid "%s Hostname"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1721
-#: htdocs/luci-static/resources/view/fchomo/node.js:1731
+#: htdocs/luci-static/resources/view/fchomo/node.js:1722
+#: htdocs/luci-static/resources/view/fchomo/node.js:1732
 msgid "%s UDP port. <code>0</code> selects an available port."
 msgstr ""
 
@@ -18,17 +18,17 @@ msgstr ""
 msgid "%s of the %s used to receiving remote debugging log."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:256
-#: htdocs/luci-static/resources/fchomo.js:257
-#: htdocs/luci-static/resources/fchomo.js:258
-#: htdocs/luci-static/resources/fchomo.js:259
-#: htdocs/luci-static/resources/fchomo.js:260
-#: htdocs/luci-static/resources/fchomo.js:261
+#: htdocs/luci-static/resources/fchomo.js:289
+#: htdocs/luci-static/resources/fchomo.js:290
+#: htdocs/luci-static/resources/fchomo.js:291
+#: htdocs/luci-static/resources/fchomo.js:292
+#: htdocs/luci-static/resources/fchomo.js:293
+#: htdocs/luci-static/resources/fchomo.js:294
 msgid "%s ports"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:647
-#: htdocs/luci-static/resources/fchomo.js:650
+#: htdocs/luci-static/resources/fchomo.js:781
+#: htdocs/luci-static/resources/fchomo.js:784
 #: htdocs/luci-static/resources/view/fchomo/client.js:318
 msgid "(Imported)"
 msgstr ""
@@ -36,95 +36,78 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo/listeners.js:1165
 #: htdocs/luci-static/resources/fchomo/listeners.js:1173
 #: htdocs/luci-static/resources/fchomo/listeners.js:1182
-#: htdocs/luci-static/resources/view/fchomo/global.js:565
-#: htdocs/luci-static/resources/view/fchomo/global.js:571
-#: htdocs/luci-static/resources/view/fchomo/node.js:1562
-#: htdocs/luci-static/resources/view/fchomo/node.js:1568
-#: htdocs/luci-static/resources/view/fchomo/node.js:1576
-#: htdocs/luci-static/resources/view/fchomo/node.js:1582
+#: htdocs/luci-static/resources/view/fchomo/global.js:572
+#: htdocs/luci-static/resources/view/fchomo/global.js:578
+#: htdocs/luci-static/resources/view/fchomo/node.js:1563
+#: htdocs/luci-static/resources/view/fchomo/node.js:1569
+#: htdocs/luci-static/resources/view/fchomo/node.js:1577
+#: htdocs/luci-static/resources/view/fchomo/node.js:1583
 msgid "(mTLS)"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:708
-msgid "-- NETWORK --"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/fchomo/client.js:1220
+#: htdocs/luci-static/resources/view/fchomo/client.js:1216
 msgid "-- PROXY-GROUP --"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1155
-#: htdocs/luci-static/resources/view/fchomo/client.js:1222
+#: htdocs/luci-static/resources/view/fchomo/client.js:1151
+#: htdocs/luci-static/resources/view/fchomo/client.js:1218
 msgid "-- PROXY-NODE --"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:837
 #: htdocs/luci-static/resources/view/fchomo/client.js:573
-#: htdocs/luci-static/resources/view/fchomo/client.js:893
-#: htdocs/luci-static/resources/view/fchomo/client.js:896
+#: htdocs/luci-static/resources/view/fchomo/client.js:889
+#: htdocs/luci-static/resources/view/fchomo/client.js:892
+#: htdocs/luci-static/resources/view/fchomo/client.js:1089
 #: htdocs/luci-static/resources/view/fchomo/client.js:1093
-#: htdocs/luci-static/resources/view/fchomo/client.js:1097
+#: htdocs/luci-static/resources/view/fchomo/client.js:1109
 #: htdocs/luci-static/resources/view/fchomo/client.js:1113
-#: htdocs/luci-static/resources/view/fchomo/client.js:1117
-#: htdocs/luci-static/resources/view/fchomo/client.js:1373
+#: htdocs/luci-static/resources/view/fchomo/client.js:1369
 #: htdocs/luci-static/resources/view/fchomo/node.js:305
-#: htdocs/luci-static/resources/view/fchomo/node.js:2770
-#: htdocs/luci-static/resources/view/fchomo/node.js:2781
-#: htdocs/luci-static/resources/view/fchomo/node.js:2800
-#: htdocs/luci-static/resources/view/fchomo/node.js:2811
+#: htdocs/luci-static/resources/view/fchomo/node.js:2771
+#: htdocs/luci-static/resources/view/fchomo/node.js:2782
+#: htdocs/luci-static/resources/view/fchomo/node.js:2801
+#: htdocs/luci-static/resources/view/fchomo/node.js:2812
 msgid "-- Please choose --"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:706
-msgid "-- REMATCH-NAME --"
-msgstr ""
-
-#: htdocs/luci-static/resources/view/fchomo/client.js:711
-msgid "-- RULE-SET --"
-msgstr ""
-
-#: htdocs/luci-static/resources/fchomo.js:838
-msgid "-- custom --"
-msgstr ""
-
-#: htdocs/luci-static/resources/fchomo.js:409
+#: htdocs/luci-static/resources/fchomo.js:477
 msgid "0-RTT reuse."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:406
-#: htdocs/luci-static/resources/fchomo.js:410
+#: htdocs/luci-static/resources/fchomo.js:474
+#: htdocs/luci-static/resources/fchomo.js:478
 msgid "1-RTT only."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:44
+#: htdocs/luci-static/resources/fchomo.js:69
 msgid "163Music"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:356
+#: htdocs/luci-static/resources/fchomo.js:424
 msgid "2022-blake3-aes-128-gcm"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:357
+#: htdocs/luci-static/resources/fchomo.js:425
 msgid "2022-blake3-aes-256-gcm"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:358
+#: htdocs/luci-static/resources/fchomo.js:426
 msgid "2022-blake3-chacha20-poly1305"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1732
+#: htdocs/luci-static/resources/view/fchomo/node.js:1733
 msgid "<code>-1</code> disables it."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:719
+#: htdocs/luci-static/resources/view/fchomo/client.js:715
 msgid "<code>0</code> or <code>1</code> only."
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1143
 #: htdocs/luci-static/resources/fchomo/listeners.js:1158
 #: htdocs/luci-static/resources/fchomo/listeners.js:1183
-#: htdocs/luci-static/resources/view/fchomo/node.js:1569
-#: htdocs/luci-static/resources/view/fchomo/node.js:1583
+#: htdocs/luci-static/resources/view/fchomo/node.js:1570
+#: htdocs/luci-static/resources/view/fchomo/node.js:1584
 msgid "<strong>Save your configuration before uploading files!</strong>"
 msgstr ""
 
@@ -136,51 +119,51 @@ msgid ""
 "a>."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:621
+#: htdocs/luci-static/resources/view/fchomo/global.js:628
 msgid "API"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:571
+#: htdocs/luci-static/resources/view/fchomo/global.js:578
 msgid "API Client Auth Certificate path"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:565
+#: htdocs/luci-static/resources/view/fchomo/global.js:572
 msgid "API Client Auth type"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:664
+#: htdocs/luci-static/resources/view/fchomo/global.js:671
 msgid "API DoH service"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:615
+#: htdocs/luci-static/resources/view/fchomo/global.js:622
 msgid "API ECH config"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:576
+#: htdocs/luci-static/resources/view/fchomo/global.js:583
 msgid "API ECH key"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:655
+#: htdocs/luci-static/resources/view/fchomo/global.js:662
 msgid "API HTTP port"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:659
+#: htdocs/luci-static/resources/view/fchomo/global.js:666
 msgid "API HTTPS port"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:557
+#: htdocs/luci-static/resources/view/fchomo/global.js:564
 msgid "API TLS certificate path"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:561
+#: htdocs/luci-static/resources/view/fchomo/global.js:568
 msgid "API TLS private key path"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:652
+#: htdocs/luci-static/resources/view/fchomo/global.js:659
 msgid "API routing mark (Fwmark)"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:668
+#: htdocs/luci-static/resources/view/fchomo/global.js:675
 msgid "API secret"
 msgstr ""
 
@@ -201,20 +184,20 @@ msgstr ""
 msgid "Accept routes"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:745
-#: htdocs/luci-static/resources/view/fchomo/global.js:795
+#: htdocs/luci-static/resources/view/fchomo/global.js:752
+#: htdocs/luci-static/resources/view/fchomo/global.js:802
 msgid "Access Control"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1792
+#: htdocs/luci-static/resources/view/fchomo/client.js:1788
 msgid "Add a Bootstrap DNS policy (Node)"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1844
+#: htdocs/luci-static/resources/view/fchomo/client.js:1840
 msgid "Add a DNS policy"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1537
+#: htdocs/luci-static/resources/view/fchomo/client.js:1533
 msgid "Add a DNS server"
 msgstr ""
 
@@ -226,23 +209,23 @@ msgstr ""
 msgid "Add a inbound"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2231
+#: htdocs/luci-static/resources/view/fchomo/node.js:2232
 msgid "Add a provider"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2744
+#: htdocs/luci-static/resources/view/fchomo/node.js:2745
 msgid "Add a proxy chain"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:984
+#: htdocs/luci-static/resources/view/fchomo/client.js:980
 msgid "Add a proxy group"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1287
+#: htdocs/luci-static/resources/view/fchomo/client.js:1283
 msgid "Add a routing rule"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:149
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:157
 msgid "Add a rule set"
 msgstr ""
 
@@ -250,15 +233,15 @@ msgstr ""
 msgid "Add a server"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1409
+#: htdocs/luci-static/resources/view/fchomo/client.js:1405
 msgid "Add a sub rule"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2528
+#: htdocs/luci-static/resources/view/fchomo/node.js:2529
 msgid "Add prefix"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2532
+#: htdocs/luci-static/resources/view/fchomo/node.js:2533
 msgid "Add suffix"
 msgstr ""
 
@@ -266,8 +249,8 @@ msgstr ""
 msgid "Add the base64 text of the planet file here."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1597
-#: htdocs/luci-static/resources/view/fchomo/client.js:1602
+#: htdocs/luci-static/resources/view/fchomo/client.js:1593
+#: htdocs/luci-static/resources/view/fchomo/client.js:1598
 msgid "Address"
 msgstr ""
 
@@ -275,13 +258,13 @@ msgstr ""
 msgid "After disabling, communication will only be possible via relay."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:413
+#: htdocs/luci-static/resources/fchomo.js:481
 msgid ""
 "After the 1-RTT client/server hello, padding randomly 111-1111 bytes with "
 "100% probability."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:63
+#: htdocs/luci-static/resources/fchomo.js:96
 msgid "Aggressive"
 msgstr ""
 
@@ -289,13 +272,13 @@ msgstr ""
 msgid "Aging time of NAT map maintained by client.</br>"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:798
-#: htdocs/luci-static/resources/view/fchomo/global.js:861
-#: htdocs/luci-static/resources/view/fchomo/global.js:895
+#: htdocs/luci-static/resources/view/fchomo/global.js:805
+#: htdocs/luci-static/resources/view/fchomo/global.js:868
+#: htdocs/luci-static/resources/view/fchomo/global.js:902
 msgid "All allowed"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:253
+#: htdocs/luci-static/resources/fchomo.js:286
 msgid "All ports"
 msgstr ""
 
@@ -303,7 +286,7 @@ msgstr ""
 msgid "Allow LAN access"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:648
+#: htdocs/luci-static/resources/view/fchomo/global.js:655
 msgid ""
 "Allow access from private network.</br>To access the API on a private "
 "network from a public website, it must be enabled."
@@ -338,8 +321,8 @@ msgstr ""
 msgid "Alter ID"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:164
-#: htdocs/luci-static/resources/fchomo.js:201
+#: htdocs/luci-static/resources/fchomo.js:197
+#: htdocs/luci-static/resources/fchomo.js:234
 msgid "AnyTLS"
 msgstr ""
 
@@ -355,12 +338,12 @@ msgstr ""
 msgid "As exit node"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:823
+#: htdocs/luci-static/resources/view/fchomo/global.js:830
 msgid "As the TOP upstream of dnsmasq"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:824
 #: htdocs/luci-static/resources/view/fchomo/global.js:831
+#: htdocs/luci-static/resources/view/fchomo/global.js:838
 msgid "As the TOP upstream of dnsmasq."
 msgstr ""
 
@@ -383,16 +366,16 @@ msgstr ""
 #: htdocs/luci-static/resources/view/fchomo/node.js:491
 #: htdocs/luci-static/resources/view/fchomo/node.js:850
 #: htdocs/luci-static/resources/view/fchomo/node.js:1202
-#: htdocs/luci-static/resources/view/fchomo/node.js:2037
+#: htdocs/luci-static/resources/view/fchomo/node.js:2038
 msgid "Auto"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1850
+#: htdocs/luci-static/resources/view/fchomo/node.js:1851
 msgid "Auto Enable when %s is empty."
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:139
-#: htdocs/luci-static/resources/view/fchomo/node.js:1653
+#: htdocs/luci-static/resources/view/fchomo/node.js:1654
 msgid "Auto configure firewall"
 msgstr ""
 
@@ -405,11 +388,11 @@ msgid "Auto update resources."
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:646
-#: htdocs/luci-static/resources/view/fchomo/node.js:1226
+#: htdocs/luci-static/resources/view/fchomo/node.js:1227
 msgid "BBR profile"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:43
+#: htdocs/luci-static/resources/fchomo.js:68
 msgid "Baidu"
 msgstr ""
 
@@ -433,36 +416,36 @@ msgstr ""
 msgid "Based on google/gvisor."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:293
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:302
 msgid "Behavior"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:302
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:316
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:311
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:325
 msgid "Binary format only supports domain / ipcidr"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:310
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:319
 msgid "Binary mrs"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:759
-#: htdocs/luci-static/resources/view/fchomo/node.js:2198
-#: htdocs/luci-static/resources/view/fchomo/node.js:2617
+#: htdocs/luci-static/resources/view/fchomo/global.js:766
+#: htdocs/luci-static/resources/view/fchomo/node.js:2199
+#: htdocs/luci-static/resources/view/fchomo/node.js:2618
 msgid "Bind interface"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2199
-#: htdocs/luci-static/resources/view/fchomo/node.js:2618
+#: htdocs/luci-static/resources/view/fchomo/node.js:2200
+#: htdocs/luci-static/resources/view/fchomo/node.js:2619
 msgid "Bind outbound interface.</br>"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:760
+#: htdocs/luci-static/resources/view/fchomo/global.js:767
 msgid ""
 "Bind outbound traffic to specific interface. Leave empty to auto detect.</br>"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:800
+#: htdocs/luci-static/resources/view/fchomo/global.js:807
 msgid "Black list"
 msgstr ""
 
@@ -470,16 +453,16 @@ msgstr ""
 msgid "Block DNS queries"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1783
-#: htdocs/luci-static/resources/view/fchomo/client.js:1792
+#: htdocs/luci-static/resources/view/fchomo/client.js:1779
+#: htdocs/luci-static/resources/view/fchomo/client.js:1788
 msgid "Bootstrap DNS policy (Node)"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1482
+#: htdocs/luci-static/resources/view/fchomo/client.js:1478
 msgid "Bootstrap DNS server"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1489
+#: htdocs/luci-static/resources/view/fchomo/client.js:1485
 msgid "Bootstrap DNS server (Node)"
 msgstr ""
 
@@ -487,11 +470,11 @@ msgstr ""
 msgid "BundleMRS version"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:862
+#: htdocs/luci-static/resources/view/fchomo/global.js:869
 msgid "Bypass CN"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:896
+#: htdocs/luci-static/resources/view/fchomo/global.js:903
 msgid "Bypass DSCP"
 msgstr ""
 
@@ -506,33 +489,33 @@ msgstr ""
 msgid "CDN support"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:643
+#: htdocs/luci-static/resources/view/fchomo/global.js:650
 msgid "CORS Allow origins"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:647
+#: htdocs/luci-static/resources/view/fchomo/global.js:654
 msgid "CORS Allow private network"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:644
+#: htdocs/luci-static/resources/view/fchomo/global.js:651
 msgid "CORS allowed origins, <code>*</code> will be used if empty."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:763
+#: htdocs/luci-static/resources/fchomo.js:897
 msgid "Cancel"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1535
+#: htdocs/luci-static/resources/view/fchomo/node.js:1536
 msgid "Cert fingerprint"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1536
+#: htdocs/luci-static/resources/view/fchomo/node.js:1537
 msgid ""
 "Certificate fingerprint. Used to implement SSL Pinning and prevent MitM."
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1120
-#: htdocs/luci-static/resources/view/fchomo/node.js:1562
+#: htdocs/luci-static/resources/view/fchomo/node.js:1563
 msgid "Certificate path"
 msgstr ""
 
@@ -545,7 +528,7 @@ msgstr ""
 msgid "Check routerself NAT Behavior"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1938
+#: htdocs/luci-static/resources/view/fchomo/client.js:1934
 msgid ""
 "Check the response from the <code>%s</code>, only initiate query if the "
 "<code>%s</code> is satisfied."
@@ -592,10 +575,10 @@ msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:862
 #: htdocs/luci-static/resources/fchomo/listeners.js:1174
-#: htdocs/luci-static/resources/view/fchomo/global.js:572
-#: htdocs/luci-static/resources/view/fchomo/node.js:1391
-#: htdocs/luci-static/resources/view/fchomo/node.js:1563
-#: htdocs/luci-static/resources/view/fchomo/node.js:1577
+#: htdocs/luci-static/resources/view/fchomo/global.js:579
+#: htdocs/luci-static/resources/view/fchomo/node.js:1392
+#: htdocs/luci-static/resources/view/fchomo/node.js:1564
+#: htdocs/luci-static/resources/view/fchomo/node.js:1578
 #: root/usr/share/luci/menu.d/luci-app-fchomo.json:22
 msgid "Client"
 msgstr ""
@@ -608,7 +591,7 @@ msgstr ""
 msgid "Client Auth type"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1608
+#: htdocs/luci-static/resources/view/fchomo/node.js:1609
 msgid "Client fingerprint"
 msgstr ""
 
@@ -632,8 +615,8 @@ msgstr ""
 msgid "Client status"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1806
-#: htdocs/luci-static/resources/view/fchomo/node.js:1838
+#: htdocs/luci-static/resources/view/fchomo/node.js:1807
+#: htdocs/luci-static/resources/view/fchomo/node.js:1839
 msgid "Cloudflare WARP"
 msgstr ""
 
@@ -641,8 +624,8 @@ msgstr ""
 msgid "Collecting data..."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:254
-#: htdocs/luci-static/resources/fchomo.js:255
+#: htdocs/luci-static/resources/fchomo.js:287
+#: htdocs/luci-static/resources/fchomo.js:288
 msgid "Common ports (bypass P2P traffic)"
 msgstr ""
 
@@ -651,8 +634,9 @@ msgid "Configuration Document"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:638
-#: htdocs/luci-static/resources/view/fchomo/node.js:1208
-#: htdocs/luci-static/resources/view/fchomo/node.js:1217
+#: htdocs/luci-static/resources/view/fchomo/global.js:549
+#: htdocs/luci-static/resources/view/fchomo/node.js:1210
+#: htdocs/luci-static/resources/view/fchomo/node.js:1218
 msgid "Congestion controller"
 msgstr ""
 
@@ -669,24 +653,24 @@ msgstr ""
 msgid "Connection-level receive window size"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:62
+#: htdocs/luci-static/resources/fchomo.js:95
 msgid "Conservative"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:632
+#: htdocs/luci-static/resources/fchomo.js:766
 msgid "Content copied to clipboard!"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:699
-#: htdocs/luci-static/resources/view/fchomo/node.js:2388
-#: htdocs/luci-static/resources/view/fchomo/node.js:2414
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:350
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:376
+#: htdocs/luci-static/resources/view/fchomo/client.js:698
+#: htdocs/luci-static/resources/view/fchomo/node.js:2389
+#: htdocs/luci-static/resources/view/fchomo/node.js:2415
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:359
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:385
 msgid "Content will not be verified, Please make sure you enter it correctly."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2387
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:349
+#: htdocs/luci-static/resources/view/fchomo/node.js:2388
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:358
 msgid "Contents"
 msgstr ""
 
@@ -698,7 +682,7 @@ msgstr ""
 msgid "Control server"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:634
+#: htdocs/luci-static/resources/fchomo.js:768
 msgid "Copy"
 msgstr ""
 
@@ -714,16 +698,16 @@ msgstr ""
 msgid "Custom %s control server."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:914
+#: htdocs/luci-static/resources/view/fchomo/global.js:921
 msgid "Custom Direct List"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2519
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:422
+#: htdocs/luci-static/resources/view/fchomo/node.js:2520
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:431
 msgid "Custom HTTP header."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:932
+#: htdocs/luci-static/resources/view/fchomo/global.js:939
 msgid "Custom Proxy List"
 msgstr ""
 
@@ -737,13 +721,13 @@ msgid ""
 "Custom internal hosts. Support <code>yaml</code> or <code>json</code> format."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:190
+#: htdocs/luci-static/resources/fchomo.js:223
 msgid "DIRECT"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1835
-#: htdocs/luci-static/resources/view/fchomo/client.js:1844
-#: htdocs/luci-static/resources/view/fchomo/client.js:1919
+#: htdocs/luci-static/resources/view/fchomo/client.js:1831
+#: htdocs/luci-static/resources/view/fchomo/client.js:1840
+#: htdocs/luci-static/resources/view/fchomo/client.js:1915
 #: htdocs/luci-static/resources/view/fchomo/node.js:1174
 msgid "DNS policy"
 msgstr ""
@@ -752,19 +736,19 @@ msgstr ""
 msgid "DNS port"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:911
-#: htdocs/luci-static/resources/view/fchomo/client.js:1528
-#: htdocs/luci-static/resources/view/fchomo/client.js:1537
+#: htdocs/luci-static/resources/view/fchomo/client.js:907
+#: htdocs/luci-static/resources/view/fchomo/client.js:1524
+#: htdocs/luci-static/resources/view/fchomo/client.js:1533
 #: htdocs/luci-static/resources/view/fchomo/node.js:1173
-#: htdocs/luci-static/resources/view/fchomo/node.js:1904
+#: htdocs/luci-static/resources/view/fchomo/node.js:1905
 msgid "DNS server"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1465
+#: htdocs/luci-static/resources/view/fchomo/client.js:1461
 msgid "DNS settings"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:899
+#: htdocs/luci-static/resources/view/fchomo/global.js:906
 msgid "DSCP list"
 msgstr ""
 
@@ -772,7 +756,7 @@ msgstr ""
 msgid "Dashboard version"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:94
+#: htdocs/luci-static/resources/fchomo.js:127
 #: htdocs/luci-static/resources/view/fchomo/node.js:825
 msgid "Debug"
 msgstr ""
@@ -781,13 +765,13 @@ msgstr ""
 msgid "Default DNS (issued by WAN)"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1503
-#: htdocs/luci-static/resources/view/fchomo/client.js:1939
-#: htdocs/luci-static/resources/view/fchomo/client.js:1942
+#: htdocs/luci-static/resources/view/fchomo/client.js:1499
+#: htdocs/luci-static/resources/view/fchomo/client.js:1935
+#: htdocs/luci-static/resources/view/fchomo/client.js:1938
 msgid "Default DNS server"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1213
+#: htdocs/luci-static/resources/view/fchomo/client.js:1209
 msgid "Default selected"
 msgstr ""
 
@@ -803,11 +787,11 @@ msgstr ""
 msgid "Destination addresses allowed to be forwarded via Wireguard."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2767
+#: htdocs/luci-static/resources/view/fchomo/node.js:2768
 msgid "Destination provider"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2778
+#: htdocs/luci-static/resources/view/fchomo/node.js:2779
 msgid "Destination proxy node"
 msgstr ""
 
@@ -815,8 +799,8 @@ msgstr ""
 msgid "Dial fields"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2790
-#: htdocs/luci-static/resources/view/fchomo/node.js:2820
+#: htdocs/luci-static/resources/view/fchomo/node.js:2791
+#: htdocs/luci-static/resources/view/fchomo/node.js:2821
 msgid "Different chain head/tail"
 msgstr ""
 
@@ -824,15 +808,15 @@ msgstr ""
 msgid "Direct"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:802
+#: htdocs/luci-static/resources/view/fchomo/global.js:809
 msgid "Direct IPv4 IP-s"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:805
+#: htdocs/luci-static/resources/view/fchomo/global.js:812
 msgid "Direct IPv6 IP-s"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:808
+#: htdocs/luci-static/resources/view/fchomo/global.js:815
 msgid "Direct MAC-s"
 msgstr ""
 
@@ -843,11 +827,11 @@ msgstr ""
 msgid "Disable"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:736
+#: htdocs/luci-static/resources/view/fchomo/global.js:743
 msgid "Disable ECN of quic-go"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:733
+#: htdocs/luci-static/resources/view/fchomo/global.js:740
 msgid "Disable GSO of quic-go"
 msgstr ""
 
@@ -859,70 +843,75 @@ msgstr ""
 msgid "Disable P2P"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1476
+#: htdocs/luci-static/resources/view/fchomo/node.js:1477
 msgid "Disable SNI"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1162
+#: htdocs/luci-static/resources/view/fchomo/client.js:1158
 msgid "Disable UDP"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:730
+#: htdocs/luci-static/resources/view/fchomo/global.js:737
 msgid "Disable safe path check"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:853
+#: htdocs/luci-static/resources/view/fchomo/client.js:849
 msgid ""
 "Do not resolve the domain connection to IP for this match.</br>Only works "
 "for pure domain inbound connections without DNS resolution. e.g., socks5h"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:876
-#: htdocs/luci-static/resources/view/fchomo/client.js:881
-#: htdocs/luci-static/resources/view/fchomo/client.js:1918
-#: htdocs/luci-static/resources/view/fchomo/client.js:1926
-#: htdocs/luci-static/resources/view/fchomo/client.js:1928
+#: htdocs/luci-static/resources/fchomo.js:299
+#: htdocs/luci-static/resources/view/fchomo/client.js:872
+#: htdocs/luci-static/resources/view/fchomo/client.js:877
+#: htdocs/luci-static/resources/view/fchomo/client.js:1914
+#: htdocs/luci-static/resources/view/fchomo/client.js:1922
+#: htdocs/luci-static/resources/view/fchomo/client.js:1924
 msgid "Domain"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1477
+#: htdocs/luci-static/resources/view/fchomo/node.js:1478
 msgid "Donot send server name in ClientHello."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1680
-#: htdocs/luci-static/resources/view/fchomo/node.js:1555
-#: htdocs/luci-static/resources/view/fchomo/node.js:2601
+#: htdocs/luci-static/resources/view/fchomo/client.js:1676
+#: htdocs/luci-static/resources/view/fchomo/node.js:1556
+#: htdocs/luci-static/resources/view/fchomo/node.js:2602
 msgid "Donot verifying server certificate."
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1410
-#: htdocs/luci-static/resources/view/fchomo/node.js:2175
+#: htdocs/luci-static/resources/view/fchomo/node.js:2176
 msgid "Download bandwidth"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1411
-#: htdocs/luci-static/resources/view/fchomo/node.js:2176
+#: htdocs/luci-static/resources/view/fchomo/node.js:2177
 msgid "Download bandwidth in Mbps."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:1639
+#: htdocs/luci-static/resources/fchomo.js:1507
 msgid "Download failed: %s"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:1635
+#: htdocs/luci-static/resources/fchomo.js:1503
 msgid "Download successful."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:175
+#: htdocs/luci-static/resources/fchomo.js:310
+msgid "Dst-IP"
+msgstr ""
+
+#: htdocs/luci-static/resources/fchomo.js:208
 msgid "Dual stack"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1602
+#: htdocs/luci-static/resources/view/fchomo/node.js:1603
 msgid "ECH HTTPS record query servername"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1231
-#: htdocs/luci-static/resources/view/fchomo/node.js:1596
+#: htdocs/luci-static/resources/view/fchomo/node.js:1597
 msgid "ECH config"
 msgstr ""
 
@@ -930,11 +919,11 @@ msgstr ""
 msgid "ECH key"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1714
+#: htdocs/luci-static/resources/view/fchomo/client.js:1710
 msgid "ECS override"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1698
+#: htdocs/luci-static/resources/view/fchomo/client.js:1694
 msgid "EDNS Client Subnet"
 msgstr ""
 
@@ -942,15 +931,15 @@ msgstr ""
 msgid "ETag support"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2015
+#: htdocs/luci-static/resources/view/fchomo/node.js:2016
 msgid "Early Data first packet length limit."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2021
+#: htdocs/luci-static/resources/view/fchomo/node.js:2022
 msgid "Early Data header name"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:211
+#: htdocs/luci-static/resources/fchomo.js:244
 msgid "EasyTier"
 msgstr ""
 
@@ -962,38 +951,38 @@ msgstr ""
 msgid "Edit outbound"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:140
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:148
 msgid "Edit ruleset"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2385
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:347
+#: htdocs/luci-static/resources/view/fchomo/node.js:2386
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:356
 msgid "Editer"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:400
+#: htdocs/luci-static/resources/fchomo.js:468
 msgid "Eliminate encryption header characteristics"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1147
+#: htdocs/luci-static/resources/view/fchomo/client.js:1143
 msgid "Empty fallback"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:134
-#: htdocs/luci-static/resources/view/fchomo/client.js:974
-#: htdocs/luci-static/resources/view/fchomo/client.js:1069
-#: htdocs/luci-static/resources/view/fchomo/client.js:1356
-#: htdocs/luci-static/resources/view/fchomo/client.js:1451
-#: htdocs/luci-static/resources/view/fchomo/client.js:1593
-#: htdocs/luci-static/resources/view/fchomo/client.js:1827
-#: htdocs/luci-static/resources/view/fchomo/client.js:1883
+#: htdocs/luci-static/resources/view/fchomo/client.js:970
+#: htdocs/luci-static/resources/view/fchomo/client.js:1065
+#: htdocs/luci-static/resources/view/fchomo/client.js:1352
+#: htdocs/luci-static/resources/view/fchomo/client.js:1447
+#: htdocs/luci-static/resources/view/fchomo/client.js:1589
+#: htdocs/luci-static/resources/view/fchomo/client.js:1823
+#: htdocs/luci-static/resources/view/fchomo/client.js:1879
 #: htdocs/luci-static/resources/view/fchomo/global.js:422
-#: htdocs/luci-static/resources/view/fchomo/global.js:705
+#: htdocs/luci-static/resources/view/fchomo/global.js:712
 #: htdocs/luci-static/resources/view/fchomo/node.js:267
-#: htdocs/luci-static/resources/view/fchomo/node.js:2358
-#: htdocs/luci-static/resources/view/fchomo/node.js:2640
-#: htdocs/luci-static/resources/view/fchomo/node.js:2754
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:274
+#: htdocs/luci-static/resources/view/fchomo/node.js:2359
+#: htdocs/luci-static/resources/view/fchomo/node.js:2641
+#: htdocs/luci-static/resources/view/fchomo/node.js:2755
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:283
 #: htdocs/luci-static/resources/view/fchomo/server.js:49
 msgid "Enable"
 msgstr ""
@@ -1009,13 +998,13 @@ msgstr ""
 msgid "Enable 0-RTT handshake"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:739
+#: htdocs/luci-static/resources/view/fchomo/global.js:746
 msgid ""
 "Enable <a target=\"_blank\" href=\"%s\" rel=\"noreferrer noopener\">IP4P</a> "
 "conversion for outbound connections"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1590
+#: htdocs/luci-static/resources/view/fchomo/node.js:1591
 msgid "Enable ECH"
 msgstr ""
 
@@ -1024,12 +1013,12 @@ msgid "Enable MagicDNS"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1398
-#: htdocs/luci-static/resources/view/fchomo/node.js:2163
+#: htdocs/luci-static/resources/view/fchomo/node.js:2164
 msgid "Enable TCP Brutal"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1399
-#: htdocs/luci-static/resources/view/fchomo/node.js:2164
+#: htdocs/luci-static/resources/view/fchomo/node.js:2165
 msgid "Enable TCP Brutal congestion control algorithm"
 msgstr ""
 
@@ -1041,7 +1030,7 @@ msgstr ""
 msgid "Enable fast open"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2152
+#: htdocs/luci-static/resources/view/fchomo/node.js:2153
 msgid "Enable multiplexing only for TCP."
 msgstr ""
 
@@ -1051,16 +1040,16 @@ msgid "Enable obfuscate for downlink"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1393
-#: htdocs/luci-static/resources/view/fchomo/node.js:2146
+#: htdocs/luci-static/resources/view/fchomo/node.js:2147
 msgid "Enable padding"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2157
+#: htdocs/luci-static/resources/view/fchomo/node.js:2158
 msgid "Enable statistic"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1256
-#: htdocs/luci-static/resources/view/fchomo/node.js:2577
+#: htdocs/luci-static/resources/view/fchomo/node.js:1257
+#: htdocs/luci-static/resources/view/fchomo/node.js:2578
 msgid ""
 "Enable the SUoT protocol, requires server support. Conflict with Multiplex."
 msgstr ""
@@ -1088,33 +1077,33 @@ msgstr ""
 msgid "Endpoint-Independent NAT"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:752
-#: htdocs/luci-static/resources/view/fchomo/client.js:903
+#: htdocs/luci-static/resources/view/fchomo/client.js:748
+#: htdocs/luci-static/resources/view/fchomo/client.js:899
 msgid "Entry"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:91
+#: htdocs/luci-static/resources/fchomo.js:124
 msgid "Error"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1206
+#: htdocs/luci-static/resources/view/fchomo/client.js:1202
 msgid ""
 "Exceeding this triggers a forced health check. <code>5</code> will be used "
 "if empty."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2698
+#: htdocs/luci-static/resources/view/fchomo/node.js:2699
 msgid "Exclude matched node types."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1260
+#: htdocs/luci-static/resources/view/fchomo/client.js:1256
 msgid ""
 "Exclude matched node types. Available types see <a target=\"_blank\" "
 "href=\"%s\" rel=\"noreferrer noopener\">here</a>."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1255
-#: htdocs/luci-static/resources/view/fchomo/node.js:2691
+#: htdocs/luci-static/resources/view/fchomo/client.js:1251
+#: htdocs/luci-static/resources/view/fchomo/node.js:2692
 msgid "Exclude nodes that meet keywords or regexps."
 msgstr ""
 
@@ -1130,39 +1119,39 @@ msgstr ""
 msgid "Expand/Collapse result"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1198
-#: htdocs/luci-static/resources/view/fchomo/node.js:2676
+#: htdocs/luci-static/resources/view/fchomo/client.js:1194
+#: htdocs/luci-static/resources/view/fchomo/node.js:2677
 msgid "Expected HTTP code. <code>204</code> will be used if empty."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1200
-#: htdocs/luci-static/resources/view/fchomo/node.js:2678
+#: htdocs/luci-static/resources/view/fchomo/client.js:1196
+#: htdocs/luci-static/resources/view/fchomo/node.js:2679
 msgid "Expected status"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:457
-#: htdocs/luci-static/resources/fchomo.js:460
-#: htdocs/luci-static/resources/fchomo.js:463
+#: htdocs/luci-static/resources/fchomo.js:525
+#: htdocs/luci-static/resources/fchomo.js:528
+#: htdocs/luci-static/resources/fchomo.js:531
 #: htdocs/luci-static/resources/fchomo/listeners.js:284
 #: htdocs/luci-static/resources/fchomo/listeners.js:339
 #: htdocs/luci-static/resources/fchomo/listeners.js:854
 #: htdocs/luci-static/resources/fchomo/listeners.js:885
 #: htdocs/luci-static/resources/fchomo/listeners.js:986
 #: htdocs/luci-static/resources/view/fchomo/client.js:71
-#: htdocs/luci-static/resources/view/fchomo/client.js:1063
-#: htdocs/luci-static/resources/view/fchomo/client.js:1608
-#: htdocs/luci-static/resources/view/fchomo/global.js:905
+#: htdocs/luci-static/resources/view/fchomo/client.js:1059
+#: htdocs/luci-static/resources/view/fchomo/client.js:1604
+#: htdocs/luci-static/resources/view/fchomo/global.js:912
 #: htdocs/luci-static/resources/view/fchomo/node.js:408
 #: htdocs/luci-static/resources/view/fchomo/node.js:444
 #: htdocs/luci-static/resources/view/fchomo/node.js:497
 #: htdocs/luci-static/resources/view/fchomo/node.js:499
 #: htdocs/luci-static/resources/view/fchomo/node.js:900
-#: htdocs/luci-static/resources/view/fchomo/node.js:1414
-#: htdocs/luci-static/resources/view/fchomo/node.js:1541
-#: htdocs/luci-static/resources/view/fchomo/node.js:2790
-#: htdocs/luci-static/resources/view/fchomo/node.js:2820
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:302
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:316
+#: htdocs/luci-static/resources/view/fchomo/node.js:1415
+#: htdocs/luci-static/resources/view/fchomo/node.js:1542
+#: htdocs/luci-static/resources/view/fchomo/node.js:2791
+#: htdocs/luci-static/resources/view/fchomo/node.js:2821
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:311
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:325
 msgid "Expecting: %s"
 msgstr ""
 
@@ -1171,7 +1160,7 @@ msgid "Expecting: Cannot be empty."
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1245
-#: htdocs/luci-static/resources/view/fchomo/node.js:1624
+#: htdocs/luci-static/resources/view/fchomo/node.js:1625
 msgid "Expecting: Cannot be enabled when %s is enabled."
 msgstr ""
 
@@ -1188,15 +1177,15 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo/listeners.js:698
 #: htdocs/luci-static/resources/fchomo/listeners.js:1319
 #: htdocs/luci-static/resources/fchomo/listeners.js:1326
-#: htdocs/luci-static/resources/view/fchomo/node.js:1288
-#: htdocs/luci-static/resources/view/fchomo/node.js:1294
-#: htdocs/luci-static/resources/view/fchomo/node.js:1930
-#: htdocs/luci-static/resources/view/fchomo/node.js:1937
-#: htdocs/luci-static/resources/view/fchomo/node.js:1945
+#: htdocs/luci-static/resources/view/fchomo/node.js:1289
+#: htdocs/luci-static/resources/view/fchomo/node.js:1295
+#: htdocs/luci-static/resources/view/fchomo/node.js:1931
+#: htdocs/luci-static/resources/view/fchomo/node.js:1938
+#: htdocs/luci-static/resources/view/fchomo/node.js:1946
 msgid "Expecting: Only support %s."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:724
+#: htdocs/luci-static/resources/view/fchomo/global.js:731
 msgid "Experimental"
 msgstr ""
 
@@ -1208,23 +1197,23 @@ msgstr ""
 #: htdocs/luci-static/resources/view/fchomo/client.js:616
 #: htdocs/luci-static/resources/view/fchomo/client.js:624
 #: htdocs/luci-static/resources/view/fchomo/client.js:631
-#: htdocs/luci-static/resources/view/fchomo/client.js:698
+#: htdocs/luci-static/resources/view/fchomo/client.js:697
 msgid "Factor"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:247
+#: htdocs/luci-static/resources/fchomo.js:280
 #: htdocs/luci-static/resources/fchomo/listeners.js:378
 msgid "Fallback"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1497
-#: htdocs/luci-static/resources/view/fchomo/client.js:1510
-#: htdocs/luci-static/resources/view/fchomo/client.js:1942
+#: htdocs/luci-static/resources/view/fchomo/client.js:1493
+#: htdocs/luci-static/resources/view/fchomo/client.js:1506
+#: htdocs/luci-static/resources/view/fchomo/client.js:1938
 msgid "Fallback DNS server"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1897
-#: htdocs/luci-static/resources/view/fchomo/client.js:1939
+#: htdocs/luci-static/resources/view/fchomo/client.js:1893
+#: htdocs/luci-static/resources/view/fchomo/client.js:1935
 msgid "Fallback filter"
 msgstr ""
 
@@ -1236,34 +1225,34 @@ msgstr ""
 msgid "Fallback relay"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1250
-#: htdocs/luci-static/resources/view/fchomo/node.js:2685
+#: htdocs/luci-static/resources/view/fchomo/client.js:1246
+#: htdocs/luci-static/resources/view/fchomo/node.js:2686
 msgid "Filter nodes that meet keywords or regexps."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1764
+#: htdocs/luci-static/resources/view/fchomo/client.js:1760
 msgid "Filter record type:"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1732
-#: htdocs/luci-static/resources/view/fchomo/client.js:1748
+#: htdocs/luci-static/resources/view/fchomo/client.js:1728
+#: htdocs/luci-static/resources/view/fchomo/client.js:1744
 msgid "Filter record: %s"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1496
+#: htdocs/luci-static/resources/view/fchomo/client.js:1492
 msgid "Final DNS server"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1498
+#: htdocs/luci-static/resources/view/fchomo/client.js:1494
 msgid "Final DNS server (For non-poisoned domains)"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1500
+#: htdocs/luci-static/resources/view/fchomo/client.js:1496
 msgid "Final DNS server (For poisoned domains)"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:138
-#: htdocs/luci-static/resources/view/fchomo/node.js:1652
+#: htdocs/luci-static/resources/view/fchomo/node.js:1653
 msgid "Firewall"
 msgstr ""
 
@@ -1272,16 +1261,16 @@ msgstr ""
 msgid "Flow"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1239
+#: htdocs/luci-static/resources/view/fchomo/client.js:1235
 msgid ""
 "For details, see <a target=\"_blank\" href=\"%s\" rel=\"noreferrer "
 "noopener\">%s</a>."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1199
-#: htdocs/luci-static/resources/view/fchomo/node.js:2538
-#: htdocs/luci-static/resources/view/fchomo/node.js:2546
-#: htdocs/luci-static/resources/view/fchomo/node.js:2677
+#: htdocs/luci-static/resources/view/fchomo/client.js:1195
+#: htdocs/luci-static/resources/view/fchomo/node.js:2539
+#: htdocs/luci-static/resources/view/fchomo/node.js:2547
+#: htdocs/luci-static/resources/view/fchomo/node.js:2678
 msgid ""
 "For format see <a target=\"_blank\" href=\"%s\" rel=\"noreferrer "
 "noopener\">%s</a>."
@@ -1291,19 +1280,19 @@ msgstr ""
 msgid "Force"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1899
+#: htdocs/luci-static/resources/view/fchomo/node.js:1900
 msgid "Force DNS remote resolution."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1249
+#: htdocs/luci-static/resources/view/fchomo/node.js:1250
 msgid "Force UDP"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:684
+#: htdocs/luci-static/resources/view/fchomo/global.js:691
 msgid "Forced sniffing domain"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:307
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:316
 msgid "Format"
 msgstr ""
 
@@ -1318,7 +1307,7 @@ msgstr ""
 msgid "FullCombo Shark!"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1970
+#: htdocs/luci-static/resources/view/fchomo/node.js:1971
 msgid "GET"
 msgstr ""
 
@@ -1336,9 +1325,9 @@ msgid "General"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:119
-#: htdocs/luci-static/resources/view/fchomo/client.js:1054
+#: htdocs/luci-static/resources/view/fchomo/client.js:1050
 #: htdocs/luci-static/resources/view/fchomo/node.js:252
-#: htdocs/luci-static/resources/view/fchomo/node.js:2348
+#: htdocs/luci-static/resources/view/fchomo/node.js:2349
 msgid "General fields"
 msgstr ""
 
@@ -1346,17 +1335,17 @@ msgstr ""
 msgid "General settings"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:583
-#: htdocs/luci-static/resources/fchomo.js:585
-#: htdocs/luci-static/resources/fchomo.js:599
-#: htdocs/luci-static/resources/fchomo.js:601
+#: htdocs/luci-static/resources/fchomo.js:717
+#: htdocs/luci-static/resources/fchomo.js:719
+#: htdocs/luci-static/resources/fchomo.js:733
+#: htdocs/luci-static/resources/fchomo.js:735
 #: htdocs/luci-static/resources/fchomo/listeners.js:262
 #: htdocs/luci-static/resources/fchomo/listeners.js:306
 #: htdocs/luci-static/resources/fchomo/listeners.js:308
 #: htdocs/luci-static/resources/fchomo/listeners.js:958
 #: htdocs/luci-static/resources/fchomo/listeners.js:1223
-#: htdocs/luci-static/resources/view/fchomo/global.js:609
-#: htdocs/luci-static/resources/view/fchomo/node.js:2506
+#: htdocs/luci-static/resources/view/fchomo/global.js:616
+#: htdocs/luci-static/resources/view/fchomo/node.js:2507
 msgid "Generate"
 msgstr ""
 
@@ -1372,21 +1361,21 @@ msgstr ""
 msgid "GeoSite version"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1907
+#: htdocs/luci-static/resources/view/fchomo/client.js:1903
 msgid "Geoip code"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1904
+#: htdocs/luci-static/resources/view/fchomo/client.js:1900
 msgid "Geoip enable"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:877
-#: htdocs/luci-static/resources/view/fchomo/client.js:886
-#: htdocs/luci-static/resources/view/fchomo/client.js:1916
+#: htdocs/luci-static/resources/view/fchomo/client.js:873
+#: htdocs/luci-static/resources/view/fchomo/client.js:882
+#: htdocs/luci-static/resources/view/fchomo/client.js:1912
 msgid "Geosite"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:46
+#: htdocs/luci-static/resources/fchomo.js:71
 msgid "GitHub"
 msgstr ""
 
@@ -1407,11 +1396,11 @@ msgstr ""
 msgid "Global padding"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:45
+#: htdocs/luci-static/resources/fchomo.js:70
 msgid "Google"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:259
+#: htdocs/luci-static/resources/fchomo.js:292
 msgid "Google FCM"
 msgstr ""
 
@@ -1419,24 +1408,24 @@ msgstr ""
 msgid "Grant access to fchomo configuration"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1079
+#: htdocs/luci-static/resources/view/fchomo/client.js:1075
 msgid "Group"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:154
-#: htdocs/luci-static/resources/fchomo.js:191
+#: htdocs/luci-static/resources/fchomo.js:187
+#: htdocs/luci-static/resources/fchomo.js:224
 #: htdocs/luci-static/resources/fchomo/listeners.js:710
-#: htdocs/luci-static/resources/view/fchomo/node.js:1306
-#: htdocs/luci-static/resources/view/fchomo/node.js:1917
-#: htdocs/luci-static/resources/view/fchomo/node.js:1930
-#: htdocs/luci-static/resources/view/fchomo/node.js:1937
+#: htdocs/luci-static/resources/view/fchomo/node.js:1307
+#: htdocs/luci-static/resources/view/fchomo/node.js:1918
+#: htdocs/luci-static/resources/view/fchomo/node.js:1931
+#: htdocs/luci-static/resources/view/fchomo/node.js:1938
 msgid "HTTP"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:333
-#: htdocs/luci-static/resources/view/fchomo/node.js:1992
-#: htdocs/luci-static/resources/view/fchomo/node.js:2518
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:421
+#: htdocs/luci-static/resources/view/fchomo/node.js:1993
+#: htdocs/luci-static/resources/view/fchomo/node.js:2519
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:430
 msgid "HTTP header"
 msgstr ""
 
@@ -1461,7 +1450,7 @@ msgstr ""
 msgid "HTTP mask: %s"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1969
+#: htdocs/luci-static/resources/view/fchomo/node.js:1970
 msgid "HTTP request method"
 msgstr ""
 
@@ -1470,7 +1459,7 @@ msgstr ""
 msgid "HTTP root path"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1663
+#: htdocs/luci-static/resources/view/fchomo/client.js:1659
 msgid "HTTP/3"
 msgstr ""
 
@@ -1480,13 +1469,13 @@ msgid ""
 "returned if empty."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1918
-#: htdocs/luci-static/resources/view/fchomo/node.js:1931
-#: htdocs/luci-static/resources/view/fchomo/node.js:1938
+#: htdocs/luci-static/resources/view/fchomo/node.js:1919
+#: htdocs/luci-static/resources/view/fchomo/node.js:1932
+#: htdocs/luci-static/resources/view/fchomo/node.js:1939
 msgid "HTTPUpgrade"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:880
+#: htdocs/luci-static/resources/view/fchomo/global.js:887
 msgid "Handle domain"
 msgstr ""
 
@@ -1503,7 +1492,7 @@ msgid "Handshake target that supports TLS 1.3"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:346
-#: htdocs/luci-static/resources/view/fchomo/node.js:1241
+#: htdocs/luci-static/resources/view/fchomo/node.js:1242
 msgid "Handshake timeout"
 msgstr ""
 
@@ -1519,28 +1508,28 @@ msgstr ""
 msgid "Health check"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1168
-#: htdocs/luci-static/resources/view/fchomo/node.js:2645
+#: htdocs/luci-static/resources/view/fchomo/client.js:1164
+#: htdocs/luci-static/resources/view/fchomo/node.js:2646
 msgid "Health check URL"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1197
-#: htdocs/luci-static/resources/view/fchomo/node.js:2675
+#: htdocs/luci-static/resources/view/fchomo/client.js:1193
+#: htdocs/luci-static/resources/view/fchomo/node.js:2676
 msgid "Health check expected status"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1177
-#: htdocs/luci-static/resources/view/fchomo/node.js:2655
+#: htdocs/luci-static/resources/view/fchomo/client.js:1173
+#: htdocs/luci-static/resources/view/fchomo/node.js:2656
 msgid "Health check interval"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1184
-#: htdocs/luci-static/resources/view/fchomo/node.js:2662
+#: htdocs/luci-static/resources/view/fchomo/client.js:1180
+#: htdocs/luci-static/resources/view/fchomo/node.js:2663
 msgid "Health check timeout"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1056
-#: htdocs/luci-static/resources/view/fchomo/node.js:2350
+#: htdocs/luci-static/resources/view/fchomo/client.js:1052
+#: htdocs/luci-static/resources/view/fchomo/node.js:2351
 msgid "Health fields"
 msgstr ""
 
@@ -1549,12 +1538,12 @@ msgstr ""
 msgid "Heartbeat interval"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1265
+#: htdocs/luci-static/resources/view/fchomo/client.js:1261
 msgid "Hidden"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:723
-#: htdocs/luci-static/resources/view/fchomo/node.js:1311
+#: htdocs/luci-static/resources/view/fchomo/node.js:1312
 msgid "Host that supports TLS 1.3"
 msgstr ""
 
@@ -1574,7 +1563,7 @@ msgstr ""
 msgid "Hostname"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1483
+#: htdocs/luci-static/resources/view/fchomo/node.js:1484
 msgid ""
 "Hostname that the client attempts to connect to at the start of the TLS "
 "handshake process."
@@ -1585,12 +1574,12 @@ msgstr ""
 msgid "Hosts"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:166
-#: htdocs/luci-static/resources/fchomo.js:204
+#: htdocs/luci-static/resources/fchomo.js:199
+#: htdocs/luci-static/resources/fchomo.js:237
 msgid "Hysteria2"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:167
+#: htdocs/luci-static/resources/fchomo.js:200
 msgid "Hysteria2 Realm Server"
 msgstr ""
 
@@ -1599,12 +1588,12 @@ msgstr ""
 msgid "Hysteria2 Realm fields"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1909
-#: htdocs/luci-static/resources/view/fchomo/client.js:1923
+#: htdocs/luci-static/resources/view/fchomo/client.js:1905
+#: htdocs/luci-static/resources/view/fchomo/client.js:1919
 msgid "IP"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1921
+#: htdocs/luci-static/resources/view/fchomo/client.js:1917
 msgid "IP CIDR"
 msgstr ""
 
@@ -1613,42 +1602,42 @@ msgid "IP override"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:1200
-#: htdocs/luci-static/resources/view/fchomo/node.js:1208
+#: htdocs/luci-static/resources/view/fchomo/node.js:1210
 msgid "IP stack"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2212
-#: htdocs/luci-static/resources/view/fchomo/node.js:2631
+#: htdocs/luci-static/resources/view/fchomo/node.js:2213
+#: htdocs/luci-static/resources/view/fchomo/node.js:2632
 msgid "IP version"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1792
-#: htdocs/luci-static/resources/view/fchomo/node.js:1802
-#: htdocs/luci-static/resources/view/fchomo/node.js:1806
-#: htdocs/luci-static/resources/view/fchomo/node.js:1818
+#: htdocs/luci-static/resources/view/fchomo/node.js:1793
+#: htdocs/luci-static/resources/view/fchomo/node.js:1803
+#: htdocs/luci-static/resources/view/fchomo/node.js:1807
+#: htdocs/luci-static/resources/view/fchomo/node.js:1819
 msgid "IPv4"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:176
+#: htdocs/luci-static/resources/fchomo.js:209
 msgid "IPv4 only"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1825
-#: htdocs/luci-static/resources/view/fchomo/node.js:1834
-#: htdocs/luci-static/resources/view/fchomo/node.js:1838
+#: htdocs/luci-static/resources/view/fchomo/node.js:1826
+#: htdocs/luci-static/resources/view/fchomo/node.js:1835
+#: htdocs/luci-static/resources/view/fchomo/node.js:1839
 msgid "IPv6"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:177
+#: htdocs/luci-static/resources/fchomo.js:210
 msgid "IPv6 only"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1479
+#: htdocs/luci-static/resources/view/fchomo/client.js:1475
 #: htdocs/luci-static/resources/view/fchomo/global.js:436
 msgid "IPv6 support"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1271
+#: htdocs/luci-static/resources/view/fchomo/client.js:1267
 msgid "Icon"
 msgstr ""
 
@@ -1678,32 +1667,32 @@ msgid ""
 "total latency."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:768
+#: htdocs/luci-static/resources/fchomo.js:902
 msgid "Import"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:991
-#: htdocs/luci-static/resources/view/fchomo/client.js:1048
-#: htdocs/luci-static/resources/view/fchomo/client.js:1294
-#: htdocs/luci-static/resources/view/fchomo/client.js:1345
-#: htdocs/luci-static/resources/view/fchomo/client.js:1416
-#: htdocs/luci-static/resources/view/fchomo/client.js:1440
-#: htdocs/luci-static/resources/view/fchomo/client.js:1544
-#: htdocs/luci-static/resources/view/fchomo/client.js:1582
-#: htdocs/luci-static/resources/view/fchomo/client.js:1799
-#: htdocs/luci-static/resources/view/fchomo/client.js:1816
-#: htdocs/luci-static/resources/view/fchomo/client.js:1851
-#: htdocs/luci-static/resources/view/fchomo/client.js:1872
-#: htdocs/luci-static/resources/view/fchomo/node.js:2238
-#: htdocs/luci-static/resources/view/fchomo/node.js:2336
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:156
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:251
+#: htdocs/luci-static/resources/view/fchomo/client.js:987
+#: htdocs/luci-static/resources/view/fchomo/client.js:1044
+#: htdocs/luci-static/resources/view/fchomo/client.js:1290
+#: htdocs/luci-static/resources/view/fchomo/client.js:1341
+#: htdocs/luci-static/resources/view/fchomo/client.js:1412
+#: htdocs/luci-static/resources/view/fchomo/client.js:1436
+#: htdocs/luci-static/resources/view/fchomo/client.js:1540
+#: htdocs/luci-static/resources/view/fchomo/client.js:1578
+#: htdocs/luci-static/resources/view/fchomo/client.js:1795
+#: htdocs/luci-static/resources/view/fchomo/client.js:1812
+#: htdocs/luci-static/resources/view/fchomo/client.js:1847
+#: htdocs/luci-static/resources/view/fchomo/client.js:1868
+#: htdocs/luci-static/resources/view/fchomo/node.js:2239
+#: htdocs/luci-static/resources/view/fchomo/node.js:2337
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:164
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:260
 msgid "Import mihomo config"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:207
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:255
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:257
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:215
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:264
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:266
 msgid "Import rule-set links"
 msgstr ""
 
@@ -1711,8 +1700,8 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo/listeners.js:480
 #: htdocs/luci-static/resources/view/fchomo/node.js:694
 #: htdocs/luci-static/resources/view/fchomo/node.js:700
-#: htdocs/luci-static/resources/view/fchomo/node.js:2583
-#: htdocs/luci-static/resources/view/fchomo/node.js:2589
+#: htdocs/luci-static/resources/view/fchomo/node.js:2584
+#: htdocs/luci-static/resources/view/fchomo/node.js:2590
 msgid "In Mbps."
 msgstr ""
 
@@ -1720,8 +1709,8 @@ msgstr ""
 msgid "In bps. 0 means no speed limit."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2426
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:394
+#: htdocs/luci-static/resources/view/fchomo/node.js:2427
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:403
 msgid "In bytes. <code>%s</code> will be used if empty."
 msgstr ""
 
@@ -1732,13 +1721,13 @@ msgstr ""
 msgid "In millisecond."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1185
-#: htdocs/luci-static/resources/view/fchomo/client.js:1231
-#: htdocs/luci-static/resources/view/fchomo/node.js:2663
+#: htdocs/luci-static/resources/view/fchomo/client.js:1181
+#: htdocs/luci-static/resources/view/fchomo/client.js:1227
+#: htdocs/luci-static/resources/view/fchomo/node.js:2664
 msgid "In millisecond. <code>%s</code> will be used if empty."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2061
+#: htdocs/luci-static/resources/view/fchomo/node.js:2062
 msgid "In milliseconds."
 msgstr ""
 
@@ -1747,65 +1736,66 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo/listeners.js:656
 #: htdocs/luci-static/resources/view/fchomo/node.js:609
 #: htdocs/luci-static/resources/view/fchomo/node.js:616
-#: htdocs/luci-static/resources/view/fchomo/node.js:2008
+#: htdocs/luci-static/resources/view/fchomo/node.js:2009
 msgid "In seconds."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1178
+#: htdocs/luci-static/resources/view/fchomo/client.js:1174
 #: htdocs/luci-static/resources/view/fchomo/global.js:446
 #: htdocs/luci-static/resources/view/fchomo/global.js:451
 #: htdocs/luci-static/resources/view/fchomo/global.js:537
 #: htdocs/luci-static/resources/view/fchomo/node.js:712
-#: htdocs/luci-static/resources/view/fchomo/node.js:2432
-#: htdocs/luci-static/resources/view/fchomo/node.js:2656
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:400
+#: htdocs/luci-static/resources/view/fchomo/node.js:2433
+#: htdocs/luci-static/resources/view/fchomo/node.js:2657
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:409
 msgid "In seconds. <code>%s</code> will be used if empty."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1242
+#: htdocs/luci-static/resources/view/fchomo/node.js:1243
 msgid ""
 "In seconds. After configuration, the handshake is not affected by the outer "
 "connection timeout."
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:874
-#: htdocs/luci-static/resources/view/fchomo/node.js:1403
+#: htdocs/luci-static/resources/view/fchomo/node.js:1404
 msgid ""
 "In the order of one <code>Padding-Length</code> and one <code>Padding-"
 "Interval</code>, infinite concatenation."
 msgstr ""
 
+#: htdocs/luci-static/resources/fchomo.js:336
 #: htdocs/luci-static/resources/view/fchomo/global.js:470
 #: htdocs/luci-static/resources/view/fchomo/inbound.js:28
 #: root/usr/share/luci/menu.d/luci-app-fchomo.json:38
 msgid "Inbound"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1132
+#: htdocs/luci-static/resources/view/fchomo/client.js:1128
 msgid "Include all"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1137
+#: htdocs/luci-static/resources/view/fchomo/client.js:1133
 msgid "Include all node"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1142
+#: htdocs/luci-static/resources/view/fchomo/client.js:1138
 msgid "Include all provider"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1143
+#: htdocs/luci-static/resources/view/fchomo/client.js:1139
 msgid "Includes all Provider."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1133
+#: htdocs/luci-static/resources/view/fchomo/client.js:1129
 msgid "Includes all Proxy Node and Provider."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1138
+#: htdocs/luci-static/resources/view/fchomo/client.js:1134
 msgid "Includes all Proxy Node."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:93
+#: htdocs/luci-static/resources/fchomo.js:126
 msgid "Info"
 msgstr ""
 
@@ -1814,8 +1804,8 @@ msgstr ""
 msgid "Initial congestion window size"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2365
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:290
+#: htdocs/luci-static/resources/view/fchomo/node.js:2366
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:299
 msgid "Inline"
 msgstr ""
 
@@ -1823,7 +1813,7 @@ msgstr ""
 msgid "Insane"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:752
+#: htdocs/luci-static/resources/view/fchomo/global.js:759
 msgid "Interface Control"
 msgstr ""
 
@@ -1832,10 +1822,10 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo/listeners.js:700
 #: htdocs/luci-static/resources/fchomo/listeners.js:1131
 #: htdocs/luci-static/resources/fchomo/listeners.js:1247
-#: htdocs/luci-static/resources/view/fchomo/node.js:1281
-#: htdocs/luci-static/resources/view/fchomo/node.js:1291
-#: htdocs/luci-static/resources/view/fchomo/node.js:1296
-#: htdocs/luci-static/resources/view/fchomo/node.js:1626
+#: htdocs/luci-static/resources/view/fchomo/node.js:1282
+#: htdocs/luci-static/resources/view/fchomo/node.js:1292
+#: htdocs/luci-static/resources/view/fchomo/node.js:1297
+#: htdocs/luci-static/resources/view/fchomo/node.js:1627
 msgid "JLS"
 msgstr ""
 
@@ -1843,18 +1833,18 @@ msgstr ""
 msgid "Join %s. Format: <code>%s</code>"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:53
-#: htdocs/luci-static/resources/fchomo.js:60
-#: htdocs/luci-static/resources/fchomo.js:174
-#: htdocs/luci-static/resources/fchomo.js:382
+#: htdocs/luci-static/resources/fchomo.js:78
+#: htdocs/luci-static/resources/fchomo.js:85
+#: htdocs/luci-static/resources/fchomo.js:93
+#: htdocs/luci-static/resources/fchomo.js:207
+#: htdocs/luci-static/resources/fchomo.js:450
 #: htdocs/luci-static/resources/view/fchomo/node.js:1136
 #: htdocs/luci-static/resources/view/fchomo/node.js:1201
-#: htdocs/luci-static/resources/view/fchomo/node.js:1209
-#: htdocs/luci-static/resources/view/fchomo/node.js:2605
+#: htdocs/luci-static/resources/view/fchomo/node.js:2606
 msgid "Keep default"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2097
+#: htdocs/luci-static/resources/view/fchomo/node.js:2098
 msgid "Keep-alive period"
 msgstr ""
 
@@ -1864,7 +1854,7 @@ msgid "Key"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1150
-#: htdocs/luci-static/resources/view/fchomo/node.js:1576
+#: htdocs/luci-static/resources/view/fchomo/node.js:1577
 msgid "Key path"
 msgstr ""
 
@@ -1872,21 +1862,21 @@ msgstr ""
 msgid "Keypairs"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:207
+#: htdocs/luci-static/resources/fchomo.js:240
 msgid "L2"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:129
-#: htdocs/luci-static/resources/view/fchomo/client.js:1059
-#: htdocs/luci-static/resources/view/fchomo/client.js:1351
-#: htdocs/luci-static/resources/view/fchomo/client.js:1446
-#: htdocs/luci-static/resources/view/fchomo/client.js:1588
-#: htdocs/luci-static/resources/view/fchomo/client.js:1822
-#: htdocs/luci-static/resources/view/fchomo/client.js:1878
+#: htdocs/luci-static/resources/view/fchomo/client.js:1055
+#: htdocs/luci-static/resources/view/fchomo/client.js:1347
+#: htdocs/luci-static/resources/view/fchomo/client.js:1442
+#: htdocs/luci-static/resources/view/fchomo/client.js:1584
+#: htdocs/luci-static/resources/view/fchomo/client.js:1818
+#: htdocs/luci-static/resources/view/fchomo/client.js:1874
 #: htdocs/luci-static/resources/view/fchomo/node.js:262
-#: htdocs/luci-static/resources/view/fchomo/node.js:2353
-#: htdocs/luci-static/resources/view/fchomo/node.js:2749
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:269
+#: htdocs/luci-static/resources/view/fchomo/node.js:2354
+#: htdocs/luci-static/resources/view/fchomo/node.js:2750
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:278
 msgid "Label"
 msgstr ""
 
@@ -1894,16 +1884,16 @@ msgstr ""
 msgid "Latency first"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1191
-#: htdocs/luci-static/resources/view/fchomo/node.js:2669
+#: htdocs/luci-static/resources/view/fchomo/client.js:1187
+#: htdocs/luci-static/resources/view/fchomo/node.js:2670
 msgid "Lazy"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1930
+#: htdocs/luci-static/resources/view/fchomo/client.js:1926
 msgid "Lazy query"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1931
+#: htdocs/luci-static/resources/view/fchomo/client.js:1927
 msgid "Lazy query."
 msgstr ""
 
@@ -1918,7 +1908,7 @@ msgid ""
 "compatibility purposes only, use of alterId > 1 is not recommended."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:515
+#: htdocs/luci-static/resources/view/fchomo/global.js:520
 msgid "Less compatibility and sometimes better performance."
 msgstr ""
 
@@ -1933,7 +1923,7 @@ msgid ""
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1073
-#: htdocs/luci-static/resources/view/fchomo/node.js:1489
+#: htdocs/luci-static/resources/view/fchomo/node.js:1490
 msgid "List of supported application level protocols, in order of preference."
 msgstr ""
 
@@ -1945,14 +1935,14 @@ msgstr ""
 msgid "Listen fields"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:754
+#: htdocs/luci-static/resources/view/fchomo/global.js:761
 msgid "Listen interfaces"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:154
-#: htdocs/luci-static/resources/view/fchomo/client.js:1471
-#: htdocs/luci-static/resources/view/fchomo/node.js:1720
-#: htdocs/luci-static/resources/view/fchomo/node.js:1730
+#: htdocs/luci-static/resources/view/fchomo/client.js:1467
+#: htdocs/luci-static/resources/view/fchomo/node.js:1721
+#: htdocs/luci-static/resources/view/fchomo/node.js:1731
 msgid "Listen port"
 msgstr ""
 
@@ -1960,20 +1950,20 @@ msgstr ""
 msgid "Listen ports"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1476
+#: htdocs/luci-static/resources/view/fchomo/client.js:1472
 msgid "Listen routing mark (Fwmark)"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1768
+#: htdocs/luci-static/resources/view/fchomo/node.js:1769
 msgid "Listeners"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:249
+#: htdocs/luci-static/resources/fchomo.js:282
 msgid "Load balance"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2363
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:288
+#: htdocs/luci-static/resources/view/fchomo/node.js:2364
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:297
 msgid "Local"
 msgstr ""
 
@@ -1993,6 +1983,10 @@ msgstr ""
 msgid "Log level"
 msgstr ""
 
+#: htdocs/luci-static/resources/fchomo.js:385
+msgid "Logical"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/node.js:837
 msgid "Low Bandwidth Mode"
 msgstr ""
@@ -2008,16 +2002,16 @@ msgstr ""
 msgid "Low-entropy data stream"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:457
+#: htdocs/luci-static/resources/fchomo.js:525
 msgid "Lowercase only"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:524
-#: htdocs/luci-static/resources/view/fchomo/node.js:1868
+#: htdocs/luci-static/resources/view/fchomo/node.js:1869
 msgid "MTU"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:210
+#: htdocs/luci-static/resources/fchomo.js:243
 msgid "Masque"
 msgstr ""
 
@@ -2025,35 +2019,35 @@ msgstr ""
 msgid "Masquerade"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:882
+#: htdocs/luci-static/resources/view/fchomo/client.js:878
 msgid "Match domain. Support wildcards."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1927
+#: htdocs/luci-static/resources/view/fchomo/client.js:1923
 msgid "Match domain. Support wildcards.</br>"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:887
+#: htdocs/luci-static/resources/view/fchomo/client.js:883
 msgid "Match geosite."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1917
+#: htdocs/luci-static/resources/view/fchomo/client.js:1913
 msgid "Match geosite.</br>"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1908
+#: htdocs/luci-static/resources/view/fchomo/client.js:1904
 msgid "Match response with geoip.</br>"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1922
+#: htdocs/luci-static/resources/view/fchomo/client.js:1918
 msgid "Match response with ipcidr.</br>"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:892
+#: htdocs/luci-static/resources/view/fchomo/client.js:888
 msgid "Match rule set."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2014
+#: htdocs/luci-static/resources/view/fchomo/node.js:2015
 msgid "Max Early Data"
 msgstr ""
 
@@ -2066,15 +2060,15 @@ msgstr ""
 msgid "Max buffered posts"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2072
+#: htdocs/luci-static/resources/view/fchomo/node.js:2073
 msgid "Max concurrency"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2077
+#: htdocs/luci-static/resources/view/fchomo/node.js:2078
 msgid "Max connections"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1205
+#: htdocs/luci-static/resources/view/fchomo/client.js:1201
 msgid "Max count of failures"
 msgstr ""
 
@@ -2089,11 +2083,11 @@ msgid "Max download speed"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1381
-#: htdocs/luci-static/resources/view/fchomo/node.js:2054
+#: htdocs/luci-static/resources/view/fchomo/node.js:2055
 msgid "Max each POST bytes"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1235
+#: htdocs/luci-static/resources/view/fchomo/node.js:1236
 msgid "Max open streams"
 msgstr ""
 
@@ -2105,15 +2099,15 @@ msgstr ""
 msgid "Max realms per client IP"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2087
+#: htdocs/luci-static/resources/view/fchomo/node.js:2088
 msgid "Max request times"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2092
+#: htdocs/luci-static/resources/view/fchomo/node.js:2093
 msgid "Max reusable seconds"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2082
+#: htdocs/luci-static/resources/view/fchomo/node.js:2083
 msgid "Max reuse times"
 msgstr ""
 
@@ -2122,12 +2116,12 @@ msgstr ""
 msgid "Max upload speed"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2118
-#: htdocs/luci-static/resources/view/fchomo/node.js:2138
+#: htdocs/luci-static/resources/view/fchomo/node.js:2119
+#: htdocs/luci-static/resources/view/fchomo/node.js:2139
 msgid "Maximum connections"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2136
+#: htdocs/luci-static/resources/view/fchomo/node.js:2137
 msgid ""
 "Maximum multiplexed streams in a connection before opening a new connection."
 "<br/>Conflict with <code>%s</code> and <code>%s</code>."
@@ -2145,16 +2139,16 @@ msgid ""
 "rate."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2135
+#: htdocs/luci-static/resources/view/fchomo/node.js:2136
 msgid "Maximum streams"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:158
-#: htdocs/luci-static/resources/fchomo.js:195
+#: htdocs/luci-static/resources/fchomo.js:191
+#: htdocs/luci-static/resources/fchomo.js:228
 msgid "Mieru"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:946
+#: htdocs/luci-static/resources/view/fchomo/client.js:942
 #: htdocs/luci-static/resources/view/fchomo/log.js:149
 #: htdocs/luci-static/resources/view/fchomo/log.js:154
 msgid "Mihomo client"
@@ -2170,11 +2164,11 @@ msgstr ""
 msgid "Min of idle sessions to keep"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2060
+#: htdocs/luci-static/resources/view/fchomo/node.js:2061
 msgid "Min posts interval"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2127
+#: htdocs/luci-static/resources/view/fchomo/node.js:2128
 msgid ""
 "Minimum multiplexed streams in a connection before opening a new connection."
 msgstr ""
@@ -2184,12 +2178,12 @@ msgstr ""
 msgid "Minimum padding rate"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2126
-#: htdocs/luci-static/resources/view/fchomo/node.js:2138
+#: htdocs/luci-static/resources/view/fchomo/node.js:2127
+#: htdocs/luci-static/resources/view/fchomo/node.js:2139
 msgid "Minimum streams"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:156
+#: htdocs/luci-static/resources/fchomo.js:189
 #: htdocs/luci-static/resources/view/fchomo/global.js:518
 msgid "Mixed"
 msgstr ""
@@ -2203,7 +2197,7 @@ msgid "Mixed port"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1388
-#: htdocs/luci-static/resources/view/fchomo/node.js:2104
+#: htdocs/luci-static/resources/view/fchomo/node.js:2105
 msgid "Multiplex"
 msgstr ""
 
@@ -2216,12 +2210,17 @@ msgstr ""
 msgid "Multiplexing"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1786
+#: htdocs/luci-static/resources/view/fchomo/client.js:706
+#: htdocs/luci-static/resources/view/fchomo/client.js:707
+msgid "NETWORK"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/node.js:1787
 msgid "NO Listener"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/client.js:642
-#: htdocs/luci-static/resources/view/fchomo/client.js:718
+#: htdocs/luci-static/resources/view/fchomo/client.js:714
 msgid "NOT"
 msgstr ""
 
@@ -2229,11 +2228,11 @@ msgstr ""
 msgid "Name of the Proxy group as outbound."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2438
+#: htdocs/luci-static/resources/view/fchomo/node.js:2439
 msgid "Name of the Proxy group to download provider."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:406
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:415
 msgid "Name of the Proxy group to download rule set."
 msgstr ""
 
@@ -2245,10 +2244,11 @@ msgstr ""
 msgid "Native UDP"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:399
+#: htdocs/luci-static/resources/fchomo.js:467
 msgid "Native appearance"
 msgstr ""
 
+#: htdocs/luci-static/resources/fchomo.js:358
 #: htdocs/luci-static/resources/view/fchomo/node.js:1016
 msgid "Network"
 msgstr ""
@@ -2267,7 +2267,7 @@ msgstr ""
 msgid "Network type"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2607
+#: htdocs/luci-static/resources/view/fchomo/node.js:2608
 msgid "No"
 msgstr ""
 
@@ -2279,52 +2279,52 @@ msgstr ""
 msgid "No SSE header"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1608
+#: htdocs/luci-static/resources/view/fchomo/client.js:1604
 msgid "No add'l params"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2044
+#: htdocs/luci-static/resources/view/fchomo/node.js:2045
 msgid "No gRPC header"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1192
-#: htdocs/luci-static/resources/view/fchomo/node.js:2670
+#: htdocs/luci-static/resources/view/fchomo/client.js:1188
+#: htdocs/luci-static/resources/view/fchomo/node.js:2671
 msgid "No testing is performed when this provider node is not in use."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:729
+#: htdocs/luci-static/resources/fchomo.js:863
 msgid "No valid %s found."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:231
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:240
 msgid "No valid rule-set link found."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1092
+#: htdocs/luci-static/resources/view/fchomo/client.js:1088
 #: htdocs/luci-static/resources/view/fchomo/node.js:234
 msgid "Node"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1254
-#: htdocs/luci-static/resources/view/fchomo/node.js:2690
+#: htdocs/luci-static/resources/view/fchomo/client.js:1250
+#: htdocs/luci-static/resources/view/fchomo/node.js:2691
 msgid "Node exclude filter"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1259
-#: htdocs/luci-static/resources/view/fchomo/node.js:2697
+#: htdocs/luci-static/resources/view/fchomo/client.js:1255
+#: htdocs/luci-static/resources/view/fchomo/node.js:2698
 msgid "Node exclude type"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1249
-#: htdocs/luci-static/resources/view/fchomo/node.js:2684
+#: htdocs/luci-static/resources/view/fchomo/client.js:1245
+#: htdocs/luci-static/resources/view/fchomo/node.js:2685
 msgid "Node filter"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1230
+#: htdocs/luci-static/resources/view/fchomo/client.js:1226
 msgid "Node switch tolerance"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:426
+#: htdocs/luci-static/resources/fchomo.js:494
 msgid "None"
 msgstr ""
 
@@ -2332,15 +2332,15 @@ msgstr ""
 msgid "Normal"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:635
+#: htdocs/luci-static/resources/view/fchomo/global.js:642
 msgid "Not Installed"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:1595
+#: htdocs/luci-static/resources/fchomo.js:1463
 msgid "Not Running"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2715
+#: htdocs/luci-static/resources/view/fchomo/node.js:2716
 msgid "Note: The subscription of provider %s is includes %s."
 msgstr ""
 
@@ -2353,7 +2353,7 @@ msgid "ON"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:709
-#: htdocs/luci-static/resources/view/fchomo/node.js:1305
+#: htdocs/luci-static/resources/view/fchomo/node.js:1306
 msgid "Obfs Mode"
 msgstr ""
 
@@ -2386,7 +2386,7 @@ msgstr ""
 msgid "Obfuscated as %s"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:905
+#: htdocs/luci-static/resources/view/fchomo/global.js:912
 msgid "One or more numbers in the range 0-63 separated by commas"
 msgstr ""
 
@@ -2405,15 +2405,15 @@ msgid ""
 "a handshake or relay traffic through this node."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:755
+#: htdocs/luci-static/resources/view/fchomo/global.js:762
 msgid "Only process traffic from specific interfaces. Leave empty for all."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1769
+#: htdocs/luci-static/resources/view/fchomo/node.js:1770
 msgid "Only the address %s is valid."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:1589
+#: htdocs/luci-static/resources/fchomo.js:1457
 msgid "Open Dashboard"
 msgstr ""
 
@@ -2421,11 +2421,15 @@ msgstr ""
 msgid "Operation mode"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1919
+#: htdocs/luci-static/resources/view/fchomo/client.js:1915
 msgid "Option is deprecated. Please use <code>%s</code> instead."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2555
+#: htdocs/luci-static/resources/fchomo.js:365
+msgid "Other"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/node.js:2556
 msgid "Other configuration items"
 msgstr ""
 
@@ -2433,18 +2437,18 @@ msgstr ""
 msgid "Outbound"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1548
-#: htdocs/luci-static/resources/view/fchomo/node.js:2594
+#: htdocs/luci-static/resources/view/fchomo/node.js:1549
+#: htdocs/luci-static/resources/view/fchomo/node.js:2595
 msgid "Override cert DNSName"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:680
-#: htdocs/luci-static/resources/view/fchomo/global.js:718
+#: htdocs/luci-static/resources/view/fchomo/global.js:687
+#: htdocs/luci-static/resources/view/fchomo/global.js:725
 msgid "Override destination"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1055
-#: htdocs/luci-static/resources/view/fchomo/node.js:2349
+#: htdocs/luci-static/resources/view/fchomo/client.js:1051
+#: htdocs/luci-static/resources/view/fchomo/node.js:2350
 msgid "Override fields"
 msgstr ""
 
@@ -2452,19 +2456,19 @@ msgstr ""
 msgid "Override the IP address of the server that DNS response."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:920
+#: htdocs/luci-static/resources/view/fchomo/client.js:916
 msgid "Override the Proxy group of DNS server."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:681
+#: htdocs/luci-static/resources/view/fchomo/global.js:688
 msgid "Override the connection destination address with the sniffed domain."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1715
+#: htdocs/luci-static/resources/view/fchomo/client.js:1711
 msgid "Override the existing ECS in original request."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1603
+#: htdocs/luci-static/resources/view/fchomo/node.js:1604
 msgid "Overrides the domain name used for HTTPS record queries."
 msgstr ""
 
@@ -2472,11 +2476,11 @@ msgstr ""
 msgid "Overview"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1971
+#: htdocs/luci-static/resources/view/fchomo/node.js:1972
 msgid "POST"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1972
+#: htdocs/luci-static/resources/view/fchomo/node.js:1973
 msgid "PUT"
 msgstr ""
 
@@ -2484,7 +2488,7 @@ msgstr ""
 msgid "Packet encoding"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2049
+#: htdocs/luci-static/resources/view/fchomo/node.js:2050
 msgid "Padding bytes"
 msgstr ""
 
@@ -2493,7 +2497,7 @@ msgid "Padding scheme"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:872
-#: htdocs/luci-static/resources/view/fchomo/node.js:1401
+#: htdocs/luci-static/resources/view/fchomo/node.js:1402
 msgid "Paddings"
 msgstr ""
 
@@ -2502,7 +2506,7 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo/listeners.js:738
 #: htdocs/luci-static/resources/view/fchomo/node.js:327
 #: htdocs/luci-static/resources/view/fchomo/node.js:348
-#: htdocs/luci-static/resources/view/fchomo/node.js:1326
+#: htdocs/luci-static/resources/view/fchomo/node.js:1327
 msgid "Password"
 msgstr ""
 
@@ -2511,17 +2515,17 @@ msgstr ""
 msgid "Path MTU Discovery"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:387
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:396
 msgid "Path in bundle"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:388
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:397
 msgid "Path in bundle: <code>%s</code>"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:812
-#: htdocs/luci-static/resources/view/fchomo/node.js:2413
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:375
+#: htdocs/luci-static/resources/view/fchomo/node.js:2414
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:384
 msgid "Payload"
 msgstr ""
 
@@ -2551,45 +2555,45 @@ msgstr ""
 msgid "Physical MTU"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:308
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:317
 msgid "Plain text"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:882
+#: htdocs/luci-static/resources/view/fchomo/global.js:889
 msgid ""
 "Please ensure that the DNS query of the domains to be processed in the DNS "
 "policy</br>are send via DIRECT/Proxy Node in the same semantics as Routing "
 "mode."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:210
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:218
 msgid ""
 "Please refer to <a href=\"%s\" target=\"_blank\">%s</a> for link format "
 "standards."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2386
-#: htdocs/luci-static/resources/view/fchomo/node.js:2412
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:348
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:374
+#: htdocs/luci-static/resources/view/fchomo/node.js:2387
+#: htdocs/luci-static/resources/view/fchomo/node.js:2413
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:357
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:383
 msgid ""
 "Please type <a target=\"_blank\" href=\"%s\" rel=\"noreferrer noopener\">%s</"
 "a>."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:992
-#: htdocs/luci-static/resources/view/fchomo/client.js:1295
-#: htdocs/luci-static/resources/view/fchomo/client.js:1417
-#: htdocs/luci-static/resources/view/fchomo/client.js:1545
-#: htdocs/luci-static/resources/view/fchomo/client.js:1800
-#: htdocs/luci-static/resources/view/fchomo/client.js:1852
-#: htdocs/luci-static/resources/view/fchomo/node.js:2239
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:157
+#: htdocs/luci-static/resources/view/fchomo/client.js:988
+#: htdocs/luci-static/resources/view/fchomo/client.js:1291
+#: htdocs/luci-static/resources/view/fchomo/client.js:1413
+#: htdocs/luci-static/resources/view/fchomo/client.js:1541
+#: htdocs/luci-static/resources/view/fchomo/client.js:1796
+#: htdocs/luci-static/resources/view/fchomo/client.js:1848
+#: htdocs/luci-static/resources/view/fchomo/node.js:2240
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:165
 msgid "Please type <code>%s</code> fields of mihomo config.</br>"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:675
-#: htdocs/luci-static/resources/view/fchomo/node.js:1269
+#: htdocs/luci-static/resources/view/fchomo/node.js:1270
 msgid "Plugin"
 msgstr ""
 
@@ -2599,10 +2603,11 @@ msgid "Plugin fields"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:681
-#: htdocs/luci-static/resources/view/fchomo/node.js:1275
+#: htdocs/luci-static/resources/view/fchomo/node.js:1276
 msgid "Plugin type"
 msgstr ""
 
+#: htdocs/luci-static/resources/fchomo.js:329
 #: htdocs/luci-static/resources/view/fchomo/node.js:282
 msgid "Port"
 msgstr ""
@@ -2615,7 +2620,7 @@ msgstr ""
 msgid "Port range"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:715
+#: htdocs/luci-static/resources/view/fchomo/global.js:722
 msgid "Ports"
 msgstr ""
 
@@ -2632,15 +2637,15 @@ msgid "Pre-shared key"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1010
-#: htdocs/luci-static/resources/view/fchomo/node.js:1436
+#: htdocs/luci-static/resources/view/fchomo/node.js:1437
 msgid "Pre-shared key of rendezvous server"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:178
+#: htdocs/luci-static/resources/fchomo.js:211
 msgid "Prefer IPv4"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:179
+#: htdocs/luci-static/resources/fchomo.js:212
 msgid "Prefer IPv6"
 msgstr ""
 
@@ -2649,17 +2654,17 @@ msgid ""
 "Prevent ICMP loopback issues in some cases. Ping will not show real delay."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1720
 #: htdocs/luci-static/resources/view/fchomo/node.js:1721
+#: htdocs/luci-static/resources/view/fchomo/node.js:1722
 msgid "Primary"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:761
-#: htdocs/luci-static/resources/view/fchomo/global.js:778
-#: htdocs/luci-static/resources/view/fchomo/node.js:2200
-#: htdocs/luci-static/resources/view/fchomo/node.js:2207
-#: htdocs/luci-static/resources/view/fchomo/node.js:2619
-#: htdocs/luci-static/resources/view/fchomo/node.js:2626
+#: htdocs/luci-static/resources/view/fchomo/global.js:768
+#: htdocs/luci-static/resources/view/fchomo/global.js:785
+#: htdocs/luci-static/resources/view/fchomo/node.js:2201
+#: htdocs/luci-static/resources/view/fchomo/node.js:2208
+#: htdocs/luci-static/resources/view/fchomo/node.js:2620
+#: htdocs/luci-static/resources/view/fchomo/node.js:2627
 msgid "Priority: Proxy Node > Global."
 msgstr ""
 
@@ -2680,16 +2685,20 @@ msgstr ""
 msgid "Private network"
 msgstr ""
 
+#: htdocs/luci-static/resources/fchomo.js:346
+msgid "Process"
+msgstr ""
+
 #: htdocs/luci-static/resources/view/fchomo/global.js:421
 msgid "Process matching mode"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2545
+#: htdocs/luci-static/resources/view/fchomo/node.js:2546
 msgid "Programmable replacement"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:709
-#: htdocs/luci-static/resources/view/fchomo/node.js:2110
+#: htdocs/luci-static/resources/view/fchomo/global.js:716
+#: htdocs/luci-static/resources/view/fchomo/node.js:2111
 msgid "Protocol"
 msgstr ""
 
@@ -2703,54 +2712,54 @@ msgid ""
 "default in v2ray and cannot be disabled)."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1112
-#: htdocs/luci-static/resources/view/fchomo/node.js:2222
-#: htdocs/luci-static/resources/view/fchomo/node.js:2231
-#: htdocs/luci-static/resources/view/fchomo/node.js:2760
+#: htdocs/luci-static/resources/view/fchomo/client.js:1108
+#: htdocs/luci-static/resources/view/fchomo/node.js:2223
+#: htdocs/luci-static/resources/view/fchomo/node.js:2232
+#: htdocs/luci-static/resources/view/fchomo/node.js:2761
 msgid "Provider"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2419
+#: htdocs/luci-static/resources/view/fchomo/node.js:2420
 msgid "Provider URL"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:966
-#: htdocs/luci-static/resources/view/fchomo/client.js:984
-#: htdocs/luci-static/resources/view/fchomo/client.js:1501
+#: htdocs/luci-static/resources/view/fchomo/client.js:962
+#: htdocs/luci-static/resources/view/fchomo/client.js:980
+#: htdocs/luci-static/resources/view/fchomo/client.js:1497
 msgid "Proxy Group"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:811
+#: htdocs/luci-static/resources/view/fchomo/global.js:818
 msgid "Proxy IPv4 IP-s"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:814
+#: htdocs/luci-static/resources/view/fchomo/global.js:821
 msgid "Proxy IPv6 IP-s"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:817
+#: htdocs/luci-static/resources/view/fchomo/global.js:824
 msgid "Proxy MAC-s"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:225
-#: htdocs/luci-static/resources/view/fchomo/node.js:2759
+#: htdocs/luci-static/resources/view/fchomo/node.js:2760
 msgid "Proxy Node"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2735
-#: htdocs/luci-static/resources/view/fchomo/node.js:2744
+#: htdocs/luci-static/resources/view/fchomo/node.js:2736
+#: htdocs/luci-static/resources/view/fchomo/node.js:2745
 msgid "Proxy chain"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:622
-#: htdocs/luci-static/resources/view/fchomo/client.js:813
-#: htdocs/luci-static/resources/view/fchomo/client.js:1643
-#: htdocs/luci-static/resources/view/fchomo/node.js:2437
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:405
+#: htdocs/luci-static/resources/view/fchomo/client.js:809
+#: htdocs/luci-static/resources/view/fchomo/client.js:1639
+#: htdocs/luci-static/resources/view/fchomo/node.js:2438
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:414
 msgid "Proxy group"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:919
+#: htdocs/luci-static/resources/view/fchomo/client.js:915
 msgid "Proxy group override"
 msgstr ""
 
@@ -2758,7 +2767,7 @@ msgstr ""
 msgid "Proxy mode"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:820
+#: htdocs/luci-static/resources/view/fchomo/global.js:827
 msgid "Proxy routerself"
 msgstr ""
 
@@ -2781,18 +2790,18 @@ msgstr ""
 msgid "QUIC versions"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:969
+#: htdocs/luci-static/resources/view/fchomo/client.js:965
 #: htdocs/luci-static/resources/view/fchomo/server.js:44
 msgid "Quick Reload"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1132
 #: htdocs/luci-static/resources/fchomo/listeners.js:1238
-#: htdocs/luci-static/resources/view/fchomo/node.js:1617
+#: htdocs/luci-static/resources/view/fchomo/node.js:1618
 msgid "REALITY"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1643
+#: htdocs/luci-static/resources/view/fchomo/node.js:1644
 msgid "REALITY X25519MLKEM768 PQC support"
 msgstr ""
 
@@ -2813,13 +2822,17 @@ msgid "REALITY private key"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1276
-#: htdocs/luci-static/resources/view/fchomo/node.js:1633
+#: htdocs/luci-static/resources/view/fchomo/node.js:1634
 msgid "REALITY public key"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1280
-#: htdocs/luci-static/resources/view/fchomo/node.js:1638
+#: htdocs/luci-static/resources/view/fchomo/node.js:1639
 msgid "REALITY short ID"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/fchomo/client.js:705
+msgid "REMATCH-NAME"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:289
@@ -2830,29 +2843,33 @@ msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:843
 #: htdocs/luci-static/resources/fchomo/listeners.js:862
-#: htdocs/luci-static/resources/view/fchomo/node.js:1391
+#: htdocs/luci-static/resources/view/fchomo/node.js:1392
 msgid "RTT"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:391
+#: htdocs/luci-static/resources/view/fchomo/client.js:708
+msgid "RULE-SET"
+msgstr ""
+
+#: htdocs/luci-static/resources/fchomo.js:459
 msgid "Random"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:669
+#: htdocs/luci-static/resources/view/fchomo/global.js:676
 msgid "Random will be used if empty."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:401
+#: htdocs/luci-static/resources/fchomo.js:469
 msgid "Randomized traffic characteristics"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:999
-#: htdocs/luci-static/resources/view/fchomo/node.js:1425
+#: htdocs/luci-static/resources/view/fchomo/node.js:1426
 msgid "Realm"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1015
-#: htdocs/luci-static/resources/view/fchomo/node.js:1441
+#: htdocs/luci-static/resources/view/fchomo/node.js:1442
 msgid "Realm ID"
 msgstr ""
 
@@ -2860,7 +2877,7 @@ msgstr ""
 msgid "Realm name pattern"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2716
+#: htdocs/luci-static/resources/view/fchomo/node.js:2717
 msgid ""
 "Recommended to adjust Client DNS configuration based on actual conditions."
 msgstr ""
@@ -2889,8 +2906,8 @@ msgstr ""
 msgid "Refresh every %s seconds."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:1582
-#: htdocs/luci-static/resources/view/fchomo/client.js:970
+#: htdocs/luci-static/resources/fchomo.js:1450
+#: htdocs/luci-static/resources/view/fchomo/client.js:966
 #: htdocs/luci-static/resources/view/fchomo/global.js:193
 #: htdocs/luci-static/resources/view/fchomo/server.js:45
 msgid "Reload"
@@ -2900,20 +2917,20 @@ msgstr ""
 msgid "Reload All"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:189
+#: htdocs/luci-static/resources/fchomo.js:222
 msgid "Rematch"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:189
+#: htdocs/luci-static/resources/fchomo.js:222
 msgid "Rematching routing rules"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2364
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:289
+#: htdocs/luci-static/resources/view/fchomo/node.js:2365
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:298
 msgid "Remote"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1898
+#: htdocs/luci-static/resources/view/fchomo/node.js:1899
 msgid "Remote DNS resolve"
 msgstr ""
 
@@ -2927,33 +2944,33 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:244
 #: htdocs/luci-static/resources/view/fchomo/node.js:246
-#: htdocs/luci-static/resources/view/fchomo/node.js:2340
-#: htdocs/luci-static/resources/view/fchomo/node.js:2342
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:261
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:263
+#: htdocs/luci-static/resources/view/fchomo/node.js:2341
+#: htdocs/luci-static/resources/view/fchomo/node.js:2343
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:270
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:272
 msgid "Remove idles"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1004
-#: htdocs/luci-static/resources/view/fchomo/node.js:1430
+#: htdocs/luci-static/resources/view/fchomo/node.js:1431
 msgid "Rendezvous server"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2536
+#: htdocs/luci-static/resources/view/fchomo/node.js:2537
 msgid "Replace name"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2537
+#: htdocs/luci-static/resources/view/fchomo/node.js:2538
 msgid "Replace node name."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:375
+#: htdocs/luci-static/resources/fchomo.js:443
 msgid "Request"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1344
-#: htdocs/luci-static/resources/view/fchomo/node.js:1978
-#: htdocs/luci-static/resources/view/fchomo/node.js:1985
+#: htdocs/luci-static/resources/view/fchomo/node.js:1979
+#: htdocs/luci-static/resources/view/fchomo/node.js:1986
 msgid "Request path"
 msgstr ""
 
@@ -2961,16 +2978,16 @@ msgstr ""
 msgid "Request timeout"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:378
+#: htdocs/luci-static/resources/fchomo.js:446
 msgid "Require and verify"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:376
+#: htdocs/luci-static/resources/fchomo.js:444
 msgid "Require any"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:409
-#: htdocs/luci-static/resources/view/fchomo/node.js:1644
+#: htdocs/luci-static/resources/fchomo.js:477
+#: htdocs/luci-static/resources/view/fchomo/node.js:1645
 msgid "Requires server support."
 msgstr ""
 
@@ -2987,24 +3004,24 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo/listeners.js:699
 #: htdocs/luci-static/resources/fchomo/listeners.js:1130
 #: htdocs/luci-static/resources/fchomo/listeners.js:1246
-#: htdocs/luci-static/resources/view/fchomo/node.js:1280
-#: htdocs/luci-static/resources/view/fchomo/node.js:1290
-#: htdocs/luci-static/resources/view/fchomo/node.js:1295
-#: htdocs/luci-static/resources/view/fchomo/node.js:1625
+#: htdocs/luci-static/resources/view/fchomo/node.js:1281
+#: htdocs/luci-static/resources/view/fchomo/node.js:1291
+#: htdocs/luci-static/resources/view/fchomo/node.js:1296
+#: htdocs/luci-static/resources/view/fchomo/node.js:1626
 msgid "Restls"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:753
-#: htdocs/luci-static/resources/view/fchomo/node.js:1349
+#: htdocs/luci-static/resources/view/fchomo/node.js:1350
 msgid "Restls script"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1266
+#: htdocs/luci-static/resources/view/fchomo/client.js:1262
 msgid ""
 "Returns hidden status in the API to hide the display of this proxy group."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1272
+#: htdocs/luci-static/resources/view/fchomo/client.js:1268
 msgid ""
 "Returns the string input for icon in the API to display in this proxy group."
 msgstr ""
@@ -3018,53 +3035,53 @@ msgstr ""
 msgid "Reusing a single tunnel to carry multiple target connections within it."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:839
+#: htdocs/luci-static/resources/view/fchomo/global.js:846
 msgid "Routing Control"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:894
-#: htdocs/luci-static/resources/view/fchomo/global.js:897
+#: htdocs/luci-static/resources/view/fchomo/global.js:901
+#: htdocs/luci-static/resources/view/fchomo/global.js:904
 msgid "Routing DSCP"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:864
+#: htdocs/luci-static/resources/view/fchomo/global.js:871
 msgid "Routing GFW"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:605
-#: htdocs/luci-static/resources/view/fchomo/global.js:777
-#: htdocs/luci-static/resources/view/fchomo/node.js:2206
-#: htdocs/luci-static/resources/view/fchomo/node.js:2625
+#: htdocs/luci-static/resources/view/fchomo/global.js:784
+#: htdocs/luci-static/resources/view/fchomo/node.js:2207
+#: htdocs/luci-static/resources/view/fchomo/node.js:2626
 msgid "Routing mark (Fwmark)"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:859
+#: htdocs/luci-static/resources/view/fchomo/global.js:866
 msgid "Routing mode"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:860
+#: htdocs/luci-static/resources/view/fchomo/global.js:867
 msgid "Routing mode of the traffic enters mihomo via firewall rules."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:881
+#: htdocs/luci-static/resources/view/fchomo/global.js:888
 msgid "Routing mode will be handle domain."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:841
-#: htdocs/luci-static/resources/view/fchomo/global.js:850
+#: htdocs/luci-static/resources/view/fchomo/global.js:848
+#: htdocs/luci-static/resources/view/fchomo/global.js:857
 msgid "Routing ports"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1278
-#: htdocs/luci-static/resources/view/fchomo/client.js:1287
+#: htdocs/luci-static/resources/view/fchomo/client.js:1274
+#: htdocs/luci-static/resources/view/fchomo/client.js:1283
 msgid "Routing rule"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:771
+#: htdocs/luci-static/resources/view/fchomo/global.js:778
 msgid "Routing rule priority"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:765
+#: htdocs/luci-static/resources/view/fchomo/global.js:772
 msgid "Routing table ID"
 msgstr ""
 
@@ -3072,13 +3089,13 @@ msgstr ""
 msgid "Rule"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:878
-#: htdocs/luci-static/resources/view/fchomo/client.js:891
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:149
+#: htdocs/luci-static/resources/view/fchomo/client.js:874
+#: htdocs/luci-static/resources/view/fchomo/client.js:887
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:157
 msgid "Rule set"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:381
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:390
 msgid "Rule set URL"
 msgstr ""
 
@@ -3090,44 +3107,44 @@ msgstr ""
 msgid "Ruleset"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:211
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:219
 msgid "Ruleset-URI-Scheme"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:1595
+#: htdocs/luci-static/resources/fchomo.js:1463
 msgid "Running"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:256
+#: htdocs/luci-static/resources/fchomo.js:289
 msgid "SMTP"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:155
+#: htdocs/luci-static/resources/fchomo.js:188
 msgid "SOCKS"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:192
+#: htdocs/luci-static/resources/fchomo.js:225
 msgid "SOCKS5"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:212
+#: htdocs/luci-static/resources/fchomo.js:245
 msgid "SSH"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:257
+#: htdocs/luci-static/resources/fchomo.js:290
 msgid "STUN"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1021
-#: htdocs/luci-static/resources/view/fchomo/node.js:1447
+#: htdocs/luci-static/resources/view/fchomo/node.js:1448
 msgid "STUN servers"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1370
+#: htdocs/luci-static/resources/view/fchomo/client.js:1366
 msgid "SUB-RULE"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1261
+#: htdocs/luci-static/resources/view/fchomo/node.js:1262
 msgid "SUoT version"
 msgstr ""
 
@@ -3136,11 +3153,11 @@ msgstr ""
 msgid "Salamander"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:184
+#: htdocs/luci-static/resources/fchomo.js:217
 msgid "Same dstaddr requests. Same node"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:185
+#: htdocs/luci-static/resources/fchomo.js:218
 msgid "Same srcaddr and dstaddr requests. Same node"
 msgstr ""
 
@@ -3149,8 +3166,8 @@ msgstr ""
 msgid "Save"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1730
 #: htdocs/luci-static/resources/view/fchomo/node.js:1731
+#: htdocs/luci-static/resources/view/fchomo/node.js:1732
 msgid "Secondary"
 msgstr ""
 
@@ -3162,24 +3179,24 @@ msgstr ""
 msgid "Segment maximum size"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:246
+#: htdocs/luci-static/resources/fchomo.js:279
 msgid "Select"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:627
+#: htdocs/luci-static/resources/view/fchomo/global.js:634
 msgid "Select Dashboard"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:415
+#: htdocs/luci-static/resources/fchomo.js:483
 msgid "Send padding randomly 0-3333 bytes with 50% probability."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1941
+#: htdocs/luci-static/resources/view/fchomo/client.js:1937
 msgid "Send queries to both the <code>%s</code> and the <code>%s</code>."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:404
-#: htdocs/luci-static/resources/fchomo.js:405
+#: htdocs/luci-static/resources/fchomo.js:472
+#: htdocs/luci-static/resources/fchomo.js:473
 msgid "Send random ticket of 300s-600s duration for client 0-RTT reuse."
 msgstr ""
 
@@ -3196,8 +3213,8 @@ msgid "Server address"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1338
-#: htdocs/luci-static/resources/view/fchomo/node.js:1957
-#: htdocs/luci-static/resources/view/fchomo/node.js:1963
+#: htdocs/luci-static/resources/view/fchomo/node.js:1958
+#: htdocs/luci-static/resources/view/fchomo/node.js:1964
 msgid "Server hostname"
 msgstr ""
 
@@ -3213,8 +3230,8 @@ msgstr ""
 msgid "Service status"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:168
-#: htdocs/luci-static/resources/fchomo.js:205
+#: htdocs/luci-static/resources/fchomo.js:201
+#: htdocs/luci-static/resources/fchomo.js:238
 msgid "ShadowQUIC"
 msgstr ""
 
@@ -3223,15 +3240,15 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo/listeners.js:698
 #: htdocs/luci-static/resources/fchomo/listeners.js:1129
 #: htdocs/luci-static/resources/fchomo/listeners.js:1245
-#: htdocs/luci-static/resources/view/fchomo/node.js:1279
-#: htdocs/luci-static/resources/view/fchomo/node.js:1289
-#: htdocs/luci-static/resources/view/fchomo/node.js:1294
-#: htdocs/luci-static/resources/view/fchomo/node.js:1624
+#: htdocs/luci-static/resources/view/fchomo/node.js:1280
+#: htdocs/luci-static/resources/view/fchomo/node.js:1290
+#: htdocs/luci-static/resources/view/fchomo/node.js:1295
+#: htdocs/luci-static/resources/view/fchomo/node.js:1625
 msgid "ShadowTLS"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:157
-#: htdocs/luci-static/resources/fchomo.js:193
+#: htdocs/luci-static/resources/fchomo.js:190
+#: htdocs/luci-static/resources/fchomo.js:226
 msgid "Shadowsocks"
 msgstr ""
 
@@ -3250,87 +3267,91 @@ msgstr ""
 msgid "Shadowsocks password"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2158
+#: htdocs/luci-static/resources/view/fchomo/node.js:2159
 msgid "Show connections in the dashboard for breaking connections easier."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:90
+#: htdocs/luci-static/resources/fchomo.js:123
 msgid "Silent"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:183
+#: htdocs/luci-static/resources/fchomo.js:216
 msgid "Simple round-robin all nodes"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2425
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:393
+#: htdocs/luci-static/resources/view/fchomo/node.js:2426
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:402
 msgid "Size limit"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1679
-#: htdocs/luci-static/resources/view/fchomo/node.js:1554
-#: htdocs/luci-static/resources/view/fchomo/node.js:2600
+#: htdocs/luci-static/resources/view/fchomo/client.js:1675
+#: htdocs/luci-static/resources/view/fchomo/node.js:1555
+#: htdocs/luci-static/resources/view/fchomo/node.js:2601
 msgid "Skip cert verify"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:687
+#: htdocs/luci-static/resources/view/fchomo/global.js:694
 msgid "Skiped sniffing domain"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:693
+#: htdocs/luci-static/resources/view/fchomo/global.js:700
 msgid "Skiped sniffing dst address"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:690
+#: htdocs/luci-static/resources/view/fchomo/global.js:697
 msgid "Skiped sniffing src address"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:160
-#: htdocs/luci-static/resources/fchomo.js:197
+#: htdocs/luci-static/resources/fchomo.js:193
+#: htdocs/luci-static/resources/fchomo.js:230
 msgid "Snell"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:697
+#: htdocs/luci-static/resources/view/fchomo/global.js:704
 msgid "Sniff protocol"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:674
+#: htdocs/luci-static/resources/view/fchomo/global.js:681
 msgid "Sniffer"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:677
+#: htdocs/luci-static/resources/view/fchomo/global.js:684
 msgid "Sniffer settings"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:447
+#: htdocs/luci-static/resources/fchomo.js:515
 msgid "Specify a ID"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:842
-#: htdocs/luci-static/resources/view/fchomo/global.js:851
+#: htdocs/luci-static/resources/view/fchomo/global.js:849
+#: htdocs/luci-static/resources/view/fchomo/global.js:858
 msgid ""
 "Specify target ports to be proxied. Multiple ports must be separated by "
 "commas."
+msgstr ""
+
+#: htdocs/luci-static/resources/fchomo.js:320
+msgid "Src-IP"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:513
 msgid "Stack"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:61
+#: htdocs/luci-static/resources/fchomo.js:94
 msgid "Standard"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:260
+#: htdocs/luci-static/resources/fchomo.js:293
 msgid "Steam Client"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:261
+#: htdocs/luci-static/resources/fchomo.js:294
 msgid "Steam P2P"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1238
-#: htdocs/luci-static/resources/view/fchomo/client.js:1240
+#: htdocs/luci-static/resources/view/fchomo/client.js:1234
+#: htdocs/luci-static/resources/view/fchomo/client.js:1236
 msgid "Strategy"
 msgstr ""
 
@@ -3340,12 +3361,12 @@ msgid "Stream-level receive window size"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:610
-#: htdocs/luci-static/resources/view/fchomo/client.js:1400
-#: htdocs/luci-static/resources/view/fchomo/client.js:1409
+#: htdocs/luci-static/resources/view/fchomo/client.js:1396
+#: htdocs/luci-static/resources/view/fchomo/client.js:1405
 msgid "Sub rule"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1455
+#: htdocs/luci-static/resources/view/fchomo/client.js:1451
 msgid "Sub rule group"
 msgstr ""
 
@@ -3353,8 +3374,8 @@ msgstr ""
 msgid "Subnet proxy"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:732
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:233
+#: htdocs/luci-static/resources/fchomo.js:866
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:242
 msgid "Successfully imported %s %s of total %s."
 msgstr ""
 
@@ -3362,8 +3383,8 @@ msgstr ""
 msgid "Successfully updated."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:159
-#: htdocs/luci-static/resources/fchomo.js:196
+#: htdocs/luci-static/resources/fchomo.js:192
+#: htdocs/luci-static/resources/fchomo.js:229
 msgid "Sudoku"
 msgstr ""
 
@@ -3371,13 +3392,13 @@ msgstr ""
 msgid "Support %s, default %s."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:208
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:216
 msgid ""
 "Supports rule-set links of type: <code>%s</code> and format: <code>%s</code>."
 "</br>"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:515
+#: htdocs/luci-static/resources/view/fchomo/global.js:520
 msgid "System"
 msgstr ""
 
@@ -3385,24 +3406,24 @@ msgstr ""
 msgid "System DNS"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:154
-#: htdocs/luci-static/resources/fchomo.js:159
-#: htdocs/luci-static/resources/fchomo.js:160
-#: htdocs/luci-static/resources/fchomo.js:161
-#: htdocs/luci-static/resources/fchomo.js:162
-#: htdocs/luci-static/resources/fchomo.js:163
-#: htdocs/luci-static/resources/fchomo.js:164
-#: htdocs/luci-static/resources/fchomo.js:191
+#: htdocs/luci-static/resources/fchomo.js:187
+#: htdocs/luci-static/resources/fchomo.js:192
+#: htdocs/luci-static/resources/fchomo.js:193
+#: htdocs/luci-static/resources/fchomo.js:194
+#: htdocs/luci-static/resources/fchomo.js:195
 #: htdocs/luci-static/resources/fchomo.js:196
 #: htdocs/luci-static/resources/fchomo.js:197
-#: htdocs/luci-static/resources/fchomo.js:198
-#: htdocs/luci-static/resources/fchomo.js:199
-#: htdocs/luci-static/resources/fchomo.js:200
-#: htdocs/luci-static/resources/fchomo.js:201
-#: htdocs/luci-static/resources/fchomo.js:212
+#: htdocs/luci-static/resources/fchomo.js:224
+#: htdocs/luci-static/resources/fchomo.js:229
+#: htdocs/luci-static/resources/fchomo.js:230
+#: htdocs/luci-static/resources/fchomo.js:231
+#: htdocs/luci-static/resources/fchomo.js:232
+#: htdocs/luci-static/resources/fchomo.js:233
+#: htdocs/luci-static/resources/fchomo.js:234
+#: htdocs/luci-static/resources/fchomo.js:245
 #: htdocs/luci-static/resources/fchomo/listeners.js:663
 #: htdocs/luci-static/resources/view/fchomo/client.js:618
-#: htdocs/luci-static/resources/view/fchomo/client.js:710
+#: htdocs/luci-static/resources/view/fchomo/client.js:707
 msgid "TCP"
 msgstr ""
 
@@ -3410,7 +3431,7 @@ msgstr ""
 msgid "TCP concurrency"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2151
+#: htdocs/luci-static/resources/view/fchomo/node.js:2152
 msgid "TCP only"
 msgstr ""
 
@@ -3422,24 +3443,24 @@ msgstr ""
 msgid "TCP-Keep-Alive interval"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:155
-#: htdocs/luci-static/resources/fchomo.js:156
-#: htdocs/luci-static/resources/fchomo.js:157
-#: htdocs/luci-static/resources/fchomo.js:158
-#: htdocs/luci-static/resources/fchomo.js:167
-#: htdocs/luci-static/resources/fchomo.js:169
-#: htdocs/luci-static/resources/fchomo.js:170
+#: htdocs/luci-static/resources/fchomo.js:188
+#: htdocs/luci-static/resources/fchomo.js:189
 #: htdocs/luci-static/resources/fchomo.js:190
-#: htdocs/luci-static/resources/fchomo.js:192
-#: htdocs/luci-static/resources/fchomo.js:193
-#: htdocs/luci-static/resources/fchomo.js:195
-#: htdocs/luci-static/resources/fchomo.js:206
-#: htdocs/luci-static/resources/fchomo.js:211
+#: htdocs/luci-static/resources/fchomo.js:191
+#: htdocs/luci-static/resources/fchomo.js:200
+#: htdocs/luci-static/resources/fchomo.js:202
+#: htdocs/luci-static/resources/fchomo.js:203
+#: htdocs/luci-static/resources/fchomo.js:223
+#: htdocs/luci-static/resources/fchomo.js:225
+#: htdocs/luci-static/resources/fchomo.js:226
+#: htdocs/luci-static/resources/fchomo.js:228
+#: htdocs/luci-static/resources/fchomo.js:239
+#: htdocs/luci-static/resources/fchomo.js:244
 msgid "TCP/UDP"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2182
-#: htdocs/luci-static/resources/view/fchomo/node.js:2561
+#: htdocs/luci-static/resources/view/fchomo/node.js:2183
+#: htdocs/luci-static/resources/view/fchomo/node.js:2562
 msgid "TFO"
 msgstr ""
 
@@ -3453,19 +3474,19 @@ msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:711
 #: htdocs/luci-static/resources/fchomo/listeners.js:1031
-#: htdocs/luci-static/resources/view/fchomo/global.js:551
+#: htdocs/luci-static/resources/view/fchomo/global.js:558
 #: htdocs/luci-static/resources/view/fchomo/node.js:472
-#: htdocs/luci-static/resources/view/fchomo/node.js:1307
-#: htdocs/luci-static/resources/view/fchomo/node.js:1457
+#: htdocs/luci-static/resources/view/fchomo/node.js:1308
+#: htdocs/luci-static/resources/view/fchomo/node.js:1458
 msgid "TLS"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1072
-#: htdocs/luci-static/resources/view/fchomo/node.js:1488
+#: htdocs/luci-static/resources/view/fchomo/node.js:1489
 msgid "TLS ALPN"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1482
+#: htdocs/luci-static/resources/view/fchomo/node.js:1483
 msgid "TLS SNI"
 msgstr ""
 
@@ -3474,16 +3495,16 @@ msgstr ""
 msgid "TLS fields"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:165
-#: htdocs/luci-static/resources/fchomo.js:202
+#: htdocs/luci-static/resources/fchomo.js:198
+#: htdocs/luci-static/resources/fchomo.js:235
 msgid "TUIC"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:258
+#: htdocs/luci-static/resources/fchomo.js:291
 msgid "TURN"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:209
+#: htdocs/luci-static/resources/fchomo.js:242
 #: htdocs/luci-static/resources/view/fchomo/node.js:962
 msgid "Tailscale"
 msgstr ""
@@ -3497,29 +3518,29 @@ msgid ""
 "Tell the client to use the BBR flow control algorithm instead of Hysteria CC."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1792
-#: htdocs/luci-static/resources/view/fchomo/node.js:1801
-#: htdocs/luci-static/resources/view/fchomo/node.js:1805
-#: htdocs/luci-static/resources/view/fchomo/node.js:1818
-#: htdocs/luci-static/resources/view/fchomo/node.js:1825
-#: htdocs/luci-static/resources/view/fchomo/node.js:1833
-#: htdocs/luci-static/resources/view/fchomo/node.js:1837
+#: htdocs/luci-static/resources/view/fchomo/node.js:1793
+#: htdocs/luci-static/resources/view/fchomo/node.js:1802
+#: htdocs/luci-static/resources/view/fchomo/node.js:1806
+#: htdocs/luci-static/resources/view/fchomo/node.js:1819
+#: htdocs/luci-static/resources/view/fchomo/node.js:1826
+#: htdocs/luci-static/resources/view/fchomo/node.js:1834
+#: htdocs/luci-static/resources/view/fchomo/node.js:1838
 msgid "The %s address used by local machine in the %s network."
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1151
-#: htdocs/luci-static/resources/view/fchomo/node.js:1577
+#: htdocs/luci-static/resources/view/fchomo/node.js:1578
 msgid "The %s private key, in PEM format."
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1121
 #: htdocs/luci-static/resources/fchomo/listeners.js:1174
-#: htdocs/luci-static/resources/view/fchomo/global.js:572
-#: htdocs/luci-static/resources/view/fchomo/node.js:1563
+#: htdocs/luci-static/resources/view/fchomo/global.js:579
+#: htdocs/luci-static/resources/view/fchomo/node.js:1564
 msgid "The %s public key, in PEM format."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1597
+#: htdocs/luci-static/resources/view/fchomo/node.js:1598
 msgid ""
 "The ECH parameter of the HTTPS record for the domain. Leave empty to resolve "
 "via DNS."
@@ -3541,25 +3562,25 @@ msgstr ""
 msgid "The default value is 2:00 every day."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1243
+#: htdocs/luci-static/resources/view/fchomo/node.js:1244
 msgid ""
 "The default value is <code>%s</code>, indicating that only the outer "
 "connection timeout is used."
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:875
-#: htdocs/luci-static/resources/view/fchomo/node.js:1404
+#: htdocs/luci-static/resources/view/fchomo/node.js:1405
 msgid ""
 "The first padding must have a probability of 100% and at least 35 bytes."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1909
+#: htdocs/luci-static/resources/view/fchomo/client.js:1905
 msgid "The matching <code>%s</code> will be deemed as not-poisoned."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1918
-#: htdocs/luci-static/resources/view/fchomo/client.js:1923
-#: htdocs/luci-static/resources/view/fchomo/client.js:1928
+#: htdocs/luci-static/resources/view/fchomo/client.js:1914
+#: htdocs/luci-static/resources/view/fchomo/client.js:1919
+#: htdocs/luci-static/resources/view/fchomo/client.js:1924
 msgid "The matching <code>%s</code> will be deemed as poisoned."
 msgstr ""
 
@@ -3568,18 +3589,18 @@ msgid "The proxy used to connect to the handshake target."
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:873
-#: htdocs/luci-static/resources/view/fchomo/node.js:1402
+#: htdocs/luci-static/resources/view/fchomo/node.js:1403
 msgid "The server and client can set different padding parameters."
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1232
-#: htdocs/luci-static/resources/view/fchomo/global.js:616
+#: htdocs/luci-static/resources/view/fchomo/global.js:623
 msgid "This ECH parameter needs to be added to the HTTPS record of the domain."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1682
-#: htdocs/luci-static/resources/view/fchomo/node.js:1557
-#: htdocs/luci-static/resources/view/fchomo/node.js:2603
+#: htdocs/luci-static/resources/view/fchomo/client.js:1678
+#: htdocs/luci-static/resources/view/fchomo/node.js:1558
+#: htdocs/luci-static/resources/view/fchomo/node.js:2604
 msgid ""
 "This is <strong>DANGEROUS</strong>, your traffic is almost like "
 "<strong>PLAIN TEXT</strong>! Use at your own risk!"
@@ -3602,11 +3623,11 @@ msgid ""
 "<code>kmod-tun</code>"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:886
+#: htdocs/luci-static/resources/view/fchomo/global.js:893
 msgid "To enable, you need to install <code>dnsmasq-full</code>."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:784
+#: htdocs/luci-static/resources/view/fchomo/global.js:791
 msgid "Tproxy Fwmark/fwmask"
 msgstr ""
 
@@ -3619,18 +3640,18 @@ msgstr ""
 msgid "Traffic pattern"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2797
+#: htdocs/luci-static/resources/view/fchomo/node.js:2798
 msgid "Transit proxy group"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2808
+#: htdocs/luci-static/resources/view/fchomo/node.js:2809
 msgid "Transit proxy node"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:194
 #: htdocs/luci-static/resources/fchomo/listeners.js:1302
 #: htdocs/luci-static/resources/view/fchomo/node.js:363
-#: htdocs/luci-static/resources/view/fchomo/node.js:1910
+#: htdocs/luci-static/resources/view/fchomo/node.js:1911
 msgid "Transport"
 msgstr ""
 
@@ -3640,21 +3661,21 @@ msgid "Transport fields"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1307
-#: htdocs/luci-static/resources/view/fchomo/node.js:1915
+#: htdocs/luci-static/resources/view/fchomo/node.js:1916
 msgid "Transport type"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:835
+#: htdocs/luci-static/resources/view/fchomo/client.js:831
 msgid "Treat the <code>destination IP</code> as the <code>source IP</code>."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:163
-#: htdocs/luci-static/resources/fchomo.js:200
+#: htdocs/luci-static/resources/fchomo.js:196
+#: htdocs/luci-static/resources/fchomo.js:233
 msgid "Trojan"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:169
-#: htdocs/luci-static/resources/fchomo.js:206
+#: htdocs/luci-static/resources/fchomo.js:202
+#: htdocs/luci-static/resources/fchomo.js:239
 msgid "TrustTunnel"
 msgstr ""
 
@@ -3662,7 +3683,7 @@ msgstr ""
 msgid "Trusted proxy header"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:789
+#: htdocs/luci-static/resources/view/fchomo/global.js:796
 msgid "Tun Fwmark/fwmask"
 msgstr ""
 
@@ -3678,7 +3699,7 @@ msgstr ""
 msgid "Tun stack."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:170
+#: htdocs/luci-static/resources/fchomo.js:203
 msgid "Tunnel"
 msgstr ""
 
@@ -3689,31 +3710,31 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo/listeners.js:143
 #: htdocs/luci-static/resources/view/fchomo/client.js:533
 #: htdocs/luci-static/resources/view/fchomo/client.js:672
-#: htdocs/luci-static/resources/view/fchomo/client.js:767
-#: htdocs/luci-static/resources/view/fchomo/client.js:875
-#: htdocs/luci-static/resources/view/fchomo/client.js:1073
+#: htdocs/luci-static/resources/view/fchomo/client.js:763
+#: htdocs/luci-static/resources/view/fchomo/client.js:871
+#: htdocs/luci-static/resources/view/fchomo/client.js:1069
 #: htdocs/luci-static/resources/view/fchomo/node.js:271
-#: htdocs/luci-static/resources/view/fchomo/node.js:2362
-#: htdocs/luci-static/resources/view/fchomo/node.js:2758
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:287
+#: htdocs/luci-static/resources/view/fchomo/node.js:2363
+#: htdocs/luci-static/resources/view/fchomo/node.js:2759
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:296
 msgid "Type"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:165
-#: htdocs/luci-static/resources/fchomo.js:166
-#: htdocs/luci-static/resources/fchomo.js:168
-#: htdocs/luci-static/resources/fchomo.js:202
-#: htdocs/luci-static/resources/fchomo.js:204
-#: htdocs/luci-static/resources/fchomo.js:205
-#: htdocs/luci-static/resources/fchomo.js:207
-#: htdocs/luci-static/resources/fchomo.js:208
-#: htdocs/luci-static/resources/fchomo.js:209
-#: htdocs/luci-static/resources/fchomo.js:210
+#: htdocs/luci-static/resources/fchomo.js:198
+#: htdocs/luci-static/resources/fchomo.js:199
+#: htdocs/luci-static/resources/fchomo.js:201
+#: htdocs/luci-static/resources/fchomo.js:235
+#: htdocs/luci-static/resources/fchomo.js:237
+#: htdocs/luci-static/resources/fchomo.js:238
+#: htdocs/luci-static/resources/fchomo.js:240
+#: htdocs/luci-static/resources/fchomo.js:241
+#: htdocs/luci-static/resources/fchomo.js:242
+#: htdocs/luci-static/resources/fchomo.js:243
 #: htdocs/luci-static/resources/fchomo/listeners.js:664
 #: htdocs/luci-static/resources/fchomo/listeners.js:669
 #: htdocs/luci-static/resources/view/fchomo/client.js:617
-#: htdocs/luci-static/resources/view/fchomo/client.js:709
-#: htdocs/luci-static/resources/view/fchomo/node.js:2571
+#: htdocs/luci-static/resources/view/fchomo/client.js:706
+#: htdocs/luci-static/resources/view/fchomo/node.js:2572
 msgid "UDP"
 msgstr ""
 
@@ -3745,7 +3766,7 @@ msgstr ""
 msgid "UP: %s; DOWN: %s"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:248
+#: htdocs/luci-static/resources/fchomo.js:281
 msgid "URL test"
 msgstr ""
 
@@ -3757,7 +3778,7 @@ msgstr ""
 msgid "UUID"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:1642
+#: htdocs/luci-static/resources/fchomo.js:1510
 msgid "Unable to download unsupported type: %s"
 msgstr ""
 
@@ -3782,8 +3803,8 @@ msgstr ""
 msgid "Unknown error: %s"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1255
-#: htdocs/luci-static/resources/view/fchomo/node.js:2576
+#: htdocs/luci-static/resources/view/fchomo/node.js:1256
+#: htdocs/luci-static/resources/view/fchomo/node.js:2577
 msgid "UoT"
 msgstr ""
 
@@ -3791,24 +3812,24 @@ msgstr ""
 msgid "Update failed."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2431
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:399
+#: htdocs/luci-static/resources/view/fchomo/node.js:2432
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:408
 msgid "Update interval"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1404
-#: htdocs/luci-static/resources/view/fchomo/node.js:2169
+#: htdocs/luci-static/resources/view/fchomo/node.js:2170
 msgid "Upload bandwidth"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1405
-#: htdocs/luci-static/resources/view/fchomo/node.js:2170
+#: htdocs/luci-static/resources/view/fchomo/node.js:2171
 msgid "Upload bandwidth in Mbps."
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1142
 #: htdocs/luci-static/resources/fchomo/listeners.js:1182
-#: htdocs/luci-static/resources/view/fchomo/node.js:1568
+#: htdocs/luci-static/resources/view/fchomo/node.js:1569
 msgid "Upload certificate"
 msgstr ""
 
@@ -3817,7 +3838,7 @@ msgid "Upload initial package"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1157
-#: htdocs/luci-static/resources/view/fchomo/node.js:1582
+#: htdocs/luci-static/resources/view/fchomo/node.js:1583
 msgid "Upload key"
 msgstr ""
 
@@ -3825,16 +3846,16 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo/listeners.js:1160
 #: htdocs/luci-static/resources/fchomo/listeners.js:1185
 #: htdocs/luci-static/resources/view/fchomo/global.js:306
-#: htdocs/luci-static/resources/view/fchomo/node.js:1571
-#: htdocs/luci-static/resources/view/fchomo/node.js:1585
+#: htdocs/luci-static/resources/view/fchomo/node.js:1572
+#: htdocs/luci-static/resources/view/fchomo/node.js:1586
 msgid "Upload..."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1848
+#: htdocs/luci-static/resources/view/fchomo/node.js:1849
 msgid "Use DHCP"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1849
+#: htdocs/luci-static/resources/view/fchomo/node.js:1850
 msgid "Use DHCP to obtain IP address."
 msgstr ""
 
@@ -3860,28 +3881,28 @@ msgstr ""
 msgid "Used to replace the contents of default %s."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1499
+#: htdocs/luci-static/resources/view/fchomo/client.js:1495
 msgid ""
 "Used to resolve domains that can be directly connected. Can use domestic DNS "
 "servers or ECS."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1501
+#: htdocs/luci-static/resources/view/fchomo/client.js:1497
 msgid ""
 "Used to resolve domains you want to proxy. Recommended to configure %s for "
 "DNS servers."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1483
+#: htdocs/luci-static/resources/view/fchomo/client.js:1479
 msgid "Used to resolve the domain of the DNS server. Must be IP."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1490
+#: htdocs/luci-static/resources/view/fchomo/client.js:1486
 msgid "Used to resolve the domain of the Proxy node."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1549
-#: htdocs/luci-static/resources/view/fchomo/node.js:2595
+#: htdocs/luci-static/resources/view/fchomo/node.js:1550
+#: htdocs/luci-static/resources/view/fchomo/node.js:2596
 msgid "Used to verify the hostname on the returned certificates."
 msgstr ""
 
@@ -3896,11 +3917,11 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo/listeners.js:162
 #: htdocs/luci-static/resources/fchomo/listeners.js:731
 #: htdocs/luci-static/resources/view/fchomo/node.js:322
-#: htdocs/luci-static/resources/view/fchomo/node.js:1319
+#: htdocs/luci-static/resources/view/fchomo/node.js:1320
 msgid "Username"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:797
+#: htdocs/luci-static/resources/view/fchomo/global.js:804
 msgid "Users filter mode"
 msgstr ""
 
@@ -3916,27 +3937,27 @@ msgstr ""
 msgid "Using this in conjunction with %s is recommended."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2026
+#: htdocs/luci-static/resources/view/fchomo/node.js:2027
 msgid "V2ray HTTPUpgrade"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2031
+#: htdocs/luci-static/resources/view/fchomo/node.js:2032
 msgid "V2ray HTTPUpgrade fast open"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:162
-#: htdocs/luci-static/resources/fchomo.js:199
+#: htdocs/luci-static/resources/fchomo.js:195
+#: htdocs/luci-static/resources/fchomo.js:232
 msgid "VLESS"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:161
-#: htdocs/luci-static/resources/fchomo.js:198
+#: htdocs/luci-static/resources/fchomo.js:194
+#: htdocs/luci-static/resources/fchomo.js:231
 msgid "VMess"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1792
-#: htdocs/luci-static/resources/view/fchomo/node.js:1818
-#: htdocs/luci-static/resources/view/fchomo/node.js:1825
+#: htdocs/luci-static/resources/view/fchomo/node.js:1793
+#: htdocs/luci-static/resources/view/fchomo/node.js:1819
+#: htdocs/luci-static/resources/view/fchomo/node.js:1826
 msgid "VPN"
 msgstr ""
 
@@ -3948,9 +3969,9 @@ msgstr ""
 msgid "Valid 16-digit Moon World ID and 10-digit Node ID of Moon Root server."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2368
-#: htdocs/luci-static/resources/view/fchomo/node.js:2764
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:330
+#: htdocs/luci-static/resources/view/fchomo/node.js:2369
+#: htdocs/luci-static/resources/view/fchomo/node.js:2765
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:339
 msgid "Value"
 msgstr ""
 
@@ -3958,32 +3979,32 @@ msgstr ""
 msgid "Verbose"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:377
+#: htdocs/luci-static/resources/fchomo.js:445
 msgid "Verify if given"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:392
 #: htdocs/luci-static/resources/fchomo/listeners.js:745
 #: htdocs/luci-static/resources/view/fchomo/node.js:514
-#: htdocs/luci-static/resources/view/fchomo/node.js:1333
+#: htdocs/luci-static/resources/view/fchomo/node.js:1334
 msgid "Version"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1341
+#: htdocs/luci-static/resources/view/fchomo/node.js:1342
 msgid "Version hint"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:1116
-#: htdocs/luci-static/resources/view/fchomo/node.js:1817
-#: htdocs/luci-static/resources/view/fchomo/node.js:1850
+#: htdocs/luci-static/resources/view/fchomo/node.js:1818
+#: htdocs/luci-static/resources/view/fchomo/node.js:1851
 msgid "Virtual IPv4 address"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1824
+#: htdocs/luci-static/resources/view/fchomo/node.js:1825
 msgid "Virtual IPv6 address"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1791
+#: htdocs/luci-static/resources/view/fchomo/node.js:1792
 msgid "Virtual address"
 msgstr ""
 
@@ -3992,11 +4013,11 @@ msgstr ""
 msgid "Vless Encryption fields"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:414
+#: htdocs/luci-static/resources/fchomo.js:482
 msgid "Wait a random 0-111 milliseconds with 75% probability."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:92
+#: htdocs/luci-static/resources/fchomo.js:125
 msgid "Warning"
 msgstr ""
 
@@ -4006,10 +4027,10 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo/listeners.js:1327
 #: htdocs/luci-static/resources/view/fchomo/node.js:468
 #: htdocs/luci-static/resources/view/fchomo/node.js:497
-#: htdocs/luci-static/resources/view/fchomo/node.js:1920
-#: htdocs/luci-static/resources/view/fchomo/node.js:1933
-#: htdocs/luci-static/resources/view/fchomo/node.js:1940
-#: htdocs/luci-static/resources/view/fchomo/node.js:1946
+#: htdocs/luci-static/resources/view/fchomo/node.js:1921
+#: htdocs/luci-static/resources/view/fchomo/node.js:1934
+#: htdocs/luci-static/resources/view/fchomo/node.js:1941
+#: htdocs/luci-static/resources/view/fchomo/node.js:1947
 msgid "WebSocket"
 msgstr ""
 
@@ -4025,11 +4046,11 @@ msgstr ""
 msgid "Whether to accept routes advertised by other nodes."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:799
+#: htdocs/luci-static/resources/view/fchomo/global.js:806
 msgid "White list"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:208
+#: htdocs/luci-static/resources/fchomo.js:241
 msgid "WireGuard"
 msgstr ""
 
@@ -4045,33 +4066,33 @@ msgstr ""
 msgid "WireGuard requires base64-encoded private keys."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1802
-#: htdocs/luci-static/resources/view/fchomo/node.js:1834
+#: htdocs/luci-static/resources/view/fchomo/node.js:1803
+#: htdocs/luci-static/resources/view/fchomo/node.js:1835
 msgid "Wireguard"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1310
 #: htdocs/luci-static/resources/fchomo/listeners.js:1321
-#: htdocs/luci-static/resources/view/fchomo/node.js:1921
-#: htdocs/luci-static/resources/view/fchomo/node.js:1941
+#: htdocs/luci-static/resources/view/fchomo/node.js:1922
+#: htdocs/luci-static/resources/view/fchomo/node.js:1942
 msgid "XHTTP"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1357
-#: htdocs/luci-static/resources/view/fchomo/node.js:2036
+#: htdocs/luci-static/resources/view/fchomo/node.js:2037
 msgid "XHTTP mode"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2067
+#: htdocs/luci-static/resources/view/fchomo/node.js:2068
 msgid "XMUX"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2072
-#: htdocs/luci-static/resources/view/fchomo/node.js:2077
-#: htdocs/luci-static/resources/view/fchomo/node.js:2082
-#: htdocs/luci-static/resources/view/fchomo/node.js:2087
-#: htdocs/luci-static/resources/view/fchomo/node.js:2092
-#: htdocs/luci-static/resources/view/fchomo/node.js:2097
+#: htdocs/luci-static/resources/view/fchomo/node.js:2073
+#: htdocs/luci-static/resources/view/fchomo/node.js:2078
+#: htdocs/luci-static/resources/view/fchomo/node.js:2083
+#: htdocs/luci-static/resources/view/fchomo/node.js:2088
+#: htdocs/luci-static/resources/view/fchomo/node.js:2093
+#: htdocs/luci-static/resources/view/fchomo/node.js:2098
 msgid "XMUX:"
 msgstr ""
 
@@ -4083,11 +4104,11 @@ msgstr ""
 msgid "Xudp (Xray-core)"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:309
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:318
 msgid "Yaml text"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2606
+#: htdocs/luci-static/resources/view/fchomo/node.js:2607
 msgid "Yes"
 msgstr ""
 
@@ -4096,11 +4117,11 @@ msgid ""
 "You can add %s in the %s to resolve A/PTR records within the virtual network."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:47
+#: htdocs/luci-static/resources/fchomo.js:72
 msgid "YouTube"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:207
+#: htdocs/luci-static/resources/fchomo.js:240
 msgid "ZeroTier"
 msgstr ""
 
@@ -4108,19 +4129,19 @@ msgstr ""
 msgid "ZeroTier UDP payload MTU."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:350
-#: htdocs/luci-static/resources/fchomo.js:363
-#: htdocs/luci-static/resources/fchomo.js:368
+#: htdocs/luci-static/resources/fchomo.js:418
+#: htdocs/luci-static/resources/fchomo.js:431
+#: htdocs/luci-static/resources/fchomo.js:436
 #: htdocs/luci-static/resources/view/fchomo/node.js:555
 msgid "aes-128-gcm"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:351
+#: htdocs/luci-static/resources/fchomo.js:419
 msgid "aes-192-gcm"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:352
-#: htdocs/luci-static/resources/fchomo.js:369
+#: htdocs/luci-static/resources/fchomo.js:420
+#: htdocs/luci-static/resources/fchomo.js:437
 msgid "aes-256-gcm"
 msgstr ""
 
@@ -4132,11 +4153,11 @@ msgstr ""
 msgid "aes-gcm-256"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2453
+#: htdocs/luci-static/resources/view/fchomo/node.js:2454
 msgid "age private key"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2514
+#: htdocs/luci-static/resources/view/fchomo/node.js:2515
 msgid "age public key"
 msgstr ""
 
@@ -4152,18 +4173,18 @@ msgstr ""
 msgid "auto"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:56
-#: htdocs/luci-static/resources/view/fchomo/node.js:1212
+#: htdocs/luci-static/resources/fchomo.js:81
+#: htdocs/luci-static/resources/fchomo.js:88
 msgid "bbr"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1213
+#: htdocs/luci-static/resources/fchomo.js:89
 msgid "bbr3"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1147
 #: htdocs/luci-static/resources/fchomo/listeners.js:1187
-#: htdocs/luci-static/resources/view/fchomo/node.js:1573
+#: htdocs/luci-static/resources/view/fchomo/node.js:1574
 msgid "certificate"
 msgstr ""
 
@@ -4171,9 +4192,9 @@ msgstr ""
 msgid "chacha20"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:353
-#: htdocs/luci-static/resources/fchomo.js:364
-#: htdocs/luci-static/resources/fchomo.js:370
+#: htdocs/luci-static/resources/fchomo.js:421
+#: htdocs/luci-static/resources/fchomo.js:432
+#: htdocs/luci-static/resources/fchomo.js:438
 msgid "chacha20-ietf-poly1305"
 msgstr ""
 
@@ -4181,8 +4202,8 @@ msgstr ""
 msgid "chacha20-poly1305"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:54
-#: htdocs/luci-static/resources/view/fchomo/node.js:1210
+#: htdocs/luci-static/resources/fchomo.js:79
+#: htdocs/luci-static/resources/fchomo.js:86
 msgid "cubic"
 msgstr ""
 
@@ -4191,17 +4212,17 @@ msgstr ""
 msgid "decryption"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:833
+#: htdocs/luci-static/resources/view/fchomo/global.js:840
 msgid "dnsmasq selects upstream on its own. (may affect CDN accuracy)"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2588
+#: htdocs/luci-static/resources/view/fchomo/node.js:2589
 msgid "down"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:821
-#: htdocs/luci-static/resources/view/fchomo/node.js:1356
-#: htdocs/luci-static/resources/view/fchomo/node.js:1379
+#: htdocs/luci-static/resources/view/fchomo/node.js:1357
+#: htdocs/luci-static/resources/view/fchomo/node.js:1380
 msgid "encryption"
 msgstr ""
 
@@ -4213,28 +4234,28 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo/listeners.js:1308
 #: htdocs/luci-static/resources/fchomo/listeners.js:1319
 #: htdocs/luci-static/resources/fchomo/listeners.js:1326
-#: htdocs/luci-static/resources/view/fchomo/node.js:1919
-#: htdocs/luci-static/resources/view/fchomo/node.js:1932
-#: htdocs/luci-static/resources/view/fchomo/node.js:1939
-#: htdocs/luci-static/resources/view/fchomo/node.js:1945
+#: htdocs/luci-static/resources/view/fchomo/node.js:1920
+#: htdocs/luci-static/resources/view/fchomo/node.js:1933
+#: htdocs/luci-static/resources/view/fchomo/node.js:1940
+#: htdocs/luci-static/resources/view/fchomo/node.js:1946
 msgid "gRPC"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2002
+#: htdocs/luci-static/resources/view/fchomo/node.js:2003
 msgid "gRPC User-Agent"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2007
+#: htdocs/luci-static/resources/view/fchomo/node.js:2008
 msgid "gRPC ping interval"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1351
-#: htdocs/luci-static/resources/view/fchomo/node.js:1998
+#: htdocs/luci-static/resources/view/fchomo/node.js:1999
 msgid "gRPC service name"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:517
-#: htdocs/luci-static/resources/view/fchomo/node.js:1203
+#: htdocs/luci-static/resources/view/fchomo/node.js:1205
 msgid "gVisor"
 msgstr ""
 
@@ -4242,7 +4263,7 @@ msgstr ""
 msgid "h2"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2114
+#: htdocs/luci-static/resources/view/fchomo/node.js:2115
 msgid "h2mux"
 msgstr ""
 
@@ -4258,54 +4279,54 @@ msgstr ""
 msgid "least one keypair required"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2729
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:435
+#: htdocs/luci-static/resources/view/fchomo/node.js:2730
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:444
 msgid "luci-app-tinyfilemanager is not installed, please install it first."
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:77
+#: htdocs/luci-static/resources/fchomo.js:110
 msgid "metacubexd"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/global.js:520
-#: htdocs/luci-static/resources/view/fchomo/node.js:1204
+#: htdocs/luci-static/resources/view/fchomo/global.js:515
+#: htdocs/luci-static/resources/view/fchomo/node.js:1203
 msgid "mihomo IP stack (MIPS)"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1046
-#: htdocs/luci-static/resources/view/fchomo/client.js:1343
-#: htdocs/luci-static/resources/view/fchomo/client.js:1438
-#: htdocs/luci-static/resources/view/fchomo/client.js:1580
-#: htdocs/luci-static/resources/view/fchomo/client.js:1814
-#: htdocs/luci-static/resources/view/fchomo/client.js:1870
-#: htdocs/luci-static/resources/view/fchomo/node.js:2334
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:249
+#: htdocs/luci-static/resources/view/fchomo/client.js:1042
+#: htdocs/luci-static/resources/view/fchomo/client.js:1339
+#: htdocs/luci-static/resources/view/fchomo/client.js:1434
+#: htdocs/luci-static/resources/view/fchomo/client.js:1576
+#: htdocs/luci-static/resources/view/fchomo/client.js:1810
+#: htdocs/luci-static/resources/view/fchomo/client.js:1866
+#: htdocs/luci-static/resources/view/fchomo/node.js:2335
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:258
 msgid "mihomo config"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:396
+#: htdocs/luci-static/resources/fchomo.js:464
 msgid "mlkem768x25519plus"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2187
-#: htdocs/luci-static/resources/view/fchomo/node.js:2566
+#: htdocs/luci-static/resources/view/fchomo/node.js:2188
+#: htdocs/luci-static/resources/view/fchomo/node.js:2567
 msgid "mpTCP"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:55
+#: htdocs/luci-static/resources/fchomo.js:80
 msgid "new_reno"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:852
+#: htdocs/luci-static/resources/view/fchomo/client.js:848
 msgid "no-resolve"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:348
-#: htdocs/luci-static/resources/fchomo.js:362
-#: htdocs/luci-static/resources/fchomo.js:374
+#: htdocs/luci-static/resources/fchomo.js:416
+#: htdocs/luci-static/resources/fchomo.js:430
+#: htdocs/luci-static/resources/fchomo.js:442
 #: htdocs/luci-static/resources/view/fchomo/node.js:553
 #: htdocs/luci-static/resources/view/fchomo/node.js:573
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:326
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:335
 msgid "none"
 msgstr ""
 
@@ -4313,11 +4334,11 @@ msgstr ""
 msgid "not found"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1063
+#: htdocs/luci-static/resources/view/fchomo/client.js:1059
 msgid "not included \",\""
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:234
+#: htdocs/luci-static/resources/fchomo.js:267
 #: htdocs/luci-static/resources/fchomo/listeners.js:612
 #: htdocs/luci-static/resources/fchomo/listeners.js:615
 msgid "null"
@@ -4325,8 +4346,8 @@ msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:682
 #: htdocs/luci-static/resources/fchomo/listeners.js:692
-#: htdocs/luci-static/resources/view/fchomo/node.js:1276
-#: htdocs/luci-static/resources/view/fchomo/node.js:1288
+#: htdocs/luci-static/resources/view/fchomo/node.js:1277
+#: htdocs/luci-static/resources/view/fchomo/node.js:1289
 msgid "obfs-simple"
 msgstr ""
 
@@ -4350,11 +4371,11 @@ msgstr ""
 msgid "openssl-chacha20"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2547
+#: htdocs/luci-static/resources/view/fchomo/node.js:2548
 msgid "override.override-expr"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2539
+#: htdocs/luci-static/resources/view/fchomo/node.js:2540
 msgid "override.proxy-name"
 msgstr ""
 
@@ -4363,7 +4384,7 @@ msgid "packet addr (v2ray-core v5+)"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1361
-#: htdocs/luci-static/resources/view/fchomo/node.js:2040
+#: htdocs/luci-static/resources/view/fchomo/node.js:2041
 msgid "packet-up"
 msgstr ""
 
@@ -4373,28 +4394,28 @@ msgid "poll"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1162
-#: htdocs/luci-static/resources/view/fchomo/node.js:1587
+#: htdocs/luci-static/resources/view/fchomo/node.js:1588
 msgid "private key"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:79
+#: htdocs/luci-static/resources/fchomo.js:112
 msgid "razord-meta"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1211
+#: htdocs/luci-static/resources/fchomo.js:87
 msgid "reno"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:1267
-#: htdocs/luci-static/resources/view/fchomo/client.js:1273
+#: htdocs/luci-static/resources/view/fchomo/client.js:1263
+#: htdocs/luci-static/resources/view/fchomo/client.js:1269
 msgid "requires front-end adaptation using the API."
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/ruleset.js:234
+#: htdocs/luci-static/resources/view/fchomo/ruleset.js:243
 msgid "rule-set"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2112
+#: htdocs/luci-static/resources/view/fchomo/node.js:2113
 msgid "smux"
 msgstr ""
 
@@ -4403,17 +4424,17 @@ msgstr ""
 msgid "split-stream"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/client.js:834
+#: htdocs/luci-static/resources/view/fchomo/client.js:830
 msgid "src"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1359
-#: htdocs/luci-static/resources/view/fchomo/node.js:2038
+#: htdocs/luci-static/resources/view/fchomo/node.js:2039
 msgid "stream-one"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:1360
-#: htdocs/luci-static/resources/view/fchomo/node.js:2039
+#: htdocs/luci-static/resources/view/fchomo/node.js:2040
 msgid "stream-up"
 msgstr ""
 
@@ -4429,11 +4450,11 @@ msgstr ""
 msgid "sudoku-keypair"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1343
+#: htdocs/luci-static/resources/view/fchomo/node.js:1344
 msgid "tls12"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1344
+#: htdocs/luci-static/resources/view/fchomo/node.js:1345
 msgid "tls13"
 msgstr ""
 
@@ -4441,15 +4462,15 @@ msgstr ""
 msgid "unchecked"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:460
+#: htdocs/luci-static/resources/fchomo.js:528
 msgid "unique UCI identifier"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:463
+#: htdocs/luci-static/resources/fchomo.js:531
 msgid "unique identifier"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2582
+#: htdocs/luci-static/resources/view/fchomo/node.js:2583
 msgid "up"
 msgstr ""
 
@@ -4457,23 +4478,23 @@ msgstr ""
 #: htdocs/luci-static/resources/fchomo/listeners.js:746
 #: htdocs/luci-static/resources/view/fchomo/node.js:515
 #: htdocs/luci-static/resources/view/fchomo/node.js:656
-#: htdocs/luci-static/resources/view/fchomo/node.js:1262
-#: htdocs/luci-static/resources/view/fchomo/node.js:1334
+#: htdocs/luci-static/resources/view/fchomo/node.js:1263
+#: htdocs/luci-static/resources/view/fchomo/node.js:1335
 msgid "v1"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:394
 #: htdocs/luci-static/resources/fchomo/listeners.js:747
 #: htdocs/luci-static/resources/view/fchomo/node.js:516
-#: htdocs/luci-static/resources/view/fchomo/node.js:1263
-#: htdocs/luci-static/resources/view/fchomo/node.js:1335
+#: htdocs/luci-static/resources/view/fchomo/node.js:1264
+#: htdocs/luci-static/resources/view/fchomo/node.js:1336
 msgid "v2"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:395
 #: htdocs/luci-static/resources/fchomo/listeners.js:748
 #: htdocs/luci-static/resources/view/fchomo/node.js:517
-#: htdocs/luci-static/resources/view/fchomo/node.js:1336
+#: htdocs/luci-static/resources/view/fchomo/node.js:1337
 msgid "v3"
 msgstr ""
 
@@ -4487,19 +4508,19 @@ msgstr ""
 msgid "v5"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:1541
+#: htdocs/luci-static/resources/view/fchomo/node.js:1542
 msgid "valid SHA256 string with %d characters"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:420
+#: htdocs/luci-static/resources/fchomo.js:488
 msgid "vless-mlkem768"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:419
+#: htdocs/luci-static/resources/fchomo.js:487
 msgid "vless-x25519"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:354
+#: htdocs/luci-static/resources/fchomo.js:422
 msgid "xchacha20-ietf-poly1305"
 msgstr ""
 
@@ -4507,15 +4528,15 @@ msgstr ""
 msgid "xor"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:78
+#: htdocs/luci-static/resources/fchomo.js:111
 msgid "yacd-meta"
 msgstr ""
 
-#: htdocs/luci-static/resources/view/fchomo/node.js:2113
+#: htdocs/luci-static/resources/view/fchomo/node.js:2114
 msgid "yamux"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:76
+#: htdocs/luci-static/resources/fchomo.js:109
 msgid "zashboard"
 msgstr ""
 
@@ -4523,6 +4544,6 @@ msgstr ""
 msgid "zero"
 msgstr ""
 
-#: htdocs/luci-static/resources/fchomo.js:1644
+#: htdocs/luci-static/resources/fchomo.js:1512
 msgid "🡇"
 msgstr ""

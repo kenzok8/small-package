@@ -238,10 +238,10 @@ const outbound_type = [
 	['shadowquic', _('ShadowQUIC') + ' - ' + _('UDP')],
 	['trusttunnel', _('TrustTunnel') + ' - ' + _('TCP/UDP')],
 	['zerotier', _('ZeroTier') + ' - ' + _('UDP') + ' - ' + _('L2')], // Endpoint
-	['wireguard', _('WireGuard') + ' - ' + _('UDP')], // Endpoint
-	['tailscale', _('Tailscale') + ' - ' + _('UDP')], // Endpoint
-	['masque', _('Masque') + ' - ' + _('UDP')], // Endpoint // https://blog.cloudflare.com/post-quantum-warp/
-	['easytier', _('EasyTier') + ' - ' + _('TCP/UDP')], // Endpoint
+	['wireguard', _('WireGuard') + ' - ' + _('UDP') + ' - ' + _('L3')], // Endpoint
+	['tailscale', _('Tailscale') + ' - ' + _('UDP') + ' - ' + _('L3')], // Endpoint
+	['masque', _('Masque') + ' - ' + _('UDP') + ' - ' + _('L3')], // Endpoint // https://blog.cloudflare.com/post-quantum-warp/
+	['easytier', _('EasyTier') + ' - ' + _('TCP/UDP') + ' - ' + _('L3')], // Endpoint
 	['ssh', _('SSH') + ' - ' + _('TCP')]
 ];
 
@@ -295,47 +295,79 @@ const routing_port_type = [
 ];
 
 const rules_type = [
-	['DOMAIN'],
-	['DOMAIN-SUFFIX'],
-	['DOMAIN-KEYWORD'],
-	['DOMAIN-WILDCARD'],
-	['DOMAIN-REGEX'],
-	['GEOSITE'],
-
-	['IP-CIDR'],
-	['IP-CIDR6'],
-	['IP-SUFFIX'],
-	['IP-ASN'],
-	['GEOIP'],
-
-	['SRC-GEOIP'],
-	['SRC-IP-ASN'],
-	['SRC-IP-CIDR'],
-	['SRC-IP-SUFFIX'],
-
-	['DST-PORT'],
-	['SRC-PORT'],
-
-	//['IN-PORT'],
-	//['IN-TYPE'],
-	//['IN-USER'],
-	//['IN-NAME'],
-	['REMATCH-NAME'],
-
-	['PROCESS-PATH'],
-	['PROCESS-PATH-REGEX'],
-	['PROCESS-PATH-WILDCARD'],
-	['PROCESS-NAME'],
-	['PROCESS-NAME-REGEX'],
-	['PROCESS-NAME-WILDCARD'],
-	['UID'],
-
-	['NETWORK'],
-	['DSCP'],
-
-	['RULE-SET'],
-
-	['MATCH']
+	{
+		label: _('Domain'),
+		types: [
+			['DOMAIN'],
+			['DOMAIN-SUFFIX'],
+			['DOMAIN-KEYWORD'],
+			['DOMAIN-WILDCARD'],
+			['DOMAIN-REGEX'],
+			['GEOSITE']
+		]
+	},
+	{
+		label: _('Dst-IP'),
+		types: [
+			['IP-CIDR'],
+			['IP-CIDR6'],
+			['IP-SUFFIX'],
+			['IP-ASN'],
+			['GEOIP']
+		]
+	},
+	{
+		label: _('Src-IP'),
+		types: [
+			['SRC-GEOIP'],
+			['SRC-IP-ASN'],
+			['SRC-IP-CIDR'],
+			['SRC-IP-SUFFIX']
+		]
+	},
+	{
+		label: _('Port'),
+		types: [
+			['DST-PORT'],
+			['SRC-PORT']
+		]
+	},
+	{
+		label: _('Inbound'),
+		types: [
+			//['IN-PORT'],
+			//['IN-TYPE'],
+			//['IN-USER'],
+			//['IN-NAME'],
+			['REMATCH-NAME']
+		]
+	},
+	{
+		label: _('Process'),
+		types: [
+			['PROCESS-PATH'],
+			['PROCESS-PATH-REGEX'],
+			['PROCESS-PATH-WILDCARD'],
+			['PROCESS-NAME'],
+			['PROCESS-NAME-REGEX'],
+			['PROCESS-NAME-WILDCARD'],
+			['UID']
+		]
+	},
+	{
+		label: _('Network'),
+		types: [
+			['NETWORK'],
+			['DSCP']
+		]
+	},
+	{
+		label: _('Other'),
+		types: [
+			['RULE-SET'],
+			['MATCH']
+		]
+	}
 ];
 
 const rules_type_allowparms = [
@@ -349,12 +381,15 @@ const rules_type_allowparms = [
 	'RULE-SET',
 ];
 
-const rules_logical_type = [
-	['AND'],
-	['OR'],
-	['NOT'],
-	//['SUB-RULE'],
-];
+const rules_logical_type = {
+	label: _('Logical'),
+	types: [
+		['AND'],
+		['OR'],
+		['NOT'],
+		//['SUB-RULE']
+	]
+};
 
 const rules_logical_payload_count = {
 	'AND': { low: 2, high: undefined },
@@ -510,6 +545,16 @@ const CBIGridSection = form.GridSection.extend({
 	}
 });
 
+const CBIListValue = form.ListValue.extend({
+	renderWidget(/* ... */) {
+		let frameEl = form.ListValue.prototype.renderWidget.apply(this, arguments);
+
+		frameEl.querySelector('select').style["min-width"] = '10em';
+
+		return frameEl;
+	}
+});
+
 const CBIDynamicList = form.DynamicList.extend({ // @less_25_12
 	__name__: 'CBI.DynamicList',
 
@@ -533,6 +578,18 @@ const CBIDynamicList = form.DynamicList.extend({ // @less_25_12
 	}
 });
 
+const CBIStaticList = form.DynamicList.extend({
+	__name__: 'CBI.StaticList',
+
+	renderWidget(/* ... */) {
+		let El = (less_25_12 ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments); // @less_25_12
+
+		El.querySelector('.add-item ul > li[data-value="-"]')?.remove();
+
+		return El;
+	}
+});
+
 const CBIMultiValue = form.MultiValue.extend({ // @pr8758_merged
 	__name__: 'CBI.MultiValue',
 
@@ -550,25 +607,77 @@ const CBIMultiValue = form.MultiValue.extend({ // @pr8758_merged
 	}
 });
 
-const CBIStaticList = form.DynamicList.extend({
-	__name__: 'CBI.StaticList',
+const CBIGroupListValue = CBIListValue.extend({
+	__name__: 'CBI.GroupListValue',
+
+	renderWidget(section_id, option_index, cfgvalue) {
+		const frameEl = CBIListValue.prototype.renderWidget.apply(this, arguments);
+		const select = frameEl.querySelector('select');
+		const options = Array.from(select.options);
+
+		Object.keys(this.grplist).forEach((label) => {
+			const groupEl = E('optgroup', {label: label}, []);
+			for (const option of options)
+				if (this.grplist[label].includes(option.value))
+					groupEl.appendChild(option);
+			select.appendChild(groupEl);
+		});
+
+		select.value = (cfgvalue != null) ? cfgvalue : this.default;
+		return frameEl;
+	},
+
+	value(key, val) {
+		this.keylist ??= [];
+		this.vallist ??= [];
+		this.grplist ??= {};
+
+		if (Array.isArray(key)) {
+			this.grplist[val] ??= [];
+			this.grplist[val].push(key[0]);
+			this.super('value', ...key);
+		} else
+			this.super('value', key, val);
+	}
+});
+
+const CBIGroupDynamicList = (less_25_12 ? CBIDynamicList : form.DynamicList).extend({ // @less_25_12
+	__name__: 'CBI.GroupDynamicList',
+
+	renderWidget(section_id, option_index, cfgvalue) {
+		const frameEl = (less_25_12 ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments); // @less_25_12
+		const select = frameEl.querySelector('ul');
+		const optLis = Array.from(select.querySelectorAll('li'));
+
+		Object.keys(this.grplist).forEach((label) => {
+			const groupLi = E('li', {
+				class: "group-title",
+				style: "font-weight: bold; pointer-events: none;"
+			}, [label]);
+			for (const optLi of optLis)
+				if (this.grplist[label].includes(optLi.getAttribute('data-value'))) {
+					optLi.classList.add('group-item');
+					optLi.style.paddingLeft = '20px';
+				}
+			const firstLi = select.querySelector(`li[data-value="${this.grplist[label][0]}"]`);
+			select.insertBefore(groupLi, firstLi);
+		});
+
+		return frameEl;
+	},
+
+	value: CBIGroupListValue.prototype.value
+});
+
+const CBIGroupStaticList = CBIGroupDynamicList.extend({
+	__name__: 'CBI.GroupStaticList',
 
 	renderWidget(/* ... */) {
-		let El = (less_25_12 ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments); // @less_25_12
+		let El = CBIGroupDynamicList.prototype.renderWidget.apply(this, arguments);
 
 		El.querySelector('.add-item ul > li[data-value="-"]')?.remove();
 
 		return El;
-	}
-});
-
-const CBIListValue = form.ListValue.extend({
-	renderWidget(/* ... */) {
-		let frameEl = form.ListValue.prototype.renderWidget.apply(this, arguments);
-
-		frameEl.querySelector('select').style["min-width"] = '10em';
-
-		return frameEl;
 	}
 });
 
@@ -1938,10 +2047,13 @@ return baseclass.extend({
 
 	/* Prototype */
 	GridSection: CBIGridSection,
-	DynamicList: CBIDynamicList,
-	MultiValue: CBIMultiValue,
-	StaticList: CBIStaticList,
 	ListValue: CBIListValue,
+	DynamicList: CBIDynamicList, // @less_25_12
+	StaticList: CBIStaticList,
+	MultiValue: CBIMultiValue,
+	GroupListValue: CBIGroupListValue,
+	GroupDynamicList: CBIGroupDynamicList,
+	GroupStaticList: CBIGroupStaticList,
 	RichValue: CBIRichValue,
 	RichMultiValue: CBIRichMultiValue,
 	TextValue: CBITextValue,

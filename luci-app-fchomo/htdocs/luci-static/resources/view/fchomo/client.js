@@ -137,9 +137,9 @@ class RulesEntry {
 			Object.keys(content).forEach(key => this[key] = content[key]);
 		} catch {}
 
-		this.type ||= hm.rules_type[0][0];
+		this.type ||= hm.rules_type[0].types[0][0];
 		this.payload ||= [
-			{type: hm.rules_type[0][0], factor: '', /* deny: false */},
+			{type: hm.rules_type[0].types[0][0], factor: '', /* deny: false */},
 			//{type: 'DOMAIN-SUFFIX', factor: '.google.com', deny: true}
 		];
 		this.detour ||= hm.preset_outbound.full[0][0];
@@ -215,7 +215,7 @@ class RulesEntry {
 
 	toString(format) {
 		format ||= 'json';
-		let logical = hm.rules_logical_type.map(e => e[0] || e).includes(this.type);
+		let logical = hm.rules_logical_type.types.map(e => e[0] || e).includes(this.type);
 		let rule, factor, detour, params;
 
 		if (logical) {
@@ -380,7 +380,7 @@ const parseRulesYaml = hm.parseYaml.extend({
 				return null;
 		}
 
-		if (hm.rules_logical_type.map(e => e[0] || e).includes(tp)) {
+		if (hm.rules_logical_type.types.map(e => e[0] || e).includes(tp)) {
 			logical_payload = payload.match(/^\(\((.*)\)\)$/); // LOGIC_TYPE,((payload1),(payload2),(payload3)),DIRECT
 			if (logical_payload)
 				logical_payload = logical_payload[1].split('),(');
@@ -530,11 +530,11 @@ function renderPayload(s, total, uciconfig) {
 	for (let n=0; n<total; n++) {
 		prefix = `payload${n}_`;
 
-		o = s.option(form.ListValue, prefix + 'type', _('Type') + ` ${n+1}`);
-		o.default = hm.rules_type[0][0];
-		hm.rules_type.forEach((res) => {
-			o.value.apply(o, res);
-		})
+		o = s.option(hm.GroupListValue, prefix + 'type', _('Type') + ` ${n+1}`);
+		o.default = hm.rules_type[0].types[0][0];
+		for (const {label, types} of hm.rules_type) {
+			types.forEach((res) => o.value.call(o, res, label));
+		}
 		Object.keys(hm.rules_logical_payload_count).forEach((key) => {
 			if (n < hm.rules_logical_payload_count[key].low)
 				o.depends('type', key);
@@ -669,11 +669,10 @@ function renderPayload(s, total, uciconfig) {
 	Object.keys(extenbox).forEach((n) => {
 		prefix = `payload${n}_`;
 
-		o = s.option(hm.StaticList, prefix + 'type', _('Type') + ' ++');
-		o.default = hm.rules_type[0][0];
-		hm.rules_type.forEach((res) => {
-			o.value.apply(o, res);
-		})
+		o = s.option(hm.GroupStaticList, prefix + 'type', _('Type') + ' ++');
+		for (const {label, types} of hm.rules_type) {
+			types.forEach((res) => o.value.call(o, res, label));
+		}
 		extenbox[n].forEach((type) => {
 			o.depends('type', type);
 		})
@@ -695,7 +694,7 @@ function renderPayload(s, total, uciconfig) {
 			return true;
 		}
 
-		o = s.option(hm.less_25_12 ? hm.DynamicList : form.DynamicList, prefix + 'fused', _('Factor') + ' ++', // @less_25_12
+		o = s.option(hm.GroupDynamicList, prefix + 'fused', _('Factor') + ' ++',
 			_('Content will not be verified, Please make sure you enter it correctly.'));
 		extenbox[n].forEach((type) => {
 			o.depends(Object.fromEntries([['type', type], [prefix + 'type', /.+/]]));
@@ -703,13 +702,10 @@ function renderPayload(s, total, uciconfig) {
 		initDynamicPayload(o, n, 'factor', uciconfig);
 		o.load = L.bind(function(n, key, uciconfig, section_id) {
 			hm.loadLabel.call(this, [
-				['REMATCHNAME', _('-- REMATCH-NAME --')],
-				...hm.loadLabelValues(this.config, 'rematch-name'),
-				['NETWORK', _('-- NETWORK --')],
-				['udp', _('UDP')],
-				['tcp', _('TCP')],
-				['RULESET', _('-- RULE-SET --')],
-				...hm.loadLabelValues(this.config, 'ruleset')
+				...hm.loadLabelValues(this.config, 'rematch-name').map(e => [e, _('REMATCH-NAME')]),
+				[['udp', _('UDP')], _('NETWORK')],
+				[['tcp', _('TCP')], _('NETWORK')],
+				...hm.loadLabelValues(this.config, 'ruleset').map(e => [e, _('RULE-SET')])
 			], section_id);
 
 			return new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayloads().slice(n).map(e => e[key] ?? '');
@@ -764,11 +760,11 @@ function renderRules(s, uciconfig) {
 	o.remove = form.AbstractValue.prototype.remove;
 	o.editable = true;
 
-	o = s.option(form.ListValue, 'type', _('Type'));
-	o.default = hm.rules_type[0][0];
-	[...hm.rules_type, ...hm.rules_logical_type].forEach((res) => {
-		o.value.apply(o, res);
-	})
+	o = s.option(hm.GroupListValue, 'type', _('Type'));
+	o.default = hm.rules_type[0].types[0][0];
+	for (const {label, types} of hm.rules_type.concat(hm.rules_logical_type)) {
+		types.forEach((res) => o.value.call(o, res, label));
+	}
 	o.load = function(section_id) {
 		return new RulesEntry(uci.get(uciconfig, section_id, 'entry')).type;
 	}

@@ -67,9 +67,9 @@ return view.extend({
 					}
 					return url;
 				},
-				githubRelease: 'https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.8/doona-0.1.0-beta.8.tar.gz',
-				ghfastMirror: 'https://ghfast.top/https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.8/doona-0.1.0-beta.8.tar.gz',
-				ghproxyMirror: 'https://ghproxy.net/https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.8/doona-0.1.0-beta.8.tar.gz',
+				githubRelease: 'https://github.com/Zakkaus/doona',
+				ghfastMirror: 'https://ghfast.top/https://github.com/Zakkaus/doona',
+				ghproxyMirror: 'https://ghproxy.net/https://github.com/Zakkaus/doona',
 				pkgName: 'doona-*.tar.gz'
 			}
 		};

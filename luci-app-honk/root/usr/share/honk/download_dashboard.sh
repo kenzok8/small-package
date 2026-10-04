@@ -6,7 +6,7 @@ if [ -z "${2:-}" ]; then
     if [ "$TARGET_DIR" = "/etc/honk/zashboard" ]; then
         DOWNLOAD_URL="https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
     else
-        DOWNLOAD_URL="https://github.com/Zakkaus/doona/releases/download/v0.1.0-beta.11/doona-0.1.0-beta.11.tar.gz"
+        DOWNLOAD_URL="https://github.com/Zakkaus/doona"
     fi
 else
     DOWNLOAD_URL="$2"
@@ -60,36 +60,49 @@ fetch_text() {
 case "$DOWNLOAD_URL" in
     *github.com/Zakkaus/doona*)
         PREFIX="${DOWNLOAD_URL%%https://github.com/*}"
-        DEFAULT_TAG="v0.1.0-beta.11"
-        DEFAULT_TAG_NO_V="${DEFAULT_TAG#[vV]}"
-        FALLBACK_URL="${PREFIX}https://github.com/Zakkaus/doona/releases/download/${DEFAULT_TAG}/doona-${DEFAULT_TAG_NO_V}.tar.gz"
         log "Checking latest release..."
 
         RESOLVED_URL=""
-        RELEASES_HTML=$(fetch_text "https://github.com/Zakkaus/doona/releases")
-        LATEST_TAG=$(printf "%s" "$RELEASES_HTML" | grep -o 'releases/tag/[^"/]*' | head -n 1 | sed 's|releases/tag/||')
+        MAX_RETRIES=5
+        RETRY_DELAY=2
+        attempt=1
 
-        if [ -n "$LATEST_TAG" ]; then
-            log "Latest tag: $LATEST_TAG"
-            ASSETS_HTML=$(fetch_text "https://github.com/Zakkaus/doona/releases/expanded_assets/$LATEST_TAG")
-            ASSET_PATH=$(printf "%s" "$ASSETS_HTML" | grep -o '/Zakkaus/doona/releases/download/[^"]*/doona-[^"]*\.tar\.gz' | grep -v 'fonts' | head -n 1)
-            if [ -n "$ASSET_PATH" ]; then
-                RESOLVED_URL="https://github.com${ASSET_PATH}"
-                log "Found package: $ASSET_PATH"
-            else
-                TAG_NO_V="${LATEST_TAG#[vV]}"
-                RESOLVED_URL="https://github.com/Zakkaus/doona/releases/download/${LATEST_TAG}/doona-${TAG_NO_V}.tar.gz"
-                log "Inferred package URL: $RESOLVED_URL"
+        while [ "$attempt" -le "$MAX_RETRIES" ]; do
+            RELEASES_HTML=$(fetch_text "https://github.com/Zakkaus/doona/releases")
+            LATEST_TAG=$(printf "%s" "$RELEASES_HTML" | grep -o '/Zakkaus/doona/releases/tag/[^"/]*' | head -n 1 | sed 's|/Zakkaus/doona/releases/tag/||')
+            if [ -z "$LATEST_TAG" ]; then
+                RELEASES_HTML=$(fetch_text "https://github.com/Zakkaus/doona/releases.atom")
+                LATEST_TAG=$(printf "%s" "$RELEASES_HTML" | grep -o 'Zakkaus/doona/releases/tag/[^<"]*' | head -n 1 | sed 's|Zakkaus/doona/releases/tag/||')
             fi
-        fi
+
+            if [ -n "$LATEST_TAG" ]; then
+                log "Latest tag: $LATEST_TAG"
+                ASSETS_HTML=$(fetch_text "https://github.com/Zakkaus/doona/releases/expanded_assets/$LATEST_TAG")
+                ASSET_PATH=$(printf "%s" "$ASSETS_HTML" | grep -o '/Zakkaus/doona/releases/download/[^"]*/doona-[^"]*\.tar\.gz' | grep -v 'fonts' | head -n 1)
+                if [ -n "$ASSET_PATH" ]; then
+                    RESOLVED_URL="https://github.com${ASSET_PATH}"
+                    log "Found package: $ASSET_PATH"
+                else
+                    TAG_NO_V="${LATEST_TAG#[vV]}"
+                    RESOLVED_URL="https://github.com/Zakkaus/doona/releases/download/${LATEST_TAG}/doona-${TAG_NO_V}.tar.gz"
+                    log "Inferred package URL: $RESOLVED_URL"
+                fi
+                break
+            fi
+
+            log "Failed to fetch latest release tag (attempt $attempt/$MAX_RETRIES). Retrying in ${RETRY_DELAY}s..."
+            sleep "$RETRY_DELAY"
+            attempt=$((attempt + 1))
+        done
 
         if [ -n "$RESOLVED_URL" ]; then
             DOWNLOAD_URL="${PREFIX}${RESOLVED_URL}"
             log "Resolved URL: $DOWNLOAD_URL"
         else
-            log "Online tag resolution failed, fallback: $DEFAULT_TAG"
-            DOWNLOAD_URL="$FALLBACK_URL"
-            log "Fallback URL: $DOWNLOAD_URL"
+            log "Error: Failed to obtain latest release version after $MAX_RETRIES attempts."
+            set_status "FAILED"
+            rm -rf "$TMP_DIR"
+            exit 1
         fi
         ;;
 esac
