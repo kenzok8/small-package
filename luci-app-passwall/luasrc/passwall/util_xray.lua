@@ -540,6 +540,10 @@ function gen_config_server(node)
 					u.user = user.username
 					u.pass = user.password
 				end
+				if node.protocol == "masque" then
+					u.email = user.username
+					u.pass = user.password
+				end
 				if node.protocol == "shadowsocks" or node.protocol == "trojan" then
 					u.email = user.username
 					u.password = user.password
@@ -609,6 +613,18 @@ function gen_config_server(node)
 		settings = {
 			version = 2,
 			users = users
+		}
+	elseif node.protocol == "masque" then
+		node.transport = "masque"
+		node.tls = "1"
+		node.reality = nil
+		node.alpn = nil
+		node.fallback = nil
+		node.finalmask = nil
+		settings = {
+			users = users,
+			address = node.masque_address,
+			mtu = tonumber(node.masque_mtu or 1280)
 		}
 	elseif node.protocol == "tunnel" then
 		settings = {
@@ -719,6 +735,9 @@ function gen_config_server(node)
 				streamSettings = {
 					method = node.transport,
 					security = "none",
+					masqueSettings = (node.protocol == "masque") and {
+						path = (node.masque_path and node.masque_path ~= "") and node.masque_path or nil
+					} or nil,
 					tlsSettings = ("1" == node.tls) and {
 						disableSystemRoot = false,
 						certificates = {

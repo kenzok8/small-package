@@ -65,6 +65,7 @@ o:value("shadowsocks", "Shadowsocks")
 o:value("trojan", "Trojan")
 o:value("hysteria2", "Hysteria2")
 o:value("wireguard", "WireGuard")
+o:value("masque", "MASQUE")
 o:value("tunnel", "Tunnel")
 o:depends({ custom = false })
 
@@ -85,6 +86,7 @@ o:depends({ protocol = "vless" })
 o:depends({ protocol = "trojan" })
 o:depends({ protocol = "hysteria2" })
 o:depends({ protocol = "wireguard" })
+o:depends({ protocol = "masque" })
 
 o = s:option(ListValue, "d_protocol", translate("Destination protocol"))
 o:value("tcp", "TCP")
@@ -188,6 +190,19 @@ o:depends({ protocol = "hysteria2", hysteria2_ignore_client_bandwidth = false })
 o = s:option(Value, "hysteria2_down_mbps", translate("Max download Mbps"))
 o:depends({ protocol = "hysteria2", hysteria2_ignore_client_bandwidth = false })
 
+-- [[ MASQUE ]] --
+o = s:option(Value, "masque_path", translate("MASQUE Path"))
+o:depends({ protocol = "masque" })
+
+o = s:option(DynamicList, "masque_address", translate("MASQUE Address"))
+o.rmempty = false
+o:depends({ protocol = "masque" })
+
+o = s:option(Value, "masque_mtu", "MTU")
+o.datatype = "uinteger"
+o.default = "1280"
+o:depends({ protocol = "masque" })
+
 ---- [[ TLS ]]
 o = s:option(Flag, "tls", translate("TLS"))
 o.default = 0
@@ -274,12 +289,14 @@ end
 o = s:option(Flag, "tls_use_pem", translate("Use PEM"), translate("Use certificate and private key PEM content."))
 o:depends({ tls = true, reality = false })
 o:depends({ protocol = "hysteria2" })
+o:depends({ protocol = "masque" })
 
 o = s:option(FileUpload, "tls_certificateFile", translate("Path to the certificate file"), translate("as:") .. "/etc/ssl/fullchain.crt")
 o.default = m:get(s.section, "tls_certificateFile") or "/etc/config/ssl/" .. s.section .. ".crt"
 if o and o:formvalue(s.section) then o.default = o:formvalue(s.section) end
 o:depends({ tls = true, reality = false, tls_use_pem = false })
 o:depends({ protocol = "hysteria2", tls_use_pem = false })
+o:depends({ protocol = "masque", tls_use_pem = false })
 o.validate = function(self, value, t)
 	if value and value ~= "" then
 		if not api.fs.access(value) then
@@ -296,6 +313,7 @@ o.default = m:get(s.section, "tls_keyFile") or "/etc/config/ssl/" .. s.section .
 if o and o:formvalue(s.section) then o.default = o:formvalue(s.section) end
 o:depends({ tls = true, reality = false, tls_use_pem = false })
 o:depends({ protocol = "hysteria2", tls_use_pem = false })
+o:depends({ protocol = "masque", tls_use_pem = false })
 o.validate = function(self, value, t)
 	if value and value ~= "" then
 		if not api.fs.access(value) then
@@ -336,6 +354,7 @@ end
 o = s:option(Flag, "ech", translate("ECH"))
 o.default = "0"
 o:depends({ tls = true, reality = false })
+o:depends({ protocol = "masque" })
 
 o = s:option(TextValue, "ech_key", translate("ECH Key"))
 o.default = ""

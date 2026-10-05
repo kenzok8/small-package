@@ -742,6 +742,11 @@ function gen_config_server(node)
 		{ type = "direct", tag = "direct" }
 	}
 
+	if node.protocol == "masque" then
+		node.tls = "1"
+		node.reality = nil
+	end
+
 	local tls = {
 		enabled = true,
 		certificate_path = (node.tls_use_pem ~= "1") and node.tls_certificateFile or nil,
@@ -853,7 +858,7 @@ function gen_config_server(node)
 			local user = api.uci_get_s(v) or {}
 			if user[".type"] == "user" then
 				local u = {}
-				if node.protocol == "mixed" or node.protocol == "socks" or node.protocol == "http" or node.protocol == "naive" then
+				if node.protocol == "mixed" or node.protocol == "socks" or node.protocol == "http" or node.protocol == "naive" or node.protocol == "masque" then
 					u.username = user.username
 					u.password = user.password
 				end
@@ -899,6 +904,18 @@ function gen_config_server(node)
 	end
 
 	local protocol_table = nil
+
+	if node.protocol == "masque" then
+		tls.alpn = nil
+		protocol_table = {
+			type = "masque-server",
+			users = users,
+			path = (node.masque_path and node.masque_path ~= "") and node.masque_path or nil,
+			address = node.masque_address,
+			mtu = tonumber(node.masque_mtu or 1280),
+			tls = tls
+		}
+	end
 
 	if node.protocol == "mixed" then
 		protocol_table = {
@@ -1095,8 +1112,7 @@ function gen_config_server(node)
 		end
 	end
 
-	if node.protocol == "wireguard" then
-		inbound.listen = nil
+	if node.protocol == "wireguard" or node.protocol == "masque" then
 		table.insert(endpoints, inbound)
 	else
 		table.insert(inbounds, inbound)

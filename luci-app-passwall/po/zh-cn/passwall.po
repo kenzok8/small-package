@@ -2183,3 +2183,6 @@ msgstr "MASQUE 路径"
 
 msgid "Custom HTTP Headers"
 msgstr "自定义 HTTP 请求头"
+
+msgid "MASQUE Address"
+msgstr "MASQUE 隧道地址"
