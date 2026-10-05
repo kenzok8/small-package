@@ -1462,10 +1462,7 @@ function to_check_self()
 		release = release[1]
 	end
 	if type(release) ~= "table" or not release.tag_name then
-		return {
-			code = 1,
-			error = i18n.translate("Get remote version info failed.")
-		}
+		return {code = 1, error = i18n.translate("Get remote version info failed.")}
 	end
 	local local_version  = get_version()
 	-- Keep the release suffix (-1, -2, ...) so package revisions are compared too.
@@ -1482,15 +1479,20 @@ function to_check_self()
 		extension = ".ipk"
 	end
 	local main, i18n_package
-	for _, asset in ipairs(release.assets or {}) do
-		local name = asset.name or ""
-		if name:find(prefix, 1, true) == 1 and name:sub(-#extension) == extension then
-			name = name:sub(#prefix + 1)
-			if name:match("^luci%-app%-" .. appname .. "[_%-]%d") then main = asset end
-			if name:match("^luci%-i18n%-" .. appname .. "%-zh%-cn[_%-]%d") then i18n_package = asset end
+	for _, search_prefix in ipairs({prefix, ""}) do
+		for _, asset in ipairs(release.assets or {}) do
+			local name = asset.name or ""
+			if name:find(search_prefix, 1, true) == 1 and name:sub(-#extension) == extension then
+				name = name:sub(#search_prefix + 1)
+				if not main and name:match("^luci%-app%-" .. appname .. "[_%-]%d") then main = asset end
+				if not i18n_package and name:match("^luci%-i18n%-" .. appname .. "%-zh%-cn[_%-]%d") then i18n_package = asset end
+			end
 		end
+		if main and i18n_package then break end
 	end
-	if not main or not i18n_package then return {code = 1} end
+	if not main or not i18n_package then
+		return {code = 1, error = i18n.translate("Get remote version info failed.")}
+	end
 	return {
 		code = 0, has_update = has_update, local_version = local_version,
 		remote_version = remote_version, html_url = release.html_url,

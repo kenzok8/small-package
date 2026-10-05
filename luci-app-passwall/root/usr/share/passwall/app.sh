@@ -946,7 +946,7 @@ start_crontab() {
 	clean_crontab
 
 	if [ "$ENABLED" != "1" ]; then
-		/etc/init.d/cron restart
+		[ -x /etc/init.d/cron ] && /etc/init.d/cron restart >/dev/null 2>&1
 		return
 	fi
 
@@ -1042,13 +1042,13 @@ start_crontab() {
 		echolog "运行于非代理模式，仅允许服务启停的定时任务。"
 	fi
 
-	/etc/init.d/cron restart
+	[ -x /etc/init.d/cron ] && /etc/init.d/cron restart >/dev/null 2>&1
 }
 
 stop_crontab() {
 	[ "$1" = "cron" ] && return
 	clean_crontab
-	/etc/init.d/cron restart
+	[ -x /etc/init.d/cron ] && /etc/init.d/cron restart >/dev/null 2>&1
 	#echolog "清除定时执行命令。"
 }
 

@@ -44,6 +44,9 @@ o:value("wireguard", translate("WireGuard"))
 if api.compare_versions(xray_version, ">=", "26.1.13") then
 	o:value("hysteria2", translate("Hysteria2"))
 end
+if api.compare_versions(xray_version, ">=", "26.9.30") then
+	o:value("masque", "MASQUE")
+end
 if api.compare_versions(xray_version, ">=", "1.8.12") then
 	o:value("_balancing", translate("Balancing"))
 end
@@ -260,6 +263,7 @@ o:depends({ protocol = "vless" })
 o = s:option(Value, "username", translate("Username"))
 o:depends({ protocol = "http" })
 o:depends({ protocol = "socks" })
+o:depends({ protocol = "masque" })
 
 o = s:option(Value, "password", translate("Password"))
 o.password = true
@@ -267,6 +271,34 @@ o:depends({ protocol = "http" })
 o:depends({ protocol = "socks" })
 o:depends({ protocol = "shadowsocks" })
 o:depends({ protocol = "trojan" })
+o:depends({ protocol = "masque" })
+
+-- [[ MASQUE ]] --
+o = s:option(Value, "masque_path", translate("MASQUE Path"))
+o:depends({ protocol = "masque" })
+
+o = s:option(TextValue, "masque_headers", translate("Custom HTTP Headers"))
+o.rows = 5
+o.wrap = "off"
+o:depends({ protocol = "masque" })
+o.cfgvalue = function(self, section)
+	return (m:get(section, "masque_headers") or ""):gsub("\\n", "\n")
+end
+o.validate = function(self, value)
+	value = api.trim(value):gsub("\r\n", "\n"):gsub("\r", "\n")
+	local headers = {}
+	for line in value:gmatch("[^\n]+") do
+		if api.trim(line) ~= "" then
+			local key = line:match("^%s*([^:]+):")
+			key = key and api.trim(key):lower()
+			if not key or not key:match("^[!#$%%&'*+%.%^_`|~%w%-]+$") or headers[key] or key == "host" or key == "capsule-protocol" then
+				return nil, translate("Not true format, please re-enter!") .. " (" .. line .. ")"
+			end
+			headers[key] = true
+		end
+	end
+	return value:gsub("\n", "\\n")
+end
 
 o = s:option(ListValue, "security", translate("Encrypt Method"))
 for a, t in ipairs(security_list) do o:value(t) end
@@ -419,21 +451,25 @@ o:depends({ tls = true, reality = false })
 o = s:option(Value, "tls_serverName", "SNI " .. translate("Domain"))
 o:depends({ tls = true })
 o:depends({ protocol = "hysteria2" })
+o:depends({ protocol = "masque" })
 
 o = s:option(Value, "tls_pinSHA256", translate("TLS Chain Fingerprint (SHA256)"))
 o:depends({ tls = true, reality = false })
 o:depends({ protocol = "hysteria2" })
+o:depends({ protocol = "masque" })
 o.description = translate("Once set, connects only when the server’s chain fingerprint matches.") ..
 		string.format("<a href='javascript:void(0)' onclick='javascript:fetchCertSha256(this)'>%s</a>", "→ " .. translate("Fetch Manually"))
 
 o = s:option(Value, "tls_CertByName", translate("TLS Certificate Name (CertName)"), translate("TLS is used to verify the leaf certificate name."))
 o:depends({ tls = true, reality = false })
 o:depends({ protocol = "hysteria2" })
+o:depends({ protocol = "masque" })
 
 o = s:option(Flag, "tls_certificate", translate("TLS Certificate (PEM)"))
 o.default = "0"
 o:depends({ tls = true, reality = false })
 o:depends({ protocol = "hysteria2" })
+o:depends({ protocol = "masque" })
 
 o = s:option(TextValue, "tls_certificate_pem", "　", translate("Full certificate (chain), PEM format."))
 o.default = ""
@@ -452,6 +488,7 @@ o = s:option(Flag, "ech", translate("ECH"))
 o.default = "0"
 o:depends({ tls = true, reality = false })
 o:depends({ protocol = "hysteria2", hysteria2_realms = false })
+o:depends({ protocol = "masque" })
 
 o = s:option(TextValue, "ech_config", translate("ECH Config"))
 o.default = ""
@@ -495,6 +532,7 @@ o:depends({ tls = true, reality = true })
 
 o = s:option(Value, "cipherSuites", translate("Cipher Suites"), '<a href="https://go.dev/src/crypto/tls/cipher_suites.go#L44" target="_blank">***</a>' .. " " .. translate("Configures the list of supported cipher suites, separated by :"))
 o:depends({ tls = true, reality = false })
+o:depends({ protocol = "masque" })
 
 o = s:option(Flag, "use_mldsa65Verify", translate("ML-DSA-65"))
 o.default = "0"
@@ -702,6 +740,7 @@ o:depends({ transport = "ws" })
 o:depends({ transport = "httpupgrade" })
 o:depends({ transport = "xhttp" })
 o:depends({ transport = "grpc" })
+o:depends({ protocol = "masque" })
 
 -- [[ Mux.Cool ]]--
 o = s:option(Flag, "mux", "Mux", translate("Enable Mux.Cool"))
