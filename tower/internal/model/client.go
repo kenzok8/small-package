@@ -27,6 +27,7 @@ const (
 	ClientClashoo      ClientTarget = "clashoo-mihomo"
 	ClientClashooSB    ClientTarget = "clashoo-singbox"
 	ClientMomo         ClientTarget = "momo"
+	ClientDAE          ClientTarget = "dae-config"
 )
 
 // AllClients lists every supported client target in a stable order.
@@ -53,6 +54,7 @@ var AllClients = []ClientTarget{
 	ClientClashoo,
 	ClientClashooSB,
 	ClientMomo,
+	ClientDAE,
 }
 
 // Supported reports whether a target is an advertised export destination.
@@ -112,6 +114,8 @@ func (c ClientTarget) Name() string {
 		return "Clashoo (sing-box)"
 	case ClientMomo:
 		return "Momo"
+	case ClientDAE:
+		return "dae config"
 	default:
 		return string(c)
 	}
@@ -130,6 +134,7 @@ const (
 	FamilySingBox                          // sing-box JSON (sing-box MT, Hiddify)
 	FamilyEgern                            // Egern YAML
 	FamilyV2Box                            // V2Box node-only subscription
+	FamilyDAE                              // Native dae DSL
 )
 
 // Family returns the generator family for a client target.
@@ -149,6 +154,8 @@ func (c ClientTarget) Family() FormatFamily {
 		return FamilyQuanX
 	case ClientHiddify, ClientSingBox, ClientClashooSB, ClientMomo:
 		return FamilySingBox
+	case ClientDAE:
+		return FamilyDAE
 	case ClientEgern:
 		return FamilyEgern
 	case ClientV2Box:

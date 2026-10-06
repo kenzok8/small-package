@@ -4,10 +4,11 @@ package model
 type RuleGroupKind string
 
 const (
-	KindSelect      RuleGroupKind = "select"
-	KindURLTest     RuleGroupKind = "url-test"
-	KindFallback    RuleGroupKind = "fallback"
-	KindLoadBalance RuleGroupKind = "load-balance"
+	KindSelect        RuleGroupKind = "select"
+	KindURLTest       RuleGroupKind = "url-test"
+	KindFallback      RuleGroupKind = "fallback"
+	KindLoadBalance   RuleGroupKind = "load-balance"
+	KindDAENativeAuto RuleGroupKind = "dae-native-auto"
 )
 
 // RuleMemberType distinguishes a group reference from a node-name pattern.
@@ -85,6 +86,7 @@ type RuleSchemeNetworkSettings struct {
 type RuleScheme struct {
 	ID              string                     `json:"id"`
 	Name            string                     `json:"name"`
+	TargetOnly      ClientTarget               `json:"target_only,omitempty"`
 	Summary         string                     `json:"summary,omitempty"`
 	SourceURL       string                     `json:"source_url,omitempty"`
 	IsBundled       bool                       `json:"is_bundled,omitempty"`

@@ -72,13 +72,6 @@ function runJSON(args) {
 	}
 }
 
-function runText(args) {
-	const r = run(args);
-	if (!r.ok)
-		return { error: r.error };
-	return { content: r.output };
-}
-
 const methods = {
 	subscriptions: {
 		args: {},
@@ -164,13 +157,13 @@ const methods = {
 			return runJSON(cmd);
 		}
 	},
-	export: {
-		args: { target: 'target', protocols: 'protocols', nodes: 'nodes', scheme: 'scheme', prefer_rule_sets: false },
+	export_begin: {
+		args: { target: 'target', protocols: 'protocols', nodes: 'nodes', scheme: 'scheme', prefer_rule_sets: false, plan_digest: 'plan_digest', accept_degradations: 'accept_degradations', strict: false, service_regions: 'service_regions' },
 		call: function(req) {
 			const target = req.args?.target ?? '';
 			if (target === '')
 				return { error: 'target is required' };
-			let cmd = `export --target ${shellquote(target)}`;
+			let cmd = `export_begin --target ${shellquote(target)}`;
 			if (req.args?.protocols)
 				cmd += ` --protocols ${shellquote(req.args.protocols)}`;
 			if (req.args?.nodes)
@@ -179,7 +172,63 @@ const methods = {
 				cmd += ` --scheme ${shellquote(req.args.scheme)}`;
 			if (req.args?.prefer_rule_sets === false)
 				cmd += ' --prefer-rule-sets=false';
-			return runText(cmd);
+			if (req.args?.plan_digest)
+				cmd += ` --plan-digest ${shellquote(req.args.plan_digest)}`;
+			if (req.args?.accept_degradations)
+				cmd += ` --accept-degradations ${shellquote(req.args.accept_degradations)}`;
+			if (req.args?.strict === true)
+				cmd += ' --strict';
+			if (req.args?.service_regions)
+				cmd += ` --service-regions ${shellquote(req.args.service_regions)}`;
+			return runJSON(cmd);
+		}
+	},
+	export_read: {
+		args: { id: 'id', offset: 0 },
+		call: function(req) {
+			const id = req.args?.id ?? '';
+			const offset = req.args?.offset;
+			if (id === '' || offset == null || int(offset) < 0)
+				return { error: 'id and a valid offset are required' };
+			return runJSON(`export_read --id ${shellquote(id)} --offset ${int(offset)}`);
+		}
+	},
+	export_discard: {
+		args: { id: 'id' },
+		call: function(req) {
+			const id = req.args?.id ?? '';
+			if (id === '')
+				return { error: 'id is required' };
+			const r = run(`export_discard --id ${shellquote(id)}`);
+			return r.ok ? { success: true } : { error: r.error };
+		}
+	},
+	preflight_export: {
+		args: { target: 'target', protocols: 'protocols', nodes: 'nodes', scheme: 'scheme', prefer_rule_sets: false, strict: false, service_regions: 'service_regions' },
+		call: function(req) {
+			const target = req.args?.target ?? '';
+			if (target === '')
+				return { error: 'target is required' };
+			let cmd = `preflight_export --target ${shellquote(target)}`;
+			if (req.args?.protocols)
+				cmd += ` --protocols ${shellquote(req.args.protocols)}`;
+			if (req.args?.nodes)
+				cmd += ` --nodes ${shellquote(req.args.nodes)}`;
+			if (req.args?.scheme)
+				cmd += ` --scheme ${shellquote(req.args.scheme)}`;
+			if (req.args?.prefer_rule_sets === false)
+				cmd += ' --prefer-rule-sets=false';
+			if (req.args?.strict === true)
+				cmd += ' --strict';
+			if (req.args?.service_regions)
+				cmd += ` --service-regions ${shellquote(req.args.service_regions)}`;
+			return runJSON(cmd);
+		}
+	},
+	capabilities: {
+		args: {},
+		call: function() {
+			return runJSON('capabilities');
 		}
 	},
 	schemes: {
@@ -260,7 +309,7 @@ const methods = {
 		}
 	},
 	share_create: {
-		args: { destination: 'destination', nodes: 'nodes', scheme: 'scheme', prefer_rule_sets: false },
+		args: { destination: 'destination', nodes: 'nodes', scheme: 'scheme', prefer_rule_sets: false, plan_digest: 'plan_digest', accept_degradations: 'accept_degradations', strict: false, service_regions: 'service_regions' },
 		call: function(req) {
 			const destination = req.args?.destination ?? '';
 			if (destination === '')
@@ -272,6 +321,14 @@ const methods = {
 				cmd += ` --scheme ${shellquote(req.args.scheme)}`;
 			if (req.args?.prefer_rule_sets === false)
 				cmd += ' --prefer-rule-sets=false';
+			if (req.args?.plan_digest)
+				cmd += ` --plan-digest ${shellquote(req.args.plan_digest)}`;
+			if (req.args?.accept_degradations)
+				cmd += ` --accept-degradations ${shellquote(req.args.accept_degradations)}`;
+			if (req.args?.strict === true)
+				cmd += ' --strict';
+			if (req.args?.service_regions)
+				cmd += ` --service-regions ${shellquote(req.args.service_regions)}`;
 			const result = runJSON(cmd);
 			if (result.error)
 				return result;

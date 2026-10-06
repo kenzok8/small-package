@@ -1,1 +1,0 @@
-import{j as a}from"./vendor-react-64fcanlc.js";import{aF as s,P as r,fq as t,T as o,fp as e,am as n}from"./index-CmbH0woS.js";function i({at:i}){const f=s[r()],m=t();return a.jsx(o,{text:i?n(i,f):void 0,children:e(i,f,m)})}export{i as T};

@@ -15,6 +15,7 @@ import (
 	"os"
 
 	"github.com/kenzok8/tower/internal/api"
+	"github.com/kenzok8/tower/internal/generator"
 	"github.com/kenzok8/tower/internal/model"
 	"github.com/kenzok8/tower/internal/service"
 	"github.com/kenzok8/tower/internal/store"
@@ -72,11 +73,11 @@ func runCLI(sub string, args []string, svc *service.Service, listen string) erro
 		}
 		return printJSON(state.Subscriptions)
 	case "nodes":
-		state, err := svc.Store.Load()
+		nodes, err := svc.Nodes()
 		if err != nil {
 			return err
 		}
-		return printJSON(state.Nodes)
+		return printJSON(nodes)
 	case "update_node":
 		fs := flag.NewFlagSet("update_node", flag.ExitOnError)
 		file := fs.String("file", "", "path to the node JSON file")
@@ -150,19 +151,119 @@ func runCLI(sub string, args []string, svc *service.Service, listen string) erro
 		nodes := fs.String("nodes", "", "comma-separated node ids (empty = all)")
 		scheme := fs.String("scheme", "", "rule scheme id (empty = built-in fallback)")
 		preferRuleSets := fs.Bool("prefer-rule-sets", true, "prefer native remote rule sets when supported")
+		planDigest := fs.String("plan-digest", "", "digest from preflight for degraded exports")
+		serviceRegionsJSON := fs.String("service-regions", "", "JSON service-to-country map for target-specific routing")
+		acceptedDegradations := fs.String("accept-degradations", "", "comma-separated preflight warning IDs")
+		strict := fs.Bool("strict", false, "require explicit nodes and an exact preflight digest")
 		_ = fs.Parse(args)
-		out, err := svc.ExportWithOptions(model.ClientTarget(*target), service.ParseProtocols(*protocols), service.ParseNodeIDs(*nodes), *scheme, *preferRuleSets)
+		serviceRegions, err := parseServiceRegions(*serviceRegionsJSON)
+		if err != nil {
+			return err
+		}
+		if len(serviceRegions) != 0 && !*strict {
+			return fmt.Errorf("service-regions requires --strict")
+		}
+		var out string
+		if *strict {
+			out, err = svc.ExportStrictWithServiceRegions(model.ClientTarget(*target), service.ParseProtocols(*protocols), service.ParseNodeIDs(*nodes), *scheme, *preferRuleSets, *planDigest, serviceRegions)
+		} else {
+			out, err = svc.ExportWithConsent(model.ClientTarget(*target), service.ParseProtocols(*protocols), service.ParseNodeIDs(*nodes), *scheme, *preferRuleSets, *planDigest, service.ParseNodeIDs(*acceptedDegradations))
+		}
 		if err != nil {
 			return err
 		}
 		fmt.Print(out)
 		return nil
+	case "export_begin":
+		fs := flag.NewFlagSet("export_begin", flag.ExitOnError)
+		target := fs.String("target", "", "client target")
+		protocols := fs.String("protocols", "", "comma-separated enabled protocols (empty = all)")
+		nodes := fs.String("nodes", "", "comma-separated node ids (empty = all)")
+		scheme := fs.String("scheme", "", "rule scheme id (empty = built-in fallback)")
+		preferRuleSets := fs.Bool("prefer-rule-sets", true, "prefer native remote rule sets when supported")
+		planDigest := fs.String("plan-digest", "", "digest from preflight for degraded exports")
+		serviceRegionsJSON := fs.String("service-regions", "", "JSON service-to-country map for target-specific routing")
+		acceptedDegradations := fs.String("accept-degradations", "", "comma-separated preflight warning IDs")
+		strict := fs.Bool("strict", false, "require explicit nodes and an exact preflight digest")
+		_ = fs.Parse(args)
+		serviceRegions, err := parseServiceRegions(*serviceRegionsJSON)
+		if err != nil {
+			return err
+		}
+		if len(serviceRegions) != 0 && !*strict {
+			return fmt.Errorf("service-regions requires --strict")
+		}
+		if *target == "" {
+			return fmt.Errorf("target is required")
+		}
+		var result service.ExportBeginResult
+		if *strict {
+			result, err = svc.BeginExportStrictWithServiceRegions(model.ClientTarget(*target), service.ParseProtocols(*protocols), service.ParseNodeIDs(*nodes), *scheme, *preferRuleSets, *planDigest, serviceRegions)
+		} else {
+			result, err = svc.BeginExport(model.ClientTarget(*target), service.ParseProtocols(*protocols), service.ParseNodeIDs(*nodes), *scheme, *preferRuleSets, *planDigest, service.ParseNodeIDs(*acceptedDegradations))
+		}
+		if err != nil {
+			return err
+		}
+		return printJSON(result)
+	case "export_read":
+		fs := flag.NewFlagSet("export_read", flag.ExitOnError)
+		id := fs.String("id", "", "export id")
+		offset := fs.Int("offset", 0, "byte offset")
+		_ = fs.Parse(args)
+		result, err := svc.ReadExport(*id, *offset)
+		if err != nil {
+			return err
+		}
+		return printJSON(result)
+	case "export_discard":
+		fs := flag.NewFlagSet("export_discard", flag.ExitOnError)
+		id := fs.String("id", "", "export id")
+		_ = fs.Parse(args)
+		if err := svc.DiscardExport(*id); err != nil {
+			return err
+		}
+		return printJSON(struct {
+			Success bool `json:"success"`
+		}{Success: true})
+	case "preflight_export":
+		fs := flag.NewFlagSet("preflight_export", flag.ExitOnError)
+		target := fs.String("target", "", "client target")
+		protocols := fs.String("protocols", "", "comma-separated enabled protocols (empty = all)")
+		nodes := fs.String("nodes", "", "comma-separated node ids (empty = all)")
+		scheme := fs.String("scheme", "", "rule scheme id (empty = built-in fallback)")
+		preferRuleSets := fs.Bool("prefer-rule-sets", true, "prefer native remote rule sets when supported")
+		serviceRegionsJSON := fs.String("service-regions", "", "JSON service-to-country map for target-specific routing")
+		strict := fs.Bool("strict", false, "require explicit nodes and return exact plans only")
+		_ = fs.Parse(args)
+		serviceRegions, err := parseServiceRegions(*serviceRegionsJSON)
+		if err != nil {
+			return err
+		}
+		if len(serviceRegions) != 0 && !*strict {
+			return fmt.Errorf("service-regions requires --strict")
+		}
+		if *target == "" {
+			return fmt.Errorf("target is required")
+		}
+		var result generator.PreflightResult
+		if *strict {
+			result, err = svc.PreflightExportStrictWithServiceRegions(model.ClientTarget(*target), service.ParseProtocols(*protocols), service.ParseNodeIDs(*nodes), *scheme, *preferRuleSets, serviceRegions)
+		} else {
+			result, err = svc.PreflightExportWithOptions(model.ClientTarget(*target), service.ParseProtocols(*protocols), service.ParseNodeIDs(*nodes), *scheme, *preferRuleSets)
+		}
+		if err != nil {
+			return err
+		}
+		return printJSON(result)
 	case "schemes":
 		results, err := svc.SchemeSummaries()
 		if err != nil {
 			return err
 		}
 		return printJSON(results)
+	case "capabilities":
+		return printJSON(generator.TargetCapabilities())
 	case "scheme":
 		fs := flag.NewFlagSet("scheme", flag.ExitOnError)
 		id := fs.String("id", "", "scheme id")
@@ -247,11 +348,27 @@ func runCLI(sub string, args []string, svc *service.Service, listen string) erro
 		nodes := fs.String("nodes", "", "comma-separated node ids")
 		scheme := fs.String("scheme", "", "rule scheme id")
 		preferRuleSets := fs.Bool("prefer-rule-sets", true, "prefer native remote rule sets")
+		planDigest := fs.String("plan-digest", "", "digest from preflight for degraded exports")
+		serviceRegionsJSON := fs.String("service-regions", "", "JSON service-to-country map for target-specific routing")
+		acceptedDegradations := fs.String("accept-degradations", "", "comma-separated preflight warning IDs")
+		strict := fs.Bool("strict", false, "require explicit nodes and an exact preflight digest")
 		_ = fs.Parse(args)
+		serviceRegions, err := parseServiceRegions(*serviceRegionsJSON)
+		if err != nil {
+			return err
+		}
+		if len(serviceRegions) != 0 && !*strict {
+			return fmt.Errorf("service-regions requires --strict")
+		}
 		if *destination == "" {
 			return fmt.Errorf("destination is required")
 		}
-		result, err := svc.CreateLocalShare(*destination, service.ParseNodeIDs(*nodes), *scheme, *preferRuleSets)
+		var result service.ShareResult
+		if *strict {
+			result, err = svc.CreateLocalShareStrictWithServiceRegions(*destination, service.ParseNodeIDs(*nodes), *scheme, *preferRuleSets, *planDigest, serviceRegions)
+		} else {
+			result, err = svc.CreateLocalShareWithConsent(*destination, service.ParseNodeIDs(*nodes), *scheme, *preferRuleSets, *planDigest, service.ParseNodeIDs(*acceptedDegradations))
+		}
 		if err != nil {
 			return err
 		}
@@ -275,4 +392,15 @@ func printJSON(v any) error {
 	}
 	fmt.Println(string(b))
 	return nil
+}
+
+func parseServiceRegions(raw string) (map[string]string, error) {
+	if raw == "" {
+		return nil, nil
+	}
+	regions := make(map[string]string)
+	if err := json.Unmarshal([]byte(raw), &regions); err != nil || regions == nil {
+		return nil, fmt.Errorf("service-regions must be a JSON object")
+	}
+	return regions, nil
 }

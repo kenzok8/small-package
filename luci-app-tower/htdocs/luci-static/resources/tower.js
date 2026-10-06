@@ -9,9 +9,13 @@ const callRemoveNode = rpc.declare({ object: 'luci.tower', method: 'remove_node'
 const callAddSub = rpc.declare({ object: 'luci.tower', method: 'add_subscription', params: ['name', 'url', 'user_agent'] });
 const callRemoveSub = rpc.declare({ object: 'luci.tower', method: 'remove_subscription', params: ['id'] });
 const callRefresh = rpc.declare({ object: 'luci.tower', method: 'refresh', params: ['id'] });
-const callExport = rpc.declare({ object: 'luci.tower', method: 'export', params: ['target', 'protocols', 'nodes', 'scheme', 'prefer_rule_sets'] });
+const callExportBegin = rpc.declare({ object: 'luci.tower', method: 'export_begin', params: ['target', 'protocols', 'nodes', 'scheme', 'prefer_rule_sets', 'plan_digest', 'accept_degradations', 'strict', 'service_regions'] });
+const callExportRead = rpc.declare({ object: 'luci.tower', method: 'export_read', params: ['id', 'offset'] });
+const callExportDiscard = rpc.declare({ object: 'luci.tower', method: 'export_discard', params: ['id'] });
+const callPreflightExport = rpc.declare({ object: 'luci.tower', method: 'preflight_export', params: ['target', 'protocols', 'nodes', 'scheme', 'prefer_rule_sets', 'strict', 'service_regions'] });
+const callCapabilities = rpc.declare({ object: 'luci.tower', method: 'capabilities' });
 const callLinks = rpc.declare({ object: 'luci.tower', method: 'links', params: ['protocols', 'nodes'] });
-const callShareCreate = rpc.declare({ object: 'luci.tower', method: 'share_create', params: ['destination', 'nodes', 'scheme', 'prefer_rule_sets'] });
+const callShareCreate = rpc.declare({ object: 'luci.tower', method: 'share_create', params: ['destination', 'nodes', 'scheme', 'prefer_rule_sets', 'plan_digest', 'accept_degradations', 'strict', 'service_regions'] });
 const callShareRevoke = rpc.declare({ object: 'luci.tower', method: 'share_revoke' });
 const callImport = rpc.declare({ object: 'luci.tower', method: 'import_nodes', params: ['content'] });
 const callSchemes = rpc.declare({ object: 'luci.tower', method: 'schemes' });
@@ -48,9 +52,9 @@ const openwrtClients = [
 	{ id: 'openclash', name: 'OpenClash', icon: 'OpenClash.png', detail: 'Mihomo YAML' },
 	{ id: 'nikki', name: 'Nikki', icon: 'Nikki.png', detail: 'Mihomo YAML' },
 	{ id: 'clashoo-mihomo', name: 'Clashoo · Mihomo', icon: 'Clashoo.png', detail: 'Mihomo YAML' },
-	{ id: 'clashoo-singbox', name: 'Clashoo · sing-box', icon: 'Clashoo.png', detail: 'sing-box JSON', nodeOnly: true },
-	{ id: 'momo', name: 'Momo', icon: 'ClientSingBox.png', detail: 'sing-box JSON · 需适配入站', nodeOnly: true },
-	{ id: 'daede', name: 'daede', target: 'links', icon: 'ClientDae.png', detail: '节点订阅 · 规则在插件中管理', nodeOnly: true, allowedKinds: [ 'ss', 'vmess', 'vless', 'trojan', 'hysteria2', 'tuic', 'socks5' ] }
+	{ id: 'clashoo-singbox', name: 'Clashoo · sing-box', icon: 'Clashoo.png', detail: 'sing-box JSON' },
+	{ id: 'momo', name: 'Momo', icon: 'ClientSingBox.png', detail: 'sing-box JSON' },
+	{ id: 'dae-config', name: 'daede · dae 配置', icon: 'ClientDae.png', detail: '完整配置 · 可选规则方案' }
 ];
 
 /* Protocol filter options. */
@@ -138,14 +142,26 @@ return baseclass.extend({
 	rpcRefresh: function(id) {
 		return L.resolveDefault(callRefresh(id), { data: [] }).then(function(r) { return rpcError(r).data; });
 	},
-	rpcExport: function(target, protocols, nodes, scheme, preferRuleSets) {
-		return L.resolveDefault(callExport(target, protocols, nodes, scheme, preferRuleSets !== false), { content: '' }).then(function(r) { return rpcError(r).content; });
+	rpcExportBegin: function(target, protocols, nodes, scheme, preferRuleSets, planDigest, acceptedDegradations, strict, serviceRegions) {
+		return callExportBegin(target, protocols, nodes, scheme, preferRuleSets !== false, planDigest || '', (acceptedDegradations || []).join(','), strict === true, serviceRegions || '{}').then(function(r) { return rpcError(r).data; });
+	},
+	rpcExportRead: function(id, offset) {
+		return callExportRead(id, offset).then(function(r) { return rpcError(r).data; });
+	},
+	rpcExportDiscard: function(id) {
+		return callExportDiscard(id).then(rpcError);
+	},
+	rpcPreflightExport: function(target, protocols, nodes, scheme, preferRuleSets, strict, serviceRegions) {
+		return callPreflightExport(target, protocols, nodes, scheme, preferRuleSets !== false, strict === true, serviceRegions || '{}').then(function(r) { return rpcError(r).data; });
+	},
+	rpcCapabilities: function() {
+		return callCapabilities().then(function(r) { return rpcError(r).data; });
 	},
 	rpcLinks: function(protocols, nodes) {
-		return L.resolveDefault(callLinks(protocols, nodes), { data: [] }).then(function(r) { return rpcError(r).data; });
+		return callLinks(protocols, nodes).then(function(r) { return rpcError(r).data; });
 	},
-	rpcShareCreate: function(destination, nodes, scheme, preferRuleSets) {
-		return L.resolveDefault(callShareCreate(destination, nodes, scheme, preferRuleSets !== false), { data: null }).then(function(r) { return rpcError(r).data; });
+	rpcShareCreate: function(destination, nodes, scheme, preferRuleSets, planDigest, acceptedDegradations, strict, serviceRegions) {
+		return L.resolveDefault(callShareCreate(destination, nodes, scheme, preferRuleSets !== false, planDigest || '', (acceptedDegradations || []).join(','), strict === true, serviceRegions || '{}'), { data: null }).then(function(r) { return rpcError(r).data; });
 	},
 	rpcShareRevoke: function() {
 		return L.resolveDefault(callShareRevoke(), { success: false }).then(rpcError);

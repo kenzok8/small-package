@@ -1,7 +1,7 @@
 <!doctype html>
-<html lang="zh-Hant" dir="ltr">
+<html lang="zh-Hant" dir="ltr" data-warm="pending">
 <head>
-<meta name="doona-build" content="aec6dddced7d4b97">
+<meta name="doona-build" content="f6e0197946fb875f">
 <script>// Normalize appearance before first paint. The build fills the palette list and default from src/shell/palettes.ts, the
 // language locales and reference locale from src/i18n/languages.ts, and the right-to-left scripts from src/i18n/direction.ts.
 (function () {
@@ -14,14 +14,29 @@
   };
   var scheme = read('doona-scheme');
   var palette = read('doona-palette');
+  // Before each Glass material was a palette of its own, Glass kept its material in doona-glass. Read it once into the
+  // palette, then drop it.
+  var material = read('doona-glass');
+  if (material !== null)
+    try {
+      if (palette === 'glass/glass' && (material === 'frosted' || material === 'tinted'))
+        localStorage.setItem('doona-palette', (palette = 'glass/' + material));
+      localStorage.removeItem('doona-glass');
+    } catch {
+      // Storage is unavailable; the palette stays as saved.
+    }
   var lang = read('doona-lang');
   var d = document.documentElement;
   var dark = scheme === 'dark' || (scheme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
-  var palettes = ["rose-pine/main","rose-pine/moon","catppuccin/frappe","catppuccin/macchiato","catppuccin/mocha","nord/nord","kary/kary","antd/antd","arco/arco","semi/semi","glass/glass","qiangguo/qiangguo"];
+  var palettes = ["rose-pine/main","rose-pine/moon","catppuccin/frappe","catppuccin/macchiato","catppuccin/mocha","arco/arco","semi/semi","glass/glass","glass/clear","glass/frosted","glass/tinted","nord/nord","kary/kary","antd/antd","qiangguo/qiangguo"];
   var parts = (palettes.includes(palette) ? palette : "rose-pine/moon").split('/');
   d.dataset.scheme = dark ? 'dark' : 'light';
   d.dataset.family = parts[0];
   d.dataset.flavour = parts[1];
+  // Only the Glass palettes load Glass's stylesheet. Written by the parser, it holds the first paint as the main one
+  // does, and it lands before the main one, where src/shell/glass.ts links it for a palette picked later.
+  var glass = "./assets/glass-CVYlh_Wi.css";
+  if (parts[0] === 'glass' && glass) document.write('<link rel="stylesheet" data-glass href="' + glass + '">');
   d.dataset.wordmark = read('doona-wordmark') === 'plain' ? 'plain' : 'gradient';
   var locales = {"zh-TW":"zh-TW","zh-CN":"zh-CN","en":"en-US"};
   // No saved language doona has: the browser's preferences, picked as browserLang in src/i18n/languages.ts picks them.
@@ -59,7 +74,7 @@
 </script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-E9IYqqd+Dnfibf/zu2R9QSXld/JM9uRHdGWeKY1q7iM='; connect-src 'self' http: https: ws: wss:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-67oAB/70Z6G4asfgHnuoHY0ff+D/M5Sm2bYE/WiD2Qw='; connect-src 'self' http: https: ws: wss:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self'">
 <title>doona</title>
 <meta name="description" content="Static web UI for the daeuniverse native API.">
 <link rel="icon" href="./logo.svg">
@@ -71,10 +86,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="doona">
-  <script type="module" crossorigin src="./assets/index-CmbH0woS.js"></script>
+  <script type="module" crossorigin src="./assets/index-ucpAK88B.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/_commonjsHelpers-CXUWDbkB.js">
   <link rel="modulepreload" crossorigin href="./assets/vendor-react-64fcanlc.js">
-  <link rel="stylesheet" crossorigin href="./assets/index-suuKbZt8.css">
+  <link rel="stylesheet" crossorigin href="./assets/index-o3F3WGy0.css">
 </head>
 <body><div id="root"></div></body>
 </html>

@@ -16,20 +16,35 @@ func generateSingBox(opts Options) string {
 
 	outbounds := []any{}
 
-	// Policy groups: a select group, a url-test group, and DIRECT.
-	outbounds = append(outbounds, map[string]any{
-		"tag":       selectGroupName,
-		"type":      "selector",
-		"outbounds": append(append([]string{}, nodeTags...), singBoxDirectTag),
-	})
-	outbounds = append(outbounds, map[string]any{
-		"tag":       autoGroupName,
-		"type":      "urltest",
-		"url":       "https://www.gstatic.com/generate_204",
-		"interval":  "300s",
-		"tolerance": 50,
-		"outbounds": nodeTags,
-	})
+	if opts.Scheme != nil {
+		needsReject := false
+		for _, g := range opts.Scheme.Groups {
+			for _, member := range g.Members {
+				if member.Type == model.MemberReference && isSingBoxReject(member.Value) {
+					needsReject = true
+				}
+			}
+			outbounds = append(outbounds, singBoxSchemeGroup(g, nodeTags))
+		}
+		if needsReject {
+			outbounds = append(outbounds, map[string]any{"tag": "REJECT", "type": "block"})
+		}
+	} else {
+		// Policy groups: a select group, a url-test group, and DIRECT.
+		outbounds = append(outbounds, map[string]any{
+			"tag":       selectGroupName,
+			"type":      "selector",
+			"outbounds": append(append([]string{}, nodeTags...), singBoxDirectTag),
+		})
+		outbounds = append(outbounds, map[string]any{
+			"tag":       autoGroupName,
+			"type":      "urltest",
+			"url":       "https://www.gstatic.com/generate_204",
+			"interval":  "300s",
+			"tolerance": 50,
+			"outbounds": nodeTags,
+		})
+	}
 	outbounds = append(outbounds, map[string]any{
 		"tag":  singBoxDirectTag,
 		"type": "direct",
@@ -43,30 +58,208 @@ func generateSingBox(opts Options) string {
 		}
 	}
 
-	config := map[string]any{
-		"log": map[string]any{"level": "warn", "timestamp": true},
-		"inbounds": []any{
-			map[string]any{
-				"type":         "tun",
-				"tag":          "tun-in",
-				"address":      []string{"172.19.0.1/30", "fdfe:dcba:9876::1/126"},
-				"auto_route":   true,
-				"strict_route": true,
-				"stack":        "mixed",
-			},
-		},
-		"outbounds": outbounds,
-		"route": map[string]any{
-			"final":                 selectGroupName,
-			"auto_detect_interface": true,
-		},
+	route := map[string]any{"auto_detect_interface": true}
+	if opts.Scheme != nil {
+		rules, finalGroup := singBoxSchemeRoute(opts)
+		route["rules"] = rules
+		route["final"] = finalGroup
+		if len(opts.plannedProviders) > 0 {
+			route["rule_set"] = singBoxSchemeRuleSets(opts)
+		}
+	} else {
+		route["final"] = selectGroupName
 	}
 
-	b, err := json.MarshalIndent(config, "", "  ")
+	config := map[string]any{
+		"log":       map[string]any{"level": "warn", "timestamp": true},
+		"inbounds":  singBoxInbounds(opts.Target),
+		"outbounds": outbounds,
+		"route":     route,
+	}
+	if opts.Target == model.ClientMomo {
+		const dnsTag = "tower-dns-direct"
+		config["dns"] = map[string]any{
+			"servers": []any{map[string]any{
+				"type":        "udp",
+				"tag":         dnsTag,
+				"server":      "223.5.5.5",
+				"server_port": 53,
+				"detour":      singBoxDirectTag,
+			}},
+			"final": dnsTag,
+		}
+
+		// Resolve node hostnames through the direct IP server and keep Momo's
+		// intercepted DNS inbound out of the normal proxy routing rules.
+		route["default_domain_resolver"] = dnsTag
+		dnsRule := map[string]any{"inbound": []string{"dns-in"}, "action": "hijack-dns"}
+		routeRules, _ := route["rules"].([]any)
+		route["rules"] = append([]any{dnsRule}, routeRules...)
+	}
+	if hasRemoteRuleSet(opts.plannedProviders) {
+		config["experimental"] = map[string]any{
+			"cache_file": map[string]any{"enabled": true},
+		}
+	}
+
+	var b []byte
+	var err error
+	if opts.Target == model.ClientClashooSB {
+		b, err = json.Marshal(config)
+	} else {
+		b, err = json.MarshalIndent(config, "", "  ")
+	}
 	if err != nil {
 		return "{}\n"
 	}
 	return string(b) + "\n"
+}
+
+func singBoxInbounds(target model.ClientTarget) []any {
+	tun := map[string]any{
+		"type":    "tun",
+		"tag":     "tun-in",
+		"address": []string{"172.19.0.1/30", "fdfe:dcba:9876::1/126"},
+		"stack":   "mixed",
+	}
+	if target == model.ClientMomo {
+		// Momo installs its own routes and looks up these tags in normal mode.
+		tun["interface_name"] = "momo0"
+		return []any{
+			map[string]any{"type": "redirect", "tag": "redirect-in", "listen": "::", "listen_port": 12345},
+			map[string]any{"type": "direct", "tag": "dns-in", "listen": "::", "listen_port": 1053},
+			tun,
+		}
+	}
+	tun["auto_route"] = true
+	tun["strict_route"] = true
+	return []any{tun}
+}
+
+func hasRemoteRuleSet(providers []plannedProvider) bool {
+	for _, provider := range providers {
+		if provider.format != "inline" {
+			return true
+		}
+	}
+	return false
+}
+
+// singBoxSchemeGroup renders one rule-scheme strategy group as a sing-box
+// selector/urltest outbound. Empty groups fall back to DIRECT.
+func singBoxSchemeGroup(g model.RuleSchemeGroup, nodeNames []string) map[string]any {
+	members := resolveGroupMembers(g, nodeNames)
+	if len(members) == 0 {
+		members = []string{singBoxDirectTag}
+	}
+	outbound := map[string]any{
+		"tag":       g.Name,
+		"type":      "selector",
+		"outbounds": members,
+	}
+	if g.Kind == model.KindURLTest {
+		outbound["type"] = "urltest"
+		outbound["url"] = firstNonEmpty(g.URL, "https://www.gstatic.com/generate_204")
+		interval := g.Interval
+		if interval <= 0 {
+			interval = 300
+		}
+		tolerance := g.Tolerance
+		if tolerance <= 0 {
+			tolerance = 50
+		}
+		outbound["interval"] = strconv.Itoa(interval) + "s"
+		outbound["tolerance"] = tolerance
+	}
+	return outbound
+}
+
+// singBoxRuleFields maps supported Clash-style conditions to sing-box fields.
+var singBoxRuleFields = map[string]string{
+	"DOMAIN":         "domain",
+	"DOMAIN-SUFFIX":  "domain_suffix",
+	"DOMAIN-KEYWORD": "domain_keyword",
+	"IP-CIDR":        "ip_cidr",
+	"IP-CIDR6":       "ip_cidr",
+	"IP6-CIDR":       "ip_cidr",
+	"PROCESS-NAME":   "process_name",
+	"DOMAIN-REGEX":   "domain_regex",
+}
+
+func isSingBoxReject(policy string) bool {
+	return strings.EqualFold(strings.TrimSpace(policy), "REJECT")
+}
+
+func isSingBoxRejectDrop(policy string) bool {
+	return strings.EqualFold(strings.TrimSpace(policy), "REJECT-DROP")
+}
+
+// singBoxSchemeRoute renders route.rules for a rule scheme: inline rules are
+// grouped by policy into compact field arrays, native rule sets are referenced
+// by tag, and REJECT becomes a rule action (sing-box 1.11 removed the block
+// outbound). It also returns the final fallback outbound.
+func singBoxSchemeRoute(opts Options) ([]any, string) {
+	finalGroup := singBoxDirectTag
+	if len(opts.Scheme.Groups) > 0 {
+		finalGroup = opts.Scheme.Groups[0].Name
+	}
+
+	var rules []any
+
+	for _, planned := range opts.plannedRules {
+		if planned.rule.Final {
+			finalGroup = planned.rule.Group
+			continue
+		}
+		if planned.native {
+			rule := map[string]any{"rule_set": []string{planned.providerID}}
+			if isSingBoxReject(planned.rule.Group) {
+				rule["action"] = "reject"
+			} else {
+				rule["outbound"] = planned.rule.Group
+			}
+			rules = append(rules, rule)
+			continue
+		}
+		fields := splitRuleFields(planned.rule.Body)
+		field := singBoxRuleFields[strings.ToUpper(fields[0])]
+		policy := planned.rule.Group
+		rule := map[string]any{field: []string{fields[1]}}
+		if isSingBoxReject(policy) {
+			rule["action"] = "reject"
+		} else {
+			rule["outbound"] = policy
+		}
+		rules = append(rules, rule)
+	}
+
+	return rules, finalGroup
+}
+
+// singBoxSchemeRuleSets renders route.rule_set entries for native sing-box
+// "source" rule sets.
+func singBoxSchemeRuleSets(opts Options) []any {
+	sets := make([]any, 0, len(opts.plannedProviders))
+	for _, p := range opts.plannedProviders {
+		if p.format == "inline" {
+			lines := opts.RuleSetLines[p.resource.URL]
+			rules, err := ParseClashooInlineRuleSet([]byte(strings.Join(lines, "\n")))
+			if err != nil {
+				continue
+			}
+			sets = append(sets, map[string]any{"type": "inline", "tag": p.id, "rules": rules})
+			continue
+		}
+		sets = append(sets, map[string]any{
+			"type":            "remote",
+			"tag":             p.id,
+			"format":          p.format,
+			"url":             p.resource.URL,
+			"download_detour": "DIRECT",
+			"update_interval": "1d",
+		})
+	}
+	return sets
 }
 
 // singBoxOutbound serializes one proxy node to a sing-box outbound object.
@@ -107,17 +300,7 @@ func singBoxOutbound(node model.ProxyNode, tag string) map[string]any {
 			outbound["plugin_opts"] = strings.Join(opts, ";")
 		}
 	case model.KindShadowsocksR:
-		outbound["type"] = "shadowsocksr"
-		outbound["method"] = firstNonEmpty(node.Cipher, "aes-256-cfb")
-		outbound["password"] = node.Password
-		outbound["protocol"] = firstNonEmpty(node.ProtocolName, "origin")
-		if node.ProtocolParam != "" {
-			outbound["protocol_param"] = node.ProtocolParam
-		}
-		outbound["obfs"] = firstNonEmpty(node.Obfs, "plain")
-		if node.ObfsParam != "" {
-			outbound["obfs_param"] = node.ObfsParam
-		}
+		return nil
 	case model.KindVMess:
 		outbound["type"] = "vmess"
 		outbound["uuid"] = exportableUUID(node.UUID)

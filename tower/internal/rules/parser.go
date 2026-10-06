@@ -607,6 +607,8 @@ func normalizeKind(raw string) model.RuleGroupKind {
 		return model.KindFallback
 	case "load-balance", "loadbalance", "load_balance":
 		return model.KindLoadBalance
+	case "dae-native-auto", "native-auto":
+		return model.KindDAENativeAuto
 	default:
 		return ""
 	}

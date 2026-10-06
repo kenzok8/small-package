@@ -20,6 +20,18 @@ const css = '\
 .tower-client-detail{font-size:10.5px;opacity:.56;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}\
 .tower-target-note{margin:11px 0 0;font-size:12px;opacity:.7}\
 .tower-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}\
+.tower-protocol-list{display:flex;flex-direction:column;width:100%;margin-bottom:10px;border:1px solid rgba(128,128,128,.2);border-radius:10px;overflow:hidden}\
+.tower-protocol-option{display:flex;align-items:center;gap:12px;min-width:0;box-sizing:border-box;padding:10px 14px;border:0;border-bottom:1px solid rgba(128,128,128,.14);border-radius:0;cursor:pointer;font-size:13px}\
+.tower-protocol-option:last-child{border-bottom:0}\
+.tower-protocol-meta{display:flex;flex-direction:column;gap:3px;min-width:0}\
+.tower-protocol-name{font-size:13px;font-weight:600;line-height:1.2}\
+.tower-protocol-option input{appearance:none;-webkit-appearance:none;position:relative;flex:none;width:42px;height:24px;margin:0 0 0 auto;border:1px solid rgba(128,128,128,.4);border-radius:999px;background:rgba(128,128,128,.25);cursor:pointer;transition:background-color .16s ease,border-color .16s ease}\
+.tower-protocol-option input::before{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .16s ease}\
+.tower-protocol-option input:checked{border-color:#4aa065;background:#4aa065}\
+.tower-protocol-option input:checked::before{transform:translateX(18px)}\
+.tower-protocol-option input:focus-visible{outline:2px solid rgba(66,153,225,.75);outline-offset:2px}\
+.tower-protocol-option input:disabled{opacity:.5;cursor:not-allowed}\
+.tower-protocol-count{opacity:.62;font-size:11px;font-variant-numeric:tabular-nums}\
 .tower-filter{margin-left:auto;min-width:200px;box-sizing:border-box;border:1px solid rgba(128,128,128,.28);border-radius:6px;background:transparent!important;color:inherit!important;font-size:12px;padding:7px 9px}\
 .tower-filter::placeholder,.tower-preview::placeholder{color:inherit;opacity:.48}\
 .tower-summary{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px;font-size:12px;opacity:.8}\
@@ -53,6 +65,18 @@ const css = '\
 .tower-gen-status-ok{color:#4aa065;font-weight:600}\
 .tower-gen-status-error{color:#d96d6d}\
 .tower-gen-status-busy{opacity:.55}\
+.tower-preflight{margin-top:8px;font-size:12px}\
+.tower-preflight-title{font-weight:650;margin:8px 0 4px}\
+.tower-preflight-list{margin:0 0 8px;padding-left:20px}\
+.tower-preflight-list li{margin:2px 0;overflow-wrap:anywhere}\
+.tower-preflight-details{margin:6px 0 8px}\
+.tower-preflight-details summary{cursor:pointer;font-weight:600}\
+.tower-service-regions{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}\
+.tower-service-region{display:flex;align-items:center;gap:6px;font-size:12px}\
+.tower-service-region select{min-width:88px}\
+.tower-preflight-error{color:#d96d6d}\
+.tower-preflight-warning{color:#bd7f18}\
+.tower-preflight-ok{color:#4aa065}\
 .tower-scheme-select{flex:0 1 320px;width:100%;max-width:320px;height:34px!important;min-height:34px!important;box-sizing:border-box;padding:5px 10px!important;border:1px solid rgba(128,128,128,.28)!important;border-radius:7px!important;background-color:rgba(128,128,128,.07)!important;color:inherit!important;font-size:13px!important;line-height:1.2}\
 .tower-scheme-select:focus{border-color:#4299e1!important;box-shadow:0 0 0 2px rgba(66,153,225,.16)}\
 .tower-scheme-label{font-size:12px;opacity:.7;white-space:nowrap}\
@@ -66,6 +90,8 @@ function extFor(target) {
 		return '.txt';
 	if (target === 'sing-box' || target === 'hiddify' || target === 'clashoo-singbox' || target === 'momo')
 		return '.json';
+	if (target === 'dae-config')
+		return '.dae';
 	if (target === 'surge' || target === 'surge-mac' || target === 'shadowrocket')
 		return '.conf';
 	return '.yaml';
@@ -75,6 +101,22 @@ function reusableLink(item) {
 	var aliases = { hysteria2: 'hysteria2|hy2', socks5: 'socks5|socks', http: 'https?' };
 	var scheme = aliases[item.kind] || item.kind;
 	return new RegExp('^(?:' + scheme + ')://', 'i').test(item.link || '');
+}
+
+function supportsServiceRegions(target) {
+	return [ 'sing-box', 'hiddify', 'clashoo-singbox', 'momo', 'dae-config' ].indexOf(target) >= 0;
+}
+
+function serviceRegionsJSON(target, regions) {
+	if (!supportsServiceRegions(target))
+		return '{}';
+
+	var selected = {};
+	[ 'claude', 'openai', 'gemini', 'netflix' ].forEach(function(service) {
+		if (regions[service])
+			selected[service] = regions[service];
+	});
+	return JSON.stringify(selected);
 }
 
 function clientCard(client) {
@@ -163,22 +205,29 @@ function showQRModal(name, link) {
 
 return view.extend({
 	load: function() {
-		return Promise.all([ tower.rpcListNodes(), tower.rpcSchemes() ]).then(function(res) {
-			return { nodes: res[0], schemes: res[1] };
+		return Promise.all([ tower.rpcListNodes(), tower.rpcSchemes(), tower.rpcCapabilities() ]).then(function(res) {
+			return { nodes: res[0], schemes: res[1], capabilities: res[2] };
 		});
 	},
 
 	render: function(data) {
 		var nodes = data.nodes;
 		var schemes = data.schemes || [];
+		var capabilities = {};
+		(data.capabilities || []).forEach(function(item) { capabilities[item.target] = item; });
 		var destinations = tower.clients.concat(tower.openwrtClients);
 		var selected = {};
 		nodes.forEach(function(n) { selected[n.id] = true; });
+		var serviceRegions = {};
 		var filterText = '';
+		var allProtocols = true;
+		var activeProtocols = {};
+		nodes.forEach(function(n) { activeProtocols[n.kind] = true; });
 
 		var resultBody = E('div', { 'class': 'tower-results' });
 		var statTotal = E('strong', {}, '0');
 		var statSelected = E('strong', {}, '0');
+		var statVisible = E('strong', {}, '0');
 
 		var previewArea = E('textarea', {
 			'class': 'tower-preview',
@@ -227,6 +276,12 @@ return view.extend({
 			return destinations.filter(function(c) { return c.id === id; })[0] || destinations[0];
 		}
 
+		function destinationCapability(destination) {
+			if (destination.nodeOnly)
+				return { protocols: destination.allowedKinds || [], strict: false };
+			return capabilities[destination.target || destination.id] || { protocols: [], strict: false };
+		}
+
 		function selectedCount() {
 			var n = 0;
 			for (var id in selected)
@@ -237,12 +292,13 @@ return view.extend({
 		function updateSummary() {
 			statTotal.textContent = String(nodes.length);
 			statSelected.textContent = String(selectedCount());
+			statVisible.textContent = String(visibleNodes().length);
 		}
 
 		function visibleNodes() {
 			var q = filterText.toLowerCase();
 			return nodes.filter(function(n) {
-				return !q || n.name.toLowerCase().indexOf(q) >= 0 || String(n.kind).toLowerCase().indexOf(q) >= 0;
+				return (!q || n.name.toLowerCase().indexOf(q) >= 0) && (allProtocols || !!activeProtocols[n.kind]);
 			});
 		}
 
@@ -251,11 +307,17 @@ return view.extend({
 				resultBody.removeChild(resultBody.firstChild);
 
 			var shown = visibleNodes();
+			var supported = destinationCapability(currentDestination()).protocols || [];
 			shown.forEach(function(n) {
 				var checkbox = E('input', { 'type': 'checkbox' });
+				var compatible = supported.indexOf(n.kind) >= 0;
+				checkbox.disabled = !compatible;
 				checkbox.checked = !!selected[n.id];
+				if (!compatible)
+					checkbox.title = _('当前客户端不支持此协议');
 				checkbox.addEventListener('change', function() {
 					selected[n.id] = checkbox.checked;
+					invalidateGeneration();
 					updateSummary();
 				});
 				resultBody.appendChild(E('div', { 'class': 'tower-result' }, [
@@ -281,6 +343,99 @@ return view.extend({
 		var currentTargetName = 'clash-verge';
 		var currentDestinationID = 'clash-verge';
 		var generatedOptions = null;
+		var generationSerial = 0;
+		var activeExportID = null;
+
+		function discardExport(id) {
+			if (!id)
+				return Promise.resolve();
+			return tower.rpcExportDiscard(id).catch(function() {});
+		}
+
+		function discardActiveExport() {
+			var id = activeExportID;
+			activeExportID = null;
+			discardExport(id);
+		}
+
+		function decodeBase64Chunk(value) {
+			if (typeof value !== 'string' || value.length % 4 !== 0 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value))
+				throw new Error(_('分片内容格式无效。'));
+			var binary;
+			try {
+				binary = atob(value);
+			} catch (e) {
+				throw new Error(_('分片内容无法解码。'));
+			}
+			var bytes = new Uint8Array(binary.length);
+			for (var i = 0; i < binary.length; i++)
+				bytes[i] = binary.charCodeAt(i);
+			return bytes;
+		}
+
+		function hashExport(bytes, expected) {
+			if (!window.crypto || !window.crypto.subtle || !window.crypto.subtle.digest)
+				return Promise.resolve();
+			return window.crypto.subtle.digest('SHA-256', bytes).then(function(hash) {
+				var actual = Array.prototype.map.call(new Uint8Array(hash), function(value) {
+					return ('0' + value.toString(16)).slice(-2);
+				}).join('');
+				if (actual !== expected.toLowerCase())
+					throw new Error(_('配置校验失败，请重新生成。'));
+			});
+		}
+
+		function chunkedExport(target, nodes, scheme, preferRuleSets, options, requestID) {
+			return tower.rpcExportBegin(target, '', nodes, scheme, preferRuleSets, options.planDigest, [], options.strict, options.serviceRegions).then(function(meta) {
+				if (!meta || typeof meta.id !== 'string' || !meta.id || !Number.isSafeInteger(meta.size) || meta.size < 0 || typeof meta.sha256 !== 'string' || !/^[a-f0-9]{64}$/i.test(meta.sha256))
+					return discardExport(meta && meta.id).then(function() { throw new Error(_('导出初始化信息无效。')); });
+				if (requestID !== generationSerial) {
+					discardExport(meta.id);
+					return null;
+				}
+				activeExportID = meta.id;
+				var chunks = [];
+				function readNext(offset, total) {
+					if (requestID !== generationSerial)
+						return Promise.resolve(null);
+					return tower.rpcExportRead(meta.id, offset).then(function(chunk) {
+						if (!chunk || chunk.offset !== offset || !Number.isSafeInteger(chunk.next) || typeof chunk.eof !== 'boolean')
+							throw new Error(_('导出分片位置无效。'));
+						var bytes = decodeBase64Chunk(chunk.data);
+						if (bytes.length > 128 * 1024 || chunk.next !== offset + bytes.length || chunk.next > meta.size || (bytes.length === 0 && !chunk.eof))
+							throw new Error(_('导出分片长度无效。'));
+						chunks.push(bytes);
+						total += bytes.length;
+						if (total > meta.size || chunk.eof !== (chunk.next === meta.size))
+							throw new Error(_('导出分片结束位置无效。'));
+						if (!chunk.eof)
+							return readNext(chunk.next, total);
+						var content = new Uint8Array(total);
+						var cursor = 0;
+						chunks.forEach(function(part) {
+							content.set(part, cursor);
+							cursor += part.length;
+						});
+						return hashExport(content, meta.sha256).then(function() {
+							return new TextDecoder('utf-8').decode(content);
+						});
+					});
+				}
+				return readNext(0, 0).then(function(content) {
+					return discardExport(meta.id).then(function() {
+						if (activeExportID === meta.id)
+							activeExportID = null;
+						return content;
+					});
+				}, function(error) {
+					return discardExport(meta.id).then(function() {
+						if (activeExportID === meta.id)
+							activeExportID = null;
+						throw error;
+					});
+				});
+			});
+		}
 
 		function renderLinks(links) {
 			currentLinks = links || [];
@@ -316,46 +471,327 @@ return view.extend({
 
 		// —— 规则方案选择 ——
 		var schemeSelect = E('select', { 'class': 'cbi-input-select tower-scheme-select', 'name': 'scheme' });
+		var schemeTargets = {};
+		var schemeLabels = { '': _('默认（简单分流）') };
+		var daeSchemePolicies = {
+			'kenzok8-dae-native': 'tower-dae-kenzok8-policy-v2',
+			'acl4ssr-online': 'tower-dae-acl-policy-v2',
+			'acl4ssr-full': 'tower-dae-acl-policy-v2',
+			'self-configuration': 'tower-dae-acl-policy-v2'
+		};
+		function targetPolicyMatches(target, schemeID, result) {
+			if (target !== 'dae-config' || !schemeID)
+				return true;
+
+			var expected = daeSchemePolicies[schemeID];
+			return !!expected && !!result && result.target_policy === expected;
+		}
+		var schemeCompatEpoch = 0;
+		var schemeCompatTimer = null;
+		var preflightTimer = null;
 		var preferRuleSets = E('input', { 'type': 'checkbox', 'name': 'prefer-rule-sets' });
 		preferRuleSets.checked = true;
+		var serviceRegionInputs = {};
+		var serviceRegionOptions = [
+			{ id: 'claude', name: 'Claude' },
+			{ id: 'openai', name: 'OpenAI' },
+			{ id: 'gemini', name: 'Gemini' },
+			{ id: 'netflix', name: 'Netflix' }
+		];
+		var serviceRegionFields = serviceRegionOptions.map(function(service) {
+			var select = E('select', { 'class': 'cbi-input-select', 'name': 'service-region-' + service.id });
+			serviceRegionInputs[service.id] = select;
+			select.addEventListener('change', function() {
+				if (select.value)
+					serviceRegions[service.id] = select.value;
+				else
+					delete serviceRegions[service.id];
+				invalidateGeneration();
+			});
+			return E('label', { 'class': 'tower-service-region' }, [
+				E('span', {}, [ service.name ]),
+				select
+			]);
+		});
+		var serviceRegionsPanel = E('div', { 'class': 'tower-service-regions' }, serviceRegionFields);
+
+		function updateServiceRegionOptions() {
+			var destination = currentDestination();
+			var target = destination.target || destination.id;
+			var supported = destinationCapability(destination).protocols || [];
+			var regions = [];
+			nodes.forEach(function(node) {
+				if (selected[node.id] && supported.indexOf(node.kind) >= 0 && node.effective_region && regions.indexOf(node.effective_region) < 0)
+					regions.push(node.effective_region);
+			});
+			regions.sort();
+			serviceRegionsPanel.style.display = supportsServiceRegions(target) ? '' : 'none';
+			serviceRegionOptions.forEach(function(service) {
+				var select = serviceRegionInputs[service.id];
+				var current = serviceRegions[service.id] || '';
+				while (select.firstChild)
+					select.removeChild(select.firstChild);
+				select.appendChild(E('option', { 'value': '' }, [ _('不限') ]));
+				if (current && regions.indexOf(current) < 0)
+					select.appendChild(E('option', { 'value': current }, [ current + _('（当前所选节点中不可用）') ]));
+				regions.forEach(function(region) {
+					select.appendChild(E('option', { 'value': region }, [ region.toUpperCase() ]));
+				});
+				select.value = current;
+			});
+		}
+
 		schemeSelect.appendChild(E('option', { 'value': '' }, [ _('默认（简单分流）') ]));
 		schemes.forEach(function(s) {
-			schemeSelect.appendChild(E('option', { 'value': s.id }, [ (s.name || _('未命名方案')) + (s.is_bundled ? '' : '（导入）') ]));
+			schemeTargets[s.id] = s.target_only || '';
+			schemeLabels[s.id] = (s.name || _('未命名方案')) + (s.is_bundled ? '' : '（导入）');
+			schemeSelect.appendChild(E('option', { 'value': s.id }, [ schemeLabels[s.id] ]));
 		});
 		var targetNote = E('p', { 'class': 'tower-target-note' });
+		var schemeCompatibilityNote = E('p', { 'class': 'tower-target-note' });
 
 		function updateTargetCapabilities() {
 			var destination = currentDestination();
-			var nodeOnly = !!destination.nodeOnly || destination.id === 'sing-box' || destination.id === 'hiddify';
+			var target = destination.target || destination.id;
+			Array.prototype.forEach.call(schemeSelect.options, function(option) {
+				option.disabled = (target === 'dae-config' && !!option.value && !daeSchemePolicies[option.value]) ||
+					(!!option.value && !!schemeTargets[option.value] && schemeTargets[option.value] !== target);
+			});
+			if (schemeSelect.selectedOptions[0] && schemeSelect.selectedOptions[0].disabled)
+				schemeSelect.value = target === 'dae-config' ? '' : destinationCapability(destination).default_rule || '';
+			var nodeOnly = !!destination.nodeOnly;
 			schemeSelect.disabled = nodeOnly;
-			preferRuleSets.disabled = nodeOnly;
+			preferRuleSets.disabled = nodeOnly || target === 'dae-config';
 			generateBtn.textContent = destination.target === 'links' ? _('生成节点订阅') : _('生成配置与链接');
 			sharePanel.querySelector('#tower-copy-config').textContent = destination.target === 'links' ? _('复制节点订阅') : _('复制配置文本');
 			if (nodeOnly) {
 				schemeSelect.value = '';
-				targetNote.textContent = destination.target === 'links'
-					? _('此目标只导出节点订阅；完整配置和分流规则仍在目标插件中管理。')
-					: destination.id === 'momo'
-						? _('Momo 可导入 sing-box JSON；启用代理前须按 Momo 的 TCP、UDP 和 DNS 模式补齐对应入站。当前仅导出默认分流。')
-						: _('sing-box JSON 目前只支持默认分流，不支持导入的规则方案。');
+				targetNote.textContent = _('此目标只导出节点订阅；完整配置和分流规则仍在目标插件中管理。');
+			} else if (target === 'dae-config') {
+				targetNote.textContent = _('dae 完整配置使用原生自动测速规则方案；其他不兼容规则会在预检中说明。');
+			} else if (destination.target === 'clashoo-singbox') {
+				targetNote.textContent = _('Clashoo 专用 sing-box 配置会内联受支持的规则集；当前目标不支持的节点会由严格预检提示。');
 			} else {
 				targetNote.textContent = _('使用所选规则方案生成完整配置；兼容目标仍需在对应插件中导入验证。');
 			}
-			sharePanel.classList.remove('tower-visible');
-			setGenStatus('', '');
+			if (!nodeOnly && target !== 'dae-config' && destinationCapability(destination).default_rule)
+				schemeSelect.value = destinationCapability(destination).default_rule;
+			invalidateGeneration();
+			renderResults();
 		}
 
 		// —— 生成 ——
 		var genStatus = E('span', { 'class': 'tower-gen-status' });
+		var preflightReport = E('div', { 'class': 'tower-preflight' });
+
+		function renderPreflight(result) {
+			while (preflightReport.firstChild)
+				preflightReport.removeChild(preflightReport.firstChild);
+			if (!result)
+				return;
+
+			var status = result.status || 'unknown';
+			var statusClass = status === 'exact' ? 'tower-preflight-ok' : status === 'degraded' ? 'tower-preflight-warning' : 'tower-preflight-error';
+			var statusText = status === 'exact' ? _('预检通过') : status === 'degraded' ? _('预检发现兼容性降级') : status === 'unsupported' ? _('预检未通过') : _('预检状态未知');
+			preflightReport.appendChild(E('p', { 'class': 'tower-preflight-title ' + statusClass }, [ statusText ]));
+			if (result.policy_note)
+				preflightReport.appendChild(E('p', { 'class': 'tower-target-note' }, [ result.policy_note ]));
+
+			var issues = result.issues || [];
+			var warnings = result.warnings || [];
+			if (issues.length || warnings.length) {
+				var details = E('details', { 'class': 'tower-preflight-details' });
+				details.appendChild(E('summary', {}, [ _('问题明细（') + (issues.length + warnings.length) + '）' ]));
+				if (issues.length) {
+					details.appendChild(E('p', { 'class': 'tower-preflight-title' }, [ _('问题') ]));
+					var issueList = E('ul', { 'class': 'tower-preflight-list' });
+					issues.forEach(function(issue) {
+						var location = issue.location ? ' [' + issue.location + ']' : '';
+						var issueClass = issue.severity === 'warning' ? 'tower-preflight-warning' : 'tower-preflight-error';
+						issueList.appendChild(E('li', { 'class': issueClass }, [ (issue.message || issue.code || _('未知问题')) + location ]));
+					});
+					details.appendChild(issueList);
+				}
+				if (warnings.length) {
+					details.appendChild(E('p', { 'class': 'tower-preflight-title tower-preflight-warning' }, [ _('该方案不能完整导出') ]));
+					var warningList = E('ul', { 'class': 'tower-preflight-list' });
+					warnings.forEach(function(warning) {
+						warningList.appendChild(E('li', { 'class': 'tower-preflight-warning' }, [ (warning.message || warning.code || _('未知差异')) + (warning.location ? ' [' + warning.location + ']' : '') ]));
+					});
+					details.appendChild(warningList);
+				}
+				preflightReport.appendChild(details);
+			}
+
+			var planned = result.planned || [];
+			if (planned.length) {
+				var plannedCounts = { node: 0, group: 0, rule: 0, resource: 0 };
+				planned.forEach(function(item) {
+					if (Object.prototype.hasOwnProperty.call(plannedCounts, item.kind))
+						plannedCounts[item.kind]++;
+				});
+				preflightReport.appendChild(E('p', { 'class': 'tower-preflight-title' }, [
+					_('计划导出：') + planned.length + _(' 项（节点 ') + plannedCounts.node + _(' · 组 ') + plannedCounts.group + _(' · 规则 ') + plannedCounts.rule + _(' · 规则资源 ') + plannedCounts.resource + '）'
+				]));
+			} else {
+				preflightReport.appendChild(E('p', { 'class': 'tower-preflight-title' }, [ _('计划导出：0 项') ]));
+				preflightReport.appendChild(E('p', {}, [ _('没有可导出的项目。') ]));
+			}
+		}
+
+		function refreshSchemeCompatibility(target, ids, selectedScheme) {
+			var epoch = ++schemeCompatEpoch;
+			var options = Array.prototype.slice.call(schemeSelect.options).filter(function(option) {
+				return !(option.value && schemeTargets[option.value] && schemeTargets[option.value] !== target) &&
+					!(target === 'dae-config' && option.value && !daeSchemePolicies[option.value]);
+			});
+			if (!ids.length || target === 'links') {
+				options.forEach(function(option) {
+					option.textContent = schemeLabels[option.value];
+					option.title = '';
+					option.disabled = !ids.length && option.value !== selectedScheme;
+				});
+				schemeCompatibilityNote.textContent = ids.length ? '' : _('请先选择节点，再查看规则方案兼容性。');
+				return Promise.resolve();
+			}
+			options.forEach(function(option) {
+				option.disabled = option.value !== selectedScheme;
+			});
+			schemeCompatibilityNote.textContent = _('正在检查当前节点组合的规则方案…');
+			if (schemeCompatTimer)
+				clearTimeout(schemeCompatTimer);
+			return new Promise(function(resolve) {
+				schemeCompatTimer = setTimeout(function() {
+					var queue = options.filter(function(option) { return option.value !== selectedScheme; });
+					var exactCount = 0;
+					var blocked = [];
+					var next = 0;
+					function worker() {
+						if (next >= queue.length)
+							return Promise.resolve();
+						var option = queue[next++];
+						return tower.rpcPreflightExport(target, '', ids.join(','), option.value, preferRuleSets.checked, true, serviceRegionsJSON(target, serviceRegions)).then(function(result) {
+							if (epoch !== schemeCompatEpoch)
+								return;
+							var status = result && result.status || 'unknown';
+							var policyMatches = targetPolicyMatches(target, option.value, result);
+							var reason = (result && result.issues || []).concat(result && result.warnings || []).map(function(item) {
+								return item.message || item.code;
+							}).filter(Boolean)[0] || '';
+							if (target === 'dae-config' && option.value && !policyMatches)
+								reason = _('未返回预期的 DAE 目标策略元数据。');
+							var exact = status === 'exact' && policyMatches;
+							option.textContent = (exact ? '✓ ' : status === 'degraded' ? '⚠ ' : '× ') + schemeLabels[option.value];
+							option.title = reason;
+							option.disabled = !exact;
+							if (exact)
+								exactCount++;
+							else
+								blocked.push(schemeLabels[option.value] + (reason ? '：' + reason : ''));
+						}).catch(function(error) {
+							if (epoch !== schemeCompatEpoch)
+								return;
+							var reason = String(error);
+							option.textContent = '× ' + schemeLabels[option.value];
+							option.title = reason;
+							option.disabled = true;
+							blocked.push(schemeLabels[option.value] + '：' + reason);
+						}).then(worker);
+					}
+					Promise.all([worker(), worker()]).then(function() {
+						if (epoch === schemeCompatEpoch) {
+						var firstBlocked = blocked[0] || '';
+						schemeCompatibilityNote.textContent = _('当前节点组合下，另有 ') + exactCount + ' ' + _(' 套方案可完整导出；') + blocked.length + ' ' + _(' 套需调整。') +
+							(firstBlocked ? ' ' + _('示例：') + firstBlocked : '');
+						}
+						resolve();
+					});
+				}, 350);
+			});
+		}
+
+		function needsExportPreflight(target) {
+			return target !== 'links';
+		}
+
+		var preflightEpoch = 0;
+		function refreshStrictPreflight() {
+			var epoch = ++preflightEpoch;
+			var destination = currentDestination();
+			var target = destination.target || destination.id;
+			var ids = selectedIDs();
+			refreshSchemeCompatibility(target, ids, schemeSelect.value);
+			if (!needsExportPreflight(target)) {
+				generateBtn.disabled = selectedCount() === 0;
+				return Promise.resolve();
+			}
+			if (!ids.length) {
+				generateBtn.disabled = true;
+				renderPreflight({ status: 'unsupported', issues: [{ code: 'nodes_empty', message: _('请至少选择一个节点。') }], planned: [] });
+				return Promise.resolve();
+			}
+			generateBtn.disabled = true;
+			return tower.rpcPreflightExport(target, '', ids.join(','), schemeSelect.disabled ? '' : schemeSelect.value, preferRuleSets.checked, true, serviceRegionsJSON(target, serviceRegions)).then(function(result) {
+				if (epoch !== preflightEpoch)
+					return;
+				var schemeID = schemeSelect.disabled ? '' : schemeSelect.value;
+				if (result && result.status === 'exact' && !targetPolicyMatches(target, schemeID, result)) {
+					result.status = 'unsupported';
+					result.issues = (result.issues || []).concat([{ code: 'target_policy_mismatch', message: _('DAE 预检没有返回所选方案对应的目标策略元数据。') }]);
+				}
+				renderPreflight(result);
+				generateBtn.disabled = !result || result.status !== 'exact' || !result.plan_digest;
+			}).catch(function(error) {
+				if (epoch !== preflightEpoch)
+					return;
+				renderPreflight({ status: 'unsupported', issues: [{ code: 'preflight_error', message: String(error) }], planned: [] });
+				generateBtn.disabled = true;
+			});
+		}
 
 		function setGenStatus(text, kind) {
 			genStatus.textContent = text || '';
 			genStatus.className = 'tower-gen-status' + (kind ? ' tower-gen-status-' + kind : '');
 		}
 
+		function clearGenerationResult() {
+			sharePanel.classList.remove('tower-visible');
+			currentContent = '';
+			currentLinks = [];
+			generatedOptions = null;
+			previewArea.value = '';
+			configTitle.textContent = _('配置文件');
+			renderLinks([]);
+			localShareURL.value = '';
+			localShareStatus.textContent = '';
+		}
+
+		function invalidateGeneration() {
+			updateServiceRegionOptions();
+			generationSerial++;
+			preflightEpoch++;
+			schemeCompatEpoch++;
+			discardActiveExport();
+			renderPreflight(null);
+			setGenStatus('', '');
+			clearGenerationResult();
+			generateBtn.disabled = true;
+			if (preflightTimer)
+				clearTimeout(preflightTimer);
+			preflightTimer = setTimeout(refreshStrictPreflight, 350);
+		}
+
+		schemeSelect.addEventListener('change', invalidateGeneration);
+		preferRuleSets.addEventListener('change', invalidateGeneration);
+
 		var generateBtn = E('button', {
 			'class': 'btn cbi-button cbi-button-apply',
 			'click': ui.createHandlerFn(this, function() {
+				var requestID = ++generationSerial;
+				discardActiveExport();
+				renderPreflight(null);
+				setGenStatus('', '');
+				clearGenerationResult();
 				var ids = selectedIDs();
 				if (!ids.length) {
 					setGenStatus(_('请至少选择一个节点。'), 'error');
@@ -363,19 +799,29 @@ return view.extend({
 				}
 				var destination = currentDestination();
 				currentDestinationID = destination.id;
-				currentTargetName = destination.target || destination.id;
+				var targetName = destination.target || destination.id;
+				currentTargetName = targetName;
 				var idsStr = ids.join(',');
+				var schemeID = schemeSelect.disabled ? '' : schemeSelect.value;
+				var preferRuleSetsValue = preferRuleSets.checked;
 				generatedOptions = {
 					destination: destination.id,
+					target: targetName,
 					nodes: idsStr,
-					scheme: schemeSelect.disabled ? '' : schemeSelect.value,
-					preferRuleSets: preferRuleSets.checked
+					scheme: schemeID,
+					preferRuleSets: preferRuleSetsValue,
+					planDigest: '',
+					targetPolicy: '',
+					serviceRegions: serviceRegionsJSON(targetName, serviceRegions),
+					strict: needsExportPreflight(targetName)
 				};
 				localShareURL.value = '';
 				localShareStatus.textContent = '';
 				setGenStatus(_('正在生成…'), 'busy');
-				if (currentTargetName === 'links') {
+				if (targetName === 'links') {
 					return tower.rpcLinks('', idsStr).then(function(links) {
+						if (requestID !== generationSerial)
+							return;
 						var allowed = destination.allowedKinds || [];
 						var supported = links.filter(function(item) { return allowed.indexOf(item.kind) >= 0 && reusableLink(item); });
 						if (!supported.length)
@@ -388,13 +834,48 @@ return view.extend({
 						sharePanel.classList.add('tower-visible');
 						setGenStatus(_('已导出') + ' ' + supported.length + ' ' + _('个节点；跳过') + ' ' + (links.length - supported.length) + ' ' + _('个不兼容节点'), 'ok');
 					}).catch(function(e) {
-						setGenStatus(String(e), 'error');
+						if (requestID === generationSerial)
+							setGenStatus(String(e), 'error');
 					});
 				}
-				return Promise.all([
-					tower.rpcExport(currentTargetName, '', idsStr, schemeSelect.disabled ? '' : schemeSelect.value, preferRuleSets.checked),
-					tower.rpcLinks('', idsStr)
-				]).then(function(res) {
+				var preflight = needsExportPreflight(targetName)
+							? tower.rpcPreflightExport(targetName, '', idsStr, schemeID, preferRuleSetsValue, true, generatedOptions.serviceRegions).then(function(result) {
+						if (requestID !== generationSerial)
+							return false;
+						if (!result || typeof result !== 'object') {
+						result = { status: 'unknown', issues: [{ message: _('预检没有返回有效结果。') }], planned: [] };
+					}
+					if (result.status === 'exact' && !targetPolicyMatches(targetName, schemeID, result)) {
+						result.status = 'unsupported';
+						result.issues = (result.issues || []).concat([{ code: 'target_policy_mismatch', message: _('DAE 预检没有返回所选方案对应的目标策略元数据。') }]);
+					}
+					renderPreflight(result);
+					if (result.status !== 'exact')
+						throw new Error(result.status === 'degraded' ? _('该方案存在未支持的差异，无法生成。') : result.status === 'unsupported' ? _('预检未通过，请先处理上方问题。') : _('预检返回未知状态，已停止导出。'));
+					if (!result.plan_digest)
+						throw new Error(_('预检没有返回计划摘要，已停止导出。'));
+					generatedOptions.planDigest = result.plan_digest;
+					generatedOptions.targetPolicy = result.target_policy || '';
+						return new Promise(function(resolve) { requestAnimationFrame(resolve); }).then(function() {
+							return requestID === generationSerial;
+						});
+					})
+					: Promise.resolve().then(function() {
+						renderPreflight(null);
+						return requestID === generationSerial;
+					});
+				return preflight.then(function(ready) {
+					if (!ready || requestID !== generationSerial)
+						return null;
+					return Promise.all([
+						chunkedExport(targetName, idsStr, schemeID, preferRuleSetsValue, generatedOptions, requestID),
+						tower.rpcLinks('', idsStr)
+					]);
+				}).then(function(res) {
+					if (!res || requestID !== generationSerial)
+						return;
+					if (typeof res[0] !== 'string' || !res[0].trim())
+						throw new Error(_('导出未返回配置内容，请重新登录后重试。'));
 					currentContent = res[0] || '';
 					previewArea.value = currentContent;
 					configTitle.textContent = _('配置文件');
@@ -402,7 +883,8 @@ return view.extend({
 					sharePanel.classList.add('tower-visible');
 					setGenStatus(_('已生成配置与节点链接'), 'ok');
 				}).catch(function(e) {
-					setGenStatus(String(e), 'error');
+					if (requestID === generationSerial)
+						setGenStatus(String(e), 'error');
 				});
 			})
 		}, [ _('生成配置与链接') ]);
@@ -455,12 +937,21 @@ return view.extend({
 				localShareStatus.textContent = _('请先生成配置。');
 				return;
 			}
+			var shareOptions = generatedOptions;
+			if (!targetPolicyMatches(shareOptions.target, shareOptions.scheme, { target_policy: shareOptions.targetPolicy })) {
+				localShareStatus.textContent = _('生成结果的 DAE 目标策略信息不匹配，请重新生成配置。');
+				return;
+			}
+			var shareGeneration = generationSerial;
 			localShareStatus.textContent = _('正在生成…');
-			tower.rpcShareCreate(generatedOptions.destination, generatedOptions.nodes, generatedOptions.scheme, generatedOptions.preferRuleSets).then(function(result) {
+			tower.rpcShareCreate(shareOptions.destination, shareOptions.nodes, shareOptions.scheme, shareOptions.preferRuleSets, shareOptions.planDigest, [], shareOptions.strict, shareOptions.serviceRegions).then(function(result) {
+				if (shareGeneration !== generationSerial || generatedOptions !== shareOptions)
+					return;
 				localShareURL.value = result.url;
 				localShareStatus.textContent = _('本机地址已生成');
 			}).catch(function(e) {
-				localShareStatus.textContent = String(e);
+				if (shareGeneration === generationSerial && generatedOptions === shareOptions)
+					localShareStatus.textContent = String(e);
 			});
 		});
 		sharePanel.querySelector('#tower-share-copy').addEventListener('click', function() {
@@ -486,28 +977,73 @@ return view.extend({
 		// —— 节点选择工具栏 ——
 		var filterInput = E('input', {
 			'class': 'tower-filter',
-			'placeholder': _('筛选节点名称或协议')
+			'placeholder': _('按名称搜索')
 		});
 		filterInput.addEventListener('input', function() {
 			filterText = filterInput.value;
 			renderResults();
 		});
 
-		var selectAllBtn = E('button', {
-			'class': 'btn cbi-button',
-			'click': ui.createHandlerFn(this, function() {
-				visibleNodes().forEach(function(n) { selected[n.id] = true; });
-				renderResults();
-			})
-		}, [ _('全选') ]);
-
-		var clearBtn = E('button', {
-			'class': 'btn cbi-button',
-			'click': ui.createHandlerFn(this, function() {
-				visibleNodes().forEach(function(n) { selected[n.id] = false; });
-				renderResults();
-			})
-		}, [ _('清空') ]);
+		var protocolList = E('div', { 'class': 'tower-protocol-list' });
+		var existingKinds = [];
+		nodes.forEach(function(n) { if (existingKinds.indexOf(n.kind) < 0) existingKinds.push(n.kind); });
+		existingKinds.sort();
+		var allProtocolsCheckbox = E('input', { 'type': 'checkbox' });
+		allProtocolsCheckbox.checked = true;
+		allProtocolsCheckbox.addEventListener('change', function() {
+			allProtocols = allProtocolsCheckbox.checked;
+			existingKinds.forEach(function(kind) { activeProtocols[kind] = allProtocols; });
+			nodes.forEach(function(n) { selected[n.id] = allProtocols; });
+			invalidateGeneration();
+			renderProtocolList('all');
+			renderResults();
+		});
+		function renderProtocolList(focusKind) {
+			while (protocolList.firstChild)
+				protocolList.removeChild(protocolList.firstChild);
+			allProtocolsCheckbox.checked = allProtocols;
+			protocolList.appendChild(E('label', { 'class': 'tower-protocol-option' }, [
+				E('span', { 'class': 'tower-protocol-meta' }, [
+					E('span', { 'class': 'tower-protocol-name' }, _('全部协议')),
+					E('span', { 'class': 'tower-protocol-count' }, String(nodes.length))
+				]),
+				allProtocolsCheckbox
+			]));
+			existingKinds.forEach(function(kind) {
+				var protocol = (tower.protocols || []).filter(function(item) { return item.id === kind; })[0];
+				var count = nodes.filter(function(n) { return n.kind === kind; }).length;
+				var checkbox = E('input', { 'type': 'checkbox' });
+				checkbox.checked = !allProtocols && !!activeProtocols[kind];
+				checkbox.addEventListener('change', function() {
+					if (allProtocols) {
+						allProtocols = false;
+						existingKinds.forEach(function(existingKind) { activeProtocols[existingKind] = existingKind === kind; });
+						nodes.forEach(function(n) {
+							if (n.kind !== kind) selected[n.id] = false;
+						});
+					} else {
+						activeProtocols[kind] = checkbox.checked;
+						nodes.forEach(function(n) {
+							if (n.kind === kind) selected[n.id] = checkbox.checked;
+						});
+					}
+					invalidateGeneration();
+					renderProtocolList(kind);
+					renderResults();
+				});
+				protocolList.appendChild(E('label', { 'class': 'tower-protocol-option' }, [
+					E('span', { 'class': 'tower-protocol-meta' }, [
+						E('span', { 'class': 'tower-protocol-name' }, protocol ? protocol.name : kind),
+						E('span', { 'class': 'tower-protocol-count' }, String(count))
+					]),
+					checkbox
+				]));
+			});
+			var focusIndex = focusKind === 'all' ? 0 : existingKinds.indexOf(focusKind) + 1;
+			if (focusIndex > 0 || focusKind === 'all')
+				protocolList.querySelectorAll('input')[focusIndex].focus();
+		}
+		renderProtocolList();
 
 		// —— 目标客户端 grid ——
 		var clientGrid = tower.clients.map(clientCard);
@@ -541,11 +1077,13 @@ return view.extend({
 				]),
 				targetNote
 			]),
-			E('div', { 'class': 'tower-card' }, [
-				E('h4', { 'class': 'tower-card-title' }, _('2. 选择节点')),
-				E('div', { 'class': 'tower-toolbar' }, [ selectAllBtn, ' ', clearBtn, ' ', filterInput ]),
+				E('div', { 'class': 'tower-card' }, [
+					E('h4', { 'class': 'tower-card-title' }, _('2. 选择节点')),
+					protocolList,
+					E('div', { 'class': 'tower-toolbar' }, [ filterInput ]),
 				E('div', { 'class': 'tower-summary' }, [
 					E('span', {}, [ _('共'), ' ', statTotal, ' ', _('个节点') ]),
+					E('span', {}, [ _('当前筛选'), ' ', statVisible, ' ', _('个') ]),
 					E('span', {}, [ _('已选'), ' ', statSelected, ' ', _('个') ])
 				]),
 				resultBody
@@ -555,9 +1093,12 @@ return view.extend({
 				E('div', { 'class': 'tower-toolbar' }, [
 					E('span', { 'class': 'tower-scheme-label' }, [ _('规则方案') ]),
 					schemeSelect,
-					E('label', { 'class': 'tower-rule-set-check' }, [ preferRuleSets, _('优先使用原生规则集') ])
+					E('label', { 'class': 'tower-rule-set-check' }, [ preferRuleSets, _('优先使用原生规则集') ]),
 				]),
+				serviceRegionsPanel,
+				schemeCompatibilityNote,
 				E('div', { 'class': 'tower-toolbar' }, [ generateBtn, genStatus ]),
+				preflightReport,
 				sharePanel
 			])
 		]);

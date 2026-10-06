@@ -3,6 +3,11 @@
 package service
 
 import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -22,17 +27,21 @@ import (
 
 // Service bundles the store with the subscription fetch path.
 type Service struct {
-	Store     *store.Store
-	rulesDir  string
-	ruleCache *rules.Cache
+	Store       *store.Store
+	rulesDir    string
+	ruleCache   *rules.Cache
+	daeValidate func(context.Context, string) error
 }
+
+const nativeDAESchemeID = "kenzok8-dae-native"
 
 // New creates a Service.
 func New(st *store.Store) *Service {
 	return &Service{
-		Store:     st,
-		rulesDir:  filepath.Join(st.Dir(), "rules"),
-		ruleCache: rules.NewCache(filepath.Join(st.Dir(), "rule-cache")),
+		Store:       st,
+		rulesDir:    filepath.Join(st.Dir(), "rules"),
+		ruleCache:   rules.NewCache(filepath.Join(st.Dir(), "rule-cache")),
+		daeValidate: validateDAEConfig,
 	}
 }
 
@@ -113,6 +122,7 @@ func (s *Service) UpdateOwnedNode(node model.ProxyNode) error {
 			node.Kind = st.Nodes[i].Kind
 			node.Name = strings.TrimSpace(node.Name)
 			node.Server = strings.TrimSpace(node.Server)
+			node.EffectiveRegion = ""
 			st.Nodes[i] = node
 			return nil
 		}
@@ -255,37 +265,311 @@ func (s *Service) Export(target model.ClientTarget, protocols []model.ProxyKind,
 // ExportWithOptions generates a configuration with an explicit preference for
 // client-native remote rule sets.
 func (s *Service) ExportWithOptions(target model.ClientTarget, protocols []model.ProxyKind, nodeIDs []string, schemeID string, preferRuleSets bool) (string, error) {
-	nodes, err := s.selectedNodes(nodeIDs)
+	return s.ExportWithConsent(target, protocols, nodeIDs, schemeID, preferRuleSets, "", nil)
+}
+
+// ExportWithConsent binds a degraded sing-box export to the exact preflight
+// plan and the differences accepted for this generation.
+func (s *Service) ExportWithConsent(target model.ClientTarget, protocols []model.ProxyKind, nodeIDs []string, schemeID string, preferRuleSets bool, planDigest string, acceptedDegradations []string) (string, error) {
+	options, err := s.exportOptions(target, protocols, nodeIDs, schemeID, preferRuleSets, false)
 	if err != nil {
 		return "", err
+	}
+	options.PlanDigest = planDigest
+	options.AcceptedDegradations = acceptedDegradations
+	return generator.Generate(options)
+}
+
+// ExportStrict requires an explicit non-empty node selection and a matching
+// exact preflight digest. Legacy ExportWithConsent retains its existing rules.
+func (s *Service) ExportStrict(target model.ClientTarget, protocols []model.ProxyKind, nodeIDs []string, schemeID string, preferRuleSets bool, planDigest string) (string, error) {
+	return s.ExportStrictWithServiceRegions(target, protocols, nodeIDs, schemeID, preferRuleSets, planDigest, nil)
+}
+
+// ExportStrictWithServiceRegions exports a strict plan with temporary service
+// country choices. The map is request-scoped and is not persisted.
+func (s *Service) ExportStrictWithServiceRegions(target model.ClientTarget, protocols []model.ProxyKind, nodeIDs []string, schemeID string, preferRuleSets bool, planDigest string, regions map[string]string) (string, error) {
+	if len(nodeIDs) == 0 {
+		return "", fmt.Errorf("严格导出至少需要一个已选择的节点")
+	}
+	options, err := s.exportOptionsWithServiceRegions(target, protocols, nodeIDs, schemeID, preferRuleSets, true, regions)
+	if err != nil {
+		return "", err
+	}
+	if len(generator.FilterNodes(options.Nodes, protocols)) == 0 {
+		return "", fmt.Errorf("严格导出至少需要一个支持当前目标的已选择节点")
+	}
+	for _, node := range generator.FilterNodes(options.Nodes, protocols) {
+		if !generator.SupportsProtocol(target, node.Kind) {
+			return "", fmt.Errorf("严格导出包含当前客户端不支持的协议 %s", node.Kind)
+		}
+	}
+	if target.Family() == model.FamilySingBox || target.Family() == model.FamilyDAE {
+		options.Strict = true
+		options.PlanDigest = planDigest
+		content, err := generator.Generate(options)
+		if err != nil {
+			return "", err
+		}
+		if target.Family() == model.FamilyDAE {
+			if err := s.daeValidate(context.Background(), content); err != nil {
+				return "", fmt.Errorf("设备 dae validate 未通过：%w", err)
+			}
+		}
+		return content, nil
+	}
+	options.Strict = false
+	content, err := generator.Generate(options)
+	if err != nil {
+		return "", err
+	}
+	if planDigest == "" || planDigest != strictRenderedDigest(options, content) {
+		return "", fmt.Errorf("严格导出需要与当前预检完全匹配的计划摘要")
+	}
+	return content, nil
+}
+
+// PreflightExportWithOptions checks a sing-box-family export using the same
+// selected nodes, scheme, and cached rule resources as the final export.
+func (s *Service) PreflightExportWithOptions(target model.ClientTarget, protocols []model.ProxyKind, nodeIDs []string, schemeID string, preferRuleSets bool) (generator.PreflightResult, error) {
+	options, err := s.exportOptions(target, protocols, nodeIDs, schemeID, preferRuleSets, false)
+	if err != nil {
+		var inlineErr *inlineSourceError
+		if errors.As(err, &inlineErr) {
+			return generator.PreflightResult{
+				Status:  generator.PreflightUnsupported,
+				Issues:  []generator.PreflightIssue{{Code: inlineErr.code, Severity: "blocking", Location: inlineErr.location, Message: inlineErr.message}},
+				Planned: []generator.PreflightItem{},
+			}, nil
+		}
+		return generator.PreflightResult{}, err
+	}
+	if target == model.ClientDAE {
+		result := generator.DAEPreflight(options)
+		if result.Status == generator.PreflightExact {
+			options.Strict = true
+			options.PlanDigest = result.PlanDigest
+			content, generateErr := generator.Generate(options)
+			if generateErr != nil {
+				return generator.PreflightResult{Status: generator.PreflightUnsupported, PlanDigest: result.PlanDigest, Issues: []generator.PreflightIssue{{Code: "dae_render", Severity: "blocking", Location: "export", Message: "DAE 配置生成失败"}}, Planned: result.Planned}, nil
+			}
+			if validateErr := s.daeValidate(context.Background(), content); validateErr != nil {
+				return generator.PreflightResult{Status: generator.PreflightUnsupported, PlanDigest: result.PlanDigest, Issues: []generator.PreflightIssue{{Code: "dae_validate", Severity: "blocking", Location: "export", Message: "设备 dae validate 未通过；当前 DAT 标签或配置需要修正"}}, Planned: result.Planned}, nil
+			}
+		}
+		return result, nil
+	}
+	return generator.Preflight(options), nil
+}
+
+// PreflightExportStrict never interprets an empty node list as "all nodes".
+func (s *Service) PreflightExportStrict(target model.ClientTarget, protocols []model.ProxyKind, nodeIDs []string, schemeID string, preferRuleSets bool) (generator.PreflightResult, error) {
+	return s.PreflightExportStrictWithServiceRegions(target, protocols, nodeIDs, schemeID, preferRuleSets, nil)
+}
+
+// PreflightExportStrictWithServiceRegions validates a strict request with
+// temporary service country choices. It never saves those choices.
+func (s *Service) PreflightExportStrictWithServiceRegions(target model.ClientTarget, protocols []model.ProxyKind, nodeIDs []string, schemeID string, preferRuleSets bool, regions map[string]string) (generator.PreflightResult, error) {
+	options, err := s.exportOptionsWithServiceRegions(target, protocols, nodeIDs, schemeID, preferRuleSets, true, regions)
+	if err != nil {
+		var inlineErr *inlineSourceError
+		if errors.As(err, &inlineErr) {
+			return generator.PreflightResult{Status: generator.PreflightUnsupported, Issues: []generator.PreflightIssue{{Code: inlineErr.code, Severity: "blocking", Location: inlineErr.location, Message: inlineErr.message}}, Planned: []generator.PreflightItem{}}, nil
+		}
+		return generator.PreflightResult{}, err
+	}
+	options.Strict = true
+	filtered := generator.FilterNodes(options.Nodes, protocols)
+	if len(filtered) == 0 {
+		return generator.PreflightResult{Status: generator.PreflightUnsupported, Issues: []generator.PreflightIssue{{Code: "nodes_empty", Severity: "blocking", Location: "nodes", Message: "严格导出至少需要一个支持当前目标的已选择节点"}}, Planned: []generator.PreflightItem{}}, nil
+	}
+	for _, node := range filtered {
+		if !generator.SupportsProtocol(target, node.Kind) {
+			return generator.PreflightResult{Status: generator.PreflightUnsupported, Issues: []generator.PreflightIssue{{Code: "node_protocol", Severity: "blocking", Location: "nodes", Message: fmt.Sprintf("当前客户端不支持协议 %s", node.Kind)}}, Planned: []generator.PreflightItem{}}, nil
+		}
+	}
+	if target == model.ClientDAE {
+		result := generator.DAEPreflight(options)
+		if result.Status != generator.PreflightExact {
+			return result, nil
+		}
+		options.PlanDigest = result.PlanDigest
+		content, generateErr := generator.Generate(options)
+		if generateErr != nil {
+			return generator.PreflightResult{Status: generator.PreflightUnsupported, PlanDigest: result.PlanDigest, Issues: []generator.PreflightIssue{{Code: "dae_render", Severity: "blocking", Location: "export", Message: "DAE 配置生成失败"}}, Planned: result.Planned}, nil
+		}
+		if validateErr := s.daeValidate(context.Background(), content); validateErr != nil {
+			return generator.PreflightResult{Status: generator.PreflightUnsupported, PlanDigest: result.PlanDigest, Issues: []generator.PreflightIssue{{Code: "dae_validate", Severity: "blocking", Location: "export", Message: "设备 dae validate 未通过；当前 DAT 标签或配置需要修正"}}, Planned: result.Planned}, nil
+		}
+		return result, nil
+	}
+	if target.Family() == model.FamilySingBox {
+		return generator.Preflight(options), nil
+	}
+	options.Strict = false
+	content, err := generator.Generate(options)
+	if err != nil {
+		return generator.PreflightResult{Status: generator.PreflightUnsupported, Issues: []generator.PreflightIssue{{Code: "render", Severity: "blocking", Location: "export", Message: err.Error()}}, Planned: []generator.PreflightItem{}}, nil
+	}
+	return generator.PreflightResult{Status: generator.PreflightExact, PlanDigest: strictRenderedDigest(options, content), Planned: []generator.PreflightItem{{Kind: "config", Name: target.Name(), Location: "export"}}}, nil
+}
+
+func strictRenderedDigest(options generator.Options, content string) string {
+	options.Strict = false
+	options.PlanDigest = ""
+	options.AcceptedDegradations = nil
+	payload, _ := json.Marshal(struct {
+		Target         model.ClientTarget
+		Nodes          []model.ProxyNode
+		Protocols      []model.ProxyKind
+		ServiceRegions map[string]string
+		Scheme         *model.RuleScheme
+		PreferRuleSets bool
+		RuleSetLines   map[string][]string
+		Content        string
+	}{options.Target, options.Nodes, options.Protocols, options.ServiceRegions, options.Scheme, options.PreferRuleSets, options.RuleSetLines, content})
+	sum := sha256.Sum256(payload)
+	return hex.EncodeToString(sum[:])
+}
+
+type inlineSourceError struct {
+	code     string
+	location string
+	message  string
+}
+
+func (e *inlineSourceError) Error() string { return e.message }
+
+func (s *Service) exportOptions(target model.ClientTarget, protocols []model.ProxyKind, nodeIDs []string, schemeID string, preferRuleSets, strict bool) (generator.Options, error) {
+	return s.exportOptionsWithServiceRegions(target, protocols, nodeIDs, schemeID, preferRuleSets, strict, nil)
+}
+
+func (s *Service) exportOptionsWithServiceRegions(target model.ClientTarget, protocols []model.ProxyKind, nodeIDs []string, schemeID string, preferRuleSets, strict bool, serviceRegions map[string]string) (generator.Options, error) {
+	var nodes []model.ProxyNode
+	var err error
+	if strict && len(nodeIDs) == 0 {
+		nodes = []model.ProxyNode{}
+	} else {
+		nodes, err = s.selectedNodes(nodeIDs)
+	}
+	if err != nil {
+		return generator.Options{}, err
 	}
 	var scheme *model.RuleScheme
 	if schemeID != "" {
 		if scheme, err = s.findScheme(schemeID); err != nil {
-			return "", err
+			return generator.Options{}, err
 		}
+	}
+	if scheme != nil && len(serviceRegions) > 0 {
+		prepared := generator.PrepareServiceRegionPolicy(generator.Options{
+			Target: target, Nodes: nodes, Protocols: protocols, Scheme: scheme,
+			PreferRuleSets: preferRuleSets, ServiceRegions: serviceRegions,
+		})
+		scheme = prepared.Scheme
 	}
 	lines := make(map[string][]string)
 	if scheme != nil {
-		for _, rule := range scheme.Rules {
-			if rule.Resource == nil {
+		inlineBytes := 0
+		mrsYAMLBytes := 0
+		seenInline := make(map[string][]string)
+		for i, rule := range scheme.Rules {
+			resource := rule.Resource
+			if resource == nil && target == model.ClientClashooSB && preferRuleSets && !rule.Final {
+				fields := strings.Split(rule.Body, ",")
+				if len(fields) == 2 && strings.EqualFold(strings.TrimSpace(fields[0]), "GEOIP") && strings.EqualFold(strings.TrimSpace(fields[1]), "CN") {
+					mapped := generator.SingBoxGeoIPCNRuleSet()
+					resource = &mapped
+				}
+			}
+			if resource == nil {
 				continue
 			}
-			if cached, err := s.ruleCache.Lines(rule.Resource.URL); err == nil {
-				lines[rule.Resource.URL] = cached
+			if target == model.ClientDAE {
+				if _, mapped := generator.DAENativeRuleSet(scheme.ID, *resource); mapped {
+					continue
+				}
+			}
+			if target.Family() == model.FamilySurge || target.Family() == model.FamilyShadowrocket || target.Family() == model.FamilyDAE {
+				if sourceURL, mapped := generator.MRSYAMLSourceURL(*resource); mapped {
+					if _, loaded := lines[sourceURL]; loaded {
+						continue
+					}
+					cached, cacheErr := s.ruleCache.LinesLimited(sourceURL, 8<<20)
+					if cacheErr == nil {
+						cacheErr = generator.ValidateMRSYAMLSource(*resource, []byte(strings.Join(cached, "\n")))
+					}
+					if cacheErr != nil {
+						cacheErr = s.ruleCache.DownloadWithPolicy(sourceURL, 8<<20, "raw.githubusercontent.com", func(body []byte) error {
+							return generator.ValidateMRSYAMLSource(*resource, body)
+						})
+						if cacheErr == nil {
+							cached, cacheErr = s.ruleCache.LinesLimited(sourceURL, 8<<20)
+						}
+					}
+					if cacheErr != nil {
+						return generator.Options{}, fmt.Errorf("获取 MRS 对应的 YAML 规则源 %s 失败：%w", sourceURL, cacheErr)
+					}
+					mrsYAMLBytes += len(strings.Join(cached, "\n"))
+					if mrsYAMLBytes > 32<<20 {
+						return generator.Options{}, fmt.Errorf("MRS 对应的 YAML 规则源总大小超过 32 MiB")
+					}
+					lines[sourceURL] = cached
+					continue
+				}
+			}
+			if target == model.ClientClashooSB && preferRuleSets {
+				if sourceURL, mapped := generator.ClashooInlineSourceURL(*resource); mapped {
+					location := fmt.Sprintf("rules[%d].resource", i)
+					cached, alreadyLoaded := seenInline[sourceURL]
+					if !alreadyLoaded {
+						var cacheErr error
+						cached, cacheErr = s.ruleCache.LinesLimited(sourceURL, 4<<20)
+						if cacheErr != nil {
+							cacheErr = s.ruleCache.DownloadWithPolicy(sourceURL, 4<<20, "raw.githubusercontent.com", func(body []byte) error {
+								_, err := generator.ParseClashooInlineRuleSet(body)
+								return err
+							})
+							if cacheErr == nil {
+								cached, cacheErr = s.ruleCache.LinesLimited(sourceURL, 4<<20)
+							}
+						}
+						if cacheErr != nil {
+							return generator.Options{}, &inlineSourceError{code: "resource_cache", location: location, message: fmt.Sprintf("获取 Clashoo inline 规则源 %s 失败：%v", sourceURL, cacheErr)}
+						}
+						body := []byte(strings.Join(cached, "\n"))
+						if len(body) > 4<<20 {
+							return generator.Options{}, &inlineSourceError{code: "resource_size", location: location, message: fmt.Sprintf("Clashoo inline 规则源超过 4 MiB：%s", sourceURL)}
+						}
+						if _, err := generator.ParseClashooInlineRuleSet(body); err != nil {
+							return generator.Options{}, &inlineSourceError{code: "resource_source", location: location, message: fmt.Sprintf("Clashoo inline 规则源无效 %s：%v", sourceURL, err)}
+						}
+						inlineBytes += len(body)
+						if inlineBytes > 6<<20 {
+							return generator.Options{}, &inlineSourceError{code: "resource_size", location: location, message: "Clashoo inline 规则源总大小超过 6 MiB"}
+						}
+						seenInline[sourceURL] = cached
+					}
+					lines[resource.URL] = cached
+					continue
+				}
+			}
+			if cached, err := s.ruleCache.Lines(resource.URL); err == nil {
+				lines[resource.URL] = cached
 				continue
 			}
-			if name := rules.LocalRuleFilename(rule.Resource.URL); name != "" {
+			if name := rules.LocalRuleFilename(resource.URL); name != "" {
 				if b, err := os.ReadFile(filepath.Join(s.rulesDir, name)); err == nil {
-					lines[rule.Resource.URL] = strings.Split(string(b), "\n")
+					lines[resource.URL] = strings.Split(string(b), "\n")
 				}
 			}
 		}
 	}
-	return generator.Generate(generator.Options{
+	return generator.Options{
 		Target: target, Nodes: nodes, Protocols: protocols, Scheme: scheme,
-		PreferRuleSets: preferRuleSets, RuleSetLines: lines,
-	})
+		PreferRuleSets: preferRuleSets, RuleSetLines: lines, Strict: strict,
+		ServiceRegions: serviceRegions,
+	}, nil
 }
 
 // Schemes returns the bundled presets followed by user-imported schemes.
@@ -301,6 +585,9 @@ func (s *Service) Schemes() ([]model.RuleScheme, error) {
 	out := make([]model.RuleScheme, 0, len(bundled)+len(state.Schemes))
 	for _, b := range bundled {
 		out = append(out, *b)
+		if b.ID == "kenzok8-rules" {
+			out = append(out, *nativeDAEScheme(b))
+		}
 	}
 	out = append(out, state.Schemes...)
 	return out, nil
@@ -322,15 +609,16 @@ func (s *Service) Scheme(id string) (*model.RuleScheme, error) {
 
 // SchemeSummary is the compact list representation used by LuCI and rpcd.
 type SchemeSummary struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Summary   string `json:"summary,omitempty"`
-	SourceURL string `json:"source_url,omitempty"`
-	IsBundled bool   `json:"is_bundled,omitempty"`
-	Groups    int    `json:"groups"`
-	Rules     int    `json:"rules"`
-	RuleSets  int    `json:"rule_sets"`
-	Cached    bool   `json:"cached"`
+	ID         string             `json:"id"`
+	Name       string             `json:"name"`
+	TargetOnly model.ClientTarget `json:"target_only,omitempty"`
+	Summary    string             `json:"summary,omitempty"`
+	SourceURL  string             `json:"source_url,omitempty"`
+	IsBundled  bool               `json:"is_bundled,omitempty"`
+	Groups     int                `json:"groups"`
+	Rules      int                `json:"rules"`
+	RuleSets   int                `json:"rule_sets"`
+	Cached     bool               `json:"cached"`
 }
 
 // SchemeSummaries returns counts without sending rule bodies through rpcd.
@@ -342,7 +630,7 @@ func (s *Service) SchemeSummaries() ([]SchemeSummary, error) {
 	out := make([]SchemeSummary, 0, len(schemes))
 	for _, scheme := range schemes {
 		summary := SchemeSummary{
-			ID: scheme.ID, Name: scheme.Name, Summary: scheme.Summary,
+			ID: scheme.ID, Name: scheme.Name, TargetOnly: scheme.TargetOnly, Summary: scheme.Summary,
 			SourceURL: publicSourceURL(scheme.SourceURL), IsBundled: scheme.IsBundled,
 			Groups: len(scheme.Groups), Cached: true,
 		}
@@ -354,6 +642,20 @@ func (s *Service) SchemeSummaries() ([]SchemeSummary, error) {
 				continue
 			}
 			summary.RuleSets++
+			if sourceURL, mapped := generator.MRSYAMLSourceURL(*rule.Resource); mapped {
+				lines, err := s.ruleCache.LinesLimited(sourceURL, 8<<20)
+				if err != nil {
+					summary.Cached = false
+					continue
+				}
+				count, err := generator.CountMRSYAMLSourceRules(*rule.Resource, []byte(strings.Join(lines, "\n")))
+				if err != nil {
+					summary.Cached = false
+					continue
+				}
+				summary.Rules += count
+				continue
+			}
 			lines, err := s.cachedRuleLines(rule.Resource.URL)
 			if err != nil {
 				summary.Cached = false
@@ -491,8 +793,8 @@ func (s *Service) AddSchemeFromURL(name, sourceURL string) (model.RuleScheme, er
 	return s.AddScheme(name, string(body), sourceURL)
 }
 
-// RefreshSchemeRulesets refreshes every unique remote resource referenced by a
-// scheme. A failed download leaves the previous cached copy untouched.
+// RefreshSchemeRulesets refreshes every unique usable remote resource referenced
+// by a scheme. A failed download leaves the previous cached copy untouched.
 func (s *Service) RefreshSchemeRulesets(id string) (int, int, error) {
 	scheme, err := s.findScheme(id)
 	if err != nil {
@@ -501,11 +803,25 @@ func (s *Service) RefreshSchemeRulesets(id string) (int, int, error) {
 	seen := make(map[string]bool)
 	updated, failed := 0, 0
 	for _, rule := range scheme.Rules {
-		if rule.Resource == nil || seen[rule.Resource.URL] {
+		if rule.Resource == nil {
 			continue
 		}
-		seen[rule.Resource.URL] = true
-		if err := s.ruleCache.Download(rule.Resource.URL); err != nil {
+		sourceURL := rule.Resource.URL
+		if mappedURL, mapped := generator.MRSYAMLSourceURL(*rule.Resource); mapped {
+			sourceURL = mappedURL
+		}
+		if seen[sourceURL] {
+			continue
+		}
+		seen[sourceURL] = true
+		if sourceURL == rule.Resource.URL {
+			err = s.ruleCache.Download(sourceURL)
+		} else {
+			err = s.ruleCache.DownloadWithPolicy(sourceURL, 8<<20, "raw.githubusercontent.com", func(body []byte) error {
+				return generator.ValidateMRSYAMLSource(*rule.Resource, body)
+			})
+		}
+		if err != nil {
 			failed++
 		} else {
 			updated++
@@ -552,6 +868,9 @@ func (s *Service) RemoveScheme(id string) error {
 		for _, rule := range scheme.Rules {
 			if rule.Resource != nil {
 				used[rule.Resource.URL] = true
+				if sourceURL, mapped := generator.MRSYAMLSourceURL(*rule.Resource); mapped {
+					used[sourceURL] = true
+				}
 			}
 		}
 	}
@@ -559,12 +878,20 @@ func (s *Service) RemoveScheme(id string) error {
 		for _, rule := range scheme.Rules {
 			if rule.Resource != nil {
 				used[rule.Resource.URL] = true
+				if sourceURL, mapped := generator.MRSYAMLSourceURL(*rule.Resource); mapped {
+					used[sourceURL] = true
+				}
 			}
 		}
 	}
 	for _, rule := range removed.Rules {
-		if rule.Resource != nil && !used[rule.Resource.URL] {
-			s.ruleCache.Remove(rule.Resource.URL)
+		if rule.Resource != nil {
+			if !used[rule.Resource.URL] {
+				s.ruleCache.Remove(rule.Resource.URL)
+			}
+			if sourceURL, mapped := generator.MRSYAMLSourceURL(*rule.Resource); mapped && !used[sourceURL] {
+				s.ruleCache.Remove(sourceURL)
+			}
 		}
 	}
 	return nil
@@ -580,6 +907,9 @@ func (s *Service) findScheme(id string) (*model.RuleScheme, error) {
 		if b.ID == id {
 			return b, nil
 		}
+		if id == nativeDAESchemeID && b.ID == "kenzok8-rules" {
+			return nativeDAEScheme(b), nil
+		}
 	}
 	state, err := s.Store.Load()
 	if err != nil {
@@ -593,6 +923,50 @@ func (s *Service) findScheme(id string) (*model.RuleScheme, error) {
 	return nil, fmt.Errorf("scheme not found: %s", id)
 }
 
+func nativeDAEScheme(source *model.RuleScheme) *model.RuleScheme {
+	clone := *source
+	clone.ID = nativeDAESchemeID
+	clone.Name = "kenzok8 · DAE 原生（自动测速）"
+	clone.TargetOnly = model.ClientDAE
+	clone.Summary = "按 DAE 专用策略将 MetaCubeX 规则集映射到本机 geosite/geoip DAT 标签；规则与顺序保持，生成前需由设备 dae validate 核验标签。"
+	clone.IsBundled = true
+	clone.RawConfig = ""
+	clone.NetworkSettings = nil
+	clone.Groups = make([]model.RuleSchemeGroup, 0, len(source.Groups))
+	directGroups := map[string]bool{"🌐 直连": true, "🎯 全球直连": true, "🍎 Apple": true}
+	usedGroups := make(map[string]bool, len(source.Rules))
+	for _, rule := range source.Rules {
+		if !directGroups[rule.Group] {
+			usedGroups[rule.Group] = true
+		}
+	}
+	for _, group := range source.Groups {
+		if directGroups[group.Name] || !usedGroups[group.Name] {
+			continue
+		}
+		group.Kind = model.KindDAENativeAuto
+		group.URL = ""
+		group.Interval = 0
+		group.Tolerance = 0
+		group.Members = []model.RuleGroupMember{{Type: model.MemberNodePattern, Value: ".*"}}
+		clone.Groups = append(clone.Groups, group)
+	}
+	clone.Rules = make([]model.RuleSchemeRule, len(source.Rules))
+	for i, rule := range source.Rules {
+		if directGroups[rule.Group] {
+			rule.Group = "DIRECT"
+		}
+		if rule.Resource != nil {
+			resource := *rule.Resource
+			resource.Options = append([]string(nil), rule.Resource.Options...)
+			rule.Resource = &resource
+		}
+		rule.Options = append([]string(nil), rule.Options...)
+		clone.Rules[i] = rule
+	}
+	return &clone
+}
+
 // Links converts nodes to shareable subscription links (one per node).
 // protocols and nodeIDs filter the node set exactly like Export.
 func (s *Service) Links(protocols []model.ProxyKind, nodeIDs []string) ([]generator.LinkResult, error) {
@@ -604,21 +978,34 @@ func (s *Service) Links(protocols []model.ProxyKind, nodeIDs []string) ([]genera
 	return generator.Links(nodes), nil
 }
 
-// selectedNodes loads the stored nodes, optionally narrowed to the given ids.
-func (s *Service) selectedNodes(nodeIDs []string) ([]model.ProxyNode, error) {
+// Nodes returns stored proxy nodes without subscription announcements.
+func (s *Service) Nodes() ([]model.ProxyNode, error) {
 	state, err := s.Store.Load()
 	if err != nil {
 		return nil, err
 	}
+	nodes := parser.UsableNodes(state.Nodes)
+	for i := range nodes {
+		nodes[i].EffectiveRegion = generator.EffectiveRegion(nodes[i])
+	}
+	return nodes, nil
+}
+
+// selectedNodes loads the stored nodes, optionally narrowed to the given ids.
+func (s *Service) selectedNodes(nodeIDs []string) ([]model.ProxyNode, error) {
+	nodes, err := s.Nodes()
+	if err != nil {
+		return nil, err
+	}
 	if len(nodeIDs) == 0 {
-		return state.Nodes, nil
+		return nodes, nil
 	}
 	want := make(map[string]bool, len(nodeIDs))
 	for _, id := range nodeIDs {
 		want[id] = true
 	}
-	filtered := make([]model.ProxyNode, 0, len(state.Nodes))
-	for _, n := range state.Nodes {
+	filtered := make([]model.ProxyNode, 0, len(nodes))
+	for _, n := range nodes {
 		if want[n.ID] {
 			filtered = append(filtered, n)
 			delete(want, n.ID)

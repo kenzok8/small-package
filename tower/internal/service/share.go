@@ -32,6 +32,31 @@ type ShareResult struct {
 
 // CreateLocalShare replaces the previous local subscription snapshot.
 func (s *Service) CreateLocalShare(destination string, nodeIDs []string, schemeID string, preferRuleSets bool) (ShareResult, error) {
+	return s.CreateLocalShareWithConsent(destination, nodeIDs, schemeID, preferRuleSets, "", nil)
+}
+
+// CreateLocalShareWithConsent applies the same preflight approval as file export.
+func (s *Service) CreateLocalShareWithConsent(destination string, nodeIDs []string, schemeID string, preferRuleSets bool, planDigest string, acceptedDegradations []string) (ShareResult, error) {
+	return s.createLocalShare(destination, nodeIDs, schemeID, preferRuleSets, planDigest, acceptedDegradations, false)
+}
+
+// CreateLocalShareStrict creates a share only after an exact strict preflight.
+func (s *Service) CreateLocalShareStrict(destination string, nodeIDs []string, schemeID string, preferRuleSets bool, planDigest string) (ShareResult, error) {
+	return s.CreateLocalShareStrictWithServiceRegions(destination, nodeIDs, schemeID, preferRuleSets, planDigest, nil)
+}
+
+func (s *Service) CreateLocalShareStrictWithServiceRegions(destination string, nodeIDs []string, schemeID string, preferRuleSets bool, planDigest string, regions map[string]string) (ShareResult, error) {
+	if len(nodeIDs) == 0 {
+		return ShareResult{}, fmt.Errorf("严格导出至少需要一个已选择的节点")
+	}
+	return s.createLocalShareWithRegions(destination, nodeIDs, schemeID, preferRuleSets, planDigest, nil, true, regions)
+}
+
+func (s *Service) createLocalShare(destination string, nodeIDs []string, schemeID string, preferRuleSets bool, planDigest string, acceptedDegradations []string, strict bool) (ShareResult, error) {
+	return s.createLocalShareWithRegions(destination, nodeIDs, schemeID, preferRuleSets, planDigest, acceptedDegradations, strict, nil)
+}
+
+func (s *Service) createLocalShareWithRegions(destination string, nodeIDs []string, schemeID string, preferRuleSets bool, planDigest string, acceptedDegradations []string, strict bool, regions map[string]string) (ShareResult, error) {
 	var content, contentType string
 	var included, skipped int
 
@@ -67,11 +92,12 @@ func (s *Service) CreateLocalShare(destination string, nodeIDs []string, schemeI
 		if !target.Supported() {
 			return ShareResult{}, fmt.Errorf("unknown share destination: %s", destination)
 		}
-		if target.Family() == model.FamilySingBox && schemeID != "" {
-			return ShareResult{}, fmt.Errorf("sing-box JSON 暂不支持规则方案导出")
-		}
 		var err error
-		content, err = s.ExportWithOptions(target, nil, nodeIDs, schemeID, preferRuleSets)
+		if strict {
+			content, err = s.ExportStrictWithServiceRegions(target, nil, nodeIDs, schemeID, preferRuleSets, planDigest, regions)
+		} else {
+			content, err = s.ExportWithConsent(target, nil, nodeIDs, schemeID, preferRuleSets, planDigest, acceptedDegradations)
+		}
 		if err != nil {
 			return ShareResult{}, err
 		}

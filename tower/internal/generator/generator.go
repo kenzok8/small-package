@@ -26,10 +26,16 @@ type Options struct {
 	Scheme *model.RuleScheme
 	// PreferRuleSets keeps supported remote resources as client-native links.
 	// When false (or unsupported for a target), cached lines are inlined.
-	PreferRuleSets   bool
-	RuleSetLines     map[string][]string
-	plannedRules     []plannedRule
-	plannedProviders []plannedProvider
+	PreferRuleSets bool
+	RuleSetLines   map[string][]string
+	// PlanDigest and AcceptedDegradations bind a degraded export to the exact
+	// preflight plan and warnings the caller acknowledged.
+	PlanDigest           string
+	AcceptedDegradations []string
+	ServiceRegions       map[string]string
+	Strict               bool
+	plannedRules         []plannedRule
+	plannedProviders     []plannedProvider
 }
 
 // Generate renders a full configuration for the target client.
@@ -39,11 +45,36 @@ func Generate(opts Options) (string, error) {
 	}
 	opts.Nodes = FilterNodes(opts.Nodes, opts.Protocols)
 	family := opts.Target.Family()
-	if opts.Scheme != nil {
-		switch family {
-		case model.FamilySingBox:
-			return "", fmt.Errorf("%s 暂不支持规则方案导出", opts.Target.Name())
+	if family != model.FamilyDAE && opts.Scheme != nil {
+		for _, group := range opts.Scheme.Groups {
+			if group.Kind == model.KindDAENativeAuto {
+				return "", fmt.Errorf("dae 原生自动测速策略组不能用于 %s", opts.Target.Name())
+			}
 		}
+	}
+	if family == model.FamilySingBox {
+		plan, result := compileSingBox(opts)
+		if opts.Strict {
+			if err := requireStrictExactPlan(opts, result); err != nil {
+				return "", err
+			}
+			return generateSingBox(plan.opts), nil
+		}
+		if result.Status == PreflightUnsupported {
+			return "", &PreflightError{Result: result}
+		}
+		if result.Status == PreflightDegraded && !acceptDegradedPlan(opts, &result) {
+			return "", &PreflightError{Result: result}
+		}
+		return generateSingBox(plan.opts), nil
+	}
+	if family == model.FamilyDAE {
+		return GenerateDAE(opts)
+	}
+	if opts.Strict {
+		return "", fmt.Errorf("strict export preflight is not supported for client %s", opts.Target.Name())
+	}
+	if opts.Scheme != nil {
 		var err error
 		opts.Scheme, err = prepareScheme(opts.Scheme, uniquedNames(opts.Nodes))
 		if err != nil {

@@ -4,17 +4,17 @@ aipr: &pr {type: select, proxies: [🚀 节点选择, ♻️ 香港自动, ♻�
 
 proxy-groups:
   - {name: 🚀 节点选择, type: select, proxies: [♻️ 香港自动, ♻️ 日本自动, ♻️ 美国自动, ♻️ 新加坡自动, ♻️ 台湾自动, ♻️ 韩国自动, ♻️ 自动选择, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇺🇲 美国节点, 🇸🇬 新加坡节点, 🇹🇼 台湾节点, 🇰🇷 韩国节点, 🌍 全部节点, 🌐 直连]}
-  - {name: ▶️ YouTube, icon: "https://cdn.simpleicons.org/youtube/FF0033/FF0033", <<: *pr}
-  - {name: 📔 Google, icon: "https://cdn.simpleicons.org/google/4285F4/8AB4F8", <<: *pr}
-  - {name: 🔮 OpenAI, icon: "https://api.iconify.design/simple-icons/openai.svg?color=%2374AA9C&width=24&height=24", <<: *pr}
-  - {name: 🧠 Claude, icon: "https://cdn.simpleicons.org/anthropic/D97757/EAA683", <<: *pr}
-  - {name: 🤖 Gemini, icon: "https://cdn.simpleicons.org/googlegemini/8E75B2/BCA7E8", <<: *pr}
-  - {name: 🐦 Twitter, icon: "https://api.iconify.design/simple-icons/twitter.svg?color=%231DA1F2&width=24&height=24", <<: *pr}
-  - {name: 📦 GitHub, icon: "https://cdn.simpleicons.org/github/24292F/FFFFFF", <<: *pr}
-  - {name: Ⓜ️ Microsoft, icon: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Microsoft_icon.svg", <<: *pr}
-  - {name: 🎵 TikTok, icon: "https://cdn.simpleicons.org/tiktok/111111/FFFFFF", <<: *pr}
-  - {name: 📺 NETFLIX, icon: "https://cdn.simpleicons.org/netflix/E50914/E50914", <<: *pr}
-  - {name: 💳 PayPal, icon: "https://cdn.simpleicons.org/paypal/003087/8AB4F8", <<: *pr}
+  - {name: YouTube, icon: "https://cdn.simpleicons.org/youtube/FF0033/FF0033", <<: *pr}
+  - {name: Google, icon: "https://cdn.simpleicons.org/google/4285F4/8AB4F8", <<: *pr}
+  - {name: OpenAI, icon: "https://api.iconify.design/simple-icons/openai.svg?color=%2374AA9C&width=24&height=24", <<: *pr}
+  - {name: Claude, icon: "https://cdn.simpleicons.org/anthropic/D97757/EAA683", <<: *pr}
+  - {name: Gemini, icon: "https://cdn.simpleicons.org/googlegemini/8E75B2/BCA7E8", <<: *pr}
+  - {name: Twitter, icon: "https://api.iconify.design/simple-icons/twitter.svg?color=%231DA1F2&width=24&height=24", <<: *pr}
+  - {name: GitHub, icon: "https://cdn.simpleicons.org/github/24292F/FFFFFF", <<: *pr}
+  - {name: Microsoft, icon: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Microsoft_icon.svg", <<: *pr}
+  - {name: TikTok, icon: "https://cdn.simpleicons.org/tiktok/111111/FFFFFF", <<: *pr}
+  - {name: NETFLIX, icon: "https://cdn.simpleicons.org/netflix/E50914/E50914", <<: *pr}
+  - {name: PayPal, icon: "https://cdn.simpleicons.org/paypal/003087/8AB4F8", <<: *pr}
   - {name: 🍎 Apple, type: select, proxies: [🌐 直连, 🚀 节点选择]}
   - {name: 🎯 全球直连, type: select, proxies: [🌐 直连, 🚀 节点选择]}
   - {name: 🌀 列表之外, <<: *pr}
@@ -38,21 +38,21 @@ rules:
   - RULE-SET,direct1,🌐 直连
   - RULE-SET,apple_domain,🍎 Apple
   - RULE-SET,proxylite,🚀 节点选择
-  - RULE-SET,openai_domain,🔮 OpenAI
-  - RULE-SET,claude_domain,🧠 Claude
-  - RULE-SET,gemini_domain,🤖 Gemini
-  - RULE-SET,twitter_domain,🐦 Twitter
-  - RULE-SET,github_domain,📦 GitHub
-  - RULE-SET,microsoft_domain,Ⓜ️ Microsoft
-  - RULE-SET,youtube_domain,▶️ YouTube
-  - RULE-SET,google_domain,📔 Google
-  - RULE-SET,tiktok_domain,🎵 TikTok
-  - RULE-SET,netflix_domain,📺 NETFLIX
-  - RULE-SET,paypal_domain,💳 PayPal
+  - RULE-SET,openai_domain,OpenAI
+  - RULE-SET,claude_domain,Claude
+  - RULE-SET,gemini_domain,Gemini
+  - RULE-SET,twitter_domain,Twitter
+  - RULE-SET,github_domain,GitHub
+  - RULE-SET,microsoft_domain,Microsoft
+  - RULE-SET,youtube_domain,YouTube
+  - RULE-SET,google_domain,Google
+  - RULE-SET,tiktok_domain,TikTok
+  - RULE-SET,netflix_domain,NETFLIX
+  - RULE-SET,paypal_domain,PayPal
   - RULE-SET,geolocation-!cn,🚀 节点选择
   - RULE-SET,cn_domain,🎯 全球直连
-  - RULE-SET,google_ip,📔 Google,no-resolve
-  - RULE-SET,netflix_ip,📺 NETFLIX,no-resolve
+  - RULE-SET,google_ip,Google,no-resolve
+  - RULE-SET,netflix_ip,NETFLIX,no-resolve
   - RULE-SET,cn_ip,🎯 全球直连
   - MATCH,🌀 列表之外
 rule-anchor:

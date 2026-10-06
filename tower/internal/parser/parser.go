@@ -105,11 +105,23 @@ func Parse(data []byte, sourceID string) ParsedContent {
 		}
 	}
 	return ParsedContent{
-		Nodes:             nodes,
+		Nodes:             UsableNodes(nodes),
 		RejectedLineCount: rejected,
 		Notices:           notices,
 		Status:            status,
 	}
+}
+
+// UsableNodes excludes announcement entries from new parses and stored state.
+func UsableNodes(nodes []model.ProxyNode) []model.ProxyNode {
+	out := make([]model.ProxyNode, 0, len(nodes))
+	for _, n := range nodes {
+		if n.IsSubscriptionMetadata != nil && *n.IsSubscriptionMetadata || IsNoticeName(n.Name) {
+			continue
+		}
+		out = append(out, n)
+	}
+	return out
 }
 
 // finalize assigns stable IDs, flags announcement metadata, and de-duplicates.

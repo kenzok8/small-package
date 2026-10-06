@@ -89,6 +89,7 @@ type ProxyNode struct {
 
 	IsSubscriptionMetadata *bool  `json:"is_subscription_metadata,omitempty"`
 	CountryOverride        string `json:"country_override,omitempty"`
+	EffectiveRegion        string `json:"effective_region,omitempty"`
 }
 
 // UsesReality reports whether the node negotiates REALITY rather than plain TLS.
