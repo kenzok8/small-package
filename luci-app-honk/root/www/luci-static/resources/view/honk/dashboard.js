@@ -31,7 +31,7 @@ return view.extend({
 				apiName: 'Native API',
 				defaultPort: '9527',
 				defaultDir: '/etc/honk/zashboard',
-				exampleConfig: "experimental {\n    native_api {\n        enabled: true\n        listen: '0.0.0.0:9527'\n        secret: 'honk114514'\n        ui: '/etc/honk/zashboard'\n        config_write: true\n        geosite_download_url: 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/release/geosite.dat'\n        geoip_download_url: 'https://raw.githubusercontent.com/QiuSimons/geoip-moedove/refs/heads/main/geoip.dat'\n    }\n}",
+				exampleConfig: "experimental {\n    native_api {\n        enabled: true\n        listen: '0.0.0.0:9527'\n        secret: 'honk114514'\n        ui: '/etc/honk/zashboard'\n        config_write: true\n    }\n}",
 				buildUrl: function(info, targetHost, port, secret, protocol, forceFresh) {
 					var hostPart = (targetHost.indexOf(':') !== -1 && targetHost.charAt(0) !== '[') ? '[' + targetHost + ']' : targetHost;
 					var query = 'hostname=' + encodeURIComponent(targetHost) +
@@ -58,7 +58,7 @@ return view.extend({
 				apiName: 'Native API',
 				defaultPort: '9527',
 				defaultDir: '/etc/honk/doona',
-				exampleConfig: "experimental {\n    native_api {\n        enabled: true\n        listen: '0.0.0.0:9527'\n        secret: 'honk114514'\n        ui: '/etc/honk/doona'\n        config_write: true\n        geosite_download_url: 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/release/geosite.dat'\n        geoip_download_url: 'https://raw.githubusercontent.com/QiuSimons/geoip-moedove/refs/heads/main/geoip.dat'\n    }\n}",
+				exampleConfig: "experimental {\n    native_api {\n        enabled: true\n        listen: '0.0.0.0:9527'\n        secret: 'honk114514'\n        ui: '/etc/honk/doona'\n        config_write: true\n    }\n}",
 				buildUrl: function(info, targetHost, port, secret, protocol, forceFresh) {
 					var hostPart = (targetHost.indexOf(':') !== -1 && targetHost.charAt(0) !== '[') ? '[' + targetHost + ']' : targetHost;
 					var url = protocol + '://' + hostPart + ':' + port + '/ui/';

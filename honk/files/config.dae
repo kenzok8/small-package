@@ -22,16 +22,9 @@ global {
     udp_check_dns: 'dns.google.com:53', '8.8.8.8', '2001:4860:4860::8888'
 }
 
-# API access (native_api) is configured separately in config.d/api.dae
-# to allow web dashboard configuration without locking the config as read-only.
-#
-# Optional cache-file configuration:
-#experimental {
-#    cache_file {
-#        enabled: true
-#        path: '/etc/honk/cache.db'
-#        cache_id: ''
-#        store_fakeip: false #in this time, this field will be ignored
-#    }
-#}
-
+assets {
+    geodata {
+        geosite: 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/release/geosite.dat'
+        geoip: 'https://raw.githubusercontent.com/QiuSimons/geoip-moedove/refs/heads/main/geoip.dat'
+    }
+}

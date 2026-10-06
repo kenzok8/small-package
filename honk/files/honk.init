@@ -33,21 +33,24 @@ cleanup_netns() {
 hijack_resolv_conf() {
     grep -q ' /tmp/resolv\.conf ' /proc/mounts && return 0
 
-    grep -E '^(search|domain) ' /tmp/resolv.conf > "$RESOLV_HONK" 2>/dev/null
-
-    local dns_list LOGICAL_WAN
+    local dns_list WANS
     . /lib/functions/network.sh
-    network_find_wan LOGICAL_WAN 2>/dev/null
-    if [ -n "$LOGICAL_WAN" ]; then
-        dns_list=$(ubus call "network.interface.$LOGICAL_WAN" status 2>/dev/null | \
-            jsonfilter -e '@["dns-server"][*]' 2>/dev/null)
-    fi
+    unset -v __NETWORK_CACHE
+    __network_ifstatus WANS "" "[@.route[@.target='0.0.0.0' && !@.table]].interface" 2>/dev/null
+    set -- $WANS
 
-    if [ -z "$dns_list" ] && [ -f "/tmp/resolv.conf.d/resolv.conf.auto" ]; then
-        dns_list=$(awk '/^nameserver/{print $2}' "/tmp/resolv.conf.d/resolv.conf.auto")
+    if [ $# -eq 1 ]; then
+        dns_list=$(ubus call "network.interface.$1" status 2>/dev/null | \
+            jsonfilter -e '@["dns-server"][*]' 2>/dev/null)
+        if [ -z "$dns_list" ] && [ -f "/tmp/resolv.conf.d/resolv.conf.auto" ]; then
+            dns_list=$(awk '/^nameserver/{print $2}' "/tmp/resolv.conf.d/resolv.conf.auto")
+        fi
     fi
 
     [ -z "$dns_list" ] && dns_list="119.29.29.29 223.5.5.5"
+
+    [ -f /tmp/resolv.conf ] || touch /tmp/resolv.conf
+    grep -E '^(search|domain) ' /tmp/resolv.conf > "$RESOLV_HONK" 2>/dev/null
 
     for dns in $dns_list; do
         echo "nameserver $dns" >> "$RESOLV_HONK"
@@ -58,9 +61,10 @@ hijack_resolv_conf() {
 }
 
 restore_resolv_conf() {
-    grep -q ' /tmp/resolv\.conf ' /proc/mounts || return 0
-    mount -o remount,rw,bind /tmp/resolv.conf 2>/dev/null
-    umount /tmp/resolv.conf 2>/dev/null
+    while grep -q ' /tmp/resolv\.conf ' /proc/mounts; do
+        mount -o remount,rw,bind /tmp/resolv.conf 2>/dev/null
+        umount /tmp/resolv.conf 2>/dev/null || break
+    done
     rm -f "$RESOLV_HONK"
 }
 

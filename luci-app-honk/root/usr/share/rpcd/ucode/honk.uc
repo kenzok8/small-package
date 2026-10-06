@@ -375,7 +375,6 @@ function switch_dashboard_api(target_type) {
 		if (parsed_native && parsed_native.enabled &&
 		    parsed_native.listen &&
 		    parsed_native.config_write &&
-		    parsed_native.geosite_download_url && parsed_native.geoip_download_url &&
 		    parsed_native.ui == target_ui) {
 			return { success: true, type: target_type, noop: true };
 		}
@@ -389,8 +388,6 @@ function switch_dashboard_api(target_type) {
 	let sec = (parsed_native && parsed_native.secret && length(parsed_native.secret) >= 8) ? parsed_native.secret : "honk114514";
 	let listen = (parsed_native && parsed_native.listen) ? parsed_native.listen : "0.0.0.0:9527";
 	let ui = target_ui;
-	let geosite = (parsed_native && parsed_native.geosite_download_url) ? parsed_native.geosite_download_url : "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/release/geosite.dat";
-	let geoip = (parsed_native && parsed_native.geoip_download_url) ? parsed_native.geoip_download_url : "https://raw.githubusercontent.com/QiuSimons/geoip-moedove/refs/heads/main/geoip.dat";
 
 	let api_inner =
 "    native_api {\n" +
@@ -399,8 +396,6 @@ function switch_dashboard_api(target_type) {
 "        secret: '" + sec + "'\n" +
 "        ui: '" + ui + "'\n" +
 "        config_write: true\n" +
-"        geosite_download_url: '" + geosite + "'\n" +
-"        geoip_download_url: '" + geoip + "'\n" +
 "    }\n";
 
 	let default_block = "experimental {\n" + api_inner + "}\n";
