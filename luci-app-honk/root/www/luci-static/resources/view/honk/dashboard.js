@@ -556,6 +556,11 @@ return view.extend({
 				}
 
 				downloadPollFn = function() {
+					if (!document.body.contains(progressWrap)) {
+						poll.remove(downloadPollFn);
+						downloadPollFn = null;
+						return Promise.resolve();
+					}
 					return honk.callHonkDownloadStatus().then(function(sResp) {
 						if (!sResp) return;
 						if (sResp.log) {
@@ -660,7 +665,11 @@ return view.extend({
 
 		loadInfo();
 
-		poll.add(function() {
+		var dashStatusPollFn = function() {
+			if (!document.body.contains(iframe)) {
+				poll.remove(dashStatusPollFn);
+				return Promise.resolve();
+			}
 			if (document.hidden) {
 				return Promise.resolve();
 			}
@@ -670,7 +679,10 @@ return view.extend({
 					updateHonkRunningState(isRunning, currentInfo.port);
 				});
 			}
-		}, 5);
+			return Promise.resolve();
+		};
+
+		poll.add(dashStatusPollFn, 5);
 
 		return E('div', { 'class': 'dash-wrap' }, [
 			style,

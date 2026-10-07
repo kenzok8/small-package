@@ -581,17 +581,16 @@ function renderStatusHeader() {
 	]);
 
 	function updateStatus(data) {
-		var tb = document.getElementById('honk_status');
-		if (!tb) return;
+		if (!statusEl) return;
 		if (data && data.running) {
 			var mem = data.memory ? ' (' + _('Memory Usage') + ': ' + data.memory + ')' : '';
-			dom.content(tb, [
+			dom.content(statusEl, [
 				E('span', { 'style': 'color: var(--success, #22c55e); font-weight: bold;' }, _('HONK') + ' ' + _('RUNNING')),
 				' ',
 				E('span', { 'style': 'color: var(--text-muted, #888); font-size: 0.9em;' }, mem)
 			]);
 		} else {
-			dom.content(tb, [
+			dom.content(statusEl, [
 				E('span', { 'style': 'color: var(--danger, #ef4444); font-weight: bold;' }, _('HONK') + ' ' + _('NOT RUNNING'))
 			]);
 		}
@@ -599,9 +598,15 @@ function renderStatusHeader() {
 
 	callHonkStatus().then(updateStatus);
 
-	poll.add(function() {
+	var pollStatusFn = function() {
+		if (!document.body.contains(statusEl)) {
+			poll.remove(pollStatusFn);
+			return Promise.resolve();
+		}
 		return callHonkStatus().then(updateStatus);
-	}, 5);
+	};
+
+	poll.add(pollStatusFn, 5);
 
 	applyTabVisibility();
 

@@ -62,18 +62,35 @@ return view.extend({
 
 		updateLog();
 
-		poll.add(function() {
+		var onVisibilityChange;
+
+		var logPollFn = function() {
+			if (!document.body.contains(logTextarea)) {
+				poll.remove(logPollFn);
+				if (onVisibilityChange) {
+					document.removeEventListener('visibilitychange', onVisibilityChange);
+				}
+				return Promise.resolve();
+			}
 			if (document.hidden) {
 				return Promise.resolve();
 			}
 			return updateLog();
-		}, 3);
+		};
 
-		document.addEventListener('visibilitychange', function() {
+		poll.add(logPollFn, 3);
+
+		onVisibilityChange = function() {
+			if (!document.body.contains(logTextarea)) {
+				document.removeEventListener('visibilitychange', onVisibilityChange);
+				return;
+			}
 			if (!document.hidden) {
 				updateLog();
 			}
-		});
+		};
+
+		document.addEventListener('visibilitychange', onVisibilityChange);
 
 		return E('fieldset', { 'class': 'cbi-section', 'id': '_log_fieldset' }, [
 			E('legend', {}, _('Logs')),

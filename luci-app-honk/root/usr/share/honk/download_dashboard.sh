@@ -15,6 +15,7 @@ fi
 LOG_FILE="/tmp/honk_dashboard_download.log"
 STATUS_FILE="/tmp/honk_dashboard_download.status"
 TMP_DIR="/tmp/dashboard_dl_$$"
+trap 'rm -rf "$TMP_DIR"' EXIT INT TERM
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
@@ -182,10 +183,17 @@ if [ ! -f "$DEPLOY_SRC/index.html" ]; then
 fi
 
 log "Deploying files to $TARGET_DIR..."
+case "$TARGET_DIR" in
+    /etc/honk/*) ;;
+    *)
+        log "Error: Invalid target directory (must be inside /etc/honk): $TARGET_DIR"
+        set_status "FAILED"
+        exit 1
+        ;;
+esac
+
 mkdir -p "$TARGET_DIR"
-if [ -n "$TARGET_DIR" ] && [ "$TARGET_DIR" != "/" ] && [ "$TARGET_DIR" != "/etc" ] && [ "$TARGET_DIR" != "/tmp" ]; then
-    rm -rf "${TARGET_DIR:?}"/* "${TARGET_DIR:?}"/.[!.]* 2>/dev/null || true
-fi
+rm -rf "${TARGET_DIR:?}"/* "${TARGET_DIR:?}"/.[!.]* 2>/dev/null || true
 cp -rf "$DEPLOY_SRC/"* "$TARGET_DIR/"
 rm -rf "$TARGET_DIR"/*.md "$TARGET_DIR"/LICENSE* "$TARGET_DIR"/NOTICE "$TARGET_DIR"/LICENSES 2>/dev/null || true
 chmod -R 755 "$TARGET_DIR"

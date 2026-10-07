@@ -90,10 +90,78 @@ function strip_dae_comments(content) {
 	return join("\n", clean_lines);
 }
 
+function find_bracket_block(content, header_regex) {
+	let lines = split(content, "\n");
+	let start_idx = -1;
+	let end_idx = -1;
+	let in_block = false;
+	let depth = 0;
+	let in_single = false;
+	let in_double = false;
+
+	for (let idx, line in lines) {
+		let trimmed = trim(line);
+		if (!in_block && match(trimmed, header_regex)) {
+			in_block = true;
+			start_idx = idx;
+		}
+
+		if (in_block) {
+			let len = length(line);
+			for (let i = 0; i < len; i++) {
+				let c = substr(line, i, 1);
+				let next_c = (i + 1 < len) ? substr(line, i + 1, 1) : "";
+				if (c == "'" && !in_double) {
+					in_single = !in_single;
+				} else if (c == '"' && !in_single) {
+					in_double = !in_double;
+				} else if (!in_single && !in_double) {
+					if (c == '#' || (c == '/' && next_c == '/')) {
+						break;
+					} else if (c == '{') {
+						depth++;
+					} else if (c == '}') {
+						depth--;
+						if (depth <= 0) {
+							end_idx = idx;
+							break;
+						}
+					}
+				}
+			}
+			if (end_idx != -1) break;
+		}
+	}
+	return { start: start_idx, end: end_idx };
+}
+
+function extract_bracket_block(content, header_regex) {
+	let bounds = find_bracket_block(content, header_regex);
+	if (bounds.start == -1 || bounds.end == -1) return null;
+	let lines = split(content, "\n");
+	let block_lines = [];
+	for (let i = bounds.start; i <= bounds.end; i++) {
+		push(block_lines, lines[i]);
+	}
+	return join("\n", block_lines);
+}
+
+function remove_bracket_block(content, header_regex) {
+	let bounds = find_bracket_block(content, header_regex);
+	if (bounds.start == -1 || bounds.end == -1) return content;
+	let lines = split(content, "\n");
+	let new_lines = [];
+	for (let i = 0; i < length(lines); i++) {
+		if (i < bounds.start || i > bounds.end) {
+			push(new_lines, lines[i]);
+		}
+	}
+	return join("\n", new_lines);
+}
+
 function parse_native_api(clean_content) {
-	let api_m = match(clean_content, /native_api\s*\{([^}]+)\}/);
-	if (!api_m) return null;
-	let block = api_m[1];
+	let block = extract_bracket_block(clean_content, /native_api\s*\{/);
+	if (!block) return null;
 
 	let listen_m = match(block, /listen\s*:\s*['"]?([^'" \t\r\n]+)['"]?/);
 	let ui_m = match(block, /ui\s*:\s*['"]?([^'" \t\r\n]+)['"]?/);
@@ -167,40 +235,6 @@ function get_api_config() {
 	};
 }
 
-function remove_bracket_block(content, header_regex) {
-	let lines = split(content, "\n");
-	let new_lines = [];
-	let in_block = false;
-	let depth = 0;
-
-	for (let idx, line in lines) {
-		let trimmed = trim(line);
-		if (!in_block && match(trimmed, header_regex)) {
-			in_block = true;
-			let open_cnt = length(split(trimmed, "{")) - 1;
-			let close_cnt = length(split(trimmed, "}")) - 1;
-			depth = open_cnt - close_cnt;
-			if (open_cnt > 0 && depth <= 0) {
-				in_block = false;
-			}
-			continue;
-		}
-
-		if (in_block) {
-			let open_cnt = length(split(trimmed, "{")) - 1;
-			let close_cnt = length(split(trimmed, "}")) - 1;
-			depth += (open_cnt - close_cnt);
-			if (depth <= 0) {
-				in_block = false;
-			}
-			continue;
-		}
-
-		push(new_lines, line);
-	}
-	return join("\n", new_lines);
-}
-
 function get_uci_dashboard_type(u) {
 	if (!u) return null;
 	u.load("honk");
@@ -221,9 +255,12 @@ function clean_legacy_api_from_config(config_file) {
 	if (!main_content) return;
 	let cleaned_main = remove_bracket_block(main_content, /^[#\/]*\s*clash_api\s*\{/);
 	cleaned_main = remove_bracket_block(cleaned_main, /^[#\/]*\s*native_api\s*\{/);
-	let exp_m = match(cleaned_main, /experimental\s*\{([^}]+)\}/);
-	if (exp_m) {
-		let inner_clean = strip_dae_comments(exp_m[1]);
+	
+	let exp_block = extract_bracket_block(cleaned_main, /experimental\s*\{/);
+	if (exp_block) {
+		let inner_clean = strip_dae_comments(exp_block);
+		inner_clean = replace(inner_clean, /experimental\s*\{/, "");
+		inner_clean = replace(inner_clean, /\}[ \t\r\n]*$/, "");
 		if (!match(inner_clean, /\S/)) {
 			cleaned_main = remove_bracket_block(cleaned_main, /^[#\/]*\s*experimental\s*\{/);
 		}
@@ -337,6 +374,7 @@ function download_dashboard(req) {
 }
 
 function switch_dashboard_api(target_type) {
+	cached_pid = null;
 	let api_file = get_api_file_path();
 	let config_file = get_config_file_path();
 
@@ -441,6 +479,7 @@ return {
 
 		reload: {
 			call: function(req) {
+				cached_pid = null;
 				system("/etc/init.d/honk hot_reload >/dev/null 2>&1 &");
 				return { success: true };
 			}
@@ -448,6 +487,7 @@ return {
 
 		restart: {
 			call: function(req) {
+				cached_pid = null;
 				system("/etc/init.d/honk restart >/dev/null 2>&1 &");
 				return { success: true };
 			}
@@ -464,7 +504,8 @@ return {
 
 		clear_log: {
 			call: function(req) {
-				system("true > /var/log/honk/honk.log");
+				system("mkdir -p /var/log/honk");
+				writefile("/var/log/honk/honk.log", "");
 				return { success: true };
 			}
 		},
