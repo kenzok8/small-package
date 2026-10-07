@@ -47,25 +47,24 @@ clean_log() {
 
 config_get_type() {
 	local ret=$(uci -q get "${CONFIG}.${1}" 2>/dev/null)
-	echo "${ret:=$2}"
+	printf '%s' "${ret:=$2}"
 }
 
 config_n_get() {
 	local ret=$(uci -q get "${CONFIG}.${1}.${2}" 2>/dev/null)
-	echo "${ret:=$3}"
+	printf '%s' "${ret:=$3}"
 }
 
 config_t_get() {
 	local index=${4:-0}
 	local ret=$(uci -q get "${CONFIG}.@${1}[${index}].${2}" 2>/dev/null)
-	echo "${ret:=${3}}"
+	printf '%s' "${ret:=${3}}"
 }
 
 eval_set_val() {
-	for i in $@; do
-		for j in $i; do
-			eval $j
-		done
+	local param
+	for param in "$@"; do
+		eval "${param%%=*}=\${param#*=}"
 	done
 }
 
@@ -87,13 +86,13 @@ lua_api() {
 }
 
 eval_cache_var() {
-	[ -s "$TMP_PATH/var" ] && eval $(cat "$TMP_PATH/var")
+	[ -s "$TMP_PATH/var" ] && . "$TMP_PATH/var"
 }
 
 del_cache_var() {
 	local key="${1}"
 	[ -n "${key}" ] && [ -f "${TMP_PATH}/var" ] && {
-		sed -i "/${key}=/d" $TMP_PATH/var >/dev/null 2>&1
+		sed -i "/^${key}=/d" "$TMP_PATH/var" >/dev/null 2>&1
 	}
 }
 
@@ -105,17 +104,17 @@ set_cache_var() {
 		local val="$@"
 		[ -n "${val}" ] && {
 			[ ! -d $TMP_PATH ] && mkdir -p $TMP_PATH
-			echo "${key}=\"${val}\"" >> $TMP_PATH/var
-			eval ${key}=\"${val}\"
+			printf '%s=%s\n' "$key" "$(shell_quote "$val")" >> "$TMP_PATH/var"
+			eval "$key=\$val"
 		}
 	}
 }
 
 get_cache_var() {
-	local key="${1}"
-	[ -n "${key}" ] && [ -s "$TMP_PATH/var" ] && {
-		echo $(cat $TMP_PATH/var | grep "^${key}=" | awk -F '=' '{print $2}' | tail -n 1 | awk -F'"' '{print $2}')
-	}
+	[ -n "$1" ] && [ -s "$TMP_PATH/var" ] && (
+		. "$TMP_PATH/var"
+		eval "printf '%s' \"\${$1-}\""
+	)
 }
 
 first_type() {
@@ -157,18 +156,18 @@ get_host_ip() {
 	local isip=""
 	local ip=""
 	if [ "$1" = "ipv6" ]; then
-		isip=$(echo $host | grep -Eo "$IPv6_REGEX")
-		if [ -n "$isip" ]; then
-			ip=$(echo "$host" | tr -d '[]')
-		fi
+		host=${host#[}
+		host=${host%]}
+		isip=$(printf '%s' "$host" | grep -E "^($IPv6_REGEX)$")
+		[ -n "$isip" ] && ip=$isip
 	else
-		isip=$(echo $host | grep -Eo "$IPv4_REGEX")
+		isip=$(printf '%s' "$host" | grep -E "^($IPv4_REGEX)$")
 		[ -n "$isip" ] && ip=$isip
 	fi
 	[ -z "$isip" ] && {
 		local t=4
 		[ "$1" = "ipv6" ] && t=6
-		local vpsrip=$(resolveip -$t -t $count $host | awk 'NR==1{print}')
+		local vpsrip=$(resolveip -$t -t "$count" "$host" | awk 'NR==1{print}')
 		ip=$vpsrip
 	}
 	[ -n "$ip" ] && echo "$ip"
@@ -192,19 +191,20 @@ get_ip_port_from() {
 	local __portv=${1}; shift 1
 	local __ucipriority=${1}; shift 1
 
-	local val1 val2
-	val2=$(echo "$__host" | sed -n '
-		s/^[^#]*[#]\([0-9]*\)$/\1/p; t;
-		s/^\(\[[^]]*\]\)[:]\([0-9]*\)$/\2/p; t;
-		s/^.*[:#]\([0-9]*\)$/\1/p
-	')
+	local val1="$__host" val2
+	case "$__host" in
+		*\#*) val1=${__host%#*}; val2=${__host##*#} ;;
+		\[*\]:*) val1=${__host%\]:*}; val2=${__host##*:} ;;
+		*:*:*) ;;
+		*:*) val1=${__host%:*}; val2=${__host##*:} ;;
+	esac
 	if [ -n "${__ucipriority}" ]; then
-		val2=$(config_n_get ${__host} port "${val2}")
-		val1=$(config_n_get ${__host} address "${__host%%${val2:+[:#]${val2}*}}")
-	else
-		val1="${__host%%${val2:+[:#]${val2}*}}"
+		val2=$(config_n_get "$__host" port "$val2")
+		val1=$(config_n_get "$__host" address "$val1")
 	fi
-	eval "${__ipv}=\"$val1\"; ${__portv}=\"$val2\""
+	val1=${val1#[}
+	val1=${val1%]}
+	eval "${__ipv}=\$val1; ${__portv}=\$val2"
 }
 
 parse_doh() {
@@ -237,20 +237,14 @@ parse_doh() {
 
 host_from_url(){
 	local f="${1}"
-
-	## Remove protocol part of url  ##
-	f="${f##http://}"
-	f="${f##https://}"
-	f="${f##ftp://}"
-	f="${f##sftp://}"
-
-	## Remove username and/or username:password part of URL  ##
-	f="${f##*:*@}"
-	f="${f##*@}"
-
-	## Remove rest of urls ##
-	f="${f%%/*}"
-	echo "${f%%:*}"
+	f=${f#*://}
+	f=${f%%[/?#]*}
+	f=${f##*@}
+	case "$f" in
+		\[*\]*) f=${f#\[}; f=${f%%\]*} ;;
+		*) f=${f%%:*} ;;
+	esac
+	printf '%s' "$f"
 }
 
 hosts_foreach() {
@@ -268,6 +262,7 @@ hosts_foreach() {
 		__ret=$?
 		[ ${__ret} -ge ${ERROR_NO_CATCH:-1} ] && return ${__ret}
 	done
+	return 0
 }
 
 check_host() {
@@ -354,6 +349,7 @@ get_new_port() {
 		fi
 	fi
 	([ "$port" -lt "$min_port" ] || [ "$port" -gt "$max_port" ]) && port=$default_start_port
+	local start_port=$port
 	while :; do
 		local result=$(check_port_exists "$port" "$protocol")
 		if [ "$is_auto" = "1" ] && [ -n "$(get_cache_var "get_port_${port}")" ]; then
@@ -364,13 +360,10 @@ get_new_port() {
 		if [ "$port" -lt "$max_port" ]; then
 			# If the port is smaller than the maximum port, increment by 1 and continue.
 			port=$(expr "$port" + 1)
-		elif [ "$port" -gt "$min_port" ]; then
-			# If the port is greater than the minimum port, decrement by 1 and continue.
-			port=$(expr "$port" - 1)
 		else
-			# Otherwise, reassign the default starting port.
-			port=$default_start_port
+			port=$min_port
 		fi
+		[ "$port" -eq "$start_port" ] && return 1
 	done
 	if [ "$is_auto" = "1" ]; then
 		# Set cache to prevent the port from being allocated again.
@@ -432,11 +425,16 @@ add_ip2route() {
 	[ -z "${device}" ] && device="$2"
 
 	if [ -n "${gateway}" ]; then
-		route add -host ${ip} gw ${gateway} dev ${device} >/dev/null 2>&1
-		echo "$ip" >> $TMP_ROUTE_PATH/${device}
-		echolog "  - [${remarks}]添加到接口[${device}]路由表成功！"
+		if route add -host "$ip" gw "$gateway" dev "$device" >/dev/null 2>&1; then
+			printf '%s\n' "$ip" >> "$TMP_ROUTE_PATH/$device"
+			echolog "  - [${remarks}]添加到接口[${device}]路由表成功！"
+		else
+			echolog "  - [${remarks}]添加到接口[${device}]路由表失败！"
+			return 1
+		fi
 	else
-		echolog "  - [${remarks}]添加到接口[${device}]路由表失功！原因是找不到[${device}]网关。"
+		echolog "  - [${remarks}]添加到接口[${device}]路由表失败！原因是找不到[${device}]网关。"
+		return 1
 	fi
 }
 
@@ -451,12 +449,26 @@ delete_ip2route() {
 	}
 }
 
+shell_quote() {
+	printf "'"
+	printf '%s' "$1" | sed "s/'/'\\\\''/g"
+	printf "'"
+}
+
+get_process_start_time() {
+	sed 's/.*) //' "/proc/$1/stat" 2>/dev/null | awk '{print $20}'
+}
+
 ln_run() {
 	local file_func=${1}
 	local ln_name=${2}
 	local output=${3}
 
 	shift 3;
+	case "$ln_name" in
+		dnsmasq*) set -- -k "$@" ;;
+		haproxy) set -- -db "$@" ;;
+	esac
 	if [  "${file_func%%/*}" != "${file_func}" ]; then
 		[ ! -L "${file_func}" ] && {
 			ln -s "${file_func}" "${TMP_BIN_PATH}/${ln_name}" >/dev/null 2>&1
@@ -470,12 +482,20 @@ ln_run() {
 		return 1
 	}
 
-	${file_func:-echolog " - ${ln_name}"} "$@" >${output} 2>&1 &
+	"$file_func" "$@" >"$output" 2>&1 &
+	local pid=$!
 
 	[ "$NO_REC_PROCESS" = "1" ] && return
-	process_count=$(ls $TMP_SCRIPT_FUNC_PATH | wc -l)
-	process_count=$((process_count + 1))
-	echo "${file_func:-echolog "  - ${ln_name}"} $@ >${output}" > $TMP_SCRIPT_FUNC_PATH/$process_count
+	local process_file=$(mktemp "$TMP_SCRIPT_FUNC_PATH/XXXXXX")
+	local arg
+	{
+		printf '%s\n' "$pid" "$(get_process_start_time "$pid")"
+		printf '%s' "$(shell_quote "$file_func")"
+		for arg in "$@"; do
+			printf ' %s' "$(shell_quote "$arg")"
+		done
+		printf ' >%s 2>&1\n' "$(shell_quote "$output")"
+	} > "$process_file"
 }
 
 kill_all() {
@@ -504,26 +524,24 @@ gen_lanlist_6() {
 get_wan_ips() {
 	local family="$1"
 	local NET_ADDR
-	local iface
+	local iface addr addrs
 	local INTERFACES=$(ubus call network.interface dump | jsonfilter -e \
-			'@.interface[!(@.interface ~ /lan/) && !(@.l3_device ~ /\./) && @.route[0]].interface')
+			'@.interface[!(@.interface ~ /lan/) && @.route[0]].interface')
 	for iface in $INTERFACES; do
-		local addr
 		if [ "$family" = "ip6" ]; then
-			network_get_ipaddr6 addr "$iface"
-			case "$addr" in
-				""|fe80*) continue ;;
-			esac
+			network_get_ipaddrs6 addrs "$iface"
 		else
-			network_get_ipaddr addr "$iface"
-			case "$addr" in
-				""|"0.0.0.0") continue ;;
-			esac
+			network_get_ipaddrs addrs "$iface"
 		fi
-		case " $NET_ADDR " in
-			*" $addr "*) ;;
-			*) NET_ADDR="${NET_ADDR:+$NET_ADDR }$addr" ;;
-		esac
+		for addr in $addrs; do
+			case "$addr" in
+				""|0.0.0.0|::|fe80:*) continue ;;
+			esac
+			case " $NET_ADDR " in
+				*" $addr "*) ;;
+				*) NET_ADDR="${NET_ADDR:+$NET_ADDR }$addr" ;;
+			esac
+		done
 	done
 	echo "$NET_ADDR"
 }

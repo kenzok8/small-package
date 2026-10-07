@@ -437,7 +437,7 @@ function urltest_node()
 	local id = http.formvalue("id")
 	local e = {}
 	e.index = index
-	local result = luci.sys.exec(string.format("/usr/share/passwall/test.sh url_test_node %s %s", id, "urltest_node"))
+	local result = luci.sys.exec("/usr/share/passwall/test.sh url_test_node " .. util.shellquote(id or ""))
 	local code = tonumber(luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $1}'") or "0")
 	if code ~= 0 then
 		local use_time_str = luci.sys.exec("echo -n '" .. result .. "' | awk -F ':' '{print $2}'")

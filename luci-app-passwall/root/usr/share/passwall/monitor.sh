@@ -8,30 +8,22 @@ MAX_RESTART_COUNT=10
 RESTART_STATS_DIR="${TMP_PATH}/script_rstats"
 mkdir -p "$RESTART_STATS_DIR"
 
-ENABLED=$(config_n_get @global[0] enabled 0)
-[ "$ENABLED" != 1 ] && return 1
+[ "$(get_cache_var "ENABLED_DEFAULT_ACL")" != 1 ] && [ "$(get_cache_var "ENABLED_ACLS")" != 1 ] && exit 1
 ENABLED=$(config_n_get @global_delay[0] start_daemon 0)
-[ "$ENABLED" != 1 ] && return 1
-sleep 58s
+[ "$ENABLED" != 1 ] && exit 1
+exec 9>"$LOCK_FILE"
+flock -n 9 || exit 0
+sleep 58s 9>&-
 last_cleanup_date=$(date +%Y%m%d)
 while [ "$ENABLED" -eq 1 ]; do
-	[ -f "$LOCK_FILE" ] && {
-		sleep 6s
-		continue
-	}
-	touch $LOCK_FILE
-
 	for file in "$TMP_SCRIPT_FUNC_PATH"/*; do
 		[ -f "$file" ] || continue
-		IFS= read -r cmd < "$file"
+		{
+			IFS= read -r pid
+			IFS= read -r start_time
+		} < "$file"
+		cmd=$(sed '1,2d' "$file")
 		[ -z "$cmd" ] && continue
-		cmd_check=$(printf '%s' "$cmd" | sed 's/>.*$//;s/[[:space:]]*$//')
-
-		case "$cmd_check" in
-			*dns2socks*) cmd_check=${cmd_check//:/ } ;;
-		esac
-
-		cmd_check=$(printf '%s' "$cmd_check" | sed 's/[^a-zA-Z0-9 ]/\\&/g')
 
 		filename=$(basename "$file")
 		stats_file="${RESTART_STATS_DIR}/${filename}.count"
@@ -44,12 +36,17 @@ while [ "$ENABLED" -eq 1 ]; do
 		# 检查是否超过最大重启次数
 		[ "$restart_count" -ge "$MAX_RESTART_COUNT" ] && continue
 
-		if ! busybox pgrep -f "${cmd_check}" >/dev/null; then
+		current_start_time=$(get_process_start_time "$pid")
+		if [ -z "$current_start_time" ] || [ "$current_start_time" != "$start_time" ]; then
 			restart_count=$((restart_count + 1))
 			echo "$restart_count" > "$stats_file"
 			#echo "${cmd} 进程挂掉，重启" >> /tmp/log/passwall.log
-			sh -c "nohup ${cmd} 2>&1 &"
-			sleep 1
+			pid=$(sh -c "nohup ${cmd} & echo \$!" 9>&-)
+			{
+				printf '%s\n' "$pid" "$(get_process_start_time "$pid")"
+				printf '%s\n' "$cmd"
+			} > "$file"
+			sleep 1 9>&-
 		fi
 	done
 
@@ -60,6 +57,5 @@ while [ "$ENABLED" -eq 1 ]; do
 		last_cleanup_date="$current_date"
 	fi
 
-	rm -f $LOCK_FILE
-	sleep 58s
+	sleep 58s 9>&-
 done
