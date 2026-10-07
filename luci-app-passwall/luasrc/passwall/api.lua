@@ -1105,7 +1105,7 @@ local function get_api_json(url)
 		url = gh_proxy .. url
 		return_code, content = curl_base(url, nil, curl_args)
 	else
-		return_code, content = curl_auto(url, nil, curl_args)
+		return_code, content = curl_logic(url, nil, curl_args)
 	end
 	if return_code ~= 0 or content == "" then return {} end
 	return jsonc.parse(content) or {}
@@ -1235,7 +1235,7 @@ function to_download(app_name, url, size, task_id, keep_files)
 		url = gh_proxy .. url
 		return_code, result = curl_base(url, tmp_file, _curl_args)
 	else
-		return_code, result = curl_auto(url, tmp_file, _curl_args)
+		return_code, result = curl_logic(url, tmp_file, _curl_args)
 	end
 	result = return_code == 0
 

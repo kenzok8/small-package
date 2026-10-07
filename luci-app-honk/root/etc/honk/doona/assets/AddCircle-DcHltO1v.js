@@ -1,1 +1,0 @@
-import{j as r}from"./vendor-react-64fcanlc.js";import{I as a}from"./index-h01My1hi.js";function o(o){return r.jsx(a,{...o,children:r.jsx("path",{fill:"currentColor",d:"M10 1.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17m0 15.5a7 7 0 1 1 0-14 7 7 0 0 1 0 14m3.75-7.75h-3v-3a.75.75 0 0 0-1.5 0v3h-3a.75.75 0 0 0 0 1.5h3v3a.75.75 0 0 0 1.5 0v-3h3a.75.75 0 0 0 0-1.5"})})}export{o as A};

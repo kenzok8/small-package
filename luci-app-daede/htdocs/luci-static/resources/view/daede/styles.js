@@ -29,7 +29,13 @@ const CSS = [
 	'.dd-wrap .cbi-button-action,.dd-wrap .cbi-button-positive,.dd-wrap .cbi-button-add,.dd-wrap .cbi-button-edit{border-color:#4aa065 !important;color:#4aa065 !important}',
 	'.dd-wrap .cbi-button-remove{border-color:#d96d6d !important;color:#d96d6d !important}',
 	'.dd-wrap .cbi-button-remove:hover{background:rgba(217,109,109,.12) !important}',
-	'.dd-switch{position:relative;width:42px;height:22px;border:0;border-radius:999px;background:rgba(128,128,128,.28);padding:0;cursor:pointer;transition:background .18s ease,opacity .18s ease;flex-shrink:0}',
+	/* KuCAT styles every <button> with width:auto!important, min-height:2.2rem,
+	   line-height:2.2rem, margin-left, uppercase and a hover translateY — that
+	   inflates the 42x22 switch track into a vertical pill while the knob still
+	   slides sideways. Normalize box metrics on all in-app buttons. box-shadow
+	   is deliberately left to the theme: KuCAT's halo on the switch is wanted. */
+	'.dd-wrap button,.dd-log-wrap button{min-height:0!important;line-height:1.4!important;margin-left:0;text-transform:none;transform:none!important}',
+	'.dd-switch{position:relative;width:42px!important;height:22px!important;margin:0;padding:0;border:0!important;border-radius:999px;background:rgba(128,128,128,.28);cursor:pointer;transition:background .18s ease,opacity .18s ease;flex-shrink:0}',
 	'.dd-switch .dd-switch-knob{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.96);box-shadow:0 1px 4px rgba(0,0,0,.2);transition:transform .18s ease}',
 	'.dd-switch.is-on{background:rgba(74,160,101,.65)}',
 	'.dd-switch.is-on .dd-switch-knob{transform:translateX(20px)}',
