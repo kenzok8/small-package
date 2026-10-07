@@ -273,6 +273,9 @@ func singBoxOutbound(node model.ProxyNode, tag string) map[string]any {
 	switch node.Kind {
 	case model.KindShadowsocks:
 		outbound["type"] = "shadowsocks"
+		if node.UDPRelayEnabled != nil && !*node.UDPRelayEnabled {
+			outbound["network"] = "tcp"
+		}
 		outbound["method"] = firstNonEmpty(node.Cipher, "aes-256-gcm")
 		outbound["password"] = node.Password
 		if node.Plugin == "v2ray-plugin" {
@@ -318,6 +321,16 @@ func singBoxOutbound(node model.ProxyNode, tag string) map[string]any {
 	case model.KindHysteria2:
 		outbound["type"] = "hysteria2"
 		outbound["password"] = node.Password
+		if node.PortHopping != "" {
+			ports := strings.Split(strings.ReplaceAll(node.PortHopping, "-", ":"), ",")
+			for i, port := range ports {
+				if !strings.Contains(port, ":") {
+					ports[i] = port + ":" + port
+				}
+			}
+			outbound["server_ports"] = ports
+			delete(outbound, "server_port")
+		}
 		if t, p := hysteria2Obfs(node); t != "" {
 			outbound["obfs"] = map[string]any{"type": t, "password": p}
 		}

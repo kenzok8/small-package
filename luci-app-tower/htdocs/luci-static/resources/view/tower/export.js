@@ -20,16 +20,19 @@ const css = '\
 .tower-client-detail{font-size:10.5px;opacity:.56;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}\
 .tower-target-note{margin:11px 0 0;font-size:12px;opacity:.7}\
 .tower-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}\
-.tower-protocol-list{display:flex;flex-direction:column;width:100%;margin-bottom:10px;border:1px solid rgba(128,128,128,.2);border-radius:10px;overflow:hidden}\
-.tower-protocol-option{display:flex;align-items:center;gap:12px;min-width:0;box-sizing:border-box;padding:10px 14px;border:0;border-bottom:1px solid rgba(128,128,128,.14);border-radius:0;cursor:pointer;font-size:13px}\
-.tower-protocol-option:last-child{border-bottom:0}\
+.tower-protocol-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%;margin-bottom:12px}\
+.tower-export-page .tower-protocol-option{display:grid;grid-template-columns:minmax(0,1fr) 42px;align-items:center;gap:12px;min-width:0;min-height:60px;box-sizing:border-box;padding:10px 14px;border:1px solid rgba(128,128,128,.22);border-radius:9px;background:rgba(128,128,128,.04);cursor:pointer;font-size:13px}\
+.tower-protocol-option:first-child{grid-column:1/-1}\
+.tower-protocol-option:hover{border-color:rgba(74,160,101,.55)}\
+.tower-protocol-option:has(input:checked){border-color:rgba(74,160,101,.68);background:rgba(74,160,101,.1)}\
+.tower-protocol-option:has(input:focus-visible){outline:2px solid rgba(66,153,225,.75);outline-offset:2px}\
 .tower-protocol-meta{display:flex;flex-direction:column;gap:3px;min-width:0}\
-.tower-protocol-name{font-size:13px;font-weight:600;line-height:1.2}\
-.tower-protocol-option input{appearance:none;-webkit-appearance:none;position:relative;flex:none;width:42px;height:24px;margin:0 0 0 auto;border:1px solid rgba(128,128,128,.4);border-radius:999px;background:rgba(128,128,128,.25);cursor:pointer;transition:background-color .16s ease,border-color .16s ease}\
+.tower-protocol-name{font-size:13px;font-weight:600;line-height:1.2;overflow-wrap:anywhere}\
+.tower-protocol-option input{appearance:none;-webkit-appearance:none;position:relative;justify-self:end;width:42px;height:24px;margin:0;border:1px solid rgba(128,128,128,.4);border-radius:999px;background:rgba(128,128,128,.25);cursor:pointer;transition:background-color .16s ease,border-color .16s ease}\
 .tower-protocol-option input::before{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .16s ease}\
 .tower-protocol-option input:checked{border-color:#4aa065;background:#4aa065}\
 .tower-protocol-option input:checked::before{transform:translateX(18px)}\
-.tower-protocol-option input:focus-visible{outline:2px solid rgba(66,153,225,.75);outline-offset:2px}\
+.tower-protocol-option input:focus-visible{outline:none}\
 .tower-protocol-option input:disabled{opacity:.5;cursor:not-allowed}\
 .tower-protocol-count{opacity:.62;font-size:11px;font-variant-numeric:tabular-nums}\
 .tower-filter{margin-left:auto;min-width:200px;box-sizing:border-box;border:1px solid rgba(128,128,128,.28);border-radius:6px;background:transparent!important;color:inherit!important;font-size:12px;padding:7px 9px}\
@@ -82,7 +85,7 @@ const css = '\
 .tower-scheme-label{font-size:12px;opacity:.7;white-space:nowrap}\
 .tower-rule-set-check{display:inline-flex;align-items:center;gap:7px;font-size:12px;opacity:.75;line-height:1.2;white-space:nowrap;cursor:pointer}\
 .tower-rule-set-check input{position:static!important;top:auto!important;left:auto!important;appearance:checkbox!important;-webkit-appearance:checkbox!important;accent-color:#5e72e4;flex:none;width:16px;height:16px;margin:0!important}\
-@media(max-width:700px){.tower-card{padding:14px}.tower-client-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.tower-client-card{padding:8px}.tower-filter{margin-left:0;min-width:100%}.tower-result{grid-template-columns:20px minmax(0,1fr) auto}.tower-result .tower-server{grid-column:2;grid-row:2}.tower-preview{height:240px}.tower-link-row{grid-template-columns:58px minmax(0,1fr) auto}.tower-btn-row{flex-wrap:wrap}.tower-scheme-select{flex:1 1 100%;max-width:none}}\
+@media(max-width:700px){.tower-card{padding:14px}.tower-client-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.tower-client-card{padding:8px}.tower-protocol-list{grid-template-columns:minmax(0,1fr)}.tower-filter{margin-left:0;min-width:100%}.tower-result{grid-template-columns:20px minmax(0,1fr) auto}.tower-result .tower-server{grid-column:2;grid-row:2}.tower-preview{height:240px}.tower-link-row{grid-template-columns:58px minmax(0,1fr) auto}.tower-btn-row{flex-wrap:wrap}.tower-scheme-select{flex:1 1 100%;max-width:none}}\
 ';
 
 function extFor(target) {

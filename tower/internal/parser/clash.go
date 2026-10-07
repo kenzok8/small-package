@@ -41,6 +41,12 @@ func parseClashYAML(text, sourceID string) ParsedContent {
 		var pluginMux *bool
 
 		if kind == model.KindShadowsocks {
+			if hasKey(d, "udp") {
+				if _, ok := udpRelayPreference(str(d["udp"])); !ok {
+					rejected++
+					continue
+				}
+			}
 			if plugin := strings.ToLower(str(d["plugin"])); plugin != "" {
 				opts := map[string]string{}
 				for k, v := range asMap(d["plugin-opts"]) {
@@ -114,6 +120,9 @@ func parseClashYAML(text, sourceID string) ParsedContent {
 		if kind == model.KindHysteria {
 			node.UpMbps = mbps(firstNonEmpty(str(d["up"]), str(d["up-speed"])))
 			node.DownMbps = mbps(firstNonEmpty(str(d["down"]), str(d["down-speed"])))
+		}
+		if kind == model.KindShadowsocks && hasKey(d, "udp") {
+			node.UDPRelayEnabled, _ = udpRelayPreference(str(d["udp"]))
 		}
 		if kind == model.KindWireGuard {
 			node.WireGuardPrivateKey = str(d["private-key"])

@@ -8,6 +8,7 @@ package parser
 import (
 	"encoding/base64"
 	"net/url"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -209,6 +210,7 @@ func canonicalKey(n model.ProxyNode) string {
 		intOrEmpty(n.IdleSessionCheckInterval), intOrEmpty(n.IdleSessionTimeout),
 		intOrEmpty(n.MinIdleSession), intOrEmpty(n.Version),
 		n.CongestionControl, n.UDPRelayMode,
+		boolPtrString(n.UDPRelayEnabled), n.PortHopping,
 		intOrEmpty(n.UpMbps), intOrEmpty(n.DownMbps),
 		n.WireGuardPrivateKey, n.WireGuardPublicKey, n.WireGuardPreSharedKey,
 		n.WireGuardIPv4, n.WireGuardIPv6, n.WireGuardAllowedIPs, n.WireGuardReserved,
@@ -353,6 +355,26 @@ func boolString(value string) bool {
 		return true
 	}
 	return false
+}
+
+func boolPtrString(value *bool) string {
+	if value == nil {
+		return ""
+	}
+	return strconv.FormatBool(*value)
+}
+
+func udpRelayPreference(value string) (*bool, bool) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "true", "1", "yes":
+		v := true
+		return &v, true
+	case "false", "0", "no":
+		v := false
+		return &v, true
+	default:
+		return nil, false
+	}
 }
 
 func mbps(value string) *int {

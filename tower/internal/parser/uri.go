@@ -3,6 +3,7 @@ package parser
 import (
 	"encoding/base64"
 	"encoding/json"
+	"net"
 	"net/url"
 	"strconv"
 	"strings"
@@ -69,10 +70,25 @@ func parseShadowsocks(raw, sourceID string) *model.ProxyNode {
 	var obfsMode, obfsHost, sip003Plugin, pluginTransport, pluginPath string
 	var pluginTLS bool
 	var pluginMux *bool
+	var udpRelayEnabled *bool
 
 	if qi := strings.IndexByte(payload, '?'); qi >= 0 {
 		query := payload[qi+1:]
-		if plugin := percentDecode(queryDictionary(query)["plugin"]); plugin != "" {
+		params := queryDictionary(query)
+		if value, present := params["udp-relay"]; present {
+			var ok bool
+			udpRelayEnabled, ok = udpRelayPreference(value)
+			if !ok {
+				return nil
+			}
+		} else if value, present := params["udp"]; present {
+			var ok bool
+			udpRelayEnabled, ok = udpRelayPreference(value)
+			if !ok {
+				return nil
+			}
+		}
+		if plugin := percentDecode(params["plugin"]); plugin != "" {
 			if mode, host := simpleObfsOptions(plugin); mode != "" {
 				obfsMode = mode
 				obfsHost = host
@@ -125,22 +141,23 @@ func parseShadowsocks(raw, sourceID string) *model.ProxyNode {
 		obfsParam = ""
 	}
 	return &model.ProxyNode{
-		SourceID:   sourceID,
-		Kind:       model.KindShadowsocks,
-		Name:       normalizedName(name, host),
-		Server:     host,
-		Port:       port,
-		Cipher:     method,
-		Password:   password,
-		Transport:  pluginTransport,
-		Plugin:     sip003Plugin,
-		PluginMux:  pluginMux,
-		TLS:        pluginTLS,
-		HostHeader: obfsHost,
-		Path:       pluginPath,
-		Obfs:       obfsMode,
-		ObfsParam:  obfsParam,
-		RawURI:     raw,
+		SourceID:        sourceID,
+		Kind:            model.KindShadowsocks,
+		Name:            normalizedName(name, host),
+		Server:          host,
+		Port:            port,
+		Cipher:          method,
+		Password:        password,
+		Transport:       pluginTransport,
+		Plugin:          sip003Plugin,
+		PluginMux:       pluginMux,
+		TLS:             pluginTLS,
+		HostHeader:      obfsHost,
+		Path:            pluginPath,
+		Obfs:            obfsMode,
+		ObfsParam:       obfsParam,
+		UDPRelayEnabled: udpRelayEnabled,
+		RawURI:          raw,
 	}
 }
 
@@ -223,12 +240,25 @@ func parseShadowsocksR(raw, sourceID string) *model.ProxyNode {
 		return nil
 	}
 	sections := strings.SplitN(decoded, "/?", 2)
-	main := strings.SplitN(sections[0], ":", 6)
-	if len(main) != 6 {
+	main := make([]string, 6)
+	remaining := sections[0]
+	for i := 5; i > 0; i-- {
+		sep := strings.LastIndexByte(remaining, ':')
+		if sep < 0 {
+			return nil
+		}
+		main[i], remaining = remaining[sep+1:], remaining[:sep]
+	}
+	host := remaining
+	if strings.HasPrefix(host, "[") && strings.HasSuffix(host, "]") {
+		host = host[1 : len(host)-1]
+	}
+	if host == "" || strings.ContainsAny(host, "[]") || strings.Contains(host, ":") && net.ParseIP(host) == nil {
 		return nil
 	}
+	main[0] = host
 	port, err := strconv.Atoi(main[1])
-	if err != nil {
+	if err != nil || port < 1 || port > 65535 {
 		return nil
 	}
 	password := decodeBase64String(main[5])
@@ -467,6 +497,14 @@ func parseStandardURL(raw string, kind model.ProxyKind, sourceID string) *model.
 	case strings.HasPrefix(strings.ToLower(normalized), "socks://"):
 		normalized = "socks5://" + normalized[len("socks://"):]
 	}
+	authorityPorts := ""
+	if kind == model.KindHysteria2 {
+		var ok bool
+		normalized, authorityPorts, ok = hysteria2AuthorityPorts(normalized)
+		if !ok {
+			return nil
+		}
+	}
 	u, err := url.Parse(normalized)
 	if err != nil {
 		return nil
@@ -479,6 +517,8 @@ func parseStandardURL(raw string, kind model.ProxyKind, sourceID string) *model.
 	port := 0
 	if p := u.Port(); p != "" {
 		port, _ = strconv.Atoi(p)
+	} else if kind == model.KindHysteria2 {
+		port = 443
 	} else if kind == model.KindHTTP {
 		if strings.HasPrefix(strings.ToLower(u.Scheme), "https") {
 			port = 443
@@ -612,8 +652,69 @@ func parseStandardURL(raw string, kind model.ProxyKind, sourceID string) *model.
 		node.UpMbps = mbps(firstNonEmpty(query["upmbps"], query["up"]))
 		node.DownMbps = mbps(firstNonEmpty(query["downmbps"], query["down"]))
 	}
-	node.PortHopping = firstNonEmpty(query["mport"], query["ports"], query["server-ports"], query["port-hopping"])
+	queryPorts := firstNonEmpty(query["mport"], query["ports"], query["server-ports"], query["port-hopping"])
+	if authorityPorts != "" && queryPorts != "" && authorityPorts != queryPorts {
+		return nil
+	}
+	node.PortHopping = firstNonEmpty(authorityPorts, queryPorts)
 	return node
+}
+
+// hysteria2AuthorityPorts replaces only a multi-port authority with its first
+// port so net/url can parse the rest of the URI without changing credentials.
+func hysteria2AuthorityPorts(link string) (string, string, bool) {
+	schemeEnd := strings.Index(link, "://")
+	if schemeEnd < 0 {
+		return link, "", false
+	}
+	authorityStart := schemeEnd + 3
+	authorityEnd := len(link)
+	if end := strings.IndexAny(link[authorityStart:], "/?#"); end >= 0 {
+		authorityEnd = authorityStart + end
+	}
+	authority := link[authorityStart:authorityEnd]
+	hostStart := authorityStart
+	if at := strings.LastIndexByte(authority, '@'); at >= 0 {
+		hostStart += at + 1
+	}
+	hostPort := link[hostStart:authorityEnd]
+	colon := strings.LastIndexByte(hostPort, ':')
+	if colon < 0 || strings.HasPrefix(hostPort, "[") && strings.LastIndexByte(hostPort, ']') > colon {
+		return link, "", true
+	}
+	ports := hostPort[colon+1:]
+	if !strings.ContainsAny(ports, ",- ") {
+		return link, "", true
+	}
+	first, ok := firstHysteria2Port(ports)
+	if !ok {
+		return link, "", false
+	}
+	return link[:hostStart+colon+1] + strconv.Itoa(first) + link[authorityEnd:], ports, true
+}
+
+func firstHysteria2Port(ports string) (int, bool) {
+	first := 0
+	for _, item := range strings.Split(ports, ",") {
+		bounds := strings.Split(item, "-")
+		if len(bounds) < 1 || len(bounds) > 2 {
+			return 0, false
+		}
+		start, err := strconv.Atoi(bounds[0])
+		if err != nil || start < 1 || start > 65535 {
+			return 0, false
+		}
+		if len(bounds) == 2 {
+			end, err := strconv.Atoi(bounds[1])
+			if err != nil || end < start || end > 65535 {
+				return 0, false
+			}
+		}
+		if first == 0 {
+			first = start
+		}
+	}
+	return first, true
 }
 
 // parseShadowrocketHTTPURL handles `https://base64(user:pass@host:port)`.

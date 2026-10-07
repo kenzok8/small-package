@@ -51,6 +51,9 @@ func Links(nodes []model.ProxyNode) []LinkResult {
 // Link returns the shareable link for one node.
 func Link(node model.ProxyNode) string {
 	original := strings.TrimSpace(node.RawURI)
+	if node.Kind == model.KindShadowsocks && node.UDPRelayEnabled != nil {
+		return canonicalLink(node)
+	}
 	if isReusable(original) && !needsInferredWebSocketHost(node) {
 		return original
 	}
@@ -156,6 +159,13 @@ func shadowsocksLink(node model.ProxyNode) (string, bool) {
 		}
 		b.WriteString("?plugin=" + percentEncode(plugin, "-._~"))
 	}
+	if node.UDPRelayEnabled != nil {
+		separator := "?"
+		if strings.Contains(b.String(), "?") {
+			separator = "&"
+		}
+		b.WriteString(separator + "udp-relay=" + strconv.FormatBool(*node.UDPRelayEnabled))
+	}
 	if node.Name != "" {
 		b.WriteString("#" + escapeFragment(node.Name))
 	}
@@ -174,7 +184,7 @@ func shadowsocksRLink(node model.ProxyNode) (string, bool) {
 	if node.ObfsParam != "" {
 		query += "&obfsparam=" + base64URLEncode([]byte(node.ObfsParam))
 	}
-	payload := node.Server + ":" + strconv.Itoa(node.Port) + ":" + node.ProtocolName + ":" +
+	payload := formattedHost(node.Server) + ":" + strconv.Itoa(node.Port) + ":" + node.ProtocolName + ":" +
 		node.Cipher + ":" + node.Obfs + ":" + encodedPassword + "/?" + query
 	return "ssr://" + base64URLEncode([]byte(payload)), true
 }
@@ -248,7 +258,11 @@ func standardLink(node model.ProxyNode) (string, bool) {
 	}
 	b.WriteString(formattedHost(node.Server))
 	b.WriteString(":")
-	b.WriteString(strconv.Itoa(node.Port))
+	if node.Kind == model.KindHysteria2 && node.PortHopping != "" {
+		b.WriteString(node.PortHopping)
+	} else {
+		b.WriteString(strconv.Itoa(node.Port))
+	}
 	if q := buildStandardQuery(node); q != "" {
 		b.WriteString("?")
 		b.WriteString(q)
@@ -375,9 +389,6 @@ func buildStandardQuery(node model.ProxyNode) string {
 			if node.ObfsParam != "" {
 				add("obfs-password", node.ObfsParam)
 			}
-		}
-		if node.PortHopping != "" {
-			add("mport", node.PortHopping)
 		}
 	}
 	if (node.Kind == model.KindHysteria2 || node.Kind == model.KindTrojan) && node.CertificateFingerprint != "" {

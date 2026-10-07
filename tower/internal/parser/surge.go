@@ -77,18 +77,27 @@ func parseSurgeShadowsocksLine(raw, sourceID string) *model.ProxyNode {
 	if cipher == "" || password == "" {
 		return nil
 	}
+	var udpRelayEnabled *bool
+	if value, present := options["udp-relay"]; present {
+		var ok bool
+		udpRelayEnabled, ok = udpRelayPreference(value)
+		if !ok {
+			return nil
+		}
+	}
 	server := normalizedHost(fields[1])
 	return &model.ProxyNode{
-		SourceID:  sourceID,
-		Kind:      model.KindShadowsocks,
-		Name:      normalizedName(name, server),
-		Server:    server,
-		Port:      port,
-		Cipher:    cipher,
-		Password:  password,
-		Obfs:      options["obfs"],
-		ObfsParam: options["obfs-host"],
-		RawURI:    raw,
+		SourceID:        sourceID,
+		Kind:            model.KindShadowsocks,
+		Name:            normalizedName(name, server),
+		Server:          server,
+		Port:            port,
+		Cipher:          cipher,
+		Password:        password,
+		Obfs:            options["obfs"],
+		ObfsParam:       options["obfs-host"],
+		UDPRelayEnabled: udpRelayEnabled,
+		RawURI:          raw,
 	}
 }
 

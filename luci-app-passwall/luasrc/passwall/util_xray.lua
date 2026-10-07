@@ -389,8 +389,8 @@ function gen_outbound(flag, node, tag, proxy_table)
 								return (t and t >= 2 and t <= 60) and t or nil
 							end)(node.hysteria2_keep_alive_period),
 							disablePathMTUDiscovery = node.hysteria2_disable_mtu_discovery == "1",
-							initStreamReceiveWindow = node.hysteria2_stream_recv_win and tonumber(node.hysteria2_stream_recv_win) or nil,
-							initConnectionReceiveWindow = node.hysteria2_conn_recv_win and tonumber(node.hysteria2_conn_recv_win) or nil,
+							initStreamReceiveWindow = tonumber(node.hysteria2_stream_recv_win) and tonumber(node.hysteria2_stream_recv_win)*1048576 or nil,
+							initConnectionReceiveWindow = tonumber(node.hysteria2_conn_recv_win) and tonumber(node.hysteria2_conn_recv_win)*1048576 or nil,
 						}
 					end
 					if fragment and fragment_table and ({raw=1, ws=1, httpupgrade=1, grpc=1, xhttp=1})[TP] then

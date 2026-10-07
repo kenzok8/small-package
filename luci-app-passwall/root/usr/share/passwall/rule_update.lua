@@ -111,7 +111,7 @@ local function curl(url, file)
 	if file then
 		args[#args + 1] = "-o " .. file
 	end
-	local return_code, result = api.curl_auto(url, nil, args)
+	local return_code, result = api.curl_logic(url, nil, args)
 	if result and result ~= "" then
 		local body, code = result:match("^(.-)%s*([0-9]+)$")
 		if code then

@@ -261,16 +261,6 @@ function get_domain_port_from_url(url)
 	return domain, port
 end
 
---解析域名
-function domainToIPv4(domain, dns)
-	local Dns = dns or "223.5.5.5"
-	local IPs = luci.sys.exec('nslookup %s %s | awk \'/^Name:/{getline; if ($1 == "Address:") print $2}\'' % { domain, Dns })
-	for IP in string.gmatch(IPs, "%S+") do
-		if datatypes.ipaddr(IP) and not datatypes.ip6addr(IP) then return IP end
-	end
-	return nil
-end
-
 function curl_base(url, file, args)
 	if not args then args = {} end
 	if file then
@@ -298,35 +288,6 @@ function curl_logic(url, file, args)
 		return_code, result = curl_base(url, file, args)
 	end
 	return return_code, result
-end
-
-function curl_direct(url, file, args)
-	--直连访问
-	local chn_list = uci_get_c("@global[0]", "chn_list") or "direct"
-	local Dns = (chn_list == "proxy") and "1.1.1.1" or "223.5.5.5"
-	if not args then args = {} end
-	local tmp_args = clone(args)
-	local domain, port = get_domain_port_from_url(url)
-	if domain then
-		local ip = domainToIPv4(domain, Dns)
-		if ip then
-			tmp_args[#tmp_args + 1] = "--resolve " .. domain .. ":" .. port .. ":" .. ip
-		end
-	end
-	return curl_base(url, file, tmp_args)
-end
-
-function curl_auto(url, file, args)
-	local localhost_proxy = uci_get_c("@global[0]", "localhost_proxy") or "1"
-	if localhost_proxy == "1" then
-		return curl_base(url, file, args) -- 当路由器本机开启代理时，采用passwall规则进行访问
-	else
-		local return_code, result = curl_proxy(url, file, args)
-		if not return_code or return_code ~= 0 then
-			return_code, result = curl_direct(url, file, args)
-		end
-		return return_code, result
-	end
 end
 
 function url(...)

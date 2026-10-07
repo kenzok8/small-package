@@ -159,7 +159,7 @@ func clashNode(node model.ProxyNode, target model.ClientTarget) string {
 		values = append(values,
 			"    cipher: "+yaml(firstNonEmpty(node.Cipher, "aes-256-gcm")),
 			"    password: "+yaml(node.Password),
-			"    udp: true",
+			"    udp: "+strconv.FormatBool(node.UDPRelayEnabled == nil || *node.UDPRelayEnabled),
 		)
 		if node.Plugin == "v2ray-plugin" {
 			values = append(values, "    plugin: v2ray-plugin", "    plugin-opts:", "      mode: websocket")

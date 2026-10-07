@@ -100,7 +100,7 @@ func surgeNode(node model.ProxyNode, shadowrocket bool) string {
 		components = []string{"ss", node.Server, strconv.Itoa(node.Port),
 			"encrypt-method=" + firstNonEmpty(node.Cipher, "aes-256-gcm"),
 			"password=" + confValue(node.Password),
-			"udp-relay=true"}
+			"udp-relay=" + strconv.FormatBool(node.UDPRelayEnabled == nil || *node.UDPRelayEnabled)}
 		if shadowrocket && node.Plugin == "v2ray-plugin" {
 			if node.TLS {
 				components = append(components, "obfs=wss")

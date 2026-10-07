@@ -1,0 +1,1 @@
+import{j as a}from"./vendor-react-64fcanlc.js";import{b7 as r}from"./index-h01My1hi.js";function o({page:o,className:e,children:s,...t}){return a.jsx("div",{...t,className:r("rp-toolbar",e),"data-page-toolbar":o||void 0,children:s})}export{o as T};

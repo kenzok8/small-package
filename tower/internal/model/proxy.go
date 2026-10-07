@@ -70,6 +70,7 @@ type ProxyNode struct {
 
 	CongestionControl string `json:"congestion_control,omitempty"`
 	UDPRelayMode      string `json:"udp_relay_mode,omitempty"`
+	UDPRelayEnabled   *bool  `json:"udp_relay_enabled,omitempty"`
 	PortHopping       string `json:"port_hopping,omitempty"`
 	UpMbps            *int   `json:"up_mbps,omitempty"`
 	DownMbps          *int   `json:"down_mbps,omitempty"`

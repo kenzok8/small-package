@@ -109,14 +109,14 @@ o.rewrite_option = o.option
 o = s:option(Value, "down_mbps", translate("Max download Mbps"))
 o.rewrite_option = o.option
 
-o = s:option(Value, "stream_recv_win", translate("QUIC stream receive window"))
-o.datatype = "uinteger"
-o.placeholder = "8388608"
+o = s:option(Value, "stream_recv_win", translate("QUIC stream receive window") .. " (MB)")
+o.datatype = "range(1,1000)"
+o.placeholder = "8"
 o.rewrite_option = o.option
 
-o = s:option(Value, "conn_recv_win", translate("QUIC connection receive window"))
-o.datatype = "uinteger"
-o.placeholder = "20971520"
+o = s:option(Value, "conn_recv_win", translate("QUIC connection receive window") .. " (MB)")
+o.datatype = "range(1,1000)"
+o.placeholder = "20"
 o.rewrite_option = o.option
 
 o = s:option(Value, "idle_timeout", translate("Idle Timeout"), translate("Units:seconds") .. " (4~120)")

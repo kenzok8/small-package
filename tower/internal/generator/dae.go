@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/kenzok8/tower/internal/model"
+	"github.com/kenzok8/tower/internal/parser"
 )
 
 type daePlan struct {
@@ -171,6 +172,10 @@ func compileDAE(opts Options) (daePlan, PreflightResult) {
 		name := names[i]
 		tag := fmt.Sprintf("node_%03d", i+1)
 		plan.preflight.Planned = append(plan.preflight.Planned, PreflightItem{Kind: "node", Name: name, Location: fmt.Sprintf("nodes[%d]", i)})
+		if node.Kind == model.KindShadowsocks && node.UDPRelayEnabled != nil && !*node.UDPRelayEnabled {
+			issue("node_udp_relay", fmt.Sprintf("nodes[%d]", i), fmt.Sprintf("节点 %q 禁用 UDP，但 dae URI 无法保留该设置", name))
+			continue
+		}
 		link := Link(node)
 		if !validDAENodeURI(node, link) {
 			issue("node_uri", fmt.Sprintf("nodes[%d]", i), fmt.Sprintf("节点 %q 无法转换为 dae 支持的 URI", name))
@@ -509,6 +514,12 @@ func finalizeDAEPlan(plan *daePlan, opts Options) {
 func validDAENodeURI(node model.ProxyNode, link string) bool {
 	if link == "" || strings.ContainsAny(link, "'\"\r\n") {
 		return false
+	}
+	if node.Kind == model.KindHysteria2 {
+		parsed := parser.ParseURI(link, "")
+		return parsed != nil && parsed.Kind == node.Kind && parsed.Server == node.Server &&
+			parsed.PortHopping == node.PortHopping &&
+			(node.PortHopping != "" || parsed.Port == node.Port)
 	}
 	u, err := url.Parse(link)
 	if err != nil || u.Scheme == "" || u.Host == "" {
