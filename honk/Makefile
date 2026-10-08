@@ -70,6 +70,7 @@ endef
 define Package/honk/conffiles
 /etc/honk/config.dae
 /etc/honk/config.d/
+/etc/honk/state/
 /etc/config/honk
 endef
 
