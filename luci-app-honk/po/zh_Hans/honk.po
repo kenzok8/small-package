@@ -88,11 +88,7 @@ msgstr "已格式化"
 msgid "Failed to format code:"
 msgstr "格式化代码失败："
 
-msgid "Running"
-msgstr "运行中"
 
-msgid "Not Running"
-msgstr "未运行"
 
 msgid "Checking Dashboard and API configuration..."
 msgstr "正在检测控制面板与 API 配置..."
@@ -327,3 +323,36 @@ msgstr "当前面板类型为“无”，Web 管理面板和 Native API 监听�
 
 msgid "Failed to switch dashboard:"
 msgstr "切换面板失败："
+
+msgid "GitHub Release "
+msgstr "GitHub Release "
+
+msgid "Service did not accept the request"
+msgstr "服务未接受该请求"
+
+msgid "Failed to apply configuration:"
+msgstr "应用配置失败："
+
+msgid "HONK did not come back up; check the logs"
+msgstr "HONK 未能重新启动，请检查日志"
+
+msgid "Configuration saved. HONK is disabled, so the service was not started."
+msgstr "配置已保存。HONK 处于禁用状态，未启动服务。"
+
+msgid "Download did not finish in time."
+msgstr "下载超时未完成。"
+
+msgid "Download task stopped reporting progress."
+msgstr "下载任务已停止上报进度。"
+
+msgid "Configuration saved, but the service state could not be confirmed."
+msgstr "配置已保存，但无法确认服务状态。"
+
+msgid "Running"
+msgstr "运行中"
+
+msgid "Not Running"
+msgstr "未运行"
+
+msgid "Zashboard"
+msgstr "Zashboard"

@@ -4,6 +4,7 @@
 'require ui';
 'require uci';
 'require honk.common as honk';
+'require honk.dashprofiles as dash';
 
 return view.extend({
 	load: function() {
@@ -33,8 +34,9 @@ return view.extend({
 
 		o = s.option(form.ListValue, 'dashboard', _('Dashboard Type'), _('Select the active web dashboard.'));
 		o.value('none', _('None'));
-		o.value('zashboard', 'Zashboard');
-		o.value('doona', _('Doona'));
+		Object.keys(dash.profiles).forEach(function(k) {
+			o.value(k, dash.profiles[k].label());
+		});
 		o.default = 'none';
 
 		o = s.option(form.TextValue, '_config', _('Global Configuration'), _('Correctly configure the include field for separate-config to work, or enter complete configuration here.'));
@@ -60,13 +62,24 @@ return view.extend({
 
 		return this.handleSave(ev).then(function() {
 			var newDash = uci.get('honk', sid, 'dashboard') || 'none';
-			if (newDash !== oldDash) {
-				return honk.callHonkSwitchDashboardApi(newDash);
-			} else {
-				return honk.callHonkReload();
-			}
+
+			return (newDash !== oldDash ? honk.callHonkSwitchDashboardApi(newDash) : honk.callHonkReload())
+				.then(function(resp) {
+					if (!resp || resp.success === false)
+						throw new Error((resp && resp.message) || _('Service did not accept the request'));
+
+					if (!honk.isServiceEnabled())
+						return;
+
+					return honk.waitForHonkState(true).then(function(st) {
+						if (st.running === false)
+							throw new Error(_('HONK did not come back up; check the logs'));
+					});
+				});
 		}).then(function() {
 			return ui.changes.apply(mode == '0');
+		}).catch(function(err) {
+			honk.showNotification(null, E('p', _('Failed to apply configuration:') + ' ' + (err.message || err)), 'error');
 		});
 	}
 });

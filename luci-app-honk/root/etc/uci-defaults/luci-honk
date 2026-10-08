@@ -23,7 +23,7 @@ chmod -R u=rwX,go= /etc/honk 2>/dev/null || true
 chmod 700 /etc/honk /etc/honk/config.d /etc/honk/state 2>/dev/null || true
 
 
-# Clean legacy api configuration from config.dae
+# Clean legacy clash_api configuration from config.dae
 if [ -f /etc/honk/config.dae ]; then
 	ucode -e '
 	import { readfile, writefile } from "fs";
@@ -34,7 +34,7 @@ if [ -f /etc/honk/config.dae ]; then
 		let skip = 0;
 		for (let line in lines) {
 			let trim = replace(line, /^[ \t]+|[ \t]+$/, "");
-			if (!skip && match(trim, /^[#\/]*\s*(clash_api|native_api)\s*\{/)) {
+			if (!skip && match(trim, /^[#\/]*\s*clash_api\s*\{/)) {
 				skip = 1;
 				continue;
 			}

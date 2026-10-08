@@ -75,7 +75,7 @@ return view.extend({
 			if (document.hidden) {
 				return Promise.resolve();
 			}
-			return updateLog();
+			return updateLog().catch(function() { });
 		};
 
 		poll.add(logPollFn, 3);

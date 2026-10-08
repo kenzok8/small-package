@@ -89,6 +89,132 @@ var callHonkSwitchDashboardApi = rpc.declare({
 	expect: { }
 });
 
+function isServiceEnabled() {
+	var sections = uci.sections('honk', 'honk') || [];
+	return ((sections[0] || {}).enabled === '1');
+}
+
+function waitForHonkState(wantRunning, attempts) {
+	attempts = attempts || 10;
+
+	return new Promise(function(resolve) {
+		var tries = 0;
+
+		function step() {
+			callHonkStatus().then(function(st) {
+				var running = !!(st && st.running);
+
+				if (running === wantRunning || ++tries >= attempts)
+					resolve({ running: running });
+				else
+					setTimeout(step, 1200);
+			}).catch(function() {
+				if (++tries >= attempts)
+					resolve({ running: null });
+				else
+					setTimeout(step, 1200);
+			});
+		}
+
+		step();
+	});
+}
+
+var DOWNLOAD_MAX_TICKS = 900;
+var DOWNLOAD_STALE_TICKS = 90;
+var activeDownloadCancel = null;
+
+function triggerDashboardDownload(url, type, logBox, progressWrap, onFinish) {
+	progressWrap.style.display = 'block';
+	logBox.innerText = _('Initializing download task...\n');
+
+	var ticks = 0, stale = 0, lastStatus = '', lastLog = '', pollFn = null;
+
+	if (activeDownloadCancel)
+		activeDownloadCancel();
+
+	function stop() {
+		if (pollFn) {
+			poll.remove(pollFn);
+			pollFn = null;
+		}
+
+		if (activeDownloadCancel === cancel)
+			activeDownloadCancel = null;
+	}
+
+	function cancel() {
+		stop();
+
+		if (onFinish)
+			onFinish(false);
+	}
+
+	activeDownloadCancel = cancel;
+
+	function fail(message) {
+		stop();
+		if (message) {
+			logBox.innerText += message + '\n';
+			logBox.scrollTop = logBox.scrollHeight;
+		}
+		if (onFinish)
+			onFinish(false);
+	}
+
+	callHonkDownloadDashboard(url, type).then(function(resp) {
+		if (!resp || resp.success === false) {
+			fail(_('Failed to trigger download:') + ' ' + (resp ? resp.message : _('Unknown error')));
+			return;
+		}
+
+		pollFn = function() {
+			if (!document.body.contains(progressWrap)) {
+				stop();
+				return Promise.resolve();
+			}
+
+			if (++ticks > DOWNLOAD_MAX_TICKS) {
+				fail(_('Download did not finish in time.'));
+				return Promise.resolve();
+			}
+
+			return callHonkDownloadStatus().then(function(sResp) {
+				if (!sResp)
+					return;
+
+				if (sResp.status !== lastStatus || sResp.log !== lastLog) {
+					lastStatus = sResp.status;
+					lastLog = sResp.log || '';
+					stale = 0;
+				} else {
+					stale++;
+				}
+
+				if (sResp.log) {
+					logBox.innerText = sResp.log;
+					logBox.scrollTop = logBox.scrollHeight;
+				}
+
+				if (sResp.status === 'SUCCESS') {
+					stop();
+					logBox.scrollTop = logBox.scrollHeight;
+					if (onFinish)
+						onFinish(true);
+				} else if (sResp.status === 'FAILED') {
+					fail(null);
+				} else if (stale > DOWNLOAD_STALE_TICKS) {
+					fail(_('Download task stopped reporting progress.'));
+				}
+			}).catch(function() { });
+		};
+
+		poll.add(pollFn, 1);
+	}).catch(function(err) {
+		fail(_('Download error:') + ' ' + (err.message || err));
+	});
+}
+
 function readFile(path) {
 	if (fs.read_direct) {
 		return fs.read_direct(path).catch(function() {
@@ -468,9 +594,36 @@ function createConfigFileView(filePath, mapTitle, mapDesc, fieldTitle, successMs
 
 		handleSaveApply: function(ev, mode) {
 			return this.handleSave(ev).then(function() {
-				return needRestart ? callHonkRestart() : callHonkReload();
-			}).then(function() {
-				showNotification(null, E('p', successMsg || _('Configuration applied and service reloaded.')), 'info');
+				var call = needRestart ? callHonkRestart : callHonkReload;
+
+				return call().then(function(resp) {
+					if (!resp || resp.success === false)
+						throw new Error((resp && resp.message) || _('Service did not accept the request'));
+
+					if (!isServiceEnabled())
+						return { skipped: true };
+
+					return needRestart ? waitForHonkState(true) : callHonkStatus().then(function(st) {
+						return { running: !!(st && st.running) };
+					});
+				}).then(function(st) {
+					if (st.skipped) {
+						showNotification(null, E('p', _('Configuration saved. HONK is disabled, so the service was not started.')), 'info');
+						return;
+					}
+
+					if (st.running === false)
+						throw new Error(_('HONK did not come back up; check the logs'));
+
+					if (st.running === null) {
+						showNotification(null, E('p', _('Configuration saved, but the service state could not be confirmed.')), 'warning');
+						return;
+					}
+
+					showNotification(null, E('p', successMsg || _('Configuration applied and service reloaded.')), 'info');
+				});
+			}).catch(function(err) {
+				showNotification(null, E('p', _('Failed to apply configuration:') + ' ' + (err.message || err)), 'error');
 			});
 		}
 	});
@@ -603,7 +756,7 @@ function renderStatusHeader() {
 			poll.remove(pollStatusFn);
 			return Promise.resolve();
 		}
-		return callHonkStatus().then(updateStatus);
+		return callHonkStatus().then(updateStatus).catch(function() { });
 	};
 
 	poll.add(pollStatusFn, 5);
@@ -635,5 +788,8 @@ return baseclass.extend({
 	bindCodeMirrorToMap: bindCodeMirrorToMap,
 	renderStatusHeader: renderStatusHeader,
 	createConfigFileView: createConfigFileView,
+	triggerDashboardDownload: triggerDashboardDownload,
+	waitForHonkState: waitForHonkState,
+	isServiceEnabled: isServiceEnabled,
 	showNotification: showNotification
 });

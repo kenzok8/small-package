@@ -77,6 +77,11 @@ start_service() {
 
     config_get config_file "config" "config_file" "/etc/honk/config.dae"
 
+    if [ ! -x "$PROG" ]; then
+        logger -t honk "not starting: $PROG is missing or not executable"
+        return 1
+    fi
+
     set_chmod_640
     cleanup_netns
     hijack_resolv_conf
@@ -112,6 +117,6 @@ hot_reload() {
     if /etc/init.d/honk running; then
         "$PROG" reload
     else
-        /etc/init.d/honk restart
+        start
     fi
 }

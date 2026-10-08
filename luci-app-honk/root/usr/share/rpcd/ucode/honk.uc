@@ -5,6 +5,10 @@
 import { readfile, writefile, popen, stat } from 'fs';
 import { cursor } from 'uci';
 
+const DEFAULT_HOST = "0.0.0.0";
+const DEFAULT_PORT = "9527";
+const DEFAULT_SECRET = "honk114514";
+
 const DASHBOARD_DIRS = {
 	zashboard: "/etc/honk/zashboard",
 	doona: "/etc/honk/doona"
@@ -14,16 +18,44 @@ function get_dashboard_dir(type) {
 	return DASHBOARD_DIRS[type] || DASHBOARD_DIRS.doona;
 }
 
+function is_valid_dashboard_type(type) {
+	if (type == "none")
+		return true;
+
+	for (let known in keys(DASHBOARD_DIRS))
+		if (known == type)
+			return true;
+
+	return false;
+}
+
+function is_safe_ui_dir(path) {
+	if (!path || !match(path, /^\/etc\/honk\/[^\/]+$/))
+		return false;
+
+	let base = substr(path, 10);
+	return base != "." && base != "..";
+}
+
 let cached_pid = null;
 
+function is_honk_pid(pid) {
+	if (!pid)
+		return false;
+
+	let comm = readfile("/proc/" + pid + "/comm");
+	if (comm)
+		return trim(comm) == "honk-core";
+
+	let cmd = readfile("/proc/" + pid + "/cmdline");
+	return cmd ? match(cmd, /honk-core/) : false;
+}
+
 function get_honk_pid() {
-	if (cached_pid) {
-		let cmd = readfile("/proc/" + cached_pid + "/cmdline");
-		if (cmd && match(cmd, /honk-core/)) {
-			return cached_pid;
-		}
-		cached_pid = null;
-	}
+	if (cached_pid && is_honk_pid(cached_pid))
+		return cached_pid;
+
+	cached_pid = null;
 
 	let p = popen("pidof honk-core 2>/dev/null");
 	let pids = p ? p.read("all") : "";
@@ -168,8 +200,6 @@ function parse_native_api(clean_content) {
 	let sec_m = match(block, /secret\s*:\s*['"]?([^'" \t\r\n]*)['"]?/);
 	let en_m = match(block, /enabled\s*:\s*['"]?(true|false)['"]?/);
 	let cw_m = match(block, /config_write\s*:\s*['"]?(true|false)['"]?/);
-	let geosite_m = match(block, /geosite_download_url\s*:\s*['"]?([^'" \t\r\n]+)['"]?/);
-	let geoip_m = match(block, /geoip_download_url\s*:\s*['"]?([^'" \t\r\n]+)['"]?/);
 
 	let res = {
 		enabled: en_m ? (en_m[1] == "true") : true,
@@ -177,8 +207,6 @@ function parse_native_api(clean_content) {
 		listen: listen_m ? listen_m[1] : "",
 		ui: ui_m ? ui_m[1] : "",
 		secret: sec_m ? sec_m[1] : "",
-		geosite_download_url: geosite_m ? geosite_m[1] : "",
-		geoip_download_url: geoip_m ? geoip_m[1] : "",
 		host: "",
 		port: ""
 	};
@@ -218,8 +246,6 @@ function get_api_config() {
 		if (leg_native) {
 			return {
 				file: config_file,
-				content: legacy_content,
-				clean: legacy_clean,
 				parsed_native: leg_native,
 				is_legacy: true
 			};
@@ -228,8 +254,6 @@ function get_api_config() {
 
 	return {
 		file: api_file,
-		content: content,
-		clean: clean,
 		parsed_native: parsed_native,
 		is_legacy: false
 	};
@@ -251,6 +275,9 @@ function get_uci_dashboard_type(u) {
 }
 
 function clean_legacy_api_from_config(config_file) {
+	if (!match(config_file, /^\/etc\/honk\//) || match(config_file, /\.\./))
+		return;
+
 	let main_content = readfile(config_file);
 	if (!main_content) return;
 	let cleaned_main = remove_bracket_block(main_content, /^[#\/]*\s*clash_api\s*\{/);
@@ -274,10 +301,10 @@ function clean_legacy_api_from_config(config_file) {
 function get_dashboard_info(req) {
 	let u = cursor();
 	let requested_type = (req && req.args) ? req.args.type : null;
-	if (!requested_type && u) {
+	if (!is_valid_dashboard_type(requested_type) && u) {
 		requested_type = get_uci_dashboard_type(u);
 	}
-	if (!requested_type) requested_type = "none";
+	if (!is_valid_dashboard_type(requested_type)) requested_type = "none";
 
 	let api_cfg = get_api_config();
 	let parsed_native = api_cfg.parsed_native;
@@ -293,10 +320,7 @@ function get_dashboard_info(req) {
 		host: "",
 		port: "",
 		secret: "",
-		external_ui: "",
-		geosite_download_url: "",
-		geoip_download_url: "",
-		default_mode: "Rule"
+		external_ui: ""
 	};
 
 	if (requested_type == "none") {
@@ -310,10 +334,9 @@ function get_dashboard_info(req) {
 	if (parsed_native && parsed_native.enabled) {
 		res.external_controller = parsed_native.listen;
 		res.host = parsed_native.host;
-		res.port = parsed_native.port || "9527";
+		res.port = parsed_native.port || DEFAULT_PORT;
 		res.secret = parsed_native.secret;
-		res.geosite_download_url = parsed_native.geosite_download_url;
-		res.geoip_download_url = parsed_native.geoip_download_url;
+
 		res.external_ui = (parsed_native.ui && parsed_native.ui != other_default_ui) ? parsed_native.ui : target_default_ui;
 
 		if (parsed_native.listen && parsed_native.ui && parsed_native.ui != other_default_ui) {
@@ -336,15 +359,15 @@ function get_dashboard_info(req) {
 
 function download_dashboard(req) {
 	let requested_type = (req && req.args) ? req.args.type : null;
-	if (!requested_type) {
+	if (!is_valid_dashboard_type(requested_type)) {
 		requested_type = get_uci_dashboard_type(cursor());
 	}
-	if (!requested_type || requested_type == "none") {
+	if (!is_valid_dashboard_type(requested_type) || requested_type == "none") {
 		requested_type = "doona";
 	}
 
 	let url = (req && req.args && req.args.url) ? req.args.url : "";
-	if (url != "" && (!match(url, /^https?:\/\//) || match(url, /[ \t\r\n'"`]/))) {
+	if (!match(url, /^https?:\/\//) || match(url, /[ \t\r\n'"`]/)) {
 		return { success: false, message: "Invalid URL" };
 	}
 
@@ -352,10 +375,14 @@ function download_dashboard(req) {
 	let parsed_native = api_cfg.parsed_native;
 	let other_type = (requested_type == "zashboard") ? "doona" : "zashboard";
 	let other_default_ui = get_dashboard_dir(other_type);
-	let target_dir = get_dashboard_dir(requested_type) || "/etc/honk/doona";
-	if (parsed_native && parsed_native.ui && parsed_native.ui != other_default_ui) {
+	let target_dir = get_dashboard_dir(requested_type);
+	if (parsed_native && parsed_native.ui && parsed_native.ui != other_default_ui &&
+	    is_safe_ui_dir(parsed_native.ui)) {
 		target_dir = parsed_native.ui;
 	}
+
+	if (!is_safe_ui_dir(target_dir))
+		return { success: false, message: "Refusing to deploy to an unsafe target directory" };
 
 	let script = "/usr/share/honk/download_dashboard.sh";
 	let s = stat(script);
@@ -368,15 +395,24 @@ function download_dashboard(req) {
 	let safe_url = replace(url, "'", "'\\''");
 
 	let cmd = sprintf("/bin/sh '%s' '%s' '%s' >/dev/null 2>&1 &", safe_script, safe_target, safe_url);
-	system(cmd);
+	let rc = system(cmd);
+	if (rc != 0)
+		return { success: false, message: "failed to dispatch the download task" };
 
-	return { success: true, target_dir: target_dir, url: url };
+	return { success: true, target_dir: target_dir, url: url, queued: true };
 }
 
 function switch_dashboard_api(target_type) {
 	cached_pid = null;
+
+	if (!is_valid_dashboard_type(target_type))
+		return { success: false, message: "Invalid dashboard type" };
+
 	let api_file = get_api_file_path();
 	let config_file = get_config_file_path();
+
+	let api_cfg = get_api_config();
+	let parsed_native = api_cfg.parsed_native;
 
 	clean_legacy_api_from_config(config_file);
 
@@ -398,14 +434,12 @@ function switch_dashboard_api(target_type) {
 		if (cur && trim(cur) != "") {
 			writefile(api_file, "");
 			system("/etc/init.d/honk restart >/dev/null 2>&1 &");
-			return { success: true, type: "none" };
+			return { success: true, type: "none", queued: true };
 		}
 		writefile(api_file, "");
-		return { success: true, type: "none", noop: true };
+		return { success: true, type: "none" };
 	}
 
-	let api_cfg = get_api_config();
-	let parsed_native = api_cfg.parsed_native;
 	let target_ui = get_dashboard_dir(target_type);
 
 	// Check if already correctly configured in api.dae
@@ -414,7 +448,7 @@ function switch_dashboard_api(target_type) {
 		    parsed_native.listen &&
 		    parsed_native.config_write &&
 		    parsed_native.ui == target_ui) {
-			return { success: true, type: target_type, noop: true };
+			return { success: true, type: target_type };
 		}
 	}
 
@@ -423,8 +457,8 @@ function switch_dashboard_api(target_type) {
 	cleaned_api = remove_bracket_block(cleaned_api, /^[#\/]*\s*native_api\s*\{/);
 	cleaned_api = replace(cleaned_api, /experimental\s*\{\s*\}/, "");
 
-	let sec = (parsed_native && parsed_native.secret && length(parsed_native.secret) >= 8) ? parsed_native.secret : "honk114514";
-	let listen = (parsed_native && parsed_native.listen) ? parsed_native.listen : "0.0.0.0:9527";
+	let sec = (parsed_native && parsed_native.secret && length(parsed_native.secret) >= 8) ? parsed_native.secret : DEFAULT_SECRET;
+	let listen = (parsed_native && parsed_native.listen) ? parsed_native.listen : (DEFAULT_HOST + ":" + DEFAULT_PORT);
 	let ui = target_ui;
 
 	let api_inner =
@@ -454,7 +488,7 @@ function switch_dashboard_api(target_type) {
 	writefile(api_file, new_api_content);
 	system("/etc/init.d/honk restart >/dev/null 2>&1 &");
 
-	return { success: true, type: target_type };
+	return { success: true, type: target_type, queued: true };
 }
 
 return {
@@ -480,16 +514,24 @@ return {
 		reload: {
 			call: function(req) {
 				cached_pid = null;
-				system("/etc/init.d/honk hot_reload >/dev/null 2>&1 &");
-				return { success: true };
+
+				let rc = system("/etc/init.d/honk hot_reload >/dev/null 2>&1 &");
+				if (rc != 0)
+					return { success: false, message: "failed to dispatch hot_reload" };
+
+				return { success: true, queued: true };
 			}
 		},
 
 		restart: {
 			call: function(req) {
 				cached_pid = null;
-				system("/etc/init.d/honk restart >/dev/null 2>&1 &");
-				return { success: true };
+
+				let rc = system("/etc/init.d/honk restart >/dev/null 2>&1 &");
+				if (rc != 0)
+					return { success: false, message: "failed to dispatch restart" };
+
+				return { success: true, queued: true };
 			}
 		},
 

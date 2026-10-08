@@ -1,16 +1,8 @@
 #!/bin/sh
 # Download and install Dashboard for HONK
 
-TARGET_DIR="${1:-/etc/honk/doona}"
-if [ -z "${2:-}" ]; then
-    if [ "$TARGET_DIR" = "/etc/honk/zashboard" ]; then
-        DOWNLOAD_URL="https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip"
-    else
-        DOWNLOAD_URL="https://github.com/Zakkaus/doona"
-    fi
-else
-    DOWNLOAD_URL="$2"
-fi
+TARGET_DIR="${1:-}"
+DOWNLOAD_URL="${2:-}"
 
 LOG_FILE="/tmp/honk_dashboard_download.log"
 STATUS_FILE="/tmp/honk_dashboard_download.status"
@@ -28,6 +20,13 @@ set_status() {
 
 mkdir -p /tmp
 : > "$LOG_FILE"
+
+if [ -z "$TARGET_DIR" ] || [ -z "$DOWNLOAD_URL" ]; then
+    log "Error: usage: $0 <target-dir> <archive-url>"
+    set_status "FAILED"
+    exit 1
+fi
+
 set_status "DOWNLOADING"
 
 log "Deploying dashboard to: $TARGET_DIR"
@@ -108,6 +107,50 @@ case "$DOWNLOAD_URL" in
         ;;
 esac
 
+normalize_target_dir() {
+    case "$TARGET_DIR" in
+        *..*) return 1 ;;
+    esac
+
+    TARGET_DIR="${TARGET_DIR%/}"
+
+    local parent base canon_parent
+    parent="${TARGET_DIR%/*}"
+    base="${TARGET_DIR##*/}"
+
+    case "$base" in
+        ''|.|..) return 1 ;;
+    esac
+
+    canon_parent="$(cd "$parent" 2>/dev/null && pwd -P)" || return 1
+
+    case "$canon_parent" in
+        /etc/honk) ;;
+        *) return 1 ;;
+    esac
+
+    local target resolved
+    target="$canon_parent/$base"
+
+    if [ -L "$target" ]; then
+        return 1
+    fi
+
+    if [ -e "$target" ]; then
+        resolved="$(cd "$target" 2>/dev/null && pwd -P)" || return 1
+        [ "$resolved" = "$target" ] || return 1
+    fi
+
+    TARGET_DIR="$target"
+    return 0
+}
+
+if ! normalize_target_dir; then
+    log "Error: Invalid target directory (must be a direct subdirectory of /etc/honk): $TARGET_DIR"
+    set_status "FAILED"
+    exit 1
+fi
+
 log "Downloading package..."
 
 rm -rf "$TMP_DIR"
@@ -183,15 +226,6 @@ if [ ! -f "$DEPLOY_SRC/index.html" ]; then
 fi
 
 log "Deploying files to $TARGET_DIR..."
-case "$TARGET_DIR" in
-    /etc/honk/*) ;;
-    *)
-        log "Error: Invalid target directory (must be inside /etc/honk): $TARGET_DIR"
-        set_status "FAILED"
-        exit 1
-        ;;
-esac
-
 mkdir -p "$TARGET_DIR"
 rm -rf "${TARGET_DIR:?}"/* "${TARGET_DIR:?}"/.[!.]* 2>/dev/null || true
 cp -rf "$DEPLOY_SRC/"* "$TARGET_DIR/"

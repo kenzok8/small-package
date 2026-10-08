@@ -4,6 +4,7 @@
 'require poll';
 'require uci';
 'require honk.common as honk';
+'require honk.dashprofiles as dash';
 
 return view.extend({
 	handleSaveApply: null,
@@ -24,59 +25,8 @@ return view.extend({
 		var sid = sec['.name'] || 'config';
 		var dashType = uci.get('honk', sid, 'dashboard') || 'none';
 
-		var DASHBOARD_PROFILES = {
-			zashboard: {
-				name: 'Zashboard',
-				label: 'Zashboard',
-				apiName: 'Native API',
-				defaultPort: '9527',
-				defaultDir: '/etc/honk/zashboard',
-				exampleConfig: "experimental {\n    native_api {\n        enabled: true\n        listen: '0.0.0.0:9527'\n        secret: 'honk114514'\n        ui: '/etc/honk/zashboard'\n        config_write: true\n    }\n}",
-				buildUrl: function(info, targetHost, port, secret, protocol, forceFresh) {
-					var hostPart = (targetHost.indexOf(':') !== -1 && targetHost.charAt(0) !== '[') ? '[' + targetHost + ']' : targetHost;
-					var query = 'hostname=' + encodeURIComponent(targetHost) +
-						'&port=' + encodeURIComponent(port) +
-						'&protocol=' + encodeURIComponent(protocol) +
-						'&type=dae';
-					if (secret) {
-						query += '&secret=' + encodeURIComponent(secret);
-					}
-					var uiQuery = query;
-					if (forceFresh) {
-						uiQuery += '&_t=' + Date.now();
-					}
-					return protocol + '://' + hostPart + ':' + port + '/ui/?' + uiQuery + '#/setup?' + query;
-				},
-				githubRelease: 'https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip',
-				ghfastMirror: 'https://ghfast.top/https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip',
-				ghproxyMirror: 'https://ghproxy.net/https://github.com/Zephyruso/zashboard/releases/latest/download/dist-no-fonts.zip',
-				pkgName: 'dist-no-fonts.zip'
-			},
-			doona: {
-				name: 'Doona',
-				label: _('Doona'),
-				apiName: 'Native API',
-				defaultPort: '9527',
-				defaultDir: '/etc/honk/doona',
-				exampleConfig: "experimental {\n    native_api {\n        enabled: true\n        listen: '0.0.0.0:9527'\n        secret: 'honk114514'\n        ui: '/etc/honk/doona'\n        config_write: true\n    }\n}",
-				buildUrl: function(info, targetHost, port, secret, protocol, forceFresh) {
-					var hostPart = (targetHost.indexOf(':') !== -1 && targetHost.charAt(0) !== '[') ? '[' + targetHost + ']' : targetHost;
-					var url = protocol + '://' + hostPart + ':' + port + '/ui/';
-					if (forceFresh) {
-						url += '?_t=' + Date.now();
-					}
-					return url;
-				},
-				githubRelease: 'https://github.com/Zakkaus/doona',
-				ghfastMirror: 'https://ghfast.top/https://github.com/Zakkaus/doona',
-				ghproxyMirror: 'https://ghproxy.net/https://github.com/Zakkaus/doona',
-				pkgName: 'doona-*.tar.gz'
-			}
-		};
-
-		var profile = DASHBOARD_PROFILES[dashType] || DASHBOARD_PROFILES.zashboard;
+		var profile = dash.getProfile(dashType);
 		var currentInfo = null;
-		var downloadPollFn = null;
 		var iframeLoaded = false;
 
 		function createDashboardSelect() {
@@ -97,32 +47,17 @@ return view.extend({
 			var optNone = E('option', { 'value': 'none' }, _('None'));
 			if (dashType === 'none') optNone.selected = true;
 			sel.appendChild(optNone);
-			Object.keys(DASHBOARD_PROFILES).forEach(function(k) {
-				var opt = E('option', { 'value': k }, DASHBOARD_PROFILES[k].label || DASHBOARD_PROFILES[k].name);
+			Object.keys(dash.profiles).forEach(function(k) {
+				var opt = E('option', { 'value': k }, dash.profiles[k].label());
 				if (k === dashType) opt.selected = true;
 				sel.appendChild(opt);
 			});
 			return sel;
 		}
 
-		function getTargetHost(configHost) {
-			if (!configHost || configHost === '0.0.0.0' || configHost === '::' || configHost === '[::]') {
-				return window.location.hostname;
-			}
-			return configHost;
-		}
-
-		function buildDashboardUrl(info, forceFresh) {
-			var targetHost = getTargetHost(info.host);
-			var port = info.port || profile.defaultPort || '9527';
-			var secret = info.secret || '';
-			var protocol = 'http';
-			return profile.buildUrl(info, targetHost, port, secret, protocol, forceFresh);
-		}
-
 		function reloadIframe(forceFresh) {
 			if (!currentInfo) return;
-			var url = buildDashboardUrl(currentInfo, forceFresh);
+			var url = dash.buildUrl(dashType, currentInfo, forceFresh);
 			iframe.src = 'about:blank';
 			setTimeout(function() {
 				iframe.src = url;
@@ -209,7 +144,7 @@ return view.extend({
 			E('div', { 'style': 'margin-top: 10px;' }, [
 				E('label', { 'class': 'cbi-value-title' }, E('strong', {}, _('Example Configuration (/etc/honk/config.d/api.dae):'))),
 				E('pre', { 'style': 'padding: 10px; margin-top: 6px; border: 1px solid var(--border-color-medium, #ccc); border-radius: 4px;' },
-					profile.exampleConfig || ''
+					dash.exampleConfig(profile)
 				)
 			]),
 			E('div', { 'style': 'margin-top: 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;' }, [
@@ -237,7 +172,7 @@ return view.extend({
 
 		// Missing UI view
 		var metaUiDir = E('td', {}, profile.defaultDir);
-		var metaController = E('td', {}, '0.0.0.0:9527');
+		var metaController = E('td', {}, dash.defaults.host + ':' + dash.defaults.port);
 		var metaSecret = E('td', {}, _('(Not set)'));
 
 		var radioGithub = E('input', { 'type': 'radio', 'class': 'cbi-input-radio', 'name': 'dash_dl_src', 'value': profile.githubRelease, 'checked': 'checked' });
@@ -282,9 +217,10 @@ return view.extend({
 
 				btnStartDownload.disabled = true;
 				btnStartDownload.innerText = _('Processing...');
-				triggerDownload(url, dlLogBox, dlProgressWrap, function() {
+				honk.triggerDashboardDownload(url, dashType, dlLogBox, dlProgressWrap, function(success) {
 					btnStartDownload.disabled = false;
 					btnStartDownload.innerText = _('Start Download & Install Dashboard');
+					if (success) loadInfo(true);
 				});
 			}
 		}, _('Start Download & Install Dashboard'));
@@ -307,7 +243,7 @@ return view.extend({
 				),
 				E('div', { 'style': 'display: flex; flex-direction: column; gap: 8px;' }, [
 					E('label', { 'style': 'display: flex; align-items: center; gap: 8px; cursor: pointer;' }, [
-						radioGithub, E('span', {}, [ E('strong', {}, 'GitHub Release '), '(' + profile.pkgName + ')' ])
+						radioGithub, E('span', {}, [ E('strong', {}, _('GitHub Release ')), '(' + profile.pkgName + ')' ])
 					]),
 					E('label', { 'style': 'display: flex; align-items: center; gap: 8px; cursor: pointer;' }, [
 						radioMirror1, E('span', {}, [ E('strong', {}, _('Mirror 1') + ' '), '(ghfast.top)' ])
@@ -334,7 +270,7 @@ return view.extend({
 			E('a', { 'href': '#', 'target': '_blank', 'class': 'cbi-button cbi-button-action', 'style': 'white-space: nowrap; margin-left: 10px;' }, _('Open in New Tab'))
 		]);
 
-		var honkPortLabel = E('span', { 'class': 'honk_port_label' }, profile.defaultPort || '9527');
+		var honkPortLabel = E('span', { 'class': 'honk_port_label' }, profile.defaultPort);
 		var honkStopAlert = E('div', { 'class': 'alert-message warning', 'style': 'display: none; margin-bottom: 10px; justify-content: space-between; align-items: center;' }, [
 			E('div', {}, [
 				E('strong', {}, _('HONK service is currently not running:') + ' '),
@@ -407,7 +343,7 @@ return view.extend({
 			btnCancelModal.disabled = true;
 			modalStatusAlert.style.display = 'none';
 
-			triggerDownload(url, modalLogBox, modalProgressWrap, function(success) {
+			honk.triggerDashboardDownload(url, dashType, modalLogBox, modalProgressWrap, function(success) {
 				if (success) {
 					modalStatusAlert.className = 'alert-message success';
 					modalStatusAlert.innerText = _('Installation completed successfully!');
@@ -461,7 +397,7 @@ return view.extend({
 						E('label', { 'class': 'cbi-value-title' }, _('Select download source')),
 						E('div', { 'class': 'cbi-value-field', 'style': 'display: flex; flex-direction: column; gap: 8px;' }, [
 							E('label', { 'style': 'display: flex; align-items: center; gap: 8px; cursor: pointer;' }, [
-								modalRadioGithub, E('span', {}, [ E('strong', {}, 'GitHub Release '), '(' + profile.pkgName + ')' ])
+								modalRadioGithub, E('span', {}, [ E('strong', {}, _('GitHub Release ')), '(' + profile.pkgName + ')' ])
 							]),
 							E('label', { 'style': 'display: flex; align-items: center; gap: 8px; cursor: pointer;' }, [
 								modalRadioMirror, E('span', {}, [ E('strong', {}, _('Mirror') + ' '), '(ghfast.top)' ])
@@ -539,56 +475,6 @@ return view.extend({
 			stateReady.style.display = (name === 'ready') ? 'block' : 'none';
 		}
 
-		function triggerDownload(url, logBox, progressWrap, onFinish) {
-			progressWrap.style.display = 'block';
-			logBox.innerText = _('Initializing download task...\n');
-
-			honk.callHonkDownloadDashboard(url, dashType).then(function(resp) {
-				if (!resp || !resp.success) {
-					logBox.innerText += _('Failed to trigger download:') + ' ' + (resp ? resp.message : _('Unknown error')) + '\n';
-					if (onFinish) onFinish(false);
-					return;
-				}
-
-				if (downloadPollFn) {
-					poll.remove(downloadPollFn);
-					downloadPollFn = null;
-				}
-
-				downloadPollFn = function() {
-					if (!document.body.contains(progressWrap)) {
-						poll.remove(downloadPollFn);
-						downloadPollFn = null;
-						return Promise.resolve();
-					}
-					return honk.callHonkDownloadStatus().then(function(sResp) {
-						if (!sResp) return;
-						if (sResp.log) {
-							logBox.innerText = sResp.log;
-							logBox.scrollTop = logBox.scrollHeight;
-						}
-						if (sResp.status === 'SUCCESS') {
-							poll.remove(downloadPollFn);
-							downloadPollFn = null;
-							logBox.scrollTop = logBox.scrollHeight;
-							if (onFinish) onFinish(true);
-							loadInfo(true);
-						} else if (sResp.status === 'FAILED') {
-							poll.remove(downloadPollFn);
-							downloadPollFn = null;
-							logBox.scrollTop = logBox.scrollHeight;
-							if (onFinish) onFinish(false);
-						}
-					});
-				};
-
-				poll.add(downloadPollFn, 1);
-			}).catch(function(err) {
-				logBox.innerText += _('Download error:') + ' ' + (err.message || err) + '\n';
-				if (onFinish) onFinish(false);
-			});
-		}
-
 		function updateHonkRunningState(running, port) {
 			if (running) {
 				statusServicePill.className = 'label success';
@@ -598,7 +484,7 @@ return view.extend({
 				statusServicePill.className = 'label warning';
 				statusServicePill.innerText = _('Not Running');
 				honkStopAlert.style.display = 'flex';
-				honkPortLabel.innerText = port || profile.defaultPort || '9527';
+				honkPortLabel.innerText = port || profile.defaultPort;
 			}
 		}
 
@@ -616,7 +502,7 @@ return view.extend({
 
 				if (!data.has_ui) {
 					metaUiDir.innerText = data.external_ui || profile.defaultDir;
-					metaController.innerText = data.external_controller || ('0.0.0.0:' + (profile.defaultPort || '9527'));
+					metaController.innerText = data.external_controller || (dash.defaults.host + ':' + profile.defaultPort);
 					metaSecret.innerText = data.secret ? data.secret : _('Not configured (Empty)');
 					showState('missing_ui');
 					return;
@@ -624,9 +510,9 @@ return view.extend({
 
 				// Ready state
 				showState('ready');
-				var targetHost = getTargetHost(data.host);
-				var port = data.port || profile.defaultPort || '9527';
-				var fullUrl = buildDashboardUrl(data);
+				var targetHost = dash.getTargetHost(data.host);
+				var port = data.port || profile.defaultPort;
+				var fullUrl = dash.buildUrl(dashType, data);
 
 				updateHonkRunningState(data.running, port);
 
@@ -677,7 +563,7 @@ return view.extend({
 				return honk.callHonkStatus().then(function(res) {
 					var isRunning = (res && res.running);
 					updateHonkRunningState(isRunning, currentInfo.port);
-				});
+				}).catch(function() { });
 			}
 			return Promise.resolve();
 		};
