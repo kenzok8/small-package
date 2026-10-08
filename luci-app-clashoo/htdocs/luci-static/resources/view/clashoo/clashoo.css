@@ -134,8 +134,10 @@
 
 .cl-wrap .cl-status-kernel .cl-core-btn {
   height: 24px;
-  line-height: 24px;
+  min-height: 0 !important;
+  line-height: 24px !important;
   min-width: 60px;
+  margin-left: 0;
   padding: 0 10px;
   border: 0;
   border-radius: 6px;
@@ -146,6 +148,8 @@
   color: var(--cl-label-muted);
   opacity: 0.6;
   cursor: pointer;
+  text-transform: none;
+  transform: none !important;
   transition: background-color 0.18s ease, color 0.18s ease, opacity 0.18s ease;
 }
 
