@@ -9,31 +9,30 @@ APP_FILE=${APP_PATH}/app.sh
 LOCK_FILE=${LOCK_PATH}/${CONFIG}.lock
 
 set_lock() {
-	[ ! -d "$LOCK_PATH" ] && mkdir -p $LOCK_PATH
-	exec 999>"$LOCK_FILE"
-	flock -xn 999
+	mkdir -p "$LOCK_PATH" || return 1
+	command exec 9>"$LOCK_FILE" || return 1
+	flock -xn 9
 }
 
 set_lock_wait() {
-	[ ! -d "$LOCK_PATH" ] && mkdir -p "$LOCK_PATH"
-	exec 999>"$LOCK_FILE"
-	flock -x 999
+	mkdir -p "$LOCK_PATH" || return 1
+	command exec 9>"$LOCK_FILE" || return 1
+	flock -x 9
 }
 
 unset_lock() {
-	flock -u 999
+	flock -u 9
+	exec 9>&-
 }
 
 boot_func() {
 	rm -f ${LOCK_PATH}/${CONFIG}_ready.lock
-	rm -f ${LOCK_PATH}/${CONFIG}_rule_update.lock
-	rm -f ${LOCK_PATH}/${CONFIG}_subscribe.lock
 	local delay=$(uci -q get ${CONFIG}.@global_delay[0].start_delay || echo 1)
 	if [ "$delay" -gt 0 ]; then
 		echolog "执行启动延时 $delay 秒后再启动!"
 		sleep $delay
 	fi
-	restart boot
+	restart boot || return 1
 	touch ${LOCK_PATH}/${CONFIG}_ready.lock
 }
 
@@ -42,35 +41,40 @@ boot() {
 }
 
 start() {
-	set_lock
-	[ $? == 1 ] && echolog "脚本已经在运行，不重复运行，退出." && exit 0
-	$APP_FILE start $2
+	set_lock || { echolog "脚本已经在运行，不重复运行，退出."; return 0; }
+	"$APP_FILE" start "$2" 9>&-
 	unset_lock
 }
 
 stop() {
-	set_lock_wait
-	[ $? != 0 ] && echolog "无法取得停止锁，退出." && exit 1
-	$APP_FILE stop $2
+	set_lock_wait || { echolog "无法取得停止锁，退出."; return 1; }
+	"$APP_FILE" stop "$2" 9>&-
 	unset_lock
 }
 
 restart() {
 	local action=${2:-$1}
 	[ "$action" = "restart" ] && action=
-	set_lock
-	[ $? == 1 ] && echolog "脚本已经在运行，不重复运行，退出." && exit 0
-	rule_lock=${LOCK_PATH}/${CONFIG}_rule_update.lock
-	sub_lock=${LOCK_PATH}/${CONFIG}_subscribe.lock
+	set_lock || { echolog "脚本已经在运行，不重复运行，退出."; return 0; }
+	local update_status=1
 	for i in $(seq 1 300); do
-		if [ ! -f "$rule_lock" ] && [ ! -f "$sub_lock" ]; then
-			break
-		fi
+		PASSWALL_UPDATE_LOCK="${LOCK_PATH}/${CONFIG}_sub_rule.lock" lua -e '
+			local nixio = require "nixio"
+			local file = nixio.open(os.getenv("PASSWALL_UPDATE_LOCK"), "a")
+			if not file then os.exit(2) end
+			os.exit(file:lock("tlock") and 0 or 1)
+		'
+		update_status=$?
+		[ "$update_status" -ne 1 ] && break
 		sleep 2
 	done
-	rm -f "$rule_lock" "$sub_lock"
-	$APP_FILE stop $action
-	$APP_FILE start $action
+	if [ "$update_status" -ne 0 ]; then
+		echolog "等待订阅/规则更新结束失败或超时，取消重启."
+		unset_lock
+		return 1
+	fi
+	"$APP_FILE" stop "$action" 9>&-
+	"$APP_FILE" start "$action" 9>&-
 	unset_lock
 }
 

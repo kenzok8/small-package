@@ -7,6 +7,34 @@ local jsonc = api.jsonc
 local fs = api.fs
 local uci, uci_get, uci_set, uci_del, uci_foreach, uci_save = api.uci, api.uci_get_c, api.uci_set_c, api.uci_del_c, api.uci_foreach_c, api.uci_save_c
 
+-- [[ 逻辑锁 Start ]] --
+-- Both update scripts use the same lockf lock; the kernel releases it on exit.
+local update_lock = api.nixio.open(api.LOCK_PREFIX .. "_sub_rule.lock", api.nixio.open_flags("rdwr", "creat"))
+if not update_lock then
+	api.log("无法打开订阅/规则更新锁，退出。")
+	os.exit(1)
+end
+-- Scheduled updates wait for the lock; manual requests may skip a busy lock.
+if not update_lock:lock("tlock") then
+	if arg[3] ~= "cron" then
+		api.log("订阅或规则更新正在运行，本次请求跳过。")
+		os.exit(0)
+	end
+	local running = ({s = "订阅", r = "规则更新"})[update_lock:read(1)] or "订阅/规则更新"
+	update_lock:seek(0)
+	api.log("[" .. running .. "]实例正在运行，[规则更新]进入队列等待...")
+	if not update_lock:lock("lock") then
+		api.log("无法取得更新锁，计划任务失败。")
+		os.exit(1)
+	end
+end
+-- Record the running task in the same file: s = subscription, r = rule update.
+update_lock:write("r")
+update_lock:seek(0)
+api.uci:revert(api.c_config)
+math.randomseed(os.time() + math.floor(os.clock() * 1000))
+-- [[ 逻辑锁 End ]] --
+
 local arg1 = arg[1]
 local arg2 = arg[2]
 local arg3 = arg[3]
@@ -668,36 +696,9 @@ else
 	geosite_update = uci_get("@global_rules[0]", "geosite_update") or "1"
 end
 if geo2rule ~= "1" and gfwlist_update == "0" and chnroute_update == "0" and chnroute6_update == "0" and chnlist_update == "0" and geoip_update == "0" and geosite_update == "0" then
-	os.exit(0)
+	update_lock:close()
+	return
 end
-
-local function check_instance(action)
-	local rule_lock = api.LOCK_PREFIX .. "_rule_update.lock"
-	local sub_lock = api.LOCK_PREFIX .. "_subscribe.lock"
-
-	if action == "start" then
-		math.randomseed(os.time() + math.floor(os.clock() * 1000))
-		api.nixio.nanosleep(0, math.random(100, 1000) * 1000000)
-		if fs.access(rule_lock) then
-			log("有[规则更新]实例正在运行，请稍后再试...\n")
-			os.exit(0)
-		else
-			luci.sys.call("touch " .. rule_lock)
-		end
-	elseif action == "end" then
-		api.remove(rule_lock)
-		return
-	end
-
-	if fs.access(sub_lock) then
-		log("[订阅]实例正在运行，[规则更新]进入队列等待...\n")
-	end
-	while fs.access(sub_lock) do
-		api.nixio.nanosleep(2, 0)
-	end
-end
-
-check_instance("start")
 
 log("开始更新规则...")
 local function safe_call(func, err_msg)
@@ -803,9 +804,11 @@ if reboot == 1 then
 	log("重启服务，应用新的规则。")
 	uci_set("@global[0]", "flush_set", "1")
 	uci_save(true)
-	local action = (arg3 == "cron") and " cron" or ""
-	luci.sys.call("/etc/init.d/passwall restart%s > /dev/null 2>&1 &" % action)
 end
 log("规则更新完毕...\n")
 
-check_instance("end")
+update_lock:close()
+if reboot == 1 then
+	local action = arg3 == "cron" and " cron" or ""
+	luci.sys.call("/etc/init.d/passwall restart" .. action .. " > /dev/null 2>&1 &")
+end
