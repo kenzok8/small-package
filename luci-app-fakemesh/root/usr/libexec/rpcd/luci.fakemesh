@@ -1,0 +1,1134 @@
+#!/usr/bin/env lua
+
+local json = require "luci.jsonc"
+local nixio = require "nixio"
+local ubus_has, ubus = pcall(require, "ubus")
+
+local function read_file(path)
+	local f = io.open(path, "r")
+	if not f then return "" end
+	local s = f:read("*a") or ""
+	f:close()
+	return (s:gsub("^%s*(.-)%s*$", "%1"))
+end
+
+local function exec(cmd)
+	local p = io.popen(cmd)
+	if not p then return "" end
+	local s = p:read("*a") or ""
+	p:close()
+	return s
+end
+
+local function clone_table(t)
+	if type(t) ~= "table" then return t end
+	local r = {}
+	for k, v in pairs(t) do
+		r[k] = type(v) == "table" and clone_table(v) or v
+	end
+	return r
+end
+
+local function get_device_icon(hostname, mac)
+	local h = (hostname or ""):lower()
+	if h:find("iphone") or h:find("moto") or h:find("android") or h:find("phone") or h:find("mi%-") or h:find("redmi") or h:find("huawei") or h:find("oppo") or h:find("vivo") or h:find("oneplus") or h:find("galaxy") or h:find("pixel") or h:find("honor") or h:find("meizu") or h:find("realme") or h:find("iqoo") then
+		return "phone"
+	elseif h:find("ipad") or h:find("pad") or h:find("tablet") or h:find("matepad") then
+		return "tablet"
+	elseif h:find("laptop") or h:find("macbook") or h:find("thinkpad") or h:find("notebook") or h:find("zenbook") or h:find("surface") then
+		return "laptop"
+	elseif h:find("pc") or h:find("desktop") or h:find("game") or h:find("win") or h:find("workstation") or h:find("host") then
+		return "pc"
+	elseif h:find("tv") or h:find("appletv") or h:find("box") or h:find("mibox") or h:find("chromecast") or h:find("roku") or h:find("firetv") or h:find("cast") then
+		return "tv"
+	elseif h:find("gree") or h:find("camera") or h:find("plug") or h:find("light") or h:find("bulb") or h:find("yeelink") or h:find("yeelight") or h:find("esp_") or h:find("esp32") or h:find("esp8266") or h:find("smart") or h:find("switch") or h:find("vacuum") or h:find("tuya") or h:find("aqara") then
+		return "iot"
+	elseif h:find("router") or h:find("ap") or h:find("mesh") or h:find("repeater") or h:find("gateway") then
+		return "router"
+	elseif h:find("vpn") or h:find("wireguard") or h:find("tunnel") or h:find("openvpn") or h:find("tailscale") or h:find("zerotier") then
+		return "vpn"
+	end
+	return "device"
+end
+
+local function score_client_candidate(c, nu)
+	local score = 0
+	if c.access_type == "wireless" then
+		score = score + 1000
+		if c.signal and c.signal > -95 then
+			score = score + (100 + c.signal)
+		end
+		if c.rate_rx and c.rate_rx > 0 then score = score + 50 end
+		if c.rate_tx and c.rate_tx > 0 then score = score + 50 end
+	elseif c.access_type == "wired" then
+		if c.port and c.port ~= "" and not c.port:find("MESH") then
+			score = score + 500
+			if c.port_speed and c.port_speed ~= "" then score = score + 50 end
+		else
+			score = score + 100
+		end
+	elseif c.access_type == "vpn" then
+		score = score + 800
+	end
+
+	if c.node_id and c.node_id ~= "ac" then
+		score = score + 200
+	end
+
+	if nu then
+		if nu.rx_speed_bytes and nu.rx_speed_bytes > 0 then score = score + 30 end
+		if nu.tx_speed_bytes and nu.tx_speed_bytes > 0 then score = score + 30 end
+		if nu.idle_time and nu.idle_time < 60 then score = score + 40 end
+	end
+	return score
+end
+
+local function collect_local_node_info()
+	local conn = ubus_has and ubus.connect()
+
+	local mac = ""
+	local p = io.popen("uci get network.meshx0.hostname 2>/dev/null")
+	if p then
+		local h = p:read("*l") or ""
+		p:close()
+		mac = h:match("^MESH%-AGENT_([%x]+)") or ""
+		if #mac == 12 then
+			mac = mac:gsub("(..)", "%1:"):sub(1, 17):upper()
+		end
+	end
+	if mac == "" then
+		mac = (read_file("/sys/class/net/br-lan/address")):upper()
+	end
+
+	local ip = (exec("ip -4 -o addr show br-lan 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -n1")):gsub("%s+", "")
+	if ip == "" then
+		ip = (exec("uci -q get network.lan.ipaddr 2>/dev/null")):gsub("%s+", "")
+	end
+
+	local role = (exec("uci -q get fakemesh.default.role 2>/dev/null")):gsub("%s+", "")
+	if role == "" then role = "agent" end
+
+	local uptime = 0
+	local up_str = read_file("/proc/uptime"):match("^([%d%.]+)")
+	if up_str then uptime = math.floor(tonumber(up_str) or 0) end
+
+	local info = {
+		mac = mac,
+		ip = ip,
+		hostname = read_file("/proc/sys/kernel/hostname"),
+		model = read_file("/tmp/sysinfo/model"),
+		uptime = uptime,
+		role = role,
+		mesh_id = (exec("uci -q get fakemesh.default.id 2>/dev/null")):gsub("%s+", ""),
+		band = (exec("uci -q get fakemesh.default.band 2>/dev/null")):gsub("%s+", "")
+	}
+
+	if info.model == "" then
+		info.model = (exec("jsonfilter -i /etc/board.json -e '$.model.name' 2>/dev/null")):gsub("%s+", " ")
+	end
+	if info.model == "" then info.model = "X-WRT Device" end
+
+	-- Mesh BSSID (node's own meshx0 AP BSSID)
+	if conn then
+		local st = conn:call("hostapd.meshx0", "get_status", {})
+		if st and st.bssid then
+			info.mesh_bssid = st.bssid:upper()
+		end
+	end
+
+	-- Upstream connection detection ("我连着上游谁")
+	if role == "controller" then
+		local wan_proto = (exec("uci -q get network.wan.proto 2>/dev/null")):gsub("%s+", "")
+		local wan_ip = (exec("ip -4 -o addr show wan 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -n1")):gsub("%s+", "")
+		if wan_ip == "" then
+			wan_ip = (exec("ip -4 -o addr show pppoe-wan 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -n1")):gsub("%s+", "")
+		end
+		if wan_ip == "" then
+			wan_ip = (exec("uci -q get network.wan.ipaddr 2>/dev/null")):gsub("%s+", "")
+		end
+		info.upstream = {
+			type = "root",
+			name = "Internet Gateway",
+			proto = wan_proto ~= "" and wan_proto or "dhcp",
+			wan_ip = wan_ip,
+			online = (wan_ip ~= "")
+		}
+		info.backhaul = clone_table(info.upstream)
+	else
+		local link = exec("iw dev meshx1 link 2>/dev/null")
+		if link and link:find("Connected to") then
+			local parent_mac = (link:match("Connected to ([%a%d:]+)") or ""):upper()
+			local ssid = link:match("SSID: ([^\n]+)")
+			local signal = tonumber(link:match("signal: ([%-%d]+) dBm"))
+			local rx_br = tonumber(link:match("rx bitrate: ([%d%.]+) MBit/s"))
+			local tx_br = tonumber(link:match("tx bitrate: ([%d%.]+) MBit/s"))
+			local freq = tonumber(link:match("freq: ([%d%.]+)"))
+			local channel = tonumber(link:match("channel: (%d+)"))
+
+			local band = "5G"
+			if freq and freq >= 6000 then band = "6G"
+			elseif freq and freq < 3000 then band = "2.4G" end
+
+			info.upstream = {
+				type = "wireless",
+				parent_bssid = parent_mac,
+				ssid = ssid or info.mesh_id,
+				signal = signal or 0,
+				rx_bitrate = rx_br or 0,
+				tx_bitrate = tx_br or 0,
+				channel = channel,
+				freq = freq or 0,
+				band = band
+			}
+			info.backhaul = clone_table(info.upstream)
+		else
+			-- Wired backhaul
+			local def_route = exec("ip -4 route show | grep default 2>/dev/null | head -n1")
+			local gw_ip = def_route:match("via%s+([%d%.]+)") or ""
+			local gw_mac = ""
+			if gw_ip ~= "" then
+				local arp = read_file("/proc/net/arp")
+				for line in arp:gmatch("[^\r\n]+") do
+					local aip, amac = line:match("^([%d%.]+)%s+%S+%s+%S+%s+([%a%d:]+)")
+					if aip == gw_ip and amac then
+						gw_mac = amac:upper()
+						break
+					end
+				end
+			end
+
+			local up_port = "WAN"
+			local up_speed = ""
+			local wan_sp = read_file("/sys/class/net/wan/speed")
+			if tonumber(wan_sp) and tonumber(wan_sp) > 0 then
+				up_port = "WAN"
+				up_speed = wan_sp .. "M"
+			else
+				for p = 1, 4 do
+					local lsp = read_file("/sys/class/net/lan" .. p .. "/speed")
+					if tonumber(lsp) and tonumber(lsp) > 0 then
+						up_port = "LAN" .. p
+						up_speed = lsp .. "M"
+						break
+					end
+				end
+			end
+			if up_speed == "" then up_speed = "1000M" end
+
+			info.upstream = {
+				type = "wired",
+				port = up_port,
+				port_speed = up_speed,
+				gateway_ip = gw_ip,
+				gateway_mac = gw_mac,
+				parent_mac = gw_mac
+			}
+			info.backhaul = clone_table(info.upstream)
+		end
+	end
+
+	-- Radios & Wireless clients
+	local radios = {}
+	local clients = {}
+	local seen_macs = {}
+
+	if conn then
+		local objs = conn:objects() or {}
+		for _, obj in ipairs(objs) do
+			local ifname = obj:match("^hostapd%.(.*)$")
+			if ifname and ifname ~= "meshx0" then
+				local st = conn:call(obj, "get_status", {}) or {}
+				local cl = conn:call(obj, "get_clients", {}) or {}
+				local freq = st.freq or cl.freq or 0
+				local band = "2.4G"
+				if freq >= 5000 and freq < 6000 then band = "5G"
+				elseif freq >= 6000 then band = "6G" end
+
+				radios[#radios + 1] = {
+					ifname = ifname,
+					bssid = (st.bssid or ""):upper(),
+					ssid = st.ssid or "",
+					band = band,
+					freq = freq,
+					channel = st.channel or 0
+				}
+
+				if cl.clients then
+					for cmac, cinfo in pairs(cl.clients) do
+						local mac_u = cmac:upper()
+						seen_macs[mac_u] = true
+						clients[#clients + 1] = {
+							mac = mac_u,
+							access_type = "wireless",
+							ifname = ifname,
+							band = band,
+							ssid = st.ssid or "",
+							signal = cinfo.signal or 0,
+							noise = cinfo.noise or -95,
+							rate_rx = (cinfo.rate and cinfo.rate.rx) and (cinfo.rate.rx / 1000000) or 0,
+							rate_tx = (cinfo.rate and cinfo.rate.tx) and (cinfo.rate.tx / 1000000) or 0
+						}
+					end
+				end
+			end
+		end
+	end
+
+	-- Wired clients from bridge fdb
+	local wired_ports = {}
+	local fdb = exec("bridge fdb show 2>/dev/null")
+	for line in fdb:gmatch("[^\r\n]+") do
+		if not line:find("permanent") and not line:find("none") and not line:find("self") and not line:find("stale") then
+			local cmac, dev = line:match("^([%a%d:]+)%s+dev%s+([^%s]+)%s+master%s+br%-lan")
+			if cmac and dev then
+				local dev_l = dev:lower()
+				if not dev_l:find("mesh") and not dev_l:find("phy") and not dev_l:find("wlan") and not dev_l:find("sta") then
+					local mac_u = cmac:upper()
+					local sp_str = read_file("/sys/class/net/" .. dev .. "/speed")
+					local sp = tonumber(sp_str) or 0
+					local speed_label = sp > 0 and (sp .. "M") or ""
+					wired_ports[#wired_ports + 1] = {
+						mac = mac_u,
+						port = dev:upper(),
+						speed = speed_label
+					}
+					if not seen_macs[mac_u] then
+						seen_macs[mac_u] = true
+						clients[#clients + 1] = {
+							mac = mac_u,
+							access_type = "wired",
+							ifname = dev,
+							port = dev:upper(),
+							port_speed = speed_label
+						}
+					end
+				end
+			end
+		end
+	end
+	local local_ips = {}
+	local local_ip6s = {}
+	local arp = read_file("/proc/net/arp")
+	for line in arp:gmatch("[^\r\n]+") do
+		local aip, flg, amac = line:match("^([%d%.]+)%s+%S+%s+(%S+)%s+([%a%d:]+)")
+		if aip and amac and flg ~= "0x0" then
+			amac = amac:upper()
+			if not local_ips[amac] then local_ips[amac] = {} end
+			local_ips[amac][#local_ips[amac] + 1] = aip
+		end
+	end
+
+	local ip6_out = exec("ip -6 -o neigh show 2>/dev/null")
+	for line in ip6_out:gmatch("[^\r\n]+") do
+		local aip6, amac = line:match("^([%a%d:]+)%s+dev%s+%S+%s+lladdr%s+([%a%d:]+)")
+		if aip6 and amac then
+			amac = amac:upper()
+			if not local_ip6s[amac] then local_ip6s[amac] = {} end
+			local_ip6s[amac][#local_ip6s[amac] + 1] = aip6
+		end
+	end
+
+	for _, c in ipairs(clients) do
+		c.ips = local_ips[c.mac] or {}
+		c.ip = c.ips[1] or ""
+		c.ip6 = local_ip6s[c.mac] or {}
+	end
+
+	local w_count = 0
+	local e_count = 0
+	for _, c in ipairs(clients) do
+		if c.access_type == "wireless" then
+			w_count = w_count + 1
+		else
+			e_count = e_count + 1
+		end
+	end
+
+	info.downstream = {
+		wireless_count = w_count,
+		wired_count = e_count,
+		total_count = #clients
+	}
+	info.radios = radios
+	info.clients = clients
+	info.wired_ports = wired_ports
+
+	if conn then conn:close() end
+	return info
+end
+
+local function fetch_agents_parallel(agents)
+	if not agents or #agents == 0 then return {} end
+
+	local ubus_payload = '{"jsonrpc":"2.0","id":1,"method":"call","params":["00000000000000000000000000000000","luci.fakemesh","get_node_info",{}]}'
+	local cmds = {}
+	for _, a in ipairs(agents) do
+		local tag = a.ip:gsub("%.", "_")
+		local cmd = string.format(
+			"( curl -s --connect-timeout 1 -m 2 -X POST -H 'Content-Type: application/json' -d '%s' http://%s/ubus > /tmp/fmnode_%s.json 2>/dev/null || curl -s --connect-timeout 1 -m 2 http://%s/fakemesh.node > /tmp/fmnode_%s.json 2>/dev/null ) &",
+			ubus_payload, a.ip, tag, a.ip, tag
+		)
+		cmds[#cmds + 1] = cmd
+	end
+	cmds[#cmds + 1] = "wait"
+
+	os.execute(table.concat(cmds, "\n"))
+
+	local results = {}
+	for _, a in ipairs(agents) do
+		local tag = a.ip:gsub("%.", "_")
+		local path = "/tmp/fmnode_" .. tag .. ".json"
+		local raw = read_file(path)
+		os.remove(path)
+		if raw and #raw > 10 then
+			local ok, parsed = pcall(json.parse, raw)
+			if ok and parsed then
+				if parsed.result and parsed.result[2] and parsed.result[2].mac then
+					results[a.ip] = parsed.result[2]
+				elseif parsed.mac then
+					results[a.ip] = parsed
+				end
+			end
+		end
+	end
+	return results
+end
+
+local methods = {
+	get_node_info = {
+		call = function()
+			local info = collect_local_node_info()
+			return info
+		end
+	},
+	get_topology = {
+		call = function()
+			local conn = ubus_has and ubus.connect()
+			local ac_node = collect_local_node_info()
+			ac_node.id = "ac"
+			ac_node.parent_id = nil
+			ac_node.online = true
+
+			local nodes = { ac_node }
+			local candidates_by_mac = {}
+			local function add_candidate(c, node_id)
+				if not c or not c.mac or c.mac == "" then return end
+				local mac = c.mac:upper()
+				c.mac = mac
+				c.node_id = node_id
+				if not candidates_by_mac[mac] then
+					candidates_by_mac[mac] = {}
+				end
+				candidates_by_mac[mac][#candidates_by_mac[mac] + 1] = c
+			end
+
+			local agent_ips = {}
+			local agent_list = {}
+
+			for _, c in ipairs(ac_node.clients or {}) do
+				add_candidate(c, "ac")
+			end
+
+			-- Discover all Agent nodes from /tmp/hosts/fakemesh
+			local f_mesh = io.open("/tmp/hosts/fakemesh", "r")
+			if f_mesh then
+				for line in f_mesh:lines() do
+					local aip, host = line:match("^%s*([%d%.]+)%s+([^%s]+)")
+					if aip and host and not agent_ips[aip] then
+						agent_ips[aip] = true
+						local amac = host:match("^([%x]+)%.ap%.fakemesh")
+						if amac and #amac == 12 then
+							amac = amac:gsub("(..)", "%1:"):sub(1, 17):upper()
+						else
+							amac = ""
+						end
+
+						agent_list[#agent_list + 1] = {
+							ip = aip,
+							host = host,
+							mac = amac,
+							node_id = "node_" .. (amac ~= "" and amac:gsub(":", "") or aip:gsub("%.", "_"))
+						}
+					end
+				end
+				f_mesh:close()
+			end
+
+			-- Concurrently request each Agent for real-time node reports
+			local agent_results = fetch_agents_parallel(agent_list)
+
+			for _, a in ipairs(agent_list) do
+				local agent_data = agent_results[a.ip]
+				if agent_data then
+					local anode = {
+						id = a.node_id,
+						role = (agent_data.role and agent_data.role ~= "") and agent_data.role or "agent",
+						mac = (agent_data.mac and agent_data.mac ~= "") and agent_data.mac or a.mac,
+						ip = a.ip,
+						hostname = agent_data.hostname or a.host,
+						model = agent_data.model or "Agent",
+						uptime = agent_data.uptime or 0,
+						online = true,
+						upstream = clone_table(agent_data.upstream or agent_data.backhaul),
+						backhaul = clone_table(agent_data.upstream or agent_data.backhaul),
+						downstream = agent_data.downstream,
+						mesh_bssid = agent_data.mesh_bssid,
+						radios = agent_data.radios or {},
+						wired_ports = agent_data.wired_ports or {},
+						clients = {}
+					}
+
+					if agent_data.clients then
+						for _, c in ipairs(agent_data.clients) do
+							add_candidate(c, a.node_id)
+						end
+					end
+
+					nodes[#nodes + 1] = anode
+				else
+					local anode = {
+						id = a.node_id,
+						role = "agent",
+						mac = a.mac,
+						ip = a.ip,
+						hostname = a.host,
+						model = "FakeMesh Node",
+						uptime = 0,
+						online = false,
+						radios = {},
+						clients = {}
+					}
+					nodes[#nodes + 1] = anode
+				end
+			end
+
+			-- Map wired ports downstream from AC and all agents
+			local wired_downstream = {}
+			for _, wp in ipairs(ac_node.wired_ports or {}) do
+				wired_downstream[wp.mac] = { parent_id = "ac", port = wp.port, speed = wp.speed }
+			end
+			for _, n in ipairs(nodes) do
+				for _, wp in ipairs(n.wired_ports or {}) do
+					wired_downstream[wp.mac] = { parent_id = n.id, port = wp.port, speed = wp.speed }
+				end
+			end
+
+			-- Resolve parent_id and uplink for each node
+			local bssid_to_node = {}
+			local node_by_mac = {}
+			for _, n in ipairs(nodes) do
+				if n.mac and n.mac ~= "" then
+					node_by_mac[n.mac] = n.id
+				end
+				if n.mesh_bssid and n.mesh_bssid ~= "" then
+					bssid_to_node[n.mesh_bssid] = n.id
+				end
+				if n.radios then
+					for _, r in ipairs(n.radios) do
+						if r.bssid and r.bssid ~= "" then
+							bssid_to_node[r.bssid] = n.id
+						end
+					end
+				end
+			end
+
+			for _, n in ipairs(nodes) do
+				if n.id ~= "ac" then
+					local up = n.upstream or n.backhaul or {}
+					if up.type == "wireless" and up.parent_bssid and up.parent_bssid ~= "" then
+						local p_id = bssid_to_node[up.parent_bssid]
+						if not p_id and #up.parent_bssid >= 14 then
+							local prefix = up.parent_bssid:sub(1, 14)
+							for bssid, nid in pairs(bssid_to_node) do
+								if bssid:sub(1, 14) == prefix then
+									p_id = nid
+									break
+								end
+							end
+						end
+						n.parent_id = p_id or "ac"
+						n.uplink = {
+							type = "wireless",
+							band = up.band or "5G",
+							signal = up.signal or 0,
+							rx_bitrate = up.rx_bitrate or 0,
+							tx_bitrate = up.tx_bitrate or 0,
+							channel = up.channel,
+							freq = up.freq,
+							parent_bssid = up.parent_bssid
+						}
+					else
+						-- Wired upstream
+						local w = wired_downstream[n.mac]
+						local p_id = nil
+						if w then
+							p_id = w.parent_id
+							n.uplink = {
+								type = "wired",
+								port = w.port or (up.port or "LAN"),
+								speed = (w.speed and w.speed ~= "") and w.speed or (up.port_speed or "1000M")
+							}
+						elseif up.parent_mac and node_by_mac[up.parent_mac] then
+							p_id = node_by_mac[up.parent_mac]
+							n.uplink = {
+								type = "wired",
+								port = up.port or "LAN",
+								speed = up.port_speed or "1000M"
+							}
+						else
+							p_id = "ac"
+							n.uplink = {
+								type = "wired",
+								port = up.port or "LAN",
+								speed = up.port_speed or "1000M"
+							}
+						end
+						n.parent_id = p_id or "ac"
+					end
+				else
+					n.uplink = clone_table(ac_node.upstream) or { type = "root" }
+					n.upstream = clone_table(n.uplink)
+					n.backhaul = clone_table(n.uplink)
+				end
+			end
+
+			-- Hop count calculation
+			local parent_map = {}
+			for _, n in ipairs(nodes) do parent_map[n.id] = n.parent_id end
+
+			local function get_hop(nid, visited)
+				if nid == "ac" then return 0 end
+				visited = visited or {}
+				if visited[nid] then return 1 end
+				visited[nid] = true
+				local p = parent_map[nid]
+				if not p or p == "ac" then return 1 end
+				return 1 + get_hop(p, visited)
+			end
+
+			local max_hops = 0
+			for _, n in ipairs(nodes) do
+				n.hop_count = get_hop(n.id)
+				if n.hop_count > max_hops then max_hops = n.hop_count end
+			end
+
+			-- Resolve upstream parent information for each node
+			local node_by_id = {}
+			for _, n in ipairs(nodes) do node_by_id[n.id] = n end
+			for _, n in ipairs(nodes) do
+				if n.id ~= "ac" and n.parent_id and node_by_id[n.parent_id] then
+					local p = node_by_id[n.parent_id]
+					n.parent_hostname = p.hostname or p.ip
+					n.parent_ip = p.ip
+					n.parent_name = (p.hostname and p.hostname ~= "") and (p.hostname .. " (" .. p.ip .. ")") or p.ip
+				elseif n.id == "ac" then
+					local up = n.upstream or {}
+					n.parent_name = (up.wan_ip and up.wan_ip ~= "") and ("Internet (" .. up.wan_ip .. ")") or "Internet Gateway"
+					n.parent_ip = up.wan_ip or ""
+				end
+			end
+
+			-- Collect set of all mesh node MACs and IPs so nodes aren't duplicated as terminal clients
+			local mesh_node_macs = {}
+			local mesh_node_ips = {}
+			if ac_node.mac and ac_node.mac ~= "" then mesh_node_macs[ac_node.mac:upper()] = true end
+			if ac_node.ip and ac_node.ip ~= "" then mesh_node_ips[ac_node.ip] = true end
+			if ac_node.mesh_bssid and ac_node.mesh_bssid ~= "" then mesh_node_macs[ac_node.mesh_bssid:upper()] = true end
+			for _, r in ipairs(ac_node.radios or {}) do
+				if r.bssid and r.bssid ~= "" then mesh_node_macs[r.bssid:upper()] = true end
+			end
+
+			for _, a in ipairs(agent_list) do
+				if a.mac and a.mac ~= "" then mesh_node_macs[a.mac:upper()] = true end
+				if a.ip and a.ip ~= "" then mesh_node_ips[a.ip] = true end
+			end
+
+			for _, n in ipairs(nodes) do
+				if n.mac and n.mac ~= "" then mesh_node_macs[n.mac:upper()] = true end
+				if n.ip and n.ip ~= "" then mesh_node_ips[n.ip] = true end
+				if n.mesh_bssid and n.mesh_bssid ~= "" then mesh_node_macs[n.mesh_bssid:upper()] = true end
+				for _, r in ipairs(n.radios or {}) do
+					if r.bssid and r.bssid ~= "" then mesh_node_macs[r.bssid:upper()] = true end
+				end
+			end
+
+			-- Gather DHCP leases from /tmp/dhcp.leases
+			local dhcp_hints = {}
+			local dhcp_ips = {}
+			local f_lease = io.open("/tmp/dhcp.leases", "r")
+			if f_lease then
+				for line in f_lease:lines() do
+					local lmac, lip, lname = line:match("^%s*%d+%s+([%a%d:]+)%s+([%d%.]+)%s+([^%s]+)")
+					if lmac and lip then
+						lmac = lmac:upper()
+						if not dhcp_hints[lmac] then
+							dhcp_hints[lmac] = { ip = lip, hostname = (lname ~= "*" and lname or "") }
+						elseif dhcp_hints[lmac].hostname == "" and lname ~= "*" then
+							dhcp_hints[lmac].hostname = lname
+						end
+						if not dhcp_ips[lmac] then dhcp_ips[lmac] = {} end
+						dhcp_ips[lmac][lip] = true
+					end
+				end
+				f_lease:close()
+			end
+
+			-- Gather ARP table from /proc/net/arp
+			local arp_ips = {}
+			local f_arp = io.open("/proc/net/arp", "r")
+			if f_arp then
+				for line in f_arp:lines() do
+					local aip, flg, amac = line:match("^([%d%.]+)%s+%S+%s+(%S+)%s+([%a%d:]+)")
+					if aip and amac and flg ~= "0x0" then
+						amac = amac:upper()
+						if not arp_ips[amac] then arp_ips[amac] = {} end
+						arp_ips[amac][aip] = true
+					end
+				end
+				f_arp:close()
+			end
+
+			-- Gather IPv6 neighbors
+			local ip6_neigh = {}
+			local ip6_out = exec("ip -6 -o neigh show 2>/dev/null")
+			for line in ip6_out:gmatch("[^\r\n]+") do
+				local aip6, amac = line:match("^([%a%d:]+)%s+dev%s+%S+%s+lladdr%s+([%a%d:]+)")
+				if aip6 and amac then
+					amac = amac:upper()
+					if not ip6_neigh[amac] then ip6_neigh[amac] = {} end
+					ip6_neigh[amac][aip6] = true
+				end
+			end
+
+			-- Gather hostnames from /etc/hosts and /tmp/hosts/*
+			local hosts_by_ip = {}
+			local function load_hosts_file(path)
+				local f = io.open(path, "r")
+				if not f then return end
+				for line in f:lines() do
+					line = line:gsub("#.*$", "")
+					local hip, hname = line:match("^%s*([%d%.]+)%s+([^%s]+)")
+					if hip and hname and not hname:find("%.fakemesh$") and not hname:find("localhost") and not hname:find("%.dns%.x%-wrt%.com$") then
+						hosts_by_ip[hip] = hname
+					end
+				end
+				f:close()
+			end
+			load_hosts_file("/etc/hosts")
+			local p_hosts = io.popen("ls /tmp/hosts/* 2>/dev/null")
+			if p_hosts then
+				for hf in p_hosts:lines() do
+					if not hf:find("fakemesh") and not hf:find("natcap") then
+						load_hosts_file(hf)
+					end
+				end
+				p_hosts:close()
+			end
+
+			-- Gather natflow users and VPN clients
+			local natflow_users = {}
+			local natflow_vpn = {}
+			if conn then
+				local nu = conn:call("luci.natflow", "get_mac_users", {})
+				if nu and nu.result then
+					for _, u in ipairs(nu.result) do
+						local umac = (u.mac or ""):upper()
+						local is_vpn = (u.access_type == "vpn")
+						if not is_vpn and u.ifname and u.ifname ~= "" then
+							local ifl = u.ifname:lower()
+							if ifl:find("^tun") or ifl:find("^tap") or ifl:find("^wg") or ifl:find("^pptp") or ifl:find("^ppp") or ifl:find("^tailscale") or ifl:find("^zerotier") or ifl:find("^zt") or ifl:find("^natcap") then
+								is_vpn = true
+								u.access_type = "vpn"
+							end
+						end
+						u.is_vpn = is_vpn
+
+						if umac ~= "" and umac ~= "00:00:00:00:00:00" then
+							natflow_users[umac] = u
+						end
+						if is_vpn then
+							natflow_vpn[#natflow_vpn + 1] = u
+						end
+					end
+				end
+			end
+
+			local final_clients = {}
+			local handled_macs = {}
+
+			-- Process candidate groups by MAC
+			for cmac, c_list in pairs(candidates_by_mac) do
+				if not mesh_node_macs[cmac] then
+					handled_macs[cmac] = true
+					local nu = natflow_users[cmac]
+
+					-- Score candidates and pick winner
+					local best_c = nil
+					local best_score = -1
+					for _, cand in ipairs(c_list) do
+						local s = score_client_candidate(cand, nu)
+						if s > best_score then
+							best_score = s
+							best_c = cand
+						end
+					end
+
+					if best_c then
+						-- Global Hostname Aggregation
+						local hname = ""
+						if best_c.hostname and best_c.hostname ~= "" and best_c.hostname ~= "*" and not best_c.hostname:find("^MESH%-AGENT_") then
+							hname = best_c.hostname
+						end
+						if hname == "" then
+							for _, cand in ipairs(c_list) do
+								if cand.hostname and cand.hostname ~= "" and cand.hostname ~= "*" and not cand.hostname:find("^MESH%-AGENT_") then
+									hname = cand.hostname
+									break
+								end
+							end
+						end
+						if hname == "" and dhcp_hints[cmac] and dhcp_hints[cmac].hostname ~= "" then
+							hname = dhcp_hints[cmac].hostname
+						end
+						if hname == "" and nu and nu.hostname and nu.hostname ~= "" and not nu.hostname:find("^MESH%-AGENT_") then
+							hname = nu.hostname
+						end
+						if hname == "" and dhcp_hints[cmac] and hosts_by_ip[dhcp_hints[cmac].ip] then
+							hname = hosts_by_ip[dhcp_hints[cmac].ip]
+						end
+						best_c.hostname = hname
+
+						-- Multi-IP aggregation (IPv4)
+						local seen_ips = {}
+						local ip_list = {}
+						local function add_ipv4(ip_str)
+							if ip_str and ip_str ~= "" and not ip_str:find(":") and not seen_ips[ip_str] and not mesh_node_ips[ip_str] then
+								seen_ips[ip_str] = true
+								ip_list[#ip_list + 1] = ip_str
+								if hname == "" and hosts_by_ip[ip_str] then
+									hname = hosts_by_ip[ip_str]
+									best_c.hostname = hname
+								end
+							end
+						end
+
+						-- Preferred primary IP: DHCP lease IP
+						if dhcp_hints[cmac] and dhcp_hints[cmac].ip then
+							add_ipv4(dhcp_hints[cmac].ip)
+						end
+						-- Natflow IPs
+						if nu and nu.ip then
+							for _, nip in ipairs(nu.ip) do add_ipv4(nip) end
+						end
+						-- Candidates reported IPs
+						for _, cand in ipairs(c_list) do
+							add_ipv4(cand.ip)
+							if cand.ips then
+								for _, cip in ipairs(cand.ips) do add_ipv4(cip) end
+							end
+						end
+						-- ARP table IPs
+						if arp_ips[cmac] then
+							for aip, _ in pairs(arp_ips[cmac]) do add_ipv4(aip) end
+						end
+						-- DHCP lease table IPs
+						if dhcp_ips[cmac] then
+							for dip, _ in pairs(dhcp_ips[cmac]) do add_ipv4(dip) end
+						end
+
+						best_c.ips = ip_list
+						best_c.ip = ip_list[1] or ""
+
+						-- Multi-IP aggregation (IPv6)
+						local seen_ip6 = {}
+						local ip6_list = {}
+						local function add_ipv6(ip6_str)
+							if ip6_str and ip6_str ~= "" and ip6_str:find(":") and not seen_ip6[ip6_str] then
+								seen_ip6[ip6_str] = true
+								ip6_list[#ip6_list + 1] = ip6_str
+							end
+						end
+
+						if nu and nu.ip6 then
+							for _, nip6 in ipairs(nu.ip6) do add_ipv6(nip6) end
+						end
+						if ip6_neigh[cmac] then
+							for nip6, _ in pairs(ip6_neigh[cmac]) do add_ipv6(nip6) end
+						end
+						for _, cand in ipairs(c_list) do
+							if cand.ip6 then
+								for _, cip6 in ipairs(cand.ip6) do add_ipv6(cip6) end
+							end
+						end
+						best_c.ip6 = ip6_list
+
+						-- Traffic & Activity
+						best_c.rx_speed = nu and (nu.rx_speed_bytes or 0) or 0
+						best_c.tx_speed = nu and (nu.tx_speed_bytes or 0) or 0
+						best_c.rx_bytes = nu and (nu.rx_bytes or 0) or 0
+						best_c.tx_bytes = nu and (nu.tx_bytes or 0) or 0
+						best_c.idle_time = nu and nu.idle_time or nil
+
+						best_c.icon = get_device_icon(best_c.hostname, cmac)
+
+						final_clients[#final_clients + 1] = best_c
+					end
+				end
+			end
+
+			-- Add active natflow clients not in wireless/wired assoclists
+			for cmac, nu in pairs(natflow_users) do
+				if not handled_macs[cmac] and not mesh_node_macs[cmac] and cmac ~= ac_node.mac then
+					local is_vpn = nu.is_vpn or (nu.access_type == "vpn")
+					local hname = nu.hostname or ""
+					if (hname == "" or hname == "*") and dhcp_hints[cmac] then
+						hname = dhcp_hints[cmac].hostname or ""
+					end
+
+					local seen_ips = {}
+					local ip_list = {}
+					local function add_ipv4(ip_str)
+						if ip_str and ip_str ~= "" and not ip_str:find(":") and not seen_ips[ip_str] and not mesh_node_ips[ip_str] then
+							seen_ips[ip_str] = true
+							ip_list[#ip_list + 1] = ip_str
+							if hname == "" and hosts_by_ip[ip_str] then
+								hname = hosts_by_ip[ip_str]
+							end
+						end
+					end
+
+					if dhcp_hints[cmac] and dhcp_hints[cmac].ip then add_ipv4(dhcp_hints[cmac].ip) end
+					if nu.ip then
+						for _, nip in ipairs(nu.ip) do add_ipv4(nip) end
+					end
+					if arp_ips[cmac] then
+						for aip, _ in pairs(arp_ips[cmac]) do add_ipv4(aip) end
+					end
+
+					local is_mesh_ip = false
+					for _, ip_str in ipairs(ip_list) do
+						if mesh_node_ips[ip_str] then is_mesh_ip = true; break end
+					end
+
+					if not is_mesh_ip then
+						local seen_ip6 = {}
+						local ip6_list = {}
+						if nu.ip6 then
+							for _, nip6 in ipairs(nu.ip6) do
+								if nip6 and nip6:find(":") and not seen_ip6[nip6] then
+									seen_ip6[nip6] = true
+									ip6_list[#ip6_list + 1] = nip6
+								end
+							end
+						end
+						if ip6_neigh[cmac] then
+							for nip6, _ in pairs(ip6_neigh[cmac]) do
+								if not seen_ip6[nip6] then
+									seen_ip6[nip6] = true
+									ip6_list[#ip6_list + 1] = nip6
+								end
+							end
+						end
+
+						local c = {
+							mac = cmac,
+							node_id = "ac",
+							access_type = is_vpn and "vpn" or (nu.access_type or "wired"),
+							ifname = nu.ifname or (is_vpn and "vpn" or "lan"),
+							hostname = hname,
+							ips = ip_list,
+							ip = ip_list[1] or "",
+							ip6 = ip6_list,
+							icon = is_vpn and "vpn" or get_device_icon(hname, cmac),
+							rx_speed = nu.rx_speed_bytes or 0,
+							tx_speed = nu.tx_speed_bytes or 0,
+							rx_bytes = nu.rx_bytes or 0,
+							tx_bytes = nu.tx_bytes or 0,
+							idle_time = nu.idle_time or nil
+						}
+						handled_macs[cmac] = true
+						final_clients[#final_clients + 1] = c
+					end
+				end
+			end
+
+			-- Add Layer-3 VPN clients (WireGuard/TUN/PPP without hardware MAC)
+			for _, vu in ipairs(natflow_vpn) do
+				local vip = (vu.ip and vu.ip[1]) or ""
+				local vmac = (vu.mac and vu.mac ~= "" and vu.mac ~= "00:00:00:00:00:00") and vu.mac:upper() or ""
+				local vkey = vmac ~= "" and vmac or ("VPN:" .. (vip ~= "" and vip or (vu.ifname or "client")))
+				if not handled_macs[vkey] and not (vmac ~= "" and handled_macs[vmac]) then
+					local dhcp = (vmac ~= "" and dhcp_hints[vmac]) or {}
+					local hname = (dhcp.hostname and dhcp.hostname ~= "") and dhcp.hostname or vu.hostname or ""
+					local ips = {}
+					if vu.ip then
+						for _, ip_str in ipairs(vu.ip) do
+							if ip_str and ip_str ~= "" then ips[#ips + 1] = ip_str end
+						end
+					end
+					if #ips == 0 and vip ~= "" then ips[1] = vip end
+
+					local ip6_list = {}
+					if vu.ip6 then
+						for _, ip6_str in ipairs(vu.ip6) do
+							if ip6_str and ip6_str ~= "" then ip6_list[#ip6_list + 1] = ip6_str end
+						end
+					end
+
+					local c = {
+						mac = vkey,
+						node_id = "ac",
+						access_type = "vpn",
+						ifname = vu.ifname ~= "" and vu.ifname or "vpn",
+						hostname = hname,
+						ips = ips,
+						ip = ips[1] or "",
+						ip6 = ip6_list,
+						icon = "vpn",
+						rx_speed = vu.rx_speed_bytes or 0,
+						tx_speed = vu.tx_speed_bytes or 0,
+						rx_bytes = vu.rx_bytes or 0,
+						tx_bytes = vu.tx_bytes or 0,
+						idle_time = vu.idle_time or nil
+					}
+					handled_macs[vkey] = true
+					if vmac ~= "" then handled_macs[vmac] = true end
+					final_clients[#final_clients + 1] = c
+				end
+			end
+
+			-- Update downstream client counts on each node based on final resolved clients
+			local node_client_map = {}
+			for _, c in ipairs(final_clients) do
+				local nid = c.node_id or "ac"
+				if not node_client_map[nid] then
+					node_client_map[nid] = { total = 0, wireless = 0, wired = 0, vpn = 0 }
+				end
+				local st = node_client_map[nid]
+				st.total = st.total + 1
+				if c.access_type == "wireless" then st.wireless = st.wireless + 1
+				elseif c.access_type == "vpn" then st.vpn = st.vpn + 1
+				else st.wired = st.wired + 1 end
+			end
+
+			-- Summary metrics
+			local summary = {
+				node_count = #nodes,
+				online_agents = 0,
+				offline_agents = 0,
+				wireless_nodes = 0,
+				wired_nodes = 0,
+				client_count = #final_clients,
+				wifi_2g = 0,
+				wifi_5g = 0,
+				wifi_6g = 0,
+				wired = 0,
+				vpn = 0,
+				total_rx_speed = 0,
+				total_tx_speed = 0
+			}
+
+			for _, n in ipairs(nodes) do
+				if n.id ~= "ac" then
+					if n.online then
+						summary.online_agents = summary.online_agents + 1
+					else
+						summary.offline_agents = summary.offline_agents + 1
+					end
+					if n.uplink and n.uplink.type == "wireless" then
+						summary.wireless_nodes = summary.wireless_nodes + 1
+					elseif n.uplink and n.uplink.type == "wired" then
+						summary.wired_nodes = summary.wired_nodes + 1
+					end
+				end
+
+				local st = node_client_map[n.id] or { total = 0, wireless = 0, wired = 0, vpn = 0 }
+				n.downstream = {
+					total_count = st.total,
+					wireless_count = st.wireless,
+					wired_count = st.wired,
+					vpn_count = st.vpn
+				}
+				n.clients = nil
+			end
+
+			for _, c in ipairs(final_clients) do
+				if c.access_type == "wireless" then
+					if c.band == "2.4G" then summary.wifi_2g = summary.wifi_2g + 1
+					elseif c.band == "5G" then summary.wifi_5g = summary.wifi_5g + 1
+					elseif c.band == "6G" then summary.wifi_6g = summary.wifi_6g + 1
+					else summary.wifi_5g = summary.wifi_5g + 1 end
+				elseif c.access_type == "vpn" then
+					summary.vpn = summary.vpn + 1
+				else
+					summary.wired = summary.wired + 1
+				end
+				summary.total_rx_speed = summary.total_rx_speed + (c.rx_speed or 0)
+				summary.total_tx_speed = summary.total_tx_speed + (c.tx_speed or 0)
+			end
+
+			summary.max_hops = max_hops
+			if summary.wireless_nodes > 0 and summary.wired_nodes > 0 then
+				summary.mesh_mode = "hybrid"
+			elseif summary.wireless_nodes > 0 then
+				summary.mesh_mode = "wireless"
+			elseif summary.wired_nodes > 0 then
+				summary.mesh_mode = "wired"
+			else
+				summary.mesh_mode = "single"
+			end
+
+			if conn then conn:close() end
+
+			return {
+				mesh_id = (exec("uci -q get fakemesh.default.id 2>/dev/null")):gsub("%s+", ""),
+				controller_ip = ac_node.ip,
+				timestamp = os.time(),
+				nodes = nodes,
+				clients = final_clients,
+				summary = summary
+			}
+		end
+	}
+}
+
+local function parseInput()
+	local parse = json.new()
+	local done, err
+
+	while true do
+		local chunk = io.read(4096)
+		if not chunk then
+			break
+		elseif not done and not err then
+			done, err = parse:parse(chunk)
+		end
+	end
+
+	if not done then
+		return {}
+	end
+
+	return parse:get() or {}
+end
+
+local function validateArgs(func, uargs)
+	local method = methods[func]
+	if not method then
+		print(json.stringify({ error = "Method not found: " .. (func or "") }))
+		os.exit(1)
+	end
+	return method
+end
+
+if arg[1] == "list" then
+	local _, method, rv = nil, nil, {}
+	for _, method in pairs(methods) do rv[_] = method.args or {} end
+	print((json.stringify(rv):gsub(":%[%]", ":{}")))
+elseif arg[1] == "call" then
+	local args = parseInput()
+	local method = validateArgs(arg[2], args)
+	local result, code = method.call(args)
+	print((json.stringify(result):gsub("^%[%]$", "{}")))
+	os.exit(code or 0)
+end

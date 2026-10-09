@@ -131,3 +131,250 @@ msgstr "5G+6G"
 
 msgid "6G"
 msgstr "6G"
+
+msgid "Topology"
+msgstr "网络拓扑"
+
+msgid "FakeMesh Network Topology"
+msgstr "FakeMesh 网络拓扑"
+
+msgid "Visual hierarchy of FakeMesh controller, agent nodes, and connected terminal devices."
+msgstr "可视化展示 FakeMesh 控制器、节点以及所有连接终端的层级关系。"
+
+msgid "FakeMesh ID"
+msgstr "FakeMesh ID"
+
+msgid "Not Configured"
+msgstr "未配置"
+
+msgid "Topology Mode"
+msgstr "拓扑模式"
+
+msgid "Hybrid (Wired + Wireless)"
+msgstr "混合组网 (有线+无线)"
+
+msgid "Wireless Mesh"
+msgstr "无线 Mesh"
+
+msgid "Wired AP Network"
+msgstr "有线 AP 组网"
+
+msgid "Hops"
+msgstr "跳级联"
+
+msgid "Cascade Hop"
+msgstr "级联层级"
+
+msgid "Hop "
+msgstr "第 "
+
+msgid "Mesh Nodes"
+msgstr "组网节点"
+
+msgid "Agents"
+msgstr "卫星节点"
+
+msgid "Total Clients"
+msgstr "全网终端"
+
+msgid "5G / 2.4G / Wired / VPN"
+msgstr "5G / 2.4G / 有线 / VPN"
+
+msgid "VPN"
+msgstr "VPN"
+
+msgid "Wired"
+msgstr "有线"
+
+msgid "Realtime Traffic"
+msgstr "实时流量"
+
+msgid "Search by Hostname, IP, MAC..."
+msgstr "搜索设备名称、IP、MAC..."
+
+msgid "All Clients"
+msgstr "全部终端"
+
+msgid "Close"
+msgstr "关闭"
+
+msgid "Node Details: "
+msgstr "节点详情: "
+
+msgid "Client Details: "
+msgstr "终端详情: "
+
+msgid "Hostname"
+msgstr "主机名"
+
+msgid "IP Address"
+msgstr "IP 地址"
+
+msgid "MAC Address"
+msgstr "MAC 地址"
+
+msgid "Hardware Model"
+msgstr "硬件型号"
+
+msgid "Uptime"
+msgstr "运行时间"
+
+msgid "Uptime: "
+msgstr "运行时间: "
+
+msgid "Backhaul Link"
+msgstr "回程链路"
+
+msgid "Wired Ethernet"
+msgstr "有线以太网"
+
+msgid "Root Gateway"
+msgstr "主控网关"
+
+msgid "Mesh BSSID"
+msgstr "Mesh BSSID"
+
+msgid "Open Web Admin"
+msgstr "打开管理后台"
+
+msgid "Device Name"
+msgstr "设备名称"
+
+msgid "Unknown"
+msgstr "未知设备"
+
+msgid "Connected Node"
+msgstr "挂载节点"
+
+msgid "Access Mode"
+msgstr "接入方式"
+
+msgid "Wi-Fi Signal"
+msgstr "Wi-Fi 信号"
+
+msgid "PHY Rate"
+msgstr "协商速率"
+
+msgid "Realtime Speed"
+msgstr "实时网速"
+
+msgid "Total Traffic"
+msgstr "累计流量"
+
+msgid "LAN"
+msgstr "LAN"
+
+msgid "Devices"
+msgstr "台设备"
+
+msgid "Manage"
+msgstr "管理"
+
+msgid "Hop Cascade Nodes"
+msgstr "级级联扩展节点"
+
+msgid "Sub-nodes"
+msgstr "个子节点"
+
+msgid "No matching devices"
+msgstr "暂无匹配设备"
+
+msgid "No FakeMesh nodes detected. Please verify FakeMesh configuration."
+msgstr "未检测到 FakeMesh 节点，请检查 FakeMesh 配置。"
+
+msgid "Internet Gateway"
+msgstr "互联网出口"
+
+msgid "FakeMesh Mesh Fabric"
+msgstr "FakeMesh Mesh 组网骨干"
+
+msgid "Backhaul Links"
+msgstr "组网链路"
+
+msgid "Single Gateway"
+msgstr "独立网关"
+
+msgid "Wired AP"
+msgstr "有线 AP"
+
+msgid "Cascade Hops"
+msgstr "跳级联"
+
+msgid "Mesh Connected"
+msgstr "Mesh 已连接"
+
+msgid "Primary"
+msgstr "主 IP"
+
+msgid "IPv6 Addresses"
+msgstr "IPv6 地址"
+
+msgid "IPv4 Addresses"
+msgstr "IPv4 地址"
+
+msgid "Idle Time"
+msgstr "空闲时间"
+
+msgid "Minimap View"
+msgstr "微缩拓扑视图"
+
+msgid "Expanded View"
+msgstr "完整展开视图"
+
+msgid "Upstream Node"
+msgstr "上级节点"
+
+msgid "Upstream Gateway"
+msgstr "上级网关"
+
+msgid "Node Details & Connected Devices"
+msgstr "节点详情与挂载终端"
+
+msgid "Connected Devices on this Node"
+msgstr "本节点挂载终端"
+
+msgid "Click any node to zoom in and inspect connected terminals"
+msgstr "点击任意节点图标，放大展示该节点与挂载终端"
+
+msgid "No terminal devices currently connected to this node."
+msgstr "当前节点暂无连接的终端设备。"
+
+msgid "View Full Node Specs"
+msgstr "查看节点完整详情"
+
+msgid "Currently Selected"
+msgstr "当前选中"
+
+msgid "Upstream: "
+msgstr "上级: "
+
+msgid "IP: "
+msgstr "IP: "
+
+msgid "Model: "
+msgstr "型号: "
+
+msgid "Click to Inspect"
+msgstr "点击查看详情"
+
+msgid "Click any node in minimap above to switch inspection"
+msgstr "点击上方微缩图中的任意节点切换查看"
+
+msgid "Click to inspect upstream node"
+msgstr "点击切换查看上级节点"
+
+msgid "Role & Status"
+msgstr "角色与状态"
+
+msgid "Click any client to view deep details"
+msgstr "点击任意终端查看详细指标"
+
+msgid "Agent Node"
+msgstr "卫星节点"
+
+msgid "Root Node"
+msgstr "根节点"
+
+msgid "Hop %d"
+msgstr "第 %d 级"
+

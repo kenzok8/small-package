@@ -1,11 +1,25 @@
 {
 	"luci-app-fakemesh": {
-		"description": "Grant UCI access for luci-app-fakemesh",
+		"description": "Grant UCI and ubus access for luci-app-fakemesh",
 		"read": {
-			"uci": [ "fakemesh", "fakemeshac", "network", "wireless", "dhcp" ]
+			"uci": [ "fakemesh", "fakemeshac", "network", "wireless", "dhcp", "system" ],
+			"ubus": {
+				"luci.fakemesh": [ "get_topology", "get_node_info" ],
+				"luci.natflow": [ "get_mac_users" ],
+				"network.wireless": [ "status" ],
+				"iwinfo": [ "info", "assoclist" ]
+			}
 		},
 		"write": {
 			"uci": [ "fakemesh", "network", "wireless", "dhcp" ]
+		}
+	},
+	"unauthenticated": {
+		"description": "Allow unauthenticated get_node_info for FakeMesh topology",
+		"read": {
+			"ubus": {
+				"luci.fakemesh": [ "get_node_info" ]
+			}
 		}
 	}
 }

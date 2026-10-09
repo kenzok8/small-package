@@ -57,7 +57,7 @@ function httpRequest(url, proxyType, proxyHost, proxyPort, proxyUser, proxyPassw
 			if(length(r) > 0) {
 				retCode = r[0];
 			}
-			data = replace(data, retCodeRegexp, '');
+			data = trim(replace(data, retCodeRegexp, ''));
 		}
 	}
 	return { retCode, data };

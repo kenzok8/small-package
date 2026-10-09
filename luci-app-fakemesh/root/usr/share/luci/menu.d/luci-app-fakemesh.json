@@ -14,9 +14,20 @@
 		"title": "FakeMesh",
 		"order": 1,
 		"action": {
-			"type": "firstchild",
 			"type": "view",
 			"path": "fakemesh/fakemesh"
+		},
+		"depends": {
+			"acl": [ "luci-app-fakemesh" ],
+			"uci": { "fakemesh": true }
+		}
+	},
+	"admin/mesh/topology": {
+		"title": "Topology",
+		"order": 2,
+		"action": {
+			"type": "view",
+			"path": "fakemesh/topology"
 		},
 		"depends": {
 			"acl": [ "luci-app-fakemesh" ],
