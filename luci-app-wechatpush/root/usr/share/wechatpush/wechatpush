@@ -48,7 +48,7 @@ read_config() {
 		"get_ipv4_mode" "ipv4_interface" "get_ipv6_mode" "ipv6_interface" \
 		"device_notification" "cpu_notification" "cpu_load_threshold" "temperature_threshold" \
 		"client_usage" "client_usage_max" "client_usage_disturb" "client_usage_whitelist" \
-		"login_notification" "login_max_num" "login_web_black" "login_ip_black_timeout" "login_ip_white_list" "port_knocking_enable" "login_ip_white_timeout" "login_port_white" "login_port_forward_list" \
+		"login_notification" "login_max_num" "login_web_black" "login_ip_black_timeout" "block_blacklisted_forwarding" "login_ip_white_list" "port_knocking_enable" "login_ip_white_timeout" "login_port_white" "login_port_forward_list" \
 		"crontab_regular_time" "crontab_interval_time" \
 		"do_not_disturb_mode" "do_not_disturb_starttime" "do_not_disturb_endtime" "up_down_push_whitelist" "up_down_push_blacklist" "up_down_push_interface" "mac_online_list" "mac_offline_list" "cpu_threshold_duration" "cpu_notification_delay" "login_disturb" "login_notification_delay" "login_log_enable" \
 		"up_timeout" "down_timeout" "timeout_retry_count" "always_check_ip_list" "only_timeout_push" "passive_mode" "thread_num" "defaultSortColumn" "soc_code" "server_host" "server_port" \
@@ -72,12 +72,14 @@ read_config() {
 		for str_version in "wrtbwmon" "iputils-arping" "curl" "iw"; do
 			eval $(echo ${str_version:0:2}"_version")=$(apk list | grep -w ^${str_version} | grep 'installed' | awk '{print $1}' | awk -F ${str_version}"-" '{print $2}') 2>/dev/null
 		done
-		(apk list | grep -w -q "^firewall4" | grep 'installed') && nftables_version="true"
 	else
 		for str_version in "wrtbwmon" "iputils-arping" "curl" "iw"; do
 			eval $(echo ${str_version:0:2}"_version")=$(opkg list-installed | grep -w ^${str_version} | awk '{print $3}') 2>/dev/null
 		done
-		(opkg list-installed | grep -w -q "^firewall4") && nftables_version="true"
+	fi
+	# firewall4 使用 nftables，避免回退到 iptables/ipset。
+	if command -v fw4 >/dev/null 2>&1; then
+		nftables_version="true"
 	fi
 	devices_json="${dir}/devices.json"
 	tmp_devices_json="${dir}/devices.json.tmp"
@@ -226,8 +228,8 @@ init() {
 	LockFile unlock
 
 	# 防火墙初始化
-	[ -n "$login_web_black" ] && [ "$login_web_black" -eq "1" ] && init_ip_black "ipv4"
-	[ -n "$login_web_black" ] && [ "$login_web_black" -eq "1" ] && init_ip_black "ipv6"
+	init_ip_black "ipv4"
+	init_ip_black "ipv6"
 	[ -n "$port_knocking_enable" ] && [ "$port_knocking_enable" -eq "1" ] && init_ip_white "ipv4"
 	[ -n "$port_knocking_enable" ] && [ "$port_knocking_enable" -eq "1" ] && init_ip_white "ipv6"
 	tmp_ip_list=$(echo "$login_ip_white_list" | grep -v "^$" | sort -u)
@@ -407,7 +409,75 @@ main() {
 		#[ ! -f "${dir}/send_enable.lock" ] && login_send
 		# 因修改为实时推送，白名单设备并不会再更新时间，暂时性修复
 		# 修改为实时推送后，防火墙列表读取和设置需单独列出，移除黑名单无法实时，待改善
+		# 防火墙重载会清除运行时规则，需在下一次循环恢复。
+		# nft 模式下先建立白名单 accept 规则，黑名单 drop 规则才能定位到其后；
+		# iptables 模式使用 -I 插入链首，因此必须先建立黑名单，再建立白名单。
+		if [ "$port_knocking_enable" = "1" ] && [ -n "$nftables_version" ]; then
+			init_ip_white "ipv4"
+			init_ip_white "ipv6"
+		fi
+		if [ "$login_web_black" = "1" ]; then
+			init_ip_black "ipv4"
+			init_ip_black "ipv6"
+		fi
+		if [ "$port_knocking_enable" = "1" ] && [ -z "$nftables_version" ]; then
+			init_ip_white "ipv4"
+			init_ip_white "ipv6"
+		fi
 		set_ip_black
+		if [ "$login_web_black" = "1" ] && [ "$block_blacklisted_forwarding" = "1" ] && command -v conntrack >/dev/null 2>&1; then
+			for pending_file in "${dir}"/pending_black_flow_*; do
+				[ -f "$pending_file" ] || continue
+				IFS= read -r pending_ip <"$pending_file"
+				pending_set="wechatpush_blacklist"
+				pending_family="ipv4"
+				if [[ "$pending_ip" == *:* ]]; then
+					pending_set="wechatpush_blacklistv6"
+					pending_family="ipv6"
+				fi
+				if [ "$pending_family" = "ipv4" ]; then
+					[[ "$pending_ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] || pending_ip=""
+				else
+					valid_ipv6_blacklist_ip "$pending_ip" || pending_ip=""
+				fi
+				if [ -z "$pending_ip" ]; then
+					rm -f "$pending_file"
+					continue
+				fi
+				if [ -n "$nftables_version" ]; then
+					# 集合列举失败需保留重试文件，只有成功列举后才能判定元素确实不存在；
+					# nft 会规范化 IPv4/IPv6 写法，按规范化结果比较。
+					pending_elements=$(nft -j list set inet fw4 "$pending_set" 2>/dev/null) || continue
+					pending_elements=$(jq -r '.nftables[] | .set?.elem[]? | if type == "object" then .elem.val else . end | strings' <<<"$pending_elements") || continue
+					pending_found=""
+					if [[ "$pending_ip" == *:* ]]; then
+						pending_wanted=$(normalize_ipv6_blacklist_ip "$pending_ip")
+						while IFS= read -r pending_element; do
+							[ -n "$pending_element" ] || continue
+							[ "$(normalize_ipv6_blacklist_ip "$pending_element")" = "$pending_wanted" ] && pending_found="1" && break
+						done <<<"$pending_elements"
+					else
+						pending_wanted=$(normalize_ipv4_blacklist_ip "$pending_ip") || pending_wanted=""
+						while IFS= read -r pending_element; do
+							[ -n "$pending_element" ] || continue
+							pending_normalized=$(normalize_ipv4_blacklist_ip "$pending_element") || continue
+							[ "$pending_normalized" = "$pending_wanted" ] && pending_found="1" && break
+						done <<<"$pending_elements"
+					fi
+					[ -n "$pending_found" ] || {
+						rm -f "$pending_file"
+						continue
+					}
+				else
+					ipset list "$pending_set" >/dev/null 2>&1 || continue
+					ipset test "$pending_set" "$pending_ip" >/dev/null 2>&1 || {
+						rm -f "$pending_file"
+						continue
+					}
+				fi
+				clear_ip_black_flows "$pending_ip"
+			done
+		fi
 
 		tmp_ip_list=$(echo "$login_ip_white_list" | grep -v "^$" | sort -u)
 		while IFS= read -r tmp_ip; do
@@ -2244,6 +2314,7 @@ add_ip_white() {
 # 初始化白名单
 init_ip_white() {
 	[ -n "$port_knocking_enable" ] && [ "$port_knocking_enable" -eq "1" ] || return
+	local nat_table_cmd=""
 	# 设置 IP 版本变量
 	if [ $1 == "ipv4" ]; then
 		ipset_name="wechatpush_whitelist"
@@ -2256,8 +2327,8 @@ init_ip_white() {
 
 	if [ -n "$nftables_version" ]; then
 		! nft list set inet fw4 $ipset_name >/dev/null 2>&1 && nft add set inet fw4 $ipset_name { type ${1}_addr\; flags timeout\; timeout ${login_ip_white_timeout}s\; }
-		nft -- add chain inet fw4 wechatpush_dstnat { type nat hook prerouting priority -100 \; }
-		nft add chain inet fw4 wechatpush_srcnat { type nat hook postrouting priority 100 \; }
+		nft list chain inet fw4 wechatpush_dstnat >/dev/null 2>&1 || nft -- add chain inet fw4 wechatpush_dstnat { type nat hook prerouting priority -100 \; }
+		nft list chain inet fw4 wechatpush_srcnat >/dev/null 2>&1 || nft add chain inet fw4 wechatpush_srcnat { type nat hook postrouting priority 100 \; }
 	else
 		! ipset list $ipset_name >/dev/null 2>&1 && ipset create $ipset_name hash:ip timeout $login_ip_white_timeout $nat_table_cmd >/dev/null 2>&1
 	fi
@@ -2301,58 +2372,313 @@ init_ip_white() {
 	unset port_forward
 }
 
+# 写入连接跟踪清理重试文件，供后续检测循环重试。
+# 登录监视子进程与主循环并发运行，必须原子落盘，避免主循环读到空文件后误删重试记录。
+write_pending_black_flow() {
+	local key="${1//[:.]/_}" pending_file="${dir}/pending_black_flow_${1//[:.]/_}" pending_tmp="${dir}/.pending_black_flow_${key}.${BASHPID:-$$}"
+	printf '%s\n' "$1" >"$pending_tmp" && mv -f "$pending_tmp" "$pending_file"
+}
+
+# 新封禁无法匹配已走流表的连接，需要删除该来源的连接跟踪记录。
+clear_ip_black_flows() {
+	command -v conntrack >/dev/null 2>&1 || return 0
+	local pending_file="${dir}/pending_black_flow_${1//[:.]/_}" original reply original_status reply_status
+	local -a family=()
+	[[ "$1" == *:* ]] && family=(-f ipv6)
+	conntrack ${family[@]} -D -s "$1" >/dev/null 2>&1
+	conntrack ${family[@]} -D --reply-src "$1" >/dev/null 2>&1
+	original=$(conntrack -L "${family[@]}" -s "$1" 2>/dev/null)
+	original_status=$?
+	reply=$(conntrack -L "${family[@]}" --reply-src "$1" 2>/dev/null)
+	reply_status=$?
+	if printf '%s\n%s\n' "$original" "$reply" | grep -Eq '\[(HW_)?OFFLOAD\]'; then
+		write_pending_black_flow "$1"
+		log_change "[WARN] Failed to clear offloaded connections for $1"
+	elif [ "$original_status" -eq 0 ] && [ "$reply_status" -eq 0 ]; then
+		rm -f "$pending_file"
+	else
+		write_pending_black_flow "$1"
+	fi
+	return 0
+}
+
+clear_ip_black_set_flows() {
+	command -v conntrack >/dev/null 2>&1 || return 0
+	local elements ip
+	if [ -n "$nftables_version" ]; then
+		elements=$(nft -j list set inet fw4 "$ipset_name") || return 1
+		elements=$(jq -r '.nftables[] | .set?.elem[]? | if type == "object" then .elem.val else . end | strings' <<<"$elements") || return 1
+	else
+		elements=$(ipset save "$ipset_name") || return 1
+		elements=$(awk -v set_name="$ipset_name" '$1 == "add" && $2 == set_name {print $3}' <<<"$elements")
+	fi
+	while IFS= read -r ip; do
+		[ -n "$ip" ] || continue
+		clear_ip_black_flows "$ip"
+	done <<<"$elements"
+	return 0
+}
+
+delete_nft_ip_black_forward_rule() {
+	local drop_rule_handle rules
+	while :; do
+		# 列举失败与“没有规则”需区分：返回非零由下一次检测循环重试清理。
+		rules=$(nft --handle list chain inet fw4 forward 2>/dev/null) || return 1
+		drop_rule_handle=$(awk -v set_name="@$ipset_name" 'index($0, set_name " ") && /comment "!wechatpush Forward Drop rule"/ {print $NF; exit}' <<<"$rules")
+		[ -n "$drop_rule_handle" ] || break
+		nft delete rule inet fw4 forward handle "$drop_rule_handle" >/dev/null 2>&1 || return 1
+	done
+}
+
 # 初始化黑名单规则
 init_ip_black() {
-	[ -n "$login_web_black" ] && [ "$login_web_black" -eq "1" ] || return
+	local nat_table_cmd=""
 	# 设置 IP 版本变量
-	if [ $1 == "ipv4" ]; then
+	if [ "$1" = "ipv4" ]; then
 		ipset_name="wechatpush_blacklist"
 		ip_version="ip"
-	elif [ $1 == "ipv6" ]; then
+	elif [ "$1" = "ipv6" ]; then
 		ipset_name="wechatpush_blacklistv6"
 		ip_version="ip6"
 		nat_table_cmd="family inet6"
 	fi
+	local pending_clear_marker="${dir}/pending_black_set_clear_${ipset_name}"
+	if [ "$login_web_black" != "1" ]; then
+		rm -f "$pending_clear_marker" "${dir}"/pending_black_flow_*
+		if [ -n "$nftables_version" ]; then
+			delete_nft_ip_black_forward_rule
+		else
+			${ip_version}tables -D FORWARD -m set --match-set "$ipset_name" src -j DROP >/dev/null 2>&1
+		fi
+		return
+	fi
 
-	[ -n "$nftables_version" ] && {
-		! nft list set inet fw4 ${ipset_name} >/dev/null 2>&1 && nft add set inet fw4 ${ipset_name} { type ${1}_addr\; flags timeout\; timeout ${login_ip_black_timeout}s\; }
-		! nft list ruleset | grep "$ip_version saddr @${ipset_name} counter .* comment \"\!wechatpush Drop rule\"" >/dev/null 2>&1 && nft insert rule inet fw4 input $ip_version saddr @${ipset_name} counter drop comment \"\!wechatpush Drop rule\" >/dev/null 2>&1
-	} || {
-		ipset list $ipset_name >/dev/null 2>&1 || ipset create ${ipset_name} hash:ip timeout ${login_ip_black_timeout} ${nat_table_cmd} >/dev/null 2>&1
-		${ip_version}tables -C INPUT -m set --match-set ${ipset_name} src -j DROP >/dev/null 2>&1 || ${ip_version}tables -I INPUT -m set --match-set ${ipset_name} src -j DROP >/dev/null 2>&1
-	}
+	if [ -n "$nftables_version" ]; then
+		local set_exists="" set_has_timeout="" want_timeout="" set_options="type ${1}_addr;" white_rule_handle input_rule set_meta
+		set_meta=$(nft -j list set inet fw4 "$ipset_name" 2>/dev/null)
+		if [ -n "$set_meta" ]; then
+			set_exists="1"
+			# 纯文本输出只显示默认 timeout，flags 需要通过 JSON 读取。
+			[ -n "$(jq -r '[.nftables[] | select(.set) | .set.flags[]?] | index("timeout") // empty' <<<"$set_meta")" ] && set_has_timeout="1"
+		fi
+		[ "$login_ip_black_timeout" -gt 0 ] && want_timeout="1" && set_options="${set_options} flags timeout; timeout ${login_ip_black_timeout}s;"
+		white_rule_handle=$(nft --handle list chain inet fw4 input 2>/dev/null | awk -v rule="$ip_version saddr @${ipset_name/blacklist/whitelist} counter" 'index($0, rule) && /accept comment "!wechatpush Accept rule"/ {print $NF; exit}')
+		input_rule="insert rule inet fw4 input $ip_version saddr @$ipset_name counter drop comment \"!wechatpush Drop rule\""
+		[ -n "$white_rule_handle" ] && input_rule="add rule inet fw4 input position $white_rule_handle $ip_version saddr @$ipset_name counter drop comment \"!wechatpush Drop rule\""
+
+		# nft 原子事务：切换集合失败时保留原有封禁规则。
+		if [ -n "$set_exists" ] && [ "$set_has_timeout" != "$want_timeout" ]; then
+			local rule_deletions="" element_commands="" forward_rule="" chain handle ip elements
+			elements=$(nft -j list set inet fw4 "$ipset_name") || return 1
+			elements=$(jq -r '.nftables[] | .set?.elem[]? | if type == "object" then .elem.val else . end | strings' <<<"$elements") || return 1
+			while IFS= read -r ip; do
+				[ -z "$ip" ] && continue
+				if [[ "$ip" =~ ^[0-9a-fA-F:.]+$ ]]; then
+					element_commands="${element_commands}add element inet fw4 $ipset_name { $ip"
+					[ -n "$want_timeout" ] && element_commands="${element_commands} timeout ${login_ip_black_timeout}s"
+					element_commands="${element_commands} }"$'\n'
+				else
+					log_change "[ERROR] Invalid blacklist element in $ipset_name: $ip"
+					return 1
+				fi
+			done <<<"$elements"
+			for chain in input forward; do
+				for handle in $(nft --handle list chain inet fw4 "$chain" 2>/dev/null | awk -v set_name="@$ipset_name" 'index($0, set_name " ") && /comment "!wechatpush/ && /Drop rule/ {print $NF}'); do
+					rule_deletions="${rule_deletions}delete rule inet fw4 $chain handle $handle"$'\n'
+				done
+			done
+			[ "$block_blacklisted_forwarding" = "1" ] && forward_rule="insert rule inet fw4 forward $ip_version saddr @$ipset_name counter drop comment \"!wechatpush Forward Drop rule\""
+			if ! nft -f - >/dev/null 2>&1 <<EOF
+${rule_deletions}delete set inet fw4 $ipset_name
+add set inet fw4 $ipset_name { $set_options }
+${element_commands}${input_rule}
+$forward_rule
+EOF
+			then
+				log_change "[ERROR] Failed to switch blacklist set $ipset_name; existing firewall rules retained"
+				return 1
+			fi
+			if [ -n "$forward_rule" ]; then
+				while IFS= read -r ip; do
+					[ -n "$ip" ] && clear_ip_black_flows "$ip"
+				done <<<"$elements"
+			fi
+			# 集合元素已逐个清理连接，集合级清理义务同步完成。
+			rm -f "$pending_clear_marker"
+			return 0
+		fi
+
+		if [ -z "$set_exists" ]; then
+			if [ -n "$want_timeout" ]; then
+				nft add set inet fw4 "$ipset_name" { type ${1}_addr\; flags timeout\; timeout ${login_ip_black_timeout}s\; } || return 1
+			else
+				nft add set inet fw4 "$ipset_name" { type ${1}_addr\; } || return 1
+			fi
+		fi
+		if ! nft list chain inet fw4 input | awk -v rule="$ip_version saddr @$ipset_name counter" 'index($0, rule) && / drop comment "!wechatpush Drop rule"/ {found=1} END {exit !found}'; then
+			if [ -n "$white_rule_handle" ]; then
+				nft add rule inet fw4 input position "$white_rule_handle" "$ip_version" saddr "@$ipset_name" counter drop comment '"!wechatpush Drop rule"' >/dev/null 2>&1 || {
+					log_change "[ERROR] Failed to add blacklist input rule for $ipset_name"
+					return 1
+				}
+			else
+				nft insert rule inet fw4 input "$ip_version" saddr "@$ipset_name" counter drop comment '"!wechatpush Drop rule"' >/dev/null 2>&1 || {
+					log_change "[ERROR] Failed to add blacklist input rule for $ipset_name"
+					return 1
+				}
+			fi
+		fi
+		if [ "$block_blacklisted_forwarding" = "1" ]; then
+			if ! nft list chain inet fw4 forward | awk -v rule="$ip_version saddr @$ipset_name counter" 'index($0, rule) && / drop comment "!wechatpush Forward Drop rule"/ {found=1} END {exit !found}'; then
+				nft insert rule inet fw4 forward "$ip_version" saddr "@$ipset_name" counter drop comment '"!wechatpush Forward Drop rule"' >/dev/null 2>&1 || {
+					log_change "[ERROR] Failed to add blacklist forward rule for $ipset_name"
+					return 1
+				}
+				touch "$pending_clear_marker"
+			fi
+		else
+			delete_nft_ip_black_forward_rule
+		fi
+	else
+		ipset list $ipset_name >/dev/null 2>&1 || ipset create $ipset_name hash:ip timeout $login_ip_black_timeout $nat_table_cmd >/dev/null 2>&1
+		${ip_version}tables -C INPUT -m set --match-set $ipset_name src -j DROP >/dev/null 2>&1 || ${ip_version}tables -I INPUT -m set --match-set $ipset_name src -j DROP >/dev/null 2>&1
+		if [ "$block_blacklisted_forwarding" = "1" ]; then
+			if ! ${ip_version}tables -C FORWARD -m set --match-set $ipset_name src -j DROP >/dev/null 2>&1; then
+				${ip_version}tables -I FORWARD -m set --match-set $ipset_name src -j DROP >/dev/null 2>&1 || {
+					log_change "[ERROR] Failed to add blacklist forward rule for $ipset_name"
+					return 1
+				}
+				touch "$pending_clear_marker"
+			fi
+		else
+			${ip_version}tables -D FORWARD -m set --match-set $ipset_name src -j DROP >/dev/null 2>&1
+		fi
+	fi
+	if [ "$block_blacklisted_forwarding" = "1" ] && [ -f "$pending_clear_marker" ]; then
+		clear_ip_black_set_flows || return 1
+		rm -f "$pending_clear_marker"
+	elif [ "$block_blacklisted_forwarding" != "1" ]; then
+		rm -f "$pending_clear_marker" "${dir}"/pending_black_flow_*
+	fi
+}
+
+# nft 输出可能以 :: 开头或结尾；只接受单个压缩段及合法的十六进制分组。
+valid_ipv6_blacklist_ip() {
+	local ip="$1" left right group count=0
+	if [[ "$ip" == *::* ]]; then
+		left=${ip%%::*}
+		right=${ip#*::}
+		[[ "$right" != *::* ]] || return 1
+		[[ -z "$left" || "$left" =~ ^([[:xdigit:]]{1,4}:)*[[:xdigit:]]{1,4}$ ]] || return 1
+		[[ -z "$right" || "$right" =~ ^([[:xdigit:]]{1,4}:)*[[:xdigit:]]{1,4}$ ]] || return 1
+		for group in ${ip//:/ }; do ((count+=1)); done
+		((count < 8))
+	else
+		[[ "$ip" =~ ^([[:xdigit:]]{1,4}:){7}[[:xdigit:]]{1,4}$ ]]
+	fi
+}
+
+# 按 nft 对点分 IPv4 文本的解析规则转为集合输出格式。
+# 带前导零的分组按八进制解析；不带前导零的分组按十进制解析。
+normalize_ipv4_blacklist_ip() {
+	local ip="$1" octet value normalized=""
+	local -a octets=()
+	IFS=. read -r -a octets <<<"$ip"
+	[ "${#octets[@]}" -eq 4 ] || return 1
+	for octet in "${octets[@]}"; do
+		[[ "$octet" =~ ^[0-9]{1,3}$ ]] || return 1
+		if [[ "$octet" == 0* ]]; then
+			[[ "$octet" =~ ^0[0-7]{0,2}$ ]] || return 1
+			value=$((8#$octet))
+		else
+			value=$((10#$octet))
+		fi
+		((value <= 255)) || return 1
+		normalized+="$value."
+	done
+
+	printf '%s\n' "${normalized%.}"
+}
+
+normalize_ipv6_blacklist_ip() {
+	local ip="$1" left right group count=0 missing normalized=""
+	if [[ "$ip" == *::* ]]; then
+		left=${ip%%::*}
+		right=${ip#*::}
+	else
+		left="$ip"
+		right=""
+	fi
+	for group in ${left//:/ }; do ((count+=1)); done
+	for group in ${right//:/ }; do ((count+=1)); done
+	missing=$((8 - count))
+	for group in ${left//:/ }; do printf -v group '%04x' "0x$group"; normalized+="${group}:"; done
+	for ((count=0; count<missing; count++)); do normalized+="0000:"; done
+	for group in ${right//:/ }; do printf -v group '%04x' "0x$group"; normalized+="${group}:"; done
+	printf '%s\n' "${normalized%:}"
 }
 
 # 添加黑名单
 add_ip_black() {
-	local login_ip=$1
+	local login_ip=$1 element_timeout="${login_ip_black_timeout}s"
 	[ -z "$login_ip" ] && return 0
 	echo "$login_ip_white_list" | grep -w -q "$login_ip" && return 1
 	# 检查 IP 版本
 	unset ipset_name
 	(echo "$login_ip" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$') && ipset_name="wechatpush_blacklist"
 	(echo "$login_ip" | grep -Eq '^([\da-fA-F0-9]{1,4}(:{1,2})){1,15}[\da-fA-F0-9]{1,4}$') && ipset_name="wechatpush_blacklistv6"
+	if [ -n "$nftables_version" ] && [[ "$login_ip" == *:* ]]; then
+		valid_ipv6_blacklist_ip "$login_ip" && ipset_name="wechatpush_blacklistv6" || unset ipset_name
+	fi
 	[ -z "$ipset_name" ] && sed -i "/^$login_ip /d" "$ip_blacklist_path" && log_change "[WARN] $(translate "Failed to add to blacklist, invalid IP format: %s (removed from list)" "$login_ip")" && return 1
 
 	! cat "$ip_blacklist_path" | grep -q -w -i $login_ip && echo "$login_ip timeout $login_ip_black_timeout" >>"$ip_blacklist_path"
 
-	[ -n "$nftables_version" ] && {
-		nft list set inet fw4 ${ipset_name} | grep -qw "${login_ip}" && return 1 # IP 已存在
-		nft add element inet fw4 $ipset_name { $login_ip expires ${login_ip_black_timeout}s } >/dev/null 2>&1
-	} || {
-		ipset -exist add $ipset_name $login_ip timeout ${login_ip_black_timeout} >/dev/null 2>&1
-	}
+	if [ -n "$nftables_version" ]; then
+		nft get element inet fw4 "$ipset_name" { "$login_ip" } >/dev/null 2>&1 && return 1 # 按地址值判断，兼容 IPv6 的非规范写法
+		# 先记录清理义务，若在加入集合与清理连接之间中断，下次循环仍会重试。
+		[ "$login_web_black" = "1" ] && [ "$block_blacklisted_forwarding" = "1" ] && write_pending_black_flow "$login_ip"
+		[[ "$2" =~ ^([0-9]+(ms|[smhdw]))+$ ]] && element_timeout="$2"
+		[ -z "$element_timeout" ] && element_timeout="${login_ip_black_timeout}s"
+		if [ "$login_ip_black_timeout" -eq 0 ]; then
+			nft add element inet fw4 "$ipset_name" { "$login_ip" } >/dev/null 2>&1 || return 1
+		else
+			nft add element inet fw4 "$ipset_name" { "$login_ip" timeout "$element_timeout" } >/dev/null 2>&1 || return 1
+		fi
+		# 新封禁可能覆盖磁盘中已到期的旧记录；写回当前封禁，再由集合同步剩余时间。
+		if [ "$login_ip_black_timeout" -gt 0 ]; then
+			remove_ip_black_file_entry "$login_ip" || return 1
+			echo "$login_ip expires $element_timeout" >>"$ip_blacklist_path"
+		fi
+	else
+		ipset test "$ipset_name" "$login_ip" >/dev/null 2>&1 && return 1
+		[ "$login_web_black" = "1" ] && [ "$block_blacklisted_forwarding" = "1" ] && write_pending_black_flow "$login_ip"
+		ipset -exist add "$ipset_name" "$login_ip" timeout "$login_ip_black_timeout" >/dev/null 2>&1 || return 1
+	fi
+	[ "$login_web_black" = "1" ] && [ "$block_blacklisted_forwarding" = "1" ] && clear_ip_black_flows "$login_ip"
+	return 0
+}
+
+remove_ip_black_file_entry() {
+	local escaped_ip=${1//./\\.}
+	sed -i -e "/^[[:space:]]*${escaped_ip}[[:space:]]/d" -e "/^[[:space:]]*${escaped_ip}$/d" "$ip_blacklist_path"
 }
 
 # 移出黑名单
 del_ip_black() {
 	[ -z "$1" ] && return
-	sed -i "/^${1}/d" ${ip_blacklist_path}
+	remove_ip_black_file_entry "$1" || return 1
+	rm -f "${dir}/pending_black_flow_${1//[:.]/_}"
 
 	# 检查 IP 版本
 	unset ipset_name
 	(echo "$1" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$') && ipset_name="wechatpush_blacklist"
 	(echo "$1" | grep -Eq '^([\da-fA-F0-9]{1,4}(:{1,2})){1,15}[\da-fA-F0-9]{1,4}$') && ipset_name="wechatpush_blacklistv6"
+	[ -n "$nftables_version" ] && [[ "$1" == *:* ]] && valid_ipv6_blacklist_ip "$1" && ipset_name="wechatpush_blacklistv6"
+	if [ -n "$nftables_version" ] && [[ "$1" == *:* ]]; then
+		canonical_ip=$(nft get element inet fw4 "$ipset_name" { "$1" } 2>/dev/null | awk -F'elements = [{][[:space:]]*' 'NF > 1 {split($2, fields, /[[:space:],}]/); print fields[1]; exit}')
+		[ -n "$canonical_ip" ] && [ "$canonical_ip" != "$1" ] && remove_ip_black_file_entry "$canonical_ip"
+	fi
 	[ -z "$ipset_name" ] && return
 
 	[ -n "$nftables_version" ] && {
@@ -2368,23 +2694,104 @@ set_ip_black() {
 	[ $(tail -n1 "${ip_blacklist_path}" | wc -l) -eq "0" ] && echo -e >>${ip_blacklist_path}
 
 	# 从 ip_blacklist 文件逐行添加黑名单，add_ip_black() 处验证是否重复，此处不在验证
-	for ip_black in $(cat ${ip_blacklist_path} | awk '{print $1}'); do
-		add_ip_black "$ip_black"
-	done
+	local saved_remaining
+	while IFS= read -r ip_black_info; do
+		ip_black=$(awk '{print $1}' <<<"$ip_black_info")
+		[ -z "$ip_black" ] && continue
+		saved_remaining=""
+		if [ -n "$nftables_version" ] && [[ "$ip_black_info" == *" expires "* ]]; then
+			saved_remaining=${ip_black_info##* expires }
+			saved_remaining=${saved_remaining//[[:space:]]/}
+		fi
+		if [[ "$saved_remaining" == 0s || "$saved_remaining" == 0ms ]]; then
+			if [[ "$ip_black" == *:* ]]; then
+				ipset_name="wechatpush_blacklistv6"
+			else
+				ipset_name="wechatpush_blacklist"
+			fi
+			if ! nft get element inet fw4 "$ipset_name" { "$ip_black" } >/dev/null 2>&1; then
+				del_ip_black "$ip_black"
+				rm -f "${dir}/pending_black_flow_${ip_black//[:.]/_}"
+			fi
+			continue
+		fi
+		add_ip_black "$ip_black" "$saved_remaining"
+	done <<<"$(cat "$ip_blacklist_path")"
 	# 当 ip_blacklist 文件清除 IP 时，从集合中清除 IP
-	[ -n "$nftables_version" ] && fw_info_blacklist=$(nft list set inet fw4 wechatpush_blacklist | tr -d '\n' | grep -oE 'elements = \{[^}]*\}' | grep -oE '[^{}]+ expires [^,}]+[,\}]' | tr ',}' '\n' | tr -s ' ' | sed -e 's/^[[:space:]]*//')
-	[ -n "$nftables_version" ] && fw_info_blacklistv6=$(nft list set inet fw4 wechatpush_blacklistv6 | tr -d '\n' | grep -oE 'elements = \{[^}]*\}' | grep -oE '[^{}]+ expires [^,}]+[,\}]' | tr ',}' '\n' | tr -s ' ' | sed -e 's/^[[:space:]]*//')
+	if [ -n "$nftables_version" ] && [ "$login_ip_black_timeout" -eq 0 ]; then
+		fw_info_blacklist=$(nft list set inet fw4 wechatpush_blacklist | tr -d '\n' | grep -oE 'elements = \{[^}]*\}' | sed -e 's/.*{//' -e 's/}//' | tr ',' '\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+		fw_info_blacklistv6=$(nft list set inet fw4 wechatpush_blacklistv6 | tr -d '\n' | grep -oE 'elements = \{[^}]*\}' | sed -e 's/.*{//' -e 's/}//' | tr ',' '\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+	elif [ -n "$nftables_version" ]; then
+		fw_info_blacklist=$(nft list set inet fw4 wechatpush_blacklist | tr -d '\n' | grep -oE 'elements = \{[^}]*\}' | grep -oE '[^{}]+ expires [^,}]+[,\}]' | tr ',}' '\n' | tr -s ' ' | sed -e 's/^[[:space:]]*//')
+		fw_info_blacklistv6=$(nft list set inet fw4 wechatpush_blacklistv6 | tr -d '\n' | grep -oE 'elements = \{[^}]*\}' | grep -oE '[^{}]+ expires [^,}]+[,\}]' | tr ',}' '\n' | tr -s ' ' | sed -e 's/^[[:space:]]*//')
+	fi
 	[ -z "$nftables_version" ] && fw_info_blacklist=$(ipset list wechatpush_blacklist | grep "timeout" 2>/dev/null)
 	[ -z "$nftables_version" ] && fw_info_blacklistv6=$(ipset list wechatpush_blacklistv6 | grep "timeout" 2>/dev/null)
 
-	[ -n "$fw_info_blacklist" ] && [ -n "$fw_info_blacklistv6" ] && combined_fw_info_blacklist="${fw_info_blacklist}\n${fw_info_blacklistv6}"
-	[ -z "$fw_info_blacklist" ] && combined_fw_info_blacklist="${fw_info_blacklistv6}" || combined_fw_info_blacklist="${fw_info_blacklist}"
+	combined_fw_info_blacklist="$fw_info_blacklist"
+	[ -n "$fw_info_blacklistv6" ] && combined_fw_info_blacklist="${combined_fw_info_blacklist}${combined_fw_info_blacklist:+$'\n'}${fw_info_blacklistv6}"
+	# nft 按地址值查询并返回规范写法，避免文件中的 IPv6 缩写差异导致误删集合元素。
+	local configured_ips="" configured_ip configured_set canonical_ip escaped_ip octet
+	if [ -n "$nftables_version" ]; then
+		for configured_ip in $(awk '{print $1}' "$ip_blacklist_path"); do
+			[[ "$configured_ip" =~ ^[0-9a-fA-F:.]+$ ]] || continue
+			case "$configured_ip" in
+				*:*) valid_ipv6_blacklist_ip "$configured_ip" || continue; configured_set="wechatpush_blacklistv6" ;;
+				*)
+					[[ "$configured_ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] || continue
+					for octet in ${configured_ip//./ }; do
+						((10#$octet <= 255)) || continue 2
+					done
+					configured_set="wechatpush_blacklist"
+					;;
+			esac
+			if [[ "$configured_ip" == *:* ]]; then
+				configured_canonical=$(normalize_ipv6_blacklist_ip "$configured_ip")
+				whitelist_match=""
+				for whitelist_ip in $login_ip_white_list; do
+					valid_ipv6_blacklist_ip "$whitelist_ip" || continue
+					[ "$configured_canonical" = "$(normalize_ipv6_blacklist_ip "$whitelist_ip")" ] && whitelist_match="1" && break
+				done
+				[ "$whitelist_match" = "1" ] && continue
+			elif echo "$login_ip_white_list" | grep -w -q "$configured_ip"; then
+				continue
+			fi
+			# get element 即使加 -j 仍输出集合文本，按实际输出提取规范化地址。
+			canonical_ip=$(nft get element inet fw4 "$configured_set" { "$configured_ip" } 2>/dev/null) || return 1
+			canonical_ip=$(awk -F'elements = [{][[:space:]]*' 'NF > 1 {split($2, fields, /[[:space:],}]/); print fields[1]; exit}' <<<"$canonical_ip")
+			[[ "$canonical_ip" =~ ^[0-9a-fA-F:.]+$ ]] || return 1
+			configured_ips="${configured_ips}${canonical_ip}"$'\n'
+			if [ "$configured_ip" != "$canonical_ip" ]; then
+				escaped_ip=${configured_ip//./\\.}
+				sed -i -e "s/^[[:space:]]*${escaped_ip}$/${canonical_ip}/" -e "s/^[[:space:]]*${escaped_ip} /${canonical_ip} /" "$ip_blacklist_path" || return 1
+			fi
+		done
+	fi
 
 	while IFS= read -r ip_black_info; do
-		ip_black=$(echo "$ip_black_info" | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}")
-		[ -z "$ip_black" ] && ip_black=$(echo "$ip_black_info" | grep -Eo "([\da-fA-F0-9]{1,4}(:{1,2})){1,15}[\da-fA-F0-9]{1,4}")
+		if [ -n "$nftables_version" ]; then
+			ip_black=$(awk '{print $1}' <<<"$ip_black_info")
+			[ -z "$ip_black" ] && continue
+		else
+			ip_black=$(echo "$ip_black_info" | grep -Eo "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}")
+			[ -z "$ip_black" ] && ip_black=$(echo "$ip_black_info" | grep -Eo "([\da-fA-F0-9]{1,4}(:{1,2})){1,15}[\da-fA-F0-9]{1,4}")
+		fi
 		[ -z "$ip_black" ] && continue
-		cat ${ip_blacklist_path} | grep -q -w -i ${ip_black} && sed -i "/^${ip_black}/d" ${ip_blacklist_path} && echo ${ip_black_info} >>${ip_blacklist_path} || del_ip_black ${ip_black}
+		if [ -n "$nftables_version" ]; then
+			if grep -Fqx -- "$ip_black" <<<"$configured_ips"; then
+				remove_ip_black_file_entry "$ip_black" || return 1
+				# 按集合中的剩余时长写回，忽略 nft 为单个元素输出的 timeout 字段。
+				if [ "$login_ip_black_timeout" -gt 0 ]; then
+					echo "$ip_black expires ${ip_black_info##* expires }" >>"$ip_blacklist_path"
+				else
+					echo "$ip_black" >>"$ip_blacklist_path"
+				fi
+			else
+				del_ip_black "$ip_black"
+			fi
+		else
+			cat ${ip_blacklist_path} | grep -q -w -i ${ip_black} && sed -i "/^${ip_black}/d" ${ip_blacklist_path} && echo ${ip_black_info} >>${ip_blacklist_path} || del_ip_black ${ip_black}
+		fi
 	done <<<"$combined_fw_info_blacklist"
 }
 

@@ -582,8 +582,14 @@ msgid "Blacklisting time (s)"
 msgstr "拉黑时间（秒）"
 
 #: applications/luci-app-wechatpush/htdocs/luci-static/resources/view/wechatpush/config.js:489
-msgid "\"0\" in ipset means permanent blacklist, use with caution. If misconfigured, change the device IP and clear rules in LUCI.<br/>Note: The whitelist for bans is located under the \"Do Not Disturb\" tab."
-msgstr "ipset 中, \"0\" 为永久拉黑，慎用。如不幸误操作，请更改设备 IP 进入 LUCI 界面清空规则。<br/>注：封禁白名单位于 “免打扰” 选项卡。"
+msgid "\"0\" means permanent blacklist, use with caution. If misconfigured, change the device IP and clear rules in LUCI.<br/>Note: The whitelist for bans is located under the \"Do Not Disturb\" tab."
+msgstr "\"0\" 为永久拉黑，慎用。如不幸误操作，请更改设备 IP 进入 LUCI 界面清空规则。<br/>注：封禁白名单位于“免打扰”选项卡。"
+
+msgid "Block forwarded traffic from blacklisted IPs"
+msgstr "阻止黑名单 IP 的转发流量"
+
+msgid "Includes port-forwarded access to downstream devices and LAN clients accessing the Internet."
+msgstr "包括经端口映射访问下级设备，以及局域网客户端访问互联网的流量。"
 
 #: applications/luci-app-wechatpush/htdocs/luci-static/resources/view/wechatpush/config.js:491
 msgid "Port knocking"

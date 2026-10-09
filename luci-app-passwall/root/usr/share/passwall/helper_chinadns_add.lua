@@ -201,12 +201,6 @@ if not is_file_nonzero(file_vpslist) then
 			process_address(dns)
 		end
 	end)
-	api.uci_foreach_c("subscribe_list", function(t)  --订阅链接
-		local url, _ = api.get_domain_port_from_url(t.url or "")
-		if url and url ~= "" then
-			process_address(url)
-		end
-	end)
 	f_out:close()
 end
 if is_file_nonzero(file_vpslist) then

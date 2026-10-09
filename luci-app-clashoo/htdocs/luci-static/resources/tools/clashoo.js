@@ -143,6 +143,7 @@ const callOverview          = rpc.declare({ object: 'luci.clashoo', method: 'ove
 const callSmartFlushCache       = rpc.declare({ object: 'luci.clashoo', method: 'smart_flush_cache',       expect: {} });
 const callListSingboxProfiles   = rpc.declare({ object: 'luci.clashoo', method: 'list_singbox_profiles',   expect: {} });
 const callGetSingboxProfile     = rpc.declare({ object: 'luci.clashoo', method: 'get_singbox_profile',     params: ['name'],                   expect: {} });
+const callGetSingboxProfileChunk = rpc.declare({ object: 'luci.clashoo', method: 'get_singbox_profile_chunk', params: ['name', 'index'], expect: {} });
 const callSaveSingboxProfileChunk = rpc.declare({ object: 'luci.clashoo', method: 'save_singbox_profile_chunk', params: ['name', 'content', 'index', 'total'], expect: {} });
 const callSetSingboxProfile     = rpc.declare({ object: 'luci.clashoo', method: 'set_singbox_profile',     params: ['name'],                   expect: {} });
 const callDeleteSingboxProfile  = rpc.declare({ object: 'luci.clashoo', method: 'delete_singbox_profile',  params: ['name'],                   expect: {} });
@@ -234,14 +235,66 @@ return baseclass.extend({
     smartFlushCache:    function () { return L.resolveDefault(callSmartFlushCache(),  { success: false }); },
 
     listSingboxProfiles:  function ()           { return L.resolveDefault(callListSingboxProfiles(),          { profiles: [], active: '' }); },
-    getSingboxProfile:    function (name)        { return L.resolveDefault(callGetSingboxProfile(name),        {}); },
+    getSingboxProfile: function (name) {
+        return L.resolveDefault(callGetSingboxProfile(name), {}).then(function (r) {
+            if (!r || r.error !== 'too large') return r || {};
+
+            var decoder = new TextDecoder('utf-8', { fatal: true });
+            var parts = [], total = 0, size = 0, mtime = '', received = 0;
+
+            function readNext(index) {
+                return L.resolveDefault(callGetSingboxProfileChunk(name, String(index)), {}).then(function (chunk) {
+                    if (!chunk || chunk.error)
+                        return { error: (chunk && chunk.error) || 'read_failed' };
+                    if (!Number.isInteger(chunk.index) || !Number.isInteger(chunk.total) ||
+                        !Number.isInteger(chunk.size) || chunk.index !== index ||
+                        chunk.total < 1 || chunk.total > 683 || chunk.size < 1 ||
+                        chunk.size > 16 * 1024 * 1024 || typeof chunk.content_b64 !== 'string')
+                        return { error: 'invalid_chunk' };
+                    if (index === 0) {
+                        total = chunk.total;
+                        size = chunk.size;
+                        mtime = chunk.mtime;
+                    } else if (chunk.total !== total || chunk.size !== size || chunk.mtime !== mtime) {
+                        return { error: 'file_changed' };
+                    }
+
+                    try {
+                        var raw = atob(chunk.content_b64);
+                        var bytes = new Uint8Array(raw.length);
+                        for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+                        received += bytes.length;
+                        parts.push(decoder.decode(bytes, { stream: true }));
+                    } catch (e) {
+                        return { error: 'invalid_chunk' };
+                    }
+                    if (index + 1 < total) return readNext(index + 1);
+                    if (received !== size) return { error: 'file_changed' };
+                    try { parts.push(decoder.decode()); }
+                    catch (e) { return { error: 'invalid_chunk' }; }
+                    return { content: parts.join(''), name: name };
+                });
+            }
+
+            return readNext(0);
+        });
+    },
     saveSingboxProfile: function (name, content) {
         var chunkSize = 24576;
-        var total = Math.max(1, Math.ceil((content || '').length / chunkSize));
+        var value = content || '';
+        var chunks = [];
+        for (var offset = 0; offset < value.length;) {
+            var end = Math.min(offset + chunkSize, value.length);
+            if (end < value.length && /[\uD800-\uDBFF]/.test(value.charAt(end - 1))) end--;
+            chunks.push(value.slice(offset, end));
+            offset = end;
+        }
+        if (!chunks.length) chunks.push('');
+        var total = chunks.length;
         var index = 0;
 
         function sendNext() {
-            var chunk = (content || '').slice(index * chunkSize, (index + 1) * chunkSize);
+            var chunk = chunks[index];
             return L.resolveDefault(callSaveSingboxProfileChunk(name, chunk, String(index), String(total)), {}).then(function (r) {
                 if (!r || !r.success)
                     return { success: false, error: (r && r.error) || 'upload_failed', message: (r && (r.message || r.error)) || _('Upload failed') };

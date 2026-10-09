@@ -578,7 +578,7 @@ function createConfigEditor(mode) {
   });
   var host = E('div', { 'class': 'cl-cm-host', style: 'display:none' });
   var wrap = E('div', { 'class': 'cl-cm-wrap' }, [host, ta]);
-  var cm = null, usingCM = false;
+  var cm = null, usingCM = false, valueSeq = 0;
 
   function showTextarea(content) {
     usingCM = false;
@@ -598,11 +598,14 @@ function createConfigEditor(mode) {
     el: wrap,
     textarea: ta,
     setValue: function (content, readOnly) {
+      var seq = ++valueSeq;
       content = (content == null) ? '' : String(content);
       ta.readOnly = !!readOnly;
-      if (content.length > LARGE) { showTextarea(content); return; }
+      showTextarea(content);
+      if (content.length > LARGE) return;
       if (cm) { cm.setOption('readOnly', !!readOnly); showCM(content); return; }
       loadCodeMirror().then(function () {
+        if (seq !== valueSeq) return;
         if (!cm && window.CodeMirror) {
           cm = window.CodeMirror(host, {
             value: '', mode: mode,
@@ -615,7 +618,7 @@ function createConfigEditor(mode) {
             host.classList.add('cl-cm-dark');
         }
         if (cm) { cm.setOption('readOnly', !!readOnly); showCM(content); } else showTextarea(content);
-      }).catch(function () { showTextarea(content); });
+      }).catch(function () { if (seq === valueSeq) showTextarea(content); });
     },
     getValue: function () {
       return (usingCM && cm) ? cm.getValue() : ta.value;
@@ -1707,8 +1710,9 @@ return view.extend({
     var self = this;
     var safeText = function (v) { return (v == null || v === 'null') ? '' : String(v); };
     var formatJsonForEditor = function (content) {
+      if (!content) return '';
       try {
-        return JSON.stringify(JSON.parse(content || '{}'), null, 2) + '\n';
+        return JSON.stringify(JSON.parse(content), null, 2) + '\n';
       } catch (e) {
         return content || '';
       }
@@ -1741,7 +1745,7 @@ return view.extend({
             var msg = r.changes && r.changes.length ? _("Fixed deprecated fields: ") + r.changes.join(', ') : _("Configuration is up to date; no fixes needed");
             ui.addNotification(null, E('p', msg));
             /* 重新加载编辑器内容 */
-            clashoo.getSingboxProfile(name).then(function (gr) { ed.setValue(formatJsonForEditor(gr.content || '')); });
+            loadEditor(name);
           } else {
             ui.addNotification(null, E('p', _("Fix failed: ") + ((r && r.message) || '')));
           }
@@ -1759,14 +1763,26 @@ return view.extend({
       ])
     ]);
 
+    var loadSeq = 0;
     function loadEditor(name) {
+      var seq = ++loadSeq;
       editorTitle.textContent = _("Editing: ") + name;
-      saveBtn.removeAttribute('disabled');
-      migrateBtn.removeAttribute('disabled');
-      ed.textarea.dataset.name = name;
+      saveBtn.disabled = true;
+      migrateBtn.disabled = true;
+      ed.textarea.dataset.name = '';
       ed.setValue(_("Loading…"));
       clashoo.getSingboxProfile(name).then(function (r) {
-        ed.setValue(formatJsonForEditor(r.content || ''));
+        if (seq !== loadSeq) return;
+        if (!r || r.error || typeof r.content !== 'string' || !r.content)
+          throw new Error((r && (r.message || r.error)) || 'read_failed');
+        ed.setValue(formatJsonForEditor(r.content));
+        ed.textarea.dataset.name = name;
+        saveBtn.disabled = false;
+        migrateBtn.disabled = false;
+      }).catch(function (e) {
+        if (seq !== loadSeq) return;
+        ed.setValue('');
+        ui.addNotification(null, E('p', _("Load failed") + ': ' + (e.message || e)), 'error');
       });
     }
 

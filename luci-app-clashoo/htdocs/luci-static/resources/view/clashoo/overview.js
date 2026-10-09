@@ -313,6 +313,7 @@ return view.extend({
         tcp_mode: uci.get('clashoo', 'config', 'tcp_mode') || 'tun',
         udp_mode: uci.get('clashoo', 'config', 'udp_mode') || (uci.get('clashoo', 'config', 'tcp_mode') || 'tun'),
         stack: uci.get('clashoo', 'config', 'stack') || 'system',
+        enhanced_mode: uci.get('clashoo', 'config', 'enhanced_mode') || 'fake-ip',
         config: configName,
         local_ip: location.hostname,
         health_status: 'loading'
@@ -1583,6 +1584,7 @@ return view.extend({
     var tcpMode   = String(st.tcp_mode || '').toLowerCase();
     var udpMode   = String(st.udp_mode || tcpMode).toLowerCase();
     var stackMode = String(st.stack || '').toLowerCase();
+    var enhancedMode = String(st.enhanced_mode || 'fake-ip').toLowerCase();
     var tpMode    = 'custom';
 
     if (tcpMode === 'tun' && udpMode === 'tun' && stackMode === 'mixed')
@@ -1592,7 +1594,7 @@ return view.extend({
     else if (tcpMode === 'tun' && udpMode === 'tun')
       tpMode = 'tun-system';
     else if (tcpMode === 'redirect' && udpMode === 'tproxy')
-      tpMode = 'fake-ip';
+      tpMode = enhancedMode === 'redir-host' ? 'redir-host' : 'fake-ip';
     var panelType = st.panel_type  || 'zashboard';
     var panelUrl  = this._dashboardUrl(st);
     var panels    = ['metacubexd', 'yacd', 'zashboard', 'razord'];
@@ -1603,7 +1605,7 @@ return view.extend({
           return E('option', { value: o[0], selected: o[0] === val ? '' : null, disabled: o[2] ? '' : null }, o[1]);
         }));
     };
-    var tpModeOptions = [['fake-ip','Fake-IP'],['tun-system','System'],['tun-gvisor','gVisor'],['tun-mixed','Mixed']];
+    var tpModeOptions = [['fake-ip','Fake-IP'],['redir-host','Redir-Host'],['tun-system','System'],['tun-gvisor','gVisor'],['tun-mixed','Mixed']];
     if (tpMode === 'custom')
       tpModeOptions.unshift(['custom',_("Custom")]);
 
@@ -1660,6 +1662,7 @@ return view.extend({
             sel.disabled = true;
             self._op = 'mode';
             self._lastSt = self._lastSt || {};
+            self._lastSt.enhanced_mode = mode === 'redir-host' ? 'redir-host' : 'fake-ip';
             if (mode === 'tun-mixed') {
               self._lastSt.tcp_mode = 'tun';
               self._lastSt.udp_mode = 'tun';
@@ -1809,10 +1812,12 @@ return view.extend({
            尤其是切换 tab 回到 overview 时缓存数据与首次 poll 数据通常一致 */
         var sig = JSON.stringify({
           running: st.running,
+          pid: st.pid,
           health: st.health_status,
           proxy_mode: st.proxy_mode,
           tcp_mode: st.tcp_mode,
           udp_mode: st.udp_mode,
+          enhanced_mode: st.enhanced_mode,
           stack: st.stack_type || st.stack,
           config: st.config,
           core_type: st.core_type,
@@ -1955,8 +1960,7 @@ return view.extend({
     return _("Health check in progress…");
   },
 
-  /* fn: fire-and-forget RPC + 秒速轮询直到状态到位 */
-  /* toggle switch instantly (optimistic), do not wait for RPC */
+  /* toggle switch instantly (optimistic), then poll until the operation takes effect */
   _svc: function (fn, opKey) {
     if (this._busy) return Promise.resolve();
 
@@ -1979,7 +1983,7 @@ return view.extend({
     var btn = document.querySelector('.cl-service-switch');
     if (btn) {
       var running = btn.getAttribute('aria-pressed') === 'true';
-      var newRunning = opKey === 'start';
+      var newRunning = opKey !== 'stop';
       if (newRunning !== running) {
         btn.setAttribute('aria-pressed', newRunning ? 'true' : 'false');
         btn.className = 'cl-service-switch' + (newRunning ? ' is-on' : ' is-off');
@@ -1988,12 +1992,16 @@ return view.extend({
     }
 
     var maxWait = opKey === 'stop' ? 15000 : 35000;
-    fn().catch(function () {});   /* fire-and-forget */
-
     var started   = Date.now();
     var pollTimer = null;
+    var initialPid = (this._lastSt && this._lastSt.pid) || 0;
+    var sawStopped = false;
+    var rpcDone = false;
+    var finished = false;
 
     function finish(finalMsg) {
+      if (finished) return;
+      finished = true;
       if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
       if (finalMsg) self._showOpMsg(finalMsg);
       self._busy = false;
@@ -2001,19 +2009,34 @@ return view.extend({
       self._pollOverview(true);
     }
 
+    Promise.resolve().then(fn).then(function (r) {
+      if (!r || r.success !== true)
+        throw new Error((r && (r.message || r.error)) || 'RPC failed');
+      rpcDone = true;
+    }).catch(function (e) {
+      ui.addNotification(null, E('p', _("Operation failed: ") + (e.message || e)), 'error');
+      finish(null);
+    });
+
     function pollOnce() {
+      if (finished) return;
       L.resolveDefault(clashoo.status(), {}).then(function (st) {
+        if (finished) return;
         st = st || {};
         var elapsed = Date.now() - started;
         if (opKey === 'stop') {
-          if (st.running === false)          return finish(_("Stopped") + ' ⚪');
+          if (rpcDone && st.running === false) return finish(_("Stopped") + ' ⚪');
         } else {
-          if (st.running === true)           return finish(_("Running 🟢"));
-          if (st.health_status === 'fail')   return finish(null);
+          if (st.running === false) sawStopped = true;
+          if (rpcDone && st.health_status === 'fail') return finish(null);
+          if (rpcDone && st.running === true &&
+              (opKey !== 'restart' || (initialPid && st.pid && st.pid !== initialPid) || sawStopped))
+            return finish(_("Running 🟢"));
         }
         if (elapsed >= maxWait) return finish(null);
         pollTimer = setTimeout(pollOnce, 500);
       }).catch(function () {
+        if (finished) return;
         if (Date.now() - started < maxWait) pollTimer = setTimeout(pollOnce, 500);
         else finish(null);
       });

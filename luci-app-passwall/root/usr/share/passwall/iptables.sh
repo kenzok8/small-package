@@ -778,12 +778,6 @@ filter_vpsip() {
 		echo "$ipv6_addrs" | sed "s/^/add $IPSET_VPS6 /" | awk '1; END{print "COMMIT"}' | ipset -! -R
 		echolog "  - [$?]加入所有IPv6节点服务器IP到ipset[$IPSET_VPS6]直连完成"
 	}
-	#订阅方式为直连时
-	local subscribe_host=$(get_subscribe_host | grep -Ev "$EXCLUDE_VPSIP")
-	[ -n "$subscribe_host" ] && {
-		echo "$subscribe_host" | grep -Eo "$IPv4_REGEX" | sed "s/^/add $IPSET_VPS /" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-		echo "$subscribe_host" | grep -Eo "$IPv6_REGEX" | sed "s/^/add $IPSET_VPS6 /" | awk '{print $0} END{print "COMMIT"}' | ipset -! -R
-	}
 }
 
 filter_server_port() {
@@ -1434,6 +1428,11 @@ add_firewall_rule() {
 
 	filter_direct_node_list > /dev/null 2>&1 &
 
+	local direct_ipt
+	for direct_ipt in "$ipt_n" "$ipt_m" "$ip6t_n" "$ip6t_m"; do
+		$direct_ipt -I OUTPUT $(comment "PSW_DIRECT") -m owner --gid-owner $DIRECT_GID -j RETURN
+	done
+
 	echolog "防火墙规则加载完成！"
 }
 
@@ -1509,7 +1508,7 @@ gen_include() {
 		[ -z "${_ipt}" ] && return
 
 		echo "*$2"
-		${_ipt}-save -t $2 | grep "PSW" | grep -v "\-j PSW$" | grep -v "mangle\-OUTPUT\-PSW" | grep -v "\-m socket .*\-j PSW_DIVERT$" | sed -e "s/^-A \(OUTPUT\|PREROUTING\|FORWARD\)/-I \1 1/"
+		${_ipt}-save -t $2 | grep "PSW" | grep -v "PSW_DIRECT" | grep -v "\-j PSW$" | grep -v "mangle\-OUTPUT\-PSW" | grep -v "\-m socket .*\-j PSW_DIVERT$" | sed -e "s/^-A \(OUTPUT\|PREROUTING\|FORWARD\)/-I \1 1/"
 		echo 'COMMIT'
 	}
 	local __ipt=""
@@ -1529,6 +1528,8 @@ gen_include() {
 			echo "\${mangle_output_psw}" | while read line; do
 				\$(${MY_PATH} insert_rule_before "$ipt_m" "OUTPUT" "mwan3" "\${line}")
 			done
+			$ipt_n -I OUTPUT $(comment "PSW_DIRECT") -m owner --gid-owner $DIRECT_GID -j RETURN
+			$ipt_m -I OUTPUT $(comment "PSW_DIRECT") -m owner --gid-owner $DIRECT_GID -j RETURN
 
 			[ "$accept_icmp" = "1" ] && \$(${MY_PATH} insert_rule_after "$ipt_n" "PREROUTING" "prerouting_rule" "-p icmp -j PSW")
 			[ -z "${is_tproxy}" ] && \$(${MY_PATH} insert_rule_after "$ipt_n" "PREROUTING" "prerouting_rule" "-p tcp -j PSW")
@@ -1552,6 +1553,8 @@ gen_include() {
 			echo "\${mangle_output_psw}" | while read line; do
 				\$(${MY_PATH} insert_rule_before "$ip6t_m" "OUTPUT" "mwan3" "\${line}")
 			done
+			$ip6t_n -I OUTPUT $(comment "PSW_DIRECT") -m owner --gid-owner $DIRECT_GID -j RETURN
+			$ip6t_m -I OUTPUT $(comment "PSW_DIRECT") -m owner --gid-owner $DIRECT_GID -j RETURN
 
 			[ "$accept_icmpv6" = "1" ] && $ip6t_n -A PREROUTING -p ipv6-icmp -j PSW
 

@@ -574,7 +574,12 @@ return view.extend({
 		o.rmempty = false;
 		o.datatype = 'and(uinteger,min(0))';
 		o.depends('login_web_black', '1');
-		o.description = _('\"0\" in ipset means permanent blacklist, use with caution. If misconfigured, change the device IP and clear rules in LUCI.<br/>Note: The whitelist for bans is located under the \"Do Not Disturb\" tab.');
+		o.description = _('"0" means permanent blacklist, use with caution. If misconfigured, change the device IP and clear rules in LUCI.<br/>Note: The whitelist for bans is located under the "Do Not Disturb" tab.');
+
+		o = s.taboption('ipset', form.Flag, 'block_blacklisted_forwarding', _('Block forwarded traffic from blacklisted IPs'));
+		o.default = '0';
+		o.depends('login_web_black', '1');
+		o.description = _('Includes port-forwarded access to downstream devices and LAN clients accessing the Internet.');
 
 		o = s.taboption('ipset', form.Flag, 'port_knocking_enable', _('Port knocking'));
 		o.default = '0';

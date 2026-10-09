@@ -17,6 +17,8 @@ This OpenWrt plugin delivers real-time router notifications to your mobile devic
 - [x] Security alerts (failed web/SSH logins with auto blacklist)
 - [x] Port knocking & automated tasks
 
+Auto-banning blocks blacklisted IPs from accessing the router. Optionally block all forwarded traffic from blacklisted IPs, including access to port-forwarded downstream devices and Internet access by LAN clients. With forwarded-traffic blocking enabled and conntrack installed, banning also attempts to clear that IP's existing connection-tracking entries to interrupt offloaded flows; without conntrack, this step is skipped while new connections remain blocked by the blacklist rules. Turning the option off, or turning auto-ban off, removes the forwarded-traffic drop rules on the next detection cycle; like the router-access drop rules, they are not removed by stopping the service, disappear after a firewall reload or reboot, and are restored on the plugin's next detection cycle while it runs. fw4 timed bans are restored with their last recorded remaining duration. Set the blacklist duration to `0` for permanent bans; remove the IP from the blacklist to lift the ban.
+
 Supported services:
 | Push application | Method | description |
 | :-------- | :----- | :----- |

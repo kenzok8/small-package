@@ -390,20 +390,25 @@ if (core == 'singbox' && dcore == '5') {
 return { error: 'invalid_core_target', message: '无效的内核类型与版本组合' };
 }
 
-function prepare_singbox_runtime() {
-let active = uci_get('clashoo', 'config', 'singbox_active') || '';
+let migrate_singbox;
+
+function prepare_singbox_runtime(candidate, staged) {
+let active = candidate || uci_get('clashoo', 'config', 'singbox_active') || '';
 let src = active ? (SINGBOX_DIR + '/' + active) : SINGBOX_RUNTIME_CONFIG;
-if (!access(src, 'r')) src = SINGBOX_RUNTIME_CONFIG;
+if (!candidate && !access(src, 'r')) src = SINGBOX_RUNTIME_CONFIG;
 if (!access(src, 'r'))
 	return { success: false, message: '请先生成或选择 sing-box 配置文件' };
 
 system('mkdir -p ' + shell_quote(SINGBOX_RUNTIME_DIR) + ' ' + shell_quote(SINGBOX_WORKDIR) + ' >/dev/null 2>&1');
-let tmp = shell_read('mktemp ' + shell_quote(SINGBOX_RUNTIME_CONFIG + '.tmp.XXXXXX') + ' 2>/dev/null');
+let tmp_pipe = popen('mktemp ' + shell_quote(SINGBOX_RUNTIME_CONFIG + '.tmp.XXXXXX') + ' 2>/dev/null');
+let tmp = tmp_pipe ? trim(tmp_pipe.read('all') || '') : '';
+if (tmp_pipe) tmp_pipe.close();
 if (!tmp)
 	return { success: false, message: '无法创建 sing-box 临时运行配置' };
 
 let raw = readfile(src) || '';
-let cfg = raw ? json(raw) : null;
+let cfg = null;
+try { cfg = raw ? json(raw) : null; } catch (e) {}
 if (!cfg || type(cfg) != 'object') {
 	unlink(tmp);
 	return { success: false, message: 'sing-box 配置 JSON 无法解析' };
@@ -442,6 +447,9 @@ if (uci_get('clashoo', 'config', 'core_only') != '1') {
 		return { success: false, message: 'sing-box 运行配置规范化失败' };
 	}
 }
+
+if (staged)
+	return { success: true, path: tmp };
 
 if (system('mv -f ' + shell_quote(tmp) + ' ' + shell_quote(SINGBOX_RUNTIME_CONFIG) + ' >/dev/null 2>&1') != 0) {
 	unlink(tmp);
@@ -1555,7 +1563,7 @@ return null;
 }
 
 // Migrate sing-box config from pre-1.12 deprecated formats to 1.12+ format
-function migrate_singbox(cfg) {
+migrate_singbox = function(cfg) {
   // --- Fix DNS servers: address-based → type-based, remove detour ---
   if (cfg.dns && cfg.dns.servers) {
     cfg.dns.servers = map(cfg.dns.servers || [], function(srv) {
@@ -1910,7 +1918,7 @@ function migrate_singbox(cfg) {
   }
 
   return cfg;
-}
+};
 
 function restore_backup_json_locked(raw) {
 let rollback_ready = false;
@@ -2063,12 +2071,14 @@ let c = cursor();
 c.load('clashoo');
 let configured_core = get_core_type();
 let running = is_running();
+let pid = running ? procd_instance_pid('clashoo', configured_core == 'singbox' ? 'singbox' : null) : 0;
 let proxy_mode = c.get('clashoo', 'config', 'p_mode')         || 'rule';
 let conf_path  = c.get('clashoo', 'config', 'use_config')     || '';
 let panel_type = c.get('clashoo', 'config', 'dashboard_panel')|| 'zashboard';
 let tcp_mode   = c.get('clashoo', 'config', 'tcp_mode')       || 'tun';
 let udp_mode   = c.get('clashoo', 'config', 'udp_mode')       || tcp_mode;
 let stack      = c.get('clashoo', 'config', 'stack')          || 'system';
+let enhanced_mode = c.get('clashoo', 'config', 'enhanced_mode') || 'fake-ip';
 let api = get_clash_api_auth();
 let dash_port  = api.port || (c.get('clashoo', 'config', 'dash_port') || '9090');
 let dash_pass  = api.pass || '';
@@ -2091,8 +2101,8 @@ let conf_name = slash >= 0 ? substr(conf_path, slash + 1) : conf_path;
 if (configured_core == 'singbox' && config)
 	conf_name = config;
 let dcore = c.get('clashoo', 'config', 'dcore') || '2';
-return { running, dash_port, dash_pass, proxy_mode, conf_path: conf_name, config,
-         panel_type, tcp_mode, udp_mode, stack,
+return { running, pid, dash_port, dash_pass, proxy_mode, conf_path: conf_name, config,
+         panel_type, tcp_mode, udp_mode, stack, enhanced_mode,
          effective_tcp_mode, effective_udp_mode,
          runtime_degraded, runtime_degrade_reason,
          health_status, health_detail, has_tun_device,
@@ -2146,7 +2156,9 @@ let c = cursor();
 c.load('clashoo');
 sync_legacy_core_fields(c);
 let enabled = c.get('clashoo', 'config', 'enable') == '1';
-let conf_path = c.get('clashoo', 'config', 'use_config') || '';
+let core_type = c.get('clashoo', 'config', 'core_type') || 'mihomo';
+let conf_path = core_type == 'singbox' ? c.get('clashoo', 'config', 'singbox_active') || '' :
+                c.get('clashoo', 'config', 'use_config') || '';
 c.commit('clashoo');
 let rc = system('uci commit clashoo >/dev/null 2>&1');
 // Issue #67: auto-start on first configuration. If the service is enabled
@@ -2185,7 +2197,7 @@ set_mode: {
 args: { mode: 'mode' },
 call: function(req) {
 	let mode = req.args?.mode || 'fake-ip';
-	if (mode != 'fake-ip' && mode != 'tun-system' && mode != 'tun-gvisor' && mode != 'tun-mixed')
+	if (mode != 'fake-ip' && mode != 'redir-host' && mode != 'tun-system' && mode != 'tun-gvisor' && mode != 'tun-mixed')
 	return { error: 'invalid mode' };
 	let c = cursor(); c.load('clashoo');
 	if (mode == 'tun-system' || mode == 'tun-gvisor' || mode == 'tun-mixed') {
@@ -2199,7 +2211,7 @@ call: function(req) {
 	c.set('clashoo', 'config', 'tun_mode', '0');
 	c.set('clashoo', 'config', 'tcp_mode', 'redirect');
 	c.set('clashoo', 'config', 'udp_mode', 'tproxy');
-	c.set('clashoo', 'config', 'enhanced_mode', 'fake-ip');
+	c.set('clashoo', 'config', 'enhanced_mode', mode == 'redir-host' ? 'redir-host' : 'fake-ip');
 }
 c.commit('clashoo');
 system('uci commit clashoo >/dev/null 2>&1');
@@ -2724,12 +2736,14 @@ try {
 	c.load('clashoo');
 	let configured_core = get_core_type();
 	let running = is_running();
+	let pid = running ? procd_instance_pid('clashoo', configured_core == 'singbox' ? 'singbox' : null) : 0;
 	let proxy_mode = c.get('clashoo', 'config', 'p_mode')         || 'rule';
 	let conf_path  = c.get('clashoo', 'config', 'use_config')     || '';
 let panel_type = c.get('clashoo', 'config', 'dashboard_panel')|| 'zashboard';
 let tcp_mode   = c.get('clashoo', 'config', 'tcp_mode')       || 'tun';
 let udp_mode   = c.get('clashoo', 'config', 'udp_mode')       || tcp_mode;
 let stack      = c.get('clashoo', 'config', 'stack')          || 'system';
+let enhanced_mode = c.get('clashoo', 'config', 'enhanced_mode') || 'fake-ip';
 let api = get_clash_api_auth();
 	let dash_port  = api.port || (c.get('clashoo', 'config', 'dash_port') || '9090');
 	let dash_pass  = api.pass || '';
@@ -2752,8 +2766,8 @@ let api = get_clash_api_auth();
 	if (configured_core == 'singbox' && config) conf_name = config;
 	let dcore = c.get('clashoo', 'config', 'dcore') || '2';
 
-	let status_payload = { running, dash_port, dash_pass, proxy_mode, conf_path: conf_name, config,
-	                       panel_type, tcp_mode, udp_mode, stack,
+	let status_payload = { running, pid, dash_port, dash_pass, proxy_mode, conf_path: conf_name, config,
+	                       panel_type, tcp_mode, udp_mode, stack, enhanced_mode,
 	                       effective_tcp_mode, effective_udp_mode,
 	                       runtime_degraded, runtime_degrade_reason,
 	                       health_status, health_detail, has_tun_device,
@@ -3917,6 +3931,36 @@ return { content: readfile(path) || '', name };
 }
 },
 
+get_singbox_profile_chunk: {
+args: { name: 'name', index: 'index' },
+call: function(req) {
+let name = req.args?.name || '';
+let index_raw = req.args?.index || '0';
+if (!name || index(name, '/') >= 0 || index(name, '..') >= 0 ||
+    !match(index_raw, /^[0-9]+$/))
+  return { error: 'invalid request' };
+let path = SINGBOX_DIR + '/' + name;
+let s = stat(path);
+let chunk_size = 24576;
+if (!s || !access(path, 'r')) return { error: 'not found' };
+if (s.size < 1 || s.size > 16 * 1024 * 1024) return { error: 'too large' };
+let total = int((s.size + chunk_size - 1) / chunk_size);
+let idx = int(index_raw);
+if (idx < 0 || idx >= total) return { error: 'invalid chunk' };
+let fp = open(path, 'r');
+if (!fp) return { error: 'read_failed' };
+if (!fp.seek(idx * chunk_size, 0)) {
+  fp.close();
+  return { error: 'read_failed' };
+}
+let content = fp.read(chunk_size);
+fp.close();
+if (!content) return { error: 'read_failed' };
+return { content_b64: b64enc(content), name, index: idx, total,
+         size: s.size, mtime: '' + s.mtime };
+}
+},
+
 save_singbox_profile: {
 args: { name: 'name', content: 'content' },
 call: function(req) {
@@ -3996,16 +4040,40 @@ if (!name || index(name, '/') >= 0 || index(name, '..') >= 0)
   return { success: false, error: 'invalid name' };
 let src = '/usr/share/clashoo/config/singbox/' + name;
 if (!access(src, 'r')) return { success: false, error: 'not found' };
+let running = is_running();
 let c = cursor(); c.load('clashoo');
+let previous = {};
+for (let key in ['core_type', 'singbox_active', 'enable', 'core', 'dcore'])
+  previous[key] = c.get('clashoo', 'config', key);
+let dcore = previous.dcore;
+if (dcore != '4' && dcore != '5' ||
+    !access(dcore == '5' ? SINGBOX_BINARY_PATHS[1] : SINGBOX_BINARY_PATHS[0], 'x'))
+  dcore = access(SINGBOX_BINARY_PATHS[0], 'x') ? '4' :
+          access(SINGBOX_BINARY_PATHS[1], 'x') ? '5' : '';
+if (!dcore)
+  return { success: false, error: 'core_missing', message: '请先安装 sing-box 内核' };
+let prepared = prepare_singbox_runtime(name, true);
+if (!prepared.success)
+  return { success: false, error: 'prepare_failed', message: prepared.message || '无法准备 sing-box 运行环境' };
 c.set('clashoo', 'config', 'core_type', 'singbox');
 c.set('clashoo', 'config', 'singbox_active', name);
 c.set('clashoo', 'config', 'enable', '1');
+c.set('clashoo', 'config', 'dcore', dcore);
 sync_legacy_core_fields(c);
-c.commit('clashoo');
-let prepared = prepare_singbox_runtime();
-if (!prepared.success)
-  return { success: false, error: 'prepare_failed', message: prepared.message || '无法准备 sing-box 运行环境' };
-if (is_running()) system('service ' + get_service_name() + ' restart >/dev/null 2>&1');
+if (!c.commit('clashoo')) {
+  unlink(prepared.path);
+  return { success: false, error: 'commit_failed', message: '无法保存 sing-box 配置选择' };
+}
+if (system('mv -f ' + shell_quote(prepared.path) + ' ' + shell_quote(SINGBOX_RUNTIME_CONFIG) + ' >/dev/null 2>&1') != 0) {
+  unlink(prepared.path);
+  for (let key in previous) {
+    if (previous[key] == null) c.delete('clashoo', 'config', key);
+    else c.set('clashoo', 'config', key, previous[key]);
+  }
+  c.commit('clashoo');
+  return { success: false, error: 'runtime_failed', message: '无法提交 sing-box 运行配置' };
+}
+system('sh /usr/share/clashoo/rpc/rpc_async.sh ' + (running ? 'restart' : 'start') + ' >/dev/null 2>&1');
 return { success: true };
 }
 },

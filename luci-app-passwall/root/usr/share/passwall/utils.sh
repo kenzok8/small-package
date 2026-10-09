@@ -3,6 +3,7 @@
 # Copyright (C) 2026 Openwrt-Passwall Organization
 
 CONFIG=passwall
+DIRECT_GID=9911
 APP_PATH=/usr/share/${CONFIG}
 TMP_PATH=/tmp/etc/${CONFIG}
 TMP_PATH2=${TMP_PATH}_tmp
@@ -501,17 +502,6 @@ ln_run() {
 
 kill_all() {
 	kill -9 $(pidof "$@") >/dev/null 2>&1
-}
-
-get_subscribe_host(){
-	local line
-	uci show "${CONFIG}" | grep "=subscribe_list" | while read -r line; do
-		local section="$(echo "$line" | cut -d '.' -sf 2 | cut -d '=' -sf 1)"
-		local url="$(config_n_get $section url)"
-		[ -n "$url" ] || continue
-		url="$(host_from_url "$url")"
-		echo "$url"
-	done
 }
 
 gen_lanlist() {

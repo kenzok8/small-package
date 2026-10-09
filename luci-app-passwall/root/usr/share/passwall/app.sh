@@ -51,7 +51,7 @@ check_run_environment() {
 		[ -d "/lib/apk/packages" ] && { file_path="/lib/apk/packages"; file_ext=".list"; }
 
 		if [ "$USE_TABLES" = "iptables" ]; then
-			dep_list="iptables-mod-tproxy iptables-mod-socket iptables-mod-iprange iptables-mod-conntrack-extra kmod-ipt-nat"
+			dep_list="iptables-mod-tproxy iptables-mod-socket iptables-mod-iprange iptables-mod-conntrack-extra iptables-mod-extra kmod-ipt-nat"
 		else
 			dep_list="kmod-nft-socket kmod-nft-tproxy kmod-nft-nat kmod-nf-reject kmod-nf-reject6"
 			nftflag=1
@@ -150,9 +150,8 @@ run_singbox() {
 		direct_dns_port=$(echo ${direct_dns_tcp_server} | awk -F '#' '{print $2}')
 		json_add_string "direct_dns_tcp_server" "$(echo ${direct_dns_tcp_server} | awk -F '#' '{print $1}')"
 	else
-		local local_dns=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n1) | tr " " ",")
-		json_add_string "direct_dns_udp_server" "$(echo ${local_dns} | awk -F '#' '{print $1}')"
-		direct_dns_port=$(echo ${local_dns} | awk -F '#' '{print $2}')
+		json_add_string "direct_dns_udp_server" "$(echo ${LOCAL_DNS} | awk -F '#' '{print $1}')"
+		direct_dns_port=$(echo ${LOCAL_DNS} | awk -F '#' '{print $2}')
 	fi
 	json_add_string "direct_dns_port" "${direct_dns_port:-53}"
 	direct_dns_query_strategy=${direct_dns_query_strategy:-UseIP}
@@ -259,9 +258,8 @@ run_xray() {
 		direct_dns_port=$(echo ${direct_dns_tcp_server} | awk -F '#' '{print $2}')
 		json_add_string "direct_dns_tcp_server" "$(echo ${direct_dns_tcp_server} | awk -F '#' '{print $1}')"
 	else
-		local local_dns=$(echo -n $(echo "${LOCAL_DNS}" | sed "s/,/\n/g" | head -n1) | tr " " ",")
-		json_add_string "direct_dns_udp_server" "$(echo ${local_dns} | awk -F '#' '{print $1}')"
-		direct_dns_port=$(echo ${local_dns} | awk -F '#' '{print $2}')
+		json_add_string "direct_dns_udp_server" "$(echo ${LOCAL_DNS} | awk -F '#' '{print $1}')"
+		direct_dns_port=$(echo ${LOCAL_DNS} | awk -F '#' '{print $2}')
 	fi
 	json_add_string "direct_dns_port" "${direct_dns_port:-53}"
 
@@ -1087,7 +1085,7 @@ del_smartdns_conf() {
 start_dns() {
 	echolog "DNS域名解析："
 
-	local china_ng_local_dns=$(IFS=','; set -- $LOCAL_DNS; [ "${1%%[#:]*}" = "127.0.0.1" ] && echo "$1" || ([ -n "$2" ] && echo "$*" || echo "$1"))
+	local china_ng_local_dns="${LOCAL_DNS}"
 	local v2ray_local_dns
 	local direct_dns_mode=$(config_n_get @global[0] direct_dns_mode "auto")
 
@@ -1104,6 +1102,7 @@ start_dns() {
 	case "$direct_dns_mode" in
 		udp)
 			LOCAL_DNS=$(normalize_dns "$(config_n_get @global[0] direct_dns 223.5.5.5:53)")
+			set_cache_var "LOCAL_DNS" "$LOCAL_DNS"
 			china_ng_local_dns=${LOCAL_DNS}
 			v2ray_local_dns="direct_dns_udp_server=${LOCAL_DNS}"
 		;;
@@ -1115,6 +1114,7 @@ start_dns() {
 			#当全局（包括访问控制节点）开启chinadns-ng时，不启动新进程。
 			[ "$DNS_SHUNT" != "chinadns-ng" ] || [ "$ACL_RULE_DNSMASQ" = "1" ] && {
 				LOCAL_DNS="127.0.0.1#${NEXT_DNS_LISTEN_PORT}"
+				set_cache_var "LOCAL_DNS" "$LOCAL_DNS"
 				ln_run "$(first_type chinadns-ng)" chinadns-ng "/dev/null" -b :: -l ${NEXT_DNS_LISTEN_PORT} -c ${china_ng_local_dns} -d chn
 				echolog "  - ChinaDNS-NG(${LOCAL_DNS}) -> ${china_ng_local_dns}"
 				echolog "  * 请确保上游直连 DNS 支持 TCP 查询。"
@@ -1132,6 +1132,7 @@ start_dns() {
 		[ -z "$1" ] && echo "" || echo "$1" | awk -F',' '{for(i=1;i<=NF;i++){if($i !~ /#/) $i=$i"#53";} print $0;}' OFS=','
 	}
 	LOCAL_DNS=$(add_default_port "$LOCAL_DNS")
+	set_cache_var "LOCAL_DNS" "$LOCAL_DNS"
 	IPT_APPEND_DNS=$(add_default_port "${IPT_APPEND_DNS:-$LOCAL_DNS}")
 	echo "$IPT_APPEND_DNS" | grep -q -E "(^|,)$LOCAL_DNS(,|$)" || IPT_APPEND_DNS="${IPT_APPEND_DNS:+$IPT_APPEND_DNS,}$LOCAL_DNS"
 	[ -n "$DIRECT_DNS" ] && {
@@ -1565,7 +1566,7 @@ acl_app() {
 								chinadns_port=$(expr $chinadns_port + 1)
 								_china_ng_listen="127.0.0.1#${chinadns_port},::1#${chinadns_port}"
 
-								_chinadns_local_dns=$(IFS=','; set -- $LOCAL_DNS; [ "${1%%[#:]*}" = "127.0.0.1" ] && echo "$1" || ([ -n "$2" ] && echo "$1,$2" || echo "$1"))
+								_chinadns_local_dns="${LOCAL_DNS}"
 								_direct_dns_mode=$(config_n_get @global[0] direct_dns_mode "auto")
 								case "${_direct_dns_mode}" in
 									udp)
@@ -1695,6 +1696,7 @@ start() {
 		sleep 2
 	}
 	mkdir -p /tmp/etc /tmp/log $TMP_PATH $TMP_BIN_PATH $TMP_SCRIPT_FUNC_PATH $TMP_ROUTE_PATH $TMP_ACL_PATH $TMP_PATH2
+	set_cache_var "LOCAL_DNS" "$LOCAL_DNS"
 	get_config
 	export V2RAY_LOCATION_ASSET=$(config_n_get @global_rules[0] v2ray_location_asset "/usr/share/v2ray/")
 	export XRAY_LOCATION_ASSET=$V2RAY_LOCATION_ASSET
@@ -1883,6 +1885,7 @@ get_config() {
 		SMARTDNS_LISTEN_PORT=${NEXT_DNS_LISTEN_PORT}
 		NEXT_DNS_LISTEN_PORT=$(expr $NEXT_DNS_LISTEN_PORT + 1)
 		LOCAL_DNS="127.0.0.1#${SMARTDNS_LOCAL_PORT}"
+		set_cache_var "LOCAL_DNS" "$LOCAL_DNS"
 		set_cache_var "SMARTDNS_LOCAL_PORT" "${SMARTDNS_LOCAL_PORT}"
 	}
 }
@@ -1896,7 +1899,8 @@ get_local_dns() {
 
 	DEFAULT_DNS=$(uci show dhcp.@dnsmasq[0] | grep "\.server=" | awk -F '=' '{print $2}' | sed "s/'//g" | tr ' ' '\n' | grep -v "\/" | sed ':label;N;s/\n/,/;b label')
 	[ -z "${DEFAULT_DNS}" ] && [ "$(echo $ISP_DNS | tr ' ' '\n' | wc -l)" -ge 1 ] && DEFAULT_DNS=$(echo -n $ISP_DNS | tr ' ' '\n' | tr '\n' ',' | sed 's/,$//')
-	LOCAL_DNS="${DEFAULT_DNS:-119.29.29.29,223.5.5.5}"
+	LOCAL_DNS="${DEFAULT_DNS:-223.5.5.5}"
+	LOCAL_DNS="${LOCAL_DNS%%,*}"
 }
 
 get_local_dns

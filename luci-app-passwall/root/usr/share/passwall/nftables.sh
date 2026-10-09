@@ -838,12 +838,6 @@ filter_vpsip() {
 		echo "$ipv6_addrs" | insert_nftset $NFTSET_VPS6
 		echolog "  - [$?]加入所有IPv6节点服务器IP到nftset[$NFTSET_VPS6]直连完成"
 	}
-	#订阅方式为直连时
-	local subscribe_host=$(get_subscribe_host | grep -Ev "$EXCLUDE_VPSIP")
-	[ -n "$subscribe_host" ] && {
-		echo "$subscribe_host" | grep -Eo "$IPv4_REGEX" | grep -Ev "$EXCLUDE_VPSIP" | insert_nftset $NFTSET_VPS
-		echo "$subscribe_host" | grep -Eo "$IPv6_REGEX" | insert_nftset $NFTSET_VPS6
-	}
 }
 
 filter_server_port() {
@@ -1508,6 +1502,9 @@ add_firewall_rule() {
 	}
 
 	filter_direct_node_list > /dev/null 2>&1 &
+
+	nft "insert rule $NFTABLE_NAME mangle_output meta skgid $DIRECT_GID counter return comment \"PSW_DIRECT\""
+	nft "insert rule $NFTABLE_NAME nat_output meta skgid $DIRECT_GID counter return comment \"PSW_DIRECT\""
 
 	echolog "防火墙规则加载完成！"
 }
