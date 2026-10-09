@@ -11,6 +11,7 @@ global {
     lan_interface: br-lan
     wan_interface: auto
     auto_config_kernel_parameter: true
+    disable_waiting_network: false
     data_dir: '/etc/honk'
     log_file: '/var/log/honk/honk.log'
     store_subscribe: true

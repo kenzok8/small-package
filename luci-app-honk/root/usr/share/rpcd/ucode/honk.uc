@@ -331,7 +331,7 @@ function get_dashboard_info(req) {
 	let other_type = (requested_type == "zashboard") ? "doona" : "zashboard";
 	let other_default_ui = get_dashboard_dir(other_type);
 
-	if (parsed_native && parsed_native.enabled) {
+	if (parsed_native && parsed_native.enabled && parsed_native.listen) {
 		res.external_controller = parsed_native.listen;
 		res.host = parsed_native.host;
 		res.port = parsed_native.port || DEFAULT_PORT;
@@ -339,18 +339,16 @@ function get_dashboard_info(req) {
 
 		res.external_ui = (parsed_native.ui && parsed_native.ui != other_default_ui) ? parsed_native.ui : target_default_ui;
 
-		if (parsed_native.listen && parsed_native.ui && parsed_native.ui != other_default_ui) {
+		let index_path = res.external_ui + "/index.html";
+		let s = stat(index_path);
+		res.has_ui = (s && s.type == "file") ? true : false;
+
+		if (!res.has_ui) {
+			res.configured = true;
+		} else if (parsed_native.ui && parsed_native.ui != other_default_ui) {
 			res.configured = true;
 		} else {
 			res.configured = false;
-		}
-	}
-
-	if (res.external_ui) {
-		let index_path = res.external_ui + "/index.html";
-		let s = stat(index_path);
-		if (s && s.type == "file") {
-			res.has_ui = true;
 		}
 	}
 
@@ -441,48 +439,69 @@ function switch_dashboard_api(target_type) {
 	}
 
 	let target_ui = get_dashboard_dir(target_type);
+	let index_path = target_ui + "/index.html";
+	let s = stat(index_path);
+	let has_target_ui = (s && s.type == "file") ? true : false;
+
+	// If target UI files do not exist yet, do not point api.dae to a non-existent UI directory
+	// and do not restart honk into a fatal error if native API is already working.
+	if (!has_target_ui && !api_cfg.is_legacy && parsed_native && parsed_native.enabled && parsed_native.listen) {
+		return { success: true, type: target_type, has_ui: false, pending_download: true };
+	}
 
 	// Check if already correctly configured in api.dae
-	if (!api_cfg.is_legacy) {
-		if (parsed_native && parsed_native.enabled &&
-		    parsed_native.listen &&
-		    parsed_native.config_write &&
-		    parsed_native.ui == target_ui) {
-			return { success: true, type: target_type };
-		}
+	if (!api_cfg.is_legacy && parsed_native && parsed_native.enabled &&
+	    parsed_native.listen &&
+	    parsed_native.config_write &&
+	    parsed_native.ui == target_ui &&
+	    has_target_ui) {
+		return { success: true, type: target_type };
 	}
 
 	let api_content = readfile(api_file) || "";
-	let cleaned_api = remove_bracket_block(api_content, /^[#\/]*\s*clash_api\s*\{/);
-	cleaned_api = remove_bracket_block(cleaned_api, /^[#\/]*\s*native_api\s*\{/);
-	cleaned_api = replace(cleaned_api, /experimental\s*\{\s*\}/, "");
-
 	let sec = (parsed_native && parsed_native.secret && length(parsed_native.secret) >= 8) ? parsed_native.secret : DEFAULT_SECRET;
 	let listen = (parsed_native && parsed_native.listen) ? parsed_native.listen : (DEFAULT_HOST + ":" + DEFAULT_PORT);
-	let ui = target_ui;
 
+	if (!parsed_native) {
+		let clean = strip_dae_comments(api_content);
+		let sec_m = match(clean, /secret\s*:\s*['"]?([^'" \t\r\n]*)['"]?/);
+		let listen_m = match(clean, /listen\s*:\s*['"]?([^'" \t\r\n]+)['"]?/);
+		if (sec_m && length(sec_m[1]) >= 8) {
+			sec = sec_m[1];
+		}
+		if (listen_m) {
+			listen = listen_m[1];
+		}
+	}
+
+	let cleaned_api = api_content;
+	for (let iter = 0; iter < 10; iter++) {
+		let before = cleaned_api;
+		cleaned_api = remove_bracket_block(cleaned_api, /^[#\/]*\s*clash_api\s*\{/);
+		cleaned_api = remove_bracket_block(cleaned_api, /^[#\/]*\s*native_api\s*\{/);
+		cleaned_api = remove_bracket_block(cleaned_api, /^[#\/]*\s*experimental\s*\{/);
+		if (cleaned_api == before)
+			break;
+	}
+	cleaned_api = replace(cleaned_api, /[ \t]*experimental\s*\{\s*\}[ \t]*\n?/, "");
+
+	let ui_line = has_target_ui ? ("        ui: '" + target_ui + "'\n") : "";
 	let api_inner =
 "    native_api {\n" +
 "        enabled: true\n" +
 "        listen: '" + listen + "'\n" +
 "        secret: '" + sec + "'\n" +
-"        ui: '" + ui + "'\n" +
+ui_line +
 "        config_write: true\n" +
 "    }\n";
 
 	let default_block = "experimental {\n" + api_inner + "}\n";
-	let has_active_exp = match(cleaned_api, /(^|\n)[ \t]*experimental\s*\{/);
+	let base = trim(cleaned_api);
 	let new_api_content;
-	if (has_active_exp) {
-		new_api_content = replace(cleaned_api, /(experimental\s*\{[^\n]*\n?)/, "$1" + api_inner);
+	if (base == "") {
+		new_api_content = "# api.dae\n# Configure API access for HONK dashboards and controllers.\n\n" + default_block;
 	} else {
-		cleaned_api = remove_bracket_block(cleaned_api, /^[#\/]+\s*experimental\s*\{/);
-		let base = trim(cleaned_api);
-		if (base == "") {
-			new_api_content = "# api.dae\n# Configure API access for HONK dashboards and controllers.\n\n" + default_block;
-		} else {
-			new_api_content = base + "\n\n" + default_block;
-		}
+		new_api_content = base + "\n\n" + default_block;
 	}
 
 	writefile(api_file, new_api_content);

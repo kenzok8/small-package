@@ -1059,11 +1059,26 @@ msgstr "推荐留空"
 msgid "Redirect Port"
 msgstr "Redirect 端口"
 
+msgid "Reload"
+msgstr "重新加载"
+
+msgid "Reload Service"
+msgstr "重新加载服务"
+
+msgid "Reloading…"
+msgstr "重新加载中…"
+
 msgid "Refresh"
 msgstr "刷新"
 
 msgid "Refresh Access Check"
 msgstr "刷新访问检查"
+
+msgid "Restart"
+msgstr "重启"
+
+msgid "Restart Service"
+msgstr "重启服务"
 
 msgid "Regular domains use overseas DNS only and follow proxy rules; DoT/DoQ is blocked. Takes effect after restart.<br>"
 msgstr "普通域名只走境外 DNS 并遵守代理规则，阻断 DoT/DoQ。重启生效。<br>"

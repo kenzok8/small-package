@@ -247,7 +247,7 @@ function clKernelUnlock() {
 
 return view.extend({
   _busy:      false,
-  _op:        null,   /* 'start' | 'stop' | 'restart' | null */
+  _op:        null,   /* 'start' | 'stop' | 'restart' | 'reload' | null */
   _opTimers:  null,   /* array of setTimeout IDs for cleanup */
   _accessRefreshing: false,
   _coreSwitchBusy: false,
@@ -788,7 +788,29 @@ return view.extend({
           if (disabled) return;
           return running ? self._stop() : self._start();
         }
-      }, [E('span', { 'class': 'cl-service-knob' })])
+      }, [E('span', { 'class': 'cl-service-knob' })]),
+      E('button', {
+        type: 'button',
+        'class': 'btn cbi-button-action cl-btn-sm',
+        title: _("Restart Service"),
+        disabled: (disabled || !running) ? '' : null,
+        click: function (ev) {
+          ev.preventDefault();
+          if (disabled || !running) return;
+          return self._restart();
+        }
+      }, _("Restart")),
+      E('button', {
+        type: 'button',
+        'class': 'btn cbi-button-action cl-btn-sm',
+        title: _("Reload Service"),
+        disabled: (disabled || !running) ? '' : null,
+        click: function (ev) {
+          ev.preventDefault();
+          if (disabled || !running) return;
+          return self._reload();
+        }
+      }, _("Reload"))
     ]);
   },
 
@@ -1940,7 +1962,7 @@ return view.extend({
 
     // preflight: refuse start when no profile selected.
     // backend select_config also defends but toast is slow, UI would flash.
-    if (opKey === 'start' || opKey === 'restart') {
+    if (opKey === 'start' || opKey === 'restart' || opKey === 'reload') {
       var st0 = this._lastSt || {};
       var hasConfig = !!(st0.config || st0.conf_path);
       if (!hasConfig) {
@@ -1962,7 +1984,7 @@ return view.extend({
         btn.setAttribute('aria-pressed', newRunning ? 'true' : 'false');
         btn.className = 'cl-service-switch' + (newRunning ? ' is-on' : ' is-off');
       }
-      self._showOpMsg(opKey === 'stop' ? _("Stopping…") : _("Starting…"));
+      self._showOpMsg(opKey === 'stop' ? _("Stopping…") : opKey === 'reload' ? _("Reloading…") : _("Starting…"));
     }
 
     var maxWait = opKey === 'stop' ? 15000 : 35000;
@@ -2002,6 +2024,7 @@ return view.extend({
   _start:   function () { return this._svc(function () { return clashoo.start(); },   'start'); },
   _stop:    function () { return this._svc(function () { return clashoo.stop();  },   'stop'); },
   _restart: function () { return this._svc(function () { return clashoo.restart(); }, 'restart'); },
+  _reload:  function () { return this._svc(function () { return clashoo.reload(); },  'reload'); },
 
   _updSubs: function (ev) {
     var btn = ev && ev.target;

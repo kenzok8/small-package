@@ -356,3 +356,6 @@ msgstr "未运行"
 
 msgid "Zashboard"
 msgstr "Zashboard"
+
+msgid "Saved, but the panel files are not installed yet — download the panel first."
+msgstr "配置已保存，但面板文件尚未安装，请先下载面板。"

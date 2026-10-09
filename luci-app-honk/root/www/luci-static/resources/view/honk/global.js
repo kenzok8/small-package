@@ -63,19 +63,27 @@ return view.extend({
 		return this.handleSave(ev).then(function() {
 			var newDash = uci.get('honk', sid, 'dashboard') || 'none';
 
-			return (newDash !== oldDash ? honk.callHonkSwitchDashboardApi(newDash) : honk.callHonkReload())
-				.then(function(resp) {
-					if (!resp || resp.success === false)
-						throw new Error((resp && resp.message) || _('Service did not accept the request'));
-
-					if (!honk.isServiceEnabled())
-						return;
-
-					return honk.waitForHonkState(true).then(function(st) {
-						if (st.running === false)
-							throw new Error(_('HONK did not come back up; check the logs'));
-					});
+			if (newDash !== oldDash) {
+				return honk.switchDashboardAndWait(newDash).then(function(res) {
+					if (res && res.pending)
+						honk.showNotification(null, E('p', _('Saved, but the panel files are not installed yet — download the panel first.')), 'warning');
+					else if (res.running === false)
+						throw new Error(_('HONK did not come back up; check the logs'));
 				});
+			}
+
+			return honk.callHonkReload().then(function(resp) {
+				if (!resp || resp.success === false)
+					throw new Error((resp && resp.message) || _('Service did not accept the request'));
+
+				if (!honk.isServiceEnabled())
+					return;
+
+				return honk.waitForHonkState(true).then(function(st) {
+					if (st.running === false)
+						throw new Error(_('HONK did not come back up; check the logs'));
+				});
+			});
 		}).then(function() {
 			return ui.changes.apply(mode == '0');
 		}).catch(function(err) {

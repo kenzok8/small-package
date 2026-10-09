@@ -120,6 +120,23 @@ function waitForHonkState(wantRunning, attempts) {
 	});
 }
 
+function switchDashboardAndWait(type) {
+	return callHonkSwitchDashboardApi(type).then(function(resp) {
+		if (!resp || resp.success === false)
+			throw new Error((resp && resp.message) || _('Service did not accept the request'));
+
+		if (resp.pending_download)
+			return { pending: true };
+
+		if (!isServiceEnabled())
+			return { pending: false, running: null };
+
+		return waitForHonkState(true).then(function(st) {
+			return { pending: false, running: st.running };
+		});
+	});
+}
+
 var DOWNLOAD_MAX_TICKS = 900;
 var DOWNLOAD_STALE_TICKS = 90;
 var activeDownloadCancel = null;
@@ -790,6 +807,7 @@ return baseclass.extend({
 	createConfigFileView: createConfigFileView,
 	triggerDashboardDownload: triggerDashboardDownload,
 	waitForHonkState: waitForHonkState,
+	switchDashboardAndWait: switchDashboardAndWait,
 	isServiceEnabled: isServiceEnabled,
 	showNotification: showNotification
 });

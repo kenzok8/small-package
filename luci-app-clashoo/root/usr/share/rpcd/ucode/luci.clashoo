@@ -2145,8 +2145,16 @@ call: function() {
 let c = cursor();
 c.load('clashoo');
 sync_legacy_core_fields(c);
+let enabled = c.get('clashoo', 'config', 'enable') == '1';
+let conf_path = c.get('clashoo', 'config', 'use_config') || '';
 c.commit('clashoo');
 let rc = system('uci commit clashoo >/dev/null 2>&1');
+// Issue #67: auto-start on first configuration. If the service is enabled
+// but not running (fresh install where the user configured settings but the
+// service never started), start it now so no reboot or manual Startup-page
+// restart is needed. Fire-and-forget like the other service operations.
+if (rc == 0 && enabled && conf_path != '' && !is_running())
+	system('sh /usr/share/clashoo/rpc/rpc_async.sh start >/dev/null 2>&1');
 return { success: rc === 0 };
 }
 },
