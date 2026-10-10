@@ -1149,7 +1149,16 @@ local methods = {
 						best_c.tx_speed = nu and (nu.tx_speed_bytes or 0) or 0
 						best_c.rx_bytes = nu and (nu.rx_bytes or 0) or 0
 						best_c.tx_bytes = nu and (nu.tx_bytes or 0) or 0
-						best_c.idle_time = nu and nu.idle_time or nil
+						local wifi_idle = best_c.inactive_ms and math.floor(best_c.inactive_ms / 1000) or nil
+						if (best_c.rx_speed and best_c.rx_speed > 0) or (best_c.tx_speed and best_c.tx_speed > 0) then
+							best_c.idle_time = 0
+						elseif wifi_idle and nu and nu.idle_time then
+							best_c.idle_time = math.min(wifi_idle, nu.idle_time)
+						elseif wifi_idle then
+							best_c.idle_time = wifi_idle
+						else
+							best_c.idle_time = nu and nu.idle_time or nil
+						end
 
 						best_c.icon = get_device_icon(best_c.hostname, cmac)
 
@@ -1228,7 +1237,7 @@ local methods = {
 							tx_speed = nu.tx_speed_bytes or 0,
 							rx_bytes = nu.rx_bytes or 0,
 							tx_bytes = nu.tx_bytes or 0,
-							idle_time = nu.idle_time or nil
+							idle_time = ((nu.rx_speed_bytes and nu.rx_speed_bytes > 0) or (nu.tx_speed_bytes and nu.tx_speed_bytes > 0)) and 0 or (nu.idle_time or nil)
 						}
 						handled_macs[cmac] = true
 						final_clients[#final_clients + 1] = c
@@ -1273,7 +1282,7 @@ local methods = {
 						tx_speed = vu.tx_speed_bytes or 0,
 						rx_bytes = vu.rx_bytes or 0,
 						tx_bytes = vu.tx_bytes or 0,
-						idle_time = vu.idle_time or nil
+						idle_time = ((vu.rx_speed_bytes and vu.rx_speed_bytes > 0) or (vu.tx_speed_bytes and vu.tx_speed_bytes > 0)) and 0 or (vu.idle_time or nil)
 					}
 					handled_macs[vkey] = true
 					if vmac ~= "" then handled_macs[vmac] = true end

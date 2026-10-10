@@ -240,6 +240,7 @@ test("only associated and authorized Wi-Fi clients are counted; PHY uses Mbps", 
 	state.ubus["luci.natflow"] = {get_mac_users = {result = {{mac = b_mac, access_type = "wireless", ip = {"192.168.1.99"}}}}}
 	local topology = instantiate(state).methods.get_topology.call()
 	assert(#topology.clients == 1 and topology.clients[1].mac == client_mac)
+	assert(topology.clients[1].idle_time == 0)
 end)
 
 test("roaming ownership uses per-node activity before signal strength", function()

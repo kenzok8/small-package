@@ -73,7 +73,7 @@ url_test_node() {
 		fi
 		sleep 2s
 		probeUrl=$(config_n_get @global_other[0] url_test_url https://www.google.com/generate_204)
-		result=$(curl --connect-timeout 3 --max-time 5 -o /dev/null -I -skL -w "%{http_code}:%{time_pretransfer}" "$@" -x "$curlx" "${probeUrl}")
+		result=$(curl --connect-timeout 3 --max-time 5 -o /dev/null -I -sk -w "%{http_code}:%{time_pretransfer}:%{time_starttransfer}" "$@" -x "$curlx" "${probeUrl}") || result=0
 		# 结束 SS 插件进程
 		if [ "$_type" != "socks" ]; then
 			pid_file="${TMP_PATH}/${test_flag}_plugin.pid"

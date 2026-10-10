@@ -42,4 +42,18 @@ check([
 ], { ac: null, A: 'ac', B: 'ac' });
 check([{ id: 'A' }, { id: 'B', parent_id: 'A' }], { A: null, B: 'A' });
 assert.strictEqual(view.buildNodeTree([]), null);
-console.log('5 frontend topology regression tests passed');
+
+// formatLastActive tests
+assert.strictEqual(view.formatLastActive(0), 'Just now');
+assert.strictEqual(view.formatLastActive(5), 'Just now');
+assert.strictEqual(view.formatLastActive(30), '30 seconds ago');
+assert.strictEqual(view.formatLastActive(60), '1 minutes ago');
+assert.strictEqual(view.formatLastActive(125), '2m 5s ago');
+assert.strictEqual(view.formatLastActive(3600), '1 hours ago');
+assert.strictEqual(view.formatLastActive(3720), '1h 2m ago');
+assert.strictEqual(view.formatLastActive(86400), '1 days ago');
+assert.strictEqual(view.formatLastActive(90000), '1d 1h ago');
+assert.strictEqual(view.formatLastActive(-1), '-');
+assert.strictEqual(view.formatLastActive(null), '-');
+
+console.log('6 frontend topology regression tests passed');

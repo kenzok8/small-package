@@ -313,7 +313,7 @@ msgid "IPv4 Addresses"
 msgstr "IPv4 地址"
 
 msgid "Idle Time"
-msgstr "空闲时间"
+msgstr "最后活跃"
 
 msgid "Minimap View"
 msgstr "微缩拓扑视图"
@@ -386,4 +386,31 @@ msgstr "当前访问设备 (本机)"
 
 msgid "Local Device"
 msgstr "本机标识"
+
+msgid "Last Active"
+msgstr "最后活跃"
+
+msgid "Just now"
+msgstr "刚刚"
+
+msgid "%d seconds ago"
+msgstr "%d 秒前"
+
+msgid "%dm %ds ago"
+msgstr "%d分 %d秒前"
+
+msgid "%d minutes ago"
+msgstr "%d 分钟前"
+
+msgid "%dh %dm ago"
+msgstr "%d小时 %d分前"
+
+msgid "%d hours ago"
+msgstr "%d 小时前"
+
+msgid "%dd %dh ago"
+msgstr "%d天 %d小时前"
+
+msgid "%d days ago"
+msgstr "%d 天前"
 

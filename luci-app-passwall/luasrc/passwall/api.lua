@@ -169,7 +169,7 @@ function del_cache_var(key)
 end
 
 function set_cache_var(key, val)
-	sys.call(string.format('. /usr/share/passwall/utils.sh ; set_cache_var "%s" "%s"', key, val))
+	sys.call(string.format('. /usr/share/passwall/utils.sh ; set_cache_var %s %s', util.shellquote(tostring(key)), util.shellquote(tostring(val))))
 end
 
 function get_cache_var(key)
