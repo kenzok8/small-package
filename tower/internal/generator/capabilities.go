@@ -66,9 +66,9 @@ func supportsProtocol(target model.ClientTarget, kind model.ProxyKind) bool {
 		}
 	case model.FamilyDAE:
 		switch kind {
-		case model.KindShadowsocks, model.KindShadowsocksR, model.KindVMess, model.KindVLESS,
+		case model.KindShadowsocks, model.KindVMess, model.KindVLESS,
 			model.KindTrojan, model.KindHysteria, model.KindHysteria2, model.KindTUIC,
-			model.KindSOCKS5, model.KindHTTP:
+			model.KindSOCKS5, model.KindAnyTLS:
 			return true
 		default:
 			return false

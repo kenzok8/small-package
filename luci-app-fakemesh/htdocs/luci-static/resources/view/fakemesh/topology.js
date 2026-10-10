@@ -220,7 +220,8 @@ return view.extend({
 	},
 
 	showNodeModal: function(node) {
-		var isController = (node.role === 'controller') || (node.id === 'ac');
+		var isController = (node.role === 'controller') || (!node.role && node.id === 'ac');
+		var isLocal = (this.data && this.data.current_node_id) ? (node.id === this.data.current_node_id) : false;
 		var uplinkText = _('Root Gateway');
 		if (node.uplink && node.uplink.type === 'wireless') {
 			uplinkText = (node.uplink.band || '5G') + ' Mesh (' + (node.uplink.signal || 0) + ' dBm, ' + (node.uplink.rx_bitrate || 0) + ' Mbps)';
@@ -232,6 +233,7 @@ return view.extend({
 
 		var body = E('div', { 'class': 'fm-modal-body' }, [
 			E('table', { 'class': 'table' }, [
+				isLocal ? E('tr', {}, [ E('td', { 'class': 'font-weight-bold text-success' }, _('Local Device')), E('td', {}, E('span', { 'class': 'badge badge-local' }, '📍 ' + _('Current Device (This Node)'))) ]) : E([]),
 				E('tr', {}, [ E('td', { 'class': 'font-weight-bold' }, _('Hostname')), E('td', {}, node.hostname || '-') ]),
 				E('tr', {}, [ E('td', { 'class': 'font-weight-bold' }, _('Role')), E('td', {}, isController ? _('Controller (AC)') : (node.uplink && node.uplink.type === 'wired' ? _('Wired AP') : _('Agent Node'))) ]),
 				E('tr', {}, [ E('td', { 'class': 'font-weight-bold' }, _('Upstream Node')), E('td', {}, upstreamNodeName) ]),
@@ -243,13 +245,15 @@ return view.extend({
 				E('tr', {}, [ E('td', { 'class': 'font-weight-bold' }, _('Backhaul Link')), E('td', {}, uplinkText) ]),
 				node.mesh_bssid ? E('tr', {}, [ E('td', { 'class': 'font-weight-bold' }, _('Mesh BSSID')), E('td', {}, node.mesh_bssid) ]) : E([])
 			]),
-			node.ip ? E('div', { 'style': 'margin-top:15px; text-align:right;' }, [
+			(!isLocal && node.ip) ? E('div', { 'style': 'margin-top:15px; text-align:right;' }, [
 				E('a', {
 					'class': 'btn btn-success',
 					'href': 'http://' + node.ip + '/',
 					'target': '_blank'
 				}, _('Open Web Admin') + ' ↗')
-			]) : E([])
+			]) : (isLocal ? E('div', { 'style': 'margin-top:15px; text-align:right;' }, [
+				E('span', { 'class': 'badge badge-local', 'style': 'font-size:12px; padding:6px 12px;' }, '📍 ' + _('Current Device (This Node)'))
+			]) : E([]))
 		]);
 		this.showDetailModal(_('Node Details: ') + (node.hostname || node.ip), body);
 	},
@@ -420,7 +424,8 @@ return view.extend({
 
 	renderNodeCard: function(node, isRoot, nodeClients) {
 		var self = this;
-		var isController = (node.role === 'controller') || (node.id === 'ac');
+		var isController = (node.role === 'controller') || (!node.role && node.id === 'ac');
+		var isLocal = (self.data && self.data.current_node_id) ? (node.id === self.data.current_node_id) : false;
 		var isWired = node.uplink && node.uplink.type === 'wired';
 		var roleBadge = isController ? _('Controller (AC)') : (isWired ? _('Wired AP') : _('Agent Node'));
 
@@ -431,6 +436,7 @@ return view.extend({
 				E('div', { 'class': 'fm-node-role' }, [
 					E('span', { 'class': 'badge ' + (isController ? 'badge-controller' : (isWired ? 'badge-wired' : 'badge-agent')) }, roleBadge),
 					(node.hop_count && node.hop_count > 0) ? E('span', { 'class': 'badge badge-hop' }, _('Hop %d').format(node.hop_count)) : E([]),
+					isLocal ? E('span', { 'class': 'badge badge-local' }, '📍 ' + _('This Device')) : E([]),
 					E('span', { 'class': 'fm-status-dot ' + (node.online ? 'online' : 'offline') })
 				])
 			])
@@ -461,16 +467,16 @@ return view.extend({
 
 		var footer = E('div', { 'class': 'fm-node-footer' }, [
 			E('span', { 'class': 'badge badge-secondary' }, clientCount + ' ' + _('Devices')),
-			node.ip ? E('a', {
+			(!isLocal && node.ip) ? E('a', {
 				'class': 'btn btn-xs btn-outline-primary',
 				'href': 'http://' + node.ip + '/',
 				'target': '_blank',
 				'click': function(ev) { ev.stopPropagation(); }
-			}, _('Manage') + ' ↗') : E([])
+			}, _('Manage') + ' ↗') : (isLocal ? E('span', { 'class': 'badge badge-local' }, '📍 ' + _('This Device')) : E([]))
 		]);
 
 		return E('div', {
-			'class': 'fm-node-card ' + (isController ? 'controller-card' : 'agent-card'),
+			'class': 'fm-node-card ' + (isController ? 'controller-card' : 'agent-card') + (isLocal ? ' local-node' : ''),
 			'click': function() {
 				self.showNodeModal(node);
 			}
@@ -484,7 +490,7 @@ return view.extend({
 
 	renderNodeBranch: function(node, depth, clientsByNode) {
 		var self = this;
-		var isRoot = (depth === 0) || (node.role === 'controller') || (node.id === 'ac');
+		var isRoot = (depth === 0) || (node.role === 'controller') || (!node.role && node.id === 'ac');
 		var nodeClients = clientsByNode[node.id] || [];
 		var children = node.children || [];
 
@@ -523,7 +529,8 @@ return view.extend({
 
 	renderMinimapNodeChip: function(node, isRoot, nodeClients, hasChildren) {
 		var self = this;
-		var isController = (node.role === 'controller') || (node.id === 'ac');
+		var isController = (node.role === 'controller') || (!node.role && node.id === 'ac');
+		var isLocal = (self.data && self.data.current_node_id) ? (node.id === self.data.current_node_id) : false;
 		var isWired = node.uplink && node.uplink.type === 'wired';
 		var isSelected = (node.id === self.selectedNodeId);
 		var roleBadge = isController ? _('Controller (AC)') : (isWired ? _('Wired AP') : _('Agent Node'));
@@ -542,6 +549,7 @@ return view.extend({
 		var subBadges = E('div', { 'class': 'fm-mini-sub-badge' }, [
 			E('span', { 'class': 'badge ' + (isController ? 'badge-controller' : (isWired ? 'badge-wired' : 'badge-agent')) }, roleBadge),
 			(node.hop_count && node.hop_count > 0) ? E('span', { 'class': 'badge badge-hop' }, _('Hop %d').format(node.hop_count)) : E([]),
+			isLocal ? E('span', { 'class': 'badge badge-local' }, '📍 ' + _('This Device')) : E([]),
 			isSelected ? E('span', { 'class': 'badge badge-selected' }, _('Currently Selected')) : E([]),
 			E('span', { 'class': 'fm-status-dot ' + (node.online ? 'online' : 'offline') })
 		]);
@@ -558,6 +566,7 @@ return view.extend({
 		]);
 
 		var chipClasses = ['fm-minimap-node'];
+		if (isLocal) chipClasses.push('local-node');
 		if (isSelected) chipClasses.push('selected');
 		if (isController) chipClasses.push('controller-chip');
 		else chipClasses.push('agent-chip');
@@ -580,7 +589,7 @@ return view.extend({
 
 	renderMinimapBranch: function(node, depth, clientsByNode) {
 		var self = this;
-		var isRoot = (depth === 0) || (node.role === 'controller') || (node.id === 'ac');
+		var isRoot = (depth === 0) || (node.role === 'controller') || (!node.role && node.id === 'ac');
 		var nodeClients = clientsByNode[node.id] || [];
 		var children = node.children || [];
 		var hasChildren = children.length > 0;
@@ -636,7 +645,8 @@ return view.extend({
 		}
 		if (!selectedNode) return E([]);
 
-		var isController = (selectedNode.role === 'controller') || (selectedNode.id === 'ac');
+		var isController = (selectedNode.role === 'controller') || (!selectedNode.role && selectedNode.id === 'ac');
+		var isLocal = (data && data.current_node_id) ? (selectedNode.id === data.current_node_id) : false;
 		var isWired = selectedNode.uplink && selectedNode.uplink.type === 'wired';
 		var roleBadge = isController ? _('Controller (AC)') : (isWired ? _('Wired AP') : _('Agent Node'));
 		var allNodeClients = clientsByNode[selectedNode.id] || [];
@@ -681,11 +691,15 @@ return view.extend({
 					'class': 'btn btn-sm btn-info',
 					'click': function() { self.showNodeModal(selectedNode); }
 				}, _('View Full Node Specs') + ' 🔍'),
-				selectedNode.ip ? E('a', {
+				isLocal ? E('span', {
+					'class': 'badge badge-local',
+					'style': 'align-self: center; font-size: 12px; padding: 6px 12px; margin-left: 6px;'
+				}, '📍 ' + _('Current Device (This Node)')) :
+				(selectedNode.ip ? E('a', {
 					'class': 'btn btn-sm btn-success',
 					'href': 'http://' + selectedNode.ip + '/',
 					'target': '_blank'
-				}, _('Open Web Admin') + ' ↗') : E([])
+				}, _('Open Web Admin') + ' ↗') : E([]))
 			])
 		]);
 
@@ -715,6 +729,8 @@ return view.extend({
 					' ',
 					(selectedNode.hop_count && selectedNode.hop_count > 0) ? E('span', { 'class': 'badge badge-hop' }, _('Hop %d').format(selectedNode.hop_count)) : E([]),
 					' ',
+					isLocal ? E('span', { 'class': 'badge badge-local' }, '📍 ' + _('This Device')) : E([]),
+					(isLocal ? ' ' : ''),
 					E('span', { 'class': 'fm-status-dot ' + (selectedNode.online ? 'online' : 'offline') })
 				])
 			]),
@@ -788,7 +804,7 @@ return view.extend({
 		nodes.forEach(function(n) {
 			if (n.parent_id && nodeMap[n.parent_id]) {
 				nodeMap[n.parent_id].children.push(n);
-			} else if (n.role === 'controller' || n.id === 'ac') {
+			} else if (n.role === 'controller' || (!n.role && n.id === 'ac')) {
 				root = n;
 			}
 		});
@@ -1254,6 +1270,7 @@ return view.extend({
 			.badge-vpn { background: #f3e8ff; color: #7e22ce; font-weight: 600; font-size: 11px; }
 			.badge-controller { background: #007bff; color: #fff; font-size: 11px; }
 			.badge-agent { background: #28a745; color: #fff; font-size: 11px; }
+			.badge-local { background: #10b981; color: #fff; font-size: 10px; font-weight: 600; }
 			.badge-hop { background: #6c757d; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
 			.btn-xs { padding: 2px 6px; font-size: 11px; border-radius: 4px; }
 
@@ -1392,6 +1409,17 @@ return view.extend({
 				border-color: #0284c7 !important;
 				background: #f0f9ff !important;
 				box-shadow: 0 0 0 3px rgba(2,132,199,0.25), 0 6px 16px rgba(2,132,199,0.15) !important;
+			}
+			.fm-minimap-node.local-node {
+				border-color: #10b981;
+			}
+			.fm-minimap-node.local-node:not(.selected) {
+				border-color: #10b981;
+				box-shadow: 0 0 0 2px rgba(16,185,129,0.3), 0 4px 12px rgba(0,0,0,0.06);
+			}
+			.fm-node-card.local-node {
+				border: 2px solid #10b981;
+				box-shadow: 0 0 0 2px rgba(16,185,129,0.25), 0 4px 12px rgba(0,0,0,0.05);
 			}
 			.fm-minimap-node::before {
 				content: '';
@@ -1570,6 +1598,9 @@ return view.extend({
 	render: function(topoData) {
 		this.injectStyles();
 		this.data = topoData || {};
+		if (this.data.current_node_id) {
+			this.selectedNodeId = this.data.current_node_id;
+		}
 		this.pollData();
 
 		var summaryBar = E('div', { 'id': 'fm-topology-summary' }, [

@@ -378,3 +378,12 @@ msgstr "根节点"
 msgid "Hop %d"
 msgstr "第 %d 级"
 
+msgid "This Device"
+msgstr "本机"
+
+msgid "Current Device (This Node)"
+msgstr "当前访问设备 (本机)"
+
+msgid "Local Device"
+msgstr "本机标识"
+

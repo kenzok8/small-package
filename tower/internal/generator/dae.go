@@ -151,6 +151,20 @@ func compileDAE(opts Options) (daePlan, PreflightResult) {
 		}
 	}
 	nodes := FilterNodes(opts.Nodes, opts.Protocols)
+	// The dae core loads a fixed protocol set (no SSR/HTTP/WireGuard/Snell);
+	// silently skip unsupported nodes so the exported config stays loadable by
+	// both daed and honk.
+	{
+		kept := make([]model.ProxyNode, 0, len(nodes))
+		for i, n := range nodes {
+			if !supportsProtocol(model.ClientDAE, n.Kind) {
+				warning("node_protocol", fmt.Sprintf("nodes[%d]", i), fmt.Sprintf("节点 %q 使用 dae 不支持的协议，已跳过", n.Name))
+				continue
+			}
+			kept = append(kept, n)
+		}
+		nodes = kept
+	}
 	if opts.Strict && len(nodes) == 0 {
 		issue("nodes_empty", "nodes", "严格导出至少需要一个已选择的节点")
 	}
@@ -526,11 +540,11 @@ func validDAENodeURI(node model.ProxyNode, link string) bool {
 		return false
 	}
 	allowed := map[model.ProxyKind]map[string]bool{
-		model.KindShadowsocks: {"ss": true}, model.KindShadowsocksR: {"ssr": true},
+		model.KindShadowsocks: {"ss": true},
 		model.KindVMess: {"vmess": true}, model.KindVLESS: {"vless": true},
 		model.KindTrojan: {"trojan": true}, model.KindHysteria: {"hysteria": true},
 		model.KindHysteria2: {"hysteria2": true, "hy2": true}, model.KindTUIC: {"tuic": true},
-		model.KindSOCKS5: {"socks5": true}, model.KindHTTP: {"http": true, "https": true},
+		model.KindSOCKS5: {"socks5": true}, model.KindAnyTLS: {"anytls": true},
 	}
 	return allowed[node.Kind][strings.ToLower(u.Scheme)]
 }

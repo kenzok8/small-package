@@ -404,7 +404,138 @@ local methods = {
 	get_topology = {
 		call = function()
 			local conn = ubus_has and ubus.connect()
-			local ac_node = collect_local_node_info()
+			local local_info = collect_local_node_info()
+
+			if local_info.role ~= "controller" then
+				local ac_ip = nil
+
+				-- 1. Default gateway from route table
+				local route = read_file("/proc/net/route")
+				for line in route:gmatch("[^\r\n]+") do
+					local iface, dest, gw = line:match("^([%w%-_]+)%s+([%x]+)%s+([%x]+)")
+					if iface and dest == "00000000" and gw and gw ~= "00000000" then
+						local b1 = tonumber(gw:sub(7, 8), 16)
+						local b2 = tonumber(gw:sub(5, 6), 16)
+						local b3 = tonumber(gw:sub(3, 4), 16)
+						local b4 = tonumber(gw:sub(1, 2), 16)
+						local rip = string.format("%d.%d.%d.%d", b1, b2, b3, b4)
+						if rip ~= "0.0.0.0" then
+							ac_ip = rip
+							break
+						end
+					end
+				end
+
+				-- 2. Try umdns discovery if route gateway not found
+				if (not ac_ip or ac_ip == "") and conn then
+					local umdns_data = conn:call("umdns", "browse", {}) or {}
+					for sname, sinfo in pairs(umdns_data) do
+						if sname:match("^_fakemesh_") then
+							for _, inst in pairs(sinfo) do
+								if inst.ipv4 and inst.ipv4 ~= "" then
+									ac_ip = inst.ipv4
+									break
+								end
+							end
+						end
+						if ac_ip then break end
+					end
+				end
+
+				local my_node_id = "node_" .. (local_info.mac ~= "" and local_info.mac:gsub(":", "") or local_info.ip:gsub("%.", "_"))
+
+				-- Fetch full topology from upstream controller
+				if ac_ip and ac_ip ~= "" then
+					local post_payload = '{"jsonrpc":"2.0","id":1,"method":"call","params":["00000000000000000000000000000000","luci.fakemesh","get_topology",{}]}'
+					local cmd = string.format("uclient-fetch -q -O - --timeout=3 'http://%s/ubus' --post-data='%s' 2>/dev/null", ac_ip, post_payload)
+					local p = io.popen(cmd)
+					if p then
+						local raw = p:read("*a")
+						p:close()
+						if raw and raw ~= "" then
+							local ok, resp = pcall(json.parse, raw)
+							if ok and resp and resp.result and resp.result[2] then
+								local topo = resp.result[2]
+								topo.current_node_id = my_node_id
+								if conn then conn:close() end
+								return topo
+							end
+						end
+					end
+				end
+
+				-- Fallback if AC is unreachable: return standalone view of this agent
+				local my_node = clone_table(local_info)
+				my_node.id = my_node_id
+				my_node.online = true
+				my_node.parent_id = "ac"
+				my_node.parent_ip = ac_ip or ""
+				my_node.parent_name = (ac_ip and ac_ip ~= "") and ("X-WRT (" .. ac_ip .. ") [离线]") or "X-WRT (离线)"
+				my_node.hop_count = 1
+
+				local ac_stub = {
+					id = "ac",
+					role = "controller",
+					hostname = "X-WRT",
+					ip = ac_ip or "192.168.16.1",
+					mac = "",
+					model = "FakeMesh Controller",
+					online = false,
+					uptime = 0,
+					hop_count = 0,
+					parent_name = "Internet Gateway",
+					upstream = { type = "root", name = "Internet Gateway", online = false },
+					downstream = { total_count = 0, wireless_count = 0, wired_count = 0, vpn_count = 0 },
+					radios = {},
+					wired_ports = {}
+				}
+
+				local clients = local_info.clients or {}
+				for _, c in ipairs(clients) do
+					c.node_id = my_node_id
+				end
+
+				local summary = {
+					node_count = 2,
+					online_agents = 1,
+					offline_agents = 0,
+					client_count = #clients,
+					wifi_5g = 0,
+					wifi_2g = 0,
+					wired = 0,
+					vpn = 0,
+					total_rx_speed = 0,
+					total_tx_speed = 0,
+					max_hops = 1,
+					wireless_nodes = (my_node.upstream and my_node.upstream.type == "wireless") and 1 or 0,
+					wired_nodes = (my_node.upstream and my_node.upstream.type == "wired") and 1 or 0
+				}
+				for _, c in ipairs(clients) do
+					if c.access_type == "wireless" then
+						if c.band == "5G" then summary.wifi_5g = summary.wifi_5g + 1
+						else summary.wifi_2g = summary.wifi_2g + 1 end
+					elseif c.access_type == "wired" then
+						summary.wired = summary.wired + 1
+					elseif c.access_type == "vpn" then
+						summary.vpn = summary.vpn + 1
+					end
+					summary.total_rx_speed = summary.total_rx_speed + (c.rx_speed or 0)
+					summary.total_tx_speed = summary.total_tx_speed + (c.tx_speed or 0)
+				end
+
+				if conn then conn:close() end
+
+				return {
+					mesh_id = local_info.mesh_id or "fakemesh",
+					timestamp = os.time(),
+					current_node_id = my_node_id,
+					nodes = { ac_stub, my_node },
+					clients = clients,
+					summary = summary
+				}
+			end
+
+			local ac_node = local_info
 			ac_node.id = "ac"
 			ac_node.parent_id = nil
 			ac_node.online = true
@@ -1083,6 +1214,7 @@ local methods = {
 			return {
 				mesh_id = (exec("uci -q get fakemesh.default.id 2>/dev/null")):gsub("%s+", ""),
 				controller_ip = ac_node.ip,
+				current_node_id = "ac",
 				timestamp = os.time(),
 				nodes = nodes,
 				clients = final_clients,

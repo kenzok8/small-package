@@ -15,10 +15,10 @@
 		}
 	},
 	"unauthenticated": {
-		"description": "Allow unauthenticated get_node_info for FakeMesh topology",
+		"description": "Allow unauthenticated get_node_info and get_topology for FakeMesh topology",
 		"read": {
 			"ubus": {
-				"luci.fakemesh": [ "get_node_info" ]
+				"luci.fakemesh": [ "get_node_info", "get_topology" ]
 			}
 		}
 	}
