@@ -147,26 +147,11 @@ msgstr "FakeMesh ID"
 msgid "Not Configured"
 msgstr "未配置"
 
-msgid "Topology Mode"
-msgstr "拓扑模式"
-
-msgid "Hybrid (Wired + Wireless)"
-msgstr "混合组网 (有线+无线)"
-
 msgid "Wireless Mesh"
 msgstr "无线 Mesh"
 
-msgid "Wired AP Network"
-msgstr "有线 AP 组网"
-
-msgid "Hops"
-msgstr "跳级联"
-
 msgid "Cascade Hop"
 msgstr "级联层级"
-
-msgid "Hop "
-msgstr "第 "
 
 msgid "Mesh Nodes"
 msgstr "组网节点"
@@ -198,11 +183,11 @@ msgstr "全部终端"
 msgid "Close"
 msgstr "关闭"
 
-msgid "Node Details: "
-msgstr "节点详情: "
+msgid "Node Details"
+msgstr "节点详情"
 
-msgid "Client Details: "
-msgstr "终端详情: "
+msgid "Client Details"
+msgstr "终端详情"
 
 msgid "Hostname"
 msgstr "主机名"
@@ -218,9 +203,6 @@ msgstr "硬件型号"
 
 msgid "Uptime"
 msgstr "运行时间"
-
-msgid "Uptime: "
-msgstr "运行时间: "
 
 msgid "Backhaul Link"
 msgstr "回程链路"
@@ -285,9 +267,6 @@ msgstr "未检测到 FakeMesh 节点，请检查 FakeMesh 配置。"
 msgid "Internet Gateway"
 msgstr "互联网出口"
 
-msgid "FakeMesh Mesh Fabric"
-msgstr "FakeMesh Mesh 组网骨干"
-
 msgid "Backhaul Links"
 msgstr "组网链路"
 
@@ -312,9 +291,6 @@ msgstr "IPv6 地址"
 msgid "IPv4 Addresses"
 msgstr "IPv4 地址"
 
-msgid "Idle Time"
-msgstr "最后活跃"
-
 msgid "Minimap View"
 msgstr "微缩拓扑视图"
 
@@ -323,9 +299,6 @@ msgstr "完整展开视图"
 
 msgid "Upstream Node"
 msgstr "上级节点"
-
-msgid "Upstream Gateway"
-msgstr "上级网关"
 
 msgid "Node Details & Connected Devices"
 msgstr "节点详情与挂载终端"
@@ -345,14 +318,14 @@ msgstr "查看节点完整详情"
 msgid "Currently Selected"
 msgstr "当前选中"
 
-msgid "Upstream: "
-msgstr "上级: "
+msgid "Upstream"
+msgstr "上级"
 
-msgid "IP: "
-msgstr "IP: "
+msgid "IP"
+msgstr "IP"
 
-msgid "Model: "
-msgstr "型号: "
+msgid "Model"
+msgstr "型号"
 
 msgid "Click to Inspect"
 msgstr "点击查看详情"

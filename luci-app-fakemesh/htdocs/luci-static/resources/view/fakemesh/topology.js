@@ -37,9 +37,9 @@ function formatUptime(sec) {
 	var h = Math.floor((sec % 86400) / 3600);
 	var m = Math.floor((sec % 3600) / 60);
 	var s = sec % 60;
-	if (d > 0) return '%dd %dh %dm'.format(d, h, m);
-	if (h > 0) return '%dh %dm %ds'.format(h, m, s);
-	return '%dm %ds'.format(m, s);
+	if (d > 0) return String.prototype.format ? '%dd %dh %dm'.format(d, h, m) : (d + 'd ' + h + 'h ' + m + 'm');
+	if (h > 0) return String.prototype.format ? '%dh %dm %ds'.format(h, m, s) : (h + 'h ' + m + 'm ' + s + 's');
+	return String.prototype.format ? '%dm %ds'.format(m, s) : (m + 'm ' + s + 's');
 }
 
 function formatLastActive(sec) {
@@ -231,7 +231,7 @@ return view.extend({
 			{ id: '5g', label: '5G' },
 			{ id: '2g', label: '2.4G' },
 			{ id: 'wired', label: _('Wired') },
-			{ id: 'vpn', label: 'VPN' }
+			{ id: 'vpn', label: _('VPN') }
 		].map(function(item) {
 			return E('button', {
 				'class': 'btn btn-sm ' + (self.filterBand === item.id ? 'btn-primary' : 'btn-secondary'),
@@ -303,7 +303,7 @@ return view.extend({
 				E('span', { 'class': 'badge badge-local', 'style': 'font-size:12px; padding:6px 12px;' }, '📍 ' + _('Current Device (This Node)'))
 			]) : E([]))
 		]);
-		this.showDetailModal(_('Node Details: ') + (node.hostname || node.ip), body);
+		this.showDetailModal(_('Node Details') + ': ' + (node.hostname || node.ip), body);
 	},
 
 	showClientModal: function(client, node) {
@@ -350,7 +350,7 @@ return view.extend({
 				E('tr', {}, [ E('td', { 'class': 'font-weight-bold' }, _('Total Traffic')), E('td', {}, '↓ ' + formatBytes(client.rx_bytes || 0) + '  ↑ ' + formatBytes(client.tx_bytes || 0)) ])
 			])
 		]);
-		this.showDetailModal(_('Client Details: ') + (client.hostname || client.mac), body);
+		this.showDetailModal(_('Client Details') + ': ' + (client.hostname || client.mac), body);
 	},
 
 	renderClientCard: function(client, node) {
@@ -493,15 +493,15 @@ return view.extend({
 		]);
 
 		var upstreamLine = E('div', {}, [
-			E('span', { 'class': 'text-muted' }, _('Upstream: ')),
+			E('span', { 'class': 'text-muted' }, _('Upstream') + ': '),
 			E('strong', {}, isRoot ? (node.parent_name || _('Internet Gateway')) : (node.parent_name || node.parent_hostname || 'X-WRT'))
 		]);
 
 		var meta = E('div', { 'class': 'fm-node-meta' }, [
 			upstreamLine,
-			E('div', {}, [ E('span', { 'class': 'text-muted' }, _('IP: ')), E('strong', {}, node.ip || '-') ]),
-			E('div', {}, [ E('span', { 'class': 'text-muted' }, _('Model: ')), node.model || '-' ]),
-			node.uptime ? E('div', {}, [ E('span', { 'class': 'text-muted' }, _('Uptime: ')), formatUptime(node.uptime) ]) : E([])
+			E('div', {}, [ E('span', { 'class': 'text-muted' }, _('IP') + ': '), E('strong', {}, node.ip || '-') ]),
+			E('div', {}, [ E('span', { 'class': 'text-muted' }, _('Model') + ': '), node.model || '-' ]),
+			node.uptime ? E('div', {}, [ E('span', { 'class': 'text-muted' }, _('Uptime') + ': '), formatUptime(node.uptime) ]) : E([])
 		]);
 
 		var clientsContainer = E('div', { 'class': 'fm-clients-container' });
@@ -606,7 +606,7 @@ return view.extend({
 
 		var upstreamText = isRoot ? (node.parent_name || _('Internet Gateway')) : (node.parent_name || node.parent_hostname || 'X-WRT');
 		var upstreamLine = E('div', { 'class': 'fm-mini-upstream' }, [
-			E('span', { 'class': 'text-muted' }, _('Upstream: ')),
+			E('span', { 'class': 'text-muted' }, _('Upstream') + ': '),
 			E('strong', { 'class': isRoot ? 'text-secondary' : 'text-primary' }, upstreamText)
 		]);
 
