@@ -1610,3 +1610,9 @@ msgstr "只读预览；修改请编辑模板后点「更新」重新生成"
 
 msgid "Active config cannot be updated; switch to another first"
 msgstr "活跃配置无法更新；请先切换到其他配置"
+
+msgid "Local conversion only"
+msgstr "仅在本机转换"
+
+msgid "If local conversion fails, the selected external service receives the complete subscription URL, including its access token. Leave Local conversion only selected to keep the URL on this router."
+msgstr "如果本机转换失败，所选第三方服务会收到完整订阅链接，包括访问令牌。保持选择「仅在本机转换」可避免向第三方发送链接。"

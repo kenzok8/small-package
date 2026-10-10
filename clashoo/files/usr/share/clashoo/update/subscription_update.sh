@@ -188,7 +188,7 @@ download_to() {
 		DOWNLOAD_ERROR="$(curl_error "$last_rc")"
 		return 1
 	fi
-	wget -q --tries=4 --timeout=20 --user-agent="$ua" "$url" -O "$out"
+	wget -q --timeout=20 --user-agent="$ua" "$url" -O "$out"
 	rc=$?
 	[ "$rc" -eq 0 ] && return 0
 	DOWNLOAD_ERROR="网络错误（wget rc=${rc}）"
@@ -209,8 +209,7 @@ update_info() {
 }
 
 service_running() {
-	[ -n "${CLASHOO_SERVICE_CMD:-}" ] && return 0
-	"$SERVICE_CMD" status >/dev/null 2>&1
+	[ "$("$SERVICE_CMD" status 2>/dev/null)" = "running" ]
 }
 
 template_output_name() {

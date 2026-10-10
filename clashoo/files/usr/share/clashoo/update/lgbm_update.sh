@@ -22,7 +22,7 @@ if command -v curl >/dev/null 2>&1; then
 	curl -fL --connect-timeout 15 --max-time 120 -A "Clash/OpenWRT" "$DOWNLOAD_URL" -o "$TMP_PATH" 2>/dev/null
 	dl_rc=$?
 elif command -v wget >/dev/null 2>&1; then
-	wget -q --timeout=30 --tries=2 --no-check-certificate -U "Clash/OpenWRT" "$DOWNLOAD_URL" -O "$TMP_PATH" 2>/dev/null
+	wget -q --timeout=30 -U "Clash/OpenWRT" "$DOWNLOAD_URL" -O "$TMP_PATH" 2>/dev/null
 	dl_rc=$?
 else
 	log "No curl or wget found"

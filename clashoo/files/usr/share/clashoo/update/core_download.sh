@@ -176,7 +176,7 @@ fetch_url_try() {
 		return $?
 	fi
 	if command -v wget >/dev/null 2>&1; then
-		wget -qO- --timeout="$CONNECT_TIMEOUT" --no-check-certificate --user-agent="Clash/OpenWRT" "$url"
+		wget -qO- --timeout="$CONNECT_TIMEOUT" --user-agent="Clash/OpenWRT" "$url"
 		return $?
 	fi
 	return 127
@@ -204,7 +204,7 @@ download_file_try() {
 		return $?
 	fi
 	if command -v wget >/dev/null 2>&1; then
-		wget -q --timeout="$REQUEST_TIMEOUT" --tries=1 --no-check-certificate --user-agent="Clash/OpenWRT" "$url" -O "$out"
+		wget -q --timeout="$REQUEST_TIMEOUT" --user-agent="Clash/OpenWRT" "$url" -O "$out"
 		return $?
 	fi
 	return 127
@@ -216,7 +216,7 @@ head_url_try() {
 		curl -fsSIL --connect-timeout "$CONNECT_TIMEOUT" --max-time "$REQUEST_TIMEOUT" -A "Clash/OpenWRT" "$url" >/dev/null 2>&1
 		return $?
 	fi
-	wget -q --spider --timeout="$CONNECT_TIMEOUT" --no-check-certificate --user-agent="Clash/OpenWRT" "$url"
+	wget -q --spider --timeout="$CONNECT_TIMEOUT" --user-agent="Clash/OpenWRT" "$url"
 }
 
 map_mihomo_arch() {
@@ -637,7 +637,7 @@ fetch_latest_tag() {
 			if command -v curl >/dev/null 2>&1; then
 				tag="$(curl -fsSIL --connect-timeout "$CONNECT_TIMEOUT" --max-time "$REQUEST_TIMEOUT" -A "Clash/OpenWRT" "$u" 2>/dev/null | sed -n 's#^[Ll]ocation: .*/releases/tag/\([^[:space:]\r]*\).*#\1#p' | head -n 1)"
 			else
-				tag="$(wget -S --spider --timeout="$CONNECT_TIMEOUT" --no-check-certificate --user-agent="Clash/OpenWRT" "$u" 2>&1 | sed -n 's#^  Location: .*/releases/tag/\([^[:space:]]*\).*#\1#p' | head -n 1)"
+				tag="$(wget -S --spider --timeout="$CONNECT_TIMEOUT" --user-agent="Clash/OpenWRT" "$u" 2>&1 | sed -n 's#^  Location: .*/releases/tag/\([^[:space:]]*\).*#\1#p' | head -n 1)"
 			fi
 			case "$tag" in
 				v*[-]*)
@@ -684,7 +684,7 @@ fetch_latest_tag() {
 	if command -v curl >/dev/null 2>&1; then
 		tag="$(curl -fsSIL --connect-timeout "$CONNECT_TIMEOUT" --max-time "$REQUEST_TIMEOUT" -A "Clash/OpenWRT" "$u" 2>/dev/null | sed -n 's#^[Ll]ocation: .*/releases/tag/\([^[:space:][:cntrl:]]*\).*#\1#p' | head -n 1)"
 	else
-		tag="$(wget -S --spider --timeout="$CONNECT_TIMEOUT" --no-check-certificate --user-agent="Clash/OpenWRT" "$u" 2>&1 | sed -n 's#^  Location: .*/releases/tag/\([^[:space:]]*\).*#\1#p' | head -n 1)"
+		tag="$(wget -S --spider --timeout="$CONNECT_TIMEOUT" --user-agent="Clash/OpenWRT" "$u" 2>&1 | sed -n 's#^  Location: .*/releases/tag/\([^[:space:]]*\).*#\1#p' | head -n 1)"
 	fi
 	[ -n "$tag" ] && { echo "$tag"; return 0; }
 

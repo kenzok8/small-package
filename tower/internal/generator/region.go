@@ -101,7 +101,7 @@ func SchemeTargetPolicy(target model.ClientTarget, schemeID string) (string, str
 		return "tower-singbox-acl-policy-v2", "sing-box 专用策略：GEOIP,CN 使用固定 MetaCubeX SRS；服务地区选择使用独立 MetaCubeX 服务规则组；URL-REGEX 省略，REJECT 保留为可选 block。"
 	case target.Family() == model.FamilyDAE && isACL4SSRScheme(schemeID):
 		return "tower-dae-acl-policy-v2", "DAE 专用策略：REJECT 首项组固定为 block，DIRECT 首项组固定直连，其余选择组转自动测速并保留节点过滤；服务地区选择使用独立 geosite/geoip DAT 规则组；URL-REGEX 省略，REJECT-DROP 阻断。"
-	case target == model.ClientDAE && schemeID == "kenzok8-dae-native":
+	case target.Family() == model.FamilyDAE && schemeID == "kenzok8-dae-native":
 		return "tower-dae-kenzok8-policy-v2", "DAE 专用策略：将 allowlist 内的 MetaCubeX MRS 映射到本机 geosite/geoip DAT 标签；按地区选择服务时使用独立 DAT 规则组，生成前由设备 dae validate 核验。"
 	default:
 		return "", ""

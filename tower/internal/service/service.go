@@ -311,7 +311,9 @@ func (s *Service) ExportStrictWithServiceRegions(target model.ClientTarget, prot
 		if err != nil {
 			return "", err
 		}
-		if target.Family() == model.FamilyDAE {
+		// Honk 变体用 include system.dae 引用 honk 自带的全局配置，dae validate
+		// 无法在临时目录里解析该引用（报 global required），交由 honk-core 导入时验证。
+		if target == model.ClientDAE {
 			if err := s.daeValidate(context.Background(), content); err != nil {
 				return "", fmt.Errorf("设备 dae validate 未通过：%w", err)
 			}
@@ -344,7 +346,7 @@ func (s *Service) PreflightExportWithOptions(target model.ClientTarget, protocol
 		}
 		return generator.PreflightResult{}, err
 	}
-	if target == model.ClientDAE {
+	if target.Family() == model.FamilyDAE {
 		result := generator.DAEPreflight(options)
 		if result.Status == generator.PreflightExact {
 			options.Strict = true
@@ -353,8 +355,10 @@ func (s *Service) PreflightExportWithOptions(target model.ClientTarget, protocol
 			if generateErr != nil {
 				return generator.PreflightResult{Status: generator.PreflightUnsupported, PlanDigest: result.PlanDigest, Issues: []generator.PreflightIssue{{Code: "dae_render", Severity: "blocking", Location: "export", Message: "DAE 配置生成失败"}}, Planned: result.Planned}, nil
 			}
-			if validateErr := s.daeValidate(context.Background(), content); validateErr != nil {
-				return generator.PreflightResult{Status: generator.PreflightUnsupported, PlanDigest: result.PlanDigest, Issues: []generator.PreflightIssue{{Code: "dae_validate", Severity: "blocking", Location: "export", Message: "设备 dae validate 未通过；当前 DAT 标签或配置需要修正"}}, Planned: result.Planned}, nil
+			if target == model.ClientDAE {
+				if validateErr := s.daeValidate(context.Background(), content); validateErr != nil {
+					return generator.PreflightResult{Status: generator.PreflightUnsupported, PlanDigest: result.PlanDigest, Issues: []generator.PreflightIssue{{Code: "dae_validate", Severity: "blocking", Location: "export", Message: "设备 dae validate 未通过；当前 DAT 标签或配置需要修正"}}, Planned: result.Planned}, nil
+				}
 			}
 		}
 		return result, nil
@@ -388,7 +392,7 @@ func (s *Service) PreflightExportStrictWithServiceRegions(target model.ClientTar
 			return generator.PreflightResult{Status: generator.PreflightUnsupported, Issues: []generator.PreflightIssue{{Code: "node_protocol", Severity: "blocking", Location: "nodes", Message: fmt.Sprintf("当前客户端不支持协议 %s", node.Kind)}}, Planned: []generator.PreflightItem{}}, nil
 		}
 	}
-	if target == model.ClientDAE {
+	if target.Family() == model.FamilyDAE {
 		result := generator.DAEPreflight(options)
 		if result.Status != generator.PreflightExact {
 			return result, nil
@@ -398,8 +402,10 @@ func (s *Service) PreflightExportStrictWithServiceRegions(target model.ClientTar
 		if generateErr != nil {
 			return generator.PreflightResult{Status: generator.PreflightUnsupported, PlanDigest: result.PlanDigest, Issues: []generator.PreflightIssue{{Code: "dae_render", Severity: "blocking", Location: "export", Message: "DAE 配置生成失败"}}, Planned: result.Planned}, nil
 		}
-		if validateErr := s.daeValidate(context.Background(), content); validateErr != nil {
-			return generator.PreflightResult{Status: generator.PreflightUnsupported, PlanDigest: result.PlanDigest, Issues: []generator.PreflightIssue{{Code: "dae_validate", Severity: "blocking", Location: "export", Message: "设备 dae validate 未通过；当前 DAT 标签或配置需要修正"}}, Planned: result.Planned}, nil
+		if target == model.ClientDAE {
+			if validateErr := s.daeValidate(context.Background(), content); validateErr != nil {
+				return generator.PreflightResult{Status: generator.PreflightUnsupported, PlanDigest: result.PlanDigest, Issues: []generator.PreflightIssue{{Code: "dae_validate", Severity: "blocking", Location: "export", Message: "设备 dae validate 未通过；当前 DAT 标签或配置需要修正"}}, Planned: result.Planned}, nil
+			}
 		}
 		return result, nil
 	}
@@ -485,7 +491,7 @@ func (s *Service) exportOptionsWithServiceRegions(target model.ClientTarget, pro
 			if resource == nil {
 				continue
 			}
-			if target == model.ClientDAE {
+			if target.Family() == model.FamilyDAE {
 				if _, mapped := generator.DAENativeRuleSet(scheme.ID, *resource); mapped {
 					continue
 				}
@@ -557,6 +563,13 @@ func (s *Service) exportOptionsWithServiceRegions(target model.ClientTarget, pro
 			if cached, err := s.ruleCache.Lines(resource.URL); err == nil {
 				lines[resource.URL] = cached
 				continue
+			}
+			// 首次导出时惰性下载未缓存的规则集，避免预检因冷缓存失败。
+			if s.ruleCache.Download(resource.URL) == nil {
+				if cached, err := s.ruleCache.Lines(resource.URL); err == nil {
+					lines[resource.URL] = cached
+					continue
+				}
 			}
 			if name := rules.LocalRuleFilename(resource.URL); name != "" {
 				if b, err := os.ReadFile(filepath.Join(s.rulesDir, name)); err == nil {

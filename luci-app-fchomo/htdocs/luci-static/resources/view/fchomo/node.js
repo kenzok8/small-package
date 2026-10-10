@@ -1043,18 +1043,19 @@ return view.extend({
 		so.depends('type', 'easytier');
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.Value, 'easytier_network_name', _('Network name'));
+		so = ss.taboption('field_general', form.Value, 'easytier_network_name', _('Room name'));
 		so.rmempty = false;
 		so.depends('type', 'easytier');
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.Value, 'easytier_network_secret', _('Network secret'));
+		so = ss.taboption('field_general', form.Value, 'easytier_network_secret', _('Room secret'));
+		so.password = true;
 		so.depends('type', 'easytier');
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.Flag, 'easytier_private_mode', _('Private network'),
+		so = ss.taboption('field_general', form.Flag, 'easytier_private_mode', _('Private room'),
 			_('Only nodes using the same %s and %s as this network are permitted to perform a handshake or relay traffic through this node.')
-			.format(_('Network name'), _('Network secret')));
+			.format(_('Room name'), _('Room secret')));
 		so.default = so.disabled;
 		so.depends('type', 'easytier');
 		so.modalonly = true;

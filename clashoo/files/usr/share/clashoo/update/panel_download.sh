@@ -79,11 +79,27 @@ download_zip() {
 				--proxy "$proxy" -A "Clash/OpenWRT" "$url" -o "$ZIP_FILE"; then
 			return 0
 		fi
-		if wget -q --timeout=60 --no-check-certificate --user-agent="Clash/OpenWRT" "$url" -O "$ZIP_FILE"; then
+		if wget -q --timeout=60 --user-agent="Clash/OpenWRT" "$url" -O "$ZIP_FILE"; then
 			return 0
 		fi
 	done
 	return 1
+}
+
+validate_zip_entries() {
+	entries="$TMP_ROOT/entries.txt"
+	if command -v unzip >/dev/null 2>&1; then
+		unzip -Z1 "$ZIP_FILE" >"$entries" 2>/dev/null || return 1
+	elif command -v bsdtar >/dev/null 2>&1; then
+		bsdtar -tf "$ZIP_FILE" >"$entries" 2>/dev/null || return 1
+	else
+		return 1
+	fi
+	[ -s "$entries" ] || return 1
+	awk '
+		/^\// || /^[A-Za-z]:/ || /(^|\/)\.\.(\/|$)/ || /\\/ || /\r/ { bad = 1 }
+		END { exit bad }
+	' "$entries"
 }
 
 extract_zip() {
@@ -141,6 +157,12 @@ if ! download_zip; then
 	exit 1
 fi
 
+if ! validate_zip_entries; then
+	set_state "error" "压缩包路径无效"
+	log_msg "Dashboard panel archive has unsafe entries" "面板压缩包含不安全路径"
+	exit 1
+fi
+
 extract_zip
 extract_rc=$?
 if [ "$extract_rc" -ne 0 ]; then
@@ -151,6 +173,12 @@ if [ "$extract_rc" -ne 0 ]; then
 		set_state "error" "解压失败"
 		log_msg "Dashboard panel unzip failed" "面板解压失败"
 	fi
+	exit 1
+fi
+
+if find "$UNPACK_DIR" ! -type d ! -type f | grep -q .; then
+	set_state "error" "压缩包文件类型无效"
+	log_msg "Dashboard panel archive has unsafe file types" "面板压缩包含不安全文件类型"
 	exit 1
 fi
 

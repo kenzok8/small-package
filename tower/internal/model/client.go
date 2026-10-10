@@ -28,6 +28,7 @@ const (
 	ClientClashooSB    ClientTarget = "clashoo-singbox"
 	ClientMomo         ClientTarget = "momo"
 	ClientDAE          ClientTarget = "dae-config"
+	ClientHonk         ClientTarget = "honk-config"
 )
 
 // AllClients lists every supported client target in a stable order.
@@ -55,6 +56,7 @@ var AllClients = []ClientTarget{
 	ClientClashooSB,
 	ClientMomo,
 	ClientDAE,
+	ClientHonk,
 }
 
 // Supported reports whether a target is an advertised export destination.
@@ -116,6 +118,8 @@ func (c ClientTarget) Name() string {
 		return "Momo"
 	case ClientDAE:
 		return "dae config"
+	case ClientHonk:
+		return "Honk config"
 	default:
 		return string(c)
 	}
@@ -154,7 +158,7 @@ func (c ClientTarget) Family() FormatFamily {
 		return FamilyQuanX
 	case ClientHiddify, ClientSingBox, ClientClashooSB, ClientMomo:
 		return FamilySingBox
-	case ClientDAE:
+	case ClientDAE, ClientHonk:
 		return FamilyDAE
 	case ClientEgern:
 		return FamilyEgern

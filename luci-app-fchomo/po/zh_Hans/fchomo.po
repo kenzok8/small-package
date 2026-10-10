@@ -2287,13 +2287,13 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:1046
 #: htdocs/luci-static/resources/view/fchomo/node.js:1057
-msgid "Network name"
-msgstr "网络名称"
+msgid "Room name"
+msgstr "房间名称"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:1051
 #: htdocs/luci-static/resources/view/fchomo/node.js:1057
-msgid "Network secret"
-msgstr "网络密码"
+msgid "Room secret"
+msgstr "房间密码"
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:662
 msgid "Network type"
@@ -2717,8 +2717,8 @@ msgid "Private key"
 msgstr "私钥"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:1055
-msgid "Private network"
-msgstr "私密网络"
+msgid "Private room"
+msgstr "私密房间"
 
 #: htdocs/luci-static/resources/fchomo.js:346
 msgid "Process"

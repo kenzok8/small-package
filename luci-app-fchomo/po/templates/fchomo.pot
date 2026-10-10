@@ -2255,12 +2255,12 @@ msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:1046
 #: htdocs/luci-static/resources/view/fchomo/node.js:1057
-msgid "Network name"
+msgid "Room name"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:1051
 #: htdocs/luci-static/resources/view/fchomo/node.js:1057
-msgid "Network secret"
+msgid "Room secret"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo/listeners.js:662
@@ -2682,7 +2682,7 @@ msgid "Private key"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:1055
-msgid "Private network"
+msgid "Private room"
 msgstr ""
 
 #: htdocs/luci-static/resources/fchomo.js:346

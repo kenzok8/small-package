@@ -9,10 +9,11 @@ TARGET_V6="${NFT_DIR}/geoip6_cn.nft"
 FW4_SCRIPT="${FW4_SCRIPT:-/usr/share/clashoo/net/fw4.sh}"
 PROC_ROOT="${PROC_ROOT:-/proc}"
 SINGBOX_BIN_DIR="${SINGBOX_BIN_DIR:-/usr/share/clashoo/bin}"
-TMP_V4="/tmp/china_ip.txt.$$"
-TMP_V6="/tmp/china_ipv6.txt.$$"
-OUT_V4="/tmp/geoip_cn.nft.$$"
-OUT_V6="/tmp/geoip6_cn.nft.$$"
+TMP_ROOT="$(mktemp -d /tmp/clashoo_china_ip.XXXXXX)"
+TMP_V4="$TMP_ROOT/china_ip.txt"
+TMP_V6="$TMP_ROOT/china_ipv6.txt"
+OUT_V4="$TMP_ROOT/geoip_cn.nft"
+OUT_V6="$TMP_ROOT/geoip6_cn.nft"
 
 log() {
 	printf '  %s - %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1" >> "$LOG_FILE"
@@ -30,14 +31,14 @@ download_with_fallback() {
 	local output="$2"
 	local ip
 
-	if curl -fsSL "$url" -o "$output"; then
+	if curl -fsSL --connect-timeout 10 --max-time 120 "$url" -o "$output"; then
 		return 0
 	fi
 
 	case "$url" in
 		https://ispip.clang.cn/*)
 			for ip in 182.247.248.127 103.220.64.183; do
-				if curl -fsSL --resolve "ispip.clang.cn:443:${ip}" "$url" -o "$output"; then
+				if curl -fsSL --connect-timeout 10 --max-time 120 --resolve "ispip.clang.cn:443:${ip}" "$url" -o "$output"; then
 					log "DNS 异常，已使用 --resolve(${ip}) 回源下载"
 					return 0
 				fi
@@ -49,7 +50,7 @@ download_with_fallback() {
 }
 
 cleanup() {
-	rm -f "$TMP_V4" "$TMP_V6" "$OUT_V4" "$OUT_V6"
+	rm -rf "$TMP_ROOT"
 }
 
 trap cleanup EXIT INT TERM
@@ -61,6 +62,21 @@ render_nft_set() {
 	local set_type="$4"
 
 	awk -v set_name="$set_name" -v set_type="$set_type" '
+	function valid_cidr(value, parts, octets, i, prefix) {
+		if (split(value, parts, "/") != 2 || parts[2] !~ /^[0-9]+$/)
+			return 0
+		prefix = parts[2] + 0
+		if (set_type == "ipv4_addr") {
+			if (prefix > 32 || split(parts[1], octets, ".") != 4)
+				return 0
+			for (i = 1; i <= 4; i++)
+				if (octets[i] !~ /^[0-9]+$/ || length(octets[i]) > 3 || octets[i] + 0 > 255)
+					return 0
+			return 1
+		}
+		return set_type == "ipv6_addr" && prefix <= 128 &&
+			parts[1] ~ /^[0-9A-Fa-f:]+$/ && index(parts[1], ":") > 0
+	}
 	BEGIN {
 		print "set " set_name " {"
 		print "\ttype " set_type ";"
@@ -73,6 +89,12 @@ render_nft_set() {
 		gsub(/^[[:space:]]+|[[:space:]]+$/, "", $0)
 		if ($0 == "")
 			next
+		if (!valid_cidr($0)) {
+			if (!invalid)
+				printf "invalid CIDR at line %d\n", NR > "/dev/stderr"
+			invalid = 1
+			next
+		}
 		if (!first)
 			print ","
 		printf "\t\t%s", $0
@@ -83,8 +105,13 @@ render_nft_set() {
 			print ""
 		print "\t}"
 		print "}"
+		if (invalid || first)
+			exit 1
 	}
-	' "$source_file" > "$output_file"
+	' "$source_file" > "$output_file" || return 1
+	# nft catches malformed IPv6 forms and invalid network prefixes before replacement.
+	{ printf 'table inet clashoo_validate {\n'; cat "$output_file"; printf '\n}\n'; } |
+		nft -c -f - >/dev/null 2>&1
 }
 
 url4="$(uci -q get clashoo.config.china_ip_url 2>/dev/null || true)"
@@ -107,7 +134,10 @@ download_with_fallback "$url4" "$TMP_V4"
 }
 changed=0
 
-render_nft_set "$TMP_V4" "$OUT_V4" clashoo_china ipv4_addr
+if ! render_nft_set "$TMP_V4" "$OUT_V4" clashoo_china ipv4_addr; then
+	log '大陆 IPv4 白名单包含无效 CIDR，保留原文件'
+	exit 1
+fi
 if cmp -s "$OUT_V4" "$TARGET_V4"; then
 	log '大陆 IPv4 白名单内容无变化'
 else
@@ -119,7 +149,10 @@ fi
 
 if download_with_fallback "$url6" "$TMP_V6"; then
 	if [ -s "$TMP_V6" ]; then
-		render_nft_set "$TMP_V6" "$OUT_V6" clashoo_china6 ipv6_addr
+		if ! render_nft_set "$TMP_V6" "$OUT_V6" clashoo_china6 ipv6_addr; then
+			log '大陆 IPv6 白名单包含无效 CIDR，保留原文件'
+			exit 1
+		fi
 		if cmp -s "$OUT_V6" "$TARGET_V6"; then
 			log '大陆 IPv6 白名单内容无变化'
 		else

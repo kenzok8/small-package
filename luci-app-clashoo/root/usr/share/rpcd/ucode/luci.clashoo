@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { access, popen, glob, readfile, writefile, stat, unlink, open } from 'fs';
+import { access, popen, glob, readfile, writefile, stat, lstat, unlink, open, mkdtemp, rename, rmdir } from 'fs';
 import { cursor } from 'uci';
 
 const BINARY_PATHS = [
@@ -23,6 +23,8 @@ const SINGBOX_BIN_DIR = '/usr/share/clashoo/bin';
 const SINGBOX_RUNTIME_DIR = '/var/run/clashoo/sing-box';
 const SINGBOX_RUNTIME_CONFIG = SINGBOX_RUNTIME_DIR + '/config.json';
 const SINGBOX_WORKDIR = SINGBOX_RUNTIME_DIR + '/work';
+const SINGBOX_UPLOAD_PREFIX = '/tmp/clashoo_sb_upload.';
+const SINGBOX_PROFILE_MAX_SIZE = 16 * 1024 * 1024;
 const SINGBOX_BINARY_PATHS = [
 SINGBOX_BIN_DIR + '/sing-box-stable',
 SINGBOX_BIN_DIR + '/sing-box-alpha'
@@ -1170,6 +1172,33 @@ if (!name) return '';
 if (!match(name, /\.(yaml|yml)$/))
 name = name + '.yaml';
 return name;
+}
+
+function cleanup_singbox_upload(dir) {
+unlink(dir + '/profile.json');
+unlink(dir + '/state.json');
+rmdir(dir);
+}
+
+function cleanup_singbox_conversion(dir) {
+for (let name in ['sub.url', 'sub.yaml', 'sub.hdr', 'from-yaml.json', 'yaml2sb.log', 'generated.json'])
+  unlink(dir + '/' + name);
+rmdir(dir);
+}
+
+function commit_singbox_profile(source, name) {
+let target = SINGBOX_DIR + '/' + name;
+let current = lstat(target);
+if (current && current.type != 'file') return false;
+let stage_dir = mkdtemp(SINGBOX_DIR + '/.clashoo_sb_save.XXXXXX');
+if (!stage_dir) return false;
+let stage = stage_dir + '/profile.json';
+let ok = system('cp ' + shell_quote(source) + ' ' + shell_quote(stage) + ' >/dev/null 2>&1') == 0 &&
+         system('chmod 600 ' + shell_quote(stage) + ' >/dev/null 2>&1') == 0 &&
+         rename(stage, target);
+if (!ok) unlink(stage);
+rmdir(stage_dir);
+return !!ok;
 }
 
 function file_name_from_url(url) {
@@ -3472,7 +3501,7 @@ system('mkdir -p ' + shell_quote(out_dir));
 if (match(tpl_src, /^https?:\/\//)) {
 let dl_cmd = '(curl -fL --connect-timeout 15 --max-time 60 ' + shell_quote(tpl_src)
 + ' -o ' + shell_quote(tmp_tpl)
-+ ' || wget -O ' + shell_quote(tmp_tpl) + ' ' + shell_quote(tpl_src)
++ ' || wget --timeout=60 -O ' + shell_quote(tmp_tpl) + ' ' + shell_quote(tpl_src)
 + ') >/dev/null 2>&1';
 if (system(dl_cmd) != 0 || !access(tmp_tpl, 'r'))
 return { success: false, error: 'download_failed', message: '远程模板下载失败' };
@@ -3697,7 +3726,7 @@ let tmp_path = '/tmp/rewrite_remote.yaml';
 system('mkdir -p ' + shell_quote(out_dir));
 
 let dl_cmd = '(curl -fL --connect-timeout 15 --max-time 90 ' + shell_quote(url) + ' -o ' + shell_quote(tmp_path)
-  + ' || wget -O ' + shell_quote(tmp_path) + ' ' + shell_quote(url) + ') >/dev/null 2>&1';
+  + ' || wget --timeout=90 -O ' + shell_quote(tmp_path) + ' ' + shell_quote(url) + ') >/dev/null 2>&1';
 
 if (system(dl_cmd) != 0 || !access(tmp_path, 'r'))
 return { success: false, error: 'download_failed', message: '远程复写文件下载失败' };
@@ -3906,7 +3935,6 @@ for (let f in (glob(dir + '/*.json') || [])) {
   for (let k in meta) entry[k] = meta[k];
   let url_path = f + '.url';
   if (access(url_path, 'r')) {
-    entry.sub_url = trim(readfile(url_path) || '');
     entry.source = 'native';
   } else {
     entry.source = 'local';
@@ -3921,7 +3949,8 @@ get_singbox_profile: {
 args: { name: 'name' },
 call: function(req) {
 let name = req.args?.name || '';
-if (!name || index(name, '/') >= 0 || index(name, '..') >= 0)
+if (!name || index(name, '/') >= 0 || index(name, '..') >= 0 ||
+    !match(name, /\.json$/))
   return { error: 'invalid name' };
 let path = '/usr/share/clashoo/config/singbox/' + name;
 if (!access(path, 'r')) return { error: 'not found' };
@@ -3937,7 +3966,7 @@ call: function(req) {
 let name = req.args?.name || '';
 let index_raw = req.args?.index || '0';
 if (!name || index(name, '/') >= 0 || index(name, '..') >= 0 ||
-    !match(index_raw, /^[0-9]+$/))
+    !match(name, /\.json$/) || !match(index_raw, /^[0-9]+$/))
   return { error: 'invalid request' };
 let path = SINGBOX_DIR + '/' + name;
 let s = stat(path);
@@ -3969,65 +3998,112 @@ let content = req.args?.content || '';
 if (!name || index(name, '/') >= 0 || index(name, '..') >= 0)
   return { success: false, error: 'invalid name' };
 if (!content) return { success: false, error: 'empty content' };
+if (length(content) > SINGBOX_PROFILE_MAX_SIZE)
+  return { success: false, error: 'too_large' };
 if (!match(name, /\.json$/)) name = name + '.json';
-let dir = '/usr/share/clashoo/config/singbox';
-system('mkdir -p ' + shell_quote(dir) + ' >/dev/null 2>&1');
-let tmp = '/tmp/clashoo_sb_validate.json';
-writefile(tmp, content);
+system('mkdir -p ' + shell_quote(SINGBOX_DIR) + ' >/dev/null 2>&1');
+let tmp_dir = mkdtemp('/tmp/clashoo_sb_save.XXXXXX');
+if (!tmp_dir) return { success: false, error: 'write_failed' };
+let tmp = tmp_dir + '/profile.json';
+if (writefile(tmp, content) === null) {
+  cleanup_singbox_upload(tmp_dir);
+  return { success: false, error: 'write_failed', message: '写入文件失败' };
+}
 let binary = find_binary();
 if (binary && match(binary, /sing-box/)) {
   if (system(shell_quote(binary) + ' check -c ' + shell_quote(tmp) + ' >/dev/null 2>&1') != 0) {
-    system('rm -f ' + shell_quote(tmp));
+    cleanup_singbox_upload(tmp_dir);
     return { success: false, error: 'invalid_config', message: 'sing-box 配置验证失败，请检查 JSON 格式' };
   }
 }
-system('rm -f ' + shell_quote(tmp));
-if (writefile(dir + '/' + name, content) === null)
+let saved = commit_singbox_profile(tmp, name);
+cleanup_singbox_upload(tmp_dir);
+if (!saved)
   return { success: false, error: 'write_failed', message: '写入文件失败' };
 return { success: true, name };
 }
 },
 
 save_singbox_profile_chunk: {
-args: { name: 'name', content: 'content', index: 'index', total: 'total' },
+args: { name: 'name', content: 'content', index: 'index', total: 'total', upload: 'upload' },
 call: function(req) {
 let name    = req.args?.name    || '';
 let content = req.args?.content;
-let idx     = int(req.args?.index || 0);
-let total   = int(req.args?.total || 0);
+let index_raw = req.args?.index || '0';
+let total_raw = req.args?.total || '';
+let upload = req.args?.upload || '';
 if (!name || index(name, '/') >= 0 || index(name, '..') >= 0)
   return { success: false, error: 'invalid name' };
 if (!match(name, /\.json$/)) name = name + '.json';
-if (type(content) != 'string') return { success: false, error: 'invalid content' };
-if (total < 1 || idx < 0 || idx >= total) return { success: false, error: 'invalid chunk' };
+if (type(content) != 'string' || length(content) > 131072)
+  return { success: false, error: 'invalid content' };
+if (!match(index_raw, /^[0-9]+$/) || !match(total_raw, /^[0-9]+$/))
+  return { success: false, error: 'invalid chunk' };
+let idx = int(index_raw);
+let total = int(total_raw);
+if (total < 1 || total > 700 || idx < 0 || idx >= total)
+  return { success: false, error: 'invalid chunk' };
 if (total == 1 && !content) return { success: false, error: 'empty content' };
-let dir = '/usr/share/clashoo/config/singbox';
-system('mkdir -p ' + shell_quote(dir) + ' >/dev/null 2>&1');
-let tmp = '/tmp/clashoo_sb_upload_' + name;
+system('mkdir -p ' + shell_quote(SINGBOX_DIR) + ' >/dev/null 2>&1');
+let tmp_dir;
+let state;
 if (idx == 0) {
-  if (writefile(tmp, content) === null)
+  if (upload) return { success: false, error: 'invalid upload' };
+  tmp_dir = mkdtemp(SINGBOX_UPLOAD_PREFIX + 'XXXXXX');
+  if (!tmp_dir) return { success: false, error: 'write_failed' };
+  upload = substr(tmp_dir, length('/tmp/'));
+  state = { name, total, next: 1, created: time() };
+  if (writefile(tmp_dir + '/state.json', sprintf('%J', state)) === null ||
+      writefile(tmp_dir + '/profile.json', content) === null) {
+    cleanup_singbox_upload(tmp_dir);
     return { success: false, error: 'write_failed', message: '写入文件失败' };
+  }
 } else {
-  let fp = open(tmp, 'a');
+  if (type(upload) != 'string' || !match(upload, /^clashoo_sb_upload\.[A-Za-z0-9]{6}$/))
+    return { success: false, error: 'invalid upload' };
+  tmp_dir = '/tmp/' + upload;
+  let info = lstat(tmp_dir);
+  if (!info || info.type != 'directory' || info.uid != 0)
+    return { success: false, error: 'invalid upload' };
+  try { state = json(readfile(tmp_dir + '/state.json')); } catch (e) {}
+  if (!state || state.name != name || state.total != total || state.next != idx ||
+      time() - state.created > 600)
+    return { success: false, error: 'invalid upload' };
+  let previous = lstat(tmp_dir + '/profile.json');
+  if (!previous || previous.type != 'file' || previous.uid != 0 ||
+      previous.size + length(content) > SINGBOX_PROFILE_MAX_SIZE)
+    return { success: false, error: 'too_large' };
+  let fp = open(tmp_dir + '/profile.json', 'a');
   if (!fp) return { success: false, error: 'write_failed', message: '打开文件失败' };
   let ok = fp.write(content);
   fp.close();
   if (ok === null) return { success: false, error: 'write_failed', message: '写入文件失败' };
 }
-if (idx + 1 < total)
-  return { success: true, name, index: idx, total, complete: false };
+let tmp = tmp_dir + '/profile.json';
+let written = lstat(tmp);
+if (!written || written.type != 'file' || written.size > SINGBOX_PROFILE_MAX_SIZE) {
+  cleanup_singbox_upload(tmp_dir);
+  return { success: false, error: 'too_large' };
+}
+if (idx + 1 < total) {
+  state.next = idx + 1;
+  if (writefile(tmp_dir + '/state.json', sprintf('%J', state)) === null) {
+    cleanup_singbox_upload(tmp_dir);
+    return { success: false, error: 'write_failed' };
+  }
+  return { success: true, name, index: idx, total, complete: false, upload };
+}
 let binary = find_binary();
 if (binary && match(binary, /sing-box/)) {
   if (system(shell_quote(binary) + ' check -c ' + shell_quote(tmp) + ' >/dev/null 2>&1') != 0) {
-    system('rm -f ' + shell_quote(tmp));
+    cleanup_singbox_upload(tmp_dir);
     return { success: false, error: 'invalid_config', message: 'sing-box 配置验证失败，请检查 JSON 格式' };
   }
 }
-if (system('cp -f ' + shell_quote(tmp) + ' ' + shell_quote(dir + '/' + name) + ' >/dev/null 2>&1') != 0) {
-  system('rm -f ' + shell_quote(tmp));
+let saved = commit_singbox_profile(tmp, name);
+cleanup_singbox_upload(tmp_dir);
+if (!saved)
   return { success: false, error: 'write_failed', message: '写入文件失败' };
-}
-system('rm -f ' + shell_quote(tmp));
 return { success: true, name, index: idx, total, complete: true };
 }
 },
@@ -4223,10 +4299,11 @@ return { success: true, changes: ['deprecated fields removed/updated'] };
 },
 
 create_singbox_config: {
-args: { sub_url: 'sub_url', name: 'name' },
+args: { sub_url: 'sub_url', name: 'name', converter: 'converter' },
 call: function(req) {
 let sub_url  = trim(req.args?.sub_url || '');
 let name     = trim(req.args?.name    || '');
+let converter = req.args?.converter || '';
 // dashboard 字段（port/secret）由 normalize_singbox_config.uc 在启动时强制覆盖为 UCI 值，
 // 这里写入仅作占位，无实际生效途径，因此直接读 UCI 即可。
 let secret   = uci_get('clashoo', 'config', 'dash_pass') || '';
@@ -4234,6 +4311,8 @@ let ext_port = uci_get('clashoo', 'config', 'dash_port') || '9090';
 
 if (!sub_url || !match(sub_url, /^https?:\/\//))
   return { success: false, error: 'invalid_url', message: '请输入有效的订阅链接' };
+if (converter != '' && converter != 'kidsqq' && converter != 'xeton' && converter != 'v1mk')
+  return { success: false, error: 'invalid_converter' };
 
 if (!name) name = 'singbox';
 name = replace(name, /\.json$/, '');
@@ -4241,14 +4320,15 @@ name = replace(name, /[^A-Za-z0-9_.\u4e00-\u9fa5-]/g, '-');
 name = replace(name, /-+/g, '-');
 name = replace(name, /^[-.]|[-.]$/g, '') || 'singbox';
 
-let dir = '/usr/share/clashoo/config/singbox';
+let dir = SINGBOX_DIR;
 system('mkdir -p ' + shell_quote(dir) + ' >/dev/null 2>&1');
+let work_dir = mkdtemp('/tmp/clashoo_sb_convert.XXXXXX');
+if (!work_dir) return { success: false, error: 'write_failed', message: '无法创建临时目录' };
 
 let final_name = name + '.json';
 
-// Write sub_url to temp file to avoid shell injection in curl call
-let tmp_url = '/tmp/.clashoo-sb-url';
-writefile(tmp_url, sub_url);
+let tmp_url = work_dir + '/sub.url';
+let tmp_hdr = work_dir + '/sub.hdr';
 
 let config_obj = null;
 let downloaded_yaml = '';
@@ -4283,7 +4363,8 @@ if (!prefer_template) {
     let raw0 = p0 ? trim(p0.read('all')) : '';
     if (p0) p0.close();
     if (length(raw0) > 50 && substr(raw0, 0, 1) === '{') {
-      let obj = json(raw0);
+      let obj = null;
+      try { obj = json(raw0); } catch (e) {}
       if (has_proxy_outbounds(obj)) {
         config_obj = obj;
         break;
@@ -4299,11 +4380,9 @@ if (!config_obj && system('command -v ucode >/dev/null 2>&1') == 0 &&
     access('/usr/share/clashoo/lib/templates/default.json', 'r')) {
   let yaml_src = '';
   if (!(yaml_src && access(yaml_src, 'r') && match(yaml_src, /\.(yaml|yml)$/))) {
-    let tmp_yaml = '/tmp/clashoo_sb_sub.yaml';
-    let tmp_hdr  = '/tmp/clashoo_sb_sub.hdr';
-    system('rm -f ' + shell_quote(tmp_hdr) + ' >/dev/null 2>&1');
+    let tmp_yaml = work_dir + '/sub.yaml';
     let conv_ua = uci_get('clashoo', 'config', 'sub_ua') || 'clash.meta';
-    let dl_cmd = 'curl -fsSL --connect-timeout 8 --max-time 20 -D ' + shell_quote(tmp_hdr) + ' -A ' + shell_quote(conv_ua) + ' ' + shell_quote(sub_url) + ' -o ' + shell_quote(tmp_yaml) + ' >/dev/null 2>&1 || wget -q --user-agent=' + shell_quote(conv_ua) + ' -O ' + shell_quote(tmp_yaml) + ' ' + shell_quote(sub_url) + ' >/dev/null 2>&1';
+    let dl_cmd = 'curl -fsSL --connect-timeout 8 --max-time 20 -D ' + shell_quote(tmp_hdr) + ' -A ' + shell_quote(conv_ua) + ' ' + shell_quote(sub_url) + ' -o ' + shell_quote(tmp_yaml) + ' >/dev/null 2>&1 || wget -q --timeout=20 --user-agent=' + shell_quote(conv_ua) + ' -O ' + shell_quote(tmp_yaml) + ' ' + shell_quote(sub_url) + ' >/dev/null 2>&1';
     if (system(dl_cmd) == 0 && access(tmp_yaml, 'r')) {
       yaml_src = tmp_yaml;
       downloaded_yaml = tmp_yaml;
@@ -4311,48 +4390,47 @@ if (!config_obj && system('command -v ucode >/dev/null 2>&1') == 0 &&
   }
 
   if (yaml_src && access(yaml_src, 'r')) {
-    let tmp_json = '/tmp/clashoo_sb_from_yaml.json';
+    let tmp_json = work_dir + '/from-yaml.json';
     let cv_cmd = 'ucode /usr/share/clashoo/lib/yaml2singbox.uc '
       + shell_quote(yaml_src) + ' '
       + shell_quote('/usr/share/clashoo/lib/templates/default.json') + ' '
-      + shell_quote(tmp_json) + ' >/tmp/clashoo_yaml2sb.log 2>&1';
+      + shell_quote(tmp_json) + ' >' + shell_quote(work_dir + '/yaml2sb.log') + ' 2>&1';
     if (system(cv_cmd) == 0 && access(tmp_json, 'r')) {
       let raw3 = readfile(tmp_json);
-      let obj3 = raw3 ? json(raw3) : null;
+      let obj3 = null;
+      try { obj3 = raw3 ? json(raw3) : null; } catch (e) {}
       if (has_proxy_outbounds(obj3))
         config_obj = obj3;
     }
-    system('rm -f ' + shell_quote(tmp_json));
+    unlink(tmp_json);
   }
 }
 
-// Step 3: 本地 yaml2singbox 失败再走外部 subconverter（base64 ss/vmess 链接列表
-// yaml2singbox 不识别，要靠外部转换器）。每个 max-time 12s，最坏 36s 兜底。
-if (!config_obj) {
-  let converters = [
-    ['https://sub.kidsqq.cn/singbox?selectedRules=%5B%22Location%3ACN%22%2C%22Private%22%2C%22Non-China%22%2C%22Github%22%2C%22Google%22%2C%22Youtube%22%2C%22AI%2BServices%22%2C%22Telegram%22%2C%22Ad%2BBlock%22%2C%22Streaming%22%2C%22Apple%22%2C%22Social%2BMedia%22%5D&customRules=%5B%5D&group_by_country=true', 'config'],
-    ['https://sub.xeton.dev/sub?target=singbox', 'url'],
-    ['https://api.v1.mk/sub?target=singbox',     'url'],
-  ];
-  for (let cv in converters) {
+// Step 3: 仅用户明确选择外部转换器时才把完整订阅链接交给该服务。
+if (!config_obj && converter) {
+  let converters = {
+    kidsqq: ['https://sub.kidsqq.cn/singbox?selectedRules=%5B%22Location%3ACN%22%2C%22Private%22%2C%22Non-China%22%2C%22Github%22%2C%22Google%22%2C%22Youtube%22%2C%22AI%2BServices%22%2C%22Telegram%22%2C%22Ad%2BBlock%22%2C%22Streaming%22%2C%22Apple%22%2C%22Social%2BMedia%22%5D&customRules=%5B%5D&group_by_country=true', 'config'],
+    xeton: ['https://sub.xeton.dev/sub?target=singbox', 'url'],
+    v1mk: ['https://api.v1.mk/sub?target=singbox', 'url']
+  };
+  let cv = converters[converter];
+  if (writefile(tmp_url, sub_url) !== null) {
     let base = cv[0], param = cv[1];
     let p = popen('curl -sL --max-time 12 -G --data-urlencode ' +
                   shell_quote(param + '@' + tmp_url) + ' ' +
                   shell_quote(base) + ' 2>/dev/null');
     let raw = p ? trim(p.read('all')) : '';
     if (p) p.close();
-    if (length(raw) < 50 || substr(raw, 0, 1) !== '{') continue;
-    let obj = json(raw);
-    if (has_proxy_outbounds(obj)) {
-      config_obj = obj;
-      break;
+    if (length(raw) >= 50 && substr(raw, 0, 1) === '{') {
+      let obj = null;
+      try { obj = json(raw); } catch (e) {}
+      if (has_proxy_outbounds(obj)) config_obj = obj;
     }
   }
 }
 
-system('rm -f ' + shell_quote(tmp_url));
-if (downloaded_yaml)
-  system('rm -f ' + shell_quote(downloaded_yaml));
+unlink(tmp_url);
+if (downloaded_yaml) unlink(downloaded_yaml);
 
 
 
@@ -4421,7 +4499,6 @@ if (config_obj) {
 '{\n' +
 '  "log": { "level": "info", "timestamp": true },\n' +
 '  "_note": "subconverter unavailable - replace outbounds with your proxies",\n' +
-'  "_sub_url": "' + je(sub_url) + '",\n' +
 '  "dns": {\n' +
 '    "servers": [\n' +
 '      { "tag": "remote", "type": "https", "server": "1.1.1.1" },\n' +
@@ -4463,11 +4540,15 @@ if (config_obj) {
 }
 
 let path = dir + '/' + final_name;
-if (writefile(path, content) === null)
+let generated = work_dir + '/generated.json';
+if (writefile(generated, content) === null ||
+    !commit_singbox_profile(generated, final_name)) {
+  cleanup_singbox_conversion(work_dir);
   return { success: false, error: 'write_failed', message: '写入配置文件失败' };
+}
 
 // Save Subscription-Userinfo from captured HTTP headers as <name>.json.info
-let sb_hdr_file = '/tmp/clashoo_sb_sub.hdr';
+let sb_hdr_file = tmp_hdr;
 if (access(sb_hdr_file, 'r')) {
   let hdr_raw = readfile(sb_hdr_file) || '';
   for (let line in split(hdr_raw, '\n')) {
@@ -4478,8 +4559,8 @@ if (access(sb_hdr_file, 'r')) {
       break;
     }
   }
-  system('rm -f ' + shell_quote(sb_hdr_file) + ' >/dev/null 2>&1');
 }
+cleanup_singbox_conversion(work_dir);
 
 let msg = from_converter
   ? '配置已从订阅生成: ' + final_name

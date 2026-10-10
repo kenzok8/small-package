@@ -110,7 +110,7 @@ func GenerateDAE(opts Options) (string, error) {
 		if err := requireStrictExactPlan(opts, result); err != nil {
 			return "", err
 		}
-		return renderDAE(plan), nil
+		return renderDAE(plan, opts.Target == model.ClientHonk), nil
 	}
 	if result.Status == PreflightUnsupported {
 		return "", &PreflightError{Result: result}
@@ -118,7 +118,7 @@ func GenerateDAE(opts Options) (string, error) {
 	if result.Status == PreflightDegraded && !acceptDegradedPlan(opts, &result) {
 		return "", &PreflightError{Result: result}
 	}
-	return renderDAE(plan), nil
+	return renderDAE(plan, opts.Target == model.ClientHonk), nil
 }
 
 func compileDAE(opts Options) (daePlan, PreflightResult) {
@@ -686,17 +686,25 @@ var (
 	daeProcessName = regexp.MustCompile(`^[A-Za-z0-9_. -]+$`)
 )
 
-func renderDAE(plan daePlan) string {
+func renderDAE(plan daePlan, honkVariant bool) string {
 	var b strings.Builder
 	b.WriteString("# Generated locally by Tower as a native dae config.dae file.\n")
 	b.WriteString("# Review LAN and DNS settings before replacing an existing dae config.\n\n")
-	b.WriteString("global {\n")
-	b.WriteString("    tproxy_port: 12345\n")
-	b.WriteString("    lan_interface: br-lan\n")
-	b.WriteString("    wan_interface: auto\n")
-	b.WriteString("    auto_config_kernel_parameter: true\n")
-	b.WriteString("    dial_mode: domain\n")
-	b.WriteString("}\n\n")
+	if honkVariant {
+		// Honk keeps its global/native_api in /etc/honk/system.dae; reference it
+		// so the exported config stays loadable while Doona stays available.
+		b.WriteString("include {\n")
+		b.WriteString("    system.dae\n")
+		b.WriteString("}\n\n")
+	} else {
+		b.WriteString("global {\n")
+		b.WriteString("    tproxy_port: 12345\n")
+		b.WriteString("    lan_interface: br-lan\n")
+		b.WriteString("    wan_interface: auto\n")
+		b.WriteString("    auto_config_kernel_parameter: true\n")
+		b.WriteString("    dial_mode: domain\n")
+		b.WriteString("}\n\n")
+	}
 	b.WriteString("dns {\n")
 	b.WriteString("    upstream {\n")
 	b.WriteString("        cndns: 'udp://dns.alidns.com:53'\n")

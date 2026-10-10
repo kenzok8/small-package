@@ -58,8 +58,8 @@ fetch_text() {
     return $?
   fi
   if command -v wget >/dev/null 2>&1; then
-    [ -n "$proxy" ] && { http_proxy="$proxy" https_proxy="$proxy" wget -qO- --timeout="$REQUEST_TIMEOUT" --tries=1 "$url"; return $?; }
-    wget -qO- --timeout="$REQUEST_TIMEOUT" --tries=1 "$url"
+    [ -n "$proxy" ] && { http_proxy="$proxy" https_proxy="$proxy" wget -qO- --timeout="$REQUEST_TIMEOUT" "$url"; return $?; }
+    wget -qO- --timeout="$REQUEST_TIMEOUT" "$url"
     return $?
   fi
   return 127
@@ -74,10 +74,10 @@ download_file() {
     return $?
   fi
   if [ -n "$proxy" ]; then
-    http_proxy="$proxy" https_proxy="$proxy" wget -qO "$out" --timeout="$REQUEST_TIMEOUT" --tries=1 "$url"
+    http_proxy="$proxy" https_proxy="$proxy" wget -qO "$out" --timeout="$REQUEST_TIMEOUT" "$url"
     return $?
   fi
-  wget -qO "$out" --timeout="$REQUEST_TIMEOUT" --tries=1 "$url"
+  wget -qO "$out" --timeout="$REQUEST_TIMEOUT" "$url"
 }
 
 download_url() {

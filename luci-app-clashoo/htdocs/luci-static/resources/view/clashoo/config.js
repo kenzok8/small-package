@@ -1817,7 +1817,7 @@ return view.extend({
                   });
                 }
               }, _("Switch Profile")),
-              p.source === 'native' && p.sub_url ? E('button', {
+              p.source === 'native' ? E('button', {
                 'class': 'btn cbi-button cl-btn-sm cl-btn-sb-action',
                 click: function (ev) {
                   var btn = ev.currentTarget;
@@ -1898,6 +1898,12 @@ return view.extend({
     try { savedUa = uci.get('clashoo', 'config', 'sub_ua') || ''; } catch (e) {}
     // YAML 订阅转换走 mihomo 订阅流程（拉 yaml → yaml2singbox），UA 与 mihomo 共用 sub_ua
     var convertUaPicker = buildUaPicker(savedUa);
+    var converterSelect = E('select', { 'class': 'cl-sub-url', style: 'margin-top:0' }, [
+      E('option', { value: '' }, _("Local conversion only")),
+      E('option', { value: 'kidsqq' }, 'sub.kidsqq.cn'),
+      E('option', { value: 'xeton' }, 'sub.xeton.dev'),
+      E('option', { value: 'v1mk' }, 'api.v1.mk')
+    ]);
 
     var genBtn, applyBtn;
     function setBusy(busy, activeBtn) {
@@ -1925,7 +1931,7 @@ return view.extend({
           .then(function () { return clearClashooDirty(); });
       }).catch(function () {});
       uaPromise.then(function () {
-        return clashoo.createSingboxConfig(url, nameInput.value.trim());
+        return clashoo.createSingboxConfig(url, nameInput.value.trim(), converterSelect.value);
       })
         .then(function (r) {
           /* RPC 超时被 resolveDefault 兜底成 {}，r.success 是 undefined。
@@ -2050,7 +2056,10 @@ return view.extend({
       E('div', { 'class': 'cl-section cl-card cl-sb-card' }, [
         E('h4', {}, _("YAML Subscription Conversion")),
         E('div', { 'class': 'cl-form-wrap cl-fixed-600 cl-sb-form' }, [
-          urlInput, nameInput, convertUaPicker.wrap,
+          urlInput, nameInput, convertUaPicker.wrap, converterSelect,
+          E('p', { 'class': 'cl-sb-note' },
+            _("If local conversion fails, the selected external service receives the complete subscription URL, including its access token. Leave Local conversion only selected to keep the URL on this router.")
+          ),
           E('div', { 'class': 'cl-actions cl-sb-top-actions' }, [
             genBtn,
             applyBtn

@@ -67,7 +67,7 @@ _fetch() {
 		fi
 		return $?
 	fi
-	wget -q --timeout=120 --no-check-certificate --user-agent="Clash/OpenWRT" "$url" -O "$target"
+	wget -q --timeout=120 --user-agent="Clash/OpenWRT" "$url" -O "$target"
 }
 
 # 多源拉取：本机代理 → 国内镜像（gh-proxy / ghfast / jsdelivr）→ 原 URL 兜底
