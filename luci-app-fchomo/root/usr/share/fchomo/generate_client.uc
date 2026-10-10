@@ -522,7 +522,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		uuid: cfg.vmess_uuid || cfg.uuid,
 		cipher: cfg.vmess_chipher || cfg.shadowsocks_chipher,
 		password: cfg.shadowsocks_password || cfg.password,
-		hostname: cfg.tailscale_hostname || cfg.easytier_hostname,
+		hostname: cfg.tailscale_hostname || cfg.easytier_hostname || ubus.call('system', 'board')?.hostname,
 		headers: cfg.headers ? json(cfg.headers) : null,
 		network: cfg.zerotier_network_id || cfg.masque_network || null,
 		"state-dir": (cfg.type in ['zerotier', 'tailscale', 'easytier']) ? `${HM_DIR}/${ucinode}/${cfg['.name']}` : null,

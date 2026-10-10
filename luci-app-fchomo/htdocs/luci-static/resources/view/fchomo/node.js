@@ -1062,7 +1062,6 @@ return view.extend({
 
 		so = ss.taboption('field_general', form.Value, 'easytier_hostname', _('Hostname'));
 		so.datatype = 'hostname';
-		so.placeholder = 'mihomo';
 		so.depends('type', 'easytier');
 		so.modalonly = true;
 
