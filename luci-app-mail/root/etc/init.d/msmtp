@@ -17,46 +17,63 @@ validate_section() {
 		'port:port:25'
 }
 
+# msmtp takes the rest of the line as the argument and strips one pair of
+# enclosing double quotes, nothing else: quoting keeps leading/trailing
+# spaces and a value that is itself quoted; a newline would start a new
+# command, so it is dropped.
+msmtp_arg() {
+	printf '"%s"' "$(printf '%s' "$1" | tr -d '\r\n')"
+}
+
 config_account() {
-	local server tls tls_starttls from user password
+	local server tls tls_starttls from user password port
 
 	validate_section "${1}" || {
-		_err "validation failed"
+		logger -t msmtp "${1}: validation failed"
 		return 1
 	}
 
-	cat > /tmp/msmtp.tmp <<-EOF
+	cat > "$msmtp_tmp" <<-EOF
 	account default
 	host $server
 	port $port
 	EOF
 	[ -n "$user" ] && [ -n "$password" ] && {
-		cat >> /tmp/msmtp.tmp <<-EOF
+		cat >> "$msmtp_tmp" <<-EOF
 		auth on
-		user $user
-		password $password
+		user $(msmtp_arg "$user")
+		password $(msmtp_arg "$password")
 		EOF
 	}
-	[ -n "$from" ] && echo "from $from" >> /tmp/msmtp.tmp
+	[ -n "$from" ] && echo "from $(msmtp_arg "$from")" >> "$msmtp_tmp"
 	[ "$tls" = "1" ] && {
-		cat >> /tmp/msmtp.tmp <<-EOF
+		cat >> "$msmtp_tmp" <<-EOF
 		tls_trust_file /etc/ssl/certs/ca-certificates.crt
 		tls on
 		EOF
 	} || {
-		echo 'tls off' >> /tmp/msmtp.tmp
+		echo 'tls off' >> "$msmtp_tmp"
 	}
 	[ "$tls_starttls" = "1" ] && {
-		echo 'tls_starttls on' >> /tmp/msmtp.tmp
+		echo 'tls_starttls on' >> "$msmtp_tmp"
 	} || {
-		echo 'tls_starttls off' >> /tmp/msmtp.tmp
+		echo 'tls_starttls off' >> "$msmtp_tmp"
 	}
+	msmtp_written=1
 }
 
 start_service() {
+	local msmtp_tmp msmtp_written=0
+	# The file holds the SMTP password: created 0600 next to the target so
+	# the mv is a rename, never readable by others even for a moment
+	msmtp_tmp="$(umask 077; mktemp /etc/msmtprc.XXXXXX)" || return 1
 	config_load mail
 	config_foreach config_account smtp
-	[ -f "/tmp/msmtp.tmp" ] && mv /tmp/msmtp.tmp /etc/msmtprc
+	if [ "$msmtp_written" = "1" ]; then
+		mv "$msmtp_tmp" /etc/msmtprc
+	else
+		rm -f "$msmtp_tmp"
+	fi
 }
 
 service_triggers() {

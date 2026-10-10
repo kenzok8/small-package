@@ -8,8 +8,14 @@ FILTERFILE="$WORKDIR/tcpdump_filter"
 PCAPFILE="$WORKDIR/capture.pcap"
 
 if [ -f "$PIDFILE" ]; then
-    echo "error: Packet capture is running"
-    exit 1
+	# a helper that died on an error never removed its pidfile
+	pid=$(cat "$PIDFILE" 2>/dev/null)
+	case "$pid" in ''|*[!0-9]*) pid="" ;; esac
+	if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null && grep -sq packet_capture "/proc/$pid/cmdline"; then
+		echo "error: Packet capture is running"
+		exit 1
+	fi
+	rm -f "$PIDFILE"
 fi
 
 mkdir -p "$WORKDIR"
@@ -84,6 +90,6 @@ fi
 
 (/usr/libexec/packet_capture "$args" "$duration")&
 
-echo $! > /var/run/packet_capture.pid
+echo $! > "$PIDFILE"
 
 exit 0

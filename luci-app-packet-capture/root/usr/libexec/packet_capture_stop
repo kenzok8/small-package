@@ -1,9 +1,16 @@
 #!/bin/sh
 
-pid=$(cat /var/run/packet_capture.pid)
+PIDFILE="/var/run/packet_capture.pid"
+
+pid=$(cat "$PIDFILE" 2>/dev/null)
+case "$pid" in ''|*[!0-9]*) pid="" ;; esac
 if [ -n "$pid" ] && grep -sq packet_capture "/proc/$pid/cmdline"; then
     ppid=$(pgrep -P $pid)
-    kill -TERM $ppid
+    [ -n "$ppid" ] && kill -TERM $ppid
+else
+    # Nothing runs it any more (the helper died on an error before removing
+    # it): a stale pidfile made every later start answer "running".
+    rm -f "$PIDFILE"
 fi
 
 exit 0

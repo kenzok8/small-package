@@ -795,29 +795,34 @@ return view.extend({
 	},
 
 	buildNodeTree: function(nodes) {
-		var nodeMap = {};
+		var nodeMap = Object.create(null);
 		var root = null;
 		nodes.forEach(function(n) {
 			nodeMap[n.id] = n;
 			n.children = [];
-		});
-		nodes.forEach(function(n) {
-			if (n.parent_id && nodeMap[n.parent_id]) {
-				nodeMap[n.parent_id].children.push(n);
-			} else if (n.role === 'controller' || (!n.role && n.id === 'ac')) {
-				root = n;
-			}
+			if (n.role === 'controller' || (!n.role && n.id === 'ac')) root = n;
 		});
 		if (!root && nodes.length > 0) root = nodes[0];
-		if (root) {
-			nodes.forEach(function(n) {
-				if (n !== root && (!n.parent_id || !nodeMap[n.parent_id])) {
-					if (root.children.indexOf(n) === -1) {
-						root.children.push(n);
-					}
+		var parents = Object.create(null);
+		nodes.forEach(function(n) {
+			if (n !== root) parents[n.id] = nodeMap[n.parent_id] || root;
+		});
+		nodes.forEach(function(n) {
+			if (n === root) return;
+			var visited = Object.create(null);
+			var current = n;
+			while (current && current !== root) {
+				if (visited[current.id]) {
+					parents[n.id] = root;
+					break;
 				}
-			});
-		}
+				visited[current.id] = true;
+				current = parents[current.id];
+			}
+		});
+		nodes.forEach(function(n) {
+			if (parents[n.id]) parents[n.id].children.push(n);
+		});
 		return root;
 	},
 

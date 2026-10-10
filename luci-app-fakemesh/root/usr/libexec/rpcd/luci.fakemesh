@@ -51,7 +51,26 @@ local function get_device_icon(hostname, mac)
 	return "device"
 end
 
-local function score_client_candidate(c, nu)
+local function flag_set(value)
+	return value == true or value == 1
+end
+
+local function parse_fdb_entry(line)
+	if line:find("%f[%w]permanent%f[%W]") or line:find("%f[%w]self%f[%W]") or line:find("%f[%w]stale%f[%W]") or line:find("%f[%w]none%f[%W]") then
+		return nil
+	end
+	if not line:find("%s+master%s+br%-lan%f[%s%z]") then return nil end
+	local mac, dev = line:match("^([%x:]+)%s+dev%s+(%S+)")
+	if mac and #mac == 17 then return mac:upper(), dev end
+end
+
+local function is_uplink_port(upstream, port)
+	if not upstream or upstream.type ~= "wired" or not port or port == "" then return false end
+	local uplink = upstream.ifname and upstream.ifname ~= "" and upstream.ifname or upstream.port
+	return uplink and uplink ~= "" and uplink:lower() == port:lower()
+end
+
+local function score_client_candidate(c)
 	local score = 0
 	if c.access_type == "wireless" then
 		score = score + 1000
@@ -71,20 +90,45 @@ local function score_client_candidate(c, nu)
 		score = score + 800
 	end
 
-	if c.node_id and c.node_id ~= "ac" then
-		score = score + 200
-	end
-
-	if nu then
-		if nu.rx_speed_bytes and nu.rx_speed_bytes > 0 then score = score + 30 end
-		if nu.tx_speed_bytes and nu.tx_speed_bytes > 0 then score = score + 30 end
-		if nu.idle_time and nu.idle_time < 60 then score = score + 40 end
-	end
 	return score
+end
+
+local function prefer_client_candidate(candidate, current)
+	if not current then return true end
+	local wireless = candidate.access_type == "wireless"
+	if wireless and current.access_type == "wireless" then
+		local inactive = tonumber(candidate.inactive_ms)
+		local current_inactive = tonumber(current.inactive_ms)
+		if inactive and current_inactive and inactive ~= current_inactive then
+			return inactive < current_inactive
+		end
+	end
+	return score_client_candidate(candidate) > score_client_candidate(current)
+end
+
+local function client_on_uplink(client, node_by_id)
+	local node = node_by_id[client.node_id]
+	local port = client.ifname and client.ifname ~= "" and client.ifname or client.port
+	return node and client.access_type == "wired" and is_uplink_port(node.upstream or node.backhaul, port)
+end
+
+local function client_forwarded_downstream(client, candidates, node_by_id)
+	if client.access_type ~= "wired" then return false end
+	for _, other in ipairs(candidates) do
+		if other.node_id ~= client.node_id and not client_on_uplink(other, node_by_id) then
+			local node = node_by_id[other.node_id]
+			while node and node.parent_id do
+				if node.parent_id == client.node_id then return true end
+				node = node_by_id[node.parent_id]
+			end
+		end
+	end
+	return false
 end
 
 local function collect_local_node_info()
 	local conn = ubus_has and ubus.connect()
+	local fdb = exec("bridge fdb show 2>/dev/null")
 
 	local mac = ""
 	local p = io.popen("uci get network.meshx0.hostname 2>/dev/null")
@@ -197,27 +241,24 @@ local function collect_local_node_info()
 				end
 			end
 
-			local up_port = "WAN"
-			local up_speed = ""
-			local wan_sp = read_file("/sys/class/net/wan/speed")
-			if tonumber(wan_sp) and tonumber(wan_sp) > 0 then
-				up_port = "WAN"
-				up_speed = wan_sp .. "M"
-			else
-				for p = 1, 4 do
-					local lsp = read_file("/sys/class/net/lan" .. p .. "/speed")
-					if tonumber(lsp) and tonumber(lsp) > 0 then
-						up_port = "LAN" .. p
-						up_speed = lsp .. "M"
-						break
-					end
+			-- The gateway's FDB entry identifies the uplink even when the
+			-- cable uses a LAN port. An active port alone is not evidence.
+			local up_ifname = def_route:match("%sdev%s+(%S+)") or ""
+			if up_ifname == "br-lan" then up_ifname = "" end
+			for line in fdb:gmatch("[^\r\n]+") do
+				local fmac, dev = parse_fdb_entry(line)
+				if fmac == gw_mac then
+					up_ifname = dev
+					break
 				end
 			end
-			if up_speed == "" then up_speed = "1000M" end
+			local speed = up_ifname ~= "" and tonumber(read_file("/sys/class/net/" .. up_ifname .. "/speed")) or nil
+			local up_speed = speed and speed > 0 and (speed .. "M") or ""
 
 			info.upstream = {
 				type = "wired",
-				port = up_port,
+				ifname = up_ifname,
+				port = up_ifname:upper(),
 				port_speed = up_speed,
 				gateway_ip = gw_ip,
 				gateway_mac = gw_mac,
@@ -239,6 +280,11 @@ local function collect_local_node_info()
 			if ifname and ifname ~= "meshx0" then
 				local st = conn:call(obj, "get_status", {}) or {}
 				local cl = conn:call(obj, "get_clients", {}) or {}
+				local stations = conn:call("iwinfo", "assoclist", { device = ifname }) or {}
+				local activity_by_mac = {}
+				for _, station in ipairs(stations.results or {}) do
+					if station.mac then activity_by_mac[station.mac:upper()] = tonumber(station.inactive) end
+				end
 				local freq = st.freq or cl.freq or 0
 				local band = "2.4G"
 				if freq >= 5000 and freq < 6000 then band = "5G"
@@ -255,19 +301,24 @@ local function collect_local_node_info()
 
 				if cl.clients then
 					for cmac, cinfo in pairs(cl.clients) do
-						local mac_u = cmac:upper()
-						seen_macs[mac_u] = true
-						clients[#clients + 1] = {
-							mac = mac_u,
-							access_type = "wireless",
-							ifname = ifname,
-							band = band,
-							ssid = st.ssid or "",
-							signal = cinfo.signal or 0,
-							noise = cinfo.noise or -95,
-							rate_rx = (cinfo.rate and cinfo.rate.rx) and (cinfo.rate.rx / 1000000) or 0,
-							rate_tx = (cinfo.rate and cinfo.rate.tx) and (cinfo.rate.tx / 1000000) or 0
-						}
+						if flag_set(cinfo.assoc) and flag_set(cinfo.authorized) then
+							local mac_u = cmac:upper()
+							seen_macs[mac_u] = true
+							clients[#clients + 1] = {
+								mac = mac_u,
+								access_type = "wireless",
+								ifname = ifname,
+								band = band,
+								ssid = st.ssid or "",
+								associated = true,
+								authorized = true,
+								inactive_ms = activity_by_mac[mac_u],
+								signal = cinfo.signal or 0,
+								noise = cinfo.noise or -95,
+								rate_rx = (cinfo.rate and cinfo.rate.rx) and (cinfo.rate.rx / 1000) or 0,
+								rate_tx = (cinfo.rate and cinfo.rate.tx) and (cinfo.rate.tx / 1000) or 0
+							}
+						end
 					end
 				end
 			end
@@ -276,32 +327,29 @@ local function collect_local_node_info()
 
 	-- Wired clients from bridge fdb
 	local wired_ports = {}
-	local fdb = exec("bridge fdb show 2>/dev/null")
 	for line in fdb:gmatch("[^\r\n]+") do
-		if not line:find("permanent") and not line:find("none") and not line:find("self") and not line:find("stale") then
-			local cmac, dev = line:match("^([%a%d:]+)%s+dev%s+([^%s]+)%s+master%s+br%-lan")
-			if cmac and dev then
-				local dev_l = dev:lower()
-				if not dev_l:find("mesh") and not dev_l:find("phy") and not dev_l:find("wlan") and not dev_l:find("sta") then
-					local mac_u = cmac:upper()
-					local sp_str = read_file("/sys/class/net/" .. dev .. "/speed")
-					local sp = tonumber(sp_str) or 0
-					local speed_label = sp > 0 and (sp .. "M") or ""
-					wired_ports[#wired_ports + 1] = {
+		local cmac, dev = parse_fdb_entry(line)
+		if cmac and dev and not is_uplink_port(info.upstream, dev) then
+			local dev_l = dev:lower()
+			if not dev_l:find("mesh") and not dev_l:find("phy") and not dev_l:find("wlan") and not dev_l:find("sta") then
+				local mac_u = cmac:upper()
+				local sp_str = read_file("/sys/class/net/" .. dev .. "/speed")
+				local sp = tonumber(sp_str) or 0
+				local speed_label = sp > 0 and (sp .. "M") or ""
+				wired_ports[#wired_ports + 1] = {
+					mac = mac_u,
+					port = dev:upper(),
+					speed = speed_label
+				}
+				if not seen_macs[mac_u] then
+					seen_macs[mac_u] = true
+					clients[#clients + 1] = {
 						mac = mac_u,
+						access_type = "wired",
+						ifname = dev,
 						port = dev:upper(),
-						speed = speed_label
+						port_speed = speed_label
 					}
-					if not seen_macs[mac_u] then
-						seen_macs[mac_u] = true
-						clients[#clients + 1] = {
-							mac = mac_u,
-							access_type = "wired",
-							ifname = dev,
-							port = dev:upper(),
-							port_speed = speed_label
-						}
-					end
 				end
 			end
 		end
@@ -357,41 +405,153 @@ local function collect_local_node_info()
 	return info
 end
 
-local function fetch_agents_parallel(agents)
-	if not agents or #agents == 0 then return {} end
+local function valid_ipv4(ip)
+	if type(ip) ~= "string" then return false end
+	local a, b, c, d = ip:match("^(%d+)%.(%d+)%.(%d+)%.(%d+)$")
+	if not a then return false end
+	return tonumber(a) <= 255 and tonumber(b) <= 255 and tonumber(c) <= 255 and tonumber(d) <= 255
+end
 
-	local ubus_payload = '{"jsonrpc":"2.0","id":1,"method":"call","params":["00000000000000000000000000000000","luci.fakemesh","get_node_info",{}]}'
-	local cmds = {}
-	for _, a in ipairs(agents) do
-		local tag = a.ip:gsub("%.", "_")
-		local cmd = string.format(
-			"( curl -s --connect-timeout 1 -m 2 -X POST -H 'Content-Type: application/json' -d '%s' http://%s/ubus > /tmp/fmnode_%s.json 2>/dev/null || curl -s --connect-timeout 1 -m 2 http://%s/fakemesh.node > /tmp/fmnode_%s.json 2>/dev/null ) &",
-			ubus_payload, a.ip, tag, a.ip, tag
-		)
-		cmds[#cmds + 1] = cmd
+local function monotonic_time()
+	return tonumber(read_file("/proc/uptime"):match("^[%d%.]+")) or 0
+end
+
+local function start_http_request(ip, method, timeout)
+	if not valid_ipv4(ip) then return nil end
+	-- mkstemp unlinks the file immediately: concurrent RPCs never share a
+	-- pathname, and a killed RPC cannot leave response files behind.
+	local response = nixio.mkstemp("fakemesh-node")
+	if not response then return nil end
+	local payload = string.format('{"jsonrpc":"2.0","id":1,"method":"call","params":["00000000000000000000000000000000","luci.fakemesh","%s",{}]}', method)
+	local pid = nixio.fork()
+	if not pid then response:close(); return nil end
+	if pid == 0 then
+		local null = nixio.open("/dev/null", "r+")
+		if not null or not nixio.dup(response, nixio.stdout) or not nixio.dup(null, nixio.stderr) or not nixio.dup(null, nixio.stdin) then
+			os.exit(1)
+		end
+		response:close()
+		null:close()
+		nixio.execp("wget", "-4", "-q", "-T", tostring(math.max(1, math.ceil(timeout))),
+			"--header=Content-Type: application/json", "--post-data=" .. payload,
+			"-O", "-", "http://" .. ip .. "/ubus")
+		os.exit(1)
 	end
-	cmds[#cmds + 1] = "wait"
+	return { pid = pid, response = response, ip = ip }
+end
 
-	os.execute(table.concat(cmds, "\n"))
+local function read_http_response(response)
+	response:seek(0, "set")
+	local chunks, size = {}, 0
+	while size <= 1024 * 1024 do
+		local chunk = response:read(4096)
+		if not chunk or chunk == "" then break end
+		chunks[#chunks + 1] = chunk
+		size = size + #chunk
+	end
+	if size > 1024 * 1024 then return nil end
+	local ok, parsed = pcall(json.parse, table.concat(chunks))
+	if ok and type(parsed) == "table" and type(parsed.result) == "table" and parsed.result[1] == 0 and type(parsed.result[2]) == "table" then
+		return parsed.result[2]
+	end
+end
 
+local function finish_http_requests(requests, deadline)
 	local results = {}
-	for _, a in ipairs(agents) do
-		local tag = a.ip:gsub("%.", "_")
-		local path = "/tmp/fmnode_" .. tag .. ".json"
-		local raw = read_file(path)
-		os.remove(path)
-		if raw and #raw > 10 then
-			local ok, parsed = pcall(json.parse, raw)
-			if ok and parsed then
-				if parsed.result and parsed.result[2] and parsed.result[2].mac then
-					results[a.ip] = parsed.result[2]
-				elseif parsed.mac then
-					results[a.ip] = parsed
+	local pending = #requests
+	while pending > 0 do
+		for _, request in ipairs(requests) do
+			if request.pid then
+				local pid, status, code = nixio.waitpid(request.pid, "nohang")
+				if pid or monotonic_time() >= deadline then
+					if not pid then
+						-- wget is the direct child, so this also stops GNU wget
+						-- retries without leaving a shell or downloader running.
+						nixio.kill(request.pid, 9)
+						nixio.waitpid(request.pid)
+					elseif status == "exited" and code == 0 then
+						results[request.ip] = read_http_response(request.response)
+					end
+					request.response:close()
+					request.pid = nil
+					pending = pending - 1
+				end
+			end
+		end
+		if pending > 0 then nixio.poll({}, 50) end
+	end
+	return results
+end
+
+local function fetch_nodes_parallel(nodes, method, timeout)
+	local requests = {}
+	local deadline = monotonic_time() + timeout
+	for _, node in ipairs(nodes or {}) do
+		local request = start_http_request(node.ip, method, timeout)
+		if request then requests[#requests + 1] = request end
+	end
+	return finish_http_requests(requests, deadline)
+end
+
+local function fetch_agents_parallel(agents)
+	local reports = fetch_nodes_parallel(agents, "get_node_info", 2)
+	for ip, report in pairs(reports) do
+		if type(report.mac) ~= "string" then reports[ip] = nil end
+	end
+	return reports
+end
+
+local function discover_controllers(conn, local_info)
+	local candidates, seen = {}, {}
+	local function add(ip)
+		if valid_ipv4(ip) and ip ~= local_info.ip and not seen[ip] then
+			seen[ip] = true
+			candidates[#candidates + 1] = { ip = ip }
+		end
+	end
+	if conn then
+		local services = conn:call("umdns", "browse", {}) or {}
+		local mesh_service = "_fakemesh_" .. local_info.mesh_id .. "._tcp"
+		for _, instance in pairs(services[mesh_service] or {}) do
+			if type(instance) == "table" then add(instance.ipv4) end
+		end
+	end
+	table.sort(candidates, function(a, b) return a.ip < b.ip end)
+	-- A gateway is only a fallback candidate; it must pass the same
+	-- controller-role and Mesh-ID checks as an mDNS advertisement.
+	for line in read_file("/proc/net/route"):gmatch("[^\r\n]+") do
+		local dest, gateway = line:match("^%S+%s+([%x]+)%s+([%x]+)")
+		if dest == "00000000" and gateway and #gateway == 8 and gateway ~= "00000000" then
+			add(string.format("%d.%d.%d.%d", tonumber(gateway:sub(7, 8), 16), tonumber(gateway:sub(5, 6), 16), tonumber(gateway:sub(3, 4), 16), tonumber(gateway:sub(1, 2), 16)))
+		end
+	end
+	return candidates
+end
+
+local function fetch_controller_topology(conn, local_info)
+	local candidates = discover_controllers(conn, local_info)
+	local deadline = monotonic_time() + 5
+	local reports = fetch_nodes_parallel(candidates, "get_node_info", 2)
+	local controllers = {}
+	for _, candidate in ipairs(candidates) do
+		local report = reports[candidate.ip]
+		if report and report.role == "controller" and report.mesh_id == local_info.mesh_id then
+			controllers[#controllers + 1] = candidate
+		end
+	end
+	local remaining = deadline - monotonic_time()
+	local topologies = remaining > 0 and fetch_nodes_parallel(controllers, "get_topology", remaining) or {}
+	for _, controller in ipairs(controllers) do
+		local topology = topologies[controller.ip]
+		if topology and topology.mesh_id == local_info.mesh_id and type(topology.nodes) == "table" and type(topology.clients) == "table" then
+			for _, node in ipairs(topology.nodes) do
+				if node.id == "ac" and node.role == "controller" then
+					return topology, controller.ip
 				end
 			end
 		end
 	end
-	return results
+	return nil, (controllers[1] or candidates[1] or {}).ip
 end
 
 local methods = {
@@ -407,61 +567,12 @@ local methods = {
 			local local_info = collect_local_node_info()
 
 			if local_info.role ~= "controller" then
-				local ac_ip = nil
-
-				-- 1. Default gateway from route table
-				local route = read_file("/proc/net/route")
-				for line in route:gmatch("[^\r\n]+") do
-					local iface, dest, gw = line:match("^([%w%-_]+)%s+([%x]+)%s+([%x]+)")
-					if iface and dest == "00000000" and gw and gw ~= "00000000" then
-						local b1 = tonumber(gw:sub(7, 8), 16)
-						local b2 = tonumber(gw:sub(5, 6), 16)
-						local b3 = tonumber(gw:sub(3, 4), 16)
-						local b4 = tonumber(gw:sub(1, 2), 16)
-						local rip = string.format("%d.%d.%d.%d", b1, b2, b3, b4)
-						if rip ~= "0.0.0.0" then
-							ac_ip = rip
-							break
-						end
-					end
-				end
-
-				-- 2. Try umdns discovery if route gateway not found
-				if (not ac_ip or ac_ip == "") and conn then
-					local umdns_data = conn:call("umdns", "browse", {}) or {}
-					for sname, sinfo in pairs(umdns_data) do
-						if sname:match("^_fakemesh_") then
-							for _, inst in pairs(sinfo) do
-								if inst.ipv4 and inst.ipv4 ~= "" then
-									ac_ip = inst.ipv4
-									break
-								end
-							end
-						end
-						if ac_ip then break end
-					end
-				end
-
+				local topo, ac_ip = fetch_controller_topology(conn, local_info)
 				local my_node_id = "node_" .. (local_info.mac ~= "" and local_info.mac:gsub(":", "") or local_info.ip:gsub("%.", "_"))
-
-				-- Fetch full topology from upstream controller
-				if ac_ip and ac_ip ~= "" then
-					local post_payload = '{"jsonrpc":"2.0","id":1,"method":"call","params":["00000000000000000000000000000000","luci.fakemesh","get_topology",{}]}'
-					local cmd = string.format("uclient-fetch -q -O - --timeout=3 'http://%s/ubus' --post-data='%s' 2>/dev/null", ac_ip, post_payload)
-					local p = io.popen(cmd)
-					if p then
-						local raw = p:read("*a")
-						p:close()
-						if raw and raw ~= "" then
-							local ok, resp = pcall(json.parse, raw)
-							if ok and resp and resp.result and resp.result[2] then
-								local topo = resp.result[2]
-								topo.current_node_id = my_node_id
-								if conn then conn:close() end
-								return topo
-							end
-						end
-					end
+				if topo then
+					topo.current_node_id = my_node_id
+					if conn then conn:close() end
+					return topo
 				end
 
 				-- Fallback if AC is unreachable: return standalone view of this agent
@@ -544,6 +655,10 @@ local methods = {
 			local candidates_by_mac = {}
 			local function add_candidate(c, node_id)
 				if not c or not c.mac or c.mac == "" then return end
+				if c.access_type == "wireless" then
+					if c.associated ~= nil and not flag_set(c.associated) then return end
+					if c.authorized ~= nil and not flag_set(c.authorized) then return end
+				end
 				local mac = c.mac:upper()
 				c.mac = mac
 				c.node_id = node_id
@@ -633,15 +748,38 @@ local methods = {
 				end
 			end
 
-			-- Map wired ports downstream from AC and all agents
-			local wired_downstream = {}
-			for _, wp in ipairs(ac_node.wired_ports or {}) do
-				wired_downstream[wp.mac] = { parent_id = "ac", port = wp.port, speed = wp.speed }
-			end
+			-- Keep every downstream report, excluding each node's uplink.
+			-- FDB visibility is transitive: the last reporter is not
+			-- necessarily the directly connected parent.
+			local wired_downstream, downstream_by_node = {}, {}
 			for _, n in ipairs(nodes) do
+				downstream_by_node[n.id] = {}
 				for _, wp in ipairs(n.wired_ports or {}) do
-					wired_downstream[wp.mac] = { parent_id = n.id, port = wp.port, speed = wp.speed }
+					if wp.mac and not is_uplink_port(n.upstream or n.backhaul, wp.port) then
+						local mac = wp.mac:upper()
+						downstream_by_node[n.id][mac] = true
+						wired_downstream[mac] = wired_downstream[mac] or {}
+						wired_downstream[mac][#wired_downstream[mac] + 1] = { node = n, port = wp.port, speed = wp.speed }
+					end
 				end
+			end
+			local function wired_parent(node)
+				local candidates = wired_downstream[node.mac] or {}
+				local best = nil
+				for _, candidate in ipairs(candidates) do
+					local parent = candidate.node
+					local nearest = parent.id ~= node.id and not downstream_by_node[node.id][parent.mac]
+					for _, other in ipairs(candidates) do
+						if other.node.id ~= node.id and other.node.id ~= parent.id and downstream_by_node[parent.id][other.node.mac] then
+							nearest = false
+						end
+					end
+					if nearest then
+						if best and best.node.id ~= parent.id then return nil end
+						best = candidate
+					end
+				end
+				return best
 			end
 
 			-- Resolve parent_id and uplink for each node
@@ -690,10 +828,10 @@ local methods = {
 						}
 					else
 						-- Wired upstream
-						local w = wired_downstream[n.mac]
+						local w = wired_parent(n)
 						local p_id = nil
 						if w then
-							p_id = w.parent_id
+							p_id = w.node.id
 							n.uplink = {
 								type = "wired",
 								port = w.port or (up.port or "LAN"),
@@ -723,6 +861,24 @@ local methods = {
 				end
 			end
 
+			-- Repair self-links, unknown parents and cycles before calculating
+			-- hops. A guarded counter alone leaves cyclic nodes invisible.
+			local node_by_id = {}
+			for _, n in ipairs(nodes) do node_by_id[n.id] = n end
+			for _, n in ipairs(nodes) do
+				if n.id ~= "ac" then
+					local visited, current = {}, n
+					while current and current.id ~= "ac" do
+						if visited[current.id] or not node_by_id[current.parent_id] then
+							n.parent_id = "ac"
+							break
+						end
+						visited[current.id] = true
+						current = node_by_id[current.parent_id]
+					end
+				end
+			end
+
 			-- Hop count calculation
 			local parent_map = {}
 			for _, n in ipairs(nodes) do parent_map[n.id] = n.parent_id end
@@ -744,8 +900,6 @@ local methods = {
 			end
 
 			-- Resolve upstream parent information for each node
-			local node_by_id = {}
-			for _, n in ipairs(nodes) do node_by_id[n.id] = n end
 			for _, n in ipairs(nodes) do
 				if n.id ~= "ac" and n.parent_id and node_by_id[n.parent_id] then
 					local p = node_by_id[n.parent_id]
@@ -895,11 +1049,8 @@ local methods = {
 
 					-- Score candidates and pick winner
 					local best_c = nil
-					local best_score = -1
 					for _, cand in ipairs(c_list) do
-						local s = score_client_candidate(cand, nu)
-						if s > best_score then
-							best_score = s
+						if not client_on_uplink(cand, node_by_id) and not client_forwarded_downstream(cand, c_list, node_by_id) and prefer_client_candidate(cand, best_c) then
 							best_c = cand
 						end
 					end
@@ -1007,9 +1158,11 @@ local methods = {
 				end
 			end
 
-			-- Add active natflow clients not in wireless/wired assoclists
+			-- A natflow Wi-Fi entry can outlive its association. Only the
+			-- authorized hostapd candidates establish a live Wi-Fi client.
+			-- Other access types can still be recovered from natflow.
 			for cmac, nu in pairs(natflow_users) do
-				if not handled_macs[cmac] and not mesh_node_macs[cmac] and cmac ~= ac_node.mac then
+				if not handled_macs[cmac] and not mesh_node_macs[cmac] and cmac ~= ac_node.mac and nu.access_type ~= "wireless" then
 					local is_vpn = nu.is_vpn or (nu.access_type == "vpn")
 					local hname = nu.hostname or ""
 					if (hname == "" or hname == "*") and dhcp_hints[cmac] then

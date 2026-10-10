@@ -16,8 +16,10 @@ local filterfile = workdir .. "/tcpdump_filter"
 local pcapbase = workdir .. "/capture.pcap"
 local outputfile = "/tmp/capture.pcap"
 
+-- Empty is valid: "Resolve domains" alone drops the default -n and leaves no
+-- argument at all, and an error() here left the pidfile behind.
 local function validate_args(value)
-	if type(value) ~= "string" or value == "" then
+	if type(value) ~= "string" then
 		return false
 	end
 	local tokens = {}
