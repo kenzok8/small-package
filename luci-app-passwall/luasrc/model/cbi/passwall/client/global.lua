@@ -136,13 +136,7 @@ if (has_singbox or has_xray) and #nodes_table > 0 then
 		tips.cfgvalue = function(t, n)
 			return string.format('<a style="color: red">%s</a>', translate("There are no available nodes, please add or subscribe nodes first."))
 		end
-		tips:depends("_node", "1")
-		for k, v in pairs(shunt_list) do
-			tips:depends("node", v.id)
-		end
-		for k, v in pairs(balancing_list) do
-			tips:depends("node", v.id)
-		end
+		tips:depends({ node = "", ['!reverse'] = true })
 	end
 end
 
@@ -150,7 +144,7 @@ o = s:taboption("Main", Value, "node_socks_port", translate("Node") .. " Socks "
 o.default = 1070
 o.placeholder = 1070
 o.datatype = "range(1,65535)"
-o:depends("_node", "1")
+o:depends({ node = "", ['!reverse'] = true })
 --[[
 if has_singbox or has_xray then
 	o = s:taboption("Main", Value, "node_http_port", translate("Node") .. " HTTP " .. translate("Listen Port") .. " " .. translate("0 is not use"))
@@ -160,21 +154,15 @@ end
 ]]--
 o = s:taboption("Main", Flag, "node_socks_bind_local", translate("Node") .. " Socks " .. translate("Bind Local"), translate("When selected, it can only be accessed localhost."))
 o.default = "1"
-o:depends("_node", "1")
+o:depends({ node = "", ['!reverse'] = true })
 
 o = s:taboption("Main", HideValue, "node_save_before", "")
 o.value = current_node[".name"]
 o.cbid = function(self, section) return "node_save_before" end
 
-o = s:taboption("Main", HideValue, "_node", "")
-o:depends({ node = "",  ['!reverse'] = true })
-
 -- Node → DNS Depends Settings
 o = s:taboption("Main", HideValue, "_node_sel_shunt", "")
 o:depends({ node = "__always__" })
-
-o = s:taboption("Main", HideValue, "_node_sel_other", "")
-o:depends({ _node_sel_shunt = "1",  ['!reverse'] = true })
 
 -- [[ DNS Settings ]]--
 s:tab("DNS", translate("DNS"))
@@ -279,8 +267,8 @@ end
 if has_xray then
 	o:value("xray", "Xray")
 end
-o:depends({ dns_shunt = "chinadns-ng", _node_sel_other = "1" })
-o:depends({ dns_shunt = "dnsmasq", _node_sel_other = "1" })
+o:depends({ dns_shunt = "chinadns-ng", _node_sel_shunt = "" })
+o:depends({ dns_shunt = "dnsmasq", _node_sel_shunt = "" })
 o.write = function(self, section, value)
 	if value ~= "sing-box" and value ~= "xray" then
 		m:del(section, "v2ray_dns_mode")
@@ -305,7 +293,7 @@ if api.is_finded("smartdns") then
 	if has_xray then
 		o:value("xray", "Xray")
 	end
-	o:depends({ dns_shunt = "smartdns", _node_sel_other = "1" })
+	o:depends({ dns_shunt = "smartdns", _node_sel_shunt = "" })
 	o.write = function(self, section, value)
 		if value == "socks" then
 			m:del(section, "v2ray_dns_mode")
