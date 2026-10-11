@@ -721,7 +721,9 @@ function add_rule(var)
 						end
 					end
 
-					log(string.format("  - Sing-Box/Xray分流规则(%s)：%s", s.remarks, fwd_dns or "默认"))
+					if _node_id ~= "_direct" and _node_id ~= "_blackhole" then
+						log(string.format("  - Sing-Box/Xray分流规则(%s)：%s", s.remarks, fwd_dns or "默认"))
+					end
 				end
 			end)
 		elseif only_global == 1 and NO_PROXY_IPV6 == "1" then

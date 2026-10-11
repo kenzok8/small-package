@@ -1278,12 +1278,16 @@ start_dns() {
 
 			echolog "  - 域名解析：使用SmartDNS，请确保配置正常。"
 			china_ng_listen="127.0.0.1#${SMARTDNS_LISTEN_PORT}"
-			echolog "  - SmartDNS(127.0.0.1#${SMARTDNS_LOCAL_PORT}) -> 国内分组(${group_domestic:-null})，SmartDNS(${china_ng_listen}) -> Dnsmasq"
+			if [ "${DNS_REDIRECT}" = "1" ]; then
+				echolog "  - DNS 重定向 -> SmartDNS(${china_ng_listen})，直连 DNS -> 国内分组(${group_domestic:-null})"
+			else
+				echolog "  - SmartDNS(127.0.0.1#${SMARTDNS_LOCAL_PORT}) -> 国内分组(${group_domestic:-null})，SmartDNS(${china_ng_listen}) -> Dnsmasq"
+			fi
 			china_ng_listen="${china_ng_listen},::1#${SMARTDNS_LISTEN_PORT}"
 
 			local subnet_ip=$(config_n_get @global[0] remote_dns_client_ip)
 			lua $APP_PATH/helper_smartdns_add.lua -FLAG "default" -SMARTDNS_CONF "/tmp/etc/smartdns/$CONFIG.conf" \
-				-LISTEN_PORT ${SMARTDNS_LISTEN_PORT} -LOCAL_PORT ${SMARTDNS_LOCAL_PORT} \
+				-LISTEN_PORT ${SMARTDNS_LISTEN_PORT} -LOCAL_PORT ${SMARTDNS_LOCAL_PORT} -DNS_REDIRECT ${DNS_REDIRECT} \
 				-LOCAL_GROUP ${group_domestic:-null} -REMOTE_GROUP "passwall_proxy" -REMOTE_PROXY_SERVER ${GLOBAL_SOCKS_server} -USE_DEFAULT_DNS "${USE_DEFAULT_DNS:-direct}" \
 				-REMOTE_DNS ${smartdns_remote_dns} -DNS_MODE ${DNS_MODE:-socks} -TUN_DNS ${TUN_DNS} \
 				-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -CHN_LIST "${CHN_LIST}" \
@@ -1370,6 +1374,10 @@ start_dns() {
 		uci -q add_list dhcp.@dnsmasq[0].addnmount=${GLOBAL_DNSMASQ_CONF_PATH}
 		uci -q commit dhcp
 		lua $APP_PATH/helper_dnsmasq.lua logic_restart -LOG 1
+	elif [ "${DNS_SHUNT}" = "smartdns" ]; then
+		# SmartDNS reads DHCP leases itself; no forwarding dnsmasq instance is needed.
+		DNS_REDIRECT_PORT=${SMARTDNS_LISTEN_PORT}
+		set_cache_var "ACL_default_dns_port" "${DNS_REDIRECT_PORT}"
 	else
 		#Run a copy dnsmasq instance, DNS hijack for that need proxy devices.
 		GLOBAL_DNSMASQ_PORT=$(get_new_port 11400)
@@ -1489,7 +1497,7 @@ acl_app() {
 					if [ -n "${GLOBAL_NODE}" ]; then
 						set_cache_var "ACL_${sid}_node" "${GLOBAL_NODE}"
 						set_cache_var "ACL_${sid}_redir_port" "${GLOBAL_redir_port}"
-						set_cache_var "ACL_${sid}_dns_port" "${GLOBAL_DNSMASQ_PORT}"
+						set_cache_var "ACL_${sid}_dns_port" "${DNS_REDIRECT_PORT:-${GLOBAL_DNSMASQ_PORT}}"
 						set_cache_var "ACL_${sid}_default" "1"
 						[ "$GLOBAL_SHUNT_NODE_FAKEDNS" = "1" ] && use_fakedns=1
 					else
