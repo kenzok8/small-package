@@ -2,7 +2,6 @@
 'require view';
 'require ui';
 'require uci';
-'require poll';
 'require honk.common as honk';
 
 return view.extend({
@@ -65,20 +64,17 @@ return view.extend({
 		var onVisibilityChange;
 
 		var logPollFn = function() {
-			if (!document.body.contains(logTextarea)) {
-				poll.remove(logPollFn);
-				if (onVisibilityChange) {
-					document.removeEventListener('visibilitychange', onVisibilityChange);
-				}
-				return Promise.resolve();
-			}
 			if (document.hidden) {
 				return Promise.resolve();
 			}
 			return updateLog().catch(function() { });
 		};
 
-		poll.add(logPollFn, 3);
+		honk.addElementPoll(logPollFn, logTextarea, 3, function() {
+			if (onVisibilityChange) {
+				document.removeEventListener('visibilitychange', onVisibilityChange);
+			}
+		});
 
 		onVisibilityChange = function() {
 			if (!document.body.contains(logTextarea)) {

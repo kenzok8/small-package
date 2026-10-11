@@ -94,6 +94,49 @@ function isServiceEnabled() {
 	return ((sections[0] || {}).enabled === '1');
 }
 
+function updateStatus(data, targetEl) {
+	var el = targetEl || document.getElementById('honk_status');
+	if (!el) return;
+	if (data && data.running) {
+		var mem = data.memory ? ' (' + _('Memory Usage') + ': ' + data.memory + ')' : '';
+		dom.content(el, [
+			E('span', { 'style': 'color: var(--success, #22c55e); font-weight: bold;' }, _('HONK') + ' ' + _('RUNNING')),
+			' ',
+			E('span', { 'style': 'color: var(--text-muted, #888); font-size: 0.9em;' }, mem)
+		]);
+	} else {
+		dom.content(el, [
+			E('span', { 'style': 'color: var(--danger, #ef4444); font-weight: bold;' }, _('HONK') + ' ' + _('NOT RUNNING'))
+		]);
+	}
+}
+
+// Register a poll function operating on `el` and unregister it once `el` is gone.
+// poll.add() runs the first tick synchronously when it starts the polling loop, which
+// normally happens while the view is still being rendered, i.e. before `el` has been
+// attached to the document. Tolerate that single early tick and only give up on the
+// element once it is still missing on a later tick.
+function addElementPoll(fn, el, interval, onDetach) {
+	var missing = 0;
+
+	var pollFn = function() {
+		if (document.body.contains(el)) {
+			missing = 0;
+		} else if (++missing > 1) {
+			poll.remove(pollFn);
+			if (typeof onDetach === 'function')
+				onDetach();
+			return Promise.resolve();
+		}
+
+		return fn();
+	};
+
+	poll.add(pollFn, interval);
+
+	return pollFn;
+}
+
 function waitForHonkState(wantRunning, attempts) {
 	attempts = attempts || 10;
 
@@ -104,15 +147,23 @@ function waitForHonkState(wantRunning, attempts) {
 			callHonkStatus().then(function(st) {
 				var running = !!(st && st.running);
 
-				if (running === wantRunning || ++tries >= attempts)
+				if (running === wantRunning || ++tries >= attempts) {
+					updateStatus(st);
+					if (poll && typeof(poll.start) === 'function')
+						poll.start();
 					resolve({ running: running });
-				else
+				} else {
 					setTimeout(step, 1200);
+				}
 			}).catch(function() {
-				if (++tries >= attempts)
+				if (++tries >= attempts) {
+					updateStatus({ running: false });
+					if (poll && typeof(poll.start) === 'function')
+						poll.start();
 					resolve({ running: null });
-				else
+				} else {
 					setTimeout(step, 1200);
+				}
 			});
 		}
 
@@ -621,6 +672,7 @@ function createConfigFileView(filePath, mapTitle, mapDesc, fieldTitle, successMs
 						return { skipped: true };
 
 					return needRestart ? waitForHonkState(true) : callHonkStatus().then(function(st) {
+						updateStatus(st);
 						return { running: !!(st && st.running) };
 					});
 				}).then(function(st) {
@@ -750,33 +802,17 @@ function renderStatusHeader() {
 		])
 	]);
 
-	function updateStatus(data) {
-		if (!statusEl) return;
-		if (data && data.running) {
-			var mem = data.memory ? ' (' + _('Memory Usage') + ': ' + data.memory + ')' : '';
-			dom.content(statusEl, [
-				E('span', { 'style': 'color: var(--success, #22c55e); font-weight: bold;' }, _('HONK') + ' ' + _('RUNNING')),
-				' ',
-				E('span', { 'style': 'color: var(--text-muted, #888); font-size: 0.9em;' }, mem)
-			]);
-		} else {
-			dom.content(statusEl, [
-				E('span', { 'style': 'color: var(--danger, #ef4444); font-weight: bold;' }, _('HONK') + ' ' + _('NOT RUNNING'))
-			]);
-		}
-	}
-
-	callHonkStatus().then(updateStatus);
+	callHonkStatus().then(function(st) {
+		updateStatus(st, statusEl);
+	});
 
 	var pollStatusFn = function() {
-		if (!document.body.contains(statusEl)) {
-			poll.remove(pollStatusFn);
-			return Promise.resolve();
-		}
-		return callHonkStatus().then(updateStatus).catch(function() { });
+		return callHonkStatus().then(function(st) {
+			updateStatus(st, statusEl);
+		}).catch(function() { });
 	};
 
-	poll.add(pollStatusFn, 5);
+	addElementPoll(pollStatusFn, statusEl, 5);
 
 	applyTabVisibility();
 
@@ -809,5 +845,7 @@ return baseclass.extend({
 	waitForHonkState: waitForHonkState,
 	switchDashboardAndWait: switchDashboardAndWait,
 	isServiceEnabled: isServiceEnabled,
-	showNotification: showNotification
+	showNotification: showNotification,
+	updateStatus: updateStatus,
+	addElementPoll: addElementPoll
 });

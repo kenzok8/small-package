@@ -10,6 +10,14 @@ if [ "$dash" = "none" ]; then
 	: > /etc/honk/config.d/api.dae
 fi
 
+# Drop options of the auto-subscribe feature removed from this package
+uci -q show honk 2>/dev/null | sed -n 's/^\(.*\)\.subscribe_[a-z_]*=.*$/\1/p' | sort -u | while read -r s; do
+	for opt in subscribe_auto_update subscribe_update_week_time subscribe_update_day_time; do
+		uci -q delete "$s.$opt"
+	done
+	uci -q commit honk
+done
+
 # Migrate legacy /etc/honk/dashboard directory
 if [ -d /etc/honk/dashboard ] && [ ! -d /etc/honk/doona ]; then
 	mv /etc/honk/dashboard /etc/honk/doona

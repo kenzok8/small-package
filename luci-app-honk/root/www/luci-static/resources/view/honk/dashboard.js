@@ -1,7 +1,6 @@
 'use strict';
 'require view';
 'require ui';
-'require poll';
 'require uci';
 'require honk.common as honk';
 'require honk.dashprofiles as dash';
@@ -574,10 +573,6 @@ return view.extend({
 		loadInfo();
 
 		var dashStatusPollFn = function() {
-			if (!document.body.contains(iframe)) {
-				poll.remove(dashStatusPollFn);
-				return Promise.resolve();
-			}
 			if (document.hidden) {
 				return Promise.resolve();
 			}
@@ -590,7 +585,7 @@ return view.extend({
 			return Promise.resolve();
 		};
 
-		poll.add(dashStatusPollFn, 5);
+		honk.addElementPoll(dashStatusPollFn, iframe, 5);
 
 		return E('div', { 'class': 'dash-wrap' }, [
 			style,

@@ -2,10 +2,11 @@
 dns {
     bind: 'tcp+udp://[::]:53530'
     client_subnet: auto
+    max_cache_size: 50000
     #ipversion_prefer: 4
     upstream {
         local: 'udp://127.0.0.1:53' -> direct
-        remote: 'tcp+udp://one.one.one.one:53'
+        remote: 'tcp+udp://dns.google:53'
     }
     routing {
         request {

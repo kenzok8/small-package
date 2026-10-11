@@ -63,29 +63,18 @@ return view.extend({
 		return this.handleSave(ev).then(function() {
 			var newDash = uci.get('honk', sid, 'dashboard') || 'none';
 
-			if (newDash !== oldDash) {
-				return honk.switchDashboardAndWait(newDash).then(function(res) {
-					if (res && res.pending)
-						honk.showNotification(null, E('p', _('Saved, but the panel files are not installed yet — download the panel first.')), 'warning');
-					else if (res.running === false)
-						throw new Error(_('HONK did not come back up; check the logs'));
-				});
-			}
+			var pre = (newDash !== oldDash) ? honk.switchDashboardAndWait(newDash).then(function(res) {
+				if (res && res.pending)
+					honk.showNotification(null, E('p', _('Saved, but the panel files are not installed yet — download the panel first.')), 'warning');
+				else if (res.running === false)
+					throw new Error(_('HONK did not come back up; check the logs'));
+			}) : Promise.resolve();
 
-			return honk.callHonkReload().then(function(resp) {
-				if (!resp || resp.success === false)
-					throw new Error((resp && resp.message) || _('Service did not accept the request'));
-
-				if (!honk.isServiceEnabled())
-					return;
-
-				return honk.waitForHonkState(true).then(function(st) {
-					if (st.running === false)
-						throw new Error(_('HONK did not come back up; check the logs'));
-				});
+			// LuCI reloads the page right after applying, and the status header then
+			// polls the real service state on its own (see honk.addElementPoll).
+			return pre.then(function() {
+				ui.changes.apply(mode == '0');
 			});
-		}).then(function() {
-			return ui.changes.apply(mode == '0');
 		}).catch(function(err) {
 			honk.showNotification(null, E('p', _('Failed to apply configuration:') + ' ' + (err.message || err)), 'error');
 		});
