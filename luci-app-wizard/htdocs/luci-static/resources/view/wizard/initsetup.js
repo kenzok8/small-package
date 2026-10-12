@@ -133,11 +133,11 @@ return view.extend({
 			lan_dns: toArray(uci.get('network', 'lan', 'dns')),
 			dhcp: uci.get('dhcp', 'lan', 'ignore') === '1' ? '0' : '1',
 			ipv6: uci.get('network', 'wan6', 'auto') === '0' ? '0' : '1',
-			https: uci.get('wizard', 'default', 'https') || '0',
-			cookie_p: uci.get('wizard', 'default', 'persistent_cookies') || '1',
-			landing_page: uci.get('wizard', 'default', 'landing_page') || 'auto',
-			autoupgrade_fm: uci.get('wizard', 'default', 'autoupgrade_fm') || '0',
-			coremark: uci.get('wizard', 'default', 'coremark') || '0',
+			https: uci.get('luci', 'main', 'https') || '0',
+			cookie_p: uci.get('luci', 'main', 'persistent_cookies') || '1',
+			landing_page: uci.get('luci', 'main', 'landing_page') || 'auto',
+			autoupgrade_fm: uci.get('luci', 'main', 'autoupgrade_fm') || '0',
+			coremark: uci.get('luci', 'main', 'coremark') || '0',
 			wifi_ssid: baseSsid || (this.hasWireless ? 'Kwrt' : ''),
 			wifi_key: (ap && ap.key) || ''
 		};
@@ -477,23 +477,23 @@ return view.extend({
 
 			// H. HTTPS 访问重定向（由 wizard.init 调度底层生效）
 			if (has(changed, 'https')) {
-				uci.set('wizard', 'default', 'https', cur.https);
+				uci.set('luci', 'main', 'https', cur.https);
 			}
 
 			// I. 页面与会话设置（持久Cookie双向同步至luci系统底层与向导配置包）
 			if (has(changed, 'cookie_p')) {
-				uci.set('wizard', 'default', 'persistent_cookies', cur.cookie_p);
+				uci.set('luci', 'main', 'persistent_cookies', cur.cookie_p);
 			}
 			if (has(changed, 'landing_page')) {
-				uci.set('wizard', 'default', 'landing_page', cur.landing_page);
+				uci.set('luci', 'main', 'landing_page', cur.landing_page);
 			}
 
 			// J. 向导专属项（完整保留 autoupgrade_fm 与 coremark）
 			if (has(changed, 'autoupgrade_fm')) {
-				uci.set('wizard', 'default', 'autoupgrade_fm', cur.autoupgrade_fm);
+				uci.set('luci', 'main', 'autoupgrade_fm', cur.autoupgrade_fm);
 			}
 			if (has(changed, 'coremark')) {
-				uci.set('wizard', 'default', 'coremark', cur.coremark);
+				uci.set('luci', 'main', 'coremark', cur.coremark);
 			}
 
 			self.initialValues = Object.assign({}, cur);
