@@ -1,0 +1,18 @@
+# WiFi Calling (VoWiFi): proxy the carrier ePDG traffic. Only IKE (UDP 500) and NAT-T (UDP 4500)
+# are proxyable - no TUN stack carries raw ESP (IP proto 50) - so the phone must stay on NAT-T.
+# WIFI_CALLING_PROXY (module param, e.g. WIFI_CALLING_PROXY=Smart) must be a UDP-capable group;
+# without it the rules below are skipped and a warning is logged.
+# STACK_TYPE = mips reassembles fragmented NAT-T packets, "system" drops them; ENABLE_UDP_PROXY only
+# matters in the TProxy/redirect modes; CHINA_IP_ROUTE_PASS keeps a domestic ePDG out of the
+# "bypass mainland" RETURN.
+[General]
+ENABLE_UDP_PROXY = 1
+STACK_TYPE = mips
+CHINA_IP_ROUTE_PASS = pub.3gppnetwork.org
+CHINA_IP6_ROUTE_PASS = pub.3gppnetwork.org
+
+[YAML]
++rules:
+  - AND,((NETWORK,udp),(DST-PORT,500)),${WIFI_CALLING_PROXY}
+  - AND,((NETWORK,udp),(DST-PORT,4500)),${WIFI_CALLING_PROXY}
+  - DOMAIN-SUFFIX,pub.3gppnetwork.org,${WIFI_CALLING_PROXY}

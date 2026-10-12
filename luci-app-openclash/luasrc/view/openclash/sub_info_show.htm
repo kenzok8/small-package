@@ -1,16 +1,13 @@
 <%+cbi/valueheader%>
 <%
     local fs = require "luci.openclash"
-    local plugin_version = fs.oc_version()
 %>
 <%
-	local fs = require "luci.openclash"
-	local val = self:cfgvalue(section)
-	local filename = fs.filename(val)
-	local idname = math.random(1000)..(string.match(filename, "[%w_]+") or "")
+    local val = self:cfgvalue(section)
+    local filename = fs.filename(val)
+    local idname = math.random(1000)..(string.match(filename, "[%w_]+") or "")
 %>
 
-<script src="/luci-static/resources/openclash/js/oc-icons.js?v=<%=plugin_version%>"></script>
 <div class="oc">
     <div class="sub_div">
         <span id='<%=idname%>' class="sub_tab"></span>
@@ -26,27 +23,15 @@
     </div>
 </div>
 
+<script src="/luci-static/resources/openclash/js/oc-icons.js?v=@OPENCLASH_VERSION@"></script>
 <script type="text/javascript">//<![CDATA[
 
 var retry_<%=idname%> = 0;
 var s_<%=idname%>;
+var sk_<%=idname%> = '<div class="oc-sk oc-sk-block" style="width:92%"></div><div class="oc-sk oc-sk-block" style="width:55%"></div>';
 sub_info_refresh_<%=idname%>(false);
 
 function progressbar_<%=idname%>(v, m, pc, np, f, t, tr) {
-    var screenWidth = window.innerWidth || document.documentElement.clientWidth;
-    var fontSize = '12px';
-
-    if (screenWidth <= 320) {
-        fontSize = '8px';
-    } else if (screenWidth <= 480) {
-        fontSize = '9px';
-    } else if (screenWidth <= 768) {
-        fontSize = '10px';
-    } else if (screenWidth <= 1024) {
-        fontSize = '11px';
-    }
-
-    // Build title for native tooltip (format: "v / m (pc%)\nt (Remaining tr days)")
     var titleText = v + ' / ' + m + ' (' + pc + '%%)';
     if (t && t !== 'null' && tr && tr !== 'null' && parseInt(tr) > 0) {
         titleText += '\n' + t + ' (<%:Remaining%> ' + tr + ' <%:days%>)';
@@ -58,13 +43,13 @@ function progressbar_<%=idname%>(v, m, pc, np, f, t, tr) {
         (pc < 50 && pc >= 20 ? '<div class="progress_bar_fill progress_bar_medium" style="width:%d%%">' :
         '<div class="progress_bar_fill progress_bar_low" style="width:%d%%">')) +
         '<div class="progress_bar_text">' +
-        '<small class="text_show" style="font-size:%s;">%s '+ (f ? f : '/') +' %s ' + (np ? "" : '(%s%%)') +
-        (tr == "null" ? '<div class="progress_bar_expire" style="visibility: hidden;">' : '<div class="progress_bar_expire" style="visibility: visible;">') +
-        '%s (<%:Remaining%> %s <%:days%>)</small>' +
+        '<div class="text_show">%s '+ (f ? f : '/') +' %s ' + (np ? "" : '(%s%%)') + '</div>' +
+        (tr == "null" ? '<div class="progress_bar_expire" style="visibility: hidden;"><div class="text_show">' : '<div class="progress_bar_expire" style="visibility: visible;"><div class="text_show">') +
+        '%s (<%:Remaining%> %s <%:days%>)</div></div>' +
         '</div>' +
         '</div>' +
         '</div>',
-        pc, fontSize, v, m, pc, t, tr
+        pc, v, m, pc, t, tr
     );
 };
 
@@ -171,7 +156,93 @@ function initDragScroll_<%=idname%>() {
     });
 };
 
-function dispaly_progressbar(id, status) {
+function initTextDrag_<%=idname%>(element) {
+    if (!element) return;
+
+    if (!element.dragBound) {
+        var isDragging = false;
+        var startX = 0;
+        var startScrollLeft = 0;
+        var touchIdentifier = null;
+
+        function endDrag() {
+            if (!isDragging) return;
+            isDragging = false;
+            touchIdentifier = null;
+            element.classList.remove('dragging');
+        }
+
+        element.addEventListener('mousedown', function(e) {
+            isDragging = true;
+            startX = e.pageX - element.getBoundingClientRect().left;
+            startScrollLeft = element.scrollLeft;
+            element.classList.add('dragging');
+            e.preventDefault();
+        });
+
+        element.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            var x = e.pageX - element.getBoundingClientRect().left;
+            var walk = (x - startX) * 1.2;
+            element.scrollLeft = startScrollLeft - walk;
+            e.preventDefault();
+        });
+
+        element.addEventListener('mouseleave', function() {
+            endDrag();
+        });
+
+        element.addEventListener('mouseup', function() {
+            endDrag();
+        });
+
+        element.addEventListener('touchstart', function(e) {
+            if (!e.touches || e.touches.length !== 1) return;
+
+            var touch = e.touches[0];
+            isDragging = true;
+            touchIdentifier = touch.identifier;
+            startX = touch.pageX - element.getBoundingClientRect().left;
+            startScrollLeft = element.scrollLeft;
+            element.classList.add('dragging');
+        }, { passive: true });
+
+        element.addEventListener('touchmove', function(e) {
+            if (!isDragging || !e.touches || e.touches.length === 0) return;
+
+            var touch = null;
+            for (var i = 0; i < e.touches.length; i++) {
+                if (e.touches[i].identifier === touchIdentifier) {
+                    touch = e.touches[i];
+                    break;
+                }
+            }
+
+            if (!touch) return;
+
+            var x = touch.pageX - element.getBoundingClientRect().left;
+            var walk = (x - startX) * 1.2;
+            element.scrollLeft = startScrollLeft - walk;
+            e.preventDefault();
+        }, { passive: false });
+
+        element.addEventListener('touchend', function() {
+            endDrag();
+        });
+
+        element.addEventListener('touchcancel', function() {
+            endDrag();
+        });
+
+        element.addEventListener('dragstart', function(e) {
+            e.preventDefault();
+        });
+
+        element.dragBound = true;
+    }
+};
+
+function display_progressbar(id, status) {
     document.getElementById(id).className = "sub_tab_show";
     if (status && status.providers && status.providers.length > 0) {
         if (status.providers.length === 1) {
@@ -184,13 +255,9 @@ function dispaly_progressbar(id, status) {
                 (provider.expire),
                 (provider.day_left)
             );
-            var textShow = document.getElementById(id).querySelector('.text_show');
-            if (textShow && textShow.scrollWidth > textShow.clientWidth) {
-                var size = parseFloat(window.getComputedStyle(textShow).fontSize) || 12;
-                while (textShow.scrollWidth > textShow.clientWidth && size > 6) {
-                    size -= 1;
-                    textShow.style.fontSize = size + 'px';
-                }
+            var textShows = document.getElementById(id).querySelectorAll('.text_show');
+            for (var i = 0; i < textShows.length; i++) {
+                initTextDrag_<%=idname%>(textShows[i]);
             }
         } else {
             document.getElementById(id).innerHTML = window["progressbar_multi_" + id](status.providers);
@@ -201,16 +268,17 @@ function dispaly_progressbar(id, status) {
 };
 
 function sub_info_refresh_<%=idname%>(force) {
-	if (s_<%=idname%>) { clearTimeout(s_<%=idname%>);};
+    if (s_<%=idname%>) { clearTimeout(s_<%=idname%>);};
 
     if (force) {
         localStorage.removeItem("sub_info_<%=filename%>");
+        retry_<%=idname%> = 0;
     }
 
     var save_info = (localStorage.getItem("sub_info_<%=filename%>")) ? JSON.parse(localStorage.getItem("sub_info_<%=filename%>")) : null;
     var shouldFetchNew = true;
     if (!force) {
-        dispaly_progressbar('<%=idname%>', save_info);
+        display_progressbar('<%=idname%>', save_info);
         if (save_info && save_info.get_time) {
             var currentTime = Math.floor(Date.now() / 1000);
             var cacheTime = parseInt(save_info.get_time);
@@ -230,49 +298,56 @@ function sub_info_refresh_<%=idname%>(force) {
 
     if (!save_info) {
         document.getElementById('<%=idname%>').className = "sub_tab_show";
-        document.getElementById('<%=idname%>').innerHTML = "<span><%:Collecting data...%></span>";
+        document.getElementById('<%=idname%>').innerHTML = sk_<%=idname%>;
     }
 
-	XHR.get('<%=luci.dispatcher.build_url("admin", "services", "openclash", "sub_info_get")%>', {filename: "<%=filename%>"}, function(x, status) {
-        var needsErrorHandling = false;
-        if (x && x.status == 200 && status.providers.length > 0) {
+    XHR.get('<%=luci.dispatcher.build_url("admin", "services", "openclash", "sub_info_get")%>', {filename: "<%=filename%>"}, function(x, status) {
+        var hasData = (x && x.status == 200 && status.providers.length > 0);
+        var needsErrorHandling = !hasData;
+        if (hasData) {
             var save_info_length = (save_info && save_info.providers) ? save_info.providers.length : 0;
             var newProvidersLength = status.providers.length;
             if (save_info_length !== newProvidersLength && save_info_length > newProvidersLength) {
                 needsErrorHandling = true;
             }
+        }
+        var no_sub_url = (x && x.status == 500 && (String(x.statusText || '') + String(x.responseText || '')).indexOf('Subscription information not found') !== -1);
 
-            if (!needsErrorHandling) {
-                retry_<%=idname%> = 0;
-                (window.requestIdleCallback || function(cb) { setTimeout(cb, 1); })(function() { localStorage.setItem("sub_info_<%=filename%>", JSON.stringify(status)); });
-                dispaly_progressbar('<%=idname%>', status);
-            }
-		} else {
-            needsErrorHandling = true;
-		};
-
-        if (needsErrorHandling && retry_<%=idname%> <= 2) {
+        if (needsErrorHandling && !no_sub_url && retry_<%=idname%> <= 0) {
             retry_<%=idname%>++;
+            var retryBox = document.getElementById('<%=idname%>');
+            if (retryBox) retryBox.innerHTML = sk_<%=idname%>;
             s_<%=idname%> = setTimeout("sub_info_refresh_<%=idname%>(false)", 5000);
+            return;
+        }
+
+        retry_<%=idname%> = 0;
+        if (hasData) {
+            (window.requestIdleCallback || function(cb) { setTimeout(cb, 1); })(function() { localStorage.setItem("sub_info_<%=filename%>", JSON.stringify(status)); });
+            display_progressbar('<%=idname%>', status);
         } else {
-            retry_<%=idname%> = 0;
-            dispaly_progressbar('<%=idname%>', status);
-            if (status && status.providers) {
-                (window.requestIdleCallback || function(cb) { setTimeout(cb, 1); })(function() { localStorage.setItem("sub_info_<%=filename%>", JSON.stringify(status)); });
-            }
-            s_<%=idname%> = setTimeout("sub_info_refresh_<%=idname%>(false)", 60000*15);
-        };
-	});
+            var fail_info = (x && x.status == 200 && status.providers) ? status : {providers: [], get_time: Math.floor(Date.now() / 1000)};
+            (window.requestIdleCallback || function(cb) { setTimeout(cb, 1); })(function() { localStorage.setItem("sub_info_<%=filename%>", JSON.stringify(fail_info)); });
+            display_progressbar('<%=idname%>', fail_info);
+        }
+        s_<%=idname%> = setTimeout("sub_info_refresh_<%=idname%>(false)", 60000*15);
+    });
 };
 
 function setUrlConfig_<%=idname%>() {
+    if (typeof SubscriptionUrlSetter === 'undefined') {
+        ocRequireScript('/cgi-bin/luci/admin/services/openclash/translate_js?f=config_upload&v=@OPENCLASH_VERSION@&l=<%=luci.i18n.context.lang%>', setUrlConfig_<%=idname%>);
+        return false;
+    }
     SubscriptionUrlSetter.show("<%=filename%>", "sub_info_refresh_<%=idname%>(true)");
     return false;
 }
 
 function uploadConfig_<%=idname%>() {
-    if (typeof ConfigUploader === 'undefined') return false;
-
+    if (typeof ConfigUploader === 'undefined') {
+        ocRequireScript('/cgi-bin/luci/admin/services/openclash/translate_js?f=config_upload&v=@OPENCLASH_VERSION@&l=<%=luci.i18n.context.lang%>', uploadConfig_<%=idname%>);
+        return false;
+    }
     var filename = "<%=filename%>";
     var cb = "sub_info_refresh_<%=idname%>(true)";
     XHR.get('<%=luci.dispatcher.build_url("admin", "services", "openclash", "get_subscribe_data")%>', {

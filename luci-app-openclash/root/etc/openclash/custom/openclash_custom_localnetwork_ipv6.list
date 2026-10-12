@@ -1,12 +1,17 @@
-::/128
-::1/128
-::ffff:0:0/96
-::ffff:0:0:0/96
-64:ff9b::/96
-100::/64
-2001::/32
-2001:20::/28
-2001:db8::/32
-2002::/16
-fe80::/10
-ff00::/8
+# Local network ranges: traffic to these destinations bypasses the proxy.
+# One entry per line, '#' starts a comment (inline comments are allowed).
+::/128                 # unspecified
+::1/128                # loopback
+::ffff:0:0/96          # IPv4-mapped
+::ffff:0:0:0/96        # IPv4-translated (SIIT)
+64:ff9b::/96           # NAT64 well-known prefix
+100::/64               # discard-only
+2001::/32              # Teredo
+2001:20::/28           # ORCHIDv2
+2001:db8::/32          # documentation
+2002::/16              # 6to4
+fc00::/7               # unique local (ULA, includes fd00::/8)
+fd7a:115c:a1e0::/48    # Tailscale
+fe80::/10              # link-local
+ff00::/8               # multicast
+

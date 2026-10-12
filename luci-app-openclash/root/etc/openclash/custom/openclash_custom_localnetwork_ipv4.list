@@ -1,9 +1,11 @@
-0.0.0.0/8
-10.0.0.0/8
-100.64.0.0/10
-127.0.0.0/8
-169.254.0.0/16
-172.16.0.0/12
-192.168.0.0/16
-224.0.0.0/4
-240.0.0.0/4
+# Local network ranges: traffic to these destinations bypasses the proxy.
+# One entry per line, '#' starts a comment (inline comments are allowed).
+0.0.0.0/8        # this network
+10.0.0.0/8       # private
+100.64.0.0/10    # shared address space (CGNAT, used by Tailscale)
+127.0.0.0/8      # loopback
+169.254.0.0/16   # link-local
+172.16.0.0/12    # private
+192.168.0.0/16   # private
+224.0.0.0/4      # multicast
+240.0.0.0/4      # reserved

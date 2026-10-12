@@ -13,6 +13,7 @@ function index()
 	entry({"admin", "services", "openclash", "client"},form("openclash/client"),_("Overviews"), 20).leaf = true
 	entry({"admin", "services", "openclash", "conn_status"},call("action_conn_status")).leaf=true
 	entry({"admin", "services", "openclash", "status"},call("action_status")).leaf=true
+	entry({"admin", "services", "openclash", "translate_js"},call("action_translate_js")).leaf=true
 	entry({"admin", "services", "openclash", "startlog"},call("action_start")).leaf=true
 	entry({"admin", "services", "openclash", "refresh_log"},call("action_refresh_log"))
 	entry({"admin", "services", "openclash", "del_log"},call("action_del_log"))
@@ -74,19 +75,22 @@ function index()
 	entry({"admin", "services", "openclash", "other-rules-edit"},cbi("openclash/other-rules-edit"), nil).leaf = true
 	entry({"admin", "services", "openclash", "custom-dns-edit"},cbi("openclash/custom-dns-edit"), nil).leaf = true
 	entry({"admin", "services", "openclash", "other-file-edit"},cbi("openclash/other-file-edit"), nil).leaf = true
-	entry({"admin", "services", "openclash", "proxy-provider-file-manage"},form("openclash/proxy-provider-file-manage"), nil).leaf = true
+	entry({"admin", "services", "openclash", "proxy-providers-file-manage"},form("openclash/proxy-providers-file-manage"), nil).leaf = true
 	entry({"admin", "services", "openclash", "rule-providers-file-manage"},form("openclash/rule-providers-file-manage"), nil).leaf = true
 	entry({"admin", "services", "openclash", "config-subscribe-edit"},cbi("openclash/config-subscribe-edit"), nil).leaf = true
-	entry({"admin", "services", "openclash", "servers-config"},cbi("openclash/servers-config"), nil).leaf = true
-	entry({"admin", "services", "openclash", "groups-config"},cbi("openclash/groups-config"), nil).leaf = true
-	entry({"admin", "services", "openclash", "proxy-provider-config"},cbi("openclash/proxy-provider-config"), nil).leaf = true
+	entry({"admin", "services", "openclash", "proxies-config"},cbi("openclash/proxies-config"), nil).leaf = true
+	entry({"admin", "services", "openclash", "proxy-groups-config"},cbi("openclash/proxy-groups-config"), nil).leaf = true
+	entry({"admin", "services", "openclash", "proxy-providers-config"},cbi("openclash/proxy-providers-config"), nil).leaf = true
 	entry({"admin", "services", "openclash", "config"},form("openclash/config"),_("Config Manage"), 80).leaf = true
 	entry({"admin", "services", "openclash", "log"},cbi("openclash/log"),_("Server Logs"), 90).leaf = true
 	entry({"admin", "services", "openclash", "myip_check"}, call("action_myip_check"))
 	entry({"admin", "services", "openclash", "website_check"}, call("action_website_check"))
+	entry({"admin", "services", "openclash", "unlock_check"}, call("action_unlock_check"))
+	entry({"admin", "services", "openclash", "unlock_services"}, call("action_unlock_services"))
 	entry({"admin", "services", "openclash", "version_history"}, call("action_version_history"))
 	entry({"admin", "services", "openclash", "addr_info"}, call("action_cdn_info"))
 	entry({"admin", "services", "openclash", "save_github_address_mod"}, call("action_save_github_address_mod"))
+	entry({"admin", "services", "openclash", "save_custom_addr"}, call("action_save_custom_addr"))
 	entry({"admin", "services", "openclash", "proxy_info"}, call("action_proxy_info"))
 	entry({"admin", "services", "openclash", "oc_settings"}, call("action_oc_settings"))
 	entry({"admin", "services", "openclash", "switch_oc_setting"}, call("action_switch_oc_setting"))
@@ -96,7 +100,11 @@ function index()
 	entry({"admin", "services", "openclash", "config_file_read"}, call("action_config_file_read"))
 	entry({"admin", "services", "openclash", "config_file_save"}, call("action_config_file_save"))
 	entry({"admin", "services", "openclash", "upload_config"}, call("action_upload_config"))
+	entry({"admin", "services", "openclash", "restore_backup"}, call("action_restore_backup"))
 	entry({"admin", "services", "openclash", "add_subscription"}, call("action_add_subscription"))
+	entry({"admin", "services", "openclash", "config_stats"}, call("action_config_stats"))
+	entry({"admin", "services", "openclash", "runtime_stats"}, call("action_runtime_stats"))
+	entry({"admin", "services", "openclash", "template_preview"}, call("action_template_preview"))
 	entry({"admin", "services", "openclash", "subconverter_version"}, call("action_subconverter_version"))
 	entry({"admin", "services", "openclash", "generate_age_key"}, call("action_generate_age_key"))
 	entry({"admin", "services", "openclash", "cal_age_public_key"}, call("action_cal_age_public_key"))
@@ -114,6 +122,8 @@ function index()
 	entry({"admin", "services", "openclash", "oix_login_info_save"}, call("oix_login_info_save"))
 	entry({"admin", "services", "openclash", "oix_params_sync"}, call("oix_params_sync"))
 	entry({"admin", "services", "openclash", "oix_params_get"}, call("oix_params_get"))
+	entry({"admin", "services", "openclash", "theme_get"}, call("action_theme_get"))
+	entry({"admin", "services", "openclash", "theme_save"}, call("action_theme_save"))
 end
 
 local SYS = require "luci.sys"
@@ -145,6 +155,29 @@ local function is_running()
 	return SYS.call("pidof clash >/dev/null") == 0
 end
 
+-- the procd instance state is the authority after an init.d restart, pidof can still
+-- see a dying process; nil means ubus itself is unavailable
+local function service_running()
+	local out = SYS.exec("ubus call service list '{\"name\":\"openclash\"}' 2>/dev/null")
+	if not out or out == "" then
+		return nil
+	end
+	local ok, data = pcall(json.parse, out)
+	if not ok or type(data) ~= "table" or type(data.openclash) ~= "table" then
+		return nil
+	end
+	local instances = data.openclash.instances
+	if type(instances) ~= "table" then
+		return false
+	end
+	for _, inst in pairs(instances) do
+		if type(inst) == "table" and inst.running == true then
+			return true
+		end
+	end
+	return false
+end
+
 local CONFIG_PATH_PREFIX = "/etc/openclash/config/"
 local CONFIG_PATH_PREFIX_LEN = #CONFIG_PATH_PREFIX + 1
 
@@ -168,16 +201,24 @@ local function dase()
 	return fs.uci_get_config("config", "dashboard_password")
 end
 
-local function db_foward_domain()
+local function dashboard_forward_domain()
 	return fs.uci_get_config("config", "dashboard_forward_domain")
 end
 
-local function db_foward_port()
+local function dashboard_forward_port()
 	return fs.uci_get_config("config", "dashboard_forward_port")
 end
 
-local function db_foward_ssl()
+local function dashboard_forward_ssl()
 	return fs.uci_get_config("config", "dashboard_forward_ssl") or 0
+end
+
+local function dashboard_custom_url()
+	return fs.uci_get_config("config", "dashboard_custom_url")
+end
+
+local function dashboard_custom_clash_compatible()
+	return fs.uci_get_config("config", "dashboard_custom_clash_compatible") or 0
 end
 
 local function coremodel()
@@ -261,16 +302,20 @@ end
 local ov = dofile("/usr/share/openclash/openclash_version.lua")
 
 local function coremetacv()
-	local v = "0"
 	if not fs.access(meta_core_path) then
-		return v
-	else
-		v = SYS.exec(string.format("%s -v 2>/dev/null |awk -F ' ' '{print $3}' |head -1 |tr -d '\n'", meta_core_path))
-		if not v or v == "" then
-			return "0"
-		end
+		return "0"
 	end
-	return v
+
+	local st = nixio.fs.stat(meta_core_path)
+	local key = st and (tostring(st.mtime) .. "-" .. tostring(st.size)) or ""
+
+	local v = fs.cached_value("core_cv_cache", key, function()
+		local out = SYS.exec(string.format("%s -v 2>/dev/null |awk -F ' ' '{print $3}' |head -1 |tr -d '\n'", meta_core_path))
+		if not out or out == "" then return nil end
+		return out
+	end)
+
+	return v or "0"
 end
 
 function release_branch()
@@ -319,10 +364,12 @@ local function opcv()
 	if info and info["luci-app-openclash"] and info["luci-app-openclash"]["Version"] and info["luci-app-openclash"]["Installed-Time"] then
 		v = info["luci-app-openclash"]["Version"]
 	else
-		if fs.pkg_type() == "opkg" then
-			v = fs.read_pkg_field("luci-app-openclash", "Version")
-		else
-			v = fs.read_pkg_field("luci-app-openclash", "V"):match("[%d%.]+") or ""
+		v = fs.oc_version()
+		if v == "0" then
+			return "0"
+		end
+		if fs.pkg_type() ~= "opkg" then
+			v = v:match("[%d%.]+") or ""
 		end
 	end
 	if v and v ~= "" then
@@ -416,6 +463,7 @@ function action_flush_smart_cache()
 	})
 end
 
+-- no_restart is passed by the config upload flow, which restarts at its own switch step
 function action_update_config()
 	-- filename is basename
 	local filename = HTTP.formvalue("filename")
@@ -430,7 +478,10 @@ function action_update_config()
 		return
 	end
 
-	local update_result = SYS.call(string.format("/usr/share/openclash/openclash.sh '%s' >/dev/null 2>&1", filename))
+	local no_restart = HTTP.formvalue("no_restart")
+	local restart_arg = no_restart == "1" and " norestart" or ""
+
+	local update_result = SYS.call(string.format("/usr/share/openclash/openclash.sh '%s'%s >/dev/null 2>&1", filename, restart_arg))
 
 	if update_result == 0 then
 		HTTP.write_json({
@@ -867,9 +918,11 @@ function sub_info_get()
 	sub_ua = "Clash"
 	sub_headers = ""
 
+	-- the config list passes the file name; subscription entries are keyed by the bare config name
+	local base = filename and filename:gsub("%.ya?ml$", "") or filename
 	uci:foreach("openclash", "config_subscribe",
 		function(s)
-			if s.name == filename then
+			if s.name == filename or s.name == base then
 				if s.sub_ua then
 					sub_ua = s.sub_ua
 				end
@@ -882,8 +935,8 @@ function sub_info_get()
 		end
 	)
 
-	if filename and not is_start() then
-		url_result = get_sub_url(filename)
+	if base and not is_start() then
+		url_result = get_sub_url(base)
 
 		if url_result then
 			if url_result.type == "single" then
@@ -1092,7 +1145,7 @@ function action_switch_run_mode()
 	end
 	uci:commit("openclash")
 	if is_running() then
-		SYS.exec("/etc/init.d/openclash restart >/dev/null 2>&1 &")
+		SYS.exec("/etc/init.d/openclash restart >/dev/null 2>&1")
 	end
 end
 
@@ -1139,44 +1192,159 @@ function action_switch_log()
 	})
 end
 
-local function s(e)
-local a={' B/S',' KB/S',' MB/S',' GB/S',' TB/S',' PB/S'}
-local t=0
-if (e<=1024) then
-	return e..a[1]
-else
-	repeat
-		e=e/1024
-		t=t+1
-	until(e<=1024)
-	return math.floor(e * 10 + 0.5) / 10 .. a[t]
+local function proc_cpu_count()
+	local content = nixio.fs.readfile("/proc/cpuinfo")
+	if not content then
+		return "1"
 	end
+	local count = 0
+	for line in content:gmatch("[^\n]+") do
+		if line:match("^processor") then
+			count = count + 1
+		end
+	end
+	return count > 0 and tostring(count) or "1"
+end
+
+local function proc_find_core_pid()
+	local iter = nixio.fs.dir("/proc")
+	if not iter then
+		return nil
+	end
+	local pids = {}
+	for entry in iter do
+		if entry:match("^%d+$") then
+			pids[#pids + 1] = tonumber(entry)
+		end
+	end
+	table.sort(pids)
+	for _, pid in ipairs(pids) do
+		local cmdline = nixio.fs.readfile("/proc/" .. pid .. "/cmdline")
+		if cmdline and cmdline:gsub("%z", " "):match("^[^ ]*clash") then
+			return tostring(pid)
+		end
+	end
+	return nil
+end
+
+local function proc_core_cpu_percent(pid)
+	if nixio.fs.access("/sys/fs/cgroup/cpuacct") then
+		local dir = "/sys/fs/cgroup/cpuacct/openclash"
+		if not nixio.fs.access(dir) then
+			SYS.exec("mkdir -p " .. dir .. " 2>/dev/null")
+		end
+		if nixio.fs.access(dir) then
+			local f = io.open(dir .. "/cgroup.procs", "w")
+			if f then
+				f:write(pid, "\n")
+				f:close()
+				local usage_file = dir .. "/cpuacct.usage"
+				local function read_usage()
+					local raw = fs.readfile(usage_file)
+					if not raw then
+						return nil
+					end
+					return tonumber(raw:match("^(%d+)"))
+				end
+				local u1 = read_usage()
+				if u1 then
+					local up1 = tonumber((fs.readfile("/proc/uptime") or ""):match("^(%S+)"))
+					nixio.nanosleep(0, 200000000)
+					local u2 = read_usage()
+					local up2 = tonumber((fs.readfile("/proc/uptime") or ""):match("^(%S+)"))
+					if u2 and up1 and up2 and up2 > up1 then
+						return (u2 - u1) / ((up2 - up1) * 1e9)
+					end
+				end
+			end
+		end
+	end
+
+	if nixio.fs.access("/sys/fs/cgroup/cgroup.controllers") then
+		local cg = fs.readfile("/proc/" .. pid .. "/cgroup")
+		if cg then
+			local path = cg:match("0::([^\n]+)")
+			if path and path ~= "/" and path ~= "" then
+				local usage_file = "/sys/fs/cgroup" .. path .. "/cpu.stat"
+				local function read_usage()
+					local raw = fs.readfile(usage_file)
+					if not raw then
+						return nil
+					end
+					return tonumber(raw:match("usage_usec%s+(%d+)"))
+				end
+				local u1 = read_usage()
+				if u1 then
+					local up1 = tonumber((fs.readfile("/proc/uptime") or ""):match("^(%S+)"))
+					nixio.nanosleep(0, 200000000)
+					local u2 = read_usage()
+					local up2 = tonumber((fs.readfile("/proc/uptime") or ""):match("^(%S+)"))
+					if u2 and up1 and up2 and up2 > up1 then
+						return (u2 - u1) / ((up2 - up1) * 1e6)
+					end
+				end
+			end
+		end
+	end
+
+	local function read_sample()
+		local uptime = fs.readfile("/proc/uptime")
+		local stat = fs.readfile("/proc/" .. pid .. "/stat")
+		if not uptime or not stat then
+			return nil
+		end
+		local up = tonumber(uptime:match("^(%S+)"))
+		local last_bracket = 0
+		for pos in stat:gmatch("()%)") do
+			last_bracket = pos
+		end
+		if not up or up <= 0 or last_bracket == 0 then
+			return nil
+		end
+		local fields = {}
+		for field in stat:sub(last_bracket + 1):gmatch("%S+") do
+			fields[#fields + 1] = field
+		end
+		local utime = tonumber(fields[12])
+		local stime = tonumber(fields[13])
+		if not utime or not stime then
+			return nil
+		end
+		return up, utime + stime
+	end
+
+	local up1, total1 = read_sample()
+	if not up1 then
+		return nil
+	end
+	nixio.nanosleep(0, 200000000)
+	local up2, total2 = read_sample()
+	if not up2 then
+		return nil
+	end
+	local elapsed = up2 - up1
+	if elapsed <= 0 then
+		return nil
+	end
+	return (total2 - total1) / elapsed
 end
 
 function action_toolbar_show_sys()
 	local cpu = "0"
 	local load_avg = "0"
-	local cpu_count = SYS.exec("grep -c ^processor /proc/cpuinfo 2>/dev/null"):gsub("\n", "") or 1
-	local pid = SYS.exec("pgrep -f '^[^ ]*clash' | head -1 | tr -d '\n' 2>/dev/null")
+	local cpu_count = proc_cpu_count()
+	local pid = proc_find_core_pid()
 
 	if pid and pid ~= "" then
-		cpu = SYS.exec(string.format([[
-		top -b -n1 | awk -v pid="%s" '
-			BEGIN { cpu_col=0; }
-			$0 ~ /%%CPU/ { 
-				for(i=1;i<=NF;i++) if($i=="%%CPU") cpu_col=i;
-				next
-			}
-			cpu_col>0 && $1==pid { print $cpu_col }
-		'
-		]], pid))
-		if cpu and cpu ~= "" then
-			cpu = string.match(cpu, "%d+%.?%d*") or "0"
-		else
-			cpu = "0"
+		local usage = proc_core_cpu_percent(pid)
+		if usage then
+			cpu = usage
 		end
 
-		load_avg = SYS.exec("awk '{print $2; exit}' /proc/loadavg 2>/dev/null"):gsub("\n", "") or "0"
+		local loadavg = nixio.fs.readfile("/proc/loadavg")
+		if loadavg then
+			load_avg = loadavg:match("^%S+%s+(%S+)") or "0"
+		end
 
 		if not string.match(load_avg, "^[0-9]*%.?[0-9]*$") then
 			load_avg = "0"
@@ -1185,14 +1353,23 @@ function action_toolbar_show_sys()
 
 	HTTP.prepare_content("application/json")
 	HTTP.write_json({
-		cpu = cpu,
-		load_avg = tostring(math.floor(tonumber(load_avg) / tonumber(cpu_count) * 100));
+		cpu = tostring(cpu),
+		load_avg = tostring(tonumber(load_avg) / tonumber(cpu_count) * 100);
 	})
 end
 
 function action_toolbar_show()
-	local pid = SYS.exec("pgrep -f '^[^ ]*clash' | head -1 | tr -d '\n' 2>/dev/null")
+	local pid = proc_find_core_pid()
 	local traffic, connections, connection, up, down, up_total, down_total, mem, cpu, load_avg, cpu_count
+	connection = "0"
+	up = "0"
+	down = "0"
+	up_total = "0"
+	down_total = "0"
+	mem = 0
+	cpu = 0
+	load_avg = "0"
+	cpu_count = proc_cpu_count()
 	if pid and pid ~= "" then
 		local daip = daip()
 		local dase = dase() or ""
@@ -1280,37 +1457,27 @@ function action_toolbar_show()
 
 		if traffic and connections and connections.connections then
 			connection = #(connections.connections)
-			up = s(traffic.up)
-			down = s(traffic.down)
-			up_total = fs.filesize(connections.uploadTotal)
-			down_total = fs.filesize(connections.downloadTotal)
+			up = traffic.up
+			down = traffic.down
+			up_total = connections.uploadTotal
+			down_total = connections.downloadTotal
 		else
-			up = "0 B/S"
-			down = "0 B/S"
-			up_total = "0 KB"
-			down_total = "0 KB"
+			up = "0"
+			down = "0"
+			up_total = "0"
+			down_total = "0"
 			connection = "0"
 		end
 
 		mem = tonumber(SYS.exec(string.format("cat /proc/%s/status 2>/dev/null |grep -w VmRSS |awk '{print $2}'", pid)))
-		cpu = SYS.exec(string.format([[
-		top -b -n1 | awk -v pid="%s" '
-			BEGIN { cpu_col=0; }
-			$0 ~ /%%CPU/ { 
-				for(i=1;i<=NF;i++) if($i=="%%CPU") cpu_col=i;
-				next
-			}
-			cpu_col>0 && $1==pid { print $cpu_col }
-		'
-		]], pid))
+		cpu = proc_core_cpu_percent(pid)
 
-		if mem and cpu then
-			mem = fs.filesize(mem*1024) or "0 KB"
-			cpu = string.match(cpu, "%d+%.?%d*") or "0"
+		if mem then
+			mem = mem * 1024
 		else
-			mem = "0 KB"
-			cpu = "0"
+			mem = 0
 		end
+		cpu = cpu or 0
 
 		load_avg = SYS.exec("awk '{print $2; exit}' /proc/loadavg 2>/dev/null"):gsub("\n", "") or "0"
 		cpu_count = SYS.exec("grep -c ^processor /proc/cpuinfo 2>/dev/null"):gsub("\n", "") or 1
@@ -1318,8 +1485,6 @@ function action_toolbar_show()
 		if not string.match(load_avg, "^[0-9]*%.?[0-9]*$") then
 			load_avg = "0"
 		end
-	else
-		return
 	end
 
 	HTTP.prepare_content("application/json")
@@ -1330,8 +1495,8 @@ function action_toolbar_show()
 		up_total = up_total,
 		down_total = down_total,
 		mem = mem,
-		cpu = cpu,
-		load_avg = tostring(math.floor(tonumber(load_avg) / tonumber(cpu_count) * 100));
+		cpu = tostring(cpu),
+		load_avg = tostring(tonumber(load_avg) / tonumber(cpu_count) * 100);
 	})
 end
 
@@ -1495,13 +1660,33 @@ function action_conn_status(internal)
 		clash = uci:get("openclash", "config", "enable") == "1",
 		daip = daip(),
 		dase = dase(),
-		db_foward_port = db_foward_port(),
-		db_foward_domain = db_foward_domain(),
+		-- Keep the misspelled JSON keys for compatibility with existing views.
+		db_foward_port = dashboard_forward_port(),
+		db_foward_domain = dashboard_forward_domain(),
+		db_forward_ssl = dashboard_forward_ssl(),
 		cn_port = cn_port()
 	}
 	if internal then return data end
 	HTTP.prepare_content("application/json")
 	HTTP.write_json(data)
+end
+
+-- Serve page js files with translations compiled server-side: the <%:Message%> markers and
+-- <%=...%> islands inside them are only valid after this rendering step.
+function action_translate_js()
+	local name = HTTP.formvalue("f") or ""
+	local src = name:match("^[%w_]+$") and fs.readfile("/www/luci-static/resources/openclash/js/" .. name .. ".js")
+	if not src then
+		HTTP.status(404, "Not Found")
+		return
+	end
+	-- loadc is absent on the ucode-based LuCI, where the catalogs load with the language
+	local i18n = require("luci.i18n")
+	if i18n.loadc then i18n.loadc("openclash") end
+	HTTP.prepare_content("application/javascript; charset=UTF-8")
+	-- safe to cache long: the htm templates stamp the script URL per release
+	HTTP.header("Cache-Control", "private, max-age=31536000, immutable")
+	require("luci.template").render_string(src)
 end
 
 function action_status()
@@ -1517,7 +1702,9 @@ function action_status()
 		dase = status_data.dase,
 		db_foward_port = status_data.db_foward_port,
 		db_foward_domain = status_data.db_foward_domain,
-		db_forward_ssl = db_foward_ssl(),
+		db_forward_ssl = status_data.db_forward_ssl,
+		dashboard_custom_url = dashboard_custom_url(),
+		dashboard_custom_clash_compatible = dashboard_custom_clash_compatible(),
 		cn_port = status_data.cn_port,
 		yacd = fs.isdirectory("/usr/share/openclash/ui/yacd"),
 		dashboard = fs.isdirectory("/usr/share/openclash/ui/dashboard"),
@@ -1544,37 +1731,11 @@ function action_status()
 end
 
 -- Streaming write.
--- New LuCI: luci.http.write = L.print() (http.lua) is C-stdio buffered
--- (musl 4096B / glibc 8192B), io.flush() can't reach it -> use L.http:write.
--- Old LuCI (18.06): no L global; HTTP.write = coroutine.yield, immediate.
--- CRITICAL: on old LuCI HTTP.write = coroutine.yield, and Lua 5.1 cannot
--- yield across a C function boundary. Wrapping write_padded() in pcall()
--- throws "attempt to yield across C-call boundary" -> pcall swallows the
--- error and the chunk is silently lost while the rest of the script keeps
--- running (backend logs look fine but the frontend receives nothing).
--- Callers MUST call write_padded() directly, never through pcall.
--- 8192-space first line only helps the old buffered path.
--- Ref: openwrt/luci master: libs/luci-lib-base/luasrc/http.lua
---      modules/luci-base/ucode/http.uc, htdocs/cgi-bin/luci
---      immortalwrt/luci 18.06-k5.4: modules/luci-base/luasrc/http.lua
---      jow-/ucode: vm.c (uc_vm_insn_print), lib/fs.c, main.c
---
--- Nginx mode (ImmortalWrt luci-nginx / luci-ssl-nginx): LuCI is not run by
--- uhttpd directly; nginx forwards /cgi-bin/luci over the uwsgi protocol to
--- the uwsgi-cgi plugin (luci-webui vassal), which forks the CGI and pipes its
--- stdout back through nginx. The CGI-side flush (io.flush / L.http:write)
--- only gets data into the pipe; nginx still buffers the whole response body
--- by default (uwsgi_buffering on, ~8KB) and only pushes it once the buffer
--- fills or the response ends, so the 8192-space first line alone cannot keep
--- the stream alive. To make nginx forward every chunk in real time, the CGI
--- response must carry the "X-Accel-Buffering: no" header (honored by nginx
--- proxy/fastcgi/uwsgi modules). It is emitted unconditionally on the very
--- first write, before any body, so it lands in the response header block.
--- Backend detection via SERVER_SOFTWARE was deliberately dropped: the value
--- is not reliable (custom uwsgi_params may pre-set it to "nginx", defeating
--- the check). The header is only meaningful to nginx and is stripped by it
--- before reaching the client; under uhttpd it is simply passed through and
--- ignored, so sending it always is harmless.
+-- New LuCI buffers luci.http.write in C stdio and io.flush cannot reach it, so L.http:write
+-- is used there; old LuCI has no L global and writes immediately.
+-- pcall must never wrap write_padded: on old LuCI HTTP.write yields and Lua 5.1 cannot
+-- yield across a C call. The first line fills the old path's buffer, the X-Accel-Buffering
+-- header makes nginx forward every chunk, uhttpd passes it through.
 local write_padded_first = true
 
 local function write_padded(data)
@@ -1693,10 +1854,10 @@ function process_status(name)
 end
 
 local START_SCRIPT_PATTERNS = {
-	["init"] = "/etc/init.d/[o]penclash",
-	["openclash.sh"] = "[o]penclash\\.sh",
-	["openclash_core.sh"] = "[o]penclash_core\\.sh",
-	["openclash_update.sh"] = "[o]penclash_update\\.sh",
+	["init"] = { "/etc/init.d/[o]penclash" },
+	["openclash.sh"] = { "[o]penclash\\.sh", "/etc/init\\.d/[o]penclash" },
+	["openclash_core.sh"] = { "[o]penclash_core\\.sh", "/etc/init\\.d/[o]penclash" },
+	["openclash_update.sh"] = { "[o]penclash_update\\.sh", "/etc/init\\.d/[o]penclash" },
 }
 
 local function stream_log_and_parse(reader)
@@ -1727,17 +1888,32 @@ end
 function action_start()
 	HTTP.prepare_content("text/plain; charset=utf-8")
 	local logfile = "/tmp/openclash_start.log"
-	local pattern = START_SCRIPT_PATTERNS[HTTP.formvalue("script")]
+	local patterns = START_SCRIPT_PATTERNS[HTTP.formvalue("script")]
+	if type(patterns) == "string" then
+		patterns = { patterns }
+	end
 
 	local cmd
-	if pattern then
+	if patterns then
+		local pattern_cases = {}
+		for idx, p in ipairs(patterns) do
+			pattern_cases[#pattern_cases + 1] = string.format(
+				"%d) %s | grep -v grep | grep \"%s\" | grep -v \"openclash_start\" | grep -c \"^\";;",
+				idx, "$PS_CMD", p
+			)
+		end
+		local check_fn = string.format(
+			"check_liveness() { case \"$1\" in %s *) echo 0;; esac; }; ",
+			table.concat(pattern_cases, " ")
+		)
 		cmd = string.format(
-			"logfile='%s'; pattern='%s'; " ..
+			"logfile='%s'; " ..
+			check_fn ..
 			"if [ \"$(ps --version 2>&1 | grep -c procps-ng)\" -eq 1 ]; then PS_CMD='ps -efw'; else PS_CMD='ps -w'; fi; " ..
 			"bytes=$(wc -c < \"$logfile\" 2>/dev/null); bytes=${bytes:-0}; " ..
 			"[ \"$bytes\" -gt 0 ] && tail -c +1 \"$logfile\" 2>/dev/null; " ..
 			"seen=0; [ \"$bytes\" -gt 0 ] && seen=1; " ..
-			"elapsed=0; " ..
+			"elapsed=0; i=1; miss=0; total=%d; " ..
 			"while true; do " ..
 			"new_bytes=$(wc -c < \"$logfile\" 2>/dev/null); new_bytes=${new_bytes:-0}; " ..
 			"if [ \"$new_bytes\" -gt \"$bytes\" ] 2>/dev/null; then " ..
@@ -1745,25 +1921,30 @@ function action_start()
 			"tail -c +$((bytes + 1)) \"$logfile\" 2>/dev/null; bytes=$new_bytes; " ..
 			"else tail -c +$((bytes + 1)) \"$logfile\" 2>/dev/null | awk '{ if (p) printf \"%%s\\n\", prev; prev = $0; p = 1 }'; " ..
 			"bytes=$((new_bytes - $(tail -c +$((bytes + 1)) \"$logfile\" 2>/dev/null | awk 'END { print length($0) }'))); " ..
-			"fi; " ..
+			"fi; seen=1; " ..
 			"elif [ \"$new_bytes\" -lt \"$bytes\" ] 2>/dev/null; then " ..
 			"if [ \"$(tail -c 1 \"$logfile\" 2>/dev/null)\" = \"$(printf '\\n')\" ]; then " ..
 			"tail -c +1 \"$logfile\" 2>/dev/null; bytes=$new_bytes; " ..
 			"else tail -c +1 \"$logfile\" 2>/dev/null | awk '{ if (p) printf \"%%s\\n\", prev; prev = $0; p = 1 }'; " ..
 			"bytes=$((new_bytes - $(tail -c +1 \"$logfile\" 2>/dev/null | awk 'END { print length($0) }'))); " ..
+			"fi; seen=1; " ..
 			"fi; " ..
-			"fi; " ..
-			"liveness=$($PS_CMD | grep -v grep | grep \"$pattern\" | grep -v \"openclash_start\" | grep -c \"^\"); " ..
-			"[ \"$liveness\" -gt 0 ] 2>/dev/null && seen=1; " ..
-			"if [ \"$seen\" -eq 1 ]; then " ..
-			"if [ \"$liveness\" = \"0\" ]; then echo '##FINISHED##'; exit 0; fi; " ..
+			"found=0; i=1; " ..
+			"while [ \"$i\" -le \"$total\" ]; do " ..
+			"liveness=$(check_liveness \"$i\"); " ..
+			"if [ \"$liveness\" -gt 0 ] 2>/dev/null; then found=1; seen=1; break; fi; " ..
+			"i=$((i + 1)); " ..
+			"done; " ..
+			"if [ \"$found\" = \"1\" ]; then miss=0; " ..
 			"if [ \"$elapsed\" -ge 50 ]; then echo '##CONTINUE##'; exit 0; fi; " ..
 			"else " ..
-			"if [ \"$elapsed\" -ge 5 ]; then echo '##FINISHED##'; exit 0; fi; " ..
+			"miss=$((miss + 1)); " ..
+			"if [ \"$seen\" -eq 1 ] && [ \"$miss\" -ge 3 ]; then echo '##FINISHED##'; exit 0; fi; " ..
+			"if [ \"$elapsed\" -ge 8 ]; then echo '##FINISHED##'; exit 0; fi; " ..
 			"fi; " ..
 			"sleep 1; elapsed=$((elapsed + 1)); " ..
 			"done",
-			logfile, pattern
+			logfile, #patterns
 		)
 	else
 		cmd = string.format(
@@ -1825,6 +2006,42 @@ function action_save_github_address_mod()
 	HTTP.prepare_content("application/json")
 	HTTP.write_json({
 		success = true;
+	})
+end
+
+function action_save_custom_addr()
+	local addr = HTTP.formvalue("addr") or ""
+	addr = addr:gsub("^%s+", ""):gsub("%s+$", "")
+	local success = false
+	if addr ~= "" and #addr <= 256 and addr:match("^https?://%S+$") then
+		local list = {}
+		local seen = {}
+		local custom = uci:get("openclash", "config", "github_addr_custom")
+		if type(custom) == "table" then
+			for _, v in ipairs(custom) do
+				if v ~= "" and not seen[v] then
+					seen[v] = true
+					list[#list + 1] = v
+				end
+			end
+		elseif type(custom) == "string" then
+			for v in custom:gmatch("%S+") do
+				if not seen[v] then
+					seen[v] = true
+					list[#list + 1] = v
+				end
+			end
+		end
+		if not seen[addr] then
+			list[#list + 1] = addr
+			uci:set_list("openclash", "config", "github_addr_custom", list)
+			uci:commit("openclash")
+		end
+		success = true
+	end
+	HTTP.prepare_content("application/json")
+	HTTP.write_json({
+		success = success;
 	})
 end
 
@@ -1902,7 +2119,7 @@ function action_refresh_log()
 
 	local exclude_pattern = "UDP%-Receive%-Buffer%-Size|^Sec%-Fetch%-Mode|^User%-Agent|^Access%-Control|^Accept|^Origin|^Referer|^Connection|^Pragma|^Cache%-"
 	local core_pattern = "level=|^time="
-	local limit = core_refresh and 1000 or 2000
+	local limit = core_refresh and 2500 or 5000
 	local start_line = (log_len > 0 and total_lines > log_len) and (log_len + 1) or 1
 	local read_count = math.max(0, total_lines - start_line + 1)
 	local core_raw, oc_raw
@@ -1999,15 +2216,22 @@ function action_diag_connection()
 	if addr and (datatype.hostname(addr) or datatype.ipaddr(addr)) then
 		local cmd = string.format("/usr/share/openclash/openclash_debug_getcon.lua %s", addr)
 		HTTP.prepare_content("text/plain")
-		local util = io.popen(cmd)
-		if util and util ~= "" then
+		local reader = ltn12_popen(cmd)
+		if not reader then return end
+		local buf = ""
+		while true do
+			local chunk = reader()
+			if not chunk then break end
+			buf = buf .. chunk
 			while true do
-				local ln = util:read("*l")
-				if not ln then break end
-				write_padded(ln)
+				local nl = buf:find("\n")
+				if not nl then break end
+				local line = buf:sub(1, nl - 1)
+				buf = buf:sub(nl + 1)
+				write_padded(line)
 			end
-			util:close()
 		end
+		reader.kill()
 		return
 	end
 	HTTP.status(500, "Bad address")
@@ -2018,15 +2242,22 @@ function action_diag_dns()
 	if addr and datatype.hostname(addr)then
 		local cmd = string.format("/usr/share/openclash/openclash_debug_dns.lua %s", addr)
 		HTTP.prepare_content("text/plain")
-		local util = io.popen(cmd)
-		if util and util ~= "" then
+		local reader = ltn12_popen(cmd)
+		if not reader then return end
+		local buf = ""
+		while true do
+			local chunk = reader()
+			if not chunk then break end
+			buf = buf .. chunk
 			while true do
-				local ln = util:read("*l")
-				if not ln then break end
-				write_padded(ln)
+				local nl = buf:find("\n")
+				if not nl then break end
+				local line = buf:sub(1, nl - 1)
+				buf = buf:sub(nl + 1)
+				write_padded(line)
 			end
-			util:close()
 		end
+		reader.kill()
 		return
 	end
 	HTTP.status(500, "Bad address")
@@ -2254,11 +2485,11 @@ function rename_file()
 			if fs.uci_get_config("config", "config_path") == old_file_path then
 				uci:set("openclash", "config", "config_path", new_file_path)
 			end
-			
+
 			if fs.isfile(old_run_file_path) then
 				fs.rename(old_run_file_path, new_run_file_path)
 			end
-			
+
 			fs.config_refs(old_file_name, new_file_name)
 		end
 		HTTP.status(200, "Rename File Successful")
@@ -2271,6 +2502,9 @@ end
 function manual_stream_unlock_test()
 	local type = HTTP.formvalue("type")
 	local cmd = string.format('/usr/share/openclash/openclash_streaming_unlock.lua "%s"', type)
+	if HTTP.formvalue("result") == "1" then
+		cmd = cmd .. ' "result"'
+	end
 	HTTP.prepare_content("text/plain; charset=utf-8")
 	local util = io.popen(cmd)
 	if util and util ~= "" then
@@ -2281,6 +2515,13 @@ function manual_stream_unlock_test()
 				write_padded(trans_line(ln))
 			end
 			if not process_status("openclash_streaming_unlock.lua "..type) or not process_status("openclash_streaming_unlock.lua ") then
+				while true do
+					ln = util:read("*l")
+					if not ln then break end
+					if ln ~= "" then
+						write_padded(trans_line(ln))
+					end
+				end
 				break
 			end
 		end
@@ -2433,10 +2674,9 @@ function action_myip_check()
 			return nil
 		end
 
-		local ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 		local cmd = string.format(
 			'curl -SsL -m 10 -A "%s" "%s" 2>/dev/null',
-			ua, service.url
+			fs.user_agent, service.url
 		)
 
 		local pid = nixio.fork()
@@ -2625,8 +2865,8 @@ function action_myip_check()
 
 	if result.ipify and result.ipify.ip and result.ipify.ip ~= "" then
 		local geo_cmd = string.format(
-			'curl -sL -m 10 --retry 2 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://api.ip.sb/geoip/%s" 2>/dev/null',
-			result.ipify.ip
+			'curl -sL -m 10 --retry 2 -A "%s" "https://api.ip.sb/geoip/%s" 2>/dev/null',
+			fs.user_agent, result.ipify.ip
 		)
 		local geo_data = SYS.exec(geo_cmd)
 
@@ -2841,6 +3081,210 @@ function latency_test(addr, on_result)
 	result.error = last_failure.error
 	if on_result then on_result(result) end
 	return result
+end
+
+local unlock_service_keys = { "prime_video", "bahamut", "bilibili", "claude", "dazn", "discovery", "disney", "gemini", "google", "hbo_max", "netflix", "openai", "paramount", "spotify", "steam", "tvb", "ytb" }
+local unlock_service_labels = {
+	prime_video = "Amazon Prime Video",
+	bahamut = "Bahamut Anime",
+	bilibili = "Bilibili",
+	claude = "Claude",
+	dazn = "DAZN",
+	discovery = "Discovery Plus",
+	disney = "Disney Plus",
+	gemini = "Gemini",
+	google = "Google",
+	hbo_max = "HBO Max",
+	netflix = "Netflix",
+	openai = "OpenAI",
+	paramount = "Paramount Plus",
+	spotify = "Spotify",
+	steam = "Steam",
+	tvb = "TVB Anywhere+",
+	ytb = "YouTube Premium",
+}
+local unlock_service_default = { "netflix", "ytb", "openai", "claude" }
+
+function action_unlock_check()
+	local service = HTTP.formvalue("service")
+	local services = {}
+	if service and service ~= "" then
+		for _, name in ipairs(unlock_service_keys) do
+			if name == service then
+				services[#services + 1] = name
+			end
+		end
+	else
+		local selected = uci:get("openclash", "config", "unlock_check_services") or ""
+		local seen = {}
+		for name in selected:gmatch("[^,]+") do
+			name = name:match("^%s*(.-)%s*$")
+			if name ~= "" and not seen[name] and #services < 4 then
+				for _, key in ipairs(unlock_service_keys) do
+					if key == name then
+						seen[key] = true
+						services[#services + 1] = key
+						break
+					end
+				end
+			end
+		end
+		if #services == 0 then
+			services = unlock_service_default
+		end
+	end
+
+	HTTP.prepare_content("text/plain; charset=utf-8")
+
+	if #services == 0 then
+		write_padded(json.stringify({ complete = true }))
+		return
+	end
+
+	local queries = {}
+	for _, name in ipairs(services) do
+		local fdi, fdo = nixio.pipe()
+		if fdi and fdo then
+			local cmd = string.format('lua "/usr/share/openclash/openclash_streaming_unlock.lua" "%s" "check"', unlock_service_labels[name] or name)
+			local pid = nixio.fork()
+			if pid > 0 then
+				fdo:close()
+				queries[#queries + 1] = { pid = pid, name = name, fdi = fdi, data = "", done = false }
+			elseif pid == 0 then
+				nixio.dup(fdo, nixio.stdout)
+				fdi:close()
+				fdo:close()
+				nixio.exec("/bin/sh", "-c", cmd)
+			else
+				if fdi then fdi:close() end
+				if fdo then fdo:close() end
+			end
+		end
+	end
+
+	if #queries == 0 then
+		HTTP.prepare_content("application/json")
+		HTTP.write_json({ error = "Failed to create any queries" })
+		return
+	end
+
+	local pending = #queries
+	local delay = 50000000
+	local max_iterations = 280
+
+	for _ = 1, max_iterations do
+		for _, q in ipairs(queries) do
+			if not q.done then
+				local ok_r, buf = pcall(try_read, q.fdi, 4096)
+				if ok_r and buf then
+					q.data = q.data .. buf
+				end
+
+				local ok_w, wpid = pcall(nixio.waitpid, q.pid, "nohang")
+				local finished = false
+				if ok_w and wpid then
+					finished = true
+				else
+					local ok_k, alive = pcall(nixio.kill, q.pid, 0)
+					if not (ok_k and alive) then
+						finished = true
+						pcall(nixio.waitpid, q.pid, 0)
+					end
+				end
+
+				if finished then
+					local guard = 0
+					while guard < 64 do
+						guard = guard + 1
+						local ok_b, b = pcall(try_read, q.fdi, 4096)
+						if not ok_b or not b then break end
+						q.data = q.data .. b
+					end
+					pcall(q.fdi.close, q.fdi)
+					q.done = true
+					pending = pending - 1
+
+					local st = 0
+					local region = ""
+					local node = ""
+					local ok_j, parsed = pcall(json.parse, string.gsub(q.data or "", "%s+$", ""))
+					if ok_j and parsed and type(parsed) == "table" and parsed.st then
+						st = tonumber(parsed.st) or 0
+						region = parsed.region or ""
+						node = parsed.node or ""
+					end
+					write_padded(json.stringify({ service = q.name, st = st, region = region, node = node }))
+				end
+			end
+		end
+
+		if pending == 0 then
+			break
+		end
+
+		nixio.nanosleep(0, delay)
+		delay = math.min(delay * 2, 200000000)
+	end
+
+	for _, q in ipairs(queries) do
+		if not q.done then
+			write_padded(json.stringify({ service = q.name, st = 0, region = "", node = "" }))
+			pcall(nixio.kill, q.pid, nixio.const.SIGTERM)
+			local reaped = false
+			for _ = 1, 20 do
+				local ok_w, wpid = pcall(nixio.waitpid, q.pid, "nohang")
+				if ok_w and wpid then reaped = true break end
+				local ok_k, alive = pcall(nixio.kill, q.pid, 0)
+				if not (ok_k and alive) then
+					pcall(nixio.waitpid, q.pid, 0)
+					reaped = true
+					break
+				end
+				nixio.nanosleep(0, 50000000)
+			end
+			if not reaped then
+				pcall(nixio.kill, q.pid, nixio.const.SIGKILL)
+				pcall(nixio.waitpid, q.pid, 0)
+			end
+			pcall(q.fdi.close, q.fdi)
+		end
+	end
+
+	write_padded(json.stringify({ complete = true }))
+end
+
+function action_unlock_services()
+	local valid = {}
+	for _, name in ipairs(unlock_service_keys) do
+		valid[name] = true
+	end
+	local input = HTTP.formvalue("services")
+	local saved = false
+	local raw = uci:get("openclash", "config", "unlock_check_services") or ""
+	if input and input ~= "" then
+		raw = input
+		saved = true
+	end
+	local seen = {}
+	local list = {}
+	for item in raw:gmatch("[^,]+") do
+		item = item:gsub("^%s+", ""):gsub("%s+$", "")
+		if valid[item] and not seen[item] and #list < 4 then
+			seen[item] = true
+			list[#list + 1] = item
+		end
+	end
+	if #list == 0 then
+		list = unlock_service_default
+	elseif saved then
+		uci:set("openclash", "config", "unlock_check_services", table.concat(list, ","))
+		uci:commit("openclash")
+	end
+	local enable = fs.uci_get_config("config", "enable") == "1"
+	local self_proxy = fs.uci_get_config("config", "router_self_proxy")
+	if self_proxy == nil then self_proxy = "1" end
+	HTTP.prepare_content("application/json")
+	HTTP.write_json({ services = list, enable = enable, auto_ready = enable and self_proxy == "1" })
 end
 
 function action_website_check()
@@ -3332,18 +3776,22 @@ if [ $C_EXIT -eq 0 ] && [ -n "$CORE_RAW" ]; then
 	if [ "$C_CODE" -ge 200 ] 2>/dev/null && [ "$C_CODE" -lt 400 ] 2>/dev/null && [ "$C_TIME" -gt 0 ] 2>/dev/null; then
 		CORE_META_VER=$(echo "$CORE_RAW" | sed '$d' | sed -n '1p' | tr -d '\n\r')
 		CORE_SMART_VER=$(echo "$CORE_RAW" | sed '$d' | sed -n '2p' | tr -d '\n\r')
+		CORE_ERR=""
 		if [ "$LATENCY" = "null" ] || [ "$C_TIME" -lt "$LATENCY" ] 2>/dev/null; then
 			LATENCY=$C_TIME
 		fi
 	elif [ "$LATENCY" != "null" ] && [ "$LATENCY" != "-3" ]; then
-		:
+		CORE_ERR="denied"
 	else
 		[ "$C_CODE" = "404" ] && LATENCY=-3 || LATENCY=-2
+		CORE_ERR="denied"
 	fi
 elif [ $C_EXIT -ne 0 ]; then
 	[ "$LATENCY" = "null" ] && LATENCY=-1
+	CORE_ERR="timeout"
 else
 	[ "$LATENCY" = "null" ] && LATENCY=-2
+	CORE_ERR="denied"
 fi
 
 printf '{"plugin_ver":"%%s","core_meta_ver":"%%s","core_smart_ver":"%%s","latency":%%s,"core_error":"%%s"}\n' \
@@ -3662,8 +4110,8 @@ function action_switch_oc_setting()
 		local daip = daip()
 		local dase = dase() or ""
 		local cn_port = cn_port()
-		if not daip or not cn_port then 
-			HTTP.status(500, "Switch Failed") 
+		if not daip or not cn_port then
+			HTTP.status(500, "Switch Failed")
 			return false
 		end
 
@@ -3691,7 +4139,7 @@ function action_switch_oc_setting()
 						config = File.exist?(config_path) ? YAML.load_file(config_path) : {}
 						config ||= {}
 
-						if config['sniffer']&.dig('enable') == true && 
+						if config['sniffer']&.dig('enable') == true &&
 						   config['sniffer']&.dig('parse-pure-ip') == true &&
 						   config['sniffer']&.dig('sniff')
 							exit 0
@@ -3718,7 +4166,7 @@ function action_switch_oc_setting()
 							config['sniffer']['sniff'] = {
 								'QUIC' => { 'ports' => [443] },
 								'TLS' => { 'ports' => [443, '8443'] },
-								'HTTP' => { 'ports' => [80, '8080-8880'], 'override-destination' => true }
+								'HTTP' => { 'ports' => [80, '8080-8880'], 'override-destination' => false }
 							}
 						end
 
@@ -3834,7 +4282,7 @@ function action_switch_oc_setting()
 			end
 			uci:set("openclash", "@overwrite[0]", "china_ip_route", value)
 			uci:commit("openclash")
-			SYS.exec("/etc/init.d/openclash restart >/dev/null 2>&1 &")
+			SYS.exec("/etc/init.d/openclash restart >/dev/null 2>&1")
 		end
 	elseif setting == "stream_unlock" then
 		uci:set("openclash", "config", "stream_auto_select", value)
@@ -3886,7 +4334,7 @@ function action_generate_pac()
 	local auth_pass = ""
 
 	uci:foreach("openclash", "authentication", function(section)
-		if section.enabled == "1" and section.username and section.username ~= "" 
+		if section.enabled == "1" and section.username and section.username ~= ""
 			and section.password and section.password ~= "" then
 			auth_user = section.username
 			auth_pass = section.password
@@ -3971,7 +4419,7 @@ function action_generate_pac()
 							end
 						end
 					elseif existing_proxy and string.find(existing_proxy, "^PROXY%s+[%d%.]+:[%d]+") then
-						local updated_content = string.gsub(file_content, 
+						local updated_content = string.gsub(file_content,
 							'return%s*"PROXY%s+[^"]*"',
 							'return "' .. new_proxy_string .. '"')
 
@@ -4050,7 +4498,7 @@ function generate_pac_url_with_client_info(pac_filename, random_suffix)
 	if client_protocol and (client_protocol == "http" or client_protocol == "https") then
 		request_scheme = client_protocol
 	else
-		if HTTP.getenv("HTTPS") == "on" or 
+		if HTTP.getenv("HTTPS") == "on" or
 		   HTTP.getenv("HTTP_X_FORWARDED_PROTO") == "https" or
 		   HTTP.getenv("REQUEST_SCHEME") == "https" then
 			request_scheme = "https"
@@ -4241,9 +4689,9 @@ function checkNetworkConnectivity() {
 }
 
 function FindProxyForURL(url, host) {
-	if (isPlainHostName(host) || 
-		host === "127.0.0.1" || 
-		host === "::1" || 
+	if (isPlainHostName(host) ||
+		host === "127.0.0.1" ||
+		host === "::1" ||
 		host === "localhost") {
 		return "DIRECT";
 	}
@@ -4287,7 +4735,7 @@ end
 function action_oc_action()
 	local action = HTTP.formvalue("action")
 	local config_file = HTTP.formvalue("config_file")
-	
+
 	if not action then
 		HTTP.status(500, "Missing action parameter")
 		return
@@ -4334,7 +4782,7 @@ function action_oc_action()
 		HTTP.status(500, "Invalid action parameter")
 		return
 	end
-	
+
 	HTTP.prepare_content("application/json")
 	HTTP.write_json({status = "success", action = action})
 end
@@ -4404,7 +4852,7 @@ function action_config_file_list()
 						local cfile = io.open(full_path,"r")
 						if cfile then
 							local content = cfile:read(1024)
-							local age_symbol = content:find("BEGIN AGE ENCRYPTED FILE")
+							local age_symbol = content:find("BEGIN AGE ENCRYPTED FILE", 1, true)
 							for _, age in pairs(age_files) do
 								if age.name == name_no_ext and age.secret and age_symbol then
 									stat.age = true
@@ -4440,12 +4888,74 @@ function action_config_file_list()
 end
 
 function action_upload_config()
-	local upload = HTTP.formvalue("config_file")
-	local filename = HTTP.formvalue("filename")
+	local config_dir = "/etc/openclash/config/"
+	local started, fp, filename, target_path, file_size, stream_err = false, nil, nil, nil, 0, nil
 
+	HTTP.setfilehandler(function(meta, chunk, eof)
+		if stream_err then
+			return
+		end
+
+		if not started then
+			if not chunk then
+				return
+			end
+
+			started = true
+
+			local name = (meta and meta.file) or ""
+			if name == "" or not is_safe_filename(name) then
+				stream_err = "Invalid filename"
+				return
+			end
+
+			if not string.match(name, "%.ya?ml$") then
+				name = name .. ".yaml"
+			end
+
+			filename = name
+			target_path = config_dir .. name
+
+			SYS.call("mkdir -p " .. config_dir)
+
+			fp = io.open(target_path, "w")
+			if not fp then
+				stream_err = "Failed to save config file to disk"
+				return
+			end
+		end
+
+		if #chunk > 0 then
+			if not fp:write(chunk) then
+				stream_err = "Failed to save config file to disk"
+				return
+			end
+
+			file_size = file_size + #chunk
+		end
+
+		if eof then
+			fp:close()
+			fp = nil
+		end
+	end)
+
+	HTTP.formvalue("config_file")
 	HTTP.prepare_content("application/json")
 
-	if not upload or upload == "" then
+	if stream_err then
+		if target_path then
+			fs.unlink(target_path)
+		end
+
+		HTTP.write_json({
+			status = "error",
+			message = stream_err
+		})
+		return
+	end
+
+	if not target_path then
 		HTTP.write_json({
 			status = "error",
 			message = "No file uploaded"
@@ -4453,26 +4963,8 @@ function action_upload_config()
 		return
 	end
 
-	if not filename or filename == "" then
-		filename = "upload_" .. os.date("%Y%m%d_%H%M%S")
-	end
-
-	if not is_safe_filename(filename) then
-		HTTP.write_json({
-			status = "error",
-			message = "Invalid filename"
-		})
-		return
-	end
-
-	if not string.match(filename, "%.ya?ml$") then
-		filename = filename .. ".yaml"
-	end
-
-	local config_dir = "/etc/openclash/config/"
-	local target_path = config_dir .. filename
-
-	if string.len(upload) == 0 then
+	if file_size == 0 then
+		fs.unlink(target_path)
 		HTTP.write_json({
 			status = "error",
 			message = "Uploaded file is empty"
@@ -4480,19 +4972,15 @@ function action_upload_config()
 		return
 	end
 
-	local file_size = string.len(upload)
-	if file_size > 10 * 1024 * 1024 then
-		HTTP.write_json({
-			status = "error",
-			message = string.format("File size (%s) exceeds 10MB limit", fs.filesize(file_size))
-		})
-		return
+	local yaml_valid = false
+	local content_start = ""
+	local rfp = io.open(target_path, "r")
+	if rfp then
+		content_start = rfp:read(5000) or ""
+		rfp:close()
 	end
 
-	local yaml_valid = false
-	local content_start = string.sub(upload, 1, 5000)
-
-	if string.find(content_start, "proxy%-providers:") or 
+	if string.find(content_start, "proxy%-providers:") or
 	   string.find(content_start, "proxies:") or
 	   string.find(content_start, "rules:") or
 	   string.find(content_start, "port:") or
@@ -4508,51 +4996,104 @@ function action_upload_config()
 		return
 	end
 
-	SYS.call("mkdir -p " .. config_dir)
+	SYS.call(string.format("chmod 644 '%s'", target_path))
+	SYS.call(string.format("chown root:root '%s'", target_path))
 
-	local fp = io.open(target_path, "w")
-	if fp then
-		fp:write(upload)
-		fp:close()
+	HTTP.write_json({
+		status = "success",
+		message = "Config file uploaded successfully",
+		filename = filename,
+		file_path = target_path,
+		file_size = file_size,
+		readable_size = fs.filesize(file_size)
+	})
+end
 
-		SYS.call(string.format("chmod 644 '%s'", target_path))
-		SYS.call(string.format("chown root:root '%s'", target_path))
+function action_restore_backup()
+	local backup_dir = "/tmp/"
+	local started, fp, target_path, stream_err = false, nil, nil, nil
 
-		local written_content = fs.readfile(target_path)
-		if not written_content or string.len(written_content) ~= file_size then
-			fs.unlink(target_path)
-			HTTP.write_json({
-				status = "error",
-				message = "File write verification failed"
-			})
+	HTTP.setfilehandler(function(meta, chunk, eof)
+		if stream_err then
 			return
 		end
 
+		if not started then
+			if not chunk then
+				return
+			end
+
+			started = true
+
+			local name = (meta and meta.file) or ""
+			if name == "" or not is_safe_filename(name) then
+				stream_err = "Invalid filename"
+				return
+			end
+
+			target_path = backup_dir .. name
+
+			fp = io.open(target_path, "w")
+			if not fp then
+				stream_err = "Failed to save backup file to disk"
+				return
+			end
+		end
+
+		if chunk and fp then
+			fp:write(chunk)
+		end
+
+		if eof and fp then
+			fp:close()
+			fp = nil
+		end
+	end)
+
+	HTTP.formvalue("backup_file")
+	HTTP.prepare_content("application/json")
+
+	if stream_err then
+		if target_path then
+			fs.unlink(target_path)
+		end
+
+		HTTP.write_json({
+			status = "error",
+			message = stream_err
+		})
+		return
+	end
+
+	if not target_path then
+		HTTP.write_json({
+			status = "error",
+			message = "No file uploaded"
+		})
+		return
+	end
+
+	local restored = fs.restore_backup(target_path)
+	fs.unlink(target_path)
+
+	if restored then
 		HTTP.write_json({
 			status = "success",
-			message = "Config file uploaded successfully",
-			filename = filename,
-			file_path = target_path,
-			file_size = file_size,
-			readable_size = fs.filesize(file_size)
+			message = "Backup File Restore Successful!"
 		})
 	else
 		HTTP.write_json({
 			status = "error",
-			message = "Failed to save config file to disk"
+			message = "Backup File Restore Failed!"
 		})
 	end
 end
 
 function action_config_file_read()
 	local config_file = HTTP.formvalue("config_file")
-	HTTP.prepare_content("application/json")
 
 	if not config_file then
-		HTTP.write_json({
-			status = "error",
-			message = "Missing config_file parameter"
-		})
+		HTTP.status(400, "Missing config_file parameter")
 		return
 	end
 
@@ -4568,157 +5109,136 @@ function action_config_file_read()
 	end
 
 	if not allow then
-		HTTP.write_json({
-			status = "error",
-			message = "Invalid config file path"
-		})
-		return
-	end
-
-	if not fs.access(config_file) then
-		HTTP.write_json({
-			status = "success",
-			content = "",
-			file_info = {
-				path = config_file,
-				size = 0,
-				mtime = 0,
-				readable_size = "0 KB",
-				last_modified = ""
-			}
-		})
+		HTTP.status(403, "Invalid config file path")
 		return
 	end
 
 	local stat = fs.stat(config_file)
-	if not stat or stat.type ~= "regular" then
-		HTTP.write_json({
-			status = "error",
-			message = "Config file is not a regular file"
-		})
+	if stat and stat.type ~= "regular" then
+		HTTP.status(500, "Config file is not a regular file")
 		return
 	end
 
-	if stat.size > 10 * 1024 * 1024 then
-		HTTP.write_json({
-			status = "error",
-			message = "Config file too large (max 10MB)"
-		})
+	HTTP.header("X-Oc-Size", stat and tostring(stat.size) or "0")
+	HTTP.header("X-Oc-Mtime", stat and tostring(stat.mtime) or "0")
+	HTTP.prepare_content("text/plain; charset=utf-8")
+
+	if not stat then
 		return
 	end
 
-	local content = fs.readfile(config_file)
-	if content == nil then
-		HTTP.write_json({
-			status = "error",
-			message = "Failed to read config file"
-		})
+	local reader = ltn12_popen("exec cat " .. UTIL.shellquote(config_file))
+	if not reader then
 		return
 	end
-
-	HTTP.write_json({
-		status = "success",
-		content = content,
-		file_info = {
-			path = config_file,
-			size = stat.size,
-			mtime = stat.mtime,
-			readable_size = fs.filesize(stat.size),
-			last_modified = os.date("%Y-%m-%d %H:%M:%S", stat.mtime)
-		}
-	})
+	luci.ltn12.pump.all(reader, HTTP.write)
+	reader.kill()
 end
 
 function action_config_file_save()
-	local config_file = HTTP.formvalue("config_file")
-	local content = HTTP.formvalue("content")
+	local config_file, fp, file_size, backup_file, stream_err, started, opened = nil, nil, 0, nil, nil, false, false
+
+	HTTP.setfilehandler(function(meta, chunk, eof)
+		if stream_err then
+			return
+		end
+
+		if not started then
+			if not chunk then
+				return
+			end
+
+			started = true
+
+			config_file = HTTP.formvalue("config_file", true)
+			if not config_file then
+				stream_err = "Missing config_file parameter"
+				return
+			end
+
+			local is_overwrite = (config_file == "/etc/openclash/custom/openclash_custom_overwrite.sh" or config_file:match("^/etc/openclash/overwrite/[^/]+$"))
+			if not is_overwrite then
+				if not string.match(config_file, "^/etc/openclash/config/[^/]+%.ya?ml$") or string.find(config_file, "%.%.") then
+					stream_err = "Invalid config file path"
+					return
+				end
+			else
+				if not (config_file == "/etc/openclash/custom/openclash_custom_overwrite.sh" or (config_file:match("^/etc/openclash/overwrite/[^/]+$") and not string.find(config_file, "%.%."))) then
+					stream_err = "Invalid overwrite file path"
+					return
+				end
+			end
+
+			if fs.access(config_file) then
+				backup_file = config_file .. ".backup." .. os.time()
+				if SYS.call(string.format("cp '%s' '%s'", config_file, backup_file)) ~= 0 then
+					backup_file = nil
+					stream_err = "Failed to create backup file"
+					return
+				end
+			end
+		end
+
+		if #chunk > 0 then
+			if not fp then
+				fp = io.open(config_file, "w")
+				if not fp then
+					stream_err = "Failed to write config file"
+					return
+				end
+
+				opened = true
+			end
+
+			if not fp:write(chunk) then
+				stream_err = "Failed to write config file"
+				return
+			end
+
+			file_size = file_size + #chunk
+		end
+
+		if eof and fp then
+			fp:close()
+			fp = nil
+		end
+	end)
+
+	HTTP.formvalue("config_file")
 	HTTP.prepare_content("application/json")
-	if content then
-		content = content:gsub("\r\n", "\n"):gsub("\r", "\n")
+
+	if not stream_err and not config_file then
+		stream_err = "Missing config_file parameter"
 	end
 
-	if not config_file then
-		HTTP.write_json({
-			status = "error",
-			message = "Missing config_file parameter"
-		})
-		return
+	if not stream_err and file_size == 0 then
+		stream_err = "Missing content parameter"
 	end
 
-	if not content then
+	if not stream_err then
+		local saved = fs.stat(config_file)
+		if not saved or saved.size ~= file_size then
+			stream_err = "File write verification failed"
+		end
+	end
+
+	if stream_err then
+		if opened then
+			if backup_file then
+				SYS.call(string.format("mv '%s' '%s'", backup_file, config_file))
+			else
+				fs.unlink(config_file)
+			end
+		end
+
 		HTTP.write_json({
 			status = "error",
-			message = "Missing content parameter"
+			message = stream_err
 		})
 		return
 	end
 
 	local is_overwrite = (config_file == "/etc/openclash/custom/openclash_custom_overwrite.sh" or config_file:match("^/etc/openclash/overwrite/[^/]+$"))
-
-	if not is_overwrite then
-		if not string.match(config_file, "^/etc/openclash/config/[^/]+%.ya?ml$") or string.find(config_file, "%.%.") then
-			HTTP.write_json({
-				status = "error",
-				message = "Invalid config file path"
-			})
-			return
-		end
-	else
-		if not (config_file == "/etc/openclash/custom/openclash_custom_overwrite.sh" or (config_file:match("^/etc/openclash/overwrite/[^/]+$") and not string.find(config_file, "%.%."))) then
-			HTTP.write_json({
-				status = "error",
-				message = "Invalid overwrite file path"
-			})
-			return
-		end
-	end
-
-	if string.len(content) > 10 * 1024 * 1024 then
-		HTTP.write_json({
-			status = "error",
-			message = "Content too large (max 10MB)"
-		})
-		return
-	end
-
-	local backup_file = nil
-	if fs.access(config_file) then
-		backup_file = config_file .. ".backup." .. os.time()
-		local backup_success = SYS.call(string.format("cp '%s' '%s'", config_file, backup_file))
-		if backup_success ~= 0 then
-			HTTP.write_json({
-				status = "error",
-				message = "Failed to create backup file"
-			})
-			return
-		end
-	end
-
-	local success = fs.writefile(config_file, content)
-	if not success then
-		if backup_file then
-			SYS.call(string.format("mv '%s' '%s'", backup_file, config_file))
-		end
-
-		HTTP.write_json({
-			status = "error",
-			message = "Failed to write config file"
-		})
-		return
-	end
-
-	local written_content = fs.readfile(config_file)
-	if written_content ~= content then
-		if backup_file then
-			SYS.call(string.format("mv '%s' '%s'", backup_file, config_file))
-		end
-
-		HTTP.write_json({
-			status = "error",
-			message = "File write verification failed"
-		})
-		return
-	end
 
 	if not is_overwrite then
 		SYS.call(string.format("chmod 644 '%s'", config_file))
@@ -4770,7 +5290,10 @@ function action_add_subscription()
 	local sort = HTTP.formvalue("sort") or "false"
 	local node_type = HTTP.formvalue("node_type") or "false"
 	local rule_provider = HTTP.formvalue("rule_provider") or "false"
+	local tfo = HTTP.formvalue("tfo") or "false"
+	local tls13 = HTTP.formvalue("tls13") or "false"
 	local custom_params = HTTP.formvalue("custom_params") or ""
+	local keyword_option = HTTP.formvalue("keyword_option") or "0"
 	local keyword = HTTP.formvalue("keyword") or ""
 	local ex_keyword = HTTP.formvalue("ex_keyword") or ""
 	local de_ex_keyword = HTTP.formvalue("de_ex_keyword") or ""
@@ -4788,8 +5311,8 @@ function action_add_subscription()
 	local is_valid_url = false
 
 	if address and address ~= "" and sub_convert == "1" then
-		local prefixed_http_pattern = "^[^,%s]+,https?://.+"
-		local encoded_prefixed_http_pattern = "^[^%%%s]+%%2[Cc]https?%%3[Aa]%%2[Ff]%%2[Ff].+"
+		local prefixed_pattern = "^[^,%s]+,%a[%w+.-]*://.+"
+		local encoded_prefixed_pattern = "^[^%%%s]+%%2[Cc]%a[%%%w+.-]*%%3[Aa]%%2[Ff]%%2[Ff].+"
 
 		if string.find(address, "\n") or string.find(address, "|") then
 			local links = {}
@@ -4807,8 +5330,8 @@ function action_add_subscription()
 				if link and link ~= "" then
 					if string.find(link, "^https?://")
 						or string.find(link, "^[a-zA-Z]+://")
-						or string.find(link, prefixed_http_pattern)
-						or string.find(link, encoded_prefixed_http_pattern) then
+						or string.find(link, prefixed_pattern)
+						or string.find(link, encoded_prefixed_pattern) then
 						is_valid_url = true
 						break
 					end
@@ -4817,8 +5340,8 @@ function action_add_subscription()
 		else
 			if string.find(address, "^https?://")
 				or string.find(address, "^[a-zA-Z]+://")
-				or string.find(address, prefixed_http_pattern)
-				or string.find(address, encoded_prefixed_http_pattern) then
+				or string.find(address, prefixed_pattern)
+				or string.find(address, encoded_prefixed_pattern) then
 				is_valid_url = true
 			end
 		end
@@ -4926,6 +5449,8 @@ function action_add_subscription()
 		uci:set("openclash", section_id, "sort", sort)
 		uci:set("openclash", section_id, "node_type", node_type)
 		uci:set("openclash", section_id, "rule_provider", rule_provider)
+		uci:set("openclash", section_id, "tfo", tfo)
+		uci:set("openclash", section_id, "tls13", tls13)
 
 		uci:delete("openclash", section_id, "custom_params")
 		if custom_params and custom_params ~= "" and sub_convert == "1" then
@@ -4940,6 +5465,8 @@ function action_add_subscription()
 				uci:set_list("openclash", section_id, "custom_params", params)
 			end
 		end
+
+		uci:set("openclash", section_id, "keyword_option", keyword_option)
 
 		uci:delete("openclash", section_id, "keyword")
 		if keyword and keyword ~= "" then
@@ -4991,9 +5518,567 @@ function action_add_subscription()
 	end
 end
 
-function action_upload_overwrite()
-	local upload = HTTP.formvalue("config_file")
+function action_config_stats()
 	local filename = HTTP.formvalue("filename")
+	HTTP.prepare_content("application/json")
+
+	if not filename or filename == "" then
+		HTTP.write_json({ status = "error", message = "Missing filename" })
+		return
+	end
+
+	local base = filename:match("([^/]+)$")
+	if not base or not is_safe_filename(base) then
+		HTTP.write_json({ status = "error", message = "Invalid filename" })
+		return
+	end
+
+	local path = "/etc/openclash/config/" .. base
+	if not fs.access(path) and not base:match("%.ya?ml$") then
+		path = path .. ".yaml"
+	end
+	if not fs.access(path) then
+		HTTP.write_json({ status = "error", message = "Config file not found" })
+		return
+	end
+
+	-- a running config is answered by the core; static=1 parses the stored file instead (core unreachable)
+	local active_path = fs.uci_get_config("config", "config_path")
+	if active_path == path and HTTP.formvalue("static") ~= "1" then
+		local st = fs.stat(path)
+		HTTP.write_json({
+			status = "success",
+			active = true,
+			size = (st and st.size) or 0,
+			mtime = (st and st.mtime) and os.date("%Y-%m-%d %H:%M:%S", st.mtime) or ""
+		})
+		return
+	end
+
+	local stats = SYS.exec(string.format("/usr/share/openclash/yml_stats_get.sh %s 2>/dev/null", UTIL.shellquote(path)))
+	stats = stats:gsub("%s+$", "")
+	if stats == "" or not stats:find("{", 1, true) then
+		HTTP.write_json({ status = "error", message = "Stats unavailable" })
+		return
+	end
+	local decoded = json.parse(stats)
+	if decoded and type(decoded) == "table" then
+		local st = fs.stat(path)
+		decoded.size = (st and st.size) or 0
+		HTTP.write_json(decoded)
+	else
+		HTTP.write(stats)
+	end
+end
+
+local function core_api_get(path)
+	local ip = daip()
+	local port = cn_port()
+	local secret = dase() or ""
+	if not ip or not port then
+		return nil
+	end
+
+	local cmd = string.format('curl -sL -m 5 --retry 1 -H %s http://"%s":"%s"%s 2>/dev/null',
+		UTIL.shellquote("Authorization: Bearer " .. secret), ip, port, path)
+	local out = SYS.exec(cmd)
+	if not out or out == "" then
+		return nil
+	end
+	return out
+end
+
+function action_runtime_stats()
+	HTTP.prepare_content("application/json")
+
+	local service_up = service_running()
+	local offline = { status = "success", online = false }
+	if service_up ~= nil then offline.service_running = service_up end
+
+	if not is_running() then
+		HTTP.write_json(offline)
+		return
+	end
+
+	local version_data = nil
+	local version_raw = core_api_get("/version")
+	if version_raw and version_raw:find("version") then
+		version_data = json.parse(version_raw)
+	end
+	if not version_data then
+		HTTP.write_json(offline)
+		return
+	end
+
+	local result = {
+		status = "success",
+		online = true,
+		version = version_data.version or "",
+		nodes = { total = 0, types = {} },
+		rules = { total = 0, types = {} },
+		providers = { total = 0, items = {} }
+	}
+	if service_up ~= nil then result.service_running = service_up end
+
+	local proxies_raw = core_api_get("/proxies")
+	local proxies = proxies_raw and json.parse(proxies_raw) or nil
+	if proxies and type(proxies.proxies) == "table" then
+		-- the core reports group types in CamelCase without dashes (Selector, URLTest, ...)
+		local group_types = { select = true, urltest = true, fallback = true, loadbalance = true, smart = true, relay = true, selector = true }
+		local builtin_types = { direct = true, reject = true, rejectdrop = true, pass = true, passrule = true, compatible = true }
+		local group_names = {}
+		for name, p in pairs(proxies.proxies) do
+			local t = string.lower(p.type or "")
+			if group_types[(t:gsub("%-", ""))] and name ~= "GLOBAL" then
+				group_names[name] = true
+			end
+		end
+		for name, p in pairs(proxies.proxies) do
+			-- provider nodes are not listed in /proxies, the rest are groups and builtin entries
+			local t = p.type or "unknown"
+			local tk = string.lower(t):gsub("%-", "")
+			if name ~= "GLOBAL" and not group_names[name] and not builtin_types[tk] then
+				result.nodes.total = result.nodes.total + 1
+				result.nodes.types[t] = (result.nodes.types[t] or 0) + 1
+			end
+		end
+		local ref_counts = {}
+		for name, p in pairs(proxies.proxies) do
+			if group_names[name] and type(p.all) == "table" then
+				local seen = {}
+				for _, m in ipairs(p.all) do
+					if type(m) == "string" and m ~= name and group_names[m] and not seen[m] then
+						seen[m] = true
+						ref_counts[m] = (ref_counts[m] or 0) + 1
+					end
+				end
+			end
+		end
+		local groups_out = {}
+		for name, p in pairs(proxies.proxies) do
+			if group_names[name] and type(p.all) == "table" then
+				local members, seen = {}, {}
+				local node_count = 0
+				for _, m in ipairs(p.all) do
+					if type(m) == "string" and m ~= name and not seen[m] then
+						seen[m] = true
+						if m == "DIRECT" then
+							members[#members + 1] = { k = "direct", v = "DIRECT" }
+						elseif m:match("^REJECT") or m == "PASS" then
+							members[#members + 1] = { k = "reject", v = m }
+						elseif group_names[m] then
+							members[#members + 1] = { k = "ref", v = m }
+						else
+							node_count = node_count + 1
+						end
+					end
+				end
+				if node_count > 0 then
+					members[#members + 1] = { k = "nodes", v = node_count }
+				end
+				groups_out[#groups_out + 1] = { n = name, t = p.type, refs = ref_counts[name] or 0, members = members }
+			end
+		end
+		table.sort(groups_out, function(a, b)
+			if a.refs ~= b.refs then return a.refs > b.refs end
+			return a.n < b.n
+		end)
+		result.structure = result.structure or {}
+		result.structure.groups = groups_out
+	end
+
+	local rules_raw = core_api_get("/rules")
+	local rules = rules_raw and json.parse(rules_raw) or nil
+	if rules and type(rules.rules) == "table" then
+		result.rules.total = #rules.rules
+		-- map the core's CamelCase types (DomainSuffix / RuleSet) back to the config
+		-- spelling so both stats sources feed the same charts
+		local rule_type_names = {
+			domain = "DOMAIN", domainsuffix = "DOMAIN-SUFFIX", domainkeyword = "DOMAIN-KEYWORD",
+			domainregex = "DOMAIN-REGEX", domainwildcard = "DOMAIN-WILDCARD", geosite = "GEOSITE",
+			geoip = "GEOIP", srcgeoip = "SRC-GEOIP", ipasn = "IP-ASN", srcipasn = "SRC-IP-ASN",
+			ipcidr = "IP-CIDR", srcipcidr = "SRC-IP-CIDR", ipsuffix = "IP-SUFFIX", srcipsuffix = "SRC-IP-SUFFIX",
+			srcport = "SRC-PORT", dstport = "DST-PORT", inport = "IN-PORT", dscp = "DSCP",
+			inuser = "IN-USER", inname = "IN-NAME", intype = "IN-TYPE",
+			processname = "PROCESS-NAME", processpath = "PROCESS-PATH",
+			processnameregex = "PROCESS-NAME-REGEX", processpathregex = "PROCESS-PATH-REGEX",
+			processnamewildcard = "PROCESS-NAME-WILDCARD", processpathwildcard = "PROCESS-PATH-WILDCARD",
+			rematchname = "REMATCH-NAME", ruleset = "RULE-SET", match = "MATCH", network = "NETWORK",
+			uid = "UID", ["and"] = "AND", ["or"] = "OR", ["not"] = "NOT",
+		}
+		local targets, order = {}, {}
+		for _, r in ipairs(rules.rules) do
+			local raw_type = type(r) == "table" and type(r.type) == "string" and r.type or ""
+			local tkey = raw_type ~= "" and (string.lower(raw_type):gsub("[^%w]", "")) or ""
+			local tname = rule_type_names[tkey]
+			if tname then
+				result.rules.types[tname] = (result.rules.types[tname] or 0) + 1
+			elseif raw_type ~= "" then
+				result.rules.types[raw_type] = (result.rules.types[raw_type] or 0) + 1
+			end
+			local target = type(r) == "table" and r.proxy or nil
+			if type(target) == "string" and target ~= "" then
+				local entry = targets[target]
+				if not entry then
+					entry = { t = target, c = 0, sets = {}, rules = {} }
+					targets[target] = entry
+					order[#order + 1] = target
+				end
+				entry.c = entry.c + 1
+				local label = type(r.payload) == "string" and r.payload or ""
+				if tkey == "ruleset" then
+					if #entry.sets < 48 and label ~= "" then
+						entry.sets[#entry.sets + 1] = label
+					end
+				elseif #entry.rules < 48 and label ~= "" then
+					entry.rules[#entry.rules + 1] = label
+				end
+			end
+		end
+		local target_list = {}
+		for _, name in ipairs(order) do
+			target_list[#target_list + 1] = targets[name]
+		end
+		result.structure = result.structure or {}
+		result.structure.rules = { targets = target_list }
+	end
+
+	local rprov_raw = core_api_get("/providers/rules")
+	local rprov = rprov_raw and json.parse(rprov_raw) or nil
+	if rprov and type(rprov.providers) == "table" then
+		local prov_count = 0
+		for _ in pairs(rprov.providers) do
+			prov_count = prov_count + 1
+		end
+		result.rules.sets = prov_count
+	end
+
+	local prov_raw = core_api_get("/providers/proxies")
+	local prov = prov_raw and json.parse(prov_raw) or nil
+	if prov and type(prov.providers) == "table" then
+		for name, info in pairs(prov.providers) do
+			-- the smart core exposes every group as a compatible provider, only real ones count
+			if info.vehicleType ~= "Compatible" then
+				local items = type(info.proxies) == "table" and info.proxies or {}
+				local ptypes = {}
+				for _, px in ipairs(items) do
+					local t = type(px) == "table" and px.type or nil
+					if type(t) == "string" and t ~= "" then
+						ptypes[t] = (ptypes[t] or 0) + 1
+					end
+				end
+				table.insert(result.providers.items, { name = name, count = #items, types = ptypes })
+				result.providers.total = result.providers.total + #items
+				result.nodes.total = result.nodes.total + #items
+			end
+		end
+	end
+
+	HTTP.write_json(result)
+end
+
+local TPL_CACHE_DIR = "/tmp/openclash_tpl_cache"
+local TPL_CACHE_TTL = 1800
+
+local function tpl_cache_path(id)
+	local safe = id:gsub("[^%w%.%-]", "_")
+	if #safe > 96 then safe = safe:sub(1, 96) end
+	return TPL_CACHE_DIR .. "/" .. safe
+end
+
+-- The github address mod is tried before the direct URL (same rewriting as yml_rules_change.sh).
+local function tpl_source_urls(url)
+	local mod = fs.uci_get_config("config", "github_address_mod") or "0"
+	if mod == "" or mod == "0" then
+		return { url }
+	end
+	if mod == "https://cdn.jsdelivr.net/" or mod == "https://fastly.jsdelivr.net/" or mod == "https://testingcf.jsdelivr.net/" then
+		local owner, repo, file = url:match("^https://raw%.githubusercontent%.com/([^/]+)/([^/]+)/(.+)$")
+		if not owner then
+			return { url }
+		end
+		return { mod .. "gh/" .. owner .. "/" .. repo .. "@" .. file, url }
+	end
+	if url:match("^https://raw%.githubusercontent%.com/") or url:match("^https://gist%.githubusercontent%.com/") or url:match("^https://raw%.github%.com/") then
+		return { mod .. url, url }
+	end
+	return { url }
+end
+
+-- Returns ok, fetched; a failed download keeps the expired cache for offline preview.
+local function tpl_fetch(url, path, force)
+	fs.mkdir(TPL_CACHE_DIR)
+	local st = fs.stat(path)
+	if st and st.size > 0 and not force and (os.time() - st.mtime) < TPL_CACHE_TTL then
+		return true, false
+	end
+	for _, source in ipairs(tpl_source_urls(url)) do
+		SYS.call(string.format("curl -sL -m 15 --retry 1 -A %s -o %s %s 2>/dev/null",
+			UTIL.shellquote(fs.user_agent), UTIL.shellquote(path), UTIL.shellquote(source)))
+		local st2 = fs.stat(path)
+		if st2 and st2.size > 0 then
+			return true, true
+		end
+	end
+	return false, false
+end
+
+local function tpl_add_group(acc, line)
+	local parts = {}
+	for tok in line:gmatch("[^`]+") do
+		parts[#parts + 1] = tok
+	end
+	local name = parts[1]
+	if not name or name == "" then return end
+	local members = {}
+	for i = 3, #parts do
+		local arg = parts[i]
+		local k, label
+		local ref = arg:match("^%[%](.+)$")
+		if arg == ".*" then
+			k, label = "all", ".*"
+		elseif ref then
+			if ref == "DIRECT" then
+				k, label = "direct", "DIRECT"
+			elseif ref == "REJECT" or ref:match("^REJECT") or ref == "PASS" then
+				k, label = "reject", ref
+			else
+				k, label = "ref", ref
+			end
+		elseif arg:match("^https?://") then
+			k, label = "test", arg
+		elseif arg:match("^%d+[%d,]*$") then
+			k, label = "param", arg
+		elseif arg:match("[%%%*%[%]%(%)|%^%$\\]") then
+			k, label = "filter", arg
+		else
+			k, label = "node", arg
+		end
+		members[#members + 1] = { k = k, v = label }
+	end
+	acc.groups[#acc.groups + 1] = { name = name, type = parts[2] or "", members = members }
+end
+
+local function tpl_add_ruleset(acc, rest)
+	local target, body = rest:match("^([^,]+),(.+)$")
+	if not target then return end
+	local kind, label
+	if body:match("^%[%]") then
+		kind, label = "rule", body:sub(3)
+	else
+		kind = "file"
+		label = body:match("^[^,]+") or body
+		label = label:match("([^/]+)$") or label
+	end
+	acc.rulesets[#acc.rulesets + 1] = { target = target, kind = kind, label = label }
+end
+
+local function tpl_parse(path, acc, depth, force)
+	local file = io.open(path, "r")
+	if not file then return end
+	local content = file:read("*a")
+	file:close()
+	for line in content:gmatch("[^\r\n]+") do
+		local t = line:gsub("^%s+", ""):gsub("%s+$", "")
+		if t ~= "" and not t:match("^[;#]") and not t:match("^%[.*%]$") then
+			-- imported lists carry bare lines (NAME`type`members / TARGET,url); the main file prefixes them
+			local value, is_group
+			if t:match("^custom_proxy_group=") then
+				value, is_group = t:sub(20), true
+			elseif t:match("^ruleset=") then
+				value = t:sub(9)
+			elseif not t:match("=") and t:match("`") then
+				value, is_group = t, true
+			elseif not t:match("=") and t:match("^[^,]+,.+$") then
+				value = t
+			end
+			local iurl = value and value:match("^!!import:(.+)$") or nil
+			if iurl then
+				if depth < 3 then
+					local ipath = tpl_cache_path(iurl)
+					if tpl_fetch(iurl, ipath, force) then
+						tpl_parse(ipath, acc, depth + 1, force)
+					end
+				end
+			elseif value and is_group then
+				tpl_add_group(acc, value)
+			elseif value then
+				tpl_add_ruleset(acc, value)
+			else
+				local key, val = t:match("^([^=]+)=(.*)$")
+				if key then
+					acc.extra[#acc.extra + 1] = { k = key, v = val }
+				end
+			end
+		end
+	end
+end
+
+function action_template_preview()
+	HTTP.prepare_content("application/json")
+	local name = HTTP.formvalue("name") or ""
+	local custom = HTTP.formvalue("url") or ""
+	local force = HTTP.formvalue("force") == "1"
+
+	local url, cache_id, label
+	if custom ~= "" then
+		if not custom:match("^https?://") then
+			HTTP.write_json({ status = "error", message = "Invalid template URL" })
+			return
+		end
+		url = custom
+		cache_id = "custom_" .. custom
+		label = custom:match("([^/]+)$") or custom
+	else
+		local file = io.open("/usr/share/openclash/res/sub_ini.list", "r")
+		local tpl_file
+		if file then
+			for line in file:lines() do
+				local n, fl, u = line:match("^([^,]*),([^,]*),(.+)$")
+				if n == name and u then
+					url, tpl_file = u, fl
+					break
+				end
+			end
+			file:close()
+		end
+		if not url then
+			HTTP.write_json({ status = "error", message = "Template not found" })
+			return
+		end
+		cache_id = tpl_file or name
+		label = name
+	end
+
+	local path = tpl_cache_path(cache_id)
+	local ok, fetched = tpl_fetch(url, path, force)
+	if not ok then
+		HTTP.write_json({ status = "error", message = "Failed to fetch template" })
+		return
+	end
+
+	local acc = { groups = {}, rulesets = {}, extra = {} }
+	tpl_parse(path, acc, 0, force)
+	if #acc.groups == 0 and #acc.rulesets == 0 then
+		-- the newer YAML templates only fill their structure in at generation time
+		local is_yaml = url:match("%.ya?ml") ~= nil
+		if not is_yaml then
+			local f = io.open(path, "r")
+			if f then
+				local head = f:read(512) or ""
+				f:close()
+				is_yaml = head:match("^%s*custom%s*:") ~= nil
+			end
+		end
+		if is_yaml then
+			HTTP.write_json({ status = "error", message = "YAML template" })
+		else
+			HTTP.write_json({ status = "error", message = "Unsupported template format" })
+		end
+		return
+	end
+
+	local refs = {}
+	local tests, smart = 0, 0
+	for _, g in ipairs(acc.groups) do
+		if g.type == "url-test" or g.type == "fallback" or g.type == "load-balance" then
+			tests = tests + 1
+		elseif g.type == "smart" then
+			smart = smart + 1
+		end
+		for _, m in ipairs(g.members) do
+			if m.k == "ref" then
+				refs[m.v] = (refs[m.v] or 0) + 1
+			end
+		end
+	end
+	for _, g in ipairs(acc.groups) do
+		g.refs = refs[g.name] or 0
+	end
+
+	local st = fs.stat(path)
+	HTTP.write_json({
+		status = "success",
+		source = { name = label, url = url, age = st and (os.time() - st.mtime) or 0, from_cache = not fetched },
+		summary = { groups = #acc.groups, sets = #acc.rulesets, tests = tests, smart = smart },
+		groups = acc.groups,
+		rulesets = acc.rulesets,
+		extra = acc.extra
+	})
+end
+
+function action_upload_overwrite()
+	local overwrite_dir = "/etc/openclash/overwrite/"
+	local started, fp, filename, target_path, file_size, stream_err = false, nil, nil, nil, 0, nil
+
+	HTTP.setfilehandler(function(meta, chunk, eof)
+		if stream_err then
+			return
+		end
+
+		if not started then
+			if not chunk then
+				return
+			end
+
+			started = true
+
+			local name = (meta and meta.file) or ""
+			if name == "" or not is_safe_filename(name) then
+				stream_err = "Invalid filename"
+				return
+			end
+
+			filename = name
+			target_path = overwrite_dir .. name
+
+			SYS.call("mkdir -p " .. overwrite_dir)
+
+			fp = io.open(target_path, "w")
+			if not fp then
+				stream_err = "Failed to save file to disk"
+				return
+			end
+		end
+
+		if #chunk > 0 then
+			if not fp:write(chunk) then
+				stream_err = "Failed to save file to disk"
+				return
+			end
+
+			file_size = file_size + #chunk
+		end
+
+		if eof then
+			fp:close()
+			fp = nil
+		end
+	end)
+
+	HTTP.formvalue("config_file")
+	HTTP.prepare_content("application/json")
+
+	if stream_err then
+		if target_path then
+			fs.unlink(target_path)
+		end
+
+		HTTP.write_json({status = "error", message = stream_err})
+		return
+	end
+
+	if not target_path then
+		HTTP.write_json({status = "error", message = "No file uploaded"})
+		return
+	end
+
+	if file_size == 0 then
+		fs.unlink(target_path)
+		HTTP.write_json({status = "error", message = "Uploaded file is empty"})
+		return
+	end
+
 	local config_values = {}
 	local raw_config = HTTP.formvalue("config") or ""
 	if raw_config ~= "" then
@@ -5006,43 +6091,8 @@ function action_upload_overwrite()
 	end
 	local enable = HTTP.formvalue("enable")
 	local order = HTTP.formvalue("order")
-	HTTP.prepare_content("application/json")
-	if not upload or upload == "" then
-		HTTP.write_json({status = "error", message = "No file uploaded"})
-		return
-	end
-	if not filename or filename == "" then
-		filename = "upload_" .. os.date("%Y%m%d_%H%M%S")
-	end
-	if not is_safe_filename(filename) then
-		HTTP.write_json({status = "error", message = "Invalid filename"})
-		return
-	end
-	local overwrite_dir = "/etc/openclash/overwrite/"
-	SYS.call("mkdir -p " .. overwrite_dir)
-	local target_path = overwrite_dir .. filename
-	if string.len(upload) == 0 then
-		HTTP.write_json({status = "error", message = "Uploaded file is empty"})
-		return
-	end
-	local file_size = string.len(upload)
-	if file_size > 10 * 1024 * 1024 then
-		HTTP.write_json({status = "error", message = string.format("File size (%s) exceeds 10MB limit", require("luci.openclash").filesize(file_size))})
-		return
-	end
-	local fp = io.open(target_path, "w")
-	if fp then
-		fp:write(upload)
-		fp:close()
-		SYS.call(string.format("chmod 644 '%s'", target_path))
-		SYS.call(string.format("chown root:root '%s'", target_path))
-		local written_content = fs.readfile(target_path)
-		if not written_content or string.len(written_content) ~= file_size then
-			fs.unlink(target_path)
-			HTTP.write_json({status = "error", message = "File write verification failed"})
-			return
-		end
 
+	if target_path then
 		local section_name = filename
 		local found = false
 
@@ -5059,18 +6109,11 @@ function action_upload_overwrite()
 					end
 					uci:set("openclash", s[".name"], "enable", tostring(enable))
 				end
-				if s.order == nil or (s.order ~= nil and s.order ~= order and order ~= nil) then
-					if order == nil then
-						local max_order = -1
-						uci:foreach("openclash", "config_overwrite", function(s)
-							local o = tonumber(s.order)
-							if o and o > max_order then max_order = o end
-						end)
-						order = tostring(max_order + 1)
-					end
-					uci:set("openclash", s[".name"], "order", order)
-				else
-					uci:set("openclash", s[".name"], "order", tonumber(order))
+				-- an uploaded local file replaces the remote source of this module
+				uci:set("openclash", s[".name"], "type", "file")
+				uci:set("openclash", s[".name"], "url", "")
+				if order ~= nil then
+					uci:set("openclash", s[".name"], "order", tostring(tonumber(order) or 0))
 				end
 				return false
 			end
@@ -5110,8 +6153,6 @@ function action_upload_overwrite()
 			file_size = file_size,
 			readable_size = fs.filesize(file_size)
 		})
-	else
-		HTTP.write_json({status = "error", message = "Failed to save file to disk"})
 	end
 end
 
@@ -5142,8 +6183,9 @@ function action_overwrite_subscribe_info()
 			if s.name then
 				local config_value = ""
 				if s.config then
+					local config_items = type(s.config) == "table" and s.config or { s.config }
 					local config_list = {}
-					for _, item in ipairs(s.config) do
+					for _, item in ipairs(config_items) do
 						if item and item ~= "" then
 							table.insert(config_list, tostring(item))
 						end
@@ -5161,6 +6203,7 @@ function action_overwrite_subscribe_info()
 					order = tonumber(s.order) or 0,
 					type = s.type or "file",
 					param = s.param or "",
+					official = tonumber(s.official) or 0,
 					enable = tonumber(s.enable) or 0
 				}
 			end
@@ -5214,143 +6257,111 @@ function action_overwrite_subscribe_info()
 			end
 		end
 
-		local found = false
-		if old_section_name and old_section_name ~= "" and old_section_name ~= section_name then
-			uci:foreach("openclash", "config_overwrite", function(s)
-				if s.name == old_section_name then
-					uci:set("openclash", s[".name"], "name", section_name)
-					uci:set("openclash", s[".name"], "url", url)
-					uci:delete("openclash", s[".name"], "config")
-					if #config_values > 0 then
-						uci:set_list("openclash", s[".name"], "config", config_values)
-					end
-					uci:set("openclash", s[".name"], "update_days", update_days)
-					uci:set("openclash", s[".name"], "update_hour", update_hour)
-					uci:set("openclash", s[".name"], "type", typ)
-					uci:set("openclash", s[".name"], "param", param)
-					if s.order == nil or (s.order ~= nil and s.order ~= order and order ~= nil) then
-						if order == nil then
-							local max_order = -1
-							uci:foreach("openclash", "config_overwrite", function(s)
-								local o = tonumber(s.order)
-								if o and o > max_order then max_order = o end
-							end)
-							order = tostring(max_order + 1)
-						end
-						uci:set("openclash", s[".name"], "order", order)
-					else
-						uci:set("openclash", s[".name"], "order", tonumber(order) or 1)
-					end
-					if s.enable == nil or (s.enable ~= nil and enable ~= nil) then
-						if enable == nil then
-							enable = 0
-						end
-						uci:set("openclash", s[".name"], "enable", tostring(enable))
-					end
-					found = true
-					return false
-				end
-			end)
-			local overwrite_dir = "/etc/openclash/overwrite/"
-			local old_file = overwrite_dir .. old_section_name
-			local new_file = overwrite_dir .. section_name
-			if fs.access(old_file) and not fs.access(new_file) then
-				fs.rename(old_file, new_file)
+		-- locate the section to update (rename source or the section with the target name)
+		local target_section = nil
+		local rename_source = nil
+		uci:foreach("openclash", "config_overwrite", function(s)
+			if s.name == section_name then
+				target_section = s
 			end
-			uci:commit("openclash")
-			HTTP.prepare_content("application/json")
-			HTTP.write_json({status="success"})
-			return
-		end
-		if not found then
-			uci:foreach("openclash", "config_overwrite", function(s)
-				if s.name == section_name then
-					uci:set("openclash", s[".name"], "url", url)
-					uci:delete("openclash", s[".name"], "config")
-					if #config_values > 0 then
-						uci:set_list("openclash", s[".name"], "config", config_values)
-					end
-					uci:set("openclash", s[".name"], "update_days", update_days)
-					uci:set("openclash", s[".name"], "update_hour", update_hour)
-					uci:set("openclash", s[".name"], "type", typ)
-					uci:set("openclash", s[".name"], "param", param)
-					if s.order == nil or (s.order ~= nil and s.order ~= order and order ~= nil) then
-						if order == nil then
-							local max_order = -1
-							uci:foreach("openclash", "config_overwrite", function(s)
-								local o = tonumber(s.order)
-								if o and o > max_order then max_order = o end
-							end)
-							order = tostring(max_order + 1)
-						end
-						uci:set("openclash", s[".name"], "order", order)
-					else
-						uci:set("openclash", s[".name"], "order", tonumber(order))
-					end
-					if s.enable == nil or (s.enable ~= nil and enable ~= nil) then
-						if enable == nil then
-							enable = 0
-						end
-						uci:set("openclash", s[".name"], "enable", tostring(enable))
-					end
-					found = true
-					return false
-				end
-			end)
-		end
-		if not found then
-			local sid = uci:add("openclash", "config_overwrite")
-			uci:set("openclash", sid, "name", section_name)
-			uci:set("openclash", sid, "url", url)
-			uci:delete("openclash", sid, "config")
-			if #config_values > 0 then
-				uci:set_list("openclash", sid, "config", config_values)
+			if old_section_name and old_section_name ~= "" and old_section_name ~= section_name and s.name == old_section_name then
+				rename_source = s
 			end
-			uci:set("openclash", sid, "update_days", update_days)
-			uci:set("openclash", sid, "update_hour", update_hour)
-			uci:set("openclash", sid, "type", typ)
-			uci:set("openclash", sid, "param", param)
-			if order == nil then
-				local max_order = -1
-				uci:foreach("openclash", "config_overwrite", function(s)
-					local o = tonumber(s.order)
-					if o and o > max_order then max_order = o end
-				end)
-				order = tostring(max_order + 1)
-			else
-				order = tostring(order)
-			end
-			uci:set("openclash", sid, "order", order)
-			uci:set("openclash", sid, "enable", 0)
-		end
-		uci:commit("openclash")
+		end)
 
-		if typ == "file" then
-			local overwrite_dir = "/etc/openclash/overwrite/"
-			local file_path = overwrite_dir .. section_name
-			if not fs.access(file_path) then
-				fs.writefile(file_path, "")
+		local file_path = "/etc/openclash/overwrite/" .. section_name
+		-- only refresh the module body when it is really needed (new url / explicit refresh / missing file)
+		local need_download = false
+		if typ == "http" and url ~= "" then
+			local known_url = ""
+			if target_section and target_section.url then
+				known_url = target_section.url
+			elseif rename_source and rename_source.url then
+				known_url = rename_source.url
 			end
-		elseif typ == "http" then
-			local overwrite_dir = "/etc/openclash/overwrite/"
-			local file_path = overwrite_dir .. section_name
-			if url and url ~= "" then
-				local cmd = string.format('curl -sL --connect-timeout 5 -m 15 --retry 2 "%s" -o "%s"', url, file_path)
-				local ret = SYS.call(cmd)
-				if not fs.access(file_path) then
-					fs.writefile(file_path, "")
-				end
-				if ret ~= 0 or not fs.access(file_path) or fs.stat(file_path).size == 0 then
-					HTTP.prepare_content("application/json")
-					HTTP.write_json({status="error", message="Download failed"})
-					return
-				end
-			else
-				if not fs.access(file_path) then
-					fs.writefile(file_path, "")
+			if HTTP.formvalue("refresh") == "1" or known_url ~= url or not fs.access(file_path) then
+				need_download = true
+			end
+		end
+
+		if need_download then
+			local tmp_file = "/tmp/openclash_overwrite_download"
+			SYS.call("rm -f " .. tmp_file)
+			local ret = SYS.call(string.format('curl -fsSL --connect-timeout 5 -m 30 --retry 2 "%s" -o "%s"', url, tmp_file))
+			local stat = fs.stat(tmp_file)
+			if ret ~= 0 or not stat or stat.type ~= "regular" or stat.size == 0 then
+				SYS.call("rm -f " .. tmp_file)
+				HTTP.prepare_content("application/json")
+				HTTP.write_json({status="error", message="Download failed"})
+				return
+			end
+			SYS.call(string.format("mkdir -p /etc/openclash/overwrite && mv -f '%s' '%s' && chmod 644 '%s'", tmp_file, file_path, file_path))
+			if not fs.access(file_path) then
+				HTTP.prepare_content("application/json")
+				HTTP.write_json({status="error", message="Failed to save downloaded file"})
+				return
+			end
+		end
+
+		if old_section_name and old_section_name ~= "" and old_section_name ~= section_name then
+			local old_file = "/etc/openclash/overwrite/" .. old_section_name
+			if fs.access(old_file) then
+				if need_download or fs.access(file_path) then
+					fs.unlink(old_file)
+				else
+					fs.rename(old_file, file_path)
 				end
 			end
 		end
+
+		if not fs.access(file_path) then
+			fs.writefile(file_path, "")
+		end
+		local section = rename_source or target_section
+		local sid = nil
+		if section then
+			sid = section[".name"]
+			if section_name ~= old_section_name and rename_source and rename_source[".name"] == sid then
+				uci:set("openclash", sid, "name", section_name)
+			end
+		else
+			-- never register a module without a config match: it would stay inactive forever
+			if #config_values == 0 then
+				HTTP.prepare_content("application/json")
+				HTTP.write_json({status="error", message="Config file match cannot be empty"})
+				return
+			end
+			sid = uci:add("openclash", "config_overwrite")
+			uci:set("openclash", sid, "name", section_name)
+		end
+		uci:set("openclash", sid, "type", typ)
+		uci:set("openclash", sid, "url", url)
+		uci:set("openclash", sid, "update_days", update_days)
+		uci:set("openclash", sid, "update_hour", update_hour)
+		uci:set("openclash", sid, "param", param)
+		if #config_values > 0 then
+			uci:delete("openclash", sid, "config")
+			uci:set_list("openclash", sid, "config", config_values)
+		end
+		local order_num = tonumber(order)
+		if order_num == nil then
+			order_num = section and tonumber(section.order) or nil
+		end
+		if order_num == nil then
+			local max_order = -1
+			uci:foreach("openclash", "config_overwrite", function(s)
+				local o = tonumber(s.order)
+				if o and o > max_order then max_order = o end
+			end)
+			order_num = max_order + 1
+		end
+		uci:set("openclash", sid, "order", tostring(order_num))
+		local enable_num = tonumber(enable)
+		if enable_num == nil then
+			enable_num = section and tonumber(section.enable) or 0
+		end
+		uci:set("openclash", sid, "enable", tostring(enable_num == 1 and 1 or 0))
+		uci:commit("openclash")
 
 		HTTP.prepare_content("application/json")
 		HTTP.write_json({status="success"})
@@ -5383,7 +6394,7 @@ function action_overwrite_file_list()
 			for _, file in ipairs(files) do
 				local full_path = overwrite_dir .. file
 				local stat = fs.stat(full_path)
-				if stat and stat.type == "regular" then
+				if stat and stat.type == "regular" and file:sub(1, 1) ~= "." and not file:match("%.backup%.") and not file:match("%.tmp$") then
 					table.insert(overwrite_files, {
 						name = file,
 						path = full_path,
@@ -5413,6 +6424,11 @@ function delete_overwrite_file()
 		HTTP.write_json({status="error", message="Missing filename"})
 		return
 	end
+	if not is_safe_filename(filename) then
+		HTTP.prepare_content("application/json")
+		HTTP.write_json({status="error", message="Invalid filename"})
+		return
+	end
 	local overwrite_dir = "/etc/openclash/overwrite/"
 	local file_path = overwrite_dir .. filename
 
@@ -5434,7 +6450,7 @@ function delete_overwrite_file()
 	end)
 	table.sort(order_list, function(a, b) return a.order < b.order end)
 	for idx, item in ipairs(order_list) do
-		uci:set("openclash", item.section, "order", tostring(idx - 1))
+		uci:set("openclash", item.section, "order", tostring(idx))
 	end
 	uci:commit("openclash")
 
@@ -5450,8 +6466,10 @@ function action_get_subscribe_data()
 	end
 
 	local data = {}
+	-- the config list passes the file name; subscription entries are keyed by the bare config name
+	local base = filename:gsub("%.ya?ml$", "")
 	uci:foreach("openclash", "config_subscribe", function(s)
-		if s.name == filename then
+		if s.name == filename or s.name == base then
 			data = s
 			-- UCI list fields: convert to newline-separated strings for frontend
 			local sid = s['.name']
@@ -5466,13 +6484,13 @@ function action_get_subscribe_data()
 	end)
 
 	uci:foreach("openclash", "config_age_secret", function(a)
-		if a.name == filename and (not a.hidden or a.hidden ~= "true") then
+		if (a.name == filename or a.name == base) and (not a.hidden or a.hidden ~= "true") then
 			if a.secret then data.config_age_secret = a.secret end
 			if a.public then data.config_age_public = a.public end
 			if a.algo then data.config_age_algo = a.algo end
 			return false
 		end
-		if a.name == filename and a.hidden and a.hidden == "true" then
+		if (a.name == filename or a.name == base) and a.hidden and a.hidden == "true" then
 			data.config_age_hidden = true
 			return false
 		end
@@ -5504,12 +6522,12 @@ function action_subconverter_version()
 
 	local cmd = table.concat({
 		"curl -fsS --connect-timeout 3 -m 6 --retry 0",
-		"-H " .. util.shellquote("Accept: text/plain, */*"),
-		"-H " .. util.shellquote("Origin: https://openclash.local"),
-		"-H " .. util.shellquote("Sec-Fetch-Mode: cors"),
-		"-H " .. util.shellquote("Sec-Fetch-Dest: empty"),
-		"-H " .. util.shellquote("User-Agent: OpenClash Subconverter Version Check"),
-		util.shellquote(version_url),
+		"-H " .. UTIL.shellquote("Accept: text/plain, */*"),
+		"-H " .. UTIL.shellquote("Origin: https://openclash.local"),
+		"-H " .. UTIL.shellquote("Sec-Fetch-Mode: cors"),
+		"-H " .. UTIL.shellquote("Sec-Fetch-Dest: empty"),
+		"-H " .. UTIL.shellquote("User-Agent: OpenClash Subconverter Version Check"),
+		UTIL.shellquote(version_url),
 		"2>/dev/null | head -c 4096"
 	}, " ")
 	local version = sanitize_subconverter_version_text(SYS.exec(cmd))
@@ -5557,7 +6575,7 @@ function action_add_age_config()
 	local age_secret = HTTP.formvalue("age_secret") or ""
 	local age_public = HTTP.formvalue("age_public") or ""
 	local age_algo = HTTP.formvalue("age_algo") or ""
-	local age_section_id, age_section_hidden
+	local age_section_id, age_section_hidden, age_section_secret
 
 	HTTP.prepare_content("application/json")
 
@@ -5570,6 +6588,7 @@ function action_add_age_config()
 		if s.name == name then
 			age_section_id = s['.name']
 			age_section_hidden = s.hidden and s.hidden == "true"
+			age_section_secret = s.secret
 			return false
 		end
 	end)
@@ -5579,7 +6598,7 @@ function action_add_age_config()
 		return
 	end
 
-	if not age_section_id and (age_secret ~= "" or age_public ~= "" or age_algo ~= "") then
+	if not age_section_id and age_secret ~= "" then
 		age_section_id = uci:add("openclash", "config_age_secret")
 		if age_section_id then
 			uci:set("openclash", age_section_id, "name", name)
@@ -5587,7 +6606,37 @@ function action_add_age_config()
 	end
 
 	if age_section_id then
-		if (age_secret == "" and age_public == "") then
+		if (age_secret == "") then
+			-- Before removing the age keys, decrypt the config file if it is
+			-- age-encrypted so it stays readable after the keys are gone.
+			if age_section_secret and age_section_secret ~= "" then
+				local config_paths = {
+					"/etc/openclash/config/" .. name .. ".yaml",
+					"/etc/openclash/" .. name .. ".yaml",
+				}
+				for _, config_path in ipairs(config_paths) do
+					if fs.access(config_path) then
+						local fp = io.open(config_path, "rb")
+						if fp then
+							local content = fp:read("*a")
+							fp:close()
+							if content and content:find("BEGIN AGE ENCRYPTED FILE", 1, true) then
+								local plain = fs.age_decrypt(age_section_secret, content)
+								if plain and plain ~= "" then
+									local fo = io.open(config_path, "wb")
+									if fo then
+										fo:write(plain)
+										fo:close()
+									end
+								else
+									HTTP.write_json({status = "error", message = "Failed to decrypt config file, age config cannot be removed"})
+									return
+								end
+							end
+						end
+					end
+				end
+			end
 			uci:delete("openclash", age_section_id)
 		else
 			if age_secret and age_secret ~= "" then
@@ -5707,12 +6756,62 @@ function oix_params_get()
 	HTTP.write_json(result)
 end
 
+function action_theme_get()
+	local result = {
+		mode = uci:get("openclash", "config", "theme_mode") or "",
+		name = uci:get("openclash", "config", "theme_name") or "",
+		custom = uci:get("openclash", "config", "theme_custom") or ""
+	}
+	HTTP.prepare_content("application/json")
+	HTTP.write_json(result)
+end
+
+function action_theme_save()
+	local mode = HTTP.formvalue("mode") or ""
+	local name = HTTP.formvalue("name") or ""
+	local custom = HTTP.formvalue("custom")
+	if mode ~= "" then
+		if mode ~= "light" and mode ~= "dark" and mode ~= "auto" then
+			HTTP.status(400, "Invalid mode")
+			HTTP.write_json({status = "error", msg = "invalid mode"})
+			return
+		end
+		uci:set("openclash", "config", "theme_mode", mode)
+	end
+	if name ~= "" then
+		local valid = {classic = true, cyan = true, indigo = true, graphite = true, amber = true, imperial = true, rose = true, smoky = true, custom = true}
+		if not valid[name] then
+			HTTP.status(400, "Invalid theme")
+			HTTP.write_json({status = "error", msg = "invalid theme"})
+			return
+		end
+		uci:set("openclash", "config", "theme_name", name)
+	end
+	if custom ~= nil then
+		custom = custom:lower()
+		if custom == "" then
+			uci:delete("openclash", "config", "theme_custom")
+		elseif custom:match("^#%x%x%x%x%x%x$") then
+			uci:set("openclash", "config", "theme_custom", custom)
+		else
+			HTTP.status(400, "Invalid color")
+			HTTP.write_json({status = "error", msg = "invalid color"})
+			return
+		end
+	end
+	uci:commit("openclash")
+	HTTP.prepare_content("application/json")
+	HTTP.write_json({status = "success"})
+end
+
 local function fetch_oix_sub(token)
 	write_padded('{"stage":"fetching_sub","text":"' .. luci.i18n.translate("Fetching subscription...") .. '"}')
 	local get_sub = string.format("curl -sL -H 'Content-Type: application/json' -H 'Authorization: Bearer %s' -X POST https://oix-api.dler.io/api/v1/managed/clash", token)
 	local sub_info = SYS.exec(get_sub)
 	if sub_info then sub_info = json.parse(sub_info) end
 	if sub_info and sub_info.ret == 200 then
+		uci:set("openclash", "config", "oix_token", token)
+		uci:commit("openclash")
 		local sub_key = {"openclash"}
 		for _,v in ipairs(sub_key) do
 			while true do
@@ -5765,8 +6864,6 @@ function oix_login()
 		write_padded('{"stage":"saving_token","text":"' .. luci.i18n.translate("Saving token...") .. '"}')
 		token = input_token
 		if fetch_oix_sub(token) then
-			uci:set("openclash", "config", "oix_token", input_token)
-			uci:commit("openclash")
 			write_padded('{"stage":"done","result":200}')
 		else
 			write_padded('{"stage":"error","result":' .. json.stringify(luci.i18n.translate("invalid token")) .. '}')
@@ -5785,11 +6882,16 @@ function oix_login()
 					oix_logout(token)
 				end
 				token = info.data.token
-				uci:set("openclash", "config", "oix_token", token)
-				uci:commit("openclash")
-				result = info.ret
-				fetch_oix_sub(token)
-				write_padded('{"stage":"done","result":200}')
+				if fetch_oix_sub(token) then
+					write_padded('{"stage":"done","result":200}')
+				else
+					uci:delete("openclash", "config", "oix_token")
+					uci:commit("openclash")
+					fs.unlink("/tmp/oix_checkin")
+					fs.unlink("/tmp/oix_info")
+					result = luci.i18n.translate("login failed")
+					write_padded('{"stage":"error","result":' .. json.stringify(result) .. '}')
+				end
 			else
 				uci:delete("openclash", "config", "oix_token")
 				uci:commit("openclash")

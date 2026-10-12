@@ -12,7 +12,7 @@
 
 # --- 控制面板相关 ---
 # CN_PORT (控制面板端口)
-# DA_PASSWORD (控制面板访问密码)
+# DASHBOARD_PASSWORD (控制面板访问密码)
 
 # --- 端口相关 ---
 # PROXY_PORT (Redir代理端口)
@@ -47,7 +47,7 @@
 # ENABLE_UDP_PROXY (启用 UDP 代理, 0: 禁用, 1: 启用, only for EN_MODE_TUN is nil)
 # DISABLE_UDP_QUIC (禁用 UDP QUIC, 0: 启用, 1: 禁用)
 # ROUTER_SELF_PROXY (路由器自身代理, 0: 禁用, 1: 启用)
-# STACK_TYPE (TUN 网络栈类型, system/gvisor/mixed, default is system)
+# STACK_TYPE (TUN 网络栈类型, system/gvisor/mixed/mips, default is mips)
 # PROXY_MODE (代理模式, rule/global/direct, default is rule)
 
 # --- 防火墙与访问控制 ---
@@ -163,6 +163,9 @@
 #[Overwrite]
 #EN_KEY 为对应模块需要用户指定的环境变量值, EN_KEY1=URL1;EN_KEY2=URL2;EN_KEY3=URL3
 #其他 Ruby 编辑函数请参考 openclash_custom_overwrite.sh
+#参数按字面量解析（\ 、; 、$( ) 无需转义）；代码参数受 AST 白名单限制，未列入的调用（system/send/File./ENV、反引号等）会被跳过并记录 skip invalid Overwrite command，纯值参数与引号内的选项字不受影响
+#正则里的 \. 可直接书写（旧写法 [.] 仍有效）；值里有字面 $ 时用单引号参数，避免被当作环境变量展开
+#ruby_map_edit "$CONFIG_FILE" "['proxy-providers']" "provider1" "['filter']" '^abc[.]com$x'
 #ruby_map_edit "$CONFIG_FILE" "['proxy-providers']" "优质服务商" "['url']" "$EN_KEY1"
 #ruby_map_edit "$CONFIG_FILE" "['proxy-providers']" "备用服务商" "['url']" "$EN_KEY2"
 #ruby_map_edit "$CONFIG_FILE" "['proxy-providers']" "落地服务商" "['url']" "$EN_KEY3"
@@ -197,7 +200,7 @@
 #DISABLE_UDP_QUIC = 1
 #ROUTER_SELF_PROXY = 1
 #PROXY_MODE = rule
-#STACK_TYPE = system
+#STACK_TYPE = mips
 
 # --- 模块更新后重启 ---
 #RESTART = true
@@ -206,7 +209,7 @@
 #DOWNLOAD_FILE = url=https://default-demo.yaml, path=/etc/openclash/config/default-demo.yaml, cron=0 6 * * *, force=true, restart=false
 
 #将配置作为默认配置文件
-#ONFIG_FILE = /etc/openclash/config/default-demo.yaml
+#CONFIG_FILE = /etc/openclash/config/default-demo.yaml
 
 #指定展示订阅信息的 URL 地址
 #SUB_INFO_URL = https://default-demo.yaml
@@ -533,7 +536,7 @@ EN_MODE = fake-ip-mix
 DISABLE_UDP_QUIC = 1
 ROUTER_SELF_PROXY = 1
 PROXY_MODE = rule
-STACK_TYPE = system
+STACK_TYPE = mips
 
 # --- 防火墙与访问控制 ---
 INTRANET_ALLOWED = 1

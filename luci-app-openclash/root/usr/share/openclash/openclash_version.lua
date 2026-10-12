@@ -7,9 +7,6 @@ local json = require "luci.jsonc"
 
 local M = {}
 
-local VERSION_CACHE_FILE = "/tmp/openclash_version_history.json"
-local CDN_CACHE_FILE = "/tmp/openclash_cdn_info.json"
-
 local function trim(s)
 	if not s then return "" end
 	return (s:gsub("^%s+", ""):gsub("%s+$", ""))
@@ -19,7 +16,7 @@ function M.is_valid_version(s)
 	if not s or s == "" then return false end
 	s = trim(s)
 	if s == "" then return false end
-	if s:match("^<") then return false end
+	if s:match("^<") or s:match("%s") or s:match(":") then return false end
 	return true
 end
 
@@ -42,44 +39,38 @@ function try_read(fd, maxlen)
 	return nil
 end
 
-local function read_json(path)
-	if not fs.access(path) then return nil end
-	local raw = fs.readfile(path)
-	if not raw or raw == "" then return nil end
-	local ok, parsed = pcall(json.parse, raw)
-	if ok and parsed and type(parsed) == "table" then
-		return parsed
-	end
-	return nil
-end
+local read_version_cache = fs.read_version_cache
+local update_version_cache = fs.update_version_cache
 
-local function write_json(path, data)
-	local tmp = path .. ".tmp"
-	fs.writefile(tmp, json.stringify(data))
-	os.rename(tmp, path)
-end
+M.read_version_cache = read_version_cache
+M.update_version_cache = update_version_cache
 
-local function read_version_cache()
-	return read_json(VERSION_CACHE_FILE)
-end
-
-local function update_version_cache(updater)
-	local parsed = read_version_cache() or {}
-	updater(parsed)
-	write_json(VERSION_CACHE_FILE, parsed)
-end
-
-local DEFAULT_CDN_LIST = {
-	"https://ghfast.top/",
-	"https://github.dpik.top/",
-	"https://gh-proxy.com/",
-	"https://git.yylx.win/"
-}
+local CDN_LIST_FILE = "/usr/share/openclash/res/cdn.list"
+local CDN_LIST_REMOTE_URL = "https://raw.githubusercontent.com/vernesong/OpenClash/dev/luci-app-openclash/root/usr/share/openclash/res/cdn.list"
+local CDN_LIST_MAX_AGE = 7 * 24 * 3600
 
 local function cdn_list()
-	local list = fs.cdn_list()
-	if #list > 0 then return list end
-	return DEFAULT_CDN_LIST
+	return fs.cdn_list()
+end
+
+function M.update_cdn_list(force)
+	local mt = fs.mtime(CDN_LIST_FILE)
+	if not force and mt and (os.time() - mt) < CDN_LIST_MAX_AGE then
+		return false, "fresh"
+	end
+	local child = nixio.fork()
+	if child > 0 then
+		return true, "started"
+	elseif child == 0 then
+		local tmp = CDN_LIST_FILE .. ".tmp"
+		local cmd = string.format(
+			'curl -sL -m 10 --connect-timeout 5 "%s" -o "%s" && grep -q "https://" "%s" && mv "%s" "%s"',
+			CDN_LIST_REMOTE_URL, tmp, tmp, tmp, CDN_LIST_FILE)
+		nixio.exec("/bin/sh", "-c", cmd)
+		return nil, "exec_failed"
+	else
+		return false, "fork_error"
+	end
 end
 
 local function raw_url(path)
@@ -312,6 +303,11 @@ local function launch_file_batch(job)
 	end
 end
 
+local function is_version_response(buf)
+	if not buf or buf == "" then return false end
+	return M.is_valid_version(trim(buf:match("^[^\n\r]*") or ""))
+end
+
 local function collect_fork_results(jobs, max_jobs)
 	local results = {}
 	local active = 0
@@ -355,7 +351,7 @@ local function collect_fork_results(jobs, max_jobs)
 							end
 							pcall(child.fdi.close, child.fdi)
 							child.done = true
-							if winner == "" and child.buf ~= "" then
+							if winner == "" and child.buf ~= "" and is_version_response(child.buf) then
 								winner = child.buf
 							end
 						end
@@ -462,6 +458,7 @@ end
 
 function M.fetch_version_history(branch, force, cdn, latest_only)
 	local result = { plugin = {}, core_meta = {}, core_smart = {}, latest = nil, error = nil, oix_ver = "" }
+	M.update_cdn_list()
 	local cur_oix = M.is_oix_mode()
 	local skip_core = cur_oix
 	local github_address_mod = fs.uci_get_config("config", "github_address_mod") or "0"

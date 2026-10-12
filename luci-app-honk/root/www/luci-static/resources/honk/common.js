@@ -333,7 +333,7 @@ function ensureEditorStyles() {
 		'.honk-editor-toolbar { margin-bottom: 6px !important; margin-top: 0 !important; display: flex !important; align-items: center !important; justify-content: flex-start !important; }',
 		'.cm-format-btn { margin: 0 !important; cursor: pointer !important; }',
 		'.cbi-value:has(.CodeMirror) { align-items: flex-start !important; }',
-		'.cbi-value:has(.CodeMirror) > .cbi-value-title { padding-top: 5px !important; }',
+		'.cbi-value:has(.CodeMirror) > .cbi-value-title { padding-top: 5px !important; flex-grow: 0 !important; }',
 		'.cbi-value:has(.CodeMirror) .cbi-value-field { flex: 1 1 0% !important; min-width: 0 !important; width: auto !important; }',
 		'.CodeMirror {',
 		'	border: 1px solid var(--border, var(--hairline, var(--border-color-medium, #ccc))) !important;',

@@ -1,0 +1,7 @@
+# Tailscale MagicDNS: resolve ts.net names through the Tailscale DNS stub, the public DNS does
+# not know them. Requires tailscaled to be running.
+[YAML]
+dns:
+  nameserver-policy+:
+    '+.ts.net':
+      - 100.100.100.100#DIRECT

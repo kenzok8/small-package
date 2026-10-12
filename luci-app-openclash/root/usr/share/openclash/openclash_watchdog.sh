@@ -15,11 +15,39 @@ STREAM_AUTO_SELECT=0
 FIREWALL_RELOAD=0
 MAX_FIREWALL_RELOAD=3
 FW4=$(command -v fw4)
+PROXY_FWMARK="0x162"
 
 ## Skip Proxies Address
 skip_proxies_address()
 {
 ruby -ryaml -rYAML -I "/usr/share/openclash" -E UTF-8 -e "
+REG4 = /^((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.){3}(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])$/
+REG6 = /^(?:(?:(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}:[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){5}:([0-9A-Fa-f]{1,4}:)?[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){4}:([0-9A-Fa-f]{1,4}:){0,2}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){3}:([0-9A-Fa-f]{1,4}:){0,3}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){2}:([0-9A-Fa-f]{1,4}:){0,4}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|(([0-9A-Fa-f]{1,4}:){0,5}:((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|(::([0-9A-Fa-f]{1,4}:){0,5}((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|([0-9A-Fa-f]{1,4}::([0-9A-Fa-f]{1,4}:){0,5}[0-9A-Fa-f]{1,4})|(::([0-9A-Fa-f]{1,4}:){0,6}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){1,7}:))|\[(?:(?:(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}:[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){5}:([0-9A-Fa-f]{1,4}:)?[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){4}:([0-9A-Fa-f]{1,4}:){0,2}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){3}:([0-9A-Fa-f]{1,4}:){0,3}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){2}:([0-9A-Fa-f]{1,4}:){0,4}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|(([0-9A-Fa-f]{1,4}:){0,5}:((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|(::([0-9A-Fa-f]{1,4}:){0,5}((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|([0-9A-Fa-f]{1,4}::([0-9A-Fa-f]{1,4}:){0,5}[0-9A-Fa-f]{1,4})|(::([0-9A-Fa-f]{1,4}:){0,6}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){1,7}:))\]$/i
+REG_DOMAIN = /([0-9a-zA-Z-]{1,}\.)+([a-zA-Z]{2,})/
+
+def write_ips_set(ips)
+   return if ips.nil? or ips.empty?
+   firewall_v = '$FW4'.empty? ? 'ipt' : 'nft'
+   set_commands = []
+   ips.each do |ip|
+      next if ip.nil? or ip.empty?
+      if ip.match(REG4) then
+         if firewall_v == 'nft' then
+            set_commands << 'nft add element inet fw4 localnetwork { \"' + ip + '\" } 2>/dev/null'
+         else
+            set_commands << 'ipset add localnetwork \"' + ip + '\" 2>/dev/null'
+         end
+      elsif ip.match(REG6) then
+         if firewall_v == 'nft' then
+            set_commands << 'nft add element inet fw4 localnetwork6 { \"' + ip + '\" } 2>/dev/null'
+         else
+            set_commands << 'ipset add localnetwork6 \"' + ip + '\" 2>/dev/null'
+         end
+      end
+   end
+   system(set_commands.join('; ')) if not set_commands.empty?
+end
+
 begin
    Value = YAML.load_file('$CONFIG_FILE');
 rescue Exception => e
@@ -103,14 +131,11 @@ begin
 
    domains_to_resolve = Array.new
    ips = Array.new
-   reg_domain = /([0-9a-zA-Z-]{1,}\.)+([a-zA-Z]{2,})/
-   reg4 = /^((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.){3}(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])$/
-   reg6 = /^(?:(?:(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}:[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){5}:([0-9A-Fa-f]{1,4}:)?[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){4}:([0-9A-Fa-f]{1,4}:){0,2}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){3}:([0-9A-Fa-f]{1,4}:){0,3}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){2}:([0-9A-Fa-f]{1,4}:){0,4}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|(([0-9A-Fa-f]{1,4}:){0,5}:((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|(::([0-9A-Fa-f]{1,4}:){0,5}((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|([0-9A-Fa-f]{1,4}::([0-9A-Fa-f]{1,4}:){0,5}[0-9A-Fa-f]{1,4})|(::([0-9A-Fa-f]{1,4}:){0,6}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){1,7}:))|\[(?:(?:(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}:[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){5}:([0-9A-Fa-f]{1,4}:)?[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){4}:([0-9A-Fa-f]{1,4}:){0,2}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){3}:([0-9A-Fa-f]{1,4}:){0,3}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){2}:([0-9A-Fa-f]{1,4}:){0,4}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){6}((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|(([0-9A-Fa-f]{1,4}:){0,5}:((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|(::([0-9A-Fa-f]{1,4}:){0,5}((\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b)\.){3}(\b((25[0-5])|(1\d{2})|(2[0-4]\d)|(\d{1,2}))\b))|([0-9A-Fa-f]{1,4}::([0-9A-Fa-f]{1,4}:){0,5}[0-9A-Fa-f]{1,4})|(::([0-9A-Fa-f]{1,4}:){0,6}[0-9A-Fa-f]{1,4})|(([0-9A-Fa-f]{1,4}:){1,7}:))\]$/i
 
    servers_to_process.each do |server|
-      if server.to_s.match(reg4) or server.to_s.match(reg6)
+      if server.to_s.match(REG4) or server.to_s.match(REG6)
          ips.push(server)
-      elsif server.to_s.match(reg_domain)
+      elsif server.to_s.match(REG_DOMAIN)
          domains_to_resolve.push(server)
       end
    end
@@ -119,18 +144,33 @@ begin
    domains_to_resolve.uniq!
 
    if not domains_to_resolve.empty?
+      host = '127.0.0.1'
+      port = IO.popen('uci -q get openclash.config.cn_port').read.strip
+      pw = IO.popen('uci -q get openclash.config.dashboard_password').read.strip
+
       ips_mutex = Mutex.new
       queue = Queue.new
-      domains_to_resolve.each{|d| queue << d}
+      domains_to_resolve.each do |d|
+         queue << [d, 'A']
+         queue << [d, 'AAAA']
+      end
 
       threads = (1..[10, queue.size].min).map do
          Thread.new do
-            while domain = queue.pop(true) rescue nil
-               syscall = '/usr/share/openclash/openclash_debug_dns.lua 2>/dev/null \"' + domain + '\" \"true\"'
+            while task = (queue.pop(true) rescue nil)
+               domain, qtype = task
+               syscall = 'curl -s -m 3 -H \"Authorization: Bearer ' + pw + '\" \"http://' + host + ':' + port + '/dns/query?name=' + domain + '&type=' + qtype + '\" | jsonfilter -e \"@.Answer[*].data\" 2>/dev/null'
                result = IO.popen(syscall).read.split(/\n+/)
                if result
                   ips_mutex.synchronize do
-                     result.each{|ip| ips.push(ip)}
+                     result.each do |ip|
+                        next if ip.nil? or ip.empty?
+                        if qtype == 'AAAA'
+                           ips.push(ip) if ip.match(REG6)
+                        else
+                           ips.push(ip) if ip.match(REG4)
+                        end
+                     end
                   end
                end
             end
@@ -142,28 +182,7 @@ begin
    ips.compact!
    ips.uniq!
 
-   # Add IPs to ipset/nft
-   if not ips.empty? then
-      firewall_v = '$FW4'.empty? ? 'ipt' : 'nft'
-      set_commands = []
-      ips.each do |ip|
-         next if ip.nil? or ip.empty?
-         if ip.match(reg4) then
-            if firewall_v == 'nft' then
-               set_commands << 'nft add element inet fw4 localnetwork { \"' + ip + '\" } 2>/dev/null'
-            else
-               set_commands << 'ipset add localnetwork \"' + ip + '\" 2>/dev/null'
-            end
-         elsif ip.match(reg6) then
-            if firewall_v == 'nft' then
-               set_commands << 'nft add element inet fw4 localnetwork6 { \"' + ip + '\" } 2>/dev/null'
-            else
-               set_commands << 'ipset add localnetwork6 \"' + ip + '\" 2>/dev/null'
-            end
-         end
-      end
-      system(set_commands.join('; ')) if not set_commands.empty?
-   end
+   write_ips_set(ips)
 rescue Exception => e
    YAML.LOG_ERROR('Set Proxies Address Skip: Failed【' + e.message + '】');
 end" 2>/dev/null >> $LOG_FILE
@@ -199,6 +218,9 @@ do
    stream_auto_select_openai=$(uci_get_config "stream_auto_select_openai" || echo 0)
    stream_auto_select_claude=$(uci_get_config "stream_auto_select_claude" || echo 0)
    stream_auto_select_gemini=$(uci_get_config "stream_auto_select_gemini" || echo 0)
+   stream_auto_select_bahamut=$(uci_get_config "stream_auto_select_bahamut" || echo 0)
+   stream_auto_select_spotify=$(uci_get_config "stream_auto_select_spotify" || echo 0)
+   stream_auto_select_steam=$(uci_get_config "stream_auto_select_steam" || echo 0)
    upnp_lease_file=$(uci -q get upnpd.config.upnp_lease_file)
 
 #wait for core start complete
@@ -208,11 +230,21 @@ do
 done >/dev/null 2>&1
 
 #check the clash service status
-if ! ubus call service list '{"name":"openclash"}' 2>/dev/null | jsonfilter -e '@.openclash.instances.*.running' | grep -q 'true'; then
-   uci -q set openclash.config.enable=0
-   uci -q commit openclash
-   /etc/init.d/openclash stop >/dev/null 2>&1
-   exit 0
+CORE_JSON=$(ubus call service list '{"name":"openclash"}' 2>/dev/null)
+if [ -n "$CORE_JSON" ]; then
+   # stop signals the watchdog itself, this exits it when the core vanished otherwise
+   if [ -z "$(echo "$CORE_JSON" | jsonfilter -e '@.openclash.instances.openclash')" ]; then
+      LOG_WATCHDOG "OpenClash Service Not Running, Exit..."
+      exit 0
+   fi
+   # procd drops the respawn table once it gave up on the core (crash loop)
+   if [ "$(echo "$CORE_JSON" | jsonfilter -e '@.openclash.instances.openclash.running')" != "true" ] \
+      && [ -z "$(echo "$CORE_JSON" | jsonfilter -e '@.openclash.instances.openclash.respawn.retry')" ]; then
+      uci -q set openclash.config.enable=0
+      uci -q commit openclash
+      /etc/init.d/openclash stop >/dev/null 2>&1
+      exit 0
+   fi
 fi
 
 ## Porxy history
@@ -244,7 +276,7 @@ fi
          LOG_WATCHDOG "Setting Firewall For Rules Order..."
          /etc/init.d/openclash reload "firewall"
          let FIREWALL_RELOAD++
-      elif [ -n "$(ip link show utun 2>/dev/null)" ] && [ -z "$(ip route list table 354)" ]; then
+      elif [ -n "$(ip link show utun 2>/dev/null)" ] && [ -n "$(ip rule show 2>/dev/null | grep "fwmark $PROXY_FWMARK")" ] && [ -z "$(ip route list table 354)" ]; then
          ## 路由表检查
          LOG_WATCHDOG "Setting Firewall For IP Rules Table Recreate..."
          /etc/init.d/openclash reload "firewall"
@@ -385,7 +417,7 @@ fi
          uci -q delete dhcp.@dnsmasq[0].resolvfile
          uci -q set dhcp.@dnsmasq[0].noresolv=1
          [ "$disable_masq_cache" -eq 1 ] && {
-         	uci -q set dhcp.@dnsmasq[0].cachesize=0
+            uci -q set dhcp.@dnsmasq[0].cachesize=0
          }
          uci -q commit dhcp
          /etc/init.d/dnsmasq restart >/dev/null 2>&1
@@ -462,6 +494,18 @@ fi
             if [ "$stream_auto_select_gemini" -eq 1 ]; then
                LOG_INFO "【Gemini】Start Auto Select Unlock Proxy..."
                /usr/share/openclash/openclash_streaming_unlock.lua "Gemini" >> $LOG_FILE
+            fi
+            if [ "$stream_auto_select_bahamut" -eq 1 ]; then
+               LOG_INFO "【Bahamut Anime】Start Auto Select Unlock Proxy..."
+               /usr/share/openclash/openclash_streaming_unlock.lua "Bahamut Anime" >> $LOG_FILE
+            fi
+            if [ "$stream_auto_select_spotify" -eq 1 ]; then
+               LOG_INFO "【Spotify】Start Auto Select Unlock Proxy..."
+               /usr/share/openclash/openclash_streaming_unlock.lua "Spotify" >> $LOG_FILE
+            fi
+            if [ "$stream_auto_select_steam" -eq 1 ]; then
+               LOG_INFO "【Steam】Start Auto Select Unlock Proxy..."
+               /usr/share/openclash/openclash_streaming_unlock.lua "Steam" >> $LOG_FILE
             fi
          fi
       fi

@@ -35,6 +35,7 @@ config openclash 'config'
 	option small_flash_memory '0'
 	option interface_name '0'
 	option common_ports '0'
+	option china_ip_route_domain_source 'mrs'
 	option log_size '1024'
 	option tolerance '0'
 	option store_fakeip '0'
@@ -63,7 +64,7 @@ config openclash 'config'
 	option geoasn_custom_url 'https://testingcf.jsdelivr.net/gh/xishang0128/geoip@release/GeoLite2-ASN.mmdb'
 	option chnr_custom_url 'https://ispip.clang.cn/all_cn.txt'
 	option chnr6_custom_url 'https://ispip.clang.cn/all_cn_ipv6.txt'
-	
+
 config dns_servers
 	option type 'udp'
 	option ip '114.114.114.114'
@@ -288,10 +289,44 @@ config dns_servers
 
 config config_overwrite
 	option name 'default'
+	option official '1'
 	option enable '0'
 	option url 'https://raw.githubusercontent.com/vernesong/OpenClash/refs/heads/dev/luci-app-openclash/root/etc/openclash/overwrite/default'
 	option update_days 'off'
 	option update_hour 'off'
 	option type 'http'
 	option order '1'
+	list config 'all'
 
+config config_overwrite
+	option name 'Google_Play'
+	option official '1'
+	option enable '0'
+	option url 'https://raw.githubusercontent.com/vernesong/OpenClash/refs/heads/dev/luci-app-openclash/root/etc/openclash/overwrite/Google_Play'
+	option update_days 'off'
+	option update_hour 'off'
+	option type 'http'
+	option order '2'
+	list config 'all'
+
+config config_overwrite
+	option name 'Tailscale'
+	option official '1'
+	option enable '0'
+	option url 'https://raw.githubusercontent.com/vernesong/OpenClash/refs/heads/dev/luci-app-openclash/root/etc/openclash/overwrite/Tailscale'
+	option update_days 'off'
+	option update_hour 'off'
+	option type 'http'
+	option order '3'
+	list config 'all'
+
+config config_overwrite
+	option name 'WiFi_Calling'
+	option official '1'
+	option enable '0'
+	option url 'https://raw.githubusercontent.com/vernesong/OpenClash/refs/heads/dev/luci-app-openclash/root/etc/openclash/overwrite/WiFi_Calling'
+	option update_days 'off'
+	option update_hour 'off'
+	option type 'http'
+	option order '4'
+	list config 'all'

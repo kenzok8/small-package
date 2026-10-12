@@ -1,14 +1,15 @@
 local m, s, o
 local openclash = "openclash"
 local uci = luci.model.uci.cursor()
+local dynamic_uci = luci.model.uci.cursor()
 local fs = require "luci.openclash"
 local SYS = require "luci.sys"
 local DISP = require "luci.dispatcher"
 local HTTP = require "luci.http"
 local sid = arg[1]
 
-font_red = [[<b style=color:red>]]
-font_green = [[<b style=color:green>]]
+font_red = [[<b class="oc-txt-bad">]]
+font_green = [[<b class="oc-txt-good">]]
 font_off = [[</b>]]
 bold_on = [[<strong>]]
 bold_off = [[</strong>]]
@@ -146,7 +147,7 @@ if filename then
 	end
 end
 
-m.uci:foreach("openclash", "groups",
+dynamic_uci:foreach("openclash", "proxy_groups",
 function(s)
 	if s.name ~= "" and s.name ~= nil then
 		o:value(s.name)
@@ -180,5 +181,10 @@ o.write = function()
 	HTTP.redirect(m.redirect)
 end
 
-m:append(Template("openclash/toolbar_show"))
+local render_children = m.render_children
+m.render_children = function(self, ...)
+	fs.render_page_head()
+	render_children(self, ...)
+end
+
 return m

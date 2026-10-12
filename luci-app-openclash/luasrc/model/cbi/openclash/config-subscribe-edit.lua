@@ -9,16 +9,18 @@ local HTTP = require "luci.http"
 local DISP = require "luci.dispatcher"
 local sid = arg[1]
 local age_section
+
 local backend_version_status = [[
 <div class="oc">
 	<div id="subconverter-version-status-cbi" class="subconverter-version-status" data-state="idle" hidden>
+		<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M5 14h14a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2Z"/><path d="M7 7h.01M7 17h.01"/></svg>
 		<span class="subconverter-version-label"></span>
 		<span class="subconverter-version-text"></span>
 	</div>
 </div>
 ]]
 
-font_red = [[<b style=color:red>]]
+font_red = [[<b class="oc-txt-bad">]]
 font_off = [[</b>]]
 bold_on = [[<strong>]]
 bold_off = [[</strong>]]
@@ -75,13 +77,137 @@ o:value("clash.meta/1.19.20")
 o:value("Clash")
 o.rmempty = true
 
+---- subconverter
+o = s:option(Flag, "sub_convert", translate("Subscribe Convert Online"))
+o.description = translate("Convert Subscribe Online With Template")
+o.default = 0
+
+---- Convert Address
+o = s:option(Value, "convert_address", translate("Convert Address"))
+o.rmempty = true
+o.description = backend_version_status..'<div class="oc-warn-strip"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M12 3 2 20h20ZM12 10v4m0 3h.01" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>'..translate("Note: There is A Risk of Privacy Leakage in Online Convert")..'</span></div>'
+o:depends("sub_convert", "1")
+o:value("https://api.asailor.org/sub", translate("api.asailor.org"))
+o:value("https://api.wcc.best/sub", translate("api.wcc.best"))
+o.default = "https://api.asailor.org/sub"
+o.placeholder = "https://api.asailor.org/sub"
+
+---- Template
+o = s:option(ListValue, "template", translate("Template Name"))
+o.rmempty = true
+o:depends("sub_convert", "1")
+file = io.open("/usr/share/openclash/res/sub_ini.list", "r");
+for l in file:lines() do
+	if l ~= "" then
+		o:value(l:match("^([^,]*)"))
+	end
+end
+file:close()
+o:value("0", translate("Custom Template"))
+
+---- Custom Template
+o = s:option(Value, "custom_template_url", translate("Custom Template URL"))
+o.rmempty = true
+o.placeholder = translate("Not Null")
+o.datatype = "or(host, string)"
+o:depends("template", "0")
+
+---- emoji
+o = s:option(ListValue, "emoji", translate("Emoji"))
+o.rmempty = false
+o:value("false", translate("Disable"))
+o:value("true", translate("Enable"))
+o.default = "false"
+o:depends("sub_convert", "1")
+
+---- udp
+o = s:option(ListValue, "udp", translate("UDP Enable"))
+o.rmempty = false
+o:value("false", translate("Disable"))
+o:value("true", translate("Enable"))
+o.default = "false"
+o:depends("sub_convert", "1")
+
+---- skip-cert-verify
+o = s:option(ListValue, "skip_cert_verify", translate("skip-cert-verify"))
+o.rmempty = false
+o:value("false", translate("Disable"))
+o:value("true", translate("Enable"))
+o.default = "true"
+o:depends("sub_convert", "1")
+
+---- sort
+o = s:option(ListValue, "sort", translate("Sort"))
+o.rmempty = false
+o:value("false", translate("Disable"))
+o:value("true", translate("Enable"))
+o.default = "false"
+o:depends("sub_convert", "1")
+
+---- node type
+o = s:option(ListValue, "node_type", translate("Append Node Type"))
+o.rmempty = false
+o:value("false", translate("Disable"))
+o:value("true", translate("Enable"))
+o.default = "false"
+o:depends("sub_convert", "1")
+
+---- rule provider
+o = s:option(ListValue, "rule_provider", translate("Use Rule Provider"))
+o.description = font_red..bold_on..translate("Note: Please Make Sure Backend Service Supports This Feature")..bold_off..font_off
+o.rmempty = false
+o:value("false", translate("Disable"))
+o:value("true", translate("Enable"))
+o.default = "false"
+o:depends("sub_convert", "1")
+
+---- custom params
+o = s:option(DynamicList, "custom_params", translate("Custom Params"))
+o.description = font_red..bold_on..translate("eg: \"rename=match@replace\" , \"rename=\\s+([2-9])[xX]@ (HIGH:$1)\"")..bold_off..font_off
+o.rmempty = false
+o:depends("sub_convert", "1")
+
+---- Node Filtering
+o = s:option(Flag, "keyword_option", translate("Node Filtering"))
+o.description = translate("Show node filter options")
+o.default = 0
+
+---- key
+o = s:option(DynamicList, "keyword", font_red..bold_on..translate("Keyword Match")..bold_off..font_off)
+o.description = font_red..bold_on..translate("eg: hk or tw&bgp")..bold_off..font_off
+o.rmempty = true
+o:depends("keyword_option", "1")
+
+---- exkey
+o = s:option(DynamicList, "ex_keyword", font_red..bold_on..translate("Exclude Keyword Match")..bold_off..font_off)
+o.description = font_red..bold_on..translate("eg: hk or tw&bgp")..bold_off..font_off
+o.rmempty = true
+o:depends("keyword_option", "1")
+
+---- de_exkey
+o = s:option(MultiValue, "de_ex_keyword", font_red..bold_on..translate("Exclude Keyword Match Default")..bold_off..font_off)
+o.rmempty = true
+o:depends("keyword_option", "1")
+o:value(translate("Expire"))
+o:value(translate("Traffic"))
+o:value(translate("Plan"))
+o:value(translate("Official"))
+
+
+---- Advanced Options
+o = s:option(Flag, "ad_option", translate("Advanced Options"))
+o.description = translate("Show more subscription options")
+o.default = 0
+
 ---- Custom Headers
 o = s:option(DynamicList, "sub_headers", translate("Custom Headers"))
 o.description = font_red..bold_on..translate("Custom HTTP request headers, one per line, format: Header-Name: value")..bold_off..font_off
 o.rmempty = true
 o.placeholder = "x-hwid: my-device-id"
+o:depends("ad_option", "1")
 
 o = s:option(ListValue, "config_age_algo", translate("Age Key Type"))
+o:depends("ad_option", "1")
 o.description = font_red..bold_on..translate("Age Encryption For Config, Click For More:")..bold_off..font_off.." ".."<a href='javascript:void(0)' onclick='javascript:return winOpen(\"https://wiki.metacubex.one/config/proxy-providers/?age-secret-key#age-secret-key\")'>"..translate("Age Encryption Introduce").."</a>"
 o:value("keygen", "x25519")
 o:value("pq", "PQ (mlkem768-x25519)")
@@ -124,6 +250,7 @@ end
 
 o = s:option(Value, "config_age_secret", translate("Secret Key"))
 o.rmempty = true
+o:depends("ad_option", "1")
 o.placeholder = "AGE-SECRET-KEY-..."
 function o.cfgvalue(self, section)
 	local name = m.uci:get(openclash, section, "name") or section
@@ -163,6 +290,7 @@ end
 
 o = s:option(Value, "config_age_public", translate("Public Key"))
 o.rmempty = true
+o:depends("ad_option", "1")
 o.placeholder = "age..."
 function o.cfgvalue(self, section)
 	local name = m.uci:get(openclash, section, "name") or section
@@ -201,115 +329,8 @@ function o.remove(self, section)
 end
 
 o = s:option(DummyValue, "_generate_age_btn", "")
+o:depends("ad_option", "1")
 o.template = "openclash/generate_age"
-
----- subconverter
-o = s:option(Flag, "sub_convert", translate("Subscribe Convert Online"))
-o.description = translate("Convert Subscribe Online With Template")
-o.default = 0
-
----- Convert Address
-o = s:option(Value, "convert_address", translate("Convert Address"))
-o.rmempty = true
-o.description = backend_version_status..font_red..bold_on..translate("Note: There is A Risk of Privacy Leakage in Online Convert")..bold_off..font_off
-o:depends("sub_convert", "1")
-o:value("https://api.asailor.org/sub", translate("api.asailor.org"))
-o:value("https://api.wcc.best/sub", translate("api.wcc.best"))
-o.default = "https://api.asailor.org/sub"
-o.placeholder = "https://api.asailor.org/sub"
-
----- Template
-o = s:option(ListValue, "template", translate("Template Name"))
-o.rmempty = true
-o:depends("sub_convert", "1")
-file = io.open("/usr/share/openclash/res/sub_ini.list", "r");
-for l in file:lines() do
-	if l ~= "" and l ~= nil then
-		o:value(string.sub(luci.sys.exec(string.format("echo '%s' |awk -F ',' '{print $1}' 2>/dev/null",l)),1,-2))
-	end
-end
-file:close()
-o:value("0", translate("Custom Template"))
-
----- Custom Template
-o = s:option(Value, "custom_template_url", translate("Custom Template URL"))
-o.rmempty = true
-o.placeholder = translate("Not Null")
-o.datatype = "or(host, string)"
-o:depends("template", "0")
-
----- emoji
-o = s:option(ListValue, "emoji", translate("Emoji"))
-o.rmempty = false
-o:value("false", translate("Disable"))
-o:value("true", translate("Enable"))
-o.default = "false"
-o:depends("sub_convert", "1")
-
----- udp
-o = s:option(ListValue, "udp", translate("UDP Enable"))
-o.rmempty = false
-o:value("false", translate("Disable"))
-o:value("true", translate("Enable"))
-o.default = "false"
-o:depends("sub_convert", "1")
-
----- skip-cert-verify
-o = s:option(ListValue, "skip_cert_verify", translate("skip-cert-verify"))
-o.rmempty = false
-o:value("false", translate("Disable"))
-o:value("true", translate("Enable"))
-o.default = "false"
-o:depends("sub_convert", "1")
-
----- sort
-o = s:option(ListValue, "sort", translate("Sort"))
-o.rmempty = false
-o:value("false", translate("Disable"))
-o:value("true", translate("Enable"))
-o.default = "false"
-o:depends("sub_convert", "1")
-
----- node type
-o = s:option(ListValue, "node_type", translate("Append Node Type"))
-o.rmempty = false
-o:value("false", translate("Disable"))
-o:value("true", translate("Enable"))
-o.default = "false"
-o:depends("sub_convert", "1")
-
----- rule provider
-o = s:option(ListValue, "rule_provider", translate("Use Rule Provider"))
-o.description = font_red..bold_on..translate("Note: Please Make Sure Backend Service Supports This Feature")..bold_off..font_off
-o.rmempty = false
-o:value("false", translate("Disable"))
-o:value("true", translate("Enable"))
-o.default = "false"
-o:depends("sub_convert", "1")
-
----- custom params
-o = s:option(DynamicList, "custom_params", translate("Custom Params"))
-o.description = font_red..bold_on..translate("eg: \"rename=match@replace\" , \"rename=\\s+([2-9])[xX]@ (HIGH:$1)\"")..bold_off..font_off
-o.rmempty = false
-o:depends("sub_convert", "1")
-
----- key
-o = s:option(DynamicList, "keyword", font_red..bold_on..translate("Keyword Match")..bold_off..font_off)
-o.description = font_red..bold_on..translate("eg: hk or tw&bgp")..bold_off..font_off
-o.rmempty = true
-
----- exkey
-o = s:option(DynamicList, "ex_keyword", font_red..bold_on..translate("Exclude Keyword Match")..bold_off..font_off)
-o.description = font_red..bold_on..translate("eg: hk or tw&bgp")..bold_off..font_off
-o.rmempty = true
-
----- de_exkey
-o = s:option(MultiValue, "de_ex_keyword", font_red..bold_on..translate("Exclude Keyword Match Default")..bold_off..font_off)
-o.rmempty = true
-o:value(translate("Expire"))
-o:value(translate("Traffic"))
-o:value(translate("Plan"))
-o:value(translate("Official"))
 
 local t = {
 	{Commit, Back}
@@ -322,14 +343,49 @@ o.inputstyle = "apply"
 o.write = function()
 	local to_delete = {}
 	m.uci:foreach(openclash, "config_age_secret", function(s)
-		local pub = m.uci:get(openclash, s['.name'], "public") or ""
 		local sec = m.uci:get(openclash, s['.name'], "secret") or ""
-		if (pub == "" or pub == nil) and (sec == "" or sec == nil) then
-			table.insert(to_delete, s['.name'])
+		if sec == "" or sec == nil then
+			table.insert(to_delete, { sid = s['.name'], name = s.name or "" })
 		end
 	end)
-	for _, n in ipairs(to_delete) do
-		m.uci:delete(openclash, n)
+	-- Before removing the age keys, decrypt each affected config file so it
+	-- stays readable after the keys are gone. The field writes above have
+	-- already dropped the secret in the working cursor, so read the previous
+	-- value from a fresh cursor (the change is not committed to disk yet).
+	local old_uci = luci.model.uci.cursor()
+	for _, d in ipairs(to_delete) do
+		local old_secret = old_uci:get(openclash, d.sid, "secret") or ""
+		local can_delete = true
+		if old_secret ~= "" and d.name and d.name ~= "" then
+			local config_paths = {
+				"/etc/openclash/config/" .. d.name .. ".yaml",
+				"/etc/openclash/" .. d.name .. ".yaml",
+			}
+			for _, config_path in ipairs(config_paths) do
+				if fs.access(config_path) then
+					local fp = io.open(config_path, "rb")
+					if fp then
+						local content = fp:read("*a")
+						fp:close()
+						if content and content:find("BEGIN AGE ENCRYPTED FILE", 1, true) then
+							local plain = fs.age_decrypt(old_secret, content)
+							if plain and plain ~= "" then
+								local fo = io.open(config_path, "wb")
+								if fo then
+									fo:write(plain)
+									fo:close()
+								end
+							else
+								can_delete = false
+							end
+						end
+					end
+				end
+			end
+		end
+		if can_delete then
+			m.uci:delete(openclash, d.sid)
+		end
 	end
 	m.uci:commit(openclash)
 	HTTP.redirect(m.redirect)
@@ -340,10 +396,17 @@ o.inputtitle = translate("Back Settings")
 o.inputstyle = "reset"
 o.write = function()
 	m.uci:revert(openclash, sid)
-	m.uci:revert(openclash, age_section)
+	if age_section then
+		m.uci:revert(openclash, age_section)
+	end
 	HTTP.redirect(m.redirect)
 end
 
-m:append(Template("openclash/toolbar_show"))
+local render_children = m.render_children
+m.render_children = function(self, ...)
+	fs.render_page_head()
+	render_children(self, ...)
+end
+
 m:append(Template("openclash/subconverter_version"))
 return m

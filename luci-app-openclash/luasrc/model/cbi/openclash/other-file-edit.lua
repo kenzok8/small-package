@@ -10,6 +10,28 @@ if not file_path then
 	return
 end
 
+local stream_fd
+HTTP.setfilehandler(
+	function(meta, chunk, eof)
+		if not meta or meta.name ~= "oc_editor_content" then
+			return
+		end
+
+		if not stream_fd and chunk then
+			stream_fd = nixio.open(file_path, "w")
+		end
+
+		if stream_fd and chunk then
+			stream_fd:write(chunk)
+		end
+
+		if eof and stream_fd then
+			stream_fd:close()
+			stream_fd = nil
+		end
+	end
+)
+
 m = Map("openclash", translate("File Edit"))
 m.pageaction = false
 m.redirect = DISP.build_url("admin", "services", "openclash", "other-file-edit", "%s") % arg[1].."?file="..HTTP.urlencode(file_path)
@@ -22,7 +44,7 @@ o.rows = 50
 o.wrap = "off"
 
 function o.write(self, section, value)
-	if value then
+	if value and value ~= "oc-editor-streamed" then
 		value = value:gsub("\r\n?", "\n")
 		local old_value = fs.readfile(file_path)
 		if value ~= old_value then
@@ -57,5 +79,4 @@ o.write = function()
 end
 
 m:append(Template("openclash/config_editor"))
-m:append(Template("openclash/toolbar_show"))
 return m

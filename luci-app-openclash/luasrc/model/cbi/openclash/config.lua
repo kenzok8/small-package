@@ -8,7 +8,7 @@ local fs = require "luci.openclash"
 local uci = require("luci.model.uci").cursor()
 local CHIF = "0"
 
-font_green = [[<b style=color:green>]]
+font_green = [[<b class="oc-txt-good">]]
 font_off = [[</b>]]
 bold_on = [[<strong>]]
 bold_off = [[</strong>]]
@@ -47,6 +47,9 @@ o.cfgvalue = function(self, section)
 end
 
 local dir, fd, clash
+local conf = fs.uci_get_config("config", "config_path")
+if not conf then conf = "/etc/openclash/config/config.yaml" end
+local edit_fd
 dir = "/etc/openclash/config/"
 proxy_pro_dir="/etc/openclash/proxy_provider/"
 rule_pro_dir="/etc/openclash/rule_provider/"
@@ -55,6 +58,20 @@ backup_dir="/tmp/"
 
 HTTP.setfilehandler(
 	function(meta, chunk, eof)
+		if meta and meta.name == "oc_editor_content" then
+			if not edit_fd and chunk then
+				edit_fd = nixio.open(conf, "w")
+			end
+			if edit_fd and chunk then
+				edit_fd:write(chunk)
+			end
+			if eof and edit_fd then
+				edit_fd:close()
+				edit_fd = nil
+			end
+			return
+		end
+
 		local fp = HTTP.formvalue("file_type")
 		if not fd then
 			if not meta then return end
@@ -131,15 +148,18 @@ HTTP.setfilehandler(
 				else
 					os.execute(string.format("mv '%s' '/etc/openclash/core/%s' >/dev/null 2>&1", (core_dir .. meta.file), fp))
 				end
-				
+
 				os.execute(string.format("chmod 4755 '/etc/openclash/core/%s' >/dev/null 2>&1", fp))
 				os.execute(string.format("rm -rf %s >/dev/null 2>&1", core_dir))
 				o.value = translate("File saved to") .. ' "/etc/openclash/core/"'
 			elseif fp == "backup-file" then
-				os.execute("tar -C '/etc/openclash/' -xzf %s >/dev/null 2>&1" % (backup_dir .. meta.file))
-				os.execute("mv /etc/openclash/openclash /etc/config/openclash >/dev/null 2>&1")
-				fs.unlink(backup_dir .. meta.file)
-				o.value = translate("Backup File Restore Successful!")
+				local archive = backup_dir .. meta.file
+				if fs.restore_backup(archive) then
+					o.value = translate("Backup File Restore Successful!")
+				else
+					o.value = translate("Backup File Restore Failed!")
+				end
+				fs.unlink(archive)
 			end
 		end
 	end
@@ -159,9 +179,9 @@ e[t]={}
 e[t].name=fs.basename(o)
 e[t].mtime=os.date("%Y-%m-%d %H:%M:%S",a.mtime)
 if fs.uci_get_config("config", "config_path") and string.sub(fs.uci_get_config("config", "config_path"), 23, -1) == e[t].name then
-	e[t].state=translate("Enabled")
+	e[t].state="Enabled"
 else
-	e[t].state=translate("Disabled")
+	e[t].state="Disabled"
 end
 e[t].size=fs.filesize(a.size)
 e[t].remove=0
@@ -330,7 +350,7 @@ o = promg:option(Button, "proxy_mg", " ")
 o.inputtitle = translate("Proxy Provider File List")
 o.inputstyle = "reload"
 o.write = function()
-	HTTP.redirect(DISP.build_url("admin", "services", "openclash", "proxy-provider-file-manage"))
+	HTTP.redirect(DISP.build_url("admin", "services", "openclash", "proxy-providers-file-manage"))
 end
 
 o = promg:option(Button, "rule_mg", " ")
@@ -345,16 +365,14 @@ m.reset = false
 m.submit = false
 
 local tab = {
- {user, default}
+	{user, default}
 }
 
 s = m:section(Table, tab)
 s.anonymous = true
 s.addremove = false
 
-local conf = fs.uci_get_config("config", "config_path")
 local dconf = "/usr/share/openclash/res/default.yaml"
-if not conf then conf = "/etc/openclash/config/config.yaml" end
 local conf_name = fs.basename(conf)
 if not conf_name then conf_name = "config.yaml"  end
 local sconf = "/etc/openclash/"..conf_name
@@ -369,7 +387,7 @@ sev.cfgvalue = function(self, section)
 	return fs.readfile(conf) or fs.readfile(dconf) or ""
 end
 sev.write = function(self, section, value)
-if (CHIF == "0") then
+if (CHIF == "0" and value and value ~= "oc-editor-streamed") then
 	value = value:gsub("\r\n?", "\n")
 	local old_value = fs.readfile(conf)
 	if value ~= old_value then

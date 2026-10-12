@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0
 #
-# Copyright (C) 2024-2025 Anya Lin <hukk1996@gmail.com>
+# Copyright (C) 2024-2026 Anya Lin <hukk1996@gmail.com>
 
 include $(TOPDIR)/rules.mk
 
@@ -29,6 +29,7 @@ define Package/luci-app-fchomo/conffiles
 /etc/fchomo/geoip.dat
 /etc/fchomo/geosite.dat
 /etc/fchomo/asn.mmdb
+/etc/fchomo/BundleMRS.7z
 /etc/fchomo/cache.db
 endef
 
@@ -50,7 +51,8 @@ fi
 
 [ "$$REVISION" -ge 28158 -o "$$REVISION" -eq 0 ] || { 2>&1 echo "Minimum OpenWrt version required is 24.10."; exit 1; }
 # https://archive.openwrt.org/releases/**/version.buildinfo
-# r?????-??????????    25.??.?-rc1
+# r?????-??????????    26.??.?-rc1
+# r32353-9e9b05130c    25.12.0-rc1
 # r28158-d276b4c91a    24.10.0-rc1
 # r23069-e2701e0f33    23.05.0-rc1
 
