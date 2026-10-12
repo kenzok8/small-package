@@ -1,0 +1,1 @@
+.rp-dns-answer{align-items:center;column-gap:var(--rp-space-3);row-gap:var(--rp-space-1);flex-wrap:wrap;display:flex}.rp-dns-answer>.rp-code{overflow-wrap:anywhere;flex:auto;min-width:0}.rp-dns-answer>:not(.rp-code){margin-inline-start:auto}.rp-dns-answer>.meta{gap:var(--rp-space-2);color:var(--rp-subtle);font-size:var(--rp-text-xs);white-space:nowrap;display:flex}
