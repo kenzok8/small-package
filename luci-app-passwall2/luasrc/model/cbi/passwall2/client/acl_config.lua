@@ -29,7 +29,7 @@ local doh_validate = function(self, value, t)
 		for i = 1, #val do
 			local v = val[i]
 			if v then
-				if not datatypes.ipmask4(v) then
+				if not api.datatypes.ipmask4(v) then
 					flag = 1
 				end
 			end
@@ -113,11 +113,11 @@ sources.validate = function(self, value, t)
 			end
 		end
 
-		if flag == false and datatypes.macaddr(v) then
+		if flag == false and api.datatypes.macaddr(v) then
 			flag = true
 		end
 
-		if flag == false and datatypes.ip4addr(v) then
+		if flag == false and api.datatypes.ip4addr(v) then
 			flag = true
 		end
 

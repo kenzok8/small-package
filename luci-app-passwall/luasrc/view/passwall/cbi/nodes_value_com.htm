@@ -603,8 +603,10 @@
 		}
 
 		// 分组项
-		data.group_order.forEach(gname => {
-			const items = data.groups[gname];
+		const groupPool = window.v_groups_pool && window.v_groups_pool[data.appname];
+		data.group_order.forEach((gname, index) => {
+			const items = data.groups ? data.groups[gname] : groupPool && groupPool[data.group_refs[index]];
+			if (!Array.isArray(items)) return;
 
 			html += `
 			<div class="v-group" data-group="${v_idSafe(gname)}" style="margin-bottom:8px;">

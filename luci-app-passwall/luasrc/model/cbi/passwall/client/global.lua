@@ -3,6 +3,7 @@ datatypes = api.datatypes
 local fs = api.fs
 has_singbox = api.finded_com("sing-box")
 has_xray = api.finded_com("xray")
+local has_smartdns = api.is_finded("smartdns")
 local has_gfwlist = fs.access("/usr/share/passwall/rules/gfwlist")
 local has_chnlist = fs.access("/usr/share/passwall/rules/chnlist")
 local has_chnroute = fs.access("/usr/share/passwall/rules/chnroute")
@@ -180,7 +181,7 @@ o.write = function(self, section, value)
 	end
 	return ListValue.write(self, section, value)
 end
-if api.is_finded("smartdns") then
+if has_smartdns then
 	o:value("smartdns", "SmartDNS")
 
 	o = s:taboption("DNS", Value, "group_domestic", translate("Domestic group name"))
@@ -284,7 +285,7 @@ o.remove = function(self, section)
 end
 
 ---- SmartDNS Forward Mode
-if api.is_finded("smartdns") then
+if has_smartdns then
 	o = s:taboption("DNS", ListValue, "smartdns_dns_mode", translate("Filter Mode"))
 	o:value("socks", "Socks")
 	if has_singbox then
@@ -487,14 +488,14 @@ o:value("remote", translate("Remote DNS"))
 o:value("direct", translate("Direct DNS"))
 o.description = desc .. "</ul>"
 o:depends({dns_shunt = "dnsmasq", tcp_proxy_mode = "proxy", chn_list = "direct"})
-if api.is_finded("smartdns") then
+if has_smartdns then
 	o:depends({dns_shunt = "smartdns", tcp_proxy_mode = "proxy", chn_list = "direct"})
 end
 
 o = s:taboption("DNS", Flag, "force_https_soa", translate("Force HTTPS SOA"), translate("Force queries with qtype 65 to respond with an SOA record."))
 o.default = "0"
 o:depends({dns_shunt = "chinadns-ng"})
-if api.is_finded("smartdns") then
+if has_smartdns then
 	o:depends({dns_shunt = "smartdns"})
 end
 
