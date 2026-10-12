@@ -53,9 +53,8 @@ process_shortcut() {
 
 # 配置 HTTPS 访问重定向 (适配 Nginx / Lighttpd / uHTTPd)
 sethttps() {
-	local cfg="${1:-default}"
 	local https
-	config_get https "$cfg" https 0
+	config_get https default https 0
 
 	if [ -x /etc/init.d/nginx ] && [ -f /etc/nginx/uci.conf ]; then
 		if [ "x${https}" = "x1" ]; then
@@ -120,21 +119,12 @@ start_service() {
 			(sleep 5;/sbin/coremark >/dev/null 2>&1) &
 	fi
 
-	# 2. 持久 Cookie 会话配置同步到 LuCI 底层系统
-	local cookie_p
-	config_get cookie_p default persistent_cookies 1
-	if [ -n "$cookie_p" ]; then
-		[ -z "$(uci -q get luci.sgi)" ] && uci -q set luci.sgi=sgi
-		uci -q set luci.sgi.persistent_cookies="$cookie_p"
-		uci -q commit luci
-	fi
-
 	# 3. 清理并重新配置所有 Shortcuts
 	clean_shortcuts
 	config_foreach process_shortcut shortcuts
 
 	# 4. 设置 HTTPS 重定向
-	sethttps default
+	sethttps
 
 	# 5. 提交并重载生效服务
 	reload_services
