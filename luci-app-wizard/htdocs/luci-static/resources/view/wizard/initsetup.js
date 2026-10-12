@@ -134,7 +134,7 @@ return view.extend({
 			dhcp: uci.get('dhcp', 'lan', 'ignore') === '1' ? '0' : '1',
 			ipv6: uci.get('network', 'wan6', 'auto') === '0' ? '0' : '1',
 			https: uci.get('wizard', 'default', 'https') || '0',
-			cookie_p: uci.get('luci', 'main', 'persistent_cookies') || '1',
+			persistent_cookies: uci.get('luci', 'main', 'persistent_cookies') || '1',
 			landing_page: uci.get('luci', 'main', 'landing_page') || 'auto',
 			autoupgrade_fm: uci.get('luci', 'main', 'autoupgrade_fm') || '0',
 			coremark: uci.get('wizard', 'default', 'coremark') || '0',
@@ -192,7 +192,7 @@ return view.extend({
 			// 固件与系统设置
 			{ tab: 'firmware', type: form.Flag, id: 'autoupgrade_fm', title: _('Firmware Upgrade Notice'), desc: _('Check and display notices for newer firmware versions.') },
 			{ tab: 'firmware', type: form.Flag, id: 'coremark', title: _('Run CoreMark on Boot'), desc: _('Run CPU benchmark asynchronously upon router initialization.') },
-			{ tab: 'firmware', type: form.Flag, id: 'cookie_p', title: _('Persistent Cookie Session'), desc: _('Maintain persistent login sessions in the web browser.') },
+			{ tab: 'firmware', type: form.Flag, id: 'persistent_cookies', title: _('Persistent Cookie Session'), desc: _('Maintain persistent login sessions in the web browser.') },
 			{ tab: 'firmware', type: form.Flag, id: 'https', title: _('Enforce HTTPS Access'), desc: _('Automatically redirect HTTP requests to secure HTTPS.') },
 			{ tab: 'firmware', type: form.ListValue, id: 'landing_page', title: _('Landing Dashboard Mode'),
 			  choices: { 'auto': _('Auto'), 'overview': _('Overview'), 'istoreos': _('iStoreOS'), 'dashboard': _('Dashboard'), routerdog: _('RouterDog'), nas: _('NAS'), 'next-nas': _('Next-NAS'), router: _('Router') } }
@@ -480,9 +480,9 @@ return view.extend({
 				uci.set('wizard', 'default', 'https', cur.https);
 			}
 
-			// I. 页面与会话设置（持久Cookie双向同步至luci系统底层与向导配置包）
-			if (has(changed, 'cookie_p')) {
-				uci.set('luci', 'main', 'persistent_cookies', cur.cookie_p);
+			// I. 页面与会话设置
+			if (has(changed, 'persistent_cookies')) {
+				uci.set('luci', 'main', 'persistent_cookies', cur.persistent_cookies);
 			}
 			if (has(changed, 'landing_page')) {
 				uci.set('luci', 'main', 'landing_page', cur.landing_page);

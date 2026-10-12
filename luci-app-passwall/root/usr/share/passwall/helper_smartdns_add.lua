@@ -203,6 +203,18 @@ config_lines = {
 	DNS_MODE == "socks" and string.format("proxy-server socks5://%s -name %s", REMOTE_PROXY_SERVER, proxy_server_name) or ""
 }
 if DNS_REDIRECT then
+	local hosts = {}
+	api.uci:foreach("dhcp", "host", function(s)
+		if datatypes.hostname(s.name or "") and datatypes.ip4addr(s.ip or "") then
+			hosts[#hosts + 1] = s.ip .. " " .. s.name
+		end
+	end)
+
+	local hosts_file = FLAG_PATH .. "/dhcp-static-hosts"
+	if fs.writefile(hosts_file, table.concat(hosts, "\n") .. "\n") and #hosts > 0 then
+		table.insert(config_lines, string.format("hosts-file %q", hosts_file))
+	end
+
 	-- SmartDNS monitors the lease file and updates local records without a restart.
 	local lease_file = api.uci_get("dhcp", "@dnsmasq[0]", "leasefile")
 	if not lease_file or lease_file == "" then lease_file = "/tmp/dhcp.leases" end

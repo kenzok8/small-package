@@ -2,8 +2,17 @@
 
 'use strict';
 
-import { access, popen, glob, readfile, writefile, stat, lstat, unlink, open, mkdtemp, rename, rmdir } from 'fs';
+import { access, popen, glob, readfile, writefile, stat, lstat, unlink, open, rename, rmdir } from 'fs';
 import { cursor } from 'uci';
+
+// 兼容 ucode < 2026-10-10：原生缺少 mkdtemp，改用 mktemp -d
+function mkdtemp(tpl) {
+	let p = popen("mktemp -d '" + tpl + "' 2>/dev/null");
+	if (!p) return null;
+	let r = trim(p.read('all') || '');
+	p.close();
+	return r || null;
+}
 
 const BINARY_PATHS = [
 '/usr/bin/mihomo-stable',
@@ -1219,6 +1228,10 @@ if (!t) t = 'template';
 return '_merged_' + s + '__' + t + '.yaml';
 }
 
+function is_generated_yaml(path) {
+return system("grep -q '^x-clashoo:' " + shell_quote(path) + " 2>/dev/null") == 0;
+}
+
 function template_search_dirs() {
 return [TEMPLATE_DIR, '/usr/share/clashoo/config/template'];
 }
@@ -1228,7 +1241,7 @@ name = ensure_yaml_name(name || '');
 if (!name) return '';
 for (let dir in template_search_dirs()) {
 let p = dir + '/' + name;
-if (access(p, 'r')) return p;
+if (access(p, 'r') && !is_generated_yaml(p)) return p;
 }
 return '';
 }
@@ -2907,6 +2920,7 @@ for (let dir in template_search_dirs()) {
 for (let f in (glob(dir + '/*.yaml') || [])) {
 let name = replace(f, dir + '/', '');
 if (index(name, '_merged_') == 0 || seen[name]) continue;
+if (is_generated_yaml(f)) continue;
 seen[name] = 1;
 let fi = stat(f);
 push(files, { name, mtime: fi ? ('' + fi.mtime) : null, size: fi ? (int(fi.size / 1024) + ' KB') : null });
@@ -2914,6 +2928,7 @@ push(files, { name, mtime: fi ? ('' + fi.mtime) : null, size: fi ? (int(fi.size 
 for (let f in (glob(dir + '/*.yml') || [])) {
 let name = replace(f, dir + '/', '');
 if (index(name, '_merged_') == 0 || seen[name]) continue;
+if (is_generated_yaml(f)) continue;
 seen[name] = 1;
 let fi = stat(f);
 push(files, { name, mtime: fi ? ('' + fi.mtime) : null, size: fi ? (int(fi.size / 1024) + ' KB') : null });
@@ -3477,13 +3492,22 @@ if (!tpl_src)
 return { success: false, error: 'invalid_template', message: '模板来源不能为空' };
 
 let pairs = [];
+let names = {};
 try {
 let parsed = json(pairs_raw || '[]');
-if (type(parsed) == 'array') {
+if (type(parsed) != 'array')
+return { success: false, error: 'invalid_pairs', message: '订阅参数格式错误' };
 for (let p in parsed) {
-if (p && p.name && p.url && match(p.url, /^https?:\/\//))
-push(pairs, { name: trim(p.name), url: trim(p.url) });
-}
+if (!p || type(p.name) != 'string' || type(p.url) != 'string')
+return { success: false, error: 'invalid_pairs', message: '订阅名称和链接不能为空' };
+let name = trim(p.name);
+let url = trim(p.url);
+if (!name || !match(url, /^https?:\/\//))
+return { success: false, error: 'invalid_pairs', message: '订阅名称不能为空，链接必须以 http:// 或 https:// 开头' };
+if (names[name])
+return { success: false, error: 'duplicate_provider_name', message: '订阅名称不能重复' };
+names[name] = 1;
+push(pairs, { name, url });
 }
 } catch (err) {
 return { success: false, error: 'invalid_pairs', message: '订阅参数格式错误' };
@@ -3507,11 +3531,7 @@ if (system(dl_cmd) != 0 || !access(tmp_tpl, 'r'))
 return { success: false, error: 'download_failed', message: '远程模板下载失败' };
 } else {
 let safe = safe_name(tpl_src);
-let local_path = null;
-let search_dirs = template_search_dirs();
-for (let i = 0; i < length(search_dirs); i++) {
-if (access(search_dirs[i] + '/' + safe, 'r')) { local_path = search_dirs[i] + '/' + safe; break; }
-}
+let local_path = find_template_path(safe);
 if (!local_path)
 return { success: false, error: 'template_not_found', message: '本地模板文件不存在' };
 if (system('cp -f ' + shell_quote(local_path) + ' ' + shell_quote(tmp_tpl)) != 0)
@@ -3528,17 +3548,27 @@ return { success: false, error: 'missing_yq', message: '缺少 yq，无法注入
 		system("cp -f " + shell_quote(tmp_tpl) + " " + shell_quote(exploded));
 	}
 
+	/* 模板必须有 proxy-providers 段 */
+	if (system("yq -e 'has(\"proxy-providers\")' " + shell_quote(exploded) + " >/dev/null 2>&1") != 0) {
+		system("rm -f " + shell_quote(exploded));
+		return { success: false, error: 'no_proxy_providers', message: '模板缺少 proxy-providers 段' };
+	}
+	if (system("yq -e '(.\"proxy-providers\" | tag) == \"!!map\" and (.\"proxy-providers\" | length) == 1 and (.\"proxy-providers\" | to_entries[0].value | tag) == \"!!map\" and (.\"proxy-providers\" | to_entries[0].value.type) == \"http\"' " + shell_quote(exploded) + " >/dev/null 2>&1") != 0) {
+		system("rm -f " + shell_quote(exploded));
+		return { success: false, error: 'invalid_proxy_providers', message: '面板模板只支持一个 type: http 的样板 provider；多 provider 配置请直接上传使用' };
+	}
+
 	/* pairs 写到临时 JSON 文件 */
 	writefile(tmp_pairs, sprintf('%.J', pairs));
 
 	let tpl_label = match(tpl_src, /^https?:\/\//) ? tpl_src : replace(tpl_src, /^.*\//, "");
+	let tpl_expr = length(pairs) > 1 ? '($entry.value | del(.path))' : '$entry.value';
 
 	let yq_expr = '(load("' + tmp_pairs + '")) as $pairs | '
-		+ '(.["proxy-providers"] | keys) as $oldkeys | '
-		+ '($oldkeys | to_entries | map(.key as $i | .value as $k | {"key": $k, "value": ($pairs[$i].name // $k)}) | from_entries) as $ren | '
-		+ '($oldkeys | to_entries | map(select(.key < ($pairs | length)) | .key as $i | .value as $k | {"key": $k, "value": $pairs[$i].url}) | from_entries) as $reurl | '
-		+ '.["proxy-providers"] |= with_entries(.key as $old | .key = ($ren[$old] // $old) | .value.url = ($reurl[$old] // .value.url)) | '
-		+ '(.["proxy-groups"][] | select(has("use")) | .use) |= map($ren[.] // .) | '
+		+ '(.["proxy-providers"] | to_entries[0]) as $entry | '
+		+ tpl_expr + ' as $tpl | '
+		+ '.["proxy-providers"] = ($pairs | map({"key": .name, "value": ($tpl + {"url": .url})}) | from_entries) | '
+		+ '(.["proxy-groups"][] | select(has("use")) | .use) |= (map(. as $name | ([$pairs[].name] | select($name == $entry.key)) // [$name]) | flatten) | '
 		+ '."x-clashoo" = {"template": strenv(TPL_LABEL)}';
 
 	let inject_cmd = "TPL_LABEL=" + shell_quote(tpl_label)
@@ -3584,7 +3614,7 @@ system('rm -f ' + shell_quote(tmp_tpl));
 		}
 	}
 	if (_core_bin) {
-		let _ret = system(_core_bin + " -t -d /etc/clashoo -f " + shell_quote(out_path) + " 2>/tmp/clashoo_tpl_verify.txt");
+		let _ret = system(_core_bin + " -t -d /etc/clashoo -f " + shell_quote(out_path) + " >/dev/null 2>/tmp/clashoo_tpl_verify.txt");
 		if (_ret != 0) {
 			let _err = trim(readfile('/tmp/clashoo_tpl_verify.txt') || '配置校验失败');
 			system('rm -f ' + shell_quote(out_path) + ' /tmp/clashoo_tpl_verify.txt 2>/dev/null');
