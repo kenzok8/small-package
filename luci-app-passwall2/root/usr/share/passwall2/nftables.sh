@@ -902,6 +902,9 @@ add_firewall_rule() {
 
 	filter_direct_node_list > /dev/null 2>&1 &
 
+	nft "insert rule $NFTABLE_NAME mangle_output meta skgid $DIRECT_GID counter return comment \"PSW2_DIRECT\""
+	nft "insert rule $NFTABLE_NAME nat_output meta skgid $DIRECT_GID counter return comment \"PSW2_DIRECT\""
+
 	log_i18n 0 "%s firewall rules load complete!" "nftables"
 }
 

@@ -47,7 +47,7 @@ check_run_environment() {
 		[ -d "/lib/apk/packages" ] && { file_path="/lib/apk/packages"; file_ext=".list"; }
 
 		if [ "$USE_TABLES" = "iptables" ]; then
-			dep_list="iptables-mod-tproxy iptables-mod-socket iptables-mod-iprange iptables-mod-conntrack-extra kmod-ipt-nat"
+			dep_list="iptables-mod-tproxy iptables-mod-socket iptables-mod-iprange iptables-mod-conntrack-extra iptables-mod-extra kmod-ipt-nat"
 		else
 			dep_list="kmod-nft-socket kmod-nft-tproxy kmod-nft-nat"
 			nftflag=1
@@ -923,6 +923,8 @@ start() {
 			set_cache_var "USE_TABLES" "$USE_TABLES"
 		fi
 	}
+	set_cache_var "ENABLED_DEFAULT_ACL" "$ENABLED_DEFAULT_ACL"
+	set_cache_var "ENABLED_ACLS" "$ENABLED_ACLS"
 	if [ "$ENABLED_DEFAULT_ACL" == 1 ] || [ "$ENABLED_ACLS" == 1 ]; then
 		bridge_nf_ipt=$(sysctl -e -n net.bridge.bridge-nf-call-iptables)
 		set_cache_var "bak_bridge_nf_ipt" "$bridge_nf_ipt"
@@ -1059,6 +1061,12 @@ get_config() {
 	DIRECT_DNS_QUERY_STRATEGY=$(config_n_get @global[0] direct_dns_query_strategy UseIP)
 
 	get_direct_dns
+	# nslookup uses UDP; TCP direct DNS remains configured for the proxy cores.
+	if [ "$DIRECT_DNS_PROTO" = "udp" ]; then
+		set_cache_var "DIRECT_DNS" "${DIRECT_DNS_SERVER}#${DIRECT_DNS_PORT}"
+	else
+		set_cache_var "DIRECT_DNS" "${AUTO_DNS%%,*}"
+	fi
 
 	DEFAULT_DNSMASQ_CONF_DIR=/tmp/dnsmasq.d
 	DNSMASQ_CONF_DIR=${DEFAULT_DNSMASQ_CONF_DIR}

@@ -282,10 +282,15 @@ main() {
 
 	firstconnect
 	while true; do
-		[ $STARTED -eq 0 ] && {
-			sleep $MAX_SLEEP &
+		if [ $STARTED -eq 0 ]; then
+			# Do not rely solely on the ifup signal: it may arrive between the
+			# initial state check and the sleep below during early boot.
+			sleep 5 &
 			wait $!
-		}
+			IFUP_EVENT=0
+			firstconnect
+			[ $STARTED -eq 0 ] && continue
+		fi
 		sleep_time=$interval
 		for track_ip in $track_ips; do
 			if [ $host_up_count -lt $reliability ]; then

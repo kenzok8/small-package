@@ -699,12 +699,14 @@ end
 function com_update(comname)
 	local json = nil
 	local task = http.formvalue("task")
-	if task == "extract" then
+	if task == "progress" then
+		json = api.to_download_progress(comname, http.formvalue("id"), http.formvalue("total_size"))
+	elseif task == "extract" then
 		json = api.to_extract(comname, http.formvalue("file"), http.formvalue("subfix"))
 	elseif task == "move" then
 		json = api.to_move(comname, http.formvalue("file"))
 	else
-		json = api.to_download(comname, http.formvalue("url"), http.formvalue("size"))
+		json = api.to_download(comname, http.formvalue("url"), http.formvalue("size"), http.formvalue("id"))
 	end
 
 	http_write_json(json)
