@@ -1275,6 +1275,7 @@ start_dns() {
 			else
 				smartdns_remote_dns="tcp://1.1.1.1"
 			fi
+			local smartdns_default_dns=$(config_n_get @global[0] smartdns_default_dns direct)
 
 			echolog "  - 域名解析：使用SmartDNS，请确保配置正常。"
 			china_ng_listen="127.0.0.1#${SMARTDNS_LISTEN_PORT}"
@@ -1288,7 +1289,7 @@ start_dns() {
 			local subnet_ip=$(config_n_get @global[0] remote_dns_client_ip)
 			lua $APP_PATH/helper_smartdns_add.lua -FLAG "default" -SMARTDNS_CONF "/tmp/etc/smartdns/$CONFIG.conf" \
 				-LISTEN_PORT ${SMARTDNS_LISTEN_PORT} -LOCAL_PORT ${SMARTDNS_LOCAL_PORT} -DNS_REDIRECT ${DNS_REDIRECT} \
-				-LOCAL_GROUP ${group_domestic:-null} -REMOTE_GROUP "passwall_proxy" -REMOTE_PROXY_SERVER ${GLOBAL_SOCKS_server} -USE_DEFAULT_DNS "${USE_DEFAULT_DNS:-direct}" \
+				-LOCAL_GROUP ${group_domestic:-null} -REMOTE_GROUP "passwall_proxy" -REMOTE_PROXY_SERVER ${GLOBAL_SOCKS_server} -USE_DEFAULT_DNS "${smartdns_default_dns}" \
 				-REMOTE_DNS ${smartdns_remote_dns} -DNS_MODE ${DNS_MODE:-socks} -TUN_DNS ${TUN_DNS} \
 				-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -CHN_LIST "${CHN_LIST}" \
 				-NODE ${NODE} -DEFAULT_PROXY_MODE "${TCP_PROXY_MODE}" -NO_PROXY_IPV6 ${FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \

@@ -10,6 +10,10 @@ LUCI_DEPENDS:=+msmtp-mta
 
 PKG_LICENSE:=GPLv3
 
+define Package/luci-app-mail/conffiles
+/etc/config/mail
+endef
+
 #include ../luci/luci.mk
 include $(TOPDIR)/feeds/luci/luci.mk
 

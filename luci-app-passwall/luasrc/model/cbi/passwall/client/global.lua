@@ -488,7 +488,16 @@ o:value("remote", translate("Remote DNS"))
 o:value("direct", translate("Direct DNS"))
 o.description = desc .. "</ul>"
 o:depends({dns_shunt = "dnsmasq", tcp_proxy_mode = "proxy", chn_list = "direct"})
+
 if has_smartdns then
+	o = s:taboption("DNS", ListValue, "smartdns_default_dns", translate("Default DNS"))
+	o.default = "direct"
+	o:value("remote", translate("Remote DNS"))
+	o:value("direct", translate("Direct DNS"))
+	o:value("auto", translate("Auto"))
+	o.description = desc
+		.. "<li>" .. translate("Auto: Prefer mainland China IPs returned by direct DNS and fall back to remote DNS when no usable result is available.") .. "</li>"
+		.. "</ul>"
 	o:depends({dns_shunt = "smartdns", tcp_proxy_mode = "proxy", chn_list = "direct"})
 end
 

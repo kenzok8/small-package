@@ -60,6 +60,11 @@ local function is_file_nonzero(path)
 	return nil
 end
 
+local function get_new_port(start_port, protocol)
+	local cmd_format = ". /usr/share/passwall/utils.sh ; echo -n $(get_new_port %s %s)"
+	return tonumber(sys.exec(string.format(cmd_format, api.util.shellquote(tostring(start_port or "auto")), api.util.shellquote(protocol or "tcp,udp"))))
+end
+
 local function insert_unique(dest_table, value, lookup_table)
 	if not lookup_table[value] then
 		table.insert(dest_table, value)
@@ -113,10 +118,24 @@ sys.call("mkdir -p %s" % FLAG_PATH)
 sys.call("mkdir -p %s" % CACHE_RULES_PATH)
 
 local LOCAL_EXTEND_ARG = ""
-if LOCAL_GROUP == "null" or LOCAL_GROUP == "" then
+local LOCAL_SERVERS = {}
+local SERVER_TYPES = {
+	udp = "server", tcp = "server-tcp", tls = "server-tls",
+	https = "server-https", quic = "server-quic", h3 = "server-h3"
+}
+if not LOCAL_GROUP or LOCAL_GROUP == "null" or LOCAL_GROUP == "" then
 	log("  * 注意：SmartDNS 国内分组名未设置，DNS 将无法正常工作！！！")
 	os.exit(1)
 else
+	api.uci:foreach("smartdns", "server", function(s)
+		if s.enabled ~= "0" and s.server_group == LOCAL_GROUP and s.ip and s.ip ~= "" and SERVER_TYPES[s.type or "udp"] then
+			table.insert(LOCAL_SERVERS, s)
+		end
+	end)
+	if #LOCAL_SERVERS == 0 then
+		log("  * 注意：SmartDNS 国内分组 " .. LOCAL_GROUP .. " 没有可用的 DNS 服务器，DNS 将无法正常工作！！！")
+		os.exit(1)
+	end
 	--从smartdns配置中读取参数
 	local custom_conf_path = "/etc/smartdns/custom.conf"
 	local options = {
@@ -163,15 +182,14 @@ else
 			val = custom_config[opt.config_key] or api.uci_get("smartdns", "@smartdns[0]", opt.key) or opt.default
 		end
 		if val == "yes" then val = "1" elseif val == "no" then val = "0" end
+		local arg
 		if opt.yes_no then
-			local arg = (val == "1" and opt.arg_yes or opt.arg_no)
-			if arg and arg ~= "" then
-				LOCAL_EXTEND_ARG = LOCAL_EXTEND_ARG .. (LOCAL_EXTEND_ARG ~= "" and " " or "") .. arg
-			end
-		else
-			if val and (not opt.value or (opt.invert and val ~= opt.value) or (not opt.invert and val == opt.value)) then
-				LOCAL_EXTEND_ARG = LOCAL_EXTEND_ARG .. (LOCAL_EXTEND_ARG ~= "" and " " or "") .. (opt.prefix or "") .. (opt.arg or val)
-			end
+			arg = (val == "1" and opt.arg_yes or opt.arg_no)
+		elseif val and (not opt.value or (opt.invert and val ~= opt.value) or (not opt.invert and val == opt.value)) then
+			arg = (opt.prefix or "") .. (opt.arg or val)
+		end
+		if arg and arg ~= "" then
+			LOCAL_EXTEND_ARG = LOCAL_EXTEND_ARG .. (LOCAL_EXTEND_ARG ~= "" and " " or "") .. arg
 		end
 	end
 end
@@ -182,10 +200,29 @@ end
 if REMOTE_DNS then
 	REMOTE_DNS = REMOTE_DNS:gsub("#", ":")
 end
-sys.call('sed -i "/passwall/d" /etc/smartdns/custom.conf >/dev/null 2>&1')
-
 local SANDBOX_GROUP = "passwall_" .. FLAG
+local AUTO_GROUP = "passwall_auto"
+local AUTO_ENTRY_GROUP = AUTO_GROUP .. "_entry"
+local auto_config_lines = {}
+--设置默认 DNS 分组(兜底组)，全局代理模式仍使用远程组。
+local DEFAULT_DNS_GROUP = (USE_DEFAULT_DNS == "direct" and LOCAL_GROUP) or
+                          (USE_DEFAULT_DNS == "remote" and REMOTE_GROUP) or
+                          (USE_DEFAULT_DNS == "auto" and AUTO_GROUP)
+local only_global = (DEFAULT_PROXY_MODE == "proxy" and CHN_LIST == "0" and USE_GFW_LIST == "0") and 1
+if only_global == 1 then
+	DEFAULT_DNS_GROUP = REMOTE_GROUP
+end
+local AUTO_PORT
+if DEFAULT_DNS_GROUP == AUTO_GROUP then
+	AUTO_PORT = get_new_port(15453, "udp")
+	if not AUTO_PORT then
+		log("  * 注意：SmartDNS 自动模式无法获取可用的 UDP 回环端口！")
+		os.exit(1)
+	end
+end
+sys.call('sed -i "/passwall/d" /etc/smartdns/custom.conf >/dev/null 2>&1')
 local force_https_soa = api.uci_get_c("@global[0]", "force_https_soa") or 0
+local force_qtype_soa = tonumber(force_https_soa) == 1 and "force-qtype-SOA 65" or "force-qtype-SOA -,65"
 local proxy_server_name = "psw-proxy-server"
 local listen_address = "[::]:" .. LISTEN_PORT .. (DNS_REDIRECT and "" or "@lo")
 local local_domain = DNS_REDIRECT and api.uci_get("dhcp", "@dnsmasq[0]", "domain")
@@ -194,7 +231,6 @@ config_lines = {
 	tonumber(LISTEN_PORT) ~= 0 and ("bind-tcp " .. listen_address .. " -group " .. SANDBOX_GROUP) or "",
 	(tonumber(LOCAL_PORT) ~= 0 and LOCAL_GROUP) and "bind [::]:" .. LOCAL_PORT .. "@lo -group " ..  LOCAL_GROUP or "",
 	(tonumber(LOCAL_PORT) ~= 0 and LOCAL_GROUP) and "bind-tcp [::]:" .. LOCAL_PORT .. "@lo -group " .. LOCAL_GROUP or "",
-	tonumber(force_https_soa) == 1 and "force-qtype-SOA 65" or "force-qtype-SOA -,65",
 	"server 223.5.5.5 -bootstrap-dns",
 	-- Set the suffix before loading hosts/leases so initial records are expanded too.
 	(local_domain and local_domain ~= "") and "local-domain " .. local_domain or "",
@@ -224,6 +260,53 @@ if DNS_REDIRECT then
 		table.insert(config_lines, string.format("odhcpd-lease-file %q", odhcpd_lease))
 	end
 end
+if DEFAULT_DNS_GROUP == AUTO_GROUP then
+	-- 复制国内组中启用的 UCI DNS 服务器，原组不添加白名单过滤。
+	for _, s in ipairs(LOCAL_SERVERS) do
+		local server_type = SERVER_TYPES[s.type or "udp"]
+		local address = s.ip
+		if not address:find("://", 1, true) then
+			if address:find(":", 1, true) and not address:find("[", 1, true) then
+				address = "[" .. address .. "]"
+			end
+			if s.port and s.port ~= "" then address = address .. ":" .. s.port end
+		end
+		local args = {server_type, address}
+		for _, key in ipairs({"tls_host_verify", "host_name", "http_host", "spki_pin", "set_mark"}) do
+			if s[key] and s[key] ~= "" then
+				table.insert(args, "-" .. key:gsub("_", "-"))
+				table.insert(args, s[key])
+			end
+		end
+		for _, key in ipairs({"no_check_certificate", "blacklist_ip", "check_edns"}) do
+			if s[key] == "1" and not (key == "blacklist_ip" and NO_PROXY_IPV6 == "1") then
+				table.insert(args, "-" .. key:gsub("_", "-"))
+			end
+		end
+		if s.use_proxy == "1" then table.insert(args, "-proxy default-proxy") end
+		-- 国内副本作为主用服务器，不继承后备标记。
+		local addition_arg = api.trim((" " .. (s.addition_arg or "")):gsub("(%s)%-%-?fallback%f[%s%z]", "%1"))
+		if NO_PROXY_IPV6 == "1" then
+			-- 国内副本只使用白名单，避免远程 IPv6 黑名单同时过滤国内结果。
+			addition_arg = api.trim((" " .. addition_arg):gsub("(%s)%-%-?blacklist%-ip%f[%s%z]", "%1"))
+		end
+		if addition_arg ~= "" then table.insert(args, addition_arg) end
+		table.insert(args, "-exclude-default-group -whitelist-ip")
+		table.insert(auto_config_lines, table.concat(args, " "))
+	end
+end
+
+-- 由下方 DNS_MODE 分支调用，服务器参数来自 PassWall 的 REMOTE_DNS 或 TUN_DNS。
+local function add_remote_server(server_param)
+	table.insert(config_lines, server_param .. " -group " .. REMOTE_GROUP .. " -exclude-default-group")
+	if DEFAULT_DNS_GROUP == AUTO_GROUP then
+		-- 远程副本作为自动组的后备服务器，保留代理、ECS 和传输协议参数。
+		local auto_param = server_param .. " -exclude-default-group -fallback"
+		if NO_PROXY_IPV6 == "1" then auto_param = auto_param .. " -blacklist-ip" end
+		table.insert(auto_config_lines, auto_param)
+	end
+end
+
 if DNS_MODE == "socks" then
 	for w in string.gmatch(REMOTE_DNS, '[^|]+') do
 		local server_dns = api.trim(w)
@@ -274,35 +357,60 @@ if DNS_MODE == "socks" then
 			server_param = server_param .. " -proxy " .. proxy_server_name
 		end
 
-		server_param = server_param .. " -group " .. REMOTE_GROUP .. " -exclude-default-group"
 		if SUBNET and SUBNET ~= "" and SUBNET ~= "0" then
 			server_param = server_param .. " -subnet " .. SUBNET
 		end
-		table.insert(config_lines, server_param)
+		add_remote_server(server_param)
 	end
 else
-	local server_param = string.format("server %s -group %s -exclude-default-group", TUN_DNS:gsub("#", ":"), REMOTE_GROUP)
-	table.insert(config_lines, server_param)
+	add_remote_server("server " .. TUN_DNS:gsub("#", ":"))
 	log("  - " .. DNS_MODE:gsub("^%l",string.upper) .. " " .. TUN_DNS .. " -> " .. REMOTE_GROUP)
 end
 
--- Isolate PassWall domain rules within dedicated group to avoid polluting SmartDNS default group
-table.insert(config_lines, "group-begin " .. SANDBOX_GROUP)
-
---设置默认 DNS 分组(托底组)
-local DEFAULT_DNS_GROUP = (USE_DEFAULT_DNS == "direct" and LOCAL_GROUP) or
-                          (USE_DEFAULT_DNS == "remote" and REMOTE_GROUP)
-local only_global = (DEFAULT_PROXY_MODE == "proxy" and CHN_LIST == "0" and USE_GFW_LIST == "0") and 1 --没有启用中国列表和GFW列表时(全局)
-if only_global == 1 then
-	DEFAULT_DNS_GROUP = REMOTE_GROUP
+if DEFAULT_DNS_GROUP == AUTO_GROUP then
+	-- IP 集合和过滤规则集中在自动规则组内。
+	if NO_PROXY_IPV6 == "1" then
+		table.insert(auto_config_lines, "ip-rules ::/0 -blacklist-ip")
+	end
+	for _, name in ipairs({"chnroute", "chnroute6"}) do
+		local path = RULES_PATH .. "/" .. name
+		if is_file_nonzero(path) then
+			local set_name = AUTO_GROUP .. "-" .. name
+			table.insert(auto_config_lines, string.format("ip-set -name %s -file %s", set_name, path))
+			local ip_rules = "ip-rules ip-set:" .. set_name .. " -whitelist-ip"
+			if name == "chnroute6" and NO_PROXY_IPV6 == "1" then
+				-- 最长前缀匹配时，大陆 IPv6 网段也需要黑名单标记才能过滤远程结果。
+				ip_rules = ip_rules .. " -blacklist-ip"
+			end
+			table.insert(auto_config_lines, ip_rules)
+		else
+			log("  * 注意：SmartDNS 智能模式大陆 IP 列表不存在或为空：" .. path)
+		end
+	end
+	-- 兜底通过 UDP 回环入口进入自动规则组，避免 IP 过滤影响其他查询。
+	table.insert(config_lines, "bind [::]:" .. AUTO_PORT .. "@lo -group " .. AUTO_GROUP)
+	table.insert(config_lines, "server [::1]:" .. AUTO_PORT .. " -group " .. AUTO_ENTRY_GROUP .. " -exclude-default-group")
+	table.insert(config_lines, "group-begin " .. AUTO_GROUP .. " -inherit none")
+	table.insert(config_lines, force_qtype_soa)
+	merge_array(config_lines, auto_config_lines)
+	table.insert(config_lines, "domain-rules /./ -nameserver " .. AUTO_GROUP .. (LOCAL_EXTEND_ARG ~= "" and " " .. LOCAL_EXTEND_ARG or ""))
+	table.insert(config_lines, "group-end")
 end
+
+-- PassWall 规则组不继承外部规则。
+table.insert(config_lines, "group-begin " .. SANDBOX_GROUP .. " -inherit none")
+table.insert(config_lines, force_qtype_soa)
+
 if DEFAULT_DNS_GROUP then
-	local domain_rules_str = "domain-rules /./ -nameserver " .. DEFAULT_DNS_GROUP
+	local domain_rules_str = "domain-rules /./ -nameserver " .. (DEFAULT_DNS_GROUP == AUTO_GROUP and AUTO_ENTRY_GROUP or DEFAULT_DNS_GROUP)
 	if DEFAULT_DNS_GROUP == REMOTE_GROUP then
 		domain_rules_str = domain_rules_str .. " -speed-check-mode none -d no -no-serve-expired"
 		domain_rules_str = domain_rules_str .. " -address " .. ((only_global and IS_SHUNT_NODE) and "-6" or (NO_PROXY_IPV6 == "1" and "#6" or "-6"))
 	elseif DEFAULT_DNS_GROUP == LOCAL_GROUP then
 		domain_rules_str = domain_rules_str .. (LOCAL_EXTEND_ARG ~= "" and " " .. LOCAL_EXTEND_ARG or "")
+	elseif DEFAULT_DNS_GROUP == AUTO_GROUP then
+		-- 转接层只转发请求，测速、双栈优选及缓存交给自动规则组处理。
+		domain_rules_str = domain_rules_str .. " -speed-check-mode none -d no -no-cache"
 	end
 	table.insert(config_lines, domain_rules_str)
 end
@@ -803,7 +911,7 @@ if #config_lines > 0 then
 end
 
 if DEFAULT_DNS_GROUP then
-	log(string.format("  - 默认 DNS 分组：%s", DEFAULT_DNS_GROUP))
+	log(string.format("  - 默认 DNS 分组：%s", DEFAULT_DNS_GROUP == AUTO_GROUP and "自动" or DEFAULT_DNS_GROUP))
 end
 
 fs.symlink(TMP_CONF_FILE, SMARTDNS_CONF)
