@@ -35,7 +35,6 @@ define Package/$(PKG_NAME)
 	TITLE:=LuCI app for daede dashboard
 	DEPENDS:=+luci-base +PACKAGE_$(PKG_NAME)_dae:dae +PACKAGE_$(PKG_NAME)_daed:daed
 	PKGARCH:=all
-	MAINTAINER:=kenzok8
 endef
 
 define Package/$(PKG_NAME)/description
