@@ -187,38 +187,30 @@ nft_rule_dual() {
 	nft "add rule $NFTABLE_NAME $chain_name $match_condition @${static_set} ${final_action}"
 }
 
+# Avoid terminal stdin or open-ended pipes to prevent hanging.
 insert_nftset() {
 	local nftset_name="${1}"; shift
-	local suffix=""
+	[ -n "$nftset_name" ] || return 0
 
-	if [ -n "$nftset_name" ] && { [ $# -gt 0 ] || [ ! -t 0 ]; }; then
-		{
-			if [ $# -gt 0 ] && [ $# -le 1000 ]; then
-				printf "%s\n" "$@"
-			elif [ $# -gt 1000 ]; then
-				printf "%s\n" "$*"
-			else
-				cat
-			fi | awk -v s="$suffix" -v n="$nftset_name" -v t="$NFTABLE_NAME" '
-				BEGIN {
-					RS = "[ \t\n\r]+"
-					ORS = ""
-				}
-				$0 != "" {
-					if (!first) {
-						printf "add element %s %s { \n", t, n
-						first = 1;
-					} else {
-						print ",\n"
-					}
-					print $0 s
-				}
-				END {
-					if (first) print "\n }\n"
-				}
-			'
-		} | nft -f -
-	fi
+	awk -v n="$nftset_name" -v t="$NFTABLE_NAME" '
+		BEGIN {
+			RS = "[ \t\n\r]+"
+			ORS = ""
+		}
+        $0 != "" {
+            if (!first) {
+                printf "add element %s %s { \n", t, n
+				first = 1
+            } else {
+                print ",\n"
+            }
+            printf " %s", $0
+        }
+        END {
+            if (first) {
+                print "\n }\n"
+            }
+        }' | nft -f -
 }
 
 gen_nftset() {
@@ -234,9 +226,6 @@ gen_nftset() {
 		else
 			nft "add set $NFTABLE_NAME $nftset_name { type $ip_type; flags interval, timeout; timeout $timeout_argument_set; gc-interval $gc_interval_time; auto-merge; }"
 		fi
-	fi
-	if [ $# -gt 0 ]; then
-		insert_nftset "$nftset_name" "$@"
 	fi
 }
 
@@ -969,7 +958,8 @@ add_firewall_rule() {
 	gen_nftset $NFTSET_VPS ipv4_addr 0
 	gen_nftset $NFTSET_GFW ipv4_addr "2d"
 	gen_nftset $NFTSET_LOCAL ipv4_addr 0
-	gen_nftset $NFTSET_LAN ipv4_addr 0 $(gen_lanlist)
+	gen_nftset $NFTSET_LAN ipv4_addr 0
+	gen_lanlist | insert_nftset $NFTSET_LAN
 	gen_nftset $NFTSET_CHN ipv4_addr "2d"
 	if [ -f $RULES_PATH/chnroute.nft ] && [ -s $RULES_PATH/chnroute.nft ] && [ $(awk 'END{print NR}' $RULES_PATH/chnroute.nft) -ge 8 ]; then
 		nft -f $RULES_PATH/chnroute.nft
@@ -990,7 +980,8 @@ add_firewall_rule() {
 	gen_nftset $NFTSET_VPS6 ipv6_addr 0
 	gen_nftset $NFTSET_GFW6 ipv6_addr "2d"
 	gen_nftset $NFTSET_LOCAL6 ipv6_addr 0
-	gen_nftset $NFTSET_LAN6 ipv6_addr 0 $(gen_lanlist_6)
+	gen_nftset $NFTSET_LAN6 ipv6_addr 0
+	gen_lanlist_6 | insert_nftset $NFTSET_LAN6
 	gen_nftset $NFTSET_CHN6 ipv6_addr "2d"
 	if [ -f $RULES_PATH/chnroute6.nft ] && [ -s $RULES_PATH/chnroute6.nft ] && [ $(awk 'END{print NR}' $RULES_PATH/chnroute6.nft) -ge 8 ]; then
 		#echolog "使用缓存加载chnroute6..."
@@ -1627,9 +1618,6 @@ stop() {
 arg1=$1
 shift
 case $arg1 in
-insert_nftset)
-	insert_nftset "$@"
-	;;
 filter_direct_node_list)
 	filter_direct_node_list
 	;;
