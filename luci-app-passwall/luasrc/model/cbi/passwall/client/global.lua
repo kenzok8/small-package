@@ -176,26 +176,10 @@ o.write = function(self, section, value)
 	if old and old ~= value then
 		m:set(section, "flush_set", "1")
 	end
-	if value ~= "smartdns" then
-		m:del(section, "group_domestic")
-	end
 	return ListValue.write(self, section, value)
 end
 if has_smartdns then
 	o:value("smartdns", "SmartDNS")
-
-	o = s:taboption("DNS", Value, "group_domestic", translate("Domestic group name"))
-	o.placeholder = "local"
-	o.rmempty = false
-	o:depends("dns_shunt", "smartdns")
-	o.description = translate("You only need to configure domestic DNS packets in SmartDNS, and fill in the domestic DNS group name here.")
-	o.validate = function(self, value, section)
-		value = api.trim(value)
-		if value == "" then
-			return nil, translatef("%s cannot be empty.", "SmartDNS " .. translate("Domestic group name"))
-		end
-		return value
-	end
 end
 
 o = s:taboption("DNS", ListValue, "direct_dns_mode", translate("Direct DNS") .. " " .. translate("Request protocol"))
@@ -204,6 +188,9 @@ o:value("udp", translatef("Requery DNS By %s", "UDP"))
 o:value("tcp", translatef("Requery DNS By %s", "TCP"))
 o:depends({dns_shunt = "dnsmasq"})
 o:depends({dns_shunt = "chinadns-ng"})
+if has_smartdns then
+	o:depends({dns_shunt = "smartdns"})
+end
 
 o = s:taboption("DNS", Value, "direct_dns", translate("Direct DNS"))
 o.datatype = "or(ipaddr,ipaddrport(1))"
@@ -654,6 +641,90 @@ o.cfgvalue = function(t, n)
 	return s
 end
 o:depends("log_chinadns_ng", "1")
+
+if has_smartdns then
+	o = s:taboption("log", Flag, "log_smartdns", translate("Enable") .. " SmartDNS " .. translate("Log"))
+	o.default = "0"
+	o.rmempty = false
+	o:depends("dns_shunt", "smartdns")
+
+	o = s:taboption("log", ListValue, "smartdns_log_level", "SmartDNS " .. translate("Log Level"))
+	o.default = "error"
+	o:value("fatal", "Fatal")
+	o:value("error", "Error")
+	o:value("warn", "Warning")
+	o:value("notice", "Notice")
+	o:value("info", "Info")
+	o:value("debug", "Debug")
+	o:depends({dns_shunt = "smartdns", log_smartdns = "1"})
+
+	o = s:taboption("log", Value, "smartdns_log_size", translate("Log Size") .. " (MB)")
+	o.default = "1"
+	o.datatype = "and(uinteger,min(1))"
+	o.rmempty = false
+	o:depends({dns_shunt = "smartdns", log_smartdns = "1"})
+
+	o = s:taboption("log", DummyValue, "_smartdns_log", translate("Log File"))
+	o.rawhtml = true
+	o.cfgvalue = function(t, n)
+		local log_file = api.TMP_PATH .. "/acl/default/smartdns.log"
+		local log_url = api.url("get_smartdns_log")
+		local s = "<code>%s</code>&nbsp;&nbsp;" % log_file
+		if api.fs.access(log_file) then
+			local btn = string.format(
+				'<input class="btn cbi-button cbi-button-apply" type="button" value="%s" onclick="window.open(\'%s\', \'_blank\')" />',
+				translate("View Log"),
+				log_url
+			)
+			s = s .. btn
+		end
+		return s
+	end
+	o:depends({dns_shunt = "smartdns", log_smartdns = "1"})
+
+	if api.fs.access("/usr/lib/smartdns_ui.so") or api.fs.access("/usr/lib/smartdns/smartdns_ui.so") then
+		o = s:taboption("log", Flag, "smartdns_ui", "SmartDNS " .. translate("Enable WebUI"))
+		o.default = "0"
+		o.rmempty = false
+		o:depends("dns_shunt", "smartdns")
+
+		o = s:taboption("log", Value, "smartdns_ui_port", translate("WebUI Port"))
+		o.default = "9880"
+		o.datatype = "range(1,65535)"
+		o.rmempty = false
+		o:depends({dns_shunt = "smartdns", smartdns_ui = "1"})
+
+		o = s:taboption("log", Value, "smartdns_ui_data_dir", translate("WebUI Database Directory"))
+		o.default = api.CACHE_PATH .. "/smartdns"
+		o.rmempty = false
+		o.validate = function(self, value, section)
+			value = api.trim(value)
+			if value:sub(1, 1) ~= "/" or value:find("%s") then
+				return nil, translate("An absolute path without spaces is required.")
+			end
+			return value
+		end
+		o:depends({dns_shunt = "smartdns", smartdns_ui = "1"})
+
+		o = s:taboption("log", Value, "smartdns_ui_log_max_age", translate("WebUI Log Retention Days"))
+		o.default = "7"
+		o.datatype = "and(uinteger,min(1))"
+		o.rmempty = false
+		o:depends({dns_shunt = "smartdns", smartdns_ui = "1"})
+
+		o = s:taboption("log", DummyValue, "_smartdns_ui_link", "WebUI")
+		o.rawhtml = true
+		o.cfgvalue = function(self, section)
+			local port = tonumber(m:get(section, "smartdns_ui_port")) or 9880
+			if port < 1 or port > 65535 or port % 1 ~= 0 then port = 9880 end
+			return string.format(
+				[[<input class="btn cbi-button cbi-button-apply" type="button" value="%s" onclick="var host = window.location.hostname; if (host.indexOf(':') !== -1 &amp;&amp; host.charAt(0) !== '[') host = '[' + host + ']'; window.open('http://' + host + ':%d', '_blank', 'noopener,noreferrer');" />]],
+				translate("Open WebUI"), port
+			)
+		end
+		o:depends({dns_shunt = "smartdns", smartdns_ui = "1"})
+	end
+end
 
 o = s:taboption("log", DummyValue, "_log_tips", "　")
 o.rawhtml = true

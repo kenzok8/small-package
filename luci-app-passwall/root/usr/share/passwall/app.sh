@@ -1066,22 +1066,6 @@ stop_crontab() {
 	#echolog "清除定时执行命令。"
 }
 
-restart_smartdns() {
-	rm -rf /tmp/smartdns.cache
-	/etc/init.d/smartdns reload >/dev/null 2>&1
-}
-
-del_smartdns_conf() {
-	command -v smartdns >/dev/null 2>&1 || return
-	rm -rf "/tmp/etc/smartdns/${CONFIG}.conf"
-	local custom_conf="/etc/smartdns/custom.conf"
-	if [ -f "$custom_conf" ] && grep -q "${CONFIG}" "$custom_conf"; then
-		sed -i "/${CONFIG}/d" "$custom_conf" >/dev/null 2>&1
-		rm -rf /tmp/smartdns.cache
-		/etc/init.d/smartdns reload >/dev/null 2>&1
-	fi
-}
-
 start_dns() {
 	echolog "DNS域名解析："
 
@@ -1111,15 +1095,15 @@ start_dns() {
 			china_ng_local_dns="tcp://${DIRECT_DNS}"
 			v2ray_local_dns="direct_dns_tcp_server=${DIRECT_DNS}"
 
-			#当全局（包括访问控制节点）开启chinadns-ng时，不启动新进程。
-			[ "$DNS_SHUNT" != "chinadns-ng" ] || [ "$ACL_RULE_DNSMASQ" = "1" ] && {
+			# ChinaDNS-NG and SmartDNS can query TCP upstreams directly.
+			if { [ "$DNS_SHUNT" != "chinadns-ng" ] && [ "$DNS_SHUNT" != "smartdns" ]; } || [ "$ACL_RULE_DNSMASQ" = "1" ]; then
 				LOCAL_DNS="127.0.0.1#${NEXT_DNS_LISTEN_PORT}"
 				set_cache_var "LOCAL_DNS" "$LOCAL_DNS"
 				ln_run "$(first_type chinadns-ng)" chinadns-ng "/dev/null" -b :: -l ${NEXT_DNS_LISTEN_PORT} -c ${china_ng_local_dns} -d chn
 				echolog "  - ChinaDNS-NG(${LOCAL_DNS}) -> ${china_ng_local_dns}"
 				echolog "  * 请确保上游直连 DNS 支持 TCP 查询。"
 				NEXT_DNS_LISTEN_PORT=$(expr $NEXT_DNS_LISTEN_PORT + 1)
-			}
+			fi
 		;;
 		auto)
 			#Automatic logic is already done by default
@@ -1266,9 +1250,9 @@ start_dns() {
 
 	local china_ng_listen=0
 	[ "${DNS_SHUNT}" = "smartdns" ] && {
-		if command -v smartdns > /dev/null 2>&1; then
+		local smartdns_bin=$(first_type smartdns)
+		if [ -n "$smartdns_bin" ]; then
 			rm -rf $TMP_PATH2/dnsmasq_default*
-			local group_domestic=$(config_n_get @global[0] group_domestic)
 			local smartdns_remote_dns=$(config_n_get @global[0] smartdns_remote_dns)
 			if [ -n "${smartdns_remote_dns}" ] && [ "${smartdns_remote_dns}" != "nil" ]; then
 				smartdns_remote_dns=$(echo ${smartdns_remote_dns} | tr -s ' ' '|')
@@ -1276,27 +1260,34 @@ start_dns() {
 				smartdns_remote_dns="tcp://1.1.1.1"
 			fi
 			local smartdns_default_dns=$(config_n_get @global[0] smartdns_default_dns direct)
-
-			echolog "  - 域名解析：使用SmartDNS，请确保配置正常。"
-			china_ng_listen="127.0.0.1#${SMARTDNS_LISTEN_PORT}"
-			if [ "${DNS_REDIRECT}" = "1" ]; then
-				echolog "  - DNS 重定向 -> SmartDNS(${china_ng_listen})，直连 DNS -> 国内分组(${group_domestic:-null})"
-			else
-				echolog "  - SmartDNS(127.0.0.1#${SMARTDNS_LOCAL_PORT}) -> 国内分组(${group_domestic:-null})，SmartDNS(${china_ng_listen}) -> Dnsmasq"
-			fi
-			china_ng_listen="${china_ng_listen},::1#${SMARTDNS_LISTEN_PORT}"
-
+			local smartdns_listen_port=$(get_new_port "$(expr $NEXT_DNS_LISTEN_PORT + 1)")
+			[ -n "$smartdns_listen_port" ] || {
+				echolog "  * SmartDNS 无法获取可用的 DNS 监听端口！"
+				return 1
+			}
+			local smartdns_config="${GLOBAL_ACL_PATH}/smartdns.conf"
 			local subnet_ip=$(config_n_get @global[0] remote_dns_client_ip)
-			lua $APP_PATH/helper_smartdns_add.lua -FLAG "default" -SMARTDNS_CONF "/tmp/etc/smartdns/$CONFIG.conf" \
-				-LISTEN_PORT ${SMARTDNS_LISTEN_PORT} -LOCAL_PORT ${SMARTDNS_LOCAL_PORT} -DNS_REDIRECT ${DNS_REDIRECT} \
-				-LOCAL_GROUP ${group_domestic:-null} -REMOTE_GROUP "passwall_proxy" -REMOTE_PROXY_SERVER ${GLOBAL_SOCKS_server} -USE_DEFAULT_DNS "${smartdns_default_dns}" \
-				-REMOTE_DNS ${smartdns_remote_dns} -DNS_MODE ${DNS_MODE:-socks} -TUN_DNS ${TUN_DNS} \
+			echolog "  - SmartDNS(127.0.0.1#${smartdns_listen_port})，直连 DNS：${china_ng_local_dns} -> 分组(direct)"
+
+			lua "$APP_PATH/helper_smartdns_add.lua" -FLAG "default" \
+				-LISTEN_PORT "$smartdns_listen_port" -LOCAL_DNS "$china_ng_local_dns" -DNS_REDIRECT "${DNS_REDIRECT}" \
+				-REMOTE_PROXY_SERVER "${GLOBAL_SOCKS_server}" -USE_DEFAULT_DNS "${smartdns_default_dns}" \
+				-REMOTE_DNS "${smartdns_remote_dns}" -DNS_MODE "${DNS_MODE:-socks}" -TUN_DNS "${TUN_DNS}" \
 				-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -CHN_LIST "${CHN_LIST}" \
-				-NODE ${NODE} -DEFAULT_PROXY_MODE "${TCP_PROXY_MODE}" -NO_PROXY_IPV6 ${FILTER_PROXY_IPV6:-0} -NFTFLAG ${nftflag:-0} \
-				-SUBNET ${subnet_ip:-0} -NO_LOGIC_LOG ${NO_LOGIC_LOG:-0}
-
-			restart_smartdns
-
+				-NODE "${NODE}" -DEFAULT_PROXY_MODE "${TCP_PROXY_MODE}" -NO_PROXY_IPV6 "${FILTER_PROXY_IPV6:-0}" -NFTFLAG "${nftflag:-0}" \
+				-SUBNET "${subnet_ip:-0}" -NO_LOGIC_LOG "${NO_LOGIC_LOG:-0}" \
+				-LOG "$(config_n_get @global[0] log_smartdns 0)" \
+				-LOG_LEVEL "$(config_n_get @global[0] smartdns_log_level error)" \
+				-LOG_SIZE "$(config_n_get @global[0] smartdns_log_size 1)" \
+				-UI "$(config_n_get @global[0] smartdns_ui 0)" \
+				-UI_PORT "$(config_n_get @global[0] smartdns_ui_port 9880)" \
+				-UI_DATA_DIR "$(config_n_get @global[0] smartdns_ui_data_dir "$TMP_PATH2/smartdns")" \
+				-UI_LOG_MAX_AGE "$(config_n_get @global[0] smartdns_ui_log_max_age 7)" || {
+				echolog "  * SmartDNS 配置生成失败！"
+				return 1
+			}
+			ln_run "$smartdns_bin" smartdns "/dev/null" -f -c "$smartdns_config" -p "${GLOBAL_ACL_PATH}/smartdns.pid"
+			china_ng_listen="127.0.0.1#${smartdns_listen_port},::1#${smartdns_listen_port}"
 			USE_DEFAULT_DNS="chinadns_ng"
 		else
 			DNS_SHUNT="dnsmasq"
@@ -1377,7 +1368,7 @@ start_dns() {
 		lua $APP_PATH/helper_dnsmasq.lua logic_restart -LOG 1
 	elif [ "${DNS_SHUNT}" = "smartdns" ]; then
 		# SmartDNS reads DHCP leases itself; no forwarding dnsmasq instance is needed.
-		DNS_REDIRECT_PORT=${SMARTDNS_LISTEN_PORT}
+		DNS_REDIRECT_PORT=${smartdns_listen_port}
 		set_cache_var "ACL_default_dns_port" "${DNS_REDIRECT_PORT}"
 	else
 		#Run a copy dnsmasq instance, DNS hijack for that need proxy devices.
@@ -1730,7 +1721,11 @@ start() {
 	[ "$ENABLED_DEFAULT_ACL" = 1 ] && {
 		mkdir -p ${GLOBAL_ACL_PATH}
 		start_global
-		start_dns
+		start_dns || {
+			echolog "DNS 启动失败，停止服务。"
+			stop
+			return 1
+		}
 	}
 	[ -n "$USE_TABLES" ] && source $APP_PATH/${USE_TABLES}.sh start
 	set_cache_var "USE_TABLES" "$USE_TABLES"
@@ -1783,7 +1778,6 @@ stop() {
 	unset XRAY_LOCATION_ASSET
 	unset SS_SYSTEM_DNS_RESOLVER_FORCE_BUILTIN
 	stop_crontab $1
-	del_smartdns_conf
 	rm -rf $GLOBAL_DNSMASQ_CONF
 	rm -rf $GLOBAL_DNSMASQ_CONF_PATH
 	[ "1" = "1" ] && {
@@ -1884,19 +1878,6 @@ get_config() {
 	fi
 	set_cache_var GLOBAL_DNSMASQ_CONF ${DNSMASQ_CONF_DIR}/dnsmasq-${CONFIG}.conf
 	set_cache_var GLOBAL_DNSMASQ_CONF_PATH ${GLOBAL_ACL_PATH}/dnsmasq.d
-
-	SMARTDNS_LOCAL_PORT=0
-	SMARTDNS_LISTEN_PORT=0
-	[ "$ENABLED_DEFAULT_ACL" = 1 ] && [ "$DNS_SHUNT" = "smartdns" ] && {
-		NEXT_DNS_LISTEN_PORT=$(expr $NEXT_DNS_LISTEN_PORT + 1)
-		SMARTDNS_LOCAL_PORT=${NEXT_DNS_LISTEN_PORT}
-		NEXT_DNS_LISTEN_PORT=$(expr $NEXT_DNS_LISTEN_PORT + 1)
-		SMARTDNS_LISTEN_PORT=${NEXT_DNS_LISTEN_PORT}
-		NEXT_DNS_LISTEN_PORT=$(expr $NEXT_DNS_LISTEN_PORT + 1)
-		LOCAL_DNS="127.0.0.1#${SMARTDNS_LOCAL_PORT}"
-		set_cache_var "LOCAL_DNS" "$LOCAL_DNS"
-		set_cache_var "SMARTDNS_LOCAL_PORT" "${SMARTDNS_LOCAL_PORT}"
-	}
 }
 
 get_local_dns() {

@@ -127,12 +127,6 @@ msgstr "当前节点：%s"
 msgid "DNS Shunt"
 msgstr "DNS分流"
 
-msgid "Domestic group name"
-msgstr "国内分组名"
-
-msgid "You only need to configure domestic DNS packets in SmartDNS, and fill in the domestic DNS group name here."
-msgstr "您只需要在SmartDNS配置好国内DNS分组，并在此处填入国内DNS分组名。"
-
 msgid "%s cannot be empty."
 msgstr "%s 不能为空。"
 
@@ -1651,6 +1645,27 @@ msgstr "启用节点日志"
 
 msgid "Log Level"
 msgstr "日志等级"
+
+msgid "Log Size"
+msgstr "日志大小"
+
+msgid "Enable WebUI"
+msgstr "启用 WebUI"
+
+msgid "Open WebUI"
+msgstr "打开 WebUI"
+
+msgid "WebUI Port"
+msgstr "WebUI 端口"
+
+msgid "WebUI Database Directory"
+msgstr "WebUI 数据库目录"
+
+msgid "WebUI Log Retention Days"
+msgstr "WebUI 日志保存天数"
+
+msgid "An absolute path without spaces is required."
+msgstr "请输入不含空格的绝对路径。"
 
 msgid "Not enabled log"
 msgstr "未启用日志"
