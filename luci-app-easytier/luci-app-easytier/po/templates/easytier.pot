@@ -906,10 +906,12 @@ msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:65
 msgid ""
-"Web configuration server address. (-w parameter)<br>For a self-hosted Web "
-"server, use the format: udp://server_address:22020/username<br>For the "
-"official Web server, use the format: username<br>Official Web Console: <a "
-"href='https://easytier.cn/web'>easytier.cn/web</a>"
+"Web configuration server address. (-w parameter)<br>Since EasyTier 2.7.0 a "
+"full URL is required, the token-only shorthand is no longer supported<br>Self-"
+"hosted Web server, use the format: udp://server_address:22020/username<br>"
+"Official Web server, use the format: udp://config-server.easytier.cn:22020/"
+"username<br>Official Web Console: <a href='https://easytier.cn/web'>easytier."
+"cn/web</a>"
 msgstr ""
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:365
@@ -1411,4 +1413,112 @@ msgid "Copied"
 msgstr ""
 
 msgid "Duplicate extra parameter"
+msgstr ""
+
+msgid "VPN Portal Listen Address"
+msgstr ""
+
+msgid "WireGuard VPN portal listen address, allowing other VPN clients to connect.<br>Since EasyTier 2.7.0 only wg://HOST:PORT is accepted; the client network can no longer be appended to the URL, please add each client in \"VPN Portal Clients\" below (--vpn-portal parameter)"
+msgstr ""
+
+msgid "Only wg://HOST:PORT is accepted since EasyTier 2.7.0, please fill the client network into \"VPN Portal Clients\""
+msgstr ""
+
+msgid "VPN Portal Clients"
+msgstr ""
+
+msgid "One WireGuard client per entry in the form NAME=CIDR, for example client1=10.14.14.1/24.<br>NAME may contain letters, digits and dashes only; the address must be a usable host address inside the client network. (--vpn-portal-client parameter)"
+msgstr ""
+
+msgid "Invalid client, expected NAME=CIDR, for example client1=10.14.14.1/24"
+msgstr ""
+
+msgid "VPN Portal Private Key"
+msgstr ""
+
+msgid "Base64 encoded 32-byte WireGuard private key of the portal.<br>Required since EasyTier 2.7.0, the portal will not start without it. It is handed to easytier-core through an environment variable so that it never shows up in the process list. (--vpn-portal-private-key parameter)"
+msgstr ""
+
+msgid "Disable relay quic"
+msgstr ""
+
+msgid "If true, disable relaying quic packets, avoiding consuming too much bandwidth. (--disable-relay-quic parameter)"
+msgstr ""
+
+msgid "Relay foreign network quic"
+msgstr ""
+
+msgid "If true, allow relaying quic packets from foreign networks. (--enable-relay-foreign-network-quic parameter)"
+msgstr ""
+
+msgid "Magic DNS Zone"
+msgstr ""
+
+msgid "Top level DNS zone used by Magic DNS, default is et.net. Only takes effect when Magic DNS is enabled. (--tld-dns-zone parameter)"
+msgstr ""
+
+msgid "Instance Receive Rate Limit"
+msgstr ""
+
+msgid "the maximum inbound bps limit for this network instance, default is no limit. unit: BPS (bytes per second). (--instance-recv-bps-limit parameter)"
+msgstr ""
+
+msgid "Socket Mark"
+msgstr ""
+
+msgid "Set SO_MARK on all underlay sockets, Linux only and requires CAP_NET_ADMIN. Usually used together with policy routing. (--socket-mark parameter)"
+msgstr ""
+
+msgid "Lazy P2P"
+msgstr ""
+
+msgid "Only try to establish P2P connections when traffic actually needs to be forwarded. (--lazy-p2p parameter)"
+msgstr ""
+
+msgid "Need P2P"
+msgstr ""
+
+msgid "Require a P2P connection before forwarding traffic through relays. (--need-p2p parameter)"
+msgstr ""
+
+msgid "Disable UPnP"
+msgstr ""
+
+msgid "EasyTier 2.7.0 tries to map listener ports through UPnP/NAT-PMP by default. Enable this to turn the automatic port mapping off. (--disable-upnp parameter)"
+msgstr ""
+
+msgid "STUN Servers"
+msgstr ""
+
+msgid "Custom UDP STUN servers used for NAT type detection and hole punching. Leave empty to use the built-in defaults. (--stun-servers parameter)"
+msgstr ""
+
+msgid "STUN Servers (TCP)"
+msgstr ""
+
+msgid "Custom TCP STUN servers used for NAT type detection and hole punching. Leave empty to use the built-in defaults. (--tcp-stun-servers parameter)"
+msgstr ""
+
+msgid "Heartbeat Minimum Response Time (ms)"
+msgstr ""
+
+msgid "Minimum heartbeat response delay used by the config server when measuring client latency"
+msgstr ""
+
+msgid "Heartbeat Timeout (ms)"
+msgstr ""
+
+msgid "How long a client may stay silent before the config server marks it offline"
+msgstr ""
+
+msgid "Gateway Peer URL"
+msgstr ""
+
+msgid "Peer URL used by this web instance when it works as a gateway"
+msgstr ""
+
+msgid "Gateway Relay Data"
+msgstr ""
+
+msgid "Allow this web gateway instance to relay data traffic"
 msgstr ""

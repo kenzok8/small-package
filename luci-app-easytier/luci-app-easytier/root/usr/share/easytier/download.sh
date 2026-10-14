@@ -42,7 +42,7 @@ get_latest_version() {
 	# 如果获取失败，从 UCI 配置或使用默认版本
 	if [ -z "$tag" ]; then
 		tag=$(uci -q get easytier.@easytier[0].fallback_version)
-		[ -z "$tag" ] && tag="v2.6.2"
+		[ -z "$tag" ] && tag="v2.7.0"
 	fi
 	
 	echo "$tag"

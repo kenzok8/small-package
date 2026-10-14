@@ -3,6 +3,8 @@ instance_id = "f9f05421-7c6b-47d6-a67d-4d58d49f51d8"
 dhcp = true
 listeners = []
 exit_nodes = []
+# 注意：顶层配置结构里没有 rpc_portal 字段，该行会被 easytier-core 静默忽略。
+# RPC 端口只能通过命令行 -r 指定（本插件的“RPC 端口”选项），保持默认即可。
 rpc_portal = "0.0.0.0:15888"
 
 [network_identity]
@@ -11,5 +13,19 @@ network_secret = "mysecret"
 
 [[peer]]
 uri = "tcp://public.easytier.top:11010"
+
+# EasyTier 2.7.0 起 WireGuard 门户写法（默认关闭，需要时取消注释）
+# 旧版把客户端网段写在 wireguard_listen 之外的 client_cidr 键已不再支持，会导致配置文件解析失败。
+# 门户私钥为 base64 编码的 32 字节，2.7.0 起必须填写，否则门户监听不会启动。
+# [vpn_portal_config]
+# enabled = true
+# wireguard_listen = "0.0.0.0:51820"
+# wireguard_private_key = ""
+#
+# [[vpn_portal_config.clients]]
+# name = "client1"
+# virtual_ip = "10.14.14.1/24"
+# groups = []
+
 
 

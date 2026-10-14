@@ -107,7 +107,7 @@ check_bin() {
 	# 如果获取失败，从 UCI 配置或使用默认版本
 	if [ -z "$tag" ]; then
 		tag=$(uci -q get easytier.@easytier[0].fallback_version)
-		[ -z "$tag" ] && tag="v2.6.4"
+		[ -z "$tag" ] && tag="v2.7.0"
 	fi
 	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 开始在线下载${tag}版本，${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip下载较慢耐心等候" >>/tmp/easytier.log
 	echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 开始在线下载${tag}版本，${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip下载较慢耐心等候" >>/tmp/easytierweb.log
@@ -167,7 +167,10 @@ check_config() {
                    wireguard_port=$(cat $config_file | grep "wireguard_listen = " | awk -F ":" '{print $2}'| tr -d '/", ')
                    log="$(uci -q get easytier.@easytier[0].log || echo off)"
                    echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 检测配置文件可用性 ${easytierbin} --check-config --config-file ${config_file}" >>/tmp/easytier.log
-                   ${easytierbin} --check-config --config-file ${config_file} >> /tmp/easytier.log 2>&1 &
+                   ${easytierbin} --check-config --config-file ${config_file} >> /tmp/easytier.log 2>&1
+                   if [ "$?" != "0" ] ; then
+                   echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 配置文件 ${config_file} 校验失败，请查看上方 easytier-core 的报错。EasyTier 2.7.0 起配置校验更严格：旧的 [vpn_portal_config] client_cidr 写法与 [flags] 中的未知键都会导致解析失败" >>/tmp/easytier.log
+                   fi
                    
 		   echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 开始运行 ${easytierbin} -c ${config_file}" >>/tmp/easytier.log
                    procd_open_instance
@@ -218,6 +221,8 @@ get_etconfig() {
 		desvice_name="$(uci -q get easytier.@easytier[0].desvice_name)"
 		instance_name="$(uci -q get easytier.@easytier[0].instance_name)"
 		vpn_portal="$(uci -q get easytier.@easytier[0].vpn_portal)"
+		vpn_portal_clients="$(uci -q get easytier.@easytier[0].vpn_portal_clients)"
+		vpn_portal_private_key="$(uci -q get easytier.@easytier[0].vpn_portal_private_key)"
 		mtu="$(uci -q get easytier.@easytier[0].mtu)"
 		default_protocol="$(uci -q get easytier.@easytier[0].default_protocol)"
 		disable_encryption="$(uci -q get easytier.@easytier[0].disable_encryption || echo 0)"
@@ -263,7 +268,18 @@ get_etconfig() {
 		auto_config_interface="$(uci -q get easytier.@easytier[0].auto_config_interface || echo 1)"
 		interface_netmask="$(uci -q get easytier.@easytier[0].interface_netmask)"
 		auto_config_firewall="$(uci -q get easytier.@easytier[0].auto_config_firewall || echo 1)"
-		
+		# EasyTier 2.7.0 新增参数
+		tld_dns_zone="$(uci -q get easytier.@easytier[0].tld_dns_zone)"
+		instance_recv_bps_limit="$(uci -q get easytier.@easytier[0].instance_recv_bps_limit)"
+		socket_mark="$(uci -q get easytier.@easytier[0].socket_mark)"
+		disable_upnp="$(uci -q get easytier.@easytier[0].disable_upnp || echo 0)"
+		lazy_p2p="$(uci -q get easytier.@easytier[0].lazy_p2p || echo 0)"
+		need_p2p="$(uci -q get easytier.@easytier[0].need_p2p || echo 0)"
+		disable_relay_quic="$(uci -q get easytier.@easytier[0].disable_relay_quic || echo 0)"
+		relay_quic="$(uci -q get easytier.@easytier[0].relay_quic || echo 0)"
+		stun_servers="$(uci -q get easytier.@easytier[0].stun_servers)"
+		tcp_stun_servers="$(uci -q get easytier.@easytier[0].tcp_stun_servers)"
+
 }
 
 set_firewall() {
@@ -449,7 +465,8 @@ start_et() {
 			procd_open_instance "easytier_core"
 			get_tz
 			[ -z "$SET_TZ" ] || procd_set_param env TZ="$SET_TZ"
-			core_cmd=""
+			# 门户私钥通过环境变量下发给 easytier-core，避免出现在进程命令行（状态页会展示命令行）
+			[ -z "$vpn_portal_private_key" ] || procd_set_param env ET_VPN_PORTAL_PRIVATE_KEY="$vpn_portal_private_key"
 			if [ "$etcmd" = "etcmd" ] ; then
 				#默认方式启动
 				[ -z "$network_name" ] || core_cmd="${core_cmd} --network-name $(shell_quote "$network_name")"
@@ -536,12 +553,46 @@ start_et() {
 				[ "$listenermode" = "ON" ] || core_cmd="${core_cmd} --no-listener"
 				[ -z "$desvice_name" ] || core_cmd="${core_cmd} --hostname $(shell_quote "$desvice_name")"
 				[ -z "$instance_name" ] || core_cmd="${core_cmd} -m $instance_name"
-				[ -z "$vpn_portal" ] || core_cmd="${core_cmd} --vpn-portal $vpn_portal"
+				# EasyTier 2.7.0 起 --vpn-portal 只接受 wg://主机:端口，客户端必须逐个具名枚举
+				if [ -n "$vpn_portal" ]; then
+					case "$vpn_portal" in
+						wg://*/*)
+							# 旧版把客户端网段写在 URL path 里，2.7.0 会直接拒绝并让进程退出，这里跳过门户并提示用户修改
+							echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : VPN 门户地址 ${vpn_portal} 是 2.6.4 旧写法，EasyTier 2.7.0 起只接受 wg://主机:端口，已跳过门户启动；请在界面把客户端网段填入 VPN 门户客户端列表" >>/tmp/easytier.log
+							;;
+						wg://*)
+							if [ -z "$vpn_portal_private_key" ]; then
+								# 2.7.0 起门户必须有私钥，否则门户监听会启动失败并连带整个实例退出
+								echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 已配置 VPN 门户但未填写门户私钥，EasyTier 2.7.0 起门户必须有私钥，已跳过门户启动；请在界面填写 VPN 门户私钥" >>/tmp/easytier.log
+							else
+								core_cmd="${core_cmd} --vpn-portal $vpn_portal"
+							fi
+							;;
+						*)
+							echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : VPN 门户地址 ${vpn_portal} 格式不正确，应为 wg://主机:端口，已跳过门户启动" >>/tmp/easytier.log
+							;;
+					esac
+				fi
+				# 门户具名客户端，格式 名称=地址/前缀，可配置多条
+				if [ -n "$vpn_portal_clients" ]; then
+					if [[ "$(grep "list vpn_portal_clients" /etc/config/easytier | awk '{print $3}' | wc -l)" -eq 1 ]]; then
+						core_cmd="${core_cmd} --vpn-portal-client $vpn_portal_clients"
+					else
+						for vpn_portal_client in $(cat /etc/config/easytier | grep 'list vpn_portal_clients' | awk -F 'list vpn_portal_clients' '{print $2}' | sed "s/'/\n/g" | tr -d " ' "); do
+							core_cmd="${core_cmd} --vpn-portal-client $vpn_portal_client"
+						done
+					fi
+				fi
 				[ -z "$mtu" ] || core_cmd="${core_cmd} --mtu $mtu"
 				[ "$default_protocol" = "-" ] || core_cmd="${core_cmd} --default-protocol $default_protocol"
 				[ -z "$tunname" ] || core_cmd="${core_cmd} --dev-name $tunname"
 				[ "$disable_encryption" = "0" ] || core_cmd="${core_cmd} -u"
-				[ "$multi_thread" = "0" ] || core_cmd="${core_cmd} --multi-thread"
+				# 2.7.0 起 multi_thread 的默认值由 false 改为 true，这里始终显式传值，保证升级后行为与界面勾选一致
+				if [ "$multi_thread" = "0" ]; then
+					core_cmd="${core_cmd} --multi-thread false"
+				else
+					core_cmd="${core_cmd} --multi-thread true"
+				fi
 				[ -z "$multi_thread_count" ] || core_cmd="${core_cmd} --multi-thread-count $multi_thread_count"
 				[ "$no_tun" = "0" ] || core_cmd="${core_cmd} --no-tun"
 				[ "$smoltcp" = "0" ] || core_cmd="${core_cmd} --use-smoltcp"
@@ -571,8 +622,28 @@ start_et() {
 				[ "$disable_sym" = "0" ] || core_cmd="${core_cmd} --disable-sym-hole-punching"
 				[ "$disable_relay_kcp" = "0" ] || core_cmd="${core_cmd} --disable-relay-kcp true"
 				[ "$relay_kcp" = "0" ] || core_cmd="${core_cmd} --enable-relay-foreign-network-kcp true"
+				[ "$disable_relay_quic" = "0" ] || core_cmd="${core_cmd} --disable-relay-quic true"
+				[ "$relay_quic" = "0" ] || core_cmd="${core_cmd} --enable-relay-foreign-network-quic true"
 				[ -z "$udp_white_port" ] || core_cmd="${core_cmd} --udp-whitelist $udp_white_port"
 				[ -z "$tcp_white_port" ] || core_cmd="${core_cmd} --tcp-whitelist $tcp_white_port"
+				# EasyTier 2.7.0 新增的常用参数
+				[ -z "$tld_dns_zone" ] || core_cmd="${core_cmd} --tld-dns-zone $tld_dns_zone"
+				[ -z "$instance_recv_bps_limit" ] || core_cmd="${core_cmd} --instance-recv-bps-limit $instance_recv_bps_limit"
+				[ -z "$socket_mark" ] || core_cmd="${core_cmd} --socket-mark $socket_mark"
+				[ "$disable_upnp" = "0" ] || core_cmd="${core_cmd} --disable-upnp"
+				[ "$lazy_p2p" = "0" ] || core_cmd="${core_cmd} --lazy-p2p"
+				[ "$need_p2p" = "0" ] || core_cmd="${core_cmd} --need-p2p"
+				# 自定义 STUN 服务器，可配置多条
+				if [ -n "$stun_servers" ] ; then
+					for stun_server in $(cat /etc/config/easytier | grep 'list stun_servers' | awk -F 'list stun_servers' '{print $2}' | sed "s/'/\n/g" | tr -d " ' "); do
+						core_cmd="${core_cmd} --stun-servers $stun_server"
+					done
+				fi
+				if [ -n "$tcp_stun_servers" ] ; then
+					for tcp_stun_server in $(cat /etc/config/easytier | grep 'list tcp_stun_servers' | awk -F 'list tcp_stun_servers' '{print $2}' | sed "s/'/\n/g" | tr -d " ' "); do
+						core_cmd="${core_cmd} --tcp-stun-servers $tcp_stun_server"
+					done
+				fi
 				if [ -n "$extra_args" ] ; then
 					while IFS= read -r extra_arg; do
 						[ -n "$extra_arg" ] && core_cmd="${core_cmd} $extra_arg"
@@ -595,7 +666,18 @@ EOF
 				fi
 				et_uuid="$(cat /etc/easytier/et_machine_id | tr -d ' \n')"
 				[ -z "$et_uuid" ] || core_cmd="${core_cmd} --machine-id $et_uuid"
-				[ -z "$web_config" ] || core_cmd="${core_cmd} -w $web_config"
+				# EasyTier 2.7.0 起 -w 必须填写完整 URL（例如 udp://config-server.easytier.cn:22020/账户名），
+				# 旧版只填账户名的写法会解析失败并让整个进程退出，这里跳过 Web 客户端并提示用户修改
+				case "$web_config" in
+					"")
+						;;
+					*://*)
+						core_cmd="${core_cmd} -w $web_config"
+						;;
+					*)
+						echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : Web 服务器地址 ${web_config} 不是完整 URL，EasyTier 2.7.0 起必须填写完整地址（例如 udp://config-server.easytier.cn:22020/账户名），已跳过 Web 客户端启动；请在界面把 Web 服务器地址改为完整地址" >>/tmp/easytier.log
+						;;
+				esac
 				[ -z "$desvice_name" ] || core_cmd="${core_cmd} --hostname $(shell_quote "$desvice_name")"
 			fi
 	     		procd_set_param command /bin/sh -c "
@@ -623,7 +705,10 @@ EOF
 		procd_set_param limits nofile="1000000 1000000"
 		procd_set_param stdout 1
 		procd_set_param stderr 1
-		procd_set_param respawn
+		# procd 进程守护参数：threshold=3600 秒、timeout=5 秒、retry=20 次
+		# 存活满 1 小时后崩溃计数归零；1 小时内崩溃超过 20 次（即第 21 次）才判定崩溃循环并放弃拉起，
+		# 避免参数配置错误这类必然失败的场景无限重启刷日志、空烧 CPU
+		procd_set_param respawn 3600 5 20
 		procd_close_instance
 		
                 # 不再自动放行 SOCKS5 端口到 WAN —— 无认证 SOCKS5 代理暴露给公网有严重安全风险
@@ -691,6 +776,11 @@ start_web() {
 	html_addr="$(uci -q get easytier.@easytier[0].web_html_addr)"
 	disable_registration="$(uci -q get easytier.@easytier[0].web_disable_registration || echo 0)"
 	allow_auto_create_user="$(uci -q get easytier.@easytier[0].web_allow_auto_create_user || echo 0)"
+	# EasyTier 2.7.0 新增的 web 参数
+	heartbeat_min_response_ms="$(uci -q get easytier.@easytier[0].web_heartbeat_min_response_ms)"
+	heartbeat_timeout_ms="$(uci -q get easytier.@easytier[0].web_heartbeat_timeout_ms)"
+	gateway_peer_url="$(uci -q get easytier.@easytier[0].web_gateway_peer_url)"
+	gateway_relay_data="$(uci -q get easytier.@easytier[0].web_gateway_relay_data || echo 0)"
 	# OIDC配置
 	oidc_enabled="$(uci -q get easytier.@easytier[0].web_oidc_enabled || echo 0)"
 	oidc_issuer_url="$(uci -q get easytier.@easytier[0].web_oidc_issuer_url)"
@@ -729,6 +819,11 @@ start_web() {
 	[ -n "$html_addr" ] && [ "$html_addr" != "0.0.0.0" ] && web_cmd="${web_cmd} --web-server-addr $html_addr"
 	[ "$disable_registration" = "1" ] && web_cmd="${web_cmd} --disable-registration"
 	[ "$allow_auto_create_user" = "1" ] && web_cmd="${web_cmd} --allow-auto-create-user"
+	# EasyTier 2.7.0 新增的 web 参数
+	[ -z "$heartbeat_min_response_ms" ] || web_cmd="${web_cmd} --heartbeat-min-response-ms $heartbeat_min_response_ms"
+	[ -z "$heartbeat_timeout_ms" ] || web_cmd="${web_cmd} --heartbeat-timeout-ms $heartbeat_timeout_ms"
+	[ -z "$gateway_peer_url" ] || web_cmd="${web_cmd} --gateway-peer-url $gateway_peer_url"
+	[ "$gateway_relay_data" = "1" ] && web_cmd="${web_cmd} --gateway-relay-data true"
 	# OIDC配置参数
 	if [ "$oidc_enabled" = "1" ] ; then
 		[ -z "$oidc_issuer_url" ] || web_cmd="${web_cmd} --oidc-issuer-url $oidc_issuer_url"
@@ -773,7 +868,9 @@ start_web() {
 	"
 	procd_set_param stdout 1
 	procd_set_param stderr 1
-	procd_set_param respawn
+	# procd 进程守护参数：threshold=3600 秒、timeout=5 秒、retry=20 次
+	# 存活满 1 小时后崩溃计数归零；1 小时内崩溃超过 20 次（即第 21 次）才判定崩溃循环并放弃拉起
+	procd_set_param respawn 3600 5 20
 	procd_close_instance
 	if [ ! -z "$web_port" ] && [ "$fw_web" = "1" ] ; then
 		      echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 添加防火墙规则 easytier_web 放行服务端口 ${web_port} " >>/tmp/easytierweb.log

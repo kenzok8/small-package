@@ -163,7 +163,7 @@ function get_upload_config()
 		easytierbin = uci:get_first("easytier", "easytier", "easytierbin") or "/usr/bin/easytier-core",
 		webbin = uci:get_first("easytier", "easytier", "webbin") or "/usr/bin/easytier-web",
 		github_proxys = {},
-		fallback_version = uci:get_first("easytier", "easytier", "fallback_version") or "v2.6.4"
+		fallback_version = uci:get_first("easytier", "easytier", "fallback_version") or "v2.7.0"
 	}
 	
 	-- 读取代理列表（list 类型）
@@ -200,7 +200,7 @@ function save_upload_config()
 	-- 保存配置
 	uci:set("easytier", "@easytier[0]", "easytierbin", data.easytierbin or "/usr/bin/easytier-core")
 	uci:set("easytier", "@easytier[0]", "webbin", data.webbin or "/usr/bin/easytier-web")
-	uci:set("easytier", "@easytier[0]", "fallback_version", data.fallback_version or "v2.6.4")
+	uci:set("easytier", "@easytier[0]", "fallback_version", data.fallback_version or "v2.7.0")
 	
 	-- 删除旧的代理列表
 	uci:delete("easytier", "@easytier[0]", "github_proxys")
@@ -595,69 +595,130 @@ function clear_version_cache()
 	luci.http.write("OK")
 end
 
+-- 连接信息各分区与 easytier-cli 子命令的对应关系。
+-- 实测每调用一次 easytier-cli 都要新起一个进程，单次进程启动开销约 200ms（路由器上更慢），
+-- RPC 往返本身只要几毫秒，因此耗时几乎完全取决于进程个数，改为按分区按需加载。
+local CONNINFO_CLI_PARTS = {
+	node = "node",
+	peer = "peer",
+	route = "route",
+	connector = "connector",
+	stun = "stun",
+	peer_center = "peer-center",
+	vpn_portal = "vpn-portal",
+	proxy = "proxy",
+	acl = "acl stats",
+	mapped_listener = "mapped-listener",
+	stats = "stats",
+}
+-- cmdline 只读本地 /proc，不需要 easytier-cli
+local CONNINFO_LOCAL_PARTS = { cmdline = true }
+
+-- 分区结果的短时缓存，避免轮询与手动刷新、来回切换分区时重复起进程
+local CONNINFO_CACHE_DIR = "/tmp/easytier_conninfo"
+local CONNINFO_CACHE_TTL = 3
+
+local function read_conninfo_cache(name)
+	local handle = io.open(CONNINFO_CACHE_DIR .. "/" .. name, "r")
+	if not handle then
+		return nil
+	end
+	local content = handle:read("*all") or ""
+	handle:close()
+	local ts, data = content:match("^(%d+)\n([%s%S]*)$")
+	if not ts or (os.time() - tonumber(ts)) > CONNINFO_CACHE_TTL then
+		return nil
+	end
+	return data
+end
+
+local function write_conninfo_cache(name, data)
+	luci.sys.call("mkdir -p " .. CONNINFO_CACHE_DIR)
+	local handle = io.open(CONNINFO_CACHE_DIR .. "/" .. name, "w")
+	if handle then
+		handle:write(tostring(os.time()) .. "\n" .. data)
+		handle:close()
+	end
+end
+
 function act_conninfo()
 	local e = {}
 	local uci = require "luci.model.uci".cursor()
 	local easytierbin = uci:get_first("easytier", "easytier", "easytierbin") or "/usr/bin/easytier-core"
 	local clibin = easytierbin:gsub("easytier%-core$", "easytier-cli")
-	
-	local process_status = luci.sys.exec("pgrep easytier-core")
-	
-	if process_status ~= "" then
-		-- 获取各类CLI信息
-		local function get_cli_output(cmd)
-			local handle = io.popen(clibin .. " " .. cmd .. " 2>&1")
-			if handle then
-				local result = handle:read("*all")
-				handle:close()
-				return result or ""
+
+	-- 解析要加载的分区，前端只请求当前显示的分区；
+	-- 不传 parts 时加载除 stun 以外的所有分区（stun 会实时访问 STUN 服务器，单次实测约 3 秒）
+	local parts = luci.http.formvalue("parts")
+	local want_cli, want_local = {}, {}
+	if parts and parts ~= "" then
+		for name in parts:gmatch("[%w_]+") do
+			if CONNINFO_CLI_PARTS[name] then
+				want_cli[name] = true
+			elseif CONNINFO_LOCAL_PARTS[name] then
+				want_local[name] = true
 			end
-			return ""
 		end
-		
-		e.node = get_cli_output("node")
-		e.peer = get_cli_output("peer")
-		e.connector = get_cli_output("connector")
-		e.stun = get_cli_output("stun")
-		e.route = get_cli_output("route")
-		e.peer_center = get_cli_output("peer-center")
-		e.vpn_portal = get_cli_output("vpn-portal")
-		e.proxy = get_cli_output("proxy")
-		e.acl = get_cli_output("acl stats")
-		e.mapped_listener = get_cli_output("mapped-listener")
-		e.stats = get_cli_output("stats")
-		
-		-- 获取启动参数
-		local cmdhandle = io.popen("cat /proc/$(pidof easytier-core)/cmdline 2>/dev/null | tr '\\0' ' '")
-		if cmdhandle then
-			e.cmdline = cmdhandle:read("*all") or ""
-			cmdhandle:close()
-		else
-			e.cmdline = ""
+	else
+		for name in pairs(CONNINFO_CLI_PARTS) do
+			if name ~= "stun" then
+				want_cli[name] = true
+			end
 		end
-		
-		-- 检查是否使用配置文件启动
-		if e.cmdline:match("%-%-config%-file") or e.cmdline:match("%-c%s+/") then
-			e.config_file = safe_read_file("/etc/easytier/config.toml") or ""
-		else
-			e.config_file = ""
+		for name in pairs(CONNINFO_LOCAL_PARTS) do
+			want_local[name] = true
+		end
+	end
+
+	local process_status = luci.sys.exec("pgrep easytier-core")
+
+	if process_status ~= "" then
+		-- 只运行被请求的分区，命中缓存的分区直接复用结果
+		for name in pairs(want_cli) do
+			local cached = read_conninfo_cache(name)
+			if cached then
+				e[name] = cached
+			else
+				local handle = io.popen(clibin .. " " .. CONNINFO_CLI_PARTS[name] .. " 2>&1")
+				local result = ""
+				if handle then
+					result = handle:read("*all") or ""
+					handle:close()
+				end
+				e[name] = result
+				write_conninfo_cache(name, result)
+			end
+		end
+
+		if want_local.cmdline then
+			-- 获取启动参数
+			local cmdhandle = io.popen("cat /proc/$(pidof easytier-core)/cmdline 2>/dev/null | tr '\\0' ' '")
+			if cmdhandle then
+				e.cmdline = cmdhandle:read("*all") or ""
+				cmdhandle:close()
+			else
+				e.cmdline = ""
+			end
+
+			-- 检查是否使用配置文件启动，配置内容随本次响应一起返回，前端无需再请求一次
+			if e.cmdline:match("%-%-config%-file") or e.cmdline:match("%-c%s+/") then
+				e.config_file = safe_read_file("/etc/easytier/config.toml") or ""
+			else
+				e.config_file = ""
+			end
 		end
 	else
 		local errMsg = i18n.translate("Error: Program not running! Please start the program and refresh")
-		e.node = errMsg
-		e.peer = errMsg
-		e.connector = errMsg
-		e.stun = errMsg
-		e.route = errMsg
-		e.peer_center = errMsg
-		e.vpn_portal = errMsg
-		e.proxy = errMsg
-		e.acl = errMsg
-		e.mapped_listener = errMsg
-		e.stats = errMsg
-		e.cmdline = errMsg
+		for name in pairs(want_cli) do
+			e[name] = errMsg
+		end
+		if want_local.cmdline then
+			e.cmdline = errMsg
+		end
+		-- 未运行时清掉缓存，避免下次启动后读到旧的错误输出
+		luci.sys.call("rm -rf " .. CONNINFO_CACHE_DIR)
 	end
-	
+
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end
@@ -682,6 +743,11 @@ function get_web_config()
 		web_geoip_db = uci:get_first("easytier", "easytier", "web_geoip_db") or "",
 		web_disable_registration = uci:get_first("easytier", "easytier", "web_disable_registration") or "0",
 		web_allow_auto_create_user = uci:get_first("easytier", "easytier", "web_allow_auto_create_user") or "0",
+		-- EasyTier 2.7.0 新增的 web 参数
+		web_heartbeat_min_response_ms = uci:get_first("easytier", "easytier", "web_heartbeat_min_response_ms") or "",
+		web_heartbeat_timeout_ms = uci:get_first("easytier", "easytier", "web_heartbeat_timeout_ms") or "",
+		web_gateway_peer_url = uci:get_first("easytier", "easytier", "web_gateway_peer_url") or "",
+		web_gateway_relay_data = uci:get_first("easytier", "easytier", "web_gateway_relay_data") or "0",
 		web_weblog = uci:get_first("easytier", "easytier", "web_weblog") or "off",
 		-- OIDC配置
 		web_oidc_enabled = uci:get_first("easytier", "easytier", "web_oidc_enabled") or "0",
@@ -723,6 +789,11 @@ function save_web_config()
 	local web_geoip_db = http.formvalue("web_geoip_db") or ""
 	local web_disable_registration = http.formvalue("web_disable_registration") or "0"
 	local web_allow_auto_create_user = http.formvalue("web_allow_auto_create_user") or "0"
+	-- EasyTier 2.7.0 新增的 web 参数
+	local web_heartbeat_min_response_ms = http.formvalue("web_heartbeat_min_response_ms") or ""
+	local web_heartbeat_timeout_ms = http.formvalue("web_heartbeat_timeout_ms") or ""
+	local web_gateway_peer_url = http.formvalue("web_gateway_peer_url") or ""
+	local web_gateway_relay_data = http.formvalue("web_gateway_relay_data") or "0"
 	local web_weblog = http.formvalue("web_weblog") or "off"
 	-- OIDC
 	local web_oidc_enabled = http.formvalue("web_oidc_enabled") or "0"
@@ -756,6 +827,11 @@ function save_web_config()
 	uci:set("easytier", "@easytier[0]", "web_geoip_db", web_geoip_db)
 	uci:set("easytier", "@easytier[0]", "web_disable_registration", web_disable_registration)
 	uci:set("easytier", "@easytier[0]", "web_allow_auto_create_user", web_allow_auto_create_user)
+	-- EasyTier 2.7.0 新增的 web 参数
+	uci:set("easytier", "@easytier[0]", "web_heartbeat_min_response_ms", web_heartbeat_min_response_ms)
+	uci:set("easytier", "@easytier[0]", "web_heartbeat_timeout_ms", web_heartbeat_timeout_ms)
+	uci:set("easytier", "@easytier[0]", "web_gateway_peer_url", web_gateway_peer_url)
+	uci:set("easytier", "@easytier[0]", "web_gateway_relay_data", web_gateway_relay_data)
 	uci:set("easytier", "@easytier[0]", "web_weblog", web_weblog)
 	-- OIDC
 	uci:set("easytier", "@easytier[0]", "web_oidc_enabled", web_oidc_enabled)

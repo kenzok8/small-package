@@ -6,63 +6,90 @@ USE_PROCD=1
 get_config() {
 	config_get_bool enabled "$1" enabled 0
 	config_get data_dir "$1" data_dir ""
-	config_get listen_mode "$1" listen_mode "auto"
-	config_get_bool external_port_enabled "$1" external_port_enabled 0
-	config_get socket_path "$1" socket_path "/var/run/dockermanager.sock"
 	config_get port "$1" port "8192"
 	config_get bind_addr "$1" bind_addr "0.0.0.0"
 	config_get base_path "$1" base_path "/apps/dockermanager/"
+	config_get listen_mode "$1" listen_mode "auto"
+	config_get_bool external_port_enabled "$1" external_port_enabled 0
+	config_get socket_path "$1" socket_path "/var/run/dockermanager.sock"
+	config_get integration_token_file "$1" integration_token_file "/etc/lighthost/docker-manager.token"
 }
 
-mkdir_p() {
-	[ -d "$1" ] || mkdir -p "$1"
+valid_data_dir() {
+	case "$1" in
+		/mnt/*|/root/*) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
+prepare_token() {
+	case "$integration_token_file" in
+		/etc/lighthost/*) ;;
+		*)
+			logger -t dockermanager "refusing unsafe integration_token_file: $integration_token_file"
+			return 1
+			;;
+	esac
+	mkdir -p "$(dirname "$integration_token_file")" || return 1
+	if [ ! -s "$integration_token_file" ]; then
+		umask 077
+		hexdump -v -n 32 -e '1/1 "%02x"' /dev/urandom > "$integration_token_file" || return 1
+	fi
+	if grep -q '^lighthost:' /etc/group; then
+		chown root:lighthost "$integration_token_file" || return 1
+		chmod 640 "$integration_token_file" || return 1
+	else
+		chown root:root "$integration_token_file" || return 1
+		chmod 600 "$integration_token_file" || return 1
+	fi
 }
 
 start_service() {
 	config_load dockermanager
 	config_foreach get_config dockermanager
-
-	if [ "$enabled" != 1 ]; then
+	[ "$enabled" = 1 ] || return 0
+	valid_data_dir "$data_dir" || {
+		logger -t dockermanager "refusing unsafe data_dir: $data_dir"
 		return 1
-	fi
-	if [ -z "$data_dir" ]; then
-		logger -t dockermanager "data_dir is empty; set option data_dir in /etc/config/dockermanager"
-		return 1
-	fi
+	}
+	mkdir -p "$data_dir/state" "$data_dir/cache" || return 1
+	prepare_token || return 1
 
-	mkdir_p "$data_dir" || return 1
-	mkdir_p "$data_dir/state" || return 1
-	mkdir_p "$data_dir/cache" || return 1
+	local effective_listen_mode
+	effective_listen_mode="$listen_mode"
+	if [ "$effective_listen_mode" = auto ]; then
+		if [ "$external_port_enabled" = 1 ]; then
+			effective_listen_mode=tcp
+		else
+			effective_listen_mode=unix
+		fi
+	fi
+	case "$effective_listen_mode" in
+		tcp|unix) ;;
+		*)
+			logger -t dockermanager "invalid listen_mode: $effective_listen_mode"
+			return 1
+			;;
+	esac
 
-	logger -t dockermanager "Starting Docker Manager service"
 	procd_open_instance docker-manager
-	if [ "$listen_mode" = "tcp" ] || [ "$external_port_enabled" = 1 ]; then
-		procd_set_param env \
-			DOCKER_MANAGER_LISTEN_MODE="tcp" \
-			DOCKER_MANAGER_ADDR="$bind_addr:$port" \
-			DOCKER_MANAGER_BASE_PATH="$base_path" \
-			DOCKER_MANAGER_DATA_DIR="$data_dir" \
-			DOCKER_MANAGER_STATIC_ROOT="/usr/share/dockermanager/www" \
-			DOCKER_MANAGER_PLATFORM="openwrt" \
-			DOCKER_MANAGER_AUTH_MODE="openwrt_luci"
-	else
-		procd_set_param env \
-			DOCKER_MANAGER_LISTEN_MODE="unix" \
-			DOCKER_MANAGER_SOCKET_PATH="$socket_path" \
-			DOCKER_MANAGER_BASE_PATH="$base_path" \
-			DOCKER_MANAGER_DATA_DIR="$data_dir" \
-			DOCKER_MANAGER_STATIC_ROOT="/usr/share/dockermanager/www" \
-			DOCKER_MANAGER_PLATFORM="openwrt" \
-			DOCKER_MANAGER_AUTH_MODE="openwrt_luci"
-	fi
+	procd_set_param env \
+		"DOCKER_MANAGER_ADDR=$bind_addr:$port" \
+		"DOCKER_MANAGER_BASE_PATH=$base_path" \
+		"DOCKER_MANAGER_DATA_DIR=$data_dir" \
+		"DOCKER_MANAGER_STATIC_ROOT=/usr/share/dockermanager/www" \
+		"DOCKER_MANAGER_PLATFORM=openwrt" \
+		"DOCKER_MANAGER_AUTH_MODE=openwrt_luci" \
+		"DOCKER_MANAGER_LISTEN_MODE=$effective_listen_mode" \
+		"DOCKER_MANAGER_SOCKET_PATH=$socket_path" \
+		"DOCKER_MANAGER_INTEGRATION_TOKEN_FILE=$integration_token_file"
 	procd_set_param command /usr/sbin/docker-manager
 	procd_set_param stdout 1
 	procd_set_param stderr 1
-	procd_set_param respawn
+	procd_set_param respawn 3600 5 5
 	procd_close_instance
-	logger -t dockermanager "Docker Manager service started"
 }
 
 service_triggers() {
-	procd_add_reload_trigger "dockermanager"
+	procd_add_reload_trigger dockermanager
 }

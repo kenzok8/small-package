@@ -818,12 +818,15 @@ msgstr "Web服务器地址"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:65
 msgid ""
-"Web configuration server address. (-w parameter)<br>For a self-hosted Web "
-"server, use the format: udp://server_address:22020/username<br>For the "
-"official Web server, use the format: username<br>Official Web Console: <a "
-"href='https://easytier.cn/web'>easytier.cn/web</a>"
+"Web configuration server address. (-w parameter)<br>Since EasyTier 2.7.0 a "
+"full URL is required, the token-only shorthand is no longer supported<br>Self-"
+"hosted Web server, use the format: udp://server_address:22020/username<br>"
+"Official Web server, use the format: udp://config-server.easytier.cn:22020/"
+"username<br>Official Web Console: <a href='https://easytier.cn/web'>easytier."
+"cn/web</a>"
 msgstr ""
-"Web配置服务器地址。（-w 参数）<br>自建Web服务器 输入格式：udp://服务器地址:22020/账户名<br>官方Web服务器 输入格式：账户名 <br>"
+"Web配置服务器地址。（-w 参数）<br>EasyTier 2.7.0 起必须填写完整 URL，不再支持仅填 token 的简写方式<br>"
+"自建Web服务器 输入格式：udp://服务器地址:22020/账户名<br>官方Web服务器 输入格式：udp://config-server.easytier.cn:22020/账户名<br>"
 "官方Web控制台：<a href='https://easytier.cn/web' target='_blank'>https://easytier.cn/web</a>"
 
 #: applications/luci-app-easytier/luasrc/model/cbi/easytier.lua:365
@@ -1663,6 +1666,9 @@ msgstr "节点中心服务不可用，此功能要求网络中包含多个节点
 msgid "Refreshing..."
 msgstr "正在刷新..."
 
+msgid "Loading timed out. Please click Refresh to try again."
+msgstr "加载超时，请点击刷新重试。"
+
 msgid "Failed to parse response:"
 msgstr "解析响应失败："
 
@@ -1802,8 +1808,173 @@ msgstr "按实例统计接收数据包"
 msgid "Traffic Control Packets TX By Instance"
 msgstr "按实例统计发送数据包"
 
+msgid "Traffic Control Bytes Forwarded"
+msgstr "流量控制转发字节数"
+
+msgid "Traffic Control Packets Forwarded"
+msgstr "流量控制转发数据包"
+
+msgid "Traffic Bytes RX By Instance"
+msgstr "按实例统计接收字节数（总计）"
+
+msgid "Traffic Bytes TX By Instance"
+msgstr "按实例统计发送字节数（总计）"
+
+msgid "Traffic Packets RX By Instance"
+msgstr "按实例统计接收数据包（总计）"
+
+msgid "Traffic Packets TX By Instance"
+msgstr "按实例统计发送数据包（总计）"
+
+msgid "Traffic Bytes Foreign Forward RX"
+msgstr "跨网中转接收字节数"
+
+msgid "Traffic Bytes Foreign Forward TX"
+msgstr "跨网中转发送字节数"
+
+msgid "Traffic Bytes Foreign Forward Forwarded"
+msgstr "跨网中转转发字节数"
+
+msgid "Traffic Packets Foreign Forward RX"
+msgstr "跨网中转接收数据包"
+
+msgid "Traffic Packets Foreign Forward TX"
+msgstr "跨网中转发送数据包"
+
+msgid "Traffic Packets Foreign Forward Forwarded"
+msgstr "跨网中转转发数据包"
+
+msgid "Peer RPC Errors"
+msgstr "节点 RPC 错误数"
+
+msgid "TCP Proxy Connect"
+msgstr "TCP 代理连接数"
+
+msgid "UDP Broadcast Relay Packets Captured"
+msgstr "UDP 广播中继捕获数据包"
+
+msgid "UDP Broadcast Relay Packets Forwarded"
+msgstr "UDP 广播中继转发数据包"
+
+msgid "UDP Broadcast Relay Packets Forward Failed"
+msgstr "UDP 广播中继转发失败数据包"
+
+msgid "UDP Broadcast Relay Packets Ignored"
+msgstr "UDP 广播中继忽略数据包"
+
+msgid "VPN Portal Client"
+msgstr "VPN 门户客户端"
+
+msgid "VPN Portal Client Bytes RX"
+msgstr "VPN 门户客户端接收字节数"
+
+msgid "VPN Portal Client Bytes TX"
+msgstr "VPN 门户客户端发送字节数"
+
+msgid "VPN Portal Client Packets RX"
+msgstr "VPN 门户客户端接收数据包"
+
+msgid "VPN Portal Client Packets TX"
+msgstr "VPN 门户客户端发送数据包"
+
 msgid "From Instance ID"
 msgstr "来源实例ID"
+
+msgid "Direction"
+msgstr "方向"
+
+msgid "Destination IP"
+msgstr "目标 IP"
+
+msgid "Mapped Destination IP"
+msgstr "映射后目标 IP"
+
+msgid "Error Type"
+msgstr "错误类型"
+
+msgid "Protocol"
+msgstr "协议"
+
+msgid "Name"
+msgstr "名称"
+
+msgid "Priority"
+msgstr "优先级"
+
+msgid "Action"
+msgstr "动作"
+
+msgid "Enabled"
+msgstr "已启用"
+
+msgid "Ports"
+msgstr "端口"
+
+msgid "Source Ports"
+msgstr "源端口"
+
+msgid "Source IPs"
+msgstr "源 IP"
+
+msgid "Destination IPs"
+msgstr "目标 IP"
+
+msgid "Stateful"
+msgstr "有状态"
+
+msgid "Rate Limit"
+msgstr "速率限制"
+
+msgid "Burst Limit"
+msgstr "突发限制"
+
+msgid "Packets"
+msgstr "数据包数"
+
+msgid "Bytes"
+msgstr "字节数"
+
+msgid "Source Address"
+msgstr "源地址"
+
+msgid "Destination Address"
+msgstr "目标地址"
+
+msgid "Created"
+msgstr "创建时间"
+
+msgid "Last Seen"
+msgstr "最近活跃"
+
+msgid "Allow"
+msgstr "允许"
+
+msgid "Drop (no response)"
+msgstr "丢弃（不回应）"
+
+msgid "Noop"
+msgstr "不处理"
+
+msgid "Any"
+msgstr "任意"
+
+msgid "Unspecified"
+msgstr "未指定"
+
+msgid "New"
+msgstr "新建"
+
+msgid "Established"
+msgstr "已建立"
+
+msgid "Related"
+msgstr "关联"
+
+msgid "Invalid"
+msgstr "无效"
+
+msgid "Default / None"
+msgstr "默认 / 无"
 
 msgid "To Instance ID"
 msgstr "目标实例ID"
@@ -2107,3 +2278,111 @@ msgstr "数据库重置成功"
 
 msgid "Restart service to apply changes?"
 msgstr "重启服务以生效？"
+
+msgid "VPN Portal Listen Address"
+msgstr "VPN 门户监听地址"
+
+msgid "WireGuard VPN portal listen address, allowing other VPN clients to connect.<br>Since EasyTier 2.7.0 only wg://HOST:PORT is accepted; the client network can no longer be appended to the URL, please add each client in \"VPN Portal Clients\" below (--vpn-portal parameter)"
+msgstr "WireGuard VPN 门户监听地址，允许其他 VPN 客户端接入。<br>EasyTier 2.7.0 起只接受 wg://主机:端口，客户端网段不能再写在地址里，请在下方“VPN 门户客户端”中逐个添加（--vpn-portal 参数）"
+
+msgid "Only wg://HOST:PORT is accepted since EasyTier 2.7.0, please fill the client network into \"VPN Portal Clients\""
+msgstr "EasyTier 2.7.0 起只接受 wg://主机:端口，请把客户端网段填写到“VPN 门户客户端”中"
+
+msgid "VPN Portal Clients"
+msgstr "VPN 门户客户端"
+
+msgid "One WireGuard client per entry in the form NAME=CIDR, for example client1=10.14.14.1/24.<br>NAME may contain letters, digits and dashes only; the address must be a usable host address inside the client network. (--vpn-portal-client parameter)"
+msgstr "每条一个 WireGuard 客户端，格式为 名称=CIDR，例如 client1=10.14.14.1/24。<br>名称只能包含字母、数字和短横线；地址必须是该网段内可用的主机地址（--vpn-portal-client 参数）"
+
+msgid "Invalid client, expected NAME=CIDR, for example client1=10.14.14.1/24"
+msgstr "客户端格式错误，应为 名称=CIDR，例如 client1=10.14.14.1/24"
+
+msgid "VPN Portal Private Key"
+msgstr "VPN 门户私钥"
+
+msgid "Base64 encoded 32-byte WireGuard private key of the portal.<br>Required since EasyTier 2.7.0, the portal will not start without it. It is handed to easytier-core through an environment variable so that it never shows up in the process list. (--vpn-portal-private-key parameter)"
+msgstr "门户的 WireGuard 私钥（base64 编码的 32 字节）。<br>EasyTier 2.7.0 起必填，未填写时门户不会启动。私钥通过环境变量传给 easytier-core，不会出现在进程列表中（--vpn-portal-private-key 参数）"
+
+msgid "Disable relay quic"
+msgstr "禁用转发 QUIC"
+
+msgid "If true, disable relaying quic packets, avoiding consuming too much bandwidth. (--disable-relay-quic parameter)"
+msgstr "开启后禁止转发 QUIC 报文，避免占用过多带宽（--disable-relay-quic 参数）"
+
+msgid "Relay foreign network quic"
+msgstr "转发外部网络 QUIC"
+
+msgid "If true, allow relaying quic packets from foreign networks. (--enable-relay-foreign-network-quic parameter)"
+msgstr "开启后允许转发来自其他网络的 QUIC 报文（--enable-relay-foreign-network-quic 参数）"
+
+msgid "Magic DNS Zone"
+msgstr "魔法 DNS 区域"
+
+msgid "Top level DNS zone used by Magic DNS, default is et.net. Only takes effect when Magic DNS is enabled. (--tld-dns-zone parameter)"
+msgstr "魔法 DNS 使用的顶级域名区域，默认 et.net.，仅在启用魔法 DNS 时生效（--tld-dns-zone 参数）"
+
+msgid "Instance Receive Rate Limit"
+msgstr "实例接收限速"
+
+msgid "the maximum inbound bps limit for this network instance, default is no limit. unit: BPS (bytes per second). (--instance-recv-bps-limit parameter)"
+msgstr "本网络实例的整体入站限速，默认不限速，单位字节每秒（--instance-recv-bps-limit 参数）"
+
+msgid "Socket Mark"
+msgstr "Socket Mark"
+
+msgid "Set SO_MARK on all underlay sockets, Linux only and requires CAP_NET_ADMIN. Usually used together with policy routing. (--socket-mark parameter)"
+msgstr "为所有底层套接字设置 SO_MARK，仅 Linux 支持且需要 CAP_NET_ADMIN 权限，通常配合策略路由使用（--socket-mark 参数）"
+
+msgid "Lazy P2P"
+msgstr "延迟 P2P"
+
+msgid "Only try to establish P2P connections when traffic actually needs to be forwarded. (--lazy-p2p parameter)"
+msgstr "仅在有实际数据需要转发时才尝试建立 P2P 连接（--lazy-p2p 参数）"
+
+msgid "Need P2P"
+msgstr "强制 P2P"
+
+msgid "Require a P2P connection before forwarding traffic through relays. (--need-p2p parameter)"
+msgstr "必须建立 P2P 连接后才允许通过中继转发数据（--need-p2p 参数）"
+
+msgid "Disable UPnP"
+msgstr "禁用 UPnP"
+
+msgid "EasyTier 2.7.0 tries to map listener ports through UPnP/NAT-PMP by default. Enable this to turn the automatic port mapping off. (--disable-upnp parameter)"
+msgstr "EasyTier 2.7.0 默认会尝试通过 UPnP/NAT-PMP 自动映射监听端口，开启本项可关闭自动端口映射（--disable-upnp 参数）"
+
+msgid "STUN Servers"
+msgstr "STUN 服务器"
+
+msgid "Custom UDP STUN servers used for NAT type detection and hole punching. Leave empty to use the built-in defaults. (--stun-servers parameter)"
+msgstr "用于 NAT 类型探测与打洞的自定义 UDP STUN 服务器，留空则使用内置默认值（--stun-servers 参数）"
+
+msgid "STUN Servers (TCP)"
+msgstr "STUN 服务器（TCP）"
+
+msgid "Custom TCP STUN servers used for NAT type detection and hole punching. Leave empty to use the built-in defaults. (--tcp-stun-servers parameter)"
+msgstr "用于 NAT 类型探测与打洞的自定义 TCP STUN 服务器，留空则使用内置默认值（--tcp-stun-servers 参数）"
+
+msgid "Heartbeat Minimum Response Time (ms)"
+msgstr "心跳最小响应时间（毫秒）"
+
+msgid "Minimum heartbeat response delay used by the config server when measuring client latency"
+msgstr "配置服务器测量客户端延迟时使用的心跳最小响应延迟"
+
+msgid "Heartbeat Timeout (ms)"
+msgstr "心跳超时时间（毫秒）"
+
+msgid "How long a client may stay silent before the config server marks it offline"
+msgstr "客户端多久无心跳后会被配置服务器标记为离线"
+
+msgid "Gateway Peer URL"
+msgstr "网关对等节点地址"
+
+msgid "Peer URL used by this web instance when it works as a gateway"
+msgstr "本 Web 实例作为网关时使用的对等节点地址"
+
+msgid "Gateway Relay Data"
+msgstr "网关转发数据"
+
+msgid "Allow this web gateway instance to relay data traffic"
+msgstr "允许本 Web 网关实例转发数据流量"

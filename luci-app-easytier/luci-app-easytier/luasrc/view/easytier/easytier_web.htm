@@ -678,6 +678,35 @@ input:disabled + .slider {
 			</div>
 
 			<div class="form-group">
+				<label for="web_heartbeat_min_response_ms"><%:Heartbeat Minimum Response Time (ms)%></label>
+				<input type="number" class="form-control" id="web_heartbeat_min_response_ms" name="web_heartbeat_min_response_ms" placeholder="3500">
+				<span class="description"><%:Minimum heartbeat response delay used by the config server when measuring client latency%>. (--heartbeat-min-response-ms <%:parameter%>)</span>
+			</div>
+
+			<div class="form-group">
+				<label for="web_heartbeat_timeout_ms"><%:Heartbeat Timeout (ms)%></label>
+				<input type="number" class="form-control" id="web_heartbeat_timeout_ms" name="web_heartbeat_timeout_ms" placeholder="15000">
+				<span class="description"><%:How long a client may stay silent before the config server marks it offline%>. (--heartbeat-timeout-ms <%:parameter%>)</span>
+			</div>
+
+			<div class="form-group">
+				<label for="web_gateway_peer_url"><%:Gateway Peer URL%></label>
+				<input type="text" class="form-control" id="web_gateway_peer_url" name="web_gateway_peer_url" placeholder="tcp://public.easytier.top:11010">
+				<span class="description"><%:Peer URL used by this web instance when it works as a gateway%>. (--gateway-peer-url <%:parameter%>)</span>
+			</div>
+
+			<div class="form-group">
+				<div class="checkbox-wrapper">
+					<label for="web_gateway_relay_data"><%:Gateway Relay Data%></label>
+					<label class="switch">
+						<input type="checkbox" id="web_gateway_relay_data" name="web_gateway_relay_data">
+						<span class="slider"></span>
+					</label>
+				</div>
+				<span class="description"><%:Allow this web gateway instance to relay data traffic%>. (--gateway-relay-data <%:parameter%>)</span>
+			</div>
+
+			<div class="form-group">
 				<label for="web_weblog"><%:Log Level%></label>
 				<select class="form-control" id="web_weblog" name="web_weblog">
 					<option value="off"><%:Off%></option>
@@ -905,6 +934,11 @@ function loadConfig() {
 			document.getElementById('web_geoip_db').value = data.web_geoip_db || '';
 			document.getElementById('web_disable_registration').checked = data.web_disable_registration === '1';
 			document.getElementById('web_allow_auto_create_user').checked = data.web_allow_auto_create_user === '1';
+			// EasyTier 2.7.0 新增的 web 参数
+			document.getElementById('web_heartbeat_min_response_ms').value = data.web_heartbeat_min_response_ms || '';
+			document.getElementById('web_heartbeat_timeout_ms').value = data.web_heartbeat_timeout_ms || '';
+			document.getElementById('web_gateway_peer_url').value = data.web_gateway_peer_url || '';
+			document.getElementById('web_gateway_relay_data').checked = data.web_gateway_relay_data === '1';
 			document.getElementById('web_weblog').value = data.web_weblog || 'off';
 			
 			// OIDC配置
@@ -953,6 +987,11 @@ function getCurrentConfig() {
 		web_geoip_db: document.getElementById('web_geoip_db').value,
 		web_disable_registration: document.getElementById('web_disable_registration').checked ? '1' : '0',
 		web_allow_auto_create_user: document.getElementById('web_allow_auto_create_user').checked ? '1' : '0',
+		// EasyTier 2.7.0 新增的 web 参数
+		web_heartbeat_min_response_ms: document.getElementById('web_heartbeat_min_response_ms').value,
+		web_heartbeat_timeout_ms: document.getElementById('web_heartbeat_timeout_ms').value,
+		web_gateway_peer_url: document.getElementById('web_gateway_peer_url').value,
+		web_gateway_relay_data: document.getElementById('web_gateway_relay_data').checked ? '1' : '0',
 		web_weblog: document.getElementById('web_weblog').value,
 		// OIDC
 		web_oidc_enabled: document.getElementById('web_oidc_enabled').checked ? '1' : '0',

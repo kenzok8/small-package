@@ -900,18 +900,133 @@ var translations = {
 	// Stats指标名称翻译
 	"traffic_control_bytes_rx": "<%:Traffic Control Bytes RX%>",
 	"traffic_control_bytes_tx": "<%:Traffic Control Bytes TX%>",
+	"traffic_control_bytes_forwarded": "<%:Traffic Control Bytes Forwarded%>",
 	"traffic_control_bytes_rx_by_instance": "<%:Traffic Control Bytes RX By Instance%>",
 	"traffic_control_bytes_tx_by_instance": "<%:Traffic Control Bytes TX By Instance%>",
 	"traffic_control_packets_rx": "<%:Traffic Control Packets RX%>",
 	"traffic_control_packets_tx": "<%:Traffic Control Packets TX%>",
+	"traffic_control_packets_forwarded": "<%:Traffic Control Packets Forwarded%>",
 	"traffic_control_packets_rx_by_instance": "<%:Traffic Control Packets RX By Instance%>",
 	"traffic_control_packets_tx_by_instance": "<%:Traffic Control Packets TX By Instance%>",
+	"traffic_bytes_rx_by_instance": "<%:Traffic Bytes RX By Instance%>",
+	"traffic_bytes_tx_by_instance": "<%:Traffic Bytes TX By Instance%>",
+	"traffic_packets_rx_by_instance": "<%:Traffic Packets RX By Instance%>",
+	"traffic_packets_tx_by_instance": "<%:Traffic Packets TX By Instance%>",
+	"traffic_bytes_foreign_forward_rx": "<%:Traffic Bytes Foreign Forward RX%>",
+	"traffic_bytes_foreign_forward_tx": "<%:Traffic Bytes Foreign Forward TX%>",
+	"traffic_bytes_foreign_forward_forwarded": "<%:Traffic Bytes Foreign Forward Forwarded%>",
+	"traffic_packets_foreign_forward_rx": "<%:Traffic Packets Foreign Forward RX%>",
+	"traffic_packets_foreign_forward_tx": "<%:Traffic Packets Foreign Forward TX%>",
+	"traffic_packets_foreign_forward_forwarded": "<%:Traffic Packets Foreign Forward Forwarded%>",
+	"peer_rpc_errors": "<%:Peer RPC Errors%>",
+	"tcp_proxy_connect": "<%:TCP Proxy Connect%>",
+	"udp_broadcast_relay_packets_captured": "<%:UDP Broadcast Relay Packets Captured%>",
+	"udp_broadcast_relay_packets_forwarded": "<%:UDP Broadcast Relay Packets Forwarded%>",
+	"udp_broadcast_relay_packets_forward_failed": "<%:UDP Broadcast Relay Packets Forward Failed%>",
+	"udp_broadcast_relay_packets_ignored": "<%:UDP Broadcast Relay Packets Ignored%>",
+	"vpn_portal_client": "<%:VPN Portal Client%>",
+	"vpn_portal_client_bytes_rx": "<%:VPN Portal Client Bytes RX%>",
+	"vpn_portal_client_bytes_tx": "<%:VPN Portal Client Bytes TX%>",
+	"vpn_portal_client_packets_rx": "<%:VPN Portal Client Packets RX%>",
+	"vpn_portal_client_packets_tx": "<%:VPN Portal Client Packets TX%>",
+	// Stats 标签（Labels 列）字段翻译
+	"compression_algo": "<%:Compression Algorithm%>",
+	"direction": "<%:Direction%>",
+	"dst_ip": "<%:Destination IP%>",
+	"mapped_dst_ip": "<%:Mapped Destination IP%>",
+	"error_type": "<%:Error Type%>",
+	"protocol": "<%:Protocol%>",
 	"from_instance_id": "<%:From Instance ID%>",
 	"to_instance_id": "<%:To Instance ID%>"
 };
 
 var currentTab = 'node';
-var isRefreshing = false;
+
+// 连接信息分区表：id 为 TAB 元素后缀，key 为后端 api_conninfo?parts= 使用的分区名
+var connInfoSections = [
+	{id: 'node', key: 'node'},
+	{id: 'peer', key: 'peer'},
+	{id: 'route', key: 'route'},
+	{id: 'connector', key: 'connector'},
+	{id: 'stun', key: 'stun'},
+	{id: 'peercenter', key: 'peer_center'},
+	{id: 'vpnportal', key: 'vpn_portal'},
+	{id: 'proxy', key: 'proxy'},
+	{id: 'acl', key: 'acl'},
+	{id: 'mappedlistener', key: 'mapped_listener'},
+	{id: 'stats', key: 'stats'},
+	{id: 'cmdline', key: 'cmdline'}
+];
+
+// 已经成功加载过的分区，切换 TAB 时命中就不再请求
+var connInfoLoaded = {};
+// 待请求的分区队列：同一时刻只允许一个请求在跑，避免一次性起一堆 easytier-cli 进程
+var connInfoQueue = [];
+var connInfoBusy = false;
+// 最近一次响应中的配置文件内容，供"命令行"分区直接使用
+var lastConfigFile = null;
+
+// ACL 统计是 core 直接输出的英文结构体文本（core 侧没有多语言），
+// 字段名单独放在这里精确匹配，避免 name / bytes 这类通用词影响其它卡片
+var aclFieldTranslations = {
+	"name": "<%:Name%>",
+	"prio": "<%:Priority%>",
+	"action": "<%:Action%>",
+	"enabled": "<%:Enabled%>",
+	"proto": "<%:Protocol%>",
+	"ports": "<%:Ports%>",
+	"src_ports": "<%:Source Ports%>",
+	"src_ips": "<%:Source IPs%>",
+	"dst_ips": "<%:Destination IPs%>",
+	"stateful": "<%:Stateful%>",
+	"rate": "<%:Rate Limit%>",
+	"burst": "<%:Burst Limit%>",
+	"pkts": "<%:Packets%>",
+	"bytes": "<%:Bytes%>",
+	"src": "<%:Source Address%>",
+	"dst": "<%:Destination Address%>",
+	"state": "<%:State%>",
+	"created": "<%:Created%>",
+	"last_seen": "<%:Last Seen%>"
+};
+
+// ACL 规则里的枚举取值
+var aclValueTranslations = {
+	"Allow": "<%:Allow%>",
+	"Drop": "<%:Drop (no response)%>",
+	"Noop": "<%:Noop%>",
+	"Any": "<%:Any%>",
+	"Unspecified": "<%:Unspecified%>",
+	"New": "<%:New%>",
+	"Established": "<%:Established%>",
+	"Related": "<%:Related%>",
+	"Invalid": "<%:Invalid%>",
+	"<default/none>": "<%:Default / None%>"
+};
+
+// 翻译 ACL 统计文本：先翻译枚举取值，再翻译字段名
+function translateAclStats(content) {
+	var text = content;
+
+	text = text.replace(/\baction: (Noop|Allow|Drop)\b/g, function(m, v) {
+		return 'action: ' + (aclValueTranslations[v] || v);
+	});
+	text = text.replace(/\bproto: (Unspecified|Icmpv6|Tcp|Udp|Icmp|Any)\b/g, function(m, v) {
+		return 'proto: ' + (aclValueTranslations[v] || v);
+	});
+	text = text.replace(/\bstate: (New|Established|Related|Invalid)\b/g, function(m, v) {
+		return 'state: ' + (aclValueTranslations[v] || v);
+	});
+
+	text = text.replace(/\b(name|prio|action|enabled|proto|ports|src_ports|src_ips|dst_ips|stateful|rate|burst|pkts|bytes|src|dst|state|created|last_seen): /g,
+		function(m, field) {
+			return (aclFieldTranslations[field] || field) + ': ';
+		});
+
+	text = text.replace(/<default\/none>/g, aclValueTranslations['<default/none>'] || '<default/none>');
+
+	return text;
+}
 
 function tr(text) {
 	return translations[text] || text;
@@ -996,37 +1111,16 @@ function parseTable(content, tabName) {
 		var html = renderCopyablePre(content);
 
 		// 检查是否使用配置文件启动
-		if (content.indexOf('--config-file') !== -1 || content.match(/-c\s+\//)) {
-			XHR.get('<%=url("admin/vpn/easytier/api_conninfo")%>', null, function(x, data) {
-				if (data && data.config_file) {
-					var configDiv = document.createElement('div');
-					configDiv.className = 'et-pre';
-					configDiv.style.marginTop = '16px';
-					configDiv.style.borderTop = '2px solid var(--border-color)';
-					configDiv.style.paddingTop = '16px';
-
-					var title = document.createElement('div');
-					title.style.fontWeight = '600';
-					title.style.marginBottom = '8px';
-					title.style.color = 'var(--primary-color)';
-					title.textContent = tr('Configuration File Content') + ':';
-
-					var contentDiv = document.createElement('pre');
-					contentDiv.style.margin = '0';
-					contentDiv.style.whiteSpace = 'pre-wrap';
-					contentDiv.style.overflowWrap = 'anywhere';
-					contentDiv.style.wordBreak = 'break-word';
-					contentDiv.textContent = data.config_file;
-
-					configDiv.appendChild(title);
-					configDiv.appendChild(contentDiv);
-
-					var container = document.getElementById('tab_cmdline');
-					if (container) {
-						container.appendChild(configDiv);
-					}
-				}
-			});
+		// 配置文件内容随 cmdline 分区一起返回，这里不再单独请求一次 api_conninfo
+		if ((content.indexOf('--config-file') !== -1 || content.match(/-c\s+\//)) && lastConfigFile) {
+			html += '<div class="et-pre" style="margin-top:16px;border-top:2px solid var(--border-color);padding-top:16px;">' +
+				'<div style="font-weight:600;margin-bottom:8px;color:var(--primary-color);">' +
+					escapeHtml(tr('Configuration File Content')) + ':' +
+				'</div>' +
+				'<pre style="margin:0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">' +
+					escapeHtml(lastConfigFile) +
+				'</pre>' +
+			'</div>';
 		}
 
 		return html;
@@ -1091,7 +1185,12 @@ function parseTable(content, tabName) {
 		translatedContent = translatedContent.replace(/###############\s*([^#]+)\s*###############/g, function(match, p1) {
 			return '############### ' + tr(p1.trim()) + ' ###############';
 		});
-		
+
+		// ACL 统计的结构体字段名与枚举取值按精确规则翻译
+		if (tabName === 'acl') {
+			translatedContent = translateAclStats(translatedContent);
+		}
+
 		return '<div class="et-pre">' + (translatedContent.indexOf('<svg') !== -1 || translatedContent.indexOf('<span') !== -1 ? translatedContent : escapeHtml(translatedContent)) + '</div>';
 	}
 	
@@ -1179,96 +1278,157 @@ function parseTable(content, tabName) {
 }
 
 function switchTab(tabName) {
-	if (isRefreshing) return;
-	
 	var tabs = document.querySelectorAll('.et-tab');
 	var contents = document.querySelectorAll('.et-tab-content');
-	
+
 	tabs.forEach(function(tab) {
 		tab.classList.remove('active');
 	});
 	contents.forEach(function(content) {
 		content.classList.remove('active');
 	});
-	
+
 	var activeTab = document.querySelector('.et-tab[data-tab="' + tabName + '"]');
 	var activeContent = document.getElementById('tab_' + tabName);
-	
+
 	if (activeTab && activeContent) {
 		activeTab.classList.add('active');
 		activeContent.classList.add('active');
 		currentTab = tabName;
+		// 按需加载：只请求当前显示的分区，没有加载过才发起请求
+		queueConnInfo([tabName], false);
+	}
+}
+
+// 把 TAB 名换算成后端分区名
+function connInfoKeyOfTab(tabName) {
+	for (var i = 0; i < connInfoSections.length; i++) {
+		if (connInfoSections[i].id === tabName) {
+			return connInfoSections[i].key;
+		}
+	}
+	return null;
+}
+
+// 分区加载失败（超时/网络错误）时给出提示，避免加载动画一直转下去
+function reportConnInfoError(keys) {
+	for (var i = 0; i < keys.length; i++) {
+		var sec = null;
+		for (var j = 0; j < connInfoSections.length; j++) {
+			if (connInfoSections[j].key === keys[i]) sec = connInfoSections[j];
+		}
+		if (!sec) continue;
+		var el = document.getElementById('tab_' + sec.id);
+		if (el) {
+			el.innerHTML = '<div class="et-error"><%:Loading timed out. Please click Refresh to try again.%></div>';
+			el.setAttribute('data-loaded', '1');
+		}
+	}
+}
+
+// 把分区加入请求队列
+function queueConnInfo(tabNames, force) {
+	var changed = false;
+	for (var i = 0; i < tabNames.length; i++) {
+		var key = connInfoKeyOfTab(tabNames[i]);
+		if (!key) continue;
+		if (!force && connInfoLoaded[key]) continue;
+		if (connInfoQueue.indexOf(key) !== -1) continue;
+		connInfoQueue.push(key);
+		changed = true;
+	}
+	if (changed) {
+		pumpConnInfoQueue();
+	}
+}
+
+// 依次请求队列里的分区，同一时刻只允许一个请求在跑，
+// 避免一次起多个 easytier-cli 进程把路由器拖慢
+function pumpConnInfoQueue() {
+	if (connInfoBusy || connInfoQueue.length === 0) return;
+
+	var keys = connInfoQueue;
+	connInfoQueue = [];
+	connInfoBusy = true;
+	setRefreshBtnBusy(true);
+
+	var xhr = new XMLHttpRequest();
+	var finished = false;
+
+	var onDone = function(data) {
+		if (finished) return;
+		finished = true;
+		connInfoBusy = false;
+		setRefreshBtnBusy(false);
+		if (data) {
+			if (typeof data.config_file === 'string') {
+				lastConfigFile = data.config_file;
+			}
+			for (var i = 0; i < keys.length; i++) {
+				connInfoLoaded[keys[i]] = true;
+			}
+			updateConnInfo(data);
+		} else {
+			reportConnInfoError(keys);
+		}
+		// 继续处理下一个分区
+		pumpConnInfoQueue();
+	};
+
+	xhr.open('GET', '<%=url("admin", "vpn", "easytier", "api_conninfo")%>?parts=' + encodeURIComponent(keys.join(',')), true);
+	xhr.timeout = 20000;
+	xhr.onreadystatechange = function() {
+		if (xhr.readyState !== 4) return;
+		var data = null;
+		if (xhr.status === 200) {
+			try {
+				data = JSON.parse(xhr.responseText);
+			} catch (e) {
+				data = null;
+			}
+		}
+		onDone(data);
+	};
+	xhr.ontimeout = function() { onDone(null); };
+	xhr.onerror = function() { onDone(null); };
+	xhr.onabort = function() { onDone(null); };
+	xhr.send();
+}
+
+function setRefreshBtnBusy(busy) {
+	var btn = document.getElementById('et_conninfo_refresh');
+	if (!btn) return;
+	var btnText = btn.querySelector('span');
+	btn.disabled = busy;
+	if (busy) {
+		btn.classList.add('loading');
+		if (btnText) btnText.textContent = '<%:Refreshing...%>';
+	} else {
+		btn.classList.remove('loading');
+		if (btnText) btnText.textContent = '<%:Refresh%>';
 	}
 }
 
 function refreshConnInfo() {
-	if (isRefreshing) return;
-	
-	isRefreshing = true;
-	var btn = document.getElementById('et_conninfo_refresh');
-	var btnText = btn.querySelector('span');
-	var originalText = btnText.textContent;
-	
-	btn.disabled = true;
-	btn.classList.add('loading');
-	btnText.textContent = '<%:Refreshing...%>';
-	
-	var xhr = new XMLHttpRequest();
-	xhr.open('GET', '<%=url("admin", "vpn", "easytier", "api_conninfo")%>', true);
-	xhr.onreadystatechange = function() {
-		if (xhr.readyState === 4) {
-			isRefreshing = false;
-			btn.disabled = false;
-			btn.classList.remove('loading');
-			btnText.textContent = originalText;
-			
-			if (xhr.status === 200) {
-				try {
-					var data = JSON.parse(xhr.responseText);
-					updateConnInfo(data);
-				} catch (e) {
-					console.error('Failed to parse response:', e);
-				}
-			}
+	// 手动刷新：立即刷新当前显示的分区，其余分区标记失效，切过去时再重新加载，
+	// 这样点一次刷新不会同时起十几个 easytier-cli 进程
+	var activeKey = connInfoKeyOfTab(currentTab);
+	for (var i = 0; i < connInfoSections.length; i++) {
+		if (connInfoSections[i].key !== activeKey) {
+			delete connInfoLoaded[connInfoSections[i].key];
 		}
-	};
-	xhr.onerror = function() {
-      		isRefreshing = false;
-      		btn.disabled = false;
-      		btn.classList.remove('loading');
-      		btnText.textContent = originalText;
-  	};
-  	xhr.onabort = function() {
-      		isRefreshing = false;
-      		btn.disabled = false;
-      		btn.classList.remove('loading');
-      		btnText.textContent = originalText;
-  	};
-	xhr.send();
+	}
+	queueConnInfo([currentTab], true);
 }
 
 function updateConnInfo(data) {
 	if (!data) return;
-	
-	var sections = [
-		{id: 'node', key: 'node'},
-		{id: 'peer', key: 'peer'},
-		{id: 'route', key: 'route'},
-		{id: 'connector', key: 'connector'},
-		{id: 'stun', key: 'stun'},
-		{id: 'peercenter', key: 'peer_center'},
-		{id: 'vpnportal', key: 'vpn_portal'},
-		{id: 'proxy', key: 'proxy'},
-		{id: 'acl', key: 'acl'},
-		{id: 'mappedlistener', key: 'mapped_listener'},
-		{id: 'stats', key: 'stats'},
-		{id: 'cmdline', key: 'cmdline'}
-	];
-	
-	sections.forEach(function(sec) {
+
+	connInfoSections.forEach(function(sec) {
 		var el = document.getElementById('tab_' + sec.id);
 		if (el && data[sec.key] !== undefined) {
 			el.innerHTML = parseTable(data[sec.key], sec.id);
+			el.setAttribute('data-loaded', '1');
 		}
 	});
 }
@@ -1290,9 +1450,16 @@ document.addEventListener('DOMContentLoaded', function() {
 	
 	// 加载贡献者
 	loadContributors();
-	
-	// 初始加载数据
-	refreshConnInfo();
+
+	// 初始只加载当前显示的分区，其余分区等切过去时再按需请求
+	queueConnInfo([currentTab], false);
+
+	// 定时刷新：只刷新当前显示的分区，不再每次把十几个 easytier-cli 全部跑一遍。
+	// 间隔取 10 秒，低性能设备上也能跑得过来（单次只起一个进程）
+	window.setInterval(function() {
+		if (document.hidden) return;
+		queueConnInfo([currentTab], true);
+	}, 10000);
 });
 
 // 贡献者轮播管理 (ES5)
@@ -1506,11 +1673,6 @@ function loadContributors() {
 	contributorsCarousel.init();
 }
 
-// 自动刷新
-XHR.poll(5, '<%=url("admin", "vpn", "easytier", "api_conninfo")%>', null, function(x, data) {
-	if (!isRefreshing && data) {
-		updateConnInfo(data);
-	}
-});
+// 自动刷新已改为只刷新当前显示的分区，见上方 DOMContentLoaded 中的定时器
 //]]>
 </script>

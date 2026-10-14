@@ -45,10 +45,11 @@ end
 
 web_config = s:taboption("general", Value, "web_config", translate("Web Server Address"),
         translate("Web configuration server address. (-w parameter)<br>"
-                .. "For a self-hosted Web server, use the format: udp://server_address:22020/username<br>"
-                .. "For the official Web server, use the format: username<br>"
+                .. "Since EasyTier 2.7.0 a full URL is required, the token-only shorthand is no longer supported<br>"
+                .. "Self-hosted Web server, use the format: udp://server_address:22020/username<br>"
+                .. "Official Web server, use the format: udp://config-server.easytier.cn:22020/username<br>"
                 .. "Official Web Console: <a href='https://easytier.cn/web'>easytier.cn/web</a>"))
-web_config.placeholder = "admin"
+web_config.placeholder = "udp://config-server.easytier.cn:22020/my-token"
 web_config:depends("etcmd", "web")
 
 network_name = s:taboption("general", Value, "network_name", translate("Network Name"),
@@ -199,12 +200,52 @@ instance_name = s:taboption("privacy", Value, "instance_name", translate("Instan
 instance_name.placeholder = "default"
 instance_name:depends("etcmd", "etcmd")
 
-vpn_portal = s:taboption("privacy", Value, "vpn_portal", translate("VPN Portal URL"),
-        translate("Defines the URL of the VPN portal, allowing other VPN clients to connect.<br>"
-                .. "Example: wg://0.0.0.0:11011/10.14.14.0/24 means the VPN portal is a WireGuard server listening on vpn."
-                .. "example.com:11010, and the VPN clients are in the 10.14.14.0/24 network (--vpn-portal parameter)"))
-vpn_portal.placeholder = "wg://0.0.0.0:11011/10.14.14.0/24"
+vpn_portal = s:taboption("privacy", Value, "vpn_portal", translate("VPN Portal Listen Address"),
+        translate("WireGuard VPN portal listen address, allowing other VPN clients to connect.<br>"
+                .. "Since EasyTier 2.7.0 only wg://HOST:PORT is accepted; the client network can no longer be "
+                .. "appended to the URL, please add each client in \"VPN Portal Clients\" below "
+                .. "(--vpn-portal parameter)"))
+vpn_portal.placeholder = "wg://0.0.0.0:11011"
+vpn_portal.validate = function(self, value, section)
+    value = value and tostring(value):match("^%s*(.-)%s*$") or ""
+    if value == "" then return value end
+    -- EasyTier 2.7.0 起不再允许把客户端网段写在 URL 里，这里提前拦截，避免核心启动失败
+    if not (value:match("^wg://%d+%.%d+%.%d+%.%d+:%d+$") or value:match("^wg://%[[%x:]+%]:%d+$")) then
+        return nil, translate("Only wg://HOST:PORT is accepted since EasyTier 2.7.0, please fill the client network into \"VPN Portal Clients\"")
+    end
+    return value
+end
 vpn_portal:depends("etcmd", "etcmd")
+
+vpn_portal_clients = s:taboption("privacy", DynamicList, "vpn_portal_clients", translate("VPN Portal Clients"),
+        translate("One WireGuard client per entry in the form NAME=CIDR, for example client1=10.14.14.1/24.<br>"
+                .. "NAME may contain letters, digits and dashes only; the address must be a usable host address "
+                .. "inside the client network. (--vpn-portal-client parameter)"))
+vpn_portal_clients.placeholder = "client1=10.14.14.1/24"
+vpn_portal_clients.validate = function(self, value, section)
+    if type(value) == "table" then
+        local i
+        for i = 1, #value do
+            local item = value[i] and tostring(value[i]):match("^%s*(.-)%s*$") or ""
+            if item ~= "" then
+                -- 与 easytier-core 的校验保持一致：名称只能是字母数字与短横线，地址必须是 主机/前缀
+                if not item:match("^[%w][%w%-]*=[%d%.]+/%d+$") then
+                    return nil, translate("Invalid client, expected NAME=CIDR, for example client1=10.14.14.1/24")
+                end
+            end
+        end
+    end
+    return value
+end
+vpn_portal_clients:depends("etcmd", "etcmd")
+
+vpn_portal_private_key = s:taboption("privacy", Value, "vpn_portal_private_key", translate("VPN Portal Private Key"),
+        translate("Base64 encoded 32-byte WireGuard private key of the portal.<br>"
+                .. "Required since EasyTier 2.7.0, the portal will not start without it. "
+                .. "It is handed to easytier-core through an environment variable so that it never shows up in the process list. "
+                .. "(--vpn-portal-private-key parameter)"))
+vpn_portal_private_key.password = true
+vpn_portal_private_key:depends("etcmd", "etcmd")
 
 mtu = s:taboption("privacy", Value, "mtu", translate("MTU"),
         translate("MTU for the TUN device, default is 1380 when unencrypted, and 1360 when encrypted"))
@@ -314,6 +355,23 @@ socks_port.datatype = "range(1,65535)"
 socks_port.placeholder = "1080"
 socks_port:depends("etcmd", "etcmd")
 
+disable_upnp = s:taboption("privacy", Flag, "disable_upnp", translate("Disable UPnP"),
+        translate("EasyTier 2.7.0 tries to map listener ports through UPnP/NAT-PMP by default. "
+                .. "Enable this to turn the automatic port mapping off. (--disable-upnp parameter)"))
+disable_upnp:depends("etcmd", "etcmd")
+
+stun_servers = s:taboption("privacy", DynamicList, "stun_servers", translate("STUN Servers"),
+        translate("Custom UDP STUN servers used for NAT type detection and hole punching. "
+                .. "Leave empty to use the built-in defaults. (--stun-servers parameter)"))
+stun_servers.placeholder = "stun.miwifi.com:3478"
+stun_servers:depends("etcmd", "etcmd")
+
+tcp_stun_servers = s:taboption("privacy", DynamicList, "tcp_stun_servers", translate("STUN Servers (TCP)"),
+        translate("Custom TCP STUN servers used for NAT type detection and hole punching. "
+                .. "Leave empty to use the built-in defaults. (--tcp-stun-servers parameter)"))
+tcp_stun_servers.placeholder = "stun.miwifi.com:3478"
+tcp_stun_servers:depends("etcmd", "etcmd")
+
 disable_p2p = s:taboption("privacy", Flag, "disable_p2p", translate("Disable P2P"),
         translate("Disable P2P communication; only use nodes specified by -p to forward packets (--disable-p2p parameter)"))
 disable_p2p:depends("etcmd", "etcmd")
@@ -321,6 +379,15 @@ disable_p2p:depends("etcmd", "etcmd")
 p2p_only = s:taboption("privacy", Flag, "p2p_only", translate("P2P only"),
         translate("only communicate with peers that already establish p2p connection. (--p2p-only parameter)"))
 p2p_only:depends("etcmd", "etcmd")
+
+lazy_p2p = s:taboption("privacy", Flag, "lazy_p2p", translate("Lazy P2P"),
+        translate("Only try to establish P2P connections when traffic actually needs to be forwarded. "
+                .. "(--lazy-p2p parameter)"))
+lazy_p2p:depends("etcmd", "etcmd")
+
+need_p2p = s:taboption("privacy", Flag, "need_p2p", translate("Need P2P"),
+        translate("Require a P2P connection before forwarding traffic through relays. (--need-p2p parameter)"))
+need_p2p:depends("etcmd", "etcmd")
 
 disable_udp = s:taboption("privacy", Flag, "disable_udp", translate("Disable UDP"),
         translate("Disable UDP hole punching (--disable-udp-hole-punching parameter)"))
@@ -373,6 +440,14 @@ relay_kcp = s:taboption("privacy", Flag, "relay_kcp", translate("Relay foreign n
         translate("If true, allow relay kcp packets from foreign network. default is false (not forward foreign network kcp packets). (--enable-relay-foreign-network-kcp parameter)"))
 relay_kcp:depends("etcmd", "etcmd")
 
+disable_relay_quic = s:taboption("privacy", Flag, "disable_relay_quic", translate("Disable relay quic"),
+        translate("If true, disable relaying quic packets, avoiding consuming too much bandwidth. (--disable-relay-quic parameter)"))
+disable_relay_quic:depends("etcmd", "etcmd")
+
+relay_quic = s:taboption("privacy", Flag, "relay_quic", translate("Relay foreign network quic"),
+        translate("If true, allow relaying quic packets from foreign networks. (--enable-relay-foreign-network-quic parameter)"))
+relay_quic:depends("etcmd", "etcmd")
+
 quic_proxy = s:taboption("privacy", Flag, "quic_proxy", translate("Enable QUIC Proxy"),
         translate("Proxy tcp streams with QUIC, improving the latency and throughput on the network with udp packet loss.<br>"
                 .. "All nodes in the virtual network must be using EasyTier version v2.3.2 or higher for this feature. "
@@ -396,6 +471,12 @@ accept_dns = s:taboption("privacy", Flag, "accept_dns", translate("Enable Magic 
                 .. "Magic DNS will modify your system DNS settings, please enable with caution. (--accept-dns parameter)"))
 accept_dns:depends("etcmd", "etcmd")
 
+tld_dns_zone = s:taboption("privacy", Value, "tld_dns_zone", translate("Magic DNS Zone"),
+        translate("Top level DNS zone used by Magic DNS, default is et.net. Only takes effect when Magic DNS is enabled. "
+                .. "(--tld-dns-zone parameter)"))
+tld_dns_zone.placeholder = "et.net."
+tld_dns_zone:depends("accept_dns", "1")
+
 private_mode = s:taboption("privacy", Flag, "private_mode", translate("Enable Private Mode"),
         translate("When enabled, nodes with a different network name and password are not allowed to handshake or "
                 .. "relay via this node. (--private-mode parameter)"))
@@ -405,6 +486,17 @@ foreign_relay_bps_limit = s:taboption("privacy", Value, "foreign_relay_bps_limit
         translate("the maximum bps limit for foreign network relay, default is no limit. unit: BPS (bytes per second). "
                 .. "(--foreign-relay-bps-limit parameter)"))
 foreign_relay_bps_limit:depends("etcmd", "etcmd")
+
+instance_recv_bps_limit = s:taboption("privacy", Value, "instance_recv_bps_limit", translate("Instance Receive Rate Limit"),
+        translate("the maximum inbound bps limit for this network instance, default is no limit. "
+                .. "unit: BPS (bytes per second). (--instance-recv-bps-limit parameter)"))
+instance_recv_bps_limit:depends("etcmd", "etcmd")
+
+socket_mark = s:taboption("privacy", Value, "socket_mark", translate("Socket Mark"),
+        translate("Set SO_MARK on all underlay sockets, Linux only and requires CAP_NET_ADMIN. "
+                .. "Usually used together with policy routing. (--socket-mark parameter)"))
+socket_mark.datatype = "range(0,4294967295)"
+socket_mark:depends("etcmd", "etcmd")
 
 extra_args = s:taboption("privacy", DynamicList, "extra_args", translate("Extra Parameters"),
     translate("Additional command-line arguments passed to the backend process"))
