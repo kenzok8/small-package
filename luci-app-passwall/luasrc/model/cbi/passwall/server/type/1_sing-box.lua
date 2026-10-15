@@ -387,7 +387,7 @@ o.validate = function(self, value, t)
 	return nil
 end
 
-o = s:option(TextValue, "tls_certificate", "TLS Certificate (PEM)", translate("Full certificate (chain), PEM format."))
+o = s:option(TextValue, "tls_certificate", translate("TLS Certificate (PEM)"), translate("Full certificate (chain), PEM format."))
 o.default = ""
 o.rows = 5
 o.wrap = "off"
@@ -400,7 +400,7 @@ o.validate = function(self, value)
 	return value:gsub("\n", "\\n")
 end
 
-o = s:option(TextValue, "tls_key", "TLS Private Key (PEM)", translate("Private key in PEM format."))
+o = s:option(TextValue, "tls_key", translate("TLS Private Key (PEM)"), translate("Private key in PEM format."))
 o.default = ""
 o.rows = 5
 o.wrap = "off"

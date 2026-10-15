@@ -138,9 +138,7 @@ function gen_outbound(flag, node, tag, proxy_table)
 		if node.protocol == "masque" then
 			node.transport = "masque"
 			node.stream_security = "tls"
-			node.alpn = nil
 			node.utls = nil
-			node.finalmask = nil
 		end
 
 		if node.protocol == "http" and node.stream_security == "tls" then
@@ -277,9 +275,14 @@ function gen_outbound(flag, node, tag, proxy_table)
 				} or nil,
 				masqueSettings = (node.protocol == "masque") and {
 					path = (node.masque_path and node.masque_path ~= "") and node.masque_path or nil,
+					warp = (node.masque_warp == "1") and {
+						privateKey = (node.masque_warp_private_key or ""):gsub("\\n", "\n"),
+						publicKey = (node.masque_warp_public_key or ""):gsub("\\n", "\n"),
+						address = node.masque_warp_address
+					} or nil,
 					headers = (function()
 						local headers = {}
-						if (node.username and node.username ~= "") or (node.password and node.password ~= "") then
+						if node.masque_warp ~= "1" and ((node.username and node.username ~= "") or (node.password and node.password ~= "")) then
 							headers["authorization"] = "Basic " .. api.base64Encode((node.username or "") .. ":" .. (node.password or ""))
 						end
 						if node.user_agent and node.user_agent ~= "" then

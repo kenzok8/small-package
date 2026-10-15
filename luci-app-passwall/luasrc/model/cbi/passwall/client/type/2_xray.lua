@@ -41,15 +41,9 @@ o:value("vless", translate("VLESS"))
 o:value("shadowsocks", translate("Shadowsocks"))
 o:value("trojan", translate("Trojan"))
 o:value("wireguard", translate("WireGuard"))
-if api.compare_versions(xray_version, ">=", "26.1.13") then
-	o:value("hysteria2", translate("Hysteria2"))
-end
-if api.compare_versions(xray_version, ">=", "26.9.30") then
-	o:value("masque", "MASQUE")
-end
-if api.compare_versions(xray_version, ">=", "1.8.12") then
-	o:value("_balancing", translate("Balancing"))
-end
+o:value("hysteria2", translate("Hysteria2"))
+o:value("masque", "MASQUE")
+o:value("_balancing", translate("Balancing"))
 o:value("_shunt", translate("Shunt"))
 o:value("_iface", translate("Custom Interface"))
 local protocol_val = m:get(s.section, "protocol")
@@ -274,6 +268,29 @@ o:depends({ protocol = "trojan" })
 o:depends({ protocol = "masque" })
 
 -- [[ MASQUE ]] --
+o = s:option(Flag, "masque_warp", "WARP")
+o.default = "0"
+o:depends({ protocol = "masque" })
+
+for _, field in ipairs({
+	{ "masque_warp_private_key", translate("WARP Device Private Key") },
+	{ "masque_warp_public_key", translate("WARP Endpoint Public Key") }
+}) do
+	o = s:option(TextValue, field[1], field[2])
+	o.rows = 3
+	o.wrap = "off"
+	o:depends({ protocol = "masque", masque_warp = "1" })
+	o.cfgvalue = function(self, section)
+		return (m:get(section, self.config_option) or ""):gsub("\\n", "\n")
+	end
+	o.validate = function(self, value)
+		return api.trim(value):gsub("\r\n?", "\n"):gsub("\n", "\\n")
+	end
+end
+
+o = s:option(DynamicList, "masque_warp_address", "WARP " .. translate("Local Address"))
+o:depends({ protocol = "masque", masque_warp = "1" })
+
 o = s:option(Value, "masque_path", translate("MASQUE Path"))
 o:depends({ protocol = "masque" })
 
@@ -338,11 +355,7 @@ o:depends({ protocol = "hysteria2", hysteria2_realms = false })
 
 o = s:option(Flag, "hysteria2_realms", translate("Realms"))
 o.default = "0"
-if api.compare_versions(xray_version, ">", "26.5.9") then
-	o:depends({ protocol = "hysteria2"})
-else
-	o:depends({ protocol = "__hide"})
-end
+o:depends({ protocol = "hysteria2"})
 
 o = s:option(Value, "hysteria2_realm_url", translate("Realm URL"), translate("Example:") .. "realm://public@realm.hy2.io/your-realm-name")
 o:depends({ hysteria2_realms = "1" })
@@ -442,6 +455,7 @@ o:value("http/1.1")
 o:value("h2,http/1.1")
 o:value("h3,h2,http/1.1")
 o:depends({ tls = true, reality = false })
+o:depends({ protocol = "masque" })
 
 -- o = s:option(Value, "minversion", translate("minversion"))
 -- o.default = "1.3"
@@ -575,10 +589,8 @@ o = s:option(Value, "wireguard_mtu", translate("MTU"))
 o.default = "1420"
 o:depends({ protocol = "wireguard" })
 
-if api.compare_versions(xray_version, ">=", "1.8.0") then
-	o = s:option(Value, "wireguard_reserved", translate("Reserved"), translate("Decimal numbers separated by \",\" or Base64-encoded strings."))
-	o:depends({ protocol = "wireguard" })
-end
+o = s:option(Value, "wireguard_reserved", translate("Reserved"), translate("Decimal numbers separated by \",\" or Base64-encoded strings."))
+o:depends({ protocol = "wireguard" })
 
 o = s:option(Value, "wireguard_keepAlive", translate("Keep Alive"))
 o.default = "0"
@@ -771,6 +783,7 @@ o:depends({ protocol = "trojan" })
 o:depends({ protocol = "shadowsocks" })
 o:depends({ protocol = "wireguard" })
 o:depends({ protocol = "hysteria2", hysteria2_realms = false })
+o:depends({ protocol = "masque" })
 
 o = s:option(TextValue, "finalmask", "　")
 o:depends({ use_finalmask = true })
