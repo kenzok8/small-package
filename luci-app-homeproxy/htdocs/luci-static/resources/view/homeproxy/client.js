@@ -349,11 +349,6 @@ return view.extend({
 		for (let i in hp.dns_strategy)
 			so.value(i, hp.dns_strategy[i]);
 
-		so = ss.option(form.Flag, 'sniff_override', _('Override destination'),
-			_('Override the connection destination address with the sniffed domain.'));
-		so.default = so.enabled;
-		so.rmempty = false;
-
 		so = ss.option(form.ListValue, 'default_outbound', _('Default outbound'),
 			_('Default outbound for connections not matched by any routing rules.'));
 		so.load = function(section_id) {
@@ -899,10 +894,6 @@ return view.extend({
 		so = ss.option(form.Flag, 'disable_cache', _('Disable DNS cache'));
 
 		so = ss.option(form.Flag, 'disable_cache_expire', _('Disable cache expire'));
-		so.depends('disable_cache', '0');
-
-		so = ss.option(form.Flag, 'independent_cache', _('Independent cache per server'),
-			_('Make each DNS server\'s cache independent for special purposes. If enabled, will slightly degrade performance.'));
 		so.depends('disable_cache', '0');
 
 		so = ss.option(form.Value, 'client_subnet', _('EDNS Client subnet'),
