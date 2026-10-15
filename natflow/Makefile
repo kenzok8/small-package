@@ -10,6 +10,7 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=natflow
 PKG_VERSION:=20261009
+PKG_RELEASE:=3
 
 PKG_SOURCE_URL:=https://codeload.github.com/ptpt52/natflow/tar.gz/$(PKG_VERSION)?
 PKG_HASH:=2d66a0619e5390e7771b4bf245de9634dd59957b03ede25d6961ab6fb6ff5bf7
