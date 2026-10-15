@@ -229,5 +229,37 @@ local sid = "@global[0]"
 			select.insertAdjacentElement("afterend", logLink);
 		};
 	})();
+
+	(function () {
+		function initSmartdnsDirectAuto() {
+			const field = document.getElementById("cbi-<%=appname%>-" + global_id + "-smartdns_direct_dns");
+			if (!field) return;
+
+			const update = () => {
+				const list = field.querySelector(".cbi-dynlist");
+				if (!list) return;
+				const hasDns = Array.from(list.querySelectorAll('.item > input[type="hidden"]'))
+					.some(input => input.value.trim() !== "");
+				const text = hasDns ? <%=api.jsonc.stringify(translate("-- Please choose --"))%> : "<%:Auto%>";
+				const placeholder = list.querySelector(".add-item .cbi-dropdown > ul > li[placeholder]");
+				// 只修改空选项的提示文字，不添加 DNS 条目，也不改变正在输入的内容。
+				if (placeholder && placeholder.textContent !== text) {
+					placeholder.textContent = text;
+				}
+				const input = list.querySelector('.add-item > input[type="text"]');
+				if (input) input.placeholder = hasDns ? "" : "<%:Auto%>";
+			};
+
+			// 同时处理 LuCI 延迟渲染，以及添加、删除 DNS 后的空列表状态。
+			new MutationObserver(update).observe(field, { childList: true, subtree: true });
+			update();
+		}
+
+		if (document.readyState === "loading") {
+			document.addEventListener("DOMContentLoaded", initSmartdnsDirectAuto, { once: true });
+		} else {
+			initSmartdnsDirectAuto();
+		}
+	})();
 	//]]>
 </script>

@@ -188,9 +188,6 @@ o:value("udp", translatef("Requery DNS By %s", "UDP"))
 o:value("tcp", translatef("Requery DNS By %s", "TCP"))
 o:depends({dns_shunt = "dnsmasq"})
 o:depends({dns_shunt = "chinadns-ng"})
-if has_smartdns then
-	o:depends({dns_shunt = "smartdns"})
-end
 
 o = s:taboption("DNS", Value, "direct_dns", translate("Direct DNS"))
 o.datatype = "or(ipaddr,ipaddrport(1))"
@@ -202,8 +199,25 @@ o:value("180.184.2.2")
 o:value("114.114.114.114")
 o:value("114.114.115.115")
 o:value("119.28.28.28")
-o:depends("direct_dns_mode", "udp")
-o:depends("direct_dns_mode", "tcp")
+o:depends({dns_shunt = "dnsmasq", direct_dns_mode = "udp"})
+o:depends({dns_shunt = "dnsmasq", direct_dns_mode = "tcp"})
+o:depends({dns_shunt = "chinadns-ng", direct_dns_mode = "udp"})
+o:depends({dns_shunt = "chinadns-ng", direct_dns_mode = "tcp"})
+
+if has_smartdns then
+	o = s:taboption("DNS", DynamicList, "smartdns_direct_dns", translate("Direct DNS"))
+	o.placeholder = translate("Auto")
+	o.rmempty = true
+	o:value("223.5.5.5")
+	o:value("119.29.29.29")
+	o:value("tcp://223.5.5.5")
+	o:value("tcp://114.114.114.114")
+	o:value("tls://dot.pub,1.12.12.12")
+	o:value("tls://dns.alidns.com,223.5.5.5")
+	o:value("https://223.5.5.5/dns-query")
+	o:value("https://1.12.12.12/dns-query")
+	o:depends({dns_shunt = "smartdns"})
+end
 
 o = s:taboption("DNS", Flag, "filter_proxy_ipv6", translate("Filter Proxy Host IPv6"))
 o.default = "0"

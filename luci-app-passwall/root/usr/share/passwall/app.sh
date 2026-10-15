@@ -658,10 +658,11 @@ start_global() {
 			local _remote_dns_client_ip=$(config_n_get @global[0] remote_dns_client_ip)
 			[ -n "${_remote_dns_client_ip}" ] && _args="${_args} remote_dns_client_ip=${_remote_dns_client_ip}"
 			[ "${DNS_CACHE}" = "0" ] && _args="${_args} dns_cache=0"
-			resolve_dns_port=${NEXT_DNS_LISTEN_PORT}
+			resolve_dns_port=$(get_new_port "$NEXT_DNS_LISTEN_PORT" tcp,udp)
+			[ -n "$resolve_dns_port" ] || return 1
 			_args="${_args} dns_listen_port=${resolve_dns_port}"
 
-			case "$(config_n_get @global[0] direct_dns_mode "auto")" in
+			case "$(get_direct_dns_mode)" in
 				udp)
 					_args="${_args} direct_dns_udp_server=$(normalize_dns "$(config_n_get @global[0] direct_dns 223.5.5.5:53)")"
 				;;
@@ -694,7 +695,7 @@ start_global() {
 				USE_FAKEDNS=1
 			}
 			_args="${_args} remote_rewrite_ttl=$(config_n_get @global[0] remote_rewrite_ttl)"
-			NEXT_DNS_LISTEN_PORT=$(expr $NEXT_DNS_LISTEN_PORT + 1)
+			NEXT_DNS_LISTEN_PORT=$(expr $resolve_dns_port + 1)
 		}
 		_args="${_args} use_proxy_list=$USE_PROXY_LIST use_gfw_list=$USE_GFW_LIST chn_list=$CHN_LIST"
 		run_singbox flag=$_flag node=$NODE redir_port=$REDIR_PORT tcp_proxy_way=$TCP_PROXY_WAY config_file=$config_file log_file=$log_file ${_args}
@@ -741,10 +742,11 @@ start_global() {
 			local _remote_dns_client_ip=$(config_n_get @global[0] remote_dns_client_ip)
 			[ -n "${_remote_dns_client_ip}" ] && _args="${_args} remote_dns_client_ip=${_remote_dns_client_ip}"
 			[ "${DNS_CACHE}" = "0" ] && _args="${_args} dns_cache=0"
-			resolve_dns_port=${NEXT_DNS_LISTEN_PORT}
+			resolve_dns_port=$(get_new_port "$NEXT_DNS_LISTEN_PORT" tcp,udp)
+			[ -n "$resolve_dns_port" ] || return 1
 			_args="${_args} dns_listen_port=${resolve_dns_port}"
 
-			case "$(config_n_get @global[0] direct_dns_mode "auto")" in
+			case "$(get_direct_dns_mode)" in
 				udp)
 					_args="${_args} direct_dns_udp_server=$(normalize_dns "$(config_n_get @global[0] direct_dns 223.5.5.5:53)")"
 				;;
@@ -773,7 +775,7 @@ start_global() {
 				resolve_dns_log="${resolve_dns_log} + FakeDNS"
 				USE_FAKEDNS=1
 			}
-			NEXT_DNS_LISTEN_PORT=$(expr $NEXT_DNS_LISTEN_PORT + 1)
+			NEXT_DNS_LISTEN_PORT=$(expr $resolve_dns_port + 1)
 		}
 		_args="${_args} use_proxy_list=$USE_PROXY_LIST use_gfw_list=$USE_GFW_LIST chn_list=$CHN_LIST"
 		run_xray flag=$_flag node=$NODE redir_port=$REDIR_PORT tcp_proxy_way=$TCP_PROXY_WAY config_file=$config_file log_file=$log_file ${_args}
@@ -1066,12 +1068,21 @@ stop_crontab() {
 	#echolog "清除定时执行命令。"
 }
 
+get_direct_dns_mode() {
+	# SmartDNS 使用独立直连列表，其余 DNS 分流模式继续读取原来的设置。
+	if [ "$ENABLED_DEFAULT_ACL" = "1" ] && [ "$DNS_SHUNT" = "smartdns" ]; then
+		echo auto
+	else
+		config_n_get @global[0] direct_dns_mode "auto"
+	fi
+}
+
 start_dns() {
 	echolog "DNS域名解析："
 
 	local china_ng_local_dns="${LOCAL_DNS}"
 	local v2ray_local_dns
-	local direct_dns_mode=$(config_n_get @global[0] direct_dns_mode "auto")
+	local direct_dns_mode=$(get_direct_dns_mode)
 
 	#获取访问控制节点所使用的DNS分流模式
 	local ACL_RULE_DNSMASQ=0
@@ -1267,10 +1278,11 @@ start_dns() {
 			}
 			local smartdns_config="${GLOBAL_ACL_PATH}/smartdns.conf"
 			local subnet_ip=$(config_n_get @global[0] remote_dns_client_ip)
-			echolog "  - SmartDNS(127.0.0.1#${smartdns_listen_port})，直连 DNS：${china_ng_local_dns} -> 分组(direct)"
+			echolog "  - SmartDNS(127.0.0.1#${smartdns_listen_port})，直连 DNS：${SMARTDNS_DIRECT_DNS} -> 分组(direct)"
+			[ "${SMARTDNS_LOCAL_PORT:-0}" != "0" ] && echolog "  - SmartDNS 直连入口：${LOCAL_DNS} -> 分组(direct)"
 
 			lua "$APP_PATH/helper_smartdns_add.lua" -FLAG "default" \
-				-LISTEN_PORT "$smartdns_listen_port" -LOCAL_DNS "$china_ng_local_dns" -DNS_REDIRECT "${DNS_REDIRECT}" \
+				-LISTEN_PORT "$smartdns_listen_port" -DIRECT_DNS "$SMARTDNS_DIRECT_DNS" -LOCAL_PORT "${SMARTDNS_LOCAL_PORT:-0}" -DNS_REDIRECT "${DNS_REDIRECT}" \
 				-REMOTE_PROXY_SERVER "${GLOBAL_SOCKS_server}" -USE_DEFAULT_DNS "${smartdns_default_dns}" \
 				-REMOTE_DNS "${smartdns_remote_dns}" -DNS_MODE "${DNS_MODE:-socks}" -TUN_DNS "${TUN_DNS}" \
 				-USE_DIRECT_LIST "${USE_DIRECT_LIST}" -USE_PROXY_LIST "${USE_PROXY_LIST}" -USE_BLOCK_LIST "${USE_BLOCK_LIST}" -USE_GFW_LIST "${USE_GFW_LIST}" -CHN_LIST "${CHN_LIST}" \
@@ -1567,7 +1579,7 @@ acl_app() {
 								_china_ng_listen="127.0.0.1#${chinadns_port},::1#${chinadns_port}"
 
 								_chinadns_local_dns="${LOCAL_DNS}"
-								_direct_dns_mode=$(config_n_get @global[0] direct_dns_mode "auto")
+								_direct_dns_mode=$(get_direct_dns_mode)
 								case "${_direct_dns_mode}" in
 									udp)
 										_chinadns_local_dns=$(normalize_dns "$(config_n_get @global[0] direct_dns 223.5.5.5:53)")
@@ -1720,7 +1732,11 @@ start() {
 	fi
 	[ "$ENABLED_DEFAULT_ACL" = 1 ] && {
 		mkdir -p ${GLOBAL_ACL_PATH}
-		start_global
+		start_global || {
+			echolog "全局节点启动失败，停止服务。"
+			stop
+			return 1
+		}
 		start_dns || {
 			echolog "DNS 启动失败，停止服务。"
 			stop
@@ -1856,7 +1872,7 @@ get_config() {
 	REDIRECT_LIST="socks ss-rust ssr sing-box xray naiveproxy hysteria2"
 	TPROXY_LIST="socks ss-rust ssr sing-box xray hysteria2"
 
-	NEXT_DNS_LISTEN_PORT=15353
+	NEXT_DNS_LISTEN_PORT=$(get_new_port 15353 tcp,udp)
 	TUN_DNS="127.0.0.1#${NEXT_DNS_LISTEN_PORT}"
 	DNS_CACHE=0
 	DIRECT_DNS_QUERY_STRATEGY="UseIP"
@@ -1878,6 +1894,37 @@ get_config() {
 	fi
 	set_cache_var GLOBAL_DNSMASQ_CONF ${DNSMASQ_CONF_DIR}/dnsmasq-${CONFIG}.conf
 	set_cache_var GLOBAL_DNSMASQ_CONF_PATH ${GLOBAL_ACL_PATH}/dnsmasq.d
+
+	SMARTDNS_LOCAL_PORT=0
+	SMARTDNS_DIRECT_DNS=
+	if [ "$ENABLED_DEFAULT_ACL" = "1" ] && [ "$DNS_SHUNT" = "smartdns" ]; then
+		# 显式列出空白字符，兼容未启用字符类支持的 BusyBox tr。
+		SMARTDNS_DIRECT_DNS=$(config_n_get @global[0] smartdns_direct_dns | tr -s ' \t\r\n\v\f' '|' | sed 's/^|//;s/|$//')
+		[ "$SMARTDNS_DIRECT_DNS" = "nil" ] && SMARTDNS_DIRECT_DNS=
+		if [ -z "$SMARTDNS_DIRECT_DNS" ]; then
+			SMARTDNS_DIRECT_DNS="$LOCAL_DNS"
+		else
+			local smartdns_single_dns="${SMARTDNS_DIRECT_DNS%%,*}"
+			local smartdns_protocol=udp
+			case "$smartdns_single_dns" in
+				*://*)
+					smartdns_protocol=$(printf '%s' "${smartdns_single_dns%%://*}" | tr 'A-Z' 'a-z')
+					smartdns_single_dns="${smartdns_single_dns#*://}"
+				;;
+			esac
+			if [ "${SMARTDNS_DIRECT_DNS#*|}" = "$SMARTDNS_DIRECT_DNS" ] && [ "$smartdns_protocol" = "udp" ]; then
+				LOCAL_DNS=$(normalize_dns "$smartdns_single_dns" 53)
+				local smartdns_host_ip="${SMARTDNS_DIRECT_DNS#*,}"
+				[ "$smartdns_host_ip" != "$SMARTDNS_DIRECT_DNS" ] && [ -n "$smartdns_host_ip" ] && \
+					LOCAL_DNS=$(normalize_dns "$smartdns_host_ip" "${LOCAL_DNS##*#}")
+			else
+				SMARTDNS_LOCAL_PORT=${NEXT_DNS_LISTEN_PORT}
+				NEXT_DNS_LISTEN_PORT=$(expr $NEXT_DNS_LISTEN_PORT + 1)
+				LOCAL_DNS="127.0.0.1#${SMARTDNS_LOCAL_PORT}"
+			fi
+		fi
+		set_cache_var "LOCAL_DNS" "$LOCAL_DNS"
+	fi
 }
 
 get_local_dns() {
