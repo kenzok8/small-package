@@ -31,6 +31,7 @@ local singbox_tags = luci.sys.exec(singbox_bin .. " version  | grep 'Tags:' | aw
 
 local local_version = api.get_app_version("sing-box"):match("[^v]+")
 local version_ge_1_14_0 = api.compare_versions(local_version, ">=", "1.14.0")
+local version_ge_1_15_0 = api.compare_versions(local_version, ">=", "1.15.0")
 
 local ss_method_list = {
 	"none", "aes-128-gcm", "aes-192-gcm", "aes-256-gcm", "chacha20-ietf-poly1305", "xchacha20-ietf-poly1305",
@@ -246,6 +247,24 @@ o:value("", translate("Disable"))
 o:value("xtls-rprx-vision")
 o:depends({ protocol = "vless" , tls = true })
 
+-- [[ MASQUE ]] --
+if version_ge_1_15_0 and singbox_tags:find("with_quic") then
+	s.fields["protocol"]:value("masque", "MASQUE")
+	s.fields["users"]:depends({ protocol = "masque" })
+
+	o = s:option(Value, "masque_path", translate("MASQUE Path"))
+	o:depends({ protocol = "masque" })
+
+	o = s:option(DynamicList, "masque_address", translate("MASQUE Address"))
+	o.rmempty = false
+	o:depends({ protocol = "masque" })
+
+	o = s:option(Value, "masque_mtu", "MTU")
+	o.datatype = "uinteger"
+	o.default = "1280"
+	o:depends({ protocol = "masque" })
+end
+
 o = s:option(Flag, "tls", translate("TLS"))
 o.default = 0
 o.validate = function(self, value, t)
@@ -322,6 +341,7 @@ o:depends({ protocol = "naive" })
 o:depends({ protocol = "hysteria" })
 o:depends({ protocol = "tuic" })
 o:depends({ protocol = "hysteria2" })
+o:depends({ protocol = "masque" })
 
 o = s:option(FileUpload, "tls_certificateFile", translate("Path to the certificate file"), translate("as:") .. "/etc/ssl/fullchain.crt")
 o.default = m:get(s.section, "tls_certificateFile") or "/etc/config/ssl/" .. s.section .. ".crt"
@@ -331,6 +351,7 @@ o:depends({ protocol = "naive", tls_use_pem = false })
 o:depends({ protocol = "hysteria", tls_use_pem = false })
 o:depends({ protocol = "tuic", tls_use_pem = false })
 o:depends({ protocol = "hysteria2", tls_use_pem = false })
+o:depends({ protocol = "masque", tls_use_pem = false })
 o.validate = function(self, value, t)
 	if value and value ~= "" then
 		if not api.fs.access(value) then
@@ -350,6 +371,7 @@ o:depends({ protocol = "naive", tls_use_pem = false })
 o:depends({ protocol = "hysteria", tls_use_pem = false })
 o:depends({ protocol = "tuic", tls_use_pem = false })
 o:depends({ protocol = "hysteria2", tls_use_pem = false })
+o:depends({ protocol = "masque", tls_use_pem = false })
 o.validate = function(self, value, t)
 	if value and value ~= "" then
 		if not api.fs.access(value) then
@@ -361,7 +383,7 @@ o.validate = function(self, value, t)
 	return nil
 end
 
-o = s:option(TextValue, "tls_certificate", "TLS Certificate (PEM)", translate("Full certificate (chain), PEM format."))
+o = s:option(TextValue, "tls_certificate", translate("TLS Certificate (PEM)"), translate("Full certificate (chain), PEM format."))
 o.default = ""
 o.rows = 5
 o.wrap = "off"
@@ -374,7 +396,7 @@ o.validate = function(self, value)
 	return value:gsub("\n", "\\n")
 end
 
-o = s:option(TextValue, "tls_key", "TLS Private Key (PEM)", translate("Private key in PEM format."))
+o = s:option(TextValue, "tls_key", translate("TLS Private Key (PEM)"), translate("Private key in PEM format."))
 o.default = ""
 o.rows = 5
 o.wrap = "off"
@@ -394,6 +416,7 @@ o:depends({ protocol = "naive" })
 o:depends({ protocol = "hysteria" })
 o:depends({ protocol = "tuic" })
 o:depends({ protocol = "hysteria2", hysteria2_realms = false })
+o:depends({ protocol = "masque" })
 
 o = s:option(TextValue, "ech_key", translate("ECH Key"))
 o.default = ""

@@ -23,6 +23,35 @@ local uci, uci_get, uci_set, uci_del, uci_foreach, uci_save = api.uci, api.uci_g
 -- so caching them is worth the effort
 local tinsert = table.insert
 local ssub, slen, schar, sbyte, sformat, sgsub = string.sub, string.len, string.char, string.byte, string.format, string.gsub
+
+-- Both update scripts use the same lockf lock; the kernel releases it on exit.
+if not arg[1] then os.exit(0) end
+local update_lock = api.nixio.open(api.LOCK_PREFIX .. "_sub_rule.lock", api.nixio.open_flags("rdwr", "creat"))
+if not update_lock then
+	log(0, i18n.translate("Unable to open the subscription/rule update lock. Exiting."))
+	os.exit(1)
+end
+-- Scheduled updates wait for the lock; manual requests skip a busy lock.
+if not update_lock:lock("tlock") then
+	if arg[3] ~= "cron" then
+		log(0, i18n.translate("A subscription or rule update is already running. Skipping this request."))
+		os.exit(0)
+	end
+	local running = ({s = i18n.translate("Subscription"), r = i18n.translate("Rule Update")})[update_lock:read(1)] or i18n.translate("Subscription/Rule Update")
+	update_lock:seek(0, "set")
+	log(0, i18n.translatef("[%s] is running; [%s] is queued and waiting...", running, i18n.translate("Subscription")))
+	if not update_lock:lock("lock") then
+		log(0, i18n.translate("Unable to acquire the update lock. Scheduled task failed."))
+		os.exit(1)
+	end
+end
+-- Record the running task in the same file: s = subscription, r = rule update.
+update_lock:write("s")
+update_lock:seek(0, "set")
+uci:revert(c_config)
+math.randomseed(os.time() + math.floor(os.clock() * 1000))
+local restart_required = false
+
 local lyaml = require "lyaml"
 
 local has_ss_rust = api.is_finded("sslocal")
@@ -2487,15 +2516,7 @@ local function update_node(manual)
 
 	uci_save(true)
 
-	if arg[3] == "cron" then
-		if not fs.access(api.LOCK_PREFIX .. ".lock") then
-			luci.sys.call("touch %s_cron.lock" % api.LOCK_PREFIX)
-		end
-	end
-
-	if manual ~= 1 then
-		luci.sys.call("/etc/init.d/passwall2 restart > /dev/null 2>&1 &")
-	end
+	if manual ~= 1 then restart_required = true end
 end
 
 local function parse_link(raw, add_mode, group, sub_cfg)
@@ -2687,54 +2708,29 @@ local execute = function()
 	end
 end
 
-local function check_instance(action)
-	local sub_lock = api.LOCK_PREFIX .. "_subscribe.lock"
-	local rule_lock = api.LOCK_PREFIX .. "_rule_update.lock"
-
-	if action == "start" then
-		math.randomseed(os.time() + math.floor(os.clock() * 1000))
-		api.nixio.nanosleep(0, math.random(100, 1000) * 1000000)
-		if fs.access(sub_lock) then
-			log(0, i18n.translatef("[Subscription] instance is running; please try again later.") .. "\n")
-			os.exit(0)
-		else
-			luci.sys.call("touch " .. sub_lock)
-			uci:revert(c_config)
+if arg[1] == "start" then
+	log(0, i18n.translate("Start subscribing..."))
+	xpcall(execute, function(e)
+		log(1, e)
+		if type(debug) == "table" and type(debug.traceback) == "function" then
+			log(1, debug.traceback())
 		end
-	elseif action == "end" then
-		luci.sys.call("rm -f " .. sub_lock)
-		return
-	end
-
-	if fs.access(rule_lock) then
-		log(0, i18n.translatef("[Rule Update] instance is running; [Subscription] queue and wait.") .. "\n")
-	end
-	while fs.access(rule_lock) do
-		api.nixio.nanosleep(2, 0)
-	end
+		log(1, i18n.translate("An error occurred during subscription."))
+	end)
+	log(0, i18n.translate("Subscription complete...") .. "\n")
+elseif arg[1] == "add" then
+	local f = assert(io.open("/tmp/links.conf", 'r'))
+	local raw = f:read('*all')
+	f:close()
+	parse_link(raw, "1", arg[2])
+	update_node(1)
+	luci.sys.call("rm -f /tmp/links.conf")
+elseif arg[1] == "truncate" then
+	truncate_nodes(arg[2])
 end
 
-if arg[1] then
-	check_instance("start")
-
-	if arg[1] == "start" then
-		log(0, i18n.translatef("Start subscribing..."))
-		xpcall(execute, function(e)
-			log(1, e)
-			log(1, debug.traceback())
-			log(1, i18n.translatef("Error, restoring service."))
-		end)
-		log(0, i18n.translatef("Subscription complete...") .. "\n")
-	elseif arg[1] == "add" then
-		local f = assert(io.open("/tmp/links.conf", 'r'))
-		local raw = f:read('*all')
-		f:close()
-		parse_link(raw, "1", arg[2])
-		update_node(1)
-		luci.sys.call("rm -f /tmp/links.conf")
-	elseif arg[1] == "truncate" then
-		truncate_nodes(arg[2])
-	end
-
-	check_instance("end")
+update_lock:close()
+if restart_required then
+	local action = arg[3] == "cron" and " cron" or ""
+	luci.sys.call("/etc/init.d/passwall2 restart" .. action .. " > /dev/null 2>&1 &")
 end

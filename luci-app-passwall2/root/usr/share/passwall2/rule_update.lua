@@ -1,7 +1,6 @@
 #!/usr/bin/lua
 
 local api = require "luci.passwall2.api"
-local appname = api.appname
 local fs = api.fs
 local log = api.log
 local sys = api.sys
@@ -10,6 +9,35 @@ local uci, uci_get, uci_set, uci_del, uci_foreach, uci_save = api.uci, api.uci_g
 local arg1 = arg[1]
 local arg2 = arg[2]
 local arg3 = arg[3]
+
+local update_lock = api.nixio.open(api.LOCK_PREFIX .. "_sub_rule.lock", api.nixio.open_flags("rdwr", "creat"))
+if not update_lock then
+	log(0, api.i18n.translate("Unable to open the subscription/rule update lock. Exiting."))
+	os.exit(1)
+end
+
+if not update_lock:lock("tlock") then
+	if arg3 ~= "cron" then
+		log(0, api.i18n.translate("A subscription or rule update is already running. Skipping this request."))
+		update_lock:close()
+		os.exit(0)
+	end
+	local running_task = update_lock:read(1)
+	update_lock:seek(0, "set")
+	local running_name = running_task == "s" and api.i18n.translate("Subscription")
+		or running_task == "r" and api.i18n.translate("Rule Update")
+		or api.i18n.translate("Subscription/Rule Update")
+	log(0, api.i18n.translatef("[%s] is running; [%s] is queued and waiting...", running_name, api.i18n.translate("Rule Update")))
+	if not update_lock:lock("lock") then
+		log(0, api.i18n.translate("Unable to acquire the update lock. Scheduled task failed."))
+		update_lock:close()
+		os.exit(1)
+	end
+end
+update_lock:write("r")
+update_lock:seek(0, "set")
+uci:revert(api.c_config)
+math.randomseed(os.time() + math.floor(os.clock() * 1000))
 
 local reboot = 0
 local geoip_update = "0"
@@ -181,36 +209,9 @@ else
 	geosite_update = uci_get("@global_rules[0]", "geosite_update") or "1"
 end
 if geoip_update == "0" and geosite_update == "0" then
-	os.exit(0)
+	update_lock:close()
+	return
 end
-
-local function check_instance(action)
-	local rule_lock = "/var/lock/" .. appname .. "_rule_update.lock"
-	local sub_lock = "/var/lock/" .. appname .. "_subscribe.lock"
-
-	if action == "start" then
-		math.randomseed(os.time() + math.floor(os.clock() * 1000))
-		api.nixio.nanosleep(0, math.random(100, 1000) * 1000000)
-		if fs.access(rule_lock) then
-			log(0, api.i18n.translatef("[Rule update] instance is running; please try again later.") .. "\n")
-			os.exit(0)
-		else
-			luci.sys.call("touch " .. rule_lock)
-		end
-	elseif action == "end" then
-		luci.sys.call("rm -f " .. rule_lock)
-		return
-	end
-
-	if fs.access(sub_lock) then
-		log(0, api.i18n.translatef("[Subscription] instance is running; [Rule Update] queue and wait.") .. "\n")
-	end
-	while fs.access(sub_lock) do
-		api.nixio.nanosleep(2, 0)
-	end
-end
-
-check_instance("start")
 
 log(0, api.i18n.translate("Start updating the rules..."))
 local function safe_call(func, err_msg)
@@ -235,19 +236,16 @@ end
 
 uci_set("@global_rules[0]", "geoip_update", geoip_update)
 uci_set("@global_rules[0]", "geosite_update", geosite_update)
-uci_save(true)
 
 if reboot == 1 then
-	if arg3 == "cron" then
-		if not fs.access(api.LOCK_PREFIX .. ".lock") then
-			sys.call("touch %s_cron.lock" % api.LOCK_PREFIX)
-		end
-	end
-
 	log(1, api.i18n.translate("Restart the service and apply the new rules."))
 	uci_set("@global[0]", "flush_set", "1")
-	uci_save(true, true)
 end
+uci_save(true)
 log(0, api.i18n.translate("The rules have been updated..."))
 
-check_instance("end")
+update_lock:close()
+if reboot == 1 then
+	local action = arg3 == "cron" and " cron" or ""
+	sys.call("/etc/init.d/passwall2 restart" .. action .. " > /dev/null 2>&1 &")
+end

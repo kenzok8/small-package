@@ -2244,11 +2244,26 @@ msgstr "入口 %s:%s"
 msgid "Node: %s:%s, Weight: %s"
 msgstr "節點：%s:%s，權重：%s"
 
-msgid "[Rule update] instance is running; please try again later."
-msgstr "[規則更新]實例正在運行，請稍後再試..."
+msgid "Unable to open the subscription/rule update lock. Exiting."
+msgstr "無法開啟訂閱/規則更新鎖，退出。"
 
-msgid "[Subscription] instance is running; [Rule Update] queue and wait."
-msgstr "[訂閱]實例正在運行，[規則更新]進入隊列等待..."
+msgid "A subscription or rule update is already running. Skipping this request."
+msgstr "訂閱或規則更新已在執行，略過本次請求。"
+
+msgid "Unable to acquire the update lock. Scheduled task failed."
+msgstr "無法取得更新鎖，排程任務失敗。"
+
+msgid "Subscription"
+msgstr "訂閱"
+
+msgid "Rule Update"
+msgstr "規則更新"
+
+msgid "Subscription/Rule Update"
+msgstr "訂閱/規則更新"
+
+msgid "[%s] is running; [%s] is queued and waiting..."
+msgstr "[%s]正在執行，[%s]已進入佇列等待..."
 
 msgid "Start updating the rules..."
 msgstr "開始更新規則..."
@@ -2406,11 +2421,11 @@ msgstr "不代理"
 msgid "Proxy"
 msgstr "代理"
 
-msgid "[Subscription] instance is running; please try again later."
-msgstr "[訂閱]實例正在運行，請稍後再試..."
+msgid "Unable to acquire the stop lock. Exiting."
+msgstr "無法取得停止鎖，退出。"
 
-msgid "[Rule Update] instance is running; [Subscription] queue and wait."
-msgstr "[規則更新]實例正在運行，[訂閱]進入隊列等待..."
+msgid "Failed or timed out waiting for subscription/rule updates. Restart cancelled."
+msgstr "等待訂閱/規則更新失敗或逾時，已取消重新啟動。"
 
 msgid "Start subscribing..."
 msgstr "開始訂閱..."
@@ -2424,8 +2439,8 @@ msgstr "訂閱:【%s】沒有變化，無需更新。"
 msgid "[%s] Subscription failed. This could be due to an invalid subscription address or a network issue. Please diagnose the problem! [%s]"
 msgstr "【%s】訂閱失敗，可能是訂閱地址無效，或是網絡問題，請診斷！[%s]"
 
-msgid "Error, restoring service."
-msgstr "發生錯誤, 正在恢復服務。"
+msgid "An error occurred during subscription."
+msgstr "訂閱過程中發生錯誤。"
 
 msgid "Subscription complete..."
 msgstr "訂閱完毕..."
@@ -2462,3 +2477,18 @@ msgstr "配置支援的密碼套件列表。"
 
 msgid "This username already exists."
 msgstr "該用戶名已存在。"
+
+msgid "MASQUE Path"
+msgstr "MASQUE 路徑"
+
+msgid "Custom HTTP Headers"
+msgstr "自訂 HTTP 請求標頭"
+
+msgid "MASQUE Address"
+msgstr "MASQUE 隧道位址"
+
+msgid "WARP Device Private Key"
+msgstr "WARP 裝置私鑰"
+
+msgid "WARP Endpoint Public Key"
+msgstr "WARP 伺服器公鑰"

@@ -37,6 +37,7 @@ local singbox_tags = luci.sys.exec(singbox_bin .. " version  | grep 'Tags:' | aw
 
 local singbox_version = api.get_app_version("sing-box"):match("[^v]+")
 local version_ge_1_14_0 = api.compare_versions(singbox_version, ">=", "1.14.0")
+local version_ge_1_15_0 = api.compare_versions(singbox_version, ">=", "1.15.0")
 
 o = s:option(ListValue, "protocol", translate("Protocol"))
 o:value("socks", "Socks")
@@ -67,6 +68,9 @@ if singbox_tags:find("with_naive_outbound") then
 end
 if version_ge_1_14_0 then
 	o:value("snell", "Snell")
+end
+if version_ge_1_15_0 and singbox_tags:find("with_quic") then
+	o:value("masque", "MASQUE")
 end
 o:value("_urltest", translate("URLTest"))
 o:value("_shunt", translate("Shunt"))
@@ -197,6 +201,7 @@ o:depends({ protocol = "http" })
 o:depends({ protocol = "socks" })
 o:depends({ protocol = "ssh" })
 o:depends({ protocol = "naive" })
+o:depends({ protocol = "masque" })
 
 o = s:option(Value, "password", translate("Password"))
 o.password = true
@@ -209,6 +214,34 @@ o:depends({ protocol = "tuic" })
 o:depends({ protocol = "anytls" })
 o:depends({ protocol = "ssh" })
 o:depends({ protocol = "naive" })
+o:depends({ protocol = "masque" })
+
+-- [[ MASQUE ]] --
+o = s:option(Value, "masque_path", translate("MASQUE Path"))
+o:depends({ protocol = "masque" })
+
+o = s:option(TextValue, "masque_headers", translate("Custom HTTP Headers"))
+o.rows = 5
+o.wrap = "off"
+o:depends({ protocol = "masque" })
+o.cfgvalue = function(self, section)
+	return (m:get(section, self.config_option) or ""):gsub("\\n", "\n")
+end
+o.validate = function(self, value)
+	value = api.trim(value):gsub("\r\n", "\n"):gsub("\r", "\n")
+	local headers = {}
+	for line in value:gmatch("[^\n]+") do
+		if api.trim(line) ~= "" then
+			local key = line:match("^%s*([^:]+):")
+			key = key and api.trim(key):lower()
+			if not key or not key:match("^[!#$%%&'*+%.%^_`|~%w%-]+$") or headers[key] then
+				return nil, translate("Not true format, please re-enter!") .. " (" .. line .. ")"
+			end
+			headers[key] = true
+		end
+	end
+	return value:gsub("\n", "\\n")
+end
 
 if version_ge_1_14_0 then
 	-- snell
@@ -549,6 +582,7 @@ o:depends({ tls = true })
 o:depends({ protocol = "hysteria"})
 o:depends({ protocol = "tuic" })
 o:depends({ protocol = "hysteria2" })
+o:depends({ protocol = "masque" })
 
 o = s:option(Value, "tls_serverName", "SNI " .. translate("Domain"))
 o:depends({ tls = true })
@@ -556,6 +590,7 @@ o:depends({ protocol = "hysteria"})
 o:depends({ protocol = "tuic" })
 o:depends({ protocol = "hysteria2" })
 o:depends({ protocol = "naive" })
+o:depends({ protocol = "masque" })
 
 o = s:option(Flag, "tls_allowInsecure", translate("allowInsecure"), translate("Whether unsafe connections are allowed. When checked, Certificate validation will be skipped."))
 o.default = "0"
@@ -563,12 +598,14 @@ o:depends({ tls = true })
 o:depends({ protocol = "hysteria" })
 o:depends({ protocol = "tuic" })
 o:depends({ protocol = "hysteria2" })
+o:depends({ protocol = "masque" })
 
 o = s:option(Value, "tls_pinSHA256", translate("TLS Chain Fingerprint (SHA256)"))
 o:depends({ tls = true })
 o:depends({ protocol = "hysteria" })
 o:depends({ protocol = "tuic" })
 o:depends({ protocol = "hysteria2" })
+o:depends({ protocol = "masque" })
 o.description = translate("Once set, connects only when the server’s chain fingerprint matches.") ..
 		string.format("<a href='javascript:void(0)' onclick='javascript:fetchCertSha256(this)'>%s</a>", "→ " .. translate("Fetch Manually"))
 
@@ -579,6 +616,7 @@ o:depends({ protocol = "hysteria"})
 o:depends({ protocol = "tuic" })
 o:depends({ protocol = "hysteria2" })
 o:depends({ protocol = "naive" })
+o:depends({ protocol = "masque" })
 
 o = s:option(TextValue, "tls_certificate_pem", "　", translate("Full certificate (chain), PEM format."))
 o.default = ""
@@ -608,6 +646,7 @@ o:value("TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384")
 o:value("TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256")
 o:value("TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256")
 o:depends({ tls = true })
+o:depends({ protocol = "masque" })
 
 o = s:option(Flag, "ech", translate("ECH"))
 o.default = "0"
@@ -616,6 +655,7 @@ o:depends({ protocol = "tuic" })
 o:depends({ protocol = "hysteria" })
 o:depends({ protocol = "hysteria2", hysteria2_realms = false })
 o:depends({ protocol = "naive" })
+o:depends({ protocol = "masque" })
 
 o = s:option(TextValue, "ech_config", translate("ECH Config"))
 o.default = ""
@@ -812,6 +852,7 @@ o:depends({ transport = "http" })
 o:depends({ transport = "ws" })
 o:depends({ transport = "httpupgrade" })
 o:depends({ protocol = "naive" })
+o:depends({ protocol = "masque" })
 
 -- [[ Mux ]]--
 o = s:option(Flag, "mux", translate("Mux"))

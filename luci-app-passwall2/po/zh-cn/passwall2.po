@@ -2238,11 +2238,26 @@ msgstr "入口 %s:%s"
 msgid "Node: %s:%s, Weight: %s"
 msgstr "节点：%s:%s，权重：%s"
 
-msgid "[Rule update] instance is running; please try again later."
-msgstr "[规则更新]实例正在运行，请稍后再试..."
+msgid "Unable to open the subscription/rule update lock. Exiting."
+msgstr "无法打开订阅/规则更新锁，退出。"
 
-msgid "[Subscription] instance is running; [Rule Update] queue and wait."
-msgstr "[订阅]实例正在运行，[规则更新]进入队列等待..."
+msgid "A subscription or rule update is already running. Skipping this request."
+msgstr "订阅或规则更新已在运行，跳过本次请求。"
+
+msgid "Unable to acquire the update lock. Scheduled task failed."
+msgstr "无法获取更新锁，定时任务失败。"
+
+msgid "Subscription"
+msgstr "订阅"
+
+msgid "Rule Update"
+msgstr "规则更新"
+
+msgid "Subscription/Rule Update"
+msgstr "订阅/规则更新"
+
+msgid "[%s] is running; [%s] is queued and waiting..."
+msgstr "[%s]正在运行，[%s]已进入队列等待..."
 
 msgid "Start updating the rules..."
 msgstr "开始更新规则..."
@@ -2400,11 +2415,11 @@ msgstr "不代理"
 msgid "Proxy"
 msgstr "代理"
 
-msgid "[Subscription] instance is running; please try again later."
-msgstr "[订阅]实例正在运行，请稍后再试..."
+msgid "Unable to acquire the stop lock. Exiting."
+msgstr "无法获取停止锁，退出。"
 
-msgid "[Rule Update] instance is running; [Subscription] queue and wait."
-msgstr "[规则更新]实例正在运行，[订阅]进入队列等待..."
+msgid "Failed or timed out waiting for subscription/rule updates. Restart cancelled."
+msgstr "等待订阅/规则更新失败或超时，已取消重启。"
 
 msgid "Start subscribing..."
 msgstr "开始订阅..."
@@ -2418,8 +2433,8 @@ msgstr "订阅:【%s】没有变化，无需更新。"
 msgid "[%s] Subscription failed. This could be due to an invalid subscription address or a network issue. Please diagnose the problem! [%s]"
 msgstr "【%s】订阅失败，可能是订阅地址无效，或是网络问题，请诊断！[%s]"
 
-msgid "Error, restoring service."
-msgstr "发生错误, 正在恢复服务。"
+msgid "An error occurred during subscription."
+msgstr "订阅过程中发生错误。"
 
 msgid "Subscription complete..."
 msgstr "订阅完毕..."
@@ -2459,4 +2474,19 @@ msgstr "该用户名已存在。"
 
 msgid "Update Options"
 msgstr "更新选项"
+
+msgid "MASQUE Path"
+msgstr "MASQUE 路径"
+
+msgid "Custom HTTP Headers"
+msgstr "自定义 HTTP 请求头"
+
+msgid "MASQUE Address"
+msgstr "MASQUE 隧道地址"
+
+msgid "WARP Device Private Key"
+msgstr "WARP 设备私钥"
+
+msgid "WARP Endpoint Public Key"
+msgstr "WARP 服务端公钥"
 

@@ -2252,11 +2252,26 @@ msgstr "ورودی %s:%s"
 msgid "Node: %s:%s, Weight: %s"
 msgstr "گره: %s:%s، وزن: %s"
 
-msgid "[Rule update] instance is running; please try again later."
-msgstr "نمونه [به‌روزرسانی قانون] در حال اجرا است؛ لطفاً بعداً دوباره امتحان کنید."
+msgid "Unable to open the subscription/rule update lock. Exiting."
+msgstr "باز کردن قفل به‌روزرسانی اشتراک/قوانین ممکن نشد. خروج."
 
-msgid "[Subscription] instance is running; [Rule Update] queue and wait."
-msgstr "نمونه [اشتراک] در حال اجرا است؛ [به‌روزرسانی قانون] در صف انتظار قرار می‌گیرد."
+msgid "A subscription or rule update is already running. Skipping this request."
+msgstr "به‌روزرسانی اشتراک یا قوانین در حال اجرا است. این درخواست نادیده گرفته می‌شود."
+
+msgid "Unable to acquire the update lock. Scheduled task failed."
+msgstr "دریافت قفل به‌روزرسانی ممکن نشد. وظیفه زمان‌بندی‌شده ناموفق بود."
+
+msgid "Subscription"
+msgstr "اشتراک"
+
+msgid "Rule Update"
+msgstr "به‌روزرسانی قوانین"
+
+msgid "Subscription/Rule Update"
+msgstr "به‌روزرسانی اشتراک/قوانین"
+
+msgid "[%s] is running; [%s] is queued and waiting..."
+msgstr "[%s] در حال اجرا است؛ [%s] در صف قرار گرفته و منتظر است..."
 
 msgid "Start updating the rules..."
 msgstr "شروع به‌روزرسانی قوانین..."
@@ -2414,11 +2429,11 @@ msgstr "بدون پروکسی"
 msgid "Proxy"
 msgstr "پروکسی"
 
-msgid "[Subscription] instance is running; please try again later."
-msgstr "نمونه [اشتراک] در حال اجرا است؛ لطفاً بعداً دوباره امتحان کنید."
+msgid "Unable to acquire the stop lock. Exiting."
+msgstr "دریافت قفل توقف ممکن نشد. خروج."
 
-msgid "[Rule Update] instance is running; [Subscription] queue and wait."
-msgstr "نمونه [به‌روزرسانی قانون] در حال اجرا است؛ [اشتراک] در صف انتظار قرار دارد."
+msgid "Failed or timed out waiting for subscription/rule updates. Restart cancelled."
+msgstr "انتظار برای به‌روزرسانی اشتراک/قوانین ناموفق بود یا مهلت آن به پایان رسید. راه‌اندازی مجدد لغو شد."
 
 msgid "Start subscribing..."
 msgstr "شروع اشتراک‌گیری..."
@@ -2432,8 +2447,8 @@ msgstr "اشتراک: [%s] بدون تغییر، نیازی به به‌روزر
 msgid "[%s] Subscription failed. This could be due to an invalid subscription address or a network issue. Please diagnose the problem! [%s]"
 msgstr "[%s] اشتراک ناموفق بود. این می‌تواند به دلیل آدرس اشتراک نامعتبر یا مشکل شبکه باشد. لطفاً مشکل را بررسی کنید! [%s]"
 
-msgid "Error, restoring service."
-msgstr "خطا، بازیابی سرویس."
+msgid "An error occurred during subscription."
+msgstr "هنگام به‌روزرسانی اشتراک خطایی رخ داد."
 
 msgid "Subscription complete..."
 msgstr "اشتراک کامل شد..."
@@ -2470,3 +2485,18 @@ msgstr "فهرست مجموعه‌های رمز پشتیبانی‌شده را �
 
 msgid "This username already exists."
 msgstr "این نام کاربری از قبل وجود دارد."
+
+msgid "MASQUE Path"
+msgstr "مسیر MASQUE"
+
+msgid "Custom HTTP Headers"
+msgstr "سرآیندهای سفارشی HTTP"
+
+msgid "MASQUE Address"
+msgstr "آدرس تونل MASQUE"
+
+msgid "WARP Device Private Key"
+msgstr "کلید خصوصی دستگاه WARP"
+
+msgid "WARP Endpoint Public Key"
+msgstr "کلید عمومی سرور WARP"

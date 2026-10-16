@@ -2253,11 +2253,26 @@ msgstr "Вход %s:%s"
 msgid "Node: %s:%s, Weight: %s"
 msgstr "Сервер: %s:%s, вес: %s"
 
-msgid "[Rule update] instance is running; please try again later."
-msgstr "Экземпляр [Обновление правила] запущен; пожалуйста, попробуйте позже."
+msgid "Unable to open the subscription/rule update lock. Exiting."
+msgstr "Не удалось открыть файл блокировки обновления подписок и правил. Завершение работы."
 
-msgid "[Subscription] instance is running; [Rule Update] queue and wait."
-msgstr "Экземпляр [Подписка] запущен; [Обновление правила] поставить в очередь и ждать."
+msgid "A subscription or rule update is already running. Skipping this request."
+msgstr "Обновление подписки или правил уже выполняется. Этот запрос пропущен."
+
+msgid "Unable to acquire the update lock. Scheduled task failed."
+msgstr "Не удалось получить блокировку обновления. Запланированная задача не выполнена."
+
+msgid "Subscription"
+msgstr "Подписка"
+
+msgid "Rule Update"
+msgstr "Обновление правил"
+
+msgid "Subscription/Rule Update"
+msgstr "Обновление подписки/правил"
+
+msgid "[%s] is running; [%s] is queued and waiting..."
+msgstr "[%s] выполняется; [%s] находится в очереди и ожидает..."
 
 msgid "Start updating the rules..."
 msgstr "Начало обновления правил..."
@@ -2415,11 +2430,11 @@ msgstr "Без прокси"
 msgid "Proxy"
 msgstr "Прокси"
 
-msgid "[Subscription] instance is running; please try again later."
-msgstr "Экземпляр [Подписки] запущен; пожалуйста, попробуйте позже."
+msgid "Unable to acquire the stop lock. Exiting."
+msgstr "Не удалось получить блокировку остановки. Завершение работы."
 
-msgid "[Rule Update] instance is running; [Subscription] queue and wait."
-msgstr "Экземпляр [Обновление правила] запущен; [Подписка] ставится в очередь и ожидает."
+msgid "Failed or timed out waiting for subscription/rule updates. Restart cancelled."
+msgstr "Ошибка или превышено время ожидания обновления подписок/правил. Перезапуск отменён."
 
 msgid "Start subscribing..."
 msgstr "Начало подписки..."
@@ -2433,8 +2448,8 @@ msgstr "Подписка: [%s] изменений нет, обновление �
 msgid "[%s] Subscription failed. This could be due to an invalid subscription address or a network issue. Please diagnose the problem! [%s]"
 msgstr "[%s] Ошибка подписки. Возможно, адрес подписки неверен или есть проблема с сетью. Пожалуйста, проведите диагностику! [%s]"
 
-msgid "Error, restoring service."
-msgstr "Ошибка, выполняется восстановление службы."
+msgid "An error occurred during subscription."
+msgstr "При обновлении подписки произошла ошибка."
 
 msgid "Subscription complete..."
 msgstr "Подписка завершена..."
@@ -2471,3 +2486,18 @@ msgstr "Задает список поддерживаемых наборов ш
 
 msgid "This username already exists."
 msgstr "Это имя пользователя уже существует."
+
+msgid "MASQUE Path"
+msgstr "Путь MASQUE"
+
+msgid "Custom HTTP Headers"
+msgstr "Пользовательские HTTP-заголовки"
+
+msgid "MASQUE Address"
+msgstr "Адрес туннеля MASQUE"
+
+msgid "WARP Device Private Key"
+msgstr "Приватный ключ устройства WARP"
+
+msgid "WARP Endpoint Public Key"
+msgstr "Публичный ключ сервера WARP"

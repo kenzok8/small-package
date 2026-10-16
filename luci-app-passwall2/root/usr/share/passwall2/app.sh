@@ -591,7 +591,6 @@ start_socks() {
 }
 
 clean_crontab() {
-	[ -f "${LOCK_PATH}/${CONFIG}_cron.lock" ] && return
 	touch /etc/crontabs/root
 	#sed -i "/${CONFIG}/d" /etc/crontabs/root >/dev/null 2>&1
 	sed -i "/$(echo "/etc/init.d/${CONFIG}" | sed 's#\/#\\\/#g')/d" /etc/crontabs/root >/dev/null 2>&1
@@ -608,11 +607,10 @@ start_crontab() {
 		[ "$start_daemon" = "1" ] && { $APP_PATH/monitor.sh > /dev/null 2>&1 & }
 	fi
 
-	[ -f "${LOCK_PATH}/${CONFIG}_cron.lock" ] && {
-		rm -rf "${LOCK_PATH}/${CONFIG}_cron.lock"
+	if [ "$1" = "cron" ]; then
 		log_i18n 0 "The task is currently running automatically as a scheduled task; no reconfiguration of the scheduled task is required."
 		return
-	}
+	fi
 
 	clean_crontab
 
@@ -628,7 +626,7 @@ start_crontab() {
 		stop_time_mm=$(echo $stop_time_mode | awk -F ':' '{print $2}')
 		local t="$stop_time_mm $stop_time_hh * * $stop_week_mode"
 		[ "$stop_week_mode" = "7" ] && t="$stop_time_mm $stop_time_hh * * *"
-		echo "$t /etc/init.d/$CONFIG stop > /dev/null 2>&1 &" >>/etc/crontabs/root
+		echo "$t /etc/init.d/$CONFIG stop cron > /dev/null 2>&1 &" >>/etc/crontabs/root
 		log_i18n 0 "Scheduled tasks: Auto stop service."
 	fi
 
@@ -639,7 +637,7 @@ start_crontab() {
 		start_time_mm=$(echo $start_time_mode | awk -F ':' '{print $2}')
 		local t="$start_time_mm $start_time_hh * * $start_week_mode"
 		[ "$start_week_mode" = "7" ] && t="$start_time_mm $start_time_hh * * *"
-		echo "$t /etc/init.d/$CONFIG start > /dev/null 2>&1 &" >>/etc/crontabs/root
+		echo "$t /etc/init.d/$CONFIG start cron > /dev/null 2>&1 &" >>/etc/crontabs/root
 		log_i18n 0 "Scheduled tasks: Auto start service."
 	fi
 
@@ -653,7 +651,7 @@ start_crontab() {
 		if [ "$restart_week_mode" = "8" ]; then
 			update_loop=1
 		else
-			echo "$t /etc/init.d/$CONFIG restart > /dev/null 2>&1 &" >>/etc/crontabs/root
+			echo "$t /etc/init.d/$CONFIG restart cron > /dev/null 2>&1 &" >>/etc/crontabs/root
 		fi
 		log_i18n 0 "Scheduled tasks: Auto restart service."
 	fi
@@ -716,7 +714,7 @@ start_crontab() {
 }
 
 stop_crontab() {
-	[ -f "${LOCK_PATH}/${CONFIG}_cron.lock" ] && return
+	[ "$1" = "cron" ] && return
 	clean_crontab
 	/etc/init.d/cron restart
 	#log_i18n 0 "Clear scheduled commands."
@@ -894,7 +892,7 @@ acl_node() {
 start() {
 	busybox pgrep -f ${TMP_PATH}/bin > /dev/null 2>&1 && {
 		logger -t PW2-RESTART "Upgrade or overload residue is detected, and the subprocess is being called to perform complete cleaning..."
-		(stop)
+		(stop "$1")
 		sleep 2
 	}
 	mkdir -p /tmp/etc /tmp/log $TMP_PATH $TMP_BIN_PATH $TMP_SCRIPT_FUNC_PATH $TMP_ROUTE_PATH $TMP_ACL_PATH $TMP_PATH2
@@ -936,10 +934,7 @@ start() {
 		}
 	fi
 	run_process_queue
-	[ "$1" = "boot" ] && {
-		rm -f "${LOCK_PATH}/${CONFIG}_cron.lock"
-	}
-	start_crontab
+	start_crontab "$1"
 	log_i18n 0 "Running complete!"
 	echolog "\n"
 
@@ -977,7 +972,7 @@ stop() {
 	unset V2RAY_LOCATION_ASSET
 	unset XRAY_LOCATION_ASSET
 	unset SS_SYSTEM_DNS_RESOLVER_FORCE_BUILTIN
-	stop_crontab
+	stop_crontab "$1"
 	rm -rf $DEFAULT_DNSMASQ_CONF
 	rm -rf $DEFAULT_DNSMASQ_CONF_PATH
 	[ "1" = "1" ] && {
@@ -1004,12 +999,6 @@ stop() {
 	rm -f ${LOCK_PATH}/${CONFIG}_socks_auto_switch*
 	rm -f ${LOCK_PATH}/${CONFIG}_lease2hosts*
 	rm -f ${LOCK_PATH}/${CONFIG}_monitor*
-	if ! busybox pgrep -af "${CONFIG}/" | grep -q '/subscribe\.lua'; then
-		rm -f "${LOCK_PATH}/${CONFIG}_subscribe.lock"
-	fi
-	if ! busybox pgrep -af "${CONFIG}/" | grep -q '/rule_update\.lua'; then
-		rm -f "${LOCK_PATH}/${CONFIG}_rule_update.lock"
-	fi
 	log_i18n 0 "Clearing and closing related programs and cache complete."
 	exit 0
 }
@@ -1099,9 +1088,9 @@ socks_node_switch)
 	socks_node_switch $@
 	;;
 start)
-	start $@
+	start "$@"
 	;;
 stop)
-	stop
+	stop "$@"
 	;;
 esac
