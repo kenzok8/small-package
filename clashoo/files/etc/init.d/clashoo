@@ -1481,7 +1481,7 @@ _remap_dns_system_nameserver() {
 
 ip_rules() {
 #===========================================================================================================================
-	sh /usr/share/clashoo/runtime/iprules.sh 2>/dev/null
+	CLASHOO_CONFIG_YAML="$CONFIG_YAML" sh /usr/share/clashoo/runtime/iprules.sh 2>/dev/null
 #===========================================================================================================================
 }
 
@@ -1691,14 +1691,20 @@ _lan_dns_split_enabled() {
 
 yml_dns_change(){
 #=========================================================================================================================== 	
-	dns_port=$(sed -n 's/^[[:space:]]*listen:.*:[[:space:]]*['"'"'"]*\([0-9]\{1,\}\)['"'"'"]*[[:space:]]*$/\1/p' /etc/clashoo/config.yaml 2>/dev/null | head -n1)
+	dns_port=$(sed -n 's/^[[:space:]]*listen:.*:[[:space:]]*['"'"'"]*\([0-9]\{1,\}\)['"'"'"]*[[:space:]]*$/\1/p' "$CONFIG_YAML" 2>/dev/null | head -n1)
 	listen_port=$(uci get clashoo.config.listen_port 2>/dev/null)
 	[ -z "$listen_port" ] && listen_port=5300
 	if [ -z "$dns_port" ]; then
 		dns_port="$listen_port"
-		if grep -q '^dns:' /etc/clashoo/config.yaml && ! grep -q "^ \{0,\}listen:" /etc/clashoo/config.yaml; then
-			sed -i "/^dns:/a\    listen: 0.0.0.0:${dns_port}" /etc/clashoo/config.yaml 2>/dev/null
+		if grep -q '^dns:' "$CONFIG_YAML" && ! grep -q "^ \{0,\}listen:" "$CONFIG_YAML"; then
+			sed -i "/^dns:/a\    listen: 0.0.0.0:${dns_port}" "$CONFIG_YAML" 2>/dev/null
 		fi
+	fi
+	if [ "${CLASHOO_RELOAD_CANDIDATE:-0}" = "1" ]; then
+		if [ "${dns_port:-0}" -eq 53 ]; then
+			sed -i "s@^\([[:space:]]*listen:[[:space:]]*\)0\.0\.0\.0:53@\10.0.0.0:${listen_port}@g" "$CONFIG_YAML" || return 1
+		fi
+		return 0
 	fi
 	dnsforwader=$(uci get clashoo.config.dnsforwader 2>/dev/null)
 	dnscache=$(uci get clashoo.config.dnscache 2>/dev/null)
@@ -2036,26 +2042,29 @@ _start_validate_core() {
 }
 
 _start_prepare_config() {
+	local _reload_candidate="${CLASHOO_RELOAD_CANDIDATE:-0}"
 	# Core-only: run the imported config verbatim. select_config already copied
 	# it to /etc/clashoo/config.yaml, so skip every mixin/DNS/rule rewrite below.
 	[ "$(uci -q get clashoo.config.core_only 2>/dev/null)" = "1" ] && return 0
 
-	check >/dev/null 2>&1
+	check >/dev/null 2>&1 || return 1
 
-	_migrate_dns_roles >/dev/null 2>&1
+	[ "$_reload_candidate" = "1" ] || _migrate_dns_roles >/dev/null 2>&1
 
 	enable_dns=$(uci get clashoo.config.enable_dns 2>/dev/null)
 
-	if [ -z "$(grep -E "^ {0,}listen:" /etc/clashoo/config.yaml)" ] || [ -z "$(grep -E "^ {0,}enhanced-mode:" /etc/clashoo/config.yaml)" ] || [ -z "$(grep -E "^ {0,}dns:" /etc/clashoo/config.yaml)" ];then
+	if [ -z "$(grep -E "^ {0,}listen:" "$CONFIG_YAML")" ] || [ -z "$(grep -E "^ {0,}enhanced-mode:" "$CONFIG_YAML")" ] || [ -z "$(grep -E "^ {0,}dns:" "$CONFIG_YAML")" ];then
 
 	if [ "${enable_dns:-0}" -eq 0 ];then
+		[ "$_reload_candidate" = "1" ] && return 1
 			uci set clashoo.config.enable_dns="1" && uci commit clashoo
 			log_msg "Enabling Custom Dns" "启用自定义DNS"
 	fi
 
 	fi
 
-	if { egrep -q '^ {0,}rule-providers:' "/etc/clashoo/config.yaml" || egrep -q '^ {0,}script:' "/etc/clashoo/config.yaml"; } && ! core_supports_advanced_features; then
+	if { egrep -q '^ {0,}rule-providers:' "$CONFIG_YAML" || egrep -q '^ {0,}script:' "$CONFIG_YAML"; } && ! core_supports_advanced_features; then
+		[ "$_reload_candidate" = "1" ] && return 1
 		if [ -x /usr/bin/mihomo ]; then
 			uci set clashoo.config.core="3" && uci commit clashoo
 		elif [ -x /usr/bin/mihomo-stable ]; then
@@ -2073,6 +2082,7 @@ _start_prepare_config() {
 	fi
 
 	if [ "$(uci get clashoo.config.p_mode 2>/dev/null)" = "script" ]; then
+		[ "$_reload_candidate" = "1" ] && return 1
 		uci set clashoo.config.p_mode="rule" && uci commit clashoo
 	fi
 
@@ -2082,7 +2092,7 @@ _start_prepare_config() {
 	fi
 	_adapt_dns_loopback_resolver >/dev/null 2>&1
 	# stage bundled cn.mrs into the core dir; mihomo rejects rule-set paths outside /etc/clashoo
-	if [ -f /usr/share/clashoo/ruleset/cn.mrs ]; then
+	if [ "$_reload_candidate" != "1" ] && [ -f /usr/share/clashoo/ruleset/cn.mrs ]; then
 		if [ ! -f /etc/clashoo/ruleset/cn.mrs ] || [ /usr/share/clashoo/ruleset/cn.mrs -nt /etc/clashoo/ruleset/cn.mrs ]; then
 			mkdir -p /etc/clashoo/ruleset
 			cp -f /usr/share/clashoo/ruleset/cn.mrs /etc/clashoo/ruleset/cn.mrs 2>/dev/null
@@ -2117,12 +2127,13 @@ _start_prepare_config() {
 		log_msg "GeoIP database not found, continue without local GeoIP DB" "未找到本地 GeoIP 数据库，继续启动（可在系统页更新 GeoIP）"
 	fi
 
-	_prepare_geo_bootstrap_mode
+	[ "$_reload_candidate" = "1" ] || _prepare_geo_bootstrap_mode
 	_remap_dns_system_nameserver >/dev/null 2>&1
 	ensure_dns_cn_policy_fallback >/dev/null 2>&1
 
 
-	if [ ! -f /etc/clashoo/config.yaml ];then
+	if [ ! -f "$CONFIG_YAML" ];then
+		[ "$_reload_candidate" = "1" ] && return 1
 		log_msg "Cannot find config.yaml" "找不到config.yaml"
 		backend_remove_rules >/dev/null 2>&1
 		sleep 1
@@ -2130,10 +2141,10 @@ _start_prepare_config() {
 		exit 0
 	fi
 
-	yml_dns_change >/dev/null 2>&1
+	yml_dns_change >/dev/null 2>&1 || return 1
 
 	# Sync processed config (with DNS listen injected) to mihomo working directory
-	cp -f "$CONFIG_YAML" "${CLASH_CONFIG}/config.yaml" 2>/dev/null
+	[ "$_reload_candidate" = "1" ] || cp -f "$CONFIG_YAML" "${CLASH_CONFIG}/config.yaml" 2>/dev/null
 
 	ip_rules >/dev/null 2>&1
 }
@@ -2465,6 +2476,52 @@ stop_service(){
 #===========================================================================================================================
 }
 
+_mihomo_reload_api() {
+	local _path="$1" _response="$2" _dp _ds _lip
+	_dp="$(uci -q get clashoo.config.dash_port)"; [ -n "$_dp" ] || _dp=9090
+	_ds="$(uci -q get clashoo.config.dash_pass)"
+	_lip="$(uci -q get network.lan.ipaddr 2>/dev/null | awk -F'/' '{print $1}')"
+	[ -n "$_lip" ] || _lip=127.0.0.1
+	MIHOMO_RELOAD_CURL_RC=0
+	MIHOMO_RELOAD_HTTP_CODE="$(curl -sS -m 5 -o "$_response" -w '%{http_code}' \
+		-H "Authorization: Bearer ${_ds}" -H "Content-Type: application/json" \
+		-X PUT -d '{"path":"'"$_path"'"}' \
+		"http://${_lip}:${_dp}/configs?force=true" 2>/dev/null)" || MIHOMO_RELOAD_CURL_RC=$?
+	[ "$MIHOMO_RELOAD_CURL_RC" -eq 0 ] || return 1
+	case "$MIHOMO_RELOAD_HTTP_CODE" in
+		2??) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
+_mihomo_reload_save_dns() {
+	MIHOMO_DHCP_MODE="$(stat -c %a /etc/config/dhcp)" || return 1
+	cp /etc/config/dhcp "$1"
+}
+
+_mihomo_reload_restore_dns() {
+	cp "$1" /etc/config/dhcp && chmod "$MIHOMO_DHCP_MODE" /etc/config/dhcp &&
+		uci -q revert dhcp && _reload_dnsmasq >/dev/null 2>&1
+}
+
+_mihomo_reload_restore() {
+	local _previous="$1" _response="$2" _dns_backup="$3" _peripheral_changed="$4" _restore _failed=0
+	if ! _mihomo_reload_api "$_previous" "$_response"; then
+		return 1
+	fi
+	if [ "$_peripheral_changed" = "1" ]; then
+		if _restore="$(mktemp "${CLASH_CONFIG}/.reload-restore.XXXXXX")"; then
+			cp "$_previous" "$_restore" && mv -f "$_restore" "$CONFIG_YAML" || { rm -f "$_restore"; _failed=1; }
+		else
+			_failed=1
+		fi
+		_mihomo_reload_restore_dns "$_dns_backup" || _failed=1
+		backend_remove_rules >/dev/null 2>&1 || _failed=1
+		backend_apply_rules >/dev/null 2>&1 || _failed=1
+	fi
+	return "$_failed"
+}
+
 reload_service()
 {
 	if is_singbox_selected; then
@@ -2477,23 +2534,78 @@ reload_service()
 			start
 		fi
 	elif _core_running; then
+		local _candidate _previous _response _dns_backup _source _pf_rc _error _peripheral_changed
+		_error=""
 		resolve_effective_tp_modes
-		runtime_state_record_preflight "mihomo"
-		backend_remove_rules 2>/dev/null
-		( select_config && _start_prepare_config ) >/dev/null 2>&1
-		# hot-reload via mihomo REST API (config + addtype rules), no process restart or tunnel drop
-		local _dp _ds _lip
-		_dp="$(uci -q get clashoo.config.dash_port)"; [ -n "$_dp" ] || _dp=9090
-		_ds="$(uci -q get clashoo.config.dash_pass)"
-		_lip="$(uci -q get network.lan.ipaddr 2>/dev/null | awk -F'/' '{print $1}')"
-		[ -n "$_lip" ] || _lip=127.0.0.1
-		curl -m 5 -H "Authorization: Bearer ${_ds}" -H "Content-Type: application/json" \
-			-X PUT -d '{"path":"'"$CONFIG_YAML"'"}' \
-			"http://${_lip}:${_dp}/configs?force=true" >/dev/null 2>&1
-		backend_apply_rules 2>/dev/null
-		if [ "$(uci -q get clashoo.config.core_only 2>/dev/null)" != "1" ]; then
-			_reload_dnsmasq >/dev/null 2>&1
+		_candidate="$(mktemp "${CLASH_CONFIG}/.reload-candidate.XXXXXX")" || { _log_runtime_error "Mihomo reload failed: cannot stage candidate"; return 1; }
+		_previous="$(mktemp "${CLASH_CONFIG}/.reload-previous.XXXXXX")" || { rm -f "$_candidate"; _log_runtime_error "Mihomo reload failed: cannot back up current config"; return 1; }
+		_response="$(mktemp /tmp/clashoo-reload-response.XXXXXX)" || { rm -f "$_candidate" "$_previous"; _log_runtime_error "Mihomo reload failed: cannot stage API response"; return 1; }
+		_dns_backup="$(mktemp "${CLASH_CONFIG}/.reload-dhcp.XXXXXX")" || { rm -f "$_candidate" "$_previous" "$_response"; _log_runtime_error "Mihomo reload failed: cannot back up DNS state"; return 1; }
+		_source="$(uci -q get clashoo.config.use_config 2>/dev/null)"
+		if [ ! -s "$_source" ]; then
+			_error="selected config is missing or empty"
+		elif ! cp "$_source" "$_candidate" || ! cp "$CONFIG_YAML" "$_previous" ||
+			! _mihomo_reload_save_dns "$_dns_backup"; then
+			_error="cannot back up current config or DNS state"
+		elif ! ( CONFIG_YAML="$_candidate"; CLASHOO_RELOAD_CANDIDATE=1; _start_prepare_config ) >/dev/null 2>&1 ||
+			[ ! -s "$_candidate" ]; then
+			_error="candidate generation failed; check DNS and core settings"
 		fi
+		rm -f "${_candidate}.mixin" 2>/dev/null
+		if [ -n "$_error" ]; then
+			_log_runtime_error "Mihomo reload failed: ${_error}; current config preserved"
+			rm -f "$_candidate" "$_previous" "$_response" "$_dns_backup"
+			return 1
+		fi
+		if [ "$(uci -q get clashoo.config.core_only 2>/dev/null)" = "1" ]; then
+			SAFE_PATHS=/ _run_with_timeout 15 "$CLASH" -d "$CLASH_CONFIG" -f "$_candidate" -t >> "$CORE_LOG_PATH" 2>&1
+		else
+			_run_with_timeout 15 "$CLASH" -d "$CLASH_CONFIG" -f "$_candidate" -t >> "$CORE_LOG_PATH" 2>&1
+		fi
+		_pf_rc=$?
+		if [ "$_pf_rc" -ne 0 ]; then
+			if [ "$_pf_rc" -eq 124 ]; then
+				_error="Mihomo reload failed: candidate preflight timed out"
+			else
+				_error="Mihomo reload failed: candidate config invalid (exit ${_pf_rc}; see core log)"
+			fi
+			_log_runtime_error "$_error; current config preserved"
+			rm -f "$_candidate" "$_previous" "$_response" "$_dns_backup"
+			return 1
+		fi
+		if ! _mihomo_reload_api "$_candidate" "$_response"; then
+			_error="Mihomo reload failed (curl ${MIHOMO_RELOAD_CURL_RC}, HTTP ${MIHOMO_RELOAD_HTTP_CODE})"
+			if _mihomo_reload_restore "$_previous" "$_response" "$_dns_backup" 0; then
+				_log_runtime_error "${_error}; previous config restored"
+				rm -f "$_candidate" "$_previous" "$_response" "$_dns_backup"
+			else
+				_log_runtime_error "${_error}; reload outcome unknown; candidate and backup retained"
+				rm -f "$_response" "$_dns_backup"
+			fi
+			return 1
+		fi
+		_peripheral_changed=0
+		if ! mv -f "$_candidate" "$CONFIG_YAML"; then
+			_error="Mihomo reload failed: cannot commit candidate config"
+		elif [ "$(uci -q get clashoo.config.core_only 2>/dev/null)" != "1" ]; then
+			_peripheral_changed=1
+			if ! backend_remove_rules >/dev/null 2>&1 || ! backend_apply_rules >/dev/null 2>&1 ||
+				! yml_dns_change >/dev/null 2>&1 || ! _reload_dnsmasq >/dev/null 2>&1; then
+				_error="Mihomo reload failed: firewall or DNS update failed"
+			fi
+		fi
+		if [ -n "$_error" ]; then
+			if _mihomo_reload_restore "$_previous" "$_response" "$_dns_backup" "$_peripheral_changed"; then
+				_log_runtime_error "${_error}; previous config and settings restored"
+				rm -f "$_candidate" "$_previous" "$_response" "$_dns_backup"
+			else
+				_log_runtime_error "${_error}; rollback incomplete; previous config retained for recovery"
+				rm -f "$_candidate" "$_response"
+			fi
+			return 1
+		fi
+		rm -f "$_previous" "$_response" "$_dns_backup" "${CONFIG_YAML}.dns-leak-nameserver"
+		runtime_state_record_preflight "mihomo"
 		runtime_run_health_check_settle >/dev/null 2>&1
 	fi
 }

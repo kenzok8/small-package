@@ -6,7 +6,7 @@ TMP_PREFIX="/tmp/clashoo_iprules.$$"
 CUSTOM_RULE_FILE="${TMP_PREFIX}.ipadd.conf"
 RULE="${TMP_PREFIX}.rules_conf.yaml"
 CLASH="${TMP_PREFIX}.conf.yaml"
-CONFIG_YAML="/etc/clashoo/config.yaml"
+CONFIG_YAML="${CLASHOO_CONFIG_YAML:-/etc/clashoo/config.yaml}"
 CLASH_CONFIG="${TMP_PREFIX}.config.yaml"
 trap 'rm -f "$CUSTOM_RULE_FILE" "$RULE" "$CLASH" "$CLASH_CONFIG"' EXIT
 

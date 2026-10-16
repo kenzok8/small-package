@@ -181,6 +181,15 @@ local only_global = (DEFAULT_PROXY_MODE == "proxy" and CHN_LIST == "0" and USE_G
 if only_global == 1 then
 	DEFAULT_DNS_GROUP = "proxy"
 end
+local AUTO_DIRECT_PORT = 0
+if DEFAULT_DNS_GROUP == AUTO_GROUP then
+	AUTO_DIRECT_PORT = api.get_new_port(15350)
+	-- 避开同一进程尚未启动的主监听和直连监听端口。
+	for _ = 1, 2 do
+		if not AUTO_DIRECT_PORT or (AUTO_DIRECT_PORT ~= tonumber(LISTEN_PORT) and AUTO_DIRECT_PORT ~= LOCAL_PORT) then break end
+		AUTO_DIRECT_PORT = api.get_new_port(AUTO_DIRECT_PORT + 1)
+	end
+end
 local force_https_soa = api.uci_get_c("@global[0]", "force_https_soa") or 0
 local force_qtype_soa = tonumber(force_https_soa) == 1 and "force-qtype-SOA 65" or "force-qtype-SOA -,65"
 local proxy_server_name = "psw-proxy-server"
@@ -191,6 +200,7 @@ config_lines = {
 	tonumber(LISTEN_PORT) ~= 0 and ("bind-tcp " .. listen_address) or "",
 	LOCAL_PORT > 0 and ("bind [::]:" .. LOCAL_PORT .. "@lo -group direct -no-rules") or "",
 	LOCAL_PORT > 0 and ("bind-tcp [::]:" .. LOCAL_PORT .. "@lo -group direct -no-rules") or "",
+	AUTO_DIRECT_PORT > 0 and ("bind [::]:" .. AUTO_DIRECT_PORT .. "@lo -group auto-direct") or "",
 	"log-level " .. LOG_LEVEL,
 	"log-num " .. (LOG and "1" or "0"),
 	LOG and string.format("log-file %q", FLAG_PATH .. "/smartdns.log") or "",
@@ -236,10 +246,13 @@ if DNS_REDIRECT then
 end
 for _, server_param in ipairs(DIRECT_SERVERS) do
 	table.insert(config_lines, server_param .. " -group direct -exclude-default-group")
-	if DEFAULT_DNS_GROUP == AUTO_GROUP then
-		-- 自动组的直连副本仅接受大陆 IP，普通直连组保持默认行为。
-		table.insert(auto_config_lines, server_param .. " -group " .. AUTO_GROUP .. " -exclude-default-group -whitelist-ip")
-	end
+end
+if DEFAULT_DNS_GROUP == AUTO_GROUP then
+	-- 自动组先通过独立入口去除 CNAME，再按原逻辑筛选 IP。
+	table.insert(auto_config_lines, "server 127.0.0.1:" .. AUTO_DIRECT_PORT .. " -group " .. AUTO_GROUP .. " -exclude-default-group -whitelist-ip")
+	table.insert(auto_config_lines, "group-begin auto-direct -inherit none")
+	merge_array(auto_config_lines, DIRECT_SERVERS)
+	merge_array(auto_config_lines, {"force-no-CNAME yes", "group-end"})
 end
 
 -- 由下方 DNS_MODE 分支调用，服务器参数来自 PassWall 的 REMOTE_DNS 或 TUN_DNS。

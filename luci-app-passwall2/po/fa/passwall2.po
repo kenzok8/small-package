@@ -442,7 +442,7 @@ msgid "Failure Tolerance (%)"
 msgstr "تحمل شکست (%)"
 
 msgid "The maximum acceptable speed test failure rate. For example, 1 means allowing a 1% failure rate."
-msgstr "حداکثر نرخ شکست قابل قبول در تست سرعت. برای مثال، عدد ۱ به معنای مجاز بودن نرخ شکست ۱٪ است.
+msgstr "حداکثر نرخ شکست قابل قبول در تست سرعت. برای مثال، عدد ۱ به معنای مجاز بودن نرخ شکست ۱٪ است."
 
 msgid "Shunt"
 msgstr "شنت (Shunt)"
@@ -1008,6 +1008,15 @@ msgstr "در حال انتقال..."
 
 msgid "App Update"
 msgstr "به‌روزرسانی برنامه"
+
+msgid "GitHub Proxy"
+msgstr "پروکسی معکوس GitHub"
+
+msgid "Use GitHub instead of proxy nodes for component updates."
+msgstr "برای بررسی و دانلود به‌روزرسانی اجزا، مستقیماً از سرویس پروکسی معکوس GitHub استفاده کنید، بدون عبور از گره‌های پروکسی."
+
+msgid "Close(Not use)"
+msgstr "خاموش (عدم استفاده)"
 
 msgid "if you want to run from memory, change the path, /tmp beginning then save the application and update it manually."
 msgstr "اگر می‌خواهید از حافظه اجرا کنید، مسیر را تغییر دهید، با /tmp شروع شود سپس برنامه را ذخیره و دستی به‌روزرسانی کنید."

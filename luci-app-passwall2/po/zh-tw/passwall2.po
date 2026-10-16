@@ -1001,6 +1001,15 @@ msgstr "移動中"
 msgid "App Update"
 msgstr "组件更新"
 
+msgid "GitHub Proxy"
+msgstr "GitHub 反向代理"
+
+msgid "Use GitHub instead of proxy nodes for component updates."
+msgstr "元件更新時使用 GitHub 反向代理服務直接檢查與下載，不經過代理節點。"
+
+msgid "Close(Not use)"
+msgstr "關閉（不使用）"
+
 msgid "if you want to run from memory, change the path, /tmp beginning then save the application and update it manually."
 msgstr "如果你希望从內存中運行，請更改路径，/tmp 開头，然後保存應用後，再手動更新。"
 

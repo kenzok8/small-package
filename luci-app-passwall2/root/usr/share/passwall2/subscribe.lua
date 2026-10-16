@@ -30,9 +30,26 @@ local has_ssr = api.is_finded("ssr-local") and api.is_finded("ssr-redir")
 local has_singbox = api.finded_com("sing-box")
 local has_xray = api.finded_com("xray")
 local DEFAULT_ALLOWINSECURE = true
-local DEFAULT_FILTER_KEYWORD_MODE = uci_get("@global_subscribe[0]", "filter_keyword_mode") or "0"
-local DEFAULT_FILTER_KEYWORD_DISCARD_LIST = uci_get("@global_subscribe[0]", "filter_discard_list") or {}
-local DEFAULT_FILTER_KEYWORD_KEEP_LIST = uci_get("@global_subscribe[0]", "filter_keep_list") or {}
+-- Expand each DynamicList row, preserving spaces and ignoring empty or duplicate keywords.
+local function split_filter_keywords(list)
+	local keywords, seen = {}, {}
+	if type(list) == "string" then list = {list} end
+	for _, row in ipairs(list or {}) do
+		for keyword in row:gmatch("[^|]+") do
+			if not seen[keyword] then
+				seen[keyword] = true
+				keywords[#keywords + 1] = keyword
+			end
+		end
+	end
+	return keywords
+end
+
+local DEFAULT_FILTER_KEYWORD = {
+	mode = uci_get("@global_subscribe[0]", "filter_keyword_mode") or "0",
+	discard_list = split_filter_keywords(uci_get("@global_subscribe[0]", "filter_discard_list")),
+	keep_list = split_filter_keywords(uci_get("@global_subscribe[0]", "filter_keep_list"))
+}
 -- Nodes should be retrieved using the core type (if not set on the node subscription page, the default type will be used automatically).
 local DEFAULT_SS_TYPE = api.get_core("ss_type", {{has_ss_rust,"shadowsocks-rust"},{has_singbox,"sing-box"},{has_xray,"xray"}})
 local DEFAULT_TROJAN_TYPE = api.get_core("trojan_type", {{has_singbox,"sing-box"},{has_xray,"xray"}})
@@ -44,71 +61,38 @@ local core_has = {
 	["sing-box"] = has_singbox,
 	["shadowsocks-rust"] = has_ss_rust,
 }
--- Determine whether to filter node keywords
-local function is_filter_keyword(sub_cfg, value)
-	local mode = DEFAULT_FILTER_KEYWORD_MODE
-	local discard_list = DEFAULT_FILTER_KEYWORD_DISCARD_LIST
-	local keep_list = DEFAULT_FILTER_KEYWORD_KEEP_LIST
-	if sub_cfg then
-		local filter_keyword_mode = sub_cfg.filter_keyword_mode or "5" -- 5 is global
-		if filter_keyword_mode == "0" then
-			mode = "0"
-		elseif filter_keyword_mode == "1" then
-			mode = "1"
-			discard_list = sub_cfg.filter_discard_list or {}
-		elseif filter_keyword_mode == "2" then
-			mode = "2"
-			keep_list = sub_cfg.filter_keep_list or {}
-		elseif filter_keyword_mode == "3" then
-			mode = "3"
-			keep_list = sub_cfg.filter_keep_list or {}
-			discard_list = sub_cfg.filter_discard_list or {}
-		elseif filter_keyword_mode == "4" then
-			mode = "4"
-			keep_list = sub_cfg.filter_keep_list or {}
-			discard_list = sub_cfg.filter_discard_list or {}
+-- Prepare once per subscription; mode 5 or an unset mode inherits the global filter.
+local function prepare_keyword_filter(sub_cfg)
+	local mode = sub_cfg and sub_cfg.filter_keyword_mode
+	if mode == "0" or mode == "1" or mode == "2" or mode == "3" or mode == "4" then
+		return {
+			mode = mode,
+			discard_list = split_filter_keywords(sub_cfg.filter_discard_list),
+			keep_list = split_filter_keywords(sub_cfg.filter_keep_list)
+		}
+	end
+	return DEFAULT_FILTER_KEYWORD
+end
+
+local function match_filter_keywords(value, keywords)
+	for _, keyword in ipairs(keywords) do
+		if value:find(keyword, 1, true) then
+			return true
 		end
 	end
-	if mode == "1" then
-		for k,v in ipairs(discard_list) do
-			if value:find(v, 1, true) then
-				return true
-			end
-		end
-	elseif mode == "2" then
-		local result = true
-		for k,v in ipairs(keep_list) do
-			if value:find(v, 1, true) then
-				result = false
-			end
-		end
-		return result
-	elseif mode == "3" then
-		local result = false
-		for k,v in ipairs(discard_list) do
-			if value:find(v, 1, true) then
-				result = true
-			end
-		end
-		for k,v in ipairs(keep_list) do
-			if value:find(v, 1, true) then
-				result = false
-			end
-		end
-		return result
-	elseif mode == "4" then
-		local result = true
-		for k,v in ipairs(keep_list) do
-			if value:find(v, 1, true) then
-				result = false
-			end
-		end
-		for k,v in ipairs(discard_list) do
-			if value:find(v, 1, true) then
-				result = true
-			end
-		end
-		return result
+	return false
+end
+
+-- Decide whether to discard a parsed node using the current subscription's filter.
+local function is_filter_keyword(filter, value)
+	if filter.mode == "1" then
+		return match_filter_keywords(value, filter.discard_list)
+	elseif filter.mode == "2" then
+		return not match_filter_keywords(value, filter.keep_list)
+	elseif filter.mode == "3" then
+		return match_filter_keywords(value, filter.discard_list) and not match_filter_keywords(value, filter.keep_list)
+	elseif filter.mode == "4" then
+		return match_filter_keywords(value, filter.discard_list) or not match_filter_keywords(value, filter.keep_list)
 	end
 	return false
 end
@@ -2520,6 +2504,7 @@ local function parse_link(raw, add_mode, group, sub_cfg)
 		if sub_cfg then
 			cfgid = sub_cfg[".name"]
 		end
+		local keyword_filter = add_mode == "2" and prepare_keyword_filter(sub_cfg)
 		local nodes, szType, clashTable
 		local node_list = {}
 		-- ssd appear to be in this format, starting with ssd://.
@@ -2563,7 +2548,7 @@ local function parse_link(raw, add_mode, group, sub_cfg)
 					log(2, i18n.translatef("Discard node: %s, Reason:", node.remarks) .. " " .. node.error_msg)
 				elseif not node.type then
 					log(2, i18n.translatef("Discard node: %s, Reason:", node.remarks) .. " " .. i18n.translatef("No usable binary was found."))
-				elseif (add_mode == "2" and is_filter_keyword(sub_cfg, node.remarks)) or not node.address or node.remarks == "NULL" or node.address == "127.0.0.1" or
+				elseif (add_mode == "2" and is_filter_keyword(keyword_filter, node.remarks)) or not node.address or node.remarks == "NULL" or node.address == "127.0.0.1" or
 						(not datatypes.hostname(node.address) and not (api.is_ip(node.address))) then
 					log(2, i18n.translatef("Discard filter nodes: %s type node %s", node.type, node.remarks))
 				else

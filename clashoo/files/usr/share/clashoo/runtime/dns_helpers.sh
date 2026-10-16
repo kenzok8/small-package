@@ -145,132 +145,70 @@ dns_mihomo_apply_respect_rules() {
 # Use fallback DNS for queries; keep bootstrap DNS unchanged.
 dns_mihomo_apply_leak_nameservers() {
   local cfg="$1" enabled="${2:-0}" state="${1}.dns-leak-nameserver"
-  local selected="${1}.dns-leak-selected" current="${1}.dns-leak-current" tmp="${1}.$$"
+  local selected="${1}.dns-leak-selected" tmp="${1}.$$"
+  # The config is rebuilt from the selected subscription on every run.
+  # A saved nameserver from an earlier run must never replace its DNS.
+  rm -f "$state" 2>/dev/null
+  [ "$enabled" = "1" ] || return 0
   [ -f "$cfg" ] || return 0
   command -v yq >/dev/null 2>&1 || return 0
 
-  if [ "$enabled" = "1" ]; then
-    yq e -r '.dns.fallback[]' "$cfg" > "$selected" 2>/dev/null || true
-    if [ ! -s "$selected" ]; then
-      printf '%s\n' 'https://1.1.1.1/dns-query' 'https://8.8.8.8/dns-query' > "$selected"
-    fi
-    yq e -r '.dns.nameserver[]' "$cfg" > "$current" 2>/dev/null || true
-
-    if [ ! -f "$state" ] ||
-       ! grep -q 'clashoo:dns_leak_protect_respect_rules' "$cfg" ||
-       ! cmp -s "$current" "$selected"; then
-      awk '
-        function indent_len(s) { match(s, /[^ ]/); return RSTART ? RSTART - 1 : length(s) }
-        /^dns:[[:space:]]*$/ { in_dns = 1; dns_indent = indent_len($0); next }
-        in_dns && /^[^[:space:]#][^:]*:/ { exit }
-        in_dns && /^[[:space:]]*nameserver:/ {
-          print
-          rest = $0
-          sub(/^[[:space:]]*nameserver:[[:space:]]*/, "", rest)
-          sub(/[[:space:]]*(#.*)?$/, "", rest)
-          if (rest == "") { in_ns = 1; ns_indent = indent_len($0) }
-          next
-        }
-        in_ns {
-          cur_indent = indent_len($0)
-          if ($0 ~ /^[[:space:]]*$/ || cur_indent > ns_indent) {
-            print
-            next
-          }
-          exit
-        }
-      ' "$cfg" > "$state"
-      [ -s "$state" ] || printf '__ABSENT__\n' > "$state"
-    fi
-
-    awk -v selected="$selected" '
-      function indent_len(s) { match(s, /[^ ]/); return RSTART ? RSTART - 1 : length(s) }
-      function spaces(n,   out,i) {
-        out = ""
-        for (i = 0; i < n; i++) out = out " "
-        return out
-      }
-      function print_selected(sp,   line) {
-        print sp "nameserver:"
-        while ((getline line < selected) > 0)
-          if (line != "") print sp "  - " line
-        close(selected)
-        inserted = 1
-      }
-      /^dns:[[:space:]]*$/ {
-        in_dns = 1
-        dns_indent = indent_len($0)
-        child_indent = -1
-        print
-        next
-      }
-      in_dns && /^[^[:space:]#][^:]*:/ {
-        if (!inserted) print_selected(spaces(child_indent > 0 ? child_indent : dns_indent + 2))
-        in_dns = 0
-        print
-        next
-      }
-      in_dns && /^[[:space:]]*[^#[:space:]][^:]*:/ && child_indent < 0 {
-        child_indent = indent_len($0)
-      }
-      in_dns && /^[[:space:]]*nameserver:/ {
-        ns_indent = indent_len($0)
-        rest = $0
-        sub(/^[[:space:]]*nameserver:[[:space:]]*/, "", rest)
-        sub(/[[:space:]]*(#.*)?$/, "", rest)
-        print_selected(spaces(ns_indent))
-        if (rest == "") skip_ns = 1
-        next
-      }
-      skip_ns {
-        cur_indent = indent_len($0)
-        if ($0 ~ /^[[:space:]]*$/ || cur_indent > ns_indent) next
-        skip_ns = 0
-      }
-      { print }
-      END {
-        if (in_dns && !inserted)
-          print_selected(spaces(child_indent > 0 ? child_indent : dns_indent + 2))
-      }
-    ' "$cfg" > "$tmp" && mv "$tmp" "$cfg"
-  elif [ -f "$state" ]; then
-    awk -v state="$state" '
-      function indent_len(s) { match(s, /[^ ]/); return RSTART ? RSTART - 1 : length(s) }
-      function print_original(   line) {
-        if ((getline line < state) > 0 && line != "__ABSENT__") {
-          print line
-          while ((getline line < state) > 0) print line
-        }
-        close(state)
-        restored = 1
-      }
-      /^dns:[[:space:]]*$/ { in_dns = 1; print; next }
-      in_dns && /^[^[:space:]#][^:]*:/ {
-        if (!restored) print_original()
-        in_dns = 0
-        print
-        next
-      }
-      in_dns && /^[[:space:]]*nameserver:/ {
-        ns_indent = indent_len($0)
-        rest = $0
-        sub(/^[[:space:]]*nameserver:[[:space:]]*/, "", rest)
-        sub(/[[:space:]]*(#.*)?$/, "", rest)
-        print_original()
-        if (rest == "") skip_ns = 1
-        next
-      }
-      skip_ns {
-        cur_indent = indent_len($0)
-        if ($0 ~ /^[[:space:]]*$/ || cur_indent > ns_indent) next
-        skip_ns = 0
-      }
-      { print }
-      END { if (in_dns && !restored) print_original() }
-    ' "$cfg" > "$tmp" && mv "$tmp" "$cfg"
-    rm -f "$state"
+  yq e -r '.dns.fallback[]' "$cfg" > "$selected" 2>/dev/null || true
+  if [ ! -s "$selected" ]; then
+    printf '%s\n' 'https://1.1.1.1/dns-query' 'https://8.8.8.8/dns-query' > "$selected"
   fi
-  rm -f "$selected" "$current" "$tmp" 2>/dev/null
+
+  awk -v selected="$selected" '
+    function indent_len(s) { match(s, /[^ ]/); return RSTART ? RSTART - 1 : length(s) }
+    function spaces(n,   out,i) {
+      out = ""
+      for (i = 0; i < n; i++) out = out " "
+      return out
+    }
+    function print_selected(sp,   line) {
+      print sp "nameserver:"
+      while ((getline line < selected) > 0)
+        if (line != "") print sp "  - " line
+      close(selected)
+      inserted = 1
+    }
+    /^dns:[[:space:]]*$/ {
+      in_dns = 1
+      dns_indent = indent_len($0)
+      child_indent = -1
+      print
+      next
+    }
+    in_dns && /^[^[:space:]#][^:]*:/ {
+      if (!inserted) print_selected(spaces(child_indent > 0 ? child_indent : dns_indent + 2))
+      in_dns = 0
+      print
+      next
+    }
+    in_dns && /^[[:space:]]*[^#[:space:]][^:]*:/ && child_indent < 0 {
+      child_indent = indent_len($0)
+    }
+    in_dns && /^[[:space:]]*nameserver:/ {
+      ns_indent = indent_len($0)
+      rest = $0
+      sub(/^[[:space:]]*nameserver:[[:space:]]*/, "", rest)
+      sub(/[[:space:]]*(#.*)?$/, "", rest)
+      print_selected(spaces(ns_indent))
+      if (rest == "") skip_ns = 1
+      next
+    }
+    skip_ns {
+      cur_indent = indent_len($0)
+      if ($0 ~ /^[[:space:]]*$/ || cur_indent > ns_indent) next
+      skip_ns = 0
+    }
+    { print }
+    END {
+      if (in_dns && !inserted)
+        print_selected(spaces(child_indent > 0 ? child_indent : dns_indent + 2))
+    }
+  ' "$cfg" > "$tmp" && mv "$tmp" "$cfg"
+  rm -f "$selected" "$tmp" 2>/dev/null
 }
 
 

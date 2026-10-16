@@ -1170,7 +1170,14 @@ local default_file_tree = {
 }
 
 function get_api_json(url)
-	local return_code, content = curl_auto(url, nil, curl_args)
+	local gh_proxy = uci_get_c("@global_app[0]", "gh_proxy_url") or ""
+	local return_code, content
+	if gh_proxy ~= "" then
+		url = gh_proxy .. url
+		return_code, content = curl_direct(url, nil, curl_args)
+	else
+		return_code, content = curl_auto(url, nil, curl_args)
+	end
 	if return_code ~= 0 or content == "" then return {} end
 	return jsonc.parse(content) or {}
 end
@@ -1293,7 +1300,14 @@ function to_download(app_name, url, size, task_id)
 	local _curl_args = clone(curl_args)
 	table.insert(_curl_args, "--speed-limit 51200 --speed-time 15 --max-time 300")
 
-	local return_code, result = curl_auto(url, tmp_file, _curl_args)
+	local gh_proxy = uci_get_c("@global_app[0]", "gh_proxy_url") or ""
+	local return_code, result
+	if gh_proxy ~= "" then
+		url = gh_proxy .. url
+		return_code, result = curl_direct(url, tmp_file, _curl_args)
+	else
+		return_code, result = curl_auto(url, tmp_file, _curl_args)
+	end
 	result = return_code == 0
 
 	if not result then
@@ -1461,7 +1475,14 @@ end
 function to_check_self()
 	local url = "https://raw.githubusercontent.com/Openwrt-Passwall/openwrt-passwall2/main/luci-app-passwall2/Makefile"
 	local tmp_file = "/tmp/passwall2_makefile"
-	local return_code, result = curl_auto(url, tmp_file, curl_args)
+	local gh_proxy = uci_get_c("@global_app[0]", "gh_proxy_url") or ""
+	local return_code, result
+	if gh_proxy ~= "" then
+		url = gh_proxy .. url
+		return_code, result = curl_direct(url, tmp_file, curl_args)
+	else
+		return_code, result = curl_auto(url, tmp_file, curl_args)
+	end
 	result = return_code == 0
 	if not result then
 		exec("/bin/rm", {"-f", tmp_file})

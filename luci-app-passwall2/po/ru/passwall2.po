@@ -1010,6 +1010,15 @@ msgstr "Перемещение..."
 msgid "App Update"
 msgstr "Обновление компонентов"
 
+msgid "GitHub Proxy"
+msgstr "Обратный прокси для GitHub"
+
+msgid "Use GitHub instead of proxy nodes for component updates."
+msgstr "При обновлении компонентов проверять и загружать их напрямую через сервис обратного прокси для GitHub, без использования прокси-узлов."
+
+msgid "Close(Not use)"
+msgstr "Отключено (не использовать)"
+
 msgid "if you want to run from memory, change the path, /tmp beginning then save the application and update it manually."
 msgstr "Если вы хотите запускать из оперативной памяти, измените путь на начинающийся с /tmp, затем сохраните настройки и обновите компонент вручную."
 
@@ -2443,7 +2452,7 @@ msgid "Gecko Packet Size (max)"
 msgstr "Размер упаковки Gecko (макс)"
 
 msgid "Enable UPnP/NAT-PMP port mapping on your gateway to improve hole punching success."
-msgstr "Включите сопоставление портов UPnP/NAT-PMP на вашем шлюзе, чтобы повысить вероятность успешного выполнения операций "пробивания дыр"."
+msgstr "Включите сопоставление портов UPnP/NAT-PMP на вашем шлюзе, чтобы повысить вероятность успешного выполнения операций \"пробивания дыр\"."
 
 msgid "valid time (hh:mm)"
 msgstr "Время действия (чч:мм)"
