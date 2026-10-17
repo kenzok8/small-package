@@ -2141,7 +2141,7 @@ local function curl(url, file, ua, mode, hwid)
 		"-fskL", "-w %{http_code}", "--retry 3", "--connect-timeout 3", "-H 'Accept: */*'", "-H 'Accept-Encoding: identity'"
 	}
 	if ua and ua ~= "" and ua ~= "curl" then
-		ua = (ua == "passwall2") and ("passwall2/" .. api.get_version()) or ua
+		ua = (ua == "passwall2") and ("passwall2/" .. (api.get_version():match("^([^-]+)") or "")) or ua
 		curl_args[#curl_args + 1] = '--user-agent "' .. ua .. '"'
 	end
 	if hwid == "1" then

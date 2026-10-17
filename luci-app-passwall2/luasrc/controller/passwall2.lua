@@ -100,10 +100,11 @@ function index()
 	entry({"admin", "services", appname, "delete_select_shunt_rules"}, call("delete_select_shunt_rules")).leaf = true
 
 	--[[Components update]]
-	entry({"admin", "services", appname, "check_passwall2"}, call("app_check")).leaf = true
+	entry({"admin", "services", appname, "check_" .. appname}, call("app_check")).leaf = true
+	entry({"admin", "services", appname, "update_" .. appname}, call("app_update")).leaf = true
 	local coms = require "luci.passwall2.com"
 	local com
-	for com, _ in pairs(coms) do
+	for _, com in ipairs(coms.order) do
 		entry({"admin", "services", appname, "check_" .. com}, call("com_check", com)).leaf = true
 		entry({"admin", "services", appname, "update_" .. com}, call("com_update", com)).leaf = true
 		entry({"admin", "services", appname, "version_" .. com}, call("com_version", com)).leaf = true
@@ -689,6 +690,30 @@ end
 function app_check()
 	local json = api.to_check_self()
 	http_write_json(json)
+end
+
+function app_update()
+	local id = http.formvalue("id")
+	if not id or not id:match("^[%w_-]+$") then
+		http_write_json({code = 1, error = i18n.translate("Invalid download task.")})
+		return
+	end
+	local task = http.formvalue("task")
+	local result
+	if task == "progress" then
+		result = api.to_download_progress(appname, id, http.formvalue("total_size"))
+	elseif task == "install" then
+		if not luci.dispatcher.test_post_security() then return end
+		result = api.to_install_self(id, http.formvalue("force"), http.formvalue("languages"))
+	else
+		local part = tonumber(http.formvalue("part")) or 1
+		if part < 1 or part > 5 or part ~= math.floor(part) then
+			http_write_json({code = 1, error = i18n.translate("Invalid download task.")})
+			return
+		end
+		result = api.to_download(appname, http.formvalue("url"), http.formvalue("size"), id .. part, part > 1)
+	end
+	http_write_json(result)
 end
 
 function com_check(comname)

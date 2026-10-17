@@ -208,10 +208,11 @@ function get_cache_var(key)
 	return val
 end
 
-function get_new_port(p)
-	if not p then p = "auto" end
-	local cmd_format = ". /usr/share/passwall2/utils.sh ; echo -n $(get_new_port %s tcp,udp)"
-	return tonumber(sys.exec(string.format(cmd_format, p)))
+function get_new_port(start_port, protocol)
+	start_port = tonumber(start_port) or "auto"
+	if protocol ~= "tcp" and protocol ~= "udp" then protocol = "tcp,udp" end
+	local cmd_format = ". /usr/share/passwall2/utils.sh ; echo -n $(get_new_port %s %s)"
+	return tonumber(sys.exec(string.format(cmd_format, util.shellquote(tostring(start_port)), util.shellquote(protocol))))
 end
 
 function exec_call(cmd)
@@ -1102,9 +1103,16 @@ function compare_versions(ver1, comp, ver2)
 	local n2 = table.getn(av2)
 	if (max < n2) then max = n2 end
 
+	local function version_part(value)
+		local number = tonumber(value)
+		if number then return number end
+		local revision = type(value) == "string" and value:match("^[rR](%d+)$")
+		return tonumber(revision) or 0
+	end
+
 	for i = 1, max, 1 do
-		local s1 = tonumber(av1[i] or 0) or 0
-		local s2 = tonumber(av2[i] or 0) or 0
+		local s1 = version_part(av1[i] or 0)
+		local s2 = version_part(av2[i] or 0)
 
 		if comp == "~=" and (s1 ~= s2) then return true end
 		if (comp == "<" or comp == "<=") and (s1 < s2) then return true end
@@ -1270,8 +1278,8 @@ function to_check(arch, app_name)
 	}
 end
 
-function to_download(app_name, url, size, task_id)
-	local result = check_path(app_name)
+function to_download(app_name, url, size, task_id, keep_files)
+	local result = app_name == appname and {code = 0} or check_path(app_name)
 	if result.code ~= 0 then
 		return result
 	end
@@ -1280,7 +1288,7 @@ function to_download(app_name, url, size, task_id)
 		return {code = 1, error = i18n.translate("Download url is required.")}
 	end
 
-	sys.call("/bin/rm -f /tmp/".. app_name .."_download.*")
+	if not keep_files then sys.call("/bin/rm -f /tmp/".. app_name .."_download.*") end
 
 	local tmp_file
 	if type(task_id) == "string" and task_id:match("^[%w_-]+$") then
@@ -1329,6 +1337,12 @@ function to_download_progress(app_name, task_id, total_size)
 	total_size = tonumber(total_size) or 0
 	local tmp_file = "/tmp/" .. app_name .. "_download." .. task_id
 	local downloaded = tonumber(fs.stat(tmp_file, "size")) or 0
+	if app_name == appname then
+		downloaded = 0
+		for part = 1, 5 do
+			downloaded = downloaded + (tonumber(fs.stat(tmp_file .. part, "size")) or 0)
+		end
+	end
 	local percent
 	if total_size > 0 then
 		-- Leave 100% for the download request's success callback.
@@ -1465,51 +1479,134 @@ function to_move(app_name,file)
 end
 
 function get_version()
-	local version = sys.exec("opkg list-installed luci-app-passwall2 2>/dev/null | awk '{print $3}'")
-	if not version or #version == 0 then
-		version = sys.exec("apk list luci-app-passwall2 2>/dev/null | awk '/installed/ {print $1}' | cut -d'-' -f4-")
+	local version_file = CACHE_PATH .. "/passwall2_version"
+	local version = trim(fs.readfile(version_file) or "")
+	if version == "" then
+		version = trim(sys.exec("opkg list-installed luci-app-passwall2 2>/dev/null | awk '{print $3}'") or "")
+		if version == "" then
+			version = trim(sys.exec("apk list luci-app-passwall2 2>/dev/null | awk '/installed/ {print $1}' | cut -d'-' -f4-") or "")
+		end
+		if version ~= "" then
+			fs.mkdirr(CACHE_PATH)
+			fs.writefile(version_file, version)
+		end
 	end
-	return (version or ""):gsub("\n", ""):match("^([^-]+)")
+	return (version:gsub("%-[rR](%d+)$", "-%1"))
+end
+
+local function self_update_languages()
+	local current = uci:get("luci", "main", "lang") or "auto"
+	if current == "auto" then
+		current = _G.L and _G.L.dispatcher and _G.L.dispatcher.lang
+		if not current or current == "auto" then
+			local ok, request, accept = pcall(function()
+				local http = require "luci.http"
+				return http.getenv("REQUEST_METHOD") or http.getenv("REQUEST_URI"), http.getenv("HTTP_ACCEPT_LANGUAGE")
+			end)
+			current = lang
+			if ok and (request or accept) then
+				current = "en"
+				for item in (accept or ""):gmatch("[^,]+") do
+					local code = item:match("^%s*([%w_-]+)")
+					local quality = tonumber(item:match(";%s*q%s*=%s*([%d%.]+)")) or 1
+					if code and quality > 0 then
+						code = code:gsub("-", "_")
+						local lower = code:lower()
+						local alias = ({zh="zh_Hans", zh_cn="zh_Hans", zh_sg="zh_Hans", zh_tw="zh_Hant", zh_hk="zh_Hant", zh_mo="zh_Hant"})[lower]
+						if lower:match("^zh_hans") then alias = "zh_Hans" end
+						if lower:match("^zh_hant") then alias = "zh_Hant" end
+						local matched
+						for _, candidate in ipairs({code, lower, alias or "", code:match("^([^_]+)") or ""}) do
+							if uci:get("luci", "languages", candidate) then current = candidate; matched = true; break end
+						end
+						if matched then break end
+					end
+				end
+			end
+		end
+	end
+	current = (current or ""):lower():gsub("_", "-")
+	if current == "zh" or current == "zh-cn" or current == "zh-sg" or current:match("^zh%-hans") then current = "zh-cn" end
+	if current == "zh-tw" or current == "zh-hk" or current == "zh-mo" or current:match("^zh%-hant") then current = "zh-tw" end
+	if current:match("^fa%-") then current = "fa" end
+	if current:match("^ru%-") then current = "ru" end
+	local languages = {}
+	for _, code in ipairs({"fa", "ru", "zh-cn", "zh-tw"}) do
+		if current == code or is_install("luci-i18n-" .. appname .. "-" .. code) then languages[#languages + 1] = code end
+	end
+	return languages
 end
 
 function to_check_self()
-	local url = "https://raw.githubusercontent.com/Openwrt-Passwall/openwrt-passwall2/main/luci-app-passwall2/Makefile"
-	local tmp_file = "/tmp/passwall2_makefile"
-	local gh_proxy = uci_get_c("@global_app[0]", "gh_proxy_url") or ""
-	local return_code, result
-	if gh_proxy ~= "" then
-		url = gh_proxy .. url
-		return_code, result = curl_direct(url, tmp_file, curl_args)
-	else
-		return_code, result = curl_auto(url, tmp_file, curl_args)
+	local release = get_api_json(com[appname]:get_url())
+	if type(release) == "table" and #release > 0 then release = release[1] end
+	if type(release) ~= "table" or not release.tag_name then
+		return {code = 1, error = i18n.translate("Get remote version info failed.")}
 	end
-	result = return_code == 0
-	if not result then
-		exec("/bin/rm", {"-f", tmp_file})
-		return {
-			code = 1,
-			error = i18n.translatef("Failed")
-		}
+	local local_version = get_version()
+	local remote_version = release.tag_name:gsub("^v", ""):gsub("%-r(%d+)$", "-%1")
+	local package_version = remote_version:gsub("%-(%d+)$", "-r%1")
+	local language_version = remote_version:match("^(%d+%.%d+%.%d+)") or remote_version
+	local apk = sys.call("command -v apk >/dev/null 2>&1") == 0
+	local main_name = "luci-app-" .. appname .. (apk and "-" .. package_version .. ".apk" or "_" .. package_version .. "_all.ipk")
+	local languages = self_update_languages()
+	local wanted, found = {}, {}
+	for _, code in ipairs(languages) do
+		local name = "luci-i18n-" .. appname .. "-" .. code .. (apk and "-" .. language_version .. ".apk" or "_" .. language_version .. "_all.ipk")
+		wanted[name] = code
 	end
-	local local_version  = get_version()
-	local remote_version = sys.exec("echo -n $(grep '^PKG_VERSION' /tmp/passwall2_makefile | head -n 1 | awk -F '=' '{print $2}')")
-	exec("/bin/rm", {"-f", tmp_file})
-
-	local has_update = compare_versions(local_version, "<", remote_version)
-	if not has_update then
-		return {
-			code = 0,
-			local_version = local_version,
-			remote_version = remote_version
-		}
+	local main
+	for _, asset in ipairs(release.assets or {}) do
+		if asset.name == main_name then main = asset end
+		if wanted[asset.name] then found[wanted[asset.name]] = asset end
 	end
+	local selected = {}
+	for _, code in ipairs(languages) do
+		if not found[code] then return {code = 1, error = i18n.translate("Get remote version info failed.")} end
+		selected[#selected + 1] = found[code]
+	end
+	if not main then return {code = 1, error = i18n.translate("Get remote version info failed.")} end
 	return {
-		code = 1,
-		has_update = true,
-		local_version = local_version,
-		remote_version = remote_version,
-		error = i18n.translatef("The latest version: %s, currently does not support automatic update, if you need to update, please compile or download the ipk and then manually install.", remote_version)
+		code = 0, has_update = compare_versions(local_version, "<", remote_version),
+		local_version = local_version, remote_version = remote_version, html_url = release.html_url,
+		data = main, i18n = selected, languages = table.concat(languages, ",")
 	}
+end
+
+function to_install_self(id, force, languages)
+	if type(id) ~= "string" or not id:match("^[%w_-]+$") or (languages and type(languages) ~= "string") then return {code = 1} end
+	local selected, seen = {}, {}
+	for code in (languages or ""):gmatch("[^,]+") do
+		if not ({fa=true, ru=true, ["zh-cn"]=true, ["zh-tw"]=true})[code] or seen[code] then return {code = 1} end
+		selected[#selected + 1], seen[code] = code, true
+	end
+	local dir = "/tmp/" .. appname .. "_luci_update." .. id
+	local manager = sys.call("command -v apk >/dev/null 2>&1") == 0 and "apk" or "opkg"
+	local extension = manager == "apk" and ".apk" or ".ipk"
+	local status_dir = "/www/luci-static/resources/" .. appname .. "-update"
+	local status = status_dir .. "/" .. id .. ".json"
+	fs.mkdir(dir)
+	fs.mkdir(status_dir)
+	if exec("/bin/mv", {"/tmp/" .. appname .. "_download." .. id .. "1", dir .. "/luci-app-" .. appname .. extension}) ~= 0 then
+		remove(dir)
+		return {code = 1}
+	end
+	for part, code in ipairs(selected) do
+		if exec("/bin/mv", {"/tmp/" .. appname .. "_download." .. id .. (part + 1), dir .. "/luci-i18n-" .. appname .. "-" .. code .. extension}) ~= 0 then
+			remove(dir)
+			return {code = 1}
+		end
+	end
+	local script = dir .. "/luci_update.sh"
+	if exec("/bin/cp", {"/usr/share/" .. appname .. "/luci_update.sh", script}) ~= 0 then
+		remove(dir)
+		return {code = 1}
+	end
+	chmod_755(script)
+	fs.writefile(status, '{"installing":true}')
+	sys.call("nohup " .. script .. " " .. dir .. " " .. status .. " " .. manager .. " " ..
+		(force == "1" and "1" or "0") .. " >/dev/null 2>&1 </dev/null &")
+	return {code = 0}
 end
 
 function cacheFileCompareToLogic(file, str)

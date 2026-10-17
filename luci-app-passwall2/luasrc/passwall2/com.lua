@@ -10,6 +10,18 @@ local function gh_pre_release_url(self)
 	return "https://github.com/Openwrt-Passwall/openwrt-passwall-packages/releases/download/api-cache/" .. string.lower(self.name) .. "-pre-release-api.json"
 end
 
+_M.order = {
+	"geoview",
+	"xray",
+	"sing-box"
+}
+
+-- The LuCI package has its own update flow and is not a binary component.
+_M.passwall2 = {
+	name = "PassWall2",
+	get_url = gh_release_url
+}
+
 _M["sing-box"] = {
 	name = "Sing-Box",
 	repo = "SagerNet/sing-box",

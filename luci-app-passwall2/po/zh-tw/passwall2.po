@@ -2492,3 +2492,15 @@ msgstr "WARP 裝置私鑰"
 
 msgid "WARP Endpoint Public Key"
 msgstr "WARP 伺服器公鑰"
+
+msgid "Installing..."
+msgstr "安裝中"
+
+msgid "Do not refresh or switch pages during installation."
+msgstr "安裝時請勿重新整理或切換頁面。"
+
+msgid "Update failed"
+msgstr "更新失敗"
+
+msgid "Unknown error"
+msgstr "未知錯誤"

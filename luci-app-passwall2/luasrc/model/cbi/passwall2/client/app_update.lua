@@ -18,8 +18,8 @@ o:value("https://ghproxy.cc/", "ghproxy.cc")
 o:value("https://mirror.ghproxy.com/", "ghproxy.com")
 o:value("https://ghfast.top/", "ghfast.top")
 
-local k, v
-for k, v in pairs(com) do
+for _, k in ipairs(com.order) do
+	local v = com[k]
 	o = s:option(Value, k:gsub("%-","_") .. "_file", translatef("%s App Path", v.name))
 	o.default = v.default_path or ("/usr/bin/" .. k)
 	o.placeholder = o.default

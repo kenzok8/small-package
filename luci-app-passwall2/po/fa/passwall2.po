@@ -2500,3 +2500,15 @@ msgstr "کلید خصوصی دستگاه WARP"
 
 msgid "WARP Endpoint Public Key"
 msgstr "کلید عمومی سرور WARP"
+
+msgid "Installing..."
+msgstr "در حال نصب..."
+
+msgid "Do not refresh or switch pages during installation."
+msgstr "در حین نصب، صفحه را بازخوانی نکنید و به صفحه دیگری نروید."
+
+msgid "Update failed"
+msgstr "به‌روزرسانی ناموفق بود"
+
+msgid "Unknown error"
+msgstr "خطای ناشناخته"
