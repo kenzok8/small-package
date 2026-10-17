@@ -2211,8 +2211,14 @@ msgstr "Socks切換偵測：連接埠 [%s] 節點切換完畢！"
 msgid "Socks switch detection: Port [%s] [%s:[%s]] abnormal."
 msgstr "Socks切換偵測：連接埠 [%s] 異常。"
 
-msgid "Socks switch detection: Port [%s] all nodes are unavailable!"
-msgstr "Socks切換偵測：連接埠 [%s] 所有節點均不可用！"
+msgid "Socks switch detection: Port [%s] all nodes are unavailable or switching failed!"
+msgstr "Socks切換偵測：連接埠 [%s] 所有節點均不可用或切換失敗！"
+
+msgid "Socks switch detection: Port [%s] node switch failed, continue trying other nodes!"
+msgstr "Socks切換偵測：連接埠 [%s] 節點切換失敗，繼續嘗試其他節點！"
+
+msgid "Socks switch detection: Port [%s] failed to restore the primary node!"
+msgstr "Socks切換偵測：連接埠 [%s] 恢復主節點失敗！"
 
 msgid "Socks switch detection: Port [%s] Unknown error."
 msgstr "Socks切換偵測：連接埠 [%s] 未知錯誤。"
@@ -2477,6 +2483,9 @@ msgstr "配置支援的密碼套件列表。"
 
 msgid "This username already exists."
 msgstr "該用戶名已存在。"
+
+msgid "Update Options"
+msgstr "更新選項"
 
 msgid "MASQUE Path"
 msgstr "MASQUE 路徑"

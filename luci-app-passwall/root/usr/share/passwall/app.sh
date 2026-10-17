@@ -1814,9 +1814,6 @@ stop() {
 		[ -n "${bak_bridge_nf_ip6t}" ] && sysctl -w net.bridge.bridge-nf-call-ip6tables=${bak_bridge_nf_ip6t} >/dev/null 2>&1
 	}
 	rm -rf $TMP_PATH
-	rm -f ${LOCK_PATH}/${CONFIG}_socks_auto_switch*
-	rm -f ${LOCK_PATH}/${CONFIG}_lease2hosts*
-	rm -f ${LOCK_PATH}/${CONFIG}_monitor*
 	echolog "清空并关闭相关程序和缓存完成。"
 	exit 0
 }

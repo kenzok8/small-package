@@ -93,6 +93,6 @@ while true; do
 		rm -f "$TMP_FILE"
 	fi
 
-	sleep 60
+	sleep 60 9>&-
 
 done 2>/dev/null

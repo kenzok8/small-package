@@ -2205,8 +2205,14 @@ msgstr "Socks切换检测：端口 [%s] 节点切换完毕！"
 msgid "Socks switch detection: Port [%s] [%s:[%s]] abnormal."
 msgstr "Socks切换检测：端口 [%s] 异常。"
 
-msgid "Socks switch detection: Port [%s] all nodes are unavailable!"
-msgstr "Socks切换检测：端口 [%s] 所有节点均不可用！"
+msgid "Socks switch detection: Port [%s] all nodes are unavailable or switching failed!"
+msgstr "Socks切换检测：端口 [%s] 所有节点均不可用或切换失败！"
+
+msgid "Socks switch detection: Port [%s] node switch failed, continue trying other nodes!"
+msgstr "Socks切换检测：端口 [%s] 节点切换失败，继续尝试其他节点！"
+
+msgid "Socks switch detection: Port [%s] failed to restore the primary node!"
+msgstr "Socks切换检测：端口 [%s] 恢复主节点失败！"
 
 msgid "Socks switch detection: Port [%s] Unknown error."
 msgstr "Socks切换检测：端口 [%s] 未知错误。"

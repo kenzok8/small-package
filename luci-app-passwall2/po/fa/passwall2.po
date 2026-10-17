@@ -2219,8 +2219,14 @@ msgstr "تشخیص تغییر وضعیت سوکت‌ها: تغییر وضعیت 
 msgid "Socks switch detection: Port [%s] [%s:[%s]] abnormal."
 msgstr "تشخیص وضعیت سوئیچ: پورت [%s] [%s:[%s]] غیرعادی است."
 
-msgid "Socks switch detection: Port [%s] all nodes are unavailable!"
-msgstr "تشخیص تغییر وضعیت سوئیچ: در پورت [%s]، تمام گره‌ها در دسترس نیستند!"
+msgid "Socks switch detection: Port [%s] all nodes are unavailable or switching failed!"
+msgstr "بررسی تغییر گره SOCKS: پورت [%s]، همه گره‌ها در دسترس نیستند یا تغییر گره ناموفق بود!"
+
+msgid "Socks switch detection: Port [%s] node switch failed, continue trying other nodes!"
+msgstr "بررسی تغییر گره SOCKS: پورت [%s]، تغییر گره ناموفق بود؛ تلاش با گره‌های دیگر ادامه دارد!"
+
+msgid "Socks switch detection: Port [%s] failed to restore the primary node!"
+msgstr "بررسی تغییر گره SOCKS: پورت [%s]، بازیابی گره اصلی ناموفق بود!"
 
 msgid "Socks switch detection: Port [%s] Unknown error."
 msgstr "تشخیص وضعیت سوئیچ جوراب: پورت [%s] خطای ناشناخته."
@@ -2485,6 +2491,9 @@ msgstr "فهرست مجموعه‌های رمز پشتیبانی‌شده را �
 
 msgid "This username already exists."
 msgstr "این نام کاربری از قبل وجود دارد."
+
+msgid "Update Options"
+msgstr "گزینه‌های به‌روزرسانی"
 
 msgid "MASQUE Path"
 msgstr "مسیر MASQUE"

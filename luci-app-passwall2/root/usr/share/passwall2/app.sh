@@ -380,7 +380,7 @@ run_socks() {
 	if [ -n "$server_host" ] && [ -n "$server_port" ]; then
 		check_host $server_host
 		[ $? != 0 ] && {
-			log 1 "$(i18n "Socks node: [%s]%s is an invalid server address and cannot be started!" "${$remarks}" "${server_host}")"
+			log 1 "$(i18n "Socks node: [%s]%s is an invalid server address and cannot be started!" "${remarks}" "${server_host}")"
 			return 1
 		}
 		tmp="${server_host}:${server_port}"
@@ -553,9 +553,12 @@ socks_node_switch() {
 		local http_config_file="${flag}_http.json"
 		LOG_FILE="/dev/null"
 		run_socks flag=$flag node=$new_node bind=$bind socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file log_file=$log_file
+		sleep 2s
+		[ "$(check_port_exists "$port" tcp)" = "0" ] && return 1
 		set_cache_var "${flag}" "$new_node"
 		local USE_TABLES=$(get_cache_var "USE_TABLES")
 		[ -n "$USE_TABLES" ] && source $APP_PATH/${USE_TABLES}.sh filter_direct_node_list
+		return 0
 	}
 }
 
@@ -579,11 +582,15 @@ start_socks() {
 				[ "$log" == "0" ] && log_file=""
 				local http_port=$(config_n_get $id http_port 0)
 				local http_config_file="${id}_http.json"
-				run_socks flag=$id node=$node bind=$bind socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file log_file=$log_file
+				local enable_autoswitch=$(config_n_get $id enable_autoswitch 0)
+				if [ "$enable_autoswitch" = "1" ]; then
+					NO_REC_PROCESS=1 $APP_PATH/app.sh run_socks flag=$id node=$node bind=$bind socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file log_file=$log_file
+				else
+					run_socks flag=$id node=$node bind=$bind socks_port=$port config_file=$config_file http_port=$http_port http_config_file=$http_config_file log_file=$log_file
+				fi
 				set_cache_var "${id}" "$node"
 
 				# Auto switch logic
-				local enable_autoswitch=$(config_n_get $id enable_autoswitch 0)
 				[ "$enable_autoswitch" = "1" ] && { $APP_PATH/socks_auto_switch.sh ${id} > /dev/null 2>&1 & }
 			done
 		}
@@ -619,6 +626,9 @@ start_crontab() {
 		return
 	}
 
+	local setsid_cmd=""
+	command -v setsid >/dev/null 2>&1 && setsid_cmd="setsid "
+
 	stop_week_mode=$(config_n_get @global_delay[0] stop_week_mode)
 	stop_time_mode=$(config_n_get @global_delay[0] stop_time_mode)
 	if [ -n "$stop_week_mode" ]; then
@@ -626,7 +636,7 @@ start_crontab() {
 		stop_time_mm=$(echo $stop_time_mode | awk -F ':' '{print $2}')
 		local t="$stop_time_mm $stop_time_hh * * $stop_week_mode"
 		[ "$stop_week_mode" = "7" ] && t="$stop_time_mm $stop_time_hh * * *"
-		echo "$t /etc/init.d/$CONFIG stop cron > /dev/null 2>&1 &" >>/etc/crontabs/root
+		echo "$t ${setsid_cmd}/etc/init.d/$CONFIG stop cron > /dev/null 2>&1 &" >>/etc/crontabs/root
 		log_i18n 0 "Scheduled tasks: Auto stop service."
 	fi
 
@@ -637,7 +647,7 @@ start_crontab() {
 		start_time_mm=$(echo $start_time_mode | awk -F ':' '{print $2}')
 		local t="$start_time_mm $start_time_hh * * $start_week_mode"
 		[ "$start_week_mode" = "7" ] && t="$start_time_mm $start_time_hh * * *"
-		echo "$t /etc/init.d/$CONFIG start cron > /dev/null 2>&1 &" >>/etc/crontabs/root
+		echo "$t ${setsid_cmd}/etc/init.d/$CONFIG start cron > /dev/null 2>&1 &" >>/etc/crontabs/root
 		log_i18n 0 "Scheduled tasks: Auto start service."
 	fi
 
@@ -651,7 +661,7 @@ start_crontab() {
 		if [ "$restart_week_mode" = "8" ]; then
 			update_loop=1
 		else
-			echo "$t /etc/init.d/$CONFIG restart cron > /dev/null 2>&1 &" >>/etc/crontabs/root
+			echo "$t ${setsid_cmd}/etc/init.d/$CONFIG restart cron > /dev/null 2>&1 &" >>/etc/crontabs/root
 		fi
 		log_i18n 0 "Scheduled tasks: Auto restart service."
 	fi
@@ -666,7 +676,7 @@ start_crontab() {
 		if [ "$rules_update_week_mode" = "8" ]; then
 			update_loop=1
 		else
-			echo "$t lua $APP_PATH/rule_update.lua log all cron > /dev/null 2>&1 &" >>/etc/crontabs/root
+			echo "$t ${setsid_cmd}lua $APP_PATH/rule_update.lua log all cron > /dev/null 2>&1 &" >>/etc/crontabs/root
 		fi
 		log_i18n 0 "Scheduled tasks: Auto update rules."
 	fi
@@ -695,7 +705,7 @@ start_crontab() {
 			if [ "$sub_update_week_mode" = "8" ]; then
 				update_loop=1
 			else
-				echo "$t lua $APP_PATH/subscribe.lua start $cfgids cron > /dev/null 2>&1 &" >>/etc/crontabs/root
+				echo "$t ${setsid_cmd}lua $APP_PATH/subscribe.lua start $cfgids cron > /dev/null 2>&1 &" >>/etc/crontabs/root
 			fi
 		done
 		rm -rf $TMP_SUB_PATH
@@ -996,8 +1006,6 @@ stop() {
 		[ -n "${bak_bridge_nf_ip6t}" ] && sysctl -w net.bridge.bridge-nf-call-ip6tables=${bak_bridge_nf_ip6t} >/dev/null 2>&1
 	}
 	rm -rf $TMP_PATH
-	rm -f ${LOCK_PATH}/${CONFIG}_socks_auto_switch*
-	rm -f ${LOCK_PATH}/${CONFIG}_lease2hosts*
 	rm -f ${LOCK_PATH}/${CONFIG}_monitor*
 	log_i18n 0 "Clearing and closing related programs and cache complete."
 	exit 0
