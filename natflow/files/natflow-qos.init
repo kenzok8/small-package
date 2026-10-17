@@ -309,6 +309,9 @@ start() {
 
 	echo clear >$DEVCTL
 
+	local buffer_ms=$(uci get natflow.main.buffer_ms 2>/dev/null || echo 100)
+	echo "buffer_ms=$buffer_ms" >$DEVCTL 2>/dev/null
+
 	config_load natflow
 	config_foreach natflow_qos_setup qos
 
@@ -340,6 +343,10 @@ stop() {
 	done
 
 	natflow_qos_clear_tc
+}
+
+reload() {
+	restart
 }
 
 restart() {
