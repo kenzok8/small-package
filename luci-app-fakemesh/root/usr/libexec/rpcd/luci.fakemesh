@@ -29,6 +29,79 @@ local function clone_table(t)
 	return r
 end
 
+local function valid_mac(mac)
+	return type(mac) == "string" and mac:match("^%x%x:%x%x:%x%x:%x%x:%x%x:%x%x$") ~= nil
+end
+
+local function valid_fields(record, strings, numbers)
+	if type(record) ~= "table" then return false end
+	for field in strings:gmatch("%S+") do
+		if record[field] ~= nil and type(record[field]) ~= "string" then return false end
+	end
+	for field in numbers:gmatch("%S+") do
+		local value = record[field]
+		if value ~= nil and (type(value) ~= "number" or value ~= value or math.abs(value) == math.huge) then return false end
+	end
+	return true
+end
+
+local function valid_array(values, validate)
+	if values == nil then return true end
+	if type(values) ~= "table" then return false end
+	local count = 0
+	for index, value in pairs(values) do
+		if type(index) ~= "number" or index < 1 or index % 1 ~= 0 or not validate(value) then return false end
+		count = count + 1
+	end
+	return count == #values
+end
+
+local function valid_client(client)
+	if not valid_fields(client, "mac node_id access_type ifname band ssid hostname ip port port_speed icon", "signal noise rate_rx rate_tx inactive_ms idle_time rx_speed tx_speed rx_bytes tx_bytes") then return false end
+	if type(client.mac) ~= "string" or client.mac == "" or (client.access_type ~= "vpn" and not valid_mac(client.mac)) then return false end
+	for _, field in ipairs({"associated", "authorized"}) do
+		local value = client[field]
+		if value ~= nil and type(value) ~= "boolean" and value ~= 0 and value ~= 1 then return false end
+	end
+	local function string_value(value) return type(value) == "string" end
+	return valid_array(client.ips, string_value) and valid_array(client.ip6, string_value)
+end
+
+local function valid_node_fields(node)
+	if not valid_fields(node, "id role mac ip hostname model mesh_id band mesh_bssid parent_id parent_name parent_hostname parent_ip", "uptime hop_count") then return false end
+	if node.online ~= nil and type(node.online) ~= "boolean" then return false end
+	for _, field in ipairs({"upstream", "backhaul", "uplink"}) do
+		local link = node[field]
+		if link ~= nil and not valid_fields(link, "type name parent_mac parent_bssid gateway_ip gateway_mac ifname port port_speed speed ssid band proto wan_ip", "signal rx_bitrate tx_bitrate channel freq") then return false end
+	end
+	if node.downstream ~= nil and not valid_fields(node.downstream, "", "total_count wireless_count wired_count vpn_count") then return false end
+	return valid_array(node.clients, valid_client) and valid_array(node.radios, function(radio)
+		return valid_fields(radio, "ifname bssid ssid band", "freq channel")
+	end) and valid_array(node.wired_ports, function(port)
+		return valid_fields(port, "mac port speed", "") and valid_mac(port.mac)
+	end)
+end
+
+local function valid_node_report(report, mesh_id, expected_mac)
+	return valid_node_fields(report) and valid_mac(report.mac) and report.mesh_id == mesh_id
+		and (not expected_mac or expected_mac == "" or report.mac:upper() == expected_mac:upper())
+end
+
+local function valid_topology_report(topology, mesh_id)
+	if not valid_fields(topology, "mesh_id controller_ip current_node_id", "timestamp") or topology.mesh_id ~= mesh_id then return false end
+	if type(topology.nodes) ~= "table" or type(topology.clients) ~= "table" then return false end
+	if topology.summary ~= nil and not valid_fields(topology.summary, "mesh_mode", "node_count online_agents offline_agents wireless_nodes wired_nodes client_count wifi_2g wifi_5g wifi_6g wired vpn total_rx_speed total_tx_speed max_hops") then return false end
+	local seen, root = {}, false
+	local nodes_valid = valid_array(topology.nodes, function(node)
+		if not valid_node_fields(node) or type(node.id) ~= "string" or node.id == "" or seen[node.id] then return false end
+		seen[node.id] = true
+		if node.id == "ac" and node.role == "controller" then root = true
+		elseif node.role ~= "agent" and node.role ~= "wap" then return false end
+		return true
+	end)
+	return nodes_valid and root and valid_array(topology.clients, valid_client)
+end
+
 local function get_device_icon(hostname, mac)
 	local h = (hostname or ""):lower()
 	if h:find("iphone") or h:find("moto") or h:find("android") or h:find("phone") or h:find("mi%-") or h:find("redmi") or h:find("huawei") or h:find("oppo") or h:find("vivo") or h:find("oneplus") or h:find("galaxy") or h:find("pixel") or h:find("honor") or h:find("meizu") or h:find("realme") or h:find("iqoo") then
@@ -126,30 +199,39 @@ local function client_forwarded_downstream(client, candidates, node_by_id)
 	return false
 end
 
-local function collect_local_node_info()
-	local conn = ubus_has and ubus.connect()
+local function config_snapshot(conn, name)
+	local reply = conn and conn:call("uci", "get", { config = name })
+	local values = type(reply) == "table" and reply.values
+	return function(section, option)
+		if type(values) == "table" then
+			local record = values[section]
+			local value = type(record) == "table" and record[option]
+			return type(value) == "string" and value or ""
+		end
+		return (exec("uci -q get " .. name .. "." .. section .. "." .. option .. " 2>/dev/null")):gsub("\n$", "")
+	end
+end
+
+local function collect_local_node_info(conn)
+	local own_connection = not conn
+	conn = conn or (ubus_has and ubus.connect())
+	local network_config = config_snapshot(conn, "network")
+	local mesh_config = config_snapshot(conn, "fakemesh")
+	local arp = read_file("/proc/net/arp")
 	local fdb = exec("bridge fdb show 2>/dev/null")
 
-	local mac = ""
-	local p = io.popen("uci get network.meshx0.hostname 2>/dev/null")
-	if p then
-		local h = p:read("*l") or ""
-		p:close()
-		mac = h:match("^MESH%-AGENT_([%x]+)") or ""
-		if #mac == 12 then
-			mac = mac:gsub("(..)", "%1:"):sub(1, 17):upper()
-		end
-	end
+	local mac = network_config("meshx0", "hostname"):match("^MESH%-AGENT_([%x]+)") or ""
+	if #mac == 12 then mac = mac:gsub("(..)", "%1:"):sub(1, 17):upper() end
 	if mac == "" then
 		mac = (read_file("/sys/class/net/br-lan/address")):upper()
 	end
 
 	local ip = (exec("ip -4 -o addr show br-lan 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -n1")):gsub("%s+", "")
 	if ip == "" then
-		ip = (exec("uci -q get network.lan.ipaddr 2>/dev/null")):gsub("%s+", "")
+		ip = network_config("lan", "ipaddr")
 	end
 
-	local role = (exec("uci -q get fakemesh.default.role 2>/dev/null")):gsub("%s+", "")
+	local role = mesh_config("default", "role")
 	if role == "" then role = "agent" end
 
 	local uptime = 0
@@ -163,8 +245,8 @@ local function collect_local_node_info()
 		model = read_file("/tmp/sysinfo/model"),
 		uptime = uptime,
 		role = role,
-		mesh_id = (exec("uci -q get fakemesh.default.id 2>/dev/null")):gsub("%s+", ""),
-		band = (exec("uci -q get fakemesh.default.band 2>/dev/null")):gsub("%s+", "")
+		mesh_id = mesh_config("default", "id"),
+		band = mesh_config("default", "band")
 	}
 
 	if info.model == "" then
@@ -182,17 +264,16 @@ local function collect_local_node_info()
 
 	-- Upstream connection detection ("我连着上游谁")
 	if role == "controller" then
-		local wan_proto = (exec("uci -q get network.wan.proto 2>/dev/null")):gsub("%s+", "")
+		local wan_proto = network_config("wan", "proto")
 		local wan_ip = (exec("ip -4 -o addr show wan 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -n1")):gsub("%s+", "")
 		if wan_ip == "" then
 			wan_ip = (exec("ip -4 -o addr show pppoe-wan 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -n1")):gsub("%s+", "")
 		end
 		if wan_ip == "" then
-			wan_ip = (exec("uci -q get network.wan.ipaddr 2>/dev/null")):gsub("%s+", "")
+			wan_ip = network_config("wan", "ipaddr")
 		end
 		info.upstream = {
 			type = "root",
-			name = "Internet Gateway",
 			proto = wan_proto ~= "" and wan_proto or "dhcp",
 			wan_ip = wan_ip,
 			online = (wan_ip ~= "")
@@ -210,7 +291,7 @@ local function collect_local_node_info()
 			local channel = tonumber(link:match("channel: (%d+)"))
 
 			local band = "5G"
-			if freq and freq >= 6000 then band = "6G"
+			if freq and freq >= 5925 then band = "6G"
 			elseif freq and freq < 3000 then band = "2.4G" end
 
 			info.upstream = {
@@ -231,7 +312,6 @@ local function collect_local_node_info()
 			local gw_ip = def_route:match("via%s+([%d%.]+)") or ""
 			local gw_mac = ""
 			if gw_ip ~= "" then
-				local arp = read_file("/proc/net/arp")
 				for line in arp:gmatch("[^\r\n]+") do
 					local aip, amac = line:match("^([%d%.]+)%s+%S+%s+%S+%s+([%a%d:]+)")
 					if aip == gw_ip and amac then
@@ -256,7 +336,7 @@ local function collect_local_node_info()
 			local up_speed = speed and speed > 0 and (speed .. "M") or ""
 
 			info.upstream = {
-				type = "wired",
+				type = (up_ifname ~= "" or gw_mac ~= "") and "wired" or "unknown",
 				ifname = up_ifname,
 				port = up_ifname:upper(),
 				port_speed = up_speed,
@@ -281,14 +361,14 @@ local function collect_local_node_info()
 				local st = conn:call(obj, "get_status", {}) or {}
 				local cl = conn:call(obj, "get_clients", {}) or {}
 				local stations = conn:call("iwinfo", "assoclist", { device = ifname }) or {}
-				local activity_by_mac = {}
+				local stations_by_mac = {}
 				for _, station in ipairs(stations.results or {}) do
-					if station.mac then activity_by_mac[station.mac:upper()] = tonumber(station.inactive) end
+					if station.mac then stations_by_mac[station.mac:upper()] = station end
 				end
 				local freq = st.freq or cl.freq or 0
 				local band = "2.4G"
-				if freq >= 5000 and freq < 6000 then band = "5G"
-				elseif freq >= 6000 then band = "6G" end
+				if freq >= 5000 and freq < 5925 then band = "5G"
+				elseif freq >= 5925 then band = "6G" end
 
 				radios[#radios + 1] = {
 					ifname = ifname,
@@ -303,6 +383,7 @@ local function collect_local_node_info()
 					for cmac, cinfo in pairs(cl.clients) do
 						if flag_set(cinfo.assoc) and flag_set(cinfo.authorized) then
 							local mac_u = cmac:upper()
+							local station = stations_by_mac[mac_u] or {}
 							seen_macs[mac_u] = true
 							clients[#clients + 1] = {
 								mac = mac_u,
@@ -312,11 +393,12 @@ local function collect_local_node_info()
 								ssid = st.ssid or "",
 								associated = true,
 								authorized = true,
-								inactive_ms = activity_by_mac[mac_u],
+								inactive_ms = tonumber(station.inactive),
 								signal = cinfo.signal or 0,
 								noise = cinfo.noise or -95,
-								rate_rx = (cinfo.rate and cinfo.rate.rx) and (cinfo.rate.rx / 1000) or 0,
-								rate_tx = (cinfo.rate and cinfo.rate.tx) and (cinfo.rate.tx / 1000) or 0
+								-- iwinfo reports kbit/s; hostapd rate scaling varies by version.
+								rate_rx = (station.rx and tonumber(station.rx.rate) or 0) / 1000,
+								rate_tx = (station.tx and tonumber(station.tx.rate) or 0) / 1000
 							}
 						end
 					end
@@ -356,7 +438,6 @@ local function collect_local_node_info()
 	end
 	local local_ips = {}
 	local local_ip6s = {}
-	local arp = read_file("/proc/net/arp")
 	for line in arp:gmatch("[^\r\n]+") do
 		local aip, flg, amac = line:match("^([%d%.]+)%s+%S+%s+(%S+)%s+([%a%d:]+)")
 		if aip and amac and flg ~= "0x0" then
@@ -401,8 +482,8 @@ local function collect_local_node_info()
 	info.clients = clients
 	info.wired_ports = wired_ports
 
-	if conn then conn:close() end
-	return info
+	if own_connection and conn then conn:close() end
+	return info, { arp = arp, ip6 = ip6_out }
 end
 
 local function valid_ipv4(ip)
@@ -493,10 +574,13 @@ local function fetch_nodes_parallel(nodes, method, timeout)
 	return finish_http_requests(requests, deadline)
 end
 
-local function fetch_agents_parallel(agents)
+local function fetch_agents_parallel(agents, mesh_id)
 	local reports = fetch_nodes_parallel(agents, "get_node_info", 2)
-	for ip, report in pairs(reports) do
-		if type(report.mac) ~= "string" then reports[ip] = nil end
+	for _, agent in ipairs(agents) do
+		local report = reports[agent.ip]
+		if not valid_node_report(report, mesh_id, agent.mac) or (report.role ~= "agent" and report.role ~= "wap") then
+			reports[agent.ip] = nil
+		end
 	end
 	return reports
 end
@@ -535,7 +619,7 @@ local function fetch_controller_topology(conn, local_info)
 	local controllers = {}
 	for _, candidate in ipairs(candidates) do
 		local report = reports[candidate.ip]
-		if report and report.role == "controller" and report.mesh_id == local_info.mesh_id then
+		if valid_node_report(report, local_info.mesh_id) and report.role == "controller" then
 			controllers[#controllers + 1] = candidate
 		end
 	end
@@ -543,7 +627,7 @@ local function fetch_controller_topology(conn, local_info)
 	local topologies = remaining > 0 and fetch_nodes_parallel(controllers, "get_topology", remaining) or {}
 	for _, controller in ipairs(controllers) do
 		local topology = topologies[controller.ip]
-		if topology and topology.mesh_id == local_info.mesh_id and type(topology.nodes) == "table" and type(topology.clients) == "table" then
+		if valid_topology_report(topology, local_info.mesh_id) then
 			for _, node in ipairs(topology.nodes) do
 				if node.id == "ac" and node.role == "controller" then
 					return topology, controller.ip
@@ -564,7 +648,7 @@ local methods = {
 	get_topology = {
 		call = function()
 			local conn = ubus_has and ubus.connect()
-			local local_info = collect_local_node_info()
+			local local_info, snapshot = collect_local_node_info(conn)
 
 			if local_info.role ~= "controller" then
 				local topo, ac_ip = fetch_controller_topology(conn, local_info)
@@ -581,7 +665,8 @@ local methods = {
 				my_node.online = true
 				my_node.parent_id = "ac"
 				my_node.parent_ip = ac_ip or ""
-				my_node.parent_name = (ac_ip and ac_ip ~= "") and ("X-WRT (" .. ac_ip .. ") [离线]") or "X-WRT (离线)"
+				my_node.parent_hostname = "X-WRT"
+				my_node.parent_name = (ac_ip and ac_ip ~= "") and ("X-WRT (" .. ac_ip .. ")") or "X-WRT"
 				my_node.hop_count = 1
 
 				local ac_stub = {
@@ -594,8 +679,7 @@ local methods = {
 					online = false,
 					uptime = 0,
 					hop_count = 0,
-					parent_name = "Internet Gateway",
-					upstream = { type = "root", name = "Internet Gateway", online = false },
+					upstream = { type = "root", online = false },
 					downstream = { total_count = 0, wireless_count = 0, wired_count = 0, vpn_count = 0 },
 					radios = {},
 					wired_ports = {}
@@ -613,6 +697,7 @@ local methods = {
 					client_count = #clients,
 					wifi_5g = 0,
 					wifi_2g = 0,
+					wifi_6g = 0,
 					wired = 0,
 					vpn = 0,
 					total_rx_speed = 0,
@@ -623,7 +708,8 @@ local methods = {
 				}
 				for _, c in ipairs(clients) do
 					if c.access_type == "wireless" then
-						if c.band == "5G" then summary.wifi_5g = summary.wifi_5g + 1
+						if c.band == "6G" then summary.wifi_6g = summary.wifi_6g + 1
+						elseif c.band == "5G" then summary.wifi_5g = summary.wifi_5g + 1
 						else summary.wifi_2g = summary.wifi_2g + 1 end
 					elseif c.access_type == "wired" then
 						summary.wired = summary.wired + 1
@@ -701,7 +787,7 @@ local methods = {
 			end
 
 			-- Concurrently request each Agent for real-time node reports
-			local agent_results = fetch_agents_parallel(agent_list)
+			local agent_results = fetch_agents_parallel(agent_list, local_info.mesh_id)
 
 			for _, a in ipairs(agent_list) do
 				local agent_data = agent_results[a.ip]
@@ -804,7 +890,10 @@ local methods = {
 			for _, n in ipairs(nodes) do
 				if n.id ~= "ac" then
 					local up = n.upstream or n.backhaul or {}
-					if up.type == "wireless" and up.parent_bssid and up.parent_bssid ~= "" then
+					if not n.online then
+						n.parent_id = "ac"
+						n.uplink = { type = "unknown" }
+					elseif up.type == "wireless" and up.parent_bssid and up.parent_bssid ~= "" then
 						local p_id = bssid_to_node[up.parent_bssid]
 						if not p_id and #up.parent_bssid >= 14 then
 							local prefix = up.parent_bssid:sub(1, 14)
@@ -835,22 +924,18 @@ local methods = {
 							n.uplink = {
 								type = "wired",
 								port = w.port or (up.port or "LAN"),
-								speed = (w.speed and w.speed ~= "") and w.speed or (up.port_speed or "1000M")
+								speed = (w.speed and w.speed ~= "") and w.speed or up.port_speed
 							}
-						elseif up.parent_mac and node_by_mac[up.parent_mac] then
-							p_id = node_by_mac[up.parent_mac]
+						elseif up.type == "wired" then
+							p_id = node_by_mac[up.parent_mac] or "ac"
 							n.uplink = {
 								type = "wired",
 								port = up.port or "LAN",
-								speed = up.port_speed or "1000M"
+								speed = up.port_speed
 							}
 						else
 							p_id = "ac"
-							n.uplink = {
-								type = "wired",
-								port = up.port or "LAN",
-								speed = up.port_speed or "1000M"
-							}
+							n.uplink = { type = "unknown" }
 						end
 						n.parent_id = p_id or "ac"
 					end
@@ -908,7 +993,7 @@ local methods = {
 					n.parent_name = (p.hostname and p.hostname ~= "") and (p.hostname .. " (" .. p.ip .. ")") or p.ip
 				elseif n.id == "ac" then
 					local up = n.upstream or {}
-					n.parent_name = (up.wan_ip and up.wan_ip ~= "") and ("Internet (" .. up.wan_ip .. ")") or "Internet Gateway"
+					n.parent_name = up.wan_ip or ""
 					n.parent_ip = up.wan_ip or ""
 				end
 			end
@@ -960,22 +1045,18 @@ local methods = {
 
 			-- Gather ARP table from /proc/net/arp
 			local arp_ips = {}
-			local f_arp = io.open("/proc/net/arp", "r")
-			if f_arp then
-				for line in f_arp:lines() do
-					local aip, flg, amac = line:match("^([%d%.]+)%s+%S+%s+(%S+)%s+([%a%d:]+)")
-					if aip and amac and flg ~= "0x0" then
-						amac = amac:upper()
-						if not arp_ips[amac] then arp_ips[amac] = {} end
-						arp_ips[amac][aip] = true
-					end
+			for line in snapshot.arp:gmatch("[^\r\n]+") do
+				local aip, flg, amac = line:match("^([%d%.]+)%s+%S+%s+(%S+)%s+([%a%d:]+)")
+				if aip and amac and flg ~= "0x0" then
+					amac = amac:upper()
+					if not arp_ips[amac] then arp_ips[amac] = {} end
+					arp_ips[amac][aip] = true
 				end
-				f_arp:close()
 			end
 
 			-- Gather IPv6 neighbors
 			local ip6_neigh = {}
-			local ip6_out = exec("ip -6 -o neigh show 2>/dev/null")
+			local ip6_out = snapshot.ip6
 			for line in ip6_out:gmatch("[^\r\n]+") do
 				local aip6, amac = line:match("^([%a%d:]+)%s+dev%s+%S+%s+lladdr%s+([%a%d:]+)")
 				if aip6 and amac then
@@ -1374,7 +1455,7 @@ local methods = {
 			if conn then conn:close() end
 
 			return {
-				mesh_id = (exec("uci -q get fakemesh.default.id 2>/dev/null")):gsub("%s+", ""),
+				mesh_id = local_info.mesh_id,
 				controller_ip = ac_node.ip,
 				current_node_id = "ac",
 				timestamp = os.time(),

@@ -11,6 +11,16 @@ role="$(uci -q get fakemesh.default.role 2>/dev/null)"
 
 [ "$INTERFACE" = "$interface" ] || exit 0
 
+schedule_umdns_reload()
+{
+	(
+		exec 8>/var/lock/fakemesh-umdns-reload.lock || exit 1
+		flock -n 8 || exit 0
+		sleep 60
+		/etc/init.d/umdns enabled 8>&- && /etc/init.d/umdns reload 8>&-
+	) &
+}
+
 #change hostname if mesh enabled
 if [ "$enabled" = "1" ]; then
 	old_hostname="$(uci get system.@system[0].hostname || echo X-WRT)"
@@ -40,7 +50,7 @@ band_steer_helper="$band_steer_helper" /usr/sbin/fakemesh band_steer_helper_swit
 		uci commit umdns
 		/etc/init.d/umdns reload
 	}
-	(sleep 60 && /etc/init.d/umdns reload) &
+	schedule_umdns_reload
 }
 [ "$interface" = "lan" ] && uci get umdns.@umdns[0] && {
 	old_net=$(uci get umdns.@umdns[0].network)
@@ -55,7 +65,7 @@ band_steer_helper="$band_steer_helper" /usr/sbin/fakemesh band_steer_helper_swit
 		uci commit umdns
 		/etc/init.d/umdns reload
 	}
-	(sleep 60 && /etc/init.d/umdns reload) &
+	schedule_umdns_reload
 }
 
 } ##/etc/init.d/umdns enabled

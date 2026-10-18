@@ -58,7 +58,10 @@ assert.strictEqual(view.formatLastActive(null), '-');
 // Modal title translation regression tests
 let modalTitle = null;
 global.ui = {
-	showModal: function(title) { modalTitle = title; },
+	showModal: function(title) {
+		modalTitle = title;
+		return { parentNode: { addEventListener: function() {} } };
+	},
 	hideModal: function() {}
 };
 global._ = function(s) {

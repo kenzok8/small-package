@@ -162,8 +162,8 @@ msgstr "卫星节点"
 msgid "Total Clients"
 msgstr "全网终端"
 
-msgid "5G / 2.4G / Wired / VPN"
-msgstr "5G / 2.4G / 有线 / VPN"
+msgid "6G / 5G / 2.4G / Wired / VPN"
+msgstr "6G / 5G / 2.4G / 有线 / VPN"
 
 msgid "VPN"
 msgstr "VPN"
@@ -387,3 +387,24 @@ msgstr "%d天 %d小时前"
 msgid "%d days ago"
 msgstr "%d 天前"
 
+
+msgid "Last successful refresh"
+msgstr "上次成功刷新"
+
+msgid "Waiting for topology data"
+msgstr "等待拓扑数据"
+
+msgid "Refresh failed; showing the last successful snapshot."
+msgstr "刷新失败，当前显示上次成功获取的数据。"
+
+msgid "Topology refresh failed."
+msgstr "拓扑刷新失败。"
+
+msgid "This device is no longer present in the latest topology."
+msgstr "最新拓扑中已没有此设备。"
+
+msgid "Unknown link"
+msgstr "未知链路"
+
+msgid "Offline"
+msgstr "离线"

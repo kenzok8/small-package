@@ -135,7 +135,7 @@ FakeMesh 提供了全网可视化网络拓扑功能（Web 路径：**Mesh 组网
 ### 3. 后端 RPCD 接口规格
 
 #### (1) `luci.fakemesh get_topology`
-由 Web 前端调用 AC 控制器，返回全网拓扑与终端汇总数据。
+由 Web 前端调用 AC 控制器，返回全网拓扑与终端汇总数据。互联网出口及离线标签由前端按界面语言生成；上游节点名称、地址和在线状态使用原始数据。
 
 - **调用方式**：`ubus call luci.fakemesh get_topology`
 - **返回结构**：
@@ -169,7 +169,7 @@ FakeMesh 提供了全网可视化网络拓扑功能（Web 路径：**Mesh 组网
         "uptime": 65756,
         "online": true,
         "hop_count": 0,
-        "parent_name": "Internet (100.73.112.26)",
+        "parent_name": "100.73.112.26",
         "parent_ip": "100.73.112.26",
         "upstream": { "type": "root", "wan_ip": "100.73.112.26" },
         "downstream": { "total_count": 7, "wireless_count": 6, "wired_count": 0, "vpn_count": 1 }

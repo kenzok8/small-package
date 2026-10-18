@@ -51,19 +51,26 @@ local function fixture()
 end
 
 local function instantiate(state)
+	state.shell_calls = {}
+	state.file_reads = {}
+	state.connections = 0
 	local env = setmetatable({arg = {}}, {__index = _G})
 	env.io = {
 		open = function(path)
+			state.file_reads[path] = (state.file_reads[path] or 0) + 1
 			if path == "/proc/uptime" then return stream(tostring(state.time)) end
 			if state.files[path] == nil then return nil end
 			return stream(state.files[path])
 		end,
 		popen = function(command)
+			state.shell_calls[#state.shell_calls + 1] = command
 			local data = ""
 			if command:find("uci ", 1, true) then
-				data = state.uci[command:match("get ([%w%._]+)")] or ""
+				local value = state.uci[command:match("get ([%w%._]+)")]
+				data = value and (value .. "\n") or ""
 			elseif command:find("ip -4 -o addr show br-lan", 1, true) then data = state.ip
 			elseif command:find("bridge fdb show", 1, true) then data = state.fdb
+			elseif command:find("iw dev meshx1 link", 1, true) then data = state.link or ""
 			elseif command:find("ip -4 route show", 1, true) then data = state.route
 			end
 			return stream(data)
@@ -85,9 +92,22 @@ local function instantiate(state)
 		end
 		if name == "ubus" then
 			return {connect = function()
+				state.connections = state.connections + 1
 				return {
 					call = function(_, object, method, args)
 						state.calls[#state.calls + 1] = object .. " " .. method
+						if object == "uci" and method == "get" then
+							if state.uci_unavailable then return nil end
+							local values = {}
+							for key, value in pairs(state.uci) do
+								local config, section, option = key:match("^([^.]+)%.([^.]+)%.([^.]+)$")
+								if config == args.config then
+									values[section] = values[section] or {}
+									values[section][option] = value
+								end
+							end
+							return {values = values}
+						end
 						local value = state.ubus[object] and state.ubus[object][method]
 						return type(value) == "function" and value(args) or value
 					end,
@@ -219,7 +239,7 @@ test("only associated and authorized Wi-Fi clients are counted; PHY uses Mbps", 
 	state.ubus["hostapd.phy0-ap0"] = {
 		get_status = {ssid = "Test", freq = 5180},
 		get_clients = {clients = {
-			[client_mac] = {assoc = true, authorized = true, signal = -62, rate = {rx = 1201000, tx = 866700}},
+			[client_mac] = {assoc = true, authorized = true, signal = -62, rate = {rx = 120100000, tx = 86670000}},
 			[a_mac] = {assoc = false, authorized = false},
 			[b_mac] = {assoc = true, authorized = false},
 			[c_mac] = {assoc = 0, authorized = 1}
@@ -227,12 +247,16 @@ test("only associated and authorized Wi-Fi clients are counted; PHY uses Mbps", 
 	}
 	state.ubus.iwinfo = {assoclist = function(args)
 		assert(args.device == "phy0-ap0")
-		return {results = {{mac = client_mac, inactive = 250}}}
+		return {results = {{mac = client_mac, inactive = 250, rx = {rate = 1201000}, tx = {rate = 866700}}}}
 	end}
 	local node = instantiate(state).methods.get_node_info.call()
 	assert(#node.clients == 1 and node.downstream.total_count == 1)
 	assert(node.clients[1].rate_rx == 1201 and node.clients[1].rate_tx == 866.7)
 	assert(node.clients[1].inactive_ms == 250)
+	-- Older hostapd versions report kbps correctly; the result must be identical.
+	state.ubus["hostapd.phy0-ap0"].get_clients.clients[client_mac].rate = {rx = 1201000, tx = 866700}
+	node = instantiate(state).methods.get_node_info.call()
+	assert(node.clients[1].rate_rx == 1201 and node.clients[1].rate_tx == 866.7)
 	state.ubus["hostapd.phy0-ap0"].get_clients.clients[client_mac].assoc = 1
 	state.ubus["hostapd.phy0-ap0"].get_clients.clients[client_mac].authorized = 1
 	assert(#instantiate(state).methods.get_node_info.call().clients == 1)
@@ -241,6 +265,26 @@ test("only associated and authorized Wi-Fi clients are counted; PHY uses Mbps", 
 	local topology = instantiate(state).methods.get_topology.call()
 	assert(#topology.clients == 1 and topology.clients[1].mac == client_mac)
 	assert(topology.clients[1].idle_time == 0)
+	assert(topology.clients[1].rate_rx == 1201 and topology.clients[1].rate_tx == 866.7)
+end)
+
+test("Wi-Fi PHY rates handle missing iwinfo data and match MACs case-insensitively", function()
+	local state = fixture()
+	local mac = "AA:BB:CC:DD:EE:99"
+	state.objects = {"hostapd.phy0-ap0"}
+	state.ubus["hostapd.phy0-ap0"] = {
+		get_status = {ssid = "Test", freq = 5180},
+		get_clients = {clients = {[mac] = {assoc = true, authorized = true, rate = {rx = 120100000, tx = 86670000}}}}
+	}
+	local client = instantiate(state).methods.get_node_info.call().clients[1]
+	assert(client.rate_rx == 0 and client.rate_tx == 0)
+	state.ubus.iwinfo = {assoclist = {results = {{mac = mac:lower(), inactive = 100, rx = {rate = 5500}}}}}
+	client = instantiate(state).methods.get_node_info.call().clients[1]
+	assert(client.mac == mac and client.inactive_ms == 100)
+	assert(client.rate_rx == 5.5 and client.rate_tx == 0)
+	state.ubus.iwinfo.assoclist.results[1] = {mac = mac:lower(), rx = {rate = 0}, tx = {rate = 0}}
+	client = instantiate(state).methods.get_node_info.call().clients[1]
+	assert(client.rate_rx == 0 and client.rate_tx == 0)
 end)
 
 test("roaming ownership uses per-node activity before signal strength", function()
@@ -290,8 +334,8 @@ test("bypass deployment discovers the matching controller instead of gateway", f
 		["_fakemesh_test-mesh._tcp"] = {AC = {ipv4 = "192.168.1.1"}},
 		["_fakemesh_other-mesh._tcp"] = {Other = {ipv4 = "192.168.1.10"}}
 	}}
-	state.agents["192.168.1.1"] = {role = "controller", mesh_id = "test-mesh"}
-	state.agents["192.168.168.1"] = {role = "agent", mesh_id = "test-mesh"}
+	state.agents["192.168.1.1"] = {mac = ac_mac, role = "controller", mesh_id = "test-mesh"}
+	state.agents["192.168.168.1"] = {mac = a_mac, role = "agent", mesh_id = "test-mesh"}
 	state.topologies["192.168.1.1"] = {mesh_id = "test-mesh", nodes = {{id = "ac", role = "controller"}}, clients = {}}
 	local topology = instantiate(state).methods.get_topology.call()
 	assert(topology.current_node_id == "node_020000000002")
@@ -308,15 +352,114 @@ test("controller failures continue to validated gateway and reject wrong Mesh ID
 		First = {ipv4 = "192.168.1.10"}, Wrong = {ipv4 = "192.168.1.11"}
 	}}}
 	state.files["/proc/net/route"] = "br-lan 00000000 0101A8C0 0003 0 0 10 00000000\n"
-	state.agents["192.168.1.10"] = {role = "controller", mesh_id = "test-mesh"}
-	state.agents["192.168.1.11"] = {role = "controller", mesh_id = "other-mesh"}
-	state.agents["192.168.1.1"] = {role = "controller", mesh_id = "test-mesh"}
+	state.agents["192.168.1.10"] = {mac = ac_mac, role = "controller", mesh_id = "test-mesh"}
+	state.agents["192.168.1.11"] = {mac = ac_mac, role = "controller", mesh_id = "other-mesh"}
+	state.agents["192.168.1.1"] = {mac = ac_mac, role = "controller", mesh_id = "test-mesh"}
+	state.topologies["192.168.1.10"] = {mesh_id = "test-mesh", nodes = {false}, clients = {}}
 	state.topologies["192.168.1.1"] = {mesh_id = "test-mesh", nodes = {{id = "ac", role = "controller"}}, clients = {}}
 	local api = instantiate(state)
 	local topology, ip = api.fetch_controller({call = function() return state.ubus.umdns.browse end}, {ip = "192.168.1.2", mesh_id = "test-mesh"})
 	assert(topology and ip == "192.168.1.1")
 	for _, request in ipairs(state.requests) do
 		assert(request.method ~= "get_topology" or request.ip ~= "192.168.1.11")
+	end
+end)
+
+test("Mesh IDs preserve spaces through both config paths and mDNS discovery", function()
+	for _, legacy in ipairs({false, true}) do
+		local state = fixture()
+		local mesh_id = " room mesh "
+		state.uci_unavailable = legacy
+		state.uci["fakemesh.default.id"] = mesh_id
+		state.uci["fakemesh.default.role"] = "agent"
+		state.uci["network.meshx0.hostname"] = "MESH-AGENT_020000000002"
+		state.ip = "192.168.1.2"
+		state.ubus.umdns = {browse = {["_fakemesh_" .. mesh_id .. "._tcp"] = {AC = {ipv4 = "192.168.1.1"}}}}
+		state.agents["192.168.1.1"] = {mac = ac_mac, role = "controller", mesh_id = mesh_id}
+		state.topologies["192.168.1.1"] = {mesh_id = mesh_id, nodes = {{id = "ac", role = "controller"}}, clients = {}}
+		local api = instantiate(state)
+		assert(api.methods.get_node_info.call().mesh_id == mesh_id)
+		local topology = api.methods.get_topology.call()
+		assert(topology.mesh_id == mesh_id and #topology.nodes == 1)
+		assert(topology.current_node_id == "node_020000000002")
+	end
+end)
+
+test("a controller refresh shares config, ARP, IPv6 and one ubus connection", function()
+	local state = fixture()
+	state.files["/proc/net/arp"] = "192.168.1.99 0x1 0x2 " .. client_mac .. " * br-lan\n"
+	state.fdb = client_mac .. " dev lan1 master br-lan\n"
+	local topology = instantiate(state).methods.get_topology.call()
+	assert(topology.clients[1].ip == "192.168.1.99")
+	assert(state.connections == 1 and state.file_reads["/proc/net/arp"] == 1)
+	local ipv6, configs = 0, 0
+	for _, command in ipairs(state.shell_calls) do
+		assert(not command:find("uci ", 1, true))
+		if command:find("ip -6 -o neigh show", 1, true) then ipv6 = ipv6 + 1 end
+	end
+	for _, call in ipairs(state.calls) do if call == "uci get" then configs = configs + 1 end end
+	assert(ipv6 == 1 and configs == 2)
+	assert(#state.shell_calls == 6)
+end)
+
+test("6 GHz clients and backhauls include low channels in both topology paths", function()
+	for _, role in ipairs({"controller", "agent"}) do
+		for _, freq in ipairs({5935, 5955, 6115}) do
+			local state = fixture()
+			state.uci["fakemesh.default.role"] = role
+			state.link = "Connected to " .. ac_mac .. "\nSSID: test-mesh\nfreq: " .. freq .. "\n"
+			state.objects = {"hostapd.phy0-ap0"}
+			state.ubus["hostapd.phy0-ap0"] = {
+				get_status = {ssid = "Test6G", freq = freq},
+				get_clients = {clients = {[client_mac] = {assoc = true, authorized = true}}}
+			}
+			local topology = instantiate(state).methods.get_topology.call()
+			assert(topology.clients[1].band == "6G")
+			assert(topology.summary.wifi_6g == 1 and topology.summary.wifi_2g == 0 and topology.summary.wifi_5g == 0)
+			if role == "agent" then assert(topology.nodes[2].upstream.band == "6G") end
+		end
+	end
+end)
+
+test("offline and unknown uplinks never invent an Ethernet speed", function()
+	local state = fixture()
+	register(state, agent(a_mac, "192.168.1.2"))
+	state.agents["192.168.1.2"] = nil
+	local live = agent(b_mac, "192.168.1.3")
+	live.upstream.port_speed = nil
+	register(state, live)
+	local unknown = agent(c_mac, "192.168.1.4")
+	unknown.upstream = {type = "unknown"}
+	register(state, unknown)
+	local topology = instantiate(state).methods.get_topology.call()
+	local nodes = by_id(topology)
+	assert(nodes.node_020000000002.uplink.type == "unknown")
+	assert(nodes.node_020000000003.uplink.type == "wired" and nodes.node_020000000003.uplink.speed == nil)
+	assert(nodes.node_020000000004.uplink.type == "unknown")
+	assert(topology.summary.wired_nodes == 1 and topology.summary.offline_agents == 1)
+end)
+
+test("foreign, mismatched and malformed node reports only take that node offline", function()
+	local invalid = {
+		function(n) n.mesh_id = "other-mesh" end,
+		function(n) n.mac = b_mac end,
+		function(n) n.role = "controller" end,
+		function(n) n.radios = "invalid" end,
+		function(n) n.clients = {{mac = client_mac, ips = {false}}} end,
+		function(n) n.upstream = {parent_bssid = {}} end,
+		function(n) n.wired_ports = {{mac = false}} end,
+		function(n) n.uptime = "invalid" end
+	}
+	for _, corrupt in ipairs(invalid) do
+		local state = fixture()
+		local bad = agent(a_mac, "192.168.1.2")
+		register(state, bad)
+		corrupt(bad)
+		register(state, agent(c_mac, "192.168.1.4", {}, {wired_client("LAN1")}))
+		local topology = instantiate(state).methods.get_topology.call()
+		local nodes = by_id(topology)
+		assert(nodes.node_020000000002.online == false)
+		assert(nodes.node_020000000004.online and #topology.clients == 1)
 	end
 end)
 
