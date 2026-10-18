@@ -270,10 +270,11 @@ end
 -- 计算字符串 MD5
 function md5_string(str)
 	if type(str) ~= "string" then return "" end
-	local quoted = "'" .. str:gsub("'", "'\\''") .. "'"
-	local out = sys.exec("printf '%s' " .. quoted .. " | md5sum")
-	if not out then return "" end
-	return out:sub(1, 32)
+	local path = trim(sys.exec("mktemp /tmp/md5.XXXXXX") or "")
+	if path == "" then return "" end
+	local md5 = fs.writefile(path, str) == #str and md5_file(path) or ""
+	fs.unlink(path)
+	return md5
 end
 
 --提取URL中的域名和端口(no ip)
