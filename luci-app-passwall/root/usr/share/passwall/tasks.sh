@@ -8,10 +8,7 @@ LOCK_FILE=${LOCK_PATH}/${CONFIG}_tasks.lock
 CFG_UPDATE_INT=0
 
 exec 99>"$LOCK_FILE"
-flock -n 99
-if [ "$?" != 0 ]; then
-	exit 0
-fi
+flock -n 99 || exit 0
 
 while true
 do
@@ -23,7 +20,7 @@ do
 		restart_interval_mode=$(expr "$restart_interval_mode" \* 60)
 		if [ -n "$restart_week_mode" ]; then
 			[ "$restart_week_mode" = "8" ] && {
-				[ "$(expr "$CFG_UPDATE_INT" % "$restart_interval_mode")" -eq 0 ] && { /etc/init.d/$CONFIG restart cron > /dev/null 2>&1 & }
+				[ "$(expr "$CFG_UPDATE_INT" % "$restart_interval_mode")" -eq 0 ] && { /etc/init.d/$CONFIG restart cron > /dev/null 2>&1 99>&- & }
 			}
 		fi
 
@@ -32,7 +29,7 @@ do
 		rules_update_interval_mode=$(expr "$rules_update_interval_mode" \* 60)
 		if [ -n "$rules_update_week_mode" ]; then
 			[ "$rules_update_week_mode" = "8" ] && {
-				[ "$(expr "$CFG_UPDATE_INT" % "$rules_update_interval_mode")" -eq 0 ] && { lua $APP_PATH/rule_update.lua log all cron > /dev/null 2>&1 & }
+				[ "$(expr "$CFG_UPDATE_INT" % "$rules_update_interval_mode")" -eq 0 ] && { lua "$APP_PATH/rule_update.lua" log all cron > /dev/null 2>&1 99>&- & }
 			}
 		fi
 
@@ -53,9 +50,9 @@ do
 				sub_update_week_mode=${name%_*}
 				sub_update_interval_mode=${name#*_}
 				sub_update_interval_mode=$(expr "$sub_update_interval_mode" \* 60)
-				cfgids=$(echo -n $(cat ${TMP_SUB_PATH}/${name}) | sed 's# #,#g')
+				cfgids=$(tr '\n' ',' < "${TMP_SUB_PATH}/${name}" | sed 's/,$//')
 				[ "$sub_update_week_mode" = "8" ] && {
-					[ "$(expr "$CFG_UPDATE_INT" % "$sub_update_interval_mode")" -eq 0 ] && { lua $APP_PATH/subscribe.lua start $cfgids cron > /dev/null 2>&1 & }
+					[ "$(expr "$CFG_UPDATE_INT" % "$sub_update_interval_mode")" -eq 0 ] && { lua "$APP_PATH/subscribe.lua" start "$cfgids" cron > /dev/null 2>&1 99>&- & }
 				}
 			done
 			rm -rf $TMP_SUB_PATH
@@ -65,6 +62,6 @@ do
 
 	CFG_UPDATE_INT=$(expr "$CFG_UPDATE_INT" + 10)
 
-	sleep 600
+	sleep 600 99>&-
 
 done 2>/dev/null
