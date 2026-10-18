@@ -196,10 +196,6 @@ if not is_file_nonzero(file_vpslist) then
 	api.uci_foreach_c("nodes", function(t)
 		process_address(t.address)
 		process_address(t.download_address)
-		local dns, _ = api.get_domain_port_from_url(t.domain_resolver_dns or t.domain_resolver_dns_https or "")
-		if dns and dns ~= "" then
-			process_address(dns)
-		end
 	end)
 	f_out:close()
 end

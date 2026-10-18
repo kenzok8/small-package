@@ -59,7 +59,7 @@ assert.strictEqual(view.formatLastActive(null), '-');
 let modalTitle = null;
 global.ui = {
 	showModal: function(title) {
-		modalTitle = title;
+		modalTitle = Array.isArray(title) ? title.join('') : title;
 		return { parentNode: { addEventListener: function() {} } };
 	},
 	hideModal: function() {}

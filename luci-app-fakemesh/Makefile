@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-fakemesh
 PKG_VERSION:=1.0.3
-PKG_RELEASE:=13
+PKG_RELEASE:=22
 
 PKG_LICENSE:=GPLv3
 PKG_LICENSE_FILES:=LICENSE
@@ -24,7 +24,8 @@ define Package/luci-app-fakemesh
 	SUBMENU:=Configuration Fake Mesh Support
 	TITLE:=LuCI Support for fakemesh
 	PKGARCH:=all
-	DEPENDS:=+jsonfilter +umdns +firewall4 +@BUSYBOX_CONFIG_FLOCK
+	DEPENDS:=+luci-base +lua +luci-lib-jsonc +luci-lib-nixio +libubus-lua \
+		+jsonfilter +umdns +firewall4 +@BUSYBOX_CONFIG_FLOCK
 endef
 
 define Package/luci-app-fakemesh/description

@@ -463,6 +463,111 @@ test("foreign, mismatched and malformed node reports only take that node offline
 	end
 end)
 
+test("standalone agents retain known wired, wireless and unknown backhauls", function()
+	for _, link in ipairs({"wired", "wireless", "unknown"}) do
+		local state = fixture()
+		state.uci["fakemesh.default.role"] = link == "wired" and "wap" or "agent"
+		if link == "wired" then
+			state.route = "default via 192.168.1.1 dev br-lan"
+			state.files["/proc/net/arp"] = "192.168.1.1 0x1 0x2 " .. ac_mac .. " * br-lan\n"
+			state.files["/sys/class/net/lan2/speed"] = "2500"
+			state.fdb = ac_mac .. " dev lan2 master br-lan\n"
+		elseif link == "wireless" then
+			state.link = "Connected to " .. ac_mac .. "\nSSID: test-mesh\nsignal: -51 dBm\nfreq: 5955\nrx bitrate: 1201.0 MBit/s\n"
+		end
+		local topology = instantiate(state).methods.get_topology.call()
+		local controller, node = topology.nodes[1], topology.nodes[2]
+		assert(controller.online == false and controller.uplink.type == "root")
+		assert(node.uplink.type == link and node.upstream.type == link and node.online)
+		assert(node.uplink ~= node.upstream and node.uplink ~= node.backhaul)
+		if link == "wired" then
+			assert(node.uplink.port == "LAN2" and node.uplink.speed == "2500M" and topology.summary.wired_nodes == 1)
+		elseif link == "wireless" then
+			assert(node.uplink.band == "6G" and node.uplink.signal == -51 and node.uplink.rx_bitrate == 1201 and topology.summary.wireless_nodes == 1)
+		else
+			assert(node.uplink.speed == nil and topology.summary.wired_nodes == 0 and topology.summary.wireless_nodes == 0)
+		end
+	end
+end)
+
+test("natflow mesh records need a live node report before becoming clients", function()
+	local state = fixture()
+	register(state, agent(a_mac, "192.168.1.2", {}, {{mac = client_mac, access_type = "wireless", band = "6G", associated = true, authorized = true}}))
+	state.ubus["luci.natflow"] = {get_mac_users = {result = {
+		{mac = client_mac, access_type = "wireless_mesh", ifname = "meshx0", ip = {"192.168.1.99"}, idle_time = 900, rx_speed_bytes = 1024},
+		{mac = b_mac, access_type = "wired", ifname = "lan1", ip = {"192.168.1.98"}},
+		{mac = c_mac, access_type = "vpn", ifname = "wg0", ip = {"10.0.0.2"}}
+	}}}
+	local topology = instantiate(state).methods.get_topology.call()
+	assert(#topology.clients == 3 and topology.summary.wifi_6g == 1)
+	for _, client in ipairs(topology.clients) do
+		if client.mac == client_mac then
+			assert(client.node_id == "node_020000000002" and client.access_type == "wireless" and client.rx_speed == 1024)
+		end
+	end
+	state.agents["192.168.1.2"].clients[1].access_type = "wired"
+	state.agents["192.168.1.2"].clients[1].port = "LAN1"
+	topology = instantiate(state).methods.get_topology.call()
+	assert(#topology.clients == 3 and topology.summary.wired == 2)
+	for _, client in ipairs(topology.clients) do
+		if client.mac == client_mac then assert(client.node_id == "node_020000000002" and client.access_type == "wired") end
+	end
+	-- NAT state can outlive both an association and the node's HTTP report.
+	state.agents["192.168.1.2"].clients = {}
+	for _, offline in ipairs({false, true}) do
+		if offline then state.agents["192.168.1.2"] = nil end
+		topology = instantiate(state).methods.get_topology.call()
+		assert(#topology.clients == 2 and topology.summary.wired == 1 and topology.summary.vpn == 1)
+		for _, client in ipairs(topology.clients) do
+			assert(client.mac ~= client_mac and client.node_id == "ac")
+		end
+	end
+end)
+
+test("node IPs exclude NAT-only aliases before address filtering", function()
+	for _, access_type in ipairs({"wired", "vpn"}) do
+		for _, address_source in ipairs({"natflow", "dhcp", "arp"}) do
+			local state = fixture()
+			local user = {mac = client_mac, access_type = access_type, ifname = access_type == "vpn" and "wg0" or "lan1", ip = {}}
+			if address_source == "natflow" then user.ip = {state.ip, "192.168.1.99"}
+			elseif address_source == "dhcp" then state.files["/tmp/dhcp.leases"] = "0 " .. client_mac .. " " .. state.ip .. " alias *\n"
+			else state.files["/proc/net/arp"] = state.ip .. " 0x1 0x2 " .. client_mac .. " * br-lan\n" end
+			state.ubus["luci.natflow"] = {get_mac_users = {result = {user,
+				{mac = b_mac, access_type = "wired", ip = {"192.168.1.98"}},
+				{mac = c_mac, access_type = "wired", ip = {}, ip6 = {"2001:db8::1"}}
+			}}}
+			local topology = instantiate(state).methods.get_topology.call()
+			assert(#topology.clients == 2 and topology.summary.wired == 2)
+			for _, client in ipairs(topology.clients) do assert(client.mac ~= client_mac) end
+		end
+	end
+	local state = fixture()
+	state.ubus["luci.natflow"] = {get_mac_users = {result = {
+		{mac = "00:00:00:00:00:00", access_type = "vpn", ifname = "wg0", ip = {"10.0.0.1", state.ip}},
+		{mac = ac_mac, access_type = "vpn", ifname = "wg0", ip = {"10.0.0.2"}},
+		{mac = "", access_type = "vpn", ifname = "wg1", ip = {"10.0.0.3"}}
+	}}}
+	local topology = instantiate(state).methods.get_topology.call()
+	assert(#topology.clients == 1 and topology.clients[1].ip == "10.0.0.3" and topology.summary.vpn == 1)
+end)
+
+test("node IP aliases cannot bypass filtering through FDB or node reports", function()
+	for _, reporter in ipairs({"fdb", "agent"}) do
+		local state = fixture()
+		state.ubus["luci.natflow"] = {get_mac_users = {result = {{mac = b_mac, access_type = "wired", ip = {"192.168.1.98"}}}}}
+		if reporter == "fdb" then
+			state.fdb = client_mac .. " dev lan1 master br-lan\n"
+			state.files["/proc/net/arp"] = state.ip .. " 0x1 0x2 " .. client_mac .. " * br-lan\n"
+		else
+			local client = wired_client("LAN1")
+			client.ip = state.ip
+			register(state, agent(a_mac, "192.168.1.2", {}, {client}))
+		end
+		local topology = instantiate(state).methods.get_topology.call()
+		assert(#topology.clients == 1 and topology.clients[1].mac == b_mac and topology.summary.wired == 1)
+	end
+end)
+
 test("request deadline kills and reaps stalled children and closes responses", function()
 	local state = fixture()
 	state.processes = {[1] = {done_at = 1000}, [2] = {done_at = math.huge}}

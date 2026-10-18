@@ -251,6 +251,7 @@ function get_redir_log()
 	local path = api.TMP_PATH .. "/acl/" .. id
 
 	local function alert(msg)
+		http.prepare_content("text/html; charset=utf-8")
 		http.write(string.format("<script>alert('%s');window.close();</script>", i18n.translate(msg)))
 	end
 
@@ -271,9 +272,8 @@ function get_redir_log()
 	end
 
 	if fs.access(path .. "/" .. name .. ".log") then
-		local content = luci.sys.exec("tail -n 5000 ".. path .. "/" .. name .. ".log")
-		content = content:gsub("\n", "<br />")
-		http.write(content)
+		http.prepare_content("text/plain; charset=utf-8")
+		http.write(luci.sys.exec("tail -n 5000 " .. util.shellquote(path)))
 	else
 		alert("Not enabled log")
 	end
@@ -283,10 +283,10 @@ function get_socks_log()
 	local name = http.formvalue("name")
 	local path = api.TMP_PATH .. "/" .. name .. ".log"
 	if fs.access(path) then
-		local content = luci.sys.exec("tail -n 5000 ".. path)
-		content = content:gsub("\n", "<br />")
-		http.write(content)
+		http.prepare_content("text/plain; charset=utf-8")
+		http.write(luci.sys.exec("tail -n 5000 " .. util.shellquote(path)))
 	else
+		http.prepare_content("text/html; charset=utf-8")
 		http.write(string.format("<script>alert('%s');window.close();</script>", i18n.translate("Not enabled log")))
 	end
 end
@@ -306,21 +306,22 @@ function get_chinadns_log()
 		end
 	end
 	if fs.access(path) then
-		local content = luci.sys.exec("tail -n 5000 ".. path)
-		content = content:gsub("\n", "<br />")
-		http.write(content)
+		http.prepare_content("text/plain; charset=utf-8")
+		http.write(luci.sys.exec("tail -n 5000 " .. util.shellquote(path)))
 	else
+		http.prepare_content("text/html; charset=utf-8")
 		http.write(string.format("<script>alert('%s');window.close();</script>", i18n.translate("Not enabled log")))
 	end
 end
 
 function get_smartdns_log()
 	local path = api.TMP_PATH .. "/acl/default/smartdns.log"
-	http.prepare_content("text/plain; charset=utf-8")
 	if fs.access(path) then
+		http.prepare_content("text/plain; charset=utf-8")
 		http.write(luci.sys.exec("tail -n 5000 " .. util.shellquote(path)))
 	else
-		http.write(i18n.translate("Not enabled log"))
+		http.prepare_content("text/html; charset=utf-8")
+		http.write(string.format("<script>alert('%s');window.close();</script>", i18n.translate("Not enabled log")))
 	end
 end
 

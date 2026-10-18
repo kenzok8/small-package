@@ -196,10 +196,9 @@ local sid = "@global[0]"
 			}
 			requestAnimationFrame(waitForDnsSelect);
 		};
-		waitForDnsSelect();
 
 		const initDnsSelect = (dns_select) => {
-			if (dns_select.value === "chinadns-ng") {
+			if (dns_select.value === "chinadns-ng" || dns_select.value === "smartdns") {
 				addLogLink(dns_select);
 			}
 			if (dns_select._dnsLogBinded) return;
@@ -210,7 +209,7 @@ local sid = "@global[0]"
 				if (existingLogLink) {
 					existingLogLink.remove();
 				}
-				if (dns_select.value === "chinadns-ng") {
+				if (dns_select.value === "chinadns-ng" || dns_select.value === "smartdns") {
 					addLogLink(dns_select);
 				}
 			});
@@ -225,9 +224,12 @@ local sid = "@global[0]"
 			logLink.href = "#";
 			logLink.className = "dns-log-link";
 			logLink.style.marginLeft = "10px";
-			logLink.setAttribute("onclick", "window.open('" + '<%=api.url("get_chinadns_log")%>' + "?flag=default', '_blank')");
+			const logUrl = select.value === "smartdns" ? '<%=api.url("get_smartdns_log")%>' : '<%=api.url("get_chinadns_log")%>?flag=default';
+			logLink.setAttribute("onclick", "window.open('" + logUrl + "', '_blank')");
 			select.insertAdjacentElement("afterend", logLink);
 		};
+
+		waitForDnsSelect();
 	})();
 
 	(function () {

@@ -401,10 +401,6 @@ if not is_file_nonzero(file_vpslist) then
 	api.uci_foreach_c("nodes", function(t)
 		process_address(t.address)
 		process_address(t.download_address)
-		local dns, _ = api.get_domain_port_from_url(t.domain_resolver_dns or t.domain_resolver_dns_https or "")
-		if dns and dns ~= "" then
-			process_address(dns)
-		end
 	end)
 	f_out:close()
 end
@@ -418,6 +414,8 @@ if is_file_nonzero(file_vpslist) then
 		"#6:" .. setflag .. "psw_vps6"
 	}
 	local domain_rules_str = string.format('domain-rules /domain-set:%s/ -nameserver direct', domain_set_name) .. DIRECT_RULE_OPTIONS
+	-- 节点域名最多缓存 30 秒，到期后重新查询，避免继续返回过期的节点 IP。
+	domain_rules_str = domain_rules_str .. " -rr-ttl-max 30 -no-serve-expired"
 	domain_rules_str = domain_rules_str .. " " .. set_type .. " " .. table.concat(sets, ",")
 	table.insert(tmp_lines, domain_rules_str)
 	insert_array_after(config_lines, tmp_lines, "#--9")

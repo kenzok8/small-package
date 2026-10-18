@@ -668,6 +668,8 @@ local methods = {
 				my_node.parent_hostname = "X-WRT"
 				my_node.parent_name = (ac_ip and ac_ip ~= "") and ("X-WRT (" .. ac_ip .. ")") or "X-WRT"
 				my_node.hop_count = 1
+				my_node.uplink = clone_table(my_node.upstream or my_node.backhaul) or { type = "unknown" }
+				if my_node.uplink.type == "wired" then my_node.uplink.speed = my_node.uplink.port_speed end
 
 				local ac_stub = {
 					id = "ac",
@@ -680,6 +682,7 @@ local methods = {
 					uptime = 0,
 					hop_count = 0,
 					upstream = { type = "root", online = false },
+					uplink = { type = "root", online = false },
 					downstream = { total_count = 0, wireless_count = 0, wired_count = 0, vpn_count = 0 },
 					radios = {},
 					wired_ports = {}
@@ -1164,8 +1167,11 @@ local methods = {
 						-- Multi-IP aggregation (IPv4)
 						local seen_ips = {}
 						local ip_list = {}
+						local is_mesh_ip = false
 						local function add_ipv4(ip_str)
-							if ip_str and ip_str ~= "" and not ip_str:find(":") and not seen_ips[ip_str] and not mesh_node_ips[ip_str] then
+							if ip_str and mesh_node_ips[ip_str] then
+								is_mesh_ip = true
+							elseif ip_str and ip_str ~= "" and not ip_str:find(":") and not seen_ips[ip_str] then
 								seen_ips[ip_str] = true
 								ip_list[#ip_list + 1] = ip_str
 								if hname == "" and hosts_by_ip[ip_str] then
@@ -1243,16 +1249,17 @@ local methods = {
 
 						best_c.icon = get_device_icon(best_c.hostname, cmac)
 
-						final_clients[#final_clients + 1] = best_c
+						if not is_mesh_ip then final_clients[#final_clients + 1] = best_c end
 					end
 				end
 			end
 
-			-- A natflow Wi-Fi entry can outlive its association. Only the
-			-- authorized hostapd candidates establish a live Wi-Fi client.
+			-- Wi-Fi and mesh NAT entries can outlive their associations or
+			-- node reports. Live client reports establish their presence.
 			-- Other access types can still be recovered from natflow.
 			for cmac, nu in pairs(natflow_users) do
-				if not handled_macs[cmac] and not mesh_node_macs[cmac] and cmac ~= ac_node.mac and nu.access_type ~= "wireless" then
+				if not handled_macs[cmac] and not mesh_node_macs[cmac] and cmac ~= ac_node.mac
+					and nu.access_type ~= "wireless" and nu.access_type ~= "wireless_mesh" then
 					local is_vpn = nu.is_vpn or (nu.access_type == "vpn")
 					local hname = nu.hostname or ""
 					if (hname == "" or hname == "*") and dhcp_hints[cmac] then
@@ -1261,8 +1268,12 @@ local methods = {
 
 					local seen_ips = {}
 					local ip_list = {}
+					local is_mesh_ip = false
 					local function add_ipv4(ip_str)
-						if ip_str and ip_str ~= "" and not ip_str:find(":") and not seen_ips[ip_str] and not mesh_node_ips[ip_str] then
+						if ip_str and mesh_node_ips[ip_str] then
+							-- Remember node ownership before removing its address.
+							is_mesh_ip = true
+						elseif ip_str and ip_str ~= "" and not ip_str:find(":") and not seen_ips[ip_str] then
 							seen_ips[ip_str] = true
 							ip_list[#ip_list + 1] = ip_str
 							if hname == "" and hosts_by_ip[ip_str] then
@@ -1279,11 +1290,7 @@ local methods = {
 						for aip, _ in pairs(arp_ips[cmac]) do add_ipv4(aip) end
 					end
 
-					local is_mesh_ip = false
-					for _, ip_str in ipairs(ip_list) do
-						if mesh_node_ips[ip_str] then is_mesh_ip = true; break end
-					end
-
+					if is_mesh_ip then handled_macs[cmac] = true end
 					if not is_mesh_ip then
 						local seen_ip6 = {}
 						local ip6_list = {}
@@ -1331,7 +1338,11 @@ local methods = {
 				local vip = (vu.ip and vu.ip[1]) or ""
 				local vmac = (vu.mac and vu.mac ~= "" and vu.mac ~= "00:00:00:00:00:00") and vu.mac:upper() or ""
 				local vkey = vmac ~= "" and vmac or ("VPN:" .. (vip ~= "" and vip or (vu.ifname or "client")))
-				if not handled_macs[vkey] and not (vmac ~= "" and handled_macs[vmac]) then
+				local is_mesh_ip = false
+				for _, ip_str in ipairs(vu.ip or {}) do
+					if mesh_node_ips[ip_str] then is_mesh_ip = true; break end
+				end
+				if not mesh_node_macs[vmac] and not is_mesh_ip and not handled_macs[vkey] and not (vmac ~= "" and handled_macs[vmac]) then
 					local dhcp = (vmac ~= "" and dhcp_hints[vmac]) or {}
 					local hname = (dhcp.hostname and dhcp.hostname ~= "") and dhcp.hostname or vu.hostname or ""
 					local ips = {}
