@@ -130,13 +130,25 @@ end
 
 local nodeResult = {} -- update result
 local isDebug = false
+local log_buffer = nil
 
 local log = function(...)
-	if isDebug == true then
+	if log_buffer then
+		local n = select("#", ...)
+		tinsert(log_buffer, n == 1 and (...) or table.concat({...}, " "))
+	elseif isDebug == true then
 		local result = os.date("%Y-%m-%d %H:%M:%S: ") .. table.concat({...}, " ")
 		print(result)
 	else
 		api.log(...)
+	end
+end
+
+local function flush_log_buffer()
+	local buffered = log_buffer
+	log_buffer = nil
+	for _, msg in ipairs(buffered or {}) do
+		log(msg)
 	end
 end
 
@@ -885,6 +897,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			result.method = method
 			result.ss_method = method
 			result.password = password
+			result.uot = params.uot
 			result.tcp_fast_open = params.tfo
 			result.use_finalmask = (params.fm and params.fm ~= "") and "1" or nil
 			result.finalmask = (params.fm and params.fm ~= "") and api.base64Encode(params.fm) or nil
@@ -1039,7 +1052,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 					end
 					local insecure = params.allowinsecure or params.allowInsecure or params.insecure
 					result.tls_allowInsecure = (insecure == "1" or insecure == "0") and insecure or (sub_allowinsecure and "1" or "0")
-					result.uot = params.udp
+					result.uot = params.uot or params.udp
 				else
 					result.error_msg = "请更换 Xray 或 Sing-Box 来支持 SS 更多的传输方式。"
 				end
@@ -1420,7 +1433,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 		for _, v in pairs(split(query[2], '&')) do
 			local s = v:find("=", 1, true)
 			if s and s > 1 then
-				params[v:sub(1, s - 1)] = v:sub(s + 1)
+				params[v:sub(1, s - 1)] = UrlDecode(v:sub(s + 1))
 			end
 		end
 		-- [2001:4860:4860::8888]:443
@@ -1447,6 +1460,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 		result.hysteria_up_mbps = params.upmbps or sub_hy_up_mbps
 		result.hysteria_down_mbps = params.downmbps or sub_hy_down_mbps
 		result.hysteria_hop = params.mport
+		result.tls_CertByName = params.vcn
 
 	elseif szType == 'hysteria2' or szType == 'hy2' then
 		local alias = ""
@@ -1490,6 +1504,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 		result.hysteria2_up_mbps = params.upmbps or (sub_cfg and sub_hy_up_mbps or nil)
 		result.hysteria2_down_mbps = params.downmbps or (sub_cfg and sub_hy_down_mbps or nil)
 		result.hysteria2_hop = params.mport
+		result.hysteria2_hop_interval = params.hopinterval or params["hop-interval"]
 		if params.ech and params.ech ~= "" then
 			result.ech = "1"
 			result.ech_config = params.ech
@@ -1569,6 +1584,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 		end
 		result.tls_serverName = params.sni
 		result.tls_disable_sni = params.disable_sni
+		result.tls_CertByName = params.vcn
 		result.tls_pinSHA256 = params.pcs or params.pinsha256
 		result.tuic_alpn = params.alpn or "h3"
 		result.tuic_congestion_control = params.congestion_control or "cubic"
@@ -1994,10 +2010,29 @@ local function select_node(nodes, config, parentConfig)
 	end
 end
 
+-- 账户信息只在实际变化时写回，由调用方统一提交。
+local function update_subscribe_info()
+	local changed = {}
+	for cfgid, info in pairs(subscribe_info) do
+		for key, value in pairs(info) do
+			value = value and value ~= "" and value or nil
+			if uci_get(cfgid, key) ~= value then
+				if value then
+					uci_set(cfgid, key, value)
+				else
+					uci_del(cfgid, key)
+				end
+				changed[cfgid] = true
+			end
+		end
+	end
+	return changed
+end
+
 local function update_node(manual)
 	if next(nodeResult) == nil then
 		log("没有可用的节点信息更新。")
-		return
+		return false
 	end
 
 	local group = {}
@@ -2087,17 +2122,6 @@ local function update_node(manual)
 			end
 		end
 	end
-	-- 更新机场信息
-	for cfgid, info in pairs(subscribe_info) do
-		for key, value in pairs(info) do
-			if value ~= "" then
-				uci_set(cfgid, key, value)
-			else
-				uci_del(cfgid, key)
-			end
-		end
-	end
-
 	if next(CONFIG) then
 		local nodes = {}
 		uci_foreach("nodes", function(node)
@@ -2119,9 +2143,7 @@ local function update_node(manual)
 		end
 	end
 
-	uci_save(true)
-
-	if manual ~= 1 then restart_required = true end
+	return true
 end
 
 local function parse_link(raw, add_mode, group, sub_cfg)
@@ -2187,7 +2209,8 @@ local function parse_link(raw, add_mode, group, sub_cfg)
 							log('丢弃节点：' .. result.remarks .. " ，原因：" .. result.error_msg)
 						elseif not result.type then
 							log('丢弃节点：' .. result.remarks .. " ，找不到可使用二进制。")
-						elseif (add_mode == "2" and is_filter_keyword(keyword_filter, result.remarks)) or not result.address or result.remarks == "NULL" or result.address == "127.0.0.1" or
+							-- 过滤无效物理网络节点（回环、全零等非网络出站卡片）
+						elseif (add_mode == "2" and is_filter_keyword(keyword_filter, result.remarks)) or not result.address or result.remarks == "NULL" or result.address == "127.0.0.1" or result.address == "0.0.0.0" or
 								(not datatypes.hostname(result.address) and not (api.is_ip(result.address))) then
 							log('丢弃过滤节点：' .. result.type .. ' 节点，' .. result.remarks)
 						else
@@ -2205,17 +2228,21 @@ local function parse_link(raw, add_mode, group, sub_cfg)
 			end
 		end
 		if #node_list > 0 then
-			nodeResult[#nodeResult + 1] = {
-				remark = group,
-				list = node_list,
-				sub_cfg = sub_cfg
-			}
+			if add_mode ~= "2" then
+				nodeResult[#nodeResult + 1] = {
+					remark = group,
+					list = node_list,
+					sub_cfg = sub_cfg
+				}
+			end
 		end
 		log('成功解析【' .. group .. '】节点数量：' .. #node_list)
+		return node_list
 	else
 		if add_mode == "2" then
 			log('获取到的【' .. group .. '】订阅内容为空，可能是订阅地址无效，或是网络问题，请诊断！')
 		end
+		return {}
 	end
 end
 
@@ -2266,15 +2293,32 @@ local execute = function()
 					local stdout = f:read("*all")
 					f:close()
 					local raw_data = api.trim(stdout)
+					raw_data = parseClashNode(raw_data)
+					-- 优先提取标准 Clash 订阅响应头中的账户用量与到期时间（不受节点变化与否影响）
+					if headers and headers ~= "" then
+						subscribe_info[cfgid] = parse_clash_sub_info(headers)
+					end
+					-- 开启日志事务缓冲：前置解析期间日志暂存，未变更时静默丢弃，避免定时任务刷屏
+					log_buffer = {}
+					local parsed_nodes = parse_link(raw_data, "2", remark, value)
 					local old_md5 = value.md5 or ""
-					local new_md5 = api.md5_file(tmp_file)
+					local new_md5 = #parsed_nodes > 0 and api.md5_string(jsonStringify(parsed_nodes)) or ""
+					-- 仅当解析出有效节点且节点集合与上次完全一致时，跳过节点重写与服务重启
 					if not manual_sub and new_md5 ~= "" and old_md5 == new_md5 then
+						log_buffer = nil -- 无物理变动，直接丢弃暂存的丢弃与计数明细
 						log('订阅:【' .. remark .. '】没有变化，无需更新。')
 					else
-						raw_data = parseClashNode(raw_data)
-						subscribe_info[cfgid] = parse_clash_sub_info(headers)
-						parse_link(raw_data, "2", remark, value)
-						uci_set(cfgid, "md5", new_md5)
+						-- 节点发生变动时，回放前置解析期间的节点统计与丢弃日志
+						flush_log_buffer()
+						-- 暂存有效节点及其 MD5，完成节点更新后再一起写入配置。
+						if #parsed_nodes > 0 then
+							nodeResult[#nodeResult + 1] = {
+								remark = remark,
+								list = parsed_nodes,
+								sub_cfg = value,
+								md5 = new_md5
+							}
+						end
 					end
 				else
 					fail_list[#fail_list + 1] = value
@@ -2284,19 +2328,33 @@ local execute = function()
 				end
 			end
 		end
-
 		if #fail_list > 0 then
 			for index, value in ipairs(fail_list) do
 				log(string.format('【%s】订阅失败，可能是订阅地址无效，或是网络问题，请诊断！[%s]', (value.remark or ""), tostring(value.http_code or 0)))
 			end
 		end
-		update_node(0)
+		local nodes_changed = update_node(0)
+		local info_changed = update_subscribe_info()
+		-- 节点、引用关系和 MD5 必须在同一次提交中保存。
+		for _, result in ipairs(nodeResult) do
+			uci_set(result.sub_cfg[".name"], "md5", result.md5)
+		end
+		if nodes_changed or next(info_changed) then
+			uci_save(true)
+			restart_required = nodes_changed
+			for _, value in ipairs(subscribe_list) do
+				if info_changed[value[".name"]] then
+					log(string.format('刷新订阅【%s】账户用量与到期时间信息。', (value.remark or "")))
+				end
+			end
+		end
 	end
 end
 
 if arg[1] == "start" then
 	log('开始订阅...')
 	xpcall(execute, function(e)
+		flush_log_buffer()
 		log(e)
 		if type(debug) == "table" and type(debug.traceback) == "function" then
 			log(debug.traceback())
@@ -2309,7 +2367,7 @@ elseif arg[1] == "add" then
 	local raw = f:read('*all')
 	f:close()
 	parse_link(raw, "1", arg[2])
-	update_node(1)
+	if update_node(1) then uci_save(true) end
 	api.remove("/tmp/links.conf")
 elseif arg[1] == "truncate" then
 	truncate_nodes(arg[2])

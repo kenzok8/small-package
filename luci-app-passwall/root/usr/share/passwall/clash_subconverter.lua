@@ -3,11 +3,85 @@
 -- Copyright(c): lwb1978 2025–2027
 
 local api = require("luci.passwall.api")
-local urlencode = api.UrlEncode
 local base64 = api.base64Encode
 local json = api.jsonc
 
 local domain_redir = {}
+
+local function urlencode(value)
+	return api.UrlEncode(value == nil and "" or tostring(value))
+end
+
+local function add_param(params, key, value)
+	if value ~= nil and value ~= "" then
+		if type(value) == "boolean" then value = value and "1" or "0" end
+		params[#params + 1] = key .. "=" .. urlencode(value)
+	end
+end
+
+local function build_ech(node)
+	local opts = node["ech-opts"]
+	if type(opts) ~= "table" or opts.enable ~= true then return nil end
+	if opts.config and opts.config ~= "" then return opts.config end
+	local name = opts["query-server-name"]
+	if not name or name == "" then name = node.servername or node.sni or node.server end
+	if name == "" then name = node.server end
+	return name .. "+https://223.5.5.5/dns-query"
+end
+
+local function bandwidth_mbps(value)
+	if value == nil then return nil end
+	local number = tonumber(value)
+	if number then return number end
+	local amount, prefix, unit = tostring(value):match("^%s*(%d+)%s*([KMGT]?)([Bb])ps%s*$")
+	local scales = { [""] = 1, K = 1000, M = 1000000, G = 1000000000, T = 1000000000000 }
+	if not amount then return nil end
+	return tonumber(amount) * scales[prefix] * (unit == "B" and 8 or 1) / 1000000
+end
+
+local function inherit(base, overrides)
+	local result = {}
+	for key, value in pairs(base or {}) do result[key] = value end
+	for key, value in pairs(overrides or {}) do result[key] = value end
+	return result
+end
+
+local function build_xhttp_extra(opts)
+	local extra = {}
+	local fields = {
+		headers = "headers", ["x-padding-bytes"] = "xPaddingBytes",
+		["no-grpc-header"] = "noGRPCHeader", ["x-padding-obfs-mode"] = "xPaddingObfsMode",
+		["x-padding-key"] = "xPaddingKey", ["x-padding-header"] = "xPaddingHeader",
+		["x-padding-placement"] = "xPaddingPlacement", ["x-padding-method"] = "xPaddingMethod",
+		["uplink-http-method"] = "uplinkHTTPMethod", ["session-placement"] = "sessionIDPlacement",
+		["session-key"] = "sessionIDKey", ["session-table"] = "sessionIDTable",
+		["session-length"] = "sessionIDLength", ["seq-placement"] = "seqPlacement", ["seq-key"] = "seqKey",
+		["uplink-data-placement"] = "uplinkDataPlacement", ["uplink-data-key"] = "uplinkDataKey",
+		["uplink-chunk-size"] = "uplinkChunkSize", ["sc-max-each-post-bytes"] = "scMaxEachPostBytes",
+		["sc-min-posts-interval-ms"] = "scMinPostsIntervalMs"
+	}
+	for source, target in pairs(fields) do extra[target] = opts[source] end
+	-- jsonc treats empty tables as arrays and repeated table references as null.
+	if type(extra.headers) == "table" then
+		extra.headers = next(extra.headers) and inherit(extra.headers) or nil
+	end
+	local reuse = opts["reuse-settings"]
+	if reuse then
+		local xmux = {}
+		local ranges = {
+			["max-concurrency"] = "maxConcurrency", ["max-connections"] = "maxConnections",
+			["c-max-reuse-times"] = "cMaxReuseTimes", ["h-max-request-times"] = "hMaxRequestTimes",
+			["h-max-reusable-secs"] = "hMaxReusableSecs"
+		}
+		for source, target in pairs(ranges) do
+			local value = reuse[source]
+			if value ~= nil then xmux[target] = tonumber(value) or value end
+		end
+		xmux.hKeepAlivePeriod = tonumber(reuse["h-keep-alive-period"])
+		if next(xmux) then extra.xmux = xmux end
+	end
+	return extra
+end
 
 local function host_format(host)
 	if not host then return "" end
@@ -62,18 +136,12 @@ local function build_common(node)
 	o.tls.sni = node.servername or node.sni
 	o.tls.fp = node["client-fingerprint"]
 	o.tls.pcs = node.fingerprint
+	o.tls.vcn = node["name-cert-verify"]
 	o.tls.insecure = node["skip-cert-verify"] == true
 
 	o.tls.alpn = build_alpn(node.alpn)
 
-	local ech_opts = node["ech-opts"]
-	if ech_opts and ech_opts.enable == true then
-		if ech_opts["query-server-name"] then
-			o.tls.ech = ech_opts["query-server-name"] .. "+https://223.5.5.5/dns-query"
-		elseif ech_opts.config then
-			o.tls.ech = ech_opts.config
-		end
-	end
+	o.tls.ech = build_ech(node)
 
 	-- ===== transport =====
 	o.transport = {}
@@ -89,16 +157,15 @@ local function build_common(node)
 		local opts = node["ws-opts"]
 		if opts then
 			local path = opts.path or "/"
-			local ed = opts["max-early-data"]
-			local eh = opts["early-data-header-name"]
-			if ed then
-				path = path .. "?ed=" .. ed
+			if opts["v2ray-http-upgrade"] ~= true and opts["max-early-data"] then
+				path = path .. (path:find("?", 1, true) and "&ed=" or "?ed=") .. opts["max-early-data"]
 			end
-			if eh then
-				path = path .. (path:find("?", 1, true) and "&eh=" or "?eh=") .. eh
+			if opts["v2ray-http-upgrade"] ~= true and opts["early-data-header-name"] then
+				path = path .. (path:find("?", 1, true) and "&eh=" or "?eh=") .. opts["early-data-header-name"]
 			end
 			o.transport.path = path
 			o.transport.host = opts.headers and opts.headers.Host
+			if opts["v2ray-http-upgrade"] == true then o.transport.type = "httpupgrade" end
 		end
 
 	elseif net == "grpc" then
@@ -108,12 +175,17 @@ local function build_common(node)
 		end
 
 	elseif net == "http" then
+		-- Use TCP + HTTP camouflage so each core selects its matching transport.
+		o.transport.type = "tcp"
+		o.transport.headerType = "http"
+		o.transport.host = node.server
+		o.transport.path = "/"
 		local opts = node["http-opts"]
 		if opts then
 			-- Clash http-opts carries the camouflage Host under headers.Host
 			-- (a list), like ws-opts; opts.host is not standard for http.
-			o.transport.host = get_first(opts.host) or (opts.headers and get_first(opts.headers.Host))
-			o.transport.path = get_first(opts.path)
+			o.transport.host = get_first(opts.host) or (opts.headers and get_first(opts.headers.Host)) or o.transport.host
+			o.transport.path = get_first(opts.path) or o.transport.path
 		end
 
 	elseif net == "h2" then
@@ -130,85 +202,45 @@ local function build_common(node)
 			o.transport.path = opts.path
 			o.transport.mode = opts.mode
 
-			local extra = {}
-
-			-- headers
-			if opts.headers then
-				extra.headers = opts.headers
-			end
-
-			if opts["x-padding-bytes"] then
-				extra.xPaddingBytes = opts["x-padding-bytes"]
-			end
-
-			if opts["no-grpc-header"] ~= nil then
-				extra.noGRPCHeader = opts["no-grpc-header"]
-			end
-
-			if opts["sc-max-each-post-bytes"] then
-				extra.scMaxEachPostBytes = opts["sc-max-each-post-bytes"]
-			end
-
-			if opts["sc-min-posts-interval-ms"] then
-				extra.scMinPostsIntervalMs = opts["sc-min-posts-interval-ms"]
-			end
-
-			-- xmux
-			if opts["reuse-settings"] then
-				local r = opts["reuse-settings"]
-				local xmux = {}
-
-				if r["max-concurrency"] then xmux.maxConcurrency = r["max-concurrency"] end
-				if r["max-connections"] then xmux.maxConnections = tonumber(r["max-connections"]) end
-				if r["c-max-reuse-times"] then xmux.cMaxReuseTimes = tonumber(r["c-max-reuse-times"]) end
-				if r["h-max-request-times"] then xmux.hMaxRequestTimes = r["h-max-request-times"] end
-				if r["h-max-reusable-secs"] then xmux.hMaxReusableSecs = r["h-max-reusable-secs"] end
-				if r["h-keep-alive-period"] then xmux.hKeepAlivePeriod = tonumber(r["h-keep-alive-period"]) end
-
-				if next(xmux) then extra.xmux = xmux end
-			end
+			local extra = build_xhttp_extra(opts)
 
 			-- download-settings
 			if opts["download-settings"] then
 				local d = opts["download-settings"]
-				local ds = {}
-
-				if d.server then ds.address = domain_redir[d.server] or d.server end
-				if d.port then ds.port = d.port end
-
-				ds.network = "xhttp"
-
-				-- TLS
-				if d.tls then
-					ds.security = "tls"
-					ds.tlsSettings = {}
-
-					if d.servername then
-						ds.tlsSettings.serverName = d.servername
-					end
-					if d["skip-cert-verify"] == true then
-						ds.tlsSettings.allowInsecure = true
-					end
-					if d["client-fingerprint"] then
-						ds.tlsSettings.fingerprint = d["client-fingerprint"]
-					end
-					if d.fingerprint then
-						ds.tlsSettings.pinnedPeerCertSha256 = d.fingerprint
-					end
-					if d.alpn then
-						ds.tlsSettings.alpn = d.alpn
+				local effective = inherit(node, d)
+				local ds = {
+					address = domain_redir[effective.server] or effective.server,
+					port = effective.port,
+					network = "xhttp",
+					security = effective.tls and "tls" or "none"
+				}
+				local sni = effective.servername or effective.sni or effective.server
+				local alpn = build_alpn(effective.alpn)
+				if effective.tls or effective["reality-opts"] then
+					ds.tlsSettings = {
+						serverName = sni,
+						allowInsecure = effective["skip-cert-verify"] == true,
+						fingerprint = effective["client-fingerprint"],
+						pinnedPeerCertSha256 = effective.fingerprint and api.sha256_sb_xray(effective.fingerprint) or nil,
+						verifyPeerCertByName = effective["name-cert-verify"],
+						alpn = alpn and api.split(alpn, ",") or nil,
+						echConfigList = build_ech(effective)
+					}
+					local reality = effective["reality-opts"]
+					if reality then
+						ds.security = "reality"
+						ds.realitySettings = {
+							serverName = sni, fingerprint = effective["client-fingerprint"] or "chrome",
+							publicKey = reality["public-key"], shortId = reality["short-id"] or ""
+						}
+						ds.tlsSettings = nil
 					end
 				end
-
-				-- xhttpSettings
-				local xs = {}
-
-				if d.path then xs.path = d.path end
-				if d.host then xs.host = d.host end
-
-				if next(xs) then
-					ds.xhttpSettings = xs
-				end
+				local xs = build_xhttp_extra(inherit(opts, d))
+				xs.path = d.path or opts.path or "/"
+				xs.host = d.host or opts.host or sni
+				xs.mode = opts.mode or "auto"
+				ds.xhttpSettings = xs
 
 				extra.downloadSettings = ds
 			end
@@ -229,27 +261,29 @@ local function encode_vless(node)
 	local link = "vless://" .. node.uuid .. "@" .. o.server .. ":" .. o.port
 	local p = {}
 
-	if type(node.flow) == "string" and node.flow:sub(1, 5) == "xtls-" then table.insert(p, "flow=" .. urlencode(node.flow)) end
-	if node.encryption then table.insert(p, "encryption=" .. urlencode(node.encryption)) end
+	if type(node.flow) == "string" and node.flow:sub(1, 5) == "xtls-" then add_param(p, "flow", node.flow) end
+	add_param(p, "encryption", node.encryption)
 
 	-- TLS
-	if o.tls.security then table.insert(p, "security=" .. o.tls.security) end
-	if o.tls.pbk then table.insert(p, "pbk=" .. urlencode(o.tls.pbk)) end
-	if o.tls.sid then table.insert(p, "sid=" .. urlencode(o.tls.sid)) end
-	if o.tls.sni then table.insert(p, "sni=" .. urlencode(o.tls.sni)) end
-	if o.tls.fp then table.insert(p, "fp=" .. urlencode(o.tls.fp)) end
-	if o.tls.alpn then table.insert(p, "alpn=" .. urlencode(o.tls.alpn)) end
-	if o.tls.ech then table.insert(p, "ech=" .. urlencode(o.tls.ech)) end
-	if o.tls.pcs then table.insert(p, "pcs=" .. urlencode(o.tls.pcs)) end
-	table.insert(p, "allowInsecure=" .. (o.tls.insecure and "1" or "0"))
+	add_param(p, "security", o.tls.security)
+	add_param(p, "pbk", o.tls.pbk)
+	add_param(p, "sid", o.tls.sid)
+	add_param(p, "sni", o.tls.sni)
+	add_param(p, "fp", o.tls.fp)
+	add_param(p, "alpn", o.tls.alpn)
+	add_param(p, "ech", o.tls.ech)
+	add_param(p, "pcs", o.tls.pcs)
+	add_param(p, "vcn", o.tls.vcn)
+	add_param(p, "allowInsecure", o.tls.insecure)
 
 	-- transport
-	table.insert(p, "type=" .. o.transport.type)
-	if o.transport.host then table.insert(p, "host=" .. urlencode(o.transport.host)) end
-	if o.transport.path then table.insert(p, "path=" .. urlencode(o.transport.path)) end
-	if o.transport.serviceName then table.insert(p, "serviceName=" .. urlencode(o.transport.serviceName)) end
-	if o.transport.mode then table.insert(p, "mode=" .. urlencode(o.transport.mode)) end
-	if o.transport.extra then table.insert(p, "extra=" .. urlencode(o.transport.extra)) end
+	add_param(p, "type", o.transport.type)
+	add_param(p, "headerType", o.transport.headerType)
+	add_param(p, "host", o.transport.host)
+	add_param(p, "path", o.transport.path)
+	add_param(p, "serviceName", o.transport.serviceName)
+	add_param(p, "mode", o.transport.mode)
+	add_param(p, "extra", o.transport.extra)
 
 	if #p > 0 then
 		link = link .. "?" .. table.concat(p, "&")
@@ -262,23 +296,24 @@ end
 local function encode_trojan(node)
 	local o = build_common(node)
 
-	local link = "trojan://" .. node.password .. "@" .. o.server .. ":" .. o.port
+	local link = "trojan://" .. urlencode(node.password) .. "@" .. o.server .. ":" .. o.port
 	local p = {}
 
-	if o.tls.security then table.insert(p, "security=" .. o.tls.security) end
-	if o.tls.pbk then table.insert(p, "pbk=" .. urlencode(o.tls.pbk)) end
-	if o.tls.sid then table.insert(p, "sid=" .. urlencode(o.tls.sid)) end
-	if o.tls.sni then table.insert(p, "sni=" .. urlencode(o.tls.sni)) end
-	if o.tls.fp then table.insert(p, "fp=" .. urlencode(o.tls.fp)) end
-	if o.tls.alpn then table.insert(p, "alpn=" .. urlencode(o.tls.alpn)) end
-	if o.tls.ech then table.insert(p, "ech=" .. urlencode(o.tls.ech)) end
-	if o.tls.pcs then table.insert(p, "pcs=" .. urlencode(o.tls.pcs)) end
-	table.insert(p, "allowInsecure=" .. (o.tls.insecure and "1" or "0"))
-
-	table.insert(p, "type=" .. o.transport.type)
-	if o.transport.host then table.insert(p, "host=" .. urlencode(o.transport.host)) end
-	if o.transport.path then table.insert(p, "path=" .. urlencode(o.transport.path)) end
-	if o.transport.serviceName then table.insert(p, "serviceName=" .. urlencode(o.transport.serviceName)) end
+	add_param(p, "security", o.tls.security)
+	add_param(p, "pbk", o.tls.pbk)
+	add_param(p, "sid", o.tls.sid)
+	add_param(p, "sni", o.tls.sni)
+	add_param(p, "fp", o.tls.fp)
+	add_param(p, "alpn", o.tls.alpn)
+	add_param(p, "ech", o.tls.ech)
+	add_param(p, "pcs", o.tls.pcs)
+	add_param(p, "vcn", o.tls.vcn)
+	add_param(p, "allowInsecure", o.tls.insecure)
+	add_param(p, "type", o.transport.type)
+	add_param(p, "headerType", o.transport.headerType)
+	add_param(p, "host", o.transport.host)
+	add_param(p, "path", o.transport.path)
+	add_param(p, "serviceName", o.transport.serviceName)
 
 	if #p > 0 then
 		link = link .. "?" .. table.concat(p, "&")
@@ -301,21 +336,22 @@ local function encode_vmess(node)
 		net = o.transport.type,
 		security = node.cipher,
 		scy = node.cipher,
-		type = "none",
+		type = o.transport.headerType or "none",
 		host = o.transport.host or "",
-		path = o.transport.path or "",
+		path = urlencode(o.transport.path or ""),
 		tls = o.tls.security == "tls" and "tls" or "",
 		sni = o.tls.sni,
 		alpn = o.tls.alpn,
 		fp = o.tls.fp,
 		ech = o.tls.ech,
 		pcs = o.tls.pcs,
+		vcn = o.tls.vcn,
 		insecure = o.tls.insecure and "1" or "0",
 		tfo = node.tfo and "1" or "0"
 	}
 
 	if o.transport.type == "grpc" then
-		obj.path = o.transport.serviceName or ""
+		obj.path = urlencode(o.transport.serviceName or "")
 	end
 
 	return 0, "vmess://" .. base64(json.stringify(obj))
@@ -337,14 +373,14 @@ local function encode_ss(node)
 
 	local p = {}
 
-	if node.udp then table.insert(p, "udp=1") end
-	if node["udp-over-tcp"] then table.insert(p, "uot=1") end
+	if node.udp then add_param(p, "udp", true) end
+	if node["udp-over-tcp"] then add_param(p, "uot", true) end
 
 	if node.plugin then
 		local plugin = (node.plugin == "obfs") and "obfs-local" or node.plugin
 		if plugin == "shadow-tls" then
 			local shadow_tls = base64(json.stringify(node["plugin-opts"] or {}))
-			table.insert(p, "shadow-tls=" .. urlencode(shadow_tls))
+			add_param(p, "shadow-tls", shadow_tls)
 		elseif plugin == "obfs-local" or plugin == "v2ray-plugin" then
 			local opts = {}
 			for k, v in pairs(node["plugin-opts"] or {}) do
@@ -369,7 +405,7 @@ local function encode_ss(node)
 				end
 			end
 			if #opts > 0 then plugin = plugin .. ";" .. table.concat(opts, ";") end
-			table.insert(p, "plugin=" .. urlencode(plugin))
+			add_param(p, "plugin", plugin)
 		else
 			return 1, "订阅转换 → 丢弃 SS 节点：" .. (node.name or "") .. "，因 Core 不支持 " .. plugin .. " 插件"
 		end
@@ -383,22 +419,24 @@ local function encode_ss(node)
 end
 
 -- Hysteria
-local function encode_hysteria2(node)
+local function encode_hysteria(node)
+	if node.protocol and node.protocol ~= "udp" then
+		return 1, "订阅转换 → 丢弃 Hysteria 节点：" .. node.name .. "，当前 Core 不支持 " .. node.protocol .. " 传输"
+	end
 	local link = "hysteria://" .. host_format(node.server) .. ":" .. (node.port or "")
 	local p = {}
 
-	if node["auth-str"] then table.insert(p, "auth=" .. node["auth-str"]) end
-	if node["ports"] then table.insert(p, "mport=" .. node["ports"]) end
-	if node.obfs then table.insert(p, "obfsParam=" .. node.obfs) end
-	if node.sni then table.insert(p, "sni=" .. node.sni) end
-	if node.up then table.insert(p, "upmbps=" .. node.up) end
-	if node.down then table.insert(p, "downmbps=" .. node.down) end
-	if node["skip-cert-verify"] then table.insert(p, "insecure=1") end
-	if node["fingerprint"] then table.insert(p, "pinSHA256=" .. urlencode(node["fingerprint"])) end
+	add_param(p, "auth", node["auth-str"])
+	add_param(p, "mport", node.ports)
+	add_param(p, "obfsParam", node.obfs)
+	add_param(p, "sni", node.sni)
+	add_param(p, "upmbps", bandwidth_mbps(node.up))
+	add_param(p, "downmbps", bandwidth_mbps(node.down))
+	add_param(p, "insecure", node["skip-cert-verify"] == true)
+	add_param(p, "vcn", node["name-cert-verify"])
+	add_param(p, "pinSHA256", node.fingerprint)
 
-	if node.alpn then
-		table.insert(p, "alpn=" .. urlencode(build_alpn(node.alpn)))
-	end
+	add_param(p, "alpn", build_alpn(node.alpn))
 
 	if #p > 0 then
 		link = link .. "?" .. table.concat(p, "&")
@@ -409,20 +447,24 @@ end
 
 -- Hysteria2
 local function encode_hysteria2(node)
-	local link = "hysteria2://" .. (node.password or "") .. "@" .. host_format(node.server) .. ":" .. (node.port or "")
+	-- Hopping subscriptions may omit port; keep a valid fallback for all cores.
+	local port = node.port or tostring(node.ports or ""):match("^%s*(%d+)")
+	local link = "hysteria2://" .. urlencode(node.password or "") .. "@" .. host_format(node.server) .. ":" .. port
 	local p = {}
 
-	if node["ports"] then table.insert(p, "mport=" .. urlencode(node["ports"])) end
-	if node.obfs then table.insert(p, "obfs=" .. node.obfs) end
-	if node["obfs-password"] then table.insert(p, "obfs-password=" .. node["obfs-password"]) end
-	if node["obfs-min-packet-size"] then table.insert(p, "minPacketSize=" .. node["obfs-min-packet-size"]) end
-	if node["obfs-max-packet-size"] then table.insert(p, "maxPacketSize=" .. node["obfs-max-packet-size"]) end
-	if node.up then table.insert(p, "upmbps=" .. node.up) end
-	if node.down then table.insert(p, "downmbps=" .. node.down) end
-
-	if node.sni then table.insert(p, "sni=" .. urlencode(node.sni)) end
-	if node["skip-cert-verify"] then table.insert(p, "insecure=1") end
-	if node["fingerprint"] then table.insert(p, "pinSHA256=" .. urlencode(node["fingerprint"])) end
+	add_param(p, "mport", node.ports)
+	add_param(p, "hopInterval", node["hop-interval"])
+	add_param(p, "obfs", node.obfs)
+	add_param(p, "obfs-password", node["obfs-password"])
+	add_param(p, "minPacketSize", node["obfs-min-packet-size"])
+	add_param(p, "maxPacketSize", node["obfs-max-packet-size"])
+	add_param(p, "upmbps", bandwidth_mbps(node.up))
+	add_param(p, "downmbps", bandwidth_mbps(node.down))
+	add_param(p, "ech", build_ech(node))
+	add_param(p, "vcn", node["name-cert-verify"])
+	add_param(p, "sni", node.sni)
+	add_param(p, "insecure", node["skip-cert-verify"] == true)
+	add_param(p, "pinSHA256", node.fingerprint)
 
 	if #p > 0 then
 		link = link .. "?" .. table.concat(p, "&")
@@ -433,22 +475,23 @@ end
 
 -- TUIC
 local function encode_tuic(node)
-	local link = "tuic://" .. node.uuid .. ":" .. node.password .. "@" .. host_format(node.server) .. ":" .. node.port
+	if node.token then
+		return 1, "订阅转换 → 丢弃 TUIC 节点：" .. node.name .. "，当前 Core 不支持 TUIC v4"
+	end
+	if not node.uuid or node.password == nil then
+		return 1, "订阅转换 → 丢弃 TUIC 节点：" .. node.name .. "，认证信息不完整。"
+	end
+	local link = "tuic://" .. urlencode(node.uuid) .. ":" .. urlencode(node.password) .. "@" .. host_format(node.server) .. ":" .. node.port
 	local p = {}
 
-	if node["congestion-controller"] then
-		table.insert(p, "congestion_control=" .. node["congestion-controller"])
-	end
-
-	if node.alpn then
-		table.insert(p, "alpn=" .. urlencode(build_alpn(node.alpn)))
-	end
-
-	if node.sni then table.insert(p, "sni=" .. urlencode(node.sni)) end
-	if node["disable-sni"] then table.insert(p, "disable_sni=1") end
-	if node["skip-cert-verify"] then table.insert(p, "allowInsecure=1") end
-	if node["udp-relay-mode"] then table.insert(p, "udp_relay_mode=" .. node["udp-relay-mode"]) end
-	if node["fingerprint"] then table.insert(p, "pcs=" .. urlencode(node["fingerprint"])) end
+	add_param(p, "congestion_control", node["congestion-controller"])
+	add_param(p, "alpn", build_alpn(node.alpn))
+	add_param(p, "sni", node.sni)
+	if node["disable-sni"] then add_param(p, "disable_sni", true) end
+	add_param(p, "allowInsecure", node["skip-cert-verify"] == true)
+	add_param(p, "udp_relay_mode", node["udp-relay-mode"])
+	add_param(p, "pcs", node.fingerprint)
+	add_param(p, "vcn", node["name-cert-verify"])
 
 	if #p > 0 then
 		link = link .. "?" .. table.concat(p, "&")
@@ -474,18 +517,18 @@ local function encode_anytls(node)
 
 	local o = build_common(node)
 
-	local link = "anytls://" .. (node.password or "") .. "@" .. host_format(node.server) .. ":" .. node.port
+	local link = "anytls://" .. urlencode(node.password or "") .. "@" .. host_format(node.server) .. ":" .. node.port
 	local p = {}
 
-	if o.tls.security then table.insert(p, "security=" .. o.tls.security) end
-	if o.tls.pbk then table.insert(p, "pbk=" .. urlencode(o.tls.pbk)) end
-	if o.tls.sid then table.insert(p, "sid=" .. urlencode(o.tls.sid)) end
-	if o.tls.sni then table.insert(p, "sni=" .. urlencode(o.tls.sni)) end
-	if o.tls.alpn then table.insert(p, "alpn=" .. urlencode(o.tls.alpn)) end
-	if o.tls.fp then table.insert(p, "fp=" .. urlencode(o.tls.fp)) end
-	if o.tls.ech then table.insert(p, "ech=" .. urlencode(o.tls.ech)) end
-	if o.tls.pcs then table.insert(p, "pcs=" .. urlencode(o.tls.pcs)) end
-	table.insert(p, "insecure=" .. (o.tls.insecure and "1" or "0"))
+	add_param(p, "security", o.tls.security)
+	add_param(p, "pbk", o.tls.pbk)
+	add_param(p, "sid", o.tls.sid)
+	add_param(p, "sni", o.tls.sni)
+	add_param(p, "alpn", o.tls.alpn)
+	add_param(p, "fp", o.tls.fp)
+	add_param(p, "ech", o.tls.ech)
+	add_param(p, "pcs", o.tls.pcs)
+	add_param(p, "insecure", o.tls.insecure)
 
 	if #p > 0 then
 		link = link .. "?" .. table.concat(p, "&")
@@ -514,8 +557,8 @@ end
 -- snell
 local function encode_snell(node)
 	local err_msg
-	local obfs = node["obfs-opts"]
-	if obfs and obfs.mode ~= "http" and obfs.mode ~= "none" then
+	local obfs = node["obfs-opts"] or {}
+	if obfs.mode and obfs.mode ~= "http" and obfs.mode ~= "none" then
 		err_msg = obfs.mode
 	end
 	if err_msg then
@@ -532,13 +575,13 @@ local function encode_snell(node)
 	local link = "snell://" .. host_format(node.server) .. ":" .. node.port
 	local p = {}
 
-	if node.psk then table.insert(p, "psk=" .. urlencode(node.psk)) end
-	table.insert(p, "version=" .. version)
+	add_param(p, "psk", node.psk)
+	add_param(p, "version", version)
 	if obfs.mode == "http" then
-		table.insert(p, "obfs=http")
-		if obfs.host then table.insert(p, "obfs-host=" .. urlencode(obfs.host)) end
+		add_param(p, "obfs", "http")
+		add_param(p, "obfs-host", obfs.host)
 	end
-	table.insert(p, "reuse=" .. (node.reuse and "1" or "0"))
+	add_param(p, "reuse", node.reuse and "1" or "0")
 
 	if #p > 0 then
 		link = link .. "?" .. table.concat(p, "&")
@@ -548,9 +591,22 @@ local function encode_snell(node)
 end
 
 local function encode_node(node)
-	if (not node.type) or (not node.name) then return nil end
+	if type(node) ~= "table" or not node.type or not node.name then
+		return 1, "订阅转换 → 跳过格式不完整的节点。"
+	end
+	if not node.server or node.server == "" or not (node.port or (node.type == "hysteria2" and node.ports)) then
+		return 1, "订阅转换 → 丢弃节点：" .. tostring(node.name) .. "，节点信息不完整。"
+	end
+	node = inherit(node)
 
 	local t = node.type
+	if t == "hysteria" or t == "hysteria2" then
+		local up, down = bandwidth_mbps(node.up), bandwidth_mbps(node.down)
+		if (node.up ~= nil and up == nil) or (node.down ~= nil and down == nil) then
+			return 1, "订阅转换 → 丢弃节点：" .. tostring(node.name) .. "，带宽格式不正确。"
+		end
+		node.up, node.down = up, down
+	end
 
 	node.server = domain_redir[node.server] or node.server
 
@@ -570,17 +626,22 @@ end
 
 function parseClashNode(raw, remark)
 	if not raw then return "" end 
+	domain_redir = {}
 	local ok, lyaml = pcall(require, "lyaml")
 	if not ok then return raw end
 
-	local data = lyaml.load(raw)
+	local parsed, data = pcall(lyaml.load, raw)
+	if not parsed then
+		api.log('订阅转换 → YAML 解析失败：' .. tostring(remark or ""))
+		return ""
+	end
 	if not data or type(data) ~= "table" then return raw end
-	if not data.proxies then return "" end
+	if type(data.proxies) ~= "table" then return "" end
 
 	api.log('检测到 Clash 订阅，正在进行转换 ...')
 
 	-- Some airports use hosts domain redirect to disguise the real node domain name.
-	for k, v in pairs(data.hosts or {}) do
+	for k, v in pairs(type(data.hosts) == "table" and data.hosts or {}) do
 		if type(k) == "string" and type(v) == "string" then
 			if api.datatypes.hostname(k) and api.datatypes.hostname(v) then
 				domain_redir[k] = v
@@ -590,8 +651,11 @@ function parseClashNode(raw, remark)
 
 	local links = {}
 	for _, node in ipairs(data.proxies) do
-		local err, link = encode_node(node)
-		if err == 1 and link then
+		local converted, err, link = pcall(encode_node, node)
+		if not converted then
+			local name = type(node) == "table" and node.name or ""
+			api.log('订阅转换 → 丢弃节点：' .. tostring(name or "") .. '，转换失败，已跳过。')
+		elseif err == 1 and link then
 			api.log(link)
 		elseif link then
 			table.insert(links, link)
