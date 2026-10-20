@@ -288,6 +288,25 @@ function UrlDecode(szText)
 	end) or nil
 end
 
+-- Calculate the MD5 hash of a file.
+function md5_file(path)
+	if type(path) ~= "string" then return "" end
+	local quoted = "'" .. path:gsub("'", "'\\''") .. "'"
+	local out = sys.exec("md5sum " .. quoted)
+	if not out then return "" end
+	return out:sub(1, 32)
+end
+
+-- Calculate the MD5 hash of a string.
+function md5_string(str)
+	if type(str) ~= "string" then return "" end
+	local path = trim(sys.exec("mktemp /tmp/md5.XXXXXX") or "")
+	if path == "" then return "" end
+	local md5 = fs.writefile(path, str) == #str and md5_file(path) or ""
+	fs.unlink(path)
+	return md5
+end
+
 -- Extract the domain name and port from the URL (no IP address).
 function get_domain_port_from_url(url)
 	local scheme, domain, port = string.match(url, "^(https?)://([%w%.%-]+):?(%d*)")

@@ -2450,6 +2450,9 @@ msgstr "شروع اشتراک‌گیری: %s"
 msgid "Subscription: [%s] No changes, no update required."
 msgstr "اشتراک: [%s] بدون تغییر، نیازی به به‌روزرسانی نیست."
 
+msgid "Refresh subscription [%s] account usage and expiration information."
+msgstr "به‌روزرسانی اطلاعات میزان مصرف حساب و زمان انقضای اشتراک [%s]."
+
 msgid "[%s] Subscription failed. This could be due to an invalid subscription address or a network issue. Please diagnose the problem! [%s]"
 msgstr "[%s] اشتراک ناموفق بود. این می‌تواند به دلیل آدرس اشتراک نامعتبر یا مشکل شبکه باشد. لطفاً مشکل را بررسی کنید! [%s]"
 

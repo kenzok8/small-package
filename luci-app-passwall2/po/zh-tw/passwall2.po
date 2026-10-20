@@ -2442,6 +2442,9 @@ msgstr "開始訂閱：%s"
 msgid "Subscription: [%s] No changes, no update required."
 msgstr "訂閱:【%s】沒有變化，無需更新。"
 
+msgid "Refresh subscription [%s] account usage and expiration information."
+msgstr "重新整理訂閱【%s】帳戶用量與到期時間資訊。"
+
 msgid "[%s] Subscription failed. This could be due to an invalid subscription address or a network issue. Please diagnose the problem! [%s]"
 msgstr "【%s】訂閱失敗，可能是訂閱地址無效，或是網絡問題，請診斷！[%s]"
 

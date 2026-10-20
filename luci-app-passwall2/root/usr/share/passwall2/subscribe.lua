@@ -15,7 +15,22 @@ local base64Decode = api.base64Decode
 local jsonParse, jsonStringify = api.jsonc.parse, api.jsonc.stringify
 local UrlEncode, UrlDecode = api.UrlEncode, api.UrlDecode
 local fs = api.fs
-local log = api.log
+local log_buffer
+local function log(...)
+	if log_buffer then
+		table.insert(log_buffer, {...})
+	else
+		api.log(...)
+	end
+end
+
+local function flush_log_buffer()
+	local buffered = log_buffer
+	log_buffer = nil
+	for _, args in ipairs(buffered or {}) do
+		log(unpack(args))
+	end
+end
 local i18n = api.i18n
 local uci, uci_get, uci_set, uci_del, uci_foreach, uci_save = api.uci, api.uci_get_c, api.uci_set_c, api.uci_del_c, api.uci_foreach_c, api.uci_save_c
 
@@ -2389,10 +2404,29 @@ local function select_node(nodes, config, parentConfig)
 	end
 end
 
+-- Write account information only when it changes; commit together with node updates.
+local function update_subscribe_info()
+	local changed = {}
+	for cfgid, info in pairs(subscribe_info) do
+		for key, value in pairs(info) do
+			value = value and value ~= "" and value or nil
+			if uci_get(cfgid, key) ~= value then
+				if value then
+					uci_set(cfgid, key, value)
+				else
+					uci_del(cfgid, key)
+				end
+				changed[cfgid] = true
+			end
+		end
+	end
+	return changed
+end
+
 local function update_node(manual)
 	if next(nodeResult) == nil then
 		log(1, i18n.translatef("No node information updates are available."))
-		return
+		return false
 	end
 
 	local group = {}
@@ -2479,17 +2513,6 @@ local function update_node(manual)
 			end
 		end
 	end
-	-- Update subscription information
-	for cfgid, info in pairs(subscribe_info) do
-		for key, value in pairs(info) do
-			if value ~= "" then
-				uci_set(cfgid, key, value)
-			else
-				uci_del(cfgid, key)
-			end
-		end
-	end
-
 	if next(CONFIG) then
 		local nodes = {}
 		uci_foreach("nodes", function(node)
@@ -2514,9 +2537,7 @@ local function update_node(manual)
 		end
 	end
 
-	uci_save(true)
-
-	if manual ~= 1 then restart_required = true end
+	return true
 end
 
 local function parse_link(raw, add_mode, group, sub_cfg)
@@ -2619,7 +2640,7 @@ local function parse_link(raw, add_mode, group, sub_cfg)
 			)
 			end
 		end
-		if #node_list > 0 then
+		if add_mode ~= "2" and #node_list > 0 then
 			nodeResult[#nodeResult + 1] = {
 				remark = group,
 				list = node_list,
@@ -2627,10 +2648,12 @@ local function parse_link(raw, add_mode, group, sub_cfg)
 			}
 		end
 		log(2, i18n.translatef("Successfully resolved the [%s] node, number: %s", group, #node_list))
+		return node_list
 	else
 		if add_mode == "2" then
 			log(2, i18n.translatef("Get subscription content for [%s] is empty. This may be due to an invalid subscription address or a network problem. Please diagnose the issue!", group))
 		end
+		return {}
 	end
 end
 
@@ -2680,13 +2703,24 @@ local execute = function()
 					local stdout = f:read("*all")
 					f:close()
 					local raw_data = api.trim(stdout)
+					-- Buffer parsing details until the parsed nodes are known to have changed.
+					log_buffer = {}
+					local parsed_nodes = parse_link(raw_data, "2", remark, value)
 					local old_md5 = value.md5 or ""
-					local new_md5 = luci.sys.exec("md5sum " .. tmp_file .. " 2>/dev/null | awk '{printf \"%s\", $1}'")
-					if not manual_sub and old_md5 == new_md5 then
+					local new_md5 = #parsed_nodes > 0 and api.md5_string(jsonStringify(parsed_nodes)) or ""
+					if not manual_sub and new_md5 ~= "" and old_md5 == new_md5 then
+						log_buffer = nil
 						log(1, i18n.translatef("Subscription: [%s] No changes, no update required.", remark))
 					else
-						parse_link(raw_data, "2", remark, value)
-						uci_set(cfgid, "md5", new_md5)
+						flush_log_buffer()
+						if #parsed_nodes > 0 then
+							nodeResult[#nodeResult + 1] = {
+								remark = remark,
+								list = parsed_nodes,
+								sub_cfg = value,
+								md5 = new_md5
+							}
+						end
 					end
 				else
 					fail_list[#fail_list + 1] = value
@@ -2704,13 +2738,28 @@ local execute = function()
 				log(1, i18n.translatef("[%s] Subscription failed. This could be due to an invalid subscription address or a network issue. Please diagnose the problem! [%s]", value.remark, tostring(value.http_code)))
 			end
 		end
-		update_node(0)
+		local nodes_changed = update_node(0)
+		local info_changed = update_subscribe_info()
+		-- Save nodes, references and their MD5 in the same commit.
+		for _, result in ipairs(nodeResult) do
+			uci_set(result.sub_cfg[".name"], "md5", result.md5)
+		end
+		if nodes_changed or next(info_changed) then
+			uci_save(true)
+			restart_required = nodes_changed
+			for _, value in ipairs(subscribe_list) do
+				if info_changed[value[".name"]] then
+					log(1, i18n.translatef("Refresh subscription [%s] account usage and expiration information.", value.remark or ""))
+				end
+			end
+		end
 	end
 end
 
 if arg[1] == "start" then
 	log(0, i18n.translate("Start subscribing..."))
 	xpcall(execute, function(e)
+		flush_log_buffer()
 		log(1, e)
 		if type(debug) == "table" and type(debug.traceback) == "function" then
 			log(1, debug.traceback())
@@ -2723,7 +2772,7 @@ elseif arg[1] == "add" then
 	local raw = f:read('*all')
 	f:close()
 	parse_link(raw, "1", arg[2])
-	update_node(1)
+	if update_node(1) then uci_save(true) end
 	luci.sys.call("rm -f /tmp/links.conf")
 elseif arg[1] == "truncate" then
 	truncate_nodes(arg[2])

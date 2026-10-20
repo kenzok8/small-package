@@ -2451,6 +2451,9 @@ msgstr "Начало подписки: %s"
 msgid "Subscription: [%s] No changes, no update required."
 msgstr "Подписка: [%s] изменений нет, обновление не требуется."
 
+msgid "Refresh subscription [%s] account usage and expiration information."
+msgstr "Обновление информации об использовании трафика и сроке действия учётной записи подписки [%s]."
+
 msgid "[%s] Subscription failed. This could be due to an invalid subscription address or a network issue. Please diagnose the problem! [%s]"
 msgstr "[%s] Ошибка подписки. Возможно, адрес подписки неверен или есть проблема с сетью. Пожалуйста, проведите диагностику! [%s]"
 
