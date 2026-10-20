@@ -50,6 +50,11 @@ cat "$PKG_BUILD_DIR"/base64
 tail -n +$(( $p +1 )) "$PKG_BUILD_DIR"/htdocs/luci-static/resources/fchomo.js
 } > "$PKG_BUILD_DIR"/htdocs/luci-static/resources/fchomo.js.new
 mv -f "$PKG_BUILD_DIR"/htdocs/luci-static/resources/fchomo.js.new "$PKG_BUILD_DIR"/htdocs/luci-static/resources/fchomo.js
+# md5
+pushd "$PKG_BUILD_DIR"/htdocs/luci-static/resources/fchomo/
+cp "$(readlink -f md5.js)" md5.js.new
+rm -f md5.js && mv -f md5.js.new md5.js && rm -rf js-md5
+popd
 
 if [ -d "$CURDIR/.git" ]; then
 	config="$CURDIR/.git/config"
