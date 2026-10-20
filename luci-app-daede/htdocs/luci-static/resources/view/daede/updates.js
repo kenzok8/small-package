@@ -122,7 +122,7 @@ function probeFile(path) {
 
 function probePkg(pkg) {
 	return fs.exec('/usr/share/luci-app-daede/pkg-info.sh', [pkg]).then(function(res) {
-		const out = (res.stdout || '').trim().split('\t');
+		const out = (res.stdout || '').replace(/[\r\n]+$/, '').split('\t');
 		return { installed: out[0] || '', latest: out[1] || '' };
 	}).catch(function() {
 		return { installed: '', latest: '' };
