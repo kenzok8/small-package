@@ -35,6 +35,8 @@ const HEALTH_PATHS = {
 	btfDetached: '/usr/lib/debug/boot/vmlinux',
 	netns: '/run/netns/daens'
 };
+const INDEX_STATUS_PATH = '/tmp/luci-app-daede.idx.status';
+let indexStartFailed = false;
 
 const CSS = [
 	'.dd-up-wrap{padding:6px 0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",sans-serif}',
@@ -122,10 +124,19 @@ function probeFile(path) {
 
 function probePkg(pkg) {
 	return fs.exec('/usr/share/luci-app-daede/pkg-info.sh', [pkg]).then(function(res) {
+		if (res.code !== 0) throw new Error('package probe failed');
 		const out = (res.stdout || '').replace(/[\r\n]+$/, '').split('\t');
-		return { installed: out[0] || '', latest: out[1] || '' };
+		return { installed: out[0] || '', latest: out[1] || '', state: out[2] || 'absent' };
 	}).catch(function() {
-		return { installed: '', latest: '' };
+		return { installed: '', latest: '', state: 'error' };
+	});
+}
+
+function probeIndex() {
+	if (indexStartFailed) return Promise.resolve('failed');
+	return L.resolveDefault(fs.read_direct(INDEX_STATUS_PATH, 'text'), '').then(function(out) {
+		const state = String(out).trim();
+		return state === 'success' || state === 'failed' ? state : 'running';
 	});
 }
 
@@ -137,14 +148,16 @@ function stamp() {
 
 return view.extend({
 	load: function() {
-		// background apk update so new versions show on next poll
-		fs.exec('/usr/share/luci-app-daede/refresh-index.sh', []).catch(function() {});
+		// The script starts a background refresh and returns after writing its state.
 		return Promise.all([
+			fs.exec('/usr/share/luci-app-daede/refresh-index.sh', []).then(function(res) {
+				indexStartFailed = res.code !== 0;
+			}).catch(function() { indexStartFailed = true; }),
 			backend.detectBackend(),
 			uci.load('daed').catch(function() {}),
 			uci.load('daede').catch(function() {})
 		]).then(function(r) {
-			return r[0];
+			return r[1];
 		});
 	},
 
@@ -342,6 +355,7 @@ return view.extend({
 				probes.push(probePkg(pkg));
 			});
 			probes.push(probePkg('luci-app-daede'));
+			probes.push(probeIndex());
 
 			if (ctx.backend.useNetns)
 				probes.push(probeFile(HEALTH_PATHS.netns));
@@ -354,7 +368,8 @@ return view.extend({
 					coreInfo[pkg] = r[pkgOffset + i];
 				});
 				const luci = r[pkgOffset + corePkgs.length];
-				const ns = r[pkgOffset + corePkgs.length + 1];
+				const indexState = r[pkgOffset + corePkgs.length + 1];
+				const ns = r[pkgOffset + corePkgs.length + 2];
 
 				// data rows
 				while (dataBody.firstChild) dataBody.removeChild(dataBody.firstChild);
@@ -391,26 +406,36 @@ return view.extend({
 					// a stale compile-jell build) must never be offered as an upgrade.
 					const cmp = (entry.r.installed && entry.r.latest)
 						? cmpVer(entry.r.latest, entry.r.installed) : null;
-					const updatable = cmp !== null && cmp > 0;
+					const updatable = indexState === 'success' && cmp !== null && cmp > 0;
 					let meta;
 					if (!entry.r.installed) {
-						meta = _('not installed via package manager');
+						meta = entry.r.state === 'manual' ? _('not installed via package manager')
+							: entry.r.state === 'foreign' ? _('unsupported package version')
+							: entry.r.state === 'error' ? _('package status unavailable') : _('Not installed');
 						btn.disabled = true;
 						btn.textContent = _('Unavailable');
+					} else if (indexState === 'failed') {
+						meta = _('installed') + ': ' + entry.r.installed + ' · ' + _('package index refresh failed');
+						btn.disabled = true;
+					} else if (indexState !== 'success') {
+						meta = _('installed') + ': ' + entry.r.installed + ' · ' + _('refreshing package indexes');
+						btn.disabled = true;
 					} else if (!entry.r.latest) {
-						// latest unknown (registry unreachable) - nothing to upgrade to
-						meta = _('installed') + ': ' + entry.r.installed + ' · ' + _('latest version unknown');
+						meta = _('installed') + ': ' + entry.r.installed + ' · ' + _('package not found in configured feeds');
 						btn.disabled = true;
 					} else if (updatable) {
 						meta = _('installed') + ': ' + entry.r.installed + ' → ' + _('latest') + ': ' + entry.r.latest;
+					} else if (cmp < 0) {
+						meta = _('installed') + ': ' + entry.r.installed + ' · ' + _('feed version older: %s').format(entry.r.latest);
+						btn.disabled = true;
 					} else {
-						// installed >= feed: already up to date (feed may even be older)
 						meta = _('installed') + ': ' + entry.r.installed + ' · ' + _('up to date');
 						btn.disabled = true;
 					}
+					const uncertain = entry.r.installed && (indexState !== 'success' || !entry.r.latest || cmp < 0);
 					pkgBody.appendChild(mkRow(
-						updatable ? '↑' : (entry.r.installed ? '✓' : '✗'),
-						updatable ? 'dd-up-new' : (entry.r.installed ? 'dd-up-ok' : 'dd-up-err'),
+						updatable ? '↑' : (uncertain ? '⚠' : (entry.r.installed ? '✓' : '✗')),
+						updatable ? 'dd-up-new' : (uncertain ? 'dd-up-warn' : (entry.r.installed ? 'dd-up-ok' : 'dd-up-err')),
 						entry.name,
 						meta,
 						btn

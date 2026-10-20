@@ -314,6 +314,24 @@ msgstr "已是最新"
 msgid "not installed via package manager"
 msgstr "非包管理器安装"
 
+msgid "unsupported package version"
+msgstr "已安装其他版本，无法在此升级"
+
+msgid "package status unavailable"
+msgstr "软件包状态读取失败"
+
+msgid "package index refresh failed"
+msgstr "软件源刷新失败，请检查网络和软件源"
+
+msgid "refreshing package indexes"
+msgstr "正在刷新软件源"
+
+msgid "package not found in configured feeds"
+msgstr "当前软件源中没有此包"
+
+msgid "feed version older: %s"
+msgstr "软件源版本较旧：%s"
+
 msgid "Unavailable"
 msgstr "不可用"
 

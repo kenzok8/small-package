@@ -3,17 +3,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=honk
-PKG_VERSION:=2026.10.15_pre1
+PKG_VERSION:=2026.10.21.1_pre1
 PKG_RELEASE:=1
 
 # Raw upstream release tag. It keeps the dots in qualifiers (e.g. v0.0.1.beta.49)
 # because that is what the GitHub release asset name uses.
-HONK_RELEASE_TAG:=debug.2026.10.15.native-api.1
+HONK_RELEASE_TAG:=debug.2026.10.21.1
 HONK_ASSET_TAG:=debug
 
 # SHA256 of each release tarball, kept in sync by scripts/update_honk_version.sh.
-HONK_HASH_X86_64:=b492c22fbf9347b741fe8904fbe1c6fb128e1f7b391b60f3925cec4cf14b5085
-HONK_HASH_AARCH64:=ce25b0df9bfeb371a5340392df91606a8da6d209f1779d59dd1bd5abafe2c8a4
+HONK_HASH_X86_64:=0714b035fb39efcdd9ab5f8b759ccd647847b3fe293ed51b4fafe11603834e3d
+HONK_HASH_AARCH64:=d63a51bf922899ababf5bbddc9913a4a7a6df17fbbeb021a127b85bc740e0568
 
 PKG_LICENSE:=AGPL-3.0-only
 PKG_LICENSE_FILE:=LICENSE
@@ -33,7 +33,7 @@ HONK_SUFFIX:=-stock
 HONK_ASSET:=honk-core-$(HONK_ASSET_TAG)-$(HONK_TARGET)$(HONK_SUFFIX).tar.gz
 
 PKG_SOURCE:=$(HONK_ASSET)
-PKG_SOURCE_URL:=https://github.com/Glassyiris/honk/releases/download/$(HONK_RELEASE_TAG)/
+PKG_SOURCE_URL:=https://github.com/daeuniverse/honk/releases/download/$(HONK_RELEASE_TAG)/
 PKG_HASH:=$(HONK_HASH)
 
 include $(INCLUDE_DIR)/package.mk
@@ -43,7 +43,7 @@ define Package/honk
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=honk - eBPF transparent proxy engine (dae-compatible)
-  URL:=https://github.com/Glassyiris/honk
+  URL:=https://github.com/daeuniverse/honk
   DEPENDS:=@(x86_64||aarch64) \
     +ca-bundle +ip-full \
     +kmod-sched-core +kmod-sched-bpf +kmod-veth +kmod-nft-queue \
