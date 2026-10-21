@@ -1541,6 +1541,9 @@ msgstr "请指定下载地址。"
 msgid "File download failed or timed out: %s"
 msgstr "文件下载失败或超时：%s"
 
+msgid "File verification failed."
+msgstr "文件校验失败"
+
 msgid "File path required."
 msgstr "请指定文件路径。"
 
@@ -2270,6 +2273,9 @@ msgstr "开始更新规则..."
 
 msgid "Download file size verification error. Original file size: %sB. Downloaded file size: %sB."
 msgstr "下载文件大小校验出错，原始文件大小 %sB，下载文件大小：%sB。"
+
+msgid "%s SHA256 verification information is invalid. Update failed."
+msgstr "%s SHA256 校验信息无效，更新失败。"
 
 msgid "Downloaded file is empty or an error occurred while reading it."
 msgstr "下载的文件为空或读取文件时发生错误。"

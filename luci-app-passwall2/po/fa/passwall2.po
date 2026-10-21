@@ -1549,6 +1549,9 @@ msgstr "URL دانلود الزامی است."
 msgid "File download failed or timed out: %s"
 msgstr "دانلود فایل ناموفق بود یا زمان آن تمام شد: %s"
 
+msgid "File verification failed."
+msgstr "تأیید فایل ناموفق بود."
+
 msgid "File path required."
 msgstr "مسیر فایل الزامی است."
 
@@ -2284,6 +2287,9 @@ msgstr "شروع به‌روزرسانی قوانین..."
 
 msgid "Download file size verification error. Original file size: %sB. Downloaded file size: %sB."
 msgstr "خطای تأیید اندازه فایل دانلود شده. اندازه فایل اصلی: %sB. اندازه فایل دانلود شده: %sB."
+
+msgid "%s SHA256 verification information is invalid. Update failed."
+msgstr "اطلاعات تأیید SHA256 برای %s نامعتبر است. به‌روزرسانی ناموفق بود."
 
 msgid "Downloaded file is empty or an error occurred while reading it."
 msgstr "فایل دانلود شده خالی است یا خطایی هنگام خواندن آن رخ داده است."

@@ -86,7 +86,7 @@ local com = self.com
 		var app = btn.getAttribute('data-update-app');
 		var detailId = app === appname ? appname + '-check_btn' : '_' + app + '-check_btn';
 		var ckeckDetailElm = document.getElementById(detailId + '-detail');
-		if (app === appname && !checking) errorMessage = errorMessage ? updateFailedText : unknownErrorText;
+		if (app === appname && !checking && !errorMessage) errorMessage = unknownErrorText;
 		if (errorMessage && ckeckDetailElm) {
 			ckeckDetailElm.textContent = errorMessage
 		}

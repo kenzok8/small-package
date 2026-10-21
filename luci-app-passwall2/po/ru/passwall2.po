@@ -1550,6 +1550,9 @@ msgstr "Необходимо указать URL для загрузки."
 msgid "File download failed or timed out: %s"
 msgstr "Ошибка загрузки файла или тайм-аут: %s"
 
+msgid "File verification failed."
+msgstr "Ошибка проверки файла."
+
 msgid "File path required."
 msgstr "Необходимо указать путь к файлу."
 
@@ -2285,6 +2288,9 @@ msgstr "Начало обновления правил..."
 
 msgid "Download file size verification error. Original file size: %sB. Downloaded file size: %sB."
 msgstr "Ошибка проверки размера файла. Исходный размер: %sB, загруженный: %sB."
+
+msgid "%s SHA256 verification information is invalid. Update failed."
+msgstr "Недопустимые данные проверки SHA256 для %s. Обновление не выполнено."
 
 msgid "Downloaded file is empty or an error occurred while reading it."
 msgstr "Загруженный файл пуст или произошла ошибка при чтении."

@@ -116,31 +116,25 @@ local function fetch_geofile(geo_name, geo_type, url)
 	local sha_url = url:gsub((down_filename:gsub("(%W)", "%%%1")), down_filename .. ".sha256sum")
 	local sha_path = tmp_path .. ".sha256sum"
 
-	local function verify_sha256(sha_file)
-		return sys.call("sha256sum -c " .. sha_file .. " > /dev/null 2>&1") == 0
-	end
-
+	local digest
 	local sha_verify, _ = curl(sha_url, sha_path) == 200
 	if sha_verify then
 		local f = io.open(sha_path, "r")
 		if f then
 			local content = f:read("*l")
 			f:close()
-			if content then
-				content = content:gsub("(%x+)%s+.+", "%1  " .. tmp_path)
-				f = io.open(sha_path, "w")
-				if f then
-					f:write(content)
-					f:close()
-				end
+			local hash = content and content:match("^(%x+)%s")
+			if hash and #hash == 64 then
+				digest = "sha256:" .. hash
 			end
 		end
-		if fs.access(asset_path) then
-			sys.call(string.format("cp -f %s %s", asset_path, tmp_path))
-			if verify_sha256(sha_path) then
-				log(1, api.i18n.translatef("%s version is the same and does not need to be updated.", geo_type))
-				return 0
-			end
+		if not digest then
+			log(1, api.i18n.translatef("%s SHA256 verification information is invalid. Update failed.", geo_type))
+			return 1
+		end
+		if fs.access(asset_path) and api.verify_sha256(asset_path, digest) then
+			log(1, api.i18n.translatef("%s version is the same and does not need to be updated.", geo_type))
+			return 0
 		end
 	end
 
@@ -156,7 +150,7 @@ local function fetch_geofile(geo_name, geo_type, url)
 	end
 	if sret_tmp == 200 then
 		if sha_verify then
-			if verify_sha256(sha_path) then
+			if api.verify_sha256(tmp_path, digest) then
 				sys.call(string.format("mkdir -p %s && mv -f %s %s", backup_path, asset_path, backup_path))
 				sys.call(string.format("mkdir -p %s && mv -f %s %s", asset_location, tmp_path, asset_path))
 				reboot = 1

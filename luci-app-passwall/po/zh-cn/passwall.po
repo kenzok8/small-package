@@ -1505,6 +1505,9 @@ msgstr "请指定下载地址。"
 msgid "File download failed or timed out: %s"
 msgstr "文件下载失败或超时：%s"
 
+msgid "File verification failed."
+msgstr "文件校验失败"
+
 msgid "File path required."
 msgstr "请指定文件路径。"
 
