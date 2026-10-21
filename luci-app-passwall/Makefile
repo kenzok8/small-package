@@ -7,14 +7,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-passwall
-PKG_VERSION:=26.10.16
-PKG_RELEASE:=2
+PKG_VERSION:=26.10.22
+PKG_RELEASE:=1
 PKG_PO_VERSION:=$(PKG_VERSION)
 
 PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_$(PKG_NAME)_Iptables_Transparent_Proxy \
 	CONFIG_PACKAGE_$(PKG_NAME)_Nftables_Transparent_Proxy \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Geoview \
+	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_SmartDNS \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Haproxy \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Hysteria \
 	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_NaiveProxy \
@@ -69,6 +70,11 @@ config PACKAGE_$(PKG_NAME)_Nftables_Transparent_Proxy
 config PACKAGE_$(PKG_NAME)_INCLUDE_Geoview
 	bool "Include Geoview"
 	select PACKAGE_geoview
+	default y if aarch64||arm||i386||x86_64
+
+config PACKAGE_$(PKG_NAME)_INCLUDE_SmartDNS
+	bool "Include SmartDNS"
+	select PACKAGE_smartdns
 	default y if aarch64||arm||i386||x86_64
 
 config PACKAGE_$(PKG_NAME)_INCLUDE_Haproxy
