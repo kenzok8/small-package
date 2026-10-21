@@ -425,14 +425,11 @@ return view.extend({
 						btn.disabled = true;
 					} else if (updatable) {
 						meta = _('installed') + ': ' + entry.r.installed + ' → ' + _('latest') + ': ' + entry.r.latest;
-					} else if (cmp < 0) {
-						meta = _('installed') + ': ' + entry.r.installed + ' · ' + _('feed version older: %s').format(entry.r.latest);
-						btn.disabled = true;
 					} else {
 						meta = _('installed') + ': ' + entry.r.installed + ' · ' + _('up to date');
 						btn.disabled = true;
 					}
-					const uncertain = entry.r.installed && (indexState !== 'success' || !entry.r.latest || cmp < 0);
+					const uncertain = entry.r.installed && (indexState !== 'success' || !entry.r.latest);
 					pkgBody.appendChild(mkRow(
 						updatable ? '↑' : (uncertain ? '⚠' : (entry.r.installed ? '✓' : '✗')),
 						updatable ? 'dd-up-new' : (uncertain ? 'dd-up-warn' : (entry.r.installed ? 'dd-up-ok' : 'dd-up-err')),

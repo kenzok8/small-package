@@ -329,9 +329,6 @@ msgstr "正在刷新软件源"
 msgid "package not found in configured feeds"
 msgstr "当前软件源中没有此包"
 
-msgid "feed version older: %s"
-msgstr "软件源版本较旧：%s"
-
 msgid "Unavailable"
 msgstr "不可用"
 
