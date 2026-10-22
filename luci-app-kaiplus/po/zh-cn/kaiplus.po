@@ -43,6 +43,21 @@ msgstr "外部端口访问已禁用。"
 msgid "Click to open KaiPlus"
 msgstr "点击打开酷友社AI"
 
+msgid "Classic KAI"
+msgstr "经典版 KAI"
+
+msgid "Classic KAI is not installed. Install it now?"
+msgstr "尚未安装经典版 KAI，是否现在安装？"
+
+msgid "Task log window is not available."
+msgstr "任务日志窗口不可用。"
+
+msgid "Starting installation..."
+msgstr "正在启动安装……"
+
+msgid "Failed to start KAI installation."
+msgstr "无法启动经典版 KAI 安装任务。"
+
 msgid "Status"
 msgstr "状态"
 
