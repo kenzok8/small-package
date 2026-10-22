@@ -47,9 +47,6 @@ start_instance() {
 		local _key="key key"
 	}
 	
-	local c_lzo=$(uci -q get ${CONFIG}.${cfgid}.lzo)
-	[ "${c_lzo}" = "1" ] && local _lzo="comp-lzo"
-	
 	local c_route_nopull=$(uci -q get ${CONFIG}.${cfgid}.route_nopull)
 	[ "${c_route_nopull}" = "1" ] && local _route_nopull="route-nopull"
 	
@@ -201,7 +198,6 @@ start_instance() {
 		${_auth_user_pass}
 		${_tls_auth}
 		${_tls_crypt}
-		${_lzo}
 		${_route_nopull}
 		verb 3
 		

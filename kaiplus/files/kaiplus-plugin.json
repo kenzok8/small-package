@@ -3,16 +3,19 @@
   "id": "kaiplus",
   "name": "KaiPlus",
   "icon": "logo.png",
-  "staticRoot": "/usr/share/kaiplus/www",
+  "staticRoot": "/usr/share/kaiplus",
   "desktop": {
     "mode": "module",
     "entry": "desktop-entry.js",
     "isolation": "shadow-dom"
   },
   "standalone": {
-    "entry": "index.html",
     "basePath": "/apps/kaiplus/",
-    "url": "/apps/kaiplus/"
+    "url": "/apps/kaiplus/",
+    "externalOpen": {
+      "enabled": true,
+      "label": "在浏览器中打开酷友社AI"
+    }
   },
   "config": {
     "providerOrder": ["uci"],
@@ -24,42 +27,14 @@
   },
   "backend": {
     "type": "http",
-    "transport": "unix",
     "scheme": "http",
-    "values": {
-      "socketPath": {
-        "default": "/var/run/kaiplus.sock",
-        "keys": {
-          "uci": "kaiplus.@kaiplus[0].socket_path"
-        }
-      },
-      "listenMode": {
-        "default": "auto",
-        "keys": {
-          "uci": "kaiplus.@kaiplus[0].listen_mode"
-        }
-      },
-      "externalPortEnabled": {
-        "default": false,
-        "keys": {
-          "uci": "kaiplus.@kaiplus[0].external_port_enabled"
-        }
-      },
-      "port": {
-        "default": 8189,
-        "keys": {
-          "uci": "kaiplus.@kaiplus[0].port"
-        }
-      }
-    },
+    "host": "127.0.0.1",
+    "portFromUci": "kaiplus.@kaiplus[0].port",
+    "defaultPort": 8189,
     "upstreamBasePath": "/apps/kaiplus/",
     "apiPath": "api/",
     "pathMode": "preserve",
-    "fallback": {
-      "transport": "tcp",
-      "scheme": "http",
-      "host": "127.0.0.1"
-    }
+    "proxyMode": "app-base"
   },
   "window": {
     "width": 1180,

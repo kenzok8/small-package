@@ -24,14 +24,12 @@ end
 function kaiplus_status()
 	local sys = require "luci.sys"
 	local uci = require("luci.model.uci").cursor()
-	local external_port_enabled = uci:get_first("kaiplus", "kaiplus", "external_port_enabled") == "1"
 	compat():legacy_status("kaiplus", {
-		running = sys.call("pidof kaiplus_bin >/dev/null") == 0,
+		running = sys.call("pidof kaiplus >/dev/null") == 0,
 		port = uci:get_first("kaiplus", "kaiplus", "port") or "8189",
-		base_path = uci:get_first("kaiplus", "kaiplus", "base_path") or "/apps/kaiplus/",
-		listen_mode = uci:get_first("kaiplus", "kaiplus", "listen_mode") or "auto",
-		socket_path = uci:get_first("kaiplus", "kaiplus", "socket_path") or "/var/run/kaiplus.sock",
-		external_port_enabled = external_port_enabled,
+		base_path = "/apps/kaiplus/",
+		listen_mode = "tcp",
+		external_port_enabled = true,
 		lan_ip = uci:get("network", "lan", "ipaddr") or ""
 	})
 end

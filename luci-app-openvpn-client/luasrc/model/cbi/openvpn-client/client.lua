@@ -35,10 +35,6 @@ o:value("tun", "TUN")
 o:value("tap", "TAP")
 o.rmempty = false
 
-o = s:option(Flag, "lzo", translate("LZO compression"))
-o.default = "1"
-o.rmempty = false
-
 o = s:option(Flag, "route_nopull", translate("No pull route"))
 o.default = "1"
 o.rmempty = false

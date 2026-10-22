@@ -43,9 +43,6 @@ msgstr "协议"
 msgid "Type"
 msgstr "类型"
 
-msgid "LZO compression"
-msgstr "LZO 压缩"
-
 msgid "No pull route"
 msgstr "不拉取路由"
 

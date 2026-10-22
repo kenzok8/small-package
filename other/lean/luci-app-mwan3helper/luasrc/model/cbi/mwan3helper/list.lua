@@ -1,35 +1,75 @@
+local sys = require "luci.sys"
+
 m = Map("mwan3helper")
-m.title	= translate("MWAN3 IPSets")
+m.title	= translate("MWAN3 Helper")
+m.description = translate("MWAN3 Helper generate IPSets")
 
 s = m:section(TypedSection, "mwan3helper")
 s.addremove = false
 s.anonymous = true
 
-o = s:option(DummyValue, "gfwlist", translate("GFW列表"))
-o.description = translate("GFW列表数据： 5207 条，IPSET 名称为 gfwlist")
+o = s:option(Flag, "enabled", translate("Enable"))
+o.rmempty = false
 
-o = s:option(DummyValue, "all_cn", translate("中国所有IP地址"))
-o.description = translate("中国所有IP地址路由表数据： 8304 条, IPSET 名称为 cn")
+local function get_num(ipset_name)
+    local base_cmd = "ipset -q list %s | grep -E 'Number of entries:' | awk -F ': ' '{print $2}'"
+    local num = sys.exec(base_cmd % ipset_name)
+    if not num or num == "" then
+        num = 0
+    end
+    return num
+end
 
-o = s:option(DummyValue, "chinatelecom", translate("中国电信"))
-o.description = translate("中国电信路由表数据： 1948 条, IPSET 名称为 ct")
 
-o = s:option(DummyValue, "unicom_cnc", translate("中国联通/网通"))
-o.description = translate("中国联通/网通路由表数据： 895 条, IPSET 名称为 cnc")
+local data = {
+    all_cn = {
+        name = translate("中国所有IP地址"),
+        ipset_name = "cn",
+        num = get_num("cn")
+    },
+    ct = {
+        name = translate("中国电信"),
+        ipset_name = "ct",
+        num = get_num("ct")
+    },
+    cnc = {
+        name = translate("中国联通"),
+        ipset_name = "cnc",
+        num = get_num("cnc")
+    },
+    cmcc = {
+        name = translate("中国移动/铁通"),
+        ipset_name = "cmcc",
+        num = get_num("cmcc")
+    },
+    cbtn = {
+        name = translate("中国广电"),
+        ipset_name = "cbtn",
+        num = get_num("cbtn")
+    },
+    cernet = {
+        name = translate("中国教育网"),
+        ipset_name = "cernet",
+        num = get_num("cernet")
+    },
+    gwbn = {
+        name = translate("长城宽带/鹏博士"),
+        ipset_name = "gwbn",
+        num = get_num("gwbn")
+    },
+    othernet = {
+        name = translate("中国其他ISP"),
+        ipset_name = "othernet",
+        num = get_num("othernet")
+    },
+}
 
-o = s:option(DummyValue, "cmcc", translate("中国移动"))
-o.description = translate("中国移动路由表数据： 55 条, IPSET 名称为 cmcc")
+local data_order = {"all_cn", "ct", "cnc", "cmcc", "cbtn", "cernet", "gwbn", "othernet"}
 
-o = s:option(DummyValue, "crtc", translate("中国铁通"))
-o.description = translate("中国铁通路由表数据： 16 条, IPSET 名称为 crtc")
-
-o = s:option(DummyValue, "cernet", translate("中国教育网"))
-o.description = translate("中国教育网路由表数据： 162 条, IPSET 名称为 cernet")
-
-o = s:option(DummyValue, "gwbn", translate("长城宽带/鹏博士"))
-o.description = translate("长城宽带/鹏博士： 94 条, IPSET 名称为 gwbn")
-
-o = s:option(DummyValue, "othernet", translate("中国其他ISP"))
-o.description = translate("中国其他ISP： 5134 条, IPSET 名称为 othernet")
+for i, v in ipairs(data_order) do
+    local d = data[v]
+    o = s:option(DummyValue, v, d.name)
+    o.description = translatef("%s 条, IPSet 名称为 %s", d.num, d.ipset_name)
+end
 
 return m
