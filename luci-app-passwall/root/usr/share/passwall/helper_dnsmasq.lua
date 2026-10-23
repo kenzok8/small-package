@@ -63,15 +63,8 @@ function stretch()
 	if not _flag and dnsmasq_noresolv == "1" then
 		api.uci_del("dhcp", "@dnsmasq[0]", "noresolv")
 		local RESOLVFILE = "/tmp/resolv.conf.d/resolv.conf.auto"
-		local file = io.open(RESOLVFILE, "r")
-		if not file then
+		if (fs.stat(RESOLVFILE, "size") or 0) == 0 then
 			RESOLVFILE = "/tmp/resolv.conf.auto"
-		else
-			local size = file:seek("end")
-			file:close()
-			if size == 0 then
-				RESOLVFILE = "/tmp/resolv.conf.auto"
-			end
 		end
 		api.uci_set("dhcp", "@dnsmasq[0]", "resolvfile", RESOLVFILE)
 		api.uci_save(nil, "dhcp", true)

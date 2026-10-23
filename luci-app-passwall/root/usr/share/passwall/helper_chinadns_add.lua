@@ -45,12 +45,10 @@ local function log(...)
 end
 
 local function is_file_nonzero(path)
-	if path and #path > 1 then
-		if sys.exec('[ -s "%s" ] && echo -n 1' % path) == "1" then
-			return true
-		end
+	if path and #path > 1 and (fs.stat(path, "size") or 0) > 0 then
+		return true
 	end
-	return nil
+	return false
 end
 
 local function insert_unique(dest_table, value, lookup_table)

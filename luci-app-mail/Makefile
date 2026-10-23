@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=LuCI Mail Configuration
-LUCI_DEPENDS:=+msmtp-mta
+LUCI_DEPENDS:=+msmtp-mta +luci-compat
 
 PKG_LICENSE:=GPLv3
 

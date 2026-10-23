@@ -402,20 +402,18 @@ local function GeoToRule(rule_name, rule_type, out_path)
 		log("[警告] Geoview 组件缺失或版本过低，规则生成流程已被跳过。")
 		return false
 	end
-	local geosite_path = asset_location .. "geosite.dat"
-	local geoip_path = asset_location .. "geoip.dat"
-	local file_path = (rule_type == "domain") and geosite_path or geoip_path
-	local geo_arg
-	if rule_type == "domain" then
-		if rule_name == "gfwlist" then
-			geo_arg = "-type geosite -list gfw"
-		else
-			geo_arg = "-type geosite -list cn"
-		end
-	elseif rule_type == "ip4" then
-		geo_arg = "-type geoip -list cn -ipv6=false"
+	local geo_type = (rule_type == "domain") and "geosite" or "geoip"
+	local geo_tag = (rule_type == "domain" and rule_name == "gfwlist") and "gfw" or "cn"
+	local file_path = asset_location .. geo_type .. ".dat"
+	if sys.call(string.format('"%s" -type %s -input "%s" | grep -q "^%s$"', bin, geo_type, file_path, geo_tag:upper())) ~= 0 then
+		log(string.format("%s 生成失败：%s.dat 中缺少 %s 标签。", rule_name, geo_type, geo_tag))
+		return false
+	end
+	local geo_arg = "-type " .. geo_type .. " -list " .. geo_tag
+	if rule_type == "ip4" then
+		geo_arg = geo_arg .. " -ipv6=false"
 	elseif rule_type == "ip6" then
-		geo_arg = "-type geoip -list cn -ipv4=false"
+		geo_arg = geo_arg .. " -ipv4=false"
 	end
 	local cmd = string.format(bin .. " -input '%s' %s -lowmem=true -output '%s'", file_path, geo_arg, out_path)
 	sys.exec(cmd)
