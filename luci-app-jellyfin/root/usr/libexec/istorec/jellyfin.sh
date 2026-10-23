@@ -152,6 +152,33 @@ usage() {
   echo "      port                   Jellyfin port"
 }
 
+# Read the exact container TCP binding, never another application's port.
+# Empty success means no LAN-visible publication; failures stay failures.
+do_entry_port() {
+    local bindings address candidate extra port=''
+    local network
+    network=$(docker inspect --format '{{.HostConfig.NetworkMode}}' jellyfin) || return 1
+    if [ "$network" = host ]; then
+        # Preserve the image's default host-network HTTP listener.
+        echo 8096
+        return 0
+    fi
+    bindings=$(docker inspect --format '{{range (index .NetworkSettings.Ports "8096/tcp")}}{{printf "%s %s\n" .HostIp .HostPort}}{{end}}' jellyfin) || return 1
+    while read -r address candidate extra; do
+        [ -n "$address$candidate$extra" ] || continue
+        [ -z "$extra" ] || return 1
+        case "$candidate" in ''|*[!0-9]*) return 1 ;; esac
+        [ "${#candidate}" -le 5 ] && [ "$candidate" -ge 1 ] && [ "$candidate" -le 65535 ] || return 1
+        case "$address" in 127.*|::1|'[::1]') continue ;; esac
+        [ -z "$port" ] || [ "$port" = "$candidate" ] || return 1
+        port=$candidate
+    done <<EOF
+$bindings
+EOF
+    [ -z "$port" ] || printf '%s\n' "$port"
+    return 0
+}
+
 case ${ACTION} in
   "install")
     do_install
@@ -169,7 +196,7 @@ case ${ACTION} in
     docker ps --all -f 'name=^/jellyfin$' --format '{{.State}}'
   ;;
   "port")
-    docker ps --all -f 'name=^/jellyfin$' --format '{{.Ports}}' | grep -om1 '0.0.0.0:[0-9]*->8096/tcp' | sed 's/0.0.0.0:\([0-9]*\)->.*/\1/'
+    do_entry_port
   ;;
   *)
     usage

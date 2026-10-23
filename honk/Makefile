@@ -3,17 +3,17 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=honk
-PKG_VERSION:=2026.10.21.1_pre1
+PKG_VERSION:=0.1.0_beta1
 PKG_RELEASE:=1
 
 # Raw upstream release tag. It keeps the dots in qualifiers (e.g. v0.0.1.beta.49)
 # because that is what the GitHub release asset name uses.
-HONK_RELEASE_TAG:=debug.2026.10.21.1
-HONK_ASSET_TAG:=debug
+HONK_RELEASE_TAG:=v0.1.0-beta.1
+HONK_ASSET_TAG:=v0.1.0-beta.1
 
 # SHA256 of each release tarball, kept in sync by scripts/update_honk_version.sh.
-HONK_HASH_X86_64:=0714b035fb39efcdd9ab5f8b759ccd647847b3fe293ed51b4fafe11603834e3d
-HONK_HASH_AARCH64:=d63a51bf922899ababf5bbddc9913a4a7a6df17fbbeb021a127b85bc740e0568
+HONK_HASH_X86_64:=41deede50c346a13cf0df87eee35ea2942afafca7c6ec51a3d79d694651d9197
+HONK_HASH_AARCH64:=325c18c4acd0458bb3679de2e544ff20af4449263caeb9eb057feead34cf2fe6
 
 PKG_LICENSE:=AGPL-3.0-only
 PKG_LICENSE_FILE:=LICENSE
@@ -30,7 +30,9 @@ endif
 # Default to the stock-malloc build: lower RSS high-water on small gateways.
 # Use an empty suffix to switch back to the mimalloc build (faster QUIC).
 HONK_SUFFIX:=-stock
-HONK_ASSET:=honk-core-$(HONK_ASSET_TAG)-$(HONK_TARGET)$(HONK_SUFFIX).tar.gz
+# Upstream feature variant: -native-api (recommended for OpenWrt gateway), -full, or empty for legacy releases.
+HONK_VARIANT:=-native-api
+HONK_ASSET:=honk-core-$(HONK_ASSET_TAG)-$(HONK_TARGET)$(HONK_SUFFIX)$(HONK_VARIANT).tar.gz
 
 PKG_SOURCE:=$(HONK_ASSET)
 PKG_SOURCE_URL:=https://github.com/daeuniverse/honk/releases/download/$(HONK_RELEASE_TAG)/
