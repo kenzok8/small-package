@@ -78,7 +78,7 @@ if has_xray or has_singbox then
 		o.default = 0
 		o.rmempty = false
 		o.description = translate("Generate rule lists such as GFW, China domains, and China IP ranges based on Geo files.") .. "<br><font color='red'>" ..
-			translate("When manually updating with this option enabled, rules will be regenerated from existing Geo files even if no new version is available.") .. "</font>"
+			translate("GeoSite files without GFW rules cannot generate a GFW list (e.g. the original v2fly/Xray files).") .. "</font>"
 
 		o = s:option(Flag, "enable_geoview", translate("Enable Geo Data Parsing"))
 		o.default = 0

@@ -1692,8 +1692,21 @@ function gen_config(var)
 				local bin = api.finded_com("geoview")
 				if bin then
 					local geo_file = (api.uci_get_c("@global_rules[0]", "v2ray_location_asset") or "/usr/share/v2ray/"):match("^(.*)/") .. "/geosite.dat"
-					if luci.sys.call('"' .. bin .. '" -type geosite -input "' .. geo_file .. '" | grep -q "^GFW$"') == 0 then
-						domain_list = (domain_list == "") and "geosite:gfw" or domain_list .. "\ngeosite:gfw"
+					local gfw_rule
+					if sys.call('"' .. bin .. '" -type geosite -input "' .. geo_file .. '" 2>/dev/null | grep -q "^GFW$"') == 0 then
+						gfw_rule = "geosite:gfw"
+					elseif api.compare_versions(api.get_app_version("geoview"), ">=", "0.2.8") then
+						local output = GEO_VAR.TO_SRS_PATH .. "geosite-gfw.srs"
+						if not fs.access(output) then
+							fs.mkdirr(GEO_VAR.TO_SRS_PATH)
+							local cmd = string.format("%s -type geosite -action convert -input /usr/share/passwall/rules/gfwlist -list '*' -output %s -format srs",
+								api.util.shellquote(bin), api.util.shellquote(output))
+							if api.exec_call(cmd) ~= 0 then fs.unlink(output) end
+						end
+						gfw_rule = fs.access(output) and ("rule-set:local:" .. output) or nil
+					end
+					if gfw_rule then
+						domain_list = (domain_list == "") and gfw_rule or domain_list .. "\n" .. gfw_rule
 					end
 				end
 
