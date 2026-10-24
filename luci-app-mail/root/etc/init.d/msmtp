@@ -63,17 +63,28 @@ config_account() {
 }
 
 start_service() {
-	local msmtp_tmp msmtp_written=0
-	# The file holds the SMTP password: created 0600 next to the target so
-	# the mv is a rename, never readable by others even for a moment
-	msmtp_tmp="$(umask 077; mktemp /etc/msmtprc.XXXXXX)" || return 1
+	local msmtp_tmp msmtp_new msmtp_written=0
+	# The file holds the SMTP password: always created 0600. Built in tmpfs
+	# and only written to flash when it changed, every start and reload
+	# rewrote /etc/msmtprc
+	msmtp_tmp="$(umask 077; mktemp /tmp/msmtprc.XXXXXX)" || return 1
 	config_load mail
 	config_foreach config_account smtp
-	if [ "$msmtp_written" = "1" ]; then
-		mv "$msmtp_tmp" /etc/msmtprc
-	else
-		rm -f "$msmtp_tmp"
+	if [ "$msmtp_written" = "1" ] && ! cmp -s "$msmtp_tmp" /etc/msmtprc; then
+		# next to the target so the mv is a rename, never readable by
+		# others even for a moment; keeps the owner and mode of the old
+		# file, but never its bits for others
+		msmtp_new="$(umask 077; mktemp /etc/msmtprc.XXXXXX)" &&
+		cat "$msmtp_tmp" > "$msmtp_new" && {
+			[ -f /etc/msmtprc ] && {
+				chown "$(stat -c %u:%g /etc/msmtprc)" "$msmtp_new"
+				chmod "$(stat -c %a /etc/msmtprc)" "$msmtp_new"
+				chmod o-rwx "$msmtp_new"
+			}
+			mv "$msmtp_new" /etc/msmtprc
+		} || rm -f "$msmtp_new"
 	fi
+	rm -f "$msmtp_tmp"
 }
 
 service_triggers() {

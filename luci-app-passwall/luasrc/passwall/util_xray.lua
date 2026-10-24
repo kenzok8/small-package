@@ -579,11 +579,15 @@ function gen_config_server(node)
 		end
 	end
 
-	if node.protocol == "vmess" or node.protocol == "vless" then
+	if node.protocol == "vless" then
+		settings = {
+			users = users,
+			decryption = (node.decryption and node.decryption ~= "") and node.decryption or "none"
+		}
+	elseif node.protocol == "vmess" then
 		if users then
 			settings = {
-				users = users,
-				decryption = (node.protocol == "vless") and ((node.decryption and node.decryption ~= "") and node.decryption or "none") or nil
+				users = users
 			}
 		end
 	elseif node.protocol == "socks" then
