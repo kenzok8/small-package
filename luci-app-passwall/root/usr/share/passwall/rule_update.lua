@@ -396,6 +396,98 @@ local function non_file_check(file_path, header_content)
 	return false
 end
 
+-- 检查 Geo 所有分类的边界，每个分类抽查首条规则，仅用于识别 Geo 格式。
+local function validate_geo_file(file_path, geo_type)
+	if geo_type ~= "geoip" and geo_type ~= "geosite" then return false end
+	local file = io.open(file_path, "rb")
+	if not file then return false end
+	local size = file:seek("end")
+	if not size or size == 0 or not file:seek("set", 0) then file:close(); return false end
+	local pos, rules = 0, 0
+	-- 使用文件自身的读取缓冲，跳过内容时直接定位，无需维护额外缓冲区。
+	local function skip(length, limit)
+		assert(length <= limit - pos)
+		pos = pos + length
+		assert(file:seek("set", pos))
+	end
+	-- 未指定数值上限时，仅检查并跳过变长整数，避免 64 位属性值的精度问题。
+	local function varint(limit, maximum)
+		local value, factor = 0, 1
+		for i = 1, 10 do
+			assert(pos < limit)
+			local byte = assert(file:read(1)):byte()
+			pos = pos + 1
+			assert(i < 10 or byte <= 1)
+			if maximum then
+				local digit = byte % 128
+				assert(digit <= math.floor((maximum - value) / factor))
+				value = value + digit * factor
+			end
+			if byte < 128 then return value end
+			factor = factor * 128
+		end
+		error(false)
+	end
+	-- 字段定义：编码类型、子消息类型（可选）、数值上限（可选）。
+	local schema = {
+		list = {{2, geo_type}},
+		geoip = {{2}, {2, "cidr"}, {0}},
+		geosite = {{2}, {2, "domain"}},
+		cidr = {{2}, {0, nil, 4294967295}},
+		domain = {{0, nil, 3}, {2}, {2, "attribute"}},
+		attribute = {{2}, {0}, {0}}
+	}
+	local parse
+	parse = function(kind, limit)
+		local values, entries = {}, 0
+		local is_entry = kind == "geoip" or kind == "geosite"
+		while pos < limit do
+			if is_entry and values[1] and values[1] > 0 and entries > 0 then
+				skip(limit - pos, limit)
+				return
+			end
+			local tag = varint(limit, 4294967295)
+			local field, wire = math.floor(tag / 8), tag % 8
+			local spec = schema[kind][field]
+			assert(field > 0 and (not spec or wire == spec[1]))
+			local value
+			if wire == 0 then
+				value = varint(limit, spec and spec[3])
+			elseif wire == 2 then
+				value = varint(limit, limit - pos)
+				assert(value <= limit - pos)
+				if spec and spec[2] and not (is_entry and entries > 0) then
+					parse(spec[2], pos + value)
+				else
+					skip(value, limit)
+				end
+				if spec and spec[2] then entries = entries + 1 end
+			elseif wire == 1 or wire == 5 then
+				skip(wire == 1 and 8 or 4, limit)
+			else
+				-- Geo 格式不使用 Protobuf 分组字段。
+				error(false)
+			end
+			if spec then values[field] = value end
+		end
+		if kind == "list" then
+			assert(entries > 0 and rules > 0)
+		elseif kind == "geoip" or kind == "geosite" or kind == "attribute" then
+			assert(values[1] and values[1] > 0)
+		elseif kind == "cidr" then
+			assert(values[1] == 4 or values[1] == 16)
+			assert((values[2] or 0) <= (values[1] == 4 and 32 or 128))
+			rules = rules + 1
+		elseif kind == "domain" then
+			assert(values[2] and values[2] > 0)
+			rules = rules + 1
+		end
+	end
+	local valid = pcall(parse, "list", size)
+	file:close()
+	return valid
+end
+
 local function GeoToRule(rule_name, rule_type, out_path)
 	local bin = api.finded_com("geoview")
 	if not (bin and api.compare_versions(api.get_app_version("geoview"), ">=", "0.1.10")) then
@@ -416,11 +508,11 @@ local function GeoToRule(rule_name, rule_type, out_path)
 		geo_arg = geo_arg .. " -ipv4=false"
 	end
 	local cmd = string.format(bin .. " -input '%s' %s -lowmem=true -output '%s'", file_path, geo_arg, out_path)
-	sys.exec(cmd)
+	local code, out = api.exec_call(cmd)
 	local local_file_size = tonumber(fs.stat(out_path, "size") or 0)
-	if local_file_size == 0 then
+	if code ~= 0 or local_file_size == 0 then
 		api.remove(out_path)
-		log(rule_name .. " 生成失败，请确保 Geo 文件正确且包含目标规则。")
+		log(rule_name .. " 生成失败，原因：" .. out)
 		return false
 	end
 	return true
@@ -612,6 +704,10 @@ local function fetch_geofile(geo_name, geo_type, url)
 				return 1
 			end
 		else
+			if not validate_geo_file(tmp_path, geo_type) then
+				log(geo_type .. " 文件格式校验错误，更新失败。")
+				return 1
+			end
 			if fs.access(asset_path) and sys.call(string.format("cmp -s %s %s", tmp_path, asset_path)) == 0 then
 				log(geo_type .. " 版本一致，无需更新。")
 				return 0

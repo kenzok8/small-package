@@ -2277,6 +2277,9 @@ msgstr "下载文件大小校验出错，原始文件大小 %sB，下载文件�
 msgid "%s SHA256 verification information is invalid. Update failed."
 msgstr "%s SHA256 校验信息无效，更新失败。"
 
+msgid "%s file format verification failed. Update failed."
+msgstr "%s 文件格式校验错误，更新失败。"
+
 msgid "Downloaded file is empty or an error occurred while reading it."
 msgstr "下载的文件为空或读取文件时发生错误。"
 

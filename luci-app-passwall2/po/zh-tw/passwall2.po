@@ -2283,6 +2283,9 @@ msgstr "下載檔案大小校驗出錯，原始檔案大小 %sB，下載檔案�
 msgid "%s SHA256 verification information is invalid. Update failed."
 msgstr "%s SHA256 校驗資訊無效，更新失敗。"
 
+msgid "%s file format verification failed. Update failed."
+msgstr "%s 檔案格式校驗錯誤，更新失敗。"
+
 msgid "Downloaded file is empty or an error occurred while reading it."
 msgstr "下載的文件為空或讀取文件時發生錯誤。"
 
