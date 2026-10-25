@@ -725,7 +725,7 @@ if has_smartdns then
 		o = s:taboption("log", DummyValue, "_smartdns_ui_link", "WebUI")
 		o.rawhtml = true
 		o.cfgvalue = function(self, section)
-			local port = tonumber(m:get(section, "smartdns_ui_port")) or 9880
+			local port = tonumber((m:get(section, "smartdns_ui_port"))) or 9880
 			if port < 1 or port > 65535 or port % 1 ~= 0 then port = 9880 end
 			return string.format(
 				[[<input class="btn cbi-button cbi-button-apply" type="button" value="%s" onclick="var host = window.location.hostname; if (host.indexOf(':') !== -1 &amp;&amp; host.charAt(0) !== '[') host = '[' + host + ']'; window.open('http://' + host + ':%d', '_blank', 'noopener,noreferrer');" />]],
