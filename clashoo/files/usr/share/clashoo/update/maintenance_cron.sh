@@ -32,5 +32,6 @@ fi
 
 if [ "$(uci -q get clashoo.config.auto_clear_log)" = "1" ] && due log_cleanup.status clear_time; then
 	: >"$LOG_FILE"
+	sh /usr/share/clashoo/lib/core_log_guard.sh >/dev/null 2>&1
 	stamp log_cleanup.status
 fi

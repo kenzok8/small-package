@@ -30,6 +30,8 @@ echo "$$" >"$PID_FILE"
 while :; do
 	[ "$(uci -q get clashoo.config.enable 2>/dev/null)" = "1" ] || break
 	/usr/share/clashoo/net/access_check_cache.sh >/dev/null 2>&1 || true
+	# 每轮顺手卡一下 core.log 大小（tmpfs 很小，跑飞会写满 /tmp）
+	sh /usr/share/clashoo/lib/core_log_guard.sh >/dev/null 2>&1 || true
 	if [ -n "$INTERVAL_FIXED" ]; then
 		sleep "$INTERVAL_FIXED"
 	else

@@ -876,6 +876,10 @@ revert_dns() {
 
 add_cron(){
 #===========================================================================================================================
+	# core.log 落在 tmpfs 上，按分钟卡一次大小；内核对日志没有上限，
+	# 一旦刷屏写满 /tmp，dnsmasq 与配置生成都会跟着挂。
+	[ -z "$(grep -w "lib/core_log_guard.sh" "$CRON_FILE")" ] && echo "* * * * * sh /usr/share/clashoo/lib/core_log_guard.sh >/dev/null 2>&1" >> "$CRON_FILE"
+
 	auto=$(uci get clashoo.config.auto_update 2>/dev/null)
 	clear=$(uci get clashoo.config.auto_clear_log 2>/dev/null)
 	if [ "${auto:-0}" -eq 1 ] || [ "${clear:-0}" -eq 1 ]; then
@@ -908,6 +912,7 @@ del_cron(){
 	sed -i '/update\/update_all.sh/d' "$CRON_FILE"
 	sed -i '/\/usr\/share\/clash\/update_all.sh/d' "$CRON_FILE"
 	sed -i '/update\/maintenance_cron.sh/d' "$CRON_FILE"
+	sed -i '/lib\/core_log_guard.sh/d' "$CRON_FILE"
 	sed -i '/clashoo.txt/d' "$CRON_FILE"
 	sed -i '/update\/lgbm_update.sh/d' "$CRON_FILE"
 	sed -i '/\/usr\/share\/clash\/lgbm_update.sh/d' "$CRON_FILE"
@@ -1149,6 +1154,103 @@ _dns_nameserver_inherit_mode() {
 	esac
 	[ "$has_proxy" = "true" ] && return 0
 	printf '%s' inherit
+}
+
+# issue #73: mihomo resolves proxy server domains through
+# proxy-server-nameserver(-policy) and ignores nameserver-policy there. Airports
+# ship their own resolver for node domains (e.g. "+.chylink.xyz" -> DoT) which
+# answers with reachable relay IPs, so mirror the entries that match a node
+# server domain before mixin drops them.
+#
+# Everything travels through a private 0700 work dir: large airports can produce
+# hundreds of KB of policy entries, which neither argv nor env vars can carry
+# (E2BIG), and predictable /tmp names are symlink bait.
+_dns_node_policy_workdir=""
+
+_dns_node_policy_cleanup() {
+	[ -n "${_dns_node_policy_workdir:-}" ] || return 0
+	rm -rf "$_dns_node_policy_workdir" 2>/dev/null
+	_dns_node_policy_workdir=""
+	return 0
+}
+
+# Same inputs yml_change feeds mixin: settle FORCE/PRESENT here so the skip
+# decision cannot disagree with the config that mixin actually generates.
+_dns_node_policy_mode() {
+	CLASHOO_DNS_FORCE="$(_clashoo_dns_force_fields)"
+	CLASHOO_DNS_PRESENT="$(_user_dns_fields "$CLASHOO_DNS_FORCE")"
+	export CLASHOO_DNS_FORCE CLASHOO_DNS_PRESENT
+	_dns_nameserver_inherit_mode
+}
+
+_dns_node_policy_capture() {
+	_dns_node_policy_cleanup
+	command -v yq >/dev/null 2>&1 || return 0
+	command -v ucode >/dev/null 2>&1 || return 0
+
+	local helper workdir
+	helper="${CLASHOO_NODE_DNS_UC:-/usr/share/clashoo/runtime/dns_node_policy.uc}"
+	[ -r "$helper" ] || return 0
+	[ -s "$CONFIG_YAML" ] || return 0
+
+	# skip mode keeps the source DNS verbatim: mihomo already falls back to the
+	# normal DNS policy for node domains when no dedicated resolver is generated.
+	[ "$(_dns_node_policy_mode)" = "skip" ] && return 0
+
+	# sweep leftovers from an interrupted start; they are private to root anyway
+	find "${TMPDIR:-/tmp}" -maxdepth 1 -name 'clashoo-node-dns.*' -mmin +60 \
+		-exec rm -rf {} + >/dev/null 2>&1
+
+	workdir="$(mktemp -d "${TMPDIR:-/tmp}/clashoo-node-dns.XXXXXX" 2>/dev/null)" || return 0
+	chmod 700 "$workdir" 2>/dev/null
+
+	if ! yq -M e -o=json -I0 '({"policies": (.dns."nameserver-policy" // {}), "servers": [(.proxies // [])[] | select(type == "!!map") | .server // ""]})' "$CONFIG_YAML" > "$workdir/source.json" 2>/dev/null ||
+		[ ! -s "$workdir/source.json" ]; then
+		rm -rf "$workdir"
+		return 0
+	fi
+	chmod 600 "$workdir/source.json" 2>/dev/null
+
+	if ! CLASHOO_NODE_DNS_SOURCE_FILE="$workdir/source.json" ucode "$helper" > "$workdir/policy.json" 2>/dev/null ||
+		[ ! -s "$workdir/policy.json" ]; then
+		rm -rf "$workdir"
+		return 0
+	fi
+	chmod 600 "$workdir/policy.json" 2>/dev/null
+	rm -f "$workdir/source.json"
+
+	if [ "$(yq -M e -r 'length' "$workdir/policy.json" 2>/dev/null)" = "0" ]; then
+		rm -rf "$workdir"
+		return 0
+	fi
+
+	_dns_node_policy_workdir="$workdir"
+	return 0
+}
+
+_dns_node_policy_apply() {
+	local policy_file rc
+	policy_file="${_dns_node_policy_workdir:+"$_dns_node_policy_workdir/policy.json"}"
+	if [ -z "$policy_file" ] || [ ! -s "$policy_file" ] || ! command -v yq >/dev/null 2>&1; then
+		_dns_node_policy_cleanup
+		return 0
+	fi
+
+	# existing keys keep their value; overlapping patterns are left to mihomo
+	CLASHOO_NODE_DNS_POLICY_FILE="$policy_file" yq -M e -i '(.dns // {}) as $dns |
+		(load(strenv(CLASHOO_NODE_DNS_POLICY_FILE)) // {}) as $derived |
+		.dns."proxy-server-nameserver-policy" = ($derived * ($dns."proxy-server-nameserver-policy" // {}))
+	' "$CONFIG_YAML" 2>/dev/null
+	rc=$?
+
+	# mihomo rejects a node policy without a proxy node resolver
+	if [ "$(yq -M e -r '((.dns."proxy-server-nameserver" // []) | length)' "$CONFIG_YAML" 2>/dev/null)" = "0" ]; then
+		yq -M e -i '.dns."proxy-server-nameserver" = (.dns."default-nameserver" // ["223.5.5.5"])' "$CONFIG_YAML" 2>/dev/null || true
+	fi
+
+	_dns_node_policy_cleanup
+	[ "$rc" = "0" ] && log_msg "Inherited node domain DNS policy from subscription" "已从订阅继承节点域名 DNS 策略"
+	return 0
 }
 
 _dns_proxy_nameservers() {
@@ -2098,7 +2200,9 @@ _start_prepare_config() {
 			cp -f /usr/share/clashoo/ruleset/cn.mrs /etc/clashoo/ruleset/cn.mrs 2>/dev/null
 		fi
 	fi
+	_dns_node_policy_capture
 	yml_change >/dev/null 2>&1
+	_dns_node_policy_apply
 	append_luci_fake_ip_filter_extras >/dev/null 2>&1
 	normalize_fake_ip_filter >/dev/null 2>&1
 	drop_legacy_cn_ip_injection >/dev/null 2>&1
@@ -2173,6 +2277,8 @@ _start_launch_core() {
 	_core_only=$(uci -q get clashoo.config.core_only 2>/dev/null)
 	mkdir -p "$(dirname "$CORE_LOG_PATH")" >/dev/null 2>&1
 	touch "$CORE_LOG_PATH" >/dev/null 2>&1
+	# core.log 在 tmpfs 上，先按大小裁剪，避免上次跑飞的大日志直接卡死启动
+	sh /usr/share/clashoo/lib/core_log_guard.sh "$CORE_LOG_PATH" >/dev/null 2>&1
 
 	# Core-only runs the imported config verbatim, which may reference absolute
 	# paths (e.g. OpenClash's external-ui /usr/share/openclash/ui). mihomo's
@@ -2211,6 +2317,10 @@ _start_launch_core() {
 	procd_set_param command /bin/sh -c "$_cmd"
 	[ "$disable_quic_gso" = "1" ] && procd_set_param env QUIC_GO_DISABLE_GSO=1
 	[ "$_core_only" = "1" ] && procd_set_param env SAFE_PATHS=/
+	# 默认 4095 个 fd 顶不住 BT/PCDN 类连接洪水，打爆后核心会陷入
+	# accept 失败刷屏，与 sing-box 实例保持一致提到 1000000。
+	procd_set_param limits core="unlimited"
+	procd_set_param limits nofile="1000000 1000000"
 	procd_set_param respawn 3600 5 5
 	procd_close_instance
 	[ "$disable_quic_gso" = "1" ] && log_msg "Disable quic-go GSO support" "已启用：禁用 quic-go GSO 支持"
