@@ -1,122 +1,55 @@
 #!/bin/sh /etc/rc.common
 
 USE_PROCD=1
-START=96
+START=95
 STOP=10
 
-extra_command "hot_reload" "Hot-reload service"
+. /lib/functions.sh
 
-CONF="honk"
-PROG="/usr/bin/honk-core"
-# honk-core hardcodes dae-compatible datapath names (dae0/dae0peer + daens);
-# these are the real interface/netns names, not leftover dae config.
-HONK_HOST_IFACE="dae0"
-HONK_PEER_IFACE="dae0peer"
-HONK_NETNS_NAME="daens"
-HONK_NETNS_PATH="/run/netns/$HONK_NETNS_NAME"
-RESOLV_HONK="/tmp/resolv.conf.honk"
+HONK_CONTROL=/usr/share/honk/control.sh
+HONK_CONFIG=/etc/honk/config.dae
 
-set_chmod_640() {
-    mkdir -p /etc/honk/config.d /etc/honk/state /var/log/honk
-    chmod -R u=rwX,go= /etc/honk 2>/dev/null || true
-    chmod 700 /etc/honk /etc/honk/config.d /etc/honk/state 2>/dev/null || true
-}
-
-cleanup_netns() {
-    ip netns del "$HONK_NETNS_NAME" 2>/dev/null || true
-    umount "$HONK_NETNS_PATH" 2>/dev/null || true
-    rm -f "$HONK_NETNS_PATH" 2>/dev/null || true
-    ip link del "$HONK_HOST_IFACE" 2>/dev/null || true
-    ip link del "$HONK_PEER_IFACE" 2>/dev/null || true
-}
-
-hijack_resolv_conf() {
-    grep -q ' /tmp/resolv\.conf ' /proc/mounts && return 0
-
-    local dns_list WANS
-    . /lib/functions/network.sh
-    unset -v __NETWORK_CACHE
-    __network_ifstatus WANS "" "[@.route[@.target='0.0.0.0' && !@.table]].interface" 2>/dev/null
-    set -- $WANS
-
-    if [ $# -eq 1 ]; then
-        dns_list=$(ubus call "network.interface.$1" status 2>/dev/null | \
-            jsonfilter -e '@["dns-server"][*]' 2>/dev/null)
-        if [ -z "$dns_list" ] && [ -f "/tmp/resolv.conf.d/resolv.conf.auto" ]; then
-            dns_list=$(awk '/^nameserver/{print $2}' "/tmp/resolv.conf.d/resolv.conf.auto")
-        fi
-    fi
-
-    [ -z "$dns_list" ] && dns_list="119.29.29.29 223.5.5.5"
-
-    [ -f /tmp/resolv.conf ] || touch /tmp/resolv.conf
-    grep -E '^(search|domain) ' /tmp/resolv.conf > "$RESOLV_HONK" 2>/dev/null
-
-    for dns in $dns_list; do
-        echo "nameserver $dns" >> "$RESOLV_HONK"
-    done
-
-    mount --bind "$RESOLV_HONK" /tmp/resolv.conf
-    mount -o remount,ro,bind /tmp/resolv.conf
-}
-
-restore_resolv_conf() {
-    while grep -q ' /tmp/resolv\.conf ' /proc/mounts; do
-        mount -o remount,rw,bind /tmp/resolv.conf 2>/dev/null
-        umount /tmp/resolv.conf 2>/dev/null || break
-    done
-    rm -f "$RESOLV_HONK"
+boot() {
+	local boot_enabled
+	config_load honk
+	config_get_bool boot_enabled main boot_enabled 0
+	[ "$boot_enabled" -eq 1 ] || return 0
+	uci set honk.main.enabled='1' || return 1
+	uci commit honk || return 1
+	start
 }
 
 start_service() {
-    local enabled config_file
+	local enabled initialized config_file
+	config_load honk
+	config_get_bool enabled main enabled 0
+	config_get_bool initialized main initialized 0
+	[ "$enabled" -eq 1 ] && [ "$initialized" -eq 1 ] || {
+		logger -t honk "refusing to start before explicit initialization and enablement"
+		return 1
+	}
+	config_get config_file main config_file "$HONK_CONFIG"
+	[ "$config_file" = "$HONK_CONFIG" ] || {
+		logger -t honk "refusing non-default config path"
+		return 1
+	}
+	"$HONK_CONTROL" preflight || return 1
+	unset HONK_MAINT_CAP
 
-    config_load "$CONF"
-    config_get_bool enabled "config" "enabled" "0"
-    [ "$enabled" -eq "1" ] || return 1
-
-    config_get config_file "config" "config_file" "/etc/honk/config.dae"
-
-    if [ ! -x "$PROG" ]; then
-        logger -t honk "not starting: $PROG is missing or not executable"
-        return 1
-    fi
-
-    set_chmod_640
-    cleanup_netns
-    hijack_resolv_conf
-
-    procd_open_instance "$CONF"
-    procd_set_param env DAE_LOCATION_ASSET="/usr/share/v2ray"
-    procd_set_param command "$PROG" --config "$config_file"
-    procd_set_param netdev "$HONK_HOST_IFACE" "$HONK_PEER_IFACE"
-    procd_set_param limits core="unlimited"
-    procd_set_param limits nofile="1000000 1000000"
-    procd_set_param term_timeout 8
-    procd_set_param respawn 3600 5 5
-    procd_set_param stderr 1
-    procd_close_instance
-}
-
-service_stopped() {
-    restore_resolv_conf
-    cleanup_netns
+	procd_open_instance main
+	procd_set_param command /usr/bin/honk-core --config "$HONK_CONFIG" --disable-timestamp
+	procd_set_param env DAE_LOCATION_ASSET="/usr/share/v2ray"
+	procd_set_param stdout 1
+	procd_set_param stderr 1
+	procd_set_param respawn 3600 5 5
+	procd_set_param term_timeout 20
+	procd_close_instance
 }
 
 reload_service() {
-    stop
-    start
-}
-
-service_triggers() {
-    procd_add_reload_trigger "$CONF"
-}
-
-hot_reload() {
-    set_chmod_640
-    if /etc/init.d/honk running; then
-        "$PROG" reload
-    else
-        start
-    fi
+	# honk-core has no hot-reload API wired here; a reload is an explicit
+	# restart so existing connections are cycled. The UI only exposes
+	# restart, this exists so manual `/etc/init.d/honk reload` is defined.
+	logger -t honk "reload requested, restarting (no hot-reload)"
+	restart
 }

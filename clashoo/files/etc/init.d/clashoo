@@ -1049,7 +1049,7 @@ _user_dns_fields() {
 	command -v yq >/dev/null 2>&1 || return 0
 	[ -s "$CONFIG_YAML" ] || return 0
 	for field in nameserver proxy-server-nameserver fallback direct-nameserver \
-		default-nameserver nameserver-policy respect-rules; do
+		default-nameserver nameserver-policy proxy-server-nameserver-policy respect-rules; do
 		case ",$force," in *,"$field",*) continue ;; esac
 		[ "$(yq -M e "(.dns // {}) | has(\"${field}\")" "$CONFIG_YAML" 2>/dev/null)" = "true" ] &&
 			out="${out}${out:+,}${field}"
@@ -1091,7 +1091,7 @@ _clashoo_dns_force_fields() {
 	command -v yq >/dev/null 2>&1 || return 0
 	[ -s "$CONFIG_YAML" ] || return 0
 	local managed legacy fields
-	fields="nameserver,proxy-server-nameserver,direct-nameserver,default-nameserver,nameserver-policy,respect-rules"
+	fields="nameserver,proxy-server-nameserver,direct-nameserver,default-nameserver,nameserver-policy,proxy-server-nameserver-policy,respect-rules"
 	managed="$(yq -M e '(.dns."x-clashoo-managed-dns" // false) == true' "$CONFIG_YAML" 2>/dev/null)"
 	if [ "$managed" = "true" ]; then
 		printf '%s' "$fields"
@@ -2156,6 +2156,17 @@ _core_only_ui_args() {
 	printf ' -ext-ui %s' "$(shell_quote /etc/clashoo/dashboard)"
 }
 
+_mihomo_proxy_dns_valid() {
+	local config="$1" proxy_count policy_count respect_rules
+	command -v yq >/dev/null 2>&1 || return 0
+	[ -s "$config" ] || return 0
+	proxy_count="$(yq -M e -r '(.dns."proxy-server-nameserver" // []) | length' "$config" 2>/dev/null)"
+	[ "$proxy_count" = "0" ] || return 0
+	policy_count="$(yq -M e -r '(.dns."proxy-server-nameserver-policy" // {}) | length' "$config" 2>/dev/null)"
+	respect_rules="$(yq -M e -r '.dns."respect-rules" // false' "$config" 2>/dev/null)"
+	[ "$policy_count" = "0" ] && [ "$respect_rules" != "true" ]
+}
+
 _start_launch_core() {
 	local _cmd _core_only
 	disable_quic_gso=$(uci get clashoo.config.disable_quic_gso 2>/dev/null)
@@ -2168,6 +2179,13 @@ _start_launch_core() {
 	# SAFE_PATHS guard rejects paths outside the working dir, so relax it here —
 	# in core-only the user is explicitly trusting their own config.
 	[ "$_core_only" = "1" ] && export SAFE_PATHS="/"
+
+	if ! _mihomo_proxy_dns_valid "${CLASH_CONFIG}/config.yaml"; then
+		log_msg "Proxy node DNS is required by node DNS policy or respect-rules; set a Proxy Node Domain Resolver in LuCI" "节点域名 DNS 策略或 DNS 遵循规则需要代理节点域名解析，请在 LuCI 中配置"
+		runtime_state_record_health "fail" "preflight:proxy_dns_missing"
+		echo "Clashoo" > "$REAL_LOG"
+		return 1
+	fi
 
 	# preflight dry-run with watchdog: bail on bad config without touching
 	# firewall/dnsmasq, and never let a geo auto-download (mihomo blocks ~90s on
@@ -2554,6 +2572,11 @@ reload_service()
 		rm -f "${_candidate}.mixin" 2>/dev/null
 		if [ -n "$_error" ]; then
 			_log_runtime_error "Mihomo reload failed: ${_error}; current config preserved"
+			rm -f "$_candidate" "$_previous" "$_response" "$_dns_backup"
+			return 1
+		fi
+		if ! _mihomo_proxy_dns_valid "$_candidate"; then
+			_log_runtime_error "Mihomo reload failed: node DNS policy or respect-rules requires a Proxy Node Domain Resolver; current config preserved"
 			rm -f "$_candidate" "$_previous" "$_response" "$_dns_backup"
 			return 1
 		fi

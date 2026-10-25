@@ -145,7 +145,7 @@ if (type(inherited_nameserver) != 'array') {
 		inherited_nameserver = [];
 }
 let dns_role_fields = ['nameserver', 'proxy-server-nameserver', 'direct-nameserver',
-	'default-nameserver', 'nameserver-policy', 'respect-rules'];
+	'default-nameserver', 'nameserver-policy', 'proxy-server-nameserver-policy', 'respect-rules'];
 let had_user_dns_roles = false;
 for (let f in dns_role_fields)
 	if (dns_present[f]) had_user_dns_roles = true;
@@ -200,18 +200,23 @@ if (length(bootstrap) && (!dns_present['default-nameserver'] || dns_force['defau
 	cfg['dns']['default-nameserver'] = bootstrap;
 
 let policies = {};
+let proxy_policies = {};
 uci.foreach('clashoo', 'dns_policy', function(sec) {
 	if (b(sec.enabled) == false) return;
-	if (s(sec.policy_type, 'nameserver-policy') != 'nameserver-policy') return;
+	let role = s(sec.policy_type, 'nameserver-policy');
+	if (role != 'nameserver-policy' && role != 'proxy-server-nameserver-policy') return;
 	let matcher = trim(sec.matcher || '');
 	let servers = sec.nameserver;
 	if (type(servers) != 'array') servers = servers != null ? [servers] : [];
 	if (!length(matcher) || !length(servers)) return;
 	if (matcher == 'geosite:cn') { matcher = 'rule-set:cn_domain'; need_cn_rs = true; }
-	policies[matcher] = servers;
+	if (role == 'nameserver-policy') policies[matcher] = servers;
+	else proxy_policies[matcher] = servers;
 });
 if (length(keys(policies)) && (!dns_present['nameserver-policy'] || dns_force['nameserver-policy']))
 	cfg['dns']['nameserver-policy'] = policies;
+if (length(keys(proxy_policies)) && (!dns_present['proxy-server-nameserver-policy'] || dns_force['proxy-server-nameserver-policy']))
+	cfg['dns']['proxy-server-nameserver-policy'] = proxy_policies;
 
 let respect_rules = a('dns_respect_rules') == null ? true : ab('dns_respect_rules');
 if (dns_force['respect-rules'])

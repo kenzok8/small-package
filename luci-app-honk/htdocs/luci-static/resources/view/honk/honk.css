@@ -1,0 +1,915 @@
+/* SPDX-License-Identifier: GPL-3.0-only */
+
+/* Honk — Apple-style design system.
+   Cards, pill badges, iOS segmented controls and soft-tinted buttons on a
+   translucent surface, so the UI adapts to every LuCI theme (light or dark). */
+
+.honk-page {
+	/* Accent — Apple system blue */
+	--hk-accent-rgb: 0, 122, 255;
+	--hk-accent: rgba(var(--hk-accent-rgb), 0.9);
+	--hk-accent-strong: rgba(var(--hk-accent-rgb), 1);
+	--hk-accent-border: rgba(var(--hk-accent-rgb), 0.35);
+	--hk-accent-soft: rgba(var(--hk-accent-rgb), 0.09);
+	--hk-accent-soft-hover: rgba(var(--hk-accent-rgb), 0.16);
+
+	/* Status — Apple system green / red */
+	--hk-green: #34c759;
+	--hk-red: #ff3b30;
+	--hk-orange: #ff9500;
+
+	/* Surfaces (translucent → adapts to any theme) */
+	--hk-card-bg: rgba(128, 128, 128, 0.04);
+	--hk-card-border: rgba(128, 128, 128, 0.14);
+	--hk-field-bg: rgba(128, 128, 128, 0.05);
+	--hk-field-border: rgba(128, 128, 128, 0.22);
+	--hk-hover: rgba(128, 128, 128, 0.08);
+	--hk-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+	--hk-shadow-hover: 0 8px 28px rgba(0, 0, 0, 0.08);
+	--hk-muted: rgba(74, 86, 106, 0.62);
+
+	--hk-radius: 14px;
+	--hk-radius-sm: 9px;
+	--hk-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+		"Hiragino Sans GB", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+	--hk-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+		"Liberation Mono", monospace;
+
+	font-family: var(--hk-font);
+	width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+}
+
+.honk-page,
+.honk-page * {
+	box-sizing: border-box;
+}
+
+/* LuCI themes (Argon/Bootstrap) set #view>div:first-child and .cbi-map to flex;
+   force block so our card/segmented-control layout behaves identically across
+   themes (ID selector specificity requires !important). */
+.cbi-map.honk-page {
+	display: block !important;
+}
+
+/* ---------- Hidden attribute guard ---------- */
+
+.honk-page [hidden] {
+	display: none !important;
+}
+
+/* ---------- Page header ---------- */
+
+.honk-header {
+	margin: 4px 0 18px;
+}
+
+.honk-header h2 {
+	margin: 0;
+	padding: 0;
+	font-size: 26px;
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	line-height: 1.15;
+	background: transparent !important;
+	box-shadow: none !important;
+	border-radius: 0 !important;
+}
+
+.honk-header-sub {
+	margin: 6px 0 0;
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--hk-muted);
+	max-width: 68ch;
+}
+
+/* ---------- Cards ---------- */
+
+.honk-page .cbi-section,
+.honk-page .cbi-section-node {
+	background: transparent !important;
+	border: 0 !important;
+	box-shadow: none !important;
+	margin: 0;
+	padding: 0;
+}
+
+.honk-card {
+	background: var(--hk-card-bg);
+	border: 1px solid var(--hk-card-border);
+	border-radius: var(--hk-radius);
+	padding: 18px 20px;
+	margin-bottom: 16px;
+	box-shadow: var(--hk-shadow);
+	backdrop-filter: blur(6px);
+	transition: box-shadow 0.25s ease;
+}
+
+.honk-card:hover {
+	box-shadow: var(--hk-shadow-hover);
+}
+
+.honk-card-head {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 12px;
+	flex-wrap: wrap;
+	margin-bottom: 12px;
+}
+
+.honk-card-title {
+	margin: 0 0 6px;
+	padding: 0 !important;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	opacity: 0.55;
+	background: transparent !important;
+	box-shadow: none !important;
+	border-radius: 0 !important;
+	width: auto !important;
+}
+
+.honk-card-head .honk-card-title {
+	margin-bottom: 4px;
+}
+
+/* ---------- Status badge (pill) ---------- */
+
+.honk-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	padding: 4px 14px;
+	border-radius: 999px;
+	font-size: 12.5px;
+	font-weight: 600;
+	line-height: 1.3;
+	border: 1px solid transparent;
+	white-space: nowrap;
+}
+
+.honk-badge::before {
+	content: "";
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: currentColor;
+	flex: none;
+}
+
+.honk-badge--run {
+	color: var(--hk-green);
+	border-color: rgba(52, 199, 89, 0.5);
+}
+
+.honk-badge--stop {
+	color: var(--hk-red);
+	border-color: rgba(255, 59, 48, 0.55);
+}
+
+.honk-badge--idle {
+	color: var(--hk-muted);
+	border-color: rgba(128, 128, 128, 0.35);
+}
+
+/* ---------- Buttons ---------- */
+
+.honk-page .cbi-button {
+	font-family: var(--hk-font);
+	font-size: 13px !important;
+	font-weight: 500;
+	line-height: 1.35 !important;
+	min-height: 0 !important;
+	height: auto !important;
+	padding: 7px 16px !important;
+	border-radius: 10px !important;
+	border: 1px solid rgba(128, 128, 128, 0.32) !important;
+	background: transparent !important;
+	color: inherit !important;
+	box-shadow: none !important;
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background-color 0.18s ease, border-color 0.18s ease,
+		opacity 0.18s ease, transform 0.12s ease;
+}
+
+.honk-page .cbi-button:hover {
+	background: var(--hk-hover) !important;
+}
+
+.honk-page .cbi-button:active {
+	transform: scale(0.98);
+}
+
+.honk-page .cbi-button:disabled {
+	opacity: 0.42;
+	cursor: not-allowed;
+}
+
+/* Primary — soft Apple blue */
+.honk-page .cbi-button-action {
+	border-color: var(--hk-accent-border) !important;
+	color: var(--hk-accent) !important;
+	background: var(--hk-accent-soft) !important;
+}
+
+.honk-page .cbi-button-action:hover {
+	background: var(--hk-accent-soft-hover) !important;
+	border-color: var(--hk-accent) !important;
+}
+
+/* Positive — soft green */
+.honk-page .cbi-button-positive {
+	border-color: rgba(52, 199, 89, 0.5) !important;
+	color: var(--hk-green) !important;
+	background: rgba(52, 199, 89, 0.09) !important;
+}
+
+.honk-page .cbi-button-positive:hover {
+	background: rgba(52, 199, 89, 0.16) !important;
+	border-color: var(--hk-green) !important;
+}
+
+/* Negative — soft red */
+.honk-page .cbi-button-negative {
+	border-color: rgba(255, 59, 48, 0.5) !important;
+	color: var(--hk-red) !important;
+	background: rgba(255, 59, 48, 0.08) !important;
+}
+
+.honk-page .cbi-button-negative:hover {
+	background: rgba(255, 59, 48, 0.15) !important;
+	border-color: var(--hk-red) !important;
+}
+
+/* ---------- Button groups ---------- */
+
+.honk-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+}
+
+.honk-subscription-add {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin-top: 10px;
+}
+
+.honk-subscription-add .cbi-input-text {
+	flex: 1;
+	min-width: 160px;
+}
+
+/* ---------- Meta line (mono, muted) ---------- */
+
+.honk-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 14px;
+	font-family: var(--hk-mono);
+	font-size: 12px;
+	color: var(--hk-muted);
+}
+
+.honk-meta-item {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 5px;
+}
+
+.honk-meta-label {
+	opacity: 0.55;
+}
+
+/* ---------- Forms / fields ---------- */
+
+.honk-page .cbi-value {
+	padding: 9px 0;
+	margin: 0;
+	border: 0;
+	background: transparent;
+}
+
+.honk-page .cbi-value-title {
+	float: none;
+	display: block;
+	width: auto;
+	padding: 0 0 6px;
+	font-size: 13px;
+	font-weight: 600;
+	opacity: 0.85;
+}
+
+.honk-page .cbi-value-field {
+	display: block;
+	width: auto;
+	padding: 0;
+	min-width: 0;
+}
+
+.honk-page .cbi-value-description {
+	font-size: 12px;
+	color: var(--hk-muted);
+	line-height: 1.5;
+	padding-top: 6px;
+}
+
+.honk-page .cbi-input-text,
+.honk-page .cbi-input-password,
+.honk-page .cbi-input-select,
+.honk-page .cbi-input-textarea,
+.honk-page select,
+.honk-page input[type="text"],
+.honk-page input[type="password"],
+.honk-page input[type="number"],
+.honk-page input[type="url"],
+.honk-page textarea {
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+	font-family: var(--hk-font);
+	font-size: 13.5px;
+	height: 38px;
+	padding: 7px 12px;
+	border: 1px solid var(--hk-field-border);
+	border-radius: var(--hk-radius-sm);
+	background: var(--hk-field-bg);
+	color: inherit;
+	transition: border-color 0.18s ease, box-shadow 0.18s ease,
+		background-color 0.18s ease;
+}
+
+.honk-page textarea,
+.honk-page .cbi-input-textarea {
+	height: auto;
+	min-height: 96px;
+	resize: vertical;
+	font-family: var(--hk-mono);
+	line-height: 1.5;
+}
+
+.honk-page .cbi-input-text:focus,
+.honk-page .cbi-input-password:focus,
+.honk-page .cbi-input-select:focus,
+.honk-page .cbi-input-textarea:focus,
+.honk-page select:focus,
+.honk-page input[type="text"]:focus,
+.honk-page input[type="password"]:focus,
+.honk-page input[type="number"]:focus,
+.honk-page input[type="url"]:focus,
+.honk-page textarea:focus {
+	outline: 0;
+	border-color: var(--hk-accent-border);
+	box-shadow: 0 0 0 3px var(--hk-accent-soft);
+	background: transparent;
+}
+
+.honk-page .cbi-input-text::placeholder,
+.honk-page textarea::placeholder,
+.honk-page input::placeholder {
+	opacity: 0.5;
+}
+
+/* Comfortable field widths inside full-width cards */
+.honk-page .cbi-value-field .cbi-input-text,
+.honk-page .cbi-value-field .cbi-input-password,
+.honk-page .cbi-value-field input[type="number"],
+.honk-page .cbi-value-field input[type="url"],
+.honk-page .cbi-value-field input[type="text"],
+.honk-page .cbi-value-field .cbi-input-select,
+.honk-page .cbi-value-field select,
+.honk-page .cbi-value-field input[type="file"] {
+	max-width: 400px;
+}
+
+.honk-page .cbi-value-field textarea,
+.honk-page .cbi-value-field .cbi-input-textarea {
+	max-width: 640px;
+}
+
+/* ---------- iOS toggle switch (boot-enabled checkbox) ---------- */
+
+.honk-page input[type="checkbox"] {
+	-webkit-appearance: none;
+	appearance: none;
+	position: relative;
+	width: 46px;
+	height: 27px;
+	margin: 0;
+	border: 0;
+	border-radius: 999px;
+	background: rgba(128, 128, 128, 0.3);
+	cursor: pointer;
+	transition: background-color 0.2s ease, opacity 0.2s ease;
+	flex: none;
+}
+
+.honk-page input[type="checkbox"]::before {
+	content: "";
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 23px;
+	height: 23px;
+	border-radius: 50%;
+	background: #fff;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+	transition: transform 0.2s ease;
+}
+
+.honk-page input[type="checkbox"]:checked {
+	background: var(--hk-green);
+}
+
+.honk-page input[type="checkbox"]:checked::before {
+	transform: translateX(19px);
+}
+
+.honk-page input[type="checkbox"]:focus-visible {
+	outline: 2px solid var(--hk-accent);
+	outline-offset: 3px;
+}
+
+.honk-page input[type="checkbox"]:disabled {
+	opacity: 0.42;
+	cursor: not-allowed;
+}
+
+/* ---------- Segmented control (iOS style) ---------- */
+
+.honk-seg {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	padding: 3px;
+	border-radius: 10px;
+	background: rgba(128, 128, 128, 0.12);
+	max-width: 100%;
+	overflow-x: auto;
+}
+
+.honk-seg-btn {
+	height: 30px;
+	line-height: 30px;
+	padding: 0 14px;
+	border: 0;
+	border-radius: 8px;
+	background: transparent;
+	color: inherit;
+	font-family: var(--hk-font);
+	font-size: 12.5px;
+	font-weight: 500;
+	opacity: 0.6;
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background-color 0.18s ease, color 0.18s ease,
+		opacity 0.18s ease;
+}
+
+.honk-seg-btn:hover {
+	opacity: 0.85;
+}
+
+.honk-seg-btn[aria-selected="true"],
+.honk-seg-btn.is-active {
+	background: #fff;
+	color: #1c1c1e;
+	opacity: 1;
+	font-weight: 600;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+}
+
+.honk-seg-btn:focus-visible {
+	outline: 2px solid var(--hk-accent);
+	outline-offset: 2px;
+}
+
+/* ---------- Notes & alerts ---------- */
+
+.honk-note {
+	font-size: 12.5px;
+	line-height: 1.55;
+	color: var(--hk-muted);
+	max-width: 72ch;
+}
+
+.honk-page .alert-message {
+	font-size: 12.5px;
+	line-height: 1.55;
+	padding: 10px 14px;
+	border-radius: var(--hk-radius-sm);
+	background: rgba(255, 59, 48, 0.08);
+	border: 1px solid rgba(255, 59, 48, 0.25);
+	color: inherit;
+	margin: 10px 0;
+	list-style: none;
+}
+
+.honk-page .alert-message li {
+	margin: 4px 0;
+}
+
+.honk-status-msg {
+	font-size: 12.5px;
+	color: var(--hk-muted);
+	min-height: 1.4em;
+	margin: 10px 0 0;
+}
+
+.honk-status-msg:empty {
+	margin: 0;
+}
+
+/* ---------- Disclosure (details/summary) ---------- */
+
+.honk-page details {
+	margin-top: 12px;
+}
+
+.honk-page details > summary {
+	min-height: 36px;
+	padding: 8px 0;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	opacity: 0.85;
+	user-select: none;
+	list-style: none;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.honk-page details > summary::-webkit-details-marker {
+	display: none;
+}
+
+.honk-page details > summary::before {
+	content: "";
+	width: 7px;
+	height: 7px;
+	border-right: 1.5px solid currentColor;
+	border-bottom: 1.5px solid currentColor;
+	transform: rotate(-45deg);
+	transition: transform 0.2s ease;
+	opacity: 0.6;
+	flex: none;
+	margin-top: -3px;
+}
+
+.honk-page details[open] > summary::before {
+	transform: rotate(45deg);
+	margin-top: 3px;
+}
+
+.honk-page details > summary:hover {
+	opacity: 1;
+}
+
+.honk-disclosure-danger > summary {
+	color: var(--hk-red);
+}
+
+/* ---------- Logs ---------- */
+
+.honk-log-toolbar {
+	display: flex;
+	align-items: flex-end;
+	gap: 10px;
+	flex-wrap: wrap;
+	margin: 12px 0;
+}
+
+.honk-log-toolbar .honk-field {
+	padding: 0;
+}
+
+.honk-log-toolbar label {
+	display: grid;
+	gap: 5px;
+	min-width: min(12em, 100%);
+	font-size: 12px;
+	font-weight: 600;
+	opacity: 0.8;
+}
+
+.honk-log-output {
+	width: 100%;
+	min-height: 380px;
+	max-height: 62vh;
+	margin: 0;
+	padding: 14px 16px;
+	border-radius: var(--hk-radius-sm);
+	border: 1px solid rgba(128, 128, 128, 0.22);
+	background: #1a1d21;
+	color: #d8dde6;
+	overflow: auto;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	font-family: var(--hk-mono);
+	font-size: 12px;
+	line-height: 1.55;
+}
+
+.honk-log-output .honk-log-line {
+	display: block;
+	padding: 1px 6px;
+	border-radius: 4px;
+}
+
+.honk-log-output .honk-log-ts {
+	color: #6b7480;
+	margin-right: 8px;
+	white-space: nowrap;
+}
+
+.honk-log-output .honk-log-lvl {
+	display: inline-block;
+	min-width: 40px;
+	padding: 0 5px;
+	margin-right: 8px;
+	border-radius: 3px;
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.4px;
+	text-align: center;
+	vertical-align: 1px;
+}
+
+.honk-log-output .honk-log-lvl-info {
+	color: #7fc7a8;
+	background: rgba(127, 199, 168, 0.08);
+}
+
+.honk-log-output .honk-log-lvl-warn {
+	color: #e8b95a;
+	background: rgba(232, 185, 90, 0.10);
+}
+
+.honk-log-output .honk-log-lvl-error {
+	color: #ea7878;
+	background: rgba(234, 120, 120, 0.10);
+}
+
+.honk-log-output .honk-log-lvl-debug {
+	color: #7a8290;
+	background: rgba(122, 130, 144, 0.10);
+}
+
+.honk-log-output .honk-log-lvl-trace {
+	color: #68717d;
+	background: rgba(104, 113, 125, 0.10);
+}
+
+.honk-log-output .honk-log-msg {
+	color: inherit;
+}
+
+.honk-log-output .honk-log-error .honk-log-msg {
+	color: #ea7878;
+}
+
+.honk-log-output .honk-log-warn .honk-log-msg {
+	color: #e8b95a;
+}
+
+.honk-log-output .honk-log-info .honk-log-msg {
+	color: #cfd6df;
+}
+
+.honk-log-output .honk-log-debug .honk-log-msg {
+	color: #7a8290;
+}
+
+.honk-log-output .honk-log-trace .honk-log-msg {
+	color: #68717d;
+}
+
+/* ---------- Package update rows ---------- */
+
+.honk-pkg-row {
+	display: grid;
+	grid-template-columns: 24px 130px minmax(0, 1fr) auto auto;
+	gap: 10px;
+	align-items: center;
+	font-size: 12.5px;
+	padding: 9px 0;
+	border-top: 1px dashed rgba(128, 128, 128, 0.18);
+}
+
+.honk-pkg-row:first-child {
+	border-top: 0;
+}
+
+.honk-pkg-icon {
+	text-align: center;
+	font-size: 14px;
+}
+
+.honk-pkg-ok {
+	color: var(--hk-green);
+}
+
+.honk-pkg-err {
+	color: var(--hk-red);
+}
+
+.honk-pkg-new {
+	color: var(--hk-accent);
+}
+
+.honk-pkg-name {
+	font-weight: 600;
+	opacity: 0.85;
+}
+
+.honk-pkg-meta {
+	opacity: 0.7;
+	font-family: var(--hk-mono);
+	font-size: 12px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.honk-up-log {
+	margin-top: 12px;
+	padding: 10px 12px;
+	border: 1px solid var(--hk-field-border);
+	border-radius: var(--hk-radius-sm);
+	max-height: 220px;
+	overflow: auto;
+	white-space: pre-wrap;
+	word-break: break-all;
+	font-family: var(--hk-mono);
+	font-size: 12px;
+	line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+	.honk-pkg-row {
+		grid-template-columns: 24px minmax(0, 1fr);
+		row-gap: 4px;
+	}
+
+	.honk-pkg-row .honk-pkg-icon {
+		grid-column: 1;
+		grid-row: 1;
+	}
+
+	.honk-pkg-row .honk-pkg-name {
+		grid-column: 2;
+		grid-row: 1;
+	}
+
+	.honk-pkg-row .honk-pkg-meta {
+		grid-column: 2;
+		grid-row: 2;
+		white-space: normal;
+	}
+
+	.honk-pkg-row > span:nth-child(4) {
+		display: none;
+	}
+
+	.honk-pkg-row > button,
+	.honk-pkg-row > span:last-child {
+		grid-column: 2;
+		grid-row: 3;
+		justify-self: start;
+	}
+}
+
+/* ---------- Page actions footer ---------- */
+
+.honk-page .cbi-page-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	background: transparent;
+	border: 0;
+	padding: 12px 0 0;
+	margin: 0;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 640px) {
+	.honk-page {
+		max-width: 100%;
+	}
+
+	.honk-header h2 {
+		font-size: 22px;
+	}
+
+	.honk-card {
+		padding: 15px 16px;
+		border-radius: 12px;
+	}
+
+	.honk-card-head {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.honk-actions {
+		width: 100%;
+	}
+
+	.honk-actions .cbi-button {
+		flex: 1 1 auto;
+	}
+
+	.honk-log-output {
+		min-height: 320px;
+	}
+}
+
+/* ---------- Dark mode ---------- */
+
+body.dark .honk-page,
+html.dark .honk-page,
+body[data-theme="dark"] .honk-page,
+html[data-theme="dark"] .honk-page,
+body[data-bs-theme="dark"] .honk-page,
+html[data-bs-theme="dark"] .honk-page,
+body[data-darkmode="1"] .honk-page,
+html[data-darkmode="1"] .honk-page,
+body[data-darkmode="true"] .honk-page,
+html[data-darkmode="true"] .honk-page {
+	--hk-green: #30d158;
+	--hk-red: #ff453a;
+	--hk-orange: #ff9f0a;
+	--hk-card-bg: rgba(255, 255, 255, 0.04);
+	--hk-card-border: rgba(255, 255, 255, 0.1);
+	--hk-field-bg: rgba(255, 255, 255, 0.05);
+	--hk-field-border: rgba(255, 255, 255, 0.16);
+	--hk-hover: rgba(255, 255, 255, 0.08);
+	--hk-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+	--hk-shadow-hover: 0 10px 32px rgba(0, 0, 0, 0.45);
+	--hk-muted: rgba(200, 210, 224, 0.6);
+}
+
+body.dark .honk-page .honk-seg-btn[aria-selected="true"],
+html.dark .honk-page .honk-seg-btn[aria-selected="true"],
+body[data-theme="dark"] .honk-page .honk-seg-btn[aria-selected="true"],
+html[data-theme="dark"] .honk-page .honk-seg-btn[aria-selected="true"],
+body[data-bs-theme="dark"] .honk-page .honk-seg-btn[aria-selected="true"],
+html[data-bs-theme="dark"] .honk-page .honk-seg-btn[aria-selected="true"],
+body[data-darkmode="1"] .honk-page .honk-seg-btn[aria-selected="true"],
+html[data-darkmode="1"] .honk-page .honk-seg-btn[aria-selected="true"],
+body[data-darkmode="true"] .honk-page .honk-seg-btn[aria-selected="true"],
+html[data-darkmode="true"] .honk-page .honk-seg-btn[aria-selected="true"],
+body.dark .honk-page .honk-seg-btn.is-active,
+html.dark .honk-page .honk-seg-btn.is-active,
+body[data-theme="dark"] .honk-page .honk-seg-btn.is-active,
+html[data-theme="dark"] .honk-page .honk-seg-btn.is-active,
+body[data-bs-theme="dark"] .honk-page .honk-seg-btn.is-active,
+html[data-bs-theme="dark"] .honk-page .honk-seg-btn.is-active,
+body[data-darkmode="1"] .honk-page .honk-seg-btn.is-active,
+html[data-darkmode="1"] .honk-page .honk-seg-btn.is-active,
+body[data-darkmode="true"] .honk-page .honk-seg-btn.is-active,
+html[data-darkmode="true"] .honk-page .honk-seg-btn.is-active {
+	background: rgba(255, 255, 255, 0.22);
+	color: #fff;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+body.dark .honk-page .honk-log-output,
+html.dark .honk-page .honk-log-output,
+body[data-theme="dark"] .honk-page .honk-log-output,
+html[data-theme="dark"] .honk-page .honk-log-output,
+body[data-bs-theme="dark"] .honk-page .honk-log-output,
+html[data-bs-theme="dark"] .honk-page .honk-log-output,
+body[data-darkmode="1"] .honk-page .honk-log-output,
+html[data-darkmode="1"] .honk-page .honk-log-output,
+body[data-darkmode="true"] .honk-page .honk-log-output,
+html[data-darkmode="true"] .honk-page .honk-log-output {
+	background: rgba(0, 0, 0, 0.28);
+}
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+	.honk-page .cbi-button,
+	.honk-page .cbi-button:active,
+	.honk-card,
+	.honk-page input[type="checkbox"],
+	.honk-page input[type="checkbox"]::before,
+	.honk-page details > summary::before {
+		transition: none !important;
+		transform: none !important;
+	}
+}

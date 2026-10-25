@@ -1,0 +1,14 @@
+#!/bin/sh
+
+. /lib/functions.sh
+
+config_load honk
+config_get_bool boot_enabled main boot_enabled 0
+
+if [ "$boot_enabled" -eq 1 ]; then
+	/etc/init.d/honk enable
+else
+	/etc/init.d/honk disable
+fi
+
+exit 0

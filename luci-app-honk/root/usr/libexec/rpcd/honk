@@ -1,0 +1,750 @@
+#!/bin/sh
+
+. /usr/share/libubox/jshn.sh
+. /lib/functions.sh
+. /usr/share/honk/lock.sh
+. /usr/share/honk/lifecycle.sh
+. /usr/share/honk/log-lines.sh
+
+CONTROL=/usr/share/honk/control.sh
+CORE=/usr/bin/honk-core
+JOBS=/tmp/honk-jobs
+JOB_RUNNER=/usr/share/honk/job.sh
+UPDATE=/usr/share/honk/update.sh
+MAINT=/usr/share/honk/maintenance.sh
+REDACT=/usr/share/honk/redact-log.sh
+LOG_LEVEL_FILTER=/usr/share/honk/log-level-filter.sh
+RESTORE_ROOT=/tmp/honk-maintenance
+RESTORE_PATH=$RESTORE_ROOT/restore.tar.gz
+
+emit_result() {
+	ok=$1
+	message=$2
+	[ "$ok" = true ] && ok=1 || ok=0
+	json_init
+	json_add_boolean ok "$ok"
+	json_add_string message "$message"
+	json_dump
+}
+
+emit_errors() {
+	ok=$1
+	[ "$ok" = true ] && ok=1 || ok=0
+	json_init
+	json_add_boolean ok "$ok"
+	json_add_array errors
+	for error in $2; do
+		json_add_string "" "$error"
+	done
+	json_close_array
+	json_dump
+}
+
+lock_owner_invalid() {
+	[ -d "$HONK_LOCK_DIR" ] || return 1
+	lock_owner=$(cat "$HONK_LOCK_DIR/pid" 2>/dev/null)
+	case "$lock_owner" in ''|*[!0-9]*) return 0 ;; esac
+	return 1
+}
+
+status() {
+	local enabled initialized boot_enabled running api_url api_ready core_version doona_version kernel lan_network listen_port errors listen clash_api_enabled clash_api_port clash_api_secret clash_api_url clash_api_ready clash_ui_ready clash_secret_set
+	config_load honk
+	config_get_bool enabled main enabled 0
+	config_get_bool initialized main initialized 0
+	config_get_bool boot_enabled main boot_enabled 0
+	config_get listen_port main listen_port 9527
+	config_get lan_network main lan_network lan
+	config_get_bool clash_api_enabled main clash_api_enabled 0
+	config_get clash_api_port main clash_api_port 9090
+	config_get clash_api_secret main clash_api_secret ''
+	managed_pid=$(procd_core_pid)
+	if is_managed_core "$managed_pid"; then running=1; else running=0; fi
+	listen=$(sed -n "s/^[[:space:]]*listen:[[:space:]]*'\\([^']*\\)'.*/\\1/p" /etc/honk/system.dae | head -n 1)
+	case "$listen" in
+		''|*[!0-9.:]*) listen="127.0.0.1:$listen_port" ;;
+	esac
+	api_url="http://$listen"
+	case "$clash_api_port" in
+		''|*[!0-9]*) clash_api_port=0 ;;
+	esac
+	clash_api_url="http://${listen%:*}:$clash_api_port"
+	clash_api_ready=0
+	if [ "$running" = 1 ] && [ "$clash_api_enabled" = 1 ] && [ "$clash_api_port" -gt 0 ] && honk_lifecycle_listener_owned "$managed_pid" "$clash_api_port"; then clash_api_ready=1; fi
+	clash_ui_ready=0
+	[ -s /usr/share/honk/zashboard/index.html ] && clash_ui_ready=1
+	clash_secret_set=0
+	[ -n "$clash_api_secret" ] && clash_secret_set=1
+	if [ "$running" = 1 ] && honk_lifecycle_api_owned "$managed_pid"; then api_ready=1; else api_ready=0; fi
+	core_version=$($CORE --version 2>/dev/null | sed -n '1p')
+	[ -n "$core_version" ] || core_version=unknown
+	doona_version=$(sed -n 's/^Version: //p' /usr/share/doona/SOURCE 2>/dev/null | head -n 1)
+	[ -n "$doona_version" ] || doona_version=unknown
+	kernel=$(uname -r)
+	errors=""
+	if [ "$enabled" != 1 ]; then errors="$errors disabled"; fi
+	if [ "$initialized" != 1 ]; then errors="$errors not_initialized"; fi
+	if [ "$enabled" = 1 ] && [ "$initialized" = 1 ] && [ "$running" != 1 ]; then errors="$errors service_not_running"; fi
+	if [ "$running" = 1 ] && [ "$api_ready" != 1 ]; then errors="$errors api_unavailable"; fi
+	if [ -d "$HONK_LOCK_DIR" ]; then
+		if lock_owner_invalid || honk_lock_is_stale; then errors="$errors stale_operation_lock maintenance_recovery_required"; else errors="$errors operation_in_progress"; fi
+	fi
+	{ [ -e /etc/.honk-maintenance/journal ] || [ -L /etc/.honk-maintenance/journal ]; } && errors="$errors maintenance_recovery_required"
+	{ [ -e /etc/.honk-update/journal ] || [ -L /etc/.honk-update/journal ]; } && errors="$errors update_recovery_required"
+	json_init
+	json_add_boolean enabled "$enabled"
+	json_add_boolean initialized "$initialized"
+	json_add_boolean boot_enabled "$boot_enabled"
+	json_add_boolean running "$running"
+	json_add_boolean api_ready "$api_ready"
+	json_add_string api_url "$api_url"
+	json_add_boolean clash_api_enabled "$clash_api_enabled"
+	json_add_int clash_api_port "$clash_api_port"
+	json_add_boolean clash_api_secret_set "$clash_secret_set"
+	json_add_boolean clash_api_ready "$clash_api_ready"
+	json_add_boolean clash_ui_ready "$clash_ui_ready"
+	json_add_string clash_api_url "$clash_api_url"
+	json_add_string core_version "$core_version"
+	json_add_string doona_version "$doona_version"
+	json_add_string kernel "$kernel"
+	json_add_string lan_network "$lan_network"
+	case "$listen_port" in
+		''|*[!0-9]*) listen_port=0 ;;
+	esac
+	json_add_int listen_port "$listen_port"
+	json_add_array errors
+	for error in $errors; do json_add_string "" "$error"; done
+	json_close_array
+	json_dump
+}
+
+
+service_ready_config() {
+	local enabled initialized
+	config_load honk
+	config_get_bool enabled main enabled 0
+	config_get_bool initialized main initialized 0
+	[ "$initialized" = 1 ]
+}
+
+start_job() {
+	job_operation=$1
+	job_request=
+	case "$job_operation" in backup|restore|reset|update_check|update_apply) ;; *) emit_result false invalid_operation; return 1 ;; esac
+	if [ "$job_operation" = update_apply ]; then
+		update_gate_result=$("$UPDATE" gate 2>/dev/null) || { emit_result false update_check_failed; return 1; }
+		json_load "$update_gate_result" 2>/dev/null || { emit_result false update_check_failed; return 1; }
+		json_get_var update_apply_enabled apply_enabled
+		if [ "$update_apply_enabled" != 1 ]; then
+			json_get_var update_gate_reason reason
+			case "$update_gate_reason" in rollback_tuple_unavailable|trusted_feed_unavailable|signed_manifest_missing|signed_manifest_expired|no_update) emit_result false "$update_gate_reason" ;; *) emit_result false update_check_failed ;; esac
+			return 1
+		fi
+	fi
+
+	if [ ! -e "$JOBS" ] && [ ! -L "$JOBS" ]; then
+		(umask 077; mkdir "$JOBS") || { emit_result false job_storage_unavailable; return 1; }
+	fi
+	[ -d "$JOBS" ] && [ ! -L "$JOBS" ] && [ "$(stat -c '%u:%a' "$JOBS" 2>/dev/null)" = 0:700 ] || { emit_result false job_storage_unavailable; return 1; }
+	job_id=$(cat /proc/sys/kernel/random/uuid 2>/dev/null | tr -d '-')
+	case "$job_id" in [0-9a-f][0-9a-f]*) [ "${#job_id}" -eq 32 ] || { emit_result false job_id_unavailable; return 1; } ;; *) emit_result false job_id_unavailable; return 1 ;; esac
+	job_dir=$JOBS/$job_id
+	mkdir "$job_dir" || { emit_result false job_storage_unavailable; return 1; }
+	chmod 0700 "$job_dir" || { rm -rf "$job_dir"; emit_result false job_storage_unavailable; return 1; }
+
+	json_init
+	json_add_string state running
+	json_add_string phase queued
+	json_add_boolean ok 1
+	json_add_string message job_started
+	json_dump > "$job_dir/status" || { rm -rf "$job_dir"; emit_result false job_storage_unavailable; return 1; }
+	chmod 0600 "$job_dir/status" || { rm -rf "$job_dir"; emit_result false job_storage_unavailable; return 1; }
+	nohup "$JOB_RUNNER" "$job_id" "$job_operation" >/dev/null 2>&1 </dev/null &
+	job_pid=$!
+	printf '%s\n' "$job_pid" > "$job_dir/worker.pid" || { rm -rf "$job_dir"; emit_result false job_storage_unavailable; return 1; }
+	chmod 0600 "$job_dir/worker.pid" || { rm -rf "$job_dir"; emit_result false job_storage_unavailable; return 1; }
+	json_init
+	json_add_boolean ok 1
+	json_add_string message job_started
+	json_add_string job_id "$job_id"
+	json_dump
+}
+
+job_status() {
+	request=$(cat)
+	json_load "$request" 2>/dev/null || { emit_result false invalid_request; return 1; }
+	json_get_var job_id job_id
+	case "$job_id" in ''|*[!0-9a-f]*) emit_result false invalid_job_id; return 1 ;; esac
+	[ "${#job_id}" -eq 32 ] || { emit_result false invalid_job_id; return 1; }
+	[ -d "$JOBS" ] && [ ! -L "$JOBS" ] && [ "$(stat -c '%u:%a' "$JOBS" 2>/dev/null)" = 0:700 ] || { emit_result false job_not_found; return 1; }
+	job_dir=$JOBS/$job_id
+	[ -d "$job_dir" ] && [ ! -L "$job_dir" ] && [ "$(stat -c '%u:%a' "$job_dir" 2>/dev/null)" = 0:700 ] || { emit_result false job_not_found; return 1; }
+	job_status_file=$JOBS/$job_id/status
+	[ -f "$job_status_file" ] && [ ! -L "$job_status_file" ] && [ "$(stat -c '%u:%a' "$job_status_file" 2>/dev/null)" = 0:600 ] || { emit_result false job_not_found; return 1; }
+	job_pid_file=$job_dir/worker.pid
+	[ -f "$job_pid_file" ] && [ ! -L "$job_pid_file" ] && [ "$(stat -c '%u:%a' "$job_pid_file" 2>/dev/null)" = 0:600 ] || { emit_result false job_not_found; return 1; }
+	job_state=$(jsonfilter -i "$job_status_file" -e '@.state' 2>/dev/null)
+	job_pid=$(cat "$job_pid_file" 2>/dev/null)
+	case "$job_pid" in ''|*[!0-9]*) job_pid= ;; esac
+	if [ "$job_state" = running ] && { [ -z "$job_pid" ] || ! kill -0 "$job_pid" 2>/dev/null; }; then
+		json_init
+		if [ -e /etc/.honk-maintenance/journal ] || [ -L /etc/.honk-maintenance/journal ] || [ -e /etc/.honk-update/journal ] || [ -L /etc/.honk-update/journal ] || [ -d "$HONK_LOCK_DIR" ]; then
+			json_add_string state rollback_required
+			json_add_string phase recovery
+			job_lost_message=maintenance_recovery_required
+		else
+			json_add_string state failed
+			json_add_string phase complete
+			job_lost_message worker_lost
+		fi
+		json_add_boolean ok 0
+		json_add_string message "$job_lost_message"
+		json_dump > "$job_dir/status.new" && chmod 0600 "$job_dir/status.new" && mv -f "$job_dir/status.new" "$job_status_file" || { emit_result false job_status_unavailable; return 1; }
+	fi
+	cat "$job_status_file"
+}
+
+logs() {
+	request=$(cat)
+	json_load "$request" 2>/dev/null || { emit_result false invalid_request; return 1; }
+	json_get_var log_source source
+	json_get_var log_level level
+	json_get_var log_limit limit
+	case "$log_source" in service) log_pattern='honk.init|procd.*honk|honk service|honk\[[0-9]+\]' ;; core) log_pattern='honk-core|honk::' ;; maintenance) log_pattern='honk-maintenance|honk maintenance' ;; *) emit_result false invalid_log_source; return 1 ;; esac
+	case "$log_level" in all|debug|info|warn|error) ;; *) emit_result false invalid_log_level; return 1 ;; esac
+	case "$log_limit" in ''|*[!0-9]*) log_limit=200 ;; esac
+	[ "$log_limit" -ge 1 ] && [ "$log_limit" -le 200 ] || { emit_result false invalid_log_limit; return 1; }
+	command -v logread >/dev/null 2>&1 || { emit_result false logs_unavailable; return 1; }
+	[ -x "$REDACT" ] && [ -x "$LOG_LEVEL_FILTER" ] || { emit_result false logs_unavailable; return 1; }
+	log_raw_file=$(mktemp /tmp/honk-log.XXXXXX) || { emit_result false logs_unavailable; return 1; }
+	log_file=$(mktemp /tmp/honk-log.XXXXXX) || { rm -f "$log_raw_file"; emit_result false logs_unavailable; return 1; }
+	chmod 0600 "$log_raw_file" "$log_file" || { rm -f "$log_raw_file" "$log_file"; emit_result false logs_unavailable; return 1; }
+	log_capped=0
+	logread -l 200 -e 'honk' 2>/dev/null | head -c 262144 > "$log_raw_file"
+	log_raw_bytes=$(wc -c < "$log_raw_file" | tr -d ' ')
+	if [ "$log_raw_bytes" -ge 262144 ]; then
+		log_capped=1
+		log_raw_complete=$(mktemp /tmp/honk-log.XXXXXX) || { rm -f "$log_raw_file" "$log_file"; emit_result false logs_unavailable; return 1; }
+		chmod 0600 "$log_raw_complete" || { rm -f "$log_raw_file" "$log_file" "$log_raw_complete"; emit_result false logs_unavailable; return 1; }
+		sed '$d' "$log_raw_file" > "$log_raw_complete"
+		mv -f "$log_raw_complete" "$log_raw_file"
+	fi
+	grep -E "$log_pattern" "$log_raw_file" | "$LOG_LEVEL_FILTER" "$log_level" | "$REDACT" > "$log_file"
+	rm -f "$log_raw_file"
+	line_count=$(wc -l < "$log_file" | tr -d ' ')
+	if [ "$line_count" -gt "$log_limit" ]; then
+		log_capped=1
+		tail -n "$log_limit" "$log_file" > "$log_file.latest" && mv -f "$log_file.latest" "$log_file"
+	fi
+	log_bytes=$(wc -c < "$log_file" | tr -d ' ')
+	if [ "$log_bytes" -gt 32768 ]; then
+		log_capped=1
+		log_capped_file=$(mktemp /tmp/honk-log.XXXXXX) || { rm -f "$log_file"; emit_result false logs_unavailable; return 1; }
+		chmod 0600 "$log_capped_file" || { rm -f "$log_file" "$log_capped_file"; emit_result false logs_unavailable; return 1; }
+		LC_ALL=C awk 'BEGIN { first=1; bytes=0 } { lines[NR]=$0; sizes[NR]=length($0)+1; bytes+=sizes[NR]; while (bytes>32768 && first<=NR) { bytes-=sizes[first]; first++ } } END { for (i=first; i<=NR; i++) print lines[i] }' "$log_file" > "$log_capped_file"
+		mv -f "$log_capped_file" "$log_file"
+	fi
+	json_init
+	json_add_boolean ok 1
+	json_add_string message logs_read
+	[ "$log_capped" = 1 ] && json_add_boolean capped 1 || json_add_boolean capped 0
+	json_add_array lines
+	honk_add_log_lines "$log_file"
+	json_close_array
+	json_dump
+	rm -f "$log_file"
+}
+
+promote_default_route() {
+	local current=$1 candidate=$2 dns_block
+	if cmp -s "$current" /usr/share/honk/default-config.dae; then
+		sed 's/^    fallback: direct$/    fallback: proxy/' "$candidate" > "$candidate.route" || return 1
+	elif [ "$(sha256sum "$current" | awk '{print $1}')" = 83d1cc32bfe5b44ecae4b05c2c82c81ce9a36ab29f391d1e1d1d6b4993e17d2b ]; then
+		# The r1 package had only an include and a direct fallback. Preserve the
+		# newly added node or subscription while upgrading that exact default.
+		dns_block=$(sed -n '/^dns {$/,/^}$/p' /usr/share/honk/default-config.dae) || return 1
+		[ -n "$dns_block" ] || return 1
+		awk -v dns_block="$dns_block" '
+			/^routing[[:space:]]*\{$/ {
+				print "group {\n    proxy {\n        policy: min_moving_avg\n    }\n}\n"
+				print dns_block "\n"
+				print
+				print "    dip(224.0.0.0/3, \047ff00::/8\047) -> direct\n    dip(geoip: private) && !dport(53) -> direct(must)\n    dip(geoip: cn) && !dport(53) -> direct(must)\n    domain(geosite: cn) -> direct"
+				next
+			}
+			/^    fallback: direct$/ { print "    fallback: proxy"; next }
+			{ print }
+		' "$candidate" > "$candidate.route" || return 1
+	else
+		return 0
+	fi
+	mv "$candidate.route" "$candidate" || return 1
+}
+
+validate_proxy_nodes() (
+	local candidate=$1 provider_name=${2:-} node_prefix=${3:-} expected_nodes=${4:-0} temp port core_pid= attempt ready node_count group_count result provider
+	temp=$(mktemp -d /tmp/honk-onboard.XXXXXX) || return 1
+	validator_core_owned() {
+		[ -n "$core_pid" ] && [ -r "/proc/$core_pid/cmdline" ] || return 1
+		case "$(tr '\000' ' ' < "/proc/$core_pid/cmdline" 2>/dev/null)" in
+			*"$temp/config.dae"*--mock-ebpf*) [ "$(readlink -f "/proc/$core_pid/exe" 2>/dev/null)" = "$CORE" ] ;;
+			*) return 1 ;;
+		esac
+	}
+	validator_cleanup() {
+		if validator_core_owned; then
+			kill -TERM "$core_pid" 2>/dev/null || :
+			attempt=0
+			while validator_core_owned && [ "$attempt" -lt 3 ]; do sleep 1; attempt=$((attempt + 1)); done
+			if validator_core_owned; then
+				kill -KILL "$core_pid" 2>/dev/null || :
+				attempt=0
+				while validator_core_owned && [ "$attempt" -lt 2 ]; do sleep 1; attempt=$((attempt + 1)); done
+			fi
+			validator_core_owned && { logger -t honk "candidate core did not exit; retained $temp"; return 1; }
+		fi
+		[ -z "$core_pid" ] || wait "$core_pid" 2>/dev/null || :
+		rm -rf "$temp" || return 1
+		core_pid=
+		temp=
+	}
+	trap 'validator_cleanup' EXIT
+	trap 'exit 1' HUP INT TERM
+	port=$((20000 + $(hexdump -n 2 -e '1/2 "%u"' /dev/urandom) % 20000))
+	if ! cp -p /etc/honk/*.dae "$temp/" || ! cp "$candidate" "$temp/config.dae"; then
+		return 1
+	fi
+	cat > "$temp/system.dae" <<EOF
+global {
+    wan_interface: auto
+    lan_interface: ''
+    data_dir: '$temp'
+    tproxy_port: $((port + 20000))
+    nfqueue_enable: false
+    store_subscribe: true
+}
+experimental {
+    native_api {
+        enabled: true
+        listen: '127.0.0.1:$port'
+        password_auth: false
+        allow_anonymous_loopback: true
+        config_write: false
+    }
+}
+EOF
+	DAE_LOCATION_ASSET=/usr/share/v2ray "$CORE" --config "$temp/config.dae" --mock-ebpf > "$temp/core.log" 2>&1 &
+	core_pid=$!
+	ready=0
+	result=2
+	attempt=0
+	while [ "$attempt" -lt 25 ]; do
+		if ! kill -0 "$core_pid" 2>/dev/null; then result=1; break; fi
+		if curl -fsS --noproxy '*' --connect-timeout 1 --max-time 2 "http://127.0.0.1:$port/api/v1/nodes" -o "$temp/nodes.json" 2>/dev/null; then
+			ready=1
+			node_count=$(jsonfilter -i "$temp/nodes.json" -e '@.nodes[*].protocol' 2>/dev/null | awk '$1 != "direct" && $1 != "block" { count++ } END { print count+0 }')
+			if curl -fsS --noproxy '*' --connect-timeout 1 --max-time 2 "http://127.0.0.1:$port/api/v1/groups" -o "$temp/groups.json" 2>/dev/null; then
+				group_count=$(jsonfilter -i "$temp/groups.json" -e '@[*].member_count' 2>/dev/null | awk '{ count += $1 } END { print count+0 }')
+				if [ "$node_count" -gt 0 ] && [ "$group_count" -gt 0 ]; then
+					if [ -n "$node_prefix" ]; then
+						node_count=$(jsonfilter -i "$temp/nodes.json" -e '@.nodes[*].name' 2>/dev/null | awk -v prefix="$node_prefix" '$0 ~ "^" prefix "[0-9]+$" { count++ } END { print count+0 }')
+						if [ "$node_count" -eq "$expected_nodes" ]; then result=0; break; fi
+					elif [ -z "$provider_name" ]; then result=0; break; fi
+					if curl -fsS --noproxy '*' --connect-timeout 1 --max-time 2 "http://127.0.0.1:$port/api/v1/providers" -o "$temp/providers.json" 2>/dev/null &&
+						jsonfilter -i "$temp/providers.json" -e '@.providers[*]' > "$temp/providers.rows" 2>/dev/null; then
+						while IFS= read -r provider; do
+							[ "$(jsonfilter -s "$provider" -e '@.name' 2>/dev/null)" = "$provider_name" ] || continue
+							[ "$(jsonfilter -s "$provider" -e '@.kind' 2>/dev/null)" = subscription ] || continue
+							node_count=$(jsonfilter -s "$provider" -e '@.node_count' 2>/dev/null)
+							case "$node_count" in ''|*[!0-9]*) break ;; esac
+							if [ "$node_count" -gt 0 ]; then result=0; fi
+							break
+						done < "$temp/providers.rows"
+						[ "$result" = 0 ] && break
+					fi
+				fi
+			fi
+		fi
+		sleep 1
+		attempt=$((attempt + 1))
+	done
+	[ "$ready" = 1 ] || result=1
+	validator_cleanup || return 1
+	trap - EXIT HUP INT TERM
+	return "$result"
+)
+
+commit_validated_candidate() {
+	local cfg=$1 candidate=$2 was_running=0 restore
+	[ -n "$(honk_lifecycle_managed_pid 2>/dev/null)" ] && was_running=1
+	cp -p "$cfg" "$cfg.bak" || return 1
+	chmod 0600 "$candidate" && mv "$candidate" "$cfg" || return 1
+	[ "$was_running" = 1 ] || return 0
+	honk_lifecycle_restart 30 && return 0
+	restore=$(mktemp /etc/honk/.config.rollback.XXXXXX) || return 3
+	cp -p "$cfg.bak" "$restore" && mv "$restore" "$cfg" || { rm -f "$restore"; return 3; }
+	honk_lifecycle_stop 30 && honk_lifecycle_start 30 && return 2
+	logger -t honk "candidate restart and previous service restoration failed; inspect $cfg.bak"
+	return 3
+}
+
+add_subscription() {
+	request=$(cat)
+	json_load "$request" 2>/dev/null || { emit_result false invalid_request; return 1; }
+	json_get_var sub_name name
+	json_get_var sub_url url
+
+	case "$sub_name" in
+		''|*[!A-Za-z0-9_-]*) emit_result false subscription_invalid; return 1 ;;
+	esac
+	case "$sub_url" in
+		http://*|https://*) ;;
+		*) emit_result false subscription_invalid; return 1 ;;
+	esac
+
+	cfg=/etc/honk/config.dae
+	[ -f "$cfg" ] || { emit_result false config_missing; return 1; }
+	begin_mutation
+	original_hash=$(sha256sum "$cfg" | awk '{print $1}')
+
+	if grep -qE "^[[:space:]]*${sub_name}:[[:space:]]*['\"]" "$cfg"; then
+		emit_result false subscription_invalid_or_conflicting
+		return 1
+	fi
+
+	candidate=$(mktemp /etc/honk/.config.dae.XXXXXX) || { emit_result false config_write_failed; return 1; }
+
+	if ! awk -v name="$sub_name" -v url="$sub_url" '
+		/^subscription[[:space:]]*\{/ {
+			print
+			printf "    %s: \047%s\047 {\n        interval: 86400s\n        route: direct\n    }\n", name, url
+			found = 1
+			next
+		}
+		{ print }
+		END {
+			if (!found) {
+				printf "\nsubscription {\n    %s: \047%s\047 {\n        interval: 86400s\n        route: direct\n    }\n}\n", name, url
+			}
+		}
+	' "$cfg" > "$candidate" 2>/dev/null; then
+		rm -f "$candidate"
+		emit_result false config_write_failed
+		return 1
+	fi
+
+	promote_default_route "$cfg" "$candidate" || { rm -f "$candidate" "$candidate.route"; emit_result false config_write_failed; return 1; }
+	validate_proxy_nodes "$candidate" "$sub_name"
+	case "$?" in
+		0) ;;
+		2) rm -f "$candidate"; emit_result false subscription_no_nodes; return 1 ;;
+		*) rm -f "$candidate"; emit_result false candidate_invalid; return 1 ;;
+	esac
+	[ "$(sha256sum "$cfg" | awk '{print $1}')" = "$original_hash" ] || { rm -f "$candidate"; emit_result false source_changed; return 1; }
+	commit_validated_candidate "$cfg" "$candidate"
+	case "$?" in
+		0) ;;
+		2) emit_result false reload_failed_rolled_back; return 1 ;;
+		3) emit_result false reload_and_rollback_failed; return 1 ;;
+		*) rm -f "$candidate"; emit_result false config_write_failed; return 1 ;;
+	esac
+
+	emit_result true subscription_added
+}
+
+add_nodes() {
+	request=$(cat)
+	json_load "$request" 2>/dev/null || { emit_result false invalid_request; return 1; }
+	json_get_var node_links links
+
+	[ -n "$node_links" ] || { emit_result false invalid_request; return 1; }
+
+	cfg=/etc/honk/config.dae
+	[ -f "$cfg" ] || { emit_result false config_missing; return 1; }
+	begin_mutation
+	original_hash=$(sha256sum "$cfg" | awk '{print $1}')
+
+	node_prefix="node_$(hexdump -n 4 -e '4/1 "%02x"' /dev/urandom)_"
+	node_lines=$(printf '%s\n' "$node_links" | awk -v prefix="$node_prefix" '
+		BEGIN { n = 0 }
+		{
+			if ($0 !~ /^(vless|vmess|ss|ssr|tuic|trojan|hysteria2|hy2|socks5|http|https):\/\//) next
+			n++
+			printf "    %s%03d: \047%s\047\n", prefix, n, $0
+		}
+		END { if (n == 0) exit 1 }
+	') || { emit_result false share_links_invalid_or_conflicting; return 1; }
+	added_nodes=$(printf '%s\n' "$node_lines" | awk 'END { print NR }')
+
+	candidate=$(mktemp /etc/honk/.config.dae.XXXXXX) || { emit_result false config_write_failed; return 1; }
+
+	if ! awk -v lines="$node_lines" '
+		/^[[:space:]]*node[[:space:]]*\{/ {
+			print
+			printf "%s\n", lines
+			found = 1
+			next
+		}
+		{ print }
+		END {
+			if (!found) printf "\nnode {\n%s\n}\n", lines
+		}
+	' "$cfg" > "$candidate" 2>/dev/null; then
+		rm -f "$candidate"
+		emit_result false config_write_failed
+		return 1
+	fi
+
+	promote_default_route "$cfg" "$candidate" || { rm -f "$candidate" "$candidate.route"; emit_result false config_write_failed; return 1; }
+	validate_proxy_nodes "$candidate" "" "$node_prefix" "$added_nodes"
+	case "$?" in
+		0) ;;
+		2) rm -f "$candidate"; emit_result false share_links_invalid_or_conflicting; return 1 ;;
+		*) rm -f "$candidate"; emit_result false candidate_invalid; return 1 ;;
+	esac
+	[ "$(sha256sum "$cfg" | awk '{print $1}')" = "$original_hash" ] || { rm -f "$candidate"; emit_result false source_changed; return 1; }
+	commit_validated_candidate "$cfg" "$candidate"
+	case "$?" in
+		0) ;;
+		2) emit_result false reload_failed_rolled_back; return 1 ;;
+		3) emit_result false reload_and_rollback_failed; return 1 ;;
+		*) rm -f "$candidate"; emit_result false config_write_failed; return 1 ;;
+	esac
+
+	emit_result true nodes_added
+}
+
+extract_dae_block() {
+	# $1 = 块名, $2 = 文件；输出该顶级块（含大括号）。只匹配行首（无缩进）的块，
+	# 避免把 dns 里的 routing/request 子块误当成顶级 routing。
+	awk -v name="$1" '
+		$0 ~ "^" name "[[:space:]]*\\{" {
+			in_block = 1
+			depth = 0
+		}
+		in_block {
+			print
+			depth += gsub(/\{/, "{")
+			depth -= gsub(/\}/, "}")
+			if (depth <= 0 && $0 ~ /\}/) in_block = 0
+		}
+	' "$2"
+}
+
+import_dae() {
+	request=$(cat)
+	json_load "$request" 2>/dev/null || { emit_result false invalid_request; return 1; }
+
+	src=/tmp/honk-v2-upload/import.dae
+	[ -f "$src" ] || { emit_result false dae_upload_unavailable; return 1; }
+
+	cfg=/etc/honk/config.dae
+	[ -f "$cfg" ] || { emit_result false config_missing; return 1; }
+
+	# 提取 node 块（过滤 honk-core 不支持的 ssr/snell 协议）
+	node_block=$(awk '
+		$0 ~ /^node[[:space:]]*\{/ {
+			in_block = 1
+			depth = 0
+			print
+			next
+		}
+		in_block {
+			if ($0 ~ /node_[A-Za-z0-9_]+:[[:space:]]*\047(ssr|snell):\/\//) next
+			print
+			depth += gsub(/\{/, "{")
+			depth -= gsub(/\}/, "}")
+			if (depth <= 0 && $0 ~ /\}/) in_block = 0
+		}
+	' "$src")
+	group_block=$(extract_dae_block group "$src")
+	routing_block=$(extract_dae_block routing "$src")
+	dns_block=$(extract_dae_block dns "$src")
+
+	[ -n "$node_block" ] || [ -n "$group_block" ] || [ -n "$routing_block" ] || [ -n "$dns_block" ] || { emit_result false dae_invalid_or_unsupported; return 1; }
+
+	cp -p "$cfg" "$cfg.bak" 2>/dev/null || true
+
+	# 整体替换 node/group/routing/dns 四个业务块，保留 include（system.dae）与 subscription。
+	if ! awk -v node_block="$node_block" -v group_block="$group_block" -v routing_block="$routing_block" -v dns_block="$dns_block" '
+		function skip_block() {
+			depth = 1
+			while (depth > 0 && (getline line) > 0) {
+				depth += gsub(/\{/, "{", line)
+				depth -= gsub(/\}/, "}", line)
+			}
+		}
+		/^[[:space:]]*node[[:space:]]*\{/ {
+			if (node_block != "") { printf "%s\n", node_block; node_done = 1 }
+			skip_block()
+			next
+		}
+		/^[[:space:]]*group[[:space:]]*\{/ {
+			if (group_block != "") { printf "%s\n", group_block; group_done = 1 }
+			skip_block()
+			next
+		}
+		/^[[:space:]]*routing[[:space:]]*\{/ {
+			if (routing_block != "") { printf "%s\n", routing_block; routing_done = 1 }
+			skip_block()
+			next
+		}
+		/^[[:space:]]*dns[[:space:]]*\{/ {
+			if (dns_block != "") { printf "%s\n", dns_block; dns_done = 1 }
+			skip_block()
+			next
+		}
+		{ print }
+		END {
+			if (node_block != "" && !node_done) printf "\n%s\n", node_block
+			if (group_block != "" && !group_done) printf "\n%s\n", group_block
+			if (routing_block != "" && !routing_done) printf "\n%s\n", routing_block
+			if (dns_block != "" && !dns_done) printf "\n%s\n", dns_block
+		}
+	' "$cfg" > "$cfg.tmp" 2>/dev/null; then
+		rm -f "$cfg.tmp"
+		emit_result false config_write_failed
+		return 1
+	fi
+
+	mv "$cfg.tmp" "$cfg" || { rm -f "$cfg.tmp"; emit_result false config_write_failed; return 1; }
+	chmod 0600 "$cfg" 2>/dev/null || true
+	rm -f "$src" 2>/dev/null || true
+
+	if [ -n "$(honk_lifecycle_managed_pid 2>/dev/null)" ]; then
+		/etc/init.d/honk reload >/dev/null 2>&1 || :
+	fi
+
+	emit_result true dae_imported
+}
+
+set_enabled() {
+	uci set "honk.main.enabled=$1" && uci commit honk
+}
+
+procd_core_pid() {
+	honk_lifecycle_procd_pid
+}
+
+is_managed_core() {
+	[ "$1" = "$(honk_lifecycle_managed_pid 2>/dev/null)" ] && [ -n "$1" ]
+}
+
+begin_mutation() {
+	if [ -e /etc/.honk-update/journal ] || [ -L /etc/.honk-update/journal ]; then emit_result false update_recovery_required; exit 1; fi
+	honk_lock_acquire || { emit_result false operation_in_progress; exit 1; }
+	trap 'honk_lock_release >/dev/null 2>&1' 0
+}
+
+restore_prepare() {
+	# Stage the upload directory for a backup restore. The frontend calls
+	# this before uploading the archive to $RESTORE_PATH.
+	if ! mkdir -p "$RESTORE_ROOT" 2>/dev/null; then
+		emit_result false mkdir_failed
+		return 1
+	fi
+	rm -f "$RESTORE_PATH"
+	emit_result true prepared
+}
+
+case "$1" in
+list)
+		echo '{"status":{},"check":{},"initialize":{"username":"String","password":"String"},"start":{},"stop":{},"restart":{},"settings":{"lan_network":"String","listen_port":"Integer","boot_enabled":"Boolean","clash_api_enabled":"Boolean","clash_api_port":"Integer","clash_api_secret":"String"},"add_subscription":{"name":"String","url":"String"},"add_nodes":{"links":"String"},"import_dae":{},"repair":{},"backup":{},"restore":{},"restore_prepare":{},"reset":{},"job_status":{"job_id":"String"},"logs":{"source":"String","level":"String","limit":"Integer"},"update_check":{},"update_apply":{}}'
+		;;
+	call)
+		case "$2" in
+			status)
+				status
+				;;
+			check)
+				if errors=$("$CONTROL" diagnose 2>/dev/null); then emit_errors true ""; else emit_errors false "$errors"; fi
+				;;
+			initialize)
+				exec "$CONTROL" initialize
+				;;
+			settings)
+				exec "$CONTROL" settings
+				;;
+			add_subscription)
+				add_subscription
+				;;
+			add_nodes)
+				add_nodes
+				;;
+			import_dae)
+				import_dae
+				;;
+			repair)
+				exec "$CONTROL" repair
+				;;
+			backup)
+				start_job backup
+				;;
+			restore)
+				start_job restore
+				;;
+			restore_prepare)
+				restore_prepare
+				;;
+			reset)
+				start_job reset
+				;;
+			job_status)
+				job_status
+				;;
+			logs)
+				logs
+				;;
+			update_check)
+				start_job update_check
+				;;
+			update_apply)
+				start_job update_apply
+				;;
+			start)
+				begin_mutation
+				if ! service_ready_config; then emit_result false not_initialized; exit 1; fi
+				old_enabled=$(uci -q get honk.main.enabled || echo 0)
+				if ! set_enabled 1; then emit_result false settings_write_failed; exit 1; fi
+				managed_pid=$(honk_lifecycle_managed_pid 2>/dev/null)
+				if [ -n "$managed_pid" ]; then
+					if honk_lifecycle_api_owned "$managed_pid"; then emit_result true already_running; else set_enabled "$old_enabled" >/dev/null 2>&1; emit_result false managed_service_unhealthy; exit 1; fi
+				elif honk_lifecycle_start 30; then
+					emit_result true started
+				else
+					honk_lifecycle_stop 30 >/dev/null 2>&1 || :
+					set_enabled "$old_enabled" >/dev/null 2>&1
+					emit_result false start_failed
+					exit 1
+				fi
+				;;
+			stop)
+				begin_mutation
+				old_enabled=$(uci -q get honk.main.enabled || echo 0)
+				if ! set_enabled 0; then emit_result false settings_write_failed; exit 1; fi
+				if honk_lifecycle_stop 30; then emit_result true stopped; else set_enabled "$old_enabled" >/dev/null 2>&1; emit_result false stop_failed; exit 1; fi
+				;;
+			restart)
+				begin_mutation
+				if ! service_ready_config; then emit_result false not_initialized; exit 1; fi
+				old_enabled=$(uci -q get honk.main.enabled || echo 0)
+				if ! set_enabled 1; then emit_result false settings_write_failed; exit 1; fi
+				if [ -n "$(honk_lifecycle_managed_pid 2>/dev/null)" ]; then
+					:
+				elif pidof honk-core >/dev/null 2>&1; then
+					set_enabled "$old_enabled" >/dev/null 2>&1
+					emit_result false unmanaged_core_running
+					exit 1
+				fi
+				if honk_lifecycle_restart 30; then emit_result true restarted; else set_enabled "$old_enabled" >/dev/null 2>&1; emit_result false restart_failed; exit 1; fi
+				;;
+			*)
+				emit_result false unknown_method
+				exit 1
+				;;
+		esac
+		;;
+	*)
+		exit 2
+		;;
+esac

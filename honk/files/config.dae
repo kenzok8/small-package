@@ -1,31 +1,31 @@
-# config.dae
-# Load all honk files placed in ./config.d/.
 include {
-    config.d/*.dae
+    system.dae
 }
 
-global {
-    log_level: warn
-    check_interval: 600s
-    check_tolerance: 30ms
-    lan_interface: br-lan
-    wan_interface: auto
-    auto_config_kernel_parameter: true
-    disable_waiting_network: false
-    data_dir: '/etc/honk'
-    log_file: '/var/log/honk/honk.log'
-    store_subscribe: true
-    # if u not using dns bind, set dial_mode to domain++ prefer
-    dial_mode: domain
-    bootstrap_resolver: '223.5.5.5:53'
-    tcp_check_url: 'https://www.gstatic.com/generate_204'
-    tcp_check_http_method: HEAD
-    udp_check_dns: 'dns.google.com:53', '8.8.8.8', '2001:4860:4860::8888'
-}
-
-assets {
-    geodata {
-        geosite: 'https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/release/geosite.dat'
-        geoip: 'https://raw.githubusercontent.com/QiuSimons/geoip-moedove/refs/heads/main/geoip.dat'
+group {
+    proxy {
+        policy: min_moving_avg
     }
+}
+
+dns {
+    upstream {
+        default: 'https://223.5.5.5/dns-query?tls_server_name=dns.alidns.com' -> direct
+        remote: 'https://8.8.8.8/dns-query?tls_server_name=dns.google' -> proxy
+    }
+    routing {
+        request {
+            qname(geosite: private) -> asis
+            qname(geosite: cn) -> default
+            fallback: remote
+        }
+    }
+}
+
+routing {
+    dip(224.0.0.0/3, 'ff00::/8') -> direct
+    dip(geoip: private) && !dport(53) -> direct(must)
+    dip(geoip: cn) && !dport(53) -> direct(must)
+    domain(geosite: cn) -> direct
+    fallback: direct
 }
