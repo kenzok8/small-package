@@ -169,43 +169,54 @@ cleanup_stale_core_nft() {
 }
 
 _core_candidates() {
-	echo "/usr/bin/mihomo-stable /usr/bin/mihomo /usr/bin/clash-meta /etc/clashoo/clash"
+	echo "/usr/share/clashoo/bin/mihomo-stable /usr/libexec/clashoo/mihomo-stable /usr/share/clashoo/bin/mihomo-alpha /usr/bin/mihomo /usr/bin/clash-meta /etc/clashoo/clash"
 }
 
 _migrate_legacy_mihomo_stable() {
-	local legacy=/usr/bin/clash-meta version
-	[ -x /usr/bin/mihomo-stable ] && return 0
+	local legacy=/usr/bin/clash-meta target=/usr/share/clashoo/bin/mihomo-stable version staged
+	[ -x "$target" ] && return 0
 	[ -x "$legacy" ] && [ ! -L "$legacy" ] || return 0
 	version=$("$legacy" -v 2>/dev/null | head -n 1)
 	[ -n "$version" ] || return 0
 	echo "$version" | grep -Eiq '(alpha|beta|rc|pre|smart)' && return 0
-	cp -f "$legacy" /usr/bin/mihomo-stable 2>/dev/null && chmod 0755 /usr/bin/mihomo-stable
+	mkdir -p "$(dirname "$target")" || return 1
+	staged="${target}.$$"
+	cp -f "$legacy" "$staged" 2>/dev/null && chmod 0755 "$staged" && mv -f "$staged" "$target"
 }
 
-_fallback_missing_mihomo_core() {
-	local selected fallback
-	is_singbox_selected && return 0
-	selected="$(uci -q get clashoo.config.core 2>/dev/null)"
-	case "$selected" in
-		2)
-			[ -x /usr/bin/mihomo-stable ] && return 0
-			[ -x /usr/bin/mihomo ] || return 0
-			fallback=3
-			;;
-		3)
-			[ -x /usr/bin/mihomo ] && return 0
-			[ -x /usr/bin/mihomo-stable ] || return 0
-			fallback=2
-			;;
-		*) return 0 ;;
-	esac
-	uci -q set clashoo.config.core="$fallback"
-	uci -q set clashoo.config.dcore="$fallback"
-	uci -q commit clashoo >/dev/null 2>&1
-	if [ "$fallback" = "3" ]; then
-		log_msg "Stable core missing, falling back to Alpha" "稳定版内核缺失，自动回退到 Alpha"
+_mihomo_stable_binary() {
+	local bundled=/usr/libexec/clashoo/mihomo-stable manual=/usr/share/clashoo/bin/mihomo-stable bundled_ver manual_ver
+	# A successful custom download is an explicit override, even if its version is older.
+	if [ -x "$manual" ] &&
+		[ "$(sed -n '1{s/^[[:space:]]*//;s/[[:space:]]*$//;p;}' /usr/share/clashoo/clash_meta_version 2>/dev/null)" = "custom-url" ]; then
+		echo "$manual"
+		return 0
+	fi
+	[ -x "$bundled" ] || { [ -x "$manual" ] && { echo "$manual"; return 0; }; return 1; }
+	[ -x "$manual" ] || { echo "$bundled"; return; }
+	bundled_ver="$("$bundled" -v 2>/dev/null | awk '{for (i = 1; i < NF; i++) if ($i == "Meta") {print $(i + 1); exit}}')"
+	manual_ver="$("$manual" -v 2>/dev/null | awk '{for (i = 1; i < NF; i++) if ($i == "Meta") {print $(i + 1); exit}}')"
+	bundled_ver="${bundled_ver#v}"
+	manual_ver="${manual_ver#v}"
+	printf '%s\n' "$bundled_ver" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || bundled_ver=""
+	printf '%s\n' "$manual_ver" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || manual_ver=""
+	if [ -n "$bundled_ver" ] && [ -n "$manual_ver" ]; then
+		if awk -v manual="$manual_ver" -v bundled="$bundled_ver" 'BEGIN {
+			split(manual, m, "."); split(bundled, b, ".");
+			for (i = 1; i <= 3; i++) {
+				if (m[i] + 0 > b[i] + 0) exit 0;
+				if (m[i] + 0 < b[i] + 0) exit 1;
+			}
+			exit 0;
+		}'; then
+			echo "$manual"
+		else
+			echo "$bundled"
+		fi
+	elif [ -n "$manual_ver" ]; then
+		echo "$manual"
 	else
-		log_msg "Alpha core missing, falling back to stable" "Alpha 内核缺失，自动回退到稳定版"
+		echo "$bundled"
 	fi
 }
 
@@ -220,11 +231,11 @@ _detect_selected_core() {
 			return 1
 			;;
 		2|mihomo)
-			[ -x /usr/bin/mihomo-stable ] && echo /usr/bin/mihomo-stable && return
-			return 1
+			_mihomo_stable_binary
+			return $?
 			;;
 		3|mihomo-alpha)
-			[ -x /usr/bin/mihomo ] && echo /usr/bin/mihomo && return
+			[ -x /usr/share/clashoo/bin/mihomo-alpha ] && echo /usr/share/clashoo/bin/mihomo-alpha && return
 			return 1
 			;;
 	esac
@@ -233,7 +244,7 @@ _detect_selected_core() {
 
 core_supports_advanced_features() {
 	case "$CLASH" in
-		*/mihomo|*/mihomo-stable|*/clash-meta|*/smart)
+		*/mihomo|*/mihomo-stable|*/mihomo-alpha|*/clash-meta|*/smart)
 			return 0
 			;;
 		*)
@@ -2126,12 +2137,12 @@ _start_validate_core() {
 		echo "Clashoo" > "$REAL_LOG"
 		return 1
 	elif [ "${core:-0}" -eq 2 ] && [ ! -x "$CLASH" ]; then
-		log_msg "mihomo core not found, detected binary is unavailable: $CLASH" "找不到可用的 mihomo 内核: $CLASH"
+		log_msg "mihomo stable core not found, detected binary is unavailable: $CLASH" "找不到可用的 mihomo 稳定版内核: $CLASH"
 		sleep 1
 		echo "Clashoo" > "$REAL_LOG"
 		return 1
 	elif [ "${core:-0}" -eq 3 ] && [ ! -x "$CLASH" ]; then
-		log_msg "mihomo core not found, detected binary is unavailable: $CLASH" "找不到可用的 mihomo 内核: $CLASH"
+		log_msg "mihomo Alpha core not found, detected binary is unavailable: $CLASH" "找不到可用的 mihomo Alpha 内核，请在组件更新中安装: $CLASH"
 		sleep 1
 		echo "Clashoo" > "$REAL_LOG"
 		return 1
@@ -2167,10 +2178,10 @@ _start_prepare_config() {
 
 	if { egrep -q '^ {0,}rule-providers:' "$CONFIG_YAML" || egrep -q '^ {0,}script:' "$CONFIG_YAML"; } && ! core_supports_advanced_features; then
 		[ "$_reload_candidate" = "1" ] && return 1
-		if [ -x /usr/bin/mihomo ]; then
-			uci set clashoo.config.core="3" && uci commit clashoo
-		elif [ -x /usr/bin/mihomo-stable ]; then
+		if [ -n "$(_mihomo_stable_binary)" ]; then
 			uci set clashoo.config.core="2" && uci commit clashoo
+		elif [ -x /usr/share/clashoo/bin/mihomo-alpha ]; then
+			uci set clashoo.config.core="3" && uci commit clashoo
 		else
 			log_msg "Current config requires mihomo/clash-meta core" "当前配置需要 mihomo 或 clash-meta 内核"
 			backend_remove_rules >/dev/null 2>&1
@@ -2407,7 +2418,6 @@ start_service(){
 
 	sync_legacy_core_field
 	_migrate_legacy_mihomo_stable
-	_fallback_missing_mihomo_core
 	CLASH="$(_detect_selected_core)"
 
 	cleanup_legacy_startup_backups

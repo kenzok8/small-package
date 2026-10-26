@@ -1,11 +1,11 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=kai-agent
-PKG_VERSION:=0.0.26
+PKG_VERSION:=0.0.27
 PKG_RELEASE:=1
 PKG_SOURCE:=kai-agent-bundle-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/kai-runtime-v$(PKG_VERSION)/
-PKG_HASH:=04ac5286b45e0e88e9d197992041299250a30d83151f59008fc035b1a0a62ac4
+PKG_HASH:=864e5092c6051752f16d43836d5bd01914b3206a3d7e38b6300953fe6912cead
 PKG_BUILD_DIR:=$(BUILD_DIR)/kai-agent-bundle-$(PKG_VERSION)
 
 PKG_BUILD_PARALLEL:=1
@@ -17,7 +17,7 @@ define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=System
 	TITLE:=KAI OpenCode Agent bundle
-	URL:=https://github.com/linkease/linkease-skills
+	URL:=https://github.com/linkease/kai-skills
 endef
 
 define Package/$(PKG_NAME)/description

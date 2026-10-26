@@ -15,7 +15,9 @@ function mkdtemp(tpl) {
 }
 
 const BINARY_PATHS = [
-'/usr/bin/mihomo-stable',
+'/usr/share/clashoo/bin/mihomo-stable',
+'/usr/libexec/clashoo/mihomo-stable',
+'/usr/share/clashoo/bin/mihomo-alpha',
 '/usr/bin/mihomo',
 '/usr/bin/clash-meta',
 '/usr/bin/clash',
@@ -283,8 +285,8 @@ if (family === 'mihomo') {
 		}
 	}
 	let channel = get_core_channel('mihomo');
-	if (channel == 'stable' && access('/usr/bin/mihomo-stable', 'x')) return '/usr/bin/mihomo-stable';
-	if (channel == 'alpha' && access('/usr/bin/mihomo', 'x')) return '/usr/bin/mihomo';
+	if (channel == 'stable') return selected_mihomo_stable();
+	if (channel == 'alpha') return access('/usr/share/clashoo/bin/mihomo-alpha', 'x') ? '/usr/share/clashoo/bin/mihomo-alpha' : '';
 	if (channel == 'smart') {
 		for (let path in SMART_BINARY_PATHS)
 			if (access(path, 'x')) return path;
@@ -371,7 +373,7 @@ c.set('clashoo', 'config', 'core', legacy);
 }
 
 function has_mihomo_stable() {
-if (access('/usr/bin/mihomo-stable', 'x')) return true;
+if (selected_mihomo_stable()) return true;
 if (system("[ -x /usr/bin/clash-meta ] && [ ! -L /usr/bin/clash-meta ]") != 0) return false;
 let version = get_core_version('/usr/bin/clash-meta');
 return !!version && !match(version, /(alpha|beta|rc|pre|smart)/i);
@@ -387,7 +389,7 @@ if (core == 'mihomo' && dcore == '2') {
 	return { error: 'mihomo_stable_missing', message: '未检测到 mihomo 稳定版，请先在“组件更新”中更新稳定版' };
 }
 if (core == 'mihomo' && dcore == '3') {
-	if (access('/usr/bin/mihomo', 'x')) return null;
+	if (access('/usr/share/clashoo/bin/mihomo-alpha', 'x')) return null;
 	return { error: 'mihomo_alpha_missing', message: '未检测到 mihomo Alpha，请先在“组件更新”中更新 Alpha' };
 }
 if (core == 'singbox' && dcore == '4') {
@@ -887,6 +889,23 @@ if (m) return m[1];
 return full;
 }
 
+function selected_mihomo_stable() {
+let bundled = '/usr/libexec/clashoo/mihomo-stable';
+let manual = '/usr/share/clashoo/bin/mihomo-stable';
+if (access(manual, 'x') && read_first_line('/usr/share/clashoo/clash_meta_version') == 'custom-url') return manual;
+if (!access(bundled, 'x')) return access(manual, 'x') ? manual : '';
+if (!access(manual, 'x')) return bundled;
+let bv = match(core_short_version(bundled), /^v?([0-9]+)\.([0-9]+)\.([0-9]+)$/);
+let mv = match(core_short_version(manual), /^v?([0-9]+)\.([0-9]+)\.([0-9]+)$/);
+if (!bv) return mv ? manual : bundled;
+if (!mv) return bundled;
+for (let i = 1; i <= 3; i++) {
+	if (int(mv[i]) > int(bv[i])) return manual;
+	if (int(mv[i]) < int(bv[i])) return bundled;
+}
+return manual;
+}
+
 function component_installed_label(id) {
 if (id == 'clashoo') return pkg_version('clashoo') || '未安装';
 if (id == 'luci')    return pkg_version('luci-app-clashoo') || '未安装';
@@ -923,12 +942,11 @@ return !!match(ver || '', /(alpha|beta|rc|pre|smart)/i);
 function component_installed_versions(id) {
 let out = {};
 if (id == 'mihomo') {
-	let stable = access('/usr/bin/mihomo-stable', 'x') ? read_first_line('/usr/share/clashoo/clash_meta_version') : '';
-	if (!stable && access('/usr/bin/mihomo-stable', 'x')) stable = core_short_version('/usr/bin/mihomo-stable');
+	let stable_bin = selected_mihomo_stable();
+	let stable = stable_bin ? core_short_version(stable_bin) : '';
 	if (is_prerelease_label(stable)) stable = '';
-	let alpha = read_first_line('/usr/share/clashoo/mihomo_version');
+	let alpha = access('/usr/share/clashoo/bin/mihomo-alpha', 'x') ? core_short_version('/usr/share/clashoo/bin/mihomo-alpha') : '';
 	if (match(alpha, /^smart-/)) alpha = '';
-	if (!alpha && access('/usr/bin/mihomo', 'x')) alpha = core_short_version('/usr/bin/mihomo');
 	out.stable = stable || '';
 	out.alpha = mihomo_alpha_label(alpha);
 	return out;
@@ -2815,7 +2833,7 @@ let api = get_clash_api_auth();
 	                       health_status, health_detail, has_tun_device,
 	                       core_type: configured_core, dcore, local_ip,
 	                       has_mihomo_stable: has_mihomo_stable(),
-	                       has_mihomo_alpha: !!access('/usr/bin/mihomo', 'x'),
+	                       has_mihomo_alpha: !!access('/usr/share/clashoo/bin/mihomo-alpha', 'x'),
 	                       has_singbox_stable: !!access(SINGBOX_BINARY_PATHS[0], 'x'),
 	                       has_singbox_alpha: !!access(SINGBOX_BINARY_PATHS[1], 'x'),
 	                       has_smart: !!find_smart_binary() };

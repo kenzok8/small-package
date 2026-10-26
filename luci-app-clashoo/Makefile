@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-clashoo
 PKG_VERSION:=1.31.0
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 PKG_MAINTAINER:=kenzok8
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
@@ -91,7 +91,7 @@ define Package/luci-i18n-clashoo-zh-cn/postinst
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	# just clear the LuCI cache so the new translations load on next request;
 	# no service restart needed (and none that would drop the login session).
-	rm -rf /tmp/luci*
+	rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
 fi
 exit 0
 endef

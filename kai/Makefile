@@ -10,11 +10,11 @@ include $(TOPDIR)/rules.mk
 PKG_ARCH_kai:=$(ARCH)
 
 PKG_NAME:=kai
-PKG_VERSION:=0.0.25
+PKG_VERSION:=0.0.27
 PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/kai-runtime-v$(PKG_VERSION)/
-PKG_HASH:=748686f223d07b3b426db766d5954f2efc3c3f1edf753952bb5fad95da49c440
+PKG_HASH:=370c5c1a4107e8b71a66cdca5a7352429566b82492fe0983281ca80bfeb279e9
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-binary-$(PKG_VERSION)
 
 PKG_BUILD_PARALLEL:=1
@@ -28,11 +28,12 @@ define Package/$(PKG_NAME)
 	SUBMENU:=
 	TITLE:=KAI
 	DEPENDS:=+kai_session +kai-agent +luci-lib-linkeaseauth +linkease-app-entry
-	URL:=https://github.com/Carseason/openwrt-packages
+	EXTRA_DEPENDS:=kai-agent (>=0.0.27~0)
+	URL:=https://github.com/linkease/istore-ai-helper
 endef
 
 define Package/$(PKG_NAME)/description
-  KAI is a dashboard & user guide
+  KAI provides the OpenCode gateway and embedded Web UI with packaged local skills.
 endef
 
 define Package/$(PKG_NAME)/conffiles

@@ -1062,10 +1062,10 @@ if [ -n "$CUSTOM_CORE_URL" ]; then
 	write_log "使用自定义内核下载链接"
 	URL="$CUSTOM_CORE_URL"
 	if [ "$CORETYPE" = "3" ]; then
-		TARGET="/usr/bin/mihomo"
+		TARGET="/usr/share/clashoo/bin/mihomo-alpha"
 		VERSION_FILE="/usr/share/clashoo/mihomo_version"
 	else
-		TARGET="/usr/bin/mihomo-stable"
+		TARGET="/usr/share/clashoo/bin/mihomo-stable"
 		VERSION_FILE="/usr/share/clashoo/clash_meta_version"
 	fi
 	TAG="custom"
@@ -1175,7 +1175,7 @@ elif [ "$CORETYPE" = "2" ]; then
 	[ -z "$TAG" ] && write_log "获取稳定版版本号失败" && exit 1
 	ASSET=$(pick_mihomo_asset "MetaCubeX/mihomo" "$TAG" "$(map_mihomo_arch "$MODELTYPE")" "stable")
 	URL="https://github.com/MetaCubeX/mihomo/releases/download/${TAG}/${ASSET}"
-	TARGET="/usr/bin/mihomo-stable"
+	TARGET="/usr/share/clashoo/bin/mihomo-stable"
 	VERSION_FILE="/usr/share/clashoo/clash_meta_version"
  	VERSION_VALUE="$TAG"
 else
@@ -1189,7 +1189,7 @@ else
 	[ -z "$ASSET" ] && ASSET=$(pick_mihomo_asset "MetaCubeX/mihomo" "$TAG" "$(map_mihomo_arch "$MODELTYPE")" "alpha")
 	[ -z "$ASSET" ] && ASSET=$(pick_mihomo_asset "MetaCubeX/mihomo" "$TAG" "$(map_mihomo_arch "$MODELTYPE")" "stable")
 	URL="https://github.com/MetaCubeX/mihomo/releases/download/${TAG}/${ASSET}"
-	TARGET="/usr/bin/mihomo"
+	TARGET="/usr/share/clashoo/bin/mihomo-alpha"
 	VERSION_FILE="/usr/share/clashoo/mihomo_version"
 	VERSION_VALUE="$(printf '%s\n' "$ASSET" | sed -n 's#^mihomo-.*-alpha-\([0-9a-fA-F]\{7,\}\)\.gz$#\1#p' | head -n 1)"
 	[ -z "$VERSION_VALUE" ] && VERSION_VALUE="$TAG"

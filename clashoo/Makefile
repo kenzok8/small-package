@@ -1,19 +1,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=clashoo
-PKG_SHORT_SHA:=6780eee
-PKG_COMMIT_DATE:=2026.10.25
+PKG_UPSTREAM_VERSION:=1.19.33
+PKG_UPSTREAM_TAG:=v$(PKG_UPSTREAM_VERSION)
+PKG_SHORT_SHA:=3f27ef3
 
-PKG_VERSION:=$(PKG_COMMIT_DATE)~$(PKG_SHORT_SHA)
-PKG_RELEASE:=3
+PKG_VERSION:=2026.10.25.$(PKG_UPSTREAM_VERSION)
+PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA).tar.gz
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-alpha-$(PKG_SHORT_SHA)
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-alpha-$(PKG_SHORT_SHA)
+PKG_SOURCE:=$(PKG_NAME)-stable-$(PKG_UPSTREAM_TAG)-$(PKG_SHORT_SHA).tar.gz
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-stable-$(PKG_UPSTREAM_TAG)-$(PKG_SHORT_SHA)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 PKG_SOURCE_URL:=https://github.com/kenzok8/openwrt-clashoo/releases/download/mihomo-src
-PKG_SOURCE_VERSION:=6780eeeb27c7eda5e79a6310a4f7f91ba7cb725d
-PKG_HASH:=affb9e916e750c6bd4385c6718660a02cc213936063141fd1c2422011e408b47
-PKG_BUILD_VERSION:=alpha-$(PKG_SHORT_SHA)
+PKG_SOURCE_VERSION:=3f27ef39f8c96bbfbc8b0b9bb10f5c9ef60149d8
+PKG_HASH:=1ef7a4087f3805bd2624a940e2e43a0bc23719a25465c9f503aa6c11572f1321
+PKG_BUILD_VERSION:=$(PKG_UPSTREAM_TAG)
 
 PKG_LICENSE:=GPL3.0+
 PKG_MAINTAINER:=kenzok8
@@ -50,8 +51,11 @@ endef
 define Package/clashoo/install
 	$(call GoPackage/Package/Install/Bin,$(1))
 
+	$(INSTALL_DIR) $(1)/usr/libexec/clashoo
 	$(INSTALL_DIR) $(1)/usr/bin
-	ln -sf /usr/bin/mihomo $(1)/usr/bin/clash-meta
+	mv -f $(1)/usr/bin/mihomo $(1)/usr/libexec/clashoo/mihomo-stable
+	ln -sf /usr/libexec/clashoo/mihomo-stable $(1)/usr/bin/mihomo
+	ln -sf /usr/libexec/clashoo/mihomo-stable $(1)/usr/bin/clash-meta
 
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_DIR) $(1)/etc/config
@@ -82,10 +86,44 @@ define Package/clashoo/install
 	$(RM) $(1)/usr/share/clashoo/core_down_complete
 endef
 
+define Package/clashoo/preinst
+#!/bin/sh
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	save_core() {
+		src="$$1"
+		dst="$$2"
+		[ -f "$$src" ] && [ ! -L "$$src" ] || return 0
+		if [ -e "$$dst" ] || [ -L "$$dst" ]; then return 0; fi
+		mkdir -p "$$(dirname "$$dst")" || return 1
+		tmp="$$dst.tmp.$$$$"
+		cp "$$src" "$$tmp" && chmod 0755 "$$tmp" && cmp -s "$$src" "$$tmp" || {
+			rm -f "$$tmp"
+			return 1
+		}
+		if command -v sha256sum >/dev/null 2>&1; then
+			old_hash="$$(sha256sum "$$src" | awk '{print $$1}')"
+			new_hash="$$(sha256sum "$$tmp" | awk '{print $$1}')"
+			[ "$$old_hash" = "$$new_hash" ] || {
+				rm -f "$$tmp"
+				return 1
+			}
+		fi
+		mv -f "$$tmp" "$$dst"
+	}
+	save_core /usr/bin/mihomo /usr/share/clashoo/bin/mihomo-alpha || exit 1
+	save_core /usr/bin/mihomo-stable /usr/share/clashoo/bin/mihomo-stable || exit 1
+	if [ -x /usr/bin/clash-meta ] && [ ! -L /usr/bin/clash-meta ] && [ ! -e /usr/share/clashoo/bin/mihomo-stable ]; then
+		if ! /usr/bin/clash-meta -v 2>/dev/null | grep -Eiq '(alpha|beta|rc|pre|smart)'; then
+			save_core /usr/bin/clash-meta /usr/share/clashoo/bin/mihomo-stable || exit 1
+		fi
+	fi
+fi
+exit 0
+endef
+
 define Package/clashoo/postinst
 #!/bin/sh
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	[ -x /usr/bin/mihomo ] && [ ! -x /usr/bin/clash-meta ] && ln -sf /usr/bin/mihomo /usr/bin/clash-meta
 	rm -f /usr/share/clashoo/check_luci_version.sh /usr/share/clashoo/check_clash_meta_version.sh /usr/share/clashoo/check_mihomo_core_version.sh
 	rm -f /usr/share/clashoo/cuslist.sh /usr/share/clashoo/groups.sh /usr/share/clashoo/load_groups.sh /usr/share/clashoo/panel_diag.sh
 	rm -f /usr/share/clashoo/rmlist.sh /usr/share/clashoo/uplist.sh /usr/share/clashoo/rpc_restart_async.sh /usr/share/clashoo/rpc_update_china_ip_async.sh
