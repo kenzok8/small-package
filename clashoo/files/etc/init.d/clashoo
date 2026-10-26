@@ -2099,7 +2099,11 @@ _finish_geo_bootstrap() {
 	read need_mmdb need_geosite < /var/run/clashoo_bootstrap_pending 2>/dev/null
 
 	log_msg "Bootstrap: fetching geo data via proxy" "引导模式：正在通过代理补全 Geo 数据"
-	/usr/share/clashoo/update/geoip.sh >/dev/null 2>&1
+	if [ "$need_geosite" = "1" ]; then
+		/usr/share/clashoo/update/geoip.sh --require-geosite >/dev/null 2>&1
+	else
+		/usr/share/clashoo/update/geoip.sh >/dev/null 2>&1
+	fi
 
 	still=0
 	[ "$need_mmdb" = "1" ] && ! _has_valid_local_mmdb && still=1

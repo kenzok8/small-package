@@ -12,6 +12,8 @@ cfg_mmdb_url="$(uci -q get clashoo.config.geoip_mmdb_url 2>/dev/null)"
 cfg_geosite_url="$(uci -q get clashoo.config.geosite_url 2>/dev/null)"
 cfg_geoip_dat_url="$(uci -q get clashoo.config.geoip_dat_url 2>/dev/null)"
 cfg_geoip_asn_url="$(uci -q get clashoo.config.geoip_asn_url 2>/dev/null)"
+require_geosite=0
+[ "$1" = "--require-geosite" ] && require_geosite=1
 
 DEFAULT_MMDB_URL="https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country.mmdb"
 DEFAULT_GEOSITE_URL="https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/release/geosite.dat"
@@ -36,6 +38,10 @@ cleanup() {
 }
 
 config_needs_geosite() {
+	_cfg="$(uci -q get clashoo.config.use_config 2>/dev/null)"
+	if [ -s "$_cfg" ] && grep -Eq "^[[:space:]]*-[[:space:]]*[\"']?GEOSITE,|^[[:space:]]*geosite:[[:space:]]*|^[[:space:]]*'geosite:|^[[:space:]]*-[[:space:]]*[\"']?geosite:" "$_cfg"; then
+		return 0
+	fi
 	_cfg="/etc/clashoo/config.yaml"
 	[ -f "$_cfg" ] || return 1
 	grep -Eq "^[[:space:]]*-[[:space:]]*[\"']?GEOSITE,|^[[:space:]]*geosite:[[:space:]]*|^[[:space:]]*'geosite:|^[[:space:]]*-[[:space:]]*[\"']?geosite:" "$_cfg"
@@ -133,19 +139,19 @@ download_geosite() {
 	size=0
 	if [ -z "$url" ]; then
 		log "GeoSite.dat skip (url empty)"
-		return 0
+		return 1
 	fi
 	rm -f "$tmp_target" >/dev/null 2>&1
 	if ! download_to "$url" "$tmp_target"; then
 		rm -f "$tmp_target" >/dev/null 2>&1
 		log "GeoSite.dat update failed"
-		return 0
+		return 1
 	fi
 	size=$(wc -c <"$tmp_target" 2>/dev/null)
 	if [ -z "$size" ] || [ "$size" -lt "$GEOSITE_MIN_SIZE" ]; then
 		log "GeoSite.dat download invalid or incomplete (${size:-0} bytes)"
 		rm -f "$tmp_target" >/dev/null 2>&1
-		return 0
+		return 1
 	fi
 	mv -f "$tmp_target" /etc/clashoo/GeoSite.dat >/dev/null 2>&1 || return 1
 	cp -f /etc/clashoo/GeoSite.dat /etc/clashoo/geosite.dat >/dev/null 2>&1 || true
@@ -248,13 +254,22 @@ if [ "$geoip_source" != "1" ]; then
 	fi
 	log "Country.mmdb updated"
 
-	if config_needs_geosite; then
-		download_geosite "$geosite_url"
+	if [ "$require_geosite" -eq 1 ] || config_needs_geosite; then
+		if ! download_geosite "$geosite_url"; then
+			exit 1
+		fi
 	else
 		log "GeoSite.dat skip (no geosite reference in config)"
 	fi
 	download_optional "$geoip_dat_url" /etc/clashoo/geoip.dat "geoip.dat"
 	download_optional "$geoip_asn_url" /etc/clashoo/GeoLite2-ASN.mmdb "GeoLite2-ASN.mmdb"
+fi
+
+if [ "$geoip_source" = "1" ] && { [ "$require_geosite" -eq 1 ] || config_needs_geosite; }; then
+	geosite_url="${cfg_geosite_url:-$DEFAULT_GEOSITE_URL}"
+	if ! download_geosite "$geosite_url"; then
+		exit 1
+	fi
 fi
 
 touch /var/run/geoip_down_complete >/dev/null 2>&1
