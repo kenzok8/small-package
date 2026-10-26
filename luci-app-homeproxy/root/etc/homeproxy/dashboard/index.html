@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+    <meta name="color-scheme" content="light dark" />
+    <!-- iOS 26 Safari ignores theme-color and samples #statusbar-tint instead. -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0f0f0" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#181818" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="sing-box" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <script>
+      // iOS Safari samples the canvas color for its chrome before first paint.
+      (function () {
+        var dark = false;
+        try {
+          var stored = localStorage.getItem("sing-box-dashboard.theme");
+          dark =
+            stored === "dark" ||
+            (stored !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+        } catch (e) {}
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+      })();
+      (function () {
+        try {
+          var accent = localStorage.getItem("sing-box-dashboard.accent");
+          if (!accent) {
+            return;
+          }
+          var presets = ["blue", "purple", "pink", "red", "orange", "yellow", "green", "graphite"];
+          if (presets.indexOf(accent) !== -1) {
+            document.documentElement.dataset.accent = accent;
+          } else if (/^#[0-9a-f]{6}$/.test(accent)) {
+            var lin = function (i) {
+              var c = parseInt(accent.slice(1 + i * 2, 3 + i * 2), 16) / 255;
+              return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+            };
+            var luminance = 0.2126 * lin(0) + 0.7152 * lin(1) + 0.0722 * lin(2);
+            document.documentElement.dataset.accent = "custom";
+            document.documentElement.style.setProperty("--custom-accent", accent);
+            document.documentElement.style.setProperty(
+              "--on-accent",
+              luminance > 0.45 ? "#1a1a1a" : "#ffffff"
+            );
+          }
+        } catch (e) {}
+      })();
+      (function () {
+        var lang = "en";
+        try {
+          var stored = localStorage.getItem("sing-box-dashboard.language");
+          var known = ["en", "zh-Hans", "zh-Hant", "fa", "ru"];
+          if (known.indexOf(stored) !== -1) {
+            lang = stored;
+          } else {
+            var tags = navigator.languages || [navigator.language];
+            for (var i = 0; i < tags.length; i++) {
+              var tag = String(tags[i]).toLowerCase();
+              if (tag.indexOf("zh") === 0) {
+                lang = /hant|tw|hk|mo/.test(tag) ? "zh-Hant" : "zh-Hans";
+                break;
+              }
+              if (tag.indexOf("fa") === 0) {
+                lang = "fa";
+                break;
+              }
+              if (tag.indexOf("ru") === 0) {
+                lang = "ru";
+                break;
+              }
+              if (tag.indexOf("en") === 0) {
+                break;
+              }
+            }
+          }
+        } catch (e) {}
+        document.documentElement.lang = lang;
+        document.documentElement.dir = lang === "fa" ? "rtl" : "ltr";
+      })();
+    </script>
+    <title>sing-box dashboard</title>
+    <script type="module" crossorigin src="./assets/index-CvdWH0XG.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DSWRtvWp.css">
+  <link rel="manifest" href="./manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js" defer></script>
+<link rel="icon" href="./favicon.ico" sizes="48x48">
+<link rel="icon" href="./favicon.svg" sizes="any" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./apple-touch-icon-180x180.png"></head>
+  <body>
+    <!-- iOS 26 Safari samples this fixed element for the status bar tint. -->
+    <div id="statusbar-tint" class="statusbar-tint" aria-hidden="true"></div>
+    <div id="root"></div>
+  </body>
+</html>

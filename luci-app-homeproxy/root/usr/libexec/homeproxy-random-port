@@ -1,0 +1,32 @@
+#!/bin/sh
+
+port_in_use() {
+	local hex
+
+	hex="$(printf '%04X' "$1")"
+	awk -v suffix=":$hex" '
+		FNR > 1 && substr($2, length($2) - 4) == suffix { found = 1 }
+		END { exit(found ? 0 : 1) }
+	' /proc/net/tcp /proc/net/tcp6 2>/dev/null
+}
+
+random="$(hexdump -n 2 -e '1/1 "%02x"' /dev/urandom 2>/dev/null)"
+case "$random" in
+[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]) random=$((0x$random)) ;;
+*) random="$(date +%s)$$" ;;
+esac
+
+port=$((20000 + random % 40000))
+while :; do
+	reserved=0
+	for value in "$@"; do
+		[ "$port" != "$value" ] || reserved=1
+	done
+	if [ "$reserved" -eq 0 ] && ! port_in_use "$port"; then
+		printf '%s\n' "$port"
+		exit 0
+	fi
+
+	port=$((port + 1))
+	[ "$port" -le 59999 ] || port=20000
+done

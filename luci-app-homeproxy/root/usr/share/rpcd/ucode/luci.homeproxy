@@ -7,50 +7,278 @@
 
 'use strict';
 
-import { access, error, lstat, popen, readfile, writefile } from 'fs';
+import { lstat, open, popen, readfile, rename, unlink, writefile } from 'fs';
+import { cursor } from 'uci';
 
-/* Kanged from ucode/luci */
-function shellquote(s) {
-	return `'${replace(s, "'", "'\\''")}'`;
-}
+import {
+	HP_DIR, RUN_DIR, addECHDNS, createNodeOutboundTags, domainListPath,
+	findDomainGroupConflict, isBinary, normalizeDomainList, removeBlankAttrs, renderEndpoint, renderOutbound,
+	shellQuote, splitDomainList, validation
+} from '/etc/homeproxy/scripts/homeproxy.uc';
 
 function hasKernelModule(kmod) {
-	return (system(sprintf('[ -e "/lib/modules/$(uname -r)"/%s ]', shellquote(kmod))) === 0);
+	return (system(sprintf('[ -e "/lib/modules/$(uname -r)"/%s ]', shellQuote(kmod))) === 0);
 }
 
-const HP_DIR = '/etc/homeproxy';
-const RUN_DIR = '/var/run/homeproxy';
+const RESOURCES = {
+	geoip_cn: {
+		source: 'https://cdn.jsdelivr.net/gh/SagerNet/sing-geoip@rule-set/geoip-cn.srs',
+		version: `${HP_DIR}/resources/geoip_cn.ver`
+	},
+	geosite_cn: {
+		source: 'https://cdn.jsdelivr.net/gh/SagerNet/sing-geosite@rule-set-unstable/geosite-cn.srs',
+		version: `${HP_DIR}/resources/geosite_cn.ver`
+	},
+	dashboard: {
+		source: 'https://codeload.github.com/SagerNet/sing-box-dashboard/zip/refs/heads/gh-pages',
+		version: `${HP_DIR}/dashboard/dashboard.ver`
+	}
+};
+const CONNECTION_SITES = {
+	baidu: 'https://www.baidu.com/',
+	bilibili: 'https://www.bilibili.com/',
+	jd: 'https://www.jd.com/',
+	google: 'https://www.google.com/',
+	github: 'https://github.com/',
+	youtube: 'https://www.youtube.com/'
+};
+
+function validDomainListId(id) {
+	return type(id) === 'string' && match(id, /^[A-Za-z0-9_]+$/);
+}
+
+function normalizeDomainContent(content) {
+	if (isBinary(content))
+		return null;
+
+	for (let domain in split(content || '', /[\r\n]+/)) {
+		domain = trim(domain);
+		if (domain && !replace(domain, /^\.+|\.+$/g, ''))
+			return null;
+	}
+
+	let domains = normalizeDomainList(content);
+	for (let domain in domains)
+		if (!validation('hostname', domain))
+			return null;
+	return length(domains) ? join('\n', domains) + '\n' : '';
+}
+
+function validateDomainLists(changes, routingMode, groupStates) {
+	const uci = cursor();
+	uci.load('homeproxy');
+
+	let groups = [], seen = {};
+	function appendGroup(id) {
+		if (!(id in ['direct', 'proxy']) &&
+		    ((id in groupStates ? groupStates[id] : uci.get('homeproxy', id, 'enabled')) === '0'))
+			return;
+		if (id in seen)
+			return;
+		seen[id] = true;
+
+		const content = (id in changes) ? changes[id] : readfile(domainListPath(id));
+		const domains = normalizeDomainList(content);
+		if (length(domains))
+			push(groups, { id, ...splitDomainList(domains) });
+	}
+
+	appendGroup('direct');
+	if (routingMode === 'bypass_mainland_china')
+		appendGroup('proxy');
+	uci.foreach('homeproxy', 'domain_route', (section) => appendGroup(section['.name']));
+	for (let id in keys(changes))
+		if (!(id in ['direct', 'proxy']))
+			appendGroup(id);
+
+	return findDomainGroupConflict(groups);
+}
 
 const methods = {
-	acllist_read: {
-		args: { type: 'type' },
+	tailscale_status: {
+		call: function() {
+			const uci = cursor();
+			uci.load('homeproxy');
+			if (uci.get('homeproxy', 'tailscale', 'enabled') !== '1')
+				return { state: 'disabled' };
+			let config;
+			try {
+				config = json(readfile(RUN_DIR + '/sing-box-c.json') || '{}');
+			} catch (e) {
+				return { state: 'unavailable' };
+			}
+			const api = filter(config.services || [], (service) => service.type === 'api' && service.tag === 'api')[0];
+			const port = int(api?.listen_port);
+			if (!port || port < 1 || port > 65535)
+				return { state: 'unavailable' };
+			const fd = popen(sprintf(
+				'BOX_API_SECRET=%s /usr/bin/timeout 5 /usr/bin/sing-box api --url %s tailscale status 2>/dev/null',
+				shellQuote(api.secret || ''), shellQuote(`http://127.0.0.1:${port}`)
+			));
+			if (!fd)
+				return { state: 'unavailable' };
+			const output = fd.read('all') || '';
+			if (fd.close() !== 0)
+				return { state: 'unavailable' };
+			let active = false, result = { state: 'unavailable' };
+			for (let line in split(output, '\n')) {
+				if (line && !match(line, /^\s/)) {
+					active = trim(line) === 'tailscale-out';
+					continue;
+				}
+				if (!active)
+					continue;
+				const state = match(line, /^\s+State:\s+([A-Za-z]+)\s*$/);
+				const auth = match(line, /^\s+Log in:\s+(https?:\/\/[^[:space:]<>"']+)\s*$/);
+				if (state)
+					result.state = state[1];
+				if (auth)
+					result.auth_url = auth[1];
+			}
+			if (result.state === 'Running')
+				delete result.auth_url;
+			return result;
+		}
+	},
+	domainlist_read: {
+		args: { id: 'id' },
 		call: function(req) {
-			if (index(['direct_list', 'proxy_list'], req.args?.type) === -1)
+			const id = req.args?.id;
+			if (!validDomainListId(id))
 				return { content: null, error: 'illegal type' };
 
-			const filecontent = readfile(`${HP_DIR}/resources/${req.args?.type}.txt`);
+			const filecontent = readfile(domainListPath(id));
 			return { content: filecontent };
 		}
 	},
-	acllist_write: {
-		args: { type: 'type', content: 'content' },
+	domainlist_write: {
+		args: { lists: {}, routing_mode: 'routing_mode', group_states: {} },
 		call: function(req) {
-			if (index(['direct_list', 'proxy_list'], req.args?.type) === -1)
-				return { result: false, error: 'illegal type' };
+			const lists = req.args?.lists;
+			const routingMode = req.args?.routing_mode;
+			const groupStates = req.args?.group_states || {};
+			if (type(lists) !== 'object' || !(routingMode in ['bypass_mainland_china', 'global']))
+				return { result: false, error: 'invalid domain list request' };
+			if (type(groupStates) !== 'object')
+				return { result: false, error: 'invalid diversion group states' };
+			for (let id in keys(groupStates))
+				if (!validDomainListId(id) || !(groupStates[id] in ['0', '1']))
+					return { result: false, error: 'invalid diversion group states' };
 
-			const file = `${HP_DIR}/resources/${req.args?.type}.txt`;
-			let content = req.args?.content;
+			let changes = {};
+			for (let id in keys(lists)) {
+				if (!validDomainListId(id) || type(lists[id]) !== 'string')
+					return { result: false, error: 'illegal domain list identifier' };
 
-			/* Sanitize content */
-			if (content) {
-				content = trim(content);
-				content = replace(content, /\r\n?/g, '\n');
-				if (!match(content, /\n$/))
-					content += '\n';
+				const content = normalizeDomainContent(lists[id]);
+				if (content === null)
+					return { result: false, error: `invalid domain in list ${id}` };
+				changes[id] = content;
 			}
 
-			system(`mkdir -p ${HP_DIR}/resources`);
-			writefile(file, content);
+			const conflict = validateDomainLists(changes, routingMode, groupStates);
+			if (conflict)
+				return {
+					result: false,
+					error: `domain ${conflict.left.value} conflicts with ${conflict.right.value}`
+				};
+
+			if (system(`mkdir -p ${HP_DIR}/diversion`) !== 0)
+				return { result: false, error: 'failed to prepare domain list directory' };
+
+			let staged = [];
+			const cleanup = () => {
+				let succeeded = true;
+				for (let path in staged) {
+					if (lstat(path.temporary) && !unlink(path.temporary))
+						succeeded = false;
+					if (!path.preserve_backup && lstat(path.backup) && !unlink(path.backup))
+						succeeded = false;
+				}
+				return succeeded;
+			};
+
+			for (let id in keys(changes)) {
+				const file = domainListPath(id), temporary = file + '.new', backup = file + '.rollback';
+				const file_stat = lstat(file);
+				if ((file_stat && file_stat.type !== 'file') || lstat(temporary) || lstat(backup)) {
+					cleanup();
+					return { result: false, error: 'domain list transaction requires manual recovery' };
+				}
+
+				const path = {
+					file, temporary, backup,
+					had_original: !!file_stat,
+					installed: false,
+					preserve_backup: false
+				};
+				push(staged, path);
+
+				if (file_stat) {
+					const original = readfile(file);
+					if (original === null || writefile(backup, original) === null) {
+						const clean = cleanup();
+						return { result: false, error: clean ? 'failed to back up domain list' : 'failed to back up domain list; transaction files retained' };
+					}
+				}
+
+				if (writefile(temporary, changes[id]) === null) {
+					const clean = cleanup();
+					return { result: false, error: clean ? 'failed to stage domain list' : 'failed to stage domain list; transaction files retained' };
+				}
+			}
+
+			for (let path in staged) {
+				if (!rename(path.temporary, path.file)) {
+					let rollback_failed = false;
+					for (let i = length(staged) - 1; i >= 0; i--) {
+						const committed = staged[i];
+						if (!committed.installed)
+							continue;
+
+						if (committed.had_original) {
+							if (!rename(committed.backup, committed.file)) {
+								committed.preserve_backup = true;
+								rollback_failed = true;
+							}
+						} else if (!unlink(committed.file) && lstat(committed.file)) {
+							rollback_failed = true;
+						}
+					}
+
+					if (!cleanup())
+						rollback_failed = true;
+					return {
+						result: false,
+						error: rollback_failed ?
+							'failed to install domain list; rollback failed, recovery files retained' :
+							'failed to install domain list; previous files restored'
+					};
+				}
+				path.installed = true;
+			}
+
+			if (!cleanup())
+				return { result: true, warning: 'domain lists saved but transaction backup cleanup failed' };
+
+			return { result: true };
+		}
+	},
+	domainlist_remove: {
+		args: { id: 'id' },
+		call: function(req) {
+			const id = req.args?.id;
+			if (!validDomainListId(id) || id in ['direct', 'proxy'])
+				return { result: false, error: 'illegal domain list identifier' };
+
+			const file = domainListPath(id);
+			for (let path in [file, file + '.new']) {
+				if (readfile(path) === null)
+					continue;
+				unlink(path);
+				if (readfile(path) !== null)
+					return { result: false, error: 'failed to remove domain list' };
+			}
 
 			return { result: true };
 		}
@@ -59,36 +287,73 @@ const methods = {
 	certificate_write: {
 		args: { filename: 'filename' },
 		call: function(req) {
-			const writeCertificate = (filename, priv) => {
+			const writeCertificate = (filename, kind) => {
 				const tmpcert = '/tmp/homeproxy_certificate.tmp';
 				const filestat = lstat(tmpcert);
 
 				if (!filestat || filestat.type !== 'file' || filestat.size <= 0) {
-					system(`rm -f ${tmpcert}`);
+					system(`/bin/rm -f ${shellQuote(tmpcert)}`);
 					return { result: false, error: 'empty certificate file' };
 				}
 
 				let filecontent = readfile(tmpcert);
-				if (is_binary(filecontent)) {
-					system(`rm -f ${tmpcert}`);
+				if (isBinary(filecontent)) {
+					system(`/bin/rm -f ${shellQuote(tmpcert)}`);
 					return { result: false, error: 'illegal file type: binary' };
 				}
 
-				/* Kanged from luci-proto-openconnect */
-				const beg = priv ? /^-----BEGIN (RSA|EC) PRIVATE KEY-----$/ : /^-----BEGIN CERTIFICATE-----$/,
-				      end = priv ? /^-----END (RSA|EC) PRIVATE KEY-----$/ : /^-----END CERTIFICATE-----$/,
-				      lines = split(trim(filecontent), /[\r\n]/);
-				let start = false, i;
+				const allowed = (kind === 'private') ?
+				      [ 'RSA PRIVATE KEY', 'EC PRIVATE KEY', 'PRIVATE KEY' ] :
+				      ((kind === 'ech') ? [ 'ECH CONFIGS' ] : [ 'CERTIFICATE' ]),
+				      multiple = kind === 'certificate',
+				      normalized = replace(trim(filecontent), /\r\n?/g, '\n'),
+				      lines = split(normalized, '\n');
+				let current, payload = '', blocks = 0, valid = true;
 
-				for (i = 0; i < length(lines); i++) {
-					if (match(lines[i], beg))
-						start = true;
-					else if (start && !b64dec(lines[i]) && length(lines[i]) !== 64)
+				for (let line in lines) {
+					if (!current) {
+						if (!line)
+							continue;
+
+						const begin = match(line, /^-----BEGIN (.+)-----$/);
+						if (!begin || !(begin[1] in allowed)) {
+							valid = false;
+							break;
+						}
+
+						current = begin[1];
+						payload = '';
+						continue;
+					}
+
+					if (line === `-----END ${current}-----`) {
+						let decoded;
+						try {
+							decoded = payload ? b64dec(payload) : null;
+						} catch (e) {
+							decoded = null;
+						}
+
+						if (!decoded) {
+							valid = false;
+							break;
+						}
+
+						current = null;
+						payload = '';
+						blocks++;
+						continue;
+					}
+
+					if (!line || match(line, /^-----/) || !match(line, /^[A-Za-z0-9+\/]+={0,2}$/)) {
+						valid = false;
 						break;
+					}
+					payload += line;
 				}
 
-				if (!start || i < length(lines) - 1 || !match(lines[i], end)) {
-					system(`rm -f ${tmpcert}`);
+				if (!valid || current || blocks === 0 || (!multiple && blocks !== 1)) {
+					system(`/bin/rm -f ${shellQuote(tmpcert)}`);
 					return { result: false, error: 'this does not look like a correct PEM file' };
 				}
 
@@ -98,9 +363,17 @@ const methods = {
 				if (!match(filecontent, /\n$/))
 					filecontent += '\n';
 
-				system(`mkdir -p ${HP_DIR}/certs`);
-				writefile(`${HP_DIR}/certs/${filename}.pem`, filecontent);
-				system(`rm -f ${tmpcert}`);
+				const certfile = `${HP_DIR}/certs/${filename}.pem`;
+				system(`/bin/mkdir -p ${shellQuote(HP_DIR + '/certs')}`);
+				if (writefile(certfile, filecontent) === null) {
+					system(`/bin/rm -f ${shellQuote(tmpcert)}`);
+					return { result: false, error: 'failed to write certificate file' };
+				}
+				if (kind === 'private' && system(`/bin/chmod 600 ${shellQuote(certfile)}`) !== 0) {
+					system(`/bin/rm -f ${shellQuote(tmpcert)} ${shellQuote(certfile)}`);
+					return { result: false, error: 'failed to protect private key file' };
+				}
+				system(`/bin/rm -f ${shellQuote(tmpcert)}`);
 
 				return { result: true };
 			};
@@ -109,14 +382,13 @@ const methods = {
 			switch (filename) {
 			case 'client_ca':
 			case 'server_publickey':
-				return writeCertificate(filename, false);
-				break;
+				return writeCertificate(filename, 'certificate');
+			case 'client_ech_conf':
+				return writeCertificate(filename, 'ech');
 			case 'server_privatekey':
-				return writeCertificate(filename, true);
-				break;
+				return writeCertificate(filename, 'private');
 			default:
-				return { result: false, error: 'illegal cerificate filename' };
-				break;
+				return { result: false, error: 'illegal certificate filename' };
 			}
 		}
 	},
@@ -124,20 +396,458 @@ const methods = {
 	connection_check: {
 		args: { site: 'site' },
 		call: function(req) {
-			let url;
-			switch(req.args?.site) {
-			case 'baidu':
-				url = 'https://www.baidu.com';
-				break;
-			case 'google':
-				url = 'https://www.google.com';
-				break;
-			default:
+			const requested_site = req.args?.site;
+			if (requested_site !== 'all' && !CONNECTION_SITES[requested_site])
 				return { result: false, error: 'illegal site' };
-				break;
+
+			const sites = (requested_site === 'all') ? keys(CONNECTION_SITES) : [ requested_site ];
+			let commands = [];
+			for (let site in sites) {
+				push(commands, sprintf(
+					'/usr/bin/curl --location --silent --output /dev/null --user-agent %s --connect-timeout 5 --max-time 9 --write-out %s %s',
+					shellQuote('Mozilla/5.0'),
+					shellQuote(sprintf('%s\\t%%{http_code}\\t%%{time_appconnect}\\t%%{time_total}\\n', site)),
+					shellQuote(CONNECTION_SITES[site])
+				));
 			}
 
-			return { result: (system(`/usr/bin/wget --spider -qT3 ${url} 2>"/dev/null"`, 3100) === 0) };
+			const fd = popen(sprintf('(%s & wait) 2>"/dev/null"', join(' & ', commands)));
+			if (!fd)
+				return { result: false, error: 'failed to execute connection test' };
+
+			let payload = '', line;
+			while (true) {
+				line = fd.read('line');
+				if (line === null || line === '')
+					break;
+				payload += line;
+			}
+			fd.close();
+
+			const responses = {};
+			const curlTimeMs = (value) => {
+				const parts = split(value || '0', '.');
+				const fraction = ((parts[1] || '') + '000');
+				return int(parts[0] || '0') * 1000 + int(substr(fraction, 0, 3));
+			};
+
+			for (let response in split(trim(payload), /[\r\n]+/)) {
+				const fields = split(response, '\t');
+				if (length(fields) !== 4 || !CONNECTION_SITES[fields[0]])
+					continue;
+
+				const latency_ms = curlTimeMs(fields[2]);
+				const total_ms = curlTimeMs(fields[3]);
+				const http_code = int(fields[1] || '0');
+				responses[fields[0]] = {
+					site: fields[0],
+					result: http_code >= 100 && http_code <= 599,
+					latency_ms,
+					timed_out: http_code === 0 && total_ms >= 8900
+				};
+			}
+
+			let results = [];
+			for (let site in sites)
+				push(results, responses[site] || { site, result: false, latency_ms: 0, timed_out: false });
+
+			return { results };
+		}
+	},
+
+	current_node_get: {
+		call: function() {
+			const uci = cursor();
+			uci.load('homeproxy');
+
+			const formatNode = (section_id, fallback_name) => {
+				if (!section_id || section_id in ['nil', 'same'])
+					return { id: section_id, label: fallback_name || section_id, type: null };
+
+				const section = uci.get_all('homeproxy', section_id);
+				if (!section || section['.type'] !== 'node')
+					return { id: section_id, label: fallback_name || section_id, type: null };
+
+				const address = trim(section.address || '');
+				const port = trim(section.port || '');
+				const label = trim(section.label || '') || ((address && port) ? `${address}:${port}` : section_id);
+				return {
+					id: section_id,
+					label,
+					type: section.type || null
+				};
+			};
+
+			const main_node = trim(uci.get('homeproxy', 'config', 'main_node') || 'nil');
+			if (main_node !== 'urltest')
+				return {
+					mode: main_node,
+					active: formatNode(main_node, (main_node === 'nil') ? 'Disable' : null),
+					error: null
+				};
+
+			const clash_api_port = int(uci.get('homeproxy', 'infra', 'clash_api_port'));
+			if (!clash_api_port)
+				return {
+					mode: 'urltest',
+					active: { id: 'urltest', label: 'URLTest', type: 'urltest' },
+					error: 'clash_api_unavailable'
+				};
+			const fd = popen(`/usr/bin/curl -fsS --connect-timeout 1 --max-time 2 http://127.0.0.1:${clash_api_port}/proxies/main-out 2>"/dev/null"`);
+			if (!fd)
+				return {
+					mode: 'urltest',
+					active: { id: 'urltest', label: 'URLTest', type: 'urltest' },
+					error: 'clash_api_unavailable'
+				};
+
+			let payload = '', line;
+			for (line = fd.read('line'); length(line); line = fd.read('line'))
+				payload += line;
+			fd.close();
+
+			let data = null;
+			try {
+				data = json(payload);
+			} catch (e) {}
+
+			const tag = trim(data?.now || '');
+			if (!tag)
+				return {
+					mode: 'urltest',
+					active: { id: 'urltest', label: 'URLTest', type: 'urltest' },
+					error: 'missing_current_proxy'
+				};
+
+			for (let section_id, node_tag in createNodeOutboundTags(uci, 'homeproxy'))
+				if (node_tag === tag)
+					return {
+						mode: 'urltest',
+						active: formatNode(section_id, tag),
+						error: null
+					};
+
+			const matched = match(tag, /^cfg-(.*)-out$/);
+			const section_id = matched ? matched[1] : tag;
+
+			return {
+				mode: 'urltest',
+				active: formatNode(section_id, tag),
+				error: null
+			};
+		}
+	},
+
+	node_latency_test: {
+		args: { nodes: [] },
+		call: function(req) {
+			const error_codes = {
+				invalid_node: 'invalid_node',
+				invalid_outbound: 'invalid_outbound',
+				runtime_prepare_failed: 'runtime_prepare_failed',
+				runtime_launch_failed: 'runtime_launch_failed',
+				runtime_timeout: 'runtime_timeout',
+				delay_timeout: 'delay_timeout',
+				delay_failed: 'delay_failed',
+				backend_execution_failed: 'backend_execution_failed'
+			};
+			const probe_url_encoded = 'https%3A%2F%2Fcp.cloudflare.com%2Fgenerate_204';
+			const delay_timeout_ms = 5000;
+			const probe_parallelism = 16;
+			const hpuci = cursor();
+			hpuci.load('homeproxy');
+			const dns_strategy = hpuci.get('homeproxy', 'config', 'ipv6_support') === '1' ?
+				'prefer_ipv6' : 'prefer_ipv4';
+			const reserved_controller_port = int(hpuci.get('homeproxy', 'infra', 'clash_api_port')) || 0;
+
+			const formatResult = (node, state, latency_ms, err) => ({
+				node,
+				state,
+				latency_ms,
+				measured_at: time(),
+				error: err
+			});
+
+			const readCommand = (command) => {
+				const fd = popen(command);
+				if (!fd)
+					return null;
+
+				let payload = '', line;
+				while (true) {
+					line = fd.read('line');
+					if (line === null || line === '')
+						break;
+					payload += line;
+				}
+				fd.close();
+				return payload;
+			};
+
+			const getRuntimePid = (runtime_meta) => {
+				const pid = trim(readfile(runtime_meta?.pid_path) || '');
+				if (!match(pid, /^[0-9]+$/))
+					return null;
+
+				const cmdline = readfile(`/proc/${pid}/cmdline`) || '';
+				if (index(cmdline, 'sing-box') === -1 || index(cmdline, runtime_meta.config_path) === -1)
+					return null;
+
+				return pid;
+			};
+
+			const buildProbeRuntime = (entries) => {
+				const runtime_root = RUN_DIR + '/latency-test';
+				const session_id = sprintf('%d-%d', time(), int(readfile('/proc/uptime') || '0'));
+				const session_dir = `${runtime_root}/${session_id}`;
+				const config_path = `${session_dir}/sing-box.json`;
+				const pid_path = `${session_dir}/sing-box.pid`;
+				const port_output = readCommand(sprintf(
+					'/usr/libexec/homeproxy-random-port %s 2>"/dev/null"',
+					shellQuote(reserved_controller_port)
+				));
+				const controller_port = int(trim(port_output || ''));
+				if (controller_port <= 0 || controller_port > 65535)
+					return { error: 'failed to allocate temporary controller port' };
+
+				const config = {
+					log: { disabled: true },
+					dns: {
+						servers: [{ type: 'local', tag: 'local-dns' }],
+						strategy: dns_strategy
+					},
+					outbounds: [{ type: 'direct', tag: 'direct-out' }],
+					endpoints: [],
+					route: {
+						final: 'direct-out',
+						auto_detect_interface: true,
+						default_domain_resolver: { server: 'local-dns', strategy: dns_strategy }
+					},
+					experimental: {
+						clash_api: {
+							external_controller: `127.0.0.1:${controller_port}`
+						}
+					}
+				};
+
+				try {
+					for (let entry in entries) {
+						push(entry.endpoint ? config.endpoints : config.outbounds, entry.outbound);
+						addECHDNS(config, entry.section, { server: 'local-dns', strategy: dns_strategy });
+					}
+				} catch (e) {
+					return { error: e.message };
+				}
+
+				if (system(`/bin/mkdir -p ${shellQuote(session_dir)}`) !== 0)
+					return { error: 'failed to prepare temporary runtime directory' };
+
+				if (!writefile(config_path, sprintf('%.J\n', removeBlankAttrs(config)))) {
+					system(`/bin/rm -rf ${shellQuote(session_dir)}`);
+					return { error: 'failed to write temporary sing-box config' };
+				}
+
+				return {
+					session_dir,
+					config_path,
+					pid_path,
+					controller_port,
+					controller_url: `http://127.0.0.1:${controller_port}`
+				};
+			};
+
+			const launchProbeRuntime = (runtime_meta) => {
+				const launch_cmd = sprintf(
+					'/usr/bin/sing-box run --config %s >/dev/null 2>&1 & pid=$!; printf "%%s\\n" "$pid" > %s; /bin/kill -0 "$pid" >/dev/null 2>&1',
+					shellQuote(runtime_meta.config_path),
+					shellQuote(runtime_meta.pid_path)
+				);
+
+				return system(`/bin/sh -c ${shellQuote(launch_cmd)}`) === 0;
+			};
+
+			const waitControllerReady = (runtime_meta) => {
+				for (let i = 0; i < 10; i++) {
+					if (getRuntimePid(runtime_meta)) {
+						const payload = readCommand(`/usr/bin/curl -fsS --connect-timeout 1 --max-time 1 ${shellQuote(runtime_meta.controller_url + '/version')} 2>"/dev/null"`);
+						if (trim(payload || ''))
+							return true;
+					}
+
+					if (i + 1 < 10)
+						sleep(200);
+				}
+
+				return false;
+			};
+
+			const cleanupProbeRuntime = (runtime_meta) => {
+				const pid = getRuntimePid(runtime_meta);
+				if (pid)
+					system(`/bin/kill ${shellQuote(pid)} >/dev/null 2>&1`);
+
+				system(`/bin/rm -rf ${shellQuote(runtime_meta.session_dir)}`);
+			};
+
+			const parseDelayResponse = (entry) => {
+				const payload = readfile(entry.response_path);
+				if (!trim(payload || '')) {
+					return formatResult(entry.node, 'timeout', null, {
+						code: error_codes.delay_timeout,
+						message: sprintf('sing-box delay request timed out after %dms', delay_timeout_ms)
+					});
+				}
+
+				let data;
+				try {
+					data = json(payload);
+				} catch (e) {
+					return formatResult(entry.node, 'error', null, {
+						code: error_codes.delay_failed,
+						message: 'sing-box delay response is not valid JSON'
+					});
+				}
+
+				const delay_ms = int(data?.delay || '0');
+				if (delay_ms > 0)
+					return formatResult(entry.node, 'success', delay_ms, null);
+
+				const message = trim(sprintf('%s', data?.message || data?.error || '')) || 'sing-box delay request failed';
+				return formatResult(entry.node, match(message, /timeout/i) ? 'timeout' : 'error', null, {
+					code: match(message, /timeout/i) ? error_codes.delay_timeout : error_codes.delay_failed,
+					message
+				});
+			};
+
+			const probeDelays = (runtime_meta, entries) => {
+				let commands = [];
+				for (let i = 0; i < length(entries); i++) {
+					const entry = entries[i];
+					const delay_endpoint = sprintf(
+						'%s/proxies/%s/delay?url=%s&timeout=%d',
+						runtime_meta.controller_url,
+						entry.tag,
+						probe_url_encoded,
+						delay_timeout_ms
+					);
+					entry.response_path = `${runtime_meta.session_dir}/${entry.tag}.json`;
+					push(commands, sprintf(
+						'/usr/bin/curl -fsS --connect-timeout 1 --max-time %d -o %s %s 2>"/dev/null" &',
+						int((delay_timeout_ms + 999) / 1000),
+						shellQuote(entry.response_path),
+						shellQuote(delay_endpoint)
+					));
+
+					if (length(commands) === probe_parallelism || i + 1 === length(entries)) {
+						system(`/bin/sh -c ${shellQuote(join(' ', commands) + ' wait')}`);
+						commands = [];
+					}
+				}
+
+				for (let entry in entries)
+					entry.result = parseDelayResponse(entry);
+			};
+
+			let requested_nodes = req.args?.nodes;
+			if (type(requested_nodes) !== 'array')
+				requested_nodes = requested_nodes ? [requested_nodes] : [];
+
+			let slots = [], entries = [], seen = {};
+			for (let value in requested_nodes) {
+				const node = trim(sprintf('%s', value || ''));
+				if (!node || seen[node])
+					continue;
+				seen[node] = true;
+
+				const section = hpuci.get_all('homeproxy', node);
+				if (!section || section['.type'] !== 'node') {
+					push(slots, {
+						result: formatResult(node, 'error', null, {
+							code: error_codes.invalid_node,
+							message: 'node section does not exist or is not a node section'
+						})
+					});
+					continue;
+				}
+
+				const endpoint = section.type === 'wireguard';
+				let outbound;
+				try {
+					outbound = endpoint ? renderEndpoint(section) : renderOutbound(section);
+				} catch (e) {
+					push(slots, { result: formatResult(node, 'error', null, {
+						code: error_codes.invalid_outbound, message: e.message
+					}) });
+					continue;
+				}
+				const tag = `probe-${length(entries)}`;
+				if (!outbound || type(outbound) !== 'object' || !outbound.type) {
+					push(slots, {
+						result: formatResult(node, 'error', null, {
+							code: error_codes.invalid_outbound,
+							message: 'failed to render sing-box outbound for node'
+						})
+					});
+					continue;
+				}
+
+				outbound.tag = tag;
+				const entry = { node, tag, endpoint, outbound, section };
+				push(slots, entry);
+				push(entries, entry);
+			}
+
+			if (!length(entries))
+				return { results: map(slots, (slot) => slot.result) };
+
+			system(`/bin/mkdir -p ${shellQuote(RUN_DIR)}`);
+			let lockfd = open(`${RUN_DIR}/latency-test.lock`, 'w', 0600);
+			if (!lockfd || lockfd.lock('x') !== true) {
+				lockfd?.close();
+				for (let entry in entries)
+					entry.result = formatResult(entry.node, 'error', null, {
+						code: error_codes.runtime_prepare_failed,
+						message: 'failed to lock temporary latency test runtime'
+					});
+				return { results: map(slots, (slot) => slot.result) };
+			}
+
+			const releaseLock = () => {
+				lockfd.lock('u');
+				lockfd.close();
+				lockfd = null;
+			};
+			const setPendingError = (state, code, message) => {
+				for (let entry in entries)
+					if (!entry.result)
+						entry.result = formatResult(entry.node, state, null, { code, message });
+			};
+
+			let runtime_meta = buildProbeRuntime(entries);
+			if (runtime_meta?.error) {
+				setPendingError('error', error_codes.runtime_prepare_failed, runtime_meta.error);
+				releaseLock();
+				return { results: map(slots, (slot) => slot.result) };
+			}
+
+			try {
+				if (!launchProbeRuntime(runtime_meta))
+					setPendingError('error', error_codes.runtime_launch_failed, 'failed to launch temporary sing-box runtime');
+				else if (!waitControllerReady(runtime_meta))
+					setPendingError('timeout', error_codes.runtime_timeout, 'temporary sing-box runtime did not become ready in time');
+				else
+					probeDelays(runtime_meta, entries);
+			} catch (e) {
+				setPendingError('error', error_codes.backend_execution_failed, 'unexpected backend error during latency test');
+			}
+
+			cleanupProbeRuntime(runtime_meta);
+			releaseLock();
+
+			return { results: map(slots, (slot) => slot.result || formatResult(slot.node, 'error', null, {
+				code: error_codes.backend_execution_failed,
+				message: 'latency test did not return a result'
+			})) };
 		}
 	},
 
@@ -148,8 +858,8 @@ const methods = {
 				return { result: false, error: 'illegal type' };
 
 			const filestat = lstat(`${RUN_DIR}/${req.args?.type}.log`);
-			if (filestat)
-				writefile(`${RUN_DIR}/${req.args?.type}.log`, '');
+			if (filestat && writefile(`${RUN_DIR}/${req.args?.type}.log`, '') === null)
+				return { result: false, error: 'failed to clean log file' };
 			return { result: true };
 		}
 	},
@@ -161,9 +871,10 @@ const methods = {
 				return { result: false, error: 'illegal type' };
 
 			const type = req.args?.type;
+			const params = trim(req.args?.params || '');
 			let result = {};
 
-			const fd = popen(`/usr/bin/sing-box generate ${type} ${shellquote(req.args?.params || '')}`);
+			const fd = popen(`/usr/bin/sing-box generate ${type}${params ? ' ' + shellQuote(params) : ''}`);
 			if (fd) {
 				let ech_cfg_set = false;
 				let ech_key_set = false;
@@ -222,31 +933,56 @@ const methods = {
 				fd.close();
 			}
 
-			features.hp_has_ip_full = access('/usr/libexec/ip-full');
 			features.hp_has_tcp_brutal = hasKernelModule('brutal.ko');
-			features.hp_has_tproxy = hasKernelModule('nft_tproxy.ko') || access('/etc/modules.d/nft-tproxy');
-			features.hp_has_tun = hasKernelModule('tun.ko') || access('/etc/modules.d/30-tun');
 
 			return features;
 		}
 	},
 
-	resources_get_version: {
-		args: { type: 'type' },
-		call: function(req) {
-			const version = trim(readfile(`${HP_DIR}/resources/${req.args?.type}.ver`));
-			return { version: version, error: error() };
+	resources_get: {
+		call: function() {
+			let resources = [];
+			for (let resource_type in keys(RESOURCES)) {
+				const resource = RESOURCES[resource_type];
+				const version = trim(readfile(resource.version) || '');
+				push(resources, {
+					type: resource_type,
+					version: version || null,
+					source: resource.source
+				});
+			}
+			return { resources };
 		}
 	},
 	resources_update: {
-		args: { type: 'type' },
-		call: function(req) {
-			if (req.args?.type) {
-				const type = shellquote(req.args?.type);
-				const exit_code = system(`${HP_DIR}/scripts/update_resources.sh ${type}`);
-				return { status: exit_code };
-			} else
-				return { status: 255, error: 'illegal type' };
+		call: function() {
+			const hpuci = cursor();
+			hpuci.load('homeproxy');
+			const mixed_port = int(hpuci.get('homeproxy', 'infra', 'mixed_port')) || 5330;
+			const update_proxy = (hpuci.get('homeproxy', 'subscription', 'update_via_proxy') === '1') ?
+				`HOMEPROXY_UPDATE_PROXY=${shellQuote(`http://127.0.0.1:${mixed_port}`)} ` : '';
+			const status = system(`${update_proxy}${HP_DIR}/scripts/update_resources.sh`);
+			let update_result = {};
+			if (status !== 2) {
+				for (let line in split(trim(readfile(`${RUN_DIR}/update_resources.result`) || ''), '\n')) {
+					const pair = match(line, /^([^=]+)=(.*)$/);
+					if (pair)
+						update_result[pair[1]] = pair[2];
+				}
+			}
+			const core_updated = update_result.core_updated === '1';
+			const dashboard_updated = update_result.dashboard_updated === '1';
+			let apply_failed = false;
+			if ((core_updated || dashboard_updated) && system('/etc/init.d/homeproxy running >/dev/null 2>&1') === 0)
+				apply_failed = system('/etc/init.d/homeproxy reload >/dev/null 2>&1') !== 0;
+			return {
+				status,
+				core_updated,
+				dashboard_updated,
+				apply_failed,
+				updated: update_result.updated || null,
+				failed: update_result.failed || null
+			};
 		}
 	}
 };

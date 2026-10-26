@@ -3,20 +3,30 @@
 		"description": "Grant access to homeproxy configuration",
 		"read": {
 			"file": {
-				"/etc/homeproxy/scripts/update_subscriptions.uc": [ "exec" ],
 				"/var/run/homeproxy/homeproxy.log": [ "read" ],
 				"/var/run/homeproxy/sing-box-c.log": [ "read" ],
 				"/var/run/homeproxy/sing-box-s.log": [ "read" ]
 			},
 			"ubus": {
 				"service": [ "list" ],
-				"luci.homeproxy": [ "*" ]
+				"luci-rpc": [ "getHostHints" ],
+				"luci.homeproxy": [
+					"connection_check", "current_node_get", "domainlist_read",
+					"node_latency_test", "resources_get",
+					"singbox_generator", "singbox_get_features", "tailscale_status"
+				]
 			},
 			"uci": [ "homeproxy" ]
 		},
 		"write": {
 			"file": {
+				"/etc/homeproxy/scripts/update_subscriptions.sh": [ "exec" ],
 				"/tmp/homeproxy_certificate.tmp": [ "write" ]
+			},
+			"ubus": {
+				"luci.homeproxy": [
+					"certificate_write", "domainlist_remove", "domainlist_write", "log_clean", "resources_update"
+				]
 			},
 			"uci": [ "homeproxy" ]
 		}

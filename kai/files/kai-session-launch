@@ -7,4 +7,7 @@ if [ "$#" -ne 1 ] || [ -z "$1" ]; then
 fi
 
 cd "$1"
+OPENCODE_PASSWORD="$(cat "${KAI_ENGINE_PASSWORD_FILE:?missing KAI engine credential file}")"
+[ -n "$OPENCODE_PASSWORD" ] || exit 1
+export OPENCODE_PASSWORD
 exec /usr/sbin/kai_session serve --port 8196 --hostname 127.0.0.1

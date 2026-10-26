@@ -7,6 +7,7 @@
 'use strict';
 'require form';
 'require fs';
+'require rpc';
 'require uci';
 'require ui';
 'require view';
@@ -14,9 +15,80 @@
 'require homeproxy as hp';
 'require tools.widgets as widgets';
 
+const callNodeLatencyTest = rpc.declare({
+	object: 'luci.homeproxy',
+	method: 'node_latency_test',
+	params: ['nodes'],
+	expect: { '': { results: [] } },
+	reject: true
+});
+
 function allowInsecureConfirm(ev, _section_id, value) {
 	if (value === '1' && !confirm(_('Are you sure to allow insecure?')))
 		ev.target.firstElementChild.checked = null;
+}
+
+function normalizeHysteriaHoppingPort(mport) {
+	if (!mport)
+		return null;
+
+	const ports = mport.split(',')
+		.map((p) => p.trim())
+		.filter((p) => p.length)
+		.map((p) => (/^\d+$/.test(p) ? `${p}:${p}` : p.replace('-', ':')));
+	return ports.length ? ports : null;
+}
+
+function validateCronField(field, minimum, maximum) {
+	return field.split(',').every((item) => {
+		const parts = item.split('/');
+		if (parts.length > 2 || !parts[0])
+			return false;
+
+		if (parts.length === 2) {
+			const step = Number(parts[1]);
+			if (!/^\d+$/.test(parts[1]) || step < 1 || step > maximum - minimum + 1)
+				return false;
+		}
+
+		if (parts[0] === '*')
+			return true;
+
+		const range = parts[0].split('-');
+		if (range.length > 2 || range.some((value) => !/^\d+$/.test(value)))
+			return false;
+
+		const start = Number(range[0]);
+		const end = Number(range[range.length - 1]);
+		return start >= minimum && end <= maximum && start <= end;
+	});
+}
+
+function validateCronExpression(_section_id, value) {
+	const fields = String(value || '').trim().replace(/\s+/g, ' ').split(' ');
+	const limits = [ [ 0, 59 ], [ 0, 23 ], [ 1, 31 ], [ 1, 12 ], [ 0, 6 ] ];
+
+	if (fields.length === limits.length && fields.every((field, index) =>
+		validateCronField(field, limits[index][0], limits[index][1])))
+		return true;
+
+	return _('Minutes (0-59), hours (0-23), days (1-31), months (1-12), weekdays (0-6).');
+}
+
+function parseECHConfig(value) {
+	if (!value || ['0', 'false', 'none'].includes(value))
+		return {};
+	const query = value.match(/^(?:([^+]+)\+)?((?:https|udp):\/\/.+)$/);
+	if (query) {
+		const server = new URL(query[2]);
+		if (!server.hostname || server.username || server.password || server.hash ||
+		    (query[1] && !/^[A-Za-z0-9_][A-Za-z0-9_.-]*[A-Za-z0-9]$/.test(query[1])))
+			throw new TypeError(_('Invalid ECH DNS query settings.'));
+		return { tls_ech: '1', tls_ech_query_server_name: query[1], tls_ech_query_server: query[2] };
+	}
+	if (!/^[A-Za-z0-9+\/]+={0,2}$/.test(value) || !hp.decodeBase64Str(value))
+		throw new TypeError(_('Invalid ECH configuration.'));
+	return { tls_ech: '1', tls_ech_config: ['-----BEGIN ECH CONFIGS-----', value, '-----END ECH CONFIGS-----'] };
 }
 
 function parseShareLink(uri, features) {
@@ -29,6 +101,11 @@ function parseShareLink(uri, features) {
 			/* https://github.com/anytls/anytls-go/blob/v0.0.8/docs/uri_scheme.md */
 			url = new URL('http://' + uri[1]);
 			params = url.searchParams;
+			let anytls_fp = params.get('fp');
+			if (['none', 'disable', 'disabled'].includes(anytls_fp))
+				anytls_fp = null;
+			else if (!anytls_fp)
+				anytls_fp = 'chrome';
 
 			/* Check if password exists */
 			if (!url.username)
@@ -42,7 +119,8 @@ function parseShareLink(uri, features) {
 				password: url.username ? decodeURIComponent(url.username) : null,
 				tls: '1',
 				tls_sni: params.get('sni'),
-				tls_insecure: (params.get('insecure') === '1') ? '1' : '0'
+				tls_insecure: (params.get('insecure') === '1' || params.get('allowInsecure') === '1') ? '1' : '0',
+				tls_utls: features.with_utls ? anytls_fp : null
 			};
 
 			break;
@@ -75,16 +153,16 @@ function parseShareLink(uri, features) {
 				type: 'hysteria',
 				address: url.hostname,
 				port: url.port || '80',
-				hysteria_protocol: params.get('protocol') || 'udp',
+				hysteria_hopping_port: normalizeHysteriaHoppingPort(params.get('mport')),
 				hysteria_auth_type: params.get('auth') ? 'string' : null,
 				hysteria_auth_payload: params.get('auth'),
 				hysteria_obfs_password: params.get('obfsParam'),
 				hysteria_down_mbps: params.get('downmbps'),
 				hysteria_up_mbps: params.get('upmbps'),
 				tls: '1',
+				tls_insecure: (params.get('insecure') === '1' || params.get('allowInsecure') === '1') ? '1' : '0',
 				tls_sni: params.get('peer'),
-				tls_alpn: params.get('alpn'),
-				tls_insecure: (params.get('insecure') === '1') ? '1' : '0'
+				tls_alpn: params.get('alpn')
 			};
 
 			break;
@@ -105,11 +183,12 @@ function parseShareLink(uri, features) {
 				password: url.username ? (
 					decodeURIComponent(url.username + (url.password ? (':' + url.password) : ''))
 				) : null,
+				hysteria_hopping_port: normalizeHysteriaHoppingPort(params.get('mport')),
 				hysteria_obfs_type: params.get('obfs'),
 				hysteria_obfs_password: params.get('obfs-password'),
 				tls: '1',
-				tls_sni: params.get('sni'),
-				tls_insecure: params.get('insecure') ? '1' : '0'
+				tls_insecure: (params.get('insecure') === '1' || params.get('allowInsecure') === '1') ? '1' : '0',
+				tls_sni: params.get('sni')
 			};
 
 			break;
@@ -133,17 +212,7 @@ function parseShareLink(uri, features) {
 			break;
 		case 'ss':
 			try {
-				/* "Lovely" Shadowrocket format */
-				try {
-					let suri = uri[1].split('#'), slabel = '';
-					if (suri.length <= 2) {
-						if (suri.length === 2)
-							slabel = '#' + suri[1];
-						uri[1] = hp.decodeBase64Str(suri[0]) + slabel;
-					}
-				} catch(e) { }
-
-				/* SIP002 format https://shadowsocks.org/guide/sip002.html */
+				/* SIP002 format https://shadowsocks.org/doc/sip002.html */
 				url = new URL('http://' + uri[1]);
 
 				let userinfo;
@@ -178,20 +247,7 @@ function parseShareLink(uri, features) {
 					shadowsocks_plugin_opts: plugin_opts
 				};
 			} catch(e) {
-				/* Legacy format https://github.com/shadowsocks/shadowsocks-org/commit/78ca46cd6859a4e9475953ed34a2d301454f579e */
-				uri = uri[1].split('@');
-				if (uri.length < 2)
-					return null;
-				else if (uri.length > 2)
-					uri = [ uri.slice(0, -1).join('@'), uri.slice(-1).toString() ];
-
-				config = {
-					type: 'shadowsocks',
-					address: uri[1].split(':')[0],
-					port: uri[1].split(':')[1],
-					shadowsocks_encrypt_method: uri[0].split(':')[0],
-					password: uri[0].split(':').slice(1).join(':')
-				};
+				return null;
 			}
 
 			break;
@@ -212,11 +268,23 @@ function parseShareLink(uri, features) {
 				password: decodeURIComponent(url.username),
 				transport: params.get('type') !== 'tcp' ? params.get('type') : null,
 				tls: '1',
-				tls_sni: params.get('sni')
+				tls_insecure: (params.get('insecure') === '1' || params.get('allowInsecure') === '1') ? '1' : '0',
+				tls_sni: params.get('sni'),
+				tls_alpn: params.get('alpn') ? params.get('alpn').split(',') : null,
+				tls_utls: features.with_utls ? params.get('fp') : null,
+				...parseECHConfig(params.get('ech'))
 			};
 			switch (params.get('type')) {
 			case 'grpc':
 				config.grpc_servicename = params.get('serviceName');
+				break;
+			case 'http':
+				config.http_host = params.get('host') ? decodeURIComponent(params.get('host')).split(',') : null;
+				config.http_path = params.get('path') ? decodeURIComponent(params.get('path')) : null;
+				break;
+			case 'httpupgrade':
+				config.httpupgrade_host = params.get('host') ? decodeURIComponent(params.get('host')) : null;
+				config.http_path = params.get('path') ? decodeURIComponent(params.get('path')) : null;
 				break;
 			case 'ws':
 				config.ws_host = params.get('host') ? decodeURIComponent(params.get('host')) : null;
@@ -249,6 +317,7 @@ function parseShareLink(uri, features) {
 				tuic_congestion_control: params.get('congestion_control'),
 				tuic_udp_relay_mode: params.get('udp_relay_mode'),
 				tls: '1',
+				tls_insecure: (params.get('insecure') === '1' || params.get('allowInsecure') === '1') ? '1' : '0',
 				tls_sni: params.get('sni'),
 				tls_alpn: params.get('alpn') ? decodeURIComponent(params.get('alpn')).split(',') : null
 			};
@@ -264,8 +333,8 @@ function parseShareLink(uri, features) {
 				return null;
 			else if (params.get('type') === 'quic' && ((params.get('quicSecurity') && params.get('quicSecurity') !== 'none') || !features.with_quic))
 				return null;
-			/* Check if uuid and type exist */
-			if (!url.username || !params.get('type'))
+			/* Check if uuid exists; omitted transport means TCP. */
+			if (!url.username)
 				return null;
 
 			config = {
@@ -276,13 +345,15 @@ function parseShareLink(uri, features) {
 				uuid: url.username,
 				transport: params.get('type') !== 'tcp' ? params.get('type') : null,
 				tls: ['tls', 'xtls', 'reality'].includes(params.get('security')) ? '1' : '0',
+				tls_insecure: (params.get('insecure') === '1' || params.get('allowInsecure') === '1') ? '1' : '0',
 				tls_sni: params.get('sni'),
 				tls_alpn: params.get('alpn') ? decodeURIComponent(params.get('alpn')).split(',') : null,
 				tls_reality: (params.get('security') === 'reality') ? '1' : '0',
 				tls_reality_public_key: params.get('pbk') ? decodeURIComponent(params.get('pbk')) : null,
 				tls_reality_short_id: params.get('sid'),
 				tls_utls: features.with_utls ? params.get('fp') : null,
-				vless_flow: ['tls', 'reality'].includes(params.get('security')) ? params.get('flow') : null
+				vless_flow: ['tls', 'reality'].includes(params.get('security')) ? params.get('flow') : null,
+				...parseECHConfig(params.get('ech'))
 			};
 			switch (params.get('type')) {
 			case 'grpc':
@@ -291,6 +362,7 @@ function parseShareLink(uri, features) {
 			case 'http':
 			case 'tcp':
 				if (config.transport === 'http' || params.get('headerType') === 'http') {
+					config.transport = 'http';
 					config.http_host = params.get('host') ? decodeURIComponent(params.get('host')).split(',') : null;
 					config.http_path = params.get('path') ? decodeURIComponent(params.get('path')) : null;
 				}
@@ -343,7 +415,8 @@ function parseShareLink(uri, features) {
 				tls: uri.tls === 'tls' ? '1' : '0',
 				tls_sni: uri.sni || uri.host,
 				tls_alpn: uri.alpn ? uri.alpn.split(',') : null,
-				tls_utls: features.with_utls ? uri.fp : null
+				tls_utls: features.with_utls ? uri.fp : null,
+				...parseECHConfig(uri.ech)
 			};
 			switch (uri.net) {
 			case 'grpc':
@@ -377,6 +450,9 @@ function parseShareLink(uri, features) {
 	}
 
 	if (config) {
+		if (['vless', 'vmess', 'trojan'].includes(config.type) && config.transport &&
+		    !['tcp', 'http', 'ws', 'grpc', 'httpupgrade', 'quic'].includes(config.transport))
+			throw new TypeError(_('Unsupported transport: %s.').format(config.transport));
 		if (!config.address || !config.port)
 			return null;
 		else if (!config.label)
@@ -388,40 +464,404 @@ function parseShareLink(uri, features) {
 	return config;
 }
 
-function renderNodeSettings(section, data, features, main_node, routing_mode) {
+const NODE_LATENCY_ROW_STATES = Object.freeze({
+	UNTESTED: 'untested',
+	TESTING: 'testing',
+	SUCCESS: 'success',
+	TIMEOUT: 'timeout',
+	ERROR: 'error'
+});
+
+const NODE_LATENCY_ROW_STATE_VALUES = Object.freeze(Object.values(NODE_LATENCY_ROW_STATES));
+
+function resolveNodeLatencyResult(result) {
+	let state = result?.state;
+	let latency_ms = (result?.latency_ms != null) ? result.latency_ms : null;
+	let error = result?.error || null;
+
+	if (error?.code?.endsWith('_timeout'))
+		state = NODE_LATENCY_ROW_STATES.TIMEOUT;
+	else if (error)
+		state = NODE_LATENCY_ROW_STATES.ERROR;
+	else if (latency_ms != null)
+		state = NODE_LATENCY_ROW_STATES.SUCCESS;
+
+	return { state, latency_ms, error };
+}
+
+function getNodeLatencyErrorText(error_code) {
+	switch (error_code) {
+	case 'backend_execution_failed':
+	case 'runtime_launch_failed':
+	case 'runtime_prepare_failed':
+		return _('Backend execution failed');
+	case 'delay_failed':
+		return _('Probe failed');
+	case 'invalid_outbound':
+	case 'invalid_node':
+		return _('Invalid node');
+	case 'invalid_response':
+		return _('Invalid response');
+	case 'rpc_failed':
+		return _('RPC failed');
+	default:
+		return _('Error');
+	}
+}
+
+function getNodeLatencyStatusText(row_state) {
+	if (!row_state)
+		return _('Not tested');
+
+	switch (row_state.state) {
+	case NODE_LATENCY_ROW_STATES.TESTING:
+		return _('Testing');
+	case NODE_LATENCY_ROW_STATES.SUCCESS:
+		return (row_state.latency_ms != null) ? _('%s ms').format(row_state.latency_ms) : _('Success');
+	case NODE_LATENCY_ROW_STATES.TIMEOUT:
+		return _('Timeout');
+	case NODE_LATENCY_ROW_STATES.ERROR:
+		return getNodeLatencyErrorText(row_state.error?.code);
+	case NODE_LATENCY_ROW_STATES.UNTESTED:
+	default:
+		return _('Not tested');
+	}
+}
+
+function getNodeLatencyStatusStyle(row_state) {
+	if (!row_state)
+		return 'color:gray';
+
+	switch (row_state.state) {
+	case NODE_LATENCY_ROW_STATES.TESTING:
+		return 'color:#0a84ff';
+	case NODE_LATENCY_ROW_STATES.SUCCESS:
+		return 'color:green';
+	case NODE_LATENCY_ROW_STATES.TIMEOUT:
+		return 'color:#ff8c00';
+	case NODE_LATENCY_ROW_STATES.ERROR:
+		return 'color:red';
+	case NODE_LATENCY_ROW_STATES.UNTESTED:
+	default:
+		return 'color:gray';
+	}
+}
+
+function renderNodeLatencyStatus(row_state) {
+	return '<strong style="%s">%s</strong>'.format(getNodeLatencyStatusStyle(row_state), getNodeLatencyStatusText(row_state));
+}
+
+function renderNodeLatencyStatusNode(row_state, attrs) {
+	return E('strong', Object.assign({
+		'style': getNodeLatencyStatusStyle(row_state)
+	}, attrs || {}), [ getNodeLatencyStatusText(row_state) ]);
+}
+
+function getNodeLatencyActionTitle(row_state) {
+	return (row_state?.state === NODE_LATENCY_ROW_STATES.TESTING) ? _('Testing') : _('Test');
+}
+
+function parseNodeLatencySectionId(widget_id) {
+	let matched = String(widget_id || '').match(/^cbi-homeproxy-(.*)-_test_latency$/);
+	return matched ? matched[1] : null;
+}
+
+function parseActiveSubscriptionTabId(value) {
+	let matched = String(value || '').match(/(?:^|[^\w])(sub_[0-9a-f]+)(?:$|[^\w])/i);
+	return matched ? matched[1] : null;
+}
+
+function parseActiveNodeListTabId(value) {
+	let matched = String(value || '').match(/(?:^|[^\w])(node|subscription|sub_[0-9a-f]+)(?:$|[^\w])/i);
+	return matched ? matched[1].toLowerCase() : null;
+}
+
+function getActiveNodeListTabId(root_el) {
+	let active_tab = null;
+	let active_tab_nodes = root_el.querySelectorAll('.cbi-tabmenu li.cbi-tab-active, .cbi-tabmenu li.active, .cbi-tabmenu [aria-selected="true"]');
+
+	for (let node of active_tab_nodes) {
+		let tab_id = parseActiveNodeListTabId(node?.getAttribute('data-tab'))
+			|| parseActiveNodeListTabId(node?.dataset?.tab)
+			|| parseActiveNodeListTabId(node?.getAttribute('id'));
+		if (!tab_id && node?.querySelector)
+			tab_id = parseActiveNodeListTabId(node.querySelector('a')?.getAttribute('href'))
+				|| parseActiveNodeListTabId(node.querySelector('a')?.getAttribute('data-tab'));
+
+		if (tab_id) {
+			active_tab = tab_id;
+			break;
+		}
+	}
+
+	if (!active_tab) {
+		let fallback_tab_nodes = root_el.querySelectorAll('.cbi-tabmenu li.cbi-tab[data-tab], .cbi-tabmenu li[data-tab]:not(.cbi-tab-disabled)');
+
+		for (let node of fallback_tab_nodes) {
+			let tab_id = parseActiveNodeListTabId(node?.getAttribute('data-tab')) || parseActiveNodeListTabId(node?.dataset?.tab);
+			if (tab_id) {
+				active_tab = tab_id;
+				break;
+			}
+		}
+	}
+
+	return active_tab;
+}
+
+function shouldShowBulkLatencyButton(root_el) {
+	let active_tab = getActiveNodeListTabId(root_el);
+
+	if (!active_tab)
+		return false;
+
+	return !!parseActiveSubscriptionTabId(active_tab);
+}
+
+function getActiveSubscriptionTabId(root_el) {
+	let active_tab = getActiveNodeListTabId(root_el);
+	return parseActiveSubscriptionTabId(active_tab);
+}
+
+function getActiveSubscriptionTabContainer(root_el, active_tab) {
+	if (!active_tab)
+		return null;
+
+	let candidates = [];
+	for (let selector of [
+		'.cbi-tabcontainer[data-tab="%s"]'.format(active_tab),
+		'[data-tab="%s"]'.format(active_tab),
+		'[id="tab.%s"]'.format(active_tab),
+		'[id="tab-%s"]'.format(active_tab),
+		'[id="%s"]'.format(active_tab)
+	]) {
+		candidates = candidates.concat(Array.from(root_el.querySelectorAll(selector)));
+	}
+
+	return candidates.find((node) => !node.closest('.cbi-tabmenu') && node.querySelector('div[id$="-_test_latency"]')) || null;
+}
+
+function getActiveSubscriptionLatencySectionIds(root_el) {
+	let active_tab = getActiveSubscriptionTabId(root_el);
+	let active_container = getActiveSubscriptionTabContainer(root_el, active_tab);
+	if (!active_container)
+		return [];
+
+	let widgets = Array.from(active_container.querySelectorAll('div[id$="-_test_latency"]'));
+	return widgets.map((node) => parseNodeLatencySectionId(node.id)).filter((sid) => !!sid);
+}
+
+function createNodeLatencyRowStateModel() {
+	let rows = Object.create(null);
+
+	const buildRowState = (state, result) => {
+		let resolved_result = resolveNodeLatencyResult(result);
+
+		return {
+			state: state,
+			latency_ms: resolved_result.latency_ms,
+			measured_at: (result && result.measured_at) ? result.measured_at : null,
+			error: resolved_result.error
+		};
+	};
+
+	const normalizeState = (state) => {
+		if (NODE_LATENCY_ROW_STATE_VALUES.includes(state))
+			return state;
+
+		return NODE_LATENCY_ROW_STATES.ERROR;
+	};
+
+	const ensure = (section_id) => {
+		if (!section_id)
+			return buildRowState(NODE_LATENCY_ROW_STATES.UNTESTED, null);
+
+		if (!rows[section_id])
+			rows[section_id] = buildRowState(NODE_LATENCY_ROW_STATES.UNTESTED, null);
+
+		return rows[section_id];
+	};
+
+	return {
+		states: NODE_LATENCY_ROW_STATES,
+
+		get: (section_id) => ensure(section_id),
+
+		set: (section_id, state, result) => {
+			if (!section_id)
+				return null;
+
+			rows[section_id] = buildRowState(normalizeState(state), result);
+			return rows[section_id];
+		},
+
+		setFromProbeResult: (section_id, result) => {
+			if (!section_id)
+				return null;
+
+			let resolved_result = resolveNodeLatencyResult(result);
+			let state = resolved_result.state ? normalizeState(resolved_result.state) : NODE_LATENCY_ROW_STATES.ERROR;
+			rows[section_id] = buildRowState(state, result);
+			return rows[section_id];
+		},
+
+		clear: (section_id) => {
+			if (!section_id)
+				return;
+
+			delete rows[section_id];
+		},
+
+		reset: () => {
+			rows = Object.create(null);
+		},
+
+		snapshot: () => rows
+	};
+}
+
+function renderNodeSettings(section, data, features, main_node, node_latency_row_state) {
 	let s = section, o;
+	if (typeof globalThis !== 'undefined') {
+		globalThis.__hpNodeLatencySections = globalThis.__hpNodeLatencySections || {};
+		globalThis.__hpNodeLatencyTrigger = function(section_id) {
+			let target = globalThis.__hpNodeLatencySections?.[section_id];
+			return target ? target.handleNodeLatencyTest(section_id) : false;
+		};
+	}
 	s.rowcolors = true;
 	s.sortable = true;
 	s.nodescriptions = true;
+	s.max_cols = 7;
 	s.modaltitle = L.bind(hp.loadModalTitle, this, _('Node'), _('Add a node'), data[0]);
 	s.sectiontitle = L.bind(hp.loadDefaultLabel, this, data[0]);
+	s.node_latency_row_state = node_latency_row_state;
+	s.getNodeLatencyRowState = function(section_id) {
+		return node_latency_row_state.get(section_id);
+	}
+	s.setNodeLatencyRowState = function(section_id, state, result) {
+		return node_latency_row_state.set(section_id, state, result);
+	}
+	s.setNodeLatencyRowStateFromProbeResult = function(section_id, result) {
+		return node_latency_row_state.setFromProbeResult(section_id, result);
+	}
+	s.refreshNodeLatencyRow = function(section_id) {
+		let row_state = this.getNodeLatencyRowState(section_id);
+		let latency_id = 'cbi-%s-%s-_latency'.format(data[0], section_id);
+		let test_id = 'cbi-%s-%s-_test_latency'.format(data[0], section_id);
 
-	if (routing_mode !== 'custom') {
-		o = s.option(form.Button, '_apply', _('Apply'));
-		o.editable = true;
-		o.modalonly = false;
-		o.inputstyle = 'apply';
-		o.inputtitle = function(section_id) {
-			if (main_node == section_id) {
-				this.readonly = true;
-				return _('Applied');
-			} else {
-				this.readonly = false;
-				return _('Apply');
+		let status_widget = this.map.findElement('id', latency_id);
+		if (status_widget)
+			status_widget.innerHTML = renderNodeLatencyStatus(row_state);
+
+		let test_widget = this.map.findElement('id', test_id);
+		let test_button = test_widget ? test_widget.querySelector('button') : null;
+		if (test_button) {
+			test_button.textContent = getNodeLatencyActionTitle(row_state);
+			test_button.disabled = (row_state.state === NODE_LATENCY_ROW_STATES.TESTING) ? true : null;
+		}
+	}
+
+	s.handleNodeLatencyTests = function(section_ids) {
+		section_ids = Array.from(new Set(section_ids || [])).filter((sid) => !!sid);
+		for (let sid of section_ids) {
+			this.setNodeLatencyRowState(sid, NODE_LATENCY_ROW_STATES.TESTING, null);
+			this.refreshNodeLatencyRow(sid);
+		}
+
+		return callNodeLatencyTest(section_ids).then((response) => {
+			let results = Object.create(null);
+			for (let result of response?.results || [])
+				if (result?.node)
+					results[result.node] = result;
+
+			for (let sid of section_ids) {
+				if (results[sid])
+					this.setNodeLatencyRowStateFromProbeResult(sid, results[sid]);
+				else
+					this.setNodeLatencyRowState(sid, NODE_LATENCY_ROW_STATES.ERROR, {
+						error: {
+							code: 'invalid_response',
+							message: 'missing node latency result'
+						}
+					});
 			}
-		}
-		o.onclick = function(ev, section_id) {
-			uci.set(data[0], 'config', 'main_node', section_id);
+		}).catch((err) => {
+			for (let sid of section_ids)
+				this.setNodeLatencyRowState(sid, NODE_LATENCY_ROW_STATES.ERROR, {
+					error: {
+						code: 'rpc_failed',
+						message: String(err)
+					}
+				});
+		}).then(() => {
+			for (let sid of section_ids)
+				this.refreshNodeLatencyRow(sid);
+		});
+	}
+	s.handleNodeLatencyTest = function(section_id) {
+		return this.handleNodeLatencyTests([section_id]);
+	}
 
-			return this.map.save(null, true).then(() => {
-				ui.changes.apply(true);
-			});
+	o = s.option(form.Button, '_apply', _('Apply'));
+	o.editable = true;
+	o.modalonly = false;
+	o.inputstyle = 'apply';
+	o.inputtitle = function(section_id) {
+		if (main_node == section_id) {
+			this.readonly = true;
+			return _('Applied');
+		} else {
+			this.readonly = false;
+			return _('Apply');
 		}
+	}
+	o.onclick = function(ev, section_id) {
+		uci.set(data[0], 'config', 'main_node', section_id);
+
+		return this.map.save(null, true).then(() => {
+			ui.changes.apply(true);
+		});
+	}
+	o = s.option(form.DummyValue, '_latency', _('Latency'));
+	o.rawhtml = true;
+	o.modalonly = false;
+	o.textvalue = function(section_id) {
+		return E('span', { 'id': 'cbi-%s-%s-_latency'.format(data[0], section_id) }, [
+			renderNodeLatencyStatusNode(this.section.getNodeLatencyRowState(section_id))
+		]);
+	}
+
+	o = s.option(form.Button, '_test_latency', _('Test'));
+	o.editable = true;
+	o.modalonly = false;
+	o.inputstyle = 'action';
+	o.inputtitle = function(section_id) {
+		return getNodeLatencyActionTitle(this.section.getNodeLatencyRowState(section_id));
+	}
+	o.renderWidget = function(section_id, _option_index, cfgvalue) {
+		let hiddenEl = new ui.Hiddenfield((cfgvalue != null) ? cfgvalue : '', {
+			id: this.cbid(section_id)
+		});
+		let outputEl = E('output', { 'for': this.cbid(section_id) });
+		let row_state = s.getNodeLatencyRowState(section_id);
+
+		if (typeof globalThis !== 'undefined' && globalThis.__hpNodeLatencySections)
+			globalThis.__hpNodeLatencySections[section_id] = s;
+
+		outputEl.appendChild(E('button', {
+			'class': 'cbi-button cbi-button-action',
+			'onclick': 'return globalThis.__hpNodeLatencyTrigger(%s);'.format(JSON.stringify(section_id)),
+			'disabled': (row_state.state === NODE_LATENCY_ROW_STATES.TESTING) ? true : null
+		}, [ getNodeLatencyActionTitle(row_state) ]));
+
+		return E([ outputEl, hiddenEl.render() ]);
 	}
 
 	o = s.option(form.Value, 'label', _('Label'));
 	o.load = L.bind(hp.loadDefaultLabel, this, data[0]);
 	o.validate = L.bind(hp.validateUniqueValue, this, data[0], 'node', 'label');
+	o.rmempty = false;
 	o.modalonly = true;
 
 	o = s.option(form.ListValue, 'type', _('Type'));
@@ -434,11 +874,11 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	}
 	o.value('shadowsocks', _('Shadowsocks'));
 	o.value('shadowtls', _('ShadowTLS'));
-	o.value('socks', _('Socks'));
+	o.value('socks', _('SOCKS'));
 	o.value('ssh', _('SSH'));
 	o.value('trojan', _('Trojan'));
 	if (features.with_quic)
-		o.value('tuic', _('Tuic'));
+		o.value('tuic', _('TUIC'));
 	if (features.with_wireguard && features.with_gvisor)
 		o.value('wireguard', _('WireGuard'));
 	o.value('vless', _('VLESS'));
@@ -493,15 +933,6 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	}
 	o.modalonly = true;
 
-	/* Direct config */
-	o = s.option(form.ListValue, 'proxy_protocol', _('Proxy protocol'),
-		_('Write proxy protocol in the connection header.'));
-	o.value('', _('Disable'));
-	o.value('1', _('v1'));
-	o.value('2', _('v2'));
-	o.depends('type', 'direct');
-	o.modalonly = true;
-
 	/* AnyTLS config start */
 	o = s.option(form.Value, 'anytls_idle_session_check_interval', _('Idle session check interval'),
 		_('Interval checking for idle sessions, in seconds.'));
@@ -513,7 +944,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o = s.option(form.Value, 'anytls_idle_session_timeout', _('Idle session check timeout'),
 		_('In the check, close sessions that have been idle for longer than this, in seconds.'));
 	o.datatype = 'uinteger';
-	o.placeholder = '30';
+	o.placeholder = '120';
 	o.depends('type', 'anytls');
 	o.modalonly = true;
 
@@ -534,21 +965,35 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 
 	o = s.option(form.Value, 'hysteria_hop_interval', _('Hop interval'),
 		_('Port hopping interval in seconds.'));
-	o.datatype = 'uinteger';
+	o.datatype = 'and(uinteger,min(5))';
 	o.placeholder = '30';
 	o.depends({'type': 'hysteria', 'hysteria_hopping_port': /[\s\S]/});
 	o.depends({'type': 'hysteria2', 'hysteria_hopping_port': /[\s\S]/});
 	o.modalonly = true;
 
-	o = s.option(form.ListValue, 'hysteria_protocol', _('Protocol'));
+	o = s.option(form.Value, 'hysteria_hop_interval_max', _('Maximum hop interval'),
+		_('Maximum port hopping interval in seconds. The actual interval is randomly chosen between the hop interval (30 seconds by default) and this value. Leave empty to use a fixed interval.'));
+	o.datatype = 'and(uinteger,min(5))';
+	o.depends({'type': 'hysteria2', 'hysteria_hopping_port': /[\s\S]/});
+	o.validate = function(section_id, value) {
+		if (!value)
+			return true;
+
+		const interval = this.section.formvalue(section_id, 'hysteria_hop_interval') || '30';
+		if (Number(value) < Number(interval))
+			return _('Must be greater than or equal to the hop interval.');
+
+		return true;
+	};
+	o.modalonly = true;
+
+	o = s.option(form.ListValue, 'hysteria_network', _('Network'));
+	o.value('', _('TCP and UDP'));
 	o.value('udp');
-	/* WeChat-Video / FakeTCP are unsupported by sing-box currently
-	 * o.value('wechat-video');
-	 * o.value('faketcp');
-	 */
-	o.default = 'udp';
+	o.value('tcp');
+	o.default = '';
 	o.depends('type', 'hysteria');
-	o.rmempty = false;
+	o.depends('type', 'hysteria2');
 	o.modalonly = true;
 
 	o = s.option(form.ListValue, 'hysteria_auth_type', _('Authentication type'));
@@ -567,6 +1012,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o = s.option(form.ListValue, 'hysteria_obfs_type', _('Obfuscate type'));
 	o.value('', _('Disable'));
 	o.value('salamander', _('Salamander'));
+	o.value('gecko', _('Gecko'));
 	o.depends('type', 'hysteria2');
 	o.modalonly = true;
 
@@ -581,6 +1027,12 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.datatype = 'uinteger';
 	o.depends('type', 'hysteria');
 	o.depends('type', 'hysteria2');
+	o.validate = function(section_id, value) {
+		if (section_id && this.section.formvalue(section_id, 'type') === 'hysteria' && !value)
+			return _('Expecting: %s').format(_('non-empty value'));
+
+		return true;
+	}
 	o.modalonly = true;
 
 	o = s.option(form.Value, 'hysteria_up_mbps', _('Max upload speed'),
@@ -588,23 +1040,37 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.datatype = 'uinteger';
 	o.depends('type', 'hysteria');
 	o.depends('type', 'hysteria2');
+	o.validate = function(section_id, value) {
+		if (section_id && this.section.formvalue(section_id, 'type') === 'hysteria' && !value)
+			return _('Expecting: %s').format(_('non-empty value'));
+
+		return true;
+	}
 	o.modalonly = true;
 
-	o = s.option(form.Value, 'hysteria_recv_window_conn', _('QUIC stream receive window'),
+	o = s.option(form.Value, 'hysteria_stream_receive_window', _('QUIC stream receive window'),
 		_('The QUIC stream-level flow control window for receiving data.'));
 	o.datatype = 'uinteger';
 	o.depends('type', 'hysteria');
+	o.depends('type', 'hysteria2');
 	o.modalonly = true;
 
-	o = s.option(form.Value, 'hysteria_revc_window', _('QUIC connection receive window'),
+	o = s.option(form.Value, 'hysteria_connection_receive_window', _('QUIC connection receive window'),
 		_('The QUIC connection-level flow control window for receiving data.'));
 	o.datatype = 'uinteger';
 	o.depends('type', 'hysteria');
+	o.depends('type', 'hysteria2');
 	o.modalonly = true;
 
-	o = s.option(form.Flag, 'hysteria_disable_mtu_discovery', _('Disable Path MTU discovery'),
+	o = s.option(form.Flag, 'hysteria_disable_path_mtu_discovery', _('Disable path MTU discovery'),
 		_('Disables Path MTU Discovery (RFC 8899). Packets will then be at most 1252 (IPv4) / 1232 (IPv6) bytes in size.'));
 	o.depends('type', 'hysteria');
+	o.depends('type', 'hysteria2');
+	o.modalonly = true;
+
+	o = s.option(form.Flag, 'hysteria_disable_chrome_parrot', _('Disable Chrome QUIC fingerprint imitation'),
+		_('Disable Chrome QUIC handshake fingerprint imitation for compatibility with servers using Ed25519 certificates.'));
+	o.depends('type', 'hysteria2');
 	o.modalonly = true;
 	/* Hysteria (2) config end */
 
@@ -628,7 +1094,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.modalonly = true;
 
 	o = s.option(form.ListValue, 'shadowsocks_plugin', _('Plugin'));
-	o.value('', _('none'));
+	o.value('', _('None'));
 	o.value('obfs-local');
 	o.value('v2ray-plugin');
 	o.depends('type', 'shadowsocks');
@@ -650,11 +1116,11 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.rmempty = false;
 	o.modalonly = true;
 
-	/* Socks config */
-	o = s.option(form.ListValue, 'socks_version', _('Socks version'));
-	o.value('4', _('Socks4'));
-	o.value('4a', _('Socks4A'));
-	o.value('5', _('Socks5'));
+	/* SOCKS config */
+	o = s.option(form.ListValue, 'socks_version', _('SOCKS version'));
+	o.value('4', _('SOCKS4'));
+	o.value('4a', _('SOCKS4A'));
+	o.value('5', _('SOCKS5'));
 	o.default = '5';
 	o.depends('type', 'socks');
 	o.rmempty = false;
@@ -730,7 +1196,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.default = '10';
 	o.depends('type', 'tuic');
 	o.modalonly = true;
-	/* Tuic config end */
+	/* TUIC config end */
 
 	/* VMess / VLESS config start */
 	o = s.option(form.ListValue, 'vless_flow', _('Flow'));
@@ -884,9 +1350,14 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	/* WebSocket config end */
 
 	o = s.option(form.ListValue, 'packet_encoding', _('Packet encoding'));
-	o.value('', _('none'));
+	o.value('none', _('None'));
 	o.value('packetaddr', _('packet addr (v2ray-core v5+)'));
-	o.value('xudp', _('Xudp (Xray-core)'));
+	o.value('xudp', _('XUDP (Xray-core)'));
+	o.rmempty = false;
+	o.cfgvalue = function(section_id) {
+		const value = uci.get('homeproxy', section_id, 'packet_encoding');
+		return value == null ? (uci.get('homeproxy', section_id, 'type') === 'vless' ? 'xudp' : 'none') : (value || 'none');
+	};
 	o.depends('type', 'vless');
 	o.depends('type', 'vmess');
 	o.modalonly = true;
@@ -982,7 +1453,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.modalonly = true;
 
 	o = s.option(form.Flag, 'multiplex_brutal', _('Enable TCP Brutal'),
-		_('Enable TCP Brutal congestion control algorithm'));
+		_('Enable TCP Brutal congestion control algorithm.'));
 	o.depends('multiplex', '1');
 	o.modalonly = true;
 
@@ -1013,9 +1484,11 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.validate = function(section_id, _value) {
 		if (section_id) {
 			let type = this.map.lookupOption('type', section_id)[0].formvalue(section_id);
+			let transport_options = this.map.lookupOption('transport', section_id);
+			let transport = transport_options?.[0]?.formvalue(section_id);
 			let tls = this.map.findElement('id', 'cbid.homeproxy.%s.tls'.format(section_id)).firstElementChild;
 
-			if (['anytls', 'hysteria', 'hysteria2', 'shadowtls', 'tuic'].includes(type)) {
+			if (['anytls', 'hysteria', 'hysteria2', 'shadowtls', 'tuic'].includes(type) || transport === 'quic') {
 				tls.checked = true;
 				tls.disabled = true;
 			} else {
@@ -1047,7 +1520,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 
 	o = s.option(form.ListValue, 'tls_min_version', _('Minimum TLS version'),
 		_('The minimum TLS version that is acceptable.'));
-	o.value('', _('default'));
+	o.value('', _('Default'));
 	for (let i of hp.tls_versions)
 		o.value(i);
 	o.depends('tls', '1');
@@ -1055,7 +1528,7 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 
 	o = s.option(form.ListValue, 'tls_max_version', _('Maximum TLS version'),
 		_('The maximum TLS version that is acceptable.'));
-	o.value('', _('default'));
+	o.value('', _('Default'));
 	for (let i of hp.tls_versions)
 		o.value(i);
 	o.depends('tls', '1');
@@ -1100,6 +1573,28 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 	o.value('/etc/homeproxy/certs/client_ech_conf.pem');
 	o.depends('tls_ech', '1');
 	o.modalonly = true;
+
+	o = s.option(form.Value, 'tls_ech_query_server_name', _('ECH query domain'),
+		_('Domain used to query ECH records. The TLS server name is used when empty.'));
+	o.datatype = 'hostname';
+	o.depends('tls_ech', '1');
+	o.modalonly = true;
+
+	o = s.option(form.Value, 'tls_ech_query_server', _('ECH DNS server'),
+		_('DNS server used only to obtain ECH records. Supports https:// and udp:// URLs.'));
+	o.depends('tls_ech', '1');
+	o.modalonly = true;
+	o.validate = function(_section_id, value) {
+		if (!value)
+			return true;
+		try {
+			const url = new URL(value);
+			return (['https:', 'udp:'].includes(url.protocol) && url.hostname &&
+				!url.username && !url.password && !url.hash) || _('Invalid ECH DNS query settings.');
+		} catch (e) {
+			return _('Invalid ECH DNS query settings.');
+		}
+	};
 
 	o = s.option(form.Button, '_upload_ech_config', _('Upload ECH config'),
 		_('<strong>Save your configuration before uploading files!</strong>'));
@@ -1159,12 +1654,13 @@ function renderNodeSettings(section, data, features, main_node, routing_mode) {
 
 	/* Extra settings start */
 	o = s.option(form.Flag, 'tcp_fast_open', _('TCP fast open'));
+	o.depends({'type': 'anytls', '!reverse': true});
 	o.modalonly = true;
 
-	o = s.option(form.Flag, 'tcp_multi_path', _('MultiPath TCP'));
+	o = s.option(form.Flag, 'tcp_multi_path', _('TCP multi-path'));
 	o.modalonly = true;
 
-	o = s.option(form.Flag, 'udp_fragment', _('UDP Fragment'),
+	o = s.option(form.Flag, 'udp_fragment', _('UDP fragment'),
 		_('Enable UDP fragmentation.'));
 	o.modalonly = true;
 
@@ -1196,19 +1692,21 @@ return view.extend({
 	render(data) {
 		let m, s, o, ss, so;
 		let main_node = uci.get(data[0], 'config', 'main_node');
-		let routing_mode = uci.get(data[0], 'config', 'routing_mode');
 		let features = data[1];
+		let node_latency_row_state = createNodeLatencyRowStateModel();
+
+		this.node_latency_row_state = node_latency_row_state;
 
 		/* Cache subscription information, it will be called multiple times */
-		let subinfo = [];
-		for (let suburl of (uci.get(data[0], 'subscription', 'subscription_url') || [])) {
-			const url = new URL(suburl);
-			const urlhash = hp.calcStringMD5(suburl.replace(/#.*$/, ''));
-			const title = url.hash ? decodeURIComponent(url.hash.slice(1)) : url.hostname;
-			subinfo.push({ 'hash': urlhash, 'title': title });
-		}
+		const subinfo = hp.getSubscriptionGroups(data[0]);
 
-		m = new form.Map('homeproxy', _('Edit nodes'));
+		m = new form.Map('homeproxy', _('Edit Nodes'));
+		const saveMap = m.save;
+		m.save = function(cb, silent) {
+			return saveMap.call(this, () => Promise.resolve(
+				typeof cb === 'function' ? cb() : null
+			).then(() => hp.reconcileUrltestNodes(data[0])), silent);
+		};
 
 		s = m.section(form.NamedSection, 'subscription', 'homeproxy');
 
@@ -1216,14 +1714,10 @@ return view.extend({
 		/* User nodes start */
 		s.tab('node', _('Nodes'));
 		o = s.taboption('node', form.SectionValue, '_node', form.GridSection, 'node');
-		ss = renderNodeSettings(o.subsection, data, features, main_node, routing_mode);
+		ss = renderNodeSettings(o.subsection, data, features, main_node, node_latency_row_state);
 		ss.addremove = true;
 		ss.filter = function(section_id) {
-			for (let info of subinfo)
-				if (info.hash === uci.get(data[0], section_id, 'grouphash'))
-					return false;
-
-			return true;
+			return !uci.get(data[0], section_id, 'grouphash');
 		}
 		/* Import subscription links start */
 		/* Thanks to luci-app-shadowsocks-libev */
@@ -1249,35 +1743,44 @@ return view.extend({
 
 								let allow_insecure = uci.get(data[0], 'subscription', 'allow_insecure');
 								let packet_encoding = uci.get(data[0], 'subscription', 'packet_encoding');
-								let imported_node = 0;
+								let imported_node = 0, import_errors = [];
 								input_links.forEach((l) => {
-									let config = parseShareLink(l, features);
-									if (config) {
+									let sid = null;
+									try {
+										let config = parseShareLink(l, features);
+										if (!config)
+											return;
 										if (config.tls === '1' && allow_insecure === '1')
 											config.tls_insecure = '1'
 										if (['vless', 'vmess'].includes(config.type))
 											config.packet_encoding = packet_encoding
 
-										let nameHash = hp.calcStringMD5(config.label);
-										let sid = uci.add(data[0], 'node', nameHash);
+										sid = uci.add(data[0], 'node');
 										Object.keys(config).forEach((k) => {
 											uci.set(data[0], sid, k, config[k]);
 										});
 										imported_node++;
+									} catch (e) {
+										if (e.message && !import_errors.includes(e.message))
+											import_errors.push(e.message);
+										if (sid)
+											uci.remove(data[0], sid);
 									}
 								});
 
 								if (imported_node === 0)
-									ui.addNotification(null, E('p', _('No valid share link found.')));
+									ui.addNotification(null, E('p', _('No valid share link found.') + ' ' + import_errors.join(' ')));
 								else
 									ui.addNotification(null, E('p', _('Successfully imported %s nodes of total %s.').format(
-										imported_node, input_links.length)));
+										imported_node, input_links.length) + ' ' + import_errors.join(' ')));
 
 								return uci.save()
 									.then(L.bind(this.map.load, this.map))
 									.then(L.bind(this.map.reset, this.map))
 									.then(L.ui.hideModal)
-									.catch(() => {});
+									.catch((err) => {
+									ui.addNotification(null, E('p', _('Unknown error: %s.').format(err)), 'error');
+									});
 							} else {
 								return ui.hideModal();
 							}
@@ -1321,7 +1824,7 @@ return view.extend({
 		for (const info of subinfo) {
 			s.tab('sub_' + info.hash, _('Sub (%s)').format(info.title));
 			o = s.taboption('sub_' + info.hash, form.SectionValue, '_sub_' + info.hash, form.GridSection, 'node');
-			ss = renderNodeSettings(o.subsection, data, features, main_node, routing_mode);
+			ss = renderNodeSettings(o.subsection, data, features, main_node, node_latency_row_state);
 			ss.filter = function(section_id) {
 				return (uci.get(data[0], section_id, 'grouphash') === info.hash);
 			}
@@ -1333,20 +1836,24 @@ return view.extend({
 		s.tab('subscription', _('Subscriptions'));
 
 		o = s.taboption('subscription', form.Flag, 'auto_update', _('Auto update'),
-			_('Auto update subscriptions and geodata.'));
+			_('Auto update subscriptions and resources.'));
 		o.rmempty = false;
 
-		o = s.taboption('subscription', form.ListValue, 'auto_update_time', _('Update time'));
-		for (let i = 0; i < 24; i++)
-			o.value(i, i + ':00');
-		o.default = '2';
-		o.depends('auto_update', '1');
+			o = s.taboption('subscription', form.Value, 'auto_update_time', _('Cron expression'),
+				_('Minutes (0-59), hours (0-23), days (1-31), months (1-12), weekdays (0-6).') +
+				'<br/>' +
+				'<a target="_blank" rel="noreferrer noopener" href="https://www.toolbox365.cn/tools/cron/">' +
+				_('Cron expression online generator') + '</a>');
+			o.default = '0 */6 * * *';
+			o.placeholder = '0 */6 * * *';
+			o.rmempty = false;
+			o.validate = validateCronExpression;
 
 		o = s.taboption('subscription', form.Flag, 'update_via_proxy', _('Update via proxy'),
-			_('Update subscriptions via proxy.'));
+			_('Update resources and subscriptions via proxy.'));
 		o.rmempty = false;
 
-		o = s.taboption('subscription', form.DynamicList, 'subscription_url', _('Subscription URL-s'),
+		o = s.taboption('subscription', form.DynamicList, 'subscription_url', _('Subscription URLs'),
 			_('Support Hysteria, Shadowsocks, Trojan, v2rayN (VMess), and XTLS (VLESS) online configuration delivery standard.'));
 		o.validate = function(section_id, value) {
 			if (section_id && value) {
@@ -1372,24 +1879,32 @@ return view.extend({
 		o.rmempty = false;
 
 		o = s.taboption('subscription', form.DynamicList, 'filter_keywords', _('Filter keywords'),
-			_('Drop/keep nodes that contain the specific keywords. <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions">Regex</a> is supported.'));
+			_('Drop/keep nodes that contain the specific keywords. <a target="_blank" href="https://www.toolbox365.cn/tools/regex/">Regex</a> is supported.'));
 		o.depends({'filter_nodes': 'disabled', '!reverse': true});
 		o.rmempty = false;
 
 		o = s.taboption('subscription', form.Value, 'user_agent', _('User-Agent'));
-		o.placeholder = 'Wget/1.21 (HomeProxy, like v2rayN)';
+		o.default = 'homeproxy';
+		o.placeholder = 'homeproxy';
+		o.rmempty = false;
 
 		o = s.taboption('subscription', form.Flag, 'allow_insecure', _('Allow insecure'),
-			_('Allow insecure connection by default when add nodes from subscriptions.') +
+			_('Allow insecure connection by default when adding nodes from subscriptions.') +
 			'<br/>' +
 			_('This is <strong>DANGEROUS</strong>, your traffic is almost like <strong>PLAIN TEXT</strong>! Use at your own risk!'));
 		o.rmempty = false;
 		o.onchange = allowInsecureConfirm;
 
 		o = s.taboption('subscription', form.ListValue, 'packet_encoding', _('Default packet encoding'));
-		o.value('', _('none'));
+		o.value('none', _('None'));
 		o.value('packetaddr', _('packet addr (v2ray-core v5+)'));
-		o.value('xudp', _('Xudp (Xray-core)'));
+		o.value('xudp', _('XUDP (Xray-core)'));
+		o.default = 'xudp';
+		o.rmempty = false;
+		o.cfgvalue = function(section_id) {
+		const value = uci.get('homeproxy', section_id, 'packet_encoding');
+		return value == null ? 'xudp' : (value || 'none');
+	};
 
 		o = s.taboption('subscription', form.Button, '_save_subscriptions', _('Save subscriptions settings'),
 			_('NOTE: Save current settings before updating subscriptions.'));
@@ -1413,10 +1928,16 @@ return view.extend({
 			}
 		}
 		o.onclick = function() {
-			return fs.exec_direct('/etc/homeproxy/scripts/update_subscriptions.uc').then((res) => {
+			return fs.exec('/etc/homeproxy/scripts/update_subscriptions.sh').then((res) => {
+				if (res.code !== 0) {
+					ui.addNotification(null, E('p', _('An error occurred during updating subscriptions: %s.').format(
+						res.stderr || _('exit code %d').format(res.code))));
+					return this.map.reset();
+				}
+
 				return location.reload();
 			}).catch((err) => {
-				ui.addNotification(null, E('p', _('An error occurred during updating subscriptions: %s').format(err)));
+				ui.addNotification(null, E('p', _('An error occurred during updating subscriptions: %s.').format(err)));
 				return this.map.reset();
 			});
 		}
@@ -1450,9 +1971,6 @@ return view.extend({
 			if (subnodes.includes(uci.get(data[0], 'config', 'main_node')))
 				uci.set(data[0], 'config', 'main_node', 'nil');
 
-			if (subnodes.includes(uci.get(data[0], 'config', 'main_udp_node')))
-				uci.set(data[0], 'config', 'main_udp_node', 'nil');
-
 			this.inputtitle = _('%s nodes removed').format(subnodes.length);
 			this.readonly = true;
 
@@ -1460,6 +1978,72 @@ return view.extend({
 		}
 		/* Subscriptions settings end */
 
-		return m.render();
+		return m.render().then((el) => {
+			let bulk_testing = false;
+			let tabmenu_observer = null;
+			let bulk_button = E('button', {
+				'class': 'cbi-button cbi-button-action hp-bulk-latency-test',
+				'click': ui.createHandlerFn(this, async () => {
+					if (bulk_testing || typeof globalThis === 'undefined')
+						return false;
+
+					let section_ids = getActiveSubscriptionLatencySectionIds(el);
+					if (!section_ids.length)
+						return false;
+					let target = globalThis.__hpNodeLatencySections?.[section_ids[0]];
+					if (!target)
+						return false;
+
+					bulk_testing = true;
+					bulk_button.textContent = _('Testing current list...');
+					bulk_button.disabled = true;
+
+					try {
+						await target.handleNodeLatencyTests(section_ids);
+					} finally {
+						bulk_testing = false;
+						bulk_button.textContent = _('Test current list');
+						bulk_button.disabled = false;
+					}
+					return true;
+				})
+			}, [ _('Test current list') ]);
+
+			let updateBulkButtonVisibility = () => {
+				bulk_button.style.display = shouldShowBulkLatencyButton(el) ? '' : 'none';
+			};
+
+			let attachBulkButton = () => {
+				let actions = (el.parentElement ? el.parentElement.querySelector('.cbi-page-actions') : null) || document.querySelector('.cbi-page-actions');
+				if (!actions)
+					return false;
+
+				if (!actions.querySelector('.hp-bulk-latency-test'))
+					actions.insertBefore(bulk_button, actions.firstChild);
+
+				updateBulkButtonVisibility();
+
+				if (!tabmenu_observer) {
+					let tabmenu = el.querySelector('.cbi-tabmenu');
+					if (tabmenu) {
+						tabmenu_observer = new MutationObserver(() => updateBulkButtonVisibility());
+						tabmenu_observer.observe(tabmenu, {
+							subtree: true,
+							attributes: true,
+							attributeFilter: [ 'class', 'aria-selected' ]
+						});
+					}
+				}
+
+				return true;
+			};
+
+			if (!attachBulkButton()) {
+				window.setTimeout(attachBulkButton, 0);
+				window.setTimeout(attachBulkButton, 300);
+			}
+
+			return el;
+		});
 	}
 });

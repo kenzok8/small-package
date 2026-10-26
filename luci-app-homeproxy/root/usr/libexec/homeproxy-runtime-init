@@ -1,0 +1,90 @@
+#!/bin/sh
+
+dashboard_port="$(uci -q get homeproxy.config.dashboard_port)"
+dashboard_port_initialized="$(uci -q get homeproxy.config.dashboard_port_initialized)"
+clash_api_port="$(uci -q get homeproxy.infra.clash_api_port)"
+clash_api_port_initialized="$(uci -q get homeproxy.infra.clash_api_port_initialized)"
+main_node="$(uci -q get homeproxy.config.main_node)"
+dashboard_enabled="$(uci -q get homeproxy.config.dashboard_enabled)"
+tailscale_enabled="$(uci -q get homeproxy.tailscale.enabled)"
+changed=0
+
+mkdir -p /var/run/homeproxy
+
+log() {
+	printf '%s [DAEMON] %s\n' "$(date "+%Y-%m-%d %H:%M:%S")" "$*" >> /var/run/homeproxy/homeproxy.log
+}
+
+random_port() {
+	/usr/libexec/homeproxy-random-port "$@"
+}
+
+valid_port() {
+	case "$1" in
+	''|*[!0-9]*) return 1 ;;
+	esac
+	[ "$1" -ge 1 ] && [ "$1" -le 65535 ]
+}
+
+set_runtime_option() {
+	if ! uci -q set "$1=$2"; then
+		log "Failed to set runtime option $1."
+		return 1
+	fi
+}
+
+initialize_port() {
+	local port="$1" default_port="$2" initialized="$3" reserved="$4"
+
+	if ! valid_port "$port" || { [ "$port" = "$default_port" ] && [ "$initialized" != '1' ]; }; then
+		port="$(random_port "$reserved")"
+	fi
+	printf '%s\n' "$port"
+}
+
+sing_box_version="$(/usr/bin/sing-box version -n 2>/dev/null)"
+sing_box_major="${sing_box_version%%.*}"
+sing_box_minor="${sing_box_version#*.}"
+sing_box_minor="${sing_box_minor%%.*}"
+case "$sing_box_major:$sing_box_minor" in
+*[!0-9:]*|:*)
+	log "HomeProxy requires sing-box 1.15 or newer."
+	exit 1
+	;;
+esac
+if [ "$sing_box_major" -lt 1 ] || \
+   { [ "$sing_box_major" -eq 1 ] && [ "$sing_box_minor" -lt 15 ]; }; then
+	log "HomeProxy requires sing-box 1.15 or newer; found $sing_box_version."
+	exit 1
+fi
+
+clash_api_port="$(initialize_port "$clash_api_port" 9090 "$clash_api_port_initialized" "$dashboard_port")"
+dashboard_port="$(initialize_port "$dashboard_port" 9095 "$dashboard_port_initialized" "$clash_api_port")"
+
+if [ "$main_node" = 'urltest' ] && { [ "$dashboard_enabled" = '1' ] || [ "$tailscale_enabled" = '1' ]; } && \
+   [ "$clash_api_port" = "$dashboard_port" ]; then
+	dashboard_port="$(random_port "$clash_api_port")"
+fi
+
+if [ "$(uci -q get homeproxy.infra.clash_api_port)" != "$clash_api_port" ]; then
+	set_runtime_option homeproxy.infra.clash_api_port "$clash_api_port" || exit 1
+	changed=1
+fi
+if [ "$(uci -q get homeproxy.config.dashboard_port)" != "$dashboard_port" ]; then
+	set_runtime_option homeproxy.config.dashboard_port "$dashboard_port" || exit 1
+	changed=1
+fi
+if [ "$clash_api_port_initialized" != '1' ]; then
+	set_runtime_option homeproxy.infra.clash_api_port_initialized '1' || exit 1
+	changed=1
+fi
+if [ "$dashboard_port_initialized" != '1' ]; then
+	set_runtime_option homeproxy.config.dashboard_port_initialized '1' || exit 1
+	changed=1
+fi
+
+if [ "$changed" -ne 0 ] && ! uci -q commit homeproxy; then
+	log 'Failed to commit runtime port settings.'
+	exit 1
+fi
+exit 0
