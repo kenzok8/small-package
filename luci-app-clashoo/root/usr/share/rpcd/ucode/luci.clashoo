@@ -273,6 +273,8 @@ if (clashoo_running())  return 'mihomo';
 return '';
 }
 
+let selected_mihomo_stable;
+
 function find_binary_for_family(family) {
 if (family === 'mihomo') {
 	let pid = procd_instance_pid('clashoo');
@@ -889,7 +891,7 @@ if (m) return m[1];
 return full;
 }
 
-function selected_mihomo_stable() {
+selected_mihomo_stable = function() {
 let bundled = '/usr/libexec/clashoo/mihomo-stable';
 let manual = '/usr/share/clashoo/bin/mihomo-stable';
 if (access(manual, 'x') && read_first_line('/usr/share/clashoo/clash_meta_version') == 'custom-url') return manual;
@@ -904,7 +906,7 @@ for (let i = 1; i <= 3; i++) {
 	if (int(mv[i]) < int(bv[i])) return bundled;
 }
 return manual;
-}
+};
 
 function component_installed_label(id) {
 if (id == 'clashoo') return pkg_version('clashoo') || '未安装';

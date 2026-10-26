@@ -296,20 +296,27 @@ load_github_urls() {
   return 0
 }
 
+# `~` 是版本里的预发布分隔符，而 release 资产文件名会把它换成 `.`
+# （clashoo_2026.10.25.6780eee-r3_x86_64.ipk 对应已安装的 2026.10.25~6780eee-r3）。
+# 只比分隔符就会误判成「校验失败」，所以比较前统一归一化，解析时保持文件名原样。
+version_equal() {
+  [ -n "$1" ] && [ "$(printf '%s' "$1" | tr '~' '.')" = "$(printf '%s' "$2" | tr '~' '.')" ]
+}
+
 package_version_from_url() {
   file="${1##*/}"
   case "$file" in
     clashoo_*_"$ARCH".ipk)
       v="${file#clashoo_}"
-      v="${v%_${ARCH}.ipk}"
-      printf '%s\n' "$v" | sed 's/^\([0-9][0-9][0-9][0-9]\.[0-9][0-9]*\.[0-9][0-9]*\)\./\1~/'
+      printf '%s\n' "${v%_${ARCH}.ipk}"
       ;;
-    clashoo_*.ipk) printf '%s\n' "$file" | sed -n 's/^clashoo_\(.*\)_[^_][^_]*\.ipk$/\1/p' | sed 's/^\([0-9][0-9][0-9][0-9]\.[0-9][0-9]*\.[0-9][0-9]*\)\./\1~/' ;;
+    # 架构名本身可能带下划线（aarch64_generic / arm_cortex-a7_neon-vfpv4），
+    # 只截到版本号为止，否则尾巴会混进版本串。
+    clashoo_*.ipk) printf '%s\n' "$file" | sed -n 's/^clashoo_\([^_]*\)_.*\.ipk$/\1/p' ;;
     luci-app-clashoo_*.ipk) printf '%s\n' "$file" | sed -n 's/^luci-app-clashoo_\(.*\)_all\.ipk$/\1/p' ;;
     luci-i18n-clashoo-zh-cn_*.ipk) printf '%s\n' "$file" | sed -n 's/^luci-i18n-clashoo-zh-cn_\(.*\)_all\.ipk$/\1/p' ;;
     clashoo-*.apk)
-      v="$(printf '%s\n' "$file" | sed -n -e 's/^clashoo-\(.*-r[0-9][0-9]*\)-.*\.apk$/\1/p' -e 's/^clashoo-\(.*-r[0-9][0-9]*\)\.apk$/\1/p' | head -n 1)"
-      printf '%s\n' "$v" | sed 's/^\([0-9][0-9][0-9][0-9]\.[0-9][0-9]*\.[0-9][0-9]*\)\./\1~/'
+      printf '%s\n' "$file" | sed -n -e 's/^clashoo-\(.*-r[0-9][0-9]*\)-.*\.apk$/\1/p' -e 's/^clashoo-\(.*-r[0-9][0-9]*\)\.apk$/\1/p' | head -n 1
       ;;
     luci-app-clashoo-*.apk) printf '%s\n' "$file" | sed -n -e 's/^luci-app-clashoo-\(.*-r[0-9][0-9]*\)-.*\.apk$/\1/p' -e 's/^luci-app-clashoo-\(.*-r[0-9][0-9]*\)\.apk$/\1/p' | head -n 1 ;;
     luci-i18n-clashoo-zh-cn-*.apk) printf '%s\n' "$file" | sed -n -e 's/^luci-i18n-clashoo-zh-cn-\(.*-r[0-9][0-9]*\)-.*\.apk$/\1/p' -e 's/^luci-i18n-clashoo-zh-cn-\(.*-r[0-9][0-9]*\)\.apk$/\1/p' | head -n 1 ;;
@@ -405,14 +412,14 @@ run_pkg_update() {
   core_ver_before="$(installed_package_version clashoo)"
 
   apk_core_ready() {
-    package_installed clashoo && [ "$(installed_package_version clashoo)" = "$core_ver" ] \
+    package_installed clashoo && version_equal "$(installed_package_version clashoo)" "$core_ver" \
       && [ -x /etc/init.d/clashoo ] && [ -x /usr/share/clashoo/update/component_update.sh ]
   }
 
   apk_luci_ready() {
-    package_installed luci-app-clashoo && [ "$(installed_package_version luci-app-clashoo)" = "$luci_ver" ] \
+    package_installed luci-app-clashoo && version_equal "$(installed_package_version luci-app-clashoo)" "$luci_ver" \
       && { [ -z "$I18N_URL" ] || { package_installed luci-i18n-clashoo-zh-cn \
-        && [ "$(installed_package_version luci-i18n-clashoo-zh-cn)" = "$i18n_ver" ]; }; } \
+        && version_equal "$(installed_package_version luci-i18n-clashoo-zh-cn)" "$i18n_ver"; }; } \
       && [ -r /usr/share/luci/menu.d/luci-app-clashoo.json ] \
       && [ -r /usr/share/rpcd/ucode/luci.clashoo ]
   }
@@ -434,7 +441,7 @@ run_pkg_update() {
     cur_ver="$(installed_package_version clashoo)"
     if [ "$PM" = "apk" ] && apk_update_ready; then
       finish 0 "Clashoo 核心已是最新版本"
-    elif [ "$PM" != "apk" ] && [ -n "$core_ver" ] && [ "$cur_ver" = "$core_ver" ]; then
+    elif [ "$PM" != "apk" ] && version_equal "$cur_ver" "$core_ver"; then
       finish 0 "Clashoo 核心已是最新版本"
     fi
   else
@@ -442,7 +449,7 @@ run_pkg_update() {
     cur_ver="$(installed_package_version luci-app-clashoo)"
     if [ "$PM" = "apk" ] && apk_update_ready; then
       finish 0 "客户端已是最新版本"
-    elif [ "$PM" != "apk" ] && [ -n "$luci_ver" ] && [ "$cur_ver" = "$luci_ver" ]; then
+    elif [ "$PM" != "apk" ] && version_equal "$cur_ver" "$luci_ver"; then
       finish 0 "客户端已是最新版本"
     fi
   fi
@@ -532,11 +539,11 @@ run_pkg_update() {
       apk_update_ready || validation_failed
     fi
   elif [ "$which" = "clashoo" ]; then
-    package_installed clashoo && [ "$(installed_package_version clashoo)" = "$core_ver" ] \
+    package_installed clashoo && version_equal "$(installed_package_version clashoo)" "$core_ver" \
       && [ -x /etc/init.d/clashoo ] && [ -x /usr/share/clashoo/update/component_update.sh ] \
       || validation_failed
   else
-    package_installed luci-app-clashoo && [ "$(installed_package_version luci-app-clashoo)" = "$luci_ver" ] \
+    package_installed luci-app-clashoo && version_equal "$(installed_package_version luci-app-clashoo)" "$luci_ver" \
       && [ -r /usr/share/luci/menu.d/luci-app-clashoo.json ] \
       && [ -r /usr/share/rpcd/ucode/luci.clashoo ] \
       || validation_failed

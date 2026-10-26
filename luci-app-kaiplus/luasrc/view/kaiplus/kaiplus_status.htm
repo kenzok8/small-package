@@ -1,5 +1,3 @@
-<%+tasks/embed%>
-
 <style type="text/css">
 .kaiplus-actions {
 	display: flex;
@@ -18,51 +16,10 @@
 </style>
 
 <script type="text/javascript">//<![CDATA[
-var kaiInstalled = false;
-var kaiLuciUrl = '<%=url("admin/services/kai")%>';
-var kaiInstallUrl = '<%=url("admin/services/kaiplus/install_kai")%>';
-var kaiCsrfToken = (window.taskd && window.taskd.csrfToken) || '';
-
-function openClassicKai() {
-	var button = document.getElementById('kaiplus-open-kai');
-	if (kaiInstalled) {
-		window.location.href = kaiLuciUrl;
-		return;
-	}
-	if (!window.confirm('<%:Classic KAI is not installed. Install it now?%>')) return;
-	if (!window.taskd || !window.taskd.show_log) {
-		window.alert('<%:Task log window is not available.%>');
-		return;
-	}
-
-	button.disabled = true;
-	button.value = '<%:Starting installation...%>';
-	(new XHR()).post(kaiInstallUrl, { token: kaiCsrfToken }, function(x) {
-		var data = {};
-		button.disabled = false;
-		button.value = '<%:Classic KAI%>';
-		if (x && x.responseText) {
-			try { data = JSON.parse(x.responseText || '{}'); }
-			catch (e) { data = {}; }
-		}
-		if (!data.ok) {
-			window.alert(data.error || '<%:Failed to start KAI installation.%>');
-			return;
-		}
-		if (data.installed) {
-			kaiInstalled = true;
-			window.location.href = kaiLuciUrl;
-			return;
-		}
-		window.taskd.show_log(data.task_id || 'kaiplus-kai-install');
-	});
-}
-
 XHR.poll(5, '<%=url("admin/services/kaiplus_status")%>', null, function(x, st) {
 	var el = document.getElementById('kaiplus_status');
 	var openButton = document.getElementById('kaiplus-open');
 	if (st && el) {
-		kaiInstalled = st.kai_installed === true;
 		var status = st.running
 			? '<br/><em style=\"color:green\"><%:The KaiPlus service is running.%></em>'
 			: '<br/><em style=\"color:red\"><%:The KaiPlus service is not running.%></em>';
@@ -88,6 +45,6 @@ XHR.poll(5, '<%=url("admin/services/kaiplus_status")%>', null, function(x, st) {
 	</p>
 	<div class="kaiplus-actions">
 		<input id="kaiplus-open" class="btn cbi-button cbi-button-apply" type="button" value=" <%:Click to open KaiPlus%> " onclick="window.open('<%=url("admin/services/kaiplus/open")%>')" style="display:none"/>
-		<input id="kaiplus-open-kai" class="btn cbi-button" type="button" value=" <%:Classic KAI%> " onclick="openClassicKai()"/>
+		<input id="kaiplus-open-kai" class="btn cbi-button" type="button" value=" <%:CLASSIC KAI%> " onclick="window.location.href='<%=url("admin/services/kaiplus/classic")%>'"/>
 	</div>
 </fieldset>

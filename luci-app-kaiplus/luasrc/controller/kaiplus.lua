@@ -13,7 +13,11 @@ function index()
 	if not nixio.fs.access("/etc/config/kaiplus") then return end
 	local install_kai = entry({"admin", "services", "kaiplus", "install_kai"}, call("install_kai"))
 	install_kai.leaf = true
-	entry({"admin", "services", "kaiplus"}, cbi("kaiplus"), _("KaiPlus"), 100).dependent = true
+	entry({"admin", "services", "kaiplus", "update_kai"}, call("update_kai")).leaf = true
+	entry({"admin", "services", "kaiplus"}, alias("admin", "services", "kaiplus", "settings"), _("KaiPlus"), 100).dependent = true
+	entry({"admin", "services", "kaiplus", "settings"}, cbi("kaiplus"), _("KaiPlus"), 10)
+	entry({"admin", "services", "kaiplus", "classic"}, cbi("kaiplus/classic"), _("CLASSIC KAI"), 20)
+	entry({"admin", "services", "kaiplus", "classic_status"}, call("classic_status")).leaf = true
 end
 
 local function write_json(obj)
@@ -51,15 +55,11 @@ local function compat()
 end
 
 function kaiplus_status()
-	local fs = require "nixio.fs"
 	local sys = require "luci.sys"
 	local uci = require("luci.model.uci").cursor()
 	compat():legacy_status("kaiplus", {
 		running = sys.call("pidof kaiplus >/dev/null") == 0,
-		kai_installed = not not (
-			fs.access("/usr/share/kai/kai-plugin.json")
-			and fs.access("/usr/lib/lua/luci/controller/kai.lua")
-		),
+		kai_installed = require("luci.model.kaiplus.classic").installed(),
 		port = uci:get_first("kaiplus", "kaiplus", "port") or "8189",
 		base_path = "/apps/kaiplus/",
 		listen_mode = "tcp",
@@ -72,7 +72,11 @@ function kaiplus_open()
 	compat():open("kaiplus")
 end
 
-function install_kai()
+function classic_status()
+	write_json(require("luci.model.kaiplus.classic").status())
+end
+
+local function classic_package_task(action)
 	local fs = require "nixio.fs"
 	local jsonc = require "luci.jsonc"
 	local sys = require "luci.sys"
@@ -83,9 +87,14 @@ function install_kai()
 		return
 	end
 
-	if fs.access("/usr/share/kai/kai-plugin.json")
-		and fs.access("/usr/lib/lua/luci/controller/kai.lua") then
+	local installed = require("luci.model.kaiplus.classic").installed()
+	if action == "install" and installed then
 		write_json({ ok = true, installed = true })
+		return
+	end
+	if action == "update" and not installed then
+		http.status(409, "Conflict")
+		write_json({ ok = false, error = "CLASSIC KAI is not installed" })
 		return
 	end
 	if not fs.access("/etc/init.d/tasks") then
@@ -94,6 +103,10 @@ function install_kai()
 	end
 	if not fs.access("/bin/is-opkg") then
 		write_json({ ok = false, error = "iStore package installer is not available" })
+		return
+	end
+	if not fs.access("/usr/libexec/kaiplus-classic", "x") then
+		write_json({ ok = false, error = "CLASSIC KAI package helper is not available" })
 		return
 	end
 
@@ -105,19 +118,20 @@ function install_kai()
 		return
 	end
 
-	local install_script = table.concat({
-		'set -e',
-		'echo "[KaiPlus] Installing classic KAI..."',
-		'/bin/is-opkg install luci-app-kai',
-		'rm -f /tmp/luci-indexcache',
-		'echo "[KaiPlus] Classic KAI installed successfully."'
-	}, "\n")
-	local command = "/bin/sh -c " .. util.shellquote(install_script)
+	local command = "/usr/libexec/kaiplus-classic " .. action
 	local rc = sys.call("/etc/init.d/tasks task_add " .. task_id .. " " .. util.shellquote(command) .. " >/dev/null 2>&1")
 	if rc ~= 0 then
-		write_json({ ok = false, error = "failed to start KAI installation", task_id = task_id })
+		write_json({ ok = false, error = "failed to start CLASSIC KAI package task", task_id = task_id })
 		return
 	end
 
 	write_json({ ok = true, task_id = task_id })
+end
+
+function install_kai()
+	classic_package_task("install")
+end
+
+function update_kai()
+	classic_package_task("update")
 end

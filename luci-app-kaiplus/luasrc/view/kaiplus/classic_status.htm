@@ -1,0 +1,99 @@
+<%+tasks/embed%>
+<% local installed = require("luci.model.kaiplus.classic").installed() %>
+
+<style type="text/css">
+.classic-kai-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	margin: 16px;
+}
+.classic-kai-actions #classic-kai-update {
+	font-size: 0.875em;
+	padding: 6px 12px;
+	min-height: 32px;
+	height: auto;
+	line-height: 1.4;
+}
+</style>
+
+<script type="text/javascript">//<![CDATA[
+var classicPageInstalled = <%= installed and "true" or "false" %>;
+var classicInstallUrl = '<%=url("admin/services/kaiplus/install_kai")%>';
+var classicUpdateUrl = '<%=url("admin/services/kaiplus/update_kai")%>';
+var classicOpenUrl = '<%=url("admin/services/linkease_apps/open")%>?id=kai';
+
+function installClassicKai() {
+	classicPackageTask(false);
+}
+
+function updateClassicKai() {
+	classicPackageTask(true);
+}
+
+function classicPackageTask(update) {
+	var prompt = update
+		? '<%:Update CLASSIC KAI and its runtime engine from the iStore package feed? A running CLASSIC KAI service will restart.%>'
+		: '<%:Classic KAI is not installed. Install it now?%>';
+	if (!window.confirm(prompt)) return;
+	if (!window.taskd || !window.taskd.show_log) {
+		window.alert('<%:Task log window is not available.%>');
+		return;
+	}
+
+	var button = document.getElementById(update ? 'classic-kai-update' : 'classic-kai-install');
+	button.disabled = true;
+	button.value = '<%:Starting task...%>';
+	(new XHR()).post(update ? classicUpdateUrl : classicInstallUrl, { token: window.taskd.csrfToken || '' }, function(x) {
+		var data = {};
+		button.disabled = false;
+		button.value = update ? '<%:Update%>' : '<%:Install CLASSIC KAI%>';
+		if (x && x.responseText) {
+			try { data = JSON.parse(x.responseText || '{}'); }
+			catch (e) { data = {}; }
+		}
+		if (!data.ok) {
+			window.alert(data.error || '<%:Failed to start the CLASSIC KAI package task.%>');
+			return;
+		}
+		if (data.installed) {
+			window.location.reload();
+			return;
+		}
+		window.taskd.show_log(data.task_id || 'kaiplus-kai-install');
+	});
+}
+
+XHR.poll(5, '<%=url("admin/services/kaiplus/classic_status")%>', null, function(x, st) {
+	if (!st) return;
+	if (!classicPageInstalled && st.installed) {
+		window.location.reload();
+		return;
+	}
+	var status = document.getElementById('classic-kai-status');
+	var installButton = document.getElementById('classic-kai-install');
+	var updateButton = document.getElementById('classic-kai-update');
+	var updateHint = document.getElementById('classic-kai-update-hint');
+	var openButton = document.getElementById('classic-kai-open');
+	status.textContent = !st.installed
+		? '<%:CLASSIC KAI is not installed. Install it to configure and start the service.%>'
+		: st.running ? '<%:The CLASSIC KAI service is running.%>' : '<%:The CLASSIC KAI service is not running.%>';
+	status.style.color = st.installed && st.running ? 'green' : '';
+	installButton.style.display = st.installed ? 'none' : '';
+	updateButton.style.display = st.installed ? '' : 'none';
+	updateHint.style.display = st.installed ? '' : 'none';
+	openButton.style.display = st.installed && st.running ? '' : 'none';
+});
+//]]></script>
+
+<fieldset class="cbi-section">
+	<legend><%:Status%></legend>
+	<p id="classic-kai-status"><em><%:Collecting data...%></em></p>
+	<p id="classic-kai-update-hint" style="display:none"><%:Updates come from the iStore package feed and include CLASSIC KAI and its runtime engine.%></p>
+	<div class="classic-kai-actions">
+		<input id="classic-kai-install" class="btn cbi-button cbi-button-apply" type="button" value="<%:Install CLASSIC KAI%>" onclick="installClassicKai()" style="display:none"/>
+		<input id="classic-kai-open" class="btn cbi-button cbi-button-apply" type="button" value="<%:Open CLASSIC KAI%>" onclick="window.open(classicOpenUrl, '_blank', 'noopener')" style="display:none"/>
+		<input id="classic-kai-update" class="btn cbi-button" type="button" value="<%:Update%>" title="<%:Update CLASSIC KAI%>" aria-label="<%:Update CLASSIC KAI%>" onclick="updateClassicKai()" style="display:none"/>
+	</div>
+</fieldset>

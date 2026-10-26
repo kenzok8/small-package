@@ -30,17 +30,18 @@ kaiplus.home = function()
   return home_dirs
 end
 
-kaiplus.find_paths = function(blocks, home_dirs, path_name)
-  local default_path = home_dirs[path_name] .. "/KAIPlus"
+kaiplus.find_paths = function(blocks, home_dirs, path_name, product)
+  product = product or "KAIPlus"
+  local default_path = home_dirs[path_name] .. "/" .. product
   local paths = {}
 
   if #blocks == 0 then
     table.insert(paths, default_path)
   else
     for _, val in pairs(blocks) do
-      table.insert(paths, val .. "/" .. path_name .. "/KAIPlus")
+      table.insert(paths, val .. "/" .. path_name .. "/" .. product)
     end
-    local without_conf_dir = "/root/" .. path_name .. "/KAIPlus"
+    local without_conf_dir = "/root/" .. path_name .. "/" .. product
     if default_path == without_conf_dir then
       default_path = paths[1]
     end

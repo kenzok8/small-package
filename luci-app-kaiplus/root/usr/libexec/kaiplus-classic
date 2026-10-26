@@ -1,0 +1,30 @@
+#!/bin/sh
+set -eu
+
+case "${1:-}" in
+	install)
+		echo "[KaiPlus] Installing classic KAI..."
+		/bin/is-opkg install kai
+		echo "[KaiPlus] Classic KAI installed successfully."
+		;;
+	update)
+		was_running=0
+		if pidof kai_bin >/dev/null 2>&1; then
+			was_running=1
+		fi
+		echo "[KaiPlus] Refreshing the iStore package feed..."
+		/bin/is-opkg update
+		echo "[KaiPlus] Updating classic KAI and its runtime engine..."
+		/bin/is-opkg upgrade kai kai_session
+		if [ "$was_running" = 1 ] && [ "$(uci -q get kai.@kai[0].enabled || true)" = 1 ]; then
+			/etc/init.d/kai restart
+		else
+			/etc/init.d/kai stop
+		fi
+		echo "[KaiPlus] Classic KAI package update completed."
+		;;
+	*)
+		echo "Usage: kaiplus-classic {install|update}" >&2
+		exit 2
+		;;
+esac
