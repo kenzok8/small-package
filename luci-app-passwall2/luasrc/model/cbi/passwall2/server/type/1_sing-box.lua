@@ -27,7 +27,7 @@ s.type_name = type_name
 s.option_prefix = "singbox_"
 api.set_type_cbi(s)
 
-local singbox_tags = luci.sys.exec(singbox_bin .. " version  | grep 'Tags:' | awk '{print $2}'")
+local singbox_tags = api.get_singbox_tags()
 
 local local_version = api.get_app_version("sing-box"):match("[^v]+")
 local version_ge_1_14_0 = api.compare_versions(local_version, ">=", "1.14.0")

@@ -928,7 +928,7 @@ function clone(org)
 	return res
 end
 
-local function get_bin_version_cache(file, cmd)
+local function get_bin_version_cache(file, cmd, sb_tags)
 	if file and file ~= "" and fs.access(file) then
 		chmod_755(file)
 		local stat = fs.stat(file)
@@ -937,16 +937,28 @@ local function get_bin_version_cache(file, cmd)
 			-- Use metadata to avoid hashing the entire binary on every lookup.
 			cache_file = CACHE_PATH .. "/binver_" .. table.concat({stat.dev, stat.ino, stat.size, stat.mtime, stat.ctime}, "_")
 			local cached = fs.readfile(cache_file)
-			if cached and trim(cached) ~= "" then
-				return trim(cached)
+			local version = cached and trim(cached:match("^[^\n]*"))
+			if version and version ~= "" then
+				if sb_tags then
+					return version, trim(cached:match("^[^\n]*\n([^\n]*)"))
+				end
+				return version
 			end
 		end
-		local version = sys.exec(string.format("echo -n $(%s %s)", util.shellquote(file), cmd))
+		local version, tags
+		if sb_tags then
+			local output = sys.exec(string.format("%s %s", util.shellquote(file), cmd))
+			version = output:match("^sing%-box%s+version%s+(%S+)") or ""
+			tags = trim(output:match("\nTags:[ \t]*([^\r\n]*)"))
+		else
+			version = sys.exec(string.format("echo -n $(%s %s)", util.shellquote(file), cmd))
+		end
 		if version and version ~= "" then
 			if cache_file then
 				fs.mkdirr(CACHE_PATH)
-				fs.writefile(cache_file, version)
+				fs.writefile(cache_file, sb_tags and (version .. "\n" .. tags .. "\n") or version)
 			end
+			if sb_tags then return version, tags end
 			return version
 		end
 	end
@@ -964,7 +976,14 @@ end
 
 function get_app_version(app_name, file)
 	if file == nil then file = get_app_path(app_name) end
-	return get_bin_version_cache(file, com[app_name].cmd_version)
+	local version = get_bin_version_cache(file, com[app_name].cmd_version, app_name == "sing-box")
+	return version
+end
+
+function get_singbox_tags()
+	local file = get_app_path("sing-box")
+	local _, tags = get_bin_version_cache(file, com["sing-box"].cmd_version, true)
+	return tags or ""
 end
 
 function is_file(path)

@@ -449,12 +449,17 @@ table td, .table .td {
 	.pw-filter select,
 	.pw-filter input[type="search"],
 	.pw-filter .cbi-button {
+		box-sizing: border-box !important;
 		width: auto !important;
 		min-width: 6em;
 		max-width: 22em;
-		height: auto;
-		padding: 0.15em 0.3em;
-		margin: 0;
+		height: 1.65rem !important;
+		min-height: 0 !important;
+		max-height: none !important;
+		font: inherit !important;
+		line-height: 1.2 !important;
+		padding: 0.15em 0.3em !important;
+		margin: 0 !important;
 	}
 
 	.pw-filter .pw-filter-count {
