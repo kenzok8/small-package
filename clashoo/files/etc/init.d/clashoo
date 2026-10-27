@@ -735,9 +735,12 @@ cleanup_legacy_startup_backups() {
 #===========================================================================================================================
 	# Historical backup artifacts can clutter LuCI "System -> Startup".
 	# Keep runtime clean by removing known obsolete backup filenames.
+	# The old `*bak*` glob also wiped other packages' backups (e.g. wireless.bak),
+	# so scope it to Clashoo's own script names (legacy `clash`, current `clashoo`).
+	# `._*` is macOS AppleDouble metadata, never a valid init script, so it stays.
 	rm -f /etc/init.d/._clash \
 	      /etc/init.d/._* \
-	      /etc/init.d/*bak* >/dev/null 2>&1 || true
+	      /etc/init.d/clash*bak* >/dev/null 2>&1 || true
 #===========================================================================================================================
 }
 

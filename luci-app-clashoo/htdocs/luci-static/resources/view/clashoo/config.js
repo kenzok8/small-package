@@ -152,7 +152,7 @@ var callSubscriptionUpdateStatus = rpc.declare({ object: 'luci.clashoo', method:
 var callSetSubscriptionUpdateSchedule = rpc.declare({ object: 'luci.clashoo', method: 'set_subscription_update_schedule', params: ['enabled', 'interval'], expect: {} });
 var callSetConfig     = rpc.declare({ object: 'luci.clashoo', method: 'set_config',          params: ['name'], expect: {} });
 var callDeleteCfg     = rpc.declare({ object: 'luci.clashoo', method: 'delete_config',       params: ['name', 'type'], expect: {} });
-var callUploadConfigChunk = rpc.declare({ object: 'luci.clashoo', method: 'upload_config_chunk', params: ['name', 'content', 'type', 'index', 'total'], expect: {} });
+var callUploadConfigChunk = rpc.declare({ object: 'luci.clashoo', method: 'upload_config_chunk', params: ['name', 'content', 'type', 'index', 'total', 'token'], expect: {} });
 var callReadOtherConfig = rpc.declare({ object: 'luci.clashoo', method: 'read_other_config',  params: ['name', 'type'], expect: {} });
 var callListTemplates = rpc.declare({ object: 'luci.clashoo', method: 'list_templates',      expect: {} });
 var callUploadTemplate= rpc.declare({ object: 'luci.clashoo', method: 'upload_template',     params: ['name', 'content'], expect: {} });
@@ -175,10 +175,13 @@ function uploadConfigContent(name, content, type) {
   var chunkSize = 24576;
   var total = Math.max(1, Math.ceil((content || '').length / chunkSize));
   var index = 0;
+  // 每次上传一个独立事务 ID：分片写进服务端同名暂存文件，最后一片才原子替换，
+  // 中断或多标签页同时上传都不会再写坏现有配置。
+  var token = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
 
   function sendNext() {
     var chunk = (content || '').slice(index * chunkSize, (index + 1) * chunkSize);
-    return L.resolveDefault(callUploadConfigChunk(name, chunk, type || '2', String(index), String(total)), {}).then(function (r) {
+    return L.resolveDefault(callUploadConfigChunk(name, chunk, type || '2', String(index), String(total), token), {}).then(function (r) {
       if (!r || !r.success)
         throw new Error((r && (r.message || r.error)) || _("Upload failed"));
       index++;

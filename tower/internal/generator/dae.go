@@ -152,6 +152,14 @@ func compileDAE(opts Options) (daePlan, PreflightResult) {
 			ID: code + "@" + location, Code: code, Location: location, Message: message,
 		})
 	}
+	// note records an informational warning without degrading the plan. Strict
+	// exports require an exact plan, and a policy substitution the user cannot
+	// act on must not block the export.
+	note := func(code, location, message string) {
+		plan.preflight.Warnings = append(plan.preflight.Warnings, PreflightWarning{
+			ID: code + "@" + location, Code: code, Location: location, Message: message,
+		})
+	}
 	var regionIssues []PreflightIssue
 	opts, regionIssues = applyServiceRegions(opts)
 	for _, regionIssue := range regionIssues {
@@ -159,9 +167,13 @@ func compileDAE(opts Options) (daePlan, PreflightResult) {
 	}
 	if plan.preflight.TargetPolicy == "tower-dae-acl-policy-v2" {
 		var policyIssues []PreflightIssue
-		opts.Scheme, policyIssues = applyDAEACLPolicy(opts.Scheme)
+		var policyNotes []policyNote
+		opts.Scheme, policyIssues, policyNotes = applyDAEACLPolicy(opts.Scheme)
 		for _, policyIssue := range policyIssues {
 			issue(policyIssue.Code, policyIssue.Location, policyIssue.Message)
+		}
+		for _, policyNote := range policyNotes {
+			note(policyNote.code, policyNote.location, policyNote.message)
 		}
 	}
 	nodes := FilterNodes(opts.Nodes, opts.Protocols)
@@ -216,13 +228,8 @@ func compileDAE(opts Options) (daePlan, PreflightResult) {
 	}
 	// Fallbacks are informational: the affected subscription is still exported,
 	// just with its nodes expanded instead of passed through.
-	for i, note := range opts.DAESubscriptionFallbacks {
-		plan.preflight.Warnings = append(plan.preflight.Warnings, PreflightWarning{
-			ID:       fmt.Sprintf("subscription_fallback@subscriptions[%d]", i),
-			Code:     "subscription_fallback",
-			Location: fmt.Sprintf("subscriptions[%d]", i),
-			Message:  note,
-		})
+	for i, message := range opts.DAESubscriptionFallbacks {
+		note("subscription_fallback", fmt.Sprintf("subscriptions[%d]", i), message)
 	}
 	for i, node := range nodes {
 		name := nodeNames[i]
@@ -452,9 +459,27 @@ func compileDAE(opts Options) (daePlan, PreflightResult) {
 	return plan, plan.preflight
 }
 
-func applyDAEACLPolicy(source *model.RuleScheme) (*model.RuleScheme, []PreflightIssue) {
+// policyNote is a non-blocking observation produced by the DAE policy lowering.
+type policyNote struct {
+	code     string
+	location string
+	message  string
+}
+
+// applyDAEACLPolicy lowers an ACL4SSR-style scheme onto dae's static policy
+// model: REJECT becomes block, a group whose default member is another group
+// collapses to that member, and a node-pattern default becomes an auto-measuring
+// group.
+//
+// dae and honk cannot switch a group at runtime, so the group that carries the
+// FINAL rule has to resolve to a real proxy. A scheme whose fallback chain ends
+// at DIRECT (Self-Configuration starts every select group with DIRECT) would
+// otherwise export a config that proxies nothing while still reporting an exact
+// preflight, so the fallback chain prefers its first proxy-capable member and the
+// substitution is reported as a warning.
+func applyDAEACLPolicy(source *model.RuleScheme) (*model.RuleScheme, []PreflightIssue, []policyNote) {
 	if source == nil {
-		return nil, nil
+		return nil, nil, nil
 	}
 	clone := *source
 	clone.Groups = nil
@@ -463,15 +488,48 @@ func applyDAEACLPolicy(source *model.RuleScheme) (*model.RuleScheme, []Preflight
 	for _, group := range source.Groups {
 		groups[group.Name] = group
 	}
+	// proxyPath marks the groups reachable from the FINAL rule. Only those must
+	// proxy; a group such as 国内流量 keeps its own DIRECT default.
+	proxyPath := make(map[string]bool, len(source.Groups))
+	fallbackGroup := ""
+	for _, rule := range source.Rules {
+		if rule.Final {
+			fallbackGroup = strings.TrimSpace(rule.Group)
+		}
+	}
+	if fallbackGroup != "" {
+		var walk func(string)
+		walk = func(name string) {
+			if proxyPath[name] {
+				return
+			}
+			group, ok := groups[name]
+			if !ok {
+				return
+			}
+			proxyPath[name] = true
+			if len(group.Members) == 0 {
+				return
+			}
+			if first := group.Members[0]; first.Type == model.MemberReference && !builtinPolicy(first.Value) {
+				walk(strings.TrimSpace(first.Value))
+			}
+		}
+		walk(fallbackGroup)
+	}
+
 	type resolved struct {
-		kind    string
-		members []model.RuleGroupMember
+		kind     string
+		members  []model.RuleGroupMember
+		deviated bool
 	}
 	cache := make(map[string]resolved)
 	visiting := make(map[string]bool)
 	var resolve func(string) (resolved, error)
 	resolve = func(name string) (resolved, error) {
-		if value, ok := cache[name]; ok {
+		cacheKey := name
+		preferProxy := proxyPath[name]
+		if value, ok := cache[cacheKey]; ok {
 			return value, nil
 		}
 		if visiting[name] {
@@ -485,36 +543,55 @@ func applyDAEACLPolicy(source *model.RuleScheme) (*model.RuleScheme, []Preflight
 			return resolved{}, fmt.Errorf("策略组没有默认成员")
 		}
 		visiting[name] = true
-		member := group.Members[0]
-		var value resolved
-		if member.Type == model.MemberNodePattern {
-			value = resolved{kind: "auto", members: []model.RuleGroupMember{member}}
-		} else if member.Type == model.MemberReference {
-			switch strings.ToUpper(strings.TrimSpace(member.Value)) {
-			case "DIRECT":
-				value.kind = "DIRECT"
-			case "REJECT":
-				value.kind = "BLOCK"
-			case "REJECT-DROP":
-				delete(visiting, name)
-				return resolved{}, fmt.Errorf("REJECT-DROP 的静默丢弃语义不能由 DAE block 保留")
-			default:
-				var err error
-				value, err = resolve(member.Value)
-				if err != nil {
-					delete(visiting, name)
-					return resolved{}, err
+		defer delete(visiting, name)
+
+		resolveMember := func(member model.RuleGroupMember) (resolved, error) {
+			switch member.Type {
+			case model.MemberNodePattern:
+				return resolved{kind: "auto", members: []model.RuleGroupMember{member}}, nil
+			case model.MemberReference:
+				switch strings.ToUpper(strings.TrimSpace(member.Value)) {
+				case "DIRECT":
+					return resolved{kind: "DIRECT"}, nil
+				case "REJECT":
+					return resolved{kind: "BLOCK"}, nil
+				case "REJECT-DROP":
+					return resolved{}, fmt.Errorf("REJECT-DROP 的静默丢弃语义不能由 DAE block 保留")
+				default:
+					return resolve(member.Value)
 				}
+			default:
+				return resolved{}, fmt.Errorf("策略组默认成员类型不受支持")
 			}
-		} else {
-			delete(visiting, name)
-			return resolved{}, fmt.Errorf("策略组默认成员类型不受支持")
 		}
-		delete(visiting, name)
-		cache[name] = value
-		return value, nil
+
+		var first resolved
+		for i, member := range group.Members {
+			value, err := resolveMember(member)
+			if err != nil {
+				return resolved{}, err
+			}
+			if i == 0 {
+				first = value
+			}
+			if !preferProxy {
+				break
+			}
+			if value.kind == "auto" {
+				if i > 0 {
+					value.deviated = true
+				}
+				cache[cacheKey] = value
+				return value, nil
+			}
+		}
+		cache[cacheKey] = first
+		return first, nil
 	}
+
 	issues := make([]PreflightIssue, 0)
+	notes := make([]policyNote, 0)
+	noted := make(map[string]bool, len(source.Groups))
 	created := make(map[string]bool)
 	for i := range clone.Rules {
 		groupName := clone.Rules[i].Group
@@ -533,6 +610,20 @@ func applyDAEACLPolicy(source *model.RuleScheme) (*model.RuleScheme, []Preflight
 			issues = append(issues, PreflightIssue{Code: "group_default", Severity: "blocking", Location: fmt.Sprintf("rules[%d].group", i), Message: fmt.Sprintf("无法解析策略组 %q 的默认成员：%v", groupName, err)})
 			continue
 		}
+		if proxyPath[groupName] && value.kind != "auto" {
+			issues = append(issues, PreflightIssue{
+				Code: "group_no_proxy", Severity: "blocking", Location: fmt.Sprintf("rules[%d].group", i),
+				Message: fmt.Sprintf("策略组 %q 位于兜底路径上，但它的成员里没有可代理的节点或自动测速组，DAE 无法代理流量", groupName),
+			})
+			continue
+		}
+		if value.deviated && !noted[groupName] {
+			noted[groupName] = true
+			notes = append(notes, policyNote{
+				code: "group_default_proxy", location: fmt.Sprintf("groups[%q]", groupName),
+				message: fmt.Sprintf("策略组 %q 在源方案里默认直连，而 DAE/Honk 无法在运行中切换策略，已改用组内第一个代理成员生成自动测速组", groupName),
+			})
+		}
 		if value.kind == "auto" {
 			clone.Rules[i].Group = groupName
 			if !created[groupName] {
@@ -549,7 +640,7 @@ func applyDAEACLPolicy(source *model.RuleScheme) (*model.RuleScheme, []Preflight
 			clone.Rules[i].Group = value.kind
 		}
 	}
-	return &clone, issues
+	return &clone, issues, notes
 }
 
 func finalizeDAEPlan(plan *daePlan, opts Options) {

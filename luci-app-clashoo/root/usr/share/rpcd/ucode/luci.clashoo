@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { access, popen, glob, readfile, writefile, stat, lstat, unlink, open, rename, rmdir } from 'fs';
+import { access, popen, glob, readfile, writefile, stat, lstat, unlink, open, rename, rmdir, lsdir } from 'fs';
 import { cursor } from 'uci';
 
 // 兼容 ucode < 2026-10-10：原生缺少 mkdtemp，改用 mktemp -d
@@ -3834,34 +3834,75 @@ return { success: true, name, path };
 },
 
 upload_config_chunk: {
-args: { name: 'name', content: 'content', type: 'type', index: 'index', total: 'total' },
+args: { name: 'name', content: 'content', type: 'type', index: 'index', total: 'total', token: 'token' },
 call: function(req) {
 let name     = safe_name(ensure_yaml_name(req.args?.name || ''));
 let content  = req.args?.content;
 let cfg_type = req.args?.type || '2';
 let index    = int(req.args?.index || 0);
 let total    = int(req.args?.total || 0);
+let token    = req.args?.token || '';
 if (!name) return { success: false, error: 'invalid_name', message: '文件名无效' };
 if (type(content) != 'string') return { success: false, error: 'invalid_content', message: '文件内容无效' };
 if (total < 1 || index < 0 || index >= total) return { success: false, error: 'invalid_chunk', message: '上传分片无效' };
+// 上传事务 ID 由前端生成，只允许字母数字，避免拼出目录外路径
+if (!match(token, /^[A-Za-z0-9]{8,64}$/))
+	return { success: false, error: 'invalid_token', message: '上传会话无效' };
 if (total == 1 && !content) return { success: false, error: 'empty_content', message: '文件内容为空' };
 let dir = config_dir_by_type(cfg_type);
 if (!dir) dir = '/usr/share/clashoo/config/upload';
 system('mkdir -p ' + shell_quote(dir));
 let path = dir + '/' + name;
+// 分片先写同目录下的隐藏暂存文件，最后一片写完再 rename 原子替换。
+// 中断、重试或多会话交错都不会再写坏正在使用的配置。
+let part  = dir + '/.clashoo-upload-' + token + '.part';
+let state = part + '.state';
 
 if (index == 0) {
-	if (writefile(path, content) === null)
-		return { success: false, error: 'write_failed', message: '写入文件失败' };
+	// 清掉中断上传留下的暂存文件（同目录、超过 1 小时）
+	for (let stale in lsdir(dir)) {
+		if (!match(stale, /^\.clashoo-upload-[A-Za-z0-9]{8,64}\.part(\.state)?$/))
+			continue;
+		let st = stat(dir + '/' + stale);
+		if (st && (time() - (st.mtime || 0)) > 3600)
+			unlink(dir + '/' + stale);
+	}
+	if (writefile(part, content) === null)
+		return { success: false, error: 'write_failed', message: '写入上传临时文件失败' };
 } else {
-	let fp = open(path, 'a');
-	if (!fp) return { success: false, error: 'write_failed', message: '打开文件失败' };
+	let st = stat(part);
+	let prev = st ? split(trim(readfile(state) || ''), ' ') : [];
+	if (!st || st.type != 'file' || length(prev) != 2 ||
+	    int(prev[0]) != index - 1 || int(prev[1]) != total) {
+		unlink(part);
+		unlink(state);
+		return { success: false, error: 'upload_restart', message: '上传会话已失效或分片顺序错误，请重新上传' };
+	}
+	let fp = open(part, 'a');
+	if (!fp) return { success: false, error: 'write_failed', message: '打开上传临时文件失败' };
 	let ok = fp.write(content);
 	fp.close();
-	if (ok === null) return { success: false, error: 'write_failed', message: '写入文件失败' };
+	if (ok === null) return { success: false, error: 'write_failed', message: '写入上传临时文件失败' };
 }
 
-return { success: true, name, path, index, total, complete: index + 1 >= total };
+if (index + 1 >= total) {
+	let st = stat(part);
+	if (!st || st.size <= 0 || !rename(part, path)) {
+		unlink(part);
+		unlink(state);
+		return { success: false, error: 'commit_failed', message: '配置保存失败' };
+	}
+	unlink(state);
+	return { success: true, name, path, index, total, complete: true };
+}
+
+if (writefile(state, sprintf('%d %d\n', index, total)) === null) {
+	unlink(part);
+	unlink(state);
+	return { success: false, error: 'write_failed', message: '写入上传状态失败' };
+}
+
+return { success: true, name, path, index, total, complete: false };
 }
 },
 
