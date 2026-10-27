@@ -16,7 +16,7 @@ import (
 type daePlan struct {
 	nodes         []daeNode
 	groups        []daeGroup
-	rules         []string
+	rules         []daePredicate
 	fallback      string
 	preflight     PreflightResult
 	subscriptions []daeSubscription
@@ -41,33 +41,8 @@ type daeSubscription struct {
 	userAgent string
 }
 
-// daeDATTags maps only known MetaCubeX MRS paths to the corresponding
-// geosite/geoip tags consumed by dae's DAT files. The caller still validates
-// the generated config against the device's installed DAT assets.
-var daeDATTags = map[string]string{
-	"geosite/private.mrs":         "GEOSITE,private",
-	"geosite/openai.mrs":          "GEOSITE,openai",
-	"geosite/anthropic.mrs":       "GEOSITE,anthropic",
-	"geosite/google-gemini.mrs":   "GEOSITE,google-gemini",
-	"geosite/twitter.mrs":         "GEOSITE,twitter",
-	"geosite/youtube.mrs":         "GEOSITE,youtube",
-	"geosite/google.mrs":          "GEOSITE,google",
-	"geosite/github.mrs":          "GEOSITE,github",
-	"geosite/netflix.mrs":         "GEOSITE,netflix",
-	"geosite/paypal.mrs":          "GEOSITE,paypal",
-	"geosite/onedrive.mrs":        "GEOSITE,onedrive",
-	"geosite/microsoft.mrs":       "GEOSITE,microsoft",
-	"geosite/apple-cn.mrs":        "GEOSITE,apple-cn",
-	"geosite/tiktok.mrs":          "GEOSITE,tiktok",
-	"geosite/gfw.mrs":             "GEOSITE,gfw",
-	"geosite/geolocation-!cn.mrs": "GEOSITE,geolocation-!cn",
-	"geosite/cn.mrs":              "GEOSITE,cn",
-	"geoip/cn.mrs":                "GEOIP,cn",
-	"geoip/google.mrs":            "GEOIP,google",
-	"geoip/netflix.mrs":           "GEOIP,netflix",
-}
-
-const daeDATPolicyRevision = "metacubex-mrs-to-dae-dat-v1"
+// daeDATPolicyRevision identifies the DAT mapping policy in preflight manifests.
+const daeDATPolicyRevision = "metacubex-mrs-to-dae-dat-v2"
 
 func DAENativeDATPolicyRevision() string {
 	return daeDATPolicyRevision
@@ -80,8 +55,11 @@ var daeDATPolicySchemes = map[string]bool{
 	"self-configuration": true,
 }
 
-// DAENativeRuleSet returns the explicit native DAT predicate for an allowlisted
-// MetaCubeX source. Other source URLs must use the validated cached expansion.
+// DAENativeRuleSet maps a MetaCubeX MRS rule set onto the geosite/geoip tag that
+// dae and honk read from the device DAT files. Every path below
+// /MetaCubeX/meta-rules-dat/meta/geo/ carries its tag in the filename, so the
+// mapping is exact by construction; whether the device actually ships the tag is
+// proven by `dae validate`, which fails loudly on an unknown code.
 func DAENativeRuleSet(schemeID string, source model.RuleSchemeRuleSet) (string, bool) {
 	if !daeDATPolicySchemes[schemeID] {
 		return "", false
@@ -97,12 +75,19 @@ func DAENativeRuleSet(schemeID string, source model.RuleSchemeRuleSet) (string, 
 	if !strings.HasPrefix(u.Path, prefix) {
 		return "", false
 	}
-	key := strings.TrimPrefix(u.Path, prefix)
-	if strings.Contains(key, "/") && strings.Count(key, "/") != 1 {
+	key := strings.TrimSuffix(strings.TrimPrefix(u.Path, prefix), ".mrs")
+	kind, tag, ok := strings.Cut(key, "/")
+	if !ok || strings.Contains(tag, "/") || !daeGeoToken.MatchString(tag) {
 		return "", false
 	}
-	body, ok := daeDATTags[key]
-	return body, ok
+	switch kind {
+	case "geosite":
+		return "GEOSITE," + tag, true
+	case "geoip":
+		return "GEOIP," + tag, true
+	default:
+		return "", false
+	}
 }
 
 // DAEPreflight reports whether this scheme can be represented by dae's native
@@ -380,7 +365,7 @@ func compileDAE(opts Options) (daePlan, PreflightResult) {
 				if body == "" {
 					continue
 				}
-				converted, err := daeRule(body, target)
+				converted, err := daePredicateFor(body, target)
 				if err != nil {
 					issue("rule_resource", location, err.Error())
 					continue
@@ -428,7 +413,7 @@ func compileDAE(opts Options) (daePlan, PreflightResult) {
 				MappingReason: mappingReason, ExpandedRules: len(bodies),
 			})
 			for lineIndex, body := range bodies {
-				converted, err := daeRule(body, target)
+				converted, err := daePredicateFor(body, target)
 				if err != nil {
 					issue("rule_resource", fmt.Sprintf("%s.payload[%d]", location, lineIndex), err.Error())
 					continue
@@ -445,7 +430,7 @@ func compileDAE(opts Options) (daePlan, PreflightResult) {
 			plan.preflight.Planned = append(plan.preflight.Planned, PreflightItem{Kind: "omitted_rule", Name: "URL-REGEX", Location: location})
 			continue
 		}
-		converted, err := daeRule(rule.Body, target)
+		converted, err := daePredicateFor(rule.Body, target)
 		if err != nil {
 			issue("rule_condition", location, err.Error())
 			continue
@@ -454,6 +439,11 @@ func compileDAE(opts Options) (daePlan, PreflightResult) {
 	}
 	if plan.fallback == "" {
 		issue("rule_fallback", "rules", "方案需要一条最后的 FINAL/MATCH 规则作为 dae fallback")
+	}
+	if daeProtocolTarget(opts.Target) == model.ClientHonk {
+		if count := daeDomainPredicateCount(plan.rules); count > honkDomainPredicateLimit {
+			issue("honk_domain_predicates", "rules", fmt.Sprintf("honk 内核路由只支持 %d 个域名谓词，当前方案需要 %d 个；请改用基于 MetaCubeX geosite 规则集的方案", honkDomainPredicateLimit, count))
+		}
 	}
 	finalizeDAEPlan(&plan, opts)
 	return plan, plan.preflight
@@ -840,65 +830,140 @@ func daeResourceBodies(source model.RuleSchemeRuleSet, ruleOptions []string, cac
 	return out, nil
 }
 
+// daePredicate is one structured routing condition. Keeping conditions
+// structured lets consecutive rules that share a function, key and target
+// collapse into a single dae predicate, which keeps the file small and stays
+// inside honk's routing predicate budget.
+type daePredicate struct {
+	funcName string
+	key      string
+	value    string
+	target   string
+}
+
+func (p daePredicate) render(arguments []string) string {
+	parts := make([]string, 0, len(arguments))
+	for _, argument := range arguments {
+		if p.key == "" {
+			parts = append(parts, argument)
+			continue
+		}
+		parts = append(parts, p.key+": "+argument)
+	}
+	return p.funcName + "(" + strings.Join(parts, ", ") + ") -> " + p.target
+}
+
 func daeRule(body, target string) (string, error) {
+	predicate, err := daePredicateFor(body, target)
+	if err != nil {
+		return "", err
+	}
+	return predicate.render([]string{predicate.value}), nil
+}
+
+// daePredicateFor parses one scheme rule body into a dae routing predicate.
+func daePredicateFor(body, target string) (daePredicate, error) {
+	fail := func(format string, args ...any) (daePredicate, error) {
+		return daePredicate{}, fmt.Errorf(format, args...)
+	}
 	fields := strings.Split(body, ",")
 	if len(fields) != 2 {
-		return "", fmt.Errorf("dae 导出不支持规则条件 %q", body)
+		return fail("dae 导出不支持规则条件 %q", body)
 	}
 	kind := strings.ToUpper(strings.TrimSpace(fields[0]))
 	value := strings.TrimSpace(fields[1])
+	predicate := daePredicate{value: value, target: target}
 	if value == "" || strings.ContainsAny(value, "'\"\r\n()") {
-		return "", fmt.Errorf("dae 导出不支持空值或含引号/换行的规则条件")
+		return fail("dae 导出不支持空值或含引号/换行的规则条件")
 	}
 	switch kind {
 	case "PROCESS-NAME":
 		if !daeProcessName.MatchString(value) {
-			return "", fmt.Errorf("dae 导出遇到无效进程名条件")
+			return fail("dae 导出遇到无效进程名条件")
 		}
 		if strings.Contains(value, " ") {
-			value = "'" + value + "'"
+			predicate.value = "'" + value + "'"
 		}
-		return fmt.Sprintf("pname(%s) -> %s", value, target), nil
-	case "DOMAIN":
-		if !daeToken.MatchString(value) || strings.Contains(value, "*") {
-			return "", fmt.Errorf("dae 导出遇到无效域名条件 %q", value)
+		predicate.funcName = "pname"
+		return predicate, nil
+	case "DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "GEOSITE":
+		if kind == "GEOSITE" {
+			if !daeGeoToken.MatchString(value) {
+				return fail("dae 导出遇到无效 geosite 标识 %q", value)
+			}
+		} else if !daeToken.MatchString(value) || strings.Contains(value, "*") {
+			return fail("dae 导出遇到无效域名条件 %q", value)
 		}
-		return fmt.Sprintf("domain(full: %s) -> %s", value, target), nil
-	case "DOMAIN-SUFFIX":
-		if !daeToken.MatchString(value) || strings.Contains(value, "*") {
-			return "", fmt.Errorf("dae 导出遇到无效域名后缀 %q", value)
-		}
-		return fmt.Sprintf("domain(suffix: %s) -> %s", value, target), nil
-	case "DOMAIN-KEYWORD":
-		if !daeToken.MatchString(value) || strings.Contains(value, "*") {
-			return "", fmt.Errorf("dae 导出遇到无效域名关键词 %q", value)
-		}
-		return fmt.Sprintf("domain(keyword: %s) -> %s", value, target), nil
-	case "GEOSITE":
-		if !daeGeoToken.MatchString(value) {
-			return "", fmt.Errorf("dae 导出遇到无效 geosite 标识 %q", value)
-		}
-		return fmt.Sprintf("domain(geosite: %s) -> %s", value, target), nil
+		predicate.funcName, predicate.key = "domain", map[string]string{
+			"DOMAIN": "full", "DOMAIN-SUFFIX": "suffix", "DOMAIN-KEYWORD": "keyword", "GEOSITE": "geosite",
+		}[kind]
+		return predicate, nil
 	case "GEOIP":
 		if !daeGeoToken.MatchString(value) {
-			return "", fmt.Errorf("dae 导出遇到无效 geoip 标识 %q", value)
+			return fail("dae 导出遇到无效 geoip 标识 %q", value)
 		}
-		return fmt.Sprintf("dip(geoip: %s) -> %s", value, target), nil
+		predicate.funcName, predicate.key = "dip", "geoip"
+		return predicate, nil
 	case "IP-CIDR", "IP-CIDR6":
 		if _, _, err := net.ParseCIDR(value); err != nil {
-			return "", fmt.Errorf("dae 导出遇到无效 CIDR %q", value)
+			return fail("dae 导出遇到无效 CIDR %q", value)
 		}
-		return fmt.Sprintf("dip('%s') -> %s", value, target), nil
+		predicate.funcName = "dip"
+		predicate.value = "'" + value + "'"
+		return predicate, nil
 	case "MATCH", "FINAL":
-		return "", fmt.Errorf("FINAL/MATCH 必须由方案的 Final 标记表示")
+		return fail("FINAL/MATCH 必须由方案的 Final 标记表示")
 	default:
-		return "", fmt.Errorf("dae 导出暂不支持 %s 规则", kind)
+		return fail("dae 导出暂不支持 %s 规则", kind)
 	}
+}
+
+// honkDomainPredicateLimit is honk's hard cap on distinct domain predicates in
+// one routing policy (ROUTING_FACT_CAPACITY in its eBPF map).
+const honkDomainPredicateLimit = 256
+
+// daeMaxPredicateArguments caps how many conditions share one rendered line so a
+// merged rule stays readable and parsable.
+const daeMaxPredicateArguments = 96
+
+// renderDAEPredicates emits routing lines, merging every run of consecutive
+// predicates with the same function, key and target. Merging never reorders
+// rules across different targets, so routing precedence is preserved.
+func renderDAEPredicates(predicates []daePredicate) []string {
+	lines := make([]string, 0, len(predicates))
+	for i := 0; i < len(predicates); {
+		head := predicates[i]
+		arguments := []string{head.value}
+		j := i + 1
+		for j < len(predicates) && len(arguments) < daeMaxPredicateArguments {
+			next := predicates[j]
+			if next.funcName != head.funcName || next.key != head.key || next.target != head.target {
+				break
+			}
+			arguments = append(arguments, next.value)
+			j++
+		}
+		lines = append(lines, head.render(arguments))
+		i = j
+	}
+	return lines
+}
+
+// daeDomainPredicateCount reports how many domain predicates the routing table
+// ends up with after merging: honk caps them at 256.
+func daeDomainPredicateCount(predicates []daePredicate) int {
+	count := 0
+	for _, line := range renderDAEPredicates(predicates) {
+		if strings.HasPrefix(line, "domain(") {
+			count++
+		}
+	}
+	return count
 }
 
 var (
 	daeToken       = regexp.MustCompile(`^[A-Za-z0-9_*.-]+$`)
-	daeGeoToken    = regexp.MustCompile(`^[A-Za-z0-9_!.-]+$`)
+	daeGeoToken    = regexp.MustCompile(`^[A-Za-z0-9_!@.-]+$`)
 	daeProcessName = regexp.MustCompile(`^[A-Za-z0-9_. -]+$`)
 )
 
@@ -977,7 +1042,7 @@ func renderDAE(plan daePlan, honkVariant bool) string {
 		b.WriteString("}\n\n")
 	}
 	b.WriteString("routing {\n")
-	for _, rule := range plan.rules {
+	for _, rule := range renderDAEPredicates(plan.rules) {
 		b.WriteString("    " + rule + "\n")
 	}
 	b.WriteString("    fallback: " + plan.fallback + "\n")

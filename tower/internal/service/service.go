@@ -319,12 +319,8 @@ func (s *Service) ExportStrictWithServiceRegions(target model.ClientTarget, prot
 		if err != nil {
 			return "", err
 		}
-		// Honk 变体用 include system.dae 引用 honk 自带的全局配置，dae validate
-		// 无法在临时目录里解析该引用（报 global required），交由 honk-core 导入时验证。
-		if target == model.ClientDAE {
-			if err := s.daeValidate(context.Background(), content); err != nil {
-				return "", fmt.Errorf("设备 dae validate 未通过：%w", err)
-			}
+		if err := s.validateDAEExport(target, content); err != nil {
+			return "", fmt.Errorf("设备 dae validate 未通过：%w", err)
 		}
 		return content, nil
 	}
@@ -363,10 +359,8 @@ func (s *Service) PreflightExportWithOptions(target model.ClientTarget, protocol
 			if generateErr != nil {
 				return generator.PreflightResult{Status: generator.PreflightUnsupported, PlanDigest: result.PlanDigest, Issues: []generator.PreflightIssue{{Code: "dae_render", Severity: "blocking", Location: "export", Message: "DAE 配置生成失败"}}, Planned: result.Planned}, nil
 			}
-			if target == model.ClientDAE {
-				if validateErr := s.daeValidate(context.Background(), content); validateErr != nil {
-					return generator.PreflightResult{Status: generator.PreflightUnsupported, PlanDigest: result.PlanDigest, Issues: []generator.PreflightIssue{{Code: "dae_validate", Severity: "blocking", Location: "export", Message: "设备 dae validate 未通过；当前 DAT 标签或配置需要修正"}}, Planned: result.Planned}, nil
-				}
+			if validateErr := s.validateDAEExport(target, content); validateErr != nil {
+				return generator.PreflightResult{Status: generator.PreflightUnsupported, PlanDigest: result.PlanDigest, Issues: []generator.PreflightIssue{{Code: "dae_validate", Severity: "blocking", Location: "export", Message: "设备 dae validate 未通过；当前 DAT 标签或配置需要修正"}}, Planned: result.Planned}, nil
 			}
 		}
 		return result, nil
