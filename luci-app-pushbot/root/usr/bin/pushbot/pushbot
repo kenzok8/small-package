@@ -1655,7 +1655,8 @@ function login_send(){
 		[ -z "$login_ip" ] && continue
 		ip_in_whitelist "$login_ip" && continue
 		local web_login_time=`cat ${dir}web_login|grep -w ${login_ip}|awk '{print $1}'|grep -v "^$"|sort -u|head -n1`
-		local web_login_mode=`cat ${dir}web_login|grep -w ${login_ip}|awk '{print $3}'|grep -v "^$"|sort -u|head -n1`
+		# 非表格正文补齐"登录方式"项（Web 类别固定文案；SSH 段显示真实 Pubkey/Password）
+		local content_mode="${str_linefeed}${str_tab}登录方式： ${str_space}${str_space}${str_space}${str_space}Web 登录"
 		if [ ! -z "$web_logged" ] && [ "$web_logged" -eq "1" ]; then
 			# 低频通知检查（模式3）：同一来源Web登录，在时间窗口内只通知一次
 			if ! check_dnd_limit "web_login" "$login_ip" "$dnd_low_range"; then
@@ -1663,7 +1664,8 @@ function login_send(){
 				continue
 			fi
 			if [ "$table_enable" = "1" ]; then
-				local info="$(table_body "时间" "${web_login_time}" "设备 IP" "${login_ip}" "登录方式" "${web_login_mode}")"
+				# Web 登录日志（accepted login）不含认证方式细分，登录类别本身即信息——固定显示"Web 登录"（与 SSH 的 Pubkey/Password 及标题呼应）
+				local info="$(table_body "时间" "${web_login_time}" "设备 IP" "${login_ip}" "登录方式" "Web 登录")"
 				if [ -z "$title" ]; then
 					title="${login_ip} 通过 Web 登录了路由器"
 					content="${content}${str_splitline}${str_title_start}${font_success} 登录信息${font_end}${str_title_end}${info}"
@@ -1687,7 +1689,7 @@ function login_send(){
 				fi
 			fi
 		fi
-		echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}设备 ${login_ip} 通过 web ${web_login_mode} 登录了路由器 " >> ${logfile}
+		echo "`date "+%Y-%m-%d %H:%M:%S"` ${disturb_text}设备 ${login_ip} 通过 Web 登录了路由器 " >> ${logfile}
 	done
 	echo "" > ${dir}web_login
 	unset login_ip login_ip_list

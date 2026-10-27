@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/kenzok8/tower/internal/generator"
@@ -31,6 +32,13 @@ type Service struct {
 	rulesDir    string
 	ruleCache   *rules.Cache
 	daeValidate func(context.Context, string) error
+
+	// DAE exports read the LAN bridge once per process and reuse the airport
+	// format checks for a short while.
+	lanOnce     sync.Once
+	lanName     string
+	daeSubMu    sync.Mutex
+	daeSubCache map[string]daeSubscriptionCheck
 }
 
 const nativeDAESchemeID = "kenzok8-dae-native"
@@ -578,11 +586,18 @@ func (s *Service) exportOptionsWithServiceRegions(target model.ClientTarget, pro
 			}
 		}
 	}
-	return generator.Options{
+	options := generator.Options{
 		Target: target, Nodes: nodes, Protocols: protocols, Scheme: scheme,
 		PreferRuleSets: preferRuleSets, RuleSetLines: lines, Strict: strict,
 		ServiceRegions: serviceRegions,
-	}, nil
+	}
+	if target.Family() == model.FamilyDAE {
+		// dae only accepts explicit interface names, so the LAN bridge has to be
+		// read from the running network configuration of this device.
+		options.LANInterface = s.lanInterfaceForDAE()
+		options.DAESubscriptions, options.DAESubscriptionFallbacks = s.daeSubscriptionPlan(target, nodes)
+	}
+	return options, nil
 }
 
 // Schemes returns the bundled presets followed by user-imported schemes.

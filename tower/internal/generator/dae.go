@@ -14,21 +14,31 @@ import (
 )
 
 type daePlan struct {
-	nodes     []daeNode
-	groups    []daeGroup
-	rules     []string
-	fallback  string
-	preflight PreflightResult
+	nodes         []daeNode
+	groups        []daeGroup
+	rules         []string
+	fallback      string
+	preflight     PreflightResult
+	subscriptions []daeSubscription
+	lanInterface  string
 }
 
 type daeNode struct {
-	tag string
 	uri string
 }
 
 type daeGroup struct {
-	tag   string
-	nodes []string
+	tag string
+	// filters are dae `filter:` expressions, one per member pattern. Repeated
+	// filter lines are "or"-ed by dae and honk, which matches how schemes store
+	// node-name patterns.
+	filters []string
+}
+
+type daeSubscription struct {
+	tag       string
+	url       string
+	userAgent string
 }
 
 // daeDATTags maps only known MetaCubeX MRS paths to the corresponding
@@ -123,6 +133,10 @@ func GenerateDAE(opts Options) (string, error) {
 
 func compileDAE(opts Options) (daePlan, PreflightResult) {
 	plan := daePlan{preflight: PreflightResult{Status: PreflightExact, Planned: []PreflightItem{}}}
+	// dae takes a bare interface name here; anything else falls back to br-lan.
+	if lan := strings.TrimSpace(opts.LANInterface); lan != "" && !strings.ContainsAny(lan, " \t\r\n'\"") {
+		plan.lanInterface = lan
+	}
 	plan.preflight.TargetPolicy, plan.preflight.PolicyNote = SchemeTargetPolicy(opts.Target, schemeID(opts.Scheme))
 	issue := func(code, location, message string) {
 		plan.preflight.Status = PreflightUnsupported
@@ -151,13 +165,13 @@ func compileDAE(opts Options) (daePlan, PreflightResult) {
 		}
 	}
 	nodes := FilterNodes(opts.Nodes, opts.Protocols)
-	// The dae core loads a fixed protocol set (no SSR/HTTP/WireGuard/Snell);
-	// silently skip unsupported nodes so the exported config stays loadable by
-	// both daed and honk.
+	// The dae and honk cores load a fixed protocol set; silently skip unsupported
+	// nodes so the exported config stays loadable by the selected core.
 	{
+		client := daeProtocolTarget(opts.Target)
 		kept := make([]model.ProxyNode, 0, len(nodes))
 		for i, n := range nodes {
-			if !supportsProtocol(model.ClientDAE, n.Kind) {
+			if !supportsProtocol(client, n.Kind) {
 				warning("node_protocol", fmt.Sprintf("nodes[%d]", i), fmt.Sprintf("节点 %q 使用 dae 不支持的协议，已跳过", n.Name))
 				continue
 			}
@@ -165,7 +179,7 @@ func compileDAE(opts Options) (daePlan, PreflightResult) {
 		}
 		nodes = kept
 	}
-	if opts.Strict && len(nodes) == 0 {
+	if opts.Strict && len(nodes) == 0 && len(opts.DAESubscriptions) == 0 {
 		issue("nodes_empty", "nodes", "严格导出至少需要一个已选择的节点")
 	}
 	if opts.Scheme == nil {
@@ -180,11 +194,38 @@ func compileDAE(opts Options) (daePlan, PreflightResult) {
 		}
 	}
 
-	names := uniquedNames(nodes)
-	nodeTags := make(map[string]string, len(nodes))
+	nodeNames := uniquedNames(nodes)
+	// Subscription nodes are fetched by dae/honk itself, so their names are not
+	// part of the inline node list. Group filters still have to be validated
+	// against them, otherwise every group would look empty.
+	names := append([]string(nil), nodeNames...)
+	for _, sub := range opts.DAESubscriptions {
+		if strings.TrimSpace(sub.Tag) == "" || !daeSubscriptionURL(sub.URL) {
+			issue("subscription", "subscriptions", "订阅缺少可用的标签或地址")
+			continue
+		}
+		plan.subscriptions = append(plan.subscriptions, daeSubscription{tag: sub.Tag, url: sub.URL, userAgent: sub.UserAgent})
+		plan.preflight.Planned = append(plan.preflight.Planned, PreflightItem{
+			Kind: "subscription", Name: sub.Tag, Location: fmt.Sprintf("subscriptions[%d]", len(plan.subscriptions)-1), URL: sub.URL,
+		})
+		for _, name := range sub.NodeNames {
+			if name = strings.TrimSpace(name); name != "" && !containsString(names, name) {
+				names = append(names, name)
+			}
+		}
+	}
+	// Fallbacks are informational: the affected subscription is still exported,
+	// just with its nodes expanded instead of passed through.
+	for i, note := range opts.DAESubscriptionFallbacks {
+		plan.preflight.Warnings = append(plan.preflight.Warnings, PreflightWarning{
+			ID:       fmt.Sprintf("subscription_fallback@subscriptions[%d]", i),
+			Code:     "subscription_fallback",
+			Location: fmt.Sprintf("subscriptions[%d]", i),
+			Message:  note,
+		})
+	}
 	for i, node := range nodes {
-		name := names[i]
-		tag := fmt.Sprintf("node_%03d", i+1)
+		name := nodeNames[i]
 		plan.preflight.Planned = append(plan.preflight.Planned, PreflightItem{Kind: "node", Name: name, Location: fmt.Sprintf("nodes[%d]", i)})
 		if node.Kind == model.KindShadowsocks && node.UDPRelayEnabled != nil && !*node.UDPRelayEnabled {
 			issue("node_udp_relay", fmt.Sprintf("nodes[%d]", i), fmt.Sprintf("节点 %q 禁用 UDP，但 dae URI 无法保留该设置", name))
@@ -195,10 +236,12 @@ func compileDAE(opts Options) (daePlan, PreflightResult) {
 			issue("node_uri", fmt.Sprintf("nodes[%d]", i), fmt.Sprintf("节点 %q 无法转换为 dae 支持的 URI", name))
 			continue
 		}
-		nodeTags[name] = tag
-		plan.nodes = append(plan.nodes, daeNode{tag: tag, uri: link})
+		// Inline nodes carry no tag on purpose: honk names a tagged node after its
+		// tag, while dae always uses the link's own name. Untagged entries keep the
+		// airport name on both cores, so `name(regex:)` filters agree.
+		plan.nodes = append(plan.nodes, daeNode{uri: link})
 	}
-	if len(nodes) == 0 {
+	if len(nodes) == 0 && len(plan.subscriptions) == 0 {
 		issue("nodes_empty", "nodes", "至少需要一个已选择的节点")
 	}
 
@@ -229,7 +272,11 @@ func compileDAE(opts Options) (daePlan, PreflightResult) {
 		if groupTags[group.Name] == "" || (group.Kind != model.KindURLTest && group.Kind != model.KindDAENativeAuto) {
 			continue
 		}
-		var members []string
+		planGroup := daeGroup{tag: groupTags[group.Name]}
+		matchedAny := false
+		// matchesAll tracks whether every available node is a member, so the filter
+		// line can be dropped entirely (dae treats a filterless group that way).
+		matchesAll := true
 		for j, member := range group.Members {
 			location := fmt.Sprintf("groups[%d].members[%d]", i, j)
 			if member.Type != model.MemberNodePattern {
@@ -241,25 +288,39 @@ func compileDAE(opts Options) (daePlan, PreflightResult) {
 				issue("group_pattern", location, fmt.Sprintf("策略组 %q 含无效节点匹配正则", group.Name))
 				continue
 			}
-			matched := false
+			matched, hitsAll := false, true
 			for _, name := range names {
-				if matcher.MatchString(name) && (member.Exclude == "" || !matchNodePattern(member.Exclude, name)) {
-					if tag := nodeTags[name]; tag != "" {
-						members = append(members, tag)
-						matched = true
-					}
+				if !matcher.MatchString(name) || (member.Exclude != "" && matchNodePattern(member.Exclude, name)) {
+					hitsAll = false
+					continue
 				}
+				matched = true
 			}
 			if !matched {
 				issue("group_empty", location, fmt.Sprintf("策略组 %q 的节点过滤条件没有匹配已选择节点", group.Name))
+				continue
 			}
+			matchedAny = true
+			if !hitsAll {
+				matchesAll = false
+			}
+			expr, ok := daeGroupFilter(member)
+			if !ok {
+				issue("group_filter", location, fmt.Sprintf("策略组 %q 的节点过滤条件无法写成 dae filter", group.Name))
+				continue
+			}
+			planGroup.filters = append(planGroup.filters, expr)
 		}
-		members = dedupStrings(members)
-		if len(members) == 0 {
+		if !matchedAny {
 			issue("group_empty", fmt.Sprintf("groups[%d]", i), fmt.Sprintf("策略组 %q 没有可用节点", group.Name))
 			continue
 		}
-		plan.groups = append(plan.groups, daeGroup{tag: groupTags[group.Name], nodes: members})
+		if matchesAll {
+			// A group that matches every available node needs no filter at all: dae
+			// treats a filterless group as "all nodes", subscriptions included.
+			planGroup.filters = nil
+		}
+		plan.groups = append(plan.groups, planGroup)
 	}
 
 	if len(opts.Scheme.Rules) == 0 {
@@ -494,6 +555,8 @@ func applyDAEACLPolicy(source *model.RuleScheme) (*model.RuleScheme, []Preflight
 func finalizeDAEPlan(plan *daePlan, opts Options) {
 	filtered := opts
 	filtered.Nodes = FilterNodes(opts.Nodes, opts.Protocols)
+	// Strict only asks for the digest check; it never changes the rendered
+	// output, so it must stay out of the digest itself.
 	payload := struct {
 		Target         model.ClientTarget
 		TargetPolicy   string
@@ -502,19 +565,22 @@ func finalizeDAEPlan(plan *daePlan, opts Options) {
 		Scheme         *model.RuleScheme
 		Policy         string
 		ServiceRegions map[string]string
-		Strict         bool
 		RuleSetLines   map[string][]string
 		Planned        []PreflightItem
 		Warnings       []PreflightWarning
 		Issues         []PreflightIssue
+		LANInterface   string
+		Subscriptions  []DAESubscription
 	}{
 		Target: filtered.Target, TargetPolicy: plan.preflight.TargetPolicy,
 		Nodes: filtered.Nodes, Protocols: filtered.Protocols,
 		Scheme: filtered.Scheme, Policy: daeDATPolicyRevision,
-		ServiceRegions: filtered.ServiceRegions, Strict: filtered.Strict,
-		RuleSetLines: opts.RuleSetLines,
-		Planned:      plan.preflight.Planned,
-		Warnings:     plan.preflight.Warnings, Issues: plan.preflight.Issues,
+		ServiceRegions: filtered.ServiceRegions,
+		RuleSetLines:   opts.RuleSetLines,
+		LANInterface:   plan.lanInterface,
+		Subscriptions:  filtered.DAESubscriptions,
+		Planned:        plan.preflight.Planned,
+		Warnings:       plan.preflight.Warnings, Issues: plan.preflight.Issues,
 	}
 	data, err := json.Marshal(payload)
 	if err != nil {
@@ -523,6 +589,64 @@ func finalizeDAEPlan(plan *daePlan, opts Options) {
 	}
 	digest := sha256.Sum256(data)
 	plan.preflight.PlanDigest = fmt.Sprintf("%x", digest[:])
+}
+
+// daeProtocolTarget narrows a target to the core whose protocol set applies.
+// Only honk differs: its Rust core implements no SSR dialer.
+func daeProtocolTarget(target model.ClientTarget) model.ClientTarget {
+	if target == model.ClientHonk {
+		return model.ClientHonk
+	}
+	return model.ClientDAE
+}
+
+// daeSubscriptionURL reports whether a subscription URL can be written into the
+// single-quoted dae `subscription` block as-is.
+func daeSubscriptionURL(raw string) bool {
+	u, err := url.Parse(strings.TrimSpace(raw))
+	if err != nil || u.Host == "" {
+		return false
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return false
+	}
+	return !strings.ContainsAny(raw, "'\"\r\n")
+}
+
+// daeGroupFilter renders one scheme member as a dae `filter:` expression. dae
+// and honk both accept regular expressions through `name(regex: ...)`, and a
+// repeated filter line is "or"-ed, which is exactly how schemes store node-name
+// patterns. Patterns that cannot survive single quoting fall back to enumerating
+// node tags.
+func daeGroupFilter(member model.RuleGroupMember) (string, bool) {
+	pattern := strings.TrimSpace(member.Value)
+	if pattern == "" || strings.ContainsAny(pattern, "'\r\n") {
+		return "", false
+	}
+	if _, err := regexp.Compile(pattern); err != nil {
+		return "", false
+	}
+	expr := "name(regex: '" + pattern + "')"
+	exclude := strings.TrimSpace(member.Exclude)
+	if exclude == "" {
+		return expr, true
+	}
+	if strings.ContainsAny(exclude, "'\r\n") {
+		return "", false
+	}
+	if _, err := regexp.Compile(exclude); err != nil {
+		return "", false
+	}
+	return expr + " && !name(regex: '" + exclude + "')", true
+}
+
+func containsString(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
 }
 
 func validDAENodeURI(node model.ProxyNode, link string) bool {
@@ -540,8 +664,9 @@ func validDAENodeURI(node model.ProxyNode, link string) bool {
 		return false
 	}
 	allowed := map[model.ProxyKind]map[string]bool{
-		model.KindShadowsocks: {"ss": true},
-		model.KindVMess: {"vmess": true}, model.KindVLESS: {"vless": true},
+		model.KindShadowsocks:  {"ss": true},
+		model.KindShadowsocksR: {"ssr": true},
+		model.KindVMess:        {"vmess": true}, model.KindVLESS: {"vless": true},
 		model.KindTrojan: {"trojan": true}, model.KindHysteria: {"hysteria": true},
 		model.KindHysteria2: {"hysteria2": true, "hy2": true}, model.KindTUIC: {"tuic": true},
 		model.KindSOCKS5: {"socks5": true}, model.KindAnyTLS: {"anytls": true},
@@ -697,9 +822,13 @@ func renderDAE(plan daePlan, honkVariant bool) string {
 		b.WriteString("    system.dae\n")
 		b.WriteString("}\n\n")
 	} else {
+		lan := plan.lanInterface
+		if lan == "" {
+			lan = "br-lan"
+		}
 		b.WriteString("global {\n")
 		b.WriteString("    tproxy_port: 12345\n")
-		b.WriteString("    lan_interface: br-lan\n")
+		b.WriteString("    lan_interface: " + lan + "\n")
 		b.WriteString("    wan_interface: auto\n")
 		b.WriteString("    auto_config_kernel_parameter: true\n")
 		b.WriteString("    dial_mode: domain\n")
@@ -717,16 +846,40 @@ func renderDAE(plan daePlan, honkVariant bool) string {
 	b.WriteString("        }\n")
 	b.WriteString("    }\n")
 	b.WriteString("}\n\n")
-	b.WriteString("node {\n")
-	for _, node := range plan.nodes {
-		b.WriteString("    " + node.tag + ": '" + node.uri + "'\n")
+	if len(plan.subscriptions) > 0 {
+		b.WriteString("# Airport endpoints are fetched by the core itself, so node changes\n")
+		b.WriteString("# upstream are picked up without regenerating this file.\n")
+		b.WriteString("subscription {\n")
+		for _, sub := range plan.subscriptions {
+			if !honkVariant {
+				b.WriteString("    " + sub.tag + ": '" + sub.url + "'\n")
+				continue
+			}
+			b.WriteString("    " + sub.tag + ": '" + sub.url + "' {\n")
+			if sub.userAgent != "" {
+				b.WriteString("        ua: '" + sub.userAgent + "'\n")
+			}
+			// A fresh config has no working node yet, so the download must not be
+			// routed through the proxy it is meant to populate.
+			b.WriteString("        route: direct\n")
+			b.WriteString("    }\n")
+		}
+		b.WriteString("}\n\n")
 	}
-	b.WriteString("}\n\n")
+	if len(plan.nodes) > 0 {
+		b.WriteString("node {\n")
+		for _, node := range plan.nodes {
+			b.WriteString("    '" + node.uri + "'\n")
+		}
+		b.WriteString("}\n\n")
+	}
 	if len(plan.groups) > 0 {
 		b.WriteString("group {\n")
 		for _, group := range plan.groups {
 			b.WriteString("    " + group.tag + " {\n")
-			b.WriteString("        filter: name(" + strings.Join(group.nodes, ", ") + ")\n")
+			for _, filter := range group.filters {
+				b.WriteString("        filter: " + filter + "\n")
+			}
 			b.WriteString("        policy: min_moving_avg\n")
 			b.WriteString("    }\n")
 		}

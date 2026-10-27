@@ -241,6 +241,8 @@ func compileSingBox(opts Options) (singBoxPlan, PreflightResult) {
 }
 
 func finalizeSingBoxPlan(plan *singBoxPlan, opts Options) {
+	// Strict only asks for the digest check; it never changes the rendered
+	// output, so it must stay out of the digest itself.
 	payload := struct {
 		Target         model.ClientTarget
 		TargetPolicy   string
@@ -249,7 +251,6 @@ func finalizeSingBoxPlan(plan *singBoxPlan, opts Options) {
 		ServiceRegions map[string]string
 		Scheme         *model.RuleScheme
 		PreferRuleSets bool
-		Strict         bool
 		RuleSetLines   map[string][]string
 		Planned        []PreflightItem
 		Warnings       []PreflightWarning
@@ -258,7 +259,6 @@ func finalizeSingBoxPlan(plan *singBoxPlan, opts Options) {
 		Target: opts.Target, TargetPolicy: plan.result.TargetPolicy,
 		Nodes: opts.Nodes, Protocols: opts.Protocols, ServiceRegions: opts.ServiceRegions,
 		Scheme: opts.Scheme, PreferRuleSets: opts.PreferRuleSets,
-		Strict:       opts.Strict,
 		RuleSetLines: opts.RuleSetLines, Planned: plan.result.Planned,
 		Warnings: plan.result.Warnings, Issues: plan.result.Issues,
 	}
