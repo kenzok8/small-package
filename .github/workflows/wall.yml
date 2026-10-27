@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/wall.yml'
       - '.github/diy/main.sh'
+      - '.github/diy/patches/**'
   schedule:
     - cron: '0 */4 * * *'
   repository_dispatch:

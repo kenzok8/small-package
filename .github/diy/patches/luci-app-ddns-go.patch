@@ -1,0 +1,63 @@
+diff --git a/luci-app-ddns-go/Makefile b/luci-app-ddns-go/Makefile
+index 3051dd83..27c72e56 100644
+--- a/luci-app-ddns-go/Makefile
++++ b/luci-app-ddns-go/Makefile
+@@ -8,7 +8,7 @@ include $(TOPDIR)/rules.mk
+ 
+ PKG_NAME:=luci-app-ddns-go
+ PKG_VERSION:=1.6.8
+-PKG_RELEASE:=20260323
++PKG_RELEASE:=20261027
+ 
+ PKG_MAINTAINER:=sirpdboy  <herboy2008@gmail.com>
+ PKG_CONFIG_DEPENDS:=
+diff --git a/luci-app-ddns-go/htdocs/luci-static/resources/view/ddns-go/config.js b/luci-app-ddns-go/htdocs/luci-static/resources/view/ddns-go/config.js
+index 711f0753..3774b2d9 100644
+--- a/luci-app-ddns-go/htdocs/luci-static/resources/view/ddns-go/config.js
++++ b/luci-app-ddns-go/htdocs/luci-static/resources/view/ddns-go/config.js
+@@ -204,20 +204,8 @@ return view.extend({
+  
+     handleRestartService: async function() {
+     try {
+-        // const enabledValue = document.querySelector('input[name="cfg001c48.enabled"]')?.checked ? '1' : '0';
+-	const enabledValue = document.querySelectorAll('input[id="widget.cbid.ddns-go.config.enabled"]')?.checked ? '1' : '0';
++        await fs.exec('/etc/init.d/ddns-go', ['restart']);
+ 
+-        await uci.set('ddns-go', 'config', 'enabled', enabledValue);
+-        await uci.save('ddns-go');
+-        await uci.apply();
+-        
+-        await fs.exec('/etc/init.d/ddns-go', ['stop']);
+-        await new Promise(resolve => setTimeout(resolve, 1000));
+-        
+-        if (enabledValue === '1') {
+-            await fs.exec('/etc/init.d/ddns-go', ['start']);
+-        }
+-        
+         alert(_('SUCCESS:') + '\n' + _('DDNS-Go service restarted successfully'));
+         if (window.statusPoll) {
+             window.statusPoll();
+@@ -227,6 +215,23 @@ return view.extend({
+     }
+     },
+ 
++    handleSaveApply: function(ev, mode) {
++        var enabled;
++
++        return this.handleSave(ev).then(L.bind(function() {
++            enabled = uci.get('ddns-go', 'config', 'enabled') === '1';
++
++            return uci.apply();
++        }, this)).then(function() {
++            return fs.exec('/etc/init.d/ddns-go', [enabled ? 'enable' : 'disable']);
++        }).then(function() {
++            return fs.exec('/etc/init.d/ddns-go', [enabled ? 'restart' : 'stop']);
++        }).then(function() {
++            if (window.statusPoll)
++                return window.statusPoll();
++        });
++    },
++
+     handleUpdate: async function () {
+         try {
+             var updateView = document.getElementById('update_status');
