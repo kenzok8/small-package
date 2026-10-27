@@ -32,11 +32,35 @@ func (s *Service) validateDAEExport(target model.ClientTarget, content string) e
 	}
 }
 
-// honkValidationConfig swaps honk's include block for a minimal global section so
-// dae can parse the rest of the file.
+// honkValidationConfig swaps honk's include block for a minimal global section and
+// drops the subscription block: honk's `ua:`/`route:` entry options are not dae
+// syntax, and dae does not fetch subscriptions while validating.
 func honkValidationConfig(content string) string {
-	if !strings.Contains(content, honkIncludeBlock) {
+	if strings.Contains(content, honkIncludeBlock) {
+		content = strings.Replace(content, honkIncludeBlock, honkValidationGlobal, 1)
+	}
+	return stripTopLevelBlock(content, "subscription {")
+}
+
+// stripTopLevelBlock removes one top-level block, from its header to the closing
+// brace in the first column. Nested blocks are indented, so they cannot end it.
+func stripTopLevelBlock(content, header string) string {
+	if !strings.Contains(content, header) {
 		return content
 	}
-	return strings.Replace(content, honkIncludeBlock, honkValidationGlobal, 1)
+	lines := strings.Split(content, "\n")
+	out := make([]string, 0, len(lines))
+	skipping := false
+	for _, line := range lines {
+		switch {
+		case skipping && line == "}":
+			skipping = false
+		case skipping:
+		case line == header:
+			skipping = true
+		default:
+			out = append(out, line)
+		}
+	}
+	return strings.Join(out, "\n")
 }

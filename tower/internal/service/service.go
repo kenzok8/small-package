@@ -589,7 +589,22 @@ func (s *Service) exportOptionsWithServiceRegions(target model.ClientTarget, pro
 		// dae only accepts explicit interface names, so the LAN bridge has to be
 		// read from the running network configuration of this device.
 		options.LANInterface = s.lanInterfaceForDAE()
-		options.DAESubscriptions, options.DAESubscriptionFallbacks = s.daeSubscriptionPlan(target, nodes)
+		var covered []string
+		options.DAESubscriptions, options.DAESubscriptionFallbacks, covered = s.daeSubscriptionPlan(target, nodes)
+		if len(covered) > 0 {
+			// Nodes the core fetches itself must not be inlined as well.
+			passthrough := make(map[string]bool, len(covered))
+			for _, id := range covered {
+				passthrough[id] = true
+			}
+			inlined := make([]model.ProxyNode, 0, len(nodes))
+			for _, node := range nodes {
+				if !passthrough[node.SourceID] {
+					inlined = append(inlined, node)
+				}
+			}
+			options.Nodes = inlined
+		}
 	}
 	return options, nil
 }

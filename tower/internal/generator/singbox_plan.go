@@ -35,6 +35,9 @@ type PreflightWarning struct {
 	Code     string `json:"code"`
 	Location string `json:"location"`
 	Message  string `json:"message"`
+	// Informational warnings describe a substitution the caller cannot act on.
+	// They are shown but never block a degraded export.
+	Informational bool `json:"informational,omitempty"`
 }
 
 type PreflightItem struct {
@@ -272,17 +275,24 @@ func finalizeSingBoxPlan(plan *singBoxPlan, opts Options) {
 }
 
 func acceptDegradedPlan(opts Options, result *PreflightResult) bool {
-	warningIDs := make([]string, 0, len(result.Warnings))
+	// Only the warnings that actually degraded the plan need consent. Informational
+	// notes (a policy substitution, a subscription that stayed inline) can change
+	// between two independent preflight and export processes, so requiring them
+	// would fail spuriously; extra accepted IDs are ignored.
+	required := make(map[string]bool, len(result.Warnings))
 	for _, warning := range result.Warnings {
-		warningIDs = append(warningIDs, warning.ID)
+		if !warning.Informational {
+			required[warning.ID] = true
+		}
 	}
-	accepted := append([]string(nil), opts.AcceptedDegradations...)
-	sort.Strings(warningIDs)
-	sort.Strings(accepted)
-	valid := opts.PlanDigest != "" && opts.PlanDigest == result.PlanDigest && len(accepted) == len(warningIDs)
+	accepted := make(map[string]bool, len(opts.AcceptedDegradations))
+	for _, id := range opts.AcceptedDegradations {
+		accepted[id] = true
+	}
+	valid := opts.PlanDigest != "" && opts.PlanDigest == result.PlanDigest
 	if valid {
-		for i := range warningIDs {
-			if accepted[i] == "" || accepted[i] != warningIDs[i] || (i > 0 && accepted[i] == accepted[i-1]) {
+		for id := range required {
+			if !accepted[id] {
 				valid = false
 				break
 			}

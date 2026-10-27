@@ -32,22 +32,24 @@ type daeSubscriptionCheck struct {
 // export already contains all of its nodes and the endpoint answers with a URI
 // list the core can parse; every other case keeps the inline node expansion so
 // an export never silently loses nodes.
-func (s *Service) daeSubscriptionPlan(target model.ClientTarget, selected []model.ProxyNode) ([]generator.DAESubscription, []string) {
-	// honk 会按节点内容 ID（协议|主机|端口|凭据|拨号形状）去重，一旦订阅节点与
-	// 已内联的节点撞 ID，整条订阅会被拒绝；另外 honk 内核对路由里显式域名谓词有
-	// 256 条硬上限。两项都没解决前，honk 导出继续内联节点，dae 则安全透传。
-	if target == model.ClientHonk {
-		return nil, []string{"honk 暂不使用订阅透传（订阅节点 ID 冲突会导致整条订阅被拒绝），已展开为节点"}
-	}
+// daeSubscriptionPlan decides which airport endpoints the exported config fetches
+// itself. The second return value lists the node sources that are covered by a
+// passthrough subscription: those nodes must not be inlined any more, or the core
+// would end up with two copies of every endpoint.
+func (s *Service) daeSubscriptionPlan(target model.ClientTarget, selected []model.ProxyNode) ([]generator.DAESubscription, []string, []string) {
 	st, err := s.Store.Load()
 	if err != nil {
-		return nil, nil
+		return nil, nil, nil
 	}
 	selectedIDs := make(map[string]bool, len(selected))
 	for _, node := range selected {
 		selectedIDs[node.ID] = true
 	}
-	var subs []generator.DAESubscription
+	type candidate struct {
+		sub   model.SubscriptionSource
+		check daeSubscriptionCheck
+	}
+	var candidates []candidate
 	var fallbacks []string
 	for _, sub := range st.Subscriptions {
 		if !sub.Enabled || strings.TrimSpace(sub.URL) == "" {
@@ -75,14 +77,45 @@ func (s *Service) daeSubscriptionPlan(target model.ClientTarget, selected []mode
 			fallbacks = append(fallbacks, fmt.Sprintf("订阅 %q 已展开为节点：%s", sub.Name, check.reason))
 			continue
 		}
+		candidates = append(candidates, candidate{sub: sub, check: check})
+	}
+	if len(candidates) == 0 {
+		return nil, fallbacks, nil
+	}
+
+	// honk hashes each endpoint into its own node id and rejects a whole
+	// subscription when one id is already taken by an inline node, so a passthrough
+	// is only provable when the export inlines nothing: collisions inside the
+	// subscription itself are de-duplicated by honk without a rejection.
+	if target == model.ClientHonk {
+		eligible := make(map[string]bool, len(candidates))
+		for _, c := range candidates {
+			eligible[c.sub.ID] = true
+		}
+		for _, node := range selected {
+			if !eligible[node.SourceID] {
+				fallbacks = append(fallbacks, fmt.Sprintf("honk 需要内联其它节点（%q），订阅透传会因节点 ID 冲突被整条拒绝，已展开为节点", node.Name))
+				return nil, fallbacks, nil
+			}
+		}
+	}
+	var subs []generator.DAESubscription
+	covered := make([]string, 0, len(candidates))
+	for _, c := range candidates {
 		entry := generator.DAESubscription{
 			Tag:       fmt.Sprintf("sub_%03d", len(subs)+1),
-			URL:       sub.URL,
-			NodeNames: daeNodeNames(check.nodes),
+			URL:       c.sub.URL,
+			NodeNames: daeNodeNames(c.check.nodes),
+		}
+		if target == model.ClientHonk {
+			// honk can pin the download user agent; without it most airports answer
+			// with mihomo YAML, which the core cannot parse.
+			entry.UserAgent = daeSubscriptionUserAgent
 		}
 		subs = append(subs, entry)
+		covered = append(covered, c.sub.ID)
 	}
-	return subs, fallbacks
+	return subs, fallbacks, covered
 }
 
 func daeNodeNames(nodes []model.ProxyNode) []string {

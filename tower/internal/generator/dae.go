@@ -143,6 +143,7 @@ func compileDAE(opts Options) (daePlan, PreflightResult) {
 	note := func(code, location, message string) {
 		plan.preflight.Warnings = append(plan.preflight.Warnings, PreflightWarning{
 			ID: code + "@" + location, Code: code, Location: location, Message: message,
+			Informational: true,
 		})
 	}
 	var regionIssues []PreflightIssue
@@ -651,7 +652,7 @@ func finalizeDAEPlan(plan *daePlan, opts Options) {
 		Warnings       []PreflightWarning
 		Issues         []PreflightIssue
 		LANInterface   string
-		Subscriptions  []DAESubscription
+		Subscriptions  []DAESubscriptionDigest
 	}{
 		Target: filtered.Target, TargetPolicy: plan.preflight.TargetPolicy,
 		Nodes: filtered.Nodes, Protocols: filtered.Protocols,
@@ -659,7 +660,7 @@ func finalizeDAEPlan(plan *daePlan, opts Options) {
 		ServiceRegions: filtered.ServiceRegions,
 		RuleSetLines:   opts.RuleSetLines,
 		LANInterface:   plan.lanInterface,
-		Subscriptions:  filtered.DAESubscriptions,
+		Subscriptions:  daeSubscriptionDigests(filtered.DAESubscriptions),
 		Planned:        plan.preflight.Planned,
 		Warnings:       plan.preflight.Warnings, Issues: plan.preflight.Issues,
 	}
@@ -670,6 +671,26 @@ func finalizeDAEPlan(plan *daePlan, opts Options) {
 	}
 	digest := sha256.Sum256(data)
 	plan.preflight.PlanDigest = fmt.Sprintf("%x", digest[:])
+}
+
+// DAESubscriptionDigest is the part of a subscription that changes the rendered
+// config. The fetched node names only feed group validation and rotate between
+// two independent fetches, so they stay out of the plan digest.
+type DAESubscriptionDigest struct {
+	Tag       string
+	URL       string
+	UserAgent string
+}
+
+func daeSubscriptionDigests(subscriptions []DAESubscription) []DAESubscriptionDigest {
+	if len(subscriptions) == 0 {
+		return nil
+	}
+	out := make([]DAESubscriptionDigest, 0, len(subscriptions))
+	for _, sub := range subscriptions {
+		out = append(out, DAESubscriptionDigest{Tag: sub.Tag, URL: sub.URL, UserAgent: sub.UserAgent})
+	}
+	return out
 }
 
 // daeProtocolTarget narrows a target to the core whose protocol set applies.

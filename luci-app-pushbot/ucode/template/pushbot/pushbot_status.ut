@@ -1271,8 +1271,26 @@ pb_ota_showCountdown(ov);
 			});
 		}
 
+		/* 去重键：MAC（最后一个 '-' 前的部分，别名允许含 '-'）。
+		   同一设备（MAC）只允许一个别名——无论别名是否相同、大小写是否一致 */
+		function aliasMac(t) {
+			var s = t.replace('✕', '').trim();
+			var i = s.lastIndexOf('-');
+			return i < 0 ? '' : s.substring(0, i).trim().toUpperCase();
+		}
+		function aliasExists(text) {
+			var m = aliasMac(text);
+			if (!m) return false;
+			var tags = tagContainer.querySelectorAll('.pushbot-alias-tag');
+			for (var i = 0; i < tags.length; i++) {
+				if (aliasMac(tags[i].textContent) === m) return true;
+			}
+			return false;
+		}
 		function addTag(text) {
-			if (!text || text.indexOf('-') < 0) return;
+			if (!text || text.indexOf('-') < 0) return false;
+			/* 重复项（与已有条目相同，含本次连续提交内部的重复）：丢弃不添加 */
+			if (aliasExists(text)) return false;
 			var tag = document.createElement('span');
 			tag.className = 'pushbot-alias-tag';
 			tag.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;font-size:12px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25);color:inherit';
@@ -1286,6 +1304,7 @@ pb_ota_showCountdown(ov);
 			tag.appendChild(del);
 			tagContainer.appendChild(tag);
 			syncAliases();
+			return true;
 		}
 
 		function syncAliases() {
@@ -1298,19 +1317,40 @@ pb_ota_showCountdown(ov);
 			rebuildHiddenAliases(vals);
 		}
 
+		/* 已有配置加载：addTag 自带去重，历史重复数据只显示一条 */
 		(PB_list('device_aliases') || []).forEach(function(v) { if (v) addTag(v); });
+
+		/* 查重提示（红字，显示于标签区下方；无重复时清空）。
+		   注意：此处 tagContainer 尚未挂载 DOM，hint 的插入必须等
+		   aliasBox.appendChild(tagContainer) 之后（见下方挂载点），
+		   否则 parentNode 为 null 抛异常会拖垮整卡初始化 */
+		var aliasHint = document.createElement('div');
+		aliasHint.style.cssText = 'margin-top:4px;font-size:12px;color:#dc2626;min-height:0';
+
+		/* 统一提交入口：支持逗号/空格分隔批量；重复项（本次内部重复 或 与已有重复）一律丢弃并提示 */
+		function submitAliases(val) {
+			var aliases = val.split(/[,，\s]+/).filter(function(item) {
+				return item && item.indexOf('-') >= 0;
+			});
+			var added = 0, dups = [];
+			aliases.forEach(function(alias) {
+				var a = alias.trim();
+				if (!a) return;
+				if (addTag(a)) added++; else dups.push(a);
+			});
+			if (dups.length) {
+				aliasHint.textContent = '{{ _('Duplicate entries were ignored') }}：' + dups.join('、');
+			} else {
+				aliasHint.textContent = '';
+			}
+			return added;
+		}
 
 		addBtn.addEventListener('click', function(e) {
 			e.preventDefault();
 			var val = aliasInp.value.trim();
 			if (val) {
-				// 支持逗号或空格分隔的多个别名
-				var aliases = val.split(/[,，\s]+/).filter(function(item) {
-					return item && item.indexOf('-') >= 0;
-				});
-				aliases.forEach(function(alias) {
-					addTag(alias.trim());
-				});
+				submitAliases(val);
 				aliasInp.value = '';
 			}
 		});
@@ -1319,19 +1359,14 @@ pb_ota_showCountdown(ov);
 				e.preventDefault();
 				var val = aliasInp.value.trim();
 				if (val) {
-					// 支持逗号或空格分隔的多个别名
-					var aliases = val.split(/[,，\s]+/).filter(function(item) {
-						return item && item.indexOf('-') >= 0;
-					});
-					aliases.forEach(function(alias) {
-						addTag(alias.trim());
-					});
+					submitAliases(val);
 					aliasInp.value = '';
 				}
 			}
 		});
 
 		aliasBox.appendChild(tagContainer);
+		aliasBox.appendChild(aliasHint);
 		aliasBox.appendChild(aliasHiddenBox);
 		card.appendChild(aliasBox);
 

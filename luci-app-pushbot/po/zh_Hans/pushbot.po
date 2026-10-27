@@ -1457,3 +1457,6 @@ msgstr "保存并测试"
 
 msgid "Current changes are not saved. This will save the configuration first, then run the test. Continue?"
 msgstr "当前配置有未保存的改动，将先保存配置再进行测试，是否继续？"
+
+msgid "Duplicate entries were ignored"
+msgstr "存在重复，已忽略重复的条目"
