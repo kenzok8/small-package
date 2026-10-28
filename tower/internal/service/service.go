@@ -55,7 +55,9 @@ const maxRuleSetBytes = 8 << 20
 // soon as it opens, so a preflight gets a short leash and fails with a hint instead
 // of holding the admin session; the explicit export action may take much longer.
 const (
-	rulePreflightBudget = 60 * time.Second
+	// A preflight runs on page open and on every selection change, and uhttpd only
+	// serves three script requests at a time, so it must never sit on downloads.
+	rulePreflightBudget = 10 * time.Second
 	ruleExportBudget    = 10 * time.Minute
 )
 
@@ -353,6 +355,16 @@ func (s *Service) ExportStrictWithServiceRegions(target model.ClientTarget, prot
 		}
 	}
 	if target.Family() == model.FamilySingBox || target.Family() == model.FamilyDAE {
+		// The UI may not have a usable preflight digest (cold rule cache, budget hit).
+		// Recompute the plan here with the export budget so the user is never blocked
+		// by a failed hint, and keep the digest binding for the actual render.
+		if planDigest == "" {
+			if result := generator.Preflight(options); result.Status == generator.PreflightUnsupported {
+				return "", &generator.PreflightError{Result: result}
+			} else {
+				planDigest = result.PlanDigest
+			}
+		}
 		options.Strict = true
 		options.PlanDigest = planDigest
 		content, err := generator.Generate(options)
@@ -381,6 +393,14 @@ func (s *Service) PreflightExportWithOptions(target model.ClientTarget, protocol
 	s.beginRuleBudget(rulePreflightBudget)
 	options, err := s.exportOptions(target, protocols, nodeIDs, schemeID, preferRuleSets, false)
 	if err != nil {
+		// 预检只是提示，取源失败必须作为可读问题返回，而不是让调用方拿到裸错误
+		if !errors.As(err, new(*inlineSourceError)) {
+			return generator.PreflightResult{
+				Status:  generator.PreflightUnsupported,
+				Issues:  []generator.PreflightIssue{{Code: "resource_unavailable", Severity: "blocking", Location: "resources", Message: err.Error()}},
+				Planned: []generator.PreflightItem{},
+			}, nil
+		}
 		var inlineErr *inlineSourceError
 		if errors.As(err, &inlineErr) {
 			return generator.PreflightResult{
@@ -424,7 +444,7 @@ func (s *Service) PreflightExportStrictWithServiceRegions(target model.ClientTar
 		if errors.As(err, &inlineErr) {
 			return generator.PreflightResult{Status: generator.PreflightUnsupported, Issues: []generator.PreflightIssue{{Code: inlineErr.code, Severity: "blocking", Location: inlineErr.location, Message: inlineErr.message}}, Planned: []generator.PreflightItem{}}, nil
 		}
-		return generator.PreflightResult{}, err
+		return generator.PreflightResult{Status: generator.PreflightUnsupported, Issues: []generator.PreflightIssue{{Code: "resource_unavailable", Severity: "blocking", Location: "resources", Message: err.Error()}}, Planned: []generator.PreflightItem{}}, nil
 	}
 	options.Strict = true
 	filtered := generator.FilterNodes(options.Nodes, protocols)
