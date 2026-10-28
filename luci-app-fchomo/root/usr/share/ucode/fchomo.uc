@@ -265,6 +265,7 @@ export function parseListener(cfg) {
 		transport: cfg.mieru_transport,
 		"traffic-pattern": cfg.mieru_traffic_pattern,
 		"user-hint-is-mandatory": strToBool(cfg.mieru_user_hint_is_mandatory),
+		"tcp-idle-timeout": durationToSecond(cfg.mieru_tcp_idle_timeout),
 
 		/* Sudoku */
 		key: cfg.sudoku_key,

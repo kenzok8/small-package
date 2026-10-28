@@ -259,6 +259,17 @@ local com = self.com
 		detail.textContent = installingNotice;
 		// Read the tiny result file even if rpcd restart invalidates the session.
 		var pending = false, finished = false;
+		function finishInstall(code) {
+			if (finished) return;
+			finished = true;
+			clearInterval(timer);
+			removePageNotice(appname);
+			if (code) onRequestError(btn, updateFailedText);
+			else {
+				window.onbeforeunload = undefined;
+				window.location.reload();
+			}
+		}
 		var timer = setInterval(function() {
 			if (pending) return;
 			pending = true;
@@ -271,27 +282,28 @@ local com = self.com
 				if (finished) return;
 				var json;
 				try { json = JSON.parse(xhr.responseText); } catch (e) { return; }
-				if (typeof json.code !== 'number') return;
-				finished = true;
-				clearInterval(timer);
-				removePageNotice(appname);
-				if (json.code) onRequestError(btn, updateFailedText);
-				else {
-					window.onbeforeunload = undefined;
-					window.location.reload();
-				}
+				if (!json || typeof json.code !== 'number') return;
+				finishInstall(json.code);
 			};
 			xhr.send();
 		}, 1000);
-		XHR.post(url, {token: tokenStr, task: 'install', id: id,
-			force: appInfoList[appname].has_update ? '0' : '1'}, function(x, json) {
-			if (!finished && json && json.code) {
-				finished = true;
-				clearInterval(timer);
-				removePageNotice(appname);
-				onRequestError(btn, updateFailedText);
+		// Legacy LuCI has no static XHR.post(), and its instance callback has no JSON argument.
+		var request = new XMLHttpRequest();
+		request.open('POST', url, true);
+		request.timeout = 300000;
+		request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+		request.onerror = request.ontimeout = function() { finishInstall(1); };
+		request.onload = function() {
+			if (finished) return;
+			var json;
+			try { json = JSON.parse(request.responseText); } catch (e) {}
+			if (request.status < 200 || request.status >= 300 || !json ||
+				typeof json.code !== 'number' || json.code) {
+				finishInstall(1);
 			}
-		}, 300);
+		};
+		request.send('token=' + encodeURIComponent(tokenStr) + '&task=install&id=' + encodeURIComponent(id) +
+			'&force=' + (appInfoList[appname].has_update ? '0' : '1'));
 	}
 
 //]]>

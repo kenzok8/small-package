@@ -300,89 +300,36 @@ table td, .table .td {
 		text-align: right;
 	}
 
-	.custom-dropdown {
-		position: relative;
-		border: 1px solid #d9d9d9;
-		border-radius: 2px;
+	.pw-group-select {
 		width: 180px;
 		height: 28px;
-		font-size: 13px;
-		background: #fff;
-		cursor: pointer;
-		box-sizing: border-box;
-		display: block;
-	}
-
-	.selected-display {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 0 8px;
-		width: 100%;
-		height: 100%;
-		box-sizing: border-box;
-		font-size: 12px;
-		color: #666;
-	}
-
-	.selected-display:hover {
-		background-color: #f7f7f7;
-	}
-
-	.dropdown-list {
-		position: absolute;
-		top: calc(100% + 2px);
-		left: -1px;
-		width: calc(100% + 2px);
-		border: 1px solid #d9d9d9;
-		border-radius: 2px;
-		border-top: none;
-		box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-		background: #fff;
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		max-height: 200px;
-		overflow-y: auto;
-		overflow-x: hidden;
-		z-index: 100;
-		box-sizing: border-box;
-		color: #666;
-	}
-
-	.dropdown-item {
-		padding: 4px 8px;
-		line-height: 20px;
-		cursor: pointer;
-	}
-
-	.dropdown-item.selected {
-		background-color: #1e90ff;
-		color: #fff;
-	}
-
-	.create-item-input::placeholder {
-		text-align: center;
-	}
-
-	.dropdown-item.custom-input input {
-		width: 100%;
-		box-sizing: border-box;
-		padding: 3px;
-		font-size: 13px;
-		line-height: 20px;
-		border: 1px solid #ccc;
+		flex: 0 0 180px;
 		text-align: left;
 	}
 
-	.arrow-down-small {
-		width: 0;
-		height: 0;
-		border-left: 4px solid transparent;
-		border-right: 4px solid transparent;
-		border-top: 5px solid #555;
-		display: inline-block;
-		vertical-align: middle;
+	.pw-group-select > .cbi-dropdown,
+	.pw-group-select > .cbi-input-text,
+	.pw-group-select > .cbi-input-select {
+		width: 100% !important;
+		min-width: 0 !important;
+		max-width: 100% !important;
+		height: 28px !important;
+		min-height: 28px !important;
+		box-sizing: border-box;
+		margin: 0;
+		padding-top: 0;
+		padding-bottom: 0;
+		font-size: 13px;
+	}
+
+	.pw-group-select > .cbi-dropdown > ul:not(.dropdown) > li,
+	.pw-group-select > .cbi-dropdown > .open {
+		height: 26px;
+		min-height: 0;
+		line-height: 26px;
+		padding-top: 0;
+		padding-bottom: 0;
+		box-sizing: border-box;
 	}
 </style>
 
@@ -1077,97 +1024,103 @@ table td, .table .td {
 	//<![CDATA[
 	//Pop-up logic
 
-	// Custom group dropdown list events
-	function dropdown_list_fun(div_id) {
-		const dropdown = document.getElementById(div_id);
-		if (!dropdown) return;
+	function normalize_group_name(value, groups) {
+		const name = value.trim();
+		return groups.find(group => group.toLowerCase() === name.toLowerCase()) || name;
+	}
 
-		const display = dropdown.querySelector(".selected-display");
-		const displayText = display.querySelector(".text");
-		const list = dropdown.querySelector(".dropdown-list");
-		const hidden = dropdown.querySelector('input[type="hidden"]');
-		const input = dropdown.querySelector(".create-item-input");
-
-		display.addEventListener("click", function() {
-			list.style.display = list.style.display === "none" ? "block" : "none";
-			input.value = "";
-			//input.focus();
-		});
-
-		function selectItem(li) {
-			list.querySelectorAll(".dropdown-item").forEach(function(el){
-				el.classList.remove("selected");
-			});
-			li.classList.add("selected");
-			hidden.value = li.dataset.value;
-			displayText.textContent = li.dataset.value || "<%:default%>";
-			list.style.display = "none";
+	function init_group_dropdown(div_id) {
+		const container = document.getElementById(div_id);
+		if (!container || container._group_ready || container._group_loading) return;
+		const tabs = document.querySelector("#node_list .cbi-tabmenu");
+		if (!tabs) {
+			setTimeout(() => init_group_dropdown(div_id), 50);
+			return;
 		}
 
-		list.addEventListener("click", function(e){
-			const li = e.target.closest(".dropdown-item");
-			if (!li || li.classList.contains("custom-input")) return;
-			selectItem(li);
-		});
-
-		input.addEventListener("keydown", function(e){
-			const isEnter = e.key === "Enter" || e.keyCode === 13;
-			if (!isEnter) return;
-			e.stopPropagation();
-			e.preventDefault();
-
-			const val = input.value.trim();
-			if (!val) return;
-
-			if (val.toLowerCase() === "default") {
-				const emptyLi = Array.from(list.querySelectorAll(".dropdown-item"))
-					.find(function(el){ return !el.dataset.value; });
-				if (emptyLi) selectItem(emptyLi);
-				input.value = "";
-				return;
+		const choices = { "default": "<%:default%>" };
+		const groups = ["default"];
+		tabs.querySelectorAll("li[group_name]").forEach(function(tab) {
+			const group = tab.getAttribute("group_name");
+			if (group !== "default" && !groups.includes(group)) {
+				choices[group] = group;
+				groups.push(group);
 			}
-
-			let li = Array.from(list.querySelectorAll(".dropdown-item")).find(function(el){
-				return el.dataset.value && el.dataset.value.toLowerCase() === val.toLowerCase();
+		});
+		const input = container.querySelector("input");
+		<% if is_js_luci then -%>
+		container._group_loading = true;
+		L.require("ui").then(function(ui) {
+			const widget = new ui.Dropdown("default", choices, {
+				id: input.id,
+				name: input.name,
+				multiple: false,
+				optional: false,
+				create: true,
+				sort: groups,
+				custom_placeholder: "-- <%:custom%> --"
 			});
-			if (!li) {
-				li = document.createElement("li");
-				li.className = "dropdown-item";
-				li.dataset.value = val;
-				li.textContent = val;
-				list.insertBefore(li, input.parentNode); 
-			}
-
-			input.value = "";
-			selectItem(li);
-		});
-		// Read group names from tab
-		function InsertGroup(list, input) {
-			const tabs = document.querySelectorAll(".cbi-tabmenu li");
-			if (!tabs.length) {
-				setTimeout(() => InsertGroup(list, input), 50);
-				return;
-			}
-
-			tabs.forEach(function(li){
-				const group = li.id.split('.').pop();
-				if(group === "default") return;
-				if(Array.from(list.querySelectorAll(".dropdown-item")).some(el => el.dataset.value === group)) return;
-				const newLi = document.createElement("li");
-				newLi.className = "dropdown-item";
-				newLi.dataset.value = group;
-				newLi.textContent = group;
-				list.insertBefore(newLi, input.parentNode);
+			const dropdown = widget.render();
+			// Normalize before LuCI handles Enter and replaces its single custom item.
+			dropdown.addEventListener("keydown", function(e) {
+				if (!e.target.classList.contains("create-item-input") ||
+					(e.key !== "Enter" && e.keyCode !== 13)) return;
+				if (e.isComposing) {
+					e.stopPropagation();
+					return;
+				}
+				const values = Array.from(dropdown.querySelectorAll("ul.dropdown > li[data-value]:not([unselectable])"), li => li.dataset.value);
+				e.target.value = normalize_group_name(e.target.value, values);
+				if (!e.target.value) {
+					e.preventDefault();
+					e.stopPropagation();
+				}
+			}, true);
+			const customInput = dropdown.querySelector(".create-item-input");
+			// The custom input row must not shadow a group named "-".
+			customInput.parentNode.removeAttribute("data-value");
+			customInput.setAttribute("inputmode", "text");
+			customInput.setAttribute("enterkeyhint", "done");
+			dropdown.addEventListener("cbi-dropdown-change", function() {
+				customInput.value = "";
 			});
-		}
-		InsertGroup(list, input);
-
-		// Automatically collapses when clicking on the outside.
-		document.addEventListener("click", function(e) {
-			if (!dropdown.contains(e.target)) {
-				list.style.display = "none";
+			container.replaceChild(dropdown, input);
+			container._group_widget = widget;
+			container._group_ready = true;
+			container._group_loading = false;
+		}).catch(function(error) {
+			container._group_loading = false;
+			console.error("Group dropdown init failed:", error);
+			alert("<%:Error%>");
+		});
+		<% else -%>
+		input.disabled = false;
+		input.addEventListener("blur", function() {
+			input.value = normalize_group_name(input.value, groups) || "default";
+		});
+		input.addEventListener("keydown", function(e) {
+			if ((e.key === "Enter" || e.keyCode === 13) && !e.isComposing) {
+				e.preventDefault();
+				e.stopPropagation();
+				input.blur();
 			}
 		});
+		cbi_combobox_init(input.id, choices, "<%:default%>", "-- <%:custom%> --");
+		container._group_ready = true;
+		<% end -%>
+	}
+
+	function get_group_value(div_id) {
+		const container = document.getElementById(div_id);
+		return (container._group_widget ? container._group_widget.getValue() : container.querySelector("input").value) || "default";
+	}
+
+	function close_group_dropdown(div_id) {
+		const container = document.getElementById(div_id);
+		const dropdown = container.querySelector(".cbi-dropdown[open]");
+		if (dropdown) dropdown.dispatchEvent(new CustomEvent("cbi-dropdown-close"));
+		const input = container.querySelector(".create-item-input");
+		if (input) input.value = "";
 	}
 
 	function getBg(el) {
@@ -1187,20 +1140,18 @@ table td, .table .td {
 			const addLinkDiv = document.getElementById("add_link_div");
 			addLinkDiv.style.background = getBg(document.querySelector('.cbi-section')) || getBg(document.body) || '';
 			addLinkDiv.style.display = "block";
-			if (!addLinkDiv._dropdown_inited) {
-				addLinkDiv._dropdown_inited = true;
-				dropdown_list_fun("addlink_group_custom");
-			}
+			init_group_dropdown("addlink_group_custom");
 			document.getElementById("nodes_link").focus();
 		},
 		close() {
+			close_group_dropdown("addlink_group_custom");
 			document.getElementById('modal-mask').style.display = 'none';
 			document.getElementById("add_link_div").style.display = "none";
 			document.body.classList.remove('modal-open');
 		},
 		add_node() {
 			let nodes_link = document.getElementById("nodes_link").value;
-			const group = (document.querySelector('#addlink_group_custom input[type="hidden"]')?.value || "default");
+			const group = get_group_value("addlink_group_custom");
 			nodes_link = nodes_link.replace(/\t/g, "").replace(/\r\n|\r/g, "\n").replace(/<[^>]*>/g, '').trim();
 			if (nodes_link != "") {
 				nodes_link = decodeIfBase64(nodes_link);
@@ -1279,23 +1230,21 @@ table td, .table .td {
 					const reassignGroupDiv = document.getElementById("reassign_group_div");
 					reassignGroupDiv.style.background = getBg(document.querySelector('.cbi-section')) || getBg(document.body) || '';
 					reassignGroupDiv.style.display = "block";
-					if (!reassignGroupDiv._dropdown_inited) {
-						reassignGroupDiv._dropdown_inited = true;
-						dropdown_list_fun("reassign_group_custom");
-					}
+					init_group_dropdown("reassign_group_custom");
 				} else {
 					alert("<%:You no select nodes !%>");
 				}
 			}
 		},
 		close() {
+			close_group_dropdown("reassign_group_custom");
 			document.getElementById('modal-mask').style.display = 'none';
 			document.getElementById("reassign_group_div").style.display = "none";
 			document.body.classList.remove('modal-open');
 		},
 		action() {
 			const ids = [];
-			const group = (document.querySelector('#reassign_group_custom input[type="hidden"]')?.value || "default");
+			const group = get_group_value("reassign_group_custom");
 			const visibleContainer = document.querySelector('#cbi-passwall-nodes > .cbi-tabcontainer[style*="display:block"], #cbi-passwall-nodes > .cbi-tabcontainer[style*="display: block"]');
 			if (!visibleContainer) return;
 			const doms = visibleContainer.getElementsByClassName("nodes_select");
@@ -1742,19 +1691,9 @@ table td, .table .td {
 		</div>
 		<div class="value-custom">
 			<div class="value-field-custom">
-				<label class="value-title-custom" for="addlink_group_custom"><%:Group Name%></label>
-				<div id="addlink_group_custom" class="custom-dropdown">
-					<div class="selected-display">
-						<span class="text"><%:default%></span>
-						<span class="arrow-down-small"></span>
-					</div>
-					<ul class="dropdown-list" style="display:none;">
-						<li class="dropdown-item selected" data-value=""><%:default%></li>
-						<li class="dropdown-item custom-input">
-							<input type="text" placeholder="-- <%:custom%> --" class="create-item-input" inputmode="text" enterkeyhint="done">
-						</li>
-					</ul>
-					<input type="hidden" name="addlink_group" value="">
+				<label class="value-title-custom" for="addlink_group"><%:Group Name%></label>
+				<div id="addlink_group_custom" class="pw-group-select">
+					<input id="addlink_group" name="addlink_group" class="cbi-input-text" type="text" value="default" disabled>
 				</div>
 			</div>
 		</div>
@@ -1770,19 +1709,9 @@ table td, .table .td {
 		<h3><%:Reassign Node Group%></h3>
 		<div class="value-custom">
 			<div class="value-field-custom">
-				<label class="value-title-custom" for="reassign_group_custom"><%:Group Name%></label>
-				<div id="reassign_group_custom" class="custom-dropdown">
-					<div class="selected-display">
-						<span class="text"><%:default%></span>
-						<span class="arrow-down-small"></span>
-					</div>
-					<ul class="dropdown-list" style="display:none;">
-						<li class="dropdown-item selected" data-value=""><%:default%></li>
-						<li class="dropdown-item custom-input">
-							<input type="text" placeholder="-- <%:custom%> --" class="create-item-input" inputmode="text" enterkeyhint="done">
-						</li>
-					</ul>
-					<input type="hidden" name="to_group" value="">
+				<label class="value-title-custom" for="to_group"><%:Group Name%></label>
+				<div id="reassign_group_custom" class="pw-group-select">
+					<input id="to_group" name="to_group" class="cbi-input-text" type="text" value="default" disabled>
 				</div>
 			</div>
 		</div>

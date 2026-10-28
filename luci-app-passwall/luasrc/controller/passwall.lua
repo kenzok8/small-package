@@ -190,12 +190,12 @@ function socks_autoswitch_add_node()
 		uci_set(id, "enable_autoswitch", "1")
 		local new_list = uci_get(id, "autoswitch_backup_node") or {}
 		for i = #new_list, 1, -1 do
-			if (uci_get(new_list[i], "remarks") or ""):find(key) then
+			if (uci_get(new_list[i], "remarks") or ""):find(key, 1, true) then
 				table.remove(new_list, i)
 			end
 		end
 		for k, e in ipairs(api.get_valid_nodes()) do
-			if e.node_type == "normal" and e["remark"]:find(key) then
+			if e.node_type == "normal" and e["remark"]:find(key, 1, true) then
 				table.insert(new_list, e.id)
 			end
 		end
@@ -212,7 +212,7 @@ function socks_autoswitch_remove_node()
 		uci_set(id, "enable_autoswitch", "1")
 		local new_list = uci_get(id, "autoswitch_backup_node") or {}
 		for i = #new_list, 1, -1 do
-			if (uci_get(new_list[i], "remarks") or ""):find(key) then
+			if (uci_get(new_list[i], "remarks") or ""):find(key, 1, true) then
 				table.remove(new_list, i)
 			end
 		end
