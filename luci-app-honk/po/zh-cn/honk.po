@@ -1281,7 +1281,7 @@ msgstr "Clash API 密钥"
 msgid "A secret is set. Leave blank to keep it."
 msgstr "已设置密钥，留空则保持原值。"
 
-msgid "Required when enabling. Use 6–128 letters, numbers, dots, underscores or hyphens."
+msgid "Required when enabling. Use 8–128 letters, numbers, dots, underscores or hyphens."
 msgstr "启用时必填，使用 6～128 位英文字母、数字、点、下划线或短横线。"
 
 msgid "Use your existing HTTPS reverse proxy for external access. Enter the secret in Zashboard when connecting."
@@ -1293,13 +1293,13 @@ msgstr "请选择不同的 Clash API 端口并填写有效密钥。"
 msgid "A secret is set. Leave blank to keep it. Use your existing HTTPS reverse proxy for external access."
 msgstr "已设置密钥，留空则保持原值；外网访问请使用现有 HTTPS 反向代理。"
 
-msgid "A secret is required when enabling Clash API. Use 6–128 letters, numbers, dots, underscores or hyphens."
+msgid "A secret is required when enabling Clash API. Use 8–128 letters, numbers, dots, underscores or hyphens."
 msgstr "启用 Clash API 时必须填写密钥，使用 6～128 位英文字母、数字、点、下划线或短横线。"
 
 msgid "The Clash API port is already in use."
 msgstr "Clash API 端口已被占用。"
 
-msgid "Enter a different Clash API port and a secret of 6–128 letters, numbers, dots, underscores or hyphens."
+msgid "Enter a different Clash API port and a secret of 8–128 letters, numbers, dots, underscores or hyphens."
 msgstr "请设置不同的 Clash API 端口，以及 6～128 位英文字母、数字、点、下划线或短横线组成的密钥。"
 
 msgid "Clash API port must be between 1024 and 65535."
@@ -1311,7 +1311,7 @@ msgstr "Clash API 端口不能和监听端口相同。"
 msgid "A secret is required when enabling Clash API."
 msgstr "启用 Clash API 时需要设置密钥。"
 
-msgid "The secret must be 6-128 letters, numbers, dots, underscores or hyphens."
+msgid "The secret must be 8-128 letters, numbers, dots, underscores or hyphens."
 msgstr "密钥需要 6～128 位，只能包含字母、数字、点、下划线或短横线。"
 
 msgid "Check configuration"
@@ -1895,3 +1895,24 @@ msgstr "重置管理员失败，请查看核心日志。"
 
 msgid "Core is running; stop Honk before resetting the administrator."
 msgstr "核心正在运行，请先停止 Honk 再重置管理员。"
+
+msgid "The subscription could not be added: the name must be 1-64 characters without single quotes, and the URL must be a valid http(s) link."
+msgstr "无法添加订阅：名称 1-64 个字符且不能含单引号；链接必须是有效的 http(s) 地址。"
+
+msgid "Import config"
+msgstr "导入配置"
+
+msgid "Edit config"
+msgstr "编辑配置"
+
+msgid "Paste Clash YAML, Surge INI, Base64 or share links. They are parsed locally into nodes and appended to /etc/honk/config.dae."
+msgstr "粘贴 Clash YAML、Surge INI、Base64 或分享链接，会在本地解析成节点并追加到 /etc/honk/config.dae。"
+
+msgid "Doona opens after Honk starts."
+msgstr "启动 Honk 后即可打开 Doona。"
+
+msgid "Finish the first setup first: Honk does not start without an administrator."
+msgstr "请先完成首次设置：没有管理员账号时 Honk 不会启动。"
+
+msgid "Not initialized yet. Finish the first setup below, then Honk can be started."
+msgstr "还没完成首次设置。先做完下面的首次设置，Honk 才能启动。"

@@ -10,12 +10,8 @@ HONK_CONTROL=/usr/share/honk/control.sh
 HONK_CONFIG=/etc/honk/config.dae
 
 boot() {
-	local boot_enabled
-	config_load honk
-	config_get_bool boot_enabled main boot_enabled 0
-	[ "$boot_enabled" -eq 1 ] || return 0
-	uci set honk.main.enabled='1' || return 1
-	uci commit honk || return 1
+	# 开机自启内置：只要服务是"已启用 + 已初始化"就起来，
+	# 用户主动停掉（enabled=0）后重启也不会被强行拉起。
 	start
 }
 

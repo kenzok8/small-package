@@ -30,7 +30,7 @@ const callRestart = rpc.declare({ object: 'honk', method: 'restart', expect: { '
 const callSettings = rpc.declare({
 	object: 'honk',
 	method: 'settings',
-	params: [ 'lan_network', 'listen_port', 'boot_enabled', 'clash_api_enabled', 'clash_api_port', 'clash_api_secret' ],
+	params: [ 'lan_network', 'listen_port', 'clash_api_enabled', 'clash_api_port', 'clash_api_secret' ],
 	expect: { '': {} }
 });
 
@@ -222,7 +222,7 @@ function tokenMessage(token) {
 		import_failed: _('The core could not prepare this import preview.'),
 		share_links_too_large: _('Share links exceed the 16 KiB per request limit.'),
 		share_links_invalid_or_conflicting: _('A share link is invalid or conflicts with an existing node. Review the input and try again.'),
-		subscription_invalid: _('The subscription name or URL is invalid.'),
+		subscription_invalid: _('The subscription could not be added: the name must be 1-64 characters without single quotes, and the URL must be a valid http(s) link.'),
 		subscription_invalid_or_conflicting: _('The subscription is invalid or its name already exists.'),
 		subscription_no_nodes: _('The subscription returned no usable nodes. The configuration was not changed.'),
 		subscription_added: _('Subscription saved with usable nodes.'),
@@ -357,7 +357,7 @@ function tokenMessage(token) {
 		lan_network_unavailable: _('The selected LAN network is unavailable.'),
 		listen_port_occupied: _('The listen port is already in use.'),
 		clash_api_port_occupied: _('The Clash API port is already in use.'),
-		invalid_clash_api_settings: _('Enter a different Clash API port and a secret of 6–128 letters, numbers, dots, underscores or hyphens.'),
+		invalid_clash_api_settings: _('Enter a different Clash API port and a secret of 8–128 letters, numbers, dots, underscores or hyphens.'),
 		invalid_listen_port: _('The listen port is invalid.'),
 		initialize_before_enabling_service: _('Complete initial setup before enabling Honk.'),
 		system_config_unavailable: _('Honk system configuration is unavailable.'),

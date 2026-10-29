@@ -59,7 +59,7 @@ lock_owner_invalid() {
 }
 
 status() {
-	local enabled initialized boot_enabled running api_url api_ready core_version doona_version kernel lan_network listen_port errors listen clash_api_enabled clash_api_port clash_api_secret clash_api_url clash_api_ready clash_ui_ready clash_secret_set config_mode api_enabled core_ready config_pending manual_runtime clash_listen_addr
+	local enabled initialized boot_enabled running api_url api_ready core_version core_commit doona_version kernel lan_network listen_port errors listen clash_api_enabled clash_api_port clash_api_secret clash_api_url clash_api_ready clash_ui_ready clash_secret_set config_mode api_enabled core_ready config_pending manual_runtime clash_listen_addr
 	config_load honk
 	config_get_bool enabled main enabled 0
 	config_get_bool initialized main initialized 0
@@ -146,6 +146,8 @@ status() {
 	if [ "$running" = 1 ] && honk_lifecycle_api_owned "$managed_pid"; then api_ready=1; else api_ready=0; fi
 	core_version=$($CORE --version 2>/dev/null | sed -n '1p')
 	[ -n "$core_version" ] || core_version=unknown
+	# --version 只是构建时注入的版本串，真正的上游代码看 provenance.json
+	core_commit=$(jsonfilter -i /usr/share/honk/provenance.json -e '@.core.commit' 2>/dev/null)
 	doona_version=$(sed -n 's/^Version: //p' /usr/share/doona/SOURCE 2>/dev/null | head -n 1)
 	[ -n "$doona_version" ] || doona_version=unknown
 	kernel=$(uname -r)
@@ -178,6 +180,7 @@ status() {
 	json_add_boolean clash_ui_ready "$clash_ui_ready"
 	json_add_string clash_api_url "$clash_api_url"
 	json_add_string core_version "$core_version"
+	json_add_string core_commit "$core_commit"
 	json_add_string doona_version "$doona_version"
 	json_add_string kernel "$kernel"
 	json_add_string lan_network "$lan_network"
@@ -553,8 +556,17 @@ add_subscription() {
 	json_get_var sub_name name
 	json_get_var sub_url url
 
+	# 名字允许中文和空格：内核的 tag 支持引号写法，我们只在写入时决定要不要加引号。
+	# 但单引号、反斜杠、换行会破坏 dae 的字符串，必须拒绝。
 	case "$sub_name" in
-		''|*[!A-Za-z0-9_-]*) emit_result false subscription_invalid; return 1 ;;
+		'') emit_result false subscription_invalid; return 1 ;;
+		*\'*|*\\*) emit_result false subscription_invalid; return 1 ;;
+	esac
+	[ "$(printf '%s' "$sub_name" | tr -d '\n\r')" = "$sub_name" ] || { emit_result false subscription_invalid; return 1; }
+	[ "$(printf '%s' "$sub_name" | wc -c)" -le 64 ] || { emit_result false subscription_invalid; return 1; }
+	case "$sub_name" in
+		*[!A-Za-z0-9_-]*) sub_tag="'$sub_name'" ;;
+		*) sub_tag=$sub_name ;;
 	esac
 	case "$sub_url" in
 		http://*|https://*) ;;
@@ -567,14 +579,14 @@ add_subscription() {
 	require_managed_mode || return 1
 	original_hash=$(sha256sum "$cfg" | awk '{print $1}')
 
-	if grep -qE "^[[:space:]]*${sub_name}:[[:space:]]*['\"]" "$cfg"; then
+	if grep -qF "$sub_tag:" "$cfg" || grep -qF "'$sub_name':" "$cfg"; then
 		emit_result false subscription_invalid_or_conflicting
 		return 1
 	fi
 
 	candidate=$(mktemp /etc/honk/.config.dae.XXXXXX) || { emit_result false config_write_failed; return 1; }
 
-	if ! awk -v name="$sub_name" -v url="$sub_url" '
+	if ! awk -v name="$sub_tag" -v url="$sub_url" '
 		/^subscription[[:space:]]*\{/ {
 			print
 			printf "    %s: \047%s\047 {\n        interval: 86400s\n        route: direct\n    }\n", name, url

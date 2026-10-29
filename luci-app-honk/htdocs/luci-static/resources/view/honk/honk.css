@@ -264,9 +264,11 @@
 	margin-top: 10px;
 }
 
-.honk-subscription-add .cbi-input-text {
-	flex: 1;
-	min-width: 160px;
+/* 加 .honk-page 前缀压过后面的 `.honk-page .cbi-input-text{min-width:0}`，
+   否则手机上两个输入框会被挤成一条窄缝而不是换行。 */
+.honk-page .honk-subscription-add .cbi-input-text {
+	flex: 1 1 12rem;
+	min-width: 12rem;
 }
 
 /* ---------- Meta line (mono, muted) ---------- */
@@ -292,39 +294,56 @@
 
 /* ---------- Forms / fields ---------- */
 
+/* 两栏表单：左栏固定宽度、标签右对齐贴近控件（和最早的设计一致）。
+   窄屏（手机）自动堆叠，标签改成左对齐放在控件上方。 */
 .honk-page .cbi-value {
+	display: flex;
+	align-items: center;
+	gap: 12px;
 	padding: 9px 0;
 	margin: 0;
 	border: 0;
 	background: transparent;
-	/* Bootstrap 把 .cbi-value 设成 flex 横排：标题固定 180px 且右对齐。
-	   这里改成竖向排列，让「标题在上、控件在下」对所有主题一致。 */
-	display: block;
 }
 
-/* 用 `.cbi-value > label.cbi-value-title` 这种更具体的选择器：Bootstrap 的
-   `.cbi-value label.cbi-value-title` 优先级比 `.honk-page .cbi-value-title` 高，
-   只写后者在 Bootstrap 下会被右对齐覆盖。 */
+/* 用 `.cbi-value > label.cbi-value-title` 压过 Bootstrap 的
+   `.cbi-value label.cbi-value-title`（它把标签设成 flex 定宽 + 右对齐）。 */
 .honk-page .cbi-value > label.cbi-value-title {
 	float: none;
 	display: block;
+	flex: 0 0 168px;
 	width: auto;
-	flex: none;
-	padding: 0 0 6px;
-	text-align: left;
+	padding: 0 8px 0 0;
+	text-align: right;
 	line-height: 1.5;
 	font-size: 13px;
 	font-weight: 600;
 	opacity: 0.85;
+	white-space: nowrap;
 }
 
 .honk-page .cbi-value-field {
 	display: block;
+	flex: 1 1 auto;
 	width: auto;
 	margin-left: 0;
 	padding: 0;
 	min-width: 0;
-	flex: none;
+}
+
+@media (max-width: 719px) {
+	.honk-page .cbi-value {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 6px;
+	}
+
+	.honk-page .cbi-value > label.cbi-value-title {
+		flex: none;
+		padding: 0;
+		text-align: left;
+		white-space: normal;
+	}
 }
 
 .honk-page .cbi-value-description {
@@ -450,6 +469,47 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+/* 配置页的标签栏：一排切换，只显示当前板块 */
+.honk-tabs-wrap {
+	margin: 4px 0 14px;
+}
+
+.honk-page .honk-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	max-width: 100%;
+}
+
+.honk-page .honk-tabs .honk-seg-btn:disabled {
+	opacity: 0.32;
+	cursor: not-allowed;
+}
+
+/* 分段/标签控件：选中态原来用纯白药丸，深色主题下非常刺眼。
+   Argon 的暗色是额外加载 dark.css、不在 <html> 上留标记，所以不能靠
+   属性选择器区分明暗；这里统一用中性灰的半透明层次，明暗两种背景都成立，
+   同时把主题给 <button> 的边框和阴影压掉，保证和轨道融为一体。 */
+.honk-page .honk-seg {
+	background: rgba(128, 128, 128, 0.18);
+}
+
+.honk-page .honk-seg-btn {
+	border: 0 !important;
+	background: transparent !important;
+	color: inherit;
+	box-shadow: none !important;
+	opacity: 0.7;
+}
+
+.honk-page .honk-seg-btn.is-active,
+.honk-page .honk-seg-btn[aria-selected="true"] {
+	background: rgba(128, 128, 128, 0.38) !important;
+	color: inherit;
+	opacity: 1;
+	font-weight: 600;
+	box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.22) !important;
 }
 
 /* ---------- iOS toggle switch (boot-enabled checkbox) ---------- */

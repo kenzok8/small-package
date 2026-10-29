@@ -37,7 +37,8 @@ valid_clash_api() {
 	[ "$clash_api_port" -ge 1024 ] && [ "$clash_api_port" -le 65535 ] || return 1
 	[ "$clash_api_port" != "$listen_port" ] || return 1
 	case "$clash_api_secret" in ''|*[!A-Za-z0-9._-]*) return 1 ;; esac
-	[ "${#clash_api_secret}" -ge 6 ] && [ "${#clash_api_secret}" -le 128 ]
+	# 内核规定：密钥短于 8 字节时不会在 API 响应里做掩码，等于明文回显
+	[ "${#clash_api_secret}" -ge 8 ] && [ "${#clash_api_secret}" -le 128 ]
 }
 
 valid_network_name() {
@@ -435,7 +436,8 @@ settings() {
 	json_get_type clash_secret_type clash_api_secret
 	[ "$network_type" = string ] || { echo '{"ok":false,"message":"invalid_lan_network"}'; return 1; }
 	case "$port_type" in int|integer) ;; *) echo '{"ok":false,"message":"invalid_listen_port"}'; return 1 ;; esac
-	[ "$boot_enabled_type" = boolean ] || { echo '{"ok":false,"message":"invalid_boolean_settings"}'; return 1; }
+	# boot_enabled 已内置（恒为 1），前端不再提交，缺省就按当前值处理
+	case "$boot_enabled_type" in ''|null|boolean) ;; *) echo '{"ok":false,"message":"invalid_boolean_settings"}'; return 1 ;; esac
 	case "$clash_enabled_type" in ''|null|boolean) ;; *) echo '{"ok":false,"message":"invalid_clash_api_settings"}'; return 1 ;; esac
 	case "$clash_port_type" in ''|null|int|integer) ;; *) echo '{"ok":false,"message":"invalid_clash_api_settings"}'; return 1 ;; esac
 	case "$clash_secret_type" in ''|null|string) ;; *) echo '{"ok":false,"message":"invalid_clash_api_settings"}'; return 1 ;; esac
@@ -443,6 +445,8 @@ settings() {
 	case "$new_port" in ''|*[!0-9]*) echo '{"ok":false,"message":"invalid_listen_port"}'; return 1 ;; esac
 	[ "$new_port" -ge 1024 ] && [ "$new_port" -le 65535 ] || { echo '{"ok":false,"message":"invalid_listen_port"}'; return 1; }
 	load_settings
+	case "$boot_enabled_type" in ''|null) new_boot_enabled=1 ;; esac
+	new_boot_enabled=1
 	case "$clash_enabled_type" in ''|null) new_clash_enabled=$clash_api_enabled ;; esac
 	case "$clash_port_type" in ''|null) new_clash_port=$clash_api_port ;; esac
 	[ -n "$new_clash_secret" ] || new_clash_secret=$clash_api_secret
@@ -455,7 +459,7 @@ settings() {
 	old_clash_enabled=$clash_api_enabled
 	old_clash_port=$clash_api_port
 	old_clash_secret=$clash_api_secret
-	[ "$initialized" = 1 ] || { [ "$new_enabled" = 0 ] && [ "$new_boot_enabled" = 0 ] || { echo '{"ok":false,"message":"initialize_before_enabling_service"}'; return 1; }; }
+	[ "$initialized" = 1 ] || { [ "$new_enabled" = 0 ] || { echo '{"ok":false,"message":"initialize_before_enabling_service"}'; return 1; }; }
 	lan_network=$new_network
 	listen_port=$new_port
 	clash_api_enabled=$new_clash_enabled

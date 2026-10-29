@@ -117,8 +117,10 @@ CONFIGURE_ARGS += \
 	--without-macosx-keyring \
 	--without-msmtpd
 
+# libgnutls is what the ssl variant depends on (as in OpenWrt's msmtp): with
+# openssl here the binary linked libssl, a library it did not declare
 ifeq ($(BUILD_VARIANT),ssl)
-	CONFIGURE_ARGS += --with-tls=openssl
+	CONFIGURE_ARGS += --with-tls=gnutls
 else
 	CONFIGURE_ARGS += --without-tls
 endif

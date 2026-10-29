@@ -139,7 +139,6 @@ return view.extend({
 		const subModeHint = E('p', { 'class': 'honk-note honk-mode-hint' }, _('Manual mode: this tool is disabled until you restore managed mode (link at the top).'));
 		subModeHint.hidden = true;
 		const subSection = E('section', { 'class': 'honk-card' }, [
-			E('h3', { 'class': 'honk-card-title' }, _('Add subscription')),
 			E('p', { 'class': 'honk-note' }, _('Enter a name and subscription URL. Honk checks for usable nodes before saving.')),
 			subModeHint,
 			E('div', { 'class': 'honk-subscription-add' }, [ nameInput, urlInput, subBtn ]),
@@ -277,8 +276,7 @@ return view.extend({
 		const pasteModeHint = E('p', { 'class': 'honk-note honk-mode-hint' }, _('Manual mode: this tool is disabled until you restore managed mode (link at the top).'));
 		pasteModeHint.hidden = true;
 		const pasteSection = E('section', { 'class': 'honk-card' }, [
-			E('h3', { 'class': 'honk-card-title' }, _('Paste nodes')),
-			E('p', { 'class': 'honk-note' }, _('Paste Clash YAML, Surge INI, Base64 or share links; they are parsed locally into nodes and written to /etc/honk/config.dae.')),
+			E('p', { 'class': 'honk-note' }, _('Paste Clash YAML, Surge INI, Base64 or share links. They are parsed locally into nodes and appended to /etc/honk/config.dae.')),
 			pasteModeHint,
 			pasteInput,
 			E('div', { 'class': 'honk-actions' }, [ pasteBtn ]),
@@ -299,7 +297,6 @@ return view.extend({
 		const importBtn = E('button', { 'class': 'cbi-button cbi-button-apply', 'type': 'button' }, [ _('Import and start') ]);
 
 		const importSection = E('section', { 'class': 'honk-card' }, [
-			E('h3', { 'class': 'honk-card-title' }, _('Import a configuration')),
 			E('p', { 'class': 'honk-note' }, _('Upload a complete dae file (subscriptions, nodes and routing included) and Honk starts with it: the file is validated, written to /etc/honk/config.dae and the service is restarted. To hand-edit or paste instead, use the editor below.')),
 			E('div', { 'class': 'honk-file-row' }, [ filePick, fileName, importBtn ]),
 			importStatus
@@ -621,6 +618,16 @@ return view.extend({
 			return honk.status().then(function(status) {
 				const manual = !!status && status.config_mode === 'manual';
 				managedBtn.hidden = !manual;
+				const tabState = page._honkTabs;
+				if (tabState) {
+					tabState.tabs.forEach(function(tab) {
+						const disabled = manual && tab.managedOnly;
+						tab.button.disabled = disabled;
+						tab.panel.hidden = tab.id !== tabState.getActive();
+					});
+					if (manual && ['sub', 'nodes'].indexOf(tabState.getActive()) >= 0)
+						tabState.select('edit');
+				}
 				subModeHint.hidden = !manual;
 				pasteModeHint.hidden = !manual;
 				subBtn.disabled = manual;
@@ -737,7 +744,6 @@ return view.extend({
 		});
 
 		const editorSection = E('section', { 'class': 'honk-card' }, [
-			E('h3', { 'class': 'honk-card-title' }, _('Direct configuration')),
 			E('p', { 'class': 'honk-note' }, _('Edit or paste a complete dae file. Check configuration only parses the text; Save and apply writes /etc/honk/config.dae, restarts Honk, and rolls back if startup fails.')),
 			E('div', { 'class': 'honk-subscription-add' }, [ saveBtn, reloadBtn, validateBtn ]),
 			editor,
@@ -749,10 +755,44 @@ return view.extend({
 		});
 		refreshMode();
 
-		page.appendChild(subSection);
-		page.appendChild(pasteSection);
-		page.appendChild(importSection);
-		page.appendChild(editorSection);
+		/* 一排标签页，只显示当前板块：四张卡片竖着堆太占屏，也不好一眼看出"有几种做法"。 */
+		const tabs = [
+			{ id: 'sub', label: _('Add subscription'), panel: subSection, managedOnly: true },
+			{ id: 'nodes', label: _('Add nodes'), panel: pasteSection, managedOnly: true },
+			{ id: 'import', label: _('Import config'), panel: importSection, managedOnly: false },
+			{ id: 'edit', label: _('Edit config'), panel: editorSection, managedOnly: false }
+		];
+		let activeTab = 'sub';
+		const tabBar = E('div', { 'class': 'honk-seg honk-tabs', 'role': 'tablist' });
+		function selectTab(id) {
+			activeTab = id;
+			tabs.forEach(function(tab) {
+				const active = tab.id === id;
+				tab.panel.hidden = !active;
+				tab.button.setAttribute('aria-selected', active ? 'true' : 'false');
+				tab.button.classList.toggle('is-active', active);
+			});
+		}
+		tabs.forEach(function(tab) {
+			tab.button = E('button', {
+				'class': 'honk-seg-btn', 'type': 'button', 'role': 'tab',
+				'aria-selected': 'false'
+			}, [ tab.label ]);
+			tab.button.addEventListener('click', function(ev) {
+				ev.preventDefault();
+				if (tab.button.disabled)
+					return;
+				selectTab(tab.id);
+			});
+			tab.panel.hidden = true;
+			tabBar.appendChild(tab.button);
+		});
+		page.appendChild(E('div', { 'class': 'honk-tabs-wrap' }, [ tabBar ]));
+		tabs.forEach(function(tab) { page.appendChild(tab.panel); });
+		selectTab(activeTab);
+
+		/* 曝光给 refreshMode：手动模式下订阅/节点两个标签不可用，自动切到编辑配置。 */
+		page._honkTabs = { tabs: tabs, select: selectTab, getActive: function() { return activeTab; } };
 		return page;
 	}
 });

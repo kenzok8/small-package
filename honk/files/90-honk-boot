@@ -1,14 +1,5 @@
 #!/bin/sh
-
-. /lib/functions.sh
-
-config_load honk
-config_get_bool boot_enabled main boot_enabled 0
-
-if [ "$boot_enabled" -eq 1 ]; then
-	/etc/init.d/honk enable
-else
-	/etc/init.d/honk disable
-fi
-
+# 开机自启是内置行为：装上就 enable，是否真正启动由 honk.main.enabled 决定，
+# 不再提供单独的 boot_enabled 开关。
+/etc/init.d/honk enable
 exit 0
