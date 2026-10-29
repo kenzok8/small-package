@@ -34,6 +34,12 @@ const callSettings = rpc.declare({
 	expect: { '': {} }
 });
 
+const callProbeSubscription = rpc.declare({
+	object: 'honk',
+	method: 'probe_subscription',
+	params: [ 'url' ],
+	expect: { '': {} }
+});
 const callAddSubscription = rpc.declare({
 	object: 'honk',
 	method: 'add_subscription',
@@ -51,10 +57,18 @@ const callImportDae = rpc.declare({
 	method: 'import_dae',
 	expect: { '': {} }
 });
+const callConfigRead = rpc.declare({ object: 'honk', method: 'config_read', expect: { '': {} } });
+const callConfigDraftRead = rpc.declare({ object: 'honk', method: 'config_draft_read', expect: { '': {} } });
+const callLanCandidates = rpc.declare({ object: 'honk', method: 'lan_candidates', expect: { '': {} } });
+const callConfigValidate = rpc.declare({ object: 'honk', method: 'config_validate', params: [ 'content' ], expect: { '': {} } });
+const callConfigSave = rpc.declare({ object: 'honk', method: 'config_save', params: [ 'content' ], expect: { '': {} } });
+const callConfigApply = rpc.declare({ object: 'honk', method: 'config_apply', expect: { '': {} } });
+const callConfigUseManaged = rpc.declare({ object: 'honk', method: 'config_use_managed', expect: { '': {} } });
 const callRepair = rpc.declare({ object: 'honk', method: 'repair', expect: { '': {} } });
 const callBackup = rpc.declare({ object: 'honk', method: 'backup', expect: { '': {} } });
 const callRestore = rpc.declare({ object: 'honk', method: 'restore', expect: { '': {} } });
 const callRestorePrepare = rpc.declare({ object: 'honk', method: 'restore_prepare', expect: { '': {} } });
+const callResetAdmin = rpc.declare({ object: 'honk', method: 'reset_admin', expect: { '': {} } });
 const callReset = rpc.declare({ object: 'honk', method: 'reset', expect: { '': {} } });
 const callJobStatus = rpc.declare({
 	object: 'honk',
@@ -85,6 +99,19 @@ function installStyles() {
 	pageStylesInstalled = true;
 }
 
+/* A core bound to 0.0.0.0 (or ::) reports a wildcard authority. A browser
+   cannot open that, but the router is still reachable at the host LuCI was
+   loaded from, so substitute that instead of hiding the panel button. */
+function wildcardHost(hostname) {
+	const name = String(hostname || '').replace(/^\[|\]$/g, '').toLowerCase();
+	return name === '0.0.0.0' || name === '::' || name === '';
+}
+
+function urlHost(hostname) {
+	const name = String(hostname || '');
+	return name.indexOf(':') >= 0 ? '[' + name.replace(/^\[|\]$/g, '') + ']' : name;
+}
+
 function localWebUi(status) {
 	if (!status || !status.initialized || !status.running || !status.api_ready || !status.api_url)
 		return null;
@@ -103,6 +130,9 @@ function localWebUi(status) {
 			url.protocol !== 'http:' && url.protocol !== 'https:' ||
 			url.username || url.password || url.search || url.hash)
 			return null;
+
+		if (wildcardHost(hostname) && window.location.hostname)
+			return url.protocol + '//' + urlHost(window.location.hostname) + ':' + port + '/ui/';
 
 		const octets = hostname.split('.');
 		let localIPv4 = false;
@@ -130,7 +160,9 @@ function localClashUi(status, secret) {
 		return null;
 	try {
 		const url = new URL(status.clash_api_url);
-		const host = url.hostname.replace(/^\[|\]$/g, '').toLowerCase();
+		const host = wildcardHost(url.hostname)
+			? String(window.location.hostname || '').replace(/^\[|\]$/g, '').toLowerCase()
+			: url.hostname.replace(/^\[|\]$/g, '').toLowerCase();
 		const port = status.clash_api_port || url.port;
 		const query = [
 			'host=' + encodeURIComponent(host),
@@ -210,6 +242,109 @@ function tokenMessage(token) {
 		dae_upload_unavailable: _('The dae upload is missing or unavailable. Upload the file again.'),
 		dae_upload_invalid: _('The uploaded dae file is invalid.'),
 		dae_upload_changed: _('The uploaded dae file changed. Upload it again.'),
+		upload_failed: _('Honk could not prepare the upload location. Check the upload directory permissions and try again.'),
+		upload_directory_unavailable: _('Honk could not prepare a private configuration upload directory.'),
+		upload_target_unavailable: _('The temporary configuration upload is unavailable. Try again.'),
+		config_too_large: _('The configuration file exceeds the 2 MiB limit.'),
+		config_applied: _('Configuration applied and Honk is running.'),
+		config_apply_failed_rolled_back: _('Honk could not start with this configuration. The previous file was restored.'),
+		config_apply_rollback_failed_snapshot_retained: _('Startup failed and the automatic rollback did not finish. The snapshot was kept; run system recovery.'),
+		config_changed_concurrently: _('The configuration changed during the operation. Nothing was applied.'),
+		config_write_failed_snapshot_retained: _('Could not write the configuration. The snapshot was kept.'),
+		service_stop_unconfirmed_snapshot_retained: _('Could not confirm that Honk stopped. The operation was aborted and the snapshot was kept.'),
+		manual_mode_required: _('Manual mode is active. Restore managed mode before using the subscription tools.'),
+		managed_edit_unavailable: _('Manual mode is active, so this tool cannot edit the configuration. Select Restore managed mode first.'),
+		administrator_exists_reuse_credentials_or_reset_state: _('已经初始化过了，请用原来的账号登录 Doona。忘记密码：到「维护 → 重置管理员」清掉管理员记录（不动订阅和规则），再回到本页重新初始化。'),
+		administrator_setup_failed: _('创建 Doona 管理员失败，请到「维护 → 日志」查看核心日志。'),
+		invalid_credentials: _('用户名只能包含字母、数字、下划线、点、连字符（不超过 64 个字符）；密码长度必须是 8 到 128 个字符，可以包含空格。'),
+		disable_service_before_initialization: _('请先停止 Honk 服务再初始化。'),
+		honk_resources_already_exist: _('系统里还留着 dae0 / daens 等运行痕迹，请先停止服务或执行系统恢复。'),
+		core_missing: _('找不到 /usr/bin/honk-core，请重新安装 honk 包。'),
+		core_already_running: _('honk-core 已经在运行，请先停止服务。'),
+		jshn_unavailable: _('缺少 libubox 组件（/usr/share/libubox/jshn.sh），请检查固件是否完整。'),
+		temporary_storage_unavailable: _('临时目录 /tmp 不可写或空间不足。'),
+		system_config_backup_failed: _('备份现有 system.dae 失败，请检查磁盘空间。'),
+		system_snapshot_failed: _('备份系统配置失败，请检查磁盘空间。'),
+		uci_snapshot_failed: _('备份 UCI 配置失败，请检查磁盘空间。'),
+		loopback_listener_write_failed: _('写入 system.dae 的监听地址失败，请检查文件权限。'),
+		main_config_unavailable: _('/etc/honk/config.dae 不存在或不是普通文件。'),
+		main_config_changed_concurrently: _('操作期间 config.dae 被其他进程改动，已中止。'),
+		invalid_package_config: _('luci-app-honk 的软件包配置不完整，请重新安装。'),
+		invalid_config_path: _('配置路径不是 /etc/honk/config.dae，拒绝操作。'),
+		manual_config_valid: _('手动模式配置有效。'),
+		manual_config_invalid: _('手动模式配置无效，请先修正 config.dae。'),
+		required_system_include_missing_manual_repair: _('手动模式的配置缺少 include { system.dae }，无法修复托管设置。'),
+		native_api_setup_state_unavailable: _('读不到核心的 API 状态，请查看日志。'),
+		ui_assets_missing: _('缺少 Doona 静态文件（/usr/share/doona），请重新安装 luci-app-honk。'),
+		mock_core_start_failed: _('测试用核心启动失败：通常是内核缺 BTF（/sys/kernel/btf/vmlinux）或 eBPF 依赖模块。'),
+		mock_core_stop_failed: _('测试用核心无法正常停止，请稍后重试。'),
+		mock_core_restart_failed: _('测试用核心重启失败，请查看日志。'),
+		mock_core_stop_failed_restored_loopback: _('测试核心停止失败，已恢复原来的监听配置。'),
+		generated_config_invalid_restored_loopback: _('生成的配置校验不通过，已恢复原来的监听配置。'),
+		uci_commit_failed_restored_loopback: _('写入 UCI 失败，已恢复原来的监听配置。'),
+		lan_api_verification_failed_restored_loopback: _('用局域网地址访问 API 验证失败（网卡或 IP 可能对不上），已恢复。'),
+		persistence_login_failed: _('初始化后登录验证失败，请重试或查看日志。'),
+		persistence_verification_failed: _('初始化结果没有落盘（可能磁盘空间不足）。'),
+		setup_verification_failed: _('初始化后的自检没通过，请查看日志。'),
+		lan_ipv4_unavailable: _('选中的 LAN 网络没有 IPv4 地址。'),
+		mkdir_failed: _('创建目录失败，请检查磁盘空间与权限。'),
+		settings_unavailable_in_manual_mode: _('手动模式下这些设置由 config.dae 决定，无法保存。'),
+		settings_too_large: _('提交的设置数据过大。'),
+		invalid_settings_json: _('设置的请求格式不正确。'),
+		invalid_boolean_settings: _('开关类设置取值不合法。'),
+		invalid_log_level: _('日志级别不合法。'),
+		invalid_log_limit: _('日志行数不合法。'),
+		invalid_log_source: _('日志来源不合法。'),
+		invalid_operation: _('未知的操作类型。'),
+		unknown_method: _('未知的接口方法。'),
+		settings_changed_concurrently: _('操作期间设置被改动，已中止。'),
+		lan_network_changed_during_settings: _('操作期间 LAN 网络被改动，已中止。'),
+		lan_network_changed_during_repair: _('操作期间 LAN 网络被改动，已中止。'),
+		service_state_changed_concurrently: _('操作期间服务状态发生变化，已中止。'),
+		settings_commit_failed_rolled_back: _('设置写入失败，已回滚到原值。'),
+		settings_commit_and_rollback_failed_snapshot_retained: _('设置写入失败且回滚未完成，快照已保留，请执行系统恢复。'),
+		service_apply_and_rollback_failed_snapshot_retained: _('应用设置失败且回滚未完成，快照已保留，请执行系统恢复。'),
+		service_stop_failed_rolled_back: _('停止服务失败，已回滚。'),
+		service_stop_and_rollback_failed_snapshot_retained: _('停止服务失败且回滚未完成，快照已保留。'),
+		system_config_write_failed: _('写入 system.dae 失败。'),
+		system_config_write_failed_rolled_back: _('写入 system.dae 失败，已回滚。'),
+		system_config_write_and_rollback_failed_snapshot_retained: _('写入 system.dae 失败且回滚未完成，快照已保留。'),
+		system_config_repair_failed_rolled_back: _('修复 system.dae 失败，已回滚。'),
+		system_config_repair_rollback_failed_snapshot_retained: _('修复 system.dae 失败且回滚未完成，快照已保留。'),
+		system_config_not_regular_file: _('system.dae 不是普通文件（可能是软链），拒绝操作。'),
+		boot_link_update_failed_rolled_back: _('更新开机自启链接失败，已回滚。'),
+		boot_link_update_and_rollback_failed_snapshot_retained: _('更新开机自启链接失败且回滚未完成，快照已保留。'),
+		repair_restart_failed_rolled_back: _('修复后重启失败，已回滚。'),
+		repair_restart_and_rollback_failed_snapshot_retained: _('修复后重启失败且回滚未完成，快照已保留。'),
+		subscription_unreachable: _('抓不到这个订阅地址：网络不通、需要代理，或链接已失效。'),
+		subscription_empty: _('订阅内容是空的。'),
+		subscription_too_large: _('订阅内容超过 4 MiB，拒绝处理。'),
+		configuration_validation_failed: _('配置没有通过静态校验。'),
+		config_changed_concurrently_restart_failed_snapshot_retained: _('操作期间配置被改动且重启失败，快照已保留。'),
+		invalid_job_id: _('任务编号不合法。'),
+		job_id_unavailable: _('拿不到任务编号。'),
+		job_not_found: _('找不到该任务。'),
+		job_status_unavailable: _('读不到任务状态。'),
+		job_storage_unavailable: _('任务存储不可用（/tmp 空间不足？）。'),
+		prepared: _('上传目录已准备好。'),
+		probe_failed: _('预检失败，请稍后重试。'),
+		managed_switch_failed_rolled_back: _('Could not switch back to managed mode. The previous configuration was restored.'),
+		managed_switch_rollback_failed_snapshot_retained: _('Switching back to managed mode failed and the rollback did not finish. The snapshot was kept.'),
+		managed_snapshot_invalid: _('The saved managed configuration is not a valid regular file.'),
+		config_draft_missing: _('There is no saved draft to apply.'),
+		config_draft_invalid: _('The saved draft is not a valid regular file.'),
+		managed_mode_restored: _('Managed mode restored.'),
+		managed_snapshot_missing: _('There is no saved managed configuration to restore.'),
+		lan_candidates_unavailable: _('Could not read the list of network interfaces.'),
+		config_read_failed: _('Honk could not read the current configuration.'),
+		config_request_invalid: _('The configuration request is empty or invalid.'),
+		config_validation_failed: _('The configuration did not pass static validation.'),
+		config_validation_unavailable: _('The core validator did not return a result.'),
+		config_saved_pending_apply: _('Configuration saved. The running service is unchanged until you apply it.'),
+		config_loaded: _('Configuration loaded.'),
+		dae_loaded: _('Configuration file loaded into the editor.'),
+		upload_ready: _('Upload location ready.'),
+		upload_cleared: _('Temporary upload cleared.'),
 		upload_unavailable: _('A private upload location could not be prepared.'),
 		settings_write_failed: _('Could not save Honk settings.'),
 		curl_missing: _('The curl command is missing. Install the curl package and try again.'),
@@ -234,7 +369,7 @@ function tokenMessage(token) {
 }
 
 function statusIssue(token) {
-	return tokenMessage(token) || _('Honk reported a system issue.');
+	return tokenMessage(token) || _('Honk reported a system issue: %s').format(token);
 }
 
 function resultMessage(result, fallback) {
@@ -242,7 +377,14 @@ function resultMessage(result, fallback) {
 }
 
 function errorMessage(error, fallback) {
-	return error && tokenMessage(error.message) || fallback;
+	const token = error && error.message;
+	const mapped = tokenMessage(token);
+	if (mapped)
+		return mapped;
+	/* 没映射过就把错误码原样带出来，否则用户只能看到「操作失败」，没法反馈 */
+	if (token && /^[a-z0-9_]+$/.test(token))
+		return _('%s (code: %s)').format(fallback || _('The operation failed.'), token);
+	return fallback;
 }
 
 function jobPhaseMessage(phase) {
@@ -315,13 +457,22 @@ return baseclass.extend({
 	stop: callStop,
 	restart: callRestart,
 	settings: callSettings,
+	probeSubscription: callProbeSubscription,
 	addSubscription: callAddSubscription,
 	addNodes: callAddNodes,
 	importDae: callImportDae,
+	configRead: callConfigRead,
+	configDraftRead: callConfigDraftRead,
+	lanCandidates: callLanCandidates,
+	configValidate: callConfigValidate,
+	configSave: callConfigSave,
+	configApply: callConfigApply,
+	configUseManaged: callConfigUseManaged,
 	repair: callRepair,
 	backup: callBackup,
 	restore: callRestore,
 	restorePrepare: callRestorePrepare,
+	resetAdmin: callResetAdmin,
 	reset: callReset,
 	logs: callLogs,
 	updateCheck: callUpdateCheck,

@@ -29,16 +29,54 @@ honk_lifecycle_starttime() {
 }
 
 honk_lifecycle_listen() {
+	config_load honk
+	config_get config_mode main config_mode managed
+	if [ "$config_mode" = manual ]; then
+		[ -f /var/run/honk/readiness ] && [ ! -L /var/run/honk/readiness ] || return 1
+		read -r hlp_token _ < /var/run/honk/readiness || return 1
+		case "$hlp_token" in ''|*[!0-9a-f-]*) return 1 ;; esac
+		sed -n 's/^api_listen=//p' "/var/run/honk/core-ready-$hlp_token" 2>/dev/null
+		return
+	fi
 	sed -n "s/^[[:space:]]*listen:[[:space:]]*'\([^']*\)'.*/\1/p" /etc/honk/system.dae 2>/dev/null | head -n 1
 }
 
 honk_lifecycle_parse_listen() {
+	config_load honk
+	config_get config_mode main config_mode managed
+	if [ "$config_mode" = manual ]; then
+		HONK_LIFECYCLE_LISTEN=$(honk_lifecycle_listen)
+		if [ -z "$HONK_LIFECYCLE_LISTEN" ]; then
+			HONK_LIFECYCLE_PORT=0
+			return 0
+		fi
+		case "$HONK_LIFECYCLE_LISTEN" in *:*) ;; *) return 1 ;; esac
+		HONK_LIFECYCLE_PORT=${HONK_LIFECYCLE_LISTEN##*:}
+		case "$HONK_LIFECYCLE_LISTEN" in ''|*[!A-Za-z0-9:._-]*) return 1 ;; esac
+		case "$HONK_LIFECYCLE_PORT" in ''|*[!0-9]*) return 1 ;; esac
+		[ "$HONK_LIFECYCLE_PORT" -ge 1024 ] && [ "$HONK_LIFECYCLE_PORT" -le 65535 ]
+		return $?
+	fi
 	HONK_LIFECYCLE_LISTEN=$(honk_lifecycle_listen)
 	case "$HONK_LIFECYCLE_LISTEN" in *:*) ;; *) return 1 ;; esac
 	HONK_LIFECYCLE_PORT=${HONK_LIFECYCLE_LISTEN##*:}
 	case "$HONK_LIFECYCLE_LISTEN" in ''|*[!A-Za-z0-9:._-]*) return 1 ;; esac
 	case "$HONK_LIFECYCLE_PORT" in ''|*[!0-9]*) return 1 ;; esac
 	[ "$HONK_LIFECYCLE_PORT" -ge 1024 ] && [ "$HONK_LIFECYCLE_PORT" -le 65535 ]
+}
+
+honk_lifecycle_ready_owned() {
+	hlp_pid=$1
+	[ -f /var/run/honk/readiness ] && [ ! -L /var/run/honk/readiness ] || return 1
+	read -r hlp_token hlp_hash < /var/run/honk/readiness || return 1
+	case "$hlp_token:$hlp_hash" in *[!0-9a-f:-]*|:*|:|*:) return 1 ;; esac
+	hlp_marker=/var/run/honk/core-ready-$hlp_token
+	[ -f "$hlp_marker" ] && [ ! -L "$hlp_marker" ] || return 1
+	grep -Fqx "pid=$hlp_pid" "$hlp_marker" && \
+		grep -Fqx "token=$hlp_token" "$hlp_marker" && \
+		grep -Fqx "config_hash=$hlp_hash" "$hlp_marker" && \
+		grep -Eq '^api_enabled=(true|false)$' "$hlp_marker" && \
+		grep -Eq '^clash_api_secret_set=(true|false)$' "$hlp_marker"
 }
 
 honk_lifecycle_port_open() {
@@ -72,8 +110,20 @@ honk_lifecycle_listener_owned() {
 honk_lifecycle_api_owned() {
 	hlp_pid=$1
 	honk_lifecycle_parse_listen || return 1
+	[ "$HONK_LIFECYCLE_PORT" -gt 0 ] || return 1
 	honk_lifecycle_listener_owned "$hlp_pid" "$HONK_LIFECYCLE_PORT" && \
 		curl -fsS --noproxy '*' --connect-timeout 1 --max-time 2 "http://$HONK_LIFECYCLE_LISTEN/api" -o /dev/null 2>/dev/null
+}
+
+honk_lifecycle_runtime_owned() {
+	hlp_pid=$1
+	config_load honk
+	config_get config_mode main config_mode managed
+	if [ "$config_mode" = manual ]; then
+		honk_lifecycle_ready_owned "$hlp_pid"
+	else
+		honk_lifecycle_api_owned "$hlp_pid"
+	fi
 }
 
 honk_lifecycle_resources_clear() {
@@ -145,7 +195,9 @@ honk_lifecycle_start() {
 	honk_lifecycle_parse_listen || { echo "honk lifecycle: invalid configured listener" >&2; return 1; }
 	hlp_listen=$HONK_LIFECYCLE_LISTEN
 	hlp_port=$HONK_LIFECYCLE_PORT
-	if honk_lifecycle_port_open "$hlp_port"; then echo "honk lifecycle: listener port remains occupied" >&2; return 1; fi
+	config_load honk
+	config_get config_mode main config_mode managed
+	if [ "$config_mode" != manual ] && honk_lifecycle_port_open "$hlp_port"; then echo "honk lifecycle: listener port remains occupied" >&2; return 1; fi
 	if [ -n "${HONK_MAINT_CAP:-}" ]; then export HONK_MAINT_CAP; fi
 	/etc/init.d/honk start >/dev/null 2>&1
 	hlp_start_status=$?
@@ -154,14 +206,28 @@ honk_lifecycle_start() {
 	hlp_stable=0
 	hlp_pid=
 	hlp_starttime=
+	# A config the core cannot run crash-loops through procd: every attempt gets a
+	# new PID, so a fixed timeout would burn the whole budget before the caller can
+	# be told the start failed. Count distinct PIDs and give up early instead.
+	hlp_seen_pid=
+	hlp_attempts=0
 	while [ "$hlp_timeout" -gt 0 ]; do
 		hlp_new_pid=$(honk_lifecycle_managed_pid 2>/dev/null)
+		if [ -n "$hlp_new_pid" ] && [ "$hlp_new_pid" != "$hlp_seen_pid" ]; then
+			hlp_seen_pid=$hlp_new_pid
+			hlp_attempts=$((hlp_attempts + 1))
+			if [ "$hlp_attempts" -gt 3 ]; then
+				echo "honk lifecycle: core keeps restarting, giving up" >&2
+				return 1
+			fi
+		fi
 		if [ -n "$hlp_new_pid" ]; then
 			hlp_new_starttime=$(honk_lifecycle_starttime "$hlp_new_pid") || hlp_new_starttime=
 			if [ -n "$hlp_new_starttime" ] && \
 				{ [ -z "${HONK_LIFECYCLE_STOP_PID:-}" ] || [ "$hlp_new_pid:$hlp_new_starttime" != "$HONK_LIFECYCLE_STOP_PID:$HONK_LIFECYCLE_STOP_STARTTIME" ]; } && \
-				honk_lifecycle_listener_owned "$hlp_new_pid" "$hlp_port" && \
-				curl -fsS --noproxy '*' --connect-timeout 1 --max-time 2 "http://$hlp_listen/api" -o /dev/null 2>/dev/null; then
+				{ [ "$config_mode" = manual ] && honk_lifecycle_ready_owned "$hlp_new_pid" || \
+					{ [ "$config_mode" != manual ] && honk_lifecycle_listener_owned "$hlp_new_pid" "$hlp_port" && \
+					curl -fsS --noproxy '*' --connect-timeout 1 --max-time 2 "http://$hlp_listen/api" -o /dev/null 2>/dev/null; }; }; then
 				if [ "$hlp_pid:$hlp_starttime" = "$hlp_new_pid:$hlp_new_starttime" ]; then
 					hlp_stable=$((hlp_stable + 1))
 				else

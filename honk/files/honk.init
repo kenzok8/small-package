@@ -20,7 +20,7 @@ boot() {
 }
 
 start_service() {
-	local enabled initialized config_file
+	local enabled initialized config_file config_mode ready_token ready_hash ready_runtime ready_api_enabled ready_api_listen ready_clash_api_listen ready_clash_api_secret_set old_ready_token
 	config_load honk
 	config_get_bool enabled main enabled 0
 	config_get_bool initialized main initialized 0
@@ -29,6 +29,7 @@ start_service() {
 		return 1
 	}
 	config_get config_file main config_file "$HONK_CONFIG"
+	config_get config_mode main config_mode managed
 	[ "$config_file" = "$HONK_CONFIG" ] || {
 		logger -t honk "refusing non-default config path"
 		return 1
@@ -36,9 +37,41 @@ start_service() {
 	"$HONK_CONTROL" preflight || return 1
 	unset HONK_MAINT_CAP
 
+	if [ "$config_mode" = manual ]; then
+		ready_token=$(cat /proc/sys/kernel/random/uuid 2>/dev/null) || return 1
+		case "$ready_token" in *[!0-9a-f-]*|'') return 1 ;; esac
+		ready_hash=$(sha256sum "$HONK_CONFIG" 2>/dev/null | awk '{print $1}') || return 1
+		case "$ready_hash" in *[!0-9a-f]*|'') return 1 ;; esac
+		ready_runtime=$(/usr/bin/honk-core config validate --config "$HONK_CONFIG" 2>/dev/null) || return 1
+		ready_api_enabled=$(printf '%s' "$ready_runtime" | jsonfilter -e '@.runtime.native_api_enabled' 2>/dev/null)
+		ready_api_listen=$(printf '%s' "$ready_runtime" | jsonfilter -e '@.runtime.native_api_listen' 2>/dev/null)
+		ready_clash_api_listen=$(printf '%s' "$ready_runtime" | jsonfilter -e '@.runtime.clash_api_listen' 2>/dev/null)
+		ready_clash_api_secret_set=$(printf '%s' "$ready_runtime" | jsonfilter -e '@.runtime.clash_api_secret_set' 2>/dev/null)
+		case "$ready_api_enabled" in true|false) ;; *) return 1 ;; esac
+		case "$ready_api_listen" in *[!A-Za-z0-9:._-]*) return 1 ;; esac
+		case "$ready_clash_api_listen" in *[!A-Za-z0-9:._-]*) return 1 ;; esac
+		case "$ready_clash_api_secret_set" in true|false) ;; *) return 1 ;; esac
+		mkdir -p /var/run/honk || return 1
+		chmod 0700 /var/run/honk || return 1
+		if [ -f /var/run/honk/readiness ] && [ ! -L /var/run/honk/readiness ]; then
+			read -r old_ready_token _ < /var/run/honk/readiness
+			case "$old_ready_token" in ''|*[!0-9a-f-]*) ;; *) rm -f "/var/run/honk/core-ready-$old_ready_token" ;; esac
+		fi
+		printf '%s %s\n' "$ready_token" "$ready_hash" > /var/run/honk/readiness || return 1
+		chmod 0600 /var/run/honk/readiness || return 1
+	fi
 	procd_open_instance main
 	procd_set_param command /usr/bin/honk-core --config "$HONK_CONFIG" --disable-timestamp
-	procd_set_param env DAE_LOCATION_ASSET="/usr/share/v2ray"
+	# One env call, no empty values: procd drops the whole list when a KEY has an
+	# empty value, which silently stripped the readiness hash the core requires.
+	ready_env="DAE_LOCATION_ASSET=/usr/share/v2ray"
+	if [ "$config_mode" = manual ]; then
+		ready_env="$ready_env HONK_READY_TOKEN=$ready_token HONK_READY_CONFIG_HASH=$ready_hash HONK_READY_API_ENABLED=$ready_api_enabled HONK_READY_CLASH_API_SECRET_SET=$ready_clash_api_secret_set"
+		[ -n "$ready_api_listen" ] && ready_env="$ready_env HONK_READY_API_LISTEN=$ready_api_listen"
+		[ -n "$ready_clash_api_listen" ] && ready_env="$ready_env HONK_READY_CLASH_API_LISTEN=$ready_clash_api_listen"
+	fi
+	# shellcheck disable=SC2086
+	procd_set_param env $ready_env
 	procd_set_param stdout 1
 	procd_set_param stderr 1
 	procd_set_param respawn 3600 5 5

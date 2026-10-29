@@ -362,9 +362,11 @@ return view.extend({
 		const exportBtn = E('button', { 'class': 'cbi-button cbi-button-action', 'type': 'button' }, _('Export'));
 		const importBtn = E('button', { 'class': 'cbi-button', 'type': 'button' }, _('Import'));
 		const restoreCfgBtn = E('button', { 'class': 'cbi-button cbi-button-negative', 'type': 'button' }, _('Restore config'));
+		/* 忘记密码用：只清管理员记录，不动订阅和规则 */
+		const resetAdminBtn = E('button', { 'class': 'cbi-button', 'type': 'button' }, _('Reset administrator'));
 		const fileInput = E('input', { 'type': 'file', 'accept': '.tar.gz,.gz,application/gzip', 'style': 'display:none' });
 		let backupBusy = false;
-		writeControls.push(exportBtn, importBtn, restoreCfgBtn);
+		writeControls.push(exportBtn, importBtn, restoreCfgBtn, resetAdminBtn);
 
 		function setBackupBusy(busy) {
 			backupBusy = busy;
@@ -433,6 +435,24 @@ return view.extend({
 			});
 		});
 
+		resetAdminBtn.addEventListener('click', function(ev) {
+			ev.preventDefault();
+			if (!confirm(_('Clear the Honk administrator account so the first-setup page opens again? Subscriptions, nodes and routing are kept. Honk will be stopped.')))
+				return;
+			setBackupBusy(true);
+			resetAdminBtn.disabled = true;
+			backupMessage.textContent = _('Resetting the administrator…');
+			honk.resetAdmin().then(honk.ensureOk).then(function(result) {
+				backupMessage.textContent = honk.resultMessage(result, _('Administrator cleared. Open the Overview page and run the first setup again.'));
+				window.setTimeout(function() { window.location.href = L.url('admin/services/honk/overview'); }, 1200);
+			}).catch(function(error) {
+				backupMessage.textContent = honk.errorMessage(error, _('Could not reset the administrator.'));
+			}).finally(function() {
+				setBackupBusy(false);
+				resetAdminBtn.disabled = false;
+			});
+		});
+
 		restoreCfgBtn.addEventListener('click', function(ev) {
 			ev.preventDefault();
 			if (!confirm(_('This permanently clears Honk subscriptions, nodes, policies, DNS data, history, and cache, then restores the default configuration. The administrator account is kept, and Honk will be stopped. Continue?')))
@@ -454,7 +474,7 @@ return view.extend({
 
 		backupSection.appendChild(E('h3', { 'class': 'honk-card-title' }, _('Config backup')));
 		backupSection.appendChild(E('p', { 'class': 'honk-note' }, _('Export a backup archive, import one from your computer, or restore Honk to its default configuration.')));
-		backupSection.appendChild(E('div', { 'class': 'honk-actions' }, [ exportBtn, importBtn, restoreCfgBtn ]));
+		backupSection.appendChild(E('div', { 'class': 'honk-actions' }, [ exportBtn, importBtn, restoreCfgBtn, resetAdminBtn ]));
 		backupSection.appendChild(fileInput);
 		backupSection.appendChild(backupMessage);
 

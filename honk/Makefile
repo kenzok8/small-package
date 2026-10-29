@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=honk
 PKG_VERSION:=2026.10.24
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 # Pinned honk-core revision (Glassyiris/honk feat/native-api), cross-compiled by
 # ci/build-core.sh. The per-architecture asset/hash are filled by that script;
@@ -64,6 +64,8 @@ define Package/honk/conffiles
 /etc/config/honk
 /etc/honk/config.dae
 /etc/honk/system.dae
+/etc/honk/manual-config.dae
+/etc/honk/managed-config.dae
 endef
 
 define Build/Prepare

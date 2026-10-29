@@ -424,7 +424,7 @@ load_uci_values() {
 	uci_show=$(uci_run -q show honk 2>/dev/null) || return 1
 	printf '%s\n' "$uci_show" | awk -F= '
 		/^honk\.main=/ { main++ ; next }
-		/^honk\.main\.(enabled|boot_enabled|initialized|config_file|listen_port|lan_network|geoip_url|geosite_url|geo_auto|geo_auto_freq|clash_api_enabled|clash_api_port|clash_api_secret)=/ { next }
+		/^honk\.main\.(enabled|boot_enabled|initialized|config_mode|config_file|listen_port|lan_network|geoip_url|geosite_url|geo_auto|geo_auto_freq|clash_api_enabled|clash_api_port|clash_api_secret)=/ { next }
 		/^honk\.main\./ { bad=1; next }
 		/^honk\.[A-Za-z0-9_.-]+=/ { bad=1; next }
 		END { exit (bad || main != 1) }
@@ -433,6 +433,7 @@ load_uci_values() {
 	u_enabled=$(get_uci enabled) || return 1
 	u_boot=$(get_uci boot_enabled) || return 1
 	u_initialized=$(get_uci initialized) || return 1
+	u_config_mode=$(get_uci config_mode 2>/dev/null || printf managed)
 	u_config=$(get_uci config_file) || return 1
 	u_port=$(get_uci listen_port) || return 1
 	u_network=$(get_uci lan_network) || return 1
@@ -442,6 +443,7 @@ load_uci_values() {
 	u_geo_auto=$(get_uci geo_auto 2>/dev/null || printf 0)
 	u_geo_auto_freq=$(get_uci geo_auto_freq 2>/dev/null || printf daily)
 	case "$u_enabled:$u_boot:$u_initialized" in 0:0:0|0:0:1|0:1:0|0:1:1|1:0:0|1:0:1|1:1:0|1:1:1) ;; *) return 1 ;; esac
+	case "$u_config_mode" in managed|manual) ;; *) return 1 ;; esac
 	case "$u_geo_auto:$u_geo_auto_freq" in 0:daily|0:weekly|1:daily|1:weekly) ;; *) return 1 ;; esac
 	[ "$u_config" = /etc/honk/config.dae ] || return 1
 	case "$u_port" in ''|*[!0-9]*) return 1 ;; esac
@@ -537,6 +539,12 @@ validate_config_tree() {
 	main=$config_root/config.dae
 	system=$config_root/system.dae
 	[ -f "$main" ] && [ ! -L "$main" ] && [ -f "$system" ] && [ ! -L "$system" ] || return 1
+	if [ "$u_config_mode" = manual ]; then
+		"$HONK_CORE" config validate --config "$main" >/dev/null 2>&1 || return 2
+		find "$config_root" -type l -print 2>/dev/null | grep -q . && return 2
+		find "$config_root" ! -type f ! -type d -print 2>/dev/null | grep -q . && return 2
+		return 0
+	fi
 	validate_system_schema "$system" "$expected_device" "$expected_ip" "$expected_port" "$expected_initialized" || return 2
 	# `validate_candidate` asks honk-core's own parser to resolve every include
 	# and captures the complete source tree inside its private shadow. Keep this
@@ -797,6 +805,18 @@ validate_candidate() {
 	config_tree=$candidate/etc/honk
 	mkdir -p "$temp_dir/uci-tmp" || return 1
 	load_uci_values uci "$uci_dir" || return 1
+	if [ "$u_config_mode" = manual ]; then
+		validate_config_tree "$config_tree" '' '' "$u_port" "$u_initialized" || return 2
+		if [ "$state" = present ] || { [ "$state" = preview ] && { [ -e "$config_tree/state/honk.db" ] || [ -L "$config_tree/state/honk.db" ]; }; }; then
+			archive_sqlite_check "$config_tree/state/honk.db" || return 1
+		fi
+		if [ -f "$config_tree/state/honk.db" ] && [ ! -L "$config_tree/state/honk.db" ]; then
+			restore_initialized=1
+		else
+			restore_initialized=0
+		fi
+		return 0
+	fi
 	. /lib/functions/network.sh || return 1
 	candidate_device=
 	candidate_ip=
@@ -988,8 +1008,10 @@ restore() {
 	fi
 	[ "$old_running" != 1 ] || [ "$restore_initialized" = 1 ] || { error running_service_requires_initialized_restore; return 1; }
 	[ "$(sha_of "$RESTORE")" = "$archive_hash" ] || { error restore_archive_changed; return 1; }
-	write_live_system "$restore_stage/etc/honk/system.dae" "$candidate_device" "$candidate_ip" "$u_port" "$restore_initialized" || { error system_config_render_failed; return 1; }
-	chmod 0600 "$restore_stage/etc/honk/system.dae" || { error system_config_render_failed; return 1; }
+	if [ "$u_config_mode" = managed ]; then
+		write_live_system "$restore_stage/etc/honk/system.dae" "$candidate_device" "$candidate_ip" "$u_port" "$restore_initialized" || { error system_config_render_failed; return 1; }
+		chmod 0600 "$restore_stage/etc/honk/system.dae" || { error system_config_render_failed; return 1; }
+	fi
 	uci -c "$uci_dir" -t "$temp_dir/uci-tmp" set "honk.main.enabled=$old_enabled" || { error restore_profile_stage_failed; return 1; }
 	uci -c "$uci_dir" -t "$temp_dir/uci-tmp" set "honk.main.boot_enabled=$old_boot" || { error restore_profile_stage_failed; return 1; }
 	uci -c "$uci_dir" -t "$temp_dir/uci-tmp" set "honk.main.initialized=$restore_initialized" || { error restore_profile_stage_failed; return 1; }
@@ -1068,6 +1090,7 @@ reset_data() {
 	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" import honk < "$temp_dir/old-uci" || { error reset_profile_stage_failed; return 1; }
 	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" set honk.main.enabled=0 || { error reset_profile_stage_failed; return 1; }
 	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" set honk.main.boot_enabled=0 || { error reset_profile_stage_failed; return 1; }
+	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" set honk.main.config_mode=managed || { error reset_profile_stage_failed; return 1; }
 	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" set honk.main.listen_port=9527 || { error reset_profile_stage_failed; return 1; }
 	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" set honk.main.lan_network=lan || { error reset_profile_stage_failed; return 1; }
 	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" set honk.main.clash_api_enabled=0 || { error reset_profile_stage_failed; return 1; }

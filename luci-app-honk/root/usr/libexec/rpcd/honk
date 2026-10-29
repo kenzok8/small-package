@@ -16,6 +16,9 @@ REDACT=/usr/share/honk/redact-log.sh
 LOG_LEVEL_FILTER=/usr/share/honk/log-level-filter.sh
 RESTORE_ROOT=/tmp/honk-maintenance
 RESTORE_PATH=$RESTORE_ROOT/restore.tar.gz
+DAE_UPLOAD_ROOT=/tmp/honk-v2-upload
+DAE_UPLOAD_PATH=$DAE_UPLOAD_ROOT/import.dae
+DAE_UPLOAD_LIMIT=2097152
 
 emit_result() {
 	ok=$1
@@ -25,6 +28,14 @@ emit_result() {
 	json_add_boolean ok "$ok"
 	json_add_string message "$message"
 	json_dump
+}
+
+require_managed_mode() {
+	managed_mode=$(uci -q get honk.main.config_mode 2>/dev/null)
+	[ -n "$managed_mode" ] || managed_mode=managed
+	[ "$managed_mode" = managed ] && return 0
+	emit_result false managed_edit_unavailable
+	return 1
 }
 
 emit_errors() {
@@ -48,11 +59,12 @@ lock_owner_invalid() {
 }
 
 status() {
-	local enabled initialized boot_enabled running api_url api_ready core_version doona_version kernel lan_network listen_port errors listen clash_api_enabled clash_api_port clash_api_secret clash_api_url clash_api_ready clash_ui_ready clash_secret_set
+	local enabled initialized boot_enabled running api_url api_ready core_version doona_version kernel lan_network listen_port errors listen clash_api_enabled clash_api_port clash_api_secret clash_api_url clash_api_ready clash_ui_ready clash_secret_set config_mode api_enabled core_ready config_pending manual_runtime clash_listen_addr
 	config_load honk
 	config_get_bool enabled main enabled 0
 	config_get_bool initialized main initialized 0
 	config_get_bool boot_enabled main boot_enabled 0
+	config_get config_mode main config_mode managed
 	config_get listen_port main listen_port 9527
 	config_get lan_network main lan_network lan
 	config_get_bool clash_api_enabled main clash_api_enabled 0
@@ -60,21 +72,77 @@ status() {
 	config_get clash_api_secret main clash_api_secret ''
 	managed_pid=$(procd_core_pid)
 	if is_managed_core "$managed_pid"; then running=1; else running=0; fi
-	listen=$(sed -n "s/^[[:space:]]*listen:[[:space:]]*'\\([^']*\\)'.*/\\1/p" /etc/honk/system.dae | head -n 1)
+	api_enabled=1
+	core_ready=0
+	config_pending=0
+	if [ "$config_mode" = manual ]; then
+		api_enabled=0
+		clash_api_enabled=0
+		clash_api_port=0
+		clash_secret_set=0
+		clash_listen_addr=
+		manual_runtime=$("$CORE" config validate --config /etc/honk/config.dae 2>/dev/null)
+		if [ -n "$manual_runtime" ]; then
+			json_load "$manual_runtime" 2>/dev/null
+			json_select runtime 2>/dev/null
+			json_get_var api_enabled native_api_enabled
+			json_get_var listen native_api_listen
+			json_get_var clash_listen_addr clash_api_listen
+			json_get_var clash_secret_set clash_api_secret_set
+			json_select .. 2>/dev/null
+		fi
+		[ "$api_enabled" = 1 ] || api_enabled=0
+		if [ -n "$managed_pid" ] && honk_lifecycle_ready_owned "$managed_pid"; then core_ready=1; fi
+		if [ "$core_ready" = 1 ]; then
+			runtime_token=$(awk 'NR == 1 { print $1 }' /var/run/honk/readiness 2>/dev/null)
+			runtime_marker=/var/run/honk/core-ready-$runtime_token
+			runtime_api_enabled=$(sed -n 's/^api_enabled=//p' "$runtime_marker" 2>/dev/null)
+			runtime_listen=$(sed -n 's/^api_listen=//p' "$runtime_marker" 2>/dev/null)
+			runtime_clash_listen=$(sed -n 's/^clash_api_listen=//p' "$runtime_marker" 2>/dev/null)
+			runtime_clash_secret_set=$(sed -n 's/^clash_api_secret_set=//p' "$runtime_marker" 2>/dev/null)
+			case "$runtime_api_enabled" in true) api_enabled=1 ;; false) api_enabled=0 ;; esac
+			[ -n "$runtime_listen" ] && listen=$runtime_listen
+			clash_listen_addr=$runtime_clash_listen
+			case "$runtime_clash_secret_set" in true) clash_secret_set=1 ;; false) clash_secret_set=0 ;; esac
+		fi
+		if [ -n "$clash_listen_addr" ]; then
+			clash_api_enabled=1
+			clash_api_port=${clash_listen_addr##*:}
+		fi
+		active_hash=$(sha256sum /etc/honk/config.dae 2>/dev/null | awk '{print $1}')
+		runtime_hash=$(awk 'NR == 1 { print $2 }' /var/run/honk/readiness 2>/dev/null)
+		[ -n "$runtime_hash" ] && [ "$runtime_hash" = "$active_hash" ] || { [ "$running" = 1 ] && config_pending=1; }
+		if [ -f /etc/honk/manual-config.dae ] && [ ! -L /etc/honk/manual-config.dae ]; then
+			draft_hash=$(sha256sum /etc/honk/manual-config.dae 2>/dev/null | awk '{print $1}')
+			[ "$draft_hash" = "$active_hash" ] || config_pending=1
+		fi
+	else
+		listen=$(sed -n "s/^[[:space:]]*listen:[[:space:]]*'\\([^']*\\)'.*/\\1/p" /etc/honk/system.dae | head -n 1)
+	fi
 	case "$listen" in
 		''|*[!0-9.:]*) listen="127.0.0.1:$listen_port" ;;
 	esac
 	api_url="http://$listen"
+	if [ "$config_mode" = manual ] && [ "$api_enabled" != 1 ]; then api_url=""; fi
 	case "$clash_api_port" in
 		''|*[!0-9]*) clash_api_port=0 ;;
 	esac
-	clash_api_url="http://${listen%:*}:$clash_api_port"
+	if [ "$config_mode" = manual ]; then
+		clash_api_url=
+		[ -n "$clash_listen_addr" ] && clash_api_url="http://$clash_listen_addr"
+	else
+		clash_api_url="http://${listen%:*}:$clash_api_port"
+	fi
 	clash_api_ready=0
 	if [ "$running" = 1 ] && [ "$clash_api_enabled" = 1 ] && [ "$clash_api_port" -gt 0 ] && honk_lifecycle_listener_owned "$managed_pid" "$clash_api_port"; then clash_api_ready=1; fi
 	clash_ui_ready=0
 	[ -s /usr/share/honk/zashboard/index.html ] && clash_ui_ready=1
-	clash_secret_set=0
-	[ -n "$clash_api_secret" ] && clash_secret_set=1
+	# UCI 里的 secret 只对托管模式有意义：手动模式的密码在 config.dae 里，
+	# 已经由运行标记读取过，这里不能再拿 UCI 覆盖。
+	if [ "$config_mode" != manual ]; then
+		clash_secret_set=0
+		[ -n "$clash_api_secret" ] && clash_secret_set=1
+	fi
 	if [ "$running" = 1 ] && honk_lifecycle_api_owned "$managed_pid"; then api_ready=1; else api_ready=0; fi
 	core_version=$($CORE --version 2>/dev/null | sed -n '1p')
 	[ -n "$core_version" ] || core_version=unknown
@@ -85,7 +153,8 @@ status() {
 	if [ "$enabled" != 1 ]; then errors="$errors disabled"; fi
 	if [ "$initialized" != 1 ]; then errors="$errors not_initialized"; fi
 	if [ "$enabled" = 1 ] && [ "$initialized" = 1 ] && [ "$running" != 1 ]; then errors="$errors service_not_running"; fi
-	if [ "$running" = 1 ] && [ "$api_ready" != 1 ]; then errors="$errors api_unavailable"; fi
+	if [ "$running" = 1 ] && [ "$api_ready" != 1 ] && { [ "$config_mode" != manual ] || [ "$api_enabled" = 1 ]; }; then errors="$errors api_unavailable"; fi
+	if [ "$config_mode" = manual ] && [ "$running" = 1 ] && [ "$core_ready" != 1 ]; then errors="$errors core_not_ready"; fi
 	if [ -d "$HONK_LOCK_DIR" ]; then
 		if lock_owner_invalid || honk_lock_is_stale; then errors="$errors stale_operation_lock maintenance_recovery_required"; else errors="$errors operation_in_progress"; fi
 	fi
@@ -96,6 +165,10 @@ status() {
 	json_add_boolean initialized "$initialized"
 	json_add_boolean boot_enabled "$boot_enabled"
 	json_add_boolean running "$running"
+	json_add_string config_mode "$config_mode"
+	json_add_boolean config_pending "$config_pending"
+	json_add_boolean core_ready "$core_ready"
+	json_add_boolean api_enabled "$api_enabled"
 	json_add_boolean api_ready "$api_ready"
 	json_add_string api_url "$api_url"
 	json_add_boolean clash_api_enabled "$clash_api_enabled"
@@ -388,6 +461,92 @@ commit_validated_candidate() {
 	return 3
 }
 
+# 添加订阅前的预检：把 URL 抓下来，判断格式并统计节点类型，交给前端判可用性。
+# 不能交给内核去做——内核只在保存后才拉，失败了用户只能翻日志。
+probe_subscription() {
+	request=$(cat)
+	json_load "$request" 2>/dev/null || { emit_result false invalid_request; return 1; }
+	json_get_var url url
+	case "$url" in
+		http://*|https://*) ;;
+		*) emit_result false subscription_invalid; return 1 ;;
+	esac
+	# 只允许普通的 URL 字符，避免把奇怪的参数塞进 curl
+	case "$url" in
+		*[!A-Za-z0-9._~:/?#@\!\$\&\(\)\*+,\;=%-]*) emit_result false subscription_invalid; return 1 ;;
+	esac
+
+	probe_file=$(mktemp /tmp/honk-probe.XXXXXX) || { emit_result false probe_failed; return 1; }
+	chmod 0600 "$probe_file" || { rm -f "$probe_file"; emit_result false probe_failed; return 1; }
+	if ! curl -fsSL --max-time 25 --connect-timeout 8 -A 'clash.meta/1.19.30' -o "$probe_file" "$url" 2>/dev/null; then
+		if ! curl -fsSL --max-time 25 -o "$probe_file" "$url" 2>/dev/null; then
+			rm -f "$probe_file"
+			emit_result false subscription_unreachable
+			return 1
+		fi
+	fi
+
+	probe_bytes=$(wc -c < "$probe_file" 2>/dev/null | tr -d ' ')
+	case "$probe_bytes" in ''|*[!0-9]*) probe_bytes=0 ;; esac
+	if [ "$probe_bytes" -eq 0 ]; then
+		rm -f "$probe_file"
+		emit_result false subscription_empty
+		return 1
+	fi
+
+	# 超过 4 MiB 直接拒绝：订阅不该这么大，继续读只会拖垮路由器
+	if [ "$probe_bytes" -gt 4194304 ]; then
+		rm -f "$probe_file"
+		emit_result false subscription_too_large
+		return 1
+	fi
+
+	probe_format=unknown
+	probe_types=
+	if grep -qE '^proxies:[[:space:]]*$' "$probe_file" 2>/dev/null; then
+		probe_format=clash
+		probe_types=$(awk '
+			/^proxies:[[:space:]]*$/ { inside = 1; next }
+			inside && /^[A-Za-z0-9_-]+:/ { inside = 0 }
+			inside {
+				if (match($0, /type:[[:space:]]*["'"'"']?[A-Za-z0-9_-]+/)) {
+					t = substr($0, RSTART, RLENGTH)
+					sub(/^type:[[:space:]]*["'"'"']?/, "", t)
+					print t
+				}
+			}
+		' "$probe_file" | sort | uniq -c | awk '{ printf "%s:%s ", $2, $1 }')
+	elif head -c 1 "$probe_file" 2>/dev/null | grep -qE '[\{\[]'; then
+		probe_format=json
+		probe_types=$(grep -oE '"type"[[:space:]]*:[[:space:]]*"[A-Za-z0-9_-]+"' "$probe_file" 2>/dev/null \
+			| sed 's/.*"\([A-Za-z0-9_-]*\)"$/\1/' | sort | uniq -c | awk '{ printf "%s:%s ", $2, $1 }')
+	elif grep -qE '^\[[A-Za-z ]+\]' "$probe_file" 2>/dev/null; then
+		probe_format=records
+		probe_types=$(sed -n 's/^[^=][^=]*=[[:space:]]*\([A-Za-z0-9_-]*\),.*/\1/p' "$probe_file" 2>/dev/null \
+			| sort | uniq -c | awk '{ printf "%s:%s ", $2, $1 }')
+	elif grep -qE '://' "$probe_file" 2>/dev/null; then
+		probe_format=uri
+		probe_types=$(grep -oE '^[A-Za-z0-9+.-]+://' "$probe_file" 2>/dev/null \
+			| sed 's|://$||' | sort | uniq -c | awk '{ printf "%s:%s ", $2, $1 }')
+	elif tr -d '\r\n' < "$probe_file" | grep -qE '^[A-Za-z0-9+/=]+$'; then
+		# 整份是 base64：本机没有 base64 解码工具，把小样本交给前端解
+		probe_format=base64
+	fi
+
+	json_init
+	json_add_boolean ok 1
+	json_add_string message probe_ok
+	json_add_string format "$probe_format"
+	json_add_number bytes "$probe_bytes"
+	json_add_string types "$probe_types"
+	if [ "$probe_format" = base64 ] && [ "$probe_bytes" -le 262144 ]; then
+		probe_body=$(cat "$probe_file")
+		json_add_string content "$probe_body"
+	fi
+	rm -f "$probe_file"
+	json_dump
+}
+
 add_subscription() {
 	request=$(cat)
 	json_load "$request" 2>/dev/null || { emit_result false invalid_request; return 1; }
@@ -405,6 +564,7 @@ add_subscription() {
 	cfg=/etc/honk/config.dae
 	[ -f "$cfg" ] || { emit_result false config_missing; return 1; }
 	begin_mutation
+	require_managed_mode || return 1
 	original_hash=$(sha256sum "$cfg" | awk '{print $1}')
 
 	if grep -qE "^[[:space:]]*${sub_name}:[[:space:]]*['\"]" "$cfg"; then
@@ -462,6 +622,7 @@ add_nodes() {
 	cfg=/etc/honk/config.dae
 	[ -f "$cfg" ] || { emit_result false config_missing; return 1; }
 	begin_mutation
+	require_managed_mode || return 1
 	original_hash=$(sha256sum "$cfg" | awk '{print $1}')
 
 	node_prefix="node_$(hexdump -n 4 -e '4/1 "%02x"' /dev/urandom)_"
@@ -540,6 +701,8 @@ import_dae() {
 
 	cfg=/etc/honk/config.dae
 	[ -f "$cfg" ] || { emit_result false config_missing; return 1; }
+	begin_mutation
+	require_managed_mode || return 1
 
 	# 提取 node 块（过滤 honk-core 不支持的 ssr/snell 协议）
 	node_block=$(awk '
@@ -632,6 +795,9 @@ is_managed_core() {
 
 begin_mutation() {
 	if [ -e /etc/.honk-update/journal ] || [ -L /etc/.honk-update/journal ]; then emit_result false update_recovery_required; exit 1; fi
+	# A caller that timed out mid-operation cannot release the lock itself. Without
+	# this, one aborted apply wedges every later configuration operation.
+	if honk_lock_is_stale; then rm -rf "$HONK_LOCK_DIR"; fi
 	honk_lock_acquire || { emit_result false operation_in_progress; exit 1; }
 	trap 'honk_lock_release >/dev/null 2>&1' 0
 }
@@ -647,9 +813,331 @@ restore_prepare() {
 	emit_result true prepared
 }
 
+# 忘记密码：清掉核心里的管理员记录，并让 LuCI 重新显示首次设置。
+# 只删管理员，不动订阅/分组/路由；需要先停服务（内核自己也会拒绝运行中的 reset）。
+reset_admin() {
+	begin_mutation
+	if pidof honk-core >/dev/null 2>&1; then
+		honk_lifecycle_stop 30 || { emit_result false service_stop_failed_rolled_back; return 1; }
+	fi
+	reset_data_dir=$(sed -n "s/^[[:space:]]*data_dir:[[:space:]]*'\([^']*\)'.*/\1/p" /etc/honk/system.dae 2>/dev/null | head -n 1)
+	[ -n "$reset_data_dir" ] || reset_data_dir=/etc/honk
+	case "$reset_data_dir" in /*) ;; *) reset_data_dir=/etc/honk ;; esac
+	if [ -f "$reset_data_dir/state/honk.db" ]; then
+		reset_backup=$(mktemp /etc/honk/.state-backup.XXXXXX) || { emit_result false config_write_failed; return 1; }
+		cp -p "$reset_data_dir/state/honk.db" "$reset_backup" || { rm -f "$reset_backup"; emit_result false config_write_failed; return 1; }
+	fi
+	if ! reset_output=$("$CORE" --config /etc/honk/config.dae --data-dir "$reset_data_dir" admin reset 2>&1); then
+		[ -n "${reset_backup:-}" ] && rm -f "$reset_backup"
+		logger -t honk "administrator reset failed: $reset_output" 2>/dev/null || :
+		emit_result false administrator_reset_failed
+		return 1
+	fi
+	if ! uci set honk.main.initialized=0 || ! uci set honk.main.enabled=0 || ! uci commit honk || ! chmod 0600 /etc/config/honk; then
+		emit_result false config_write_failed
+		return 1
+	fi
+	rm -f "${reset_backup:-}"
+	emit_result true administrator_reset
+}
+
+config_read() {
+	[ -f /etc/honk/config.dae ] && [ ! -L /etc/honk/config.dae ] || { emit_result false config_missing; return 1; }
+	config_size=$(wc -c < /etc/honk/config.dae)
+	[ "$config_size" -le "$DAE_UPLOAD_LIMIT" ] || { emit_result false config_too_large; return 1; }
+	config_content=$(cat /etc/honk/config.dae; printf '\001') || { emit_result false config_read_failed; return 1; }
+	config_content=${config_content%?}
+	config_load honk
+	config_get config_mode main config_mode managed
+	json_init
+	json_add_boolean ok 1
+	json_add_string message config_loaded
+	json_add_string mode "$config_mode"
+	json_add_string content "$config_content"
+	json_dump
+}
+
+config_draft_read() {
+	[ -f /etc/honk/manual-config.dae ] && [ ! -L /etc/honk/manual-config.dae ] || { emit_result false config_draft_missing; return 1; }
+	config_size=$(wc -c < /etc/honk/manual-config.dae)
+	[ "$config_size" -le "$DAE_UPLOAD_LIMIT" ] || { emit_result false config_too_large; return 1; }
+	config_content=$(cat /etc/honk/manual-config.dae; printf '\001') || { emit_result false config_read_failed; return 1; }
+	config_content=${config_content%?}
+	json_init
+	json_add_boolean ok 1
+	json_add_string message config_draft_loaded
+	json_add_string content "$config_content"
+	json_dump
+}
+
+lan_candidates() {
+	lan_dump=$(ubus call network.interface dump 2>/dev/null) || { emit_result false lan_candidates_unavailable; return 1; }
+	lan_file=$(mktemp /tmp/honk-lan-candidates.XXXXXX) || { emit_result false lan_candidates_unavailable; return 1; }
+	chmod 0600 "$lan_file" || { rm -f "$lan_file"; emit_result false lan_candidates_unavailable; return 1; }
+	printf '%s' "$lan_dump" > "$lan_file" || { rm -f "$lan_file"; emit_result false lan_candidates_unavailable; return 1; }
+	json_init
+	json_add_boolean ok 1
+	json_add_string message lan_candidates_loaded
+	json_add_array candidates
+	for lan_name in $(jsonfilter -i "$lan_file" -e '@.interface[*].interface' 2>/dev/null); do
+		case "$lan_name" in ''|*[!A-Za-z0-9_.-]*) continue ;; esac
+		lan_status=$(ubus call "network.interface.$lan_name" status 2>/dev/null) || continue
+		lan_up=$(printf '%s' "$lan_status" | jsonfilter -e '@.up' 2>/dev/null)
+		[ "$lan_up" = true ] || continue
+		lan_device=$(printf '%s' "$lan_status" | jsonfilter -e '@.device' 2>/dev/null)
+		lan_l3=$(printf '%s' "$lan_status" | jsonfilter -e '@.l3_device' 2>/dev/null)
+		[ -n "$lan_l3" ] || lan_l3=$lan_device
+		case "$lan_l3:$lan_device" in *[!A-Za-z0-9_.:-]*) continue ;; esac
+		[ -n "$lan_l3" ] || continue
+		lan_ip=$(printf '%s' "$lan_status" | jsonfilter -e '@["ipv4-address"][0].address' 2>/dev/null)
+		json_add_object ""
+		json_add_string network "$lan_name"
+		json_add_string l3_device "$lan_l3"
+		json_add_string device "$lan_device"
+		json_add_string ipv4 "$lan_ip"
+		json_close_object
+	done
+	json_close_array
+	json_dump
+	rm -f "$lan_file"
+}
+
+
+config_candidate_from_request() {
+	request=$(cat)
+	json_load "$request" 2>/dev/null || return 1
+	json_get_var config_content content
+	config_bytes=$(printf '%s' "$config_content" | wc -c)
+	case "$config_bytes" in ''|*[!0-9]*) return 1 ;; esac
+	[ "$config_bytes" -le "$DAE_UPLOAD_LIMIT" ] || return 2
+	umask 077
+	# Use mktemp -d for BusyBox compatibility, then create an exclusive .dae
+	# sibling so relative paths resolve from the same directory as config.dae.
+	config_candidate_dir=$(mktemp -d /etc/honk/.config-candidate.XXXXXX) || return 3
+	config_candidate=/etc/honk/.config-candidate-${config_candidate_dir##*.config-candidate.}.dae
+	(set -C; printf '%s' "$config_content" > "$config_candidate") || { rm -rf "$config_candidate_dir"; return 3; }
+	rmdir "$config_candidate_dir" || { rm -f "$config_candidate"; rm -rf "$config_candidate_dir"; return 3; }
+	chmod 0600 "$config_candidate" || { rm -f "$config_candidate"; return 3; }
+	return 0
+}
+
+validate_config_candidate() {
+	validation_file=$(mktemp /tmp/honk-config-validation.XXXXXX) || return 1
+	chmod 0600 "$validation_file" || { rm -f "$validation_file"; return 1; }
+	if "$CORE" config validate --config "$config_candidate" > "$validation_file" 2>/dev/null; then
+		config_validation=$(cat "$validation_file")
+		json_load "$config_validation" 2>/dev/null || { rm -f "$validation_file"; return 1; }
+		json_get_var validation_ok ok
+		rm -f "$validation_file"
+		[ "$validation_ok" = 1 ] || return 1
+		return 0
+	fi
+	config_validation=$(cat "$validation_file")
+	json_load "$config_validation" 2>/dev/null || config_validation='{"ok":false,"message":"configuration_validation_failed","diagnostics":[]}'
+	rm -f "$validation_file"
+	return 1
+}
+
+config_validate() {
+	config_candidate_from_request
+	case "$?" in
+		1) emit_result false config_request_invalid; return 1 ;;
+		2) emit_result false config_too_large; return 1 ;;
+		3) emit_result false config_write_failed; return 1 ;;
+	esac
+	validate_config_candidate
+	validation_status=$?
+	rm -f "$config_candidate"
+	if [ -n "$config_validation" ]; then
+		printf '%s\n' "$config_validation"
+		return 0
+	fi
+	emit_result false config_validation_unavailable
+	return 1
+}
+
+config_save() {
+	begin_mutation
+	config_candidate_from_request
+	case "$?" in
+		1) emit_result false config_request_invalid; return 1 ;;
+		2) emit_result false config_too_large; return 1 ;;
+		3) emit_result false config_write_failed; return 1 ;;
+	esac
+	if ! validate_config_candidate; then
+		rm -f "$config_candidate"
+		[ -n "$config_validation" ] && printf '%s\n' "$config_validation" || emit_result false config_validation_unavailable
+		return 0
+	fi
+	draft_path=/etc/honk/manual-config.dae
+	draft_backup=
+	if [ -e "$draft_path" ] || [ -L "$draft_path" ]; then
+		[ -f "$draft_path" ] && [ ! -L "$draft_path" ] || { rm -f "$config_candidate"; emit_result false config_draft_invalid; return 1; }
+		draft_backup=$(mktemp /etc/honk/.manual-config-backup.XXXXXX) || { rm -f "$config_candidate"; emit_result false config_write_failed; return 1; }
+		cp -p "$draft_path" "$draft_backup" || { rm -f "$config_candidate" "$draft_backup"; emit_result false config_write_failed; return 1; }
+	fi
+	if ! mv -f "$config_candidate" "$draft_path"; then
+		if [ -n "$draft_backup" ]; then
+			draft_restore=$(mktemp /etc/honk/.manual-config-restore.XXXXXX)
+			cp -p "$draft_backup" "$draft_restore" && mv -f "$draft_restore" "$draft_path"
+			rm -f "$draft_restore"
+		fi
+		rm -f "$draft_backup"
+		emit_result false config_write_failed
+		return 1
+	fi
+	chmod 0600 "$draft_path" || { emit_result false config_write_failed; return 1; }
+	rm -f "$draft_backup"
+	rm -f /etc/honk/manual-system.dae
+	emit_result true config_saved_pending_apply
+}
+
+config_apply() {
+	begin_mutation
+	draft_path=/etc/honk/manual-config.dae
+	[ -f "$draft_path" ] && [ ! -L "$draft_path" ] || { emit_result false config_draft_missing; return 1; }
+	activate_dir=$(mktemp -d /etc/honk/.manual-activate.XXXXXX) || { emit_result false config_write_failed; return 1; }
+	activate_file=/etc/honk/.manual-config-${activate_dir##*.manual-activate.}.dae
+	(set -C; cp "$draft_path" "$activate_file") || { rm -rf "$activate_dir"; emit_result false config_write_failed; return 1; }
+	rmdir "$activate_dir" || { rm -rf "$activate_dir"; rm -f "$activate_file"; emit_result false config_write_failed; return 1; }
+	chmod 0600 "$activate_file" || { rm -f "$activate_file"; emit_result false config_write_failed; return 1; }
+	config_candidate=$activate_file
+	if ! validate_config_candidate; then
+		rm -f "$activate_file"
+		[ -n "$config_validation" ] && printf '%s\n' "$config_validation" || emit_result false config_validation_unavailable
+		return 1
+	fi
+	candidate_hash=$(sha256sum "$activate_file" | awk '{print $1}')
+	old_hash=$(sha256sum /etc/honk/config.dae 2>/dev/null | awk '{print $1}')
+	old_mode=$(uci -q get honk.main.config_mode || echo managed)
+	old_running=0
+	old_pid=$(honk_lifecycle_managed_pid 2>/dev/null)
+	if [ -n "$old_pid" ]; then
+		old_running=1
+	elif pidof honk-core >/dev/null 2>&1; then
+		rm -f "$activate_file"
+		emit_result false unmanaged_core_running
+		return 1
+	fi
+	backup_dir=$(mktemp -d /etc/honk/.manual-apply-backup.XXXXXX) || { rm -f "$activate_file"; emit_result false config_write_failed; return 1; }
+	chmod 0700 "$backup_dir" || { rm -rf "$backup_dir"; rm -f "$activate_file"; emit_result false config_write_failed; return 1; }
+	cp -p /etc/honk/config.dae "$backup_dir/config.dae" && cp -p /etc/config/honk "$backup_dir/honk.uci" || {
+		rm -rf "$backup_dir" "$activate_file"
+		emit_result false config_write_failed
+		return 1
+	}
+	managed_snapshot=/etc/honk/managed-config.dae
+	if [ "$old_mode" = managed ] && { [ -e "$managed_snapshot" ] || [ -L "$managed_snapshot" ]; }; then
+		[ -f "$managed_snapshot" ] && [ ! -L "$managed_snapshot" ] || { rm -rf "$backup_dir" "$activate_file"; emit_result false managed_snapshot_invalid; return 1; }
+	fi
+	if [ "$old_mode" = managed ]; then
+		managed_snapshot_tmp=$(mktemp /etc/honk/.managed-config.XXXXXX) || { rm -rf "$backup_dir" "$activate_file"; emit_result false config_write_failed; return 1; }
+		cp -p "$backup_dir/config.dae" "$managed_snapshot_tmp" && chmod 0600 "$managed_snapshot_tmp" && mv -f "$managed_snapshot_tmp" "$managed_snapshot" || {
+			rm -f "$managed_snapshot_tmp"
+			rm -rf "$backup_dir" "$activate_file"
+			emit_result false config_write_failed
+			return 1
+		}
+	fi
+	if [ "$old_running" = 1 ] && ! honk_lifecycle_stop 30; then
+		rm -f "$activate_file"
+		emit_result false service_stop_unconfirmed_snapshot_retained
+		return 1
+	fi
+	if [ "$(sha256sum /etc/honk/config.dae 2>/dev/null | awk '{print $1}')" != "$old_hash" ]; then
+		if [ "$old_running" = 1 ]; then honk_lifecycle_start 20 || { emit_result false config_changed_concurrently_restart_failed_snapshot_retained; return 1; }; fi
+		rm -rf "$backup_dir" "$activate_file"
+		emit_result false config_changed_concurrently
+		return 1
+	fi
+	if ! mv -f "$activate_file" /etc/honk/config.dae; then
+		emit_result false config_write_failed_snapshot_retained
+		return 1
+	fi
+	if ! uci set honk.main.config_mode=manual || ! uci set honk.main.enabled=1 || ! uci set honk.main.initialized=1 || ! uci commit honk || ! chmod 0600 /etc/config/honk; then
+		apply_failed=1
+	else
+		apply_failed=0
+	fi
+	if [ "$apply_failed" = 0 ] && honk_lifecycle_start 20; then
+		rm -rf "$backup_dir"
+		emit_result true config_applied
+		return 0
+	fi
+	[ "$apply_failed" = 1 ] || honk_lifecycle_stop 30 >/dev/null 2>&1 || :
+	rollback_ok=1
+	if [ "$(sha256sum /etc/honk/config.dae 2>/dev/null | awk '{print $1}')" = "$candidate_hash" ]; then
+		rollback_tmp=$(mktemp /etc/honk/.manual-rollback.XXXXXX) || rollback_ok=0
+		[ "$rollback_ok" = 0 ] || { cp -p "$backup_dir/config.dae" "$rollback_tmp" && mv -f "$rollback_tmp" /etc/honk/config.dae || rollback_ok=0; }
+	else
+		rollback_ok=0
+	fi
+	uci_tmp=$(mktemp /etc/config/.honk-rollback.XXXXXX) || rollback_ok=0
+	[ "$rollback_ok" = 0 ] || { cp -p "$backup_dir/honk.uci" "$uci_tmp" && mv -f "$uci_tmp" /etc/config/honk || rollback_ok=0; }
+	[ "$rollback_ok" = 0 ] || [ "$(sha256sum /etc/config/honk 2>/dev/null | awk '{print $1}')" = "$(sha256sum "$backup_dir/honk.uci" | awk '{print $1}')" ] || rollback_ok=0
+	uci revert honk 2>/dev/null || :
+	if [ "$rollback_ok" = 1 ] && [ "$old_running" = 1 ]; then honk_lifecycle_start 10 || rollback_ok=0; fi
+	rm -f "$rollback_tmp" "$uci_tmp"
+	if [ "$rollback_ok" = 1 ]; then
+		rm -rf "$backup_dir"
+		emit_result false config_apply_failed_rolled_back
+	else
+		emit_result false config_apply_rollback_failed_snapshot_retained
+	fi
+	return 1
+}
+
+config_use_managed() {
+	begin_mutation
+	current_mode=$(uci -q get honk.main.config_mode 2>/dev/null)
+	[ "$current_mode" = manual ] || { emit_result false manual_mode_required; return 1; }
+	managed_snapshot=/etc/honk/managed-config.dae
+	[ -f "$managed_snapshot" ] && [ ! -L "$managed_snapshot" ] || { emit_result false managed_snapshot_missing; return 1; }
+	activate_dir=$(mktemp -d /etc/honk/.managed-activate.XXXXXX) || { emit_result false config_write_failed; return 1; }
+	activate_file=/etc/honk/.managed-config-${activate_dir##*.managed-activate.}.dae
+	(set -C; cp "$managed_snapshot" "$activate_file") || { rm -rf "$activate_dir"; emit_result false config_write_failed; return 1; }
+	rmdir "$activate_dir" || { rm -rf "$activate_dir"; rm -f "$activate_file"; emit_result false config_write_failed; return 1; }
+	chmod 0600 "$activate_file" || { rm -f "$activate_file"; emit_result false config_write_failed; return 1; }
+	config_candidate=$activate_file
+	if ! validate_config_candidate; then rm -f "$activate_file"; [ -n "$config_validation" ] && printf '%s\n' "$config_validation" || emit_result false config_validation_unavailable; return 1; fi
+	candidate_hash=$(sha256sum "$activate_file" | awk '{print $1}')
+	old_hash=$(sha256sum /etc/honk/config.dae 2>/dev/null | awk '{print $1}')
+	old_running=0
+	old_pid=$(honk_lifecycle_managed_pid 2>/dev/null)
+	if [ -n "$old_pid" ]; then old_running=1; elif pidof honk-core >/dev/null 2>&1; then rm -f "$activate_file"; emit_result false unmanaged_core_running; return 1; fi
+	backup_dir=$(mktemp -d /etc/honk/.managed-switch-backup.XXXXXX) || { rm -f "$activate_file"; emit_result false config_write_failed; return 1; }
+	chmod 0700 "$backup_dir" || { rm -rf "$backup_dir" "$activate_file"; emit_result false config_write_failed; return 1; }
+	cp -p /etc/honk/config.dae "$backup_dir/config.dae" && cp -p /etc/config/honk "$backup_dir/honk.uci" || { rm -rf "$backup_dir" "$activate_file"; emit_result false config_write_failed; return 1; }
+	if [ "$old_running" = 1 ] && ! honk_lifecycle_stop 30; then rm -f "$activate_file"; emit_result false service_stop_unconfirmed_snapshot_retained; return 1; fi
+	if [ "$(sha256sum /etc/honk/config.dae 2>/dev/null | awk '{print $1}')" != "$old_hash" ]; then
+		if [ "$old_running" = 1 ]; then honk_lifecycle_start 20 || { emit_result false config_changed_concurrently_restart_failed_snapshot_retained; return 1; }; fi
+		rm -rf "$backup_dir" "$activate_file"
+		emit_result false config_changed_concurrently
+		return 1
+	fi
+	if ! mv -f "$activate_file" /etc/honk/config.dae || ! uci set honk.main.config_mode=managed || ! uci commit honk || ! chmod 0600 /etc/config/honk; then
+		switch_failed=1
+	else
+		switch_failed=0
+	fi
+	if [ "$switch_failed" = 0 ] && { [ "$old_running" = 0 ] || honk_lifecycle_start 45; }; then rm -rf "$backup_dir"; emit_result true managed_mode_restored; return 0; fi
+	[ "$switch_failed" = 1 ] || honk_lifecycle_stop 30 >/dev/null 2>&1 || :
+	rollback_ok=1
+	rollback_tmp=$(mktemp /etc/honk/.managed-rollback.XXXXXX) || rollback_ok=0
+	[ "$rollback_ok" = 0 ] || { cp -p "$backup_dir/config.dae" "$rollback_tmp" && mv -f "$rollback_tmp" /etc/honk/config.dae || rollback_ok=0; }
+	uci_tmp=$(mktemp /etc/config/.honk-rollback.XXXXXX) || rollback_ok=0
+	[ "$rollback_ok" = 0 ] || { cp -p "$backup_dir/honk.uci" "$uci_tmp" && mv -f "$uci_tmp" /etc/config/honk || rollback_ok=0; }
+	[ "$rollback_ok" = 0 ] || [ "$(sha256sum /etc/config/honk 2>/dev/null | awk '{print $1}')" = "$(sha256sum "$backup_dir/honk.uci" | awk '{print $1}')" ] || rollback_ok=0
+	uci revert honk 2>/dev/null || :
+	if [ "$rollback_ok" = 1 ] && [ "$old_running" = 1 ]; then honk_lifecycle_start 10 || rollback_ok=0; fi
+	rm -f "$rollback_tmp" "$uci_tmp"
+	if [ "$rollback_ok" = 1 ]; then rm -rf "$backup_dir"; emit_result false managed_switch_failed_rolled_back; else emit_result false managed_switch_rollback_failed_snapshot_retained; fi
+	return 1
+}
+
 case "$1" in
 list)
-		echo '{"status":{},"check":{},"initialize":{"username":"String","password":"String"},"start":{},"stop":{},"restart":{},"settings":{"lan_network":"String","listen_port":"Integer","boot_enabled":"Boolean","clash_api_enabled":"Boolean","clash_api_port":"Integer","clash_api_secret":"String"},"add_subscription":{"name":"String","url":"String"},"add_nodes":{"links":"String"},"import_dae":{},"repair":{},"backup":{},"restore":{},"restore_prepare":{},"reset":{},"job_status":{"job_id":"String"},"logs":{"source":"String","level":"String","limit":"Integer"},"update_check":{},"update_apply":{}}'
+		echo '{"status":{},"check":{},"initialize":{"username":"String","password":"String"},"start":{},"stop":{},"restart":{},"settings":{"lan_network":"String","listen_port":"Integer","boot_enabled":"Boolean","clash_api_enabled":"Boolean","clash_api_port":"Integer","clash_api_secret":"String"},"add_subscription":{"name":"String","url":"String"},"probe_subscription":{"url":"String"},"reset_admin":{},"add_nodes":{"links":"String"},"import_dae":{},"config_read":{},"config_draft_read":{},"lan_candidates":{},"config_validate":{"content":"String"},"config_save":{"content":"String"},"config_apply":{},"config_use_managed":{},"repair":{},"backup":{},"restore":{},"restore_prepare":{},"reset":{},"job_status":{"job_id":"String"},"logs":{"source":"String","level":"String","limit":"Integer"},"update_check":{},"update_apply":{}}'
 		;;
 	call)
 		case "$2" in
@@ -665,6 +1153,12 @@ list)
 			settings)
 				exec "$CONTROL" settings
 				;;
+			probe_subscription)
+				probe_subscription
+				;;
+			reset_admin)
+				reset_admin
+				;;
 			add_subscription)
 				add_subscription
 				;;
@@ -673,6 +1167,27 @@ list)
 				;;
 			import_dae)
 				import_dae
+				;;
+			config_read)
+				config_read
+				;;
+			config_draft_read)
+				config_draft_read
+				;;
+			lan_candidates)
+				lan_candidates
+				;;
+			config_validate)
+				config_validate
+				;;
+			config_save)
+				config_save
+				;;
+			config_apply)
+				config_apply
+				;;
+			config_use_managed)
+				config_use_managed
 				;;
 			repair)
 				exec "$CONTROL" repair
@@ -708,7 +1223,7 @@ list)
 				if ! set_enabled 1; then emit_result false settings_write_failed; exit 1; fi
 				managed_pid=$(honk_lifecycle_managed_pid 2>/dev/null)
 				if [ -n "$managed_pid" ]; then
-					if honk_lifecycle_api_owned "$managed_pid"; then emit_result true already_running; else set_enabled "$old_enabled" >/dev/null 2>&1; emit_result false managed_service_unhealthy; exit 1; fi
+					if honk_lifecycle_runtime_owned "$managed_pid"; then emit_result true already_running; else set_enabled "$old_enabled" >/dev/null 2>&1; emit_result false managed_service_unhealthy; exit 1; fi
 				elif honk_lifecycle_start 30; then
 					emit_result true started
 				else
