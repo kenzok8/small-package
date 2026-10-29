@@ -49,7 +49,6 @@ define Package/netdata/description
   python3-urllib3
 endef
 
-TARGET_CFLAGS := $(filter-out -O%,$(TARGET_CFLAGS)) -O3
 TARGET_LDFLAGS += -L$(STAGING_DIR)/usr/lib
 TARGET_CFLAGS += $(FPIC)
 
