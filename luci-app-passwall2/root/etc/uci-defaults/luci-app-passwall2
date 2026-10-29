@@ -34,8 +34,10 @@ uci commit firewall
 
 chmod +x /usr/share/passwall2/*.sh
 
-rm -f /tmp/etc/passwall2_tmp/passwall2_version /tmp/etc/passwall2_tmp/binver_* /tmp/luci-indexcache /tmp/luci-indexcache.*
-rm -rf /tmp/luci-modulecache/
+rm -rf /tmp/etc/passwall2_tmp
+
+rm -f /tmp/luci-indexcache /tmp/luci-indexcache.*
+rm -rf /tmp/luci-modulecache
 killall -HUP rpcd 2>/dev/null
 
 exit 0
