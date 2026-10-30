@@ -303,9 +303,13 @@ function gen_outbound(flag, node, tag, proxy_table)
 					local finalmask = {}
 					local TP = node.transport
 					if TP == "mkcp" then
+						local s = { type = "mkcp-legacy" }
+						if node.mkcp_seed and node.mkcp_seed ~= "" then
+							s.settings = { value = node.mkcp_seed }
+						end
+						local udp = { s }
 						local map = {none = "none", srtp = "srtp", utp = "utp", ["wechat-video"] = "wechat",
 							dtls = "dtls", wireguard = "wireguard", dns = "dns"}
-						local udp = {}
 						if node.mkcp_guise and node.mkcp_guise ~= "none" then
 							local g = { type = "mkcp-legacy" }
 							g.settings = { header = map[node.mkcp_guise] }
@@ -314,11 +318,6 @@ function gen_outbound(flag, node, tag, proxy_table)
 							end
 							udp[#udp+1] = g
 						end
-						local s = { type = "mkcp-legacy" }
-						if node.mkcp_seed and node.mkcp_seed ~= "" then
-							s.settings = { value = node.mkcp_seed }
-						end
-						udp[#udp+1] = s
 						finalmask.udp = udp
 					elseif TP == "hysteria" then
 						local udp = {}
@@ -807,9 +806,13 @@ function gen_config_server(node)
 					finalmask = (function()
 						local finalmask = {}
 						if node.transport == "mkcp" then
+							local s = { type = "mkcp-legacy" }
+							if node.mkcp_seed and node.mkcp_seed ~= "" then
+								s.settings = { value = node.mkcp_seed }
+							end
+							local udp = { s }
 							local map = {none = "none", srtp = "srtp", utp = "utp", ["wechat-video"] = "wechat",
 								dtls = "dtls", wireguard = "wireguard", dns = "dns"}
-							local udp = {}
 							if node.mkcp_guise and node.mkcp_guise ~= "none" then
 								local g = { type = "mkcp-legacy" }
 								g.settings = { header = map[node.mkcp_guise] }
@@ -818,11 +821,6 @@ function gen_config_server(node)
 								end
 								udp[#udp+1] = g
 							end
-							local s = { type = "mkcp-legacy" }
-							if node.mkcp_seed and node.mkcp_seed ~= "" then
-								s.settings = { value = node.mkcp_seed }
-							end
-							udp[#udp+1] = s
 							finalmask.udp = udp
 						elseif node.transport == "hysteria" then
 							local udp = {}
