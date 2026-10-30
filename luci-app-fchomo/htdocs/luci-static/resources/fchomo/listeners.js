@@ -204,7 +204,7 @@ function renderListeners(s, uciconfig, isClient) {
 	o.modalonly = true;
 
 	o = s.taboption('field_general', form.Value, 'mieru_tcp_idle_timeout', _('TCP idle timeout'),
-		_('In seconds.'), _('Minimum value is $s.').format('60'));
+		_('In seconds.') + ' ' + _('Minimum value is $s.').format('60'));
 	o.placeholder = '1800';
 	o.validate = hm.validateTimeDuration;
 	o.depends('type', 'mieru');
@@ -1003,36 +1003,24 @@ function renderListeners(s, uciconfig, isClient) {
 	// @xhttp-config其他的配置
 
 	/* Hysteria2 Realm fields */
-	o = s.taboption('field_general', form.Flag, 'hysteria2_realm', _('Realm'));
-	o.default = o.disabled;
-	o.depends('type', 'hysteria2');
-	o.modalonly = true;
+	hm.renderHy2Realm(s, uciconfig);
 
-	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_server_url', _('Rendezvous server'));
-	o.placeholder = 'https://realm.hy2.io';
-	o.rmempty = false;
-	o.depends('hysteria2_realm', '1');
-	o.modalonly = true;
-
-	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_token', _('Pre-shared key of rendezvous server'));
-	o.placeholder = 'public';
-	o.depends('hysteria2_realm', '1');
-	o.modalonly = true;
-
-	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_id', _('Realm ID'));
-	o.placeholder = 'my-cabin-1f3a8c2e9b';
-	o.rmempty = false;
-	o.depends('hysteria2_realm', '1');
-	o.modalonly = true;
-
-	o = s.taboption('field_hysteria2_realm', form.DynamicList, 'hysteria2_realm_stun_servers', _('STUN servers'));
-	o.datatype = 'hostport';
-	o.default = ['stun.nextcloud.com:3478','stun.sip.us:3478','global.stun.twilio.com:3478'];
-	o.rmempty = false;
-	o.depends('hysteria2_realm', '1');
-	o.modalonly = true;
-
-	// @ 下面支持填写针对server-url的TLS配置(sni, skip-cert-verify, name-cert-verify, fingerprint, certificate, private-key, alpn)
+	if (isClient) {
+		o = s.taboption('field_hysteria2_realm', form.ListValue, 'hysteria2_realm_proxy', _('Proxy group'),
+			_('The proxy used to connect to the rendezvous server.'));
+		o.default = hm.preset_outbound.direct[0][0];
+		hm.preset_outbound.direct.forEach((res) => {
+			o.value.apply(o, res);
+		})
+		o.load = function(section_id) {
+			return hm.loadLabel.call(this, [
+				...hm.preset_outbound.direct,
+				...hm.loadLabelValues(this.config, 'proxy_group')
+			], section_id);
+		}
+		o.depends('hysteria2_realm', '1');
+		o.modalonly = true;
+	}
 
 	/* TLS fields */
 	o = s.taboption('field_general', form.Flag, 'tls', _('TLS'));

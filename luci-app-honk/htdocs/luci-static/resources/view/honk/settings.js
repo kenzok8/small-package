@@ -88,10 +88,10 @@ return view.extend({
 			networkSelect.appendChild(E('option', { 'value': '' }, _('No network interfaces found')));
 		section.appendChild(field(_('LAN network'), networkSelect));
 		section.appendChild(field(_('Listen port'), portInput));
-				section.appendChild(field(_('Enable Clash API and Zashboard'), clashEnabledInput));
+				section.appendChild(field(_('Enable Clash API'), clashEnabledInput));
 		section.appendChild(field(_('Clash API port'), clashPortInput));
 		section.appendChild(field(_('Clash API secret'), clashSecretInput));
-		section.appendChild(E('p', { 'class': 'honk-note' }, data.status && data.status.clash_api_secret_set ? _('A secret is set. Leave blank to keep it. Use your existing HTTPS reverse proxy for external access.') : _('A secret is required when enabling Clash API. Use 8–128 letters, numbers, dots, underscores or hyphens.')));
+		section.appendChild(E('p', { 'class': 'honk-note' }, data.status && data.status.clash_api_secret_set ? _('A secret is set. Leave blank to keep it. Use your existing HTTPS reverse proxy for external access.') : _('A secret is required when enabling Clash API. Use 6–128 letters, numbers, dots, underscores or hyphens.')));
 		section.appendChild(E('div', { 'class': 'cbi-page-actions' }, save));
 		section.appendChild(message);
 		section.addEventListener('submit', function(ev) {
@@ -116,7 +116,7 @@ return view.extend({
 				return;
 			}
 			if (clashEnabledInput.checked && clashSecret && !/^[A-Za-z0-9._-]{6,128}$/.test(clashSecret)) {
-				message.textContent = _('The secret must be 8-128 letters, numbers, dots, underscores or hyphens.');
+				message.textContent = _('The secret must be 6-128 letters, numbers, dots, underscores or hyphens.');
 				return;
 			}
 

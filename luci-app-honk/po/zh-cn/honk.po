@@ -1269,8 +1269,8 @@ msgstr "Zashboard 仍在下载或暂不可用。"
 msgid "The Clash API listener is unavailable. Check the service logs."
 msgstr "Clash API 监听不可用，请检查服务日志。"
 
-msgid "Enable Clash API and Zashboard"
-msgstr "启用 Clash API 和 Zashboard"
+msgid "Enable Clash API"
+msgstr "启用 Clash API"
 
 msgid "Clash API port"
 msgstr "Clash API 端口"
@@ -1299,7 +1299,7 @@ msgstr "启用 Clash API 时必须填写密钥，使用 6～128 位英文字母�
 msgid "The Clash API port is already in use."
 msgstr "Clash API 端口已被占用。"
 
-msgid "Enter a different Clash API port and a secret of 8–128 letters, numbers, dots, underscores or hyphens."
+msgid "Enter a different Clash API port and a secret of 6–128 letters, numbers, dots, underscores or hyphens."
 msgstr "请设置不同的 Clash API 端口，以及 6～128 位英文字母、数字、点、下划线或短横线组成的密钥。"
 
 msgid "Clash API port must be between 1024 and 65535."
@@ -1311,7 +1311,7 @@ msgstr "Clash API 端口不能和监听端口相同。"
 msgid "A secret is required when enabling Clash API."
 msgstr "启用 Clash API 时需要设置密钥。"
 
-msgid "The secret must be 8-128 letters, numbers, dots, underscores or hyphens."
+msgid "The secret must be 6-128 letters, numbers, dots, underscores or hyphens."
 msgstr "密钥需要 6～128 位，只能包含字母、数字、点、下划线或短横线。"
 
 msgid "Check configuration"

@@ -1420,6 +1420,84 @@ function getDashURL(isRunning) {
 		String.format(dashrepos_urlparams[repo] || '', host, port, secret)
 }
 
+function renderHy2Realm(s, uciconfig) {
+	let o;
+
+	o = s.taboption('field_general', form.Flag, 'hysteria2_realm', _('Realm'));
+	o.default = o.disabled;
+	o.depends('type', 'hysteria2');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_server_url', _('Rendezvous server'));
+	o.placeholder = 'https://realm.hy2.io';
+	o.rmempty = false;
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_token', _('Pre-shared key of rendezvous server'));
+	o.placeholder = 'public';
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_id', _('Realm ID'));
+	o.placeholder = 'my-cabin-1f3a8c2e9b';
+	o.rmempty = false;
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.DynamicList, 'hysteria2_realm_stun_servers', _('STUN servers'));
+	o.datatype = 'hostport';
+	o.default = ['stun.nextcloud.com:3478','stun.sip.us:3478','global.stun.twilio.com:3478'];
+	o.rmempty = false;
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	// @ 下面支持填写针对server-url的TLS配置(sni, skip-cert-verify, name-cert-verify, fingerprint, certificate, private-key, alpn)
+
+	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_sni', _('TLS SNI'),
+		_('Hostname that the client attempts to connect to at the start of the TLS handshake process.'));
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.DynamicList, 'hysteria2_realm_alpn', _('TLS ALPN'),
+		_('List of supported application level protocols, in order of preference.'));
+	o.default = ['h2', 'http/1.1'];
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_fingerprint', _('Cert fingerprint'),
+		_('Certificate fingerprint. Used to implement SSL Pinning and prevent MitM.'));
+	o.validate = validateSha256Key || hm.validateSha256Key;
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_name_cert_verify', _('Override cert DNSName'),
+		_('Used to verify the hostname on the returned certificates.'));
+	o.datatype = 'hostname';
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.Flag, 'hysteria2_realm_skip_cert_verify', _('Skip cert verify'),
+		_('Donot verifying server certificate.') +
+		'<br/>' +
+		_('This is <strong>DANGEROUS</strong>, your traffic is almost like <strong>PLAIN TEXT</strong>! Use at your own risk!'));
+	o.default = o.disabled;
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_cert_path', _('Certificate path') + _(' (mTLS)'),
+		_('The %s public key, in PEM format.').format(_('Client')));
+	o.value('/etc/fchomo/certs/client_publickey.pem');
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_key_path', _('Key path') + _(' (mTLS)'),
+		_('The %s private key, in PEM format.').format(_('Client')));
+	o.value('/etc/fchomo/certs/client_privatekey.pem');
+	o.depends({hysteria2_realm: '1', hysteria2_realm_cert_path: /.+/});
+	o.modalonly = true;
+}
+
 function renderResDownload(section_id) {
 	const section_type = this.section.sectiontype;
 	const type = uci.get(this.config, section_id, 'type');
@@ -1738,6 +1816,14 @@ function validateBase64Key(length, section_id, value) {
 	return true;
 }
 
+function validateSha256Key(section_id, value) {
+	if (!value)
+		return true;
+	if (!((value.length === 64) && (value.match(/^[0-9a-fA-F]+$/))))
+		return _('Expecting: %s').format(_('valid SHA256 string with %d characters').format(64));
+	return true;
+}
+
 function validateMTLSClientAuth(type_option, section_id, value) {
 	// If `client-auth-type` is set to "verify-if-given" or "require-and-verify", `client-auth-cert` must not be empty.
 	const auth_type = this.section.getOption(type_option).formvalue(section_id);
@@ -2021,6 +2107,7 @@ return baseclass.extend({
 	renderStatus,
 	updateStatus,
 	getDashURL,
+	renderHy2Realm,
 	renderResDownload,
 	renderResLink,
 	handleGenKey,
@@ -2037,9 +2124,9 @@ return baseclass.extend({
 	validateJson,
 	validateUUID,
 	validateUrl,
-	// validate with bind this
 	validateHexstr,
 	validateBase64Key,
+	validateSha256Key,
 	validateMTLSClientAuth,
 	validatePresetIDs,
 	validateShadowsocksPassword,

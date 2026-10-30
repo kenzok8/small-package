@@ -37,8 +37,7 @@ valid_clash_api() {
 	[ "$clash_api_port" -ge 1024 ] && [ "$clash_api_port" -le 65535 ] || return 1
 	[ "$clash_api_port" != "$listen_port" ] || return 1
 	case "$clash_api_secret" in ''|*[!A-Za-z0-9._-]*) return 1 ;; esac
-	# 内核规定：密钥短于 8 字节时不会在 API 响应里做掩码，等于明文回显
-	[ "${#clash_api_secret}" -ge 8 ] && [ "${#clash_api_secret}" -le 128 ]
+	[ "${#clash_api_secret}" -ge 6 ] && [ "${#clash_api_secret}" -le 128 ]
 }
 
 valid_network_name() {

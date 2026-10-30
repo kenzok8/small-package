@@ -323,13 +323,15 @@ export function parseListener(cfg) {
 			token: cfg.hysteria2_realm_token,
 			"realm-id": cfg.hysteria2_realm_id,
 			"stun-servers": cfg.hysteria2_realm_stun_servers,
-			// @TLS of server-url
-			//sni,
-			//alpn,
-			//"skip-cert-verify",
-			//fingerprint,
-			//certificate,
-			//"private-key"
+			// TLS of server-url
+			sni: cfg.hysteria2_realm_sni,
+			alpn: cfg.hysteria2_realm_alpn,
+			fingerprint: cfg.hysteria2_realm_fingerprint,
+			"name-cert-verify": cfg.hysteria2_realm_name_cert_verify,
+			"skip-cert-verify": strToBool(cfg.hysteria2_realm_skip_cert_verify),
+			certificate: cfg.hysteria2_realm_cert_path, // mTLS
+			"private-key": cfg.hysteria2_realm_key_path, // mTLS
+			proxy: cfg.hysteria2_realm_proxy // raw data need post-processing
 		} : null,
 
 		/* Hysteria2 Realmserver */

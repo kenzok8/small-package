@@ -1423,36 +1423,7 @@ return view.extend({
 		// @ 下面支持填写针对download-settings的上下行分离配置
 
 		/* Hysteria2 Realm fields */
-		so = ss.taboption('field_general', form.Flag, 'hysteria2_realm', _('Realm'));
-		so.default = so.disabled;
-		so.depends('type', 'hysteria2');
-		so.modalonly = true;
-
-		so = ss.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_server_url', _('Rendezvous server'));
-		so.placeholder = 'https://realm.hy2.io';
-		so.rmempty = false;
-		so.depends('hysteria2_realm', '1');
-		so.modalonly = true;
-
-		so = ss.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_token', _('Pre-shared key of rendezvous server'));
-		so.placeholder = 'public';
-		so.depends('hysteria2_realm', '1');
-		so.modalonly = true;
-
-		so = ss.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_id', _('Realm ID'));
-		so.placeholder = 'my-cabin-1f3a8c2e9b';
-		so.rmempty = false;
-		so.depends('hysteria2_realm', '1');
-		so.modalonly = true;
-
-		so = ss.taboption('field_hysteria2_realm', form.DynamicList, 'hysteria2_realm_stun_servers', _('STUN servers'));
-		so.datatype = 'hostport';
-		so.default = ['stun.nextcloud.com:3478','stun.sip.us:3478','global.stun.twilio.com:3478'];
-		so.rmempty = false;
-		so.depends('hysteria2_realm', '1');
-		so.modalonly = true;
-
-		// @ 下面支持填写针对server-url的TLS配置(sni, skip-cert-verify, name-cert-verify, fingerprint, certificate, private-key, alpn)
+		hm.renderHy2Realm(ss, data[0]);
 
 		/* TLS fields */
 		so = ss.taboption('field_general', form.Flag, 'tls', _('TLS'));
@@ -1491,7 +1462,7 @@ return view.extend({
 		so.validate = function(section_id, value) {
 			const type = this.section.getOption('type').formvalue(section_id);
 			//const plugin_type = this.section.getOption('plugin_type').formvalue(section_id);
-			let tls_alpn = this.section.getUIElement(section_id, 'tls_alpn');
+			let tls_alpn = this.getUIElement(section_id);
 
 			// Default alpn
 			if (!`${tls_alpn.getValue()}`) {
@@ -1535,14 +1506,7 @@ return view.extend({
 
 		so = ss.taboption('field_tls', form.Value, 'tls_fingerprint', _('Cert fingerprint'),
 			_('Certificate fingerprint. Used to implement SSL Pinning and prevent MitM.'));
-		so.validate = function(section_id, value) {
-			if (!value)
-				return true;
-			if (!((value.length === 64) && (value.match(/^[0-9a-fA-F]+$/))))
-				return _('Expecting: %s').format(_('valid SHA256 string with %d characters').format(64));
-
-			return true;
-		}
+		so.validate = hm.validateSha256Key;
 		so.depends({tls: '1', type: /^(http|socks5|vmess|vless|trojan|hysteria|hysteria2)$/});
 		so.modalonly = true;
 
