@@ -13,6 +13,8 @@ write_status() {
 	status_phase=$2
 	status_ok=$3
 	status_message=$4
+	# jshn 的布尔只认 1/0，传 "true" 会被写进状态文件成 false。
+	case "$status_ok" in true|1) status_ok=1 ;; *) status_ok=0 ;; esac
 	status_tmp=$job_dir/status.new
 	{
 		json_init
@@ -41,12 +43,15 @@ job_dir=$JOBS/$job_id
 write_status running preparing true preparing || exit 1
 : > "$job_dir/output" || exit 1
 chmod 0600 "$job_dir/output" || exit 1
+# stderr 单独存：混进 output 会让结果 JSON 解析失败，报成“操作失败”。
+: > "$job_dir/stderr" || exit 1
+chmod 0600 "$job_dir/stderr" || exit 1
 if [ "$operation" = update_apply ]; then
-	/usr/share/honk/update.sh apply > "$job_dir/output" 2>&1 &
+	/usr/share/honk/update.sh apply > "$job_dir/output" 2> "$job_dir/stderr" &
 elif [ "$operation" = update_check ]; then
-	/usr/share/honk/update.sh check > "$job_dir/output" 2>&1 &
+	/usr/share/honk/update.sh check > "$job_dir/output" 2> "$job_dir/stderr" &
 else
-	"$MAINT" "$operation" > "$job_dir/output" 2>&1 &
+	"$MAINT" "$operation" > "$job_dir/output" 2> "$job_dir/stderr" &
 fi
 maint_pid=$!
 logger -t honk-maintenance "$operation started" 2>/dev/null || :

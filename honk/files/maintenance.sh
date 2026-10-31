@@ -25,6 +25,8 @@ if [ "${HONK_MAINT_LIBRARY:-0}" != 1 ]; then
 	. /usr/share/honk/lock.sh || exit 1
 	. /usr/share/honk/lifecycle.sh || exit 1
 	. /usr/share/libubox/jshn.sh || exit 1
+	# lifecycle.sh 用 config_load/config_get 读模式，job 路径没有 rc.common 帮它加载。
+	[ -r /lib/functions.sh ] && . /lib/functions.sh
 fi
 
 json_result() {
@@ -693,6 +695,21 @@ parse_uci_file() {
 	[ "$u_initialized" = 1 ] || [ ! -f "$restore_stage/etc/honk/state/honk.db" ] || return 1
 }
 
+# 清订阅、节点、策略、历史与缓存，保留管理员记录和 geo 设置。
+purge_business_state() {
+	purge_db=$1
+	[ -f "$purge_db" ] && [ ! -L "$purge_db" ] || return 0
+	command -v sqlite3 >/dev/null 2>&1 || return 1
+	purge_sql='BEGIN IMMEDIATE;'
+	for purge_table in head revision subscription_body selector delay_sample dns_answer clash_state listener_secret; do
+		purge_exists=$(sqlite3 "$purge_db" "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='$purge_table';" 2>/dev/null) || return 1
+		[ "$purge_exists" = 1 ] || continue
+		purge_sql="$purge_sql DELETE FROM $purge_table;"
+	done
+	sqlite3 "$purge_db" "$purge_sql COMMIT; PRAGMA wal_checkpoint(TRUNCATE); VACUUM;" >/dev/null 2>&1 || return 1
+	check_sqlite "$purge_db"
+}
+
 archive_sqlite_check() {
 	db=$1
 	[ -f "$db" ] || return 0
@@ -1122,7 +1139,7 @@ reset_data() {
 	checkpoint_sqlite || { restore_abort sqlite_checkpoint_failed; return 1; }
 	rm -rf "$reset_stage/etc/honk" || { restore_abort reset_stage_failed; return 1; }
 	stage_reset_tree "$HONK_ROOT" "$reset_stage/etc/honk" "$reset_candidate/etc/honk/system.dae" /usr/share/honk/default-config.dae || { restore_abort reset_stage_failed; return 1; }
-	DAE_LOCATION_ASSET=/usr/share/v2ray "$HONK_CORE" --config "$reset_stage/etc/honk/config.dae" --data-dir "$reset_stage/etc/honk" admin reset-business --revision-root /etc/honk >/dev/null 2>&1 || { restore_abort state_reset_failed; return 1; }
+	purge_business_state "$reset_stage/etc/honk/state/honk.db" || { restore_abort state_reset_failed; return 1; }
 	reset_archive_state=absent
 	if [ -f "$reset_stage/etc/honk/state/honk.db" ]; then reset_archive_state=present; fi
 	if [ "$reset_archive_state" = present ]; then archive_sqlite_check "$reset_stage/etc/honk/state/honk.db" || { restore_abort state_reset_validation_failed; return 1; }; fi

@@ -31,6 +31,12 @@ GO_PKG_TAGS:=with_gvisor
 include $(INCLUDE_DIR)/package.mk
 include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
 
+define Build/Prepare
+	$(Build/Prepare/Default)
+	# rm unit test
+	rm -rf $(PKG_BUILD_DIR)/rules/logic_test
+endef
+
 define Package/mihomo
   SECTION:=net
   CATEGORY:=Network
@@ -40,13 +46,6 @@ define Package/mihomo
   PROVIDES:=mihomo
   ALTERNATIVES:=\
     100:/usr/bin/mihomo:/usr/libexec/mihomo-core
-  USERID:=mihomo=7890:mihomo=7890
-endef
-
-define Build/Prepare
-	$(Build/Prepare/Default)
-	# rm unit test
-	rm -f $(PKG_BUILD_DIR)/rules/logic_test/logic_test.go
 endef
 
 define Package/mihomo/install

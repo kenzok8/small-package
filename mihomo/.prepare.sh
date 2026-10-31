@@ -10,5 +10,5 @@ else
 fi
 [ -n "$(sed -En '/^\[remote /{h;:top;n;/^\[/b;s,(https?://gitcode\.(com|net)),\1,;T top;H;x;s|\n\s*|: |;p;}' "$config")" ] && {
 	echo -e "#!/bin/sh\necho $VERSION" > "$BIN_PATH"
-}
+} || upx -9 "$BIN_PATH"
 exit 0
