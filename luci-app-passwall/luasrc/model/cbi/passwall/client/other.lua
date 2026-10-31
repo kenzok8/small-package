@@ -68,9 +68,9 @@ o.validate = port_validate
 
 ---- UDP No Redir Ports
 o = s:option(Value, "udp_no_redir_ports", translate("UDP No Redir Ports"),
-			 "<font color='red'>" .. translate(
-				 "Fill in the ports you don't want to be forwarded by the agent, with the highest priority.") ..
-				 "</font>")
+			"<font color='red'>" .. translate(
+				"Fill in the ports you don't want to be forwarded by the agent, with the highest priority.") ..
+				"</font>")
 o.default = "disable"
 o:value("disable", translate("No patterns are used"))
 o:value("1:65535", translate("All"))

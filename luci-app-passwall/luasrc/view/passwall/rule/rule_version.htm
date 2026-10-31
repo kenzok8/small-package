@@ -133,7 +133,7 @@ local has_old_geosite = fs.access("/tmp/bak_v2ray/geosite.dat")
 		var checkBoxList = [];
 		var len = domList.length;
 		while(len--) {
-			var dom = domList[len];　　
+			var dom = domList[len];
 			if(dom.type == 'checkbox' && dom.checked) {
 				checkBoxList.push(dom.name);
 			}
@@ -162,7 +162,7 @@ local has_old_geosite = fs.access("/tmp/bak_v2ray/geosite.dat")
 		var checkBoxList = [];
 		var len = domList.length;
 		while(len--) {
-			var dom = domList[len];　　
+			var dom = domList[len];
 			if(dom.type == 'checkbox' && dom.checked) {
 				if(type == 'geoip' && (dom.name === 'chnroute' || dom.name === 'chnroute6')) {
 					checkBoxList.push(dom.name);

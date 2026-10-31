@@ -167,7 +167,7 @@ if load_urltest_options then -- [[ URLTest Start ]]
 	o = s:option(Flag, "urltest_interrupt_exist_connections", translate("Interrupt existing connections"))
 	o:depends({ protocol = "_urltest" })
 	o.default = "0"
-	o.description = translate("Interrupt existing connections when the selected outbound has changed.") 
+	o.description = translate("Interrupt existing connections when the selected outbound has changed.")
 end -- [[ URLTest End ]]
 
 if load_iface_options then -- [[ 自定义接口 Start ]]

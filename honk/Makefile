@@ -5,19 +5,19 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=honk
-PKG_VERSION:=2026.10.24
+PKG_VERSION:=2026.10.31
 PKG_RELEASE:=2
 
-# Pinned honk-core revision (Glassyiris/honk feat/native-api), cross-compiled by
+# Pinned honk-core revision (upstream daeuniverse/honk main), cross-compiled by
 # ci/build-core.sh. Every release run publishes its core archives under an
 # immutable source-<run_id> tag; the tag and SHA-256 values below are the exact
 # assets behind CORE_COMMIT, so a plain feed build downloads and verifies them
 # without any generated file. A staged run may still override them through
 # honk/generated-stage.mk, which is generated and never committed.
-CORE_COMMIT:=aebc0d78d567cac1cd74ee9c56674857c5441451
+CORE_COMMIT:=367a10da39a3f4ad2f86a083a20554c2468e45b0
 
 # Immutable source asset tag holding this pin's core archives.
-HONK_SOURCE_TAG?=source-41012758310
+HONK_SOURCE_TAG?=source-41166361394
 HONK_SOURCE_URL?=https://github.com/kenzok8/openwrt-honk/releases/download/$(HONK_SOURCE_TAG)
 
 -include $(CURDIR)/generated-stage.mk
@@ -25,9 +25,9 @@ HONK_SOURCE_URL?=https://github.com/kenzok8/openwrt-honk/releases/download/$(HON
 HONK_ASSET_X86_64?=honk-core-$(CORE_COMMIT)-x86_64.tar.gz
 HONK_ASSET_AARCH64?=honk-core-$(CORE_COMMIT)-aarch64.tar.gz
 HONK_ASSET_ARMV7?=honk-core-$(CORE_COMMIT)-armv7.tar.gz
-HONK_HASH_X86_64?=20293344e2b3eb287b793b1b34a58e11f04cd8100e03a38af4eedf7c0bb6e99b
-HONK_HASH_AARCH64?=3603497964db81622536f86b4c9352d3eb5492e3b4d28a39f4f4541a9d8391d1
-HONK_HASH_ARMV7?=334550d3c90a016b5b1f3b43137e11a2b76a13bfa4a75d24a67a9a198c962ccc
+HONK_HASH_X86_64?=4555020f830f2d1249b5ce98836b46268b046a8ba6f33977f8eb0ccac53dbdf1
+HONK_HASH_AARCH64?=3db5d9b5b4c7af9bcac3b7031bdd50758b7dd59324edf7963bda55210f32b9ca
+HONK_HASH_ARMV7?=00ccd1cc97a2a737762777791f0fdf81a18eca05117059d318d1117bfd958ca1
 
 # ARCH_PACKAGES is the package arch (e.g. arm_cortex-a7_neon-vfpv4);
 # ARCH is the CPU arch (x86_64/aarch64/arm) and coincides for 64-bit.
@@ -59,8 +59,9 @@ define Package/honk
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
   TITLE:=Honk transparent proxy core
-  URL:=https://github.com/Glassyiris/honk
-  DEPENDS:=@(x86_64||aarch64||arm) +ca-bundle +ip-full +ubus +kmod-sched-core +kmod-sched-bpf +kmod-veth +kmod-nft-queue +jsonfilter +jshn +sqlite3-cli +libubox +usign +coreutils-stat +v2ray-geoip +v2ray-geosite +@KERNEL_DEBUG_INFO_BTF
+  URL:=https://github.com/daeuniverse/honk
+  # 不直接依赖 libubox：包名带 ABI 日期戳，会锁死固件；脚本只用 jshn 提供的 jshn.sh。
+  DEPENDS:=@(x86_64||aarch64||arm) +ca-bundle +ip-full +ubus +kmod-sched-core +kmod-sched-bpf +kmod-veth +kmod-nft-queue +jsonfilter +jshn +sqlite3-cli +usign +coreutils-stat +v2ray-geoip +v2ray-geosite +@KERNEL_DEBUG_INFO_BTF
 endef
 
 define Package/honk/description

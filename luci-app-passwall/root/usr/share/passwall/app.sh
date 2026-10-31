@@ -1088,7 +1088,7 @@ start_dns() {
 	local ACL_RULE_DNSMASQ=0
 	for acl_section in $(uci show ${CONFIG} | grep "=acl_rule" | cut -d '.' -sf 2 | cut -d '=' -sf 1); do
 		if [ "$(config_n_get $acl_section enabled)" = "1" ] && \
-		   [ "$(config_n_get $acl_section dns_shunt)" = "dnsmasq" ]; then
+			[ "$(config_n_get $acl_section dns_shunt)" = "dnsmasq" ]; then
 			ACL_RULE_DNSMASQ=1
 			break
 		fi
@@ -1101,7 +1101,7 @@ start_dns() {
 			china_ng_local_dns=${LOCAL_DNS}
 			v2ray_local_dns="direct_dns_udp_server=${LOCAL_DNS}"
 		;;
-		tcp)	
+		tcp)
 			local DIRECT_DNS=$(normalize_dns "$(config_n_get @global[0] direct_dns 223.5.5.5:53)")
 			china_ng_local_dns="tcp://${DIRECT_DNS}"
 			v2ray_local_dns="direct_dns_tcp_server=${DIRECT_DNS}"

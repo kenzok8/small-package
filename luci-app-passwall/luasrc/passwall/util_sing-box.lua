@@ -2037,7 +2037,7 @@ function gen_config(var)
 		table.insert(dns.servers, remote_server)
 
 		fakedns_tag = "remote_fakeip"
-		if remote_dns_fake or inner_fakedns == "1" then		
+		if remote_dns_fake or inner_fakedns == "1" then
 			table.insert(dns.servers, {
 				tag = fakedns_tag,
 				type = "fakeip",
@@ -2178,7 +2178,7 @@ function gen_config(var)
 							local remote_dns_server = api.clone(remote_server)
 							remote_dns_server.tag = value.shunt_tag
 							local is_local = (remote_server.address and api.is_local_ip(remote_server.address)) or
-									 (remote_server.server and api.is_local_ip(remote_server.server))  --dns为本地ip，不走代理
+									(remote_server.server and api.is_local_ip(remote_server.server))  --dns为本地ip，不走代理
 							remote_dns_server.detour = is_local and "direct" or value.outboundTag
 							table.insert(dns.servers, remote_dns_server)
 							dns_rule.server = remote_dns_server.tag

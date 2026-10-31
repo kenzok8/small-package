@@ -31,6 +31,7 @@ start_service() {
 		return 1
 	}
 	"$HONK_CONTROL" preflight || return 1
+	"$HONK_CONTROL" local-direct || logger -t honk "local-direct sync skipped"
 	unset HONK_MAINT_CAP
 
 	if [ "$config_mode" = manual ]; then

@@ -696,9 +696,6 @@ msgstr "Honk 更新"
 msgid "Updates install the matching Honk core, LuCI, Doona assets, and Chinese translation as one package set."
 msgstr "更新会一次安装相互匹配的 Honk 核心、LuCI、Doona 资源和简体中文翻译包。"
 
-msgid "This target supports x86_64 on OpenWrt 25.12 using APK packages."
-msgstr "此目标支持 OpenWrt 25.12 x86_64 和 APK 软件包。"
-
 msgid "No trusted signed feed and compatibility manifest are configured, so no update is available."
 msgstr "尚未配置可信签名软件源和兼容性清单，因此目前没有可用更新。"
 

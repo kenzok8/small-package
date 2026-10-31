@@ -105,6 +105,47 @@ check_network() {
 	ubus call "network.interface.$lan_network" status >/dev/null 2>&1 || { fail "选择的 LAN 网络在 netifd 里不存在，请在服务设置里重新选择"; return 1; }
 }
 
+# 本机 LAN/WAN 设备地址（跳过链路本地），与 honk 的 local_direct_cidrs 对齐
+local_direct_addresses() {
+	list=''
+	. /lib/functions/network.sh
+	for net in "$lan_network" wan; do
+		network_get_device dev "$net" || continue
+		case "$dev" in ''|*[!A-Za-z0-9_.-]*) continue ;; esac
+		for addr in $(ip -o addr show dev "$dev" 2>/dev/null | awk '/inet6? / { split($4, a, "/"); print a[1] }'); do
+			case "$addr" in fe80:*|169.254.*) continue ;; esac
+			case "$addr" in ''|*[!0-9a-fA-F:.]*) continue ;; esac
+			[ "${#addr}" -le 45 ] || continue
+			case " $list " in *" $addr "*) continue ;; esac
+			list="${list:+$list, }$addr"
+		done
+	done
+	printf '%s\n' "$list"
+}
+
+# 把标记区块换成当前本机地址，honk 的 LAN self-protection 检查才认
+sync_local_direct() {
+	begin='    # honk:local-direct-begin'
+	end='    # honk:local-direct-end'
+	grep -qxF "$begin" /etc/honk/config.dae || return 0
+	grep -qxF "$end" /etc/honk/config.dae || return 0
+	ips=$(local_direct_addresses)
+	[ -n "$ips" ] && rule="    dip($ips) && !dport(53) -> direct(must)" || rule=''
+	# honk-core 只认 .dae 后缀，临时文件必须带它
+	temp=/etc/honk/.config.$$.dae
+	( umask 077; : > "$temp" ) || return 1
+	awk -v begin="$begin" -v end="$end" -v rule="$rule" '
+		$0 == begin { print; if (rule != "") print rule; skip = 1; next }
+		skip && $0 == end { print; skip = 0; next }
+		skip { next }
+		{ print }
+	' /etc/honk/config.dae > "$temp" || { rm -f "$temp"; return 1; }
+	cmp -s "$temp" /etc/honk/config.dae && { rm -f "$temp"; return 0; }
+	"$HONK_CORE" config validate --config "$temp" >/dev/null 2>&1 || { rm -f "$temp"; return 1; }
+	chmod 0600 "$temp"
+	mv -f "$temp" /etc/honk/config.dae || { rm -f "$temp"; return 1; }
+}
+
 check_config() {
 	[ "$config_file" = /etc/honk/config.dae ] || { fail "配置路径必须为 /etc/honk/config.dae"; return 1; }
 	[ -f /etc/honk/config.dae ] && [ ! -L /etc/honk/config.dae ] || { fail "/etc/honk/config.dae 不是普通文件（可能被替换成软链）"; return 1; }
@@ -923,6 +964,10 @@ case "$1" in
 	preflight)
 		prepare_runtime
 		;;
+	local-direct)
+		load_settings
+		sync_local_direct
+		;;
 	initialize)
 		initialize
 		;;
@@ -933,7 +978,7 @@ case "$1" in
 		repair
 		;;
 	*)
-		echo "usage: $0 {check|diagnose|preflight|initialize|settings|repair}" >&2
+		echo "usage: $0 {check|diagnose|preflight|local-direct|initialize|settings|repair}" >&2
 		exit 2
 		;;
 esac

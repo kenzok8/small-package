@@ -605,7 +605,7 @@ if CHNLIST == "proxy" then DEFAULT_TAG = "chn" end
 --全局模式，默认使用远程DNS
 if only_global then
 	DEFAULT_TAG = "gfw"
-	if NO_IPV6_TRUST == "1" and not IS_SHUNT_NODE then 
+	if NO_IPV6_TRUST == "1" and not IS_SHUNT_NODE then
 		table.insert(config_lines, "no-ipv6")
 	end
 end

@@ -625,7 +625,7 @@ local function encode_node(node)
 end
 
 function parseClashNode(raw, remark)
-	if not raw then return "" end 
+	if not raw then return "" end
 	domain_redir = {}
 	local ok, lyaml = pcall(require, "lyaml")
 	if not ok then return raw end

@@ -761,7 +761,7 @@ function add_rule(var)
 			server_out:close()
 			ipset_out:close()
 		end
-		
+
 		if not GEO_SUCCESS then new_text = "" end
 		local f_out = io.open(CACHE_TEXT_FILE, "a")
 		f_out:write(new_text)

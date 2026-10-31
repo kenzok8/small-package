@@ -886,17 +886,17 @@ function read_rulelist()
 end
 
 local backup_files = {
-    "/etc/config/passwall",
-    "/etc/config/passwall_server",
-    "/etc/passwall/rules/block_host",
-    "/etc/passwall/rules/block_ip",
-    "/etc/passwall/rules/direct_host",
-    "/etc/passwall/rules/direct_ip",
-    "/etc/passwall/rules/proxy_host",
-    "/etc/passwall/rules/proxy_ip",
-    "/etc/passwall/rules/lanlist_ipv4",
-    "/etc/passwall/rules/lanlist_ipv6",
-    "/etc/passwall/rules/domains_excluded"
+	"/etc/config/passwall",
+	"/etc/config/passwall_server",
+	"/etc/passwall/rules/block_host",
+	"/etc/passwall/rules/block_ip",
+	"/etc/passwall/rules/direct_host",
+	"/etc/passwall/rules/direct_ip",
+	"/etc/passwall/rules/proxy_host",
+	"/etc/passwall/rules/proxy_ip",
+	"/etc/passwall/rules/lanlist_ipv4",
+	"/etc/passwall/rules/lanlist_ipv6",
+	"/etc/passwall/rules/domains_excluded"
 }
 
 function create_backup()

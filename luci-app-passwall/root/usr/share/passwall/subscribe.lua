@@ -608,7 +608,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 		result.protocol = hostInfo[#hostInfo-3]
 		result.method = hostInfo[#hostInfo-2]
 		result.obfs = hostInfo[#hostInfo-1]
-		result.password = base64Decode(hostInfo[#hostInfo])	
+		result.password = base64Decode(hostInfo[#hostInfo])
 		local params = {}
 		for _, v in pairs(split(dat[2], '&')) do
 			local s = v:find("=", 1, true)
@@ -695,7 +695,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 
 		if not info.net then info.net = "tcp" end
 		info.net = string.lower(info.net)
-		if result.type == "sing-box" and info.net == "raw" then 
+		if result.type == "sing-box" and info.net == "raw" then
 			info.net = "tcp"
 		elseif result.type == "Xray" and info.net == "tcp" then
 			info.net = "raw"
@@ -962,7 +962,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 
 			if params.type then
 				params.type = string.lower(params.type)
-				if result.type == "sing-box" and params.type == "raw" then 
+				if result.type == "sing-box" and params.type == "raw" then
 					params.type = "tcp"
 				elseif result.type == "Xray" and params.type == "tcp" then
 					params.type = "raw"
@@ -1175,7 +1175,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 
 			if not params.type then params.type = "tcp" end
 			params.type = string.lower(params.type)
-			if result.type == "sing-box" and params.type == "raw" then 
+			if result.type == "sing-box" and params.type == "raw" then
 				params.type = "tcp"
 			elseif result.type == "Xray" and params.type == "tcp" then
 				params.type = "raw"
@@ -1302,7 +1302,7 @@ local function processData(szType, content, add_mode, group, sub_cfg)
 			if ({ xhttp=true, kcp=true, mkcp=true })[params.type] and result.type ~= "Xray" and has_xray then
 				result.type = "Xray"
 			end
-			if result.type == "sing-box" and params.type == "raw" then 
+			if result.type == "sing-box" and params.type == "raw" then
 				params.type = "tcp"
 			elseif result.type == "Xray" and params.type == "tcp" then
 				params.type = "raw"
@@ -2117,7 +2117,7 @@ local function update_node(manual)
 							uci_set(cfgid, "chain_proxy", "3")
 							uci_set(cfgid, "outbound_iface", outbound_iface_group)
 						end
-					end		
+					end
 				end
 			end
 		end

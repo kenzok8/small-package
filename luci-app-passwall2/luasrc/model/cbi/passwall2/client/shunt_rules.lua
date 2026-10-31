@@ -19,13 +19,13 @@ m.description = (m.description or "") .. [[
 <style>
 /* Scope to passwall2 CBI fields so it won't leak elsewhere */
 div[id^="cbid.passwall2."] .cbi-value-field {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1em;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1em;
 }
 div[id^="cbid.passwall2."] .cbi-checkbox {
-  display: inline-flex;
-  align-items: center;
+	display: inline-flex;
+	align-items: center;
 }
 </style>
 ]]

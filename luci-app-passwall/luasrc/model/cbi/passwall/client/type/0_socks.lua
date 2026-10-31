@@ -18,7 +18,7 @@ s.type_name = type_name
 s.option_prefix = "socks_"
 api.set_type_cbi(s)
 
-o = s:option(ListValue, "del_protocol", "¡¡") --Ê¼ÖÕÒş²Ø£¬ÓÃÓÚÉ¾³ı protocol
+o = s:option(ListValue, "del_protocol", "ã€€") --å§‹ç»ˆéšè—ï¼Œç”¨äºåˆ é™¤ protocol
 o:depends({ __hide = "1" })
 o.rewrite_option = "protocol"
 

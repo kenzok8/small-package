@@ -24,6 +24,9 @@ dns {
 
 routing {
     dip(224.0.0.0/3, 'ff00::/8') -> direct
+    # 路由器自身地址直连，管理面板不被代理；服务启动时按本机地址重写下面区块
+    # honk:local-direct-begin
+    # honk:local-direct-end
     dip(geoip: private) && !dport(53) -> direct(must)
     dip(geoip: cn) && !dport(53) -> direct(must)
     domain(geosite: cn) -> direct

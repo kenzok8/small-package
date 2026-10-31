@@ -172,7 +172,7 @@ o.validate = port_validate
 ---- UDP No Redir Ports
 local UDP_NO_REDIR_PORTS = m:get("@global_forwarding[0]", "udp_no_redir_ports")
 o = s:taboption("Proxy", Value, "udp_no_redir_ports", translate("UDP No Redir Ports"),
-	"<font color='red'>" .. 
+	"<font color='red'>" ..
 		translate("Fill in the ports you don't want to be forwarded by the agent, with the highest priority.") ..
 	"</font>")
 o:value("", translate("Use global config") .. "(" .. UDP_NO_REDIR_PORTS .. ")")

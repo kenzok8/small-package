@@ -5,18 +5,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-honk
-PKG_VERSION:=2026.10.30
+PKG_VERSION:=2026.10.31
 PKG_RELEASE:=1
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
-PKG_SOURCE:=doona-4493e8c3-cc20a8667745.tar.gz
+PKG_SOURCE:=doona-1eddb546-1f1bae5a57a2.tar.gz
 # Each package Makefile is evaluated on its own, so this tag is defined here too
 # instead of relying on the honk package's variable. It must match honk/Makefile:
 # scripts/check.sh enforces that.
-HONK_SOURCE_TAG?=source-41012758310
+HONK_SOURCE_TAG?=source-41166361394
 PKG_SOURCE_URL?=https://github.com/kenzok8/openwrt-honk/releases/download/$(HONK_SOURCE_TAG)
 PKG_SOURCE_SUBDIR:=doona
-PKG_HASH:=cc20a8667745965986f36531e0658033fccc6a3114183257573bc2b6677e2c5c
+PKG_HASH:=1f1bae5a57a2984dc35178a43668a477f9c046a392b91b6f4226cdff703bb17b
 
 -include $(CURDIR)/generated-doona-stage.mk
 
@@ -29,7 +29,7 @@ define Package/luci-app-honk
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:=LuCI support for Honk
-  DEPENDS:=+honk +rpcd +luci-base +cgi-io +jsonfilter +libubox
+  DEPENDS:=+honk +rpcd +luci-base +cgi-io +jsonfilter
   PKGARCH:=all
   URL:=https://github.com/kenzok8/openwrt-honk
   MAINTAINER:=kenzok8

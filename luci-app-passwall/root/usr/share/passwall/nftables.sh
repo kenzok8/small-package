@@ -197,20 +197,20 @@ insert_nftset() {
 			RS = "[ \t\n\r]+"
 			ORS = ""
 		}
-        $0 != "" {
-            if (!first) {
-                printf "add element %s %s { \n", t, n
+		$0 != "" {
+			if (!first) {
+				printf "add element %s %s { \n", t, n
 				first = 1
-            } else {
-                print ",\n"
-            }
-            printf " %s", $0
-        }
-        END {
-            if (first) {
-                print "\n }\n"
-            }
-        }' | nft -f -
+			} else {
+				print ",\n"
+			}
+			printf " %s", $0
+		}
+		END {
+			if (first) {
+				print "\n }\n"
+			}
+		}' | nft -f -
 }
 
 gen_nftset() {
@@ -300,7 +300,7 @@ load_acl() {
 			use_shunt_node=0
 			[ -n "$node" ] && [ "$(config_n_get $node protocol)" = "_shunt" ] && use_shunt_node=1
 
-			[ "${use_global_config}" = "1" ] && { 
+			[ "${use_global_config}" = "1" ] && {
 				if [ "$(config_get_type $NODE)" = "socks" ]; then
 					node_remark="Socks 配置($(config_n_get $NODE port) 端口)"
 				else
@@ -856,7 +856,7 @@ filter_node() {
 	local address=$(config_n_get "$node" address)
 	local port=$(config_n_get "$node" port)
 	local hop=$(config_n_get "$node" hysteria2_hop)
-	[ -n "$hop" ] && port="${port:+$port,}$hop" 
+	[ -n "$hop" ] && port="${port:+$port,}$hop"
 	[ -z "$address" ] && return 1
 	echo "$address" | grep -Eq "$EXCLUDE_VPSIP" && return 1
 	[ -z "$port" ] && return 1
@@ -954,7 +954,7 @@ add_firewall_rule() {
 	add_script_mwan3
 	mwan3_start
 	set_tproxy_sysctl
-	gen_nftset $NFTSET_WAN ipv4_addr 0 
+	gen_nftset $NFTSET_WAN ipv4_addr 0
 	gen_nftset $NFTSET_VPS ipv4_addr 0
 	gen_nftset $NFTSET_GFW ipv4_addr "2d"
 	gen_nftset $NFTSET_LOCAL ipv4_addr 0
@@ -976,7 +976,7 @@ add_firewall_rule() {
 	gen_nftset $NFTSET_SHUNT ipv4_addr "2d"
 	gen_nftset $NFTSET_SHUNT_STATIC ipv4_addr 0
 
-	gen_nftset $NFTSET_WAN6 ipv6_addr 0 
+	gen_nftset $NFTSET_WAN6 ipv6_addr 0
 	gen_nftset $NFTSET_VPS6 ipv6_addr 0
 	gen_nftset $NFTSET_GFW6 ipv6_addr "2d"
 	gen_nftset $NFTSET_LOCAL6 ipv6_addr 0
@@ -1502,7 +1502,7 @@ add_firewall_rule() {
 
 del_firewall_rule() {
 	for nft in "dstnat" "srcnat" "nat_output" "mangle_prerouting" "mangle_output"; do
-        local handles=$(nft -a list chain $NFTABLE_NAME ${nft} 2>/dev/null | grep -E "PSW_" | awk -F '# handle ' '{print$2}')
+		local handles=$(nft -a list chain $NFTABLE_NAME ${nft} 2>/dev/null | grep -E "PSW_" | awk -F '# handle ' '{print$2}')
 		for handle in $handles; do
 			nft delete rule $NFTABLE_NAME ${nft} handle ${handle} 2>/dev/null
 		done
