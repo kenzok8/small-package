@@ -2,4 +2,10 @@
 # 开机自启是内置行为：装上就 enable，是否真正启动由 honk.main.enabled 决定，
 # 不再提供单独的 boot_enabled 开关。
 /etc/init.d/honk enable
+
+# 配置模式已取消：只清遗留键，活动配置与启停状态一概不动。
+legacy_mode=$(uci -q get honk.main.config_mode 2>/dev/null)
+if [ -n "$legacy_mode" ]; then
+	uci -q delete honk.main.config_mode && uci -q commit honk
+fi
 exit 0

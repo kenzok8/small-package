@@ -81,8 +81,7 @@
 					"update_apply",
 					"config_read",
 					"config_draft_read",
-					"config_apply",
-					"config_use_managed"
+					"config_apply"
 				]
 			},
 			"file": {

@@ -25,7 +25,6 @@ if [ "${HONK_MAINT_LIBRARY:-0}" != 1 ]; then
 	. /usr/share/honk/lock.sh || exit 1
 	. /usr/share/honk/lifecycle.sh || exit 1
 	. /usr/share/libubox/jshn.sh || exit 1
-	# lifecycle.sh 用 config_load/config_get 读模式，job 路径没有 rc.common 帮它加载。
 	[ -r /lib/functions.sh ] && . /lib/functions.sh
 fi
 
@@ -445,7 +444,7 @@ load_uci_values() {
 	u_geo_auto=$(get_uci geo_auto 2>/dev/null || printf 0)
 	u_geo_auto_freq=$(get_uci geo_auto_freq 2>/dev/null || printf daily)
 	case "$u_enabled:$u_boot:$u_initialized" in 0:0:0|0:0:1|0:1:0|0:1:1|1:0:0|1:0:1|1:1:0|1:1:1) ;; *) return 1 ;; esac
-	case "$u_config_mode" in managed|manual) ;; *) return 1 ;; esac
+	case "$u_config_mode" in ''|managed|manual) ;; *) return 1 ;; esac
 	case "$u_geo_auto:$u_geo_auto_freq" in 0:daily|0:weekly|1:daily|1:weekly) ;; *) return 1 ;; esac
 	[ "$u_config" = /etc/honk/config.dae ] || return 1
 	case "$u_port" in ''|*[!0-9]*) return 1 ;; esac
@@ -541,7 +540,7 @@ validate_config_tree() {
 	main=$config_root/config.dae
 	system=$config_root/system.dae
 	[ -f "$main" ] && [ ! -L "$main" ] && [ -f "$system" ] && [ ! -L "$system" ] || return 1
-	if [ "$u_config_mode" = manual ]; then
+	if [ "$(config_owner "$main")" != system ]; then
 		"$HONK_CORE" config validate --config "$main" >/dev/null 2>&1 || return 2
 		find "$config_root" -type l -print 2>/dev/null | grep -q . && return 2
 		find "$config_root" ! -type f ! -type d -print 2>/dev/null | grep -q . && return 2
@@ -822,7 +821,7 @@ validate_candidate() {
 	config_tree=$candidate/etc/honk
 	mkdir -p "$temp_dir/uci-tmp" || return 1
 	load_uci_values uci "$uci_dir" || return 1
-	if [ "$u_config_mode" = manual ]; then
+	if [ "$(config_owner "$config_tree/config.dae")" != system ]; then
 		validate_config_tree "$config_tree" '' '' "$u_port" "$u_initialized" || return 2
 		if [ "$state" = present ] || { [ "$state" = preview ] && { [ -e "$config_tree/state/honk.db" ] || [ -L "$config_tree/state/honk.db" ]; }; }; then
 			archive_sqlite_check "$config_tree/state/honk.db" || return 1
@@ -1025,7 +1024,7 @@ restore() {
 	fi
 	[ "$old_running" != 1 ] || [ "$restore_initialized" = 1 ] || { error running_service_requires_initialized_restore; return 1; }
 	[ "$(sha_of "$RESTORE")" = "$archive_hash" ] || { error restore_archive_changed; return 1; }
-	if [ "$u_config_mode" = managed ]; then
+	if [ "$(config_owner "$restore_stage/etc/honk/config.dae")" = system ]; then
 		write_live_system "$restore_stage/etc/honk/system.dae" "$candidate_device" "$candidate_ip" "$u_port" "$restore_initialized" || { error system_config_render_failed; return 1; }
 		chmod 0600 "$restore_stage/etc/honk/system.dae" || { error system_config_render_failed; return 1; }
 	fi
@@ -1107,7 +1106,7 @@ reset_data() {
 	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" import honk < "$temp_dir/old-uci" || { error reset_profile_stage_failed; return 1; }
 	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" set honk.main.enabled=0 || { error reset_profile_stage_failed; return 1; }
 	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" set honk.main.boot_enabled=0 || { error reset_profile_stage_failed; return 1; }
-	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" set honk.main.config_mode=managed || { error reset_profile_stage_failed; return 1; }
+	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" delete honk.main.config_mode >/dev/null 2>&1 || :
 	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" set honk.main.listen_port=9527 || { error reset_profile_stage_failed; return 1; }
 	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" set honk.main.lan_network=lan || { error reset_profile_stage_failed; return 1; }
 	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" set honk.main.clash_api_enabled=0 || { error reset_profile_stage_failed; return 1; }

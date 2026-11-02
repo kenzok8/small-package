@@ -69,16 +69,13 @@ return view.extend({
 
 		section.appendChild(E('h3', { 'class': 'honk-card-title' }, _('Honk settings')));
 
-		/* In manual mode the whole runtime comes from config.dae, so the backend
-		   refuses these settings. Disable them instead of letting the save fail
-		   with an error the user cannot act on. */
-		const manualMode = !!(data.status && data.status.config_mode === 'manual');
-		if (manualMode) {
+		/* 配置自带 global/experimental 时这些值归文件，后端会拒绝写入。 */
+		const owner = (data.status && data.status.settings_owner) || 'unknown';
+		if (owner !== 'system') {
 			[ networkSelect, portInput, clashEnabledInput, clashPortInput, clashSecretInput ].forEach(function(input) {
 				input.disabled = true;
 			});
 			save.disabled = true;
-			section.appendChild(E('p', { 'class': 'honk-note honk-mode-hint' }, _('Manual mode: these settings belong to config.dae, so they are read-only here. Restore managed mode on the Configuration page to change them.')));
 		}
 		if (data.statusError)
 			section.appendChild(E('div', { 'class': 'alert-message' }, _('Could not read current settings: %s').format(data.statusError)));

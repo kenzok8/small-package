@@ -498,7 +498,7 @@ return view.extend({
 		so.value('redir', _('Redirect TCP'));
 		if (features.has_tproxy)
 			so.value('redir_tproxy', _('Redirect TCP + TProxy UDP'));
-		if (features.has_ip_full && features.has_tun) {
+		if (features.has_tun) {
 			so.value('redir_tun', _('Redirect TCP + Tun UDP'));
 			so.value('tun', _('Tun TCP/UDP'));
 		} else

@@ -24,6 +24,25 @@ function isHttpUrl(value) {
 	}
 }
 
+/* 导入完整配置前要让人看清会替换掉哪些段落：按候选文件里实际出现的顶层块列。 */
+const SCOPE_LABELS = {
+	node: 'nodes', subscription: 'subscriptions', group: 'groups',
+	routing: 'routing', dns: 'DNS', global: 'global settings',
+	experimental: 'API and UI settings', include: 'included files'
+};
+function describeConfigScope(text) {
+	const found = [];
+	String(text || '').split('\n').forEach(function(line) {
+		const block = /^([A-Za-z_]+)[ \t]*\{/.exec(line);
+		if (!block || !SCOPE_LABELS[block[1]])
+			return;
+		const label = _(SCOPE_LABELS[block[1]]);
+		if (found.indexOf(label) < 0)
+			found.push(label);
+	});
+	return found.length ? found.join(' · ') : _('no recognised sections');
+}
+
 function loadYamlParser() {
 	if (window.jsyaml && window.jsyaml.load)
 		return Promise.resolve(window.jsyaml);
@@ -93,13 +112,26 @@ return view.extend({
 
 		const page = E('div', { 'class': 'cbi-map honk-page' });
 		page.appendChild(E('div', { 'class': 'honk-header' }, [
-			E('h2', {}, _('Configuration')),
-			E('p', { 'class': 'honk-header-sub' }, _('Honk reads its nodes, subscriptions and routing from /etc/honk/config.dae.'))
+			E('h2', {}, _('Configuration'))
 		]));
 
-		const modeText = E('span', {}, '');
-		const modeNote = E('p', { 'class': 'honk-note honk-mode-note' }, [ modeText ]);
-		page.appendChild(modeNote);
+		const draftNote = E('div', { 'class': 'honk-note honk-draft-note' });
+		draftNote.hidden = true;
+		page.appendChild(E('section', { 'class': 'honk-card honk-config-hero' }, [
+			E('p', { 'class': 'honk-hero-eyebrow' }, _('Configuration management')),
+			E('p', { 'class': 'honk-hero-lead' }, _('Add subscriptions and nodes, or import and edit a complete configuration.')),
+			E('p', { 'class': 'honk-hero-points' }, _('Append keeps your rules · validated before applying · rolled back when startup fails')),
+			E('details', { 'class': 'honk-hero-details' }, [
+				E('summary', {}, _('Read before use')),
+				E('ul', {}, [
+					E('li', {}, _('Subscriptions and nodes must use a protocol Honk supports; SSR is not supported.')),
+					E('li', {}, _('For a complete configuration, check lan_interface and the group names against your nodes.')),
+					E('li', {}, _('Importing a complete configuration replaces the current one; back it up first, startup failures roll back.')),
+					E('li', {}, _('In the editor, checking only parses; a draft stays inactive until you save and apply.'))
+				])
+			]),
+			draftNote
+		]));
 
 		/* --- Add subscription --- */
 		const subStatus = E('p', { 'class': 'honk-note', 'role': 'status', 'aria-live': 'polite' }, '');
@@ -136,12 +168,18 @@ return view.extend({
 			}).finally(function() { subBtn.disabled = false; });
 		});
 
-		const subModeHint = E('p', { 'class': 'honk-note honk-mode-hint' }, _('Manual mode: this tool is disabled until you restore managed mode (link at the top).'));
-		subModeHint.hidden = true;
+		nameInput.id = 'honk-sub-name';
+		urlInput.id = 'honk-sub-url';
 		const subSection = E('section', { 'class': 'honk-card' }, [
-			E('p', { 'class': 'honk-note' }, _('Enter a name and subscription URL. Honk checks for usable nodes before saving.')),
-			subModeHint,
-			E('div', { 'class': 'honk-subscription-add' }, [ nameInput, urlInput, subBtn ]),
+			E('div', { 'class': 'honk-form-row' }, [
+				E('label', { 'class': 'honk-form-label', 'for': 'honk-sub-name' }, _('Name')),
+				E('div', { 'class': 'honk-form-field' }, [ nameInput ])
+			]),
+			E('div', { 'class': 'honk-form-row' }, [
+				E('label', { 'class': 'honk-form-label', 'for': 'honk-sub-url' }, _('Subscription URL')),
+				E('div', { 'class': 'honk-form-field' }, [ urlInput ])
+			]),
+			E('div', { 'class': 'honk-form-actions' }, [ subBtn ]),
 			subStatus
 		]);
 
@@ -273,11 +311,7 @@ return view.extend({
 			}).finally(function() { pasteBtn.disabled = false; });
 		});
 
-		const pasteModeHint = E('p', { 'class': 'honk-note honk-mode-hint' }, _('Manual mode: this tool is disabled until you restore managed mode (link at the top).'));
-		pasteModeHint.hidden = true;
 		const pasteSection = E('section', { 'class': 'honk-card' }, [
-			E('p', { 'class': 'honk-note' }, _('Paste Clash YAML, Surge INI, Base64 or share links. They are parsed locally into nodes and appended to /etc/honk/config.dae.')),
-			pasteModeHint,
 			pasteInput,
 			E('div', { 'class': 'honk-actions' }, [ pasteBtn ]),
 			pasteStatus
@@ -297,7 +331,6 @@ return view.extend({
 		const importBtn = E('button', { 'class': 'cbi-button cbi-button-apply', 'type': 'button' }, [ _('Import and start') ]);
 
 		const importSection = E('section', { 'class': 'honk-card' }, [
-			E('p', { 'class': 'honk-note' }, _('Upload a complete dae file (subscriptions, nodes and routing included) and Honk starts with it: the file is validated, written to /etc/honk/config.dae and the service is restarted. To hand-edit or paste instead, use the editor below.')),
 			E('div', { 'class': 'honk-file-row' }, [ filePick, fileName, importBtn ]),
 			importStatus
 		]);
@@ -309,11 +342,8 @@ return view.extend({
 			'spellcheck': 'false', 'wrap': 'off', 'aria-label': _('Full dae configuration')
 		});
 		const saveBtn = E('button', { 'class': 'cbi-button cbi-button-positive', 'type': 'button' }, [ _('Save and apply') ]);
-		const reloadBtn = E('button', { 'class': 'cbi-button', 'type': 'button' }, [ _('Reload from disk') ]);
+		const draftBtn = E('button', { 'class': 'cbi-button', 'type': 'button' }, [ _('Save draft') ]);
 		const validateBtn = E('button', { 'class': 'cbi-button cbi-button-link', 'type': 'button' }, [ _('Check configuration') ]);
-		const managedBtn = E('a', { 'href': '#', 'class': 'honk-inline-link', 'role': 'button' }, [ _('Restore managed mode') ]);
-		managedBtn.hidden = true;
-		modeNote.appendChild(managedBtn);
 
 		let editorBaseline = '';
 
@@ -608,39 +638,9 @@ return view.extend({
 				/* A failed apply rolls the file back, so reload what is really on
 				   disk — but keep the outcome message the user needs to read. */
 				const outcome = target.textContent;
-				return refreshMode().then(function() {
-					return loadCurrent(outcome === editorStatus.textContent ? outcome : '', true).catch(function() {});
-				});
-			});
-		}
-
-		function refreshMode() {
-			return honk.status().then(function(status) {
-				const manual = !!status && status.config_mode === 'manual';
-				managedBtn.hidden = !manual;
-				const tabState = page._honkTabs;
-				if (tabState) {
-					tabState.tabs.forEach(function(tab) {
-						const disabled = manual && tab.managedOnly;
-						tab.button.disabled = disabled;
-						tab.panel.hidden = tab.id !== tabState.getActive();
-					});
-					if (manual && ['sub', 'nodes'].indexOf(tabState.getActive()) >= 0)
-						tabState.select('edit');
-				}
-				subModeHint.hidden = !manual;
-				pasteModeHint.hidden = !manual;
-				subBtn.disabled = manual;
-				pasteBtn.disabled = manual;
-				nameInput.disabled = manual;
-				urlInput.disabled = manual;
-				pasteInput.disabled = manual;
-				modeText.textContent = manual
-					? _('Manual mode: the file below owns nodes, groups, routing and DNS.')
-					: _('Managed mode: the subscription and paste-nodes tools are active. Saving here switches Honk to manual mode.');
-				return status;
-			}).catch(function() {
-				modeText.textContent = '';
+				return loadCurrent(outcome === editorStatus.textContent ? outcome : '', true)
+					.then(renderDraftNote)
+					.catch(function() {});
 			});
 		}
 
@@ -689,6 +689,8 @@ return view.extend({
 					}
 					if (plan.notes.length)
 						setEditorContent(plan.text, _('Adapted in the editor: %s').format(plan.notes.join('; ')));
+					if (!confirm(_('This file replaces the current configuration.\n\nIt defines: %s\n\nBack up the current configuration first if you are unsure. Continue?').format(describeConfigScope(editor.value))))
+						return null;
 					return applyContent(editor.value, importStatus).then(function() {
 						if (importStatus.textContent === _('Configuration applied and Honk is running.'))
 							importStatus.textContent = _('%s imported and Honk is running.').format(file.name);
@@ -697,15 +699,6 @@ return view.extend({
 			}).catch(function(error) {
 				importStatus.textContent = honk.errorMessage(error, _('Could not read the configuration file.'));
 			}).finally(function() { importBtn.disabled = false; });
-		});
-
-		reloadBtn.addEventListener('click', function(ev) {
-			ev.preventDefault();
-			if (!confirmEditorReplace()) return;
-			reloadBtn.disabled = true;
-			loadCurrent(null, true).catch(function(error) {
-				editorStatus.textContent = honk.errorMessage(error, _('Could not read the saved configuration.'));
-			}).finally(function() { reloadBtn.disabled = false; });
 		});
 
 		validateBtn.addEventListener('click', function(ev) {
@@ -727,40 +720,88 @@ return view.extend({
 			adaptEditor().then(function(proceed) {
 				if (!proceed) { editorStatus.textContent = _('Save cancelled.'); return null; }
 				return applyContent(editor.value, editorStatus);
-			}).finally(function() { saveBtn.disabled = false; });
+			}).finally(function() {
+				saveBtn.disabled = false;
+				renderDraftNote();
+			});
 		});
 
-		managedBtn.addEventListener('click', function(ev) {
+		/* 草稿只备份到 /etc/honk/config-draft.dae：不动活动配置，也不重启服务。 */
+		draftBtn.addEventListener('click', function(ev) {
 			ev.preventDefault();
-			if (!confirm(_('Restore the managed configuration and return to the subscription tools? Honk restarts if it is running.'))) return;
-			managedBtn.disabled = true;
-			editorStatus.textContent = _('Restoring the managed configuration…');
-			withLongTimeout(function() { return honk.configUseManaged().then(honk.ensureOk); }).then(function(result) {
-				editorStatus.textContent = honk.resultMessage(result, _('Managed mode restored.'));
-				return refreshMode().then(function() { return loadCurrent(null, true); });
+			if (!editor.value.trim()) { editorStatus.textContent = _('The editor is empty.'); return; }
+			draftBtn.disabled = true;
+			editorStatus.textContent = _('Saving draft…');
+			honk.configSave(editor.value).then(function(result) {
+				editorStatus.textContent = isOk(result)
+					? _('Draft saved. It is not active until you apply it.')
+					: validationText(result);
+				return renderDraftNote();
 			}).catch(function(error) {
-				editorStatus.textContent = honk.errorMessage(error, _('Could not restore managed mode.'));
-			}).finally(function() { managedBtn.disabled = false; });
+				editorStatus.textContent = honk.errorMessage(error, _('Could not save the draft.'));
+			}).finally(function() { draftBtn.disabled = false; });
 		});
 
 		const editorSection = E('section', { 'class': 'honk-card' }, [
-			E('p', { 'class': 'honk-note' }, _('Edit or paste a complete dae file. Check configuration only parses the text; Save and apply writes /etc/honk/config.dae, restarts Honk, and rolls back if startup fails.')),
-			E('div', { 'class': 'honk-subscription-add' }, [ saveBtn, reloadBtn, validateBtn ]),
+			E('div', { 'class': 'honk-actions' }, [ saveBtn, draftBtn, validateBtn ]),
 			editor,
 			editorStatus
 		]);
 
+		/* 草稿提示：只提示存在与差异，载入必须由用户明确点击。 */
+		function draftButton(label, source) {
+			const button = E('button', { 'class': 'cbi-button cbi-button-link', 'type': 'button' }, [ label ]);
+			button.addEventListener('click', function(ev) {
+				ev.preventDefault();
+				loadDraft(source);
+			});
+			return button;
+		}
+
+		function renderDraftNote() {
+			return honk.status().then(function(status) {
+				const parts = [];
+				if (status && status.draft_pending) {
+					parts.push(E('span', {}, _('An unapplied draft exists.')));
+					parts.push(draftButton(_('Load draft'), 'draft'));
+				}
+				if (status && status.legacy_draft) {
+					parts.push(E('span', {}, _('An old manual draft from a previous version is kept on disk.')));
+					parts.push(draftButton(_('Load old draft'), 'legacy'));
+				}
+				draftNote.textContent = '';
+				if (!parts.length) {
+					draftNote.hidden = true;
+					return status;
+				}
+				draftNote.hidden = false;
+				parts.forEach(function(node) { draftNote.appendChild(node); });
+				return status;
+			}).catch(function() {
+				draftNote.hidden = true;
+			});
+		}
+
+		function loadDraft(source) {
+			if (!confirmEditorReplace()) return;
+			honk.configDraftRead(source).then(honk.ensureOk).then(function(result) {
+				setEditorContent(result.content || '', _('Draft loaded into the editor. It is not active until you apply it.'));
+			}).catch(function(error) {
+				editorStatus.textContent = honk.errorMessage(error, _('Could not read the draft.'));
+			});
+		}
+
 		loadCurrent().catch(function(error) {
 			editorStatus.textContent = honk.errorMessage(error, _('Could not read the saved configuration.'));
 		});
-		refreshMode();
+		renderDraftNote();
 
 		/* 一排标签页，只显示当前板块：四张卡片竖着堆太占屏，也不好一眼看出"有几种做法"。 */
 		const tabs = [
-			{ id: 'sub', label: _('Add subscription'), panel: subSection, managedOnly: true },
-			{ id: 'nodes', label: _('Add nodes'), panel: pasteSection, managedOnly: true },
-			{ id: 'import', label: _('Import config'), panel: importSection, managedOnly: false },
-			{ id: 'edit', label: _('Edit config'), panel: editorSection, managedOnly: false }
+			{ id: 'sub', label: _('Add subscription'), panel: subSection },
+			{ id: 'nodes', label: _('Add nodes'), panel: pasteSection },
+			{ id: 'import', label: _('Import config'), panel: importSection },
+			{ id: 'edit', label: _('Edit config'), panel: editorSection }
 		];
 		let activeTab = 'sub';
 		const tabBar = E('div', { 'class': 'honk-seg honk-tabs', 'role': 'tablist' });
@@ -791,8 +832,6 @@ return view.extend({
 		tabs.forEach(function(tab) { page.appendChild(tab.panel); });
 		selectTab(activeTab);
 
-		/* 曝光给 refreshMode：手动模式下订阅/节点两个标签不可用，自动切到编辑配置。 */
-		page._honkTabs = { tabs: tabs, select: selectTab, getActive: function() { return activeTab; } };
 		return page;
 	}
 });

@@ -22,13 +22,13 @@ load_settings() {
 	config_get_bool enabled main enabled 0
 	config_get_bool boot_enabled main boot_enabled 0
 	config_get_bool initialized main initialized 0
-	config_get config_mode main config_mode managed
 	config_get config_file main config_file /etc/honk/config.dae
 	config_get listen_port main listen_port 9527
 	config_get_bool clash_api_enabled main clash_api_enabled 0
 	config_get clash_api_port main clash_api_port 9090
 	config_get clash_api_secret main clash_api_secret ''
 	config_get lan_network main lan_network lan
+	settings_owner=$(config_owner "$config_file")
 }
 
 valid_clash_api() {
@@ -149,17 +149,11 @@ sync_local_direct() {
 check_config() {
 	[ "$config_file" = /etc/honk/config.dae ] || { fail "配置路径必须为 /etc/honk/config.dae"; return 1; }
 	[ -f /etc/honk/config.dae ] && [ ! -L /etc/honk/config.dae ] || { fail "/etc/honk/config.dae 不是普通文件（可能被替换成软链）"; return 1; }
-	case "$config_mode" in
-		manual)
-			"$HONK_CORE" config validate --config /etc/honk/config.dae >/dev/null || { fail "手动模式的 config.dae 未通过静态校验，请先修正配置"; return 1; }
-			return 0
-			;;
-		managed) ;;
-		*) fail "配置模式取值非法（应为 managed 或 manual）"; return 1 ;;
-	esac
+	"$HONK_CORE" config validate --config /etc/honk/config.dae >/dev/null || { fail "config.dae 未通过静态校验，请先修正配置"; return 1; }
+	[ -r /usr/share/doona/index.html ] || { fail "缺少 Doona 静态文件（/usr/share/doona/index.html），请重新安装 luci-app-honk"; return 1; }
+	[ "$settings_owner" = system ] || return 0
 	[ -f /etc/honk/system.dae ] && [ ! -L /etc/honk/system.dae ] || { fail "/etc/honk/system.dae 不是普通文件（可能被替换成软链）"; return 1; }
 	system_config_readonly || { fail "/etc/honk/system.dae 权限不对，应为 0600"; return 1; }
-	[ -r /usr/share/doona/index.html ] || { fail "缺少 Doona 静态文件（/usr/share/doona/index.html），请重新安装 luci-app-honk"; return 1; }
 	case "$listen_port" in
 		''|*[!0-9]*) fail "监听端口必须是数字"; return 1 ;;
 	esac
@@ -276,13 +270,14 @@ lock_owner_invalid() {
 preflight() {
 	load_settings
 	[ "$enabled" = 1 ] && [ "$initialized" = 1 ] || { fail "请先在 LuCI 里启用并完成初始化"; return 1; }
-	if [ "$config_mode" = manual ]; then
-		maintenance_start_guard && check_config && check_kernel && no_honk_resources && check_conflicts
+	# 只有 system.dae 负责这些字段时才检查 UCI 端口与网络；完整配置自行定义时不碰。
+	if [ "$settings_owner" = system ]; then
+		maintenance_start_guard && check_config && check_network && check_kernel && no_honk_resources && check_conflicts && check_port && {
+			[ "$clash_api_enabled" = 0 ] || check_port "$clash_api_port"
+		}
 		return $?
 	fi
-	maintenance_start_guard && check_config && check_network && check_kernel && no_honk_resources && check_conflicts && check_port && {
-		[ "$clash_api_enabled" = 0 ] || check_port "$clash_api_port"
-	}
+	maintenance_start_guard && check_config && check_kernel && no_honk_resources && check_conflicts
 }
 
 prepare_runtime() {
@@ -454,7 +449,7 @@ settings_rollback() {
 settings() {
 	if [ -e /etc/.honk-update/journal ] || [ -L /etc/.honk-update/journal ]; then echo '{"ok":false,"message":"update_recovery_required"}'; return 1; fi
 	load_settings
-	[ "$config_mode" = manual ] && { echo '{"ok":false,"message":"settings_unavailable_in_manual_mode"}'; return 1; }
+	[ "$settings_owner" = system ] || { echo '{"ok":false,"message":"config_settings_owned_by_file"}'; return 1; }
 	. /usr/share/libubox/jshn.sh || { echo '{"ok":false,"message":"jshn_unavailable"}'; return 1; }
 	# Bound stdin to 64KiB (DoS protection); read one extra byte to detect truncation.
 	settings_json=$(head -c 65537)
@@ -600,7 +595,7 @@ diagnose() {
 	managed_core_pid >/dev/null 2>&1 && running=1 || running=0
 	check_config >/dev/null 2>&1 || errors="$errors invalid_package_config"
 	check_kernel >/dev/null 2>&1 || errors="$errors kernel_requirements_unmet"
-	if [ "$config_mode" = manual ]; then
+	if [ "$settings_owner" != system ]; then
 		if [ "$running" != 1 ]; then
 			no_honk_resources >/dev/null 2>&1 || errors="$errors honk_resources_occupied"
 			pidof honk-core >/dev/null 2>&1 && errors="$errors unmanaged_core_running"
@@ -659,9 +654,9 @@ clash_system_matches() {
 repair() {
 	if [ -e /etc/.honk-update/journal ] || [ -L /etc/.honk-update/journal ]; then echo '{"ok":false,"message":"update_recovery_required"}'; return 1; fi
 	load_settings
-	if [ "$config_mode" = manual ]; then
-		check_config && { echo '{"ok":true,"message":"manual_config_valid"}'; return 0; }
-		echo '{"ok":false,"message":"manual_config_invalid"}'
+	if [ "$settings_owner" != system ]; then
+		check_config && { echo '{"ok":true,"message":"config_valid"}'; return 0; }
+		echo '{"ok":false,"message":"config_invalid"}'
 		return 1
 	fi
 	old_network=$lan_network
@@ -675,7 +670,7 @@ repair() {
 	[ "$config_file" = /etc/honk/config.dae ] || { echo '{"ok":false,"message":"invalid_config_path"}'; return 1; }
 	[ -f /etc/honk/config.dae ] && [ ! -L /etc/honk/config.dae ] || { echo '{"ok":false,"message":"main_config_unavailable"}'; return 1; }
 	main_hash=$(sha256sum /etc/honk/config.dae | awk '{print $1}')
-	main_has_system_include || { echo '{"ok":false,"message":"required_system_include_missing_manual_repair"}'; return 1; }
+	main_has_system_include || { echo '{"ok":false,"message":"required_system_include_missing"}'; return 1; }
 	valid_network_name || { echo '{"ok":false,"message":"invalid_lan_network"}'; return 1; }
 	case "$listen_port" in ''|*[!0-9]*) echo '{"ok":false,"message":"invalid_listen_port"}'; return 1 ;; esac
 	[ "$listen_port" -ge 1024 ] && [ "$listen_port" -le 65535 ] || { echo '{"ok":false,"message":"invalid_listen_port"}'; return 1; }

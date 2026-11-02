@@ -26,6 +26,34 @@ esac
 LOCK="/tmp/luci-app-honk.pkg-${PKG}.lock"
 LOG="/tmp/luci-app-honk.pkg-${PKG}.log"
 
+. /usr/share/honk/lifecycle.sh 2>/dev/null || :
+
+# 运行状态与恢复交给 lifecycle：它已经处理 dae0/BPF 排空、崩溃重启和就绪判定。
+service_running() {
+	honk_lifecycle_managed_pid >/dev/null 2>&1
+}
+
+restore_service_state() {
+	if [ "$was_running" = 1 ]; then
+		echo "--- 升级前为运行状态，重启加载新内核 ---"
+		if honk_lifecycle_restart 30 >/dev/null 2>&1; then
+			echo "result: 服务已恢复运行"
+			return 0
+		fi
+		echo "result: 服务重启失败"
+		return 1
+	fi
+	if service_running; then
+		echo "--- 升级前为停止状态，停止服务 ---"
+		honk_lifecycle_stop 30 >/dev/null 2>&1 || {
+			echo "result: 服务停止或资源排空失败"
+			return 1
+		}
+	fi
+	echo "result: 服务保持停止"
+	return 0
+}
+
 if [ -f "$LOCK" ]; then
 	mtime=$(date -r "$LOCK" +%s 2>/dev/null || echo 0)
 	age=$(( $(date +%s) - mtime ))
@@ -46,6 +74,9 @@ fi
 	trap 'rm -f "$LOCK"; [ "${0#/tmp/.honk-upd-}" != "$0" ] && rm -f "$0"' EXIT INT TERM
 
 	echo "$(date '+%F %T') begin upgrade: $PKG"
+	was_running=0
+	service_running && was_running=1
+	echo "升级前服务状态: $([ "$was_running" = 1 ] && echo 运行中 || echo 已停止)"
 
 	if command -v apk >/dev/null 2>&1; then
 		(
@@ -85,11 +116,20 @@ fi
 		exit 3
 	fi
 
-	if [ "$rc" = 0 ]; then echo "$(date '+%F %T') ✓ 完成"; else echo "$(date '+%F %T') ✗ 失败 (rc=$rc)"; fi
-
-	if [ "$PKG" = "luci-app-honk" ] && [ "$rc" = "0" ]; then
-		echo "reloading rpcd to pick up new ACL"
+	service_rc=0
+	if [ "$rc" = "0" ]; then
+		echo "reloading rpcd to pick up new scripts"
 		/etc/init.d/rpcd reload 2>&1
+		restore_service_state || service_rc=$?
+	fi
+
+	# 前端轮询见到 ✓/✗ 即停止，结论只在这里输出一次。
+	if [ "$rc" != "0" ]; then
+		echo "$(date '+%F %T') ✗ 升级失败 (rc=$rc)"
+	elif [ "$service_rc" != "0" ]; then
+		echo "$(date '+%F %T') ✗ 软件包升级成功，但服务启动失败，请查看日志后手动启动"
+	else
+		echo "$(date '+%F %T') ✓ 完成"
 	fi
 ) </dev/null >/dev/null 2>&1 &
 

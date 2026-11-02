@@ -256,21 +256,6 @@
 	align-items: center;
 }
 
-.honk-subscription-add {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
-	align-items: center;
-	margin-top: 10px;
-}
-
-/* 加 .honk-page 前缀压过后面的 `.honk-page .cbi-input-text{min-width:0}`，
-   否则手机上两个输入框会被挤成一条窄缝而不是换行。 */
-.honk-page .honk-subscription-add .cbi-input-text {
-	flex: 1 1 12rem;
-	min-width: 12rem;
-}
-
 /* ---------- Meta line (mono, muted) ---------- */
 
 .honk-meta {
@@ -622,14 +607,6 @@
 
 /* ---------- Notes & alerts ---------- */
 
-.honk-mode-note .honk-inline-link {
-	margin-left: 8px;
-	color: var(--hk-accent-border);
-	text-decoration: underline;
-	text-underline-offset: 2px;
-	font-size: 12.5px;
-}
-
 .honk-note {
 	font-size: 12.5px;
 	line-height: 1.55;
@@ -937,6 +914,127 @@
 	margin: 0;
 }
 
+/* ---------- Configuration page ---------- */
+
+/* 顶部说明卡片：一眼看出"能做什么"，折叠区只放真正需要确认的三条。 */
+.honk-config-hero {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 20px 22px;
+}
+
+.honk-hero-eyebrow {
+	margin: 0;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--hk-muted);
+}
+
+.honk-hero-lead {
+	margin: 0;
+	font-size: 15px;
+	line-height: 1.55;
+}
+
+.honk-hero-points {
+	margin: 0;
+	font-size: 12.5px;
+	color: var(--hk-muted);
+}
+
+.honk-hero-details {
+	margin-top: 10px;
+	padding-top: 10px;
+	border-top: 1px solid var(--hk-card-border);
+	font-size: 12.5px;
+	line-height: 1.6;
+	color: var(--hk-muted);
+}
+
+.honk-hero-details summary {
+	cursor: pointer;
+	list-style: none;
+	color: var(--hk-accent-border);
+}
+
+.honk-hero-details summary::-webkit-details-marker {
+	display: none;
+}
+
+.honk-hero-details summary::before {
+	content: '\25B8';
+	display: inline-block;
+	margin-right: 6px;
+	transition: transform 0.15s ease;
+}
+
+.honk-hero-details[open] summary::before {
+	transform: rotate(90deg);
+}
+
+.honk-hero-details ul {
+	margin: 8px 0 0;
+	padding-left: 18px;
+	max-width: 72ch;
+}
+
+/* 订阅表单：桌面两行、标签右对齐；移动端上下排列（见下方媒体查询）。 */
+.honk-form-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 14px;
+	margin-bottom: 12px;
+}
+
+.honk-form-label {
+	flex: 0 0 7.5rem;
+	padding-top: 8px;
+	font-size: 12.5px;
+	text-align: right;
+	color: var(--hk-muted);
+}
+
+.honk-form-field {
+	flex: 1 1 auto;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.honk-page .honk-form-field .cbi-input-text {
+	width: 100%;
+	min-width: 0;
+}
+
+.honk-form-hint {
+	margin: 0;
+	font-size: 12px;
+	color: var(--hk-muted);
+}
+
+.honk-form-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+.honk-draft-note {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 10px;
+}
+
+.honk-page .honk-config-editor {
+	height: 46vh;
+	max-height: 560px;
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 640px) {
@@ -1045,5 +1143,38 @@ html[data-darkmode="true"] .honk-page .honk-log-output {
 	.honk-page details > summary::before {
 		transition: none !important;
 		transform: none !important;
+	}
+}
+
+@media (max-width: 640px) {
+	.honk-form-row {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 6px;
+		margin-bottom: 14px;
+	}
+
+	.honk-form-label {
+		flex: none;
+		padding-top: 0;
+		text-align: left;
+	}
+
+	.honk-form-actions {
+		justify-content: stretch;
+	}
+
+	.honk-form-actions .cbi-button {
+		flex: 1 1 auto;
+	}
+
+	.honk-config-hero {
+		padding: 16px;
+	}
+
+	.honk-page .honk-config-editor {
+		height: auto;
+		min-height: 300px;
+		max-height: 60vh;
 	}
 }

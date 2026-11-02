@@ -199,7 +199,6 @@ const methods = {
 
 			features.has_luci_app_tinyfilemanager = system(`[ -n "$(${use_apk ? 'apk list -qI' : 'opkg list-installed'} luci-app-tinyfilemanager)" ]`) == 0 || null; // @less_25_12
 			features.has_dnsmasq_full = system(`[ -n "$(${use_apk ? 'apk list -qI' : 'opkg list-installed'} dnsmasq-full)" ]`) == 0 || null; // @less_25_12
-			features.has_ip_full = access('/usr/libexec/ip-full');
 			features.has_stunclient = access('/usr/bin/stunclient');
 			features.has_tcp_brutal = hasKernelModule('brutal.ko');
 			features.has_tproxy = hasKernelModule('nft_tproxy.ko') || access('/etc/modules.d/nft-tproxy');
