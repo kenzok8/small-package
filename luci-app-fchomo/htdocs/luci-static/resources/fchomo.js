@@ -710,8 +710,8 @@ const CBITextValue = form.TextValue.extend({
 const CBIGenValue = form.Value.extend({
 	__name__: 'CBI.GenValue',
 
-	renderWidget(/* ... */) {
-		let node = form.Value.prototype.renderWidget.apply(this, arguments);
+	renderWidget(section_id, option_index, cfgvalue) {
+		let node = form.Value.prototype.renderWidget.call(this, section_id, option_index, cfgvalue);
 
 		if (!this.password)
 			node.classList.add('control-group');
@@ -719,7 +719,7 @@ const CBIGenValue = form.Value.extend({
 		(node.querySelector('.control-group') || node).appendChild(E('button', {
 			class: 'cbi-button cbi-button-add',
 			title: _('Generate'),
-			click: ui.createHandlerFn(this, handleGenKey, this.hm_options || this.option)
+			click: ui.createHandlerFn(this, handleGenKey, section_id, this.hm_options || this.option)
 		}, [ _('Generate') ]));
 
 		return node;
@@ -729,13 +729,13 @@ const CBIGenValue = form.Value.extend({
 const CBIGenText = CBITextValue.extend({
 	__name__: 'CBI.GenText',
 
-	renderWidget(/* ... */) {
-		let node = CBITextValue.prototype.renderWidget.apply(this, arguments);
+	renderWidget(section_id, option_index, cfgvalue) {
+		let node = CBITextValue.prototype.renderWidget.call(this, section_id, option_index, cfgvalue);
 
 		node.appendChild(E('button', {
 			class: 'cbi-button cbi-button-add',
 			title: _('Generate'),
-			click: ui.createHandlerFn(this, handleGenKey, this.hm_options || this.option)
+			click: ui.createHandlerFn(this, handleGenKey, section_id, this.hm_options || this.option)
 		}, [ _('Generate') ]));
 
 		return node;
@@ -912,7 +912,7 @@ const CBIHandleImport = baseclass.extend(/** @lends hm.HandleImport.prototype */
 		return uci.save()
 			.then(L.bind(this.map.load, this.map))
 			.then(L.bind(this.map.reset, this.map))
-			.then(L.ui.hideModal)
+			.then(ui.hideModal)
 			.catch(() => {});
 	},
 
@@ -1548,8 +1548,7 @@ function renderResLink(section_id) {
 	return El;
 }
 
-function handleGenKey(option) {
-	const section_id = this.section.section;
+function handleGenKey(section_id, option) {
 	const type = this.section.getOption('type')?.formvalue(section_id);
 	const widget = L.bind(function(option) {
 		return this.map.findElement('id', 'widget.' + this.cbid(section_id).replace(/\.[^\.]+$/, '.') + option);

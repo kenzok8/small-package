@@ -1653,7 +1653,7 @@ return view.extend({
 
 		const zerotier_listen_port = {
 			load(section_id) {
-				const listen_port = this.map.data.get(this.section.config, section_id, 'zerotier_listen_port') || '';
+				const listen_port = uci.get(this.section.config, section_id, 'zerotier_listen_port') || '';
 				const value = [
 					this.map.data.get(this.section.config, section_id, 'zerotier_primary_port'),
 					this.map.data.get(this.section.config, section_id, 'zerotier_secondary_port')
@@ -1661,13 +1661,12 @@ return view.extend({
 
 				if (listen_port != value) {
 					uci.set(this.section.config, section_id, 'zerotier_listen_port', value);
-					return uci.save()
-						.then(L.bind(this.map.load, this.map))
+					uci.save()
 						.then(L.bind(this.map.reset, this.map))
 						.catch(() => {});
 				}
 
-				return form.Value.prototype.load.apply(this, arguments);
+				return this.super('load', section_id);
 			},
 
 			write(section_id, formvalue) {
@@ -1678,7 +1677,7 @@ return view.extend({
 
 				uci.set(this.section.config, section_id, 'zerotier_listen_port', value);
 
-				return form.Value.prototype[formvalue ? 'write' : 'remove'].apply(this, arguments);
+				return this.super(formvalue ? 'write' : 'remove', ...arguments);
 			}
 		};
 
@@ -1705,19 +1704,18 @@ return view.extend({
 
 		const easytier_listen_port = {
 			load(section_id) {
-				const listen_port = this.map.data.get(this.section.config, section_id, 'easytier_listen_port') || '';
+				const listen_port = uci.get(this.section.config, section_id, 'easytier_listen_port') || '';
 				const value = [...new Set(this.map.data.get(this.section.config, section_id, 'endpoint_listeners')?.map(uri => new URL(uri).port) || [])]
 					.filter(Boolean).join(',');
 
 				if (listen_port != value) {
 					uci.set(this.section.config, section_id, 'easytier_listen_port', value);
-					return uci.save()
-						.then(L.bind(this.map.load, this.map))
+					uci.save()
 						.then(L.bind(this.map.reset, this.map))
 						.catch(() => {});
 				}
 
-				return form.Value.prototype.load.apply(this, arguments);
+				return this.super('load', section_id);
 			},
 
 			write(section_id, formvalue) {
@@ -1726,7 +1724,7 @@ return view.extend({
 
 				uci.set(this.section.config, section_id, 'easytier_listen_port', value);
 
-				return form.Value.prototype[formvalue ? 'write' : 'remove'].apply(this, arguments);
+				return this.super(formvalue ? 'write' : 'remove', ...arguments);
 			}
 		};
 
