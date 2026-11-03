@@ -25,7 +25,7 @@ document.querySelector('head').appendChild(E('style', [
 	'
 ]));
 
-const hm_dir = '/var/run/fchomo';
+const RUN_DIR = '/var/run/fchomo';
 
 function getRuntimeLog(name, option_index, section_id, in_table) {
 	const filename = this.option.split('_')[1];
@@ -84,7 +84,7 @@ function getRuntimeLog(name, option_index, section_id, in_table) {
 
 	let log;
 	poll.add(function() {
-		return fs.read_direct(String.format('%s/%s.log', hm_dir, filename), 'text')
+		return fs.read_direct(String.format('%s/%s.log', RUN_DIR, filename), 'text')
 		.then((res) => {
 			log = E('pre', { 'wrap': 'pre' }, [
 				res.trim() || _('Log is empty.')
