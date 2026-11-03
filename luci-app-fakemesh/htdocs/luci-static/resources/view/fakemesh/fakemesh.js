@@ -46,6 +46,7 @@ return view.extend({
 		o.value('5g', _('5G'));
 		o.value('2g', _('2G'));
 		o.default = '5g';
+		o.rmempty = false;
 		var available_bands = {};
 		uci.sections('wireless', 'wifi-device', function(radio) {
 			if (radio.band)
@@ -131,6 +132,7 @@ return view.extend({
 		o.value('5g', _('5G'));
 		o.value('2g', _('2G'));
 		o.default = '2g5g';
+		o.rmempty = false;
 		if (current_role != 'controller') o.readonly = true;
 
 		o = s.option(form.Flag, 'enabled', _('Enable'));

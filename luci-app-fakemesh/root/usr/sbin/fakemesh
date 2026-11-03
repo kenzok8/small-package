@@ -555,7 +555,8 @@ wireless_config_md5()
 {
 	local digest
 	digest=$({
-		printf 'role=%s\n' "$1"
+		# Bump the generation version when rules change, so upgrades reapply them.
+		printf 'version=2\nrole=%s\n' "$1"
 		uci show fakemeshac | awk '
 			/^fakemeshac\.[^.]+=/ {
 				section = $0
@@ -606,7 +607,8 @@ validate_ac_config()
 	[ "$(ac_get fakemeshac.default.enabled)" = "1" ] || exit 1
 	mesh_id=$(ac_get fakemeshac.default.id)
 	[ -n "$mesh_id" ] && [ "${#mesh_id}" -le 32 ] || exit 1
-	case "$(ac_get fakemeshac.default.band)" in
+	# LuCI and older configs may omit options equal to their defaults.
+	case "$(ac_get fakemeshac.default.band || printf 5g)" in
 		2g|5g|6g) ;;
 		*) exit 1 ;;
 	esac
@@ -616,7 +618,7 @@ validate_ac_config()
 	for section in $sections; do
 		ssid=$(ac_get "$section.ssid")
 		[ -n "$ssid" ] && [ "${#ssid}" -le 32 ] || exit 1
-		bands=$(ac_get "$section.band")
+		bands=$(ac_get "$section.band" || printf 2g5g)
 		case "$bands" in
 			2g|5g|6g|2g5g|2g6g|5g6g|2g5g6g) ;;
 			*) exit 1 ;;
@@ -803,7 +805,7 @@ agent_sync_config()
 				ssid=$(uci get fakemeshac.@wifim[$J].ssid)
 				encryption=$(uci get fakemeshac.@wifim[$J].encryption)
 				key=$(uci get fakemeshac.@wifim[$J].key)
-				bands=$(uci get fakemeshac.@wifim[$J].band)
+				bands=$(uci -q get fakemeshac.@wifim[$J].band || printf 2g5g)
 				enabled=$(uci get fakemeshac.@wifim[$J].enabled || echo 1)
 
 				[ "$bands" = "2g5g" ] && bands="2g 5g"
