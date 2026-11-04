@@ -3,6 +3,14 @@
 
 do_pre_kmodload()
 {
+	test -e /etc/modules.d/mt7996e && {
+		# WED must attach during probe; setting wed_enable later is too late.
+		grep -q wed_enable=Y < /etc/modules.d/mt7996e ||
+			sed -i '/^[[:space:]]*mt7996e\([[:space:]]\|$\)/ {
+				s/[[:space:]]wed_enable=[^[:space:]]*//g
+				s/$/ wed_enable=Y/
+			}' /etc/modules.d/mt7996e
+	}
 	test -e /etc/modules.d/mt7915e && {
 		grep -q wed_enable=Y < /etc/modules.d/mt7915e || echo mt7915e wed_enable=Y >/etc/modules.d/mt7915e
 		. /lib/functions/system.sh
