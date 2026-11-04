@@ -68,6 +68,7 @@ const callLanCandidates = rpc.declare({ object: 'honk', method: 'lan_candidates'
 const callConfigValidate = rpc.declare({ object: 'honk', method: 'config_validate', params: [ 'content' ], expect: { '': {} } });
 const callConfigSave = rpc.declare({ object: 'honk', method: 'config_save', params: [ 'content' ], expect: { '': {} } });
 const callConfigApply = rpc.declare({ object: 'honk', method: 'config_apply', expect: { '': {} } });
+const callConfigDetach = rpc.declare({ object: 'honk', method: 'config_detach', params: [ 'dry_run' ], expect: { '': {} } });
 const callRepair = rpc.declare({ object: 'honk', method: 'repair', expect: { '': {} } });
 const callBackup = rpc.declare({ object: 'honk', method: 'backup', expect: { '': {} } });
 const callRestore = rpc.declare({ object: 'honk', method: 'restore', expect: { '': {} } });
@@ -335,6 +336,12 @@ function tokenMessage(token) {
 		config_validation_failed: _('The configuration did not pass static validation.'),
 		config_validation_unavailable: _('The core validator did not return a result.'),
 		config_settings_owned_by_file: _('这些设置由当前配置文件决定，请到「配置 → 编辑配置」里修改。'),
+		config_detached: _('已改由面板接管，订阅和分流规则保持不变。'),
+		config_not_file_owned: _('当前配置没有自带系统设置，不需要切换。'),
+		detach_layout_unsupported: _('配置里的 global / experimental 写法无法自动拆出，请到「配置 → 编辑配置」手动删除。'),
+		detach_validation_failed: _('拆分后的配置没有通过校验，原配置未改动。'),
+		detach_failed_rolled_back: _('切换后服务没能启动，已还原原配置。'),
+		detach_rollback_failed: _('切换失败且自动还原未完成，请到「维护」执行系统恢复。'),
 		config_valid: _('配置通过校验。'),
 		config_invalid: _('配置没有通过校验。'),
 		config_saved_pending_apply: _('Configuration saved. The running service is unchanged until you apply it.'),
@@ -465,6 +472,7 @@ return baseclass.extend({
 	configValidate: callConfigValidate,
 	configSave: callConfigSave,
 	configApply: callConfigApply,
+	configDetach: callConfigDetach,
 	repair: callRepair,
 	backup: callBackup,
 	restore: callRestore,

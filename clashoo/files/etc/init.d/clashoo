@@ -1551,6 +1551,34 @@ _ensure_cn_domain_rule_provider() {
 	' "$CONFIG_YAML" 2>/dev/null || true
 }
 
+# fake-ip-filter 引用当前配置没定义的 rule-set 时，mihomo 会拒绝启动
+# （dns.fake-ip-filter[i] "RULE-SET,x,real-ip": rule-set 'x' not found）。
+# 切换配置后最常出现，启动前丢掉并记日志，免得整机莫名断网。
+prune_fakeip_missing_rulesets() {
+	command -v yq >/dev/null 2>&1 || return 0
+	[ -s "$CONFIG_YAML" ] || return 0
+
+	local providers entry _rs
+	providers="$(yq -M e -r '.rule-providers // {} | keys | .[]' "$CONFIG_YAML" 2>/dev/null)"
+
+	yq -M e -r '.dns."fake-ip-filter" // [] | .[]' "$CONFIG_YAML" 2>/dev/null |
+	while IFS= read -r entry; do
+		case "$entry" in
+			RULE-SET,*|rule-set:*) ;;
+			*) continue ;;
+		esac
+		_rs="${entry#RULE-SET,}"
+		_rs="${_rs#rule-set:}"
+		_rs="${_rs%%,*}"
+		[ -n "$_rs" ] || continue
+		printf '%s\n' "$providers" | grep -Fxq "$_rs" && continue
+		CLASHOO_DROP_ENTRY="$entry" yq -M e -i \
+			'.dns."fake-ip-filter" = [.dns."fake-ip-filter"[] | select(. != strenv(CLASHOO_DROP_ENTRY))]' \
+			"$CONFIG_YAML" 2>/dev/null || true
+		log_msg "Skipped fake-ip-filter entry, rule-set not found: $entry" "已跳过 fake-ip-filter 条目，规则集不存在：$entry"
+	done
+}
+
 append_luci_fake_ip_filter_extras() {
 	[ -n "${CLASHOO_KEEP_FAKEIP_FILTER:-}" ] || return 0
 	command -v yq >/dev/null 2>&1 || return 0
@@ -2252,6 +2280,7 @@ _start_prepare_config() {
 	[ "$_reload_candidate" = "1" ] || _prepare_geo_bootstrap_mode
 	_remap_dns_system_nameserver >/dev/null 2>&1
 	ensure_dns_cn_policy_fallback >/dev/null 2>&1
+	prune_fakeip_missing_rulesets
 
 
 	if [ ! -f "$CONFIG_YAML" ];then

@@ -361,6 +361,13 @@ p.close();
 return v;
 }
 
+/* eBPF 入站只存在于第三方 mihomo 分支（如 alpha-smart-xxx-ebpf），
+ * 官方 mihomo / smart / sing-box 都没有，这里只做识别。 */
+function core_is_ebpf_build(binary) {
+	let v = get_core_version(binary);
+	return !!match(v, /ebpf/i);
+}
+
 function sync_legacy_core_fields(c) {
 let family = c.get('clashoo', 'config', 'core_type') || 'mihomo';
 let dcore = c.get('clashoo', 'config', 'dcore') || '2';
@@ -2169,6 +2176,7 @@ return { running, pid, dash_port, dash_pass, proxy_mode, conf_path: conf_name, c
          runtime_degraded, runtime_degrade_reason,
          health_status, health_detail, has_tun_device,
          core_type: configured_core, dcore, local_ip,
+         core_is_ebpf: core_is_ebpf_build(find_binary()),
          has_smart: !!find_smart_binary() };
 } catch (e) {
 return { success: false, error: 'status_failed', message: '' + e };
@@ -2259,14 +2267,14 @@ set_mode: {
 args: { mode: 'mode' },
 call: function(req) {
 	let mode = req.args?.mode || 'fake-ip';
-	if (mode != 'fake-ip' && mode != 'redir-host' && mode != 'tun-system' && mode != 'tun-gvisor' && mode != 'tun-mixed')
+	if (mode != 'fake-ip' && mode != 'redir-host' && mode != 'tun-system' && mode != 'tun-gvisor' && mode != 'tun-mixed' && mode != 'tun-mips')
 	return { error: 'invalid mode' };
 	let c = cursor(); c.load('clashoo');
-	if (mode == 'tun-system' || mode == 'tun-gvisor' || mode == 'tun-mixed') {
+	if (mode == 'tun-system' || mode == 'tun-gvisor' || mode == 'tun-mixed' || mode == 'tun-mips') {
 	c.set('clashoo', 'config', 'tun_mode', '1');
 	c.set('clashoo', 'config', 'tcp_mode', 'tun');
 	c.set('clashoo', 'config', 'udp_mode', 'tun');
-	c.set('clashoo', 'config', 'stack', mode == 'tun-mixed' ? 'mixed' : (mode == 'tun-gvisor' ? 'gvisor' : 'system'));
+	c.set('clashoo', 'config', 'stack', mode == 'tun-mixed' ? 'mixed' : (mode == 'tun-gvisor' ? 'gvisor' : (mode == 'tun-mips' ? 'mips' : 'system')));
 	c.set('clashoo', 'config', 'enable_udp', '1');
 	c.set('clashoo', 'config', 'enhanced_mode', 'fake-ip');
 } else {

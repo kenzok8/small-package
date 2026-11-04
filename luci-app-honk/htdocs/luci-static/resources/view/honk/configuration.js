@@ -769,6 +769,10 @@ return view.extend({
 					parts.push(E('span', {}, _('An old manual draft from a previous version is kept on disk.')));
 					parts.push(draftButton(_('Load old draft'), 'legacy'));
 				}
+				if (status && status.detach_backup) {
+					parts.push(E('span', {}, _('The configuration from before the switch is kept on disk.')));
+					parts.push(draftButton(_('Load the previous configuration'), 'predetach'));
+				}
 				draftNote.textContent = '';
 				if (!parts.length) {
 					draftNote.hidden = true;

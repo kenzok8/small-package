@@ -213,8 +213,8 @@ msgstr "黑名单"
 msgid "Blocklist (listed items use real IP, default)"
 msgstr "黑名单（列入走真 IP，默认）"
 
-msgid "Blocklist mode: enter domains or shorthand like <code>geosite:cn</code>. Rule mode: entries are converted to rule syntax automatically, such as <code>RULE-SET,xxx,real-ip</code> / <code>DOMAIN-SUFFIX,xxx,real-ip</code>; usually add <code>MATCH,fake-ip</code> at the end as fallback. <code>geosite:cn</code> becomes <code>RULE-SET,cn_domain,real-ip</code> via built-in cn.mrs acceleration (other <code>geosite:xxx</code> becomes <code>GEOSITE,xxx,real-ip</code>). Allowlist mode drops the shipped defaults (they mean the opposite there), so enter your own domains."
-msgstr "黑名单模式：填域名或 <code>geosite:cn</code> 简写。规则模式：条目会自动转成 <code>RULE-SET,xxx,real-ip</code> / <code>DOMAIN-SUFFIX,xxx,real-ip</code> 这种与 rules 同语法的写法，末尾通常加一条 <code>MATCH,fake-ip</code> 兜底。<code>geosite:cn</code> 会转成 <code>RULE-SET,cn_domain,real-ip</code>，走内置 cn.mrs 加速（其它 <code>geosite:xxx</code> 则转成 <code>GEOSITE,xxx,real-ip</code>）。白名单模式下随包自带的默认项含义相反，会被跳过，请自行填写需要 Fake-IP 的域名。"
+msgid "Blocklist (default): listed domains get a real IP — <code>+.lan</code>, <code>rule-set:cn_domain</code>, <code>geosite:cn</code>.<br>\nAllowlist: only listed domains get fake-IP.<br>\nRule mode: every entry needs a <code>fake-ip</code> / <code>real-ip</code> action; Clashoo adds <code>real-ip</code> for you."
+msgstr "黑名单（默认）：列出的域名返回真实 IP，可写 +.lan、rule-set:cn_domain、geosite:cn。<br>白名单：只有列出的域名走 Fake-IP。<br>规则模式：每条必须带 fake-ip / real-ip 动作，Clashoo 会自动补 real-ip。"
 
 msgid "Bypass China IPv4"
 msgstr "大陆 IPv4 绕过"
@@ -261,6 +261,9 @@ msgstr "清理失败（mihomo 可能未运行）"
 msgid "Cleanup interval (hours)"
 msgstr "清理间隔（小时）"
 
+msgid "Currently fake-ip: this role is skipped, the entry is saved but not used. Switch to redir-host to make it a secondary resolver."
+msgstr "当前是 fake-ip：这一项会被跳过，配置会保存但不生效。改成 redir-host 后才会作为备用解析器。"
+
 msgid "Clear"
 msgstr "清理"
 
@@ -272,6 +275,9 @@ msgstr "清理 Smart 缓存"
 
 msgid "Clear the current log file? This cannot be undone."
 msgstr "确定要清空当前日志文件吗？此操作不可恢复。"
+
+msgid "redir-host mode: used as a secondary encrypted resolver."
+msgstr "redir-host 模式：作为备用加密解析器。"
 
 msgid "Clear View"
 msgstr "清空显示"
@@ -927,8 +933,11 @@ msgstr "输出文件名（不含扩展名，留空自动填写）"
 msgid "Overseas"
 msgstr "境外"
 
-msgid "Overseas Encrypted DNS (anti-pollution)"
-msgstr "国外加密 DNS（防污染）"
+msgid "Overseas Encrypted DNS"
+msgstr "国外加密 DNS"
+
+msgid "Overseas Encrypted DNS (no effect in fake-ip mode)"
+msgstr "国外加密 DNS（fake-ip 下不生效）"
 
 msgid "Overview"
 msgstr "概览"
@@ -1616,3 +1625,15 @@ msgstr "仅在本机转换"
 
 msgid "If local conversion fails, the selected external service receives the complete subscription URL, including its access token. Leave Local conversion only selected to keep the URL on this router."
 msgstr "如果本机转换失败，所选第三方服务会收到完整订阅链接，包括访问令牌。保持选择「仅在本机转换」可避免向第三方发送链接。"
+
+msgid "TUN stack is used when either TCP or UDP mode is TUN. System: kernel stack. gVisor / Mixed: userspace stack, needs a core built with <code>with_gvisor</code>. Mips: mihomo's own userspace stack (metacubex/mipstack), always available — pick it when gVisor is not in the core."
+msgstr "TCP 或 UDP 模式为 TUN 时生效。System：系统协议栈。gVisor / Mixed：用户态栈，内核需要带 <code>with_gvisor</code> 编译。Mips：mihomo 自带用户态栈（metacubex/mipstack），始终可用，内核没有 gVisor 时选它。"
+
+msgid "core-managed"
+msgstr "内核接管"
+
+msgid "Core-managed"
+msgstr "内核接管"
+
+msgid "eBPF core captures traffic itself; turn off Clashoo forwarding rules"
+msgstr "eBPF 内核自行接管流量，请关闭 Clashoo 的转发规则"

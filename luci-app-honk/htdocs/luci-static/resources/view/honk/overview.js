@@ -3,6 +3,7 @@
 'use strict';
 'require network';
 'require poll';
+'require ui';
 'require view';
 'require view.honk.rpc as honk';
 'require uci';
@@ -246,7 +247,15 @@ return view.extend({
 			form.appendChild(field(_('Clash API port'), clashPortInput));
 			form.appendChild(field(_('Clash API secret'), clashSecretInput, status.clash_api_secret_set ? _('A secret is set. Leave blank to keep it.') : _('Required when enabling. Use 6–128 letters, numbers, dots, underscores or hyphens.')));
 			form.appendChild(E('p', { 'class': 'honk-note' }, _('Use your existing HTTPS reverse proxy for external access. Enter the secret in Zashboard when connecting.')));
-			form.appendChild(E('div', { 'class': 'cbi-page-actions' }, save));
+			if (owner === 'file') {
+				const detach = E('button', { 'class': 'cbi-button cbi-button-action', 'type': 'button' }, _('Switch to panel management'));
+				detach.addEventListener('click', function() { detachSettings(detach); });
+				form.appendChild(E('div', { 'class': 'honk-actions' }, [ detach ]));
+			} else {
+				form.appendChild(E('div', { 'class': 'cbi-page-actions' }, [ save ]));
+				if (owner !== 'system')
+					form.appendChild(E('p', { 'class': 'honk-note' }, _('This configuration is not a plain include of system.dae, so these settings cannot be edited here.')));
+			}
 			form.appendChild(message);
 			form.addEventListener('submit', function(ev) {
 				ev.preventDefault();
@@ -290,6 +299,77 @@ return view.extend({
 			});
 			card.appendChild(form);
 			return card;
+		}
+
+		/* 先预览会变动的项，确认后才真正改写。 */
+		function detachSettings(button) {
+			button.disabled = true;
+			settingsBusy = true;
+			actionMessage.textContent = _('Checking the configuration…');
+			honk.configDetach(true).then(honk.ensureOk).then(function(preview) {
+				actionMessage.textContent = '';
+				return confirmDetach(preview);
+			}).then(function(confirmed) {
+				if (!confirmed)
+					return;
+				actionMessage.textContent = _('Switching to panel management…');
+				return honk.configDetach(false).then(honk.ensureOk).then(function(result) {
+					actionMessage.textContent = honk.resultMessage(result, _('The panel manages these settings now.'));
+				});
+			}).catch(function(error) {
+				actionMessage.textContent = honk.errorMessage(error, _('The switch failed. The configuration was left unchanged.'));
+			}).finally(function() {
+				settingsBusy = false;
+				button.disabled = false;
+				refresh();
+			});
+		}
+
+		function confirmDetach(preview) {
+			/* 面板能映射的项与它固定写死的项分开列，避免把「会被默认值覆盖」说成「不支持」。 */
+			const mapped = {
+				'global.lan_interface': _('LAN network'),
+				'experimental.native_api.listen': _('Doona listen address'),
+				'experimental.clash_api.external_controller': _('Clash API address')
+			};
+			const carried = [];
+			const replaced = [];
+			(preview.changes || []).forEach(function(item) {
+				if (/\.secret$/.test(item.key))
+					return;
+				const label = mapped[item.key];
+				if (label)
+					carried.push(E('li', {}, '%s：%s → %s'.format(label, item.old, item.new)));
+				else if (!item.new)
+					replaced.push(E('li', {}, _('%s: %s (removed)').format(item.key, item.old)));
+				else
+					replaced.push(E('li', {}, '%s：%s → %s'.format(item.key, item.old, item.new)));
+			});
+			const summary = _('LAN network %s, port %s, Clash API %s.').format(preview.lan_network, preview.listen_port,
+				preview.clash_api_enabled ? _('enabled on port %s').format(preview.clash_api_port) : _('disabled'));
+			return new Promise(function(resolve) {
+				ui.showModal(_('Switch to panel management'), [
+					E('p', {}, _('These settings move to this page. Subscriptions, nodes, groups and routing rules stay as they are.')),
+					E('p', {}, summary),
+					carried.length ? E('div', {}, [ E('p', {}, _('These values carry over, written the way the panel expects:')), E('ul', {}, carried) ]) : '',
+					replaced.length ? E('div', {}, [ E('p', {}, _('These items have no panel setting, so the panel defaults replace them:')), E('ul', {}, replaced) ]) : '',
+					E('p', { 'class': 'honk-note' }, _('Honk restarts during the switch.')),
+					E('p', { 'class': 'honk-note' }, _('The current file is backed up. To undo, load it again from the Configuration page and apply it.')),
+					E('div', { 'class': 'right' }, [
+						E('button', { 'class': 'cbi-button', 'click': function(ev) {
+							ev.preventDefault();
+							ui.hideModal();
+							resolve(false);
+						} }, [ _('Cancel') ]),
+						' ',
+						E('button', { 'class': 'cbi-button cbi-button-positive', 'click': function(ev) {
+							ev.preventDefault();
+							ui.hideModal();
+							resolve(true);
+						} }, [ _('Switch to panel management') ])
+					])
+				]);
+			});
 		}
 
 		function renderSetup(status) {

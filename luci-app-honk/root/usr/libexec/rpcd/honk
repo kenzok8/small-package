@@ -51,7 +51,7 @@ lock_owner_invalid() {
 }
 
 status() {
-	local enabled initialized boot_enabled running api_url api_ready core_version core_commit doona_version kernel lan_network listen_port errors listen clash_api_enabled clash_api_port clash_api_secret clash_api_url clash_api_ready clash_ui_ready clash_secret_set settings_owner api_enabled core_ready config_pending draft_pending legacy_draft clash_listen_addr
+	local enabled initialized boot_enabled running api_url api_ready core_version core_commit doona_version kernel lan_network listen_port errors listen clash_api_enabled clash_api_port clash_api_secret clash_api_url clash_api_ready clash_ui_ready clash_secret_set settings_owner api_enabled core_ready config_pending draft_pending legacy_draft detach_backup clash_listen_addr
 	config_load honk
 	config_get_bool enabled main enabled 0
 	config_get_bool initialized main initialized 0
@@ -74,6 +74,7 @@ status() {
 	config_pending=0
 	draft_pending=0
 	legacy_draft=0
+	detach_backup=0
 	listen=
 	runtime_config=$("$CORE" config validate --config /etc/honk/config.dae 2>/dev/null)
 	if [ -n "$runtime_config" ]; then
@@ -120,6 +121,7 @@ status() {
 		[ "$draft_hash" = "$active_hash" ] || draft_pending=1
 	fi
 	[ -f /etc/honk/manual-config.dae ] && [ ! -L /etc/honk/manual-config.dae ] && legacy_draft=1
+	[ -f /etc/honk/config-before-detach.dae ] && [ ! -L /etc/honk/config-before-detach.dae ] && detach_backup=1
 	clash_api_ready=0
 	if [ "$running" = 1 ] && [ "$clash_api_enabled" = 1 ] && [ "$clash_api_port" -gt 0 ] && honk_lifecycle_listener_owned "$managed_pid" "$clash_api_port"; then clash_api_ready=1; fi
 	clash_ui_ready=0
@@ -155,6 +157,7 @@ status() {
 	json_add_boolean config_pending "$config_pending"
 	json_add_boolean draft_pending "$draft_pending"
 	json_add_boolean legacy_draft "$legacy_draft"
+	json_add_boolean detach_backup "$detach_backup"
 	json_add_boolean core_ready "$core_ready"
 	json_add_boolean api_enabled "$api_enabled"
 	json_add_boolean api_ready "$api_ready"
@@ -912,6 +915,7 @@ config_draft_read() {
 	case "$draft_source" in
 		draft) draft_file=/etc/honk/config-draft.dae ;;
 		legacy) draft_file=/etc/honk/manual-config.dae ;;
+		predetach) draft_file=/etc/honk/config-before-detach.dae ;;
 		*) emit_result false invalid_request; return 1 ;;
 	esac
 	[ -f "$draft_file" ] && [ ! -L "$draft_file" ] || { emit_result false config_draft_missing; return 1; }
@@ -1132,7 +1136,7 @@ config_apply() {
 
 case "$1" in
 list)
-		echo '{"status":{},"check":{},"initialize":{"username":"String","password":"String"},"start":{},"stop":{},"restart":{},"settings":{"lan_network":"String","listen_port":"Integer","boot_enabled":"Boolean","clash_api_enabled":"Boolean","clash_api_port":"Integer","clash_api_secret":"String"},"add_subscription":{"name":"String","url":"String"},"probe_subscription":{"url":"String"},"reset_admin":{},"add_nodes":{"links":"String"},"import_dae":{},"config_read":{},"config_draft_read":{},"lan_candidates":{},"config_validate":{"content":"String"},"config_save":{"content":"String"},"config_apply":{},"repair":{},"backup":{},"restore":{},"restore_prepare":{},"reset":{},"job_status":{"job_id":"String"},"logs":{"source":"String","level":"String","limit":"Integer"},"update_check":{},"update_apply":{}}'
+		echo '{"status":{},"check":{},"initialize":{"username":"String","password":"String"},"start":{},"stop":{},"restart":{},"settings":{"lan_network":"String","listen_port":"Integer","boot_enabled":"Boolean","clash_api_enabled":"Boolean","clash_api_port":"Integer","clash_api_secret":"String"},"add_subscription":{"name":"String","url":"String"},"probe_subscription":{"url":"String"},"reset_admin":{},"add_nodes":{"links":"String"},"import_dae":{},"config_read":{},"config_draft_read":{},"lan_candidates":{},"config_validate":{"content":"String"},"config_save":{"content":"String"},"config_apply":{},"config_detach":{"dry_run":"Boolean"},"repair":{},"backup":{},"restore":{},"restore_prepare":{},"reset":{},"job_status":{"job_id":"String"},"logs":{"source":"String","level":"String","limit":"Integer"},"update_check":{},"update_apply":{}}'
 		;;
 	call)
 		case "$2" in
@@ -1180,6 +1184,9 @@ list)
 				;;
 			config_apply)
 				config_apply
+				;;
+			config_detach)
+				exec "$CONTROL" detach
 				;;
 			repair)
 				exec "$CONTROL" repair

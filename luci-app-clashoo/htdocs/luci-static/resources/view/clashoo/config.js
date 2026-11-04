@@ -1349,8 +1349,8 @@ return view.extend({
     o = s.option(form.ListValue, 'udp_mode', _("UDP Mode"));
     o.value('tun', 'TUN'); o.value('tproxy', 'TPROXY'); o.value('off', _("Off"));
     o = s.option(form.ListValue, 'stack', _("TUN Network Stack"));
-    o.value('system', 'System'); o.value('gvisor', 'gVisor'); o.value('mixed', 'Mixed');
-    o.description = _("TUN stack is used when either TCP or UDP mode is TUN.");
+    o.value('system', 'System'); o.value('gvisor', 'gVisor'); o.value('mixed', 'Mixed'); o.value('mips', 'Mips');
+    o.description = _("TUN stack is used when either TCP or UDP mode is TUN. System: kernel stack. gVisor / Mixed: userspace stack, needs a core built with <code>with_gvisor</code>. Mips: mihomo's own userspace stack (metacubex/mipstack), always available — pick it when gVisor is not in the core.");
     o = s.option(form.Flag, 'disable_quic_gso', _("Disable QUIC GSO"));
     o = s.option(form.Flag, 'block_quic', _("Block QUIC"));
     o.description = _("Reject proxied UDP 443 so some apps fall back to TCP. Try only when downloads or video stall.");
@@ -1577,7 +1577,9 @@ return view.extend({
 
     o = s.option(form.DynamicList, 'fake_ip_filter',    _("Fake-IP Filter Domains"));
     o.placeholder = '+.lan / geosite:cn / RULE-SET,cn_domain,real-ip';
-    o.description = _("Blocklist mode: enter domains or shorthand like <code>geosite:cn</code>. Rule mode: entries are converted to rule syntax automatically, such as <code>RULE-SET,xxx,real-ip</code> / <code>DOMAIN-SUFFIX,xxx,real-ip</code>; usually add <code>MATCH,fake-ip</code> at the end as fallback. <code>geosite:cn</code> becomes <code>RULE-SET,cn_domain,real-ip</code> via built-in cn.mrs acceleration (other <code>geosite:xxx</code> becomes <code>GEOSITE,xxx,real-ip</code>). Allowlist mode drops the shipped defaults (they mean the opposite there), so enter your own domains.");
+    o.description = _(`Blocklist (default): listed domains get a real IP — <code>+.lan</code>, <code>rule-set:cn_domain</code>, <code>geosite:cn</code>.<br>
+Allowlist: only listed domains get fake-IP.<br>
+Rule mode: every entry needs a <code>fake-ip</code> / <code>real-ip</code> action; Clashoo adds <code>real-ip</code> for you.`);
     o.depends('enhanced_mode', 'fake-ip');
     o.remove = function () {};
     o = s.option(form.DynamicList, 'default_nameserver', 'Bootstrap DNS');
@@ -1613,8 +1615,15 @@ return view.extend({
     o.value('nameserver', _("Domestic Upstream DNS"));
     o.value('direct-nameserver', _("Direct Domain Resolver"));
     o.value('proxy-server-nameserver', _("Proxy Node Domain Resolver"));
-    o.value('fallback', _("Overseas Encrypted DNS (anti-pollution)"));
+    /* fake-ip 先返回合成地址，fallback 这一角色会被 mixin 跳过，界面上要说清 */
+    var dnsFakeIpMode = (uci.get('clashoo', 'config', 'enhanced_mode') || 'fake-ip') === 'fake-ip';
+    o.value('fallback', dnsFakeIpMode
+      ? _("Overseas Encrypted DNS (no effect in fake-ip mode)")
+      : _("Overseas Encrypted DNS"));
     o.default = 'nameserver';
+    o.description = dnsFakeIpMode
+      ? _("Currently fake-ip: this role is skipped, the entry is saved but not used. Switch to redir-host to make it a secondary resolver.")
+      : _("redir-host mode: used as a secondary encrypted resolver.");
     o = s.option(form.Value,     'ser_address', _("DNS Address"));
     o.placeholder = 'https://dns.alidns.com/dns-query / https://doh.pub/dns-query';
     o = s.option(form.ListValue, 'protocol',    _("Protocol"));

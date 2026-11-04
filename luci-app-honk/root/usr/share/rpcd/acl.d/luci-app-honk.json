@@ -81,7 +81,8 @@
 					"update_apply",
 					"config_read",
 					"config_draft_read",
-					"config_apply"
+					"config_apply",
+					"config_detach"
 				]
 			},
 			"file": {

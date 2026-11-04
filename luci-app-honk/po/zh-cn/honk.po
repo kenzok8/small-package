@@ -18,6 +18,9 @@ msgstr "%s（错误码：%s）"
 msgid "%s imported and Honk is running."
 msgstr "%s 已导入，Honk 正在运行。"
 
+msgid "%s: %s (removed)"
+msgstr "%s：%s（移除）"
+
 msgid "/etc/honk/config.dae 不存在或不是普通文件。"
 msgstr "/etc/honk/config.dae 不存在或不是普通文件。"
 
@@ -159,6 +162,9 @@ msgstr "选择 LAN 网卡"
 msgid "Clash API %s"
 msgstr "Clash API %s"
 
+msgid "Clash API address"
+msgstr "Clash API 地址"
+
 msgid "Clash API port"
 msgstr "Clash API 端口"
 
@@ -288,6 +294,9 @@ msgstr "已载入 /etc/honk/config.dae 的当前配置。"
 msgid "Custom"
 msgstr "自定义"
 
+msgid "DNS"
+msgstr "DNS"
+
 msgid "Daily"
 msgstr "每天"
 
@@ -317,6 +326,9 @@ msgstr "Doona 面板 %s"
 
 msgid "Doona is not ready yet. Check the overview for status."
 msgstr "Doona 尚未就绪，请在概况页查看状态。"
+
+msgid "Doona listen address"
+msgstr "Doona 监听地址"
 
 msgid "Doona version"
 msgstr "Doona 版本"
@@ -459,6 +471,9 @@ msgstr "Honk 报告了系统问题：%s"
 msgid "Honk restarted."
 msgstr "Honk 已重启。"
 
+msgid "Honk restarts during the switch."
+msgstr "切换过程中会重启 Honk。"
+
 msgid "Honk settings"
 msgstr "Honk 设置"
 
@@ -525,6 +540,11 @@ msgstr "局域网接口 %s"
 msgid "LAN network"
 msgstr "LAN 网络"
 
+msgid "LAN network %s, port %s, Clash API %s."
+msgstr "LAN 网络 %s，端口 %s，Clash API %s。"
+
+
+
 msgid "Line %d"
 msgstr "第 %d 行"
 
@@ -539,6 +559,9 @@ msgstr "载入草稿"
 
 msgid "Load old draft"
 msgstr "载入旧草稿"
+
+msgid "Load the previous configuration"
+msgstr "载入接管前的配置"
 
 msgid "Loaded %s into the editor."
 msgstr "已把 %s 载入编辑器。"
@@ -855,6 +878,9 @@ msgstr "订阅已保存，检测到可用节点。"
 msgid "Subscriptions and nodes must use a protocol Honk supports; SSR is not supported."
 msgstr "订阅与节点需使用 Honk 支持的协议，不支持 SSR。"
 
+msgid "Switching to panel management…"
+msgstr "正在改由面板接管…"
+
 msgid "System check and repair"
 msgstr "系统检查与修复"
 
@@ -897,6 +923,9 @@ msgstr "The configuration file exceeds the 2 MiB limit."
 msgid "The configuration file is missing."
 msgstr "配置文件不存在。"
 
+msgid "The configuration from before the switch is kept on disk."
+msgstr "面板接管前的配置已备份在路由器上。"
+
 msgid "The configuration request is empty or invalid."
 msgstr "The configuration request is empty or invalid."
 
@@ -908,6 +937,9 @@ msgstr "The core validator did not return a result."
 
 msgid "The curl command is missing. Install the curl package and try again."
 msgstr "缺少 curl 命令，请先安装 curl 包（apk add curl 或 opkg install curl）后重试。"
+
+msgid "The current file is backed up. To undo, load it again from the Configuration page and apply it."
+msgstr "原配置已备份。想撤回：到「配置」页点「载入接管前的配置」，再保存并应用。"
 
 msgid "The dae file contains invalid sections or unsupported includes."
 msgstr "dae 文件包含无效配置段或不支持的 include。"
@@ -957,6 +989,9 @@ msgstr "Honk 托管服务状态异常。"
 msgid "The operation failed."
 msgstr "操作失败。"
 
+msgid "The panel manages these settings now."
+msgstr "已改由面板接管，订阅和分流规则保持不变。"
+
 msgid "The password must be between 8 and 128 characters."
 msgstr "密码长度必须在 8 到 128 个字符之间。"
 
@@ -1005,6 +1040,9 @@ msgstr "订阅无效或名称已存在。"
 msgid "The subscription returned no usable nodes. The configuration was not changed."
 msgstr "订阅没有返回可用节点，配置未改动。"
 
+msgid "The switch failed. The configuration was left unchanged."
+msgstr "切换失败，原配置未改动。"
+
 msgid "The system check did not finish (interface timeout or error). Retry, or check the core log under Maintenance → Logs."
 msgstr "系统检查没有跑完（接口超时或出错），请重试；或到「维护 → 日志」查看核心日志。"
 
@@ -1029,8 +1067,20 @@ msgstr "上传的 dae 文件无效。"
 msgid "There is no saved draft to apply."
 msgstr "没有可应用的已保存草稿。"
 
+msgid "These items have no panel setting, so the panel defaults replace them:"
+msgstr "这些项面板没有对应设置，会改成面板默认值："
+
 msgid "These lines will be changed for this router:"
 msgstr "这几行会按本机修改："
+
+msgid "These settings move to this page. Subscriptions, nodes, groups and routing rules stay as they are."
+msgstr "这些设置改由概览页管理，订阅、节点、分组和分流规则不变。"
+
+msgid "These values carry over, written the way the panel expects:"
+msgstr "这些值会保留，只是写法按面板要求调整："
+
+msgid "This configuration is not a plain include of system.dae, so these settings cannot be edited here."
+msgstr "当前配置不是纯粹的 system.dae 引用，这里无法编辑这些设置。"
 
 msgid "This core cannot use any of these nodes, so the subscription was not saved."
 msgstr "这份订阅里的节点本内核一个都用不了，所以没有保存。"
@@ -1103,6 +1153,12 @@ msgstr "YAML 解析器加载失败"
 
 msgid "Zashboard is still downloading or unavailable."
 msgstr "Zashboard 仍在下载或暂不可用。"
+
+msgid "disabled"
+msgstr "关闭"
+
+msgid "enabled on port %s"
+msgstr "开启（端口 %s）"
 
 msgid "global settings"
 msgstr "全局设置"
@@ -1209,6 +1265,12 @@ msgstr "写入 system.dae 失败，已回滚。"
 msgid "写入 system.dae 的监听地址失败，请检查文件权限。"
 msgstr "写入 system.dae 的监听地址失败，请检查文件权限。"
 
+msgid "切换后服务没能启动，已还原原配置。"
+msgstr "切换后服务没能启动，已还原原配置。"
+
+msgid "切换失败且自动还原未完成，请到「维护」执行系统恢复。"
+msgstr "切换失败且自动还原未完成，请到「维护」执行系统恢复。"
+
 msgid "创建 Doona 管理员失败，请到「维护 → 日志」查看核心日志。"
 msgstr "创建 Doona 管理员失败，请到「维护 → 日志」查看核心日志。"
 
@@ -1233,11 +1295,26 @@ msgstr "备份现有 system.dae 失败，请检查磁盘空间。"
 msgid "备份系统配置失败，请检查磁盘空间。"
 msgstr "备份系统配置失败，请检查磁盘空间。"
 
+msgid "已改由面板接管，订阅和分流规则保持不变。"
+msgstr "已改由面板接管，订阅和分流规则保持不变。"
+
+msgid "已经初始化过了，请用原来的账号登录 Doona。忘记密码：到「维护 → 重置管理员」清掉管理员记录（不动订阅和规则），再回到本页重新初始化。"
+msgstr "已经初始化过了，请用原来的账号登录 Doona。忘记密码：到「维护 → 重置管理员」清掉管理员记录（不动订阅和规则），再回到本页重新初始化。"
+
 msgid "应用设置失败且回滚未完成，快照已保留，请执行系统恢复。"
 msgstr "应用设置失败且回滚未完成，快照已保留，请执行系统恢复。"
 
 msgid "开关类设置取值不合法。"
 msgstr "开关类设置取值不合法。"
+
+msgid "当前配置不支持快捷追加，请在「编辑配置」中修改。"
+msgstr "当前配置不支持快捷追加，请在「编辑配置」中修改。"
+
+msgid "当前配置没有 include { system.dae }，这些设置请到「编辑配置」里修改。"
+msgstr "当前配置没有 include { system.dae }，这些设置请到「编辑配置」里修改。"
+
+msgid "当前配置没有自带系统设置，不需要切换。"
+msgstr "当前配置没有自带系统设置，不需要切换。"
 
 msgid "找不到 /usr/bin/honk-core，请重新安装 honk 包。"
 msgstr "找不到 /usr/bin/honk-core，请重新安装 honk 包。"
@@ -1247,6 +1324,9 @@ msgstr "找不到该任务。"
 
 msgid "抓不到这个订阅地址：网络不通、需要代理，或链接已失效。"
 msgstr "抓不到这个订阅地址：网络不通、需要代理，或链接已失效。"
+
+msgid "拆分后的配置没有通过校验，原配置未改动。"
+msgstr "拆分后的配置没有通过校验，原配置未改动。"
 
 msgid "拿不到任务编号。"
 msgstr "拿不到任务编号。"
@@ -1344,8 +1424,14 @@ msgstr "读不到任务状态。"
 msgid "读不到核心的 API 状态，请查看日志。"
 msgstr "读不到核心的 API 状态，请查看日志。"
 
+msgid "这些设置由当前配置文件决定，请到「配置 → 编辑配置」里修改。"
+msgstr "这些设置由当前配置文件决定，请到「配置 → 编辑配置」里修改。"
+
 msgid "选中的 LAN 网络没有 IPv4 地址。"
 msgstr "选中的 LAN 网络没有 IPv4 地址。"
+
+msgid "配置没有通过校验。"
+msgstr "配置没有通过校验。"
 
 msgid "配置没有通过静态校验。"
 msgstr "配置没有通过静态校验。"
@@ -1353,26 +1439,14 @@ msgstr "配置没有通过静态校验。"
 msgid "配置路径不是 /etc/honk/config.dae，拒绝操作。"
 msgstr "配置路径不是 /etc/honk/config.dae，拒绝操作。"
 
-msgid "预检失败，请稍后重试。"
-msgstr "预检失败，请稍后重试。"
-
-msgid "DNS"
-msgstr "DNS"
-
-msgid "已经初始化过了，请用原来的账号登录 Doona。忘记密码：到「维护 → 重置管理员」清掉管理员记录（不动订阅和规则），再回到本页重新初始化。"
-msgstr "已经初始化过了，请用原来的账号登录 Doona。忘记密码：到「维护 → 重置管理员」清掉管理员记录（不动订阅和规则），再回到本页重新初始化。"
-
-msgid "当前配置没有 include { system.dae }，这些设置请到「编辑配置」里修改。"
-msgstr "当前配置没有 include { system.dae }，这些设置请到「编辑配置」里修改。"
-
-msgid "这些设置由当前配置文件决定，请到「配置 → 编辑配置」里修改。"
-msgstr "这些设置由当前配置文件决定，请到「配置 → 编辑配置」里修改。"
-
-msgid "配置没有通过校验。"
-msgstr "配置没有通过校验。"
-
 msgid "配置通过校验。"
 msgstr "配置通过校验。"
 
-msgid "当前配置不支持快捷追加，请在「编辑配置」中修改。"
-msgstr "当前配置不支持快捷追加，请在「编辑配置」中修改。"
+msgid "配置里的 global / experimental 写法无法自动拆出，请到「配置 → 编辑配置」手动删除。"
+msgstr "配置里的 global / experimental 写法无法自动拆出，请到「配置 → 编辑配置」手动删除。"
+
+msgid "预检失败，请稍后重试。"
+msgstr "预检失败，请稍后重试。"
+
+msgid "Switch to panel management"
+msgstr "切换为面板管理"

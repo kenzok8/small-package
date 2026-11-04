@@ -175,7 +175,7 @@ function dns_server(address, protocol, port) {
 
 let dns_roles = {};
 uci.foreach('clashoo', 'dnsservers', function(sec) {
-	if (b(sec.enabled) == false) return;
+	if (sec.enabled != null && b(sec.enabled) == false) return;
 	let role = s(sec.ser_type, 'nameserver');
 	if (role == 'fallback' && cfg['dns']['enhanced-mode'] == 'fake-ip') return;
 	let srv = dns_server(sec.ser_address, sec.protocol, sec.ser_port);
@@ -202,7 +202,7 @@ if (length(bootstrap) && (!dns_present['default-nameserver'] || dns_force['defau
 let policies = {};
 let proxy_policies = {};
 uci.foreach('clashoo', 'dns_policy', function(sec) {
-	if (b(sec.enabled) == false) return;
+	if (sec.enabled != null && b(sec.enabled) == false) return;
 	let role = s(sec.policy_type, 'nameserver-policy');
 	if (role != 'nameserver-policy' && role != 'proxy-server-nameserver-policy') return;
 	let matcher = trim(sec.matcher || '');
@@ -252,7 +252,7 @@ if (need_cn_rs) {
 if (ab('authentication')) {
 	cfg['authentication'] = [];
 	uci.foreach('clashoo', 'authentication', function(sec) {
-		if (b(sec.enabled) == false) return;
+		if (sec.enabled != null && b(sec.enabled) == false) return;
 		let user = trim(sec.username || '');
 		let pass = trim(sec.password || '');
 		if (user) push(cfg['authentication'], user + ':' + pass);
@@ -262,7 +262,7 @@ if (ab('authentication')) {
 /* ── hosts ────────────────────────────────────────── */
 cfg['hosts'] = {};
 uci.foreach('clashoo', 'hosts', function(sec) {
-	if (b(sec.enabled) == false) return;
+	if (sec.enabled != null && b(sec.enabled) == false) return;
 	let domain = trim(sec.adress || '');
 	let ip     = trim(sec.ip || '');
 	if (domain && ip) cfg['hosts'][domain] = ip;

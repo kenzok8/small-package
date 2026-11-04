@@ -876,11 +876,23 @@ return view.extend({
 
   _stackLabel: function (stack) {
     var s = String(stack || '').toLowerCase();
-    var map = { gvisor: 'gVisor', system: 'System', mixed: 'Mixed' };
+    var map = { gvisor: 'gVisor', system: 'System', mixed: 'Mixed', mips: 'Mips' };
     return map[s] || (stack ? String(stack) : 'System');
   },
 
   _tpModeRows: function (st) {
+    /* eBPF 内核自己接管（cgroup + packet_rewrite），不跑 TUN/Redirect，也不建 tun 设备 */
+    if (st && st.core_is_ebpf) {
+      return {
+        ebpf: true,
+        rows: [
+          { proto: 'TCP', mode: 'eBPF', suffix: _("Mode") },
+          { proto: 'UDP', mode: 'eBPF', suffix: _("Mode") },
+          { proto: _("Network Stack"), mode: _("Core-managed"), suffix: '' }
+        ]
+      };
+    }
+
     var tcpRaw = st.tcp_node || st.effective_tcp_mode || st.tcp_mode || uci.get('clashoo', 'config', 'tcp_mode') || 'off';
     var udpRaw = st.udp_node || st.effective_udp_mode || st.udp_mode || uci.get('clashoo', 'config', 'udp_mode') || tcpRaw;
     var stackRaw = st.stack_type || st.stack || uci.get('clashoo', 'config', 'stack') || 'system';
@@ -897,6 +909,8 @@ return view.extend({
 
   _isTpModeDegraded: function (st) {
     if (!st)
+      return false;
+    if (st.core_is_ebpf)
       return false;
 
     if (st.runtime_degraded)
@@ -919,6 +933,8 @@ return view.extend({
     });
     if (this._isTpModeDegraded(st))
       rows.push(E('div', { 'class': 'cl-check-updated cl-mode-degraded' }, _("Degraded")));
+    if (data.ebpf)
+      rows.push(E('div', { 'class': 'cl-check-updated cl-mode-degraded' }, _("eBPF core captures traffic itself; turn off Clashoo forwarding rules")));
 
     return E('div', { id: 'cl-tpmode', 'class': 'cl-mode-stack' }, rows);
   },
@@ -1565,10 +1581,14 @@ return view.extend({
     var enhancedMode = String(st.enhanced_mode || 'fake-ip').toLowerCase();
     var tpMode    = 'custom';
 
-    if (tcpMode === 'tun' && udpMode === 'tun' && stackMode === 'mixed')
+    if (st.core_is_ebpf)
+      tpMode = 'ebpf';
+    else if (tcpMode === 'tun' && udpMode === 'tun' && stackMode === 'mixed')
       tpMode = 'tun-mixed';
     else if (tcpMode === 'tun' && udpMode === 'tun' && stackMode === 'gvisor')
       tpMode = 'tun-gvisor';
+    else if (tcpMode === 'tun' && udpMode === 'tun' && stackMode === 'mips')
+      tpMode = 'tun-mips';
     else if (tcpMode === 'tun' && udpMode === 'tun')
       tpMode = 'tun-system';
     else if (tcpMode === 'redirect' && udpMode === 'tproxy')
@@ -1583,7 +1603,9 @@ return view.extend({
           return E('option', { value: o[0], selected: o[0] === val ? '' : null, disabled: o[2] ? '' : null }, o[1]);
         }));
     };
-    var tpModeOptions = [['fake-ip','Fake-IP'],['redir-host','Redir-Host'],['tun-system','System'],['tun-gvisor','gVisor'],['tun-mixed','Mixed']];
+    var tpModeOptions = [['fake-ip','Fake-IP'],['redir-host','Redir-Host'],['tun-system','System'],['tun-gvisor','gVisor'],['tun-mixed','Mixed'],['tun-mips','Mips']];
+    if (tpMode === 'ebpf')
+      tpModeOptions.unshift(['ebpf', 'eBPF (' + _("core-managed") + ')', true]);
     if (tpMode === 'custom')
       tpModeOptions.unshift(['custom',_("Custom")]);
 
@@ -1649,6 +1671,10 @@ return view.extend({
               self._lastSt.tcp_mode = 'tun';
               self._lastSt.udp_mode = 'tun';
               self._lastSt.stack = 'gvisor';
+            } else if (mode === 'tun-mips') {
+              self._lastSt.tcp_mode = 'tun';
+              self._lastSt.udp_mode = 'tun';
+              self._lastSt.stack = 'mips';
             } else if (mode === 'tun-system') {
               self._lastSt.tcp_mode = 'tun';
               self._lastSt.udp_mode = 'tun';

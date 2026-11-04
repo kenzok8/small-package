@@ -1,6 +1,7 @@
 #!/bin/sh
 
 HONK_LIFECYCLE_CORE=/usr/bin/honk-core
+HONK_LIFECYCLE_HAVE_TIMEOUT=$(command -v timeout 2>/dev/null)
 
 # 字段归属：自带 global/experimental → file；只 include system.dae（且写法规范）→ system；
 # 其余一律 unknown。写法不规范时不猜，直接拒绝。
@@ -44,6 +45,15 @@ config_owner() {
 	else
 		echo unknown
 	fi
+}
+
+# 启动轮询用 0.25 秒粒度，核心就绪后尽快返回；没有 timeout 命令时退回 1 秒。
+honk_lifecycle_pause() {
+	if [ -n "$HONK_LIFECYCLE_HAVE_TIMEOUT" ]; then
+		timeout 0.25 sleep 1 2>/dev/null
+		return 0
+	fi
+	sleep 1
 }
 
 honk_lifecycle_procd_pid() {	ubus call service list '{"name":"honk"}' 2>/dev/null | jsonfilter -e '@.honk.instances.main.pid' 2>/dev/null
@@ -227,6 +237,7 @@ honk_lifecycle_start() {
 	# be told the start failed. Count distinct PIDs and give up early instead.
 	hlp_seen_pid=
 	hlp_attempts=0
+	hlp_tick=0
 	while [ "$hlp_timeout" -gt 0 ]; do
 		hlp_new_pid=$(honk_lifecycle_managed_pid 2>/dev/null)
 		if [ -n "$hlp_new_pid" ] && [ "$hlp_new_pid" != "$hlp_seen_pid" ]; then
@@ -264,8 +275,9 @@ honk_lifecycle_start() {
 			hlp_pid=
 			hlp_starttime=
 		fi
-		sleep 1
-		hlp_timeout=$((hlp_timeout - 1))
+		honk_lifecycle_pause
+		hlp_tick=$((hlp_tick + 1))
+		[ "$hlp_tick" -lt 4 ] || { hlp_tick=0; hlp_timeout=$((hlp_timeout - 1)); }
 	done
 	echo "honk lifecycle: new managed core did not become stable and own its API listener" >&2
 	return 1
