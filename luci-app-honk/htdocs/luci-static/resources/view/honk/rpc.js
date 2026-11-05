@@ -353,6 +353,11 @@ function tokenMessage(token) {
 		upload_unavailable: _('A private upload location could not be prepared.'),
 		settings_write_failed: _('Could not save Honk settings.'),
 		curl_missing: _('The curl command is missing. Install the curl package and try again.'),
+		kernel_too_old: _('内核版本过低，honk 需要 Linux 6.12 及以上，请升级固件。'),
+		kernel_btf_missing: _('内核缺少 BTF（/sys/kernel/btf/vmlinux 和 /usr/lib/debug/boot/vmlinux 都没有）。装 vmlinux-btf（apk add vmlinux-btf）或换用自带 BTF 的固件；自编译或快照内核需用同一份内核源码生成 BTF。'),
+		bpffs_not_mounted: _('bpffs 没有挂到 /sys/fs/bpf，请检查固件是否完整，或手工挂载后重试。'),
+		ip_full_missing: _('缺少 ip 命令，请安装 ip-full 包。'),
+		kmod_missing: _('缺少 modprobe 命令，请安装 kmod 包。'),
 		start_failed: _('Honk could not start.'),
 		stop_failed: _('Honk could not stop.'),
 		restart_failed: _('Honk could not restart.'),
@@ -374,6 +379,10 @@ function tokenMessage(token) {
 }
 
 function statusIssue(token) {
+	/* 内核模块检查会带上具体模块名，按前缀拆开再填进文案 */
+	if (typeof token === 'string' && token.indexOf('kernel_module_missing:') === 0)
+		return _('缺少内核模块 %s，请确认 kmod-sched-core / kmod-sched-bpf / kmod-veth / kmod-nft-queue 已安装。').format(token.slice('kernel_module_missing:'.length));
+
 	return tokenMessage(token) || _('Honk reported a system issue: %s').format(token);
 }
 

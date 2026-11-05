@@ -1154,6 +1154,9 @@ msgstr "YAML 解析器加载失败"
 msgid "Zashboard is still downloading or unavailable."
 msgstr "Zashboard 仍在下载或暂不可用。"
 
+msgid "bpffs 没有挂到 /sys/fs/bpf，请检查固件是否完整，或手工挂载后重试。"
+msgstr "bpffs 没有挂到 /sys/fs/bpf，请检查固件是否完整，或手工挂载后重试。"
+
 msgid "disabled"
 msgstr "关闭"
 
@@ -1249,6 +1252,12 @@ msgstr "停止服务失败且回滚未完成，快照已保留。"
 
 msgid "停止服务失败，已回滚。"
 msgstr "停止服务失败，已回滚。"
+
+msgid "内核版本过低，honk 需要 Linux 6.12 及以上，请升级固件。"
+msgstr "内核版本过低，honk 需要 Linux 6.12 及以上，请升级固件。"
+
+msgid "内核缺少 BTF（/sys/kernel/btf/vmlinux 和 /usr/lib/debug/boot/vmlinux 都没有）。装 vmlinux-btf（apk add vmlinux-btf）或换用自带 BTF 的固件；自编译或快照内核需用同一份内核源码生成 BTF。"
+msgstr "内核缺少 BTF（/sys/kernel/btf/vmlinux 和 /usr/lib/debug/boot/vmlinux 都没有）。装 vmlinux-btf（apk add vmlinux-btf）或换用自带 BTF 的固件；自编译或快照内核需用同一份内核源码生成 BTF。"
 
 msgid "写入 UCI 失败，已恢复原来的监听配置。"
 msgstr "写入 UCI 失败，已恢复原来的监听配置。"
@@ -1397,8 +1406,17 @@ msgstr "系统里还留着 dae0 / daens 等运行痕迹，请先停止服务或�
 msgid "缺少 Doona 静态文件（/usr/share/doona），请重新安装 luci-app-honk。"
 msgstr "缺少 Doona 静态文件（/usr/share/doona），请重新安装 luci-app-honk。"
 
+msgid "缺少 ip 命令，请安装 ip-full 包。"
+msgstr "缺少 ip 命令，请安装 ip-full 包。"
+
 msgid "缺少 libubox 组件（/usr/share/libubox/jshn.sh），请检查固件是否完整。"
 msgstr "缺少 libubox 组件（/usr/share/libubox/jshn.sh），请检查固件是否完整。"
+
+msgid "缺少 modprobe 命令，请安装 kmod 包。"
+msgstr "缺少 modprobe 命令，请安装 kmod 包。"
+
+msgid "缺少内核模块 %s，请确认 kmod-sched-core / kmod-sched-bpf / kmod-veth / kmod-nft-queue 已安装。"
+msgstr "缺少内核模块 %s，请确认 kmod-sched-core / kmod-sched-bpf / kmod-veth / kmod-nft-queue 已安装。"
 
 msgid "订阅内容是空的。"
 msgstr "订阅内容是空的。"

@@ -161,18 +161,27 @@ check_config() {
 	valid_clash_api || { fail "Clash API 设置不合法（端口 1024-65535，密钥 6-128 位）"; return 1; }
 }
 
+# 与 honk-core 的查找顺序一致：固件自带 BTF，或 OpenWrt vmlinux-btf 包装到
+# /usr/lib/debug/boot/vmlinux 的原始 BTF（dae 也认这个路径）。
+kernel_btf_path() {
+	for btf_file in /sys/kernel/btf/vmlinux /usr/lib/debug/boot/vmlinux; do
+		[ -r "$btf_file" ] && { printf '%s\n' "$btf_file"; return 0; }
+	done
+	return 1
+}
+
 check_kernel() {
+	kernel_error=""
 	kernel=$(uname -r | cut -d- -f1)
 	major=$(printf '%s' "$kernel" | cut -d. -f1)
 	minor=$(printf '%s' "$kernel" | cut -d. -f2)
-	[ "$major" -gt 6 ] || { [ "$major" -eq 6 ] && [ "$minor" -ge 12 ]; } || { fail "内核版本过低，需要 Linux 6.12 或更新"; return 1; }
-	[ -r /sys/kernel/btf/vmlinux ] || { fail "内核缺少 BTF（/sys/kernel/btf/vmlinux），请换用带 BTF 的固件"; return 1; }
-	[ -d /sys/fs/bpf ] && grep -q ' /sys/fs/bpf bpf ' /proc/mounts || { fail "bpffs 未挂载到 /sys/fs/bpf，请检查内核或手工挂载"; return 1; }
-	command -v ip >/dev/null 2>&1 || { fail "缺少 ip 命令（装 ip-full）"; return 1; }
-	command -v modprobe >/dev/null 2>&1 || { fail "缺少 modprobe 命令（装 kmod）"; return 1; }
-	[ -r /sys/kernel/btf/vmlinux ] || { fail "内核缺少 BTF（/sys/kernel/btf/vmlinux），请换用带 BTF 的固件"; return 1; }
+	[ "$major" -gt 6 ] || { [ "$major" -eq 6 ] && [ "$minor" -ge 12 ]; } || { kernel_error=kernel_too_old; fail "内核版本过低，需要 Linux 6.12 或更新"; return 1; }
+	kernel_btf_path >/dev/null || { kernel_error=kernel_btf_missing; fail "内核缺少 BTF（/sys/kernel/btf/vmlinux 或 /usr/lib/debug/boot/vmlinux），请安装 vmlinux-btf 或换用带 BTF 的固件"; return 1; }
+	[ -d /sys/fs/bpf ] && grep -q ' /sys/fs/bpf bpf ' /proc/mounts || { kernel_error=bpffs_not_mounted; fail "bpffs 未挂载到 /sys/fs/bpf，请检查内核或手工挂载"; return 1; }
+	command -v ip >/dev/null 2>&1 || { kernel_error=ip_full_missing; fail "缺少 ip 命令（装 ip-full）"; return 1; }
+	command -v modprobe >/dev/null 2>&1 || { kernel_error=kmod_missing; fail "缺少 modprobe 命令（装 kmod）"; return 1; }
 	for module in sch_ingress cls_bpf veth nft_queue nfnetlink_queue; do
-		module_available "$module" || { fail "缺少内核模块 $module，请确认 kmod-sched-core / kmod-sched-bpf / kmod-veth / kmod-nft-queue 已安装"; return 1; }
+		module_available "$module" || { kernel_error="kernel_module_missing:$module"; fail "缺少内核模块 $module，请确认 kmod-sched-core / kmod-sched-bpf / kmod-veth / kmod-nft-queue 已安装"; return 1; }
 	done
 }
 
@@ -823,7 +832,8 @@ diagnose() {
 	errors=""
 	managed_core_pid >/dev/null 2>&1 && running=1 || running=0
 	check_config >/dev/null 2>&1 || errors="$errors invalid_package_config"
-	check_kernel >/dev/null 2>&1 || errors="$errors kernel_requirements_unmet"
+	# 内核检查自报具体缺哪项，面板才能给出可操作的提示
+	check_kernel >/dev/null 2>&1 || errors="$errors ${kernel_error:-kernel_requirements_unmet}"
 	if [ "$settings_owner" != system ]; then
 		if [ "$running" != 1 ]; then
 			no_honk_resources >/dev/null 2>&1 || errors="$errors honk_resources_occupied"

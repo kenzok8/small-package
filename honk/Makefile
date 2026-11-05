@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=honk
-PKG_VERSION:=2026.11.04
+PKG_VERSION:=2026.11.05
 PKG_RELEASE:=1
 
 # Pinned honk-core revision (upstream daeuniverse/honk main), cross-compiled by
@@ -61,7 +61,9 @@ define Package/honk
   TITLE:=Honk transparent proxy core
   URL:=https://github.com/daeuniverse/honk
   # 不直接依赖 libubox：包名带 ABI 日期戳，会锁死固件；脚本只用 jshn 提供的 jshn.sh。
-  DEPENDS:=@(x86_64||aarch64||arm) +ca-bundle +ip-full +ubus +kmod-sched-core +kmod-sched-bpf +kmod-veth +kmod-nft-queue +jsonfilter +jshn +sqlite3-cli +usign +coreutils-stat +v2ray-geoip +v2ray-geosite +@KERNEL_DEBUG_INFO_BTF
+  # 不绑 @KERNEL_DEBUG_INFO_BTF：固件没编 BTF 时还有 vmlinux-btf 包这条活路，
+  # 绑上去会让官方 OpenWrt 直接装不了，启动时由控制脚本给出明确报错。
+  DEPENDS:=@(x86_64||aarch64||arm) +ca-bundle +ip-full +ubus +kmod-sched-core +kmod-sched-bpf +kmod-veth +kmod-nft-queue +jsonfilter +jshn +sqlite3-cli +usign +coreutils-stat +v2ray-geoip +v2ray-geosite
 endef
 
 define Package/honk/description
