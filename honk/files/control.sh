@@ -161,9 +161,12 @@ check_config() {
 	valid_clash_api || { fail "Clash API 设置不合法（端口 1024-65535，密钥 6-128 位）"; return 1; }
 }
 
-# 与 honk-core 的查找顺序一致：固件自带 BTF，或 OpenWrt vmlinux-btf 包装到
-# /usr/lib/debug/boot/vmlinux 的原始 BTF（dae 也认这个路径）。
+# 顺序同 honk-core：设了 HONK_VMLINUX_BTF 就只认它
 kernel_btf_path() {
+	if [ -n "${HONK_VMLINUX_BTF:-}" ]; then
+		[ -r "$HONK_VMLINUX_BTF" ] && { printf '%s\n' "$HONK_VMLINUX_BTF"; return 0; }
+		return 1
+	fi
 	for btf_file in /sys/kernel/btf/vmlinux /usr/lib/debug/boot/vmlinux; do
 		[ -r "$btf_file" ] && { printf '%s\n' "$btf_file"; return 0; }
 	done
@@ -176,7 +179,16 @@ check_kernel() {
 	major=$(printf '%s' "$kernel" | cut -d. -f1)
 	minor=$(printf '%s' "$kernel" | cut -d. -f2)
 	[ "$major" -gt 6 ] || { [ "$major" -eq 6 ] && [ "$minor" -ge 12 ]; } || { kernel_error=kernel_too_old; fail "内核版本过低，需要 Linux 6.12 或更新"; return 1; }
-	kernel_btf_path >/dev/null || { kernel_error=kernel_btf_missing; fail "内核缺少 BTF（/sys/kernel/btf/vmlinux 或 /usr/lib/debug/boot/vmlinux），请安装 vmlinux-btf 或换用带 BTF 的固件"; return 1; }
+	if ! kernel_btf_path >/dev/null; then
+		if [ -n "${HONK_VMLINUX_BTF:-}" ]; then
+			kernel_error=kernel_btf_override_invalid
+			fail "HONK_VMLINUX_BTF 指向的 $HONK_VMLINUX_BTF 不可读，honk-core 不会回退到默认路径"
+		else
+			kernel_error=kernel_btf_missing
+			fail "内核缺少 BTF（/sys/kernel/btf/vmlinux 或 /usr/lib/debug/boot/vmlinux），请安装 vmlinux-btf 或换用带 BTF 的固件"
+		fi
+		return 1
+	fi
 	[ -d /sys/fs/bpf ] && grep -q ' /sys/fs/bpf bpf ' /proc/mounts || { kernel_error=bpffs_not_mounted; fail "bpffs 未挂载到 /sys/fs/bpf，请检查内核或手工挂载"; return 1; }
 	command -v ip >/dev/null 2>&1 || { kernel_error=ip_full_missing; fail "缺少 ip 命令（装 ip-full）"; return 1; }
 	command -v modprobe >/dev/null 2>&1 || { kernel_error=kmod_missing; fail "缺少 modprobe 命令（装 kmod）"; return 1; }
