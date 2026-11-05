@@ -679,9 +679,11 @@ entry_value() {
 	awk -v key="$1" 'index($0, key "=") == 1 { print substr($0, length(key) + 2); exit }' "$2"
 }
 
-# 只删顶级 global/experimental，在第一块的位置补 include，其余内容原样保留。
+# 只删顶级 global/experimental，缺 include 时在第一块的位置补上，其余内容原样保留。
 strip_system_blocks() {
+	# 第一遍只摸底：已有 include 就不重复插入，重复 include 会被核心判成循环引用。
 	awk '
+		NR == FNR { if ($0 ~ /^[[:space:]]*include[[:space:]]*\{/) added = 1; next }
 		skip {
 			n = length($0)
 			for (i = 1; i <= n; i++) {
@@ -703,7 +705,7 @@ strip_system_blocks() {
 			next
 		}
 		{ print }
-	' "$1"
+	' "$1" "$1"
 }
 
 device_network() {
@@ -747,7 +749,8 @@ detach() {
 	case "$dry_run" in 1|true) dry_run=1 ;; *) dry_run=0 ;; esac
 	load_settings
 	[ "$initialized" = 1 ] || { detach_fail not_initialized; return 1; }
-	[ "$settings_owner" = file ] || { detach_fail config_not_file_owned; return 1; }
+	# 混合写法（include + 自带 global/experimental）也给一键切换；strip 后仍不规范会在下面被拒绝。
+	case "$settings_owner" in file|unknown) ;; *) detach_fail config_not_file_owned; return 1 ;; esac
 	[ -f /etc/honk/system.dae ] && [ ! -L /etc/honk/system.dae ] || { detach_fail system_config_unavailable; return 1; }
 	umask 077
 	detach_dir=$(mktemp -d /etc/honk/.detach.XXXXXX) || { detach_fail config_write_failed; return 1; }

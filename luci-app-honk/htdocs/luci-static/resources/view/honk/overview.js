@@ -247,14 +247,15 @@ return view.extend({
 			form.appendChild(field(_('Clash API port'), clashPortInput));
 			form.appendChild(field(_('Clash API secret'), clashSecretInput, status.clash_api_secret_set ? _('A secret is set. Leave blank to keep it.') : _('Required when enabling. Use 6–128 letters, numbers, dots, underscores or hyphens.')));
 			form.appendChild(E('p', { 'class': 'honk-note' }, _('Use your existing HTTPS reverse proxy for external access. Enter the secret in Zashboard when connecting.')));
-			if (owner === 'file') {
+			if (owner === 'system') {
+				form.appendChild(E('div', { 'class': 'cbi-page-actions' }, [ save ]));
+			} else {
+				/* 写法不规范时后端拒绝猜归属，这里必须给一键切换，否则页面成死胡同。 */
+				if (owner === 'unknown')
+					form.appendChild(E('p', { 'class': 'honk-note' }, _('This file includes system.dae and also defines global/experimental itself, so the panel will not guess. Switching moves these settings here; the current file is backed up first.')));
 				const detach = E('button', { 'class': 'cbi-button cbi-button-action', 'type': 'button' }, _('Switch to panel management'));
 				detach.addEventListener('click', function() { detachSettings(detach); });
 				form.appendChild(E('div', { 'class': 'honk-actions' }, [ detach ]));
-			} else {
-				form.appendChild(E('div', { 'class': 'cbi-page-actions' }, [ save ]));
-				if (owner !== 'system')
-					form.appendChild(E('p', { 'class': 'honk-note' }, _('This configuration is not a plain include of system.dae, so these settings cannot be edited here.')));
 			}
 			form.appendChild(message);
 			form.addEventListener('submit', function(ev) {

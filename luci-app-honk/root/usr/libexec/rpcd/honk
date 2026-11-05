@@ -86,8 +86,9 @@ status() {
 		json_get_var clash_secret_set clash_api_secret_set
 		json_select .. 2>/dev/null
 	fi
-	case "$api_enabled" in true) api_enabled=1 ;; *) api_enabled=0 ;; esac
-	case "$clash_secret_set" in true) clash_secret_set=1 ;; *) clash_secret_set=0 ;; esac
+	# jshn 在不同 libubox 版本上把布尔读成 true/false 或 1/0，两种都得认。
+	case "$api_enabled" in true|1) api_enabled=1 ;; *) api_enabled=0 ;; esac
+	case "$clash_secret_set" in true|1) clash_secret_set=1 ;; *) clash_secret_set=0 ;; esac
 	if [ -n "$managed_pid" ] && honk_lifecycle_ready_owned "$managed_pid"; then core_ready=1; fi
 	if [ "$core_ready" = 1 ]; then
 		runtime_token=$(awk 'NR == 1 { print $1 }' /var/run/honk/readiness 2>/dev/null)

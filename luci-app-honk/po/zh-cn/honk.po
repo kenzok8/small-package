@@ -1079,8 +1079,8 @@ msgstr "这些设置改由概览页管理，订阅、节点、分组和分流规
 msgid "These values carry over, written the way the panel expects:"
 msgstr "这些值会保留，只是写法按面板要求调整："
 
-msgid "This configuration is not a plain include of system.dae, so these settings cannot be edited here."
-msgstr "当前配置不是纯粹的 system.dae 引用，这里无法编辑这些设置。"
+msgid "This file includes system.dae and also defines global/experimental itself, so the panel will not guess. Switching moves these settings here; the current file is backed up first."
+msgstr "当前文件既引用 system.dae，又自带 global/experimental，面板不猜归谁管。切换后面板接管这些设置，原文件会先备份。"
 
 msgid "This core cannot use any of these nodes, so the subscription was not saved."
 msgstr "这份订阅里的节点本内核一个都用不了，所以没有保存。"
