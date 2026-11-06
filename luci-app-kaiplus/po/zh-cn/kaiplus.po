@@ -97,11 +97,11 @@ msgstr "可通过 http://路由器地址:端口/apps/kai/web/ 访问经典版 KA
 msgid "CLASSIC KAI could not apply the service settings. Check its configuration and system log."
 msgstr "经典版 KAI 无法应用服务设置，请检查配置和系统日志。"
 
-msgid "Update CLASSIC KAI"
-msgstr "更新经典版 KAI"
+msgid "Check for CLASSIC KAI updates"
+msgstr "检查经典版 KAI 更新"
 
-msgid "Update"
-msgstr "更新"
+msgid "Check for updates"
+msgstr "检查更新"
 
 msgid "Update CLASSIC KAI and its runtime engine from the iStore package feed? A running CLASSIC KAI service will restart."
 msgstr "是否从 iStore 软件源更新经典版 KAI 及运行引擎？正在运行的经典版服务将重启。"

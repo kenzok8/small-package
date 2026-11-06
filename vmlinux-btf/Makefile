@@ -63,6 +63,37 @@ define Build/Prepare
 endef
 
 define Build/Compile
+	# 影子内核开 DEBUG_INFO_BTF，链接 vmlinux 与后续 pahole 编码都需要 pahole。
+	# 部分 SDK 镜像里没有 pahole（armv7 imx 等目标默认不开 BTF），这里直接从
+	# dwarves 源码现编一个装到 staging host 目录；版本与哈希同上游 tools/dwarves
+	# 保持一致，已装好就跳过。注意：SDK 的 tools/dwarves 编译目标在实测里不可用，
+	# 不要改回那条路。另外这段 recipe 会被 make 展开两次，shell 变量写了也活不下来，
+	# 所以只用 make 变量写死路径与并行数，不要用双美元转义。
+	if [ -x "$(STAGING_DIR_HOST)/bin/pahole" ]; then \
+		echo "pahole already present, skipping dwarves build"; \
+	else \
+		[ -f "$(DL_DIR)/dwarves-1.28.tar.bz2" ] || \
+			wget -nv -O "$(DL_DIR)/dwarves-1.28.tar.bz2" \
+				"https://fedorapeople.org/~acme/dwarves/dwarves-1.28.tar.bz2"; \
+		echo "826efc0fc9237d3c1e9c01553ea387a8cb46e8dc119ff863889043f4ed54b2ae  $(DL_DIR)/dwarves-1.28.tar.bz2" | sha256sum -c -; \
+		rm -rf $(PKG_BUILD_DIR)/dwarves-build; \
+		mkdir -p $(PKG_BUILD_DIR)/dwarves-build; \
+		tar -xjf "$(DL_DIR)/dwarves-1.28.tar.bz2" -C $(PKG_BUILD_DIR)/dwarves-build --strip-components=1; \
+		cd $(PKG_BUILD_DIR)/dwarves-build && \
+			PATH="$(STAGING_DIR_HOST)/bin:$(PATH)" \
+			PKG_CONFIG_PATH="$(STAGING_DIR_HOST)/lib/pkgconfig" \
+			$(if $(wildcard $(STAGING_DIR_HOST)/bin/cmake),$(STAGING_DIR_HOST)/bin/cmake,cmake) \
+				-DCMAKE_INSTALL_PREFIX="$(STAGING_DIR_HOST)" \
+				-DCMAKE_BUILD_TYPE=Release \
+				-DCMAKE_FIND_ROOT_PATH="$(STAGING_DIR_HOST)" \
+				-DCMAKE_PREFIX_PATH="$(STAGING_DIR_HOST)" \
+				-D__LIB=lib \
+				-DCMAKE_INSTALL_RPATH="$(STAGING_DIR_HOST)/lib" \
+				-DCMAKE_SKIP_RPATH=FALSE . && \
+			$(MAKE) -j$(shell nproc) && \
+			$(MAKE) install; \
+	fi
+
 	$(PKG_BUILD_DIR)/shadow-kernel/scripts/config \
 		--file $(PKG_BUILD_DIR)/shadow-kernel/.config \
 		--disable WERROR \

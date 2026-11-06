@@ -13,6 +13,16 @@ APP_DIR = Path(__file__).resolve().parents[1]
 
 
 class ClassicKaiEntryContractTest(unittest.TestCase):
+    def test_classic_navigation_is_not_duplicated_in_kaiplus_status(self):
+        template = (APP_DIR / "luasrc/view/kaiplus/kaiplus_status.htm").read_text()
+        self.assertNotIn("kaiplus-open-kai", template)
+        self.assertNotIn("admin/services/kaiplus/classic", template)
+
+    def test_classic_maintenance_button_does_not_imply_an_available_update(self):
+        template = (APP_DIR / "luasrc/view/kaiplus/classic_status.htm").read_text()
+        self.assertEqual(template.count("<%:Check for updates%>"), 2)
+        self.assertNotIn("<%:Update%>", template)
+
     def test_classic_runtime_remains_an_optional_install(self):
         makefile = (APP_DIR / "Makefile").read_text()
         deps = re.search(r"^LUCI_DEPENDS:=(.*)$", makefile, re.M).group(1).split()

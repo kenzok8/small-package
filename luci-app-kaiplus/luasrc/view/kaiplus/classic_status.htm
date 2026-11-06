@@ -48,7 +48,7 @@ function classicPackageTask(update) {
 	(new XHR()).post(update ? classicUpdateUrl : classicInstallUrl, { token: window.taskd.csrfToken || '' }, function(x) {
 		var data = {};
 		button.disabled = false;
-		button.value = update ? '<%:Update%>' : '<%:Install CLASSIC KAI%>';
+		button.value = update ? '<%:Check for updates%>' : '<%:Install CLASSIC KAI%>';
 		if (x && x.responseText) {
 			try { data = JSON.parse(x.responseText || '{}'); }
 			catch (e) { data = {}; }
@@ -94,6 +94,6 @@ XHR.poll(5, '<%=url("admin/services/kaiplus/classic_status")%>', null, function(
 	<div class="classic-kai-actions">
 		<input id="classic-kai-install" class="btn cbi-button cbi-button-apply" type="button" value="<%:Install CLASSIC KAI%>" onclick="installClassicKai()" style="display:none"/>
 		<input id="classic-kai-open" class="btn cbi-button cbi-button-apply" type="button" value="<%:Open CLASSIC KAI%>" onclick="window.open(classicOpenUrl, '_blank', 'noopener')" style="display:none"/>
-		<input id="classic-kai-update" class="btn cbi-button" type="button" value="<%:Update%>" title="<%:Update CLASSIC KAI%>" aria-label="<%:Update CLASSIC KAI%>" onclick="updateClassicKai()" style="display:none"/>
+		<input id="classic-kai-update" class="btn cbi-button" type="button" value="<%:Check for updates%>" title="<%:Check for CLASSIC KAI updates%>" aria-label="<%:Check for CLASSIC KAI updates%>" onclick="updateClassicKai()" style="display:none"/>
 	</div>
 </fieldset>
