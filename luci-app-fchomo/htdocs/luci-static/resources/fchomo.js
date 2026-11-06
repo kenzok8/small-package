@@ -268,7 +268,7 @@ const preset_outbound = {
 		['COMPATIBLE']
 	],
 	direct: [
-		['', _('null')],
+		['', _('none')],
 		['DIRECT'],
 		['GLOBAL']
 	],
@@ -711,16 +711,17 @@ const CBIGenValue = form.Value.extend({
 	__name__: 'CBI.GenValue',
 
 	renderWidget(section_id, option_index, cfgvalue) {
-		let node = form.Value.prototype.renderWidget.call(this, section_id, option_index, cfgvalue);
+		let node = form.Value.prototype.renderWidget.apply(this, arguments);
 
 		if (!this.password)
 			node.classList.add('control-group');
 
-		(node.querySelector('.control-group') || node).appendChild(E('button', {
-			class: 'cbi-button cbi-button-add',
-			title: _('Generate'),
-			click: ui.createHandlerFn(this, handleGenKey, section_id, this.hm_options || this.option)
-		}, [ _('Generate') ]));
+		if (this.section.section) // modalonly
+			(node.querySelector('.control-group') || node).appendChild(E('button', {
+				class: 'cbi-button cbi-button-add',
+				title: _('Generate'),
+				click: ui.createHandlerFn(this, handleGenKey, section_id, this.et_options || this.option)
+			}, [ _('Generate') ]));
 
 		return node;
 	}
@@ -730,13 +731,14 @@ const CBIGenText = CBITextValue.extend({
 	__name__: 'CBI.GenText',
 
 	renderWidget(section_id, option_index, cfgvalue) {
-		let node = CBITextValue.prototype.renderWidget.call(this, section_id, option_index, cfgvalue);
+		let node = CBITextValue.prototype.renderWidget.apply(this, arguments);
 
-		node.appendChild(E('button', {
-			class: 'cbi-button cbi-button-add',
-			title: _('Generate'),
-			click: ui.createHandlerFn(this, handleGenKey, section_id, this.hm_options || this.option)
-		}, [ _('Generate') ]));
+		if (this.section.section) // modalonly
+			(node.querySelector('.control-group') || node).appendChild(E('button', {
+				class: 'cbi-button cbi-button-add',
+				title: _('Generate'),
+				click: ui.createHandlerFn(this, handleGenKey, section_id, this.et_options || this.option)
+			}, [ _('Generate') ]));
 
 		return node;
 	}
@@ -748,28 +750,29 @@ const CBICopyValue = form.Value.extend({
 	readonly: true,
 
 	renderWidget(section_id, option_index, cfgvalue) {
-		let node = form.Value.prototype.renderWidget.call(this, section_id, option_index, cfgvalue);
+		let node = form.Value.prototype.renderWidget.apply(this, arguments);
 
 		node.classList.add('control-group');
 
-		node.appendChild(E('button', {
-			class: 'cbi-button cbi-button-add',
-			click: ui.createHandlerFn(this, async (section_id) => {
-				try {
-					await navigator.clipboard.writeText(this.formvalue(section_id));
-					console.log('Content copied to clipboard!');
-				} catch (e) {
-					console.error('Failed to copy: ', e);
-				}
-				/* Deprecated
-				let inputEl = document.getElementById(this.cbid(section_id)).querySelector('input');
-				inputEl.select();
-				document.execCommand("copy");
-				inputEl.blur();
-				*/
-				return alert(_('Content copied to clipboard!'));
-			}, section_id)
-		}, [ _('Copy') ]));
+		if (this.section.section) // modalonly
+			node.appendChild(E('button', {
+				class: 'cbi-button cbi-button-add',
+				click: ui.createHandlerFn(this, async (section_id) => {
+					try {
+						await navigator.clipboard.writeText(this.formvalue(section_id));
+						console.log('Content copied to clipboard!');
+					} catch (e) {
+						console.error('Failed to copy: ', e);
+					}
+					/* Deprecated
+					let inputEl = document.getElementById(this.cbid(section_id)).querySelector('input');
+					inputEl.select();
+					document.execCommand("copy");
+					inputEl.blur();
+					*/
+					return alert(_('Content copied to clipboard!'));
+				}, section_id)
+			}, [ _('Copy') ]));
 
 		return node;
 	}

@@ -3247,7 +3247,7 @@ msgid "Secondary"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:1074
-msgid "Secure Mode"
+msgid "Secure mode"
 msgstr ""
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:531

@@ -3282,7 +3282,7 @@ msgid "Secondary"
 msgstr "次要"
 
 #: htdocs/luci-static/resources/view/fchomo/node.js:1074
-msgid "Secure Mode"
+msgid "Secure mode"
 msgstr "安全模式"
 
 #: htdocs/luci-static/resources/view/fchomo/global.js:531

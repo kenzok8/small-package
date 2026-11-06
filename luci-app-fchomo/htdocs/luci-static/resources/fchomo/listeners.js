@@ -264,7 +264,7 @@ function renderListeners(s, uciconfig, isClient) {
 				click: ui.createHandlerFn(this, () => {
 					this.hm_options.type = document.getElementById(cbid).value;
 
-					return hm.handleGenKey.call(this, this.hm_options);
+					return hm.handleGenKey.call(this, section_id, this.hm_options);
 				})
 			}, [ _('Generate') ])
 		]));
@@ -311,7 +311,7 @@ function renderListeners(s, uciconfig, isClient) {
 		(node.querySelector('.control-group') || node).appendChild(E('button', {
 			class: 'cbi-button cbi-button-positive',
 			title: _('Generate'),
-			click: ui.createHandlerFn(this, hm.handleGenKey, this.hm_options || this.option)
+			click: ui.createHandlerFn(this, hm.handleGenKey, section_id, this.hm_options || this.option)
 		}, [ _('Generate') ]));
 
 		return node;
@@ -616,10 +616,10 @@ function renderListeners(s, uciconfig, isClient) {
 
 		o = s.taboption('field_general', hm.ListValue, 'rule', _('Sub rule'),
 			_('Name of the Sub rule used for inbound matching.'));
-		o.value.apply(o, ['', _('null')]);
+		o.value.apply(o, ['', _('none')]);
 		o.load = function(section_id) {
 			return hm.loadLabel.call(this, [
-				['', _('null')],
+				['', _('none')],
 				...hm.loadLabelValues(this.config, 'subrule-group')
 			], section_id);
 		}
@@ -960,7 +960,7 @@ function renderListeners(s, uciconfig, isClient) {
 				click: ui.createHandlerFn(this, () => {
 					this.hm_options.type = document.getElementById(cbid).value;
 
-					return hm.handleGenKey.call(this, this.hm_options);
+					return hm.handleGenKey.call(this, section_id, this.hm_options);
 				})
 			}, [ _('Generate') ])
 		]));
@@ -1213,7 +1213,7 @@ function renderListeners(s, uciconfig, isClient) {
 				click: ui.createHandlerFn(this, () => {
 					this.hm_options.params = document.getElementById(cbid).value;
 
-					return hm.handleGenKey.call(this, this.hm_options);
+					return hm.handleGenKey.call(this, section_id, this.hm_options);
 				})
 			}, [ _('Generate') ])
 		]));

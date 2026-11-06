@@ -1071,16 +1071,19 @@ return view.extend({
 		so.depends('type', 'easytier');
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.Flag, 'easytier_secure_mode', _('Secure Mode'));
+		so = ss.taboption('field_general', form.Flag, 'easytier_secure_mode', _('Secure mode'));
 		so.default = so.disabled;
 		so.validate = function(section_id, value) {
 			const secure_mode = this.getUIElement(section_id).node.querySelector('input');
 			const peers = this.section.getOption('easytier_peers').formvalue(section_id);
-			const local_private_key = this.section.getOption('easytier_local_private_key').formvalue(section_id);
-			const local_public_key = this.section.getOption('easytier_local_public_key').formvalue(section_id);
 
 			// Force enabled
-			if ((local_private_key && local_public_key) || peers.filter(e => new URL(e).searchParams.get('peer-public-key')).length > 0) {
+			if (peers.filter(e => {
+					try {
+						return new URL(e).searchParams.get('peer-public-key');
+					} catch {}
+				}).length > 0
+			) {
 				secure_mode.checked = true;
 				secure_mode.disabled = true;
 			} else
@@ -1104,12 +1107,13 @@ return view.extend({
 		}
 		so.password = true;
 		so.validate = L.bind(hm.validateBase64Key, so, 44);
-		so.depends('type', 'easytier');
+		so.rmempty = false;
+		so.depends('easytier_secure_mode', '1');
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', hm.CopyValue, 'easytier_local_public_key', _('Client public key'),
 			_('Base64 encoded X25519 public key.'));
-		so.depends('type', 'easytier');
+		so.depends('easytier_secure_mode', '1');
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.DynamicList, 'easytier_exit_nodes', _('Exit nodes'),
@@ -2464,7 +2468,7 @@ return view.extend({
 						else
 							this.hm_options.params = '';
 
-						return hm.handleGenKey.call(this, this.hm_options);
+						return hm.handleGenKey.call(this, section_id, this.hm_options);
 					})
 				}, [ _('Generate') ])
 			]));
