@@ -1,0 +1,70 @@
+From: lua-maxminddb maintainers
+Subject: [PATCH] Keep database owners alive and validate lookup results
+
+A lookup result contains pointers into its database. Retain the database in
+its result userdata so garbage collection cannot close it prematurely.
+Check libmaxminddb error codes before reading data, report lookup misses
+clearly, reject overlong paths, and balance the stack on repeated module
+initialization. Preserve the existing exception-based API.
+
+--- a/maxminddb.c
++++ b/maxminddb.c
+@@ -41,7 +41,10 @@
+ 
+ static void addclass(lua_State *L, const char *name, const luaL_Reg *methods, const luaL_Reg *metamethods)
+ {
+-	if (!luaL_newmetatable(L, name)) return;
++	if (!luaL_newmetatable(L, name)) {
++		lua_pop(L, 1);
++		return;
++	}
+ 	if (metamethods)
+ 		luaL_setfuncs(L, metamethods, 0);
+ 	if (methods) {
+@@ -69,17 +72,20 @@
+ 
+ static int mmdbres_get(lua_State *L)
+ {
+-	MMDB_entry_data_s data;
++	MMDB_entry_data_s data = { 0 };
+ 	MMDB_lookup_result_s *res = luaL_checkudata(L, 1, MMDB_RESULT_CLASS);
+ 	const char *keys[16];
+-	int r, i;
++	int r, i, n = lua_gettop(L) - 1;
+ 
+-	for (i = 2; i <= lua_gettop(L) && i < 15; i++)
+-		keys[i-2] = luaL_checkstring(L, i);
+-	keys[i-2] = 0;
++	if (n >= (int)(sizeof(keys) / sizeof(keys[0])))
++		return luaL_error(L, "Lookup path is too long (maximum 15 keys)");
++	for (i = 0; i < n; i++)
++		keys[i] = luaL_checkstring(L, i + 2);
++	keys[n] = NULL;
+ 
+ 	r = MMDB_aget_value(&res->entry, &data, keys);
+-	if (!data.has_data) return mm_error(L, r);
++	if (r != MMDB_SUCCESS) return mm_error(L, r);
++	if (!data.has_data) return luaL_error(L, "No data found at lookup path");
+ 
+ 	switch (data.type) {
+ 	case MMDB_DATA_TYPE_BYTES:
+@@ -141,7 +147,18 @@
+ 		lua_pushstring(L, gai_strerror(gaierr));
+ 		return lua_error(L);
+ 	}
+-	if (!res->found_entry) return mm_error(L, mmerr);
++	if (mmerr != MMDB_SUCCESS) return mm_error(L, mmerr);
++	if (!res->found_entry) return luaL_error(L, "No entry found for IP address");
++
++	/* The result points into the database, so keep its owner alive. */
++	lua_newtable(L);
++	lua_pushvalue(L, 1);
++	lua_rawseti(L, -2, 1);
++#if LUA_VERSION_NUM >= 502
++	lua_setuservalue(L, -2);
++#else
++	lua_setfenv(L, -2);
++#endif
+ 
+ 	return 1;
+ }

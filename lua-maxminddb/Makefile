@@ -7,16 +7,17 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua-maxminddb
 PKG_VERSION:=0.2
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=5
 
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/fabled/lua-maxminddb.git
 PKG_SOURCE_DATE:=2019-03-14
 PKG_SOURCE_VERSION:=93da9f4e6c814c3a23044dd2cdd22d4a6b4f665b
-PKG_MIRROR_HASH:=b99ef18516b705b3e73b15a9d5ddc99add359299b52639fe3c81dd761591d9d9
+PKG_MIRROR_HASH:=168cbaada08da240d0b24e0f776fb380c1a19d9f88d2ca019710b5e62397d808
 
 PKG_LICENSE:=MIT
-PKG_LICENSE_FILE:=LICENSE
+PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=fabled
 
 PKG_BUILD_PARALLEL:=1
@@ -30,6 +31,11 @@ define Package/lua-maxminddb
   TITLE:=libmaxminddb bindings for lua
   URL:=https://github.com/jerrykuku/lua-maxminddb
   DEPENDS:=+lua +libmaxminddb
+endef
+
+define Package/lua-maxminddb/description
+  Lua bindings for reading MaxMind DB files, including GeoIP2 and GeoLite2
+  databases. Database files must be installed separately.
 endef
 
 TARGET_CFLAGS += $(FPIC)
