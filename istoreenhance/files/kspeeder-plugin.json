@@ -5,9 +5,23 @@
   "icon": "logo.png",
   "staticRoot": "/usr/share/kspeeder/www",
   "desktop": {
-    "mode": "module",
-    "entry": "desktop-entry.js",
-    "isolation": "shadow-dom"
+    "mode": "iframe",
+    "target": {
+      "scheme": "http",
+      "hostMode": "request-host",
+      "port": {
+        "default": 5003,
+        "keys": {
+          "uci": "istoreenhance.@istoreenhance[0].adminport"
+        }
+      },
+      "path": "/"
+    },
+    "access": {
+      "scope": "lan",
+      "blockedTitle": "请在局域网内打开 KSpeeder",
+      "blockedMessage": "KSpeeder 运行在设备的独立服务端口，请连接设备所在局域网后再打开。"
+    }
   },
   "standalone": {
     "entry": "index.html",
@@ -19,6 +33,14 @@
       "hostMode": "request-host",
       "defaultPort": 5003,
       "path": "/"
+    }
+  },
+  "config": {
+    "providerOrder": ["uci"],
+    "providers": {
+      "uci": {
+        "type": "uci"
+      }
     }
   },
   "backend": {

@@ -11,8 +11,8 @@ PKG_ARCH_ISTOREENHANCE:=$(ARCH)
 
 PKG_NAME:=istoreenhance
 # use PKG_SOURCE_DATE instead of PKG_VERSION for compitable
-PKG_SOURCE_DATE:=0.8.5
-PKG_RELEASE:=1
+PKG_SOURCE_DATE:=0.8.8
+PKG_RELEASE:=2
 ARCH_HEXCODE:=
 ifeq ($(ARCH),x86_64)
 ARCH_HEXCODE=8664
@@ -26,7 +26,7 @@ endif
 PKG_SOURCE_VERSION:=$(ARCH_HEXCODE)
 PKG_SOURCE:=iStoreEnhance-binary-$(PKG_SOURCE_DATE).tar.gz
 PKG_SOURCE_URL:=https://github.com/kspeeder/docker_kspeeder/releases/download/v$(PKG_SOURCE_DATE)/
-PKG_HASH:=9bd2fb08b6c2cc950c7c436abd7e04fbd11496105998303ae3da9dc28e63c0d3
+PKG_HASH:=a396881aced3074b545c5bbfd1872a1f000b3c8e0e02a17f33e253aedfb194b1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/iStoreEnhance-binary-$(PKG_SOURCE_DATE)
 KSPEEDER_WEB_ROOT:=$(PKG_BUILD_DIR)/wwwroot
@@ -88,11 +88,8 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) ./files/istoreenhance.init $(1)/etc/init.d/istoreenhance
 	$(INSTALL_BIN) ./files/istoreenhance.uci-default $(1)/etc/uci-defaults/istoreenhance
 	$(INSTALL_DATA) ./files/kspeeder-plugin.json $(1)/usr/share/kspeeder/kspeeder-plugin.json
-	if [ -d "$(KSPEEDER_WEB_ROOT)" ] && [ -f "$(KSPEEDER_WEB_ROOT)/desktop-entry.js" ]; then \
+	if [ -d "$(KSPEEDER_WEB_ROOT)" ] && [ -f "$(KSPEEDER_WEB_ROOT)/index.html" ]; then \
 		$(CP) $(KSPEEDER_WEB_ROOT)/* $(1)/usr/share/kspeeder/www/; \
-	else \
-		$(INSTALL_DATA) ./files/www/desktop-entry.js $(1)/usr/share/kspeeder/www/desktop-entry.js; \
-		$(INSTALL_DATA) ./files/www/index.html $(1)/usr/share/kspeeder/www/index.html; \
 	fi
 	$(INSTALL_DATA) ./files/logo.png $(1)/usr/share/kspeeder/www/logo.png
 	ln -sf /usr/share/kspeeder/kspeeder-plugin.json $(1)/usr/share/linkeasefull/desktop-apps.d/20-kspeeder.json

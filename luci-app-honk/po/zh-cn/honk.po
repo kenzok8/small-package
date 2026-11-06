@@ -692,6 +692,18 @@ msgstr "需要先完成恢复，才能执行其他操作。"
 msgid "Recovery is required before another write operation."
 msgstr "需要先完成恢复，才能进行其他写入操作。"
 
+msgid "Recover the interrupted operation"
+msgstr "恢复被中断的操作"
+
+msgid "Recovering…"
+msgstr "正在恢复…"
+
+msgid "Recovery completed."
+msgstr "恢复完成。"
+
+msgid "Recovery failed."
+msgstr "恢复失败。"
+
 msgid "Recovery is required. Run system recovery before starting another maintenance operation."
 msgstr "需要先恢复系统，再执行其他维护操作。"
 

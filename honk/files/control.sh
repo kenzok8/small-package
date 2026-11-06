@@ -1203,6 +1203,35 @@ EOF
 	echo '{"ok":true,"message":"administrator_initialized"}'
 }
 
+# 收尾被中断的维护事务：死锁优先清，再交给 maintenance.sh 回滚日志。
+# 只在确认没有 honk-core 在跑时动手，避免清掉别人正在用的锁。
+recover() {
+	if [ -e /etc/.honk-update/journal ] || [ -L /etc/.honk-update/journal ]; then
+		echo '{"ok":false,"message":"update_recovery_required"}'
+		return 1
+	fi
+	if [ -d "$HONK_LOCK_DIR" ]; then
+		lock_readable=0
+		[ -r "$HONK_LOCK_DIR/pid" ] && lock_readable=1
+		if [ "$lock_readable" = 1 ] && ! honk_lock_is_stale; then
+			echo '{"ok":false,"message":"operation_in_progress"}'
+			return 1
+		fi
+		if pidof honk-core >/dev/null 2>&1; then
+			echo '{"ok":false,"message":"unmanaged_core_running"}'
+			return 1
+		fi
+		rm -rf "$HONK_LOCK_DIR" || { echo '{"ok":false,"message":"lock_clear_failed"}'; return 1; }
+	fi
+	if [ -d /etc/.honk-maintenance ]; then
+		if ! maint_out=$(/usr/share/honk/maintenance.sh recover 2>/dev/null); then
+			echo "${maint_out:-{\"ok\":false,\"message\":\"recovery_failed\"}}"
+			return 1
+		fi
+	fi
+	echo '{"ok":true,"message":"transaction_recovered"}'
+}
+
 case "$1" in
 	check)
 		preflight
@@ -1229,8 +1258,11 @@ case "$1" in
 	detach)
 		detach
 		;;
+	recover)
+		recover
+		;;
 	*)
-		echo "usage: $0 {check|diagnose|preflight|local-direct|initialize|settings|repair|detach}" >&2
+		echo "usage: $0 {check|diagnose|preflight|local-direct|initialize|settings|repair|detach|recover}" >&2
 		exit 2
 		;;
 esac

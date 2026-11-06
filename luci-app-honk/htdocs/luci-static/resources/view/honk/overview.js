@@ -488,8 +488,11 @@ return view.extend({
 		}
 
 		page.appendChild(E('div', { 'class': 'honk-header' }, [
-			E('h2', {}, _('Honk')),
-			E('p', { 'class': 'honk-header-sub' }, _('Transparent proxy core for OpenWrt. Start, stop and manage the Honk service.'))
+			E('img', { 'class': 'honk-header-logo', 'src': L.resource('view/honk/logo.png'), 'alt': '' }),
+			E('div', { 'class': 'honk-header-text' }, [
+				E('h2', {}, _('Honk')),
+				E('p', { 'class': 'honk-header-sub' }, _('Transparent proxy core for OpenWrt. Start, stop and manage the Honk service.'))
+			])
 		]));
 		page.appendChild(statusArea);
 		page.appendChild(actionMessage);

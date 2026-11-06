@@ -63,6 +63,20 @@
 
 .honk-header {
 	margin: 4px 0 18px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.honk-header-logo {
+	height: 30px;
+	width: auto;
+	flex: none;
+	display: block;
+}
+
+.honk-header-text {
+	min-width: 0;
 }
 
 .honk-header h2 {
@@ -83,6 +97,11 @@
 	line-height: 1.5;
 	color: var(--hk-muted);
 	max-width: 68ch;
+}
+
+@media (max-width: 480px) {
+	.honk-header { gap: 10px; }
+	.honk-header-logo { height: 26px; }
 }
 
 /* ---------- Cards ---------- */
@@ -510,7 +529,9 @@
 	margin: 0;
 	border: 0;
 	border-radius: 999px;
-	background: rgba(128, 128, 128, 0.3);
+	background: rgba(128, 128, 128, 0.42);
+	/* 只靠底色时浅色主题和深色主题都会糊掉，加深色描边让轨道边界清楚 */
+	box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.3);
 	background-image: none !important;
 	cursor: pointer;
 	transition: background-color 0.2s ease, opacity 0.2s ease;
@@ -526,10 +547,11 @@
 .honk-page input[type="checkbox"]::before {
 	content: "";
 	position: absolute;
-	top: 2px;
-	left: 2px;
-	width: 23px;
-	height: 23px;
+	/* 圆点必须完整落在轨道里：27px 高减去上下各 3px 留白 */
+	top: 3px;
+	left: 3px;
+	width: 21px;
+	height: 21px;
 	border-radius: 50%;
 	background: #fff;
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
@@ -544,6 +566,10 @@
 
 .honk-page input[type="checkbox"]:checked::before {
 	transform: translateX(19px);
+}
+
+.honk-page input[type="checkbox"]:checked {
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
 }
 
 .honk-page input[type="checkbox"]:focus-visible {

@@ -174,8 +174,11 @@ return view.extend({
 
 		return E('div', { 'class': 'cbi-map honk-page' }, [
 			E('div', { 'class': 'honk-header' }, [
-				E('h2', {}, _('Logs')),
-				E('p', { 'class': 'honk-header-sub' }, _('Shows up to 200 Honk-specific lines, capped at 32 KiB, and refreshes every 5 seconds while live. Sensitive URLs and credentials are redacted before display.'))
+				E('img', { 'class': 'honk-header-logo', 'src': L.resource('view/honk/logo.png'), 'alt': '' }),
+				E('div', { 'class': 'honk-header-text' }, [
+					E('h2', {}, _('Logs')),
+					E('p', { 'class': 'honk-header-sub' }, _('Shows up to 200 Honk-specific lines, capped at 32 KiB, and refreshes every 5 seconds while live. Sensitive URLs and credentials are redacted before display.'))
+				])
 			]),
 			E('section', { 'class': 'honk-card' }, [
 				E('h3', { 'class': 'honk-card-title' }, _('Live log')),

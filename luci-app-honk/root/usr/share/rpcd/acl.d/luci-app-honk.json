@@ -74,6 +74,7 @@
 					"config_save",
 					"reset_admin",
 					"repair",
+					"recover",
 					"backup",
 					"restore",
 					"restore_prepare",

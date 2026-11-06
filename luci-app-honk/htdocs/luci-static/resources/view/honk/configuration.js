@@ -112,7 +112,8 @@ return view.extend({
 
 		const page = E('div', { 'class': 'cbi-map honk-page' });
 		page.appendChild(E('div', { 'class': 'honk-header' }, [
-			E('h2', {}, _('Configuration'))
+			E('img', { 'class': 'honk-header-logo', 'src': L.resource('view/honk/logo.png'), 'alt': '' }),
+			E('div', { 'class': 'honk-header-text' }, [ E('h2', {}, _('Configuration')) ])
 		]));
 
 		const draftNote = E('div', { 'class': 'honk-note honk-draft-note' });

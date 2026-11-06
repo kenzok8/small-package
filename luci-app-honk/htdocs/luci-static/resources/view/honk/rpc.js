@@ -70,6 +70,7 @@ const callConfigSave = rpc.declare({ object: 'honk', method: 'config_save', para
 const callConfigApply = rpc.declare({ object: 'honk', method: 'config_apply', expect: { '': {} } });
 const callConfigDetach = rpc.declare({ object: 'honk', method: 'config_detach', params: [ 'dry_run' ], expect: { '': {} } });
 const callRepair = rpc.declare({ object: 'honk', method: 'repair', expect: { '': {} } });
+const callRecover = rpc.declare({ object: 'honk', method: 'recover', expect: { '': {} } });
 const callBackup = rpc.declare({ object: 'honk', method: 'backup', expect: { '': {} } });
 const callRestore = rpc.declare({ object: 'honk', method: 'restore', expect: { '': {} } });
 const callRestorePrepare = rpc.declare({ object: 'honk', method: 'restore_prepare', expect: { '': {} } });
@@ -484,6 +485,7 @@ return baseclass.extend({
 	configApply: callConfigApply,
 	configDetach: callConfigDetach,
 	repair: callRepair,
+	recover: callRecover,
 	backup: callBackup,
 	restore: callRestore,
 	restorePrepare: callRestorePrepare,
