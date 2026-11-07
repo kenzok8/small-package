@@ -192,6 +192,17 @@ service_ready_config() {
 	[ "$initialized" = 1 ]
 }
 
+# 包文件被改坏（丢了执行位）时自己修回来，用户不该为这个去敲 chmod。
+ensure_runner_ready() {
+	runner_fixed=
+	for runner_file in "$JOB_RUNNER" "$MAINT" "$CONTROL" "$UPDATE" /usr/share/honk/lock.sh /usr/share/honk/lifecycle.sh; do
+		[ -f "$runner_file" ] || continue
+		[ -x "$runner_file" ] && continue
+		chmod 0755 "$runner_file" 2>/dev/null && runner_fixed="$runner_fixed $runner_file"
+	done
+	[ -z "$runner_fixed" ] || logger -t honk-maintenance "restored execute bits:$runner_fixed" 2>/dev/null || :
+}
+
 start_job() {
 	job_operation=$1
 	job_request=
@@ -207,6 +218,7 @@ start_job() {
 		fi
 	fi
 
+	ensure_runner_ready
 	if [ ! -e "$JOBS" ] && [ ! -L "$JOBS" ]; then
 		(umask 077; mkdir "$JOBS") || { emit_result false job_storage_unavailable; return 1; }
 	fi
@@ -224,10 +236,31 @@ start_job() {
 	json_add_string message job_started
 	json_dump > "$job_dir/status" || { rm -rf "$job_dir"; emit_result false job_storage_unavailable; return 1; }
 	chmod 0600 "$job_dir/status" || { rm -rf "$job_dir"; emit_result false job_storage_unavailable; return 1; }
-	nohup "$JOB_RUNNER" "$job_id" "$job_operation" >/dev/null 2>&1 </dev/null &
+	# 没有 nohup 的固件直接跑，别让一个可选命令决定备份能不能用。
+	if command -v nohup >/dev/null 2>&1; then
+		nohup "$JOB_RUNNER" "$job_id" "$job_operation" >/dev/null 2>&1 </dev/null &
+	else
+		"$JOB_RUNNER" "$job_id" "$job_operation" >/dev/null 2>&1 </dev/null &
+	fi
 	job_pid=$!
 	printf '%s\n' "$job_pid" > "$job_dir/worker.pid" || { rm -rf "$job_dir"; emit_result false job_storage_unavailable; return 1; }
 	chmod 0600 "$job_dir/worker.pid" || { rm -rf "$job_dir"; emit_result false job_storage_unavailable; return 1; }
+	# worker 一秒内既没活着也没写状态，就是它压根没起来。
+	# 这时在本进程里直接跑完：备份逻辑本身是好的，不该因为后台起不来就让导出彻底不可用。
+	sleep 1
+	if ! kill -0 "$job_pid" 2>/dev/null && [ "$(jsonfilter -i "$job_dir/status" -e '@.phase' 2>/dev/null)" = queued ]; then
+		job_runner_detail="id=$(id -u 2>/dev/null) jobs=$(stat -c '%u:%a' "$JOBS" 2>/dev/null) dir=$(stat -c '%u:%a' "$job_dir" 2>/dev/null) runner=$(command -v "$JOB_RUNNER" 2>/dev/null || echo missing)"
+		logger -t honk-maintenance "job runner did not start, running inline: $job_runner_detail" 2>/dev/null || :
+		"$JOB_RUNNER" "$job_id" "$job_operation" >/dev/null 2>&1 || :
+		if [ "$(jsonfilter -i "$job_dir/status" -e '@.phase' 2>/dev/null)" = queued ]; then
+			json_init
+			json_add_boolean ok 0
+			json_add_string message job_runner_unavailable
+			json_add_string detail "$job_runner_detail"
+			json_dump
+			return 1
+		fi
+	fi
 	json_init
 	json_add_boolean ok 1
 	json_add_string message job_started
@@ -260,10 +293,18 @@ job_status() {
 		else
 			json_add_string state failed
 			json_add_string phase complete
-			job_lost_message worker_lost
+			job_lost_message=worker_lost
+			# 没 output 说明 job.sh 连脚本都没跑起来（早退或没启动），
+			# 有 output 才是跑一半被杀，这两种要分得开。
+			if [ -e "$job_dir/output" ]; then
+				job_lost_detail="worker pid ${job_pid:-unknown} exited before writing a status"
+			else
+				job_lost_detail="the maintenance worker never ran (no output file)"
+			fi
 		fi
 		json_add_boolean ok 0
 		json_add_string message "$job_lost_message"
+		[ -z "${job_lost_detail:-}" ] || json_add_string detail "$job_lost_detail"
 		json_dump > "$job_dir/status.new" && chmod 0600 "$job_dir/status.new" && mv -f "$job_dir/status.new" "$job_status_file" || { emit_result false job_status_unavailable; return 1; }
 	fi
 	cat "$job_status_file"

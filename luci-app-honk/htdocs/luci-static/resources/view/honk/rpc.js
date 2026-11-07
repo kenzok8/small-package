@@ -273,6 +273,8 @@ function tokenMessage(token) {
 		worker_lost: _('The maintenance worker stopped unexpectedly; check system recovery status before retrying.'),
 		operation_failed: _('The maintenance operation failed.'),
 	maintenance_no_result: _('The maintenance script stopped without reporting a result. Check Maintenance → Logs → Maintenance for the reason.'),
+	job_runner_unavailable: _('The maintenance worker did not start at all. The panel cannot see why, so this is a packaging or permission problem on the device.'),
+	job_runner_not_root: _('The maintenance worker did not run as root.'),
 	honk_tree_missing: _('The /etc/honk directory is missing or is a symlink.'),
 	honk_tree_has_symlink: _('There is a symlink under /etc/honk. The backup cannot carry it; remove it and try again.'),
 	honk_tree_has_special_file: _('There is a non-regular file (device, socket, fifo) under /etc/honk. Remove it and try again.'),
@@ -471,13 +473,13 @@ function resultMessage(result, fallback) {
 
 function errorMessage(error, fallback) {
 	const token = error && error.message;
-	const mapped = tokenMessage(token);
-	if (mapped)
-		return mapped;
 	/* 没映射过就把错误码原样带出来，否则用户只能看到「操作失败」，没法反馈 */
-	if (token && /^[a-z0-9_]+$/.test(token))
-		return _('%s (code: %s)').format(fallback || _('The operation failed.'), token);
-	return fallback;
+	const text = tokenMessage(token) || (token && /^[a-z0-9_]+$/.test(token)
+		? _('%s (code: %s)').format(fallback || _('The operation failed.'), token)
+		: fallback);
+	/* 后端把 stderr 摘要放进 detail，直接给用户，省得再去翻日志。 */
+	const detail = error && error.detail;
+	return detail ? _('%s Reason: %s').format(text, String(detail)) : text;
 }
 
 function jobPhaseMessage(phase) {
@@ -524,6 +526,7 @@ function waitJob(jobId, onProgress) {
 				if (result.state === 'failed' || result.state === 'rollback_required') {
 					const error = new Error(result.state === 'rollback_required' ? 'maintenance_recovery_required' : result.message || 'operation_failed');
 					error.recoveryRequired = result.state === 'rollback_required';
+					error.detail = result.detail;
 					reject(error);
 					return;
 				}

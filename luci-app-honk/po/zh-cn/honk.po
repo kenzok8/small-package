@@ -1513,3 +1513,12 @@ msgstr "备份会超过 512 个文件或 127 MB，日志里写了是哪个条目
 
 msgid "config.dae or system.dae is missing under /etc/honk. Reinstall or repair Honk before backing up."
 msgstr "/etc/honk 里缺 config.dae 或 system.dae，先修复或重装 Honk 再备份。"
+
+msgid "%s Reason: %s"
+msgstr "%s 原因：%s"
+
+msgid "The maintenance worker did not start at all. The panel cannot see why, so this is a packaging or permission problem on the device."
+msgstr "后台维护进程根本没启动起来，面板看不到更细的原因，属于设备上的权限或安装问题。"
+
+msgid "The maintenance worker did not run as root."
+msgstr "后台维护进程不是以 root 身份运行的。"

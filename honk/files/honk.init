@@ -72,6 +72,13 @@ start_service() {
 	procd_close_instance
 }
 
+# procd 默认的 stop→start 太快，start 的 preflight 会把还没清掉的 dae0 当残留
+# 拒绝，restart 完服务就停在停止状态。走 lifecycle 先排空再起。
+restart() {
+	. /usr/share/honk/lifecycle.sh || return 1
+	honk_lifecycle_restart 30
+}
+
 reload_service() {
 	# honk-core has no hot-reload API wired here; a reload is an explicit
 	# restart so existing connections are cycled. The UI only exposes
