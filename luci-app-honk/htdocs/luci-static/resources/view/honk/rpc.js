@@ -92,27 +92,55 @@ const callUpdateCheck = rpc.declare({ object: 'honk', method: 'update_check', ex
 const callUpdateApply = rpc.declare({ object: 'honk', method: 'update_apply', expect: { '': {} } });
 
 let pageStylesInstalled = false;
+let switchStylesInstalled = false;
+
+/* 开关样式随 JS 注入：CSS 与 JS 分开缓存，主题又各改各的 checkbox/button。 */
+const SWITCH_CSS = [
+	'.honk-page .honk-switch-wrap{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;vertical-align:middle;line-height:1}',
+	'.honk-page .honk-switch-label{font-size:11px;font-weight:600;letter-spacing:.3px;opacity:.62}',
+	'.honk-page .honk-switch{position:relative!important;flex:0 0 auto;width:42px!important;height:22px!important;min-width:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:999px!important;background:rgba(128,128,128,.28)!important;background-image:none!important;box-shadow:none!important;line-height:1!important;text-transform:none!important;transform:none!important;overflow:hidden;cursor:pointer;transition:background .18s ease,opacity .18s ease}',
+	'.honk-page .honk-switch .honk-switch-knob{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.96);box-shadow:0 1px 4px rgba(0,0,0,.2);transition:left .18s ease}',
+	'.honk-page .honk-switch.is-on{background:rgba(74,160,101,.65)!important}',
+	'.honk-page .honk-switch:disabled{opacity:.45;cursor:not-allowed}',
+	'.honk-page .honk-switch:focus-visible{outline:2px solid rgba(74,160,101,.75);outline-offset:2px}',
+	/* 0,3,1 才压得过 honk.css 里那颗 46px !important 的 checkbox。 */
+	'.honk-page .honk-switch-wrap>input.honk-switch-input{position:absolute!important;width:1px!important;height:1px!important;margin:0!important;padding:0!important;border:0!important;opacity:0!important;pointer-events:none!important;appearance:none!important;-webkit-appearance:none!important;box-shadow:none!important;background:none!important}'
+].join('\n');
+
+function installSwitchStyles() {
+	if (switchStylesInstalled || document.getElementById('honk-switch-styles'))
+		return;
+
+	const style = document.createElement('style');
+	style.id = 'honk-switch-styles';
+	style.appendChild(document.createTextNode(SWITCH_CSS));
+	document.head.appendChild(style);
+	switchStylesInstalled = true;
+}
 
 /* 主题对 input[type=checkbox] 的处理各不相同（Argon 会放大成错位的胶囊，
    Bootstrap 干脆是原生小方框），所以开关自己画：真 input 留在表单里保证
    取值/回填逻辑不变，外面套一层可点的胶囊和 ON/OFF 文字。 */
 function switchControl(input) {
+	installSwitchStyles();
 	input.classList.add('honk-switch-input');
 	input.setAttribute('tabindex', '-1');
 
 	const caption = E('span', { 'class': 'honk-switch-label' }, '');
+	const knob = E('span', { 'class': 'honk-switch-knob' });
 	const toggle = E('button', {
 		'class': 'honk-switch',
 		'type': 'button',
 		'role': 'switch',
 		'aria-checked': input.checked ? 'true' : 'false'
-	}, E('span', { 'class': 'honk-switch-knob' }));
+	}, knob);
 
 	const sync = function() {
 		toggle.classList.toggle('is-on', !!input.checked);
 		toggle.setAttribute('aria-checked', input.checked ? 'true' : 'false');
 		toggle.disabled = !!input.disabled;
 		caption.textContent = input.checked ? 'ON' : 'OFF';
+		knob.style.left = input.checked ? '23px' : '3px';
 	};
 
 	toggle.addEventListener('click', function(ev) {
@@ -139,7 +167,7 @@ function installStyles() {
 	const stylesheet = document.createElement('link');
 	stylesheet.id = 'honk-page-styles';
 	stylesheet.rel = 'stylesheet';
-	stylesheet.href = L.resource('view/honk/honk.css');
+	stylesheet.href = L.resource('view/honk/honk.css') + (L.env.resource_version ? '?v=' + L.env.resource_version : '');
 	document.head.appendChild(stylesheet);
 	pageStylesInstalled = true;
 }
@@ -244,6 +272,14 @@ function tokenMessage(token) {
 		data_reset: _('Honk data reset. The service is stopped.'),
 		worker_lost: _('The maintenance worker stopped unexpectedly; check system recovery status before retrying.'),
 		operation_failed: _('The maintenance operation failed.'),
+	maintenance_no_result: _('The maintenance script stopped without reporting a result. Check Maintenance → Logs → Maintenance for the reason.'),
+	honk_tree_missing: _('The /etc/honk directory is missing or is a symlink.'),
+	honk_tree_has_symlink: _('There is a symlink under /etc/honk. The backup cannot carry it; remove it and try again.'),
+	honk_tree_has_special_file: _('There is a non-regular file (device, socket, fifo) under /etc/honk. Remove it and try again.'),
+	honk_tree_unreadable: _('A file under /etc/honk could not be read. Check the filesystem and permissions.'),
+	honk_backup_file_too_large: _('A single file under /etc/honk is larger than 64 MB. The service log names it.'),
+	honk_backup_tree_too_large: _('The backup would exceed 512 files or 127 MB. The service log names the entry that crossed the limit.'),
+	honk_config_incomplete: _('config.dae or system.dae is missing under /etc/honk. Reinstall or repair Honk before backing up.'),
 		unsupported_honk_tree_entry: _('The backup found an entry under /etc/honk it cannot archive (a symlink, a special file, or too many files).'),
 		unsafe_honk_file_name: _('A file under /etc/honk has a name the backup cannot carry (spaces, wildcards or "../"). The service log names it; rename it and try again.'),
 		job_timeout: _('The maintenance operation timed out.'),

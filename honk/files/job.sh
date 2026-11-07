@@ -103,7 +103,7 @@ json_load "$(cat "$job_dir/output" 2>/dev/null)" 2>/dev/null || {
 	if [ -e /etc/.honk-maintenance/journal ] || [ -L /etc/.honk-maintenance/journal ] || [ -d /run/honk.lock ]; then
 		write_status rollback_required recovery false maintenance_recovery_required
 	else
-		write_status failed complete false operation_failed
+		write_status failed complete false maintenance_no_result
 	fi
 	logger -t honk-maintenance "$operation failed (invalid result)" 2>/dev/null || :
 	exit 1
