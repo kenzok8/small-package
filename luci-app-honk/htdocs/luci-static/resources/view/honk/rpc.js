@@ -93,6 +93,45 @@ const callUpdateApply = rpc.declare({ object: 'honk', method: 'update_apply', ex
 
 let pageStylesInstalled = false;
 
+/* 主题对 input[type=checkbox] 的处理各不相同（Argon 会放大成错位的胶囊，
+   Bootstrap 干脆是原生小方框），所以开关自己画：真 input 留在表单里保证
+   取值/回填逻辑不变，外面套一层可点的胶囊和 ON/OFF 文字。 */
+function switchControl(input) {
+	input.classList.add('honk-switch-input');
+	input.setAttribute('tabindex', '-1');
+
+	const caption = E('span', { 'class': 'honk-switch-label' }, '');
+	const toggle = E('button', {
+		'class': 'honk-switch',
+		'type': 'button',
+		'role': 'switch',
+		'aria-checked': input.checked ? 'true' : 'false'
+	}, E('span', { 'class': 'honk-switch-knob' }));
+
+	const sync = function() {
+		toggle.classList.toggle('is-on', !!input.checked);
+		toggle.setAttribute('aria-checked', input.checked ? 'true' : 'false');
+		toggle.disabled = !!input.disabled;
+		caption.textContent = input.checked ? 'ON' : 'OFF';
+	};
+
+	toggle.addEventListener('click', function(ev) {
+		ev.preventDefault();
+		if (input.disabled)
+			return;
+		input.checked = !input.checked;
+		input.dispatchEvent(new Event('change', { bubbles: true }));
+		sync();
+	});
+	input.addEventListener('change', sync);
+
+	/* 表单回填（restoreFields）直接改 input.checked，不会触发 change。 */
+	const wrapper = E('span', { 'class': 'honk-switch-wrap' }, [ input, caption, toggle ]);
+	wrapper.syncSwitch = sync;
+	sync();
+	return wrapper;
+}
+
 function installStyles() {
 	if (pageStylesInstalled || document.getElementById('honk-page-styles'))
 		return;
@@ -205,6 +244,8 @@ function tokenMessage(token) {
 		data_reset: _('Honk data reset. The service is stopped.'),
 		worker_lost: _('The maintenance worker stopped unexpectedly; check system recovery status before retrying.'),
 		operation_failed: _('The maintenance operation failed.'),
+		unsupported_honk_tree_entry: _('The backup found an entry under /etc/honk it cannot archive (a symlink, a special file, or too many files).'),
+		unsafe_honk_file_name: _('A file under /etc/honk has a name the backup cannot carry (spaces, wildcards or "../"). The service log names it; rename it and try again.'),
 		job_timeout: _('The maintenance operation timed out.'),
 		maintenance_recovery_required: _('Recovery is required. Run system recovery before starting another maintenance operation.'),
 		update_recovery_required: _('The signed update did not finish. Keep Honk stopped and reinstall a complete verified package set before retrying.'),
@@ -502,5 +543,6 @@ return baseclass.extend({
 	resultMessage: resultMessage,
 	errorMessage: errorMessage,
 	jobPhaseMessage: jobPhaseMessage,
+	switchControl: switchControl,
 	installStyles: installStyles
 });

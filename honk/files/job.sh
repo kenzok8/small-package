@@ -92,6 +92,14 @@ done
 wait "$maint_pid"
 operation_rc=$?
 json_load "$(cat "$job_dir/output" 2>/dev/null)" 2>/dev/null || {
+	# 脚本没吐出结果（崩溃、语法错误、被信号杀掉）时，stderr 里往往就是唯一线索，
+	# 只报 operation_failed 会让用户和我们都无法定位。
+	invalid_reason=$(sed -n '$p' "$job_dir/stderr" 2>/dev/null)
+	if [ -n "$invalid_reason" ]; then
+		logger -t honk-maintenance "$operation produced no result: $invalid_reason" 2>/dev/null || :
+	else
+		logger -t honk-maintenance "$operation produced no result and no error output" 2>/dev/null || :
+	fi
 	if [ -e /etc/.honk-maintenance/journal ] || [ -L /etc/.honk-maintenance/journal ] || [ -d /run/honk.lock ]; then
 		write_status rollback_required recovery false maintenance_recovery_required
 	else

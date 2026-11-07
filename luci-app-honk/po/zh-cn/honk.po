@@ -30,6 +30,9 @@ msgstr "发现兼容更新，但尚无完整且已验证的回滚软件包组。
 msgid "A compatible update is available."
 msgstr "发现兼容更新。"
 
+msgid "A file under /etc/honk has a name the backup cannot carry (spaces, wildcards or \"../\"). The service log names it; rename it and try again."
+msgstr "/etc/honk 下有文件名无法写入备份（含空格、通配符或 ../）。文件名已记入日志，改名后重试。"
+
 msgid "A previous operation did not finish cleanly."
 msgstr "上一次操作未能正常结束。"
 
@@ -907,6 +910,9 @@ msgstr "系统检查结果：%s"
 
 msgid "Temporary upload cleared."
 msgstr "Temporary upload cleared."
+
+msgid "The backup found an entry under /etc/honk it cannot archive (a symlink, a special file, or too many files)."
+msgstr "/etc/honk 下有无法归档的条目（符号链接、特殊文件或文件数量超出上限）。"
 
 msgid "The Clash API listener is unavailable. Check the service logs."
 msgstr "Clash API 监听不可用，请检查服务日志。"
