@@ -324,7 +324,6 @@ local function merge(raw_path, overlay_path, output_path)
 	local filled_groups = fill_empty_proxy_groups(raw_doc)
 	local stripped_rules = strip_incompatible_script_rules(raw_doc)
 	local merged = deep_merge(raw_doc, overlay_doc)
-	strip_runtime_conflicts(merged)
 	local ok, rendered = pcall(lyaml.dump, { merged })
 	if not ok or not rendered then
 		io.stderr:write("dump_failed\n")
