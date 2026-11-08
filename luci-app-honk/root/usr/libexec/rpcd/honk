@@ -51,6 +51,7 @@ lock_owner_invalid() {
 }
 
 status() {
+	local core_lane
 	local enabled initialized boot_enabled running api_url api_ready core_version core_commit doona_version kernel lan_network listen_port errors listen clash_api_enabled clash_api_port clash_api_secret clash_api_url clash_api_ready clash_ui_ready clash_secret_set settings_owner api_enabled core_ready config_pending draft_pending legacy_draft detach_backup clash_listen_addr
 	config_load honk
 	config_get_bool enabled main enabled 0
@@ -135,6 +136,8 @@ status() {
 	[ -n "$core_version" ] || core_version=unknown
 	# --version 只是构建时注入的版本串，真正的上游代码看 provenance.json
 	core_commit=$(jsonfilter -i /usr/share/honk/provenance.json -e '@.core.commit' 2>/dev/null)
+	core_lane=$(jsonfilter -i /usr/share/honk/core-capabilities.json -e '@.lane' 2>/dev/null)
+	[ -n "$core_lane" ] || core_lane=stable
 	doona_version=$(sed -n 's/^Version: //p' /usr/share/doona/SOURCE 2>/dev/null | head -n 1)
 	[ -n "$doona_version" ] || doona_version=unknown
 	kernel=$(uname -r)
@@ -171,6 +174,7 @@ status() {
 	json_add_string clash_api_url "$clash_api_url"
 	json_add_string core_version "$core_version"
 	json_add_string core_commit "$core_commit"
+	json_add_string core_lane "$core_lane"
 	json_add_string doona_version "$doona_version"
 	json_add_string kernel "$kernel"
 	json_add_string lan_network "$lan_network"

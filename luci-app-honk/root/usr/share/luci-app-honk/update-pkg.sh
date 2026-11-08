@@ -74,6 +74,11 @@ fi
 	trap 'rm -f "$LOCK"; [ "${0#/tmp/.honk-upd-}" != "$0" ] && rm -f "$0"' EXIT INT TERM
 
 	echo "$(date '+%F %T') begin upgrade: $PKG"
+	if [ "$(jsonfilter -i /usr/share/honk/core-capabilities.json -e '@.lane' 2>/dev/null)" = linux66 ]; then
+		echo "result: 实验兼容版请从独立兼容通道手动更新，暂不使用稳定源升级"
+		echo "✗"
+		exit 1
+	fi
 	was_running=0
 	service_running && was_running=1
 	echo "升级前服务状态: $([ "$was_running" = 1 ] && echo 运行中 || echo 已停止)"

@@ -29,6 +29,12 @@ if command -v apk >/dev/null 2>&1; then
 			print v
 		}
 	' | sort -V | tail -1)
+elif command -v opkg >/dev/null 2>&1; then
+	installed=$(opkg status "$PKG" 2>/dev/null | awk '
+		/^Version: / { version = $2 }
+		/^Status: .* installed$/ { installed = 1 }
+		END { if (installed) print version }
+	')
 fi
 
 printf '%s\t%s\n' "$installed" "$latest"
