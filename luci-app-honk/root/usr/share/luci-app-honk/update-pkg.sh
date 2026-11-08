@@ -74,11 +74,16 @@ fi
 	trap 'rm -f "$LOCK"; [ "${0#/tmp/.honk-upd-}" != "$0" ] && rm -f "$0"' EXIT INT TERM
 
 	echo "$(date '+%F %T') begin upgrade: $PKG"
-	if [ "$(jsonfilter -i /usr/share/honk/core-capabilities.json -e '@.lane' 2>/dev/null)" = linux66 ]; then
-		echo "result: 实验兼容版请从独立兼容通道手动更新，暂不使用稳定源升级"
-		echo "✗"
-		exit 1
-	fi
+	# 按包管理器/内核目标判断，而不是按车道一律拒绝：24.10 的源本身就是 6.6 通道，
+	# 一律拒绝会把这条通道自己的更新也挡掉。
+	core_lane=$(jsonfilter -i /usr/share/honk/core-capabilities.json -e '@.lane' 2>/dev/null)
+	case "$core_lane:$(command -v apk >/dev/null 2>&1 && echo apk || echo opkg)" in
+		linux66:apk|stable:opkg)
+			echo "result: 当前核心与软件源不是同一条通道（$core_lane + $(command -v apk >/dev/null 2>&1 && echo APK || echo IPK)），已拒绝升级"
+			echo "✗"
+			exit 1
+			;;
+	esac
 	was_running=0
 	service_running && was_running=1
 	echo "升级前服务状态: $([ "$was_running" = 1 ] && echo 运行中 || echo 已停止)"
