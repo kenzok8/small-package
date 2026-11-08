@@ -3,6 +3,21 @@
 HONK_LIFECYCLE_CORE=/usr/bin/honk-core
 HONK_LIFECYCLE_HAVE_TIMEOUT=$(command -v timeout 2>/dev/null)
 
+HONK_LIFECYCLE_TICKS=1
+honk_lifecycle_detect_pause() {
+	HONK_LIFECYCLE_TICKS=1
+	[ -n "$HONK_LIFECYCLE_HAVE_TIMEOUT" ] || return 0
+	pause_before=$(cut -d' ' -f1 /proc/uptime 2>/dev/null)
+	[ -n "$pause_before" ] || return 0
+	timeout 0.25 sleep 1 2>/dev/null
+	pause_after=$(cut -d' ' -f1 /proc/uptime 2>/dev/null)
+	[ -n "$pause_after" ] || return 0
+	awk -v a="$pause_before" -v b="$pause_after" 'BEGIN { exit (b - a >= 0.15) ? 0 : 1 }' && \
+		HONK_LIFECYCLE_TICKS=4
+	return 0
+}
+honk_lifecycle_detect_pause
+
 # 字段归属：自带 global/experimental → file；只 include system.dae（且写法规范）→ system；
 # 其余一律 unknown。写法不规范时不猜，直接拒绝。
 config_owner() {
@@ -49,7 +64,7 @@ config_owner() {
 
 # 启动轮询用 0.25 秒粒度，核心就绪后尽快返回；没有 timeout 命令时退回 1 秒。
 honk_lifecycle_pause() {
-	if [ -n "$HONK_LIFECYCLE_HAVE_TIMEOUT" ]; then
+	if [ "$HONK_LIFECYCLE_TICKS" -gt 1 ]; then
 		timeout 0.25 sleep 1 2>/dev/null
 		return 0
 	fi
@@ -163,6 +178,18 @@ honk_lifecycle_resources_clear() {
 	! ip netns list 2>/dev/null | awk '{print $1}' | grep -qx daens
 }
 
+honk_lifecycle_reclaim_resources() {
+	command -v ip >/dev/null 2>&1 || return 1
+	[ -z "$(pidof honk-core 2>/dev/null)" ] || return 1
+	for hlp_link in dae0 dae0peer; do
+		ip link show "$hlp_link" >/dev/null 2>&1 && ip link del "$hlp_link" >/dev/null 2>&1
+	done
+	if ip netns list 2>/dev/null | awk '{print $1}' | grep -qx daens; then
+		ip netns del daens >/dev/null 2>&1
+	fi
+	honk_lifecycle_resources_clear
+}
+
 honk_lifecycle_drain() {
 	hlp_timeout=${1:-30}
 	while [ "$hlp_timeout" -gt 0 ]; do
@@ -186,7 +213,10 @@ honk_lifecycle_drain() {
 			done
 			hlp_wait=1
 		fi
-		honk_lifecycle_resources_clear || hlp_wait=1
+		if ! honk_lifecycle_resources_clear; then
+			honk_lifecycle_reclaim_resources || :
+			honk_lifecycle_resources_clear || hlp_wait=1
+		fi
 		honk_lifecycle_parse_listen || { echo "honk lifecycle: invalid configured listener" >&2; return 1; }
 		hlp_port=$HONK_LIFECYCLE_PORT
 		if honk_lifecycle_port_open "$hlp_port"; then hlp_wait=1; fi
@@ -277,7 +307,7 @@ honk_lifecycle_start() {
 		fi
 		honk_lifecycle_pause
 		hlp_tick=$((hlp_tick + 1))
-		[ "$hlp_tick" -lt 4 ] || { hlp_tick=0; hlp_timeout=$((hlp_timeout - 1)); }
+		[ "$hlp_tick" -lt "$HONK_LIFECYCLE_TICKS" ] || { hlp_tick=0; hlp_timeout=$((hlp_timeout - 1)); }
 	done
 	echo "honk lifecycle: new managed core did not become stable and own its API listener" >&2
 	return 1

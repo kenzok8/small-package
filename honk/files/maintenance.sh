@@ -847,7 +847,6 @@ validate_candidate() {
 	candidate=$1
 	uci_dir=$2
 	state=$3
-	# local = 本机自己拍的快照（备份/重置），archive = 从别的设备导入的包。
 	identity=${4:-local}
 	config_tree=$candidate/etc/honk
 	mkdir -p "$temp_dir/uci-tmp" || return 1
@@ -870,7 +869,6 @@ validate_candidate() {
 	network_get_device candidate_device "$u_network" || return 1
 	network_get_ipaddr candidate_ip "$u_network" || return 1
 	if [ "$identity" = archive ]; then
-		# 包里记的是原设备的 IP，落地时会被改写；拿本机 IP 比会拒掉换设备的备份。
 		archive_lan=$(sed -n "s/^    lan_interface: '\([^']*\)'$/\1/p" "$config_tree/system.dae")
 		archive_listen=$(sed -n "s/^        listen: '\([^']*\)'$/\1/p" "$config_tree/system.dae")
 		validate_config_tree "$config_tree" "$archive_lan" "${archive_listen%:*}" "${archive_listen##*:}" "$u_initialized" || return 2

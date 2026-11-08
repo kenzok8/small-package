@@ -91,10 +91,12 @@ const callLogs = rpc.declare({
 const callUpdateCheck = rpc.declare({ object: 'honk', method: 'update_check', expect: { '': {} } });
 const callUpdateApply = rpc.declare({ object: 'honk', method: 'update_apply', expect: { '': {} } });
 
+if (!L.env.rpctimeout || L.env.rpctimeout < 180)
+	L.env.rpctimeout = 180;
+
 let pageStylesInstalled = false;
 let switchStylesInstalled = false;
 
-/* 开关样式随 JS 注入：CSS 与 JS 分开缓存，主题又各改各的 checkbox/button。 */
 const SWITCH_CSS = [
 	'.honk-page .honk-switch-wrap{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;vertical-align:middle;line-height:1}',
 	'.honk-page .honk-switch-label{font-size:11px;font-weight:600;letter-spacing:.3px;opacity:.62}',
@@ -103,7 +105,6 @@ const SWITCH_CSS = [
 	'.honk-page .honk-switch.is-on{background:rgba(74,160,101,.65)!important}',
 	'.honk-page .honk-switch:disabled{opacity:.45;cursor:not-allowed}',
 	'.honk-page .honk-switch:focus-visible{outline:2px solid rgba(74,160,101,.75);outline-offset:2px}',
-	/* 0,3,1 才压得过 honk.css 里那颗 46px !important 的 checkbox。 */
 	'.honk-page .honk-switch-wrap>input.honk-switch-input{position:absolute!important;width:1px!important;height:1px!important;margin:0!important;padding:0!important;border:0!important;opacity:0!important;pointer-events:none!important;appearance:none!important;-webkit-appearance:none!important;box-shadow:none!important;background:none!important}'
 ].join('\n');
 

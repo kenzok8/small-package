@@ -418,7 +418,6 @@ return view.extend({
 			}).finally(function() { setBackupBusy(false); });
 		});
 
-		/* 只让用户选一次文件：上传对话框自己会弹选择框。 */
 		importBtn.addEventListener('click', function(ev) {
 			ev.preventDefault();
 			if (backupBusy) return;
