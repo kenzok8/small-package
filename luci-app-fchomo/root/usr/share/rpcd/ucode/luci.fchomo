@@ -44,7 +44,7 @@ const methods = {
 		args: { type: 'type', params: 'params' },
 		call: function(req) {
 			/* https://github.com/MetaCubeX/mihomo/blob/Alpha/component/generator/cmd.go */
-			if (!(req.args?.type in ['uuid',
+			if (!(req.args?.type in ['uuid', 'ss-password',
 				'reality-keypair', 'wg-keypair', 'sudoku-keypair',
 				'age-x25519', 'age-mlkem768-x25519', 'age-convert',
 				'vless-mlkem768', 'vless-x25519',
@@ -73,6 +73,8 @@ const methods = {
 				for (let line = fd.read('line'); length(line); line = fd.read('line')) {
 					if (type === 'uuid')
 						result.uuid = trim(line);
+					if (type === 'ss-password')
+						result.password = trim(line);
 					else if (type in ['reality-keypair', 'wg-keypair', 'sudoku-keypair']) {
 						let priv = match(trim(line), /PrivateKey: (.*)/);
 						if (priv)

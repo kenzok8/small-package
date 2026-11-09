@@ -404,13 +404,23 @@ const parseRulesYaml = hm.parseYaml.extend({
 				else
 					[type, factor] = logical_payload[i].split(',');
 
-				if (type === 'RULE-SET')
+				if (type === 'IN-TYPE') {
+					factor = factor.toLowerCase(); // Multi-values are not supported in Factor ++
+					//factor = factor.replace(/\/.*/, '').toLowerCase();
+				} else if (type === 'IN-NAME')
+					factor = this.calcID(hm.glossary["inbound"].field, factor);
+				else if (type === 'RULE-SET')
 					factor = this.calcID(hm.glossary["ruleset"].field, factor);
 
 				entry.setPayload(i, {type: type.toUpperCase(), factor: factor, deny: deny ? true : null});
 			}
 		else if (payload)
-			if (tp === 'RULE-SET')
+			if (tp === 'IN-TYPE') {
+				entry.setPayload(0, {factor: payload.toLowerCase()}); // Multi-values are not supported in Factor ++
+				// entry.setPayload(0, {factor: payload.replace(/\/.*/, '').toLowerCase()});
+			} else if (tp === 'IN-NAME')
+				entry.setPayload(0, {factor: this.calcID(hm.glossary["inbound"].field, payload)});
+			else if (tp === 'RULE-SET')
 				entry.setPayload(0, {factor: this.calcID(hm.glossary["ruleset"].field, payload)});
 			else
 				entry.setPayload(0, {factor: payload});
@@ -429,7 +439,7 @@ const parseRulesYaml = hm.parseYaml.extend({
 
 	parseRules(line) {
 		// parse rules
-		// https://github.com/muink/mihomo/blob/ad730ae9744971dfaa75bda20cfc2ffe07eeb59d/config/config.go#L1090-L1118
+		// https://github.com/muink/mihomo/blob/63bd52ec794b7051569b76ede2f6cdbf4c091fda/config/config.go#L1102-L1130
 		let [tp, payload, target, params] = this.ParseRulePayload(line, true);
 		if (!target)
 			return null; // error: format invalid
@@ -563,27 +573,6 @@ function renderPayload(s, total, uciconfig) {
 		o.depends(Object.fromEntries([[prefix + 'type', /\bPROCESS\b/]]));
 		initPayload(o, n, 'factor', uciconfig);
 
-		o = s.option(form.ListValue, prefix + 'rematchname', _('Factor') + ` ${n+1}`);
-		if (n === 0)
-			o.depends('type', 'REMATCH-NAME');
-		o.depends(prefix + 'type', 'REMATCH-NAME');
-		initPayload(o, n, 'factor', uciconfig);
-		o.load = L.bind(function(n, key, uciconfig, section_id) {
-			hm.loadLabel.call(this, [
-				['', _('-- Please choose --')],
-				...hm.loadLabelValues(this.config, 'rematch-name')
-			], section_id);
-
-			return new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayload(n)[key];
-		}, o, n, 'factor', uciconfig)
-
-		o = s.option(form.Value, prefix + 'uint', _('Factor') + ` ${n+1}`);
-		o.datatype = 'uinteger';
-		if (n === 0)
-			o.depends('type', 'UID');
-		o.depends(prefix + 'type', 'UID');
-		initPayload(o, n, 'factor', uciconfig);
-
 		o = s.option(form.Value, prefix + 'ip', _('Factor') + ` ${n+1}`);
 		o.datatype = 'cidr';
 		if (n === 0) {
@@ -612,6 +601,63 @@ function renderPayload(s, total, uciconfig) {
 			}
 			return result;
 		}
+
+		o = s.option(form.MultiValue, prefix + 'intype', _('Factor') + ` ${n+1}`);
+		hm.inbound_type.forEach((res) => {
+			o.value.apply(o, res);
+		})
+		if (n === 0)
+			o.depends('type', 'IN-TYPE');
+		o.depends(prefix + 'type', 'IN-TYPE');
+		initPayload(o, n, 'factor', uciconfig);
+		o.load = L.bind(function(n, key, uciconfig, section_id) {
+			return (new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayload(n)[key] || '')
+				.split('/');
+		}, o, n, 'factor', uciconfig)
+		o.onchange = function(ev, section_id, value) {
+			let UIEl = this.section.getUIElement(section_id, 'entry');
+
+			let n = this.option.match(/^payload(\d+)_/)[1];
+			let rule = new RulesEntry(UIEl.getValue()).setPayload(n, {factor: value.join('/')});
+
+			UIEl.node.previousSibling.innerText = rule.toString('mihomo');
+			UIEl.setValue(rule.toString('json'));
+		}
+
+		o = s.option(form.ListValue, prefix + 'inname', _('Factor') + ` ${n+1}`);
+		if (n === 0)
+			o.depends('type', 'IN-NAME');
+		o.depends(prefix + 'type', 'IN-NAME');
+		initPayload(o, n, 'factor', uciconfig);
+		o.load = L.bind(function(n, key, uciconfig, section_id) {
+			hm.loadLabel.call(this, [
+				['', _('-- Please choose --')],
+				...hm.loadLabelValues(this.config, 'inbound')
+			], section_id);
+
+			return new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayload(n)[key];
+		}, o, n, 'factor', uciconfig)
+
+		o = s.option(form.ListValue, prefix + 'rematchname', _('Factor') + ` ${n+1}`);
+		if (n === 0)
+			o.depends('type', 'REMATCH-NAME');
+		o.depends(prefix + 'type', 'REMATCH-NAME');
+		initPayload(o, n, 'factor', uciconfig);
+		o.load = L.bind(function(n, key, uciconfig, section_id) {
+			hm.loadLabel.call(this, [
+				['', _('-- Please choose --')],
+				...hm.loadLabelValues(this.config, 'rematch-name')
+			], section_id);
+
+			return new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayload(n)[key];
+		}, o, n, 'factor', uciconfig)
+
+		o = s.option(form.Value, prefix + 'uint', _('Factor') + ` ${n+1}`);
+		o.datatype = 'uinteger';
+		if (n === 0)
+			o.depends('type', 'UID');
+		o.depends(prefix + 'type', 'UID');
+		initPayload(o, n, 'factor', uciconfig);
 
 		o = s.option(form.ListValue, prefix + 'l4', _('Factor') + ` ${n+1}`);
 		o.value('udp', _('UDP'));
@@ -702,6 +748,8 @@ function renderPayload(s, total, uciconfig) {
 		initDynamicPayload(o, n, 'factor', uciconfig);
 		o.load = L.bind(function(n, key, uciconfig, section_id) {
 			hm.loadLabel.call(this, [
+				...hm.inbound_type.map(e => [e, _('IN-TYPE')]), // Multi-values are not supported
+				...hm.loadLabelValues(this.config, 'inbound').map(e => [e, _('IN-NAME')]),
 				...hm.loadLabelValues(this.config, 'rematch-name').map(e => [e, _('REMATCH-NAME')]),
 				[['udp', _('UDP')], _('NETWORK')],
 				[['tcp', _('TCP')], _('NETWORK')],
@@ -1306,6 +1354,10 @@ return view.extend({
 							'- SRC-IP-SUFFIX,192.168.1.201/8,DIRECT\n' +
 							'- DST-PORT,80,DIRECT\n' +
 							'- SRC-PORT,7777,DIRECT\n' +
+							'- IN-PORT,7890/7893,GLOBAL\n' +
+							'- IN-TYPE,SOCKS/HTTP,GLOBAL\n' +
+							'- IN-NAME,ss,GLOBAL\n' +
+							'- REMATCH-NAME,rematch1,GLOBAL\n' +
 							'- PROCESS-PATH,/usr/bin/wget,auto\n' +
 							'- PROCESS-PATH-WILDCARD,/usr/*/wget,GLOBAL\n' +
 							'- PROCESS-PATH-REGEX,.*bin/wget,auto\n' +

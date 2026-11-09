@@ -339,10 +339,10 @@ const rules_type = [
 	{
 		label: _('Inbound'),
 		types: [
-			//['IN-PORT'],
-			//['IN-TYPE'],
+			['IN-PORT'],
+			['IN-TYPE'],
 			//['IN-USER'],
-			//['IN-NAME'],
+			['IN-NAME'],
 			['REMATCH-NAME']
 		]
 	},
@@ -1327,6 +1327,7 @@ function loadLabelValues(uciconfig, sectiontype, options = {}) {
 
 	switch (sectiontype) {
 		case 'proxy_group':
+		case 'inbound':
 		case 'node':
 		case 'provider':
 			uci.sections(uciconfig, sectiontype, (res) => {
@@ -1814,6 +1815,9 @@ function validateBase64Key(length, section_id, value) {
 	if (value)
 		if (value.length !== length || !value.match(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/) || value[length-1] !== '=')
 			return _('Expecting: %s').format(_('valid base64 key with %d characters').format(length));
+	else
+		if (this.rmempty === false || (this.optional ?? true) !== false)
+			return _('Expecting: %s').format(_('non-empty value'));
 
 	return true;
 }
@@ -2115,25 +2119,25 @@ return baseclass.extend({
 	handleGenKey,
 	handleReload,
 	handleRemoveIdles,
-	textvalue2Value,
+	textvalue2Value,  // this
 	// validate
 	validateAuth,
 	validateAuthUsername,
 	validateAuthPassword,
-	validateCommonPort,
+	validateCommonPort,  // this
 	validateBytesize,
 	validateTimeDuration,
 	validateJson,
 	validateUUID,
 	validateUrl,
 	validateHexstr,
-	validateBase64Key,
+	validateBase64Key,  // this
 	validateSha256Key,
-	validateMTLSClientAuth,
-	validatePresetIDs,
-	validateShadowsocksPassword,
+	validateMTLSClientAuth,  // this
+	validatePresetIDs,  // this
+	validateShadowsocksPassword,  // this
 	validateSudokuCustomTable,
-	validateUniqueValue,
+	validateUniqueValue,  // this
 	// file operations
 	lsDir,
 	readFile,

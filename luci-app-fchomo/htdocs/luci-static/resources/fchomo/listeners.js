@@ -402,8 +402,17 @@ function renderListeners(s, uciconfig, isClient) {
 	o.value('3', _('v3'));
 	o.value('4', _('v4'));
 	o.value('5', _('v5'));
+	o.value('6', _('v6'));
 	o.default = '4';
 	o.depends('type', 'snell');
+	o.modalonly = true;
+
+	o = s.taboption('field_general', form.ListValue, 'snell_mode', _('Traffic mode'));
+	o.value('', _('Keep default'));
+	o.value('default', _('Default'));
+	o.value('unshaped', _('No obfuscation'));
+	o.value('unsafe-raw', _('No encryption No obfuscation'));
+	o.depends({type: 'snell', snell_version: /^(6)$/});
 	o.modalonly = true;
 
 	/* VMess / VLESS fields */
@@ -693,11 +702,20 @@ function renderListeners(s, uciconfig, isClient) {
 	//o.value('kcp-tun', _('kcp-tun'));
 	o.validate = function(section_id, value) {
 		const type = this.section.getOption('type').formvalue(section_id);
+		const snell_version = this.section.getOption('snell_version').formvalue(section_id);
 
 		if (value) {
-			if (type === 'snell' && !['obfs', 'shadow-tls', 'restls', 'jls'].includes(value)) {
-				return _('Expecting: Only support %s.').format(_('obfs-simple') +
-					' / ' + _('ShadowTLS') +
+			if (type === 'snell' && !['shadow-tls', 'restls', 'jls'].includes(value)) {
+				let obfs_simple_supported = true;
+				if (Number(snell_version) < 6) {
+					if (value === 'obfs')
+						return true;
+				} else
+					obfs_simple_supported = false;
+
+				return _('Expecting: Only support %s.').format(
+					(obfs_simple_supported ? _('obfs-simple') + ' / ' : '') +
+					_('ShadowTLS') +
 					' / ' + _('Restls') +
 					' / ' + _('JLS'));
 			}

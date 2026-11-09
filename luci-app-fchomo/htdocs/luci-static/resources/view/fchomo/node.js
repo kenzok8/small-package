@@ -517,13 +517,23 @@ return view.extend({
 		so.value('3', _('v3'));
 		so.value('4', _('v4'));
 		so.value('5', _('v5'));
+		so.value('6', _('v6'));
 		so.default = '4';
 		so.depends('type', 'snell');
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Flag, 'snell_reuse', _('Connection reuse'));
 		so.default = so.disabled;
-		so.depends({type: 'snell', snell_version: /^(4|5)$/});
+		so.depends({type: 'snell', snell_version: /^(4|5|6)$/});
+		so.modalonly = true;
+
+		so = ss.taboption('field_general', form.ListValue, 'snell_mode', _('Traffic mode'),
+			_('Must be consistent with the server.'));
+		so.value('', _('Keep default'));
+		so.value('default', _('Default'));
+		so.value('unshaped', _('No obfuscation'));
+		so.value('unsafe-raw', _('No encryption No obfuscation'));
+		so.depends({type: 'snell', snell_version: /^(6)$/});
 		so.modalonly = true;
 
 		/* VMess / VLESS fields */
@@ -1254,7 +1264,7 @@ return view.extend({
 		so = ss.taboption('field_general', form.Flag, 'udp', _('Force UDP'));
 		so.default = so.disabled;
 		so.depends({type: /^(rematch|direct|socks5|ss|mieru|vmess|vless|trojan|anytls|trusttunnel|zerotier|wireguard|tailscale|masque|easytier)$/});
-		so.depends({type: 'snell', snell_version: /^(3|4|5)$/});
+		so.depends({type: 'snell', snell_version: /^(3|4|5|6)$/});
 		so.modalonly = true;
 
 		so = ss.taboption('field_general', form.Flag, 'uot', _('UoT'),
@@ -1287,11 +1297,20 @@ return view.extend({
 		//so.value('kcptun', _('kcptun'));
 		so.validate = function(section_id, value) {
 			const type = this.section.getOption('type').formvalue(section_id);
+			const snell_version = this.section.getOption('snell_version').formvalue(section_id);
 
 			if (value) {
-				if (type === 'snell' && !['obfs', 'shadow-tls', 'restls', 'jls'].includes(value)) {
-					return _('Expecting: Only support %s.').format(_('obfs-simple') +
-						' / ' + _('ShadowTLS') +
+				if (type === 'snell' && !['shadow-tls', 'restls', 'jls'].includes(value)) {
+					let obfs_simple_supported = true;
+					if (Number(snell_version) < 6) {
+						if (value === 'obfs')
+							return true;
+					} else
+						obfs_simple_supported = false;
+
+					return _('Expecting: Only support %s.').format(
+						(obfs_simple_supported ? _('obfs-simple') + ' / ' : '') +
+						_('ShadowTLS') +
 						' / ' + _('Restls') +
 						' / ' + _('JLS'));
 				}

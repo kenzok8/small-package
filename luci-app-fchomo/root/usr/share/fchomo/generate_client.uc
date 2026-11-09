@@ -121,6 +121,20 @@ function parse_filter(cfg) {
 		return cfg;
 }
 
+function get_listener(cfg, no_verify) {
+	if (isEmpty(cfg))
+		return null;
+
+	const label = uci.get(uciconf, cfg, 'label');
+	if (isEmpty(label)) {
+		if (no_verify)
+			return cfg;
+		else
+			die(sprintf("%s's label is missing, please check your configuration.", cfg));
+	} else
+		return label;
+}
+
 function get_proxy(cfg, no_verify) {
 	if (isEmpty(cfg))
 		return null;
@@ -179,7 +193,11 @@ function parse_entry(cfg) {
 	function _payloadStrategy(payload) {
 		// LOGIC_TYPE,((payload1),(payload2))
 		if (payload.factor === null || (type(payload.factor) in ['bool', 'int', 'string'])) {
-			return sprintf(payload.deny ? 'NOT,((%s))' : '%s', join(',', [payload.type, payload.factor ?? '']));
+			return sprintf(payload.deny ? 'NOT,((%s))' : '%s', join(',',
+				(payload.type === 'IN-NAME')
+				? [payload.type, get_listener(payload.factor) ?? '']
+				: [payload.type, payload.factor ?? '']
+			));
 		} else if (type(payload.factor) === 'array') {
 			return sprintf(`${payload.type},(%s)`, join(',', map(payload.factor, p => `(${_payloadStrategy(p)})`)));
 		} else if (type(payload.factor) === 'object') {
@@ -352,22 +370,7 @@ uci.foreach(uciconf, uciinbd, (cfg) => {
 	if (cfg.enabled === '0')
 		return;
 
-	const listener = parseListener(cfg);
-	listener.proxy = get_proxy(listener.proxy);
-	if (listener["reality-config"])
-		listener["reality-config"].proxy = get_proxy(listener["reality-config"].proxy);
-	if (listener["shadow-tls"])
-		listener["shadow-tls"].handshake.proxy = get_proxy(listener["shadow-tls"].handshake.proxy);
-	if (listener["res-tls"])
-		listener["res-tls"].proxy = get_proxy(listener["res-tls"].proxy);
-	if (listener["jls-config"])
-		listener["jls-config"].proxy = get_proxy(listener["jls-config"].proxy);
-	if (listener["jls-upstream"])
-		listener["jls-upstream"].proxy = get_proxy(listener["jls-upstream"].proxy);
-	if (listener["realm-opts"])
-		listener["realm-opts"].proxy = get_proxy(listener["realm-opts"].proxy);
-
-	push(config.listeners, listener);
+	push(config.listeners, parseListener(cfg, get_proxy));
 });
 /* Tun settings */
 if (match(proxy_mode, /tun/))
@@ -561,6 +564,7 @@ uci.foreach(uciconf, ucinode, (cfg) => {
 		psk: cfg.snell_psk,
 		version: strToInt(cfg.snell_version),
 		reuse: strToBool(cfg.snell_reuse),
+		mode: cfg.snell_mode,
 
 		/* VMess / VLESS */
 		flow: cfg.vless_flow,
