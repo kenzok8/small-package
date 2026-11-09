@@ -596,7 +596,7 @@ return view.extend({
 			}
 		}
 		so.renderWidget = function(section_id, option_index, cfgvalue) {
-			let node = hm.TextValue.prototype.renderWidget.call(this, section_id, option_index, cfgvalue);
+			let node = hm.TextValue.prototype.renderWidget.apply(this, arguments);
 			const cbid = this.cbid(section_id) + '._outer_sni';
 
 			node.appendChild(E('div',  { 'class': 'control-group' }, [

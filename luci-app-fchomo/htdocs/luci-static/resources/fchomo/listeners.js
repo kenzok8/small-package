@@ -240,7 +240,7 @@ function renderListeners(s, uciconfig, isClient) {
 		}
 	}
 	o.renderWidget = function(section_id, option_index, cfgvalue) {
-		let node = form.Value.prototype.renderWidget.call(this, section_id, option_index, cfgvalue);
+		let node = form.Value.prototype.renderWidget.apply(this, arguments);
 		const cbid = this.cbid(section_id) + '._keytype_select';
 		const selected = this.hm_options.type;
 
@@ -305,7 +305,7 @@ function renderListeners(s, uciconfig, isClient) {
 
 	o = s.taboption('field_general', form.DynamicList, 'sudoku_custom_tables', _('Custom byte layout'),
 			_('Only applies to the %s.').format(_('Low-entropy data stream')));
-	o.renderWidget = function(/* ... */) {
+	o.renderWidget = function(section_id, option_index, cfgvalue) {
 		let node = form.DynamicList.prototype.renderWidget.apply(this, arguments);
 
 		(node.querySelector('.control-group') || node).appendChild(E('button', {
@@ -954,7 +954,7 @@ function renderListeners(s, uciconfig, isClient) {
 		}
 	}
 	o.renderWidget = function(section_id, option_index, cfgvalue) {
-		let node = hm.TextValue.prototype.renderWidget.call(this, section_id, option_index, cfgvalue);
+		let node = hm.TextValue.prototype.renderWidget.apply(this, arguments);
 		const cbid = this.cbid(section_id) + '._keytype_select';
 		const selected = this.hm_options.type;
 
@@ -1216,7 +1216,7 @@ function renderListeners(s, uciconfig, isClient) {
 		}
 	}
 	o.renderWidget = function(section_id, option_index, cfgvalue) {
-		let node = hm.TextValue.prototype.renderWidget.call(this, section_id, option_index, cfgvalue);
+		let node = hm.TextValue.prototype.renderWidget.apply(this, arguments);
 		const cbid = this.cbid(section_id) + '._outer_sni';
 
 		node.appendChild(E('div',  { 'class': 'control-group' }, [
