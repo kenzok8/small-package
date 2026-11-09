@@ -224,7 +224,7 @@ gen_nftset() {
 		if [ "$timeout_argument_set" = "0" ]; then
 			nft "add set $NFTABLE_NAME $nftset_name { type $ip_type; flags interval; auto-merge; }"
 		else
-			nft "add set $NFTABLE_NAME $nftset_name { type $ip_type; flags interval, timeout; timeout $timeout_argument_set; gc-interval $gc_interval_time; auto-merge; }"
+			nft "add set $NFTABLE_NAME $nftset_name { type $ip_type; flags interval, timeout; timeout $timeout_argument_set; gc-interval $gc_interval_time; }"
 		fi
 	fi
 }
@@ -1102,17 +1102,17 @@ add_firewall_rule() {
 
 	[ -n "$ISP_DNS" ] && {
 		#echolog "处理 ISP DNS 例外..."
-		echo "$ISP_DNS" | insert_nftset $NFTSET_WHITE
+		echo "$ISP_DNS" | insert_nftset $NFTSET_VPS
 		for ispip in $ISP_DNS; do
-			echolog "  - [$?]追加ISP IPv4 DNS到白名单：${ispip}"
+			echolog "  - [$?]追加ISP IPv4 DNS到nftset[$NFTSET_VPS]：${ispip}"
 		done
 	}
 
 	[ -n "$ISP_DNS6" ] && {
 		#echolog "处理 ISP IPv6 DNS 例外..."
-		echo $ISP_DNS6 | insert_nftset $NFTSET_WHITE6
+		echo "$ISP_DNS6" | insert_nftset $NFTSET_VPS6
 		for ispip6 in $ISP_DNS6; do
-			echolog "  - [$?]追加ISP IPv6 DNS到白名单：${ispip6}"
+			echolog "  - [$?]追加ISP IPv6 DNS到nftset[$NFTSET_VPS6]：${ispip6}"
 		done
 	}
 
@@ -1548,6 +1548,11 @@ del_firewall_rule() {
 	destroy_nftset $NFTSET_BLACK6_STATIC
 	destroy_nftset $NFTSET_BLOCK6 $NFTSET_BLOCK6_STATIC
 	destroy_nftset $NFTSET_WHITE6 $NFTSET_WHITE6_STATIC
+
+	local nftset
+	for nftset in $(nft -t list table $NFTABLE_NAME 2>/dev/null | awk '$1 == "set" && $2 ~ /^psw_.+_shunt6?_static$/ {print $2}'); do
+		destroy_nftset "$nftset"
+	done
 
 	del_script_mwan3
 

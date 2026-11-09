@@ -15,7 +15,7 @@ import { cursor } from 'uci';
 import { urldecode, urlencode } from 'luci.http';
 
 import {
-	wGET, decodeBase64Str, getTime, isEmpty, parseECHConfig, parseURL,
+	wGET, decodeBase64Str, getTime, isEmpty, parseECHConfig, parseURL, realityFingerprint,
 	reconcileUrltestNodes, reserveUniqueLabel, synchronizeNodeLabels,
 	validation, HP_DIR, RUN_DIR
 } from 'homeproxy';
@@ -37,7 +37,7 @@ const allow_insecure = uci.get(uciconfig, ucisubscription, 'allow_insecure') || 
       subscription_urls = uci.get(uciconfig, ucisubscription, 'subscription_url') || [],
       user_agent = uci.get(uciconfig, ucisubscription, 'user_agent'),
       via_proxy = uci.get(uciconfig, ucisubscription, 'update_via_proxy') || '0';
-const resources_updated = getenv('HOMEPROXY_RESOURCES_UPDATED') === '1';
+const dashboard_updated = getenv('HOMEPROXY_DASHBOARD_UPDATED') === '1';
 const mixed_port = int(uci.get(uciconfig, uciinfra, 'mixed_port')) || 5330;
 const update_proxy = (via_proxy === '1') ? `http://127.0.0.1:${mixed_port}` : null;
 const service_running = system('/etc/init.d/homeproxy running >/dev/null 2>&1') === 0;
@@ -125,8 +125,8 @@ function restart_service(message) {
 	return true;
 }
 
-function apply_updated_resources() {
-	return !resources_updated || restart_service('Restarting service to apply updated resources...');
+function apply_updated_dashboard() {
+	return !dashboard_updated || restart_service('Restarting service to apply the updated dashboard...');
 }
 
 function has_value(value) {
@@ -1074,6 +1074,7 @@ function main() {
 						config = parse_uri(node);
 					if (isEmpty(config))
 						continue;
+					config.tls_utls = realityFingerprint(config, sing_features.with_utls);
 
 					const label = config.label;
 					config.label = null;
@@ -1129,7 +1130,7 @@ function main() {
 	if (isEmpty(node_result)) {
 		log('Failed to update subscriptions: no valid node found.');
 
-		apply_updated_resources();
+		apply_updated_dashboard();
 
 		return false;
 	}
@@ -1218,7 +1219,7 @@ function main() {
 	const config_changed = !isEmpty(uci.changes(uciconfig));
 	if (config_changed && uci.commit(uciconfig) !== true)
 		die('failed to commit subscription changes');
-	if ((config_changed || resources_updated) && !restart_service())
+	if ((config_changed || dashboard_updated) && !restart_service())
 		return false;
 
 	log(sprintf('%s added, %s updated, %s removed.', added, updated, removed));
@@ -1231,6 +1232,6 @@ if (!isEmpty(subscription_urls))
 			exit(1);
 	} catch(e) {
 		log_error('[FATAL ERROR] An error occurred during updating subscriptions', e);
-		apply_updated_resources();
+		apply_updated_dashboard();
 		exit(1);
 	}

@@ -180,6 +180,9 @@ return baseclass.extend({
 		}
 
 		const mainNodes = reconcileList('config', 'main_urltest_nodes');
+		uci.sections(uciconfig, 'domain_route', (section) => {
+			reconcileList(section['.name'], 'urltest_nodes');
+		});
 		const mainNode = uci.get(uciconfig, 'config', 'main_node');
 		if (mainNode === 'urltest' && !mainNodes.length) {
 			uci.set(uciconfig, 'config', 'main_node', firstNode || 'nil');
@@ -193,6 +196,15 @@ return baseclass.extend({
 		return { changed, removed, removedNodes };
 	},
 
+	realityFingerprint(node, with_utls) {
+		if (node.tls_reality !== '1')
+			return node.tls_utls;
+		if (with_utls === false)
+			throw new TypeError(_('REALITY requires sing-box uTLS support.'));
+		if (['none', 'disable', 'disabled'].includes(node.tls_utls))
+			throw new TypeError(_('REALITY requires a uTLS fingerprint.'));
+		return node.tls_utls || 'chrome';
+	},
 	calcStringMD5(e) {
 		/* Thanks to https://stackoverflow.com/a/41602636 */
 		let h = (a, b) => {

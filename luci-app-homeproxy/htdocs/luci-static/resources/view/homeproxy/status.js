@@ -176,6 +176,7 @@ function getResources(o) {
 	const callResUpdate = rpc.declare({
 		object: 'luci.homeproxy',
 		method: 'resources_update',
+		params: ['scope'],
 		expect: { '': {} }
 	});
 
@@ -211,13 +212,13 @@ function getResources(o) {
 		cbi_update_table(table, rows);
 
 		return E('div', { 'class': 'cbi-map' }, [
-			E('h3', { 'name': 'content', 'style': 'align-items:center;display:flex' }, [
+			E('h3', { 'name': 'content', 'style': 'align-items:center;display:flex;flex-wrap:wrap;gap:4px' }, [
 				_('Resource Management'),
-				E('button', {
+				...['rules', 'all'].map((scope) => E('button', {
 					'class': 'btn cbi-button cbi-button-action',
 					'style': 'margin-left:4px',
 					'click': ui.createHandlerFn(this, () => {
-						return L.resolveDefault(callResUpdate(), {}).then((res) => {
+						return L.resolveDefault(callResUpdate(scope), {}).then((res) => {
 							let message, severity = 'info';
 
 							if (res.apply_failed) {
@@ -226,7 +227,8 @@ function getResources(o) {
 							} else {
 								switch (res.status) {
 								case 0:
-									message = _('Successfully updated.');
+									message = res.core_updated && !res.dashboard_updated ?
+										_('Rule sets updated. HomeProxy was not restarted.') : _('Successfully updated.');
 									break;
 								case 1:
 									message = _('Update failed.');
@@ -253,7 +255,7 @@ function getResources(o) {
 							return o.map.reset();
 						});
 					})
-				}, [ _('Update all') ])
+				}, [scope === 'rules' ? _('Update rule sets') : _('Update all')]))
 			]),
 			E('div', { 'class': 'cbi-section' }, [ table ])
 		]);
@@ -340,7 +342,9 @@ function getRuntimeLog(o, name, _option_index, section_id, _in_table) {
 		log_textarea.scrollLeft = left;
 	}
 
-	poll.add(L.bind(() => {
+	if (o.logPoll)
+		poll.remove(o.logPoll);
+	o.logPoll = () => {
 		return fs.read_direct(String.format('%s/%s.log', hp_dir, filename), 'text')
 		.then((res) => {
 			updateLog(res || _('Log is empty.'));
@@ -350,7 +354,9 @@ function getRuntimeLog(o, name, _option_index, section_id, _in_table) {
 			else
 				updateLog(_('Unknown error: %s.').format(err));
 		});
-	}));
+	};
+	poll.add(o.logPoll);
+	o.logPoll();
 
 	return E([
 		E('div', {'class': 'cbi-map'}, [

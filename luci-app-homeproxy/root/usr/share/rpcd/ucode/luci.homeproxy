@@ -94,6 +94,14 @@ function validateDomainLists(changes, routingMode, groupStates) {
 	return findDomainGroupConflict(groups);
 }
 
+function readClientConfig() {
+	try {
+		return json(readfile(`${RUN_DIR}/sing-box-c.json`) || '{}');
+	} catch (e) {
+		return {};
+	}
+}
+
 const methods = {
 	tailscale_status: {
 		call: function() {
@@ -101,12 +109,7 @@ const methods = {
 			uci.load('homeproxy');
 			if (uci.get('homeproxy', 'tailscale', 'enabled') !== '1')
 				return { state: 'disabled' };
-			let config;
-			try {
-				config = json(readfile(RUN_DIR + '/sing-box-c.json') || '{}');
-			} catch (e) {
-				return { state: 'unavailable' };
-			}
+			const config = readClientConfig();
 			const api = filter(config.services || [], (service) => service.type === 'api' && service.tag === 'api')[0];
 			const port = int(api?.listen_port);
 			if (!port || port < 1 || port > 65535)
@@ -479,62 +482,58 @@ const methods = {
 			};
 
 			const main_node = trim(uci.get('homeproxy', 'config', 'main_node') || 'nil');
+			let groups = {};
+			uci.foreach('homeproxy', 'domain_route', (section) => {
+				if (section.enabled !== '0' && section.node === 'urltest')
+					groups[section['.name']] = null;
+			});
+			const result = { mode: main_node, active: formatNode(main_node, main_node === 'nil' ? 'Disable' : null), error: null, groups };
+			if (main_node !== 'urltest' && !length(keys(groups)))
+				return result;
+
+			/* Read all group selections and their histories in one local request. */
+			let proxies;
+			const port = int(uci.get('homeproxy', 'infra', 'clash_api_port'));
+			if (port > 0 && port <= 65535) {
+				const fd = popen(`/usr/bin/curl -fsS --connect-timeout 1 --max-time 2 --max-filesize 1048576 http://127.0.0.1:${port}/proxies 2>/dev/null`);
+				if (fd) {
+					const payload = fd.read('all');
+					if (fd.close() === 0)
+						try {
+							proxies = json(payload)?.proxies;
+						} catch (e) {}
+				}
+			}
+			let node_ids = {};
+			for (let id, tag in createNodeOutboundTags(uci, 'homeproxy'))
+				node_ids[tag] = id;
 			if (main_node !== 'urltest')
+				node_ids['main-out'] = main_node;
+
+			function current(tag) {
+				const group = proxies?.[tag];
+				const selected = trim(group?.now || '');
+				if (!selected)
+					return { active: null, error: proxies ? 'missing_current_proxy' : 'clash_api_unavailable' };
+				const legacy_id = match(selected, /^cfg-(.*)-out$/)?.[1];
+				const history = group.history?.[0];
 				return {
-					mode: main_node,
-					active: formatNode(main_node, (main_node === 'nil') ? 'Disable' : null),
+					active: formatNode(node_ids[selected] || legacy_id || selected, selected),
+					latency_ms: type(history?.delay) in ['int', 'double'] ? history.delay : null,
+					measured_at: history?.time,
 					error: null
 				};
-
-			const clash_api_port = int(uci.get('homeproxy', 'infra', 'clash_api_port'));
-			if (!clash_api_port)
-				return {
-					mode: 'urltest',
-					active: { id: 'urltest', label: 'URLTest', type: 'urltest' },
-					error: 'clash_api_unavailable'
-				};
-			const fd = popen(`/usr/bin/curl -fsS --connect-timeout 1 --max-time 2 http://127.0.0.1:${clash_api_port}/proxies/main-out 2>"/dev/null"`);
-			if (!fd)
-				return {
-					mode: 'urltest',
-					active: { id: 'urltest', label: 'URLTest', type: 'urltest' },
-					error: 'clash_api_unavailable'
-				};
-
-			let payload = '', line;
-			for (line = fd.read('line'); length(line); line = fd.read('line'))
-				payload += line;
-			fd.close();
-
-			let data = null;
-			try {
-				data = json(payload);
-			} catch (e) {}
-
-			const tag = trim(data?.now || '');
-			if (!tag)
-				return {
-					mode: 'urltest',
-					active: { id: 'urltest', label: 'URLTest', type: 'urltest' },
-					error: 'missing_current_proxy'
-				};
-
-			for (let section_id, node_tag in createNodeOutboundTags(uci, 'homeproxy'))
-				if (node_tag === tag)
-					return {
-						mode: 'urltest',
-						active: formatNode(section_id, tag),
-						error: null
-					};
-
-			const matched = match(tag, /^cfg-(.*)-out$/);
-			const section_id = matched ? matched[1] : tag;
-
-			return {
-				mode: 'urltest',
-				active: formatNode(section_id, tag),
-				error: null
-			};
+			}
+			for (let id in keys(groups))
+				groups[id] = current(`domain-${id}-urltest`);
+			if (main_node === 'urltest') {
+				const main = current('main-out');
+				result.active = main.active || { id: 'urltest', label: 'URLTest', type: 'urltest' };
+				result.latency_ms = main.latency_ms;
+				result.measured_at = main.measured_at;
+				result.error = main.error;
+			}
+			return result;
 		}
 	},
 
@@ -559,6 +558,8 @@ const methods = {
 			const dns_strategy = hpuci.get('homeproxy', 'config', 'ipv6_support') === '1' ?
 				'prefer_ipv6' : 'prefer_ipv4';
 			const reserved_controller_port = int(hpuci.get('homeproxy', 'infra', 'clash_api_port')) || 0;
+			const running_config = readClientConfig();
+			const tun = filter(running_config.inbounds || [], (inbound) => inbound.type === 'tun' && inbound.auto_redirect)[0];
 
 			const formatResult = (node, state, latency_ms, err) => ({
 				node,
@@ -621,6 +622,8 @@ const methods = {
 					route: {
 						final: 'direct-out',
 						auto_detect_interface: true,
+						/* Probe sockets must bypass the main core's TUN redirection. */
+						default_mark: tun ? (tun.auto_redirect_output_mark || 0x2024) : null,
 						default_domain_resolver: { server: 'local-dns', strategy: dns_strategy }
 					},
 					experimental: {
@@ -955,13 +958,17 @@ const methods = {
 		}
 	},
 	resources_update: {
-		call: function() {
+		args: { scope: 'scope' },
+		call: function(req) {
+			const scope = req?.args?.scope || 'all';
+			if (!(scope in ['all', 'rules']))
+				return { status: 1 };
 			const hpuci = cursor();
 			hpuci.load('homeproxy');
 			const mixed_port = int(hpuci.get('homeproxy', 'infra', 'mixed_port')) || 5330;
 			const update_proxy = (hpuci.get('homeproxy', 'subscription', 'update_via_proxy') === '1') ?
 				`HOMEPROXY_UPDATE_PROXY=${shellQuote(`http://127.0.0.1:${mixed_port}`)} ` : '';
-			const status = system(`${update_proxy}${HP_DIR}/scripts/update_resources.sh`);
+			const status = system(`${update_proxy}${HP_DIR}/scripts/update_resources.sh ${scope}`);
 			let update_result = {};
 			if (status !== 2) {
 				for (let line in split(trim(readfile(`${RUN_DIR}/update_resources.result`) || ''), '\n')) {
@@ -973,7 +980,8 @@ const methods = {
 			const core_updated = update_result.core_updated === '1';
 			const dashboard_updated = update_result.dashboard_updated === '1';
 			let apply_failed = false;
-			if ((core_updated || dashboard_updated) && system('/etc/init.d/homeproxy running >/dev/null 2>&1') === 0)
+			/* Local rule sets reload through the core's file watcher. */
+			if (dashboard_updated && system('/etc/init.d/homeproxy running >/dev/null 2>&1') === 0)
 				apply_failed = system('/etc/init.d/homeproxy reload >/dev/null 2>&1') !== 0;
 			return {
 				status,

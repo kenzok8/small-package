@@ -112,18 +112,22 @@ return view.extend({
 		m = new form.Map('homeproxy', _('HomeProxy Server'),
 			_('The modern ImmortalWRT proxy platform for ARM64/AMD64. Powered by Sing-Box/TUN/AI Edition'));
 
+		let statusNode, statusHTML;
 		s = m.section(form.TypedSection);
 		s.render = function() {
-			poll.add(() => {
-				return L.resolveDefault(hp.getServiceStatus('sing-box-s')).then((res) => {
-					let view = document.getElementById('service_status');
-					view.innerHTML = renderStatus(res, features.version);
-				});
-			});
-
+			statusNode = E('p', { id: 'service_status' }, _('Collecting data...'));
+			if (statusHTML)
+				statusNode.innerHTML = statusHTML;
 			return E('div', { class: 'cbi-section', id: 'status_bar' }, [
-					E('p', { id: 'service_status' }, _('Collecting data...'))
+				statusNode
 			]);
+		};
+		function refreshStatus() {
+			return L.resolveDefault(hp.getServiceStatus('sing-box-s')).then((res) => {
+				statusHTML = renderStatus(res, features.version);
+				if (statusNode)
+					statusNode.innerHTML = statusHTML;
+			});
 		}
 
 		s = m.section(form.NamedSection, 'server', 'homeproxy', _('Global Settings'));
@@ -876,6 +880,9 @@ return view.extend({
 		o.modalonly = true;
 		/* Extra settings end */
 
-		return m.render();
+		return m.render().then((node) => {
+			poll.add(refreshStatus);
+			return refreshStatus().then(() => node);
+		});
 	}
 });

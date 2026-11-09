@@ -450,6 +450,7 @@ function parseShareLink(uri, features) {
 	}
 
 	if (config) {
+		config.tls_utls = hp.realityFingerprint(config, features.with_utls);
 		if (['vless', 'vmess', 'trojan'].includes(config.type) && config.transport &&
 		    !['tcp', 'http', 'ws', 'grpc', 'httpupgrade', 'quic'].includes(config.transport))
 			throw new TypeError(_('Unsupported transport: %s.').format(config.transport));

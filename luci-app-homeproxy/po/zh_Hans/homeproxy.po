@@ -1583,6 +1583,14 @@ msgstr "REALITY 私钥"
 msgid "REALITY public key"
 msgstr "REALITY 公钥"
 
+#: luci-app-homeproxy/htdocs/luci-static/resources/homeproxy.js:205
+msgid "REALITY requires a uTLS fingerprint."
+msgstr "REALITY 必须启用 uTLS 指纹。"
+
+#: luci-app-homeproxy/htdocs/luci-static/resources/homeproxy.js:203
+msgid "REALITY requires sing-box uTLS support."
+msgstr "REALITY 需要 sing-box 提供 uTLS 支持。"
+
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/node.js:1648
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/server.js:728
 msgid "REALITY short ID"
@@ -1659,6 +1667,10 @@ msgstr "规则代理 IPv4 地址"
 msgid "Rule Proxy MAC addresses"
 msgstr "规则代理 MAC 地址"
 
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:231
+msgid "Rule sets updated. HomeProxy was not restarted."
+msgstr "规则库已更新，HomeProxy 未重启。"
+
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/node.js:877
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/server.js:168
 msgid "SOCKS"
@@ -1704,6 +1716,10 @@ msgstr "保存当前设置"
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/node.js:1909
 msgid "Save subscriptions settings"
 msgstr "保存订阅设置"
+
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/client.js:767
+msgid "Select at least one available URLTest node."
+msgstr "请至少选择一个可用的 URLTest 节点。"
 
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/server.js:139
 msgid "Server"
@@ -2179,6 +2195,10 @@ msgstr "从订阅更新节点"
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/node.js:1853
 msgid "Update resources and subscriptions via proxy."
 msgstr "通过代理更新资源和订阅。"
+
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:258
+msgid "Update rule sets"
+msgstr "更新规则库"
 
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/node.js:1852
 msgid "Update via proxy"

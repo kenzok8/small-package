@@ -201,11 +201,14 @@ return view.extend({
 			_('The modern ImmortalWRT proxy platform for ARM64/AMD64. Powered by Sing-Box/TUN/AI Edition'));
 
 		let domainListCache = Object.create(null),
-		    pendingDomainLists = Object.create(null);
+		    pendingDomainLists = Object.create(null),
+		    domainListEditors = Object.create(null);
 
 		function loadDomainList(id) {
 			if (Object.prototype.hasOwnProperty.call(pendingDomainLists, id))
 				return Promise.resolve(pendingDomainLists[id]);
+			if (Object.prototype.hasOwnProperty.call(domainListCache, id))
+				return Promise.resolve(domainListCache[id]);
 
 			return callReadDomainList(id).then((res) => {
 				if (res.error)
@@ -225,39 +228,84 @@ return view.extend({
 		}
 
 		function domainListContent(id) {
+			const editor = domainListEditors[id];
+			const value = editor?.option.formvalue(editor.section_id);
+			if (value != null)
+				return value;
 			return Object.prototype.hasOwnProperty.call(pendingDomainLists, id) ?
 				pendingDomainLists[id] : (domainListCache[id] || '');
 		}
 
-		function validateDomainLists() {
-			const routingMode = uci.get('homeproxy', 'config', 'routing_mode') || 'bypass_mainland_china';
+		function currentOption(section_id, name) {
+			for (const map of [domainListEditors[section_id]?.option.map, m]) {
+				const option = map?.lookupOption(name, section_id)?.[0];
+				const value = option?.formvalue(section_id);
+				if (value != null)
+					return value;
+			}
+			return uci.get('homeproxy', section_id, name);
+		}
+
+		function domainListGroups(editedId, editedValue) {
+			const routingMode = currentOption('config', 'routing_mode') || 'bypass_mainland_china';
 			let groups = [ { id: 'direct', label: _('Direct List') } ];
 			if (routingMode === 'bypass_mainland_china')
 				groups.push({ id: 'proxy', label: _('Proxy List') });
 			uci.sections('homeproxy', 'domain_route', (section) => {
-				if (section.enabled === '0')
+				if (currentOption(section['.name'], 'enabled') === '0')
 					return;
 				groups.push({
 					id: section['.name'],
-					label: section.label || section['.name']
+					label: currentOption(section['.name'], 'label') || section['.name']
 				});
 			});
 
 			for (let group of groups) {
-				const parsed = parseDomainList(domainListContent(group.id));
+				const parsed = parseDomainList(group.id === editedId ? editedValue : domainListContent(group.id));
 				if (parsed.error)
 					throw new TypeError(_('%s contains an invalid domain.').format(group.label));
 				Object.assign(group, parsed);
 			}
 
+			return { routingMode, groups };
+		}
+
+		function domainConflictMessage(conflict) {
+			return _('Domain %s in %s conflicts with %s in %s.').format(
+				conflict.left.value, conflict.left.group.label,
+				conflict.right.value, conflict.right.group.label
+			);
+		}
+
+		function validateDomainList(option, section_id, id, value) {
+			domainListEditors[id] = { option, section_id };
+			const parsed = parseDomainList(value);
+			if (parsed.error)
+				return parsed.error;
+			try {
+				const { groups } = domainListGroups(id, value);
+				const group = groups.find((entry) => entry.id === id);
+				if (!group)
+					return true;
+				/* Check this editor against every other enabled list. */
+				for (const other of groups) {
+					if (other.id === id)
+						continue;
+					const conflict = findDomainListConflict([other, group]);
+					if (conflict)
+						return domainConflictMessage(conflict);
+				}
+			} catch (error) {
+				return error.message;
+			}
+			return true;
+		}
+
+		function validateDomainLists() {
+			const { routingMode, groups } = domainListGroups();
 			const conflict = findDomainListConflict(groups);
 			if (conflict)
-				throw new TypeError(
-					_('Domain %s in %s conflicts with %s in %s.').format(
-						conflict.left.value, conflict.left.group.label,
-						conflict.right.value, conflict.right.group.label
-					)
-				);
+				throw new TypeError(domainConflictMessage(conflict));
 
 			return routingMode;
 		}
@@ -308,32 +356,61 @@ return view.extend({
 			};
 		}
 		configureDomainListSave(m);
+		let currentGroups = {};
+		function currentGroupLabel(current) {
+			const active = current?.active;
+			if (!active || active.id === 'urltest')
+				return null;
+			let label = proxy_nodes[active.id] || active.label || active.id;
+			if (typeof current.latency_ms === 'number')
+				label += ' ' + current.latency_ms + 'ms';
+			return label;
+		}
+		function groupStatusNode(id) {
+			const current = currentGroups[id];
+			const label = currentGroupLabel(current);
+			return E('span', {
+				'data-homeproxy-group': id,
+				style: 'display:block;white-space:normal;overflow-wrap:anywhere;max-width:22rem',
+				title: current?.measured_at || ''
+			}, [label ? _('URLTest: %s').format(label) : _('URLTest')]);
+		}
+		let statusNode, statusHTML;
 
 		s = m.section(form.TypedSection);
 		s.render = function () {
-			poll.add(function () {
-				return Promise.all([
-					L.resolveDefault(hp.getServiceStatus('sing-box-c'), false),
-					L.resolveDefault(callCurrentNode(), null)
-				]).then((res) => {
-					let isRunning = res[0],
-					    current = res[1],
-					    current_label = null;
-
-					if (current?.mode === 'urltest') {
-						let active = current.active || {};
-						let nodeName = (active?.id && active.id !== 'urltest') ? (proxy_nodes[active.id] || active.label || active.id) : _('Invalid node');
-
-						current_label = _('URLTest: %s').format(nodeName);
-					}
-					let view = document.getElementById('service_status');
-					view.innerHTML = renderStatus(isRunning, features.version, current_label);
-				});
-			});
-
+			statusNode = E('p', { id: 'service_status' }, _('Collecting data...'));
+			if (statusHTML)
+				statusNode.innerHTML = statusHTML;
 			return E('div', { class: 'cbi-section', id: 'status_bar' }, [
-				E('p', { id: 'service_status' }, _('Collecting data...'))
+				statusNode
 			]);
+		};
+		/* Saving the map rerenders sections; keep one status poll per view. */
+		function refreshStatus() {
+			return Promise.all([
+				L.resolveDefault(hp.getServiceStatus('sing-box-c'), false),
+				L.resolveDefault(callCurrentNode(), null)
+			]).then((res) => {
+				let isRunning = res[0],
+				    current = res[1],
+				    current_label = null;
+
+				if (current?.mode === 'urltest') {
+					let nodeName = currentGroupLabel(current) || _('Invalid node');
+
+					current_label = _('URLTest: %s').format(nodeName);
+				}
+				currentGroups = current?.groups || {};
+				for (const node of m.root.querySelectorAll('[data-homeproxy-group]')) {
+					const replacement = groupStatusNode(node.getAttribute('data-homeproxy-group'));
+					node.textContent = replacement.textContent;
+					node.title = replacement.title;
+				}
+				statusHTML = renderStatus(isRunning, features.version, current_label);
+				if (statusNode)
+					statusNode.innerHTML = statusHTML;
+			});
 		}
 
 		s = m.section(form.NamedSection, 'config', 'homeproxy');
@@ -627,7 +704,8 @@ return view.extend({
 			option.monospace = true;
 			option.rmempty = true;
 			option.retain = true;
-			option.load = function(/* ... */) {
+			option.load = function(section_id) {
+				domainListEditors[id] = { option: this, section_id };
 				return loadDomainList(id);
 			};
 			option.write = function(_section_id, value) {
@@ -636,8 +714,8 @@ return view.extend({
 			option.remove = function(/* ... */) {
 				stageDomainList(id, '');
 			};
-			option.validate = function(_section_id, value) {
-				return parseDomainList(value).error || true;
+			option.validate = function(section_id, value) {
+				return validateDomainList(this, section_id, id, value);
 			};
 		}
 
@@ -660,6 +738,16 @@ return view.extend({
 		domainRoutes.addremove = true;
 		domainRoutes.addbtntitle = _('Add diversion group');
 		domainRoutes.nodescriptions = true;
+		domainRoutes.render = function(/* ... */) {
+			return Promise.resolve(form.GridSection.prototype.render.apply(this, arguments)).then((node) => {
+				/* Nested tables must not inherit a theme's full-section negative margins. */
+				Object.assign(node.style, { margin: '0', padding: '0', width: '100%', maxWidth: '100%' });
+				const table = node.querySelector('table');
+				if (table)
+					Object.assign(table.style, { margin: '0', width: '100%', maxWidth: '100%' });
+				return node;
+			});
+		};
 		domainRoutes.addModalOptions = function(section) {
 			configureDomainListSave(section.map);
 		};
@@ -684,23 +772,60 @@ return view.extend({
 		};
 
 		let dro = domainRoutes.option(form.Flag, 'enabled', _('Enable'));
+		dro.width = '4rem';
 		dro.default = dro.enabled;
 		dro.rmempty = false;
 		dro.editable = true;
 
 		dro = domainRoutes.option(form.Value, 'label', _('Name'));
+		dro.width = '25%';
 		dro.rmempty = false;
+		dro.textvalue = function(section_id) {
+			return E('span', { style: 'display: block; white-space: normal; overflow-wrap: anywhere; max-width: 14rem' },
+				[this.cfgvalue(section_id) || section_id]);
+		};
 
 		dro = domainRoutes.option(form.ListValue, 'node', _('Node'));
+		dro.width = '45%';
+		dro.value('urltest', _('URLTest'));
 		for (let i in proxy_nodes)
 			dro.value(i, E('span', {}, [proxy_nodes[i]]));
 		dro.value('tailscale', _('[Tailscale] Tailscale'));
 		dro.rmempty = false;
 		dro.textvalue = function(section_id) {
 			const value = this.cfgvalue(section_id);
-			return value === 'tailscale' ? _('[Tailscale] Tailscale') :
-				(value != null ? E('span', {}, [proxy_nodes[value] || value]) : null);
+			if (value == null)
+				return null;
+			if (value === 'urltest')
+				return groupStatusNode(section_id);
+			const label = value === 'urltest' ? _('URLTest') : value === 'tailscale' ?
+				_('[Tailscale] Tailscale') : (proxy_nodes[value] || value);
+			return E('span', { style: 'display: block; white-space: normal; overflow-wrap: anywhere; max-width: 22rem' }, [label]);
 		};
+
+		dro = domainRoutes.option(hp.CBIStaticList, 'urltest_nodes', _('URLTest nodes'),
+			_('List of nodes to test.'));
+		for (const id in proxy_nodes)
+			dro.value(id, E('span', {}, [proxy_nodes[id]]));
+		dro.depends('node', 'urltest');
+		dro.rmempty = false;
+		dro.retain = true;
+		dro.modalonly = true;
+		dro.validate = function(section_id) {
+			/* The parent form validates again after the modal has closed. */
+			const value = this.formvalue(section_id) ?? this.cfgvalue(section_id);
+			const nodes = Array.isArray(value) ? value : (value ? [value] : []);
+			return nodes.length > 0 && nodes.every((id) => Object.prototype.hasOwnProperty.call(proxy_nodes, id)) ||
+				_('Select at least one available URLTest node.');
+		};
+
+		dro = domainRoutes.option(form.Flag, 'urltest_interrupt_exist_connections', _('Interrupt existing connections'),
+			_('Interrupt existing connections when the selected outbound has changed.'));
+		dro.default = dro.disabled;
+		dro.depends('node', 'urltest');
+		dro.rmempty = false;
+		dro.retain = true;
+		dro.modalonly = true;
 
 		dro = domainRoutes.option(form.TextValue, '_domain_list', _('Domain List'),
 			_('Entries containing a dot use domain suffix matching; other entries use keyword matching.'));
@@ -709,6 +834,7 @@ return view.extend({
 		dro.monospace = true;
 		dro.rmempty = true;
 		dro.load = function(section_id) {
+			domainListEditors[section_id] = { option: this, section_id };
 			return loadDomainList(section_id);
 		};
 		dro.write = function(section_id, value) {
@@ -717,13 +843,14 @@ return view.extend({
 		dro.remove = function(section_id) {
 			stageDomainList(section_id, '');
 		};
-		dro.validate = function(_section_id, value) {
-			return parseDomainList(value).error || true;
+		dro.validate = function(section_id, value) {
+			return validateDomainList(this, section_id, section_id, value);
 		};
 
 		const removeDomainRoute = domainRoutes.handleRemove;
 		domainRoutes.handleRemove = function(section_id, ev) {
 			delete pendingDomainLists[section_id];
+			delete domainListEditors[section_id];
 			return removeDomainRoute.call(this, section_id, ev).then(() => {
 				return callRemoveDomainList(section_id);
 			}).then((result) => {
@@ -761,6 +888,9 @@ return view.extend({
 			const refresh = () => L.resolveDefault(callTailscaleStatus(), {}).then((status) => {
 				dom.content(container, renderTailscaleStatus(status));
 			});
+			if (this.statusPoll)
+				poll.remove(this.statusPoll);
+			this.statusPoll = refresh;
 			poll.add(refresh, 5);
 			refresh();
 			return container;
@@ -855,6 +985,12 @@ return view.extend({
 		so.depends('enabled', '1');
 		/* Tailscale settings end */
 
-		return m.render();
+		/* Inline validation must also see lists whose editors have never opened. */
+		const domainListIds = ['direct', 'proxy'];
+		uci.sections('homeproxy', 'domain_route', (section) => domainListIds.push(section['.name']));
+		return Promise.all(domainListIds.map(loadDomainList)).then(() => m.render()).then((node) => {
+			poll.add(refreshStatus);
+			return refreshStatus().then(() => node);
+		});
 	}
 });

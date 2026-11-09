@@ -159,6 +159,12 @@ setDefault('config', 'main_urltest_tolerance', '60');
 setDefault('config', 'main_urltest_interrupt_exist_connections', '0');
 setDefault('config', 'log_level', 'warn');
 setDefault('config', 'multi_queue', '1');
+uci.foreach(uciconfig, 'domain_route', (section) => {
+	if (section.node !== 'urltest')
+		return;
+	deleteOptions(section['.name'], ['urltest_interval', 'urltest_tolerance']);
+	setDefault(section['.name'], 'urltest_interrupt_exist_connections', '0');
+});
 if (isEmpty(uci.get(uciconfig, 'tailscale')))
 	uci.set(uciconfig, 'tailscale', 'homeproxy');
 setDefault('tailscale', 'enabled', '0');

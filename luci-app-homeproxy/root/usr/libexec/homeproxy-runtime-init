@@ -61,7 +61,12 @@ fi
 clash_api_port="$(initialize_port "$clash_api_port" 9090 "$clash_api_port_initialized" "$dashboard_port")"
 dashboard_port="$(initialize_port "$dashboard_port" 9095 "$dashboard_port_initialized" "$clash_api_port")"
 
-if [ "$main_node" = 'urltest' ] && { [ "$dashboard_enabled" = '1' ] || [ "$tailscale_enabled" = '1' ]; } && \
+urltest_enabled=0
+[ "$main_node" != 'urltest' ] || urltest_enabled=1
+if uci -q show homeproxy | grep -q "\.node='urltest'$"; then
+	urltest_enabled=1
+fi
+if [ "$urltest_enabled" = '1' ] && { [ "$dashboard_enabled" = '1' ] || [ "$tailscale_enabled" = '1' ]; } && \
    [ "$clash_api_port" = "$dashboard_port" ]; then
 	dashboard_port="$(random_port "$clash_api_port")"
 fi

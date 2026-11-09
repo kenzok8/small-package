@@ -18,20 +18,16 @@ fi
 
 HOMEPROXY_UPDATE_PROXY="$UPDATE_PROXY" "$SCRIPTS_DIR"/update_resources.sh
 RESOURCE_STATUS="$?"
-CORE_RESOURCES_UPDATED=0
 DASHBOARD_UPDATED=0
 if [ "$RESOURCE_STATUS" -ne 2 ]; then
-	CORE_RESOURCES_UPDATED="$(sed -n 's/^core_updated=//p' "$RUN_DIR/update_resources.result" 2>"/dev/null")"
-	[ "$CORE_RESOURCES_UPDATED" = "1" ] || CORE_RESOURCES_UPDATED=0
 	DASHBOARD_UPDATED="$(sed -n 's/^dashboard_updated=//p' "$RUN_DIR/update_resources.result" 2>"/dev/null")"
 	[ "$DASHBOARD_UPDATED" = "1" ] || DASHBOARD_UPDATED=0
 fi
-RESOURCES_UPDATED=$((CORE_RESOURCES_UPDATED || DASHBOARD_UPDATED))
 
 SUBSCRIPTION_URLS="$(uci -q get homeproxy.subscription.subscription_url)"
 SUBSCRIPTION_STATUS=0
 if [ -n "$SUBSCRIPTION_URLS" ]; then
-	HOMEPROXY_RESOURCES_UPDATED="$RESOURCES_UPDATED" \
+	HOMEPROXY_DASHBOARD_UPDATED="$DASHBOARD_UPDATED" \
 		"$SCRIPTS_DIR"/update_subscriptions.sh || SUBSCRIPTION_STATUS="$?"
 else
 	mkdir -p "$RUN_DIR"
@@ -39,7 +35,8 @@ else
 		"$(date '+%Y-%m-%d %H:%M:%S')" >> "$LOG_PATH"
 fi
 
-if [ "$RESOURCES_UPDATED" -eq 1 ] && \
+# Local rule-set files are watched by sing-box; only the dashboard needs a reload.
+if [ "$DASHBOARD_UPDATED" -eq 1 ] && \
 	{ [ -z "$SUBSCRIPTION_URLS" ] || [ "$SUBSCRIPTION_STATUS" -eq 2 ]; } && \
 	   /etc/init.d/homeproxy running >/dev/null 2>&1; then
 	if ! /etc/init.d/homeproxy reload >/dev/null 2>&1; then

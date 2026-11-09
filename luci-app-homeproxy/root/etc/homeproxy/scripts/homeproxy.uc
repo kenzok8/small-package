@@ -262,6 +262,9 @@ export function reconcileUrltestNodes(uci, config, logger) {
 	}
 
 	const mainNodes = reconcileList('config', 'main_urltest_nodes');
+	uci.foreach(config, 'domain_route', (section) => {
+		reconcileList(section['.name'], 'urltest_nodes');
+	});
 	const mainNode = uci.get(config, 'config', 'main_node');
 	if (mainNode === 'urltest' && !length(mainNodes)) {
 		const fallback = uci.get_first(config, 'node') || 'nil';
@@ -379,6 +382,16 @@ export function renderV2RayTransport(node, server_mode) {
 	}
 };
 
+export function realityFingerprint(node, with_utls) {
+	if (node.tls_reality !== '1')
+		return node.tls_utls;
+	if (with_utls === false)
+		die('REALITY requires sing-box uTLS support.');
+	if (node.tls_utls in ['none', 'disable', 'disabled'])
+		die('REALITY requires a uTLS fingerprint.');
+	return isEmpty(node.tls_utls) ? 'chrome' : node.tls_utls;
+};
+
 export function renderOutbound(node) {
 	if (type(node) !== 'object' || isEmpty(node))
 		return null;
@@ -390,7 +403,8 @@ export function renderOutbound(node) {
 		]))
 			return null;
 
-		const tls_utls_value = (node.type === 'anytls' && isEmpty(node.tls_utls)) ? 'chrome' : node.tls_utls;
+		const tls_utls_value = (node.type === 'anytls' && isEmpty(node.tls_utls)) ?
+			'chrome' : realityFingerprint(node);
 		return {
 			enabled: true,
 			server_name: node.tls_sni,
@@ -714,6 +728,9 @@ export function getSubscriptionGroups(uci, config) {
 
 export function createNodeOutboundTags(uci, config) {
 	const used = createNodeLabelRegistry();
+	uci.foreach(config, 'domain_route', (section) => {
+		used[`domain-${section['.name']}-urltest`] = true;
+	});
 	let groups = {}, tags = {};
 	for (let group in getSubscriptionGroups(uci, config))
 		groups[group.hash] = group.title;
