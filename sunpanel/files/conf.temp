@@ -4,19 +4,33 @@
 [base]
 # Web run port. Default:3002
 http_port=<%=port%>
+# Web run https port. Default:3003
+https_port=3003
+# Web run address Default: 0.0.0.0
+http_address=0.0.0.0
 # Database driver [mysql/sqlite(Default)]
 database_drive=sqlite
 # Cache driver [redis/memory(Default)]
 cache_drive=memory
 # Queue driver [redis/memory(Default)]
 queue_drive=memory
-# Web Paths
-web_path=/www/luci-static/sunpanel
-# File cache path (Please start with the current path './')
-# Warning: The files that have been uploaded after the modification cannot be accessed
+# File cache path
 source_path=<%=config_path%>/uploads
-# File cache path.
+# File cache temp path
 source_temp_path=<%=config_path%>/runtime/temp
+# Front -end path.
+web_path=/www/luci-static/sunpanel
+# Custom JS and CSS.
+custom_style_path=<%=config_path%>/custom
+# Token expires (hour). defalut 168
+token_expires=168
+
+# ==============================
+# SSL certificate configuration
+# ==============================
+[cert]
+cert_path=
+key_path=
 
 # ======================
 # Mysql database driver

@@ -7,16 +7,22 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_ARCH_sunpanel:=$(ARCH)
-
 PKG_NAME:=sunpanel
-PKG_VERSION:=1.3.1
-PKG_RELEASE:=7
-PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/linkease/istore-packages/releases/download/prebuilt/
-PKG_HASH:=3ce70530fad9788c4ce0a2969cffc5b80f010406c7a0185b9a40616e3e67f201
+PKG_VERSION:=1.8.1
+PKG_RELEASE:=1
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-binary-$(PKG_VERSION)
+# v1.8.1 official release assets are per-arch (linux musl static binary)
+ifeq ($(ARCH),x86_64)
+  GO_ARCH:=amd64
+else ifeq ($(ARCH),aarch64)
+  GO_ARCH:=arm64
+endif
+
+PKG_SOURCE:=sun-panel_v$(PKG_VERSION)_linux_musl_$(GO_ARCH).tar.gz
+PKG_SOURCE_URL:=https://github.com/hslr-s/sun-panel/releases/download/v$(PKG_VERSION)
+PKG_HASH:=$(if $(filter x86_64,$(ARCH)),c1f03fbb97b2bd801768474bb20f736fc699dd822b6330c545edb5356b12b07c,6821facee03bd56d8be0f50da9ee05fd664b11064acdfee6dacba73c77e25cd2)
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
@@ -28,7 +34,7 @@ define Package/$(PKG_NAME)
 	CATEGORY:=Network
 	SUBMENU:=Web Servers/Proxies
 	TITLE:=SunPanel, NAS navigation panel.
-	DEPENDS:=@(x86_64||aarch64||arm) +ubus +uci +bash
+	DEPENDS:=@(x86_64||aarch64) +ubus +uci +bash
 	URL:=https://sun-panel-doc.enianteam.com/
 endef
 
@@ -48,6 +54,12 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 fi
 endef
 
+# The official tarball has one top-level dir, strip it so files land in PKG_BUILD_DIR
+#define Build/Prepare
+	mkdir -p $(PKG_BUILD_DIR)
+	$(TAR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE) -C $(PKG_BUILD_DIR)
+endef
+
 define Build/Configure
 endef
 
@@ -55,8 +67,9 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d $(1)/etc/config $(1)/usr/libexec/istorec $(1)/usr/share/sunpanel $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sunpanelbin.$(PKG_ARCH_sunpanel) $(1)/usr/sbin/sunpanelbin
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d $(1)/etc/config $(1)/usr/libexec/istorec $(1)/usr/share/sunpanel $(1)/etc/uci-defaults $(1)/www/luci-static
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/sun-panel $(1)/usr/sbin/sunpanelbin
+	$(CP) $(PKG_BUILD_DIR)/web $(1)/www/luci-static/sunpanel
 	$(INSTALL_BIN) ./files/sunpanel.init $(1)/etc/init.d/sunpanel
 	$(CP) ./files/sunpanel_conf.lua $(1)/usr/libexec/istorec/
 	$(CP) ./files/conf.temp $(1)/usr/share/sunpanel/
