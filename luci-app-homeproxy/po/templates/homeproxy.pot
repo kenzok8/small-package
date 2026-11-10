@@ -2156,10 +2156,6 @@ msgstr ""
 msgid "Update resources and subscriptions via proxy."
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:258
-msgid "Update rule sets"
-msgstr ""
-
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/node.js:1853
 msgid "Update via proxy"
 msgstr ""

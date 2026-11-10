@@ -19,11 +19,6 @@ DASHBOARD_VERSION_URL="${DASHBOARD_VERSION_URL:-https://github.com/SagerNet/sing
 USER_AGENT="HomeProxy resource updater"
 UPDATE_PROXY="${HOMEPROXY_UPDATE_PROXY:-}"
 SING_BOX="${SING_BOX:-/usr/bin/sing-box}"
-UPDATE_SCOPE="${1:-all}"
-case "$UPDATE_SCOPE" in
-all|rules) ;;
-*) exit 1 ;;
-esac
 
 if ! mkdir -p "$RESOURCES_DIR" "$DASHBOARD_DIR" "$RUN_DIR"; then
 	printf '%s\n' "Failed to prepare HomeProxy resource directories." >&2
@@ -244,9 +239,7 @@ trap 'exit 143' TERM
 
 update_rule_set "geoip_cn" "$GEOIP_SOURCE" "$GEOIP_VERSION_URL" || mark_failed "geoip_cn"
 update_rule_set "geosite_cn" "$GEOSITE_SOURCE" "$GEOSITE_VERSION_URL" || mark_failed "geosite_cn"
-if [ "$UPDATE_SCOPE" = 'all' ]; then
-	update_dashboard || mark_failed "dashboard"
-fi
+update_dashboard || mark_failed "dashboard"
 
 if [ -n "$FAILED_BRANCHES" ]; then
 	if [ -n "$UPDATED_BRANCHES" ]; then

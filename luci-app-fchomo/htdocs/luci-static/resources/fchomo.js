@@ -720,7 +720,7 @@ const CBIGenValue = form.Value.extend({
 			(node.querySelector('.control-group') || node).appendChild(E('button', {
 				class: 'cbi-button cbi-button-add',
 				title: _('Generate'),
-				click: ui.createHandlerFn(this, handleGenKey, section_id, this.et_options || this.option)
+				click: ui.createHandlerFn(this, handleGenKey, section_id, this.hm_options || this.option)
 			}, [ _('Generate') ]));
 
 		return node;
@@ -737,7 +737,7 @@ const CBIGenText = CBITextValue.extend({
 			(node.querySelector('.control-group') || node).appendChild(E('button', {
 				class: 'cbi-button cbi-button-add',
 				title: _('Generate'),
-				click: ui.createHandlerFn(this, handleGenKey, section_id, this.et_options || this.option)
+				click: ui.createHandlerFn(this, handleGenKey, section_id, this.hm_options || this.option)
 			}, [ _('Generate') ]));
 
 		return node;
@@ -1456,7 +1456,7 @@ function renderHy2Realm(s, uciconfig) {
 	o.depends('hysteria2_realm', '1');
 	o.modalonly = true;
 
-	// @ 下面支持填写针对server-url的TLS配置(sni, skip-cert-verify, name-cert-verify, fingerprint, certificate, private-key, alpn)
+	// 下面支持填写针对server-url的TLS配置(sni, skip-cert-verify, name-cert-verify, fingerprint, certificate, private-key, alpn)
 
 	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_sni', _('TLS SNI'),
 		_('Hostname that the client attempts to connect to at the start of the TLS handshake process.'));
@@ -1812,12 +1812,11 @@ function validateHexstr(length, section_id, value) {
 
 function validateBase64Key(length, section_id, value) {
 	/* Thanks to luci-proto-wireguard */
-	if (value)
+	if (value) {
 		if (value.length !== length || !value.match(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/) || value[length-1] !== '=')
 			return _('Expecting: %s').format(_('valid base64 key with %d characters').format(length));
-	else
-		if (this.rmempty === false || (this.optional ?? true) !== false)
-			return _('Expecting: %s').format(_('non-empty value'));
+	} else if (this.rmempty === false || (this.optional ?? true) !== false)
+		return _('Expecting: %s').format(_('non-empty value'));
 
 	return true;
 }

@@ -212,13 +212,12 @@ function parse_entry(cfg) {
 
 	if (rule.subrule)
 		return sprintf('SUB-RULE,(%s),%s', payload, rule.subrule);
+	else if (rule.type === 'MATCH')
+		return join(',', [rule.type, rule.detour]);
 	else
-		if (rule.type === 'MATCH')
-			return join(',', [rule.type, rule.detour]);
-		else
-			return join(',', [...[payload, rule.detour],
-				...(rule.params ? keys(rule.params) : [])
-			]);
+		return join(',', [...[payload, rule.detour],
+			...(rule.params ? keys(rule.params) : [])
+		]);
 }
 /* Config helper END */
 

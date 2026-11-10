@@ -958,17 +958,13 @@ const methods = {
 		}
 	},
 	resources_update: {
-		args: { scope: 'scope' },
-		call: function(req) {
-			const scope = req?.args?.scope || 'all';
-			if (!(scope in ['all', 'rules']))
-				return { status: 1 };
+		call: function() {
 			const hpuci = cursor();
 			hpuci.load('homeproxy');
 			const mixed_port = int(hpuci.get('homeproxy', 'infra', 'mixed_port')) || 5330;
 			const update_proxy = (hpuci.get('homeproxy', 'subscription', 'update_via_proxy') === '1') ?
 				`HOMEPROXY_UPDATE_PROXY=${shellQuote(`http://127.0.0.1:${mixed_port}`)} ` : '';
-			const status = system(`${update_proxy}${HP_DIR}/scripts/update_resources.sh ${scope}`);
+			const status = system(`${update_proxy}${HP_DIR}/scripts/update_resources.sh`);
 			let update_result = {};
 			if (status !== 2) {
 				for (let line in split(trim(readfile(`${RUN_DIR}/update_resources.result`) || ''), '\n')) {

@@ -2204,10 +2204,6 @@ msgstr "从订阅更新节点"
 msgid "Update resources and subscriptions via proxy."
 msgstr "通过代理更新资源和订阅。"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:258
-msgid "Update rule sets"
-msgstr "更新规则库"
-
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/node.js:1853
 msgid "Update via proxy"
 msgstr "使用代理更新"

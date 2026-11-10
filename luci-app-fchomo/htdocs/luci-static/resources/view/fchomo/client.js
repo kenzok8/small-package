@@ -204,13 +204,12 @@ class RulesEntry {
 
 		if (rule.subrule)
 			return 'SUB-RULE,(%s),%s'.format(payload, rule.subrule);
+		else if (rule.type === 'MATCH')
+			return [rule.type, rule.detour].join(',');
 		else
-			if (rule.type === 'MATCH')
-				return [rule.type, rule.detour].join(',');
-			else
-				return [payload, rule.detour].concat(
-					rule.params ? ['no-resolve', 'src'].filter(k => rule.params[k]) : []
-				).join(',');
+			return [payload, rule.detour].concat(
+				rule.params ? ['no-resolve', 'src'].filter(k => rule.params[k]) : []
+			).join(',');
 	}
 
 	toString(format) {

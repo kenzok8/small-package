@@ -176,7 +176,6 @@ function getResources(o) {
 	const callResUpdate = rpc.declare({
 		object: 'luci.homeproxy',
 		method: 'resources_update',
-		params: ['scope'],
 		expect: { '': {} }
 	});
 
@@ -214,11 +213,11 @@ function getResources(o) {
 		return E('div', { 'class': 'cbi-map' }, [
 			E('h3', { 'name': 'content', 'style': 'align-items:center;display:flex;flex-wrap:wrap;gap:4px' }, [
 				_('Resource Management'),
-				...['rules', 'all'].map((scope) => E('button', {
+				E('button', {
 					'class': 'btn cbi-button cbi-button-action',
 					'style': 'margin-left:4px',
 					'click': ui.createHandlerFn(this, () => {
-						return L.resolveDefault(callResUpdate(scope), {}).then((res) => {
+						return L.resolveDefault(callResUpdate(), {}).then((res) => {
 							let message, severity = 'info';
 
 							if (res.apply_failed) {
@@ -255,7 +254,7 @@ function getResources(o) {
 							return o.map.reset();
 						});
 					})
-				}, [scope === 'rules' ? _('Update rule sets') : _('Update all')]))
+				}, [ _('Update all') ])
 			]),
 			E('div', { 'class': 'cbi-section' }, [ table ])
 		]);
