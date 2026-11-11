@@ -9,13 +9,12 @@ include $(TOPDIR)/rules.mk
 KAIPLUS_ARCH_x86_64:=amd64
 KAIPLUS_ARCH_aarch64:=arm64
 KAIPLUS_ARCH:=$(KAIPLUS_ARCH_$(ARCH))
-
 KAIPLUS_HASH_x86_64:=945d1bcd7871426a10a77089512328e01e1db292f5dafbcf4e5c6b38f5a15cce
 KAIPLUS_HASH_aarch64:=8ea9ce946e42f95b02f98749869d4990008d7221705beb51a9a90c00a1b00f83
 
 PKG_NAME:=kaiplus
 PKG_VERSION:=1.0.11
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 KAIPLUS_URL_FILE:=kaiplus-linux-$(KAIPLUS_ARCH)
 KAIPLUS_DOWNLOAD:=$(KAIPLUS_URL_FILE)-$(KAIPLUS_HASH_$(ARCH))
@@ -52,15 +51,24 @@ define Package/$(PKG_NAME)/conffiles
 /etc/config/kaiplus
 endef
 
+define Package/$(PKG_NAME)/postinst
+#!/bin/sh
+# Retire only this package-owned legacy registration.
+root="$${IPKG_INSTROOT:-}"
+legacy="$${root}/usr/share/linkeasefull/desktop-apps.d/00-kaiplus-plugin.json"
+if [ "$$(readlink "$${legacy}" 2>/dev/null)" = "/usr/share/kaiplus/kaiplus-plugin.json" ]; then
+	rm -f "$${legacy}"
+fi
+rmdir "$${root}/usr/share/linkeasefull/desktop-apps.d" 2>/dev/null || true
+exit 0
+endef
+
 define Package/$(PKG_NAME)/prerm
 #!/bin/sh
-if [ "$${IPKG_INSTROOT}" = "" ]; then
-	if [ "$$(readlink /usr/share/linkeasefull/desktop-apps.d/00-kaiplus-plugin.json 2>/dev/null)" = "/usr/share/kaiplus/kaiplus-plugin.json" ]; then
-		rm -f /usr/share/linkeasefull/desktop-apps.d/00-kaiplus-plugin.json
-	fi
-	if [ "$$(readlink /usr/share/linkease/apps.d/00-kaiplus-plugin.json 2>/dev/null)" = "/usr/share/kaiplus/kaiplus-plugin.json" ]; then
-		rm -f /usr/share/linkease/apps.d/00-kaiplus-plugin.json
-	fi
+root="$${IPKG_INSTROOT:-}"
+registration="$${root}/usr/share/linkease/apps.d/00-kaiplus-plugin.json"
+if [ "$$(readlink "$${registration}" 2>/dev/null)" = "/usr/share/kaiplus/kaiplus-plugin.json" ]; then
+	rm -f "$${registration}"
 fi
 exit 0
 endef
@@ -77,11 +85,10 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/share/kaiplus $(1)/usr/share/linkease/apps.d $(1)/usr/share/linkeasefull/desktop-apps.d $(1)/etc/init.d $(1)/etc/config
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/share/kaiplus $(1)/usr/share/linkease/apps.d $(1)/etc/init.d $(1)/etc/config
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/kaiplus $(1)/usr/sbin/kaiplus
 	$(INSTALL_DATA) ./files/logo.png $(1)/usr/share/kaiplus/logo.png
 	$(INSTALL_DATA) ./files/kaiplus-plugin.json $(1)/usr/share/kaiplus/kaiplus-plugin.json
-	ln -sf /usr/share/kaiplus/kaiplus-plugin.json $(1)/usr/share/linkeasefull/desktop-apps.d/00-kaiplus-plugin.json
 	ln -sf /usr/share/kaiplus/kaiplus-plugin.json $(1)/usr/share/linkease/apps.d/00-kaiplus-plugin.json
 	$(INSTALL_BIN) ./files/kaiplus.init $(1)/etc/init.d/kaiplus
 	$(INSTALL_CONF) ./files/kaiplus.config $(1)/etc/config/kaiplus

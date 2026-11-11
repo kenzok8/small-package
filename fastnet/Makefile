@@ -9,12 +9,12 @@ include $(TOPDIR)/rules.mk
 PKG_ARCH_FASTNET:=$(ARCH)
 
 PKG_NAME:=fastnet
-PKG_VERSION:=0.8.1
-PKG_RELEASE:=1
+PKG_VERSION:=0.8.9
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/fastnet-runtime-v$(PKG_VERSION)/
-PKG_HASH:=29e29c6f11ea788098fd66f812f069e916f55547b0d9bad1059ce951efeb6404
+PKG_HASH:=14214f92b0564df5d930ebcff8b10cc62c0cdaa83ff17fd7984ddd81dfd2a18d
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-binary-$(PKG_VERSION)
 
@@ -33,11 +33,17 @@ endef
 
 define Package/$(PKG_NAME)/prerm
 #!/bin/sh
-if [ "$${IPKG_INSTROOT}" = "" ]; then
-	if [ "$$(readlink /usr/share/linkease/apps.d/17-fastnet.json 2>/dev/null)" = "/usr/share/fastnet/fastnet-plugin.json" ]; then
-		rm -f /usr/share/linkease/apps.d/17-fastnet.json
-	fi
+if [ -z "$${IPKG_INSTROOT:-}" ]; then
+	/etc/init.d/fastnet stop 2>/dev/null || true
 fi
+root="$${IPKG_INSTROOT:-}"
+for directory in /usr/share/linkease/apps.d /usr/share/linkeasefull/desktop-apps.d; do
+	registration="$${root}$${directory}/17-fastnet.json"
+	if [ "$$(readlink "$${registration}" 2>/dev/null)" = "/usr/share/fastnet/fastnet-plugin.json" ]; then
+		rm -f "$${registration}"
+	fi
+done
+rmdir "$${root}/usr/share/linkeasefull/desktop-apps.d" 2>/dev/null || true
 exit 0
 endef
 
@@ -51,6 +57,9 @@ endef
 
 define Package/$(PKG_NAME)/postinst
 #!/bin/sh
+# Maintain the old desktop entry without a second manifest or file owner.
+root="$${IPKG_INSTROOT:-}"
+sh "$${root}/usr/share/fastnet/register-desktop.sh" || exit $$?
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	[ -f /etc/uci-defaults/fastnet ] && /etc/uci-defaults/fastnet && rm -f /etc/uci-defaults/fastnet
 	exit 0
@@ -70,6 +79,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) ./files/fastnet.init $(1)/etc/init.d/fastnet
 	$(INSTALL_BIN) ./files/fastnet.uci-default $(1)/etc/uci-defaults/fastnet
 	$(INSTALL_DATA) ./files/fastnet-plugin.json $(1)/usr/share/fastnet/fastnet-plugin.json
+	$(INSTALL_BIN) ./files/register-desktop.sh $(1)/usr/share/fastnet/register-desktop.sh
 	ln -sf /usr/share/fastnet/fastnet-plugin.json $(1)/usr/share/linkease/apps.d/17-fastnet.json
 endef
 

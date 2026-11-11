@@ -11,7 +11,7 @@ PKG_ARCH_kai:=$(ARCH)
 
 PKG_NAME:=kai
 PKG_VERSION:=0.0.28
-PKG_RELEASE:=10
+PKG_RELEASE:=11
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/kai-runtime-v$(PKG_VERSION)/
 PKG_HASH:=93a0f7192c04b457cf12167c66ec72ed59aecc046053918fc06df7a7422bb0bd
@@ -39,15 +39,24 @@ define Package/$(PKG_NAME)/conffiles
 /etc/config/kai
 endef
 
+define Package/$(PKG_NAME)/postinst
+#!/bin/sh
+# Retire only this package-owned legacy registration.
+root="$${IPKG_INSTROOT:-}"
+legacy="$${root}/usr/share/linkeasefull/desktop-apps.d/05-kai-plugin.json"
+if [ "$$(readlink "$${legacy}" 2>/dev/null)" = "/usr/share/kai/kai-plugin.json" ]; then
+	rm -f "$${legacy}"
+fi
+rmdir "$${root}/usr/share/linkeasefull/desktop-apps.d" 2>/dev/null || true
+exit 0
+endef
+
 define Package/$(PKG_NAME)/prerm
 #!/bin/sh
-if [ "$${IPKG_INSTROOT}" = "" ]; then
-	if [ "$$(readlink /usr/share/linkease/apps.d/05-kai-plugin.json 2>/dev/null)" = "/usr/share/kai/kai-plugin.json" ]; then
-		rm -f /usr/share/linkease/apps.d/05-kai-plugin.json
-	fi
-	if [ "$$(readlink /usr/share/linkeasefull/desktop-apps.d/05-kai-plugin.json 2>/dev/null)" = "/usr/share/kai/kai-plugin.json" ]; then
-		rm -f /usr/share/linkeasefull/desktop-apps.d/05-kai-plugin.json
-	fi
+root="$${IPKG_INSTROOT:-}"
+registration="$${root}/usr/share/linkease/apps.d/05-kai-plugin.json"
+if [ "$$(readlink "$${registration}" 2>/dev/null)" = "/usr/share/kai/kai-plugin.json" ]; then
+	rm -f "$${registration}"
 fi
 exit 0
 endef
@@ -59,7 +68,7 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/libexec $(1)/etc/init.d $(1)/etc/config $(1)/usr/share/kai/www $(1)/usr/share/linkease/apps.d $(1)/usr/share/linkeasefull/desktop-apps.d
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/libexec $(1)/etc/init.d $(1)/etc/config $(1)/usr/share/kai/www $(1)/usr/share/linkease/apps.d
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/kai.$(PKG_ARCH_kai) $(1)/usr/sbin/kai_bin
 	$(INSTALL_BIN) ./files/kai-session-launch $(1)/usr/libexec/kai-session-launch
 	$(INSTALL_BIN) ./files/kai.init $(1)/etc/init.d/kai
@@ -67,7 +76,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./files/kai-plugin.json $(1)/usr/share/kai/kai-plugin.json
 	$(INSTALL_DATA) ./files/logo.png $(1)/usr/share/kai/www/logo.png
 	ln -sf /usr/share/kai/kai-plugin.json $(1)/usr/share/linkease/apps.d/05-kai-plugin.json
-	ln -sf /usr/share/kai/kai-plugin.json $(1)/usr/share/linkeasefull/desktop-apps.d/05-kai-plugin.json
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))

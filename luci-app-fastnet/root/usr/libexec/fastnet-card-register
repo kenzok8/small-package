@@ -1,0 +1,23 @@
+#!/bin/sh
+set -eu
+root=${IPKG_INSTROOT:-}
+source="$root/usr/share/fastnet/quickstart/fastnet.json"
+target="$root/usr/share/quickstart/cards.d/fastnet.json"
+case "${1:-install}" in
+ install)
+  [ -f "$source" ] || exit 1
+  entry=$(sed -n 's/^[[:space:]]*"entry": "\(\/luci-static\/fastnet\/quickstart\/card\.[a-f0-9][a-f0-9]*\.js\)".*/\1/p' "$source")
+  [ -n "$entry" ] && [ -f "$root/www$entry" ] || exit 1
+  umask 022
+  mkdir -p "${target%/*}"
+  temporary="$target.new.$$"
+  trap 'rm -f "$temporary"' EXIT HUP INT TERM
+  cp "$source" "$temporary"
+  mv -f "$temporary" "$target"
+  ;;
+ remove)
+  # Never delete another package's registration, including a replaced file.
+  if [ -f "$source" ] && cmp -s "$source" "$target"; then rm -f "$target"; fi
+  ;;
+ *) exit 2 ;;
+esac

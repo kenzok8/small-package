@@ -1,5 +1,6 @@
 #!/bin/sh
 
+/usr/libexec/fastnet-card-register install || exit 1
 rm -f /tmp/luci-indexcache
 exit 0
 

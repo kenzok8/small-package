@@ -15,7 +15,7 @@ AGENTFLOW_HASH_aarch64:=7790a94a0a04e57d196165ef96177475125c1b24fe24321f6927a55b
 
 PKG_NAME:=agentflow
 PKG_VERSION:=0.3.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 AGENTFLOW_URL_FILE:=agentflow-linux-$(AGENTFLOW_ARCH)
 AGENTFLOW_DOWNLOAD:=$(AGENTFLOW_URL_FILE)-$(AGENTFLOW_HASH_$(ARCH))
@@ -52,15 +52,24 @@ define Package/$(PKG_NAME)/conffiles
 /etc/config/agentflow
 endef
 
+define Package/$(PKG_NAME)/postinst
+#!/bin/sh
+# Retire only this package-owned legacy registration.
+root="$${IPKG_INSTROOT:-}"
+legacy="$${root}/usr/share/linkeasefull/desktop-apps.d/30-agentflow.json"
+if [ "$$(readlink "$${legacy}" 2>/dev/null)" = "/usr/share/agentflow/agentflow-plugin.json" ]; then
+	rm -f "$${legacy}"
+fi
+rmdir "$${root}/usr/share/linkeasefull/desktop-apps.d" 2>/dev/null || true
+exit 0
+endef
+
 define Package/$(PKG_NAME)/prerm
 #!/bin/sh
-if [ "$${IPKG_INSTROOT}" = "" ]; then
-	if [ "$$(readlink /usr/share/linkeasefull/desktop-apps.d/30-agentflow.json 2>/dev/null)" = "/usr/share/agentflow/agentflow-plugin.json" ]; then
-		rm -f /usr/share/linkeasefull/desktop-apps.d/30-agentflow.json
-	fi
-	if [ "$$(readlink /usr/share/linkease/apps.d/30-agentflow.json 2>/dev/null)" = "/usr/share/agentflow/agentflow-plugin.json" ]; then
-		rm -f /usr/share/linkease/apps.d/30-agentflow.json
-	fi
+root="$${IPKG_INSTROOT:-}"
+registration="$${root}/usr/share/linkease/apps.d/30-agentflow.json"
+if [ "$$(readlink "$${registration}" 2>/dev/null)" = "/usr/share/agentflow/agentflow-plugin.json" ]; then
+	rm -f "$${registration}"
 fi
 exit 0
 endef
@@ -77,14 +86,13 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d $(1)/etc/uci-defaults $(1)/etc/config $(1)/usr/share/agentflow/www $(1)/usr/share/linkease/apps.d $(1)/usr/share/linkeasefull/desktop-apps.d
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d $(1)/etc/uci-defaults $(1)/etc/config $(1)/usr/share/agentflow/www $(1)/usr/share/linkease/apps.d
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/agentflow $(1)/usr/sbin/agentflow
 	$(INSTALL_BIN) ./files/agentflow.init $(1)/etc/init.d/agentflow
 	$(INSTALL_BIN) ./files/agentflow.uci-default $(1)/etc/uci-defaults/09-agentflow
 	$(INSTALL_CONF) ./files/agentflow.config $(1)/etc/config/agentflow
 	$(INSTALL_DATA) ./files/agentflow-plugin.json $(1)/usr/share/agentflow/agentflow-plugin.json
 	$(INSTALL_DATA) ./files/www/logo.svg $(1)/usr/share/agentflow/www/logo.svg
-	ln -sf /usr/share/agentflow/agentflow-plugin.json $(1)/usr/share/linkeasefull/desktop-apps.d/30-agentflow.json
 	ln -sf /usr/share/agentflow/agentflow-plugin.json $(1)/usr/share/linkease/apps.d/30-agentflow.json
 endef
 

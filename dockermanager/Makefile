@@ -10,7 +10,7 @@ PKG_ARCH_DOCKERMANAGER:=$(ARCH)
 
 PKG_NAME:=dockermanager
 PKG_VERSION:=0.1.2
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/dockermanager-runtime-v$(PKG_VERSION)/
 PKG_HASH:=1ecaa4363b1a20a26c31a36f994e94a8064ed0de67cd612a233fc05f5026726a
@@ -37,16 +37,28 @@ define Package/$(PKG_NAME)/conffiles
 /etc/config/dockermanager
 endef
 
+define Package/$(PKG_NAME)/postinst
+#!/bin/sh
+# Compatibility entry for desktops which only scan the old directory.
+root="$${IPKG_INSTROOT:-}"
+legacy="$${root}/usr/share/linkeasefull/desktop-apps.d/20-dockermanager-plugin.json"
+if [ ! -e "$${legacy}" ] && [ ! -L "$${legacy}" ]; then
+	mkdir -p "$${legacy%/*}"
+	ln -s /usr/share/dockermanager/dockermanager-plugin.json "$${legacy}" || exit $$?
+fi
+exit 0
+endef
+
 define Package/$(PKG_NAME)/prerm
 #!/bin/sh
-if [ "$${IPKG_INSTROOT}" = "" ]; then
-	if [ "$$(readlink /usr/share/linkeasefull/desktop-apps.d/20-dockermanager-plugin.json 2>/dev/null)" = "/usr/share/dockermanager/dockermanager-plugin.json" ]; then
-		rm -f /usr/share/linkeasefull/desktop-apps.d/20-dockermanager-plugin.json
+root="$${IPKG_INSTROOT:-}"
+for directory in /usr/share/linkease/apps.d /usr/share/linkeasefull/desktop-apps.d; do
+	registration="$${root}$${directory}/20-dockermanager-plugin.json"
+	if [ "$$(readlink "$${registration}" 2>/dev/null)" = "/usr/share/dockermanager/dockermanager-plugin.json" ]; then
+		rm -f "$${registration}"
 	fi
-	if [ "$$(readlink /usr/share/linkease/apps.d/20-dockermanager-plugin.json 2>/dev/null)" = "/usr/share/dockermanager/dockermanager-plugin.json" ]; then
-		rm -f /usr/share/linkease/apps.d/20-dockermanager-plugin.json
-	fi
-fi
+done
+rmdir "$${root}/usr/share/linkeasefull/desktop-apps.d" 2>/dev/null || true
 exit 0
 endef
 
@@ -57,12 +69,11 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/share/dockermanager/www $(1)/usr/share/linkease/apps.d $(1)/usr/share/linkeasefull/desktop-apps.d $(1)/etc/init.d $(1)/etc/config
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/share/dockermanager/www $(1)/usr/share/linkease/apps.d $(1)/etc/init.d $(1)/etc/config
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/docker-manager.$(PKG_ARCH_DOCKERMANAGER) $(1)/usr/sbin/docker-manager
 	$(CP) $(PKG_BUILD_DIR)/www/* $(1)/usr/share/dockermanager/www/
 	$(INSTALL_DATA) ./files/logo.svg $(1)/usr/share/dockermanager/www/logo.svg
 	$(INSTALL_DATA) ./files/dockermanager-plugin.json $(1)/usr/share/dockermanager/dockermanager-plugin.json
-	ln -sf /usr/share/dockermanager/dockermanager-plugin.json $(1)/usr/share/linkeasefull/desktop-apps.d/20-dockermanager-plugin.json
 	ln -sf /usr/share/dockermanager/dockermanager-plugin.json $(1)/usr/share/linkease/apps.d/20-dockermanager-plugin.json
 	$(INSTALL_BIN) ./files/dockermanager.init $(1)/etc/init.d/dockermanager
 	$(INSTALL_CONF) ./files/dockermanager.config $(1)/etc/config/dockermanager

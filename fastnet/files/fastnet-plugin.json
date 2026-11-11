@@ -29,9 +29,13 @@
     }
   },
   "config": {
-    "providerOrder": ["uci"],
+    "providerOrder": [
+      "uci"
+    ],
     "providers": {
-      "uci": {"type": "uci"}
+      "uci": {
+        "type": "uci"
+      }
     }
   },
   "window": {
@@ -39,6 +43,22 @@
     "height": 760,
     "singleton": true
   },
-  "capabilities": ["speed-test", "diagnostics", "network"],
-  "categories": ["network", "service"]
+  "capabilities": [
+    "speed-test",
+    "diagnostics",
+    "network"
+  ],
+  "categories": [
+    "network",
+    "service"
+  ],
+  "backend": {
+    "type": "http",
+    "scheme": "http",
+    "host": "127.0.0.1",
+    "portFromUci": "fastnet.@fastnet[0].port",
+    "defaultPort": 3200,
+    "upstreamBasePath": "/",
+    "pathMode": "strip-public-base"
+  }
 }

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "plugin.fastnet",
+  "title": "外网测速",
+  "glyph": "activity",
+  "abi": "quickstart-card-v1",
+  "version": "0.8.9-1",
+  "apiBase": "/cgi-bin/luci/admin/services/fastnet/card",
+  "forms": {
+    "standard": {
+      "minWidth": 280,
+      "minHeight": 260
+    },
+    "summary": {
+      "minWidth": 240,
+      "minHeight": 148
+    }
+  },
+  "stacked": [
+    "summary"
+  ],
+  "entry": "/luci-static/fastnet/quickstart/card.dfb0ce55.js"
+}

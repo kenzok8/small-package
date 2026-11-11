@@ -1,8 +1,8 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:323
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:364
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:322
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:363
 msgid "%s Log"
 msgstr ""
 
@@ -139,7 +139,7 @@ msgstr ""
 msgid "Allowed payload size is in the request."
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:241
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:240
 msgid "Already at the latest version."
 msgstr ""
 
@@ -307,7 +307,7 @@ msgstr ""
 msgid "Cisco Public DNS (DoH)"
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:372
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:371
 msgid "Clean log"
 msgstr ""
 
@@ -330,7 +330,7 @@ msgstr ""
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/client.js:382
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/client.js:887
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/server.js:118
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:329
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:328
 msgid "Collecting data..."
 msgstr ""
 
@@ -399,7 +399,7 @@ msgstr ""
 msgid "Dashboard"
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:285
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:284
 msgid "Debug"
 msgstr ""
 
@@ -671,7 +671,7 @@ msgid ""
 msgstr ""
 
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/node.js:509
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:288
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:287
 msgid "Error"
 msgstr ""
 
@@ -751,7 +751,7 @@ msgstr ""
 msgid "Failed to upload %s, error: %s."
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:289
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:288
 msgid "Fatal"
 msgstr ""
 
@@ -875,7 +875,7 @@ msgstr ""
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/client.js:146
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/client.js:148
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/client.js:200
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:403
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:402
 #: luci-app-homeproxy/root/usr/share/luci/menu.d/luci-app-homeproxy.json:3
 msgid "HomeProxy"
 msgstr ""
@@ -1031,7 +1031,7 @@ msgid ""
 "seconds."
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:286
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:285
 msgid "Info"
 msgstr ""
 
@@ -1159,7 +1159,7 @@ msgstr ""
 msgid "Local address"
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:353
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:352
 msgid "Log file does not exist."
 msgstr ""
 
@@ -1167,7 +1167,7 @@ msgstr ""
 msgid "Log in to Tailscale"
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:350
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:349
 msgid "Log is empty."
 msgstr ""
 
@@ -1312,7 +1312,7 @@ msgid "NOTE: Save current settings before updating subscriptions."
 msgstr ""
 
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/client.js:780
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:190
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:189
 msgid "Name"
 msgstr ""
 
@@ -1421,7 +1421,7 @@ msgstr ""
 msgid "Padding scheme"
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:290
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:289
 msgid "Panic"
 msgstr ""
 
@@ -1584,7 +1584,7 @@ msgstr ""
 msgid "Random version will be used if empty."
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:377
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:376
 msgid "Refresh every %s seconds."
 msgstr ""
 
@@ -1604,11 +1604,11 @@ msgstr ""
 msgid "Reserved field bytes"
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:216
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:215
 msgid "Resource Management"
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:225
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:224
 msgid ""
 "Resources were updated, but HomeProxy failed to reload. Check the log for "
 "details."
@@ -1642,7 +1642,7 @@ msgstr ""
 msgid "Rule Proxy MAC addresses"
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:231
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:230
 msgid "Rule sets updated. HomeProxy was not restarted."
 msgstr ""
 
@@ -1728,11 +1728,11 @@ msgstr ""
 msgid "Shadowsocks"
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:244
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:243
 msgid "Some resources failed to update. Check the log for details."
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:192
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:191
 msgid "Source"
 msgstr ""
 
@@ -1794,7 +1794,7 @@ msgstr ""
 msgid "Successfully imported %s nodes of total %s."
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:231
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:230
 msgid "Successfully updated."
 msgstr ""
 
@@ -2035,7 +2035,7 @@ msgid ""
 "code>."
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:284
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:283
 msgid "Trace"
 msgstr ""
 
@@ -2115,12 +2115,12 @@ msgstr ""
 msgid "UUID"
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:248
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:247
 msgid "Unknown error."
 msgstr ""
 
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/node.js:1783
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:355
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:354
 msgid "Unknown error: %s."
 msgstr ""
 
@@ -2136,15 +2136,15 @@ msgstr ""
 msgid "Update %s subscriptions"
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:258
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:257
 msgid "Update all"
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:238
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:237
 msgid "Update already in progress."
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:234
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:233
 msgid "Update failed."
 msgstr ""
 
@@ -2230,7 +2230,7 @@ msgstr ""
 msgid "VMess"
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:191
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:190
 msgid "Version"
 msgstr ""
 
@@ -2249,7 +2249,7 @@ msgid ""
 "not appear."
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:287
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:286
 msgid "Warn"
 msgstr ""
 
@@ -2346,11 +2346,11 @@ msgstr ""
 msgid "packet addr (v2ray-core v5+)"
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:406
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:405
 msgid "sing-box Client"
 msgstr ""
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:409
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:408
 msgid "sing-box Server"
 msgstr ""
 

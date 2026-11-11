@@ -11,7 +11,7 @@ PKG_ARCH_BAIDUDRIVE:=$(ARCH)
 
 PKG_NAME:=baidudrive
 PKG_VERSION:=1.0.6
-PKG_RELEASE:=2
+PKG_RELEASE:=4
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/baidudrive-runtime-v$(PKG_VERSION)/
 PKG_HASH:=2cc12327dbe08f0b9906c6213e7f14c0cdc09cae5a5c64e353639e7bd3d34a01
@@ -41,16 +41,28 @@ define Package/$(PKG_NAME)/conffiles
 /etc/config/baidudrive
 endef
 
+define Package/$(PKG_NAME)/postinst
+#!/bin/sh
+# Compatibility entry for desktops which only scan the old directory.
+root="$${IPKG_INSTROOT:-}"
+legacy="$${root}/usr/share/linkeasefull/desktop-apps.d/10-baidudrive-plugin.json"
+if [ ! -e "$${legacy}" ] && [ ! -L "$${legacy}" ]; then
+	mkdir -p "$${legacy%/*}"
+	ln -s /usr/share/baidudrive/baidudrive-plugin.json "$${legacy}" || exit $$?
+fi
+exit 0
+endef
+
 define Package/$(PKG_NAME)/prerm
 #!/bin/sh
-if [ "$${IPKG_INSTROOT}" = "" ]; then
-	if [ "$$(readlink /usr/share/linkeasefull/desktop-apps.d/10-baidudrive-plugin.json 2>/dev/null)" = "/usr/share/baidudrive/baidudrive-plugin.json" ]; then
-		rm -f /usr/share/linkeasefull/desktop-apps.d/10-baidudrive-plugin.json
+root="$${IPKG_INSTROOT:-}"
+for directory in /usr/share/linkease/apps.d /usr/share/linkeasefull/desktop-apps.d; do
+	registration="$${root}$${directory}/10-baidudrive-plugin.json"
+	if [ "$$(readlink "$${registration}" 2>/dev/null)" = "/usr/share/baidudrive/baidudrive-plugin.json" ]; then
+		rm -f "$${registration}"
 	fi
-	if [ "$$(readlink /usr/share/linkease/apps.d/10-baidudrive-plugin.json 2>/dev/null)" = "/usr/share/baidudrive/baidudrive-plugin.json" ]; then
-		rm -f /usr/share/linkease/apps.d/10-baidudrive-plugin.json
-	fi
-fi
+done
+rmdir "$${root}/usr/share/linkeasefull/desktop-apps.d" 2>/dev/null || true
 exit 0
 endef
 
@@ -61,11 +73,10 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/libexec/baidudrive $(1)/usr/share/baidudrive/www $(1)/usr/share/linkease/apps.d $(1)/usr/share/linkeasefull/desktop-apps.d $(1)/opt/baidunas-sdk $(1)/opt/baidunas-glibc $(1)/etc/init.d $(1)/etc/uci-defaults $(1)/etc/config
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/libexec/baidudrive $(1)/usr/share/baidudrive/www $(1)/usr/share/linkease/apps.d $(1)/opt/baidunas-sdk $(1)/opt/baidunas-glibc $(1)/etc/init.d $(1)/etc/uci-defaults $(1)/etc/config
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/baidudrive.$(PKG_ARCH_BAIDUDRIVE) $(1)/usr/sbin/baidudrive
 	$(CP) $(PKG_BUILD_DIR)/web/dist/. $(1)/usr/share/baidudrive/www/
 	$(INSTALL_DATA) ./files/baidudrive-plugin.json $(1)/usr/share/baidudrive/baidudrive-plugin.json
-	ln -sf /usr/share/baidudrive/baidudrive-plugin.json $(1)/usr/share/linkeasefull/desktop-apps.d/10-baidudrive-plugin.json
 	ln -sf /usr/share/baidudrive/baidudrive-plugin.json $(1)/usr/share/linkease/apps.d/10-baidudrive-plugin.json
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/nas_sdk/$(PKG_ARCH_BAIDUDRIVE)/baiduNas $(1)/opt/baidunas-sdk/baiduNas
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/nas_sdk/$(PKG_ARCH_BAIDUDRIVE)/P2PClient.bin $(1)/opt/baidunas-sdk/P2PClient.bin

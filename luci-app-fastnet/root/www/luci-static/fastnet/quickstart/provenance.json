@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "abi": "quickstart-card-v1",
+  "vue": "3.5.44",
+  "compiler": "3.5.44",
+  "version": "0.8.9-1",
+  "sourceCommit": "082bf1e42911b8fdfed7ac421518ee990952b304",
+  "sourceFiles": {
+    "quickstart-card/manifest.json": "0f8b3a0dc15803c27243288e97ebea098ba2894c26b836293ed656f9396104d1",
+    "quickstart-card/package-lock.json": "daaa5d8d53587115f2fb7127adb51cbfaa9c5d55906e598ab643e8b4b0fc3a6d",
+    "quickstart-card/package.json": "7683ee1fb095bbf9897941bc4bf4796c488545cc9f712a943870ded1cdf7fccb",
+    "quickstart-card/src/Card.vue": "792c0528eb22ad3e84db8f023b29b430ea5faf8b1638766176bf24ce05aa90f7",
+    "quickstart-card/src/Details.vue": "a94eb71ec6ac389f4c1d6e5ea82c546ed1be5e31da410a63563c78e8a233407c",
+    "quickstart-card/src/WebDialog.vue": "9248328cf1e8d2afd671a44ba6340e7d84ef7f32f101461471f9f1d2920517f4",
+    "quickstart-card/src/directFrame.js": "648cd8ed2f9f2188aee71475df1ee4f936df73fdc7ce3fa7de03f0ae2c8b2f1a",
+    "quickstart-card/src/index.js": "48c908c983f14c159bf50c1d2ab3c54824f04bc2ecdacc714691164dea974c75",
+    "quickstart-card/src/model.js": "0497552a2caadd0f3d1333f359cb6704a9e370e68ce71ed80c2d9090857124e3",
+    "quickstart-card/src/style.css": "818e49ac458ee245b2c27fd7a7d62bd7e2117e44a85bbb388dddd175b05fce66",
+    "quickstart-card/src/webStyle.css": "7bc8849ff35cce46a1aec88239905f307eb7ebe655d8d19c9c88d854018526b7",
+    "quickstart-card/vite.config.js": "7dda71bfe6923df40b4142608d38fa239da9e79e0b30ff3cd6d1747c49f657eb",
+    "scripts/build-quickstart-card.sh": "345645c1513398221c612f6f1c0da77b3e4c958a86a18ef9382236307a55e3e8",
+    "scripts/card-provenance.py": "2bbed5b4ad40fe94310bc6b9ba6f4d20fc7ed8ec675800b4ebcb5ed68d01a026"
+  },
+  "sourceSha256": "ca7ed2ac012210d4be444c080306e27e77c02eab0a998dda7b5f911f712f4385",
+  "assets": {
+    "card.dfb0ce55.js": "ed9555d2ead731e603cce340c950c681d8dcb64f301c52ed5380bf8e7cd62664",
+    "chunk.1932f6b1.js": "af27ba0c26dff540b8fd4cf07eaa50cca447539f7cc3d7d29f3fb3c44bf0ffef",
+    "chunk.31ac0177.js": "c9d9ebd0ea447c7cee8743a912f63c744ff426a50eb1c5dc8c8321b86103d4f1"
+  }
+}

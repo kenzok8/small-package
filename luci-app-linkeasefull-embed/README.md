@@ -7,7 +7,7 @@ separate from the independently installable `linkeasefull` runtime package.
 This package installs:
 
 - `/usr/share/linkeasefull/openwrt-luci/openwrt-luci.json`
-- `/usr/share/linkeasefull/desktop-apps.d/15-openwrt-luci.json`
+- `/usr/share/linkease/apps.d/15-openwrt-luci.json`
 - `/www/luci-static/linkeasefull-embed/embed-prelude.js`
 - `/www/luci-static/linkeasefull-embed/embed.css`
 

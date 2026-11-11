@@ -9,8 +9,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:323
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:364
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:322
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:363
 msgid "%s Log"
 msgstr "%s 日志"
 
@@ -147,7 +147,7 @@ msgstr "从订阅添加节点时，默认允许不安全连接。"
 msgid "Allowed payload size is in the request."
 msgstr "请求中允许的载荷大小。"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:241
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:240
 msgid "Already at the latest version."
 msgstr "已是最新版本。"
 
@@ -315,7 +315,7 @@ msgstr "密码套件"
 msgid "Cisco Public DNS (DoH)"
 msgstr "Cisco 公共DNS (DoH)"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:372
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:371
 msgid "Clean log"
 msgstr "清空日志"
 
@@ -338,7 +338,7 @@ msgstr "Cloudflare 公共DNS (DoH)"
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/client.js:382
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/client.js:887
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/server.js:118
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:329
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:328
 msgid "Collecting data..."
 msgstr "正在收集数据中..."
 
@@ -407,7 +407,7 @@ msgstr "DNS.SB 公共DNS (DoH)"
 msgid "Dashboard"
 msgstr "仪表盘"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:285
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:284
 msgid "Debug"
 msgstr "调试"
 
@@ -690,7 +690,7 @@ msgid ""
 msgstr "包含点号的条目使用域名后缀匹配；其他条目使用关键词匹配。"
 
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/node.js:509
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:288
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:287
 msgid "Error"
 msgstr "错误"
 
@@ -771,7 +771,7 @@ msgstr "保存域名列表失败。"
 msgid "Failed to upload %s, error: %s."
 msgstr "上传 %s 失败，错误：%s。"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:289
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:288
 msgid "Fatal"
 msgstr "致命"
 
@@ -895,7 +895,7 @@ msgstr "心跳间隔"
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/client.js:146
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/client.js:148
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/client.js:200
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:403
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:402
 #: luci-app-homeproxy/root/usr/share/luci/menu.d/luci-app-homeproxy.json:3
 msgid "HomeProxy"
 msgstr "HomeProxy"
@@ -1053,7 +1053,7 @@ msgid ""
 "seconds."
 msgstr "在检查中，关闭空闲时间超过此值的会话（单位：秒）。"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:286
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:285
 msgid "Info"
 msgstr "信息"
 
@@ -1183,7 +1183,7 @@ msgstr "监听端口"
 msgid "Local address"
 msgstr "本地地址"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:353
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:352
 msgid "Log file does not exist."
 msgstr "日志文件不存在。"
 
@@ -1191,7 +1191,7 @@ msgstr "日志文件不存在。"
 msgid "Log in to Tailscale"
 msgstr "登录 Tailscale"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:350
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:349
 msgid "Log is empty."
 msgstr "日志为空。"
 
@@ -1340,7 +1340,7 @@ msgid "NOTE: Save current settings before updating subscriptions."
 msgstr "注意：更新订阅前先保存当前配置。"
 
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/client.js:780
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:190
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:189
 msgid "Name"
 msgstr "名称"
 
@@ -1449,7 +1449,7 @@ msgstr "数据包编码"
 msgid "Padding scheme"
 msgstr "填充方案"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:290
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:289
 msgid "Panic"
 msgstr "崩溃"
 
@@ -1612,7 +1612,7 @@ msgstr "运行中"
 msgid "Random version will be used if empty."
 msgstr "如留空，则使用随机版本。"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:377
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:376
 msgid "Refresh every %s seconds."
 msgstr "每 %s 秒刷新。"
 
@@ -1632,11 +1632,11 @@ msgstr "移除所有订阅节点"
 msgid "Reserved field bytes"
 msgstr "保留字段字节"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:216
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:215
 msgid "Resource Management"
 msgstr "资源管理"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:225
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:224
 msgid ""
 "Resources were updated, but HomeProxy failed to reload. Check the log for "
 "details."
@@ -1670,7 +1670,7 @@ msgstr "规则代理 IPv4 地址"
 msgid "Rule Proxy MAC addresses"
 msgstr "规则代理 MAC 地址"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:231
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:230
 msgid "Rule sets updated. HomeProxy was not restarted."
 msgstr "规则库已更新，HomeProxy 未重启。"
 
@@ -1756,11 +1756,11 @@ msgstr "ShadowTLS 版本"
 msgid "Shadowsocks"
 msgstr "Shadowsocks"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:244
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:243
 msgid "Some resources failed to update. Check the log for details."
 msgstr "部分资源更新失败，请查看日志了解详情。"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:192
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:191
 msgid "Source"
 msgstr "来源"
 
@@ -1829,7 +1829,7 @@ msgstr "成功"
 msgid "Successfully imported %s nodes of total %s."
 msgstr "成功导入 %s 个节点，共 %s 个。"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:231
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:230
 msgid "Successfully updated."
 msgstr "更新成功。"
 
@@ -2083,7 +2083,7 @@ msgid ""
 msgstr ""
 "要与 Xray-core 兼容，请将其设置为 <code>Sec-WebSocket-Protocol</code>。"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:284
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:283
 msgid "Trace"
 msgstr "跟踪"
 
@@ -2163,12 +2163,12 @@ msgstr "URLTest: %s"
 msgid "UUID"
 msgstr "UUID"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:248
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:247
 msgid "Unknown error."
 msgstr "未知错误。"
 
 #: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/node.js:1783
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:355
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:354
 msgid "Unknown error: %s."
 msgstr "未知错误：%s。"
 
@@ -2184,15 +2184,15 @@ msgstr "不支持的传输方式：%s。"
 msgid "Update %s subscriptions"
 msgstr "更新 %s 个订阅"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:258
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:257
 msgid "Update all"
 msgstr "全部更新"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:238
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:237
 msgid "Update already in progress."
 msgstr "正在更新中。"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:234
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:233
 msgid "Update failed."
 msgstr "更新失败。"
 
@@ -2278,7 +2278,7 @@ msgstr "VLESS"
 msgid "VMess"
 msgstr "VMess"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:191
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:190
 msgid "Version"
 msgstr "版本"
 
@@ -2297,7 +2297,7 @@ msgid ""
 "not appear."
 msgstr "正在等待登录链接。若一直未显示，请检查与控制服务器的连接。"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:287
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:286
 msgid "Warn"
 msgstr "警告"
 
@@ -2394,11 +2394,11 @@ msgstr "非空值"
 msgid "packet addr (v2ray-core v5+)"
 msgstr "packet addr (v2ray-core v5+)"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:406
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:405
 msgid "sing-box Client"
 msgstr "sing-box 客户端"
 
-#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:409
+#: luci-app-homeproxy/htdocs/luci-static/resources/view/homeproxy/status.js:408
 msgid "sing-box Server"
 msgstr "sing-box 服务端"
 
