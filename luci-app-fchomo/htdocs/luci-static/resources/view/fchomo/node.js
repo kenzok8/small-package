@@ -1382,6 +1382,19 @@ return view.extend({
 		so.depends('type', 'vless');
 		so.modalonly = true;
 
+		so = ss.taboption('field_vless_encryption', form.Value, 'vless_encryption_encryption', _('encryption'));
+		so.renderWidget = function(/* ... */) {
+			let node = form.Value.prototype.renderWidget.apply(this, arguments);
+
+			node.firstChild.style.width = '30em';
+
+			return node;
+		}
+		so.rmempty = false;
+		so.depends('vless_encryption', '1');
+		so.modalonly = true;
+
+		// common part
 		const initVlessEncryptionClientOption = function(o, key) {
 			o.load = function(section_id) {
 				const value = uci.get(data[0], section_id, 'vless_encryption_encryption');
@@ -1398,19 +1411,9 @@ return view.extend({
 				UIEl.setValue(newpayload.toString());
 			}
 			o.write = function() {};
+			o.depends('vless_encryption', '1');
+			o.modalonly = true;
 		}
-
-		so = ss.taboption('field_vless_encryption', form.Value, 'vless_encryption_encryption', _('encryption'));
-		so.renderWidget = function(/* ... */) {
-			let node = form.Value.prototype.renderWidget.apply(this, arguments);
-
-			node.firstChild.style.width = '30em';
-
-			return node;
-		}
-		so.rmempty = false;
-		so.depends('vless_encryption', '1');
-		so.modalonly = true;
 
 		so = ss.taboption('field_vless_encryption', form.ListValue, 'vless_encryption_rtt', _('Client') +' '+ _('RTT'));
 		so.default = hm.vless_encryption.rtts[0][0];
@@ -1419,8 +1422,6 @@ return view.extend({
 		})
 		initVlessEncryptionClientOption(so, 'rtt');
 		so.rmempty = false;
-		so.depends('vless_encryption', '1');
-		so.modalonly = true;
 
 		so = ss.taboption('field_vless_encryption', hm.less_25_12 ? hm.DynamicList : form.DynamicList, 'vless_encryption_paddings', _('Paddings'), // @less_25_12
 			_('The server and client can set different padding parameters.') + '</br>' +
@@ -1440,8 +1441,6 @@ return view.extend({
 			return true;
 		}
 		so.allowduplicates = true;
-		so.depends('vless_encryption', '1');
-		so.modalonly = true;
 
 		// @ 下面支持填写针对download-settings的上下行分离配置
 
