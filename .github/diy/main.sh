@@ -47,6 +47,7 @@ git clone --depth 1 https://github.com/yaof2/luci-app-ikoolproxy
 git clone --depth 1 https://github.com/project-lede/luci-app-godproxy
 git clone --depth 1 https://github.com/rchen14b/luci-theme-glass
 git clone --depth 1 https://github.com/zzsj0928/luci-theme-liquid
+git clone --depth 1 https://github.com/mrjoechen/luci-theme-carbon
 git clone --depth 1 https://github.com/tty228/luci-app-wechatpush
 git clone --depth 1 https://github.com/4IceG/luci-app-sms-tool smstool && mvdir smstool
 git clone --depth 1 https://github.com/silime/luci-app-xunlei
