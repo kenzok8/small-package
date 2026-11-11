@@ -15,7 +15,7 @@ AGENTFLOW_HASH_aarch64:=7790a94a0a04e57d196165ef96177475125c1b24fe24321f6927a55b
 
 PKG_NAME:=agentflow
 PKG_VERSION:=0.3.5
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 AGENTFLOW_URL_FILE:=agentflow-linux-$(AGENTFLOW_ARCH)
 AGENTFLOW_DOWNLOAD:=$(AGENTFLOW_URL_FILE)-$(AGENTFLOW_HASH_$(ARCH))
@@ -54,23 +54,26 @@ endef
 
 define Package/$(PKG_NAME)/postinst
 #!/bin/sh
-# Retire only this package-owned legacy registration.
+# Compatibility entry for desktops which only scan the old directory.
 root="$${IPKG_INSTROOT:-}"
 legacy="$${root}/usr/share/linkeasefull/desktop-apps.d/30-agentflow.json"
-if [ "$$(readlink "$${legacy}" 2>/dev/null)" = "/usr/share/agentflow/agentflow-plugin.json" ]; then
-	rm -f "$${legacy}"
+if [ ! -e "$${legacy}" ] && [ ! -L "$${legacy}" ]; then
+	mkdir -p "$${legacy%/*}"
+	ln -s /usr/share/agentflow/agentflow-plugin.json "$${legacy}" || exit $$?
 fi
-rmdir "$${root}/usr/share/linkeasefull/desktop-apps.d" 2>/dev/null || true
 exit 0
 endef
 
 define Package/$(PKG_NAME)/prerm
 #!/bin/sh
 root="$${IPKG_INSTROOT:-}"
-registration="$${root}/usr/share/linkease/apps.d/30-agentflow.json"
-if [ "$$(readlink "$${registration}" 2>/dev/null)" = "/usr/share/agentflow/agentflow-plugin.json" ]; then
-	rm -f "$${registration}"
-fi
+for directory in /usr/share/linkease/apps.d /usr/share/linkeasefull/desktop-apps.d; do
+	registration="$${root}$${directory}/30-agentflow.json"
+	if [ "$$(readlink "$${registration}" 2>/dev/null)" = "/usr/share/agentflow/agentflow-plugin.json" ]; then
+		rm -f "$${registration}"
+	fi
+done
+rmdir "$${root}/usr/share/linkeasefull/desktop-apps.d" 2>/dev/null || true
 exit 0
 endef
 

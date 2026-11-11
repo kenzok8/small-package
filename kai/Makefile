@@ -11,7 +11,7 @@ PKG_ARCH_kai:=$(ARCH)
 
 PKG_NAME:=kai
 PKG_VERSION:=0.0.28
-PKG_RELEASE:=11
+PKG_RELEASE:=12
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/kai-runtime-v$(PKG_VERSION)/
 PKG_HASH:=93a0f7192c04b457cf12167c66ec72ed59aecc046053918fc06df7a7422bb0bd
@@ -41,23 +41,26 @@ endef
 
 define Package/$(PKG_NAME)/postinst
 #!/bin/sh
-# Retire only this package-owned legacy registration.
+# Compatibility entry for desktops which only scan the old directory.
 root="$${IPKG_INSTROOT:-}"
 legacy="$${root}/usr/share/linkeasefull/desktop-apps.d/05-kai-plugin.json"
-if [ "$$(readlink "$${legacy}" 2>/dev/null)" = "/usr/share/kai/kai-plugin.json" ]; then
-	rm -f "$${legacy}"
+if [ ! -e "$${legacy}" ] && [ ! -L "$${legacy}" ]; then
+	mkdir -p "$${legacy%/*}"
+	ln -s /usr/share/kai/kai-plugin.json "$${legacy}" || exit $$?
 fi
-rmdir "$${root}/usr/share/linkeasefull/desktop-apps.d" 2>/dev/null || true
 exit 0
 endef
 
 define Package/$(PKG_NAME)/prerm
 #!/bin/sh
 root="$${IPKG_INSTROOT:-}"
-registration="$${root}/usr/share/linkease/apps.d/05-kai-plugin.json"
-if [ "$$(readlink "$${registration}" 2>/dev/null)" = "/usr/share/kai/kai-plugin.json" ]; then
-	rm -f "$${registration}"
-fi
+for directory in /usr/share/linkease/apps.d /usr/share/linkeasefull/desktop-apps.d; do
+	registration="$${root}$${directory}/05-kai-plugin.json"
+	if [ "$$(readlink "$${registration}" 2>/dev/null)" = "/usr/share/kai/kai-plugin.json" ]; then
+		rm -f "$${registration}"
+	fi
+done
+rmdir "$${root}/usr/share/linkeasefull/desktop-apps.d" 2>/dev/null || true
 exit 0
 endef
 
