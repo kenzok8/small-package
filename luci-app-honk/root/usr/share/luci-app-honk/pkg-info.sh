@@ -45,13 +45,16 @@ elif command -v opkg >/dev/null 2>&1; then
 			END { if (installed) print version }
 		')
 	fi
+	_arch=$(sed -n "s/^DISTRIB_ARCH=['\"]\(.*\)['\"].*/\1/p" /etc/openwrt_release 2>/dev/null | head -n 1)
 	latest=$(
 		for _list in /var/opkg-lists/*; do
 			[ "${_list%.sig}" = "$_list" ] || continue
 			zcat "$_list" 2>/dev/null || cat "$_list" 2>/dev/null
-		done | awk -v p="$PKG" '
-			$1 == "Package:" { cur = $2 }
-			cur == p && $1 == "Version:" { print $2 }
+		done | awk -v p="$PKG" -v a="$_arch" '
+			$1 == "Package:" { cur = $2; ver = ""; ok = 0 }
+			cur == p && $1 == "Version:" { ver = $2 }
+			cur == p && $1 == "Architecture:" { ok = (a == "" || $2 == a || $2 == "all") }
+			cur == p && ok && ver != "" { print ver; ok = 0 }
 		' | sort -V | tail -1
 	)
 fi

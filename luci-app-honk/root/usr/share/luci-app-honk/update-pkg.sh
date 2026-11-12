@@ -34,6 +34,28 @@ service_running() {
 }
 
 # 镜像卡住时 opkg update 会一直占着锁；这里给它上闸，超时直接掐掉。
+installed_version_file() {
+	awk -v p="$1" '
+		$1 == "Package:" { cur = $2; ver = ""; ok = 0 }
+		$1 == "Version:" { ver = $2 }
+		$1 == "Status:" { ok = ($NF == "installed") }
+		cur == p && ok && ver != "" { print ver; exit }
+	' /usr/lib/opkg/status 2>/dev/null
+}
+
+package_cache_version() {
+	_arch=$(sed -n "s/^DISTRIB_ARCH=['\"]\(.*\)['\"].*/\1/p" /etc/openwrt_release 2>/dev/null | head -n 1)
+	for _list in /var/opkg-lists/*; do
+		[ "${_list%.sig}" = "$_list" ] || continue
+		zcat "$_list" 2>/dev/null || cat "$_list" 2>/dev/null
+	done | awk -v p="$1" -v a="$_arch" '
+		$1 == "Package:" { cur = $2; ver = ""; ok = 0 }
+		cur == p && $1 == "Version:" { ver = $2 }
+		cur == p && $1 == "Architecture:" { ok = (a == "" || $2 == a || $2 == "all") }
+		cur == p && ok && ver != "" { print ver; ok = 0 }
+	' | sort -V | tail -n 1
+}
+
 pkg_update() {
 	_limit=$1; shift
 	"$@" &
@@ -45,7 +67,7 @@ pkg_update() {
 	kill -TERM "$_watch" 2>/dev/null
 	wait "$_watch" 2>/dev/null
 	if [ "$_rc" != 0 ]; then
-		echo "note: 索引刷新超时或被中断（${_limit}s），改用现有缓存继续"
+		echo "note: 索引刷新未完成（rc=${_rc}），改用现有缓存继续"
 	fi
 	return 0
 }
@@ -86,6 +108,9 @@ if ! ( set -C; echo "$$" >"$LOCK" ) 2>/dev/null; then
 	exit 75
 fi
 
+# 面板拿到「已启动」就立刻读日志，先清空，别让它读到上一次的 ✓。
+: >"$LOG"
+
 (
 	exec >"$LOG" 2>&1
 	trap 'rm -f "$LOCK"; [ "${0#/tmp/.honk-upd-}" != "$0" ] && rm -f "$0"' EXIT INT TERM
@@ -123,7 +148,7 @@ fi
 			fi
 			echo "--- apk add $constraint ---"
 			apk add "$constraint" 2>&1
-			exit 0
+			exit $?
 		) 9>/tmp/luci-app-honk.apk.lock
 		rc=$?
 		if [ "$rc" != 0 ]; then
@@ -139,20 +164,39 @@ fi
 			rc=0
 		fi
 	elif command -v opkg >/dev/null 2>&1; then
+		# opkg 命令都要抢同一把锁，面板后台刷新期间点升级必然失败。
+		# 索引和状态都直接读文件，安装遇到锁占用就等一会儿重试。
 		(
 			flock 9
-			opkg list "$PKG" 2>/dev/null | grep -q "^$PKG - " || pkg_update 60 opkg update 2>&1
-			opkg install "$PKG" 2>&1
-			exit 0
+			cached_latest=$(package_cache_version "$PKG")
+			[ -n "$cached_latest" ] || pkg_update 60 opkg update 2>&1
+			tries=0
+			install_rc=0
+			while :; do
+				install_out=$(opkg install "$PKG" 2>&1)
+				install_rc=$?
+				printf '%s\n' "$install_out"
+				case "$install_out" in
+					*"Could not lock"*) ;;
+					*) break ;;
+				esac
+				tries=$((tries + 1))
+				[ "$tries" -lt 10 ] || break
+				echo "note: opkg 锁被占用，3 秒后重试（${tries}/10）"
+				sleep 3
+			done
+			exit "$install_rc"
 		) 9>/tmp/luci-app-honk.opkg.lock
 		rc=$?
+		installed_now=$(installed_version_file "$PKG")
+		pending=$(package_cache_version "$PKG")
 		if [ "$rc" != 0 ]; then
 			:
-		elif ! opkg status "$PKG" 2>/dev/null | grep -q '^Status: .* installed$'; then
+		elif [ -z "$installed_now" ]; then
 			echo "result: $PKG is not installed"
 			rc=1
-		elif opkg list-upgradable 2>/dev/null | grep -q "^${PKG} - "; then
-			echo "result: $PKG still has a pending upgrade"
+		elif [ -n "$pending" ] && [ "$installed_now" != "$pending" ]; then
+			echo "result: $PKG still has a pending upgrade ($installed_now -> $pending)"
 			rc=1
 		else
 			echo "result: $PKG is at the latest available version"
