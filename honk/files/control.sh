@@ -51,6 +51,13 @@ module_loaded() {
 	[ -d "/sys/module/$1" ] || grep -q "^$1 " /proc/modules
 }
 
+# 只有面板管理的 system.dae 能决定 NFQUEUE；自定义配置按开启处理。
+nfqueue_enabled() {
+	[ "${settings_owner:-}" = system ] || return 0
+	_nfq=$(sed -n 's/^    nfqueue_enable: \(true\|false\)$/\1/p' /etc/honk/system.dae 2>/dev/null | head -n 1)
+	[ "$_nfq" != false ]
+}
+
 module_available() {
 	module_loaded "$1" && return 0
 	module_path=$(printf '%s' "$1" | tr '_' '-')
@@ -189,9 +196,14 @@ check_kernel() {
 	[ -d /sys/fs/bpf ] && grep -q ' /sys/fs/bpf bpf ' /proc/mounts || { kernel_error=bpffs_not_mounted; fail "bpffs 未挂载到 /sys/fs/bpf，请检查内核或手工挂载"; return 1; }
 	command -v ip >/dev/null 2>&1 || { kernel_error=ip_full_missing; fail "缺少 ip 命令（装 ip-full）"; return 1; }
 	command -v modprobe >/dev/null 2>&1 || { kernel_error=kmod_missing; fail "缺少 modprobe 命令（装 kmod）"; return 1; }
-	for module in sch_ingress cls_bpf veth nft_queue nfnetlink_queue; do
-		module_available "$module" || { kernel_error="kernel_module_missing:$module"; fail "缺少内核模块 $module，请确认 kmod-sched-core / kmod-sched-bpf / kmod-veth / kmod-nft-queue 已安装"; return 1; }
+	for module in sch_ingress cls_bpf veth; do
+		module_available "$module" || { kernel_error="kernel_module_missing:$module"; fail "缺少内核模块 $module，请确认 kmod-sched-core / kmod-sched-bpf / kmod-veth 已安装"; return 1; }
 	done
+	if nfqueue_enabled; then
+		for module in nft_queue nfnetlink_queue; do
+			module_available "$module" || { kernel_error="kernel_module_missing:$module"; fail "缺少内核模块 $module，装 kmod-nft-queue，或在 system.dae 里设 nfqueue_enable: false"; return 1; }
+		done
+	fi
 }
 
 check_conflicts() {
@@ -396,10 +408,12 @@ cleanup_initialize() {
 
 # 交还面板管理时也用它，保证两条路径生成的 system.dae 一致。
 render_runtime_system() {
+	_nfq=$(sed -n 's/^    nfqueue_enable: \(true\|false\)$/\1/p' /etc/honk/system.dae 2>/dev/null | head -n 1)
+	case "$_nfq" in true|false) ;; *) _nfq=true ;; esac
 	printf "global {\n    wan_interface: auto\n    lan_interface: '%s'\n" "$1"
 	printf "    log_level: info\n    dial_mode: domain\n    allow_insecure: false\n"
 	printf "    auto_config_kernel_parameter: true\n    data_dir: '/etc/honk'\n"
-	printf "    store_subscribe: true\n    nfqueue_enable: true\n}\n\n"
+	printf "    store_subscribe: true\n    nfqueue_enable: %s\n}\n\n" "$_nfq"
 	printf "experimental {\n    native_api {\n        enabled: true\n        listen: '%s:%s'\n" "$2" "$3"
 	printf "        password_auth: true\n        allow_anonymous_loopback: false\n"
 	printf "        config_write: true\n        ui: '/usr/share/doona'\n    }\n"
@@ -954,7 +968,7 @@ repair() {
 	if [ "$initialized" = 1 ]; then system_host=$lan_ip; else system_host=127.0.0.1; fi
 	if [ -r /usr/share/doona/index.html ] && [ -f /etc/honk/system.dae ] && [ ! -L /etc/honk/system.dae ] && system_config_readonly && \
 		grep -Fqx '    wan_interface: auto' /etc/honk/system.dae && grep -Fqx "    lan_interface: '$lan_device'" /etc/honk/system.dae && \
-		grep -Fqx "    data_dir: '/etc/honk'" /etc/honk/system.dae && grep -Fqx '    nfqueue_enable: true' /etc/honk/system.dae && \
+		grep -Fqx "    data_dir: '/etc/honk'" /etc/honk/system.dae && grep -Eqx '    nfqueue_enable: (true|false)' /etc/honk/system.dae && \
 		grep -Fqx "        listen: '$system_host:$listen_port'" /etc/honk/system.dae && \
 		grep -Fqx "        ui: '/usr/share/doona'" /etc/honk/system.dae && grep -Fqx '        password_auth: true' /etc/honk/system.dae && \
 		grep -Fqx '        allow_anonymous_loopback: false' /etc/honk/system.dae && grep -Fqx '        config_write: true' /etc/honk/system.dae && clash_system_matches; then

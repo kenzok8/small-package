@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-only
-# Background apk index refresh for the Maintenance view. Returns at once.
+# Background package index refresh for the Maintenance view. Returns at once.
 
 LOCK=/tmp/luci-app-honk.idx.lock
 
@@ -10,10 +10,15 @@ if [ -f "$LOCK" ]; then
 fi
 : > "$LOCK"
 
-(
-	if command -v apk >/dev/null 2>&1; then
-		flock -n /tmp/luci-app-honk.apk.lock apk update
-	fi
-) >/dev/null 2>&1 </dev/null &
+if command -v apk >/dev/null 2>&1; then
+	apk update >/dev/null 2>&1 </dev/null &
+elif command -v opkg >/dev/null 2>&1; then
+	opkg update >/dev/null 2>&1 </dev/null &
+else
+	exit 0
+fi
+_pid=$!
+# 有一个镜像卡住就会把 opkg 锁占死，60 秒后直接掐掉。
+( sleep 60; kill -TERM "$_pid" 2>/dev/null; sleep 5; kill -KILL "$_pid" 2>/dev/null ) >/dev/null 2>&1 &
 
 exit 0

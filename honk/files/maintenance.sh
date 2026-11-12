@@ -598,6 +598,8 @@ validate_system_schema() {
 	[ "$listen_host" = "$expected_ip" ] || [ "$listen_host" = 127.0.0.1 ] || return 1
 	store_subscribe=$(sed -n 's/^    store_subscribe: \(true\|false\)$/\1/p' "$trusted_system")
 	case "$store_subscribe" in true|false) ;; *) return 1 ;; esac
+	nfqueue_enable=$(sed -n 's/^    nfqueue_enable: \(true\|false\)$/\1/p' "$trusted_system")
+	case "$nfqueue_enable" in true|false) ;; *) nfqueue_enable=true ;; esac
 	cat > "$temp_dir/system.expected" <<EOF
 global {
     wan_interface: auto
@@ -608,7 +610,7 @@ global {
     auto_config_kernel_parameter: true
     data_dir: '/etc/honk'
     store_subscribe: $store_subscribe
-    nfqueue_enable: true
+    nfqueue_enable: $nfqueue_enable
 }
 
 experimental {
@@ -797,6 +799,9 @@ write_live_system() {
 	live_ip=$3
 	live_port=$4
 	live_initialized=$5
+	# 第 6 个参数决定 NFQUEUE：false 才关闭，其余按开启。
+	live_nfqueue=$6
+	case "$live_nfqueue" in true|false) ;; *) live_nfqueue=true ;; esac
 	if [ "$live_initialized" = 1 ]; then live_host=$live_ip; else live_host=127.0.0.1; fi
 	cat > "$live_system" <<EOF
 global {
@@ -808,7 +813,7 @@ global {
     auto_config_kernel_parameter: true
     data_dir: '/etc/honk'
     store_subscribe: true
-    nfqueue_enable: true
+    nfqueue_enable: $live_nfqueue
 }
 
 experimental {
@@ -1061,7 +1066,9 @@ restore() {
 	[ "$old_running" != 1 ] || [ "$restore_initialized" = 1 ] || { error running_service_requires_initialized_restore; return 1; }
 	[ "$(sha_of "$RESTORE")" = "$archive_hash" ] || { error restore_archive_changed; return 1; }
 	if [ "$(config_owner "$restore_stage/etc/honk/config.dae")" = system ]; then
-		write_live_system "$restore_stage/etc/honk/system.dae" "$candidate_device" "$candidate_ip" "$u_port" "$restore_initialized" || { error system_config_render_failed; return 1; }
+		restore_nfqueue=$(sed -n 's/^    nfqueue_enable: \(true\|false\)$/\1/p' "$restore_stage/etc/honk/system.dae" 2>/dev/null | head -n 1)
+		case "$restore_nfqueue" in true|false) ;; *) restore_nfqueue=true ;; esac
+		write_live_system "$restore_stage/etc/honk/system.dae" "$candidate_device" "$candidate_ip" "$u_port" "$restore_initialized" "$restore_nfqueue" || { error system_config_render_failed; return 1; }
 		chmod 0600 "$restore_stage/etc/honk/system.dae" || { error system_config_render_failed; return 1; }
 	fi
 	uci -c "$uci_dir" -t "$temp_dir/uci-tmp" set "honk.main.enabled=$old_enabled" || { error restore_profile_stage_failed; return 1; }
@@ -1155,7 +1162,7 @@ reset_data() {
 	reset_ip=
 	network_get_device reset_device "$u_network" || { error lan_network_unavailable; return 1; }
 	network_get_ipaddr reset_ip "$u_network" || { error lan_network_unavailable; return 1; }
-	write_live_system "$reset_stage/etc/honk/system.dae" "$reset_device" "$reset_ip" "$u_port" "$u_initialized" || { error system_config_render_failed; return 1; }
+	write_live_system "$reset_stage/etc/honk/system.dae" "$reset_device" "$reset_ip" "$u_port" "$u_initialized" true || { error system_config_render_failed; return 1; }
 	chmod 0600 "$reset_stage/etc/honk/system.dae" || { error system_config_render_failed; return 1; }
 	reset_candidate=$temp_dir/reset-candidate
 	mkdir -p "$reset_candidate/etc" || { error reset_stage_failed; return 1; }
