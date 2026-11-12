@@ -182,7 +182,7 @@ check_kernel() {
 			fail "HONK_VMLINUX_BTF 指向的 $HONK_VMLINUX_BTF 不可读，honk-core 不会回退到默认路径"
 		else
 			kernel_error=kernel_btf_missing
-			fail "内核缺少 BTF（/sys/kernel/btf/vmlinux 或 /usr/lib/debug/boot/vmlinux），请安装 vmlinux-btf 或换用带 BTF 的固件"
+			fail "内核缺少 BTF（/sys/kernel/btf/vmlinux 或 /usr/lib/debug/boot/vmlinux），需装与 uname -r 同版本的 vmlinux-btf（https://github.com/kenzok8/vmlinux-btf/releases/tag/latest），或换用自带 BTF 的固件"
 		fi
 		return 1
 	fi

@@ -180,7 +180,7 @@ return view.extend({
 					E('div', { 'class': 'honk-actions' }, actions)
 				]),
 				E('div', { 'class': 'honk-meta' }, [
-					metaItem(_('Core version'), status.core_lane === 'linux66' ? status.core_version + ' · ' + _('Linux 6.6 experimental') : status.core_version),
+					metaItem(_('Core version'), status.core_version),
 					metaItem(_('Doona version'), status.doona_version),
 					metaItem(_('Kernel'), status.kernel)
 				])

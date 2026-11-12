@@ -490,10 +490,10 @@ function flagToBool(flag) {
 
 function renderPayload(s, total, uciconfig) {
 	// common payload
-	let initPayload = function(o, n, key, uciconfig) {
-		o.load = L.bind(function(n, key, uciconfig, section_id) {
+	let initPayload = function(o, n, key) {
+		o.load = function(section_id) {
 			return new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayload(n)[key];
-		}, o, n, key, uciconfig);
+		}
 		o.onchange = function(ev, section_id, value) {
 			let UIEl = this.section.getUIElement(section_id, 'entry');
 
@@ -507,11 +507,11 @@ function renderPayload(s, total, uciconfig) {
 		o.rmempty = false;
 		o.modalonly = true;
 	}
-	let initDynamicPayload = function(o, n, key, uciconfig) {
+	let initDynamicPayload = function(o, n, key) {
 		o.allowduplicates = true;
-		o.load = L.bind(function(n, key, uciconfig, section_id) {
+		o.load = function(section_id) {
 			return new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayloads().slice(n).map(e => e[key] ?? '');
-		}, o, n, key, uciconfig);
+		}
 		o.validate = function(section_id, value) {
 			value = this.formvalue(section_id);
 			let UIEl = this.section.getUIElement(section_id, 'entry');
@@ -548,7 +548,7 @@ function renderPayload(s, total, uciconfig) {
 			if (n < hm.rules_logical_payload_count[key].low)
 				o.depends('type', key);
 		})
-		initPayload(o, n, 'type', uciconfig);
+		initPayload(o, n, 'type');
 		o.onchange = function(ev, section_id, value) {
 			let UIEl = this.section.getUIElement(section_id, 'entry');
 
@@ -570,7 +570,7 @@ function renderPayload(s, total, uciconfig) {
 		o.depends(Object.fromEntries([[prefix + 'type', /\bGEO(SITE|IP)\b/]]));
 		o.depends(Object.fromEntries([[prefix + 'type', /\bASN\b/]]));
 		o.depends(Object.fromEntries([[prefix + 'type', /\bPROCESS\b/]]));
-		initPayload(o, n, 'factor', uciconfig);
+		initPayload(o, n, 'factor');
 
 		o = s.option(form.Value, prefix + 'ip', _('Factor') + ` ${n+1}`);
 		o.datatype = 'cidr';
@@ -580,7 +580,7 @@ function renderPayload(s, total, uciconfig) {
 		}
 		o.depends(Object.fromEntries([[prefix + 'type', /\bCIDR6?\b/]]));
 		o.depends(Object.fromEntries([[prefix + 'type', /\bIP-SUFFIX\b/]]));
-		initPayload(o, n, 'factor', uciconfig);
+		initPayload(o, n, 'factor');
 
 		o = s.option(form.Value, prefix + 'port', _('Factor') + ` ${n+1}`);
 		//o.datatype = 'or(port, portrange)'; // ⬇️ migrated to validate
@@ -588,7 +588,7 @@ function renderPayload(s, total, uciconfig) {
 		if (n === 0)
 			o.depends({type: /\bPORT\b/});
 		o.depends(Object.fromEntries([[prefix + 'type', /\bPORT\b/]]));
-		initPayload(o, n, 'factor', uciconfig);
+		initPayload(o, n, 'factor');
 		// if validate is already defined in initPayload
 		const port_old_validate = o.validate;
 		o.validate = function(section_id, value) {
@@ -608,7 +608,7 @@ function renderPayload(s, total, uciconfig) {
 		if (n === 0)
 			o.depends('type', 'IN-TYPE');
 		o.depends(prefix + 'type', 'IN-TYPE');
-		initPayload(o, n, 'factor', uciconfig);
+		initPayload(o, n, 'factor');
 		o.load = L.bind(function(n, key, uciconfig, section_id) {
 			return (new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayload(n)[key] || '')
 				.split('/');
@@ -627,7 +627,7 @@ function renderPayload(s, total, uciconfig) {
 		if (n === 0)
 			o.depends('type', 'IN-NAME');
 		o.depends(prefix + 'type', 'IN-NAME');
-		initPayload(o, n, 'factor', uciconfig);
+		initPayload(o, n, 'factor');
 		o.load = L.bind(function(n, key, uciconfig, section_id) {
 			hm.loadLabel.call(this, [
 				['', _('-- Please choose --')],
@@ -641,7 +641,7 @@ function renderPayload(s, total, uciconfig) {
 		if (n === 0)
 			o.depends('type', 'REMATCH-NAME');
 		o.depends(prefix + 'type', 'REMATCH-NAME');
-		initPayload(o, n, 'factor', uciconfig);
+		initPayload(o, n, 'factor');
 		o.load = L.bind(function(n, key, uciconfig, section_id) {
 			hm.loadLabel.call(this, [
 				['', _('-- Please choose --')],
@@ -656,7 +656,7 @@ function renderPayload(s, total, uciconfig) {
 		if (n === 0)
 			o.depends('type', 'UID');
 		o.depends(prefix + 'type', 'UID');
-		initPayload(o, n, 'factor', uciconfig);
+		initPayload(o, n, 'factor');
 
 		o = s.option(form.ListValue, prefix + 'l4', _('Factor') + ` ${n+1}`);
 		o.value('udp', _('UDP'));
@@ -664,20 +664,20 @@ function renderPayload(s, total, uciconfig) {
 		if (n === 0)
 			o.depends('type', 'NETWORK');
 		o.depends(prefix + 'type', 'NETWORK');
-		initPayload(o, n, 'factor', uciconfig);
+		initPayload(o, n, 'factor');
 
 		o = s.option(form.Value, prefix + 'dscp', _('Factor') + ` ${n+1}`);
 		o.datatype = 'and(uinteger, range(0, 63))';
 		if (n === 0)
 			o.depends('type', 'DSCP');
 		o.depends(prefix + 'type', 'DSCP');
-		initPayload(o, n, 'factor', uciconfig);
+		initPayload(o, n, 'factor');
 
 		o = s.option(form.ListValue, prefix + 'rule_set', _('Factor') + ` ${n+1}`);
 		if (n === 0)
 			o.depends('type', 'RULE-SET');
 		o.depends(prefix + 'type', 'RULE-SET');
-		initPayload(o, n, 'factor', uciconfig);
+		initPayload(o, n, 'factor');
 		o.load = L.bind(function(n, key, uciconfig, section_id) {
 			hm.loadLabel.call(this, hm.loadLabelValues(this.config, 'ruleset'), section_id);
 
@@ -687,7 +687,7 @@ function renderPayload(s, total, uciconfig) {
 		o = s.option(form.Flag, prefix + 'NOT', _('NOT') + ` ${n+1}`);
 		o.default = o.disabled;
 		o.depends(Object.fromEntries([[prefix + 'type', /.+/]]));
-		initPayload(o, n, 'deny', uciconfig);
+		initPayload(o, n, 'deny');
 		o.load = L.bind(function(n, key, uciconfig, section_id) {
 			return boolToFlag(new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayload(n)[key] ? true : false);
 		}, o, n, 'deny', uciconfig);
@@ -721,7 +721,7 @@ function renderPayload(s, total, uciconfig) {
 		extenbox[n].forEach((type) => {
 			o.depends('type', type);
 		})
-		initDynamicPayload(o, n, 'type', uciconfig);
+		initDynamicPayload(o, n, 'type');
 		o.validate = function(section_id, value) {
 			value = this.formvalue(section_id);
 			let UIEl = this.section.getUIElement(section_id, 'entry');
@@ -744,7 +744,7 @@ function renderPayload(s, total, uciconfig) {
 		extenbox[n].forEach((type) => {
 			o.depends(Object.fromEntries([['type', type], [prefix + 'type', /.+/]]));
 		})
-		initDynamicPayload(o, n, 'factor', uciconfig);
+		initDynamicPayload(o, n, 'factor');
 		o.load = L.bind(function(n, key, uciconfig, section_id) {
 			hm.loadLabel.call(this, [
 				...hm.inbound_type.map(e => [e, _('IN-TYPE')]), // Multi-values are not supported
@@ -765,7 +765,7 @@ function renderPayload(s, total, uciconfig) {
 		extenbox[n].forEach((type) => {
 			o.depends(Object.fromEntries([['type', type], [prefix + 'type', /.+/]]));
 		})
-		initDynamicPayload(o, n, 'deny', uciconfig);
+		initDynamicPayload(o, n, 'deny');
 		o.load = L.bind(function(n, key, uciconfig, section_id) {
 			return new RulesEntry(uci.get(uciconfig, section_id, 'entry')).getPayloads().slice(n).map(e => boolToFlag(e[key] ? true : false));
 		}, o, n, 'deny', uciconfig);

@@ -121,6 +121,26 @@ fi
 			echo "result: $PKG is at the latest available version"
 			rc=0
 		fi
+	elif command -v opkg >/dev/null 2>&1; then
+		(
+			flock 9
+			opkg update 2>&1
+			opkg install "$PKG" 2>&1
+			exit 0
+		) 9>/tmp/luci-app-honk.opkg.lock
+		rc=$?
+		if [ "$rc" != 0 ]; then
+			:
+		elif ! opkg status "$PKG" 2>/dev/null | grep -q '^Status: .* installed$'; then
+			echo "result: $PKG is not installed"
+			rc=1
+		elif opkg list-upgradable 2>/dev/null | grep -q "^${PKG} - "; then
+			echo "result: $PKG still has a pending upgrade"
+			rc=1
+		else
+			echo "result: $PKG is at the latest available version"
+			rc=0
+		fi
 	else
 		echo "no package manager found"
 		exit 3

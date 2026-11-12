@@ -35,6 +35,7 @@ elif command -v opkg >/dev/null 2>&1; then
 		/^Status: .* installed$/ { installed = 1 }
 		END { if (installed) print version }
 	')
+	latest=$(opkg list "$PKG" 2>/dev/null | awk -F' - ' -v p="$PKG" '$1 == p { print $2 }' | sort -V | tail -1)
 fi
 
 printf '%s\t%s\n' "$installed" "$latest"
