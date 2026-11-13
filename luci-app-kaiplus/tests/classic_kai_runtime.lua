@@ -5,7 +5,7 @@ local function check(value, message)
 	assert(value, message)
 	checks = checks + 1
 end
-local runtime_files = { "/usr/sbin/kai_bin", "/usr/sbin/kai_session", "/etc/init.d/kai", "/etc/config/kai", "/usr/share/kai/kai-plugin.json" }
+local runtime_files = { "/usr/sbin/kai_bin", "/usr/sbin/kai_session", "/etc/init.d/kai", "/etc/config/kai" }
 local function fixture(o)
 	o = o or {}
 	local f = { calls = {}, routes = {} }
@@ -22,6 +22,12 @@ local function fixture(o)
 		exec = function(command) f.task_query = command; return "task status fixture" end
 	}
 	package.loaded["nixio.fs"], package.loaded["luci.sys"] = fs, sys
+	package.loaded["luci.model.uci"] = { cursor = function() return {
+		get_first = function(_, config, section, option)
+			check(config == "kai" and section == "kai" and option == "port", "read classic port")
+			return o.port
+		end
+	} end }
 	package.loaded["luci.jsonc"] = { parse = function() return o.task_status or {} end }
 	package.loaded["luci.util"] = { shellquote = function(v) return "'" .. v:gsub("'", "'\\''") .. "'" end }
 	package.loaded["luci.http"] = {
@@ -87,7 +93,18 @@ f.controller.classic_status()
 check(f.reply.installed == false and f.reply.running == false, "missing KAI status")
 f = fixture({ installed = true, running = true })
 f.controller.classic_status()
-check(f.reply.installed and f.reply.running, "runtime must work without luci-app-kai")
+check(f.reply.installed and f.reply.running, "runtime must work without luci-app-kai or a desktop manifest")
+check(f.reply.port == 8197, "default classic port")
+for _, port in ipairs({ "8201", "80", "65535" }) do
+	local configured = fixture({ installed = true, port = port })
+	configured.controller.classic_status()
+	check(configured.reply.port == tonumber(port), "custom classic port")
+end
+for _, port in ipairs({ "0", "65536", "8197.5", "invalid" }) do
+	local configured = fixture({ installed = true, port = port })
+	configured.controller.classic_status()
+	check(configured.reply.port == nil, "invalid ports must not produce a launch target")
+end
 check(f.calls[1] == "pidof kai_bin >/dev/null", "status must use classic process")
 for _, path in ipairs(runtime_files) do
 	f = fixture({ installed = true, missing = path })

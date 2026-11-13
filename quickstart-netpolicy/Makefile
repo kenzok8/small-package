@@ -7,17 +7,21 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=quickstart-netpolicy
-PKG_VERSION:=0.2.0-test20260928
-PKG_RELEASE:=3
+PKG_VERSION:=0.2.1-rc20261113
+PKG_RELEASE:=1
 NETPOLICY_TARGET_x86_64:=x86_64-unknown-linux-musl
 NETPOLICY_TARGET_aarch64:=aarch64-unknown-linux-musl
 NETPOLICY_TARGET:=$(NETPOLICY_TARGET_$(ARCH))
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(NETPOLICY_TARGET).tar.gz
-PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/quickstart-runtime-v0.17.0-test20261022/
-PKG_HASH_x86_64:=943a330db2a7ea3703f95aba80b50f7eb2a91cbfef96a10ea24ffac74f1c3927
-PKG_HASH_aarch64:=535e52b6e5f9c1a2dbced20fffc7c384ad3f7e00f28ae1be4fa3a910eafd5766
+PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/quickstart-runtime-v0.17.1-rc20261028/
+PKG_HASH_x86_64:=39861c6d508a900d691315b6443f274ea1e283bc3f8c9f9fa91b4e992814a372
+PKG_HASH_aarch64:=ef2dd2c67ce02b945e89c9fbff66650586fb1c1410717b9306e583c4ad53e480
 PKG_HASH:=$(PKG_HASH_$(ARCH))
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+
+ifeq ($(CONFIG_USE_APK),y)
+PKG_VERSION:=$(subst -rc,_rc,$(PKG_VERSION))
+endif
 
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0

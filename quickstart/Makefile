@@ -11,12 +11,16 @@ PKG_ARCH_quickstart:=$(ARCH)
 
 PKG_NAME:=quickstart
 PKG_VERSION:=0.17.1-rc20261028
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/istoreos/quickstart/releases/download/v$(PKG_VERSION)/
 PKG_HASH:=c2fa6bfe8bc9f7a17f989f43f3103a2cd02314800dcf155989e2ff8f944c8469
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-binary-$(PKG_VERSION)
+
+ifeq ($(CONFIG_USE_APK),y)
+PKG_VERSION:=$(subst -rc,_rc,$(PKG_VERSION))
+endif
 
 PKG_BUILD_PARALLEL:=1
 PKG_USE_MIPS16:=0
@@ -91,6 +95,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
 	$(INSTALL_BIN) ./files/startdhns.hotplug $(1)/etc/hotplug.d/iface/21-startdhns
 	$(INSTALL_DIR) $(1)/usr/share/quickstart
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/MANIFEST $(1)/usr/share/quickstart/MANIFEST
 	$(INSTALL_DATA) ./files/manuf $(1)/usr/share/quickstart/manuf
 	$(INSTALL_DIR) $(1)/lib/upgrade/keep.d
 	$(INSTALL_DATA) ./files/quickstart.keep $(1)/lib/upgrade/keep.d/quickstart

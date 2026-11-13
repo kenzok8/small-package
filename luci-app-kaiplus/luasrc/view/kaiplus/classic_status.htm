@@ -22,7 +22,8 @@
 var classicPageInstalled = <%= installed and "true" or "false" %>;
 var classicInstallUrl = '<%=url("admin/services/kaiplus/install_kai")%>';
 var classicUpdateUrl = '<%=url("admin/services/kaiplus/update_kai")%>';
-var classicOpenUrl = '<%=url("admin/services/linkease_apps/open")%>?id=kai';
+var classicAuthUrl = '<%=url("admin/services/linkease_auth/auth")%>';
+var classicOpenUrl = '';
 
 function installClassicKai() {
 	classicPackageTask(false);
@@ -83,7 +84,11 @@ XHR.poll(5, '<%=url("admin/services/kaiplus/classic_status")%>', null, function(
 	installButton.style.display = st.installed ? 'none' : '';
 	updateButton.style.display = st.installed ? '' : 'none';
 	updateHint.style.display = st.installed ? '' : 'none';
-	openButton.style.display = st.installed && st.running ? '' : 'none';
+	var port = Number(st.port);
+	classicOpenUrl = port >= 1 && port <= 65535 && port === Math.floor(port)
+		? classicAuthUrl + '?return=' + encodeURIComponent('http://' + window.location.hostname + ':' + port + '/apps/kai/')
+		: '';
+	openButton.style.display = st.installed && st.running && classicOpenUrl ? '' : 'none';
 });
 //]]></script>
 
