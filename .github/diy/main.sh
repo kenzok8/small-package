@@ -48,6 +48,26 @@ git clone --depth 1 https://github.com/project-lede/luci-app-godproxy
 git clone --depth 1 https://github.com/rchen14b/luci-theme-glass
 git clone --depth 1 https://github.com/zzsj0928/luci-theme-liquid
 git clone --depth 1 https://github.com/mrjoechen/luci-theme-carbon
+# ── carbon 上游仓库含开发期文件：styles/ 是 CSS 源码（编译产物 carbon.css ──
+# ── 已提交在 htdocs/）；scripts/tests/preview/package*.json 不参与打包； ──
+# ── keys/ 是签名密钥的开发侧副本（运行侧那份在 root/usr/share/carbon/keys/）； ──
+# ── docs/ 只留截图。README 两张图原在 .github/screenshots/，.github/ 会被 ──
+# ── Modify.sh 统一清理，先移到 docs/screenshots/ 并改 README 里的路径 ──
+mkdir -p luci-theme-carbon/docs/screenshots
+cp luci-theme-carbon/.github/screenshots/*.jpg luci-theme-carbon/docs/screenshots/
+sed -i 's|\.github/screenshots/|docs/screenshots/|g' luci-theme-carbon/README.md luci-theme-carbon/README.zh-CN.md
+rm -rf luci-theme-carbon/scripts luci-theme-carbon/styles luci-theme-carbon/tests luci-theme-carbon/preview luci-theme-carbon/keys luci-theme-carbon/package.json luci-theme-carbon/package-lock.json luci-theme-carbon/docs/*.md luci-theme-carbon/docs/releases
+# ── luci-theme-vantage + luci-app-vantage：上游仓库除两包外还有 docs/dev/ ──
+# ── tests 等杂物，只把两个包目录移出来；另把 README/CHANGELOG/截图留进 ──
+# ── 主题包（README 里的图是相对路径，截图不带就全断），README 只改 logo ──
+# ── 与 NOTICE 两处路径 ──
+git clone --depth 1 https://github.com/anothaDev/luci-theme-vantage vantage
+mv -n vantage/luci-theme-vantage vantage/luci-app-vantage ./
+cp vantage/README.md vantage/CHANGELOG.md luci-theme-vantage/
+mkdir -p luci-theme-vantage/docs/screenshots
+cp vantage/docs/screenshots/*.png vantage/docs/screenshots/*.webp luci-theme-vantage/docs/screenshots/
+sed -i 's|luci-theme-vantage/htdocs/luci-static/vantage/logo.svg|htdocs/luci-static/vantage/logo.svg|; s|(luci-theme-vantage/NOTICE)|(NOTICE)|' luci-theme-vantage/README.md
+rm -rf vantage
 git clone --depth 1 https://github.com/tty228/luci-app-wechatpush
 git clone --depth 1 https://github.com/4IceG/luci-app-sms-tool smstool && mvdir smstool
 git clone --depth 1 https://github.com/silime/luci-app-xunlei
