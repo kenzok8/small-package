@@ -627,9 +627,9 @@ function renderListeners(s, uciconfig, isClient) {
 			_('Name of the Sub rule used for inbound matching.'));
 		o.value.apply(o, ['', _('none')]);
 		o.load = function(section_id) {
-			return hm.loadLabel.call(this, [
+			return hm.loadChoices.call(this, [
 				['', _('none')],
-				...hm.loadLabelValues(this.config, 'subrule-group')
+				...hm.loadChoicesGetMap(this.config, 'subrule-group')
 			], section_id);
 		}
 		o.modalonly = false;
@@ -642,9 +642,9 @@ function renderListeners(s, uciconfig, isClient) {
 			o.value.apply(o, res);
 		})
 		o.load = function(section_id) {
-			return hm.loadLabel.call(this, [
+			return hm.loadChoices.call(this, [
 				...hm.preset_outbound.direct,
-				...hm.loadLabelValues(this.config, 'proxy_group')
+				...hm.loadChoicesGetMap(this.config, 'proxy_group')
 			], section_id);
 		}
 		o.modalonly = false;
@@ -789,9 +789,9 @@ function renderListeners(s, uciconfig, isClient) {
 			o.value.apply(o, res);
 		})
 		o.load = function(section_id) {
-			return hm.loadLabel.call(this, [
+			return hm.loadChoices.call(this, [
 				...hm.preset_outbound.direct,
-				...hm.loadLabelValues(this.config, 'proxy_group')
+				...hm.loadChoicesGetMap(this.config, 'proxy_group')
 			], section_id);
 		}
 		o.depends('tls_reality', '1');
@@ -1016,9 +1016,9 @@ function renderListeners(s, uciconfig, isClient) {
 			o.value.apply(o, res);
 		})
 		o.load = function(section_id) {
-			return hm.loadLabel.call(this, [
+			return hm.loadChoices.call(this, [
 				...hm.preset_outbound.direct,
-				...hm.loadLabelValues(this.config, 'proxy_group')
+				...hm.loadChoicesGetMap(this.config, 'proxy_group')
 			], section_id);
 		}
 		o.depends('hysteria2_realm', '1');

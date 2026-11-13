@@ -418,9 +418,9 @@ return view.extend({
 			o.value.apply(o, res);
 		})
 		o.load = function(section_id) {
-			return hm.loadLabel.call(this, [
+			return hm.loadChoices.call(this, [
 				...hm.preset_outbound.direct,
-				...hm.loadLabelValues(this.config, 'proxy_group')
+				...hm.loadChoicesGetMap(this.config, 'proxy_group')
 			], section_id);
 		}
 		o.textvalue = hm.textvalue2Value;

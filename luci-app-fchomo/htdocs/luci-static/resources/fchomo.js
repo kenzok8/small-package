@@ -1312,7 +1312,7 @@ function loadModalTitle(title, addtitle, section_id) {
 	return label ? title + ' » ' + label : addtitle;
 }
 
-function loadLabel(preadds, section_id) {
+function loadChoices(preadds, section_id) {
 	delete this.keylist;
 	delete this.vallist;
 
@@ -1322,7 +1322,7 @@ function loadLabel(preadds, section_id) {
 	return this.super('load', section_id);
 }
 
-function loadLabelValues(uciconfig, sectiontype, options = {}) {
+function loadChoicesGetMap(uciconfig, sectiontype, options = {}) {
 	const values = [];
 
 	switch (sectiontype) {
@@ -2106,8 +2106,8 @@ return baseclass.extend({
 	// load
 	loadDefaultLabel,
 	loadModalTitle,
-	loadLabel,
-	loadLabelValues,
+	loadChoices,
+	loadChoicesGetMap,
 	// render
 	renderStatus,
 	updateStatus,

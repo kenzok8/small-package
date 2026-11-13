@@ -609,9 +609,9 @@ function renderPayload(s, total, uciconfig) {
 		initPayload(o, n, 'factor');
 		const inname_old_load = o.load;
 		o.load = function(section_id) {
-			hm.loadLabel.call(this, [
+			hm.loadChoices.call(this, [
 				['', _('-- Please choose --')],
-				...hm.loadLabelValues(this.config, 'inbound')
+				...hm.loadChoicesGetMap(this.config, 'inbound')
 			], section_id);
 
 			return inname_old_load.apply(this, arguments);
@@ -624,9 +624,9 @@ function renderPayload(s, total, uciconfig) {
 		initPayload(o, n, 'factor');
 		const rematchname_old_load = o.load;
 		o.load = function(section_id) {
-			hm.loadLabel.call(this, [
+			hm.loadChoices.call(this, [
 				['', _('-- Please choose --')],
-				...hm.loadLabelValues(this.config, 'rematch-name')
+				...hm.loadChoicesGetMap(this.config, 'rematch-name')
 			], section_id);
 
 			return rematchname_old_load.apply(this, arguments);
@@ -661,7 +661,7 @@ function renderPayload(s, total, uciconfig) {
 		initPayload(o, n, 'factor');
 		const rule_set_old_load = o.load;
 		o.load = function(section_id) {
-			hm.loadLabel.call(this, hm.loadLabelValues(this.config, 'ruleset'), section_id);
+			hm.loadChoices.call(this, hm.loadChoicesGetMap(this.config, 'ruleset'), section_id);
 
 			return rule_set_old_load.apply(this, arguments);
 		}
@@ -712,13 +712,13 @@ function renderPayload(s, total, uciconfig) {
 		initDynamicPayload(o, n, 'factor');
 		const fused_old_load = o.load;
 		o.load = function(section_id) {
-			hm.loadLabel.call(this, [
+			hm.loadChoices.call(this, [
 				...hm.inbound_type.map(e => [e, _('IN-TYPE')]), // Multi-values are not supported
-				...hm.loadLabelValues(this.config, 'inbound').map(e => [e, _('IN-NAME')]),
-				...hm.loadLabelValues(this.config, 'rematch-name').map(e => [e, _('REMATCH-NAME')]),
+				...hm.loadChoicesGetMap(this.config, 'inbound').map(e => [e, _('IN-NAME')]),
+				...hm.loadChoicesGetMap(this.config, 'rematch-name').map(e => [e, _('REMATCH-NAME')]),
 				[['udp', _('UDP')], _('NETWORK')],
 				[['tcp', _('TCP')], _('NETWORK')],
-				...hm.loadLabelValues(this.config, 'ruleset').map(e => [e, _('RULE-SET')])
+				...hm.loadChoicesGetMap(this.config, 'ruleset').map(e => [e, _('RULE-SET')])
 			], section_id);
 
 			return fused_old_load.apply(this, arguments);
@@ -823,9 +823,9 @@ function renderRules(s, uciconfig) {
 	initEntryOption(o, 'detour');
 	const detour_old_load = o.load;
 	o.load = function(section_id) {
-		hm.loadLabel.call(this, [
+		hm.loadChoices.call(this, [
 			...hm.preset_outbound.full,
-			...hm.loadLabelValues(this.config, 'proxy_group')
+			...hm.loadChoicesGetMap(this.config, 'proxy_group')
 		], section_id);
 
 		return detour_old_load.apply(this, arguments);
@@ -878,9 +878,9 @@ function renderPolicies(s, uciconfig) {
 		_('Match rule set.'));
 	o.value('', _('-- Please choose --'));
 	o.load = function(section_id) {
-		return hm.loadLabel.call(this, [
+		return hm.loadChoices.call(this, [
 			['', _('-- Please choose --')],
-			...hm.loadLabelValues(this.config, 'ruleset', {behaviors: ['domain', 'classical']})
+			...hm.loadChoicesGetMap(this.config, 'ruleset', {behaviors: ['domain', 'classical']})
 		], section_id);
 	}
 	o.depends('type', 'rule_set');
@@ -909,9 +909,9 @@ function renderPolicies(s, uciconfig) {
 		o.value.apply(o, res);
 	})
 	o.load = function(section_id) {
-		return hm.loadLabel.call(this, [
+		return hm.loadChoices.call(this, [
 			...hm.preset_outbound.direct,
-			...hm.loadLabelValues(this.config, 'proxy_group')
+			...hm.loadChoicesGetMap(this.config, 'proxy_group')
 		], section_id);
 	}
 	o.editable = true;
@@ -1068,9 +1068,9 @@ return view.extend({
 		})
 		so.keep_order = true;
 		so.load = function(section_id) {
-			return hm.loadLabel.call(this, [
+			return hm.loadChoices.call(this, [
 				...hm.preset_outbound.proxy,
-				...hm.loadLabelValues(this.config, 'proxy_group')
+				...hm.loadChoicesGetMap(this.config, 'proxy_group')
 			], section_id);
 		}
 		so.editable = true;
@@ -1079,9 +1079,9 @@ return view.extend({
 		so.value('', _('-- Please choose --'));
 		so.keep_order = true;
 		so.load = function(section_id) {
-			return hm.loadLabel.call(this, [
+			return hm.loadChoices.call(this, [
 				['', _('-- Please choose --')],
-				...hm.loadLabelValues(this.config, 'node')
+				...hm.loadChoicesGetMap(this.config, 'node')
 			], section_id);
 		}
 		so.validate = function(section_id, value) {
@@ -1099,9 +1099,9 @@ return view.extend({
 		so.value('', _('-- Please choose --'));
 		so.keep_order = true;
 		so.load = function(section_id) {
-			return hm.loadLabel.call(this, [
+			return hm.loadChoices.call(this, [
 				['', _('-- Please choose --')],
-				...hm.loadLabelValues(this.config, 'provider')
+				...hm.loadChoicesGetMap(this.config, 'provider')
 			], section_id);
 		}
 		so.validate = function(section_id, value) {
@@ -1136,10 +1136,10 @@ return view.extend({
 			so.value.apply(so, res);
 		})
 		so.load = function(section_id) {
-			return hm.loadLabel.call(this, [
+			return hm.loadChoices.call(this, [
 				...hm.preset_outbound.proxy,
 				['NODE', _('-- PROXY-NODE --')],
-				...hm.loadLabelValues(this.config, 'node')
+				...hm.loadChoicesGetMap(this.config, 'node')
 			], section_id);
 		}
 		so.textvalue = hm.textvalue2Value;
@@ -1201,12 +1201,12 @@ return view.extend({
 			so.value.apply(so, res);
 		})
 		so.load = function(section_id) {
-			return hm.loadLabel.call(this, [
+			return hm.loadChoices.call(this, [
 				...hm.preset_outbound.proxy,
 				['GROUP', _('-- PROXY-GROUP --')],
-				...hm.loadLabelValues(this.config, 'proxy_group'),
+				...hm.loadChoicesGetMap(this.config, 'proxy_group'),
 				['NODE', _('-- PROXY-NODE --')],
-				...hm.loadLabelValues(this.config, 'node')
+				...hm.loadChoicesGetMap(this.config, 'node')
 			], section_id);
 		}
 		so.depends('type', 'select');
@@ -1359,9 +1359,9 @@ return view.extend({
 
 		so = ss.option(form.ListValue, 'SUB-RULE', _('SUB-RULE'));
 		so.load = function(section_id) {
-			hm.loadLabel.call(this, [
+			hm.loadChoices.call(this, [
 				['', _('-- Please choose --')],
-				...hm.loadLabelValues(this.config, 'subrule-group')
+				...hm.loadChoicesGetMap(this.config, 'subrule-group')
 			], section_id);
 
 			return this.section.getOption('entry').instget(section_id).subrule || '';
@@ -1646,9 +1646,9 @@ return view.extend({
 		);
 		const detour_old_load = so.load;
 		so.load = function(section_id) {
-			hm.loadLabel.call(this, [
+			hm.loadChoices.call(this, [
 				...hm.preset_outbound.dns,
-				...hm.loadLabelValues(this.config, 'proxy_group')
+				...hm.loadChoicesGetMap(this.config, 'proxy_group')
 			], section_id);
 
 			return detour_old_load.apply(this, arguments);
