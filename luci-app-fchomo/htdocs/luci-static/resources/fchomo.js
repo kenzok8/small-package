@@ -509,17 +509,17 @@ const CBIGridSection = form.GridSection.extend({
 		return loadDefaultLabel.apply(this, arguments);
 	},
 
-	renderSectionAdd(extra_class) {
+	renderSectionAdd(/* ... */) {
 		const prefmt = this.hm_prefmt || '%s';
 		const LC = this.hm_lowcase_only;
 
-		let el = form.GridSection.prototype.renderSectionAdd.call(this, extra_class),
-			nameEl = el.querySelector('.cbi-section-create-name');
+		let node = form.GridSection.prototype.renderSectionAdd.apply(this, arguments),
+			nameEl = node.querySelector('.cbi-section-create-name');
 
 		nameEl.placeholder = _('Specify a ID');
 
 		ui.addValidator(nameEl, 'uciname', true, (v) => {
-			let button = el.querySelector('.cbi-section-create > .cbi-button-add');
+			let button = node.querySelector('.cbi-section-create > .cbi-button-add');
 
 			if (!v) {
 				button.disabled = true;
@@ -539,7 +539,7 @@ const CBIGridSection = form.GridSection.extend({
 			}
 		}, 'blur', 'keyup');
 
-		return el;
+		return node;
 	},
 
 	handleAdd(ev, name) {
@@ -551,11 +551,11 @@ const CBIGridSection = form.GridSection.extend({
 
 const CBIListValue = form.ListValue.extend({
 	renderWidget(/* ... */) {
-		let frameEl = form.ListValue.prototype.renderWidget.apply(this, arguments);
+		let node = form.ListValue.prototype.renderWidget.apply(this, arguments);
 
-		frameEl.querySelector('select').style["min-width"] = '10em';
+		node.querySelector('select').style["min-width"] = '10em';
 
-		return frameEl;
+		return node;
 	}
 });
 
@@ -567,7 +567,7 @@ const CBIDynamicList = form.DynamicList.extend({ // @less_25_12
 		const choices = this.transformChoices();
 		const items = L.toArray(value);
 
-		const widget = new UIDynamicList(items, choices, {
+		const node = new UIDynamicList(items, choices, {
 			id: this.cbid(section_id),
 			sort: this.keylist,
 			allowduplicates: this.allowduplicates,
@@ -578,7 +578,7 @@ const CBIDynamicList = form.DynamicList.extend({ // @less_25_12
 			disabled: (this.readonly != null) ? this.readonly : this.map.readonly
 		});
 
-		return widget.render();
+		return node.render();
 	}
 });
 
@@ -586,11 +586,11 @@ const CBIStaticList = form.DynamicList.extend({
 	__name__: 'CBI.StaticList',
 
 	renderWidget(/* ... */) {
-		let El = (less_25_12 ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments); // @less_25_12
+		let node = (less_25_12 ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments); // @less_25_12
 
-		El.querySelector('.add-item ul > li[data-value="-"]')?.remove();
+		node.querySelector('.add-item ul > li[data-value="-"]')?.remove();
 
-		return El;
+		return node;
 	}
 });
 
@@ -615,8 +615,8 @@ const CBIGroupListValue = CBIListValue.extend({
 	__name__: 'CBI.GroupListValue',
 
 	renderWidget(section_id, option_index, cfgvalue) {
-		const frameEl = CBIListValue.prototype.renderWidget.apply(this, arguments);
-		const select = frameEl.querySelector('select');
+		const node = CBIListValue.prototype.renderWidget.apply(this, arguments);
+		const select = node.querySelector('select');
 		const options = Array.from(select.options);
 
 		Object.keys(this.grplist).forEach((label) => {
@@ -628,7 +628,7 @@ const CBIGroupListValue = CBIListValue.extend({
 		});
 
 		select.value = (cfgvalue != null) ? cfgvalue : this.default;
-		return frameEl;
+		return node;
 	},
 
 	value(key, val) {
@@ -649,8 +649,8 @@ const CBIGroupDynamicList = (less_25_12 ? CBIDynamicList : form.DynamicList).ext
 	__name__: 'CBI.GroupDynamicList',
 
 	renderWidget(section_id, option_index, cfgvalue) {
-		const frameEl = (less_25_12 ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments); // @less_25_12
-		const select = frameEl.querySelector('ul');
+		const node = (less_25_12 ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments); // @less_25_12
+		const select = node.querySelector('ul');
 		const optLis = Array.from(select.querySelectorAll('li'));
 
 		Object.keys(this.grplist).forEach((label) => {
@@ -667,7 +667,7 @@ const CBIGroupDynamicList = (less_25_12 ? CBIDynamicList : form.DynamicList).ext
 			select.insertBefore(groupLi, firstLi);
 		});
 
-		return frameEl;
+		return node;
 	},
 
 	value: CBIGroupListValue.prototype.value
@@ -677,11 +677,11 @@ const CBIGroupStaticList = CBIGroupDynamicList.extend({
 	__name__: 'CBI.GroupStaticList',
 
 	renderWidget(/* ... */) {
-		let El = CBIGroupDynamicList.prototype.renderWidget.apply(this, arguments);
+		let node = CBIGroupDynamicList.prototype.renderWidget.apply(this, arguments);
 
-		El.querySelector('.add-item ul > li[data-value="-"]')?.remove();
+		node.querySelector('.add-item ul > li[data-value="-"]')?.remove();
 
-		return El;
+		return node;
 	}
 });
 
@@ -699,11 +699,11 @@ const CBIRichMultiValue = form.MultiValue.extend({
 
 const CBITextValue = form.TextValue.extend({
 	renderWidget(/* ... */) {
-		let frameEl = form.TextValue.prototype.renderWidget.apply(this, arguments);
+		let node = form.TextValue.prototype.renderWidget.apply(this, arguments);
 
-		frameEl.querySelector('textarea').style.fontFamily = monospacefonts.join(',');
+		node.querySelector('textarea').style.fontFamily = monospacefonts.join(',');
 
-		return frameEl;
+		return node;
 	}
 });
 
@@ -1377,7 +1377,7 @@ function loadChoicesGetMap(uciconfig, sectiontype, options = {}) {
 	return values;
 }
 
-function renderStatus(ElId, isRunning, instance, noGlobal) {
+function renderStatus(elemId, isRunning, instance, noGlobal) {
 	const visible = isRunning && (isRunning.http || isRunning.https);
 
 	return E([
@@ -1385,7 +1385,7 @@ function renderStatus(ElId, isRunning, instance, noGlobal) {
 			class: 'cbi-button cbi-button-apply' + (noGlobal ? ' hidden' : ''),
 			click: ui.createHandlerFn(this, handleReload, instance)
 		}, [ _('Reload') ]),
-		updateStatus(E('span', { id: ElId, style: 'border: unset; font-style: italic; font-weight: bold' }), isRunning ? true : false),
+		updateStatus(E('span', { id: elemId, style: 'border: unset; font-style: italic; font-weight: bold' }), isRunning ? true : false),
 		E('a', {
 			class: 'cbi-button cbi-button-apply %s'.format(visible ? '' : 'hidden'),
 			href: visible ? getDashURL(isRunning) : '',
@@ -1394,24 +1394,24 @@ function renderStatus(ElId, isRunning, instance, noGlobal) {
 		}, [ _('Open Dashboard') ])
 	]);
 }
-function updateStatus(El, isRunning, instance, noGlobal) {
-	if (El) {
-		El.style.color = isRunning ? 'green' : 'red';
-		El.innerHTML = '&ensp;%s%s&ensp;'.format(noGlobal ? instance + ' ' : '', isRunning ? _('Running') : _('Not Running'));
+function updateStatus(node, isRunning, instance, noGlobal) {
+	if (node) {
+		node.style.color = isRunning ? 'green' : 'red';
+		node.innerHTML = '&ensp;%s%s&ensp;'.format(noGlobal ? instance + ' ' : '', isRunning ? _('Running') : _('Not Running'));
 		/* Dashboard button */
-		if (El.nextSibling?.localName === 'a')
+		if (node.nextSibling?.localName === 'a')
 			getClashAPI(instance).then((res) => {
 				let visible = isRunning && (res.http || res.https);
 				if (visible) {
-					El.nextSibling.classList.remove('hidden');
+					node.nextSibling.classList.remove('hidden');
 				} else
-					El.nextSibling.classList.add('hidden');
+					node.nextSibling.classList.add('hidden');
 
-				El.nextSibling.href = visible ? getDashURL(Object.assign(res, isRunning)) : '';
+				node.nextSibling.href = visible ? getDashURL(Object.assign(res, isRunning)) : '';
 			});
 	}
 
-	return El;
+	return node;
 }
 function getDashURL(isRunning) {
 	const tls = isRunning.https ? 's' : '';
@@ -1508,7 +1508,7 @@ function renderResDownload(section_id) {
 	const url = uci.get(this.config, section_id, 'url');
 	const header = uci.get(this.config, section_id, 'header');
 
-	let El = E([
+	let node = E([
 		E('button', {
 			class: 'cbi-button cbi-button-add',
 			disabled: (type !== 'http') || null,
@@ -1527,14 +1527,14 @@ function renderResDownload(section_id) {
 		}, [ _('🡇') ]) //🗘
 	]);
 
-	return El;
+	return node;
 }
 
 function renderResLink(section_id) {
 	const section_type = this.section.sectiontype;
 	const type = uci.get(this.config, section_id, 'type');
 
-	let El = E([
+	let node = E([
 		E('span', {
 			title: this.readonly ? this.readonly : null
 		}, [
@@ -1549,7 +1549,7 @@ function renderResLink(section_id) {
 		])
 	]);
 
-	return El;
+	return node;
 }
 
 function handleGenKey(section_id, option) {

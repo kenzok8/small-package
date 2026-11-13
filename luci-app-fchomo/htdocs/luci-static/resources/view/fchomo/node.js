@@ -237,15 +237,15 @@ return view.extend({
 		ss.hm_lowcase_only = true;
 		/* Remove idle files start */
 		ss.renderSectionAdd = function(/* ... */) {
-			let el = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
+			let node = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
 
-			el.appendChild(E('button', {
+			node.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
 				'title': _('Remove idles'),
 				'click': ui.createHandlerFn(this, hm.handleRemoveIdles)
 			}, [ _('Remove idles') ]));
 
-			return el;
+			return node;
 		}
 		/* Remove idle files end */
 
@@ -2312,21 +2312,21 @@ return view.extend({
 			return o.render();
 		}
 		ss.renderSectionAdd = function(/* ... */) {
-			let el = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
+			let node = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
 
-			el.appendChild(E('button', {
+			node.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
 				'title': _('mihomo config'),
 				'click': ui.createHandlerFn(this, 'handleYamlImport')
 			}, [ _('Import mihomo config') ]));
 
-			el.appendChild(E('button', {
+			node.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
 				'title': _('Remove idles'),
 				'click': ui.createHandlerFn(this, hm.handleRemoveIdles)
 			}, [ _('Remove idles') ]));
 
-			return el;
+			return node;
 		}
 		/* Import mihomo config and Remove idle files end */
 

@@ -251,27 +251,27 @@ return view.extend({
 			return o.render();
 		}
 		s.renderSectionAdd = function(/* ... */) {
-			let el = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
+			let node = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
 
-			el.appendChild(E('button', {
+			node.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
 				'title': _('mihomo config'),
 				'click': ui.createHandlerFn(this, 'handleYamlImport')
 			}, [ _('Import mihomo config') ]));
 
-			el.appendChild(E('button', {
+			node.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
 				'title': _('Import rule-set links'),
 				'click': ui.createHandlerFn(this, 'handleLinkImport')
 			}, [ _('Import rule-set links') ]));
 
-			el.appendChild(E('button', {
+			node.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
 				'title': _('Remove idles'),
 				'click': ui.createHandlerFn(this, hm.handleRemoveIdles)
 			}, [ _('Remove idles') ]));
 
-			return el;
+			return node;
 		}
 		/* Import mihomo config and Import rule-set links and Remove idle files end */
 

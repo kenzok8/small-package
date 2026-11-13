@@ -77,7 +77,7 @@ function handleResUpdate(type, repo) {
 	});
 }
 
-function renderResVersion(El, type, repo) {
+function renderResVersion(node, type, repo) {
 	return L.resolveDefault(callResVersion(type, repo), {}).then((res) => {
 		let resEl = E([
 			E('button', {
@@ -87,23 +87,23 @@ function renderResVersion(El, type, repo) {
 			updateResVersion(E('span', { style: 'border: unset; font-weight: bold; align-items: center' }), res.version)
 		]);
 
-		if (El) {
-			El.appendChild(resEl);
-			El.lastChild.style.display = 'flex';
+		if (node) {
+			node.appendChild(resEl);
+			node.lastChild.style.display = 'flex';
 		} else
-			El = resEl;
+			node = resEl;
 
-		return El;
+		return node;
 	});
 }
 
-function updateResVersion(El, version) {
-	if (El) {
-		El.style.color = version ? 'green' : 'red';
-		El.innerHTML = '&ensp;%s'.format(version || _('not found'));
+function updateResVersion(node, version) {
+	if (node) {
+		node.style.color = version ? 'green' : 'red';
+		node.innerHTML = '&ensp;%s'.format(version || _('not found'));
 	}
 
-	return El;
+	return node;
 }
 
 return view.extend({
@@ -239,7 +239,7 @@ return view.extend({
 			so.renderWidget = function(section_id, option_index, cfgvalue) {
 				const cval = new URL(cfgvalue || this.default);
 				//console.info(cval.toString());
-				let El = form.Value.prototype.renderWidget.call(this, section_id, option_index, cval.host);
+				let node = form.Value.prototype.renderWidget.call(this, section_id, option_index, cval.host);
 
 				let resEl = E('div',  { 'class': 'control-group' }, [
 					E('select', {
@@ -278,13 +278,13 @@ return view.extend({
 					return true;
 				}, 'change');
 
-				let newEl = E('div', { style: 'font-weight: bold; align-items: center; display: flex' }, []);
-				if (El) {
-					newEl.appendChild(E([El, resEl]));
+				let new_node = E('div', { style: 'font-weight: bold; align-items: center; display: flex' }, []);
+				if (node) {
+					new_node.appendChild(E([node, resEl]));
 				} else
-					newEl.appendChild(resEl);
+					new_node.appendChild(resEl);
 
-				return newEl;
+				return new_node;
 			}
 		}
 		so.onchange = function(ev, section_id, value) {
@@ -344,12 +344,12 @@ return view.extend({
 			so.value.apply(so, repo);
 		})
 		so.renderWidget = function(/* ... */) {
-			let El = form.ListValue.prototype.renderWidget.apply(this, arguments);
+			let node = form.ListValue.prototype.renderWidget.apply(this, arguments);
 
-			El.classList.add('control-group');
-			El.firstChild.style.width = '10em';
+			node.classList.add('control-group');
+			node.firstChild.style.width = '10em';
 
-			return renderResVersion.call(this, El, 'dashboard', this.default);
+			return renderResVersion.call(this, node, 'dashboard', this.default);
 		}
 		so.onchange = function(ev, section_id, value) {
 			this.default = value;

@@ -749,11 +749,11 @@ function renderRules(s, uciconfig) {
 
 	o = s.option(form.DummyValue, 'entry', _('Entry'));
 	o.renderWidget = function(/* ... */) {
-		let El = form.DummyValue.prototype.renderWidget.apply(this, arguments);
+		let node = form.DummyValue.prototype.renderWidget.apply(this, arguments);
 
-		El.firstChild.innerText = new RulesEntry(El.querySelector('input').value).toString('mihomo');
+		node.firstChild.innerText = new RulesEntry(node.querySelector('input').value).toString('mihomo');
 
-		return El;
+		return node;
 	}
 	o.load = function(section_id) {
 		const value = this.super('load', section_id);
@@ -1025,15 +1025,15 @@ return view.extend({
 			return o.render();
 		}
 		ss.renderSectionAdd = function(/* ... */) {
-			let el = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
+			let node = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
 
-			el.appendChild(E('button', {
+			node.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
 				'title': _('mihomo config'),
 				'click': ui.createHandlerFn(this, 'handleYamlImport')
 			}, [ _('Import mihomo config') ]));
 
-			return el;
+			return node;
 		}
 		/* Import mihomo config end */
 
@@ -1326,15 +1326,15 @@ return view.extend({
 			return o.render();
 		}
 		ss.renderSectionAdd = function(/* ... */) {
-			let el = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
+			let node = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
 
-			el.appendChild(E('button', {
+			node.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
 				'title': _('mihomo config'),
 				'click': ui.createHandlerFn(this, 'handleYamlImport')
 			}, [ _('Import mihomo config') ]));
 
-			return el;
+			return node;
 		}
 		/* Import mihomo config end */
 
@@ -1416,15 +1416,15 @@ return view.extend({
 			return o.render();
 		}
 		ss.renderSectionAdd = function(/* ... */) {
-			let el = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
+			let node = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
 
-			el.appendChild(E('button', {
+			node.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
 				'title': _('mihomo config'),
 				'click': ui.createHandlerFn(this, 'handleYamlImport')
 			}, [ _('Import mihomo config') ]));
 
-			return el;
+			return node;
 		}
 		/* Import mihomo config end */
 
@@ -1558,15 +1558,15 @@ return view.extend({
 			return o.render();
 		}
 		ss.renderSectionAdd = function(/* ... */) {
-			let el = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
+			let node = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
 
-			el.appendChild(E('button', {
+			node.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
 				'title': _('mihomo config'),
 				'click': ui.createHandlerFn(this, 'handleYamlImport')
 			}, [ _('Import mihomo config') ]));
 
-			return el;
+			return node;
 		}
 		/* Import mihomo config end */
 
@@ -1732,15 +1732,15 @@ return view.extend({
 			return o.render();
 		}
 		ss.renderSectionAdd = function(/* ... */) {
-			let el = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
+			let node = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
 
-			el.appendChild(E('button', {
+			node.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
 				'title': _('mihomo config'),
 				'click': ui.createHandlerFn(this, 'handleYamlImport')
 			}, [ _('Import mihomo config') ]));
 
-			return el;
+			return node;
 		}
 		/* Import mihomo config end */
 
@@ -1788,15 +1788,15 @@ return view.extend({
 			return o.render();
 		}
 		ss.renderSectionAdd = function(/* ... */) {
-			let el = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
+			let node = hm.GridSection.prototype.renderSectionAdd.apply(this, arguments);
 
-			el.appendChild(E('button', {
+			node.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
 				'title': _('mihomo config'),
 				'click': ui.createHandlerFn(this, 'handleYamlImport')
 			}, [ _('Import mihomo config') ]));
 
-			return el;
+			return node;
 		}
 		/* Import mihomo config end */
 
