@@ -330,7 +330,7 @@ func clashNode(node model.ProxyNode, target model.ClientTarget) string {
 		appendClashCertificateFingerprint(node, &values)
 		if target == model.ClientShadowrocket || target == model.ClientKaring {
 			values = append(values, "    tls: true")
-			appendClashReality(node, &values)
+			appendClashReality(node, target, &values)
 		}
 		appendClashClientFingerprint(node, &values)
 	case model.KindSnell:
@@ -363,7 +363,7 @@ func clashNode(node model.ProxyNode, target model.ClientTarget) string {
 			appendClashALPN(node, &values)
 			appendClashCertificateFingerprint(node, &values)
 			if target == model.ClientShadowrocket || target == model.ClientKaring {
-				appendClashReality(node, &values)
+				appendClashReality(node, target, &values)
 			}
 			appendClashClientFingerprint(node, &values)
 		}
@@ -392,14 +392,19 @@ func mihomoFamily(target model.ClientTarget) bool {
 	return false
 }
 
-// appendClashReality writes the REALITY options block.
-func appendClashReality(node model.ProxyNode, values *[]string) {
+// appendClashReality writes the REALITY options block. support-x25519mlkem768
+// is only emitted for mihomo-based targets; other Clash-family parsers may
+// reject the unknown key.
+func appendClashReality(node model.ProxyNode, target model.ClientTarget, values *[]string) {
 	if !node.UsesReality() {
 		return
 	}
 	*values = append(*values, "    reality-opts:", "      public-key: "+yaml(node.RealityPublicKey))
 	if node.RealityShortID != "" {
 		*values = append(*values, "      short-id: "+yaml(node.RealityShortID))
+	}
+	if node.RealitySupportX25519MLKEM768 != nil && mihomoFamily(target) {
+		*values = append(*values, "      support-x25519mlkem768: "+strconv.FormatBool(*node.RealitySupportX25519MLKEM768))
 	}
 	*values = append(*values, "    client-fingerprint: "+yaml(firstNonEmpty(node.Fingerprint, "chrome")))
 }
@@ -441,7 +446,7 @@ func appendClashTransport(node model.ProxyNode, target model.ClientTarget, value
 		*values = append(*values, "    "+key+": "+yaml(node.SNI))
 	}
 	appendClashCertificateFingerprint(node, values)
-	appendClashReality(node, values)
+	appendClashReality(node, target, values)
 	if node.Kind == model.KindVLESS && node.Flow != "" {
 		*values = append(*values, "    flow: "+yaml(node.Flow))
 	}

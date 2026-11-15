@@ -352,6 +352,9 @@ func buildStandardQuery(node model.ProxyNode) string {
 		if node.RealitySpiderX != "" {
 			add("spx", node.RealitySpiderX)
 		}
+		if node.RealitySupportX25519MLKEM768 != nil {
+			add("support-x25519mlkem768", strconv.FormatBool(*node.RealitySupportX25519MLKEM768))
+		}
 		if node.Fingerprint != "" {
 			add("fp", node.Fingerprint)
 		}

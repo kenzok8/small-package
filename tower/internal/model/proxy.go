@@ -59,6 +59,10 @@ type ProxyNode struct {
 	// RealitySpiderX is REALITY's spiderX path. Only the vless:// URI dialect
 	// carries it; Clash reality-opts and sing-box's reality block do not.
 	RealitySpiderX string `json:"reality_spider_x,omitempty"`
+	// RealitySupportX25519MLKEM768 is the REALITY/TLS-layer X25519MLKEM768
+	// key-share switch (mihomo reality-opts). A nil pointer means "unset";
+	// explicit true/false must survive the round-trip.
+	RealitySupportX25519MLKEM768 *bool `json:"reality_support_x25519mlkem768,omitempty"`
 
 	SkipCertificateVerification bool `json:"skip_cert_verify,omitempty"`
 
