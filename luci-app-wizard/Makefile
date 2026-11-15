@@ -12,7 +12,7 @@ LUCI_DEPENDS:=
 LUCI_PKGARCH:=all
 PKG_NAME:=luci-app-wizard
 
-PKG_MAINTAINER:=Chen Minqiang <ptpt52@gmail.com>
+PKG_MAINTAINER:=Kiddin9
 PKG_LICENSE:=GPLv3
 
 define Package/luci-app-wizard/conffiles

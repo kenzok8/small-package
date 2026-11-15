@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: luci-app-wizard\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-09-20 20:00+0800\n"
-"PO-Revision-Date: 2026-09-20 20:00+0800\n"
+"PO-Revision-Date: 2026-11-16 03:22+0800\n"
 "Last-Translator: Eric\n"
 "Language-Team: Chinese (Simplified) <zh_Hans>\n"
 "Language: zh_Hans\n"
@@ -15,11 +15,20 @@ msgstr ""
 msgid "Home"
 msgstr "首页"
 
+msgid "Default"
+msgstr "默认"
+
+msgid "Auto"
+msgstr "自动"
+
 msgid "Setup Wizard"
 msgstr "快速设置向导"
 
 msgid "Quickly configure common network, wireless, and system settings."
 msgstr "快速配置常用网络、无线与系统运行设置。"
+
+msgid "Grant UCI and filesystem access for LuCI Setup Wizard"
+msgstr "授予 LuCI 快速设置向导访问 UCI 配置与文件系统的权限"
 
 msgid "Net Settings"
 msgstr "网络设置"
@@ -60,6 +69,9 @@ msgstr "LAN IPv4 地址"
 msgid "Custom DNS Server(s)"
 msgstr "自定义 DNS 服务器"
 
+msgid "Leave empty for ISP DNS."
+msgstr "留空则使用上级或运营商默认 DNS。"
+
 msgid "Gateway Address"
 msgstr "网关地址"
 
@@ -70,10 +82,7 @@ msgid "Enable DHCP Server"
 msgstr "启用 DHCP 服务器"
 
 msgid "If this DHCP is enabled, disable the main router's DHCP. If disabled, manually set client devices' gateway and DNS to this bypass router's IP."
-msgstr "开启此DHCP则需要关闭主路由DHCP, 关闭此DHCP则需要手动将上网设备的网关和DNS改为此旁路由的IP。"
-
-msgid "Leave empty for ISP DNS."
-msgstr "留空则使用 ISP 运营商DNS"
+msgstr "开启此 DHCP 时请关闭主路由 DHCP；关闭此 DHCP 时需手动将客户端设备的网关和 DNS 设为本旁路由 IP。"
 
 msgid "IPv6 Support"
 msgstr "IPv6 支持"
@@ -108,8 +117,17 @@ msgstr "自动将普通 HTTP 请求重定向到加密的 HTTPS 连接。"
 msgid "Landing Dashboard Mode"
 msgstr "管理首页展示模式"
 
-msgid "Default"
-msgstr "默认"
+msgid "Auto"
+msgstr "自动"
+
+msgid "Overview"
+msgstr "概览"
+
+msgid "iStoreOS"
+msgstr "iStoreOS"
+
+msgid "Dashboard"
+msgstr "仪表盘"
 
 msgid "RouterDog"
 msgstr "路由狗"
@@ -125,9 +143,6 @@ msgstr "Router"
 
 msgid "Wireless Network Name (SSID)"
 msgstr "无线网络名称 (SSID)"
-
-msgid "无线名称基准前缀，系统将自动识别并为 2.4G 追加 _2.4G、5G 追加 _5G、6G 追加 _6G。"
-msgstr "无线名称基准前缀，系统将自动识别并为 2.4G 追加 _2.4G、5G 追加 _5G、6G 追加 _6G。"
 
 msgid "Wireless Password (Key)"
 msgstr "无线密码"
@@ -165,14 +180,14 @@ msgstr "没有需要应用的更改"
 msgid "LAN IP Address Changed"
 msgstr "LAN 口 IP 地址已变更"
 
-msgid "LAN IP has been changed to "
-msgstr "LAN 口 IP 地址已更改为 "
+msgid "LAN IP has been changed to"
+msgstr "LAN 口 IP 地址已更改为"
 
-msgid "Applying changes without rollback. Redirecting to the new address in "
-msgstr "正在永久应用更改（已禁用回滚保护）。将在 "
+msgid "Applying changes without rollback. Redirecting to the new address in"
+msgstr "正在永久应用更改（已禁用回滚保护）。将在"
 
-msgid " seconds..."
-msgstr " 秒后自动跳转至新地址..."
+msgid "seconds..."
+msgstr "秒后自动跳转至新地址..."
 
 msgid "提示：更改网段后，若未能自动加载新页面，请尝试重新插拔网线或断开重连 Wi-Fi，以获取新网段的 IP 地址。"
 msgstr "提示：更改网段后，若未能自动加载新页面，请尝试重新插拔网线或断开重连 Wi-Fi，以获取新网段的 IP 地址。"

@@ -526,10 +526,10 @@ return view.extend({
 				// 1. 核心操作：调用 apply_unchecked，进行强制永久提交，彻底绕过 90 秒回滚保护机制！
 				L.post(L.url('admin', 'uci', 'apply_unchecked')).catch(function() {});
 
-				// 2. 立即在前端呼出弹窗遮罩层
+				// 2. 立即在前端呼出弹窗遮罩层（剥离 _() 内首尾空格以防 po2lmo 截断导致匹配失效）
 				ui.showModal(_('LAN IP Address Changed'), [
-					E('p', {}, [_('LAN IP has been changed to '), E('strong', {}, newIp), '.']),
-					E('p', {}, [_('Applying changes without rollback. Redirecting to the new address in '), countSpan, _(' seconds...')]),
+					E('p', {}, [_('LAN IP has been changed to'), ' ', E('strong', {}, newIp), '.']),
+					E('p', {}, [_('Applying changes without rollback. Redirecting to the new address in'), ' ', countSpan, ' ', _('seconds...')]),
 					E('p', { 'class': 'alert-message notice', 'style': 'margin-top: 1em;' },
 						_('提示：更改网段后，若未能自动加载新页面，请尝试重新插拔网线或断开重连 Wi-Fi，以获取新网段的 IP 地址。')),
 					E('div', { 'class': 'spinning', 'style': 'margin: 1.5em auto;' }),
