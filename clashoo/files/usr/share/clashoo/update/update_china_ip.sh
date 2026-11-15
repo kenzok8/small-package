@@ -14,6 +14,10 @@ TMP_V4="$TMP_ROOT/china_ip.txt"
 TMP_V6="$TMP_ROOT/china_ipv6.txt"
 OUT_V4="$TMP_ROOT/geoip_cn.nft"
 OUT_V6="$TMP_ROOT/geoip6_cn.nft"
+# 失败现场放到固定路径：TMP_ROOT 会被 trap 清掉，事后才能回溯。
+KEEP_FAILED="${KEEP_FAILED:-/tmp/clashoo_china_ip_failed.txt}"
+render_failure=""
+render_detail=""
 
 log() {
 	printf '  %s - %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1" >> "$LOG_FILE"
@@ -60,17 +64,23 @@ render_nft_set() {
 	local output_file="$2"
 	local set_name="$3"
 	local set_type="$4"
+	local awk_log="$output_file.awk-error"
+	local nft_log="$output_file.nft-error"
+
+	render_failure=""
+	render_detail=""
 
 	awk -v set_name="$set_name" -v set_type="$set_type" '
 	function valid_cidr(value, parts, octets, i, prefix) {
-		if (split(value, parts, "/") != 2 || parts[2] !~ /^[0-9]+$/)
+		if (split(value, parts, "/") != 2 || parts[2] !~ /^[0-9]+$/ || parts[2] ~ /^0[0-9]/)
 			return 0
 		prefix = parts[2] + 0
 		if (set_type == "ipv4_addr") {
 			if (prefix > 32 || split(parts[1], octets, ".") != 4)
 				return 0
+			# nft 不认前导零（010.1.2.0/24），不在这里拦就只能等 nft 报错，看不出是哪一行
 			for (i = 1; i <= 4; i++)
-				if (octets[i] !~ /^[0-9]+$/ || length(octets[i]) > 3 || octets[i] + 0 > 255)
+				if (octets[i] !~ /^[0-9]+$/ || octets[i] ~ /^0[0-9]/ || length(octets[i]) > 3 || octets[i] + 0 > 255)
 					return 0
 			return 1
 		}
@@ -108,10 +118,35 @@ render_nft_set() {
 		if (invalid || first)
 			exit 1
 	}
-	' "$source_file" > "$output_file" || return 1
+	' "$source_file" > "$output_file" 2>"$awk_log" || {
+		render_failure="格式校验失败"
+		render_detail=$(head -n 1 "$awk_log" 2>/dev/null)
+		return 1
+	}
 	# nft catches malformed IPv6 forms and invalid network prefixes before replacement.
-	{ printf 'table inet clashoo_validate {\n'; cat "$output_file"; printf '\n}\n'; } |
-		nft -c -f - >/dev/null 2>&1
+	if { printf 'table inet clashoo_validate {\n'; cat "$output_file"; printf '\n}\n'; } |
+		nft -c -f - >/dev/null 2>"$nft_log"; then
+		return 0
+	fi
+	render_failure="nft 校验失败"
+	render_detail=$(head -n 1 "$nft_log" 2>/dev/null)
+	return 1
+}
+
+# 失败时保留现场：报错内容加下载到的原始文件，事后才能定位到行。
+report_render_failure() {
+	local label="$1"
+	local source_file="$2"
+	local lines
+	lines=$(grep -c '[^[:space:]]' "$source_file" 2>/dev/null || true)
+	[ -n "$render_detail" ] || render_detail="报错为空"
+	if cp -f "$source_file" "$KEEP_FAILED" 2>/dev/null; then
+		chmod 644 "$KEEP_FAILED" >/dev/null 2>&1 || true
+		log "${label}校验失败（${render_failure:-未知}），条目 ${lines:-?}，$(nft --version 2>/dev/null | head -n 1)，保留原文件；原始文件已存到 $KEEP_FAILED"
+	else
+		log "${label}校验失败（${render_failure:-未知}），条目 ${lines:-?}，$(nft --version 2>/dev/null | head -n 1)，保留原文件"
+	fi
+	log "${label}报错：$render_detail"
 }
 
 url4="$(uci -q get clashoo.config.china_ip_url 2>/dev/null || true)"
@@ -135,7 +170,7 @@ download_with_fallback "$url4" "$TMP_V4"
 changed=0
 
 if ! render_nft_set "$TMP_V4" "$OUT_V4" clashoo_china ipv4_addr; then
-	log '大陆 IPv4 白名单包含无效 CIDR，保留原文件'
+	report_render_failure '大陆 IPv4 白名单' "$TMP_V4"
 	exit 1
 fi
 if cmp -s "$OUT_V4" "$TARGET_V4"; then
@@ -150,7 +185,7 @@ fi
 if download_with_fallback "$url6" "$TMP_V6"; then
 	if [ -s "$TMP_V6" ]; then
 		if ! render_nft_set "$TMP_V6" "$OUT_V6" clashoo_china6 ipv6_addr; then
-			log '大陆 IPv6 白名单包含无效 CIDR，保留原文件'
+			report_render_failure '大陆 IPv6 白名单' "$TMP_V6"
 			exit 1
 		fi
 		if cmp -s "$OUT_V6" "$TARGET_V6"; then

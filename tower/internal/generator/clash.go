@@ -213,6 +213,7 @@ func clashNode(node model.ProxyNode, target model.ClientTarget) string {
 			"    uuid: "+yaml(exportableUUID(node.UUID)),
 			"    udp: true",
 		)
+		appendClashVLESSEncryption(node, target, &values)
 		appendClashTransport(node, target, &values)
 	case model.KindTrojan:
 		values = append(values,
@@ -368,6 +369,27 @@ func clashNode(node model.ProxyNode, target model.ClientTarget) string {
 		}
 	}
 	return strings.Join(values, "\n")
+}
+
+// appendClashVLESSEncryption writes mihomo's top-level vless `encryption`
+// option. Only mihomo-based targets parse it; Stash and Clash Apple treat it as
+// an unknown key and may reject the whole proxy.
+func appendClashVLESSEncryption(node model.ProxyNode, target model.ClientTarget, values *[]string) {
+	if !node.UsesVLESSEncryption() || !mihomoFamily(target) {
+		return
+	}
+	*values = append(*values, "    encryption: "+yaml(node.VLESSEncryption))
+}
+
+// mihomoFamily lists the Clash-family clients built on mihomo's option parser.
+func mihomoFamily(target model.ClientTarget) bool {
+	switch target {
+	case model.ClientOpenClash, model.ClientNikki, model.ClientClashoo,
+		model.ClientClashVerge, model.ClientMihomoParty, model.ClientFlClash,
+		model.ClientClashMi, model.ClientClashMac, model.ClientKaring:
+		return true
+	}
+	return false
 }
 
 // appendClashReality writes the REALITY options block.

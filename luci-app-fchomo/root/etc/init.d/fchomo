@@ -132,7 +132,7 @@ log() {
 
 start_service() {
 	local client_enabled server_enabled
-	config_get client_enabled "routing" "client_enabled" "0"
+	config_get_bool client_enabled "routing" "client_enabled" "0"
 	config_get_bool server_enabled "routing" "server_enabled" "0"
 
 	if [ "$client_enabled" = "0" -a "$server_enabled" = "0" ]; then

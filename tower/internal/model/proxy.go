@@ -53,6 +53,12 @@ type ProxyNode struct {
 	CertificateFingerprint string `json:"certificate_fingerprint,omitempty"`
 	Fingerprint            string `json:"fingerprint,omitempty"`
 	Flow                   string `json:"flow,omitempty"`
+	// VLESSEncryption is Xray's VLESS encryption layer, unrelated to REALITY.
+	// mihomo accepts it as a top-level vless option; sing-box has no equivalent.
+	VLESSEncryption string `json:"vless_encryption,omitempty"`
+	// RealitySpiderX is REALITY's spiderX path. Only the vless:// URI dialect
+	// carries it; Clash reality-opts and sing-box's reality block do not.
+	RealitySpiderX string `json:"reality_spider_x,omitempty"`
 
 	SkipCertificateVerification bool `json:"skip_cert_verify,omitempty"`
 
@@ -96,6 +102,12 @@ type ProxyNode struct {
 // UsesReality reports whether the node negotiates REALITY rather than plain TLS.
 func (n *ProxyNode) UsesReality() bool {
 	return n.RealityPublicKey != ""
+}
+
+// UsesVLESSEncryption reports whether the node carries Xray's VLESS encryption
+// layer, which only mihomo can express among the generated formats.
+func (n *ProxyNode) UsesVLESSEncryption() bool {
+	return n.Kind == KindVLESS && n.VLESSEncryption != ""
 }
 
 // ExportablePath returns the transport path with a leading slash, matching what

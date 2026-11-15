@@ -477,6 +477,8 @@ func parseLegacyVLESS(raw, sourceID string) *model.ProxyNode {
 		ALPN:                        percentDecode(query["alpn"]),
 		RealityPublicKey:            realityPublicKey,
 		RealityShortID:              percentDecode(query["sid"]),
+		RealitySpiderX:              percentDecode(query["spx"]),
+		VLESSEncryption:             normalizeVLESSEncryption(percentDecode(query["encryption"])),
 		CertificateFingerprint:      percentDecode(firstNonEmpty(query["pcs"], query["pinsha256"], query["pin-sha256"])),
 		Fingerprint:                 realityFingerprint(query, realityPublicKey != ""),
 		Flow:                        flow,
@@ -629,6 +631,8 @@ func parseStandardURL(raw string, kind model.ProxyKind, sourceID string) *model.
 		ALPN:                        normalizedALPN(queryValues(u, "alpn")),
 		RealityPublicKey:            map[bool]string{true: realityPublicKey, false: ""}[carriesReality],
 		RealityShortID:              map[bool]string{true: query["sid"], false: ""}[carriesReality],
+		RealitySpiderX:              map[bool]string{true: query["spx"], false: ""}[carriesReality],
+		VLESSEncryption:             map[bool]string{true: normalizeVLESSEncryption(query["encryption"]), false: ""}[kind == model.KindVLESS],
 		CertificateFingerprint:      firstNonEmpty(query["pinsha256"], query["pin-sha256"], query["tls-fingerprint"], query["pcs"]),
 		Fingerprint:                 firstNonEmpty(query["fp"], query["client_fingerprint"], query["client-fingerprint"], map[bool]string{true: query["fingerprint"], false: ""}[carriesReality]),
 		Flow:                        flow,
@@ -976,6 +980,16 @@ func transportPath(query map[string]string, transport string) string {
 		return firstNonEmpty(query["servicename"], query["service_name"], query["path"])
 	}
 	return query["path"]
+}
+
+// normalizeVLESSEncryption drops `none` and blanks: generators must not emit a
+// field that means "no encryption".
+func normalizeVLESSEncryption(value string) string {
+	value = strings.TrimSpace(value)
+	if strings.EqualFold(value, "none") {
+		return ""
+	}
+	return value
 }
 
 func realityFingerprint(query map[string]string, reality bool) string {

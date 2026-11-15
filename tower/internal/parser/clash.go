@@ -105,6 +105,7 @@ func parseClashYAML(text, sourceID string) ParsedContent {
 			CertificateFingerprint:      firstNonEmpty(str(d["tls-fingerprint"]), str(d["fingerprint"])),
 			Fingerprint:                 firstNonEmpty(str(d["client-fingerprint"]), str(d["fp"])),
 			Flow:                        str(d["flow"]),
+			VLESSEncryption:             map[bool]string{true: normalizeVLESSEncryption(clashYAMLScalar(str(d["encryption"]))), false: ""}[kind == model.KindVLESS],
 			SkipCertificateVerification: boolString(str(d["skip-cert-verify"])),
 			AlterID:                     numPtr(firstNonEmpty(str(d["alterid"]), str(d["alter-id"]))),
 			ProtocolName:                str(d["protocol"]),
