@@ -9,12 +9,12 @@ include $(TOPDIR)/rules.mk
 KAIPLUS_ARCH_x86_64:=amd64
 KAIPLUS_ARCH_aarch64:=arm64
 KAIPLUS_ARCH:=$(KAIPLUS_ARCH_$(ARCH))
-KAIPLUS_HASH_x86_64:=945d1bcd7871426a10a77089512328e01e1db292f5dafbcf4e5c6b38f5a15cce
-KAIPLUS_HASH_aarch64:=8ea9ce946e42f95b02f98749869d4990008d7221705beb51a9a90c00a1b00f83
+KAIPLUS_HASH_x86_64:=15773187b86183eb802b03b48d4dbeccf27d2ae849aea002cc9cb16efbfa0d2d
+KAIPLUS_HASH_aarch64:=4d1eeca6cfecca4742d9a7fb7b1c25a819c90d5c6ff9a188ed0eb25ee2b9b691
 
 PKG_NAME:=kaiplus
-PKG_VERSION:=1.0.11
-PKG_RELEASE:=3
+PKG_VERSION:=1.0.15
+PKG_RELEASE:=1
 
 KAIPLUS_URL_FILE:=kaiplus-linux-$(KAIPLUS_ARCH)
 KAIPLUS_DOWNLOAD:=$(KAIPLUS_URL_FILE)-$(KAIPLUS_HASH_$(ARCH))
@@ -28,7 +28,7 @@ RSTRIP:=:
 include $(INCLUDE_DIR)/package.mk
 
 define Download/kaiplus
-	URL:=https://fw.koolcenter.com/binary/kai/releases/build/
+	URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/kaiplus-runtime-v$(PKG_VERSION)/
 	URL_FILE:=$(KAIPLUS_URL_FILE)
 	FILE:=$(KAIPLUS_DOWNLOAD)
 	HASH:=$(KAIPLUS_HASH_$(ARCH))
@@ -40,7 +40,7 @@ define Package/$(PKG_NAME)
 	SUBMENU:=
 	TITLE:=KaiPlus
 	URL:=https://github.com/linkease/istore-packages
-	DEPENDS:=@(x86_64||aarch64) +linkease-app-entry
+	DEPENDS:=@(x86_64||aarch64) +linkease-app-entry +changeguard
 endef
 
 define Package/$(PKG_NAME)/description
@@ -48,6 +48,7 @@ define Package/$(PKG_NAME)/description
 endef
 
 define Package/$(PKG_NAME)/conffiles
+/etc/init.d/kaiplus
 /etc/config/kaiplus
 endef
 
@@ -88,10 +89,12 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/share/kaiplus $(1)/usr/share/linkease/apps.d $(1)/etc/init.d $(1)/etc/config
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/kaiplus $(1)/usr/sbin/kaiplus
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/usr/share/kaiplus $(1)/usr/share/linkease/apps.d $(1)/usr/share/rpcd/acl.d $(1)/etc/init.d $(1)/etc/config
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/kaiplus $(1)/usr/sbin/kaiplus_bin
+	ln -sf kaiplus_bin $(1)/usr/sbin/kaiplus
 	$(INSTALL_DATA) ./files/logo.png $(1)/usr/share/kaiplus/logo.png
 	$(INSTALL_DATA) ./files/kaiplus-plugin.json $(1)/usr/share/kaiplus/kaiplus-plugin.json
+	$(INSTALL_DATA) ./files/kaiplus.json $(1)/usr/share/rpcd/acl.d/kaiplus.json
 	ln -sf /usr/share/kaiplus/kaiplus-plugin.json $(1)/usr/share/linkease/apps.d/00-kaiplus-plugin.json
 	$(INSTALL_BIN) ./files/kaiplus.init $(1)/etc/init.d/kaiplus
 	$(INSTALL_CONF) ./files/kaiplus.config $(1)/etc/config/kaiplus

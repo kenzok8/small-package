@@ -1,0 +1,7 @@
+{
+  "kaiplus": {
+    "description": "KaiPlus administrator tools on this device",
+    "read": { "ubus": { "system": ["board"] } },
+    "write": { "ubus": { "session": ["access"] } }
+  }
+}

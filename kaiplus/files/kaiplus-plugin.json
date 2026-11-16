@@ -25,6 +25,7 @@
       }
     }
   },
+  "auth": { "mode": "passthrough" },
   "backend": {
     "type": "http",
     "scheme": "http",

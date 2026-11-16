@@ -1,0 +1,4 @@
+config optimemachine 'main'
+	option config_file '/etc/optimemachine/config.json'
+	option scheme 'http'
+	option socket_path '/var/run/optimemachine.sock'

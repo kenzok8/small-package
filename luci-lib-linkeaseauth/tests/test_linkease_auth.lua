@@ -65,11 +65,12 @@ bridge:auth()
 local state = result.redirect:match("/auth_finish/([A-Za-z0-9_-]+)$")
 equal(type(state), "string", "auth begin must encode return intent into the protected path")
 
-bridge, result = scenario({
+bridge, result, headers = scenario({
 	cookies = { sysauth = "valid-session" },
 	valid_sid = "valid-session"
 })
 bridge:auth_finish(state)
+equal(has_header(headers, "linkease_openwrt_sid=valid%-session; Path=/apps"), true)
 equal(result.redirect, "/apps/kaiplus/")
 
 local first_bridge, first_result = scenario({
