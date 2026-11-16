@@ -1,0 +1,112 @@
+#!/usr/bin/ucode
+
+'use strict';
+
+import { access, popen, writefile } from 'fs';
+import { get_users, get_groups, get_cgroups, load_profile } from '/etc/nikki/ucode/include.uc';
+
+const methods = {
+	version: {
+		call: function() {
+			let process;
+			let app = '';
+			if (system('command -v opkg') == 0) {
+				process = popen('opkg list-installed luci-app-nikki | cut -d " " -f 3');
+				if (process) {
+					app = trim(process.read('all'));
+					process.close();
+				}
+			} else if (system('command -v apk') == 0) {
+				process = popen('apk list -I luci-app-nikki | cut -d " " -f 1 | cut -d "-" -f 4');
+				if (process) {
+					app = trim(process.read('all'));
+					process.close();
+				}
+			}
+			let core = '';
+			process = popen('mihomo -v | grep Mihomo | cut -d " " -f 3');
+			if (process) {
+				core = trim(process.read('all'));
+				process.close();
+			}
+			return { app: app, core: core };
+		}
+	},
+	profile: {
+		args: { defaults: {} },
+		call: function(req) {
+			let profile = {};
+			const defaults = req.args?.defaults ?? {};
+			const filepath = '/etc/nikki/run/config.yaml';
+			const tmpFilepath = '/var/run/nikki/profile.json';
+			if (access(filepath, 'r')) {
+				writefile(tmpFilepath, defaults);
+				const command = `yq -M -p yaml -o json eval-all 'select(fi == 0) *? select(fi == 1)' ${tmpFilepath} ${filepath}`;
+				const process = popen(command);
+				if (process) {
+					profile = json(process);
+					process.close();
+				}
+			}
+			return profile;
+		}
+	},
+	update_subscription: {
+		args: { section_id: 'section_id' },
+		call: function(req) {
+			let success = false;
+			const section_id = req.args?.section_id;
+			if (section_id) {
+				success = system(['service', 'nikki', 'update_subscription', section_id]) == 0;
+			}
+			return { success: success };
+		}
+	},
+	api: {
+		args: { method: 'method', path: 'path', query: 'query', body: 'body' },
+		call: function(req) {
+			let result = {};
+
+			const method = req.args?.method;
+			const path = req.args?.path;
+			const query = req.args?.query;
+			const body = req.args?.body;
+
+			const profile = load_profile();
+			const api_listen = profile['external-controller'];
+			const api_tls_listen = profile['external-controller-tls'];
+			const api_secret = profile['secret'];
+			if (!api_listen && !api_tls_listen) {
+				return result;
+			}
+
+			const protocol = api_tls_listen ? 'https' : 'http';
+
+			const url = (api_tls_listen ?? api_listen) + path;
+
+			const process = popen(`curl --proto-default '${protocol}' --insecure --request '${method}' --oauth2-bearer '${api_secret}' --url-query '${query}' --data '${body}' '${url}'`);
+			if (process) {
+				result = json(process);
+				process.close();
+			}
+
+			return result;
+		}
+	},
+	get_identifiers: {
+		call: function() {
+			const users = filter(get_users(), (x) => x != '');
+			const groups = filter(get_groups(), (x) => x != '');
+			const cgroups = filter(get_cgroups(), (x) => x != '' && index(x, 'services/nikki') < 0);
+			return { users: users, groups: groups, cgroups: cgroups };
+		}
+	},
+	debug: {
+		call: function() {
+			const success = system('/etc/nikki/scripts/debug.sh > /var/log/nikki/debug.log') == 0;
+			return { success: success };
+		}
+	}
+};
+
+return { 'luci.nikki': methods };

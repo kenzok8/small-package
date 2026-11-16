@@ -1,0 +1,657 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=10
+USE_PROCD=1
+
+PROG="/usr/bin/mihomo"
+
+. "$IPKG_INSTROOT/etc/nikki/scripts/include.sh"
+
+extra_command 'update_subscription' 'Update subscription by section id'
+extra_command 'clear_logs' 'Clear logs if size exceeds the limit'
+
+boot_func() {
+	# prepare files
+	prepare_files
+	# load config
+	config_load nikki
+	# start delay
+	local enabled start_delay
+	config_get_bool enabled "config" "enabled" 0
+	config_get start_delay "config" "start_delay" 0
+	if [ "$enabled" = 1 ] && [ "$start_delay" -gt 0 ]; then
+		log "App" "Start after $start_delay seconds."
+		sleep "$start_delay"
+	fi
+	# start
+	start
+}
+
+boot() {
+	boot_func < /dev/null > /dev/null 2>&1 &
+}
+
+start_service() {
+	# prepare files
+	prepare_files
+	# load config
+	config_load nikki
+	# check if enabled
+	local enabled
+	config_get_bool enabled "config" "enabled" 0
+	if [ "$enabled" = 0 ]; then
+		log "App" "Disabled."
+		log "App" "Exit."
+		return
+	fi
+	# start
+	log "App" "Enabled."
+	log "App" "Start."
+	# check if executable
+	if [ ! -x $PROG ]; then
+		log "App" "Core is not executable."
+		log "App" "Exit."
+		return
+	fi
+	# get config
+	## app config
+	local scheduled_restart scheduled_restart_cron profile test_profile core_only
+	config_get_bool scheduled_restart "config" "scheduled_restart" 0
+	config_get scheduled_restart_cron "config" "scheduled_restart_cron"
+	config_get profile "config" "profile"
+	config_get_bool test_profile "config" "test_profile" 0
+	config_get_bool core_only "config" "core_only" 0
+	## procd config
+	### general
+	local fast_reload
+	config_get_bool fast_reload "procd" "fast_reload" 0
+	### rlimit
+	local rlimit_nproc_soft rlimit_nproc_hard rlimit_address_space_soft rlimit_address_space_hard rlimit_data_soft rlimit_data_hard rlimit_stack_soft rlimit_stack_hard rlimit_nofile_soft rlimit_nofile_hard
+	config_get rlimit_nproc_soft "procd" "rlimit_nproc_soft" "$(ulimit -Su)"
+	config_get rlimit_nproc_hard "procd" "rlimit_nproc_hard" "$(ulimit -Hu)"
+	config_get rlimit_address_space_soft "procd" "rlimit_address_space_soft"
+	config_get rlimit_address_space_hard "procd" "rlimit_address_space_hard"
+	config_get rlimit_data_soft "procd" "rlimit_data_soft"
+	config_get rlimit_data_hard "procd" "rlimit_data_hard"
+	config_get rlimit_stack_soft "procd" "rlimit_stack_soft"
+	config_get rlimit_stack_hard "procd" "rlimit_stack_hard"
+	config_get rlimit_nofile_soft "procd" "rlimit_nofile_soft" "$(ulimit -Sn)"
+	config_get rlimit_nofile_hard "procd" "rlimit_nofile_hard" "$(ulimit -Hn)"
+	### environment variable
+	local env_go_max_procs env_go_mem_limit env_safe_paths env_disable_loopback_detector env_disable_quic_go_gso env_disable_quic_go_ecn env_skip_system_ipv6_check
+	config_get env_go_max_procs "procd" "env_go_max_procs"
+	config_get env_go_mem_limit "procd" "env_go_mem_limit"
+	config_get env_safe_paths "procd" "env_safe_paths"
+	config_get_bool env_disable_loopback_detector "procd" "env_disable_loopback_detector" 0
+	config_get_bool env_disable_quic_go_gso "procd" "env_disable_quic_go_gso" 0
+	config_get_bool env_disable_quic_go_ecn "procd" "env_disable_quic_go_ecn" 0
+	config_get_bool env_skip_system_ipv6_check "procd" "env_skip_system_ipv6_check" 0
+	## mixin config
+	### overwrite
+	local overwrite_authentication overwrite_tun_dns_hijack overwrite_fake_ip_filter overwrite_hosts overwrite_dns_nameserver overwrite_dns_nameserver_policy overwrite_sniffer_sniff overwrite_sniffer_force_domain_name overwrite_sniffer_ignore_domain_name
+	config_get_bool overwrite_authentication "mixin" "authentication" 0
+	config_get_bool overwrite_tun_dns_hijack "mixin" "tun_dns_hijack" 0
+	config_get_bool overwrite_fake_ip_filter "mixin" "fake_ip_filter" 0
+	config_get_bool overwrite_hosts "mixin" "hosts" 0
+	config_get_bool overwrite_dns_nameserver "mixin" "dns_nameserver" 0
+	config_get_bool overwrite_dns_nameserver_policy "mixin" "dns_nameserver_policy" 0
+	config_get_bool overwrite_sniffer_force_domain_name "mixin" "sniffer_force_domain_name" 0
+	config_get_bool overwrite_sniffer_ignore_domain_name "mixin" "sniffer_ignore_domain_name" 0
+	config_get_bool overwrite_sniffer_sniff "mixin" "sniffer_sniff" 0
+	### mixin file content
+	local mixin_file_content
+	config_get_bool mixin_file_content "mixin" "mixin_file_content" 0
+	## core config
+	local redirect_listener_name tproxy_listener_name tun_listener_name
+	config_get redirect_listener_name "core" "redirect_listener_name"
+	config_get tproxy_listener_name "core" "tproxy_listener_name"
+	config_get tun_listener_name "core" "tun_listener_name"
+	## proxy config
+	local proxy_enabled ipv4_dns_hijack ipv6_dns_hijack tcp_mode udp_mode
+	config_get_bool proxy_enabled "proxy" "enabled" 0
+	config_get_bool ipv4_dns_hijack "proxy" "ipv4_dns_hijack" 0
+	config_get_bool ipv6_dns_hijack "proxy" "ipv6_dns_hijack" 0
+	config_get tcp_mode "proxy" "tcp_mode"
+	config_get udp_mode "proxy" "udp_mode"
+	## log config
+	local log_scheduled_clear log_scheduled_clear_cron
+	config_get_bool log_scheduled_clear "log" "scheduled_clear" 0
+	config_get log_scheduled_clear_cron "log" "scheduled_clear_cron"
+	# get profile
+	local profile_type; profile_type=$(echo "$profile" | cut -d ':' -f 1)
+	local profile_id; profile_id=$(echo "$profile" | cut -d ':' -f 2)
+	if [ "$profile_type" = "file" ]; then
+		local profile_name; profile_name="$profile_id"
+		local profile_file; profile_file="$PROFILES_DIR/$profile_name"
+		log "Profile" "Use file: $profile_name."
+		if [ ! -f "$profile_file" ]; then
+			log "Profile" "File not found."
+			log "App" "Exit."
+			return
+		fi
+		cp -f "$profile_file" "$RUN_PROFILE_PATH"
+	elif [ "$profile_type" = "subscription" ]; then
+		local subscription_section; subscription_section="$profile_id"
+		local subscription_name subscription_prefer
+		config_get subscription_name "$subscription_section" "name"
+		config_get subscription_prefer "$subscription_section" "prefer" "remote"
+		log "Profile" "Use subscription: $subscription_name."
+		local subscription_file; subscription_file="$SUBSCRIPTIONS_DIR/$subscription_section.yaml"
+		if [ "$subscription_prefer" = "remote" ] || [ ! -f "$subscription_file" ]; then
+			update_subscription "$subscription_section"
+		fi
+		if [ ! -f "$subscription_file" ]; then
+			log "Profile" "Subscription file not found."
+			log "App" "Exit."
+			return
+		fi
+		cp -f "$subscription_file" "$RUN_PROFILE_PATH"
+	else
+		log "Profile" "No profile/subscription selected."
+		log "App" "Exit."
+		return
+	fi
+	# mixin
+	if [ "$core_only" = 0 ]; then
+		log "Mixin" "Mixin config."
+		if [ "$overwrite_authentication" = 1 ]; then
+			yq -M -i 'del(.authentication)' "$RUN_PROFILE_PATH"
+		fi
+		if [ "$overwrite_tun_dns_hijack" = 1 ]; then
+			yq -M -i 'del(.tun.dns-hijack)' "$RUN_PROFILE_PATH"
+		fi
+		if [ "$overwrite_fake_ip_filter" = 1 ]; then
+			yq -M -i 'del(.dns.fake-ip-filter)' "$RUN_PROFILE_PATH"
+		fi
+		if [ "$overwrite_hosts" = 1 ]; then
+			yq -M -i 'del(.hosts)' "$RUN_PROFILE_PATH"
+		fi
+		if [ "$overwrite_dns_nameserver" = 1 ]; then
+			yq -M -i 'del(.dns.default-nameserver) | del(.dns.proxy-server-nameserver) | del(.dns.direct-nameserver) | del(.dns.nameserver) | del(.dns.fallback) ' "$RUN_PROFILE_PATH"
+		fi
+		if [ "$overwrite_dns_nameserver_policy" = 1 ]; then
+			yq -M -i 'del(.dns.nameserver-policy)' "$RUN_PROFILE_PATH"
+		fi
+		if [ "$overwrite_sniffer_force_domain_name" = 1 ]; then
+			yq -M -i 'del(.sniffer.force-domain)' "$RUN_PROFILE_PATH"
+		fi
+		if [ "$overwrite_sniffer_ignore_domain_name" = 1 ]; then
+			yq -M -i 'del(.sniffer.skip-domain)' "$RUN_PROFILE_PATH"
+		fi
+		if [ "$overwrite_sniffer_sniff" = 1 ]; then
+			yq -M -i 'del(.sniffer.sniff)' "$RUN_PROFILE_PATH"
+		fi
+		if [ "$mixin_file_content" = 0 ]; then
+			ucode -S "$MIXIN_UC" | yq -M -p json -o yaml | yq -M -i eval-all '... comments="" | . as $item ireduce ({}; . * $item ) | .proxies = .nikki-proxies + .proxies | del(.nikki-proxies) | .proxy-groups = .nikki-proxy-groups + .proxy-groups | del(.nikki-proxy-groups) | .rules = .nikki-rules + .rules | del(.nikki-rules) | explode(.)' "$RUN_PROFILE_PATH" -
+		elif [ "$mixin_file_content" = 1 ]; then
+			ucode -S "$MIXIN_UC" | yq -M -p json -o yaml | yq -M -i eval-all '... comments="" | . as $item ireduce ({}; . * $item ) | .proxies = .nikki-proxies + .proxies | del(.nikki-proxies) | .proxy-groups = .nikki-proxy-groups + .proxy-groups | del(.nikki-proxy-groups) | .rules = .nikki-rules + .rules | del(.nikki-rules) | explode(.)' "$RUN_PROFILE_PATH" "$MIXIN_FILE_PATH" -
+		fi
+		if [ "$proxy_enabled" = 1 ]; then
+			if yq -M -e 'has("tun")' "$RUN_PROFILE_PATH" > /dev/null 2>&1; then
+				yq -M -i '(.tun) |= (.auto-route = false | .auto-redirect = false | .auto-detect-interface = false | .disable-icmp-forwarding = true)' "$RUN_PROFILE_PATH"
+			fi
+			if yq -M -e 'has("listeners")' "$RUN_PROFILE_PATH" > /dev/null 2>&1; then
+				yq -M -i '(.listeners[] | select(.type == "tun")) |= (.auto-route = false | .auto-redirect = false | .auto-detect-interface = false | .disable-icmp-forwarding = true)' "$RUN_PROFILE_PATH"
+			fi
+		fi
+	fi
+	# check profile
+	if [ "$core_only" = 0 ] && [ "$proxy_enabled" = 1 ]; then
+		log "Profile" "Checking..."
+		if [ "$ipv4_dns_hijack" = 1 ] || [ "$ipv6_dns_hijack" = 1 ]; then
+			if yq -M -e '(has("dns") and (.dns | .enable) and (.dns | has("listen"))) | not' "$RUN_PROFILE_PATH" > /dev/null 2>&1; then
+				log "Profile" "Check failed."
+				log "Profile" "DNS should be enabled and listen should be defined."
+				log "App" "Exit."
+				return
+			fi
+		fi
+		if [ "$tcp_mode" = "redirect" ]; then
+			if yq -M -e "(has(\"redir-port\") or (has(\"listeners\") and .listeners | any_c(.name == \"$redirect_listener_name\" and .type == \"redir\"))) | not" "$RUN_PROFILE_PATH" > /dev/null 2>&1; then
+				log "Profile" "Check failed."
+				log "Profile" "Redirect Port/Listener should be defined."
+				log "App" "Exit."
+				return
+			fi
+		fi
+		if [ "$tcp_mode" = "tproxy" ] || [ "$udp_mode" = "tproxy" ]; then
+			if yq -M -e "(has(\"tproxy-port\") or (has(\"listeners\") and .listeners | any_c(.name == \"$tproxy_listener_name\" and .type == \"tproxy\"))) | not" "$RUN_PROFILE_PATH" > /dev/null 2>&1; then
+				log "Profile" "Check failed."
+				log "Profile" "TPROXY Port/Listener should be defined."
+				log "App" "Exit."
+				return
+			fi
+		fi
+		if [ "$tcp_mode" = "tun" ] || [ "$udp_mode" = "tun" ]; then
+			if yq -M -e "(has(\"tun\") and (.tun | .enable) and (.tun | has(\"device\"))) or (has(\"listeners\") and .listeners | any_c(.name == \"$tun_listener_name\" and .type == \"tun\" and has(\"device\")))) | not" "$RUN_PROFILE_PATH" > /dev/null 2>&1; then
+				log "Profile" "Check failed."
+				log "Profile" "TUN should be defined."
+				log "App" "Exit."
+				return
+			fi
+		fi
+		log "Profile" "Check passed."
+	fi
+	# test profile
+	if [ "$test_profile" = 1 ]; then
+		log "Profile" "Testing..."
+		if env \
+			GOMAXPROCS="$env_go_max_procs" \
+			GOMEMLIMIT="$env_go_mem_limit" \
+			SAFE_PATHS="$env_safe_paths" \
+			DISABLE_LOOPBACK_DETECTOR="$env_disable_loopback_detector" \
+			QUIC_GO_DISABLE_GSO="$env_disable_quic_go_gso" \
+			QUIC_GO_DISABLE_ECN="$env_disable_quic_go_ecn" \
+			SKIP_SYSTEM_IPV6_CHECK="$env_skip_system_ipv6_check" \
+			$PROG -d "$RUN_DIR" -t >> "$CORE_LOG_PATH" 2>&1; then
+			log "Profile" "Test passed."
+		else
+			log "Profile" "Test failed."
+			log "Profile" "Please check the core log to find out the problem."
+			log "App" "Exit."
+			return
+		fi
+	fi
+	# start core
+	log "Core" "Start."
+	procd_open_instance nikki
+
+	procd_set_param command /bin/sh -c "$PROG -d $RUN_DIR >> $CORE_LOG_PATH 2>&1"
+	procd_set_param file "$RUN_PROFILE_PATH"
+	if [ "$fast_reload" = 1 ]; then
+		procd_set_param reload_signal HUP
+	fi
+	procd_set_param pidfile "$PID_FILE_PATH"
+	procd_set_param respawn
+
+	procd_append_param limits nproc="${rlimit_nproc_soft} ${rlimit_nproc_hard}"
+	procd_append_param limits as="${rlimit_address_space_soft:-unlimited} ${rlimit_address_space_hard:-unlimited}"
+	procd_append_param limits data="${rlimit_data_soft:-unlimited} ${rlimit_data_hard:-unlimited}"
+	procd_append_param limits stack="${rlimit_stack_soft:-unlimited} ${rlimit_stack_hard:-unlimited}"
+	procd_append_param limits nofile="${rlimit_nofile_soft} ${rlimit_nofile_hard}"
+
+	procd_append_param env GOMAXPROCS="$env_go_max_procs"
+	procd_append_param env GOMEMLIMIT="$env_go_mem_limit"
+
+	procd_append_param env SAFE_PATHS="$env_safe_paths"
+	procd_append_param env DISABLE_LOOPBACK_DETECTOR="$env_disable_loopback_detector"
+	procd_append_param env QUIC_GO_DISABLE_GSO="$env_disable_quic_go_gso"
+	procd_append_param env QUIC_GO_DISABLE_ECN="$env_disable_quic_go_ecn"
+	procd_append_param env SKIP_SYSTEM_IPV6_CHECK="$env_skip_system_ipv6_check"
+
+	procd_close_instance
+	# cron
+	## clear cron
+	if grep -q "#nikki" "/etc/crontabs/root"; then
+		log "App" "Clear cron."
+		sed -i "/#nikki/d" "/etc/crontabs/root" > /dev/null 2>&1
+	fi
+	## add restart cron if needed
+	if [ "$scheduled_restart" = 1 ] && [ -n "$scheduled_restart_cron" ]; then
+		log "App" "Set scheduled restart."
+		echo "$scheduled_restart_cron /etc/init.d/nikki restart #nikki scheduled restart" >> "/etc/crontabs/root"
+	fi
+	## add log scheduled clear cron if needed
+	if [ "$log_scheduled_clear" = 1 ] && [ -n "$log_scheduled_clear_cron" ]; then
+		log "App" "Set log scheduled clear."
+		echo "$log_scheduled_clear_cron /etc/init.d/nikki clear_logs #nikki log scheduled clear" >> "/etc/crontabs/root"
+	fi
+	# set started flag
+	touch "$STARTED_FLAG_PATH"
+}
+
+service_started() {
+	# check if started
+	if [ ! -f "$STARTED_FLAG_PATH" ]; then
+		return
+	fi
+	# load config
+	config_load nikki
+	# check if proxy enabled
+	local proxy_enabled
+	config_get_bool proxy_enabled "proxy" "enabled" 0
+	if [ "$proxy_enabled" = 0 ]; then
+		log "Proxy" "Disabled."
+		return
+	fi
+	# get config
+	## app config
+	local core_only
+	config_get_bool core_only "config" "core_only" 0
+	## core
+	local tun_listener_name
+	config_get tun_listener_name "core" "tun_listener_name"
+	## proxy config
+	### general
+	local tcp_mode udp_mode ipv4_proxy ipv6_proxy tun_timeout tun_interval
+	config_get tcp_mode "proxy" "tcp_mode"
+	config_get udp_mode "proxy" "udp_mode"
+	config_get_bool ipv4_proxy "proxy" "ipv4_proxy" 0
+	config_get_bool ipv6_proxy "proxy" "ipv6_proxy" 0
+	config_get tun_timeout "proxy" "tun_timeout" 30
+	config_get tun_interval "proxy" "tun_interval" 1
+	## routing config
+	local tproxy_fw_mark tproxy_fw_mask tun_fw_mark tun_fw_mask tproxy_rule_pref tun_rule_pref tproxy_route_table tun_route_table cgroup_id cgroup_name dummy_device
+	config_get tproxy_fw_mark "routing" "tproxy_fw_mark" "0x80"
+	config_get tproxy_fw_mask "routing" "tproxy_fw_mask" "0xFF"
+	config_get tun_fw_mark "routing" "tun_fw_mark" "0x81"
+	config_get tun_fw_mask "routing" "tun_fw_mask" "0xFF"
+	config_get tproxy_rule_pref "routing" "tproxy_rule_pref" "1024"
+	config_get tun_rule_pref "routing" "tun_rule_pref" "1025"
+	config_get tproxy_route_table "routing" "tproxy_route_table" "80"
+	config_get tun_route_table "routing" "tun_route_table" "81"
+	config_get cgroup_id "routing" "cgroup_id" "0x12061206"
+	config_get cgroup_name "routing" "cgroup_name" "nikki"
+	config_get dummy_device "routing" "dummy_device" "nikki-dummy"
+	# prepare config
+	local tproxy_enable; tproxy_enable=0
+	if [ "$tcp_mode" = "tproxy" ] || [ "$udp_mode" = "tproxy" ]; then
+		tproxy_enable=1
+	fi
+	local tun_enable; tun_enable=0
+	if [ "$tcp_mode" = "tun" ] || [ "$udp_mode" = "tun" ]; then
+		tun_enable=1
+	fi
+	local dns_mode; dns_mode=$(yq -M '.dns.enhanced-mode // ""' "$RUN_PROFILE_PATH")
+	local fake_ip6_range; fake_ip6_range=$(yq -M '.dns.fake-ip-range6 // ""' "$RUN_PROFILE_PATH")
+	local tun_device; tun_device=$(yq -M "(.tun | select(.enable) | .device) // (.listeners[] | select(.name == \"$tun_listener_name\" and .type == \"tun\") | .device)" "$RUN_PROFILE_PATH")
+	if [ "$core_only" = 0 ]; then
+		# proxy
+		log "Proxy" "Enabled."
+		# wait for tun device online
+		if [ "$tun_enable" = 1 ]; then
+			log "Proxy" "Waiting for tun device online within $tun_timeout seconds..."
+			while [ "$tun_timeout" -gt 0 ]; do
+				if ip -j link show dev "$tun_device" 2>/dev/null | jsonfilter -q -e "@[@['flags'][@='UP']]" > /dev/null 2>&1; then
+					log "Proxy" "TUN device is online."
+					break
+				fi
+				tun_timeout=$((tun_timeout - tun_interval))
+				sleep "$tun_interval"
+			done
+			if [ "$tun_timeout" -le 0 ]; then
+				log "Proxy" "Timeout, TUN device is not online."
+				log "App" "Exit."
+				return
+			fi
+		fi
+		# fix compatible with dockerd
+		## cgroupfs-mount
+		### when cgroupfs-mount is installed, cgroupv1 will mounted instead of cgroupv2, we need to create cgroup manually
+		if mount | grep -q -w "^cgroup"; then
+			mkdir -p "/sys/fs/cgroup/net_cls/$cgroup_name"
+			echo "$cgroup_id" > "/sys/fs/cgroup/net_cls/$cgroup_name/net_cls.classid"
+			cat "$PID_FILE_PATH" > "/sys/fs/cgroup/net_cls/$cgroup_name/cgroup.procs"
+		fi
+		## kmod-br-netfilter
+		### when kmod-br-netfilter is loaded, bridge-nf-call-iptables and bridge-nf-call-ip6tables are set to 1, we need to set them to 0 if tproxy is enabled
+		if [ "$tproxy_enable" = 1 ] && (lsmod | grep -q br_netfilter); then
+			if [ "$ipv4_proxy" = 1 ]; then
+				local bridge_nf_call_iptables; bridge_nf_call_iptables=$(sysctl -e -n net.bridge.bridge-nf-call-iptables)
+				if [ "$bridge_nf_call_iptables" = 1 ]; then
+					touch "$BRIDGE_NF_CALL_IPTABLES_FLAG_PATH"
+					sysctl -q -w net.bridge.bridge-nf-call-iptables=0
+				fi
+			fi
+			if [ "$ipv6_proxy" = 1 ]; then
+				local bridge_nf_call_ip6tables; bridge_nf_call_ip6tables=$(sysctl -e -n net.bridge.bridge-nf-call-ip6tables)
+				if [ "$bridge_nf_call_ip6tables" = 1 ]; then
+					touch "$BRIDGE_NF_CALL_IP6TABLES_FLAG_PATH"
+					sysctl -q -w net.bridge.bridge-nf-call-ip6tables=0
+				fi
+			fi
+		fi
+		# ip route and rule
+		if [ "$tproxy_enable" = 1 ]; then
+			if [ "$ipv4_proxy" = 1 ]; then
+				ip -4 route add local default dev lo table "$tproxy_route_table"
+				ip -4 rule add pref "$tproxy_rule_pref" fwmark "$tproxy_fw_mark/$tproxy_fw_mask" table "$tproxy_route_table"
+			fi
+			if [ "$ipv6_proxy" = 1 ]; then
+				ip -6 route add local default dev lo table "$tproxy_route_table"
+				ip -6 rule add pref "$tproxy_rule_pref" fwmark "$tproxy_fw_mark/$tproxy_fw_mask" table "$tproxy_route_table"
+			fi
+		fi
+		if [ "$tun_enable" = 1 ]; then
+			if [ "$ipv4_proxy" = 1 ]; then
+				ip -4 route add unicast default dev "$tun_device" table "$tun_route_table"
+				ip -4 rule add pref "$tun_rule_pref" fwmark "$tun_fw_mark/$tun_fw_mask" table "$tun_route_table"
+			fi
+			if [ "$ipv6_proxy" = 1 ]; then
+				ip -6 route add unicast default dev "$tun_device" table "$tun_route_table"
+				ip -6 rule add pref "$tun_rule_pref" fwmark "$tun_fw_mark/$tun_fw_mask" table "$tun_route_table"
+			fi
+			$FIREWALL_INCLUDE_SH
+		fi
+		if [ "$dns_mode" = "fake-ip" ] && [ -n "$fake_ip6_range" ]; then
+			ip link add "$dummy_device" type dummy
+			ip link set dev "$dummy_device" up
+			ip -6 route add "$fake_ip6_range" dev "$dummy_device"
+		fi
+		# hijack
+		utpl -S "$HIJACK_UT" | nft -f -
+		# check hijack
+		if nft list tables | grep -q nikki; then
+			log "Proxy" "Hijack successful."
+		else
+			log "Proxy" "Hijack failed."
+			log "App" "Exit."
+		fi
+	fi
+}
+
+service_stopped() {
+	cleanup
+}
+
+reload_service() {
+	cleanup
+	start
+}
+
+service_triggers() {
+	procd_add_reload_trigger "nikki"
+}
+
+cleanup() {
+	# load config
+	config_load nikki
+	# get config
+	## log config
+	local log_clear_at_stop
+	config_get_bool log_clear_at_stop "log" "clear_at_stop" 0
+	## routing config
+	local tproxy_route_table tun_route_table dummy_device
+	config_get tproxy_route_table "routing" "tproxy_route_table" "80"
+	config_get tun_route_table "routing" "tun_route_table" "81"
+	config_get dummy_device "routing" "dummy_device" "nikki-dummy"
+	# clear logs if needed
+	if [  "$log_clear_at_stop" = 1 ]; then
+		echo -n > "$APP_LOG_PATH"
+		echo -n > "$CORE_LOG_PATH"
+		log "Log" "Logs are cleared due to clear at stop is enabled."
+	fi
+	# delete routing policy
+	ip -4 rule del table "$tproxy_route_table" > /dev/null 2>&1
+	ip -4 rule del table "$tun_route_table" > /dev/null 2>&1
+	ip -6 rule del table "$tproxy_route_table" > /dev/null 2>&1
+	ip -6 rule del table "$tun_route_table" > /dev/null 2>&1
+	# delete routing table
+	ip -4 route flush table "$tproxy_route_table" > /dev/null 2>&1
+	ip -4 route flush table "$tun_route_table" > /dev/null 2>&1
+	ip -6 route flush table "$tproxy_route_table" > /dev/null 2>&1
+	ip -6 route flush table "$tun_route_table" > /dev/null 2>&1
+	# delete dummy device
+	ip -6 link del "$dummy_device" > /dev/null 2>&1
+	# delete hijack
+	nft delete table inet nikki > /dev/null 2>&1
+	local handles handle
+	handles=$(nft --json list table inet fw4 | jsonfilter -q -e "@['nftables'][*]['rule']" | jsonfilter -q -a -e "@[@['chain']='input']" | jsonfilter -q -a -e "@[@['comment']='nikki']" | jsonfilter -q -a -e "@[*]['handle']")
+	for handle in $handles; do
+		nft delete rule inet fw4 input handle "$handle"
+	done
+	handles=$(nft --json list table inet fw4 | jsonfilter -q -e "@['nftables'][*]['rule']" | jsonfilter -q -a -e "@[@['chain']='forward']" | jsonfilter -q -a -e "@[@['comment']='nikki']" | jsonfilter -q -a -e "@[*]['handle']")
+	for handle in $handles; do
+		nft delete rule inet fw4 forward handle "$handle"
+	done
+	# delete started flag
+	rm "$STARTED_FLAG_PATH" > /dev/null 2>&1
+	# revert fix compatible with dockerd
+	## kmod-br-netfilter
+	if rm "$BRIDGE_NF_CALL_IPTABLES_FLAG_PATH" > /dev/null 2>&1; then
+		sysctl -q -w net.bridge.bridge-nf-call-iptables=1
+	fi
+	if rm "$BRIDGE_NF_CALL_IP6TABLES_FLAG_PATH" > /dev/null 2>&1; then
+		sysctl -q -w net.bridge.bridge-nf-call-ip6tables=1
+	fi
+	# delete cron
+	if grep -q "#nikki" "/etc/crontabs/root"; then
+		sed -i "/#nikki/d" "/etc/crontabs/root" > /dev/null 2>&1
+	fi
+}
+
+clear_logs() {
+	# load config
+	config_load nikki
+	# get config
+	## log config
+	local log_scheduled_clear_size_limit log_scheduled_clear_size_limit_unit
+	config_get log_scheduled_clear_size_limit "log" "scheduled_clear_size_limit" 1
+	config_get log_scheduled_clear_size_limit_unit "log" "scheduled_clear_size_limit_unit" "MB"
+	# prepare config
+	local log_scheduled_clear_size_limit_in_bytes; log_scheduled_clear_size_limit_in_bytes=0
+	case "$log_scheduled_clear_size_limit_unit" in
+		B)
+			log_scheduled_clear_size_limit_in_bytes=$((log_scheduled_clear_size_limit))
+		;;
+		KB)
+			log_scheduled_clear_size_limit_in_bytes=$((log_scheduled_clear_size_limit * 1024))
+		;;
+		MB)
+			log_scheduled_clear_size_limit_in_bytes=$((log_scheduled_clear_size_limit * 1024 * 1024))
+		;;
+		GB)
+			log_scheduled_clear_size_limit_in_bytes=$((log_scheduled_clear_size_limit * 1024 * 1024 * 1024))
+		;;
+	esac
+	# clear logs
+	if [ -f "$APP_LOG_PATH" ] && [ "$(wc -c < "$APP_LOG_PATH")" -ge "$log_scheduled_clear_size_limit_in_bytes" ]; then
+		echo -n > "$APP_LOG_PATH"
+		log "Log" "App log is cleared due to scheduled clear and exceeding size limits."
+	fi
+	if [ -f "$CORE_LOG_PATH" ] && [ "$(wc -c < "$CORE_LOG_PATH")" -ge "$log_scheduled_clear_size_limit_in_bytes" ]; then
+		echo -n > "$CORE_LOG_PATH"
+		log "Log" "Core log is cleared due to scheduled clear and exceeding size limits."
+	fi
+}
+
+update_subscription() {
+	local subscription_section; subscription_section="$1"
+	if [ -z "$subscription_section" ]; then
+		return
+	fi
+	# load config
+	config_load nikki
+	# get subscription config
+	local subscription_name subscription_info_url subscription_url subscription_user_agent
+	config_get subscription_name "$subscription_section" "name"
+	config_get subscription_info_url "$subscription_section" "info_url"
+	config_get subscription_url "$subscription_section" "url"
+	config_get subscription_user_agent "$subscription_section" "user_agent"
+	# reset subscription info
+	uci_remove "nikki" "$subscription_section" "expire" > /dev/null 2>&1
+	uci_remove "nikki" "$subscription_section" "upload" > /dev/null 2>&1
+	uci_remove "nikki" "$subscription_section" "download" > /dev/null 2>&1
+	uci_remove "nikki" "$subscription_section" "total" > /dev/null 2>&1
+	uci_remove "nikki" "$subscription_section" "used" > /dev/null 2>&1
+	uci_remove "nikki" "$subscription_section" "avaliable" > /dev/null 2>&1
+	uci_remove "nikki" "$subscription_section" "update" > /dev/null 2>&1
+	uci_remove "nikki" "$subscription_section" "success" > /dev/null 2>&1
+	# update subscription
+	log "Profile" "Update subscription: $subscription_name."
+	local success
+	local subscription_info_header_tmpfile; subscription_info_header_tmpfile="$TEMP_DIR/$subscription_section.info.header"
+	local subscription_header_tmpfile; subscription_header_tmpfile="$TEMP_DIR/$subscription_section.header"
+	local subscription_tmpfile; subscription_tmpfile="$TEMP_DIR/$subscription_section.yaml"
+	local subscription_info_file
+	local subscription_file; subscription_file="$SUBSCRIPTIONS_DIR/$subscription_section.yaml"
+	# fetch subscription info
+	if [ -n "$subscription_info_url" ]; then
+		log "Profile" "Fetch subscription info."
+		if curl -s -f -m 120 --connect-timeout 15 --retry 3 -L -X GET -A "$subscription_user_agent" -D "$subscription_info_header_tmpfile" "$subscription_info_url" > /dev/null 2>&1; then
+			if [ ! -f "$subscription_info_file" ] && grep -q -i "subscription-userinfo:" "$subscription_info_header_tmpfile"; then
+				subscription_info_file="$subscription_info_header_tmpfile"
+			fi
+		fi
+	fi
+	# download subscription
+	log "Profile" "Download subscription."
+	if curl -s -f -m 120 --connect-timeout 15 --retry 3 -L -X GET -A "$subscription_user_agent" -D "$subscription_header_tmpfile" -o "$subscription_tmpfile" "$subscription_url" > /dev/null 2>&1; then
+		log "Profile" "Subscription download successful."
+		if [ ! -f "$subscription_info_file" ] && grep -q -i "subscription-userinfo:" "$subscription_header_tmpfile"; then
+			subscription_info_file="$subscription_header_tmpfile"
+		fi
+		if yq -M -p yaml -o yaml -e 'has("proxies") or has("proxy-providers")' "$subscription_tmpfile" > /dev/null 2>&1; then
+			log "Profile" "Subscription is valid."
+			success=1
+		else
+			log "Profile" "Subscription is not valid."
+			success=0
+		fi
+	else
+		log "Profile" "Subscription download failed."
+		success=0
+	fi
+	# check if success
+	if [ "$success" = 1 ]; then
+		log "Profile" "Subscription update successful."
+		if [ -f "$subscription_info_file" ]; then
+			local subscription_expire subscription_upload subscription_download subscription_total subscription_used subscription_avaliable
+			subscription_expire=$(grep -i "subscription-userinfo: " "$subscription_info_file" | grep -i -o -E "expire=[[:digit:]]+" | cut -d '=' -f 2)
+			subscription_upload=$(grep -i "subscription-userinfo: " "$subscription_info_file" | grep -i -o -E "upload=[[:digit:]]+" | cut -d '=' -f 2)
+			subscription_download=$(grep -i "subscription-userinfo: " "$subscription_info_file" | grep -i -o -E "download=[[:digit:]]+" | cut -d '=' -f 2)
+			subscription_total=$(grep -i "subscription-userinfo: " "$subscription_info_file" | grep -i -o -E "total=[[:digit:]]+" | cut -d '=' -f 2)
+			if [ -n "$subscription_upload" ] && [ -n "$subscription_download" ]; then
+				subscription_used=$((subscription_upload + subscription_download))
+				if [ -n "$subscription_total" ]; then
+					subscription_avaliable=$((subscription_total - subscription_used))
+				fi
+			fi
+			# update subscription info
+			if [ -n "$subscription_expire" ]; then
+				uci_set "nikki" "$subscription_section" "expire" "$(date "+%Y-%m-%d %H:%M:%S" -d "@$subscription_expire")"
+			fi
+			if [ -n "$subscription_upload" ]; then
+				uci_set "nikki" "$subscription_section" "upload" "$(format_filesize "$subscription_upload")"
+			fi
+			if [ -n "$subscription_download" ]; then
+				uci_set "nikki" "$subscription_section" "download" "$(format_filesize "$subscription_download")"
+			fi
+			if [ -n "$subscription_total" ]; then
+				uci_set "nikki" "$subscription_section" "total" "$(format_filesize "$subscription_total")"
+			fi
+			if [ -n "$subscription_used" ]; then
+				uci_set "nikki" "$subscription_section" "used" "$(format_filesize "$subscription_used")"
+			fi
+			if [ -n "$subscription_avaliable" ]; then
+				uci_set "nikki" "$subscription_section" "avaliable" "$(format_filesize "$subscription_avaliable")"
+			fi
+		fi
+		uci_set "nikki" "$subscription_section" "update" "$(date "+%Y-%m-%d %H:%M:%S")"
+		uci_set "nikki" "$subscription_section" "success" "1"
+		# update subscription file
+		rm -f "$subscription_info_header_tmpfile"
+		rm -f "$subscription_header_tmpfile"
+		mv -f "$subscription_tmpfile" "$subscription_file"
+	elif [ "$success" = 0 ]; then
+		log "Profile" "Subscription update failed."
+		# update subscription info
+		uci_set "nikki" "$subscription_section" "success" "0"
+		# remove tmpfile
+		rm -f "$subscription_info_header_tmpfile"
+		rm -f "$subscription_header_tmpfile"
+		rm -f "$subscription_tmpfile"
+	fi
+	uci_commit "nikki"
+}

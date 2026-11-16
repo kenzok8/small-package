@@ -1,0 +1,71 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: luci-app-airconnect/htdocs/luci-static/resources/view/airconnect.js:42
+#: luci-app-airconnect/root/usr/share/luci/menu.d/luci-app-airconnect.json:3
+msgid "AirConnect"
+msgstr ""
+
+#: luci-app-airconnect/htdocs/luci-static/resources/view/airconnect.js:68
+msgid "Bind interface"
+msgstr ""
+
+#: luci-app-airconnect/htdocs/luci-static/resources/view/airconnect.js:88
+msgid "Chromecast"
+msgstr ""
+
+#: luci-app-airconnect/htdocs/luci-static/resources/view/airconnect.js:58
+msgid "Collecting data..."
+msgstr ""
+
+#: luci-app-airconnect/htdocs/luci-static/resources/view/airconnect.js:88
+msgid "Enable Chromecast Device Support"
+msgstr ""
+
+#: luci-app-airconnect/htdocs/luci-static/resources/view/airconnect.js:76
+msgid "Enable UPnP/Sonos Device Support"
+msgstr ""
+
+#: luci-app-airconnect/htdocs/luci-static/resources/view/airconnect.js:64
+msgid "Enabled"
+msgstr ""
+
+#: luci-app-airconnect/root/usr/share/rpcd/acl.d/luci-app-airconnect.json:3
+msgid "Grant UCI access for luci-app-airconnect"
+msgstr ""
+
+#: luci-app-airconnect/htdocs/luci-static/resources/view/airconnect.js:80
+msgid "How Sonos should treat the stream (affects buffering/behavior)"
+msgstr ""
+
+#: luci-app-airconnect/htdocs/luci-static/resources/view/airconnect.js:32
+msgid "NOT RUNNING"
+msgstr ""
+
+#: luci-app-airconnect/htdocs/luci-static/resources/view/airconnect.js:30
+msgid "RUNNING"
+msgstr ""
+
+#: luci-app-airconnect/htdocs/luci-static/resources/view/airconnect.js:43
+msgid "Send audio to UPnP/Sonos/Chromecast players using AirPlay."
+msgstr ""
+
+#: luci-app-airconnect/htdocs/luci-static/resources/view/airconnect.js:80
+msgid "Sonos stream mode"
+msgstr ""
+
+#: luci-app-airconnect/htdocs/luci-static/resources/view/airconnect.js:76
+msgid "UPnP/Sonos"
+msgstr ""
+
+#: luci-app-airconnect/htdocs/luci-static/resources/view/airconnect.js:81
+msgid "broadcast"
+msgstr ""
+
+#: luci-app-airconnect/htdocs/luci-static/resources/view/airconnect.js:83
+msgid "radio"
+msgstr ""
+
+#: luci-app-airconnect/htdocs/luci-static/resources/view/airconnect.js:82
+msgid "track"
+msgstr ""

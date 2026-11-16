@@ -1,0 +1,98 @@
+#!/usr/bin/env lua
+
+--[[
+	Internet detector daemon for OpenWrt.
+
+	Dependences:
+		lua
+		luaposix
+		libuci-lua
+
+	(с) 2025 gSpot (https://github.com/gSpotx2f/luci-app-internet-detector)
+--]]
+
+local getopt           = require("posix.unistd").getopt
+local InternetDetector = require("internet-detector.main")
+
+local function help()
+	return table.concat({
+		[1] = string.format(
+			"Usage: %s -a daemon -i <UCI instance> | -a nodaemon -i <UCI instance> | -a debug -i <UCI instance> | -a stop | -S | -I | -U | -h",
+			arg[0]),
+		[2] = " -a ARG  action: daemon | nodaemon | debug | stop",
+		[3] = " -i ARG  instance: UCI instance name",
+		[4] = " -S      status",
+		[5] = " -I      inet status",
+		[6] = " -U      uipoll",
+		[7] = " -h      print this help text"
+	}, "\n")
+end
+
+local action, instance
+local params = {}
+local last_index = 1
+for r, optarg, optind in getopt(arg, "a:i:SIUh") do
+	if r == "?" then
+		print("Error! Unrecognized option")
+		os.exit(1)
+	end
+	last_index = optind
+	if r == "a" then
+		action = optarg
+	elseif r == "i" then
+		instance = optarg
+	else
+		params[#params + 1] = r
+	end
+end
+if action == "stop" then
+	InternetDetector:stop()
+elseif action then
+	if not instance then
+		print("Error! Instance not specified [-i]")
+		os.exit(1)
+	end
+	if action == "daemon" then
+		if InternetDetector:setServiceConfig(instance) then
+			InternetDetector:daemon()
+		else
+			os.exit(126)
+		end
+	elseif action == "nodaemon" then
+		if InternetDetector:setServiceConfig(instance) then
+			InternetDetector:noDaemon()
+		else
+			os.exit(126)
+		end
+	elseif action == "debug" then
+		if InternetDetector:setServiceConfig(instance) then
+			InternetDetector.debug = true
+			InternetDetector:noDaemon()
+		else
+			os.exit(126)
+		end
+	else
+		print("Error! Wrong action [-a]")
+		os.exit(1)
+	end
+else
+	if params[1] == "S" then
+		print(InternetDetector:status())
+	elseif params[1] == "I" then
+		print(InternetDetector:inetStatus())
+	elseif params[1] == "U" then
+		if InternetDetector:status() == "stoped" then
+			os.exit(126)
+		else
+			InternetDetector:setSIGUSR()
+			print(InternetDetector:inetStatus())
+		end
+	elseif params[1] == "h" then
+		print(help())
+	else
+		print(help())
+		os.exit(1)
+	end
+end
+
+os.exit(0)

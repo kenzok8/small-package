@@ -1,0 +1,10 @@
+{
+	"luci-app-internet-detector-mod-telegram": {
+		"description": "Grant access to internet-detector-mod-telegram procedures",
+		"read": {
+			"ubus": {
+				"luci.internet-detector-mod-telegram": [ "GetTgChatId" ]
+			}
+		}
+	}
+}

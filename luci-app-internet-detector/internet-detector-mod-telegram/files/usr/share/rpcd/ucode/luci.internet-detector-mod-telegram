@@ -1,0 +1,128 @@
+
+'use strict';
+
+import { popen, stat } from 'fs';
+
+const curlPath            = '/usr/bin/curl';
+const curlExec            = (stat(curlPath)?.perm?.user_exec) ? curlPath : null;
+const curlParams          = '-s -g --no-keepalive';
+const curlConnectTimeout  = 15;
+const tgUpdatesURLPattern = 'https://api.telegram.org/bot%s/getUpdates';
+
+if(!curlExec) {
+	die('Error! Curl not found!');
+}
+
+function httpRequest(url, proxyType, proxyHost, proxyPort, proxyUser, proxyPasswd, iface) {
+	let retCode         = 1;
+	let data            = '';
+	let proxyAuthString = '';
+	let proxyString     = '';
+	let ifaceString     = iface ? (' --interface ' + iface) : '';
+
+	if(!url) {
+		return { retCode: 1, data };
+	}
+
+	if(proxyType && proxyHost && proxyPort) {
+		if(proxyUser && proxyPasswd) {
+			proxyAuthString = sprintf(
+				' --proxy-user "%s:%s"',
+				proxyUser,
+				proxyPasswd);
+		}
+		proxyString = sprintf(
+			' --proxy %s://%s:%d%s',
+			proxyType,
+			proxyHost,
+			proxyPort,
+			proxyAuthString);
+	}
+	const curl = sprintf(
+		'%s%s%s --connect-timeout %s %s "%s"; printf "\n$?";',
+		curlExec,
+		ifaceString,
+		proxyString,
+		curlConnectTimeout,
+		curlParams,
+		url
+	);
+	const fd = popen(curl, 'r');
+	if(fd) {
+		data = fd.read('all');
+		fd.close();
+		if(data) {
+			const retCodeRegexp = /[0-9]+\n?$/;
+			const r             = match(data, retCodeRegexp);
+			if(length(r) > 0) {
+				retCode = r[0];
+			}
+			data = trim(replace(data, retCodeRegexp, ''));
+		}
+	}
+	return { retCode, data };
+}
+
+function parseResponse(str) {
+	let ok      = null;
+	let chatId  = [];
+	let errCode = null;
+	let errDesc = null;
+
+	const data = json(str);
+	ok         = data.ok;
+	if(ok == false) {
+		errCode = data.error_code;
+		errDesc = data.description;
+	} else {
+		let chats = [];
+		if(data.result) {
+			for(let i in data.result) {
+				if(i.message && i.message.chat && i.message.chat.id) {
+					push(chats, i.message.chat.id);
+				}
+			}
+		}
+		if(length(chats) > 0) {
+			chatId = uniq(chats);
+		}
+	}
+	return { ok, chatId, errCode, errDesc };
+}
+
+const methods = {
+	GetTgChatId: {
+		args: {
+			botToken   : 'String',
+			proxyType  : 'String',
+			proxyHost  : 'String',
+			proxyPort  : 'String',
+			proxyUser  : 'String',
+			proxyPasswd: 'String',
+			iface      : 'String',
+		},
+		call: function(request) {
+			const botToken = request.args?.botToken;
+			if(botToken) {
+				const ret = httpRequest(
+					sprintf(tgUpdatesURLPattern, botToken),
+					request.args.proxyType,
+					request.args.proxyHost,
+					request.args.proxyPort,
+					request.args.proxyUser,
+					request.args.proxyPasswd,
+					request.args.iface
+				);
+				if(ret.retCode == 0 && length(ret.data) > 0) {
+					return parseResponse(ret.data);
+				} else {
+					return { ok: null, chatId: [], errCode: ret.retCode, errDesc: 'Network request error' };
+				}
+			} else {
+				return { ok: null, chatId: [], errCode: 1, errDesc: 'Bot token missing' };
+			}
+		},
+	},
+};
+
+return { 'luci.internet-detector-mod-telegram': methods };

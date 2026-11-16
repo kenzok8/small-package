@@ -1,0 +1,14 @@
+{
+	"luci-app-airconnect": {
+		"description": "Grant UCI access for luci-app-airconnect",
+		"read": {
+			"ubus": {
+				"service": [ "list" ]
+			},
+			"uci": [ "airconnect" ]
+		},
+		"write": {
+			"uci": [ "airconnect" ]
+		}
+	}
+}

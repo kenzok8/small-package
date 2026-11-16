@@ -1,0 +1,2148 @@
+'use strict';
+'require baseclass';
+'require form';
+'require fs';
+'require dom';
+'require rpc';
+'require uci';
+'require ui';
+'require validation';
+
+document.querySelector('head').appendChild(E('script', {
+	src: L.resource('fchomo/md5.js')
+}));
+
+function funcSed(originFunc, matrix = [], closure = []) {
+	if (isEmpty(matrix))
+		return originFunc;
+
+	const oriFuncStr = originFunc.toString();
+	let funcStr = oriFuncStr;
+
+	for (const [regexp, replacer] of matrix) {
+		if (!regexp)
+			continue;
+		if (regexp.test(funcStr))
+			funcStr = funcStr.replace(regexp, replacer || '');
+		else
+			throw new Error(`funcSed: No matching items found: ${regexp}`);
+	}
+
+	if (isEmpty(funcStr) || funcStr === oriFuncStr)
+		return originFunc;
+
+	const funcArgs = funcStr.substring(funcStr.indexOf('(') +1, funcStr.indexOf(')')).split(',');
+	const funcBody = funcStr.substring(funcStr.indexOf('{') +1, funcStr.lastIndexOf('}'));
+
+	return new Function(...closure, ...funcArgs, funcBody);
+}
+
+/* Member */
+const rulesetdoc = [
+	'data:text/html;base64,',
+'H4sIAAAAAAAAAyvKKS4pyElMTs3Iz0lJLQIA8fIyYQ8AAAA='
+];
+
+const sharkaudio = function() {
+	return 'data:audio/x-wav;base64,' +
+'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA='
+}()
+
+const sharktaikogif = function() {
+	return 'data:image/gif;base64,' +
+'c2hhcmstdGFpa28uZ2lm'
+}()
+
+const less_25_12 = !form.DynamicList.prototype.renderWidget.toString().match('this\.allowduplicates');
+
+const HM_DIR = "/etc/fchomo";
+
+const monospacefonts = [
+	'"Cascadia Code"',
+	'"Cascadia Mono"',
+	'Menlo',
+	'Monaco',
+	'Consolas',
+	'"Liberation Mono"',
+	'"Courier New"',
+	'monospace'
+];
+
+const checkurls = [
+	['https://www.baidu.com', _('Baidu')],
+	['https://s1.music.126.net/style/favicon.ico', _('163Music')],
+	['https://www.google.com/generate_204', _('Google')],
+	['https://github.com', _('GitHub')],
+	['https://www.youtube.com', _('YouTube')]
+];
+
+// allowed_congestion    '/proc/sys/net/ipv4/tcp_allowed_congestion_control'
+// available_congestion  '/proc/sys/net/ipv4/tcp_available_congestion_control'
+const congestion_controller = [
+	['', _('Keep default')],
+	['cubic', _('cubic')],
+	['new_reno', _('new_reno')],
+	['bbr', _('bbr')],
+];
+
+const ipstack_congestion_controller = [
+	['', _('Keep default')],
+	['cubic', _('cubic')],
+	['reno', _('reno')],
+	['bbr', _('bbr')],
+	['bbr3', _('bbr3')],
+];
+
+const bbr_profiles = [
+	['', _('Keep default')],
+	['standard', _('Standard')],
+	['conservative', _('Conservative')],
+	['aggressive', _('Aggressive')],
+];
+
+const stunserver = [
+	['stun.fitauto.ru:3478'],
+	['stun.hot-chilli.net:3478'],
+	['stun.pure-ip.com:3478'],
+	['stun.voipgate.com:3478'],
+	['stun.voipia.net:3478'],
+	['stunserver2024.stunprotocol.org:3478']
+];
+
+const dashrepos = [
+	['zephyruso/zashboard', _('zashboard')],
+	['metacubex/metacubexd', _('metacubexd')],
+	['metacubex/yacd-meta', _('yacd-meta')],
+	['metacubex/razord-meta', _('razord-meta')]
+];
+
+const dashrepos_urlparams = {
+	'zephyruso/zashboard':   '#/setup' + '?hostname=%s&port=%s&secret=%s',
+	'metacubex/metacubexd':  '#/setup' + '?hostname=%s&port=%s&secret=%s',
+	'metacubex/yacd-meta':   '?hostname=%s&port=%s&secret=%s',
+	'metacubex/razord-meta': '?host=%s&port=%s&secret=%s'
+};
+
+const log_levels = [
+	['silent', _('Silent')],
+	['error', _('Error')],
+	['warning', _('Warning')],
+	['info', _('Info')],
+	['debug', _('Debug')]
+];
+
+const glossary = {
+	proxy_group: {
+		prefmt: 'group_%s',
+		field: 'proxy-groups',
+	},
+	rules: {
+		prefmt: '%s_host',
+		field: 'rules',
+	},
+	subrules: {
+		prefmt: '%s_subhost',
+		field: 'sub-rules',
+	},
+	dns_server: {
+		prefmt: 'dns_%s',
+		field: 'nameserver',
+	},
+	dns_policy: {
+		prefmt: '%s_domain',
+		field: 'nameserver-policy',
+	},
+	dns_node_policy: {
+		prefmt: '%s_nodedomain',
+		field: 'proxy-server-nameserver-policy',
+	},
+	node: { // outbound
+		prefmt: 'node_%s',
+		field: 'proxies',
+	},
+	provider: {
+		prefmt: 'sub_%s',
+		field: 'proxy-providers',
+	},
+	dialer_proxy: {
+		prefmt: 'chain_%s',
+		//field: 'dialer-proxy',
+	},
+	ruleset: {
+		prefmt: 'rule_%s',
+		field: 'rule-providers',
+	},
+	inbound: {
+		prefmt: 'inbound_%s',
+		field: 'listeners',
+	},
+	server: {
+		prefmt: 'server_%s',
+		field: 'listeners',
+	},
+};
+
+const health_checkurls = [
+	['https://cp.cloudflare.com'],
+	['https://www.gstatic.com/generate_204']
+];
+
+const inbound_type = [
+	['http', _('HTTP') + ' - ' + _('TCP')],
+	['socks', _('SOCKS') + ' - ' + _('TCP/UDP')],
+	['mixed', _('Mixed') + ' - ' + _('TCP/UDP')],
+	['shadowsocks', _('Shadowsocks') + ' - ' + _('TCP/UDP')],
+	['mieru', _('Mieru') + ' - ' + _('TCP/UDP')],
+	['sudoku', _('Sudoku') + ' - ' + _('TCP')],
+	['snell', _('Snell') + ' - ' + _('TCP')],
+	['vmess', _('VMess') + ' - ' + _('TCP')],
+	['vless', _('VLESS') + ' - ' + _('TCP')],
+	['trojan', _('Trojan') + ' - ' + _('TCP')],
+	['anytls', _('AnyTLS') + ' - ' + _('TCP')],
+	['tuic', _('TUIC') + ' - ' + _('UDP')],
+	['hysteria2', _('Hysteria2') + ' - ' + _('UDP')],
+	['hysteria2-realm', _('Hysteria2 Realm Server') + ' - ' + _('TCP/UDP')],
+	['shadowquic', _('ShadowQUIC') + ' - ' + _('UDP')],
+	['trusttunnel', _('TrustTunnel') + ' - ' + _('TCP/UDP')],
+	['tunnel', _('Tunnel') + ' - ' + _('TCP/UDP')]
+];
+
+const ip_version = [
+	['', _('Keep default')],
+	['dual', _('Dual stack')],
+	['ipv4', _('IPv4 only')],
+	['ipv6', _('IPv6 only')],
+	['ipv4-prefer', _('Prefer IPv4')],
+	['ipv6-prefer', _('Prefer IPv6')]
+];
+
+const load_balance_strategy = [
+	['round-robin', _('Simple round-robin all nodes')],
+	['consistent-hashing', _('Same dstaddr requests. Same node')],
+	['sticky-sessions', _('Same srcaddr and dstaddr requests. Same node')]
+];
+
+const outbound_type = [
+	['rematch', _('Rematch'), _('Rematching routing rules')],
+	['direct', _('DIRECT') + ' - ' + _('TCP/UDP')],
+	['http', _('HTTP') + ' - ' + _('TCP')],
+	['socks5', _('SOCKS5') + ' - ' + _('TCP/UDP')],
+	['ss', _('Shadowsocks') + ' - ' + _('TCP/UDP')],
+	//['ssr', _('ShadowsocksR')], // Deprecated
+	['mieru', _('Mieru') + ' - ' + _('TCP/UDP')],
+	['sudoku', _('Sudoku') + ' - ' + _('TCP')],
+	['snell', _('Snell') + ' - ' + _('TCP')],
+	['vmess', _('VMess') + ' - ' + _('TCP')],
+	['vless', _('VLESS') + ' - ' + _('TCP')],
+	['trojan', _('Trojan') + ' - ' + _('TCP')],
+	['anytls', _('AnyTLS') + ' - ' + _('TCP')],
+	['tuic', _('TUIC') + ' - ' + _('UDP')],
+	//['hysteria', _('Hysteria') + ' - ' + _('UDP')],
+	['hysteria2', _('Hysteria2') + ' - ' + _('UDP')],
+	['shadowquic', _('ShadowQUIC') + ' - ' + _('UDP')],
+	['trusttunnel', _('TrustTunnel') + ' - ' + _('TCP/UDP')],
+	['zerotier', _('ZeroTier') + ' - ' + _('UDP') + ' - ' + _('L2')], // Endpoint
+	['wireguard', _('WireGuard') + ' - ' + _('UDP') + ' - ' + _('L3')], // Endpoint
+	['tailscale', _('Tailscale') + ' - ' + _('UDP') + ' - ' + _('L3')], // Endpoint
+	['masque', _('Masque') + ' - ' + _('UDP') + ' - ' + _('L3')], // Endpoint // https://blog.cloudflare.com/post-quantum-warp/
+	['easytier', _('EasyTier') + ' - ' + _('TCP/UDP') + ' - ' + _('L3')], // Endpoint
+	['ssh', _('SSH') + ' - ' + _('TCP')]
+];
+
+const preset_outbound = {
+	full: [
+		['DIRECT'],      // built-in Outbound
+		['REJECT'],      // built-in Outbound
+		['REJECT-DROP'], // built-in Outbound
+		['PASS'],        // built-in Outbound
+		['PASS-RULE'],   // built-in Outbound
+		['COMPATIBLE'],  // built-in Outbound
+		['GLOBAL']       // built-in Proxy Group
+	],
+	proxy: [ // built-in Outbound
+		['DIRECT'],
+		['REJECT'],
+		['REJECT-DROP'],
+		['PASS'],
+		['PASS-RULE'],
+		['COMPATIBLE']
+	],
+	direct: [
+		['', _('none')],
+		['DIRECT'],
+		['GLOBAL']
+	],
+	dns: [
+		['', 'RULES'],
+		['DIRECT'],
+		['GLOBAL']
+	]
+};
+
+const proxy_group_type = [
+	['select', _('Select')],
+	['fallback', _('Fallback')],
+	['url-test', _('URL test')],
+	['load-balance', _('Load balance')],
+];
+
+const routing_port_type = [
+	['all', _('All ports')],
+	['common_tcpport', _('Common ports (bypass P2P traffic)'), uci.get('fchomo', 'config', 'common_tcpport') || '20-21,22,53,80,110,143,443,853,873,993,995,5222,8080,8443,9418'],
+	['common_udpport', _('Common ports (bypass P2P traffic)'), uci.get('fchomo', 'config', 'common_udpport') || '20-21,22,53,80,110,143,443,853,993,995,8080,8443,9418'],
+	['smtp_tcpport', _('%s ports').format(_('SMTP')), uci.get('fchomo', 'config', 'smtp_tcpport') || '465,587'],
+	['stun_port', _('%s ports').format(_('STUN')), uci.get('fchomo', 'config', 'stun_port') || '3478,19302'],
+	['turn_port', _('%s ports').format(_('TURN')), uci.get('fchomo', 'config', 'turn_port') || '5349'],
+	['google_fcm_port', _('%s ports').format(_('Google FCM')), uci.get('fchomo', 'config', 'google_fcm_port') || '443,5228-5230'],
+	['steam_client_port', _('%s ports').format(_('Steam Client')), uci.get('fchomo', 'config', 'steam_client_port') || '27015-27050'],
+	['steam_p2p_udpport', _('%s ports').format(_('Steam P2P')), uci.get('fchomo', 'config', 'steam_p2p_udpport') || '3478,4379,4380,27000-27100'],
+];
+
+const rules_type = [
+	{
+		label: _('Domain'),
+		types: [
+			['DOMAIN'],
+			['DOMAIN-SUFFIX'],
+			['DOMAIN-KEYWORD'],
+			['DOMAIN-WILDCARD'],
+			['DOMAIN-REGEX'],
+			['GEOSITE']
+		]
+	},
+	{
+		label: _('Dst-IP'),
+		types: [
+			['IP-CIDR'],
+			['IP-CIDR6'],
+			['IP-SUFFIX'],
+			['IP-ASN'],
+			['GEOIP']
+		]
+	},
+	{
+		label: _('Src-IP'),
+		types: [
+			['SRC-GEOIP'],
+			['SRC-IP-ASN'],
+			['SRC-IP-CIDR'],
+			['SRC-IP-SUFFIX']
+		]
+	},
+	{
+		label: _('Port'),
+		types: [
+			['DST-PORT'],
+			['SRC-PORT']
+		]
+	},
+	{
+		label: _('Inbound'),
+		types: [
+			['IN-PORT'],
+			['IN-TYPE'],
+			//['IN-USER'],
+			['IN-NAME'],
+			['REMATCH-NAME']
+		]
+	},
+	{
+		label: _('Process'),
+		types: [
+			['PROCESS-PATH'],
+			['PROCESS-PATH-REGEX'],
+			['PROCESS-PATH-WILDCARD'],
+			['PROCESS-NAME'],
+			['PROCESS-NAME-REGEX'],
+			['PROCESS-NAME-WILDCARD'],
+			['UID']
+		]
+	},
+	{
+		label: _('Network'),
+		types: [
+			['NETWORK'],
+			['DSCP']
+		]
+	},
+	{
+		label: _('Other'),
+		types: [
+			['RULE-SET'],
+			['MATCH']
+		]
+	}
+];
+
+const rules_type_allowparms = [
+	// params only available for types other than
+	// https://github.com/muink/mihomo/blob/ea19cda0c9b666aa0fc1b0412ae6fbc0ea9d44e0/rules/parser.go#L12
+	'GEOIP',
+	'IP-ASN',
+	'IP-CIDR',
+	'IP-CIDR6',
+	'IP-SUFFIX',
+	'RULE-SET',
+];
+
+const rules_logical_type = {
+	label: _('Logical'),
+	types: [
+		['AND'],
+		['OR'],
+		['NOT'],
+		//['SUB-RULE']
+	]
+};
+
+const rules_logical_payload_count = {
+	'AND': { low: 2, high: undefined },
+	'OR': { low: 2, high: undefined },
+	'NOT': { low: 1, high: 1 },
+	//'SUB-RULE': 0,
+};
+
+const aead_cipher_length = {
+	/* AEAD */
+	'aes-128-gcm': 0,
+	'aes-192-gcm': 0,
+	'aes-256-gcm': 0,
+	'chacha20-ietf-poly1305': 0,
+	'xchacha20-ietf-poly1305': 0,
+	/* AEAD 2022 */
+	'2022-blake3-aes-128-gcm': 16,
+	'2022-blake3-aes-256-gcm': 32,
+	'2022-blake3-chacha20-poly1305': 32
+};
+
+const shadowsocks_cipher_methods = [
+	/* Stream */
+	['none', _('none')],
+	/* AEAD */
+	['aes-128-gcm', _('aes-128-gcm')],
+	['aes-192-gcm', _('aes-192-gcm')],
+	['aes-256-gcm', _('aes-256-gcm')],
+	['chacha20-ietf-poly1305', _('chacha20-ietf-poly1305')],
+	['xchacha20-ietf-poly1305', _('xchacha20-ietf-poly1305')],
+	/* AEAD 2022 */
+	['2022-blake3-aes-128-gcm', _('2022-blake3-aes-128-gcm')],
+	['2022-blake3-aes-256-gcm', _('2022-blake3-aes-256-gcm')],
+	['2022-blake3-chacha20-poly1305', _('2022-blake3-chacha20-poly1305')]
+];
+
+const sudoku_cipher_methods = [
+	['none', _('none')],
+	['aes-128-gcm', _('aes-128-gcm')],
+	['chacha20-ietf-poly1305', _('chacha20-ietf-poly1305')]
+];
+
+const trojan_cipher_methods = [
+	['aes-128-gcm', _('aes-128-gcm')],
+	['aes-256-gcm', _('aes-256-gcm')],
+	['chacha20-ietf-poly1305', _('chacha20-ietf-poly1305')]
+];
+
+const tls_client_auth_types = [
+	['', _('none')],
+	['request', _('Request')],
+	['require-any', _('Require any')],
+	['verify-if-given', _('Verify if given')],
+	['require-and-verify', _('Require and verify')]
+];
+
+const tls_client_fingerprints = [
+	['', _('Keep default')],
+	['chrome'],
+	['firefox'],
+	['safari'],
+	['ios'],
+	['android'],
+	['edge'],
+	['360'],
+	['qq'],
+	['random', _('Random')]
+];
+
+const vless_encryption = {
+	methods: [
+		['mlkem768x25519plus', _('mlkem768x25519plus')]
+	],
+	xormodes: [
+		['native', 'native', _('Native appearance')],
+		['xorpub', 'xorpub', _('Eliminate encryption header characteristics')],
+		['random', 'random', _('Randomized traffic characteristics')]
+	],
+	tickets: [
+		['600s', '600s', _('Send random ticket of 300s-600s duration for client 0-RTT reuse.')],
+		['300-600s', '300-600s', _('Send random ticket of 300s-600s duration for client 0-RTT reuse.')],
+		['0s', '0s', _('1-RTT only.')]
+	],
+	rtts: [
+		['0rtt', _('0-RTT reuse.') +' '+ _('Requires server support.')],
+		['1rtt', _('1-RTT only.')]
+	],
+	paddings: [
+		['100-111-1111', '100-111-1111: ' + _('After the 1-RTT client/server hello, padding randomly 111-1111 bytes with 100% probability.')],
+		['75-0-111', '75-0-111: ' + _('Wait a random 0-111 milliseconds with 75% probability.')],
+		['50-0-3333', '50-0-3333: ' + _('Send padding randomly 0-3333 bytes with 50% probability.')]
+	],
+	keypairs: {
+		types: [
+			['vless-x25519', _('vless-x25519')],
+			['vless-mlkem768', _('vless-mlkem768')]
+		]
+	}
+};
+
+const vless_flow = [
+	['', _('None')],
+	['xtls-rprx-vision']
+];
+
+/* Prototype */
+const CBIGridSection = form.GridSection.extend({
+	modaltitle(/* ... */) {
+		return loadModalTitle.call(this, ...this.hm_modaltitle || [null,null], ...arguments);
+	},
+
+	sectiontitle(/* ... */) {
+		return loadDefaultLabel.apply(this, arguments);
+	},
+
+	renderSectionAdd(/* ... */) {
+		const prefmt = this.hm_prefmt || '%s';
+		const LC = this.hm_lowcase_only;
+
+		let node = form.GridSection.prototype.renderSectionAdd.apply(this, arguments),
+			nameEl = node.querySelector('.cbi-section-create-name');
+
+		nameEl.placeholder = _('Specify a ID');
+
+		ui.addValidator(nameEl, 'uciname', true, (v) => {
+			let button = node.querySelector('.cbi-section-create > .cbi-button-add');
+
+			if (!v) {
+				button.disabled = true;
+				return true;
+			} else if (LC && (v !== v.toLowerCase())) {
+				button.disabled = true;
+				return _('Expecting: %s').format(_('Lowercase only'));
+			} else if (uci.get(this.config, v)) {
+				button.disabled = true;
+				return _('Expecting: %s').format(_('unique UCI identifier'));
+			} else if (uci.get(this.config, prefmt.format(v))) {
+				button.disabled = true;
+				return _('Expecting: %s').format(_('unique identifier'));
+			} else {
+				button.removeAttribute('disabled');
+				return true;
+			}
+		}, 'blur', 'keyup');
+
+		return node;
+	},
+
+	handleAdd(ev, name) {
+		const prefmt = this.hm_prefmt || '%s';
+
+		return form.GridSection.prototype.handleAdd.call(this, ev, prefmt.format(name));
+	}
+});
+
+const CBIListValue = form.ListValue.extend({
+	renderWidget(/* ... */) {
+		let node = form.ListValue.prototype.renderWidget.apply(this, arguments);
+
+		node.querySelector('select').style["min-width"] = '10em';
+
+		return node;
+	}
+});
+
+const CBIDynamicList = form.DynamicList.extend({ // @less_25_12
+	__name__: 'CBI.DynamicList',
+
+	renderWidget(section_id, option_index, cfgvalue) {
+		const value = (cfgvalue != null) ? cfgvalue : this.default;
+		const choices = this.transformChoices();
+		const items = L.toArray(value);
+
+		const node = new UIDynamicList(items, choices, {
+			id: this.cbid(section_id),
+			sort: this.keylist,
+			allowduplicates: this.allowduplicates,
+			optional: this.optional || this.rmempty,
+			datatype: this.datatype,
+			placeholder: this.placeholder,
+			validate: L.bind(this.validate, this, section_id),
+			disabled: (this.readonly != null) ? this.readonly : this.map.readonly
+		});
+
+		return node.render();
+	}
+});
+
+const CBIStaticList = form.DynamicList.extend({
+	__name__: 'CBI.StaticList',
+
+	renderWidget(/* ... */) {
+		let node = (less_25_12 ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments); // @less_25_12
+
+		node.querySelector('.add-item ul > li[data-value="-"]')?.remove();
+
+		return node;
+	}
+});
+
+const CBIMultiValue = form.MultiValue.extend({ // @pr8758_merged
+	__name__: 'CBI.MultiValue',
+
+	renderWidget(/* ... */) {
+		const sb = funcSed(
+			form.MultiValue.prototype.renderWidget,
+			[
+				[new RegExp(/(widget\s*=\s*new)\s*ui\.Dropdown/), '$1 UIDropdown'],
+				[new RegExp(/(multiple:\s*true)/), 'keep_order: this.keep_order, $1']
+			],
+			['UIDropdown']
+		).call(this, UIDropdown, ...arguments);
+
+		return sb;
+	}
+});
+
+const CBIGroupListValue = CBIListValue.extend({
+	__name__: 'CBI.GroupListValue',
+
+	renderWidget(section_id, option_index, cfgvalue) {
+		const node = CBIListValue.prototype.renderWidget.apply(this, arguments);
+		const select = node.querySelector('select');
+		const options = Array.from(select.options);
+
+		Object.keys(this.grplist).forEach((label) => {
+			const groupEl = E('optgroup', {label: label}, []);
+			for (const option of options)
+				if (this.grplist[label].includes(option.value))
+					groupEl.appendChild(option);
+			select.appendChild(groupEl);
+		});
+
+		select.value = (cfgvalue != null) ? cfgvalue : this.default;
+		return node;
+	},
+
+	value(key, val) {
+		this.keylist ??= [];
+		this.vallist ??= [];
+		this.grplist ??= {};
+
+		if (Array.isArray(key)) {
+			this.grplist[val] ??= [];
+			this.grplist[val].push(key[0]);
+			this.super('value', ...key);
+		} else
+			this.super('value', key, val);
+	}
+});
+
+const CBIGroupDynamicList = (less_25_12 ? CBIDynamicList : form.DynamicList).extend({ // @less_25_12
+	__name__: 'CBI.GroupDynamicList',
+
+	renderWidget(section_id, option_index, cfgvalue) {
+		const node = (less_25_12 ? CBIDynamicList : form.DynamicList).prototype.renderWidget.apply(this, arguments); // @less_25_12
+		const select = node.querySelector('ul');
+		const optLis = Array.from(select.querySelectorAll('li'));
+
+		Object.keys(this.grplist).forEach((label) => {
+			const groupLi = E('li', {
+				class: "group-title",
+				style: "font-weight: bold; pointer-events: none;"
+			}, [label]);
+			for (const optLi of optLis)
+				if (this.grplist[label].includes(optLi.getAttribute('data-value'))) {
+					optLi.classList.add('group-item');
+					optLi.style.paddingLeft = '20px';
+				}
+			const firstLi = select.querySelector(`li[data-value="${this.grplist[label][0]}"]`);
+			select.insertBefore(groupLi, firstLi);
+		});
+
+		return node;
+	},
+
+	value: CBIGroupListValue.prototype.value
+});
+
+const CBIGroupStaticList = CBIGroupDynamicList.extend({
+	__name__: 'CBI.GroupStaticList',
+
+	renderWidget(/* ... */) {
+		let node = CBIGroupDynamicList.prototype.renderWidget.apply(this, arguments);
+
+		node.querySelector('.add-item ul > li[data-value="-"]')?.remove();
+
+		return node;
+	}
+});
+
+const CBIRichValue = form.Value.extend({
+	__name__: 'CBI.RichValue',
+
+	value: form.RichListValue.prototype.value
+});
+
+const CBIRichMultiValue = form.MultiValue.extend({
+	__name__: 'CBI.RichMultiValue',
+
+	value: form.RichListValue.prototype.value
+});
+
+const CBITextValue = form.TextValue.extend({
+	renderWidget(/* ... */) {
+		let node = form.TextValue.prototype.renderWidget.apply(this, arguments);
+
+		node.querySelector('textarea').style.fontFamily = monospacefonts.join(',');
+
+		return node;
+	}
+});
+
+const CBIGenValue = form.Value.extend({
+	__name__: 'CBI.GenValue',
+
+	renderWidget(section_id, option_index, cfgvalue) {
+		let node = form.Value.prototype.renderWidget.apply(this, arguments);
+
+		if (!this.password)
+			node.classList.add('control-group');
+
+		if (this.section.section) // modalonly
+			(node.querySelector('.control-group') || node).appendChild(E('button', {
+				class: 'cbi-button cbi-button-add',
+				title: _('Generate'),
+				click: ui.createHandlerFn(this, handleGenKey, section_id, this.hm_options || this.option)
+			}, [ _('Generate') ]));
+
+		return node;
+	}
+});
+
+const CBIGenText = CBITextValue.extend({
+	__name__: 'CBI.GenText',
+
+	renderWidget(section_id, option_index, cfgvalue) {
+		let node = CBITextValue.prototype.renderWidget.apply(this, arguments);
+
+		if (this.section.section) // modalonly
+			(node.querySelector('.control-group') || node).appendChild(E('button', {
+				class: 'cbi-button cbi-button-add',
+				title: _('Generate'),
+				click: ui.createHandlerFn(this, handleGenKey, section_id, this.hm_options || this.option)
+			}, [ _('Generate') ]));
+
+		return node;
+	}
+});
+
+const CBICopyValue = form.Value.extend({
+	__name__: 'CBI.CopyValue',
+
+	readonly: true,
+
+	renderWidget(section_id, option_index, cfgvalue) {
+		let node = form.Value.prototype.renderWidget.apply(this, arguments);
+
+		node.classList.add('control-group');
+
+		if (this.section.section) // modalonly
+			node.appendChild(E('button', {
+				class: 'cbi-button cbi-button-add',
+				click: ui.createHandlerFn(this, async (section_id) => {
+					try {
+						await navigator.clipboard.writeText(this.formvalue(section_id));
+						console.log('Content copied to clipboard!');
+					} catch (e) {
+						console.error('Failed to copy: ', e);
+					}
+					/* Deprecated
+					let inputEl = document.getElementById(this.cbid(section_id)).querySelector('input');
+					inputEl.select();
+					document.execCommand("copy");
+					inputEl.blur();
+					*/
+					return alert(_('Content copied to clipboard!'));
+				}, section_id)
+			}, [ _('Copy') ]));
+
+		return node;
+	}
+});
+
+const CBIparseYaml = baseclass.extend(/** @lends hm.parseYaml.prototype */ {
+	__init__(field, name, cfg) {
+		if (isEmpty(cfg))
+			return null;
+
+		if (typeof cfg === 'object') {
+			this.id = this.calcID(field, name ?? cfg.name);
+			this.label = '%s %s'.format(name ?? cfg.name, _('(Imported)'));
+		} else {
+			this.id = this.calcID(field, name ?? cfg);
+			this.label = '%s %s'.format(name ?? cfg, _('(Imported)'));
+		}
+
+		this.field = field;
+		this.name = name;
+		this.cfg = this.key_mapping(cfg);
+	},
+
+	key_mapping(cfg) {
+		return cfg;
+	},
+
+	calcID(field, name) {
+		return calcStringMD5(String.format('%s:%s', field, name));
+	},
+
+	bool2str(value) {
+		if (typeof value !== 'boolean')
+			return null;
+		return value ? '1' : '0';
+	},
+
+	jq(obj, path) {
+		return path.split('.').reduce((acc, cur) => acc && acc[cur], obj);
+	},
+
+	output() {
+		return this.cfg;
+	}
+});
+
+const CBIHandleImport = baseclass.extend(/** @lends hm.HandleImport.prototype */ {
+	__init__(map, section, title, description) {
+		this.map = map;
+		this.section = section;
+		this.title = title ?? '';
+		this.description = description ?? '';
+		this.placeholder = '';
+		this.appendcommand = '';
+		this.overridecommand = '';
+	},
+
+	handleFn(textarea) {
+		const modaltitle = this.section.hm_modaltitle[0];
+		const field = this.section.hm_field;
+
+		let content = textarea.getValue().trim();
+		let command = this.overridecommand || `.["${field}"]` + this.appendcommand;
+		if (['proxy-providers', 'rule-providers'].includes(field))
+			content = content.replace(/(\s*payload:)/g, "$1 |-") /* payload to text */
+
+		return yaml2json(content, command).then((res) => {
+			let imported_count = 0;
+			//let type_file_count = 0;
+
+			//console.info(JSON.stringify(res, null, 2));
+			if (!isEmpty(res) && typeof res === 'object') {
+				if (Array.isArray(res))
+					res.forEach((cfg) => {
+						let config = new this.parseYaml(field, null, cfg).output();
+						//console.info(JSON.stringify(config, null, 2));
+						if (config) {
+							this.write(config);
+							imported_count++;
+						}
+					})
+				else
+					for (let name in res) {
+						let config = new this.parseYaml(field, name, res[name]).output();
+						//console.info(JSON.stringify(config, null, 2));
+						if (config) {
+							this.write(config);
+							imported_count++;
+							//if (config.type === 'file')
+							//	type_file_count++;
+						}
+					}
+
+				if (imported_count === 0)
+					ui.addNotification(null, E('p', _('No valid %s found.').format(modaltitle)));
+				else
+					ui.addNotification(null, E('p', [
+						_('Successfully imported %s %s of total %s.')
+							.format(imported_count, modaltitle, Object.keys(res).length),
+						E('br'),
+						//type_file_count ? _("%s rule-set of type '%s' need to be filled in manually.")
+						//	.format(type_file_count, 'file') : ''
+					]), 'info');
+			}
+
+			if (imported_count)
+				return this.save();
+			else
+				return ui.hideModal();
+		});
+	},
+
+	parseYaml: CBIparseYaml,
+
+	render() {
+		const textarea = new ui.Textarea('', {
+			placeholder: this.placeholder
+		});
+		const textareaEl = textarea.render();
+		textareaEl.querySelector('textarea').style.fontFamily = monospacefonts.join(',');
+
+		ui.showModal(this.title, [
+			E('p', this.description),
+			textareaEl,
+			E('div', { class: 'right' }, [
+				E('button', {
+					class: 'btn',
+					click: ui.hideModal
+				}, [ _('Cancel') ]),
+				' ',
+				E('button', {
+					class: 'btn cbi-button-action',
+					click: ui.createHandlerFn(this, 'handleFn', textarea)
+				}, [ _('Import') ])
+			])
+		]);
+	},
+
+	save() {
+		return uci.save()
+			.then(L.bind(this.map.load, this.map))
+			.then(L.bind(this.map.reset, this.map))
+			.then(ui.hideModal)
+			.catch(() => {});
+	},
+
+	write(config) {
+		const uciconfig = this.uciconfig || this.section.uciconfig || this.map.config;
+		const section_type = this.section.sectiontype;
+
+		let sid = uci.add(uciconfig, section_type, config.id);
+		delete config.id;
+		for (let k in config)
+			uci.set(uciconfig, sid, k, config[k] ?? '');
+	}
+});
+
+const UIDynamicList = ui.DynamicList.extend({ // @less_25_12
+	addItem(dl, value, text, flash) {
+		if (this.options.allowduplicates) {
+			const new_item = E('div', { class: flash ? 'item flash' : 'item', tabindex: 0, draggable: true }, [
+				E('span', {}, [ text ?? value ]),
+				E('input', {
+					type: 'hidden',
+					name: this.options.name,
+					value: value })]);
+
+			const ai = dl.querySelector('.add-item');
+			ai.parentNode.insertBefore(new_item, ai);
+		}
+
+		ui.DynamicList.prototype.addItem.call(this, dl, value, text, flash);
+	},
+
+	handleDropdownChange(ev) {
+		ui.DynamicList.prototype.handleDropdownChange.call(this, ev);
+
+		if (this.options.allowduplicates) {
+			const sbVal = ev.detail.value;
+			sbVal?.element.removeAttribute('unselectable');
+		}
+	}
+});
+
+// keep selected order for multiple selection
+const UIDropdown = ui.Dropdown.extend({ // @pr8758_merged
+	__init__(value, choices, options) {
+		const result = ui.Dropdown.prototype.__init__.apply(this, arguments);
+
+		this.orderCounter = this.values.length;
+		this.options.keep_order = options?.keep_order ?? false;
+
+		return result;
+	},
+
+	render(/* ... */) {
+		const sb = funcSed(
+			ui.Dropdown.prototype.render,
+			[
+				[new RegExp(/('multiple':[^\n]*this\.options\.multiple)/), `'keep_order': this.options.keep_order ? '' : null, $1`]
+			],
+			['dom']
+		).call(this, dom, ...arguments);
+
+		return sb;
+	},
+
+	bind(/* ... */) {
+		const sb = funcSed(
+			ui.Dropdown.prototype.bind,
+			[
+				[new RegExp(/(o\.multiple\s*=)/), `o.keep_order = sb.hasAttribute('keep_order'); $1`],
+				[
+					new RegExp(/(if\s*\(items\[i\]\.hasAttribute\('selected'\)\s*&&\s*ndisplay--\s*>\s*0\)[\n\s]*items\[i\]\.setAttribute\('display',\s*n\+\+\);)/),
+					`$1
+					if (this.options.keep_order) {
+						const value = items[i].getAttribute('data-value');
+						if (items[i].hasAttribute('selected') && this.values.includes(value))
+							items[i].setAttribute('data-order', this.values.indexOf(value));
+					}`
+				]
+			],
+			['dom']
+		).call(this, dom, ...arguments);
+
+		return sb;
+	},
+
+	toggleItem(/* ... */) {
+		const result = funcSed(
+			ui.Dropdown.prototype.toggleItem,
+			[
+				[
+					new RegExp(/(li\.removeAttribute\('selected'\))/),
+					`if (this.options.keep_order)
+						li.removeAttribute('data-order');
+					$1`
+				],
+				[
+					new RegExp(/(li\.setAttribute\('selected',\s*''\))/),
+					`if (this.options.keep_order)
+						li.setAttribute('data-order', this.orderCounter++);
+					$1`
+				]
+			],
+			['dom']
+		).call(this, dom, ...arguments);
+
+		return result;
+	},
+
+	saveValues(/* ... */) {
+		const result = funcSed(
+			ui.Dropdown.prototype.saveValues,
+			[
+				[
+					new RegExp(/(const sel\s*=)([^;\n]+);/),
+					`$1 Array.from($2);
+					if (this.options.keep_order) {
+						sel.sort((a, b) =>
+							(+a.getAttribute('data-order') || 0) -
+							(+b.getAttribute('data-order') || 0)
+						);
+					}`
+				]
+			]
+		).call(this, ...arguments);
+
+		return result;
+	}
+});
+
+/* Method */
+function calcStringMD5(e) {
+	return md5(e);
+}
+
+/* Thanks to luci-app-ssr-plus */
+function base64Prefmt(str) {
+	str = str.replace(/-/g, '+').replace(/_/g, '/');
+	const padding = (4 - (str.length % 4)) % 4;
+	if (padding)
+		str += '='.repeat(padding);
+
+	return str;
+}
+
+/* thanks to homeproxy */
+/**
+ * General Base64 Decoding
+ * @param {string} str - Base64 string
+ * @param {boolean} asText - true: decoded string (UTF-8), false: Uint8Array
+ * @returns {string|Uint8Array}
+ */
+function decodeBase64(str, asText = false) {
+	if (!str)
+		return null;
+
+	str = base64Prefmt(str);
+
+	if (asText)
+		return decodeURIComponent(Array.prototype.map.call(atob(str), c =>
+			'%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+		).join(''));
+
+	return Uint8Array.fromBase64(str); // OR Uint8Array.from(atob(str), c => c.charCodeAt(0));
+}
+
+/**
+ * General Base64 Encoding
+ * @param {string|Array|ArrayBuffer|Uint8Array} input - String or binary data to be encoded
+ * @returns {string}
+ */
+function encodeBase64(input) {
+	if (isEmpty(input))
+		return null;
+
+	if (typeof input === 'string') {
+		const rawStr = encodeURIComponent(input).replace(/%([0-9A-F]{2})/g, (match, p1) =>
+			String.fromCharCode(parseInt(p1, 16))
+		);
+		return btoa(rawStr);
+	}
+
+	const buf = (input instanceof ArrayBuffer) ? new Uint8Array(input) : input;
+	return new Uint8Array(buf).toBase64(); // OR btoa(String.fromCharCode.apply(null, buf));
+}
+
+// thanks to https://github.com/scottschiller/ArmorAlley/blob/master/src/floppy/index-floppy.html
+/**
+ * Unzip Gzip data
+ * @param {string|Array|ArrayBuffer|Uint8Array} input - Input data (Base64 string or binary object)
+ * @param {boolean} asText - Return a string? (true: text, false: arrayBuffer)
+ * @returns {Promise} string|Uint8Array
+ */
+async function decompressGzip(input, asText = false) {
+	if (isEmpty(input))
+		return null;
+
+	const ds = new DecompressionStream('gzip');
+
+	let blob_in;
+	if (typeof input === 'string') {
+		if (input.match(/^H4sI/)) { // Gzip magic + Deflate
+			const response = await window.fetch('data:application/octet-stream;base64,' + base64Prefmt(input));
+			blob_in = await response.blob();
+		} else
+			throw new Error('Not a valid base64 encoded gzip');
+	} else {
+		// The `input` should be `Array` or `ArrayBuffer` or `Uint8Array`.
+		input = new Uint8Array(input);
+		if (input.subarray(0, 3).join(',') === [0x1f, 0x8b, 0x08].join(',')) // Gzip magic + Deflate
+			blob_in = new Blob([input]);
+		else
+			throw new Error('Not a valid gzip');
+	}
+
+	const decodedStream = blob_in.stream().pipeThrough(ds);
+	const blob_out = await new window.Response(decodedStream).blob();
+
+	if (asText)
+		return await blob_out.text();
+	else {
+		const buf = await blob_out.arrayBuffer();
+		return new Uint8Array(buf);
+	}
+}
+
+function generateRand(type, length) {
+	let byteArr;
+	if (['base64', 'hex'].includes(type))
+		byteArr = crypto.getRandomValues(new Uint8Array(length));
+	switch (type) {
+		case 'base64':
+			/* Thanks to https://stackoverflow.com/questions/9267899 */
+			return btoa(String.fromCharCode.apply(null, byteArr));
+		case 'hex':
+			return Array.from(byteArr, (byte) =>
+				(byte & 255).toString(16).padStart(2, '0')
+			).join('');
+		case 'uuid':
+			/* Thanks to https://stackoverflow.com/a/2117523 */
+			return (location.protocol === 'https:') ? crypto.randomUUID() :
+			([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, (c) =>
+				(c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)
+			);
+		default:
+			return null;
+	};
+}
+
+function shuffle(StrORArr) {
+	let arr;
+
+	if (typeof StrORArr === 'string')
+		arr = StrORArr.split('');
+	else if (Array.isArray(StrORArr))
+		arr = StrORArr;
+	else
+		throw new Error(`String or Array only`);
+
+	for (let i = arr.length - 1; i > 0; i--) {         // Traverse the array from back to front
+		const j = Math.floor(Math.random() * (i + 1)); // Generate a random index between 0 and i
+
+		[arr[i], arr[j]] = [arr[j], arr[i]];           // Swap positions
+	}
+
+	if (typeof StrORArr === 'string')
+		return arr.join('');
+	else if (Array.isArray(StrORArr))
+		return arr;
+}
+
+function json2yaml(object, command) {
+	const callJson2Yaml = rpc.declare({
+		object: 'luci.fchomo',
+		method: 'json2yaml',
+		params: ['content', 'command'],
+		expect: { '': {} }
+	});
+
+	return callJson2Yaml(typeof object === 'string' ? object : JSON.stringify(object), command).then(res => res.result);
+}
+function yaml2json(content, command) {
+	const callYaml2Json = rpc.declare({
+		object: 'luci.fchomo',
+		method: 'yaml2json',
+		params: ['content', 'command'],
+		expect: { '': {} }
+	});
+
+	return callYaml2Json(content, command).then(res => res.result);
+}
+function yamlfile2json(type, filename, command) {
+	const callYamlfile2Json = rpc.declare({
+		object: 'luci.fchomo',
+		method: 'yamlfile2json',
+		params: ['type', 'filename', 'command'],
+		expect: { '': {} }
+	});
+
+	return callYamlfile2Json(type, filename, command).then(res => res.result);
+}
+
+function isEmpty(res) {
+	if (res == null) return true;                                                // null, undefined
+	if (typeof res.length === 'number') return res.length === 0;                 // empty String/Array/TypedArray
+	if (res instanceof ArrayBuffer) return res.byteLength === 0;                 // empty ArrayBuffer
+	if (typeof res === 'object') {
+		if (res instanceof Map || res instanceof Set) return res.size === 0;     // empty Map/Set
+		return Object.keys(res).length === 0;                                    // empty Object
+	}
+	return false;
+}
+
+function removeBlankAttrs(res) {
+	if (Array.isArray(res)) {
+		return res
+			.filter(item => !isEmpty(item))
+			.map(item => removeBlankAttrs(item));
+	}
+	if (res !== null && typeof res === 'object') {
+		const obj = {};
+		for (const key in res) {
+			const val = removeBlankAttrs(res[key]);
+			if (!isEmpty(val))
+				obj[key] = val;
+		}
+		return obj;
+	}
+	return res;
+}
+
+function toUciname(str) {
+	if (isEmpty(str))
+		return null;
+
+	const unuciname = new RegExp(/[^a-zA-Z0-9_]+/, "g");
+
+	return str.replace(/[\s\.-]/g, '_').replace(unuciname, '');
+}
+
+function getFeatures() {
+	const callGetFeatures = rpc.declare({
+		object: 'luci.fchomo',
+		method: 'get_features',
+		expect: { '': {} }
+	});
+
+	return L.resolveDefault(callGetFeatures(), {});
+}
+
+function getServiceStatus(instance) {
+	const conf = 'fchomo';
+	const callServiceList = rpc.declare({
+		object: 'service',
+		method: 'list',
+		params: ['name'],
+		expect: { '': {} }
+	});
+
+	return L.resolveDefault(callServiceList(conf), {})
+		.then((res) => {
+			let isRunning = false;
+			try {
+				isRunning = res[conf]['instances'][instance].running;
+			} catch (e) {}
+			return isRunning;
+		});
+}
+
+function getClashAPI(instance) {
+	const callGetClashAPI = rpc.declare({
+		object: 'luci.fchomo',
+		method: 'get_clash_api',
+		params: ['instance'],
+		expect: { '': {} }
+	});
+
+	return L.resolveDefault(callGetClashAPI(instance), {});
+}
+
+/* thanks to homeproxy */
+function loadDefaultLabel(section_id) {
+	const label = uci.get(this.config, section_id, 'label');
+	if (label) {
+		return label;
+	} else {
+		uci.set(this.config, section_id, 'label', section_id);
+		return section_id;
+	}
+}
+
+/* thanks to homeproxy */
+function loadModalTitle(title, addtitle, section_id) {
+	const label = uci.get(this.config, section_id, 'label');
+	return label ? title + ' » ' + label : addtitle;
+}
+
+function loadChoices(preadds, section_id) {
+	delete this.keylist;
+	delete this.vallist;
+
+	for (const arr of preadds || [])
+		this.value(...arr);
+
+	return this.super('load', section_id);
+}
+
+function loadChoicesGetMap(uciconfig, sectiontype, options = {}) {
+	const values = [];
+
+	switch (sectiontype) {
+		case 'proxy_group':
+		case 'inbound':
+		case 'node':
+		case 'provider':
+			uci.sections(uciconfig, sectiontype, (res) => {
+				if (res.enabled !== '0')
+					values.push([res['.name'], res.label]);
+			});
+			break;
+		case 'ruleset':
+			uci.sections(uciconfig, sectiontype, (res) => {
+				if (
+					res.enabled !== '0' &&
+					(!options.behaviors ||
+					  options.behaviors.includes(res.behavior))
+				) {
+					values.push([res['.name'], res.label]);
+				}
+			});
+			break;
+		case 'subrule-group': {
+			const groups = new Set();
+
+			uci.sections(uciconfig, 'subrules', (res) => {
+				if (res.enabled !== '0')
+					groups.add(res.group);
+			});
+
+			for (const group of groups)
+				values.push([group, group]);
+			break;
+		}
+		case 'rematch-name': {
+			const names = new Set();
+
+			uci.sections(uciconfig, 'node', (res) => {
+				if (res.enabled !== '0' && res.target_rematch_name)
+					names.add(res.target_rematch_name);
+			});
+
+			for (const name of names)
+				values.push([name, name]);
+			break;
+		}
+		default:
+			break;
+	}
+
+	return values;
+}
+
+function renderStatus(elemId, isRunning, instance, noGlobal) {
+	const visible = isRunning && (isRunning.http || isRunning.https);
+
+	return E([
+		E('button', {
+			class: 'cbi-button cbi-button-apply' + (noGlobal ? ' hidden' : ''),
+			click: ui.createHandlerFn(this, handleReload, instance)
+		}, [ _('Reload') ]),
+		updateStatus(E('span', { id: elemId, style: 'border: unset; font-style: italic; font-weight: bold' }), isRunning ? true : false),
+		E('a', {
+			class: 'cbi-button cbi-button-apply %s'.format(visible ? '' : 'hidden'),
+			href: visible ? getDashURL(isRunning) : '',
+			target: '_blank',
+			rel: 'noreferrer noopener'
+		}, [ _('Open Dashboard') ])
+	]);
+}
+function updateStatus(node, isRunning, instance, noGlobal) {
+	if (node) {
+		node.style.color = isRunning ? 'green' : 'red';
+		node.innerHTML = '&ensp;%s%s&ensp;'.format(noGlobal ? instance + ' ' : '', isRunning ? _('Running') : _('Not Running'));
+		/* Dashboard button */
+		if (node.nextSibling?.localName === 'a')
+			getClashAPI(instance).then((res) => {
+				let visible = isRunning && (res.http || res.https);
+				if (visible) {
+					node.nextSibling.classList.remove('hidden');
+				} else
+					node.nextSibling.classList.add('hidden');
+
+				node.nextSibling.href = visible ? getDashURL(Object.assign(res, isRunning)) : '';
+			});
+	}
+
+	return node;
+}
+function getDashURL(isRunning) {
+	const tls = isRunning.https ? 's' : '';
+	const host = window.location.hostname;
+	const port = isRunning.https ? isRunning.https.split(':').pop() : isRunning.http.split(':').pop();
+	const secret = isRunning.secret;
+	const repo = isRunning.dashboard_repo;
+
+	return 'http%s://%s:%s/ui/'.format(tls, host, port) +
+		String.format(dashrepos_urlparams[repo] || '', host, port, secret)
+}
+
+function renderHy2Realm(s, uciconfig) {
+	let o;
+
+	o = s.taboption('field_general', form.Flag, 'hysteria2_realm', _('Realm'));
+	o.default = o.disabled;
+	o.depends('type', 'hysteria2');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_server_url', _('Rendezvous server'));
+	o.placeholder = 'https://realm.hy2.io';
+	o.rmempty = false;
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_token', _('Pre-shared key of rendezvous server'));
+	o.placeholder = 'public';
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_id', _('Realm ID'));
+	o.placeholder = 'my-cabin-1f3a8c2e9b';
+	o.rmempty = false;
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.DynamicList, 'hysteria2_realm_stun_servers', _('STUN servers'));
+	o.datatype = 'hostport';
+	o.default = ['stun.nextcloud.com:3478','stun.sip.us:3478','global.stun.twilio.com:3478'];
+	o.rmempty = false;
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	// 下面支持填写针对server-url的TLS配置(sni, skip-cert-verify, name-cert-verify, fingerprint, certificate, private-key, alpn)
+
+	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_sni', _('TLS SNI'),
+		_('Hostname that the client attempts to connect to at the start of the TLS handshake process.'));
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.DynamicList, 'hysteria2_realm_alpn', _('TLS ALPN'),
+		_('List of supported application level protocols, in order of preference.'));
+	o.default = ['h2', 'http/1.1'];
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_fingerprint', _('Cert fingerprint'),
+		_('Certificate fingerprint. Used to implement SSL Pinning and prevent MitM.'));
+	o.validate = validateSha256Key || hm.validateSha256Key;
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_name_cert_verify', _('Override cert DNSName'),
+		_('Used to verify the hostname on the returned certificates.'));
+	o.datatype = 'hostname';
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.Flag, 'hysteria2_realm_skip_cert_verify', _('Skip cert verify'),
+		_('Donot verifying server certificate.') +
+		'<br/>' +
+		_('This is <strong>DANGEROUS</strong>, your traffic is almost like <strong>PLAIN TEXT</strong>! Use at your own risk!'));
+	o.default = o.disabled;
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_cert_path', _('Certificate path') + _(' (mTLS)'),
+		_('The %s public key, in PEM format.').format(_('Client')));
+	o.value('/etc/fchomo/certs/client_publickey.pem');
+	o.depends('hysteria2_realm', '1');
+	o.modalonly = true;
+
+	o = s.taboption('field_hysteria2_realm', form.Value, 'hysteria2_realm_key_path', _('Key path') + _(' (mTLS)'),
+		_('The %s private key, in PEM format.').format(_('Client')));
+	o.value('/etc/fchomo/certs/client_privatekey.pem');
+	o.depends({hysteria2_realm: '1', hysteria2_realm_cert_path: /.+/});
+	o.modalonly = true;
+}
+
+function renderResDownload(section_id) {
+	const section_type = this.section.sectiontype;
+	const type = uci.get(this.config, section_id, 'type');
+	const url = uci.get(this.config, section_id, 'url');
+	const header = uci.get(this.config, section_id, 'header');
+
+	let node = E([
+		E('button', {
+			class: 'cbi-button cbi-button-add',
+			disabled: (type !== 'http') || null,
+			click: ui.createHandlerFn(this, (section_type, section_id, type, url, header) => {
+				if (type === 'http') {
+					return downloadFile(section_type, section_id, url, header).then((res) => {
+						ui.addNotification(null, E('p', _('Download successful.')), 'info');
+						if (this.callback)
+							this.callback(section_type, section_id);
+					}).catch((e) => {
+						ui.addNotification(null, E('p', _('Download failed: %s').format(e)), 'error');
+					});
+				} else
+					return ui.addNotification(null, E('p', _('Unable to download unsupported type: %s').format(type)), 'error');
+			}, section_type, section_id, type, url, header)
+		}, [ _('🡇') ]) //🗘
+	]);
+
+	return node;
+}
+
+function renderResLink(section_id) {
+	const section_type = this.section.sectiontype;
+	const type = uci.get(this.config, section_id, 'type');
+
+	let node = E([
+		E('span', {
+			title: this.readonly ? this.readonly : null
+		}, [
+			E('button', {
+				class: 'cbi-button cbi-button-apply',
+				disabled: (this.readonly !== false || type === 'inline') || null,
+				click: ui.createHandlerFn(this, (section_type, section_id) => {
+					let path = encodeURIComponent(`${HM_DIR.replace(/^\//, '')}/${section_type}`);
+					return window.open(`${window.location.origin}/tinyfilemanager/index.php?p=${path}&view=${section_id}`, '_blank', 'noopener');
+				}, section_type, section_id)
+			}, [ _('🔗') ])
+		])
+	]);
+
+	return node;
+}
+
+function handleGenKey(section_id, option) {
+	const type = this.section.getOption('type')?.formvalue(section_id);
+	const widget = L.bind(function(option) {
+		return this.map.findElement('id', 'widget.' + this.cbid(section_id).replace(/\.[^\.]+$/, '.') + option);
+	}, this);
+
+	const callMihomoGenerator = rpc.declare({
+		object: 'luci.fchomo',
+		method: 'mihomo_generator',
+		params: ['type', 'params'],
+		expect: { '': {} }
+	});
+
+	if (typeof option === 'object') {
+		return callMihomoGenerator(option.type, option.params).then((res) => {
+			if (res.result)
+				option.callback.call(this, res.result).forEach(([k, v]) => {
+					widget(k).value = v ?? '';
+				});
+			else
+				ui.addNotification(null, E('p', _('Failed to generate %s, error: %s.').format(type, res.error)), 'error');
+		});
+	} else {
+		let password, required_method;
+
+		if (option === 'uuid' || option.match(/_uuid/))
+			required_method = 'uuid';
+		else if (option.match(/sudoku_custom_table/))
+			required_method = 'sudoku_custom_table';
+		else if (type === 'shadowsocks' && option === 'shadowsocks_password')
+			required_method = this.section.getOption('shadowsocks_chipher')?.formvalue(section_id);
+		else if (type === 'trojan' && option === 'trojan_ss_password')
+			required_method = this.section.getOption('trojan_ss_chipher')?.formvalue(section_id);
+
+		switch (required_method) {
+			/* NONE */
+			case 'none':
+				password = '';
+				break;
+			/* UUID */
+			case 'uuid':
+				password = generateRand('uuid');
+				break;
+			/* SUDOKU CUSTOM TABLE */
+			case 'sudoku_custom_table':
+				password = shuffle('xxppvvvv');
+				break;
+			/* DEFAULT */
+			default:
+				password = generateRand('hex', 32/2);
+				break;
+		}
+		/* AEAD */
+		(function(length) {
+			if (length && length > 0)
+				password = generateRand('base64', length);
+		}(aead_cipher_length[required_method]));
+
+		return widget(option).value = password;
+	}
+}
+
+function handleReload(instance, ev, section_id) {
+	instance = instance || '';
+	return fs.exec('/etc/init.d/fchomo', ['reload', instance])
+		.then((res) => { /* return window.location = window.location.href.split('#')[0] */ })
+		.catch((e) => {
+			ui.addNotification(null, E('p', _('Failed to execute "/etc/init.d/fchomo %s %s" reason: %s').format('reload', instance, e)), 'error')
+		})
+}
+
+function handleRemoveIdles() {
+	const section_type = this.sectiontype;
+
+	let loaded = [];
+	uci.sections(this.config, section_type, (section, sid) => loaded.push(sid));
+
+	return lsDir(section_type).then((res) => {
+		let sectionEl = E('div', { class: 'cbi-section' }, []);
+
+		res.filter(e => !loaded.includes(e)).forEach((filename) => {
+			sectionEl.appendChild(E('div', { class: 'cbi-value' }, [
+				E('label', {
+					class: 'cbi-value-title',
+					id: 'rmidles.' + filename + '.label'
+				}, [ filename ]),
+				E('div', { class: 'cbi-value-field' }, [
+					E('button', {
+						class: 'cbi-button cbi-button-negative important',
+						id: 'rmidles.' + filename + '.button',
+						click: ui.createHandlerFn(this, (filename) => {
+							return removeFile(section_type, filename).then((res) => {
+								let node = document.getElementById('rmidles.' + filename + '.label');
+								node.innerHTML = '<s>%s</s>'.format(node.innerHTML);
+								node = document.getElementById('rmidles.' + filename + '.button');
+								node.classList.add('hidden');
+							});
+						}, filename)
+					}, [ _('Remove') ])
+				])
+			]));
+		});
+
+		ui.showModal(_('Remove idles'), [
+			sectionEl,
+			E('div', { class: 'right' }, [
+				E('button', {
+					class: 'btn cbi-button-action',
+					click: ui.hideModal
+				}, [ _('Complete') ])
+			])
+		]);
+	});
+}
+
+function textvalue2Value(section_id) {
+	let cval = this.cfgvalue(section_id);
+	let i = this.keylist.indexOf(cval);
+
+	return this.vallist[i] ?? cval;
+}
+
+function validateAuth(section_id, value) {
+	if (!value)
+		return true;
+	if (!value.match(/^[\w-]{3,}:[^:]+$/))
+		return _('Expecting: %s').format('[A-Za-z0-9_-]{3,}:[^:]+');
+
+	return true;
+}
+function validateAuthUsername(section_id, value) {
+	if (!value)
+		return true;
+	if (!value.match(/^[\w-]{3,}$/))
+		return _('Expecting: %s').format('[A-Za-z0-9_-]{3,}');
+
+	return true;
+}
+function validateAuthPassword(section_id, value) {
+	if (!value)
+		return true;
+	if (!value.match(/^[^:]+$/))
+		return _('Expecting: %s').format('[^:]+');
+
+	return true;
+}
+
+function validateCommonPort(section_id, value) {
+	/* thanks to homeproxy */
+	let stubValidator = {
+		factory: validation,
+		apply(type, value, args) {
+			if (value != null)
+				this.value = value;
+
+			return validation.types[type].apply(this, args);
+		},
+		assert(condition) {
+			return !!condition;
+		}
+	};
+
+	const arr = value.trim().split(' ');
+
+	if (arr.length === 0 || arr.includes(''))
+		return _('Expecting: %s').format(_('non-empty value'));
+
+	if (arr.length > 1 && arr.includes('all'))
+		return _('Expecting: %s').format(_('If All ports is selected, uncheck others'));
+
+	for (let custom of arr) {
+		if (!routing_port_type.map(e => e[0]).includes(custom)) {
+			let ports = [];
+			for (let i of custom.split(this.hm_separator ?? ',')) {
+				if (!stubValidator.apply('port', i) && !stubValidator.apply('portrange', i))
+					return _('Expecting: %s').format(_('valid port value'));
+				if (ports.includes(i))
+					return _('Port %s alrealy exists!').format(i);
+				ports = ports.concat(i);
+			}
+		}
+	}
+
+	return true;
+}
+
+function validateBytesize(section_id, value) {
+	if (!value)
+		return true;
+
+	if (!value.match(/^(\d+)(k|m|g)?b?$/))
+		return _('Expecting: %s').format('^(\\d+)(k|m|g)?b?$');
+
+	return true;
+}
+function validateTimeDuration(section_id, value) {
+	if (!value)
+		return true;
+
+	if (!value.match(/^(\d+)(s|m|h|d)?$/))
+		return _('Expecting: %s').format('^(\\d+)(s|m|h|d)?$');
+
+	return true;
+}
+
+function validateJson(section_id, value) {
+	if (!value)
+		return true;
+
+	try {
+		let obj = JSON.parse(value.trim());
+		if (!obj)
+			return _('Expecting: %s').format(_('valid JSON format'));
+	}
+	catch(e) {
+		return _('Expecting: %s').format(_('valid JSON format'));
+	}
+
+	return true;
+}
+
+function validateUUID(section_id, value) {
+	if (!value)
+		return true;
+	else if (value.match('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') === null)
+		return _('Expecting: %s').format(_('valid uuid'));
+
+	return true;
+}
+
+function validateUrl(section_id, value) {
+	if (!value)
+		return true;
+
+	try {
+		let url = new URL(value);
+		if (!url.hostname)
+			return _('Expecting: %s').format(_('valid URL'));
+	}
+	catch(e) {
+		return _('Expecting: %s').format(_('valid URL'));
+	}
+
+	return true;
+}
+
+function validateHexstr(length, section_id, value) {
+	if (!value)
+		return true;
+
+	length /= 4; // Convert bits to hex characters
+	const regexp = new RegExp(`^[0-9a-fA-F]{${length}}$`);
+	if (!value.match(regexp))
+		return _('Expecting: %s').format(_('valid hex string with %d characters').format(length));
+
+	return true;
+}
+
+function validateBase64Key(length, section_id, value) {
+	/* Thanks to luci-proto-wireguard */
+	if (value) {
+		if (value.length !== length || !value.match(/^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/) || value[length-1] !== '=')
+			return _('Expecting: %s').format(_('valid base64 key with %d characters').format(length));
+	} else if (this.rmempty === false || (this.optional ?? true) !== false)
+		return _('Expecting: %s').format(_('non-empty value'));
+
+	return true;
+}
+
+function validateSha256Key(section_id, value) {
+	if (!value)
+		return true;
+	if (!((value.length === 64) && (value.match(/^[0-9a-fA-F]+$/))))
+		return _('Expecting: %s').format(_('valid SHA256 string with %d characters').format(64));
+	return true;
+}
+
+function validateMTLSClientAuth(type_option, section_id, value) {
+	// If `client-auth-type` is set to "verify-if-given" or "require-and-verify", `client-auth-cert` must not be empty.
+	const auth_type = this.section.getOption(type_option).formvalue(section_id);
+					//this.section.getUIElement('tls_client_auth_type').getValue();
+	if (!value && ["verify-if-given", "require-and-verify"].includes(auth_type))
+		return _('Expecting: %s').format(_('non-empty value'));
+
+	return true;
+}
+
+function validatePresetIDs(disoption_list, section_id) {
+	let node;
+	let hm_prefmt = glossary[this.section.sectiontype].prefmt;
+	let preset_ids = [
+		'fchomo_direct_list',
+		'fchomo_proxy_list',
+		'fchomo_china_list',
+		'fchomo_gfw_list'
+	];
+
+	if (preset_ids.map((v) => hm_prefmt.format(v)).includes(section_id)) {
+		disoption_list.forEach(([typ, opt]) => {
+			node = this.section.getUIElement(section_id, opt)?.node;
+			(typ ? node?.querySelector(typ) : node)?.setAttribute(typ === 'textarea' ? 'readOnly' : 'disabled', '');
+		});
+
+		this.map.findElement('id', 'cbi-fchomo-' + section_id)?.lastChild.querySelector('.cbi-button-remove')?.remove();
+	}
+
+	return true;
+}
+
+function validateShadowsocksPassword(encmode, section_id, value) {
+	let length = aead_cipher_length[encmode];
+	if (typeof length !== 'undefined') {
+		length = Math.ceil(length/3)*4;
+		if (encmode.match(/^2022-/)) {
+			return validateBase64Key.call(this, length, section_id, value);
+		} else {
+			if (length === 0 && !value)
+				return _('Expecting: %s').format(_('non-empty value'));
+			if (length !== 0 && value.length !== length)
+				return _('Expecting: %s').format(_('valid key length with %d characters').format(length));
+		}
+	} else
+		return true;
+
+	return true;
+}
+
+function validateSudokuCustomTable(section_id, value) {
+	if (!value)
+		return true;
+
+	if (value.length !== 8)
+		return _('Expecting: %s').format(_('valid format: 2x, 2p, 4v'));
+
+	const counts = {};
+	for (const c of value)
+		counts[c] = (counts[c] || 0) + 1;
+	if (!(counts.x === 2 && counts.p === 2 && counts.v === 4))
+		return _('Expecting: %s').format(_('valid format: 2x, 2p, 4v'));
+
+	return true;
+}
+
+function validateUniqueValue(section_id, value) {
+	if (!value)
+		return _('Expecting: %s').format(_('non-empty value'));
+
+	let duplicate = false;
+	uci.sections(this.config, this.section.sectiontype, (res) => {
+		if (res['.name'] !== section_id)
+			if (res[this.option] === value)
+				duplicate = true;
+	});
+	if (duplicate)
+		return _('Expecting: %s').format(_('unique value'));
+
+	return true;
+}
+
+function lsDir(type) {
+	const callLsDir = rpc.declare({
+		object: 'luci.fchomo',
+		method: 'dir_ls',
+		params: ['type'],
+		expect: { '': {} }
+	});
+
+	return L.resolveDefault(callLsDir(type), {}).then((res) => {
+		if (res.result) {
+			return res.result;
+		} else
+			throw res.error || 'unknown error';
+	});
+}
+
+function readFile(type, filename, isbinary) {
+	const callReadFile = rpc.declare({
+		object: 'luci.fchomo',
+		method: 'file_read',
+		params: ['type', 'filename', 'isbinary'],
+		expect: { '': {} }
+	});
+
+	return L.resolveDefault(callReadFile(type, filename, isbinary), {}).then((res) => {
+		if (res.content ?? true) {
+			return res.content;
+		} else
+			throw res.error || 'unknown error';
+	});
+}
+
+function writeFile(type, filename, content, isbinary) {
+	const callWriteFile = rpc.declare({
+		object: 'luci.fchomo',
+		method: 'file_write',
+		params: ['type', 'filename', 'content', 'isbinary'],
+		expect: { '': {} }
+	});
+
+	return L.resolveDefault(callWriteFile(type, filename, content, isbinary), {}).then((res) => {
+		if (res.result) {
+			return res.result;
+		} else
+			throw res.error || 'unknown error';
+	});
+}
+
+function downloadFile(type, filename, url, header) {
+	const callDownloadFile = rpc.declare({
+		object: 'luci.fchomo',
+		method: 'file_download',
+		params: ['type', 'filename', 'url', 'header'],
+		expect: { '': {} }
+	});
+
+	return L.resolveDefault(callDownloadFile(type, filename, url, header), {}).then((res) => {
+		if (res.result) {
+			return res.result;
+		} else
+			throw res.error || 'unknown error';
+	});
+}
+
+function removeFile(type, filename) {
+	const callRemoveFile = rpc.declare({
+		object: 'luci.fchomo',
+		method: 'file_remove',
+		params: ['type', 'filename'],
+		expect: { '': {} }
+	});
+
+	return L.resolveDefault(callRemoveFile(type, filename), {}).then((res) => {
+		if (res.result) {
+			return res.result;
+		} else
+			throw res.error || 'unknown error';
+	});
+}
+
+/* thanks to homeproxy */
+function uploadCertificate(type, filename, ev) {
+	const callWriteCertificate = rpc.declare({
+		object: 'luci.fchomo',
+		method: 'certificate_write',
+		params: ['filename'],
+		expect: { '': {} }
+	});
+
+	return ui.uploadFile('/tmp/fchomo_certificate.tmp', ev.target)
+	.then(L.bind((btn, res) => {
+		return L.resolveDefault(callWriteCertificate(filename), {}).then((ret) => {
+			if (ret.result === true)
+				ui.addNotification(null, E('p', _('Your %s was successfully uploaded. Size: %sB.').format(type, res.size)), 'info');
+			else
+				ui.addNotification(null, E('p', _('Failed to upload %s, error: %s.').format(type, ret.error)), 'error');
+		});
+	}, this, ev.target))
+	.catch((e) => { ui.addNotification(null, E('p', e.message), 'error') });
+}
+function uploadInitialPack(ev, section_id) {
+	const callWriteInitialPack = rpc.declare({
+		object: 'luci.fchomo',
+		method: 'initialpack_write',
+		expect: { '': {} }
+	});
+
+	return ui.uploadFile('/tmp/fchomo_initialpack.tmp', ev.target)
+	.then(L.bind((btn, res) => {
+		return L.resolveDefault(callWriteInitialPack(), {}).then((ret) => {
+			if (ret.result === true) {
+				ui.addNotification(null, E('p', _('Successfully uploaded.')), 'info');
+				return window.location = window.location.href.split('#')[0];
+			} else
+				ui.addNotification(null, E('p', _('Failed to upload, error: %s.').format(ret.error)), 'error');
+		});
+	}, this, ev.target))
+	.catch((e) => { ui.addNotification(null, E('p', e.message), 'error') });
+}
+
+return baseclass.extend({
+	/* Member */
+	rulesetdoc,
+	sharkaudio,
+	sharktaikogif,
+	less_25_12,
+	HM_DIR,
+	monospacefonts,
+	checkurls,
+	congestion_controller,
+	ipstack_congestion_controller,
+	bbr_profiles,
+	stunserver,
+	dashrepos,
+	dashrepos_urlparams,
+	log_levels,
+	glossary,
+	health_checkurls,
+	inbound_type,
+	ip_version,
+	load_balance_strategy,
+	outbound_type,
+	preset_outbound,
+	proxy_group_type,
+	routing_port_type,
+	rules_type,
+	rules_type_allowparms,
+	rules_logical_type,
+	rules_logical_payload_count,
+	aead_cipher_length,
+	shadowsocks_cipher_methods,
+	sudoku_cipher_methods,
+	trojan_cipher_methods,
+	tls_client_auth_types,
+	tls_client_fingerprints,
+	vless_encryption,
+	vless_flow,
+
+	/* Prototype */
+	GridSection: CBIGridSection,
+	ListValue: CBIListValue,
+	DynamicList: CBIDynamicList, // @less_25_12
+	StaticList: CBIStaticList,
+	MultiValue: CBIMultiValue,
+	GroupListValue: CBIGroupListValue,
+	GroupDynamicList: CBIGroupDynamicList,
+	GroupStaticList: CBIGroupStaticList,
+	RichValue: CBIRichValue,
+	RichMultiValue: CBIRichMultiValue,
+	TextValue: CBITextValue,
+	GenValue: CBIGenValue,
+	GenText: CBIGenText,
+	CopyValue: CBICopyValue,
+	parseYaml: CBIparseYaml,
+	HandleImport: CBIHandleImport,
+
+	/* Method */
+	calcStringMD5,
+	decodeBase64,
+	encodeBase64,
+	decompressGzip,
+	generateRand,
+	shuffle,
+	json2yaml,
+	yaml2json,
+	yamlfile2json,
+	isEmpty,
+	removeBlankAttrs,
+	toUciname,
+	getFeatures,
+	getServiceStatus,
+	getClashAPI,
+	// load
+	loadDefaultLabel,
+	loadModalTitle,
+	loadChoices,
+	loadChoicesGetMap,
+	// render
+	renderStatus,
+	updateStatus,
+	getDashURL,
+	renderHy2Realm,
+	renderResDownload,
+	renderResLink,
+	handleGenKey,
+	handleReload,
+	handleRemoveIdles,
+	textvalue2Value,  // this
+	// validate
+	validateAuth,
+	validateAuthUsername,
+	validateAuthPassword,
+	validateCommonPort,  // this
+	validateBytesize,
+	validateTimeDuration,
+	validateJson,
+	validateUUID,
+	validateUrl,
+	validateHexstr,
+	validateBase64Key,  // this
+	validateSha256Key,
+	validateMTLSClientAuth,  // this
+	validatePresetIDs,  // this
+	validateShadowsocksPassword,  // this
+	validateSudokuCustomTable,
+	validateUniqueValue,  // this
+	// file operations
+	lsDir,
+	readFile,
+	writeFile,
+	downloadFile,
+	removeFile,
+	uploadCertificate,
+	uploadInitialPack,
+});

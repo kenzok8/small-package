@@ -1,0 +1,30 @@
+# Mixin File
+# You can set any mihomo profile's config at here, it will mixin to the profile.
+# Mixin file have lower priority than the LuCI mixin options.
+#
+# Mihomo's Wiki: https://wiki.metacubex.one
+#
+# For example:
+#
+# experimental: # experimental config
+#   dialer-ip4p-convert: false # IP4P support
+# listeners: # overwrite listeners
+#   - name: shadowsocks
+#     type: shadowsocks
+#     listen: "::"
+#     port: 12060
+# nikki-proxies: # prepend proxies
+#   - name: PROXY
+#     type: ss
+#     server: proxy.example.com
+#     port: 443
+#     cipher: chacha20-ietf-poly1305
+#     password: password
+# nikki-proxy-groups: # prepend proxy groups
+#   - name: PROXY_GROUP
+#     type: select
+#     proxies:
+#       - PROXY
+# nikki-rules: # prepend rules
+#   - DOMAIN,direct.example.com,DIRECT
+#   - DOMAIN-SUFFIX,proxy.example.com,PROXY

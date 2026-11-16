@@ -1,0 +1,28 @@
+#!/bin/sh
+# Migration script for fchomo rules & sub-rules
+# Used to migrate LuCI application routing rules and sub-rules option.
+
+. /lib/functions.sh
+. /usr/share/libubox/jshn.sh
+
+CONF=fchomo
+
+config_load "$CONF"
+
+# isDefined <section> <option>
+isDefined() {
+	local opt=CONFIG_${1}_${2};
+
+	eval "[ -n \"\${$opt+x}\" ] && return 0 || return 1"
+}
+
+migrate() {
+	:
+}
+
+#config_foreach migrate rules
+#config_foreach migrate subrules
+
+#uci_commit "$CONF"
+
+exit 0

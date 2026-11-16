@@ -1,0 +1,9 @@
+#!/bin/sh
+# Migration script for fchomo
+# Used to migrate LuCI application option.
+
+CONF=fchomo
+
+#uci commit "$CONF"
+
+exit 0

@@ -1,0 +1,206 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:63
+msgid "Auto login user"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:64
+msgid ""
+"Automatically login/logout of the specified user based on LuCI credentials."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:161
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:162
+msgid "Check update"
+msgstr ""
+
+#: root/usr/share/luci/menu.d/luci-app-tinyfilemanager.json:30
+msgid "Config"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:93
+msgid "D-M-YYYY"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:92
+msgid "D.M.YYYY"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:94
+msgid "D/M/YYYY"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:90
+msgid "DD-MM-YYYY"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:89
+msgid "DD.MM.YYYY"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:91
+msgid "DD/MM/YYYY"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:88
+msgid "Date format"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:129
+msgid "Disable"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:42
+msgid "Enable Authentication"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:141
+msgid "Enable proxy for updater"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:121
+msgid "Exclude Files/Folders"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:118
+msgid "Favicon path"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:78
+msgid "Global Readonly"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:130
+msgid "Google Docs"
+msgstr ""
+
+#: root/usr/share/rpcd/acl.d/luci-app-tinyfilemanager.json:3
+msgid "Grant access to tinyfilemanager procedures"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:106
+msgid "H:mm:ss"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:105
+msgid "HH:mm:ss"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:82
+msgid "Home path"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:45
+msgid "Login user name and passwd hash"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:135
+msgid "Max upload size (MBytes)"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:131
+msgid "Microsoft Web Apps"
+msgstr ""
+
+#: root/usr/share/luci/menu.d/luci-app-tinyfilemanager.json:3
+msgid "NAS"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:127
+msgid "Online Docs viewer"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:144
+msgid "Proxy Protocol"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:154
+msgid "Proxy Server"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:55
+msgid "Readonly users"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:171
+msgid "Releases list"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:34
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:35
+msgid "Reload"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:128
+msgid "Requires running on open network"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:114
+msgid "Show seconds in time"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:108
+msgid "TT h:mm:ss"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:107
+msgid "TT hh:mm:ss"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:104
+msgid "Time format"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:178
+#: root/usr/share/luci/menu.d/luci-app-tinyfilemanager.json:11
+#: root/usr/share/luci/menu.d/luci-app-tinyfilemanager.json:22
+msgid "Tiny File Manager"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:178
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:179
+msgid "Uprgade"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:99
+msgid "YYYY-M-D"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:96
+msgid "YYYY-MM-DD"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:98
+msgid "YYYY.M.D"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:95
+msgid "YYYY.MM.DD"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:100
+msgid "YYYY/M/D"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:97
+msgid "YYYY/MM/DD"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:46
+msgid ""
+"You can generate new passwd in <b>File Manager -> Admin -> Help -> Generate "
+"new</b> or <a href=\"%s\" target=\"_blank\"><b>Here</b></a>."
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:110
+msgid "h:mm:ss TT"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:109
+msgid "hh:mm:ss TT"
+msgstr ""
+
+#: htdocs/luci-static/resources/view/tinyfilemanager/config.js:70
+msgid "none"
+msgstr ""

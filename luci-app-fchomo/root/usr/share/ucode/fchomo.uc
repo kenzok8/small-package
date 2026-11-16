@@ -1,0 +1,502 @@
+/* thanks for homeproxy */
+
+import { mkstemp, popen } from 'fs';
+
+/* Global variables START */
+export const HM_DIR = '/etc/fchomo';
+export const EXE_DIR = '/usr/libexec/fchomo';
+export const SDL_DIR = '/usr/share/fchomo';
+export const RUN_DIR = '/var/run/fchomo';
+export const PRESET_OUTBOUND = [
+	'DIRECT',
+	'REJECT',
+	'REJECT-DROP',
+	'PASS',
+	'PASS-RULE',
+	'COMPATIBLE',
+	'GLOBAL'
+];
+export const RULES_LOGICAL_TYPE = [
+	'AND',
+	'OR',
+	'NOT'
+];
+/* Global variables END */
+
+/* Utilities start */
+/* Kanged from luci-app-commands */
+export function shellQuote(s) {
+	return `'${replace(s, "'", "'\\''")}'`;
+};
+
+export function isBinary(str) {
+	for (let off = 0, byte = ord(str); off < length(str); byte = ord(str, ++off))
+		if (byte <= 8 || (byte >= 14 && byte <= 31))
+			return true;
+
+	return false;
+};
+
+export function executeCommand(infd, ...args) {
+	let outfd = mkstemp();
+	let errfd = mkstemp();
+
+	if (infd)
+		push(args, `<&${infd.fileno()}`);
+
+	const exitcode = system(`${join(' ', args)} >&${outfd.fileno()} 2>&${errfd.fileno()}`);
+
+	outfd.seek();
+	errfd.seek();
+
+	const stdout = outfd.read(1024 * 1024) ?? '';
+	const stderr = errfd.read(1024 * 1024) ?? '';
+
+	outfd.close();
+	errfd.close();
+
+	const binary = isBinary(stdout);
+
+	return {
+		command: join(' ', args),
+		stdout: binary ? null : stdout,
+		stderr,
+		exitcode,
+		binary
+	};
+};
+
+export function yqRead(flags, command, content) {
+	let infd = mkstemp();
+
+	if (content) {
+		content = trim(content);
+		content = replace(content, /\r\n?/g, '\n');
+		if (!match(content, /\n$/))
+			content += '\n';
+	}
+	infd.write(content);
+
+	infd.seek();
+	const out = executeCommand(infd, 'yq', flags, shellQuote(command));
+	infd.close();
+
+	return out.stdout;
+};
+
+export function yqReadFile(flags, command, filepath) {
+	const out = executeCommand(null, 'yq', flags, shellQuote(command), shellQuote(filepath));
+
+	return out.stdout;
+};
+/* Utilities end */
+
+/* String helper start */
+export function isEmpty(res) {                                            // no false, 0, NaN
+	if (res == null || res in ['']) return true;                          // null, ''
+	if (type(res) in ['array', 'object']) return length(res) === 0;       // empty Array/Object
+	return false;
+};
+
+export function strToBool(str) {
+	return (str === '1') || null;
+};
+
+export function strToInt(str) {
+	if (isEmpty(str))
+		return null;
+
+	return !match(str, /^\d+$/) ? str : int(str) ?? null;
+};
+
+export function bytesizeToByte(str) {
+	if (isEmpty(str))
+		return null;
+
+	let bytes = 0;
+	let arr = match(str, /^(\d+)(k|m|g)?b?$/);
+	if (arr) {
+		switch (arr[2]) {
+			case 'k':
+				bytes = strToInt(arr[1]) * 1024;
+				break;
+			case 'm':
+				bytes = strToInt(arr[1]) * 1048576;
+				break;
+			case 'g':
+				bytes = strToInt(arr[1]) * 1073741824;
+				break;
+			default:
+				bytes = strToInt(arr[1]);
+				break;
+		}
+	}
+
+	return bytes;
+};
+export function durationToSecond(str) {
+	if (isEmpty(str))
+		return null;
+
+	let seconds = 0;
+	let arr = match(str, /^(\d+)(s|m|h|d)?$/);
+	if (arr) {
+		switch (arr[2]) {
+			case 's':
+				seconds = strToInt(arr[1]);
+				break;
+			case 'm':
+				seconds = strToInt(arr[1]) * 60;
+				break;
+			case 'h':
+				seconds = strToInt(arr[1]) * 3600;
+				break;
+			case 'd':
+				seconds = strToInt(arr[1]) * 86400;
+				break;
+			default:
+				seconds = strToInt(arr[1]);
+				break;
+		}
+	}
+
+	return seconds;
+};
+
+export function arrToObj(res) {
+	if (isEmpty(res))
+		return null;
+
+	let object;
+	if (type(res) === 'array') {
+		object = {};
+		map(res, (e) => {
+			if (type(e) === 'array')
+				object[e[0]] = e[1];
+		});
+	} else
+		return res;
+
+	return object;
+};
+
+export function removeBlankAttrs(res) {
+	let content;
+
+	if (type(res) === 'object') {
+		content = {};
+		map(keys(res), (k) => {
+			if (type(res[k]) in ['array', 'object'])
+				content[k] = removeBlankAttrs(res[k]);
+			else if (res[k] !== null && res[k] !== '')
+				content[k] = res[k];
+		});
+	} else if (type(res) === 'array') {
+		content = [];
+		map(res, (k, i) => {
+			if (type(k) in ['array', 'object'])
+				push(content, removeBlankAttrs(k));
+			else if (k !== null && k !== '')
+				push(content, k);
+		});
+	} else
+		return res;
+
+	return content;
+};
+/* String helper end */
+
+/* String universal start */
+export function parseVlessEncryption(payload, side) {
+	if (isEmpty(payload))
+		return null;
+
+	let content = json(trim(payload));
+
+	let required = join('.', [
+		content.method,
+		content.xormode,
+		side === 'server' ? content.ticket : side === 'client' ? content.rtt : null
+	]);
+
+	return required +
+		(isEmpty(content.paddings) ? '' : '.' + join('.', content.paddings)) + // Optional
+		(isEmpty(content.keypairs) ? '' : '.' + join('.', map(content.keypairs, e => e[side]))); // Required
+};
+
+export function parseListener(cfg, proxyResolver) {
+	if (proxyResolver == null)
+		proxyResolver = value => value;
+	else
+		assert(
+			type(proxyResolver) == 'function',
+			'parseListener: proxyResolver must be a function'
+		);
+
+	return {
+		name: cfg.label,
+		type: cfg.type,
+
+		listen: cfg.listen || '::',
+		port: strToInt(cfg.listen_port),
+		"routing-mark": strToInt(cfg.routing_mark) || null,
+		rule: cfg.rule,
+		proxy: proxyResolver(cfg.proxy),
+
+		/* HTTP / SOCKS / Mieru / VMess / VLESS / Trojan / AnyTLS / Tuic / Hysteria2 / TrustTunnel */
+		users: (cfg.type in ['http', 'socks', 'mixed', 'vmess', 'vless', 'trojan', 'trusttunnel']) ? [
+			(cfg.username || cfg.vmess_uuid) ? {
+				/* HTTP / SOCKS / Trojan / TrustTunnel */
+				username: cfg.username,
+				password: cfg.password,
+
+				/* VMess / VLESS */
+				uuid: cfg.vmess_uuid,
+				flow: cfg.vless_flow,
+				alterId: strToInt(cfg.vmess_alterid)
+			} : null
+			/*{
+			}*/
+		] : (cfg.type in ['mieru', 'anytls', 'tuic', 'hysteria2']) ? {
+			/* Mieru / AnyTLS / Hysteria2 */
+			...arrToObj([[cfg.username, cfg.password]]),
+
+			/* Tuic */
+			...arrToObj([[cfg.uuid, cfg.password]])
+		} : null,
+
+		/* Shadowsocks */
+		cipher: cfg.shadowsocks_chipher,
+		password: cfg.shadowsocks_password,
+
+		/* Mieru */
+		transport: cfg.mieru_transport,
+		"traffic-pattern": cfg.mieru_traffic_pattern,
+		"user-hint-is-mandatory": strToBool(cfg.mieru_user_hint_is_mandatory),
+		"tcp-idle-timeout": durationToSecond(cfg.mieru_tcp_idle_timeout),
+
+		/* Sudoku */
+		key: cfg.sudoku_key,
+		"aead-method": replace(cfg.sudoku_aead_method || '', 'chacha20-ietf-poly1305', 'chacha20-poly1305') || null,
+		"padding-min": strToInt(cfg.sudoku_padding_min),
+		"padding-max": strToInt(cfg.sudoku_padding_max),
+		"table-type": cfg.sudoku_table_type,
+		"custom-tables": cfg.sudoku_custom_tables,
+		"handshake-timeout": strToInt(cfg.sudoku_handshake_timeout) ?? null,
+		"enable-pure-downlink": (cfg.sudoku_enable_pure_downlink === '0') ? false : null,
+		...(cfg.type === 'sudoku' ? {
+			httpmask: (cfg.sudoku_http_mask === '0') ? { disable: true } : {
+				disable: false,
+				mode: cfg.sudoku_http_mask_mode,
+				"path-root": cfg.sudoku_path_root,
+			}
+		} : {}),
+		fallback: (cfg.sudoku_http_mask === '0') ? null : cfg.sudoku_fallback,
+
+		/* Snell */
+		psk: cfg.snell_psk,
+		version: cfg.snell_version,
+		mode: cfg.snell_mode,
+
+		/* VMess / VLESS */
+		decryption: cfg.vless_decryption === '1' ? parseVlessEncryption(cfg.vless_encryption_hmpayload, 'server') : null,
+
+		/* Trojan */
+		"ss-option": cfg.trojan_ss_enabled === '1' ? {
+			enabled: true,
+			method: cfg.trojan_ss_chipher,
+			password: cfg.trojan_ss_password
+		} : null,
+
+		/* AnyTLS */
+		"padding-scheme": cfg.anytls_padding_scheme,
+
+		/* Tuic */
+		"authentication-timeout": durationToSecond(cfg.tuic_authentication_timeout),
+		"max-udp-relay-packet-size": strToInt(cfg.tuic_max_udp_relay_packet_size),
+
+		/* Brutal */
+		up: strToInt(cfg.brutal_up_mbps),
+		down: strToInt(cfg.brutal_down_mbps),
+		"ignore-client-bandwidth": strToBool(cfg.brutal_ignore_client_bandwidth),
+
+		/* Hysteria2 */
+		obfs: cfg.hysteria_obfs_type,
+		"obfs-password": cfg.hysteria_obfs_password,
+		"obfs-min-packet-size": strToInt(cfg.hysteria_obfs_min_packet_size),
+		"obfs-max-packet-size": strToInt(cfg.hysteria_obfs_max_packet_size),
+		masquerade: cfg.hysteria_masquerade,
+		"realm-opts": cfg.hysteria2_realm === '1' ? {
+			enable: true,
+			"server-url": cfg.hysteria2_realm_server_url,
+			token: cfg.hysteria2_realm_token,
+			"realm-id": cfg.hysteria2_realm_id,
+			"stun-servers": cfg.hysteria2_realm_stun_servers,
+			// TLS of server-url
+			sni: cfg.hysteria2_realm_sni,
+			alpn: cfg.hysteria2_realm_alpn,
+			fingerprint: cfg.hysteria2_realm_fingerprint,
+			"name-cert-verify": cfg.hysteria2_realm_name_cert_verify,
+			"skip-cert-verify": strToBool(cfg.hysteria2_realm_skip_cert_verify),
+			certificate: cfg.hysteria2_realm_cert_path, // mTLS
+			"private-key": cfg.hysteria2_realm_key_path, // mTLS
+			proxy: proxyResolver(cfg.hysteria2_realm_proxy)
+		} : null,
+
+		/* Hysteria2 Realmserver */
+		token: cfg.hysteria2_realmserver_token,
+		"max-realms": strToInt(cfg.hysteria2_realmserver_max_realms),
+		"max-realms-per-ip": strToInt(cfg.hysteria2_realmserver_max_realms_per_ip),
+		"trusted-proxy-header": cfg.hysteria2_realmserver_trusted_proxy_header,
+		"realm-name-pattern": cfg.hysteria2_realmserver_realm_name_pattern,
+
+		/* ShadowQUIC */
+		...(cfg.type === 'shadowquic' ? {
+			users: [
+				{
+					username: cfg.plugin_opts_thetlsusername,
+					password: cfg.plugin_opts_thetlspassword
+				}
+			]
+		} : {}),
+		"quic-versions": cfg.shadowquic_quic_versions,
+		"zero-rtt": strToBool(cfg.shadowquic_zero_rtt),
+		"jls-upstream": cfg.type === 'shadowquic' ? {
+			addr: cfg.plugin_opts_handshake_dest,
+			sni: cfg.plugin_opts_host,
+			proxy: proxyResolver(cfg.plugin_opts_dest_proxy),
+			"rate-limit": strToInt(cfg.plugin_opts_rate_limit)
+		} : null,
+		cwnd: strToInt(cfg.shadowquic_cwnd),
+		"max-datagram-frame-size": strToInt(cfg.shadowquic_max_datagram_frame_size),
+		"recv-window-conn": strToInt(cfg.shadowquic_recv_window_conn),
+		"recv-window": strToInt(cfg.shadowquic_recv_window),
+		"disable-mtu-discovery": cfg.shadowquic_mtu_discovery === '0' ? true : null,
+
+		/* TrustTunnel */
+
+		/* Tunnel */
+		target: cfg.tunnel_target,
+
+		/* Extra fields */
+		"congestion-controller": cfg.congestion_controller,
+		"bbr-profile": cfg.bbr_profile,
+		"max-idle-time": durationToSecond(cfg.max_idle_time),
+
+		network: cfg.network,
+		udp: cfg.udp === '0' ? false : true,
+
+		/* Plugin fields */
+		...(cfg.plugin === '1' ? (
+			cfg.plugin_type === 'obfs' ? (
+			// obfs-simple
+				cfg.type === 'snell' ? {
+					// snell
+					"obfs-opts": {
+						mode: cfg.plugin_opts_obfsmode,
+						host: cfg.plugin_opts_host
+					}
+				} : {
+					// shadowsocks
+					"simple-obfs": {
+						enable: true,
+						mode: cfg.plugin_opts_obfsmode
+					}
+				}
+			) : cfg.plugin_type === 'shadow-tls' ? {
+			// shadow-tls
+				"shadow-tls": {
+					enable: true,
+					version: strToInt(cfg.plugin_opts_shadowtls_version),
+					...(strToInt(cfg.plugin_opts_shadowtls_version) >= 3 ? {
+						users: [
+							{
+								name: 1,
+								password: cfg.plugin_opts_thetlspassword
+							}
+						],
+					} : { password: cfg.plugin_opts_thetlspassword }),
+					handshake: {
+						dest: cfg.plugin_opts_handshake_dest,
+						proxy: proxyResolver(cfg.plugin_opts_dest_proxy)
+					}
+				}
+			} : cfg.plugin_type === 'restls' ? {
+			// restls
+				"res-tls": {
+					enable: true,
+					dest: cfg.plugin_opts_handshake_dest,
+					password: cfg.plugin_opts_thetlspassword,
+					"restls-script": cfg.plugin_opts_restls_script,
+					//"min-record-len": 0,
+					proxy: proxyResolver(cfg.plugin_opts_dest_proxy),
+					"rate-limit": strToInt(cfg.plugin_opts_rate_limit)
+				}
+			} : cfg.plugin_type === 'jls' ? {
+			// jls
+				"jls-config": {
+					enable: true,
+					users: [
+						{
+							username: cfg.plugin_opts_thetlsusername,
+							password: cfg.plugin_opts_thetlspassword
+						}
+					],
+					dest: cfg.plugin_opts_handshake_dest,
+					sni: cfg.plugin_opts_host,
+					alpn: cfg.tls_alpn,
+					proxy: proxyResolver(cfg.plugin_opts_dest_proxy),
+					"rate-limit": strToInt(cfg.plugin_opts_rate_limit)
+				}
+			} : {}
+		) : {}),
+
+		/* TLS fields */
+		...(cfg.allow_insecure === '1' ? { "allow-insecure": true } : cfg.tls === '1' ? {
+			alpn: cfg.plugin_type in ['jls'] ? null : cfg.tls_alpn,
+			...(cfg.tls_reality === '1' ? {
+				"reality-config": {
+					dest: cfg.tls_reality_dest,
+					"private-key": cfg.tls_reality_private_key,
+					"short-id": cfg.tls_reality_short_id,
+					"server-names": cfg.tls_reality_server_names,
+					"max-time-difference": strToInt(cfg.tls_reality_max_time_difference),
+					proxy: proxyResolver(cfg.plugin_opts_dest_proxy),
+				}
+			} : {
+				certificate: cfg.tls_cert_path,
+				"private-key": cfg.tls_key_path
+			}),
+			"client-auth-type": cfg.tls_client_auth_type,
+			"client-auth-cert": cfg.tls_client_auth_cert_path,
+			"ech-key": cfg.tls_ech_key,
+		} : {}),
+
+		/* Transport fields */
+		...(cfg.transport_enabled === '1' ? {
+			"grpc-service-name": cfg.transport_type === 'grpc' ? cfg.transport_grpc_servicename : null,
+			"ws-path": cfg.transport_type === 'ws' ? cfg.transport_path : null,
+			"xhttp-config": cfg.transport_type === 'xhttp' ? {
+				path: cfg.transport_path,
+				host: cfg.transport_host,
+				mode: cfg.transport_xhttp_mode,
+				"no-sse-header": strToBool(cfg.transport_xhttp_no_sse_header),
+				"sc-max-buffered-posts": strToInt(cfg.transport_xhttp_sc_max_buffered_posts) || null,
+				"sc-stream-up-server-secs": cfg.transport_xhttp_sc_stream_up_server_secs,
+				"sc-max-each-post-bytes": strToInt(cfg.transport_xhttp_sc_max_each_post_bytes) || null,
+				// @其他的配置
+			} : null
+		} : {}),
+
+		/* Multiplex fields */
+		"mux-option": cfg.smux_enabled === '1' ? {
+			padding: strToBool(cfg.smux_padding),
+			brutal: cfg.smux_brutal === '1' ? {
+				enabled: true,
+				up: strToInt(cfg.smux_brutal_up) || null, // Mbps
+				down: strToInt(cfg.smux_brutal_down) || null // Mbps
+			} : null
+		} : null
+	}
+};
+/* String universal end */

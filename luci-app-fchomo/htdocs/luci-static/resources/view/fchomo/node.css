@@ -1,0 +1,67 @@
+
+/*
+	bubbles style START
+*/
+.nested-bubbles-container {
+	padding: 0;
+
+	/* Visual recognition */
+	/* https://github.com/openwrt/luci/blob/715f41e4c1033fc67724a32c6f1d33caba5357c6/themes/luci-theme-bootstrap/htdocs/luci-static/bootstrap/cascade.css#L2313 */
+	color: var(--text-color-high);
+	text-shadow: 0 1px 1px hsla(var(--background-color-high-hsl), 0.75);
+}
+
+/* Visual recognition */
+/* https://github.com/openwrt/luci/blob/715f41e4c1033fc67724a32c6f1d33caba5357c6/themes/luci-theme-bootstrap/htdocs/luci-static/bootstrap/cascade.css#L2210 */
+[data-darkmode="true"] .bubble[style] {
+	background: linear-gradient(
+		color-mix(in srgb, var(--bubble-color) 40%, var(--background-color-high)),
+		color-mix(in srgb, var(--bubble-color) 30%, var(--background-color-high))
+	) !important;
+}
+
+.bubble {
+	/* border: 2px solid; */
+	border-radius: 6px;
+	padding: 3px;
+	box-sizing: border-box;
+
+	/* Default compact width (for desktop, will be overwritten on mobile)*/
+	max-width: 100%;
+	width: fit-content;
+}
+
+.bubble-label {
+	display: inline-block;
+	padding: 0 6px;
+	font-weight: bold;
+}
+
+/* Desktop platform style */
+@media (min-device-width: 600px) {
+	.bubble {
+		/* Enable Flexbox to align the label and inner bubble horizontally */
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+
+		/* The gap between the label and the inner bubble */
+		gap: 8px;
+	}
+}
+
+/* Mobile platform style */
+@media (max-device-width: 600px) {
+	.bubble {
+		/* Stack vertically, full width */
+		display: block;
+		width: 100%;
+		text-align: center;
+
+		/* The gap between the label and the inner bubble */
+		margin-bottom: 8px;
+	}
+}
+/*
+	bubbles style END
+*/
