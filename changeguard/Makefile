@@ -1,10 +1,10 @@
 include $(TOPDIR)/rules.mk
 PKG_NAME:=changeguard
-PKG_VERSION:=0.3.0-cg1
-PKG_RELEASE:=17
+PKG_VERSION:=0.3.1
+PKG_RELEASE:=1
 include ./release.mk
 PKG_SOURCE:=changeguard-$(PKG_VERSION)-$(ARCH).tar.gz
-PKG_SOURCE_URL?=https://fw.koolcenter.com/binary/changeguard/releases/
+PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/changeguard-runtime-v$(PKG_VERSION)/
 PKG_HASH:=$(CHANGEGUARD_HASH_$(ARCH))
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 STRIP:=true
@@ -51,8 +51,8 @@ IPKG_INSTROOT="$${IPKG_INSTROOT:-}" "$${IPKG_INSTROOT:-}/usr/libexec/changeguard
 endef
 
 define Package/changeguard/install
- $(INSTALL_DIR) $(1)/usr/sbin
- $(INSTALL_BIN) $(PKG_BUILD_DIR)/changeguard_bin $(1)/usr/sbin/changeguard_bin
- $(CP) ./files/* $(1)/
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/changeguard_bin $(1)/usr/sbin/changeguard_bin
+	$(CP) ./files/* $(1)/
 endef
 $(eval $(call BuildPackage,changeguard))

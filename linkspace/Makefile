@@ -1,10 +1,10 @@
 include $(TOPDIR)/rules.mk
 PKG_NAME:=linkspace
-PKG_VERSION:=0.3.0-cg1
-PKG_RELEASE:=6
+PKG_VERSION:=0.3.1
+PKG_RELEASE:=1
 include ./release.mk
 PKG_SOURCE:=linkspace-$(PKG_VERSION)-$(ARCH).tar.gz
-PKG_SOURCE_URL?=https://fw.koolcenter.com/binary/linkspace/releases/
+PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/linkspace-runtime-v$(PKG_VERSION)/
 PKG_HASH:=$(LINKSPACE_HASH_$(ARCH))
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_BUILD_PARALLEL:=1
@@ -64,8 +64,8 @@ exit 0
 endef
 
 define Package/linkspace/install
- $(INSTALL_DIR) $(1)/usr/bin $(1)/usr/share/linkspace
- $(INSTALL_BIN) $(PKG_BUILD_DIR)/linkspace $(1)/usr/bin/linkspace
- $(INSTALL_DATA) $(PKG_BUILD_DIR)/dependency.json $(1)/usr/share/linkspace/dependency.json
+	$(INSTALL_DIR) $(1)/usr/bin $(1)/usr/share/linkspace
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/linkspace $(1)/usr/bin/linkspace
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/dependency.json $(1)/usr/share/linkspace/dependency.json
 endef
 $(eval $(call BuildPackage,linkspace))
