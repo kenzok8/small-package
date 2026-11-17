@@ -32,6 +32,7 @@ function getConnectionStatus() {
 		object: 'luci.homeproxy',
 		method: 'connection_check',
 		params: ['site'],
+		nobatch: true,
 		expect: { '': {} }
 	});
 
@@ -170,20 +171,21 @@ function getResources(o) {
 	const callResStatus = rpc.declare({
 		object: 'luci.homeproxy',
 		method: 'resources_get',
-		expect: { '': {} }
+		expect: { '': {} },
+		reject: true
 	});
-
 	const callResUpdate = rpc.declare({
 		object: 'luci.homeproxy',
 		method: 'resources_update',
-		expect: { '': {} }
+		expect: { '': {} },
+		reject: true
 	});
 
-	return L.resolveDefault(callResStatus(), { resources: [] }).then((result) => {
-		const status = {};
-		(result.resources || []).forEach((resource) => {
-			status[resource.type] = resource;
-		});
+	return callResStatus().then((initial) => {
+		let running = false;
+		let observedJob = null;
+		let notifiedJob = null;
+		const progress = E('span', { 'role': 'status', 'aria-live': 'polite' });
 		const table = E('table', { 'class': 'table' }, [
 			E('tr', { 'class': 'tr table-titles' }, [
 				E('th', { 'class': 'th' }, _('Name')),
@@ -191,70 +193,101 @@ function getResources(o) {
 				E('th', { 'class': 'th' }, _('Source'))
 			])
 		]);
-		const rows = resources.map((resource) => {
-			const resourceStatus = status[resource.type] || {};
-			const available = resourceStatus.version;
-			const source = resourceStatus.source;
 
-			return [
-				resource.name,
-				E('span', { 'style': available ? 'color:green' : 'color:red' },
-					available || '-'),
-				source ? E('a', {
-					'href': source,
-					'target': '_blank',
-					'rel': 'noreferrer noopener',
-					'style': 'word-break:break-all'
-				}, source) : '-'
-			];
+		const notifyResult = (res) => {
+			let message, severity = 'info';
+			if (res.apply_failed) {
+				message = _('Resources were updated, but HomeProxy failed to reload. Check the log for details.');
+				severity = 'error';
+			} else if (res.error === 'interrupted') {
+				message = _('Resource update was interrupted. You can try again.');
+				severity = 'error';
+			} else if (res.error === 'deadline_exceeded') {
+				message = _('Resource update timed out. Failed resources were left unchanged.');
+				severity = 'warning';
+			} else {
+				switch (res.status) {
+				case 0:
+					message = res.core_updated && !res.dashboard_updated ?
+						_('Rule sets updated. HomeProxy was not restarted.') : _('Successfully updated.');
+					break;
+				case 2:
+					message = _('Update already in progress.');
+					break;
+				case 3:
+					message = _('Already at the latest version.');
+					break;
+				case 4:
+					message = _('Some resources failed to update. Check the log for details.');
+					severity = 'warning';
+					break;
+				default:
+					message = _('Update failed.');
+					severity = 'error';
+				}
+			}
+			ui.addNotification(null, E('p', message), severity);
+		};
+		const updateState = (state = {}) => {
+			running = !!state.running;
+			updateButton.disabled = running;
+			if (running) {
+				observedJob = state.job_id;
+				const resource = resources.find((entry) => entry.type === state.phase);
+				dom.content(progress, resource ? _('Updating %s...').format(resource.name) : _('Updating resources...'));
+			} else {
+				dom.content(progress, '');
+				if (observedJob && observedJob === state.job_id && notifiedJob !== state.job_id) {
+					notifiedJob = state.job_id;
+					notifyResult(state);
+				}
+			}
+		};
+		const updateRows = (result) => {
+			const status = {};
+			(result.resources || []).forEach((resource) => status[resource.type] = resource);
+			cbi_update_table(table, resources.map((resource) => {
+				const info = status[resource.type] || {};
+				return [resource.name,
+					E('span', { 'style': info.version ? 'color:green' : 'color:red' }, info.version || '-'),
+					info.source ? E('a', { 'href': info.source, 'target': '_blank',
+						'rel': 'noreferrer noopener', 'style': 'word-break:break-all' }, info.source) : '-'];
+			}));
+			updateState(result.update);
+		};
+		const refresh = () => callResStatus().then(updateRows).catch(() => {
+			dom.content(progress, _('Update status is temporarily unavailable. Retrying...'));
 		});
-		cbi_update_table(table, rows);
+		const updateButton = E('button', {
+			'class': 'btn cbi-button cbi-button-action',
+			'style': 'margin-left:4px',
+			'click': () => {
+				if (running)
+					return;
+				updateButton.disabled = true;
+				return callResUpdate().then((state) => {
+					updateState(state);
+					if (!state.running && (!state.job_id || notifiedJob !== state.job_id)) {
+						notifiedJob = state.job_id;
+						notifyResult(state);
+					}
+					return refresh();
+				}).catch(() => {
+					ui.addNotification(null, E('p', _('Unable to start or query the resource update. Check its status before retrying.')), 'warning');
+					updateButton.disabled = running;
+					return refresh();
+				});
+			}
+		}, [ _('Update all') ]);
 
+		updateRows(initial);
+		if (o.resourcePoll)
+			poll.remove(o.resourcePoll);
+		o.resourcePoll = refresh;
+		poll.add(o.resourcePoll, 2);
 		return E('div', { 'class': 'cbi-map' }, [
 			E('h3', { 'name': 'content', 'style': 'align-items:center;display:flex;flex-wrap:wrap;gap:4px' }, [
-				_('Resource Management'),
-				E('button', {
-					'class': 'btn cbi-button cbi-button-action',
-					'style': 'margin-left:4px',
-					'click': ui.createHandlerFn(this, () => {
-						return L.resolveDefault(callResUpdate(), {}).then((res) => {
-							let message, severity = 'info';
-
-							if (res.apply_failed) {
-								message = _('Resources were updated, but HomeProxy failed to reload. Check the log for details.');
-								severity = 'error';
-							} else {
-								switch (res.status) {
-								case 0:
-									message = res.core_updated && !res.dashboard_updated ?
-										_('Rule sets updated. HomeProxy was not restarted.') : _('Successfully updated.');
-									break;
-								case 1:
-									message = _('Update failed.');
-									severity = 'error';
-									break;
-								case 2:
-									message = _('Update already in progress.');
-									break;
-								case 3:
-									message = _('Already at the latest version.');
-									break;
-								case 4:
-									message = _('Some resources failed to update. Check the log for details.');
-									severity = 'warning';
-									break;
-								default:
-									message = _('Unknown error.');
-									severity = 'error';
-									break;
-								}
-							}
-
-							ui.addNotification(null, E('p', message), severity);
-							return o.map.reset();
-						});
-					})
-				}, [ _('Update all') ])
+				_('Resource Management'), updateButton, progress
 			]),
 			E('div', { 'class': 'cbi-section' }, [ table ])
 		]);

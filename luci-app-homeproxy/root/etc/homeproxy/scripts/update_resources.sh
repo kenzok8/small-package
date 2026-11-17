@@ -19,6 +19,16 @@ DASHBOARD_VERSION_URL="${DASHBOARD_VERSION_URL:-https://github.com/SagerNet/sing
 USER_AGENT="HomeProxy resource updater"
 UPDATE_PROXY="${HOMEPROXY_UPDATE_PROXY:-}"
 SING_BOX="${SING_BOX:-/usr/bin/sing-box}"
+UPDATE_BUDGET="${HOMEPROXY_UPDATE_BUDGET:-180}"
+case "$UPDATE_BUDGET" in ''|*[!0-9]*) UPDATE_BUDGET=180 ;; esac
+JOB_ID="${HOMEPROXY_JOB_ID:-$(date +%s)-$$}"
+STARTED_AT="${HOMEPROXY_JOB_STARTED:-$(date +%s)}"
+DEADLINE=$((STARTED_AT + UPDATE_BUDGET))
+WORKER_PID="$$"
+RUNNING=1
+PHASE="starting"
+APPLY_FAILED=0
+ERROR=""
 
 if ! mkdir -p "$RESOURCES_DIR" "$DASHBOARD_DIR" "$RUN_DIR"; then
 	printf '%s\n' "Failed to prepare HomeProxy resource directories." >&2
@@ -46,25 +56,54 @@ mark_failed() {
 	FAILED_BRANCHES="${FAILED_BRANCHES:+$FAILED_BRANCHES,}$1"
 }
 
+write_result() {
+	local stage="$RESULT_PATH.$$.tmp"
+	(umask 077; printf 'status=%s\nrunning=%s\njob_id=%s\npid=%s\nstarted_at=%s\nphase=%s\ncore_updated=%s\ndashboard_updated=%s\napply_failed=%s\nupdated=%s\nfailed=%s\nerror=%s\n' \
+		"$1" "$RUNNING" "$JOB_ID" "$WORKER_PID" "$STARTED_AT" "$PHASE" \
+		"$CORE_UPDATED" "$DASHBOARD_UPDATED" "$APPLY_FAILED" \
+		"$UPDATED_BRANCHES" "$FAILED_BRANCHES" "$ERROR" > "$stage") &&
+		mv -f "$stage" "$RESULT_PATH"
+}
+
 finish() {
-	printf 'status=%s\ncore_updated=%s\ndashboard_updated=%s\nupdated=%s\nfailed=%s\n' \
-		"$1" "$CORE_UPDATED" "$DASHBOARD_UPDATED" \
-		"$UPDATED_BRANCHES" "$FAILED_BRANCHES" > "$RESULT_PATH"
+	ERROR="${2:-}"
+	if [ -z "$ERROR" ] && [ -n "$FAILED_BRANCHES" ] && [ "$(date +%s)" -ge "$DEADLINE" ]; then
+		ERROR="deadline_exceeded"
+	fi
+	if [ "${HOMEPROXY_APPLY_DASHBOARD:-0}" = 1 ] &&
+	   [ "$DASHBOARD_UPDATED" = 1 ] && /etc/init.d/homeproxy running >/dev/null 2>&1; then
+		PHASE="applying"
+		write_result "$1"
+		/etc/init.d/homeproxy reload >/dev/null 2>&1 || APPLY_FAILED=1
+	fi
+	RUNNING=0
+	PHASE="finished"
+	write_result "$1"
 	exit "$1"
 }
 
 run_curl() {
+	local limit="$1" remaining
+	shift
+	remaining=$((DEADLINE - $(date +%s)))
+	[ "$remaining" -gt 0 ] || return 28
+	[ "$limit" -le "$remaining" ] || limit="$remaining"
 	if [ -n "$UPDATE_PROXY" ]; then
-		/usr/bin/curl --proxy "$UPDATE_PROXY" "$@"
+		/usr/bin/curl --proxy "$UPDATE_PROXY" --connect-timeout 5 --max-time "$limit" "$@"
 	else
-		/usr/bin/curl "$@"
+		/usr/bin/curl --connect-timeout 5 --max-time "$limit" "$@"
 	fi
 }
 
 download() {
-	run_curl -fsSL --compressed --retry 3 --retry-all-errors --retry-delay 1 \
-		--connect-timeout 10 --max-time 60 -A "$USER_AGENT" -o "$2" "$1" &&
-		test -s "$2"
+	local attempt
+	for attempt in 1 2; do
+		if run_curl 60 -fsSL --compressed -A "$USER_AGENT" -o "$2" "$1" && test -s "$2"; then
+			return 0
+		fi
+		[ "$attempt" -lt 2 ] && [ "$(date +%s)" -lt "$DEADLINE" ] || break
+	done
+	return 1
 }
 
 validate_rule_set() {
@@ -73,8 +112,7 @@ validate_rule_set() {
 
 fetch_release_version() {
 	local effective_url version
-	effective_url="$(run_curl -fsSL --compressed --retry 3 --retry-all-errors \
-		--retry-delay 1 --connect-timeout 10 --max-time 30 \
+	effective_url="$(run_curl 8 -fsSL --compressed \
 		-A "$USER_AGENT" -o /dev/null -w '%{url_effective}' "$1")" || return 1
 	version="${effective_url##*/}"
 	case "$version" in
@@ -86,8 +124,7 @@ fetch_release_version() {
 fetch_dashboard_version() {
 	local feed version
 
-	feed="$(run_curl -fsSL --compressed --retry 3 --retry-all-errors \
-		--retry-delay 1 --connect-timeout 10 --max-time 30 \
+	feed="$(run_curl 8 -fsSL --compressed \
 		-A "$USER_AGENT" "$DASHBOARD_VERSION_URL")" || return 1
 	version="$(printf '%s\n' "$feed" | awk -F '[<>]' '
 		/<updated>/ {
@@ -220,12 +257,21 @@ update_dashboard() {
 	log "[dashboard] Successfully updated."
 }
 
-exec 9>"$RUN_DIR/update_resources.lock"
+if [ "${1:-}" != --worker ]; then
+	exec 9>"$RUN_DIR/update_resources.lock"
+fi
 if ! flock -n 9 >/dev/null 2>&1; then
 	log "[RESOURCES] A task is already running."
 	exit 2
 fi
-rm -f "$RESULT_PATH"
+if [ "${1:-}" = --background ]; then
+	WORKER_PID=0
+	write_result 0 || exit 1
+	HOMEPROXY_JOB_ID="$JOB_ID" HOMEPROXY_JOB_STARTED="$STARTED_AT" HOMEPROXY_APPLY_DASHBOARD=1 \
+		"$0" --worker </dev/null >>"$LOG_PATH" 2>&1 &
+	exit 0
+fi
+write_result 0 || exit 1
 
 TMP_DIR="$(mktemp -d "$RUN_DIR/resources-update.XXXXXX")" || {
 	log "[RESOURCES] Failed to prepare the temporary update directory."
@@ -234,11 +280,16 @@ TMP_DIR="$(mktemp -d "$RUN_DIR/resources-update.XXXXXX")" || {
 DASHBOARD_STAGE="${DASHBOARD_DIR}.new.$$"
 RESOURCE_RESTORE_FAILED=0
 trap 'rm -rf "$TMP_DIR" "$DASHBOARD_STAGE"; [ "$RESOURCE_RESTORE_FAILED" -ne 0 ] || rm -rf "$RESOURCES_DIR/.update.$$.tmp"' EXIT
-trap 'exit 130' INT
-trap 'exit 143' TERM
+trap 'finish 1 interrupted' INT TERM HUP
 
+PHASE="geoip_cn"
+write_result 0
 update_rule_set "geoip_cn" "$GEOIP_SOURCE" "$GEOIP_VERSION_URL" || mark_failed "geoip_cn"
+PHASE="geosite_cn"
+write_result 0
 update_rule_set "geosite_cn" "$GEOSITE_SOURCE" "$GEOSITE_VERSION_URL" || mark_failed "geosite_cn"
+PHASE="dashboard"
+write_result 0
 update_dashboard || mark_failed "dashboard"
 
 if [ -n "$FAILED_BRANCHES" ]; then

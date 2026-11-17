@@ -363,7 +363,7 @@ return baseclass.extend({
 		return el;
 	},
 
-	uploadCertificate(_option, type, filename, ev) {
+	uploadCertificate(type, filename, ev) {
 		const callWriteCertificate = rpc.declare({
 			object: 'luci.homeproxy',
 			method: 'certificate_write',

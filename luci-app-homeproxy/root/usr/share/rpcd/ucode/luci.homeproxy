@@ -9,6 +9,7 @@
 
 import { lstat, open, popen, readfile, rename, unlink, writefile } from 'fs';
 import { cursor } from 'uci';
+import { task } from 'uloop';
 
 import {
 	HP_DIR, RUN_DIR, addECHDNS, createNodeOutboundTags, domainListPath,
@@ -34,6 +35,36 @@ const RESOURCES = {
 		version: `${HP_DIR}/dashboard/dashboard.ver`
 	}
 };
+
+function resourceUpdateStatus() {
+	const data = trim(readfile(`${RUN_DIR}/update_resources.result`) || '');
+	if (!data)
+		return { running: false, status: null };
+
+	let result = {};
+	for (let line in split(data, '\n')) {
+		const pair = match(line, /^([^=]+)=(.*)$/);
+		if (pair)
+			result[pair[1]] = pair[2];
+	}
+	result.status = int(result.status);
+	result.running = result.running === '1';
+	result.core_updated = result.core_updated === '1';
+	result.dashboard_updated = result.dashboard_updated === '1';
+	result.apply_failed = result.apply_failed === '1';
+	if (result.running) {
+		const pid = int(result.pid);
+		const starting = !pid && time() - int(result.started_at) < 5;
+		const command = pid ? readfile(`/proc/${pid}/cmdline`) || '' : '';
+		if (!starting && index(command, 'update_resources.sh') === -1 && index(command, '--worker') === -1) {
+			result.running = false;
+			result.status = 1;
+			result.error = 'interrupted';
+		}
+	}
+	return result;
+}
+
 const CONNECTION_SITES = {
 	baidu: 'https://www.baidu.com/',
 	bilibili: 'https://www.bilibili.com/',
@@ -372,9 +403,11 @@ const methods = {
 					system(`/bin/rm -f ${shellQuote(tmpcert)}`);
 					return { result: false, error: 'failed to write certificate file' };
 				}
-				if (kind === 'private' && system(`/bin/chmod 600 ${shellQuote(certfile)}`) !== 0) {
+				if (system(`/bin/chown sing-box:sing-box ${shellQuote(HP_DIR + '/certs')} ${shellQuote(certfile)}`) !== 0 ||
+				    system(`/bin/chmod 700 ${shellQuote(HP_DIR + '/certs')}`) !== 0 ||
+				    system(`/bin/chmod 600 ${shellQuote(certfile)}`) !== 0) {
 					system(`/bin/rm -f ${shellQuote(tmpcert)} ${shellQuote(certfile)}`);
-					return { result: false, error: 'failed to protect private key file' };
+					return { result: false, error: 'failed to set certificate file permissions' };
 				}
 				system(`/bin/rm -f ${shellQuote(tmpcert)}`);
 
@@ -805,12 +838,12 @@ const methods = {
 
 			system(`/bin/mkdir -p ${shellQuote(RUN_DIR)}`);
 			let lockfd = open(`${RUN_DIR}/latency-test.lock`, 'w', 0600);
-			if (!lockfd || lockfd.lock('x') !== true) {
+			if (!lockfd || lockfd.lock('xn') !== true) {
 				lockfd?.close();
 				for (let entry in entries)
 					entry.result = formatResult(entry.node, 'error', null, {
 						code: error_codes.runtime_prepare_failed,
-						message: 'failed to lock temporary latency test runtime'
+						message: 'another latency test is running or the runtime lock is unavailable'
 					});
 				return { results: map(slots, (slot) => slot.result) };
 			}
@@ -954,7 +987,12 @@ const methods = {
 					source: resource.source
 				});
 			}
-			return { resources };
+			return { resources, update: resourceUpdateStatus() };
+		}
+	},
+	resources_update_status: {
+		call: function() {
+			return resourceUpdateStatus();
 		}
 	},
 	resources_update: {
@@ -964,31 +1002,34 @@ const methods = {
 			const mixed_port = int(hpuci.get('homeproxy', 'infra', 'mixed_port')) || 5330;
 			const update_proxy = (hpuci.get('homeproxy', 'subscription', 'update_via_proxy') === '1') ?
 				`HOMEPROXY_UPDATE_PROXY=${shellQuote(`http://127.0.0.1:${mixed_port}`)} ` : '';
-			const status = system(`${update_proxy}${HP_DIR}/scripts/update_resources.sh`);
-			let update_result = {};
-			if (status !== 2) {
-				for (let line in split(trim(readfile(`${RUN_DIR}/update_resources.result`) || ''), '\n')) {
-					const pair = match(line, /^([^=]+)=(.*)$/);
-					if (pair)
-						update_result[pair[1]] = pair[2];
-				}
-			}
-			const core_updated = update_result.core_updated === '1';
-			const dashboard_updated = update_result.dashboard_updated === '1';
-			let apply_failed = false;
-			/* Local rule sets reload through the core's file watcher. */
-			if (dashboard_updated && system('/etc/init.d/homeproxy running >/dev/null 2>&1') === 0)
-				apply_failed = system('/etc/init.d/homeproxy reload >/dev/null 2>&1') !== 0;
-			return {
-				status,
-				core_updated,
-				dashboard_updated,
-				apply_failed,
-				updated: update_result.updated || null,
-				failed: update_result.failed || null
-			};
+			const status = system(`${update_proxy}${HP_DIR}/scripts/update_resources.sh --background </dev/null >/dev/null 2>&1`);
+			if (status !== 0 && status !== 2)
+				return { status: 1, running: false, error: 'start_failed' };
+			return { ...resourceUpdateStatus(), already_running: status === 2 };
 		}
 	}
 };
+
+/* Network diagnostics run outside rpcd's event loop, including their subprocess waits. */
+for (let name in ['connection_check', 'node_latency_test', 'tailscale_status']) {
+	const handler = methods[name].call;
+	methods[name].call = function(req) {
+		const worker = task(() => {
+			try {
+				return { success: true, result: handler(req) };
+			} catch (e) {
+				return { success: false };
+			}
+		}, (response) => {
+			if (response?.success)
+				req.reply(response.result);
+			else
+				req.reply(null, 1);
+		});
+		if (worker)
+			return req.defer();
+		req.reply(null, 1);
+	};
+}
 
 return { 'luci.homeproxy': methods };

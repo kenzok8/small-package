@@ -18,6 +18,7 @@
 const callNodeLatencyTest = rpc.declare({
 	object: 'luci.homeproxy',
 	method: 'node_latency_test',
+	nobatch: true,
 	params: ['nodes'],
 	expect: { '': { results: [] } },
 	reject: true
@@ -770,35 +771,32 @@ function renderNodeSettings(section, data, features, main_node, node_latency_row
 			this.refreshNodeLatencyRow(sid);
 		}
 
-		return callNodeLatencyTest(section_ids).then((response) => {
-			let results = Object.create(null);
-			for (let result of response?.results || [])
-				if (result?.node)
-					results[result.node] = result;
+		const batches = [];
+		for (let offset = 0; offset < section_ids.length; offset += 16)
+			batches.push(section_ids.slice(offset, offset + 16));
 
-			for (let sid of section_ids) {
-				if (results[sid])
-					this.setNodeLatencyRowStateFromProbeResult(sid, results[sid]);
-				else
+		return batches.reduce((pending, batch) => pending.then(() => {
+			return callNodeLatencyTest(batch).then((response) => {
+				const results = Object.fromEntries((response?.results || [])
+					.filter((result) => result?.node).map((result) => [result.node, result]));
+				for (const sid of batch) {
+					if (results[sid])
+						this.setNodeLatencyRowStateFromProbeResult(sid, results[sid]);
+					else
+						this.setNodeLatencyRowState(sid, NODE_LATENCY_ROW_STATES.ERROR, {
+							error: { code: 'invalid_response', message: 'missing node latency result' }
+						});
+				}
+			}).catch((err) => {
+				for (const sid of batch)
 					this.setNodeLatencyRowState(sid, NODE_LATENCY_ROW_STATES.ERROR, {
-						error: {
-							code: 'invalid_response',
-							message: 'missing node latency result'
-						}
+						error: { code: 'rpc_failed', message: String(err) }
 					});
-			}
-		}).catch((err) => {
-			for (let sid of section_ids)
-				this.setNodeLatencyRowState(sid, NODE_LATENCY_ROW_STATES.ERROR, {
-					error: {
-						code: 'rpc_failed',
-						message: String(err)
-					}
-				});
-		}).then(() => {
-			for (let sid of section_ids)
-				this.refreshNodeLatencyRow(sid);
-		});
+			}).then(() => {
+				for (const sid of batch)
+					this.refreshNodeLatencyRow(sid);
+			});
+		}), Promise.resolve());
 	}
 	s.handleNodeLatencyTest = function(section_id) {
 		return this.handleNodeLatencyTests([section_id]);

@@ -12,7 +12,7 @@
 				"luci-rpc": [ "getHostHints" ],
 				"luci.homeproxy": [
 					"connection_check", "current_node_get", "domainlist_read",
-					"node_latency_test", "resources_get",
+					"node_latency_test", "resources_get", "resources_update_status",
 					"singbox_generator", "singbox_get_features", "tailscale_status"
 				]
 			},

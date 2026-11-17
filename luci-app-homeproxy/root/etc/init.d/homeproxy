@@ -186,6 +186,20 @@ sync_subscription_cron() {
 	configure_subscription_cron "$enabled" "$auto_update_time"
 }
 
+prepare_server_certificates() {
+	local certificate
+	mkdir -p "$HP_DIR/certs" &&
+		chown sing-box:sing-box "$HP_DIR/certs" &&
+		chmod 700 "$HP_DIR/certs" || return 1
+
+	# Migrate uploaded files from versions that left them owned by root.
+	for certificate in client_ca client_ech_conf server_publickey server_privatekey; do
+		[ -f "$HP_DIR/certs/$certificate.pem" ] || continue
+		chown sing-box:sing-box "$HP_DIR/certs/$certificate.pem" &&
+			chmod 600 "$HP_DIR/certs/$certificate.pem" || return 1
+	done
+}
+
 start_service() {
 	mkdir -p "$RUN_DIR" || return 1
 	if ! /usr/libexec/homeproxy-runtime-init; then
@@ -238,7 +252,9 @@ start_service() {
 	fi
 
 	if [ "$server_enabled" = "1" ]; then
-		if ! ucode -S "$HP_DIR/scripts/generate_server.uc" 2>>"$LOG_PATH" || \
+		if ! prepare_server_certificates; then
+			log "Error: failed to prepare server certificate permissions."
+		elif ! ucode -S "$HP_DIR/scripts/generate_server.uc" 2>>"$LOG_PATH" || \
 		   [ ! -s "$RUN_DIR/sing-box-s.json.new" ]; then
 			log "Error: failed to generate server configuration."
 			rm -f "$RUN_DIR/sing-box-s.json.new"
