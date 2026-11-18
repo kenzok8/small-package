@@ -57,10 +57,14 @@ end
 function kaiplus_status()
 	local sys = require "luci.sys"
 	local uci = require("luci.model.uci").cursor()
+	local model = require "luci.model.kaiplus"
+	local port = uci:get_first("kaiplus", "kaiplus", "port") or "8189"
+	local running = sys.call("pidof kaiplus kaiplus_bin >/dev/null") == 0
 	compat():legacy_status("kaiplus", {
-		running = sys.call("pidof kaiplus kaiplus_bin >/dev/null") == 0,
+		running = running,
+		ready = running and model.ready(port),
 		kai_installed = require("luci.model.kaiplus.classic").installed(),
-		port = uci:get_first("kaiplus", "kaiplus", "port") or "8189",
+		port = port,
 		base_path = "/apps/kaiplus/",
 		listen_mode = "tcp",
 		external_port_enabled = true,

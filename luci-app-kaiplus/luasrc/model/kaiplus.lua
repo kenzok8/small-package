@@ -2,6 +2,41 @@ local jsonc = require "luci.jsonc"
 
 local kaiplus = {}
 
+local function valid_port(port)
+  local value = tonumber(port)
+  if not value or value < 1 or value > 65535 or value % 1 ~= 0 then
+    return nil
+  end
+  return value
+end
+
+kaiplus.ready = function(port)
+  local value = valid_port(port)
+  if not value then return false end
+  local socket = require("nixio").socket("inet", "stream")
+  if not socket then return false end
+  socket:setopt("socket", "sndtimeo", 1)
+  local connected = socket:connect("127.0.0.1", value)
+  socket:close()
+  return connected == true
+end
+
+kaiplus.wait_ready = function(port, attempts, delay_ms)
+  attempts = tonumber(attempts) or 30
+  delay_ms = tonumber(delay_ms) or 500
+  if attempts < 1 then return false end
+
+  for attempt = 1, attempts do
+    if kaiplus.ready(port) then return true end
+    if attempt < attempts and delay_ms > 0 then
+      local seconds = math.floor(delay_ms / 1000)
+      local nanoseconds = (delay_ms % 1000) * 1000000
+      require("nixio").nanosleep(seconds, nanoseconds)
+    end
+  end
+  return false
+end
+
 kaiplus.blocks = function()
   local f = io.popen("lsblk -s -f -b -o NAME,FSSIZE,MOUNTPOINT --json", "r")
   local vals = {}

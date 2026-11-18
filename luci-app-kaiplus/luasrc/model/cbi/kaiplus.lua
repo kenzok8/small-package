@@ -1,11 +1,16 @@
 local m, s
 local sys = require "luci.sys"
+local kaiplus_model = require "luci.model.kaiplus"
 
 m = Map("kaiplus", translate("KaiPlus"), translate("KaiPlus is an AI workspace and session service."))
 m:section(SimpleSection).template = "kaiplus/kaiplus_status"
 
 m.on_after_commit = function(self)
 	sys.call("/etc/init.d/kaiplus restart >/dev/null 2>&1")
+	if self.uci:get_first("kaiplus", "kaiplus", "enabled") == "1" then
+		local port = self.uci:get_first("kaiplus", "kaiplus", "port") or "8189"
+		kaiplus_model.wait_ready(port, 30, 500)
+	end
 	if sys.call("[ -x /etc/init.d/linkease ]") == 0 then
 		sys.call("/etc/init.d/linkease restart >/dev/null 2>&1 &")
 	end
@@ -17,7 +22,6 @@ s.anonymous = true
 
 s:option(Flag, "enabled", translate("Enable")).rmempty = false
 
-local kaiplus_model = require "luci.model.kaiplus"
 local blocks = kaiplus_model.blocks()
 local home = kaiplus_model.home()
 

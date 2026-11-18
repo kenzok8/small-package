@@ -16,13 +16,15 @@
 </style>
 
 <script type="text/javascript">//<![CDATA[
-XHR.poll(5, '<%=url("admin/services/kaiplus_status")%>', null, function(x, st) {
+XHR.poll(2, '<%=url("admin/services/kaiplus_status")%>', null, function(x, st) {
 	var el = document.getElementById('kaiplus_status');
 	var openButton = document.getElementById('kaiplus-open');
 	if (st && el) {
-		var status = st.running
+		var status = st.ready
 			? '<br/><em style=\"color:green\"><%:The KaiPlus service is running.%></em>'
-			: '<br/><em style=\"color:red\"><%:The KaiPlus service is not running.%></em>';
+			: st.running
+				? '<br/><em style=\"color:#d97706\"><%:The KaiPlus service is starting.%></em>'
+				: '<br/><em style=\"color:red\"><%:The KaiPlus service is not running.%></em>';
 		if (st.proxy_prefix_enabled && st.app_entry_running) {
 			status = status + '<br/><em><%:Access mode: LinkEase Desktop proxy.%></em>';
 		}
@@ -33,7 +35,7 @@ XHR.poll(5, '<%=url("admin/services/kaiplus_status")%>', null, function(x, st) {
 			status = status + '<br/><em><%:External port access is disabled.%></em>';
 		}
 		el.innerHTML = status;
-		if (openButton) openButton.style.display = st.running ? '' : 'none';
+		if (openButton) openButton.style.display = st.ready ? '' : 'none';
 	}
 });
 //]]></script>

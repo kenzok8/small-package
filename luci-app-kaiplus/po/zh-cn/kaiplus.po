@@ -28,6 +28,9 @@ msgstr "可通过 http://路由器地址:端口/apps/kaiplus/ 访问酷友社AI�
 msgid "The KaiPlus service is running."
 msgstr "酷友社AI 服务正在运行。"
 
+msgid "The KaiPlus service is starting."
+msgstr "酷友社AI 服务正在启动。"
+
 msgid "The KaiPlus service is not running."
 msgstr "酷友社AI 服务未运行。"
 
