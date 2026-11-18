@@ -1,0 +1,11 @@
+{
+	"luci-app-agent2api": {
+		"description": "Grant UCI access for luci-app-agent2api",
+		"read": {
+			"uci": [ "agent2api" ]
+		},
+		"write": {
+			"uci": [ "agent2api" ]
+		}
+	}
+}

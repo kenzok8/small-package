@@ -1,0 +1,5 @@
+config main
+	option 'http_port' '3065'
+	option 'image_name' 'aimodcc/agent2api:latest'
+	option 'install_accelerated' '1'
+	option 'config_path' ''
