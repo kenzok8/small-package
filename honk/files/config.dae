@@ -1,5 +1,45 @@
-include {
-    system.dae
+global {
+    wan_interface: auto
+    lan_interface: br-lan
+    log_level: info
+    dial_mode: domain
+    allow_insecure: false
+    auto_config_kernel_parameter: true
+    data_dir: '/etc/honk'
+    # 默认只走 logread，由面板日志页读取。需要跨重启排障时再指定持久路径。
+    log_file: ''
+    # 节点健康检查目标：经节点访问，用国外可达的地址，避免误判。
+    tcp_check_url: 'https://www.gstatic.com/generate_204'
+    tcp_check_http_method: HEAD
+    udp_check_dns: dns.google.com:53, 8.8.8.8
+    check_interval: 300s
+    # DNS 上游写域名时用它自举；写死 IP 时不会用到。
+    bootstrap_resolver: '1.1.1.1:53'
+    store_subscribe: true
+    nfqueue_enable: true
+}
+
+experimental {
+    native_api {
+        enabled: true
+        listen: '127.0.0.1:9527'
+        password_auth: true
+        allow_anonymous_loopback: false
+        config_write: true
+        ui: '/usr/share/doona'
+    }
+
+    clash_api {
+        external_controller: '0.0.0.0:9090'
+        external_ui: '/usr/share/honk/zashboard'
+        secret: ''
+        default_mode: Rule
+    }
+
+    # 缓存解析结果与订阅，重启后首包更快。
+    cache_file {
+        enabled: true
+    }
 }
 
 group {
@@ -33,6 +73,8 @@ dns {
 
 routing {
     dip(224.0.0.0/3, 'ff00::/8') -> direct
+    # dnsmasq 用 127.0.0.1 源地址查上游，private 规则兜不住，单独放行。
+    pname(dnsmasq) && l4proto(udp) && dport(53) -> direct(must)
     # 路由器自身地址直连，管理面板不被代理；服务启动时按本机地址重写下面区块
     # honk:local-direct-begin
     # honk:local-direct-end

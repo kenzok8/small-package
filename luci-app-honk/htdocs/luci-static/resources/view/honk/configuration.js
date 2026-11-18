@@ -345,6 +345,84 @@ return view.extend({
 		const saveBtn = E('button', { 'class': 'cbi-button cbi-button-positive', 'type': 'button' }, [ _('Save and apply') ]);
 		const draftBtn = E('button', { 'class': 'cbi-button', 'type': 'button' }, [ _('Save draft') ]);
 		const validateBtn = E('button', { 'class': 'cbi-button cbi-button-link', 'type': 'button' }, [ _('Check configuration') ]);
+		const mergeBtn = E('button', { 'class': 'cbi-button', 'type': 'button' }, [ _('Preview merging system.dae') ]);
+		mergeBtn.hidden = true;
+		const mergeNotice = E('div', { 'class': 'alert-message', 'hidden': true }, [
+			E('p', {}, _('This configuration still uses system.dae. Preview a merge or keep editing the existing file.')),
+			E('button', { 'class': 'cbi-button', 'type': 'button', 'click': function() { selectTab('edit'); } }, _('Edit configuration'))
+		]);
+		const legacyBtn = E('button', { 'class': 'cbi-button', 'type': 'button' }, [ _('Edit legacy system.dae') ]);
+		legacyBtn.hidden = true;
+		legacyBtn.addEventListener('click', function() {
+			legacyBtn.disabled = true;
+			honk.systemRead().then(honk.ensureOk).then(function(result) {
+				const content = E('textarea', {
+					'class': 'cbi-input-textarea honk-config-editor', 'rows': '22', 'spellcheck': 'false', 'wrap': 'off'
+				});
+				content.value = result.content || '';
+				const note = E('p', { 'class': 'honk-note', 'role': 'status' }, '');
+				const save = E('button', { 'class': 'cbi-button cbi-button-positive', 'type': 'button' }, _('Save and validate'));
+				save.addEventListener('click', function() {
+					save.disabled = true;
+					withLongTimeout(function() { return honk.systemSave(content.value).then(honk.ensureOk); }).then(function() {
+						ui.hideModal();
+						return loadCurrent(_('system.dae saved.'), false);
+					}).catch(function(error) {
+						note.textContent = honk.errorMessage(error, _('Could not save system.dae.'));
+						save.disabled = false;
+					});
+				});
+				ui.showModal(_('Legacy system.dae'), [
+					E('p', {}, _('This file is still included by the active configuration. Saving validates it and restarts Honk if it is running.')),
+					content, note,
+					E('div', { 'class': 'right' }, [
+						E('button', { 'class': 'cbi-button', 'type': 'button', 'click': ui.hideModal }, _('Cancel')), save
+					])
+				]);
+			}).catch(function(error) {
+				editorStatus.textContent = honk.errorMessage(error, _('Could not read system.dae.'));
+			}).finally(function() { legacyBtn.disabled = false; });
+		});
+		mergeBtn.addEventListener('click', function() {
+			if (!confirmEditorReplace()) return;
+			const editorSnapshot = editor.value;
+			mergeBtn.disabled = true;
+			honk.configMergePreview().then(honk.ensureOk).then(function(preview) {
+				const content = E('textarea', {
+					'class': 'cbi-input-textarea honk-config-editor', 'rows': '22', 'readonly': 'readonly',
+					'spellcheck': 'false', 'wrap': 'off', 'aria-label': _('Merged configuration preview')
+				});
+				content.value = preview.content || '';
+				const apply = E('button', { 'class': 'cbi-button cbi-button-positive', 'type': 'button' }, _('Merge and start Honk'));
+				apply.addEventListener('click', function() {
+					if (editor.value !== editorSnapshot) {
+						ui.hideModal();
+						editorStatus.textContent = _('The editor changed. Preview the merge again.');
+						return;
+					}
+					apply.disabled = true;
+					withLongTimeout(function() {
+						return honk.configMergeApply(preview.config_sha256, preview.system_sha256, preview.candidate_sha256).then(honk.ensureOk);
+					}).then(function(result) {
+						ui.hideModal();
+						return loadCurrent(honk.resultMessage(result, _('Configuration applied.')), true);
+					}).catch(function(error) {
+						ui.hideModal();
+						editorStatus.textContent = honk.errorMessage(error, _('Could not merge the configuration.'));
+					});
+				});
+				ui.showModal(_('Merge configuration'), [
+					E('p', {}, _('This replaces config.dae and starts Honk. system.dae and any existing draft are kept.')),
+					content,
+					E('div', { 'class': 'right' }, [
+						E('button', { 'class': 'cbi-button', 'type': 'button', 'click': ui.hideModal }, _('Cancel')),
+						apply
+					])
+				]);
+			}).catch(function(error) {
+				editorStatus.textContent = honk.errorMessage(error, _('Could not preview the merge.'));
+			}).finally(function() { mergeBtn.disabled = false; });
+		});
 
 		let editorBaseline = '';
 
@@ -390,24 +468,13 @@ return view.extend({
 			}).join(' | ');
 		}
 
-		/* 本机事实：LuCI 的 Doona 端口、活跃 L3 候选（含所属 netifd 网络）。取一次复用。 */
+		/* 接口适配只使用设备事实，不把旧 UCI 向导选项当成运行配置。 */
 		let runtimeFacts = null;
 		function runtimeContext() {
 			if (!runtimeFacts)
-				runtimeFacts = Promise.all([
-					honk.status().catch(function() { return {}; }),
-					honk.lanCandidates().catch(function() { return {}; })
-				]).then(function(results) {
-					const status = results[0] || {};
-					const candidates = ((results[1] && results[1].candidates) || []).filter(function(item) {
-						return item && item.l3_device;
-					});
-					return {
-						listenPort: String(status.listen_port || 9527),
-						lanNetwork: status.lan_network || 'lan',
-						candidates: candidates,
-						devices: candidates.map(function(item) { return item.l3_device; })
-					};
+				runtimeFacts = honk.lanCandidates().catch(function() { return {}; }).then(function(result) {
+					const candidates = (result.candidates || []).filter(function(item) { return item && item.l3_device; });
+					return { candidates: candidates, devices: candidates.map(function(item) { return item.l3_device; }) };
 				});
 			return runtimeFacts;
 		}
@@ -447,7 +514,7 @@ return view.extend({
 
 		/* 优先 netifd 里配置的 LAN 网络；不做「取第一个活跃设备」，那可能是 WAN / VPN。 */
 		function preferredLanDevice(ctx) {
-			const order = [ ctx.lanNetwork, 'lan' ];
+			const order = [ 'lan' ];
 			for (let i = 0; i < order.length; i++) {
 				const hit = ctx.candidates.find(function(item) { return item.network === order[i]; });
 				if (hit)
@@ -651,6 +718,9 @@ return view.extend({
 			return honk.configRead().then(honk.ensureOk).then(function(result) {
 				if (!force && editor.value !== editorBaseline && editor.value !== '')
 					return result;
+				mergeNotice.hidden = !result.legacy_system;
+				mergeBtn.hidden = !result.legacy_system;
+				legacyBtn.hidden = !(result.legacy_system || result.includes_system);
 				setEditorContent(result.content || '', message || _('Current configuration loaded from /etc/honk/config.dae.'));
 				return result;
 			});
@@ -744,7 +814,7 @@ return view.extend({
 		});
 
 		const editorSection = E('section', { 'class': 'honk-card' }, [
-			E('div', { 'class': 'honk-actions' }, [ saveBtn, draftBtn, validateBtn ]),
+			E('div', { 'class': 'honk-actions' }, [ saveBtn, draftBtn, validateBtn, mergeBtn, legacyBtn ]),
 			editor,
 			editorStatus
 		]);
@@ -808,7 +878,7 @@ return view.extend({
 			{ id: 'import', label: _('Import config'), panel: importSection },
 			{ id: 'edit', label: _('Edit config'), panel: editorSection }
 		];
-		let activeTab = 'sub';
+		let activeTab = window.location.hash === '#edit' ? 'edit' : 'sub';
 		const tabBar = E('div', { 'class': 'honk-seg honk-tabs', 'role': 'tablist' });
 		function selectTab(id) {
 			activeTab = id;
@@ -833,6 +903,7 @@ return view.extend({
 			tab.panel.hidden = true;
 			tabBar.appendChild(tab.button);
 		});
+		page.appendChild(mergeNotice);
 		page.appendChild(E('div', { 'class': 'honk-tabs-wrap' }, [ tabBar ]));
 		tabs.forEach(function(tab) { page.appendChild(tab.panel); });
 		selectTab(activeTab);

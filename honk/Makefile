@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=honk
-PKG_VERSION:=2026.11.12
+PKG_VERSION:=2026.11.18.1
 PKG_RELEASE:=1
 
 # Pinned honk-core revision (upstream daeuniverse/honk main), cross-compiled by
@@ -17,7 +17,7 @@ PKG_RELEASE:=1
 CORE_COMMIT:=64848881b7304e250e7a25422f4f1d86a5975eca
 
 # Immutable source asset tag holding this pin's core archives.
-HONK_SOURCE_TAG?=source-42975766273
+HONK_SOURCE_TAG?=source-verified-20261117
 HONK_SOURCE_URL?=https://github.com/kenzok8/openwrt-honk/releases/download/$(HONK_SOURCE_TAG)
 
 -include $(CURDIR)/generated-stage.mk
@@ -25,9 +25,9 @@ HONK_SOURCE_URL?=https://github.com/kenzok8/openwrt-honk/releases/download/$(HON
 HONK_ASSET_X86_64?=honk-core-$(CORE_COMMIT)-x86_64.tar.gz
 HONK_ASSET_AARCH64?=honk-core-$(CORE_COMMIT)-aarch64.tar.gz
 HONK_ASSET_ARMV7?=honk-core-$(CORE_COMMIT)-armv7.tar.gz
-HONK_HASH_X86_64?=d8b779a60fbe4965d323bcab187924f5c28745509318bf54c853cbd71d9e540a
-HONK_HASH_AARCH64?=27df7fbab0e3fb15cb3171d1f74d387f815ecc7c53f96256af11dcc6618da047
-HONK_HASH_ARMV7?=44cbb9a75054c14b97f98849a70aa32fd87b9d4ef7116c6e790315d0adee7766
+HONK_HASH_X86_64?=496157e2ec9d8af457fce9be1b00758b4fec7b1fcce8d1e916162982fd599981
+HONK_HASH_AARCH64?=c32e88cb138c31963b309c5ee150ec094868d91ab13020f1ee0f2bbd054e83d6
+HONK_HASH_ARMV7?=53d75ef91db267a112fb7cacf5c3521b43e69ed10f6acdabb4dbf4ab2125d5ba
 
 # ARCH_PACKAGES is the package arch (e.g. arm_cortex-a7_neon-vfpv4);
 # ARCH is the CPU arch (x86_64/aarch64/arm) and coincides for 64-bit.
@@ -132,6 +132,72 @@ define Package/honk/install
 	$(INSTALL_BIN) $(CURDIR)/files/redact-log.sh $(1)/usr/share/honk/redact-log.sh
 	$(INSTALL_BIN) $(CURDIR)/files/log-level-filter.sh $(1)/usr/share/honk/log-level-filter.sh
 	$(INSTALL_DATA) $(CURDIR)/files/log-lines.sh $(1)/usr/share/honk/log-lines.sh
+	$(INSTALL_DATA) $(CURDIR)/files/preupgrade-restore.sh $(1)/usr/share/honk/preupgrade-restore.sh
+	$(if $(CONFIG_USE_APK),$(INSTALL_DIR) $(1)/usr/lib/opkg/info && printf '[ -n "$$$${IPKG_INSTROOT}" ] && exit 0\n. /usr/share/honk/preupgrade-restore.sh\n' > $(1)/usr/lib/opkg/info/honk.postinst-pkg && chmod 0644 $(1)/usr/lib/opkg/info/honk.postinst-pkg)
 endef
+
+# pre 在解包前执行，新包脚本尚未落盘，逻辑必须内联。
+define Package/honk/preinst
+#!/bin/sh
+[ -n "$${IPKG_INSTROOT}" ] && exit 0
+P=/etc/.honk-preupgrade
+if [ -e "$$P/pending" ] || [ -L "$$P/pending" ]; then
+	[ -f "$$P/pending" ] && [ ! -L "$$P/pending" ] || exit 1
+	rm -f "$$P/pending" || exit 1
+fi
+[ "$$PKG_UPGRADE" = 1 ] || exit 0
+[ -f /etc/honk/config.dae ] && [ ! -L /etc/honk/config.dae ] || exit 0
+mkdir -p "$$P" && chmod 0700 "$$P" || exit 1
+apk_txnid=
+if [ -f /lib/apk/db/installed ] && [ -r "/proc/$$PPID/stat" ]; then
+	bid=$$(cat /proc/sys/kernel/random/boot_id 2>/dev/null)
+	rest=$$(sed 's/^[0-9]* (.*) //' "/proc/$$PPID/stat" 2>/dev/null)
+	st=$$(printf '%s\n' "$$rest" | awk '{print $$20}')
+	case "$$bid" in ''|*[!0-9a-f-]*) bid= ;; esac
+	case "$$st" in ''|*[!0-9]*) st= ;; esac
+	[ -n "$$bid" ] && [ -n "$$st" ] && apk_txnid="$$bid:$$PPID:$$st"
+fi
+nonce=$$(cat /proc/sys/kernel/random/uuid 2>/dev/null | tr -d '-')
+case "$$nonce" in ''|*[!0-9a-f]*) exit 1 ;; esac
+[ "$${#nonce}" -eq 32 ] || exit 1
+d="$$P/txn-$$nonce"
+mkdir -m 0700 "$$d" || exit 1
+csha=$$(sha256sum /etc/honk/config.dae 2>/dev/null | awk '{print $$1}')
+[ -n "$$csha" ] || { rm -rf "$$d"; exit 1; }
+cp -p /etc/honk/config.dae "$$d/config.dae" || { rm -rf "$$d"; exit 1; }
+[ "$$(sha256sum "$$d/config.dae" 2>/dev/null | awk '{print $$1}')" = "$$csha" ] || { rm -rf "$$d"; exit 1; }
+ssha=absent
+if [ -f /etc/honk/system.dae ] && [ ! -L /etc/honk/system.dae ]; then
+	ssha=$$(sha256sum /etc/honk/system.dae 2>/dev/null | awk '{print $$1}')
+	[ -n "$$ssha" ] || { rm -rf "$$d"; exit 1; }
+	cp -p /etc/honk/system.dae "$$d/system.dae" || { rm -rf "$$d"; exit 1; }
+	[ "$$(sha256sum "$$d/system.dae" 2>/dev/null | awk '{print $$1}')" = "$$ssha" ] || { rm -rf "$$d"; exit 1; }
+fi
+{
+	echo "format=1"
+	echo "nonce=$$nonce"
+	echo "config_sha256=$$csha"
+	echo "system_sha256=$$ssha"
+	echo "saved_at=$$(date +%s)"
+	echo "apk_txnid=$$apk_txnid"
+	echo "state=ready"
+} > "$$d/manifest" || { rm -rf "$$d"; exit 1; }
+chmod 0600 "$$d/manifest" 2>/dev/null
+tmp="$$P/.pending.$$nonce"
+printf '%s\n' "$$nonce" > "$$tmp" || { rm -rf "$$d"; exit 1; }
+chmod 0600 "$$tmp" 2>/dev/null
+mv -f "$$tmp" "$$P/pending" || { rm -rf "$$d"; exit 1; }
+exit 0
+endef
+
+# 只在无核心、当前是本包模板、关联文件未变且身份匹配时写回。
+ifeq ($(CONFIG_USE_APK),)
+# IPK：opkg 原生把本段落成 postinst-pkg，default_postinst 在 start 前 source。
+define Package/honk/postinst
+#!/bin/sh
+[ -n "$${IPKG_INSTROOT}" ] && exit 0
+. /usr/share/honk/preupgrade-restore.sh
+endef
+endif
 
 $(eval $(call BuildPackage,honk))

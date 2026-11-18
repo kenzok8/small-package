@@ -20,6 +20,30 @@ honk_lifecycle_detect_pause
 
 # 字段归属：自带 global/experimental → file；只 include system.dae（且写法规范）→ system；
 # 其余一律 unknown。写法不规范时不猜，直接拒绝。
+# 只认顶层 include 块里的条目，控制脚本与 rpcd 共用。
+config_includes_system() {
+	awk '
+		BEGIN { inblock = 0 }
+		{
+			line = $0
+			sub(/\r$/, "", line)
+			if (!inblock) {
+				if (line ~ /^[[:space:]]*include[[:space:]]*\{/) { inblock = 1; rest = line; sub(/^[^{]*\{/, "", rest) }
+				else next
+			} else {
+				rest = line
+			}
+			sub(/#.*/, "", rest)
+			n = split(rest, parts, /[},]/)
+			for (i = 1; i <= n; i++) {
+				entry = parts[i]
+				gsub(/^[[:space:]\047"]+|[[:space:]\047"]+$/, "", entry)
+				if (entry == "system.dae") { print "yes"; exit }
+			}
+			if (line ~ /\}/) inblock = 0
+		}
+	' "$1"
+}
 config_owner() {
 	config_owner_file=${1:-/etc/honk/config.dae}
 	[ -f "$config_owner_file" ] && [ ! -L "$config_owner_file" ] || { echo unknown; return 0; }

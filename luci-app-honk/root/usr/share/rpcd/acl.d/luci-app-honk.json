@@ -83,7 +83,12 @@
 					"config_read",
 					"config_draft_read",
 					"config_apply",
-					"config_detach"
+					"config_merge_preview",
+					"config_merge_apply",
+					"config_detach",
+					"system_read",
+					"system_save",
+					"system_panel"
 				]
 			},
 			"file": {

@@ -716,20 +716,20 @@ msgstr "立即刷新"
 msgid "Refreshing status…"
 msgstr "正在刷新状态……"
 
-msgid "Repair"
-msgstr "修复"
+msgid "Validate configuration"
+msgstr "校验配置"
 
-msgid "Repair completed."
-msgstr "修复已完成。"
+msgid "Configuration checked."
+msgstr "配置已校验。"
 
-msgid "Repair failed."
-msgstr "修复失败。"
+msgid "Configuration check failed."
+msgstr "配置校验失败。"
 
-msgid "Repair replaces missing or damaged Honk system files and does not overwrite user configuration."
-msgstr "修复会补齐或替换缺失、损坏的 Honk 系统文件，不会覆盖用户配置。"
+msgid "Validates the configuration and reports the result. No files are rewritten."
+msgstr "校验配置并报告结果，不改写文件。"
 
-msgid "Repairing…"
-msgstr "正在修复……"
+msgid "Validating…"
+msgstr "正在校验……"
 
 msgid "Required when enabling. Use 6–128 letters, numbers, dots, underscores or hyphens."
 msgstr "启用时必填，6–128 位字母、数字、点、下划线或连字符。"
@@ -851,8 +851,8 @@ msgstr "分享链接超过单次 16 KiB 的限制。"
 msgid "Showing the latest %d matching entries."
 msgstr "当前显示最新的 %d 条匹配日志。"
 
-msgid "Shows up to 200 Honk-specific lines, capped at 32 KiB, and refreshes every 5 seconds while live. Sensitive URLs and credentials are redacted before display."
-msgstr "最多显示 200 行 Honk 日志，数据上限为 32 KiB；实时模式下每 5 秒刷新，并在显示前隐藏敏感网址和凭据。"
+msgid "Up to 200 lines or 32 KiB, refreshed every 5 s while live, sensitive data redacted."
+msgstr "最多 200 行或 32 KiB，实时模式每 5 秒刷新，敏感信息已隐藏。"
 
 msgid "Source"
 msgstr "数据源"
@@ -896,8 +896,8 @@ msgstr "订阅与节点需使用 Honk 支持的协议，不支持 SSR。"
 msgid "Switching to panel management…"
 msgstr "正在改由面板接管…"
 
-msgid "System check and repair"
-msgstr "系统检查与修复"
+msgid "System check and configuration validation"
+msgstr "系统检查与配置校验"
 
 msgid "System check failed."
 msgstr "系统检查失败。"
@@ -1533,3 +1533,177 @@ msgstr "核心与兼容信息不匹配，请重新安装 Honk。"
 
 msgid "Kernel BTF is missing. Install vmlinux-btf matching your firmware, or use firmware with built-in BTF."
 msgstr "缺少内核 BTF，请安装与固件匹配的 vmlinux-btf，或使用自带 BTF 的固件。"
+
+msgid "A source file changed. Refresh the merge preview."
+msgstr "来源文件已变化，请重新预览合并。"
+
+msgid "Could not merge the configuration."
+msgstr "无法合并配置。"
+
+msgid "Could not preview the merge."
+msgstr "无法预览合并。"
+
+msgid "Could not read system.dae."
+msgstr "无法读取 system.dae。"
+
+msgid "Could not save system.dae."
+msgstr "无法保存 system.dae。"
+
+msgid "Edit configuration"
+msgstr "编辑配置"
+
+msgid "Edit legacy system.dae"
+msgstr "编辑旧 system.dae"
+
+msgid "First setup settings saved."
+msgstr "已保存首次引导设置。"
+
+msgid "LAN and API settings are managed in the configuration file."
+msgstr "LAN 和 API 设置由配置文件管理。"
+
+msgid "LAN, listen ports and API settings are managed in the configuration file."
+msgstr "LAN、监听端口和 API 设置由配置文件管理。"
+
+msgid "Legacy system.dae"
+msgstr "旧 system.dae"
+
+msgid "Merge and start Honk"
+msgstr "合并并启动 Honk"
+
+msgid "Merge configuration"
+msgstr "合并配置"
+
+msgid "Merged configuration preview"
+msgstr "合并后的配置预览"
+
+msgid "Preview merging system.dae"
+msgstr "预览合并 system.dae"
+
+msgid "Preview the merge on the configuration page."
+msgstr "请在配置页预览合并。"
+
+msgid "Runtime settings are managed in config.dae."
+msgstr "运行设置由 config.dae 管理。"
+
+msgid "Save and validate"
+msgstr "保存并校验"
+
+msgid "The active configuration no longer uses system.dae. Edit config.dae instead."
+msgstr "当前配置不再引用 system.dae，请编辑 config.dae。"
+
+msgid "The active configuration still includes this legacy file. Edit it here, or preview merging it on the configuration page."
+msgstr "当前配置仍引用此旧文件，可直接编辑，或在配置页预览合并。"
+
+msgid "The editor changed. Preview the merge again."
+msgstr "编辑器内容已变化，请重新预览合并。"
+
+msgid "The merged candidate changed. Refresh the preview."
+msgstr "合并候选已变化，请重新预览。"
+
+msgid "The merged configuration did not pass validation. The existing files were kept."
+msgstr "合并配置未通过校验，原文件已保留。"
+
+msgid "These settings are used only by the first setup wizard. Later changes belong in config.dae."
+msgstr "这些选项只用于首次引导，之后请在 config.dae 中修改。"
+
+msgid "This file has been customized. Use the configuration page instead of the first setup wizard."
+msgstr "文件已自定义，请在配置页编辑，不使用首次引导。"
+
+msgid "This file is still included by the active configuration. Saving validates it and restarts Honk if it is running."
+msgstr "当前配置仍引用此文件，保存时会校验；服务运行中时会重启。"
+
+msgid "This layout cannot be merged automatically. Keep editing the existing files."
+msgstr "此布局无法自动合并，请继续编辑原文件。"
+
+msgid "This replaces config.dae and starts Honk. system.dae and any existing draft are kept."
+msgstr "将替换 config.dae 并启动 Honk，旧 system.dae 和已有草稿会保留。"
+
+msgid "Update the Honk core together with this package. Its configuration diagnostics are incomplete."
+msgstr "请同时更新 Honk 核心，当前核心缺少所需的配置诊断字段。"
+
+msgid "system.dae saved."
+msgstr "system.dae 已保存。"
+
+msgid "This configuration still uses system.dae. Preview a merge or keep editing the existing file."
+msgstr "当前配置仍使用 system.dae，可预览合并，也可继续编辑原文件。"
+
+msgid "Configuration is valid. No file was rewritten."
+msgstr "配置校验通过，未重写文件。"
+
+msgid "Configuration validation failed. Check the service logs."
+msgstr "配置校验失败，请检查服务日志。"
+
+msgid "The installed default template is missing. Reinstall Honk."
+msgstr "缺少安装默认模板，请重新安装 Honk。"
+
+msgid "Could not back up config.dae. No configuration was replaced."
+msgstr "无法备份 config.dae，未替换配置。"
+
+msgid "config.dae is missing or is not a regular file."
+msgstr "config.dae 缺失或不是普通文件。"
+
+msgid "config.dae changed during setup. Nothing was overwritten."
+msgstr "配置在初始化期间发生变化，未覆盖文件。"
+
+msgid "Could not prepare the first setup configuration."
+msgstr "无法生成首次引导配置。"
+
+msgid "The first setup configuration could not be validated or started."
+msgstr "首次引导配置未通过校验或无法启动。"
+
+msgid "Could not install the first setup configuration. Check the service logs."
+msgstr "无法写入首次引导配置，请检查服务日志。"
+
+msgid "Could not finish initialization. Check the configuration and service logs."
+msgstr "初始化未完成，请检查配置和服务日志。"
+
+msgid "Confirm the LAN target"
+msgstr "确认重置目标"
+
+msgid "Reset writes these values into config.dae. Confirm the interface and address are still correct."
+msgstr "重置会把下列网络与地址写入 config.dae，请确认识别到的接口和地址仍然正确。"
+
+msgid "No active LAN candidate. Configure a LAN interface before resetting."
+msgstr "没有可用的 LAN 候选，请先在系统中配置 LAN 接口再重置。"
+
+msgid "This permanently clears subscriptions, nodes, policies, DNS data, history and cache. The administrator account is kept, and Honk stops."
+msgstr "会永久清除订阅、节点、策略、DNS 数据、历史与缓存；管理员账号保留，Honk 会停止。"
+
+msgid "LAN interface"
+msgstr "LAN 接口"
+
+msgid "Listen address"
+msgstr "监听地址"
+
+msgid "Clash API"
+msgstr "Clash API"
+
+msgid "Effective values read from the configuration file. Edit them in the configuration page."
+msgstr "以下数值取自配置文件，修改请到配置页。"
+
+msgid "Clear saved secret"
+msgstr "清空已保存的密钥"
+msgid "This configuration is managed by the panel. Saving keeps the previous layout."
+msgstr "当前配置由面板管理，保存会沿用原有布局。"
+msgid "Leave the secret blank to keep the saved one. Use your existing HTTPS reverse proxy for external access."
+msgstr "密钥留空表示保留原值。外网访问请沿用现有 HTTPS 反向代理。"
+msgid "Choose a LAN interface."
+msgstr "请选择 LAN 接口。"
+msgid "Enter a listen address, for example 192.168.3.1 or [::1]."
+msgstr "请填写监听地址，例如 192.168.3.1 或 [::1]。"
+msgid "The listen port must be between 1 and 65535."
+msgstr "监听端口需在 1 到 65535 之间。"
+msgid "Enter a Clash API bind address."
+msgstr "请填写 Clash API 绑定地址。"
+msgid "The Clash API port must be between 1 and 65535."
+msgstr "Clash API 端口需在 1 到 65535 之间。"
+msgid "The secret cannot contain quotes, backslashes or line breaks."
+msgstr "密钥不能包含引号、反斜杠或换行。"
+
+msgid "A secret is already set. Leave blank to keep it."
+msgstr "密钥已设置，留空则保留原值。"
+msgid "Optional. Used by Clash API clients."
+msgstr "可留空，供 Clash API 客户端使用。"
+
+msgid "状态数据库损坏，请到维护页执行重置后重新初始化。"
+msgstr "状态数据库损坏，请到维护页执行重置后重新初始化。"

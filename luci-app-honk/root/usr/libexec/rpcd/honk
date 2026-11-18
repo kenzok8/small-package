@@ -52,7 +52,7 @@ lock_owner_invalid() {
 
 status() {
 	local core_lane
-	local enabled initialized boot_enabled running api_url api_ready core_version core_commit doona_version kernel lan_network listen_port errors listen clash_api_enabled clash_api_port clash_api_secret clash_api_url clash_api_ready clash_ui_ready clash_secret_set settings_owner api_enabled core_ready config_pending draft_pending legacy_draft detach_backup clash_listen_addr
+	local enabled initialized boot_enabled running api_url api_ready core_version core_commit doona_version kernel lan_network listen_port errors listen runtime_lan clash_api_enabled clash_api_port clash_api_secret clash_api_url clash_api_ready clash_ui_ready clash_secret_set settings_owner api_enabled core_ready config_pending draft_pending legacy_draft detach_backup clash_listen_addr config_sha256
 	config_load honk
 	config_get_bool enabled main enabled 0
 	config_get_bool initialized main initialized 0
@@ -66,6 +66,8 @@ status() {
 	if is_managed_core "$managed_pid"; then running=1; else running=0; fi
 	# 只有 system.dae 负责这些字段时，UCI 里的端口/密钥才有意义。
 	settings_owner=$(config_owner /etc/honk/config.dae)
+	includes_system=0
+	[ -n "$(config_includes_system /etc/honk/config.dae)" ] && includes_system=1
 	api_enabled=0
 	clash_api_enabled=0
 	clash_api_port=0
@@ -107,6 +109,8 @@ status() {
 		clash_api_enabled=1
 		clash_api_port=${clash_listen_addr##*:}
 	fi
+	# 概览页展示实际生效值：LAN 接口与监听地址都来自核心解析结果。
+	runtime_lan=$(printf '%s' "$runtime_config" | jsonfilter -e '@.runtime.lan_interfaces[*]' 2>/dev/null | tr '\n' ',' | sed 's/,$//')
 	case "$listen" in
 		''|*[!0-9.:]*) listen="127.0.0.1:$listen_port" ;;
 	esac
@@ -157,7 +161,13 @@ status() {
 	json_add_boolean initialized "$initialized"
 	json_add_boolean boot_enabled "$boot_enabled"
 	json_add_boolean running "$running"
+	config_sha256=$(sha256sum /etc/honk/config.dae 2>/dev/null | awk '{print $1}')
+	json_add_string config_sha256 "$config_sha256"
 	json_add_string settings_owner "$settings_owner"
+	json_add_boolean includes_system "$includes_system"
+	system_managed=$(uci -q get honk.main.system_managed)
+	[ -n "$system_managed" ] || system_managed=1
+	json_add_boolean system_managed "$system_managed"
 	json_add_boolean config_pending "$config_pending"
 	json_add_boolean draft_pending "$draft_pending"
 	json_add_boolean legacy_draft "$legacy_draft"
@@ -172,12 +182,15 @@ status() {
 	json_add_boolean clash_api_ready "$clash_api_ready"
 	json_add_boolean clash_ui_ready "$clash_ui_ready"
 	json_add_string clash_api_url "$clash_api_url"
+	json_add_string clash_listen_addr "$clash_listen_addr"
 	json_add_string core_version "$core_version"
 	json_add_string core_commit "$core_commit"
 	json_add_string core_lane "$core_lane"
 	json_add_string doona_version "$doona_version"
 	json_add_string kernel "$kernel"
 	json_add_string lan_network "$lan_network"
+	json_add_string runtime_lan "$runtime_lan"
+	json_add_string runtime_listen "$listen"
 	case "$listen_port" in
 		''|*[!0-9]*) listen_port=0 ;;
 	esac
@@ -189,11 +202,16 @@ status() {
 }
 
 service_ready_config() {
-	local enabled initialized
+	local enabled initialized db_state
 	config_load honk
 	config_get_bool enabled main enabled 0
 	config_get_bool initialized main initialized 0
-	[ "$initialized" = 1 ]
+	[ "$initialized" = 1 ] || return 1
+	if [ -f /etc/honk/state/honk.db ] && [ ! -L /etc/honk/state/honk.db ] && command -v sqlite3 >/dev/null 2>&1; then
+		db_state=$(sqlite3 /etc/honk/state/honk.db 'PRAGMA quick_check;' 2>/dev/null) || db_state=failed
+		[ "$db_state" = ok ] || { config_error=state_database_corrupt; return 1; }
+	fi
+	return 0
 }
 
 # 包文件被改坏（丢了执行位）时自己修回来，用户不该为这个去敲 chmod。
@@ -209,7 +227,7 @@ ensure_runner_ready() {
 
 start_job() {
 	job_operation=$1
-	job_request=
+	job_request=$2
 	case "$job_operation" in backup|restore|reset|update_check|update_apply) ;; *) emit_result false invalid_operation; return 1 ;; esac
 	if [ "$job_operation" = update_apply ]; then
 		update_gate_result=$("$UPDATE" gate 2>/dev/null) || { emit_result false update_check_failed; return 1; }
@@ -232,6 +250,11 @@ start_job() {
 	job_dir=$JOBS/$job_id
 	mkdir "$job_dir" || { emit_result false job_storage_unavailable; return 1; }
 	chmod 0700 "$job_dir" || { rm -rf "$job_dir"; emit_result false job_storage_unavailable; return 1; }
+	if [ -n "$job_request" ]; then
+		job_request_text=$(printf '%s' "$job_request" | tr '|' ' ')
+		printf '%s\n' "$job_request_text" > "$job_dir/request" || { rm -rf "$job_dir"; emit_result false job_storage_unavailable; return 1; }
+		chmod 0600 "$job_dir/request" || { rm -rf "$job_dir"; emit_result false job_storage_unavailable; return 1; }
+	fi
 
 	json_init
 	json_add_string state running
@@ -471,6 +494,13 @@ validate_proxy_nodes() (
 	fi
 	# 候选原样作为被测配置，落盘路径与 API 由我们写的 system.dae 提供。
 	cp -p "$candidate" "$temp/config.dae" || { rm -rf "$temp"; return 1; }
+	# 单文件布局的 native_api 在 config.dae 里，system.dae 盖不住：
+	# 改成临时端口 + 匿名只读，才能拿到 nodes/groups。
+	sed -i -e "s#^        listen: .*#        listen: '127.0.0.1:$port'#" \
+		-e "s#^        password_auth: .*#        password_auth: false#" \
+		-e "s#^        allow_anonymous_loopback: .*#        allow_anonymous_loopback: true#" \
+		-e "s#^        config_write: .*#        config_write: false#" \
+		"$temp/config.dae" 2>/dev/null || :
 	chmod 0600 "$temp/config.dae" || { rm -rf "$temp"; return 1; }
 	cat > "$temp/system.dae" <<EOF
 global {
@@ -659,8 +689,11 @@ add_subscription() {
 	cfg=/etc/honk/config.dae
 	[ -f "$cfg" ] || { emit_result false config_missing; return 1; }
 	begin_mutation
-	# 快捷追加只支持系统托管结构；自带 global/experimental 或 include 其他文件一律拒绝。
-	[ "$(config_owner "$cfg")" = system ] || { emit_result false quick_add_unsupported; return 1; }
+	# system（旧 include 布局）与 file（完整单文件）都支持追加；混合/不规范布局拒绝。
+	case "$(config_owner "$cfg")" in
+		system|file) ;;
+		*) emit_result false quick_add_unsupported; return 1 ;;
+	esac
 	original_hash=$(sha256sum "$cfg" | awk '{print $1}')
 
 	if grep -qF "$sub_tag:" "$cfg" || grep -qF "'$sub_name':" "$cfg"; then
@@ -708,6 +741,177 @@ add_subscription() {
 	emit_result true subscription_added
 }
 
+# 概览页快捷编辑只认完整单文件 + 固定块结构；其余布局保留文本编辑。
+settings_file_layout() {
+	_layout_cfg=/etc/honk/config.dae
+	[ -f "$_layout_cfg" ] && [ ! -L "$_layout_cfg" ] || return 1
+	grep -q '^[[:space:]]*include[[:space:]]*{' "$_layout_cfg" && return 1
+	[ "$(grep -c '^global[[:space:]]*{' "$_layout_cfg")" = 1 ] || return 1
+	[ "$(grep -c '^experimental[[:space:]]*{' "$_layout_cfg")" = 1 ] || return 1
+	return 0
+}
+
+settings_file_probe() {
+	awk '
+	BEGIN { nat = 0; clash = 0 }
+	/^[ \t]*include[ \t]*\{/ { inc = 1 }
+	/^global[ \t]*\{/ { g++ }
+	/^experimental[ \t]*\{/ { e++ }
+	/^[ \t]*native_api[ \t]*\{/ { nat = 1 }
+	/^[ \t]*clash_api[ \t]*\{/ { clash = 1; hc = 1 }
+	/^[ \t]*\}/ { nat = 0; clash = 0 }
+	{
+		if ($0 ~ /^[ \t]*lan_interface[ \t]*:/) { v = $0; sub(/^[^:]*:[ \t]*/, "", v); gsub(/^[\047"]|[\047"]$/, "", v); print "lan=" v }
+		if (nat && $0 ~ /^[ \t]*listen[ \t]*:/) { v = $0; sub(/^[^:]*:[ \t]*/, "", v); gsub(/^[\047"]|[\047"]$/, "", v); print "listen=" v }
+		if (clash && $0 ~ /^[ \t]*external_controller[ \t]*:/) { v = $0; sub(/^[^:]*:[ \t]*/, "", v); gsub(/^[\047"]|[\047"]$/, "", v); print "clash=" v }
+	}
+	END { print "inc=" (inc ? 1 : 0); print "global=" g + 0; print "experimental=" e + 0; print "hasclash=" (hc ? 1 : 0) }
+	' /etc/honk/config.dae
+}
+
+# 只替换目标行，保留注释、顺序和未涉及的字段；clash_api 关闭改 external_controller 为空。
+settings_file_render() {
+	awk -v lan="$1" -v lh="$2" -v lp="$3" -v ce="$4" -v ch="$5" -v cp="$6" -v sm="$7" -v ss="$8" -v hasclash="$9" '
+	BEGIN { nat = 0; clash = 0; in_exp = 0; secret_seen = 0; need = (ce == 1 && hasclash == 0) }
+	/^experimental[ \t]*\{/ { in_exp = 1 }
+	{
+		if (in_exp && need && /^\}/) {
+			# 新建块必须带 external_ui，否则核心不知道面板在哪，/ui/ 会 404。
+			printf "    clash_api {\n        external_controller: \047%s:%s\047\n        external_ui: \047/usr/share/honk/zashboard\047\n", ch, cp
+			if (sm != "keep") printf "        secret: \047%s\047\n", ss
+			printf "    }\n"
+			need = 0
+		}
+		if ($0 ~ /^[ \t]*native_api[ \t]*\{/) { nat = 1 }
+		if ($0 ~ /^[ \t]*clash_api[ \t]*\{/) { clash = 1; secret_seen = 0 }
+		if ($0 ~ /^[ \t]*lan_interface[ \t]*:/) {
+			match($0, /^[ \t]*/); printf "%slan_interface: \047%s\047\n", substr($0, 1, RLENGTH), lan; next
+		}
+		if (nat && $0 ~ /^[ \t]*listen[ \t]*:/) {
+			match($0, /^[ \t]*/); printf "%slisten: \047%s:%s\047\n", substr($0, 1, RLENGTH), lh, lp; next
+		}
+		if (clash && $0 ~ /^[ \t]*external_controller[ \t]*:/) {
+			match($0, /^[ \t]*/); v = (ce == 1) ? ch ":" cp : ""
+			printf "%sexternal_controller: \047%s\047\n", substr($0, 1, RLENGTH), v; next
+		}
+		if (clash && $0 ~ /^[ \t]*secret[ \t]*:/) {
+			secret_seen = 1
+			if (sm != "keep") {
+				match($0, /^[ \t]*/); printf "%ssecret: \047%s\047\n", substr($0, 1, RLENGTH), ss; next
+			}
+		}
+		if ($0 ~ /^[ \t]*\}/) {
+			if (clash && sm == "set" && !secret_seen) printf "        secret: \047%s\047\n", ss
+			nat = 0; clash = 0
+			print; next
+		}
+		print
+	}' /etc/honk/config.dae
+}
+
+settings_split_addr() {
+	case "$1" in *:*) ;; *) return 1 ;; esac
+	_split_host=${1%:*}
+	_split_port=${1##*:}
+	[ -n "$_split_host" ] && [ -n "$_split_port" ] || return 1
+	case "$_split_port" in *[!0-9]*) return 1 ;; esac
+	[ "$_split_port" -ge 1 ] && [ "$_split_port" -le 65535 ] || return 1
+	printf '%s %s\n' "$_split_host" "$_split_port"
+}
+
+# .dae 单引号字符串装不下引号、反斜杠和换行，直接拒绝而不是硬转义。
+settings_secret_ok() {
+	case "$1" in *"'"*|*\\*) return 1 ;; esac
+	[ "$(printf '%s' "$1" | wc -l)" -eq 0 ] || return 1
+	[ "$(printf '%s' "$1" | tr -d '\t')" = "$1" ] || return 1
+	[ "$(printf '%s' "$1" | wc -c)" -le 512 ] || return 1
+}
+
+settings_file_apply() {
+	request=$(cat)
+	json_load "$request" 2>/dev/null || { emit_result false invalid_request; return 1; }
+	json_get_var sf_lan lan_device
+	json_get_var sf_lh listen_host
+	json_get_var sf_lp listen_port
+	json_get_var sf_ce clash_api_enabled
+	json_get_var sf_ch clash_host
+	json_get_var sf_cp clash_api_port
+	json_get_var sf_ss clash_api_secret
+	json_get_var sf_sm clash_api_secret_mode
+	json_get_var sf_sha expect_sha256
+
+	settings_file_layout || { emit_result false quick_settings_unsupported; return 1; }
+	probe=$(settings_file_probe)
+	echo "$probe" | grep -qx 'inc=0' || { emit_result false quick_settings_unsupported; return 1; }
+	echo "$probe" | grep -qx 'global=1' || { emit_result false quick_settings_unsupported; return 1; }
+	echo "$probe" | grep -qx 'experimental=1' || { emit_result false quick_settings_unsupported; return 1; }
+	probe_lan=$(echo "$probe" | sed -n 's/^lan=//p')
+	probe_listen=$(echo "$probe" | sed -n 's/^listen=//p')
+	probe_hasclash=$(echo "$probe" | sed -n 's/^hasclash=//p')
+	[ "$(printf '%s\n' "$probe_lan" | grep -c .)" = 1 ] || { emit_result false quick_settings_unsupported; return 1; }
+	# 多值（逗号分隔）无法安全映射回单个设备，交给文本编辑。
+	case "$probe_lan" in *,*) emit_result false quick_settings_unsupported; return 1 ;; esac
+	[ "$(printf '%s\n' "$probe_listen" | grep -c .)" = 1 ] || { emit_result false quick_settings_unsupported; return 1; }
+
+	[ -n "$sf_lan" ] || sf_lan=$probe_lan
+	case "$sf_lan" in ''|*[!A-Za-z0-9_.-]*) emit_result false invalid_lan_device; return 1 ;; esac
+	[ "$(printf '%s' "$sf_lan" | wc -c)" -le 15 ] || { emit_result false invalid_lan_device; return 1; }
+
+	split=$(settings_split_addr "$probe_listen")
+	[ -n "$split" ] || { emit_result false quick_settings_unsupported; return 1; }
+	probe_lh=${split% *}
+	probe_lp=${split#* }
+	[ -n "$sf_lh" ] || sf_lh=$probe_lh
+	[ -n "$sf_lp" ] || sf_lp=$probe_lp
+	[ -n "$(settings_split_addr "$sf_lh:$sf_lp")" ] || { emit_result false invalid_listen_address; return 1; }
+	case "$sf_lp" in ''|*[!0-9]*) emit_result false invalid_listen_port; return 1 ;; esac
+	[ "$sf_lp" -ge 1 ] && [ "$sf_lp" -le 65535 ] || { emit_result false invalid_listen_port; return 1; }
+
+	case "$sf_ce" in ''|null|false|0) sf_ce=0 ;; true|1) sf_ce=1 ;; *) emit_result false invalid_clash_api_settings; return 1 ;; esac
+	case "$sf_sm" in ''|null) sf_sm=keep ;; keep|set|clear) ;; *) emit_result false invalid_clash_api_settings; return 1 ;; esac
+
+	if [ "$sf_ce" = 1 ]; then
+		probe_clash=$(echo "$probe" | sed -n 's/^clash=//p')
+		# 已有绑定地址原样保留，只有新建块时才跟随 Native 监听地址。
+		[ -n "$sf_ch" ] || sf_ch=${probe_clash%:*}
+		[ -n "$sf_ch" ] || sf_ch=$sf_lh
+		[ -n "$sf_cp" ] || sf_cp=${probe_clash##*:}
+		[ -n "$(settings_split_addr "$sf_ch:$sf_cp")" ] || { emit_result false invalid_clash_api_settings; return 1; }
+		case "$sf_cp" in ''|*[!0-9]*) emit_result false invalid_clash_api_settings; return 1 ;; esac
+		[ "$sf_cp" -ge 1 ] && [ "$sf_cp" -le 65535 ] || { emit_result false invalid_clash_api_settings; return 1; }
+		[ "$sf_cp" != "$sf_lp" ] || { emit_result false invalid_clash_api_settings; return 1; }
+	fi
+	if [ "$sf_sm" = set ]; then
+		settings_secret_ok "$sf_ss" || { emit_result false invalid_clash_api_secret; return 1; }
+	elif [ "$sf_sm" = clear ]; then
+		sf_ss=""
+	fi
+
+	cfg=/etc/honk/config.dae
+	begin_mutation
+	original_hash=$(sha256sum "$cfg" | awk '{print $1}')
+	[ -z "$sf_sha" ] || [ "$sf_sha" = "$original_hash" ] || { emit_result false config_changed_concurrently; return 1; }
+	# 核心只认 .dae 结尾，候选名必须带扩展名。
+	candidate_dir=$(mktemp -d /etc/honk/.settings-candidate.XXXXXX) || { emit_result false config_write_failed; return 1; }
+	candidate=/etc/honk/.settings-candidate-${candidate_dir##*.settings-candidate.}.dae
+	if ! settings_file_render "$sf_lan" "$sf_lh" "$sf_lp" "$sf_ce" "$sf_ch" "$sf_cp" "$sf_sm" "$sf_ss" "$probe_hasclash" > "$candidate" 2>/dev/null; then
+		rm -f "$candidate"; rm -rf "$candidate_dir"; emit_result false config_write_failed; return 1
+	fi
+	rmdir "$candidate_dir" 2>/dev/null
+	chmod 0600 "$candidate" || { rm -f "$candidate"; emit_result false config_write_failed; return 1; }
+	config_candidate=$candidate
+	validate_config_candidate || { rm -f "$candidate"; emit_result false candidate_invalid; return 1; }
+	[ "$(sha256sum "$cfg" | awk '{print $1}')" = "$original_hash" ] || { rm -f "$candidate"; emit_result false source_changed; return 1; }
+	commit_validated_candidate "$cfg" "$candidate"
+	case "$?" in
+		0) ;;
+		2) emit_result false reload_failed_rolled_back; return 1 ;;
+		3) emit_result false reload_and_rollback_failed; return 1 ;;
+		*) rm -f "$candidate"; emit_result false config_write_failed; return 1 ;;
+	esac
+	emit_result true settings_saved
+}
+
 add_nodes() {
 	request=$(cat)
 	json_load "$request" 2>/dev/null || { emit_result false invalid_request; return 1; }
@@ -718,8 +922,11 @@ add_nodes() {
 	cfg=/etc/honk/config.dae
 	[ -f "$cfg" ] || { emit_result false config_missing; return 1; }
 	begin_mutation
-	# 快捷追加只支持系统托管结构；自带 global/experimental 或 include 其他文件一律拒绝。
-	[ "$(config_owner "$cfg")" = system ] || { emit_result false quick_add_unsupported; return 1; }
+	# system（旧 include 布局）与 file（完整单文件）都支持追加；混合/不规范布局拒绝。
+	case "$(config_owner "$cfg")" in
+		system|file) ;;
+		*) emit_result false quick_add_unsupported; return 1 ;;
+	esac
 	original_hash=$(sha256sum "$cfg" | awk '{print $1}')
 
 	node_prefix="node_$(hexdump -n 4 -e '4/1 "%02x"' /dev/urandom)_"
@@ -916,7 +1123,9 @@ reset_admin() {
 	if pidof honk-core >/dev/null 2>&1; then
 		honk_lifecycle_stop 30 || { emit_result false service_stop_failed_rolled_back; return 1; }
 	fi
-	reset_data_dir=$(sed -n "s/^[[:space:]]*data_dir:[[:space:]]*'\([^']*\)'.*/\1/p" /etc/honk/system.dae 2>/dev/null | head -n 1)
+	# 单文件布局把 data_dir 写在 config.dae；system.dae 只在旧 include 布局里存在。
+	reset_data_dir=$(sed -n "s/^[[:space:]]*data_dir:[[:space:]]*'\([^']*\)'.*/\1/p" /etc/honk/config.dae 2>/dev/null | head -n 1)
+	[ -n "$reset_data_dir" ] || reset_data_dir=$(sed -n "s/^[[:space:]]*data_dir:[[:space:]]*'\([^']*\)'.*/\1/p" /etc/honk/system.dae 2>/dev/null | head -n 1)
 	[ -n "$reset_data_dir" ] || reset_data_dir=/etc/honk
 	case "$reset_data_dir" in /*) ;; *) reset_data_dir=/etc/honk ;; esac
 	if [ -f "$reset_data_dir/state/honk.db" ]; then
@@ -946,7 +1155,38 @@ config_read() {
 	json_init
 	json_add_boolean ok 1
 	json_add_string message config_loaded
+	[ "$(config_owner /etc/honk/config.dae)" = system ] && json_add_boolean legacy_system 1 || json_add_boolean legacy_system 0
+	[ -n "$(config_includes_system /etc/honk/config.dae)" ] && json_add_boolean includes_system 1 || json_add_boolean includes_system 0
 	json_add_string content "$config_content"
+	json_dump
+}
+
+system_save() {
+	[ -n "$(config_includes_system /etc/honk/config.dae)" ] || { emit_result false system_config_not_included; return 1; }
+	request=$(cat)
+	json_load "$request" 2>/dev/null || { emit_result false invalid_request; return 1; }
+	json_get_var system_content content
+	system_bytes=$(printf '%s' "$system_content" | wc -c)
+	case "$system_bytes" in ''|*[!0-9]*) emit_result false invalid_request; return 1 ;; esac
+	[ "$system_bytes" -le "$DAE_UPLOAD_LIMIT" ] || { emit_result false content_too_large; return 1; }
+	[ "$system_bytes" -gt 0 ] || { emit_result false content_empty; return 1; }
+	umask 077
+	system_candidate=$(mktemp /tmp/honk-system-candidate.XXXXXX) || { emit_result false temporary_storage_unavailable; return 1; }
+	trap 'rm -f "$system_candidate"' 0
+	printf '%s' "$system_content" > "$system_candidate" || { emit_result false system_config_write_failed; return 1; }
+	exec "$CONTROL" write-system "$system_candidate"
+}
+
+system_read() {
+	[ -n "$(config_includes_system /etc/honk/config.dae)" ] || { emit_result false system_config_not_included; return 1; }
+	if [ -e /etc/.honk-update/journal ] || [ -L /etc/.honk-update/journal ]; then emit_result false update_recovery_required; return 1; fi
+	[ -f /etc/honk/system.dae ] && [ ! -L /etc/honk/system.dae ] || { emit_result false system_config_unavailable; return 1; }
+	system_content=$(cat /etc/honk/system.dae; printf '\001') || { emit_result false system_read_failed; return 1; }
+	system_content=${system_content%?}
+	json_init
+	json_add_boolean ok 1
+	json_add_string message system_config
+	json_add_string content "$system_content"
 	json_dump
 }
 
@@ -997,6 +1237,9 @@ lan_candidates() {
 		case "$lan_l3:$lan_device" in *[!A-Za-z0-9_.:-]*) continue ;; esac
 		[ -n "$lan_l3" ] || continue
 		lan_ip=$(printf '%s' "$lan_status" | jsonfilter -e '@["ipv4-address"][0].address' 2>/dev/null)
+		# 重置目标必须是可用的 LAN：排除 loopback 与无 IPv4
+		case "$lan_l3" in lo|lo:*) continue ;; esac
+		case "$lan_ip" in ''|127.*|*[!0-9.]*) continue ;; esac
 		json_add_object ""
 		json_add_string network "$lan_name"
 		json_add_string l3_device "$lan_l3"
@@ -1043,6 +1286,144 @@ validate_config_candidate() {
 	json_load "$config_validation" 2>/dev/null || config_validation='{"ok":false,"message":"configuration_validation_failed","diagnostics":[]}'
 	rm -f "$validation_file"
 	return 1
+}
+
+# 只展开历史默认的独立 system 引用；复杂结构留给用户原文编辑。
+config_merge_candidate() {
+	merge_main=/etc/honk/config.dae
+	merge_system=/etc/honk/system.dae
+	merge_error=config_merge_not_applicable
+	[ -f "$merge_main" ] && [ ! -L "$merge_main" ] && [ -f "$merge_system" ] && [ ! -L "$merge_system" ] || return 1
+	merge_config_hash=$(sha256sum "$merge_main" | awk '{print $1}') || return 1
+	merge_system_hash=$(sha256sum "$merge_system" | awk '{print $1}') || return 1
+	[ "$(wc -c < "$merge_main")" -le "$DAE_UPLOAD_LIMIT" ] && [ "$(wc -c < "$merge_system")" -le "$DAE_UPLOAD_LIMIT" ] || return 1
+	[ "$(head -n 3 "$merge_main")" = "$(printf 'include {\n    system.dae\n}')" ] || return 1
+	tail -n +4 "$merge_main" | awk '
+		/^[[:space:]]*#/ { next }
+		/(^|[^[:alnum:]_])(include|global|experimental)([^[:alnum:]_]|$)/ { exit 1 }
+		/[\047"][^\047"]*[\047"][[:space:]]*\{/ { exit 1 }
+	' || return 1
+	awk '
+		/^[[:space:]]*(#.*)?$/ { next }
+		/^[[:space:]]*include[[:space:]]*\{/ { exit 1 }
+		/^[[:space:]]*(data_dir|ui|log_file|path)[[:space:]]*:/ {
+			value = $0; sub(/^[^:]*:[[:space:]]*/, "", value)
+			sub(/^[\047"]/, "", value)
+			if (value !~ /^\// && value !~ /^([\047"])?[[:space:]]*(#.*)?$/) exit 1
+		}
+		/^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*[[:space:]]*\{[[:space:]]*(#.*)?$/ {
+			if (depth == 0) {
+				name = $0; sub(/^[[:space:]]*/, "", name); sub(/[[:space:]]*\{.*/, "", name)
+				if (name == "global") global++
+				else if (name == "experimental") experimental++
+				else exit 1
+			}
+			depth++; next
+		}
+		/^[[:space:]]*}[[:space:]]*(#.*)?$/ { if (--depth < 0) exit 1; next }
+		/[{}]/ { exit 1 }
+		{ if (depth == 0) exit 1 }
+		END { if (depth != 0 || global != 1 || experimental > 1) exit 1 }
+	' "$merge_system" || return 1
+	umask 077
+	merge_dir=$(mktemp -d /etc/honk/.config-merge.XXXXXX) || { merge_error=config_write_failed; return 1; }
+	merge_name=$(basename "$merge_dir")
+	config_candidate=/etc/honk/$merge_name.dae
+	(set -C; { cat "$merge_system"; printf '\n'; tail -n +4 "$merge_main"; } > "$config_candidate") || {
+		rm -rf "$merge_dir"; rm -f "$config_candidate"; merge_error=config_write_failed; return 1
+	}
+	rmdir "$merge_dir" && chmod 0600 "$config_candidate" || { rm -rf "$merge_dir"; rm -f "$config_candidate"; merge_error=config_write_failed; return 1; }
+	[ "$(wc -c < "$config_candidate")" -le "$DAE_UPLOAD_LIMIT" ] || { rm -f "$config_candidate"; merge_error=config_too_large; return 1; }
+	if [ "$(sha256sum "$merge_main" | awk '{print $1}')" != "$merge_config_hash" ] ||
+		[ "$(sha256sum "$merge_system" | awk '{print $1}')" != "$merge_system_hash" ]; then
+		rm -f "$config_candidate"; merge_error=config_merge_source_changed; return 1
+	fi
+	# 只覆盖面板实际生成过的两种写法：带引号或不带引号的单值
+	merge_lan_dev=$(sed -n "s/^    lan_interface:[[:space:]]*'\{0,1\}\([^',#[:space:]]*\)'\{0,1\}[[:space:]]*\(#.*\)\{0,1\}$/\1/p" "$config_candidate" 2>/dev/null | head -n 1)
+	case "$merge_lan_dev" in
+		''|*[!A-Za-z0-9_.:-]*)
+			rm -f "$config_candidate"
+			merge_error=lan_interface_unavailable
+			return 1
+			;;
+	esac
+	merge_wan_dev=
+	if . /lib/functions/network.sh 2>/dev/null; then
+		network_get_device merge_wan_dev wan 2>/dev/null || merge_wan_dev=
+	fi
+	case "$merge_wan_dev" in ''|*[!A-Za-z0-9_.:-]*) merge_wan_dev= ;; esac
+	"$CONTROL" local-direct-file "$config_candidate" "$merge_lan_dev" "$merge_wan_dev" >/dev/null 2>&1 || { rm -f "$config_candidate"; merge_error=local_direct_render_failed; return 1; }
+	if ! validate_config_candidate; then
+		rm -f "$config_candidate"; merge_error=config_merge_validation_failed; return 1
+	fi
+	merge_candidate_hash=$(sha256sum "$config_candidate" | awk '{print $1}')
+}
+
+config_merge_guard() {
+	merge_guard_error=
+	[ -n "$1" ] || return 0
+	if [ ! -f /etc/honk/config.dae ] || [ -L /etc/honk/config.dae ] ||
+		[ ! -f /etc/honk/system.dae ] || [ -L /etc/honk/system.dae ] ||
+		[ "$(sha256sum /etc/honk/config.dae 2>/dev/null | awk '{print $1}')" != "$1" ] ||
+		[ "$(sha256sum /etc/honk/system.dae 2>/dev/null | awk '{print $1}')" != "$2" ]; then
+		merge_guard_error=config_merge_source_changed
+		return 1
+	fi
+	if [ "$(sha256sum "$4" 2>/dev/null | awk '{print $1}')" != "$3" ]; then
+		merge_guard_error=config_merge_preview_changed
+		return 1
+	fi
+}
+
+config_merge_preview() {
+	config_candidate=
+	trap 'rm -f "$config_candidate"' 0
+	trap 'exit 1' HUP INT TERM
+	config_merge_candidate || { emit_result false "$merge_error"; return 1; }
+	if ! config_merge_guard "$merge_config_hash" "$merge_system_hash" "$merge_candidate_hash" "$config_candidate"; then
+		rm -f "$config_candidate"; emit_result false "$merge_guard_error"; return 1
+	fi
+	merge_content=$(cat "$config_candidate"; printf '\001')
+	merge_content=${merge_content%?}
+	rm -f "$config_candidate"
+	json_init
+	json_add_boolean ok 1
+	json_add_string message config_merge_preview
+	json_add_string content "$merge_content"
+	json_add_string config_sha256 "$merge_config_hash"
+	json_add_string system_sha256 "$merge_system_hash"
+	json_add_string candidate_sha256 "$merge_candidate_hash"
+	json_dump
+}
+
+config_merge_apply() {
+	merge_request=$(head -c 2049)
+	[ "$(printf '%s' "$merge_request" | wc -c)" -le 2048 ] && json_load "$merge_request" 2>/dev/null || { emit_result false invalid_request; return 1; }
+	for merge_key in config_sha256 system_sha256 candidate_sha256; do
+		json_get_type merge_hash_type "$merge_key"
+		[ "$merge_hash_type" = string ] || { emit_result false invalid_request; return 1; }
+	done
+	json_get_var requested_config_hash config_sha256
+	json_get_var requested_system_hash system_sha256
+	json_get_var requested_candidate_hash candidate_sha256
+	for merge_hash in "$requested_config_hash" "$requested_system_hash" "$requested_candidate_hash"; do
+		[ "$(printf '%s' "$merge_hash" | wc -c)" -eq 64 ] || { emit_result false invalid_request; return 1; }
+		case "$merge_hash" in *[!0-9a-f]*) emit_result false invalid_request; return 1 ;; esac
+	done
+	begin_mutation
+	config_candidate=
+	merge_file=
+	trap 'rm -f "$config_candidate" "$merge_file"; honk_lock_release >/dev/null 2>&1' 0
+	trap 'exit 1' HUP INT TERM
+	config_merge_candidate || { emit_result false "$merge_error"; return 1; }
+	merge_file=$config_candidate
+	if ! config_merge_guard "$requested_config_hash" "$requested_system_hash" "$requested_candidate_hash" "$merge_file"; then
+		rm -f "$merge_file"; emit_result false "$merge_guard_error"; return 1
+	fi
+	config_apply_candidate "$merge_file" "$requested_config_hash" "$requested_system_hash" "$requested_candidate_hash"
+	merge_apply_status=$?
+	rm -f "$merge_file"
+	return "$merge_apply_status"
 }
 
 config_validate() {
@@ -1100,7 +1481,15 @@ config_save() {
 
 config_apply() {
 	begin_mutation
-	draft_path=/etc/honk/config-draft.dae
+	config_apply_candidate /etc/honk/config-draft.dae "" "" ""
+}
+
+# 合并候选与普通草稿共用应用事务，不替换用户已有的草稿。
+config_apply_candidate() {
+	draft_path=$1
+	apply_expected_config=$2
+	apply_expected_system=$3
+	apply_expected_candidate=$4
 	[ -f "$draft_path" ] && [ ! -L "$draft_path" ] || { emit_result false config_draft_missing; return 1; }
 	activate_dir=$(mktemp -d /etc/honk/.config-activate.XXXXXX) || { emit_result false config_write_failed; return 1; }
 	activate_file=/etc/honk/.config-${activate_dir##*.config-activate.}.dae
@@ -1112,6 +1501,9 @@ config_apply() {
 		rm -f "$activate_file"
 		[ -n "$config_validation" ] && printf '%s\n' "$config_validation" || emit_result false config_validation_unavailable
 		return 1
+	fi
+	if ! config_merge_guard "$apply_expected_config" "$apply_expected_system" "$apply_expected_candidate" "$activate_file"; then
+		rm -f "$activate_file"; emit_result false "$merge_guard_error"; return 1
 	fi
 	candidate_hash=$(sha256sum "$activate_file" | awk '{print $1}')
 	old_hash=$(sha256sum /etc/honk/config.dae 2>/dev/null | awk '{print $1}')
@@ -1136,10 +1528,14 @@ config_apply() {
 		emit_result false service_stop_unconfirmed
 		return 1
 	fi
-	if [ "$(sha256sum /etc/honk/config.dae 2>/dev/null | awk '{print $1}')" != "$old_hash" ]; then
+	apply_source_changed=0
+	[ "$(sha256sum /etc/honk/config.dae 2>/dev/null | awk '{print $1}')" = "$old_hash" ] || apply_source_changed=1
+	config_merge_guard "$apply_expected_config" "$apply_expected_system" "$apply_expected_candidate" "$activate_file" || apply_source_changed=1
+	if [ "$apply_source_changed" = 1 ]; then
 		if [ "$old_running" = 1 ]; then honk_lifecycle_start 20 || { emit_result false config_changed_concurrently_restart_failed; return 1; }; fi
 		rm -rf "$backup_dir" "$activate_file"
-		emit_result false config_changed_concurrently
+		[ -n "$merge_guard_error" ] || merge_guard_error=config_changed_concurrently
+		emit_result false "$merge_guard_error"
 		return 1
 	fi
 	if ! mv -f "$activate_file" /etc/honk/config.dae; then
@@ -1182,7 +1578,7 @@ config_apply() {
 
 case "$1" in
 list)
-		echo '{"status":{},"check":{},"initialize":{"username":"String","password":"String"},"start":{},"stop":{},"restart":{},"settings":{"lan_network":"String","listen_port":"Integer","boot_enabled":"Boolean","clash_api_enabled":"Boolean","clash_api_port":"Integer","clash_api_secret":"String"},"add_subscription":{"name":"String","url":"String"},"probe_subscription":{"url":"String"},"reset_admin":{},"add_nodes":{"links":"String"},"import_dae":{},"config_read":{},"config_draft_read":{},"lan_candidates":{},"config_validate":{"content":"String"},"config_save":{"content":"String"},"config_apply":{},"config_detach":{"dry_run":"Boolean"},"repair":{},"recover":{},"backup":{},"restore":{},"restore_prepare":{},"reset":{},"job_status":{"job_id":"String"},"logs":{"source":"String","level":"String","limit":"Integer"},"update_check":{},"update_apply":{}}'
+		echo '{"status":{},"check":{},"initialize":{"username":"String","password":"String"},"start":{},"stop":{},"restart":{},"settings":{"lan_network":"String","lan_device":"String","listen_host":"String","listen_port":"Integer","boot_enabled":"Boolean","clash_api_enabled":"Boolean","clash_host":"String","clash_api_port":"Integer","clash_api_secret":"String","clash_api_secret_mode":"String","expect_sha256":"String"},"add_subscription":{"name":"String","url":"String"},"probe_subscription":{"url":"String"},"reset_admin":{},"add_nodes":{"links":"String"},"import_dae":{},"config_read":{},"config_draft_read":{},"lan_candidates":{},"config_validate":{"content":"String"},"config_save":{"content":"String"},"config_apply":{},"config_merge_preview":{},"config_merge_apply":{"config_sha256":"String","system_sha256":"String","candidate_sha256":"String"},"config_detach":{"dry_run":"Boolean"},"system_read":{},"system_save":{"content":"String"},"system_panel":{"dry_run":"Boolean","expect":"String","base":"String"},"repair":{},"recover":{},"backup":{},"restore":{},"restore_prepare":{},"reset":{"lan_device":"String","lan_ip":"String"},"job_status":{"job_id":"String"},"logs":{"source":"String","level":"String","limit":"Integer"},"update_check":{},"update_apply":{}}'
 		;;
 	call)
 		case "$2" in
@@ -1196,7 +1592,13 @@ list)
 				exec "$CONTROL" initialize
 				;;
 			settings)
-				exec "$CONTROL" settings
+				# 首次引导阶段只记意图（UCI），文件仍保持模板，初始化才据此渲染；
+				# 初始化之后才直接编辑 config.dae。
+				if [ "$(config_owner /etc/honk/config.dae)" = file ] && [ "$(uci -q get honk.main.initialized)" = 1 ]; then
+					settings_file_apply
+				else
+					exec "$CONTROL" settings
+				fi
 				;;
 			probe_subscription)
 				probe_subscription
@@ -1228,11 +1630,26 @@ list)
 			config_save)
 				config_save
 				;;
+			config_merge_preview)
+				config_merge_preview
+				;;
+			config_merge_apply)
+				config_merge_apply
+				;;
 			config_apply)
 				config_apply
 				;;
 			config_detach)
 				exec "$CONTROL" detach
+				;;
+			system_read)
+				system_read
+				;;
+			system_save)
+				system_save
+				;;
+			system_panel)
+				exec "$CONTROL" panel-managed
 				;;
 			repair)
 				exec "$CONTROL" repair
@@ -1251,7 +1668,17 @@ list)
 				restore_prepare
 				;;
 			reset)
-				start_job reset
+				reset_request=$(head -c 512)
+				reset_device=
+				reset_ip=
+				if [ -n "$reset_request" ]; then
+					json_load "$reset_request" 2>/dev/null || { emit_result false invalid_request; return 1; }
+					json_get_var reset_device lan_device
+					json_get_var reset_ip lan_ip
+				fi
+				case "$reset_device" in ''|*[!A-Za-z0-9_.:-]*) emit_result false invalid_request; return 1 ;; esac
+				case "$reset_ip" in ''|*[!0-9.]*) emit_result false invalid_request; return 1 ;; esac
+				start_job reset "$reset_device|$reset_ip"
 				;;
 			job_status)
 				job_status
@@ -1267,7 +1694,7 @@ list)
 				;;
 			start)
 				begin_mutation
-				if ! service_ready_config; then emit_result false not_initialized; exit 1; fi
+				if ! service_ready_config; then emit_result false "${config_error:-not_initialized}"; exit 1; fi
 				old_enabled=$(uci -q get honk.main.enabled || echo 0)
 				if ! set_enabled 1; then emit_result false settings_write_failed; exit 1; fi
 				managed_pid=$(honk_lifecycle_managed_pid 2>/dev/null)
@@ -1290,7 +1717,7 @@ list)
 				;;
 			restart)
 				begin_mutation
-				if ! service_ready_config; then emit_result false not_initialized; exit 1; fi
+				if ! service_ready_config; then emit_result false "${config_error:-not_initialized}"; exit 1; fi
 				old_enabled=$(uci -q get honk.main.enabled || echo 0)
 				if ! set_enabled 1; then emit_result false settings_write_failed; exit 1; fi
 				if [ -n "$(honk_lifecycle_managed_pid 2>/dev/null)" ]; then

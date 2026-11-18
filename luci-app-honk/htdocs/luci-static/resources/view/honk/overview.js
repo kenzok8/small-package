@@ -6,7 +6,6 @@
 'require ui';
 'require view';
 'require view.honk.rpc as honk';
-'require uci';
 
 function getNetworkNames(networks) {
 	if (!networks)
@@ -88,10 +87,9 @@ return view.extend({
 	load: function() {
 		return Promise.all([
 			honk.status().then(function(status) { return { status: status }; }).catch(function(error) { return { error: error.message || String(error) }; }),
-			network.getNetworks().then(getNetworkNames).then(function(networks) { return { networks: networks }; }).catch(function() { return { networks: [] }; }),
-			uci.load('honk').then(function() { return { clash_secret: uci.get('honk', 'main', 'clash_api_secret') || '' }; }).catch(function() { return { clash_secret: '' }; })
+			honk.lanCandidates().then(function(result) { return { candidates: (result && result.candidates) || [] }; }).catch(function() { return { candidates: [] }; })
 		]).then(function(results) {
-			return Object.assign({}, results[0], results[1], results[2]);
+			return Object.assign({}, results[0], results[1]);
 		});
 	},
 
@@ -102,7 +100,8 @@ return view.extend({
 		const actionMessage = E('p', { 'class': 'honk-status-msg', 'role': 'status' }, '');
 		const setupArea = E('div');
 		let currentStatus = data.status;
-		const clashSecret = data.clash_secret || '';
+		/* 表单加载时的配置摘要；自动刷新后仍用它，避免拿新 SHA 提交旧表单值。 */
+		let formSnapshotSha = null;
 		let busy = false;
 		let setupBusy = false;
 		let settingsBusy = false;
@@ -137,7 +136,7 @@ return view.extend({
 				'type': webUi ? null : 'button',
 				'disabled': webUi ? null : true
 			}, _('Open Doona'));
-			const clashUi = honk.localClashUi(status, clashSecret);
+			const clashUi = honk.localClashUi(status);
 			const openClash = E(clashUi ? 'a' : 'button', {
 				'class': 'cbi-button cbi-button-action',
 				'href': clashUi || null,
@@ -211,90 +210,115 @@ return view.extend({
 			restoreFields(statusArea, fields);
 		}
 
+		function splitAddress(value) {
+			value = String(value || '');
+			const at = value.lastIndexOf(':');
+			if (at <= 0)
+				return [ value, '' ];
+			return [ value.slice(0, at), value.slice(at + 1) ];
+		}
+
 		function renderServiceSettings(status) {
 			const card = E('section', { 'class': 'honk-card' });
 			const form = E('form');
-			const networkSelect = E('select', { 'class': 'cbi-input-select', 'name': 'lan_network', 'id': 'honk-lan-network' });
-			const portInput = E('input', { 'class': 'cbi-input-text', 'type': 'number', 'name': 'listen_port', 'id': 'honk-listen-port', 'min': '1024', 'max': '65535', 'step': '1' });
+			const candidates = data.candidates || [];
+			if (formSnapshotSha === null)
+				formSnapshotSha = status.config_sha256 || '';
+			const currentDevice = status.runtime_lan || status.lan_network || '';
+			const listenParts = splitAddress(status.runtime_listen);
+			const clashParts = splitAddress(status.clash_listen_addr);
+
+			/* LAN 下拉按设备去重，值提交设备名；网络名只作说明。 */
+			const lanSelect = E('select', { 'class': 'cbi-input-select', 'name': 'lan_device', 'id': 'honk-lan-device' });
+			const seenDevice = {};
+			candidates.forEach(function(c) {
+				const dev = c.l3_device || c.device || '';
+				if (!dev || seenDevice[dev])
+					return;
+				seenDevice[dev] = 1;
+				/* 下拉只显示网络名，设备名和地址放 title，避免一行三段太挤。 */
+				lanSelect.appendChild(E('option', { 'value': dev, 'title': '%s · %s'.format(dev, c.ipv4 || '—') }, c.network || dev));
+			});
+			if (currentDevice && !seenDevice[currentDevice])
+				lanSelect.appendChild(E('option', { 'value': currentDevice }, currentDevice));
+			if (currentDevice)
+				lanSelect.value = currentDevice;
+			if (!lanSelect.children.length)
+				lanSelect.appendChild(E('option', { 'value': '' }, _('No network interfaces found')));
+
+			const listenPortInput = E('input', { 'class': 'cbi-input-text', 'type': 'number', 'name': 'listen_port', 'id': 'honk-listen-port', 'min': '1', 'max': '65535', 'step': '1' });
+			listenPortInput.value = listenParts[1] || (status.listen_port ? String(status.listen_port) : '9527');
+
 			const clashEnabledInput = E('input', { 'type': 'checkbox', 'name': 'clash_api_enabled', 'id': 'honk-clash-enabled' });
+			clashEnabledInput.checked = status.clash_api_enabled === true;
 			const clashSwitch = honk.switchControl(clashEnabledInput);
-			const clashPortInput = E('input', { 'class': 'cbi-input-text', 'type': 'number', 'name': 'clash_api_port', 'id': 'honk-clash-port', 'min': '1024', 'max': '65535', 'step': '1' });
+			const clashPortInput = E('input', { 'class': 'cbi-input-text', 'type': 'number', 'name': 'clash_api_port', 'id': 'honk-clash-port', 'min': '1', 'max': '65535', 'step': '1' });
+			clashPortInput.value = clashParts[1] || (status.clash_api_port ? String(status.clash_api_port) : '9090');
 			const clashSecretInput = E('input', { 'class': 'cbi-input-password', 'type': 'password', 'name': 'clash_api_secret', 'id': 'honk-clash-secret', 'autocomplete': 'new-password', 'readonly': 'readonly' });
 			clashSecretInput.addEventListener('focus', function() { clashSecretInput.removeAttribute('readonly'); });
+			const clashClearInput = E('input', { 'type': 'checkbox', 'id': 'honk-clash-clear' });
+			const clashClearSwitch = honk.switchControl(clashClearInput);
 			const message = E('p', { 'class': 'honk-status-msg', 'role': 'status' }, '');
 			const save = E('button', { 'class': 'cbi-button cbi-button-positive', 'type': 'submit' }, _('Save service settings'));
 
-			(data.networks || []).forEach(function(name) {
-				networkSelect.appendChild(E('option', { 'value': name }, name));
-			});
-			if (status.lan_network && !(data.networks || []).includes(status.lan_network))
-				networkSelect.appendChild(E('option', { 'value': status.lan_network }, status.lan_network));
-			if (status.lan_network)
-				networkSelect.value = status.lan_network;
-			portInput.value = status.listen_port ? String(status.listen_port) : '9527';
-			clashEnabledInput.checked = status.clash_api_enabled === true;
-			clashPortInput.value = status.clash_api_port ? String(status.clash_api_port) : '9090';
+			/* 关闭时不丢绑定地址，只是禁用；重新打开仍用用户填过的值。 */
+			function syncClashFields() {
+				const on = clashEnabledInput.checked;
+				clashPortInput.disabled = !on;
+				clashSecretInput.disabled = !on;
+				clashClearInput.disabled = !on;
+			}
+			clashEnabledInput.addEventListener('change', syncClashFields);
+			syncClashFields();
 
 			card.appendChild(E('h3', { 'class': 'honk-card-title' }, _('Service settings')));
-			/* 字段归属由当前配置决定，非 system.dae 提供时这些设置只读。 */
-			const owner = status.settings_owner || 'unknown';
-			if (owner !== 'system') {
-				[ networkSelect, portInput, clashEnabledInput, clashPortInput, clashSecretInput ].forEach(function(input) {
-					input.disabled = true;
-				});
-				save.disabled = true;
-				clashSwitch.syncSwitch();
-			}
-			if (!(data.networks || []).length)
-				networkSelect.appendChild(E('option', { 'value': '' }, _('No network interfaces found')));
-			form.appendChild(field(_('LAN network'), networkSelect));
-			form.appendChild(field(_('Listen port'), portInput));
+			if (status.settings_owner !== 'file')
+				card.appendChild(E('p', { 'class': 'honk-note' }, _('This configuration is managed by the panel. Saving keeps the previous layout.')));
+			form.appendChild(field(_('LAN interface'), lanSelect));
+			form.appendChild(field(_('Listen port'), listenPortInput));
 			form.appendChild(field(_('Enable Clash API'), clashSwitch));
 			form.appendChild(field(_('Clash API port'), clashPortInput));
-			form.appendChild(field(_('Clash API secret'), clashSecretInput, status.clash_api_secret_set ? _('A secret is set. Leave blank to keep it.') : _('Required when enabling. Use 6–128 letters, numbers, dots, underscores or hyphens.')));
-			form.appendChild(E('p', { 'class': 'honk-note' }, _('Use your existing HTTPS reverse proxy for external access. Enter the secret in Zashboard when connecting.')));
-			if (owner === 'system') {
-				form.appendChild(E('div', { 'class': 'cbi-page-actions' }, [ save ]));
-			} else {
-				/* 写法不规范时后端拒绝猜归属，这里必须给一键切换，否则页面成死胡同。 */
-				if (owner === 'unknown')
-					form.appendChild(E('p', { 'class': 'honk-note' }, _('This file includes system.dae and also defines global/experimental itself, so the panel will not guess. Switching moves these settings here; the current file is backed up first.')));
-				const detach = E('button', { 'class': 'cbi-button cbi-button-action', 'type': 'button' }, _('Switch to panel management'));
-				detach.addEventListener('click', function() { detachSettings(detach); });
-				form.appendChild(E('div', { 'class': 'honk-actions' }, [ detach ]));
-			}
+			form.appendChild(field(_('Clash API secret'), clashSecretInput,
+				status.clash_api_secret_set ? _('A secret is already set. Leave blank to keep it.') : _('Optional. Used by Clash API clients.')));
+			form.appendChild(field(_('Clear saved secret'), clashClearSwitch));
+			form.appendChild(E('p', { 'class': 'honk-note' }, _('Leave the secret blank to keep the saved one. Use your existing HTTPS reverse proxy for external access.')));
+			form.appendChild(E('div', { 'class': 'cbi-page-actions' }, [ save ]));
 			form.appendChild(message);
+
 			form.addEventListener('submit', function(ev) {
 				ev.preventDefault();
-				const port = Number(portInput.value);
+				const device = lanSelect.value;
+				const listenPort = Number(listenPortInput.value);
+				const clashOn = clashEnabledInput.checked;
 				const clashPort = Number(clashPortInput.value);
-				const clashSecret = clashSecretInput.value;
-				if (!networkSelect.value || !Number.isInteger(port) || port < 1024 || port > 65535) {
-					message.textContent = _('Choose a LAN network and a port from 1024 to 65535.');
-					return;
+				const secret = clashSecretInput.value;
+				const mode = clashClearInput.checked ? 'clear' : (secret ? 'set' : 'keep');
+
+				if (!device) { message.textContent = _('Choose a LAN interface.'); return; }
+				if (!Number.isInteger(listenPort) || listenPort < 1 || listenPort > 65535) { message.textContent = _('The listen port must be between 1 and 65535.'); return; }
+				if (clashOn) {
+					if (!Number.isInteger(clashPort) || clashPort < 1 || clashPort > 65535) { message.textContent = _('The Clash API port must be between 1 and 65535.'); return; }
+					if (clashPort === listenPort) { message.textContent = _('The Clash API port must differ from the listen port.'); return; }
 				}
-				if (!Number.isInteger(clashPort) || clashPort < 1024 || clashPort > 65535) {
-					message.textContent = _('Clash API port must be between 1024 and 65535.');
-					return;
-				}
-				if (clashEnabledInput.checked && clashPort === port) {
-					message.textContent = _('The Clash API port must differ from the listen port.');
-					return;
-				}
-				if (clashEnabledInput.checked && !status.clash_api_secret_set && !clashSecret) {
-					message.textContent = _('A secret is required when enabling Clash API.');
-					return;
-				}
-				if (clashEnabledInput.checked && clashSecret && !/^[A-Za-z0-9._-]{6,128}$/.test(clashSecret)) {
-					message.textContent = _('The secret must be 6-128 letters, numbers, dots, underscores or hyphens.');
-					return;
-				}
+				if (mode === 'set' && /['\\\n\r\t]/.test(secret)) { message.textContent = _('The secret cannot contain quotes, backslashes or line breaks.'); return; }
 
 				save.disabled = true;
 				settingsBusy = true;
 				message.textContent = _('Saving…');
-				honk.settings(networkSelect.value, port, clashEnabledInput.checked, clashPort, clashSecret).then(honk.ensureOk).then(function(result) {
+				const matched = candidates.find(function(c) { return (c.l3_device || c.device) === device; });
+				honk.settings({
+					lan_network: matched ? matched.network : status.lan_network,
+					lan_device: device,
+					listen_port: listenPort,
+					clash_api_enabled: clashOn,
+					clash_api_port: clashPort,
+					clash_api_secret: secret,
+					clash_api_secret_mode: mode,
+					expect_sha256: formSnapshotSha
+				}).then(honk.ensureOk).then(function(result) {
+					formSnapshotSha = null;
 					clashSecretInput.value = '';
+					clashClearInput.checked = false;
 					message.textContent = honk.resultMessage(result, _('Service settings saved.'));
 				}).catch(function(error) {
 					message.textContent = honk.errorMessage(error, _('Settings could not be applied.'));
@@ -306,77 +330,6 @@ return view.extend({
 			});
 			card.appendChild(form);
 			return card;
-		}
-
-		/* 先预览会变动的项，确认后才真正改写。 */
-		function detachSettings(button) {
-			button.disabled = true;
-			settingsBusy = true;
-			actionMessage.textContent = _('Checking the configuration…');
-			honk.configDetach(true).then(honk.ensureOk).then(function(preview) {
-				actionMessage.textContent = '';
-				return confirmDetach(preview);
-			}).then(function(confirmed) {
-				if (!confirmed)
-					return;
-				actionMessage.textContent = _('Switching to panel management…');
-				return honk.configDetach(false).then(honk.ensureOk).then(function(result) {
-					actionMessage.textContent = honk.resultMessage(result, _('The panel manages these settings now.'));
-				});
-			}).catch(function(error) {
-				actionMessage.textContent = honk.errorMessage(error, _('The switch failed. The configuration was left unchanged.'));
-			}).finally(function() {
-				settingsBusy = false;
-				button.disabled = false;
-				refresh();
-			});
-		}
-
-		function confirmDetach(preview) {
-			/* 面板能映射的项与它固定写死的项分开列，避免把「会被默认值覆盖」说成「不支持」。 */
-			const mapped = {
-				'global.lan_interface': _('LAN network'),
-				'experimental.native_api.listen': _('Doona listen address'),
-				'experimental.clash_api.external_controller': _('Clash API address')
-			};
-			const carried = [];
-			const replaced = [];
-			(preview.changes || []).forEach(function(item) {
-				if (/\.secret$/.test(item.key))
-					return;
-				const label = mapped[item.key];
-				if (label)
-					carried.push(E('li', {}, '%s：%s → %s'.format(label, item.old, item.new)));
-				else if (!item.new)
-					replaced.push(E('li', {}, _('%s: %s (removed)').format(item.key, item.old)));
-				else
-					replaced.push(E('li', {}, '%s：%s → %s'.format(item.key, item.old, item.new)));
-			});
-			const summary = _('LAN network %s, port %s, Clash API %s.').format(preview.lan_network, preview.listen_port,
-				preview.clash_api_enabled ? _('enabled on port %s').format(preview.clash_api_port) : _('disabled'));
-			return new Promise(function(resolve) {
-				ui.showModal(_('Switch to panel management'), [
-					E('p', {}, _('These settings move to this page. Subscriptions, nodes, groups and routing rules stay as they are.')),
-					E('p', {}, summary),
-					carried.length ? E('div', {}, [ E('p', {}, _('These values carry over, written the way the panel expects:')), E('ul', {}, carried) ]) : '',
-					replaced.length ? E('div', {}, [ E('p', {}, _('These items have no panel setting, so the panel defaults replace them:')), E('ul', {}, replaced) ]) : '',
-					E('p', { 'class': 'honk-note' }, _('Honk restarts during the switch.')),
-					E('p', { 'class': 'honk-note' }, _('The current file is backed up. To undo, load it again from the Configuration page and apply it.')),
-					E('div', { 'class': 'right' }, [
-						E('button', { 'class': 'cbi-button', 'click': function(ev) {
-							ev.preventDefault();
-							ui.hideModal();
-							resolve(false);
-						} }, [ _('Cancel') ]),
-						' ',
-						E('button', { 'class': 'cbi-button cbi-button-positive', 'click': function(ev) {
-							ev.preventDefault();
-							ui.hideModal();
-							resolve(true);
-						} }, [ _('Switch to panel management') ])
-					])
-				]);
-			});
 		}
 
 		function renderSetup(status) {

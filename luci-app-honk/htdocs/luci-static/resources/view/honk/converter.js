@@ -241,6 +241,10 @@ function convertProxy(node) {
 			throw new Error('Node must be an object');
 		if (!converters[type])
 			throw new Error('Unsupported protocol: ' + (type || 'unknown'));
+		/* 核心只支持 tcp/ws/grpc，h2/http 生成的链接会让整批校验失败。 */
+		const net = String(node.network || 'tcp').toLowerCase();
+		if (net !== 'tcp' && net !== 'ws' && net !== 'grpc')
+			throw new Error('Unsupported transport: ' + net);
 		return {
 			ok: true,
 			name: String(node.name || 'Node'),

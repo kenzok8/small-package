@@ -462,23 +462,61 @@ return view.extend({
 			});
 		});
 
+		/* 重置目标由用户确认，后台按实时地址复核；不按名称猜。 */
+		function selectResetTarget() {
+			return honk.lanCandidates().then(function(result) {
+				const list = (result && result.candidates) || [];
+				if (!list.length) {
+					backupMessage.textContent = _('No active LAN candidate. Configure a LAN interface before resetting.');
+					return null;
+				}
+				return new Promise(function(resolve) {
+					const select = E('select', { 'class': 'cbi-input-select' }, list.map(function(item, idx) {
+						const label = [ item.network, item.l3_device, item.ipv4 ].filter(Boolean).join(' · ');
+						return E('option', { 'value': String(idx) }, label);
+					}));
+					ui.showModal(_('Confirm the LAN target'), [
+						E('p', {}, _('Reset writes these values into config.dae. Confirm the interface and address are still correct.')),
+						select,
+						E('p', { 'class': 'honk-note' }, _('This permanently clears subscriptions, nodes, policies, DNS data, history and cache. The administrator account is kept, and Honk stops.')),
+						E('div', { 'class': 'right' }, [
+							E('button', { 'class': 'cbi-button', 'click': function(ev) {
+								ev.preventDefault();
+								ui.hideModal();
+								resolve(null);
+							} }, _('Cancel')),
+							' ',
+							E('button', { 'class': 'cbi-button cbi-button-negative', 'click': function(ev) {
+								ev.preventDefault();
+								ui.hideModal();
+								const item = list[Number(select.value)] || list[0];
+								resolve(item && item.l3_device && item.ipv4 ? { device: item.l3_device, ip: item.ipv4 } : null);
+							} }, _('Reset'))
+						])
+					]);
+				});
+			}).catch(function() { return null; });
+		}
+
 		restoreCfgBtn.addEventListener('click', function(ev) {
 			ev.preventDefault();
-			if (!confirm(_('This permanently clears Honk subscriptions, nodes, policies, DNS data, history, and cache, then restores the default configuration. The administrator account is kept, and Honk will be stopped. Continue?')))
-				return;
-			setBackupBusy(true);
-			backupMessage.textContent = _('Restoring default config…');
-			honk.reset().then(honk.ensureOk).then(function(result) {
-				return honk.waitJob(result.job_id, function(job) {
-					backupMessage.textContent = phaseMessage(job, _('Restoring default config…'));
-				});
-			}).then(function(result) {
-				backupMessage.textContent = honk.resultMessage(result, _('Honk data reset. The service is stopped.'));
-			}).catch(function(error) {
-				if (error && error.recoveryRequired)
-					blockWrites();
-				backupMessage.textContent = honk.errorMessage(error, _('Reset failed.'));
-			}).finally(function() { setBackupBusy(false); });
+			selectResetTarget().then(function(target) {
+				if (!target)
+					return;
+				setBackupBusy(true);
+				backupMessage.textContent = _('Restoring default config…');
+				honk.reset(target.device, target.ip).then(honk.ensureOk).then(function(result) {
+					return honk.waitJob(result.job_id, function(job) {
+						backupMessage.textContent = phaseMessage(job, _('Restoring default config…'));
+					});
+				}).then(function(result) {
+					backupMessage.textContent = honk.resultMessage(result, _('Honk data reset. The service is stopped.'));
+				}).catch(function(error) {
+					if (error && error.recoveryRequired)
+						blockWrites();
+					backupMessage.textContent = honk.errorMessage(error, _('Reset failed.'));
+				}).finally(function() { setBackupBusy(false); });
+			});
 		});
 
 		backupSection.appendChild(E('h3', { 'class': 'honk-card-title' }, _('Config backup')));
@@ -509,26 +547,26 @@ return view.extend({
 			}).finally(function() { check.disabled = false; });
 		});
 		const repairMessage = E('p', { 'class': 'honk-status-msg', 'role': 'status' }, '');
-		const repair = E('button', { 'class': 'cbi-button cbi-button-action' }, _('Repair'));
+		const repair = E('button', { 'class': 'cbi-button cbi-button-action' }, _('Validate configuration'));
 		writeControls.push(repair);
 		repair.addEventListener('click', function(ev) {
 			ev.preventDefault();
 			repair.disabled = true;
-			repairMessage.textContent = _('Repairing…');
+			repairMessage.textContent = _('Validating…');
 			honk.repair().then(honk.ensureOk).then(function(result) {
-				repairMessage.textContent = honk.resultMessage(result, _('Repair completed.'));
+				repairMessage.textContent = honk.resultMessage(result, _('Configuration checked.'));
 			}).catch(function(error) {
 				if (error && error.recoveryRequired)
 					blockWrites();
-				repairMessage.textContent = honk.errorMessage(error, _('Repair failed.'));
+				repairMessage.textContent = honk.errorMessage(error, _('Configuration check failed.'));
 			}).finally(function() { repair.disabled = recoveryRequired; });
 		});
-		health.appendChild(E('h3', { 'class': 'honk-card-title' }, _('System check and repair')));
+		health.appendChild(E('h3', { 'class': 'honk-card-title' }, _('System check and configuration validation')));
 		health.appendChild(E('p', { 'class': 'honk-note' }, _('Checks Honk system components and reports detected issues.')));
 		health.appendChild(E('div', { 'class': 'honk-actions' }, [ check, repair ]));
 		health.appendChild(healthMessage);
 		health.appendChild(repairMessage);
-		health.appendChild(E('p', { 'class': 'honk-note' }, _('Repair replaces missing or damaged Honk system files and does not overwrite user configuration.')));
+		health.appendChild(E('p', { 'class': 'honk-note' }, _('Validates the configuration and reports the result. No files are rewritten.')));
 
 		page.appendChild(E('div', { 'class': 'honk-header' }, [
 			E('img', { 'class': 'honk-header-logo', 'src': L.resource('view/honk/logo.png'), 'alt': '' }),

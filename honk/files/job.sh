@@ -59,7 +59,17 @@ if [ "$operation" = update_apply ]; then
 elif [ "$operation" = update_check ]; then
 	/usr/share/honk/update.sh check > "$job_dir/output" 2> "$job_dir/stderr" &
 else
-	"$MAINT" "$operation" > "$job_dir/output" 2> "$job_dir/stderr" &
+	request_args=
+	if [ -f "$job_dir/request" ] && [ ! -L "$job_dir/request" ]; then
+		read -r req_dev req_ip < "$job_dir/request" || :
+		case "$req_dev" in ''|*[!A-Za-z0-9_.:-]*) ;; *)
+			case "$req_ip" in ''|*[!0-9.]*) ;; *)
+				request_args="$req_dev $req_ip"
+			esac
+		esac
+	fi
+	# shellcheck disable=SC2086
+	"$MAINT" "$operation" $request_args > "$job_dir/output" 2> "$job_dir/stderr" &
 fi
 maint_pid=$!
 logger -t honk-maintenance "$operation started" 2>/dev/null || :
