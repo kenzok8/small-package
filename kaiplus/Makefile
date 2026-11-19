@@ -14,7 +14,7 @@ KAIPLUS_HASH_aarch64:=2690e9f6d8610740f3cc05eca972a5b83f36bb555b6a4b2e37b2e4b46e
 
 PKG_NAME:=kaiplus
 PKG_VERSION:=1.0.18
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 KAIPLUS_URL_FILE:=kaiplus-linux-$(KAIPLUS_ARCH)
 KAIPLUS_DOWNLOAD:=$(KAIPLUS_URL_FILE)-$(KAIPLUS_HASH_$(ARCH))
@@ -41,6 +41,7 @@ define Package/$(PKG_NAME)
 	TITLE:=KaiPlus
 	URL:=https://github.com/linkease/istore-packages
 	DEPENDS:=@(x86_64||aarch64) +linkease-app-entry +changeguard
+	EXTRA_DEPENDS:=changeguard (>=0.3.3)
 endef
 
 define Package/$(PKG_NAME)/description

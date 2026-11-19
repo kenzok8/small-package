@@ -9,7 +9,8 @@ local m, s, o
 m = taskd.docker_map("agent2api", "agent2api", "/usr/libexec/istorec/agent2api.sh",
   translate("Agent2API"),
   translate("Agent2API is an AI routing gateway with Agent client takeover.")
-    .. translate("Official website:") .. ' <a href="https://github.com/aimod-cc/Agent2API" target="_blank">https://github.com/aimod-cc/Agent2API</a>')
+    .. translate("Official website:") .. ' <a href="https://github.com/aimod-cc/Agent2API" target="_blank">https://github.com/aimod-cc/Agent2API</a>'
+    .. '<br />' .. translate("Image pull acceleration uses Docker's global registry mirror settings. Configure KSpeeder/iStoreEnhance globally to enable it."))
 
 s = m:section(SimpleSection, translate("Service Status"), translate("Agent2API status:"))
 s:append(Template("agent2api/status"))
@@ -28,10 +29,6 @@ o.rmempty = false
 o.datatype = "string"
 o:value("aimodcc/agent2api:latest", "aimodcc/agent2api:latest")
 o.default = "aimodcc/agent2api:latest"
-
-o = s:option(Flag, "install_accelerated", translate("KSpeeder accelerated install"), translate("Use KSpeeder/iStoreEnhance to accelerate image pull when enabled"))
-o.default = 1
-o.rmempty = false
 
 local blocks = agent2api_model.blocks()
 local home = agent2api_model.home()

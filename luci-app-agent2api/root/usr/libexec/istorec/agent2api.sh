@@ -10,14 +10,9 @@ shift 1
 # so a normal "docker pull" already goes through it when iStoreEnhance is active.
 istoreenhance_pull() {
   local image_name="$1"
-  local accel=`uci get agent2api.@main[0].install_accelerated 2>/dev/null`
   echo "docker pull ${image_name}"
   if docker pull "$image_name"; then
     return 0
-  fi
-  if [ "$accel" != "1" ]; then
-    echo "download failed (KSpeeder acceleration is disabled)"
-    exit 1
   fi
   local isInstall=$(command -v iStoreEnhance)
   local isRun=$(pgrep iStoreEnhance)
@@ -56,21 +51,22 @@ do_install() {
   istoreenhance_pull "${image_name}"
   docker rm -f agent2api
 
-  local cmd="docker run --restart=unless-stopped -d \
+  set -- docker run --restart=unless-stopped -d \
     --dns=172.17.0.1 \
-    -v \"$config:/data\" \
-    -p $http_port:3065 "
+    -v "$config:/data" \
+    -p "$http_port:3065"
 
   local tz="`uci get system.@system[0].zonename | sed 's/ /_/g'`"
-  [ -z "$tz" ] || cmd="$cmd -e TZ=$tz"
+  [ -z "$tz" ] || set -- "$@" -e "TZ=$tz"
 
   # Small-memory friendly: cap the two in-memory image caches (MiB).
-  cmd="$cmd -e AGENT2API_IMAGE_CACHE_MB=64 -e AGENT2API_IMAGE_COMPRESS_CACHE_MB=64"
+  set -- "$@" -e AGENT2API_IMAGE_CACHE_MB=64 -e AGENT2API_IMAGE_COMPRESS_CACHE_MB=64
 
-  cmd="$cmd --name agent2api \"$image_name\""
+  set -- "$@" --name agent2api "$image_name"
 
-  echo "$cmd"
-  eval "$cmd"
+  printf '%s ' "$@"
+  printf '\n'
+  "$@"
 }
 
 usage() {

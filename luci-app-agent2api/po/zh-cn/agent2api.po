@@ -28,11 +28,8 @@ msgstr "HTTP 端口"
 msgid "Docker Image"
 msgstr "镜像"
 
-msgid "KSpeeder accelerated install"
-msgstr "Kspeeder 加速安装"
-
-msgid "Use KSpeeder/iStoreEnhance to accelerate image pull when enabled"
-msgstr "启用后使用 KSpeeder/iStoreEnhance 加速镜像拉取"
+msgid "Image pull acceleration uses Docker's global registry mirror settings. Configure KSpeeder/iStoreEnhance globally to enable it."
+msgstr "镜像拉取加速遵循 Docker 的全局镜像源设置，请在全局配置中启用 KSpeeder/iStoreEnhance。"
 
 msgid "Config path"
 msgstr "配置路径"

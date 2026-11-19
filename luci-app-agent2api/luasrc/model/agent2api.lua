@@ -34,17 +34,21 @@ end
 
 agent2api.find_paths = function(blocks, home_dirs, path_name)
   local appname = '/Agent2API'
-  local default_path = ''
-  local configs = {}
+  local default_path = home_dirs[path_name] .. appname
 
-  if #blocks == 0 then
-    return configs, default_path
+  if default_path == "/root/" .. path_name .. appname and #blocks > 0 then
+    default_path = blocks[1] .. "/" .. path_name .. appname
   end
 
-  for _, val in pairs(blocks) do
-    table.insert(configs, val .. "/" .. path_name .. appname)
+  local configs = { default_path }
+  local seen = { [default_path] = true }
+  for _, val in ipairs(blocks) do
+    local path = val .. "/" .. path_name .. appname
+    if not seen[path] then
+      table.insert(configs, path)
+      seen[path] = true
+    end
   end
-  default_path = configs[1]
 
   return configs, default_path
 end
