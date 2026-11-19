@@ -479,7 +479,12 @@ function gen_outbound(flag, node, tag, proxy_table)
 			end
 		end
 
-		if api.datatypes.hostname(node.address) and node.domain_resolver and (node.domain_resolver_dns or node.domain_resolver_dns_https) then
+		local node_domains = {}
+		for _, address in ipairs({node.address, node.transport == "xhttp" and node.download_address or nil}) do
+			address = address:lower()
+			if api.datatypes.hostname(address) then table.insert(node_domains, address) end
+		end
+		if #node_domains > 0 and node.domain_resolver and (node.domain_resolver_dns or node.domain_resolver_dns_https) then
 			local dns_proto = node.domain_resolver
 			local config_address
 			local config_port
@@ -518,13 +523,15 @@ function gen_outbound(flag, node, tag, proxy_table)
 					domains = {}
 				}
 			end
-			local exists
-			local domain = "full:" .. node.address
-			for _, d in ipairs(GLOBAL.DNS_SERVER[dns_key].domains) do
-				if d == domain then exists = true; break end
+			for _, address in ipairs(node_domains) do
+				local exists
+				local domain = "full:" .. address
+				for _, d in ipairs(GLOBAL.DNS_SERVER[dns_key].domains) do
+					if d == domain then exists = true; break end
+				end
+				if not exists then table.insert(GLOBAL.DNS_SERVER[dns_key].domains, domain) end
+				GLOBAL.VPS_EXCLUDE[address] = true
 			end
-			if not exists then table.insert(GLOBAL.DNS_SERVER[dns_key].domains, domain) end
-			GLOBAL.VPS_EXCLUDE[node.address] = true
 		end
 	end
 	return result
