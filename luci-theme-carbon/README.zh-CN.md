@@ -59,6 +59,12 @@ https://github.com/user-attachments/assets/b78ccf2b-679e-459b-88ea-b4f82da6e03f
 在路由器上执行（SSH 登录后）：
 
 ```bash
+curl -fsSL -o /tmp/carbon-install.sh https://github.com/mrjoechen/luci-theme-carbon/releases/latest/download/carbon-install.sh && sh /tmp/carbon-install.sh
+```
+
+或者使用 `wget`。
+
+```bash
 wget -O /tmp/carbon-install.sh https://github.com/mrjoechen/luci-theme-carbon/releases/latest/download/carbon-install.sh && sh /tmp/carbon-install.sh
 ```
 

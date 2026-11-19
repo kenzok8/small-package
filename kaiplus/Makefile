@@ -41,7 +41,8 @@ define Package/$(PKG_NAME)
 	TITLE:=KaiPlus
 	URL:=https://github.com/linkease/istore-packages
 	DEPENDS:=@(x86_64||aarch64) +linkease-app-entry +changeguard
-	EXTRA_DEPENDS:=changeguard (>=0.3.3)
+	# Build matrix: OpenWrt 21.02 OPKG uses -N; 25.12 APK uses -rN.
+	EXTRA_DEPENDS:=changeguard (>=0.3.3-$(if $(CONFIG_USE_APK),r)2)
 endef
 
 define Package/$(PKG_NAME)/description

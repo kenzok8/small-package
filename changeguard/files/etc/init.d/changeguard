@@ -4,7 +4,6 @@ STOP=89
 USE_PROCD=1
 BIN=/usr/sbin/changeguard_bin
 CONFIG=/etc/changeguard/config.json
-[ -e "$CONFIG" ] || { [ ! -e /etc/optimemachine/config.json ] || CONFIG=/etc/optimemachine/config.json; }
 case "$action" in
  stop|restart|reload|disable)
   if [ -f "$CONFIG" ]; then "$BIN" maintenance-check --config "$CONFIG" --phase "$action" >/dev/null || exit 1; fi

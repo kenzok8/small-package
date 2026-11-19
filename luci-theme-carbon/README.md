@@ -62,6 +62,12 @@ All files are on the [Releases](https://github.com/mrjoechen/luci-theme-carbon/r
 Run on the router (SSH):
 
 ```bash
+curl -fsSL -o /tmp/carbon-install.sh https://github.com/mrjoechen/luci-theme-carbon/releases/latest/download/carbon-install.sh && sh /tmp/carbon-install.sh
+```
+
+Or use `wget`.
+
+```bash
 wget -O /tmp/carbon-install.sh https://github.com/mrjoechen/luci-theme-carbon/releases/latest/download/carbon-install.sh && sh /tmp/carbon-install.sh
 ```
 

@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 PKG_NAME:=changeguard
-PKG_VERSION:=0.3.1
-PKG_RELEASE:=1
+PKG_VERSION:=0.3.3
+PKG_RELEASE:=2
 include ./release.mk
 PKG_SOURCE:=changeguard-$(PKG_VERSION)-$(ARCH).tar.gz
 PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/changeguard-runtime-v$(PKG_VERSION)/
@@ -16,6 +16,8 @@ define Package/changeguard
  CATEGORY:=System
  TITLE:=Device change protection CLI
  DEPENDS:=@(x86_64||aarch64) +linkspace +block-mount
+ # Build matrix: OpenWrt 21.02 OPKG uses -N; 25.12 APK uses -rN.
+ EXTRA_DEPENDS:=linkspace (>=0.3.2-$(if $(CONFIG_USE_APK),r)2)
 endef
 
 define Build/Configure
@@ -26,17 +28,7 @@ endef
 define Package/changeguard/preinst
 #!/bin/sh
 [ -n "$${IPKG_INSTROOT:-}" ] && exit 0
-if [ -x /usr/libexec/changeguard-package ]; then /usr/libexec/changeguard-package preinst; exit $$?; fi
-if [ -x /usr/sbin/optimemachine_bin ] && [ -f /etc/optimemachine/config.json ]; then
- /usr/sbin/optimemachine_bin maintenance-check >/dev/null || exit 1
- touch /var/run/changeguard-package-upgrade
- if /etc/init.d/optimemachine enabled; then touch /var/run/optimemachine-package-enable; fi
- if /usr/sbin/optimemachine_bin status --config /etc/optimemachine/config.json >/dev/null 2>&1; then
-  touch /var/run/optimemachine-package-restart
-  /etc/init.d/optimemachine stop || exit 1
- fi
- /usr/sbin/optimemachine_bin maintenance-check --config /etc/optimemachine/config.json >/dev/null || exit 1
-fi
+if [ -x /usr/libexec/changeguard-package ]; then exec /usr/libexec/changeguard-package preinst; fi
 exit 0
 endef
 

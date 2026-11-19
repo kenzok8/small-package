@@ -1,87 +1,36 @@
 #!/bin/sh
 set -eu
-root="${IPKG_INSTROOT:-}"
-phase=${1:-}
-entries() {
- cat <<'ENTRIES'
-/usr/share/linkease/apps.d/25-optimemachine.json
-/usr/share/linkeasefull/desktop-apps.d/25-optimemachine.json
-/usr/share/luci/menu.d/luci-app-optimemachine.json
-/www/luci-static/resources/view/optimemachine.js
-/usr/share/rpcd/acl.d/optimemachine.json
-/usr/share/optimemachine/optimemachine-plugin.json
-/usr/share/optimemachine/www/desktop-entry.js
-/usr/share/optimemachine/www/logo.svg
-ENTRIES
-}
-owned() {
- path=$1
- if [ -L "$path" ]; then [ "$(readlink "$path")" = /usr/share/optimemachine/optimemachine-plugin.json ]; return; fi
- [ -f "$path" ] || return 1
- digest=$(sha256sum "$path"); digest=${digest%% *}
- case "$digest" in
- 57dc596ed4c3616169eef67256cec0e300a9fa9f3f0a3b12804132cddc0ad685|7721fcd859bb7d82888d6211c9381ee266083fd13895c151a5121491d9fa4bff|9b15773d8513210d898993121e577029c674791b7a678e641e63bf1e1bb8abcb|b5e615a6038108de61cd5e518d535bcb4e2a298cd0f67532b6dec4d1462e4383|c7f26d5b0b60a0ee8b195cadf0de1626b8643aead51f3d3088da73418f9e98c3|d4544b2d9a1fbacc224ba8834cb351f10c636e9a269217a3b7214cb6b643e4e0) return 0 ;;
- esac
- return 1
-}
-stash_custom() {
- entries | while IFS= read -r rel; do
-  path="$root$rel"; saved="$root/etc/changeguard/migration$rel"
-  if { [ -f "$path" ] || [ -L "$path" ]; } && ! owned "$path"; then
-   umask 077; mkdir -p "${saved%/*}"; rm -f "$saved"; cp -Pp "$path" "$saved"; touch "$saved.pending"
-  fi
- done
-}
-retire_entries() {
- for link in "$root"/etc/rc.d/[SK][0-9][0-9]optimemachine; do
-  [ -L "$link" ] || continue
-  case "$(readlink "$link")" in ../init.d/optimemachine|/etc/init.d/optimemachine) rm -f "$link" ;; esac
- done
- entries | while IFS= read -r rel; do
-  path="$root$rel"; saved="$root/etc/changeguard/migration$rel"
-  if owned "$path"; then rm -f "$path"; fi
-  if [ -f "$saved.pending" ]; then
-   if [ ! -e "$path" ] && [ ! -L "$path" ]; then mkdir -p "${path%/*}"; cp -Pp "$saved" "$path"; fi
-   rm -f "$saved.pending"
-  fi
- done
-}
-case "$phase" in
- preinst|prerm) stash_custom ;;
- postinst) retire_entries ;;
- *) exit 2 ;;
-esac
-[ -n "$root" ] && exit 0
+[ -n "${IPKG_INSTROOT:-}" ] && exit 0
 bin=/usr/sbin/changeguard_bin
 config=/etc/changeguard/config.json
-[ -e "$config" ] || { [ ! -e /etc/optimemachine/config.json ] || config=/etc/optimemachine/config.json; }
+phase=${1:-}
 run_checked() {
  response=$("$bin" "$@" --config "$config") || { printf '%s\n' "$response" >&2; return 1; }
 }
+remember_service() {
+ if /etc/init.d/changeguard enabled; then touch /var/run/changeguard-package-enable; fi
+ if "$bin" status --config "$config" >/dev/null 2>&1; then
+  touch /var/run/changeguard-package-restart
+  /etc/init.d/changeguard stop
+ fi
+}
 case "$phase" in
  preinst|prerm)
-  if [ -f "$config" ]; then "$bin" maintenance-check --config "$config" >/dev/null || exit 1; touch /var/run/changeguard-package-upgrade; fi
-  if [ -x /etc/init.d/changeguard ] && /etc/init.d/changeguard enabled; then touch /var/run/changeguard-package-enable; fi
-  if "$bin" status --config "$config" >/dev/null 2>&1; then
-   touch /var/run/changeguard-package-restart
-   /etc/init.d/changeguard stop || exit 1
-  fi
-  if [ -f "$config" ]; then "$bin" maintenance-check --config "$config" >/dev/null || exit 1; fi
-  if [ "$phase" = prerm ]; then /etc/init.d/changeguard disable || exit 1; fi
+  if [ -f "$config" ]; then run_checked maintenance-check; fi
+  remember_service
+  if [ -f "$config" ]; then run_checked maintenance-check; fi
+  if [ "$phase" = prerm ]; then /etc/init.d/changeguard disable; fi
  ;;
  postinst)
   fresh=0
-  if [ ! -f "$config" ]; then fresh=1; else run_checked maintenance-check || exit 1; fi
-  if /etc/init.d/changeguard enabled; then touch /var/run/changeguard-package-enable; fi
-  if "$bin" status --config "$config" >/dev/null 2>&1; then
-   touch /var/run/changeguard-package-restart
-   /etc/init.d/changeguard stop || exit 1
-  fi
-  run_checked initialize || exit 1
-  run_checked sync-backend || exit 1
-  run_checked refresh-runtime || exit 1
-  if [ "$fresh" = 1 ] || [ -f /var/run/changeguard-package-enable ] || [ -f /var/run/optimemachine-package-enable ]; then /etc/init.d/changeguard enable || exit 1; fi
-  if [ "$fresh" = 1 ] || [ -f /var/run/changeguard-package-restart ] || [ -f /var/run/optimemachine-package-restart ]; then /etc/init.d/changeguard start || exit 1; fi
-  rm -f /var/run/changeguard-package-upgrade /var/run/changeguard-package-enable /var/run/changeguard-package-restart /var/run/optimemachine-package-enable /var/run/optimemachine-package-restart
+  if [ ! -f "$config" ]; then fresh=1; else run_checked maintenance-check; fi
+  remember_service
+  run_checked initialize
+  run_checked sync-backend
+  run_checked refresh-runtime
+  if [ "$fresh" = 1 ] || [ -f /var/run/changeguard-package-enable ]; then /etc/init.d/changeguard enable; fi
+  if [ "$fresh" = 1 ] || [ -f /var/run/changeguard-package-restart ]; then /etc/init.d/changeguard start; fi
+  rm -f /var/run/changeguard-package-enable /var/run/changeguard-package-restart
  ;;
+ *) exit 2 ;;
 esac
