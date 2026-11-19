@@ -37,13 +37,13 @@ const callSettings = rpc.declare({
 const callProbeSubscription = rpc.declare({
 	object: 'honk',
 	method: 'probe_subscription',
-	params: [ 'url' ],
+	params: [ 'url', 'ua' ],
 	expect: { '': {} }
 });
 const callAddSubscription = rpc.declare({
 	object: 'honk',
 	method: 'add_subscription',
-	params: [ 'name', 'url' ],
+	params: [ 'name', 'url', 'ua', 'interval' ],
 	expect: { '': {} }
 });
 const callAddNodes = rpc.declare({
@@ -347,6 +347,8 @@ function tokenMessage(token) {
 		share_links_too_large: _('Share links exceed the 16 KiB per request limit.'),
 		share_links_invalid_or_conflicting: _('A share link is invalid or conflicts with an existing node. Review the input and try again.'),
 		subscription_invalid: _('The subscription could not be added: the name must be 1-64 characters without single quotes, and the URL must be a valid http(s) link.'),
+		subscription_ua_invalid: _('The User-Agent contains characters that cannot be stored. Keep it under 200 printable ASCII characters.'),
+		subscription_interval_invalid: _('The update interval must be a whole number of days.'),
 		subscription_invalid_or_conflicting: _('The subscription is invalid or its name already exists.'),
 		subscription_no_nodes: _('The subscription returned no usable nodes. The configuration was not changed.'),
 		subscription_added: _('Subscription saved with usable nodes.'),
@@ -435,7 +437,7 @@ function tokenMessage(token) {
 		boot_link_update_and_rollback_failed_snapshot_retained: _('更新开机自启链接失败且回滚未完成，快照已保留。'),
 		repair_restart_failed_rolled_back: _('修复后重启失败，已回滚。'),
 		repair_restart_and_rollback_failed_snapshot_retained: _('修复后重启失败且回滚未完成，快照已保留。'),
-		subscription_unreachable: _('抓不到这个订阅地址：网络不通、需要代理，或链接已失效。'),
+		subscription_unreachable: _('抓不到这个订阅地址：网络不通、需要代理、链接已失效，或机场校验 User-Agent。'),
 		subscription_empty: _('订阅内容是空的。'),
 		subscription_too_large: _('订阅内容超过 4 MiB，拒绝处理。'),
 		configuration_validation_failed: _('配置没有通过静态校验。'),

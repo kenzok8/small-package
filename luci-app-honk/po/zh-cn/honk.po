@@ -1352,8 +1352,8 @@ msgstr "找不到 /usr/bin/honk-core，请重新安装 honk 包。"
 msgid "找不到该任务。"
 msgstr "找不到该任务。"
 
-msgid "抓不到这个订阅地址：网络不通、需要代理，或链接已失效。"
-msgstr "抓不到这个订阅地址：网络不通、需要代理，或链接已失效。"
+msgid "抓不到这个订阅地址：网络不通、需要代理、链接已失效，或机场校验 User-Agent。"
+msgstr "抓不到这个订阅地址：网络不通、需要代理、链接已失效，或机场校验 User-Agent。"
 
 msgid "拆分后的配置没有通过校验，原配置未改动。"
 msgstr "拆分后的配置没有通过校验，原配置未改动。"
@@ -1707,3 +1707,57 @@ msgstr "可留空，供 Clash API 客户端使用。"
 
 msgid "状态数据库损坏，请到维护页执行重置后重新初始化。"
 msgstr "状态数据库损坏，请到维护页执行重置后重新初始化。"
+
+msgid "User-Agent"
+msgstr "User-Agent"
+
+msgid "Update interval (days)"
+msgstr "更新间隔（天）"
+
+msgid "Empty uses the core default; fill it in when the provider checks the User-Agent."
+msgstr "留空用核心默认 UA；机场校验 UA 时再填。"
+
+msgid "The User-Agent contains characters that cannot be stored. Keep it under 200 printable ASCII characters."
+msgstr "User-Agent 含不能保存的字符，只支持 200 个以内的可见 ASCII 字符。"
+
+msgid "The update interval must be a whole number of days."
+msgstr "更新间隔必须是整数天。"
+
+msgid "The update interval must be a whole number of days (0 disables scheduled refresh)."
+msgstr "更新间隔必须是整数天，填 0 关闭定时刷新。"
+
+msgid "Browser User-Agent"
+msgstr "浏览器 User-Agent"
+
+msgid "Custom…"
+msgstr "自定义…"
+
+msgid "User-Agent the provider asks for"
+msgstr "机场要求的 User-Agent"
+
+msgid "Off"
+msgstr "关闭"
+
+msgid "Every day"
+msgstr "每天"
+
+msgid "Every 3 days"
+msgstr "每 3 天"
+
+msgid "Every 7 days"
+msgstr "每 7 天"
+
+msgid "Days"
+msgstr "天数"
+
+msgid "Auto update"
+msgstr "自动更新"
+
+msgid "Subscription name"
+msgstr "订阅名称"
+
+msgid "Subscription name, e.g. MyAirport"
+msgstr "订阅名称，例如 MyAirport"
+
+msgid "Subscription name is required."
+msgstr "请输入订阅名称。"

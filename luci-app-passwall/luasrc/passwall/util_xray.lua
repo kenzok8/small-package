@@ -263,6 +263,13 @@ function gen_outbound(flag, node, tag, proxy_table)
 								extra = parsed.extra or parsed
 							end
 						end
+						-- 下载通道不继承上行 sockopt，补齐域名解析策略和防回环标记。
+						if type(extra.downloadSettings) == "table" then
+							local sockopt = extra.downloadSettings.sockopt or {}
+							sockopt.domainStrategy = sockopt.domainStrategy or node.domain_strategy or "UseIP"
+							sockopt.mark = sockopt.mark or 255
+							extra.downloadSettings.sockopt = sockopt
+						end
 						-- 处理 User-Agent
 						if node.user_agent and node.user_agent ~= "" then
 							extra.headers = extra.headers or {}

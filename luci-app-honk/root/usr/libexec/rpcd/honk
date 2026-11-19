@@ -579,10 +579,34 @@ commit_validated_candidate() {
 
 # 添加订阅前的预检：把 URL 抓下来，判断格式并统计节点类型，交给前端判可用性。
 # 不能交给内核去做——内核只在保存后才拉，失败了用户只能翻日志。
+# 订阅 UA 会原样写进 dae 的单引号字符串，也会塞进 curl -A，先挡住会破坏两者的字符。
+valid_ua() {
+	case "$1" in
+		'') return 0 ;;
+		*\'*|*\\*) return 1 ;;
+	esac
+	[ "$(printf '%s' "$1" | wc -c)" -le 200 ] || return 1
+	# grep 按行匹配拦不住换行，单独比一次。
+	[ "$(printf '%s' "$1" | tr -d '\n\r')" = "$1" ] || return 1
+	printf '%s' "$1" | LC_ALL=C grep -q '[^ -~]' && return 1
+	return 0
+}
+
+# 核心默认 UA 是 honk/<版本>，预检跟着用同一个，不用 clash.meta 冒充。
+default_subscription_ua() {
+	_ua_ver=$(honk-core --version 2>/dev/null | awk 'NR == 1 { print $2 }')
+	_ua_ver=${_ua_ver#v}
+	case "$_ua_ver" in
+		''|*[!A-Za-z0-9._-]*) printf 'honk' ;;
+		*) printf 'honk/%s' "$_ua_ver" ;;
+	esac
+}
+
 probe_subscription() {
 	request=$(cat)
 	json_load "$request" 2>/dev/null || { emit_result false invalid_request; return 1; }
 	json_get_var url url
+	json_get_var probe_ua ua
 	case "$url" in
 		http://*|https://*) ;;
 		*) emit_result false subscription_invalid; return 1 ;;
@@ -591,10 +615,12 @@ probe_subscription() {
 	case "$url" in
 		*[!A-Za-z0-9._~:/?#@\!\$\&\(\)\*+,\;=%-]*) emit_result false subscription_invalid; return 1 ;;
 	esac
+	valid_ua "$probe_ua" || { emit_result false subscription_ua_invalid; return 1; }
+	probe_ua=${probe_ua:-$(default_subscription_ua)}
 
 	probe_file=$(mktemp /tmp/honk-probe.XXXXXX) || { emit_result false probe_failed; return 1; }
 	chmod 0600 "$probe_file" || { rm -f "$probe_file"; emit_result false probe_failed; return 1; }
-	if ! curl -fsSL --max-time 25 --connect-timeout 8 -A 'clash.meta/1.19.30' -o "$probe_file" "$url" 2>/dev/null; then
+	if ! curl -fsSL --max-time 25 --connect-timeout 8 -A "$probe_ua" -o "$probe_file" "$url" 2>/dev/null; then
 		if ! curl -fsSL --max-time 25 -o "$probe_file" "$url" 2>/dev/null; then
 			rm -f "$probe_file"
 			emit_result false subscription_unreachable
@@ -668,6 +694,15 @@ add_subscription() {
 	json_load "$request" 2>/dev/null || { emit_result false invalid_request; return 1; }
 	json_get_var sub_name name
 	json_get_var sub_url url
+	json_get_var sub_ua ua
+	json_get_var sub_interval interval
+	valid_ua "$sub_ua" || { emit_result false subscription_ua_invalid; return 1; }
+	# 前端按天换算成秒传进来；0 表示不给这条订阅定时刷新。
+	case "$sub_interval" in
+		'') sub_interval=86400 ;;
+		*[!0-9]*) emit_result false subscription_interval_invalid; return 1 ;;
+	esac
+	[ "${#sub_interval}" -le 8 ] || { emit_result false subscription_interval_invalid; return 1; }
 
 	# 名字允许中文和空格：内核的 tag 支持引号写法，我们只在写入时决定要不要加引号。
 	# 但单引号、反斜杠、换行会破坏 dae 的字符串，必须拒绝。
@@ -703,17 +738,26 @@ add_subscription() {
 
 	candidate=$(mktemp /etc/honk/.config.dae.XXXXXX) || { emit_result false config_write_failed; return 1; }
 
-	if ! awk -v name="$sub_tag" -v url="$sub_url" '
+	if ! awk -v name="$sub_tag" -v url="$sub_url" -v interval="$sub_interval" -v ua="$sub_ua" '
+		function entry() {
+			printf "    %s: \047%s\047 {\n", name, url
+			printf "        interval: %ss\n", interval
+			printf "        route: direct\n"
+			if (ua != "") printf "        ua: \047%s\047\n", ua
+			printf "    }\n"
+		}
 		/^subscription[[:space:]]*\{/ {
 			print
-			printf "    %s: \047%s\047 {\n        interval: 86400s\n        route: direct\n    }\n", name, url
+			entry()
 			found = 1
 			next
 		}
 		{ print }
 		END {
 			if (!found) {
-				printf "\nsubscription {\n    %s: \047%s\047 {\n        interval: 86400s\n        route: direct\n    }\n}\n", name, url
+				printf "\nsubscription {\n"
+				entry()
+				printf "}\n"
 			}
 		}
 	' "$cfg" > "$candidate" 2>/dev/null; then
@@ -1578,7 +1622,7 @@ config_apply_candidate() {
 
 case "$1" in
 list)
-		echo '{"status":{},"check":{},"initialize":{"username":"String","password":"String"},"start":{},"stop":{},"restart":{},"settings":{"lan_network":"String","lan_device":"String","listen_host":"String","listen_port":"Integer","boot_enabled":"Boolean","clash_api_enabled":"Boolean","clash_host":"String","clash_api_port":"Integer","clash_api_secret":"String","clash_api_secret_mode":"String","expect_sha256":"String"},"add_subscription":{"name":"String","url":"String"},"probe_subscription":{"url":"String"},"reset_admin":{},"add_nodes":{"links":"String"},"import_dae":{},"config_read":{},"config_draft_read":{},"lan_candidates":{},"config_validate":{"content":"String"},"config_save":{"content":"String"},"config_apply":{},"config_merge_preview":{},"config_merge_apply":{"config_sha256":"String","system_sha256":"String","candidate_sha256":"String"},"config_detach":{"dry_run":"Boolean"},"system_read":{},"system_save":{"content":"String"},"system_panel":{"dry_run":"Boolean","expect":"String","base":"String"},"repair":{},"recover":{},"backup":{},"restore":{},"restore_prepare":{},"reset":{"lan_device":"String","lan_ip":"String"},"job_status":{"job_id":"String"},"logs":{"source":"String","level":"String","limit":"Integer"},"update_check":{},"update_apply":{}}'
+		echo '{"status":{},"check":{},"initialize":{"username":"String","password":"String"},"start":{},"stop":{},"restart":{},"settings":{"lan_network":"String","lan_device":"String","listen_host":"String","listen_port":"Integer","boot_enabled":"Boolean","clash_api_enabled":"Boolean","clash_host":"String","clash_api_port":"Integer","clash_api_secret":"String","clash_api_secret_mode":"String","expect_sha256":"String"},"add_subscription":{"name":"String","url":"String","ua":"String","interval":"String"},"probe_subscription":{"url":"String","ua":"String"},"reset_admin":{},"add_nodes":{"links":"String"},"import_dae":{},"config_read":{},"config_draft_read":{},"lan_candidates":{},"config_validate":{"content":"String"},"config_save":{"content":"String"},"config_apply":{},"config_merge_preview":{},"config_merge_apply":{"config_sha256":"String","system_sha256":"String","candidate_sha256":"String"},"config_detach":{"dry_run":"Boolean"},"system_read":{},"system_save":{"content":"String"},"system_panel":{"dry_run":"Boolean","expect":"String","base":"String"},"repair":{},"recover":{},"backup":{},"restore":{},"restore_prepare":{},"reset":{"lan_device":"String","lan_ip":"String"},"job_status":{"job_id":"String"},"logs":{"source":"String","level":"String","limit":"Integer"},"update_check":{},"update_apply":{}}'
 		;;
 	call)
 		case "$2" in

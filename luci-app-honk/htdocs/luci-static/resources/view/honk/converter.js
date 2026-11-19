@@ -84,26 +84,6 @@ function convertSs(node) {
 	return 'ss://' + auth + '@' + endpoint(node.server, node.port) + query + '#' + encodeURIComponent(node.name || 'Node');
 }
 
-function convertSsr(node) {
-	requireFields(node, [ 'server', 'port', 'cipher', 'password', 'protocol', 'obfs' ]);
-	const query = [];
-	query.push('remarks=' + base64Url(node.name || 'Node'));
-	if (node['protocol-param'])
-		query.push('protoparam=' + base64Url(node['protocol-param']));
-	if (node['obfs-param'])
-		query.push('obfsparam=' + base64Url(node['obfs-param']));
-
-	const payload = [
-		node.server,
-		node.port,
-		node.protocol,
-		node.cipher,
-		node.obfs,
-		base64Url(node.password)
-	].join(':') + '/?' + query.join('&');
-	return 'ssr://' + base64Url(payload);
-}
-
 function convertVmess(node) {
 	requireFields(node, [ 'server', 'port', 'uuid' ]);
 	const network = node.network || 'tcp';
@@ -226,7 +206,6 @@ function convertProxy(node) {
 	const type = String(node && node.type || '').toLowerCase();
 	const converters = {
 		ss: convertSs,
-		ssr: convertSsr,
 		vmess: convertVmess,
 		vless: convertVless,
 		trojan: convertTrojan,
@@ -269,7 +248,8 @@ function convertProxies(proxies) {
 
 // --- Paste-import helpers -------------------------------------------------
 
-const NODE_SCHEMES = /^(ss|ssr|vmess|vless|trojan|tuic|hysteria2?|hy2|anytls|socks5|socks4|juicity|snell):\/\//i;
+/* 只列核心能收的 scheme：ssr / snell 核心不认，列进来只会在后面校验时失败。 */
+const NODE_SCHEMES = /^(ss|vmess|vless|trojan|tuic|hysteria2?|hy2|anytls|socks5|socks4a?|juicity|masque):\/\//i;
 
 function looksLikeNodeList(text) {
 	const lines = String(text || '').split('\n');
