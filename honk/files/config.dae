@@ -73,6 +73,11 @@ dns {
 
 routing {
     dip(224.0.0.0/3, 'ff00::/8') -> direct
+    # 其它代理核心和 DNS 守护进程的出站不能再被抓一次，否则成环。
+    pname(AdGuardHome, mosdns, mihomo, sing-box, clash, frpc, xray, v2ray) -> direct(must)
+    # BT 走代理既费流量又拖慢节点。
+    pname(qbittorrent) -> direct(must)
+    dscp(4) -> direct(must)
     # dnsmasq 用 127.0.0.1 源地址查上游，private 规则兜不住，单独放行。
     pname(dnsmasq) && l4proto(udp) && dport(53) -> direct(must)
     # 路由器自身地址直连，管理面板不被代理；服务启动时按本机地址重写下面区块
@@ -80,6 +85,7 @@ routing {
     # honk:local-direct-end
     dip(geoip: private) && !dport(53) -> direct(must)
     dip(geoip: cn) && !dport(53) -> direct(must)
+    domain(geosite: private) -> direct
     domain(geosite: cn) -> direct
     # 这几类在 geosite: cn 里覆盖不全，单独列出
     domain(geosite: apple-cn) -> direct
@@ -87,5 +93,6 @@ routing {
     domain(geosite: steam@cn) -> direct
     domain(geosite: category-ai-cn) -> direct
     domain(geosite: onedrive) -> direct
-    fallback: direct
+    # 前面全是直连，未命中的就是国外流量，进代理组。
+    fallback: proxy
 }
