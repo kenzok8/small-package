@@ -1,0 +1,415 @@
+Subject: [PATCH] dns: filter IPv6 answers for IPv4-only proxy exits
+
+Adapt the outbound-aware DNS filtering from hiddify/hiddify-sing-box.
+Probe selected outbounds directly and apply the policy to copies of replies
+so switching nodes does not leave a filtered answer in the DNS cache.
+
+--- /dev/null
++++ b/dns/ipv6_by_outbound.go
+@@ -0,0 +1,228 @@
++package dns
++
++import (
++	"context"
++	"slices"
++	"sync"
++	"time"
++
++	"github.com/sagernet/sing-box/adapter"
++	"github.com/sagernet/sing-box/common/urltest"
++	C "github.com/sagernet/sing-box/constant"
++	"github.com/sagernet/sing-box/log"
++	N "github.com/sagernet/sing/common/network"
++
++	mDNS "github.com/miekg/dns"
++)
++
++type ipv6Reachability uint8
++
++const (
++	ipv6Unknown ipv6Reachability = iota
++	ipv6Reachable
++	ipv6Unreachable
++)
++
++const (
++	ipv6ProbeInterval = 10 * time.Minute
++	ipv6ProbeRetry    = time.Minute
++	ipv6ProbeTimeout  = 8 * time.Second
++	ipv6ProbeLimit    = 2
++)
++
++// Literal HTTPS destinations avoid DNS and SNI-based rewrites at the proxy exit.
++var ipv6ProbeTargets = [][2]string{
++	{"https://[2606:4700:4700::1111]/dns-query", "https://1.1.1.1/dns-query"},
++	{"https://[2606:4700:4700::1001]/dns-query", "https://1.0.0.1/dns-query"},
++}
++
++type outboundIPv6State struct {
++	result     ipv6Reachability
++	probing    bool
++	nextProbe  time.Time
++	validUntil time.Time
++}
++
++type outboundIPv6Filter struct {
++	ctx      context.Context
++	cancel   context.CancelFunc
++	logger   log.ContextLogger
++	outbound adapter.OutboundManager
++	detours  map[string]string
++	probeURL func(context.Context, string, N.Dialer) (uint16, error)
++	access   sync.Mutex
++	states   map[string]outboundIPv6State
++	active   int
++	workers  sync.WaitGroup
++}
++
++func newOutboundIPv6Filter(ctx context.Context, logger log.ContextLogger, outbound adapter.OutboundManager, detours map[string]string) *outboundIPv6Filter {
++	ctx, cancel := context.WithCancel(ctx)
++	return &outboundIPv6Filter{
++		ctx: ctx, cancel: cancel, logger: logger, outbound: outbound, detours: detours,
++		probeURL: urltest.URLTest, states: make(map[string]outboundIPv6State),
++	}
++}
++
++func (f *outboundIPv6Filter) close() error {
++	f.access.Lock()
++	f.cancel()
++	f.access.Unlock()
++	f.workers.Wait()
++	return nil
++}
++
++func (f *outboundIPv6Filter) selectedOutbound(tag string, network string) adapter.Outbound {
++	current, _ := f.outbound.Outbound(tag)
++	for depth := 0; depth < 16 && current != nil; depth++ {
++		if group, isGroup := current.(adapter.OutboundGroup); isGroup {
++			current = group.Selected(network)
++			continue
++		}
++		if current.Type() != C.TypeDirect && slices.Contains(current.Network(), N.NetworkTCP) {
++			return current
++		}
++		return nil
++	}
++	return nil
++}
++
++func (f *outboundIPv6Filter) ipv4Only(outbound adapter.Outbound) bool {
++	tag := outbound.Tag()
++	now := time.Now()
++	f.access.Lock()
++	defer f.access.Unlock()
++	state := f.states[tag]
++	if f.ctx.Err() == nil && f.active < ipv6ProbeLimit && !state.probing && !now.Before(state.nextProbe) {
++		state.probing = true
++		f.states[tag] = state
++		f.active++
++		f.workers.Add(1)
++		go f.probe(outbound)
++	}
++	return state.result == ipv6Unreachable && now.Before(state.validUntil)
++}
++
++func (f *outboundIPv6Filter) testURL(outbound adapter.Outbound, link string) bool {
++	ctx, cancel := context.WithTimeout(f.ctx, ipv6ProbeTimeout)
++	defer cancel()
++	_, err := f.probeURL(ctx, link, outbound)
++	return err == nil
++}
++
++func (f *outboundIPv6Filter) detect(outbound adapter.Outbound) ipv6Reachability {
++	for _, targets := range ipv6ProbeTargets {
++		if f.testURL(outbound, targets[0]) {
++			return ipv6Reachable
++		}
++		if f.ctx.Err() != nil || !f.testURL(outbound, targets[1]) {
++			return ipv6Unknown
++		}
++	}
++	return ipv6Unreachable
++}
++
++func (f *outboundIPv6Filter) probe(outbound adapter.Outbound) {
++	defer f.workers.Done()
++	result := f.detect(outbound)
++	tag := outbound.Tag()
++	now := time.Now()
++	f.access.Lock()
++	f.active--
++	state := f.states[tag]
++	changed := result != ipv6Unknown && state.result != result
++	state.probing = false
++	if result == ipv6Unknown {
++		state.nextProbe = now.Add(ipv6ProbeRetry)
++	} else {
++		state.result = result
++		state.nextProbe = now.Add(ipv6ProbeInterval)
++		state.validUntil = now.Add(2 * ipv6ProbeInterval)
++	}
++	f.states[tag] = state
++	f.access.Unlock()
++	if changed && f.ctx.Err() == nil {
++		if result == ipv6Unreachable {
++			f.logger.Info("outbound ", tag, " failed both IPv6 probes while IPv4 worked, using IPv4-only DNS answers")
++		} else {
++			f.logger.Debug("outbound ", tag, " passed an IPv6 probe")
++		}
++	}
++}
++
++func (f *outboundIPv6Filter) filter(message, response *mDNS.Msg, transport adapter.DNSTransport) *mDNS.Msg {
++	if f == nil || response == nil || response.Rcode != mDNS.RcodeSuccess || transport == nil {
++		return response
++	}
++	qtype := message.Question[0].Qtype
++	if qtype != mDNS.TypeA && qtype != mDNS.TypeAAAA && qtype != mDNS.TypeHTTPS && qtype != mDNS.TypeSVCB {
++		return response
++	}
++	tag := f.detours[transport.Tag()]
++	if tag == "" {
++		return response
++	}
++	tcp := f.selectedOutbound(tag, N.NetworkTCP)
++	udp := f.selectedOutbound(tag, N.NetworkUDP)
++	onlyIPv4 := tcp != nil && f.ipv4Only(tcp)
++	if udp != nil && udp != tcp {
++		onlyIPv4 = f.ipv4Only(udp) || onlyIPv4
++	}
++	if !onlyIPv4 || qtype == mDNS.TypeA {
++		return response
++	}
++	if qtype == mDNS.TypeAAAA {
++		return FixedResponseStatus(message, mDNS.RcodeSuccess)
++	}
++	// The original response remains usable from cache when the group's selection changes.
++	filtered := response.Copy()
++	var answerChanged, extraChanged bool
++	filtered.Answer, answerChanged = removeIPv6Hints(filtered.Answer)
++	filtered.Extra, extraChanged = removeIPv6Hints(filtered.Extra)
++	if !answerChanged && !extraChanged {
++		return response
++	}
++	filtered.Answer = slices.DeleteFunc(filtered.Answer, coversIPv6Records)
++	filtered.Extra = slices.DeleteFunc(filtered.Extra, coversIPv6Records)
++	filtered.AuthenticatedData = false
++	return filtered
++}
++
++func removeIPv6Hints(records []mDNS.RR) ([]mDNS.RR, bool) {
++	var changed bool
++	filtered := slices.DeleteFunc(records, func(record mDNS.RR) bool {
++		var service *mDNS.SVCB
++		switch rr := record.(type) {
++		case *mDNS.AAAA:
++			changed = true
++			return true
++		case *mDNS.HTTPS:
++			service = &rr.SVCB
++		case *mDNS.SVCB:
++			service = rr
++		}
++		if service == nil {
++			return false
++		}
++		for _, value := range service.Value {
++			if mandatory, ok := value.(*mDNS.SVCBMandatory); ok && slices.Contains(mandatory.Code, mDNS.SVCB_IPV6HINT) {
++				changed = true
++				return true
++			}
++		}
++		count := len(service.Value)
++		service.Value = slices.DeleteFunc(service.Value, func(value mDNS.SVCBKeyValue) bool {
++			return value.Key() == mDNS.SVCB_IPV6HINT
++		})
++		if len(service.Value) != count {
++			changed = true
++		}
++		return false
++	})
++	return filtered, changed
++}
++
++func coversIPv6Records(record mDNS.RR) bool {
++	signature, ok := record.(*mDNS.RRSIG)
++	return ok && (signature.TypeCovered == mDNS.TypeAAAA || signature.TypeCovered == mDNS.TypeHTTPS || signature.TypeCovered == mDNS.TypeSVCB)
++}
+--- a/dns/router.go
++++ b/dns/router.go
+@@ -42,6 +42,7 @@ type Router struct {
+ 	outbound              adapter.OutboundManager
+ 	powerManager          *powerreport.Manager
+ 	client                adapter.DNSClient
++	ipv6ByOutbound        *outboundIPv6Filter
+ 	rawRules              []option.DNSRule
+ 	rules                 []adapter.DNSRule
+ 	defaultDomainStrategy C.DomainStrategy
+@@ -116,6 +117,9 @@ func NewRouter(ctx context.Context, logF
+ 	if options.ReverseMapping {
+ 		router.dnsReverseMapping = common.Must1(freelru.New[netip.Addr, string](1024, maphash.NewHasher[netip.Addr]().Hash32, true))
+ 	}
++	if len(options.IPv6ByOutbound) > 0 {
++		router.ipv6ByOutbound = newOutboundIPv6Filter(ctx, router.logger, router.outbound, options.IPv6ByOutbound)
++	}
+ 	return router, nil
+ }
+ 
+@@ -133,6 +137,9 @@ func (r *Router) Start(stage adapter.Sta
+ 	monitor := taskmonitor.New(r.logger, C.StartTimeout)
+ 	switch stage {
+ 	case adapter.StartStateStart:
++		if r.ipv6ByOutbound != nil {
++			scope.Add(r.ipv6ByOutbound.close)
++		}
+ 		scope.Add(func() error {
+ 			r.rulesAccess.Lock()
+ 			r.closing = true
+@@ -1209,6 +1216,7 @@ func (r *Router) Exchange(ctx context.Co
+ 	if err != nil {
+ 		return nil, err
+ 	}
++	response = r.ipv6ByOutbound.filter(message, response, transport)
+ 	r.recordReverseMapping(message, response, transport)
+ 	return response, nil
+ }
+@@ -1242,6 +1250,7 @@ func (r *Router) finishExchangeAsync(mes
+ 		callback(nil, err)
+ 		return
+ 	}
++	response = r.ipv6ByOutbound.filter(message, response, transport)
+ 	r.recordReverseMapping(message, response, transport)
+ 	callback(response, nil)
+ }
+--- a/option/dns.go
++++ b/option/dns.go
+@@ -20,6 +20,8 @@ type RawDNSOptions struct {
+ 	Rules          []DNSRule          `json:"rules,omitempty"`
+ 	Final          string             `json:"final,omitempty" reference:"dns_server"`
+ 	ReverseMapping bool               `json:"reverse_mapping,omitempty"`
++	// Map a DNS server tag to the outbound that carries traffic for its answers.
++	IPv6ByOutbound map[string]string `json:"ipv6_by_outbound,omitempty"`
+ 	DNSClientOptions
+ }
+ 
+--- a/protocol/group/urltest.go
++++ b/protocol/group/urltest.go
+@@ -104,11 +104,14 @@ func (s *URLTest) All() []string {
+ }
+ 
+ func (s *URLTest) Selected(network string) adapter.Outbound {
++	if s.group == nil {
++		return nil
++	}
+ 	var outbound adapter.Outbound
+ 	if network == N.NetworkUDP {
+-		outbound = s.group.selectedOutboundUDP
++		outbound = s.group.selectedOutboundUDP.Load()
+ 	} else {
+-		outbound = s.group.selectedOutboundTCP
++		outbound = s.group.selectedOutboundTCP.Load()
+ 	}
+ 	if outbound == nil {
+ 		outbound, _ = s.group.Select(network)
+@@ -127,11 +130,12 @@ func (s *URLTest) References() []string
+ 		return nil
+ 	}
+ 	var references []string
+-	if group.selectedOutboundTCP != nil {
+-		references = append(references, group.selectedOutboundTCP.Tag())
++	tcp, udp := group.selectedOutboundTCP.Load(), group.selectedOutboundUDP.Load()
++	if tcp != nil {
++		references = append(references, tcp.Tag())
+ 	}
+-	if group.selectedOutboundUDP != nil && group.selectedOutboundUDP != group.selectedOutboundTCP {
+-		references = append(references, group.selectedOutboundUDP.Tag())
++	if udp != nil && udp != tcp {
++		references = append(references, udp.Tag())
+ 	}
+ 	return references
+ }
+@@ -171,9 +175,9 @@ func (s *URLTest) DialContext(ctx contex
+ 	var outbound adapter.Outbound
+ 	switch N.NetworkName(network) {
+ 	case N.NetworkTCP:
+-		outbound = s.group.selectedOutboundTCP
++		outbound = s.group.selectedOutboundTCP.Load()
+ 	case N.NetworkUDP:
+-		outbound = s.group.selectedOutboundUDP
++		outbound = s.group.selectedOutboundUDP.Load()
+ 	default:
+ 		return nil, E.Extend(N.ErrUnknownNetwork, network)
+ 	}
+@@ -194,7 +198,7 @@ func (s *URLTest) DialContext(ctx contex
+ 
+ func (s *URLTest) ListenPacket(ctx context.Context, destination M.Socksaddr) (net.PacketConn, error) {
+ 	s.group.Touch()
+-	outbound := s.group.selectedOutboundUDP
++	outbound := s.group.selectedOutboundUDP.Load()
+ 	if outbound == nil {
+ 		outbound, _ = s.group.Select(N.NetworkUDP)
+ 	}
+@@ -223,8 +227,8 @@ type URLTestGroup struct {
+ 	idleTimeout                  time.Duration
+ 	history                      *urltest.HistoryStorage
+ 	checking                     atomic.Bool
+-	selectedOutboundTCP          adapter.Outbound
+-	selectedOutboundUDP          adapter.Outbound
++	selectedOutboundTCP          common.TypedValue[adapter.Outbound]
++	selectedOutboundUDP          common.TypedValue[adapter.Outbound]
+ 	interruptGroup               *interrupt.Group
+ 	interruptExternalConnections bool
+ 	access                       sync.Mutex
+@@ -312,18 +316,15 @@ func (g *URLTestGroup) Select(network st
+ 	var minOutbound adapter.Outbound
+ 	switch network {
+ 	case N.NetworkTCP:
+-		if g.selectedOutboundTCP != nil {
+-			if history := g.history.LoadURLTestHistory(RealTag(g.selectedOutboundTCP, N.NetworkTCP)); history != nil {
+-				minOutbound = g.selectedOutboundTCP
+-				minDelay = history.Delay
+-			}
+-		}
++		minOutbound = g.selectedOutboundTCP.Load()
+ 	case N.NetworkUDP:
+-		if g.selectedOutboundUDP != nil {
+-			if history := g.history.LoadURLTestHistory(RealTag(g.selectedOutboundUDP, N.NetworkUDP)); history != nil {
+-				minOutbound = g.selectedOutboundUDP
+-				minDelay = history.Delay
+-			}
++		minOutbound = g.selectedOutboundUDP.Load()
++	}
++	if minOutbound != nil {
++		if history := g.history.LoadURLTestHistory(RealTag(minOutbound, network)); history != nil {
++			minDelay = history.Delay
++		} else {
++			minOutbound = nil
+ 		}
+ 	}
+ 	for _, detour := range g.outbounds {
+@@ -507,18 +508,19 @@ func (g *URLTestGroup) performUpdateChec
+ 		updated  bool
+ 		selected bool
+ 	)
+-	if outbound, exists := g.Select(N.NetworkTCP); outbound != nil && (g.selectedOutboundTCP == nil || (exists && outbound != g.selectedOutboundTCP)) {
+-		if g.selectedOutboundTCP != nil {
++	selectedTCP, selectedUDP := g.selectedOutboundTCP.Load(), g.selectedOutboundUDP.Load()
++	if outbound, exists := g.Select(N.NetworkTCP); outbound != nil && (selectedTCP == nil || (exists && outbound != selectedTCP)) {
++		if selectedTCP != nil {
+ 			updated = true
+ 		}
+-		g.selectedOutboundTCP = outbound
++		g.selectedOutboundTCP.Store(outbound)
+ 		selected = true
+ 	}
+-	if outbound, exists := g.Select(N.NetworkUDP); outbound != nil && (g.selectedOutboundUDP == nil || (exists && outbound != g.selectedOutboundUDP)) {
+-		if g.selectedOutboundUDP != nil {
++	if outbound, exists := g.Select(N.NetworkUDP); outbound != nil && (selectedUDP == nil || (exists && outbound != selectedUDP)) {
++		if selectedUDP != nil {
+ 			updated = true
+ 		}
+-		g.selectedOutboundUDP = outbound
++		g.selectedOutboundUDP.Store(outbound)
+ 		selected = true
+ 	}
+ 	if updated {

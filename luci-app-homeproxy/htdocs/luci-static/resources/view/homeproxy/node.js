@@ -878,7 +878,7 @@ function renderNodeSettings(section, data, features, main_node, node_latency_row
 	o.value('trojan', _('Trojan'));
 	if (features.with_quic)
 		o.value('tuic', _('TUIC'));
-	if (features.with_wireguard && features.with_gvisor)
+	if (features.with_wireguard)
 		o.value('wireguard', _('WireGuard'));
 	o.value('vless', _('VLESS'));
 	o.value('vmess', _('VMess'));

@@ -5,8 +5,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-homeproxy
-PKG_VERSION:=20261117
-PKG_RELEASE:=3
+PKG_VERSION:=20261120
+PKG_RELEASE:=1
 PKG_PO_VERSION:=$(PKG_VERSION)-r$(PKG_RELEASE)
 
 LUCI_TITLE:=The modern ImmortalWRT proxy platform for ARM64/AMD64. Powered by Sing-Box/TUN/AI Edition
@@ -22,7 +22,7 @@ LUCI_DEPENDS:= \
 	+ucode-mod-digest \
 	+ucode-mod-math \
 	+ucode-mod-uloop
-LUCI_EXTRA_DEPENDS:=sing-box (>=1.15.0_alpha10)
+LUCI_EXTRA_DEPENDS:=sing-box (>=1.15.0_alpha13-r2)
 LUCI_PKGARCH:=all
 
 define Package/$(PKG_NAME)/conffiles

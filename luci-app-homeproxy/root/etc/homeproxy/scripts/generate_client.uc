@@ -102,7 +102,7 @@ if (routing_mode === 'bypass_mainland_china') {
 	if (isEmpty(china_dns_server) || type(china_dns_server) !== 'string' || china_dns_server === 'wan')
 		china_dns_server = wan_dns;
 }
-const dns_default_strategy = (ipv6_support === '1') ? 'prefer_ipv6' : 'prefer_ipv4';
+const dns_default_strategy = (ipv6_support === '1') ? 'prefer_ipv6' : 'ipv4_only';
 
 function make_domain_resolver(server) {
 	return {
@@ -598,6 +598,16 @@ if (!isEmpty(main_node)) {
 			action: 'respond'
 		});
 	}
+}
+
+if (ipv6_support === '1') {
+	const ipv6_by_outbound = {};
+	for (let server in config.dns.servers) {
+		if (server.detour)
+			ipv6_by_outbound[server.tag] = server.detour;
+	}
+	if (!isEmpty(ipv6_by_outbound))
+		config.dns.ipv6_by_outbound = ipv6_by_outbound;
 }
 /* DNS end */
 
