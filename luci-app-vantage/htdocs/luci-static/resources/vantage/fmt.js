@@ -119,6 +119,18 @@ return baseclass.extend({
 		return _('%d h ago', 'vantage').format(Math.floor(s / 3600));
 	},
 
+	/* whole days since -> 'today', '12 days ago', '5 months ago', '3 years
+	   ago': days for two months, months for two years, then full years */
+	daysAgo: function(d) {
+		d = num(d);
+		if (d == null || d < 0) return DASH;
+		d = Math.floor(d);
+		if (d < 1) return _('today');
+		if (d < 60) return this.N_(d, '%d day ago', '%d days ago').format(d);
+		if (d < 731) return this.N_(Math.round(d / 30.44), '%d month ago', '%d months ago').format(Math.round(d / 30.44));
+		return this.N_(Math.floor(d / 365.25), '%d year ago', '%d years ago').format(Math.floor(d / 365.25));
+	},
+
 	dbm: function(v) {
 		v = num(v);
 		if (v == null || v === 0) return DASH;

@@ -33,7 +33,7 @@
 		/* compiled once a page, not once a layout: ucode compiles a
 		   literal each time it is reached, and these counted repeats
 		   take milliseconds to compile on a router */
-		const form = /^(default|[a-z]{1,8}:[0-3]:[1-4](:h)?( [a-z]{1,8}:[0-3]:[1-4](:h)?){0,7})$/;
+		const form = /^(default|[a-z]{1,8}:[0-3]:[1-4](:h)?( [a-z]{1,8}:[0-3]:[1-4](:h)?){0,11})$/;
 		let out = [];
 		if (authed)
 			for (let k in [ 'wide', 'mid', 'narrow', 'wide_wired', 'mid_wired', 'narrow_wired' ]) {
