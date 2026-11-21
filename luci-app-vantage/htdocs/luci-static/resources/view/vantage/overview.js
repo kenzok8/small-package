@@ -93,7 +93,7 @@ var WG_RETRY_MS = 60 * 1000;
 var WG_ABSENT = /ubus code [346]\b|error -3200[02]\b/;
 var WG_PEERS = 5;                     /* peers a tunnel lists before "+n more" */
 var STORE_KEY = 'vantage.hist.v1';
-var VERSION = '1.1.0';                /* this package's, as its Makefile has it (tests/version.test.js) */
+var VERSION = '1.1.1';                /* this package's, as its Makefile has it (tests/version.test.js) */
 var SVGNS = 'http://www.w3.org/2000/svg';
 var HOSTAPD_OBJ = /^[A-Za-z0-9_.-]{1,64}$/;
 
@@ -339,6 +339,7 @@ function pos(el, xPct, yPct) {
    marker on the newest value, a faint top grid line and (opts.scale) the
    axis maximum with its unit. Before a minute of history the data is
    drawn from the right edge. opts: { min: axis floor, scale: fn(max),
+   ceil: fn(v) rounding the maximum up (series.niceCeil unless given),
    thresh: value for a dashed reference line, threshLabel, quiet: no
    'collecting…' note before there is a line, bare: the line and its
    area only (no grid, baseline or end marker) } */
@@ -362,7 +363,7 @@ function sparkline(data, cols, vmax, cls, opts) {
 	   with headroom so a steady rate doesn't run along the top */
 	var t1 = data[data.length - 1][0], t0 = opts.bare ? data[0][0] : Math.min(data[0][0], t1 - 60000);
 	var max = vmax > 0 ? vmax : opts.bare ? Math.max(series.max(data, cols) * 1.35, opts.min || 0)
-		: series.niceCeil(Math.max(series.max(data, cols) * 1.05, opts.min || 0));
+		: (opts.ceil || series.niceCeil)(Math.max(series.max(data, cols) * 1.05, opts.min || 0));
 	if (opts.thresh != null) {
 		var ty = H - Math.max(0, Math.min(1, opts.thresh / max)) * H;
 		s.appendChild(svgPath('M0 ' + ty.toFixed(1) + 'H' + W, 'vt-spark-thresh'));
@@ -579,6 +580,11 @@ function themeInstalled() {
 	}).catch(function() { return false; });
 }
 
+/* a rate axis is round in the unit its labels show: 8 bits to a step
+   where the traffic reads in bytes */
+function rateUnit() { return fmt.speedUnits() === 'bytes' ? 8 : 1; }
+function rateCeil(v) { var k = rateUnit(); return series.niceCeil(v / k) * k; }
+
 /* axis labels: round numbers without a trailing '.0' ('15 Mbit/s') */
 function bitsLabel(v) {
 	var p = fmt.bitsParts(v);
@@ -653,7 +659,7 @@ function writeStore(v) {
    dotted numbers, this one and the kept one alike: anything else kept
    counts as nothing kept, and with a VERSION of another form there is
    no line. */
-var NEWS_URL = 'https://github.com/anothaDev/luci-theme-vantage/blob/v1.1.0/CHANGELOG.md';
+var NEWS_URL = 'https://github.com/anothaDev/luci-theme-vantage/blob/v1.1.1/CHANGELOG.md';
 var SEEN_KEY = 'vantage.seen.v1';
 var VERSION_FORM = /^\d{1,4}(\.\d{1,4}){1,3}$/;
 
@@ -832,6 +838,13 @@ function lowPower() {
 function movesUnfocused() {
 	var root = typeof document !== 'undefined' ? document.documentElement : null;
 	return !!(root && root.getAttribute && root.getAttribute('data-vt-unfocused') === 'moving');
+}
+
+/* Speed units (the Vantage theme's Appearance, data-vt-units): what the
+   dashboard reads its traffic in (fmt); bits unless picked otherwise */
+function speedUnits() {
+	var root = typeof document !== 'undefined' ? document.documentElement : null;
+	return root && root.getAttribute && root.getAttribute('data-vt-units') === 'bytes' ? 'bytes' : 'bits';
 }
 
 function writeBackdrop(v) {
@@ -1685,11 +1698,22 @@ return view.extend({
 		this.paintLive();
 	},
 
+	/* Speed units (the theme's Appearance): fmt reads them, and a page
+	   that is built paints again in the unit picked (UNITS_EVENT), the
+	   health cards with it: their texts are made when the data comes in */
+	applyUnits: function() {
+		fmt.setSpeedUnits(speedUnits());
+		if (this.el && this.el.root) this.rehealth();
+	},
+
 	/* ----------------------------------------------------------- render */
 
 	render: function(data) {
 		var self = this;
 		this.initState(data);
+		/* before the first texts are made and the first build: the rates
+		   read in the picked unit */
+		this.applyUnits();
 		this.ingest(data.raw);
 		this.st.lastOk = Date.now();
 
@@ -1742,6 +1766,7 @@ return view.extend({
 			var d = ev.detail;
 			if (d && typeof d.add === 'function') d.add(self.searchEntries(d.query));
 		});
+		window.addEventListener('vantage:units', function() { self.applyUnits(); });
 		window.addEventListener('vantage:unfocused', function() { self.paintLive(); });
 		[ 'pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart', 'focus' ].forEach(function(t) {
 			window.addEventListener(t, function() { self.noteInput(); }, { passive: true });
@@ -3204,9 +3229,11 @@ return view.extend({
 			return vb - va || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
 		});
 		var shown = rows.slice(0, MAX), more = rows.length - shown.length;
-		/* compact, so the columns fit every card alike: 176, 62.2k, 3.42M (bit/s) */
+		/* compact, so the columns fit every card alike: 176, 62.2k, 3.42M
+		   (bit/s, or B/s where the traffic reads in bytes) */
 		function short(bps) {
 			var u = [ '', 'k', 'M', 'G' ], i = 0;
+			bps /= rateUnit();
 			while (bps >= 1000 && i < u.length - 1) { bps /= 1000; i++; }
 			return (i ? (bps >= 100 ? bps.toFixed(0) : bps >= 10 ? bps.toFixed(1) : bps.toFixed(2)) : bps.toFixed(0)) + u[i];
 		}
@@ -3588,7 +3615,7 @@ return view.extend({
 			var d = (net[s.key] || []).filter(function(p) { return p[0] >= dm.t0 - POLL_S * 1000; });
 			var sd = series.stats(d, s.dn, dm.t0), su = series.stats(d, s.up, dm.t0);
 			var last = d.length ? d[d.length - 1] : null, fresh = !!(last && now - last[0] < POLL_S * 3000);
-			var g = series.chartGeom(style, sd.peak, su.peak), pk = fmt.rateParts(sd.peak, su.peak);
+			var g = series.chartGeom(style, sd.peak, su.peak, rateUnit()), pk = fmt.rateParts(sd.peak, su.peak);
 			samples = Math.max(samples, sd.n);
 
 			var svg = svgRoot('vt-mult-svg', '0 0 ' + W + ' ' + H);
@@ -3817,7 +3844,7 @@ return view.extend({
 				]),
 				E('div', { 'class': 'vt-radio-live' }, [
 					rateLine(rr ? rr.tx : null, rr ? rr.rx : null),
-					sparkline(hist, [ 2, 1 ], 0, 'vt-spark-' + (r.band || 'x'), { min: 1000, scale: bitsLabel })
+					sparkline(hist, [ 2, 1 ], 0, 'vt-spark-' + (r.band || 'x'), { min: 1000, scale: bitsLabel, ceil: rateCeil })
 				]),
 				E('ul', { 'class': 'vt-notes' }, ins.notes.map(function(n) {
 					return E('li', { 'class': 'vt-note vt-note-' + n.level }, [ icon(n.level === 'warn' ? 'warn' : n.level === 'err' ? 'err' : 'info', 'vt-ico-sm'), E('span', {}, [ n.text ]) ]);
@@ -4784,7 +4811,7 @@ return view.extend({
 					E('div', { 'class': 'vt-dcard-label' }, [ _('Throughput', 'vantage') ]),
 					E('div', { 'class': 'vt-dcard-value' }, [ r ? fmt.bits(r.tx + r.rx) : fmt.DASH ]),
 					E('div', { 'class': 'vt-dcard-sub vt-tn' }, [ r ? '↓ ' + fmt.bits(r.tx) + ' · ↑ ' + fmt.bits(r.rx) : _('measuring') ]),
-					sparkline(hist, [ 2, 3 ], 0, 'vt-spark-' + (c.band || 'x'), { min: 1000, scale: bitsLabel })
+					sparkline(hist, [ 2, 3 ], 0, 'vt-spark-' + (c.band || 'x'), { min: 1000, scale: bitsLabel, ceil: rateCeil })
 				])
 			]),
 			c.ap ? this.section(_('Link', 'vantage'), [ E('dl', { 'class': 'vt-kvs' }, [
@@ -5064,7 +5091,7 @@ return view.extend({
 				E('div', { 'class': 'vt-dactions' }, [ pageLink(insight.PAGES.wireless, _('Radio settings')) ]),
 				E('div', { 'class': 'vt-dgrid' }, [
 					E('div', { 'class': 'vt-dcard' }, [ E('div', { 'class': 'vt-dcard-label' }, [ _('Channel') ]), E('div', { 'class': 'vt-dcard-value' }, [ r.channel ? String(r.channel) : fmt.DASH ]), E('div', { 'class': 'vt-dcard-sub' }, [ [ r.width ? _('%s MHz').format(r.width) : null, r.freq ? fmt.mhz(r.freq) : null ].filter(Boolean).join(' · ') ]) ]),
-					E('div', { 'class': 'vt-dcard' }, [ E('div', { 'class': 'vt-dcard-label' }, [ _('Traffic') ]), E('div', { 'class': 'vt-dcard-value' }, [ rr ? fmt.bits(rr.tx + rr.rx) : fmt.DASH ]), E('div', { 'class': 'vt-dcard-sub vt-tn' }, [ rr ? '↓ ' + fmt.bits(rr.tx) + ' · ↑ ' + fmt.bits(rr.rx) : '' ]), sparkline(this.st.hist.net[r.id] || [], [ 2, 1 ], 0, 'vt-spark-' + (r.band || 'x'), { min: 1000, scale: bitsLabel }) ])
+					E('div', { 'class': 'vt-dcard' }, [ E('div', { 'class': 'vt-dcard-label' }, [ _('Traffic') ]), E('div', { 'class': 'vt-dcard-value' }, [ rr ? fmt.bits(rr.tx + rr.rx) : fmt.DASH ]), E('div', { 'class': 'vt-dcard-sub vt-tn' }, [ rr ? '↓ ' + fmt.bits(rr.tx) + ' · ↑ ' + fmt.bits(rr.rx) : '' ]), sparkline(this.st.hist.net[r.id] || [], [ 2, 1 ], 0, 'vt-spark-' + (r.band || 'x'), { min: 1000, scale: bitsLabel, ceil: rateCeil }) ])
 				]),
 				ins.notes.length ? E('ul', { 'class': 'vt-notes' }, ins.notes.map(function(n) { return E('li', { 'class': 'vt-note vt-note-' + n.level }, [ icon(n.level === 'warn' ? 'warn' : 'info', 'vt-ico-sm'), E('span', {}, [ n.text ]) ]); })) : '',
 				this.section(_('Radio', 'vantage'), [ E('dl', { 'class': 'vt-kvs' }, [
@@ -5125,7 +5152,7 @@ return view.extend({
 					E('div', { 'class': 'vt-dcard' }, [ E('div', { 'class': 'vt-dcard-label' }, [ _('From network') ]), E('div', { 'class': 'vt-dcard-value' }, [ r ? fmt.bits(r.rx) : fmt.DASH ]), E('div', { 'class': 'vt-dcard-sub' }, [ _('received on %s').format(up.dev) ]) ]),
 					E('div', { 'class': 'vt-dcard' }, [ E('div', { 'class': 'vt-dcard-label' }, [ _('To network') ]), E('div', { 'class': 'vt-dcard-value' }, [ r ? fmt.bits(r.tx) : fmt.DASH ]), E('div', { 'class': 'vt-dcard-sub' }, [ _('sent on %s').format(up.dev) ]) ])
 				]),
-				E('div', { 'class': 'vt-dspark' }, [ sparkline(hist || [], [ 1, 2 ], 0, 'vt-spark-up', { min: 1000, scale: bitsLabel }) ]),
+				E('div', { 'class': 'vt-dspark' }, [ sparkline(hist || [], [ 1, 2 ], 0, 'vt-spark-up', { min: 1000, scale: bitsLabel, ceil: rateCeil }) ]),
 				natText ? E('ul', { 'class': 'vt-notes' }, [ E('li', { 'class': 'vt-note vt-note-info' }, [ icon('info', 'vt-ico-sm'), E('span', {}, [ natText ]) ]) ]) : '',
 				this.section(_('Link', 'vantage'), [ E('dl', { 'class': 'vt-kvs' }, [
 					kv(_('Carrier'), up.carrier === false ? _('No link') : _('Up', 'vantage')),
