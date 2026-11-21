@@ -6,12 +6,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=redsocks2
-PKG_VERSION:=0.73.1
+PKG_VERSION:=0.73.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=redsocks-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/kenzok8/redsocks/tar.gz/release-$(PKG_VERSION)?
-PKG_HASH:=b8049f747f5b77dacc93d322bf870f458d37423361aeb6a078c0c8dcbc75c05d
+PKG_HASH:=5c717a5fa6af2b1ef26f985079c43baee052a4169fedbed8921cca6e8f39a041
 PKG_BUILD_DIR:=$(BUILD_DIR)/redsocks-release-$(PKG_VERSION)
 
 PKG_MAINTAINER:=semigodking <semigodking@gmail.com>

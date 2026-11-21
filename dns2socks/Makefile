@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dns2socks
-PKG_VERSION:=2.2
+PKG_VERSION:=2.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/kenzok8/dns2socks/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=790f7ca5ec07677a699121eb071c9e66cdafe65a22bb229eed7fd3cf215631d2
+PKG_HASH:=af11e238a98d5ee21175bfb145b0467e0eb8cab927d233bffcd6248907afeded
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_LICENSE:=BSD-3-Clause

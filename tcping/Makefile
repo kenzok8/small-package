@@ -5,12 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=tcping
-PKG_VERSION:=0.5
+PKG_VERSION:=0.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/kenzok8/tcping/tar.gz/$(PKG_VERSION)?
-PKG_HASH:=10a9af5062c2eac8a2d60776404565052c875b4582b378248163facc47dbb10f
+PKG_HASH:=4e78a87e675974fa3b8ee389ba00758c3fa43c895291dac392b7a3ae649e4f31
 
 PKG_LICENSE:=GPL-2.0-only
 PKG_LICENSE_FILE:=license.txt
