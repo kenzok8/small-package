@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 PKG_NAME:=changeguard
-PKG_VERSION:=0.3.3
-PKG_RELEASE:=2
+PKG_VERSION:=0.3.5
+PKG_RELEASE:=1
 include ./release.mk
 PKG_SOURCE:=changeguard-$(PKG_VERSION)-$(ARCH).tar.gz
 PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/changeguard-runtime-v$(PKG_VERSION)/
@@ -17,7 +17,7 @@ define Package/changeguard
  TITLE:=Device change protection CLI
  DEPENDS:=@(x86_64||aarch64) +linkspace +block-mount
  # Build matrix: OpenWrt 21.02 OPKG uses -N; 25.12 APK uses -rN.
- EXTRA_DEPENDS:=linkspace (>=0.3.2-$(if $(CONFIG_USE_APK),r)2)
+ EXTRA_DEPENDS:=linkspace (>=0.3.3-$(if $(CONFIG_USE_APK),r)1)
 endef
 
 define Build/Configure

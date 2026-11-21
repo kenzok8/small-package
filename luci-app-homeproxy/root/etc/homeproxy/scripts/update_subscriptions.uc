@@ -145,6 +145,18 @@ function bool_to_uci(value) {
 	return null;
 }
 
+function parse_vmess_insecure(...values) {
+	for (let value in values) {
+		if (type(value) === 'string')
+			value = lc(trim(value));
+		if (value in [true, 1, 1.0, '1', 'true', 'yes'])
+			return '1';
+		if (value in [false, 0, 0.0, '0', 'false', 'no'])
+			return '0';
+	}
+	return '0';
+}
+
 function values_equal(left, right) {
 	if (!has_value(left) && !has_value(right))
 		return true;
@@ -337,7 +349,8 @@ function parse_mihomo_proxy(proxy) {
 		};
 		break;
 	}
-	case 'vmess':
+	case 'vmess': {
+		const tls = proxy.tls === true;
 		config = {
 			label: proxy.name,
 			type: 'vmess',
@@ -347,15 +360,17 @@ function parse_mihomo_proxy(proxy) {
 			vmess_alterid: has_value(proxy.alterId) ? to_string(proxy.alterId) : null,
 			vmess_encrypt: proxy.cipher,
 			packet_encoding: proxy['packet-encoding'],
-			tls: (proxy.tls === true) ? '1' : '0',
+			tls: tls ? '1' : '0',
 			tls_sni,
 			tls_alpn: normalize_alpn(proxy.alpn),
-			tls_insecure,
+			tls_insecure: tls ? parse_vmess_insecure(proxy['skip-cert-verify'],
+				proxy.insecure, proxy.allowInsecure) : '0',
 			tls_utls: sing_features.with_utls ? tls_fingerprint : null,
 			tcp_fast_open: (proxy.tfo === true) ? '1' : null
 		};
 		apply_transport_opts(config, proxy);
 		break;
+	}
 	case 'hysteria2':
 		if (!sing_features.with_quic) {
 			log_missing_quic(proxy.type, proxy.name || proxy.server);
@@ -877,7 +892,7 @@ function parse_uri(uri) {
 			}
 
 			break;
-		case 'vmess':
+		case 'vmess': {
 			/* "Lovely" shadowrocket format */
 			if (match(uri, /&/)) {
 				log(sprintf('Skipping unsupported %s format.', uri[0]));
@@ -915,17 +930,19 @@ function parse_uri(uri) {
 			 * }
 			 */
 
+			const tls = uri.tls === 'tls';
 			config = {
 				label: uri.ps ? urldecode(uri.ps) : null,
 				type: 'vmess',
 				address: uri.add,
-				port: uri.port,
+				port: to_string(uri.port),
 				uuid: uri.id,
-				vmess_alterid: uri.aid,
+				vmess_alterid: to_string(uri.aid),
 				vmess_encrypt: uri.scy || 'auto',
 				vmess_global_padding: '1',
 				transport: (uri.net !== 'tcp') ? uri.net : null,
-				tls: (uri.tls === 'tls') ? '1' : '0',
+				tls: tls ? '1' : '0',
+				tls_insecure: tls ? parse_vmess_insecure(uri.allowInsecure, uri.insecure) : '0',
 				tls_sni: uri.sni || uri.host,
 				tls_alpn: uri.alpn ? split(uri.alpn, ',') : null,
 				tls_utls: sing_features.with_utls ? uri.fp : null,
@@ -959,6 +976,7 @@ function parse_uri(uri) {
 			}
 
 			break;
+		}
 		}
 	}
 
