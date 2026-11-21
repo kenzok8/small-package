@@ -7,12 +7,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=trojan
-PKG_VERSION:=1.17.2
+PKG_VERSION:=1.17.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=Trojan-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/kenzok8/trojan/tar.gz/v$(PKG_VERSION)?
-PKG_HASH:=922e18272e06a61dd91a098716e738e580b74431443583dda3c5e9ee1a446e2e
+PKG_HASH:=c4c9443590ec3c50de90171359e43365749dea5c26fd111087cbf15dbdd38bb6
 
 PKG_BUILD_PARALLEL:=1
 PKG_BUILD_DEPENDS:=openssl
@@ -32,7 +32,7 @@ TARGET_CXXFLAGS += -flto
 TARGET_LDFLAGS += -flto
 
 # CXX standard
-TARGET_CXXFLAGS += -std=c++11
+TARGET_CXXFLAGS += -std=c++17
 TARGET_CXXFLAGS := $(filter-out -O%,$(TARGET_CXXFLAGS)) -O3
 TARGET_CXXFLAGS += -ffunction-sections -fdata-sections
 TARGET_LDFLAGS += -Wl,--gc-sections
