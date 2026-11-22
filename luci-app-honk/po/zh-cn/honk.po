@@ -195,6 +195,9 @@ msgstr "配置"
 msgid "Configuration applied and Honk is running."
 msgstr "配置已生效，Honk 已启动。"
 
+msgid "Configuration applied and Honk is running. The listener secret moved to secrets.dae."
+msgstr "配置已生效，Honk 已启动。监听密钥已移到 secrets.dae，Doona 可以继续编辑配置。"
+
 msgid "Configuration applied."
 msgstr "配置已应用。"
 

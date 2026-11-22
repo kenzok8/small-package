@@ -18,10 +18,10 @@ honk_lifecycle_detect_pause() {
 }
 honk_lifecycle_detect_pause
 
-# 字段归属：自带 global/experimental → file；只 include system.dae（且写法规范）→ system；
-# 其余一律 unknown。写法不规范时不猜，直接拒绝。
-# 只认顶层 include 块里的条目，控制脚本与 rpcd 共用。
-config_includes_system() {
+# Layout owner: own global/experimental -> file; include system.dae only -> system;
+# anything else is unknown and refused. secrets.dae holds secrets and is allowed in both.
+# Only top-level include entries count; control.sh and rpcd share this.
+config_include_entries() {
 	awk '
 		BEGIN { inblock = 0 }
 		{
@@ -38,22 +38,31 @@ config_includes_system() {
 			for (i = 1; i <= n; i++) {
 				entry = parts[i]
 				gsub(/^[[:space:]\047"]+|[[:space:]\047"]+$/, "", entry)
-				if (entry == "system.dae") { print "yes"; exit }
+				if (entry != "") print entry
 			}
 			if (line ~ /\}/) inblock = 0
 		}
 	' "$1"
 }
+config_includes_entry() {
+	config_include_entries "$1" | grep -qxF "$2"
+}
+config_includes_system() {
+	config_includes_entry "$1" system.dae && echo yes
+}
+config_includes_secrets() {
+	config_includes_entry "$1" "${HONK_SECRETS_FILE:-secrets.dae}" && echo yes
+}
 config_owner() {
 	config_owner_file=${1:-/etc/honk/config.dae}
 	[ -f "$config_owner_file" ] && [ ! -L "$config_owner_file" ] || { echo unknown; return 0; }
-	own=$(awk '/^[[:space:]]*(global|experimental)[[:space:]]*\{/ { print "1"; exit }' "$config_owner_file")
-	inc=$(awk '
+	config_owner_state=$(awk '
 		{
 			line = $0
 			sub(/\r$/, "", line)
 			if (!in_block) {
-				# 只接受「include {」独占一行；同行带内容一律算不规范
+				if (line ~ /^[[:space:]]*(global|experimental)[[:space:]]*\{/) own = 1
+				# Only a lone `include {` line counts; text on the same line is irregular
 				if (line ~ /^[[:space:]]*include[[:space:]]*\{[[:space:]]*$/) { in_block = 1; next }
 				if (line ~ /^[[:space:]]*include[[:space:]]*\{/) { print "irregular"; next }
 				next
@@ -62,31 +71,42 @@ config_owner() {
 			if (line ~ /^[[:space:]]*\}/ || line ~ /\{/) { print "irregular"; next }
 			entry = line
 			sub(/#.*/, "", entry)
-			gsub(/^[[:space:]]+|[[:space:]]+$/, "", entry)
-			gsub(/["\047]/, "", entry)
+			gsub(/^[[:space:]\047"]+|[[:space:]\047"]+$/, "", entry)
 			if (entry == "") next
-			if (entry == "system.dae") print "system"
-			else if (entry ~ /^[A-Za-z0-9._-]+$/) print "other"
+			if (entry ~ /^[A-Za-z0-9._-]+$/) print "entry=" entry
 			else print "irregular"
 		}
-		END { if (in_block) print "irregular" }
+		END { if (in_block) print "irregular"; if (own) print "own" }
 	' "$config_owner_file")
-	has_system=
-	has_bad=
-	case "$inc" in *system*) has_system=1 ;; esac
-	case "$inc" in *other*|*irregular*) has_bad=1 ;; esac
-	if [ -n "$own" ]; then
-		[ -z "$inc" ] && echo file || echo unknown
-	elif [ -n "$has_bad" ]; then
-		echo unknown
-	elif [ -n "$has_system" ]; then
+	owner_own=
+	owner_system=
+	owner_other=
+	while IFS= read -r owner_token; do
+		case "$owner_token" in
+			own) owner_own=1 ;;
+			irregular) owner_other=1 ;;
+			entry=*)
+				case "${owner_token#entry=}" in
+					system.dae) owner_system=1 ;;
+					"${HONK_SECRETS_FILE:-secrets.dae}") ;;
+					*) owner_other=1 ;;
+				esac
+				;;
+			esac
+	done <<EOF
+$config_owner_state
+EOF
+	[ -z "$owner_other" ] || { echo unknown; return 0; }
+	if [ -n "$owner_own" ]; then
+		[ -z "$owner_system" ] && echo file || echo unknown
+	elif [ -n "$owner_system" ]; then
 		echo system
 	else
 		echo unknown
 	fi
 }
 
-# 启动轮询用 0.25 秒粒度，核心就绪后尽快返回；没有 timeout 命令时退回 1 秒。
+# 0.25s polls so startup returns as soon as the core is ready; 1s without timeout(1).
 honk_lifecycle_pause() {
 	if [ "$HONK_LIFECYCLE_TICKS" -gt 1 ]; then
 		timeout 0.25 sleep 1 2>/dev/null

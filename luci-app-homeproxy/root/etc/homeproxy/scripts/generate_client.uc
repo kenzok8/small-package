@@ -790,8 +790,17 @@ if (!isEmpty(main_node)) {
 	}
 
 	if (tailscale_enabled) {
-		push_route(config.route.rules, { inbound: tailscale_tag }, 'direct-out');
+		const direct_match = { inbound: tailscale_tag };
+		if (tailscale_advertise_exit_node) {
+			/* Keep local services and advertised subnets reachable directly. */
+			direct_match.ip_is_private = true;
+			if (length(tailscale_advertise_routes))
+				direct_match.ip_cidr = tailscale_advertise_routes;
+		}
+		push_route(config.route.rules, direct_match, 'direct-out');
 		push_route(config.route.rules, { preferred_by: tailscale_tag }, tailscale_tag);
+		if (tailscale_advertise_exit_node)
+			push(config.route.rules, { inbound: tailscale_tag, port: 53, action: 'hijack-dns' });
 	}
 	add_control_pre_match_fallback_rules(config.route.rules, pre_match_control);
 

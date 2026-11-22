@@ -25,6 +25,7 @@ CAPABILITY=$TXN_DIR/capability
 if [ "${HONK_MAINT_LIBRARY:-0}" != 1 ]; then
 	. /usr/share/honk/lock.sh || exit 1
 	. /usr/share/honk/lifecycle.sh || exit 1
+	. /usr/share/honk/secrets.sh || exit 1
 	. /usr/share/libubox/jshn.sh || exit 1
 	[ -r /lib/functions.sh ] && . /lib/functions.sh
 fi
@@ -398,8 +399,8 @@ check_root_file() {
 
 safe_relpath() {
 	case "$1" in ''|/*|*..*|*//*|*/./*|./*|*/.) return 1 ;; esac
-	# 空白、控制字符、通配符、反斜杠会打乱 tar 成员解析与解包，一律拒绝；
-	# 中文等 UTF-8 名放行（路由上不一定有 od/hexdump，只能用 awk 的字符类判）。
+	# Whitespace, control chars, globs and backslashes break tar parsing; refuse them.
+	# UTF-8 names pass (no od/hexdump on a router, so awk char classes decide).
 	printf '%s\n' "$1" | LC_ALL=C awk '
 		$0 ~ /[[:space:][:cntrl:]]/ { bad = 1 }
 		$0 ~ /\*/ || $0 ~ /\?/ || $0 ~ /\[/ || $0 ~ /\\/ { bad = 1 }
@@ -454,7 +455,7 @@ load_uci_values() {
 	case "$u_config_mode" in ''|managed|manual) ;; *) return 1 ;; esac
 	case "$u_geo_auto:$u_geo_auto_freq" in 0:daily|0:weekly|1:daily|1:weekly) ;; *) return 1 ;; esac
 	[ "$u_config" = /etc/honk/config.dae ] || return 1
-	# 旧端口和网络选项仅随备份保留，不再作为运行配置的校验来源。
+	# Legacy port and network options are backup-only, no longer a run-config source.
 }
 
 check_sqlite() {
@@ -518,7 +519,7 @@ collect_tree() {
 		is_excluded "$collect_path" && continue
 		safe_relpath "$collect_path" || {
 			collect_error=unsafe_honk_file_name
-			# 文件名进面板日志（维护→日志→维护），否则用户不知道是哪个文件。
+			# Log the file name so the panel shows which file failed.
 			logger -t honk-maintenance "unsafe file name: $collect_path" 2>/dev/null || :
 			printf '%s\n' "unsafe file name: $collect_path" >&2
 			return 1
@@ -641,7 +642,7 @@ check_tar_members() {
 		{
 			if (NF < 2 || substr($1,1,1) != "-") exit 1
 			name=$NF
-			# 空白、控制字符、通配符会打乱成员名解析，其余（含 UTF-8）放行。
+			# Whitespace, control chars and globs break member parsing; the rest passes.
 			if (name ~ /[[:space:][:cntrl:]]/) exit 1
 			if (name ~ /\*/ || name ~ /\?/ || name ~ /\[/ || name ~ /\\/) exit 1
 			if (name ~ /^\// || name ~ /(^|\/)\.\.(\/|$)/ || name ~ /(^|\/)\.($|\/)/ || name ~ /\/\//) exit 1
@@ -717,7 +718,7 @@ parse_uci_file() {
 	[ "$u_initialized" = 1 ] || [ ! -f "$restore_stage/etc/honk/state/honk.db" ] || return 1
 }
 
-# 清订阅、节点、策略、历史与缓存，保留管理员记录和 geo 设置。
+# Wipe subscriptions, nodes, policies, history and caches; keep admin and geo.
 purge_business_state() {
 	purge_db=$1
 	[ -f "$purge_db" ] && [ ! -L "$purge_db" ] || return 0
@@ -791,7 +792,7 @@ write_live_system() {
 	live_ip=$3
 	live_port=$4
 	live_initialized=$5
-	# 第 6 个参数决定 NFQUEUE：false 才关闭，其余按开启。
+	# The 6th argument drives NFQUEUE: only false disables it.
 	live_nfqueue=$6
 	case "$live_nfqueue" in true|false) ;; *) live_nfqueue=true ;; esac
 	if [ "$live_initialized" = 1 ]; then live_host=$live_ip; else live_host=127.0.0.1; fi
@@ -848,7 +849,7 @@ validate_candidate() {
 	config_tree=$candidate/etc/honk
 	mkdir -p "$temp_dir/uci-tmp" || return 1
 	load_uci_values uci "$uci_dir" || return 1
-	# 配置文件包含运行值，旧管理标志不再触发 UCI 重生或字段覆盖。
+	# The file holds runtime values; the old managed flag no longer regenerates them.
 	validate_config_tree "$config_tree" '' '' "$u_port" "$u_initialized" 1 || return 2
 	if [ "$state" = present ] || { [ "$state" = preview ] && { [ -e "$config_tree/state/honk.db" ] || [ -L "$config_tree/state/honk.db" ]; }; }; then
 		archive_sqlite_check "$config_tree/state/honk.db" || return 1
@@ -1059,8 +1060,8 @@ restore() {
 	json_result true "" restored
 }
 
-# 重置目标由调用方显式给出，执行时按实时地址复核；不猜网络名或设备名。
-# 目标必须是非 loopback 的活动设备，且该地址确实挂在其上。
+# The caller names the reset target and it is re-checked live; never guessed.
+# The target must be an up, non-loopback device that really holds that address.
 reset_verify_target() {
 	case "$reset_target_device" in ''|lo|lo:*|*[!A-Za-z0-9_.:-]*) return 1 ;; esac
 	case "$reset_target_ip" in ''|127.*|*[!0-9.]*) return 1 ;; esac
@@ -1108,6 +1109,9 @@ reset_data() {
 	case "$reset_wan_device" in ''|*[!A-Za-z0-9_.:-]*) reset_wan_device= ;; esac
 	"$CONTROL" local-direct-file "$reset_stage/etc/honk/config.dae" "$reset_target_device" "$reset_wan_device" || { error local_direct_render_failed; return 1; }
 	chmod 0600 "$reset_stage/etc/honk/config.dae" || { error reset_stage_failed; return 1; }
+	# No secret after reset: comments only, so config.dae stays writable.
+	honk_secrets_render > "$reset_stage/etc/honk/secrets.dae" || { error reset_stage_failed; return 1; }
+	chmod 0600 "$reset_stage/etc/honk/secrets.dae" || { error reset_stage_failed; return 1; }
 	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" import honk < "$temp_dir/old-uci" || { error reset_profile_stage_failed; return 1; }
 	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" set honk.main.enabled=0 || { error reset_profile_stage_failed; return 1; }
 	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" set honk.main.boot_enabled=0 || { error reset_profile_stage_failed; return 1; }
@@ -1120,7 +1124,7 @@ reset_data() {
 	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" set honk.main.system_managed=1 || { error reset_profile_stage_failed; return 1; }
 	uci -c "$reset_uci" -t "$temp_dir/uci-tmp" commit honk || { error reset_profile_stage_failed; return 1; }
 	load_uci_values uci "$reset_uci" || { error reset_profile_stage_failed; return 1; }
-	# 重置保留一个未引用的兼容文件，不再依赖旧网络选项生成运行配置。
+	# Keep an unreferenced system.dae for compatibility; runtime no longer uses it.
 	write_live_system "$reset_stage/etc/honk/system.dae" "$reset_target_device" "$reset_target_ip" "$u_port" 0 true || { error system_config_render_failed; return 1; }
 	chmod 0600 "$reset_stage/etc/honk/system.dae" || { error system_config_render_failed; return 1; }
 	reset_candidate=$temp_dir/reset-candidate
@@ -1130,7 +1134,7 @@ reset_data() {
 	validate_candidate "$reset_candidate" "$reset_uci" absent
 	validate_rc=$?
 	[ "$validate_rc" = 0 ] || { [ "$validate_rc" = 2 ] && error default_config_unsupported || error default_config_validation_failed; return 1; }
-	# 重置前留一份旧库，降级或取证时还能取回。
+	# Archive the old store before reset for downgrade or forensics.
 	reset_db_archive=/etc/honk-pre-reset
 	if [ -f "$HONK_STATE" ] && [ ! -L "$HONK_STATE" ]; then
 		mkdir -p "$reset_db_archive" 2>/dev/null || :
@@ -1146,7 +1150,7 @@ reset_data() {
 	foreign_core_running && { restore_abort unmanaged_core_running; return 1; }
 	checkpoint_sqlite || { restore_abort sqlite_checkpoint_failed; return 1; }
 	rm -rf "$reset_stage/etc/honk" || { restore_abort reset_stage_failed; return 1; }
-	stage_reset_tree "$HONK_ROOT" "$reset_stage/etc/honk" "$reset_candidate/etc/honk/system.dae" "$reset_candidate/etc/honk/config.dae" || { restore_abort reset_stage_failed; return 1; }
+	stage_reset_tree "$HONK_ROOT" "$reset_stage/etc/honk" "$reset_candidate/etc/honk/system.dae" "$reset_candidate/etc/honk/config.dae" "$reset_candidate/etc/honk/secrets.dae" || { restore_abort reset_stage_failed; return 1; }
 	purge_business_state "$reset_stage/etc/honk/state/honk.db" || { restore_abort state_reset_failed; return 1; }
 	reset_archive_state=absent
 	if [ -f "$reset_stage/etc/honk/state/honk.db" ]; then reset_archive_state=present; fi
@@ -1185,14 +1189,20 @@ stage_reset_tree() {
 	stage_target=$2
 	stage_system=$3
 	stage_config=$4
+	stage_secrets=${5:-}
 	[ -d "$stage_source" ] && [ ! -L "$stage_source" ] || return 1
 	[ -f "$stage_system" ] && [ ! -L "$stage_system" ] || return 1
 	[ -f "$stage_config" ] && [ ! -L "$stage_config" ] || return 1
+	[ -z "$stage_secrets" ] || { [ -f "$stage_secrets" ] && [ ! -L "$stage_secrets" ]; } || return 1
 	mkdir -p "$stage_target/state" || return 1
 	cp "$stage_config" "$stage_target/config.dae" || return 1
 	cp "$stage_system" "$stage_target/system.dae" || return 1
 	chmod 0600 "$stage_target/config.dae" || return 1
 	chmod 0600 "$stage_target/system.dae" || return 1
+	if [ -n "$stage_secrets" ]; then
+		cp "$stage_secrets" "$stage_target/secrets.dae" || return 1
+		chmod 0600 "$stage_target/secrets.dae" || return 1
+	fi
 	chmod 0700 "$stage_target/state" || return 1
 	if [ -e "$stage_source/state/honk.db" ] || [ -L "$stage_source/state/honk.db" ]; then
 		[ -f "$stage_source/state/honk.db" ] && [ ! -L "$stage_source/state/honk.db" ] || return 1

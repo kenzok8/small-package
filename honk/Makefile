@@ -5,8 +5,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=honk
-PKG_VERSION:=2026.11.18.1
-PKG_RELEASE:=2
+PKG_VERSION:=2026.11.22.1
+PKG_RELEASE:=1
 
 # Pinned honk-core revision (upstream daeuniverse/honk main), cross-compiled by
 # ci/build-core.sh. Every release run publishes its core archives under an
@@ -77,6 +77,7 @@ endef
 define Package/honk/conffiles
 /etc/config/honk
 /etc/honk/config.dae
+/etc/honk/secrets.dae
 /etc/honk/system.dae
 /etc/honk/manual-config.dae
 /etc/honk/managed-config.dae
@@ -107,7 +108,8 @@ define Package/honk/install
 	$(INSTALL_DIR) $(1)/etc/honk
 	$(INSTALL_CONF) $(CURDIR)/files/config.dae $(1)/etc/honk/config.dae
 	$(INSTALL_CONF) $(CURDIR)/files/system.dae $(1)/etc/honk/system.dae
-	chmod 0600 $(1)/etc/honk/system.dae
+	$(INSTALL_CONF) $(CURDIR)/files/secrets.dae $(1)/etc/honk/secrets.dae
+	chmod 0600 $(1)/etc/honk/system.dae $(1)/etc/honk/secrets.dae
 	$(INSTALL_DIR) $(1)/etc/honk/state
 	chmod 0700 $(1)/etc/honk/state
 
@@ -126,6 +128,7 @@ define Package/honk/install
 	$(INSTALL_BIN) $(CURDIR)/files/control.sh $(1)/usr/share/honk/control.sh
 	$(INSTALL_BIN) $(CURDIR)/files/lock.sh $(1)/usr/share/honk/lock.sh
 	$(INSTALL_BIN) $(CURDIR)/files/lifecycle.sh $(1)/usr/share/honk/lifecycle.sh
+	$(INSTALL_DATA) $(CURDIR)/files/secrets.sh $(1)/usr/share/honk/secrets.sh
 	$(INSTALL_BIN) $(CURDIR)/files/maintenance.sh $(1)/usr/share/honk/maintenance.sh
 	$(INSTALL_BIN) $(CURDIR)/files/job.sh $(1)/usr/share/honk/job.sh
 	$(INSTALL_BIN) $(CURDIR)/files/update.sh $(1)/usr/share/honk/update.sh

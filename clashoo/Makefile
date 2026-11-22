@@ -6,7 +6,7 @@ PKG_UPSTREAM_TAG:=v$(PKG_UPSTREAM_VERSION)
 PKG_SHORT_SHA:=0455d0d
 
 PKG_VERSION:=2026.11.12.$(PKG_UPSTREAM_VERSION)
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-stable-$(PKG_UPSTREAM_TAG)-$(PKG_SHORT_SHA).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-stable-$(PKG_UPSTREAM_TAG)-$(PKG_SHORT_SHA)
@@ -36,7 +36,7 @@ define Package/clashoo
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Clashoo (Mihomo)
-  DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle +yq +firewall4 +ip-full +coreutils-nohup +coreutils-timeout +kmod-inet-diag +kmod-nft-socket +kmod-nft-tproxy +kmod-tun +kmod-dummy +unzip
+  DEPENDS:=$(GO_ARCH_DEPENDS) +ca-bundle +curl +yq +firewall4 +ip-full +coreutils-nohup +coreutils-timeout +kmod-inet-diag +kmod-nft-socket +kmod-nft-tproxy +kmod-tun +kmod-dummy +unzip
   PROVIDES:=mihomo clash-meta
 endef
 

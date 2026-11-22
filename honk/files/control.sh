@@ -11,6 +11,7 @@ HONK_MAINT_CAP_FILE=$HONK_MAINT_DIR/capability
 . /lib/functions.sh
 . /usr/share/honk/lock.sh
 . /usr/share/honk/lifecycle.sh
+. /usr/share/honk/secrets.sh
 
 fail() {
 	echo "honk: $*" >&2
@@ -51,7 +52,7 @@ module_loaded() {
 	[ -d "/sys/module/$1" ] || grep -q "^$1 " /proc/modules
 }
 
-# check_config 从核心已解析配置缓存该值；缺少字段时不能猜测。
+# check_config caches this from the parsed core output; never guess when missing.
 nfqueue_enabled() {
 	[ "${runtime_nfqueue_enable:-}" = true ]
 }
@@ -99,8 +100,8 @@ check_network() {
 	ubus call "network.interface.$lan_network" status >/dev/null 2>&1 || { fail "选择的 LAN 网络在 netifd 里不存在，请在服务设置里重新选择"; return 1; }
 }
 
-# 按设备取本机地址（IPv4+IPv6），跳过链路本地；不依赖 UCI 网络名。
-# WAN 设备名，用于把本机公网地址也纳入直连；取不到就跳过。
+# Local addresses (IPv4+IPv6) by device, link-local skipped; never by UCI name.
+# WAN device, so the local public address also stays direct; skipped when unknown.
 network_wan_device() {
 	. /lib/functions/network.sh 2>/dev/null || return 0
 	wan_dev=
@@ -124,7 +125,7 @@ local_direct_addresses() {
 	printf '%s\n' "$list"
 }
 
-# 只在显式时机（首次引导、重置、合并预览）把本机地址写进标记区块；启动不调用。
+# Only explicit paths (first boot, reset, merge preview) refresh the marker block.
 sync_local_direct() {
 	target=${1:-/etc/honk/config.dae}
 	begin='    # honk:local-direct-begin'
@@ -135,7 +136,7 @@ sync_local_direct() {
 	shift
 	ips=$(local_direct_addresses "$@")
 	[ -n "$ips" ] && rule="    dip($ips) && !dport(53) -> direct(must)" || rule=''
-	# honk-core 只认 .dae 后缀，临时文件必须与目标同目录
+	# honk-core only accepts .dae, and includes resolve from this directory
 	temp=$(dirname "$target")/.local-direct.$$.dae
 	( umask 077; : > "$temp" ) || return 1
 	awk -v begin="$begin" -v end="$end" -v rule="$rule" '
@@ -157,7 +158,7 @@ check_config() {
 	config_error=
 	[ "$config_file" = /etc/honk/config.dae ] || { fail "配置路径必须为 /etc/honk/config.dae"; return 1; }
 	[ -f /etc/honk/config.dae ] && [ ! -L /etc/honk/config.dae ] || { fail "/etc/honk/config.dae 不是普通文件（可能被替换成软链）"; return 1; }
-	# 状态库损坏时直接给可执行的提示，不要让核心抛 raw 错误。
+	# A fixable hint beats the core's raw error when the store is corrupt.
 	state_db=/etc/honk/state/honk.db
 	if [ -f "$state_db" ] && [ ! -L "$state_db" ] && command -v sqlite3 >/dev/null 2>&1; then
 		state_check=$(sqlite3 "$state_db" 'PRAGMA quick_check;' 2>/dev/null) || state_check=failed
@@ -180,7 +181,7 @@ check_config() {
 
 }
 
-# 顺序同 honk-core：设了 HONK_VMLINUX_BTF 就只认它
+# Same order as honk-core: HONK_VMLINUX_BTF wins when set
 kernel_btf_path() {
 	if [ -n "${HONK_VMLINUX_BTF:-}" ]; then
 		[ -r "$HONK_VMLINUX_BTF" ] && { printf '%s\n' "$HONK_VMLINUX_BTF"; return 0; }
@@ -334,9 +335,108 @@ check_runtime_ports() {
 	fi
 }
 
+# Move a listener secret still in config.dae into secrets.dae.
+# Any doubt leaves files untouched: read-only beats a service that will not start.
+migrate_listener_secret() {
+	_mig_cfg=/etc/honk/config.dae
+	_inc=
+	[ "$(config_owner "$_mig_cfg")" = file ] || return 0
+	config_includes_secrets "$_mig_cfg" >/dev/null && _inc=1
+	_mig_dir=$(mktemp -d /tmp/honk-secrets.XXXXXX) || return 0
+	honk_secrets_split "$_mig_cfg" "$_mig_dir/config.dae" "$_mig_dir/native" "$_mig_dir/clash"
+	_mig_status=$?
+	case "$_mig_status" in
+		0) ;;
+		1) rm -rf "$_mig_dir"; return 0 ;;
+		*) rm -rf "$_mig_dir"; logger -t honk "listener secret stays in config.dae: unsupported layout"; return 0 ;;
+	esac
+	_mig_native=$(cat "$_mig_dir/native" 2>/dev/null)
+	_mig_clash=$(cat "$_mig_dir/clash" 2>/dev/null)
+	{ [ -z "$_mig_native" ] || honk_secret_value_ok "$_mig_native"; } || { rm -rf "$_mig_dir"; logger -t honk "listener secret stays in config.dae: unsupported value"; return 0; }
+	{ [ -z "$_mig_clash" ] || honk_secret_value_ok "$_mig_clash"; } || { rm -rf "$_mig_dir"; logger -t honk "listener secret stays in config.dae: unsupported value"; return 0; }
+	if [ -z "$_inc" ]; then
+		{ printf 'include {\n    %s\n}\n' "$HONK_SECRETS_FILE"; cat "$_mig_dir/config.dae"; } > "$_mig_dir/config.inc" || { rm -rf "$_mig_dir"; return 0; }
+		mv -f "$_mig_dir/config.inc" "$_mig_dir/config.dae" || { rm -rf "$_mig_dir"; return 0; }
+	fi
+	# Validate inside /etc/honk: includes resolve from the entry directory.
+	_mig_candidate=/etc/honk/.config-secrets.$$.dae
+	cp "$_mig_dir/config.dae" "$_mig_candidate" && chmod 0600 "$_mig_candidate" || { rm -rf "$_mig_dir"; rm -f "$_mig_candidate"; return 0; }
+	if [ -z "$_inc" ]; then
+		_mig_secrets=/etc/honk/secrets.dae
+		cp -p "$_mig_secrets" "$_mig_dir/secrets.prev" 2>/dev/null && _mig_had=1
+		honk_secrets_render "$_mig_clash" "$_mig_native" > "$_mig_dir/secrets.new" || { rm -rf "$_mig_dir"; rm -f "$_mig_candidate"; return 0; }
+		_mig_temp=$(mktemp /etc/honk/.secrets.dae.XXXXXX) || { rm -rf "$_mig_dir"; rm -f "$_mig_candidate"; return 0; }
+		cp "$_mig_dir/secrets.new" "$_mig_temp" && chmod 0600 "$_mig_temp" && mv -f "$_mig_temp" "$_mig_secrets" || {
+			rm -f "$_mig_temp"
+			rm -rf "$_mig_dir"
+			rm -f "$_mig_candidate"
+			return 0
+		}
+	fi
+	if ! "$HONK_CORE" config validate --config "$_mig_candidate" >/dev/null 2>&1; then
+		if [ -z "$_inc" ] && [ "${_mig_had:-0}" = 1 ]; then
+			mv -f "$_mig_dir/secrets.prev" "$_mig_secrets" 2>/dev/null
+		elif [ -z "$_inc" ]; then
+			rm -f "$_mig_secrets"
+		fi
+		rm -rf "$_mig_dir"
+		rm -f "$_mig_candidate"
+		return 0
+	fi
+	if [ ! -e /etc/honk/config-before-secrets.dae ]; then
+		cp -p "$_mig_cfg" /etc/honk/config-before-secrets.dae 2>/dev/null && chmod 0600 /etc/honk/config-before-secrets.dae 2>/dev/null
+	fi
+	if ! mv -f "$_mig_candidate" "$_mig_cfg"; then
+		rm -f "$_mig_candidate"
+		rm -rf "$_mig_dir"
+		return 0
+	fi
+	chmod 0600 "$_mig_cfg" 2>/dev/null
+	# Only the secret is recorded; whether the API is enabled stays the user's choice.
+	[ -z "$_mig_clash" ] || uci -q set "honk.main.clash_api_secret=$_mig_clash" || :
+	[ -z "$_mig_clash" ] || uci -q commit honk || :
+	logger -t honk "listener secret moved to $HONK_SECRETS_FILE; config.dae is writable again"
+	rm -rf "$_mig_dir"
+	return 0
+}
+
+# A clash_api without a credential off loopback stays open to the whole LAN; close it.
+# Any doubt leaves the file alone, and a failed validation puts the original back.
+close_open_clash_api() {
+	_oc_cfg=/etc/honk/config.dae
+	[ -f "$_oc_cfg" ] && [ ! -L "$_oc_cfg" ] || return 0
+	# Nothing to do when a non-empty secret is already configured, here or in the include.
+	if grep -qE "^[[:space:]]*secret[[:space:]]*:[[:space:]]*['\"]?[^'\"[:space:]]" "$_oc_cfg" 2>/dev/null; then return 0; fi
+	if [ -f /etc/honk/secrets.dae ] && [ ! -L /etc/honk/secrets.dae ] &&
+		grep -qE "^[[:space:]]*secret[[:space:]]*:[[:space:]]*['\"]?[^'\"[:space:]]" /etc/honk/secrets.dae 2>/dev/null; then
+		return 0
+	fi
+	_oc_dir=$(mktemp -d /tmp/honk-clash.XXXXXX) || return 0
+	cp -p "$_oc_cfg" "$_oc_dir/orig.dae" || { rm -rf "$_oc_dir"; return 0; }
+	_oc_candidate=/etc/honk/.config-clash.$$.dae
+	cp -p "$_oc_cfg" "$_oc_candidate" && chmod 0600 "$_oc_candidate" || { rm -rf "$_oc_dir"; rm -f "$_oc_candidate"; return 0; }
+	_oc_bind=$(honk_secrets_blank_open_clash "$_oc_candidate") || { rm -rf "$_oc_dir"; rm -f "$_oc_candidate"; return 0; }
+	if ! "$HONK_CORE" config validate --config "$_oc_candidate" >/dev/null 2>&1; then
+		rm -rf "$_oc_dir"
+		rm -f "$_oc_candidate"
+		return 0
+	fi
+	if [ ! -e /etc/honk/config-before-clash.dae ]; then
+		cp -p "$_oc_dir/orig.dae" /etc/honk/config-before-clash.dae 2>/dev/null &&
+			chmod 0600 /etc/honk/config-before-clash.dae 2>/dev/null
+	fi
+	mv -f "$_oc_candidate" "$_oc_cfg" || { rm -rf "$_oc_dir"; rm -f "$_oc_candidate"; return 0; }
+	chmod 0600 "$_oc_cfg" 2>/dev/null
+	logger -t honk "clash API had no secret on $_oc_bind; disabled it (enable it from the panel with a secret)"
+	rm -rf "$_oc_dir"
+	return 0
+}
+
 preflight() {
 	load_settings
 	[ "$enabled" = 1 ] && [ "$initialized" = 1 ] || { fail "请先在 LuCI 里启用并完成初始化"; return 1; }
+	migrate_listener_secret
+	close_open_clash_api
 	maintenance_start_guard && check_config && check_kernel && no_honk_resources && check_conflicts && check_runtime_ports
 }
 
@@ -437,13 +537,45 @@ initialize_restore_main() {
 	mv -f "$_restore_temp" "$_restore_target" || { rm -f "$_restore_temp"; return 1; }
 }
 
+# Initialization writes the secret to secrets.dae; config.dae keeps the include.
+initialize_install_secrets() {
+	_sec_source=$1
+	_sec_target=/etc/honk/secrets.dae
+	[ -f "$_sec_source" ] && [ ! -L "$_sec_source" ] || { initialize_error=write_failed; return 1; }
+	if [ -e "$_sec_target" ] || [ -L "$_sec_target" ]; then
+		[ -f "$_sec_target" ] && [ ! -L "$_sec_target" ] || { initialize_error=write_failed; return 1; }
+		cp -p "$_sec_target" "$temp_dir/secrets.prev" || { initialize_error=write_failed; return 1; }
+		secrets_had_previous=1
+	fi
+	_sec_temp=$(mktemp /etc/honk/.secrets.dae.XXXXXX) || { initialize_error=write_failed; return 1; }
+	cp "$_sec_source" "$_sec_temp" && chmod 0600 "$_sec_temp" || { rm -f "$_sec_temp"; initialize_error=write_failed; return 1; }
+	mv -f "$_sec_temp" "$_sec_target" || { rm -f "$_sec_temp"; initialize_error=write_failed; return 1; }
+	secrets_written=1
+}
+
+initialize_restore_secrets() {
+	_sec_target=/etc/honk/secrets.dae
+	if [ "${secrets_had_previous:-0}" = 1 ] && [ -f "$temp_dir/secrets.prev" ]; then
+		_sec_temp=$(mktemp /etc/honk/.secrets.dae.XXXXXX) || return 1
+		cp -p "$temp_dir/secrets.prev" "$_sec_temp" && chmod 0600 "$_sec_temp" || { rm -f "$_sec_temp"; return 1; }
+		mv -f "$_sec_temp" "$_sec_target" || { rm -f "$_sec_temp"; return 1; }
+		return 0
+	fi
+	rm -f "$_sec_target"
+}
+
 cleanup_initialize() {
 	if mock_stop >/dev/null 2>&1; then
 		retain_snapshot=0
-		if [ "${initialize_committed:-0}" != 1 ] && { [ "${main_written:-0}" = 1 ] || [ "${main_install_pending:-0}" = 1 ]; }; then
-			initialize_restore_main "${main_config_path:-/etc/honk/config.dae}" "$old_main" "$candidate_hash" "$original_main_hash" || retain_snapshot=1
-			if [ ! -f "$old_uci" ] || { ! uci import honk < "$old_uci" || ! uci commit honk || ! chmod 0600 /etc/config/honk; }; then
-				retain_snapshot=1
+		if [ "${initialize_committed:-0}" != 1 ]; then
+			if [ "${secrets_written:-0}" = 1 ]; then
+				initialize_restore_secrets || retain_snapshot=1
+			fi
+			if [ "${main_written:-0}" = 1 ] || [ "${main_install_pending:-0}" = 1 ]; then
+				initialize_restore_main "${main_config_path:-/etc/honk/config.dae}" "$old_main" "$candidate_hash" "$original_main_hash" || retain_snapshot=1
+				if [ ! -f "$old_uci" ] || { ! uci import honk < "$old_uci" || ! uci commit honk || ! chmod 0600 /etc/config/honk; }; then
+					retain_snapshot=1
+				fi
 			fi
 		fi
 		if [ "$retain_snapshot" = 1 ]; then
@@ -457,7 +589,7 @@ cleanup_initialize() {
 	fi
 }
 
-# 交还面板管理时也用它，保证两条路径生成的 system.dae 一致。
+# Also used when handing the layout back, so both paths render it the same.
 render_runtime_system() {
 	_nfq=$(sed -n 's/^    nfqueue_enable: \(true\|false\)$/\1/p' /etc/honk/system.dae 2>/dev/null | head -n 1)
 	case "$_nfq" in true|false) ;; *) _nfq=true ;; esac
@@ -474,7 +606,7 @@ render_runtime_system() {
 	printf "}\n"
 }
 
-# 自管模式下 system.dae 归用户，面板一处都不改。
+# With a user-managed system.dae the panel does not touch it.
 system_is_managed() {
 	_managed=$(uci -q get honk.main.system_managed)
 	[ -z "$_managed" ] || [ "$_managed" = 1 ]
@@ -547,7 +679,7 @@ settings() {
 	json_get_type clash_port_type clash_api_port
 	json_get_var new_clash_secret clash_api_secret
 	json_get_type clash_secret_type clash_api_secret
-	# boot_enabled 已内置（恒为 1），前端不再提交，缺省就按当前值处理
+	# boot_enabled is implicit (always 1) and no longer submitted; keep the value
 	case "$boot_enabled_type" in ''|null|boolean) ;; *) echo '{"ok":false,"message":"invalid_boolean_settings"}'; return 1 ;; esac
 	case "$clash_enabled_type" in ''|null|boolean) ;; *) echo '{"ok":false,"message":"invalid_clash_api_settings"}'; return 1 ;; esac
 	case "$clash_port_type" in ''|null|int|integer) ;; *) echo '{"ok":false,"message":"invalid_clash_api_settings"}'; return 1 ;; esac
@@ -658,16 +790,16 @@ settings() {
 	echo '{"ok":true,"message":"settings_saved"}'
 }
 
-# 把 global/experimental 摊平成「路径=值」，取值和比对共用。
+# Flatten global/experimental into path=value lines, shared by lookup and compare.
 system_entries() {
-	# 逐字符扫描：大括号可以跟值写在同一行，按整行判断会把归属解析错。
+	# Scan character by character: a brace may share the line with a value.
 	awk '
 		function flush(stmt,   key, val, p, i, fields) {
 			gsub(/^[[:space:]]+|[[:space:]]+$/, "", stmt)
 			if (stmt == "" || d == 0) return
 			if (path[1] != "global" && path[1] != "experimental") return
 			if (stmt !~ /^[A-Za-z_][A-Za-z0-9_]*[[:space:]]*:/) return
-			# 一行写多个字段无法可靠拆分，交给调用方拒绝，不能只取第一个就当成全部。
+			# Several fields on one line cannot be split reliably; the caller refuses.
 			fields = stmt
 			gsub(/"[^"]*"/, "", fields)
 			gsub(/\047[^\047]*\047/, "", fields)
@@ -724,9 +856,9 @@ entry_value() {
 	awk -v key="$1" 'index($0, key "=") == 1 { print substr($0, length(key) + 2); exit }' "$2"
 }
 
-# 只删顶级 global/experimental，缺 include 时在第一块的位置补上，其余内容原样保留。
+# Drop only top-level global/experimental; insert the include before the first block.
 strip_system_blocks() {
-	# 第一遍只摸底：已有 include 就不重复插入，重复 include 会被核心判成循环引用。
+	# First pass probes only: a duplicate include is a cycle for the core.
 	awk '
 		NR == FNR { if ($0 ~ /^[[:space:]]*include[[:space:]]*\{/) added = 1; next }
 		skip {
@@ -783,7 +915,7 @@ detach_rollback() {
 	[ "$dr_ok" = 1 ]
 }
 
-# 把文件里的 global/experimental 交还 system.dae 管理；dry_run 只返回会变动的项。
+# Hand global/experimental back to system.dae; dry_run only reports changes.
 detach() {
 	if [ -e /etc/.honk-update/journal ] || [ -L /etc/.honk-update/journal ]; then detach_fail update_recovery_required; return 1; fi
 	detach_fail configuration_page_merge_preview_required
@@ -796,7 +928,7 @@ detach() {
 	case "$dry_run" in 1|true) dry_run=1 ;; *) dry_run=0 ;; esac
 	load_settings
 	[ "$initialized" = 1 ] || { detach_fail not_initialized; return 1; }
-	# 混合写法（include + 自带 global/experimental）也给一键切换；strip 后仍不规范会在下面被拒绝。
+	# Mixed layouts can switch too; anything irregular is refused below.
 	case "$settings_owner" in file|unknown) ;; *) detach_fail config_not_file_owned; return 1 ;; esac
 	[ -f /etc/honk/system.dae ] && [ ! -L /etc/honk/system.dae ] || { detach_fail system_config_unavailable; return 1; }
 	umask 077
@@ -806,7 +938,7 @@ detach() {
 	system_entries /etc/honk/config.dae > "$detach_dir/old.entries"
 	grep -q '^!unsupported$' "$detach_dir/old.entries" && { detach_fail detach_layout_unsupported; return 1; }
 
-	# 能对应到面板的值照搬，对不上的沿用面板现值。
+	# Copy values that map onto panel fields; keep the panel value for the rest.
 	file_device=$(entry_value global.lan_interface "$detach_dir/old.entries")
 	if [ -n "$file_device" ] && detach_network=$(device_network "$file_device"); then lan_network=$detach_network; fi
 	file_port=$(entry_value experimental.native_api.listen "$detach_dir/old.entries")
@@ -882,7 +1014,7 @@ detach() {
 		if detach_rollback; then detach_fail detach_failed_rolled_back; else logger -t honk "detach rollback failed; snapshot kept at $detach_dir"; trap 'honk_lock_release >/dev/null 2>&1' 0; detach_fail detach_rollback_failed; fi
 		return 1
 	fi
-	# 草稿原本就是旧配置时跟着换，免得配置页一直提示「有未应用的草稿」。
+	# Retarget the draft when it held the old file, so the page stops warning.
 	if [ -f /etc/honk/config-draft.dae ] && [ "$(sha256sum /etc/honk/config-draft.dae | awk '{print $1}')" = "$old_hash" ]; then
 		cp -p /etc/honk/config.dae /etc/honk/.config-draft.detach && mv -f /etc/honk/.config-draft.detach /etc/honk/config-draft.dae
 	fi
@@ -894,7 +1026,7 @@ diagnose() {
 	errors=""
 	managed_core_pid >/dev/null 2>&1 && running=1 || running=0
 	check_config >/dev/null 2>&1 || errors="$errors ${config_error:-invalid_package_config}"
-	# 内核检查自报具体缺哪项，面板才能给出可操作的提示
+	# Let the kernel check name the missing piece so the panel can act
 	check_kernel >/dev/null 2>&1 || errors="$errors ${kernel_error:-kernel_requirements_unmet}"
 	if [ "$running" != 1 ]; then
 		no_honk_resources >/dev/null 2>&1 || errors="$errors honk_resources_occupied"
@@ -1009,8 +1141,8 @@ initialize_preflight() {
 	return 0
 }
 
-# 允许安装模板中由本机地址同步器维护的 local-direct 标记区块变化。
-# 归一只剥渲染器会写回的运行字段，业务规则照原样比对。
+# Tolerate changes only inside the local-direct marker block the syncer owns.
+# Normalize only the runtime fields the renderer writes back; rules compare verbatim.
 normalize_default_config() {
 	awk '
 		/^    # honk:local-direct-begin$/ { print; inside = 1; next }
@@ -1038,21 +1170,22 @@ default_config_matches() {
 	return "$match_status"
 }
 
-# 初始化只改安装模板中的运行字段，业务规则保持原样。
+# Initialization only rewrites runtime fields of the installed template.
 render_initial_config() {
 	awk -v device="$1" -v host="$2" -v nfq="$3" -v port="$listen_port" \
-		-v api_enabled="$clash_api_enabled" -v api_port="$clash_api_port" -v api_secret="$clash_api_secret" '
+		-v api_enabled="$clash_api_enabled" -v api_port="$clash_api_port" '
 		/^    lan_interface: .*$/ { print "    lan_interface: " device; lan++; next }
 		/^    nfqueue_enable: (true|false)$/ { print "    nfqueue_enable: " nfq; queue++; next }
 		/^        listen: .*$/ { print "        listen: '\''" host ":" port "'\''"; listen++; next }
 		/^    clash_api \{$/ { in_clash = 1; clash++; print; next }
 		in_clash && /^        external_controller:/ {
-			# 关闭时写空串，等价于核心侧不监听，块本身保留以便再次启用。
+			# Disabled writes an empty value: no listener, but the block stays for re-enabling.
 			if (api_enabled == 1) print "        external_controller: '\''" host ":" api_port "'\''"
 			else print "        external_controller: '\'''\''"
 			controller++; next
 		}
-		in_clash && /^        secret:/ { print "        secret: '\''" api_secret "'\''"; secret++; next }
+		# No secret here: a secret field makes this file read-only for Doona.
+		in_clash && /^        secret:/ { next }
 		in_clash && /^    }$/ { in_clash = 0; print; next }
 		/^experimental \{$/ { in_experimental = 1; depth = 1; print; next }
 		in_experimental {
@@ -1061,7 +1194,6 @@ render_initial_config() {
 					print "    clash_api {"
 					print "        external_controller: '\''" host ":" api_port "'\''"
 					print "        external_ui: '\''/usr/share/honk/zashboard'\''"
-					print "        secret: '\''" api_secret "'\''"
 					print "        default_mode: Rule"
 					print "    }"
 					clash = 1; controller = 1; secret = 1
@@ -1075,8 +1207,8 @@ render_initial_config() {
 		{ print }
 		END {
 			if (lan != 1 || queue != 1 || listen != 1) exit 1
-			if (api_enabled == 1 && (clash != 1 || controller != 1 || secret != 1)) exit 1
-			# 关闭时允许 clash 块存在，块内 controller 会被渲染成空串。
+			if (api_enabled == 1 && (clash != 1 || controller != 1)) exit 1
+			# A disabled clash block may stay; its controller renders empty.
 		}
 	' "${4:-/etc/honk/config.dae}"
 }
@@ -1165,10 +1297,13 @@ EOF
 	[ "$status" = 200 ] || { echo '{"ok":false,"message":"persistence_login_failed"}'; return 1; }
 	mock_stop || { echo '{"ok":false,"message":"mock_core_stop_failed"}'; return 1; }
 
-	# 认证完成并停止最小 mock 后，再生成和校验完整 LAN 候选。
+	# After auth is set and the mock stops, render and check the full LAN candidate.
 	[ "$runtime_nfqueue_enable" = true ] || [ "$runtime_nfqueue_enable" = false ] || { echo '{"ok":false,"message":"nfqueue_runtime_unavailable"}'; return 1; }
 	mock_config=$temp_dir/candidate.dae
 	render_initial_config "$lan_device" "$lan_ip" "$runtime_nfqueue_enable" "$old_main" > "$mock_config" || { echo '{"ok":false,"message":"default_config_render_failed"}'; return 1; }
+	# Secrets get their own file: in config.dae they would make it read-only.
+	honk_secrets_render "$clash_api_secret" > "$temp_dir/secrets.dae" || { echo '{"ok":false,"message":"secrets_render_failed"}'; return 1; }
+	chmod 0600 "$temp_dir/secrets.dae" || { echo '{"ok":false,"message":"secrets_render_failed"}'; return 1; }
 	wan_device=$(network_wan_device)
 	sync_local_direct "$mock_config" "$lan_device" "$wan_device" || { echo '{"ok":false,"message":"local_direct_render_failed"}'; return 1; }
 	"$HONK_CORE" config validate --config "$mock_config" >/dev/null 2>&1 || { echo '{"ok":false,"message":"candidate_config_invalid"}'; return 1; }
@@ -1192,6 +1327,10 @@ EOF
 		echo '{"ok":false,"message":"main_config_write_failed"}'
 		return 1
 	fi
+	if ! initialize_install_secrets "$temp_dir/secrets.dae"; then
+		echo '{"ok":false,"message":"secrets_write_failed"}'
+		return 1
+	fi
 	uci set honk.main.initialized='1' && uci commit honk || {
 		echo '{"ok":false,"message":"uci_commit_failed_main_restore_pending"}'
 		return 1
@@ -1202,8 +1341,8 @@ EOF
 	echo '{"ok":true,"message":"administrator_initialized"}'
 }
 
-# 收尾被中断的维护事务：死锁优先清，再交给 maintenance.sh 回滚日志。
-# 只在确认没有 honk-core 在跑时动手，避免清掉别人正在用的锁。
+# Finish an interrupted maintenance transaction: clear a stale lock, then let
+# maintenance.sh roll back. Only when no honk-core runs, so no live lock is lost.
 recover() {
 	if [ -e /etc/.honk-update/journal ] || [ -L /etc/.honk-update/journal ]; then
 		echo '{"ok":false,"message":"update_recovery_required"}'
@@ -1232,7 +1371,7 @@ recover() {
 	echo '{"ok":true,"message":"transaction_recovered"}'
 }
 
-# 回滚后要核实文件、开关和服务，否则不能报 rolled_back。
+# Verify file, flags and service after rollback; otherwise never report rolled_back.
 system_rollback() {
 	_rs_file=$1; _rs_backup=$2; _rs_hash=$3; _rs_managed=$4; _rs_running=$5
 	rollback_state=incomplete
@@ -1251,7 +1390,7 @@ system_rollback() {
 		{ [ "$_rs_running" != 1 ] || [ "$_rs_ready" = 1 ]; }; then
 		rollback_state=rolled_back
 	else
-		# 回滚不完整时不能把备份一起删掉
+		# Keep the backup when the rollback is incomplete
 		_rs_keep=/tmp/honk-rollback-$(date +%s)-$(basename "$_rs_file")
 		cp -p "$_rs_backup" "$_rs_keep" 2>/dev/null && chmod 0600 "$_rs_keep" 2>/dev/null
 		logger -t honk "rollback incomplete: hash=$_rs_now managed=$_rs_flag ready=$_rs_ready backup=$_rs_keep"
@@ -1261,7 +1400,7 @@ system_rollback() {
 system_rollback_state() { printf '%s\n' "${rollback_state:-incomplete}"; }
 
 
-# 自管模式：候选 system.dae 以文件路径传入，校验的是新文件组成的完整配置。
+# User-managed mode: the candidate arrives by path and validates as a full tree.
 write_system_config() {
 	if [ -e /etc/.honk-update/journal ] || [ -L /etc/.honk-update/journal ]; then echo '{"ok":false,"message":"update_recovery_required"}'; return 1; fi
 	sys=/etc/honk/system.dae
@@ -1276,13 +1415,13 @@ write_system_config() {
 
 	umask 077
 	work=$(mktemp -d /tmp/honk-syssave.XXXXXX) || { echo '{"ok":false,"message":"temporary_storage_unavailable"}'; return 1; }
-	# 备份放稳定路径：进程被中断时也要能把文件和开关还原
+	# Backups live at a stable path so an interrupted process can still restore
 	committed=0
 	prev=/etc/honk/.system-prev.dae
 	cp -p "$sys" "$prev" || { rm -rf "$work"; echo '{"ok":false,"message":"system_config_backup_failed"}'; return 1; }
 	trap 'if [ "$committed" != 1 ]; then cp -p "$prev" "$sys" 2>/dev/null; [ -z "${old_managed:-}" ] || uci set honk.main.system_managed="$old_managed" >/dev/null 2>&1; uci commit honk >/dev/null 2>&1; logger -t honk "save interrupted, restored system.dae"; fi; rm -f "$prev"; rm -rf "$work"; honk_lock_release >/dev/null 2>&1' 0
 	cp -p "$sys" "$work/orig-system.dae" || { echo '{"ok":false,"message":"system_config_backup_failed"}'; return 1; }
-	# 整棵树带过来，include 到子目录时才校验得到实际生效的那份
+	# Copy the whole tree so includes into subdirectories validate for real
 	find /etc/honk -path /etc/honk/state -prune -o -type f -print > "$work/files.txt" || { echo '{"ok":false,"message":"temporary_storage_unavailable"}'; return 1; }
 	while IFS= read -r cfg_src; do
 		cfg_rel=${cfg_src#/etc/honk/}
@@ -1292,7 +1431,7 @@ write_system_config() {
 		cp -p "$cfg_src" "$work/$cfg_rel" || { echo '{"ok":false,"message":"temporary_storage_unavailable"}'; return 1; }
 	done < "$work/files.txt"
 	cp "$candidate" "$work/system.dae" || { echo '{"ok":false,"message":"temporary_storage_unavailable"}'; return 1; }
-	# 主配置没 include system.dae 时，保存成功也不会生效，直接拒绝。
+	# Refuse when config.dae does not include system.dae: saving would change nothing.
 	[ -n "$(config_includes_system "$work/config.dae")" ] || { echo '{"ok":false,"message":"system_config_not_included"}'; return 1; }
 	"$HONK_CORE" config validate --config "$work/config.dae" >/dev/null 2>&1 || { echo '{"ok":false,"message":"config_invalid"}'; return 1; }
 
@@ -1319,7 +1458,7 @@ write_system_config() {
 	echo '{"ok":true,"message":"system_config_saved"}'
 }
 
-# 切回面板管理：dry_run 只回将要生成的内容，确认后再替换。
+# Switch back to panel management: dry_run returns the result, apply replaces it.
 panel_managed_system() {
 	if [ -e /etc/.honk-update/journal ] || [ -L /etc/.honk-update/journal ]; then echo '{"ok":false,"message":"update_recovery_required"}'; return 1; fi
 	echo '{"ok":false,"message":"runtime_settings_owned_by_file"}'

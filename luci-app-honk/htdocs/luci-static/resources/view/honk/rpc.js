@@ -373,6 +373,7 @@ function tokenMessage(token) {
 		upload_target_unavailable: _('The temporary configuration upload is unavailable. Try again.'),
 		config_too_large: _('The configuration file exceeds the 2 MiB limit.'),
 		config_applied: _('Configuration applied and Honk is running.'),
+		config_applied_secrets_moved: _('Configuration applied and Honk is running. The listener secret moved to secrets.dae.'),
 		config_apply_failed_rolled_back: _('Honk could not start with this configuration. The previous file was restored.'),
 		config_apply_rollback_failed: _('Startup failed and the automatic rollback did not finish. The snapshot was kept; run system recovery.'),
 		config_changed_concurrently: _('The configuration changed during the operation. Nothing was applied.'),
