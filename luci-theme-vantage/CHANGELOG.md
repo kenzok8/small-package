@@ -7,7 +7,7 @@ packages are listed at
 <https://github.com/anothaDev/luci-theme-vantage/releases> and in the
 [signed repositories](https://anothadev.github.io/luci-theme-vantage/).
 
-## 1.1.2 - unreleased
+## 1.2.0 - unreleased
 
 - **Dashboard: a module that cannot load no longer costs LuCI its
   login** (#134, [@HachiMiku39](https://github.com/HachiMiku39)). The
@@ -116,10 +116,11 @@ packages are listed at
   links on their longer guard intervals (1.6 and 3.2 µs) were labelled
   "short GI". The label now stands for Wi-Fi 4 and 5's short interval
   alone.
-- **Theme: no second config file after an upgrade.** Once an Appearance
-  setting was saved, every upgrade left the package's own copy beside it
-  (`/etc/config/vantage_theme-opkg`, or `vantage_theme.apk-new` on 25.12).
-  That copy holds no setting; the theme's install now removes it.
+- **No second config file after an upgrade.** Once a device name or an
+  Appearance setting was saved, every upgrade left the package's own copy
+  beside it (`/etc/config/vantage-opkg` and `vantage_theme-opkg`, or
+  `vantage.apk-new` and `vantage_theme.apk-new` on 25.12). That copy holds
+  no setting; the dashboard's and the theme's installs now remove it.
 
 ## 1.1.1 - 2026-11-21
 
