@@ -56,10 +56,12 @@ dns {
     upstream {
         default: 'https://223.5.5.5/dns-query?tls_server_name=dns.alidns.com' -> direct
         remote: 'https://8.8.8.8/dns-query?tls_server_name=dns.google' -> proxy
+        # 私有域名交本机 dnsmasq；asis 依赖原始目的地址，多拨下出口不可控
+        local: 'udp://127.0.0.1:53' -> direct
     }
     routing {
         request {
-            qname(geosite: private) -> asis
+            qname(geosite: private) -> local
             qname(geosite: cn) -> default
             fallback: remote
         }

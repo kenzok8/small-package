@@ -6,6 +6,6 @@
  
 -qt_find_package(WrapLibClang 8 PROVIDED_TARGETS WrapLibClang::WrapLibClang)
 +#qt_find_package(WrapLibClang 8 PROVIDED_TARGETS WrapLibClang::WrapLibClang)
- qt_find_package_extend_sbom(TARGETS WrapLibClang::WrapLibClang
-     PACKAGE_VERSION "${QT_LIB_CLANG_VERSION}"
-     LICENSE_EXPRESSION "Apache-2.0 WITH LLVM-exception"
+ if(TARGET WrapLibClang::WrapLibClang)
+     qt_find_package_extend_sbom(TARGETS WrapLibClang::WrapLibClang
+         PACKAGE_VERSION "${QT_LIB_CLANG_VERSION}"
