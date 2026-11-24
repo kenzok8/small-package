@@ -35,6 +35,9 @@ const HEALTH_PATHS = {
 	btfDetached: '/usr/lib/debug/boot/vmlinux',
 	netns: '/run/netns/daens'
 };
+// geoip/geosite are 10 MB+; anything under 4 MiB came from a cut-off download.
+const GEO_MIN_BYTES = 4 * 1024 * 1024;
+
 const INDEX_STATUS_PATH = '/tmp/luci-app-daede.idx.status';
 let indexStartFailed = false;
 
@@ -379,12 +382,15 @@ return view.extend({
 				].forEach(function(entry) {
 					const btn = E('button', { 'class': 'dd-up-btn dd-up-btn-primary' }, _('Update'));
 					btn.addEventListener('click', function() { updateGeo(entry.k, btn); });
+					// A truncated download still exists and parses; the size is the only tell.
+					const incomplete = entry.r.exists && entry.r.size < GEO_MIN_BYTES;
 					const meta = entry.r.exists
 						? fmtBytes(entry.r.size) + (entry.r.mtime ? ' · ' + fmtMtime(entry.r.mtime) : '')
+							+ (incomplete ? ' · ' + _('incomplete, update again') : '')
 						: _('missing — click Update to fetch');
 					dataBody.appendChild(mkRow(
-						entry.r.exists ? '✓' : '✗',
-						entry.r.exists ? 'dd-up-ok' : 'dd-up-err',
+						incomplete ? '⚠' : entry.r.exists ? '✓' : '✗',
+						incomplete ? 'dd-up-warn' : entry.r.exists ? 'dd-up-ok' : 'dd-up-err',
 						entry.name,
 						meta,
 						btn

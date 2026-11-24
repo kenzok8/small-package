@@ -90,7 +90,7 @@ fi
 	else
 		size=$(wc -c < "$TMP" 2>/dev/null || echo 0)
 		magic=$(hexdump -n 1 -e '1/1 "%02x"' "$TMP" 2>/dev/null)
-		if [ "$size" -lt 1024 ]; then
+		if [ "$size" -lt 4194304 ]; then
 			echo "$(date '+%F %T') file too small ($size bytes)"
 			rm -f "$TMP"
 			rc=2

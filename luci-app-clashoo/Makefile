@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-clashoo
 PKG_VERSION:=1.32.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=kenzok8
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
@@ -13,7 +13,7 @@ define Package/luci-app-clashoo
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:=LuCI app for Clashoo
-  DEPENDS:=+luci-base +clashoo +luci-i18n-clashoo-zh-cn
+  DEPENDS:=+luci-base +clashoo
   PKGARCH:=all
   MAINTAINER:=kenzok8
 endef
@@ -75,7 +75,7 @@ define Package/luci-i18n-clashoo-zh-cn
 	SECTION:=luci
 	CATEGORY:=LuCI
 	TITLE:=luci-app-clashoo - Simplified Chinese (zh-cn)
-	DEPENDS:=+luci-base
+	DEPENDS:=+luci-app-clashoo
 	DEFAULT:=LUCI_LANG_zh_Hans||(ALL&&m)
 	HIDDEN:=1
 	PKGARCH:=all
