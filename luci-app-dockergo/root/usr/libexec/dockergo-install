@@ -1,0 +1,177 @@
+#!/usr/bin/lua
+
+local jsonc = require "luci.jsonc"
+local util = require "luci.util"
+local fs = require "nixio.fs"
+
+io.stdout:setvbuf("line")
+
+local task_id = arg[1] or ""
+if task_id:match("^dockergo%-install%-[a-z0-9._-]+%-[a-f0-9]+$") == nil then
+	print("[错误] 安装任务 ID 无效")
+	os.exit(2)
+end
+
+local config_path = "/var/run/dockergo/" .. task_id .. ".json"
+local file = io.open(config_path, "r")
+if not file then
+	print("[错误] 安装任务配置不存在")
+	os.exit(2)
+end
+
+local contents = file:read("*a") or ""
+file:close()
+os.remove(config_path)
+
+local config = jsonc.parse(contents)
+if type(config) ~= "table" or type(config.appId) ~= "string" or
+	type(config.title) ~= "string" or type(config.version) ~= "string" or
+	type(config.instanceId) ~= "string" or type(config.image) ~= "string" or
+	type(config.containerName) ~= "string" or
+	type(config.startNow) ~= "boolean" or
+	type(config.d) ~= "boolean" or type(config.rm) ~= "boolean" or
+	(config.restart ~= "no" and config.restart ~= "always" and
+		config.restart ~= "unless-stopped" and config.restart ~= "on-failure") or
+	(config.rm and config.restart ~= "no") then
+	print("[错误] 安装任务配置无效")
+	os.exit(2)
+end
+if #config.appId > 64 or config.appId:match("^[a-z0-9][a-z0-9._-]*$") == nil or
+	#config.version > 64 or config.version:match("^[A-Za-z0-9][A-Za-z0-9._-]*$") == nil or
+	#config.instanceId ~= 8 or config.instanceId:match("^[a-f0-9][a-f0-9]*$") == nil or
+	config.containerName ~= "dgo_" .. config.appId .. "_" .. config.version .. "_" .. config.instanceId then
+	print("[错误] 安装任务标识无效")
+	os.exit(2)
+end
+
+local ports = config.ports or {}
+local volumes = config.volumes or {}
+if type(ports) ~= "table" or type(volumes) ~= "table" then
+	print("[错误] 端口或存储映射配置无效")
+	os.exit(2)
+end
+
+for index, port in ipairs(ports) do
+	if type(port) ~= "table" or type(port.port) ~= "number" or port.port % 1 ~= 0 or
+		port.port < 1 or port.port > 65535 or type(port.target) ~= "number" or
+		port.target % 1 ~= 0 or port.target < 1 or port.target > 65535 then
+		print(string.format("[错误] 第 %d 个端口映射配置无效", index))
+		os.exit(2)
+	end
+end
+
+for index, volume in ipairs(volumes) do
+	if type(volume) ~= "table" then
+		print(string.format("[错误] 第 %d 个存储映射配置无效", index))
+		os.exit(2)
+	end
+	local volume_type = volume.type
+	if type(volume.source) ~= "string" or volume.source == "" or
+		type(volume.target) ~= "string" or volume.target:sub(1, 1) ~= "/" or
+		(volume_type ~= "dir" and volume_type ~= "file") then
+		print(string.format("[错误] 第 %d 个存储映射配置无效", index))
+		os.exit(2)
+	end
+end
+
+local function command_string(arguments)
+	local quoted = {}
+	for index, argument in ipairs(arguments) do
+		quoted[index] = util.shellquote(tostring(argument))
+	end
+	return table.concat(quoted, " ")
+end
+
+local function execute(label, arguments, quiet)
+	print(label)
+	local redirect = quiet and " >/dev/null 2>&1" or " 2>&1"
+	local status, reason, code = os.execute(command_string(arguments) .. redirect)
+	return status == 0 or (status == true and reason == "exit" and code == 0)
+end
+
+print(string.format("[准备] 正在安装 %s", config.title))
+
+for index, volume in ipairs(volumes) do
+	local volume_type = volume.type
+
+	if volume_type == "dir" then
+		if not execute("[存储] 创建数据目录 " .. volume.source,
+			{"/bin/mkdir", "-p", volume.source}) then
+			print("[错误] 无法创建数据目录")
+			os.exit(1)
+		end
+	else
+		local parent = volume.source:match("^(.*)/[^/]+$")
+		if not parent or not execute("[存储] 创建配置目录 " .. parent,
+			{"/bin/mkdir", "-p", parent}) then
+			print("[错误] 无法创建配置文件所在目录")
+			os.exit(1)
+		end
+
+		local file_type = fs.lstat(volume.source, "type")
+		if file_type == nil then
+			local config_file = io.open(volume.source, "w")
+			if not config_file then
+				print("[错误] 无法创建配置文件")
+				os.exit(1)
+			end
+			config_file:close()
+		elseif file_type ~= "reg" then
+			print("[错误] 配置文件路径不是普通文件")
+			os.exit(1)
+		end
+	end
+end
+
+if not execute("[镜像] 拉取 " .. config.image,
+	{"docker", "pull", config.image}) then
+	print("[错误] 镜像拉取失败")
+	os.exit(1)
+end
+
+local run = {
+	"docker", config.startNow and "run" or "create",
+	"--name", config.containerName,
+}
+
+if config.rm then
+	run[#run + 1] = "--rm"
+else
+	run[#run + 1] = "--restart"
+	run[#run + 1] = config.restart
+end
+if config.startNow and config.d then
+	run[#run + 1] = "--detach"
+end
+
+for _, port in ipairs(ports) do
+	run[#run + 1] = "--publish"
+	run[#run + 1] = string.format("0.0.0.0:%d:%d/tcp", port.port, port.target)
+end
+for _, volume in ipairs(volumes) do
+	run[#run + 1] = "--volume"
+	run[#run + 1] = volume.source .. ":" .. volume.target
+end
+for key, value in pairs(config.environment or {}) do
+	run[#run + 1] = "--env"
+	run[#run + 1] = key .. "=" .. value
+end
+
+run[#run + 1] = config.image
+for _, argument in ipairs(config.command or {}) do
+	run[#run + 1] = argument
+end
+
+if not execute((config.startNow and "[容器] 运行 " or "[容器] 创建 ") .. config.containerName, run) then
+	print("[错误] 容器创建或运行失败，请检查上方输出、端口、目录和镜像配置")
+	os.exit(1)
+end
+
+if not config.startNow then
+	print(string.format("[完成] %s 已创建但未启动，容器名称：%s", config.title, config.containerName))
+elseif not config.d then
+	print(string.format("[完成] %s 本次运行已结束%s", config.title,
+		config.rm and "，容器已自动清理" or "，后续是否重启取决于重启策略"))
+else
+	print(string.format("[完成] %s 已安装并启动，容器名称：%s", config.title, config.containerName))
+end
