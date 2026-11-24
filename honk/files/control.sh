@@ -193,6 +193,25 @@ kernel_btf_path() {
 	return 1
 }
 
+# Truncated geo assets silently break splits; a full flash truncates the download.
+check_geo() {
+	geo_error=
+	for _geo in geoip geosite; do
+		_geo_path=/usr/share/v2ray/$_geo.dat
+		if [ ! -f "$_geo_path" ]; then
+			geo_error="geo_asset_missing:$_geo"
+			return 1
+		fi
+		_geo_size=$(wc -c < "$_geo_path" 2>/dev/null || echo 0)
+		case "$_geo_size" in ''|*[!0-9]*) _geo_size=0 ;; esac
+		if [ "$_geo_size" -lt 4194304 ]; then
+			geo_error="geo_asset_truncated:$_geo"
+			return 1
+		fi
+	done
+	return 0
+}
+
 check_kernel() {
 	kernel_error=""
 	kernel=$(uname -r | cut -d- -f1)
@@ -437,6 +456,8 @@ preflight() {
 	[ "$enabled" = 1 ] && [ "$initialized" = 1 ] || { fail "请先在 LuCI 里启用并完成初始化"; return 1; }
 	migrate_listener_secret
 	close_open_clash_api
+	# Bad geo data breaks splits without failing startup, so warn once per start.
+	check_geo >/dev/null 2>&1 || logger -t honk "geo data incomplete ($geo_error); routing splits may be wrong"
 	maintenance_start_guard && check_config && check_kernel && no_honk_resources && check_conflicts && check_runtime_ports
 }
 
@@ -1026,6 +1047,7 @@ diagnose() {
 	errors=""
 	managed_core_pid >/dev/null 2>&1 && running=1 || running=0
 	check_config >/dev/null 2>&1 || errors="$errors ${config_error:-invalid_package_config}"
+	check_geo >/dev/null 2>&1 || errors="$errors ${geo_error:-geo_asset_missing}"
 	# Let the kernel check name the missing piece so the panel can act
 	check_kernel >/dev/null 2>&1 || errors="$errors ${kernel_error:-kernel_requirements_unmet}"
 	if [ "$running" != 1 ]; then

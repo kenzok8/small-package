@@ -192,6 +192,12 @@ msgstr "配置备份"
 msgid "Configuration"
 msgstr "配置"
 
+msgid "The %s data file is incomplete (under 4 MiB). Download it again from Maintenance → Geo data."
+msgstr "%s 数据文件不完整（小于 4 MiB），请到「维护 → Geo 数据」重新下载。"
+
+msgid "The %s data file is missing. Download it from Maintenance → Geo data."
+msgstr "缺少 %s 数据文件，请到「维护 → Geo 数据」下载。"
+
 msgid "Configuration applied and Honk is running."
 msgstr "配置已生效，Honk 已启动。"
 
