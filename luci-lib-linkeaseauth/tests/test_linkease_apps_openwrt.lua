@@ -60,17 +60,8 @@ local manifests = {
 		standalone = { basePath = "/apps/dockermanager/" },
 		desktop = { mode = "module", entry = "desktop-entry.js" },
 		backend = {
-			type = "http",
-			values = {
-				externalPortEnabled = {
-					default = false,
-					keys = { uci = "dockermanager.@dockermanager[0].external_port_enabled" }
-				},
-				port = {
-					default = 8192,
-					keys = { uci = "dockermanager.@dockermanager[0].port" }
-				}
-			}
+			type = "http", transport = "unix",
+			values = { socketPath = { default = "/var/run/dockermanager.sock" } }
 		}
 	},
 	["openwrt.json"] = {
@@ -156,8 +147,60 @@ local docker_enabled = apps_openwrt.new(dependencies("dockermanager.json", false
 	["dockermanager.@dockermanager[0].external_port_enabled"] = "1",
 	["dockermanager.@dockermanager[0].port"] = "8193"
 })):resolve("dockermanager")
-equal(docker_enabled.available, true)
-equal(docker_enabled.url, "http://192.168.30.7:8193/apps/dockermanager/")
+equal(docker_enabled.available, false, "obsolete Docker TCP settings cannot enable a port")
+
+-- Ordinary uhttpd has no proxy support. Both workers serve the same LAN entry.
+for _, worker in ipairs({ "gateway", "linkeasefull" }) do
+    for _, fixture in ipairs({
+        { listen = "0.0.0.0:19290", host = "192.168.30.7:10000", origin = "http://192.168.30.7:19290" },
+        { listen = "[::]:19290", host = "[fd00::7]:10000", origin = "http://[fd00::7]:19290" },
+        { listen = "0.0.0.0:19291", host = "router.lan:10000", origin = "http://router.lan:19291" }
+    }) do
+        local deps = dependencies("dockermanager.json", false)
+        local parse = deps.json.parse
+        deps.json.parse = function(raw)
+            if raw == "state" then return { active = worker, listen = fixture.listen } end
+            return parse(raw)
+        end
+        deps.sys.call = function() return 1 end
+        deps.http.getenv = function(key) if key == "HTTP_HOST" then return fixture.host end end
+        local decision = apps_openwrt.new(deps):resolve("dockermanager")
+        equal(decision.available, true)
+        equal(decision.mode, "apps")
+        equal(decision.transport, "lan")
+        equal(decision.url, fixture.origin .. "/apps/dockermanager/")
+        equal(decision.worker, worker)
+    end
+end
+
+for _, listener in ipairs({ "127.0.0.1:19290", "[::1]:19290", "invalid", "0.0.0.0:0", "0.0.0.0:65536" }) do
+    local deps = dependencies("dockermanager.json", false)
+    local parse = deps.json.parse
+    deps.json.parse = function(raw)
+        if raw == "state" then return { active = "gateway", listen = listener } end
+        return parse(raw)
+    end
+    equal(apps_openwrt.new(deps):resolve("dockermanager").available, false, "invalid or private listener must not be advertised")
+end
+
+-- Prefer same-origin proxying even if direct LAN access is also available.
+local proxied_deps = dependencies("dockermanager.json", true)
+local proxied_parse = proxied_deps.json.parse
+proxied_deps.json.parse = function(raw)
+    if raw == "state" then return { active = "gateway", listen = "0.0.0.0:19290" } end
+    return proxied_parse(raw)
+end
+local proxied = apps_openwrt.new(proxied_deps):resolve("dockermanager")
+equal(proxied.transport, "proxy")
+equal(proxied.url, "/apps/dockermanager/")
+
+proxied_deps.json.parse = function(raw)
+    if raw == "state" then return { active = "gateway", listen = "0.0.0.0:19291" } end
+    return proxied_parse(raw)
+end
+local custom_listener = apps_openwrt.new(proxied_deps):resolve("dockermanager")
+equal(custom_listener.transport, "lan", "mapping to another port must not win")
+equal(custom_listener.url, "http://192.168.30.7:19291/apps/dockermanager/")
 
 local builtin = apps_openwrt.new(dependencies("openwrt.json", true)):resolve("openwrt-luci")
 equal(builtin.registered, true)

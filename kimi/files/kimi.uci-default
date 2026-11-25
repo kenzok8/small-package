@@ -1,0 +1,19 @@
+#!/bin/sh
+set -e
+
+if ! id kimi >/dev/null 2>&1; then
+	. /lib/functions.sh
+	gid="$(group_add_next kimi)" || exit 1
+	user_add kimi "" "$gid" "Kimi Code CLI" /var/empty /bin/false || exit 1
+fi
+[ "$(id -u kimi)" -gt 0 ] || exit 1
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@kimi[-1]
+	add ucitrack kimi
+	set ucitrack.@kimi[-1].init=kimi
+	commit ucitrack
+EOF
+
+/etc/init.d/kimi enable
+exit 0

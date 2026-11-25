@@ -1,7 +1,7 @@
 {
   "luci-app-agentflow": {
-    "description": "Manage AgentFlow and its fixed shared runtime integration",
-    "read": { "uci": ["agentflow", "mise", "quickstart"] },
+    "description": "Manage AgentFlow orchestration",
+    "read": { "uci": ["agentflow", "quickstart"] },
     "write": { "uci": ["agentflow"] }
   }
 }

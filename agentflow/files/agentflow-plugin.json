@@ -25,17 +25,44 @@
     "type": "http",
     "scheme": "http",
     "host": "127.0.0.1",
-    "portFromUci": "agentflow.@agentflow[0].port",
-    "defaultPort": 9000,
     "upstreamBasePath": "/apps/agentflow/",
     "pathMode": "preserve",
-    "proxyMode": "app-base"
+    "proxyMode": "app-base",
+    "transport": "tcp",
+    "values": {
+      "port": {
+        "default": 9000,
+        "keys": {
+          "uci": "agentflow.@agentflow[0].port"
+        }
+      },
+      "externalPortEnabled": {
+        "default": false
+      }
+    }
   },
   "window": {
     "width": 1180,
     "height": 760,
     "singleton": true
   },
-  "capabilities": ["agent", "coding", "workflow"],
-  "categories": ["development", "ai"]
+  "capabilities": [
+    "agent",
+    "coding",
+    "workflow"
+  ],
+  "categories": [
+    "development",
+    "ai"
+  ],
+  "config": {
+    "providerOrder": [
+      "uci"
+    ],
+    "providers": {
+      "uci": {
+        "type": "uci"
+      }
+    }
+  }
 }

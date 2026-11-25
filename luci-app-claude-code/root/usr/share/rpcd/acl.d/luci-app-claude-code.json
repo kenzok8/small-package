@@ -1,0 +1,7 @@
+{
+  "luci-app-claude-code": {
+    "description": "Manage the Claude Code CLI, browser terminal and AgentFlow integration",
+    "read": { "uci": ["claude", "mise", "quickstart", "agentflow"] },
+    "write": { "uci": ["claude"] }
+  }
+}

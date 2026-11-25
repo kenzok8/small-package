@@ -11,7 +11,7 @@ PKG_ARCH_BAIDUDRIVE:=$(ARCH)
 
 PKG_NAME:=baidudrive
 PKG_VERSION:=1.0.6
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/baidudrive-runtime-v$(PKG_VERSION)/
 PKG_HASH:=2cc12327dbe08f0b9906c6213e7f14c0cdc09cae5a5c64e353639e7bd3d34a01
@@ -28,6 +28,7 @@ define Package/$(PKG_NAME)
 	SECTION:=net
 	CATEGORY:=Network
 	SUBMENU:=Web Servers/Proxies
+	EXTRA_DEPENDS:=luci-lib-linkeaseauth (>=1.2.1-r5)
 	TITLE:=BaiduDrive
 	DEPENDS:=@(x86_64||aarch64) +curl +linkease-app-entry
 	URL:=https://github.com/linkease/istore-packages
@@ -49,6 +50,11 @@ legacy="$${root}/usr/share/linkeasefull/desktop-apps.d/10-baidudrive-plugin.json
 if [ ! -e "$${legacy}" ] && [ ! -L "$${legacy}" ]; then
 	mkdir -p "$${legacy%/*}"
 	ln -s /usr/share/baidudrive/baidudrive-plugin.json "$${legacy}" || exit $$?
+fi
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	uci -q set baidudrive.@baidudrive[0].host='127.0.0.1'
+	uci -q commit baidudrive || exit $$?
+	if pidof baidudrive >/dev/null 2>&1; then /etc/init.d/baidudrive restart || exit $$?; fi
 fi
 exit 0
 endef

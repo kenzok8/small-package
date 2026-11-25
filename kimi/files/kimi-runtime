@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /usr/bin/lua /usr/share/kimi/runtime-cli.lua "$@"

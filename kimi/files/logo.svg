@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Kimi Code">
+  <rect width="256" height="256" rx="52" fill="#1e1b4b"/>
+  <rect x="35" y="53" width="186" height="150" rx="24" fill="#12102f" stroke="#a78bfa" stroke-width="9"/>
+  <path d="M73 101l30 27-30 27" fill="none" stroke="#f8fafc" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M121 158h58" fill="none" stroke="#a78bfa" stroke-width="13" stroke-linecap="round"/>
+  <circle cx="69" cy="78" r="6" fill="#a78bfa"/>
+  <circle cx="91" cy="78" r="6" fill="#f8fafc"/>
+  <circle cx="113" cy="78" r="6" fill="#a78bfa"/>
+</svg>

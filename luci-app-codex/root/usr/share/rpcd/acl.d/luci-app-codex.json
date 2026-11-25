@@ -1,0 +1,7 @@
+{
+  "luci-app-codex": {
+    "description": "Manage the Codex CLI, browser terminal and AgentFlow integration",
+    "read": { "uci": ["codex", "mise", "quickstart", "agentflow"] },
+    "write": { "uci": ["codex"] }
+  }
+}

@@ -1,212 +1,66 @@
-<%+tasks/embed%>
-
-<style type="text/css">
+<style>
 .agentflow-shell {
 	--af-panel:#fff;
-	--af-panel-soft:#f6f8fc;
-	--af-border:#dfe5ef;
-	--af-text:#17213d;
-	--af-muted:#667397;
+	--af-panel-soft:#f5f7fb;
+	--af-border:#d8deea;
+	--af-text:#1d2638;
+	--af-muted:#667085;
 	--af-primary:#356cf6;
-	--af-primary-hover:#2559d8;
-	--af-success:#159447;
-	--af-success-soft:#e9f8ef;
-	--af-shadow:0 8px 24px rgba(46, 67, 112, .08);
-	color:var(--af-text);
+	--af-success:#168a45;
+	--af-warning:#a15c00;
+	display:grid;
+	gap:16px;
 	margin:12px 0 20px;
 }
 .agentflow-panel {
-	background:var(--af-panel);
+	box-sizing:border-box;
+	padding:20px;
 	border:1px solid var(--af-border);
 	border-radius:10px;
-	box-shadow:var(--af-shadow);
-	box-sizing:border-box;
+	background:var(--af-panel);
+	color:var(--af-text);
 }
-.agentflow-overview {
-	display:grid;
-	grid-template-columns:minmax(260px, .9fr) minmax(320px, 1.1fr);
-	gap:28px;
-	padding:24px;
-}
-.agentflow-service {
-	display:flex;
-	align-items:flex-start;
-	gap:16px;
-}
+.agentflow-overview { display:grid; grid-template-columns:minmax(0, 1fr) minmax(280px, .8fr); gap:22px; }
+.agentflow-service { display:flex; align-items:flex-start; gap:14px; }
 .agentflow-service-icon {
 	display:flex;
 	align-items:center;
 	justify-content:center;
-	width:54px;
-	height:54px;
-	flex:0 0 54px;
+	width:44px;
+	height:44px;
+	flex:0 0 44px;
 	border-radius:50%;
-	background:#eef1f6;
-	color:var(--af-muted);
-	font-size:28px;
-	font-weight:700;
-}
-.agentflow-service-icon.running {
-	background:var(--af-success-soft);
-	color:var(--af-success);
-}
-.agentflow-service-copy { min-width:0; }
-.agentflow-service-copy h3 {
-	margin:2px 0 6px;
-	color:var(--af-text);
+	background:#fff2e3;
+	color:var(--af-warning);
 	font-size:20px;
-	line-height:1.3;
+	font-weight:800;
 }
-.agentflow-service-copy p {
-	margin:0 0 16px;
-	color:var(--af-muted);
-	line-height:1.6;
-}
-.agentflow-access {
-	padding-left:28px;
-	border-left:1px solid var(--af-border);
-}
-.agentflow-access label {
-	display:block;
-	margin:0 0 9px;
-	font-weight:700;
-}
-.agentflow-address-row {
-	display:flex;
-	gap:8px;
-}
-.agentflow-address-row input[type="text"] {
-	min-width:0;
-	flex:1 1 auto;
-	height:40px;
-	box-sizing:border-box;
-	border:1px solid var(--af-border);
-	border-radius:7px;
-	background:var(--af-panel-soft);
-	color:var(--af-text);
-	font-variant-numeric:tabular-nums;
-}
-.agentflow-access-note {
-	min-height:20px;
-	margin:10px 0 0;
-	color:var(--af-muted);
-	font-size:13px;
-}
-.agentflow-button {
-	min-height:40px;
-	box-sizing:border-box;
-	border-radius:7px !important;
-	white-space:nowrap;
-}
-.agentflow-primary {
-	border-color:var(--af-primary) !important;
-	background:var(--af-primary) !important;
-	color:#fff !important;
-}
-.agentflow-primary:hover { background:var(--af-primary-hover) !important; }
+.agentflow-service-icon.running { background:#e8f7ee; color:var(--af-success); }
+.agentflow-service h3, .agentflow-providers h3 { margin:0 0 6px; color:var(--af-text); }
+.agentflow-service p, .agentflow-note { margin:0 0 14px; color:var(--af-muted); line-height:1.55; }
+.agentflow-access { padding-left:22px; border-left:1px solid var(--af-border); }
+.agentflow-access label { display:block; margin-bottom:7px; font-weight:700; }
+.agentflow-address-row { display:flex; gap:8px; }
+.agentflow-address-row input[type="text"] { min-width:0; flex:1 1 auto; }
+.agentflow-button { min-height:38px; border-radius:7px !important; white-space:nowrap; }
+.agentflow-primary { border-color:var(--af-primary) !important; background:var(--af-primary) !important; color:#fff !important; }
 .agentflow-button:disabled { cursor:not-allowed; opacity:.55; }
-.agentflow-agents { margin-top:16px; padding:22px 20px 20px; }
-.agentflow-section-heading {
-	display:flex;
-	align-items:flex-start;
-	gap:12px;
-	margin-bottom:18px;
-}
-.agentflow-section-mark {
-	display:flex;
-	align-items:center;
-	justify-content:center;
-	width:38px;
-	height:38px;
-	flex:0 0 38px;
-	border-radius:9px;
-	background:#edf3ff;
-	color:var(--af-primary);
-	font-size:17px;
-	font-weight:800;
-}
-.agentflow-section-heading h3 { margin:0 0 4px; color:var(--af-text); font-size:20px; }
-.agentflow-section-heading p { margin:0; color:var(--af-muted); line-height:1.55; }
-.agentflow-agent-grid {
+.agentflow-provider-list { display:grid; gap:9px; margin-top:14px; }
+.agentflow-provider {
 	display:grid;
-	grid-template-columns:repeat(3, minmax(0, 1fr));
-	gap:14px;
-}
-.agentflow-agent-card {
-	display:flex;
-	min-width:0;
-	min-height:190px;
-	padding:16px;
-	box-sizing:border-box;
-	flex-direction:column;
+	grid-template-columns:minmax(150px, 1.2fr) minmax(120px, .8fr) minmax(80px, .5fr) auto;
+	align-items:center;
+	gap:12px;
+	padding:12px 14px;
 	border:1px solid var(--af-border);
-	border-radius:9px;
-	background:var(--af-panel);
+	border-radius:8px;
+	background:var(--af-panel-soft);
 }
-.agentflow-agent-card[data-state="installed"] { border-color:#b8dfc6; }
-.agentflow-agent-top { display:flex; align-items:flex-start; gap:12px; }
-.agentflow-agent-logo {
-	display:flex;
-	align-items:center;
-	justify-content:center;
-	width:48px;
-	height:48px;
-	flex:0 0 48px;
-	border-radius:9px;
-	background:var(--agent-color, var(--af-primary));
-	color:#fff;
-	font-size:21px;
-	font-weight:800;
-}
-.agentflow-agent-copy { min-width:0; }
-.agentflow-agent-title { margin:2px 0 4px; color:var(--af-text); font-size:17px; font-weight:700; line-height:1.4; }
-.agentflow-agent-copy p { margin:0; color:var(--af-muted); font-size:13px; line-height:1.45; }
-.agentflow-agent-meta {
-	display:flex;
-	align-items:center;
-	gap:10px;
-	margin:17px 0 12px;
-	color:var(--af-muted);
-	font-size:13px;
-}
-.agentflow-agent-state { display:inline-flex; align-items:center; gap:7px; font-weight:700; }
-.agentflow-agent-dot { width:8px; height:8px; border-radius:50%; background:#8a95af; }
-.agentflow-agent-card[data-state="installed"] .agentflow-agent-state { color:var(--af-success); }
-.agentflow-agent-card[data-state="installed"] .agentflow-agent-dot { background:var(--af-success); box-shadow:0 0 0 4px var(--af-success-soft); }
-.agentflow-agent-divider { color:#b4bdd0; }
-.agentflow-install-button { width:100%; margin-top:auto; }
-.agentflow-agent-card[data-state="installed"] .agentflow-install-button {
-	border-color:var(--af-success) !important;
-	background:var(--af-success-soft) !important;
-	color:var(--af-success) !important;
-}
-.agentflow-agent-modal {
-	position:fixed;
-	inset:0;
-	z-index:10000;
-	display:none;
-	align-items:center;
-	justify-content:center;
-	padding:20px;
-	box-sizing:border-box;
-	background:rgba(15, 23, 42, .48);
-}
-.agentflow-agent-modal.open { display:flex; }
-.agentflow-agent-dialog {
-	width:100%;
-	max-width:460px;
-	padding:22px;
-	box-sizing:border-box;
-	border:1px solid var(--af-border);
-	border-radius:10px;
-	background:var(--af-panel);
-	color:var(--af-text);
-	box-shadow:0 18px 48px rgba(15, 23, 42, .24);
-}
-.agentflow-agent-dialog h3 { margin:0 0 8px; color:var(--af-text); }
-.agentflow-agent-dialog p { margin:0; color:var(--af-muted); line-height:1.6; }
-.agentflow-agent-dialog strong { color:var(--af-text); }
-.agentflow-dialog-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+.agentflow-provider-name { font-weight:700; }
+.agentflow-provider-state { color:var(--af-warning); font-weight:700; }
+.agentflow-provider-state.ready { color:var(--af-success); }
+.agentflow-provider-version { color:var(--af-muted); font-variant-numeric:tabular-nums; }
+.agentflow-empty { padding:14px; border-radius:8px; background:var(--af-panel-soft); color:var(--af-muted); }
 body[theme="dark"] .agentflow-shell {
 	--af-panel:#202733;
 	--af-panel-soft:#171d27;
@@ -214,12 +68,9 @@ body[theme="dark"] .agentflow-shell {
 	--af-text:#edf2fb;
 	--af-muted:#adb8cb;
 	--af-primary:#5d88ff;
-	--af-primary-hover:#7197ff;
 	--af-success:#50c878;
-	--af-success-soft:rgba(80, 200, 120, .14);
-	--af-shadow:0 8px 24px rgba(0, 0, 0, .18);
+	--af-warning:#f0ad4e;
 }
-body[theme="dark"] .agentflow-section-mark { background:rgba(93, 136, 255, .14); }
 @media (prefers-color-scheme: dark) {
 	body:not([theme]) .agentflow-shell {
 		--af-panel:#202733;
@@ -228,108 +79,93 @@ body[theme="dark"] .agentflow-section-mark { background:rgba(93, 136, 255, .14);
 		--af-text:#edf2fb;
 		--af-muted:#adb8cb;
 		--af-primary:#5d88ff;
-		--af-primary-hover:#7197ff;
 		--af-success:#50c878;
-		--af-success-soft:rgba(80, 200, 120, .14);
-		--af-shadow:0 8px 24px rgba(0, 0, 0, .18);
+		--af-warning:#f0ad4e;
 	}
-	body:not([theme]) .agentflow-section-mark { background:rgba(93, 136, 255, .14); }
-}
-@media (max-width:1000px) {
-	.agentflow-agent-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width:760px) {
-	.agentflow-overview { grid-template-columns:1fr; gap:20px; padding:18px; }
+	.agentflow-overview { grid-template-columns:1fr; }
 	.agentflow-access { padding:18px 0 0; border-top:1px solid var(--af-border); border-left:0; }
-	.agentflow-agent-grid { grid-template-columns:1fr; }
-	.agentflow-agents { padding:18px 14px 14px; }
-	.agentflow-address-row { flex-wrap:wrap; }
-	.agentflow-address-row input[type="text"] { flex-basis:100%; }
-	.agentflow-address-row .agentflow-button { flex:1 1 auto; }
+	.agentflow-provider { grid-template-columns:1fr auto; }
+	.agentflow-provider-version { grid-column:1; }
+	.agentflow-provider-state { grid-column:2; grid-row:1; }
 }
 </style>
 
 <script type="text/javascript">//<![CDATA[
-var agentflowOpenUrl = '<%=url("admin/services/agentflow/open")%>';
+var agentflowOpenUrl = '<%=url("admin/services/linkease_apps/open")%>?id=agentflow';
 var agentflowStatusUrl = '<%=url("admin/services/agentflow_status")%>';
-var agentflowAgentInstallUrl = '<%=url("admin/services/agentflow/agent_install")%>';
-var agentflowCsrfToken = (window.taskd && window.taskd.csrfToken) || '';
-var agentflowSelectedAgent = '';
-var agentflowAgentNames = {
-	codexcli: 'Codex',
-	'claude-code': 'Claude Code',
-	opencode: 'OpenCode',
-	kimi: 'Kimi',
-	reasonix: 'Reasonix'
-};
 var agentflowLabels = {
-	installed: '<%:Installed%>',
+	ready: '<%:Ready%>',
 	notInstalled: '<%:Not installed%>',
-	unknown: '<%:Status unavailable%>',
-	install: '<%:Install%>',
-	starting: '<%:Starting...%>',
+	manage: '<%:Manage%>',
+	version: '<%:Version%>',
+	noProviders: '<%:No independent coding agent plugin was detected. Install Codex, Claude Code, OpenCode or Kimi from the app store.%>',
 	copied: '<%:Copied%>'
 };
 
 function agentflowAbsoluteUrl(value) {
+	if (!value) return '';
 	try { return new URL(value, window.location.href).href; }
-	catch (e) { return value || ''; }
+	catch (e) { return ''; }
 }
 
-function agentflowRenderStatus(st) {
+function agentflowRenderProviders(providers) {
+	var list = document.getElementById('agentflow-provider-list');
+	if (!list) return;
+	while (list.firstChild) list.removeChild(list.firstChild);
+	if (!providers || !providers.length) {
+		var empty = document.createElement('div');
+		empty.className = 'agentflow-empty';
+		empty.textContent = agentflowLabels.noProviders;
+		list.appendChild(empty);
+		return;
+	}
+	providers.forEach(function(provider) {
+		var row = document.createElement('div');
+		row.className = 'agentflow-provider';
+		var name = document.createElement('div');
+		name.className = 'agentflow-provider-name';
+		name.textContent = provider.name || provider.id;
+		var state = document.createElement('div');
+		state.className = 'agentflow-provider-state' + (provider.installed ? ' ready' : '');
+		state.textContent = provider.installed ? agentflowLabels.ready : agentflowLabels.notInstalled;
+		var version = document.createElement('div');
+		version.className = 'agentflow-provider-version';
+		version.textContent = agentflowLabels.version + ': ' + (provider.version || '-');
+		var action = document.createElement('a');
+		action.className = 'btn cbi-button agentflow-button';
+		action.textContent = agentflowLabels.manage;
+		action.href = provider.manage_url || '#';
+		if (!provider.manage_url) action.style.display = 'none';
+		row.appendChild(name);
+		row.appendChild(state);
+		row.appendChild(version);
+		row.appendChild(action);
+		list.appendChild(row);
+	});
+}
+
+function agentflowRenderStatus(status) {
+	if (!status) return;
 	var icon = document.getElementById('agentflow-service-icon');
 	var title = document.getElementById('agentflow-service-title');
 	var description = document.getElementById('agentflow-service-description');
 	var openButton = document.getElementById('agentflow-open');
 	var address = document.getElementById('agentflow-address');
-	var statuses = {};
-	var agents = st && st.agents || [];
-	var i;
-
-	if (!st) return;
 	if (icon) {
-		icon.className = 'agentflow-service-icon' + (st.running ? ' running' : '');
-		icon.textContent = st.running ? '\u2713' : '!';
+		icon.className = 'agentflow-service-icon' + (status.running ? ' running' : '');
+		icon.textContent = status.running ? '\u2713' : '!';
 	}
-	if (title) title.textContent = st.running ? '<%:AgentFlow service is running%>' : '<%:AgentFlow service is not running%>';
-	if (description) description.textContent = st.running
-		? '<%:The service is ready. You can open AgentFlow or install coding agents.%>'
-		: '<%:Start the service to use AgentFlow. Agent installation remains available.%>';
-	if (openButton) openButton.disabled = !st.running;
-	if (address) address.value = agentflowAbsoluteUrl(st.entry_url || '');
-	var runtime = st.runtime || {};
-	var runtimeStatus = document.getElementById('agentflow-runtime-status');
-	if (runtimeStatus) runtimeStatus.textContent = runtime.ready
-		? 'mise · Node ' + runtime.node + ' · npm ' + runtime.npm + ' · glibc ' + runtime.glibc + ' · HOME: ' + runtime.home
-		: (runtime.error || '<%:Shared runtime is not available%>');
-	var recover = document.getElementById('agentflow-runtime-recover');
-	if (recover) recover.style.display = runtime.interrupted ? '' : 'none';
-
-	for (i = 0; i < agents.length; i++) statuses[agents[i].id] = agents[i];
-	for (i in agentflowAgentNames) {
-		if (!agentflowAgentNames.hasOwnProperty(i)) continue;
-		var card = document.getElementById('agentflow-agent-' + i);
-		var state = document.getElementById('agentflow-agent-state-' + i);
-		var version = document.getElementById('agentflow-agent-version-' + i);
-		var installButton = document.getElementById('agentflow-agent-install-' + i);
-		var item = statuses[i];
-		var available = st.agents_available !== false && !!item;
-		var installed = available && item.installed === true;
-		if (card) card.setAttribute('data-state', installed ? 'installed' : (available ? 'available' : 'unknown'));
-		if (state) state.textContent = installed ? agentflowLabels.installed : (available ? agentflowLabels.notInstalled : agentflowLabels.unknown);
-		if (version) version.textContent = installed && item.version ? item.version : '-';
-		if (installButton) {
-			installButton.disabled = !available || installed;
-			installButton.value = installed ? agentflowLabels.installed : agentflowLabels.install;
-		}
-	}
-}
-
-function agentflowRecoverRuntime() {
-	(new XHR()).post(agentflowAgentInstallUrl, { token: agentflowCsrfToken, operation: 'recover' }, function(x, data) {
-		if (!data || !data.ok) window.alert(data && data.error || 'Recovery failed');
-		else window.location.reload();
-	});
+	if (title) title.textContent = status.running ? '<%:AgentFlow service is running%>' : '<%:AgentFlow service is not running%>';
+	if (description) description.textContent = status.running
+		? '<%:The service is ready. AgentFlow uses independently installed coding agents.%>'
+		: '<%:Start the service to use AgentFlow.%>';
+	if (status.running && !(status.access && status.access.available) && description)
+		description.textContent = '<%:Application entry is unavailable.%>';
+	if (openButton) openButton.disabled = !(status.running && status.access && status.access.available);
+	if (address) address.value = agentflowAbsoluteUrl(status.entry_url || '');
+	agentflowRenderProviders(status.providers || []);
 }
 
 function agentflowCopyAddress() {
@@ -343,69 +179,15 @@ function agentflowCopyAddress() {
 	}
 	if (navigator.clipboard && navigator.clipboard.writeText) {
 		navigator.clipboard.writeText(address.value).then(done, function() {
-			address.select();
-			document.execCommand('copy');
-			done();
+			address.select(); document.execCommand('copy'); done();
 		});
 	} else {
-		address.select();
-		document.execCommand('copy');
-		done();
+		address.select(); document.execCommand('copy'); done();
 	}
 }
 
-function agentflowAgentDialog(open, agent) {
-	var modal = document.getElementById('agentflow-agent-modal');
-	var name = document.getElementById('agentflow-selected-agent-name');
-	var confirmButton = document.getElementById('agentflow-agent-install-now');
-	if (!modal) return;
-	if (open) {
-		agentflowSelectedAgent = agent || '';
-		if (name) name.textContent = agentflowAgentNames[agentflowSelectedAgent] || agentflowSelectedAgent;
-		modal.classList.add('open');
-		if (confirmButton) confirmButton.focus();
-	} else {
-		modal.classList.remove('open');
-		var trigger = document.getElementById('agentflow-agent-install-' + agentflowSelectedAgent);
-		if (trigger) trigger.focus();
-	}
-}
-
-function agentflowInstallAgent() {
-	var button = document.getElementById('agentflow-agent-install-now');
-	if (!agentflowSelectedAgent || !button) return;
-	if (!window.taskd || !window.taskd.show_log) {
-		alert('<%:Task log window is not available.%>');
-		return;
-	}
-
-	button.disabled = true;
-	button.value = agentflowLabels.starting;
-	(new XHR()).post(agentflowAgentInstallUrl, {
-		agent: agentflowSelectedAgent,
-		token: agentflowCsrfToken
-	}, function(x, data) {
-		button.disabled = false;
-		button.value = '<%:Install now%>';
-		if (!data) {
-			try { data = JSON.parse(x.responseText || '{}'); }
-			catch (e) { data = {}; }
-		}
-		if (!data.ok) {
-			alert(data.error || '<%:Failed to start agent installation.%>');
-			return;
-		}
-		agentflowAgentDialog(false);
-		window.taskd.show_log(data.task_id || 'agentflow-agent-install');
-	});
-}
-
-XHR.poll(5, agentflowStatusUrl, null, function(x, st) {
-	agentflowRenderStatus(st);
-});
-
-document.addEventListener('keydown', function(ev) {
-	if (ev.key === 'Escape') agentflowAgentDialog(false);
+XHR.poll(5, agentflowStatusUrl, null, function(x, status) {
+	agentflowRenderStatus(status);
 });
 //]]></script>
 
@@ -413,17 +195,11 @@ document.addEventListener('keydown', function(ev) {
 	<section class="agentflow-panel agentflow-overview" aria-labelledby="agentflow-service-title">
 		<div class="agentflow-service">
 			<div id="agentflow-service-icon" class="agentflow-service-icon" aria-hidden="true">...</div>
-			<div class="agentflow-service-copy">
+			<div>
 				<h3 id="agentflow-service-title"><%:Checking AgentFlow service%></h3>
 				<p id="agentflow-service-description"><%:Collecting data...%></p>
 				<input id="agentflow-open" class="btn cbi-button agentflow-button agentflow-primary" type="button" value="<%:Open AgentFlow%>" onclick="window.open(agentflowOpenUrl)" disabled>
 			</div>
-		</div>
-		<div class="agentflow-access">
-			<p id="agentflow-runtime-status"><%:Checking shared runtime%></p>
-			<a href="<%=url('admin/services/mise')%>"><%:Manage runtime environments%></a>
-			<input id="agentflow-runtime-recover" class="btn cbi-button agentflow-button" type="button" style="display:none" value="<%:Recover interrupted install%>" onclick="agentflowRecoverRuntime()">
-			<p class="agentflow-access-note"><%:Agent packages use a fixed shared Node/glibc runtime and private application directories. Global mise versions are unchanged.%></p>
 		</div>
 		<div class="agentflow-access">
 			<label for="agentflow-address"><%:Local network access%></label>
@@ -431,55 +207,13 @@ document.addEventListener('keydown', function(ev) {
 				<input id="agentflow-address" type="text" readonly value="">
 				<input class="btn cbi-button agentflow-button" type="button" value="<%:Copy%>" onclick="agentflowCopyAddress()">
 			</div>
-			<p class="agentflow-access-note"><%:Open this address in a browser to access the AgentFlow Web interface.%> <span id="agentflow-copy-feedback" role="status" aria-live="polite"></span></p>
+			<p class="agentflow-note"><%:AgentFlow keeps its own login and is exposed only through the application gateway.%> <span id="agentflow-copy-feedback" role="status" aria-live="polite"></span></p>
 		</div>
 	</section>
 
-	<section class="agentflow-panel agentflow-agents" aria-labelledby="agentflow-agents-title">
-		<div class="agentflow-section-heading">
-			<div class="agentflow-section-mark" aria-hidden="true">A</div>
-			<div>
-				<h3 id="agentflow-agents-title"><%:Agent installation%></h3>
-				<p><%:Install coding agents into the shared AgentFlow runtime. Installed agents show their current version.%></p>
-			</div>
-		</div>
-		<div class="agentflow-agent-grid">
-			<div id="agentflow-agent-codexcli" class="agentflow-agent-card" data-state="unknown" style="--agent-color:#356cf6">
-				<div class="agentflow-agent-top"><div class="agentflow-agent-logo" aria-hidden="true">C</div><div class="agentflow-agent-copy"><div class="agentflow-agent-title">Codex</div><p><%:OpenAI coding agent for software development tasks.%></p></div></div>
-				<div class="agentflow-agent-meta"><span class="agentflow-agent-state"><span class="agentflow-agent-dot"></span><span id="agentflow-agent-state-codexcli"><%:Checking...%></span></span><span class="agentflow-agent-divider">|</span><span><%:Version%>: <span id="agentflow-agent-version-codexcli">-</span></span></div>
-				<input id="agentflow-agent-install-codexcli" class="btn cbi-button agentflow-button agentflow-primary agentflow-install-button" type="button" value="<%:Install%>" onclick="agentflowAgentDialog(true, 'codexcli')" disabled>
-			</div>
-			<div id="agentflow-agent-claude-code" class="agentflow-agent-card" data-state="unknown" style="--agent-color:#dc633d">
-				<div class="agentflow-agent-top"><div class="agentflow-agent-logo" aria-hidden="true">C</div><div class="agentflow-agent-copy"><div class="agentflow-agent-title">Claude Code</div><p><%:Anthropic coding agent for code analysis and development.%></p></div></div>
-				<div class="agentflow-agent-meta"><span class="agentflow-agent-state"><span class="agentflow-agent-dot"></span><span id="agentflow-agent-state-claude-code"><%:Checking...%></span></span><span class="agentflow-agent-divider">|</span><span><%:Version%>: <span id="agentflow-agent-version-claude-code">-</span></span></div>
-				<input id="agentflow-agent-install-claude-code" class="btn cbi-button agentflow-button agentflow-primary agentflow-install-button" type="button" value="<%:Install%>" onclick="agentflowAgentDialog(true, 'claude-code')" disabled>
-			</div>
-			<div id="agentflow-agent-opencode" class="agentflow-agent-card" data-state="unknown" style="--agent-color:#6a3ee8">
-				<div class="agentflow-agent-top"><div class="agentflow-agent-logo" aria-hidden="true">O</div><div class="agentflow-agent-copy"><div class="agentflow-agent-title">OpenCode</div><p><%:Open source coding agent with a flexible terminal workflow.%></p></div></div>
-				<div class="agentflow-agent-meta"><span class="agentflow-agent-state"><span class="agentflow-agent-dot"></span><span id="agentflow-agent-state-opencode"><%:Checking...%></span></span><span class="agentflow-agent-divider">|</span><span><%:Version%>: <span id="agentflow-agent-version-opencode">-</span></span></div>
-				<input id="agentflow-agent-install-opencode" class="btn cbi-button agentflow-button agentflow-primary agentflow-install-button" type="button" value="<%:Install%>" onclick="agentflowAgentDialog(true, 'opencode')" disabled>
-			</div>
-			<div id="agentflow-agent-kimi" class="agentflow-agent-card" data-state="unknown" style="--agent-color:#1677d2">
-				<div class="agentflow-agent-top"><div class="agentflow-agent-logo" aria-hidden="true">K</div><div class="agentflow-agent-copy"><div class="agentflow-agent-title">Kimi</div><p><%:Moonshot AI coding agent for terminal-based development.%></p></div></div>
-				<div class="agentflow-agent-meta"><span class="agentflow-agent-state"><span class="agentflow-agent-dot"></span><span id="agentflow-agent-state-kimi"><%:Checking...%></span></span><span class="agentflow-agent-divider">|</span><span><%:Version%>: <span id="agentflow-agent-version-kimi">-</span></span></div>
-				<input id="agentflow-agent-install-kimi" class="btn cbi-button agentflow-button agentflow-primary agentflow-install-button" type="button" value="<%:Install%>" onclick="agentflowAgentDialog(true, 'kimi')" disabled>
-			</div>
-			<div id="agentflow-agent-reasonix" class="agentflow-agent-card" data-state="unknown" style="--agent-color:#3f526f">
-				<div class="agentflow-agent-top"><div class="agentflow-agent-logo" aria-hidden="true">R</div><div class="agentflow-agent-copy"><div class="agentflow-agent-title">Reasonix</div><p><%:AI coding agent for software engineering workflows.%></p></div></div>
-				<div class="agentflow-agent-meta"><span class="agentflow-agent-state"><span class="agentflow-agent-dot"></span><span id="agentflow-agent-state-reasonix"><%:Checking...%></span></span><span class="agentflow-agent-divider">|</span><span><%:Version%>: <span id="agentflow-agent-version-reasonix">-</span></span></div>
-				<input id="agentflow-agent-install-reasonix" class="btn cbi-button agentflow-button agentflow-primary agentflow-install-button" type="button" value="<%:Install%>" onclick="agentflowAgentDialog(true, 'reasonix')" disabled>
-			</div>
-		</div>
+	<section class="agentflow-panel agentflow-providers" aria-labelledby="agentflow-providers-title">
+		<h3 id="agentflow-providers-title"><%:Coding agents%></h3>
+		<p class="agentflow-note"><%:Coding agents are installed and upgraded by their independent plugins. AgentFlow only invokes providers that are ready.%></p>
+		<div id="agentflow-provider-list" class="agentflow-provider-list"></div>
 	</section>
-
-	<div id="agentflow-agent-modal" class="agentflow-agent-modal" role="dialog" aria-modal="true" aria-labelledby="agentflow-agent-dialog-title" onclick="if (event.target === this) agentflowAgentDialog(false)">
-		<div class="agentflow-agent-dialog">
-			<h3 id="agentflow-agent-dialog-title"><%:Confirm agent installation%></h3>
-			<p><%:The installer will download and install%> <strong id="agentflow-selected-agent-name"></strong> <%:into the shared AgentFlow runtime.%></p>
-			<div class="agentflow-dialog-actions">
-				<input class="btn cbi-button agentflow-button" type="button" value="<%:Cancel%>" onclick="agentflowAgentDialog(false)">
-				<input id="agentflow-agent-install-now" class="btn cbi-button agentflow-button agentflow-primary" type="button" value="<%:Install now%>" onclick="agentflowInstallAgent()">
-			</div>
-		</div>
-	</div>
 </div>

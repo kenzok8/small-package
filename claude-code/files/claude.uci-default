@@ -1,0 +1,19 @@
+#!/bin/sh
+set -e
+
+if ! id claude >/dev/null 2>&1; then
+	. /lib/functions.sh
+	gid="$(group_add_next claude)" || exit 1
+	user_add claude "" "$gid" "Claude Code CLI" /var/empty /bin/false || exit 1
+fi
+[ "$(id -u claude)" -gt 0 ] || exit 1
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@claude[-1]
+	add ucitrack claude
+	set ucitrack.@claude[-1].init=claude
+	commit ucitrack
+EOF
+
+/etc/init.d/claude enable
+exit 0

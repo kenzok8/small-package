@@ -13,7 +13,7 @@ APP = Path(__file__).resolve().parents[1]
 
 
 class ServiceStatusTest(unittest.TestCase):
-    def test_readiness_probe_retries_until_http_is_available(self):
+    def test_readiness_probes_tcp_and_unix_with_retries(self):
         command = os.environ.get("LUA_COMMAND")
         if not command:
             lua = shutil.which("lua5.1") or shutil.which("lua")
@@ -25,13 +25,14 @@ class ServiceStatusTest(unittest.TestCase):
 local calls, pauses = 0, 0
 package.loaded["nixio"] = {
   socket = function(family, kind)
-    assert(family == "inet" and kind == "stream")
+    assert((family == "inet" or family == "unix") and kind == "stream")
     return {
       setopt = function(_, level, option, value)
         assert(level == "socket" and option == "sndtimeo" and value == 1)
       end,
       connect = function(_, host, port)
-        assert(host == "127.0.0.1" and port == 8189)
+        if family == "unix" then assert(host == "/var/run/kaiplus.sock" and port == nil)
+        else assert(host == "127.0.0.1" and port == 8189) end
         calls = calls + 1
         return calls >= 3
       end,
@@ -49,6 +50,12 @@ assert(model.wait_ready("8189", 5, 500) == true)
 assert(calls == 3 and pauses == 2)
 calls = 0
 assert(model.wait_ready("invalid", 2, 0) == false)
+assert(calls == 0)
+calls, pauses = 0, 0
+assert(model.wait_socket_ready("/var/run/kaiplus.sock", 5, 500) == true)
+assert(calls == 3 and pauses == 2)
+calls = 0
+assert(model.wait_socket_ready("relative.sock", 2, 0) == false)
 assert(calls == 0)
 print("ready")
 '''
@@ -75,11 +82,11 @@ package.loaded["luci.model.linkease.apps_compat"] = {new = function() return {
     legacy_status = function(_, id, fields) assert(id == "kaiplus"); reply = fields end
 } end}
 package.loaded["luci.model.uci"] = {cursor = function() return {
-    get_first = function() return "8189" end, get = function() return "192.168.30.7" end
+    get_first = function() return "/var/run/kaiplus.sock" end, get = function() return "192.168.30.7" end
 } end}
 package.loaded["luci.model.kaiplus.classic"] = {installed = function() return false end}
-package.loaded["luci.model.kaiplus"] = {ready = function(port)
-    assert(port == "8189")
+package.loaded["luci.model.kaiplus"] = {socket_ready = function(path)
+    assert(path == "/var/run/kaiplus.sock")
     return service_ready
 end}
 package.loaded["luci.sys"] = {call = function(cmd)
@@ -122,24 +129,25 @@ vm.runInNewContext(source, {
     document: {getElementById: id => elements[id]}
 });
 for (const state of states) {
-    poll(null, {...state, proxy_prefix_enabled: true, app_entry_running: true});
-    assert.equal(elements['kaiplus-open'].style.display, state.ready ? '' : 'none');
+    poll(null, {...state, access: {available: state.entry}});
+    assert.equal(elements['kaiplus-open'].style.display, state.ready && state.entry ? '' : 'none');
     const expected = state.ready ? 'service is running.' : state.running ? 'service is starting.' : 'service is not running.';
     assert.ok(elements.kaiplus_status.innerHTML.includes(expected));
-    assert.ok(elements.kaiplus_status.innerHTML.includes('LinkEase Desktop proxy.'));
+    assert.ok(elements.kaiplus_status.innerHTML.includes(state.entry ? 'Application entry is available.' : 'Application entry is unavailable.'));
 }
 '''
         browser_states = [
-            {"running": True, "ready": True},
-            {"running": True, "ready": False},
-            {"running": False, "ready": False},
+            {"running": True, "ready": True, "entry": True},
+            {"running": True, "ready": True, "entry": False},
+            {"running": True, "ready": False, "entry": True},
+            {"running": False, "ready": False, "entry": False},
         ]
         result = subprocess.run(["node", "-e", "const source = " + json.dumps(script) + "; const states = " + json.dumps(browser_states) + ";\n" + browser],
                                 text=True, capture_output=True, timeout=15)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
         form = (APP / "luasrc/model/cbi/kaiplus.lua").read_text()
-        self.assertIn("kaiplus_model.wait_ready", form)
+        self.assertIn("kaiplus_model.wait_socket_ready", form)
         self.assertNotRegex(form, r"\bsleep\s+8\b")
 
 

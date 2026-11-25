@@ -7,7 +7,7 @@ get_config() {
 	config_get_bool enabled "$1" enabled 0
 	config_get data_dir "$1" data_dir ""
 	config_get backup_dir "$1" backup_dir ""
-	config_get port "$1" port "8189"
+	config_get socket_path "$1" socket_path "/var/run/kaiplus.sock"
 }
 
 mkdir_p() {
@@ -45,11 +45,12 @@ start_service() {
 		KAIPLUS_RELEASE_CHANNEL="stable" \
 		KAIPLUS_AUTH_MODE="openwrt_luci" \
 		LINKEASE_AUTH_PROVIDER="openwrt_luci" \
-		KAIPLUS_LISTEN_MODE="tcp" \
+		KAIPLUS_LISTEN_MODE="unix" \
+		KAIPLUS_SOCKET_PATH="$socket_path" \
 		REASONIX_CREDENTIALS_STORE="file"
 	procd_set_param command /usr/sbin/kaiplus_bin kaiplus-web
-	procd_append_param command --listen-mode tcp
-	procd_append_param command --addr "0.0.0.0:$port"
+	procd_append_param command --listen-mode unix
+	procd_append_param command --socket-path "$socket_path"
 	procd_append_param command --data-dir "$data_dir"
 	procd_append_param command --base-path /apps/kaiplus/
 	procd_append_param command --web-zip /usr/share/kaiplus/kaiplus-web.zip

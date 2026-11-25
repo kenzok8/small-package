@@ -1,0 +1,7 @@
+{
+  "luci-app-kimi": {
+    "description": "Manage the Kimi Code CLI, browser terminal and AgentFlow integration",
+    "read": { "uci": ["kimi", "mise", "quickstart", "agentflow"] },
+    "write": { "uci": ["kimi"] }
+  }
+}

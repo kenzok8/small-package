@@ -1,0 +1,7 @@
+{
+  "luci-app-opencode": {
+    "description": "Manage the OpenCode CLI, browser terminal and AgentFlow integration",
+    "read": { "uci": ["opencode", "mise", "quickstart", "agentflow"] },
+    "write": { "uci": ["opencode"] }
+  }
+}

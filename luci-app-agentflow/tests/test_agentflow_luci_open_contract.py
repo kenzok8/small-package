@@ -1,12 +1,13 @@
 import json
 from pathlib import Path
+import re
+import subprocess
 import unittest
 
 
 APP_DIR = Path(__file__).resolve().parents[1]
 AGENTFLOW_DIR = APP_DIR.parent
 META_DIR = AGENTFLOW_DIR / "app-meta-agentflow"
-META_MAKEFILE = META_DIR / "Makefile"
 RUNTIME_DIR = AGENTFLOW_DIR / "agentflow"
 
 
@@ -18,69 +19,75 @@ class AgentFlowLuciOpenContractTest(unittest.TestCase):
         makefile = self.read("Makefile")
         controller = self.read("luasrc/controller/agentflow.lua")
         status = self.read("luasrc/view/agentflow/status.htm")
-        meta = META_MAKEFILE.read_text(encoding="utf-8")
+        meta = (META_DIR / "Makefile").read_text(encoding="utf-8")
 
         self.assertIn("+luci-lib-linkeaseauth", makefile)
         self.assertIn("+linkease-app-entry", makefile)
-        self.assertIn("PKG_RELEASE:=5", meta)
+        self.assertIn("PKG_VERSION:=1.0.2-r1", makefile)
+        self.assertIn("PKG_RELEASE:=9", meta)
         self.assertIn("META_LUCI_ENTRY:=/cgi-bin/luci/admin/services/agentflow", meta)
         self.assertIn('entry({"admin", "services", "agentflow", "open"}', controller)
         self.assertIn("open.sysauth = false", controller)
         self.assertIn("function agentflow_open()", controller)
         self.assertIn('compat():open("agentflow")', controller)
         self.assertIn('compat():legacy_status("agentflow"', controller)
-        self.assertIn('http = require "luci.http"', controller)
-        self.assertIn('resolver = require("luci.model.linkease.apps_openwrt").new()', controller)
-        self.assertIn('auth_url = dispatcher.build_url("admin", "services", "linkease_auth", "auth")', controller)
-        self.assertNotIn("uhttpd_apps_proxy_available", controller)
-        self.assertNotIn("linkeasefull_running", controller)
-        self.assertIn('url("admin/services/agentflow/open")', status)
+        self.assertIn('url("admin/services/linkease_apps/open")', status)
         self.assertNotIn('window.location.hostname + ":" + st.port', status)
 
-    def test_app_meta_autoconfigures_agentflow_and_exposes_management_entry(self):
-        meta = META_MAKEFILE.read_text(encoding="utf-8")
+    def test_app_meta_configures_private_data_and_home(self):
+        meta = (META_DIR / "Makefile").read_text(encoding="utf-8")
         config = (META_DIR / "config.sh").read_text(encoding="utf-8")
         entry = (META_DIR / "entry.sh").read_text(encoding="utf-8")
 
         self.assertIn("META_AUTOCONF:=path enable", meta)
-        self.assertIn('[ -n "$ISTORE_CONF_DIR" ] || exit 1', config)
         self.assertIn('data_dir="$ISTORE_CONF_DIR/AgentFlow"', config)
+        self.assertIn('set agentflow.@agentflow[0].home_dir="$home_dir"', config)
         self.assertIn('set agentflow.@agentflow[0].enabled="$enabled"', config)
-        self.assertIn('set agentflow.@agentflow[0].data_dir="$data_dir"', config)
-        self.assertIn('ISTORE_DONT_START', config)
-        self.assertIn('if [ "$enabled" = "1" ]; then', config)
-        self.assertIn('/etc/init.d/agentflow restart', config)
-        self.assertIn('/etc/init.d/agentflow stop || true', config)
-        self.assertNotIn('/etc/init.d/agentflow restart || true', config)
-
+        self.assertIn("ISTORE_DONT_START", config)
         self.assertIn('APP=agentflow', entry)
-        self.assertIn('json_add_string app "$APP"', entry)
-        self.assertIn('json_add_boolean docker 0', entry)
-        self.assertIn('ubus -S call service list', entry)
-        self.assertIn('env_value AGENT_FLOW_HOST', entry)
-        self.assertIn('env_value AGENT_FLOW_PORT', entry)
-        self.assertIn('tcp_target "$address" "$value" /apps/agentflow/', entry)
         self.assertIn('json_add_string "href" "/cgi-bin/luci/admin/services/agentflow"', entry)
-        self.assertIn('ENTRY_INIT=/etc/init.d/agentflow', entry)
-        self.assertIn('start|stop) "$ENTRY_INIT" "$1"', entry)
-        self.assertNotIn("linkease_apps/open", entry)
+        self.assertIn("linkease_apps/open?id=agentflow", entry)
 
     def test_app_meta_and_desktop_icons_have_single_owners(self):
-        manifest = json.loads(
-            (RUNTIME_DIR / "files/agentflow-plugin.json").read_text(encoding="utf-8")
-        )
+        manifest = json.loads((RUNTIME_DIR / "files/agentflow-plugin.json").read_text())
         self.assertEqual(manifest["id"], "agentflow")
-        self.assertEqual(manifest["icon"], "logo.svg")
-        self.assertEqual(manifest["staticRoot"], "/usr/share/agentflow/www")
+        self.assertEqual(manifest["auth"]["mode"], "passthrough")
+        self.assertEqual(manifest["backend"]["host"], "127.0.0.1")
         self.assertTrue((RUNTIME_DIR / "files/www/logo.svg").is_file())
+        self.assertTrue((META_DIR / "logo.png").read_bytes().startswith(b"\x89PNG\r\n\x1a\n"))
 
-        meta_logo = META_DIR / "logo.png"
-        self.assertTrue(meta_logo.is_file())
-        self.assertTrue(meta_logo.read_bytes().startswith(b"\x89PNG\r\n\x1a\n"))
-        self.assertFalse(
-            (META_DIR / "root/usr/share/linkeasefull/desktop-apps.d").exists(),
-            "agentflow runtime already owns the desktop manifest",
+    def test_missing_gateway_disables_open_and_provider_list_remains_visible(self):
+        template = self.read("luasrc/view/agentflow/status.htm")
+        source = template[template.index("function agentflowAbsoluteUrl"):template.index("XHR.poll")]
+        source = re.sub(r"<%:([^%]+)%>", r"\1", source)
+        harness = r'''
+const vm = require('node:vm'), assert = require('node:assert/strict');
+function element() { return {children:[], appendChild(v){this.children.push(v)}, removeChild(){this.children.shift()}, style:{}} }
+const elements = {
+ 'agentflow-open': {}, 'agentflow-address': {}, 'agentflow-service-description': {},
+ 'agentflow-service-icon': {}, 'agentflow-service-title': {}, 'agentflow-provider-list': element()
+};
+Object.defineProperty(elements['agentflow-provider-list'], 'firstChild', {get(){return this.children[0]}});
+const context = {
+ URL, window:{location:{href:'http://router.lan/cgi-bin/luci/admin/services/agentflow'}},
+ document:{
+  getElementById:id=>elements[id]||null,
+  createElement:tag=>{const value=element();value.tagName=tag;return value}
+ },
+ agentflowLabels:{ready:'Ready',notInstalled:'Not installed',manage:'Manage',version:'Version',noProviders:'None',copied:'Copied'}
+};
+vm.createContext(context); vm.runInContext(source, context);
+context.agentflowRenderStatus({running:true,access:{available:false},providers:[{id:'codex',name:'Codex',installed:true,version:'1.2.3',manage_url:'/manage'}]});
+assert.equal(elements['agentflow-open'].disabled, true);
+assert.equal(elements['agentflow-provider-list'].children.length, 1);
+assert.equal(elements['agentflow-provider-list'].children[0].children[0].textContent, 'Codex');
+'''
+        result = subprocess.run(
+            ["node", "-e", "const source=" + json.dumps(source) + ";\n" + harness],
+            capture_output=True, text=True, timeout=15,
         )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

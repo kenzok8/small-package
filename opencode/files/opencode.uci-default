@@ -1,0 +1,19 @@
+#!/bin/sh
+set -e
+
+if ! id opencode >/dev/null 2>&1; then
+	. /lib/functions.sh
+	gid="$(group_add_next opencode)" || exit 1
+	user_add opencode "" "$gid" "OpenCode CLI" /var/empty /bin/false || exit 1
+fi
+[ "$(id -u opencode)" -gt 0 ] || exit 1
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@opencode[-1]
+	add ucitrack opencode
+	set ucitrack.@opencode[-1].init=opencode
+	commit ucitrack
+EOF
+
+/etc/init.d/opencode enable
+exit 0

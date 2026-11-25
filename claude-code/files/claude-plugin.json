@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "id": "claude-code",
+  "name": "Claude Code",
+  "icon": "logo.svg",
+  "staticRoot": "/usr/share/claude/www",
+  "desktop": {
+    "mode": "iframe",
+    "target": {
+      "scheme": "http",
+      "hostMode": "request-host",
+      "port": {
+        "default": 7684,
+        "keys": {
+          "uci": "claude.main.terminal_port"
+        }
+      },
+      "path": "/apps/claude-code/"
+    },
+    "access": {
+      "scope": "lan",
+      "blockedTitle": "请在局域网内打开 Claude Code",
+      "blockedMessage": "Claude Code 终端只通过设备的认证应用网关提供。"
+    }
+  },
+  "standalone": {
+    "basePath": "/apps/claude-code/",
+    "externalOpen": {
+      "enabled": true,
+      "label": "打开 Claude Code 终端"
+    }
+  },
+  "auth": {
+    "mode": "default"
+  },
+  "backend": {
+    "type": "http",
+    "scheme": "http",
+    "host": "127.0.0.1",
+    "upstreamBasePath": "/apps/claude-code/",
+    "pathMode": "preserve",
+    "proxyMode": "app-base",
+    "transport": "tcp",
+    "values": {
+      "port": {
+        "default": 7684,
+        "keys": {
+          "uci": "claude.main.terminal_port"
+        }
+      },
+      "externalPortEnabled": {
+        "default": false
+      }
+    }
+  },
+  "window": {
+    "width": 1180,
+    "height": 760,
+    "singleton": true
+  },
+  "capabilities": [
+    "coding-agent",
+    "terminal",
+    "development"
+  ],
+  "categories": [
+    "development",
+    "ai"
+  ],
+  "config": {
+    "providerOrder": [
+      "uci"
+    ],
+    "providers": {
+      "uci": {
+        "type": "uci"
+      }
+    }
+  }
+}

@@ -62,11 +62,12 @@ start_service() {
 	config_load linkease_app_entry
 	config_get_bool entry_enabled main enabled 1
 	[ "$entry_enabled" = 1 ] || return 1
-	config_get listen main listen "127.0.0.1:19290"
+	config_get listen main listen "0.0.0.0:19290"
 	config_get ready_timeout main ready_timeout "75s"
 	config_get max_failures main max_primary_failures "3"
 	config_get crash_window main crash_window "60s"
 	config_get state_file main state_file "/var/run/linkease-app-entry/state.json"
+	config_get luci_origin main luci_origin ""
 
 	mkdir -p /var/run/linkease-app-entry
 	primary=0
@@ -103,6 +104,7 @@ start_service() {
 
 	procd_set_param env \
 		"LINKEASE_AUTH_PROVIDER=openwrt" \
+		"LINKEASE_OPENWRT_AUTH_ORIGIN=$luci_origin" \
 		"KAIPLUS_ENABLED=0"
 	procd_set_param respawn 3600 5 0
 	procd_set_param stdout 1

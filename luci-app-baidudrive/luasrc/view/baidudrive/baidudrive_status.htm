@@ -7,9 +7,12 @@ XHR.poll(5, '<%=url("admin/services/baidudrive_status")%>', null, function(x, st
 				+ '<br/><small>baidudrive: ' + (st.app_running ? 'running' : 'stopped')
 				+ ', baiduNas: ' + (st.sdk_running ? 'running' : 'stopped') + '</small>';
 		}
-		if (st.running) {
+		if (st.running && st.access && st.access.available) {
 			el.innerHTML = '<br/><em style=\"color:green\"><%:The BaiduDrive service is running.%></em>'
-				+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open BaiduDrive%> \" onclick=\"window.open('<%=url("admin/services/baidudrive/open")%>')\"/>";
+				+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Click to open BaiduDrive%> \" onclick=\"window.open('<%=url("admin/services/linkease_apps/open")%>?id=baidudrive')\"/>";
+		}
+		else if (st.running) {
+			el.innerHTML = '<br/><em><%:Application entry is unavailable. Check the shared application entry service.%></em>';
 		}
 	}
 });

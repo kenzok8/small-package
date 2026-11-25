@@ -32,34 +32,11 @@
         "keys": {
           "uci": "dockermanager.@dockermanager[0].socket_path"
         }
-      },
-      "listenMode": {
-        "default": "auto",
-        "keys": {
-          "uci": "dockermanager.@dockermanager[0].listen_mode"
-        }
-      },
-      "externalPortEnabled": {
-        "default": false,
-        "keys": {
-          "uci": "dockermanager.@dockermanager[0].external_port_enabled"
-        }
-      },
-      "port": {
-        "default": 8192,
-        "keys": {
-          "uci": "dockermanager.@dockermanager[0].port"
-        }
       }
     },
     "upstreamBasePath": "/apps/dockermanager/",
     "apiPath": "api/",
-    "pathMode": "preserve",
-    "fallback": {
-      "transport": "tcp",
-      "scheme": "http",
-      "host": "127.0.0.1"
-    }
+    "pathMode": "preserve"
   },
   "window": {
     "width": 1180,

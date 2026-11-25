@@ -54,3 +54,6 @@ msgstr "百度网盘未运行"
 #: luasrc/view/baidudrive/baidudrive_status.htm:9
 msgid "The BaiduDrive service is running."
 msgstr "百度网盘运行中"
+
+msgid "Application entry is unavailable. Check the shared application entry service."
+msgstr "应用入口不可用，请检查共享应用入口服务。"

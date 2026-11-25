@@ -1,0 +1,19 @@
+#!/bin/sh
+set -e
+
+if ! id codex >/dev/null 2>&1; then
+	. /lib/functions.sh
+	gid="$(group_add_next codex)" || exit 1
+	user_add codex "" "$gid" "Codex CLI" /var/empty /bin/false || exit 1
+fi
+[ "$(id -u codex)" -gt 0 ] || exit 1
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@codex[-1]
+	add ucitrack codex
+	set ucitrack.@codex[-1].init=codex
+	commit ucitrack
+EOF
+
+/etc/init.d/codex enable
+exit 0

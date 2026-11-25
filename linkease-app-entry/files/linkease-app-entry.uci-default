@@ -5,6 +5,12 @@
 mapping='/apps=http://127.0.0.1:19290'
 found=0
 
+# Migrate only the previously shipped default. Custom listener choices survive.
+if [ "$(uci -q get linkease_app_entry.main.listen)" = '127.0.0.1:19290' ]; then
+	uci -q set linkease_app_entry.main.listen='0.0.0.0:19290'
+	uci -q commit linkease_app_entry
+fi
+
 # During upgrade the old linkeasefull init may still own 19290. Stop that
 # legacy procd instance before starting the single-owner entry module.
 if grep -q 'procd_open_instance linkeasefull' /etc/init.d/linkeasefull 2>/dev/null; then
@@ -18,7 +24,7 @@ check_mapping() {
 config_load uhttpd
 config_list_foreach main proxy_prefix check_mapping
 uci -q show uhttpd.main.proxy_prefix 2>/dev/null | grep -Fq "$mapping" && found=1
-if [ "$found" != 1 ]; then
+if [ "$found" != 1 ] && grep -qr 'proxy_prefix' /etc/init.d/uhttpd /lib/functions /usr/share/uhttpd 2>/dev/null; then
 	uci -q add_list "uhttpd.main.proxy_prefix=$mapping"
 	uci -q commit uhttpd
 	/etc/init.d/uhttpd reload >/dev/null 2>&1 || true

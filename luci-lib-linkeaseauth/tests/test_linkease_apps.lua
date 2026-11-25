@@ -82,6 +82,15 @@ equal(external.available, true)
 equal(external.url, "http://192.168.30.7:8192/apps/dockermanager/")
 equal(external.reason, "external_available")
 
+local lan = engine({
+    entry = { available = true, worker = "gateway", proxy_supported = false, proxy_enabled = false,
+        direct_origin = "http://router.lan:19290" },
+    external = { dockermanager = { available = true, url = "http://router.lan:8192/" } }
+}):resolve("dockermanager")
+equal(lan.mode, "apps")
+equal(lan.transport, "lan")
+equal(lan.url, "http://router.lan:19290/apps/dockermanager/", "shared LAN entry wins over app TCP")
+
 local unavailable = engine({
 	entry = { available = false, worker = "stopped", proxy_supported = true, proxy_enabled = true },
 	external = { dockermanager = { available = false, reason = "external_disabled" } }

@@ -4,26 +4,8 @@ msgstr "Content-Type: text/plain; charset=UTF-8"
 msgid "AgentFlow"
 msgstr "AgentFlow"
 
-msgid "AgentFlow provides a Web UI for orchestrating coding agents and workflows."
-msgstr "AgentFlow 提供用于编排编码智能体和工作流的 Web 管理界面。"
-
-msgid "Click to open AgentFlow"
-msgstr "点击打开 AgentFlow"
-
-msgid "Access mode: LinkEase Desktop /apps proxy."
-msgstr "访问模式：LinkEase Desktop /apps 代理。"
-
-msgid "Access mode: external port."
-msgstr "访问模式：外部端口。"
-
-msgid "Collecting data..."
-msgstr "正在获取数据……"
-
-msgid "Data directory"
-msgstr "数据目录"
-
-msgid "Data directory cannot be empty."
-msgstr "数据目录不能为空"
+msgid "AgentFlow orchestrates projects and independently installed coding agents."
+msgstr "AgentFlow 用于编排项目和独立安装的编码智能体。"
 
 msgid "Enable"
 msgstr "启用"
@@ -31,68 +13,32 @@ msgstr "启用"
 msgid "Global settings"
 msgstr "全局设置"
 
-msgid "Listen port"
-msgstr "监听端口"
+msgid "Data directory"
+msgstr "数据目录"
 
-msgid "Port for the AgentFlow HTTP server."
-msgstr "AgentFlow HTTP 服务的端口号。"
+msgid "Data directory cannot be empty."
+msgstr "数据目录不能为空。"
 
 msgid "Please select a disk as the data directory."
-msgstr "请选择硬盘作为数据目录"
+msgstr "请选择硬盘作为数据目录。"
 
 msgid "Required. AgentFlow stores its configuration, database and workspace data under this directory."
 msgstr "必需。AgentFlow 在此目录中保存配置、数据库和工作区数据。"
 
-msgid "Status"
-msgstr "状态"
+msgid "AgentFlow home directory"
+msgstr "AgentFlow 主目录"
 
-msgid "The AgentFlow service is not running."
-msgstr "AgentFlow 服务未运行。"
+msgid "Optional. New installations use <data directory>/home. An upgraded installation may retain its previous HOME so credentials are not moved silently."
+msgstr "可选。新安装使用 <数据目录>/home；升级安装可保留原 HOME，避免静默移动凭据。"
 
-msgid "The AgentFlow service is running."
-msgstr "AgentFlow 服务运行中。"
+msgid "Please select a disk as the home directory."
+msgstr "请选择硬盘作为主目录。"
 
-msgid "Install agent"
-msgstr "安装智能体"
+msgid "Checking AgentFlow service"
+msgstr "正在检查 AgentFlow 服务"
 
-msgid "Agent"
-msgstr "智能体"
-
-msgid "Select a coding agent to install into the shared AgentFlow runtime."
-msgstr "选择要安装到 AgentFlow 共享运行环境中的编码智能体。"
-
-msgid "Cancel"
-msgstr "取消"
-
-msgid "Install now"
-msgstr "立即安装"
-
-msgid "Task log window is not available."
-msgstr "任务日志窗口不可用。"
-
-msgid "Failed to start agent installation."
-msgstr "启动智能体安装失败。"
-
-msgid "Installed"
-msgstr "已安装"
-
-msgid "Not installed"
-msgstr "未安装"
-
-msgid "Status unavailable"
-msgstr "状态不可用"
-
-msgid "Install"
-msgstr "安装"
-
-msgid "Starting..."
-msgstr "正在启动……"
-
-msgid "Copied"
-msgstr "已复制"
-
-msgid "Copy"
-msgstr "复制"
+msgid "Collecting data..."
+msgstr "正在获取数据……"
 
 msgid "AgentFlow service is running"
 msgstr "AgentFlow 服务运行中"
@@ -100,14 +46,14 @@ msgstr "AgentFlow 服务运行中"
 msgid "AgentFlow service is not running"
 msgstr "AgentFlow 服务未运行"
 
-msgid "The service is ready. You can open AgentFlow or install coding agents."
-msgstr "服务已就绪，可以打开 AgentFlow 或安装编码智能体。"
+msgid "The service is ready. AgentFlow uses independently installed coding agents."
+msgstr "服务已就绪。AgentFlow 使用独立安装的编码智能体。"
 
-msgid "Start the service to use AgentFlow. Agent installation remains available."
-msgstr "请启动服务后使用 AgentFlow；智能体安装仍然可用。"
+msgid "Start the service to use AgentFlow."
+msgstr "请启动服务后使用 AgentFlow。"
 
-msgid "Checking AgentFlow service"
-msgstr "正在检查 AgentFlow 服务"
+msgid "Application entry is unavailable."
+msgstr "应用入口当前不可用。"
 
 msgid "Open AgentFlow"
 msgstr "打开 AgentFlow"
@@ -115,55 +61,32 @@ msgstr "打开 AgentFlow"
 msgid "Local network access"
 msgstr "局域网访问"
 
-msgid "Open this address in a browser to access the AgentFlow Web interface."
-msgstr "在浏览器中打开此地址即可访问 AgentFlow Web 界面。"
+msgid "Copy"
+msgstr "复制"
 
-msgid "Agent installation"
-msgstr "智能体安装"
+msgid "Copied"
+msgstr "已复制"
 
-msgid "Install coding agents into the shared AgentFlow runtime. Installed agents show their current version."
-msgstr "将编码智能体安装到 AgentFlow 共享运行环境中；已安装的智能体会显示当前版本。"
+msgid "AgentFlow keeps its own login and is exposed only through the application gateway."
+msgstr "AgentFlow 使用自己的登录体系，并且仅通过应用网关提供访问。"
 
-msgid "OpenAI coding agent for software development tasks."
-msgstr "OpenAI 提供的代码智能体，适用于软件开发任务。"
+msgid "Coding agents"
+msgstr "编码智能体"
 
-msgid "Anthropic coding agent for code analysis and development."
-msgstr "Anthropic 提供的代码智能体，适用于代码分析与开发。"
+msgid "Coding agents are installed and upgraded by their independent plugins. AgentFlow only invokes providers that are ready."
+msgstr "编码智能体由各自独立插件安装和升级；AgentFlow 只调用已经就绪的提供方。"
 
-msgid "Open source coding agent with a flexible terminal workflow."
-msgstr "开源代码智能体，提供灵活的终端开发工作流。"
+msgid "Ready"
+msgstr "已就绪"
 
-msgid "Moonshot AI coding agent for terminal-based development."
-msgstr "Moonshot AI 提供的代码智能体，适用于终端开发。"
+msgid "Not installed"
+msgstr "未安装"
 
-msgid "AI coding agent for software engineering workflows."
-msgstr "面向软件工程工作流的 AI 代码智能体。"
-
-msgid "Checking..."
-msgstr "正在检查……"
+msgid "Manage"
+msgstr "管理"
 
 msgid "Version"
 msgstr "版本"
 
-msgid "Confirm agent installation"
-msgstr "确认安装智能体"
-
-msgid "The installer will download and install"
-msgstr "安装程序将下载并安装"
-
-msgid "into the shared AgentFlow runtime."
-msgstr "到 AgentFlow 共享运行环境。"
-msgid "Checking shared runtime"
-msgstr "正在检查共享运行时"
-
-msgid "Shared runtime is not available"
-msgstr "共享运行时不可用，请先配置持久存储"
-
-msgid "Manage runtime environments"
-msgstr "管理运行时环境"
-
-msgid "Agent packages use a fixed shared Node/glibc runtime and private application directories. Global mise versions are unchanged."
-msgstr "代理使用固定的共享 Node/glibc 运行时，安装到 AgentFlow 独立目录，不切换 mise 全局版本。"
-
-msgid "Recover interrupted install"
-msgstr "恢复中断安装"
+msgid "No independent coding agent plugin was detected. Install Codex, Claude Code, OpenCode or Kimi from the app store."
+msgstr "未检测到独立编码智能体插件。请从应用商店安装 Codex、Claude Code、OpenCode 或 Kimi。"

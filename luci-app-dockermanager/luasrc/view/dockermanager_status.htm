@@ -8,24 +8,20 @@
 					var status = st.running
 						? '<br/><em style=\"color:green\"><%:The Docker Manager service is running.%></em>'
 						: '<br/><em style=\"color:red\"><%:The Docker Manager service is not running.%></em>';
-					if (st.proxy_prefix_enabled && st.app_entry_running)
+					if (st.access && st.access.available)
 					{
-						status = status + '<br/><em><%:Access mode: LinkEase Desktop proxy.%></em>';
-					}
-					else if (st.external_port_enabled)
-					{
-						status = status + '<br/><em><%:Access mode: external port.%></em>';
+						status += '<br/><em><%:Application entry is available.%></em>';
 					}
 					else
 					{
-						status = status + '<br/><em><%:External port access is disabled.%></em>';
+						status += '<br/><em><%:Application entry is unavailable. Check the shared application entry service.%></em>';
 					}
 					tb.innerHTML = status;
 
-				if (st.running)
+				if (st.running && st.access && st.access.available)
 				{
 					tb.innerHTML = tb.innerHTML
-						+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Open Docker Manager%> \" onclick=\"window.open('<%=url("admin/services/dockermanager/open")%>')\"/>";
+						+ "<br/><br/><input class=\"btn cbi-button cbi-button-apply\" type=\"button\" value=\" <%:Open Docker Manager%> \" onclick=\"window.open('<%=url("admin/services/linkease_apps/open")%>?id=dockermanager')\"/>";
 				}
 			}
 		}

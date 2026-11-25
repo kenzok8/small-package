@@ -10,7 +10,7 @@ PKG_ARCH_DOCKERMANAGER:=$(ARCH)
 
 PKG_NAME:=dockermanager
 PKG_VERSION:=0.1.2
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/dockermanager-runtime-v$(PKG_VERSION)/
 PKG_HASH:=1ecaa4363b1a20a26c31a36f994e94a8064ed0de67cd612a233fc05f5026726a
@@ -45,6 +45,17 @@ legacy="$${root}/usr/share/linkeasefull/desktop-apps.d/20-dockermanager-plugin.j
 if [ ! -e "$${legacy}" ] && [ ! -L "$${legacy}" ]; then
 	mkdir -p "$${legacy%/*}"
 	ln -s /usr/share/dockermanager/dockermanager-plugin.json "$${legacy}" || exit $$?
+fi
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	# Old TCP settings are no longer part of this application's contract.
+	for option in listen_mode external_port_enabled port bind_addr; do
+		uci -q delete "dockermanager.@dockermanager[0].$${option}" || true
+	done
+	uci -q commit dockermanager
+	# Replace an already running TCP instance on upgrade; do not start a stopped app.
+	if pidof docker-manager >/dev/null 2>&1; then
+		/etc/init.d/dockermanager restart
+	fi
 fi
 exit 0
 endef

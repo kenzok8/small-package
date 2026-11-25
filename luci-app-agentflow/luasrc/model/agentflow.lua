@@ -45,14 +45,4 @@ agentflow.find_paths = function(blocks, home_dirs)
 	return paths, default_path
 end
 
-agentflow.runtime_dir = function(data_dir)
-	data_dir = (data_dir or ""):match("^%s*(.-)%s*$"):gsub("/+$", "")
-	local conf_dir = data_dir:match("^(.*)/[^/]+$")
-	if conf_dir == nil or conf_dir == "" then
-		return nil
-	end
-
-	return conf_dir .. "/Runtime/home"
-end
-
 return agentflow

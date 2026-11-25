@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "codex",
+  "name": "OpenAI Codex",
+  "kind": "cli",
+  "command": "/usr/bin/codex",
+  "statusCommand": ["/usr/libexec/codex-runtime", "provider-status"],
+  "manageUrl": "/cgi-bin/luci/admin/services/codex",
+  "ownerPackage": "codex",
+  "workspaceMode": "explicit",
+  "capabilities": ["interactive", "exec", "resume"]
+}

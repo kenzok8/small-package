@@ -1,0 +1,51 @@
+<%+tasks/embed%>
+<style>
+.codex-shell{margin:14px 0;border:1px solid #dfe5ef;border-radius:12px;background:#fff;box-shadow:0 6px 20px rgba(30,45,80,.06);overflow:hidden}.codex-main{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:22px;padding:22px}.codex-title{margin:0 0 7px;font-size:22px}.codex-muted{margin:0;color:#667085;line-height:1.55}.codex-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.codex-badge{display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:999px;background:#eef2f7;color:#4a5568;font-size:13px;font-weight:700}.codex-badge.codex-ok{background:#e8f6ed;color:#16833b}.codex-badge.codex-warn{background:#fff3df;color:#955600}.codex-actions{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}.codex-button{min-width:156px;text-align:center}.codex-secondary{background:#fff!important}.codex-detail{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 22px;border-top:1px solid #e8edf4}.codex-detail-copy{min-width:0;color:#667085;line-height:1.55}.codex-detail-copy strong{color:#30384b}.codex-maintenance{display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}.codex-state{font-weight:700}.codex-ok{color:#16833b}.codex-warn{color:#a15c00}body[theme="dark"] .codex-shell{background:#20252b;border-color:#3c4652}body[theme="dark"] .codex-detail{border-color:#3c4652}body[theme="dark"] .codex-secondary{background:#20252b!important}@media(max-width:800px){.codex-main{grid-template-columns:1fr}.codex-actions{align-items:stretch}.codex-button{flex:1 1 210px}.codex-detail{align-items:flex-start;flex-direction:column}}
+</style>
+<script>
+//<![CDATA[
+var codexStatusUrl='<%=url("admin/services/codex/status")%>';
+var codexInstallUrl='<%=url("admin/services/codex/install")%>';
+var codexTerminalUrl='<%=url("admin/services/linkease_apps/open")%>?id=codex';
+var codexAgentFlowUrl='<%=url("admin/services/linkease_apps/open")%>?id=agentflow';
+var codexAgentFlowManageUrl='<%=url("admin/services/agentflow")%>';
+var codexStoreUrl='/cgi-bin/luci/admin/store';
+var codexToken=(window.taskd&&window.taskd.csrfToken)||'';
+function codexText(id,value,klass){var el=document.getElementById(id);if(!el)return;el.textContent=value;if(klass)el.className='codex-state '+klass;}
+function codexBadge(id,value,klass){var el=document.getElementById(id);if(!el)return;el.textContent=value;el.className='codex-badge '+(klass||'');}
+function codexAgentFlow(a){
+ var button=document.getElementById('codex-agentflow');if(!button)return;
+ a=a||{};
+ if(a.installed&&a.running){button.textContent='在网页中使用 Codex';button.href=codexAgentFlowUrl;button.target='_blank';button.title='由 AgentFlow 提供';return}
+ button.removeAttribute('target');
+ if(a.installed){button.textContent='启动或管理 AgentFlow';button.href=codexAgentFlowManageUrl;button.title='AgentFlow 当前未运行';return}
+ button.textContent='安装 AgentFlow 后使用';button.href=codexStoreUrl;button.title='前往 iStore 安装 AgentFlow';
+}
+function codexRender(s){
+ s=s||{};var runtime=s.runtime||{};
+ codexBadge('codex-install-state',s.installed?('Codex '+(s.version||'已安装')):(s.install_running?'Codex 正在安装':'Codex 未安装'),s.installed?'codex-ok':'codex-warn');
+ codexBadge('codex-terminal-state',s.service_running?'终端运行中':'终端未运行',s.service_running?'codex-ok':'codex-warn');
+ codexBadge('codex-auth-state',s.authenticated?'OpenAI 已登录':'OpenAI 未登录',s.authenticated?'codex-ok':'codex-warn');
+ codexText('codex-runtime-state',runtime.ready?('共享运行时：Node '+runtime.node+' · npm '+runtime.npm+' · '+runtime.abi):(runtime.error||'共享运行时未准备'),runtime.ready?'codex-ok':'codex-warn');
+ var install=document.getElementById('codex-install');install.disabled=!!s.install_running;install.value=s.installed?'重新安装固定版本':(s.install_running?'正在安装…':'安装 Codex');
+ document.getElementById('codex-recover').style.display=s.interrupted?'inline-block':'none';
+ var terminal=document.getElementById('codex-terminal');terminal.href=codexTerminalUrl;terminal.style.display=s.service_running?'inline-block':'none';
+ codexAgentFlow(s.agentflow);
+}
+function codexOperation(operation){
+ (new XHR()).post(codexInstallUrl,{token:codexToken,operation:operation},function(x,data){
+  data=data||{};if(!data.ok){alert(data.error||'操作失败');return}
+  if(data.task_id&&window.taskd)window.taskd.show_log(data.task_id,false,function(){location.reload()});
+  else location.reload();
+ });
+}
+XHR.poll(5,codexStatusUrl,null,function(x,s){codexRender(s)});
+//]]>
+</script>
+<section class="codex-shell" aria-labelledby="codex-heading">
+ <div class="codex-main">
+  <div><h3 id="codex-heading" class="codex-title">Codex</h3><p class="codex-muted">在 iStoreOS 上安全运行 Codex 命令行，也可以交给 AgentFlow 提供网页工作流。</p><div class="codex-badges"><span id="codex-install-state" class="codex-badge">检查中…</span><span id="codex-terminal-state" class="codex-badge">检查中…</span><span id="codex-auth-state" class="codex-badge">检查中…</span></div></div>
+  <div class="codex-actions"><a id="codex-terminal" class="btn cbi-button cbi-button-apply codex-button" target="_blank" rel="noopener" style="display:none">打开 Codex 命令行</a><a id="codex-agentflow" class="btn cbi-button codex-button codex-secondary" rel="noopener">检查 AgentFlow…</a></div>
+ </div>
+ <div class="codex-detail"><div class="codex-detail-copy"><strong id="codex-runtime-state" class="codex-state">检查共享运行时…</strong><br>OpenAI 凭据仅保存在专用 Codex HOME；未登录时请在命令行执行 <code>codex login --device-auth</code>。</div><div class="codex-maintenance"><a class="btn cbi-button" href="<%=url('admin/services/mise')%>">运行时环境</a><input id="codex-install" class="btn cbi-button" type="button" value="安装 Codex" onclick="codexOperation('install')"><input id="codex-recover" class="btn cbi-button" style="display:none" type="button" value="恢复中断安装" onclick="codexOperation('recover')"></div></div>
+</section>

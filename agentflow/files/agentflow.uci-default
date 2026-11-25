@@ -1,13 +1,36 @@
 #!/bin/sh
 
 uci -q batch <<-EOF >/dev/null
+	set agentflow.@agentflow[0].host='127.0.0.1'
 	delete ucitrack.@agentflow[-1]
 	add ucitrack agentflow
 	set ucitrack.@agentflow[-1].init=agentflow
 	commit ucitrack
 EOF
 
-/etc/init.d/agentflow enable
-/etc/init.d/agentflow start
+# Preserve the legacy AgentFlow HOME on upgrade without keeping a runtime
+# dependency. New installations use <data_dir>/home.
+data_dir="$(uci -q get agentflow.@agentflow[0].data_dir)"
+home_dir="$(uci -q get agentflow.@agentflow[0].home_dir)"
+if [ -z "$home_dir" ] && [ -n "$data_dir" ] && [ -d "$data_dir/.runtime" ]; then
+	legacy_home="$(uci -q get mise.main.runtime_dir)"
+	if [ -z "$legacy_home" ]; then
+		storage_root="$(uci -q get mise.main.storage_root)"
+		[ -n "$storage_root" ] && legacy_home="$storage_root/home"
+	fi
+	case "$legacy_home" in
+		/mnt/?*/*)
+			uci -q set agentflow.@agentflow[0].home_dir="$legacy_home"
+			uci -q commit agentflow
+			;;
+	esac
+fi
+
+if [ "$(uci -q get agentflow.@agentflow[0].enabled)" = 1 ]; then
+	/etc/init.d/agentflow enable
+	/etc/init.d/agentflow restart
+else
+	/etc/init.d/agentflow disable
+fi
 
 exit 0

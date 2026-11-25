@@ -7,9 +7,10 @@
 include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=KaiPlus
-PKG_VERSION:=1.0.11-r4
+PKG_VERSION:=1.0.11-r5
 PKG_RELEASE:=
 LUCI_DEPENDS:=+kaiplus +luci-compat +luci-lib-taskd +luci-lib-linkeaseauth +linkease-app-entry
+LUCI_EXTRA_DEPENDS:=luci-lib-linkeaseauth (>=1.2.1-r5)
 LUCI_MINIFY_CSS:=0
 LUCI_MINIFY_JS:=0
 

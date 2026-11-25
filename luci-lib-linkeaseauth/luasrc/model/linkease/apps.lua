@@ -84,8 +84,20 @@ function Engine:resolve(id)
 		and (entry.worker == "gateway" or entry.worker == "linkeasefull") then
 		result.available = true
 		result.mode = "apps"
+		result.transport = "proxy"
 		result.url = safe_apps_url(app.url, id)
 		result.reason = "entry_available"
+		return result
+	end
+	if type(entry) == "table" and app.entry_supported ~= false
+		and entry.available == true
+		and (entry.worker == "gateway" or entry.worker == "linkeasefull")
+		and safe_external_url((entry.direct_origin or "") .. "/") then
+		result.available = true
+		result.mode = "apps"
+		result.transport = "lan"
+		result.url = entry.direct_origin .. safe_apps_url(app.url, id)
+		result.reason = "entry_lan_available"
 		return result
 	end
 

@@ -10,13 +10,13 @@ AGENTFLOW_ARCH_x86_64:=amd64
 AGENTFLOW_ARCH_aarch64:=arm64
 AGENTFLOW_ARCH:=$(AGENTFLOW_ARCH_$(ARCH))
 
-# Official build/version.json: 0.3.5-20261019-101caed9
-AGENTFLOW_HASH_x86_64:=213d44adfde5537eada6ed24bc1d90dfc6e955f103d3650d3d6876d644dfbb48
-AGENTFLOW_HASH_aarch64:=70ed6061ad7d324df58d7262580da83ec23b5af3a45370ee10f97387fdec45da
+# Official release: 0.3.5-20261123-bbd3dcf5
+AGENTFLOW_HASH_x86_64:=496c1c67b4a77c2dba24fba9f49f9cccc1d4e0d0fb7aa7759cf1822bc5fdfd31
+AGENTFLOW_HASH_aarch64:=4f11062649cc048b12545df635ea68c6ec3dd9113ffd34c47f21076649bfa8aa
 
 PKG_NAME:=agentflow
 PKG_VERSION:=0.3.5
-PKG_RELEASE:=4
+PKG_RELEASE:=8
 
 AGENTFLOW_URL_FILE:=agentflow-linux-$(AGENTFLOW_ARCH)
 AGENTFLOW_DOWNLOAD:=$(AGENTFLOW_URL_FILE)-$(AGENTFLOW_HASH_$(ARCH))
@@ -30,7 +30,7 @@ RSTRIP:=:
 include $(INCLUDE_DIR)/package.mk
 
 define Download/agentflow
-	URL:=https://fw.koolcenter.com/binary/geili/agentflow/build/
+	URL:=https://fw.koolcenter.com/binary/geili/agentflow/releases/server/0.3.5-20261123-bbd3dcf5/
 	URL_FILE:=$(AGENTFLOW_URL_FILE)
 	FILE:=$(AGENTFLOW_DOWNLOAD)
 	HASH:=$(AGENTFLOW_HASH_$(ARCH))
@@ -41,8 +41,8 @@ define Package/$(PKG_NAME)
 	CATEGORY:=Network
 	SUBMENU:=Web Servers/Proxies
 	TITLE:=AgentFlow
-	DEPENDS:=@(x86_64||aarch64) +git +git-http +mise-runtime +linkease-app-entry
-	EXTRA_DEPENDS:=mise-runtime (>=0.1.1-$(if $(CONFIG_USE_APK),r)1)
+	DEPENDS:=@(x86_64||aarch64) +git +git-http +linkease-app-entry
+	EXTRA_DEPENDS:=luci-lib-linkeaseauth (>=1.2.1-r5)
 	URL:=https://agentflow.geili.ai/
 endef
 
@@ -62,6 +62,11 @@ legacy="$${root}/usr/share/linkeasefull/desktop-apps.d/30-agentflow.json"
 if [ ! -e "$${legacy}" ] && [ ! -L "$${legacy}" ]; then
 	mkdir -p "$${legacy%/*}"
 	ln -s /usr/share/agentflow/agentflow-plugin.json "$${legacy}" || exit $$?
+fi
+if [ -z "$${IPKG_INSTROOT}" ]; then
+	uci -q set agentflow.@agentflow[0].host='127.0.0.1'
+	uci -q commit agentflow || exit $$?
+	if pidof agentflow >/dev/null 2>&1; then /etc/init.d/agentflow restart || exit $$?; fi
 fi
 exit 0
 endef
@@ -91,10 +96,8 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d $(1)/etc/uci-defaults $(1)/etc/config $(1)/usr/share/agentflow/www $(1)/usr/share/linkease/apps.d $(1)/usr/libexec
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/init.d $(1)/etc/uci-defaults $(1)/etc/config $(1)/usr/share/agentflow/www $(1)/usr/share/linkease/apps.d
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/agentflow $(1)/usr/sbin/agentflow
-	$(INSTALL_BIN) ./files/agentflow-runtime $(1)/usr/libexec/agentflow-runtime
-	$(INSTALL_DATA) ./files/agentflow-runtime.lua ./files/agentflow-agents.lua ./files/runtime-cli.lua $(1)/usr/share/agentflow/
 	$(INSTALL_BIN) ./files/agentflow.init $(1)/etc/init.d/agentflow
 	$(INSTALL_BIN) ./files/agentflow.uci-default $(1)/etc/uci-defaults/09-agentflow
 	$(INSTALL_CONF) ./files/agentflow.config $(1)/etc/config/agentflow

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "claude-code",
+  "name": "Anthropic Claude Code",
+  "kind": "cli",
+  "command": "/usr/bin/claude",
+  "statusCommand": ["/usr/libexec/claude-runtime", "provider-status"],
+  "manageUrl": "/cgi-bin/luci/admin/services/claude",
+  "ownerPackage": "claude-code",
+  "workspaceMode": "explicit",
+  "capabilities": ["interactive", "exec", "resume"]
+}

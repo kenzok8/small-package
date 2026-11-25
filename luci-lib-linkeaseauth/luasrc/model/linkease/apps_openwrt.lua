@@ -42,6 +42,21 @@ local function url_host(host)
 	return host
 end
 
+-- Use the running supervisor's listener, never a pending UCI listen value.
+local function direct_origin(state, authority)
+	if type(state) ~= "table" or type(state.listen) ~= "string" then return nil end
+	local bind, port = state.listen:match("^([^:]*):(%d+)$")
+	if not bind then bind, port = state.listen:match("^%[([^%]]+)%]:(%d+)$") end
+	local host = authority_host(authority)
+	if not bind or not port or tonumber(port) < 1 or tonumber(port) > 65535
+		or bind == "localhost" or bind == "::1" or bind:match("^127%.")
+		or host == "" or host:find("[^%w%.:%-]") then return nil end
+	if bind ~= "" and bind ~= "0.0.0.0" and bind ~= "::" and bind ~= host then return nil end
+	local scheme = state.scheme or "http"
+	if scheme ~= "http" and scheme ~= "https" then return nil end
+	return scheme .. "://" .. url_host(host) .. ":" .. port
+end
+
 local function uci_key(cursor, key, read_committed)
 	if type(key) ~= "string" then return nil end
 	local config, section_type, _, option = key:match("^([%w_-]+)%.@([%w_-]+)%[(%d+)%]%.([%w_-]+)$")
@@ -117,10 +132,17 @@ function M.new(dependencies)
 		local state_path = deps.uci:get("linkease_app_entry", "main", "state_file") or "/var/run/linkease-app-entry/state.json"
 		local raw = deps.fs.readfile(state_path)
 		local state = raw and deps.json.parse(raw) or {}
+		if type(state) == "table" and state.listen ~= nil then
+			-- The installed mapping targets IPv4 loopback port 19290. A custom
+			-- running listener must not make that unrelated route look healthy.
+			enabled = enabled and (state.listen == "0.0.0.0:19290" or state.listen == ":19290"
+				or state.listen == "127.0.0.1:19290" or state.listen == "[::]:19290")
+		end
 		local worker = type(state) == "table" and state.active or "stopped"
 		local running = worker == "gateway" or worker == "linkeasefull"
 		return {
-			available = running and supported and enabled,
+			available = running,
+			direct_origin = direct_origin(state, deps.http.getenv("HTTP_HOST") or ""),
 			worker = worker,
 			proxy_supported = supported,
 			proxy_enabled = enabled
@@ -128,6 +150,14 @@ function M.new(dependencies)
 	end
 
 	local function external_status(app)
+		local backend = app.manifest.backend or {}
+		local values = type(backend.values) == "table" and backend.values or {}
+		-- A private backend port is not a browser destination, including for
+		-- iframe applications whose app-base route is handled by the gateway.
+		if type(values.externalPortEnabled) == "table"
+			and not bool_value(configured_value(deps.uci, values.externalPortEnabled, deps.read_uci)) then
+			return { available = false, reason = "external_disabled" }
+		end
 		local desktop = app.manifest.desktop or {}
 		local target = type(desktop.target) == "table" and desktop.target or nil
 		if desktop.mode == "iframe" and target and target.hostMode == "request-host"
@@ -150,8 +180,6 @@ function M.new(dependencies)
 			}
 		end
 
-		local backend = app.manifest.backend or {}
-		local values = type(backend.values) == "table" and backend.values or {}
 		local enabled
 		local port
 		if type(values.externalPortEnabled) == "table" then

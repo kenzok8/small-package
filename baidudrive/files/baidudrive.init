@@ -8,7 +8,8 @@ get_config() {
 	config_section="$1"
 	config_get_bool enabled "$1" enabled 1
 	config_get data_dir "$1" data_dir ""
-	config_get host "$1" host "0.0.0.0"
+	# Web transport is private; legacy bind settings cannot expose it.
+	host=127.0.0.1
 	config_get port "$1" port "10780"
 	config_get sdk_dir "$1" sdk_dir "/opt/baidunas-sdk"
 	config_get sdk_host "$1" sdk_host "127.0.0.1"

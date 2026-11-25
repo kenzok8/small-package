@@ -123,3 +123,9 @@ msgstr "无法启动经典版 KAI 软件包任务。"
 
 msgid "Updates come from the iStore package feed and include CLASSIC KAI and its runtime engine."
 msgstr "从 iStore 软件源更新经典版 KAI 及运行引擎。"
+
+msgid "Application entry is available."
+msgstr "应用入口可用。"
+
+msgid "Application entry is unavailable. Check the shared application entry service."
+msgstr "应用入口不可用，请检查共享应用入口服务。"
