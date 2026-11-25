@@ -19,6 +19,12 @@ msgstr "数据目录"
 msgid "Required. KaiPlus stores workspace, cache, config, and state under this directory."
 msgstr "必填。酷友社AI 会在此目录中保存工作区、缓存、配置和状态数据。"
 
+msgid "Backup directory"
+msgstr "备份目录"
+
+msgid "Required. Device recovery points are stored here. The default TimeMachine folder is at the disk root, next to Configs."
+msgstr "必填。设备恢复点会保存在此目录。默认 TimeMachine 文件夹位于磁盘根目录，与 Configs 同级。"
+
 msgid "Access port"
 msgstr "访问端口"
 

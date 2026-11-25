@@ -2,8 +2,6 @@ include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=LuCI support for DockerGo
 LUCI_DEPENDS:=@(aarch64||arm||x86_64) \
-	+luci-base \
-	+luci-compat \
 	+luci-lib-taskd \
 	+curl \
 	+ca-bundle \

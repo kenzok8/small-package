@@ -2,6 +2,8 @@
   "schemaVersion": 1,
   "id": "fastnet",
   "name": "FastNet",
+  "icon": "logo.png",
+  "staticRoot": "/usr/share/fastnet/www",
   "desktop": {
     "mode": "iframe",
     "target": {

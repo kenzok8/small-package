@@ -1,2 +1,2 @@
 #!/bin/sh
-exec /usr/sbin/changeguard_bin "$@"
+exec /usr/libexec/changeguard-package run "$@"

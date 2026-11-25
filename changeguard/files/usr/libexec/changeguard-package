@@ -14,7 +14,30 @@ remember_service() {
   /etc/init.d/changeguard stop
  fi
 }
+resolve_runtime() {
+ local context runtime digest actual
+ [ -f "$config" ] || return 0
+ context=$(jsonfilter -i "$config" -e '@.recoveryConfig' 2>/dev/null) || context=
+ [ -n "$context" ] || context="$config"
+ [ -f "$context" ] || return 1
+ runtime=$(jsonfilter -i "$context" -e '@.recoveryRuntime.path' 2>/dev/null) || runtime=
+ [ -n "$runtime" ] || return 0
+ digest=$(jsonfilter -i "$context" -e '@.recoveryRuntime.sha256' 2>/dev/null) || return 1
+ [ -n "$digest" ] && [ -x "$runtime" ] || return 1
+ actual=$(sha256sum "$runtime") || return 1
+ [ "${actual%% *}" = "$digest" ] || return 1
+ bin="$runtime"
+}
 case "$phase" in
+ runtime-path)
+  resolve_runtime || exit 1
+  printf '%s\n' "$bin"
+ ;;
+ run)
+  shift
+  resolve_runtime || exit 1
+  exec "$bin" "$@"
+ ;;
  preinst|prerm)
   if [ -f "$config" ]; then run_checked maintenance-check; fi
   remember_service

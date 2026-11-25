@@ -85,4 +85,22 @@ kaiplus.find_paths = function(blocks, home_dirs, path_name, product)
   return paths, default_path
 end
 
+kaiplus.find_root_paths = function(blocks, home_dirs, folder)
+  local default_path = home_dirs["main_dir"] .. "/" .. folder
+  local paths = {}
+
+  if #blocks == 0 then
+    table.insert(paths, default_path)
+  else
+    for _, val in pairs(blocks) do
+      table.insert(paths, val .. "/" .. folder)
+    end
+    if default_path == "/root/" .. folder then
+      default_path = paths[1]
+    end
+  end
+
+  return paths, default_path
+end
+
 return kaiplus

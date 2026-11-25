@@ -1,0 +1,7 @@
+KAIPlus optional Linux sandbox backend
+
+This package supplies the bubblewrap dependency for explicitly confined execution.
+It does not enable sandboxing, change approval preferences, or alter existing sessions.
+Select sandbox.bash="enforce" in the host configuration for new sessions.
+KAIPlus tests actual namespace startup; a binary on PATH alone is insufficient.
+If the backend/kernel is unavailable, confined commands are refused without native fallback.

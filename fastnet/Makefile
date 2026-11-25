@@ -10,7 +10,7 @@ PKG_ARCH_FASTNET:=$(ARCH)
 
 PKG_NAME:=fastnet
 PKG_VERSION:=0.8.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/fastnet-runtime-v$(PKG_VERSION)/
@@ -73,12 +73,13 @@ define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d $(1)/etc/uci-defaults $(1)/usr/share/fastnet $(1)/usr/share/linkease/apps.d
+	$(INSTALL_DIR) $(1)/usr/sbin $(1)/etc/config $(1)/etc/init.d $(1)/etc/uci-defaults $(1)/usr/share/fastnet/www $(1)/usr/share/linkease/apps.d
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/FastNet.$(PKG_ARCH_FASTNET) $(1)/usr/sbin/FastNet
 	$(INSTALL_CONF) ./files/fastnet.config $(1)/etc/config/fastnet
 	$(INSTALL_BIN) ./files/fastnet.init $(1)/etc/init.d/fastnet
 	$(INSTALL_BIN) ./files/fastnet.uci-default $(1)/etc/uci-defaults/fastnet
 	$(INSTALL_DATA) ./files/fastnet-plugin.json $(1)/usr/share/fastnet/fastnet-plugin.json
+	$(INSTALL_DATA) ./files/logo.png $(1)/usr/share/fastnet/www/logo.png
 	$(INSTALL_BIN) ./files/register-desktop.sh $(1)/usr/share/fastnet/register-desktop.sh
 	ln -sf /usr/share/fastnet/fastnet-plugin.json $(1)/usr/share/linkease/apps.d/17-fastnet.json
 endef

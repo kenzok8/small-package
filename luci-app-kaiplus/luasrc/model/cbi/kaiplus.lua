@@ -35,6 +35,16 @@ for _, val in pairs(paths) do
 end
 data_dir.default = default_path
 
+local backup_dir = s:option(Value, "backup_dir", translate("Backup directory"))
+backup_dir.rmempty = false
+backup_dir.description = translate("Required. Device recovery points are stored here. The default TimeMachine folder is at the disk root, next to Configs.")
+
+local backup_paths, default_backup_path = kaiplus_model.find_root_paths(blocks, home, "TimeMachine")
+for _, val in pairs(backup_paths) do
+	backup_dir:value(val, val)
+end
+backup_dir.default = default_backup_path
+
 local port = s:option(Value, "port", translate("Access port"))
 port.default = "8189"
 port.rmempty = false
