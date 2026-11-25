@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /usr/bin/lua /usr/share/mise-runtime/main.lua "$@"

@@ -17,14 +17,19 @@ istore_runtime_quickstart_conf_dir() {
 }
 
 istore_runtime_set_runtime_dir() {
-	local conf_dir runtime_dir
+	local conf_dir runtime_dir storage_root
 
 	config_load mise >/dev/null 2>&1 || return 1
 	config_get runtime_dir main runtime_dir ""
 	[ -z "$runtime_dir" ] || return 0
+	config_get storage_root main storage_root ""
 
-	conf_dir="$(istore_runtime_quickstart_conf_dir)" || return 1
-	runtime_dir="$conf_dir/Runtime/home"
+	if [ -n "$storage_root" ]; then
+		runtime_dir="$storage_root/home"
+	else
+		conf_dir="$(istore_runtime_quickstart_conf_dir)" || return 1
+		runtime_dir="$conf_dir/Runtime/home"
+	fi
 
 	uci -q set "mise.main.runtime_dir=$runtime_dir" >/dev/null 2>&1 || return 1
 	uci -q commit mise >/dev/null 2>&1
@@ -39,59 +44,55 @@ istore_runtime_init() {
 }
 
 istore_runtime_env() {
-	local runtime_dir
+	local runtime_dir storage_root nearest
 
 	config_load mise >/dev/null 2>&1 || return 1
 	config_get runtime_dir main runtime_dir ""
-	[ -n "$runtime_dir" ] || runtime_dir="${HOME:-}"
-	[ -n "$runtime_dir" ] || return 1
+	# Keep explicitly configured legacy HOME values. New installations use the
+	# selected shared root; resolving HOME does not write UCI or contact network.
+	if [ -z "$runtime_dir" ]; then
+		config_get storage_root main storage_root ""
+		[ -z "$storage_root" ] || runtime_dir="$storage_root/home"
+	fi
+	[ -n "$runtime_dir" ] || { logger -t mise 'Configure a persistent runtime_dir; HOME fallback is disabled'; return 1; }
+	case "$runtime_dir" in /mnt/*) ;; *) return 1 ;; esac
+	case "$runtime_dir" in *[!a-zA-Z0-9_./-]*|*/../*|*/..|*/./*|*/.|*//*|*/) return 1 ;; esac
+	nearest="$runtime_dir"
+	while [ ! -d "$nearest" ]; do nearest="${nearest%/*}"; [ -n "$nearest" ] || return 1; done
+	[ "$(readlink -f "$nearest")" = "$nearest" ] || return 1
+	# Validate before mkdir: an absent data mount must never consume overlay.
+	awk -v target="$runtime_dir" '
+		($2 == target || index(target, $2 "/") == 1) && length($2) > best {
+			best=length($2);dev=$1;point=$2;kind=$3;opts="," $4 ","
+		}
+		END { exit !(index(point,"/mnt/")==1 && index(dev,"/dev/")==1 && kind!="tmpfs" && kind!="overlay" && index(opts,",ro,")==0 && index(opts,",noexec,")==0) }
+	' /proc/mounts || return 1
 	mkdir -p "$runtime_dir" || return 1
 
 	export HOME="$runtime_dir"
+	export XDG_CONFIG_HOME="$HOME/.config" XDG_CACHE_HOME="$HOME/.cache" XDG_DATA_HOME="$HOME/.local/share"
+	export XDG_STATE_HOME="$HOME/.local/state"
 	export PATH="$HOME/.local/share/mise/shims${PATH:+:$PATH}"
-	istore_runtime_mise_accel_env
+	# Local SDK execution and shell startup must never depend on the network.
+	return 0
 }
 
-istore_runtime_url_available() {
-	local url
+istore_runtime_mise_exec() {
+	local acceleration
 
-	url="$1"
-	if command -v wget >/dev/null 2>&1; then
-		wget -q -T 3 -O /dev/null "$url" >/dev/null 2>&1
-		return $?
-	fi
-	if command -v curl >/dev/null 2>&1; then
-		curl -fsS --max-time 3 -o /dev/null "$url" >/dev/null 2>&1
-		return $?
-	fi
-	return 1
-}
-
-istore_runtime_mise_accel_env() {
-	local download_gateway_available github_release_replacements go_mirror_url node_mirror_url port
-
-	command -v iStoreEnhance >/dev/null 2>&1 || command -v kspeeder >/dev/null 2>&1 || return 0
-
-	port="${KSPEEDER_PORT:-5443}"
-	download_gateway_available=0
-	if istore_runtime_url_available "http://127.0.0.1:5003/api/download-gateway/routes"; then
-		download_gateway_available=1
-	fi
-
-	node_mirror_url="https://dl-node-unofficial.linkease.net:${port}/"
-	if [ -z "${MISE_NODE_MIRROR_URL:-}" ] && istore_runtime_url_available "${node_mirror_url}index.json"; then
-		export MISE_NODE_MIRROR_URL="$node_mirror_url"
-		: "${MISE_NODE_VERIFY:=0}"
-		export MISE_NODE_VERIFY
-	fi
-
-	go_mirror_url="https://dl-go-sdk.linkease.net:${port}"
-	if [ -z "${MISE_GO_DOWNLOAD_MIRROR:-}" ] && [ "$download_gateway_available" = "1" ]; then
-		export MISE_GO_DOWNLOAD_MIRROR="$go_mirror_url"
-	fi
-
-	github_release_replacements="{\"regex:^https://github\\\\.com/(.+/.+/releases/download/.+)$\":\"https://dl-github.linkease.net:${port}/\$1\"}"
-	if [ -z "${MISE_URL_REPLACEMENTS:-}" ] && [ "$download_gateway_available" = "1" ]; then
-		export MISE_URL_REPLACEMENTS="$github_release_replacements"
-	fi
+	# Only explicit acquisition commands opt into ks-cli. Its current generic
+	# mise profile also preflights `exec`, which would couple local apps to the
+	# accelerator's availability. Everything else keeps native mise semantics.
+	case "${1:-}" in
+		install|i|upgrade|up|ls-remote|latest|outdated)
+			config_load mise >/dev/null 2>&1 || return 1
+			config_get acceleration main acceleration "1"
+			if [ "$acceleration" != "0" ] &&
+				[ -z "${MISE_NODE_MIRROR_URL:-}${MISE_GO_DOWNLOAD_MIRROR:-}${MISE_URL_REPLACEMENTS:-}" ] &&
+				command -v ks-cli >/dev/null 2>&1; then
+				exec ks-cli mise "$@"
+			fi
+			;;
+	esac
+	exec /usr/bin/mise "$@"
 }

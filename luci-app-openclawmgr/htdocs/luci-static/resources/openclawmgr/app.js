@@ -153,15 +153,20 @@
   }
 
   function statusText(status) {
+    if (status.runtime_preparation && status.runtime_preparation.status === "preparing" && status.running) return "准备运行环境";
+    if (status.runtime_preparation && status.runtime_preparation.status === "failed") return "运行时准备失败，可重启重试";
     if (status.installing) return status.task_op === "upgrade" ? "更新中" : "安装中";
     if (!status || !status.installed) return "未安装";
+    if (status.runtime_missing) return "固定运行时缺失";
     if (status.running) return "运行中";
     if (status.reachable) return "运行中（未托管）";
     return "已停止";
   }
 
   function statusDotClass(status) {
+    if (status && status.runtime_preparation && status.runtime_preparation.status === "failed") return "is-danger";
     if (status && status.installing) return "";
+    if (status && status.runtime_missing) return "is-danger";
     if (status && status.running) return "is-success";
     if (status && status.reachable) return "";
     return "is-danger";
@@ -920,13 +925,19 @@
 
   function render() {
     var status = state.status || {};
+    var runtimeInfo = status.runtime_info;
+    var runtimeAbi = runtimeInfo ? String(runtimeInfo.abi || "") + (runtimeInfo.libc && runtimeInfo.libc.version ? " " + runtimeInfo.libc.version : "") : "";
     var form = state.form || {};
     var formErrors = getFormErrors();
     var options = state.options || { base_dir_choices: [] };
     var security = getSecurityState();
     var allowedOrigins = Array.isArray(form.allowed_origins) ? form.allowed_origins : [];
-    var baseDirOptions = (options.base_dir_choices || []).map(function(path) {
-      return '<option value="' + escapeHtml(path) + '"></option>';
+    var baseDirPaths = options.base_dir_choices || [];
+    var baseDirValue = String(form.base_dir || "");
+    var customBaseDir = state.customBaseDir === true || (baseDirValue && baseDirPaths.indexOf(baseDirValue) < 0);
+    var baseDirOptions = baseDirPaths.map(function(path) {
+      var label = path === state.configuredBaseDir ? "当前目录 · " + path : path;
+      return '<option value="' + escapeAttr(path) + '"' + (!customBaseDir && path === baseDirValue ? ' selected' : '') + '>' + escapeHtml(label) + '</option>';
     }).join("");
     var origins = allowedOrigins.map(function(item, index) {
       return '' +
@@ -986,7 +997,10 @@
       '<div><div id="oclm-pid-row"' + ((status.running && status.pid) ? '' : ' class="oclm-hidden"') + '><div class="oclm-inline-row"><span class="oclm-tag">PID <strong id="oclm-pid">' + escapeHtml(status.pid || "") + '</strong></span></div></div></div>' +
       '<div><div class="oclm-meta-label">地址</div><div class="oclm-address-row"><span id="oclm-address-text" class="oclm-address-text">' + escapeHtml(maskedTokenUrl(status.token_url || status.base_url || "")) + '</span><button id="oclm-copy-token-url" class="oclm-icon-button' + ((status.token_url || status.base_url) ? '' : ' oclm-hidden') + '" type="button" data-copy-token-url="1" aria-label="复制地址">' + copyIcon("oclm-copy-icon") + '</button></div></div>' +
       '<div><div class="oclm-meta-label">目录</div><div id="oclm-status-base-dir">' + escapeHtml(status.base_dir || "-") + '</div></div>' +
-      '<div><div class="oclm-meta-label">版本</div><div class="oclm-version-tags"><a class="oclm-tag oclm-tag-link" href="https://github.com/openclaw/openclaw/releases" target="_blank" rel="noreferrer">OpenClaw <strong id="oclm-openclaw-version">' + escapeHtml(status.openclaw_version || "-") + '</strong></a><span class="oclm-tag">Node <strong id="oclm-node-version">' + escapeHtml(status.node_version || "-") + '</strong></span></div></div>' +
+      '<div><div class="oclm-meta-label">版本</div><div class="oclm-version-tags"><a class="oclm-tag oclm-tag-link" href="https://github.com/openclaw/openclaw/releases" target="_blank" rel="noreferrer">OpenClaw <strong id="oclm-openclaw-version">' + escapeHtml(status.openclaw_version || "-") + '</strong></a><span class="oclm-tag">Node <strong id="oclm-node-version">' + escapeHtml(status.node_version || "-") + '</strong></span>' +
+      '<span id="oclm-runtime-abi" class="oclm-tag' + (runtimeInfo ? '' : ' oclm-hidden') + '">' + escapeHtml(runtimeAbi) + '</span>' +
+      '<a id="oclm-runtime-source" class="oclm-tag oclm-tag-link" href="' + escapeAttr(config.runtimeUrl || '/cgi-bin/luci/admin/services/mise') + '" title="' + escapeAttr(runtimeInfo && runtimeInfo.instance || '') + '">mise 固定运行时</a>' +
+      '<span id="oclm-runtime-unknown" class="oclm-tag' + (!runtimeInfo && status.installed ? '' : ' oclm-hidden') + '">运行时需检查；可重启服务准备依赖</span></div></div>' +
       '<div></div>' +
       '</div>' +
       '<div id="oclm-status-actions" class="oclm-status-actions">' +
@@ -1024,7 +1038,11 @@
         ["loopback", "仅本机"],
         ["auto", "自动"]
       ])) +
-      fieldInput("数据目录", '<input class="oclm-control' + (formErrors.base_dir ? ' oclm-control-danger' : '') + '" type="text" id="oclm-base-dir" list="oclm-base-dir-options" value="' + escapeAttr(form.base_dir || "") + '" /><datalist id="oclm-base-dir-options">' + baseDirOptions + '</datalist>' +
+      fieldInput("数据目录", '<select class="oclm-control' + (formErrors.base_dir ? ' oclm-control-danger' : '') + '" id="oclm-base-dir" aria-label="数据目录">' +
+        '<option value="" disabled' + (!baseDirValue && !customBaseDir ? ' selected' : '') + '>请选择硬盘数据目录</option>' + baseDirOptions +
+        '<option value="__custom__"' + (customBaseDir ? ' selected' : '') + '>自定义目录…</option></select>' +
+        '<input class="oclm-control' + (customBaseDir ? '' : ' oclm-hidden') + '" type="text" id="oclm-base-dir-custom" aria-label="自定义数据目录" style="margin-top: 8px;" value="' + escapeAttr(baseDirValue) + '" placeholder="/mnt/硬盘目录/Configs/OpenClawMgr" />' +
+        '<div class="oclm-hint" style="margin-top: 8px;">可选择已挂载硬盘上的目录，也可自定义。更换目录不会自动搬移已有数据。</div>' +
         '<div id="oclm-base-dir-error" class="oclm-security-error' + (formErrors.base_dir ? '' : ' oclm-hidden') + '">' + escapeHtml(formErrors.base_dir || "") + '</div>') +
       '<div class="oclm-section-submit">' +
       '<button class="oclm-button oclm-button-primary" type="button" id="oclm-save-basic"' + (savingBasic ? ' disabled' : '') + '>' + (savingBasic ? '应用中…' : '保存并应用') + '</button>' +
@@ -1186,6 +1204,23 @@
     if (openclawVerEl) openclawVerEl.textContent = String(status.openclaw_version || "-");
     var nodeVerEl = byId("oclm-node-version");
     if (nodeVerEl) nodeVerEl.textContent = String(status.node_version || "-");
+    var runtimeInfo = status.runtime_info;
+    var abiEl = byId("oclm-runtime-abi");
+    var sourceEl = byId("oclm-runtime-source");
+    var unknownEl = byId("oclm-runtime-unknown");
+    if (abiEl) {
+      abiEl.classList.toggle("oclm-hidden", !runtimeInfo);
+      abiEl.textContent = runtimeInfo ? String(runtimeInfo.abi || "") + (runtimeInfo.libc && runtimeInfo.libc.version ? " " + runtimeInfo.libc.version : "") : "";
+    }
+    if (sourceEl) {
+      sourceEl.classList.remove("oclm-hidden");
+      sourceEl.title = String(runtimeInfo && runtimeInfo.instance || "");
+    }
+    if (unknownEl) {
+      var preparation = status.runtime_preparation;
+      unknownEl.classList.toggle("oclm-hidden", !!runtimeInfo && !(preparation && preparation.status === "failed") || !status.installed);
+      unknownEl.textContent = preparation && preparation.error ? String(preparation.error) : "运行时需检查；可重启服务准备依赖";
+    }
 
     var installInline = byId("oclm-install-inline");
     var installBtn = byId("oclm-install-btn");
@@ -1298,6 +1333,12 @@
       '</svg>';
   }
 
+  function baseDirFromDom() {
+    var selected = root.getElementById("oclm-base-dir");
+    var custom = root.getElementById("oclm-base-dir-custom");
+    return selected && selected.value === "__custom__" ? (custom ? custom.value : "") : (selected ? selected.value : "");
+  }
+
   function syncDraftFromDom() {
     if (!state.form) {
       state.form = {};
@@ -1314,7 +1355,7 @@
     if (bindEl) state.form.bind = bindEl.value;
 
     var baseDirEl = getEl("oclm-base-dir");
-    if (baseDirEl) state.form.base_dir = baseDirEl.value;
+    if (baseDirEl) state.form.base_dir = baseDirFromDom();
 
     var installAccelEl = getEl("oclm-install-accelerated");
     if (installAccelEl) state.form.install_accelerated = !!installAccelEl.checked;
@@ -1723,7 +1764,19 @@
     var saveBasic = root.getElementById("oclm-save-basic");
     var baseDirInput = root.getElementById("oclm-base-dir");
     if (baseDirInput) {
-      baseDirInput.oninput = function() {
+      baseDirInput.onchange = function() {
+        syncDraftFromDom();
+        state.customBaseDir = baseDirInput.value === "__custom__";
+        if (!state.customBaseDir) state.form.base_dir = baseDirInput.value;
+        getFormErrors().base_dir = "";
+        render();
+        if (state.customBaseDir) root.getElementById("oclm-base-dir-custom").focus();
+      };
+    }
+    var baseDirCustomInput = root.getElementById("oclm-base-dir-custom");
+    if (baseDirCustomInput) {
+      baseDirCustomInput.oninput = function() {
+        state.form.base_dir = baseDirCustomInput.value;
         var formErrors = getFormErrors();
         if (formErrors.base_dir) {
           formErrors.base_dir = "";
@@ -1734,7 +1787,7 @@
     if (saveBasic) {
       saveBasic.onclick = function() {
         var formErrors = getFormErrors();
-        var baseDirValue = root.getElementById("oclm-base-dir").value;
+        var baseDirValue = baseDirFromDom();
         if (!String(baseDirValue || "").replace(/^\s+|\s+$/g, "")) {
           formErrors.base_dir = "数据目录不能为空";
           render();
@@ -1894,6 +1947,8 @@
       }
       var currentInstallChannel = state.form && state.form.install_channel === "latest" ? "latest" : "stable";
       state.form = data.config || {};
+      state.configuredBaseDir = String(state.form.base_dir || "");
+      state.customBaseDir = false;
       state.form.install_channel = currentInstallChannel;
       state.form.default_model = resolveModelValue(state.form);
       state.options = data.options || {};

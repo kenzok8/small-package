@@ -153,3 +153,17 @@ msgstr "安装程序将下载并安装"
 
 msgid "into the shared AgentFlow runtime."
 msgstr "到 AgentFlow 共享运行环境。"
+msgid "Checking shared runtime"
+msgstr "正在检查共享运行时"
+
+msgid "Shared runtime is not available"
+msgstr "共享运行时不可用，请先配置持久存储"
+
+msgid "Manage runtime environments"
+msgstr "管理运行时环境"
+
+msgid "Agent packages use a fixed shared Node/glibc runtime and private application directories. Global mise versions are unchanged."
+msgstr "代理使用固定的共享 Node/glibc 运行时，安装到 AgentFlow 独立目录，不切换 mise 全局版本。"
+
+msgid "Recover interrupted install"
+msgstr "恢复中断安装"

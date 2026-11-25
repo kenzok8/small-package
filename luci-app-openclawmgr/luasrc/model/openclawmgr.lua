@@ -22,8 +22,8 @@ end
 openclawmgr.home = function()
 	local uci = require "luci.model.uci".cursor()
 	local home_dirs = {}
-	home_dirs["main_dir"] = uci:get_first("quickstart", "main", "main_dir", "/root")
-	home_dirs["Configs"] = uci:get_first("quickstart", "main", "conf_dir", home_dirs["main_dir"] .. "/Configs")
+	home_dirs["main_dir"] = uci:get_first("quickstart", "main", "main_dir", "")
+	home_dirs["Configs"] = uci:get_first("quickstart", "main", "conf_dir", home_dirs["main_dir"] ~= "" and home_dirs["main_dir"] .. "/Configs" or "")
 	home_dirs["Public"] = uci:get_first("quickstart", "main", "pub_dir", home_dirs["main_dir"] .. "/Public")
 	home_dirs["Downloads"] = uci:get_first("quickstart", "main", "dl_dir", home_dirs["Public"] .. "/Downloads")
 	home_dirs["Caches"] = uci:get_first("quickstart", "main", "tmp_dir", home_dirs["main_dir"] .. "/Caches")
@@ -34,15 +34,15 @@ openclawmgr.find_paths = function(blocks, home_dirs, path_name)
 	local default_path = ""
 	local paths = {}
 
-	default_path = home_dirs[path_name] .. "/OpenClawMgr"
+	default_path = home_dirs[path_name] ~= "" and home_dirs[path_name] .. "/OpenClawMgr" or ""
 	if #blocks == 0 then
-		table.insert(paths, default_path)
+		if default_path ~= "" then table.insert(paths, default_path) end
 	else
 		for _, val in pairs(blocks) do
 			table.insert(paths, val .. "/" .. path_name .. "/OpenClawMgr")
 		end
 		local without_conf_dir = "/root/" .. path_name .. "/OpenClawMgr"
-		if default_path == without_conf_dir then
+		if default_path == "" or default_path == without_conf_dir then
 			default_path = paths[1]
 		end
 	end

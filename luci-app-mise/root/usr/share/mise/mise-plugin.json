@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "mise",
+  "name": "运行时环境",
+  "icon": "logo.svg",
+  "staticRoot": "/www/luci-static/resources/mise",
+  "desktop": {
+    "mode": "builtin",
+    "component": "LuciContainer",
+    "props": {
+      "initialPath": "/cgi-bin/luci/admin/services/mise",
+      "contentOnly": true,
+      "isolation": "scoped-dom-css",
+      "mountIds": ["mise-app"],
+      "hideChrome": true,
+      "preloadScripts": ["/luci-static/linkeasefull-embed/embed-prelude.js"],
+      "preloadStyles": ["/luci-static/linkeasefull-embed/embed.css"]
+    }
+  },
+  "standalone": {"url": "/cgi-bin/luci/admin/services/mise"},
+  "window": {"width": 1080, "height": 760, "singleton": true},
+  "categories": ["development", "openwrt"],
+  "capabilities": ["runtime", "luci"]
+}

@@ -6,8 +6,8 @@ default_base_dir() {
 	main_dir="$(uci -q get quickstart.main.main_dir 2>/dev/null || true)"
 	conf_dir="$(uci -q get quickstart.main.conf_dir 2>/dev/null || true)"
 
-	[ -n "$main_dir" ] || main_dir="/root"
-	[ -n "$conf_dir" ] || conf_dir="${main_dir%/}/Configs"
+	[ -n "$conf_dir" ] || { [ -n "$main_dir" ] && conf_dir="${main_dir%/}/Configs"; }
+	case "$conf_dir" in /mnt/*) ;; *) return 0 ;; esac
 
 	printf '%s/OpenClawMgr\n' "${conf_dir%/}"
 }
@@ -24,13 +24,11 @@ fi
 
 uci -q commit openclawmgr >/dev/null 2>&1 || true
 
-# best-effort: create an unprivileged user for procd
+# Use OpenWrt's standard account helpers; do not create an overlay HOME.
 if ! id openclawmgr >/dev/null 2>&1; then
-	if command -v adduser >/dev/null 2>&1; then
-		adduser -D -H -s /bin/false openclawmgr >/dev/null 2>&1 || true
-	elif command -v useradd >/dev/null 2>&1; then
-		useradd -r -M -s /bin/false openclawmgr >/dev/null 2>&1 || true
-	fi
+	. /lib/functions.sh
+	gid="$(group_add_next openclawmgr)" || exit 1
+	user_add openclawmgr "" "$gid" "OpenClaw Gateway" /var/empty /bin/false || exit 1
 fi
-
+[ "$(id -u openclawmgr)" -gt 0 ] || exit 1
 exit 0

@@ -11,7 +11,8 @@ local AGENTS = {
 }
 
 function index()
-	entry({"admin", "services", "agentflow_status"}, call("agentflow_status"))
+	local status = entry({"admin", "services", "agentflow_status"}, call("agentflow_status"))
+	status.acl_depends = { "luci-app-agentflow" }
 	local open = entry({"admin", "services", "agentflow", "open"}, call("agentflow_open"))
 	open.leaf = true
 	open.dependent = false
@@ -21,6 +22,7 @@ function index()
 
 	local install = entry({"admin", "services", "agentflow", "agent_install"}, call("agentflow_agent_install"))
 	install.leaf = true
+	install.acl_depends = { "luci-app-agentflow" }
 
 	entry({"admin", "services", "agentflow"}, cbi("agentflow"), _("AgentFlow"), 100).dependent = true
 end
@@ -46,6 +48,15 @@ local function require_post_csrf()
 		write_json({ ok = false, error = "invalid csrf token" })
 		return false
 	end
+	local access = require("luci.util").ubus("session", "access", {
+		ubus_rpc_session = context.authsession, scope = "access-group",
+		object = "luci-app-agentflow", ["function"] = "write"
+	})
+	if not access or access.access ~= true then
+		http.status(403, "Forbidden")
+		write_json({ ok = false, error = "write permission required" })
+		return false
+	end
 
 	return true
 end
@@ -59,110 +70,24 @@ local function compat()
 	})
 end
 
-local function node_modules_root()
-	local sys = require "luci.sys"
-	local util = require "luci.util"
-	local script = table.concat({
-		'. /lib/functions/mise.sh 2>/dev/null || exit 1',
-		'istore_runtime_env >/dev/null 2>&1 || exit 1',
-		'mise_bin="$(command -v mise-istore || command -v mise)"',
-		'[ -n "$mise_bin" ] || exit 1',
-		'node_dir="$("$mise_bin" where node@lts 2>/dev/null)"',
-		'[ -n "$node_dir" ] || exit 1',
-		'printf "%s/lib/node_modules" "$node_dir"'
-	}, "; ")
-	local root = sys.exec("/bin/sh -c " .. util.shellquote(script)) or ""
-	root = root:match("^%s*(.-)%s*$")
-	if root == "" or root:sub(1, 1) ~= "/" then
-		return nil
-	end
-	return root
-end
-
-local function agent_commands_ready()
-	local sys = require "luci.sys"
-	local script = {
-		'. /lib/functions/mise.sh 2>/dev/null || exit 1',
-		'istore_runtime_env >/dev/null 2>&1 || exit 1',
-		'probe_prefix="/tmp/agentflow-agent-probe.$$"',
-		'cleanup_agentflow_probe() { rm -f "$probe_prefix".*; }',
-		'trap cleanup_agentflow_probe 0 HUP INT TERM',
-		'check_agent_version() {',
-		'\tshim="$1"',
-		'\toutput="$2"',
-		'\t"$shim" --version >"$output" 2>/dev/null &',
-		'\tchild_pid=$!',
-		'\t(',
-		'\t\ttimer_pid=""',
-		'\t\tstop_timer() {',
-		'\t\t\t[ -z "$timer_pid" ] || kill "$timer_pid" 2>/dev/null',
-		'\t\t\texit 0',
-		'\t\t}',
-		'\t\ttrap stop_timer TERM INT',
-		'\t\tsleep 5 &',
-		'\t\ttimer_pid=$!',
-		'\t\twait "$timer_pid" 2>/dev/null || exit 0',
-		'\t\tkill "$child_pid" 2>/dev/null',
-		'\t) &',
-		'\twatchdog_pid=$!',
-		'\twait "$child_pid"',
-		'\trc=$?',
-		'\tkill "$watchdog_pid" 2>/dev/null',
-		'\twait "$watchdog_pid" 2>/dev/null',
-		'\t[ "$rc" -eq 0 ] && [ -s "$output" ]',
-		'}'
-	}
-
-	for _, agent in ipairs(AGENTS) do
-		script[#script + 1] = 'shim="$HOME/.local/share/mise/shims/' .. agent.command .. '"'
-		script[#script + 1] = 'if [ -x "$shim" ] && check_agent_version "$shim" "$probe_prefix.' .. agent.id .. '"; then printf "ready:%s\\n" "' .. agent.id .. '"; fi'
-	end
-
-	local output = sys.exec(table.concat(script, "\n")) or ""
-	local ready = {}
-	for id in output:gmatch("ready:([%w%-]+)") do
-		ready[id] = true
-	end
-	return ready
-end
-
-local function agent_statuses()
-	local fs = require "nixio.fs"
-	local jsonc = require "luci.jsonc"
-	local root = node_modules_root()
-	local command_ready = root and agent_commands_ready() or {}
-	local statuses = {}
-
-	for _, agent in ipairs(AGENTS) do
-		local status = { id = agent.id, installed = false }
-		if root then
-			local package_file = root .. "/" .. agent.package .. "/package.json"
-			local package_data = fs.readfile(package_file)
-			local package_json = package_data and jsonc.parse(package_data) or nil
-			local package_valid = type(package_json) == "table"
-				and type(package_json.version) == "string"
-				and package_json.version ~= ""
-			if package_valid and command_ready[agent.id] == true then
-				status.installed = true
-				status.version = package_json.version
-			end
-		end
-		statuses[#statuses + 1] = status
-	end
-
-	return statuses, root ~= nil
+local function runtime_status()
+ local output = require("luci.sys").exec("/usr/libexec/agentflow-runtime status 2>/dev/null")
+ local state = require("luci.jsonc").parse(output or "")
+ return type(state) == "table" and state or { agents = {}, agents_available = false,
+  runtime = { ready = false, error = "Shared runtime is not available" } }
 end
 
 function agentflow_status()
 	local sys = require "luci.sys"
 	local uci = require "luci.model.uci".cursor()
-	local agents, agents_available = agent_statuses()
+	local state = runtime_status()
 	compat():legacy_status("agentflow", {
 		running = sys.call("pidof agentflow >/dev/null") == 0,
 		port = uci:get_first("agentflow", "agentflow", "port") or "9000",
 		base_path = uci:get_first("agentflow", "agentflow", "base_path") or "/apps/agentflow/",
-		agents_available = agents_available,
-		agents = agents
+		agents_available = state.agents_available,
+		agents = state.agents,
+		runtime = state.runtime
 	})
 end
 
@@ -172,14 +97,18 @@ function agentflow_agent_install()
 	local sys = require "luci.sys"
 	local util = require "luci.util"
 	local task_id = "agentflow-agent-install"
-	local task_script = "/tmp/agentflow-agent-install.sh"
-	local installer_url = "https://fw.koolcenter.com/binary/geili/agentflow/releases/installapp/installapp-mise.sh"
 	local supported_agents = {}
 	for _, supported_agent in ipairs(AGENTS) do
 		supported_agents[supported_agent.id] = true
 	end
 
 	if not require_post_csrf() then
+		return
+	end
+	if http.formvalue("operation") == "recover" then
+		local base = require("luci.model.uci").cursor():get_first("agentflow", "agentflow", "data_dir", "")
+		local rc = sys.call("/usr/libexec/agentflow-runtime recover " .. util.shellquote(base) .. " >/dev/null 2>&1")
+		write_json({ ok = rc == 0, error = rc ~= 0 and "Cannot recover a running or unknown install task" or nil })
 		return
 	end
 
@@ -192,8 +121,8 @@ function agentflow_agent_install()
 		write_json({ ok = false, error = "taskd is not available" })
 		return
 	end
-	if not fs.access("/lib/functions/mise.sh") then
-		write_json({ ok = false, error = "mise environment helper is not available" })
+	if not fs.access("/usr/libexec/agentflow-runtime", "x") then
+		write_json({ ok = false, error = "shared runtime integration is not available" })
 		return
 	end
 
@@ -205,33 +134,21 @@ function agentflow_agent_install()
 		return
 	end
 
-	local install_script = table.concat({
-		"set -e",
-		"agent=" .. util.shellquote(agent),
-		"installer_url=" .. util.shellquote(installer_url),
-		'installer="/tmp/agentflow-installapp-mise.$$"',
-		'cleanup() { rm -f "$installer" "$0"; }',
-		"trap cleanup 0 HUP INT TERM",
-		'. /lib/functions/mise.sh',
-		'if ! istore_runtime_env; then echo "[agentflow] Failed to initialize the shared runtime environment" >&2; exit 1; fi',
-		"set -u",
-		"export MISE_YES=1",
-		'echo "[agentflow] Downloading installer: $installer_url"',
-		'if command -v wget >/dev/null 2>&1; then',
-		'\twget -O "$installer" "$installer_url"',
-		'elif command -v curl >/dev/null 2>&1; then',
-		'\tcurl -fL -o "$installer" "$installer_url"',
-		'elif command -v uclient-fetch >/dev/null 2>&1; then',
-		'\tuclient-fetch -O "$installer" "$installer_url"',
-		"else",
-		'\techo "[agentflow] No HTTPS download tool is available" >&2',
-		"\texit 1",
-		"fi",
-		'if [ ! -s "$installer" ]; then echo "[agentflow] Failed to download the agent installer" >&2; exit 1; fi',
-		'chmod 0700 "$installer"',
-		'echo "[agentflow] Running installapp-mise.sh for $agent in $HOME"',
-		'/bin/sh "$installer" "$agent"'
-	}, "\n")
+ local base = require("luci.model.uci").cursor():get_first("agentflow", "agentflow", "data_dir", "")
+ if sys.call("/usr/libexec/agentflow-runtime prepare " .. util.shellquote(base) .. " >/dev/null 2>&1") ~= 0 then
+  write_json({ ok = false, error = "Configure persistent AgentFlow and shared runtime directories first" })
+  return
+ end
+ local task_script = base .. "/.runtime/work/install-agent-" .. require("nixio").getpid() .. ".sh"
+ if fs.lstat(task_script) then
+  write_json({ ok = false, error = "An install task file already exists; inspect the previous task" })
+  return
+ end
+ local install_script = table.concat({
+  "set -eu",
+  "trap 'rm -f \"$0\"' 0 HUP INT TERM",
+  "/usr/libexec/agentflow-runtime install " .. util.shellquote(base) .. " " .. util.shellquote(agent)
+ }, "\n")
 	if not fs.writefile(task_script, install_script .. "\n") then
 		write_json({ ok = false, error = "failed to create install task", task_id = task_id })
 		return

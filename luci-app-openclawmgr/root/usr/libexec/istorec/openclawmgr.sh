@@ -61,72 +61,8 @@ load_gateway_runtime_from_json() {
 	[ -n "$json_port" ] && PORT="$json_port"
 	[ -n "$json_bind" ] && BIND="$json_bind"
 	[ -n "$json_token" ] && TOKEN="$json_token"
-}
-
-fmt_elapsed() {
-	local total="${1:-0}" h m s
-	case "$total" in ''|*[!0-9]*) total=0 ;; esac
-	h=$((total / 3600))
-	m=$(((total % 3600) / 60))
-	s=$((total % 60))
-	if [ "$h" -gt 0 ]; then
-		printf "%dh%dm%ds" "$h" "$m" "$s"
-	elif [ "$m" -gt 0 ]; then
-		printf "%dm%ds" "$m" "$s"
-	else
-		printf "%ds" "$s"
-	fi
-}
-
-download_with_progress() {
-	local url="$1" out="$2" err="$3" label="$4"
-	local start_ts last_change_ts last_size last_report_ts
-
-	write_installer_log "$label: $url"
-
-	curl -fSL --retry 2 --retry-delay 1 --connect-timeout 15 --max-time 600 \
-		-o "$out" "$url" 2>"$err" &
-	local cpid="$!"
-
-	start_ts="$(date +%s 2>/dev/null || echo 0)"
-	last_change_ts="$start_ts"
-	last_size=0
-	last_report_ts="$start_ts"
-
-	while kill -0 "$cpid" 2>/dev/null; do
-		sleep 30
-		kill -0 "$cpid" 2>/dev/null || break
-
-		local now_ts size quiet_s elapsed_s elapsed_h size_mb
-		now_ts="$(date +%s 2>/dev/null || echo 0)"
-		size="$(wc -c <"$out" 2>/dev/null || echo 0)"
-		case "$size" in ''|*[!0-9]*) size=0 ;; esac
-		if [ "$size" -ne "$last_size" ]; then
-			last_size="$size"
-			last_change_ts="$now_ts"
-		fi
-
-		if [ $((now_ts - last_report_ts)) -ge 60 ]; then
-			last_report_ts="$now_ts"
-			quiet_s=$((now_ts - last_change_ts))
-			elapsed_s=$((now_ts - start_ts))
-			elapsed_h="$(fmt_elapsed "$elapsed_s")"
-			size_mb=$((size / 1048576))
-
-			if [ "$size" -gt 0 ]; then
-				if [ "$quiet_s" -ge 60 ]; then
-					write_installer_log "$label running (${elapsed_h} elapsed; no new data for ${quiet_s}s; downloaded ${size_mb}MB)"
-				else
-					write_installer_log "$label running (${elapsed_h} elapsed; downloaded ${size_mb}MB)"
-				fi
-			else
-				write_installer_log "$label running (${elapsed_h} elapsed; no data yet)"
-			fi
-		fi
-	done
-
-	wait "$cpid"
-	return $?
+	# Optional runtime fields must not abort status/recovery under set -e.
+	return 0
 }
 
 default_allowed_origins() {
@@ -165,7 +101,7 @@ default_gateway() {
 }
 
 ensure_dirs() {
-	mkdir -p "$BASE_DIR" "$NODE_DIR" "$GLOBAL_DIR" "$DATA_DIR/.openclaw/workspace" "$BASE_DIR/npm-cache" 2>/dev/null || true
+	mkdir -p "$BASE_DIR" "$NODE_DIR" "$GLOBAL_DIR" "$DATA_DIR/.openclaw/workspace" "$BASE_DIR/npm-cache" || return 1
 	printf "%s\n" "managed-by=openclawmgr" >"${BASE_DIR}/.openclawmgr.managed" 2>/dev/null || true
 	fix_data_permissions || true
 }
@@ -173,10 +109,10 @@ ensure_dirs() {
 fix_data_permissions() {
 	# When running under procd as user "openclawmgr", OpenClaw needs write access to data/.openclaw/*
 	if ! id openclawmgr >/dev/null 2>&1; then
-		return 0
+		return 1
 	fi
-	chown -R openclawmgr:openclawmgr "$DATA_DIR" 2>/dev/null || true
-	chmod -R u+rwX "$DATA_DIR" 2>/dev/null || true
+	chown -R openclawmgr:openclawmgr "$DATA_DIR" || return 1
+	chmod -R u+rwX "$DATA_DIR" || return 1
 }
 
 check_space_mb() {
@@ -283,8 +219,9 @@ ensure_token() {
 }
 
 is_musl() {
+	local loader
 	ldd --version 2>&1 | grep -qi musl && return 0
-	[ -e /lib/ld-musl-*.so.1 ] 2>/dev/null && return 0
+	for loader in /lib/ld-musl-*.so.1; do [ ! -e "$loader" ] || return 0; done
 	return 1
 }
 
@@ -296,84 +233,12 @@ detect_arch() {
 	esac
 }
 
-ks_admin_port() {
-	local en ap
-	en="$(uci -q get istoreenhance.@istoreenhance[0].enabled 2>/dev/null || echo 0)"
-	[ "$en" = "1" ] || return 1
-	pidof iStoreEnhance >/dev/null 2>&1 || return 1
-	ap="$(uci -q get istoreenhance.@istoreenhance[0].adminport 2>/dev/null || echo 5003)"
-	echo "$ap"
-}
-
-download() {
-	local url="$1" out="$2"
-	local ap admin_path resp err tmp rc ks_enabled resp_file http_code
-
-	tmp="/tmp/${APP}-curl.err"
-	err="/tmp/${APP}-curl.err2"
-	resp_file="/tmp/${APP}-ks-remap.json"
-	rm -f "$tmp" "$err" "$resp_file" 2>/dev/null || true
-
-	if [ "${INSTALL_ACCELERATED:-1}" != "1" ]; then
-		write_installer_log "KSpeeder not used: accelerated install is disabled"
-	else
-		ks_enabled="$(uci -q get istoreenhance.@istoreenhance[0].enabled 2>/dev/null || echo 0)"
-		if [ "$ks_enabled" != "1" ]; then
-		write_installer_log "KSpeeder not used: istoreenhance is disabled"
-		elif ! pidof iStoreEnhance >/dev/null 2>&1; then
-		write_installer_log "KSpeeder not used: iStoreEnhance process is not running"
-		else
-			ap="$(uci -q get istoreenhance.@istoreenhance[0].adminport 2>/dev/null || echo 5003)"
-			http_code="$(curl -sS --connect-timeout 2 --max-time 5 -G \
-				--data-urlencode "url=${url}" \
-				-o "$resp_file" -w "%{http_code}" \
-				"http://127.0.0.1:${ap}/api/domainfold/remap" 2>"$tmp" || echo 000)"
-			resp="$(cat "$resp_file" 2>/dev/null || true)"
-			admin_path="$(printf "%s" "$resp" | jsonfilter -e '@.admin_path' 2>/dev/null || true)"
-			if [ -n "$admin_path" ] && echo "$admin_path" | grep -q '^/'; then
-				if download_with_progress "http://127.0.0.1:${ap}${admin_path}" "$out" "$err" "Downloading via KSpeeder"; then
-					return 0
-				fi
-				rc=$?
-				write_installer_log "Download via KSpeeder failed (rc=$rc): ${url}"
-				tail -n 5 "$err" 2>/dev/null | while IFS= read -r ln; do write_installer_log "$ln"; done
-			else
-				local e brief
-				e="$(printf "%s" "$resp" | jsonfilter -e '@.error' 2>/dev/null || true)"
-				if [ -n "$e" ]; then
-					write_installer_log "KSpeeder remap failed (http=${http_code}): $e"
-				elif [ -n "$http_code" ] && [ "$http_code" != "000" ] && [ "$http_code" != "200" ]; then
-					brief="$(printf "%s" "$resp" | tr '\n' ' ' | sed 's/[[:space:]]\\+/ /g' | cut -c1-200)"
-					[ -n "$brief" ] || brief="(empty response)"
-					write_installer_log "KSpeeder not used: remap http=${http_code}: ${brief}"
-				elif [ -s "$tmp" ]; then
-					write_installer_log "KSpeeder not used: remap request failed on 127.0.0.1:${ap}"
-					tail -n 3 "$tmp" 2>/dev/null | while IFS= read -r ln; do write_installer_log "$ln"; done
-				else
-					write_installer_log "KSpeeder not used: remap response missing admin_path"
-				fi
-			fi
-		fi
-	fi
-
-	if ! has_default_route; then
-		write_installer_log "No default route (default gateway missing); internet is unreachable"
-	fi
-
-	if download_with_progress "$url" "$out" "$err" "Downloading"; then
-		return 0
-	fi
-	rc=$?
-	write_installer_log "Download failed (rc=$rc): ${url}"
-	tail -n 5 "$err" 2>/dev/null | while IFS= read -r ln; do write_installer_log "$ln"; done
-	return "$rc"
-}
-
 write_installer_log() {
 	local msg="$1"
 	local line
 	line="$(printf "%s [%s] %s" "$(log_ts)" "$APP" "$msg")"
 	printf "%s\n" "$line"
+	if [ -n "${OC_LOG_FILE:-}" ]; then printf '%s\n' "$line" >> "$OC_LOG_FILE"; fi
 }
 
 openclaw_bin() {
@@ -383,6 +248,10 @@ openclaw_bin() {
 }
 
 openclaw_cmd() {
+	if [ -f "$NODE_DIR/.mise-runtime" ]; then
+		/usr/bin/lua /usr/share/openclawmgr/shared-runtime.lua as-app "$BASE_DIR" cli "$@"
+		return $?
+	fi
 	local b
 	b="$(openclaw_bin 2>/dev/null || true)"
 	[ -n "$b" ] || return 127
@@ -421,24 +290,15 @@ local_openclaw_version() {
 }
 
 latest_openclaw_version() {
-	local npm_registry=""
-	if [ "${INSTALL_CHANNEL:-stable}" != "latest" ]; then
-		printf "%s\n" "$OPENCLAW_STABLE_VERSION"
+	if [ "${INSTALL_CHANNEL:-stable}" != latest ]; then
+		printf '%s\n' "$OPENCLAW_STABLE_VERSION"
 		return 0
 	fi
-	[ -x "$NPM_BIN" ] || return 0
-	if [ "${INSTALL_ACCELERATED:-1}" = "1" ]; then
-		npm_registry="https://registry.npmmirror.com"
-	fi
-	if [ -n "$npm_registry" ]; then
-		HOME="$DATA_DIR" npm_config_cache="${BASE_DIR}/npm-cache" npm_config_registry="$npm_registry" \
-			PATH="${NODE_DIR}/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
-			"$NPM_BIN" view openclaw version 2>/dev/null | tr -d '\r' | head -n 1
-	else
-		HOME="$DATA_DIR" npm_config_cache="${BASE_DIR}/npm-cache" \
-			PATH="${NODE_DIR}/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
-			"$NPM_BIN" view openclaw version 2>/dev/null | tr -d '\r' | head -n 1
-	fi
+	[ -x "$NPM_BIN" ] || return 1
+	if [ "$INSTALL_ACCELERATED" = 1 ] && [ ! -f "$NODE_DIR/.mise-runtime" ]; then set -- ks-cli npm; else set -- "$NPM_BIN"; fi
+	HOME="$DATA_DIR" npm_config_cache="$BASE_DIR/npm-cache" npm_config_registry=https://registry.npmjs.org \
+		PATH="${NODE_DIR}/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+		timeout -k 5 30 "$@" view openclaw version
 }
 
 target_openclaw_package() {
@@ -451,6 +311,9 @@ target_openclaw_package() {
 
 have_openclaw_runtime() {
 	[ -x "$NODE_BIN" ] || return 1
+	if [ -f "$NODE_DIR/.mise-runtime" ]; then
+		/usr/bin/lua /usr/share/openclawmgr/shared-runtime.lua inspect "$BASE_DIR/current/runtime.json" >/dev/null 2>&1 || return 1
+	fi
 	find_entry >/dev/null 2>&1 || return 1
 	return 0
 }
@@ -948,379 +811,30 @@ local encoded = json.stringify(cfg, true)
 if encoded then
 	encoded = encoded:gsub("\\/", "/")
 end
-local f = assert(io.open(cfg_path, "w"))
+local cfg_temp = cfg_path .. ".openclawmgr.tmp"
+local f = assert(io.open(cfg_temp, "w"))
 	f:write(encoded or "{}")
 	f:write("\n")
 f:close()
+assert(os.rename(cfg_temp, cfg_path))
 
 local env_path = cfg_path:gsub("openclaw%.json$", "openclaw.env")
-local envf = assert(io.open(env_path, "w"))
+local env_temp = env_path .. ".openclawmgr.tmp"
+local envf = assert(io.open(env_temp, "w"))
 if selected_env_key and selected_env_key ~= "" and selected_api_key and selected_api_key ~= "" then
 	local val = tostring(selected_api_key)
 	val = val:gsub("\\", "\\\\"):gsub("\n", "\\n"):gsub('"', '\\"')
 	envf:write(selected_env_key .. '="' .. val .. '"\n')
 end
 envf:close()
+assert(os.rename(env_temp, env_path))
 EOF
+	local config_rc=$?
+	[ "$config_rc" = 0 ] || return "$config_rc"
+	chmod 600 "$cfg" "${DATA_DIR}/.openclaw/openclaw.env"
 }
 
-have_local_node_runtime() {
-	[ -x "$NODE_BIN" ] && [ -x "$NPM_BIN" ]
-}
-
-cached_node_archive_ok() {
-	local archive="$1"
-	[ -s "$archive" ] || return 1
-
-	if command -v xz >/dev/null 2>&1; then
-		xz -t "$archive" >/dev/null 2>&1
-		return $?
-	fi
-
-	tar -tJf "$archive" >/dev/null 2>&1
-}
-
-	install_node() {
-		local arch libc url tmp
-		arch="$(detect_arch)"
-		[ "$arch" != "unsupported" ] || { write_installer_log "Unsupported arch"; return 1; }
-
-		if is_musl; then
-			libc="musl"
-		else
-			libc="glibc"
-		fi
-
-		# OpenWrt/iStoreOS runs on musl; use musl builds by default.
-		url="https://unofficial-builds.nodejs.org/download/release/v${NODE_VERSION}/node-v${NODE_VERSION}-${arch}-musl.tar.xz"
-
-		if have_local_node_runtime; then
-			write_installer_log "Using existing Node.js runtime: $($NODE_BIN --version 2>/dev/null || echo unknown)"
-			return 0
-		fi
-
-	if [ -x "$NODE_BIN" ] || [ -x "$NPM_BIN" ]; then
-		write_installer_log "Node.js runtime under $NODE_DIR is incomplete; reinstalling bundled Node.js"
-	fi
-
-	# Fallback: use system node/npm (e.g. from opkg) and symlink into BASE_DIR.
-	local sys_node sys_npm
-	sys_node="$(command -v node 2>/dev/null || true)"
-	sys_npm="$(command -v npm 2>/dev/null || true)"
-	if [ -n "$sys_node" ] && [ -n "$sys_npm" ]; then
-		mkdir -p "${NODE_DIR}/bin" 2>/dev/null || true
-		ln -sf "$sys_node" "${NODE_DIR}/bin/node" 2>/dev/null || true
-		ln -sf "$sys_npm" "${NODE_DIR}/bin/npm" 2>/dev/null || true
-		if have_local_node_runtime; then
-			write_installer_log "Using system Node.js: $($NODE_BIN --version 2>/dev/null || echo unknown)"
-			return 0
-		fi
-	fi
-
-	write_installer_log "Downloading Node.js v${NODE_VERSION} (${arch}, ${libc})"
-	tmp="/tmp/${APP}-node-${NODE_VERSION}.tar.xz"
-	if cached_node_archive_ok "$tmp"; then
-		write_installer_log "Reusing cached Node.js archive: $tmp"
-	else
-		if [ -e "$tmp" ]; then
-			write_installer_log "Cached Node.js archive is invalid, re-downloading: $tmp"
-			rm -f "$tmp" 2>/dev/null || true
-		fi
-		if ! download "$url" "$tmp"; then
-			write_installer_log "Node.js download failed"
-			return 1
-		fi
-	fi
-
-	rm -rf "$NODE_DIR" 2>/dev/null || true
-	mkdir -p "$NODE_DIR"
-	if command -v xz >/dev/null 2>&1; then
-		xz -dc "$tmp" | tar -xf - -C "$NODE_DIR" --strip-components=1
-	else
-		tar -xJf "$tmp" -C "$NODE_DIR" --strip-components=1
-	fi
-	rm -f "$tmp" 2>/dev/null || true
-
-	[ -x "$NODE_BIN" ] || return 1
-	write_installer_log "Node.js installed: $($NODE_BIN --version 2>/dev/null || echo unknown)"
-	return 0
-}
-
-install_openclaw() {
-	local flags="" npm_registry="" effective_registry=""
-	[ -x "$NPM_BIN" ] || return 1
-
-	ensure_git() {
-		ensure_remote_https() {
-			command -v git >/dev/null 2>&1 || return 1
-			local execp
-			execp="$(git --exec-path 2>/dev/null || true)"
-			[ -n "$execp" ] || return 1
-			[ -x "$execp/git-remote-https" ] && return 0
-			# Some builds ship helpers under libexec paths; exec-path should cover it,
-			# but keep a fallback in case of unusual layouts.
-			[ -x /usr/lib/git-core/git-remote-https ] && return 0
-			[ -x /usr/libexec/git-core/git-remote-https ] && return 0
-			return 1
-		}
-
-		command -v git >/dev/null 2>&1 || {
-			write_installer_log "git not found; some npm dependencies require git. Trying to install git via opkg."
-			local pm=""
-			if command -v is-opkg >/dev/null 2>&1; then
-				pm="is-opkg"
-			elif command -v opkg >/dev/null 2>&1; then
-				pm="opkg"
-			fi
-			if [ -z "$pm" ]; then
-				write_installer_log "git is required but opkg/is-opkg is not available; please install git and retry."
-				return 1
-			fi
-
-			if "$pm" install git >/dev/null 2>&1; then
-				command -v git >/dev/null 2>&1 || true
-			fi
-		}
-
-		command -v git >/dev/null 2>&1 || {
-			write_installer_log "git is required but could not be installed automatically; please opkg install git and retry."
-			return 1
-		}
-
-		# Ensure HTTPS transport is available (git-remote-https), required for git URL rewrites.
-		if ensure_remote_https; then
-			return 0
-		fi
-
-		write_installer_log "git HTTPS transport helper not found (git-remote-https); trying to install git-http/git-https."
-		local pm=""
-		if command -v is-opkg >/dev/null 2>&1; then
-			pm="is-opkg"
-		elif command -v opkg >/dev/null 2>&1; then
-			pm="opkg"
-		fi
-		if [ -z "$pm" ]; then
-			write_installer_log "git-remote-https is required but opkg/is-opkg is not available; please install git-http (or equivalent) and retry."
-			return 1
-		fi
-
-		"$pm" install git-http >/dev/null 2>&1 || true
-		"$pm" install git-https >/dev/null 2>&1 || true
-
-		if ensure_remote_https; then
-			return 0
-		fi
-
-		write_installer_log "git-remote-https is required but could not be installed automatically; please opkg install git-http (or git-https) and retry."
-		return 1
-	}
-
-	ensure_git || return 1
-
-	if is_musl; then
-		flags="--ignore-scripts"
-	fi
-
-	if [ "${INSTALL_ACCELERATED:-1}" = "1" ]; then
-		npm_registry="https://registry.npmmirror.com"
-	fi
-
-		local target_pkg=""
-		target_pkg="$(target_openclaw_package)"
-		write_installer_log "Installing OpenClaw from npm (${target_pkg})"
-	write_installer_log "Node.js: $(PATH=\"${NODE_DIR}/bin:/usr/sbin:/usr/bin:/sbin:/bin\" \"$NODE_BIN\" --version 2>/dev/null || echo unknown), npm: $(PATH=\"${NODE_DIR}/bin:/usr/sbin:/usr/bin:/sbin:/bin\" \"$NPM_BIN\" --version 2>/dev/null || echo unknown)"
-	write_installer_log "npm prefix: $GLOBAL_DIR, cache: ${BASE_DIR}/npm-cache, musl: $(is_musl && echo yes || echo no) ${flags:+($flags)}"
-	write_installer_log "npm registry: ${npm_registry:-default}"
-	if [ -n "$npm_registry" ]; then
-		effective_registry="$(HOME="$DATA_DIR" npm_config_cache="${BASE_DIR}/npm-cache" npm_config_registry="$npm_registry" \
-			PATH="${NODE_DIR}/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
-			"$NPM_BIN" config get registry 2>/dev/null | tr -d '\r' | head -n 1)"
-	else
-		effective_registry="$(HOME="$DATA_DIR" npm_config_cache="${BASE_DIR}/npm-cache" \
-			PATH="${NODE_DIR}/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
-			"$NPM_BIN" config get registry 2>/dev/null | tr -d '\r' | head -n 1)"
-	fi
-	write_installer_log "npm effective registry: ${effective_registry:-unknown}"
-	rm -rf "${GLOBAL_DIR}/lib/node_modules/openclaw" 2>/dev/null || true
-	local tmp="/tmp/${APP}-npm-install.log"
-	rm -f "$tmp" 2>/dev/null || true
-
-	# Some npm dependencies may be referenced as git+ssh (e.g. git@github.com:...),
-	# which fails on routers without SSH keys. Force git to use HTTPS by writing a
-	# scoped gitconfig under DATA_DIR and setting HOME for this invocation.
-	if command -v git >/dev/null 2>&1; then
-		mkdir -p "$DATA_DIR" 2>/dev/null || true
-		# Use --add because url.*.insteadOf is multi-valued (git config without --add overwrites).
-		git config --file "$DATA_DIR/.gitconfig" --add url."https://github.com/".insteadOf "ssh://git@github.com/" 2>/dev/null || true
-		git config --file "$DATA_DIR/.gitconfig" --add url."https://github.com/".insteadOf "ssh://git@github.com" 2>/dev/null || true
-		git config --file "$DATA_DIR/.gitconfig" --add url."https://github.com/".insteadOf "git@github.com:" 2>/dev/null || true
-	fi
-
-	# Stream npm output to taskd log while keeping a local copy for post-mortem.
-	: >"$tmp"
-	tail -n 0 -f "$tmp" &
-	local tailpid="$!"
-	write_installer_log "npm install started (may be quiet for a while); streaming npm output as it arrives"
-
-	# npm from Node tarball uses `#!/usr/bin/env node`, ensure PATH contains our node.
-	if [ -n "$npm_registry" ]; then
-		HOME="$DATA_DIR" npm_config_cache="${BASE_DIR}/npm-cache" npm_config_registry="$npm_registry" \
-			PATH="${NODE_DIR}/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
-			"$NPM_BIN" install -g "$target_pkg" --prefix="$GLOBAL_DIR" \
-			$flags --no-audit --no-fund --no-progress >"$tmp" 2>&1 &
-	else
-		HOME="$DATA_DIR" npm_config_cache="${BASE_DIR}/npm-cache" \
-			PATH="${NODE_DIR}/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
-			"$NPM_BIN" install -g "$target_pkg" --prefix="$GLOBAL_DIR" \
-			$flags --no-audit --no-fund --no-progress >"$tmp" 2>&1 &
-	fi
-	local npmpid="$!"
-
-	local start_ts last_change_ts last_size last_lines
-	start_ts="$(date +%s 2>/dev/null || echo 0)"
-	last_change_ts="$start_ts"
-	last_size=0
-	last_lines=0
-
-	# Heartbeat: emit periodic logs so the UI doesn't appear stuck.
-	while kill -0 "$npmpid" 2>/dev/null; do
-		sleep 30
-		kill -0 "$npmpid" 2>/dev/null || break
-
-		local now_ts size lines quiet_s elapsed_s elapsed_h
-		now_ts="$(date +%s 2>/dev/null || echo 0)"
-		size="$(wc -c <"$tmp" 2>/dev/null || echo 0)"
-		lines="$(wc -l <"$tmp" 2>/dev/null || echo 0)"
-		case "$size" in ''|*[!0-9]*) size=0 ;; esac
-		case "$lines" in ''|*[!0-9]*) lines=0 ;; esac
-
-		if [ "$size" -ne "$last_size" ] || [ "$lines" -ne "$last_lines" ]; then
-			last_size="$size"
-			last_lines="$lines"
-			last_change_ts="$now_ts"
-		fi
-
-		quiet_s=$((now_ts - last_change_ts))
-		elapsed_s=$((now_ts - start_ts))
-		elapsed_h="$(fmt_elapsed "$elapsed_s")"
-
-		if [ "$quiet_s" -ge 60 ]; then
-			local last
-			last="$(tail -n 1 "$tmp" 2>/dev/null | tr -d '\r' || true)"
-			if [ -n "$last" ]; then
-				write_installer_log "npm install running (${elapsed_h} elapsed; no new output for ${quiet_s}s; last: ${last})"
-			else
-				write_installer_log "npm install running (${elapsed_h} elapsed; no output yet)"
-			fi
-		fi
-	done
-
-	local npm_rc=0
-	wait "$npmpid" || npm_rc=$?
-		if [ "$npm_rc" -ne 0 ]; then
-			write_installer_log "npm install failed (rc=$npm_rc); dumping recent output"
-			kill "$tailpid" 2>/dev/null || true
-			wait "$tailpid" 2>/dev/null || true
-			rm -f "$tmp" 2>/dev/null || true
-			return 1
-		fi
-
-	local end_ts elapsed_s elapsed_h
-	end_ts="$(date +%s 2>/dev/null || echo 0)"
-	elapsed_s=$((end_ts - start_ts))
-	elapsed_h="$(fmt_elapsed "$elapsed_s")"
-		write_installer_log "npm install finished (${elapsed_h} elapsed)"
-		kill "$tailpid" 2>/dev/null || true
-		wait "$tailpid" 2>/dev/null || true
-		rm -f "$tmp" 2>/dev/null || true
-		find_entry >/dev/null 2>&1 || return 1
-		write_installer_log "OpenClaw installed: $(openclaw_version || echo unknown)"
-		return 0
-	}
-
-upgrade_openclaw() {
-	local was_running=0
-	local st=""
-
-	if ! have_openclaw_runtime; then
-		write_installer_log "OpenClaw is not installed yet; fallback to fresh install."
-		install_openclaw
-		return $?
-	fi
-
-	st="$(do_status 2>/dev/null || true)"
-	if [ "$st" = "running" ]; then
-		was_running=1
-		write_installer_log "Stopping OpenClaw service before update"
-		/etc/init.d/openclawmgr stop >/dev/null 2>&1 || true
-	fi
-
-	write_installer_log "Updating OpenClaw via npm"
-	write_installer_log "Current version: $(openclaw_version || echo unknown)"
-	if ! install_openclaw; then
-		write_installer_log "npm update failed"
-		if [ "$was_running" = "1" ] || [ "${ENABLED:-0}" = "1" ]; then
-			write_installer_log "Trying to restore service after failed update"
-			/etc/init.d/openclawmgr start >/dev/null 2>&1 || true
-		fi
-		return 1
-	fi
-
-	ensure_gateway_config || true
-	fix_data_permissions || true
-
-	if [ "$was_running" = "1" ] || [ "${ENABLED:-0}" = "1" ]; then
-		ensure_safe_port_for_start || return 1
-		write_installer_log "Restarting OpenClaw service after update"
-		/etc/init.d/openclawmgr restart >/dev/null 2>&1 || /etc/init.d/openclawmgr start >/dev/null 2>&1 || true
-	fi
-
-	write_installer_log "OpenClaw updated: $(openclaw_version || echo unknown)"
-	return 0
-}
-
-	do_install() {
-		acquire_lock
-		write_installer_log "== install begin =="
-		ensure_dirs
-		# Node version is bundled/managed by installer code; do not allow UCI override.
-		uci -q delete "${UCI_NS}.main.node_version" >/dev/null 2>&1 || true
-		uci -q commit "$UCI_NS" >/dev/null 2>&1 || true
-
-		# Ensure token exists even if runtime is already installed (service start requires it).
-		ensure_token
-		ensure_gateway_config || true
-
-		if have_openclaw_runtime; then
-			if [ "$ACTION" = "upgrade" ]; then
-				write_installer_log "OpenClaw is already installed: $(openclaw_version || echo unknown)"
-				upgrade_openclaw
-				return $?
-			fi
-			write_installer_log "OpenClaw is already installed: $(openclaw_version || echo unknown)"
-			write_installer_log "Skip install. Use restart/apply config if you only need to refresh configuration."
-			return 0
-		fi
-	if ! has_default_route; then
-		write_installer_log "Install requires internet access, but no default gateway is configured."
-		write_installer_log "Fix: configure WAN or add a default route, then retry Install."
-		return 1
-	fi
-	check_space_mb "$BASE_DIR" 2048 || return 1
-
-		install_node
-		install_openclaw
-		ensure_gateway_config || true
-		fix_data_permissions || true
-		# Do not auto-enable/start on first install; let user Save & Apply after choosing base_dir and settings.
-		if [ "${ENABLED:-0}" = "1" ]; then
-			ensure_safe_port_for_start || return 1
-			/etc/init.d/openclawmgr enable >/dev/null 2>&1 || true
-			/etc/init.d/openclawmgr restart >/dev/null 2>&1 || true
-		fi
-
-		write_installer_log "== install done =="
-	}
+. /usr/share/openclawmgr/install-runtime.sh
 
 do_uninstall() {
 	acquire_lock
@@ -1329,7 +843,7 @@ do_uninstall() {
 	/etc/init.d/openclawmgr disable >/dev/null 2>&1 || true
 	uci -q set "${UCI_NS}.main.enabled=0" && uci -q commit "$UCI_NS" || true
 
-	rm -rf "$NODE_DIR" "$GLOBAL_DIR" 2>/dev/null || true
+	oc_remove_runtime || return $?
 	write_installer_log "Runtime removed (node/global)"
 	write_installer_log "== uninstall done =="
 }
@@ -1359,7 +873,8 @@ do_purge() {
 		rm -rf "$BASE_DIR" 2>/dev/null || true
 		write_installer_log "Base dir removed: $BASE_DIR"
 	else
-		rm -rf "$NODE_DIR" "$GLOBAL_DIR" "$DATA_DIR" "$BASE_DIR/npm-cache" "${BASE_DIR}/.openclawmgr.managed" 2>/dev/null || true
+		oc_remove_runtime || return $?
+		rm -rf "$DATA_DIR" "$BASE_DIR/npm-cache" "$BASE_DIR/backups" "${BASE_DIR}/.openclawmgr.managed"
 		write_installer_log "Base dir kept (safety). Removed: node/global/data/npm-cache under $BASE_DIR"
 	fi
 	write_installer_log "== purge done =="
@@ -1368,59 +883,70 @@ do_purge() {
 do_start() {
 	acquire_lock
 	write_installer_log "== start begin =="
-	ensure_dirs
-	fix_data_permissions || true
+	ensure_dirs || return 1
+	fix_data_permissions || return 1
 	ensure_token
 	ensure_safe_port_for_start || exit 1
-	/etc/init.d/openclawmgr enable >/dev/null 2>&1 || true
-	uci -q set "${UCI_NS}.main.enabled=1" && uci -q commit "$UCI_NS" || true
-	/etc/init.d/openclawmgr restart >/dev/null 2>&1 || /etc/init.d/openclawmgr start >/dev/null 2>&1 || true
+	/etc/init.d/openclawmgr enable >/dev/null 2>&1 || return 1
+	uci -q set "${UCI_NS}.main.enabled=1" && uci -q commit "$UCI_NS" || return 1
+	/etc/init.d/openclawmgr restart >/dev/null 2>&1 || return 1
+	if [ -f "$NODE_DIR/.mise-runtime" ]; then
+		write_installer_log "Background startup submitted; inspect Runtime Environments tasks while fixed dependencies are prepared."
+	else
+		oc_health || return 1
+	fi
 	write_installer_log "== start done =="
 }
 
 do_stop() {
 	acquire_lock
 	write_installer_log "== stop begin =="
-	/etc/init.d/openclawmgr stop >/dev/null 2>&1 || true
-	/etc/init.d/openclawmgr disable >/dev/null 2>&1 || true
-	uci -q set "${UCI_NS}.main.enabled=0" && uci -q commit "$UCI_NS" || true
+	/etc/init.d/openclawmgr stop >/dev/null 2>&1 || return 1
+	/etc/init.d/openclawmgr disable >/dev/null 2>&1 || return 1
+	uci -q set "${UCI_NS}.main.enabled=0" && uci -q commit "$UCI_NS" || return 1
 	write_installer_log "== stop done =="
 }
 
 do_restart() {
 	acquire_lock
 	write_installer_log "== restart begin =="
-	ensure_dirs
-	fix_data_permissions || true
+	ensure_dirs || return 1
+	fix_data_permissions || return 1
 	ensure_token
 	ensure_safe_port_for_start || exit 1
-	/etc/init.d/openclawmgr restart >/dev/null 2>&1 || true
+	/etc/init.d/openclawmgr restart >/dev/null 2>&1 || return 1
+	if [ -f "$NODE_DIR/.mise-runtime" ]; then
+		write_installer_log "Background startup submitted; inspect Runtime Environments tasks while fixed dependencies are prepared."
+	else
+		oc_health || return 1
+	fi
 	write_installer_log "== restart done =="
 }
 
 	do_apply_config() {
 		acquire_lock
 		write_installer_log "== apply_config begin =="
-		ensure_dirs
-		fix_data_permissions || true
+		ensure_dirs || return 1
+		fix_data_permissions || return 1
 		ensure_token
-		ensure_gateway_config || true
+		ensure_gateway_config || return 1
 
 		local pid=""
 		pid="$(ubus call service list "{\"name\":\"openclawmgr\"}" 2>/dev/null | jsonfilter -e '$.openclawmgr.instances.gateway.pid' 2>/dev/null || true)"
 		if [ "${ENABLED:-0}" = "1" ]; then
 			ensure_safe_port_for_start || exit 1
-			/etc/init.d/openclawmgr enable >/dev/null 2>&1 || true
+			/etc/init.d/openclawmgr enable >/dev/null 2>&1 || return 1
 			if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
-				/etc/init.d/openclawmgr restart >/dev/null 2>&1 || true
+				/etc/init.d/openclawmgr restart >/dev/null 2>&1 || return 1
 			else
-				/etc/init.d/openclawmgr start >/dev/null 2>&1 || true
+				/etc/init.d/openclawmgr start >/dev/null 2>&1 || return 1
 			fi
 		else
-			/etc/init.d/openclawmgr stop >/dev/null 2>&1 || true
-			/etc/init.d/openclawmgr disable >/dev/null 2>&1 || true
+			/etc/init.d/openclawmgr stop >/dev/null 2>&1 || return 1
+			/etc/init.d/openclawmgr disable >/dev/null 2>&1 || return 1
 		fi
 
+	[ "${ENABLED:-0}" != 1 ] || oc_health || return 1
 	write_installer_log "== apply_config done =="
 }
 
@@ -1428,6 +954,10 @@ do_status() {
 	local entry
 	entry="$(find_entry 2>/dev/null || true)"
 	[ -n "$entry" ] || return 0
+	if [ -f "$NODE_DIR/.mise-runtime" ] && ! /usr/bin/lua /usr/share/openclawmgr/shared-runtime.lua inspect "$BASE_DIR/current/runtime.json" >/dev/null 2>&1; then
+		echo "runtime-missing"
+		return 0
+	fi
 	local pid=""
 	pid="$(ubus call service list "{\"name\":\"openclawmgr\"}" 2>/dev/null | jsonfilter -e '$.openclawmgr.instances.gateway.pid' 2>/dev/null || true)"
 	if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
@@ -1482,22 +1012,22 @@ diag_run() {
 
 		case "$name" in
 			doctor)
-				openclaw_cmd doctor --no-color
+				NO_COLOR=1 openclaw_cmd doctor
 				;;
 			gateway_status)
-				openclaw_cmd gateway status --no-color --url "ws://127.0.0.1:${PORT}" --token "${TOKEN}"
+				NO_COLOR=1 openclaw_cmd gateway status --url "ws://127.0.0.1:${PORT}" --token "${TOKEN}"
 				;;
 			gateway_health)
-				openclaw_cmd gateway health --no-color --url "ws://127.0.0.1:${PORT}" --token "${TOKEN}"
+				NO_COLOR=1 openclaw_cmd gateway health --url "ws://127.0.0.1:${PORT}" --token "${TOKEN}"
 				;;
 			logs)
 				case "$limit" in ''|*[!0-9]*) limit=200 ;; esac
 				[ "$limit" -gt 2000 ] && limit=2000
 				[ "$limit" -lt 10 ] && limit=10
-				openclaw_cmd logs --plain --no-color --limit "$limit"
+				NO_COLOR=1 openclaw_cmd logs --plain --limit "$limit"
 				;;
 			channels_status)
-				openclaw_cmd channels status --no-color
+				NO_COLOR=1 openclaw_cmd channels status
 				;;
 		esac
 		rc=$?
@@ -1562,7 +1092,6 @@ PROVIDER_BASE_URL="$(uci_get provider_base_url)"
 [ -n "$PORT" ] || PORT="18789"
 [ -n "$BIND" ] || BIND="lan"
 [ -n "$ENABLED" ] || ENABLED="0"
-NODE_VERSION="24.14.0"
 [ -n "$INSTALL_ACCELERATED" ] || INSTALL_ACCELERATED="1"
 [ -n "$INSTALL_CHANNEL" ] || INSTALL_CHANNEL="stable"
 
@@ -1611,8 +1140,13 @@ require_base_dir() {
 	fi
 	if ! validate_base_dir "$BASE_DIR"; then
 		write_installer_log "Refusing to operate on unsafe base_dir: $BASE_DIR"
-		write_installer_log "Fix: choose a dedicated directory like /root/Configs/OpenClawMgr or /mnt/.../OpenClawMgr"
+		write_installer_log "Fix: choose a dedicated persistent directory like /mnt/.../OpenClawMgr"
 		exit 2
+	fi
+	# Stop remains available when a disk is offline. Every filesystem mutation
+	# requires the real data mount and separation from shared SDK storage.
+	if [ "$ACTION" != stop ]; then
+		/usr/bin/lua /usr/share/openclawmgr/shared-runtime.lua preflight "$BASE_DIR" || exit 2
 	fi
 }
 
@@ -1650,6 +1184,13 @@ esac
 	NPM_BIN="${NODE_DIR}/bin/npm"
 
 case "$ACTION" in
+	cancel_install)
+		do_cancel_install
+		;;
+	recover_install)
+		require_base_dir
+		do_recover_install
+		;;
 	install|upgrade)
 		require_base_dir
 		do_install
@@ -1690,6 +1231,9 @@ case "$ACTION" in
 		[ -n "$BASE_DIR" ] || exit 0
 		do_status
 		;;
+	runtime_ready)
+		have_openclaw_runtime
+		;;
 	port)
 		do_port
 		;;
@@ -1715,7 +1259,7 @@ case "$ACTION" in
 		diag_poll "${1:-}"
 		;;
 	*)
-		echo "Usage: $0 {install|upgrade|uninstall|uninstall_openclaw|purge|rm|start|stop|restart|status|port|token|node_version|openclaw_version|local_openclaw_version|latest_openclaw_version|diag|diag_poll}" >&2
+		echo "Usage: $0 {install|upgrade|recover_install|cancel_install|uninstall|uninstall_openclaw|purge|rm|start|stop|restart|status|port|token|node_version|openclaw_version|local_openclaw_version|latest_openclaw_version|diag|diag_poll}" >&2
 		exit 1
 		;;
 esac

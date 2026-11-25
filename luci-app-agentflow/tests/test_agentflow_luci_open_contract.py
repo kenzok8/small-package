@@ -22,7 +22,7 @@ class AgentFlowLuciOpenContractTest(unittest.TestCase):
 
         self.assertIn("+luci-lib-linkeaseauth", makefile)
         self.assertIn("+linkease-app-entry", makefile)
-        self.assertIn("PKG_RELEASE:=2", meta)
+        self.assertIn("PKG_RELEASE:=5", meta)
         self.assertIn("META_LUCI_ENTRY:=/cgi-bin/luci/admin/services/agentflow", meta)
         self.assertIn('entry({"admin", "services", "agentflow", "open"}', controller)
         self.assertIn("open.sysauth = false", controller)
@@ -53,16 +53,16 @@ class AgentFlowLuciOpenContractTest(unittest.TestCase):
         self.assertIn('/etc/init.d/agentflow stop || true', config)
         self.assertNotIn('/etc/init.d/agentflow restart || true', config)
 
-        self.assertIn('json_add_string "app" "agentflow"', entry)
-        self.assertIn('json_add_boolean "docker" "0"', entry)
-        self.assertIn('pidof agentflow', entry)
-        self.assertIn('json_add_string "web" ":${port}${base_path}"', entry)
-        self.assertIn(
-            'json_add_string "href" "/cgi-bin/luci/admin/services/agentflow"',
-            entry,
-        )
-        self.assertIn('/etc/init.d/agentflow start', entry)
-        self.assertIn('/etc/init.d/agentflow stop', entry)
+        self.assertIn('APP=agentflow', entry)
+        self.assertIn('json_add_string app "$APP"', entry)
+        self.assertIn('json_add_boolean docker 0', entry)
+        self.assertIn('ubus -S call service list', entry)
+        self.assertIn('env_value AGENT_FLOW_HOST', entry)
+        self.assertIn('env_value AGENT_FLOW_PORT', entry)
+        self.assertIn('tcp_target "$address" "$value" /apps/agentflow/', entry)
+        self.assertIn('json_add_string "href" "/cgi-bin/luci/admin/services/agentflow"', entry)
+        self.assertIn('ENTRY_INIT=/etc/init.d/agentflow', entry)
+        self.assertIn('start|stop) "$ENTRY_INIT" "$1"', entry)
         self.assertNotIn("linkease_apps/open", entry)
 
     def test_app_meta_and_desktop_icons_have_single_owners(self):

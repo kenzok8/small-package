@@ -297,6 +297,13 @@ function agentflowRenderStatus(st) {
 		: '<%:Start the service to use AgentFlow. Agent installation remains available.%>';
 	if (openButton) openButton.disabled = !st.running;
 	if (address) address.value = agentflowAbsoluteUrl(st.entry_url || '');
+	var runtime = st.runtime || {};
+	var runtimeStatus = document.getElementById('agentflow-runtime-status');
+	if (runtimeStatus) runtimeStatus.textContent = runtime.ready
+		? 'mise · Node ' + runtime.node + ' · npm ' + runtime.npm + ' · glibc ' + runtime.glibc + ' · HOME: ' + runtime.home
+		: (runtime.error || '<%:Shared runtime is not available%>');
+	var recover = document.getElementById('agentflow-runtime-recover');
+	if (recover) recover.style.display = runtime.interrupted ? '' : 'none';
 
 	for (i = 0; i < agents.length; i++) statuses[agents[i].id] = agents[i];
 	for (i in agentflowAgentNames) {
@@ -316,6 +323,13 @@ function agentflowRenderStatus(st) {
 			installButton.value = installed ? agentflowLabels.installed : agentflowLabels.install;
 		}
 	}
+}
+
+function agentflowRecoverRuntime() {
+	(new XHR()).post(agentflowAgentInstallUrl, { token: agentflowCsrfToken, operation: 'recover' }, function(x, data) {
+		if (!data || !data.ok) window.alert(data && data.error || 'Recovery failed');
+		else window.location.reload();
+	});
 }
 
 function agentflowCopyAddress() {
@@ -404,6 +418,12 @@ document.addEventListener('keydown', function(ev) {
 				<p id="agentflow-service-description"><%:Collecting data...%></p>
 				<input id="agentflow-open" class="btn cbi-button agentflow-button agentflow-primary" type="button" value="<%:Open AgentFlow%>" onclick="window.open(agentflowOpenUrl)" disabled>
 			</div>
+		</div>
+		<div class="agentflow-access">
+			<p id="agentflow-runtime-status"><%:Checking shared runtime%></p>
+			<a href="<%=url('admin/services/mise')%>"><%:Manage runtime environments%></a>
+			<input id="agentflow-runtime-recover" class="btn cbi-button agentflow-button" type="button" style="display:none" value="<%:Recover interrupted install%>" onclick="agentflowRecoverRuntime()">
+			<p class="agentflow-access-note"><%:Agent packages use a fixed shared Node/glibc runtime and private application directories. Global mise versions are unchanged.%></p>
 		</div>
 		<div class="agentflow-access">
 			<label for="agentflow-address"><%:Local network access%></label>

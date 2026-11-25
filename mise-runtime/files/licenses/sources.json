@@ -1,0 +1,17 @@
+[
+  {
+    "file": "LGPL-2.1.txt",
+    "source": "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt",
+    "sha256": "20e50fe7aae3e56378ebf0417d9de904f55a0e61e4df315333e632a4d3555d95"
+  },
+  {
+    "file": "GPL-3.0.txt",
+    "source": "https://www.gnu.org/licenses/gpl-3.0.txt",
+    "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+  },
+  {
+    "file": "GCC-exception-3.1.txt",
+    "source": "https://raw.githubusercontent.com/gcc-mirror/gcc/releases/gcc-12.2.0/COPYING.RUNTIME",
+    "sha256": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74"
+  }
+]

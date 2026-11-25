@@ -29,7 +29,9 @@ start_service() {
 	local bind="lan"
 	local token=""
 
-	[ "$enabled" -eq 1 ] || return 0
+	# The installer can preserve a running service while a pending UCI change
+	# has disabled autostart. This override applies only to this start command.
+	[ "$enabled" -eq 1 ] || [ "${OPENCLAWMGR_FORCE_START:-0}" = 1 ] || return 0
 	[ -n "$base_dir" ] || return 1
 
 	local data_dir="${base_dir}/data"
@@ -41,9 +43,10 @@ start_service() {
 	[ -n "$json_port" ] && port="$json_port"
 	[ -n "$json_bind" ] && bind="$json_bind"
 	[ -n "$json_token" ] && token="$json_token"
+	[ "${OPENCLAWMGR_HEALTH_PROBE:-0}" != 1 ] || bind=loopback
 
 	if echo "$port" | grep -Eq '^[0-9]+$'; then
-		if [ "$port" -le 1024 ] 2>/dev/null; then
+		if [ "$port" -le 1024 ] 2>/dev/null || [ "$port" -gt 65535 ] 2>/dev/null; then
 			logger -t openclawmgr "Refusing to start: unsafe port ${port} (must be >1024)"
 			return 1
 		fi
@@ -64,14 +67,23 @@ start_service() {
 	[ -n "$entry" ] || return 1
 	[ -n "$token" ] || return 1
 
+	# Managed glibc releases must keep vector support on every service start.
+	# Legacy layouts remain startable so a failed migration can roll back.
+	if [ -f "${base_dir}/node/.openclawmgr-glibc" ]; then
+		(cd "${base_dir}/node/glibc" && sha256sum -c SHA256SUMS) >/dev/null 2>&1 || return 1
+		timeout -k 2 30 "$node_bin" /usr/share/openclawmgr/runtime-check.cjs native \
+			"$global_dir" "${base_dir}/current/receipt.json" >/dev/null || {
+			logger -t openclawmgr "Native/vector checks failed; refusing to start managed glibc release"
+			return 1
+		}
+	fi
+
 	mkdir -p "${data_dir}/.openclaw/workspace" 2>/dev/null
 	if [ -f "$env_file" ]; then
-		# shellcheck disable=SC1090
-		. "$env_file"
-		openai_api_key="${OPENAI_API_KEY:-}"
-		anthropic_api_key="${ANTHROPIC_API_KEY:-}"
-		minimax_api_key="${MINIMAX_API_KEY:-}"
-		moonshot_api_key="${MOONSHOT_API_KEY:-}"
+		openai_api_key="$(/usr/bin/lua /usr/share/openclawmgr/env-value.lua "$env_file" OPENAI_API_KEY)" || return 1
+		anthropic_api_key="$(/usr/bin/lua /usr/share/openclawmgr/env-value.lua "$env_file" ANTHROPIC_API_KEY)" || return 1
+		minimax_api_key="$(/usr/bin/lua /usr/share/openclawmgr/env-value.lua "$env_file" MINIMAX_API_KEY)" || return 1
+		moonshot_api_key="$(/usr/bin/lua /usr/share/openclawmgr/env-value.lua "$env_file" MOONSHOT_API_KEY)" || return 1
 	fi
 
 	# OpenClaw uses --force to kill conflicting processes, but requires either `lsof`
@@ -86,15 +98,27 @@ start_service() {
 	if id openclawmgr >/dev/null 2>&1; then
 		user_opt="openclawmgr"
 	fi
+	[ -n "$user_opt" ] && [ "$(id -u "$user_opt")" -gt 0 ] || {
+		logger -t openclawmgr 'Dedicated non-root account is missing; refusing to start'
+		return 1
+	}
 	if [ -n "$user_opt" ]; then
 		chown -R "$user_opt:$user_opt" "$data_dir" 2>/dev/null || true
 		chmod -R u+rwX "$data_dir" 2>/dev/null || true
 	fi
 
 	procd_open_instance "gateway"
-	procd_set_param command "$node_bin" "$entry" gateway run --port "$port" --bind "$bind" --auth token --token "$token" --allow-unconfigured $force_opt
+	if [ -f "${base_dir}/node/.mise-runtime" ]; then
+		# Prepare in the supervised child; the bridge drops UID/groups afterward.
+		procd_set_param command /usr/bin/lua /usr/share/openclawmgr/shared-runtime.lua service "$base_dir" gateway run --port "$port" --bind "$bind" --auth token --token "$token" --allow-unconfigured $force_opt
+	else
+	procd_set_param command /usr/share/openclawmgr/gateway.sh "$base_dir" "$entry" gateway run --port "$port" --bind "$bind" --auth token --token "$token" --allow-unconfigured $force_opt
+	fi
 	procd_set_param env \
 		HOME="$data_dir" \
+		USER=openclawmgr \
+		LOGNAME=openclawmgr \
+		ISTORE_RUNTIME_HOME="$data_dir" \
 		OPENCLAW_HOME="$data_dir" \
 		OPENCLAW_STATE_DIR="${data_dir}/.openclaw" \
 		OPENCLAW_CONFIG_PATH="${data_dir}/.openclaw/openclaw.json" \
@@ -106,7 +130,12 @@ start_service() {
 		MINIMAX_API_KEY="$minimax_api_key" \
 		MOONSHOT_API_KEY="$moonshot_api_key" \
 		PATH="${base_dir}/node/bin:${global_dir}/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-	[ -n "$user_opt" ] && procd_set_param user "$user_opt"
+	procd_append_param env OPENCLAWMGR_START_GENERATION="$$-$(date +%s)"
+	if [ "${OPENCLAWMGR_HEALTH_PROBE:-0}" = 1 ]; then
+		procd_append_param env OPENCLAW_SKIP_CHANNELS=1 OPENCLAW_SKIP_PROVIDERS=1 \
+			OPENCLAW_SKIP_CRON=1 OPENCLAW_SKIP_BROWSER_CONTROL_SERVER=1
+	fi
+	[ -f "${base_dir}/node/.mise-runtime" ] || procd_set_param user "$user_opt"
 	procd_set_param respawn 3600 10 5
 	procd_set_param stdout 1
 	procd_set_param stderr 1

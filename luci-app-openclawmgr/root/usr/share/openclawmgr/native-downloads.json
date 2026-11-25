@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "package": "@matrix-org/matrix-sdk-crypto-nodejs",
+  "version": "0.4.0",
+  "event": "postinstall",
+  "command": "node download-lib.js",
+  "script_sha256": "4e5601246aa452bc192641e137b81e4f56ff5e061107a4f207e54d13db3acfc8",
+  "source": "https://api.github.com/repos/matrix-org/matrix-rust-sdk-crypto-nodejs/releases/tags/v0.4.0",
+  "assets": {
+    "x86_64": {
+      "filename": "matrix-sdk-crypto.linux-x64-gnu.node",
+      "sha256": "7078d4dd987128f79afd192c4f621f64adece37e43f2a8756f1d0a9f034de718",
+      "bytes": 22027000
+    },
+    "aarch64": {
+      "filename": "matrix-sdk-crypto.linux-arm64-gnu.node",
+      "sha256": "0dc1c58315580cd0cef39c2e1ec28e1e38856a3376f2597da1ae20388f24d0f4",
+      "bytes": 19818560
+    }
+  }
+}

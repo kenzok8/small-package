@@ -40,52 +40,18 @@ class AgentInstallContractTest(unittest.TestCase):
         self.assertIn('/etc/init.d/tasks task_add ', controller)
         self.assertIn('task_id = "agentflow-agent-install"', controller)
 
-    def test_status_reports_installed_agents_from_shared_mise_runtime(self):
+    def test_status_uses_application_owned_fixed_runtime(self):
         controller = self.read("luasrc/controller/agentflow.lua")
         status = self.read("luasrc/view/agentflow/status.htm")
-
-        self.assertIn("istore_runtime_env", controller)
-        self.assertIn('where node@lts', controller)
-        for package in (
-            "@openai/codex",
-            "@anthropic-ai/claude-code",
-            "opencode-ai",
-            "@moonshot-ai/kimi-code",
-            "reasonix",
-        ):
-            self.assertIn(f'package = "{package}"', controller)
-        self.assertIn('status.version = package_json.version', controller)
-        self.assertIn('agents_available = agents_available', controller)
-        self.assertIn('st.agents_available', status)
-        self.assertIn('item.installed === true', status)
-        self.assertIn('installButton.disabled = !available || installed', status)
-        self.assertIn('installed ? agentflowLabels.installed : agentflowLabels.install', status)
-
-    def test_status_requires_valid_package_and_healthy_mise_shim(self):
-        controller = self.read("luasrc/controller/agentflow.lua")
-
-        for agent_id, package, command in (
-            ("codexcli", "@openai/codex", "codex"),
-            ("claude-code", "@anthropic-ai/claude-code", "claude"),
-            ("opencode", "opencode-ai", "opencode"),
-            ("kimi", "@moonshot-ai/kimi-code", "kimi"),
-            ("reasonix", "reasonix", "reasonix"),
-        ):
-            self.assertIn(
-                f'{{ id = "{agent_id}", package = "{package}", command = "{command}" }}',
-                controller,
-            )
-        self.assertIn('probe_prefix="/tmp/agentflow-agent-probe.$$"', controller)
-        self.assertIn('[ -x "$shim" ]', controller)
-        self.assertIn('"$shim" --version', controller)
-        self.assertIn('sleep 5', controller)
-        self.assertIn('kill "$child_pid"', controller)
-        self.assertIn('type(package_json.version) == "string"', controller)
-        self.assertIn('package_json.version ~= ""', controller)
-        self.assertIn('command_ready[agent.id] == true', controller)
-        self.assertIn(
-            'if package_valid and command_ready[agent.id] == true then', controller
-        )
+        self.assertIn("/usr/libexec/agentflow-runtime status", controller)
+        self.assertNotIn("node@lts", controller)
+        self.assertNotIn(".local/share/mise/shims", controller)
+        self.assertIn("runtime = state.runtime", controller)
+        self.assertIn("st.agents_available", status)
+        self.assertIn("item.installed === true", status)
+        self.assertIn("agentflow-runtime-status", status)
+        self.assertIn("runtime.glibc", status)
+        self.assertIn("runtime.home", status)
 
     def test_modal_theme_prefers_body_attribute_then_system_theme(self):
         status = self.read("luasrc/view/agentflow/status.htm")
@@ -94,21 +60,18 @@ class AgentInstallContractTest(unittest.TestCase):
         self.assertIn('@media (prefers-color-scheme: dark)', status)
         self.assertIn('body:not([theme]) .agentflow-shell', status)
 
-    def test_controller_runs_remote_installer_inside_taskd(self):
+    def test_controller_uses_local_runtime_task_without_remote_script_or_global_mise(self):
         controller = self.read("luasrc/controller/agentflow.lua")
-
-        self.assertFalse((APP_DIR / "root/usr/libexec/istorec/agentflow-agent.sh").exists())
-        self.assertNotIn("/usr/libexec/istorec/agentflow-agent.sh", controller)
-        self.assertIn("installapp/installapp-mise.sh", controller)
-        self.assertIn("istore_runtime_env", controller)
-        self.assertIn('wget -O "$installer" "$installer_url"', controller)
-        self.assertIn('/bin/sh "$installer" "$agent"', controller)
-        self.assertIn('task_script = "/tmp/agentflow-agent-install.sh"', controller)
+        self.assertNotIn("installapp-mise.sh", controller)
+        self.assertNotIn("installer_url", controller)
+        self.assertNotIn("node@lts", controller)
+        self.assertIn("/usr/libexec/agentflow-runtime install ", controller)
+        self.assertIn("/.runtime/work/install-agent-", controller)
+        self.assertIn("fs.lstat(task_script)", controller)
         self.assertIn("fs.writefile(task_script", controller)
-        self.assertIn('rm -f "$installer" "$0"', controller)
         self.assertIn('local command = "/bin/sh "', controller)
-        self.assertNotIn('local command = "/bin/sh -c "', controller)
-        self.assertLess(controller.index("istore_runtime_env"), controller.index('"set -u"'))
+        self.assertIn('object = "luci-app-agentflow"', controller)
+
 
 
 if __name__ == "__main__":

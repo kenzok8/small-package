@@ -1,0 +1,6 @@
+# Python ships its own OpenSSL. Do not load OpenWrt engine/provider modules
+# built for the host OpenSSL. Keep the bundled defaults; certificate trust is
+# still the OS CA bundle and applications retain explicit OPENSSL_CONF choices.
+openssl_conf = openssl_init
+
+[openssl_init]

@@ -1,0 +1,11 @@
+#!/bin/sh
+# Remove this shim before ks-cli resolves the real npm, avoiding recursion.
+PATH="${PATH#/usr/share/openclawmgr/cli-bin:}"
+export PATH
+if [ -f "$(dirname "${OPENCLAWMGR_NPM:?}")/../.mise-runtime" ]; then
+	exec "$OPENCLAWMGR_NPM" --cache "${npm_config_cache:?}" "$@"
+fi
+if [ "${OPENCLAWMGR_ACCELERATED:-0}" = 1 ]; then
+	exec ks-cli npm "$@"
+fi
+exec "${OPENCLAWMGR_NPM:?OpenClawMgr npm path is missing}" "$@"

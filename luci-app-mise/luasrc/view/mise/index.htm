@@ -1,0 +1,8 @@
+<%+header%>
+<link rel="stylesheet" href="<%=resource%>/mise/style.css?v=<%=os.time()%>">
+<div id="mise-app" class="mise-surface"
+ data-endpoint="<%=luci.dispatcher.build_url('admin','services','mise','request')%>"
+ data-token="<%=luci.util.pcdata(luci.dispatcher.context.authtoken or '')%>"
+ data-writable="<%=writable and '1' or '0'%>"></div>
+<script type="module" src="<%=resource%>/mise/app.js?v=<%=os.time()%>"></script>
+<%+footer%>

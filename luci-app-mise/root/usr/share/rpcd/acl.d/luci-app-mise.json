@@ -1,0 +1,7 @@
+{
+  "luci-app-mise": {
+    "description": "Manage persistent language runtimes",
+    "read": { "uci": ["mise"] },
+    "write": { "uci": ["mise"] }
+  }
+}

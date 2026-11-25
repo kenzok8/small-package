@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "versions": [
+    {
+      "version": "11.12.1",
+      "engines": {
+        "node": "^20.17.0 || >=22.9.0"
+      },
+      "integrity": "sha512-zcoUuF1kezGSAo0CqtvoLXX3mkRqzuqYdL6Y5tdo8g69NVV3CkjQ6ZBhBgB4d7vGkPcV6TcvLi3GRKPDFX+xTA==",
+      "source": "https://registry.npmjs.org/npm/11.12.1",
+      "artifact": {
+        "url": "https://registry.npmjs.org/npm/-/npm-11.12.1.tgz",
+        "sha256": "e679850e663b16f5f146ee425d0eb0e3442c1d2bda3d513bbfd7c81f5ee5db38",
+        "format": "tar.gz",
+        "strip": 1,
+        "bytes": 2833345,
+        "component": "npm"
+      }
+    }
+  ]
+}

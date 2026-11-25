@@ -1,0 +1,1161 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "go-1.26.10-aarch64-native-upstream1",
+      "tool": "go",
+      "version": "1.26.10",
+      "arch": "aarch64",
+      "abi": "native",
+      "build": "upstream1",
+      "source": "https://go.dev/dl/?mode=json&include=all",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://dl.google.com/go/go1.26.10.linux-arm64.tar.gz",
+          "sha256": "3f4227ce7b206a513e794f1393adb473a07b46e94d18bd15d1c684bbb7319797",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 63827526
+        }
+      ],
+      "artifact_set": "0d73063e9c03cf5a1cf158f60f5803bf7aa6c8e7ac8d2e7187cb2f537854b3d3"
+    },
+    {
+      "id": "go-1.26.10-x86_64-native-upstream1",
+      "tool": "go",
+      "version": "1.26.10",
+      "arch": "x86_64",
+      "abi": "native",
+      "build": "upstream1",
+      "source": "https://go.dev/dl/?mode=json&include=all",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://dl.google.com/go/go1.26.10.linux-amd64.tar.gz",
+          "sha256": "ccfe7ae822d2c2f41f4fe7c956199967a4dac22d0ee0d2b2bfdb440aab3b20c5",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 66936659
+        }
+      ],
+      "artifact_set": "d0421aa2fa11b520c016df6c286638afbdc2228f93742e0f54fcf5000ce10861"
+    },
+    {
+      "id": "go-1.27.4-aarch64-native-upstream1",
+      "tool": "go",
+      "version": "1.27.4",
+      "arch": "aarch64",
+      "abi": "native",
+      "build": "upstream1",
+      "source": "https://go.dev/dl/?mode=json&include=all",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://dl.google.com/go/go1.27.4.linux-arm64.tar.gz",
+          "sha256": "3392582988a273a87ab5043ee1b2c9c17a2c3c00580bf9326c47a2e0aaaeac92",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 67129258
+        }
+      ],
+      "artifact_set": "9aaf949ea1723fff27a251ae6849cab71a17a9fdf03252dd000eb8545390ca29"
+    },
+    {
+      "id": "go-1.27.4-x86_64-native-upstream1",
+      "tool": "go",
+      "version": "1.27.4",
+      "arch": "x86_64",
+      "abi": "native",
+      "build": "upstream1",
+      "source": "https://go.dev/dl/?mode=json&include=all",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://dl.google.com/go/go1.27.4.linux-amd64.tar.gz",
+          "sha256": "7226736c2339719cda28fbf3a54d71aa63bcefe376e98cef00034268dab24840",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 70680823
+        }
+      ],
+      "artifact_set": "51d304294ca856b1bd2349f1a4e5f6967fa34546b5fa82405d72cacfb75a56e1"
+    },
+    {
+      "id": "java-temurin-21.0.9+10-aarch64-glibc-hotspot1",
+      "tool": "java",
+      "version": "temurin-21.0.9+10",
+      "arch": "aarch64",
+      "abi": "glibc",
+      "build": "hotspot1",
+      "source": "https://api.github.com/repos/adoptium/temurin21-binaries/releases/tags/jdk-21.0.9%2B10",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.9%2B10/OpenJDK21U-jdk_aarch64_linux_hotspot_21.0.9_10.tar.gz",
+          "sha256": "edf0da4debe7cf475dbe320d174d6eed81479eb363f41e38a2efb740428c603a",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 205320584
+        }
+      ],
+      "artifact_set": "8b3be428145d0891bfa93dd418919496e2c63d6c8f4f3a0909a7e1e9788b68d9"
+    },
+    {
+      "id": "java-temurin-21.0.9+10-x86_64-glibc-hotspot1",
+      "tool": "java",
+      "version": "temurin-21.0.9+10",
+      "arch": "x86_64",
+      "abi": "glibc",
+      "build": "hotspot1",
+      "source": "https://api.github.com/repos/adoptium/temurin21-binaries/releases/tags/jdk-21.0.9%2B10",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.9%2B10/OpenJDK21U-jdk_x64_linux_hotspot_21.0.9_10.tar.gz",
+          "sha256": "810d3773df7e0d6c4394e4e244b264c8b30e0b05a0acf542d065fd78a6b65c2f",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 207157802
+        }
+      ],
+      "artifact_set": "38f7be4fc8893438afa1bd26c60124d09100db5629be53d241be49415c40d45b"
+    },
+    {
+      "id": "java-temurin-25.0.1+8-aarch64-glibc-hotspot1",
+      "tool": "java",
+      "version": "temurin-25.0.1+8",
+      "arch": "aarch64",
+      "abi": "glibc",
+      "build": "hotspot1",
+      "source": "https://api.github.com/repos/adoptium/temurin25-binaries/releases/tags/jdk-25.0.1%2B8",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.1%2B8/OpenJDK25U-jdk_aarch64_linux_hotspot_25.0.1_8.tar.gz",
+          "sha256": "5c83b7d2121ed482fd06831a1eba1633dbab818aba6addddf48e075b97e6e9b8",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 139632170
+        }
+      ],
+      "artifact_set": "214ef4a250d9c6251756e3eb01b6c24eaf6a6ffe8fd8bfedbd0d08e2675bcaff"
+    },
+    {
+      "id": "java-temurin-25.0.1+8-x86_64-glibc-hotspot1",
+      "tool": "java",
+      "version": "temurin-25.0.1+8",
+      "arch": "x86_64",
+      "abi": "glibc",
+      "build": "hotspot1",
+      "source": "https://api.github.com/repos/adoptium/temurin25-binaries/releases/tags/jdk-25.0.1%2B8",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.1%2B8/OpenJDK25U-jdk_x64_linux_hotspot_25.0.1_8.tar.gz",
+          "sha256": "8daf77d1aacffe38c9889689bc224a13557de77559d9a5bb91991e6a298baa0d",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 140725210
+        }
+      ],
+      "artifact_set": "e5a502960c5e637469da313eb5e3f34b8e9b2a265d7dd75b99d0cd984c9a0371"
+    },
+    {
+      "id": "node-24.21.0-aarch64-glibc-upstream1",
+      "tool": "node",
+      "version": "24.21.0",
+      "arch": "aarch64",
+      "abi": "glibc",
+      "build": "upstream1",
+      "source": "https://nodejs.org/dist/v24.21.0/SHASUMS256.txt",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://nodejs.org/dist/v24.21.0/node-v24.21.0-linux-arm64.tar.xz",
+          "sha256": "6ad1325edbdb5649c379b75a237147a666c95d4f9ae8d340fef2d1575d289ad2",
+          "format": "tar.xz",
+          "strip": 1
+        }
+      ],
+      "artifact_set": "c5381d67a2fc8268ee973d2262f592fd3e53262d5950bd8a9c65bdd766346544",
+      "npm": "11.19.0"
+    },
+    {
+      "id": "node-24.21.0-aarch64-glibc-upstream1-npm11.12.1",
+      "tool": "node",
+      "version": "24.21.0",
+      "arch": "aarch64",
+      "abi": "glibc",
+      "build": "upstream1-npm11.12.1",
+      "source": "https://nodejs.org/dist/v24.21.0/SHASUMS256.txt",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://nodejs.org/dist/v24.21.0/node-v24.21.0-linux-arm64.tar.xz",
+          "sha256": "6ad1325edbdb5649c379b75a237147a666c95d4f9ae8d340fef2d1575d289ad2",
+          "format": "tar.xz",
+          "strip": 1
+        },
+        {
+          "url": "https://registry.npmjs.org/npm/-/npm-11.12.1.tgz",
+          "sha256": "e679850e663b16f5f146ee425d0eb0e3442c1d2bda3d513bbfd7c81f5ee5db38",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 2833345,
+          "component": "npm"
+        }
+      ],
+      "artifact_set": "f511ecb2d0035345fcc30f1750939274cfa8876aad0bc43a03b48486d82a3ecb",
+      "npm": "11.12.1"
+    },
+    {
+      "id": "node-24.21.0-aarch64-musl-upstream1",
+      "tool": "node",
+      "version": "24.21.0",
+      "arch": "aarch64",
+      "abi": "musl",
+      "build": "upstream1",
+      "source": "https://unofficial-builds.nodejs.org/download/release/v24.21.0/SHASUMS256.txt",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://unofficial-builds.nodejs.org/download/release/v24.21.0/node-v24.21.0-linux-arm64-musl.tar.xz",
+          "sha256": "4008018adb2b06d3050c3ea19dc747b5d533499a0a38686562d5a22002d33f7a",
+          "format": "tar.xz",
+          "strip": 1
+        }
+      ],
+      "artifact_set": "50fa067b4da3ead81dc217aa158d5277a1d710783ce49eff915243f36338762e",
+      "npm": "11.19.0"
+    },
+    {
+      "id": "node-24.21.0-aarch64-musl-upstream1-npm11.12.1",
+      "tool": "node",
+      "version": "24.21.0",
+      "arch": "aarch64",
+      "abi": "musl",
+      "build": "upstream1-npm11.12.1",
+      "source": "https://unofficial-builds.nodejs.org/download/release/v24.21.0/SHASUMS256.txt",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://unofficial-builds.nodejs.org/download/release/v24.21.0/node-v24.21.0-linux-arm64-musl.tar.xz",
+          "sha256": "4008018adb2b06d3050c3ea19dc747b5d533499a0a38686562d5a22002d33f7a",
+          "format": "tar.xz",
+          "strip": 1
+        },
+        {
+          "url": "https://registry.npmjs.org/npm/-/npm-11.12.1.tgz",
+          "sha256": "e679850e663b16f5f146ee425d0eb0e3442c1d2bda3d513bbfd7c81f5ee5db38",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 2833345,
+          "component": "npm"
+        }
+      ],
+      "artifact_set": "415c8bdf246943d0dd82dad542c99642bc3bb9d7b3bcd823fe09ddc3a1b2c53f",
+      "npm": "11.12.1"
+    },
+    {
+      "id": "node-24.21.0-x86_64-glibc-upstream1",
+      "tool": "node",
+      "version": "24.21.0",
+      "arch": "x86_64",
+      "abi": "glibc",
+      "build": "upstream1",
+      "source": "https://nodejs.org/dist/v24.21.0/SHASUMS256.txt",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://nodejs.org/dist/v24.21.0/node-v24.21.0-linux-x64.tar.xz",
+          "sha256": "fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6",
+          "format": "tar.xz",
+          "strip": 1
+        }
+      ],
+      "artifact_set": "3c978e5d25a3a081a1b08f661b79fe92eb2c95f10b625b981a43b56b40eb4463",
+      "npm": "11.19.0"
+    },
+    {
+      "id": "node-24.21.0-x86_64-glibc-upstream1-npm11.12.1",
+      "tool": "node",
+      "version": "24.21.0",
+      "arch": "x86_64",
+      "abi": "glibc",
+      "build": "upstream1-npm11.12.1",
+      "source": "https://nodejs.org/dist/v24.21.0/SHASUMS256.txt",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://nodejs.org/dist/v24.21.0/node-v24.21.0-linux-x64.tar.xz",
+          "sha256": "fd8e59d5a511510f6a298afb548f18c7d2b1be404d8b4a27d94fbe49f56cb2d6",
+          "format": "tar.xz",
+          "strip": 1
+        },
+        {
+          "url": "https://registry.npmjs.org/npm/-/npm-11.12.1.tgz",
+          "sha256": "e679850e663b16f5f146ee425d0eb0e3442c1d2bda3d513bbfd7c81f5ee5db38",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 2833345,
+          "component": "npm"
+        }
+      ],
+      "artifact_set": "c52b848b52f1a7edd508540b368a79e267d4fc47bdbdf1bbcfca5201f2584135",
+      "npm": "11.12.1"
+    },
+    {
+      "id": "node-24.21.0-x86_64-musl-upstream1",
+      "tool": "node",
+      "version": "24.21.0",
+      "arch": "x86_64",
+      "abi": "musl",
+      "build": "upstream1",
+      "source": "https://unofficial-builds.nodejs.org/download/release/v24.21.0/SHASUMS256.txt",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://unofficial-builds.nodejs.org/download/release/v24.21.0/node-v24.21.0-linux-x64-musl.tar.xz",
+          "sha256": "dd5ca647e656c8200c873f45098a16623129c47f2387829f0a15a6de1dac1220",
+          "format": "tar.xz",
+          "strip": 1
+        }
+      ],
+      "artifact_set": "0874c07b5c0e13c99c231b0bdfadea82d928fc7e2722bbe554e4907ec642d9e9",
+      "npm": "11.19.0"
+    },
+    {
+      "id": "node-24.21.0-x86_64-musl-upstream1-npm11.12.1",
+      "tool": "node",
+      "version": "24.21.0",
+      "arch": "x86_64",
+      "abi": "musl",
+      "build": "upstream1-npm11.12.1",
+      "source": "https://unofficial-builds.nodejs.org/download/release/v24.21.0/SHASUMS256.txt",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://unofficial-builds.nodejs.org/download/release/v24.21.0/node-v24.21.0-linux-x64-musl.tar.xz",
+          "sha256": "dd5ca647e656c8200c873f45098a16623129c47f2387829f0a15a6de1dac1220",
+          "format": "tar.xz",
+          "strip": 1
+        },
+        {
+          "url": "https://registry.npmjs.org/npm/-/npm-11.12.1.tgz",
+          "sha256": "e679850e663b16f5f146ee425d0eb0e3442c1d2bda3d513bbfd7c81f5ee5db38",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 2833345,
+          "component": "npm"
+        }
+      ],
+      "artifact_set": "fdb617c1b2fae590d2be2c94b73081b9e1b64ada4ca0c918788a719de45d8a28",
+      "npm": "11.12.1"
+    },
+    {
+      "id": "node-24.22.1-aarch64-glibc-upstream1",
+      "tool": "node",
+      "version": "24.22.1",
+      "arch": "aarch64",
+      "abi": "glibc",
+      "build": "upstream1",
+      "source": "https://nodejs.org/dist/v24.22.1/SHASUMS256.txt",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://nodejs.org/dist/v24.22.1/node-v24.22.1-linux-arm64.tar.xz",
+          "sha256": "dbabf7a1cbf947e6059ffad2c27b80041db97dea1e553b62afdee7f13fca336e",
+          "format": "tar.xz",
+          "strip": 1
+        }
+      ],
+      "artifact_set": "09859876de3be52d3b45b3b9e22bbbc9e8a8876b2409e20635ee7aabda81c489",
+      "npm": "11.19.1"
+    },
+    {
+      "id": "node-24.22.1-aarch64-glibc-upstream1-npm11.12.1",
+      "tool": "node",
+      "version": "24.22.1",
+      "arch": "aarch64",
+      "abi": "glibc",
+      "build": "upstream1-npm11.12.1",
+      "source": "https://nodejs.org/dist/v24.22.1/SHASUMS256.txt",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://nodejs.org/dist/v24.22.1/node-v24.22.1-linux-arm64.tar.xz",
+          "sha256": "dbabf7a1cbf947e6059ffad2c27b80041db97dea1e553b62afdee7f13fca336e",
+          "format": "tar.xz",
+          "strip": 1
+        },
+        {
+          "url": "https://registry.npmjs.org/npm/-/npm-11.12.1.tgz",
+          "sha256": "e679850e663b16f5f146ee425d0eb0e3442c1d2bda3d513bbfd7c81f5ee5db38",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 2833345,
+          "component": "npm"
+        }
+      ],
+      "artifact_set": "831e05c4c82171394d7b2ec4e2ccecf36f4ef415297d3ae9b2854e66d69cae0b",
+      "npm": "11.12.1"
+    },
+    {
+      "id": "node-24.22.1-aarch64-musl-upstream1",
+      "tool": "node",
+      "version": "24.22.1",
+      "arch": "aarch64",
+      "abi": "musl",
+      "build": "upstream1",
+      "source": "https://unofficial-builds.nodejs.org/download/release/v24.22.1/SHASUMS256.txt",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://unofficial-builds.nodejs.org/download/release/v24.22.1/node-v24.22.1-linux-arm64-musl.tar.xz",
+          "sha256": "1938774185b35e42f0b064f0998dd7a32fa912bba5bfa8422779df9be5c21c29",
+          "format": "tar.xz",
+          "strip": 1
+        }
+      ],
+      "artifact_set": "2eb10f4cf8c8375803905d86acb24746820ddddafe94e6ee71bcd2cf72401ed5",
+      "npm": "11.19.1"
+    },
+    {
+      "id": "node-24.22.1-aarch64-musl-upstream1-npm11.12.1",
+      "tool": "node",
+      "version": "24.22.1",
+      "arch": "aarch64",
+      "abi": "musl",
+      "build": "upstream1-npm11.12.1",
+      "source": "https://unofficial-builds.nodejs.org/download/release/v24.22.1/SHASUMS256.txt",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://unofficial-builds.nodejs.org/download/release/v24.22.1/node-v24.22.1-linux-arm64-musl.tar.xz",
+          "sha256": "1938774185b35e42f0b064f0998dd7a32fa912bba5bfa8422779df9be5c21c29",
+          "format": "tar.xz",
+          "strip": 1
+        },
+        {
+          "url": "https://registry.npmjs.org/npm/-/npm-11.12.1.tgz",
+          "sha256": "e679850e663b16f5f146ee425d0eb0e3442c1d2bda3d513bbfd7c81f5ee5db38",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 2833345,
+          "component": "npm"
+        }
+      ],
+      "artifact_set": "13c515b5c5d3288f7e794926457b1d4d3f119059e50244193b77d761f4051037",
+      "npm": "11.12.1"
+    },
+    {
+      "id": "node-24.22.1-x86_64-glibc-upstream1",
+      "tool": "node",
+      "version": "24.22.1",
+      "arch": "x86_64",
+      "abi": "glibc",
+      "build": "upstream1",
+      "source": "https://nodejs.org/dist/v24.22.1/SHASUMS256.txt",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://nodejs.org/dist/v24.22.1/node-v24.22.1-linux-x64.tar.xz",
+          "sha256": "6c172a9ab6718f7b801fb5a7bd486af2ee5e32758086a04b84fcce2aa77095e6",
+          "format": "tar.xz",
+          "strip": 1
+        }
+      ],
+      "artifact_set": "0d690d21c67e40c7f93503fcc295185cc357f5d09916918abb48ea6c02d37a56",
+      "npm": "11.19.1"
+    },
+    {
+      "id": "node-24.22.1-x86_64-glibc-upstream1-npm11.12.1",
+      "tool": "node",
+      "version": "24.22.1",
+      "arch": "x86_64",
+      "abi": "glibc",
+      "build": "upstream1-npm11.12.1",
+      "source": "https://nodejs.org/dist/v24.22.1/SHASUMS256.txt",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://nodejs.org/dist/v24.22.1/node-v24.22.1-linux-x64.tar.xz",
+          "sha256": "6c172a9ab6718f7b801fb5a7bd486af2ee5e32758086a04b84fcce2aa77095e6",
+          "format": "tar.xz",
+          "strip": 1
+        },
+        {
+          "url": "https://registry.npmjs.org/npm/-/npm-11.12.1.tgz",
+          "sha256": "e679850e663b16f5f146ee425d0eb0e3442c1d2bda3d513bbfd7c81f5ee5db38",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 2833345,
+          "component": "npm"
+        }
+      ],
+      "artifact_set": "1c41f25e79f0a2c81a347773ff5fb2fdb98df040a69e8b7369116d8e01139180",
+      "npm": "11.12.1"
+    },
+    {
+      "id": "node-24.22.1-x86_64-musl-upstream1",
+      "tool": "node",
+      "version": "24.22.1",
+      "arch": "x86_64",
+      "abi": "musl",
+      "build": "upstream1",
+      "source": "https://unofficial-builds.nodejs.org/download/release/v24.22.1/SHASUMS256.txt",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://unofficial-builds.nodejs.org/download/release/v24.22.1/node-v24.22.1-linux-x64-musl.tar.xz",
+          "sha256": "c9c0685740bbb89e836ff81af64d8582db53916cdf09131db482d1dc20f59c70",
+          "format": "tar.xz",
+          "strip": 1
+        }
+      ],
+      "artifact_set": "d68ada2cc482a7089cccf37fa713377ba34d3f9c28402f0c964fcec50ad385f5",
+      "npm": "11.19.1"
+    },
+    {
+      "id": "node-24.22.1-x86_64-musl-upstream1-npm11.12.1",
+      "tool": "node",
+      "version": "24.22.1",
+      "arch": "x86_64",
+      "abi": "musl",
+      "build": "upstream1-npm11.12.1",
+      "source": "https://unofficial-builds.nodejs.org/download/release/v24.22.1/SHASUMS256.txt",
+      "availability": "available",
+      "layout": "standard",
+      "artifacts": [
+        {
+          "url": "https://unofficial-builds.nodejs.org/download/release/v24.22.1/node-v24.22.1-linux-x64-musl.tar.xz",
+          "sha256": "c9c0685740bbb89e836ff81af64d8582db53916cdf09131db482d1dc20f59c70",
+          "format": "tar.xz",
+          "strip": 1
+        },
+        {
+          "url": "https://registry.npmjs.org/npm/-/npm-11.12.1.tgz",
+          "sha256": "e679850e663b16f5f146ee425d0eb0e3442c1d2bda3d513bbfd7c81f5ee5db38",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 2833345,
+          "component": "npm"
+        }
+      ],
+      "artifact_set": "318a880634c0b495388f4f318bd43ffa6dcf3195ee40c76b88ed593e2193a4a7",
+      "npm": "11.12.1"
+    },
+    {
+      "id": "python-3.12.16-aarch64-glibc-20261110",
+      "tool": "python",
+      "version": "3.12.16",
+      "arch": "aarch64",
+      "abi": "glibc",
+      "build": "20261110",
+      "source": "https://api.github.com/repos/astral-sh/python-build-standalone/releases/tags/20261110",
+      "availability": "available",
+      "layout": "python",
+      "artifacts": [
+        {
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.12.16%2B20261110-aarch64-unknown-linux-gnu-install_only_stripped.tar.gz",
+          "sha256": "b6a41defec4975d94b4ff1950236e7383e5c02ba40ea48c9ec33c66087a35aab",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 29440910
+        }
+      ],
+      "artifact_set": "af687164472ae949758e3f68d0b082e7f483459abca0f7eaa2fc3ab4a7c38779"
+    },
+    {
+      "id": "python-3.12.16-aarch64-musl-20261110",
+      "tool": "python",
+      "version": "3.12.16",
+      "arch": "aarch64",
+      "abi": "musl",
+      "build": "20261110",
+      "source": "https://api.github.com/repos/astral-sh/python-build-standalone/releases/tags/20261110",
+      "availability": "available",
+      "layout": "python",
+      "artifacts": [
+        {
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.12.16%2B20261110-aarch64-unknown-linux-musl-install_only_stripped.tar.gz",
+          "sha256": "64bb304e59d5d6ed5eaae24e95e743a2420a8897d2f6c854b1438ff9cb47e432",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 28552582
+        }
+      ],
+      "artifact_set": "5405da25ec0fe2f7c22624102f8e9c42a025b7b84d3124f8507baae9e8f8f9be"
+    },
+    {
+      "id": "python-3.12.16-x86_64-glibc-20261110",
+      "tool": "python",
+      "version": "3.12.16",
+      "arch": "x86_64",
+      "abi": "glibc",
+      "build": "20261110",
+      "source": "https://api.github.com/repos/astral-sh/python-build-standalone/releases/tags/20261110",
+      "availability": "available",
+      "layout": "python",
+      "artifacts": [
+        {
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.12.16%2B20261110-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
+          "sha256": "6a9e62dad033790aef722dbd370e0ce76ce17b73627ba3ae679f537049350b39",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 34709145
+        }
+      ],
+      "artifact_set": "bd7515480840de31b9c6f5f0130da155ff73cb9479a06781b6180a5bfc7be73a"
+    },
+    {
+      "id": "python-3.12.16-x86_64-musl-20261110",
+      "tool": "python",
+      "version": "3.12.16",
+      "arch": "x86_64",
+      "abi": "musl",
+      "build": "20261110",
+      "source": "https://api.github.com/repos/astral-sh/python-build-standalone/releases/tags/20261110",
+      "availability": "available",
+      "layout": "python",
+      "artifacts": [
+        {
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.12.16%2B20261110-x86_64-unknown-linux-musl-install_only_stripped.tar.gz",
+          "sha256": "e32685cf248d2f33b249816120774143b4b57578cb30de5b8dba3e54963765c3",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 28193015
+        }
+      ],
+      "artifact_set": "9f7206ff1d57fb1ea6587f5aac13d9d3c00401793ba96145c0983a7e5755cd9e"
+    },
+    {
+      "id": "python-3.13.18-aarch64-glibc-20261110",
+      "tool": "python",
+      "version": "3.13.18",
+      "arch": "aarch64",
+      "abi": "glibc",
+      "build": "20261110",
+      "source": "https://api.github.com/repos/astral-sh/python-build-standalone/releases/tags/20261110",
+      "availability": "available",
+      "layout": "python",
+      "artifacts": [
+        {
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.13.18%2B20261110-aarch64-unknown-linux-gnu-install_only_stripped.tar.gz",
+          "sha256": "55c00325f7c1fddf325dfc621aabdfbbac4dc54adda224af88ec411dc12db239",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 29683231
+        }
+      ],
+      "artifact_set": "2d266362f24096d611f45f029bf42e1b1081d987cf8151cb3b3ff8309975c435"
+    },
+    {
+      "id": "python-3.13.18-aarch64-musl-20261110",
+      "tool": "python",
+      "version": "3.13.18",
+      "arch": "aarch64",
+      "abi": "musl",
+      "build": "20261110",
+      "source": "https://api.github.com/repos/astral-sh/python-build-standalone/releases/tags/20261110",
+      "availability": "available",
+      "layout": "python",
+      "artifacts": [
+        {
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.13.18%2B20261110-aarch64-unknown-linux-musl-install_only_stripped.tar.gz",
+          "sha256": "5616ed1d426cb12cc135e5998b42bfd665cf2f9e3f3f9f6c77c73f0ae26f7d03",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 28163240
+        }
+      ],
+      "artifact_set": "54e77ae2454aafda2b139fa1a20aecd97542df5fe7e8ff71bd35cfa45b917728"
+    },
+    {
+      "id": "python-3.13.18-x86_64-glibc-20261110",
+      "tool": "python",
+      "version": "3.13.18",
+      "arch": "x86_64",
+      "abi": "glibc",
+      "build": "20261110",
+      "source": "https://api.github.com/repos/astral-sh/python-build-standalone/releases/tags/20261110",
+      "availability": "available",
+      "layout": "python",
+      "artifacts": [
+        {
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.13.18%2B20261110-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
+          "sha256": "f2d2199eb25880e07863b391cf7124e7ffa1338b0d65600dfcec117c4223a7fb",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 35596130
+        }
+      ],
+      "artifact_set": "b4f14d514744a94d118e3b789e75bcf85e23c379fb711c19cdc9c83d640d4d9d"
+    },
+    {
+      "id": "python-3.13.18-x86_64-musl-20261110",
+      "tool": "python",
+      "version": "3.13.18",
+      "arch": "x86_64",
+      "abi": "musl",
+      "build": "20261110",
+      "source": "https://api.github.com/repos/astral-sh/python-build-standalone/releases/tags/20261110",
+      "availability": "available",
+      "layout": "python",
+      "artifacts": [
+        {
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261110/cpython-3.13.18%2B20261110-x86_64-unknown-linux-musl-install_only_stripped.tar.gz",
+          "sha256": "a75bf409606303deed964d4769544f98b74e7b53d4efb44f4a95cb38e86ff403",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 27932517
+        }
+      ],
+      "artifact_set": "e9f316056f3efb9bd18467f472377cce25eeca0a238be45dd02761ea27d3f49a"
+    },
+    {
+      "id": "rust-1.90.0-aarch64-glibc-minimal1",
+      "tool": "rust",
+      "version": "1.90.0",
+      "arch": "aarch64",
+      "abi": "glibc",
+      "build": "minimal1",
+      "source": "https://static.rust-lang.org/dist/channel-rust-1.90.0.toml",
+      "availability": "available",
+      "layout": "rust-components",
+      "artifacts": [
+        {
+          "url": "https://static.rust-lang.org/dist/2025-09-18/rustc-1.90.0-aarch64-unknown-linux-gnu.tar.xz",
+          "sha256": "4e1a9987a11d7d91f0d5afbf5333feb62f44172e4a31f33ce7246549003217f2",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "rustc"
+        },
+        {
+          "url": "https://static.rust-lang.org/dist/2025-09-18/cargo-1.90.0-aarch64-unknown-linux-gnu.tar.xz",
+          "sha256": "bd8d1da6fe88ea7e29338f24277c22156267447adbfc47d690467ad32d02c2a7",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "cargo"
+        },
+        {
+          "url": "https://static.rust-lang.org/dist/2025-09-18/rust-std-1.90.0-aarch64-unknown-linux-gnu.tar.xz",
+          "sha256": "4952abb7d9d3ed7cea4f7ea44dcb23dc67631fae4ac44a5f059b90a4b5e9223f",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "rust-std"
+        }
+      ],
+      "artifact_set": "ad0f9f27494fa952a0b92fe55ee3fc6875213ddcf2445c95480ebac2e8b09c68"
+    },
+    {
+      "id": "rust-1.90.0-aarch64-musl-minimal1",
+      "tool": "rust",
+      "version": "1.90.0",
+      "arch": "aarch64",
+      "abi": "musl",
+      "build": "minimal1",
+      "source": "https://static.rust-lang.org/dist/channel-rust-1.90.0.toml",
+      "availability": "available",
+      "layout": "rust-components",
+      "artifacts": [
+        {
+          "url": "https://static.rust-lang.org/dist/2025-09-18/rustc-1.90.0-aarch64-unknown-linux-musl.tar.xz",
+          "sha256": "8edced1f743772a9d3d5700b53fe9cd5f53b1942aac81bdd918e3eca98eaf373",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "rustc"
+        },
+        {
+          "url": "https://static.rust-lang.org/dist/2025-09-18/cargo-1.90.0-aarch64-unknown-linux-musl.tar.xz",
+          "sha256": "a9ad4ca5612aebfcf43cc4825d743765d5179a15fc1cc1bcf24507d169988bd4",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "cargo"
+        },
+        {
+          "url": "https://static.rust-lang.org/dist/2025-09-18/rust-std-1.90.0-aarch64-unknown-linux-musl.tar.xz",
+          "sha256": "a603e135d4eb67ababdd193268a69937fa4490bafde592f2c931d17c7567b228",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "rust-std"
+        }
+      ],
+      "artifact_set": "f5b8c78044c1dc8ed01777406770bdfc9e98a401d5b63a0b7977cc6fbabbd2a4"
+    },
+    {
+      "id": "rust-1.90.0-x86_64-glibc-minimal1",
+      "tool": "rust",
+      "version": "1.90.0",
+      "arch": "x86_64",
+      "abi": "glibc",
+      "build": "minimal1",
+      "source": "https://static.rust-lang.org/dist/channel-rust-1.90.0.toml",
+      "availability": "available",
+      "layout": "rust-components",
+      "artifacts": [
+        {
+          "url": "https://static.rust-lang.org/dist/2025-09-18/rustc-1.90.0-x86_64-unknown-linux-gnu.tar.xz",
+          "sha256": "48c2a42de9e92fcae8c24568f5fe40d5734696a6f80e83cc6d46eef1a78f13c9",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "rustc"
+        },
+        {
+          "url": "https://static.rust-lang.org/dist/2025-09-18/cargo-1.90.0-x86_64-unknown-linux-gnu.tar.xz",
+          "sha256": "9853db03d68578a30972e2755c89c66aec035fec641cf8f3a7117c81eec2578d",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "cargo"
+        },
+        {
+          "url": "https://static.rust-lang.org/dist/2025-09-18/rust-std-1.90.0-x86_64-unknown-linux-gnu.tar.xz",
+          "sha256": "663f4ab7945b392d5e5294dec1b050a66820a20e86f084ec37eeb0f2f7ff5569",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "rust-std"
+        }
+      ],
+      "artifact_set": "efe6f4e7f8cfe75ee9213e34a38246467090b606ac4fef97a5fd688db04302fd"
+    },
+    {
+      "id": "rust-1.90.0-x86_64-musl-minimal1",
+      "tool": "rust",
+      "version": "1.90.0",
+      "arch": "x86_64",
+      "abi": "musl",
+      "build": "minimal1",
+      "source": "https://static.rust-lang.org/dist/channel-rust-1.90.0.toml",
+      "availability": "available",
+      "layout": "rust-components",
+      "artifacts": [
+        {
+          "url": "https://static.rust-lang.org/dist/2025-09-18/rustc-1.90.0-x86_64-unknown-linux-musl.tar.xz",
+          "sha256": "993cb26cee9525b1553d82b8fc2b6ddffd50a0a561cd896e3daa3a9f8ae65949",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "rustc"
+        },
+        {
+          "url": "https://static.rust-lang.org/dist/2025-09-18/cargo-1.90.0-x86_64-unknown-linux-musl.tar.xz",
+          "sha256": "dddd1ee3da59440d5aa4d149ebb5fbbe0d7252dd94e171d5f2b071d7354f9b3a",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "cargo"
+        },
+        {
+          "url": "https://static.rust-lang.org/dist/2025-09-18/rust-std-1.90.0-x86_64-unknown-linux-musl.tar.xz",
+          "sha256": "38490d575786f4688e83b357baeb022d8dde0ace2cb8c1357e060c76644fc56a",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "rust-std"
+        }
+      ],
+      "artifact_set": "5fe4e6c78d90a0c87fcd74922fb05ec550ab3980fb31f43cfd2fa94e6ee3f8f6"
+    },
+    {
+      "id": "rust-1.91.1-aarch64-glibc-minimal1",
+      "tool": "rust",
+      "version": "1.91.1",
+      "arch": "aarch64",
+      "abi": "glibc",
+      "build": "minimal1",
+      "source": "https://static.rust-lang.org/dist/channel-rust-1.91.1.toml",
+      "availability": "available",
+      "layout": "rust-components",
+      "artifacts": [
+        {
+          "url": "https://static.rust-lang.org/dist/2025-11-10/rustc-1.91.1-aarch64-unknown-linux-gnu.tar.xz",
+          "sha256": "b9040293bc84d8b48cb859dcd0e95955c13ea29e3e637c7556bf7f0c12972217",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "rustc"
+        },
+        {
+          "url": "https://static.rust-lang.org/dist/2025-11-10/cargo-1.91.1-aarch64-unknown-linux-gnu.tar.xz",
+          "sha256": "827692e153382eadc39b6f1262e20ed9671e1c0abf2fb14b5095816d2b295a15",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "cargo"
+        },
+        {
+          "url": "https://static.rust-lang.org/dist/2025-11-10/rust-std-1.91.1-aarch64-unknown-linux-gnu.tar.xz",
+          "sha256": "6aed0726a0fe50cbd488f6c5dd7a053c17ff57b8b361d14bcd216ea9939fb531",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "rust-std"
+        }
+      ],
+      "artifact_set": "900c5772ce864427ed3ace75f71c049e24253d25ff7a38348f55de370b3f8263"
+    },
+    {
+      "id": "rust-1.91.1-aarch64-musl-minimal1",
+      "tool": "rust",
+      "version": "1.91.1",
+      "arch": "aarch64",
+      "abi": "musl",
+      "build": "minimal1",
+      "source": "https://static.rust-lang.org/dist/channel-rust-1.91.1.toml",
+      "availability": "available",
+      "layout": "rust-components",
+      "artifacts": [
+        {
+          "url": "https://static.rust-lang.org/dist/2025-11-10/rustc-1.91.1-aarch64-unknown-linux-musl.tar.xz",
+          "sha256": "e92ce38db596298e7ee24138b24bc3bf12d83d89824dea7f6a44ed3b51ad700d",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "rustc"
+        },
+        {
+          "url": "https://static.rust-lang.org/dist/2025-11-10/cargo-1.91.1-aarch64-unknown-linux-musl.tar.xz",
+          "sha256": "4ab2e726f61107c4f1f5f8c19125ec82c621af02745aaa750c6fe069cb6d0e03",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "cargo"
+        },
+        {
+          "url": "https://static.rust-lang.org/dist/2025-11-10/rust-std-1.91.1-aarch64-unknown-linux-musl.tar.xz",
+          "sha256": "2a919a0e5df46e1bfe4b8be8fbc81cf48bf9813be34ff5f212a2a68f03eb517f",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "rust-std"
+        }
+      ],
+      "artifact_set": "9d3d4565251253a46e5b853548d51006a8020c2de7002746ef67f58ef17e71a2"
+    },
+    {
+      "id": "rust-1.91.1-x86_64-glibc-minimal1",
+      "tool": "rust",
+      "version": "1.91.1",
+      "arch": "x86_64",
+      "abi": "glibc",
+      "build": "minimal1",
+      "source": "https://static.rust-lang.org/dist/channel-rust-1.91.1.toml",
+      "availability": "available",
+      "layout": "rust-components",
+      "artifacts": [
+        {
+          "url": "https://static.rust-lang.org/dist/2025-11-10/rustc-1.91.1-x86_64-unknown-linux-gnu.tar.xz",
+          "sha256": "4b4c596fc5268435c310a79c2e231a5a3567572c930ac0740ef9e147e83baf4e",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "rustc"
+        },
+        {
+          "url": "https://static.rust-lang.org/dist/2025-11-10/cargo-1.91.1-x86_64-unknown-linux-gnu.tar.xz",
+          "sha256": "8d17d5a4734e684228adee4ea4a75da94eb7f71993804adf29f344709e65fe09",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "cargo"
+        },
+        {
+          "url": "https://static.rust-lang.org/dist/2025-11-10/rust-std-1.91.1-x86_64-unknown-linux-gnu.tar.xz",
+          "sha256": "2023ed689529516d7bd5533738ca6d205b2561f8d51947dabeeb39dd51a024c9",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "rust-std"
+        }
+      ],
+      "artifact_set": "48d4fbb4a1d603495f2918c9ee93df15e16a46b8bbc5ece90a49cce827ad8776"
+    },
+    {
+      "id": "rust-1.91.1-x86_64-musl-minimal1",
+      "tool": "rust",
+      "version": "1.91.1",
+      "arch": "x86_64",
+      "abi": "musl",
+      "build": "minimal1",
+      "source": "https://static.rust-lang.org/dist/channel-rust-1.91.1.toml",
+      "availability": "available",
+      "layout": "rust-components",
+      "artifacts": [
+        {
+          "url": "https://static.rust-lang.org/dist/2025-11-10/rustc-1.91.1-x86_64-unknown-linux-musl.tar.xz",
+          "sha256": "644627a9accb83e5ee3c4607a4c9dc7ce241fe6f76cc4bc8354e2b186a145fb8",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "rustc"
+        },
+        {
+          "url": "https://static.rust-lang.org/dist/2025-11-10/cargo-1.91.1-x86_64-unknown-linux-musl.tar.xz",
+          "sha256": "f7e433f236d6ee40d99905803400008d206070ddf934839e6999aca8301e2145",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "cargo"
+        },
+        {
+          "url": "https://static.rust-lang.org/dist/2025-11-10/rust-std-1.91.1-x86_64-unknown-linux-musl.tar.xz",
+          "sha256": "4066d5dce6017dcd116c75972b3ec6c26fe5a1fa59f02a1da9e127d1f4a1aa7f",
+          "format": "tar.xz",
+          "strip": 1,
+          "component": "rust-std"
+        }
+      ],
+      "artifact_set": "888045b88cba4cccf463ca60f9dba60fffe2934edd940454d013a6f0b330aa87"
+    },
+    {
+      "id": "zig-0.15.2-aarch64-native-upstream1",
+      "tool": "zig",
+      "version": "0.15.2",
+      "arch": "aarch64",
+      "abi": "native",
+      "build": "upstream1",
+      "source": "https://ziglang.org/download/index.json",
+      "availability": "available",
+      "layout": "zig",
+      "artifacts": [
+        {
+          "url": "https://ziglang.org/download/0.15.2/zig-aarch64-linux-0.15.2.tar.xz",
+          "sha256": "958ed7d1e00d0ea76590d27666efbf7a932281b3d7ba0c6b01b0ff26498f667f",
+          "format": "tar.xz",
+          "strip": 1,
+          "bytes": 49471996
+        }
+      ],
+      "artifact_set": "495e312dca8fd1a11c44da4d6439d53ff1e72d9d98b1be627808e120e7e80547"
+    },
+    {
+      "id": "zig-0.15.2-x86_64-native-upstream1",
+      "tool": "zig",
+      "version": "0.15.2",
+      "arch": "x86_64",
+      "abi": "native",
+      "build": "upstream1",
+      "source": "https://ziglang.org/download/index.json",
+      "availability": "available",
+      "layout": "zig",
+      "artifacts": [
+        {
+          "url": "https://ziglang.org/download/0.15.2/zig-x86_64-linux-0.15.2.tar.xz",
+          "sha256": "02aa270f183da276e5b5920b1dac44a63f1a49e55050ebde3aecc9eb82f93239",
+          "format": "tar.xz",
+          "strip": 1,
+          "bytes": 53733924
+        }
+      ],
+      "artifact_set": "8804576e11ae9ac29e71a12c5bf3fd580ac4349b9ae07983ac531a42935bf54b"
+    },
+    {
+      "id": "zig-0.17.1-aarch64-native-upstream1",
+      "tool": "zig",
+      "version": "0.17.1",
+      "arch": "aarch64",
+      "abi": "native",
+      "build": "upstream1",
+      "source": "https://ziglang.org/download/index.json",
+      "availability": "available",
+      "layout": "zig",
+      "artifacts": [
+        {
+          "url": "https://ziglang.org/download/0.17.1/zig-aarch64-linux-0.17.1.tar.xz",
+          "sha256": "a1546d5646eb184437918d6635ca6b762a0e889eac09cef720ee7a1ed3fe7795",
+          "format": "tar.xz",
+          "strip": 1,
+          "bytes": 52977364
+        }
+      ],
+      "artifact_set": "bd248d9f17853dc2352b545c82c15ee9ec396d69082629a028a4a78c2fb0b37a"
+    },
+    {
+      "id": "zig-0.17.1-x86_64-native-upstream1",
+      "tool": "zig",
+      "version": "0.17.1",
+      "arch": "x86_64",
+      "abi": "native",
+      "build": "upstream1",
+      "source": "https://ziglang.org/download/index.json",
+      "availability": "available",
+      "layout": "zig",
+      "artifacts": [
+        {
+          "url": "https://ziglang.org/download/0.17.1/zig-x86_64-linux-0.17.1.tar.xz",
+          "sha256": "3581863e3cbcfd0fce0efc682ce7e9e93da96668a977791d356a26d2a7e9b17a",
+          "format": "tar.xz",
+          "strip": 1,
+          "bytes": 57411036
+        }
+      ],
+      "artifact_set": "1bc9b21d287a4bcf62e8a36c3dc7781901d19ffe7ee3d199c4d9e12fbcae1c61"
+    }
+  ],
+  "sources": {
+    "npm-11.12.1.json": {
+      "url": "https://registry.npmjs.org/npm/11.12.1",
+      "sha256": "5ae75bb31afc7dc982fc8b194531025ca49be471b1246b6048cae5f1a5b3993e"
+    },
+    "node-npm-24.22.1.json": {
+      "url": "https://raw.githubusercontent.com/nodejs/node/v24.22.1/deps/npm/package.json",
+      "sha256": "f6478d5600180a23f73e4217610c7709a71cedb4ae13f6c3e15ecb457f5d4fd6"
+    },
+    "node-24.22.1": {
+      "url": "https://nodejs.org/dist/v24.22.1/SHASUMS256.txt",
+      "sha256": "fdfbffc969c0f604beff0124d409b33a43b53f5c681d6220f80023e0d6df9dc4"
+    },
+    "node-musl-24.22.1": {
+      "url": "https://unofficial-builds.nodejs.org/download/release/v24.22.1/SHASUMS256.txt",
+      "sha256": "7e4ca1d9b069e6682bffd7550083697a96e11f8436c8d6da33d7562a3e054b8f"
+    },
+    "node-npm-24.21.0.json": {
+      "url": "https://raw.githubusercontent.com/nodejs/node/v24.21.0/deps/npm/package.json",
+      "sha256": "09dfcf187178ce1ab3ea6194c80d3ae082ad2a86dc1269ac963f94429e718122"
+    },
+    "node-24.21.0": {
+      "url": "https://nodejs.org/dist/v24.21.0/SHASUMS256.txt",
+      "sha256": "f410428039e2c922a14058df067a4482691c9304a5c01a75847f9f3f2d3307f6"
+    },
+    "node-musl-24.21.0": {
+      "url": "https://unofficial-builds.nodejs.org/download/release/v24.21.0/SHASUMS256.txt",
+      "sha256": "87707a4c86a61d9f67ec149ac778c49e70cdfb6c78401f385a936346468aa961"
+    },
+    "python-latest": {
+      "url": "https://api.github.com/repos/astral-sh/python-build-standalone/releases/latest",
+      "sha256": "307699ea7fbf59f722292f9f3e506ee2d89d44f18d6aa24ddeb30cf4da3b16f7"
+    },
+    "go": {
+      "url": "https://go.dev/dl/?mode=json&include=all",
+      "sha256": "dff81fa9170d1a7c6a1f38b6cec38c0e3a9e67fd0354419c123ab7c8b8f3c3eb"
+    },
+    "rust-1.91.1": {
+      "url": "https://static.rust-lang.org/dist/channel-rust-1.91.1.toml",
+      "sha256": "483bb8b271168ee654e3be4f111beefa23b9d0c8b7f4a563a8278978dbe982e5"
+    },
+    "rust-1.90.0": {
+      "url": "https://static.rust-lang.org/dist/channel-rust-1.90.0.toml",
+      "sha256": "489c19f20d331765ab2835661eb546de90f6446a107a8db83045e7371e45cae2"
+    },
+    "zig": {
+      "url": "https://ziglang.org/download/index.json",
+      "sha256": "0305a535b82cb52c4e462904ad8999e1bb7ed77a0b39e51e80d0a6aeec6a39de"
+    },
+    "java-baseline": {
+      "path": "docs/evidence/mise-java-design-20261123/upstream-fixed-artifacts.json",
+      "sha256": "ab30dabbf1043a668bdc9e74c602de8769afaf5c712f333dfc9d78c4ed4d53c2"
+    }
+  },
+  "note": "Pinned upstream availability only; runtime capability requires device probes.",
+  "revision": "e690f3de941c47d42c76ff360b19bc96cbd8435f386b6dcbc8e9da3d3892237a"
+}

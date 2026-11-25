@@ -1,0 +1,11 @@
+#!/bin/sh
+# Only ks-cli's five non-secret reads use the manager-owned public snapshot.
+# Every other UCI operation retains the system command and its permissions.
+if [ "$#" = 3 ] && [ "$1" = -q ] && [ "$2" = get ]; then
+ case "$3" in
+  'istoreenhance.@istoreenhance[0]'|'istoreenhance.@istoreenhance[0].enabled'|'istoreenhance.@istoreenhance[0].port'|'istoreenhance.@istoreenhance[0].adminport'|'istoreenhance.@istoreenhance[0].cache')
+   exec /sbin/uci -c "$ISTORE_RUNTIME_STORAGE/network/uci" "$@"
+   ;;
+ esac
+fi
+exec /sbin/uci "$@"

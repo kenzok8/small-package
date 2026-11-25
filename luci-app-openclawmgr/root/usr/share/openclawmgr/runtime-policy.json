@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "tool": "node",
+  "version": "24.22.1",
+  "build": "upstream1",
+  "abi": "glibc",
+  "npm": "11.19.1",
+  "library_revision": "r1"
+}

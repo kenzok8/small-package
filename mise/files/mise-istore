@@ -4,4 +4,4 @@
 
 istore_runtime_env || exit 1
 
-exec /usr/bin/mise "$@"
+istore_runtime_mise_exec "$@"
