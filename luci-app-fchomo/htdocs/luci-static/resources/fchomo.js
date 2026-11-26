@@ -748,33 +748,57 @@ const CBICopyValue = form.Value.extend({
 	__name__: 'CBI.CopyValue',
 
 	readonly: true,
+	editable : false,
+
+	renderCopyButton(getValue) {
+		return E('button', {
+			class: 'cbi-button cbi-button-add',
+			click: ui.createHandlerFn(this, async () => {
+				try {
+					await navigator.clipboard.writeText(String(getValue() ?? ''));
+					console.log('Content copied to clipboard!');
+					alert(_('Content copied to clipboard!'));
+				} catch (e) {
+					console.error('Failed to copy: ', e);
+				}
+				/* Deprecated
+				let inputEl = document.getElementById(this.cbid(section_id)).querySelector('input');
+				inputEl.select();
+				document.execCommand("copy");
+				inputEl.blur();
+				*/
+			})
+		}, [ _('📋') ]);
+	},
 
 	renderWidget(section_id, option_index, cfgvalue) {
-		let node = form.Value.prototype.renderWidget.apply(this, arguments);
+		const node = form.Value.prototype.renderWidget.apply(this, arguments);
 
-		node.classList.add('control-group');
+		if (!this.password)
+			node.classList.add('control-group');
 
-		if (this.section.section) // modalonly
-			node.appendChild(E('button', {
-				class: 'cbi-button cbi-button-add',
-				click: ui.createHandlerFn(this, async (section_id) => {
-					try {
-						await navigator.clipboard.writeText(this.formvalue(section_id));
-						console.log('Content copied to clipboard!');
-					} catch (e) {
-						console.error('Failed to copy: ', e);
-					}
-					/* Deprecated
-					let inputEl = document.getElementById(this.cbid(section_id)).querySelector('input');
-					inputEl.select();
-					document.execCommand("copy");
-					inputEl.blur();
-					*/
-					return alert(_('Content copied to clipboard!'));
-				}, section_id)
-			}, [ _('Copy') ]));
+		(node.querySelector('.control-group') || node)
+			.appendChild(this.renderCopyButton(() =>
+				this.formvalue(section_id)
+			));
 
 		return node;
+	},
+
+	textvalue(section_id) {
+		const value = this.cfgvalue(section_id) ?? '';
+
+		return E('div', {
+			class: 'control-group'
+		}, [
+			E('input', {
+				type: this.password ? 'password' : 'text',
+				class: this.password ? 'cbi-input-password' : 'cbi-input-text',
+				disabled: this.readonly || null,
+				value: value,
+			}),
+			this.renderCopyButton(() => value)
+		]);
 	}
 });
 

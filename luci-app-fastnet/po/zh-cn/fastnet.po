@@ -36,4 +36,3 @@ msgstr "未运行"
 
 msgid "Open Web UI"
 msgstr "打开 Web 界面"
-

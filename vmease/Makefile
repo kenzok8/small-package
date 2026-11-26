@@ -11,7 +11,7 @@ PKG_ARCH_VMEASE:=$(ARCH)
 
 PKG_NAME:=vmease
 PKG_VERSION:=0.8.7
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://fw0.koolcenter.com/binary/vmease/
 PKG_HASH:=d2f457c7179324584a7c0dcd1dfe60096eb14a0995544fd91d28a9573db1e73e
@@ -45,6 +45,7 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 	[ -f /etc/uci-defaults/vmease ] && /etc/uci-defaults/vmease && rm -f /etc/uci-defaults/vmease
 	exit 0
 fi
+exit 0
 endef
 
 define Build/Configure

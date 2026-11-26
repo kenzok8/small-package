@@ -41,8 +41,8 @@ config fchomo 'inbound'
 	option redir_port '7891'
 	option tproxy_port '7892'
 	option tunnel_port '7893'
-	option proxy_mode 'redir_tproxy'
-	option tun_stack 'system'
+	option proxy_mode 'tun'
+	option tun_stack 'mips'
 
 config fchomo 'tls'
 

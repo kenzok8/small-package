@@ -16,7 +16,7 @@ AGENTFLOW_HASH_aarch64:=4f11062649cc048b12545df635ea68c6ec3dd9113ffd34c47f210766
 
 PKG_NAME:=agentflow
 PKG_VERSION:=0.3.5
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 
 AGENTFLOW_URL_FILE:=agentflow-linux-$(AGENTFLOW_ARCH)
 AGENTFLOW_DOWNLOAD:=$(AGENTFLOW_URL_FILE)-$(AGENTFLOW_HASH_$(ARCH))
@@ -60,13 +60,17 @@ define Package/$(PKG_NAME)/postinst
 root="$${IPKG_INSTROOT:-}"
 legacy="$${root}/usr/share/linkeasefull/desktop-apps.d/30-agentflow.json"
 if [ ! -e "$${legacy}" ] && [ ! -L "$${legacy}" ]; then
-	mkdir -p "$${legacy%/*}"
-	ln -s /usr/share/agentflow/agentflow-plugin.json "$${legacy}" || exit $$?
+	mkdir -p "$${legacy%/*}" || printf '%s\n' 'agentflow: unable to create compatibility app directory.' >&2
+	ln -s /usr/share/agentflow/agentflow-plugin.json "$${legacy}" 2>/dev/null || \
+		printf '%s\n' 'agentflow: unable to create compatibility app entry.' >&2
 fi
 if [ -z "$${IPKG_INSTROOT}" ]; then
-	uci -q set agentflow.@agentflow[0].host='127.0.0.1'
-	uci -q commit agentflow || exit $$?
-	if pidof agentflow >/dev/null 2>&1; then /etc/init.d/agentflow restart || exit $$?; fi
+	uci -q set agentflow.@agentflow[0].host='127.0.0.1' || \
+		printf '%s\n' 'agentflow: unable to migrate the listen address.' >&2
+	uci -q commit agentflow || printf '%s\n' 'agentflow: unable to save migrated settings.' >&2
+	if pidof agentflow >/dev/null 2>&1; then
+		/etc/init.d/agentflow restart || printf '%s\n' 'agentflow: unable to restart service; restart it manually.' >&2
+	fi
 fi
 exit 0
 endef

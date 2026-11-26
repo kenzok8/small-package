@@ -124,7 +124,9 @@ end
 function M.pin(base,install,path)
  path=path or base..'/.runtime/runtime.json'
  if not install and fs.lstat(path)then return M.binding(base,path)end
- local root=M.uci('mise.main.storage_root');c.path(root);store.open(root)
+ local root=M.uci('mise.main.storage_root')
+ M.need(root~='','Configure persistent storage in Runtime Environments before installing Kimi Code')
+ c.path(root);store.open(root)
  local entry,id=M.policy();local previous
  if fs.lstat(path)then
   M.file(path);previous=s.decode(path)

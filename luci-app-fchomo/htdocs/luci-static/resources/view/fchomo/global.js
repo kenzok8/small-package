@@ -208,15 +208,18 @@ return view.extend({
 			return E([
 				E('button', {
 					'class': 'cbi-button cbi-button-apply',
-					'click': ui.createHandlerFn(this, () => {
-						let weight = document.getElementById(ElId);
+					'click': ui.createHandlerFn(this, async () => {
+						const weight = document.getElementById(ElId);
+						weight.replaceChildren();
 
-						weight.innerHTML = '';
-						return hm.checkurls.forEach((site) => {
-							L.resolveDefault(callConnStat(site[0]), {}).then((res) => {
-								weight.innerHTML += '<span style="color:%s">&ensp;%s</span>'.format((res.httpcode && res.httpcode.match(/^20\d$/)) ? 'green' : 'red', site[1]);
-							});
-						});
+						for (const site of hm.checkurls) {
+							const res = await L.resolveDefault(callConnStat(site[0]), {});
+								const ok = /^20\d$/.test(res.httpcode || '');
+
+								weight.appendChild(E('span', {
+									'style': `color:${ok ? 'green' : 'red'}`
+								}, `\u2002${site[1]}`));
+						}
 					})
 				}, [ _('Check') ]),
 				E('strong', { id: ElId }, [

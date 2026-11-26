@@ -738,6 +738,90 @@
       "artifact_set": "e9f316056f3efb9bd18467f472377cce25eeca0a238be45dd02761ea27d3f49a"
     },
     {
+      "id": "python-3.14.9-aarch64-glibc-20261021",
+      "tool": "python",
+      "version": "3.14.9",
+      "arch": "aarch64",
+      "abi": "glibc",
+      "build": "20261021",
+      "source": "https://api.github.com/repos/astral-sh/python-build-standalone/releases/tags/20261021",
+      "availability": "available",
+      "layout": "python",
+      "artifacts": [
+        {
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261021/cpython-3.14.9%2B20261021-aarch64-unknown-linux-gnu-install_only.tar.gz",
+          "sha256": "847895ba727440b012207bb0192282d7e182eb991ae5c7bb5c35c6a12a99e732",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 58711403
+        }
+      ],
+      "artifact_set": "1da50c563dc94ee9ad56ad95963b48847513ee6ed80646e6542c87b9219f33e5"
+    },
+    {
+      "id": "python-3.14.9-aarch64-musl-20261021",
+      "tool": "python",
+      "version": "3.14.9",
+      "arch": "aarch64",
+      "abi": "musl",
+      "build": "20261021",
+      "source": "https://api.github.com/repos/astral-sh/python-build-standalone/releases/tags/20261021",
+      "availability": "available",
+      "layout": "python",
+      "artifacts": [
+        {
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261021/cpython-3.14.9%2B20261021-aarch64-unknown-linux-musl-install_only.tar.gz",
+          "sha256": "ef171f00a80763ea5e3f547686217a1baf24cdb13905204ef8e647bfef511715",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 54022793
+        }
+      ],
+      "artifact_set": "e165b13429f4d33ad970c16b205de80c71275a43477bc13a50902de52bf635dc"
+    },
+    {
+      "id": "python-3.14.9-x86_64-glibc-20261021",
+      "tool": "python",
+      "version": "3.14.9",
+      "arch": "x86_64",
+      "abi": "glibc",
+      "build": "20261021",
+      "source": "https://api.github.com/repos/astral-sh/python-build-standalone/releases/tags/20261021",
+      "availability": "available",
+      "layout": "python",
+      "artifacts": [
+        {
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261021/cpython-3.14.9%2B20261021-x86_64-unknown-linux-gnu-install_only.tar.gz",
+          "sha256": "dfa4c5a40c47f338f41658017be550c72247c391e6bfb1fa4da03ebc8451abdf",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 76270309
+        }
+      ],
+      "artifact_set": "4eedd19a669bbcc16f37987c1bb403695cfa12f84a748a6359180814f28d40be"
+    },
+    {
+      "id": "python-3.14.9-x86_64-musl-20261021",
+      "tool": "python",
+      "version": "3.14.9",
+      "arch": "x86_64",
+      "abi": "musl",
+      "build": "20261021",
+      "source": "https://api.github.com/repos/astral-sh/python-build-standalone/releases/tags/20261021",
+      "availability": "available",
+      "layout": "python",
+      "artifacts": [
+        {
+          "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261021/cpython-3.14.9%2B20261021-x86_64-unknown-linux-musl-install_only.tar.gz",
+          "sha256": "ab192510e5ed7f219757063aedaa6f3aa73f2bfe0e8ab015eeb36bb3273fc6b0",
+          "format": "tar.gz",
+          "strip": 1,
+          "bytes": 54325130
+        }
+      ],
+      "artifact_set": "a70e547e4cdee147eb2995235a95cdca40a40dd383fb54bd7a9892a4f2776887"
+    },
+    {
       "id": "rust-1.90.0-aarch64-glibc-minimal1",
       "tool": "rust",
       "version": "1.90.0",
@@ -1135,6 +1219,10 @@
       "url": "https://api.github.com/repos/astral-sh/python-build-standalone/releases/latest",
       "sha256": "307699ea7fbf59f722292f9f3e506ee2d89d44f18d6aa24ddeb30cf4da3b16f7"
     },
+    "python-hermes-20261021": {
+      "url": "https://api.github.com/repos/astral-sh/python-build-standalone/releases/tags/20261021",
+      "sha256": "e4e500fd7253ff79064ee812920033efaa021ec87f9a90e65cf958ce219c9120"
+    },
     "go": {
       "url": "https://go.dev/dl/?mode=json&include=all",
       "sha256": "dff81fa9170d1a7c6a1f38b6cec38c0e3a9e67fd0354419c123ab7c8b8f3c3eb"
@@ -1157,5 +1245,5 @@
     }
   },
   "note": "Pinned upstream availability only; runtime capability requires device probes.",
-  "revision": "e690f3de941c47d42c76ff360b19bc96cbd8435f386b6dcbc8e9da3d3892237a"
+  "revision": "7fedeb125d490630f5e3e0cd57018088faaa8cac68798596066fce46b99d0821"
 }

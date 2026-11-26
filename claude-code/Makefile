@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=claude-code
 PKG_VERSION:=2.1.326
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 PKG_LICENSE:=Proprietary
 PKG_MAINTAINER:=LinkEase
 

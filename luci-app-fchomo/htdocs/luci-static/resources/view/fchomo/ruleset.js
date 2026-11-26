@@ -255,7 +255,7 @@ return view.extend({
 
 			node.appendChild(E('button', {
 				'class': 'cbi-button cbi-button-add',
-				'title': _('mihomo config'),
+				'title': _('Import mihomo config'),
 				'click': ui.createHandlerFn(this, 'handleYamlImport')
 			}, [ _('Import mihomo config') ]));
 

@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "id": "dsh",
+  "name": "DSH",
+  "icon": "logo.svg",
+  "staticRoot": "/usr/share/dsh/www",
+  "desktop": {
+    "mode": "iframe",
+    "target": {
+      "scheme": "http",
+      "hostMode": "request-host",
+      "port": {
+        "default": 13080,
+        "keys": {
+          "uci": "dsh.@main[0].port"
+        }
+      },
+      "path": "/"
+    },
+    "access": {
+      "scope": "lan"
+    }
+  },
+  "standalone": {
+    "basePath": "/apps/dsh/",
+    "externalOpen": {
+      "enabled": true,
+      "label": "Open DSH"
+    }
+  },
+  "auth": {
+    "mode": "passthrough"
+  },
+  "window": {
+    "width": 1280,
+    "height": 820,
+    "singleton": true
+  },
+  "capabilities": [
+    "ai-workbench",
+    "development"
+  ],
+  "categories": [
+    "development",
+    "ai"
+  ],
+  "config": {
+    "providerOrder": [
+      "uci"
+    ],
+    "providers": {
+      "uci": {
+        "type": "uci"
+      }
+    }
+  }
+}

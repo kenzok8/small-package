@@ -136,9 +136,13 @@ function M.status(value)
  local ok,base=pcall(function()return R.base(value)end)
  if not ok then result.error=type(base)=='table'and base.message or tostring(base);return result end
  result.configured=true
- local ready,binding,receipt=pcall(R.binding,base)
- if ready then result.runtime={ready=true,provider='mise-runtime',node=receipt.entry.version,npm=receipt.npm,abi=receipt.entry.abi,instance=binding.instance}
- else result.runtime.error=type(binding)=='table'and binding.message or tostring(binding)end
+ local root=R.uci('mise.main.storage_root');result.runtime.storage_configured=root~=''
+ if root==''then result.runtime.error='Persistent runtime storage is not configured'
+ else
+  local ready,binding,receipt=pcall(R.binding,base)
+  if ready then result.runtime={ready=true,storage_configured=true,provider='mise-runtime',node=receipt.entry.version,npm=receipt.npm,abi=receipt.entry.abi,instance=binding.instance}
+  else result.runtime.error=type(binding)=='table'and binding.message or tostring(binding)end
+ end
  local owner=s.decode(base..'/.runtime/.install-lock/owner.json');result.interrupted=owner and owner.process and not R.alive(owner.process)or false
  local current,dir,installed=pcall(M.current,base)
  if current then

@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_VERSION:=0.1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 LUCI_TITLE:=Persistent runtime environments
 LUCI_PKGARCH:=all
 LUCI_MINIFY_JS:=0

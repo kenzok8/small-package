@@ -1,4 +1,12 @@
 config main
+	option 'backend' 'native'
+	option 'target_backend' 'native'
 	option 'port' '8787'
 	option 'data_path' ''
 	option 'workspace_path' ''
+	option 'native_base_dir' ''
+	option 'native_enabled' '0'
+	option 'native_bind' '0.0.0.0'
+	option 'native_port' '18787'
+	option 'native_health_port' '18788'
+	option 'native_install_accelerated' '0'

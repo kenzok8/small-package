@@ -42,3 +42,90 @@ msgstr "Hermes 未运行"
 
 msgid "Open Hermes"
 msgstr "打开 Hermes"
+
+msgid "The self-improving AI agent that runs on your server. Choose the Native mise-runtime backend or the isolated Docker backend."
+msgstr "运行在您的服务器上的自我改进型人工智能代理。可选择原生 mise-runtime 后端或隔离的 Docker 后端。"
+
+msgid "Only one backend is active at a time. A failed activation restores the previous healthy backend."
+msgstr "同一时间只激活一个后端；激活失败时自动恢复之前健康的后端。"
+
+msgid "Select the backend to be activated by Install or Upgrade, then configure its tab."
+msgstr "选择安装或升级时要激活的后端，然后在对应页签中配置。"
+
+msgid "Deployment backend"
+msgstr "部署后端"
+
+msgid "Native (mise-runtime)"
+msgstr "原生（mise-runtime）"
+
+msgid "Native"
+msgstr "原生"
+
+msgid "Docker"
+msgstr "Docker"
+
+msgid "Runs directly under procd with a fixed Python supplied by mise-runtime. Docker is not required."
+msgstr "使用 mise-runtime 提供的固定 Python，由 procd 直接运行，不需要 Docker。"
+
+msgid "Runs in an isolated container. Docker must be installed separately."
+msgstr "在隔离容器中运行，需要另行安装 Docker。"
+
+msgid "Python runtime"
+msgstr "Python 运行时"
+
+msgid "Native data and runtime path"
+msgstr "原生数据与运行时路径"
+
+msgid "Native port"
+msgstr "原生端口"
+
+msgid "Listen address"
+msgstr "监听地址"
+
+msgid "All interfaces"
+msgstr "所有接口"
+
+msgid "Localhost only"
+msgstr "仅本机"
+
+msgid "Accelerate downloads with ks-cli"
+msgstr "使用 ks-cli 加速下载"
+
+msgid "Pinned image"
+msgstr "固定镜像"
+
+msgid "Docker port"
+msgstr "Docker 端口"
+
+msgid "Docker data path"
+msgstr "Docker 数据路径"
+
+msgid "Docker workspace path"
+msgstr "Docker 工作区路径"
+
+msgid "Active backend"
+msgstr "活动后端"
+
+msgid "Backend status"
+msgstr "后端状态"
+
+msgid "Python 3.14.9 (mise-runtime, SHA-verified)"
+msgstr "Python 3.14.9（mise-runtime，已验证 SHA）"
+
+msgid "Running"
+msgstr "运行中"
+
+msgid "Stopped"
+msgstr "已停止"
+
+msgid "Degraded"
+msgstr "异常"
+
+msgid "Not installed"
+msgstr "未安装"
+
+msgid "Healthy"
+msgstr "健康"
+
+msgid "Unhealthy"
+msgstr "不健康"

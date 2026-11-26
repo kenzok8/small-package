@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sunpanel
 PKG_VERSION:=1.8.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 # v1.8.1 official release assets are per-arch (linux musl static binary)
 ifeq ($(ARCH),x86_64)
@@ -52,6 +52,7 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 	[ -f /etc/uci-defaults/sunpanel ] && /etc/uci-defaults/sunpanel && rm -f /etc/uci-defaults/sunpanel
 	exit 0
 fi
+exit 0
 endef
 
 # The official tarball has one top-level dir, strip it so files land in PKG_BUILD_DIR

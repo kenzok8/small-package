@@ -1063,9 +1063,11 @@ return view.extend({
 		so.depends('type', 'easytier');
 		so.modalonly = true;
 
-		so = ss.taboption('field_general', form.Flag, 'easytier_private_mode', _('Private room'),
-			_('Only nodes using the same %s and %s as this network are permitted to perform a handshake or relay traffic through this node.')
-			.format(_('Room name'), _('Room secret')));
+		so = ss.taboption('field_general', form.Flag, 'easytier_private_mode', _('Serve members only'),
+			_('This node perform handshake or relay traffic only with nodes that:') + '</br>' +
+			_('Node use the same %s and %s as this network.')
+				.format(_('Room name'), _('Room secret')) + '</br>' +
+			_('Or temporary-credential node is already trusted via admin-issued credential propagation.'));
 		so.default = so.disabled;
 		so.depends('type', 'easytier');
 		so.modalonly = true;

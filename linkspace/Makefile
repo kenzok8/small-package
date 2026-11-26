@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 PKG_NAME:=linkspace
 PKG_VERSION:=0.3.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 include ./release.mk
 PKG_SOURCE:=linkspace-$(PKG_VERSION)-$(ARCH).tar.gz
 PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/linkspace-runtime-v$(PKG_VERSION)/
@@ -27,21 +27,27 @@ endef
 define Package/linkspace/preinst
 #!/bin/sh
 [ -n "$${IPKG_INSTROOT:-}" ] && exit 0
-if [ -x /usr/libexec/changeguard-package ]; then exec /usr/libexec/changeguard-package preinst; fi
+if [ -x /usr/libexec/changeguard-package ]; then
+	/usr/libexec/changeguard-package preinst || printf '%s\n' 'linkspace: unable to pause ChangeGuard; upgrade will continue.' >&2
+fi
 exit 0
 endef
 
 define Package/linkspace/prerm
 #!/bin/sh
 [ -n "$${IPKG_INSTROOT:-}" ] && exit 0
-if [ -x /usr/libexec/changeguard-package ]; then exec /usr/libexec/changeguard-package preinst; fi
+if [ -x /usr/libexec/changeguard-package ]; then
+	/usr/libexec/changeguard-package preinst || printf '%s\n' 'linkspace: unable to pause ChangeGuard; removal will continue.' >&2
+fi
 exit 0
 endef
 
 define Package/linkspace/postinst
 #!/bin/sh
 [ -n "$${IPKG_INSTROOT:-}" ] && exit 0
-if [ -x /usr/libexec/changeguard-package ]; then exec /usr/libexec/changeguard-package postinst; fi
+if [ -x /usr/libexec/changeguard-package ]; then
+	/usr/libexec/changeguard-package postinst || printf '%s\n' 'linkspace: unable to resume ChangeGuard; installation will continue.' >&2
+fi
 exit 0
 endef
 

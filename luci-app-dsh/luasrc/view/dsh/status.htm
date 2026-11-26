@@ -1,0 +1,83 @@
+<%
+local util = require "luci.util"
+local function command(action)
+	return util.trim(util.exec("/usr/libexec/istorec/dsh.sh " .. action .. " 2>/dev/null"))
+end
+local state = command("status")
+local running = state == "running"
+local health = command("health")
+local ready = running and health == "healthy"
+local profile = command("profile")
+local image = command("image")
+local port = command("port")
+local key_status = command("key-status")
+-%>
+<style>
+.dsh-overview { display:grid; gap:18px; padding:4px 0 2px; }
+.dsh-overview-head { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.dsh-overview-title { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.dsh-overview-title strong { font-size:20px; line-height:1.25; }
+.dsh-open { min-width:92px; margin-left:2px; }
+.dsh-dot { width:10px; height:10px; border-radius:50%; background:#98a2b3; box-shadow:0 0 0 4px rgba(152,162,179,.15); }
+.dsh-dot.ready { background:#12b76a; box-shadow:0 0 0 4px rgba(18,183,106,.14); }
+.dsh-dot.warning { background:#f79009; box-shadow:0 0 0 4px rgba(247,144,9,.14); }
+.dsh-badge { display:inline-flex; align-items:center; min-height:24px; padding:0 10px; border-radius:999px; background:#f2f4f7; color:#475467; font-size:12px; font-weight:700; }
+.dsh-badge.ready { background:#ecfdf3; color:#067647; }
+.dsh-badge.experimental { background:#fff4e5; color:#b54708; }
+.dsh-summary { margin:0; color:#667085; line-height:1.55; }
+.dsh-facts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.dsh-fact { min-height:68px; padding:14px 16px; border:1px solid #e4e7ec; border-radius:10px; background:#f9fafb; }
+.dsh-fact-label { display:block; margin-bottom:7px; color:#667085; font-size:12px; }
+.dsh-fact-value { display:block; color:#1d2939; font-weight:650; overflow-wrap:anywhere; }
+.dsh-fact-value.good { color:#067647; }
+.dsh-details { border-top:1px solid #eaecf0; padding-top:12px; color:#667085; }
+.dsh-details summary { cursor:pointer; font-weight:600; color:#475467; }
+.dsh-details-grid { display:grid; grid-template-columns:110px minmax(0,1fr); gap:8px 14px; margin-top:12px; font-size:13px; }
+.dsh-details code { white-space:normal; overflow-wrap:anywhere; }
+@media (max-width:760px) {
+	.dsh-facts { grid-template-columns:1fr; }
+	.dsh-open { margin-left:20px; }
+	.dsh-details-grid { grid-template-columns:1fr; }
+}
+@media (prefers-color-scheme:dark) {
+	.dsh-fact { background:#161b22; border-color:#30363d; }
+	.dsh-fact-label,.dsh-summary,.dsh-details { color:#9da7b3; }
+	.dsh-fact-value,.dsh-details summary { color:#e6edf3; }
+}
+</style>
+<div class="dsh-overview">
+	<div class="dsh-overview-head">
+		<div class="dsh-overview-title">
+			<span class="dsh-dot <%=ready and "ready" or (running and "warning" or "")%>"></span>
+			<strong><%=ready and translate("DSH is ready") or (running and translate("DSH is starting") or translate("DSH is stopped"))%></strong>
+			<span class="dsh-badge <%=ready and "ready" or ""%>"><%=ready and translate("Healthy") or (health ~= "" and util.pcdata(health) or translate("Not running"))%></span>
+			<% if profile == "advanced" then %><span class="dsh-badge experimental"><%:Experimental%></span><% end %>
+		</div>
+		<input class="btn cbi-button cbi-button-apply dsh-open" type="button" value="<%:Open DSH%>"
+			onclick="window.open('<%=url("admin/services/dsh/open")%>', '_blank', 'noopener')" <%=running and "" or "disabled"%>>
+	</div>
+	<p class="dsh-summary"><%=profile == "advanced" and translate("Open the browser-enhanced workbench in a new window. Its Chromium desktop and Browser Use tools share the same protected DSH session.") or translate("Open the workbench in a new window. DSH uses its own administrator-key login and keeps models, sessions and tools inside the workbench.")%></p>
+	<div class="dsh-facts">
+		<div class="dsh-fact">
+			<span class="dsh-fact-label"><%:Web access%></span>
+			<span class="dsh-fact-value"><%=port ~= "" and util.pcdata(translate("Port") .. " " .. port) or translate("Unavailable")%></span>
+		</div>
+		<div class="dsh-fact">
+			<span class="dsh-fact-label"><%:Authentication%></span>
+			<span class="dsh-fact-value <%=key_status == "configured" and "good" or ""%>"><%=key_status == "configured" and translate("Administrator key configured") or translate("Not configured")%></span>
+		</div>
+		<div class="dsh-fact">
+			<span class="dsh-fact-label"><%:Capabilities%></span>
+			<span class="dsh-fact-value"><%=profile == "advanced" and translate("Chromium desktop · Browser Use") or translate("DSH Web workbench")%></span>
+		</div>
+	</div>
+	<% if profile ~= "" or image ~= "" then %>
+	<details class="dsh-details">
+		<summary><%:Runtime details%></summary>
+		<div class="dsh-details-grid">
+			<% if profile ~= "" then %><span><%:Profile%></span><strong><%=util.pcdata(profile)%></strong><% end %>
+			<% if image ~= "" then %><span><%:Container image%></span><code><%=util.pcdata(image)%></code><% end %>
+		</div>
+	</details>
+	<% end %>
+</div>

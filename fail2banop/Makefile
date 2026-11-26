@@ -12,7 +12,7 @@ PKG_ARCH_FAIL2BANOP:=$(ARCH)
 PKG_NAME:=fail2banop
 # use PKG_SOURCE_DATE instead of PKG_VERSION for compitable
 PKG_SOURCE_DATE:=1.0.1
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 ARCH_HEXCODE:=
 ifeq ($(ARCH),x86_64)
 ARCH_HEXCODE=8664
@@ -57,6 +57,7 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 	[ -f /etc/uci-defaults/fail2banop ] && /etc/uci-defaults/fail2banop && rm -f /etc/uci-defaults/fail2banop
 	exit 0
 fi
+exit 0
 endef
 
 define Build/Configure

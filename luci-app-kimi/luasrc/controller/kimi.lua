@@ -58,6 +58,10 @@ function action_status()
 	local jsonc = require "luci.jsonc"
 	local output = sys.exec("/usr/libexec/kimi-runtime status 2>/dev/null")
 	local state = jsonc.parse(output or "") or { configured = false, installed = false, runtime = { ready = false } }
+	state.runtime = state.runtime or { ready = false }
+	local runtime_root = require("luci.model.uci").cursor():get("mise", "main", "storage_root") or ""
+	state.runtime.storage_configured = runtime_root ~= ""
+	if runtime_root == "" then state.runtime.error = nil end
 	state.service_running = sys.call("ubus -S call service list '{\"name\":\"kimi\"}' 2>/dev/null | jsonfilter -e '@.kimi.instances.terminal.running' | grep -qx true") == 0
 	state.install_running = fs.access("/etc/init.d/tasks") and task_running("kimi-install") or false
 	state.agentflow = {
@@ -82,6 +86,10 @@ function action_install()
 		write_json({ ok = rc == 0, error = rc ~= 0 and "Cannot recover a running or unknown install" or nil });return
 	end
 	if operation ~= "install" then write_json({ ok = false, error = "unsupported operation" });return end
+	local runtime_root = require("luci.model.uci").cursor():get("mise", "main", "storage_root") or ""
+	if runtime_root == "" then
+		write_json({ ok = false, error = "请先在“运行时环境”页面选择并保存持久存储目录", next = "runtime-storage" });return
+	end
 	if sys.call("/usr/libexec/kimi-runtime prepare " .. util.shellquote(base) .. " >/dev/null 2>&1") ~= 0 then
 		write_json({ ok = false, error = "Configure persistent Kimi Code and runtime directories first" });return
 	end

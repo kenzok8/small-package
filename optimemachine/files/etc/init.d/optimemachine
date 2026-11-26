@@ -1,3 +1,0 @@
-#!/bin/sh
-# Compatibility only: no second procd service or watchdog.
-exec /etc/init.d/changeguard "$@"

@@ -1,6 +1,6 @@
 <%+tasks/embed%>
 <style>
-.claude-shell{margin:14px 0;border:1px solid #dfe5ef;border-radius:12px;background:#fff;box-shadow:0 6px 20px rgba(30,45,80,.06);overflow:hidden}.claude-main{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:22px;padding:22px}.claude-title{margin:0 0 7px;font-size:22px}.claude-muted{margin:0;color:#667085;line-height:1.55}.claude-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.claude-badge{display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:999px;background:#eef2f7;color:#4a5568;font-size:13px;font-weight:700}.claude-badge.claude-ok{background:#e8f6ed;color:#16833b}.claude-badge.claude-warn{background:#fff3df;color:#955600}.claude-actions{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}.claude-button{min-width:156px;text-align:center}.claude-secondary{background:#fff!important}.claude-detail{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 22px;border-top:1px solid #e8edf4}.claude-detail-copy{min-width:0;color:#667085;line-height:1.55}.claude-detail-copy strong{color:#30384b}.claude-maintenance{display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}.claude-state{font-weight:700}.claude-ok{color:#16833b}.claude-warn{color:#a15c00}body[theme="dark"] .claude-shell{background:#20252b;border-color:#3c4652}body[theme="dark"] .claude-detail{border-color:#3c4652}body[theme="dark"] .claude-secondary{background:#20252b!important}@media(max-width:800px){.claude-main{grid-template-columns:1fr}.claude-actions{align-items:stretch}.claude-button{flex:1 1 210px}.claude-detail{align-items:flex-start;flex-direction:column}}
+.claude-shell{margin:14px 0;border:1px solid #dfe5ef;border-radius:12px;background:#fff;box-shadow:0 6px 20px rgba(30,45,80,.06);overflow:hidden}.claude-main{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:22px;padding:22px}.claude-title{margin:0 0 7px;font-size:22px}.claude-muted{margin:0;color:#667085;line-height:1.55}.claude-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}.claude-badge{display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:999px;background:#eef2f7;color:#4a5568;font-size:13px;font-weight:700}.claude-badge.claude-ok{background:#e8f6ed;color:#16833b}.claude-badge.claude-warn{background:#fff3df;color:#955600}.claude-actions{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}.claude-button{min-width:156px;text-align:center}.claude-secondary{background:#fff!important}.claude-guide{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 22px 18px;padding:15px 17px;border:1px solid #f0c36a;border-radius:9px;background:#fff8e8;color:#684400}.claude-guide p{margin:4px 0 0;line-height:1.5}.claude-guide a{flex:none}.claude-detail{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 22px;border-top:1px solid #e8edf4}.claude-detail-copy{min-width:0;color:#667085;line-height:1.55}.claude-detail-copy strong{color:#30384b}.claude-maintenance{display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}.claude-state{font-weight:700}.claude-ok{color:#16833b}.claude-warn{color:#a15c00}body[theme="dark"] .claude-shell{background:#20252b;border-color:#3c4652}body[theme="dark"] .claude-guide{background:#3a3120;border-color:#7d622c;color:#ffe2a6}body[theme="dark"] .claude-detail{border-color:#3c4652}body[theme="dark"] .claude-secondary{background:#20252b!important}@media(max-width:800px){.claude-main{grid-template-columns:1fr}.claude-actions{align-items:stretch}.claude-button{flex:1 1 210px}.claude-guide,.claude-detail{align-items:flex-start;flex-direction:column}.claude-guide{margin:0 14px 14px}.claude-guide a{width:100%;text-align:center}}
 </style>
 <script>
 //<![CDATA[
@@ -9,6 +9,7 @@ var claudeInstallUrl='<%=url("admin/services/claude/install")%>';
 var claudeTerminalUrl='<%=url("admin/services/linkease_apps/open")%>?id=claude-code';
 var claudeAgentFlowUrl='<%=url("admin/services/linkease_apps/open")%>?id=agentflow';
 var claudeAgentFlowManageUrl='<%=url("admin/services/agentflow")%>';
+var claudeMiseUrl='<%=url("admin/services/mise")%>';
 var claudeStoreUrl='/cgi-bin/luci/admin/store';
 var claudeToken=(window.taskd&&window.taskd.csrfToken)||'';
 function claudeText(id,value,klass){var el=document.getElementById(id);if(!el)return;el.textContent=value;if(klass)el.className='claude-state '+klass;}
@@ -22,19 +23,21 @@ function claudeAgentFlow(a){
  button.textContent='安装 AgentFlow 后使用';button.href=claudeStoreUrl;button.title='前往 iStore 安装 AgentFlow';
 }
 function claudeRender(s){
- s=s||{};var runtime=s.runtime||{};
+ s=s||{};var runtime=s.runtime||{},storageReady=runtime.storage_configured===true;
  claudeBadge('claude-install-state',s.installed?('Claude Code '+(s.version||'已安装')):(s.install_running?'Claude Code 正在安装':'Claude Code 未安装'),s.installed?'claude-ok':'claude-warn');
  claudeBadge('claude-terminal-state',s.service_running?'终端运行中':'终端未运行',s.service_running?'claude-ok':'claude-warn');
  claudeBadge('claude-auth-state',s.authenticated?'Anthropic 已登录':'Anthropic 未登录',s.authenticated?'claude-ok':'claude-warn');
- claudeText('claude-runtime-state',runtime.ready?('共享运行时：Node '+runtime.node+' · npm '+runtime.npm+' · '+runtime.abi):(runtime.error||'共享运行时未准备'),runtime.ready?'claude-ok':'claude-warn');
- var install=document.getElementById('claude-install');install.disabled=!!s.install_running;install.value=s.installed?'重新安装固定版本':(s.install_running?'正在安装…':'安装 Claude Code');
+ var runtimeText=!storageReady?'尚未配置共享运行时存储':runtime.ready?('共享运行时：Node '+runtime.node+' · npm '+runtime.npm+' · '+runtime.abi):s.install_running?'正在准备共享运行时':!s.installed?'共享运行时将在安装 Claude Code 时自动准备':(runtime.error||'共享运行时需要检查');
+ claudeText('claude-runtime-state',runtimeText,runtime.ready?'claude-ok':'claude-warn');
+ var guide=document.getElementById('claude-storage-guide');guide.style.display=storageReady?'none':'flex';
+ var install=document.getElementById('claude-install');install.disabled=!!s.install_running||!storageReady;install.title=storageReady?'':'请先配置运行时存储';install.value=s.installed?'重新安装固定版本':(s.install_running?'正在安装…':'安装 Claude Code');
  document.getElementById('claude-recover').style.display=s.interrupted?'inline-block':'none';
  var terminal=document.getElementById('claude-terminal');terminal.href=claudeTerminalUrl;terminal.style.display=s.service_running?'inline-block':'none';
  claudeAgentFlow(s.agentflow);
 }
 function claudeOperation(operation){
  (new XHR()).post(claudeInstallUrl,{token:claudeToken,operation:operation},function(x,data){
-  data=data||{};if(!data.ok){alert(data.error||'操作失败');return}
+  data=data||{};if(!data.ok){if(data.next==='runtime-storage'){location.href=claudeMiseUrl;return}alert(data.error||'操作失败');return}
   if(data.task_id&&window.taskd)window.taskd.show_log(data.task_id,false,function(){location.reload()});
   else location.reload();
  });
@@ -47,5 +50,6 @@ XHR.poll(5,claudeStatusUrl,null,function(x,s){claudeRender(s)});
   <div><h3 id="claude-heading" class="claude-title">Claude Code</h3><p class="claude-muted">在 iStoreOS 上安全运行 Claude Code 命令行，也可以交给 AgentFlow 提供网页工作流。</p><div class="claude-badges"><span id="claude-install-state" class="claude-badge">检查中…</span><span id="claude-terminal-state" class="claude-badge">检查中…</span><span id="claude-auth-state" class="claude-badge">检查中…</span></div></div>
   <div class="claude-actions"><a id="claude-terminal" class="btn cbi-button cbi-button-apply claude-button" target="_blank" rel="noopener" style="display:none">打开 Claude Code 命令行</a><a id="claude-agentflow" class="btn cbi-button claude-button claude-secondary" rel="noopener">检查 AgentFlow…</a></div>
  </div>
+ <div id="claude-storage-guide" class="claude-guide" role="status" style="display:none"><div><strong>先配置运行时存储</strong><p>Claude Code 需要把固定 Node/npm 环境保存在持久硬盘。请先选择并保存存储目录，再返回安装。</p></div><a class="btn cbi-button cbi-button-apply" href="<%=url('admin/services/mise')%>">前往运行时环境</a></div>
  <div class="claude-detail"><div class="claude-detail-copy"><strong id="claude-runtime-state" class="claude-state">检查共享运行时…</strong><br>Anthropic 凭据仅保存在专用 Claude Code HOME；未登录时请在命令行执行 <code>claude auth login</code>。</div><div class="claude-maintenance"><a class="btn cbi-button" href="<%=url('admin/services/mise')%>">运行时环境</a><input id="claude-install" class="btn cbi-button" type="button" value="安装 Claude Code" onclick="claudeOperation('install')"><input id="claude-recover" class="btn cbi-button" style="display:none" type="button" value="恢复中断安装" onclick="claudeOperation('recover')"></div></div>
 </section>

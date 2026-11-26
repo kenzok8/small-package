@@ -1,0 +1,64 @@
+{
+	auto_https off
+	admin off
+}
+
+:13080 {
+	route {
+		# The upstream enhanced image only supports a per-process launch token.
+		# Add a stable administrator key at the published gateway, then exchange
+		# the launch token internally when this browser has no DSH session yet.
+		basic_auth bcrypt "DSH administrator" {
+			dsh {$DSH_PASSWORD_HASH}
+		}
+
+		@desktop path /novnc-*
+		handle @desktop {
+			# noVNC has no authentication of its own. Reuse the authority-bound
+			# DSH browser session before exposing any asset or WebSocket.
+			forward_auth dsh:3080 {
+				uri /
+				header_up Host {http.request.hostport}
+				header_up -Authorization
+				# Authenticate the HTTP session, not the WebSocket handshake itself.
+				header_up -Connection
+				header_up -Upgrade
+				header_up -Origin
+				header_up -Sec-WebSocket-Key
+				header_up -Sec-WebSocket-Version
+				header_up -Sec-WebSocket-Extensions
+				header_up -Sec-WebSocket-Protocol
+			}
+			reverse_proxy dsh:6080 {
+				header_up Host {http.request.hostport}
+				header_up -Authorization
+			}
+		}
+
+		@root path /
+		handle @root {
+			reverse_proxy dsh:3080 {
+				header_up Host {http.request.hostport}
+				header_up -Authorization
+				flush_interval -1
+
+				@unauthorized status 401
+				handle_response @unauthorized {
+					rewrite * /?token={$DSH_LAUNCH_TOKEN}
+					reverse_proxy dsh:3080 {
+						header_up Host {http.request.hostport}
+						header_up -Authorization
+					}
+				}
+			}
+		}
+
+		handle {
+			reverse_proxy dsh:3080 {
+				header_up Host {http.request.hostport}
+				header_up -Authorization
+				flush_interval -1
+			}
+		}
+	}
+}

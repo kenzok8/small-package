@@ -15,7 +15,7 @@ MISE_HASH_aarch64:=06186cfbfe947049b21d58575fb0ea800cc26ed1375f20f4b678cb3a9d679
 
 PKG_NAME:=mise
 PKG_VERSION:=2026.8.14
-PKG_RELEASE:=28
+PKG_RELEASE:=29
 PKG_SOURCE:=$(PKG_NAME)-v$(PKG_VERSION)-linux-$(MISE_ARCH)-musl.tar.gz
 PKG_SOURCE_URL:=https://github.com/jdx/mise/releases/download/v$(PKG_VERSION)/
 PKG_HASH:=$(MISE_HASH_$(ARCH))
@@ -48,6 +48,7 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
 	[ -f /etc/uci-defaults/mise ] && /etc/uci-defaults/mise && rm -f /etc/uci-defaults/mise
 	exit 0
 fi
+exit 0
 endef
 
 define Build/Configure

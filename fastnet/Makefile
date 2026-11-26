@@ -10,7 +10,7 @@ PKG_ARCH_FASTNET:=$(ARCH)
 
 PKG_NAME:=fastnet
 PKG_VERSION:=0.8.10
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-binary-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/istoreos/istoreos-app-hub/releases/download/fastnet-runtime-v$(PKG_VERSION)/
@@ -59,11 +59,13 @@ define Package/$(PKG_NAME)/postinst
 #!/bin/sh
 # Maintain the old desktop entry without a second manifest or file owner.
 root="$${IPKG_INSTROOT:-}"
-sh "$${root}/usr/share/fastnet/register-desktop.sh" || exit $$?
+sh "$${root}/usr/share/fastnet/register-desktop.sh" || \
+	printf '%s\n' 'fastnet: unable to repair the compatibility app entry.' >&2
 if [ -z "$${IPKG_INSTROOT}" ]; then
 	[ -f /etc/uci-defaults/fastnet ] && /etc/uci-defaults/fastnet && rm -f /etc/uci-defaults/fastnet
 	exit 0
 fi
+exit 0
 endef
 
 define Build/Configure

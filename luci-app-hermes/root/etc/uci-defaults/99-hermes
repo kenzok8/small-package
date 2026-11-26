@@ -1,0 +1,42 @@
+#!/bin/sh
+
+if ! id hermes >/dev/null 2>&1; then
+	. /lib/functions.sh
+	gid="$(group_add_next hermes)" || exit 1
+	user_add hermes "" "$gid" "Hermes Agent" /var/empty /bin/false || exit 1
+fi
+[ "$(id -u hermes)" -gt 0 ] || exit 1
+
+uci -q get 'hermes.@main[0]' >/dev/null 2>&1 || uci -q add hermes main >/dev/null
+[ -n "$(uci -q get 'hermes.@main[0].backend' 2>/dev/null)" ] || {
+	# A pre-dual-backend conffile has Docker path options but no backend. Keep
+	# those upgraded users on Docker; the new conffile already says native.
+	if uci -q get 'hermes.@main[0].data_path' >/dev/null 2>&1 ||
+		uci -q get 'hermes.@main[0].workspace_path' >/dev/null 2>&1; then
+		uci -q set 'hermes.@main[0].backend=docker'
+	else
+		uci -q set 'hermes.@main[0].backend=native'
+	fi
+}
+[ -n "$(uci -q get 'hermes.@main[0].target_backend' 2>/dev/null)" ] || {
+	backend="$(uci -q get 'hermes.@main[0].backend' 2>/dev/null || echo native)"
+	uci -q set "hermes.@main[0].target_backend=$backend"
+}
+[ -n "$(uci -q get 'hermes.@main[0].native_enabled' 2>/dev/null)" ] || uci -q set 'hermes.@main[0].native_enabled=0'
+[ -n "$(uci -q get 'hermes.@main[0].native_bind' 2>/dev/null)" ] || uci -q set 'hermes.@main[0].native_bind=0.0.0.0'
+[ -n "$(uci -q get 'hermes.@main[0].native_port' 2>/dev/null)" ] || uci -q set 'hermes.@main[0].native_port=18787'
+[ -n "$(uci -q get 'hermes.@main[0].native_health_port' 2>/dev/null)" ] || uci -q set 'hermes.@main[0].native_health_port=18788'
+[ -n "$(uci -q get 'hermes.@main[0].native_base_dir' 2>/dev/null)" ] || {
+	conf_dir="$(uci -q get quickstart.main.conf_dir 2>/dev/null || true)"
+	case "$conf_dir" in /mnt/*) uci -q set "hermes.@main[0].native_base_dir=${conf_dir%/}/HermesNative" ;; esac
+}
+[ -n "$(uci -q get 'hermes.@main[0].data_path' 2>/dev/null)" ] || {
+	conf_dir="$(uci -q get quickstart.main.conf_dir 2>/dev/null || true)"
+	case "$conf_dir" in /mnt/*) uci -q set "hermes.@main[0].data_path=${conf_dir%/}/HermesDocker/data" ;; esac
+}
+[ -n "$(uci -q get 'hermes.@main[0].workspace_path' 2>/dev/null)" ] || {
+	conf_dir="$(uci -q get quickstart.main.conf_dir 2>/dev/null || true)"
+	case "$conf_dir" in /mnt/*) uci -q set "hermes.@main[0].workspace_path=${conf_dir%/}/HermesDocker/workspace" ;; esac
+}
+uci -q commit hermes
+exit 0

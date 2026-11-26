@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { access, lsdir, lstat, mkstemp, popen, readfile, writefile } from 'fs';
+import { access, dirname, lsdir, lstat, mkstemp, popen, readfile, writefile } from 'fs';
 import {
 	shellQuote, isBinary, executeCommand, yqRead, yqReadFile,
 	HM_DIR, EXE_DIR, SDL_DIR, RUN_DIR
@@ -386,7 +386,7 @@ const methods = {
 			if (req.args?.isbinary == 1)
 				content = b64dec(content);
 
-			//system(`mkdir -p ${HM_DIR}/${req.args?.type}`);
+			system(`mkdir -p ${dirname(file)}`);
 			writefile(file, content);
 
 			return { result: true };
@@ -407,7 +407,7 @@ const methods = {
 
 			const file = `${HM_DIR}/${req.args?.type}/${req.args?.filename}`;
 
-			//system(`mkdir -p ${HM_DIR}/${req.args?.type}`);
+			system(`mkdir -p ${dirname(file)}`);
 			let exitcode = wGET(req.args?.url, req.args?.header, file);
 
 			if (exitcode === 0) {

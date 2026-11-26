@@ -1,0 +1,29 @@
+#
+# Copyright (C) 2026 LinkEase Contributors
+#
+# This is free software, licensed under the Apache License, Version 2.0.
+#
+
+include $(TOPDIR)/rules.mk
+
+LUCI_TITLE:=LuCI support for DSH
+LUCI_PKGARCH:=all
+PKG_VERSION:=1.0.0-r2
+PKG_RELEASE:=
+LUCI_DEPENDS:=+dsh +luci-compat +luci-lib-taskd +luci-lib-linkeaseauth +linkease-app-entry +lsblk +zoneinfo-asia
+LUCI_MINIFY_CSS:=0
+LUCI_MINIFY_JS:=0
+
+define Package/luci-app-dsh/conffiles
+/etc/config/dsh
+endef
+
+define Package/luci-app-dsh/postrm
+#!/bin/sh
+rm -f /tmp/luci-indexcache /tmp/luci-indexcache.*
+exit 0
+endef
+
+include $(TOPDIR)/feeds/luci/luci.mk
+
+# call BuildPackage - OpenWrt buildroot signature

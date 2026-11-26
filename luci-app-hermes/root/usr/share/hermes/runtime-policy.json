@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "python": {
+    "version": "3.14.9",
+    "build": "20261021",
+    "abi": "musl"
+  },
+  "uv": {
+    "version": "0.13.5",
+    "artifacts": {
+      "aarch64": {
+        "url": "https://github.com/astral-sh/uv/releases/download/0.13.5/uv-aarch64-unknown-linux-musl.tar.gz",
+        "sha256": "7906c79adb21c81abd559841ba76bb1d9af9d791acac7a041b2972e03ae16538"
+      },
+      "x86_64": {
+        "url": "https://github.com/astral-sh/uv/releases/download/0.13.5/uv-x86_64-unknown-linux-musl.tar.gz",
+        "sha256": "57ef9d9ccb01fb1bd998df995b0dd221b52f7d7841fbea93f2d4463bf61fb7a9"
+      }
+    }
+  },
+  "agent": {
+    "version": "0.23.4",
+    "commit": "8fc0374447313e276f6b9a2764bfc750190c966a",
+    "url": "https://codeload.github.com/NousResearch/hermes-agent/tar.gz/refs/tags/v0.23.4",
+    "sha256": "875e633ae5b3c6349c1bcffc18c0476518fbe5dead355e4aa09ad827ebffce0c"
+  },
+  "webui": {
+    "version": "0.52.732",
+    "commit": "ff60081cadd9587a6e7e48a1e9daf898b502a88a",
+    "url": "https://codeload.github.com/nesquena/hermes-webui/tar.gz/refs/tags/v0.52.732",
+    "sha256": "3d7961176b6296f5b91e453a7d5bb1d380cbfe9af6c33d448390a2c021c2a5a6",
+    "pyyaml": {
+      "version": "6.0.4",
+      "artifacts": {
+        "aarch64": {
+          "filename": "pyyaml-6.0.4-cp314-cp314-musllinux_1_2_aarch64.whl",
+          "url": "https://files.pythonhosted.org/packages/8a/d2/6202ffb5d61667c993211a9231836b5d9be5e34165efd1714ac68ea76029/pyyaml-6.0.4-cp314-cp314-musllinux_1_2_aarch64.whl",
+          "sha256": "f1a4a85b419f5cb6470dd4be5f766bc59532f11b9c22c076b58a0348f05dca5f"
+        },
+        "x86_64": {
+          "filename": "pyyaml-6.0.4-cp314-cp314-musllinux_1_2_x86_64.whl",
+          "url": "https://files.pythonhosted.org/packages/d4/39/d62587fae4a9a32197ea43182c38f221f3f173a09c6f4380254533bdd89e/pyyaml-6.0.4-cp314-cp314-musllinux_1_2_x86_64.whl",
+          "sha256": "132c3c7c37a8e6f334921b05cfea5d26e241d792dcbb4db0462129d25ca53b43"
+        }
+      }
+    }
+  }
+}

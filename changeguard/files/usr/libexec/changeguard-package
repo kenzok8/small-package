@@ -7,12 +7,32 @@ phase=${1:-}
 run_checked() {
  response=$("$bin" "$@" --config "$config") || { printf '%s\n' "$response" >&2; return 1; }
 }
-remember_service() {
- if /etc/init.d/changeguard enabled; then touch /var/run/changeguard-package-enable; fi
- if "$bin" status --config "$config" >/dev/null 2>&1; then
-  touch /var/run/changeguard-package-restart
-  /etc/init.d/changeguard stop
+migrate_config() {
+ [ -f "$config" ] || return 0
+ local tmp
+ tmp="${config}.migrate.$$"
+ umask 077
+ if ! /usr/bin/ucode -e '
+  import { readfile } from "fs";
+  let value = json(readfile("/dev/stdin"));
+  if (type(value) != "object")
+   exit(1);
+  delete value.http;
+  print(value);
+ ' < "$config" > "$tmp"; then
+  rm -f "$tmp"
+  return 1
  fi
+ if ! mv -f "$tmp" "$config"; then
+  rm -f "$tmp"
+  return 1
+ fi
+}
+stop_service() {
+ if pidof changeguard_bin >/dev/null 2>&1; then
+  printf '%s\n' 'ChangeGuard stopped for upgrade; any active protection has failed.' >&2
+ fi
+ /etc/init.d/changeguard stop >/dev/null 2>&1 || true
 }
 resolve_runtime() {
  local context runtime digest actual
@@ -38,22 +58,20 @@ case "$phase" in
   resolve_runtime || exit 1
   exec "$bin" "$@"
  ;;
- preinst|prerm)
-  if [ -f "$config" ]; then run_checked maintenance-check; fi
-  remember_service
-  if [ -f "$config" ]; then run_checked maintenance-check; fi
-  if [ "$phase" = prerm ]; then /etc/init.d/changeguard disable; fi
+ preinst)
+  stop_service
+ ;;
+ prerm)
+  stop_service
+  /etc/init.d/changeguard disable
  ;;
  postinst)
-  fresh=0
-  if [ ! -f "$config" ]; then fresh=1; else run_checked maintenance-check; fi
-  remember_service
+  migrate_config
   run_checked initialize
   run_checked sync-backend
   run_checked refresh-runtime
-  if [ "$fresh" = 1 ] || [ -f /var/run/changeguard-package-enable ]; then /etc/init.d/changeguard enable; fi
-  if [ "$fresh" = 1 ] || [ -f /var/run/changeguard-package-restart ]; then /etc/init.d/changeguard start; fi
-  rm -f /var/run/changeguard-package-enable /var/run/changeguard-package-restart
+  /etc/init.d/changeguard enable
+  /etc/init.d/changeguard restart
  ;;
  *) exit 2 ;;
 esac
