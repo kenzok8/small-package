@@ -74,6 +74,8 @@ return view.extend({
 	originalLanIp: null, // 持久快照，防止被 handleSave 覆盖
 	hasWireless: false,
 	hasNginx: false,
+	hasQuickstart: false,
+	hasRoutergo: false,
 	map: null,
 	fields: null,
 	optMap: null,
@@ -85,12 +87,15 @@ return view.extend({
 			return uci.load(p).catch(function() { return null; });
 		});
 		tasks.push(fs.stat('/etc/nginx/uci.conf').then(function() { return true; }).catch(function() { return false; }));
-
+		tasks.push(fs.stat('/tmp/run/quickstart/local.sock').then(function() { return true; }).catch(function() { return false; }));
+		tasks.push(fs.stat('/tmp/run/routergo/local.sock').then(function() { return true; }).catch(function() { return false; }));
 		return Promise.all(tasks).then(function(res) {
-			var wifiSecs = (res && res) ? (uci.sections('wireless', 'wifi-device') || []) : [];
+			var wifiSecs = (res && res[1]) ? (uci.sections('wireless', 'wifi-device') || []) : [];
 			return {
 				hasWireless: wifiSecs.length > 0,
-				hasNginx: !!res[7]
+				hasNginx: !!res[7],
+				hasQuickstart: !!res[8],
+				hasRoutergo: !!res[9]
 			};
 		});
 	},
@@ -99,7 +104,6 @@ return view.extend({
 	getSystemConfig: function() {
 		var lanGw = getFirstIp(uci.get('network', 'lan', 'gateway'), '');
 		var wanSec = uci.get('network', 'wan');
-
 		// 判定 WAN 接口是否不存在或处于停用状态
 		var isWanDisabled = !wanSec ||
 			uci.get('network', 'wan', 'auto') === '0' ||
@@ -146,6 +150,8 @@ return view.extend({
 	render: function(data) {
 		this.hasWireless = !!data.hasWireless;
 		this.hasNginx = !!data.hasNginx;
+		this.hasQuickstart = !!data.hasQuickstart;
+		this.hasRoutergo = !!data.hasRoutergo;
 
 		var sys = this.getSystemConfig();
 		this.initialValues = Object.assign({}, sys);
@@ -161,9 +167,7 @@ return view.extend({
 			};
 		});
 
-		var m = new form.Map('wizard', _('Setup Wizard'),
-			_('Quickly configure common network, wireless, and system settings.'));
-
+		var m = new form.Map('wizard', _('Setup Wizard'), _('Quickly configure common network, wireless, and system settings.'));
 		var s = m.section(form.NamedSection, 'default', 'wizard');
 		s.anonymous = true;
 		s.addremove = false;
@@ -171,16 +175,33 @@ return view.extend({
 		s.tab('netsetup', _('Net Settings'));
 		s.tab('firmware', _('Firmware Settings'));
 		if (this.hasWireless) s.tab('wifisetup', _('Wireless Settings'));
-
 		if (this.hasNginx) {
 			s.tab('shortcuts', _('Shortcuts'), _('比如设置google.com的快捷方式为字母g,则在此路由器网络的任何浏览器中输入g/即可访问google.com'));
+		}
+
+		// 按对应服务 socket 文件是否存在动态构建首页模式候选项
+		var landingChoices = {
+			'': _('Auto'),
+			'status/overview': _('Overview')
+		};
+		if (this.hasQuickstart) {
+			landingChoices['quickstart'] = _('iStoreOS');
+		}
+		landingChoices['status/dashboard'] = _('Dashboard');
+		if (this.hasRoutergo) {
+			landingChoices['routerdog'] = _('RouterDog');
+		}
+		if (this.hasQuickstart) {
+			landingChoices['istorex/nas'] = _('NAS');
+			landingChoices['istorex/next-nas'] = _('Next-NAS');
+			landingChoices['istorex/router'] = _('Router');
 		}
 
 		// 3. 声明式配置项驱动表
 		var opt, fields = [
 			// 网络设置
 			{ tab: 'netsetup', type: form.ListValue, id: 'wan_proto', title: _('WAN Protocol / Mode'),
-			  choices: { dhcp: _('DHCP Client (Default Router)'), pppoe: _('PPPoE Dial-up'), siderouter: _('Side-Router Mode (Bypass Gateway)') } },
+				choices: { dhcp: _('DHCP Client (Default Router)'), pppoe: _('PPPoE Dial-up'), siderouter: _('Side-Router Mode (Bypass Gateway)') } },
 			{ tab: 'netsetup', type: form.Value, id: 'wan_pppoe_user', title: _('PPPoE Username'), depends: { wan_proto: 'pppoe' } },
 			{ tab: 'netsetup', type: form.Value, id: 'wan_pppoe_pass', title: _('PPPoE Password'), depends: { wan_proto: 'pppoe' }, password: true },
 			{ tab: 'netsetup', type: form.Value, id: 'lan_ipaddr', title: _('LAN IPv4 Address'), datatype: 'ip4addr', placeholder: '10.0.0.1' },
@@ -195,16 +216,8 @@ return view.extend({
 			{ tab: 'firmware', type: form.Flag, id: 'persistent_cookies', title: _('Persistent Cookie Session'), desc: _('Maintain persistent login sessions in the web browser.') },
 			{ tab: 'firmware', type: form.Flag, id: 'https', title: _('Enforce HTTPS Access'), desc: _('Automatically redirect HTTP requests to secure HTTPS.') },
 			{ tab: 'firmware', type: form.Value, id: 'landing_page', title: _('Landing Dashboard Mode'),
-				choices: {
-					'': _('Auto'),
-					'status/overview': _('Overview'),
-					'quickstart': _('iStoreOS'),
-					'status/dashboard': _('Dashboard'),
-					'routerdog': _('RouterDog'),
-					'istorex/nas': _('NAS'),
-					'istorex/next-nas': _('Next-NAS'),
-					'istorex/router': _('Router')
-				}
+				desc: _('You can enter a custom path directly, e.g. services/passwall'),
+				choices: landingChoices
 			}
 		];
 
@@ -221,10 +234,8 @@ return view.extend({
 			opt = s.taboption(f.tab, f.type, f.id, f.title, f.desc);
 			opt.cfgvalue = function() { return sys[f.id]; };
 			opt.default = sys[f.id];
-
 			opt.write = function() {};
 			opt.remove = function() {};
-
 			if (f.password) opt.password = true;
 			if (f.datatype) opt.datatype = f.datatype;
 			if (f.placeholder) opt.placeholder = f.placeholder;
@@ -241,7 +252,6 @@ return view.extend({
 					return true;
 				};
 			}
-
 			optMap[f.id] = opt;
 		});
 
@@ -257,10 +267,8 @@ return view.extend({
 			o_sc.rmempty = false;
 			o_sc.placeholder = 'g';
 			o_sc.validate = function(section_id, value) {
-				if (!value)
-					return _('Shortcut phrase cannot be empty');
-				if (!value.match(/^[a-zA-Z0-9_-]+$/))
-					return _('Only alphanumeric characters, dashes and underscores are allowed');
+				if (!value) return _('Shortcut phrase cannot be empty');
+				if (!value.match(/^[a-zA-Z0-9_-]+$/)) return _('Only alphanumeric characters, dashes and underscores are allowed');
 				return true;
 			};
 
@@ -345,7 +353,6 @@ return view.extend({
 						if (has(changed, 'wifi_ssid') && autoSsid) {
 							uci.set('wireless', ifc['.name'], 'ssid', autoSsid);
 						}
-
 						if (has(changed, 'wifi_key')) {
 							if (cur.wifi_key) {
 								uci.set('wireless', ifc['.name'], 'key', cur.wifi_key);
@@ -358,7 +365,6 @@ return view.extend({
 								uci.set('wireless', ifc['.name'], 'encryption', 'none');
 							}
 						}
-
 						// 解除物理无线与接口禁用状态
 						if (ifc.device) {
 							safeUnset('wireless', ifc.device, 'disabled');
@@ -380,7 +386,6 @@ return view.extend({
 				}
 
 				var hasWanSec = !!uci.get('network', 'wan');
-
 				if (cur.wan_proto === 'siderouter') {
 					if (hasWanSec) uci.set('network', 'wan', 'auto', '0');
 					// 旁路由模式：开启 LAN 区域动态伪装 (masq)
@@ -407,14 +412,12 @@ return view.extend({
 				var origIpRaw = uci.get('network', 'lan', 'ipaddr');
 				var firstIp = Array.isArray(origIpRaw) ? origIpRaw[0] : origIpRaw;
 				var mask = '';
-
 				if (typeof firstIp === 'string') {
 					var slashIdx = firstIp.indexOf('/');
 					if (slashIdx !== -1) {
 						mask = '/' + firstIp.substring(slashIdx + 1).trim();
 					}
 				}
-
 				var cleanIp = (typeof cur.lan_ipaddr === 'string') ? cur.lan_ipaddr.split('/')[0].trim() : String(cur.lan_ipaddr);
 				var targetVal = cleanIp + mask;
 
@@ -434,7 +437,6 @@ return view.extend({
 			if (has(changed, 'lan_dns') || has(changed, 'wan_proto') || has(changed, 'lan_gateway')) {
 				if (cur.wan_proto === 'siderouter') {
 					var effectiveDns = toArray(cur.lan_dns);
-
 					// 若 DNS 列表为空，按优先级进行智能兜底
 					if (effectiveDns.length === 0) {
 						var cleanGw = getFirstIp(cur.lan_gateway, '');
@@ -513,7 +515,6 @@ return view.extend({
 
 			self.initialValues = Object.assign({}, cur);
 			self.initialShortcuts = curShortcuts;
-
 			return uci.save().then(function() {
 				return true;
 			});
@@ -545,8 +546,7 @@ return view.extend({
 				ui.showModal(_('LAN IP Address Changed'), [
 					E('p', {}, [_('LAN IP has been changed to'), ' ', E('strong', {}, newIp), '.']),
 					E('p', {}, [_('Applying changes without rollback. Redirecting to the new address in'), ' ', countSpan, ' ', _('seconds...')]),
-					E('p', { 'class': 'alert-message notice', 'style': 'margin-top: 1em;' },
-						_('提示：更改网段后，若未能自动加载新页面，请尝试重新插拔网线或断开重连 Wi-Fi，以获取新网段的 IP 地址。')),
+					E('p', { 'class': 'alert-message notice', 'style': 'margin-top: 1em;' }, _('提示：更改网段后，若未能自动加载新页面，请尝试重新插拔网线或断开重连 Wi-Fi，以获取新网段的 IP 地址。')),
 					E('div', { 'class': 'spinning', 'style': 'margin: 1.5em auto;' }),
 					E('div', { 'class': 'right' }, [
 						E('button', {

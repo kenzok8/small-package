@@ -12,7 +12,9 @@
 				"wizard"
 			],
 			"file": {
-				"/etc/nginx/uci.conf": [ "stat" ]
+				"/etc/nginx/uci.conf": [ "stat" ],
+				"/tmp/run/quickstart/local.sock": [ "stat" ],
+				"/tmp/run/routergo/local.sock": [ "stat" ]
 			}
 		},
 		"write": {

@@ -194,3 +194,6 @@ msgstr "提示：更改网段后，若未能自动加载新页面，请尝试重
 
 msgid "Redirect Now"
 msgstr "立即跳转"
+
+msgid "You can enter a custom path directly, e.g. services/passwall"
+msgstr "可使用自定义路径如 services/passwall"
