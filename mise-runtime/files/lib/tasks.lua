@@ -41,7 +41,14 @@ function M.start(ctx,plan,workfn)
     M.save(ctx,t);sys.write(ctx.root..'/.lock/owner.json',t.owner)
     local work=ctx.root..'/work/'..id;sys.mkdir(work,448)
     sys.command_scope=dir..'/processes';sys.mkdir(sys.command_scope,448)
-    local ok,result=pcall(workfn,ctx,t,work,dir..'/log')
+    local ok,result=pcall(function()
+      -- procd may run root preparation with the application's non-root HOME.
+      -- Management probes/installers must use the repository administrator
+      -- HOME; only this fork changes context, never the caller or app process.
+      n.setenv('HOME',ctx.root..'/home')
+      n.setenv('ISTORE_RUNTIME_HOME',ctx.root..'/home')
+      return workfn(ctx,t,work,dir..'/log')
+    end)
     local finish_ok,finish_error=pcall(function()
       if ok then
         t.result=result;M.phase(ctx,t,'committed');t.final_status='success'
