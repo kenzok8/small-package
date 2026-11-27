@@ -3,6 +3,8 @@ Date: 2026-09-23
 Subject: [PATCH] daed: strictly reconcile subscription updates
 
 Reconcile nodes by link, preserve fixed-group nodes, and apply committed changes.
+Skip unparseable links instead of dropping the whole update, and keep the real
+import error instead of a generic message.
 ---
 diff --git a/cmd/run.go b/cmd/run.go
 index 7dce577..978f46c 100644
@@ -152,7 +154,7 @@ index e6bf9da..8ab756b 100644
  
  		// Running -> false
 diff --git a/graphql/service/subscription/mutation_utils.go b/graphql/service/subscription/mutation_utils.go
-index 7e6dc08..e87bf78 100644
+index 7e6dc08..e8c6ecf 100644
 --- a/graphql/service/subscription/mutation_utils.go
 +++ b/graphql/service/subscription/mutation_utils.go
 @@ -18,6 +18,7 @@ import (
@@ -175,7 +177,7 @@ index 7e6dc08..e87bf78 100644
  )
  
  func UpdateAll(ctx context.Context) {
-@@ -262,68 +264,161 @@ func Update(ctx context.Context, _id graphql.ID) (r *Resolver, err error) {
+@@ -262,68 +264,172 @@ func Update(ctx context.Context, _id graphql.ID) (r *Resolver, err error) {
  	return &Resolver{Subscription: m}, nil
  }
  
@@ -284,20 +286,27 @@ index 7e6dc08..e87bf78 100644
 +		}
  		args = append(args, &internal.ImportArgument{Link: link})
  	}
--	result, err := node.Import(tx, false, &subId, args)
-+	result, err := node.Import(tx, true, &subId, args)
++	// Tolerate broken links: a rotating subscription always ships a few links we
++	// cannot parse, and aborting on the first one drops the whole update.
+ 	result, err := node.Import(tx, false, &subId, args)
  	if err != nil {
 -		return nil, err
-+		return errors.New("failed to import subscription node")
++		return fmt.Errorf("import subscription nodes: %w", err)
  	}
 -	hasAnyCandidate := false
++	var importErr error
  	for _, r := range result {
 -		if r.Error == nil || *r.Error == node.DuplicatedError.Error() {
 -			hasAnyCandidate = true
 -			break
-+		if r.Error != nil {
-+			return errors.New("failed to import subscription node")
++		if r.Error == nil {
++			continue
  		}
++		if importErr == nil {
++			importErr = errors.New(*r.Error)
++		}
++		// The link itself carries credentials; only the reason goes to the log.
++		logrus.Warnf("Subscription %d: skip unimportable node: %s", subId, *r.Error)
  	}
 -	if !hasAnyCandidate {
 -		return nil, fmt.Errorf("interrupt to update subscription: no any valid node can be imported")
@@ -309,6 +318,9 @@ index 7e6dc08..e87bf78 100644
 -	// Update updated_at and return the latest version.
 -	if err = tx.Model(&m).
 +	if count == 0 {
++		if importErr != nil {
++			return fmt.Errorf("interrupt to update subscription: no valid node can be imported: %w", importErr)
++		}
 +		return fmt.Errorf("interrupt to update subscription: no any valid node can be imported")
 +	}
 +	return nil
@@ -377,7 +389,7 @@ index 7e6dc08..e87bf78 100644
  	return &m, nil
  }
  
-@@ -406,6 +501,8 @@ func UpdateLink(ctx context.Context, _id graphql.ID, link string) (r *Resolver,
+@@ -406,6 +512,8 @@ func UpdateLink(ctx context.Context, _id graphql.ID, link string) (r *Resolver,
  	if err != nil {
  		return nil, err
  	}
@@ -388,10 +400,10 @@ index 7e6dc08..e87bf78 100644
  	defer func() {
 diff --git a/graphql/service/subscription/reconcile_patch_test.go b/graphql/service/subscription/reconcile_patch_test.go
 new file mode 100644
-index 0000000..18ff9b9
+index 0000000..5937fa5
 --- /dev/null
 +++ b/graphql/service/subscription/reconcile_patch_test.go
-@@ -0,0 +1,212 @@
+@@ -0,0 +1,251 @@
 +/*
 + * SPDX-License-Identifier: AGPL-3.0-only
 + * Copyright (c) 2023, daeuniverse Organization <team@v2raya.org>
@@ -402,6 +414,7 @@ index 0000000..18ff9b9
 +import (
 +	"context"
 +	"fmt"
++	"strings"
 +	"testing"
 +	"time"
 +
@@ -447,6 +460,13 @@ index 0000000..18ff9b9
 +	t.Helper()
 +	if value != 0 {
 +		t.Fatalf("expected zero, got %d", value)
++	}
++}
++
++func assertContains(t *testing.T, haystack, needle string) {
++	t.Helper()
++	if !strings.Contains(haystack, needle) {
++		t.Fatalf("want %q in %q", needle, haystack)
 +	}
 +}
 +
@@ -578,16 +598,47 @@ index 0000000..18ff9b9
 +	assertEqualValues(t, len(nodes), count)
 +}
 +
-+func TestReconcileRollsBackWhenAnyIncomingNodeIsInvalid(t *testing.T) {
++// validNodeLink is a parseable share link; reconcile fixtures that only live in
++// the database may use any string, but an imported one has to parse.
++const validNodeLink = "ss://YWVzLTEyOC1nY206dGVzdA==@192.0.2.1:8388"
++
++func TestReconcileSkipsInvalidIncomingNode(t *testing.T) {
++	ctx := initReconcileTestDB(t)
++	sub, _ := createTestSubscription(t, ctx, "ss://old-1", "ss://old-2")
++	tx := db.BeginTx(ctx)
++
++	// A rotating subscription: every node is new, one of them is unparsable.
++	mustNoError(t, reconcileSubscriptionNodes(tx, sub.ID, []string{validNodeLink, "not-a-node-link"}))
++	mustNoError(t, tx.Commit().Error)
++
++	// Count by link: SQLite reuses row ids, so the new node may take an old id.
++	var staleCount int64
++	mustNoError(t, db.DB(ctx).Model(&db.Node{}).
++		Where("link IN ?", []string{"ss://old-1", "ss://old-2"}).
++		Count(&staleCount).Error)
++	assertZero(t, staleCount)
++
++	var imported []db.Node
++	mustNoError(t, db.DB(ctx).Where("subscription_id = ?", sub.ID).Find(&imported).Error)
++	assertEqualValues(t, 1, len(imported))
++	assertEqualValues(t, validNodeLink, imported[0].Link)
++}
++
++func TestReconcileRollsBackWhenNoIncomingNodeIsValid(t *testing.T) {
 +	ctx := initReconcileTestDB(t)
 +	sub, nodes := createTestSubscription(t, ctx, "ss://current", "ss://stale")
 +	tx := db.BeginTx(ctx)
 +
-+	assertError(t, reconcileSubscriptionNodes(tx, sub.ID, []string{"ss://current", "not-a-node-link"}))
++	err := reconcileSubscriptionNodes(tx, sub.ID, []string{"not-a-node-link"})
++	assertError(t, err)
++	// The real reason must survive instead of a generic import failure.
++	assertContains(t, err.Error(), "not a valid link")
 +	mustNoError(t, tx.Rollback().Error)
 +
 +	var count int64
-+	mustNoError(t, db.DB(ctx).Model(&db.Node{}).Where("id IN ?", []uint{nodes[0].ID, nodes[1].ID}).Count(&count).Error)
++	mustNoError(t, db.DB(ctx).Model(&db.Node{}).
++		Where("id IN ?", []uint{nodes[0].ID, nodes[1].ID}).
++		Count(&count).Error)
 +	assertEqualValues(t, 2, count)
 +}
 +
