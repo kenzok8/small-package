@@ -3083,8 +3083,9 @@ return view.extend({
 	/* without airtime: the Wi-Fi clients by band along the card's bottom
 	   edge, in the bands' colours (as the other cards' lines) */
 	bandPicture: function() {
-		/* this device's clients: a paired access point's are on its branch */
-		var clients = ((this.m && this.m.clients) || []).filter(function(c) { return !c.ap; }), by = {};
+		/* this device's clients: a paired access point's are on its branch,
+		   and a mesh peer is no client */
+		var clients = ((this.m && this.m.clients) || []).filter(function(c) { return !c.ap && !c.peer; }), by = {};
 		clients.forEach(function(c) { if (c.band) by[c.band] = (by[c.band] || 0) + 1; });
 		var bands = Object.keys(by).sort();
 		if (!bands.length) return [];
@@ -3582,7 +3583,7 @@ return view.extend({
 					sn.tone = tone;
 				}
 				setClass(sn.el, 'vt-node vt-node-ssid' + (s.clients ? '' : ' vt-node-idle'));
-				setTitle(sn.el, _('Show the clients of %s').format(s.ssid) + (tone ? '\n' + s.security.long : ''));
+				setTitle(sn.el, (s.mode === 'mesh' ? _('Show the peers of %s') : _('Show the clients of %s')).format(s.ssid) + (tone ? '\n' + s.security.long : ''));
 				txt(sn.name, s.ssid || _('(hidden)'));
 				txt(sn.count, self.ssidCount(s));
 				var dots = m.clients.filter(function(c) { return c.ssidId === s.id; }).slice(0, 8);
@@ -4376,7 +4377,7 @@ return view.extend({
 				spec.appendChild(E('span', { 'class': 'vt-spectrum-hi vt-tn' }, [ _('%s MHz').format(sp.bandHi) ]));
 			}
 			var hist = st.hist.net[r.id] || [];
-			var clients = m.clients.filter(function(c) { return c.radio === r.id; });
+			var clients = m.clients.filter(function(c) { return c.radio === r.id && !c.peer; });
 			return E('article', { 'class': 'vt-tile vt-radio vt-radio-' + (r.band || 'x') + (r.up ? '' : ' vt-radio-off'), 'data-radio': r.id }, [
 				E('header', { 'class': 'vt-radio-head' }, [
 					bandBadge(r.band),
@@ -5861,7 +5862,7 @@ return view.extend({
 		var self = this, r = this.m.radios.filter(function(x) { return x.id === id; })[0];
 		if (!r) return { title: [ E('span', { 'class': 'vt-drawer-name' }, [ _('Unknown radio') ]) ], body: [ E('p', { 'class': 'vt-empty-inline' }, [ _('This radio is not reported any more.') ]) ] };
 		var rr = this.st.radioRates[r.id], ins = this.st.radioInsights[r.id] || { notes: [] };
-		var clients = this.m.clients.filter(function(c) { return c.radio === r.id; });
+		var clients = this.m.clients.filter(function(c) { return c.radio === r.id && !c.peer; });
 		return {
 			title: [ E('span', { 'class': 'vt-drawer-ico' }, [ icon('radio') ]), E('div', { 'class': 'vt-drawer-titles' }, [
 				E('div', { 'class': 'vt-drawer-name' }, [ r.bandLabel + ' · ' + (r.gen || r.id) ]),
@@ -6040,21 +6041,22 @@ return view.extend({
 		   points', as the Clients list filters by the name. Not where the
 		   layout hides that list, and not one without a name */
 		var nets = [], named = Object.create(null);
-		function net(ssid, band, clients) {
+		function net(ssid, band, clients, mode) {
 			if (!ssid) return;
 			var n = named[ssid];
-			if (!n) nets.push(n = named[ssid] = { ssid: ssid, bands: [], clients: 0 });
+			if (!n) nets.push(n = named[ssid] = { ssid: ssid, bands: [], clients: 0, mode: mode });
+			else if (n.mode !== mode) n.mode = null;
 			if (band && n.bands.indexOf(band) < 0) n.bands.push(band);
 			n.clients += clients;
 		}
 		if (this.el.clients.getClientRects().length) {
-			m.ssids.forEach(function(s) { net(s.ssid, s.band, s.clients); });
+			m.ssids.forEach(function(s) { net(s.ssid, s.band, s.clients, s.mode); });
 			this.aps().forEach(function(a) { a.nodes.forEach(function(n) { net(n.ssid, n.band, n.clients); }); });
 		}
 		give('ssid', nets.map(function(n) {
 			return {
 				title: cut([ n.ssid ], '', 64),
-				detail: cut(n.bands.sort().map(wifi.bandLabel).concat(n.clients === 1 ? _('1 client') : _('%d clients').format(n.clients)), ' · ', 64),
+				detail: cut(n.bands.sort().map(wifi.bandLabel).concat(self.ssidCount(n)), ' · ', 64),
 				words: '',
 				/* open details would cover the list */
 				run: function() { self.closeDrawer(); self.filterSsid(n.ssid); }

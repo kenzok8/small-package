@@ -1632,7 +1632,7 @@ return baseclass.extend({
 				c.level = wifi.signal(c.signal);
 				c.legacyOnRadio = !!(radio && radio.std && wifi.genRank(c.gen) >= 0 && wifi.genRank(c.gen) < wifi.genRank(wifi.genName(radio.std, radio.band)) &&
 					wifi.genRank(c.gen) <= 4 && wifi.genRank(wifi.genName(radio.std, radio.band)) >= 6);
-				if (radio && !c.peer) { radio.clients++; if (c.legacyOnRadio) radio.legacy++; }
+				if (radio) { if (!c.peer) radio.clients++; if (c.legacyOnRadio) radio.legacy++; }
 				ss.clients++;
 				clients.push(c);
 			});

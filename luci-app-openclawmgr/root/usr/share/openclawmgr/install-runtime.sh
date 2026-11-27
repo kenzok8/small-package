@@ -5,6 +5,7 @@ OC_CHILD='' OC_SPAWNING=0 OC_SIGNAL=0 OC_TXN='' OC_COMMITTED=0
 OC_ACTIVATING=0 OC_OLD_CURRENT='' OC_OLD_PREVIOUS='' OC_LEGACY='' OC_RELEASE=''
 OC_WAS_RUNNING=0 OC_BACKUP_READY=0 OC_NODE_URL='' OC_NODE_SHA256=''
 OC_DOWNLOAD_PART='' OC_LOG_FILE=''
+RB_TXN='' RB_SOURCE='' RB_TARGET='' RB_BACKUP='' RB_WAS_RUNNING=0 RB_COMMITTED=0
 
 oc_signal() {
 	OC_SIGNAL="$1"
@@ -261,7 +262,7 @@ oc_wait_stopped() {
 }
 
 oc_exit() {
-	local rc="$1"
+	local rc="$1" outcome="failed"
 	trap - EXIT
 	trap '' HUP INT TERM
 	oc_join_child
@@ -292,6 +293,13 @@ oc_exit() {
 		[ -z "$OC_LEGACY" ] || rmdir "$BASE_DIR/$OC_LEGACY" 2>/dev/null || true
 	fi
 	[ -z "$OC_TXN" ] || rm -rf "$OC_TXN"
+	NODE_DIR="$BASE_DIR/node"; NODE_BIN="$NODE_DIR/bin/node"; NPM_BIN="$NODE_DIR/bin/npm"; GLOBAL_DIR="$BASE_DIR/global"
+	if [ "$rc" = 0 ]; then
+		outcome="success"
+	elif [ "$ACTION" = upgrade ] && have_openclaw_runtime; then
+		outcome="preserved"
+	fi
+	write_operation_result "$ACTION" "$rc" "$outcome" || true
 	write_installer_log "Installation finished (exit=$rc)"
 	rm -f "$LOCK_DIR/pid"; rmdir "$LOCK_DIR" 2>/dev/null || true
 	exit "$rc"
@@ -305,6 +313,9 @@ do_install() {
 	trap 'oc_signal 143' TERM
 	for old in "$BASE_DIR"/.install.*; do
 		[ ! -d "$old" ] || { write_installer_log "Interrupted transaction: $old; run recover_install first"; return 1; }
+	done
+	for old in "$BASE_DIR"/.rollback.*; do
+		[ ! -d "$old" ] || { write_installer_log "Interrupted rollback: $old; run recover_rollback first"; return 1; }
 	done
 	if [ "$ACTION" = install ] && have_openclaw_runtime; then
 		write_installer_log "OpenClaw is already installed; use upgrade to replace the runtime"
@@ -388,10 +399,17 @@ do_install() {
 	write_installer_log "Installation committed: $OC_RELEASE; receipt: $BASE_DIR/current/receipt.json"
 }
 
-oc_remove_runtime() {
+oc_require_no_pending_transactions() {
 	for journal in "$BASE_DIR"/.install.*; do
 		[ ! -d "$journal" ] || { write_installer_log "Recover interrupted installation before removing runtime"; return 1; }
 	done
+	for journal in "$BASE_DIR"/.rollback.*; do
+		[ ! -d "$journal" ] || { write_installer_log "Recover interrupted rollback before removing runtime"; return 1; }
+	done
+}
+
+oc_remove_runtime() {
+	oc_require_no_pending_transactions || return $?
 	for name in current previous; do
 		if [ -L "$BASE_DIR/$name" ]; then oc_pointer_valid "$(readlink "$BASE_DIR/$name")" || return 1; fi
 	done
@@ -447,4 +465,215 @@ do_recover_install() {
 	OC_ACTIVATING=0
 	[ "$phase" != committed ] || OC_COMMITTED=1
 	write_installer_log "Interrupted installation recovered"
+}
+
+rollback_phase() {
+	printf '%s\n' "$1" > "$RB_TXN/phase.new" && mv -f "$RB_TXN/phase.new" "$RB_TXN/phase" || return 1
+	write_installer_log "Rollback phase: $1"
+}
+
+rollback_release_id() {
+	case "$1" in releases/*) printf '%s\n' "${1#releases/}" ;; *) return 1 ;; esac
+}
+
+rollback_previous_version() {
+	local source target source_id snapshot pkg version
+	source="$(readlink "$BASE_DIR/current" 2>/dev/null || true)"
+	target="$(readlink "$BASE_DIR/previous" 2>/dev/null || true)"
+	[ -n "$source" ] && oc_pointer_valid "$source" || return 1
+	[ -n "$target" ] && oc_pointer_valid "$target" || return 1
+	[ "$source" != "$target" ] || return 1
+	source_id="$(rollback_release_id "$source")" || return 1
+	snapshot="$BASE_DIR/backups/$source_id/data.tar"
+	[ -s "$snapshot" ] && [ ! -L "$snapshot" ] || return 1
+	pkg="$BASE_DIR/$target/global/lib/node_modules/openclaw/package.json"
+	[ -f "$pkg" ] || return 1
+	version="$(sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$pkg" 2>/dev/null | head -n 1)"
+	[ -n "$version" ] || return 1
+	printf '%s\n' "$version"
+}
+
+rollback_restore() {
+	local phase
+	[ -n "$RB_TXN" ] && [ -d "$RB_TXN" ] || return 0
+	phase="$(cat "$RB_TXN/phase" 2>/dev/null || true)"
+	case "$phase" in
+		preparing) return 0 ;;
+		stopping|stopped|current-backup-ready|moving-data|data-restored|switching|checking|restored) ;;
+		committed) return 0 ;;
+		*) return 1 ;;
+	esac
+
+	write_installer_log "Restoring state from before manual rollback"
+	if [ "$phase" != preparing ]; then
+		oc_run /etc/init.d/openclawmgr stop || return 1
+		oc_wait_stopped || return 1
+	fi
+	case "$phase" in
+		switching|checking|restored)
+			oc_switch current "$RB_SOURCE" || return 1
+			oc_switch previous "$RB_TARGET" || return 1
+			;;
+	esac
+	case "$phase" in
+		moving-data|data-restored|switching|checking|restored)
+			[ -f "$RB_BACKUP/forward-data.tar" ] || return 1
+			oc_run tar -tf "$RB_BACKUP/forward-data.tar" >/dev/null || return 1
+			if [ -d "$DATA_DIR" ] && [ ! -e "$RB_BACKUP/failed-target-data" ]; then
+				mv "$DATA_DIR" "$RB_BACKUP/failed-target-data" || return 1
+			else
+				rm -rf "$DATA_DIR" || return 1
+			fi
+			mkdir -p "$DATA_DIR" || return 1
+			oc_run tar -xf "$RB_BACKUP/forward-data.tar" -C "$DATA_DIR" || return 1
+			;;
+	esac
+	NODE_DIR="$BASE_DIR/node"; NODE_BIN="$NODE_DIR/bin/node"; NPM_BIN="$NODE_DIR/bin/npm"; GLOBAL_DIR="$BASE_DIR/global"
+	fix_data_permissions || true
+	if [ "$RB_WAS_RUNNING" = 1 ]; then
+		oc_run env OPENCLAWMGR_FORCE_START=1 /etc/init.d/openclawmgr start || return 1
+		oc_health || return 1
+	fi
+	rollback_phase restored
+}
+
+rollback_exit() {
+	local rc="$1" outcome="preserved"
+	trap - EXIT
+	trap '' HUP INT TERM
+	oc_join_child
+	if [ -n "$OC_TXN" ] && [ -d "$OC_TXN" ]; then
+		/usr/bin/lua "$OC_SHARE/processes.lua" stop "$OC_TXN" || {
+			write_installer_log "Rollback command recovery incomplete; retaining journal and lock"
+			exit 1
+		}
+	fi
+	if [ "$RB_COMMITTED" != 1 ] && ! rollback_restore; then
+		write_installer_log "Rollback recovery incomplete; journal retained: $RB_TXN. Run recover_rollback before retrying."
+		exit 1
+	fi
+	[ -z "$RB_TXN" ] || rm -rf "$RB_TXN"
+	[ "$rc" != 0 ] || outcome="rolled-back"
+	write_operation_result rollback_previous "$rc" "$outcome" || true
+	write_installer_log "Manual rollback finished (exit=$rc)"
+	rm -f "$LOCK_DIR/pid"; rmdir "$LOCK_DIR" 2>/dev/null || true
+	exit "$rc"
+}
+
+do_rollback_previous() {
+	local old source_id snapshot backup_id
+	acquire_lock
+	for old in "$BASE_DIR"/.install.*; do
+		[ ! -d "$old" ] || { write_installer_log "Interrupted installation: $old; run recover_install first"; return 1; }
+	done
+	for old in "$BASE_DIR"/.rollback.*; do
+		[ ! -d "$old" ] || { write_installer_log "Interrupted rollback: $old; run recover_rollback first"; return 1; }
+	done
+	RB_SOURCE="$(readlink "$BASE_DIR/current" 2>/dev/null || true)"
+	RB_TARGET="$(readlink "$BASE_DIR/previous" 2>/dev/null || true)"
+	[ -n "$RB_SOURCE" ] && oc_pointer_valid "$RB_SOURCE" || { write_installer_log "Current release is not valid"; return 1; }
+	[ -n "$RB_TARGET" ] && oc_pointer_valid "$RB_TARGET" || { write_installer_log "No valid previous release is available"; return 1; }
+	[ "$RB_SOURCE" != "$RB_TARGET" ] || { write_installer_log "Current and previous releases are identical"; return 1; }
+	for old in backups data releases; do
+		[ ! -L "$BASE_DIR/$old" ] || { write_installer_log "Unsafe rollback path: $BASE_DIR/$old is a symlink"; return 1; }
+	done
+	source_id="$(rollback_release_id "$RB_SOURCE")" || return 1
+	snapshot="$BASE_DIR/backups/$source_id/data.tar"
+	[ -f "$snapshot" ] && [ ! -L "$snapshot" ] || { write_installer_log "Pre-upgrade data snapshot is missing for $source_id"; return 1; }
+	timeout -k 2 30 tar -tf "$snapshot" >/dev/null || { write_installer_log "Pre-upgrade data snapshot is invalid for $source_id"; return 1; }
+	RB_WAS_RUNNING=0
+	[ "$(do_status)" != running ] || RB_WAS_RUNNING=1
+	RB_TXN="$(mktemp -d "$BASE_DIR/.rollback.XXXXXX")" || return 1
+	chmod 700 "$RB_TXN" || { rm -rf "$RB_TXN"; RB_TXN=''; return 1; }
+	OC_TXN="$RB_TXN"
+	backup_id="rollback-$(date +%Y%m%d%H%M%S)-${RB_TXN##*.}"
+	RB_BACKUP="$BASE_DIR/backups/$backup_id"
+	if ! mkdir -p "$RB_BACKUP" ||
+		! chmod 700 "$RB_BACKUP" ||
+		! printf '%s\n' "$RB_SOURCE" > "$RB_TXN/source" ||
+		! printf '%s\n' "$RB_TARGET" > "$RB_TXN/target" ||
+		! printf '%s\n' "$RB_BACKUP" > "$RB_TXN/backup" ||
+		! printf '%s\n' "$RB_WAS_RUNNING" > "$RB_TXN/was-running" ||
+		! rollback_phase preparing; then
+		rm -rf "$RB_TXN" "$RB_BACKUP"
+		OC_TXN=''; RB_TXN=''; RB_BACKUP=''
+		return 1
+	fi
+	trap 'rollback_exit $?' EXIT
+	trap 'oc_signal 129' HUP
+	trap 'oc_signal 130' INT
+	trap 'oc_signal 143' TERM
+
+	rollback_phase stopping || return 1
+	oc_run /etc/init.d/openclawmgr stop || return $?
+	oc_wait_stopped || return 1
+	rollback_phase stopped || return 1
+	mkdir -p "$DATA_DIR" || return 1
+	oc_run tar -cf "$RB_BACKUP/forward-data.tar.part" -C "$DATA_DIR" . || return $?
+	oc_run tar -tf "$RB_BACKUP/forward-data.tar.part" >/dev/null || return 1
+	mv "$RB_BACKUP/forward-data.tar.part" "$RB_BACKUP/forward-data.tar" || return 1
+	rollback_phase current-backup-ready || return 1
+	rollback_phase moving-data || return 1
+	mv "$DATA_DIR" "$RB_TXN/current-data" || return 1
+	mkdir -p "$DATA_DIR" || return 1
+	oc_run tar -xf "$snapshot" -C "$DATA_DIR" || return $?
+	rollback_phase data-restored || return 1
+	rollback_phase switching || return 1
+	oc_switch current "$RB_TARGET" || return 1
+	oc_switch previous "$RB_SOURCE" || return 1
+	NODE_DIR="$BASE_DIR/node"; NODE_BIN="$NODE_DIR/bin/node"; NPM_BIN="$NODE_DIR/bin/npm"; GLOBAL_DIR="$BASE_DIR/global"
+	fix_data_permissions || true
+	rollback_phase checking || return 1
+	if [ "$ENABLED" = 1 ] || [ "$RB_WAS_RUNNING" = 1 ]; then
+		oc_run env OPENCLAWMGR_FORCE_START=1 /etc/init.d/openclawmgr start || return $?
+		oc_health || return 1
+	else
+		oc_run env OPENCLAWMGR_FORCE_START=1 OPENCLAWMGR_HEALTH_PROBE=1 /etc/init.d/openclawmgr start || return $?
+		oc_health || return 1
+		oc_run /etc/init.d/openclawmgr stop || return $?
+		oc_wait_stopped || return 1
+	fi
+	{
+		printf 'schema_version=1\n'
+		printf 'from_release=%s\n' "$RB_SOURCE"
+		printf 'to_release=%s\n' "$RB_TARGET"
+		printf 'source_snapshot=%s\n' "$snapshot"
+	} > "$RB_BACKUP/manifest"
+	chmod 600 "$RB_BACKUP/manifest" "$RB_BACKUP/forward-data.tar" || return 1
+	rollback_phase committed || return 1
+	RB_COMMITTED=1
+	write_installer_log "Manual rollback committed: $RB_SOURCE -> $RB_TARGET"
+}
+
+do_recover_rollback() {
+	local count=0 phase
+	acquire_lock
+	for RB_TXN in "$BASE_DIR"/.rollback.*; do
+		[ -d "$RB_TXN" ] || continue
+		[ ! -L "$RB_TXN" ] || return 1
+		count=$((count + 1))
+	done
+	[ "$count" = 1 ] || { write_installer_log "Expected exactly one interrupted rollback journal"; return 1; }
+	RB_SOURCE="$(cat "$RB_TXN/source")" || return 1
+	RB_TARGET="$(cat "$RB_TXN/target")" || return 1
+	RB_BACKUP="$(cat "$RB_TXN/backup")" || return 1
+	RB_WAS_RUNNING="$(cat "$RB_TXN/was-running")" || return 1
+	oc_pointer_valid "$RB_SOURCE" || return 1
+	oc_pointer_valid "$RB_TARGET" || return 1
+	case "$RB_BACKUP" in "$BASE_DIR"/backups/rollback-*) ;; *) return 1 ;; esac
+	case "$RB_WAS_RUNNING" in 0|1) ;; *) return 1 ;; esac
+	phase="$(cat "$RB_TXN/phase")" || return 1
+	OC_TXN="$RB_TXN"
+	trap 'rollback_exit $?' EXIT
+	trap 'oc_signal 129' HUP
+	trap 'oc_signal 130' INT
+	trap 'oc_signal 143' TERM
+	/usr/bin/lua "$OC_SHARE/processes.lua" stop "$OC_TXN" || return 1
+	if [ "$phase" = committed ]; then
+		RB_COMMITTED=1
+	else
+		rollback_restore || return 1
+		RB_COMMITTED=1
+	fi
+	write_installer_log "Interrupted manual rollback recovered"
 }

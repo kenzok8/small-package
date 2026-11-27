@@ -6,8 +6,10 @@ APP="openclawmgr"
 UCI_NS="openclawmgr"
 LOCK_DIR="/tmp/openclawmgr-installer.lock"
 DIAG_PREFIX="/tmp/openclawmgr-diag"
-OPENCLAW_STABLE_NPM_TAG="openclaw@2026.3.28"
-OPENCLAW_STABLE_VERSION="2026.3.28"
+OPENCLAW_STABLE_NPM_TAG="openclaw@2026.10.34"
+OPENCLAW_STABLE_VERSION="2026.10.34"
+OPENCLAW_COMPAT_NPM_TAG="openclaw@2026.3.28"
+OPENCLAW_COMPAT_VERSION="2026.3.28"
 INSTALL_CHANNEL="${INSTALL_CHANNEL:-}"
 
 log_ts() { date "+%Y-%m-%d %H:%M:%S"; }
@@ -241,6 +243,27 @@ write_installer_log() {
 	if [ -n "${OC_LOG_FILE:-}" ]; then printf '%s\n' "$line" >> "$OC_LOG_FILE"; fi
 }
 
+write_operation_result() {
+	local operation="$1" rc="$2" outcome="$3" dir file tmp
+	case "$operation" in install|upgrade|rollback_previous) ;; *) return 1 ;; esac
+	case "$rc" in ''|*[!0-9]*) return 1 ;; esac
+	case "$outcome" in success|failed|preserved|rolled-back) ;; *) return 1 ;; esac
+	dir="$BASE_DIR/log"; file="$dir/last-operation.json"; tmp="$file.$$"
+	[ ! -L "$dir" ] && [ ! -L "$file" ] || return 1
+	mkdir -p "$dir" || return 1
+	chmod 700 "$dir" || return 1
+	printf '{"operation":"%s","exit_code":%s,"outcome":"%s","timestamp":%s}\n' \
+		"$operation" "$rc" "$outcome" "$(date +%s)" > "$tmp" || return 1
+	chmod 600 "$tmp" || return 1
+	mv -f "$tmp" "$file"
+}
+
+read_last_operation() {
+	local file="$BASE_DIR/log/last-operation.json"
+	[ -f "$file" ] && [ ! -L "$file" ] || return 1
+	cat "$file"
+}
+
 openclaw_bin() {
 	local b="${GLOBAL_DIR}/bin/openclaw"
 	[ -x "$b" ] && { echo "$b"; return 0; }
@@ -290,10 +313,12 @@ local_openclaw_version() {
 }
 
 latest_openclaw_version() {
-	if [ "${INSTALL_CHANNEL:-stable}" != latest ]; then
-		printf '%s\n' "$OPENCLAW_STABLE_VERSION"
-		return 0
-	fi
+	case "${INSTALL_CHANNEL:-stable}" in
+		stable) printf '%s\n' "$OPENCLAW_STABLE_VERSION"; return 0 ;;
+		compat) printf '%s\n' "$OPENCLAW_COMPAT_VERSION"; return 0 ;;
+		latest) ;;
+		*) return 1 ;;
+	esac
 	[ -x "$NPM_BIN" ] || return 1
 	if [ "$INSTALL_ACCELERATED" = 1 ] && [ ! -f "$NODE_DIR/.mise-runtime" ]; then set -- ks-cli npm; else set -- "$NPM_BIN"; fi
 	HOME="$DATA_DIR" npm_config_cache="$BASE_DIR/npm-cache" npm_config_registry=https://registry.npmjs.org \
@@ -302,11 +327,12 @@ latest_openclaw_version() {
 }
 
 target_openclaw_package() {
-	if [ "${INSTALL_CHANNEL:-stable}" = "latest" ]; then
-		printf "%s\n" "openclaw@latest"
-	else
-		printf "%s\n" "$OPENCLAW_STABLE_NPM_TAG"
-	fi
+	case "${INSTALL_CHANNEL:-stable}" in
+		stable) printf '%s\n' "$OPENCLAW_STABLE_NPM_TAG" ;;
+		compat) printf '%s\n' "$OPENCLAW_COMPAT_NPM_TAG" ;;
+		latest) printf '%s\n' "openclaw@latest" ;;
+		*) return 1 ;;
+	esac
 }
 
 have_openclaw_runtime() {
@@ -834,10 +860,21 @@ EOF
 	chmod 600 "$cfg" "${DATA_DIR}/.openclaw/openclaw.env"
 }
 
+get_running_pid() {
+	local pid=""
+	pid="$(ubus call service list "{\"name\":\"openclawmgr\"}" 2>/dev/null | jsonfilter -e '$.openclawmgr.instances.gateway.pid' 2>/dev/null || true)"
+	case "$pid" in
+		''|*[!0-9]*) return 0 ;;
+	esac
+	[ "$pid" -gt 1 ] 2>/dev/null && kill -0 "$pid" 2>/dev/null || return 0
+	printf '%s\n' "$pid"
+}
+
 . /usr/share/openclawmgr/install-runtime.sh
 
 do_uninstall() {
 	acquire_lock
+	oc_require_no_pending_transactions || return $?
 	write_installer_log "== uninstall begin =="
 	/etc/init.d/openclawmgr stop >/dev/null 2>&1 || true
 	/etc/init.d/openclawmgr disable >/dev/null 2>&1 || true
@@ -850,6 +887,7 @@ do_uninstall() {
 
 do_uninstall_openclaw() {
 	acquire_lock
+	oc_require_no_pending_transactions || return $?
 	write_installer_log "== uninstall openclaw begin =="
 	/etc/init.d/openclawmgr stop >/dev/null 2>&1 || true
 	/etc/init.d/openclawmgr disable >/dev/null 2>&1 || true
@@ -863,6 +901,7 @@ do_uninstall_openclaw() {
 
 do_purge() {
 	acquire_lock
+	oc_require_no_pending_transactions || return $?
 	write_installer_log "== purge begin =="
 	/etc/init.d/openclawmgr stop >/dev/null 2>&1 || true
 	/etc/init.d/openclawmgr disable >/dev/null 2>&1 || true
@@ -959,8 +998,8 @@ do_status() {
 		return 0
 	fi
 	local pid=""
-	pid="$(ubus call service list "{\"name\":\"openclawmgr\"}" 2>/dev/null | jsonfilter -e '$.openclawmgr.instances.gateway.pid' 2>/dev/null || true)"
-	if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+	pid="$(get_running_pid)"
+	if [ -n "$pid" ]; then
 		echo "running"
 		return 0
 	fi
@@ -1129,8 +1168,8 @@ case "$INSTALL_ACCELERATED" in
 	*) INSTALL_ACCELERATED="0" ;;
 esac
 case "$INSTALL_CHANNEL" in
-	latest) INSTALL_CHANNEL="latest" ;;
-	*) INSTALL_CHANNEL="stable" ;;
+	stable|latest|compat) ;;
+	*) write_installer_log "Invalid install channel: $INSTALL_CHANNEL"; exit 2 ;;
 esac
 
 require_base_dir() {
@@ -1187,9 +1226,25 @@ case "$ACTION" in
 	cancel_install)
 		do_cancel_install
 		;;
+	recover_rollback)
+		require_base_dir
+		do_recover_rollback
+		;;
 	recover_install)
 		require_base_dir
 		do_recover_install
+		;;
+	rollback_previous)
+		require_base_dir
+		do_rollback_previous
+		;;
+	rollback_previous_version)
+		require_base_dir
+		rollback_previous_version
+		;;
+	last_operation)
+		require_base_dir
+		read_last_operation
 		;;
 	install|upgrade)
 		require_base_dir
@@ -1259,7 +1314,7 @@ case "$ACTION" in
 		diag_poll "${1:-}"
 		;;
 	*)
-		echo "Usage: $0 {install|upgrade|recover_install|cancel_install|uninstall|uninstall_openclaw|purge|rm|start|stop|restart|status|port|token|node_version|openclaw_version|local_openclaw_version|latest_openclaw_version|diag|diag_poll}" >&2
+		echo "Usage: $0 {install|upgrade|rollback_previous|rollback_previous_version|last_operation|recover_install|recover_rollback|cancel_install|uninstall|uninstall_openclaw|purge|rm|start|stop|restart|status|port|token|node_version|openclaw_version|local_openclaw_version|latest_openclaw_version|diag|diag_poll}" >&2
 		exit 1
 		;;
 esac

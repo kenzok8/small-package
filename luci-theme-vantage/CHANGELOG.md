@@ -23,13 +23,21 @@ packages are listed at
   point lists it as a wired host. Needs 1.2.2 on the access points as
   well. On an access point with an older built-in switch (swconfig),
   whose ports all arrive through one device, a host plugged into it
-  cannot be told from the rest of its VLAN: it stays in the router's
-  wired list, without the "behind" note.
+  cannot be told from the rest of its VLAN. 1.2.1 noted all of that
+  VLAN's hosts "behind" the access point; now none is, and the host
+  stays in the router's wired list without the note.
 - **Clients: a mesh's other nodes are peers, not clients** (#167). The
   far end of a mesh interface was listed and counted as a Wi-Fi client.
-  Its row now has a "Mesh peer" tag, it no longer counts among the
-  device's or the radio's clients, and the mesh's node in the network
-  path counts peers.
+  Its row now has a "Mesh peer" tag, and the mesh's node in the network
+  path and search count peers. A peer no longer counts among the
+  device's or the radio's clients, is not ranked in Top talkers, and is
+  left out of the Signal check's client counts; a weak one still warns.
+- **Dashboard: no hole above a card that spans several columns** (#173,
+  [@VIKINGYFY](https://github.com/VIKINGYFY)). A short card beside a
+  taller one, with a wide card under both, left an empty space below it.
+  The short card now reaches down to the wide one. Cards keep their size
+  by content otherwise, and a short column at the end of the page still
+  just ends.
 
 ## 1.2.1 - 2026-11-25
 

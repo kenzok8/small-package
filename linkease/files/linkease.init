@@ -24,6 +24,9 @@ start_service() {
 	[ -x "$PROG" ] || return 1
 	if linkeasefull_enabled; then
 		echo "linkease: linkeasefull is enabled; please disable linkeasefull before starting linkease" >&2
+		case "${APK_SCRIPT:-}" in
+			post-install|post-upgrade) return 0 ;;
+		esac
 		return 1
 	fi
 	rm -f "$LOCAL_API"

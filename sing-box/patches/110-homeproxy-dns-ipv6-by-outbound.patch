@@ -237,7 +237,7 @@ so switching nodes does not leave a filtered answer in the DNS cache.
 +}
 --- a/dns/router.go
 +++ b/dns/router.go
-@@ -42,6 +42,7 @@ type Router struct {
+@@ -44,6 +44,7 @@ type Router struct {
  	outbound              adapter.OutboundManager
  	powerManager          *powerreport.Manager
  	client                adapter.DNSClient
@@ -245,9 +245,9 @@ so switching nodes does not leave a filtered answer in the DNS cache.
  	rawRules              []option.DNSRule
  	rules                 []adapter.DNSRule
  	defaultDomainStrategy C.DomainStrategy
-@@ -116,6 +117,9 @@ func NewRouter(ctx context.Context, logF
- 	if options.ReverseMapping {
- 		router.dnsReverseMapping = common.Must1(freelru.New[netip.Addr, string](1024, maphash.NewHasher[netip.Addr]().Hash32, true))
+@@ -124,6 +125,9 @@ func NewRouter(ctx context.Context, logF
+ 	}) {
+ 		router.dnsECHPublicNames = common.Must1(freelru.New[string, string](1024, maphash.NewHasher[string]().Hash32, true))
  	}
 +	if len(options.IPv6ByOutbound) > 0 {
 +		router.ipv6ByOutbound = newOutboundIPv6Filter(ctx, router.logger, router.outbound, options.IPv6ByOutbound)
@@ -255,7 +255,7 @@ so switching nodes does not leave a filtered answer in the DNS cache.
  	return router, nil
  }
  
-@@ -133,6 +137,9 @@ func (r *Router) Start(stage adapter.Sta
+@@ -141,6 +145,9 @@ func (r *Router) Start(stage adapter.Sta
  	monitor := taskmonitor.New(r.logger, C.StartTimeout)
  	switch stage {
  	case adapter.StartStateStart:
@@ -265,22 +265,22 @@ so switching nodes does not leave a filtered answer in the DNS cache.
  		scope.Add(func() error {
  			r.rulesAccess.Lock()
  			r.closing = true
-@@ -1209,6 +1216,7 @@ func (r *Router) Exchange(ctx context.Co
+@@ -1288,6 +1295,7 @@ func (r *Router) Exchange(ctx context.Co
  	if err != nil {
  		return nil, err
  	}
 +	response = r.ipv6ByOutbound.filter(message, response, transport)
- 	r.recordReverseMapping(message, response, transport)
- 	return response, nil
- }
-@@ -1242,6 +1250,7 @@ func (r *Router) finishExchangeAsync(mes
+ 	if !options.DisableReverseMapping {
+ 		r.recordReverseMapping(message, response, transport)
+ 	}
+@@ -1323,6 +1331,7 @@ func (r *Router) finishExchangeAsync(mes
  		callback(nil, err)
  		return
  	}
 +	response = r.ipv6ByOutbound.filter(message, response, transport)
- 	r.recordReverseMapping(message, response, transport)
- 	callback(response, nil)
- }
+ 	if !options.DisableReverseMapping {
+ 		r.recordReverseMapping(message, response, transport)
+ 	}
 --- a/option/dns.go
 +++ b/option/dns.go
 @@ -20,6 +20,8 @@ type RawDNSOptions struct {
@@ -294,7 +294,7 @@ so switching nodes does not leave a filtered answer in the DNS cache.
  
 --- a/protocol/group/urltest.go
 +++ b/protocol/group/urltest.go
-@@ -104,11 +104,14 @@ func (s *URLTest) All() []string {
+@@ -104,6 +104,9 @@ func (s *URLTest) All() []string {
  }
  
  func (s *URLTest) Selected(network string) adapter.Outbound {
@@ -303,113 +303,4 @@ so switching nodes does not leave a filtered answer in the DNS cache.
 +	}
  	var outbound adapter.Outbound
  	if network == N.NetworkUDP {
--		outbound = s.group.selectedOutboundUDP
-+		outbound = s.group.selectedOutboundUDP.Load()
- 	} else {
--		outbound = s.group.selectedOutboundTCP
-+		outbound = s.group.selectedOutboundTCP.Load()
- 	}
- 	if outbound == nil {
- 		outbound, _ = s.group.Select(network)
-@@ -127,11 +130,12 @@ func (s *URLTest) References() []string
- 		return nil
- 	}
- 	var references []string
--	if group.selectedOutboundTCP != nil {
--		references = append(references, group.selectedOutboundTCP.Tag())
-+	tcp, udp := group.selectedOutboundTCP.Load(), group.selectedOutboundUDP.Load()
-+	if tcp != nil {
-+		references = append(references, tcp.Tag())
- 	}
--	if group.selectedOutboundUDP != nil && group.selectedOutboundUDP != group.selectedOutboundTCP {
--		references = append(references, group.selectedOutboundUDP.Tag())
-+	if udp != nil && udp != tcp {
-+		references = append(references, udp.Tag())
- 	}
- 	return references
- }
-@@ -171,9 +175,9 @@ func (s *URLTest) DialContext(ctx contex
- 	var outbound adapter.Outbound
- 	switch N.NetworkName(network) {
- 	case N.NetworkTCP:
--		outbound = s.group.selectedOutboundTCP
-+		outbound = s.group.selectedOutboundTCP.Load()
- 	case N.NetworkUDP:
--		outbound = s.group.selectedOutboundUDP
-+		outbound = s.group.selectedOutboundUDP.Load()
- 	default:
- 		return nil, E.Extend(N.ErrUnknownNetwork, network)
- 	}
-@@ -194,7 +198,7 @@ func (s *URLTest) DialContext(ctx contex
- 
- func (s *URLTest) ListenPacket(ctx context.Context, destination M.Socksaddr) (net.PacketConn, error) {
- 	s.group.Touch()
--	outbound := s.group.selectedOutboundUDP
-+	outbound := s.group.selectedOutboundUDP.Load()
- 	if outbound == nil {
- 		outbound, _ = s.group.Select(N.NetworkUDP)
- 	}
-@@ -223,8 +227,8 @@ type URLTestGroup struct {
- 	idleTimeout                  time.Duration
- 	history                      *urltest.HistoryStorage
- 	checking                     atomic.Bool
--	selectedOutboundTCP          adapter.Outbound
--	selectedOutboundUDP          adapter.Outbound
-+	selectedOutboundTCP          common.TypedValue[adapter.Outbound]
-+	selectedOutboundUDP          common.TypedValue[adapter.Outbound]
- 	interruptGroup               *interrupt.Group
- 	interruptExternalConnections bool
- 	access                       sync.Mutex
-@@ -312,18 +316,15 @@ func (g *URLTestGroup) Select(network st
- 	var minOutbound adapter.Outbound
- 	switch network {
- 	case N.NetworkTCP:
--		if g.selectedOutboundTCP != nil {
--			if history := g.history.LoadURLTestHistory(RealTag(g.selectedOutboundTCP, N.NetworkTCP)); history != nil {
--				minOutbound = g.selectedOutboundTCP
--				minDelay = history.Delay
--			}
--		}
-+		minOutbound = g.selectedOutboundTCP.Load()
- 	case N.NetworkUDP:
--		if g.selectedOutboundUDP != nil {
--			if history := g.history.LoadURLTestHistory(RealTag(g.selectedOutboundUDP, N.NetworkUDP)); history != nil {
--				minOutbound = g.selectedOutboundUDP
--				minDelay = history.Delay
--			}
-+		minOutbound = g.selectedOutboundUDP.Load()
-+	}
-+	if minOutbound != nil {
-+		if history := g.history.LoadURLTestHistory(RealTag(minOutbound, network)); history != nil {
-+			minDelay = history.Delay
-+		} else {
-+			minOutbound = nil
- 		}
- 	}
- 	for _, detour := range g.outbounds {
-@@ -507,18 +508,19 @@ func (g *URLTestGroup) performUpdateChec
- 		updated  bool
- 		selected bool
- 	)
--	if outbound, exists := g.Select(N.NetworkTCP); outbound != nil && (g.selectedOutboundTCP == nil || (exists && outbound != g.selectedOutboundTCP)) {
--		if g.selectedOutboundTCP != nil {
-+	selectedTCP, selectedUDP := g.selectedOutboundTCP.Load(), g.selectedOutboundUDP.Load()
-+	if outbound, exists := g.Select(N.NetworkTCP); outbound != nil && (selectedTCP == nil || (exists && outbound != selectedTCP)) {
-+		if selectedTCP != nil {
- 			updated = true
- 		}
--		g.selectedOutboundTCP = outbound
-+		g.selectedOutboundTCP.Store(outbound)
- 		selected = true
- 	}
--	if outbound, exists := g.Select(N.NetworkUDP); outbound != nil && (g.selectedOutboundUDP == nil || (exists && outbound != g.selectedOutboundUDP)) {
--		if g.selectedOutboundUDP != nil {
-+	if outbound, exists := g.Select(N.NetworkUDP); outbound != nil && (selectedUDP == nil || (exists && outbound != selectedUDP)) {
-+		if selectedUDP != nil {
- 			updated = true
- 		}
--		g.selectedOutboundUDP = outbound
-+		g.selectedOutboundUDP.Store(outbound)
- 		selected = true
- 	}
- 	if updated {
+ 		outbound = s.group.selectedOutboundUDP.Load()

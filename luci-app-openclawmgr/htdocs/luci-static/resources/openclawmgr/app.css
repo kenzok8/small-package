@@ -969,6 +969,10 @@
   margin-bottom: 12px;
 }
 
+.oclm-banner .oclm-button {
+  margin-left: 12px;
+}
+
 .oclm-hidden {
   display: none !important;
 }

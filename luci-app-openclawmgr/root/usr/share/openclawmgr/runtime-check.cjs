@@ -131,6 +131,11 @@ async function main() {
     console.log(JSON.stringify(checks));
   } else if (mode === 'receipt') {
     const [metadata, npmVersion, channel, source, nodeSource, nodeDigest, output] = args;
+    const resolved = read(metadata);
+    const fixedChannels = { stable: '2026.10.34', compat: '2026.3.28' };
+    assert(channel === 'latest' || Object.hasOwn(fixedChannels, channel), 'Invalid install channel');
+    if (fixedChannels[channel]) assert(resolved.version === fixedChannels[channel],
+      `Resolved OpenClaw ${resolved.version} does not match ${channel} ${fixedChannels[channel]}`);
     const managedRoot = path.dirname(path.dirname(process.execPath));
     const managed = fs.existsSync(path.join(managedRoot, '.openclawmgr-glibc'));
     const sdk = sharedSdk();
@@ -146,7 +151,7 @@ async function main() {
         glibc: process.report.getReport().header.glibcVersionRuntime };
     } else runtime = managed ? { kind: 'isolated-glibc', glibc: process.report.getReport().header.glibcVersionRuntime,
       manifestSha256: (await digestFile(path.join(managedRoot, 'glibc/SHA256SUMS'), 'sha256')).digest('hex') } : { kind: 'native' };
-    write(output, { ...read(metadata), npm: npmVersion, channel, source, nodeSource, nodeExecutableSha256,
+    write(output, { ...resolved, npm: npmVersion, channel, source, nodeSource, nodeExecutableSha256,
       nodeSha256: nodeDigest || null, runtime, installedAt: new Date().toISOString(), nativeChecks: read(args[7]) });
     // No credentials: the service UID must read its exact release identity.
     if (sdk) fs.chmodSync(output, 0o644);

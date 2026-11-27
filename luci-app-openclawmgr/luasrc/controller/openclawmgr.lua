@@ -167,7 +167,7 @@ local function get_task_state(task_id)
 	end
 
 	local op = ""
-	for _, candidate in ipairs({ "install", "upgrade", "uninstall_openclaw", "uninstall", "purge", "restart", "start", "stop" }) do
+	for _, candidate in ipairs({ "rollback_previous", "install", "upgrade", "uninstall_openclaw", "uninstall", "purge", "restart", "start", "stop" }) do
 		if cmd:match("%f[%w_]" .. candidate .. "%f[^%w_]") then
 			op = candidate
 			break
@@ -666,7 +666,7 @@ local function installer_lock_running()
 			cmdline = (f:read("*a") or ""):gsub("%z", " ")
 			f:close()
 		end
-		if cmdline:match("openclawmgr%.sh") and (cmdline:match("%f[%w_]install%f[^%w_]") or cmdline:match("%f[%w_]upgrade%f[^%w_]")) then
+		if cmdline:match("openclawmgr%.sh") and (cmdline:match("%f[%w_]install%f[^%w_]") or cmdline:match("%f[%w_]upgrade%f[^%w_]") or cmdline:match("%f[%w_]rollback_previous%f[^%w_]")) then
 			return true, pid
 		end
 	end
@@ -787,7 +787,7 @@ function action_status()
 		reachable, reachable_code, reachable_url = probe_gateway_ready(port, base_dir, bind)
 	end
 	local lock_running, lock_pid = installer_lock_running()
-	local installing = (task.running and (task.op == "install" or task.op == "upgrade")) or lock_running
+	local installing = (task.running and (task.op == "install" or task.op == "upgrade" or task.op == "rollback_previous")) or lock_running
 	if not installing and task.running and not installed and not running then
 		installing = true
 	end
@@ -795,8 +795,10 @@ function action_status()
 	local node_ver = ""
 	local oc_ver = ""
 	local target_oc_ver = ""
+	local rollback_ver = ""
 	local runtime_info
 	local runtime_preparation
+	local last_operation
 	if base_dir ~= "" then
 		node_ver = sys.exec("/usr/libexec/istorec/openclawmgr.sh node_version 2>/dev/null"):gsub("%s+$", "")
 		oc_ver = sys.exec("/usr/libexec/istorec/openclawmgr.sh openclaw_version 2>/dev/null"):gsub("%s+$", "")
@@ -809,8 +811,16 @@ function action_status()
 		if type(prep) == "table" and prep.storage_root == uci:get("mise", "main", "storage_root") then
 			runtime_preparation = { status = prep.status, error = prep.error }
 		end
+		local operation_raw = sys.exec("/usr/libexec/istorec/openclawmgr.sh last_operation 2>/dev/null")
+		local operation = require("luci.jsonc").parse(operation_raw)
+		if type(operation) == "table" then
+			last_operation = operation
+		end
 	end
 	target_oc_ver = sys.exec("/usr/libexec/istorec/openclawmgr.sh latest_openclaw_version 2>/dev/null"):gsub("%s+$", "")
+	if installed then
+		rollback_ver = sys.exec("/usr/libexec/istorec/openclawmgr.sh rollback_previous_version 2>/dev/null"):gsub("%s+$", "")
+	end
 	local pid = running and get_running_pid() or ""
 	if pid == "" and installing and lock_pid ~= "" then
 		pid = lock_pid
@@ -847,6 +857,9 @@ function action_status()
 		runtime_preparation = runtime_preparation,
 		openclaw_version = oc_ver,
 		target_openclaw_version = target_oc_ver,
+		rollback_available = rollback_ver ~= "",
+		rollback_version = rollback_ver,
+		last_operation = last_operation,
 		pid = pid,
 		uptime_human = uptime_human,
 		base_url = base_url,
@@ -887,7 +900,7 @@ function action_check_update()
 	local util = require "luci.util"
 	local uci = require "luci.model.uci".cursor()
 	local install_channel = http.formvalue("install_channel") or ""
-	if install_channel ~= "" and install_channel ~= "stable" and install_channel ~= "latest" then
+	if install_channel ~= "" and install_channel ~= "stable" and install_channel ~= "compat" and install_channel ~= "latest" then
 		write_json({ ok = false, error = "invalid install_channel" })
 		return
 	end
@@ -1641,12 +1654,12 @@ function action_op()
 
 	local op = http.formvalue("op") or ""
 	local install_channel = http.formvalue("install_channel") or ""
-	local ok_ops = { install = true, upgrade = true, start = true, stop = true, restart = true, apply_config = true, uninstall = true, uninstall_openclaw = true, purge = true, cancel_install = true }
+	local ok_ops = { install = true, upgrade = true, rollback_previous = true, start = true, stop = true, restart = true, apply_config = true, uninstall = true, uninstall_openclaw = true, purge = true, cancel_install = true }
 	if not ok_ops[op] then
 		write_json({ ok = false, error = "unknown op" })
 		return
 	end
-	if install_channel ~= "" and install_channel ~= "stable" and install_channel ~= "latest" then
+	if install_channel ~= "" and install_channel ~= "stable" and install_channel ~= "compat" and install_channel ~= "latest" then
 		write_json({ ok = false, error = "invalid install_channel" })
 		return
 	end

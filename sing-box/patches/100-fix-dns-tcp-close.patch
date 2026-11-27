@@ -1,165 +1,70 @@
-Subject: [PATCH] dns: close completed TCP streams after draining replies
+Subject: [PATCH] dns: drain TCP replies before closing on EOF
 
-A clean EOF from DNS hijacking is reported as success, so the caller's
-handshake-error cleanup leaves the connection open. Native TUN retains
-these flows in CLOSE_WAIT while peer probes keep refreshing conntrack.
+Wait for accepted DNS queries and serialized writes when the peer
+half-closes its stream. Bound response writes with the DNS deadline.
+Close normal resolved sessions without invoking handshake-failure
+cleanup, which can reset the TCP stream before replies are read.
 
-Share the DNS stream loop between its existing callers. Drain accepted
-asynchronous replies on a clean EOF before closing the stream, with the
-existing DNS timeout bounding response writes. Keep error cleanup and
-close callbacks in the existing callers.
-
---- a/route/dns.go
-+++ b/route/dns.go
-@@ -3,10 +3,8 @@ package route
- import (
- 	"context"
- 	"net"
--	"time"
- 
- 	"github.com/sagernet/sing-box/adapter"
--	C "github.com/sagernet/sing-box/constant"
- 	"github.com/sagernet/sing-box/dns"
- 	dnsOutbound "github.com/sagernet/sing-box/protocol/dns"
- 	R "github.com/sagernet/sing-box/route/rule"
-@@ -24,17 +22,12 @@ func (r *Router) hijackDNSStream(ctx con
- 	if err != nil {
- 		return E.Cause(err, "report handshake success")
- 	}
--	for {
--		conn.SetReadDeadline(time.Now().Add(C.DNSTimeout))
--		err = dnsOutbound.HandleStreamDNSRequest(ctx, r.dns, conn, metadata)
--		if err != nil {
--			if !E.IsClosedOrCanceled(err) {
--				return err
--			} else {
--				return nil
--			}
--		}
-+	err = dnsOutbound.HandleStreamDNSConnection(ctx, r.dns, conn, metadata)
-+	if E.IsClosedOrCanceled(err) {
-+		conn.Close()
-+		return nil
- 	}
-+	return err
- }
- 
- func (r *Router) hijackDNSPacket(ctx context.Context, conn N.PacketConn, packetBuffers []*N.PacketBuffer, metadata adapter.InboundContext, onClose N.CloseHandlerFunc) error {
 --- a/protocol/dns/handle.go
 +++ b/protocol/dns/handle.go
-@@ -3,7 +3,11 @@ package dns
+@@ -3,6 +3,8 @@ package dns
  import (
  	"context"
  	"encoding/binary"
 +	"errors"
 +	"io"
  	"net"
-+	"sync"
-+	"time"
- 
- 	"github.com/sagernet/sing-box/adapter"
- 	C "github.com/sagernet/sing-box/constant"
-@@ -19,7 +23,23 @@ import (
- 	mDNS "github.com/miekg/dns"
- )
- 
--func HandleStreamDNSRequest(ctx context.Context, router adapter.DNSRouter, conn net.Conn, metadata adapter.InboundContext) error {
-+func HandleStreamDNSConnection(ctx context.Context, router adapter.DNSRouter, conn net.Conn, metadata adapter.InboundContext) error {
+ 	"sync"
+ 	"time"
+@@ -24,11 +26,17 @@ import (
+ func NewDNSConnection(ctx context.Context, router adapter.DNSRouter, conn net.Conn, metadata adapter.InboundContext) error {
+ 	metadata.Destination = M.Socksaddr{}
+ 	var writeAccess sync.Mutex
 +	var responses sync.WaitGroup
-+	for {
-+		conn.SetReadDeadline(time.Now().Add(C.DNSTimeout))
-+		err := handleStreamDNSRequest(ctx, router, conn, metadata, &responses)
-+		if err != nil {
+ 	for {
+ 		conn.SetReadDeadline(time.Now().Add(C.DNSTimeout))
+ 		var queryLength uint16
+ 		err := binary.Read(conn, binary.BigEndian, &queryLength)
+ 		if err != nil {
 +			if errors.Is(err, io.EOF) {
-+				// A peer may stop sending before its outstanding responses arrive.
++				// Drain replies accepted before the peer closed its write side.
 +				conn.SetWriteDeadline(time.Now().Add(C.DNSTimeout))
 +				responses.Wait()
 +			}
-+			return err
-+		}
-+	}
-+}
-+
-+func handleStreamDNSRequest(ctx context.Context, router adapter.DNSRouter, conn net.Conn, metadata adapter.InboundContext, responses *sync.WaitGroup) error {
- 	var queryLength uint16
- 	err := binary.Read(conn, binary.BigEndian, &queryLength)
- 	if err != nil {
-@@ -40,12 +60,17 @@ func HandleStreamDNSRequest(ctx context.
- 		return err
- 	}
- 	metadataInQuery := metadata
-+	responses.Add(1)
- 	router.ExchangeAsync(adapter.WithContext(ctx, &metadataInQuery), &message, adapter.DNSQueryOptions{}, func(response *mDNS.Msg, err error) {
- 		if err != nil {
- 			conn.Close()
-+			responses.Done()
- 			return
+ 			return err
  		}
--		go writeStreamResponse(conn, response)
-+		go func() {
-+			defer responses.Done()
-+			writeStreamResponse(conn, response)
-+		}()
- 	})
- 	return nil
- }
---- a/protocol/dns/outbound.go
-+++ b/protocol/dns/outbound.go
-@@ -4,7 +4,6 @@ import (
- 	"context"
- 	"net"
- 	"os"
--	"time"
- 
- 	"github.com/sagernet/sing-box/adapter"
- 	"github.com/sagernet/sing-box/adapter/outbound"
-@@ -45,16 +44,10 @@ func (d *Outbound) ListenPacket(ctx cont
- 
- func (d *Outbound) NewConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext, onClose N.CloseHandlerFunc) {
- 	metadata.Destination = M.Socksaddr{}
--	for {
--		conn.SetReadDeadline(time.Now().Add(C.DNSTimeout))
--		err := HandleStreamDNSRequest(ctx, d.router, conn, metadata)
--		if err != nil {
--			conn.Close()
--			if onClose != nil {
--				onClose(err)
--			}
--			return
--		}
-+	err := HandleStreamDNSConnection(ctx, d.router, conn, metadata)
-+	conn.Close()
-+	if onClose != nil {
-+		onClose(err)
+ 		if queryLength == 0 {
+@@ -47,12 +55,17 @@ func NewDNSConnection(ctx context.Contex
+ 			return err
+ 		}
+ 		metadataInQuery := metadata
++		responses.Add(1)
+ 		router.ExchangeAsync(adapter.WithContext(ctx, &metadataInQuery), &message, adapter.DNSQueryOptions{}, func(response *mDNS.Msg, err error) {
+ 			if err != nil {
+ 				conn.Close()
++				responses.Done()
+ 				return
+ 			}
+-			go writeStreamResponse(conn, &writeAccess, response)
++			go func() {
++				defer responses.Done()
++				writeStreamResponse(conn, &writeAccess, response)
++			}()
+ 		})
  	}
  }
- 
 --- a/service/resolved/service.go
 +++ b/service/resolved/service.go
-@@ -6,7 +6,6 @@ import (
- 	"context"
- 	"net"
- 	"sync"
--	"time"
- 
- 	"github.com/sagernet/sing-box/adapter"
- 	boxService "github.com/sagernet/sing-box/adapter/service"
-@@ -132,14 +131,12 @@ func (i *Service) NewConnection(ctx cont
+@@ -126,7 +126,12 @@ func (i *Service) Start(stage adapter.St
+ func (i *Service) NewConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext, onClose N.CloseHandlerFunc) {
  	metadata.Inbound = i.Tag()
  	metadata.InboundType = i.Type()
- 	metadata.Destination = M.Socksaddr{}
--	for {
--		conn.SetReadDeadline(time.Now().Add(C.DNSTimeout))
--		err := dnsOutbound.HandleStreamDNSRequest(ctx, i.dnsRouter, conn, metadata)
--		if err != nil {
--			N.CloseOnHandshakeFailure(conn, onClose, err)
--			return
--		}
-+	err := dnsOutbound.HandleStreamDNSConnection(ctx, i.dnsRouter, conn, metadata)
+-	N.CloseOnHandshakeFailure(conn, onClose, dnsOutbound.NewDNSConnection(ctx, i.dnsRouter, conn, metadata))
++	err := dnsOutbound.NewDNSConnection(ctx, i.dnsRouter, conn, metadata)
 +	if E.IsClosedOrCanceled(err) {
 +		conn.Close()
 +		err = nil
- 	}
++	}
 +	N.CloseOnHandshakeFailure(conn, onClose, err)
  }
  
