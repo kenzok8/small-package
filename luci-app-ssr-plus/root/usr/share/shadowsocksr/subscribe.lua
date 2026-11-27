@@ -210,8 +210,12 @@ end
 
 local function collect_subscribe_items()
 	local items = {}
+	local position = 0
 
 	ucic:foreach(name, "server_subscribe_item", function(s)
+		-- 每个配置节都占用一个位置号，无论 enabled / URL 是否为空
+		position = position + 1
+
 		if target_subscribe_sid ~= "" and s[".name"] ~= target_subscribe_sid then
 			return
 		end
@@ -228,7 +232,8 @@ local function collect_subscribe_items()
 		items[#items + 1] = {
 			sid = s[".name"],
 			alias = trim(s.alias or ""),
-			url = url
+			url = url,
+			index = position
 		}
 	end)
 
@@ -247,7 +252,8 @@ local function collect_subscribe_items()
 			items[#items + 1] = {
 				sid = "legacy_" .. index,
 				alias = "Legacy " .. index,
-				url = url
+				url = url,
+				index = index
 			}
 		end
 	end
@@ -379,20 +385,23 @@ local function isClashYAML(str)
 	return false
 end
 
-local function processClashSubscription(url, groupHash)
+local function processClashSubscription(item)
+	local url = item.url
+	local fetch_url = item.fetch_url or item.url
+	local index = item.index or 1
+
 	local ok, parsed = pcall(URL.parse, url)
 	if not ok or not parsed or not parsed.host then
 		return nil
 	end
 
-	local groupHash_short = string.sub(groupHash, 1, 8)
-	local alias = "Clash_" .. parsed.host .. "_" .. groupHash_short
+	local alias = "Clash_" .. parsed.host .. "_" .. tostring(index)
 	local server_port = parsed.port or ((parsed.scheme == "http") and "80" or "443")
 	local result = {
 		type = "clash",
 		server = normalize_host(parsed.host),
 		server_port = server_port,
-		clash_url = url,
+		clash_url = fetch_url,
 		clash_user_agent = user_agent,
 		raw_alias = alias,
 		alias = alias
@@ -400,7 +409,7 @@ local function processClashSubscription(url, groupHash)
 
 	local saved_alias = result.alias
 	result.alias = nil
-	result.hashkey = md5(jsonStringify(result) .. "_" .. (saved_alias or ""))
+	result.hashkey = md5(jsonStringify(result) .. "_" .. tostring(index) .. "_" .. (saved_alias or ""))
 	result.alias = saved_alias
 	return result
 end
@@ -1491,7 +1500,9 @@ local function processData(szType, content, cfgid)
 			result.server_port = port
 
 			-- 插件处理
-			if params.plugin then
+			-- 优先级：params["shadow-tls"] 存在时优先走 JSON 解码分支；
+			-- 否则若 params.plugin 存在，走 plugin 透传分支。
+			if params.plugin and not params["shadow-tls"] then
 				local plugin_info = UrlDecode(params.plugin)
 				local idx_pn = plugin_info:find(";")
 				if idx_pn then
@@ -1501,38 +1512,97 @@ local function processData(szType, content, cfgid)
 					result.plugin = plugin_info
 					result.plugin_opts = ""
 				end
-				-- 部分机场下发的插件名为 simple-obfs，这里应该改为 obfs-local
+
+				-- 部分机场下发的插件名为 simple-obfs，这里映射为 obfs-local
 				if result.plugin == "simple-obfs" then
 					result.plugin = "obfs-local"
 				end
+
+				-- 规范化 shadow-tls 参数：
+				--   password / pwd / pass → passwd
+				--   version=N → vN=1（仅接受正整数；缺失或非法则丢弃）
+				if result.plugin == "shadow-tls" then
+					local opts, seen = {}, {}
+					for part in result.plugin_opts:gmatch("[^;]+") do
+						local k, v = part:match("^%s*([^=]+)=?(.*)%s*$")
+						if k and k ~= "" then
+							k = trim(k)
+							v = trim(v or "")
+
+							local k_lower = k:lower()
+							if k_lower == "password" or k_lower == "pwd" or k_lower == "pass" then
+								k = "passwd"
+							elseif k_lower == "version" then
+								-- 去除可选的 v/V 前缀，仅接受正整数
+								local version = v:gsub("^[vV]", "")
+								if version:match("^[1-9]%d*$") then
+									k = "v" .. version
+									v = "1"
+								else
+									-- 缺失或非法版本不生成 vN 参数
+									k = nil
+								end
+							end
+
+							if k and not seen[k] then
+								seen[k] = true
+								opts[#opts + 1] = k .. "=" .. v
+							end
+						end
+					end
+					result.plugin_opts = table.concat(opts, ";")
+				end
+
 				-- 如果插件不为 none，确保 enable_plugin 为 1
 				if result.plugin ~= "none" and result.plugin ~= "" then
 					result.enable_plugin = 1
 				end
 			else
 				if params["shadow-tls"] then
-					-- 特别处理 shadow-tls 作为插件
-					-- log("原始 shadow-tls 参数:", params["shadow-tls"])
+					-- 特别处理 shadow-tls 作为插件（优先 base64(JSON) 形式）
 					local decoded_tls = base64Decode(UrlDecode(params["shadow-tls"]))
-					--log("SS 节点 shadow-tls 解码后:", decoded_tls or "nil")
 					if decoded_tls then
 						local ok, st = pcall(jsonParse, decoded_tls)
-						if ok and st then
+						if ok and type(st) == "table" then
 							result.plugin = "shadow-tls"
 							result.enable_plugin = 1
-							local version_flag = ""
-							if st.version and tonumber(st.version) then
-								version_flag = string.format("v%s=1;", st.version)
+
+							-- 按优先级读取密码，优先 SIP003 标准 passwd
+							local st_passwd = st.passwd
+							if st_passwd == nil then
+								st_passwd = st.password
 							end
-					
-							-- 合成 plugin_opts 格式：v%s=1;host=xxx;password=xxx
-							result.plugin_opts = string.format("%shost=%s;passwd=%s",
-								version_flag,
-								st.host or "",
-								st.password or "")
+							if st_passwd == nil then
+								st_passwd = st.pwd
+							end
+							if st_passwd == nil then
+								st_passwd = st.pass
+							end
+
+							st_passwd = st_passwd ~= nil and tostring(st_passwd) or ""
+
+							-- 仅接受正整数版本，不补充默认版本
+							local version_suffix = ""
+							if st.version ~= nil then
+								local version = tostring(st.version):gsub("^[vV]", "")
+								if version:match("^[1-9]%d*$") then
+									version_suffix = ";v" .. version .. "=1"
+								end
+							end
+
+							-- 合成 SIP003 标准格式：
+							--   有合法版本：host=xxx;passwd=xxx;vN=1
+							--   无合法版本：host=xxx;passwd=xxx
+							result.plugin_opts = string.format("host=%s;passwd=%s%s",
+								st.host ~= nil and tostring(st.host) or "",
+								st_passwd,
+								version_suffix
+							)
 						else
-							log("shadow-tls JSON 解析失败")
+							log("shadow-tls JSON 解析失败或数据格式无效")
 						end
+					else
+						log("shadow-tls Base64 解码失败")
 					end
 				end
 			end
@@ -2692,7 +2762,12 @@ local execute = function()
 
 			if isClashYAML(raw) then
 				is_clash_subscription = true
-				local result = processClashSubscription(fetch_url, groupHash)
+				local clash_item = {
+					url = url,
+					fetch_url = fetch_url,
+					index = item.index
+				}
+				local result = processClashSubscription(clash_item)
 				if result and check_filer(result) then
 					log('过滤 Clash 总节点: ' .. result.alias)
 				elseif result and not cache[groupHash][result.hashkey] then
@@ -2860,7 +2935,7 @@ local execute = function()
 
 			if #mihomo_nodes > 0 then
 				local parsed_url = URL.parse(url)
-				local alias = item.alias ~= "" and item.alias or ("Mihomo_" .. ((parsed_url and parsed_url.host) or groupHash))
+				local alias = "Mihomo_" .. ((parsed_url and parsed_url.host) or tostring(item.index)) .. "_" .. tostring(item.index)
 				local local_path = string.format("%s/%s.mihomo.yaml", local_clash_dir, groupHash)
 				local yaml, proxy_count = buildMihomoSubscribeYaml(mihomo_nodes, "Proxy")
 

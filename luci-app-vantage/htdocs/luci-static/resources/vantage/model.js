@@ -1996,11 +1996,13 @@ return baseclass.extend({
 	},
 
 	/* SSIDs with the same name and security across radios -> one entry
-	   { key, ssid, security, bands: [..], ids: [..], clients } */
+	   { key, ssid, security, bands: [..], ids: [..], clients }. The same
+	   security is the same protocol at the same rating: WPA2 that lets
+	   TKIP in is not shown as the WPA2 beside it that does not */
 	groupSsids: function(ssids) {
 		var out = [], idx = Object.create(null);
 		arr(ssids).forEach(function(s) {
-			var k = s.ssid + '\u0000' + s.security.short;
+			var k = s.ssid + '\u0000' + s.security.short + '\u0000' + (s.security.tone || '');
 			if (!idx[k]) { idx[k] = { key: k, ssid: s.ssid, security: s.security, pmf: s.pmf, hidden: s.hidden, bands: [], ids: [], radios: [], clients: 0, up: false }; out.push(idx[k]); }
 			var g = idx[k];
 			if (s.band && g.bands.indexOf(s.band) < 0) g.bands.push(s.band);
