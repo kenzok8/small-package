@@ -17,7 +17,7 @@ PKG_RELEASE:=1
 CORE_COMMIT:=f7415d0ac505e330cf22bda562719d396e6b9a26
 
 # Immutable source asset tag holding this pin's core archives.
-HONK_SOURCE_TAG?=source-45789344596
+HONK_SOURCE_TAG?=source-46124989576
 HONK_SOURCE_URL?=https://github.com/kenzok8/openwrt-honk/releases/download/$(HONK_SOURCE_TAG)
 
 -include $(CURDIR)/generated-stage.mk
